@@ -11,6 +11,9 @@
  *   setStudentActiveState(classId, studentId, activeStateObj)
  *   clearStudentActiveState(classId, studentId)
  *   importRoster(classId, studentsArray)
+ *   setPeriodStartTime(classId, timeString)
+ *   setStudentAbsent(classId, studentId)
+ *   clearStudentAbsent(classId, studentId)
  */
 
 import { getDB } from './index.js'
@@ -101,6 +104,61 @@ export async function clearStudentActiveState(classId, studentId) {
 }
 
 /**
+ * Sets the period start time for a class.
+ *
+ * @param {string} classId
+ * @param {string} timeString HH:MM format
+ * @returns {Promise<void>}
+ */
+export async function setPeriodStartTime(classId, timeString) {
+    const db = await getDB()
+    const cls = await db.get('classes', classId)
+    if (!cls) throw new Error(`Class not found: ${classId}`)
+
+    cls.periodStartTime = timeString
+    await db.put('classes', cls)
+}
+
+/**
+ * Marks a student as absent.
+ *
+ * @param {string} classId
+ * @param {string} studentId
+ * @returns {Promise<void>}
+ */
+export async function setStudentAbsent(classId, studentId) {
+    const db = await getDB()
+    const cls = await db.get('classes', classId)
+    if (!cls) throw new Error(`Class not found: ${classId}`)
+    if (!cls.students[studentId]) throw new Error(`Student not found: ${studentId} in ${classId}`)
+
+    if (!cls.students[studentId].activeStates) {
+        cls.students[studentId].activeStates = { isOut: false, outTime: null, isAbsent: false }
+    }
+    cls.students[studentId].activeStates.isAbsent = true
+    await db.put('classes', cls)
+}
+
+/**
+ * Clears the absent state for a student.
+ *
+ * @param {string} classId
+ * @param {string} studentId
+ * @returns {Promise<void>}
+ */
+export async function clearStudentAbsent(classId, studentId) {
+    const db = await getDB()
+    const cls = await db.get('classes', classId)
+    if (!cls) throw new Error(`Class not found: ${classId}`)
+    if (!cls.students[studentId]) throw new Error(`Student not found: ${studentId} in ${classId}`)
+
+    if (cls.students[studentId].activeStates) {
+        cls.students[studentId].activeStates.isAbsent = false
+    }
+    await db.put('classes', cls)
+}
+
+/**
  * Upserts students from a CSV roster into the target class.
  *
  * Rules (CLAUDE.md §6):
@@ -134,7 +192,7 @@ export async function importRoster(classId, studentsArray) {
                 firstName,
                 lastName,
                 seat: null,
-                activeStates: { isOut: false, outTime: null },
+                activeStates: { isOut: false, outTime: null, isAbsent: false },
             }
             inserted++
         }

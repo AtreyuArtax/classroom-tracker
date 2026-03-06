@@ -10,102 +10,115 @@
  */
 
 /* ── 1. CSS Reset ───────────────────────────────────────────────────────── */
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
-  margin:     0;
-  padding:    0;
+  margin: 0;
+  padding: 0;
 }
 
 /* ── 2. Design Tokens (CLAUDE.md §2 — exact spec) ─────────────────────── */
 :root {
-  --primary:          #4663ac;
-  --primary-light:    color-mix(in srgb, #4663ac 15%, white);
-  --primary-dark:     color-mix(in srgb, #4663ac 80%, black);
+  --primary: #4663ac;
+  --primary-light: color-mix(in srgb, #4663ac 15%, white);
+  --primary-dark: color-mix(in srgb, #4663ac 80%, black);
 
-  --bg:               #ffffff;
-  --bg-secondary:     #f2f2f7;   /* iOS system grouped background */
-  --surface:          #ffffff;
+  --bg: #ffffff;
+  --bg-secondary: #f2f2f7;
+  /* iOS system grouped background */
+  --surface: #ffffff;
 
-  --text:             #1c1c1e;   /* iOS label */
-  --text-secondary:   #6e6e73;   /* iOS secondary label */
+  --text: #1c1c1e;
+  /* iOS label */
+  --text-secondary: #6e6e73;
+  /* iOS secondary label */
 
-  --border:           rgba(0, 0, 0, 0.1);
-  --shadow-sm:        0 1px 3px rgba(0, 0, 0, 0.1);
-  --shadow-md:        0 4px 16px rgba(0, 0, 0, 0.12);
+  --border: rgba(0, 0, 0, 0.1);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.12);
 
-  --radius-sm:        8px;
-  --radius-md:        12px;
-  --radius-lg:        16px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
 
   /* Semantic states — derived from primary */
-  --state-out:        #ff3b30;   /* iOS red — student is out of room */
-  --state-success:    #34c759;   /* iOS green — confirmation flash */
-  --state-neutral:    #8e8e93;   /* iOS grey */
+  --state-out: #ff3b30;
+  /* iOS red — student is out of room */
+  --state-success: #34c759;
+  /* iOS green — confirmation flash */
+  --state-neutral: #8e8e93;
+  /* iOS grey */
 }
 
 /* ── 3. Base Typography  ────────────────────────────────────────────────── */
 html {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  font-size:   16px;
+  font-size: 16px;
   line-height: 1.5;
-  color:       var(--text);
-  background:  var(--bg);
+  color: var(--text);
+  background: var(--bg);
   /* Prevent text-size adjustment on iOS orientation change */
   -webkit-text-size-adjust: 100%;
 }
 
 body {
-  min-height: 100dvh;
+  height: 100dvh;
+  overflow: hidden;
   background: var(--bg-secondary);
-  overflow-x: hidden;
 }
 
 #app {
-  min-height: 100dvh;
-  display:    flex;
+  height: 100dvh;
+  overflow: hidden;
+  display: flex;
   flex-direction: column;
 }
 
 /* ── 4. Button reset ────────────────────────────────────────────────────── */
 button {
   font-family: inherit;
-  font-size:   inherit;
+  font-size: inherit;
 }
 
 /* ── 5. Input reset ─────────────────────────────────────────────────────── */
-input, select, textarea {
+input,
+select,
+textarea {
   font-family: inherit;
-  font-size:   inherit;
-  color:       var(--text);
+  font-size: inherit;
+  color: var(--text);
 }
 
 /* ── 6. Scrollbar (WebKit) matching iOS aesthetic ──────────────────────── */
 ::-webkit-scrollbar {
   width: 4px;
 }
+
 ::-webkit-scrollbar-track {
   background: transparent;
 }
+
 ::-webkit-scrollbar-thumb {
-  background:    var(--border);
+  background: var(--border);
   border-radius: 2px;
 }
 
 /* ── 7. Focus ring — accessible but subtle ──────────────────────────────── */
 :focus-visible {
-  outline:        2px solid var(--primary);
+  outline: 2px solid var(--primary);
   outline-offset: 2px;
-  border-radius:  var(--radius-sm);
+  border-radius: var(--radius-sm);
 }
 
 /* ── 8. Utility: visually-hidden (for screen readers) ──────────────────── */
 .sr-only {
-  position:  absolute;
-  width:     1px;
-  height:    1px;
-  padding:   0;
-  margin:    -1px;
-  overflow:  hidden;
-  clip:      rect(0, 0, 0, 0);
-  border:    0;
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
 }

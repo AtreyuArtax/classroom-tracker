@@ -84,6 +84,9 @@ export async function logEvent(eventObj) {
         category: behaviorCode.category, // copied from behavior code
         duration: eventObj.duration ?? null,
     }
+    if (eventObj.supersededAbsent !== undefined) {
+        record.supersededAbsent = eventObj.supersededAbsent
+    }
 
     const db = await getDB()
     // Step 5 — Write and return the auto-generated eventId

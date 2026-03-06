@@ -81,8 +81,26 @@ async function init() {
         settingsService.getSettings(),
     ])
 
+    // Inject 'a' and 'l' if missing (migrating existing dbs smoothly)
+    let codesUpdated = false
+    const codesMap = Object.fromEntries(codes.map(c => [c.codeKey, c]))
+    if (!codesMap.a) {
+        settings.behaviorCodes.a = { icon: '🚫', label: 'Absent', category: 'attendance', type: 'attendance' }
+        codesUpdated = true
+    }
+    if (!codesMap.l) {
+        settings.behaviorCodes.l = { icon: '⏰', label: 'Late', category: 'attendance', type: 'attendance' }
+        codesUpdated = true
+    }
+
+    if (codesUpdated) {
+        await settingsService.saveSettings(settings)
+        behaviorCodes.value = await settingsService.getBehaviorCodes()
+    } else {
+        behaviorCodes.value = codes
+    }
+
     classList.value = classes
-    behaviorCodes.value = codes
     gridSize.value = settings.gridSize
 
     if (classes.length > 0) {
@@ -108,7 +126,7 @@ async function switchClass(classId) {
 /**
  * Create a new class and switch to it.
  *
- * @param {{ classId: string, name: string, periodNumber: number }} opts
+ * @param {{ classId: string, name: string, periodNumber: number, periodStartTime: string }} opts
  * @returns {Promise<void>}
  */
 async function createClass(opts) {
@@ -116,6 +134,7 @@ async function createClass(opts) {
         classId: opts.classId,
         name: opts.name,
         periodNumber: opts.periodNumber,
+        periodStartTime: opts.periodStartTime ?? '08:45',
         students: {},
     }
     await classService.saveClass(newCls)
@@ -124,19 +143,33 @@ async function createClass(opts) {
 }
 
 /**
- * Update name / periodNumber on the active class.
+ * Update any plain fields (name, periodNumber, periodStartTime) on the active class.
+ * Reads a fresh plain object from IDB first to avoid spreading a Vue reactive Proxy
+ * into db.put() — which can fail silently due to structured-clone incompatibilities
+ * with Vue's proxy internals.
  *
- * @param {Object} updates  Partial { name, periodNumber }
+ * @param {Object} updates  Partial { name, periodNumber, periodStartTime, … }
  * @returns {Promise<void>}
  */
 async function updateActiveClass(updates) {
-    if (!activeClass.value) return
-    const updated = { ...activeClass.value, ...updates }
+    const classId = activeClass.value?.classId
+    if (!classId) return
+
+    // Fetch a fresh PLAIN object from IDB (not the reactive proxy)
+    const fresh = await classService.getClass(classId)
+    if (!fresh) return
+
+    // Apply updates on top of the plain record
+    const updated = { ...fresh, ...updates }
     await classService.saveClass(updated)
-    activeClass.value = updated
-    classList.value = classList.value.map(c =>
-        c.classId === updated.classId ? updated : c
-    )
+
+    // Patch only the changed keys in reactive state — don't replace the whole object
+    // to preserve Vue's tracking of nested students mutations
+    for (const [key, val] of Object.entries(updates)) {
+        activeClass.value[key] = val
+        const cls = classList.value.find(c => c.classId === classId)
+        if (cls) cls[key] = val
+    }
 }
 
 // ─── roster import ────────────────────────────────────────────────────────────
@@ -260,6 +293,86 @@ async function assignSeat(studentId, newSeat) {
 }
 
 // ─── event logging ────────────────────────────────────────────────────────────
+
+/**
+ * Log an attendance event (Absent or Late).
+ */
+async function logAttendanceEvent(studentId, code) {
+    const classId = activeClass.value?.classId
+    if (!classId) return
+
+    const student = students.value[studentId]
+
+    if (code === 'a') {
+        if (student.activeStates?.isAbsent) return
+
+        await classService.setStudentAbsent(classId, studentId)
+
+        if (!student.activeStates) student.activeStates = {}
+        student.activeStates.isAbsent = true
+        student.activeStates.lateMinutes = null
+
+        const eventId = await eventService.logEvent({ studentId, classId, code, duration: null })
+        student.lastEvent = { code, ts: Date.now() }
+
+        pushUndo(async () => {
+            await classService.clearStudentAbsent(classId, studentId)
+            await eventService.deleteEvent(eventId)
+            student.activeStates.isAbsent = false
+            student.lastEvent = null
+        })
+    } else if (code === 'l') {
+        const periodStart = activeClass.value.periodStartTime
+        if (!periodStart) {
+            alert('Set a period start time in Setup to calculate lateness.')
+            return
+        }
+
+        const [h, m] = periodStart.split(':').map(Number)
+        const start = new Date()
+        start.setHours(h, m, 0, 0)
+        let minutesLate = Math.round((Date.now() - start.getTime()) / 60000)
+        if (minutesLate < 0) minutesLate = 0
+
+        const wasAbsent = student.activeStates?.isAbsent === true
+
+        const todayStr = new Date().toISOString().slice(0, 10)
+        const eventsToday = await eventService.getEventsByStudent(studentId, { from: todayStr, to: todayStr })
+        const existingLateEvent = eventsToday.find(e => e.code === 'l')
+
+        if (existingLateEvent) {
+            await eventService.deleteEvent(existingLateEvent.eventId)
+        }
+
+        if (wasAbsent) {
+            await classService.clearStudentAbsent(classId, studentId)
+        }
+
+        if (!student.activeStates) student.activeStates = {}
+        student.activeStates.isAbsent = false
+        student.activeStates.lateMinutes = minutesLate
+
+        const eventId = await eventService.logEvent({
+            studentId,
+            classId,
+            code,
+            duration: minutesLate,
+            supersededAbsent: wasAbsent
+        })
+        student.lastEvent = { code, ts: Date.now() }
+
+        pushUndo(async () => {
+            await eventService.deleteEvent(eventId)
+            student.activeStates.lateMinutes = null
+
+            if (wasAbsent) {
+                await classService.setStudentAbsent(classId, studentId)
+                student.activeStates.isAbsent = true
+            }
+            student.lastEvent = null
+        })
+    }
+}
 
 /**
  * Log a standard (non-toggle) behavior event via the radial menu selection.
@@ -418,6 +531,7 @@ export function useClassroom() {
         assignSeat,
         logStandardEvent,
         logToggleEvent,
+        logAttendanceEvent,
         checkResize,
         confirmResize,
         reloadBehaviorCodes,

@@ -85,7 +85,8 @@ onMounted(async () => {
 .app-shell {
   display:        flex;
   flex-direction: column;
-  min-height:     100dvh;
+  height:         100dvh;   /* cap height so children can own their scroll */
+  overflow:       hidden;
   background:     var(--bg-secondary);
 }
 

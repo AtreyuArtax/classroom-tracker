@@ -84,6 +84,8 @@ export function getDB() {
               p: { icon: '✋', label: 'Participation', category: 'positive', type: 'standard' },
               m: { icon: '📱', label: 'On Device', category: 'redirect', type: 'standard' },
               w: { icon: '🚽', label: 'Washroom', category: 'neutral', type: 'toggle' },
+              a: { icon: '🚫', label: 'Absent', category: 'attendance', type: 'attendance' },
+              l: { icon: '⏰', label: 'Late', category: 'attendance', type: 'attendance' },
             },
           },
           'singleton'

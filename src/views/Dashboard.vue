@@ -30,6 +30,8 @@
 
     <!-- ── Content area ─────────────────────────────────────────────── -->
     <div class="dashboard__content">
+
+      <!-- Grid fills all remaining space -->
       <section class="dashboard__grid-area" aria-label="Seating chart">
         <SeatingGrid v-if="activeClass" />
         <div v-else class="dashboard__empty">
@@ -39,33 +41,34 @@
         </div>
       </section>
 
-      <!-- ── Unassigned Pool (Drag source & Drop target) ────────────── -->
-      <Transition name="slide-pool">
+      <!-- Pool: fixed-width scrollable column to the right of the grid -->
+      <Transition name="pop-pool">
         <aside v-if="activeClass && isPoolOpen" class="dashboard__pool" aria-label="Unassigned students">
           <h3 class="dashboard__pool-title">Unassigned ({{ unseatedStudents.length }})</h3>
-        <div 
-          class="dashboard__pool-list"
-          @dragover.prevent="isPoolDragOver = true"
-          @dragleave.prevent="isPoolDragOver = false"
-          @drop.prevent="onPoolDrop"
-          :class="{ 'dashboard__pool-list--drop': isPoolDragOver }"
-        >
-          <div v-if="unseatedStudents.length === 0" class="dashboard__pool-empty">
-            Drag a student here to remove them from their seat.
-          </div>
-          <div
-            v-for="s in unseatedStudents"
-            :key="s.studentId"
-            class="dashboard__pool-item"
-            draggable="true"
-            @dragstart="onDragStart($event, s)"
+          <div 
+            class="dashboard__pool-list"
+            @dragover.prevent="isPoolDragOver = true"
+            @dragleave.prevent="isPoolDragOver = false"
+            @drop.prevent="onPoolDrop"
+            :class="{ 'dashboard__pool-list--drop': isPoolDragOver }"
           >
-            <span class="dashboard__pool-name">{{ s.firstName }} {{ s.lastName }}</span>
-            <span class="dashboard__pool-drag" aria-hidden="true">≡</span>
+            <div v-if="unseatedStudents.length === 0" class="dashboard__pool-empty">
+              Drag a student here to remove from seat.
+            </div>
+            <div
+              v-for="s in unseatedStudents"
+              :key="s.studentId"
+              class="dashboard__pool-item"
+              draggable="true"
+              @dragstart="onDragStart($event, s)"
+            >
+              <span class="dashboard__pool-name">{{ s.firstName }} {{ s.lastName }}</span>
+              <span class="dashboard__pool-drag" aria-hidden="true">≡</span>
+            </div>
           </div>
-        </div>
-      </aside>
+        </aside>
       </Transition>
+
     </div>
 
     <!-- ── Radial menu overlay (Teleport is inside the component) ─── -->
@@ -243,38 +246,24 @@ async function onPoolDrop(evt) {
   opacity: 0.8;
 }
 
-/* ── Content Layout ──────────────────────────────────────────────── */
+/* ── Content Layout ─────────────────────────────────────────────── */
 .dashboard__content {
   display:        flex;
+  flex-direction: row;  /* grid left, pool right — independent columns */
   flex:           1;
   overflow:       hidden;
-  flex-direction: column; /* Stack on mobile: grid top, pool bottom */
 }
 
-@media (min-width: 768px) {
-  .dashboard__content {
-    flex-direction: row; /* Side-by-side on desktop */
-  }
-}
-
-/* ── Pool ────────────────────────────────────────────────────────── */
+/* ── Pool — scrollable right-hand column ──────────────────────── */
 .dashboard__pool {
-  background:     var(--surface);
-  border-top:     1px solid var(--border);
+  width:          200px;
+  flex-shrink:    0;
   display:        flex;
   flex-direction: column;
-  flex-shrink:    0;
-  max-height:     28vh; /* Reduced height on mobile to leave grid space */
-}
-
-@media (min-width: 768px) {
-  .dashboard__pool {
-    width:        220px; /* Reduced width to leave grid space */
-    max-height:   none;
-    border-top:   none;
-    border-left:  1px solid var(--border);
-    box-shadow:   -2px 0 8px rgba(0, 0, 0, 0.05);
-  }
+  border-left:    1px solid var(--border);
+  background:     var(--surface);
+  box-shadow:     -2px 0 8px rgba(0,0,0,0.06);
+  overflow:       hidden; /* pool-list handles its own scroll */
 }
 
 .dashboard__pool-title {
@@ -348,26 +337,15 @@ async function onPoolDrop(evt) {
 }
 
 /* ── Transitions ─────────────────────────────────────────────────── */
-.slide-pool-enter-active,
-.slide-pool-leave-active {
-  transition: opacity 0.25s ease, transform 0.25s ease;
+.pop-pool-enter-active,
+.pop-pool-leave-active {
+  transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
-/* On desktop, pool slides in from the right */
-@media (min-width: 768px) {
-  .slide-pool-enter-from,
-  .slide-pool-leave-to {
-    opacity: 0;
-    transform: translateX(30px);
-  }
-}
-
-/* On mobile, pool slides in from the bottom */
-@media (max-width: 767px) {
-  .slide-pool-enter-from,
-  .slide-pool-leave-to {
-    opacity: 0;
-    transform: translateY(30px);
-  }
+.pop-pool-enter-from,
+.pop-pool-leave-to {
+  opacity:   0;
+  transform: scale(0.92) translateY(8px);
+  transform-origin: bottom right;
 }
 </style>

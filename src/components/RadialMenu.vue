@@ -77,7 +77,7 @@ const {
   handleItemTap,
 } = useRadial()
 
-const { logStandardEvent, logToggleEvent, behaviorCodes } = useClassroom()
+const { logStandardEvent, logToggleEvent, logAttendanceEvent, behaviorCodes } = useClassroom()
 
 // ─── geometry ─────────────────────────────────────────────────────────────────
 
@@ -139,6 +139,8 @@ async function onItemTap(item) {
 
   if (code.type === 'toggle') {
     await logToggleEvent(student.studentId, code.codeKey)
+  } else if (code.type === 'attendance') {
+    await logAttendanceEvent(student.studentId, code.codeKey)
   } else {
     await logStandardEvent(student.studentId, code.codeKey)
   }

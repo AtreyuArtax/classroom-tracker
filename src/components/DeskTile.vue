@@ -17,8 +17,10 @@
     v-else
     class="desk-tile"
     :class="{
-      'desk-tile--out':   student.activeStates?.isOut,
-      'desk-tile--flash': flashing,
+      'desk-tile--out':    student.activeStates?.isOut,
+      'desk-tile--absent': student.activeStates?.isAbsent,
+      'desk-tile--late':   student.activeStates?.lateMinutes > 0,
+      'desk-tile--flash':  flashing,
     }"
     :aria-label="`${student.firstName} ${student.lastName}`"
     draggable="true"
@@ -32,10 +34,21 @@
       <span class="desk-tile__last">{{ student.lastName }}</span>
     </div>
 
-    <!-- Out-of-room indicator: icon + elapsed timer -->
-    <div v-if="student.activeStates?.isOut" class="desk-tile__out-info">
-      <span class="desk-tile__out-icon" aria-hidden="true">🚽</span>
+    <div v-if="student.activeStates?.isOut" class="desk-tile__status-info desk-tile__status-info--out">
+      <span class="desk-tile__status-icon" aria-hidden="true">🚽</span>
       <span class="desk-tile__timer">{{ elapsedFormatted }}</span>
+    </div>
+
+    <!-- Absent indicator -->
+    <div v-else-if="student.activeStates?.isAbsent" class="desk-tile__status-info desk-tile__status-info--absent">
+      <span class="desk-tile__status-icon" aria-hidden="true">🚫</span>
+      <span class="desk-tile__status-label">Absent</span>
+    </div>
+
+    <!-- Late indicator -->
+    <div v-else-if="student.activeStates?.lateMinutes > 0" class="desk-tile__status-info desk-tile__status-info--late">
+      <span class="desk-tile__status-icon" aria-hidden="true">⏰</span>
+      <span class="desk-tile__status-label">Late {{ student.activeStates.lateMinutes }}m</span>
     </div>
   </div>
 </template>
@@ -258,28 +271,56 @@ function onDrop(evt) {
   color:       var(--text);
 }
 
-/* ── Out-of-room state (§10) ─────────────────────────────────────────────── */
-.desk-tile--out {
-  border:     2px solid var(--state-out);
-  box-shadow: 0 0 0 3px rgba(255, 59, 48, 0.15);
+.desk-tile__timer {
+  font-size:   0.7rem;
+  font-weight: 600;
+  color:       var(--state-out);
+  font-variant-numeric: tabular-nums;
 }
 
-.desk-tile__out-info {
+/* ── Status Info (Generic) ───────────────────────────────────────────────── */
+.desk-tile__status-info {
   display:     flex;
   align-items: center;
   gap:         4px;
   margin-top:  2px;
 }
 
-.desk-tile__out-icon {
+.desk-tile__status-icon {
   font-size: 0.85rem;
 }
 
-.desk-tile__timer {
-  font-size:   0.7rem;
-  font-weight: 600;
-  color:       var(--state-out);
-  font-variant-numeric: tabular-nums;
+.desk-tile__status-label {
+  font-size:   0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+/* ── Absent state ────────────────────────────────────────────────────────── */
+.desk-tile--absent {
+  background: var(--bg-secondary) !important;
+  opacity:    0.7;
+}
+
+.desk-tile--absent .desk-tile__status-label {
+  color: var(--text-secondary);
+}
+
+/* ── Late state ──────────────────────────────────────────────────────────── */
+.desk-tile--late {
+  background: #FFF9E6 !important; /* light amber */
+  border: 1px solid #FFCC00;
+  box-shadow: 0 0 8px rgba(255, 204, 0, 0.2), var(--shadow-sm);
+}
+
+.desk-tile--late .desk-tile__status-label {
+  color: #B28F00;
+}
+
+/* ── Out-of-room state (§10) ─────────────────────────────────────────────── */
+.desk-tile--out {
+  border:     2px solid var(--state-out);
+  box-shadow: 0 0 0 3px rgba(255, 59, 48, 0.15);
 }
 
 /* ── Event flash (§10) — green for ~700ms ─────────────────────────────── */

@@ -39,12 +39,20 @@
         <h2 class="reports__card-title">Student Detail</h2>
         <label class="reports__label">
           Student
-          <select v-model="selectedStudentId" class="reports__input" @change="runReport">
-            <option value="">— select —</option>
-            <option v-for="s in sortedRoster" :key="s.studentId" :value="s.studentId">
-              {{ s.lastName }}, {{ s.firstName }} ({{ s.studentId }})
-            </option>
-          </select>
+          <input
+            v-model="studentSearchText"
+            list="student-datalist"
+            class="reports__input"
+            placeholder="Search by name or ID..."
+            @change="onStudentSearchChange"
+          />
+          <datalist id="student-datalist">
+            <option
+              v-for="s in sortedRoster"
+              :key="s.studentId"
+              :value="`${s.lastName}, ${s.firstName} (${s.studentId})`"
+            ></option>
+          </datalist>
         </label>
         <EventTable :events="reportData" :behavior-codes="behaviorCodesMap" @delete-event="deleteEvent" />
         <ExportBar :events="reportData" filename="student-detail" />
@@ -109,6 +117,17 @@
         </label>
         <EventTable :events="reportData" :behavior-codes="behaviorCodesMap" @delete-event="deleteEvent" />
         <ExportBar :events="reportData" filename="daily-overview" />
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <!-- ATTENDANCE SUMMARY                                        -->
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <section v-else-if="activeTab === 'attendance'" class="reports__panel">
+      <div class="reports__card">
+        <h2 class="reports__card-title">Attendance Summary — {{ activeClass?.name }}</h2>
+        <AttendanceTable :events="reportData" :students="students" />
+        <ExportBar :events="reportData" filename="attendance-summary" />
       </div>
     </section>
 
@@ -208,6 +227,7 @@ const tabs = [
   { id: 'period',   label: 'Period'   },
   { id: 'washroom', label: 'Washroom' },
   { id: 'daily',    label: 'Daily'    },
+  { id: 'attendance', label: 'Attendance' },
   { id: 'backup',   label: '💾 Backup' },
 ]
 
@@ -237,6 +257,20 @@ const dateRange = computed(() => ({
 // ─── per-report selectors ─────────────────────────────────────────────────────
 
 const selectedStudentId = ref('')
+const studentSearchText = ref('')
+
+function onStudentSearchChange() {
+  const match = sortedRoster.value.find(
+    s => `${s.lastName}, ${s.firstName} (${s.studentId})` === studentSearchText.value
+  )
+  if (match) {
+    selectedStudentId.value = match.studentId
+    runReport()
+  } else {
+    selectedStudentId.value = ''
+    reportData.value = []
+  }
+}
 const selectedPeriod    = ref(1)
 const selectedDayOfWeek = ref(null)
 const dailyDate         = ref(new Date().toISOString().slice(0, 10))
@@ -277,9 +311,13 @@ async function runReport() {
         .map(c => c.codeKey)
       reportData.value = all.filter(e => toggleKeys.includes(e.code))
 
-    } else if (tab === 'daily') {
-      const dayRange = { from: dailyDate.value, to: dailyDate.value }
       reportData.value = await eventService.getAllEvents(dayRange)
+
+    } else if (tab === 'attendance') {
+      if (!activeClass.value) { reportData.value = []; return }
+      const all = await eventService.getEventsByClass(activeClass.value.classId, dr)
+      // Attendance items are codes 'a' and 'l'
+      reportData.value = all.filter(e => e.code === 'a' || e.code === 'l')
     }
   } finally {
     loading.value = false
@@ -398,11 +436,15 @@ const EventTable = defineComponent({
             h('th', {}, 'Period'),
             h('th', {}, ''), // Actions header
           ])),
-          h('tbody', {}, props.events.map(evt =>
-            h('tr', { key: evt.eventId }, [
+          h('tbody', {}, props.events.map(evt => {
+            const isLate = evt.code === 'l'
+            const extra = isLate 
+              ? ` (${evt.duration}m${evt.supersededAbsent ? ', replaces absent' : ''})`
+              : ''
+            return h('tr', { key: evt.eventId }, [
               h('td', {}, evt.timestamp?.slice(0, 16).replace('T', ' ') ?? ''),
               h('td', {}, evt.studentId),
-              h('td', {}, `${props.behaviorCodes[evt.code]?.icon ?? ''} ${evt.code}`),
+              h('td', {}, `${props.behaviorCodes[evt.code]?.icon ?? ''} ${evt.code}${extra}`),
               h('td', {}, evt.category),
               h('td', {}, `P${evt.periodNumber}`),
               h('td', { class: 'reports__td-actions' }, 
@@ -413,7 +455,7 @@ const EventTable = defineComponent({
                 }, '✕')
               ),
             ])
-          )),
+          })),
         ])
       )
     }
@@ -506,6 +548,64 @@ const WashroomTable = defineComponent({
                   onClick: () => emit('delete-event', evt.eventId)
                 }, '✕')
               ),
+            ])
+          })),
+        ])
+      )
+    }
+  },
+})
+
+/**
+ * AttendanceTable — summary of absent/late per student.
+ */
+const AttendanceTable = defineComponent({
+  props: {
+    events:   { type: Array, required: true },
+    students: { type: Object, default: () => ({}) },
+  },
+  setup(props) {
+    return () => {
+      if (props.events.length === 0) {
+        return h('p', { class: 'reports__no-data' }, 'No attendance events for the selected filters.')
+      }
+      
+      // Build { studentId: { absent, late, lateTotal, lateCount } }
+      const summary = {}
+      for (const evt of props.events) {
+        if (!summary[evt.studentId]) {
+          summary[evt.studentId] = { absent: 0, late: 0, lateTotal: 0, lateCount: 0 }
+        }
+        if (evt.code === 'a') {
+          summary[evt.studentId].absent++
+        } else if (evt.code === 'l') {
+          summary[evt.studentId].late++
+          if (evt.duration != null) {
+            summary[evt.studentId].lateTotal += evt.duration
+            summary[evt.studentId].lateCount++
+          }
+        }
+      }
+
+      return h('div', { class: 'reports__table-wrap' },
+        h('table', { class: 'reports__table' }, [
+          h('thead', {}, h('tr', {}, [
+            h('th', {}, 'Student'),
+            h('th', {}, 'Absent Count'),
+            h('th', {}, 'Late Count'),
+            h('th', {}, 'Avg Late (min)'),
+          ])),
+          h('tbody', {}, Object.entries(summary).map(([studentId, stats]) => {
+            const s     = props.students[studentId]
+            const name  = s ? `${s.lastName}, ${s.firstName}` : studentId
+            const avg   = stats.lateCount > 0 
+              ? (stats.lateTotal / stats.lateCount).toFixed(1)
+              : '—'
+            return h('tr', { key: studentId }, [
+              h('td', {}, name),
+              h('td', {}, stats.absent),
+              h('td', {}, stats.late),
+              h('td', {}, avg),
             ])
           })),
         ])

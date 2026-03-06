@@ -31,9 +31,32 @@
             :class="{ 'setup__class-item--active': cls.classId === activeClass?.classId }"
           >
             <div>
-              <div class="setup__class-name">{{ cls.name }}</div>
+              <!-- Editable name for active class, static text for others -->
+              <input
+                v-if="cls.classId === activeClass?.classId"
+                type="text"
+                :value="cls.name"
+                class="setup__class-name setup__class-name--edit"
+                :aria-label="`Rename class ${cls.name}`"
+                @change="e => updateActiveClass({ name: e.target.value.trim() || cls.name })"
+                @keydown.enter.prevent="e => e.target.blur()"
+              />
+              <div v-else class="setup__class-name">{{ cls.name }}</div>
+            <div class="setup__class-meta-group">
               <div class="setup__class-meta">Period {{ cls.periodNumber }} · {{ studentCount(cls) }} students</div>
+              <div v-if="cls.classId === activeClass?.classId" class="setup__class-settings">
+                <label class="setup__label setup__label--inline">
+                  Start Time
+                  <input
+                    type="time"
+                    :value="cls.periodStartTime || '08:45'"
+                    class="setup__input setup__input--sm"
+                    @change="e => updateActiveClass({ periodStartTime: e.target.value })"
+                  />
+                </label>
+              </div>
             </div>
+          </div>
             <button class="setup__pill-btn" @click="switchToClass(cls.classId)">
               {{ cls.classId === activeClass?.classId ? 'Active' : 'Switch' }}
             </button>
@@ -52,6 +75,10 @@
           <label class="setup__label">
             Period number
             <input v-model.number="newClass.periodNumber" type="number" min="1" max="10" class="setup__input" required />
+          </label>
+          <label class="setup__label">
+            Period start time
+            <input v-model="newClass.periodStartTime" type="time" class="setup__input" required />
           </label>
           <button type="submit" class="setup__btn-primary">Create Class</button>
         </form>
@@ -265,6 +292,7 @@ const {
   moveStudentFromClass,
   checkResize,
   confirmResize,
+  updateActiveClass,
   reloadBehaviorCodes,
 } = useClassroom()
 
@@ -281,7 +309,7 @@ const activeTab = ref('classes')
 
 // ─── class management ─────────────────────────────────────────────────────────
 
-const newClass  = reactive({ name: '', periodNumber: 1 })
+const newClass  = reactive({ name: '', periodNumber: 1, periodStartTime: '08:45' })
 const classError = ref('')
 
 function studentCount(cls) {
@@ -296,9 +324,15 @@ async function createNewClass() {
   classError.value = ''
   if (!newClass.name.trim()) { classError.value = 'Name is required.'; return }
   const classId = `class_${Date.now()}`
-  await createClass({ classId, name: newClass.name.trim(), periodNumber: newClass.periodNumber })
+  await createClass({
+    classId: classId,
+    name: newClass.name.trim(),
+    periodNumber: newClass.periodNumber,
+    periodStartTime: newClass.periodStartTime
+  })
   newClass.name = ''
   newClass.periodNumber = 1
+  newClass.periodStartTime = '08:45'
 }
 
 // ─── grid resize (§11) ────────────────────────────────────────────────────────
@@ -505,9 +539,59 @@ async function deleteCode(codeKey) {
   color:       var(--text);
 }
 
+/* Inline rename input — looks like text, gains border on focus */
+.setup__class-name--edit {
+  font-size:    0.9rem;
+  font-weight:  600;
+  color:        var(--text);
+  background:   transparent;
+  border:       none;
+  border-bottom: 1px dashed var(--border);
+  border-radius: 0;
+  padding:      0;
+  width:        100%;
+  min-height:   auto;
+  outline:      none;
+  cursor:       text;
+}
+
+.setup__class-name--edit:hover {
+  border-bottom-color: var(--primary);
+}
+
+.setup__class-name--edit:focus {
+  border-bottom: 2px solid var(--primary);
+}
+
 .setup__class-meta {
   font-size: 0.75rem;
   color:     var(--text-secondary);
+}
+
+.setup__class-meta-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.setup__class-settings {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.setup__label--inline {
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 8px !important;
+  font-size: 0.75rem !important;
+}
+
+.setup__input--sm {
+  min-height: 32px !important;
+  padding: 4px 8px !important;
+  font-size: 0.8rem !important;
+  width: auto !important;
 }
 
 /* ── Forms ───────────────────────────────────────────────────────── */
