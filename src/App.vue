@@ -26,15 +26,10 @@
 
     <!-- ── Main content — dynamic component (CLAUDE.md: no vue-router) ── -->
     <main class="app-main" role="main">
-      <Suspense>
-        <component
-          :is="currentComponent"
-          @navigate="navigateTo"
-        />
-        <template #fallback>
-          <div class="app-loading" aria-live="polite">Loading…</div>
-        </template>
-      </Suspense>
+      <component
+        :is="currentComponent"
+        @navigate="navigateTo"
+      />
     </main>
 
   </div>
@@ -53,7 +48,10 @@
  * Do NOT install or use vue-router.
  */
 
-import { ref, computed, onMounted, defineAsyncComponent } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import Dashboard from './views/Dashboard.vue'
+import Setup     from './views/Setup.vue'
+import Reports   from './views/Reports.vue'
 import { useClassroom } from './composables/useClassroom.js'
 
 // ─── navigation ──────────────────────────────────────────────────────────────
@@ -66,19 +64,11 @@ const views = [
   { id: 'Reports',   label: 'Reports',   icon: '📊' },
 ]
 
-// Lazy-load views so the initial bundle is small and fast
-const viewComponents = {
-  Dashboard: defineAsyncComponent(() => import('./views/Dashboard.vue')),
-  Setup:     defineAsyncComponent(() => import('./views/Setup.vue')),
-  Reports:   defineAsyncComponent(() => import('./views/Reports.vue')),
-}
-
+const viewComponents = { Dashboard, Setup, Reports }
 const currentComponent = computed(() => viewComponents[currentView.value])
 
 function navigateTo(viewId) {
-  if (viewComponents[viewId]) {
-    currentView.value = viewId
-  }
+  if (viewComponents[viewId]) currentView.value = viewId
 }
 
 // ─── init — load IDB data before first render ─────────────────────────────

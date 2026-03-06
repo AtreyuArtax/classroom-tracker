@@ -10,85 +10,87 @@
  *  - Schema version: 1
  *  - Stores: settings | classes | events
  *  - All indexes on `events` are created here in upgrade()
+ *
+ * Bug fixes vs original:
+ *  1. Cache the PROMISE (_dbPromise), not the resolved value.
+ *     The old code set `_db = await openDB(...)` which means concurrent
+ *     callers (e.g. Promise.all in useClassroom.init) all race through the
+ *     `if (_db)` guard while the first openDB is still in-flight, resulting
+ *     in multiple openDB() calls and an InvalidStateError (version change
+ *     transaction already running).
+ *  2. Use the named `transaction` parameter in upgrade() for seeding.
+ *     `arguments[3]` is undefined in ES module arrow functions.
  */
 
 import { openDB } from 'idb'
 
-const DB_NAME    = 'classroomTrackerDB'
+const DB_NAME = 'classroomTrackerDB'
 const DB_VERSION = 1
 
-/** @type {import('idb').IDBPDatabase | null} */
-let _db = null
+/**
+ * Cached promise — set synchronously before the first await so every
+ * concurrent caller gets the same promise, not a new openDB() call.
+ * @type {Promise<import('idb').IDBPDatabase> | null}
+ */
+let _dbPromise = null
 
 /**
- * Returns the open IDB database instance.
- * Opens (and if needed, upgrades) the database on first call.
- * Subsequent calls return the cached instance.
- *
+ * Returns the open IDB database instance (shared singleton).
  * @returns {Promise<import('idb').IDBPDatabase>}
  */
-export async function getDB() {
-  if (_db) return _db
+export function getDB() {
+  if (_dbPromise) return _dbPromise
 
-  _db = await openDB(DB_NAME, DB_VERSION, {
-    upgrade(db, oldVersion /*, newVersion, transaction */) {
+  // Assign the promise immediately (before any await) so concurrent callers
+  // pick up the same promise rather than spawning a second openDB().
+  _dbPromise = openDB(DB_NAME, DB_VERSION, {
+
+    // idb calls upgrade(db, oldVersion, newVersion, transaction)
+    upgrade(db, oldVersion, _newVersion, transaction) {
+
       // ── settings store ──────────────────────────────────────────────────
-      // Single record keyed by the hardcoded string "singleton"
       if (!db.objectStoreNames.contains('settings')) {
         db.createObjectStore('settings')
       }
 
       // ── classes store ────────────────────────────────────────────────────
-      // Keyed by classId (string, e.g. "class_01")
       if (!db.objectStoreNames.contains('classes')) {
         db.createObjectStore('classes', { keyPath: 'classId' })
       }
 
       // ── events store ─────────────────────────────────────────────────────
-      // Auto-increment primary key (eventId).
-      // Six indexes required by §5 and §12.
       if (!db.objectStoreNames.contains('events')) {
         const eventStore = db.createObjectStore('events', {
-          keyPath:       'eventId',
+          keyPath: 'eventId',
           autoIncrement: true,
         })
-
-        eventStore.createIndex('by_studentId',    'studentId',    { unique: false })
-        eventStore.createIndex('by_classId',      'classId',      { unique: false })
+        eventStore.createIndex('by_studentId', 'studentId', { unique: false })
+        eventStore.createIndex('by_classId', 'classId', { unique: false })
         eventStore.createIndex('by_periodNumber', 'periodNumber', { unique: false })
-        eventStore.createIndex('by_dayOfWeek',    'dayOfWeek',    { unique: false })
-        eventStore.createIndex('by_timestamp',    'timestamp',    { unique: false })
-        eventStore.createIndex('by_category',     'category',     { unique: false })
+        eventStore.createIndex('by_dayOfWeek', 'dayOfWeek', { unique: false })
+        eventStore.createIndex('by_timestamp', 'timestamp', { unique: false })
+        eventStore.createIndex('by_category', 'category', { unique: false })
       }
 
-      // ── seed default settings on fresh install ───────────────────────────
+      // ── seed defaults on fresh install ───────────────────────────────────
+      // Must use the `transaction` parameter idb passes — never db.transaction()
+      // inside upgrade(), as the version-change transaction is already running.
       if (oldVersion === 0) {
-        // We can write to the object store directly during upgrade because
-        // `idb` exposes the underlying IDBObjectStore synchronously here.
-        const settingsStore = db
-          .transaction('settings', 'readwrite')
-          .objectStore('settings')
-
-        // Seed happens inside upgrade(); the transaction is already open.
-        // Use the store reference from the upgrade transaction directly.
-        const tx = arguments[3] // the IDBPTransaction passed by idb
-        if (tx) {
-          tx.objectStore('settings').put(
-            {
-              schemaVersion: 1,
-              gridSize: { rows: 6, cols: 6 },
-              behaviorCodes: {
-                p: { icon: '✋', label: 'Participation', category: 'positive', type: 'standard' },
-                m: { icon: '📱', label: 'On Device',     category: 'redirect', type: 'standard' },
-                w: { icon: '🚽', label: 'Washroom',      category: 'neutral',  type: 'toggle'   },
-              },
+        transaction.objectStore('settings').put(
+          {
+            schemaVersion: 1,
+            gridSize: { rows: 6, cols: 6 },
+            behaviorCodes: {
+              p: { icon: '✋', label: 'Participation', category: 'positive', type: 'standard' },
+              m: { icon: '📱', label: 'On Device', category: 'redirect', type: 'standard' },
+              w: { icon: '🚽', label: 'Washroom', category: 'neutral', type: 'toggle' },
             },
-            'singleton'
-          )
-        }
+          },
+          'singleton'
+        )
       }
     },
   })
 
-  return _db
+  return _dbPromise
 }
