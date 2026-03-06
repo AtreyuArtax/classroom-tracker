@@ -72,7 +72,7 @@
     <section v-else-if="activeTab === 'class'" class="reports__panel">
       <div class="reports__card">
         <h2 class="reports__card-title">Class Summary — {{ reportClass?.name }}</h2>
-        <SummaryGrid :events="reportData" :students="students" :behavior-codes="behaviorCodesMap" />
+        <SummaryGrid :events="reportData" :students="reportStudents" :behavior-codes="behaviorCodesMap" />
         <ExportBar :events="reportData" filename="class-summary" />
       </div>
     </section>
@@ -107,7 +107,7 @@
     <section v-else-if="activeTab === 'washroom'" class="reports__panel">
       <div class="reports__card">
         <h2 class="reports__card-title">Washroom Log — {{ reportClass?.name }}</h2>
-        <WashroomTable :events="reportData" :students="students" @delete-event="deleteEvent" />
+        <WashroomTable :events="reportData" :students="reportStudents" @delete-event="deleteEvent" />
         <ExportBar :events="reportData" filename="washroom-log" />
       </div>
     </section>
@@ -132,8 +132,8 @@
     <!-- ══════════════════════════════════════════════════════════ -->
     <section v-else-if="activeTab === 'attendance'" class="reports__panel">
       <div class="reports__card">
-        <h2 class="reports__card-title">Attendance Summary — {{ activeClass?.name }}</h2>
-        <AttendanceTable :events="reportData" :students="students" />
+        <h2 class="reports__card-title">Attendance Summary — {{ reportClass?.name }}</h2>
+        <AttendanceTable :events="reportData" :students="reportStudents" />
         <ExportBar :events="reportData" filename="attendance-summary" />
       </div>
     </section>
@@ -243,6 +243,12 @@ watch(classList, (list) => {
     reportClassId.value = activeClass.value?.classId ?? list[0]?.classId
   }
 }, { immediate: true })
+
+// Student map for the selected report class — the source of truth for name
+// lookups in SummaryGrid, WashroomTable, AttendanceTable, etc.
+// reportClass.value.students comes straight from IDB via classList; it is always
+// the correct roster regardless of which class is active for teaching.
+const reportStudents = computed(() => reportClass.value?.students ?? {})
 
 // ─── tabs ─────────────────────────────────────────────────────────────────────
 
