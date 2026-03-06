@@ -55,13 +55,17 @@
           />
           <datalist id="student-datalist">
             <option
-              v-for="s in sortedRoster"
+              v-for="s in allSortedRoster"
               :key="s.studentId"
               :value="`${s.lastName}, ${s.firstName} (${s.studentId})`"
             ></option>
           </datalist>
         </label>
-        <EventTable :events="reportData" :behavior-codes="behaviorCodesMap" @delete-event="deleteEvent" />
+        <StudentProfile
+          :events="reportData"
+          :behavior-codes="behaviorCodesMap"
+          :student-name="studentSearchText"
+        />
         <ExportBar :events="reportData" filename="student-detail" />
       </div>
     </section>
@@ -80,26 +84,7 @@
     <!-- ══════════════════════════════════════════════════════════ -->
     <!-- PERIOD PATTERN ─── by_periodNumber index                 -->
     <!-- ══════════════════════════════════════════════════════════ -->
-    <section v-else-if="activeTab === 'period'" class="reports__panel">
-      <div class="reports__card">
-        <h2 class="reports__card-title">Period Pattern</h2>
-        <label class="reports__label">
-          Period
-          <select v-model.number="selectedPeriod" class="reports__input" @change="runReport">
-            <option v-for="n in 10" :key="n" :value="n">Period {{ n }}</option>
-          </select>
-        </label>
-        <label class="reports__label">
-          Day of week
-          <select v-model.number="selectedDayOfWeek" class="reports__input" @change="runReport">
-            <option :value="null">Any day</option>
-            <option v-for="(d, i) in dayNames" :key="i" :value="i">{{ d }}</option>
-          </select>
-        </label>
-        <EventTable :events="reportData" :behavior-codes="behaviorCodesMap" @delete-event="deleteEvent" />
-        <ExportBar :events="reportData" filename="period-pattern" />
-      </div>
-    </section>
+
 
     <!-- ══════════════════════════════════════════════════════════ -->
     <!-- WASHROOM LOG ─── classId + code === 'w'                  -->
@@ -115,17 +100,6 @@
     <!-- ══════════════════════════════════════════════════════════ -->
     <!-- DAILY OVERVIEW ─── by_timestamp (single day)             -->
     <!-- ══════════════════════════════════════════════════════════ -->
-    <section v-else-if="activeTab === 'daily'" class="reports__panel">
-      <div class="reports__card">
-        <h2 class="reports__card-title">Daily Overview</h2>
-        <label class="reports__label">
-          Date
-          <input v-model="dailyDate" type="date" class="reports__input" @change="runReport" />
-        </label>
-        <EventTable :events="reportData" :behavior-codes="behaviorCodesMap" @delete-event="deleteEvent" />
-        <ExportBar :events="reportData" filename="daily-overview" />
-      </div>
-    </section>
 
     <!-- ══════════════════════════════════════════════════════════ -->
     <!-- ATTENDANCE SUMMARY                                        -->
@@ -217,6 +191,7 @@
 import { ref, computed, watch, defineComponent, h } from 'vue'
 import { useClassroom } from '../composables/useClassroom.js'
 import * as eventService from '../db/eventService.js'
+import StudentProfile from '../components/StudentProfile.vue'
 
 const {
   activeClass,
@@ -255,11 +230,9 @@ const reportStudents = computed(() => reportClass.value?.students ?? {})
 const tabs = [
   { id: 'student',  label: 'Student'  },
   { id: 'class',    label: 'Class'    },
-  { id: 'period',   label: 'Period'   },
-  { id: 'washroom', label: 'Washroom' },
-  { id: 'daily',    label: 'Daily'    },
+  { id: 'washroom',   label: 'Washroom'   },
   { id: 'attendance', label: 'Attendance' },
-  { id: 'backup',   label: '💾 Backup' },
+  { id: 'backup',     label: '💾 Backup'  },
 ]
 
 const activeTab = ref('class')
@@ -271,12 +244,27 @@ function switchTab(id) {
 
 // ─── shared date range ────────────────────────────────────────────────────────
 
-const dateFrom = ref('')
-const dateTo   = ref('')
+/** Returns an ISO date string (YYYY-MM-DD) for a given Date object */
+function toISODate(d) {
+  return d.toISOString().slice(0, 10)
+}
+
+/** Monday of the current week */
+function thisWeekMonday() {
+  const d = new Date()
+  const day = d.getDay()                    // 0 = Sun … 6 = Sat
+  const diff = day === 0 ? -6 : 1 - day    // back to Monday; treat Sunday as next-week
+  d.setDate(d.getDate() + diff)
+  return toISODate(d)
+}
+
+const dateFrom = ref(thisWeekMonday())
+const dateTo   = ref(toISODate(new Date()))
 
 function clearDates() {
-  dateFrom.value = ''
-  dateTo.value   = ''
+  // Reset to school-week window rather than truly empty
+  dateFrom.value = thisWeekMonday()
+  dateTo.value   = toISODate(new Date())
   runReport()
 }
 
@@ -287,11 +275,26 @@ const dateRange = computed(() => ({
 
 // ─── per-report selectors ─────────────────────────────────────────────────────
 
+/** Flattens all students from every class into one sorted list for the datalist. */
+const allSortedRoster = computed(() => {
+  const seen = new Set()
+  return classList.value
+    .flatMap(cls =>
+      Object.entries(cls.students ?? {}).map(([studentId, s]) => ({ studentId, ...s, className: cls.name }))
+    )
+    .filter(s => {
+      if (seen.has(s.studentId)) return false
+      seen.add(s.studentId)
+      return true
+    })
+    .sort((a, b) => a.lastName.localeCompare(b.lastName))
+})
+
 const selectedStudentId = ref('')
 const studentSearchText = ref('')
 
 function onStudentSearchChange() {
-  const match = sortedRoster.value.find(
+  const match = allSortedRoster.value.find(
     s => `${s.lastName}, ${s.firstName} (${s.studentId})` === studentSearchText.value
   )
   if (match) {
@@ -302,11 +305,6 @@ function onStudentSearchChange() {
     reportData.value = []
   }
 }
-const selectedPeriod    = ref(1)
-const selectedDayOfWeek = ref(null)
-const dailyDate         = ref(new Date().toISOString().slice(0, 10))
-
-const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 
 // ─── query runner ─────────────────────────────────────────────────────────────
 
@@ -327,12 +325,6 @@ async function runReport() {
       if (!reportClass.value) { reportData.value = []; return }
       reportData.value = await eventService.getEventsByClass(reportClass.value.classId, dr)
 
-    } else if (tab === 'period') {
-      reportData.value = await eventService.getEventsByPeriod(selectedPeriod.value, {
-        ...dr,
-        dayOfWeek: selectedDayOfWeek.value,
-      })
-
     } else if (tab === 'washroom') {
       if (!reportClass.value) { reportData.value = []; return }
       const all = await eventService.getEventsByClass(reportClass.value.classId, dr)
@@ -340,10 +332,6 @@ async function runReport() {
         .filter(c => c.type === 'toggle')
         .map(c => c.codeKey)
       reportData.value = all.filter(e => toggleKeys.includes(e.code))
-
-    } else if (tab === 'daily') {
-      const dayRange = { from: dailyDate.value, to: dailyDate.value }
-      reportData.value = await eventService.getAllEvents(dayRange)
 
     } else if (tab === 'attendance') {
       if (!reportClass.value) { reportData.value = []; return }
@@ -450,6 +438,7 @@ const EventTable = defineComponent({
   props: {
     events:        { type: Array, required: true },
     behaviorCodes: { type: Object, default: () => ({}) },
+    showStudent:   { type: Boolean, default: true },
   },
   emits: ['delete-event'],
   setup(props, { emit }) {
@@ -461,7 +450,7 @@ const EventTable = defineComponent({
         h('table', { class: 'reports__table' }, [
           h('thead', {}, h('tr', {}, [
             h('th', {}, 'Time'),
-            h('th', {}, 'Student'),
+            ...(props.showStudent ? [h('th', {}, 'Student')] : []),
             h('th', {}, 'Code'),
             h('th', {}, 'Category'),
             h('th', {}, 'Period'),
@@ -474,7 +463,7 @@ const EventTable = defineComponent({
               : ''
             return h('tr', { key: evt.eventId }, [
               h('td', {}, evt.timestamp?.slice(0, 16).replace('T', ' ') ?? ''),
-              h('td', {}, evt.studentId),
+              ...(props.showStudent ? [h('td', {}, evt.studentId)] : []),
               h('td', {}, `${props.behaviorCodes[evt.code]?.icon ?? ''} ${evt.code}${extra}`),
               h('td', {}, evt.category),
               h('td', {}, `P${evt.periodNumber}`),
