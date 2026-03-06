@@ -16,6 +16,13 @@
 
     <!-- ── Date range filter (shared across report tabs) ─────────── -->
     <div v-if="activeTab !== 'backup'" class="reports__filter">
+      <!-- Class picker (for class-based tabs) -->
+      <label v-if="['class','washroom','attendance'].includes(activeTab)" class="reports__filter-label">
+        Class
+        <select v-model="reportClassId" class="reports__input" @change="runReport">
+          <option v-for="c in classList" :key="c.classId" :value="c.classId">{{ c.name }}</option>
+        </select>
+      </label>
       <label class="reports__filter-label">
         From
         <input v-model="dateFrom" type="date" class="reports__input" />
@@ -64,7 +71,7 @@
     <!-- ══════════════════════════════════════════════════════════ -->
     <section v-else-if="activeTab === 'class'" class="reports__panel">
       <div class="reports__card">
-        <h2 class="reports__card-title">Class Summary — {{ activeClass?.name }}</h2>
+        <h2 class="reports__card-title">Class Summary — {{ reportClass?.name }}</h2>
         <SummaryGrid :events="reportData" :students="students" :behavior-codes="behaviorCodesMap" />
         <ExportBar :events="reportData" filename="class-summary" />
       </div>
@@ -99,7 +106,7 @@
     <!-- ══════════════════════════════════════════════════════════ -->
     <section v-else-if="activeTab === 'washroom'" class="reports__panel">
       <div class="reports__card">
-        <h2 class="reports__card-title">Washroom Log — {{ activeClass?.name }}</h2>
+        <h2 class="reports__card-title">Washroom Log — {{ reportClass?.name }}</h2>
         <WashroomTable :events="reportData" :students="students" @delete-event="deleteEvent" />
         <ExportBar :events="reportData" filename="washroom-log" />
       </div>
@@ -207,7 +214,7 @@
  * All query functions are wrapped via useClassroom's eventService calls below.
  */
 
-import { ref, computed, defineComponent, h } from 'vue'
+import { ref, computed, watch, defineComponent, h } from 'vue'
 import { useClassroom } from '../composables/useClassroom.js'
 import * as eventService from '../db/eventService.js'
 
@@ -218,6 +225,24 @@ const {
   sortedRoster,
   classList,
 } = useClassroom()
+
+// ─── report-specific class selection (independent of the teaching active class) ─
+
+const reportClassId = ref(null)
+
+// initialise once classList is populated; also re-sync if classList changes
+const reportClass = computed(() =>
+  classList.value.find(c => c.classId === reportClassId.value)
+  ?? classList.value[0]
+  ?? null
+)
+
+// When classList first loads, default to the active (teaching) class
+watch(classList, (list) => {
+  if (!reportClassId.value && list.length) {
+    reportClassId.value = activeClass.value?.classId ?? list[0]?.classId
+  }
+}, { immediate: true })
 
 // ─── tabs ─────────────────────────────────────────────────────────────────────
 
@@ -293,8 +318,8 @@ async function runReport() {
       reportData.value = await eventService.getEventsByStudent(selectedStudentId.value, dr)
 
     } else if (tab === 'class') {
-      if (!activeClass.value) { reportData.value = []; return }
-      reportData.value = await eventService.getEventsByClass(activeClass.value.classId, dr)
+      if (!reportClass.value) { reportData.value = []; return }
+      reportData.value = await eventService.getEventsByClass(reportClass.value.classId, dr)
 
     } else if (tab === 'period') {
       reportData.value = await eventService.getEventsByPeriod(selectedPeriod.value, {
@@ -303,20 +328,20 @@ async function runReport() {
       })
 
     } else if (tab === 'washroom') {
-      if (!activeClass.value) { reportData.value = []; return }
-      const all = await eventService.getEventsByClass(activeClass.value.classId, dr)
-      // Filter for washroom toggle events (code === 'w' or any toggle-type code)
+      if (!reportClass.value) { reportData.value = []; return }
+      const all = await eventService.getEventsByClass(reportClass.value.classId, dr)
       const toggleKeys = behaviorCodes.value
         .filter(c => c.type === 'toggle')
         .map(c => c.codeKey)
       reportData.value = all.filter(e => toggleKeys.includes(e.code))
 
+    } else if (tab === 'daily') {
+      const dayRange = { from: dailyDate.value, to: dailyDate.value }
       reportData.value = await eventService.getAllEvents(dayRange)
 
     } else if (tab === 'attendance') {
-      if (!activeClass.value) { reportData.value = []; return }
-      const all = await eventService.getEventsByClass(activeClass.value.classId, dr)
-      // Attendance items are codes 'a' and 'l'
+      if (!reportClass.value) { reportData.value = []; return }
+      const all = await eventService.getEventsByClass(reportClass.value.classId, dr)
       reportData.value = all.filter(e => e.code === 'a' || e.code === 'l')
     }
   } finally {

@@ -24,8 +24,11 @@ const { push: pushUndo, clear: clearUndo } = useUndo()
 
 // ─── module-level singleton reactive state ────────────────────────────────────
 
-/** @type {import('vue').Ref<Array<Object>>} All class records (for ClassSwitcher) */
+/** @type {import('vue').Ref<Array<Object>>} Non-archived classes (for ClassSwitcher & Dashboard) */
 const classList = ref([])
+
+/** @type {import('vue').Ref<Array<Object>>} Archived (hidden) class records */
+const archivedClasses = ref([])
 
 /** @type {import('vue').Ref<Object|null>} The currently active class record */
 const activeClass = ref(null)
@@ -100,11 +103,14 @@ async function init() {
         behaviorCodes.value = codes
     }
 
-    classList.value = classes
+    const active = classes.filter(c => !c.archived)
+    const archived = classes.filter(c => c.archived)
+    classList.value = active
+    archivedClasses.value = archived
     gridSize.value = settings.gridSize
 
-    if (classes.length > 0) {
-        await _activateClass(classes[0])
+    if (active.length > 0) {
+        await _activateClass(active[0])
     }
 }
 
@@ -500,6 +506,50 @@ async function reloadBehaviorCodes() {
     behaviorCodes.value = await settingsService.getBehaviorCodes()
 }
 
+/**
+ * Archive (soft-delete) a class. Hides it from classList, saves archived flag to IDB.
+ * If the archived class was active, switches to the first remaining class (or null).
+ */
+async function archiveClass(classId) {
+    await classService.archiveClass(classId)
+    const cls = classList.value.find(c => c.classId === classId)
+    if (cls) {
+        cls.archived = true
+        classList.value = classList.value.filter(c => c.classId !== classId)
+        archivedClasses.value = [...archivedClasses.value, cls]
+    }
+    if (activeClass.value?.classId === classId) {
+        if (classList.value.length > 0) {
+            await _activateClass(classList.value[0])
+        } else {
+            activeClass.value = null
+            students.value = {}
+        }
+    }
+}
+
+/**
+ * Restore an archived class back to the active list.
+ */
+async function restoreClass(classId) {
+    await classService.restoreClass(classId)
+    const cls = archivedClasses.value.find(c => c.classId === classId)
+    if (cls) {
+        cls.archived = false
+        archivedClasses.value = archivedClasses.value.filter(c => c.classId !== classId)
+        classList.value = [...classList.value, cls]
+    }
+}
+
+/**
+ * Permanently delete a class. Only call on already-archived classes.
+ * Event history is retained (orphaned events remain in the events store).
+ */
+async function deleteClass(classId) {
+    await classService.deleteClass(classId)
+    archivedClasses.value = archivedClasses.value.filter(c => c.classId !== classId)
+}
+
 // ─── private helpers ──────────────────────────────────────────────────────────
 
 async function _activateClass(cls) {
@@ -513,6 +563,7 @@ export function useClassroom() {
     return {
         // state
         classList,
+        archivedClasses,
         activeClass,
         students,
         behaviorCodes,
@@ -526,6 +577,9 @@ export function useClassroom() {
         switchClass,
         createClass,
         updateActiveClass,
+        archiveClass,
+        restoreClass,
+        deleteClass,
         importRoster,
         moveStudentFromClass,
         assignSeat,

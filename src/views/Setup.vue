@@ -57,9 +57,39 @@
               </div>
             </div>
           </div>
-            <button class="setup__pill-btn" @click="switchToClass(cls.classId)">
-              {{ cls.classId === activeClass?.classId ? 'Active' : 'Switch' }}
-            </button>
+            <div class="setup__class-actions">
+              <button class="setup__pill-btn" @click="switchToClass(cls.classId)">
+                {{ cls.classId === activeClass?.classId ? 'Active' : 'Switch' }}
+              </button>
+              <button
+                class="setup__pill-btn setup__pill-btn--danger"
+                :disabled="cls.classId === activeClass?.classId && classList.length === 1"
+                :title="cls.classId === activeClass?.classId ? 'Switch to another class first, or archive as sole class' : 'Archive class'"
+                @click="onArchiveClass(cls.classId)"
+              >
+                Archive
+              </button>
+            </div>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Archived Classes -->
+      <div v-if="archivedClasses.length > 0" class="setup__card setup__card--archived">
+        <button class="setup__archived-toggle" @click="showArchived = !showArchived">
+          <span>📦 Archived ({{ archivedClasses.length }})</span>
+          <span class="setup__archived-chevron">{{ showArchived ? '▲' : '▼' }}</span>
+        </button>
+        <ul v-if="showArchived" class="setup__class-list setup__archived-list">
+          <li v-for="cls in archivedClasses" :key="cls.classId" class="setup__class-item setup__class-item--archived">
+            <div>
+              <div class="setup__class-name">{{ cls.name }}</div>
+              <div class="setup__class-meta">Period {{ cls.periodNumber }} · {{ studentCount(cls) }} students</div>
+            </div>
+            <div class="setup__class-actions">
+              <button class="setup__pill-btn" @click="onRestoreClass(cls.classId)">Restore</button>
+              <button class="setup__pill-btn setup__pill-btn--danger" @click="onDeleteClass(cls.classId)">Delete</button>
+            </div>
           </li>
         </ul>
       </div>
@@ -280,6 +310,7 @@ import * as settingsService  from '../db/settingsService.js'
 
 const {
   classList,
+  archivedClasses,
   activeClass,
   students,
   behaviorCodes,
@@ -293,8 +324,28 @@ const {
   checkResize,
   confirmResize,
   updateActiveClass,
+  archiveClass,
+  restoreClass,
+  deleteClass,
   reloadBehaviorCodes,
 } = useClassroom()
+
+const showArchived = ref(false)
+
+async function onArchiveClass(classId) {
+  await archiveClass(classId)
+}
+
+async function onRestoreClass(classId) {
+  await restoreClass(classId)
+}
+
+async function onDeleteClass(classId) {
+  const cls = archivedClasses.value.find(c => c.classId === classId)
+  const name = cls?.name ?? 'this class'
+  if (!window.confirm(`Permanently delete "${name}"? This cannot be undone. Event history will be retained.`)) return
+  await deleteClass(classId)
+}
 
 const emit = defineEmits(['navigate'])
 
@@ -566,6 +617,60 @@ async function deleteCode(codeKey) {
 .setup__class-meta {
   font-size: 0.75rem;
   color:     var(--text-secondary);
+}
+
+/* Actions group holding Switch + Archive buttons side by side */
+.setup__class-actions {
+  display:    flex;
+  gap:        6px;
+  flex-shrink: 0;
+}
+
+/* Danger (red) variant for Archive / Delete buttons */
+.setup__pill-btn--danger {
+  background:   rgba(255, 59, 48, 0.08);
+  border-color: rgba(255, 59, 48, 0.3);
+  color:        #ff3b30;
+}
+
+.setup__pill-btn--danger:hover:not(:disabled) {
+  background:   rgba(255, 59, 48, 0.18);
+  border-color: #ff3b30;
+}
+
+.setup__pill-btn--danger:disabled {
+  opacity: 0.4;
+  cursor:  not-allowed;
+}
+
+/* Archived section card */
+.setup__card--archived {
+  opacity: 0.9;
+  border:  1px dashed var(--border);
+}
+
+.setup__archived-toggle {
+  width:           100%;
+  display:         flex;
+  align-items:     center;
+  justify-content: space-between;
+  background:      transparent;
+  border:          none;
+  font-size:       0.85rem;
+  font-weight:     600;
+  color:           var(--text-secondary);
+  cursor:          pointer;
+  padding:         4px 0;
+}
+
+.setup__archived-list {
+  margin-top: 10px;
+  opacity:    0.75;
+}
+
+.setup__class-item--archived {
+  background: var(--bg-secondary);
+  border:     1px dashed var(--border);
 }
 
 .setup__class-meta-group {

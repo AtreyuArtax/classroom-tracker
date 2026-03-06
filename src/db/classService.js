@@ -14,6 +14,9 @@
  *   setPeriodStartTime(classId, timeString)
  *   setStudentAbsent(classId, studentId)
  *   clearStudentAbsent(classId, studentId)
+ *   archiveClass(classId)
+ *   restoreClass(classId)
+ *   deleteClass(classId)
  */
 
 import { getDB } from './index.js'
@@ -200,4 +203,45 @@ export async function importRoster(classId, studentsArray) {
 
     await db.put('classes', cls)
     return { inserted, updated }
+}
+
+/**
+ * Soft-deletes a class by setting archived = true.
+ * The record is kept in IDB; it is simply hidden from normal views.
+ *
+ * @param {string} classId
+ * @returns {Promise<void>}
+ */
+export async function archiveClass(classId) {
+    const db = await getDB()
+    const cls = await db.get('classes', classId)
+    if (!cls) throw new Error(`Class not found: ${classId}`)
+    cls.archived = true
+    await db.put('classes', cls)
+}
+
+/**
+ * Restores an archived class (clears the archived flag).
+ *
+ * @param {string} classId
+ * @returns {Promise<void>}
+ */
+export async function restoreClass(classId) {
+    const db = await getDB()
+    const cls = await db.get('classes', classId)
+    if (!cls) throw new Error(`Class not found: ${classId}`)
+    cls.archived = false
+    await db.put('classes', cls)
+}
+
+/**
+ * Permanently deletes a class record and all its student data.
+ * Event history is NOT deleted — orphaned events remain in the events store.
+ *
+ * @param {string} classId
+ * @returns {Promise<void>}
+ */
+export async function deleteClass(classId) {
+    const db = await getDB()
+    await db.delete('classes', classId)
 }
