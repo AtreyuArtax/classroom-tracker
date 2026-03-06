@@ -67,13 +67,18 @@ const gridContainerStyle = computed(() => ({
  * If the target is occupied, swaps the two students.
  */
 async function onSeatDrop({ studentId, fromRow, fromCol, toRow, toCol, toStudentId }) {
-  const toSeat   = { row: toRow, col: toCol }
-  const fromSeat = { row: fromRow, col: fromCol }
+  const toSeat = { row: toRow, col: toCol }
+  
+  // If dragging from the pool, fromRow/fromCol are undefined.
+  // We explicitly pass null so classService clears the seat correctly if they are swapped.
+  const fromSeat = (fromRow !== undefined && fromCol !== undefined) 
+    ? { row: fromRow, col: fromCol } 
+    : null
 
   // Move dragged student to target cell
   await assignSeat(studentId, toSeat)
 
-  // If target was occupied, move that student to the dragged student's old cell
+  // If target was occupied, move that student to the dragged student's old cell (or pool)
   if (toStudentId) {
     await assignSeat(toStudentId, fromSeat)
   }

@@ -46,7 +46,7 @@
             </option>
           </select>
         </label>
-        <EventTable :events="reportData" :behavior-codes="behaviorCodesMap" />
+        <EventTable :events="reportData" :behavior-codes="behaviorCodesMap" @delete-event="deleteEvent" />
         <ExportBar :events="reportData" filename="student-detail" />
       </div>
     </section>
@@ -81,7 +81,7 @@
             <option v-for="(d, i) in dayNames" :key="i" :value="i">{{ d }}</option>
           </select>
         </label>
-        <EventTable :events="reportData" :behavior-codes="behaviorCodesMap" />
+        <EventTable :events="reportData" :behavior-codes="behaviorCodesMap" @delete-event="deleteEvent" />
         <ExportBar :events="reportData" filename="period-pattern" />
       </div>
     </section>
@@ -92,7 +92,7 @@
     <section v-else-if="activeTab === 'washroom'" class="reports__panel">
       <div class="reports__card">
         <h2 class="reports__card-title">Washroom Log — {{ activeClass?.name }}</h2>
-        <WashroomTable :events="reportData" :students="students" />
+        <WashroomTable :events="reportData" :students="students" @delete-event="deleteEvent" />
         <ExportBar :events="reportData" filename="washroom-log" />
       </div>
     </section>
@@ -107,7 +107,7 @@
           Date
           <input v-model="dailyDate" type="date" class="reports__input" @change="runReport" />
         </label>
-        <EventTable :events="reportData" :behavior-codes="behaviorCodesMap" />
+        <EventTable :events="reportData" :behavior-codes="behaviorCodesMap" @delete-event="deleteEvent" />
         <ExportBar :events="reportData" filename="daily-overview" />
       </div>
     </section>
@@ -286,6 +286,16 @@ async function runReport() {
   }
 }
 
+async function deleteEvent(eventId) {
+  if (!confirm('Are you sure you want to delete this event? This cannot be undone.')) return
+  try {
+    await eventService.deleteEvent(eventId)
+    await runReport() // refresh data immediately
+  } catch (err) {
+    alert('Failed to delete event: ' + err.message)
+  }
+}
+
 // ─── behavior codes map ───────────────────────────────────────────────────────
 
 const behaviorCodesMap = computed(() =>
@@ -372,7 +382,8 @@ const EventTable = defineComponent({
     events:        { type: Array, required: true },
     behaviorCodes: { type: Object, default: () => ({}) },
   },
-  setup(props) {
+  emits: ['delete-event'],
+  setup(props, { emit }) {
     return () => {
       if (props.events.length === 0) {
         return h('p', { class: 'reports__no-data' }, 'No events for the selected filters.')
@@ -385,6 +396,7 @@ const EventTable = defineComponent({
             h('th', {}, 'Code'),
             h('th', {}, 'Category'),
             h('th', {}, 'Period'),
+            h('th', {}, ''), // Actions header
           ])),
           h('tbody', {}, props.events.map(evt =>
             h('tr', { key: evt.eventId }, [
@@ -393,6 +405,13 @@ const EventTable = defineComponent({
               h('td', {}, `${props.behaviorCodes[evt.code]?.icon ?? ''} ${evt.code}`),
               h('td', {}, evt.category),
               h('td', {}, `P${evt.periodNumber}`),
+              h('td', { class: 'reports__td-actions' }, 
+                h('button', {
+                  class: 'reports__btn-delete',
+                  title: 'Delete event',
+                  onClick: () => emit('delete-event', evt.eventId)
+                }, '✕')
+              ),
             ])
           )),
         ])
@@ -454,7 +473,8 @@ const WashroomTable = defineComponent({
     events:   { type: Array, required: true },
     students: { type: Object, default: () => ({}) },
   },
-  setup(props) {
+  emits: ['delete-event'],
+  setup(props, { emit }) {
     return () => {
       if (props.events.length === 0) {
         return h('p', { class: 'reports__no-data' }, 'No washroom events for the selected filters.')
@@ -466,6 +486,7 @@ const WashroomTable = defineComponent({
             h('th', {}, 'Student'),
             h('th', {}, 'Period'),
             h('th', {}, 'Duration'),
+            h('th', {}, ''), // Actions header
           ])),
           h('tbody', {}, props.events.map(evt => {
             const s      = props.students[evt.studentId]
@@ -478,6 +499,13 @@ const WashroomTable = defineComponent({
               h('td', {}, name),
               h('td', {}, `P${evt.periodNumber}`),
               h('td', {}, durStr),
+              h('td', { class: 'reports__td-actions' }, 
+                h('button', {
+                  class: 'reports__btn-delete',
+                  title: 'Delete event',
+                  onClick: () => emit('delete-event', evt.eventId)
+                }, '✕')
+              ),
             ])
           })),
         ])
@@ -749,6 +777,27 @@ const ExportBar = defineComponent({
 
 .reports__table tr:hover td {
   background: var(--bg-secondary);
+}
+
+.reports__td-actions {
+  text-align: right;
+  width:      40px;
+}
+
+.reports__btn-delete {
+  background: transparent;
+  border:     none;
+  color:      var(--text-secondary);
+  font-size:  1.2rem;
+  cursor:     pointer;
+  padding:    4px 8px;
+  border-radius: var(--radius-sm);
+  transition: all 0.15s ease;
+}
+
+.reports__btn-delete:hover {
+  background: rgba(255, 59, 48, 0.1);
+  color:      var(--state-out);
 }
 
 /* ── File upload ─────────────────────────────────────────────────── */
