@@ -241,3 +241,31 @@ export async function importAllData(backupObj) {
 
     return { classCount: classes.length, eventCount: events.length }
 }
+
+/**
+ * Returns an ISO string representing the start of the given reporting period,
+ * or null for 'all time'. Used by useStudentDossier to build { from } date ranges.
+ *
+ * @param {'week'|'month'|'semester'|'all'} period
+ * @returns {string|null}
+ */
+export function getDateBoundary(period) {
+    const now = new Date()
+    if (period === 'all') return null
+    if (period === 'week') {
+        const d = new Date(now)
+        d.setDate(d.getDate() - 7)
+        return d.toISOString()
+    }
+    if (period === 'month') {
+        const d = new Date(now)
+        d.setMonth(d.getMonth() - 1)
+        return d.toISOString()
+    }
+    if (period === 'semester') {
+        const d = new Date(now)
+        d.setMonth(d.getMonth() - 5)
+        return d.toISOString()
+    }
+    return null
+}

@@ -36,43 +36,35 @@ The existing `StudentProfile.vue` component is **kept and reused** inside the ne
 
 ---
 
-## Step 1 — Add time-filtered event queries to `eventService.js`
+## Step 1 — Add date boundary helper to `eventService.js`
 
-The dossier view needs events filtered by time period. Add this helper function:
-
-```js
-export async function getEventsByStudentInRange(studentId, fromDate) {
-  // fromDate is a Date object or null (null = all time)
-  // Returns all events for studentId where timestamp >= fromDate
-  // Use the existing studentId index
-  // Sort results newest first before returning
-}
-```
-
-Also add a helper to compute date range boundaries — export these constants/functions for use in the composable:
+`getEventsByStudent(studentId, dateRange)` already exists and accepts `{ from?, to? }` as an optional date range filter. Do not add a new function. Only add the date boundary helper:
 
 ```js
 export function getDateBoundary(period) {
   // period: 'week' | 'month' | 'semester' | 'all'
+  // Returns an ISO string for the start of the period, or null for 'all'
   const now = new Date()
   if (period === 'all') return null
   if (period === 'week') {
     const d = new Date(now)
     d.setDate(d.getDate() - 7)
-    return d
+    return d.toISOString()
   }
   if (period === 'month') {
     const d = new Date(now)
     d.setMonth(d.getMonth() - 1)
-    return d
+    return d.toISOString()
   }
   if (period === 'semester') {
     const d = new Date(now)
-    d.setMonth(d.getMonth() - 5)   // approx 5 months
-    return d
+    d.setMonth(d.getMonth() - 5)
+    return d.toISOString()
   }
 }
 ```
+
+This is the only change needed in `eventService.js`. The existing `getEventsByStudent` already handles range filtering via `{ from?, to? }` — the composable will pass `{ from: boundary }` when a period is selected.
 
 ---
 
@@ -129,9 +121,9 @@ export function useStudentDossier() {
     if (!selectedStudentId.value) return
     loading.value = true
     const boundary = getDateBoundary(selectedPeriod.value)
-    events.value = await eventService.getEventsByStudentInRange(
+    events.value = await eventService.getEventsByStudent(
       selectedStudentId.value,
-      boundary
+      boundary ? { from: boundary } : {}
     )
     loading.value = false
   }
