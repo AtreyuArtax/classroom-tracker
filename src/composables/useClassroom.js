@@ -88,11 +88,11 @@ async function init() {
     let codesUpdated = false
     const codesMap = Object.fromEntries(codes.map(c => [c.codeKey, c]))
     if (!codesMap.a) {
-        settings.behaviorCodes.a = { icon: '🚫', label: 'Absent', category: 'attendance', type: 'attendance' }
+        settings.behaviorCodes.a = { icon: '🚫', label: 'Absent', category: 'attendance', type: 'attendance', requiresNote: false }
         codesUpdated = true
     }
     if (!codesMap.l) {
-        settings.behaviorCodes.l = { icon: '⏰', label: 'Late', category: 'attendance', type: 'attendance' }
+        settings.behaviorCodes.l = { icon: '⏰', label: 'Late', category: 'attendance', type: 'attendance', requiresNote: false }
         codesUpdated = true
     }
 
@@ -237,6 +237,7 @@ async function importRoster(parsedRows) {
                 firstName,
                 lastName,
                 seat: null,
+                generalNote: '',
                 activeStates: { isOut: false, outTime: null },
             }
         }
@@ -271,6 +272,7 @@ async function moveStudentFromClass(fromClassId, student) {
         firstName: student.firstName,
         lastName: student.lastName,
         seat: null,
+        generalNote: '',
         activeStates: { isOut: false, outTime: null },
     }
 }
@@ -354,6 +356,9 @@ async function logAttendanceEvent(studentId, code) {
             await classService.clearStudentAbsent(classId, studentId)
         }
 
+        // Persist lateMinutes to IDB so it survives page refresh
+        await classService.setStudentLate(classId, studentId, minutesLate)
+
         if (!student.activeStates) student.activeStates = {}
         student.activeStates.isAbsent = false
         student.activeStates.lateMinutes = minutesLate
@@ -369,6 +374,7 @@ async function logAttendanceEvent(studentId, code) {
 
         pushUndo(async () => {
             await eventService.deleteEvent(eventId)
+            await classService.clearStudentLate(classId, studentId)
             student.activeStates.lateMinutes = null
 
             if (wasAbsent) {
@@ -386,11 +392,12 @@ async function logAttendanceEvent(studentId, code) {
  *
  * @param {string} studentId
  * @param {string} code  The behavior code key
+ * @param {string|null} [note]  Optional note text (from EventNoteModal for requiresNote codes)
  * @returns {Promise<void>}
  */
-async function logStandardEvent(studentId, code) {
+async function logStandardEvent(studentId, code, note = null) {
     const classId = activeClass.value?.classId
-    const eventId = await eventService.logEvent({ studentId, classId, code })
+    const eventId = await eventService.logEvent({ studentId, classId, code, note })
 
     // Reactive update: store last event for desk tile flash
     students.value[studentId].lastEvent = { code, ts: Date.now() }

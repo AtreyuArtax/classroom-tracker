@@ -55,7 +55,7 @@ function _applyDateRange(events, dateRange = {}) {
  * The caller provides { studentId, classId, code } at minimum.
  * periodNumber, dayOfWeek, category, and timestamp are derived/written here.
  *
- * @param {{ studentId: string, classId: string, code: string, duration?: number|null }} eventObj
+ * @param {{ studentId: string, classId: string, code: string, duration?: number|null, note?: string|null }} eventObj
  * @returns {Promise<number>}  The auto-generated eventId
  */
 export async function logEvent(eventObj) {
@@ -83,6 +83,7 @@ export async function logEvent(eventObj) {
         code: eventObj.code,
         category: behaviorCode.category, // copied from behavior code
         duration: eventObj.duration ?? null,
+        note: eventObj.note ?? null,
     }
     if (eventObj.supersededAbsent !== undefined) {
         record.supersededAbsent = eventObj.supersededAbsent

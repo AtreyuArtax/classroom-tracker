@@ -244,6 +244,7 @@
               <span class="setup__code-key">{{ code.codeKey }}</span>
               <span class="setup__code-label">{{ code.label }}</span>
               <span class="setup__code-meta">{{ code.category }} · {{ code.type }}</span>
+              <span v-if="code.requiresNote" class="setup__code-note-badge">📝 Note required</span>
             </div>
             <button class="setup__icon-btn" aria-label="Delete {{ code.label }}" @click="deleteCode(code.codeKey)">🗑</button>
           </li>
@@ -280,6 +281,10 @@
               <option value="standard">standard</option>
               <option value="toggle">toggle</option>
             </select>
+          </label>
+          <label class="setup__label setup__label--checkbox">
+            <input type="checkbox" v-model="newCode.requiresNote" class="setup__checkbox" />
+            Requires a note when tapped
           </label>
           <button type="submit" class="setup__btn-primary">Save Code</button>
         </form>
@@ -465,12 +470,12 @@ function classNameById(classId) {
 
 // ─── behavior code CRUD ───────────────────────────────────────────────────────
 
-const newCode = reactive({ codeKey: '', icon: '', label: '', category: 'positive', type: 'standard' })
+const newCode = reactive({ codeKey: '', icon: '', label: '', category: 'positive', type: 'standard', requiresNote: false })
 
 async function saveCode() {
   await settingsService.saveBehaviorCode({ ...newCode })
   await reloadBehaviorCodes()
-  Object.assign(newCode, { codeKey: '', icon: '', label: '', category: 'positive', type: 'standard' })
+  Object.assign(newCode, { codeKey: '', icon: '', label: '', category: 'positive', type: 'standard', requiresNote: false })
 }
 
 async function deleteCode(codeKey) {
@@ -938,6 +943,35 @@ async function deleteCode(codeKey) {
 .setup__code-meta {
   font-size: 0.72rem;
   color:     var(--text-secondary);
+}
+
+.setup__code-note-badge {
+  font-size:     0.68rem;
+  font-weight:   600;
+  color:         var(--primary);
+  background:    var(--primary-light);
+  border-radius: var(--radius-sm);
+  padding:       2px 6px;
+  width:         fit-content;
+}
+
+/* Checkbox label row in Add Code form */
+.setup__label--checkbox {
+  flex-direction: row !important;
+  align-items:    center !important;
+  gap:            8px !important;
+  font-size:      0.82rem !important;
+  font-weight:    500 !important;
+  color:          var(--text) !important;
+  cursor:         pointer;
+}
+
+.setup__checkbox {
+  width:  18px;
+  height: 18px;
+  accent-color: var(--primary);
+  cursor: pointer;
+  flex-shrink: 0;
 }
 
 /* ── Dialog ──────────────────────────────────────────────────────── */

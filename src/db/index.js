@@ -7,25 +7,20 @@
  * Rules (CLAUDE.md §4, §5):
  *  - Uses the `idb` wrapper exclusively (no raw IDBRequest chains)
  *  - Database name:  classroomTrackerDB
- *  - Schema version: 1
+ *  - Schema version: 2  (bumped from 1 — adds generalNote + requiresNote + new codes)
  *  - Stores: settings | classes | events
  *  - All indexes on `events` are created here in upgrade()
  *
- * Bug fixes vs original:
- *  1. Cache the PROMISE (_dbPromise), not the resolved value.
- *     The old code set `_db = await openDB(...)` which means concurrent
- *     callers (e.g. Promise.all in useClassroom.init) all race through the
- *     `if (_db)` guard while the first openDB is still in-flight, resulting
- *     in multiple openDB() calls and an InvalidStateError (version change
- *     transaction already running).
- *  2. Use the named `transaction` parameter in upgrade() for seeding.
- *     `arguments[3]` is undefined in ES module arrow functions.
+ * Version 2 migration (oldVersion < 2):
+ *  - Adds `generalNote: ''` to any student record missing the field
+ *  - Adds `requiresNote: false` to any behavior code missing the field
+ *  - Adds the three new codes (ob, cv, pc) if they don't exist
  */
 
 import { openDB } from 'idb'
 
 const DB_NAME = 'classroomTrackerDB'
-const DB_VERSION = 1
+const DB_VERSION = 2
 
 /**
  * Cached promise — set synchronously before the first await so every
@@ -41,11 +36,8 @@ let _dbPromise = null
 export function getDB() {
   if (_dbPromise) return _dbPromise
 
-  // Assign the promise immediately (before any await) so concurrent callers
-  // pick up the same promise rather than spawning a second openDB().
   _dbPromise = openDB(DB_NAME, DB_VERSION, {
 
-    // idb calls upgrade(db, oldVersion, newVersion, transaction)
     upgrade(db, oldVersion, _newVersion, transaction) {
 
       // ── settings store ──────────────────────────────────────────────────
@@ -72,24 +64,72 @@ export function getDB() {
         eventStore.createIndex('by_category', 'category', { unique: false })
       }
 
-      // ── seed defaults on fresh install ───────────────────────────────────
-      // Must use the `transaction` parameter idb passes — never db.transaction()
-      // inside upgrade(), as the version-change transaction is already running.
+      // ── seed defaults on fresh install (oldVersion === 0) ────────────────
       if (oldVersion === 0) {
         transaction.objectStore('settings').put(
           {
-            schemaVersion: 1,
+            schemaVersion: 2,
             gridSize: { rows: 6, cols: 6 },
             behaviorCodes: {
-              p: { icon: '✋', label: 'Participation', category: 'positive', type: 'standard' },
-              m: { icon: '📱', label: 'On Device', category: 'redirect', type: 'standard' },
-              w: { icon: '🚽', label: 'Washroom', category: 'neutral', type: 'toggle' },
-              a: { icon: '🚫', label: 'Absent', category: 'attendance', type: 'attendance' },
-              l: { icon: '⏰', label: 'Late', category: 'attendance', type: 'attendance' },
+              p: { icon: '✋', label: 'Participation', category: 'positive', type: 'standard', requiresNote: false },
+              m: { icon: '📱', label: 'On Device', category: 'redirect', type: 'standard', requiresNote: false },
+              w: { icon: '🚽', label: 'Washroom', category: 'neutral', type: 'toggle', requiresNote: false },
+              a: { icon: '🚫', label: 'Absent', category: 'attendance', type: 'attendance', requiresNote: false },
+              l: { icon: '⏰', label: 'Late', category: 'attendance', type: 'attendance', requiresNote: false },
+              ob: { icon: '👁️', label: 'Observation', category: 'note', type: 'standard', requiresNote: true },
+              cv: { icon: '💬', label: 'Conversation', category: 'note', type: 'standard', requiresNote: true },
+              pc: { icon: '📞', label: 'Parent Contact', category: 'communication', type: 'standard', requiresNote: true },
             },
           },
           'singleton'
         )
+        return  // fresh install — no migration needed
+      }
+
+      // ── version 2 migration (upgrading from v1) ───────────────────────────
+      if (oldVersion < 2) {
+        const settingsStore = transaction.objectStore('settings')
+        const classesStore = transaction.objectStore('classes')
+
+        // Patch settings: add requiresNote to existing codes, add new codes
+        const settingsReq = settingsStore.get('singleton')
+        settingsReq.onsuccess = () => {
+          const settings = settingsReq.result
+          if (!settings) return
+
+          const codes = settings.behaviorCodes ?? {}
+
+          // Add requiresNote: false to any existing code that lacks it
+          for (const key of Object.keys(codes)) {
+            if (codes[key].requiresNote === undefined) {
+              codes[key].requiresNote = false
+            }
+          }
+
+          // Add the three new codes if missing
+          if (!codes.ob) codes.ob = { icon: '👁️', label: 'Observation', category: 'note', type: 'standard', requiresNote: true }
+          if (!codes.cv) codes.cv = { icon: '💬', label: 'Conversation', category: 'note', type: 'standard', requiresNote: true }
+          if (!codes.pc) codes.pc = { icon: '📞', label: 'Parent Contact', category: 'communication', type: 'standard', requiresNote: true }
+
+          settings.schemaVersion = 2
+          settingsStore.put(settings, 'singleton')
+        }
+
+        // Patch all class records: add generalNote: '' to any student missing it
+        const classesReq = classesStore.getAll()
+        classesReq.onsuccess = () => {
+          const classes = classesReq.result ?? []
+          for (const cls of classes) {
+            let changed = false
+            for (const studentId of Object.keys(cls.students ?? {})) {
+              if (cls.students[studentId].generalNote === undefined) {
+                cls.students[studentId].generalNote = ''
+                changed = true
+              }
+            }
+            if (changed) classesStore.put(cls)
+          }
+        }
       }
     },
   })

@@ -31,12 +31,17 @@ async function _readSettings() {
 
     // Fallback: seed defaults (should have been written during upgrade, but guard anyway)
     const defaults = {
-        schemaVersion: 1,
+        schemaVersion: 2,
         gridSize: { rows: 6, cols: 6 },
         behaviorCodes: {
-            p: { icon: '✋', label: 'Participation', category: 'positive', type: 'standard' },
-            m: { icon: '📱', label: 'On Device', category: 'redirect', type: 'standard' },
-            w: { icon: '🚽', label: 'Washroom', category: 'neutral', type: 'toggle' },
+            p: { icon: '✋', label: 'Participation', category: 'positive', type: 'standard', requiresNote: false },
+            m: { icon: '📱', label: 'On Device', category: 'redirect', type: 'standard', requiresNote: false },
+            w: { icon: '🚽', label: 'Washroom', category: 'neutral', type: 'toggle', requiresNote: false },
+            a: { icon: '🚫', label: 'Absent', category: 'attendance', type: 'attendance', requiresNote: false },
+            l: { icon: '⏰', label: 'Late', category: 'attendance', type: 'attendance', requiresNote: false },
+            ob: { icon: '👁️', label: 'Observation', category: 'note', type: 'standard', requiresNote: true },
+            cv: { icon: '💬', label: 'Conversation', category: 'note', type: 'standard', requiresNote: true },
+            pc: { icon: '📞', label: 'Parent Contact', category: 'communication', type: 'standard', requiresNote: true },
         },
     }
     await db.put('settings', defaults, SETTINGS_KEY)

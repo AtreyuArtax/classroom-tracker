@@ -162,6 +162,48 @@ export async function clearStudentAbsent(classId, studentId) {
 }
 
 /**
+ * Marks a student as late with the given number of minutes.
+ * Clears isAbsent at the same time (late supersedes absent).
+ *
+ * @param {string} classId
+ * @param {string} studentId
+ * @param {number} lateMinutes
+ * @returns {Promise<void>}
+ */
+export async function setStudentLate(classId, studentId, lateMinutes) {
+    const db = await getDB()
+    const cls = await db.get('classes', classId)
+    if (!cls) throw new Error(`Class not found: ${classId}`)
+    if (!cls.students[studentId]) throw new Error(`Student not found: ${studentId} in ${classId}`)
+
+    if (!cls.students[studentId].activeStates) {
+        cls.students[studentId].activeStates = { isOut: false, outTime: null, isAbsent: false }
+    }
+    cls.students[studentId].activeStates.isAbsent = false
+    cls.students[studentId].activeStates.lateMinutes = lateMinutes
+    await db.put('classes', cls)
+}
+
+/**
+ * Clears the late state for a student (e.g. on undo).
+ *
+ * @param {string} classId
+ * @param {string} studentId
+ * @returns {Promise<void>}
+ */
+export async function clearStudentLate(classId, studentId) {
+    const db = await getDB()
+    const cls = await db.get('classes', classId)
+    if (!cls) throw new Error(`Class not found: ${classId}`)
+    if (!cls.students[studentId]) throw new Error(`Student not found: ${studentId} in ${classId}`)
+
+    if (cls.students[studentId].activeStates) {
+        cls.students[studentId].activeStates.lateMinutes = null
+    }
+    await db.put('classes', cls)
+}
+
+/**
  * Upserts students from a CSV roster into the target class.
  *
  * Rules (CLAUDE.md §6):
@@ -195,6 +237,7 @@ export async function importRoster(classId, studentsArray) {
                 firstName,
                 lastName,
                 seat: null,
+                generalNote: '',
                 activeStates: { isOut: false, outTime: null, isAbsent: false },
             }
             inserted++
@@ -203,6 +246,24 @@ export async function importRoster(classId, studentsArray) {
 
     await db.put('classes', cls)
     return { inserted, updated }
+}
+
+/**
+ * Updates a student's general note.
+ * Called by StudentProfileModal on textarea blur.
+ *
+ * @param {string} classId
+ * @param {string} studentId
+ * @param {string} note
+ * @returns {Promise<void>}
+ */
+export async function updateStudentNote(classId, studentId, note) {
+    const db = await getDB()
+    const cls = await db.get('classes', classId)
+    if (!cls) throw new Error(`Class not found: ${classId}`)
+    if (!cls.students[studentId]) throw new Error(`Student not found: ${studentId} in ${classId}`)
+    cls.students[studentId].generalNote = note
+    await db.put('classes', cls)
 }
 
 /**

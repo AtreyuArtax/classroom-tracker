@@ -12,7 +12,7 @@
       <!-- Radial ring ──────────────────────────────────────────────── -->
       <div class="radial-ring" :style="ringStyle">
 
-        <!-- Sector buttons -->
+        <!-- Sector buttons (behavior codes only) -->
         <button
           v-for="(item, idx) in visibleItems"
           :key="item.codeKey ?? item.categoryKey"
@@ -20,12 +20,24 @@
           :class="{
             'radial-btn--active': isActiveToggle(item),
           }"
-          :style="itemPositionStyle(idx, visibleItems.length)"
+          :style="slotPositionStyle(idx, totalSlots)"
           :aria-label="item.label"
           @click.stop="onItemTap(item)"
         >
           <span class="radial-btn__icon" aria-hidden="true">{{ item.icon }}</span>
           <span class="radial-btn__label">{{ item.label }}</span>
+        </button>
+
+        <!-- Permanent 👤 Profile button — first level only -->
+        <button
+          v-if="showProfile"
+          class="radial-btn radial-btn--profile"
+          :style="profilePositionStyle"
+          aria-label="Student Profile"
+          @click.stop="onProfileTap"
+        >
+          <span class="radial-btn__icon" aria-hidden="true">👤</span>
+          <span class="radial-btn__label">Profile</span>
         </button>
 
         <!-- Centre button (cancel / go-back) -->
@@ -56,6 +68,12 @@
  *  - 44×44px minimum touch targets on all buttons
  *  - Circular layout via absolute positioning + calc()
  *
+ * Update 01: permanent 👤 Profile button added at a fixed bottom position.
+ *  - Not sourced from behaviorCodes — always rendered regardless of viewMode
+ *  - Does not count toward the 6-item limit for behavior codes
+ *  - Has a visually distinct secondary style
+ *  - On tap: calls handleProfileTap() from useRadial
+ *
  * This component ONLY calls useRadial and useClassroom.
  * No direct imports from src/db/.
  */
@@ -71,10 +89,11 @@ const {
   targetStudent,
   visibleItems,
   centreGoesBack,
-  viewMode,
+  showProfile,
   close,
   handleCentre,
   handleItemTap,
+  handleProfileTap,
 } = useRadial()
 
 const { logStandardEvent, logToggleEvent, logAttendanceEvent, behaviorCodes } = useClassroom()
@@ -82,9 +101,9 @@ const { logStandardEvent, logToggleEvent, logAttendanceEvent, behaviorCodes } = 
 // ─── geometry ─────────────────────────────────────────────────────────────────
 
 /** Diameter of the ring container in px */
-const RING_SIZE  = 260
-/** Radius of the orbit on which buttons sit */
-const ORBIT_R    = 95
+const RING_SIZE  = 280
+/** Radius of the orbit on which all buttons (codes + Profile) sit */
+const ORBIT_R    = 108
 /** Size of each sector button */
 const BTN_SIZE   = 56
 
@@ -94,14 +113,15 @@ const ringStyle = {
 }
 
 /**
- * Position each button evenly around the circle.
- * Angles start at the top (−90°) and go clockwise.
+ * Evenly distribute ALL N+1 items (N behavior items + 1 Profile) around 360°.
+ * Profile is always the last slot (idx = visibleItems.length).
+ * This guarantees no overlap regardless of item count or view mode.
  *
- * @param {number} idx   Button index (0-based)
- * @param {number} total Total number of buttons
+ * @param {number} idx    Button index (0-based)
+ * @param {number} total  TOTAL slots including the Profile button (visibleItems.length + 1)
  */
-function itemPositionStyle(idx, total) {
-  const angleDeg = -90 + (360 / total) * idx
+function slotPositionStyle(idx, total) {
+  const angleDeg = -90 + (360 / total) * idx   // start at top (-90°)
   const angleRad = (angleDeg * Math.PI) / 180
   const cx       = RING_SIZE / 2
   const cy       = RING_SIZE / 2
@@ -115,6 +135,17 @@ function itemPositionStyle(idx, total) {
     height:   `${BTN_SIZE}px`,
   }
 }
+
+/** Total slots = behavior items + 1 for Profile (first level only) */
+const totalSlots = computed(() =>
+  visibleItems.value.length + (showProfile.value ? 1 : 0)
+)
+
+/** Profile always occupies the last slot */
+const profilePositionStyle = computed(() =>
+  slotPositionStyle(visibleItems.value.length, totalSlots.value)
+)
+
 
 // ─── active toggle styling ────────────────────────────────────────────────────
 
@@ -132,8 +163,8 @@ function isActiveToggle(item) {
 // ─── item tap handler ─────────────────────────────────────────────────────────
 
 async function onItemTap(item) {
-  const result = handleItemTap(item) // returns {student, code} or null (category drill)
-  if (!result) return // just drilled into a category — no event
+  const result = handleItemTap(item) // returns {student, code} or null (category drill or requiresNote intercept)
+  if (!result) return // drilled into category, or note modal will handle it
 
   const { student, code } = result
 
@@ -145,10 +176,16 @@ async function onItemTap(item) {
     await logStandardEvent(student.studentId, code.codeKey)
   }
 }
+
+// ─── profile tap handler ──────────────────────────────────────────────────────
+
+function onProfileTap() {
+  handleProfileTap()
+}
 </script>
 
 <style scoped>
-/* ── Full-screen overlay ──────────────────────────────────────────────────── */
+/* ── Full-screen overlay ──────────────────────────────────────────── */
 .radial-overlay {
   position:        fixed;
   inset:           0;
@@ -158,7 +195,6 @@ async function onItemTap(item) {
   background:      rgba(0, 0, 0, 0.35);
   backdrop-filter: blur(2px);
   z-index:         1000;
-  /* subtle entrance */
   animation:       overlay-in 0.15s ease;
 }
 
@@ -167,7 +203,7 @@ async function onItemTap(item) {
   to   { opacity: 1; }
 }
 
-/* ── Ring container ──────────────────────────────────────────────────────── */
+/* ── Ring container ──────────────────────────────────────────────── */
 .radial-ring {
   position: relative;
   animation: ring-pop 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -178,7 +214,7 @@ async function onItemTap(item) {
   to   { transform: scale(1);   opacity: 1; }
 }
 
-/* ── Sector buttons ──────────────────────────────────────────────────────── */
+/* ── Sector buttons ──────────────────────────────────────────────── */
 .radial-btn {
   display:         flex;
   flex-direction:  column;
@@ -211,6 +247,16 @@ async function onItemTap(item) {
   color: #fff;
 }
 
+/* Profile slot: distinct secondary appearance */
+.radial-btn--profile {
+  background:  var(--primary-light);
+  box-shadow:  0 0 0 2px var(--primary), var(--shadow-md);
+}
+
+.radial-btn--profile .radial-btn__label {
+  color: var(--primary);
+}
+
 .radial-btn__icon {
   font-size:   1.25rem;
   line-height: 1;
@@ -227,7 +273,7 @@ async function onItemTap(item) {
   white-space: nowrap;
 }
 
-/* ── Centre button ───────────────────────────────────────────────────────── */
+/* ── Centre button ───────────────────────────────────────────────── */
 .radial-centre {
   position:        absolute;
   top:             50%;

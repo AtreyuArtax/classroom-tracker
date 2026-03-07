@@ -74,6 +74,24 @@
     <!-- ── Radial menu overlay (Teleport is inside the component) ─── -->
     <RadialMenu />
 
+    <!-- ── Event Note Modal ─────────────────────────────────────────── -->
+    <EventNoteModal
+      v-model="noteModalOpen"
+      :student-name="pendingStudentName"
+      :behavior-code="pendingNoteCode"
+      @save="onNoteSave"
+      @cancel="onNoteCancel"
+    />
+
+    <!-- ── Student Profile Modal ────────────────────────────────────── -->
+    <StudentProfileModal
+      v-if="profileModalOpen && profileStudentId"
+      v-model="profileModalOpen"
+      :student-id="profileStudentId"
+      :class-id="profileClassId"
+      :behavior-codes-map="behaviorCodesMap"
+    />
+
   </div>
 </template>
 
@@ -83,18 +101,41 @@
  *
  * Wires SeatingGrid, RadialMenu, ClassSwitcher, and UndoButton together.
  * CLAUDE.md §4: no direct src/db/ imports.
+ *
+ * Update 01:
+ *  - Mounts EventNoteModal: shown when useRadial.pendingNoteCode is set
+ *  - Mounts StudentProfileModal: shown when useRadial.profileStudent is set
  */
 
-import ClassSwitcher from '../components/ClassSwitcher.vue'
-import SeatingGrid   from '../components/SeatingGrid.vue'
-import RadialMenu    from '../components/RadialMenu.vue'
-import UndoButton    from '../components/UndoButton.vue'
-import { useClassroom } from '../composables/useClassroom.js'
-import { ref } from 'vue'
+import { ref, computed, watch } from 'vue'
+import ClassSwitcher       from '../components/ClassSwitcher.vue'
+import SeatingGrid         from '../components/SeatingGrid.vue'
+import RadialMenu          from '../components/RadialMenu.vue'
+import UndoButton          from '../components/UndoButton.vue'
+import EventNoteModal      from '../components/EventNoteModal.vue'
+import StudentProfileModal from '../components/StudentProfileModal.vue'
+import { useClassroom }    from '../composables/useClassroom.js'
+import { useRadial }       from '../composables/useRadial.js'
 
 const emit = defineEmits(['navigate'])
 
-const { activeClass, studentsOut, unseatedStudents, assignSeat } = useClassroom()
+const {
+  activeClass,
+  studentsOut,
+  unseatedStudents,
+  assignSeat,
+  students,
+  behaviorCodes,
+  logStandardEvent,
+} = useClassroom()
+
+const {
+  pendingNoteCode,
+  pendingNoteStudent,
+  profileStudent,
+} = useRadial()
+
+// ─── pool panel ───────────────────────────────────────────────────────────────
 
 const isPoolDragOver = ref(false)
 const isPoolOpen     = ref(unseatedStudents.value.length > 0)
@@ -113,7 +154,6 @@ async function onPoolDrop(evt) {
   
   try {
     const payload = JSON.parse(data)
-    // If dropping a student from the grid back into the pool, unassign their seat
     if (payload.studentId && payload.fromRow !== undefined) {
       await assignSeat(payload.studentId, null)
     }
@@ -121,6 +161,63 @@ async function onPoolDrop(evt) {
     // ignore
   }
 }
+
+// ─── behavior codes map for passing to StudentProfileModal ────────────────────
+
+const behaviorCodesMap = computed(() =>
+  Object.fromEntries(behaviorCodes.value.map(c => [c.codeKey, c]))
+)
+
+// ─── Event Note Modal ─────────────────────────────────────────────────────────
+
+const noteModalOpen = ref(false)
+
+// Derived display name for the pending student
+const pendingStudentName = computed(() => {
+  const s = pendingNoteStudent.value
+  if (!s) return ''
+  const data = students.value[s.studentId]
+  if (!data) return s.studentId
+  return `${data.firstName} ${data.lastName}`
+})
+
+// Watch: when a requiresNote code is intercepted, open the modal
+watch(pendingNoteCode, (code) => {
+  if (code) noteModalOpen.value = true
+})
+
+async function onNoteSave(noteText) {
+  const student = pendingNoteStudent.value
+  const code    = pendingNoteCode.value
+  if (!student || !code) return
+
+  await logStandardEvent(student.studentId, code.codeKey, noteText)
+
+  // Clear pending state
+  pendingNoteCode.value    = null
+  pendingNoteStudent.value = null
+}
+
+function onNoteCancel() {
+  pendingNoteCode.value    = null
+  pendingNoteStudent.value = null
+}
+
+// ─── Student Profile Modal ────────────────────────────────────────────────────
+
+const profileModalOpen  = ref(false)
+const profileStudentId  = ref('')
+const profileClassId    = ref('')
+
+// Watch: when the radial sets profileStudent, open the modal
+watch(profileStudent, (student) => {
+  if (!student) return
+  profileStudentId.value  = student.studentId
+  profileClassId.value    = student.classId
+  profileModalOpen.value  = true
+  // Clear the radial ref so subsequent taps register correctly
+  profileStudent.value = null
+})
 </script>
 
 <style scoped>
@@ -180,7 +277,7 @@ async function onPoolDrop(evt) {
 
 @media (max-width: 480px) {
   .dashboard__pool-toggle-label {
-    display: none; /* Hide 'Pool' text on very small screens to save header space */
+    display: none;
   }
 }
 
@@ -249,7 +346,7 @@ async function onPoolDrop(evt) {
 /* ── Content Layout ─────────────────────────────────────────────── */
 .dashboard__content {
   display:        flex;
-  flex-direction: row;  /* grid left, pool right — independent columns */
+  flex-direction: row;
   flex:           1;
   overflow:       hidden;
 }
@@ -263,7 +360,7 @@ async function onPoolDrop(evt) {
   border-left:    1px solid var(--border);
   background:     var(--surface);
   box-shadow:     -2px 0 8px rgba(0,0,0,0.06);
-  overflow:       hidden; /* pool-list handles its own scroll */
+  overflow:       hidden;
 }
 
 .dashboard__pool-title {
@@ -304,7 +401,7 @@ async function onPoolDrop(evt) {
   display:         flex;
   align-items:     center;
   justify-content: space-between;
-  padding:         6px 10px; /* Denser padding */
+  padding:         6px 10px;
   background:      var(--bg-secondary);
   border-radius:   var(--radius-sm);
   cursor:          grab;
@@ -323,7 +420,7 @@ async function onPoolDrop(evt) {
 }
 
 .dashboard__pool-name {
-  font-size:     0.82rem; /* Denser font */
+  font-size:     0.82rem;
   font-weight:   600;
   color:         var(--text);
   white-space:   nowrap;
