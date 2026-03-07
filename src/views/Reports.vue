@@ -66,37 +66,7 @@
             </div>
           </div>
 
-          <!-- Stats row -->
-          <div class="reports__stats-row">
-            <div class="reports__stat-card">
-              <div class="reports__stat-value">{{ dossier.stats.value.washroomTrips }}</div>
-              <div class="reports__stat-label">🚽 Washroom</div>
-              <div class="reports__stat-sub">{{ dossier.stats.value.washroomMinutes }} min</div>
-            </div>
-            <div class="reports__stat-card">
-              <div class="reports__stat-value">{{ dossier.stats.value.redirects }}</div>
-              <div class="reports__stat-label">📱 On Device</div>
-            </div>
-            <div class="reports__stat-card">
-              <div class="reports__stat-value">{{ dossier.stats.value.absences }}</div>
-              <div class="reports__stat-label">🚫 Absences</div>
-            </div>
-            <div class="reports__stat-card">
-              <div class="reports__stat-value">{{ dossier.stats.value.lateCount }}</div>
-              <div class="reports__stat-label">⏰ Lates</div>
-              <div class="reports__stat-sub" v-if="dossier.stats.value.lateCount > 0">
-                avg {{ dossier.stats.value.avgLateMinutes }} min
-              </div>
-            </div>
-            <div class="reports__stat-card">
-              <div class="reports__stat-value">{{ dossier.stats.value.parentContactCount }}</div>
-              <div class="reports__stat-label">📞 Contacts</div>
-            </div>
-            <div class="reports__stat-card">
-              <div class="reports__stat-value">{{ dossier.stats.value.noteCount }}</div>
-              <div class="reports__stat-label">📝 Notes</div>
-            </div>
-          </div>
+
 
           <!-- Existing StudentProfile component -->
           <div class="reports__card">

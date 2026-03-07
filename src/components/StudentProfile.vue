@@ -31,6 +31,10 @@
           <div class="sp__card-value">{{ washroomTrips }}</div>
           <div class="sp__card-label">🚻 Washroom Trips</div>
         </div>
+        <div class="sp__card sp__card--device">
+          <div class="sp__card-value">{{ onDeviceCount }}</div>
+          <div class="sp__card-label">📱 On Device</div>
+        </div>
         <div v-if="topBehavior" class="sp__card sp__card--behavior">
           <div class="sp__card-value">{{ topBehavior.count }}</div>
           <div class="sp__card-label">{{ topBehavior.icon }} {{ topBehavior.label }}</div>
@@ -171,6 +175,10 @@ const washroomTrips = computed(() =>
   ).length
 )
 
+const onDeviceCount = computed(() =>
+  props.events.filter(e => e.category === 'redirect').length
+)
+
 const topBehavior = computed(() => {
   // Exclude attendance + toggle codes — focus on behaviour flags
   const counts = {}
@@ -259,6 +267,7 @@ const sortedEvents = computed(() =>
 .sp__card--absent   { border-left: 3px solid #ff3b30; }
 .sp__card--late     { border-left: 3px solid #ff9500; }
 .sp__card--washroom { border-left: 3px solid var(--primary); }
+.sp__card--device   { border-left: 3px solid #5856d6; }
 .sp__card--behavior { border-left: 3px solid #34c759; }
 
 .sp__card-value {
