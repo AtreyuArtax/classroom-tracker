@@ -74,6 +74,7 @@ Note: Additional build tool dependencies such as Vite are used heavily to manage
 * `components/RadialMenu.vue` - The circular modular action context overlay presented when selecting a `DeskTile`.
 * `components/SeatingGrid.vue` - Iteration container laying out dynamic dimensions for tracking seating configurations.
 * `components/StudentProfile.vue` - Visual breakdown rendering a single student's event history data into structured feeds and graphs.
+* `components/StudentTrendGraph.vue` - Period-aware line/bar chart rendering weekly behavior frequency trends on the student dossier.
 * `components/StudentProfileModal.vue` - Pop-up overlay encapsulating `StudentProfile.vue` logic specifically for contextual preview contexts during active instructional dashboard states.
 * `components/UndoButton.vue` - Contextual action resolving reversal closures tracked across the latest instructional session.
 * `composables/useClassroom.js` - Unified state manager syncing interactions surrounding classes, active selection variables, and live event tracking onto service objects.

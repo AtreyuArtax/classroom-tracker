@@ -150,6 +150,36 @@ export function useStudentDossier() {
             .sort((a, b) => (b.timestamp ?? '').localeCompare(a.timestamp ?? ''))
     )
 
+    // ─── trend graph data ────────────────────────────────────────────────────
+
+    const weeklyTrend = computed(() => {
+        if (!events.value.length) return []
+
+        // Group events by week start date (Monday) and category
+        const weeks = {}
+        for (const evt of events.value) {
+            const date = new Date(evt.timestamp)
+            // Get Monday of that week
+            const day = date.getDay()
+            const diff = (day === 0 ? -6 : 1 - day)
+            const monday = new Date(date)
+            monday.setDate(date.getDate() + diff)
+            monday.setHours(0, 0, 0, 0)
+            const weekKey = monday.toISOString().split('T')[0]
+
+            if (!weeks[weekKey]) weeks[weekKey] = { week: weekKey }
+            weeks[weekKey][evt.category] = (weeks[weekKey][evt.category] || 0) + 1
+        }
+
+        // Return sorted array
+        return Object.values(weeks).sort((a, b) => a.week.localeCompare(b.week))
+    })
+
+    const trendCategories = computed(() => {
+        const cats = new Set(events.value.map(e => e.category))
+        return [...cats]
+    })
+
     // ─── clear ────────────────────────────────────────────────────────────────
 
     function clearStudent() {
@@ -177,6 +207,8 @@ export function useStudentDossier() {
         // dossier
         events,
         noteEvents,
+        weeklyTrend,
+        trendCategories,
         student,
         loading,
         stats,

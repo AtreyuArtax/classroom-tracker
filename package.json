@@ -11,10 +11,12 @@
     "deploy": "gh-pages -d dist"
   },
   "dependencies": {
+    "chart.js": "^4.5.1",
     "idb": "^8.0.0",
     "lucide-vue-next": "^0.577.0",
     "papaparse": "^5.4.1",
-    "vue": "^3.4.0"
+    "vue": "^3.4.0",
+    "vue-chartjs": "^5.3.3"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.0.0",

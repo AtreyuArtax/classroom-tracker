@@ -68,7 +68,12 @@
             </div>
           </div>
 
-
+          <!-- Trend Graph -->
+          <StudentTrendGraph
+            :weekly-trend="dossier.weeklyTrend.value"
+            :categories="dossier.trendCategories.value"
+            :period="dossier.selectedPeriod.value"
+          />
 
           <!-- Existing StudentProfile component -->
           <div class="reports__card">
@@ -221,6 +226,7 @@ import { useClassroom }        from '../composables/useClassroom.js'
 import { useStudentDossier }   from '../composables/useStudentDossier.js'
 import * as eventService       from '../db/eventService.js'
 import StudentProfile          from '../components/StudentProfile.vue'
+import StudentTrendGraph       from '../components/StudentTrendGraph.vue'
 
 const {
   activeClass,
