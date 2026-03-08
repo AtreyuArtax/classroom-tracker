@@ -193,7 +193,7 @@ const topBehavior = computed(() => {
   const counts = {}
   for (const evt of props.events) {
     const c = props.behaviorCodes[evt.code]
-    if (!c || c.type === 'toggle' || c.type === 'attendance') continue
+    if (!c || c.type === 'toggle' || c.type === 'attendance' || c.category === 'redirect') continue
     counts[evt.code] = (counts[evt.code] ?? 0) + 1
   }
   const entries = Object.entries(counts).sort((a, b) => b[1] - a[1])
