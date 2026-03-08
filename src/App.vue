@@ -6,6 +6,16 @@
       <div class="app-nav__brand">
         <ClipboardList :size="24" class="app-nav__logo" />
         <span class="app-nav__title">Class Tracker</span>
+        <button 
+          v-if="isSyncLinked" 
+          class="app-nav__sync-btn" 
+          :class="{ 'app-nav__sync-btn--success': syncSuccess }"
+          @click="doQuickSync" 
+          :title="syncSuccess ? 'Synced!' : 'Quick Sync Backup'"
+          :disabled="isSyncing"
+        >
+          <Cloud :size="18" :class="{ 'app-nav__sync-icon--syncing': isSyncing }" />
+        </button>
       </div>
 
       <div class="app-nav__tabs" role="tablist">
@@ -48,12 +58,14 @@
  * Do NOT install or use vue-router.
  */
 
-import { ref, computed, onMounted } from 'vue'
-import { ClipboardList, LayoutDashboard, Settings, BarChart2 } from 'lucide-vue-next'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ClipboardList, LayoutDashboard, Settings, BarChart2, Cloud } from 'lucide-vue-next'
 import Dashboard from './views/Dashboard.vue'
 import Setup     from './views/Setup.vue'
 import Reports   from './views/Reports.vue'
 import { useClassroom } from './composables/useClassroom.js'
+import * as settingsService from './db/settingsService.js'
+import * as eventService from './db/eventService.js'
 
 // ─── navigation ──────────────────────────────────────────────────────────────
 
@@ -76,9 +88,37 @@ function navigateTo(viewId) {
 
 const { init } = useClassroom()
 
+const isSyncLinked = ref(false)
+const isSyncing    = ref(false)
+const syncSuccess  = ref(false)
+
+async function checkSyncStatus() {
+  const settings = await settingsService.getSettings()
+  isSyncLinked.value = !!settings.backupFileHandle
+}
+
 onMounted(async () => {
   await init()
+  await checkSyncStatus()
+  window.addEventListener('backup-linked', checkSyncStatus)
 })
+
+onUnmounted(() => {
+  window.removeEventListener('backup-linked', checkSyncStatus)
+})
+
+async function doQuickSync() {
+  if (isSyncing.value) return
+  isSyncing.value = true
+  const success = await eventService.quickSyncBackup()
+  isSyncing.value = false
+  if (success) {
+    syncSuccess.value = true
+    setTimeout(() => syncSuccess.value = false, 2500)
+  } else {
+    alert('Quick Sync failed! Please go to Reports > Backup to manually export, or try re-linking the sync folder in Reports.')
+  }
+}
 </script>
 
 <style scoped>
@@ -120,6 +160,39 @@ onMounted(async () => {
   font-size:   1rem;
   font-weight: 700;
   color:       var(--text);
+}
+
+.app-nav__sync-btn {
+  background:      transparent;
+  border:          none;
+  color:           var(--text-secondary);
+  cursor:          pointer;
+  padding:         6px;
+  border-radius:   50%;
+  margin-left:     8px;
+  display:         flex;
+  align-items:     center;
+  justify-content: center;
+  transition:      all 0.2s ease;
+}
+
+.app-nav__sync-btn:hover {
+  background: var(--bg-secondary);
+  color:      var(--primary);
+}
+
+.app-nav__sync-btn--success {
+  color: var(--state-success) !important;
+}
+
+.app-nav__sync-icon--syncing { 
+  opacity:   0.5; 
+  animation: setupPulse 1s infinite alternate; 
+}
+
+@keyframes setupPulse {
+  0%   { transform: scale(1); }
+  100% { transform: scale(1.15); }
 }
 
 /* ── Tab strip ───────────────────────────────────────────────────────── */

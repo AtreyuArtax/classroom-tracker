@@ -337,6 +337,71 @@
       </div>
     </section>
 
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <!-- TAB D: Data Backup                                         -->
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <section v-else-if="activeTab === 'backup'" class="setup__panel">
+      <!-- Live Quick Sync -->
+      <div class="setup__card">
+        <h2 class="setup__card-title">Live Quick Sync</h2>
+        <p class="setup__hint">
+          Link a JSON file in your local cloud drive (like OneDrive/Google Drive). Once linked, you can Quick Sync directly to it with one click.
+        </p>
+        <div style="display: flex; gap: 8px;">
+          <button class="setup__btn-primary" @click="linkBackupFile">
+            <Database :size="16" style="margin-right: 4px;" /> Link Sync File
+          </button>
+          <button class="setup__btn-ghost" @click="manualQuickSync" :disabled="!isSyncLinked">
+            Quick Sync Now
+          </button>
+        </div>
+        <p v-if="syncMsg" class="setup__msg" :class="{ 'setup__result-ok': syncMsg.startsWith('✅'), 'setup__error': syncMsg.startsWith('❌') }">{{ syncMsg }}</p>
+      </div>
+
+      <!-- Manual Backup -->
+      <div class="setup__card">
+        <h2 class="setup__card-title">Manual Export Backup</h2>
+        <p class="setup__hint">Downloads all classes, students, and events as a single JSON file. No data leaves your device.</p>
+        <button class="setup__btn-primary" @click="doExport">
+          <Download :size="16" style="margin-right: 4px;" /> Download Backup
+        </button>
+        <p v-if="backupMsg" class="setup__msg">{{ backupMsg }}</p>
+      </div>
+
+      <!-- Restore from Backup -->
+      <div class="setup__card">
+        <h2 class="setup__card-title">Restore from Backup</h2>
+        <p class="setup__hint" style="color: var(--state-danger);">⚠️ This will <strong>overwrite all existing data</strong>. A summary will be shown before anything is written.</p>
+        <label class="setup__file-label" for="backup-file">
+          <FolderOpen :size="16" style="margin-right: 4px;" /> Choose backup JSON
+          <input id="backup-file" type="file" accept=".json,application/json" class="setup__file-input" @change="onBackupFileSelected" />
+        </label>
+
+        <!-- Preview Dialog -->
+        <div v-if="importPreview" class="setup__dialog" role="dialog" aria-modal="true">
+          <div class="setup__dialog-box">
+            <h3 class="setup__dialog-title">Confirm Restore</h3>
+            <p class="setup__dialog-body">
+              This backup was created on <strong>{{ formatDate(importPreview.exportedAt) }}</strong> and contains:
+            </p>
+            <ul class="setup__dialog-list" style="margin-left: 1rem; margin-top: 0.5rem; margin-bottom: 1rem; color: var(--text-secondary);">
+              <li>{{ importPreview.classes?.length ?? 0 }} classes</li>
+              <li>{{ importPreview.events?.length ?? 0 }} events</li>
+            </ul>
+            <p class="setup__dialog-warn" style="color: var(--state-danger); margin-bottom: 1rem; font-weight: 500;">
+              All current data will be overwritten. This cannot be undone.
+            </p>
+            <div class="setup__dialog-actions">
+              <button class="setup__btn-danger" @click="doImport">Restore Now</button>
+              <button class="setup__btn-ghost" @click="importPreview = null">Cancel</button>
+            </div>
+          </div>
+          <div class="setup__dialog-backdrop" @click="importPreview = null" />
+        </div>
+        <p v-if="restoreMsg" class="setup__msg" :class="{ 'setup__result-ok': restoreMsg.startsWith('✅'), 'setup__error': restoreMsg.startsWith('❌') }">{{ restoreMsg }}</p>
+      </div>
+    </section>
+
   </div>
 </template>
 
@@ -354,11 +419,12 @@
  * reloadBehaviorCodes() to keep the reactive ref in sync.
  */
 
-import { ref, reactive, computed } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import Papa from 'papaparse'
-import { Archive, ChevronDown, ChevronUp, FolderOpen, Trash2, FileText, Pencil } from 'lucide-vue-next'
+import { Archive, ChevronDown, ChevronUp, FolderOpen, Trash2, FileText, Pencil, Download, Database, Cloud } from 'lucide-vue-next'
 import { resolveIcon }       from '../utils/icons.js'
 import { useClassroom }      from '../composables/useClassroom.js'
+import * as eventService       from '../db/eventService.js'
 import * as settingsService  from '../db/settingsService.js'
 
 const {
@@ -409,6 +475,7 @@ const tabs = [
   { id: 'classes', label: 'Classes' },
   { id: 'roster',  label: 'Roster'  },
   { id: 'codes',   label: 'Behavior Codes' },
+  { id: 'backup',  label: 'Data Backup' },
 ]
 const activeTab = ref('classes')
 
@@ -632,6 +699,110 @@ async function deleteCode(codeKey) {
   if (!window.confirm(`Delete behavior code "${name}"? This will not affect past events, but will remove it from the radial menu.`)) return
   await settingsService.deleteBehaviorCode(codeKey)
   await reloadBehaviorCodes()
+}
+// ─── Backup logic ─────────────────────────────────────────────────────────────
+
+const backupMsg     = ref('')
+const restoreMsg    = ref('')
+const syncMsg       = ref('')
+const importPreview = ref(null)
+const isSyncLinked  = ref(false)
+
+onMounted(async () => {
+  const settings = await settingsService.getSettings()
+  isSyncLinked.value = !!settings.backupFileHandle
+})
+
+async function linkBackupFile() {
+  if (!window.showSaveFilePicker) {
+    syncMsg.value = '❌ Quick Sync is not supported on this device/browser.'
+    return
+  }
+  try {
+    const handle = await window.showSaveFilePicker({
+      suggestedName: 'classroom-tracker-live-backup.json',
+      types: [{ description: 'JSON Backup', accept: { 'application/json': ['.json'] } }],
+    })
+    const settings = await settingsService.getSettings()
+    await settingsService.saveSettings({ ...settings, backupFileHandle: handle })
+    isSyncLinked.value = true
+    syncMsg.value = '✅ Sync file linked successfully! You can now use Quick Sync.'
+    window.dispatchEvent(new Event('backup-linked'))
+  } catch (err) {
+    if (err.name !== 'AbortError') syncMsg.value = `❌ Failed to link: ${err.message}`
+  }
+}
+
+async function manualQuickSync() {
+  syncMsg.value = 'Syncing...'
+  const success = await eventService.quickSyncBackup()
+  if (success) {
+    syncMsg.value = `✅ Synced to linked file at ${new Date().toLocaleTimeString()}`
+    setTimeout(() => { if (syncMsg.value.startsWith('✅')) syncMsg.value = '' }, 3000)
+  } else {
+    syncMsg.value = '❌ Sync failed. Permissions may have been denied or file moved.'
+  }
+}
+
+async function doExport() {
+  backupMsg.value = ''
+  try {
+    const data = await eventService.exportAllData()
+    const json = JSON.stringify(data, null, 2)
+    const blob = new Blob([json], { type: 'application/json' })
+    const url  = URL.createObjectURL(blob)
+    const a    = document.createElement('a')
+    a.href     = url
+    a.download = `class-tracker-backup-${new Date().toISOString().slice(0, 10)}.json`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+    backupMsg.value = '✅ Backup file downloaded.'
+    setTimeout(() => backupMsg.value = '', 3000)
+  } catch (err) {
+    backupMsg.value = '❌ Export failed: ' + err.message
+  }
+}
+
+function onBackupFileSelected(evt) {
+  const file = evt.target.files[0]
+  if (!file) return
+  restoreMsg.value = ''
+  const reader = new FileReader()
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result)
+      if (data.schemaVersion !== 1 || !data.classes || !data.events) {
+        throw new Error('Invalid backup file format.')
+      }
+      importPreview.value = data
+    } catch (err) {
+      restoreMsg.value = '❌ Invalid backup file: ' + err.message
+    }
+  }
+  reader.onerror = () => { restoreMsg.value = '❌ Failed to read file.' }
+  reader.readAsText(file)
+  evt.target.value = ''
+}
+
+async function doImport() {
+  if (!importPreview.value) return
+  restoreMsg.value = ''
+  try {
+    const result = await eventService.importAllData(importPreview.value)
+    importPreview.value = null
+    restoreMsg.value = `✅ Restore complete — ${result.classCount} classes, ${result.eventCount} events. Refreshing…`
+    setTimeout(() => window.location.reload(), 1500)
+  } catch (err) {
+    importPreview.value = null
+    restoreMsg.value = `❌ Restore failed: ${err.message}`
+  }
+}
+
+function formatDate(iso) {
+  if (!iso) return 'unknown date'
+  return new Date(iso).toLocaleString()
 }
 </script>
 

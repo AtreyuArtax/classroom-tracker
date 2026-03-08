@@ -43,6 +43,7 @@ async function _readSettings() {
             cv: { icon: 'MessageSquare', label: 'Conversation', category: 'note', type: 'standard', requiresNote: true, isTopLevel: false },
             pc: { icon: 'Phone', label: 'Parent', category: 'communication', type: 'standard', requiresNote: true, isTopLevel: true },
         },
+        backupFileHandle: null,
     }
     await db.put('settings', defaults, SETTINGS_KEY)
     return defaults

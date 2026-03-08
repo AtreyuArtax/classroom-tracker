@@ -193,6 +193,42 @@ export async function exportAllData() {
 }
 
 /**
+ * Uses the File System Access API to silently overwrite a previously linked backup JSON file.
+ * Returns true if successful, false if user denied permission or no handle exists.
+ *
+ * @returns {Promise<boolean>}
+ */
+export async function quickSyncBackup() {
+    if (!window.showSaveFilePicker) return false // fallback or unsupported
+
+    const db = await getDB()
+    const settings = await db.get('settings', 'singleton')
+    if (!settings || !settings.backupFileHandle) return false
+
+    const handle = settings.backupFileHandle
+
+    try {
+        // Request write permission if we don't already have it
+        if ((await handle.queryPermission({ mode: 'readwrite' })) !== 'granted') {
+            const permission = await handle.requestPermission({ mode: 'readwrite' })
+            if (permission !== 'granted') return false
+        }
+
+        const data = await exportAllData()
+        const json = JSON.stringify(data, null, 2)
+
+        const writable = await handle.createWritable()
+        await writable.write(json)
+        await writable.close()
+
+        return true
+    } catch (err) {
+        console.error('Quick sync failed:', err)
+        return false // e.g. file was moved/deleted/permission denied
+    }
+}
+
+/**
  * Restores all data from a backup object.
  * CLAUDE.md §13:
  *  - Validates schemaVersion before writing anything

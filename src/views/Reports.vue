@@ -135,8 +135,8 @@
               </button>
             </div>
 
-            <!-- Date filter (all tabs except backup) -->
-            <div v-if="activeTab !== 'backup'" class="reports__filter">
+            <!-- Date filter -->
+            <div class="reports__filter">
               <label class="reports__filter-label">
                 Class
                 <select v-model="reportClassId" class="reports__input" @change="runReport">
@@ -181,46 +181,6 @@
                 <ExportBar :events="reportData" filename="attendance-summary" />
               </div>
             </section>
-
-            <!-- Backup & Restore -->
-            <section v-else-if="activeTab === 'backup'" class="reports__panel">
-              <div class="reports__card">
-                <h2 class="reports__card-title">Export Backup</h2>
-                <p class="reports__hint">Downloads all classes, students, and events as a single JSON file. No data leaves your device.</p>
-                <button class="reports__btn-primary" @click="doExport">
-                  <Download :size="16" /> Download Backup
-                </button>
-                <p v-if="backupMsg" class="reports__msg">{{ backupMsg }}</p>
-              </div>
-              <div class="reports__card">
-                <h2 class="reports__card-title">Restore from Backup</h2>
-                <p class="reports__hint">⚠️ This will <strong>overwrite all existing data</strong>. A summary will be shown before anything is written.</p>
-                <label class="reports__file-label" for="backup-file">
-                  <FolderOpen :size="16" /> Choose backup JSON
-                  <input id="backup-file" type="file" accept=".json,application/json" class="reports__file-input" @change="onBackupFileSelected" />
-                </label>
-                <div v-if="importPreview" class="reports__dialog" role="dialog" aria-modal="true">
-                  <div class="reports__dialog-box">
-                    <h3 class="reports__dialog-title">Confirm Restore</h3>
-                    <p class="reports__dialog-body">
-                      This backup was created on <strong>{{ formatDate(importPreview.exportedAt) }}</strong> and contains:
-                    </p>
-                    <ul class="reports__dialog-list">
-                      <li>{{ importPreview.classes?.length ?? 0 }} classes</li>
-                      <li>{{ importPreview.events?.length ?? 0 }} events</li>
-                    </ul>
-                    <p class="reports__dialog-warn">All current data will be overwritten. This cannot be undone.</p>
-                    <div class="reports__dialog-actions">
-                      <button class="reports__btn-danger" @click="doImport">Restore Now</button>
-                      <button class="reports__btn-ghost" @click="importPreview = null">Cancel</button>
-                    </div>
-                  </div>
-                  <div class="reports__dialog-backdrop" @click="importPreview = null" />
-                </div>
-                <p v-if="restoreMsg" class="reports__msg">{{ restoreMsg }}</p>
-              </div>
-            </section>
-
           </template>
         </template>
 
@@ -247,7 +207,7 @@
  */
 
 import { ref, computed, watch, defineComponent, h, onMounted } from 'vue'
-import { Download, FolderOpen, Database, BarChart2 } from 'lucide-vue-next'
+import { BarChart2 } from 'lucide-vue-next'
 import { resolveIcon }         from '../utils/icons.js'
 import { useClassroom }        from '../composables/useClassroom.js'
 import { useStudentDossier }   from '../composables/useStudentDossier.js'
@@ -311,7 +271,7 @@ async function onSelectStudent(studentId) {
   await dossier.loadStudent(sidebarClassId.value, studentId)
 }
 
-/** Switches right panel to aggregate Class Overview */
+// Ensure active class syncs with rightmost class selector if on overview */
 function showOverview() {
   rightMode.value = 'overview'
   dossier.clearStudent()
@@ -358,7 +318,6 @@ const overviewTabs = [
   { id: 'class',      label: 'Class'      },
   { id: 'washroom',   label: 'Washroom'   },
   { id: 'attendance', label: 'Attendance' },
-  { id: 'backup',     label: 'Backup', icon: Database },
 ]
 
 const activeTab = ref('class')
@@ -440,83 +399,6 @@ async function deleteEvent(eventId) {
 const behaviorCodesMap = computed(() =>
   Object.fromEntries(behaviorCodes.value.map(c => [c.codeKey, c]))
 )
-
-
-
-
-
-
-
-
-// ─── backup / restore (§13) ──────────────────────────────────────────────────
-
-const backupMsg     = ref('')
-const restoreMsg    = ref('')
-const importPreview = ref(null)
-
-async function doExport() {
-  backupMsg.value = ''
-  try {
-    const data     = await eventService.exportAllData()
-    const json     = JSON.stringify(data, null, 2)
-    const blob     = new Blob([json], { type: 'application/json' })
-    const url      = URL.createObjectURL(blob)
-    const date     = new Date().toISOString().slice(0, 10)
-    const filename = `classroom-backup-${date}.json`
-
-    const a    = document.createElement('a')
-    a.href     = url
-    a.download = filename
-    a.click()
-    URL.revokeObjectURL(url)
-
-    backupMsg.value = `✅ Backup downloaded: ${filename}`
-  } catch (err) {
-    backupMsg.value = `❌ Export failed: ${err.message}`
-  }
-}
-
-function onBackupFileSelected(evt) {
-  const file = evt.target.files?.[0]
-  if (!file) return
-  restoreMsg.value = ''
-
-  const reader = new FileReader()
-  reader.onload = (e) => {
-    try {
-      const parsed = JSON.parse(e.target.result)
-      if (parsed.schemaVersion !== 1) {
-        restoreMsg.value = `❌ Schema version mismatch (v${parsed.schemaVersion}). Expected v1. Aborting.`
-        return
-      }
-      importPreview.value = parsed
-    } catch {
-      restoreMsg.value = '❌ Could not parse file — is it a valid backup JSON?'
-    }
-  }
-  reader.readAsText(file)
-  evt.target.value = ''
-}
-
-async function doImport() {
-  if (!importPreview.value) return
-  restoreMsg.value  = ''
-  try {
-    const result = await eventService.importAllData(importPreview.value)
-    importPreview.value = null
-    restoreMsg.value = `✅ Restore complete — ${result.classCount} classes, ${result.eventCount} events. Refreshing…`
-    // Reload the page so all reactive state is rebuilt fresh from IDB
-    setTimeout(() => window.location.reload(), 1500)
-  } catch (err) {
-    importPreview.value = null
-    restoreMsg.value = `❌ Restore failed: ${err.message}`
-  }
-}
-
-function formatDate(iso) {
-  if (!iso) return 'unknown date'
-  return new Date(iso).toLocaleString()
-}
 
 // ─── inline sub-components ────────────────────────────────────────────────────
 
