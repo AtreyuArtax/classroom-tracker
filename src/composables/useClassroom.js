@@ -62,6 +62,35 @@ const sortedRoster = computed(() =>
         .sort((a, b) => a.lastName.localeCompare(b.lastName))
 )
 
+// ─── weekly stats ─────────────────────────────────────────────────────────────
+
+/** @type {import('vue').Ref<{washroomTripsPerWeek: number, deviceIncidentsPerWeek: number}>} */
+const thresholds = ref({ washroomTripsPerWeek: 4, deviceIncidentsPerWeek: 3 })
+
+/** @type {import('vue').Ref<Object>} Shape: { [studentId]: { washroomTrips: N, deviceIncidents: N } } */
+const studentWeeklyStats = ref({})
+
+async function computeWeeklyStats(classId, studentIds) {
+    // Get Monday of current week
+    const now = new Date()
+    const day = now.getDay()
+    const diff = day === 0 ? -6 : 1 - day
+    const monday = new Date(now)
+    monday.setDate(now.getDate() + diff)
+    monday.setHours(0, 0, 0, 0)
+    const fromISO = monday.toISOString()
+
+    const stats = {}
+    for (const studentId of studentIds) {
+        const events = await eventService.getEventsByStudent(studentId, { from: fromISO })
+        stats[studentId] = {
+            washroomTrips: events.filter(e => e.code === 'w').length,
+            deviceIncidents: events.filter(e => e.category === 'redirect').length
+        }
+    }
+    studentWeeklyStats.value = stats
+}
+
 // ─── auto-suggest ─────────────────────────────────────────────────────────────
 
 /**
@@ -483,9 +512,27 @@ async function logStandardEvent(studentId, code, note = null) {
     // Reactive update: store last event for desk tile flash
     students.value[studentId].lastEvent = { code, ts: Date.now() }
 
+    // Optimistic update for stats dot
+    const category = behaviorCodes.value.find(c => c.codeKey === code)?.category
+    if (code === 'w' || category === 'redirect') {
+        const current = studentWeeklyStats.value[studentId] || { washroomTrips: 0, deviceIncidents: 0 }
+        studentWeeklyStats.value[studentId] = {
+            washroomTrips: code === 'w' ? current.washroomTrips + 1 : current.washroomTrips,
+            deviceIncidents: category === 'redirect' ? current.deviceIncidents + 1 : current.deviceIncidents
+        }
+    }
+
     pushUndo(async () => {
         await eventService.deleteEvent(eventId)
         students.value[studentId].lastEvent = null
+
+        if (code === 'w' || category === 'redirect') {
+            const current = studentWeeklyStats.value[studentId] || { washroomTrips: 0, deviceIncidents: 0 }
+            studentWeeklyStats.value[studentId] = {
+                washroomTrips: code === 'w' ? Math.max(0, current.washroomTrips - 1) : current.washroomTrips,
+                deviceIncidents: category === 'redirect' ? Math.max(0, current.deviceIncidents - 1) : current.deviceIncidents
+            }
+        }
     })
 }
 
@@ -532,6 +579,15 @@ async function logToggleEvent(studentId, code) {
         students.value[studentId].activeStates = { isOut: false, outTime: null }
         students.value[studentId].lastEvent = { code, ts: Date.now() }
 
+        // Optimistic update for stats dot
+        if (code === 'w') {
+            const current = studentWeeklyStats.value[studentId] || { washroomTrips: 0, deviceIncidents: 0 }
+            studentWeeklyStats.value[studentId] = {
+                ...current,
+                washroomTrips: current.washroomTrips + 1,
+            }
+        }
+
         // Undo: restore the exact original state (with original outTime) + delete event
         pushUndo(async () => {
             const restoredState = { isOut: true, outTime: originalOutTime }
@@ -539,6 +595,14 @@ async function logToggleEvent(studentId, code) {
             await eventService.deleteEvent(eventId)
             students.value[studentId].activeStates = restoredState
             students.value[studentId].lastEvent = null
+
+            if (code === 'w') {
+                const current = studentWeeklyStats.value[studentId] || { washroomTrips: 0, deviceIncidents: 0 }
+                studentWeeklyStats.value[studentId] = {
+                    ...current,
+                    washroomTrips: Math.max(0, current.washroomTrips - 1),
+                }
+            }
         })
     }
 }
@@ -644,6 +708,9 @@ async function _activateClass(cls) {
     activeClass.value = cls
     // Deep-copy students map so Vue can track nested mutations
     students.value = JSON.parse(JSON.stringify(cls.students ?? {}))
+
+    thresholds.value = await settingsService.getThresholds()
+    await computeWeeklyStats(cls.classId, Object.keys(cls.students ?? {}))
 }
 
 // ─── export ───────────────────────────────────────────────────────────────────
@@ -655,6 +722,8 @@ export function useClassroom() {
         activeClass,
         suggestedClass,
         students,
+        studentWeeklyStats,
+        thresholds,
         behaviorCodes,
         gridSize,
         // computed

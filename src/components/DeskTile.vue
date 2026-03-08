@@ -28,6 +28,13 @@
     @dragend="isDragging = false"
     @click="openRadialForStudent"
   >
+    <!-- Stats dot — top left corner -->
+    <span
+      v-if="showStatsDot"
+      class="desk-tile__stats-dot"
+      :title="statsDotTooltip"
+    />
+
     <!-- Student name -->
     <div class="desk-tile__name">
       <span class="desk-tile__first">{{ student.firstName }}</span>
@@ -93,7 +100,29 @@ const emit = defineEmits(['seat-drop']) // emitted to SeatingGrid for drag/drop 
 // ─── composables ──────────────────────────────────────────────────────────────
 
 const { open: openRadial } = useRadial()
-const { behaviorCodes, assignSeat } = useClassroom()
+const { behaviorCodes, assignSeat, studentWeeklyStats, thresholds } = useClassroom()
+
+const showStatsDot = computed(() => {
+  const stats = studentWeeklyStats.value[props.studentId]
+  if (!stats || !thresholds.value) return false
+  return (
+    stats.washroomTrips >= (thresholds.value.washroomTripsPerWeek ?? 4) ||
+    stats.deviceIncidents >= (thresholds.value.deviceIncidentsPerWeek ?? 3)
+  )
+})
+
+const statsDotTooltip = computed(() => {
+  const stats = studentWeeklyStats.value[props.studentId]
+  if (!stats || !thresholds.value) return ''
+  const parts = []
+  if (stats.washroomTrips >= (thresholds.value.washroomTripsPerWeek ?? 4)) {
+    parts.push(`${stats.washroomTrips} washroom trips this week`)
+  }
+  if (stats.deviceIncidents >= (thresholds.value.deviceIncidentsPerWeek ?? 3)) {
+    parts.push(`${stats.deviceIncidents} device incidents this week`)
+  }
+  return parts.join(' · ')
+})
 
 // ─── radial ───────────────────────────────────────────────────────────────────
 
@@ -222,6 +251,7 @@ function onDrop(evt) {
 <style scoped>
 /* ── Base tile ───────────────────────────────────────────────────────────── */
 .desk-tile {
+  position:        relative;
   display:         flex;
   flex-direction:  column;
   align-items:     center;
@@ -266,6 +296,18 @@ function onDrop(evt) {
   font-size:  0.65rem;
   color:      var(--text-secondary);
   text-align: center;
+}
+
+/* ── Stats dot (§10 / Update 07) ─────────────────────────────────────────── */
+.desk-tile__stats-dot {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #ff3b30;
+  box-shadow: 0 1px 3px rgba(255, 59, 48, 0.4);
 }
 
 /* ── Student name ────────────────────────────────────────────────────────── */

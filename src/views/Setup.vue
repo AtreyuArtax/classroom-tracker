@@ -281,6 +281,23 @@
     <section v-else-if="activeTab === 'codes'" class="setup__panel">
 
       <div class="setup__card">
+        <h2 class="setup__card-title">Behavior Thresholds</h2>
+        <p class="setup__hint">These thresholds control when a warning dot appears on a student's desk tile.</p>
+        <form class="setup__form" @submit.prevent="saveThresholds">
+          <label class="setup__label">
+            Washroom trips per week
+            <input v-model.number="editThresholds.washroomTripsPerWeek" type="number" min="1" max="20" class="setup__input" required />
+          </label>
+          <label class="setup__label">
+            Device incidents per week
+            <input v-model.number="editThresholds.deviceIncidentsPerWeek" type="number" min="1" max="20" class="setup__input" required />
+          </label>
+          <button type="submit" class="setup__btn-primary">Save Thresholds</button>
+        </form>
+        <p v-if="thresholdsSuccess" class="setup__result-ok">{{ thresholdsSuccess }}</p>
+      </div>
+
+      <div class="setup__card">
         <h2 class="setup__card-title">Behavior Codes</h2>
 
         <ul class="setup__code-list">
@@ -446,6 +463,7 @@ const {
   archivedClasses,
   activeClass,
   students,
+  thresholds: classroomThresholds,
   behaviorCodes,
   gridSize,
   sortedRoster,
@@ -671,6 +689,30 @@ function classNameById(classId) {
 }
 
 // ─── behavior code CRUD ───────────────────────────────────────────────────────
+
+const editThresholds     = reactive({ washroomTripsPerWeek: 4, deviceIncidentsPerWeek: 3 })
+const thresholdsSuccess  = ref('')
+
+onMounted(async () => {
+  const current = await settingsService.getThresholds()
+  if (current) {
+    editThresholds.washroomTripsPerWeek = current.washroomTripsPerWeek
+    editThresholds.deviceIncidentsPerWeek = current.deviceIncidentsPerWeek
+  }
+})
+
+async function saveThresholds() {
+  await settingsService.saveThresholds({
+    washroomTripsPerWeek: editThresholds.washroomTripsPerWeek,
+    deviceIncidentsPerWeek: editThresholds.deviceIncidentsPerWeek
+  })
+  // Sync the reactive ref in useClassroom so UI updates immediately
+  classroomThresholds.value.washroomTripsPerWeek = editThresholds.washroomTripsPerWeek
+  classroomThresholds.value.deviceIncidentsPerWeek = editThresholds.deviceIncidentsPerWeek
+  
+  thresholdsSuccess.value = 'Saved!'
+  setTimeout(() => { thresholdsSuccess.value = '' }, 1500)
+}
 
 const existingCategories = computed(() => {
   const cats = new Set(behaviorCodes.value.map(c => c.category))

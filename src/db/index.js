@@ -20,7 +20,7 @@
 import { openDB } from 'idb'
 
 const DB_NAME = 'classroomTrackerDB'
-const DB_VERSION = 6
+const DB_VERSION = 7
 
 /**
  * Cached promise — set synchronously before the first await so every
@@ -80,6 +80,10 @@ export function getDB() {
               cv: { icon: 'MessageSquare', label: 'Conversation', category: 'note', type: 'standard', requiresNote: true, isTopLevel: false },
               pc: { icon: 'Phone', label: 'Parent', category: 'communication', type: 'standard', requiresNote: true, isTopLevel: true },
             },
+            thresholds: {
+              washroomTripsPerWeek: 4,
+              deviceIncidentsPerWeek: 3
+            }
           },
           'singleton'
         )
@@ -141,6 +145,24 @@ export function getDB() {
           }
           if (changed) await classesStore.put(cls)
         }
+      }
+
+      // ── version 7 migration ────────────────────────────────────────────────
+      // Add behavior component thresholds to settings
+      if (oldVersion < 7) {
+        const tx7 = db.transaction('settings', 'readwrite')
+        const settingsStore = tx7.objectStore('settings')
+        const settings = await settingsStore.get('singleton')
+        if (settings) {
+          if (settings.thresholds === undefined) {
+            settings.thresholds = {
+              washroomTripsPerWeek: 4,
+              deviceIncidentsPerWeek: 3
+            }
+            await settingsStore.put(settings, 'singleton')
+          }
+        }
+        await tx7.done
       }
     },
   })

@@ -32,7 +32,7 @@ async function _readSettings() {
 
     // Fallback: seed defaults (should have been written during upgrade, but guard anyway)
     const defaults = {
-        schemaVersion: 6,
+        schemaVersion: 7,
         gridSize: { rows: 6, cols: 6 },
         behaviorCodes: {
             p: { icon: 'Hand', label: 'Participation', category: 'positive', type: 'standard', requiresNote: false, isTopLevel: false },
@@ -41,8 +41,11 @@ async function _readSettings() {
             a: { icon: 'UserX', label: 'Absent', category: 'attendance', type: 'attendance', requiresNote: false, isTopLevel: false },
             l: { icon: 'Clock', label: 'Late', category: 'attendance', type: 'attendance', requiresNote: false, isTopLevel: false },
             ob: { icon: 'Eye', label: 'Observation', category: 'note', type: 'standard', requiresNote: true, isTopLevel: false },
-            cv: { icon: 'MessageSquare', label: 'Conversation', category: 'note', type: 'standard', requiresNote: true, isTopLevel: false },
             pc: { icon: 'Phone', label: 'Parent', category: 'communication', type: 'standard', requiresNote: true, isTopLevel: true },
+        },
+        thresholds: {
+            washroomTripsPerWeek: 4,
+            deviceIncidentsPerWeek: 3
         },
         backupFileHandle: null,
     }
@@ -114,6 +117,30 @@ export async function deleteBehaviorCode(codeKey) {
     const db = await getDB()
     const settings = await db.get('settings', 'singleton')
     delete settings.behaviorCodes[codeKey]
+    await db.put('settings', settings, 'singleton')
+    hasUnsyncedChanges.value = true
+}
+
+/**
+ * Returns the current behavior thresholds.
+ *
+ * @returns {Promise<{washroomTripsPerWeek: number, deviceIncidentsPerWeek: number}>}
+ */
+export async function getThresholds() {
+    const settings = await _readSettings()
+    return settings.thresholds
+}
+
+/**
+ * Saves behavior thresholds.
+ *
+ * @param {{washroomTripsPerWeek: number, deviceIncidentsPerWeek: number}} thresholdsObj
+ * @returns {Promise<void>}
+ */
+export async function saveThresholds(thresholdsObj) {
+    const db = await getDB()
+    const settings = await db.get('settings', 'singleton')
+    settings.thresholds = thresholdsObj
     await db.put('settings', settings, 'singleton')
     hasUnsyncedChanges.value = true
 }
