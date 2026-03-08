@@ -244,6 +244,7 @@
               <span class="setup__code-key">{{ code.codeKey }}</span>
               <span class="setup__code-label">{{ code.label }}</span>
               <span class="setup__code-meta">{{ code.category }} · {{ code.type }}</span>
+              <span v-if="code.isTopLevel" class="setup__code-note-badge">📍 Pinned to Menu</span>
               <span v-if="code.requiresNote" class="setup__code-note-badge"><FileText :size="14" class="setup__note-icon" /> Note required</span>
             </div>
             <div class="setup__code-actions">
@@ -271,12 +272,11 @@
             <input v-model="newCode.label" class="setup__input" placeholder="Participation" required />
           </label>
           <label class="setup__label">
-            Category
-            <select v-model="newCode.category" class="setup__input">
-              <option value="positive">positive</option>
-              <option value="redirect">redirect</option>
-              <option value="neutral">neutral</option>
-            </select>
+            Category (used for folder grouping)
+            <input v-model="newCode.category" list="category-list" class="setup__input" placeholder="e.g. positive" required />
+            <datalist id="category-list">
+              <option v-for="cat in existingCategories" :key="cat" :value="cat" />
+            </datalist>
           </label>
           <label class="setup__label">
             Type
@@ -288,6 +288,10 @@
           <label class="setup__label setup__label--checkbox">
             <input type="checkbox" v-model="newCode.requiresNote" class="setup__checkbox" />
             Requires a note when tapped
+          </label>
+          <label class="setup__label setup__label--checkbox">
+            <input type="checkbox" v-model="newCode.isTopLevel" class="setup__checkbox" />
+            Pin to main menu (Top Level)
           </label>
           <button type="submit" class="setup__btn-primary">Save Code</button>
         </form>
@@ -475,12 +479,30 @@ function classNameById(classId) {
 
 // ─── behavior code CRUD ───────────────────────────────────────────────────────
 
-const newCode = reactive({ codeKey: '', icon: '', label: '', category: 'positive', type: 'standard', requiresNote: false })
+const existingCategories = computed(() => {
+  const cats = new Set(behaviorCodes.value.map(c => c.category))
+  return Array.from(cats).sort()
+})
+
+const newCode = reactive({ codeKey: '', icon: '', label: '', category: '', type: 'standard', requiresNote: false, isTopLevel: false })
 
 async function saveCode() {
+  if (newCode.isTopLevel) {
+    let pinnedCount = 0
+    for (const code of behaviorCodes.value) {
+      if (code.codeKey !== newCode.codeKey && code.isTopLevel) {
+        pinnedCount++
+      }
+    }
+    if (pinnedCount >= 6) {
+      window.alert('The main menu is full (Max 6 custom items). Please unpin an existing behavior first by editing it.')
+      return
+    }
+  }
+
   await settingsService.saveBehaviorCode({ ...newCode })
   await reloadBehaviorCodes()
-  Object.assign(newCode, { codeKey: '', icon: '', label: '', category: 'positive', type: 'standard', requiresNote: false })
+  Object.assign(newCode, { codeKey: '', icon: '', label: '', category: '', type: 'standard', requiresNote: false, isTopLevel: false })
 }
 
 function editCode(code) {
@@ -490,7 +512,8 @@ function editCode(code) {
     label: code.label, 
     category: code.category, 
     type: code.type, 
-    requiresNote: code.requiresNote 
+    requiresNote: code.requiresNote,
+    isTopLevel: code.isTopLevel || false
   })
 }
 

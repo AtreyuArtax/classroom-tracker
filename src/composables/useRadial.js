@@ -30,11 +30,6 @@ import { ref, computed } from 'vue'
 
 // ─── layout configuration ──────────────────────────────────────────────────────
 
-/**
- * Categories whose codes appear directly on the first level (no drill-down).
- * All other categories get a single category button that drills into a sub-menu.
- */
-const DIRECT_CATEGORIES = new Set(['neutral', 'redirect', 'communication'])
 
 // ─── module-level singleton state ─────────────────────────────────────────────
 
@@ -107,7 +102,7 @@ const visibleItems = computed(() => {
     const categoryButtonsSeen = new Set()
 
     for (const code of allCodes.value) {
-        if (DIRECT_CATEGORIES.has(code.category)) {
+        if (code.isTopLevel === true) {
             // Direct code — show on first level as-is
             firstLevel.push({ ...code, isCategory: false })
         } else {

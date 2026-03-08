@@ -20,7 +20,7 @@
 import { openDB } from 'idb'
 
 const DB_NAME = 'classroomTrackerDB'
-const DB_VERSION = 4
+const DB_VERSION = 6
 
 /**
  * Cached promise — set synchronously before the first await so every
@@ -38,7 +38,7 @@ export function getDB() {
 
   _dbPromise = openDB(DB_NAME, DB_VERSION, {
 
-    upgrade(db, oldVersion, _newVersion, transaction) {
+    async upgrade(db, oldVersion, _newVersion, transaction) {
 
       // ── settings store ──────────────────────────────────────────────────
       if (!db.objectStoreNames.contains('settings')) {
@@ -68,17 +68,17 @@ export function getDB() {
       if (oldVersion === 0) {
         transaction.objectStore('settings').put(
           {
-            schemaVersion: 4,
+            schemaVersion: 6,
             gridSize: { rows: 6, cols: 6 },
             behaviorCodes: {
-              p: { icon: 'Hand', label: 'Participation', category: 'positive', type: 'standard', requiresNote: false },
-              m: { icon: 'Smartphone', label: 'On Device', category: 'redirect', type: 'standard', requiresNote: false },
-              w: { icon: 'Toilet', label: 'Washroom', category: 'neutral', type: 'toggle', requiresNote: false },
-              a: { icon: 'UserX', label: 'Absent', category: 'attendance', type: 'attendance', requiresNote: false },
-              l: { icon: 'Clock', label: 'Late', category: 'attendance', type: 'attendance', requiresNote: false },
-              ob: { icon: 'Eye', label: 'Observation', category: 'note', type: 'standard', requiresNote: true },
-              cv: { icon: 'MessageSquare', label: 'Conversation', category: 'note', type: 'standard', requiresNote: true },
-              pc: { icon: 'Phone', label: 'Parent', category: 'communication', type: 'standard', requiresNote: true },
+              p: { icon: 'Hand', label: 'Participation', category: 'positive', type: 'standard', requiresNote: false, isTopLevel: false },
+              m: { icon: 'Smartphone', label: 'On Device', category: 'redirect', type: 'standard', requiresNote: false, isTopLevel: true },
+              w: { icon: 'Toilet', label: 'Washroom', category: 'neutral', type: 'toggle', requiresNote: false, isTopLevel: true },
+              a: { icon: 'UserX', label: 'Absent', category: 'attendance', type: 'attendance', requiresNote: false, isTopLevel: false },
+              l: { icon: 'Clock', label: 'Late', category: 'attendance', type: 'attendance', requiresNote: false, isTopLevel: false },
+              ob: { icon: 'Eye', label: 'Observation', category: 'note', type: 'standard', requiresNote: true, isTopLevel: false },
+              cv: { icon: 'MessageSquare', label: 'Conversation', category: 'note', type: 'standard', requiresNote: true, isTopLevel: false },
+              pc: { icon: 'Phone', label: 'Parent', category: 'communication', type: 'standard', requiresNote: true, isTopLevel: true },
             },
           },
           'singleton'
@@ -86,103 +86,60 @@ export function getDB() {
         return  // fresh install — no migration needed
       }
 
-      // ── version 2 migration (upgrading from v1) ───────────────────────────
-      if (oldVersion < 2) {
+      // ── version 6 migration (fixing previously silent failures) ───────────
+      // The previous migrations (v2-v5) used raw IndexedDB `onsuccess` callbacks
+      // which do not work with `idb` Promise wrappers. They failed silently.
+      // This version 6 block awaits the promises and applies all missing logic.
+      if (oldVersion < 6) {
         const settingsStore = transaction.objectStore('settings')
-        const classesStore = transaction.objectStore('classes')
+        const settings = await settingsStore.get('singleton')
 
-        // Patch settings: add requiresNote to existing codes, add new codes
-        const settingsReq = settingsStore.get('singleton')
-        settingsReq.onsuccess = () => {
-          const settings = settingsReq.result
-          if (!settings) return
-
+        if (settings) {
           const codes = settings.behaviorCodes ?? {}
 
-          // Add requiresNote: false to any existing code that lacks it
+          // Recover v2 logic: Missing fields and missing codes
           for (const key of Object.keys(codes)) {
-            if (codes[key].requiresNote === undefined) {
-              codes[key].requiresNote = false
-            }
+            if (codes[key].requiresNote === undefined) codes[key].requiresNote = false
           }
-
-          // Add the three new codes if missing
-          if (!codes.ob) codes.ob = { icon: '👁️', label: 'Observation', category: 'note', type: 'standard', requiresNote: true }
-          if (!codes.cv) codes.cv = { icon: '💬', label: 'Conversation', category: 'note', type: 'standard', requiresNote: true }
+          if (!codes.ob) codes.ob = { icon: 'Eye', label: 'Observation', category: 'note', type: 'standard', requiresNote: true }
+          if (!codes.cv) codes.cv = { icon: 'MessageSquare', label: 'Conversation', category: 'note', type: 'standard', requiresNote: true }
           if (!codes.pc) codes.pc = { icon: 'Phone', label: 'Parent', category: 'communication', type: 'standard', requiresNote: true }
 
-          settings.schemaVersion = 2
-          settingsStore.put(settings, 'singleton')
-        }
-
-        // Patch all class records: add generalNote: '' to any student missing it
-        const classesReq = classesStore.getAll()
-        classesReq.onsuccess = () => {
-          const classes = classesReq.result ?? []
-          for (const cls of classes) {
-            let changed = false
-            for (const studentId of Object.keys(cls.students ?? {})) {
-              if (cls.students[studentId].generalNote === undefined) {
-                cls.students[studentId].generalNote = ''
-                changed = true
-              }
-            }
-            if (changed) classesStore.put(cls)
-          }
-        }
-      }
-
-      // ── version 3 migration (upgrading from v2) ───────────────────────────
-      // Converts existing emoji icons to Lucide icon name strings
-      if (oldVersion < 3) {
-        const settingsStore = transaction.objectStore('settings')
-        const req = settingsStore.get('singleton')
-        req.onsuccess = () => {
-          const settings = req.result
-          if (!settings) return
-
-          const codes = settings.behaviorCodes ?? {}
+          // Recover v3/4 logic: Map emoji to Lucide string, resolve Washroom icon back to Toilet
           const emojiMap = {
-            '✋': 'Hand',
-            '📱': 'Smartphone',
-            '🚽': 'Toilet',
-            '🚫': 'UserX',
-            '⏰': 'Clock',
-            '👁️': 'Eye',
-            '💬': 'MessageSquare',
-            '📞': 'Phone'
+            '✋': 'Hand', '📱': 'Smartphone', '🚽': 'Toilet', '🚫': 'UserX',
+            '⏰': 'Clock', '👁️': 'Eye', '💬': 'MessageSquare', '📞': 'Phone'
           }
-
           for (const key of Object.keys(codes)) {
             const currentIcon = codes[key].icon
-            if (emojiMap[currentIcon]) {
-              codes[key].icon = emojiMap[currentIcon]
-            }
+            if (emojiMap[currentIcon]) codes[key].icon = emojiMap[currentIcon]
+            if (codes[key].icon === 'Droplets') codes[key].icon = 'Toilet'
           }
 
-          settings.schemaVersion = 3
-          settingsStore.put(settings, 'singleton')
-        }
-      }
-
-      // ── version 4 migration (upgrading from v3) ───────────────────────────
-      // Converts mistaken 'Droplets' icon back to 'Toilet' for washroom
-      if (oldVersion < 4) {
-        const settingsStore = transaction.objectStore('settings')
-        const req = settingsStore.get('singleton')
-        req.onsuccess = () => {
-          const settings = req.result
-          if (!settings) return
-
-          const codes = settings.behaviorCodes ?? {}
+          // Recover v5 logic: Top Level toggle default assignment
+          const directCategories = new Set(['neutral', 'redirect', 'communication'])
           for (const key of Object.keys(codes)) {
-            if (codes[key].icon === 'Droplets') {
-              codes[key].icon = 'Toilet'
+            if (codes[key].isTopLevel === undefined) {
+              codes[key].isTopLevel = directCategories.has(codes[key].category)
             }
           }
 
-          settings.schemaVersion = 4
-          settingsStore.put(settings, 'singleton')
+          settings.schemaVersion = 6
+          await settingsStore.put(settings, 'singleton')
+        }
+
+        // Recover v2 logic for classes: Add generalNote
+        const classesStore = transaction.objectStore('classes')
+        const classes = await classesStore.getAll()
+        for (const cls of classes) {
+          let changed = false
+          for (const studentId of Object.keys(cls.students ?? {})) {
+            if (cls.students[studentId].generalNote === undefined) {
+              cls.students[studentId].generalNote = ''
+              changed = true
+            }
+          }
+          if (changed) await classesStore.put(cls)
         }
       }
     },
