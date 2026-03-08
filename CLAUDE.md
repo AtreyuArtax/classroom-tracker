@@ -1,4 +1,4 @@
-# Classroom Behavior Tracker — Agentic Build Instructions
+# Classroom Tracker — Developer Guideld Instructions
 
 > Distilled from Architecture & Scope v3.1. This file is the authoritative ruleset for all code generation.
 > When in doubt, follow the rules here exactly. Do not invent alternatives.
