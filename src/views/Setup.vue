@@ -163,8 +163,15 @@
           Column order is flexible. Rows without a Student ID are skipped.
         </p>
 
-        <label class="setup__file-label" for="roster-file">
-          <FolderOpen :size="16" /> Choose CSV file
+        <label 
+          class="setup__file-label" 
+          for="roster-file"
+          :class="{ 'setup__file-label--drag': isDraggingRoster }"
+          @dragover.prevent="activeClass && (isDraggingRoster = true)"
+          @dragleave.prevent="isDraggingRoster = false"
+          @drop.prevent="isDraggingRoster = false; onFileSelected($event)"
+        >
+          <FolderOpen :size="16" /> {{ isDraggingRoster ? 'Drop CSV here...' : 'Choose CSV file or drag & drop here' }}
           <input
             id="roster-file"
             type="file"
@@ -372,8 +379,15 @@
       <div class="setup__card">
         <h2 class="setup__card-title">Restore from Backup</h2>
         <p class="setup__hint" style="color: var(--state-danger);">⚠️ This will <strong>overwrite all existing data</strong>. A summary will be shown before anything is written.</p>
-        <label class="setup__file-label" for="backup-file">
-          <FolderOpen :size="16" style="margin-right: 4px;" /> Choose backup JSON
+        <label 
+          class="setup__file-label" 
+          for="backup-file"
+          :class="{ 'setup__file-label--drag': isDraggingBackup }"
+          @dragover.prevent="isDraggingBackup = true"
+          @dragleave.prevent="isDraggingBackup = false"
+          @drop.prevent="isDraggingBackup = false; onBackupFileSelected($event)"
+        >
+          <FolderOpen :size="16" style="margin-right: 4px;" /> {{ isDraggingBackup ? 'Drop Backup JSON here...' : 'Choose backup JSON or drag & drop here' }}
           <input id="backup-file" type="file" accept=".json,application/json" class="setup__file-input" @change="onBackupFileSelected" />
         </label>
 
@@ -533,9 +547,10 @@ async function applyResize() {
 const importResult        = ref(null)
 const crossClassConflicts = ref([])
 let   _pendingConflicts   = []
+const isDraggingRoster    = ref(false)
 
 function onFileSelected(evt) {
-  const file = evt.target.files?.[0]
+  const file = evt.dataTransfer?.files?.[0] || evt.target?.files?.[0]
   if (!file) return
   if (!activeClass.value) return
 
@@ -567,7 +582,9 @@ function onFileSelected(evt) {
   })
 
   // Reset file input so the same file can be re-selected
-  evt.target.value = ''
+  if (evt.target && evt.target.value !== undefined) {
+    evt.target.value = ''
+  }
 }
 
 const newStudent = reactive({ studentId: '', firstName: '', lastName: '' })
@@ -707,6 +724,7 @@ const restoreMsg    = ref('')
 const syncMsg       = ref('')
 const importPreview = ref(null)
 const isSyncLinked  = ref(false)
+const isDraggingBackup = ref(false)
 
 onMounted(async () => {
   const settings = await settingsService.getSettings()
@@ -766,7 +784,7 @@ async function doExport() {
 }
 
 function onBackupFileSelected(evt) {
-  const file = evt.target.files[0]
+  const file = evt.dataTransfer?.files?.[0] || evt.target?.files?.[0]
   if (!file) return
   restoreMsg.value = ''
   const reader = new FileReader()
@@ -783,7 +801,9 @@ function onBackupFileSelected(evt) {
   }
   reader.onerror = () => { restoreMsg.value = '❌ Failed to read file.' }
   reader.readAsText(file)
-  evt.target.value = ''
+  if (evt.target && evt.target.value !== undefined) {
+    evt.target.value = ''
+  }
 }
 
 async function doImport() {
@@ -1158,11 +1178,17 @@ function formatDate(iso) {
   color:           var(--primary);
   font-weight:     600;
   min-height:      52px;
-  transition:      border-color 0.15s ease, background 0.15s ease;
+  transition:      border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
 }
-.setup__file-label:hover {
+.setup__file-label:not(.setup__file-label--disabled):hover {
   background:    var(--primary-light);
   border-color:  var(--primary);
+}
+
+.setup__file-label--drag {
+  background:    var(--primary-light);
+  border-color:  var(--primary);
+  transform:     scale(1.02);
 }
 
 .setup__file-input {
