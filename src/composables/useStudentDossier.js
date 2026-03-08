@@ -159,6 +159,11 @@ export function useStudentDossier() {
         student.value = null
     }
 
+    async function reload() {
+        if (!selectedClassId.value || !selectedStudentId.value) return
+        await loadStudent(selectedClassId.value, selectedStudentId.value)
+    }
+
     // ─── export ───────────────────────────────────────────────────────────────
 
     return {
@@ -177,6 +182,9 @@ export function useStudentDossier() {
         stats,
         // actions
         loadStudent,
+        reload,
         clearStudent,
     }
 }
+
+

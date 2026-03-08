@@ -46,17 +46,26 @@
 
             <ul v-else class="spm-feed">
               <li v-for="evt in sortedEvents" :key="evt.eventId" class="spm-feed-item">
-                <div class="spm-feed-meta">
-                  <span class="spm-feed-time">{{ formatTimestamp(evt.timestamp) }}</span>
-                  <span class="spm-feed-code">
-                    <component :is="codeInfo(evt.code).icon === '?' ? HelpCircle : resolveIcon(codeInfo(evt.code).icon)" :size="16" /> 
-                    {{ codeInfo(evt.code).label }}
-                    <span v-if="evt.duration != null" class="spm-feed-duration">
-                      ({{ formatDuration(evt) }})
+                <div class="spm-feed-content">
+                  <div class="spm-feed-meta">
+                    <span class="spm-feed-time">{{ formatTimestamp(evt.timestamp) }}</span>
+                    <span class="spm-feed-code">
+                      <component :is="codeInfo(evt.code).icon === '?' ? HelpCircle : resolveIcon(codeInfo(evt.code).icon)" :size="16" /> 
+                      {{ codeInfo(evt.code).label }}
+                      <span v-if="evt.duration != null" class="spm-feed-duration">
+                        ({{ formatDuration(evt) }})
+                      </span>
                     </span>
-                  </span>
+                  </div>
+                  <p v-if="evt.note" class="spm-feed-note">{{ evt.note }}</p>
                 </div>
-                <p v-if="evt.note" class="spm-feed-note">{{ evt.note }}</p>
+                <button 
+                  class="spm-feed-delete" 
+                  title="Delete event" 
+                  @click="onDeleteEvent(evt.eventId)"
+                >
+                  <Trash2 :size="14" />
+                </button>
               </li>
             </ul>
           </section>
@@ -95,7 +104,7 @@
  */
 
 import { ref, computed, watch } from 'vue'
-import { X, ClipboardList, Check, HelpCircle } from 'lucide-vue-next'
+import { X, ClipboardList, Check, HelpCircle, Trash2 } from 'lucide-vue-next'
 import { resolveIcon } from '../utils/icons.js'
 import * as classService  from '../db/classService.js'
 import * as eventService  from '../db/eventService.js'
@@ -176,6 +185,17 @@ const sortedEvents = computed(() =>
     (b.timestamp ?? '').localeCompare(a.timestamp ?? '')
   )
 )
+
+async function onDeleteEvent(eventId) {
+  if (!confirm('Delete this event? This cannot be undone.')) return
+  try {
+    await eventService.deleteEvent(eventId)
+    // Re-fetch local feed
+    events.value = await eventService.getEventsByStudent(props.studentId)
+  } catch (err) {
+    alert('Failed to delete event: ' + err.message)
+  }
+}
 
 function codeInfo(code) {
   return props.behaviorCodesMap[code] ?? { icon: '?', label: code }
@@ -404,9 +424,38 @@ function close() {
 .spm-feed-item {
   padding:       10px 0;
   border-bottom: 1px solid var(--border);
+  display:       flex;
+  align-items:   flex-start;
+  justify-content: space-between;
+  gap:           12px;
 }
 
 .spm-feed-item:last-child { border-bottom: none; }
+
+.spm-feed-content {
+  flex: 1;
+}
+
+.spm-feed-delete {
+  background: transparent;
+  border:     none;
+  color:      var(--text-secondary);
+  cursor:     pointer;
+  padding:    6px;
+  border-radius: 4px;
+  display:    flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+  margin-top: -2px;
+  opacity:    0.4;
+}
+
+.spm-feed-delete:hover {
+  background: rgba(255, 59, 48, 0.1);
+  color:      #ff3b30;
+  opacity:    1;
+}
 
 .spm-feed-meta {
   display:     flex;

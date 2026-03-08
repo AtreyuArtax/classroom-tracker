@@ -76,6 +76,7 @@
               :events="dossier.events.value"
               :behavior-codes="behaviorCodesMap"
               :student-name="dossierStudentName"
+              @delete-event="onDossierDelete"
             />
           </div>
 
@@ -93,6 +94,13 @@
                     {{ behaviorCodesMap[evt.code]?.icon ?? '' }}
                     {{ behaviorCodesMap[evt.code]?.label ?? evt.code }}
                   </span>
+                  <button 
+                    class="reports__note-delete" 
+                    title="Delete note" 
+                    @click="onDossierDelete(evt.eventId)"
+                  >
+                    <Trash2 :size="14" />
+                  </button>
                 </div>
                 <p class="reports__note-text">{{ evt.note }}</p>
               </li>
@@ -207,7 +215,7 @@
  */
 
 import { ref, computed, watch, defineComponent, h, onMounted } from 'vue'
-import { BarChart2, Download } from 'lucide-vue-next'
+import { BarChart2, Download, Trash2 } from 'lucide-vue-next'
 import { resolveIcon }         from '../utils/icons.js'
 import { useClassroom }        from '../composables/useClassroom.js'
 import { useStudentDossier }   from '../composables/useStudentDossier.js'
@@ -276,6 +284,17 @@ function showOverview() {
   rightMode.value = 'overview'
   dossier.clearStudent()
   if (!reportData.value.length) runReport()
+}
+
+/** Delete an event from the dossier (sync or note feed) */
+async function onDossierDelete(eventId) {
+  if (!confirm('Delete this event? This cannot be undone.')) return
+  try {
+    await eventService.deleteEvent(eventId)
+    await dossier.reload()
+  } catch (err) {
+    alert('Failed to delete event: ' + err.message)
+  }
 }
 
 // ─── dossier display helpers ─────────────────────────────────────────────────
@@ -999,6 +1018,36 @@ const ExportBar = defineComponent({
 .reports__tab--active {
   color:         var(--primary);
   border-bottom: 2px solid var(--primary);
+}
+
+.reports__note-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.reports__note-delete {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+  opacity: 0;
+}
+
+.reports__note-item:hover .reports__note-delete {
+  opacity: 1;
+}
+
+.reports__note-delete:hover {
+  background: rgba(255, 59, 48, 0.1);
+  color: #ff3b30;
 }
 
 /* ── Date filter bar ─────────────────────────────────────────────── */

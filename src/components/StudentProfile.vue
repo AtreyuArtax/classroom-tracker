@@ -94,6 +94,7 @@
                 <th>Time</th>
                 <th>Code</th>
                 <th>Detail</th>
+                <th></th>
               </tr>
             </thead>
             <tbody>
@@ -104,6 +105,15 @@
                   {{ evt.code }}
                 </td>
                 <td>{{ eventDetail(evt) }}</td>
+                <td class="sp__td-actions">
+                  <button 
+                    class="sp__btn-delete" 
+                    title="Delete event" 
+                    @click="emit('delete-event', evt.eventId)"
+                  >
+                    <Trash2 :size="14" />
+                  </button>
+                </td>
               </tr>
             </tbody>
           </table>
@@ -116,7 +126,7 @@
 
 <script setup>
 import { computed } from 'vue'
-import { UserX, Clock, Toilet, Smartphone, HelpCircle } from 'lucide-vue-next'
+import { UserX, Clock, Toilet, Smartphone, HelpCircle, Trash2 } from 'lucide-vue-next'
 import { resolveIcon } from '../utils/icons.js'
 
 const props = defineProps({
@@ -124,6 +134,8 @@ const props = defineProps({
   behaviorCodes: { type: Object, default: () => ({}) },
   studentName:   { type: String, default: '' },
 })
+
+const emit = defineEmits(['delete-event'])
 
 // ── helpers ────────────────────────────────────────────────────────────────────
 
@@ -475,4 +487,27 @@ details[open] .sp__log-summary::before { content: '▼  '; }
 }
 
 .sp__td-time { color: var(--text-secondary); white-space: nowrap; }
+
+.sp__td-actions {
+  text-align: right;
+  width: 32px;
+}
+
+.sp__btn-delete {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.sp__btn-delete:hover {
+  background: rgba(255, 59, 48, 0.1);
+  color: #ff3b30;
+}
 </style>
