@@ -19,6 +19,9 @@ export default defineConfig({
         VitePWA({
             registerType: 'autoUpdate',
             injectRegister: 'auto',
+            devOptions: {
+                enabled: true
+            },
 
             // Tells the plugin where to find the manifest
             manifest: false, // Using our own public/manifest.json
