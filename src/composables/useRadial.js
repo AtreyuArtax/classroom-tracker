@@ -113,7 +113,7 @@ const visibleItems = computed(() => {
                     isCategory: true,
                     categoryKey: code.category,
                     label: _categoryLabel(code.category),
-                    icon: code.icon,
+                    icon: _categoryIcon(code.category, code.icon),
                 })
             }
         }
@@ -224,6 +224,18 @@ function _categoryLabel(category) {
         attendance: 'Attendance',
     }
     return map[category] ?? category
+}
+
+function _categoryIcon(category, fallbackIcon) {
+    const map = {
+        positive: 'Star',
+        redirect: 'AlertCircle',
+        neutral: 'MoreHorizontal',
+        note: 'NotebookText',
+        communication: 'MessageSquare',
+        attendance: 'CalendarClock',
+    }
+    return map[category] ?? fallbackIcon
 }
 
 // ─── export ───────────────────────────────────────────────────────────────────
