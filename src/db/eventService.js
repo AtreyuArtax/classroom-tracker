@@ -26,6 +26,9 @@
 import { getDB } from './index.js'
 import { getClass } from './classService.js'
 import { getSettings } from './settingsService.js'
+import { ref } from 'vue'
+
+export const hasUnsyncedChanges = ref(true)
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
@@ -92,6 +95,8 @@ export async function logEvent(eventObj) {
     const db = await getDB()
     // Step 5 — Write and return the auto-generated eventId
     const eventId = await db.add('events', record)
+
+    hasUnsyncedChanges.value = true
     return eventId
 }
 
@@ -105,6 +110,7 @@ export async function logEvent(eventObj) {
 export async function deleteEvent(eventId) {
     const db = await getDB()
     await db.delete('events', eventId)
+    hasUnsyncedChanges.value = true
 }
 
 /**
@@ -221,6 +227,7 @@ export async function quickSyncBackup() {
         await writable.write(json)
         await writable.close()
 
+        hasUnsyncedChanges.value = false
         return true
     } catch (err) {
         console.error('Quick sync failed:', err)
@@ -275,6 +282,7 @@ export async function importAllData(backupObj) {
 
     await tx.done
 
+    hasUnsyncedChanges.value = false // We just loaded exact synced data
     return { classCount: classes.length, eventCount: events.length }
 }
 

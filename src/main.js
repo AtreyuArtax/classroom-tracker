@@ -29,5 +29,17 @@ async function requestPersistentStorage() {
 
 requestPersistentStorage()
 
+// --- EMERGENCY KILL SWITCH FOR PWA CACHE IN DEV ---
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistrations().then(function (registrations) {
+        for (let registration of registrations) {
+            registration.unregister().then(function (boolean) {
+                console.warn('Auto-unregistered aggressive Service Worker.', boolean);
+            });
+        }
+    });
+}
+// --------------------------------------------------
+
 const app = createApp(App)
 app.mount('#app')

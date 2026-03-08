@@ -20,6 +20,7 @@
  */
 
 import { getDB } from './index.js'
+import { hasUnsyncedChanges } from './eventService.js'
 
 // ─── public API ───────────────────────────────────────────────────────────────
 
@@ -54,6 +55,7 @@ export async function getClass(classId) {
 export async function saveClass(classObj) {
     const db = await getDB()
     await db.put('classes', classObj)
+    hasUnsyncedChanges.value = true
 }
 
 /**
@@ -73,6 +75,7 @@ export async function updateStudentSeat(classId, studentId, seat) {
 
     cls.students[studentId].seat = seat
     await db.put('classes', cls)
+    hasUnsyncedChanges.value = true
 }
 
 /**
@@ -92,6 +95,7 @@ export async function setStudentActiveState(classId, studentId, activeStateObj) 
 
     cls.students[studentId].activeStates = activeStateObj
     await db.put('classes', cls)
+    hasUnsyncedChanges.value = true
 }
 
 /**
@@ -120,6 +124,7 @@ export async function setPeriodStartTime(classId, timeString) {
 
     cls.periodStartTime = timeString
     await db.put('classes', cls)
+    hasUnsyncedChanges.value = true
 }
 
 /**
@@ -140,6 +145,7 @@ export async function setStudentAbsent(classId, studentId) {
     }
     cls.students[studentId].activeStates.isAbsent = true
     await db.put('classes', cls)
+    hasUnsyncedChanges.value = true
 }
 
 /**
@@ -159,6 +165,7 @@ export async function clearStudentAbsent(classId, studentId) {
         cls.students[studentId].activeStates.isAbsent = false
     }
     await db.put('classes', cls)
+    hasUnsyncedChanges.value = true
 }
 
 /**
@@ -182,6 +189,7 @@ export async function setStudentLate(classId, studentId, lateMinutes) {
     cls.students[studentId].activeStates.isAbsent = false
     cls.students[studentId].activeStates.lateMinutes = lateMinutes
     await db.put('classes', cls)
+    hasUnsyncedChanges.value = true
 }
 
 /**
@@ -201,6 +209,7 @@ export async function clearStudentLate(classId, studentId) {
         cls.students[studentId].activeStates.lateMinutes = null
     }
     await db.put('classes', cls)
+    hasUnsyncedChanges.value = true
 }
 
 /**
@@ -245,6 +254,7 @@ export async function importRoster(classId, studentsArray) {
     }
 
     await db.put('classes', cls)
+    hasUnsyncedChanges.value = true
     return { inserted, updated }
 }
 
@@ -264,6 +274,7 @@ export async function updateStudentNote(classId, studentId, note) {
     if (!cls.students[studentId]) throw new Error(`Student not found: ${studentId} in ${classId}`)
     cls.students[studentId].generalNote = note
     await db.put('classes', cls)
+    hasUnsyncedChanges.value = true
 }
 
 /**
@@ -279,6 +290,7 @@ export async function archiveClass(classId) {
     if (!cls) throw new Error(`Class not found: ${classId}`)
     cls.archived = true
     await db.put('classes', cls)
+    hasUnsyncedChanges.value = true
 }
 
 /**
@@ -293,6 +305,7 @@ export async function restoreClass(classId) {
     if (!cls) throw new Error(`Class not found: ${classId}`)
     cls.archived = false
     await db.put('classes', cls)
+    hasUnsyncedChanges.value = true
 }
 
 /**
@@ -305,4 +318,5 @@ export async function restoreClass(classId) {
 export async function deleteClass(classId) {
     const db = await getDB()
     await db.delete('classes', classId)
+    hasUnsyncedChanges.value = true
 }

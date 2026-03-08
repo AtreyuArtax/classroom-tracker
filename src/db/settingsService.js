@@ -13,6 +13,7 @@
  */
 
 import { getDB } from './index.js'
+import { hasUnsyncedChanges } from './eventService.js'
 
 const SETTINGS_KEY = 'singleton'
 
@@ -46,6 +47,7 @@ async function _readSettings() {
         backupFileHandle: null,
     }
     await db.put('settings', defaults, SETTINGS_KEY)
+    hasUnsyncedChanges.value = true
     return defaults
 }
 
@@ -70,6 +72,7 @@ export async function getSettings() {
 export async function saveSettings(settingsObj) {
     const db = await getDB()
     await db.put('settings', settingsObj, SETTINGS_KEY)
+    hasUnsyncedChanges.value = true
 }
 
 /**
@@ -94,10 +97,11 @@ export async function getBehaviorCodes() {
  * @returns {Promise<void>}
  */
 export async function saveBehaviorCode(codeObj) {
-    const settings = await _readSettings()
-    const { codeKey, ...rest } = codeObj
-    settings.behaviorCodes[codeKey] = rest
-    await saveSettings(settings)
+    const db = await getDB()
+    const settings = await db.get('settings', 'singleton')
+    settings.behaviorCodes[codeObj.codeKey] = codeObj
+    await db.put('settings', settings, 'singleton')
+    hasUnsyncedChanges.value = true
 }
 
 /**
@@ -107,7 +111,9 @@ export async function saveBehaviorCode(codeObj) {
  * @returns {Promise<void>}
  */
 export async function deleteBehaviorCode(codeKey) {
-    const settings = await _readSettings()
+    const db = await getDB()
+    const settings = await db.get('settings', 'singleton')
     delete settings.behaviorCodes[codeKey]
-    await saveSettings(settings)
+    await db.put('settings', settings, 'singleton')
+    hasUnsyncedChanges.value = true
 }

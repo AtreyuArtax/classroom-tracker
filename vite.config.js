@@ -20,7 +20,7 @@ export default defineConfig({
             registerType: 'autoUpdate',
             injectRegister: 'auto',
             devOptions: {
-                enabled: true
+                enabled: false // Disabled in dev so aggressive caching doesn't hide live code updates
             },
 
             // Tells the plugin where to find the manifest

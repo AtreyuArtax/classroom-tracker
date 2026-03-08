@@ -9,12 +9,18 @@
         <button 
           v-if="isSyncLinked" 
           class="app-nav__sync-btn" 
-          :class="{ 'app-nav__sync-btn--success': syncSuccess }"
+          :class="{
+            'app-nav__sync-btn--synced': !isUnsynced && !isSyncing,
+            'app-nav__sync-btn--unsynced': isUnsynced && !isSyncing,
+            'app-nav__sync-btn--success': syncSuccess 
+          }"
           @click="doQuickSync" 
-          :title="syncSuccess ? 'Synced!' : 'Quick Sync Backup'"
+          :title="syncSuccess ? 'Synced!' : (isUnsynced ? 'Unsynced changes! Click to backup.' : 'All changes backed up.')"
           :disabled="isSyncing"
         >
-          <Cloud :size="18" :class="{ 'app-nav__sync-icon--syncing': isSyncing }" />
+          <CloudUpload v-if="isUnsynced && !isSyncing" :size="20" class="app-nav__sync-icon--pulse" />
+          <Cloud v-else-if="isSyncing" :size="20" class="app-nav__sync-icon--syncing" />
+          <CloudCheck v-else :size="20" />
         </button>
       </div>
 
@@ -59,13 +65,17 @@
  */
 
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { ClipboardList, LayoutDashboard, Settings, BarChart2, Cloud } from 'lucide-vue-next'
+import { ClipboardList, LayoutDashboard, Settings, BarChart2, Cloud, CloudUpload, CloudCheck } from 'lucide-vue-next'
 import Dashboard from './views/Dashboard.vue'
 import Setup     from './views/Setup.vue'
 import Reports   from './views/Reports.vue'
 import { useClassroom } from './composables/useClassroom.js'
 import * as settingsService from './db/settingsService.js'
 import * as eventService from './db/eventService.js'
+import { hasUnsyncedChanges } from './db/eventService.js'
+
+// Wrap external ref in computed to guarantee template unwrapping inside object literals
+const isUnsynced = computed(() => hasUnsyncedChanges.value)
 
 // ─── navigation ──────────────────────────────────────────────────────────────
 
@@ -183,6 +193,28 @@ async function doQuickSync() {
 
 .app-nav__sync-btn--success {
   color: var(--state-success) !important;
+}
+
+.app-nav__sync-btn--synced {
+  color:      var(--state-success);
+}
+
+.app-nav__sync-btn--synced:hover {
+  opacity: 0.8;
+}
+
+.app-nav__sync-btn--unsynced {
+  color:      var(--primary); /* App loud blue theme */
+}
+
+.app-nav__sync-icon--pulse {
+  animation: pulseBlue 2s infinite;
+}
+
+@keyframes pulseBlue {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.1); opacity: 0.8; }
+  100% { transform: scale(1); opacity: 1; }
 }
 
 .app-nav__sync-icon--syncing { 
