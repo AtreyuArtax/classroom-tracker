@@ -64,7 +64,7 @@
  * Do NOT install or use vue-router.
  */
 
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { ClipboardList, LayoutDashboard, Settings, BarChart2, Cloud, CloudUpload, CloudCheck } from 'lucide-vue-next'
 import Dashboard from './views/Dashboard.vue'
 import Setup     from './views/Setup.vue'
