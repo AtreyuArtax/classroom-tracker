@@ -207,7 +207,7 @@
  */
 
 import { ref, computed, watch, defineComponent, h, onMounted } from 'vue'
-import { BarChart2 } from 'lucide-vue-next'
+import { BarChart2, Download } from 'lucide-vue-next'
 import { resolveIcon }         from '../utils/icons.js'
 import { useClassroom }        from '../composables/useClassroom.js'
 import { useStudentDossier }   from '../composables/useStudentDossier.js'
