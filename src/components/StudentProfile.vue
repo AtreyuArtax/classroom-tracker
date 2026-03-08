@@ -28,6 +28,10 @@
           <div class="sp__card-label"><Clock :size="16" /> Late Arrivals</div>
         </div>
         <div class="sp__card sp__card--washroom">
+          <div class="sp__card-value">{{ washroomMinutes }}<span class="sp__card-unit">min</span></div>
+          <div class="sp__card-label"><Toilet :size="16" /> Washroom Total</div>
+        </div>
+        <div class="sp__card sp__card--washroom">
           <div class="sp__card-value">{{ washroomTrips }}</div>
           <div class="sp__card-label"><Toilet :size="16" /> Washroom Trips</div>
         </div>
@@ -177,6 +181,13 @@ const lateMinutes = computed(() =>
     .filter(e => e.code === 'l')
     .reduce((sum, e) => sum + (e.duration ?? 0), 0)
 )
+
+const washroomMinutes = computed(() => {
+  const ms = props.events
+    .filter(e => props.behaviorCodes[e.code]?.type === 'toggle')
+    .reduce((sum, e) => sum + (e.duration ?? 0), 0)
+  return Math.round(ms / 60000)
+})
 
 const washroomTrips = computed(() =>
   props.events.filter(e =>
