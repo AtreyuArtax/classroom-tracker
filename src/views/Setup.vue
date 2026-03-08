@@ -207,13 +207,13 @@
         </div>
       </div>
 
-      <!-- Add single student -->
-      <div class="setup__card">
-        <h2 class="setup__card-title">Add Student Manually</h2>
+      <!-- Add / Edit single student -->
+      <div class="setup__card" ref="singleStudentCardRef">
+        <h2 class="setup__card-title">{{ isEditingStudent ? 'Edit Student' : 'Add Student Manually' }}</h2>
         <form class="setup__form" @submit.prevent="addSingleStudent">
           <label class="setup__label">
             Student ID
-            <input v-model="newStudent.studentId" class="setup__input" placeholder="e.g. 123456" :disabled="!activeClass" required />
+            <input v-model="newStudent.studentId" class="setup__input" placeholder="e.g. 123456" :disabled="!activeClass || isEditingStudent" required />
           </label>
           <div style="display: flex; gap: 10px;">
             <label class="setup__label" style="flex: 1;">
@@ -225,7 +225,14 @@
               <input v-model="newStudent.lastName" class="setup__input" placeholder="Last" :disabled="!activeClass" required />
             </label>
           </div>
-          <button type="submit" class="setup__btn-primary" :disabled="!activeClass">Add Student</button>
+          <div style="display: flex; gap: 8px;">
+            <button type="submit" class="setup__btn-primary" :disabled="!activeClass" style="flex: 1;">
+              {{ isEditingStudent ? 'Save Changes' : 'Add Student' }}
+            </button>
+            <button v-if="isEditingStudent" type="button" class="setup__btn-ghost" @click="cancelEditStudent" style="flex: 1;">
+              Cancel
+            </button>
+          </div>
         </form>
         <p v-if="singleAddError" class="setup__error">{{ singleAddError }}</p>
         <p v-if="singleAddSuccess" class="setup__result-ok">{{ singleAddSuccess }}</p>
@@ -249,6 +256,9 @@
               <span class="setup__seat-badge" :class="s.seat ? 'setup__seat-badge--seated' : 'setup__seat-badge--pool'">
                 {{ s.seat ? `R${s.seat.row} C${s.seat.col}` : 'Pool' }}
               </span>
+              <button class="setup__icon-btn" aria-label="Edit student" @click="onEditStudent(s)" title="Edit student name">
+                <Pencil :size="16" />
+              </button>
               <button class="setup__icon-btn" aria-label="Remove student" @click="onRemoveStudent(s)" style="color: #ff3b30;" title="Remove student from class">
                 <Trash2 :size="16" />
               </button>
@@ -496,6 +506,30 @@ function onFileSelected(evt) {
 const newStudent = reactive({ studentId: '', firstName: '', lastName: '' })
 const singleAddError = ref('')
 const singleAddSuccess = ref('')
+const isEditingStudent = ref(false)
+const singleStudentCardRef = ref(null)
+
+function onEditStudent(student) {
+  isEditingStudent.value = true
+  newStudent.studentId = student.studentId
+  newStudent.firstName = student.firstName
+  newStudent.lastName = student.lastName
+  singleAddError.value = ''
+  singleAddSuccess.value = ''
+  
+  if (singleStudentCardRef.value) {
+    singleStudentCardRef.value.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }
+}
+
+function cancelEditStudent() {
+  isEditingStudent.value = false
+  newStudent.studentId = ''
+  newStudent.firstName = ''
+  newStudent.lastName = ''
+  singleAddError.value = ''
+  singleAddSuccess.value = ''
+}
 
 async function addSingleStudent() {
   singleAddError.value = ''
@@ -520,7 +554,8 @@ async function addSingleStudent() {
       _pendingConflicts = result.crossClassConflicts
       crossClassConflicts.value = result.crossClassConflicts
     } else {
-      singleAddSuccess.value = 'Student added to roster!'
+      singleAddSuccess.value = isEditingStudent.value ? 'Student updated!' : 'Student added to roster!'
+      isEditingStudent.value = false
       newStudent.studentId = ''
       newStudent.firstName = ''
       newStudent.lastName = ''
