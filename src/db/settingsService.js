@@ -41,7 +41,7 @@ async function _readSettings() {
             l: { icon: 'Clock', label: 'Late', category: 'attendance', type: 'attendance', requiresNote: false },
             ob: { icon: 'Eye', label: 'Observation', category: 'note', type: 'standard', requiresNote: true },
             cv: { icon: 'MessageSquare', label: 'Conversation', category: 'note', type: 'standard', requiresNote: true },
-            pc: { icon: 'Phone', label: 'Parent Contact', category: 'communication', type: 'standard', requiresNote: true },
+            pc: { icon: 'Phone', label: 'Parent', category: 'communication', type: 'standard', requiresNote: true },
         },
     }
     await db.put('settings', defaults, SETTINGS_KEY)

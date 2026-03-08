@@ -246,7 +246,10 @@
               <span class="setup__code-meta">{{ code.category }} · {{ code.type }}</span>
               <span v-if="code.requiresNote" class="setup__code-note-badge"><FileText :size="14" class="setup__note-icon" /> Note required</span>
             </div>
-            <button class="setup__icon-btn" aria-label="Delete {{ code.label }}" @click="deleteCode(code.codeKey)"><Trash2 :size="18" /></button>
+            <div class="setup__code-actions">
+              <button class="setup__icon-btn" aria-label="Edit {{ code.label }}" @click="editCode(code)"><Pencil :size="16" /></button>
+              <button class="setup__icon-btn" aria-label="Delete {{ code.label }}" @click="deleteCode(code.codeKey)"><Trash2 :size="18" /></button>
+            </div>
           </li>
         </ul>
       </div>
@@ -310,7 +313,7 @@
 
 import { ref, reactive, computed } from 'vue'
 import Papa from 'papaparse'
-import { Archive, ChevronDown, ChevronUp, FolderOpen, Trash2, FileText } from 'lucide-vue-next'
+import { Archive, ChevronDown, ChevronUp, FolderOpen, Trash2, FileText, Pencil } from 'lucide-vue-next'
 import { resolveIcon }       from '../utils/icons.js'
 import { useClassroom }      from '../composables/useClassroom.js'
 import * as settingsService  from '../db/settingsService.js'
@@ -480,7 +483,21 @@ async function saveCode() {
   Object.assign(newCode, { codeKey: '', icon: '', label: '', category: 'positive', type: 'standard', requiresNote: false })
 }
 
+function editCode(code) {
+  Object.assign(newCode, { 
+    codeKey: code.codeKey, 
+    icon: code.icon, 
+    label: code.label, 
+    category: code.category, 
+    type: code.type, 
+    requiresNote: code.requiresNote 
+  })
+}
+
 async function deleteCode(codeKey) {
+  const codeToDelete = behaviorCodes.value.find(c => c.codeKey === codeKey)
+  const name = codeToDelete?.label ?? codeKey
+  if (!window.confirm(`Delete behavior code "${name}"? This will not affect past events, but will remove it from the radial menu.`)) return
   await settingsService.deleteBehaviorCode(codeKey)
   await reloadBehaviorCodes()
 }
@@ -799,13 +816,24 @@ async function deleteCode(codeKey) {
 .setup__icon-btn {
   border:     none;
   background: transparent;
+  color:      var(--text-secondary);
   cursor:     pointer;
-  font-size:  1.1rem;
-  min-width:  44px;
-  min-height: 44px;
+  padding:    6px;
+  border-radius: 50%;
   display:    flex;
   align-items: center;
   justify-content: center;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.setup__icon-btn:hover {
+  background: var(--bg-secondary);
+  color:      var(--text);
+}
+
+.setup__code-actions {
+  display: flex;
+  gap: 4px;
 }
 
 /* ── Error ───────────────────────────────────────────────────────── */

@@ -78,7 +78,7 @@ export function getDB() {
               l: { icon: 'Clock', label: 'Late', category: 'attendance', type: 'attendance', requiresNote: false },
               ob: { icon: 'Eye', label: 'Observation', category: 'note', type: 'standard', requiresNote: true },
               cv: { icon: 'MessageSquare', label: 'Conversation', category: 'note', type: 'standard', requiresNote: true },
-              pc: { icon: 'Phone', label: 'Parent Contact', category: 'communication', type: 'standard', requiresNote: true },
+              pc: { icon: 'Phone', label: 'Parent', category: 'communication', type: 'standard', requiresNote: true },
             },
           },
           'singleton'
@@ -109,7 +109,7 @@ export function getDB() {
           // Add the three new codes if missing
           if (!codes.ob) codes.ob = { icon: '👁️', label: 'Observation', category: 'note', type: 'standard', requiresNote: true }
           if (!codes.cv) codes.cv = { icon: '💬', label: 'Conversation', category: 'note', type: 'standard', requiresNote: true }
-          if (!codes.pc) codes.pc = { icon: '📞', label: 'Parent Contact', category: 'communication', type: 'standard', requiresNote: true }
+          if (!codes.pc) codes.pc = { icon: 'Phone', label: 'Parent', category: 'communication', type: 'standard', requiresNote: true }
 
           settings.schemaVersion = 2
           settingsStore.put(settings, 'singleton')
