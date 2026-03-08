@@ -56,7 +56,7 @@ export default defineConfig({
                 ],
 
                 // Never let the service worker skip routes to IndexedDB or manifest
-                navigateFallback: '/index.html',
+                navigateFallback: '/classroom-tracker/index.html',
                 navigateFallbackDenylist: [/^\/api/],
 
                 // Clean up old caches on activation
@@ -67,6 +67,6 @@ export default defineConfig({
         }),
     ],
 
-    // Base path — root-relative so the PWA works on any host root
-    base: '/',
+    // Base path — set to match the GitHub Pages repository name
+    base: '/classroom-tracker/',
 })
