@@ -328,7 +328,8 @@ const dossierStudentName = computed(() => {
 
 function formatTimestamp(ts) {
   if (!ts) return ''
-  return new Date(ts).toLocaleString('en-CA', {
+  const parseStr = ts.includes('Z') || ts.match(/[+-]\d{2}:\d{2}$/) ? ts : ts + 'Z'
+  return new Date(parseStr).toLocaleString('en-CA', {
     month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true,
   })
 }
@@ -550,7 +551,7 @@ const EventTable = defineComponent({
               ? ` (${evt.duration}m${evt.supersededAbsent ? ', replaces absent' : ''})`
               : ''
             return h('tr', { key: evt.eventId }, [
-              h('td', {}, evt.timestamp?.slice(0, 16).replace('T', ' ') ?? ''),
+              h('td', {}, formatTimestamp(evt.timestamp)),
               ...(props.showStudent ? [h('td', {}, evt.studentId)] : []),
               h('td', {}, [
                 props.behaviorCodes[evt.code] ? h(resolveIcon(props.behaviorCodes[evt.code].icon), { size: 16, style: { verticalAlign: 'middle', marginRight: '4px' } }) : null,
@@ -651,7 +652,7 @@ const WashroomTable = defineComponent({
               ? `${Math.floor(evt.duration / 60000)}m ${Math.round((evt.duration % 60000) / 1000)}s`
               : '—'
             return h('tr', { key: evt.eventId }, [
-              h('td', {}, evt.timestamp?.slice(0, 16).replace('T', ' ') ?? ''),
+              h('td', {}, formatTimestamp(evt.timestamp)),
               h('td', {}, name),
               h('td', {}, `P${evt.periodNumber}`),
               h('td', {}, durStr),

@@ -129,7 +129,16 @@ const props = defineProps({
 
 function formatTime(ts) {
   if (!ts) return ''
-  return ts.slice(0, 16).replace('T', ' ')
+  const parseStr = ts.includes('Z') || ts.match(/[+-]\d{2}:\d{2}$/) ? ts : ts + 'Z'
+  const d = new Date(parseStr)
+  return d.toLocaleString('en-US', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true
+  })
 }
 
 function eventDetail(evt) {
@@ -138,7 +147,21 @@ function eventDetail(evt) {
     if (evt.supersededAbsent) parts.push('(was absent)')
     return parts.join(' ')
   }
-  if (evt.duration) return `${evt.duration}m`
+  
+  if (evt.duration != null) {
+      const c = props.behaviorCodes[evt.code]
+      if (c && c.type === 'toggle') {
+          if (evt.duration >= 60000) {
+              const m = Math.floor(evt.duration / 60000)
+              const s = Math.round((evt.duration % 60000) / 1000)
+              return `${m}m ${String(s).padStart(2, '0')}s`
+          }
+          const s = Math.round(evt.duration / 1000)
+          return `${s}s`
+      }
+      return `${evt.duration}m`
+  }
+  
   return ''
 }
 

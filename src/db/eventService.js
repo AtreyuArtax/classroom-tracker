@@ -71,7 +71,7 @@ export async function logEvent(eventObj) {
     // Step 3 — Compute dayOfWeek
     const now = new Date()
     const dayOfWeek = now.getDay()       // 0=Sun … 6=Sat
-    const timestamp = now.toISOString().slice(0, 19) // "YYYY-MM-DDTHH:MM:SS"
+    const timestamp = now.toISOString().slice(0, 19) + 'Z' // "YYYY-MM-DDTHH:MM:SSZ"
 
     // Step 4 — Build the complete event record (no nulls for required fields)
     const record = {
