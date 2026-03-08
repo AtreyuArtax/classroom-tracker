@@ -280,6 +280,36 @@ async function moveStudentFromClass(fromClassId, student) {
 // ─── seat management ──────────────────────────────────────────────────────────
 
 /**
+ * Remove a student from the active class entirely.
+ *
+ * @param {string} studentId
+ * @returns {Promise<void>}
+ */
+async function removeStudent(studentId) {
+    const classId = activeClass.value?.classId
+    if (!classId) return
+
+    // 1. Remove from DB
+    const fresh = await classService.getClass(classId)
+    if (fresh?.students?.[studentId]) {
+        delete fresh.students[studentId]
+        await classService.saveClass(fresh)
+    }
+
+    // 2. Remove from reactive state
+    delete students.value[studentId]
+
+    if (activeClass.value?.students?.[studentId]) {
+        delete activeClass.value.students[studentId]
+    }
+
+    const clsInList = classList.value.find(c => c.classId === classId)
+    if (clsInList?.students?.[studentId]) {
+        delete clsInList.students[studentId]
+    }
+}
+
+/**
  * Assign a student to a seat (or null to send to roster pool).
  * Pushes an undo entry per CLAUDE.md §9.
  *
@@ -589,6 +619,7 @@ export function useClassroom() {
         deleteClass,
         importRoster,
         moveStudentFromClass,
+        removeStudent,
         assignSeat,
         logStandardEvent,
         logToggleEvent,

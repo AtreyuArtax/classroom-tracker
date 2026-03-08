@@ -207,6 +207,30 @@
         </div>
       </div>
 
+      <!-- Add single student -->
+      <div class="setup__card">
+        <h2 class="setup__card-title">Add Student Manually</h2>
+        <form class="setup__form" @submit.prevent="addSingleStudent">
+          <label class="setup__label">
+            Student ID
+            <input v-model="newStudent.studentId" class="setup__input" placeholder="e.g. 123456" :disabled="!activeClass" required />
+          </label>
+          <div style="display: flex; gap: 10px;">
+            <label class="setup__label" style="flex: 1;">
+              First Name
+              <input v-model="newStudent.firstName" class="setup__input" placeholder="First" :disabled="!activeClass" required />
+            </label>
+            <label class="setup__label" style="flex: 1;">
+              Last Name
+              <input v-model="newStudent.lastName" class="setup__input" placeholder="Last" :disabled="!activeClass" required />
+            </label>
+          </div>
+          <button type="submit" class="setup__btn-primary" :disabled="!activeClass">Add Student</button>
+        </form>
+        <p v-if="singleAddError" class="setup__error">{{ singleAddError }}</p>
+        <p v-if="singleAddSuccess" class="setup__result-ok">{{ singleAddSuccess }}</p>
+      </div>
+
       <!-- Current roster -->
       <div class="setup__card">
         <h2 class="setup__card-title">Current Roster</h2>
@@ -221,9 +245,14 @@
               <span class="setup__roster-name">{{ s.lastName }}, {{ s.firstName }}</span>
               <span class="setup__roster-id">{{ s.studentId }}</span>
             </div>
-            <span class="setup__seat-badge" :class="s.seat ? 'setup__seat-badge--seated' : 'setup__seat-badge--pool'">
-              {{ s.seat ? `R${s.seat.row} C${s.seat.col}` : 'Pool' }}
-            </span>
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <span class="setup__seat-badge" :class="s.seat ? 'setup__seat-badge--seated' : 'setup__seat-badge--pool'">
+                {{ s.seat ? `R${s.seat.row} C${s.seat.col}` : 'Pool' }}
+              </span>
+              <button class="setup__icon-btn" aria-label="Remove student" @click="onRemoveStudent(s)" style="color: #ff3b30;" title="Remove student from class">
+                <Trash2 :size="16" />
+              </button>
+            </div>
           </li>
         </ul>
       </div>
@@ -335,6 +364,7 @@ const {
   createClass,
   importRoster,
   moveStudentFromClass,
+  removeStudent,
   checkResize,
   confirmResize,
   updateActiveClass,
@@ -463,6 +493,44 @@ function onFileSelected(evt) {
   evt.target.value = ''
 }
 
+const newStudent = reactive({ studentId: '', firstName: '', lastName: '' })
+const singleAddError = ref('')
+const singleAddSuccess = ref('')
+
+async function addSingleStudent() {
+  singleAddError.value = ''
+  singleAddSuccess.value = ''
+  if (!activeClass.value) return
+  if (!newStudent.studentId.trim() || !newStudent.firstName.trim() || !newStudent.lastName.trim()) {
+    singleAddError.value = 'All fields are required.'
+    return
+  }
+
+  const row = {
+    studentId: newStudent.studentId.trim(),
+    firstName: newStudent.firstName.trim(),
+    lastName: newStudent.lastName.trim()
+  }
+
+  try {
+    const result = await importRoster([row])
+    
+    if (result.crossClassConflicts.length > 0) {
+      // Defer to the existing conflict dialog
+      _pendingConflicts = result.crossClassConflicts
+      crossClassConflicts.value = result.crossClassConflicts
+    } else {
+      singleAddSuccess.value = 'Student added to roster!'
+      newStudent.studentId = ''
+      newStudent.firstName = ''
+      newStudent.lastName = ''
+      setTimeout(() => singleAddSuccess.value = '', 3000)
+    }
+  } catch (err) {
+    singleAddError.value = err.message
+  }
+}
+
 async function resolveConflicts(action) {
   if (action === 'move') {
     for (const conflict of _pendingConflicts) {
@@ -471,6 +539,12 @@ async function resolveConflicts(action) {
   }
   crossClassConflicts.value = []
   _pendingConflicts = []
+}
+
+async function onRemoveStudent(student) {
+  if (window.confirm(`Are you sure you want to remove ${student.firstName} ${student.lastName} from this class? This will not delete their past events.`)) {
+    await removeStudent(student.studentId)
+  }
 }
 
 function classNameById(classId) {

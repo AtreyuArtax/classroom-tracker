@@ -61,8 +61,8 @@ const currentView = ref('Dashboard')
 
 const views = [
   { id: 'Dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { id: 'Setup',     label: 'Setup',     icon: Settings },
   { id: 'Reports',   label: 'Reports',   icon: BarChart2 },
+  { id: 'Setup',     label: 'Setup',     icon: Settings },
 ]
 
 const viewComponents = { Dashboard, Setup, Reports }
