@@ -791,7 +791,7 @@ function onBackupFileSelected(evt) {
   reader.onload = e => {
     try {
       const data = JSON.parse(e.target.result)
-      if (data.schemaVersion !== 1 || !data.classes || !data.events) {
+      if (typeof data.schemaVersion !== 'number' || !data.classes || !data.events) {
         throw new Error('Invalid backup file format.')
       }
       importPreview.value = data
@@ -810,7 +810,7 @@ async function doImport() {
   if (!importPreview.value) return
   restoreMsg.value = ''
   try {
-    const result = await eventService.importAllData(importPreview.value)
+    const result = await eventService.importAllData(JSON.parse(JSON.stringify(importPreview.value)))
     importPreview.value = null
     restoreMsg.value = `✅ Restore complete — ${result.classCount} classes, ${result.eventCount} events. Refreshing…`
     setTimeout(() => window.location.reload(), 1500)

@@ -249,9 +249,9 @@ export async function importAllData(backupObj) {
     if (!backupObj || typeof backupObj !== 'object') {
         throw new Error('Invalid backup: not an object.')
     }
-    if (backupObj.schemaVersion !== 1) {
+    if (typeof backupObj.schemaVersion !== 'number') {
         throw new Error(
-            `Schema version mismatch: backup is v${backupObj.schemaVersion}, expected v1. Aborting — no data was changed.`
+            `Invalid schema version: backup must have a numeric schemaVersion. Aborting \u2014 no data was changed.`
         )
     }
 
