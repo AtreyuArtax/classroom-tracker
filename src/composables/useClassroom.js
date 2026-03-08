@@ -14,7 +14,7 @@
  *               reactive ref updated → Vue re-renders
  */
 
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import * as classService from '../db/classService.js'
 import * as eventService from '../db/eventService.js'
 import * as settingsService from '../db/settingsService.js'
@@ -32,6 +32,9 @@ const archivedClasses = ref([])
 
 /** @type {import('vue').Ref<Object|null>} The currently active class record */
 const activeClass = ref(null)
+
+/** @type {import('vue').Ref<{ classId: string, name: string, periodNumber: number, minutesUntil: number }|null>} Suggested class based on time of day */
+const suggestedClass = ref(null)
 
 /**
  * Reactive student map for the active class.
@@ -58,6 +61,53 @@ const sortedRoster = computed(() =>
         .map(([studentId, s]) => ({ studentId, ...s }))
         .sort((a, b) => a.lastName.localeCompare(b.lastName))
 )
+
+// ─── auto-suggest ─────────────────────────────────────────────────────────────
+
+/**
+ * Calculates if a class matches the current time boundary.
+ * -15m to +30m of periodStartTime. Updates the suggestedClass ref.
+ */
+function computeSuggestedClass() {
+    const now = new Date()
+    const currentMinutes = now.getHours() * 60 + now.getMinutes()
+
+    let best = null
+    let bestDiff = Infinity
+
+    for (const cls of classList.value) {
+        if (!cls.periodStartTime || cls.archived) continue
+
+        const [h, m] = cls.periodStartTime.split(':').map(Number)
+        const classMinutes = h * 60 + m
+
+        // Window: suggest if within 15 minutes before or 30 minutes after start
+        const diff = classMinutes - currentMinutes
+        if (diff >= -30 && diff <= 15 && Math.abs(diff) < Math.abs(bestDiff)) {
+            bestDiff = diff
+            best = {
+                classId: cls.classId,
+                name: cls.name,
+                periodNumber: cls.periodNumber,
+                minutesUntil: diff  // negative = already started
+            }
+        }
+    }
+
+    // Only suggest if it's not already the active class
+    if (best && best.classId !== activeClass.value?.classId) {
+        suggestedClass.value = best
+    } else {
+        suggestedClass.value = null
+    }
+}
+
+// Recompute whenever the class list changes once populated
+watch(classList, (newList) => {
+    if (newList && newList.length > 0) {
+        computeSuggestedClass()
+    }
+}, { immediate: true })
 
 /** Students who currently have no assigned seat */
 const unseatedStudents = computed(() =>
@@ -126,6 +176,7 @@ async function switchClass(classId) {
     const cls = await classService.getClass(classId)
     if (!cls) return
     clearUndo()
+    suggestedClass.value = null // clear suggestion on manual switch
     await _activateClass(cls)
 }
 
@@ -602,6 +653,7 @@ export function useClassroom() {
         classList,
         archivedClasses,
         activeClass,
+        suggestedClass,
         students,
         behaviorCodes,
         gridSize,
@@ -621,6 +673,7 @@ export function useClassroom() {
         moveStudentFromClass,
         removeStudent,
         assignSeat,
+        computeSuggestedClass,
         logStandardEvent,
         logToggleEvent,
         logAttendanceEvent,

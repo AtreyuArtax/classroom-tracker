@@ -102,6 +102,14 @@ const isSyncLinked = ref(false)
 const isSyncing    = ref(false)
 const syncSuccess  = ref(false)
 
+const { computeSuggestedClass } = useClassroom()
+
+watch(currentView, (newView) => {
+  if (newView === 'Dashboard') {
+    computeSuggestedClass()
+  }
+})
+
 async function checkSyncStatus() {
   const settings = await settingsService.getSettings()
   isSyncLinked.value = !!settings.backupFileHandle

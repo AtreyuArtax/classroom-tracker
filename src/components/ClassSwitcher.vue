@@ -46,6 +46,13 @@
 
     <!-- Click-outside backdrop -->
     <div v-if="isOpen" class="class-switcher__backdrop" @click="isOpen = false" />
+    
+    <!-- Time-based Suggestion Banner -->
+    <div v-if="suggestedClass" class="class-suggestion">
+      <span class="class-suggestion__text">{{ suggestionText }}</span>
+      <button class="class-suggestion__accept" @click="acceptSuggestion">Switch</button>
+      <button class="class-suggestion__dismiss" @click="suggestedClass = null">✕</button>
+    </div>
   </div>
 </template>
 
@@ -62,10 +69,16 @@
  *  Navigation directive — uses emitted event; App.vue owns currentView
  */
 
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useClassroom } from '../composables/useClassroom.js'
 
-const { classList, activeClass, switchClass } = useClassroom()
+const { 
+  classList, 
+  activeClass, 
+  switchClass, 
+  suggestedClass, 
+  computeSuggestedClass 
+} = useClassroom()
 
 const emit  = defineEmits(['navigate'])
 const isOpen = ref(false)
@@ -77,6 +90,25 @@ async function selectClass(classId) {
   }
   await switchClass(classId)
   isOpen.value = false
+}
+
+const suggestionText = computed(() => {
+  if (!suggestedClass.value) return ''
+  const c = suggestedClass.value
+  if (c.minutesUntil > 0) {
+    return `Period ${c.periodNumber} starts in ${c.minutesUntil} min — switch to ${c.name}?`
+  } else if (c.minutesUntil <= 0) {
+    const diff = Math.abs(c.minutesUntil)
+    return `Period ${c.periodNumber} started ${diff === 0 ? 'just now' : diff + ' min ago'} — switch to ${c.name}?`
+  }
+  return ''
+})
+
+async function acceptSuggestion() {
+  if (suggestedClass.value) {
+    await switchClass(suggestedClass.value.classId)
+    suggestedClass.value = null
+  }
 }
 </script>
 
@@ -222,5 +254,69 @@ async function selectClass(classId) {
   position: fixed;
   inset:    0;
   z-index:  499;
+}
+
+/* ── Suggestion Banner ───────────────────────────────────────────────────── */
+.class-suggestion {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  background: var(--primary-light);
+  border-left: 3px solid var(--primary);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: var(--shadow-sm);
+  z-index: 498; 
+  animation: slide-down 0.2s ease-out forwards;
+  max-width: 320px;
+  transform-origin: top center;
+}
+
+@keyframes slide-down {
+  from { opacity: 0; transform: translateY(-4px) scaleY(0.95); }
+  to   { opacity: 1; transform: translateY(0) scaleY(1); }
+}
+
+.class-suggestion__text {
+  font-size: 13px;
+  color: var(--text);
+  line-height: 1.3;
+  flex: 1;
+}
+
+.class-suggestion__accept {
+  background: var(--primary);
+  color: white;
+  border: none;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: opacity 0.15s ease;
+}
+
+.class-suggestion__accept:hover {
+  opacity: 0.9;
+}
+
+.class-suggestion__dismiss {
+  background: transparent;
+  color: var(--text-secondary);
+  border: none;
+  padding: 4px;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.6;
+  transition: opacity 0.15s ease;
+}
+
+.class-suggestion__dismiss:hover {
+  opacity: 1;
 }
 </style>
