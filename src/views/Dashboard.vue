@@ -8,7 +8,7 @@
       <div class="dashboard__header-right">
         <!-- Students-out badge -->
         <div v-if="studentsOut.length > 0" class="dashboard__out-badge" aria-live="polite">
-          <span aria-hidden="true">🚽</span>
+          <Toilet :size="16" />
           {{ studentsOut.length }} out
         </div>
         
@@ -20,7 +20,7 @@
           :class="{ 'dashboard__pool-toggle--active': isPoolOpen }"
           title="Toggle Unassigned List"
         >
-          <span aria-hidden="true">👥</span>
+          <Users :size="20" />
           <span class="dashboard__pool-toggle-label">Pool</span>
         </button>
 
@@ -63,7 +63,7 @@
               @dragstart="onDragStart($event, s)"
             >
               <span class="dashboard__pool-name">{{ s.firstName }} {{ s.lastName }}</span>
-              <span class="dashboard__pool-drag" aria-hidden="true">≡</span>
+              <GripVertical :size="16" class="dashboard__pool-drag" />
             </div>
           </div>
         </aside>
@@ -114,6 +114,7 @@ import RadialMenu          from '../components/RadialMenu.vue'
 import UndoButton          from '../components/UndoButton.vue'
 import EventNoteModal      from '../components/EventNoteModal.vue'
 import StudentProfileModal from '../components/StudentProfileModal.vue'
+import { Toilet, Users, GripVertical } from 'lucide-vue-next'
 import { useClassroom }    from '../composables/useClassroom.js'
 import { useRadial }       from '../composables/useRadial.js'
 

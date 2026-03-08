@@ -13,7 +13,7 @@
         <!-- ── Header ──────────────────────────────────────────────── -->
         <div class="spm-header">
           <h2 class="spm-title">{{ studentName }}</h2>
-          <button class="spm-close" aria-label="Close profile" @click="close">✕</button>
+          <button class="spm-close" aria-label="Close profile" @click="close"><X :size="18" /></button>
         </div>
 
         <!-- ── Body (scrollable) ───────────────────────────────────── -->
@@ -49,7 +49,8 @@
                 <div class="spm-feed-meta">
                   <span class="spm-feed-time">{{ formatTimestamp(evt.timestamp) }}</span>
                   <span class="spm-feed-code">
-                    {{ codeInfo(evt.code).icon }} {{ codeInfo(evt.code).label }}
+                    <component :is="codeInfo(evt.code).icon === '?' ? HelpCircle : resolveIcon(codeInfo(evt.code).icon)" :size="16" /> 
+                    {{ codeInfo(evt.code).label }}
                     <span v-if="evt.duration != null" class="spm-feed-duration">
                       ({{ formatDuration(evt) }})
                     </span>
@@ -65,7 +66,12 @@
         <!-- ── Report Card Export ──────────────────────────────────── -->
         <div class="spm-footer">
           <button class="spm-copy-btn" @click="copyForReportCard">
-            {{ copyLabel }}
+            <template v-if="isCopied">
+              <Check :size="16" /> Copied!
+            </template>
+            <template v-else>
+              <ClipboardList :size="16" /> Copy for Report Card
+            </template>
           </button>
         </div>
 
@@ -89,6 +95,8 @@
  */
 
 import { ref, computed, watch } from 'vue'
+import { X, ClipboardList, Check, HelpCircle } from 'lucide-vue-next'
+import { resolveIcon } from '../utils/icons.js'
 import * as classService  from '../db/classService.js'
 import * as eventService  from '../db/eventService.js'
 import { useClassroom }   from '../composables/useClassroom.js'
@@ -170,7 +178,7 @@ const sortedEvents = computed(() =>
 )
 
 function codeInfo(code) {
-  return props.behaviorCodesMap[code] ?? { icon: '❓', label: code }
+  return props.behaviorCodesMap[code] ?? { icon: '?', label: code }
 }
 
 function formatTimestamp(ts) {
@@ -196,7 +204,7 @@ function formatDuration(evt) {
 
 // ─── report card copy ─────────────────────────────────────────────────────────
 
-const copyLabel   = ref('📋 Copy for Report Card')
+const isCopied    = ref(false)
 let   copyTimeout = null
 
 async function copyForReportCard() {
@@ -237,9 +245,9 @@ async function copyForReportCard() {
 
   try {
     await navigator.clipboard.writeText(text)
-    copyLabel.value = '✓ Copied!'
+    isCopied.value = true
     clearTimeout(copyTimeout)
-    copyTimeout = setTimeout(() => { copyLabel.value = '📋 Copy for Report Card' }, 1500)
+    copyTimeout = setTimeout(() => { isCopied.value = false }, 1500)
   } catch (err) {
     console.error('Clipboard write failed:', err)
   }

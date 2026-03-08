@@ -20,7 +20,7 @@
 import { openDB } from 'idb'
 
 const DB_NAME = 'classroomTrackerDB'
-const DB_VERSION = 2
+const DB_VERSION = 4
 
 /**
  * Cached promise — set synchronously before the first await so every
@@ -68,17 +68,17 @@ export function getDB() {
       if (oldVersion === 0) {
         transaction.objectStore('settings').put(
           {
-            schemaVersion: 2,
+            schemaVersion: 4,
             gridSize: { rows: 6, cols: 6 },
             behaviorCodes: {
-              p: { icon: '✋', label: 'Participation', category: 'positive', type: 'standard', requiresNote: false },
-              m: { icon: '📱', label: 'On Device', category: 'redirect', type: 'standard', requiresNote: false },
-              w: { icon: '🚽', label: 'Washroom', category: 'neutral', type: 'toggle', requiresNote: false },
-              a: { icon: '🚫', label: 'Absent', category: 'attendance', type: 'attendance', requiresNote: false },
-              l: { icon: '⏰', label: 'Late', category: 'attendance', type: 'attendance', requiresNote: false },
-              ob: { icon: '👁️', label: 'Observation', category: 'note', type: 'standard', requiresNote: true },
-              cv: { icon: '💬', label: 'Conversation', category: 'note', type: 'standard', requiresNote: true },
-              pc: { icon: '📞', label: 'Parent Contact', category: 'communication', type: 'standard', requiresNote: true },
+              p: { icon: 'Hand', label: 'Participation', category: 'positive', type: 'standard', requiresNote: false },
+              m: { icon: 'Smartphone', label: 'On Device', category: 'redirect', type: 'standard', requiresNote: false },
+              w: { icon: 'Toilet', label: 'Washroom', category: 'neutral', type: 'toggle', requiresNote: false },
+              a: { icon: 'UserX', label: 'Absent', category: 'attendance', type: 'attendance', requiresNote: false },
+              l: { icon: 'Clock', label: 'Late', category: 'attendance', type: 'attendance', requiresNote: false },
+              ob: { icon: 'Eye', label: 'Observation', category: 'note', type: 'standard', requiresNote: true },
+              cv: { icon: 'MessageSquare', label: 'Conversation', category: 'note', type: 'standard', requiresNote: true },
+              pc: { icon: 'Phone', label: 'Parent Contact', category: 'communication', type: 'standard', requiresNote: true },
             },
           },
           'singleton'
@@ -129,6 +129,60 @@ export function getDB() {
             }
             if (changed) classesStore.put(cls)
           }
+        }
+      }
+
+      // ── version 3 migration (upgrading from v2) ───────────────────────────
+      // Converts existing emoji icons to Lucide icon name strings
+      if (oldVersion < 3) {
+        const settingsStore = transaction.objectStore('settings')
+        const req = settingsStore.get('singleton')
+        req.onsuccess = () => {
+          const settings = req.result
+          if (!settings) return
+
+          const codes = settings.behaviorCodes ?? {}
+          const emojiMap = {
+            '✋': 'Hand',
+            '📱': 'Smartphone',
+            '🚽': 'Toilet',
+            '🚫': 'UserX',
+            '⏰': 'Clock',
+            '👁️': 'Eye',
+            '💬': 'MessageSquare',
+            '📞': 'Phone'
+          }
+
+          for (const key of Object.keys(codes)) {
+            const currentIcon = codes[key].icon
+            if (emojiMap[currentIcon]) {
+              codes[key].icon = emojiMap[currentIcon]
+            }
+          }
+
+          settings.schemaVersion = 3
+          settingsStore.put(settings, 'singleton')
+        }
+      }
+
+      // ── version 4 migration (upgrading from v3) ───────────────────────────
+      // Converts mistaken 'Droplets' icon back to 'Toilet' for washroom
+      if (oldVersion < 4) {
+        const settingsStore = transaction.objectStore('settings')
+        const req = settingsStore.get('singleton')
+        req.onsuccess = () => {
+          const settings = req.result
+          if (!settings) return
+
+          const codes = settings.behaviorCodes ?? {}
+          for (const key of Object.keys(codes)) {
+            if (codes[key].icon === 'Droplets') {
+              codes[key].icon = 'Toilet'
+            }
+          }
+
+          settings.schemaVersion = 4
+          settingsStore.put(settings, 'singleton')
         }
       }
     },

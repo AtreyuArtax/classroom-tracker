@@ -4,7 +4,7 @@
     <!-- ── Navigation bar ─────────────────────────────────────────────── -->
     <nav class="app-nav" role="navigation" aria-label="Main navigation">
       <div class="app-nav__brand">
-        <span class="app-nav__logo" aria-hidden="true">📋</span>
+        <ClipboardList :size="24" class="app-nav__logo" />
         <span class="app-nav__title">Class Tracker</span>
       </div>
 
@@ -18,7 +18,7 @@
           :aria-selected="currentView === view.id"
           @click="currentView = view.id"
         >
-          <span class="app-nav__tab-icon" aria-hidden="true">{{ view.icon }}</span>
+          <component :is="view.icon" :size="22" class="app-nav__tab-icon" />
           <span class="app-nav__tab-label">{{ view.label }}</span>
         </button>
       </div>
@@ -49,6 +49,7 @@
  */
 
 import { ref, computed, onMounted } from 'vue'
+import { ClipboardList, LayoutDashboard, Settings, BarChart2 } from 'lucide-vue-next'
 import Dashboard from './views/Dashboard.vue'
 import Setup     from './views/Setup.vue'
 import Reports   from './views/Reports.vue'
@@ -59,9 +60,9 @@ import { useClassroom } from './composables/useClassroom.js'
 const currentView = ref('Dashboard')
 
 const views = [
-  { id: 'Dashboard', label: 'Dashboard', icon: '🏠' },
-  { id: 'Setup',     label: 'Setup',     icon: '⚙️' },
-  { id: 'Reports',   label: 'Reports',   icon: '📊' },
+  { id: 'Dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { id: 'Setup',     label: 'Setup',     icon: Settings },
+  { id: 'Reports',   label: 'Reports',   icon: BarChart2 },
 ]
 
 const viewComponents = { Dashboard, Setup, Reports }

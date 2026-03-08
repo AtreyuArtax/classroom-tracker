@@ -17,27 +17,27 @@
       <div class="sp__cards">
         <div class="sp__card sp__card--absent">
           <div class="sp__card-value">{{ absenceCount }}</div>
-          <div class="sp__card-label">🚫 Absences</div>
+          <div class="sp__card-label"><UserX :size="16" /> Absences</div>
         </div>
         <div class="sp__card sp__card--late">
           <div class="sp__card-value">{{ lateMinutes }}<span class="sp__card-unit">min</span></div>
-          <div class="sp__card-label">⏰ Late Total</div>
+          <div class="sp__card-label"><Clock :size="16" /> Late Total</div>
         </div>
         <div class="sp__card sp__card--late">
           <div class="sp__card-value">{{ lateCount }}</div>
-          <div class="sp__card-label">⏰ Late Arrivals</div>
+          <div class="sp__card-label"><Clock :size="16" /> Late Arrivals</div>
         </div>
         <div class="sp__card sp__card--washroom">
           <div class="sp__card-value">{{ washroomTrips }}</div>
-          <div class="sp__card-label">🚻 Washroom Trips</div>
+          <div class="sp__card-label"><Toilet :size="16" /> Washroom Trips</div>
         </div>
         <div class="sp__card sp__card--device">
           <div class="sp__card-value">{{ onDeviceCount }}</div>
-          <div class="sp__card-label">📱 On Device</div>
+          <div class="sp__card-label"><Smartphone :size="16" /> On Device</div>
         </div>
         <div v-if="topBehavior" class="sp__card sp__card--behavior">
           <div class="sp__card-value">{{ topBehavior.count }}</div>
-          <div class="sp__card-label">{{ topBehavior.icon }} {{ topBehavior.label }}</div>
+          <div class="sp__card-label"><component :is="resolveIcon(topBehavior.icon)" :size="16" /> {{ topBehavior.label }}</div>
         </div>
       </div>
 
@@ -67,7 +67,11 @@
         <h4 class="sp__section-title">Breakdown by Code</h4>
         <div class="sp__breakdown">
           <div v-for="row in breakdown" :key="row.code" class="sp__breakdown-row">
-            <span class="sp__breakdown-label">{{ row.icon }} {{ row.label }}</span>
+            <span class="sp__breakdown-label">
+              <component :is="resolveIcon(row.icon)" :size="16" v-if="row.icon !== '?'" />
+              <HelpCircle :size="16" v-else />
+              {{ row.label }}
+            </span>
             <div class="sp__breakdown-bar-wrap">
               <div class="sp__breakdown-bar" :style="{ width: row.pct + '%' }"></div>
             </div>
@@ -91,7 +95,10 @@
             <tbody>
               <tr v-for="evt in sortedEvents" :key="evt.eventId">
                 <td class="sp__td-time">{{ formatTime(evt.timestamp) }}</td>
-                <td>{{ behaviorCodes[evt.code]?.icon ?? '' }} {{ evt.code }}</td>
+                <td>
+                  <component :is="resolveIcon(behaviorCodes[evt.code]?.icon)" :size="16" v-if="behaviorCodes[evt.code]" />
+                  {{ evt.code }}
+                </td>
                 <td>{{ eventDetail(evt) }}</td>
               </tr>
             </tbody>
@@ -105,6 +112,8 @@
 
 <script setup>
 import { computed } from 'vue'
+import { UserX, Clock, Toilet, Smartphone, HelpCircle } from 'lucide-vue-next'
+import { resolveIcon } from '../utils/icons.js'
 
 const props = defineProps({
   events:        { type: Array,  required: true },
@@ -204,7 +213,7 @@ const breakdown = computed(() => {
       code,
       count,
       pct: Math.round(count / total * 100),
-      icon:  props.behaviorCodes[code]?.icon  ?? '❓',
+      icon:  props.behaviorCodes[code]?.icon  ?? '?',
       label: props.behaviorCodes[code]?.label ?? code,
     }))
     .sort((a, b) => b.count - a.count)

@@ -77,8 +77,8 @@
       <!-- Archived Classes -->
       <div v-if="archivedClasses.length > 0" class="setup__card setup__card--archived">
         <button class="setup__archived-toggle" @click="showArchived = !showArchived">
-          <span>📦 Archived ({{ archivedClasses.length }})</span>
-          <span class="setup__archived-chevron">{{ showArchived ? '▲' : '▼' }}</span>
+          <span class="setup__archived-label"><Archive :size="16" /> Archived ({{ archivedClasses.length }})</span>
+          <span class="setup__archived-chevron"><component :is="showArchived ? ChevronUp : ChevronDown" :size="16" /></span>
         </button>
         <ul v-if="showArchived" class="setup__class-list setup__archived-list">
           <li v-for="cls in archivedClasses" :key="cls.classId" class="setup__class-item setup__class-item--archived">
@@ -164,7 +164,7 @@
         </p>
 
         <label class="setup__file-label" for="roster-file">
-          <span aria-hidden="true">📂</span> Choose CSV file
+          <FolderOpen :size="16" /> Choose CSV file
           <input
             id="roster-file"
             type="file"
@@ -239,14 +239,14 @@
 
         <ul class="setup__code-list">
           <li v-for="code in behaviorCodes" :key="code.codeKey" class="setup__code-item">
-            <span class="setup__code-icon">{{ code.icon }}</span>
+            <span class="setup__code-icon"><component :is="resolveIcon(code.icon)" :size="20" /></span>
             <div class="setup__code-info">
               <span class="setup__code-key">{{ code.codeKey }}</span>
               <span class="setup__code-label">{{ code.label }}</span>
               <span class="setup__code-meta">{{ code.category }} · {{ code.type }}</span>
-              <span v-if="code.requiresNote" class="setup__code-note-badge">📝 Note required</span>
+              <span v-if="code.requiresNote" class="setup__code-note-badge"><FileText :size="14" class="setup__note-icon" /> Note required</span>
             </div>
-            <button class="setup__icon-btn" aria-label="Delete {{ code.label }}" @click="deleteCode(code.codeKey)">🗑</button>
+            <button class="setup__icon-btn" aria-label="Delete {{ code.label }}" @click="deleteCode(code.codeKey)"><Trash2 :size="18" /></button>
           </li>
         </ul>
       </div>
@@ -260,8 +260,8 @@
             <input v-model="newCode.codeKey" class="setup__input" maxlength="4" placeholder="e.g. p" required />
           </label>
           <label class="setup__label">
-            Icon (emoji)
-            <input v-model="newCode.icon" class="setup__input" maxlength="4" placeholder="✋" required />
+            Icon (Lucide name)
+            <input v-model="newCode.icon" class="setup__input" placeholder="e.g. Hand" required />
           </label>
           <label class="setup__label">
             Label
@@ -310,6 +310,8 @@
 
 import { ref, reactive, computed } from 'vue'
 import Papa from 'papaparse'
+import { Archive, ChevronDown, ChevronUp, FolderOpen, Trash2, FileText } from 'lucide-vue-next'
+import { resolveIcon }       from '../utils/icons.js'
 import { useClassroom }      from '../composables/useClassroom.js'
 import * as settingsService  from '../db/settingsService.js'
 
@@ -666,6 +668,12 @@ async function deleteCode(codeKey) {
   color:           var(--text-secondary);
   cursor:          pointer;
   padding:         4px 0;
+}
+
+.setup__archived-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .setup__archived-list {

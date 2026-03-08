@@ -423,7 +423,7 @@ async function logToggleEvent(studentId, code) {
     if (!currentState.isOut) {
         // ── Toggle OUT ───────────────────────────────────────────────────────────
         const outTime = new Date().toISOString()
-        const newState = { isOut: true, outTime }
+        const newState = { isOut: true, outTime, code }
 
         await classService.setStudentActiveState(classId, studentId, newState)
         students.value[studentId].activeStates = newState

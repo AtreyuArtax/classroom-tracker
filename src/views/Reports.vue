@@ -39,7 +39,9 @@
           class="reports__overview-btn"
           :class="{ 'reports__overview-btn--active': rightMode === 'overview' }"
           @click="showOverview"
-        >📊 Class Overview</button>
+        >
+          <BarChart2 :size="16" class="reports__overview-icon" /> Class Overview
+        </button>
 
       </aside>
 
@@ -112,7 +114,7 @@
 
           <!-- Prompt when no student selected and not explicitly in overview mode -->
           <div v-if="rightMode !== 'overview'" class="reports__placeholder">
-            <p>← Select a student to view their dossier, or click <strong>📊 Class Overview</strong> for aggregate reports.</p>
+            <p>← Select a student to view their dossier, or click <strong><BarChart2 :size="14" class="reports__inline-icon" /> Class Overview</strong> for aggregate reports.</p>
           </div>
 
           <template v-if="rightMode === 'overview'">
@@ -127,7 +129,10 @@
                 role="tab"
                 :aria-selected="activeTab === tab.id"
                 @click="switchTab(tab.id)"
-              >{{ tab.label }}</button>
+              >
+                <component :is="tab.icon" v-if="tab.icon" :size="16" class="reports__tab-icon" />
+                {{ tab.label }}
+              </button>
             </div>
 
             <!-- Date filter (all tabs except backup) -->
@@ -183,7 +188,7 @@
                 <h2 class="reports__card-title">Export Backup</h2>
                 <p class="reports__hint">Downloads all classes, students, and events as a single JSON file. No data leaves your device.</p>
                 <button class="reports__btn-primary" @click="doExport">
-                  <span aria-hidden="true">⬇️</span> Download Backup
+                  <Download :size="16" /> Download Backup
                 </button>
                 <p v-if="backupMsg" class="reports__msg">{{ backupMsg }}</p>
               </div>
@@ -191,7 +196,7 @@
                 <h2 class="reports__card-title">Restore from Backup</h2>
                 <p class="reports__hint">⚠️ This will <strong>overwrite all existing data</strong>. A summary will be shown before anything is written.</p>
                 <label class="reports__file-label" for="backup-file">
-                  <span aria-hidden="true">📂</span> Choose backup JSON
+                  <FolderOpen :size="16" /> Choose backup JSON
                   <input id="backup-file" type="file" accept=".json,application/json" class="reports__file-input" @change="onBackupFileSelected" />
                 </label>
                 <div v-if="importPreview" class="reports__dialog" role="dialog" aria-modal="true">
@@ -242,6 +247,8 @@
  */
 
 import { ref, computed, watch, defineComponent, h, onMounted } from 'vue'
+import { Download, FolderOpen, Database, BarChart2 } from 'lucide-vue-next'
+import { resolveIcon }         from '../utils/icons.js'
 import { useClassroom }        from '../composables/useClassroom.js'
 import { useStudentDossier }   from '../composables/useStudentDossier.js'
 import * as eventService       from '../db/eventService.js'
@@ -350,7 +357,7 @@ const overviewTabs = [
   { id: 'class',      label: 'Class'      },
   { id: 'washroom',   label: 'Washroom'   },
   { id: 'attendance', label: 'Attendance' },
-  { id: 'backup',     label: '💾 Backup'  },
+  { id: 'backup',     label: 'Backup', icon: Database },
 ]
 
 const activeTab = ref('class')
@@ -545,7 +552,10 @@ const EventTable = defineComponent({
             return h('tr', { key: evt.eventId }, [
               h('td', {}, evt.timestamp?.slice(0, 16).replace('T', ' ') ?? ''),
               ...(props.showStudent ? [h('td', {}, evt.studentId)] : []),
-              h('td', {}, `${props.behaviorCodes[evt.code]?.icon ?? ''} ${evt.code}${extra}`),
+              h('td', {}, [
+                props.behaviorCodes[evt.code] ? h(resolveIcon(props.behaviorCodes[evt.code].icon), { size: 16, style: { verticalAlign: 'middle', marginRight: '4px' } }) : null,
+                `${evt.code}${extra}`
+              ]),
               h('td', {}, evt.category),
               h('td', {}, `P${evt.periodNumber}`),
               h('td', { class: 'reports__td-actions' }, 
@@ -589,7 +599,10 @@ const SummaryGrid = defineComponent({
         h('table', { class: 'reports__table' }, [
           h('thead', {}, h('tr', {}, [
             h('th', {}, 'Student'),
-            ...codes.map(c => h('th', { key: c }, `${props.behaviorCodes[c]?.icon ?? ''} ${c}`)),
+            ...codes.map(c => h('th', { key: c }, [
+              props.behaviorCodes[c] ? h(resolveIcon(props.behaviorCodes[c].icon), { size: 16, style: { verticalAlign: 'middle', marginRight: '4px' } }) : null,
+              c
+            ])),
             h('th', {}, 'Total'),
           ])),
           h('tbody', {}, Object.entries(summary).map(([studentId, counts]) => {
@@ -745,7 +758,10 @@ const ExportBar = defineComponent({
     }
 
     return () => props.events.length > 0
-      ? h('button', { class: 'reports__btn-export', onClick: downloadCsv }, '⬇️ Export CSV')
+      ? h('button', { class: 'reports__btn-export', onClick: downloadCsv }, [
+          h(Download, { size: 16, style: { marginRight: '6px' } }),
+          'Export CSV'
+        ])
       : null
   },
 })

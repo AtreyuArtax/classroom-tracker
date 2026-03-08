@@ -35,19 +35,19 @@
     </div>
 
     <div v-if="student.activeStates?.isOut" class="desk-tile__status-info desk-tile__status-info--out">
-      <span class="desk-tile__status-icon" aria-hidden="true">🚽</span>
+      <component :is="activeOutIcon" :size="16" class="desk-tile__status-icon" />
       <span class="desk-tile__timer">{{ elapsedFormatted }}</span>
     </div>
 
     <!-- Absent indicator -->
     <div v-else-if="student.activeStates?.isAbsent" class="desk-tile__status-info desk-tile__status-info--absent">
-      <span class="desk-tile__status-icon" aria-hidden="true">🚫</span>
+      <UserX :size="16" class="desk-tile__status-icon" />
       <span class="desk-tile__status-label">Absent</span>
     </div>
 
     <!-- Late indicator -->
     <div v-else-if="student.activeStates?.lateMinutes > 0" class="desk-tile__status-info desk-tile__status-info--late">
-      <span class="desk-tile__status-icon" aria-hidden="true">⏰</span>
+      <Clock :size="16" class="desk-tile__status-icon" />
       <span class="desk-tile__status-label">Late {{ student.activeStates.lateMinutes }}m</span>
     </div>
   </div>
@@ -73,6 +73,8 @@
  */
 
 import { ref, computed, watch, onUnmounted } from 'vue'
+import { HelpCircle, UserX, Clock, Droplets } from 'lucide-vue-next'
+import { resolveIcon }    from '../utils/icons.js'
 import { useRadial }    from '../composables/useRadial.js'
 import { useClassroom } from '../composables/useClassroom.js'
 
@@ -106,6 +108,21 @@ function openRadialForStudent() {
     behaviorCodes.value
   )
 }
+
+/**
+ * Resolve the icon to show when the student is "out".
+ * Checks the activeState.code first, falls back to behavior codes if matched.
+ */
+const activeOutIcon = computed(() => {
+  const stateCode = props.student?.activeStates?.code
+  if (stateCode) {
+    const codeObj = behaviorCodes.value.find(c => c.codeKey === stateCode)
+    if (codeObj) return resolveIcon(codeObj.icon)
+  }
+  
+  // Backward compatibility fallback for old sessions missing the 'code' in activeStates
+  return Droplets
+})
 
 // ─── elapsed timer ────────────────────────────────────────────────────────────
 

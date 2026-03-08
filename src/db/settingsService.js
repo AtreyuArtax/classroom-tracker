@@ -31,17 +31,17 @@ async function _readSettings() {
 
     // Fallback: seed defaults (should have been written during upgrade, but guard anyway)
     const defaults = {
-        schemaVersion: 2,
+        schemaVersion: 3,
         gridSize: { rows: 6, cols: 6 },
         behaviorCodes: {
-            p: { icon: '✋', label: 'Participation', category: 'positive', type: 'standard', requiresNote: false },
-            m: { icon: '📱', label: 'On Device', category: 'redirect', type: 'standard', requiresNote: false },
-            w: { icon: '🚽', label: 'Washroom', category: 'neutral', type: 'toggle', requiresNote: false },
-            a: { icon: '🚫', label: 'Absent', category: 'attendance', type: 'attendance', requiresNote: false },
-            l: { icon: '⏰', label: 'Late', category: 'attendance', type: 'attendance', requiresNote: false },
-            ob: { icon: '👁️', label: 'Observation', category: 'note', type: 'standard', requiresNote: true },
-            cv: { icon: '💬', label: 'Conversation', category: 'note', type: 'standard', requiresNote: true },
-            pc: { icon: '📞', label: 'Parent Contact', category: 'communication', type: 'standard', requiresNote: true },
+            p: { icon: 'Hand', label: 'Participation', category: 'positive', type: 'standard', requiresNote: false },
+            m: { icon: 'Smartphone', label: 'On Device', category: 'redirect', type: 'standard', requiresNote: false },
+            w: { icon: 'Toilet', label: 'Washroom', category: 'neutral', type: 'toggle', requiresNote: false },
+            a: { icon: 'UserX', label: 'Absent', category: 'attendance', type: 'attendance', requiresNote: false },
+            l: { icon: 'Clock', label: 'Late', category: 'attendance', type: 'attendance', requiresNote: false },
+            ob: { icon: 'Eye', label: 'Observation', category: 'note', type: 'standard', requiresNote: true },
+            cv: { icon: 'MessageSquare', label: 'Conversation', category: 'note', type: 'standard', requiresNote: true },
+            pc: { icon: 'Phone', label: 'Parent Contact', category: 'communication', type: 'standard', requiresNote: true },
         },
     }
     await db.put('settings', defaults, SETTINGS_KEY)

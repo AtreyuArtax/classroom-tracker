@@ -24,7 +24,7 @@
           :aria-label="item.label"
           @click.stop="onItemTap(item)"
         >
-          <span class="radial-btn__icon" aria-hidden="true">{{ item.icon }}</span>
+          <component :is="resolveIcon(item.icon)" :size="20" class="radial-btn__icon" />
           <span class="radial-btn__label">{{ item.label }}</span>
         </button>
 
@@ -36,7 +36,7 @@
           aria-label="Student Profile"
           @click.stop="onProfileTap"
         >
-          <span class="radial-btn__icon" aria-hidden="true">👤</span>
+          <User :size="20" class="radial-btn__icon" />
           <span class="radial-btn__label">Profile</span>
         </button>
 
@@ -46,7 +46,7 @@
           :aria-label="centreGoesBack ? 'Back' : 'Close menu'"
           @click.stop="handleCentre"
         >
-          <span aria-hidden="true">{{ centreGoesBack ? '←' : '✕' }}</span>
+          <component :is="centreGoesBack ? ChevronLeft : X" :size="18" />
         </button>
 
       </div>
@@ -79,6 +79,8 @@
  */
 
 import { computed } from 'vue'
+import { User, X, ChevronLeft } from 'lucide-vue-next'
+import { resolveIcon }  from '../utils/icons.js'
 import { useRadial }    from '../composables/useRadial.js'
 import { useClassroom } from '../composables/useClassroom.js'
 
