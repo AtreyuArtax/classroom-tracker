@@ -235,6 +235,7 @@ const {
   activeClass,
   behaviorCodes,
   classList,
+  syncLateActiveState
 } = useClassroom()
 
 const { push: pushUndo } = useUndo()
@@ -312,10 +313,16 @@ async function onDossierDelete(eventId) {
 async function editEvent(evt) {
   try {
     await eventService.updateEvent(evt.eventId, { duration: evt.newDuration })
+    if (evt.code === 'l') {
+        await syncLateActiveState(evt.classId, evt.studentId, evt.oldDuration, evt.newDuration)
+    }
     
     // Push the inverse onto the undo stack
     pushUndo(async () => {
       await eventService.updateEvent(evt.eventId, { duration: evt.oldDuration })
+      if (evt.code === 'l') {
+          await syncLateActiveState(evt.classId, evt.studentId, evt.newDuration, evt.oldDuration)
+      }
       await dossier.loadStudent(sidebarClassId.value, dossier.selectedStudentId.value)
     })
     

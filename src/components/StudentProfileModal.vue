@@ -138,7 +138,7 @@ const props = defineProps({
 
 const emit = defineEmits(['update:modelValue'])
 
-const { students, activeClass } = useClassroom()
+const { students, activeClass, syncLateActiveState } = useClassroom()
 const { push: pushUndo } = useUndo()
 
 // ─── derived student info ──────────────────────────────────────────────────────
@@ -253,9 +253,15 @@ async function onEditSave(newMinutes) {
   
   try {
     await eventService.updateEvent(evt.eventId, { duration: newDuration })
+    if (evt.code === 'l') {
+       await syncLateActiveState(evt.classId, evt.studentId, oldDuration, newDuration, evt.timestamp)
+    }
     
     pushUndo(async () => {
         await eventService.updateEvent(evt.eventId, { duration: oldDuration })
+        if (evt.code === 'l') {
+           await syncLateActiveState(evt.classId, evt.studentId, newDuration, oldDuration, evt.timestamp)
+        }
         events.value = await eventService.getEventsByStudent(props.studentId)
     })
     

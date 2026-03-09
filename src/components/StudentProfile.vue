@@ -339,6 +339,10 @@ function onEditSave(newMinutes) {
   // Emit to parent with the duration safely calculated for the DB
   emit('edit-event', {
      eventId: evt.eventId,
+     classId: evt.classId,
+     studentId: evt.studentId,
+     code: evt.code,
+     timestamp: evt.timestamp,
      newDuration: newDuration,
      oldDuration: evt.duration
   })

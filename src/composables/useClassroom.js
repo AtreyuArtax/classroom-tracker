@@ -496,6 +496,29 @@ async function logAttendanceEvent(studentId, code) {
     }
 }
 
+async function syncLateActiveState(classId, studentId, oldDuration, newDuration, eventTimestamp) {
+    const cls = await classService.getClass(classId)
+    const st = cls?.students[studentId]
+
+    const isToday = eventTimestamp ? eventTimestamp.startsWith(new Date().toISOString().slice(0, 10)) : false
+
+    // Only update if the active state matches the old duration (meaning it's the current active late state)
+    // Or if the event is from today (fallback to fix desynced DBs)
+    if (st && st.activeStates && st.activeStates.lateMinutes != null) {
+        if (st.activeStates.lateMinutes === oldDuration || isToday) {
+            await classService.setStudentLate(classId, studentId, newDuration)
+            // If the user happens to have this class active right now, sync the reactive UI
+            if (activeClass.value?.classId === classId && students.value[studentId]) {
+                // Force triggering Vue reactivity by assigning a new object
+                students.value[studentId].activeStates = {
+                    ...students.value[studentId].activeStates,
+                    lateMinutes: newDuration
+                }
+            }
+        }
+    }
+}
+
 /**
  * Log a standard (non-toggle) behavior event via the radial menu selection.
  * Follows CLAUDE.md §8 (event write procedure delegated to eventService.logEvent).
@@ -746,6 +769,7 @@ export function useClassroom() {
         logStandardEvent,
         logToggleEvent,
         logAttendanceEvent,
+        syncLateActiveState,
         checkResize,
         confirmResize,
         reloadBehaviorCodes,
