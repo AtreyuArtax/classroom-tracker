@@ -150,8 +150,7 @@ export function getDB() {
       // ── version 7 migration ────────────────────────────────────────────────
       // Add behavior component thresholds to settings
       if (oldVersion < 7) {
-        const tx7 = db.transaction('settings', 'readwrite')
-        const settingsStore = tx7.objectStore('settings')
+        const settingsStore = transaction.objectStore('settings')
         const settings = await settingsStore.get('singleton')
         if (settings) {
           if (settings.thresholds === undefined) {
@@ -162,7 +161,6 @@ export function getDB() {
             await settingsStore.put(settings, 'singleton')
           }
         }
-        await tx7.done
       }
     },
   })
