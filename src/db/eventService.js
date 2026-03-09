@@ -114,6 +114,26 @@ export async function deleteEvent(eventId) {
 }
 
 /**
+ * Updates an existing event with partial data (e.g. editing duration).
+ * Used by the edit-event process.
+ *
+ * @param {number} eventId
+ * @param {Object} updates   Partial object of fields to update
+ * @returns {Promise<void>}
+ */
+export async function updateEvent(eventId, updates = {}) {
+    const db = await getDB()
+    const event = await db.get('events', eventId)
+    if (!event) throw new Error(`Event not found: ${eventId}`)
+
+    Object.assign(event, updates)
+    await db.put('events', event)
+
+    hasUnsyncedChanges.value = true
+}
+
+
+/**
  * Returns all events for a student, optionally filtered by date.
  * Uses the `by_studentId` index (no full scan).
  *

@@ -106,13 +106,23 @@
                 </td>
                 <td>{{ eventDetail(evt) }}</td>
                 <td class="sp__td-actions">
-                  <button 
-                    class="sp__btn-delete" 
-                    title="Delete event" 
-                    @click="emit('delete-event', evt.eventId)"
-                  >
-                    <Trash2 :size="14" />
-                  </button>
+                  <div class="sp__action-group">
+                    <button 
+                      v-if="evt.duration != null || evt.code === 'w'"
+                      class="sp__btn-delete sp__btn-edit" 
+                      title="Edit duration" 
+                      @click="onEditClick(evt)"
+                    >
+                      <Pencil :size="14" />
+                    </button>
+                    <button 
+                      class="sp__btn-delete" 
+                      title="Delete event" 
+                      @click="emit('delete-event', evt.eventId)"
+                    >
+                      <Trash2 :size="14" />
+                    </button>
+                  </div>
                 </td>
               </tr>
             </tbody>
@@ -120,14 +130,21 @@
         </div>
       </details>
 
+      <EditDurationModal
+        v-model="editModalOpen"
+        :initial-minutes="editInitialMinutes"
+        @save="onEditSave"
+      />
+
     </template>
   </div>
 </template>
 
 <script setup>
-import { computed } from 'vue'
-import { UserX, Clock, Toilet, Smartphone, HelpCircle, Trash2 } from 'lucide-vue-next'
+import { ref, computed } from 'vue'
+import { UserX, Clock, Toilet, Smartphone, HelpCircle, Trash2, Pencil } from 'lucide-vue-next'
 import { resolveIcon } from '../utils/icons.js'
+import EditDurationModal from './EditDurationModal.vue'
 
 const props = defineProps({
   events:        { type: Array,  required: true },
@@ -135,7 +152,7 @@ const props = defineProps({
   studentName:   { type: String, default: '' },
 })
 
-const emit = defineEmits(['delete-event'])
+const emit = defineEmits(['delete-event', 'edit-event'])
 
 // ── helpers ────────────────────────────────────────────────────────────────────
 
@@ -287,6 +304,45 @@ const sortedEvents = computed(() =>
     (b.timestamp ?? '').localeCompare(a.timestamp ?? '')
   )
 )
+
+// ── event editing ─────────────────────────────────────────────────────────────
+
+const editModalOpen      = ref(false)
+const editInitialMinutes = ref(0)
+const editTargetEvent    = ref(null)
+
+function onEditClick(evt) {
+  editTargetEvent.value = evt
+  
+  // Calculate initial visual minutes based on toggle vs non-toggle
+  if (evt.code === 'l') {
+    editInitialMinutes.value = evt.duration ?? 0
+  } else {
+    // Toggled events (like washroom) store duration in ms
+    editInitialMinutes.value = Math.floor((evt.duration ?? 0) / 60000)
+  }
+  
+  editModalOpen.value = true
+}
+
+function onEditSave(newMinutes) {
+  const evt = editTargetEvent.value
+  if (!evt) return
+  
+  let newDuration = newMinutes
+  const c = props.behaviorCodes[evt.code]
+  
+  if (c && c.type === 'toggle') {
+     newDuration = newMinutes * 60 * 1000
+  }
+  
+  // Emit to parent with the duration safely calculated for the DB
+  emit('edit-event', {
+     eventId: evt.eventId,
+     newDuration: newDuration,
+     oldDuration: evt.duration
+  })
+}
 </script>
 
 <style scoped>
@@ -490,7 +546,13 @@ details[open] .sp__log-summary::before { content: '▼  '; }
 
 .sp__td-actions {
   text-align: right;
-  width: 32px;
+  width: 65px;
+}
+
+.sp__action-group {
+  display: flex;
+  gap: 4px;
+  justify-content: flex-end;
 }
 
 .sp__btn-delete {
@@ -504,6 +566,11 @@ details[open] .sp__log-summary::before { content: '▼  '; }
   align-items: center;
   justify-content: center;
   transition: all 0.15s ease;
+}
+
+.sp__btn-edit:hover {
+  background: rgba(70, 99, 172, 0.1);
+  color: var(--primary);
 }
 
 .sp__btn-delete:hover {

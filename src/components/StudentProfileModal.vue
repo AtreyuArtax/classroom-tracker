@@ -59,18 +59,34 @@
                   </div>
                   <p v-if="evt.note" class="spm-feed-note">{{ evt.note }}</p>
                 </div>
-                <button 
-                  class="spm-feed-delete" 
-                  title="Delete event" 
-                  @click="onDeleteEvent(evt.eventId)"
-                >
-                  <Trash2 :size="14" />
-                </button>
+                <div class="spm-feed-actions">
+                  <button 
+                    v-if="evt.duration != null || evt.code === 'w'"
+                    class="spm-feed-delete spm-feed-edit" 
+                    title="Edit duration" 
+                    @click="onEditClick(evt)"
+                  >
+                    <Pencil :size="14" />
+                  </button>
+                  <button 
+                    class="spm-feed-delete" 
+                    title="Delete event" 
+                    @click="onDeleteEvent(evt.eventId)"
+                  >
+                    <Trash2 :size="14" />
+                  </button>
+                </div>
               </li>
             </ul>
           </section>
 
         </div>
+
+        <EditDurationModal
+          v-model="editModalOpen"
+          :initial-minutes="editInitialMinutes"
+          @save="onEditSave"
+        />
 
         <!-- ── Report Card Export ──────────────────────────────────── -->
         <div class="spm-footer">
@@ -104,11 +120,13 @@
  */
 
 import { ref, computed, watch } from 'vue'
-import { X, ClipboardList, Check, HelpCircle, Trash2 } from 'lucide-vue-next'
+import { X, ClipboardList, Check, HelpCircle, Trash2, Pencil } from 'lucide-vue-next'
 import { resolveIcon } from '../utils/icons.js'
 import * as classService  from '../db/classService.js'
 import * as eventService  from '../db/eventService.js'
 import { useClassroom }   from '../composables/useClassroom.js'
+import { useUndo }        from '../composables/useUndo.js'
+import EditDurationModal  from './EditDurationModal.vue'
 
 const props = defineProps({
   studentId:  { type: String,  required: true },
@@ -121,6 +139,7 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue'])
 
 const { students, activeClass } = useClassroom()
+const { push: pushUndo } = useUndo()
 
 // ─── derived student info ──────────────────────────────────────────────────────
 
@@ -200,6 +219,53 @@ async function onDeleteEvent(eventId) {
 function codeInfo(code) {
   return props.behaviorCodesMap[code] ?? { icon: '?', label: code }
 }
+
+// ── event editing ─────────────────────────────────────────────────────────────
+
+const editModalOpen      = ref(false)
+const editInitialMinutes = ref(0)
+const editTargetEvent    = ref(null)
+
+function onEditClick(evt) {
+  editTargetEvent.value = evt
+  
+  if (evt.code === 'l') {
+    editInitialMinutes.value = evt.duration ?? 0
+  } else {
+    editInitialMinutes.value = Math.floor((evt.duration ?? 0) / 60000)
+  }
+  
+  editModalOpen.value = true
+}
+
+async function onEditSave(newMinutes) {
+  const evt = editTargetEvent.value
+  if (!evt) return
+  
+  let newDuration = newMinutes
+  const info = codeInfo(evt.code)
+  
+  if (info && info.type === 'toggle') {
+     newDuration = newMinutes * 60 * 1000
+  }
+
+  const oldDuration = evt.duration
+  
+  try {
+    await eventService.updateEvent(evt.eventId, { duration: newDuration })
+    
+    pushUndo(async () => {
+        await eventService.updateEvent(evt.eventId, { duration: oldDuration })
+        events.value = await eventService.getEventsByStudent(props.studentId)
+    })
+    
+    events.value = await eventService.getEventsByStudent(props.studentId)
+  } catch (err) {
+    alert('Failed to update event: ' + err.message)
+  }
+}
+
+// ── helpers ───────────────────────────────────────────────────────────────────
 
 function formatTimestamp(ts) {
   if (!ts) return ''
@@ -432,8 +498,9 @@ function close() {
 
 .spm-feed-item:last-child { border-bottom: none; }
 
-.spm-feed-content {
-  flex: 1;
+.spm-feed-actions {
+  display: flex;
+  gap: 4px;
 }
 
 .spm-feed-delete {
@@ -449,6 +516,12 @@ function close() {
   transition: all 0.15s ease;
   margin-top: -2px;
   opacity:    0.4;
+}
+
+.spm-feed-edit:hover {
+  background: rgba(70, 99, 172, 0.1);
+  color:      var(--primary);
+  opacity:    1;
 }
 
 .spm-feed-delete:hover {

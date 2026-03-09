@@ -78,10 +78,12 @@
           <!-- Existing StudentProfile component -->
           <div class="reports__card">
             <StudentProfile
+              v-if="dossier.student.value"
               :events="dossier.events.value"
               :behavior-codes="behaviorCodesMap"
               :student-name="dossierStudentName"
               @delete-event="onDossierDelete"
+              @edit-event="editEvent"
             />
           </div>
 
@@ -224,6 +226,7 @@ import { BarChart2, Download, Trash2 } from 'lucide-vue-next'
 import { resolveIcon }         from '../utils/icons.js'
 import { useClassroom }        from '../composables/useClassroom.js'
 import { useStudentDossier }   from '../composables/useStudentDossier.js'
+import { useUndo }             from '../composables/useUndo.js'
 import * as eventService       from '../db/eventService.js'
 import StudentProfile          from '../components/StudentProfile.vue'
 import StudentTrendGraph       from '../components/StudentTrendGraph.vue'
@@ -233,6 +236,8 @@ const {
   behaviorCodes,
   classList,
 } = useClassroom()
+
+const { push: pushUndo } = useUndo()
 
 // ─── dossier composable ───────────────────────────────────────────────────────
 
@@ -297,9 +302,27 @@ async function onDossierDelete(eventId) {
   if (!confirm('Delete this event? This cannot be undone.')) return
   try {
     await eventService.deleteEvent(eventId)
-    await dossier.reload()
+    await dossier.loadStudent(sidebarClassId.value, dossier.selectedStudentId.value)
   } catch (err) {
     alert('Failed to delete event: ' + err.message)
+  }
+}
+
+/** Edit an event's duration from the dossier profile */
+async function editEvent(evt) {
+  try {
+    await eventService.updateEvent(evt.eventId, { duration: evt.newDuration })
+    
+    // Push the inverse onto the undo stack
+    pushUndo(async () => {
+      await eventService.updateEvent(evt.eventId, { duration: evt.oldDuration })
+      await dossier.loadStudent(sidebarClassId.value, dossier.selectedStudentId.value)
+    })
+    
+    // Refresh dossier safely
+    await dossier.loadStudent(sidebarClassId.value, dossier.selectedStudentId.value)
+  } catch (err) {
+    alert('Failed to edit event: ' + err.message)
   }
 }
 
