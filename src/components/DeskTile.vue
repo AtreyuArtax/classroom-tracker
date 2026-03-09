@@ -28,11 +28,18 @@
     @dragend="isDragging = false"
     @click="openRadialForStudent"
   >
-    <!-- Stats dot — top left corner -->
+    <!-- Washroom dot — top left corner -->
     <span
-      v-if="showStatsDot"
-      class="desk-tile__stats-dot"
-      :title="statsDotTooltip"
+      v-if="showWashroomDot"
+      class="desk-tile__stats-dot desk-tile__stats-dot--washroom"
+      :title="washroomDotTooltip"
+    />
+
+    <!-- Device dot — top right corner -->
+    <span
+      v-if="showDeviceDot"
+      class="desk-tile__stats-dot desk-tile__stats-dot--device"
+      :title="deviceDotTooltip"
     />
 
     <!-- Student name -->
@@ -102,26 +109,28 @@ const emit = defineEmits(['seat-drop']) // emitted to SeatingGrid for drag/drop 
 const { open: openRadial } = useRadial()
 const { behaviorCodes, assignSeat, studentWeeklyStats, thresholds } = useClassroom()
 
-const showStatsDot = computed(() => {
+const showWashroomDot = computed(() => {
   const stats = studentWeeklyStats.value[props.studentId]
   if (!stats || !thresholds.value) return false
-  return (
-    stats.washroomTrips >= (thresholds.value.washroomTripsPerWeek ?? 4) ||
-    stats.deviceIncidents >= (thresholds.value.deviceIncidentsPerWeek ?? 3)
-  )
+  return stats.washroomTrips >= (thresholds.value.washroomTripsPerWeek ?? 4)
 })
 
-const statsDotTooltip = computed(() => {
+const showDeviceDot = computed(() => {
   const stats = studentWeeklyStats.value[props.studentId]
-  if (!stats || !thresholds.value) return ''
-  const parts = []
-  if (stats.washroomTrips >= (thresholds.value.washroomTripsPerWeek ?? 4)) {
-    parts.push(`${stats.washroomTrips} washroom trips this week`)
-  }
-  if (stats.deviceIncidents >= (thresholds.value.deviceIncidentsPerWeek ?? 3)) {
-    parts.push(`${stats.deviceIncidents} device incidents this week`)
-  }
-  return parts.join(' · ')
+  if (!stats || !thresholds.value) return false
+  return stats.deviceIncidents >= (thresholds.value.deviceIncidentsPerWeek ?? 3)
+})
+
+const washroomDotTooltip = computed(() => {
+  const stats = studentWeeklyStats.value[props.studentId]
+  if (!stats) return ''
+  return `${stats.washroomTrips} washroom trips this week`
+})
+
+const deviceDotTooltip = computed(() => {
+  const stats = studentWeeklyStats.value[props.studentId]
+  if (!stats) return ''
+  return `${stats.deviceIncidents} device incidents this week`
 })
 
 // ─── radial ───────────────────────────────────────────────────────────────────
@@ -298,16 +307,25 @@ function onDrop(evt) {
   text-align: center;
 }
 
-/* ── Stats dot (§10 / Update 07) ─────────────────────────────────────────── */
+/* ── Stats dots (§10 / Update 07) ───────────────────────────────────────── */
 .desk-tile__stats-dot {
   position: absolute;
   top: 6px;
-  left: 6px;
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background: #ff3b30;
-  box-shadow: 0 1px 3px rgba(255, 59, 48, 0.4);
+}
+
+.desk-tile__stats-dot--washroom {
+  left: 6px;
+  background: #5ac8fa;
+  box-shadow: 0 1px 3px rgba(90, 200, 250, 0.4);
+}
+
+.desk-tile__stats-dot--device {
+  right: 6px;
+  background: #ff9500;
+  box-shadow: 0 1px 3px rgba(255, 149, 0, 0.4);
 }
 
 /* ── Student name ────────────────────────────────────────────────────────── */

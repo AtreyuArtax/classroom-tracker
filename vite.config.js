@@ -38,7 +38,19 @@ export default defineConfig({
                         urlPattern: ({ request }) =>
                             request.destination === 'document' ||
                             request.destination === 'script' ||
-                            request.destination === 'style' ||
+                            request.destination === 'style',
+                        handler: 'NetworkFirst',
+                        options: {
+                            cacheName: 'app-code-v1',
+                            expiration: {
+                                maxEntries: 50,
+                                maxAgeSeconds: 24 * 60 * 60, // 1 day
+                            },
+                        },
+                    },
+                    {
+                        // Images and fonts remain CacheFirst
+                        urlPattern: ({ request }) =>
                             request.destination === 'image' ||
                             request.destination === 'font',
                         handler: 'CacheFirst',
