@@ -72,9 +72,9 @@ export async function logEvent(eventObj) {
     if (!behaviorCode) throw new Error(`Unknown behavior code: ${eventObj.code}`)
 
     // Step 3 — Compute dayOfWeek
-    const now = new Date()
+    const now = eventObj._overrideTimestamp ? new Date(eventObj._overrideTimestamp) : new Date()
     const dayOfWeek = now.getDay()       // 0=Sun … 6=Sat
-    const timestamp = now.toISOString().slice(0, 19) + 'Z' // "YYYY-MM-DDTHH:MM:SSZ"
+    const timestamp = eventObj._overrideTimestamp || (now.toISOString().slice(0, 19) + 'Z') // "YYYY-MM-DDTHH:MM:SSZ"
 
     // Step 4 — Build the complete event record (no nulls for required fields)
     const record = {

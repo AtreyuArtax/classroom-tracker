@@ -189,6 +189,18 @@ async function init() {
     gridSize.value = settings.gridSize
 
     if (active.length > 0) {
+        // Try to find the best class for the current time
+        computeSuggestedClass()
+        if (suggestedClass.value) {
+            const bestClass = active.find(c => c.classId === suggestedClass.value.classId)
+            if (bestClass) {
+                await _activateClass(bestClass)
+                suggestedClass.value = null // Clear suggestion since we are now on it
+                return
+            }
+        }
+
+        // Fallback to the first active class if no time matches
         await _activateClass(active[0])
     }
 }
@@ -728,6 +740,51 @@ async function deleteClass(classId) {
 // ─── private helpers ──────────────────────────────────────────────────────────
 
 async function _activateClass(cls) {
+    // Reconcile stale activeStates from previous days before activating
+    const todayStr = new Date().toISOString().slice(0, 10)
+    const eventsToday = await eventService.getEventsByClass(cls.classId, { from: todayStr, to: todayStr })
+
+    let needsSave = false
+    for (const [studentId, student] of Object.entries(cls.students ?? {})) {
+        const states = student.activeStates
+        if (!states) continue
+
+        // Check for stale attendance (absent/late but no event today)
+        if (states.isAbsent || states.lateMinutes != null) {
+            const hasAtt = eventsToday.some(e => e.studentId === studentId && (e.code === 'a' || e.code === 'l'))
+            if (!hasAtt) {
+                states.isAbsent = false
+                states.lateMinutes = null
+                needsSave = true
+            }
+        }
+
+        // Check for stale out-of-room state (left the room yesterday and never returned)
+        if (states.isOut && states.outTime) {
+            if (!states.outTime.startsWith(todayStr)) {
+                // Retroactively log the forgotten trip as 5 minutes on the day it occurred
+                const FIVE_MINUTES_MS = 5 * 60 * 1000
+                eventService.logEvent({
+                    studentId,
+                    classId: cls.classId,
+                    code: states.code || 'w', // Fallback to 'w' just in case
+                    duration: FIVE_MINUTES_MS,
+                    // Use a special property to override the timestamp in logEvent
+                    _overrideTimestamp: states.outTime
+                })
+
+                states.isOut = false
+                states.outTime = null
+                states.code = null
+                needsSave = true
+            }
+        }
+    }
+
+    if (needsSave) {
+        await classService.saveClass(cls)
+    }
+
     activeClass.value = cls
     // Deep-copy students map so Vue can track nested mutations
     students.value = JSON.parse(JSON.stringify(cls.students ?? {}))
