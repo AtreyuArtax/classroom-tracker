@@ -51,7 +51,7 @@
     <div v-if="suggestedClass" class="class-suggestion">
       <span class="class-suggestion__text">{{ suggestionText }}</span>
       <button class="class-suggestion__accept" @click="acceptSuggestion">Switch</button>
-      <button class="class-suggestion__dismiss" @click="suggestedClass = null">✕</button>
+      <button class="class-suggestion__dismiss" @click="dismissSuggestion">✕</button>
     </div>
   </div>
 </template>
@@ -75,9 +75,9 @@ import { useClassroom } from '../composables/useClassroom.js'
 const { 
   classList, 
   activeClass, 
-  switchClass, 
   suggestedClass, 
-  computeSuggestedClass 
+  switchClass,
+  dismissSuggestion
 } = useClassroom()
 
 const emit  = defineEmits(['navigate'])

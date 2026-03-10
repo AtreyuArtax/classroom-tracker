@@ -95,40 +95,66 @@ async function computeWeeklyStats(classId, studentIds) {
 
 /**
  * Calculates if a class matches the current time boundary.
- * -15m to +30m of periodStartTime. Updates the suggestedClass ref.
  */
 function computeSuggestedClass() {
     const now = new Date()
     const currentMinutes = now.getHours() * 60 + now.getMinutes()
 
-    let best = null
-    let bestDiff = Infinity
+    // Sort classes chronologically by start time, ignoring those without times
+    const sortedClasses = classList.value
+        .filter(c => !c.archived && c.periodStartTime)
+        .sort((a, b) => {
+            const timeA = a.periodStartTime.split(':').map(Number)
+            const timeB = b.periodStartTime.split(':').map(Number)
+            return (timeA[0] * 60 + timeA[1]) - (timeB[0] * 60 + timeB[1])
+        })
 
-    for (const cls of classList.value) {
-        if (!cls.periodStartTime || cls.archived) continue
+    if (sortedClasses.length === 0) {
+        suggestedClass.value = null
+        return null
+    }
 
+    let bestClass = null
+
+    // Find the class that has most recently started
+    // (iterate backwards from latest class to earliest)
+    for (let i = sortedClasses.length - 1; i >= 0; i--) {
+        const cls = sortedClasses[i]
         const [h, m] = cls.periodStartTime.split(':').map(Number)
         const classMinutes = h * 60 + m
 
-        // Window: suggest if within 15 minutes before or 30 minutes after start
-        const diff = classMinutes - currentMinutes
-        if (diff >= -30 && diff <= 15 && Math.abs(diff) < Math.abs(bestDiff)) {
-            bestDiff = diff
-            best = {
-                classId: cls.classId,
-                name: cls.name,
-                periodNumber: cls.periodNumber,
-                minutesUntil: diff  // negative = already started
-            }
+        if (classMinutes <= currentMinutes) {
+            bestClass = cls
+            break
         }
     }
 
-    // Only suggest if it's not already the active class
-    if (best && best.classId !== activeClass.value?.classId) {
+    // If no class has started yet today (currentMinutes < first class),
+    // suggest the first class of the day.
+    if (!bestClass) {
+        bestClass = sortedClasses[0]
+    }
+
+    // Calculate diff for the banner (minutes until start, or negative if already started)
+    const [h, m] = bestClass.periodStartTime.split(':').map(Number)
+    const classMinutes = h * 60 + m
+    const diff = classMinutes - currentMinutes
+
+    const best = {
+        classId: bestClass.classId,
+        name: bestClass.name,
+        periodNumber: bestClass.periodNumber,
+        minutesUntil: diff
+    }
+
+    // Only suggest if it's not already the active class, AND hasn't been dismissed today
+    if (best.classId !== activeClass.value?.classId && !hasBeenDismissedToday(best.classId)) {
         suggestedClass.value = best
     } else {
         suggestedClass.value = null
     }
+
+    return bestClass
 }
 
 // Recompute whenever the class list changes once populated
@@ -148,6 +174,57 @@ const studentsOut = computed(() =>
     sortedRoster.value.filter(s => s.activeStates?.isOut === true)
 )
 
+// ─── suggestion dismissal tracking ────────────────────────────────────────────
+
+// Map of date string -> array of classIds dismissed
+const dismissedSuggestions = ref({})
+
+function loadDismissedSuggestions() {
+    try {
+        const stored = sessionStorage.getItem('dismissedSuggestions')
+        if (stored) {
+            dismissedSuggestions.value = JSON.parse(stored)
+        }
+    } catch (e) {
+        console.error('Failed to load dismissed suggestions', e)
+    }
+}
+
+function saveDismissedSuggestions() {
+    try {
+        sessionStorage.setItem('dismissedSuggestions', JSON.stringify(dismissedSuggestions.value))
+    } catch (e) {
+        console.error('Failed to save dismissed suggestions', e)
+    }
+}
+
+function hasBeenDismissedToday(classId) {
+    const todayStr = new Date().toISOString().slice(0, 10)
+    const list = dismissedSuggestions.value[todayStr] || []
+    return list.includes(classId)
+}
+
+/**
+ * Dismisses the current suggestion and prevents it from reappearing today.
+ */
+function dismissSuggestion() {
+    if (!suggestedClass.value) return
+
+    const classId = suggestedClass.value.classId
+    const todayStr = new Date().toISOString().slice(0, 10)
+
+    if (!dismissedSuggestions.value[todayStr]) {
+        dismissedSuggestions.value[todayStr] = []
+    }
+
+    if (!dismissedSuggestions.value[todayStr].includes(classId)) {
+        dismissedSuggestions.value[todayStr].push(classId)
+        saveDismissedSuggestions()
+    }
+
+    suggestedClass.value = null
+}
+
 // ─── init ─────────────────────────────────────────────────────────────────────
 
 /**
@@ -157,6 +234,8 @@ const studentsOut = computed(() =>
  * @returns {Promise<void>}
  */
 async function init() {
+    loadDismissedSuggestions()
+
     const [classes, codes, settings] = await Promise.all([
         classService.getAllClasses(),
         settingsService.getBehaviorCodes(),
@@ -190,17 +269,15 @@ async function init() {
 
     if (active.length > 0) {
         // Try to find the best class for the current time
-        computeSuggestedClass()
-        if (suggestedClass.value) {
-            const bestClass = active.find(c => c.classId === suggestedClass.value.classId)
-            if (bestClass) {
-                await _activateClass(bestClass)
-                suggestedClass.value = null // Clear suggestion since we are now on it
-                return
-            }
+        const bestClassFromTime = computeSuggestedClass()
+        if (bestClassFromTime) {
+            // Because it's a fresh boot, load this optimal class directly
+            await _activateClass(bestClassFromTime)
+            suggestedClass.value = null // Clear suggestion since we are now on it
+            return
         }
 
-        // Fallback to the first active class if no time matches
+        // Fallback to the first active class if no time matches at all
         await _activateClass(active[0])
     }
 }
@@ -764,7 +841,7 @@ async function _activateClass(cls) {
             if (!states.outTime.startsWith(todayStr)) {
                 // Retroactively log the forgotten trip as 5 minutes on the day it occurred
                 const FIVE_MINUTES_MS = 5 * 60 * 1000
-                eventService.logEvent({
+                await eventService.logEvent({
                     studentId,
                     classId: cls.classId,
                     code: states.code || 'w', // Fallback to 'w' just in case
@@ -810,25 +887,26 @@ export function useClassroom() {
         sortedRoster,
         unseatedStudents,
         studentsOut,
-        // actions
+        // methods
         init,
         switchClass,
         createClass,
         updateActiveClass,
-        archiveClass,
-        restoreClass,
-        deleteClass,
         importRoster,
         moveStudentFromClass,
         removeStudent,
         assignSeat,
         computeSuggestedClass,
-        logStandardEvent,
-        logToggleEvent,
         logAttendanceEvent,
         syncLateActiveState,
+        logStandardEvent,
+        logToggleEvent,
         checkResize,
         confirmResize,
         reloadBehaviorCodes,
+        archiveClass,
+        restoreClass,
+        deleteClass,
+        dismissSuggestion
     }
 }
