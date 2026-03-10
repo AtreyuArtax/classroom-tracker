@@ -85,6 +85,29 @@
               @delete-event="onDossierDelete"
               @edit-event="editEvent"
             />
+            
+            <!-- NEW Log Past Absence panel -->
+            <div v-if="dossier.student.value" class="reports__past-absence">
+              <button 
+                v-if="!showPastAbsencePanel" 
+                class="reports__btn-past-absence"
+                @click="openPastAbsencePanel"
+              >
+                <PlusCircle :size="13" class="reports__inline-icon" /> Log Past Absence
+              </button>
+              
+              <div v-else class="reports__past-absence-panel">
+                <input 
+                  type="date" 
+                  v-model="pastAbsenceDate" 
+                  :max="pastAbsenceMaxDate" 
+                  class="reports__input reports__input--small" 
+                />
+                <button class="reports__btn-primary--small" @click="submitPastAbsence">Log Absence</button>
+                <button class="reports__btn-ghost--small" @click="closePastAbsencePanel">Cancel</button>
+                <span v-if="pastAbsenceError" class="reports__past-absence-error">{{ pastAbsenceError }}</span>
+              </div>
+            </div>
           </div>
 
           <!-- Notes & Parent Contact feed -->
@@ -222,7 +245,7 @@
  */
 
 import { ref, computed, watch, defineComponent, h, onMounted } from 'vue'
-import { BarChart2, Download, Trash2 } from 'lucide-vue-next'
+import { BarChart2, Download, Trash2, PlusCircle } from 'lucide-vue-next'
 import { resolveIcon }         from '../utils/icons.js'
 import { useClassroom }        from '../composables/useClassroom.js'
 import { useStudentDossier }   from '../composables/useStudentDossier.js'
@@ -464,6 +487,65 @@ async function deleteEvent(eventId) {
 const behaviorCodesMap = computed(() =>
   Object.fromEntries(behaviorCodes.value.map(c => [c.codeKey, c]))
 )
+
+// ─── past absence logging ─────────────────────────────────────────────────────
+
+const showPastAbsencePanel = ref(false)
+const pastAbsenceDate = ref('')
+const pastAbsenceMaxDate = ref('')
+const pastAbsenceError = ref('')
+
+function openPastAbsencePanel() {
+  const d = new Date()
+  pastAbsenceMaxDate.value = d.toISOString().slice(0, 10)
+  d.setDate(d.getDate() - 1)
+  pastAbsenceDate.value = d.toISOString().slice(0, 10)
+  pastAbsenceError.value = ''
+  showPastAbsencePanel.value = true
+}
+
+function closePastAbsencePanel() {
+  showPastAbsencePanel.value = false
+  pastAbsenceError.value = ''
+}
+
+async function submitPastAbsence() {
+  if (!pastAbsenceDate.value) return
+  const selectedDateStr = pastAbsenceDate.value
+  
+  const isAlreadyAbsent = dossier.events.value.some(e => {
+    if (e.code !== 'a' || !e.timestamp) return false
+    const parseStr = e.timestamp.includes('Z') || e.timestamp.match(/[+-]\d{2}:\d{2}$/) ? e.timestamp : e.timestamp + 'Z'
+    const evDate = new Date(parseStr)
+    const evLocalStr = evDate.getFullYear() + '-' + String(evDate.getMonth() + 1).padStart(2, '0') + '-' + String(evDate.getDate()).padStart(2, '0')
+    return evLocalStr === selectedDateStr
+  })
+  
+  if (isAlreadyAbsent) {
+    pastAbsenceError.value = 'Already marked absent on this date'
+    return
+  }
+  
+  try {
+    const timestampStr = `${selectedDateStr}T09:00:00`
+    const localDateObj = new Date(timestampStr)
+    
+    await eventService.logEvent({
+      studentId: dossier.selectedStudentId.value,
+      classId: dossier.selectedClassId.value,
+      code: 'a',
+      _overrideTimestamp: localDateObj.toISOString(),
+      duration: null,
+      note: null,
+      supersededAbsent: false
+    })
+    
+    await dossier.loadStudent(dossier.selectedClassId.value, dossier.selectedStudentId.value)
+    closePastAbsencePanel()
+  } catch (err) {
+    pastAbsenceError.value = 'Error: ' + err.message
+  }
+}
 
 // ─── inline sub-components ────────────────────────────────────────────────────
 
@@ -1170,6 +1252,80 @@ const ExportBar = defineComponent({
 }
 
 /* ── Inputs & Buttons ────────────────────────────────────────────── */
+.reports__past-absence {
+  margin-top: 16px;
+  border-top: 1px solid var(--border);
+  padding-top: 16px;
+}
+
+.reports__btn-past-absence {
+  background: transparent;
+  border: none;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 0;
+  transition: color 0.15s;
+}
+.reports__btn-past-absence:hover {
+  color: var(--text);
+}
+
+.reports__past-absence-panel {
+  background: var(--bg-secondary);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.reports__input--small {
+  padding: 6px 10px;
+  font-size: 0.85rem;
+  height: 32px;
+}
+
+.reports__btn-primary--small {
+  padding: 0 12px;
+  font-size: 0.85rem;
+  height: 32px;
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  cursor: pointer;
+}
+.reports__btn-primary--small:hover {
+  background: var(--primary-dark);
+}
+
+.reports__btn-ghost--small {
+  padding: 0 12px;
+  font-size: 0.85rem;
+  height: 32px;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-weight: 600;
+  cursor: pointer;
+}
+.reports__btn-ghost--small:hover {
+  color: var(--text);
+}
+
+.reports__past-absence-error {
+  color: var(--state-out);
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
 .reports__input {
   padding:       10px 12px;
   border:        1px solid var(--border);
