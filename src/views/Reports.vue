@@ -10,7 +10,7 @@
           <label class="reports__sidebar-label">
             Class
             <select v-model="sidebarClassId" class="reports__input reports__input--sidebar" @change="onSidebarClassChange">
-              <option v-for="c in classList" :key="c.classId" :value="c.classId">{{ c.name }}</option>
+              <option v-for="c in sortedClassList" :key="c.classId" :value="c.classId">{{ c.name }}</option>
             </select>
           </label>
         </div>
@@ -155,7 +155,7 @@
               <label class="reports__filter-label">
                 Class
                 <select v-model="reportClassId" class="reports__input" @change="runReport">
-                  <option v-for="c in classList" :key="c.classId" :value="c.classId">{{ c.name }}</option>
+                  <option v-for="c in sortedClassList" :key="c.classId" :value="c.classId">{{ c.name }}</option>
                 </select>
               </label>
               <label class="reports__filter-label">
@@ -239,6 +239,16 @@ const {
 } = useClassroom()
 
 const { push: pushUndo } = useUndo()
+
+// --- Sorted Class List for Dropdowns ---
+const sortedClassList = computed(() => {
+  return [...classList.value].sort((a, b) => {
+    if (!a.periodNumber && !b.periodNumber) return 0;
+    if (!a.periodNumber) return 1;
+    if (!b.periodNumber) return -1;
+    return Number(a.periodNumber) - Number(b.periodNumber);
+  });
+})
 
 // ─── dossier composable ───────────────────────────────────────────────────────
 

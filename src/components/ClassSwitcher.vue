@@ -21,7 +21,7 @@
       :aria-label="`Select class, currently ${activeClass?.name}`"
     >
       <button
-        v-for="cls in classList"
+        v-for="cls in sortedClassList"
         :key="cls.classId"
         class="class-switcher__option"
         :class="{ 'class-switcher__option--active': cls.classId === activeClass?.classId }"
@@ -82,6 +82,17 @@ const {
 
 const emit  = defineEmits(['navigate'])
 const isOpen = ref(false)
+
+const sortedClassList = computed(() => {
+  return [...classList.value].sort((a, b) => {
+    // Both falsy -> 0, one falsy -> it goes after
+    if (!a.periodNumber && !b.periodNumber) return 0;
+    if (!a.periodNumber) return 1;
+    if (!b.periodNumber) return -1;
+    // Compare numeric values
+    return Number(a.periodNumber) - Number(b.periodNumber);
+  });
+})
 
 async function selectClass(classId) {
   if (classId === activeClass.value?.classId) {
