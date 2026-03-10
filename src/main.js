@@ -30,7 +30,7 @@ async function requestPersistentStorage() {
 requestPersistentStorage()
 
 // --- EMERGENCY KILL SWITCH FOR PWA CACHE IN DEV ---
-if ('serviceWorker' in navigator) {
+if (import.meta.env.DEV && 'serviceWorker' in navigator) {
     navigator.serviceWorker.getRegistrations().then(function (registrations) {
         for (let registration of registrations) {
             registration.unregister().then(function (boolean) {
