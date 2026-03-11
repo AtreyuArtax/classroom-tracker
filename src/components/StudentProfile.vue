@@ -18,10 +18,12 @@
         <div class="sp__card sp__card--absent">
           <div class="sp__card-value">{{ absenceCount }}</div>
           <div class="sp__card-label"><UserX :size="16" /> Absences</div>
+          <div class="sp__card-sub" v-if="selectedPeriod !== 'week'">{{ avgAbsencesPerWeek }}/wk avg</div>
         </div>
         <div class="sp__card sp__card--late">
           <div class="sp__card-value">{{ lateMinutes }}<span class="sp__card-unit">min</span></div>
           <div class="sp__card-label"><Clock :size="16" /> Late Total</div>
+          <div class="sp__card-sub" v-if="selectedPeriod !== 'week'">{{ avgLatesPerWeek }}/wk avg</div>
         </div>
         <div class="sp__card sp__card--late">
           <div class="sp__card-value">{{ lateCount }}</div>
@@ -147,9 +149,10 @@ import { resolveIcon } from '../utils/icons.js'
 import EditDurationModal from './EditDurationModal.vue'
 
 const props = defineProps({
-  events:        { type: Array,  required: true },
-  behaviorCodes: { type: Object, default: () => ({}) },
-  studentName:   { type: String, default: '' },
+  events:         { type: Array,  required: true },
+  behaviorCodes:  { type: Object, default: () => ({}) },
+  studentName:    { type: String, default: '' },
+  selectedPeriod: { type: String, default: 'week' },
 })
 
 const emit = defineEmits(['delete-event', 'edit-event'])
@@ -249,6 +252,31 @@ const washroomTrips = computed(() =>
 
 const onDeviceCount = computed(() =>
   props.events.filter(e => e.category === 'redirect').length
+)
+
+// --- Averages per week ---
+const weeksInPeriod = computed(() => {
+  if (props.selectedPeriod === 'week') return 1
+  if (props.selectedPeriod === 'month') return 4.34
+  if (props.selectedPeriod === 'semester') return 21.7 // approx 5 months
+  
+  // For 'all', we calculate actual weeks in the range if possible, 
+  // but usually we can just fallback to total / 1 or similar if unknown.
+  // Given the UI shows these cards for filtered results, let's look at the range.
+  if (!props.events.length) return 1
+  const sorted = [...props.events].sort((a,b) => a.timestamp.localeCompare(b.timestamp))
+  const first = new Date(sorted[0].timestamp)
+  const last = new Date(sorted[sorted.length-1].timestamp)
+  const diffWeeks = Math.max(1, (last - first) / (7 * 24 * 60 * 60 * 1000))
+  return diffWeeks
+})
+
+const avgAbsencesPerWeek = computed(() => 
+  (absenceCount.value / weeksInPeriod.value).toFixed(1)
+)
+
+const avgLatesPerWeek = computed(() => 
+  (lateCount.value / weeksInPeriod.value).toFixed(1)
 )
 
 const topBehavior = computed(() => {
@@ -404,6 +432,13 @@ function onEditSave(newMinutes) {
   color: var(--text-secondary);
   margin-top: 4px;
   font-weight: 500;
+}
+
+.sp__card-sub {
+  font-size: 0.65rem;
+  color: var(--text-secondary);
+  font-style: italic;
+  margin-top: 2px;
 }
 
 /* ── Section ────────────────────────────────────────────────────── */

@@ -34,15 +34,6 @@
           <li v-if="sidebarStudents.length === 0" class="reports__roster-empty">No students</li>
         </ul>
 
-        <!-- Class Overview link -->
-        <button
-          class="reports__overview-btn"
-          :class="{ 'reports__overview-btn--active': rightMode === 'overview' }"
-          @click="showOverview"
-        >
-          <BarChart2 :size="16" class="reports__overview-icon" /> Class Overview
-        </button>
-
       </aside>
 
       <!-- ══ RIGHT PANEL ════════════════════════════════════════════════ -->
@@ -54,8 +45,11 @@
         <!-- ── STUDENT DOSSIER ──────────────────────────────────────── -->
         <template v-else-if="rightMode === 'dossier' && dossier.selectedStudentId.value">
 
-          <!-- Header + period toggle -->
+          <!-- Header + back + period toggle -->
           <div class="reports__dossier-header">
+            <button class="reports__btn-back" @click="showOverview">
+              <ChevronLeft :size="16" /> Class Overview
+            </button>
             <h2 class="reports__dossier-name">{{ dossierStudentName }}</h2>
             <div class="reports__period-row" role="group" aria-label="Time period">
               <button
@@ -82,6 +76,7 @@
               :events="dossier.events.value"
               :behavior-codes="behaviorCodesMap"
               :student-name="dossierStudentName"
+              :selected-period="dossier.selectedPeriod.value"
               @delete-event="onDossierDelete"
               @edit-event="editEvent"
             />
@@ -149,91 +144,152 @@
 
         <!-- ── CLASS OVERVIEW ────────────────────────────────────────── -->
         <template v-else>
-
-          <!-- Prompt when no student selected and not explicitly in overview mode -->
           <div v-if="rightMode !== 'overview'" class="reports__placeholder">
             <p>← Select a student to view their dossier, or click <strong><BarChart2 :size="14" class="reports__inline-icon" /> Class Overview</strong> for aggregate reports.</p>
           </div>
 
           <template v-if="rightMode === 'overview'">
-
-            <!-- Aggregate tabs (no Student tab here — superseded by sidebar) -->
-            <div class="reports__tabs" role="tablist">
-              <button
-                v-for="tab in overviewTabs"
-                :key="tab.id"
-                class="reports__tab"
-                :class="{ 'reports__tab--active': activeTab === tab.id }"
-                role="tab"
-                :aria-selected="activeTab === tab.id"
-                @click="switchTab(tab.id)"
-              >
-                <component :is="tab.icon" v-if="tab.icon" :size="16" class="reports__tab-icon" />
-                {{ tab.label }}
-              </button>
-            </div>
-
-            <!-- Date filter -->
+            <!-- Dashboard Content -->
             <div class="reports__filter">
-              <label class="reports__filter-label">
-                Class
-                <select v-model="reportClassId" class="reports__input" @change="runReport">
-                  <option v-for="c in sortedClassList" :key="c.classId" :value="c.classId">{{ c.name }}</option>
-                </select>
-              </label>
-              <label class="reports__filter-label">
-                From <input v-model="dateFrom" type="date" class="reports__input" />
-              </label>
-              <label class="reports__filter-label">
-                To <input v-model="dateTo" type="date" class="reports__input" />
-              </label>
-              <button class="reports__btn-run" @click="runReport">Run Report</button>
-              <button class="reports__btn-ghost" @click="clearDates">Clear</button>
-            </div>
-
-            <div v-if="loading" class="reports__loading" aria-live="polite">Loading…</div>
-
-            <!-- Class Summary -->
-            <section v-else-if="activeTab === 'class'" class="reports__panel">
-              <div class="reports__card">
-                <h2 class="reports__card-title">Class Summary — {{ reportClass?.name }}</h2>
-                <SummaryGrid :events="reportData" :students="reportStudents" :behavior-codes="behaviorCodesMap" />
-                <ExportBar :events="reportData" filename="class-summary" />
+                <div class="reports__period-row" role="group" aria-label="Time period">
+                  <button
+                    v-for="p in PERIOD_OPTIONS"
+                    :key="p.value"
+                    class="reports__period-btn"
+                    :class="{ 'reports__period-btn--active': selectedPeriod === p.value }"
+                    @click="selectedPeriod = p.value"
+                  >{{ p.label }}</button>
+                </div>
+                <div style="flex: 1"></div>
+                <!-- Export Sectioned Button -->
+                <div class="reports__export-group" ref="exportContainer">
+                  <button class="reports__btn-export" @click="showExportMenu = !showExportMenu">
+                    <Download :size="16" /> Export Summary
+                  </button>
+                  <div v-if="showExportMenu" class="reports__export-menu">
+                    <button @click="downloadAggregateCsv('attendance')">Attendance</button>
+                    <button @click="downloadAggregateCsv('washroom')">Washroom</button>
+                    <button @click="downloadAggregateCsv('behavior')">Behavior</button>
+                  </div>
+                </div>
               </div>
-            </section>
 
-            <!-- Washroom Log -->
-            <section v-else-if="activeTab === 'washroom'" class="reports__panel">
-              <div class="reports__card">
-                <h2 class="reports__card-title">Washroom Log — {{ reportClass?.name }}</h2>
-                <WashroomTable :events="reportData" :students="reportStudents" @delete-event="deleteEvent" />
-                <ExportBar :events="reportData" filename="washroom-log" />
-              </div>
-            </section>
+              <div v-if="loading" class="reports__loading" aria-live="polite">Loading…</div>
 
-            <!-- Attendance -->
-            <section v-else-if="activeTab === 'attendance'" class="reports__panel">
-              <div class="reports__card">
-                <h2 class="reports__card-title">Attendance Summary — {{ reportClass?.name }}</h2>
-                <AttendanceTable :events="reportData" :students="reportStudents" />
-                <ExportBar :events="reportData" filename="attendance-summary" />
+              <div v-else class="reports__dashboard">
+                <!-- Row 1: Attendance -->
+                <div class="reports__dashboard-card">
+                  <div class="reports__card-header">
+                    <h3 class="reports__card-title"><UserCheck :size="18" /> Attendance</h3>
+                  </div>
+                  <div class="reports__card-grid">
+                    <div class="reports__metric">
+                      <span class="reports__metric-label">Total Absences</span>
+                      <span class="reports__metric-value">{{ aggregates.attendance.totalAbsences }}</span>
+                    </div>
+                    <div class="reports__metric">
+                      <span class="reports__metric-label">Total Lates</span>
+                      <span class="reports__metric-value">{{ aggregates.attendance.totalLates }}</span>
+                    </div>
+                    <div class="reports__metric">
+                      <span class="reports__metric-label">Avg Absences / Student</span>
+                      <span class="reports__metric-value">{{ aggregates.attendance.avgAbsences }}</span>
+                    </div>
+                  </div>
+                  <div class="reports__card-section">
+                    <h4 class="reports__section-title">Highest Absentees</h4>
+                    <ul v-if="aggregates.attendance.topAbsentees.length" class="reports__list">
+                      <li v-for="s in aggregates.attendance.topAbsentees" :key="s.name">
+                        <span class="reports__list-name">{{ s.name }}</span>
+                        <span class="reports__list-count">{{ s.count }}</span>
+                      </li>
+                    </ul>
+                    <p v-else class="reports__no-data">No absences recorded.</p>
+                  </div>
+                </div>
+
+                <!-- Row 2: Washroom -->
+                <div class="reports__dashboard-card">
+                  <div class="reports__card-header">
+                    <h3 class="reports__card-title"><Toilet :size="18" /> Washroom</h3>
+                  </div>
+                  <div class="reports__card-grid">
+                    <div class="reports__metric">
+                      <span class="reports__metric-label">Total Trips</span>
+                      <span class="reports__metric-value">{{ aggregates.washroom.totalTrips }}</span>
+                    </div>
+                    <div class="reports__metric">
+                      <span class="reports__metric-label">Total Time (min)</span>
+                      <span class="reports__metric-value">{{ aggregates.washroom.totalDuration }}</span>
+                    </div>
+                    <div class="reports__metric">
+                      <span class="reports__metric-label">Avg Duration (min)</span>
+                      <span class="reports__metric-value">{{ aggregates.washroom.avgDuration }}</span>
+                    </div>
+                  </div>
+                  <!-- Chart -->
+                  <div class="reports__card-section">
+                    <h4 class="reports__section-title">Trips per Student</h4>
+                    <div v-if="aggregates.washroom.studentTrips.length" class="reports__chart-container">
+                      <Bar :data="washroomChartData" :options="washroomChartOptions" />
+                    </div>
+                    <p v-else class="reports__no-data">No washroom trips recorded.</p>
+                  </div>
+                  <!-- Long Trips -->
+                  <div v-if="aggregates.washroom.longTrips.length" class="reports__card-section">
+                    <h4 class="reports__section-title reports__section-title--alert">Long Trips (> 15m)</h4>
+                    <ul class="reports__list reports__list--alert">
+                      <li v-for="t in aggregates.washroom.longTrips" :key="t.date">
+                        <span>{{ t.name }} — {{ t.date }}</span>
+                        <span class="reports__list-count">{{ t.duration }}m</span>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+
+                <!-- Row 3: Behavior -->
+                <div class="reports__dashboard-card">
+                  <div class="reports__card-header">
+                    <h3 class="reports__card-title"><Activity :size="18" /> Behavior</h3>
+                  </div>
+                  <div class="reports__card-grid">
+                    <div class="reports__metric reports__metric--top-code">
+                      <span class="reports__metric-label">Most Common</span>
+                      <div v-if="aggregates.behavior.topCode" class="reports__top-code">
+                        <span class="reports__top-code-icon">{{ aggregates.behavior.topCode.icon }}</span>
+                        <div class="reports__top-code-info">
+                          <span class="reports__top-code-label">{{ aggregates.behavior.topCode.label }}</span>
+                          <span class="reports__top-code-count">{{ aggregates.behavior.topCode.count }} logs</span>
+                        </div>
+                      </div>
+                      <span v-else class="reports__metric-value">—</span>
+                    </div>
+                    <div class="reports__metric">
+                      <span class="reports__metric-label">Redirect/Device</span>
+                      <span class="reports__metric-value">{{ aggregates.behavior.totalRedirects }}</span>
+                    </div>
+                    <div class="reports__metric">
+                      <span class="reports__metric-label">Parent Contacts</span>
+                      <span class="reports__metric-value">{{ aggregates.behavior.totalParentContacts }}</span>
+                    </div>
+                  </div>
+                  <div v-if="aggregates.behavior.redirectAlerts.length" class="reports__card-section">
+                    <h4 class="reports__section-title reports__section-title--alert">Multiple Redirects (3+)</h4>
+                    <ul class="reports__list reports__list--alert">
+                      <li v-for="name in aggregates.behavior.redirectAlerts" :key="name">
+                        <span class="reports__list-name">{{ name }}</span>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
               </div>
-            </section>
+            </template>
           </template>
-        </template>
 
       </main>
     </div>
   </div>
 </template>
-
-
-
-
-
-
-
-
 
 <script setup>
 /**
@@ -244,8 +300,12 @@
  * CLAUDE.md §4  — composables handle IDB; eventService used only for backup/restore
  */
 
-import { ref, computed, watch, defineComponent, h, onMounted } from 'vue'
-import { BarChart2, Download, Trash2, PlusCircle } from 'lucide-vue-next'
+import { ref, reactive, computed, watch, defineComponent, h, onMounted, onUnmounted } from 'vue'
+import { 
+  BarChart2, Download, Trash2, PlusCircle, ChevronLeft, 
+  LayoutDashboard, Database, UserCheck, Toilet, Activity, 
+  FolderOpen 
+} from 'lucide-vue-next'
 import { resolveIcon }         from '../utils/icons.js'
 import { useClassroom }        from '../composables/useClassroom.js'
 import { useStudentDossier }   from '../composables/useStudentDossier.js'
@@ -253,6 +313,18 @@ import { useUndo }             from '../composables/useUndo.js'
 import * as eventService       from '../db/eventService.js'
 import StudentProfile          from '../components/StudentProfile.vue'
 import StudentTrendGraph       from '../components/StudentTrendGraph.vue'
+import { Bar } from 'vue-chartjs'
+import { 
+  Chart as ChartJS, 
+  Title, 
+  Tooltip, 
+  Legend, 
+  BarElement, 
+  CategoryScale, 
+  LinearScale 
+} from 'chart.js'
+
+ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale)
 
 const {
   activeClass,
@@ -292,11 +364,14 @@ const sidebarClassId = ref(activeClass.value?.classId ?? classList.value[0]?.cla
 /** Whether the roster list is visible (mobile toggle) */
 const rosterOpen     = ref(true)
 /** 'dossier' | 'overview' */
-const rightMode      = ref(null)  // null = placeholder
+const rightMode      = ref('overview')
 
 onMounted(() => {
   if (sidebarClassId.value) {
     dossier.loadSidebarClass(sidebarClassId.value)
+    if (rightMode.value === 'overview') {
+      runReport()
+    }
   }
 })
 
@@ -305,8 +380,11 @@ watch(classList, (list) => {
   if (!sidebarClassId.value && list.length) {
     sidebarClassId.value = activeClass.value?.classId ?? list[0]?.classId
     dossier.loadSidebarClass(sidebarClassId.value)
+    if (rightMode.value === 'overview') {
+      runReport()
+    }
   }
-})
+}, { immediate: true })
 
 /** Students shown in the sidebar, sorted by lastName (from dossier composable) */
 const sidebarStudents = dossier.sidebarStudents
@@ -314,9 +392,22 @@ const sidebarStudents = dossier.sidebarStudents
 /** Called when the class dropdown changes */
 function onSidebarClassChange() {
   dossier.clearStudent()
-  rightMode.value = null
   dossier.loadSidebarClass(sidebarClassId.value)
+  rightMode.value = 'overview' // Force return to dashboard on class switch
+  runReport()
 }
+
+// --- Period State ---
+const selectedPeriod = ref('week')
+const PERIOD_OPTIONS = [
+  { label: 'This Week', value: 'week' },
+  { label: 'This Month', value: 'month' },
+  { label: 'This Semester', value: 'semester' },
+]
+
+watch(selectedPeriod, () => {
+  if (rightMode.value === 'overview') runReport()
+})
 
 /** Called when a student row is tapped */
 async function onSelectStudent(studentId) {
@@ -384,89 +475,154 @@ function formatTimestamp(ts) {
 
 // ─── aggregate-report class selection (independent of sidebar) ───────────────
 
-const reportClassId = ref(null)
-
 const reportClass = computed(() =>
-  classList.value.find(c => c.classId === reportClassId.value)
+  classList.value.find(c => c.classId === sidebarClassId.value)
   ?? classList.value[0]
   ?? null
 )
 
-watch(classList, (list) => {
-  if (!reportClassId.value && list.length) {
-    reportClassId.value = activeClass.value?.classId ?? list[0]?.classId
-  }
-}, { immediate: true })
+// (Redundant watcher on classList removed)
 
 const reportStudents = computed(() => reportClass.value?.students ?? {})
 
-// ─── overview tabs ────────────────────────────────────────────────────────────
 
-const overviewTabs = [
-  { id: 'class',      label: 'Class'      },
-  { id: 'washroom',   label: 'Washroom'   },
-  { id: 'attendance', label: 'Attendance' },
-]
-
-const activeTab = ref('class')
-
-function switchTab(id) {
-  activeTab.value  = id
-  reportData.value = []
-}
-
-// ─── shared date range ────────────────────────────────────────────────────────
-
-function toISODate(d) { return d.toISOString().slice(0, 10) }
-
-function thisWeekMonday() {
-  const d = new Date()
-  const day = d.getDay()
-  const diff = day === 0 ? -6 : 1 - day
-  d.setDate(d.getDate() + diff)
-  return toISODate(d)
-}
-
-const dateFrom = ref(thisWeekMonday())
-const dateTo   = ref(toISODate(new Date()))
-
-function clearDates() {
-  dateFrom.value = thisWeekMonday()
-  dateTo.value   = toISODate(new Date())
-  runReport()
-}
-
-const dateRange = computed(() => ({
-  from: dateFrom.value || undefined,
-  to:   dateTo.value   || undefined,
-}))
 
 // ─── aggregate query runner ───────────────────────────────────────────────────
 
 const reportData = ref([])
 const loading    = ref(false)
 
+const aggregates = reactive({
+  attendance: {
+    totalAbsences: 0,
+    totalLates: 0,
+    avgAbsences: 0,
+    topAbsentees: []
+  },
+  washroom: {
+    totalTrips: 0,
+    totalDuration: 0, // minutes
+    avgDuration: 0,
+    studentTrips: [], // { name, count }
+    longTrips: [] // { name, date, duration }
+  },
+  behavior: {
+    topCode: null, // { icon, label, count }
+    totalRedirects: 0,
+    totalParentContacts: 0,
+    redirectAlerts: [] // names
+  }
+})
+
 async function runReport() {
+  if (!sidebarClassId.value) return
   loading.value = true
   try {
-    const tab = activeTab.value
-    const dr  = dateRange.value
+    const from = eventService.getDateBoundary(selectedPeriod.value)
+    const dr = { from }
+    const events = await eventService.getEventsByClass(sidebarClassId.value, dr)
+    reportData.value = events
 
-    if (tab === 'class') {
-      if (!reportClass.value) { reportData.value = []; return }
-      reportData.value = await eventService.getEventsByClass(reportClass.value.classId, dr)
+    const studentsMap = reportStudents.value
+    const studentCount = Object.keys(studentsMap).length
 
-    } else if (tab === 'washroom') {
-      if (!reportClass.value) { reportData.value = []; return }
-      const all       = await eventService.getEventsByClass(reportClass.value.classId, dr)
-      const toggleKeys = behaviorCodes.value.filter(c => c.type === 'toggle').map(c => c.codeKey)
-      reportData.value = all.filter(e => toggleKeys.includes(e.code))
+    // --- Process Attendance ---
+    const attEvents = events.filter(e => e.code === 'a' || e.code === 'l')
+    const absences = attEvents.filter(e => e.code === 'a').length
+    const lates = attEvents.filter(e => e.code === 'l').length
+    
+    const absCounts = {}
+    attEvents.filter(e => e.code === 'a').forEach(e => {
+      absCounts[e.studentId] = (absCounts[e.studentId] ?? 0) + 1
+    })
+    const topAbsentees = Object.entries(absCounts)
+      .map(([id, count]) => ({ 
+        name: studentsMap[id] ? `${studentsMap[id].lastName}, ${studentsMap[id].firstName}` : id, 
+        count 
+      }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 3)
 
-    } else if (tab === 'attendance') {
-      if (!reportClass.value) { reportData.value = []; return }
-      const all = await eventService.getEventsByClass(reportClass.value.classId, dr)
-      reportData.value = all.filter(e => e.code === 'a' || e.code === 'l')
+    aggregates.attendance = {
+      totalAbsences: absences,
+      totalLates: lates,
+      avgAbsences: studentCount ? (absences / studentCount).toFixed(1) : 0,
+      topAbsentees
     }
+
+    // --- Process Washroom ---
+    const washCodes = behaviorCodes.value.filter(c => c.type === 'toggle').map(c => c.codeKey)
+    const washEvents = events.filter(e => washCodes.includes(e.code) && e.duration != null)
+    const totalTrips = washEvents.length
+    const totalMs = washEvents.reduce((acc, e) => acc + (e.duration || 0), 0)
+    const totalMins = Math.round(totalMs / 60000)
+    
+    const tripCounts = {}
+    washEvents.forEach(e => {
+      tripCounts[e.studentId] = (tripCounts[e.studentId] ?? 0) + 1
+    })
+    const studentTripsData = Object.entries(tripCounts)
+      .map(([id, count]) => ({ 
+        name: studentsMap[id] ? `${studentsMap[id].firstName} ${studentsMap[id].lastName[0]}.` : id, 
+        count 
+      }))
+      .sort((a, b) => b.count - a.count)
+
+    const longTrips = washEvents
+      .filter(e => e.duration > 15 * 60000)
+      .map(e => ({
+        name: studentsMap[e.studentId] ? `${studentsMap[e.studentId].lastName}, ${studentsMap[e.studentId].firstName}` : e.studentId,
+        date: formatTimestamp(e.timestamp),
+        duration: Math.round(e.duration / 60000)
+      }))
+
+    aggregates.washroom = {
+      totalTrips,
+      totalDuration: totalMins,
+      avgDuration: totalTrips ? (totalMs / totalTrips / 60000).toFixed(1) : 0,
+      studentTrips: studentTripsData,
+      longTrips
+    }
+
+    // --- Process Behavior ---
+    const behaviorEvents = events.filter(e => e.category !== 'attendance' && !washCodes.includes(e.code))
+    const codeCounts = {}
+    behaviorEvents.forEach(e => {
+      codeCounts[e.code] = (codeCounts[e.code] ?? 0) + 1
+    })
+    
+    let topCodeKey = null
+    let maxCount = 0
+    Object.entries(codeCounts).forEach(([code, count]) => {
+      if (count > maxCount) {
+        maxCount = count
+        topCodeKey = code
+      }
+    })
+
+    const topCodeObject = topCodeKey ? {
+      ...behaviorCodesMap.value[topCodeKey],
+      count: maxCount
+    } : null
+
+    const redirects = events.filter(e => e.category === 'redirect').length
+    const parentContacts = events.filter(e => behaviorCodesMap.value[e.code]?.label?.toLowerCase().includes('parent')).length
+    
+    const redCounts = {}
+    events.filter(e => e.category === 'redirect').forEach(e => {
+      redCounts[e.studentId] = (redCounts[e.studentId] ?? 0) + 1
+    })
+    const redirectAlerts = Object.entries(redCounts)
+      .filter(([id, count]) => count >= 3)
+      .map(([id]) => studentsMap[id] ? `${studentsMap[id].lastName}, ${studentsMap[id].firstName}` : id)
+
+    aggregates.behavior = {
+      topCode: topCodeObject,
+      totalRedirects: redirects,
+      totalParentContacts: parentContacts,
+      redirectAlerts
+    }
+
   } finally {
     loading.value = false
   }
@@ -547,254 +703,153 @@ async function submitPastAbsence() {
   }
 }
 
-// ─── inline sub-components ────────────────────────────────────────────────────
+const showExportMenu = ref(false)
+const exportContainer = ref(null)
 
-/**
- * EventTable — renders a list of events with formatting.
- */
-const EventTable = defineComponent({
-  props: {
-    events:        { type: Array, required: true },
-    behaviorCodes: { type: Object, default: () => ({}) },
-    showStudent:   { type: Boolean, default: true },
-  },
-  emits: ['delete-event'],
-  setup(props, { emit }) {
-    return () => {
-      if (props.events.length === 0) {
-        return h('p', { class: 'reports__no-data' }, 'No events for the selected filters.')
-      }
-      return h('div', { class: 'reports__table-wrap' },
-        h('table', { class: 'reports__table' }, [
-          h('thead', {}, h('tr', {}, [
-            h('th', {}, 'Time'),
-            ...(props.showStudent ? [h('th', {}, 'Student')] : []),
-            h('th', {}, 'Code'),
-            h('th', {}, 'Category'),
-            h('th', {}, 'Period'),
-            h('th', {}, ''), // Actions header
-          ])),
-          h('tbody', {}, props.events.map(evt => {
-            const isLate = evt.code === 'l'
-            const extra = isLate 
-              ? ` (${evt.duration}m${evt.supersededAbsent ? ', replaces absent' : ''})`
-              : ''
-            return h('tr', { key: evt.eventId }, [
-              h('td', {}, formatTimestamp(evt.timestamp)),
-              ...(props.showStudent ? [h('td', {}, evt.studentId)] : []),
-              h('td', {}, [
-                props.behaviorCodes[evt.code] ? h(resolveIcon(props.behaviorCodes[evt.code].icon), { size: 16, style: { verticalAlign: 'middle', marginRight: '4px' } }) : null,
-                `${evt.code}${extra}`
-              ]),
-              h('td', {}, evt.category),
-              h('td', {}, `P${evt.periodNumber}`),
-              h('td', { class: 'reports__td-actions' }, 
-                h('button', {
-                  class: 'reports__btn-delete',
-                  title: 'Delete event',
-                  onClick: () => emit('delete-event', evt.eventId)
-                }, '✕')
-              ),
-            ])
-          })),
-        ])
-      )
-    }
-  },
+function handleClickOutside(event) {
+  if (exportContainer.value && !exportContainer.value.contains(event.target)) {
+    showExportMenu.value = false
+  }
+}
+
+watch(showExportMenu, (isOpen) => {
+  if (isOpen) {
+    setTimeout(() => {
+      window.addEventListener('click', handleClickOutside)
+    }, 0)
+  } else {
+    window.removeEventListener('click', handleClickOutside)
+  }
 })
 
-/**
- * SummaryGrid — event counts per student per code.
- */
-const SummaryGrid = defineComponent({
-  props: {
-    events:        { type: Array, required: true },
-    students:      { type: Object, default: () => ({}) },
-    behaviorCodes: { type: Object, default: () => ({}) },
-  },
-  setup(props) {
-    return () => {
-      if (props.events.length === 0) {
-        return h('p', { class: 'reports__no-data' }, 'No events for the selected filters.')
-      }
-      // Build { studentId: { code: count } }
-      const summary = {}
-      for (const evt of props.events) {
-        if (!summary[evt.studentId]) summary[evt.studentId] = {}
-        summary[evt.studentId][evt.code] = (summary[evt.studentId][evt.code] ?? 0) + 1
-      }
-      const codes = Object.keys(props.behaviorCodes)
-
-      return h('div', { class: 'reports__table-wrap' },
-        h('table', { class: 'reports__table' }, [
-          h('thead', {}, h('tr', {}, [
-            h('th', {}, 'Student'),
-            ...codes.map(c => h('th', { key: c }, [
-              props.behaviorCodes[c] ? h(resolveIcon(props.behaviorCodes[c].icon), { size: 16, style: { verticalAlign: 'middle', marginRight: '4px' } }) : null,
-              c
-            ])),
-            h('th', {}, 'Total'),
-          ])),
-          h('tbody', {}, Object.entries(summary).map(([studentId, counts]) => {
-            const s     = props.students[studentId]
-            const name  = s ? `${s.lastName}, ${s.firstName}` : studentId
-            const total = Object.values(counts).reduce((a, b) => a + b, 0)
-            return h('tr', { key: studentId }, [
-              h('td', {}, name),
-              ...codes.map(c => h('td', { key: c }, counts[c] ?? 0)),
-              h('td', {}, total),
-            ])
-          })),
-        ])
-      )
-    }
-  },
+onUnmounted(() => {
+  window.removeEventListener('click', handleClickOutside)
 })
 
-/**
- * WashroomTable — toggle events with duration.
- */
-const WashroomTable = defineComponent({
-  props: {
-    events:   { type: Array, required: true },
-    students: { type: Object, default: () => ({}) },
-  },
-  emits: ['delete-event'],
-  setup(props, { emit }) {
-    return () => {
-      if (props.events.length === 0) {
-        return h('p', { class: 'reports__no-data' }, 'No washroom events for the selected filters.')
-      }
-      return h('div', { class: 'reports__table-wrap' },
-        h('table', { class: 'reports__table' }, [
-          h('thead', {}, h('tr', {}, [
-            h('th', {}, 'Time'),
-            h('th', {}, 'Student'),
-            h('th', {}, 'Period'),
-            h('th', {}, 'Duration'),
-            h('th', {}, ''), // Actions header
-          ])),
-          h('tbody', {}, props.events.map(evt => {
-            const s      = props.students[evt.studentId]
-            const name   = s ? `${s.lastName}, ${s.firstName}` : evt.studentId
-            const durStr = evt.duration != null
-              ? `${Math.floor(evt.duration / 60000)}m ${Math.round((evt.duration % 60000) / 1000)}s`
-              : '—'
-            return h('tr', { key: evt.eventId }, [
-              h('td', {}, formatTimestamp(evt.timestamp)),
-              h('td', {}, name),
-              h('td', {}, `P${evt.periodNumber}`),
-              h('td', {}, durStr),
-              h('td', { class: 'reports__td-actions' }, 
-                h('button', {
-                  class: 'reports__btn-delete',
-                  title: 'Delete event',
-                  onClick: () => emit('delete-event', evt.eventId)
-                }, '✕')
-              ),
-            ])
-          })),
-        ])
-      )
-    }
-  },
-})
+function downloadAggregateCsv(section) {
+  showExportMenu.value = false
+  const classObj = reportClass.value
+  const className = classObj?.name ?? 'Class'
+  const date = new Date().toISOString().slice(0, 10)
+  
+  let filename = `${className}-${section}-${date}.csv`
+  let csvContent = ''
 
-/**
- * AttendanceTable — summary of absent/late per student.
- */
-const AttendanceTable = defineComponent({
-  props: {
-    events:   { type: Array, required: true },
-    students: { type: Object, default: () => ({}) },
-  },
-  setup(props) {
-    return () => {
-      if (props.events.length === 0) {
-        return h('p', { class: 'reports__no-data' }, 'No attendance events for the selected filters.')
-      }
-      
-      // Build { studentId: { absent, late, lateTotal, lateCount } }
-      const summary = {}
-      for (const evt of props.events) {
+  if (section === 'attendance') {
+    const summary = {}
+    const studentsMap = reportStudents.value
+    reportData.value.forEach(evt => {
+      if (evt.code === 'a' || evt.code === 'l') {
         if (!summary[evt.studentId]) {
-          summary[evt.studentId] = { absent: 0, late: 0, lateTotal: 0, lateCount: 0 }
+          summary[evt.studentId] = { absences: 0, lates: 0, lateTotal: 0, lateCount: 0 }
         }
-        if (evt.code === 'a') {
-          summary[evt.studentId].absent++
-        } else if (evt.code === 'l') {
-          summary[evt.studentId].late++
+        if (evt.code === 'a') summary[evt.studentId].absences++
+        else if (evt.code === 'l') {
+          summary[evt.studentId].lates++
           if (evt.duration != null) {
             summary[evt.studentId].lateTotal += evt.duration
             summary[evt.studentId].lateCount++
           }
         }
       }
+    })
+    
+    csvContent = 'Student,Absences,Lates,Avg Late (min)\n'
+    Object.entries(studentsMap).forEach(([id, s]) => {
+      const stats = summary[id] || { absences: 0, lates: 0, lateTotal: 0, lateCount: 0 }
+      const avg = stats.lateCount > 0 ? (stats.lateTotal / stats.lateCount / 60000).toFixed(1) : 0
+      csvContent += `"${s.lastName}, ${s.firstName}",${stats.absences},${stats.lates},${avg}\n`
+    })
 
-      return h('div', { class: 'reports__table-wrap' },
-        h('table', { class: 'reports__table' }, [
-          h('thead', {}, h('tr', {}, [
-            h('th', {}, 'Student'),
-            h('th', {}, 'Absent Count'),
-            h('th', {}, 'Late Count'),
-            h('th', {}, 'Avg Late (min)'),
-          ])),
-          h('tbody', {}, Object.entries(summary).map(([studentId, stats]) => {
-            const s     = props.students[studentId]
-            const name  = s ? `${s.lastName}, ${s.firstName}` : studentId
-            const avg   = stats.lateCount > 0 
-              ? (stats.lateTotal / stats.lateCount).toFixed(1)
-              : '—'
-            return h('tr', { key: studentId }, [
-              h('td', {}, name),
-              h('td', {}, stats.absent),
-              h('td', {}, stats.late),
-              h('td', {}, avg),
-            ])
-          })),
-        ])
-      )
-    }
-  },
+  } else if (section === 'washroom') {
+    const summary = {}
+    const washCodes = behaviorCodes.value.filter(c => c.type === 'toggle').map(c => c.codeKey)
+    const studentsMap = reportStudents.value
+    reportData.value.forEach(evt => {
+      if (washCodes.includes(evt.code) && evt.duration != null) {
+        if (!summary[evt.studentId]) {
+          summary[evt.studentId] = { trips: 0, totalMs: 0 }
+        }
+        summary[evt.studentId].trips++
+        summary[evt.studentId].totalMs += evt.duration
+      }
+    })
+    
+    csvContent = 'Student,Trips,Total Duration (min),Avg Duration (min)\n'
+    Object.entries(studentsMap).forEach(([id, s]) => {
+      const stats = summary[id] || { trips: 0, totalMs: 0 }
+      const totalMin = Math.round(stats.totalMs / 60000)
+      const avg = stats.trips > 0 ? (stats.totalMs / stats.trips / 60000).toFixed(1) : 0
+      csvContent += `"${s.lastName}, ${s.firstName}",${stats.trips},${totalMin},${avg}\n`
+    })
+
+  } else if (section === 'behavior') {
+    const summary = {}
+    const studentsMap = reportStudents.value
+    const washCodes = behaviorCodes.value.filter(c => c.type === 'toggle').map(c => c.codeKey)
+    
+    reportData.value.forEach(evt => {
+      if (evt.category !== 'attendance' && !washCodes.includes(evt.code)) {
+        if (!summary[evt.studentId]) {
+          summary[evt.studentId] = { counts: {}, redirects: 0, parentContacts: 0 }
+        }
+        summary[evt.studentId].counts[evt.code] = (summary[evt.studentId].counts[evt.code] ?? 0) + 1
+        if (evt.category === 'redirect') summary[evt.studentId].redirects++
+        if (behaviorCodesMap.value[evt.code]?.label?.toLowerCase().includes('parent')) summary[evt.studentId].parentContacts++
+      }
+    })
+    
+    csvContent = 'Student,Top Code,Redirect Incidents,Parent Contacts\n'
+    Object.entries(studentsMap).forEach(([id, s]) => {
+      const stats = summary[id] || { counts: {}, redirects: 0, parentContacts: 0 }
+      let topCode = '—'
+      let max = 0
+      Object.entries(stats.counts).forEach(([code, count]) => {
+        if (count > max) {
+          max = count
+          topCode = code
+        }
+      })
+      csvContent += `"${s.lastName}, ${s.firstName}",${topCode},${stats.redirects},${stats.parentContacts}\n`
+    })
+  }
+
+  const blob = new Blob([csvContent], { type: 'text/csv' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
+// --- Chart Logic ---
+const washroomChartData = computed(() => {
+  const data = aggregates.washroom.studentTrips.slice(0, 10)
+  return {
+    labels: data.map(d => d.name),
+    datasets: [{
+      label: 'Washroom Trips',
+      data: data.map(d => d.count),
+      backgroundColor: '#4663ac',
+      borderRadius: 4
+    }]
+  }
 })
 
-/**
- * ExportBar — CSV download button.
- * CLAUDE.md §12: CSV export via Blob API.
- */
-const ExportBar = defineComponent({
-  props: {
-    events:   { type: Array, required: true },
-    filename: { type: String, default: 'export' },
+const washroomChartOptions = {
+  indexAxis: 'y',
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: { display: false },
+    tooltip: { enabled: true }
   },
-  setup(props) {
-    function downloadCsv() {
-      if (props.events.length === 0) return
-      const keys  = Object.keys(props.events[0])
-      const rows  = [
-        keys.join(','),
-        ...props.events.map(e =>
-          keys.map(k => JSON.stringify(e[k] ?? '')).join(',')
-        ),
-      ]
-      const blob     = new Blob([rows.join('\n')], { type: 'text/csv' })
-      const url      = URL.createObjectURL(blob)
-      const date     = new Date().toISOString().slice(0, 10)
-      const a        = document.createElement('a')
-      a.href         = url
-      a.download     = `${props.filename}-${date}.csv`
-      a.click()
-      URL.revokeObjectURL(url)
-    }
-
-    return () => props.events.length > 0
-      ? h('button', { class: 'reports__btn-export', onClick: downloadCsv }, [
-          h(Download, { size: 16, style: { marginRight: '6px' } }),
-          'Export CSV'
-        ])
-      : null
-  },
-})
+  scales: {
+    x: { beginAtZero: true, ticks: { stepSize: 1 } },
+    y: { grid: { display: false } }
+  }
+}
 </script>
 
 <style scoped>
@@ -837,9 +892,6 @@ const ExportBar = defineComponent({
     border-right:  1px solid var(--border);
     border-bottom: none;
   }
-  .reports__roster-toggle {
-    display: none;
-  }
 }
 
 .reports__sidebar-section {
@@ -858,21 +910,23 @@ const ExportBar = defineComponent({
   letter-spacing: 0.5px;
 }
 
-.reports__input--sidebar {
+.reports__roster-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: var(--surface);
+  border: none;
+  border-bottom: 1px solid var(--border);
   width: 100%;
+  font-weight: 600;
+  color: var(--primary);
+  font-size: 0.9rem;
+  cursor: pointer;
 }
 
-.reports__roster-toggle {
-  padding:     12px 16px;
-  background:  var(--surface);
-  border:      none;
-  border-bottom: 1px solid var(--border);
-  width:       100%;
-  text-align:  left;
-  font-weight: 600;
-  color:       var(--primary);
-  font-size:   0.9rem;
-  cursor:      pointer;
+@media (min-width: 768px) {
+  .reports__roster-toggle { display: none; }
 }
 
 .reports__roster {
@@ -881,7 +935,7 @@ const ExportBar = defineComponent({
   padding:    0;
   overflow-y: auto;
   flex:       1;
-  display:    none; /* hidden on mobile by default */
+  display:    none;
 }
 
 .reports__roster--open {
@@ -889,9 +943,7 @@ const ExportBar = defineComponent({
 }
 
 @media (min-width: 768px) {
-  .reports__roster {
-    display: block;
-  }
+  .reports__roster { display: block; }
 }
 
 .reports__roster-item {
@@ -915,689 +967,542 @@ const ExportBar = defineComponent({
   color:        var(--primary-dark);
 }
 
-.reports__roster-empty {
-  padding:   16px;
-  font-size: 0.9rem;
-  color:     var(--text-secondary);
-  font-style: italic;
-}
-
-.reports__overview-btn {
-  margin:      auto 16px 16px;
-  padding:     10px;
-  background:  transparent;
-  border:      1px solid var(--border);
-  border-radius: var(--radius-md);
-  color:       var(--text-secondary);
-  font-weight: 600;
-  font-size:   0.9rem;
-  cursor:      pointer;
-  transition:  all 0.15s;
-}
-
-.reports__overview-btn:hover {
-  background: var(--bg-secondary);
-  color:      var(--text);
-}
-
-.reports__overview-btn--active {
-  background:   var(--primary-light);
-  color:        var(--primary-dark);
-  border-color: var(--primary);
-}
-
 /* ── Main Panel ──────────────────────────────────────────────────── */
 .reports__main {
   flex:           1;
   display:        flex;
   flex-direction: column;
   overflow-y:     auto;
-  position:       relative;
-  background:     var(--bg-secondary);
+  padding:        20px;
 }
 
 .reports__placeholder {
-  display:         flex;
-  align-items:     center;
+  flex: 1;
+  display: flex;
+  align-items: center;
   justify-content: center;
-  flex:            1;
-  padding:         32px;
-  color:           var(--text-secondary);
-  text-align:      center;
-  font-size:       1.05rem;
-  line-height:     1.5;
+  text-align: center;
+  color: var(--text-secondary);
+  padding: 40px;
 }
 
-/* ── Dossier Header ──────────────────────────────────────────────── */
-.reports__dossier-header {
-  background:    var(--surface);
-  padding:       24px 24px 16px;
-  border-bottom: 1px solid var(--border);
-}
-
-.reports__dossier-name {
-  margin:      0 0 16px 0;
-  font-size:   1.75rem;
-  font-weight: 800;
-  color:       var(--text);
-  letter-spacing: -0.5px;
-}
-
-.reports__period-row {
-  display:       flex;
-  background:    var(--bg-secondary);
-  border-radius: var(--radius-sm);
-  padding:       4px;
-  gap:           4px;
-  overflow-x:    auto;
-  scrollbar-width: none;
-}
-.reports__period-row::-webkit-scrollbar { display: none; }
-
-.reports__period-btn {
-  flex:          1;
-  background:    transparent;
-  border:        none;
-  padding:       8px 12px;
-  font-size:     0.85rem;
-  font-weight:   600;
-  color:         var(--text-secondary);
-  border-radius: calc(var(--radius-sm) - 2px);
-  cursor:        pointer;
-  white-space:   nowrap;
-  transition:    background 0.15s, color 0.15s;
-}
-
-.reports__period-btn:hover {
-  background: rgba(0,0,0,0.05);
-}
-
-.reports__period-btn--active {
-  background: var(--surface);
-  color:      var(--text);
-  box-shadow: var(--shadow-sm);
-}
-
-/* ── Dossier Stats Row ───────────────────────────────────────────── */
-.reports__stats-row {
-  display:               grid;
-  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-  gap:                   12px;
-  padding:               16px 24px 0;
-}
-
-.reports__stat-card {
-  background:    var(--surface);
-  border-radius: var(--radius-md);
-  padding:       16px;
-  box-shadow:    var(--shadow-sm);
-  display:       flex;
-  flex-direction: column;
-  align-items:   flex-start;
-  gap:           4px;
-}
-
-.reports__stat-value {
-  font-size:   1.5rem;
-  font-weight: 800;
-  color:       var(--primary);
-  line-height: 1;
-}
-
-.reports__stat-label {
-  font-size:   0.85rem;
-  font-weight: 600;
-  color:       var(--text);
-  margin-top:  4px;
-}
-
-.reports__stat-sub {
-  font-size: 0.75rem;
-  color:     var(--text-secondary);
-}
-
-/* ── Note Feed ───────────────────────────────────────────────────── */
-.reports__note-feed {
-  list-style: none;
-  margin:     0;
-  padding:    0;
-  display:    flex;
-  flex-direction: column;
-  gap:        16px;
-}
-
-.reports__note-item {
-  background:    var(--bg-secondary);
-  border-radius: var(--radius-md);
-  padding:       16px;
-}
-
-.reports__note-meta {
-  display:         flex;
-  justify-content: space-between;
-  align-items:     center;
-  margin-bottom:   8px;
-  font-size:       0.85rem;
-}
-
-.reports__note-time {
-  color:       var(--text-secondary);
-  font-weight: 500;
-}
-
-.reports__note-code {
-  font-weight: 600;
-  color:       var(--text);
-  background:  var(--surface);
-  padding:     4px 8px;
-  border-radius: var(--radius-sm);
-  border:      1px solid var(--border);
-}
-
-.reports__note-text {
-  margin:      0;
-  font-size:   0.95rem;
-  line-height: 1.5;
-  color:       var(--text);
-  white-space: pre-wrap;
-}
-
-.reports__general-note {
-  font-size:   0.95rem;
-  line-height: 1.6;
-  color:       var(--text);
-  white-space: pre-wrap;
-  background:  var(--bg-secondary);
-  padding:     16px;
-  border-radius: var(--radius-md);
-  margin:      0;
-}
-
-/* ── Existing Classes (Tabs, Filters, Cards, Tables, Dialog) ─────── */
+/* ── Tabs ────────────────────────────────────────────────────────── */
 .reports__tabs {
-  display:       flex;
-  overflow-x:    auto;
-  background:    var(--surface);
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
   border-bottom: 1px solid var(--border);
-  flex-shrink:   0;
-  scrollbar-width: none;
+  padding-bottom: 8px;
 }
-.reports__tabs::-webkit-scrollbar { display: none; }
 
 .reports__tab {
-  flex-shrink: 0;
-  padding:     12px 16px;
-  border:      none;
-  background:  transparent;
-  font-size:   0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
   font-weight: 600;
-  color:       var(--text-secondary);
-  cursor:      pointer;
-  min-height:  48px;
-  border-bottom: 2px solid transparent;
-  transition:  color 0.15s ease, border-color 0.15s ease;
-  white-space: nowrap;
+  font-size: 0.95rem;
+  cursor: pointer;
+  border-radius: var(--radius-md);
+  transition: all 0.2s;
 }
 
 .reports__tab:hover {
+  background: var(--bg-secondary);
   color: var(--text);
 }
 
 .reports__tab--active {
-  color:         var(--primary);
-  border-bottom: 2px solid var(--primary);
+  background: var(--primary-light);
+  color: var(--primary);
+}
+
+/* ── Filters ─────────────────────────────────────────────────────── */
+.reports__filter {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.reports__period-row {
+  display: flex;
+  background: var(--bg-secondary);
+  padding: 4px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+}
+
+.reports__period-btn {
+  padding: 6px 16px;
+  border: none;
+  background: transparent;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-radius: var(--radius-md);
+  transition: all 0.2s;
+}
+
+.reports__period-btn--active {
+  background: var(--surface);
+  color: var(--primary);
+  box-shadow: var(--shadow-sm);
+}
+
+/* ── Dashboard Cards ──────────────────────────────────────────────── */
+.reports__dashboard {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+}
+
+@media (min-width: 1100px) {
+  .reports__dashboard {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.reports__dashboard-card {
+  background: var(--surface);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.reports__card-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-secondary);
+}
+
+.reports__card-title {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.1rem;
+  color: var(--text);
+}
+
+.reports__card-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  padding: 20px;
+  background: var(--surface);
+}
+
+.reports__metric {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.reports__metric-label {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.reports__metric-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.reports__card-section {
+  padding: 0 20px 20px;
+}
+
+.reports__section-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 4px;
+}
+
+.reports__section-title--alert {
+  color: var(--danger);
+}
+
+.reports__list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.reports__list li {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--bg-secondary);
+  font-size: 0.9rem;
+}
+
+.reports__list li:last-child {
+  border-bottom: none;
+}
+
+.reports__list-name {
+  color: var(--text);
+}
+
+.reports__list-count {
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.reports__list--alert .reports__list-count {
+  color: var(--danger);
+}
+
+.reports__chart-container {
+  height: 200px;
+  position: relative;
+}
+
+/* ── Behavior Specific ───────────────────────────────────────────── */
+.reports__metric--top-code {
+  grid-column: span 3;
+  margin-bottom: 8px;
+}
+
+.reports__top-code {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--bg-secondary);
+  padding: 12px;
+  border-radius: var(--radius-md);
+  margin-top: 4px;
+}
+
+.reports__top-code-icon {
+  font-size: 1.8rem;
+}
+
+.reports__top-code-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.reports__top-code-label {
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.reports__top-code-count {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+/* ── Export ──────────────────────────────────────────────────────── */
+.reports__export-group {
+  position: relative;
+}
+
+.reports__export-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  z-index: 100;
+  min-width: 140px;
+  display: flex;
+  flex-direction: column;
+}
+
+.reports__export-menu button {
+  padding: 10px 16px;
+  text-align: left;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: var(--text);
+}
+
+.reports__export-menu button:hover {
+  background: var(--bg-secondary);
+  color: var(--primary);
+}
+
+/* ── Data Management ─────────────────────────────────────────────── */
+.reports__panel {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.reports__card {
+  background: var(--surface);
+  padding: 24px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+}
+
+.reports__card-title {
+  margin: 0 0 8px;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.reports__hint {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin-bottom: 20px;
+}
+
+.reports__hint--danger {
+  color: var(--danger);
+  font-weight: 600;
+}
+
+.reports__btn-row {
+  display: flex;
+  gap: 12px;
+}
+
+.reports__msg {
+  margin-top: 16px;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-secondary);
+  font-size: 0.9rem;
+  color: var(--success);
+}
+
+.reports__msg.reports__error {
+  color: var(--danger);
+  background: #fff5f5;
+}
+
+.reports__file-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 30px;
+  background: var(--bg-secondary);
+  border: 2px dashed var(--border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.reports__file-input {
+  display: none;
+}
+
+/* ── Dossier ─────────────────────────────────────────────────────── */
+.reports__dossier-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  gap: 12px;
+}
+
+.reports__btn-back {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-weight: 600;
+  cursor: pointer;
+  padding: 8px 0;
+}
+
+.reports__btn-back:hover {
+  color: var(--text);
+}
+
+.reports__dossier-name {
+  margin: 0;
+  flex: 1;
+  text-align: center;
+}
+
+/* ── Shared Buttons ──────────────────────────────────────────────── */
+.reports__btn-primary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--primary);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.reports__btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.reports__btn-ghost {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  padding: 10px 20px;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.reports__btn-export {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface);
+  color: var(--primary);
+  border: 1px solid var(--primary);
+  padding: 8px 16px;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.reports__loading {
+  padding: 40px;
+  text-align: center;
+  color: var(--text-secondary);
+}
+
+/* ── Past Absence ────────────────────────────────────────────────── */
+.reports__past-absence {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.reports__btn-past-absence {
+  background: none;
+  border: none;
+  color: var(--primary);
+  font-size: 0.9rem;
+  cursor: pointer;
+  padding: 0;
+}
+
+.reports__past-absence-panel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.reports__input--small {
+  padding: 4px 8px;
+  font-size: 0.85rem;
+}
+
+.reports__btn-primary--small {
+  padding: 4px 12px;
+  font-size: 0.85rem;
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 4px;
+}
+
+.reports__btn-ghost--small {
+  padding: 4px 12px;
+  font-size: 0.85rem;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+
+.reports__past-absence-error {
+  color: var(--danger);
+  font-size: 0.8rem;
+  width: 100%;
+}
+
+/* ── Feed ────────────────────────────────────────────────────────── */
+.reports__note-feed {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.reports__note-item {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
 }
 
 .reports__note-meta {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  width: 100%;
+  gap: 12px;
+  margin-bottom: 8px;
+  font-size: 0.85rem;
+}
+
+.reports__note-time {
+  color: var(--text-secondary);
+}
+
+.reports__note-code {
+  font-weight: 600;
 }
 
 .reports__note-delete {
-  background: transparent;
+  margin-left: auto;
+  background: none;
   border: none;
   color: var(--text-secondary);
   cursor: pointer;
-  padding: 4px;
-  border-radius: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.15s ease;
-  opacity: 0;
-}
-
-.reports__note-item:hover .reports__note-delete {
-  opacity: 1;
-}
-
-.reports__note-delete:hover {
-  background: rgba(255, 59, 48, 0.1);
-  color: #ff3b30;
-}
-
-/* ── Date filter bar ─────────────────────────────────────────────── */
-.reports__filter {
-  display:      flex;
-  align-items:  flex-end;
-  gap:          12px;
-  padding:      16px 24px;
-  background:   var(--surface);
-  border-bottom: 1px solid var(--border);
-  flex-shrink:  0;
-  flex-wrap:    wrap;
-}
-
-.reports__filter-label {
-  display:        flex;
-  flex-direction: column;
-  gap:            6px;
-  font-size:      0.82rem;
-  font-weight:    600;
-  color:          var(--text-secondary);
-}
-
-/* ── Panel & Cards ───────────────────────────────────────────────── */
-.reports__panel {
-  flex:       1;
-  padding:    24px;
-  display:    flex;
-  flex-direction: column;
-  gap:        20px;
-}
-
-.reports__card {
-  background:    var(--surface);
-  border-radius: var(--radius-lg);
-  box-shadow:    var(--shadow-sm);
-  padding:       24px;
-  display:       flex;
-  flex-direction: column;
-  gap:           16px;
-  margin:        0 24px 20px;
-}
-
-.reports__panel .reports__card {
-  margin: 0;
-}
-
-.reports__card-title {
-  font-size:   1.1rem;
-  font-weight: 700;
-  color:       var(--text);
-  margin:      0;
-}
-
-.reports__hint {
-  font-size:   0.85rem;
-  color:       var(--text-secondary);
-  line-height: 1.5;
-  margin:      0;
 }
 
 .reports__no-data {
-  color:      var(--text-secondary);
-  font-size:  0.9rem;
-  font-style: italic;
-  padding:    12px 0;
-}
-
-.reports__msg {
-  font-size:   0.9rem;
-  font-weight: 500;
-  color:       var(--state-success);
-  margin:      0;
-}
-
-/* ── Inputs & Buttons ────────────────────────────────────────────── */
-.reports__past-absence {
-  margin-top: 16px;
-  border-top: 1px solid var(--border);
-  padding-top: 16px;
-}
-
-.reports__btn-past-absence {
-  background: transparent;
-  border: none;
-  font-size: 0.85rem;
-  color: var(--text-secondary);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 0;
-  transition: color 0.15s;
-}
-.reports__btn-past-absence:hover {
-  color: var(--text);
-}
-
-.reports__past-absence-panel {
-  background: var(--bg-secondary);
-  border-radius: var(--radius-sm);
-  padding: 12px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.reports__input--small {
-  padding: 6px 10px;
-  font-size: 0.85rem;
-  height: 32px;
-}
-
-.reports__btn-primary--small {
-  padding: 0 12px;
-  font-size: 0.85rem;
-  height: 32px;
-  background: var(--primary);
-  color: white;
-  border: none;
-  border-radius: var(--radius-sm);
-  font-weight: 600;
-  cursor: pointer;
-}
-.reports__btn-primary--small:hover {
-  background: var(--primary-dark);
-}
-
-.reports__btn-ghost--small {
-  padding: 0 12px;
-  font-size: 0.85rem;
-  height: 32px;
-  background: transparent;
-  border: none;
-  border-radius: var(--radius-sm);
-  color: var(--text-secondary);
-  font-weight: 600;
-  cursor: pointer;
-}
-.reports__btn-ghost--small:hover {
-  color: var(--text);
-}
-
-.reports__past-absence-error {
-  color: var(--state-out);
-  font-size: 0.85rem;
-  font-weight: 500;
-}
-
-.reports__input {
-  padding:       10px 12px;
-  border:        1px solid var(--border);
-  border-radius: var(--radius-sm);
-  background:    var(--bg-secondary);
-  font-size:     0.9rem;
-  color:         var(--text);
-  font-family:   inherit;
-  height:        42px;
-  box-sizing:    border-box;
-}
-
-.reports__input:focus {
-  outline:      none;
-  border-color: var(--primary);
-  background:   var(--surface);
-}
-
-.reports__btn-run {
-  padding:       0 18px;
-  border:        none;
-  border-radius: var(--radius-md);
-  background:    var(--primary);
-  color:         white;
-  font-size:     0.9rem;
-  font-weight:   600;
-  cursor:        pointer;
-  height:        42px;
-}
-
-.reports__btn-ghost {
-  padding:       0 14px;
-  border:        1px solid var(--border);
-  border-radius: var(--radius-md);
-  background:    transparent;
-  color:         var(--text-secondary);
-  font-size:     0.9rem;
-  cursor:        pointer;
-  height:        42px;
-}
-
-.reports__btn-primary {
-  padding:       0 20px;
-  border:        none;
-  border-radius: var(--radius-md);
-  background:    var(--primary);
-  color:         white;
-  font-size:     0.95rem;
-  font-weight:   600;
-  cursor:        pointer;
-  height:        48px;
-  display:       inline-flex;
-  align-items:   center;
-  gap:           8px;
-  align-self:    flex-start;
-}
-
-.reports__btn-danger {
-  padding:       0 20px;
-  border:        none;
-  border-radius: var(--radius-md);
-  background:    var(--state-out);
-  color:         #fff;
-  font-size:     0.95rem;
-  font-weight:   600;
-  cursor:        pointer;
-  height:        48px;
-}
-
-.reports__btn-export {
-  align-self:    flex-start;
-  padding:       0 18px;
-  border:        1px solid var(--border);
-  border-radius: var(--radius-md);
-  background:    var(--bg-secondary);
-  color:         var(--primary);
-  font-size:     0.9rem;
-  font-weight:   600;
-  cursor:        pointer;
-  height:        42px;
-}
-
-/* ── Table ───────────────────────────────────────────────────────── */
-.reports__table-wrap {
-  overflow-x: auto;
-  border:     1px solid var(--border);
-  border-radius: var(--radius-md);
-}
-
-.reports__table {
-  width:           100%;
-  border-collapse: collapse;
-  font-size:       0.85rem;
-  color:           var(--text);
-  text-align:      left;
-}
-
-.reports__table th {
-  padding:       12px 16px;
-  background:    var(--bg-secondary);
-  font-weight:   600;
-  color:         var(--text-secondary);
-  border-bottom: 1px solid var(--border);
-  white-space:   nowrap;
-}
-
-.reports__table td {
-  padding:       12px 16px;
-  border-bottom: 1px solid var(--border);
-  vertical-align: middle;
-}
-
-.reports__table tr:last-child td {
-  border-bottom: none;
-}
-
-.reports__table tr:hover td {
-  background: rgba(0,0,0,0.02);
-}
-
-.reports__td-actions {
-  text-align: right;
-  width:      48px;
-}
-
-.reports__btn-delete {
-  background: transparent;
-  border:     none;
-  color:      var(--text-secondary);
-  font-size:  1.2rem;
-  cursor:     pointer;
-  width:      32px;
-  height:     32px;
-  border-radius: 4px;
-  display:    flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.15s, color 0.15s;
-}
-
-.reports__btn-delete:hover {
-  background: rgba(255, 59, 48, 0.1);
-  color:      var(--state-out);
-}
-
-/* ── File upload ─────────────────────────────────────────────────── */
-.reports__file-label {
-  display:       flex;
-  align-items:   center;
-  gap:           12px;
-  padding:       16px;
-  border:        2px dashed var(--border);
-  border-radius: var(--radius-md);
-  cursor:        pointer;
-  font-size:     0.95rem;
-  color:         var(--primary);
-  font-weight:   600;
-  transition:    all 0.15s ease;
-  background:    var(--bg-secondary);
-}
-
-.reports__file-label:hover {
-  background:   var(--primary-light);
-  border-color: var(--primary);
-}
-
-.reports__file-input {
-  position: absolute;
-  opacity:  0;
-  width:    0;
-  height:   0;
-}
-
-/* ── Loading ─────────────────────────────────────────────────────── */
-.reports__loading {
-  padding:   40px;
+  padding: 20px;
   text-align: center;
-  color:     var(--text-secondary);
-  font-weight: 500;
-  font-size: 0.95rem;
-}
-
-/* ── Dialog ──────────────────────────────────────────────────────── */
-.reports__dialog {
-  position:        fixed;
-  inset:           0;
-  z-index:         900;
-  display:         flex;
-  align-items:     center;
-  justify-content: center;
-}
-
-.reports__dialog-backdrop {
-  position:   absolute;
-  inset:      0;
-  background: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(2px);
-}
-
-.reports__dialog-box {
-  position:       relative;
-  z-index:        1;
-  background:     var(--surface);
-  border-radius:  var(--radius-lg);
-  box-shadow:     var(--shadow-md);
-  padding:        24px;
-  max-width:      400px;
-  width:          90%;
-  display:        flex;
-  flex-direction: column;
-  gap:            16px;
-}
-
-.reports__dialog-title {
-  margin:      0;
-  font-size:   1.2rem;
-  font-weight: 700;
-  color:       var(--text);
-}
-
-.reports__dialog-body {
-  margin:      0;
-  font-size:   0.95rem;
-  color:       var(--text-secondary);
-  line-height: 1.5;
-}
-
-.reports__dialog-list {
-  margin:       0;
-  padding-left: 20px;
-  font-size:    0.95rem;
-  color:        var(--text);
-  line-height:  1.6;
-}
-
-.reports__dialog-warn {
-  margin:      0;
-  font-size:   0.9rem;
-  color:       var(--state-out);
-  font-weight: 600;
-}
-
-.reports__dialog-actions {
-  display:   flex;
-  gap:       12px;
-  margin-top: 8px;
+  color: var(--text-secondary);
+  font-style: italic;
 }
 
 /* ── Print ───────────────────────────────────────────────────────── */
 @media print {
-  .reports__sidebar,
-  .reports__tabs,
-  .reports__filter,
-  .reports__btn-run,
-  .reports__btn-ghost,
-  .reports__btn-export,
-  .reports__btn-primary,
-  .reports__btn-danger {
+  .reports__sidebar, .reports__tabs, .reports__filter, .reports__btn-export, .reports__btn-back {
     display: none !important;
   }
-
-  .reports__layout {
-    display: block;
-  }
-
   .reports__main {
+    padding: 0;
     overflow: visible;
-    background: white;
   }
-
-  .reports__table {
-    font-size: 10pt;
+  .reports__dashboard-card {
+    break-inside: avoid;
+    box-shadow: none;
+    border: 1px solid #eee;
   }
 }
 </style>
