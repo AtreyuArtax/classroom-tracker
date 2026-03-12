@@ -232,11 +232,11 @@ function weekLabel(weekKey) {
 // ── computed stats ──────────────────────────────────────────────────────────────
 
 const absenceCount = computed(() =>
-  props.events.filter(e => e.code === 'a').length
+  props.events.filter(e => e.code === 'a' && !e.superseded).length
 )
 
 const testDayAbsenceCount = computed(() =>
-  props.events.filter(e => e.code === 'a' && e.testDay).length
+  props.events.filter(e => e.code === 'a' && e.testDay && !e.superseded).length
 )
 
 const lateCount = computed(() =>

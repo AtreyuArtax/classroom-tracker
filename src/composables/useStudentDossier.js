@@ -116,7 +116,7 @@ export function useStudentDossier() {
     // ─── computed stats ───────────────────────────────────────────────────────
 
     const stats = computed(() => {
-        const e = events.value
+        const e = events.value.filter(ev => !ev.superseded)
 
         const washroomEvents = e.filter(ev => ev.code === 'w' && ev.duration != null)
         const absences = e.filter(ev => ev.code === 'a').length
@@ -153,11 +153,12 @@ export function useStudentDossier() {
     // ─── trend graph data ────────────────────────────────────────────────────
 
     const weeklyTrend = computed(() => {
-        if (!events.value.length) return []
+        const filteredEvents = events.value.filter(ev => !ev.superseded)
+        if (!filteredEvents.length) return []
 
         // Group events by week start date (Monday) and category
         const weeks = {}
-        for (const evt of events.value) {
+        for (const evt of filteredEvents) {
             const date = new Date(evt.timestamp)
             // Get Monday of that week
             const day = date.getDay()
@@ -176,7 +177,7 @@ export function useStudentDossier() {
     })
 
     const trendCategories = computed(() => {
-        const cats = new Set(events.value.map(e => e.category))
+        const cats = new Set(events.value.filter(e => !e.superseded).map(e => e.category))
         return [...cats]
     })
 

@@ -305,7 +305,7 @@ async function copyForReportCard() {
   const name       = studentName.value
   const className  = activeClass.value?.name ?? ''
 
-  const absences = events.value.filter(e => e.code === 'a').length
+  const absences = events.value.filter(e => e.code === 'a' && !e.superseded).length
   const lates    = events.value.filter(e => e.code === 'l').length
   const lateMins = events.value
     .filter(e => e.code === 'l' && e.duration != null)

@@ -558,8 +558,17 @@ async function logAttendanceEvent(studentId, code) {
             await eventService.deleteEvent(existingLateEvent.eventId)
         }
 
+        let supersededAbsentId = null
         if (wasAbsent) {
             await classService.clearStudentAbsent(classId, studentId)
+            // Find the 'a' event for today and mark it superseded
+            const todayStr = new Date().toISOString().slice(0, 10)
+            const eventsToday = await eventService.getEventsByStudent(studentId, { from: todayStr, to: todayStr })
+            const absentEvent = eventsToday.find(e => e.code === 'a' && !e.superseded)
+            if (absentEvent) {
+                supersededAbsentId = absentEvent.eventId
+                await eventService.updateEvent(supersededAbsentId, { superseded: true })
+            }
         }
 
         // Persist lateMinutes to IDB so it survives page refresh
@@ -586,6 +595,10 @@ async function logAttendanceEvent(studentId, code) {
             if (wasAbsent) {
                 await classService.setStudentAbsent(classId, studentId)
                 student.activeStates.isAbsent = true
+                // Restore the superseded absent event
+                if (supersededAbsentId) {
+                    await eventService.updateEvent(supersededAbsentId, { superseded: false })
+                }
             }
             student.lastEvent = null
         })

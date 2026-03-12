@@ -20,7 +20,7 @@
 import { openDB } from 'idb'
 
 const DB_NAME = 'classroomTrackerDB'
-const DB_VERSION = 7
+const DB_VERSION = 8
 
 /**
  * Cached promise — set synchronously before the first await so every
@@ -159,6 +159,34 @@ export function getDB() {
               deviceIncidentsPerWeek: 3
             }
             await settingsStore.put(settings, 'singleton')
+          }
+        }
+      }
+
+      // ── version 8 migration ────────────────────────────────────────────────
+      // Retroactively mark absences as superseded if they were followed by a Late arrival
+      if (oldVersion < 8) {
+        const eventStore = transaction.objectStore('events')
+        const events = await eventStore.getAll()
+        
+        // Group events by student and date for easier lookup
+        const lateEventsWithSuperseded = events.filter(e => e.code === 'l' && e.supersededAbsent === true)
+        
+        for (const lateEvt of lateEventsWithSuperseded) {
+          const studentId = lateEvt.studentId
+          const dateStr = lateEvt.timestamp.slice(0, 10)
+          
+          // Find the 'a' event for the same student on the same day
+          const targetAbsent = events.find(e => 
+            e.studentId === studentId && 
+            e.code === 'a' && 
+            e.timestamp.startsWith(dateStr) &&
+            !e.superseded
+          )
+          
+          if (targetAbsent) {
+            targetAbsent.superseded = true
+            await eventStore.put(targetAbsent)
           }
         }
       }

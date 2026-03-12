@@ -531,7 +531,7 @@ async function runReport() {
     const studentCount = Object.keys(studentsMap).length
 
     // --- Process Attendance ---
-    const attEvents = events.filter(e => e.code === 'a' || e.code === 'l')
+    const attEvents = events.filter(e => (e.code === 'a' || e.code === 'l') && !e.superseded)
     const absences = attEvents.filter(e => e.code === 'a').length
     const lates = attEvents.filter(e => e.code === 'l').length
     
@@ -746,7 +746,7 @@ function downloadAggregateCsv(section) {
     const summary = {}
     const studentsMap = reportStudents.value
     reportData.value.forEach(evt => {
-      if (evt.code === 'a' || evt.code === 'l') {
+      if ((evt.code === 'a' || evt.code === 'l') && !evt.superseded) {
         if (!summary[evt.studentId]) {
           summary[evt.studentId] = { absences: 0, testDayAbsences: 0, lates: 0, lateTotal: 0, lateCount: 0 }
         }
