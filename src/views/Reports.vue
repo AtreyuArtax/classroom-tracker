@@ -100,6 +100,10 @@
                 />
                 <button class="reports__btn-primary--small" @click="submitPastAbsence">Log Absence</button>
                 <button class="reports__btn-ghost--small" @click="closePastAbsencePanel">Cancel</button>
+                <div class="reports__past-absence-testday">
+                  <input type="checkbox" id="pastAbsenceTestDay" v-model="pastAbsenceTestDay" />
+                  <label for="pastAbsenceTestDay">Test day?</label>
+                </div>
                 <span v-if="pastAbsenceError" class="reports__past-absence-error">{{ pastAbsenceError }}</span>
               </div>
             </div>
@@ -648,6 +652,7 @@ const behaviorCodesMap = computed(() =>
 
 const showPastAbsencePanel = ref(false)
 const pastAbsenceDate = ref('')
+const pastAbsenceTestDay = ref(false)
 const pastAbsenceMaxDate = ref('')
 const pastAbsenceError = ref('')
 
@@ -656,6 +661,7 @@ function openPastAbsencePanel() {
   pastAbsenceMaxDate.value = d.toISOString().slice(0, 10)
   d.setDate(d.getDate() - 1)
   pastAbsenceDate.value = d.toISOString().slice(0, 10)
+  pastAbsenceTestDay.value = false
   pastAbsenceError.value = ''
   showPastAbsencePanel.value = true
 }
@@ -690,6 +696,7 @@ async function submitPastAbsence() {
       studentId: dossier.selectedStudentId.value,
       classId: dossier.selectedClassId.value,
       code: 'a',
+      testDay: pastAbsenceTestDay.value,
       _overrideTimestamp: localDateObj.toISOString(),
       duration: null,
       note: null,
@@ -741,9 +748,12 @@ function downloadAggregateCsv(section) {
     reportData.value.forEach(evt => {
       if (evt.code === 'a' || evt.code === 'l') {
         if (!summary[evt.studentId]) {
-          summary[evt.studentId] = { absences: 0, lates: 0, lateTotal: 0, lateCount: 0 }
+          summary[evt.studentId] = { absences: 0, testDayAbsences: 0, lates: 0, lateTotal: 0, lateCount: 0 }
         }
-        if (evt.code === 'a') summary[evt.studentId].absences++
+        if (evt.code === 'a') {
+          summary[evt.studentId].absences++
+          if (evt.testDay) summary[evt.studentId].testDayAbsences++
+        }
         else if (evt.code === 'l') {
           summary[evt.studentId].lates++
           if (evt.duration != null) {
@@ -754,11 +764,11 @@ function downloadAggregateCsv(section) {
       }
     })
     
-    csvContent = 'Student,Absences,Lates,Avg Late (min)\n'
+    csvContent = 'Student,Absences,Test Day Absences,Lates,Avg Late (min)\n'
     Object.entries(studentsMap).forEach(([id, s]) => {
-      const stats = summary[id] || { absences: 0, lates: 0, lateTotal: 0, lateCount: 0 }
+      const stats = summary[id] || { absences: 0, testDayAbsences: 0, lates: 0, lateTotal: 0, lateCount: 0 }
       const avg = stats.lateCount > 0 ? (stats.lateTotal / stats.lateCount / 60000).toFixed(1) : 0
-      csvContent += `"${s.lastName}, ${s.firstName}",${stats.absences},${stats.lates},${avg}\n`
+      csvContent += `"${s.lastName}, ${s.firstName}",${stats.absences},${stats.testDayAbsences},${stats.lates},${avg}\n`
     })
 
   } else if (section === 'washroom') {
@@ -1439,6 +1449,27 @@ const washroomChartOptions = {
   background: none;
   border: 1px solid var(--border);
   border-radius: 4px;
+  cursor: pointer;
+}
+
+.reports__past-absence-testday {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.reports__past-absence-testday input {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.reports__inline-icon {
+  vertical-align: middle;
+  margin-top: -2px;
 }
 
 .reports__past-absence-error {

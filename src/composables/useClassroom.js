@@ -50,8 +50,10 @@ const students = ref({})
  */
 const behaviorCodes = ref([])
 
-/** @type {import('vue').Ref<{ rows: number, cols: number }>} */
 const gridSize = ref({ rows: 6, cols: 6 })
+
+/** @type {import('vue').Ref<boolean>} Flag for special "Test Day" mode */
+export const isTestDay = ref(false)
 
 // ─── computed ─────────────────────────────────────────────────────────────────
 
@@ -163,6 +165,11 @@ watch(classList, (newList) => {
         computeSuggestedClass()
     }
 }, { immediate: true })
+
+// Reset test day flag when active class changes
+watch(activeClass, () => {
+    isTestDay.value = false
+})
 
 /** Students who currently have no assigned seat */
 const unseatedStudents = computed(() =>
@@ -519,7 +526,7 @@ async function logAttendanceEvent(studentId, code) {
         student.activeStates.isAbsent = true
         student.activeStates.lateMinutes = null
 
-        const eventId = await eventService.logEvent({ studentId, classId, code, duration: null })
+        const eventId = await eventService.logEvent({ studentId, classId, code, duration: null, testDay: isTestDay.value })
         student.lastEvent = { code, ts: Date.now() }
 
         pushUndo(async () => {
@@ -883,12 +890,16 @@ export function useClassroom() {
         thresholds,
         behaviorCodes,
         gridSize,
+        isTestDay,
         // computed
         sortedRoster,
         unseatedStudents,
         studentsOut,
-        // methods
-        init,
+        // actions
+        init: async () => {
+            await init()
+            _scheduleMidnightReset()
+        },
         switchClass,
         createClass,
         updateActiveClass,
@@ -909,4 +920,16 @@ export function useClassroom() {
         deleteClass,
         dismissSuggestion
     }
+}
+
+/** Midnight reset scheduler for isTestDay */
+function _scheduleMidnightReset() {
+    const now = new Date()
+    const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0)
+    const msToMidnight = midnight.getTime() - now.getTime()
+
+    setTimeout(() => {
+        isTestDay.value = false
+        _scheduleMidnightReset()
+    }, msToMidnight)
 }

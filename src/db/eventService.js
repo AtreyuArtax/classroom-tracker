@@ -87,6 +87,7 @@ export async function logEvent(eventObj) {
         category: behaviorCode.category, // copied from behavior code
         duration: eventObj.duration ?? null,
         note: eventObj.note ?? null,
+        testDay: eventObj.testDay ?? false,
     }
     if (eventObj.supersededAbsent !== undefined) {
         record.supersededAbsent = eventObj.supersededAbsent

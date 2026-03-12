@@ -24,6 +24,18 @@
           <span class="dashboard__pool-toggle-label">Pool</span>
         </button>
 
+        <!-- Test Day Button -->
+        <button
+          v-if="activeClass"
+          class="dashboard__test-day-btn"
+          :class="{ 'dashboard__test-day-btn--active': isTestDay }"
+          @click="isTestDay = !isTestDay"
+          :title="isTestDay ? 'Deactivate Test Day' : 'Activate Test Day'"
+        >
+          <component :is="isTestDay ? CalendarCheck : Calendar" :size="20" />
+          <span class="dashboard__test-day-label">Test Day</span>
+        </button>
+
         <UndoButton />
       </div>
     </header>
@@ -114,7 +126,7 @@ import RadialMenu          from '../components/RadialMenu.vue'
 import UndoButton          from '../components/UndoButton.vue'
 import EventNoteModal      from '../components/EventNoteModal.vue'
 import StudentProfileModal from '../components/StudentProfileModal.vue'
-import { Toilet, Users, GripVertical } from 'lucide-vue-next'
+import { Toilet, Users, GripVertical, Calendar, CalendarCheck } from 'lucide-vue-next'
 import { useClassroom }    from '../composables/useClassroom.js'
 import { useRadial }       from '../composables/useRadial.js'
 
@@ -128,6 +140,7 @@ const {
   students,
   behaviorCodes,
   logStandardEvent,
+  isTestDay,
 } = useClassroom()
 
 const {
@@ -278,6 +291,41 @@ watch(profileStudent, (student) => {
 
 @media (max-width: 480px) {
   .dashboard__pool-toggle-label {
+    display: none;
+  }
+}
+
+/* Test Day Button */
+.dashboard__test-day-btn {
+  display:         flex;
+  align-items:     center;
+  justify-content: center;
+  gap:             6px;
+  padding:         8px 12px;
+  background:      var(--bg-secondary);
+  border:          1px solid var(--border);
+  border-radius:   var(--radius-md);
+  font-size:       0.85rem;
+  font-weight:     600;
+  color:           var(--text);
+  cursor:          pointer;
+  min-height:      44px;
+  transition:      all 0.15s ease;
+}
+
+.dashboard__test-day-btn:hover {
+  background: var(--border);
+}
+
+.dashboard__test-day-btn--active {
+  background:   #ff9500;
+  border-color: #ff9500;
+  color:        #fff;
+}
+
+@media (max-width: 480px) {
+  .dashboard__pool-toggle-label,
+  .dashboard__test-day-label {
     display: none;
   }
 }

@@ -18,6 +18,9 @@
         <div class="sp__card sp__card--absent">
           <div class="sp__card-value">{{ absenceCount }}</div>
           <div class="sp__card-label"><UserX :size="16" /> Absences</div>
+          <div class="sp__card-sub" v-if="testDayAbsenceCount > 0">
+            {{ testDayAbsenceCount }} on test days
+          </div>
           <div class="sp__card-sub" v-if="selectedPeriod !== 'week'">{{ avgAbsencesPerWeek }}/wk avg</div>
         </div>
         <div class="sp__card sp__card--late">
@@ -106,7 +109,12 @@
                   <component :is="resolveIcon(behaviorCodes[evt.code]?.icon)" :size="16" v-if="behaviorCodes[evt.code]" />
                   {{ evt.code }}
                 </td>
-                <td>{{ eventDetail(evt) }}</td>
+                <td>
+                  <div class="sp__td-detail">
+                    <span>{{ eventDetail(evt) }}</span>
+                    <span v-if="evt.testDay" class="sp__test-day-badge">Test Day</span>
+                  </div>
+                </td>
                 <td class="sp__td-actions">
                   <div class="sp__action-group">
                     <button 
@@ -225,6 +233,10 @@ function weekLabel(weekKey) {
 
 const absenceCount = computed(() =>
   props.events.filter(e => e.code === 'a').length
+)
+
+const testDayAbsenceCount = computed(() =>
+  props.events.filter(e => e.code === 'a' && e.testDay).length
 )
 
 const lateCount = computed(() =>
@@ -582,6 +594,23 @@ details[open] .sp__log-summary::before { content: '▼  '; }
 }
 
 .sp__td-time { color: var(--text-secondary); white-space: nowrap; }
+
+.sp__td-detail {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sp__test-day-badge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  background: #fff3e0;
+  color: #ff9500;
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid #ffe0b2;
+}
 
 .sp__td-actions {
   text-align: right;
