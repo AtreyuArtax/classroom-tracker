@@ -88,10 +88,19 @@
 
     <!-- ── Event Note Modal ─────────────────────────────────────────── -->
     <EventNoteModal
+      v-if="!isAssessmentCode"
       v-model="noteModalOpen"
       :student-name="pendingStudentName"
       :behavior-code="pendingNoteCode"
       @save="onNoteSave"
+      @cancel="onNoteCancel"
+    />
+
+    <AssessmentConversationModal
+      v-if="isAssessmentCode"
+      v-model="noteModalOpen"
+      :student-name="pendingStudentName"
+      @save="onAssessmentSave"
       @cancel="onNoteCancel"
     />
 
@@ -125,6 +134,7 @@ import SeatingGrid         from '../components/SeatingGrid.vue'
 import RadialMenu          from '../components/RadialMenu.vue'
 import UndoButton          from '../components/UndoButton.vue'
 import EventNoteModal      from '../components/EventNoteModal.vue'
+import AssessmentConversationModal from '../components/AssessmentConversationModal.vue'
 import StudentProfileModal from '../components/StudentProfileModal.vue'
 import { Toilet, Users, GripVertical, Calendar, CalendarCheck } from 'lucide-vue-next'
 import { useClassroom }    from '../composables/useClassroom.js'
@@ -140,6 +150,7 @@ const {
   students,
   behaviorCodes,
   logStandardEvent,
+  logAssessmentEvent,
   isTestDay,
 } = useClassroom()
 
@@ -182,9 +193,11 @@ const behaviorCodesMap = computed(() =>
   Object.fromEntries(behaviorCodes.value.map(c => [c.codeKey, c]))
 )
 
-// ─── Event Note Modal ─────────────────────────────────────────────────────────
+// ─── Assessment / Note Modal Logic ──────────────────────────────────────────
 
 const noteModalOpen = ref(false)
+
+const isAssessmentCode = computed(() => pendingNoteCode.value?.codeKey === 'ac')
 
 // Derived display name for the pending student
 const pendingStudentName = computed(() => {
@@ -200,12 +213,37 @@ watch(pendingNoteCode, (code) => {
   if (code) noteModalOpen.value = true
 })
 
-async function onNoteSave(noteText) {
+async function onNoteSave(payload) {
   const student = pendingNoteStudent.value
   const code    = pendingNoteCode.value
   if (!student || !code) return
 
-  await logStandardEvent(student.studentId, code.codeKey, noteText)
+  let finalNote = ''
+  if (typeof payload === 'object') {
+    // If it's the structured note payload from Update 08
+    finalNote = `[${payload.noteType}] ${payload.note}`.trim()
+  } else {
+    // Legacy string payload (e.g. for Parent Contact)
+    finalNote = payload
+  }
+
+  await logStandardEvent(student.studentId, code.codeKey, finalNote)
+
+  // Clear pending state
+  pendingNoteCode.value    = null
+  pendingNoteStudent.value = null
+}
+
+async function onAssessmentSave({ note, acContext, acOutcome }) {
+  const student = pendingNoteStudent.value
+  if (!student) return
+
+  await logAssessmentEvent({
+    studentId: student.studentId,
+    note,
+    acContext,
+    acOutcome
+  })
 
   // Clear pending state
   pendingNoteCode.value    = null

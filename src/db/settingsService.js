@@ -32,16 +32,72 @@ async function _readSettings() {
 
     // Fallback: seed defaults (should have been written during upgrade, but guard anyway)
     const defaults = {
-        schemaVersion: 7,
+        schemaVersion: 10,
         gridSize: { rows: 6, cols: 6 },
         behaviorCodes: {
-            p: { icon: 'Hand', label: 'Participation', category: 'positive', type: 'standard', requiresNote: false, isTopLevel: false },
-            m: { icon: 'Smartphone', label: 'On Device', category: 'redirect', type: 'standard', requiresNote: false, isTopLevel: true },
-            w: { icon: 'Toilet', label: 'Washroom', category: 'neutral', type: 'toggle', requiresNote: false, isTopLevel: true },
-            a: { icon: 'UserX', label: 'Absent', category: 'attendance', type: 'attendance', requiresNote: false, isTopLevel: false },
-            l: { icon: 'Clock', label: 'Late', category: 'attendance', type: 'attendance', requiresNote: false, isTopLevel: false },
-            ob: { icon: 'Eye', label: 'Observation', category: 'note', type: 'standard', requiresNote: true, isTopLevel: false },
-            pc: { icon: 'Phone', label: 'Parent', category: 'communication', type: 'standard', requiresNote: true, isTopLevel: true },
+            note: {
+                key: 'note',
+                icon: 'NotebookPen',
+                label: 'Note',
+                category: 'note',
+                type: 'standard',
+                requiresNote: true,
+                isTopLevel: true
+            },
+            m: {
+                key: 'm',
+                icon: 'Smartphone',
+                label: 'On Device',
+                category: 'redirect',
+                type: 'standard',
+                requiresNote: false,
+                isTopLevel: true
+            },
+            w: {
+                key: 'w',
+                icon: 'Toilet',
+                label: 'Washroom',
+                category: 'neutral',
+                type: 'toggle',
+                requiresNote: false,
+                isTopLevel: true
+            },
+            a: {
+                key: 'a',
+                icon: 'UserX',
+                label: 'Absent',
+                category: 'attendance',
+                type: 'attendance',
+                requiresNote: false,
+                isTopLevel: false
+            },
+            l: {
+                key: 'l',
+                icon: 'Clock',
+                label: 'Late',
+                category: 'attendance',
+                type: 'attendance',
+                requiresNote: false,
+                isTopLevel: false
+            },
+            pc: {
+                key: 'pc',
+                icon: 'Phone',
+                label: 'Parent',
+                category: 'communication',
+                type: 'standard',
+                requiresNote: true,
+                isTopLevel: true
+            },
+            ac: {
+                key: 'ac',
+                icon: 'GraduationCap',
+                label: 'Assessment',
+                category: 'assessment',
+                type: 'standard',
+                requiresNote: true,
+                isTopLevel: true
+            }
         },
         thresholds: {
             washroomTripsPerWeek: 4,

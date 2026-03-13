@@ -130,6 +130,9 @@ export function useStudentDossier() {
             washroomMinutes: Math.round(
                 washroomEvents.reduce((sum, ev) => sum + (ev.duration || 0), 0) / 60000
             ),
+            avgWashroomMinutes: washroomEvents.length
+                ? (washroomEvents.reduce((sum, ev) => sum + (ev.duration || 0), 0) / washroomEvents.length / 60000).toFixed(1)
+                : 0,
             absences,
             lateCount: lates.length,
             avgLateMinutes: lates.length
@@ -138,15 +141,25 @@ export function useStudentDossier() {
             redirects,
             parentContactCount: parentContacts.length,
             noteCount: noteEvents.length,
+            assessmentConversations: assessmentEvents.value.length,
+            demonstratesUnderstanding: assessmentEvents.value.filter(e => e.acOutcome === 'demonstrates_understanding').length,
+            gapConfirmed: assessmentEvents.value.filter(e => e.acOutcome === 'gap_confirmed').length,
         }
     })
 
-    // ─── sorted events for note feed ─────────────────────────────────────────
+    // ─── Assessment / Note feeds ───────────────────────────────────────────
 
-    /** Events that have a note, sorted newest-first */
+    /** Assessment conversations — separate from general noteEvents */
+    const assessmentEvents = computed(() =>
+        [...events.value]
+            .filter(e => e.code === 'ac')
+            .sort((a, b) => (b.timestamp ?? '').localeCompare(a.timestamp ?? ''))
+    )
+
+    /** General notes — ob/cv merged note code and pc, excluding ac */
     const noteEvents = computed(() =>
         [...events.value]
-            .filter(e => e.note)
+            .filter(e => e.note && e.code !== 'ac')
             .sort((a, b) => (b.timestamp ?? '').localeCompare(a.timestamp ?? ''))
     )
 
@@ -213,6 +226,7 @@ export function useStudentDossier() {
         student,
         loading,
         stats,
+        assessmentEvents,
         // actions
         loadStudent,
         reload,

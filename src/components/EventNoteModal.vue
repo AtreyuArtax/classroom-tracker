@@ -9,11 +9,25 @@
       :aria-label="`Add note for ${behaviorCode?.label}`"
     >
       <div class="enm-card" @keydown.esc="onCancel">
-        <!-- Title -->
         <h2 class="enm-title">
           {{ behaviorCode?.icon }} {{ behaviorCode?.label }}
           <span v-if="studentName" class="enm-title-student">— {{ studentName }}</span>
         </h2>
+
+        <!-- ob/cv Toggle (only for general 'note' code) -->
+        <div v-if="isNoteCode" class="enm-toggle-row">
+          <span class="enm-toggle-label">Type</span>
+          <div class="enm-toggle-group">
+            <button
+              :class="['enm-toggle-btn', noteType === 'ob' ? 'enm-toggle-btn--active' : '']"
+              @click="noteType = 'ob'"
+            >Observation</button>
+            <button
+              :class="['enm-toggle-btn', noteType === 'cv' ? 'enm-toggle-btn--active' : '']"
+              @click="noteType = 'cv'"
+            >Conversation</button>
+          </div>
+        </div>
 
         <!-- Note textarea -->
         <textarea
@@ -46,7 +60,7 @@
  * CLAUDE.md §4: no src/db/ imports.
  */
 
-import { ref, watch, nextTick } from 'vue'
+import { ref, watch, nextTick, computed } from 'vue'
 
 const props = defineProps({
   /** Displayed in the modal title */
@@ -60,19 +74,28 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue', 'save', 'cancel'])
 
 const noteText   = ref('')
+const noteType   = ref('ob')
 const textareaRef = ref(null)
+
+const isNoteCode = computed(() => props.behaviorCode?.key === 'note')
 
 // Autofocus + clear text each time the modal opens
 watch(() => props.modelValue, async (open) => {
   if (open) {
     noteText.value = ''
+    noteType.value = 'ob'
     await nextTick()
     textareaRef.value?.focus()
   }
 })
 
 function onSave() {
-  emit('save', noteText.value.trim())
+  const note = noteText.value.trim()
+  if (isNoteCode.value) {
+    emit('save', { note, noteType: noteType.value })
+  } else {
+    emit('save', note)
+  }
   emit('update:modelValue', false)
 }
 
@@ -184,5 +207,48 @@ function onCancel() {
   background:   transparent;
   border:       1px solid var(--border);
   color:        var(--text-secondary);
+}
+
+/* ── Toggle Row ──────────────────────────────────────────────────── */
+.enm-toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: -4px;
+}
+
+.enm-toggle-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.enm-toggle-group {
+  display: flex;
+  background: var(--bg-secondary);
+  padding: 4px;
+  border-radius: var(--radius-md);
+  flex: 1;
+}
+
+.enm-toggle-btn {
+  flex: 1;
+  padding: 8px;
+  border: none;
+  background: transparent;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  border-radius: calc(var(--radius-md) - 2px);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.enm-toggle-btn--active {
+  background: var(--primary);
+  color: #fff;
+  box-shadow: var(--shadow-sm);
 }
 </style>

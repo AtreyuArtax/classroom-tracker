@@ -109,6 +109,58 @@
             </div>
           </div>
 
+            <!-- Assessment Conversations -->
+          <div v-if="dossier.assessmentEvents.value.length > 0" class="reports__card">
+            <h3 class="reports__card-title">
+              <GraduationCap :size="18" class="reports__inline-icon" /> Assessment Conversations
+            </h3>
+            <div class="reports__assessment-summary">
+              {{ dossier.stats.value.assessmentConversations }} conversation{{ dossier.stats.value.assessmentConversations !== 1 ? 's' : '' }}
+              <template v-if="dossier.stats.value.demonstratesUnderstanding > 0">
+                · <span class="reports__count-success">{{ dossier.stats.value.demonstratesUnderstanding }} demonstrates understanding</span>
+              </template>
+              <template v-if="dossier.stats.value.gapConfirmed > 0">
+                · <span class="reports__count-danger">{{ dossier.stats.value.gapConfirmed }} gap confirmed</span>
+              </template>
+            </div>
+
+            <div class="reports__ac-list">
+              <div v-for="evt in dossier.assessmentEvents.value" :key="evt.eventId" class="reports__ac-item">
+                <div class="reports__ac-header">
+                  <span class="reports__ac-date">{{ formatTimestamp(evt.timestamp).split(',').slice(0, 2).join(',') }}</span>
+                  <button class="reports__note-delete" @click="onDossierDelete(evt.eventId)">
+                    <Trash2 :size="14" />
+                  </button>
+                </div>
+                <div class="reports__ac-badges">
+                  <!-- Context Badge -->
+                  <span 
+                    v-if="evt.acContext" 
+                    class="reports__ac-badge"
+                    :style="{ background: evt.acContext === 'after_assessment' ? '#5856d6' : '#007aff' }"
+                  >
+                    {{ evt.acContext === 'after_assessment' ? 'After Assessment' : 'Proactive' }}
+                  </span>
+                  <!-- Outcome Badge -->
+                  <span 
+                    v-if="evt.acOutcome" 
+                    class="reports__ac-badge"
+                    :style="{ background: 
+                      evt.acOutcome === 'demonstrates_understanding' ? '#34c759' : 
+                      evt.acOutcome === 'gap_confirmed' ? '#ff3b30' : '#ff9500' 
+                    }"
+                  >
+                    {{ 
+                      evt.acOutcome === 'demonstrates_understanding' ? 'Demonstrates Understanding' : 
+                      evt.acOutcome === 'gap_confirmed' ? 'Gap Confirmed' : 'Inconclusive' 
+                    }}
+                  </span>
+                </div>
+                <p class="reports__ac-note">{{ evt.note }}</p>
+              </div>
+            </div>
+          </div>
+
           <!-- Notes & Parent Contact feed -->
           <div class="reports__card">
             <h3 class="reports__card-title">Notes &amp; Parent Contact</h3>
@@ -119,10 +171,20 @@
               <li v-for="evt in dossier.noteEvents.value" :key="evt.eventId" class="reports__note-item">
                 <div class="reports__note-meta">
                   <span class="reports__note-time">{{ formatTimestamp(evt.timestamp) }}</span>
-                  <span class="reports__note-code">
-                    {{ behaviorCodesMap[evt.code]?.icon ?? '' }}
-                    {{ behaviorCodesMap[evt.code]?.label ?? evt.code }}
-                  </span>
+                  <div class="reports__note-source">
+                    <span v-if="parseNote(evt.note).tag" class="reports__note-tag">
+                      {{ parseNote(evt.note).tag }}
+                    </span>
+                    <span class="reports__note-code">
+                      <component 
+                        :is="resolveIcon(behaviorCodesMap[evt.code]?.icon)" 
+                        :size="14" 
+                        v-if="behaviorCodesMap[evt.code]" 
+                        class="reports__inline-icon"
+                      />
+                      <template v-if="evt.code === 'pc'"> Parent Contact</template>
+                    </span>
+                  </div>
                   <button 
                     class="reports__note-delete" 
                     title="Delete note" 
@@ -131,7 +193,7 @@
                     <Trash2 :size="14" />
                   </button>
                 </div>
-                <p class="reports__note-text">{{ evt.note }}</p>
+                <p class="reports__note-text">{{ parseNote(evt.note).text }}</p>
               </li>
             </ul>
           </div>
@@ -190,6 +252,9 @@
                     <div class="reports__metric">
                       <span class="reports__metric-label">Total Absences</span>
                       <span class="reports__metric-value">{{ aggregates.attendance.totalAbsences }}</span>
+                      <span v-if="aggregates.attendance.testDayAbsences > 0" class="reports__metric-sub">
+                        {{ aggregates.attendance.testDayAbsences }} on test days
+                      </span>
                     </div>
                     <div class="reports__metric">
                       <span class="reports__metric-label">Total Lates</span>
@@ -308,7 +373,7 @@ import { ref, reactive, computed, watch, defineComponent, h, onMounted, onUnmoun
 import { 
   BarChart2, Download, Trash2, PlusCircle, ChevronLeft, 
   LayoutDashboard, Database, UserCheck, Toilet, Activity, 
-  FolderOpen 
+  FolderOpen, GraduationCap
 } from 'lucide-vue-next'
 import { resolveIcon }         from '../utils/icons.js'
 import { useClassroom }        from '../composables/useClassroom.js'
@@ -426,6 +491,18 @@ function showOverview() {
   if (!reportData.value.length) runReport()
 }
 
+/** Get display text and tag from a note (detects [ob] / [cv] prefixes) */
+function parseNote(note) {
+  if (!note) return { text: '', tag: null }
+  if (note.startsWith('[ob]')) {
+    return { text: note.replace('[ob]', '').trim(), tag: 'Observation' }
+  }
+  if (note.startsWith('[cv]')) {
+    return { text: note.replace('[cv]', '').trim(), tag: 'Conversation' }
+  }
+  return { text: note, tag: null }
+}
+
 /** Delete an event from the dossier (sync or note feed) */
 async function onDossierDelete(eventId) {
   if (!confirm('Delete this event? This cannot be undone.')) return
@@ -499,6 +576,7 @@ const loading    = ref(false)
 const aggregates = reactive({
   attendance: {
     totalAbsences: 0,
+    testDayAbsences: 0,
     totalLates: 0,
     avgAbsences: 0,
     topAbsentees: []
@@ -532,7 +610,9 @@ async function runReport() {
 
     // --- Process Attendance ---
     const attEvents = events.filter(e => (e.code === 'a' || e.code === 'l') && !e.superseded)
-    const absences = attEvents.filter(e => e.code === 'a').length
+    const absenceEvents = attEvents.filter(e => e.code === 'a')
+    const absences = absenceEvents.length
+    const testDayAbsences = absenceEvents.filter(e => e.testDay).length
     const lates = attEvents.filter(e => e.code === 'l').length
     
     const absCounts = {}
@@ -549,6 +629,7 @@ async function runReport() {
 
     aggregates.attendance = {
       totalAbsences: absences,
+      testDayAbsences,
       totalLates: lates,
       avgAbsences: studentCount ? (absences / studentCount).toFixed(1) : 0,
       topAbsentees
@@ -1128,6 +1209,13 @@ const washroomChartOptions = {
   font-size: 1.5rem;
   font-weight: 700;
   color: var(--primary);
+  line-height: 1.2;
+}
+
+.reports__metric-sub {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  font-weight: 600;
 }
 
 .reports__card-section {
@@ -1472,10 +1560,56 @@ const washroomChartOptions = {
   margin-top: -2px;
 }
 
-.reports__past-absence-error {
-  color: var(--danger);
-  font-size: 0.8rem;
-  width: 100%;
+.reports__ac-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.reports__ac-item {
+  padding: 16px 0;
+  border-top: 1px solid var(--bg-secondary);
+}
+
+.reports__ac-item:first-child {
+  padding-top: 0;
+  border-top: none;
+}
+
+.reports__ac-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.reports__ac-date {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.reports__ac-badges {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.reports__ac-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 4px;
+  color: #fff;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.reports__ac-note {
+  font-size: 0.95rem;
+  color: var(--text);
+  margin: 0;
+  line-height: 1.5;
 }
 
 /* ── Feed ────────────────────────────────────────────────────────── */
@@ -1490,6 +1624,13 @@ const washroomChartOptions = {
   border-bottom: 1px solid var(--border);
 }
 
+.reports__note-text {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: var(--text);
+}
+
 .reports__note-meta {
   display: flex;
   align-items: center;
@@ -1499,11 +1640,30 @@ const washroomChartOptions = {
 }
 
 .reports__note-time {
+  font-size: 0.75rem;
   color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.reports__note-source {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.reports__note-tag {
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
 }
 
 .reports__note-code {
+  font-size: 0.8rem;
   font-weight: 600;
+  color: var(--primary);
 }
 
 .reports__note-delete {

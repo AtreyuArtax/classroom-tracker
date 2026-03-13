@@ -20,7 +20,7 @@
 import { openDB } from 'idb'
 
 const DB_NAME = 'classroomTrackerDB'
-const DB_VERSION = 8
+const DB_VERSION = 10
 
 /**
  * Cached promise — set synchronously before the first await so every
@@ -68,16 +68,15 @@ export function getDB() {
       if (oldVersion === 0) {
         transaction.objectStore('settings').put(
           {
-            schemaVersion: 6,
+            schemaVersion: 10,
             gridSize: { rows: 6, cols: 6 },
             behaviorCodes: {
-              p: { icon: 'Hand', label: 'Participation', category: 'positive', type: 'standard', requiresNote: false, isTopLevel: false },
               m: { icon: 'Smartphone', label: 'On Device', category: 'redirect', type: 'standard', requiresNote: false, isTopLevel: true },
               w: { icon: 'Toilet', label: 'Washroom', category: 'neutral', type: 'toggle', requiresNote: false, isTopLevel: true },
               a: { icon: 'UserX', label: 'Absent', category: 'attendance', type: 'attendance', requiresNote: false, isTopLevel: false },
               l: { icon: 'Clock', label: 'Late', category: 'attendance', type: 'attendance', requiresNote: false, isTopLevel: false },
-              ob: { icon: 'Eye', label: 'Observation', category: 'note', type: 'standard', requiresNote: true, isTopLevel: false },
-              cv: { icon: 'MessageSquare', label: 'Conversation', category: 'note', type: 'standard', requiresNote: true, isTopLevel: false },
+              note: { icon: 'NotebookPen', label: 'Note', category: 'note', type: 'standard', requiresNote: true, isTopLevel: true },
+              ac: { icon: 'GraduationCap', label: 'Assessment', category: 'assessment', type: 'standard', requiresNote: true, isTopLevel: true },
               pc: { icon: 'Phone', label: 'Parent', category: 'communication', type: 'standard', requiresNote: true, isTopLevel: true },
             },
             thresholds: {
@@ -188,6 +187,59 @@ export function getDB() {
             targetAbsent.superseded = true
             await eventStore.put(targetAbsent)
           }
+        }
+      }
+
+      // ── version 9 migration (restructure behavior codes) ───────────────────
+      if (oldVersion < 9) {
+        const tx9 = transaction.objectStore('settings')
+        const settings = await tx9.get('singleton')
+        if (settings && settings.behaviorCodes) {
+          // Remove participation code
+          delete settings.behaviorCodes['p']
+
+          // Remove cv if it exists
+          delete settings.behaviorCodes['cv']
+
+          // Rename ob to note if ob exists
+          if (settings.behaviorCodes['ob']) {
+            settings.behaviorCodes['note'] = {
+              ...settings.behaviorCodes['ob'],
+              key: 'note',
+              icon: 'NotebookPen',
+              label: 'Note',
+              category: 'note',
+              type: 'standard',
+              requiresNote: true,
+              isTopLevel: true
+            }
+            delete settings.behaviorCodes['ob']
+          }
+
+          // Add ac if it doesn't exist
+          if (!settings.behaviorCodes['ac']) {
+            settings.behaviorCodes['ac'] = {
+              key: 'ac',
+              icon: 'GraduationCap',
+              label: 'Assessment',
+              category: 'assessment',
+              type: 'standard',
+              requiresNote: true,
+              isTopLevel: true
+            }
+          }
+
+          await tx9.put(settings, 'singleton')
+        }
+      }
+
+      // ── version 10 migration (move note to top level) ──────────────────────
+      if (oldVersion < 10) {
+        const tx10 = transaction.objectStore('settings')
+        const settings = await tx10.get('singleton')
+        if (settings && settings.behaviorCodes && settings.behaviorCodes.note) {
+          settings.behaviorCodes.note.isTopLevel = true
+          await tx10.put(settings, 'singleton')
         }
       }
     },

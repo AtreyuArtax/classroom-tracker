@@ -35,6 +35,7 @@
         <div class="sp__card sp__card--washroom">
           <div class="sp__card-value">{{ washroomMinutes }}<span class="sp__card-unit">min</span></div>
           <div class="sp__card-label"><Toilet :size="16" /> Washroom Total</div>
+          <div class="sp__card-sub" v-if="washroomTrips > 0">{{ avgWashroomDuration }}min/trip avg</div>
         </div>
         <div class="sp__card sp__card--washroom">
           <div class="sp__card-value">{{ washroomTrips }}</div>
@@ -261,6 +262,14 @@ const washroomTrips = computed(() =>
     props.behaviorCodes[e.code]?.type === 'toggle'
   ).length
 )
+
+const avgWashroomDuration = computed(() => {
+  if (washroomTrips.value === 0) return '0.0'
+  const ms = props.events
+    .filter(e => props.behaviorCodes[e.code]?.type === 'toggle')
+    .reduce((sum, e) => sum + (e.duration ?? 0), 0)
+  return (ms / washroomTrips.value / 60000).toFixed(1)
+})
 
 const onDeviceCount = computed(() =>
   props.events.filter(e => e.category === 'redirect').length

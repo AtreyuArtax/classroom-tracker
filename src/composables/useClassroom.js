@@ -669,6 +669,34 @@ async function logStandardEvent(studentId, code, note = null) {
 }
 
 /**
+ * Log a specialized Assessment Conversation event.
+ *
+ * @param {Object} payload { studentId, note, acContext, acOutcome }
+ */
+async function logAssessmentEvent({ studentId, note, acContext, acOutcome }) {
+    const classId = activeClass.value?.classId
+    const code = 'ac'
+    const category = 'assessment'
+    
+    const eventId = await eventService.logEvent({ 
+        studentId, 
+        classId, 
+        code, 
+        note,
+        acContext,
+        acOutcome
+    })
+
+    // Reactive update
+    students.value[studentId].lastEvent = { code, ts: Date.now() }
+
+    pushUndo(async () => {
+        await eventService.deleteEvent(eventId)
+        students.value[studentId].lastEvent = null
+    })
+}
+
+/**
  * Toggle a washroom (or other toggle-type) event.
  * Follows CLAUDE.md §7 toggle rules and §9 undo closure rules.
  *
@@ -925,6 +953,7 @@ export function useClassroom() {
         syncLateActiveState,
         logStandardEvent,
         logToggleEvent,
+        logAssessmentEvent,
         checkResize,
         confirmResize,
         reloadBehaviorCodes,
