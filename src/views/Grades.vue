@@ -2,55 +2,16 @@
   <div class="grades">
     <div class="grades__layout">
       
-      <!-- Left Sidebar -->
-      <aside class="grades__sidebar">
-        
-        <!-- Class Selector -->
-        <div class="grades__sidebar-section">
-          <label class="grades__sidebar-label">
-            Class
-            <select v-model="sidebarClassId" class="grades__input grades__input--sidebar" @change="onClassChange">
+      <!-- Left Sidebar (Dossier Mode only) -->
+      <aside v-if="selectedStudentId && !isLoading" class="grades__sidebar">
+        <!-- Sidebar Header with Class Selector -->
+        <div class="grades__sidebar-header">
+          <div class="grades__sidebar-select-wrapper">
+            <select v-model="sidebarClassId" class="grades__sidebar-select" @change="onSidebarClassChange">
               <optgroup label="Active Classes">
                 <option v-for="c in sortedClassList" :key="c.classId" :value="c.classId">{{ c.name }}</option>
               </optgroup>
             </select>
-          </label>
-        </div>
-
-        <!-- Category Summary -->
-        <div class="grades__sidebar-section">
-          <h3 class="grades__sidebar-title">Categories</h3>
-          <div v-if="!activeClassRecord?.gradebookCategories?.length" class="grades__no-data">
-            No categories set. Go to Setup → Gradebook to add categories.
-          </div>
-          <div v-else class="grades__category-list">
-            <div v-for="cat in activeClassRecord.gradebookCategories" :key="cat.categoryId" class="grades__category-item">
-              <span>{{ cat.name }}</span>
-              <span class="grades__category-weight">{{ cat.weight }}%</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Milestone Toggle -->
-        <div v-if="activeClassRecord?.gradebookMilestones?.length" class="grades__sidebar-section">
-          <h3 class="grades__sidebar-title">Milestone</h3>
-          <div class="grades__milestone-row">
-            <button 
-              class="grades__milestone-btn"
-              :class="{ 'grades__milestone-btn--active': selectedMilestone === null }"
-              @click="selectedMilestone = null"
-            >
-              Current
-            </button>
-            <button 
-              v-for="m in activeClassRecord.gradebookMilestones"
-              :key="m.milestoneId"
-              class="grades__milestone-btn"
-              :class="{ 'grades__milestone-btn--active': selectedMilestone === m.milestoneId }"
-              @click="selectedMilestone = m.milestoneId"
-            >
-              {{ m.name }}
-            </button>
           </div>
         </div>
 
@@ -64,25 +25,22 @@
               :class="{ 'grades__roster-item--active': selectedStudentId === student.studentId }"
               @click="selectedStudentId = student.studentId"
             >
-              <span class="grades__roster-name">{{ student.lastName }}, {{ student.firstName }}</span>
-              <span 
-                v-if="classGrades[student.studentId]" 
-                class="grades__roster-grade"
-                :style="{ color: getGradeColor(classGrades[student.studentId].overallGrade) }"
-              >
-                {{ formatGrade(classGrades[student.studentId].overallGrade) }}
-              </span>
-              <span v-else class="grades__roster-grade grades__roster-grade--empty">
-                —
-              </span>
+              <div class="grades__roster-info">
+                <span class="grades__roster-name">{{ student.lastName }}, {{ student.firstName }}</span>&nbsp;
+                <span 
+                  v-if="classGrades[student.studentId]" 
+                  class="grades__roster-grade"
+                  :style="{ color: getGradeColor(classGrades[student.studentId].overallGrade) }"
+                >
+                  {{ formatGrade(classGrades[student.studentId].overallGrade) }}
+                </span>
+                <span v-else class="grades__roster-grade grades__roster-grade--empty">
+                  —
+                </span>
+              </div>
             </li>
           </ul>
         </div>
-
-        <!-- Manage Gradebook Link -->
-        <button class="grades__manage-link" @click="$emit('navigate', 'Setup', { tab: 'gradebook' })">
-          <Settings :size="14" /> Manage Gradebook
-        </button>
 
       </aside>
 
@@ -231,15 +189,44 @@
         </div>
 
         <div v-else-if="!selectedStudentId" class="grades__grid-container">
-          <!-- Grid Header Actions -->
-          <div class="grades__grid-actions">
-            <div class="grades__action-left">
-              <button class="grades__btn-primary" @click="showAddModal = true">
+          <!-- Unified Toolbar -->
+          <div v-if="activeClassRecord && !isLoading && !selectedAssessmentId" class="grades__toolbar">
+            <div class="grades__toolbar-left">
+              <button class="grades__btn-settings" title="Manage Gradebook" @click="$emit('navigate', 'Setup', { from: 'Grades', tab: 'gradebook' })">
+                <Settings :size="20" />
+              </button>
+              
+              <div class="grades__toolbar-select-wrapper">
+                <select v-model="sidebarClassId" class="grades__toolbar-select" @change="onClassChange">
+                  <optgroup label="Active Classes">
+                    <option v-for="c in sortedClassList" :key="c.classId" :value="c.classId">{{ c.name }}</option>
+                  </optgroup>
+                </select>
+              </div>
+            </div>
+
+            <div class="grades__toolbar-center">
+              <button class="grades__btn-add" @click="showAddModal = true">
                 <Plus :size="16" /> Add Assessment
               </button>
+              
+              <div v-if="activeClassRecord?.gradebookMilestones?.length" class="grades__milestone-toggle">
+                <button 
+                  class="grades__toggle-btn"
+                  :class="{ 'grades__toggle-btn--active': selectedMilestone === null }"
+                  @click="selectedMilestone = null"
+                >Current</button>
+                <button 
+                  v-for="m in activeClassRecord.gradebookMilestones"
+                  :key="m.milestoneId"
+                  class="grades__toggle-btn"
+                  :class="{ 'grades__toggle-btn--active': selectedMilestone === m.milestoneId }"
+                  @click="selectedMilestone = m.milestoneId"
+                >{{ m.name }}</button>
+              </div>
             </div>
-            
-            <div class="grades__action-right">
+
+            <div class="grades__toolbar-right">
               <div class="grades__toggle-group">
                 <button 
                   class="grades__toggle-btn"
@@ -252,7 +239,7 @@
                   @click="displayMode = 'percent'"
                 >%</button>
               </div>
-              <div class="grades__class-avg-status">
+              <div class="grades__class-avg-display">
                 Class Avg: <span class="grades__avg-value">{{ formatGrade(overallClassAvg) }}</span>
               </div>
             </div>
@@ -262,9 +249,10 @@
           <div class="grades__grid-wrapper">
             <table class="grades__grid">
               <thead>
-                <!-- Top Header: Assessment Names -->
+                <!-- Top Header -->
                 <tr>
                   <th class="grades__th-student">Student Name</th>
+                  <th class="grades__th-overall">Overall</th>
                   <th 
                     v-for="a in sortedAssessments" 
                     :key="a.assessmentId"
@@ -272,7 +260,7 @@
                   >
                     <div class="grades__assessment-header">
                       <div class="grades__assessment-info" @click="selectedAssessmentId = a.assessmentId">
-                        <span class="grades__assessment-name">{{ a.name }}</span>
+                        <span class="grades__assessment-name" :title="a.name">{{ a.name }}</span>
                         <div class="grades__assessment-meta">
                           <span class="grades__assessment-points">/{{ a.totalPoints }}</span>
                           <span v-if="a.unit" class="grades__assessment-unit">{{ a.unit }}</span>
@@ -283,12 +271,14 @@
                       </button>
                     </div>
                   </th>
-                  <th class="grades__th-overall">Overall</th>
                 </tr>
 
                 <!-- Class Avg Row (Sticky below headers) -->
                 <tr class="grades__tr-avg">
                   <td class="grades__td-student">Class Average</td>
+                  <td class="grades__td-overall grades__td-avg">
+                    {{ formatGrade(overallClassAvg) }}
+                  </td>
                   <td 
                     v-for="a in sortedAssessments" 
                     :key="a.assessmentId"
@@ -298,16 +288,19 @@
                       {{ formatCellGrade(assessmentStats[a.assessmentId].average, a.totalPoints) }}
                     </div>
                   </td>
-                  <td class="grades__td-overall grades__td-avg">
-                    {{ formatGrade(overallClassAvg) }}
-                  </td>
                 </tr>
               </thead>
               
               <tbody>
                 <tr v-for="student in sortedRoster" :key="student.studentId">
-                  <td class="grades__td-student">
-                    {{ student.lastName }}, {{ student.firstName }}
+                  <td class="grades__td-student" @click="selectedStudentId = student.studentId">
+                    <span class="grades__student-link">{{ student.lastName }}, {{ student.firstName }}</span>
+                  </td>
+                  <td 
+                    class="grades__td-overall"
+                    :style="{ background: getHeatColor(classGrades[student.studentId]?.overallGrade) }"
+                  >
+                    {{ formatGrade(classGrades[student.studentId]?.overallGrade) }}
                   </td>
                   <td 
                     v-for="a in sortedAssessments" 
@@ -353,9 +346,6 @@
                     </div>
                     <div v-else class="grades__cell-placeholder">—</div>
                   </td>
-                  <td class="grades__td-overall">
-                    {{ formatGrade(classGrades[student.studentId]?.overallGrade) }}
-                  </td>
                 </tr>
               </tbody>
             </table>
@@ -377,7 +367,7 @@
                 </div>
               </div>
               <div class="grades__student-overall">
-                <div class="grades__overall-value" :style="{ color: getGradeColor(studentOverallGrade) }">
+                <div class="grades__overall-badge" :style="{ background: getHeatColor(studentOverallGrade) }">
                   {{ formatGrade(studentOverallGrade) }}
                 </div>
                 <div v-if="gradeTrendInfo" class="grades__overall-trend">
@@ -729,9 +719,12 @@ import {
   editAssessment,
   addAssessment,
   deleteAssessment,
-  removeAttempt
+  removeAttempt,
+  saveStudentOverride,
+  saveStudentGradebookNote,
+  fetchStudentDossierData,
+  deleteGradebookEvent
 } from '../composables/useGradebook.js'
-import * as classService from '../db/classService.js'
 import { Plus, BarChart2, Settings, Pencil, XCircle, AlertCircle, Trash2, X, MoreVertical, ArrowLeft, Check, ArrowUp, ArrowDown, Minus, GraduationCap } from 'lucide-vue-next'
 import GradeTrendChart from '../components/GradeTrendChart.vue'
 
@@ -742,7 +735,7 @@ const props = defineProps({
 
 defineEmits(['navigate'])
 
-const { classList, activeClass } = useClassroom()
+const { classList, activeClass, getClass } = useClassroom()
 
 const sidebarClassId = ref(activeClass.value?.classId || '')
 const isLoading = ref(false)
@@ -883,10 +876,10 @@ const gradeTrendInfo = computed(() => {
   
   if (diff > 2) {
     trend = 'up'
-    color = '#34c759'
+    color = '#1a6b3a'
   } else if (diff < -2) {
     trend = 'down'
-    color = '#ff3b30'
+    color = '#c0392b'
   }
 
   return { midterm: midtermGrade, trend, color }
@@ -962,13 +955,18 @@ async function onClassChange() {
   
   isLoading.value = true
   try {
-    const cls = await classService.getClass(sidebarClassId.value)
+    const cls = await getClass(sidebarClassId.value)
     if (cls) {
       await loadGradebook(cls)
     }
   } finally {
     isLoading.value = false
   }
+}
+
+async function onSidebarClassChange() {
+  selectedStudentId.value = null
+  await onClassChange()
 }
 
 function formatGrade(grade) {
@@ -994,25 +992,25 @@ function getCellStyle(studentId, assessmentId, totalPoints) {
   const grade = gradeMap.value[assessmentId]?.[studentId]
   if (!grade) return {}
   
-  if (grade.missing) return { background: 'rgba(255, 59, 48, 0.1)', color: '#ff3b30' }
+  if (grade.missing) return { background: 'rgba(192, 57, 43, 0.1)', color: '#c0392b' }
   if (grade.excluded) return { background: 'var(--bg-secondary)', opacity: 0.6, textDecoration: 'line-through' }
   
   const score = grade.resolvedScore
   if (score === null || score === undefined) return {}
   
   const percent = (score / totalPoints) * 100
-  if (percent >= 80) return { background: '#d4f0dd' }
-  if (percent >= 70) return { background: '#d0e8f5' }
-  if (percent >= 60) return { background: '#fff3cd' }
-  return { background: '#f8d7da' }
+  if (percent >= 80) return { background: 'var(--grade-high)' }
+  if (percent >= 70) return { background: 'var(--grade-mid-high)' }
+  if (percent >= 60) return { background: 'var(--grade-mid-low)' }
+  return { background: 'var(--grade-low)' }
 }
 
 function getGradeColor(grade) {
   if (grade === null || grade === undefined) return 'var(--text-secondary)'
-  if (grade >= 80) return '#34c759' // green
-  if (grade >= 70) return '#007aff' // blue
-  if (grade >= 60) return '#ff9500' // amber
-  return '#ff3b30' // red
+  if (grade >= 80) return '#1a6b3a' // muted green
+  if (grade >= 70) return '#1a5276' // muted blue
+  if (grade >= 60) return '#7d6608' // muted amber
+  return '#c0392b' // muted red
 }
 
 // --- Inline Entry ---
@@ -1338,10 +1336,10 @@ async function saveNewAttempt() {
 // --- Dossier Methods ---
 function getHeatColor(percent) {
   if (percent === null) return 'var(--border)'
-  if (percent >= 80) return '#34c759'
-  if (percent >= 70) return '#007aff'
-  if (percent >= 60) return '#ff9500'
-  return '#ff3b30'
+  if (percent >= 80) return 'var(--grade-high)'
+  if (percent >= 70) return 'var(--grade-mid-high)'
+  if (percent >= 60) return 'var(--grade-mid-low)'
+  return 'var(--grade-low)'
 }
 
 function isPostMilestone(date) {
@@ -1352,17 +1350,9 @@ function isPostMilestone(date) {
 
 async function loadDossierData() {
   if (!selectedStudentId.value) return
-  
-  // ac events
-  const { getEventsByStudent } = await import('../db/eventService.js')
-  acEvents.value = await getEventsByStudent(selectedStudentId.value, { code: 'ac' })
-
-  // attendance
-  const allEvents = await getEventsByStudent(selectedStudentId.value)
-  studentAttendance.value = {
-    absences: allEvents.filter(e => e.code === 'a' && !e.superseded).length,
-    lates: allEvents.filter(e => e.code === 'l').length
-  }
+  const { acEvents: events, summary } = await fetchStudentDossierData(selectedStudentId.value)
+  acEvents.value = events
+  studentAttendance.value = summary
 }
 
 function getOverride(catId) {
@@ -1372,32 +1362,16 @@ function getOverride(catId) {
 }
 
 async function saveOverride(catId, value) {
-  const student = activeClassRecord.value.students[selectedStudentId.value]
-  if (!student.categoryOverrides) student.categoryOverrides = {}
-
-  if (value === '' || value === null || isNaN(value)) {
-    delete student.categoryOverrides[catId]
-  } else {
-    // Ensure we store as a number to avoid NaN in calculations
-    student.categoryOverrides[catId] = Number(value)
-  }
-
-  await classService.saveClass(JSON.parse(JSON.stringify(activeClassRecord.value)))
-  await refreshGrades()
+  await saveStudentOverride(selectedStudentId.value, catId, value)
 }
 
 async function saveGradebookNote(note) {
-  const student = activeClassRecord.value.students[selectedStudentId.value]
-  if (student.gradebookNote === note) return
-
-  student.gradebookNote = note
-  await classService.saveClass(JSON.parse(JSON.stringify(activeClassRecord.value)))
+  await saveStudentGradebookNote(selectedStudentId.value, note)
 }
 
 async function onDeleteEvent(eventId) {
   if (!window.confirm('Delete this assessment conversation record?')) return
-  const { deleteEvent } = await import('../db/eventService.js')
-  await deleteEvent(eventId)
+  await deleteGradebookEvent(eventId)
   acEvents.value = acEvents.value.filter(e => e.eventId !== eventId)
 }
 
@@ -1466,6 +1440,7 @@ watch(selectedAssessmentId, (val) => {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  transition: all 0.3s ease;
 }
 
 .grades__sidebar-section {
@@ -1678,10 +1653,14 @@ watch(selectedAssessmentId, (val) => {
   gap: 4px;
 }
 
-.grades__overall-value {
-  font-size: 2rem;
+.grades__overall-badge {
+  font-size: 1.5rem;
   font-weight: 800;
   line-height: 1;
+  padding: 8px 16px;
+  border-radius: var(--radius-lg);
+  color: var(--text);
+  display: inline-block;
 }
 
 .grades__overall-trend {
@@ -1983,42 +1962,6 @@ watch(selectedAssessmentId, (val) => {
   gap: 20px;
 }
 
-.grades__toggle-group {
-  display: flex;
-  background: var(--bg-secondary);
-  padding: 2px;
-  border-radius: var(--radius-sm);
-  gap: 2px;
-}
-
-.grades__toggle-btn {
-  padding: 4px 12px;
-  border: none;
-  background: transparent;
-  border-radius: calc(var(--radius-sm) - 2px);
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-  cursor: pointer;
-}
-
-.grades__toggle-btn--active {
-  background: var(--surface);
-  color: var(--primary);
-  box-shadow: var(--shadow-sm);
-}
-
-.grades__class-avg-status {
-  font-size: 0.85rem;
-  color: var(--text-secondary);
-  font-weight: 500;
-}
-
-.grades__avg-value {
-  color: var(--text);
-  font-weight: 700;
-}
-
 .grades__btn-primary {
   padding: 8px 16px;
   background: var(--primary);
@@ -2033,18 +1976,202 @@ watch(selectedAssessmentId, (val) => {
   cursor: pointer;
 }
 
+/* ── Toolbar ───────────────────────────────────────────────────────── */
+.grades__toolbar {
+  padding: 12px 20px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  z-index: 20;
+}
+
+.grades__toolbar-left,
+.grades__toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.grades__sidebar-header {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-primary);
+}
+
+.grades__sidebar-select-wrapper {
+  position: relative;
+}
+
+.grades__sidebar-select {
+  width: 100%;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  padding: 8px 32px 8px 12px;
+  border-radius: var(--radius-md);
+  font-size: 0.9rem;
+  font-weight: 700;
+  appearance: none;
+  cursor: pointer;
+  color: var(--text);
+  transition: all 0.2s;
+}
+
+.grades__sidebar-select:hover {
+  border-color: var(--primary);
+}
+
+.grades__sidebar-select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-light);
+}
+
+/* Custom chevron for sidebar select */
+.grades__sidebar-select-wrapper::after {
+  content: '';
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 10px;
+  height: 10px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' class='lucide lucide-chevron-down'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-size: contain;
+  background-repeat: no-repeat;
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+.grades__toolbar-center {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex: 1;
+  justify-content: center;
+}
+
+.grades__btn-settings {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.grades__btn-settings:hover {
+  background: var(--bg-secondary);
+  color: var(--primary);
+}
+
+.grades__toolbar-select-wrapper {
+  position: relative;
+}
+
+.grades__toolbar-select {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  padding: 6px 32px 6px 12px;
+  border-radius: var(--radius-md);
+  font-size: 0.9rem;
+  font-weight: 600;
+  appearance: none;
+  cursor: pointer;
+  min-width: 160px;
+}
+
+.grades__btn-add {
+  background: var(--primary);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.grades__btn-add:hover {
+  opacity: 0.9;
+}
+
+.grades__milestone-toggle {
+  display: flex;
+  background: var(--bg-secondary);
+  padding: 4px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  gap: 2px;
+}
+
+.grades__toggle-group {
+  display: flex;
+  background: var(--bg-secondary);
+  padding: 4px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  gap: 2px;
+}
+
+.grades__toggle-btn {
+  padding: 4px 12px;
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-md);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.grades__toggle-btn:hover {
+  color: var(--text);
+}
+
+.grades__toggle-btn--active {
+  background: var(--primary);
+  color: white !important;
+  box-shadow: var(--shadow-sm);
+}
+
 /* ── Grid Table Layout ─────────────────────────────────────────────── */
 .grades__grid-wrapper {
   flex: 1;
   overflow: auto;
   position: relative;
+  scrollbar-gutter: stable;
+}
+
+.grades__grid-wrapper::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.grades__grid-wrapper::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+
+.grades__grid-wrapper::-webkit-scrollbar-track {
+  background: transparent;
 }
 
 .grades__grid {
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
-  table-layout: fixed;
+  table-layout: auto; /* Dynamic resizing for assessment columns */
 }
 
 /* Sticky Header Row */
@@ -2065,31 +2192,35 @@ watch(selectedAssessmentId, (val) => {
   left: 0;
   z-index: 11;
   background: var(--surface);
-  width: 180px;
-  min-width: 180px;
-  border-right: 2px solid var(--border);
+  width: 160px;
+  min-width: 160px;
+  max-width: 220px;
+  border-right: 1px solid var(--border);
+  box-shadow: 2px 0 5px -2px rgba(0,0,0,0.1);
 }
 
 .grades__grid thead .grades__th-student {
-  z-index: 15; /* Top-left corner must be above top and left */
+  z-index: 15;
   background: var(--bg-secondary);
 }
 
-/* Sticky Overall Column (Right) */
+/* Sticky Overall Column (Right of Student Name) */
 .grades__th-overall,
 .grades__td-overall {
   position: sticky;
-  right: 0;
+  left: 160px; /* Right after student name */
   z-index: 11;
   background: var(--surface);
   width: 90px;
-  min-width: 90px;
-  border-left: 2px solid var(--border);
+  min-width: 70px;
+  max-width: 90px;
+  border-right: 2px solid var(--border);
   text-align: center;
+  font-weight: 700;
 }
 
 .grades__grid thead .grades__th-overall {
-  z-index: 15; /* Top-right corner */
+  z-index: 15;
   background: var(--bg-secondary);
 }
 
@@ -2114,8 +2245,9 @@ watch(selectedAssessmentId, (val) => {
 
 /* Assessment Headers */
 .grades__th-assessment {
-  width: 110px;
-  min-width: 110px;
+  width: 90px;
+  min-width: 65px;
+  max-width: 110px;
 }
 
 .grades__assessment-header {
@@ -2204,6 +2336,7 @@ watch(selectedAssessmentId, (val) => {
 .grades__td-student {
   font-weight: 600;
   padding-left: 16px;
+  cursor: pointer;
 }
 
 .grades__td-overall {
@@ -2322,7 +2455,7 @@ watch(selectedAssessmentId, (val) => {
 
 .grades__cell-missing {
   font-weight: 700;
-  color: #ff3b30;
+  color: #c0392b;
 }
 
 .grades__cell-excluded {
@@ -2720,8 +2853,8 @@ watch(selectedAssessmentId, (val) => {
   font-weight: 700;
 }
 
-.grades__status-tag--entered { color: var(--state-success); font-weight: 500; }
-.grades__status-tag--missing { color: var(--state-out); font-weight: 500; }
+.grades__status-tag--entered { color: #1a6b3a; font-weight: 500; }
+.grades__status-tag--missing { color: #c0392b; font-weight: 500; }
 .grades__status-tag--excluded { color: var(--text-secondary); font-style: italic; }
 .grades__status-tag--empty { color: var(--text-secondary); opacity: 0.5; }
 

@@ -167,6 +167,71 @@ export async function markExcluded(assessmentId, studentId, excluded) {
   await refreshGrades()
 }
 
+/**
+ * Saves a category override for a student.
+ */
+export async function saveStudentOverride(studentId, catId, value) {
+  if (!activeClassRecord.value) return
+  
+  const student = activeClassRecord.value.students[studentId]
+  if (!student) return
+  
+  if (!student.categoryOverrides) student.categoryOverrides = {}
+
+  if (value === '' || value === null || isNaN(Number(value))) {
+    delete student.categoryOverrides[catId]
+  } else {
+    student.categoryOverrides[catId] = Number(value)
+  }
+
+  const { saveClass } = await import('../db/classService.js')
+  await saveClass(JSON.parse(JSON.stringify(activeClassRecord.value)))
+  await refreshGrades()
+}
+
+/**
+ * Saves a gradebook note for a student.
+ */
+export async function saveStudentGradebookNote(studentId, note) {
+  if (!activeClassRecord.value) return
+  
+  const student = activeClassRecord.value.students[studentId]
+  if (!student || student.gradebookNote === note) return
+
+  student.gradebookNote = note
+  const { saveClass } = await import('../db/classService.js')
+  await saveClass(JSON.parse(JSON.stringify(activeClassRecord.value)))
+}
+
+/**
+ * Fetches events and calculates basic stats for a student dossier.
+ */
+export async function fetchStudentDossierData(studentId) {
+  const { getEventsByStudent } = await import('../db/eventService.js')
+  const events = await getEventsByStudent(studentId)
+  
+  const acEvents = events
+    .filter(e => e.code === 'ac')
+    .sort((a, b) => (b.timestamp || '').localeCompare(a.timestamp || ''))
+
+  const summary = {
+    absences: events.filter(e => e.code === 'a' && !e.superseded).length,
+    lates: events.filter(e => e.code === 'l').length
+  }
+
+  return { acEvents, summary }
+}
+
+
+/**
+ * Deletes an event and refreshes grades.
+ */
+export async function deleteGradebookEvent(eventId) {
+  const { deleteEvent } = await import('../db/eventService.js')
+  await deleteEvent(eventId)
+  await refreshGrades()
+}
+
 // ─── Computeds ───────────────────────────────────────────────────────────────
 
 /**

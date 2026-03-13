@@ -2,19 +2,24 @@
   <div class="setup">
     <!-- ── Page Header & Class Selector ───────────────────────────── -->
     <div class="setup__header">
-      <div class="setup__header-class">
-        <label for="setup-class-selector" class="setup__header-label">Configuring:</label>
-        <select 
-          id="setup-class-selector" 
-          class="setup__class-selector"
-          :value="activeClass?.classId"
-          @change="e => switchToClass(e.target.value)"
-        >
-          <option v-if="classList.length === 0" value="">No Classes</option>
-          <option v-for="cls in classList" :key="cls.classId" :value="cls.classId">
-            {{ cls.name }} (P{{ cls.periodNumber }})
-          </option>
-        </select>
+      <div class="setup__header-left">
+        <button v-if="props.from === 'Grades'" class="setup__back-btn" @click="$emit('navigate', 'Grades')">
+          <ArrowLeft :size="18" /> Back to Gradebook
+        </button>
+        <div class="setup__header-class">
+          <label for="setup-class-selector" class="setup__header-label">Configuring:</label>
+          <select 
+            id="setup-class-selector" 
+            class="setup__class-selector"
+            :value="activeClass?.classId"
+            @change="e => switchToClass(e.target.value)"
+          >
+            <option v-if="classList.length === 0" value="">No Classes</option>
+            <option v-for="cls in classList" :key="cls.classId" :value="cls.classId">
+              {{ cls.name }} (P{{ cls.periodNumber }})
+            </option>
+          </select>
+        </div>
       </div>
     </div>
 
@@ -600,7 +605,7 @@
 
 import { ref, reactive, computed, onMounted, watch } from 'vue'
 import Papa from 'papaparse'
-import { Archive, ChevronDown, ChevronUp, FolderOpen, Trash2, FileText, Pencil, Download, Database, Cloud, Settings2, Plus, X, Save, FileUp, FileDown, GraduationCap } from 'lucide-vue-next'
+import { Archive, ChevronDown, ChevronUp, FolderOpen, Trash2, FileText, Pencil, Download, Database, Cloud, Settings2, Plus, X, Save, FileUp, FileDown, GraduationCap, ArrowLeft } from 'lucide-vue-next'
 import { resolveIcon }       from '../utils/icons.js'
 import { useClassroom }      from '../composables/useClassroom.js'
 import * as eventService       from '../db/eventService.js'
@@ -650,7 +655,8 @@ async function onDeleteClass(classId) {
 }
 
 const props = defineProps({
-  tab: { type: String, default: 'classes' }
+  tab: { type: String, default: 'classes' },
+  from: { type: String, default: '' }
 })
 const emit = defineEmits(['navigate'])
 
@@ -664,6 +670,10 @@ const tabs = [
   { id: 'backup',  label: 'Data Backup' },
 ]
 const activeTab = ref(props.tab)
+
+watch(() => props.tab, (newTab) => {
+  if (newTab) activeTab.value = newTab
+})
 
 // ─── class management ─────────────────────────────────────────────────────────
 
@@ -1739,6 +1749,31 @@ function formatDate(iso) {
   align-items: center;
   justify-content: space-between;
   flex-shrink: 0;
+}
+
+.setup__header-left {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.setup__back-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--primary-light);
+  color: var(--primary);
+  border: none;
+  padding: 8px 16px;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.setup__back-btn:hover {
+  background: var(--primary);
+  color: white;
 }
 
 .setup__header-class {

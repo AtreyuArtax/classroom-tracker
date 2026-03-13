@@ -66,7 +66,7 @@
  */
 
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
-import { ClipboardList, LayoutDashboard, Settings, BarChart2, Cloud, CloudUpload, CloudCheck } from 'lucide-vue-next'
+import { ClipboardList, LayoutDashboard, Settings, BarChart2, Cloud, CloudUpload, CloudCheck, GraduationCap } from 'lucide-vue-next'
 import Dashboard from './views/Dashboard.vue'
 import Setup     from './views/Setup.vue'
 import Reports   from './views/Reports.vue'
@@ -87,7 +87,7 @@ const viewParams  = ref({})
 const views = [
   { id: 'Dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { id: 'Reports',   label: 'Reports',   icon: BarChart2 },
-  { id: 'Grades',    label: 'Grades',    icon: BarChart2 },
+  { id: 'Grades',    label: 'Grades',    icon: GraduationCap },
   { id: 'Setup',     label: 'Setup',     icon: Settings },
 ]
 

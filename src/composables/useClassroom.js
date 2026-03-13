@@ -942,6 +942,7 @@ export function useClassroom() {
             _scheduleMidnightReset()
         },
         switchClass,
+        getClass: async (classId) => await classService.getClass(classId),
         createClass,
         updateActiveClass,
         importRoster,
