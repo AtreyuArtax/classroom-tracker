@@ -3,7 +3,7 @@
     <div class="grades__layout">
       
       <!-- Left Sidebar (Dossier Mode only) -->
-      <aside v-if="selectedStudentId && !isLoading" class="grades__sidebar">
+      <aside v-if="selectedStudentId && !isLoading && !isSidebarCollapsed" class="grades__sidebar">
         <!-- Sidebar Header with Class Selector -->
         <div class="grades__sidebar-header">
           <div class="grades__sidebar-select-wrapper">
@@ -12,6 +12,23 @@
                 <option v-for="c in sortedClassList" :key="c.classId" :value="c.classId">{{ c.name }}</option>
               </optgroup>
             </select>
+          </div>
+          <div class="grades__sidebar-actions">
+            <button 
+              class="grades__icon-btn" 
+              :title="isPrivacyMode ? 'Show Grades' : 'Privacy Mode'"
+              @click="isPrivacyMode = !isPrivacyMode"
+            >
+              <Eye v-if="!isPrivacyMode" :size="16" />
+              <EyeOff v-else :size="16" />
+            </button>
+            <button 
+              class="grades__icon-btn" 
+              title="Collapse Sidebar"
+              @click="isSidebarCollapsed = true"
+            >
+              <ChevronLeft :size="16" />
+            </button>
           </div>
         </div>
 
@@ -30,9 +47,10 @@
                 <span 
                   v-if="classGrades[student.studentId]" 
                   class="grades__roster-grade"
-                  :style="{ color: getGradeColor(classGrades[student.studentId].overallGrade) }"
+                  :style="{ color: isPrivacyMode ? 'var(--text-secondary)' : getGradeColor(classGrades[student.studentId].overallGrade) }"
                 >
-                  {{ formatGrade(classGrades[student.studentId].overallGrade) }}
+                  <template v-if="isPrivacyMode">**</template>
+                  <template v-else>{{ formatGrade(classGrades[student.studentId].overallGrade) }}</template>
                 </span>
                 <span v-else class="grades__roster-grade grades__roster-grade--empty">
                   —
@@ -354,16 +372,25 @@
 
         <!-- Student Dossier (Step 1-8) -->
         <div v-else class="grades__student-view">
-          <!-- Dossier Header (Step 1) -->
           <div class="grades__view-header">
-            <button class="grades__back-btn" @click="selectedStudentId = null">
-              <ArrowLeft :size="16" /> Back to Class Grid
-            </button>
+            <div class="grades__header-left">
+              <button 
+                v-if="isSidebarCollapsed" 
+                class="grades__expand-btn"
+                title="Show Sidebar"
+                @click="isSidebarCollapsed = false"
+              >
+                <ChevronRight :size="16" />
+              </button>
+              <button class="grades__back-btn" @click="selectedStudentId = null">
+                <ArrowLeft :size="16" /> Back to Class Grid
+              </button>
+            </div>
             <div class="grades__student-header">
               <div class="grades__student-title-block">
                 <h2 class="grades__view-title">{{ selectedStudentName }}</h2>
                 <div class="grades__view-subtitle">
-                  {{ activeClassRecord.name }} · Period {{ activeClassRecord.periodNumber }}
+                  {{ activeClassRecord?.name }} · Period {{ activeClassRecord?.periodNumber }}
                 </div>
               </div>
               <div class="grades__student-overall">
@@ -725,7 +752,7 @@ import {
   fetchStudentDossierData,
   deleteGradebookEvent
 } from '../composables/useGradebook.js'
-import { Plus, BarChart2, Settings, Pencil, XCircle, AlertCircle, Trash2, X, MoreVertical, ArrowLeft, Check, ArrowUp, ArrowDown, Minus, GraduationCap } from 'lucide-vue-next'
+import { Plus, BarChart2, Settings, Pencil, XCircle, AlertCircle, Trash2, X, MoreVertical, ArrowLeft, Check, ArrowUp, ArrowDown, Minus, GraduationCap, Eye, EyeOff, ChevronLeft, ChevronRight } from 'lucide-vue-next'
 import GradeTrendChart from '../components/GradeTrendChart.vue'
 
 const props = defineProps({
@@ -756,6 +783,8 @@ const newAttemptForm = ref(null) // { studentId, points, date, comment }
 const filterCategory = ref(null)
 const acEvents = ref([])
 const studentAttendance = ref({ absences: 0, lates: 0 })
+const isPrivacyMode = ref(false)
+const isSidebarCollapsed = ref(false)
 
 const assessmentTypes = ['Test', 'Quiz', 'Assignment', 'Lab', 'Other']
 const newAssessment = reactive({
@@ -1637,6 +1666,7 @@ watch(selectedAssessmentId, (val) => {
   flex-direction: column;
   overflow: hidden;
   background: var(--bg);
+  position: relative;
 }
 
 .grades__student-header {
@@ -1999,6 +2029,15 @@ watch(selectedAssessmentId, (val) => {
   padding: 12px 16px;
   border-bottom: 1px solid var(--border);
   background: var(--bg-primary);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.grades__sidebar-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
 }
 
 .grades__sidebar-select-wrapper {
@@ -2143,6 +2182,33 @@ watch(selectedAssessmentId, (val) => {
   background: var(--primary);
   color: white !important;
   box-shadow: var(--shadow-sm);
+}
+
+/* Privacy & Restore Actions */
+.grades__header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.grades__expand-btn {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--primary);
+  box-shadow: var(--shadow-sm);
+  transition: all 0.2s;
+}
+
+.grades__expand-btn:hover {
+  background: var(--primary-light);
+  border-color: var(--primary);
 }
 
 /* ── Grid Table Layout ─────────────────────────────────────────────── */
