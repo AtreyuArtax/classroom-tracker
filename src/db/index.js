@@ -20,7 +20,7 @@
 import { openDB } from 'idb'
 
 const DB_NAME = 'classroomTrackerDB'
-const DB_VERSION = 10
+const DB_VERSION = 11
 
 /**
  * Cached promise — set synchronously before the first await so every
@@ -64,6 +64,28 @@ export function getDB() {
         eventStore.createIndex('by_category', 'category', { unique: false })
       }
 
+      // ── assessments store (v11) ──────────────────────────────────────────
+      if (!db.objectStoreNames.contains('assessments')) {
+        const assessmentStore = db.createObjectStore('assessments', {
+          keyPath: 'assessmentId',
+          autoIncrement: true
+        })
+        assessmentStore.createIndex('by_classId', 'classId')
+        assessmentStore.createIndex('by_categoryId', 'categoryId')
+        assessmentStore.createIndex('by_date', 'date')
+      }
+
+      // ── grades store (v11) ───────────────────────────────────────────────
+      if (!db.objectStoreNames.contains('grades')) {
+        const gradeStore = db.createObjectStore('grades', {
+          keyPath: 'gradeId',
+          autoIncrement: true
+        })
+        gradeStore.createIndex('by_assessmentId', 'assessmentId')
+        gradeStore.createIndex('by_studentId', 'studentId')
+        gradeStore.createIndex('by_assessmentAndStudent', ['assessmentId', 'studentId'], { unique: true })
+      }
+
       // ── seed defaults on fresh install (oldVersion === 0) ────────────────
       if (oldVersion === 0) {
         transaction.objectStore('settings').put(
@@ -82,10 +104,17 @@ export function getDB() {
             thresholds: {
               washroomTripsPerWeek: 4,
               deviceIncidentsPerWeek: 3
-            }
+            },
+            gradebookTemplates: []
           },
           'singleton'
         )
+
+        // Seed class fields if any classes are created during seed (none usually)
+        // However, the rules implies updating seed logic for future classes too.
+        // The getDB() itself doesn't create classes, that's classService.
+        // But if we had a seed class here, we'd adds those fields.
+
         return  // fresh install — no migration needed
       }
 
@@ -240,6 +269,40 @@ export function getDB() {
         if (settings && settings.behaviorCodes && settings.behaviorCodes.note) {
           settings.behaviorCodes.note.isTopLevel = true
           await tx10.put(settings, 'singleton')
+        }
+      }
+
+      // ── version 11 migration ───────────────────────────────────────────────
+      if (oldVersion < 11) {
+        // Update all class records
+        const tx11 = transaction.objectStore('classes')
+        const allClasses = await tx11.getAll()
+        for (const cls of allClasses) {
+          // Add gradebook fields to class record
+          if (cls.gradingMethod === undefined) cls.gradingMethod = 'traditional'
+          if (cls.gradebookCategories === undefined) cls.gradebookCategories = []
+          if (cls.gradebookMilestones === undefined) cls.gradebookMilestones = []
+          if (cls.gradebookNotes === undefined) cls.gradebookNotes = ''
+
+          // Add categoryOverrides to each student
+          if (cls.students) {
+            for (const studentId of Object.keys(cls.students)) {
+              if (cls.students[studentId].categoryOverrides === undefined) {
+                cls.students[studentId].categoryOverrides = {}
+              }
+            }
+          }
+          await tx11.put(cls)
+        }
+
+        // Update settings singleton
+        const settingsStore = transaction.objectStore('settings')
+        const settings = await settingsStore.get('singleton')
+        if (settings) {
+          if (settings.gradebookTemplates === undefined) {
+            settings.gradebookTemplates = []
+          }
+          await settingsStore.put(settings, 'singleton')
         }
       }
     },

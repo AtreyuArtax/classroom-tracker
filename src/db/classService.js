@@ -54,7 +54,8 @@ export async function getClass(classId) {
  */
 export async function saveClass(classObj) {
     const db = await getDB()
-    await db.put('classes', classObj)
+    const plain = JSON.parse(JSON.stringify(classObj))
+    await db.put('classes', plain)
     hasUnsyncedChanges.value = true
 }
 
@@ -74,7 +75,8 @@ export async function updateStudentSeat(classId, studentId, seat) {
     if (!cls.students[studentId]) throw new Error(`Student not found: ${studentId} in ${classId}`)
 
     cls.students[studentId].seat = seat
-    await db.put('classes', cls)
+    const plain = JSON.parse(JSON.stringify(cls))
+    await db.put('classes', plain)
     hasUnsyncedChanges.value = true
 }
 
@@ -94,7 +96,8 @@ export async function setStudentActiveState(classId, studentId, activeStateObj) 
     if (!cls.students[studentId]) throw new Error(`Student not found: ${studentId} in ${classId}`)
 
     cls.students[studentId].activeStates = activeStateObj
-    await db.put('classes', cls)
+    const plain = JSON.parse(JSON.stringify(cls))
+    await db.put('classes', plain)
     hasUnsyncedChanges.value = true
 }
 
@@ -123,7 +126,8 @@ export async function setPeriodStartTime(classId, timeString) {
     if (!cls) throw new Error(`Class not found: ${classId}`)
 
     cls.periodStartTime = timeString
-    await db.put('classes', cls)
+    const plain = JSON.parse(JSON.stringify(cls))
+    await db.put('classes', plain)
     hasUnsyncedChanges.value = true
 }
 
@@ -144,7 +148,8 @@ export async function setStudentAbsent(classId, studentId) {
         cls.students[studentId].activeStates = { isOut: false, outTime: null, isAbsent: false }
     }
     cls.students[studentId].activeStates.isAbsent = true
-    await db.put('classes', cls)
+    const plain = JSON.parse(JSON.stringify(cls))
+    await db.put('classes', plain)
     hasUnsyncedChanges.value = true
 }
 
@@ -164,7 +169,8 @@ export async function clearStudentAbsent(classId, studentId) {
     if (cls.students[studentId].activeStates) {
         cls.students[studentId].activeStates.isAbsent = false
     }
-    await db.put('classes', cls)
+    const plain = JSON.parse(JSON.stringify(cls))
+    await db.put('classes', plain)
     hasUnsyncedChanges.value = true
 }
 
@@ -188,7 +194,8 @@ export async function setStudentLate(classId, studentId, lateMinutes) {
     }
     cls.students[studentId].activeStates.isAbsent = false
     cls.students[studentId].activeStates.lateMinutes = lateMinutes
-    await db.put('classes', cls)
+    const plain = JSON.parse(JSON.stringify(cls))
+    await db.put('classes', plain)
     hasUnsyncedChanges.value = true
 }
 
@@ -208,7 +215,8 @@ export async function clearStudentLate(classId, studentId) {
     if (cls.students[studentId].activeStates) {
         cls.students[studentId].activeStates.lateMinutes = null
     }
-    await db.put('classes', cls)
+    const plain = JSON.parse(JSON.stringify(cls))
+    await db.put('classes', plain)
     hasUnsyncedChanges.value = true
 }
 
@@ -253,7 +261,8 @@ export async function importRoster(classId, studentsArray) {
         }
     }
 
-    await db.put('classes', cls)
+    const plain = JSON.parse(JSON.stringify(cls))
+    await db.put('classes', plain)
     hasUnsyncedChanges.value = true
     return { inserted, updated }
 }
@@ -273,7 +282,8 @@ export async function updateStudentNote(classId, studentId, note) {
     if (!cls) throw new Error(`Class not found: ${classId}`)
     if (!cls.students[studentId]) throw new Error(`Student not found: ${studentId} in ${classId}`)
     cls.students[studentId].generalNote = note
-    await db.put('classes', cls)
+    const plain = JSON.parse(JSON.stringify(cls))
+    await db.put('classes', plain)
     hasUnsyncedChanges.value = true
 }
 
@@ -289,7 +299,8 @@ export async function archiveClass(classId) {
     const cls = await db.get('classes', classId)
     if (!cls) throw new Error(`Class not found: ${classId}`)
     cls.archived = true
-    await db.put('classes', cls)
+    const plain = JSON.parse(JSON.stringify(cls))
+    await db.put('classes', plain)
     hasUnsyncedChanges.value = true
 }
 
@@ -304,7 +315,8 @@ export async function restoreClass(classId) {
     const cls = await db.get('classes', classId)
     if (!cls) throw new Error(`Class not found: ${classId}`)
     cls.archived = false
-    await db.put('classes', cls)
+    const plain = JSON.parse(JSON.stringify(cls))
+    await db.put('classes', plain)
     hasUnsyncedChanges.value = true
 }
 
@@ -319,4 +331,22 @@ export async function deleteClass(classId) {
     const db = await getDB()
     await db.delete('classes', classId)
     hasUnsyncedChanges.value = true
+}
+/**
+ * Partially updates a class record.
+ * 
+ * @param {string} classId
+ * @param {Object} updates Map of fields to update.
+ * @returns {Promise<Object>} The updated class record.
+ */
+export async function updateClass(classId, updates) {
+    const db = await getDB()
+    const cls = await db.get('classes', classId)
+    if (!cls) throw new Error(`Class not found: ${classId}`)
+
+    Object.assign(cls, updates)
+    const plain = JSON.parse(JSON.stringify(cls))
+    await db.put('classes', plain)
+    hasUnsyncedChanges.value = true
+    return plain
 }

@@ -32,7 +32,7 @@
           :class="{ 'app-nav__tab--active': currentView === view.id }"
           role="tab"
           :aria-selected="currentView === view.id"
-          @click="currentView = view.id"
+          @click="navigateTo(view.id)"
         >
           <component :is="view.icon" :size="22" class="app-nav__tab-icon" />
           <span class="app-nav__tab-label">{{ view.label }}</span>
@@ -44,6 +44,7 @@
     <main class="app-main" role="main">
       <component
         :is="currentComponent"
+        v-bind="viewParams"
         @navigate="navigateTo"
       />
     </main>
@@ -69,6 +70,7 @@ import { ClipboardList, LayoutDashboard, Settings, BarChart2, Cloud, CloudUpload
 import Dashboard from './views/Dashboard.vue'
 import Setup     from './views/Setup.vue'
 import Reports   from './views/Reports.vue'
+import Grades    from './views/Grades.vue'
 import { useClassroom } from './composables/useClassroom.js'
 import * as settingsService from './db/settingsService.js'
 import * as eventService from './db/eventService.js'
@@ -80,18 +82,23 @@ const isUnsynced = computed(() => hasUnsyncedChanges.value)
 // ─── navigation ──────────────────────────────────────────────────────────────
 
 const currentView = ref('Dashboard')
+const viewParams  = ref({})
 
 const views = [
   { id: 'Dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { id: 'Reports',   label: 'Reports',   icon: BarChart2 },
+  { id: 'Grades',    label: 'Grades',    icon: BarChart2 },
   { id: 'Setup',     label: 'Setup',     icon: Settings },
 ]
 
-const viewComponents = { Dashboard, Setup, Reports }
+const viewComponents = { Dashboard, Setup, Reports, Grades }
 const currentComponent = computed(() => viewComponents[currentView.value])
 
-function navigateTo(viewId) {
-  if (viewComponents[viewId]) currentView.value = viewId
+function navigateTo(viewId, params = {}) {
+  if (viewComponents[viewId]) {
+    currentView.value = viewId
+    viewParams.value = params
+  }
 }
 
 // ─── init — load IDB data before first render ─────────────────────────────

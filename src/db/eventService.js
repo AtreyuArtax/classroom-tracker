@@ -204,18 +204,22 @@ export async function getAllEvents(dateRange = {}) {
 export async function exportAllData() {
     const db = await getDB()
 
-    const [settings, classes, events] = await Promise.all([
+    const [settings, classes, events, assessments, grades] = await Promise.all([
         db.get('settings', 'singleton'),
         db.getAll('classes'),
         db.getAllFromIndex('events', 'by_timestamp'),
+        db.getAll('assessments'),
+        db.getAll('grades'),
     ])
 
     return {
-        schemaVersion: 1,
+        schemaVersion: settings?.schemaVersion || 1,
         exportedAt: new Date().toISOString(),
         settings,
         classes,
         events,
+        assessments,
+        grades,
     }
 }
 
@@ -276,12 +280,12 @@ export async function importAllData(backupObj) {
         )
     }
 
-    const { settings, classes = [], events = [] } = backupObj
+    const { settings, classes = [], events = [], assessments = [], grades = [] } = backupObj
 
     const db = await getDB()
 
-    // Single transaction across all three stores
-    const tx = db.transaction(['settings', 'classes', 'events'], 'readwrite')
+    // Single transaction across all stores
+    const tx = db.transaction(['settings', 'classes', 'events', 'assessments', 'grades'], 'readwrite')
 
     // Clear and rewrite settings
     await tx.objectStore('settings').clear()
@@ -299,6 +303,18 @@ export async function importAllData(backupObj) {
     await tx.objectStore('events').clear()
     for (const evt of events) {
         await tx.objectStore('events').put(evt)
+    }
+
+    // Clear and rewrite assessments
+    await tx.objectStore('assessments').clear()
+    for (const ass of assessments) {
+        await tx.objectStore('assessments').put(ass)
+    }
+
+    // Clear and rewrite grades
+    await tx.objectStore('grades').clear()
+    for (const g of grades) {
+        await tx.objectStore('grades').put(g)
     }
 
     await tx.done

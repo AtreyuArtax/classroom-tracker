@@ -1,5 +1,22 @@
 <template>
   <div class="setup">
+    <!-- ── Page Header & Class Selector ───────────────────────────── -->
+    <div class="setup__header">
+      <div class="setup__header-class">
+        <label for="setup-class-selector" class="setup__header-label">Configuring:</label>
+        <select 
+          id="setup-class-selector" 
+          class="setup__class-selector"
+          :value="activeClass?.classId"
+          @change="e => switchToClass(e.target.value)"
+        >
+          <option v-if="classList.length === 0" value="">No Classes</option>
+          <option v-for="cls in classList" :key="cls.classId" :value="cls.classId">
+            {{ cls.name }} (P{{ cls.periodNumber }})
+          </option>
+        </select>
+      </div>
+    </div>
 
     <!-- ── Page tabs ─────────────────────────────────────────────── -->
     <div class="setup__tabs" role="tablist">
@@ -362,6 +379,137 @@
     </section>
 
     <!-- ══════════════════════════════════════════════════════════ -->
+    <!-- TAB E: Gradebook                                           -->
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <section v-else-if="activeTab === 'gradebook'" class="setup__panel">
+      <div v-if="!activeClass" class="setup__empty-state">
+        <p>Select a class to manage its gradebook settings.</p>
+      </div>
+      <template v-else>
+        <!-- Grading Method -->
+        <div class="setup__card">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h2 class="setup__card-title">Grading Method</h2>
+            <span class="setup__chip">Traditional</span>
+          </div>
+          <p class="setup__hint" style="margin-top: -8px;">Standards-based grading coming soon.</p>
+        </div>
+
+        <!-- Categories -->
+        <div class="setup__card">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h2 class="setup__card-title">Categories</h2>
+            <span :class="['setup__total-weight', { 'setup__total-weight--error': categoryWeightTotal !== 100 }]">
+              Total: {{ categoryWeightTotal }}%
+            </span>
+          </div>
+          <p v-if="categoryWeightTotal !== 100" class="setup__error-msg">Weights must total 100%.</p>
+          
+          <div class="setup__gb-list">
+            <div v-for="cat in activeClass.gradebookCategories" :key="cat.categoryId" class="setup__gb-item">
+              <input 
+                v-model="cat.name" 
+                class="setup__input setup__input--naked" 
+                placeholder="Category Name"
+              />
+              <div class="setup__gb-actions">
+                <div class="setup__weight-input">
+                  <input 
+                    v-model.number="cat.weight" 
+                    type="number" 
+                    min="0" 
+                    max="100" 
+                    class="setup__input setup__input--weight"
+                  />
+                  <span>%</span>
+                </div>
+                <button 
+                  class="setup__icon-btn setup__icon-btn--danger" 
+                  title="Delete Category"
+                  @click="onDeleteCategory(cat)"
+                >
+                  <Trash2 :size="16" />
+                </button>
+              </div>
+            </div>
+          </div>
+          <button class="setup__btn-ghost setup__btn--full" @click="addCategory">
+            <Plus :size="16" /> Add Category
+          </button>
+        </div>
+
+        <!-- Milestones -->
+        <div class="setup__card">
+          <h2 class="setup__card-title">Milestones</h2>
+          <div class="setup__gb-list">
+            <div v-for="ms in activeClass.gradebookMilestones" :key="ms.milestoneId" class="setup__gb-item">
+              <input 
+                v-model="ms.name" 
+                class="setup__input setup__input--naked" 
+                placeholder="Milestone Name"
+              />
+              <div class="setup__gb-actions">
+                <input 
+                  v-model="ms.date" 
+                  type="date" 
+                  class="setup__input setup__input--date"
+                />
+                <button 
+                  class="setup__icon-btn setup__icon-btn--danger" 
+                  title="Delete Milestone"
+                  @click="onDeleteMilestone(ms.milestoneId)"
+                >
+                  <Trash2 :size="16" />
+                </button>
+              </div>
+            </div>
+          </div>
+          <button class="setup__btn-ghost setup__btn--full" @click="addMilestone">
+            <Plus :size="16" /> Add Milestone
+          </button>
+        </div>
+
+        <!-- Gradebook Notes -->
+        <div class="setup__card">
+          <h2 class="setup__card-title">Gradebook Notes</h2>
+          <textarea 
+            v-model="activeClass.gradebookNotes" 
+            class="setup__textarea" 
+            placeholder="Notes about grading decisions for this class..."
+            @blur="saveGradebookSettings"
+          ></textarea>
+        </div>
+
+        <!-- Templates -->
+        <div class="setup__card">
+          <h2 class="setup__card-title">Template Management</h2>
+          
+          <div class="setup__template-save">
+            <input v-model="newTemplateName" class="setup__input" placeholder="Template Name" />
+            <button class="setup__btn-primary" :disabled="!newTemplateName.trim()" @click="saveTemplate">
+              Save Current as Template
+            </button>
+          </div>
+
+          <div v-if="templates.length > 0" class="setup__template-apply">
+            <h3 class="setup__card-subtitle">Saved Templates</h3>
+            <div class="setup__gb-list">
+              <div v-for="tmpl in templates" :key="tmpl.templateId" class="setup__gb-item">
+                <span class="setup__tmpl-name">{{ tmpl.name }}</span>
+                <div class="setup__gb-actions">
+                  <button class="setup__pill-btn" @click="onApplyTemplate(tmpl)">Apply</button>
+                  <button class="setup__icon-btn setup__icon-btn--danger" @click="onDeleteTemplate(tmpl.templateId)">
+                    <Trash2 :size="16" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </template>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════════ -->
     <!-- TAB D: Data Backup                                         -->
     <!-- ══════════════════════════════════════════════════════════ -->
     <section v-else-if="activeTab === 'backup'" class="setup__panel">
@@ -450,13 +598,15 @@
  * reloadBehaviorCodes() to keep the reactive ref in sync.
  */
 
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, watch } from 'vue'
 import Papa from 'papaparse'
-import { Archive, ChevronDown, ChevronUp, FolderOpen, Trash2, FileText, Pencil, Download, Database, Cloud } from 'lucide-vue-next'
+import { Archive, ChevronDown, ChevronUp, FolderOpen, Trash2, FileText, Pencil, Download, Database, Cloud, Settings2, Plus, X, Save, FileUp, FileDown, GraduationCap } from 'lucide-vue-next'
 import { resolveIcon }       from '../utils/icons.js'
 import { useClassroom }      from '../composables/useClassroom.js'
 import * as eventService       from '../db/eventService.js'
 import * as settingsService  from '../db/settingsService.js'
+import * as classService     from '../db/classService.js'
+import * as gradebookService from '../db/gradebookService.js'
 
 const {
   classList,
@@ -499,6 +649,9 @@ async function onDeleteClass(classId) {
   await deleteClass(classId)
 }
 
+const props = defineProps({
+  tab: { type: String, default: 'classes' }
+})
 const emit = defineEmits(['navigate'])
 
 // ─── tabs ─────────────────────────────────────────────────────────────────────
@@ -507,9 +660,10 @@ const tabs = [
   { id: 'classes', label: 'Classes' },
   { id: 'roster',  label: 'Roster'  },
   { id: 'codes',   label: 'Behavior Codes' },
+  { id: 'gradebook', label: 'Gradebook' },
   { id: 'backup',  label: 'Data Backup' },
 ]
-const activeTab = ref('classes')
+const activeTab = ref(props.tab)
 
 // ─── class management ─────────────────────────────────────────────────────────
 
@@ -759,6 +913,137 @@ async function deleteCode(codeKey) {
   await settingsService.deleteBehaviorCode(codeKey)
   await reloadBehaviorCodes()
 }
+
+// ─── Gradebook logic ─────────────────────────────────────────────────────────
+
+const categoryWeightTotal = computed(() => {
+  if (!activeClass.value?.gradebookCategories) return 0
+  return activeClass.value.gradebookCategories.reduce((sum, cat) => sum + (Number(cat.weight) || 0), 0)
+})
+
+const templates = ref([])
+const newTemplateName = ref('')
+
+let saveTimer = null
+function debouncedSave() {
+  clearTimeout(saveTimer)
+  saveTimer = setTimeout(() => saveGradebookSettings(), 300)
+}
+
+watch(
+  () => activeClass.value?.gradebookCategories,
+  () => debouncedSave(),
+  { deep: true }
+)
+
+watch(
+  () => activeClass.value?.gradebookMilestones,
+  () => debouncedSave(),
+  { deep: true }
+)
+
+async function saveGradebookSettings() {
+  if (!activeClass.value) return
+  await classService.updateClass(activeClass.value.classId, {
+    gradebookCategories: activeClass.value.gradebookCategories,
+    gradebookMilestones: activeClass.value.gradebookMilestones,
+    gradebookNotes: activeClass.value.gradebookNotes
+  })
+}
+
+async function addCategory() {
+  if (!activeClass.value) return
+  const newCat = {
+    categoryId: crypto.randomUUID(),
+    name: 'New Category',
+    weight: 0
+  }
+  if (!activeClass.value.gradebookCategories) {
+    activeClass.value.gradebookCategories = []
+  }
+  activeClass.value.gradebookCategories.push(newCat)
+  await saveGradebookSettings()
+}
+
+async function onDeleteCategory(cat) {
+  if (!activeClass.value) return
+  
+  // Check if assessment exist for this category
+  const assessments = await gradebookService.getAssessmentsByClass(activeClass.value.classId)
+  const inUse = assessments.some(a => a.categoryId === cat.categoryId)
+  
+  if (inUse) {
+    window.alert(`Cannot delete category "${cat.name}" because it has assessments assigned to it. Remove all assessments in this category first.`)
+    return
+  }
+
+  if (activeClass.value.gradebookCategories.length <= 1) {
+    window.alert('At least one category is required.')
+    return
+  }
+
+  activeClass.value.gradebookCategories = activeClass.value.gradebookCategories.filter(c => c.categoryId !== cat.categoryId)
+  await saveGradebookSettings()
+}
+
+async function addMilestone() {
+  if (!activeClass.value) return
+  const newMs = {
+    milestoneId: crypto.randomUUID(),
+    name: 'Milestone',
+    date: new Date().toISOString().slice(0, 10)
+  }
+  if (!activeClass.value.gradebookMilestones) {
+    activeClass.value.gradebookMilestones = []
+  }
+  activeClass.value.gradebookMilestones.push(newMs)
+  await saveGradebookSettings()
+}
+
+async function onDeleteMilestone(milestoneId) {
+  if (!activeClass.value) return
+  activeClass.value.gradebookMilestones = activeClass.value.gradebookMilestones.filter(m => m.milestoneId !== milestoneId)
+  await saveGradebookSettings()
+}
+
+async function saveTemplate() {
+  if (!activeClass.value || !newTemplateName.value.trim()) return
+  
+  // Check for uniqueness
+  const existing = templates.value.some(t => t.name.toLowerCase() === newTemplateName.value.trim().toLowerCase())
+  if (existing) {
+    window.alert('A template with this name already exists.')
+    return
+  }
+
+  const template = await gradebookService.saveGradebookTemplate(newTemplateName.value.trim(), activeClass.value)
+  templates.value.push(template)
+  newTemplateName.value = ''
+}
+
+async function onApplyTemplate(template) {
+  if (!activeClass.value) return
+  if (!window.confirm('This will replace the current categories and milestones. Continue?')) return
+  
+  // Copy categories and milestones with new UUIDs (as per service implementation)
+  // Actually, applying a template usually means we just overwrite the class record.
+  // The service implementation for saveGradebookTemplate already generates new UUIDs for the template items.
+  // When applying, we should probably do similar or just use what's in the template.
+  
+  const categories = template.categories.map(c => ({ ...c, categoryId: crypto.randomUUID() }))
+  const milestones = template.milestones.map(m => ({ ...m, milestoneId: crypto.randomUUID() }))
+
+  activeClass.value.gradebookCategories = categories
+  activeClass.value.gradebookMilestones = milestones
+  
+  await saveGradebookSettings()
+}
+
+async function onDeleteTemplate(templateId) {
+  if (!window.confirm('Delete this template?')) return
+  await gradebookService.deleteGradebookTemplate(templateId)
+  templates.value = templates.value.filter(t => t.templateId !== templateId)
+}
 // ─── Backup logic ─────────────────────────────────────────────────────────────
 
 const backupMsg     = ref('')
@@ -771,6 +1056,12 @@ const isDraggingBackup = ref(false)
 onMounted(async () => {
   const settings = await settingsService.getSettings()
   isSyncLinked.value = !!settings.backupFileHandle
+  templates.value = await gradebookService.getGradebookTemplates()
+
+  // Ensure a class is selected if any exist
+  if (!activeClass.value && classList.value.length > 0) {
+    await switchToClass(classList.value[0].classId)
+  }
 })
 
 async function linkBackupFile() {
@@ -1438,5 +1729,193 @@ function formatDate(iso) {
   gap:       10px;
   flex-wrap: wrap;
   margin-top: 4px;
+}
+/* ── Header ─────────────────────────────────────────────────────── */
+.setup__header {
+  padding: 16px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.setup__header-class {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.setup__header-label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.setup__class-selector {
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-secondary);
+  color: var(--text);
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  min-width: 200px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.setup__class-selector:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-light);
+}
+
+.setup__empty-state {
+  padding: 40px;
+  text-align: center;
+  color: var(--text-secondary);
+  background: var(--bg-secondary);
+  border-radius: var(--radius-lg);
+  border: 1px dashed var(--border);
+}
+
+.setup__chip {
+  background: var(--primary-light);
+  color: var(--primary);
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+}
+
+.setup__total-weight {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--state-success);
+}
+
+.setup__total-weight--error {
+  color: var(--state-danger);
+}
+
+.setup__error-msg {
+  font-size: 0.75rem;
+  color: var(--state-danger);
+  margin-top: -8px;
+}
+
+.setup__gb-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.setup__gb-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  gap: 12px;
+}
+
+.setup__gb-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.setup__weight-input {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.setup__input--naked {
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  min-height: auto !important;
+  font-weight: 600 !important;
+}
+
+.setup__input--weight {
+  width: 50px !important;
+  text-align: right;
+  min-height: 32px !important;
+  padding: 4px 8px !important;
+}
+
+.setup__input--date {
+  min-height: 32px !important;
+  padding: 4px 8px !important;
+  font-size: 0.8rem !important;
+}
+
+.setup__textarea {
+  width: 100%;
+  min-height: 100px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-secondary);
+  color: var(--text);
+  font-size: 0.9rem;
+  resize: vertical;
+}
+
+.setup__textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.setup__template-save {
+  display: flex;
+  gap: 8px;
+}
+
+.setup__template-save .setup__input {
+  flex: 1;
+}
+
+.setup__template-apply {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.setup__card-subtitle {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+}
+
+.setup__tmpl-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.setup__btn--full {
+  width: 100%;
+}
+
+.setup__icon-btn--danger {
+  color: var(--state-out) !important;
+}
+
+.setup__icon-btn--danger:hover {
+  background: rgba(255, 59, 48, 0.1) !important;
 }
 </style>
