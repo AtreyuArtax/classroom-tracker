@@ -164,6 +164,24 @@ export async function deleteAttempt(assessmentId, studentId, attemptId) {
 }
 
 /**
+ * Sets a specific attempt as the primary (counting) one.
+ */
+export async function setPrimaryAttempt(assessmentId, studentId, attemptId) {
+  const db = await getDB()
+  const grade = await getOrCreateGrade(assessmentId, studentId)
+  
+  grade.attempts = grade.attempts.map(a => ({
+    ...a,
+    isPrimary: a.attemptId === attemptId
+  }))
+  
+  const plain = JSON.parse(JSON.stringify(grade))
+  await db.put('grades', plain)
+  hasUnsyncedChanges.value = true
+  return plain
+}
+
+/**
  * Updates boolean flags on a grade record.
  * 
  * @param {number} assessmentId

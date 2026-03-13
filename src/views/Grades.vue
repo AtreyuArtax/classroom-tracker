@@ -101,6 +101,135 @@
           <p>Select a class to view the gradebook</p>
         </div>
 
+        <div v-else-if="selectedAssessmentId && currentAssessment" class="grades__assessment-view">
+          <!-- Assessment View Header -->
+          <div class="grades__view-header">
+            <button class="grades__back-btn" @click="selectedAssessmentId = null">
+              <ArrowLeft :size="16" /> Back to Class Grid
+            </button>
+            <div class="grades__assessment-title-row">
+              <h2 class="grades__view-title">{{ currentAssessment.name }}</h2>
+              <div class="grades__assessment-badges">
+                <span class="grades__badge">{{ currentAssessment.assessmentType }}</span>
+                <span class="grades__badge">/{{ currentAssessment.totalPoints }}</span>
+                <span v-if="currentAssessment.unit" class="grades__badge">{{ currentAssessment.unit }}</span>
+                <span class="grades__badge">{{ new Date(currentAssessment.date).toLocaleDateString() }}</span>
+              </div>
+              <div class="grades__header-actions">
+                <button class="grades__btn-ghost" @click="startEditAssessment(currentAssessment)">
+                  <Pencil :size="14" /> Edit Details
+                </button>
+                <button class="grades__btn-ghost grades__btn-ghost--danger" @click="confirmDeleteAssessment(currentAssessment)">
+                  <Trash2 :size="14" /> Delete
+                </button>
+              </div>
+            </div>
+
+            <div v-if="currentAssessmentSummary" class="grades__assessment-summary">
+              <div class="grades__summary-stat">
+                <span class="grades__stat-label">Class Average:</span>
+                <span class="grades__stat-value">
+                  {{ currentAssessmentSummary.average || '—' }} / {{ currentAssessment.totalPoints }}
+                  <span v-if="currentAssessmentSummary.average" class="grades__stat-percent">
+                    ({{ Math.round((currentAssessmentSummary.average / currentAssessment.totalPoints) * 1000) / 10 }}%)
+                  </span>
+                </span>
+              </div>
+              <div class="grades__summary-stat">
+                <span class="grades__stat-label">Entered:</span>
+                <span class="grades__stat-value">{{ currentAssessmentSummary.enteredCount }} / {{ currentAssessmentSummary.totalStudents }} students</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Student List for Assessment -->
+          <div class="grades__assessment-list-wrapper">
+            <table class="grades__assessment-table">
+              <thead>
+                <tr>
+                  <th class="grades__ath-student">Student</th>
+                  <th class="grades__ath-score">Score</th>
+                  <th class="grades__ath-percent">%</th>
+                  <th class="grades__ath-status">Status</th>
+                  <th class="grades__ath-actions"></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="s in sortedRoster" :key="s.studentId" class="grades__atr-student">
+                  <td class="grades__atd-student">{{ s.lastName }}, {{ s.firstName }}</td>
+                  <td class="grades__atd-score">
+                    <div v-if="newAttemptForm?.studentId === s.studentId" class="grades__new-attempt-inline">
+                      <div class="grades__attempt-form-row">
+                        <input 
+                          v-model.number="newAttemptForm.points" 
+                          type="number" 
+                          min="0" 
+                          :max="currentAssessment.totalPoints"
+                          class="grades__input-inline grades__input-inline--score"
+                          placeholder="Score"
+                        />
+                        <input 
+                          v-model="newAttemptForm.date" 
+                          type="date" 
+                          class="grades__input-inline grades__input-inline--date"
+                        />
+                        <input 
+                          v-model="newAttemptForm.comment" 
+                          class="grades__input-inline grades__input-inline--note"
+                          placeholder="Note"
+                        />
+                        <button class="grades__icon-btn grades__icon-btn--success" @click="saveNewAttempt">
+                          <Check :size="16" />
+                        </button>
+                        <button class="grades__icon-btn" @click="newAttemptForm = null">
+                          <X :size="16" />
+                        </button>
+                      </div>
+                    </div>
+                    <div v-else-if="gradeMap[selectedAssessmentId]?.[s.studentId]?.missing" class="grades__cell-missing">M</div>
+                    <div v-else-if="gradeMap[selectedAssessmentId]?.[s.studentId]?.excluded" class="grades__cell-excluded">EX</div>
+                    <div v-else class="grades__score-input-cell">
+                      <input 
+                        type="number"
+                        min="0"
+                        :max="currentAssessment.totalPoints"
+                        class="grades__input-inline"
+                        :value="gradeMap[selectedAssessmentId]?.[s.studentId]?.resolvedScore"
+                        @blur="e => onAssessmentViewBlur(s.studentId, e.target.value)"
+                        @keydown.enter.prevent="e => onAssessmentViewEnter(s.studentId, 'down', e)"
+                        @keydown.tab.prevent="e => onAssessmentViewEnter(s.studentId, 'down', e)"
+                        @keydown.up.prevent="e => onAssessmentViewEnter(s.studentId, 'up', e)"
+                        @keydown.down.prevent="e => onAssessmentViewEnter(s.studentId, 'down', e)"
+                      />
+                      <button 
+                        v-if="gradeMap[selectedAssessmentId]?.[s.studentId]?.attempts?.length > 1" 
+                        class="grades__dot-indicator"
+                        @click="openAttempts($event, s.studentId, selectedAssessmentId)"
+                      >•</button>
+                    </div>
+                  </td>
+                  <td class="grades__atd-percent">
+                    <span v-if="gradeMap[selectedAssessmentId]?.[s.studentId]?.resolvedScore != null">
+                      {{ Math.round((gradeMap[selectedAssessmentId][s.studentId].resolvedScore / currentAssessment.totalPoints) * 1000) / 10 }}%
+                    </span>
+                  </td>
+                  <td class="grades__atd-status">
+                    <span :class="'grades__status-tag--' + getStudentStatus(s.studentId).class">
+                      {{ getStudentStatus(s.studentId).label }}
+                    </span>
+                  </td>
+                  <td class="grades__atd-actions">
+                    <button class="grades__icon-btn" @click="onStudentActionMenu($event, s.studentId)">
+                      <MoreVertical :size="14" />
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+
         <div v-else-if="!selectedStudentId" class="grades__grid-container">
           <!-- Grid Header Actions -->
           <div class="grades__grid-actions">
@@ -142,7 +271,7 @@
                     class="grades__th-assessment"
                   >
                     <div class="grades__assessment-header">
-                      <div class="grades__assessment-info" @click="onEditAssessment(a)">
+                      <div class="grades__assessment-info" @click="selectedAssessmentId = a.assessmentId">
                         <span class="grades__assessment-name">{{ a.name }}</span>
                         <div class="grades__assessment-meta">
                           <span class="grades__assessment-points">/{{ a.totalPoints }}</span>
@@ -230,60 +359,100 @@
                 </tr>
               </tbody>
             </table>
-          </div>
+          </div> <!-- End grid-wrapper -->
+        </div> <!-- End grid-container -->
 
-          <!-- Context Menu -->
-          <div v-if="contextMenu" class="grades__context-backdrop" @click="contextMenu = null" @contextmenu.prevent="contextMenu = null">
-            <div class="grades__context-menu" :style="{ top: contextMenu.y + 'px', left: contextMenu.x + 'px' }">
-              <button class="grades__context-btn" @click="startEdit(contextMenu.sId, contextMenu.aId); contextMenu = null">
-                <Pencil :size="14" /> Enter Grade
-              </button>
-              <button class="grades__context-btn" @click="toggleMissing">
-                <AlertCircle :size="14" /> {{ isMissing(contextMenu.sId, contextMenu.aId) ? 'Unmark Missing' : 'Mark Missing' }}
-              </button>
-              <button class="grades__context-btn" @click="toggleExcluded">
-                <XCircle :size="14" /> {{ isExcluded(contextMenu.sId, contextMenu.aId) ? 'Include in Grade' : 'Mark Excluded' }}
-              </button>
-            </div>
-          </div>
-
-          <!-- Attempts Popover -->
-          <div v-if="attemptsPopover" class="grades__context-backdrop" @click="attemptsPopover = null" @contextmenu.prevent="attemptsPopover = null">
-            <div class="grades__attempts-popover" :style="{ top: attemptsPopover.y + 'px', left: attemptsPopover.x + 'px' }" @click.stop>
-              <div class="grades__popover-header">
-                <h4 class="grades__popover-title">Attempts</h4>
-                <div class="grades__popover-subtitle">{{ attemptsPopover.studentName }}</div>
-              </div>
-              <ul class="grades__attempts-list">
-                <li v-for="att in attemptsPopover.attempts" :key="att.attemptId" class="grades__attempt-item">
-                  <div class="grades__attempt-info">
-                    <span class="grades__attempt-score">{{ att.pointsEarned }} / {{ attemptsPopover.totalPoints }}</span>
-                    <span class="grades__attempt-date">{{ formatDateShort(att.date) }}</span>
-                  </div>
-                  <button class="grades__icon-btn grades__icon-btn--danger" @click="onDeleteAttempt(att.attemptId)">
-                    <Trash2 :size="14" />
-                  </button>
-                </li>
-              </ul>
-            </div>
-          </div>
-          <!-- Assessment Header Menu -->
-          <div v-if="assessmentMenu" class="grades__context-backdrop" @click="assessmentMenu = null" @contextmenu.prevent="assessmentMenu = null">
-            <div class="grades__context-menu" :style="{ top: assessmentMenu.y + 'px', left: assessmentMenu.x + 'px' }">
-              <button class="grades__context-btn" @click="startEditAssessment(assessmentMenu.assessment); assessmentMenu = null">
-                <Pencil :size="14" /> Edit Assessment
-              </button>
-              <button class="grades__context-btn grades__context-btn--danger" @click="confirmDeleteAssessment(assessmentMenu.assessment); assessmentMenu = null">
-                <Trash2 :size="14" /> Delete Assessment
-              </button>
-            </div>
-          </div>
-        </div>
-
+        <!-- Student Dossier Placeholder -->
         <div v-else class="grades__placeholder">
           <h2 class="grades__view-title">{{ selectedStudentName }}</h2>
           <p class="grades__view-subtitle">[Student dossier coming in next update]</p>
         </div>
+
+        <!-- Shared Popovers & Context Menus -->
+
+
+      </main>
+    </div>
+
+    <!-- Global Popovers & Context Menus (Placed at end of template for absolute layering) -->
+    <div v-if="studentActionMenu" class="grades__context-backdrop grades__context-backdrop--dim" @click="studentActionMenu = null">
+      <div class="grades__context-menu" :style="{ top: studentActionMenu.y + 'px', left: studentActionMenu.x + 'px' }">
+        <button class="grades__context-btn" @click="toggleMissingFromView(studentActionMenu.studentId); studentActionMenu = null">
+          <AlertCircle :size="14" /> {{ isMissing(studentActionMenu.studentId, selectedAssessmentId) ? 'Unmark Missing' : 'Mark Missing' }}
+        </button>
+        <button class="grades__context-btn" @click="toggleExcludedFromView(studentActionMenu.studentId); studentActionMenu = null">
+          <XCircle :size="14" /> {{ isExcluded(studentActionMenu.studentId, selectedAssessmentId) ? 'Include in Grade' : 'Mark Excluded' }}
+        </button>
+        <button class="grades__context-btn" @click="openAttempts($event, studentActionMenu.studentId, selectedAssessmentId); studentActionMenu = null">
+          <BarChart2 :size="14" /> View Attempt History
+        </button>
+        <button class="grades__context-btn" @click="startNewAttempt(studentActionMenu.studentId); studentActionMenu = null">
+          <Plus :size="14" /> Add New Attempt
+        </button>
+      </div>
+    </div>
+
+    <div v-if="contextMenu" class="grades__context-backdrop grades__context-backdrop--dim" @click="contextMenu = null" @contextmenu.prevent="contextMenu = null">
+      <div class="grades__context-menu" :style="{ top: contextMenu.y + 'px', left: contextMenu.x + 'px' }">
+        <button class="grades__context-btn" @click="startEdit(contextMenu.sId, contextMenu.aId); contextMenu = null">
+          <Pencil :size="14" /> Enter Grade
+        </button>
+        <button class="grades__context-btn" @click="toggleMissing">
+          <AlertCircle :size="14" /> {{ isMissing(contextMenu.sId, contextMenu.aId) ? 'Unmark Missing' : 'Mark Missing' }}
+        </button>
+        <button class="grades__context-btn" @click="toggleExcluded">
+          <XCircle :size="14" /> {{ isExcluded(contextMenu.sId, contextMenu.aId) ? 'Include in Grade' : 'Mark Excluded' }}
+        </button>
+      </div>
+    </div>
+
+    <div v-if="assessmentMenu" class="grades__context-backdrop grades__context-backdrop--dim" @click="assessmentMenu = null" @contextmenu.prevent="assessmentMenu = null">
+      <div class="grades__context-menu" :style="{ top: assessmentMenu.y + 'px', left: assessmentMenu.x + 'px' }">
+        <button class="grades__context-btn" @click="startEditAssessment(assessmentMenu.assessment); assessmentMenu = null">
+          <Pencil :size="14" /> Edit Assessment
+        </button>
+        <button class="grades__context-btn grades__context-btn--danger" @click="confirmDeleteAssessment(assessmentMenu.assessment); assessmentMenu = null">
+          <Trash2 :size="14" /> Delete Assessment
+        </button>
+      </div>
+    </div>
+
+    <div v-if="attemptsPopover" class="grades__context-backdrop grades__context-backdrop--dim" @click="attemptsPopover = null" @contextmenu.prevent="attemptsPopover = null">
+      <div class="grades__attempts-popover" :style="{ top: attemptsPopover.y + 'px', left: attemptsPopover.x + 'px' }" @click.stop>
+        <div class="grades__popover-header">
+          <h4 class="grades__popover-title">Attempt History — {{ attemptsPopover.studentName }}</h4>
+          <div class="grades__popover-subtitle">{{ attemptsPopover.assessmentName }} (/{{ attemptsPopover.totalPoints }}) · Policy: {{ attemptsPopover.retestPolicy }}</div>
+        </div>
+        <ul class="grades__attempts-list">
+          <li v-for="att in attemptsPopover.attempts" :key="att.attemptId" class="grades__attempt-item">
+            <div class="grades__attempt-main">
+              <div class="grades__attempt-info">
+                <span class="grades__attempt-score">{{ att.pointsEarned }} / {{ attemptsPopover.totalPoints }}</span>
+                <span class="grades__attempt-percent">({{ Math.round((att.pointsEarned / attemptsPopover.totalPoints) * 100) }}%)</span>
+                <span class="grades__attempt-date">{{ formatDateShort(att.date) }}</span>
+              </div>
+              <div class="grades__attempt-counting">
+                <template v-if="attemptsPopover.retestPolicy === 'Manual'">
+                  <input 
+                    type="radio" 
+                    :name="'primary-' + attemptsPopover.sId" 
+                    :checked="att.isPrimary"
+                    @change="onSetPrimary(att.attemptId)"
+                  /> Primary
+                </template>
+                <template v-else>
+                  <span v-if="att.pointsEarned === attemptsPopover.resolvedScore" class="grades__counting-badge">counting ✓</span>
+                  <span v-else class="grades__not-counting-badge">not counting</span>
+                </template>
+              </div>
+            </div>
+            <button class="grades__icon-btn grades__icon-btn--danger" @click="onDeleteAttempt(att.attemptId)">
+              <Trash2 :size="14" />
+            </button>
+          </li>
+        </ul>
+      </div>
+    </div>
 
         <!-- Add Assessment Modal -->
         <div v-if="showAddModal" class="grades__modal-backdrop" @click.self="showAddModal = false">
@@ -355,9 +524,6 @@
             </form>
           </div>
         </div>
-      </main>
-
-    </div>
   </div>
 </template>
 
@@ -390,7 +556,7 @@ import {
   removeAttempt
 } from '../composables/useGradebook.js'
 import * as classService from '../db/classService.js'
-import { Plus, BarChart2, Settings, Pencil, XCircle, AlertCircle, Trash2, X, MoreVertical } from 'lucide-vue-next'
+import { Plus, BarChart2, Settings, Pencil, XCircle, AlertCircle, Trash2, X, MoreVertical, ArrowLeft, Check } from 'lucide-vue-next'
 
 defineEmits(['navigate'])
 
@@ -409,6 +575,9 @@ const editOriginalValue = ref(null)
 const assessmentMenu = ref(null) // { x, y, assessment }
 const isEditingAssessment = ref(false)
 const currentAssessmentId = ref(null)
+const selectedAssessmentId = ref(null)
+const studentActionMenu = ref(null) // { x, y, studentId }
+const newAttemptForm = ref(null) // { studentId, points, date, comment }
 
 const assessmentTypes = ['Test', 'Quiz', 'Assignment', 'Lab', 'Other']
 const newAssessment = reactive({
@@ -461,6 +630,30 @@ const selectedStudentName = computed(() => {
 
 const sortedAssessments = computed(() => {
   return [...assessments.value].sort((a, b) => new Date(a.date) - new Date(b.date))
+})
+
+const currentAssessment = computed(() => {
+  if (!selectedAssessmentId.value) return null
+  return assessments.value.find(a => a.assessmentId === selectedAssessmentId.value)
+})
+
+const currentAssessmentSummary = computed(() => {
+  if (!selectedAssessmentId.value || !currentAssessment.value) return null
+  const stats = assessmentStats.value[selectedAssessmentId.value]
+  
+  // Calculate progress
+  const totalStudents = sortedRoster.value.length
+  const enteredCount = sortedRoster.value.filter(s => {
+    const grade = gradeMap.value[selectedAssessmentId.value]?.[s.studentId]
+    return grade && (grade.attempts.length > 0 || grade.missing || grade.excluded)
+  }).length
+
+  return {
+    ...stats,
+    enteredCount,
+    totalStudents,
+    percentEntered: totalStudents > 0 ? (enteredCount / totalStudents) * 100 : 0
+  }
 })
 
 const overallClassAvg = computed(() => {
@@ -681,20 +874,51 @@ async function confirmDeleteAssessment(assessment) {
 
 // --- Attempt Management ---
 function openAttempts(e, studentId, assessmentId) {
-  const grade = gradeMap.value[assessmentId]?.[studentId]
-  const student = activeClassRecord.value.students[studentId]
-  const assessment = sortedAssessments.value.find(a => a.assessmentId === assessmentId)
+  // Defensive lookups with string conversion to be safe across types
+  const sId = String(studentId)
+  const aId = Number(assessmentId)
+
+  const grade = gradeMap.value[aId]?.[sId] || gradeMap.value[String(aId)]?.[sId]
+  const student = activeClassRecord.value?.students?.[sId]
+  const assessment = assessments.value.find(a => a.assessmentId === aId)
   
-  if (!grade || !student || !assessment) return
+  if (!grade) {
+    console.warn(`[openAttempts] No grade record found for assessment ${aId}, student ${sId}`)
+    return
+  }
+  if (!student) {
+    console.warn(`[openAttempts] Student ${sId} not found in class record`)
+    return
+  }
+  if (!assessment) {
+    console.warn(`[openAttempts] Assessment ${aId} not found`)
+    return
+  }
   
-  const { x, y } = getAdjustedPosition(e, 220, 200)
+  const { x, y } = getAdjustedPosition(e, 280, 250)
   attemptsPopover.value = {
     x, y,
-    sId: studentId,
-    aId: assessmentId,
+    sId,
+    aId,
     studentName: `${student.firstName} ${student.lastName}`,
-    attempts: grade.attempts,
-    totalPoints: assessment.totalPoints
+    assessmentName: assessment.name,
+    retestPolicy: assessment.retestPolicy,
+    attempts: grade.attempts || [],
+    totalPoints: assessment.totalPoints,
+    resolvedScore: grade.resolvedScore
+  }
+}
+
+async function onSetPrimary(attemptId) {
+  if (!attemptsPopover.value) return
+  const { sId, aId } = attemptsPopover.value
+  await setPrimaryAttempt(aId, sId, attemptId)
+  
+  // Refresh attempts in popover
+  const updatedGrade = gradeMap.value[aId]?.[sId]
+  if (updatedGrade) {
+    attemptsPopover.value.attempts = updatedGrade.attempts
+    attemptsPopover.value.resolvedScore = updatedGrade.resolvedScore
   }
 }
 
@@ -740,6 +964,88 @@ async function saveAssessment() {
   showAddModal.value = false
 }
 
+// --- Assessment View Methods ---
+function getStudentStatus(studentId) {
+  const grade = gradeMap.value[selectedAssessmentId.value]?.[studentId]
+  if (!grade) return { label: 'not entered', class: 'empty' }
+  if (grade.missing) return { label: 'missing', class: 'missing' }
+  if (grade.excluded) return { label: 'excluded', class: 'excluded' }
+  if (grade.attempts?.length > 0) {
+    const label = grade.attempts.length > 1 ? `✓ ${grade.attempts.length} attempts` : '✓'
+    return { label, class: 'entered' }
+  }
+  return { label: 'not entered', class: 'empty' }
+}
+
+async function onAssessmentViewBlur(studentId, value) {
+  if (value === '' || value === null) return
+  const current = gradeMap.value[selectedAssessmentId.value]?.[studentId]
+  const oldVal = current ? current.resolvedScore : null
+  const newVal = Number(value)
+  
+  if (oldVal !== newVal) {
+    await enterGrade(selectedAssessmentId.value, studentId, newVal)
+  }
+}
+
+async function onAssessmentViewEnter(studentId, direction, e) {
+  const val = e.target.value
+  await onAssessmentViewBlur(studentId, val)
+  
+  // Robust Row-based Traversal
+  const currentTr = e.target.closest('tr')
+  if (!currentTr) return
+
+  let targetTr = direction === 'up' ? currentTr.previousElementSibling : currentTr.nextElementSibling
+
+  // Walk siblings until we find a row with an input in the score column
+  while (targetTr) {
+    const input = targetTr.querySelector('.grades__atd-score input')
+    if (input) {
+      input.focus()
+      // If it's a numeric input, select text for easier overwriting
+      if (input.type === 'number') input.select()
+      return
+    }
+    targetTr = direction === 'up' ? targetTr.previousElementSibling : targetTr.nextElementSibling
+  }
+}
+
+function onStudentActionMenu(e, studentId) {
+  const { x, y } = getAdjustedPosition(e, 180, 200)
+  studentActionMenu.value = {
+    x, y,
+    studentId
+  }
+}
+
+async function toggleMissingFromView(studentId) {
+  const current = isMissing(studentId, selectedAssessmentId.value)
+  await markMissing(selectedAssessmentId.value, studentId, !current)
+}
+
+async function toggleExcludedFromView(studentId) {
+  const current = isExcluded(studentId, selectedAssessmentId.value)
+  await markExcluded(selectedAssessmentId.value, studentId, !current)
+}
+
+function startNewAttempt(studentId) {
+  newAttemptForm.value = {
+    studentId,
+    points: null,
+    date: new Date().toISOString().slice(0, 10),
+    comment: ''
+  }
+}
+
+async function saveNewAttempt() {
+  if (!newAttemptForm.value || newAttemptForm.value.points === null) return
+  const { studentId, points, date, comment } = newAttemptForm.value
+  
+  await enterGrade(selectedAssessmentId.value, studentId, points, date, comment)
+  newAttemptForm.value = null
+}
+
 // --- Lifecycle ---
 onMounted(async () => {
   if (sidebarClassId.value) {
@@ -750,6 +1056,21 @@ onMounted(async () => {
 // Update grades whenever milestone changes
 watch(selectedMilestone, () => {
   refreshGrades()
+})
+
+// Auto-focus first empty input in Assessment View
+watch(selectedAssessmentId, (val) => {
+  if (val) {
+    setTimeout(() => {
+      const container = document.querySelector('.grades__assessment-list-wrapper')
+      if (container) {
+        // Find first input that doesn't have a value
+        const inputs = Array.from(container.querySelectorAll('.grades__atd-score input'))
+        const firstEmpty = inputs.find(i => !i.value) || inputs[0]
+        if (firstEmpty) firstEmpty.focus()
+      }
+    }, 100) // Small delay for rendering
+  }
 })
 </script>
 
@@ -1414,6 +1735,10 @@ watch(selectedMilestone, () => {
   z-index: 999;
 }
 
+.grades__context-backdrop--dim {
+  background: rgba(0, 0, 0, 0.05);
+}
+
 /* ── Modals ────────────────────────────────────────────────────────── */
 .grades__modal-backdrop {
   position: fixed;
@@ -1550,5 +1875,196 @@ watch(selectedMilestone, () => {
 @keyframes rotate {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
+}
+
+/* ── Assessment View ───────────────────────────────────────────────── */
+.grades__assessment-view {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--bg);
+}
+
+.grades__view-header {
+  padding: 24px 32px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.grades__back-btn {
+  background: transparent;
+  border: none;
+  color: var(--primary);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  margin-bottom: 16px;
+  padding: 0;
+}
+
+.grades__assessment-title-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.grades__assessment-badges {
+  display: flex;
+  gap: 8px;
+}
+
+.grades__badge {
+  padding: 4px 10px;
+  background: var(--bg-secondary);
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.grades__assessment-summary {
+  display: flex;
+  gap: 32px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.grades__summary-stat {
+  display: flex;
+  flex-direction: column;
+}
+
+.grades__stat-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+}
+
+.grades__stat-value {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.grades__stat-percent {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+/* Assessment Table */
+.grades__assessment-list-wrapper {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 32px 32px;
+}
+
+.grades__assessment-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 24px;
+}
+
+.grades__assessment-table th {
+  text-align: left;
+  padding: 12px 16px;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  border-bottom: 2px solid var(--border);
+}
+
+.grades__atr-student td {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.95rem;
+  color: var(--text);
+}
+
+.grades__ath-student { width: 40%; }
+.grades__ath-score   { width: 150px; }
+.grades__ath-percent { width: 100px; text-align: center; }
+.grades__ath-status  { width: 150px; }
+
+.grades__atd-student { font-weight: 600; }
+.grades__atd-percent { text-align: center; font-weight: 500; }
+
+.grades__attempt-main {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.grades__attempt-counting {
+  font-size: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.grades__counting-badge {
+  color: var(--state-success);
+  font-weight: 600;
+}
+
+.grades__not-counting-badge {
+  color: var(--text-secondary);
+  opacity: 0.6;
+}
+
+.grades__attempt-percent {
+  font-weight: 700;
+  color: var(--text);
+}
+
+.grades__score-input-cell {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.grades__input-inline--score { width: 60px; }
+.grades__input-inline--date { width: 120px; }
+.grades__input-inline--note { width: 100px; flex: 1; }
+
+.grades__dot-indicator {
+  background: transparent;
+  border: none;
+  color: var(--primary);
+  font-size: 1.4rem;
+  line-height: 1;
+  padding: 0 4px;
+  cursor: pointer;
+}
+
+.grades__dot-indicator:hover {
+  transform: scale(1.2);
+  font-weight: 700;
+}
+
+.grades__status-tag--entered { color: var(--state-success); font-weight: 500; }
+.grades__status-tag--missing { color: var(--state-out); font-weight: 500; }
+.grades__status-tag--excluded { color: var(--text-secondary); font-style: italic; }
+.grades__status-tag--empty { color: var(--text-secondary); opacity: 0.5; }
+
+.grades__new-attempt-inline {
+  background: var(--bg-secondary);
+  padding: 4px;
+  border-radius: var(--radius-sm);
+}
+
+.grades__attempt-form-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.grades__btn-ghost--danger {
+  color: var(--state-out);
 }
 </style>

@@ -105,12 +105,12 @@ export async function deleteAssessment(assessmentId) {
  * @param {number} pointsEarned
  * @param {string} comment
  */
-export async function enterGrade(assessmentId, studentId, pointsEarned, comment = '') {
+export async function enterGrade(assessmentId, studentId, pointsEarned, date = null, comment = '') {
   if (!activeClassRecord.value) return
   
   await gradebookService.addAttempt(assessmentId, studentId, {
     pointsEarned,
-    date: new Date().toISOString(),
+    date: date || new Date().toISOString(),
     comment
   })
   
@@ -126,6 +126,18 @@ export async function removeAttempt(assessmentId, studentId, attemptId) {
   if (!activeClassRecord.value) return
   
   await gradebookService.deleteAttempt(assessmentId, studentId, attemptId)
+  
+  grades.value = await gradebookService.getGradesByClass(activeClassRecord.value.classId)
+  await refreshGrades()
+}
+
+/**
+ * Sets a specific attempt as primary and refreshes state.
+ */
+export async function setPrimaryAttempt(assessmentId, studentId, attemptId) {
+  if (!activeClassRecord.value) return
+  
+  await gradebookService.setPrimaryAttempt(assessmentId, studentId, attemptId)
   
   grades.value = await gradebookService.getGradesByClass(activeClassRecord.value.classId)
   await refreshGrades()
