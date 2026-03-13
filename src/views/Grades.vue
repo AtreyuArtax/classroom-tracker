@@ -504,7 +504,7 @@
                           placeholder="%" 
                           class="grades__input-inline"
                           :value="getOverride(cat.categoryId)"
-                          @blur="e => saveOverride(cat.categoryId, e.target.value)"
+                          @blur="e => saveOverride(cat.categoryId, e.target.valueAsNumber)"
                         />
                       </div>
                     </div>
@@ -900,12 +900,29 @@ const studentCategoryBreakdown = computed(() => {
   const overrides = activeClassRecord.value.students[selectedStudentId.value]?.categoryOverrides || {}
 
   return (activeClassRecord.value.gradebookCategories || []).map(cat => {
+    let percentage = null
+    let isOverridden = false
     const override = overrides[cat.categoryId]
+
+    if (override !== undefined && override !== null) {
+      const overrideValue = Number(override.overridePercentage ?? override)
+      if (isNaN(overrideValue)) {
+        // Fall back to calculated grade if override data is corrupt/NaN
+        percentage = studentData.categoryResults[cat.categoryId]?.percentage ?? null
+        isOverridden = false // It was an attempt at override, but invalid, so treat as not overridden
+      } else {
+        percentage = overrideValue
+        isOverridden = true
+      }
+    } else {
+      percentage = studentData.categoryResults[cat.categoryId]?.percentage ?? null
+    }
+
     return {
       categoryId: cat.categoryId,
       name: cat.name,
-      percent: override !== undefined ? override : (studentData.categoryResults[cat.categoryId]?.percentage ?? null),
-      overridden: override !== undefined
+      percent: percentage,
+      overridden: isOverridden
     }
   })
 })
@@ -1349,16 +1366,19 @@ async function loadDossierData() {
 }
 
 function getOverride(catId) {
-  return activeClassRecord.value.students[selectedStudentId.value]?.categoryOverrides?.[catId] ?? ''
+  const override = activeClassRecord.value.students[selectedStudentId.value]?.categoryOverrides?.[catId]
+  if (override === undefined || override === null) return ''
+  return typeof override === 'object' ? (override.overridePercentage ?? '') : override
 }
 
 async function saveOverride(catId, value) {
   const student = activeClassRecord.value.students[selectedStudentId.value]
   if (!student.categoryOverrides) student.categoryOverrides = {}
 
-  if (value === '' || value === null) {
+  if (value === '' || value === null || isNaN(value)) {
     delete student.categoryOverrides[catId]
   } else {
+    // Ensure we store as a number to avoid NaN in calculations
     student.categoryOverrides[catId] = Number(value)
   }
 

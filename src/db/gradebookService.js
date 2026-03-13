@@ -340,10 +340,19 @@ export async function calculateStudentGrade(studentId, classRecord, { asOf = nul
     const override = classRecord.students[studentId]?.categoryOverrides?.[category.categoryId]
     
     if (override !== undefined && override !== null) {
-      categoryResults[category.categoryId] = {
-        percentage: override.overridePercentage,
-        isOverridden: true,
-        overrideNote: override.note
+      const percentage = Number(override.overridePercentage ?? override)
+      if (isNaN(percentage)) {
+        // Fall back to calculated grade if override data is corrupt/NaN
+        categoryResults[category.categoryId] = {
+          percentage: (totalEarned / totalPossible) * 100,
+          isOverridden: false
+        }
+      } else {
+        categoryResults[category.categoryId] = {
+          percentage,
+          isOverridden: true,
+          overrideNote: override?.note
+        }
       }
     } else {
       categoryResults[category.categoryId] = {
