@@ -47,7 +47,10 @@
 
           <!-- Header + back + period toggle -->
           <div class="reports__dossier-header">
-            <button class="reports__btn-back" @click="showOverview">
+            <button v-if="from === 'Grades'" class="reports__btn-back" @click="$emit('navigate', 'Grades', { classId: sidebarClassId, studentId: props.studentId })">
+              <ChevronLeft :size="16" /> Back to Gradebook
+            </button>
+            <button v-else class="reports__btn-back" @click="showOverview">
               <ChevronLeft :size="16" /> Class Overview
             </button>
             <h2 class="reports__dossier-name">{{ dossierStudentName }}</h2>
@@ -395,6 +398,12 @@ import {
 
 ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale)
 
+const props = defineProps({
+  studentId: String,
+  classId: String,
+  from: String
+})
+
 const {
   activeClass,
   behaviorCodes,
@@ -436,9 +445,15 @@ const rosterOpen     = ref(true)
 const rightMode      = ref('overview')
 
 onMounted(() => {
+  if (props.classId) {
+    sidebarClassId.value = props.classId
+  }
+
   if (sidebarClassId.value) {
     dossier.loadSidebarClass(sidebarClassId.value)
-    if (rightMode.value === 'overview') {
+    if (props.studentId) {
+      onSelectStudent(props.studentId)
+    } else if (rightMode.value === 'overview') {
       runReport()
     }
   }

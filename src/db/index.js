@@ -284,11 +284,14 @@ export function getDB() {
           if (cls.gradebookMilestones === undefined) cls.gradebookMilestones = []
           if (cls.gradebookNotes === undefined) cls.gradebookNotes = ''
 
-          // Add categoryOverrides to each student
+          // Add categoryOverrides and gradebookNote to each student
           if (cls.students) {
             for (const studentId of Object.keys(cls.students)) {
               if (cls.students[studentId].categoryOverrides === undefined) {
                 cls.students[studentId].categoryOverrides = {}
+              }
+              if (cls.students[studentId].gradebookNote === undefined) {
+                cls.students[studentId].gradebookNote = ''
               }
             }
           }

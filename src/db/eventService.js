@@ -142,10 +142,17 @@ export async function updateEvent(eventId, updates = {}) {
  * @param {{ from?: string, to?: string }} [dateRange]
  * @returns {Promise<Array<Object>>}
  */
-export async function getEventsByStudent(studentId, dateRange = {}) {
+export async function getEventsByStudent(studentId, options = {}) {
     const db = await getDB()
     const events = await db.getAllFromIndex('events', 'by_studentId', studentId)
-    return _applyDateRange(events, dateRange)
+    
+    let filtered = _applyDateRange(events, options)
+    
+    if (options.code) {
+        filtered = filtered.filter(e => e.code === options.code)
+    }
+    
+    return filtered
 }
 
 /**

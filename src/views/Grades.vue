@@ -210,7 +210,7 @@
                   </td>
                   <td class="grades__atd-percent">
                     <span v-if="gradeMap[selectedAssessmentId]?.[s.studentId]?.resolvedScore != null">
-                      {{ Math.round((gradeMap[selectedAssessmentId][s.studentId].resolvedScore / currentAssessment.totalPoints) * 1000) / 10 }}%
+                      {{ Math.round((gradeMap[selectedAssessmentId]?.[s.studentId]?.resolvedScore / currentAssessment.totalPoints) * 1000) / 10 }}%
                     </span>
                   </td>
                   <td class="grades__atd-status">
@@ -362,10 +362,186 @@
           </div> <!-- End grid-wrapper -->
         </div> <!-- End grid-container -->
 
-        <!-- Student Dossier Placeholder -->
-        <div v-else class="grades__placeholder">
-          <h2 class="grades__view-title">{{ selectedStudentName }}</h2>
-          <p class="grades__view-subtitle">[Student dossier coming in next update]</p>
+        <!-- Student Dossier (Step 1-8) -->
+        <div v-else class="grades__student-view">
+          <!-- Dossier Header (Step 1) -->
+          <div class="grades__view-header">
+            <button class="grades__back-btn" @click="selectedStudentId = null">
+              <ArrowLeft :size="16" /> Back to Class Grid
+            </button>
+            <div class="grades__student-header">
+              <div class="grades__student-title-block">
+                <h2 class="grades__view-title">{{ selectedStudentName }}</h2>
+                <div class="grades__view-subtitle">
+                  {{ activeClassRecord.name }} · Period {{ activeClassRecord.periodNumber }}
+                </div>
+              </div>
+              <div class="grades__student-overall">
+                <div class="grades__overall-value" :style="{ color: getGradeColor(studentOverallGrade) }">
+                  {{ formatGrade(studentOverallGrade) }}
+                </div>
+                <div v-if="gradeTrendInfo" class="grades__overall-trend">
+                  <span class="grades__trend-label">Midterm: {{ formatGrade(gradeTrendInfo.midterm) }} →</span>
+                  <span class="grades__trend-icon" :style="{ color: gradeTrendInfo.color }">
+                    <ArrowUp v-if="gradeTrendInfo.trend === 'up'" :size="14" />
+                    <ArrowDown v-else-if="gradeTrendInfo.trend === 'down'" :size="14" />
+                    <Minus v-else :size="14" />
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="grades__student-content">
+            <!-- Category Cards (Step 2) -->
+            <div class="grades__category-cards">
+              <div 
+                v-for="cat in studentCategoryBreakdown" 
+                :key="cat.categoryId" 
+                class="grades__stat-card"
+                :class="{ 'grades__stat-card--active': filterCategory === cat.categoryId }"
+                :style="{ borderLeft: `4px solid ${getHeatColor(cat.percent)}` }"
+                @click="filterCategory = (filterCategory === cat.categoryId ? null : cat.categoryId)"
+              >
+                <div class="grades__card-label">{{ cat.name }}</div>
+                <div class="grades__card-value">{{ formatGrade(cat.percent) }}</div>
+                <div v-if="cat.overridden" class="grades__override-badge" title="Manual Override">Override</div>
+              </div>
+            </div>
+
+            <!-- Assessment List (Step 3) -->
+            <div class="grades__section">
+              <div class="grades__section-header">
+                <h3 class="grades__section-title">Assessments</h3>
+                <div v-if="filterCategory" class="grades__filter-tag">
+                  Showing {{ studentCategoryBreakdown.find(c => c.categoryId === filterCategory)?.name }}
+                  <button @click="filterCategory = null"><X :size="12" /></button>
+                </div>
+              </div>
+              <div class="grades__table-wrapper">
+                <table class="grades__dossier-table">
+                  <thead>
+                    <tr>
+                      <th>Assessment</th>
+                      <th>Type</th>
+                      <th>Date</th>
+                      <th>Score</th>
+                      <th>%</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr 
+                      v-for="row in filteredStudentAssessments" 
+                      :key="row.assessmentId"
+                      :class="{ 'grades__row--dimmed': isPostMilestone(row.date) }"
+                    >
+                      <td>{{ row.name }}</td>
+                      <td><span class="grades__badge">{{ row.type }}</span></td>
+                      <td>{{ formatDateShort(row.date) }}</td>
+                      <td>
+                        <span v-if="row.missing" class="grades__cell-missing">M</span>
+                        <span v-else-if="row.excluded" class="grades__cell-excluded">EX</span>
+                        <span v-else-if="row.resolvedScore !== null">{{ Math.round(row.resolvedScore * 10) / 10 }} / {{ row.totalPoints }}</span>
+                        <span v-else class="grades__cell-placeholder">—</span>
+                      </td>
+                      <td>
+                        <span v-if="row.resolvedScore !== null">{{ Math.round((row.resolvedScore / row.totalPoints) * 100) }}%</span>
+                      </td>
+                      <td>
+                        <button 
+                          v-if="row.attempts > 1" 
+                          class="grades__dot-indicator" 
+                          @click="openAttempts($event, selectedStudentId, row.assessmentId)"
+                        >•</button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="grades__dossier-grid">
+              <!-- Trend Graph (Step 4) -->
+              <div class="grades__section grades__section--graph">
+                <h3 class="grades__section-title">Grade Trend</h3>
+                <div class="grades__graph-container">
+                  <div v-if="dossierTrendData.length < 3" class="grades__graph-placeholder">
+                    <BarChart2 :size="32" />
+                    <p>Not enough data for trend</p>
+                  </div>
+                  <div v-else class="grades__graph-render">
+                    <GradeTrendChart :assessments="dossierTrendData" />
+                  </div>
+                </div>
+              </div>
+
+              <div class="grades__side-stats">
+                <!-- Attendance Summary (Step 6) -->
+                <div class="grades__section">
+                  <h3 class="grades__section-title">Attendance Summary</h3>
+                  <div class="grades__attendance-summary" @click="$emit('navigate', 'Reports', { studentId: selectedStudentId, classId: activeClassRecord.classId, from: 'Grades' })">
+                    <div class="grades__stat-row">
+                      <span>Absences:</span>
+                      <span class="grades__stat-val">{{ studentAttendance.absences }}</span>
+                    </div>
+                    <div class="grades__stat-row">
+                      <span>Lates:</span>
+                      <span class="grades__stat-val">{{ studentAttendance.lates }}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Overrides (Step 7) -->
+                <details class="grades__overrides-disclosure">
+                  <summary>Manage Overrides</summary>
+                  <div class="grades__overrides-content">
+                    <div v-for="cat in activeClassRecord.gradebookCategories" :key="cat.categoryId" class="grades__override-row">
+                      <span class="grades__override-name">{{ cat.name }}</span>
+                      <div class="grades__override-inputs">
+                        <input 
+                          type="number" 
+                          placeholder="%" 
+                          class="grades__input-inline"
+                          :value="getOverride(cat.categoryId)"
+                          @blur="e => saveOverride(cat.categoryId, e.target.value)"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </details>
+              </div>
+            </div>
+
+            <!-- Conversations (Step 5) -->
+            <div v-if="acEvents.length" class="grades__section">
+              <h3 class="grades__section-title">
+                <GraduationCap :size="16" /> Assessment Conversations
+              </h3>
+              <div class="grades__events-list">
+                <div v-for="evt in acEvents" :key="evt.eventId" class="grades__event-card">
+                   <div class="grades__event-header">
+                     <span class="grades__event-date">{{ formatDateShort(evt.timestamp) }}</span>
+                     <button class="grades__icon-btn grades__icon-btn--danger" @click="onDeleteEvent(evt.eventId)">
+                       <Trash2 :size="14" />
+                     </button>
+                   </div>
+                   <div class="grades__event-note">{{ evt.note }}</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Notes (Step 8) -->
+            <div class="grades__section">
+              <h3 class="grades__section-title">Gradebook Notes</h3>
+              <textarea 
+                class="grades__notes-area"
+                placeholder="Notes about this student's grades, accommodations, or grading decisions..."
+                :value="activeClassRecord.students[selectedStudentId]?.gradebookNote || ''"
+                @blur="e => saveGradebookNote(e.target.value)"
+              ></textarea>
+            </div>
+          </div>
         </div>
 
         <!-- Shared Popovers & Context Menus -->
@@ -556,7 +732,13 @@ import {
   removeAttempt
 } from '../composables/useGradebook.js'
 import * as classService from '../db/classService.js'
-import { Plus, BarChart2, Settings, Pencil, XCircle, AlertCircle, Trash2, X, MoreVertical, ArrowLeft, Check } from 'lucide-vue-next'
+import { Plus, BarChart2, Settings, Pencil, XCircle, AlertCircle, Trash2, X, MoreVertical, ArrowLeft, Check, ArrowUp, ArrowDown, Minus, GraduationCap } from 'lucide-vue-next'
+import GradeTrendChart from '../components/GradeTrendChart.vue'
+
+const props = defineProps({
+  classId: String,
+  studentId: String
+})
 
 defineEmits(['navigate'])
 
@@ -578,6 +760,9 @@ const currentAssessmentId = ref(null)
 const selectedAssessmentId = ref(null)
 const studentActionMenu = ref(null) // { x, y, studentId }
 const newAttemptForm = ref(null) // { studentId, points, date, comment }
+const filterCategory = ref(null)
+const acEvents = ref([])
+const studentAttendance = ref({ absences: 0, lates: 0 })
 
 const assessmentTypes = ['Test', 'Quiz', 'Assignment', 'Lab', 'Other']
 const newAssessment = reactive({
@@ -658,13 +843,100 @@ const currentAssessmentSummary = computed(() => {
 
 const overallClassAvg = computed(() => {
   if (!classGrades.value) return null
-  const grades = Object.values(classGrades.value)
+  const gradesValues = Object.values(classGrades.value)
     .filter(g => g && g.overallGrade !== null)
     .map(g => g.overallGrade)
   
-  if (grades.length === 0) return null
-  const sum = grades.reduce((acc, g) => acc + g, 0)
-  return sum / grades.length
+  if (gradesValues.length === 0) return null
+  const sum = gradesValues.reduce((acc, g) => acc + g, 0)
+  return sum / gradesValues.length
+})
+
+const studentOverallGrade = computed(() => {
+  return classGrades.value[selectedStudentId.value]?.overallGrade ?? null
+})
+
+const gradeTrendInfo = computed(() => {
+  if (!selectedStudentId.value || !activeClassRecord.value?.gradebookMilestones?.length) return null
+  
+  const current = studentOverallGrade.value
+  if (current === null) return null
+
+  // Find most recent milestone that is in the past
+  const now = new Date()
+  const milestone = [...activeClassRecord.value.gradebookMilestones]
+    .filter(m => new Date(m.date) <= now)
+    .sort((a, b) => new Date(b.date) - new Date(a.date))[0]
+  
+  if (!milestone) return null
+
+  // For real trend, we'd need historical grades. For now, since we only have current and milestone context:
+  // If a milestone is SELECTED in sidebar, we compare current with THAT milestone.
+  const milestoneId = selectedMilestone.value || milestone.milestoneId
+  const midtermGrade = classGrades.value[selectedStudentId.value]?.milestoneGrades?.[milestoneId]
+  
+  if (midtermGrade === undefined || midtermGrade === null) return null
+
+  const diff = current - midtermGrade
+  let trend = 'flat'
+  let color = 'var(--text-secondary)'
+  
+  if (diff > 2) {
+    trend = 'up'
+    color = '#34c759'
+  } else if (diff < -2) {
+    trend = 'down'
+    color = '#ff3b30'
+  }
+
+  return { midterm: midtermGrade, trend, color }
+})
+
+const studentCategoryBreakdown = computed(() => {
+  if (!selectedStudentId.value || !activeClassRecord.value) return []
+  const studentData = classGrades.value[selectedStudentId.value]
+  if (!studentData) return []
+
+  const overrides = activeClassRecord.value.students[selectedStudentId.value]?.categoryOverrides || {}
+
+  return (activeClassRecord.value.gradebookCategories || []).map(cat => {
+    const override = overrides[cat.categoryId]
+    return {
+      categoryId: cat.categoryId,
+      name: cat.name,
+      percent: override !== undefined ? override : (studentData.categoryResults[cat.categoryId]?.percentage ?? null),
+      overridden: override !== undefined
+    }
+  })
+})
+
+const filteredStudentAssessments = computed(() => {
+  if (!selectedStudentId.value || !assessments.value) return []
+  
+  return sortedAssessments.value
+    .filter(a => !filterCategory.value || a.categoryId === filterCategory.value)
+    .map(a => {
+      const g = gradeMap.value[a.assessmentId]?.[selectedStudentId.value]
+      return {
+        assessmentId: a.assessmentId,
+        name: a.name,
+        type: a.assessmentType,
+        date: a.date,
+        totalPoints: a.totalPoints,
+        resolvedScore: g?.resolvedScore ?? null,
+        missing: g?.missing,
+        excluded: g?.excluded,
+        attempts: g?.attempts?.length || 0
+      }
+    })
+})
+
+const dossierTrendData = computed(() => {
+  // Logic for building the trend line: array of running average after each assessment
+  if (!selectedStudentId.value) return []
+  // This requires sequential calculation which is complex for a computed.
+  // We'll simplify: return assessments that have grades.
+  return filteredStudentAssessments.value.filter(a => a.resolvedScore !== null)
 })
 
 // --- Methods ---
@@ -1046,16 +1318,93 @@ async function saveNewAttempt() {
   newAttemptForm.value = null
 }
 
+// --- Dossier Methods ---
+function getHeatColor(percent) {
+  if (percent === null) return 'var(--border)'
+  if (percent >= 80) return '#34c759'
+  if (percent >= 70) return '#007aff'
+  if (percent >= 60) return '#ff9500'
+  return '#ff3b30'
+}
+
+function isPostMilestone(date) {
+  if (!selectedMilestone.value || !activeClassRecord.value) return false
+  const m = activeClassRecord.value.gradebookMilestones.find(mil => mil.milestoneId === selectedMilestone.value)
+  return m && new Date(date) > new Date(m.date)
+}
+
+async function loadDossierData() {
+  if (!selectedStudentId.value) return
+  
+  // ac events
+  const { getEventsByStudent } = await import('../db/eventService.js')
+  acEvents.value = await getEventsByStudent(selectedStudentId.value, { code: 'ac' })
+
+  // attendance
+  const allEvents = await getEventsByStudent(selectedStudentId.value)
+  studentAttendance.value = {
+    absences: allEvents.filter(e => e.code === 'a' && !e.superseded).length,
+    lates: allEvents.filter(e => e.code === 'l').length
+  }
+}
+
+function getOverride(catId) {
+  return activeClassRecord.value.students[selectedStudentId.value]?.categoryOverrides?.[catId] ?? ''
+}
+
+async function saveOverride(catId, value) {
+  const student = activeClassRecord.value.students[selectedStudentId.value]
+  if (!student.categoryOverrides) student.categoryOverrides = {}
+
+  if (value === '' || value === null) {
+    delete student.categoryOverrides[catId]
+  } else {
+    student.categoryOverrides[catId] = Number(value)
+  }
+
+  await classService.saveClass(JSON.parse(JSON.stringify(activeClassRecord.value)))
+  await refreshGrades()
+}
+
+async function saveGradebookNote(note) {
+  const student = activeClassRecord.value.students[selectedStudentId.value]
+  if (student.gradebookNote === note) return
+
+  student.gradebookNote = note
+  await classService.saveClass(JSON.parse(JSON.stringify(activeClassRecord.value)))
+}
+
+async function onDeleteEvent(eventId) {
+  if (!window.confirm('Delete this assessment conversation record?')) return
+  const { deleteEvent } = await import('../db/eventService.js')
+  await deleteEvent(eventId)
+  acEvents.value = acEvents.value.filter(e => e.eventId !== eventId)
+}
+
 // --- Lifecycle ---
 onMounted(async () => {
-  if (sidebarClassId.value) {
-    onClassChange()
+  if (props.classId) {
+    sidebarClassId.value = props.classId
+    await onClassChange()
+  } else if (sidebarClassId.value) {
+    await onClassChange()
+  }
+
+  if (props.studentId) {
+    selectedStudentId.value = props.studentId
   }
 })
 
 // Update grades whenever milestone changes
 watch(selectedMilestone, () => {
   refreshGrades()
+})
+
+watch(selectedStudentId, (val) => {
+  if (val) {
+    loadDossierData()
+    filterCategory.value = null
+  }
 })
 
 // Auto-focus first empty input in Assessment View
@@ -1284,6 +1633,310 @@ watch(selectedAssessmentId, (val) => {
   justify-content: center;
   gap: 12px;
   color: var(--text-secondary);
+}
+
+/* ── Student Dossier View ───────────────────────────────────────────── */
+.grades__student-view {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+.grades__student-header {
+  margin-top: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+
+.grades__student-overall {
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.grades__overall-value {
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.grades__overall-trend {
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+.grades__trend-label {
+  color: var(--text-secondary);
+}
+
+.grades__trend-icon {
+  display: flex;
+  align-items: center;
+}
+
+.grades__student-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.grades__category-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 12px;
+}
+
+.grades__stat-card {
+  background: var(--surface);
+  padding: 16px;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.grades__stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.grades__stat-card--active {
+  box-shadow: 0 0 0 2px var(--primary);
+}
+
+.grades__card-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.grades__card-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.grades__override-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  font-size: 0.6rem;
+  background: var(--primary-light);
+  color: var(--primary);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 700;
+}
+
+.grades__section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.grades__section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.grades__section-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.grades__filter-tag {
+  background: var(--primary-light);
+  color: var(--primary);
+  font-size: 0.75rem;
+  padding: 4px 8px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+}
+
+.grades__filter-tag button {
+  background: transparent;
+  border: none;
+  color: var(--primary);
+  cursor: pointer;
+  display: flex;
+}
+
+.grades__table-wrapper {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.grades__dossier-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.grades__dossier-table th {
+  background: var(--bg-secondary);
+  padding: 12px;
+  font-size: 0.75rem;
+  text-align: left;
+  color: var(--text-secondary);
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.grades__dossier-table td {
+  padding: 12px;
+  font-size: 0.85rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.grades__row--dimmed {
+  opacity: 0.5;
+  background: var(--bg-secondary);
+}
+
+.grades__dossier-grid {
+  display: grid;
+  grid-template-columns: 1fr 280px;
+  gap: 20px;
+}
+
+.grades__graph-container {
+  height: 180px;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.grades__graph-render {
+  width: 100%;
+  height: 100%;
+  padding: 10px;
+}
+
+.grades__attendance-summary {
+  background: var(--surface);
+  padding: 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.grades__attendance-summary:hover {
+  border-color: var(--primary);
+}
+
+.grades__stat-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+}
+
+.grades__stat-val {
+  font-weight: 700;
+}
+
+.grades__overrides-disclosure {
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.grades__overrides-disclosure summary {
+  padding: 10px 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.grades__overrides-content {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+}
+
+.grades__override-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.8rem;
+}
+
+.grades__override-inputs {
+  width: 80px;
+}
+
+.grades__events-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 12px;
+}
+
+.grades__event-card {
+  background: var(--surface);
+  padding: 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+}
+
+.grades__event-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.grades__event-date {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.grades__event-note {
+  font-size: 0.85rem;
+  white-space: pre-wrap;
+}
+
+.grades__notes-area {
+  width: 100%;
+  min-height: 100px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  font-family: inherit;
+  font-size: 0.85rem;
+  resize: vertical;
+}
+
+.grades__notes-area:focus {
+  outline: none;
+  border-color: var(--primary);
 }
 
 /* ── Grid Container & Actions ────────────────────────────────────────── */
