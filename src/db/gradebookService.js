@@ -18,8 +18,8 @@ import { hasUnsyncedChanges } from './eventService.js'
  */
 export async function createAssessment({
   classId, categoryId, name, date,
-  assessmentType = 'other',
-  unit = '',
+  assessmentType = 'product',
+  unit = null,
   totalPoints,
   scaledTotal = null,
   excluded = false,

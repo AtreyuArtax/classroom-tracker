@@ -410,7 +410,7 @@
           </div>
 
           <div class="grades__student-content">
-            <!-- Category Cards (Step 2) -->
+            <!-- Category Cards -->
             <div class="grades__category-cards">
               <div 
                 v-for="cat in studentCategoryBreakdown" 
@@ -423,6 +423,40 @@
                 <div class="grades__card-label">{{ cat.name }}</div>
                 <div class="grades__card-value">{{ formatGrade(cat.percent) }}</div>
                 <div v-if="cat.overridden" class="grades__override-badge" title="Manual Override">Override</div>
+              </div>
+            </div>
+
+            <!-- Evidence Balance (Step 4) -->
+            <div v-if="studentEvidenceBalance" class="grades__section">
+              <h3 class="grades__section-title">Evidence Balance</h3>
+              <div class="grades__evidence-bars">
+                <div class="grades__evidence-row">
+                  <div class="grades__evidence-label">
+                    <span>Product</span>
+                    <span>{{ studentEvidenceBalance.product }}%</span>
+                  </div>
+                  <div class="grades__progress-bg">
+                    <div class="grades__progress-bar" :style="{ width: studentEvidenceBalance.product + '%' }"></div>
+                  </div>
+                </div>
+                <div class="grades__evidence-row">
+                  <div class="grades__evidence-label">
+                    <span>Observation</span>
+                    <span>{{ studentEvidenceBalance.observation }}%</span>
+                  </div>
+                  <div class="grades__progress-bg">
+                    <div class="grades__progress-bar grades__progress-bar--observation" :style="{ width: studentEvidenceBalance.observation + '%' }"></div>
+                  </div>
+                </div>
+                <div class="grades__evidence-row">
+                  <div class="grades__evidence-label">
+                    <span>Conversation</span>
+                    <span>{{ studentEvidenceBalance.conversation }}%</span>
+                  </div>
+                  <div class="grades__progress-bg">
+                    <div class="grades__progress-bar grades__progress-bar--conversation" :style="{ width: studentEvidenceBalance.conversation + '%' }"></div>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -673,7 +707,7 @@
                 <div class="grades__form-group">
                   <label class="grades__label">Type</label>
                   <select v-model="newAssessment.assessmentType" class="grades__input" required>
-                    <option v-for="type in assessmentTypes" :key="type" :value="type">{{ type }}</option>
+                    <option v-for="type in assessmentTypes" :key="type.value" :value="type.value">{{ type.label }}</option>
                   </select>
                 </div>
               </div>
@@ -684,8 +718,20 @@
                   <input v-model="newAssessment.date" type="date" class="grades__input" required />
                 </div>
                 <div class="grades__form-group">
-                  <label class="grades__label">Unit (Optional)</label>
-                  <input v-model="newAssessment.unit" class="grades__input" placeholder="e.g. Unit 1" />
+                  <label class="grades__label">Unit</label>
+                  <select 
+                    v-model="newAssessment.unit" 
+                    class="grades__input"
+                    :disabled="!activeClassRecord?.gradebookUnits?.length"
+                  >
+                    <option :value="null">Unassigned</option>
+                    <option v-for="u in sortedUnits" :key="u.unitId" :value="u.name">
+                      {{ u.name }}
+                    </option>
+                    <template v-if="!activeClassRecord?.gradebookUnits?.length">
+                      <option disabled value="">No units defined — add units in Setup</option>
+                    </template>
+                  </select>
                 </div>
               </div>
 
@@ -733,6 +779,7 @@ import { useClassroom } from '../composables/useClassroom.js'
 import { 
   activeClassRecord, 
   assessments,
+  grades,
   classGrades, 
   selectedStudentId, 
   selectedMilestone,
@@ -786,12 +833,16 @@ const studentAttendance = ref({ absences: 0, lates: 0 })
 const isPrivacyMode = ref(false)
 const isSidebarCollapsed = ref(false)
 
-const assessmentTypes = ['Test', 'Quiz', 'Assignment', 'Lab', 'Other']
+const assessmentTypes = [
+  { value: 'product', label: 'Product' },
+  { value: 'conversation', label: 'Conversation' },
+  { value: 'observation', label: 'Observation' }
+]
 const newAssessment = reactive({
   name: '',
   categoryId: '',
-  assessmentType: 'Test',
-  unit: '',
+  assessmentType: 'product',
+  unit: null,
   date: new Date().toISOString().slice(0, 10),
   totalPoints: 10,
   scaledTotal: null,
@@ -809,8 +860,8 @@ watch(showAddModal, (val) => {
     currentAssessmentId.value = null
     // Reset form for next 'Add' use
     newAssessment.name = ''
-    newAssessment.unit = ''
-    newAssessment.assessmentType = 'Test'
+    newAssessment.unit = null
+    newAssessment.assessmentType = 'product'
     newAssessment.totalPoints = 10
     newAssessment.scaledTotal = null
     newAssessment.retestPolicy = 'Highest'
@@ -827,6 +878,41 @@ const sortedRoster = computed(() => {
   return Object.keys(activeClassRecord.value.students)
     .map(id => ({ studentId: id, ...activeClassRecord.value.students[id] }))
     .sort((a, b) => a.lastName.localeCompare(b.lastName))
+})
+
+const sortedUnits = computed(() => {
+  if (!activeClassRecord.value?.gradebookUnits) return []
+  return [...activeClassRecord.value.gradebookUnits].sort((a, b) => (a.order || 0) - (b.order || 0))
+})
+
+const studentEvidenceBalance = computed(() => {
+  if (!selectedStudentId.value || !activeClassRecord.value) return null
+  
+  const studentGrades = grades.value.filter(g => g.studentId === selectedStudentId.value)
+  const counts = { product: 0, conversation: 0, observation: 0 }
+  let total = 0
+  
+  for (const grade of studentGrades) {
+    const assessment = assessments.value.find(a => a.assessmentId === grade.assessmentId)
+    if (!assessment) continue
+    if (assessment.excluded || grade.excluded || grade.missing) continue
+    if (!grade.attempts || grade.attempts.length === 0) continue
+    
+    const type = (assessment.assessmentType || 'product').toLowerCase()
+    if (counts[type] !== undefined) {
+      counts[type]++
+      total++
+    }
+  }
+  
+  if (total === 0) return null
+  
+  return {
+    total,
+    product: Math.round((counts.product / total) * 100),
+    conversation: Math.round((counts.conversation / total) * 100),
+    observation: Math.round((counts.observation / total) * 100)
+  }
 })
 
 const selectedStudentName = computed(() => {
@@ -2938,5 +3024,49 @@ watch(selectedAssessmentId, (val) => {
 
 .grades__btn-ghost--danger {
   color: var(--state-out);
+}
+
+/* Evidence Balance Bars */
+.grades__evidence-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 400px;
+}
+
+.grades__evidence-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.grades__evidence-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.grades__progress-bg {
+  height: 10px;
+  background: var(--bg-secondary);
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.grades__progress-bar {
+  height: 100%;
+  background: var(--primary);
+  border-radius: 5px;
+  transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.grades__progress-bar--observation {
+  background: #34c759; /* iOS Green */
+}
+
+.grades__progress-bar--conversation {
+  background: #5856d6; /* iOS Indigo */
 }
 </style>

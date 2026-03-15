@@ -20,7 +20,7 @@
 import { openDB } from 'idb'
 
 const DB_NAME = 'classroomTrackerDB'
-const DB_VERSION = 12
+const DB_VERSION = 13
 
 /**
  * Cached promise — set synchronously before the first await so every
@@ -326,6 +326,44 @@ export function getDB() {
         const settings = await settingsStore.get('singleton')
         if (settings) {
           settings.schemaVersion = 12
+          await settingsStore.put(settings, 'singleton')
+        }
+      }
+
+      // ── version 13 migration ───────────────────────────────────────────────
+      if (oldVersion < 13) {
+        // Update all assessments: overhaul types and replace units with null
+        const assessmentStore = transaction.objectStore('assessments')
+        const allAssessments = await assessmentStore.getAll()
+        
+        const oldTypes = new Set(['test', 'quiz', 'assignment', 'lab', 'other'])
+        
+        for (const assessment of allAssessments) {
+          let mutated = false
+          
+          // Overhaul type
+          const currentType = (assessment.assessmentType || '').toLowerCase()
+          if (oldTypes.has(currentType)) {
+            assessment.assessmentType = 'product'
+            mutated = true
+          }
+          
+          // Clear unit field (from free text to null)
+          if (assessment.unit !== null) {
+            assessment.unit = null
+            mutated = true
+          }
+          
+          if (mutated) {
+            await assessmentStore.put(assessment)
+          }
+        }
+
+        // Update settings singleton version
+        const settingsStore = transaction.objectStore('settings')
+        const settings = await settingsStore.get('singleton')
+        if (settings) {
+          settings.schemaVersion = 13
           await settingsStore.put(settings, 'singleton')
         }
       }
