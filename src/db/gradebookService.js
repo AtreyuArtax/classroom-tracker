@@ -283,6 +283,151 @@ export function resolveAttemptScore(attempts, retestPolicy) {
 }
 
 /**
+ * Finds the dominant 10% bucket for a set of scores.
+ */
+function getBucketMode(scores) {
+  if (!scores || scores.length === 0) return { result: null, isFallback: false }
+  
+  const buckets = Array.from({ length: 11 }, () => []) // 0-10, 10-20, ..., 90-100, and a catch-all 100
+  
+  scores.forEach(s => {
+    let index = Math.floor(s.percentage / 10)
+    if (index > 10) index = 10
+    if (index < 0) index = 0
+    buckets[index].push(s)
+  })
+
+  let maxCount = 0
+  let bestBucketIndex = -1
+
+  for (let i = 0; i <= 10; i++) {
+    if (buckets[i].length > maxCount) {
+      maxCount = buckets[i].length
+      bestBucketIndex = i
+    } else if (buckets[i].length === maxCount && maxCount > 0) {
+      // Tie-break: use bucket with most recent score
+      const currentNewest = Math.max(...buckets[bestBucketIndex].map(s => new Date(s.date).getTime()))
+      const candidateNewest = Math.max(...buckets[i].map(s => new Date(s.date).getTime()))
+      if (candidateNewest > currentNewest) {
+        bestBucketIndex = i
+      }
+    }
+  }
+
+  if (maxCount <= 1) return { result: null, isFallback: false }
+
+  const bucketScores = buckets[bestBucketIndex].map(s => s.percentage)
+  const mean = bucketScores.reduce((a, b) => a + b, 0) / bucketScores.length
+  
+  const low = bestBucketIndex * 10
+  const high = bestBucketIndex === 10 ? 100 : low + 9
+  const label = `${low}-${high}%`
+
+  return { 
+    result: mean, 
+    bucketLabel: label, 
+    count: maxCount, 
+    isFallback: false 
+  }
+}
+
+/**
+ * Calculates the median of an array of numbers.
+ */
+function calculateMedian(scores) {
+  if (!scores || scores.length === 0) return null
+  const sorted = [...scores].sort((a, b) => a - b)
+  const mid = Math.floor(sorted.length / 2)
+  if (sorted.length % 2 === 0) {
+    return (sorted[mid - 1] + sorted[mid]) / 2
+  }
+  return sorted[mid]
+}
+
+/**
+ * Calculates Most Consistent grade based on bucket mode per category.
+ */
+function calculateMostConsistent(studentId, classRecord, gradeMap, assessments) {
+  const categories = classRecord.gradebookCategories
+  if (!categories || categories.length === 0) return null
+
+  const breakdown = {}
+  let weightedSum = 0
+  let totalWeight = 0
+
+  for (const cat of categories) {
+    const catAssessments = assessments.filter(a => 
+      a.target === 'class' && 
+      a.categoryId === cat.categoryId && 
+      !a.excluded
+    )
+
+    const scores = []
+    for (const a of catAssessments) {
+      const g = gradeMap[a.assessmentId]
+      if (!g || g.excluded || g.missing || !g.attempts || g.attempts.length === 0) continue
+      
+      const earned = resolveAttemptScore(g.attempts, a.retestPolicy)
+      if (earned === null) continue
+      
+      scores.push({
+        percentage: (earned / a.totalPoints) * 100,
+        date: a.date
+      })
+    }
+
+    let result = getBucketMode(scores)
+    let percentage = result.result
+    let isFallback = false
+    let bucketLabel = result.bucketLabel
+    let count = result.count
+
+    if (percentage === null || scores.length < 3) {
+      percentage = calculateMedian(scores.map(s => s.percentage))
+      isFallback = true
+      bucketLabel = null
+      count = scores.length
+    }
+
+    if (percentage !== null) {
+      breakdown[cat.categoryId] = { 
+        percentage, 
+        bucketLabel, 
+        count, 
+        totalCount: scores.length,
+        isFallback 
+      }
+      weightedSum += percentage * (cat.weight / 100)
+      totalWeight += cat.weight
+    } else {
+      breakdown[cat.categoryId] = null
+    }
+  }
+
+  if (totalWeight === 0) return null
+
+  return {
+    percentage: (weightedSum / totalWeight) * 100,
+    isFallback: Object.values(breakdown).some(b => b?.isFallback),
+    categoryBreakdown: breakdown
+  }
+}
+
+function calculateOverallMedian(studentId, gradeMap, assessments) {
+  const scores = []
+  for (const a of assessments) {
+    if (a.target !== 'class' || a.excluded) continue
+    const g = gradeMap[a.assessmentId]
+    if (!g || g.excluded || g.missing || !g.attempts || g.attempts.length === 0) continue
+    
+    const earned = resolveAttemptScore(g.attempts, a.retestPolicy)
+    if (earned === null) continue
+    scores.push((earned / a.totalPoints) * 100)
+  }
+  return calculateMedian(scores)
+}
+
+/**
  * Calculates a student's weighted average for a class.
  * 
  * @param {string} studentId
@@ -396,8 +541,14 @@ export async function calculateStudentGrade(studentId, classRecord, { asOf = nul
 
   const overallGrade = weightUsed === 0 ? null : (weightedSum / weightUsed) * 100
 
+  // New Metrics (Step 2)
+  const mostConsistent = calculateMostConsistent(studentId, classRecord, gradeMap, assessments)
+  const median = calculateOverallMedian(studentId, gradeMap, assessments)
+
   return {
     overallGrade: overallGrade !== null ? Math.round(overallGrade * 10) / 10 : null,
+    mostConsistent,
+    median: median !== null ? Math.round(median * 10) / 10 : null,
     categoryResults,
     weightUsed,
     asOf

@@ -392,18 +392,41 @@
                 <div class="grades__view-subtitle">
                   {{ activeClassRecord?.name }} · Period {{ activeClassRecord?.periodNumber }}
                 </div>
-              </div>
-              <div class="grades__student-overall">
-                <div class="grades__overall-badge" :style="{ background: getHeatColor(studentOverallGrade) }">
-                  {{ formatGrade(studentOverallGrade) }}
-                </div>
-                <div v-if="gradeTrendInfo" class="grades__overall-trend">
-                  <span class="grades__trend-label">Midterm: {{ formatGrade(gradeTrendInfo.midterm) }} →</span>
-                  <span class="grades__trend-icon" :style="{ color: gradeTrendInfo.color }">
-                    <ArrowUp v-if="gradeTrendInfo.trend === 'up'" :size="14" />
-                    <ArrowDown v-else-if="gradeTrendInfo.trend === 'down'" :size="14" />
-                    <Minus v-else :size="14" />
-                  </span>
+                
+                <!-- New Stats Row (Step 3) -->
+                <div class="grades__stats-summary">
+                  <div class="grades__stat-item">
+                    <span class="grades__stat-label">Official Grade:</span>
+                    <span class="grades__stat-badge" :style="{ background: getHeatColor(studentOverallGrade) }">
+                      {{ formatGrade(studentOverallGrade) }}
+                    </span>
+                  </div>
+                  
+                  <div class="grades__stat-item">
+                    <span class="grades__stat-label">
+                      Most Consistent:
+                      <span class="grades__info-icon" title="Calculated using bucket mode per category, then weighted. Ignores outliers to show your most frequent level of performance.">ⓘ</span>
+                    </span>
+                    <template v-if="classGrades[selectedStudentId]?.mostConsistent">
+                      <span class="grades__stat-badge" :style="{ background: getHeatColor(classGrades[selectedStudentId].mostConsistent.percentage) }">
+                        {{ formatGrade(classGrades[selectedStudentId].mostConsistent.percentage) }}
+                      </span>
+                      <span v-if="classGrades[selectedStudentId].mostConsistent.isFallback" class="grades__stat-hint">
+                        (median fallback — insufficient clustering)
+                      </span>
+                    </template>
+                    <span v-else class="grades__stat-empty">Not enough data</span>
+                  </div>
+
+                  <div class="grades__stat-item">
+                    <span class="grades__stat-label">Median:</span>
+                    <template v-if="classGrades[selectedStudentId]?.median !== null">
+                      <span class="grades__stat-badge" :style="{ background: getHeatColor(classGrades[selectedStudentId].median) }">
+                        {{ formatGrade(classGrades[selectedStudentId].median) }}
+                      </span>
+                    </template>
+                    <span v-else class="grades__stat-empty">Not enough data</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -421,7 +444,22 @@
                 @click="filterCategory = (filterCategory === cat.categoryId ? null : cat.categoryId)"
               >
                 <div class="grades__card-label">{{ cat.name }}</div>
-                <div class="grades__card-value">{{ formatGrade(cat.percent) }}</div>
+                <div class="grades__card-metrics">
+                  <div class="grades__card-metric-row">
+                    <span class="grades__card-metric-label">Official:</span>
+                    <span class="grades__card-metric-value">{{ formatGrade(cat.percent) }}</span>
+                  </div>
+                  <div class="grades__card-metric-row">
+                    <span class="grades__card-metric-label">Consistent:</span>
+                    <span v-if="cat.consistent !== null" class="grades__card-metric-value">
+                      {{ Math.round(cat.consistent) }}%
+                      <span v-if="!cat.consistentIsFallback" class="grades__card-hint">
+                        ({{ cat.consistentLabel }}, {{ cat.consistentCount }} of {{ cat.consistentTotalCount }})
+                      </span>
+                    </span>
+                    <span v-else class="grades__card-metric-value">—</span>
+                  </div>
+                </div>
                 <div v-if="cat.overridden" class="grades__override-badge" title="Manual Override">Override</div>
               </div>
             </div>
@@ -1178,11 +1216,18 @@ const studentCategoryBreakdown = computed(() => {
       percentage = studentData.categoryResults[cat.categoryId]?.percentage ?? null
     }
 
+    const consistentData = studentData.mostConsistent?.categoryBreakdown?.[cat.categoryId]
+
     return {
       categoryId: cat.categoryId,
       name: cat.name,
       percent: percentage,
-      overridden: isOverridden
+      overridden: isOverridden,
+      consistent: consistentData?.percentage ?? null,
+      consistentLabel: consistentData?.bucketLabel ?? null,
+      consistentCount: consistentData?.count ?? null,
+      consistentTotalCount: consistentData?.totalCount ?? null,
+      consistentIsFallback: consistentData?.isFallback ?? false
     }
   })
 })
@@ -1278,6 +1323,14 @@ function getGradeColor(grade) {
   if (grade >= 70) return '#1a5276' // muted blue
   if (grade >= 60) return '#7d6608' // muted amber
   return '#c0392b' // muted red
+}
+
+function getHeatColor(percent) {
+  if (percent === null || percent === undefined) return 'var(--bg-secondary)'
+  if (percent >= 80) return 'var(--grade-high)'
+  if (percent >= 70) return 'var(--grade-mid-high)'
+  if (percent >= 60) return 'var(--grade-mid-low)'
+  return 'var(--grade-low)'
 }
 
 // --- Inline Entry ---
@@ -1638,14 +1691,6 @@ async function saveNewAttempt() {
 }
 
 // --- Dossier Methods ---
-function getHeatColor(percent) {
-  if (percent === null) return 'var(--border)'
-  if (percent >= 80) return 'var(--grade-high)'
-  if (percent >= 70) return 'var(--grade-mid-high)'
-  if (percent >= 60) return 'var(--grade-mid-low)'
-  return 'var(--grade-low)'
-}
-
 function isPostMilestone(date) {
   if (!selectedMilestone.value || !activeClassRecord.value) return false
   const m = activeClassRecord.value.gradebookMilestones.find(mil => mil.milestoneId === selectedMilestone.value)
@@ -3293,5 +3338,98 @@ watch(selectedAssessmentId, (val) => {
 
 .grades__progress-bar--conversation {
   background: #5856d6; /* iOS Indigo */
+}
+
+/* Stats Summary and Dossier Metrics */
+.grades__student-header {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.grades__stats-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  margin-top: 8px;
+}
+
+.grades__stat-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.grades__stat-label {
+  color: var(--text-secondary);
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.grades__stat-badge {
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-weight: 600;
+  color: var(--text-primary);
+  min-width: 50px;
+  text-align: center;
+}
+
+.grades__stat-hint {
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.grades__stat-empty {
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.grades__info-icon {
+  font-size: 12px;
+  color: var(--text-secondary);
+  cursor: help;
+  background: var(--bg-secondary);
+  width: 16px;
+  height: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 1px solid var(--border-color);
+}
+
+.grades__card-metrics {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.grades__card-metric-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 13px;
+}
+
+.grades__card-metric-label {
+  color: var(--text-secondary);
+}
+
+.grades__card-metric-value {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.grades__card-hint {
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-weight: normal;
+  margin-left: 4px;
 }
 </style>
