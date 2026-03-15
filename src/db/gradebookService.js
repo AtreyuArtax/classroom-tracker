@@ -20,6 +20,8 @@ export async function createAssessment({
   classId, categoryId, name, date,
   assessmentType = 'product',
   unit = null,
+  target = 'class',
+  targetStudentId = null,
   totalPoints,
   scaledTotal = null,
   excluded = false,
@@ -29,6 +31,7 @@ export async function createAssessment({
   const assessment = {
     classId, categoryId, name, date,
     assessmentType, unit,
+    target, targetStudentId,
     totalPoints, scaledTotal,
     excluded, retestPolicy,
     createdAt: new Date().toISOString()
@@ -201,6 +204,21 @@ export async function updateGradeFlags(assessmentId, studentId, flags) {
 }
 
 /**
+ * Deletes a grade record for a student/assessment.
+ * 
+ * @param {number} assessmentId
+ * @param {string} studentId
+ */
+export async function deleteGrade(assessmentId, studentId) {
+  const db = await getDB()
+  const existing = await db.getFromIndex('grades', 'by_assessmentAndStudent', [assessmentId, studentId])
+  if (existing) {
+    await db.delete('grades', existing.gradeId)
+    hasUnsyncedChanges.value = true
+  }
+}
+
+/**
  * Returns all grades for all students in a class.
  * 
  * @param {string} classId
@@ -285,10 +303,11 @@ export async function calculateStudentGrade(studentId, classRecord, { asOf = nul
   const categoryResults = {}
 
   for (const category of categories) {
-    // Filter assessments for this category that are not excluded at assessment level
+    // Filter assessments for this category
     let catAssessments = assessments.filter(a =>
       a.categoryId === category.categoryId &&
-      !a.excluded
+      !a.excluded &&
+      (a.target === 'class' || (a.target === 'individual' && a.targetStudentId === studentId))
     )
 
     // Apply asOf date filter if provided
@@ -406,7 +425,12 @@ export async function calculateClassGrades(classRecord, { asOf = null } = {}) {
  */
 export function calculateAssessmentStats(assessmentId, grades, assessment) {
   const scores = grades
-    .filter(g => g.assessmentId === assessmentId && !g.excluded && !g.missing && g.attempts.length > 0)
+    .filter(g => {
+      if (g.assessmentId !== assessmentId || g.excluded || g.missing || g.attempts.length === 0) return false
+      // Skip stats if it's an individual assessment
+      if (assessment.target === 'individual') return false
+      return true
+    })
     .map(g => resolveAttemptScore(g.attempts, assessment.retestPolicy))
     .filter(s => s !== null)
 

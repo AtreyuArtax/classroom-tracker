@@ -490,11 +490,37 @@
                       <td>{{ row.name }}</td>
                       <td><span class="grades__badge">{{ row.type }}</span></td>
                       <td>{{ formatDateShort(row.date) }}</td>
-                      <td>
-                        <span v-if="row.missing" class="grades__cell-missing">M</span>
-                        <span v-else-if="row.excluded" class="grades__cell-excluded">EX</span>
-                        <span v-else-if="row.resolvedScore !== null">{{ Math.round(row.resolvedScore * 10) / 10 }} / {{ row.totalPoints }}</span>
-                        <span v-else class="grades__cell-placeholder">—</span>
+                      <td 
+                        class="grades__td-assessment"
+                        :style="getCellStyle(selectedStudentId, row.assessmentId, row.totalPoints)"
+                        @click="startEdit(selectedStudentId, row.assessmentId)"
+                        @contextmenu.prevent="onContextMenu($event, selectedStudentId, row.assessmentId)"
+                      >
+                        <!-- Inline Editor -->
+                        <div v-if="editingCell?.sId === selectedStudentId && editingCell?.aId === row.assessmentId" class="grades__cell-edit">
+                          <input 
+                            ref="editInput"
+                            v-model.number="editingCell.value"
+                            type="number"
+                            min="0"
+                            :max="row.totalPoints"
+                            class="grades__input-inline"
+                            @blur="saveEdit"
+                            @keydown.enter.prevent="onEnterKey"
+                            @keydown.tab.prevent="onEnterKey"
+                            @keydown.up.prevent="onArrowKey('up')"
+                            @keydown.down.prevent="onArrowKey('down')"
+                            @keydown.esc.prevent="cancelEdit"
+                          />
+                        </div>
+
+                        <div v-else-if="gradeMap[row.assessmentId]?.[selectedStudentId]" class="grades__cell-content">
+                          <span v-if="row.missing" class="grades__cell-missing">M</span>
+                          <span v-else-if="row.excluded" class="grades__cell-excluded">EX</span>
+                          <span v-else-if="row.resolvedScore !== null">{{ Math.round(row.resolvedScore * 10) / 10 }} / {{ row.totalPoints }}</span>
+                          <span v-else class="grades__cell-placeholder">—</span>
+                        </div>
+                        <div v-else class="grades__cell-placeholder">—</div>
                       </td>
                       <td>
                         <span v-if="row.resolvedScore !== null">{{ Math.round((row.resolvedScore / row.totalPoints) * 100) }}%</span>
@@ -505,6 +531,79 @@
                           class="grades__dot-indicator" 
                           @click="openAttempts($event, selectedStudentId, row.assessmentId)"
                         >•</button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Individual Assessments (Step 5) -->
+            <div v-if="individualStudentAssessments.length" class="grades__section">
+              <h3 class="grades__section-title">
+                <UserCheck :size="16" /> Individual Assessments
+              </h3>
+              <div class="grades__table-wrapper">
+                <table class="grades__dossier-table">
+                  <thead>
+                    <tr>
+                      <th>Assessment</th>
+                      <th>Type</th>
+                      <th>Date</th>
+                      <th>Score</th>
+                      <th>%</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="row in individualStudentAssessments" :key="row.assessmentId">
+                      <td>{{ row.name }}</td>
+                      <td><span class="grades__badge">{{ row.assessmentType }}</span></td>
+                      <td>{{ formatDateShort(row.date) }}</td>
+                      <td 
+                        class="grades__td-assessment"
+                        :style="getCellStyle(selectedStudentId, row.assessmentId, row.totalPoints)"
+                        @click="startEdit(selectedStudentId, row.assessmentId)"
+                        @contextmenu.prevent="onContextMenu($event, selectedStudentId, row.assessmentId)"
+                      >
+                        <!-- Inline Editor -->
+                        <div v-if="editingCell?.sId === selectedStudentId && editingCell?.aId === row.assessmentId" class="grades__cell-edit">
+                          <input 
+                            ref="editInput"
+                            v-model.number="editingCell.value"
+                            type="number"
+                            min="0"
+                            :max="row.totalPoints"
+                            class="grades__input-inline"
+                            @blur="saveEdit"
+                            @keydown.enter.prevent="onEnterKey"
+                            @keydown.tab.prevent="onEnterKey"
+                            @keydown.up.prevent="onArrowKey('up')"
+                            @keydown.down.prevent="onArrowKey('down')"
+                            @keydown.esc.prevent="cancelEdit"
+                          />
+                        </div>
+
+                        <div v-else-if="gradeMap[row.assessmentId]?.[selectedStudentId]" class="grades__cell-content">
+                          <span v-if="row.missing" class="grades__cell-missing">M</span>
+                          <span v-else-if="row.excluded" class="grades__cell-excluded">EX</span>
+                          <span v-else-if="row.resolvedScore !== null">{{ Math.round(row.resolvedScore * 10) / 10 }} / {{ row.totalPoints }}</span>
+                          <span v-else class="grades__cell-placeholder">—</span>
+                        </div>
+                        <div v-else class="grades__cell-placeholder">—</div>
+                      </td>
+                      <td>
+                        <span v-if="row.resolvedScore !== null">{{ Math.round((row.resolvedScore / row.totalPoints) * 100) }}%</span>
+                      </td>
+                      <td>
+                        <button 
+                          v-if="row.attempts > 1" 
+                          class="grades__dot-indicator" 
+                          @click="openAttempts($event, selectedStudentId, row.assessmentId)"
+                        >•</button>
+                        <button class="grades__icon-btn" @click="onEditAssessment(row)">
+                          <Pencil :size="14" />
+                        </button>
                       </td>
                     </tr>
                   </tbody>
@@ -690,6 +789,36 @@
             </header>
             
             <form class="grades__modal-form" @submit.prevent="saveAssessment">
+              <!-- Target Toggle (Step 2) -->
+              <div class="grades__form-group">
+                <label class="grades__label">Scope</label>
+                <div class="grades__toggle-group grades__toggle-group--large">
+                  <button 
+                    type="button" 
+                    class="grades__toggle-btn" 
+                    :class="{ 'grades__toggle-btn--active': newAssessment.target === 'class' }"
+                    @click="newAssessment.target = 'class'; onTargetChange()"
+                  >Class Assessment</button>
+                  <button 
+                    type="button" 
+                    class="grades__toggle-btn" 
+                    :class="{ 'grades__toggle-btn--active': newAssessment.target === 'individual' }"
+                    @click="newAssessment.target = 'individual'; onTargetChange()"
+                  >Individual Assessment</button>
+                </div>
+              </div>
+
+              <!-- Student Picker (Individual Only) -->
+              <div v-if="newAssessment.target === 'individual'" class="grades__form-group">
+                <label class="grades__label">Target Student</label>
+                <select v-model="newAssessment.targetStudentId" class="grades__input" required>
+                  <option :value="null" disabled>Select student...</option>
+                  <option v-for="s in sortedRoster" :key="s.studentId" :value="s.studentId">
+                    {{ s.lastName }}, {{ s.firstName }}
+                  </option>
+                </select>
+              </div>
+
               <div class="grades__form-group">
                 <label class="grades__label">Name</label>
                 <input v-model="newAssessment.name" class="grades__input" placeholder="e.g. Unit 1 Test" required />
@@ -788,6 +917,7 @@ import {
   loadGradebook,
   refreshGrades,
   enterGrade,
+  clearGrade,
   markMissing,
   markExcluded,
   editAssessment,
@@ -799,7 +929,7 @@ import {
   fetchStudentDossierData,
   deleteGradebookEvent
 } from '../composables/useGradebook.js'
-import { Plus, BarChart2, Settings, Pencil, XCircle, AlertCircle, Trash2, X, MoreVertical, ArrowLeft, Check, ArrowUp, ArrowDown, Minus, GraduationCap, Eye, EyeOff, ChevronLeft, ChevronRight } from 'lucide-vue-next'
+import { Plus, BarChart2, Settings, Pencil, XCircle, AlertCircle, Trash2, X, MoreVertical, ArrowLeft, Check, ArrowUp, ArrowDown, Minus, GraduationCap, Eye, EyeOff, ChevronLeft, ChevronRight, UserCheck } from 'lucide-vue-next'
 import GradeTrendChart from '../components/GradeTrendChart.vue'
 
 const props = defineProps({
@@ -843,6 +973,8 @@ const newAssessment = reactive({
   categoryId: '',
   assessmentType: 'product',
   unit: null,
+  target: 'class',
+  targetStudentId: null,
   date: new Date().toISOString().slice(0, 10),
   totalPoints: 10,
   scaledTotal: null,
@@ -862,6 +994,8 @@ watch(showAddModal, (val) => {
     newAssessment.name = ''
     newAssessment.unit = null
     newAssessment.assessmentType = 'product'
+    newAssessment.target = 'class'
+    newAssessment.targetStudentId = null
     newAssessment.totalPoints = 10
     newAssessment.scaledTotal = null
     newAssessment.retestPolicy = 'Highest'
@@ -922,7 +1056,25 @@ const selectedStudentName = computed(() => {
 })
 
 const sortedAssessments = computed(() => {
-  return [...assessments.value].sort((a, b) => new Date(a.date) - new Date(b.date))
+  return [...assessments.value]
+    .filter(a => a.target === 'class')
+    .sort((a, b) => new Date(a.date) - new Date(b.date))
+})
+
+const individualStudentAssessments = computed(() => {
+  if (!selectedStudentId.value || !assessments.value) return []
+  return assessments.value
+    .filter(a => a.target === 'individual' && a.targetStudentId === selectedStudentId.value)
+    .sort((a, b) => new Date(a.date) - new Date(b.date))
+    .map(a => {
+      const g = gradeMap.value[a.assessmentId]?.[selectedStudentId.value]
+      return {
+        ...a,
+        resolvedScore: g?.resolvedScore ?? null,
+        missing: g?.missing,
+        excluded: g?.excluded
+      }
+    })
 })
 
 const currentAssessment = computed(() => {
@@ -1153,7 +1305,7 @@ async function saveEdit() {
   if (!editingCell.value) return
   const { sId, aId, value } = editingCell.value
   
-  // If value is null/empty and it was already null/empty, or if it matches original, just dismiss
+  // Normalize values
   const normalizedNew = (value === null || value === undefined || value === '') ? null : Number(value)
   const normalizedOld = (editOriginalValue.value === null || editOriginalValue.value === undefined || editOriginalValue.value === '') ? null : Number(editOriginalValue.value)
 
@@ -1162,7 +1314,23 @@ async function saveEdit() {
     return
   }
 
-  const assessment = sortedAssessments.value.find(a => a.assessmentId === aId)
+  // If new value is null (cleared), call clearGrade
+  if (normalizedNew === null) {
+    const grade = gradeMap.value[aId]?.[sId]
+    const hasMultipleAttempts = grade?.attempts?.length > 1
+
+    if (hasMultipleAttempts) {
+      alert('Cannot clear: This student has multiple attempts. Use the attempt history menu (•) to manage or delete specific entries.')
+      editingCell.value = null
+      return
+    }
+
+    await clearGrade(aId, sId)
+    editingCell.value = null
+    return
+  }
+
+  const assessment = assessments.value.find(a => a.assessmentId === aId)
   if (!assessment) return
 
   // Clamp value
@@ -1181,14 +1349,26 @@ async function onArrowKey(direction) {
   const { sId, aId } = editingCell.value
   await saveEdit()
   
-  // Move to next/prev student in the same column
-  const currentIndex = sortedRoster.value.findIndex(s => s.studentId === sId)
-  if (direction === 'up' && currentIndex > 0) {
-    const prevStudent = sortedRoster.value[currentIndex - 1]
-    startEdit(prevStudent.studentId, aId)
-  } else if (direction === 'down' && currentIndex < sortedRoster.value.length - 1) {
-    const nextStudent = sortedRoster.value[currentIndex + 1]
-    startEdit(nextStudent.studentId, aId)
+  if (selectedStudentId.value) {
+    // Dossier Mode: Navigate vertical (assessments)
+    // We'll combine them for navigation ease, though they are in separate tables
+    const combined = [...filteredStudentAssessments.value, ...individualStudentAssessments.value]
+    const currentIndex = combined.findIndex(a => a.assessmentId === aId)
+    if (direction === 'up' && currentIndex > 0) {
+      startEdit(sId, combined[currentIndex - 1].assessmentId)
+    } else if (direction === 'down' && currentIndex < combined.length - 1) {
+      startEdit(sId, combined[currentIndex + 1].assessmentId)
+    }
+  } else {
+    // Grid Mode: Navigate vertical (students)
+    const currentIndex = sortedRoster.value.findIndex(s => s.studentId === sId)
+    if (direction === 'up' && currentIndex > 0) {
+      const prevStudent = sortedRoster.value[currentIndex - 1]
+      startEdit(prevStudent.studentId, aId)
+    } else if (direction === 'down' && currentIndex < sortedRoster.value.length - 1) {
+      const nextStudent = sortedRoster.value[currentIndex + 1]
+      startEdit(nextStudent.studentId, aId)
+    }
   }
 }
 
@@ -1341,6 +1521,13 @@ async function onDeleteAttempt(attemptId) {
   }
 }
 
+// --- Assessment Modal Helpers ---
+function onTargetChange() {
+  if (newAssessment.target === 'individual') {
+    newAssessment.assessmentType = 'conversation'
+  }
+}
+
 // --- Assessment Modal ---
 async function saveAssessment() {
   if (!newAssessment.name || !newAssessment.categoryId) return
@@ -1351,6 +1538,8 @@ async function saveAssessment() {
     assessmentType: newAssessment.assessmentType,
     unit:           newAssessment.unit,
     date:           newAssessment.date,
+    target:         newAssessment.target,
+    targetStudentId: newAssessment.targetStudentId,
     totalPoints:    newAssessment.totalPoints,
     scaledTotal:    newAssessment.scaledTotal,
     retestPolicy:   newAssessment.retestPolicy
@@ -2093,6 +2282,15 @@ watch(selectedAssessmentId, (val) => {
 }
 
 /* ── Toolbar ───────────────────────────────────────────────────────── */
+.grades__toggle-group--large {
+  width: 100%;
+}
+
+.grades__toggle-group--large .grades__toggle-btn {
+  flex: 1;
+  padding: 10px;
+}
+
 .grades__toolbar {
   padding: 12px 20px;
   background: var(--surface);
@@ -2721,6 +2919,7 @@ watch(selectedAssessmentId, (val) => {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  max-height: 95vh;
   animation: modal-enter 0.3s ease-out;
 }
 
@@ -2745,16 +2944,35 @@ watch(selectedAssessmentId, (val) => {
 }
 
 .grades__modal-form {
-  padding: 24px;
+  padding: 16px 24px 24px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 14px;
+  overflow-y: auto;
+  max-height: calc(95vh - 120px); /* adjusted for header/footer */
+}
+
+.grades__modal-form::-webkit-scrollbar {
+  width: 4px;
+}
+
+.grades__modal-form::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.grades__modal-form::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 2px;
 }
 
 .grades__form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 16px;
+}
+
+.grades__form-row--compact {
+  gap: 12px;
 }
 
 .grades__form-group {
@@ -2915,6 +3133,13 @@ watch(selectedAssessmentId, (val) => {
 }
 
 /* Assessment Table */
+.grades__dossier-table td.grades__td-assessment {
+  width: 140px;
+  min-width: 120px;
+  padding: 4px;
+  text-align: center;
+}
+
 .grades__assessment-list-wrapper {
   flex: 1;
   overflow-y: auto;

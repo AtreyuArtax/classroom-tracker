@@ -144,6 +144,18 @@ export async function setPrimaryAttempt(assessmentId, studentId, attemptId) {
 }
 
 /**
+ * Clears all attempts and removes the grade record for a student on an assessment.
+ */
+export async function clearGrade(assessmentId, studentId) {
+  if (!activeClassRecord.value) return
+  
+  await gradebookService.deleteGrade(assessmentId, studentId)
+  
+  grades.value = await gradebookService.getGradesByClass(activeClassRecord.value.classId)
+  await refreshGrades()
+}
+
+/**
  * Toggles the 'missing' flag for a student's grade.
  */
 export async function markMissing(assessmentId, studentId, missing) {
