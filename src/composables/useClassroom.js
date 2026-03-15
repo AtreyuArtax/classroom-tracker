@@ -317,6 +317,7 @@ async function createClass(opts) {
         name: opts.name,
         periodNumber: opts.periodNumber,
         periodStartTime: opts.periodStartTime ?? '08:45',
+        gradebookUnits: [],
         students: {},
     }
     await classService.saveClass(newCls)

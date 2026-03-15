@@ -32,7 +32,7 @@ async function _readSettings() {
 
     // Fallback: seed defaults (should have been written during upgrade, but guard anyway)
     const defaults = {
-        schemaVersion: 10,
+        schemaVersion: 12,
         gridSize: { rows: 6, cols: 6 },
         behaviorCodes: {
             note: {

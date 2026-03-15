@@ -443,6 +443,32 @@
           </button>
         </div>
 
+        <!-- Units -->
+        <div class="setup__card">
+          <h2 class="setup__card-title">Units</h2>
+          <div class="setup__gb-list">
+            <div v-for="unit in activeClass.gradebookUnits" :key="unit.unitId" class="setup__gb-item">
+              <input 
+                v-model="unit.name" 
+                class="setup__input setup__input--naked" 
+                placeholder="Unit Name"
+              />
+              <div class="setup__gb-actions">
+                <button 
+                  class="setup__icon-btn setup__icon-btn--danger" 
+                  title="Delete Unit"
+                  @click="onDeleteUnit(unit.unitId)"
+                >
+                  <Trash2 :size="16" />
+                </button>
+              </div>
+            </div>
+          </div>
+          <button class="setup__btn-ghost setup__btn--full" @click="addUnit">
+            <Plus :size="16" /> Add Unit
+          </button>
+        </div>
+
         <!-- Milestones -->
         <div class="setup__card">
           <h2 class="setup__card-title">Milestones</h2>
@@ -952,10 +978,17 @@ watch(
   { deep: true }
 )
 
+watch(
+  () => activeClass.value?.gradebookUnits,
+  () => debouncedSave(),
+  { deep: true }
+)
+
 async function saveGradebookSettings() {
   if (!activeClass.value) return
   await classService.updateClass(activeClass.value.classId, {
     gradebookCategories: activeClass.value.gradebookCategories,
+    gradebookUnits: activeClass.value.gradebookUnits,
     gradebookMilestones: activeClass.value.gradebookMilestones,
     gradebookNotes: activeClass.value.gradebookNotes
   })
@@ -993,6 +1026,36 @@ async function onDeleteCategory(cat) {
   }
 
   activeClass.value.gradebookCategories = activeClass.value.gradebookCategories.filter(c => c.categoryId !== cat.categoryId)
+  await saveGradebookSettings()
+}
+
+async function addUnit() {
+  if (!activeClass.value) return
+  const newUnit = {
+    unitId: crypto.randomUUID(),
+    name: 'New Unit'
+  }
+  if (!activeClass.value.gradebookUnits) {
+    activeClass.value.gradebookUnits = []
+  }
+  activeClass.value.gradebookUnits.push(newUnit)
+  await saveGradebookSettings()
+}
+
+async function onDeleteUnit(unitId) {
+  if (!activeClass.value) return
+  
+  // Check if assessment exist for this unit
+  const assessments = await gradebookService.getAssessmentsByClass(activeClass.value.classId)
+  const unit = activeClass.value.gradebookUnits.find(u => u.unitId === unitId)
+  const inUse = assessments.some(a => a.unit === unit?.name)
+  
+  if (inUse) {
+    window.alert(`Cannot delete unit "${unit?.name || 'this unit'}" because it has assessments assigned to it. Remove all assessments in this unit before deleting.`)
+    return
+  }
+
+  activeClass.value.gradebookUnits = activeClass.value.gradebookUnits.filter(u => u.unitId !== unitId)
   await saveGradebookSettings()
 }
 

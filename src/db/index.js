@@ -20,7 +20,7 @@
 import { openDB } from 'idb'
 
 const DB_NAME = 'classroomTrackerDB'
-const DB_VERSION = 11
+const DB_VERSION = 12
 
 /**
  * Cached promise — set synchronously before the first await so every
@@ -90,7 +90,7 @@ export function getDB() {
       if (oldVersion === 0) {
         transaction.objectStore('settings').put(
           {
-            schemaVersion: 10,
+            schemaVersion: 12,
             gridSize: { rows: 6, cols: 6 },
             behaviorCodes: {
               m: { icon: 'Smartphone', label: 'On Device', category: 'redirect', type: 'standard', requiresNote: false, isTopLevel: true },
@@ -305,6 +305,27 @@ export function getDB() {
           if (settings.gradebookTemplates === undefined) {
             settings.gradebookTemplates = []
           }
+          await settingsStore.put(settings, 'singleton')
+        }
+      }
+
+      // ── version 12 migration ───────────────────────────────────────────────
+      if (oldVersion < 12) {
+        // Update all class records to include gradebookUnits
+        const tx12 = transaction.objectStore('classes')
+        const allClasses = await tx12.getAll()
+        for (const cls of allClasses) {
+          if (cls.gradebookUnits === undefined) {
+            cls.gradebookUnits = []
+            await tx12.put(cls)
+          }
+        }
+
+        // Update settings singleton version
+        const settingsStore = transaction.objectStore('settings')
+        const settings = await settingsStore.get('singleton')
+        if (settings) {
+          settings.schemaVersion = 12
           await settingsStore.put(settings, 'singleton')
         }
       }
