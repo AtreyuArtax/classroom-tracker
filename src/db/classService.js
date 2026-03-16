@@ -256,6 +256,7 @@ export async function importRoster(classId, studentsArray) {
                 seat: null,
                 generalNote: '',
                 activeStates: { isOut: false, outTime: null, isAbsent: false },
+                excludeFromAnalytics: false,
             }
             inserted++
         }
@@ -349,4 +350,24 @@ export async function updateClass(classId, updates) {
     await db.put('classes', plain)
     hasUnsyncedChanges.value = true
     return plain
+}
+
+/**
+ * Toggles a student's analytics exclusion status.
+ * Step 5: Persistence for excludeFromAnalytics.
+ * 
+ * @param {string} classId
+ * @param {string} studentId
+ * @returns {Promise<boolean>} The new exclusion state.
+ */
+export async function toggleStudentAnalyticsExclusion(classId, studentId) {
+    const db = await getDB()
+    const cls = await db.get('classes', classId)
+    if (!cls || !cls.students[studentId]) throw new Error('Student not found')
+    
+    cls.students[studentId].excludeFromAnalytics = !cls.students[studentId].excludeFromAnalytics
+    const plain = JSON.parse(JSON.stringify(cls))
+    await db.put('classes', plain)
+    hasUnsyncedChanges.value = true
+    return cls.students[studentId].excludeFromAnalytics
 }

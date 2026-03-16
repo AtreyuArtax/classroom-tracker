@@ -253,6 +253,60 @@ export async function getGradesByStudent(studentId, classId) {
   return allGrades.filter(g => assessmentIds.has(g.assessmentId))
 }
 
+// ─── Statistical Utils (Step 2) ──────────────────────────────────────────────
+
+/**
+ * Calculates standard deviation for an array of numbers.
+ * @param {Array<number>} values 
+ * @returns {number|null}
+ */
+export function calculateStandardDeviation(values) {
+  if (!values || values.length < 2) return null
+  const mean = values.reduce((a, b) => a + b, 0) / values.length
+  const squaredDiffs = values.map(v => Math.pow(v - mean, 2))
+  const avgSquaredDiff = squaredDiffs.reduce((a, b) => a + b, 0) / values.length
+  return Math.sqrt(avgSquaredDiff)
+}
+
+/**
+ * Detects outliers using standard deviation (default 1.5 SD below mean).
+ * @param {Array<number>} values 
+ * @param {number} threshold 
+ * @returns {Object} { clean, outliers, cutoff, mean, sd }
+ */
+export function detectOutliers(values, threshold = 1.5) {
+  if (!values || values.length < 3) return { clean: values, outliers: [] }
+  const mean = values.reduce((a, b) => a + b, 0) / values.length
+  const sd = calculateStandardDeviation(values)
+  if (sd === null || sd === 0) return { clean: values, outliers: [] }
+  const cutoff = mean - (threshold * sd)
+  const clean = values.filter(v => v >= cutoff)
+  const outliers = values.filter(v => v < cutoff)
+  return { clean, outliers, cutoff, mean, sd }
+}
+
+/**
+ * Groups percentages into 10% buckets.
+ * @param {Array<number>} percentages 
+ * @returns {Array<Object>}
+ */
+export function buildDistributionBuckets(percentages) {
+  const buckets = Array(10).fill(0).map((_, i) => ({
+    label: `${i * 10}-${i * 10 + 9}%`,
+    range: [i * 10, i * 10 + 9],
+    count: 0,
+    scores: []
+  }))
+  // Handle 100% edge case — goes in the last bucket
+  for (const p of percentages) {
+    const idx = p >= 100 ? 9 : Math.floor(p / 10)
+    const safeIdx = Math.max(0, Math.min(9, idx))
+    buckets[safeIdx].count++
+    buckets[safeIdx].scores.push(p)
+  }
+  return buckets
+}
+
 // ─── Grade Calculation Logic ───────────────────────────────────────────────
 
 /**
@@ -599,35 +653,264 @@ export async function calculateClassGrades(classRecord, { asOf = null } = {}) {
 }
 
 /**
- * Calculates summary statistics for a single assessment.
+ * Step 3: Rich analytics for a single assessment.
+ * Replacing calculateAssessmentStats with a richer object.
  * 
  * @param {number} assessmentId
  * @param {Array<Object>} grades All grades for this class.
  * @param {Object} assessment The assessment metadata.
+ * @param {Object} options { excludeOutliers: boolean, excludedStudentIds: Set<string> }
  * @returns {Object|null}
  */
-export function calculateAssessmentStats(assessmentId, grades, assessment) {
-  const scores = grades
-    .filter(g => {
-      if (g.assessmentId !== assessmentId || g.excluded || g.missing || g.attempts.length === 0) return false
-      // Skip stats if it's an individual assessment
-      if (assessment.target === 'individual') return false
-      return true
+export function calculateAssessmentAnalytics(assessmentId, grades, assessment, options = {}) {
+  const { excludeOutliers = false, excludedStudentIds = new Set() } = options
+
+  // Only run analytics on Product assessments (Step 17.1 Bug 3)
+  const type = (assessment.assessmentType || 'product').toLowerCase()
+  if (type !== 'product') return null
+  
+  // Skip individual assessments
+  if (assessment.target === 'individual') return null
+
+  // Collect all valid scores
+  const allScores = grades
+    .filter(g =>
+      g.assessmentId === assessmentId &&
+      !g.excluded &&
+      !g.missing &&
+      g.attempts &&
+      g.attempts.length > 0 &&
+      !excludedStudentIds.has(g.studentId)
+    )
+    .map(g => {
+      const earned = resolveAttemptScore(g.attempts, assessment.retestPolicy)
+      if (earned === null) return null
+      return {
+        studentId: g.studentId,
+        percentage: (earned / assessment.totalPoints) * 100
+      }
     })
-    .map(g => resolveAttemptScore(g.attempts, assessment.retestPolicy))
     .filter(s => s !== null)
 
-  if (scores.length === 0) return null
+  if (allScores.length === 0) return null
 
-  const avg = scores.reduce((a, b) => a + b, 0) / scores.length
-  const sorted = [...scores].sort((a, b) => a - b)
+  const allPercentages = allScores.map(s => s.percentage)
+
+  // Outlier detection
+  const outlierResult = detectOutliers(allPercentages)
+  const activePercentages = excludeOutliers ? outlierResult.clean : allPercentages
+  const outlierStudentIds = excludeOutliers
+    ? allScores
+        .filter(s => outlierResult.outliers.includes(s.percentage))
+        .map(s => s.studentId)
+    : []
+
+  if (activePercentages.length === 0) return null
+
+  // Core stats on active (possibly filtered) set
+  const mean = activePercentages.reduce((a, b) => a + b, 0) / activePercentages.length
+  const sd = calculateStandardDeviation(activePercentages)
+  const median = calculateMedian(activePercentages)
+  const sorted = [...activePercentages].sort((a, b) => a - b)
+  const highest = sorted[sorted.length - 1]
+  const lowest = sorted[0]
+
+  // Distribution buckets on full unfiltered set (always show full picture)
+  const distributionBuckets = buildDistributionBuckets(allPercentages)
 
   return {
-    count: scores.length,
-    average: Math.round(avg * 10) / 10,
-    highest: Math.round(sorted[sorted.length - 1] * 10) / 10,
-    lowest: Math.round(sorted[0] * 10) / 10,
-    median: Math.round(sorted[Math.floor(sorted.length / 2)] * 10) / 10
+    assessmentId,
+    count: activePercentages.length,
+    totalCount: allPercentages.length,
+    mean: Math.round(mean * 10) / 10,
+    median: Math.round(median * 10) / 10,
+    sd: sd !== null ? Math.round(sd * 10) / 10 : null,
+    highest: Math.round(highest * 10) / 10,
+    lowest: Math.round(lowest * 10) / 10,
+    distributionBuckets,
+    outlierCount: outlierResult.outliers.length,
+    outlierStudentIds,
+    excludeOutliersActive: excludeOutliers,
+    // Calibration signal: low mean + high SD = poorly calibrated assessment
+    calibrationFlag: mean < 60 && sd !== null && sd > 15 ? 'too_hard' :
+                     mean > 95 && sd !== null && sd < 5 ? 'too_easy' : null
+  }
+}
+
+/**
+ * Step 4: Class-level analytics (rollup of overall grades and coverage).
+ * 
+ * @param {Object} classRecord
+ * @param {Array<Object>} assessments
+ * @param {Array<Object>} grades
+ * @param {Object} options { excludeOutliers: boolean, asOf: string | null }
+ */
+export async function calculateClassAnalytics(classRecord, assessments, grades, options = {}) {
+  const { excludeOutliers = false, asOf = null } = options
+
+  const studentIds = Object.keys(classRecord.students ?? {})
+  const excludedStudentIds = new Set(
+    studentIds.filter(id => classRecord.students[id].excludeFromAnalytics)
+  )
+
+  // Filter to Product, class-target assessments only
+  let productAssessments = assessments.filter(a =>
+    a.assessmentType === 'product' &&
+    a.target === 'class' &&
+    !a.excluded
+  )
+
+  // Apply asOf date filter if milestone selected
+  if (asOf) {
+    productAssessments = productAssessments.filter(a => a.date <= asOf)
+  }
+
+  // Build grade map for quick lookup
+  const gradeMap = {}
+  for (const g of grades) {
+    if (!gradeMap[g.assessmentId]) gradeMap[g.assessmentId] = {}
+    gradeMap[g.assessmentId][g.studentId] = g
+  }
+
+  // Calculate each student's overall grade using Product assessments only
+  const studentGrades = []
+  for (const studentId of studentIds) {
+    if (excludedStudentIds.has(studentId)) continue
+
+    // Temporarily filter classRecord categories to only Product assessments
+    let totalEarned = 0
+    let totalPossible = 0
+    const categoryResults = {}
+
+    for (const cat of classRecord.gradebookCategories) {
+      const catAssessments = productAssessments.filter(a => a.categoryId === cat.categoryId)
+      let catEarned = 0
+      let catPossible = 0
+
+      for (const a of catAssessments) {
+        const grade = gradeMap[a.assessmentId]?.[studentId]
+        if (!grade || grade.excluded || grade.missing) {
+          if (grade?.missing) catPossible += a.scaledTotal ?? a.totalPoints
+          continue
+        }
+        if (!grade.attempts || grade.attempts.length === 0) continue
+
+        const earned = resolveAttemptScore(grade.attempts, a.retestPolicy)
+        if (earned === null) continue
+
+        const possible = a.scaledTotal ?? a.totalPoints
+        const scaledEarned = a.scaledTotal
+          ? (earned / a.totalPoints) * a.scaledTotal
+          : earned
+
+        catEarned += scaledEarned
+        catPossible += possible
+      }
+
+      if (catPossible > 0) {
+        categoryResults[cat.categoryId] = (catEarned / catPossible) * 100
+      }
+    }
+
+    // Weighted rollup
+    let weightedSum = 0
+    let weightUsed = 0
+    for (const cat of classRecord.gradebookCategories) {
+      const catGrade = categoryResults[cat.categoryId]
+      if (catGrade === undefined) continue
+      weightedSum += catGrade * (cat.weight / 100)
+      weightUsed += cat.weight
+    }
+
+    if (weightUsed > 0) {
+      studentGrades.push({
+        studentId,
+        percentage: (weightedSum / weightUsed) * 100
+      })
+    }
+  }
+
+  if (studentGrades.length === 0) return null
+
+  const allPercentages = studentGrades.map(s => s.percentage)
+
+  // Apply outlier exclusion if toggled
+  const outlierResult = detectOutliers(allPercentages)
+  const activePercentages = excludeOutliers ? outlierResult.clean : allPercentages
+  const outlierStudentIds = excludeOutliers
+    ? studentGrades
+        .filter(s => outlierResult.outliers.includes(s.percentage))
+        .map(s => s.studentId)
+    : []
+
+  const mean = activePercentages.reduce((a, b) => a + b, 0) / activePercentages.length
+  const sd = calculateStandardDeviation(activePercentages)
+  const median = calculateMedian(activePercentages)
+  const distributionBuckets = buildDistributionBuckets(allPercentages)
+
+  // Per-assessment analytics
+  const assessmentAnalytics = {}
+  for (const a of productAssessments) {
+    const stats = calculateAssessmentAnalytics(
+      a.assessmentId, grades, a,
+      { excludeOutliers, excludedStudentIds }
+    )
+    if (stats) assessmentAnalytics[a.assessmentId] = stats
+  }
+
+  // Conversation and Observation coverage
+  // Count how many students have at least one entered Conversation/Observation
+  const conversationStudents = new Set()
+  const observationStudents = new Set()
+  for (const a of assessments.filter(a => a.target === 'class' && !a.excluded)) {
+    const aGrades = grades.filter(g =>
+      g.assessmentId === a.assessmentId &&
+      g.attempts &&
+      g.attempts.length > 0
+    )
+    for (const g of aGrades) {
+      if (a.assessmentType === 'conversation') conversationStudents.add(g.studentId)
+      if (a.assessmentType === 'observation') observationStudents.add(g.studentId)
+    }
+  }
+
+  const totalStudents = studentIds.length
+  const conversationCoverage = {
+    studentsWithEvidence: conversationStudents.size,
+    totalStudents,
+    percentage: totalStudents > 0
+      ? Math.round((conversationStudents.size / totalStudents) * 100)
+      : 0
+  }
+  const observationCoverage = {
+    studentsWithEvidence: observationStudents.size,
+    totalStudents,
+    percentage: totalStudents > 0
+      ? Math.round((observationStudents.size / totalStudents) * 100)
+      : 0
+  }
+
+  return {
+    // Class-level stats (Product assessments only)
+    mean: Math.round(mean * 10) / 10,
+    median: Math.round(median * 10) / 10,
+    sd: sd !== null ? Math.round(sd * 10) / 10 : null,
+    distributionBuckets,
+    studentCount: activePercentages.length,
+    totalStudentCount: allPercentages.length,
+    outlierCount: outlierResult.outliers.length,
+    outlierStudentIds,
+    excludeOutliersActive: excludeOutliers,
+
+    // Per-assessment breakdown
+    assessmentAnalytics,
+
+    // Triangulation coverage
+    conversationCoverage,
+    observationCoverage,
+
+    // Milestone context
+    asOf
   }
 }
 

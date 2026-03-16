@@ -416,6 +416,7 @@ async function importRoster(parsedRows) {
                 seat: null,
                 generalNote: '',
                 activeStates: { isOut: false, outTime: null },
+                excludeFromAnalytics: false,
             }
         }
     }
@@ -451,6 +452,7 @@ async function moveStudentFromClass(fromClassId, student) {
         seat: null,
         generalNote: '',
         activeStates: { isOut: false, outTime: null },
+        excludeFromAnalytics: false,
     }
 }
 

@@ -6,6 +6,7 @@
 
 import { ref, computed } from 'vue'
 import * as gradebookService from '../db/gradebookService.js'
+import * as classService from '../db/classService.js'
 
 // ─── Reactive State ──────────────────────────────────────────────────────────
 
@@ -15,6 +16,11 @@ export const grades = ref([])
 export const classGrades = ref({})
 export const selectedStudentId = ref(null)
 export const selectedMilestone = ref(null) // null = current
+
+// Reactive state for analytics (Step 6)
+export const analyticsMode = ref(false) // false = grid, true = analytics panel
+export const excludeOutliers = ref(false) // analytics-only display toggle, not persisted
+export const classAnalytics = ref(null) // result of calculateClassAnalytics
 
 // ─── Public API ──────────────────────────────────────────────────────────────
 
@@ -48,7 +54,60 @@ export async function refreshGrades() {
     ? activeClassRecord.value.gradebookMilestones?.find(m => m.milestoneId === selectedMilestone.value)?.date
     : null
     
+    
   classGrades.value = await gradebookService.calculateClassGrades(activeClassRecord.value, { asOf })
+
+  // Refresh analytics if in analytics mode
+  if (analyticsMode.value) {
+    await refreshClassAnalytics()
+  }
+}
+
+/**
+ * Step 6: Compute class analytics.
+ */
+export async function refreshClassAnalytics() {
+  if (!activeClassRecord.value) return
+  const asOf = selectedMilestone.value
+    ? activeClassRecord.value.gradebookMilestones
+        ?.find(m => m.milestoneId === selectedMilestone.value)?.date
+    : null
+
+  classAnalytics.value = await gradebookService.calculateClassAnalytics(
+    activeClassRecord.value,
+    assessments.value,
+    grades.value,
+    { excludeOutliers: excludeOutliers.value, asOf }
+  )
+}
+
+/**
+ * Toggle outlier exclusion — recomputes analytics immediately.
+ */
+export async function toggleOutlierExclusion() {
+  excludeOutliers.value = !excludeOutliers.value
+  await refreshClassAnalytics()
+}
+
+/**
+ * Toggle a student's analytics exclusion — persists to IDB.
+ */
+export async function toggleStudentFromAnalytics(studentId) {
+  if (!activeClassRecord.value) return
+  await classService.toggleStudentAnalyticsExclusion(activeClassRecord.value.classId, studentId)
+  // Reload class record to pick up the change
+  const updated = await classService.getClass(activeClassRecord.value.classId)
+  activeClassRecord.value = updated
+  await refreshClassAnalytics()
+}
+
+/**
+ * Reset analytics state when leaving the analytics panel.
+ */
+export function resetAnalyticsState() {
+  excludeOutliers.value = false
+  classAnalytics.value = null
+  analyticsMode.value = false
 }
 
 /**
@@ -274,10 +333,17 @@ export const gradeMap = computed(() => {
 export const assessmentStats = computed(() => {
   const stats = {}
   for (const assessment of assessments.value) {
-    stats[assessment.assessmentId] = gradebookService.calculateAssessmentStats(
+    stats[assessment.assessmentId] = gradebookService.calculateAssessmentAnalytics(
       assessment.assessmentId,
       grades.value,
-      assessment
+      assessment,
+      { 
+        excludeOutliers: excludeOutliers.value,
+        excludedStudentIds: new Set(
+          Object.keys(activeClassRecord.value?.students ?? {})
+            .filter(id => activeClassRecord.value.students[id].excludeFromAnalytics)
+        )
+      }
     )
   }
   return stats

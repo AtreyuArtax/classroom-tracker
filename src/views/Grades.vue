@@ -224,10 +224,23 @@
             </div>
 
             <div class="grades__toolbar-center">
-              <button class="grades__btn-add" @click="showAddModal = true">
+              <button v-if="!analyticsMode" class="grades__btn-add" @click="showAddModal = true">
                 <Plus :size="16" /> Add Assessment
               </button>
               
+              <div class="grades__toggle-group">
+                <button 
+                  class="grades__toggle-btn"
+                  :class="{ 'grades__toggle-btn--active': !analyticsMode }"
+                  @click="exitAnalyticsMode"
+                >Grid</button>
+                <button 
+                  class="grades__toggle-btn"
+                  :class="{ 'grades__toggle-btn--active': analyticsMode }"
+                  @click="enterAnalyticsMode"
+                >Analytics</button>
+              </div>
+
               <div v-if="activeClassRecord?.gradebookMilestones?.length" class="grades__milestone-toggle">
                 <button 
                   class="grades__toggle-btn"
@@ -245,7 +258,7 @@
             </div>
 
             <div class="grades__toolbar-right">
-              <div class="grades__toggle-group">
+              <div v-if="!analyticsMode" class="grades__toggle-group">
                 <button 
                   class="grades__toggle-btn"
                   :class="{ 'grades__toggle-btn--active': displayMode === 'raw' }"
@@ -262,9 +275,225 @@
               </div>
             </div>
           </div>
+          
+          <!-- Analytics Panel (Step 2) -->
+          <div v-if="analyticsMode" class="grades__analytics-panel">
+            <!-- Outlier Toggle & Notice (Step 7) -->
+            <div class="grades__analytics-header">
+              <div v-if="excludeOutliers" class="grades__outlier-notice">
+                <AlertCircle :size="16" />
+                <span>Outlier exclusion active: {{ classAnalytics?.excludedStudentCount || 0 }} students hidden.</span>
+              </div>
+              <div class="grades__outlier-toggle">
+                <!-- Bug 4: Segmented Outlier Toggle -->
+                <div class="grades__toggle-group">
+                  <button 
+                    class="grades__toggle-btn" 
+                    :class="{ 'grades__toggle-btn--active': !excludeOutliers }"
+                    @click="excludeOutliers = false"
+                  >Include All</button>
+                  <button 
+                    class="grades__toggle-btn" 
+                    :class="{ 'grades__toggle-btn--active': excludeOutliers }"
+                    @click="excludeOutliers = true"
+                  >Exclude Outliers</button>
+                </div>
+              </div>
+            </div>
+
+            <div v-if="isCalculating" class="grades__calculating-overlay">
+              <div class="grades__spinner"></div>
+              <p>Calculating analytics...</p>
+            </div>
+
+            <div v-else-if="!classAnalytics" class="grades__empty-analytics">
+              <div class="grades__empty-content">
+                <BarChart2 :size="64" class="grades__empty-icon" />
+                <h3>No analytics available yet.</h3>
+                <p>Enter grades in the Grid view to see class performance data.</p>
+                <button class="grades__btn-primary" @click="analyticsMode = false">
+                  <ArrowLeft :size="16" /> Switch to Grid
+                </button>
+              </div>
+            </div>
+
+            <div v-else class="grades__analytics-scrollable">
+              <div class="grades__analytics-sections">
+                <!-- Class Overview Cards (Step 3) -->
+                <div class="grades__analytics-row">
+                  <div class="grades__analytics-card" :style="{ borderLeft: `4px solid ${getHeatColor(overallClassAvg)}` }">
+                    <div class="grades__card-label">CLASS AVERAGE</div>
+                    <div class="grades__card-value-group">
+                      <div class="grades__card-value">{{ formatGrade(overallClassAvg) }}</div>
+                      <div class="grades__card-hint">{{ formatGrade(classAnalytics.mean) }} products only</div>
+                    </div>
+                  </div>
+                  <div class="grades__analytics-card" :style="{ borderLeft: `4px solid ${getHeatColor(overallClassMedian)}` }">
+                    <div class="grades__card-label">WEIGHTED MEDIAN</div>
+                    <div class="grades__card-value-group">
+                      <div class="grades__card-value">{{ formatGrade(overallClassMedian) }}</div>
+                      <div class="grades__card-hint">{{ formatGrade(classAnalytics.median) }} products only</div>
+                    </div>
+                  </div>
+                  <div class="grades__analytics-card" :style="{ borderLeft: `4px solid ${getHeatColor(classMostConsistent?.range?.[0])}` }">
+                    <div class="grades__card-label">MOST CONSISTENT</div>
+                    <div v-if="classMostConsistent" class="grades__card-value-group">
+                      <div class="grades__card-value">{{ classMostConsistent.label }}</div>
+                      <div class="grades__card-hint">{{ classMostConsistent.count }} of {{ classMostConsistent.total }} students</div>
+                    </div>
+                    <div v-else class="grades__card-value">—</div>
+                  </div>
+                  <div class="grades__analytics-card" :style="{ borderLeft: `4px solid ${getSDColor(overallClassSD)}` }">
+                    <div class="grades__card-label">STD DEVIATION</div>
+                    <div class="grades__card-value-group">
+                      <div class="grades__card-value">{{ overallClassSD !== null ? overallClassSD.toFixed(1) + '%' : '—' }}</div>
+                      <div class="grades__card-hint">{{ classAnalytics.sd !== null ? classAnalytics.sd.toFixed(1) + '%' : '—' }} products only</div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Triangulation Coverage (Step 4) -->
+                <div class="grades__analytics-section">
+                  <h3 class="grades__analytics-subtitle">TRIANGULATION COVERAGE</h3>
+                  <div class="grades__coverage-grid">
+                    <div class="grades__coverage-item">
+                      <div class="grades__coverage-labels">
+                        <span>Products</span>
+                        <span>{{ classAnalytics.totalStudentCount }}/{{ classAnalytics.totalStudentCount }} students (100%)</span>
+                      </div>
+                      <div class="grades__progress-bg">
+                        <div class="grades__progress-bar" style="width: 100%; background: var(--grade-high);"></div>
+                      </div>
+                    </div>
+                    <div class="grades__coverage-item">
+                      <div class="grades__coverage-labels">
+                        <span>Conversations</span>
+                        <span>{{ classAnalytics.conversationCoverage.studentsWithEvidence }}/{{ classAnalytics.totalStudentCount }} students ({{ classAnalytics.conversationCoverage.percentage }}%)</span>
+                      </div>
+                      <div class="grades__progress-bg">
+                        <div class="grades__progress-bar" :style="{ width: classAnalytics.conversationCoverage.percentage + '%', background: getCoverageColor(classAnalytics.conversationCoverage.percentage) }"></div>
+                      </div>
+                    </div>
+                    <div class="grades__coverage-item">
+                      <div class="grades__coverage-labels">
+                        <span>Observations</span>
+                        <span>{{ classAnalytics.observationCoverage.studentsWithEvidence }}/{{ classAnalytics.totalStudentCount }} students ({{ classAnalytics.observationCoverage.percentage }}%)</span>
+                      </div>
+                      <div class="grades__progress-bg">
+                        <div class="grades__progress-bar" :style="{ width: classAnalytics.observationCoverage.percentage + '%', background: getCoverageColor(classAnalytics.observationCoverage.percentage) }"></div>
+                      </div>
+                    </div>
+                  </div>
+                  <p class="grades__analytics-hint">Conversations and Observations show % of students with at least one recorded grade.</p>
+                </div>
+
+                <!-- Grade Distribution Histogram (Step 5) -->
+                <div class="grades__analytics-section">
+                  <h3 class="grades__analytics-subtitle">GRADE DISTRIBUTION</h3>
+                  <div class="grades__chart-container" style="height: 200px;">
+                    <Bar :data="bucketChartData" :options="bucketChartOptions" />
+                  </div>
+                  <p class="grades__analytics-hint">Number of students within each 10% grade bracket.</p>
+                </div>
+
+                <!-- Per-Assessment Breakdown (Step 6) -->
+                <div class="grades__analytics-section">
+                  <h3 class="grades__analytics-subtitle">PRODUCT ASSESSMENTS BREAKDOWN</h3>
+                  <div class="grades__analytics-table-wrapper">
+                    <table class="grades__analytics-table">
+                      <thead>
+                        <tr>
+                          <th @click="analyticsSortBy = 'name'; analyticsSortOrder = analyticsSortOrder === 'asc' ? 'desc' : 'asc'">
+                            Assessment {{ analyticsSortBy === 'name' ? (analyticsSortOrder === 'asc' ? '↑' : '↓') : '' }}
+                          </th>
+                          <th>Category</th>
+                          <th @click="analyticsSortBy = 'mean'; analyticsSortOrder = analyticsSortOrder === 'asc' ? 'desc' : 'asc'">
+                            Avg {{ analyticsSortBy === 'mean' ? (analyticsSortOrder === 'asc' ? '↑' : '↓') : '' }}
+                          </th>
+                          <th @click="analyticsSortBy = 'median'; analyticsSortOrder = analyticsSortOrder === 'asc' ? 'desc' : 'asc'">
+                            Med {{ analyticsSortBy === 'median' ? (analyticsSortOrder === 'asc' ? '↑' : '↓') : '' }}
+                          </th>
+                          <th @click="analyticsSortBy = 'sd'; analyticsSortOrder = analyticsSortOrder === 'asc' ? 'desc' : 'asc'">
+                            SD {{ analyticsSortBy === 'sd' ? (analyticsSortOrder === 'asc' ? '↑' : '↓') : '' }}
+                          </th>
+                          <th>High</th>
+                          <th>Low</th>
+                          <th>Flag</th>
+                          <th>Distribution</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr v-for="a in sortedAnalyticsAssessments" :key="a.assessmentId">
+                          <td class="grades__td-assessment-name" @click="selectedAssessmentId = a.assessmentId">
+                            {{ a.name }}
+                            <span class="grades__td-meta">{{ formatDateShort(a.date) }}</span>
+                          </td>
+                          <td>{{ a.categoryName }}</td>
+                          <td :style="{ color: getHeatColor(a.stats.mean), fontWeight: 'bold' }">{{ formatGrade(a.stats.mean) }}</td>
+                          <td>{{ formatGrade(a.stats.median) }}</td>
+                          <td>{{ a.stats.sd !== null ? a.stats.sd.toFixed(1) + '%' : '—' }}</td>
+                          <td>{{ formatGrade(a.stats.highest) }}</td>
+                          <td>{{ formatGrade(a.stats.lowest) }}</td>
+                          <td>
+                            <div class="grades__flag-group">
+                              <span v-if="a.stats.calibrationFlag === 'too_hard'" class="grades__flag grades__flag--red" title="Too Hard / Calibration needed">🔴</span>
+                              <span v-else-if="a.stats.calibrationFlag === 'too_easy'" class="grades__flag grades__flag--amber" title="Too Easy / Calibration needed">🟡</span>
+                              <span v-else class="grades__flag grades__flag--green" title="Well calibrated">✓</span>
+                            </div>
+                          </td>
+                          <td>
+                            <!-- Sparkline (Step 6) -->
+                            <div class="grades__sparkline" v-if="a.stats.distributionBuckets">
+                              <div 
+                                v-for="bucket in a.stats.distributionBuckets" 
+                                :key="bucket.label"
+                                class="grades__sparkline-bar"
+                                :style="{ 
+                                  height: (bucket.count / a.stats.totalCount * 100) + '%',
+                                  background: getHeatColorHex(bucket.range[0])
+                                }"
+                                :title="`${bucket.label}: ${bucket.count} students`"
+                              ></div>
+                            </div>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                  <p v-if="!sortedAnalyticsAssessments.length" class="grades__analytics-hint">
+                    No product assessments yet — add tests, quizzes, or assignments to see breakdown.
+                  </p>
+                </div>
+
+                <!-- Student Exclusion (Step 8) -->
+                <div class="grades__analytics-section">
+                  <header class="grades__analytics-collapsible-header" @click="isExclusionsOpen = !isExclusionsOpen">
+                    <h3 class="grades__analytics-subtitle">STUDENT EXCLUSIONS</h3>
+                    <ChevronRight :size="20" :style="{ transform: isExclusionsOpen ? 'rotate(90deg)' : 'none', transition: 'transform 0.2s' }" />
+                  </header>
+                  
+                  <div v-if="isExclusionsOpen" class="grades__exclusion-list">
+                    <p class="grades__analytics-hint">Students excluded here are permanently removed from all analytics calculations for this class. Their grades are unaffected.</p>
+                    <div class="grades__exclusion-grid">
+                      <div v-for="s in sortedRoster" :key="s.studentId" class="grades__exclusion-item">
+                        <label class="grades__checkbox-label">
+                          <input 
+                            type="checkbox" 
+                            :checked="s.excludeFromAnalytics" 
+                            @change="toggleStudentFromAnalytics(s.studentId)"
+                          />
+                          {{ s.firstName }} {{ s.lastName }}
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
 
           <!-- The Scrollable Grid -->
-          <div class="grades__grid-wrapper">
+          <div v-else class="grades__grid-wrapper">
             <table class="grades__grid">
               <thead>
                 <!-- Top Header -->
@@ -968,10 +1197,29 @@ import {
   saveStudentOverride,
   saveStudentGradebookNote,
   fetchStudentDossierData,
-  deleteGradebookEvent
+  deleteGradebookEvent,
+  analyticsMode,
+  excludeOutliers,
+  classAnalytics,
+  refreshClassAnalytics,
+  toggleOutlierExclusion,
+  toggleStudentFromAnalytics,
+  resetAnalyticsState
 } from '../composables/useGradebook.js'
-import { Plus, BarChart2, Settings, Pencil, XCircle, AlertCircle, Trash2, X, MoreVertical, ArrowLeft, Check, ArrowUp, ArrowDown, Minus, GraduationCap, Eye, EyeOff, ChevronLeft, ChevronRight, UserCheck } from 'lucide-vue-next'
+import { Plus, BarChart2, Settings, Pencil, XCircle, AlertCircle, Trash2, X, MoreVertical, ArrowLeft, Check, ArrowUp, ArrowDown, Minus, GraduationCap, Eye, EyeOff, ChevronLeft, ChevronRight, UserCheck, Activity } from 'lucide-vue-next'
 import GradeTrendChart from '../components/GradeTrendChart.vue'
+import {
+  Chart as ChartJS,
+  Title,
+  Tooltip,
+  Legend,
+  BarElement,
+  CategoryScale,
+  LinearScale
+} from 'chart.js'
+import { Bar } from 'vue-chartjs'
+
+ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale)
 
 const props = defineProps({
   classId: String,
@@ -984,8 +1232,12 @@ const { classList, activeClass, getClass } = useClassroom()
 
 const sidebarClassId = ref(activeClass.value?.classId || '')
 const isLoading = ref(false)
+const isCalculating = ref(false)
 const displayMode = ref('percent') // 'raw' | 'percent'
 const showAddModal = ref(false)
+const analyticsSortBy = ref('date')
+const analyticsSortOrder = ref('asc')
+const isExclusionsOpen = ref(false)
 
 const editingCell = ref(null) // { sId, aId, value }
 const editInput = ref(null)
@@ -1142,6 +1394,33 @@ const currentAssessmentSummary = computed(() => {
   }
 })
 
+/**
+ * Step 6: Sorted Assessment Analytics
+ */
+const sortedAnalyticsAssessments = computed(() => {
+  if (!classAnalytics.value?.assessmentAnalytics) return []
+  
+  return assessments.value
+    .filter(a => classAnalytics.value.assessmentAnalytics[a.assessmentId])
+    .map(a => ({
+      ...a,
+      stats: classAnalytics.value.assessmentAnalytics[a.assessmentId]
+    }))
+    .sort((a, b) => {
+      let valA = analyticsSortBy.value === 'name' ? a.name : a.stats[analyticsSortBy.value]
+      let valB = analyticsSortBy.value === 'name' ? b.name : b.stats[analyticsSortBy.value]
+      
+      if (analyticsSortBy.value === 'date') {
+        valA = new Date(a.date)
+        valB = new Date(b.date)
+      }
+      
+      if (valA < valB) return analyticsSortOrder.value === 'asc' ? -1 : 1
+      if (valA > valB) return analyticsSortOrder.value === 'asc' ? 1 : -1
+      return 0
+    })
+})
+
 const overallClassAvg = computed(() => {
   if (!classGrades.value) return null
   const gradesValues = Object.values(classGrades.value)
@@ -1153,9 +1432,137 @@ const overallClassAvg = computed(() => {
   return sum / gradesValues.length
 })
 
+const overallClassMedian = computed(() => {
+  if (!classGrades.value) return null
+  const gradesValues = Object.values(classGrades.value)
+    .filter(g => g && g.overallGrade !== null)
+    .map(g => g.overallGrade)
+  
+  if (gradesValues.length === 0) return null
+  const sorted = [...gradesValues].sort((a, b) => a - b)
+  const mid = Math.floor(sorted.length / 2)
+  if (sorted.length % 2 === 0) {
+    return (sorted[mid - 1] + sorted[mid]) / 2
+  }
+  return sorted[mid]
+})
+
+const overallClassSD = computed(() => {
+  if (!classGrades.value) return null
+  const gradesValues = Object.values(classGrades.value)
+    .filter(g => g && g.overallGrade !== null)
+    .map(g => g.overallGrade)
+  
+  if (gradesValues.length === 0) return null
+  const mean = overallClassAvg.value
+  const squareDiffs = gradesValues.map(v => Math.pow(v - mean, 2))
+  const avgSquareDiff = squareDiffs.reduce((a, b) => a + b, 0) / squareDiffs.length
+  return Math.sqrt(avgSquareDiff)
+})
+
+/**
+ * Step 5: Grade Distribution Chart Data
+ */
+const bucketChartData = computed(() => {
+  if (!classAnalytics.value?.distributionBuckets) return { labels: [], datasets: [] }
+  
+  const buckets = classAnalytics.value.distributionBuckets
+  return {
+    labels: buckets.map(b => b.label),
+    datasets: [
+      {
+        label: 'Students',
+        backgroundColor: buckets.map(b => getHeatColorHex(b.range[0])),
+        data: buckets.map(b => b.count),
+        borderRadius: 4
+      }
+    ]
+  }
+})
+
+const bucketChartOptions = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: { display: false },
+    tooltip: {
+      callbacks: {
+        label: (context) => `${context.parsed.y} students`
+      }
+    }
+  },
+  scales: {
+    y: {
+      beginAtZero: true,
+      ticks: { stepSize: 1 },
+      grid: { color: 'rgba(0, 0, 0, 0.05)' }
+    },
+    x: {
+      grid: { display: false }
+    }
+  }
+}
+
 const studentOverallGrade = computed(() => {
   return classGrades.value[selectedStudentId.value]?.overallGrade ?? null
 })
+
+/**
+ * Step 3: Rollup of most consistent level across class
+ */
+const classMostConsistent = computed(() => {
+  if (!classGrades.value) return null
+  
+  const bucketCounts = {} // label -> count
+  const bucketRanges = {} // label -> range
+  
+  Object.values(classGrades.value).forEach(sg => {
+    // Bug 1: Aggregate categoryBreakdown across all students
+    const cb = sg?.mostConsistent?.categoryBreakdown
+    if (cb) {
+      Object.values(cb).forEach(cat => {
+        if (cat && cat.bucketLabel && !cat.isFallback) {
+          bucketCounts[cat.bucketLabel] = (bucketCounts[cat.bucketLabel] || 0) + 1
+          if (!bucketRanges[cat.bucketLabel]) {
+            bucketRanges[cat.bucketLabel] = cat.bucketRange
+          }
+        }
+      })
+    }
+  })
+  
+  const sorted = Object.entries(bucketCounts).sort((a, b) => b[1] - a[1])
+  if (sorted.length === 0) return null
+  
+  const [label, count] = sorted[0]
+  return {
+    label,
+    count,
+    range: bucketRanges[label],
+    total: Object.keys(classGrades.value).length
+  }
+})
+
+function getHeatColorHex(percent) {
+  if (percent === null || percent === undefined) return '#6c757d'
+  if (percent >= 80) return '#d4edda' // High (Green)
+  if (percent >= 70) return '#d0e8f5' // Mid-High (Blue)
+  if (percent >= 60) return '#fff3cd' // Mid-Low (Amber)
+  return '#f8d7da' // Low (Red)
+}
+
+function getSDColor(sd) {
+  if (sd === null) return 'var(--text-secondary)'
+  if (sd < 8) return 'var(--grade-high)'
+  if (sd <= 15) return 'var(--grade-mid-high)'
+  return 'var(--grade-low)'
+}
+
+function getCoverageColor(percent) {
+  if (percent >= 80) return 'var(--grade-high)'
+  if (percent >= 50) return 'var(--grade-mid-high)'
+  return 'var(--grade-mid-low)'
+}
 
 const gradeTrendInfo = computed(() => {
   if (!selectedStudentId.value || !activeClassRecord.value?.gradebookMilestones?.length) return null
@@ -1282,6 +1689,24 @@ async function onClassChange() {
 async function onSidebarClassChange() {
   selectedStudentId.value = null
   await onClassChange()
+}
+
+/**
+ * Step 1: Analytics Mode Toggles
+ */
+async function enterAnalyticsMode() {
+  selectedStudentId.value = null // Sidebar logic: hidden when no student
+  analyticsMode.value = true
+  isCalculating.value = true
+  try {
+    await refreshClassAnalytics()
+  } finally {
+    isCalculating.value = false
+  }
+}
+
+function exitAnalyticsMode() {
+  resetAnalyticsState()
 }
 
 function formatGrade(grade) {
@@ -3516,5 +3941,289 @@ watch(selectedAssessmentId, (val) => {
   color: var(--text-secondary);
   font-weight: 400;
   margin-top: 2px;
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+   Analytics UI Styles (Update 17)
+   ────────────────────────────────────────────────────────────────────────── */
+
+/* ── Analytics Panel Layout ── */
+.grades__analytics-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--bg);
+  position: relative;
+}
+
+.grades__analytics-header {
+  padding: 0.75rem 1.5rem;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.grades__outlier-notice {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #856403;
+  background: #fff3cd;
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.8125rem;
+  border: 1px solid rgba(0,0,0,0.05);
+  white-space: nowrap;
+}
+
+.grades__outlier-toggle {
+  margin-left: auto;
+}
+
+.grades__calculating-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.8);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  gap: 1rem;
+  backdrop-filter: blur(2px);
+}
+
+.grades__spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid var(--border);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: grades-spin 1s linear infinite;
+}
+
+@keyframes grades-spin {
+  to { transform: rotate(360deg); }
+}
+
+.grades__analytics-scrollable {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 1.5rem;
+}
+
+.grades__analytics-sections {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.grades__analytics-section {
+  background: var(--surface);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  padding: 1.5rem;
+  border: 1px solid var(--border);
+}
+
+.grades__analytics-subtitle {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  letter-spacing: 0.05em;
+  margin-bottom: 1.25rem;
+  text-transform: uppercase;
+}
+
+.grades__analytics-hint {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin-top: 1rem;
+}
+
+/* ── Class Overview Cards ── */
+.grades__analytics-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.25rem;
+}
+
+.grades__analytics-card {
+  background: var(--surface);
+  padding: 1.25rem;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.grades__analytics-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.grades__card-value {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+/* ── Triangulation Coverage ── */
+.grades__coverage-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.grades__coverage-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.grades__coverage-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+/* progress-bg and progress-bar are partly shared with dossier bars */
+/* We'll use more specific ones for the new UI */
+
+/* ── Per-Assessment Breakdown Table ── */
+.grades__analytics-table-wrapper {
+  overflow-x: auto;
+  margin: 0 -0.5rem;
+}
+
+.grades__analytics-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.grades__analytics-table th {
+  text-align: left;
+  padding: 0.75rem 1rem;
+  border-bottom: 2px solid var(--border);
+  color: var(--text-secondary);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.grades__analytics-table th:hover {
+  background: var(--bg-secondary);
+}
+
+.grades__analytics-table td {
+  padding: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.grades__td-assessment-name {
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--primary);
+}
+
+.grades__sparkline {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 32px;
+  width: 80px;
+}
+
+.grades__sparkline-bar {
+  flex: 1;
+  min-width: 6px;
+  border-radius: 1px;
+  transition: height 0.3s ease;
+}
+
+.grades__flag-group {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.grades__flag {
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+/* ── Exclusions Drawer ── */
+.grades__analytics-collapsible-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+}
+
+.grades__exclusion-list {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+  animation: slide-down 0.2s ease-out;
+}
+
+@keyframes slide-down {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.grades__exclusion-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.grades__exclusion-item {
+  font-size: 0.875rem;
+}
+
+/* ── Empty State ── */
+.grades__empty-analytics {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 3rem;
+}
+
+.grades__empty-content {
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.grades__empty-icon {
+  color: var(--border);
+  margin-bottom: 0.5rem;
+}
+
+.grades__empty-content h3 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.grades__empty-content p {
+  color: var(--text-secondary);
 }
 </style>
