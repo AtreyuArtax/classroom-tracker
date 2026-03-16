@@ -388,20 +388,20 @@
             </div>
             <div class="grades__student-header">
               <div class="grades__student-title-block">
-                <h2 class="grades__view-title">{{ selectedStudentName }}</h2>
+                <div class="grades__student-name-row">
+                  <h2 class="grades__view-title">{{ selectedStudentName }}</h2>
+                  <div v-if="studentOverallGrade !== null" 
+                       class="grades__overall-summary-badge" 
+                       :style="{ background: getHeatColor(studentOverallGrade) }">
+                    <span class="grades__summary-badge-label">Official Grade</span>
+                    <span class="grades__summary-badge-value">{{ formatGrade(studentOverallGrade) }}</span>
+                  </div>
+                </div>
                 <div class="grades__view-subtitle">
                   {{ activeClassRecord?.name }} · Period {{ activeClassRecord?.periodNumber }}
                 </div>
                 
-                <!-- New Stats Row (Step 3) -->
                 <div class="grades__stats-summary">
-                  <div class="grades__stat-item">
-                    <span class="grades__stat-label">Official Grade:</span>
-                    <span class="grades__stat-badge" :style="{ background: getHeatColor(studentOverallGrade) }">
-                      {{ formatGrade(studentOverallGrade) }}
-                    </span>
-                  </div>
-                  
                   <div class="grades__stat-item">
                     <span class="grades__stat-label">
                       Most Consistent:
@@ -3354,14 +3354,45 @@ watch(selectedAssessmentId, (val) => {
 .grades__student-header {
   flex-direction: column;
   align-items: flex-start;
-  gap: 16px;
+  gap: 12px;
+}
+
+.grades__student-name-row {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.grades__overall-summary-badge {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 16px;
+  border-radius: var(--radius-lg);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-sm);
+}
+
+.grades__summary-badge-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.8;
+}
+
+.grades__summary-badge-value {
+  font-size: 1.75rem;
+  font-weight: 800;
+  line-height: 1;
 }
 
 .grades__stats-summary {
   display: flex;
   flex-wrap: wrap;
-  gap: 20px;
-  margin-top: 8px;
+  gap: 24px;
+  margin-top: 4px;
 }
 
 .grades__stat-item {
