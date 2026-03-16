@@ -412,7 +412,7 @@
                         {{ formatGrade(classGrades[selectedStudentId].mostConsistent.percentage) }}
                       </span>
                       <span v-if="classGrades[selectedStudentId].mostConsistent.isFallback" class="grades__stat-hint">
-                        (median fallback — insufficient clustering)
+                        (per-category median — insufficient data for bucket mode)
                       </span>
                     </template>
                     <span v-else class="grades__stat-empty">Not enough data</span>
@@ -1779,6 +1779,7 @@ watch(selectedAssessmentId, (val) => {
   display: flex;
   flex: 1;
   overflow: hidden;
+  min-width: 0; /* Ensure layout doesn't push beyond parent */
 }
 
 /* ── Sidebar ────────────────────────────────────────────────────────── */
@@ -1956,6 +1957,7 @@ watch(selectedAssessmentId, (val) => {
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  min-width: 0; /* Essential for flexbox to shrink below content size */
 }
 
 .grades__placeholder {
@@ -1987,6 +1989,7 @@ watch(selectedAssessmentId, (val) => {
   overflow: hidden;
   background: var(--bg);
   position: relative;
+  min-width: 0;
 }
 
 .grades__student-header {
@@ -2165,8 +2168,9 @@ watch(selectedAssessmentId, (val) => {
 
 .grades__dossier-grid {
   display: grid;
-  grid-template-columns: 1fr 280px;
+  grid-template-columns: minmax(0, 1fr) 280px;
   gap: 20px;
+  width: 100%;
 }
 
 .grades__graph-container {
@@ -2176,12 +2180,15 @@ watch(selectedAssessmentId, (val) => {
   display: flex;
   align-items: center;
   justify-content: center;
+  position: relative; /* Needed for Chart.js responsive behavior */
+  overflow: hidden;    /* Prevent canvas from stretching the container */
 }
 
 .grades__graph-render {
   width: 100%;
   height: 100%;
   padding: 10px;
+  position: relative;
 }
 
 .grades__attendance-summary {
@@ -3403,17 +3410,58 @@ watch(selectedAssessmentId, (val) => {
   border: 1px solid var(--border-color);
 }
 
+.grades__category-cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.grades__stat-card {
+  flex: 0 0 auto;
+  width: calc(33.333% - 11px);
+  min-width: 220px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+}
+
+.grades__stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  border-color: var(--primary);
+}
+
+.grades__stat-card--active {
+  background: var(--bg-secondary);
+  border-color: var(--primary);
+  box-shadow: 0 4px 12px rgba(111, 146, 255, 0.1);
+}
+
+.grades__card-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  letter-spacing: 0.05em;
+  margin-bottom: 8px;
+}
+
 .grades__card-metrics {
-  margin-top: 10px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
 }
 
 .grades__card-metric-row {
   display: flex;
   justify-content: space-between;
-  align-items: baseline;
+  align-items: flex-start; /* Switch to start to allow multi-line values */
+  gap: 8px;
   font-size: 13px;
 }
 
@@ -3424,12 +3472,15 @@ watch(selectedAssessmentId, (val) => {
 .grades__card-metric-value {
   font-weight: 600;
   color: var(--text-primary);
+  text-align: right;
+  line-height: 1.2;
 }
 
 .grades__card-hint {
+  display: block; /* Force hint to its own line if it wraps or just to give it space */
   font-size: 11px;
   color: var(--text-secondary);
-  font-weight: normal;
-  margin-left: 4px;
+  font-weight: 400;
+  margin-top: 2px;
 }
 </style>
