@@ -165,23 +165,43 @@
                     <div v-else-if="gradeMap[selectedAssessmentId]?.[s.studentId]?.missing" class="grades__cell-missing">M</div>
                     <div v-else-if="gradeMap[selectedAssessmentId]?.[s.studentId]?.excluded" class="grades__cell-excluded">EX</div>
                     <div v-else class="grades__score-input-cell">
-                      <input 
-                        type="number"
-                        min="0"
-                        :max="currentAssessment.totalPoints"
-                        class="grades__input-inline"
-                        :value="gradeMap[selectedAssessmentId]?.[s.studentId]?.resolvedScore"
-                        @blur="e => onAssessmentViewBlur(s.studentId, e.target.value)"
-                        @keydown.enter.prevent="e => onAssessmentViewEnter(s.studentId, 'down', e)"
-                        @keydown.tab.prevent="e => onAssessmentViewEnter(s.studentId, 'down', e)"
-                        @keydown.up.prevent="e => onAssessmentViewEnter(s.studentId, 'up', e)"
-                        @keydown.down.prevent="e => onAssessmentViewEnter(s.studentId, 'down', e)"
-                      />
-                      <button 
-                        v-if="gradeMap[selectedAssessmentId]?.[s.studentId]?.attempts?.length > 1" 
-                        class="grades__dot-indicator"
-                        @click="openAttempts($event, s.studentId, selectedAssessmentId)"
-                      >•</button>
+                      <!-- Change Overlay -->
+                      <div v-if="editingCell?.sId === s.studentId && editingCell?.aId === selectedAssessmentId" class="grades__cell-edit">
+                        <input 
+                          ref="editInput"
+                          v-model.number="editingCell.value"
+                          type="number"
+                          min="0"
+                          :max="currentAssessment.totalPoints"
+                          class="grades__input-inline"
+                          @blur="saveEdit"
+                          @keydown.enter.prevent="onEnterKey"
+                          @keydown.tab.prevent="onEnterKey"
+                          @keydown.up.prevent="onArrowKey('up')"
+                          @keydown.down.prevent="onArrowKey('down')"
+                          @keydown.esc.prevent="cancelEdit"
+                        />
+                      </div>
+                      <template v-else>
+                        <input 
+                          type="number"
+                          min="0"
+                          :max="currentAssessment.totalPoints"
+                          class="grades__input-inline"
+                          :value="gradeMap[selectedAssessmentId]?.[s.studentId]?.resolvedScore"
+                          @blur="e => onAssessmentViewBlur(s.studentId, e.target.value)"
+                          @keydown.enter.prevent="e => onAssessmentViewEnter(s.studentId, 'down', e)"
+                          @keydown.tab.prevent="e => onAssessmentViewEnter(s.studentId, 'down', e)"
+                          @keydown.up.prevent="e => onAssessmentViewEnter(s.studentId, 'up', e)"
+                          @keydown.down.prevent="e => onAssessmentViewEnter(s.studentId, 'down', e)"
+                          @contextmenu.prevent="onContextMenu($event, s.studentId, selectedAssessmentId)"
+                        />
+                        <button 
+                          v-if="gradeMap[selectedAssessmentId]?.[s.studentId]?.attempts?.length > 1" 
+                          class="grades__dot-indicator"
+                          @click="openAttempts($event, s.studentId, selectedAssessmentId)"
+                        >•</button>
+                      </template>
                     </div>
                   </td>
                   <td class="grades__atd-percent">
@@ -984,13 +1004,19 @@
         <button class="grades__context-btn" @click="startNewAttempt(studentActionMenu.studentId); studentActionMenu = null">
           <Plus :size="14" /> Add New Attempt
         </button>
+        <button v-if="gradeMap[selectedAssessmentId]?.[studentActionMenu.studentId]?.attempts?.length > 0" class="grades__context-btn" @click="startEdit(studentActionMenu.studentId, selectedAssessmentId, true); studentActionMenu = null">
+          <Pencil :size="14" /> Change Mark
+        </button>
       </div>
     </div>
 
     <div v-if="contextMenu" class="grades__context-backdrop grades__context-backdrop--dim" @click="contextMenu = null" @contextmenu.prevent="contextMenu = null">
       <div class="grades__context-menu" :style="{ top: contextMenu.y + 'px', left: contextMenu.x + 'px' }">
-        <button class="grades__context-btn" @click="startEdit(contextMenu.sId, contextMenu.aId); contextMenu = null">
-          <Pencil :size="14" /> Enter Grade
+        <button class="grades__context-btn" @click="startEdit(contextMenu.sId, contextMenu.aId, false); contextMenu = null">
+          <Plus :size="14" /> New Attempt
+        </button>
+        <button v-if="gradeMap[contextMenu.aId]?.[contextMenu.sId]?.attempts?.length > 0" class="grades__context-btn" @click="startEdit(contextMenu.sId, contextMenu.aId, true); contextMenu = null">
+          <Pencil :size="14" /> Change Mark
         </button>
         <button class="grades__context-btn" @click="toggleMissing">
           <AlertCircle :size="14" /> {{ isMissing(contextMenu.sId, contextMenu.aId) ? 'Unmark Missing' : 'Mark Missing' }}
@@ -1050,7 +1076,7 @@
     </div>
 
         <!-- Add Assessment Modal -->
-        <div v-if="showAddModal" class="grades__modal-backdrop" @click.self="showAddModal = false">
+        <div v-if="showAddModal" class="grades__modal-backdrop">
           <div class="grades__modal" role="dialog" aria-modal="true">
             <header class="grades__modal-header">
               <h3 class="grades__modal-title">{{ isEditingAssessment ? 'Edit Assessment' : 'New Assessment' }}</h3>
@@ -1186,6 +1212,7 @@ import {
   loadGradebook,
   refreshGrades,
   enterGrade,
+  changeGrade,
   clearGrade,
   markMissing,
   markExcluded,
@@ -1254,6 +1281,7 @@ const acEvents = ref([])
 const studentAttendance = ref({ absences: 0, lates: 0 })
 const isPrivacyMode = ref(false)
 const isSidebarCollapsed = ref(false)
+const isChangeMode = ref(false)
 
 const assessmentTypes = [
   { value: 'product', label: 'Product' },
@@ -1765,11 +1793,11 @@ function getHeatColor(percent) {
   return 'var(--grade-low)'
 }
 
-// --- Inline Entry ---
-async function startEdit(studentId, assessmentId) {
+async function startEdit(studentId, assessmentId, isChange = false) {
   const current = gradeMap.value[assessmentId]?.[studentId]
   const val = current ? current.resolvedScore : null
   editOriginalValue.value = val
+  isChangeMode.value = isChange
   editingCell.value = {
     sId: studentId,
     aId: assessmentId,
@@ -1818,11 +1846,23 @@ async function saveEdit() {
   const assessment = assessments.value.find(a => a.assessmentId === aId)
   if (!assessment) return
 
-  // Clamp value
-  const points = Math.max(0, Math.min(assessment.totalPoints, Number(value)))
+  // Clamp value (Safety guard)
+  const points = Math.max(0, normalizedNew)
   
-  await enterGrade(aId, sId, points)
+  // Validation: alert user of typos
+  if (points > assessment.totalPoints) {
+    alert(`Entry error: ${points} exceeds assessment max of ${assessment.totalPoints}. Score not saved.`)
+    editingCell.value = null
+    return
+  }
+  
+  if (isChangeMode.value) {
+    await changeGrade(aId, sId, points)
+  } else {
+    await enterGrade(aId, sId, points)
+  }
   editingCell.value = null
+  isChangeMode.value = false
 }
 
 async function onEnterKey() {
@@ -2059,6 +2099,14 @@ async function onAssessmentViewBlur(studentId, value) {
   const oldVal = current ? current.resolvedScore : null
   const newVal = Number(value)
   
+  const assessment = currentAssessment.value
+  if (assessment && newVal > assessment.totalPoints) {
+    alert(`Entry error: ${newVal} exceeds assessment max of ${assessment.totalPoints}. Score not saved.`)
+    // Optional: could reset the field here if we had a ref to the specific DOM element easily, 
+    // but Blur navigation usually handles this by ignoring the change and moving on.
+    return
+  }
+
   if (oldVal !== newVal) {
     await enterGrade(selectedAssessmentId.value, studentId, newVal)
   }
@@ -2118,6 +2166,12 @@ async function saveNewAttempt() {
   if (!newAttemptForm.value || newAttemptForm.value.points === null) return
   const { studentId, points, date, comment } = newAttemptForm.value
   
+  const assessment = currentAssessment.value
+  if (assessment && points > assessment.totalPoints) {
+    alert(`Entry error: ${points} exceeds assessment max of ${assessment.totalPoints}. Attempt not saved.`)
+    return
+  }
+
   await enterGrade(selectedAssessmentId.value, studentId, points, date, comment)
   newAttemptForm.value = null
 }

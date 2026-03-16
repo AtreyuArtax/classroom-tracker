@@ -167,6 +167,13 @@ export async function deleteAssessment(assessmentId) {
 export async function enterGrade(assessmentId, studentId, pointsEarned, date = null, comment = '') {
   if (!activeClassRecord.value) return
   
+  const assessment = assessments.value.find(a => a.assessmentId === assessmentId)
+  if (assessment && pointsEarned > assessment.totalPoints) {
+    // This is a safety guard; UI should ideally catch this first with a better UX
+    console.warn(`[useGradebook] enterGrade: ${pointsEarned} exceeds assessment max ${assessment.totalPoints}`)
+    return
+  }
+  
   await gradebookService.addAttempt(assessmentId, studentId, {
     pointsEarned,
     date: date || new Date().toISOString(),
@@ -174,6 +181,18 @@ export async function enterGrade(assessmentId, studentId, pointsEarned, date = n
   })
   
   // Full re-fetch of grades to ensure sync (efficient enough for single class)
+  grades.value = await gradebookService.getGradesByClass(activeClassRecord.value.classId)
+  await refreshGrades()
+}
+
+/**
+ * Changes/overwrites the latest grade attempt.
+ */
+export async function changeGrade(assessmentId, studentId, pointsEarned) {
+  if (!activeClassRecord.value) return
+  
+  await gradebookService.updateLastAttempt(assessmentId, studentId, pointsEarned)
+  
   grades.value = await gradebookService.getGradesByClass(activeClassRecord.value.classId)
   await refreshGrades()
 }

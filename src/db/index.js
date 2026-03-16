@@ -20,7 +20,7 @@
 import { openDB } from 'idb'
 
 const DB_NAME = 'classroomTrackerDB'
-const DB_VERSION = 15
+const DB_VERSION = 16
 
 /**
  * Cached promise — set synchronously before the first await so every
@@ -83,6 +83,7 @@ export function getDB() {
         })
         gradeStore.createIndex('by_assessmentId', 'assessmentId')
         gradeStore.createIndex('by_studentId', 'studentId')
+        gradeStore.createIndex('by_classId', 'classId')
         gradeStore.createIndex('by_assessmentAndStudent', ['assessmentId', 'studentId'], { unique: true })
       }
 
@@ -90,7 +91,7 @@ export function getDB() {
       if (oldVersion === 0) {
         transaction.objectStore('settings').put(
           {
-            schemaVersion: 12,
+            schemaVersion: 16,
             gridSize: { rows: 6, cols: 6 },
             behaviorCodes: {
               m: { icon: 'Smartphone', label: 'On Device', category: 'redirect', type: 'standard', requiresNote: false, isTopLevel: true },
@@ -421,6 +422,41 @@ export function getDB() {
         const settings = await settingsStore.get('singleton')
         if (settings) {
           settings.schemaVersion = 15
+          await settingsStore.put(settings, 'singleton')
+        }
+      }
+      // ── version 16 migration (Add by_classId index to grades) ─────────────
+      if (oldVersion < 16) {
+        const gradeStore = transaction.objectStore('grades')
+        const assessmentStore = transaction.objectStore('assessments')
+        
+        // 1. Fetch all assessments to build a map of association [id] -> classId
+        const assessments = await assessmentStore.getAll()
+        const assessmentClassMap = {}
+        for (const a of assessments) {
+          assessmentClassMap[a.assessmentId] = a.classId
+        }
+
+        // 2. Backfill classId into all existing grades
+        const grades = await gradeStore.getAll()
+        for (const g of grades) {
+          const classId = assessmentClassMap[g.assessmentId]
+          if (classId) {
+            g.classId = classId
+            await gradeStore.put(g)
+          }
+        }
+
+        // 3. Add the index (if not already added by fresh install logic)
+        if (!gradeStore.indexNames.contains('by_classId')) {
+          gradeStore.createIndex('by_classId', 'classId')
+        }
+
+        // 4. Update settings singleton version
+        const settingsStore = transaction.objectStore('settings')
+        const settings = await settingsStore.get('singleton')
+        if (settings) {
+          settings.schemaVersion = 16
           await settingsStore.put(settings, 'singleton')
         }
       }

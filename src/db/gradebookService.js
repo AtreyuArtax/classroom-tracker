@@ -97,40 +97,63 @@ export async function deleteAssessment(assessmentId) {
 // ─── Grade CRUD ─────────────────────────────────────────────────────────────
 
 /**
- * Retrieves a grade record for a student/assessment pair, or creates one if missing.
- * 
- * @param {number} assessmentId
- * @param {string} studentId
- * @returns {Promise<Object>}
+ * Retrieves a grade record within a transaction.
+ * Usually called from within other transactional operations.
  */
-export async function getOrCreateGrade(assessmentId, studentId) {
-  const db = await getDB()
-  const existing = await db.getFromIndex('grades', 'by_assessmentAndStudent', [assessmentId, studentId])
+async function _getGradeInTransaction(tx, assessmentId, studentId, classId) {
+  const existing = await tx.objectStore('grades').index('by_assessmentAndStudent').get([assessmentId, studentId])
   if (existing) return existing
 
   const grade = {
     assessmentId,
     studentId,
+    classId: classId || null, // classId is required for performance index
     missing: false,
     excluded: false,
     attempts: []
   }
   const plain = JSON.parse(JSON.stringify(grade))
-  const id = await db.add('grades', plain)
+  const id = await tx.objectStore('grades').add(plain)
   return { ...plain, gradeId: id }
 }
 
 /**
- * Adds an assessment attempt (score entry) for a student.
+ * Retrieves a grade record for a student/assessment pair, or creates one if missing.
+ * Now requires classId for the index.
  * 
  * @param {number} assessmentId
  * @param {string} studentId
- * @param {Object} attemptData { pointsEarned, date, comment }
- * @returns {Promise<Object>} The updated grade record.
+ * @param {string} classId
+ * @returns {Promise<Object>}
+ */
+export async function getOrCreateGrade(assessmentId, studentId, classId) {
+  const db = await getDB()
+  const tx = db.transaction('grades', 'readwrite')
+  const grade = await _getGradeInTransaction(tx, assessmentId, studentId, classId)
+  await tx.done
+  return grade
+}
+
+/**
+ * Adds an assessment attempt (score entry) for a student.
+ * Uses a single transaction to prevent race conditions.
  */
 export async function addAttempt(assessmentId, studentId, { pointsEarned, date, comment = '' }) {
   const db = await getDB()
-  const grade = await getOrCreateGrade(assessmentId, studentId)
+  
+  // We need to know classId for the new grade record if it doesn't exist.
+  // We fetch it from the assessment.
+  const assessment = await db.get('assessments', assessmentId)
+  if (!assessment) throw new Error(`Assessment not found: ${assessmentId}`)
+
+  const tx = db.transaction('grades', 'readwrite')
+  const store = tx.objectStore('grades')
+  const grade = await _getGradeInTransaction(tx, assessmentId, studentId, assessment.classId)
+  
+  // Validation: Catch typos where score exceeds total possible
+  if (pointsEarned > assessment.totalPoints) {
+    throw new Error(`Invalid score: ${pointsEarned} exceeds assessment total of ${assessment.totalPoints}`)
+  }
   
   const attempt = {
     attemptId: crypto.randomUUID(),
@@ -141,10 +164,51 @@ export async function addAttempt(assessmentId, studentId, { pointsEarned, date, 
   
   grade.attempts.push(attempt)
   const plain = JSON.parse(JSON.stringify(grade))
-  await db.put('grades', plain)
+  await store.put(plain)
+  await tx.done
+
   hasUnsyncedChanges.value = true
   return plain
 }
+
+/**
+ * Updates the most recent attempt for a grade record.
+ * If no attempts exist, it behaves like addAttempt.
+ */
+export async function updateLastAttempt(assessmentId, studentId, pointsEarned) {
+  const db = await getDB()
+  const assessment = await db.get('assessments', assessmentId)
+  if (!assessment) throw new Error(`Assessment not found: ${assessmentId}`)
+
+  if (pointsEarned > assessment.totalPoints) {
+    throw new Error(`Invalid score: ${pointsEarned} exceeds assessment total of ${assessment.totalPoints}`)
+  }
+
+  const tx = db.transaction('grades', 'readwrite')
+  const store = tx.objectStore('grades')
+  const grade = await _getGradeInTransaction(tx, assessmentId, studentId, assessment.classId)
+  
+  if (grade.attempts.length > 0) {
+    const lastIdx = grade.attempts.length - 1
+    grade.attempts[lastIdx].pointsEarned = pointsEarned
+    grade.attempts[lastIdx].date = new Date().toISOString()
+  } else {
+    grade.attempts.push({
+      attemptId: crypto.randomUUID(),
+      pointsEarned,
+      date: new Date().toISOString(),
+      comment: ''
+    })
+  }
+  
+  const plain = JSON.parse(JSON.stringify(grade))
+  await store.put(plain)
+  await tx.done
+
+  hasUnsyncedChanges.value = true
+  return plain
+}
+
 
 /**
  * Removes a specific attempt from a grade record.
@@ -154,14 +218,25 @@ export async function addAttempt(assessmentId, studentId, { pointsEarned, date, 
  * @param {string} attemptId
  * @returns {Promise<Object>} The updated grade record.
  */
+/**
+ * Removes a specific attempt from a grade record.
+ * Transaction-guarded to prevent data loss.
+ */
 export async function deleteAttempt(assessmentId, studentId, attemptId) {
   const db = await getDB()
-  const grade = await getOrCreateGrade(assessmentId, studentId)
+  const tx = db.transaction('grades', 'readwrite')
+  const store = tx.objectStore('grades')
+  
+  // We don't have classId here easily, but getOrCreateGrade will handle 
+  // missing classId if it already exists (which it must if we're deleting an attempt).
+  const grade = await _getGradeInTransaction(tx, assessmentId, studentId)
   
   grade.attempts = grade.attempts.filter(a => a.attemptId !== attemptId)
   
   const plain = JSON.parse(JSON.stringify(grade))
-  await db.put('grades', plain)
+  await store.put(plain)
+  await tx.done
+
   hasUnsyncedChanges.value = true
   return plain
 }
@@ -169,9 +244,14 @@ export async function deleteAttempt(assessmentId, studentId, attemptId) {
 /**
  * Sets a specific attempt as the primary (counting) one.
  */
+/**
+ * Sets a specific attempt as the primary (counting) one.
+ */
 export async function setPrimaryAttempt(assessmentId, studentId, attemptId) {
   const db = await getDB()
-  const grade = await getOrCreateGrade(assessmentId, studentId)
+  const tx = db.transaction('grades', 'readwrite')
+  const store = tx.objectStore('grades')
+  const grade = await _getGradeInTransaction(tx, assessmentId, studentId)
   
   grade.attempts = grade.attempts.map(a => ({
     ...a,
@@ -179,7 +259,9 @@ export async function setPrimaryAttempt(assessmentId, studentId, attemptId) {
   }))
   
   const plain = JSON.parse(JSON.stringify(grade))
-  await db.put('grades', plain)
+  await store.put(plain)
+  await tx.done
+
   hasUnsyncedChanges.value = true
   return plain
 }
@@ -192,13 +274,20 @@ export async function setPrimaryAttempt(assessmentId, studentId, attemptId) {
  * @param {Object} flags { missing: boolean, excluded: boolean }
  * @returns {Promise<Object>} The updated grade record.
  */
+/**
+ * Updates boolean flags on a grade record.
+ */
 export async function updateGradeFlags(assessmentId, studentId, flags) {
   const db = await getDB()
-  const grade = await getOrCreateGrade(assessmentId, studentId)
+  const tx = db.transaction('grades', 'readwrite')
+  const store = tx.objectStore('grades')
+  const grade = await _getGradeInTransaction(tx, assessmentId, studentId)
   
   Object.assign(grade, flags)
   const plain = JSON.parse(JSON.stringify(grade))
-  await db.put('grades', plain)
+  await store.put(plain)
+  await tx.done
+
   hasUnsyncedChanges.value = true
   return plain
 }
@@ -224,17 +313,16 @@ export async function deleteGrade(assessmentId, studentId) {
  * @param {string} classId
  * @returns {Promise<Array<Object>>}
  */
+/**
+ * Returns all grades for all students in a class.
+ * NOW OPTIMIZED with single-query by_classId index!
+ * 
+ * @param {string} classId
+ * @returns {Promise<Array<Object>>}
+ */
 export async function getGradesByClass(classId) {
   const db = await getDB()
-  const assessments = await getAssessmentsByClass(classId)
-  const assessmentIds = assessments.map(a => a.assessmentId)
-  
-  const allGrades = []
-  for (const assessmentId of assessmentIds) {
-    const grades = await db.getAllFromIndex('grades', 'by_assessmentId', assessmentId)
-    allGrades.push(...grades)
-  }
-  return allGrades
+  return await db.getAllFromIndex('grades', 'by_classId', classId)
 }
 
 /**
@@ -264,7 +352,8 @@ export function calculateStandardDeviation(values) {
   if (!values || values.length < 2) return null
   const mean = values.reduce((a, b) => a + b, 0) / values.length
   const squaredDiffs = values.map(v => Math.pow(v - mean, 2))
-  const avgSquaredDiff = squaredDiffs.reduce((a, b) => a + b, 0) / values.length
+  // Use Sample SD (n-1) for cohort samples
+  const avgSquaredDiff = squaredDiffs.reduce((a, b) => a + b, 0) / (values.length - 1)
   return Math.sqrt(avgSquaredDiff)
 }
 
@@ -299,6 +388,7 @@ export function buildDistributionBuckets(percentages) {
   }))
   // Handle 100% edge case — goes in the last bucket
   for (const p of percentages) {
+    if (p === null || p === undefined || isNaN(p)) continue
     const idx = p >= 100 ? 9 : Math.floor(p / 10)
     const safeIdx = Math.max(0, Math.min(9, idx))
     buckets[safeIdx].count++
@@ -362,7 +452,12 @@ function getBucketMode(scores) {
       // Tie-break: use bucket with most recent score
       const currentNewest = Math.max(...buckets[bestBucketIndex].map(s => new Date(s.date).getTime()))
       const candidateNewest = Math.max(...buckets[i].map(s => new Date(s.date).getTime()))
+      // Deterministic tie-break: 
+      // 1. Favor the bucket with the most recent entry
+      // 2. If dates are identical, favor the higher grade bucket
       if (candidateNewest > currentNewest) {
+        bestBucketIndex = i
+      } else if (candidateNewest === currentNewest && i > bestBucketIndex) {
         bestBucketIndex = i
       }
     }
@@ -425,7 +520,7 @@ function calculateMostConsistent(studentId, classRecord, gradeMap, assessments) 
       if (earned === null) continue
       
       scores.push({
-        percentage: (earned / a.totalPoints) * 100,
+        percentage: (earned / (a.totalPoints || 1)) * 100,
         date: a.date
       })
     }
@@ -490,7 +585,7 @@ function calculateWeightedMedian(studentId, classRecord, gradeMap, assessments) 
       const earned = resolveAttemptScore(g.attempts, a.retestPolicy)
       if (earned === null) continue
       
-      scores.push((earned / a.totalPoints) * 100)
+      scores.push((earned / (a.totalPoints || 1)) * 100)
     }
 
     if (scores.length > 0) {
@@ -517,12 +612,12 @@ function calculateWeightedMedian(studentId, classRecord, gradeMap, assessments) 
  * 
  * @param {string} studentId
  * @param {Object} classRecord
- * @param {Object} options { asOf: string ISO date }
+ * @param {Object} options { asOf: string ISO date, assessmentsPreRef: Array, gradesPreRef: Array }
  * @returns {Promise<Object>} Result object with overall grade and category breakdowns.
  */
-export async function calculateStudentGrade(studentId, classRecord, { asOf = null } = {}) {
-  const assessments = await getAssessmentsByClass(classRecord.classId)
-  const grades = await getGradesByStudent(studentId, classRecord.classId)
+export async function calculateStudentGrade(studentId, classRecord, { asOf = null, assessmentsPreRef = null, gradesPreRef = null } = {}) {
+  const assessments = assessmentsPreRef || await getAssessmentsByClass(classRecord.classId)
+  const grades = gradesPreRef || await getGradesByStudent(studentId, classRecord.classId)
   
   const gradeMap = {}
   for (const g of grades) gradeMap[g.assessmentId] = g
@@ -572,8 +667,10 @@ export async function calculateStudentGrade(studentId, classRecord, { asOf = nul
       if (earned === null) continue
 
       const possible = assessment.scaledTotal ?? assessment.totalPoints
+      // Guard against division by zero
+      const divisor = assessment.totalPoints || 1
       const scaledEarned = assessment.scaledTotal
-        ? (earned / assessment.totalPoints) * assessment.scaledTotal
+        ? (earned / divisor) * assessment.scaledTotal
         : earned
 
       totalEarned += scaledEarned
@@ -585,13 +682,12 @@ export async function calculateStudentGrade(studentId, classRecord, { asOf = nul
       continue
     }
 
-    // Check for manual category override on this student recorded in classRecord
+    // Check for manual category override
     const override = classRecord.students[studentId]?.categoryOverrides?.[category.categoryId]
     
     if (override !== undefined && override !== null) {
       const percentage = Number(override.overridePercentage ?? override)
       if (isNaN(percentage)) {
-        // Fall back to calculated grade if override data is corrupt/NaN
         categoryResults[category.categoryId] = {
           percentage: (totalEarned / totalPossible) * 100,
           isOverridden: false
@@ -599,8 +695,7 @@ export async function calculateStudentGrade(studentId, classRecord, { asOf = nul
       } else {
         categoryResults[category.categoryId] = {
           percentage,
-          isOverridden: true,
-          overrideNote: override?.note
+          isOverridden: true
         }
       }
     } else {
@@ -619,14 +714,13 @@ export async function calculateStudentGrade(studentId, classRecord, { asOf = nul
     const result = categoryResults[category.categoryId]
     if (result === null) continue
     
-    // category.weight is an integer (e.g. 70 for 70%)
     weightedSum += result.percentage * (category.weight / 100)
     weightUsed += category.weight
   }
 
   const overallGrade = weightUsed === 0 ? null : (weightedSum / weightUsed) * 100
 
-  // New Metrics (Step 2)
+  // New Metrics
   const mostConsistent = calculateMostConsistent(studentId, classRecord, gradeMap, assessments)
   const median = calculateWeightedMedian(studentId, classRecord, gradeMap, assessments)
 
@@ -634,7 +728,7 @@ export async function calculateStudentGrade(studentId, classRecord, { asOf = nul
     overallGrade: overallGrade !== null ? Math.round(overallGrade * 10) / 10 : null,
     mostConsistent,
     median: median && median.percentage !== null ? Math.round(median.percentage * 10) / 10 : null,
-    medianData: median, // Full breakdown for UI if needed
+    medianData: median,
     categoryResults,
     weightUsed,
     asOf
@@ -642,12 +736,24 @@ export async function calculateStudentGrade(studentId, classRecord, { asOf = nul
 }
 
 /**
- * Convenience function to calculate grades for all students in a class at once.
+ * Convenience function to calculate grades for all students in a class.
+ * NOW BATCHED: Loads data once for the whole class instead of per student.
  */
 export async function calculateClassGrades(classRecord, { asOf = null } = {}) {
+  // Batch fetch all data once
+  const assessments = await getAssessmentsByClass(classRecord.classId)
+  const allGrades = await getGradesByClass(classRecord.classId)
+
   const results = {}
   for (const studentId of Object.keys(classRecord.students)) {
-    results[studentId] = await calculateStudentGrade(studentId, classRecord, { asOf })
+    // Filter the batched data for this specific student
+    const studentGrades = allGrades.filter(g => g.studentId === studentId)
+    
+    results[studentId] = await calculateStudentGrade(studentId, classRecord, { 
+      asOf, 
+      assessmentsPreRef: assessments, 
+      gradesPreRef: studentGrades 
+    })
   }
   return results
 }
@@ -687,7 +793,7 @@ export function calculateAssessmentAnalytics(assessmentId, grades, assessment, o
       if (earned === null) return null
       return {
         studentId: g.studentId,
-        percentage: (earned / assessment.totalPoints) * 100
+        percentage: (earned / (assessment.totalPoints || 1)) * 100
       }
     })
     .filter(s => s !== null)
@@ -799,8 +905,10 @@ export async function calculateClassAnalytics(classRecord, assessments, grades, 
         if (earned === null) continue
 
         const possible = a.scaledTotal ?? a.totalPoints
+        // Guard against division by zero
+        const divisor = a.totalPoints || 1
         const scaledEarned = a.scaledTotal
-          ? (earned / a.totalPoints) * a.scaledTotal
+          ? (earned / divisor) * a.scaledTotal
           : earned
 
         catEarned += scaledEarned
