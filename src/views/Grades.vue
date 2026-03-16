@@ -419,7 +419,10 @@
                   </div>
 
                   <div class="grades__stat-item">
-                    <span class="grades__stat-label">Median:</span>
+                    <span class="grades__stat-label">
+                      Weighted Median:
+                      <span class="grades__info-icon" title="Calculated as a weighted average of the median score from each category. More stable than the raw average for reflecting typical performance.">ⓘ</span>
+                    </span>
                     <template v-if="classGrades[selectedStudentId]?.median !== null">
                       <span class="grades__stat-badge" :style="{ background: getHeatColor(classGrades[selectedStudentId].median) }">
                         {{ formatGrade(classGrades[selectedStudentId].median) }}

@@ -413,18 +413,49 @@ function calculateMostConsistent(studentId, classRecord, gradeMap, assessments) 
   }
 }
 
-function calculateOverallMedian(studentId, gradeMap, assessments) {
-  const scores = []
-  for (const a of assessments) {
-    if (a.target !== 'class' || a.excluded) continue
-    const g = gradeMap[a.assessmentId]
-    if (!g || g.excluded || g.missing || !g.attempts || g.attempts.length === 0) continue
-    
-    const earned = resolveAttemptScore(g.attempts, a.retestPolicy)
-    if (earned === null) continue
-    scores.push((earned / a.totalPoints) * 100)
+function calculateWeightedMedian(studentId, classRecord, gradeMap, assessments) {
+  const categories = classRecord.gradebookCategories
+  if (!categories || categories.length === 0) return null
+
+  const breakdown = {}
+  let weightedSum = 0
+  let totalWeight = 0
+
+  for (const cat of categories) {
+    const catAssessments = assessments.filter(a => 
+      a.target === 'class' && 
+      a.categoryId === cat.categoryId && 
+      !a.excluded
+    )
+
+    const scores = []
+    for (const a of catAssessments) {
+      const g = gradeMap[a.assessmentId]
+      if (!g || g.excluded || g.missing || !g.attempts || g.attempts.length === 0) continue
+      
+      const earned = resolveAttemptScore(g.attempts, a.retestPolicy)
+      if (earned === null) continue
+      
+      scores.push((earned / a.totalPoints) * 100)
+    }
+
+    if (scores.length > 0) {
+      const median = calculateMedian(scores)
+      breakdown[cat.categoryId] = { 
+        percentage: median, 
+        count: scores.length 
+      }
+      weightedSum += median * (cat.weight / 100)
+      totalWeight += cat.weight
+    }
   }
-  return calculateMedian(scores)
+
+  if (totalWeight === 0) return null
+
+  return {
+    percentage: weightedSum / (totalWeight / 100),
+    categoryBreakdown: breakdown
+  }
 }
 
 /**
@@ -543,12 +574,13 @@ export async function calculateStudentGrade(studentId, classRecord, { asOf = nul
 
   // New Metrics (Step 2)
   const mostConsistent = calculateMostConsistent(studentId, classRecord, gradeMap, assessments)
-  const median = calculateOverallMedian(studentId, gradeMap, assessments)
+  const median = calculateWeightedMedian(studentId, classRecord, gradeMap, assessments)
 
   return {
     overallGrade: overallGrade !== null ? Math.round(overallGrade * 10) / 10 : null,
     mostConsistent,
-    median: median !== null ? Math.round(median * 10) / 10 : null,
+    median: median && median.percentage !== null ? Math.round(median.percentage * 10) / 10 : null,
+    medianData: median, // Full breakdown for UI if needed
     categoryResults,
     weightUsed,
     asOf
