@@ -426,9 +426,8 @@
                         <tr v-for="a in sortedAnalyticsAssessments" :key="a.assessmentId">
                           <td class="grades__td-assessment-name" @click="selectedAssessmentId = a.assessmentId">
                             {{ a.name }}
-                            <span class="grades__td-meta">{{ formatDateShort(a.date) }}</span>
                           </td>
-                          <td>{{ a.categoryName }}</td>
+                          <td>{{ getCategoryName(a.categoryId) }}</td>
                           <td :style="{ color: getHeatColor(a.stats.mean), fontWeight: 'bold' }">{{ formatGrade(a.stats.mean) }}</td>
                           <td>{{ formatGrade(a.stats.median) }}</td>
                           <td>{{ a.stats.sd !== null ? a.stats.sd.toFixed(1) + '%' : '—' }}</td>
@@ -1707,6 +1706,11 @@ async function enterAnalyticsMode() {
 
 function exitAnalyticsMode() {
   resetAnalyticsState()
+}
+
+const getCategoryName = (categoryId) => {
+  return activeClassRecord.value?.gradebookCategories
+    .find(c => c.categoryId === categoryId)?.name ?? '—'
 }
 
 function formatGrade(grade) {
