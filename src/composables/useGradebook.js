@@ -20,6 +20,7 @@ export const selectedMilestone = ref(null) // null = current
 // Reactive state for analytics (Step 6)
 export const analyticsMode = ref(false) // false = grid, true = analytics panel
 export const excludeOutliers = ref(false) // analytics-only display toggle, not persisted
+export const distributionMode = ref('buckets') // 'buckets' (10%) or 'levels' (Ontario GS)
 export const classAnalytics = ref(null) // result of calculateClassAnalytics
 
 // ─── Public API ──────────────────────────────────────────────────────────────
@@ -106,6 +107,7 @@ export async function toggleStudentFromAnalytics(studentId) {
  */
 export function resetAnalyticsState() {
   excludeOutliers.value = false
+  distributionMode.value = 'buckets'
   classAnalytics.value = null
   analyticsMode.value = false
 }

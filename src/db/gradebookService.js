@@ -397,6 +397,37 @@ export function buildDistributionBuckets(percentages) {
   return buckets
 }
 
+/**
+ * Groups percentages into 'Growing Success' levels (Ontario Education).
+ * R: 0-49, L1: 50-59, L2: 60-69, L3: 70-79, L4: 80-100
+ * @param {Array<number>} percentages 
+ * @returns {Array<Object>}
+ */
+export function buildLevelDistributionBuckets(percentages) {
+  const buckets = [
+    { label: 'R', range: [0, 49], count: 0, scores: [] },
+    { label: 'L1', range: [50, 59], count: 0, scores: [] },
+    { label: 'L2', range: [60, 69], count: 0, scores: [] },
+    { label: 'L3', range: [70, 79], count: 0, scores: [] },
+    { label: 'L4', range: [80, 100], count: 0, scores: [] }
+  ]
+
+  for (const p of percentages) {
+    if (p === null || p === undefined || isNaN(p)) continue
+    
+    let idx = -1
+    if (p < 50) idx = 0
+    else if (p < 60) idx = 1
+    else if (p < 70) idx = 2
+    else if (p < 80) idx = 3
+    else idx = 4
+
+    buckets[idx].count++
+    buckets[idx].scores.push(p)
+  }
+  return buckets
+}
+
 // ─── Grade Calculation Logic ───────────────────────────────────────────────
 
 /**
@@ -834,6 +865,7 @@ export function calculateAssessmentAnalytics(assessmentId, grades, assessment, o
     highest: Math.round(highest * 10) / 10,
     lowest: Math.round(lowest * 10) / 10,
     distributionBuckets,
+    levelBuckets: buildLevelDistributionBuckets(allPercentages),
     outlierCount: outlierResult.outliers.length,
     outlierStudentIds,
     excludeOutliersActive: excludeOutliers,
@@ -1004,6 +1036,7 @@ export async function calculateClassAnalytics(classRecord, assessments, grades, 
     median: Math.round(median * 10) / 10,
     sd: sd !== null ? Math.round(sd * 10) / 10 : null,
     distributionBuckets,
+    levelBuckets: buildLevelDistributionBuckets(allPercentages),
     studentCount: activePercentages.length,
     totalStudentCount: allPercentages.length,
     outlierCount: outlierResult.outliers.length,

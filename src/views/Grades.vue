@@ -180,18 +180,32 @@
                 <!-- Sparkline Distribution -->
                 <div v-if="currentAssessmentSummary.distributionBuckets" class="grades__sparkline-card grades__sparkline-card--large">
                   <div class="grades__sparkline grades__sparkline--large">
-                    <div 
-                      v-for="(bucket, idx) in currentAssessmentSummary.distributionBuckets" 
-                      :key="idx"
-                      class="grades__sparkline-bar"
-                      :style="{ 
-                        height: bucket.count > 0 ? Math.max(8, (bucket.count / currentAssessmentSummary.totalCount * 100)) + '%' : '0px',
-                        backgroundColor: getHeatColorHex(bucket.range[0])
-                      }"
-                      :title="bucket.label + ': ' + bucket.count + ' students'"
-                    ></div>
+                    <template v-if="distributionMode === 'buckets'">
+                      <div 
+                        v-for="(bucket, idx) in currentAssessmentSummary.distributionBuckets" 
+                        :key="'bucket-'+idx"
+                        class="grades__sparkline-bar"
+                        :style="{ 
+                          height: bucket.count > 0 ? Math.max(8, (bucket.count / currentAssessmentSummary.totalCount * 100)) + '%' : '0px',
+                          backgroundColor: getHeatColorHex(bucket.range[0])
+                        }"
+                        :title="bucket.label + ': ' + bucket.count + ' students'"
+                      ></div>
+                    </template>
+                    <template v-else>
+                      <div 
+                        v-for="(bucket, idx) in currentAssessmentSummary.levelBuckets" 
+                        :key="'level-'+idx"
+                        class="grades__sparkline-bar"
+                        :style="{ 
+                          height: bucket.count > 0 ? Math.max(8, (bucket.count / currentAssessmentSummary.totalCount * 100)) + '%' : '0px',
+                          backgroundColor: getHeatColorHex(bucket.range[0])
+                        }"
+                        :title="bucket.label + ': ' + bucket.count + ' students'"
+                      ></div>
+                    </template>
                   </div>
-                  <span class="grades__sparkline-label">Grade Distribution</span>
+                  <span class="grades__sparkline-label">Grade Distribution ({{ distributionMode === 'buckets' ? '10% Buckets' : 'Levels' }})</span>
                 </div>
               </div>
             </div>
@@ -494,11 +508,29 @@
 
                 <!-- Grade Distribution Histogram (Step 5) -->
                 <div class="grades__analytics-section">
-                  <h3 class="grades__analytics-subtitle">GRADE DISTRIBUTION</h3>
+                  <div class="grades__section-header-row">
+                    <h3 class="grades__analytics-subtitle">GRADE DISTRIBUTION</h3>
+                    <div class="grades__toggle-group">
+                      <button 
+                        class="grades__toggle-btn"
+                        :class="{ 'grades__toggle-btn--active': distributionMode === 'buckets' }"
+                        @click="distributionMode = 'buckets'"
+                      >10% Buckets</button>
+                      <button 
+                        class="grades__toggle-btn"
+                        :class="{ 'grades__toggle-btn--active': distributionMode === 'levels' }"
+                        @click="distributionMode = 'levels'"
+                      >Levels</button>
+                    </div>
+                  </div>
                   <div class="grades__chart-container" style="height: 200px;">
                     <Bar :data="bucketChartData" :options="bucketChartOptions" />
                   </div>
-                  <p class="grades__analytics-hint">Number of students within each 10% grade bracket.</p>
+                  <p class="grades__analytics-hint">
+                    {{ distributionMode === 'buckets' 
+                        ? 'Number of students within each 10% grade bracket.' 
+                        : 'Number of students within each Ontario level (Growing Success).' }}
+                  </p>
                 </div>
 
                 <!-- Per-Assessment Breakdown (Step 6) -->
@@ -548,16 +580,30 @@
                           <td>
                             <!-- Sparkline (Step 6) -->
                             <div class="grades__sparkline" v-if="a.stats.distributionBuckets">
-                              <div 
-                                v-for="bucket in a.stats.distributionBuckets" 
-                                :key="bucket.label"
-                                class="grades__sparkline-bar"
-                                :style="{ 
-                                  height: (bucket.count / a.stats.totalCount * 100) + '%',
-                                  background: getHeatColorHex(bucket.range[0])
-                                }"
-                                :title="`${bucket.label}: ${bucket.count} students`"
-                              ></div>
+                              <template v-if="distributionMode === 'buckets'">
+                                <div 
+                                  v-for="bucket in a.stats.distributionBuckets" 
+                                  :key="bucket.label"
+                                  class="grades__sparkline-bar"
+                                  :style="{ 
+                                    height: (bucket.count / a.stats.totalCount * 100) + '%',
+                                    background: getHeatColorHex(bucket.range[0])
+                                  }"
+                                  :title="`${bucket.label}: ${bucket.count} students`"
+                                ></div>
+                              </template>
+                              <template v-else>
+                                <div 
+                                  v-for="bucket in a.stats.levelBuckets" 
+                                  :key="bucket.label"
+                                  class="grades__sparkline-bar"
+                                  :style="{ 
+                                    height: (bucket.count / a.stats.totalCount * 100) + '%',
+                                    background: getHeatColorHex(bucket.range[0])
+                                  }"
+                                  :title="`${bucket.label}: ${bucket.count} students`"
+                                ></div>
+                              </template>
                             </div>
                           </td>
                         </tr>
@@ -602,8 +648,24 @@
               <thead>
                 <!-- Top Header -->
                 <tr>
-                  <th class="grades__th-student">Student Name</th>
-                  <th class="grades__th-overall">Overall</th>
+                  <th class="grades__th-student" @click="toggleGridSort('name')">
+                    <div class="grades__sort-header">
+                      Student Name
+                      <span v-if="gridSortBy === 'name'" class="grades__sort-icon">
+                        <ChevronUp v-if="gridSortOrder === 'asc'" :size="14" />
+                        <ChevronDown v-else :size="14" />
+                      </span>
+                    </div>
+                  </th>
+                  <th class="grades__th-overall" @click="toggleGridSort('grade')">
+                    <div class="grades__sort-header">
+                      Overall
+                      <span v-if="gridSortBy === 'grade'" class="grades__sort-icon">
+                        <ChevronUp v-if="gridSortOrder === 'asc'" :size="14" />
+                        <ChevronDown v-else :size="14" />
+                      </span>
+                    </div>
+                  </th>
                   <th 
                     v-for="a in sortedAssessments" 
                     :key="a.assessmentId"
@@ -1315,9 +1377,10 @@ import {
   refreshClassAnalytics,
   toggleOutlierExclusion,
   toggleStudentFromAnalytics,
-  resetAnalyticsState
+  resetAnalyticsState,
+  distributionMode
 } from '../composables/useGradebook.js'
-import { Plus, BarChart2, Settings, Pencil, XCircle, AlertCircle, Trash2, X, MoreVertical, ArrowLeft, Check, ArrowUp, ArrowDown, Minus, GraduationCap, Eye, EyeOff, ChevronLeft, ChevronRight, UserCheck, Activity, FilePlus, Target, Hash, Calendar } from 'lucide-vue-next'
+import { Plus, BarChart2, Settings, Pencil, XCircle, AlertCircle, Trash2, X, MoreVertical, ArrowLeft, Check, ArrowUp, ArrowDown, Minus, GraduationCap, Eye, EyeOff, ChevronLeft, ChevronRight, UserCheck, Activity, FilePlus, Target, Hash, Calendar, Award, AlertTriangle, ChevronUp, ChevronDown } from 'lucide-vue-next'
 import GradeTrendChart from '../components/GradeTrendChart.vue'
 import {
   Chart as ChartJS,
@@ -1367,6 +1430,8 @@ const studentAttendance = ref({ absences: 0, lates: 0 })
 const isPrivacyMode = ref(false)
 const isSidebarCollapsed = ref(false)
 const isChangeMode = ref(false)
+const gridSortBy = ref('name') // 'name' | 'grade'
+const gridSortOrder = ref('asc') // 'asc' | 'desc'
 
 const assessmentTypes = [
   { value: 'product', label: 'Product' },
@@ -1414,9 +1479,24 @@ const sortedClassList = computed(() => {
 
 const sortedRoster = computed(() => {
   if (!activeClassRecord.value?.students) return []
-  return Object.keys(activeClassRecord.value.students)
-    .map(id => ({ studentId: id, ...activeClassRecord.value.students[id] }))
-    .sort((a, b) => a.lastName.localeCompare(b.lastName))
+  
+  const students = Object.keys(activeClassRecord.value.students)
+    .map(id => ({ 
+      studentId: id, 
+      ...activeClassRecord.value.students[id],
+      overallGrade: classGrades.value[id]?.overallGrade ?? -1
+    }))
+
+  return students.sort((a, b) => {
+    let result = 0
+    if (gridSortBy.value === 'name') {
+      result = a.lastName.localeCompare(b.lastName)
+    } else if (gridSortBy.value === 'grade') {
+      result = a.overallGrade - b.overallGrade
+    }
+    
+    return gridSortOrder.value === 'asc' ? result : -result
+  })
 })
 
 const sortedUnits = computed(() => {
@@ -1576,9 +1656,14 @@ const overallClassSD = computed(() => {
  * Step 5: Grade Distribution Chart Data
  */
 const bucketChartData = computed(() => {
-  if (!classAnalytics.value?.distributionBuckets) return { labels: [], datasets: [] }
+  if (!classAnalytics.value) return { labels: [], datasets: [] }
   
-  const buckets = classAnalytics.value.distributionBuckets
+  const buckets = distributionMode.value === 'buckets' 
+    ? classAnalytics.value.distributionBuckets 
+    : classAnalytics.value.levelBuckets
+
+  if (!buckets) return { labels: [], datasets: [] }
+  
   return {
     labels: buckets.map(b => b.label),
     datasets: [
@@ -1783,6 +1868,16 @@ const dossierTrendData = computed(() => {
   // We'll simplify: return assessments that have grades.
   return filteredStudentAssessments.value.filter(a => a.resolvedScore !== null)
 })
+
+function toggleGridSort(column) {
+  if (gridSortBy.value === column) {
+    gridSortOrder.value = gridSortOrder.value === 'asc' ? 'desc' : 'asc'
+  } else {
+    gridSortBy.value = column
+    // Default to descending for grades, ascending for name
+    gridSortOrder.value = column === 'grade' ? 'desc' : 'asc'
+  }
+}
 
 // --- Methods ---
 async function onClassChange() {
@@ -3277,6 +3372,15 @@ verall-trend {
   box-shadow: 2px 0 5px -2px rgba(0,0,0,0.1);
 }
 
+.grades__th-student {
+  cursor: pointer;
+  user-select: none;
+}
+
+.grades__th-student:hover {
+  background: var(--bg-secondary) !important;
+}
+
 .grades__grid thead .grades__th-student {
   z-index: 15;
   background: var(--bg-secondary);
@@ -3295,6 +3399,31 @@ verall-trend {
   border-right: 2px solid var(--border);
   text-align: center;
   font-weight: 700;
+}
+
+.grades__th-overall {
+  cursor: pointer;
+  user-select: none;
+}
+
+.grades__th-overall:hover {
+  background: var(--bg-secondary) !important;
+}
+
+.grades__sort-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  justify-content: flex-start;
+}
+
+.grades__th-overall .grades__sort-header {
+  justify-content: center;
+}
+
+.grades__sort-icon {
+  display: inline-flex;
+  color: var(--primary);
 }
 
 .grades__grid thead .grades__th-overall {
@@ -4831,8 +4960,16 @@ verall-trend {
   font-weight: 700;
   color: var(--text-secondary);
   letter-spacing: 0.05em;
-  margin-bottom: 1.25rem;
   text-transform: uppercase;
+}
+
+.grades__section-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.25rem;
+  gap: 1rem;
+  flex-wrap: wrap;
 }
 
 .grades__analytics-hint {
