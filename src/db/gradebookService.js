@@ -279,9 +279,13 @@ export async function setPrimaryAttempt(assessmentId, studentId, attemptId) {
  */
 export async function updateGradeFlags(assessmentId, studentId, flags) {
   const db = await getDB()
+  
+  const assessment = await db.get('assessments', assessmentId)
+  if (!assessment) throw new Error(`Assessment not found: ${assessmentId}`)
+
   const tx = db.transaction('grades', 'readwrite')
   const store = tx.objectStore('grades')
-  const grade = await _getGradeInTransaction(tx, assessmentId, studentId)
+  const grade = await _getGradeInTransaction(tx, assessmentId, studentId, assessment.classId)
   
   Object.assign(grade, flags)
   const plain = JSON.parse(JSON.stringify(grade))
