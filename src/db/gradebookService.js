@@ -839,7 +839,7 @@ export function calculateAssessmentAnalytics(assessmentId, grades, assessment, o
     excludeOutliersActive: excludeOutliers,
     // Calibration signal: low mean + high SD = poorly calibrated assessment
     calibrationFlag: mean < 60 && sd !== null && sd > 15 ? 'too_hard' :
-                     mean > 95 && sd !== null && sd < 5 ? 'too_easy' : null
+                     mean > 90 && sd !== null && sd < 5 ? 'too_easy' : null
   }
 }
 

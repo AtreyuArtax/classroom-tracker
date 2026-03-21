@@ -76,154 +76,239 @@
           <BarChart2 :size="48" class="grades__placeholder-icon" />
           <p>Select a class to view the gradebook</p>
         </div>
-
         <div v-else-if="selectedAssessmentId && currentAssessment" class="grades__assessment-view">
-          <!-- Assessment View Header -->
-          <div class="grades__view-header">
-            <button class="grades__back-btn" @click="selectedAssessmentId = null">
-              <ArrowLeft :size="16" /> Back to Class Grid
-            </button>
-            <div class="grades__assessment-title-row">
-              <h2 class="grades__view-title">{{ currentAssessment.name }}</h2>
-              <div class="grades__assessment-badges">
-                <span class="grades__badge">{{ currentAssessment.assessmentType }}</span>
-                <span class="grades__badge">/{{ currentAssessment.totalPoints }}</span>
-                <span v-if="currentAssessment.unit" class="grades__badge">{{ currentAssessment.unit }}</span>
-                <span class="grades__badge">{{ new Date(currentAssessment.date).toLocaleDateString() }}</span>
+          <div class="grades__focused-view">
+            <!-- Assessment View Header -->
+            <div class="grades__view-header">
+              <nav class="grades__breadcrumb">
+                <button class="grades__breadcrumb-link" @click="selectedAssessmentId = null">
+                  <ArrowLeft :size="14" /> Class Grid
+                </button>
+                <span class="grades__breadcrumb-sep">/</span>
+                <span class="grades__breadcrumb-current">Assessment Details</span>
+              </nav>
+
+              <div class="grades__assessment-card">
+                <div class="grades__card-main">
+                  <div class="grades__card-header-row">
+                    <h2 class="grades__card-title">{{ currentAssessment.name }}</h2>
+                    <div class="grades__header-actions">
+                      <button class="grades__btn-action" title="Edit Assessment" @click="startEditAssessment(currentAssessment)">
+                        <Pencil :size="16" />
+                      </button>
+                      <button class="grades__btn-action grades__btn-action--danger" title="Delete Assessment" @click="confirmDeleteAssessment(currentAssessment)">
+                        <Trash2 :size="16" />
+                      </button>
+                    </div>
+                  </div>                  <div class="grades__assessment-metadata">
+                    <div class="grades__meta-item" title="Assessment Type">
+                      <FilePlus :size="14" />
+                      <span>{{ currentAssessment.assessmentType }}</span>
+                    </div>
+                    <div class="grades__meta-item" title="Total Points">
+                      <Target :size="14" />
+                      <span>/{{ currentAssessment.totalPoints }}</span>
+                    </div>
+                    <div v-if="currentAssessment.unit" class="grades__meta-item" title="Unit/Category">
+                      <Hash :size="14" />
+                      <span>{{ currentAssessment.unit }}</span>
+                    </div>
+                    <div class="grades__meta-item" title="Date">
+                      <Calendar :size="14" />
+                      <span>{{ new Date(currentAssessment.date).toLocaleDateString() }}</span>
+                    </div>
+                    
+                  </div>
+                </div>
+
+                <div v-if="currentAssessmentSummary" class="grades__assessment-stats">
+                  <div class="grades__stats-main-row">
+                    <div class="grades__stat-card" :style="{ borderLeft: `4px solid ${getHeatColor(currentAssessmentSummary.average || currentAssessmentSummary.mean)}` }">
+                      <div class="grades__stat-card-label">Class Average</div>
+                      <div class="grades__stat-card-value-row">
+                        <span class="grades__stat-card-value">{{ currentAssessmentSummary.average || currentAssessmentSummary.mean || '—' }} <small>/{{ currentAssessment.totalPoints }}</small></span>
+                        <span v-if="currentAssessmentSummary.mean" class="grades__stat-card-percent">
+                          {{ Math.round((currentAssessmentSummary.mean / 100) * 1000) / 10 }}%
+                        </span>
+                      </div>
+                    </div>
+
+                    <div class="grades__stat-card">
+                      <div class="grades__stat-card-label">Entry Progress</div>
+                      <div class="grades__stat-card-value-row">
+                        <span class="grades__stat-card-value">{{ currentAssessmentSummary.enteredCount }} <small>/{{ currentAssessmentSummary.totalStudents }}</small></span>
+                        <div class="grades__mini-progress">
+                          <div class="grades__mini-progress-fill" :style="{ width: (currentAssessmentSummary.enteredCount / currentAssessmentSummary.totalStudents * 100) + '%' }"></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div class="grades__header-actions">
-                <button class="grades__btn-ghost" @click="startEditAssessment(currentAssessment)">
-                  <Pencil :size="14" /> Edit Details
-                </button>
-                <button class="grades__btn-ghost grades__btn-ghost--danger" @click="confirmDeleteAssessment(currentAssessment)">
-                  <Trash2 :size="14" /> Delete
-                </button>
+
+              <!-- New Full-Width Analysis Bar -->
+              <div v-if="currentAssessmentSummary" class="grades__analysis-bar">
+                <div class="grades__analysis-group">
+                  <div class="grades__stat-pill">
+                    <span class="grades__stat-pill-label">Median</span>
+                    <span class="grades__stat-pill-value">{{ currentAssessmentSummary.median }}%</span>
+                  </div>
+                  <div class="grades__stat-pill">
+                    <span class="grades__stat-pill-label">Std Dev</span>
+                    <span class="grades__stat-pill-value" :style="{ color: getSDColor(currentAssessmentSummary.sd) }">±{{ currentAssessmentSummary.sd }}</span>
+                  </div>
+                  <div class="grades__stat-pill">
+                    <span class="grades__stat-pill-label">Range</span>
+                    <span class="grades__stat-pill-value">{{ currentAssessmentSummary.lowest }}% – {{ currentAssessmentSummary.highest }}%</span>
+                  </div>
+                  
+                  <!-- Professional Interpretation Flag -->
+                  <div :class="['grades__calibration-pill', 'grades__calibration-pill--' + (currentAssessmentSummary.calibrationFlag || 'fair')]">
+                    <Award v-if="!currentAssessmentSummary.calibrationFlag" :size="14" />
+                    <AlertTriangle v-else :size="14" />
+                    <span class="grades__stat-pill-label">Interpretation</span>
+                    <span class="grades__stat-pill-value">
+                      {{ 
+                        currentAssessmentSummary.calibrationFlag === 'too_hard' ? 'Tough Assessment' : 
+                        currentAssessmentSummary.calibrationFlag === 'too_easy' ? 'Easy Assessment' : 
+                        'Well Calibrated (Fair)' 
+                      }}
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Sparkline Distribution -->
+                <div v-if="currentAssessmentSummary.distributionBuckets" class="grades__sparkline-card grades__sparkline-card--large">
+                  <div class="grades__sparkline grades__sparkline--large">
+                    <div 
+                      v-for="(bucket, idx) in currentAssessmentSummary.distributionBuckets" 
+                      :key="idx"
+                      class="grades__sparkline-bar"
+                      :style="{ 
+                        height: bucket.count > 0 ? Math.max(8, (bucket.count / currentAssessmentSummary.totalCount * 100)) + '%' : '0px',
+                        backgroundColor: getHeatColorHex(bucket.range[0])
+                      }"
+                      :title="bucket.label + ': ' + bucket.count + ' students'"
+                    ></div>
+                  </div>
+                  <span class="grades__sparkline-label">Grade Distribution</span>
+                </div>
               </div>
             </div>
 
-            <div v-if="currentAssessmentSummary" class="grades__assessment-summary">
-              <div class="grades__summary-stat">
-                <span class="grades__stat-label">Class Average:</span>
-                <span class="grades__stat-value">
-                  {{ currentAssessmentSummary.average || '—' }} / {{ currentAssessment.totalPoints }}
-                  <span v-if="currentAssessmentSummary.average" class="grades__stat-percent">
-                    ({{ Math.round((currentAssessmentSummary.average / currentAssessment.totalPoints) * 1000) / 10 }}%)
-                  </span>
-                </span>
-              </div>
-              <div class="grades__summary-stat">
-                <span class="grades__stat-label">Entered:</span>
-                <span class="grades__stat-value">{{ currentAssessmentSummary.enteredCount }} / {{ currentAssessmentSummary.totalStudents }} students</span>
+            <!-- Student List for Assessment (Premium Table) -->
+            <div class="grades__table-card">
+              <div class="grades__table-scroll-area">
+                <table class="grades__assessment-table">
+                  <thead>
+                    <tr>
+                      <th class="grades__ath-student">Student</th>
+                      <th class="grades__ath-score">Score</th>
+                      <th class="grades__ath-percent">%</th>
+                      <th class="grades__ath-status">Status</th>
+                      <th class="grades__ath-actions"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="s in sortedRoster" :key="s.studentId" class="grades__atr-student">
+                      <td class="grades__atd-student">
+                        <div class="grades__row-indicator"></div>
+                        <span class="grades__student-name-text">{{ s.lastName }}, {{ s.firstName }}</span>
+                      </td>
+                      <td class="grades__atd-score">
+                        <div v-if="newAttemptForm?.studentId === s.studentId" class="grades__new-attempt-inline">
+                          <div class="grades__attempt-form-row">
+                            <input 
+                              v-model.number="newAttemptForm.points" 
+                              type="number" 
+                              min="0" 
+                              :max="currentAssessment.totalPoints"
+                              class="grades__input-ghost grades__input-ghost--score"
+                              placeholder="Score"
+                            />
+                            <input 
+                              v-model="newAttemptForm.date" 
+                              type="date" 
+                              class="grades__input-ghost grades__input-ghost--date"
+                            />
+                            <input 
+                              v-model="newAttemptForm.comment" 
+                              class="grades__input-ghost grades__input-ghost--note"
+                              placeholder="Note"
+                            />
+                            <div class="grades__inline-actions">
+                              <button class="grades__icon-btn grades__icon-btn--success" @click="saveNewAttempt">
+                                <Check :size="16" />
+                              </button>
+                              <button class="grades__icon-btn" @click="newAttemptForm = null">
+                                <X :size="16" />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                        <div v-else-if="gradeMap[selectedAssessmentId]?.[s.studentId]?.missing" class="grades__cell-missing-badge">MISSING</div>
+                        <div v-else-if="gradeMap[selectedAssessmentId]?.[s.studentId]?.excluded" class="grades__cell-excluded-badge">EXCLUDED</div>
+                        <div v-else class="grades__score-input-wrapper">
+                          <!-- Change Overlay -->
+                          <div v-if="editingCell?.sId === s.studentId && editingCell?.aId === selectedAssessmentId" class="grades__cell-edit">
+                            <input 
+                              ref="editInput"
+                              v-model.number="editingCell.value"
+                              type="number"
+                              min="0"
+                              :max="currentAssessment.totalPoints"
+                              class="grades__input-ghost grades__input-ghost--active"
+                              @blur="saveEdit"
+                              @keydown.enter.prevent="onEnterKey"
+                              @keydown.tab.prevent="onEnterKey"
+                              @keydown.up.prevent="onArrowKey('up')"
+                              @keydown.down.prevent="onArrowKey('down')"
+                              @keydown.esc.prevent="cancelEdit"
+                            />
+                          </div>
+                          <template v-else>
+                            <input 
+                              type="number"
+                              min="0"
+                              :max="currentAssessment.totalPoints"
+                              class="grades__input-ghost"
+                              :value="gradeMap[selectedAssessmentId]?.[s.studentId]?.resolvedScore"
+                              @blur="e => onAssessmentViewBlur(s.studentId, e.target.value)"
+                              @keydown.enter.prevent="e => onAssessmentViewEnter(s.studentId, 'down', e)"
+                              @keydown.tab.prevent="e => onAssessmentViewEnter(s.studentId, 'down', e)"
+                              @keydown.up.prevent="e => onAssessmentViewEnter(s.studentId, 'up', e)"
+                              @keydown.down.prevent="e => onAssessmentViewEnter(s.studentId, 'down', e)"
+                              @contextmenu.prevent="onContextMenu($event, s.studentId, selectedAssessmentId)"
+                            />
+                            <button 
+                              v-if="gradeMap[selectedAssessmentId]?.[s.studentId]?.attempts?.length > 1" 
+                              class="grades__dot-indicator"
+                              @click="openAttempts($event, s.studentId, selectedAssessmentId)"
+                            >•</button>
+                          </template>
+                        </div>
+                      </td>
+                      <td class="grades__atd-percent">
+                        <span v-if="gradeMap[selectedAssessmentId]?.[s.studentId]?.resolvedScore != null" class="grades__percent-pill">
+                          {{ Math.round((gradeMap[selectedAssessmentId]?.[s.studentId]?.resolvedScore / currentAssessment.totalPoints) * 1000) / 10 }}%
+                        </span>
+                      </td>
+                      <td class="grades__atd-status">
+                        <span :class="['grades__status-badge', 'grades__status-badge--' + getStudentStatus(s.studentId).class]">
+                          {{ getStudentStatus(s.studentId).label }}
+                        </span>
+                      </td>
+                      <td class="grades__atd-actions">
+                        <button class="grades__icon-btn" @click="onStudentActionMenu($event, s.studentId)">
+                          <MoreVertical :size="14" />
+                        </button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>
-
-          <!-- Student List for Assessment -->
-          <div class="grades__assessment-list-wrapper">
-            <table class="grades__assessment-table">
-              <thead>
-                <tr>
-                  <th class="grades__ath-student">Student</th>
-                  <th class="grades__ath-score">Score</th>
-                  <th class="grades__ath-percent">%</th>
-                  <th class="grades__ath-status">Status</th>
-                  <th class="grades__ath-actions"></th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="s in sortedRoster" :key="s.studentId" class="grades__atr-student">
-                  <td class="grades__atd-student">{{ s.lastName }}, {{ s.firstName }}</td>
-                  <td class="grades__atd-score">
-                    <div v-if="newAttemptForm?.studentId === s.studentId" class="grades__new-attempt-inline">
-                      <div class="grades__attempt-form-row">
-                        <input 
-                          v-model.number="newAttemptForm.points" 
-                          type="number" 
-                          min="0" 
-                          :max="currentAssessment.totalPoints"
-                          class="grades__input-inline grades__input-inline--score"
-                          placeholder="Score"
-                        />
-                        <input 
-                          v-model="newAttemptForm.date" 
-                          type="date" 
-                          class="grades__input-inline grades__input-inline--date"
-                        />
-                        <input 
-                          v-model="newAttemptForm.comment" 
-                          class="grades__input-inline grades__input-inline--note"
-                          placeholder="Note"
-                        />
-                        <button class="grades__icon-btn grades__icon-btn--success" @click="saveNewAttempt">
-                          <Check :size="16" />
-                        </button>
-                        <button class="grades__icon-btn" @click="newAttemptForm = null">
-                          <X :size="16" />
-                        </button>
-                      </div>
-                    </div>
-                    <div v-else-if="gradeMap[selectedAssessmentId]?.[s.studentId]?.missing" class="grades__cell-missing">M</div>
-                    <div v-else-if="gradeMap[selectedAssessmentId]?.[s.studentId]?.excluded" class="grades__cell-excluded">EX</div>
-                    <div v-else class="grades__score-input-cell">
-                      <!-- Change Overlay -->
-                      <div v-if="editingCell?.sId === s.studentId && editingCell?.aId === selectedAssessmentId" class="grades__cell-edit">
-                        <input 
-                          ref="editInput"
-                          v-model.number="editingCell.value"
-                          type="number"
-                          min="0"
-                          :max="currentAssessment.totalPoints"
-                          class="grades__input-inline"
-                          @blur="saveEdit"
-                          @keydown.enter.prevent="onEnterKey"
-                          @keydown.tab.prevent="onEnterKey"
-                          @keydown.up.prevent="onArrowKey('up')"
-                          @keydown.down.prevent="onArrowKey('down')"
-                          @keydown.esc.prevent="cancelEdit"
-                        />
-                      </div>
-                      <template v-else>
-                        <input 
-                          type="number"
-                          min="0"
-                          :max="currentAssessment.totalPoints"
-                          class="grades__input-inline"
-                          :value="gradeMap[selectedAssessmentId]?.[s.studentId]?.resolvedScore"
-                          @blur="e => onAssessmentViewBlur(s.studentId, e.target.value)"
-                          @keydown.enter.prevent="e => onAssessmentViewEnter(s.studentId, 'down', e)"
-                          @keydown.tab.prevent="e => onAssessmentViewEnter(s.studentId, 'down', e)"
-                          @keydown.up.prevent="e => onAssessmentViewEnter(s.studentId, 'up', e)"
-                          @keydown.down.prevent="e => onAssessmentViewEnter(s.studentId, 'down', e)"
-                          @contextmenu.prevent="onContextMenu($event, s.studentId, selectedAssessmentId)"
-                        />
-                        <button 
-                          v-if="gradeMap[selectedAssessmentId]?.[s.studentId]?.attempts?.length > 1" 
-                          class="grades__dot-indicator"
-                          @click="openAttempts($event, s.studentId, selectedAssessmentId)"
-                        >•</button>
-                      </template>
-                    </div>
-                  </td>
-                  <td class="grades__atd-percent">
-                    <span v-if="gradeMap[selectedAssessmentId]?.[s.studentId]?.resolvedScore != null">
-                      {{ Math.round((gradeMap[selectedAssessmentId]?.[s.studentId]?.resolvedScore / currentAssessment.totalPoints) * 1000) / 10 }}%
-                    </span>
-                  </td>
-                  <td class="grades__atd-status">
-                    <span :class="'grades__status-tag--' + getStudentStatus(s.studentId).class">
-                      {{ getStudentStatus(s.studentId).label }}
-                    </span>
-                  </td>
-                  <td class="grades__atd-actions">
-                    <button class="grades__icon-btn" @click="onStudentActionMenu($event, s.studentId)">
-                      <MoreVertical :size="14" />
-                    </button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
         </div>
 
         <div v-else-if="!selectedStudentId" class="grades__grid-container">
@@ -448,7 +533,7 @@
                             {{ a.name }}
                           </td>
                           <td>{{ getCategoryName(a.categoryId) }}</td>
-                          <td :style="{ color: getHeatColor(a.stats.mean), fontWeight: 'bold' }">{{ formatGrade(a.stats.mean) }}</td>
+                          <td :style="{ color: getHeatTextColor(a.stats.mean), fontWeight: 'bold' }">{{ formatGrade(a.stats.mean) }}</td>
                           <td>{{ formatGrade(a.stats.median) }}</td>
                           <td>{{ a.stats.sd !== null ? a.stats.sd.toFixed(1) + '%' : '—' }}</td>
                           <td>{{ formatGrade(a.stats.highest) }}</td>
@@ -1232,7 +1317,7 @@ import {
   toggleStudentFromAnalytics,
   resetAnalyticsState
 } from '../composables/useGradebook.js'
-import { Plus, BarChart2, Settings, Pencil, XCircle, AlertCircle, Trash2, X, MoreVertical, ArrowLeft, Check, ArrowUp, ArrowDown, Minus, GraduationCap, Eye, EyeOff, ChevronLeft, ChevronRight, UserCheck, Activity } from 'lucide-vue-next'
+import { Plus, BarChart2, Settings, Pencil, XCircle, AlertCircle, Trash2, X, MoreVertical, ArrowLeft, Check, ArrowUp, ArrowDown, Minus, GraduationCap, Eye, EyeOff, ChevronLeft, ChevronRight, UserCheck, Activity, FilePlus, Target, Hash, Calendar } from 'lucide-vue-next'
 import GradeTrendChart from '../components/GradeTrendChart.vue'
 import {
   Chart as ChartJS,
@@ -1580,9 +1665,10 @@ function getHeatColorHex(percent) {
 
 function getSDColor(sd) {
   if (sd === null) return 'var(--text-secondary)'
-  if (sd < 8) return 'var(--grade-high)'
-  if (sd <= 15) return 'var(--grade-mid-high)'
-  return 'var(--grade-low)'
+  if (sd < 5) return '#15803d'   // Dark Green
+  if (sd <= 12) return '#1d4ed8' // Dark Blue
+  if (sd <= 18) return '#b45309' // Dark Amber
+  return '#b91c1c'               // Dark Red
 }
 
 function getCoverageColor(percent) {
@@ -1791,6 +1877,14 @@ function getHeatColor(percent) {
   if (percent >= 70) return 'var(--grade-mid-high)'
   if (percent >= 60) return 'var(--grade-mid-low)'
   return 'var(--grade-low)'
+}
+
+function getHeatTextColor(percent) {
+  if (percent === null || percent === undefined) return 'var(--text-secondary)'
+  if (percent >= 80) return '#15803d' // Dark Green
+  if (percent >= 70) return '#1d4ed8' // Dark Blue
+  if (percent >= 60) return '#b45309' // Dark Amber
+  return '#b91c1c'               // Dark Red
 }
 
 async function startEdit(studentId, assessmentId, isChange = false) {
@@ -2502,7 +2596,103 @@ watch(selectedAssessmentId, (val) => {
   display: inline-block;
 }
 
-.grades__overall-trend {
+.grades__stats-main-row {
+  display: flex;
+  gap: 12px;
+}
+
+.grades__stats-secondary-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-light);
+}
+
+.grades__stat-card {
+  flex: 1;
+  background: var(--surface);
+  padding: 16px;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.grades__stat-pill {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 4px 10px;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-sm);
+  min-width: 70px;
+}
+
+.grades__stat-pill-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.grades__stat-pill-value {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.grades__sparkline-container {
+  flex: 1;
+  height: 32px;
+  margin-left: 8px;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-sm);
+  padding: 4px 6px;
+  display: flex;
+  align-items: flex-end;
+}
+
+.grades__sparkline {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  width: 100%;
+  height: 100%;
+}
+
+.grades__sparkline-bar {
+  flex: 1;
+  min-width: 4px;
+  border-radius: 1px 1px 0 0;
+  transition: height 0.3s ease;
+}
+
+.grades__calibration-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 100px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  margin-left: auto;
+}
+
+.grades__calibration-badge--too_hard {
+  background: #fef2f2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+
+.grades__calibration-badge--too_easy {
+  background: #ecfdf5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+}
+verall-trend {
   font-size: 0.85rem;
   display: flex;
   align-items: center;
@@ -3639,35 +3829,216 @@ watch(selectedAssessmentId, (val) => {
   color: var(--text-secondary);
 }
 
-.grades__assessment-summary {
-  display: flex;
-  gap: 32px;
-  padding-top: 12px;
-  border-top: 1px solid var(--border);
-}
-
-.grades__summary-stat {
+.grades__assessment-stats {
   display: flex;
   flex-direction: column;
+  gap: 16px;
+  min-width: 320px;
 }
 
-.grades__stat-label {
-  font-size: 0.7rem;
+.grades__stats-main-row {
+  display: flex;
+  gap: 12px;
+}
+
+.grades__analysis-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-top: 16px;
+  padding: 12px 20px;
+  background: var(--surface);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border);
+}
+
+.grades__analysis-group {
+  display: flex;
+  gap: 12px;
+}
+
+.grades__stat-card {
+  flex: 1;
+  background: var(--bg-secondary);
+  padding: 14px 16px;
+  border-radius: var(--radius-md);
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.02);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.grades__stat-card-label {
+  font-size: 0.65rem;
+  font-weight: 700;
   text-transform: uppercase;
+  color: var(--text-secondary);
   letter-spacing: 0.05em;
+}
+
+.grades__stat-card-value-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.grades__stat-card-value {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.grades__stat-card-value small {
+  font-size: 0.8rem;
+  font-weight: 500;
   color: var(--text-secondary);
 }
 
-.grades__stat-value {
-  font-size: 1.1rem;
+.grades__stat-card-percent {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.grades__mini-progress {
+  width: 60px;
+  height: 6px;
+  background: rgba(0,0,0,0.05);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.grades__mini-progress-fill {
+  height: 100%;
+  background: var(--primary);
+}
+
+.grades__stat-pill {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 12px;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-sm);
+  min-width: 80px;
+}
+
+.grades__stat-pill-label {
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.grades__stat-pill-value {
+  font-size: 0.85rem;
   font-weight: 700;
   color: var(--text);
 }
 
-.grades__stat-percent {
-  font-size: 0.85rem;
-  font-weight: 500;
+.grades__sparkline-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--bg-secondary);
+  padding: 4px 12px;
+  border-radius: var(--radius-sm);
+  height: 36px;
+}
+
+.grades__sparkline-card--large {
+  background: transparent !important;
+  flex: 1;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 8px;
+  min-width: 150px;
+  height: auto;
+  padding: 0;
+  overflow: hidden;
+}
+
+.grades__sparkline-label {
+  font-size: 0.65rem;
+  font-weight: 700;
   color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  opacity: 0.8;
+}
+
+.grades__sparkline {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  width: 100px;
+  height: 24px;
+}
+
+.grades__sparkline--large {
+  width: 100%;
+  max-width: 320px; /* Constrained to avoid overflow */
+  height: 80px;
+  gap: 4px;
+}
+
+.grades__sparkline-bar {
+  flex: 1;
+  min-width: 2px;
+  border-radius: 2px 2px 0 0;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transform-origin: bottom;
+}
+
+.grades__sparkline--large .grades__sparkline-bar {
+  min-width: 6px;
+}
+
+.grades__sparkline-bar:hover {
+  filter: brightness(0.85);
+  transform: scaleY(1.2);
+  z-index: 2;
+  cursor: help;
+}
+
+.grades__calibration-pill {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 14px;
+  border-radius: var(--radius-sm);
+  min-width: 150px;
+  position: relative;
+  border: 1px solid transparent;
+}
+
+.grades__calibration-pill svg {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  opacity: 0.6;
+}
+
+.grades__calibration-pill--fair {
+  background: #f0fdf4;
+  color: #15803d;
+  border-color: #bcf0da;
+}
+
+.grades__calibration-pill--too_hard {
+  background: #fef2f2;
+  color: #991b1b;
+  border-color: #fecaca;
+}
+
+.grades__calibration-pill--too_easy {
+  background: #ecfdf5;
+  color: #065f46;
+  border-color: #a7f3d0;
 }
 
 /* Assessment Table */
@@ -3773,17 +4144,381 @@ watch(selectedAssessmentId, (val) => {
 .grades__status-tag--excluded { color: var(--text-secondary); font-style: italic; }
 .grades__status-tag--empty { color: var(--text-secondary); opacity: 0.5; }
 
-.grades__new-attempt-inline {
-  background: var(--bg-secondary);
-  padding: 4px;
-  border-radius: var(--radius-sm);
+/* ── New Assessment View Styles ─────────────────────────── */
+.grades__assessment-view {
+  background: var(--bg);
+  height: 100%;
+  overflow-y: auto;
+  padding: 32px;
 }
 
-.grades__attempt-form-row {
+.grades__focused-view {
+  max-width: 1000px;
+  margin: 0 auto;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.grades__breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.grades__breadcrumb-link {
+  background: transparent;
+  border: none;
+  padding: 0;
+  color: var(--primary);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.grades__breadcrumb-link:hover {
+  opacity: 0.7;
+}
+
+.grades__breadcrumb-sep {
+  opacity: 0.5;
+}
+
+.grades__assessment-card {
+  display: grid;
+  grid-template-columns: 1fr 400px;
+  gap: 32px;
+  background: var(--surface);
+  padding: 12px 0;
+  align-items: center;
+}
+
+.grades__card-main {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.grades__card-header-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.grades__header-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.grades__card-title {
+  font-size: 1.85rem;
+  font-weight: 800;
+  color: var(--text);
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.grades__btn-action {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.grades__btn-action:hover {
+  background: var(--primary-light);
+  border-color: var(--primary);
+  color: var(--primary);
+  transform: translateY(-1px);
+}
+
+.grades__btn-action--danger:hover {
+  background: #fff1f0;
+  border-color: var(--state-out);
+  color: var(--state-out);
+}
+
+.grades__assessment-metadata {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.grades__meta-item {
   display: flex;
   align-items: center;
   gap: 8px;
+  padding: 6px 12px;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  font-weight: 600;
+  border: 1px solid transparent;
 }
+
+.grades__meta-item:hover {
+  border-color: var(--border);
+  color: var(--text);
+}
+
+.grades__assessment-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.grades__stat-card-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  letter-spacing: 0.05em;
+  margin-bottom: 4px;
+}
+
+.grades__stat-card-value-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.grades__stat-card-value {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--text);
+  line-height: 1;
+}
+
+.grades__stat-card-value small {
+  font-size: 0.9rem;
+  opacity: 0.5;
+  font-weight: 500;
+}
+
+.grades__stat-card-percent {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.grades__mini-progress {
+  width: 60px;
+  height: 6px;
+  background: var(--bg-secondary);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 4px;
+}
+
+.grades__mini-progress-fill {
+  height: 100%;
+  background: var(--primary);
+  border-radius: 3px;
+}
+
+/* ── Premium Table Overhaul ──────────────────────────── */
+.grades__table-card {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  margin-top: 32px;
+  border: 1px solid var(--border);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.grades__table-scroll-area {
+  overflow-x: auto;
+}
+
+.grades__assessment-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.grades__assessment-table th {
+  text-align: left;
+  padding: 16px 24px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  letter-spacing: 0.05em;
+  background: var(--bg-secondary);
+  border-bottom: 2px solid var(--border);
+}
+
+.grades__atr-student {
+  transition: all 0.2s;
+  position: relative;
+}
+
+.grades__atr-student:hover {
+  background: var(--bg-secondary);
+}
+
+.grades__atd-student {
+  padding: 14px 24px;
+  font-weight: 600;
+  color: var(--text);
+  position: relative;
+  width: auto;
+}
+
+.grades__row-indicator {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: var(--primary);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.grades__atr-student:hover .grades__row-indicator {
+  opacity: 1;
+}
+
+.grades__atd-score {
+  padding: 8px 16px;
+  width: 140px;
+}
+
+.grades__score-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+/* Ghost Input Styling */
+.grades__input-ghost {
+  width: 100%;
+  max-width: 60px;
+  padding: 6px 8px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+  outline: none;
+  transition: all 0.2s;
+  text-align: center;
+}
+
+.grades__input-ghost::-webkit-inner-spin-button,
+.grades__input-ghost::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.grades__atr-student:hover .grades__input-ghost:not(:focus) {
+  border-color: var(--border);
+  background: var(--bg);
+}
+
+.grades__input-ghost:focus,
+.grades__input-ghost--active {
+  background: var(--bg);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-light);
+  transform: translateY(-1px);
+}
+
+/* Status Badges */
+.grades__status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.grades__status-badge--entered {
+  background: #e6f7ed;
+  color: var(--state-success);
+}
+
+.grades__status-badge--missing,
+.grades__cell-missing-badge {
+  background: #fff1f0;
+  color: var(--state-out);
+}
+
+.grades__status-badge--excluded,
+.grades__cell-excluded-badge {
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.grades__status-badge--empty {
+  background: transparent;
+  color: var(--text-secondary);
+  opacity: 0.5;
+}
+
+.grades__cell-missing-badge,
+.grades__cell-excluded-badge {
+  font-size: 0.65rem;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: 800;
+}
+
+.grades__atd-percent {
+  padding: 14px 24px;
+  width: 100px;
+}
+
+.grades__percent-pill {
+  font-family: inherit;
+  font-weight: 700;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+}
+
+.grades__atd-status {
+  padding: 14px 16px;
+  width: 140px;
+}
+
+.grades__atd-actions {
+  padding: 14px 24px;
+  text-align: right;
+  width: 60px;
+}
+
+.grades__inline-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.grades__input-ghost--date { font-size: 0.8rem; width: 130px; font-weight: 500; }
+.grades__input-ghost--note { font-size: 0.8rem; width: 150px; font-weight: 500; text-align: left; }
 
 .grades__btn-ghost--danger {
   color: var(--state-out);
@@ -4195,20 +4930,6 @@ watch(selectedAssessmentId, (val) => {
   color: var(--primary);
 }
 
-.grades__sparkline {
-  display: flex;
-  align-items: flex-end;
-  gap: 2px;
-  height: 32px;
-  width: 80px;
-}
-
-.grades__sparkline-bar {
-  flex: 1;
-  min-width: 6px;
-  border-radius: 1px;
-  transition: height 0.3s ease;
-}
 
 .grades__flag-group {
   display: flex;

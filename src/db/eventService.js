@@ -28,7 +28,7 @@ import { getClass } from './classService.js'
 import { getSettings } from './settingsService.js'
 import { ref } from 'vue'
 
-export const hasUnsyncedChanges = ref(true)
+export const hasUnsyncedChanges = ref(false)
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
@@ -265,8 +265,16 @@ export async function quickSyncBackup() {
         await writable.write(json)
         await writable.close()
 
+        // Persist the sync timestamp so page reloads know we're up to date
+        const now = new Date().toISOString()
+        const freshSettings = await db.get('settings', 'singleton')
+        if (freshSettings) {
+            freshSettings.lastSyncedAt = now
+            await db.put('settings', freshSettings, 'singleton')
+        }
+
         hasUnsyncedChanges.value = false
-        return true
+        return now  // return timestamp so caller can display it
     } catch (err) {
         console.error('Quick sync failed:', err)
         return false // e.g. file was moved/deleted/permission denied
@@ -339,6 +347,14 @@ export async function importAllData(backupObj) {
     await tx.done
 
     hasUnsyncedChanges.value = false // We just loaded exact synced data
+
+    // Clear the persisted timestamp so it doesn't show stale info after a restore
+    const freshSettings = await db.get('settings', 'singleton')
+    if (freshSettings) {
+        freshSettings.lastSyncedAt = null
+        await db.put('settings', freshSettings, 'singleton')
+    }
+
     return { classCount: classes.length, eventCount: events.length }
 }
 
@@ -368,4 +384,17 @@ export function getDateBoundary(period) {
         return d.toISOString()
     }
     return null
+}
+
+/**
+ * Returns the ISO timestamp of the last successful quick sync, or null.
+ * Used by App.vue on mount to initialize the sync status indicator correctly
+ * so it doesn't falsely show "needs sync" after a page reload.
+ *
+ * @returns {Promise<string|null>}
+ */
+export async function getLastSyncedAt() {
+    const db = await getDB()
+    const settings = await db.get('settings', 'singleton')
+    return settings?.lastSyncedAt ?? null
 }

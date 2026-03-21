@@ -10,17 +10,23 @@
           v-if="isSyncLinked" 
           class="app-nav__sync-btn" 
           :class="{
-            'app-nav__sync-btn--synced': !isUnsynced && !isSyncing,
-            'app-nav__sync-btn--unsynced': isUnsynced && !isSyncing,
-            'app-nav__sync-btn--success': syncSuccess 
+            'app-nav__sync-btn--synced':   !isUnsynced && !isSyncing && !syncBroken,
+            'app-nav__sync-btn--unsynced': isUnsynced && !isSyncing && !syncBroken,
+            'app-nav__sync-btn--broken':   syncBroken && !isSyncing,
+            'app-nav__sync-btn--success':  syncSuccess 
           }"
           @click="doQuickSync" 
-          :title="syncSuccess ? 'Synced!' : (isUnsynced ? 'Unsynced changes! Click to backup.' : 'All changes backed up.')"
+          :title="isSyncing ? 'Syncing…'
+            : syncBroken   ? 'Sync failed — click to retry, or re-link file in Setup → Data Backup'
+            : isUnsynced   ? 'Unsaved changes — click to backup now'
+            : lastSyncedAt ? `All changes backed up · Last sync: ${formatSyncTime(lastSyncedAt)}`
+            : 'All changes backed up'"
           :disabled="isSyncing"
         >
-          <CloudUpload v-if="isUnsynced && !isSyncing" :size="20" class="app-nav__sync-icon--pulse" />
-          <Cloud v-else-if="isSyncing" :size="20" class="app-nav__sync-icon--syncing" />
-          <CloudCheck v-else :size="20" />
+          <CloudOff     v-if="syncBroken && !isSyncing"   :size="20" />
+          <CloudUpload  v-else-if="isUnsynced && !isSyncing" :size="20" class="app-nav__sync-icon--pulse" />
+          <Cloud        v-else-if="isSyncing"              :size="20" class="app-nav__sync-icon--syncing" />
+          <CloudCheck   v-else                             :size="20" />
         </button>
       </div>
 
@@ -66,7 +72,7 @@
  */
 
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
-import { ClipboardList, LayoutDashboard, Settings, BarChart2, Cloud, CloudUpload, CloudCheck, GraduationCap } from 'lucide-vue-next'
+import { ClipboardList, LayoutDashboard, Settings, BarChart2, Cloud, CloudUpload, CloudCheck, CloudOff, GraduationCap } from 'lucide-vue-next'
 import Dashboard from './views/Dashboard.vue'
 import Setup     from './views/Setup.vue'
 import Reports   from './views/Reports.vue'
@@ -74,7 +80,7 @@ import Grades    from './views/Grades.vue'
 import { useClassroom } from './composables/useClassroom.js'
 import * as settingsService from './db/settingsService.js'
 import * as eventService from './db/eventService.js'
-import { hasUnsyncedChanges } from './db/eventService.js'
+import { hasUnsyncedChanges, getLastSyncedAt } from './db/eventService.js'
 
 // Wrap external ref in computed to guarantee template unwrapping inside object literals
 const isUnsynced = computed(() => hasUnsyncedChanges.value)
@@ -105,9 +111,12 @@ function navigateTo(viewId, params = {}) {
 
 const { init } = useClassroom()
 
-const isSyncLinked = ref(false)
-const isSyncing    = ref(false)
-const syncSuccess  = ref(false)
+const isSyncLinked   = ref(false)
+const isSyncing      = ref(false)
+const syncSuccess    = ref(false)
+const syncBroken     = ref(false)  // true when last sync failed (file moved / permission revoked)
+const lastSyncedAt   = ref(null)   // ISO string, persisted across reloads via IndexedDB
+let   autoSyncTimer  = null        // debounce handle for auto-sync
 
 const { computeSuggestedClass } = useClassroom()
 
@@ -125,23 +134,56 @@ async function checkSyncStatus() {
 onMounted(async () => {
   await init()
   await checkSyncStatus()
+
+  // Bootstrap sync display from persisted timestamp — avoids false "needs sync" on reload
+  const stored = await getLastSyncedAt()
+  if (stored) {
+    lastSyncedAt.value = stored
+    // hasUnsyncedChanges starts false (set in eventService), so no extra work needed
+  }
+
   window.addEventListener('backup-linked', checkSyncStatus)
 })
 
 onUnmounted(() => {
   window.removeEventListener('backup-linked', checkSyncStatus)
+  clearTimeout(autoSyncTimer)
 })
+
+// ─── auto-sync watcher (3-second debounce) ────────────────────────────────
+watch(hasUnsyncedChanges, (dirty) => {
+  if (!dirty || !isSyncLinked.value) return
+  clearTimeout(autoSyncTimer)
+  autoSyncTimer = setTimeout(async () => {
+    if (!hasUnsyncedChanges.value) return // already synced by manual click
+    const result = await eventService.quickSyncBackup()
+    if (result) {
+      lastSyncedAt.value = result
+      syncBroken.value = false
+    } else {
+      syncBroken.value = true  // show CloudOff — user can click to retry or re-link
+    }
+  }, 3000)
+})
+
+function formatSyncTime(iso) {
+  if (!iso) return ''
+  return new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+}
 
 async function doQuickSync() {
   if (isSyncing.value) return
+  clearTimeout(autoSyncTimer)  // cancel pending auto-sync if user clicked manually
   isSyncing.value = true
-  const success = await eventService.quickSyncBackup()
+  const result = await eventService.quickSyncBackup()
   isSyncing.value = false
-  if (success) {
+  if (result) {
+    lastSyncedAt.value = result
+    syncBroken.value = false
     syncSuccess.value = true
     setTimeout(() => syncSuccess.value = false, 2500)
   } else {
-    alert('Quick Sync failed! Please go to Reports > Backup to manually export, or try re-linking the sync folder in Reports.')
+    syncBroken.value = true
   }
 }
 </script>
@@ -208,6 +250,16 @@ async function doQuickSync() {
 
 .app-nav__sync-btn--success {
   color: var(--state-success) !important;
+}
+
+.app-nav__sync-btn--broken {
+  color: var(--state-danger);
+  animation: brokenPulse 2s ease-in-out infinite;
+}
+
+@keyframes brokenPulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.6; }
 }
 
 .app-nav__sync-btn--synced {
