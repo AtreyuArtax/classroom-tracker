@@ -158,6 +158,56 @@ export async function deleteAssessment(assessmentId) {
   await refreshGrades()
 }
 
+// ─── Debounced Async DB Save System ──────────────────────────────────────────
+const dbSaveQueue = new Map()
+let dbSaveTimer = null
+
+function enqueueDBSave(key, saveFn) {
+  dbSaveQueue.set(key, saveFn)
+  if (dbSaveTimer) clearTimeout(dbSaveTimer)
+  dbSaveTimer = setTimeout(async () => {
+    const tasks = Array.from(dbSaveQueue.values())
+    dbSaveQueue.clear()
+    for (const task of tasks) {
+      try {
+        await task()
+      } catch (err) {
+        console.error('[useGradebook] Background DB save failed:', err)
+      }
+    }
+    // Optional: silently refresh background state after a batch saves to solidify tracking IDs
+    if (activeClassRecord.value) {
+      grades.value = await gradebookService.getGradesByClass(activeClassRecord.value.classId)
+      if (analyticsMode.value) refreshClassAnalytics() // Keep analytics in sync if it was open
+    }
+  }, 500)
+}
+
+/**
+ * Recalculates grade for a SINGLE student instantly and updates classGrades.
+ */
+async function refreshSingleStudent(studentId) {
+  if (!activeClassRecord.value) return
+  
+  const asOf = selectedMilestone.value
+    ? activeClassRecord.value.gradebookMilestones?.find(m => m.milestoneId === selectedMilestone.value)?.date
+    : null
+    
+  // Pass grades and assessments by reference so gradebookService doesn't query DB
+  const studentGrades = grades.value.filter(g => g.studentId === studentId)
+  const result = await gradebookService.calculateStudentGrade(studentId, activeClassRecord.value, {
+    asOf,
+    assessmentsPreRef: assessments.value,
+    gradesPreRef: studentGrades
+  })
+  
+  // Immutably update the reactive object so Vue detects the change
+  classGrades.value = {
+    ...classGrades.value,
+    [studentId]: result
+  }
+}
+
 /**
  * Records a grade (points earned) for a student and refreshes state.
  * 
@@ -166,97 +216,148 @@ export async function deleteAssessment(assessmentId) {
  * @param {number} pointsEarned
  * @param {string} comment
  */
-export async function enterGrade(assessmentId, studentId, pointsEarned, date = null, comment = '') {
+export function enterGrade(assessmentId, studentId, pointsEarned, date = null, comment = '') {
   if (!activeClassRecord.value) return
   
   const assessment = assessments.value.find(a => a.assessmentId === assessmentId)
   if (assessment && pointsEarned > assessment.totalPoints) {
-    // This is a safety guard; UI should ideally catch this first with a better UX
     console.warn(`[useGradebook] enterGrade: ${pointsEarned} exceeds assessment max ${assessment.totalPoints}`)
     return
   }
   
-  await gradebookService.addAttempt(assessmentId, studentId, {
+  let grade = grades.value.find(g => g.assessmentId === assessmentId && g.studentId === studentId)
+  if (!grade) {
+    grade = {
+      assessmentId, studentId, classId: activeClassRecord.value.classId,
+      missing: false, excluded: false, attempts: []
+    }
+    grades.value.push(grade)
+  }
+  
+  grade.attempts.push({
+    attemptId: crypto.randomUUID(),
     pointsEarned,
     date: date || new Date().toISOString(),
-    comment
+    comment,
+    isPrimary: grade.attempts.length === 0
   })
+
+  // 1. Refresh UI instantly for this student
+  refreshSingleStudent(studentId)
   
-  // Full re-fetch of grades to ensure sync (efficient enough for single class)
-  grades.value = await gradebookService.getGradesByClass(activeClassRecord.value.classId)
-  await refreshGrades()
+  // 2. Debounce IDB save
+  enqueueDBSave(`${assessmentId}_${studentId}_enter`, () => 
+    gradebookService.addAttempt(assessmentId, studentId, { pointsEarned, date, comment })
+  )
 }
 
 /**
  * Changes/overwrites the latest grade attempt.
  */
-export async function changeGrade(assessmentId, studentId, pointsEarned) {
+export function changeGrade(assessmentId, studentId, pointsEarned) {
   if (!activeClassRecord.value) return
   
-  await gradebookService.updateLastAttempt(assessmentId, studentId, pointsEarned)
+  const grade = grades.value.find(g => g.assessmentId === assessmentId && g.studentId === studentId)
+  if (grade && grade.attempts.length > 0) {
+    grade.attempts[grade.attempts.length - 1].pointsEarned = pointsEarned
+  }
   
-  grades.value = await gradebookService.getGradesByClass(activeClassRecord.value.classId)
-  await refreshGrades()
+  refreshSingleStudent(studentId)
+  
+  enqueueDBSave(`${assessmentId}_${studentId}_change`, () => 
+    gradebookService.updateLastAttempt(assessmentId, studentId, pointsEarned)
+  )
 }
 
 /**
  * Removes an attempt and refreshes state.
  */
-export async function removeAttempt(assessmentId, studentId, attemptId) {
+export function removeAttempt(assessmentId, studentId, attemptId) {
   if (!activeClassRecord.value) return
   
-  await gradebookService.deleteAttempt(assessmentId, studentId, attemptId)
+  const grade = grades.value.find(g => g.assessmentId === assessmentId && g.studentId === studentId)
+  if (grade) {
+    grade.attempts = grade.attempts.filter(a => a.attemptId !== attemptId)
+  }
   
-  grades.value = await gradebookService.getGradesByClass(activeClassRecord.value.classId)
-  await refreshGrades()
+  refreshSingleStudent(studentId)
+  
+  enqueueDBSave(`${assessmentId}_${studentId}_rem_${attemptId}`, () => 
+    gradebookService.deleteAttempt(assessmentId, studentId, attemptId)
+  )
 }
 
 /**
  * Sets a specific attempt as primary and refreshes state.
  */
-export async function setPrimaryAttempt(assessmentId, studentId, attemptId) {
+export function setPrimaryAttempt(assessmentId, studentId, attemptId) {
   if (!activeClassRecord.value) return
   
-  await gradebookService.setPrimaryAttempt(assessmentId, studentId, attemptId)
+  const grade = grades.value.find(g => g.assessmentId === assessmentId && g.studentId === studentId)
+  if (grade) {
+    grade.attempts.forEach(a => a.isPrimary = (a.attemptId === attemptId))
+  }
   
-  grades.value = await gradebookService.getGradesByClass(activeClassRecord.value.classId)
-  await refreshGrades()
+  refreshSingleStudent(studentId)
+  
+  enqueueDBSave(`${assessmentId}_${studentId}_prim`, () => 
+    gradebookService.setPrimaryAttempt(assessmentId, studentId, attemptId)
+  )
 }
 
 /**
  * Clears all attempts and removes the grade record for a student on an assessment.
  */
-export async function clearGrade(assessmentId, studentId) {
+export function clearGrade(assessmentId, studentId) {
   if (!activeClassRecord.value) return
   
-  await gradebookService.deleteGrade(assessmentId, studentId)
+  grades.value = grades.value.filter(g => !(g.assessmentId === assessmentId && g.studentId === studentId))
   
-  grades.value = await gradebookService.getGradesByClass(activeClassRecord.value.classId)
-  await refreshGrades()
+  refreshSingleStudent(studentId)
+  
+  enqueueDBSave(`${assessmentId}_${studentId}_clear`, () => 
+    gradebookService.deleteGrade(assessmentId, studentId)
+  )
 }
 
 /**
  * Toggles the 'missing' flag for a student's grade.
  */
-export async function markMissing(assessmentId, studentId, missing) {
+export function markMissing(assessmentId, studentId, missing) {
   if (!activeClassRecord.value) return
   
-  await gradebookService.updateGradeFlags(assessmentId, studentId, { missing })
+  let grade = grades.value.find(g => g.assessmentId === assessmentId && g.studentId === studentId)
+  if (!grade) {
+    grade = { assessmentId, studentId, classId: activeClassRecord.value.classId, attempts: [] }
+    grades.value.push(grade)
+  }
+  grade.missing = missing
   
-  grades.value = await gradebookService.getGradesByClass(activeClassRecord.value.classId)
-  await refreshGrades()
+  refreshSingleStudent(studentId)
+  
+  enqueueDBSave(`${assessmentId}_${studentId}_miss`, () => 
+    gradebookService.updateGradeFlags(assessmentId, studentId, { missing })
+  )
 }
 
 /**
  * Toggles the 'excluded' flag for a student's grade.
  */
-export async function markExcluded(assessmentId, studentId, excluded) {
+export function markExcluded(assessmentId, studentId, excluded) {
   if (!activeClassRecord.value) return
   
-  await gradebookService.updateGradeFlags(assessmentId, studentId, { excluded })
+  let grade = grades.value.find(g => g.assessmentId === assessmentId && g.studentId === studentId)
+  if (!grade) {
+    grade = { assessmentId, studentId, classId: activeClassRecord.value.classId, attempts: [] }
+    grades.value.push(grade)
+  }
+  grade.excluded = excluded
   
-  grades.value = await gradebookService.getGradesByClass(activeClassRecord.value.classId)
-  await refreshGrades()
+  refreshSingleStudent(studentId)
+  
+  enqueueDBSave(`${assessmentId}_${studentId}_exc`, () => 
+    gradebookService.updateGradeFlags(assessmentId, studentId, { excluded })
+  )
 }
 
 /**
