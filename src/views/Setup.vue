@@ -770,9 +770,23 @@ function onFileSelected(evt) {
       // Map header columns flexibly
       const rows = results.data.map(row => {
         // Support common header variants
-        const studentId = row['Student ID'] ?? row['StudentID'] ?? row['student_id'] ?? ''
-        const firstName = row['First Name'] ?? row['FirstName'] ?? row['first_name'] ?? ''
-        const lastName  = row['Last Name']  ?? row['LastName']  ?? row['last_name']  ?? ''
+        const studentId = row['Student ID'] ?? row['Student Number'] ?? row['StudentID'] ?? row['student_id'] ?? ''
+        let firstName = row['First Name'] ?? row['FirstName'] ?? row['first_name'] ?? ''
+        let lastName  = row['Last Name']  ?? row['LastName']  ?? row['last_name']  ?? ''
+        
+        // Handle combined "Student Name" columns (e.g., "Last,First" or "Last, First")
+        const studentName = row['Student Name'] ?? row['StudentName'] ?? row['student_name'] ?? ''
+        if (!firstName && !lastName && studentName) {
+          const parts = studentName.split(',')
+          if (parts.length >= 2) {
+            lastName  = parts[0]
+            firstName = parts.slice(1).join(',')
+          } else {
+            // Fallback if there is no comma
+            lastName = studentName
+          }
+        }
+        
         return { studentId: studentId.trim(), firstName: firstName.trim(), lastName: lastName.trim() }
       })
 
