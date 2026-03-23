@@ -10,7 +10,7 @@
       <span class="class-switcher__label">
         {{ activeClass?.name ?? 'No class selected' }}
       </span>
-      <span class="class-switcher__chevron" :class="{ 'class-switcher__chevron--open': isOpen }" aria-hidden="true">›</span>
+      <ChevronDown :size="16" class="class-switcher__chevron" :class="{ 'class-switcher__chevron--open': isOpen }" aria-hidden="true" />
     </button>
 
     <!-- Dropdown list -->
@@ -70,6 +70,7 @@
  */
 
 import { ref, computed } from 'vue'
+import { ChevronDown } from 'lucide-vue-next'
 import { useClassroom } from '../composables/useClassroom.js'
 
 const { 
@@ -133,14 +134,24 @@ async function acceptSuggestion() {
   display:         flex;
   align-items:     center;
   gap:             6px;
-  padding:         8px 14px;
-  border:          none;
+  padding:         6px 12px;
+  border:          1px solid var(--border);
   border-radius:   var(--radius-md);
-  background:      var(--surface);
-  box-shadow:      var(--shadow-sm);
+  background:      var(--bg-secondary);
+  box-shadow:      none;
   cursor:          pointer;
-  min-height:      44px;
-  transition:      box-shadow 0.15s ease;
+  min-height:      36px;
+  transition:      border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.class-switcher__trigger:hover {
+  border-color: var(--primary);
+}
+
+.class-switcher__trigger:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-light);
 }
 
 .class-switcher__trigger:active {
@@ -149,7 +160,7 @@ async function acceptSuggestion() {
 
 .class-switcher__label {
   font-size:   0.9rem;
-  font-weight: 600;
+  font-weight: 500;
   color:       var(--text);
   max-width:   180px;
   overflow:    hidden;
@@ -158,14 +169,14 @@ async function acceptSuggestion() {
 }
 
 .class-switcher__chevron {
-  font-size:   1.1rem;
   color:       var(--text-secondary);
   transition:  transform 0.2s ease;
   line-height: 1;
+  display:     flex;
 }
 
 .class-switcher__chevron--open {
-  transform: rotate(90deg);
+  transform: rotate(180deg);
 }
 
 /* ── Dropdown ────────────────────────────────────────────────────────────── */

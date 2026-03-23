@@ -6,13 +6,7 @@
       <aside v-if="selectedStudentId && !isLoading && !isSidebarCollapsed" class="grades__sidebar">
         <!-- Sidebar Header with Class Selector -->
         <div class="grades__sidebar-header">
-          <div class="grades__sidebar-select-wrapper">
-            <select v-model="sidebarClassId" class="grades__sidebar-select" @change="onSidebarClassChange">
-              <optgroup label="Active Classes">
-                <option v-for="c in sortedClassList" :key="c.classId" :value="c.classId">{{ c.name }}</option>
-              </optgroup>
-            </select>
-          </div>
+          <ClassSwitcher @navigate="$emit('navigate', $event)" />
           <div class="grades__sidebar-actions">
             <button 
               class="grades__icon-btn" 
@@ -336,13 +330,7 @@
                 <Settings :size="20" />
               </button>
               
-              <div class="grades__toolbar-select-wrapper">
-                <select v-model="sidebarClassId" class="grades__toolbar-select" @change="onClassChange">
-                  <optgroup label="Active Classes">
-                    <option v-for="c in sortedClassList" :key="c.classId" :value="c.classId">{{ c.name }}</option>
-                  </optgroup>
-                </select>
-              </div>
+              <ClassSwitcher @navigate="$emit('navigate', $event)" />
             </div>
 
             <div class="grades__toolbar-center">
@@ -1140,9 +1128,9 @@
                         <a v-if="contact.email" :href="'mailto:' + contact.email" class="grades__student-link" style="color: var(--primary-color)">{{ contact.email }}</a>
                         <span v-if="contact.phone">{{ contact.phone }}</span>
                       </div>
-                      <a :href="generateMailtoLink()" class="grades__btn-primary" style="display: flex; gap: 0.5rem; justify-content: center; margin-top: 0.75rem; text-decoration: none;">
+                      <button class="grades__btn-primary" style="display: flex; gap: 0.5rem; justify-content: center; margin-top: 0.75rem; width: 100%" @click="openEmailModal">
                         <Activity :size="16" /> Email Progress Report
-                      </a>
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -1461,6 +1449,57 @@
             </form>
           </div>
         </div>
+
+        <!-- Email Configuration Modal -->
+        <div v-if="showEmailModal" class="grades__modal-backdrop" @click="showEmailModal = false">
+          <div class="grades__modal" role="dialog" aria-modal="true" @click.stop style="max-width: 480px; width: 100%">
+            <header class="grades__modal-header">
+              <h3 class="grades__modal-title">Configure Email Report</h3>
+              <button class="grades__icon-btn" @click="showEmailModal = false"><X :size="20" /></button>
+            </header>
+            
+            <div class="grades__modal-body" style="padding: 1.5rem">
+              <div style="margin-bottom: 1.5rem">
+                <h4 style="margin: 0 0 0.75rem 0; font-size: 0.95rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em">Recipients</h4>
+                
+                <label v-if="activeClassRecord.students[selectedStudentId]?.studentEmail" style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; cursor: pointer">
+                  <input type="checkbox" v-model="emailConfig.recipients.student">
+                  <strong>Student:</strong> {{ activeClassRecord.students[selectedStudentId].studentEmail }}
+                </label>
+                
+                <label v-for="(contact, index) in activeClassRecord.students[selectedStudentId]?.parentContacts" :key="'p'+index" style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; cursor: pointer" :style="{ opacity: contact.email ? 1 : 0.5 }">
+                  <input type="checkbox" v-model="emailConfig.recipients.parents[index]" :disabled="!contact.email">
+                  <strong>{{ contact.name || 'Parent' }}:</strong> {{ contact.email || 'No email provided' }}
+                </label>
+              </div>
+
+              <div style="margin-bottom: 1rem">
+                <h4 style="margin: 0 0 0.75rem 0; font-size: 0.95rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em">Include in Report</h4>
+                <label style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; cursor: pointer">
+                  <input type="checkbox" v-model="emailConfig.content.overallGrade">
+                  Current Overall Grade
+                </label>
+                <label style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; cursor: pointer">
+                  <input type="checkbox" v-model="emailConfig.content.missingAssessments">
+                  Missing Assessments List
+                </label>
+                <label style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; cursor: pointer">
+                  <input type="checkbox" v-model="emailConfig.content.attendance">
+                  Attendance Summary (Absences & Lates)
+                </label>
+                <label style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; cursor: pointer">
+                  <input type="checkbox" v-model="emailConfig.content.events">
+                  Washroom & Out-of-Class Logs
+                </label>
+              </div>
+
+              <div class="grades__modal-actions" style="margin-top: 1.5rem; display: flex; justify-content: flex-end; gap: 0.5rem">
+                <button class="grades__btn-ghost" @click="showEmailModal = false">Cancel</button>
+                <button class="grades__btn-primary" @click="generateCustomMailto">Generate Draft & Open Mail</button>
+              </div>
+            </div>
+          </div>
+        </div>
   </div>
 </template>
 
@@ -1520,6 +1559,7 @@ import {
   LinearScale
 } from 'chart.js'
 import { Bar } from 'vue-chartjs'
+import ClassSwitcher from '../components/ClassSwitcher.vue'
 
 ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale)
 
@@ -1530,9 +1570,17 @@ const props = defineProps({
 
 defineEmits(['navigate'])
 
-const { classList, activeClass, getClass } = useClassroom()
+const { classList, activeClass, getClass, switchClass } = useClassroom()
 
 const sidebarClassId = ref(activeClass.value?.classId || '')
+
+watch(activeClass, async (newVal, oldVal) => {
+  if (newVal && newVal.classId !== oldVal?.classId) {
+    sidebarClassId.value = newVal.classId
+    selectedStudentId.value = null
+    await onClassChange()
+  }
+})
 const isLoading = ref(false)
 const isCalculating = ref(false)
 const displayMode = ref('percent') // 'raw' | 'percent'
@@ -1604,52 +1652,131 @@ async function saveDemographics() {
   isEditingDemographics.value = false
 }
 
-function generateMailtoLink() {
-  const student = activeClassRecord.value?.students[selectedStudentId.value]
-  if (!student) return '#'
-  
-  const emails = []
-  if (student.parentContacts) {
-      student.parentContacts.forEach(c => { if (c.email) emails.push(c.email) })
+const showEmailModal = ref(false)
+const emailConfig = reactive({
+  recipients: {
+    student: true,
+    parents: {}
+  },
+  content: {
+    overallGrade: true,
+    missingAssessments: true,
+    attendance: true,
+    events: false
   }
-  if (student.studentEmail) {
-      emails.push(student.studentEmail)
-  }
-  
-  const emailStr = emails.filter(e => e).join(',')
-  if (!emailStr) return '#'
-  
-  const subject = `Update on ${student.firstName} ${student.lastName} - ${activeClassRecord.value.name || 'Class'}`
+})
 
-  const grade = classGrades.value[selectedStudentId.value]?.overallGrade
-  const gradeStr = grade !== undefined && grade !== null ? formatGrade(grade) : 'N/A'
+function openEmailModal() {
+  const student = activeClassRecord.value?.students[selectedStudentId.value]
+  if (!student) return
   
-  const missing = []
-  if (assessments.value && gradeMap.value) {
-    for (const a of assessments.value) {
-      if (a.excluded) continue
-      const g = gradeMap.value[a.assessmentId]?.[selectedStudentId.value]
-      const isPastDate = a.date <= new Date().toISOString().slice(0, 10)
-      
-      if (g?.missing || (isPastDate && (!g?.attempts || g.attempts.length === 0))) {
-        missing.push(a.name)
+  emailConfig.recipients.student = true
+  emailConfig.recipients.parents = {}
+  
+  if (student.parentContacts && student.parentContacts.length > 0) {
+    student.parentContacts.forEach((contact, i) => {
+      // Default to selected if they have an email
+      emailConfig.recipients.parents[i] = !!contact.email
+    })
+  }
+  
+  emailConfig.content.overallGrade = true
+  emailConfig.content.attendance = true
+  emailConfig.content.missingAssessments = true
+  emailConfig.content.events = false
+  
+  showEmailModal.value = true
+}
+
+function generateCustomMailto() {
+  const student = activeClassRecord.value?.students[selectedStudentId.value]
+  if (!student) return
+
+  // Recipient gathering
+  const emails = []
+  if (emailConfig.recipients.student && student.studentEmail) {
+    emails.push(student.studentEmail)
+  }
+  if (student.parentContacts) {
+    student.parentContacts.forEach((c, i) => {
+      if (emailConfig.recipients.parents[i] && c.email) {
+        emails.push(c.email)
+      }
+    })
+  }
+
+  const emailStr = emails.filter(e => e).join(',')
+  if (!emailStr) {
+    alert("No recipients selected or no valid email addresses available.")
+    return
+  }
+
+  const subject = `Update on ${student.firstName} ${student.lastName} - ${activeClassRecord.value.name || 'Class'}`
+  let body = `Hello,\n\nI am writing to provide an update on ${student.firstName}'s progress in class.\n\n`
+
+  if (emailConfig.content.overallGrade) {
+    const grade = classGrades.value[selectedStudentId.value]?.overallGrade
+    const gradeStr = grade !== undefined && grade !== null ? formatGrade(grade) : 'N/A'
+    body += `Current Overall Grade: ${gradeStr}\n\n`
+  }
+
+  if (emailConfig.content.attendance) {
+    body += `Attendance Summary\n`
+    body += `Absences: ${studentAttendance.value.absences} | Lates: ${studentAttendance.value.lates}\n\n`
+  }
+
+  if (emailConfig.content.missingAssessments) {
+    const missing = []
+    if (assessments.value && gradeMap.value) {
+      for (const a of assessments.value) {
+        if (a.excluded) continue
+        const g = gradeMap.value[a.assessmentId]?.[selectedStudentId.value]
+        const isPastDate = a.date <= new Date().toISOString().slice(0, 10)
+        if (g?.missing || (isPastDate && (!g?.attempts || g.attempts.length === 0))) {
+          missing.push(a.name)
+        }
       }
     }
+    
+    if (missing.length > 0) {
+      body += `Missing or Incomplete Assessments:\n`
+      missing.forEach(m => body += `- ${m}\n`)
+      body += '\n'
+    } else {
+      body += `Missing Assessments: None\n\n`
+    }
   }
-  
-  let body = `Hello,\n\nI am writing to provide an update on ${student.firstName}'s progress in class.\n\n`
-  body += `Current Overall Grade: ${gradeStr}\n`
-  body += `Absences: ${studentAttendance.value.absences} | Lates: ${studentAttendance.value.lates}\n\n`
-  
-  if (missing.length > 0) {
-    body += `Missing or Incomplete Assessments:\n`
-    missing.forEach(m => body += `- ${m}\n`)
-    body += '\n'
+
+  if (emailConfig.content.events) {
+    if (acEvents.value && acEvents.value.length > 0) {
+      const totalTrips = acEvents.value.length;
+      let totalDuration = 0;
+      let tripsWithDuration = 0;
+      
+      acEvents.value.forEach(ev => {
+        if (ev.duration !== undefined && ev.duration !== null) {
+          totalDuration += Number(ev.duration);
+          tripsWithDuration++;
+        }
+      });
+      
+      body += `Washroom & Out-of-Class Summary:\n`;
+      body += `Total Trips Logged: ${totalTrips}\n`;
+      if (tripsWithDuration > 0) {
+        body += `Total Time Out of Class: ${totalDuration} minutes\n`;
+        body += `Average Time per Trip: ${Math.round(totalDuration / tripsWithDuration)} minutes\n`;
+      }
+      body += '\n';
+    } else {
+      body += `Washroom & Out-of-Class Summary:\nTotal Trips Logged: 0\n\n`;
+    }
   }
-  
+
   body += `Please contact me if you have any questions.\n\nBest regards,\n`
-  
-  return `mailto:${emails}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
+
+  const link = `mailto:${emailStr}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
+  window.location.href = link
+  showEmailModal.value = false
 }
 
 const assessmentTypes = [
@@ -2134,8 +2261,9 @@ async function onClassChange() {
 }
 
 async function onSidebarClassChange() {
-  selectedStudentId.value = null
-  await onClassChange()
+  if (sidebarClassId.value) {
+    await switchClass(sidebarClassId.value)
+  }
 }
 
 /**
@@ -2642,7 +2770,7 @@ async function onDeleteEvent(eventId) {
 onMounted(async () => {
   if (props.classId) {
     sidebarClassId.value = props.classId
-    await onClassChange()
+    await switchClass(props.classId)
   } else if (sidebarClassId.value) {
     await onClassChange()
   }
@@ -3386,50 +3514,6 @@ verall-trend {
   justify-content: flex-end;
 }
 
-.grades__sidebar-select-wrapper {
-  position: relative;
-}
-
-.grades__sidebar-select {
-  width: 100%;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border);
-  padding: 8px 32px 8px 12px;
-  border-radius: var(--radius-md);
-  font-size: 0.9rem;
-  font-weight: 700;
-  appearance: none;
-  cursor: pointer;
-  color: var(--text);
-  transition: all 0.2s;
-}
-
-.grades__sidebar-select:hover {
-  border-color: var(--primary);
-}
-
-.grades__sidebar-select:focus {
-  outline: none;
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px var(--primary-light);
-}
-
-/* Custom chevron for sidebar select */
-.grades__sidebar-select-wrapper::after {
-  content: '';
-  position: absolute;
-  right: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 10px;
-  height: 10px;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' class='lucide lucide-chevron-down'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
-  background-size: contain;
-  background-repeat: no-repeat;
-  pointer-events: none;
-  opacity: 0.5;
-}
-
 .grades__toolbar-center {
   display: flex;
   align-items: center;
@@ -3452,22 +3536,6 @@ verall-trend {
 .grades__btn-settings:hover {
   background: var(--bg-secondary);
   color: var(--primary);
-}
-
-.grades__toolbar-select-wrapper {
-  position: relative;
-}
-
-.grades__toolbar-select {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border);
-  padding: 6px 32px 6px 12px;
-  border-radius: var(--radius-md);
-  font-size: 0.9rem;
-  font-weight: 600;
-  appearance: none;
-  cursor: pointer;
-  min-width: 160px;
 }
 
 .grades__btn-add {

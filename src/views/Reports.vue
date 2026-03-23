@@ -6,13 +6,8 @@
       <aside class="reports__sidebar">
 
         <!-- Class selector -->
-        <div class="reports__sidebar-section">
-          <label class="reports__sidebar-label">
-            Class
-            <select v-model="sidebarClassId" class="reports__input reports__input--sidebar" @change="onSidebarClassChange">
-              <option v-for="c in sortedClassList" :key="c.classId" :value="c.classId">{{ c.name }}</option>
-            </select>
-          </label>
+        <div class="reports__sidebar-header">
+          <ClassSwitcher @navigate="$emit('navigate', $event)" />
         </div>
 
         <!-- Mobile toggle -->
@@ -385,6 +380,7 @@ import { useUndo }             from '../composables/useUndo.js'
 import * as eventService       from '../db/eventService.js'
 import StudentProfile          from '../components/StudentProfile.vue'
 import StudentTrendGraph       from '../components/StudentTrendGraph.vue'
+import ClassSwitcher           from '../components/ClassSwitcher.vue'
 import { Bar } from 'vue-chartjs'
 import { 
   Chart as ChartJS, 
@@ -408,7 +404,8 @@ const {
   activeClass,
   behaviorCodes,
   classList,
-  syncLateActiveState
+  syncLateActiveState,
+  switchClass
 } = useClassroom()
 
 const { push: pushUndo } = useUndo()
@@ -438,7 +435,17 @@ const PERIODS = [
 // ─── sidebar state ────────────────────────────────────────────────────────────
 
 /** Class selected in the sidebar dropdown */
-const sidebarClassId = ref(activeClass.value?.classId ?? classList.value[0]?.classId ?? null)
+const sidebarClassId = ref(activeClass.value?.classId || classList.value[0]?.classId || null)
+
+watch(activeClass, (newClass, oldClass) => {
+  if (newClass && (!oldClass || newClass.classId !== oldClass.classId)) {
+    sidebarClassId.value = newClass.classId
+    dossier.clearStudent()
+    dossier.loadSidebarClass(newClass.classId)
+    rightMode.value = 'overview'
+    runReport()
+  }
+})
 /** Whether the roster list is visible (mobile toggle) */
 const rosterOpen     = ref(true)
 /** 'dossier' | 'overview' */
@@ -447,6 +454,7 @@ const rightMode      = ref('overview')
 onMounted(() => {
   if (props.classId) {
     sidebarClassId.value = props.classId
+    switchClass(props.classId)
   }
 
   if (sidebarClassId.value) {
@@ -461,8 +469,8 @@ onMounted(() => {
 
 // Initialise sidebarClassId from classList when it first loads
 watch(classList, (list) => {
-  if (!sidebarClassId.value && list.length) {
-    sidebarClassId.value = activeClass.value?.classId ?? list[0]?.classId
+  if (!sidebarClassId.value && list.length && activeClass.value) {
+    sidebarClassId.value = activeClass.value.classId
     dossier.loadSidebarClass(sidebarClassId.value)
     if (rightMode.value === 'overview') {
       runReport()
@@ -475,10 +483,9 @@ const sidebarStudents = dossier.sidebarStudents
 
 /** Called when the class dropdown changes */
 function onSidebarClassChange() {
-  dossier.clearStudent()
-  dossier.loadSidebarClass(sidebarClassId.value)
-  rightMode.value = 'overview' // Force return to dashboard on class switch
-  runReport()
+  if (sidebarClassId.value) {
+    switchClass(sidebarClassId.value)
+  }
 }
 
 // --- Period State ---
@@ -1000,20 +1007,18 @@ const washroomChartOptions = {
   }
 }
 
+.reports__sidebar-header {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-primary);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
 .reports__sidebar-section {
   padding:       16px;
   border-bottom: 1px solid var(--border);
-}
-
-.reports__sidebar-label {
-  display:        flex;
-  flex-direction: column;
-  gap:            6px;
-  font-size:      0.82rem;
-  font-weight:    700;
-  color:          var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
 }
 
 .reports__roster-toggle {
