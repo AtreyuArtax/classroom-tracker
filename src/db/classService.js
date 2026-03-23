@@ -283,17 +283,30 @@ export async function importRoster(classId, studentsArray) {
     let inserted = 0
     let updated = 0
 
-    for (const { studentId, firstName, lastName } of studentsArray) {
+    for (const { studentId, firstName, lastName, parentContacts, studentEmail, custody, livingWith, birthDate } of studentsArray) {
         if (cls.students[studentId]) {
-            // Upsert — preserve seat and activeStates
-            cls.students[studentId].firstName = firstName
-            cls.students[studentId].lastName = lastName
+            // Upsert — preserve seat, activeStates, AND manual name changes
+            if (parentContacts && parentContacts.length > 0) {
+                // Replace parent contacts if new ones are provided in CSV
+                cls.students[studentId].parentContacts = parentContacts
+            } else if (!cls.students[studentId].parentContacts) {
+                cls.students[studentId].parentContacts = []
+            }
+            if (studentEmail) cls.students[studentId].studentEmail = studentEmail
+            if (custody) cls.students[studentId].custody = custody
+            if (livingWith) cls.students[studentId].livingWith = livingWith
+            if (birthDate) cls.students[studentId].birthDate = birthDate
             updated++
         } else {
             // Insert with defaults
             cls.students[studentId] = {
                 firstName,
                 lastName,
+                parentContacts: parentContacts || [],
+                studentEmail: studentEmail || '',
+                custody: custody || '',
+                livingWith: livingWith || '',
+                birthDate: birthDate || '',
                 seat: null,
                 generalNote: '',
                 activeStates: { isOut: false, outTime: null, isAbsent: false },

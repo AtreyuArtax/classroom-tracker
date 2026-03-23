@@ -786,8 +786,35 @@ function onFileSelected(evt) {
             lastName = studentName
           }
         }
-        
-        return { studentId: studentId.trim(), firstName: firstName.trim(), lastName: lastName.trim() }
+        // Extract Demographic Data based on exact CSV headers
+        const studentEmail = row['Student eMail'] ?? row['Student Email'] ?? ''
+        const custody = row['Custody'] ?? ''
+        const livingWith = row['Living With'] ?? ''
+        const birthDate = row['Birth'] ?? ''
+
+        const parentContacts = []
+        // The CSV provides up to 4 parents (Par1 to Par4)
+        for (let i = 1; i <= 4; i++) {
+          const pName = row[`Par${i} Name`] ?? ''
+          const pEmail = row[`Par${i} eMail`] ?? ''
+          // Prefer Mobile over Home for the primary phone number
+          const pPhone = row[`Par${i} Mobile`] || row[`Par${i} Home`] || ''
+          
+          if (pName || pEmail || pPhone) {
+            parentContacts.push({ name: pName.trim(), email: pEmail.trim(), phone: pPhone.trim() })
+          }
+        }
+
+        return { 
+          studentId: studentId.trim(), 
+          firstName: firstName.trim(), 
+          lastName: lastName.trim(),
+          parentContacts,
+          studentEmail: studentEmail.trim(),
+          custody: custody.trim(),
+          livingWith: livingWith.trim(),
+          birthDate: birthDate.trim()
+        }
       })
 
       const result = await importRoster(rows)
@@ -849,7 +876,8 @@ async function addSingleStudent() {
   const row = {
     studentId: newStudent.studentId.trim(),
     firstName: newStudent.firstName.trim(),
-    lastName: newStudent.lastName.trim()
+    lastName: newStudent.lastName.trim(),
+    parentContacts: []
   }
 
   try {

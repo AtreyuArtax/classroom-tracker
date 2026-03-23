@@ -1066,6 +1066,87 @@
               </div>
 
               <div class="grades__side-stats">
+                <!-- Demographics & Contacts -->
+                <div class="grades__section">
+                  <div class="grades__section-header">
+                    <h3 class="grades__section-title">Demographics & Contacts</h3>
+                    <button class="grades__icon-btn" title="Edit Contact Info" @click="startEditDemographics">
+                      <Pencil :size="14" />
+                    </button>
+                  </div>
+                  
+                  <div v-if="isEditingDemographics" class="grades__contacts-edit">
+                    <div class="grades__contact-edit-row">
+                      <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-secondary)">Student Email:</label>
+                      <input v-model="editableDemographics.studentEmail" placeholder="Student Email" class="grades__input-ghost" style="width: 100%; border-bottom: 1px solid var(--border-color); margin-bottom: 0.5rem" />
+                    </div>
+                    <div class="grades__contact-edit-row">
+                      <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-secondary)">Living With:</label>
+                      <input v-model="editableDemographics.livingWith" placeholder="e.g. Both Parents" class="grades__input-ghost" style="width: 100%; border-bottom: 1px solid var(--border-color); margin-bottom: 0.5rem" />
+                    </div>
+                    <div class="grades__contact-edit-row">
+                      <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-secondary)">Custody:</label>
+                      <input v-model="editableDemographics.custody" placeholder="e.g. Joint, Mother" class="grades__input-ghost" style="width: 100%; border-bottom: 1px solid var(--border-color); margin-bottom: 0.5rem" />
+                    </div>
+                    <div class="grades__contact-edit-row">
+                      <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-secondary)">Date of Birth:</label>
+                      <input v-model="editableDemographics.birthDate" placeholder="YYYY-MM-DD or MM/DD/YYYY" class="grades__input-ghost" style="width: 100%; border-bottom: 1px solid var(--border-color); margin-bottom: 1rem" />
+                    </div>
+                    
+                    <strong style="font-size: 0.8rem; font-weight: 600; color: var(--text-secondary)">Parents / Guardians</strong>
+                    <div v-for="(contact, index) in editableDemographics.parentContacts" :key="index" class="grades__contact-edit-row" style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; margin-top: 0.25rem;">
+                      <input v-model="contact.name" placeholder="Name" class="grades__input-ghost" style="flex: 1; border-bottom: 1px solid var(--border-color); min-width: 100px" />
+                      <input v-model="contact.email" placeholder="Email" class="grades__input-ghost" style="flex: 1; border-bottom: 1px solid var(--border-color); min-width: 120px" />
+                      <input v-model="contact.phone" placeholder="Phone" class="grades__input-ghost" style="flex: 1; border-bottom: 1px solid var(--border-color); min-width: 100px" />
+                      <button class="grades__icon-btn" style="flex: 0 0 auto;" @click="editableDemographics.parentContacts.splice(index, 1)"><X :size="14"/></button>
+                    </div>
+                    <div class="grades__inline-actions" style="margin-top: 0.5rem">
+                      <button class="grades__btn-ghost" @click="editableDemographics.parentContacts.push({name:'', email:'', phone:''})"><Plus :size="14"/> Add Parent</button>
+                      <button class="grades__btn-primary" style="padding: 0.25rem 0.6rem" @click="saveDemographics">Save</button>
+                      <button class="grades__btn-ghost" style="padding: 0.25rem 0.6rem" @click="isEditingDemographics = false">Cancel</button>
+                    </div>
+                  </div>
+                  <div v-else class="grades__contacts-view">
+                    <div class="grades__demographics-summary" style="margin-bottom: 0.75rem; font-size: 0.85rem">
+                        <div v-if="activeClassRecord.students[selectedStudentId]?.birthDate" style="margin-bottom: 0.25rem;">
+                            <strong>Age:</strong>&nbsp;
+                            <span v-if="computeAge(activeClassRecord.students[selectedStudentId].birthDate) >= 18" style="color: #d9534f; font-weight: 600;">
+                                {{ computeAge(activeClassRecord.students[selectedStudentId].birthDate) }}
+                                <UserCheck :size="14" style="vertical-align: middle; margin-top: -2px; margin-left: 2px;" />
+                            </span>
+                            <span v-else>
+                                {{ computeAge(activeClassRecord.students[selectedStudentId].birthDate) }}
+                            </span>
+                            <br>
+                            <span style="color: var(--text-secondary); font-size: 0.75rem">DOB: {{ activeClassRecord.students[selectedStudentId].birthDate }}</span>
+                        </div>
+                        <div v-if="activeClassRecord.students[selectedStudentId]?.studentEmail">
+                            <strong>Student Email:</strong> <a :href="'mailto:' + activeClassRecord.students[selectedStudentId].studentEmail" class="grades__student-link" style="color: var(--primary-color)">{{ activeClassRecord.students[selectedStudentId].studentEmail }}</a>
+                        </div>
+                        <div v-if="activeClassRecord.students[selectedStudentId]?.livingWith">
+                            <strong>Living With:</strong> {{ activeClassRecord.students[selectedStudentId].livingWith }}
+                        </div>
+                        <div v-if="activeClassRecord.students[selectedStudentId]?.custody">
+                            <strong>Custody:</strong> {{ activeClassRecord.students[selectedStudentId].custody }}
+                        </div>
+                    </div>
+                    
+                    <div v-if="!activeClassRecord?.students[selectedStudentId]?.parentContacts?.length">
+                      <span class="grades__stat-empty">No parent contacts on file</span>
+                    </div>
+                    <div v-else class="grades__contacts-list">
+                      <div v-for="(contact, index) in activeClassRecord.students[selectedStudentId].parentContacts" :key="index" class="grades__contact-item" style="display: flex; flex-direction: column; margin-bottom: 0.5rem; font-size: 0.85rem; border-left: 2px solid var(--border-color); padding-left: 0.5rem">
+                        <span class="grades__contact-name" style="font-weight: 600">{{ contact.name || 'Unknown' }}</span>
+                        <a v-if="contact.email" :href="'mailto:' + contact.email" class="grades__student-link" style="color: var(--primary-color)">{{ contact.email }}</a>
+                        <span v-if="contact.phone">{{ contact.phone }}</span>
+                      </div>
+                      <a :href="generateMailtoLink()" class="grades__btn-primary" style="display: flex; gap: 0.5rem; justify-content: center; margin-top: 0.75rem; text-decoration: none;">
+                        <Activity :size="16" /> Email Progress Report
+                      </a>
+                    </div>
+                  </div>
+                </div>
+
                 <!-- Attendance Summary (Step 6) -->
                 <div class="grades__section">
                   <h3 class="grades__section-title">Attendance Summary</h3>
@@ -1415,6 +1496,7 @@ import {
   removeAttempt,
   saveStudentOverride,
   saveStudentGradebookNote,
+  saveStudentDemographics,
   fetchStudentDossierData,
   deleteGradebookEvent,
   analyticsMode,
@@ -1479,6 +1561,96 @@ const isChangeMode = ref(false)
 const gridSortBy = ref('name') // 'name' | 'grade'
 const gridSortOrder = ref('asc') // 'asc' | 'desc'
 const showMissingModal = ref(false)
+
+// Added state for Demographics
+const isEditingDemographics = ref(false)
+const editableDemographics = ref({ studentEmail: '', custody: '', livingWith: '', birthDate: '', parentContacts: [] })
+
+function startEditDemographics() {
+  const current = activeClassRecord.value?.students[selectedStudentId.value]
+  editableDemographics.value = {
+      studentEmail: current?.studentEmail || '',
+      custody: current?.custody || '',
+      livingWith: current?.livingWith || '',
+      birthDate: current?.birthDate || '',
+      parentContacts: JSON.parse(JSON.stringify(current?.parentContacts || []))
+  }
+  isEditingDemographics.value = true
+}
+
+function computeAge(dobString) {
+  if (!dobString) return null
+  let dob = new Date(dobString)
+  if (isNaN(dob) && /^\d{1,2}\/\d{1,2}\/\d{4}$/.test(dobString)) {
+    const parts = dobString.split('/')
+    if (parts[0] > 12) {
+      // DD/MM/YYYY
+      dob = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`)
+    } else {
+      // MM/DD/YYYY
+      dob = new Date(`${parts[2]}-${parts[0]}-${parts[1]}`)
+    }
+  }
+  if (isNaN(dob)) return 'Unknown'
+  
+  const diff = Date.now() - dob.getTime()
+  const ageDate = new Date(diff)
+  return Math.abs(ageDate.getUTCFullYear() - 1970)
+}
+
+async function saveDemographics() {
+  editableDemographics.value.parentContacts = editableDemographics.value.parentContacts.filter(c => c.name.trim() || c.email.trim() || c.phone?.trim())
+  await saveStudentDemographics(selectedStudentId.value, editableDemographics.value)
+  isEditingDemographics.value = false
+}
+
+function generateMailtoLink() {
+  const student = activeClassRecord.value?.students[selectedStudentId.value]
+  if (!student) return '#'
+  
+  const emails = []
+  if (student.parentContacts) {
+      student.parentContacts.forEach(c => { if (c.email) emails.push(c.email) })
+  }
+  if (student.studentEmail) {
+      emails.push(student.studentEmail)
+  }
+  
+  const emailStr = emails.filter(e => e).join(',')
+  if (!emailStr) return '#'
+  
+  const subject = `Update on ${student.firstName} ${student.lastName} - ${activeClassRecord.value.name || 'Class'}`
+
+  const grade = classGrades.value[selectedStudentId.value]?.overallGrade
+  const gradeStr = grade !== undefined && grade !== null ? formatGrade(grade) : 'N/A'
+  
+  const missing = []
+  if (assessments.value && gradeMap.value) {
+    for (const a of assessments.value) {
+      if (a.excluded) continue
+      const g = gradeMap.value[a.assessmentId]?.[selectedStudentId.value]
+      const isPastDate = a.date <= new Date().toISOString().slice(0, 10)
+      
+      if (g?.missing || (isPastDate && (!g?.attempts || g.attempts.length === 0))) {
+        missing.push(a.name)
+      }
+    }
+  }
+  
+  let body = `Hello,\n\nI am writing to provide an update on ${student.firstName}'s progress in class.\n\n`
+  body += `Current Overall Grade: ${gradeStr}\n`
+  body += `Absences: ${studentAttendance.value.absences} | Lates: ${studentAttendance.value.lates}\n\n`
+  
+  if (missing.length > 0) {
+    body += `Missing or Incomplete Assessments:\n`
+    missing.forEach(m => body += `- ${m}\n`)
+    body += '\n'
+  }
+  
+  body += `Please contact me if you have any questions.\n\nBest regards,\n`
+  
+  return `mailto:${emails}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
+}
 
 const assessmentTypes = [
   { value: 'product', label: 'Product' },

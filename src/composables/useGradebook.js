@@ -397,6 +397,25 @@ export async function saveStudentGradebookNote(studentId, note) {
 }
 
 /**
+ * Saves demographic and contact information for a student.
+ */
+export async function saveStudentDemographics(studentId, demographics) {
+  if (!activeClassRecord.value) return
+  
+  const student = activeClassRecord.value.students[studentId]
+  if (!student) return
+
+  student.parentContacts = demographics.parentContacts || []
+  student.studentEmail = demographics.studentEmail || ''
+  student.custody = demographics.custody || ''
+  student.livingWith = demographics.livingWith || ''
+  student.birthDate = demographics.birthDate || ''
+
+  const { saveClass } = await import('../db/classService.js')
+  await saveClass(JSON.parse(JSON.stringify(activeClassRecord.value)))
+}
+
+/**
  * Fetches events and calculates basic stats for a student dossier.
  */
 export async function fetchStudentDossierData(studentId) {
