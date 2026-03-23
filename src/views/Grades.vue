@@ -1619,6 +1619,7 @@ const missingStudentsList = computed(() => {
   const list = []
   for (const student of sortedRoster.value) {
     const grade = gradeMap.value[currentAssessment.value.assessmentId]?.[student.studentId]
+    if (grade?.excluded) continue
     if (!grade || (!grade.missing && (!grade.attempts || grade.attempts.length === 0))) {
       list.push({ ...student, status: 'blank' })
     } else if (grade.missing) {
