@@ -57,7 +57,7 @@ async function _readSettings() {
                 key: 'w',
                 icon: 'Toilet',
                 label: 'Washroom',
-                category: 'neutral',
+                category: 'washroom',
                 type: 'toggle',
                 requiresNote: false,
                 isTopLevel: true
@@ -66,7 +66,7 @@ async function _readSettings() {
                 key: 'a',
                 icon: 'UserX',
                 label: 'Absent',
-                category: 'attendance',
+                category: 'absence',
                 type: 'attendance',
                 requiresNote: false,
                 isTopLevel: false
@@ -75,7 +75,7 @@ async function _readSettings() {
                 key: 'l',
                 icon: 'Clock',
                 label: 'Late',
-                category: 'attendance',
+                category: 'late',
                 type: 'attendance',
                 requiresNote: false,
                 isTopLevel: false

@@ -787,7 +787,11 @@ async function runReport() {
     }
 
     // --- Process Behavior ---
-    const behaviorEvents = events.filter(e => e.category !== 'attendance' && !washCodes.includes(e.code))
+    const behaviorEvents = events.filter(e => {
+      const isAttendance = e.category === 'attendance' || e.category === 'absence' || e.category === 'late'
+      const isWashroom = e.category === 'washroom' || washCodes.includes(e.code)
+      return !isAttendance && !isWashroom
+    })
     const codeCounts = {}
     behaviorEvents.forEach(e => {
       codeCounts[e.code] = (codeCounts[e.code] ?? 0) + 1

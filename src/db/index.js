@@ -16,7 +16,7 @@
 import { openDB } from 'idb'
 
 const DB_NAME = 'classroomTrackerDB'
-const DB_VERSION = 17
+const DB_VERSION = 18
 
 /**
  * Cached promise — set synchronously before the first await so every
@@ -494,6 +494,43 @@ export function getDB() {
           
           settings.schemaVersion = 17
           await settingsStore.put(settings, 'singleton')
+        }
+      }
+      // ── version 18 migration (Split behavior categories) ──────────────────
+      if (oldVersion < 18) {
+        const settingsStore = transaction.objectStore('settings')
+        const eventStore = transaction.objectStore('events')
+        
+        // 1. Update behavior codes in settings
+        const settings = await settingsStore.get('singleton')
+        if (settings && settings.behaviorCodes) {
+          const codes = settings.behaviorCodes
+          if (codes.w) codes.w.category = 'washroom'
+          if (codes.a) codes.a.category = 'absence'
+          if (codes.l) codes.l.category = 'late'
+          
+          settings.schemaVersion = 18
+          await settingsStore.put(settings, 'singleton')
+        }
+
+        // 2. Update all historical events
+        const events = await eventStore.getAll()
+        for (const evt of events) {
+          let mutated = false
+          if (evt.code === 'w' && evt.category !== 'washroom') {
+            evt.category = 'washroom'
+            mutated = true
+          } else if (evt.code === 'a' && evt.category !== 'absence') {
+            evt.category = 'absence'
+            mutated = true
+          } else if (evt.code === 'l' && evt.category !== 'late') {
+            evt.category = 'late'
+            mutated = true
+          }
+
+          if (mutated) {
+            await eventStore.put(evt)
+          }
         }
       }
     },

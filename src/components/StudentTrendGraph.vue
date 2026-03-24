@@ -41,10 +41,12 @@ const props = defineProps({
 const CATEGORY_COLOURS = {
   positive:      '#34c759',
   redirect:      '#ff9500',
-  attendance:    '#ff3b30',
+  absence:       '#ff3b30',
+  late:          '#ffcc00',
+  washroom:      '#32ade6',
   note:          '#4663ac',
   communication: '#5856d6',
-  neutral:       '#636e7b',
+  neutral:       '#8e8e93',
 }
 
 function formatWeekLabel(isoDateString) {
