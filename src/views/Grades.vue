@@ -36,8 +36,22 @@
               :class="{ 'grades__roster-item--active': selectedStudentId === student.studentId }"
               @click="selectedStudentId = student.studentId"
             >
-              <div class="grades__roster-info">
-                <span class="grades__roster-name">{{ student.lastName }}, {{ student.firstName }}</span>&nbsp;
+                <div class="grades__roster-info">
+                  <div class="grades__roster-name-group">
+                    <span class="grades__roster-name">{{ student.lastName }}, {{ student.firstName }}</span>
+                    <div class="grades__sparkline-mini" v-if="studentTrends[student.studentId]?.length > 1 && !isPrivacyMode">
+                      <svg width="60" height="12" viewBox="0 0 60 12">
+                        <path
+                          fill="none"
+                          :stroke="getGradeColor(studentTrends[student.studentId][studentTrends[student.studentId].length - 1])"
+                          stroke-width="1.5"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          :d="getSparklinePath(studentTrends[student.studentId], 60, 12)"
+                        />
+                      </svg>
+                    </div>
+                  </div>
                 <span 
                   v-if="classGrades[student.studentId]" 
                   class="grades__roster-grade"
@@ -351,14 +365,14 @@
                 >Analytics</button>
               </div>
 
-              <div v-if="activeClassRecord?.gradebookMilestones?.length" class="grades__milestone-toggle">
+              <div v-if="globalMilestones?.length" class="grades__milestone-toggle">
                 <button 
                   class="grades__toggle-btn"
                   :class="{ 'grades__toggle-btn--active': selectedMilestone === null }"
                   @click="selectedMilestone = null"
                 >Current</button>
                 <button 
-                  v-for="m in activeClassRecord.gradebookMilestones"
+                  v-for="m in globalMilestones"
                   :key="m.milestoneId"
                   class="grades__toggle-btn"
                   :class="{ 'grades__toggle-btn--active': selectedMilestone === m.milestoneId }"
@@ -698,7 +712,21 @@
               <tbody>
                 <tr v-for="student in sortedRoster" :key="student.studentId">
                   <td class="grades__td-student" @click="selectedStudentId = student.studentId">
-                    <span class="grades__student-link">{{ student.lastName }}, {{ student.firstName }}</span>
+                    <div class="grades__student-name-group">
+                      <span class="grades__student-link">{{ student.lastName }}, {{ student.firstName }}</span>
+                      <div class="grades__sparkline-mini" v-if="studentTrends[student.studentId]?.length > 1 && !isPrivacyMode">
+                        <svg width="80" height="14" viewBox="0 0 80 14">
+                          <path
+                            fill="none"
+                            :stroke="getGradeColor(classGrades[student.studentId]?.overallGrade)"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            :d="getSparklinePath(studentTrends[student.studentId], 80, 14)"
+                          />
+                        </svg>
+                      </div>
+                    </div>
                   </td>
                   <td 
                     class="grades__td-overall"
@@ -822,6 +850,18 @@
           </div>
 
           <div class="grades__student-content">
+            <!-- Coaching Alerts (Correlation) -->
+            <div v-if="studentCorrelationAlert" class="grades__coaching-alert">
+              <div class="grades__alert-icon">
+                <AlertTriangle :size="24" />
+              </div>
+              <div class="grades__alert-content">
+                <div class="grades__alert-message">{{ studentCorrelationAlert.title }}</div>
+                <div class="grades__alert-text">{{ studentCorrelationAlert.message }}</div>
+                <div class="grades__alert-recommendation">{{ studentCorrelationAlert.recommendation }}</div>
+              </div>
+            </div>
+
             <!-- Category Cards -->
             <div class="grades__category-cards">
               <div 
@@ -856,32 +896,39 @@
             <!-- Evidence Balance (Step 4) -->
             <div v-if="studentEvidenceBalance" class="grades__section">
               <h3 class="grades__section-title">Evidence Balance</h3>
-              <div class="grades__evidence-bars">
-                <div class="grades__evidence-row">
-                  <div class="grades__evidence-label">
-                    <span>Product</span>
-                    <span>{{ studentEvidenceBalance.product }}%</span>
-                  </div>
-                  <div class="grades__progress-bg">
-                    <div class="grades__progress-bar" :style="{ width: studentEvidenceBalance.product + '%' }"></div>
-                  </div>
+              <div class="grades__evidence-stacked">
+                <div class="grades__stacked-bar">
+                  <div 
+                    class="grades__stacked-segment grades__stacked-segment--product" 
+                    :style="{ width: studentEvidenceBalance.product + '%' }" 
+                    title="Product"
+                  ></div>
+                  <div 
+                    class="grades__stacked-segment grades__stacked-segment--observation" 
+                    :style="{ width: studentEvidenceBalance.observation + '%' }" 
+                    title="Observation"
+                  ></div>
+                  <div 
+                    class="grades__stacked-segment grades__stacked-segment--conversation" 
+                    :style="{ width: studentEvidenceBalance.conversation + '%' }" 
+                    title="Conversation"
+                  ></div>
                 </div>
-                <div class="grades__evidence-row">
-                  <div class="grades__evidence-label">
-                    <span>Observation</span>
-                    <span>{{ studentEvidenceBalance.observation }}%</span>
+                <div class="grades__stacked-legend">
+                  <div class="grades__legend-item">
+                    <span class="grades__legend-dot grades__legend-dot--product"></span>
+                    <span class="grades__legend-label">Product</span>
+                    <span class="grades__legend-pct">{{ studentEvidenceBalance.product }}%</span>
                   </div>
-                  <div class="grades__progress-bg">
-                    <div class="grades__progress-bar grades__progress-bar--observation" :style="{ width: studentEvidenceBalance.observation + '%' }"></div>
+                  <div class="grades__legend-item">
+                    <span class="grades__legend-dot grades__legend-dot--observation"></span>
+                    <span class="grades__legend-label">Observation</span>
+                    <span class="grades__legend-pct">{{ studentEvidenceBalance.observation }}%</span>
                   </div>
-                </div>
-                <div class="grades__evidence-row">
-                  <div class="grades__evidence-label">
-                    <span>Conversation</span>
-                    <span>{{ studentEvidenceBalance.conversation }}%</span>
-                  </div>
-                  <div class="grades__progress-bg">
-                    <div class="grades__progress-bar grades__progress-bar--conversation" :style="{ width: studentEvidenceBalance.conversation + '%' }"></div>
+                  <div class="grades__legend-item">
+                    <span class="grades__legend-dot grades__legend-dot--conversation"></span>
+                    <span class="grades__legend-label">Conversation</span>
+                    <span class="grades__legend-pct">{{ studentEvidenceBalance.conversation }}%</span>
                   </div>
                 </div>
               </div>
@@ -966,11 +1013,21 @@
             </div>
 
             <!-- Individual Assessments (Step 5) -->
-            <div v-if="individualStudentAssessments.length" class="grades__section">
-              <h3 class="grades__section-title">
-                <UserCheck :size="16" /> Individual Assessments
-              </h3>
-              <div class="grades__table-wrapper">
+            <div class="grades__section">
+              <div class="grades__section-header">
+                <h3 class="grades__section-title">
+                  <UserCheck :size="16" /> Individual Assessments
+                </h3>
+                <button 
+                  class="grades__btn-icon-sm" 
+                  title="Add Individual Assessment"
+                  @click="openAddIndividualAssessment"
+                >
+                  <Plus :size="14" />
+                </button>
+              </div>
+              
+              <div v-if="individualStudentAssessments.length" class="grades__table-wrapper">
                 <table class="grades__dossier-table">
                   <thead>
                     <tr>
@@ -1035,6 +1092,9 @@
                     </tr>
                   </tbody>
                 </table>
+              </div>
+              <div v-else class="grades__empty-state">
+                No individual assessments for this student.
               </div>
             </div>
 
@@ -1520,6 +1580,7 @@ import {
   classGrades, 
   selectedStudentId, 
   selectedMilestone,
+  globalMilestones,
   gradeMap,
   assessmentStats,
   loadGradebook,
@@ -1731,6 +1792,7 @@ function generateCustomMailto() {
       for (const a of assessments.value) {
         if (a.excluded) continue
         const g = gradeMap.value[a.assessmentId]?.[selectedStudentId.value]
+        if (g?.excluded) continue
         const isPastDate = a.date <= new Date().toISOString().slice(0, 10)
         if (g?.missing || (isPastDate && (!g?.attempts || g.attempts.length === 0))) {
           missing.push(a.name)
@@ -1818,6 +1880,26 @@ watch(showAddModal, (val) => {
   }
 })
 
+function openAddIndividualAssessment() {
+  newAssessment.name = ''
+  newAssessment.unit = sortedUnits.value.length > 0 ? sortedUnits.value[0].unitId : null
+  newAssessment.assessmentType = 'product'
+  newAssessment.target = 'individual'
+  newAssessment.targetStudentId = selectedStudentId.value
+  newAssessment.date = new Date().toISOString().slice(0, 10)
+  newAssessment.totalPoints = 10
+  newAssessment.scaledTotal = null
+  newAssessment.retestPolicy = 'Highest'
+  
+  if (activeClassRecord.value?.gradebookCategories?.length) {
+    newAssessment.categoryId = activeClassRecord.value.gradebookCategories[0].categoryId
+  }
+  
+  isEditingAssessment.value = false
+  currentAssessmentId.value = null
+  showAddModal.value = true
+}
+
 // --- Sorting ---
 const sortedClassList = computed(() => {
   return [...classList.value].sort((a, b) => (a.periodNumber || 0) - (b.periodNumber || 0))
@@ -1844,6 +1926,74 @@ const sortedRoster = computed(() => {
     return gridSortOrder.value === 'asc' ? result : -result
   })
 })
+
+const studentTrends = computed(() => {
+  if (!activeClassRecord.value?.students || !assessments.value || !gradeMap.value) return {}
+  
+  const productAssessments = [...assessments.value]
+    .filter(a => a.assessmentType === 'product' && !a.excluded && a.target === 'class')
+    .sort((a, b) => new Date(a.date) - new Date(b.date))
+    
+  if (productAssessments.length === 0) return {}
+  
+  const trends = {}
+  Object.keys(activeClassRecord.value.students).forEach(studentId => {
+    const data = []
+    productAssessments.forEach(a => {
+      const grade = gradeMap.value[a.assessmentId]?.[studentId]
+      if (grade && grade.resolvedScore !== null && !grade.excluded) {
+        data.push((grade.resolvedScore / (a.totalPoints || 1)) * 100)
+      } else if (grade?.missing) {
+        data.push(0)
+      }
+    })
+    trends[studentId] = data
+  })
+  
+  return trends
+})
+
+const studentCorrelationAlert = computed(() => {
+  const studentId = selectedStudentId.value
+  if (!studentId || !studentAttendance.value) return null
+
+  const stats = studentAttendance.value
+  const grade = classGrades.value[studentId]?.overallGrade
+
+  // Alert if grade < 70% and absences >= 3
+  if (grade !== null && grade < 70 && stats.absences >= 3) {
+    return {
+      type: 'warning',
+      title: 'Coaching Insight: Attendance Correlation',
+      message: `This student's current mark (${Math.round(grade)}%) may be impacted by their ${stats.absences} absences.`,
+      recommendation: 'Recommend a 1-on-1 to discuss missed instruction and catch-up opportunities.'
+    }
+  }
+  return null
+})
+
+function getSparklinePath(data, width, height) {
+  if (!data || data.length < 2) return ""
+  const xStep = width / (data.length - 1)
+  const points = data.map((val, i) => {
+    const x = i * xStep
+    const y = height - (val / 100) * height
+    return { x, y }
+  })
+
+  // Simple quadratic curve interpolation
+  let d = `M ${points[0].x} ${points[0].y}`
+  for (let i = 0; i < points.length - 1; i++) {
+    const p0 = points[i]
+    const p1 = points[i + 1]
+    const midX = (p0.x + p1.x) / 2
+    d += ` Q ${p0.x} ${p0.y}, ${midX} ${(p0.y + p1.y) / 2}`
+    if (i === points.length - 2) {
+      d += ` T ${p1.x} ${p1.y}`
+    }
+  }
+  return d
+}
 
 const sortedUnits = computed(() => {
   if (!activeClassRecord.value?.gradebookUnits) return []
@@ -3178,6 +3328,48 @@ verall-trend {
   display: flex;
   flex-direction: column;
   gap: 24px;
+}
+
+/* ── Correlation Alerts ───────────────────────────────────────────── */
+.grades__coaching-alert {
+  background: #fdf2f2;
+  border: 1px solid #fecaca;
+  border-radius: var(--radius-md);
+  padding: 16px;
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.grades__alert-icon {
+  color: #ef4444;
+  flex: 0 0 auto;
+}
+
+.grades__alert-message {
+  font-weight: 700;
+  color: #991b1b;
+  font-size: 0.95rem;
+  margin-bottom: 4px;
+}
+
+.grades__alert-text {
+  font-size: 0.9rem;
+  color: #b91c1c;
+  margin-bottom: 4px;
+}
+
+.grades__alert-recommendation {
+  font-size: 0.85rem;
+  color: #7f1d1d;
+  font-style: italic;
+  opacity: 0.9;
 }
 
 .grades__category-cards {
@@ -4960,48 +5152,105 @@ verall-trend {
   color: var(--state-out);
 }
 
-/* Evidence Balance Bars */
-.grades__evidence-bars {
+/* Evidence Balance Stacked Bar */
+.grades__evidence-stacked {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  max-width: 400px;
+  gap: 12px;
+  width: 100%;
 }
 
-.grades__evidence-row {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.grades__evidence-label {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--text);
-}
-
-.grades__progress-bg {
-  height: 10px;
+.grades__stacked-bar {
+  height: 12px;
   background: var(--bg-secondary);
-  border-radius: 5px;
+  border-radius: 6px;
   overflow: hidden;
+  display: flex;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);
 }
 
-.grades__progress-bar {
+.grades__stacked-segment {
   height: 100%;
-  background: var(--primary);
-  border-radius: 5px;
   transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.grades__progress-bar--observation {
-  background: #34c759; /* iOS Green */
+.grades__stacked-segment--product {
+  background: var(--primary);
 }
 
-.grades__progress-bar--conversation {
-  background: #5856d6; /* iOS Indigo */
+.grades__stacked-segment--observation {
+  background: #ff9500;
+}
+
+.grades__stacked-segment--conversation {
+  background: #34c759;
+}
+
+.grades__stacked-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.grades__legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.grades__legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.grades__legend-dot--product { background: var(--primary); }
+.grades__legend-dot--observation { background: #ff9500; }
+.grades__legend-dot--conversation { background: #34c759; }
+
+.grades__legend-label {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.grades__legend-pct {
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+}
+
+.grades__btn-icon-sm {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.grades__btn-icon-sm:hover {
+  background: var(--primary-light);
+  color: var(--primary);
+  border-color: var(--primary);
+}
+
+.grades__empty-state {
+  padding: 24px;
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  border: 1px dashed var(--border);
+  margin-top: 12px;
 }
 
 /* Stats Summary and Dossier Metrics */
@@ -5099,27 +5348,27 @@ verall-trend {
 }
 
 .grades__category-cards {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
   margin-bottom: 24px;
 }
 
 .grades__stat-card {
-  flex: 0 0 auto;
-  width: calc(33.333% - 11px);
-  min-width: 220px;
+  min-width: 0; /* Allow grid items to shrink below their content if needed */
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  padding: 16px;
+  padding: 8px 10px;
   cursor: pointer;
   transition: all 0.2s;
   position: relative;
+  display: flex;
+  flex-direction: column;
 }
 
 .grades__stat-card:hover {
-  transform: translateY(-2px);
+  transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(0,0,0,0.05);
   border-color: var(--primary);
 }
@@ -5131,45 +5380,52 @@ verall-trend {
 }
 
 .grades__card-label {
-  font-size: 0.75rem;
+  font-size: 0.65rem;
   font-weight: 700;
   text-transform: uppercase;
   color: var(--text-secondary);
   letter-spacing: 0.05em;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .grades__card-metrics {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 1px;
 }
 
 .grades__card-metric-row {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start; /* Switch to start to allow multi-line values */
-  gap: 8px;
-  font-size: 13px;
+  flex-direction: column; /* Stack vertically for ultimate compactness */
+  align-items: flex-start;
+  gap: 0px;
+  font-size: 11px;
 }
 
 .grades__card-metric-label {
   color: var(--text-secondary);
+  font-size: 9px;
+  text-transform: uppercase;
+  opacity: 0.8;
 }
 
 .grades__card-metric-value {
-  font-weight: 600;
+  font-weight: 700;
   color: var(--text-primary);
-  text-align: right;
-  line-height: 1.2;
+  text-align: left;
+  line-height: 1.1;
+  font-size: 13px;
 }
 
 .grades__card-hint {
-  display: block; /* Force hint to its own line if it wraps or just to give it space */
-  font-size: 11px;
+  display: block;
+  font-size: 10px;
   color: var(--text-secondary);
   font-weight: 400;
-  margin-top: 2px;
+  margin-top: 1px;
 }
 
 /* ──────────────────────────────────────────────────────────────────────────
@@ -5448,5 +5704,39 @@ verall-trend {
 
 .grades__empty-content p {
   color: var(--text-secondary);
+}
+
+/* ── Sparklines ──────────────────────────────────────────────────────── */
+.grades__student-name-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.grades__roster-name-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.grades__sparkline-mini {
+  display: flex;
+  align-items: center;
+  opacity: 0.7;
+  margin-top: 2px;
+}
+
+.grades__sparkline-mini svg {
+  filter: drop-shadow(0 0 1px rgba(0,0,0,0.1));
+}
+
+.grades__sparkline-dot {
+  animation: sparklinePulse 2s infinite;
+}
+
+@keyframes sparklinePulse {
+  0% { r: 2.5; opacity: 1; }
+  50% { r: 3.5; opacity: 0.7; }
+  100% { r: 2.5; opacity: 1; }
 }
 </style>

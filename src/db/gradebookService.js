@@ -224,12 +224,13 @@ export async function updateLastAttempt(assessmentId, studentId, pointsEarned) {
  */
 export async function deleteAttempt(assessmentId, studentId, attemptId) {
   const db = await getDB()
+  const assessment = await db.get('assessments', assessmentId)
+  if (!assessment) throw new Error(`Assessment not found: ${assessmentId}`)
+
   const tx = db.transaction('grades', 'readwrite')
   const store = tx.objectStore('grades')
   
-  // We don't have classId here easily, but getOrCreateGrade will handle 
-  // missing classId if it already exists (which it must if we're deleting an attempt).
-  const grade = await _getGradeInTransaction(tx, assessmentId, studentId)
+  const grade = await _getGradeInTransaction(tx, assessmentId, studentId, assessment.classId)
   
   grade.attempts = grade.attempts.filter(a => a.attemptId !== attemptId)
   
@@ -249,9 +250,12 @@ export async function deleteAttempt(assessmentId, studentId, attemptId) {
  */
 export async function setPrimaryAttempt(assessmentId, studentId, attemptId) {
   const db = await getDB()
+  const assessment = await db.get('assessments', assessmentId)
+  if (!assessment) throw new Error(`Assessment not found: ${assessmentId}`)
+
   const tx = db.transaction('grades', 'readwrite')
   const store = tx.objectStore('grades')
-  const grade = await _getGradeInTransaction(tx, assessmentId, studentId)
+  const grade = await _getGradeInTransaction(tx, assessmentId, studentId, assessment.classId)
   
   grade.attempts = grade.attempts.map(a => ({
     ...a,
@@ -566,7 +570,7 @@ function calculateMostConsistent(studentId, classRecord, gradeMap, assessments) 
     let bucketLabel = result.bucketLabel
     let count = result.count
 
-    if (percentage === null || scores.length < 3) {
+    if (percentage === null || scores.length < 2) {
       percentage = calculateMedian(scores.map(s => s.percentage))
       isFallback = true
       bucketLabel = null
@@ -637,7 +641,7 @@ function calculateWeightedMedian(studentId, classRecord, gradeMap, assessments) 
   if (totalWeight === 0) return null
 
   return {
-    percentage: weightedSum / (totalWeight / 100),
+    percentage: (weightedSum / totalWeight) * 100,
     categoryBreakdown: breakdown
   }
 }
@@ -840,11 +844,17 @@ export function calculateAssessmentAnalytics(assessmentId, grades, assessment, o
   // Outlier detection
   const outlierResult = detectOutliers(allPercentages)
   const activePercentages = excludeOutliers ? outlierResult.clean : allPercentages
-  const outlierStudentIds = excludeOutliers
-    ? allScores
-        .filter(s => outlierResult.outliers.includes(s.percentage))
-        .map(s => s.studentId)
-    : []
+  
+  // Bug 5: Safe outlier mapping by studentId
+  const outlierStudentIds = []
+  if (excludeOutliers && outlierResult.outliers.length > 0) {
+    const outlierThreshold = outlierResult.cutoff
+    allScores.forEach(s => {
+      if (s.percentage < outlierThreshold) {
+        outlierStudentIds.push(s.studentId)
+      }
+    })
+  }
 
   if (activePercentages.length === 0) return null
 
@@ -981,11 +991,16 @@ export async function calculateClassAnalytics(classRecord, assessments, grades, 
   // Apply outlier exclusion if toggled
   const outlierResult = detectOutliers(allPercentages)
   const activePercentages = excludeOutliers ? outlierResult.clean : allPercentages
-  const outlierStudentIds = excludeOutliers
-    ? studentGrades
-        .filter(s => outlierResult.outliers.includes(s.percentage))
-        .map(s => s.studentId)
-    : []
+  
+  const outlierStudentIds = []
+  if (excludeOutliers && outlierResult.outliers.length > 0) {
+    const outlierThreshold = outlierResult.cutoff
+    studentGrades.forEach(s => {
+      if (s.percentage < outlierThreshold) {
+        outlierStudentIds.push(s.studentId)
+      }
+    })
+  }
 
   const mean = activePercentages.reduce((a, b) => a + b, 0) / activePercentages.length
   const sd = calculateStandardDeviation(activePercentages)
@@ -1073,7 +1088,7 @@ export async function getGradebookTemplates() {
 /**
  * Saves a new template based on the categories/milestones of an existing class.
  */
-export async function saveGradebookTemplate(name, classRecord) {
+export async function saveGradebookTemplate(name, classRecord, milestones) {
   const db = await getDB()
   const settings = await db.get('settings', 'singleton')
   
@@ -1081,7 +1096,7 @@ export async function saveGradebookTemplate(name, classRecord) {
     templateId: crypto.randomUUID(),
     name,
     categories: classRecord.gradebookCategories.map(c => ({ ...c, categoryId: crypto.randomUUID() })),
-    milestones: classRecord.gradebookMilestones.map(m => ({ ...m, milestoneId: crypto.randomUUID() }))
+    milestones: milestones.map(m => ({ ...m, milestoneId: crypto.randomUUID() }))
   }
   
   if (!settings.gradebookTemplates) settings.gradebookTemplates = []

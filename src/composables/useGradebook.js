@@ -16,6 +16,7 @@ export const grades = ref([])
 export const classGrades = ref({})
 export const selectedStudentId = ref(null)
 export const selectedMilestone = ref(null) // null = current
+export const globalMilestones = ref([])
 
 // Reactive state for analytics (Step 6)
 export const analyticsMode = ref(false) // false = grid, true = analytics panel
@@ -40,6 +41,10 @@ export async function loadGradebook(classRecord) {
   assessments.value = await gradebookService.getAssessmentsByClass(classRecord.classId)
   grades.value = await gradebookService.getGradesByClass(classRecord.classId)
   
+  // Load global milestones
+  const { getGlobalMilestones } = await import('../db/settingsService.js')
+  globalMilestones.value = await getGlobalMilestones()
+  
   // Compute student grades
   await refreshGrades()
 }
@@ -52,7 +57,7 @@ export async function refreshGrades() {
   
   // Find date boundary if a milestone is selected
   const asOf = selectedMilestone.value
-    ? activeClassRecord.value.gradebookMilestones?.find(m => m.milestoneId === selectedMilestone.value)?.date
+    ? globalMilestones.value?.find(m => m.milestoneId === selectedMilestone.value)?.date
     : null
     
     
@@ -70,8 +75,7 @@ export async function refreshGrades() {
 export async function refreshClassAnalytics() {
   if (!activeClassRecord.value) return
   const asOf = selectedMilestone.value
-    ? activeClassRecord.value.gradebookMilestones
-        ?.find(m => m.milestoneId === selectedMilestone.value)?.date
+    ? globalMilestones.value?.find(m => m.milestoneId === selectedMilestone.value)?.date
     : null
 
   classAnalytics.value = await gradebookService.calculateClassAnalytics(
@@ -190,7 +194,7 @@ async function refreshSingleStudent(studentId) {
   if (!activeClassRecord.value) return
   
   const asOf = selectedMilestone.value
-    ? activeClassRecord.value.gradebookMilestones?.find(m => m.milestoneId === selectedMilestone.value)?.date
+    ? globalMilestones.value?.find(m => m.milestoneId === selectedMilestone.value)?.date
     : null
     
   // Pass grades and assessments by reference so gradebookService doesn't query DB

@@ -7,20 +7,16 @@
  * Rules (CLAUDE.md §4, §5):
  *  - Uses the `idb` wrapper exclusively (no raw IDBRequest chains)
  *  - Database name:  classroomTrackerDB
- *  - Schema version: 2  (bumped from 1 — adds generalNote + requiresNote + new codes)
- *  - Stores: settings | classes | events
- *  - All indexes on `events` are created here in upgrade()
- *
- * Version 2 migration (oldVersion < 2):
- *  - Adds `generalNote: ''` to any student record missing the field
- *  - Adds `requiresNote: false` to any behavior code missing the field
- *  - Adds the three new codes (ob, cv, pc) if they don't exist
+ *  - Schema version: 16 (includes gradebook and triangulation data)
+ *  - Stores: settings | classes | events | assessments | grades
+ *  - All indexes are created or migrated using the upgrade() callback to ensure
+ *    consistency for both fresh installs and existing users.
  */
 
 import { openDB } from 'idb'
 
 const DB_NAME = 'classroomTrackerDB'
-const DB_VERSION = 16
+const DB_VERSION = 17
 
 /**
  * Cached promise — set synchronously before the first await so every
@@ -83,7 +79,7 @@ export function getDB() {
         })
         gradeStore.createIndex('by_assessmentId', 'assessmentId')
         gradeStore.createIndex('by_studentId', 'studentId')
-        gradeStore.createIndex('by_classId', 'classId')
+        // gradeStore.createIndex('by_classId', 'classId') -> handled in v16 below
         gradeStore.createIndex('by_assessmentAndStudent', ['assessmentId', 'studentId'], { unique: true })
       }
 
@@ -91,7 +87,7 @@ export function getDB() {
       if (oldVersion === 0) {
         transaction.objectStore('settings').put(
           {
-            schemaVersion: 16,
+            schemaVersion: 17,
             gridSize: { rows: 6, cols: 6 },
             behaviorCodes: {
               m: { icon: 'Smartphone', label: 'On Device', category: 'redirect', type: 'standard', requiresNote: false, isTopLevel: true },
@@ -106,7 +102,8 @@ export function getDB() {
               washroomTripsPerWeek: 4,
               deviceIncidentsPerWeek: 3
             },
-            gradebookTemplates: []
+            gradebookTemplates: [],
+            gradebookMilestones: []
           },
           'singleton'
         )
@@ -116,7 +113,8 @@ export function getDB() {
         // The getDB() itself doesn't create classes, that's classService.
         // But if we had a seed class here, we'd adds those fields.
 
-        return  // fresh install — no migration needed
+        // Wait — we don't return here so that v16+ migrations can add indexes and other logic
+        // in a single source of truth (Source: User Feedback).
       }
 
       // ── version 6 migration (fixing previously silent failures) ───────────
@@ -457,6 +455,44 @@ export function getDB() {
         const settings = await settingsStore.get('singleton')
         if (settings) {
           settings.schemaVersion = 16
+          await settingsStore.put(settings, 'singleton')
+        }
+      }
+
+      // ── version 17 migration (Globalize milestones) ──────────────────────
+      if (oldVersion < 17) {
+        const settingsStore = transaction.objectStore('settings')
+        const classesStore = transaction.objectStore('classes')
+        
+        const settings = await settingsStore.get('singleton')
+        if (settings) {
+          if (!settings.gradebookMilestones) settings.gradebookMilestones = []
+          
+          const allClasses = await classesStore.getAll()
+          const globalMilestones = []
+          const seenNames = new Set()
+
+          for (const cls of allClasses) {
+            if (cls.gradebookMilestones && Array.isArray(cls.gradebookMilestones)) {
+              for (const ms of cls.gradebookMilestones) {
+                const uniqueKey = `${ms.name.trim().toLowerCase()}_${ms.date}`
+                if (!seenNames.has(uniqueKey)) {
+                  globalMilestones.push({ ...ms })
+                  seenNames.add(uniqueKey)
+                }
+              }
+              // Optional: Clear per-class milestones to avoid confusion
+              // delete cls.gradebookMilestones
+              // await classesStore.put(cls)
+            }
+          }
+
+          // If no milestones existed but we are migrating, ensure we don't overwrite if settings already had some (e.g. from seed)
+          if (globalMilestones.length > 0) {
+            settings.gradebookMilestones = globalMilestones
+          }
+          
+          settings.schemaVersion = 17
           await settingsStore.put(settings, 'singleton')
         }
       }

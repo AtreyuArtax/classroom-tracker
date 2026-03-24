@@ -471,9 +471,9 @@
 
         <!-- Milestones -->
         <div class="setup__card">
-          <h2 class="setup__card-title">Milestones</h2>
+          <h2 class="setup__card-title">Milestones (Global)</h2>
           <div class="setup__gb-list">
-            <div v-for="ms in activeClass.gradebookMilestones" :key="ms.milestoneId" class="setup__gb-item">
+            <div v-for="ms in globalMilestones" :key="ms.milestoneId" class="setup__gb-item">
               <input 
                 v-model="ms.name" 
                 class="setup__input setup__input--naked" 
@@ -638,6 +638,7 @@ import * as eventService       from '../db/eventService.js'
 import * as settingsService  from '../db/settingsService.js'
 import * as classService     from '../db/classService.js'
 import * as gradebookService from '../db/gradebookService.js'
+import { globalMilestones }  from '../composables/useGradebook.js'
 
 const {
   classList,
@@ -1015,7 +1016,7 @@ watch(
 )
 
 watch(
-  () => activeClass.value?.gradebookMilestones,
+  () => globalMilestones.value,
   () => debouncedSave(),
   { deep: true }
 )
@@ -1031,9 +1032,10 @@ async function saveGradebookSettings() {
   await classService.updateClass(activeClass.value.classId, {
     gradebookCategories: activeClass.value.gradebookCategories,
     gradebookUnits: activeClass.value.gradebookUnits,
-    gradebookMilestones: activeClass.value.gradebookMilestones,
     gradebookNotes: activeClass.value.gradebookNotes
   })
+  // Milestones are now global and saved to settings independently
+  await settingsService.saveGlobalMilestones(JSON.parse(JSON.stringify(globalMilestones.value)))
 }
 
 async function addCategory() {
@@ -1061,6 +1063,8 @@ async function onDeleteCategory(cat) {
     window.alert(`Cannot delete category "${cat.name}" because it has assessments assigned to it. Remove all assessments in this category first.`)
     return
   }
+
+  if (!window.confirm(`Delete category "${cat.name}"?`)) return
 
   if (activeClass.value.gradebookCategories.length <= 1) {
     window.alert('At least one category is required.')
@@ -1097,28 +1101,27 @@ async function onDeleteUnit(unitId) {
     return
   }
 
+  if (!window.confirm(`Delete unit "${unit?.name || 'this unit'}"?`)) return
+
   activeClass.value.gradebookUnits = activeClass.value.gradebookUnits.filter(u => u.unitId !== unitId)
   await saveGradebookSettings()
 }
 
 async function addMilestone() {
-  if (!activeClass.value) return
   const newMs = {
     milestoneId: crypto.randomUUID(),
     name: 'Milestone',
     date: new Date().toISOString().slice(0, 10)
   }
-  if (!activeClass.value.gradebookMilestones) {
-    activeClass.value.gradebookMilestones = []
-  }
-  activeClass.value.gradebookMilestones.push(newMs)
-  await saveGradebookSettings()
+  globalMilestones.value.push(newMs)
+  await settingsService.saveGlobalMilestones(JSON.parse(JSON.stringify(globalMilestones.value)))
 }
 
 async function onDeleteMilestone(milestoneId) {
-  if (!activeClass.value) return
-  activeClass.value.gradebookMilestones = activeClass.value.gradebookMilestones.filter(m => m.milestoneId !== milestoneId)
-  await saveGradebookSettings()
+  const ms = globalMilestones.value.find(m => m.milestoneId === milestoneId)
+  if (!window.confirm(`Delete milestone "${ms?.name || 'this milestone'}"?`)) return
+  globalMilestones.value = globalMilestones.value.filter(m => m.milestoneId !== milestoneId)
+  await settingsService.saveGlobalMilestones(JSON.parse(JSON.stringify(globalMilestones.value)))
 }
 
 async function saveTemplate() {
@@ -1131,7 +1134,7 @@ async function saveTemplate() {
     return
   }
 
-  const template = await gradebookService.saveGradebookTemplate(newTemplateName.value.trim(), activeClass.value)
+  const template = await gradebookService.saveGradebookTemplate(newTemplateName.value.trim(), activeClass.value, globalMilestones.value)
   templates.value.push(template)
   newTemplateName.value = ''
 }
@@ -1149,7 +1152,7 @@ async function onApplyTemplate(template) {
   const milestones = template.milestones.map(m => ({ ...m, milestoneId: crypto.randomUUID() }))
 
   activeClass.value.gradebookCategories = categories
-  activeClass.value.gradebookMilestones = milestones
+  globalMilestones.value = milestones
   
   await saveGradebookSettings()
 }
@@ -1171,6 +1174,8 @@ const isDraggingBackup = ref(false)
 onMounted(async () => {
   const settings = await settingsService.getSettings()
   isSyncLinked.value = !!settings.backupFileHandle
+  const ms = await settingsService.getGlobalMilestones()
+  globalMilestones.value = ms
   templates.value = await gradebookService.getGradebookTemplates()
 
   // Ensure a class is selected if any exist

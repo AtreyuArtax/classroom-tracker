@@ -249,7 +249,10 @@ export async function setStudentLate(classId, studentId, lateMinutes) {
  */
 export async function clearStudentLate(classId, studentId) {
     const db = await getDB()
-    const cls = await db.get('classes', classId)
+    const tx = db.transaction('classes', 'readwrite')
+    const store = tx.objectStore('classes')
+    const cls = await store.get(classId)
+    
     if (!cls) throw new Error(`Class not found: ${classId}`)
     if (!cls.students[studentId]) throw new Error(`Student not found: ${studentId} in ${classId}`)
 
@@ -257,7 +260,8 @@ export async function clearStudentLate(classId, studentId) {
         cls.students[studentId].activeStates.lateMinutes = null
     }
     const plain = JSON.parse(JSON.stringify(cls))
-    await db.put('classes', plain)
+    await store.put(plain)
+    await tx.done
     hasUnsyncedChanges.value = true
 }
 

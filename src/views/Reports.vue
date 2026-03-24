@@ -60,6 +60,18 @@
             </div>
           </div>
 
+          <!-- Coaching Alert (Step 1a) -->
+          <div v-if="studentCorrelationAlert" class="reports__coaching-alert">
+            <div class="reports__alert-icon">
+              <Activity :size="20" />
+            </div>
+            <div class="reports__alert-body">
+              <div class="reports__alert-title">{{ studentCorrelationAlert.title }}</div>
+              <div class="reports__alert-message">{{ studentCorrelationAlert.message }}</div>
+              <div class="reports__alert-recommendation">{{ studentCorrelationAlert.recommendation }}</div>
+            </div>
+          </div>
+
           <!-- Trend Graph -->
           <StudentTrendGraph
             :weekly-trend="dossier.weeklyTrend.value"
@@ -323,7 +335,7 @@
                     <div class="reports__metric reports__metric--top-code">
                       <span class="reports__metric-label">Most Common</span>
                       <div v-if="aggregates.behavior.topCode" class="reports__top-code">
-                        <span class="reports__top-code-icon">{{ aggregates.behavior.topCode.icon }}</span>
+                        <component :is="resolveIcon(aggregates.behavior.topCode.icon)" :size="28" class="reports__top-code-icon" />
                         <div class="reports__top-code-info">
                           <span class="reports__top-code-label">{{ aggregates.behavior.topCode.label }}</span>
                           <span class="reports__top-code-count">{{ aggregates.behavior.topCode.count }} logs</span>
@@ -347,6 +359,25 @@
                         <span class="reports__list-name">{{ name }}</span>
                       </li>
                     </ul>
+                  </div>
+                </div>
+
+                <!-- Correlations Card -->
+                <div v-if="correlationInsights" class="reports__dashboard-card reports__dashboard-card--insight">
+                  <div class="reports__card-header">
+                    <h3 class="reports__card-title"><LayoutDashboard :size="18" /> Trends & Correlations</h3>
+                  </div>
+                  <div class="reports__insight-content">
+                    <p class="reports__insight-text">
+                      Students with <strong>high absences (3+)</strong> average <span class="reports__insight-val">{{ correlationInsights.highAbsenceAvg }}%</span>, 
+                      compared to <span class="reports__insight-val">{{ correlationInsights.lowAbsenceAvg }}%</span> for those with regular attendance.
+                    </p>
+                    <div class="reports__insight-stat">
+                      <span class="reports__insight-label">Attendance Impact:</span>
+                      <span class="reports__insight-diff" :class="'reports__insight-diff--' + (correlationInsights.diff > 0 ? 'bad' : 'good')">
+                        {{ correlationInsights.diff > 0 ? '-' : '+' }}{{ Math.abs(correlationInsights.diff) }}% {{ correlationInsights.impactLevel }}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -381,6 +412,7 @@ import * as eventService       from '../db/eventService.js'
 import StudentProfile          from '../components/StudentProfile.vue'
 import StudentTrendGraph       from '../components/StudentTrendGraph.vue'
 import ClassSwitcher           from '../components/ClassSwitcher.vue'
+import { calculateClassGrades } from '../db/gradebookService.js'
 import { Bar } from 'vue-chartjs'
 import { 
   Chart as ChartJS, 
@@ -618,6 +650,65 @@ const aggregates = reactive({
   }
 })
 
+const classGrades = ref({})
+
+/** Class-wide correlation insights */
+const correlationInsights = computed(() => {
+  if (!classGrades.value || Object.keys(classGrades.value).length === 0) return null
+  
+  const studentIds = Object.keys(reportStudents.value)
+  if (studentIds.length === 0) return null
+
+  // Group 1: High Absences (>= 3)
+  const highAbsenceIds = studentIds.filter(id => {
+    const events = reportData.value.filter(e => e.studentId === id && e.code === 'a' && !e.superseded)
+    return events.length >= 3
+  })
+
+  // Group 2: Low/No Absences (< 3)
+  const lowAbsenceIds = studentIds.filter(id => !highAbsenceIds.includes(id))
+
+  const getAvg = (ids) => {
+    const grades = ids.map(id => classGrades.value[id]?.overallGrade).filter(g => g != null)
+    if (grades.length === 0) return null
+    return grades.reduce((a, b) => a + b, 0) / grades.length
+  }
+
+  const highAbsenceAvg = getAvg(highAbsenceIds)
+  const lowAbsenceAvg = getAvg(lowAbsenceIds)
+
+  if (highAbsenceAvg === null || lowAbsenceAvg === null) return null
+
+  const diff = lowAbsenceAvg - highAbsenceAvg
+  
+  return {
+    highAbsenceAvg: Math.round(highAbsenceAvg),
+    lowAbsenceAvg: Math.round(lowAbsenceAvg),
+    diff: Math.round(diff),
+    impactLevel: diff > 10 ? 'Significant' : diff > 5 ? 'Moderate' : 'Low'
+  }
+})
+
+/** Selected student correlation alert */
+const studentCorrelationAlert = computed(() => {
+  const sId = dossier.selectedStudentId.value
+  if (!sId || !classGrades.value[sId]) return null
+
+  const grade = classGrades.value[sId].overallGrade
+  const absences = dossier.stats.value.absences
+
+  if (grade !== null && grade < 70 && absences >= 3) {
+    return {
+      type: 'warning',
+      title: 'Coaching Insight: Attendance Correlation',
+      message: `Overall grade (${Math.round(grade)}%) correlates with high absences (${absences}).`,
+      recommendation: 'Recommend proactive parent contact or assessment conversation to identify gaps.'
+    }
+  }
+
+  return null
+})
+
 async function runReport() {
   if (!sidebarClassId.value) return
   loading.value = true
@@ -626,6 +717,10 @@ async function runReport() {
     const dr = { from }
     const events = await eventService.getEventsByClass(sidebarClassId.value, dr)
     reportData.value = events
+
+    // Fetch Academic Grades
+    const grades = await calculateClassGrades(reportClass.value)
+    classGrades.value = grades
 
     const studentsMap = reportStudents.value
     const studentCount = Object.keys(studentsMap).length
@@ -1715,5 +1810,99 @@ const washroomChartOptions = {
     box-shadow: none;
     border: 1px solid #eee;
   }
+}
+
+/* ── Correlation Alerts & Insights ───────────────────────────────────── */
+.reports__coaching-alert {
+  background: #fdf2f2;
+  border: 1px solid #fecaca;
+  border-radius: var(--radius-md);
+  padding: 16px;
+  margin-bottom: 24px;
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.reports__alert-icon {
+  color: #ef4444;
+  flex: 0 0 auto;
+  margin-top: 2px;
+}
+
+.reports__alert-title {
+  font-weight: 700;
+  color: #991b1b;
+  font-size: 0.95rem;
+  margin-bottom: 2px;
+}
+
+.reports__alert-message {
+  font-size: 0.9rem;
+  color: #b91c1c;
+  margin-bottom: 4px;
+}
+
+.reports__alert-recommendation {
+  font-size: 0.85rem;
+  color: #7f1d1d;
+  opacity: 0.9;
+}
+
+.reports__dashboard-card--insight {
+  border: 1px solid var(--primary-light);
+  background: linear-gradient(to bottom right, var(--surface), var(--bg-secondary));
+}
+
+.reports__insight-content {
+  padding: 16px;
+}
+
+.reports__insight-text {
+  font-size: 0.95rem;
+  line-height: 1.5;
+  margin-bottom: 16px;
+  color: var(--text);
+}
+
+.reports__insight-val {
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.reports__insight-stat {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-light);
+}
+
+.reports__insight-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.reports__insight-diff {
+  font-size: 0.9rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 20px;
+}
+
+.reports__insight-diff--bad {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+.reports__insight-diff--good {
+  background: #f0fdf4;
+  color: #16a34a;
+}
+
+.reports__insight-diff--low {
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
 }
 </style>

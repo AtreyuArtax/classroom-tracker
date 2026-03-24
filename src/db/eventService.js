@@ -245,21 +245,13 @@ export async function quickSyncBackup() {
 
     try {
         // Request write permission if we don't already have it
-        if ((await handle.queryPermission({ mode: 'readwrite' })) !== 'granted') {
+        if (handle.queryPermission && (await handle.queryPermission({ mode: 'readwrite' })) !== 'granted') {
             const permission = await handle.requestPermission({ mode: 'readwrite' })
             if (permission !== 'granted') return false
         }
 
         const data = await exportAllData()
         const json = JSON.stringify(data, null, 2)
-
-        // The provided code snippet for tie-breakers and schema version guards
-        // appears to be out of context for this function.
-        // It seems to belong to a different part of the application logic,
-        // possibly related to selecting between multiple backup candidates.
-        // As such, it cannot be directly inserted here without breaking
-        // the function's syntax and logic.
-        // No changes are applied to this section based on the provided snippet.
 
         const writable = await handle.createWritable()
         await writable.write(json)

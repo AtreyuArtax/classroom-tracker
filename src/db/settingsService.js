@@ -104,6 +104,7 @@ async function _readSettings() {
             deviceIncidentsPerWeek: 3
         },
         backupFileHandle: null,
+        gradebookMilestones: [],
     }
     await db.put('settings', defaults, SETTINGS_KEY)
     hasUnsyncedChanges.value = true
@@ -197,6 +198,30 @@ export async function saveThresholds(thresholdsObj) {
     const db = await getDB()
     const settings = await db.get('settings', 'singleton')
     settings.thresholds = thresholdsObj
+    await db.put('settings', settings, 'singleton')
+    hasUnsyncedChanges.value = true
+}
+
+/**
+ * Returns the global gradebook milestones.
+ *
+ * @returns {Promise<Array<Object>>}
+ */
+export async function getGlobalMilestones() {
+    const settings = await _readSettings()
+    return settings.gradebookMilestones || []
+}
+
+/**
+ * Saves the global gradebook milestones.
+ *
+ * @param {Array<Object>} milestones
+ * @returns {Promise<void>}
+ */
+export async function saveGlobalMilestones(milestones) {
+    const db = await getDB()
+    const settings = await db.get('settings', 'singleton')
+    settings.gradebookMilestones = milestones
     await db.put('settings', settings, 'singleton')
     hasUnsyncedChanges.value = true
 }
