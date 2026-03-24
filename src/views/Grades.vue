@@ -1108,7 +1108,7 @@
                     <p>Not enough data for trend</p>
                   </div>
                   <div v-else class="grades__graph-render">
-                    <GradeTrendChart :assessments="dossierTrendData" />
+                    <GradeTrendChart :assessments="dossierTrendData" :categories="activeClassRecord.gradebookCategories" />
                   </div>
                 </div>
               </div>
@@ -2359,22 +2359,40 @@ const studentCategoryBreakdown = computed(() => {
 const filteredStudentAssessments = computed(() => {
   if (!selectedStudentId.value || !assessments.value) return []
   
-  return sortedAssessments.value
+  const classAs = sortedAssessments.value.map(a => {
+    const g = gradeMap.value[a.assessmentId]?.[selectedStudentId.value]
+    return {
+      assessmentId: a.assessmentId,
+      name: a.name,
+      categoryId: a.categoryId,
+      type: a.assessmentType,
+      date: a.date,
+      totalPoints: a.totalPoints,
+      scaledTotal: a.scaledTotal,
+      resolvedScore: g?.resolvedScore ?? null,
+      missing: g?.missing,
+      excluded: g?.excluded,
+      attempts: g?.attempts?.length || 0
+    }
+  })
+
+  const individualAs = individualStudentAssessments.value.map(a => ({
+      assessmentId: a.assessmentId,
+      name: a.name,
+      categoryId: a.categoryId,
+      type: a.assessmentType,
+      date: a.date,
+      totalPoints: a.totalPoints,
+      scaledTotal: a.scaledTotal,
+      resolvedScore: a.resolvedScore ?? null,
+      missing: a.missing,
+      excluded: a.excluded,
+      attempts: a.attempts?.length || 0
+  }))
+
+  return [...classAs, ...individualAs]
     .filter(a => !filterCategory.value || a.categoryId === filterCategory.value)
-    .map(a => {
-      const g = gradeMap.value[a.assessmentId]?.[selectedStudentId.value]
-      return {
-        assessmentId: a.assessmentId,
-        name: a.name,
-        type: a.assessmentType,
-        date: a.date,
-        totalPoints: a.totalPoints,
-        resolvedScore: g?.resolvedScore ?? null,
-        missing: g?.missing,
-        excluded: g?.excluded,
-        attempts: g?.attempts?.length || 0
-      }
-    })
+    .sort((a, b) => new Date(a.date) - new Date(b.date))
 })
 
 const dossierTrendData = computed(() => {
@@ -2976,12 +2994,12 @@ watch(selectedAssessmentId, (val) => {
 
 /* ── Sidebar ────────────────────────────────────────────────────────── */
 .grades__sidebar {
-  width: 280px;
+  width: 210px;
   background: var(--surface);
   border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow: visible;
   transition: all 0.3s ease;
 }
 

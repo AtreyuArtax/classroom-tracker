@@ -162,7 +162,7 @@ async function acceptSuggestion() {
   font-size:   0.9rem;
   font-weight: 500;
   color:       var(--text);
-  max-width:   180px;
+  max-width:   150px;
   overflow:    hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
