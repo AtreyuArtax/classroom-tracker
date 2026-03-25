@@ -37,185 +37,13 @@
         <!-- Loading -->
         <div v-if="dossier.loading.value" class="reports__loading" aria-live="polite">Loading…</div>
 
-        <!-- ── STUDENT DOSSIER ──────────────────────────────────────── -->
+        <!-- ── NEW UNIFIED STUDENT 360 DOSSIER ────────────────────────── -->
         <template v-else-if="rightMode === 'dossier' && dossier.selectedStudentId.value">
-
-          <!-- Header + back + period toggle -->
-          <div class="reports__dossier-header">
-            <button v-if="from === 'Grades'" class="reports__btn-back" @click="$emit('navigate', 'Grades', { classId: sidebarClassId, studentId: props.studentId })">
-              <ChevronLeft :size="16" /> Back to Gradebook
-            </button>
-            <button v-else class="reports__btn-back" @click="showOverview">
-              <ChevronLeft :size="16" /> Class Overview
-            </button>
-            <h2 class="reports__dossier-name">{{ dossierStudentName }}</h2>
-            <div class="reports__period-row" role="group" aria-label="Time period">
-              <button
-                v-for="p in PERIODS"
-                :key="p.value"
-                class="reports__period-btn"
-                :class="{ 'reports__period-btn--active': dossier.selectedPeriod.value === p.value }"
-                @click="dossier.selectedPeriod.value = p.value"
-              >{{ p.label }}</button>
-            </div>
-          </div>
-
-          <!-- Coaching Alert (Step 1a) -->
-          <div v-if="studentCorrelationAlert" class="reports__coaching-alert">
-            <div class="reports__alert-icon">
-              <Activity :size="20" />
-            </div>
-            <div class="reports__alert-body">
-              <div class="reports__alert-title">{{ studentCorrelationAlert.title }}</div>
-              <div class="reports__alert-message">{{ studentCorrelationAlert.message }}</div>
-              <div class="reports__alert-recommendation">{{ studentCorrelationAlert.recommendation }}</div>
-            </div>
-          </div>
-
-          <!-- Trend Graph -->
-          <StudentTrendGraph
-            :weekly-trend="dossier.weeklyTrend.value"
-            :categories="dossier.trendCategories.value"
-            :period="dossier.selectedPeriod.value"
+          <Student360 
+            :student-id="dossier.selectedStudentId.value" 
+            :class-id="sidebarClassId"
+            @close="showOverview"
           />
-
-          <!-- Existing StudentProfile component -->
-          <div class="reports__card">
-            <StudentProfile
-              v-if="dossier.student.value"
-              :events="dossier.events.value"
-              :behavior-codes="behaviorCodesMap"
-              :student-name="dossierStudentName"
-              :selected-period="dossier.selectedPeriod.value"
-              @delete-event="onDossierDelete"
-              @edit-event="editEvent"
-            />
-            
-            <!-- NEW Log Past Absence panel -->
-            <div v-if="dossier.student.value" class="reports__past-absence">
-              <button 
-                v-if="!showPastAbsencePanel" 
-                class="reports__btn-past-absence"
-                @click="openPastAbsencePanel"
-              >
-                <PlusCircle :size="13" class="reports__inline-icon" /> Log Past Absence
-              </button>
-              
-              <div v-else class="reports__past-absence-panel">
-                <input 
-                  type="date" 
-                  v-model="pastAbsenceDate" 
-                  :max="pastAbsenceMaxDate" 
-                  class="reports__input reports__input--small" 
-                />
-                <button class="reports__btn-primary--small" @click="submitPastAbsence">Log Absence</button>
-                <button class="reports__btn-ghost--small" @click="closePastAbsencePanel">Cancel</button>
-                <div class="reports__past-absence-testday">
-                  <input type="checkbox" id="pastAbsenceTestDay" v-model="pastAbsenceTestDay" />
-                  <label for="pastAbsenceTestDay">Test day?</label>
-                </div>
-                <span v-if="pastAbsenceError" class="reports__past-absence-error">{{ pastAbsenceError }}</span>
-              </div>
-            </div>
-          </div>
-
-            <!-- Assessment Conversations -->
-          <div v-if="dossier.assessmentEvents.value.length > 0" class="reports__card">
-            <h3 class="reports__card-title">
-              <GraduationCap :size="18" class="reports__inline-icon" /> Assessment Conversations
-            </h3>
-            <div class="reports__assessment-summary">
-              {{ dossier.stats.value.assessmentConversations }} conversation{{ dossier.stats.value.assessmentConversations !== 1 ? 's' : '' }}
-              <template v-if="dossier.stats.value.demonstratesUnderstanding > 0">
-                · <span class="reports__count-success">{{ dossier.stats.value.demonstratesUnderstanding }} demonstrates understanding</span>
-              </template>
-              <template v-if="dossier.stats.value.gapConfirmed > 0">
-                · <span class="reports__count-danger">{{ dossier.stats.value.gapConfirmed }} gap confirmed</span>
-              </template>
-            </div>
-
-            <div class="reports__ac-list">
-              <div v-for="evt in dossier.assessmentEvents.value" :key="evt.eventId" class="reports__ac-item">
-                <div class="reports__ac-header">
-                  <span class="reports__ac-date">{{ formatTimestamp(evt.timestamp).split(',').slice(0, 2).join(',') }}</span>
-                  <button class="reports__note-delete" @click="onDossierDelete(evt.eventId)">
-                    <Trash2 :size="14" />
-                  </button>
-                </div>
-                <div class="reports__ac-badges">
-                  <!-- Context Badge -->
-                  <span 
-                    v-if="evt.acContext" 
-                    class="reports__ac-badge"
-                    :style="{ background: evt.acContext === 'after_assessment' ? '#5856d6' : '#007aff' }"
-                  >
-                    {{ evt.acContext === 'after_assessment' ? 'After Assessment' : 'Proactive' }}
-                  </span>
-                  <!-- Outcome Badge -->
-                  <span 
-                    v-if="evt.acOutcome" 
-                    class="reports__ac-badge"
-                    :style="{ background: 
-                      evt.acOutcome === 'demonstrates_understanding' ? '#34c759' : 
-                      evt.acOutcome === 'gap_confirmed' ? '#ff3b30' : '#ff9500' 
-                    }"
-                  >
-                    {{ 
-                      evt.acOutcome === 'demonstrates_understanding' ? 'Demonstrates Understanding' : 
-                      evt.acOutcome === 'gap_confirmed' ? 'Gap Confirmed' : 'Inconclusive' 
-                    }}
-                  </span>
-                </div>
-                <p class="reports__ac-note">{{ evt.note }}</p>
-              </div>
-            </div>
-          </div>
-
-          <!-- Notes & Parent Contact feed -->
-          <div class="reports__card">
-            <h3 class="reports__card-title">Notes &amp; Parent Contact</h3>
-            <div v-if="dossier.noteEvents.value.length === 0" class="reports__no-data">
-              No notes or parent contacts recorded in this period.
-            </div>
-            <ul v-else class="reports__note-feed">
-              <li v-for="evt in dossier.noteEvents.value" :key="evt.eventId" class="reports__note-item">
-                <div class="reports__note-meta">
-                  <span class="reports__note-time">{{ formatTimestamp(evt.timestamp) }}</span>
-                  <div class="reports__note-source">
-                    <span v-if="parseNote(evt.note).tag" class="reports__note-tag">
-                      {{ parseNote(evt.note).tag }}
-                    </span>
-                    <span class="reports__note-code">
-                      <component 
-                        :is="resolveIcon(behaviorCodesMap[evt.code]?.icon)" 
-                        :size="14" 
-                        v-if="behaviorCodesMap[evt.code]" 
-                        class="reports__inline-icon"
-                      />
-                      <template v-if="evt.code === 'pc'"> Parent Contact</template>
-                    </span>
-                  </div>
-                  <button 
-                    class="reports__note-delete" 
-                    title="Delete note" 
-                    @click="onDossierDelete(evt.eventId)"
-                  >
-                    <Trash2 :size="14" />
-                  </button>
-                </div>
-                <p class="reports__note-text">{{ parseNote(evt.note).text }}</p>
-              </li>
-            </ul>
-          </div>
-
-          <!-- General Note (read-only) -->
-          <div class="reports__card">
-            <h3 class="reports__card-title">General Notes</h3>
-            <p class="reports__general-note">
-              {{ dossier.student.value?.generalNote?.trim() || 'No general notes recorded.' }}
-            </p>
-          </div>
-
         </template>
 
         <!-- ── CLASS OVERVIEW ────────────────────────────────────────── -->
@@ -409,7 +237,7 @@ import { useClassroom }        from '../composables/useClassroom.js'
 import { useStudentDossier }   from '../composables/useStudentDossier.js'
 import { useUndo }             from '../composables/useUndo.js'
 import * as eventService       from '../db/eventService.js'
-import StudentProfile          from '../components/StudentProfile.vue'
+import Student360            from '../components/dossier/Student360.vue'
 import StudentTrendGraph       from '../components/StudentTrendGraph.vue'
 import ClassSwitcher           from '../components/ClassSwitcher.vue'
 import { calculateClassGrades } from '../db/gradebookService.js'

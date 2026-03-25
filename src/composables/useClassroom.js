@@ -608,6 +608,35 @@ async function logAttendanceEvent(studentId, code) {
     }
 }
 
+/**
+ * Helper for Student 360 "Red A" badges.
+ * Checks if a student was absent or late on a specific date.
+ *
+ * @param {string} studentId
+ * @param {string|Date} date  The date to check (YYYY-MM-DD or Date object)
+ * @returns {Promise<{ isAbsent: boolean, isLate: boolean, lateMinutes: number|null }>}
+ */
+async function getAttendanceOnDate(studentId, date) {
+    const dayStr = (typeof date === 'string') ? date.slice(0, 10) : date.toISOString().slice(0, 10)
+    const events = await eventService.getEventsByStudent(studentId, { from: dayStr, to: dayStr })
+    
+    const absent = events.find(e => e.code === 'a' && !e.superseded)
+    const late   = events.find(e => e.code === 'l')
+
+    return {
+        isAbsent:    !!absent,
+        isLate:      !!late,
+        lateMinutes: late ? late.duration : null
+    }
+}
+
+/**
+ * Returns all behavior and attendance events for a student.
+ */
+async function getStudentEventHistory(studentId) {
+    return await eventService.getEventsByStudent(studentId)
+}
+
 async function syncLateActiveState(classId, studentId, oldDuration, newDuration, eventTimestamp) {
     const cls = await classService.getClass(classId)
     const st = cls?.students[studentId]
@@ -958,6 +987,8 @@ export function useClassroom() {
         logStandardEvent,
         logToggleEvent,
         logAssessmentEvent,
+        getAttendanceOnDate,
+        getStudentEventHistory,
         checkResize,
         confirmResize,
         reloadBehaviorCodes,

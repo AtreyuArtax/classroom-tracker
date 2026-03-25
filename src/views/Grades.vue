@@ -34,7 +34,7 @@
               :key="student.studentId"
               class="grades__roster-item"
               :class="{ 'grades__roster-item--active': selectedStudentId === student.studentId }"
-              @click="selectedStudentId = student.studentId"
+              @click="showStudentDossier(student.studentId)"
             >
                 <div class="grades__roster-info">
                   <div class="grades__roster-name-group">
@@ -238,7 +238,12 @@
                     <tr v-for="s in sortedRoster" :key="s.studentId" class="grades__atr-student">
                       <td class="grades__atd-student">
                         <div class="grades__row-indicator"></div>
-                        <span class="grades__student-name-text">{{ s.lastName }}, {{ s.firstName }}</span>
+                        <span 
+                          class="grades__student-link" 
+                          @click="showStudentDossier(s.studentId)"
+                        >
+                          {{ s.lastName }}, {{ s.firstName }}
+                        </span>
                       </td>
                       <td class="grades__atd-score">
                         <div v-if="newAttemptForm?.studentId === s.studentId" class="grades__new-attempt-inline">
@@ -348,7 +353,7 @@
             </div>
 
             <div class="grades__toolbar-center">
-              <button v-if="!analyticsMode" class="grades__btn-add" @click="showAddModal = true">
+              <button v-if="!analyticsMode" class="grades__btn-add" @click="openAddAssessment('class')">
                 <Plus :size="16" /> Add Assessment
               </button>
               
@@ -711,7 +716,7 @@
               
               <tbody>
                 <tr v-for="student in sortedRoster" :key="student.studentId">
-                  <td class="grades__td-student" @click="selectedStudentId = student.studentId">
+                  <td class="grades__td-student" @click="showStudentDossier(student.studentId)">
                     <div class="grades__student-name-group">
                       <span class="grades__student-link">{{ student.lastName }}, {{ student.firstName }}</span>
                       <div class="grades__sparkline-mini" v-if="studentTrends[student.studentId]?.length > 1 && !isPrivacyMode">
@@ -784,482 +789,12 @@
           </div> <!-- End grid-wrapper -->
         </div> <!-- End grid-container -->
 
-        <!-- Student Dossier (Step 1-8) -->
         <div v-else class="grades__student-view">
-          <div class="grades__view-header">
-            <div class="grades__header-left">
-              <button 
-                v-if="isSidebarCollapsed" 
-                class="grades__expand-btn"
-                title="Show Sidebar"
-                @click="isSidebarCollapsed = false"
-              >
-                <ChevronRight :size="16" />
-              </button>
-              <button class="grades__back-btn" @click="selectedStudentId = null">
-                <ArrowLeft :size="16" /> Back to Class Grid
-              </button>
-            </div>
-            <div class="grades__student-header">
-              <div class="grades__student-title-block">
-                <div class="grades__student-name-row">
-                  <h2 class="grades__view-title">{{ selectedStudentName }}</h2>
-                  <div v-if="studentOverallGrade !== null" 
-                       class="grades__overall-summary-badge" 
-                       :style="{ background: getHeatColor(studentOverallGrade) }">
-                    <span class="grades__summary-badge-label">Official Grade</span>
-                    <span class="grades__summary-badge-value">{{ formatGrade(studentOverallGrade) }}</span>
-                  </div>
-                </div>
-                <div class="grades__view-subtitle">
-                  {{ activeClassRecord?.name }} · Period {{ activeClassRecord?.periodNumber }}
-                </div>
-                
-                <div class="grades__stats-summary">
-                  <div class="grades__stat-item">
-                    <span class="grades__stat-label">
-                      Most Consistent:
-                      <span class="grades__info-icon" title="Calculated using bucket mode per category, then weighted. Ignores outliers to show your most frequent level of performance.">ⓘ</span>
-                    </span>
-                    <template v-if="classGrades[selectedStudentId]?.mostConsistent">
-                      <span class="grades__stat-badge" :style="{ background: getHeatColor(classGrades[selectedStudentId].mostConsistent.percentage) }">
-                        {{ formatGrade(classGrades[selectedStudentId].mostConsistent.percentage) }}
-                      </span>
-                      <span v-if="classGrades[selectedStudentId].mostConsistent.isFallback" class="grades__stat-hint">
-                        (per-category median — insufficient data for bucket mode)
-                      </span>
-                    </template>
-                    <span v-else class="grades__stat-empty">Not enough data</span>
-                  </div>
-
-                  <div class="grades__stat-item">
-                    <span class="grades__stat-label">
-                      Weighted Median:
-                      <span class="grades__info-icon" title="Calculated as a weighted average of the median score from each category. More stable than the raw average for reflecting typical performance.">ⓘ</span>
-                    </span>
-                    <template v-if="classGrades[selectedStudentId]?.median !== null">
-                      <span class="grades__stat-badge" :style="{ background: getHeatColor(classGrades[selectedStudentId].median) }">
-                        {{ formatGrade(classGrades[selectedStudentId].median) }}
-                      </span>
-                    </template>
-                    <span v-else class="grades__stat-empty">Not enough data</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="grades__student-content">
-            <!-- Coaching Alerts (Correlation) -->
-            <div v-if="studentCorrelationAlert" class="grades__coaching-alert">
-              <div class="grades__alert-icon">
-                <AlertTriangle :size="24" />
-              </div>
-              <div class="grades__alert-content">
-                <div class="grades__alert-message">{{ studentCorrelationAlert.title }}</div>
-                <div class="grades__alert-text">{{ studentCorrelationAlert.message }}</div>
-                <div class="grades__alert-recommendation">{{ studentCorrelationAlert.recommendation }}</div>
-              </div>
-            </div>
-
-            <!-- Category Cards -->
-            <div class="grades__category-cards">
-              <div 
-                v-for="cat in studentCategoryBreakdown" 
-                :key="cat.categoryId" 
-                class="grades__stat-card"
-                :class="{ 'grades__stat-card--active': filterCategory === cat.categoryId }"
-                :style="{ borderLeft: `4px solid ${getHeatColor(cat.percent)}` }"
-                @click="filterCategory = (filterCategory === cat.categoryId ? null : cat.categoryId)"
-              >
-                <div class="grades__card-label">{{ cat.name }}</div>
-                <div class="grades__card-metrics">
-                  <div class="grades__card-metric-row">
-                    <span class="grades__card-metric-label">Official:</span>
-                    <span class="grades__card-metric-value">{{ formatGrade(cat.percent) }}</span>
-                  </div>
-                  <div class="grades__card-metric-row">
-                    <span class="grades__card-metric-label">Consistent:</span>
-                    <span v-if="cat.consistent !== null" class="grades__card-metric-value">
-                      {{ Math.round(cat.consistent) }}%
-                      <span v-if="!cat.consistentIsFallback" class="grades__card-hint">
-                        ({{ cat.consistentLabel }}, {{ cat.consistentCount }} of {{ cat.consistentTotalCount }})
-                      </span>
-                    </span>
-                    <span v-else class="grades__card-metric-value">—</span>
-                  </div>
-                </div>
-                <div v-if="cat.overridden" class="grades__override-badge" title="Manual Override">Override</div>
-              </div>
-            </div>
-
-            <!-- Evidence Balance (Step 4) -->
-            <div v-if="studentEvidenceBalance" class="grades__section">
-              <h3 class="grades__section-title">Evidence Balance</h3>
-              <div class="grades__evidence-stacked">
-                <div class="grades__stacked-bar">
-                  <div 
-                    class="grades__stacked-segment grades__stacked-segment--product" 
-                    :style="{ width: studentEvidenceBalance.product + '%' }" 
-                    title="Product"
-                  ></div>
-                  <div 
-                    class="grades__stacked-segment grades__stacked-segment--observation" 
-                    :style="{ width: studentEvidenceBalance.observation + '%' }" 
-                    title="Observation"
-                  ></div>
-                  <div 
-                    class="grades__stacked-segment grades__stacked-segment--conversation" 
-                    :style="{ width: studentEvidenceBalance.conversation + '%' }" 
-                    title="Conversation"
-                  ></div>
-                </div>
-                <div class="grades__stacked-legend">
-                  <div class="grades__legend-item">
-                    <span class="grades__legend-dot grades__legend-dot--product"></span>
-                    <span class="grades__legend-label">Product</span>
-                    <span class="grades__legend-pct">{{ studentEvidenceBalance.product }}%</span>
-                  </div>
-                  <div class="grades__legend-item">
-                    <span class="grades__legend-dot grades__legend-dot--observation"></span>
-                    <span class="grades__legend-label">Observation</span>
-                    <span class="grades__legend-pct">{{ studentEvidenceBalance.observation }}%</span>
-                  </div>
-                  <div class="grades__legend-item">
-                    <span class="grades__legend-dot grades__legend-dot--conversation"></span>
-                    <span class="grades__legend-label">Conversation</span>
-                    <span class="grades__legend-pct">{{ studentEvidenceBalance.conversation }}%</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Assessment List (Step 3) -->
-            <div class="grades__section">
-              <div class="grades__section-header">
-                <h3 class="grades__section-title">Assessments</h3>
-                <div v-if="filterCategory" class="grades__filter-tag">
-                  Showing {{ studentCategoryBreakdown.find(c => c.categoryId === filterCategory)?.name }}
-                  <button @click="filterCategory = null"><X :size="12" /></button>
-                </div>
-              </div>
-              <div class="grades__table-wrapper">
-                <table class="grades__dossier-table">
-                  <thead>
-                    <tr>
-                      <th>Assessment</th>
-                      <th>Type</th>
-                      <th>Date</th>
-                      <th>Score</th>
-                      <th>%</th>
-                      <th></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr 
-                      v-for="row in filteredStudentAssessments" 
-                      :key="row.assessmentId"
-                      :class="{ 'grades__row--dimmed': isPostMilestone(row.date) }"
-                    >
-                      <td>{{ row.name }}</td>
-                      <td><span class="grades__badge">{{ row.type }}</span></td>
-                      <td>{{ formatDateShort(row.date) }}</td>
-                      <td 
-                        class="grades__td-assessment"
-                        :style="getCellStyle(selectedStudentId, row.assessmentId, row.totalPoints)"
-                        @click="startEdit(selectedStudentId, row.assessmentId)"
-                        @contextmenu.prevent="onContextMenu($event, selectedStudentId, row.assessmentId)"
-                      >
-                        <!-- Inline Editor -->
-                        <div v-if="editingCell?.sId === selectedStudentId && editingCell?.aId === row.assessmentId" class="grades__cell-edit">
-                          <input 
-                            ref="editInput"
-                            v-model.number="editingCell.value"
-                            type="number"
-                            min="0"
-                            :max="row.totalPoints"
-                            class="grades__input-inline"
-                            @blur="saveEdit"
-                            @keydown.enter.prevent="onEnterKey"
-                            @keydown.tab.prevent="onEnterKey"
-                            @keydown.up.prevent="onArrowKey('up')"
-                            @keydown.down.prevent="onArrowKey('down')"
-                            @keydown.esc.prevent="cancelEdit"
-                          />
-                        </div>
-
-                        <div v-else-if="gradeMap[row.assessmentId]?.[selectedStudentId]" class="grades__cell-content">
-                          <span v-if="row.missing" class="grades__cell-missing">M</span>
-                          <span v-else-if="row.excluded" class="grades__cell-excluded">EX</span>
-                          <span v-else-if="row.resolvedScore !== null">{{ Math.round(row.resolvedScore * 10) / 10 }} / {{ row.totalPoints }}</span>
-                          <span v-else class="grades__cell-placeholder">—</span>
-                        </div>
-                        <div v-else class="grades__cell-placeholder">—</div>
-                      </td>
-                      <td>
-                        <span v-if="row.resolvedScore !== null">{{ Math.round((row.resolvedScore / row.totalPoints) * 100) }}%</span>
-                      </td>
-                      <td>
-                        <button 
-                          v-if="row.attempts > 1" 
-                          class="grades__dot-indicator" 
-                          @click="openAttempts($event, selectedStudentId, row.assessmentId)"
-                        >•</button>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            <!-- Individual Assessments (Step 5) -->
-            <div class="grades__section">
-              <div class="grades__section-header">
-                <h3 class="grades__section-title">
-                  <UserCheck :size="16" /> Individual Assessments
-                </h3>
-                <button 
-                  class="grades__btn-icon-sm" 
-                  title="Add Individual Assessment"
-                  @click="openAddIndividualAssessment"
-                >
-                  <Plus :size="14" />
-                </button>
-              </div>
-              
-              <div v-if="individualStudentAssessments.length" class="grades__table-wrapper">
-                <table class="grades__dossier-table">
-                  <thead>
-                    <tr>
-                      <th>Assessment</th>
-                      <th>Type</th>
-                      <th>Date</th>
-                      <th>Score</th>
-                      <th>%</th>
-                      <th></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr v-for="row in individualStudentAssessments" :key="row.assessmentId">
-                      <td>{{ row.name }}</td>
-                      <td><span class="grades__badge">{{ row.assessmentType }}</span></td>
-                      <td>{{ formatDateShort(row.date) }}</td>
-                      <td 
-                        class="grades__td-assessment"
-                        :style="getCellStyle(selectedStudentId, row.assessmentId, row.totalPoints)"
-                        @click="startEdit(selectedStudentId, row.assessmentId)"
-                        @contextmenu.prevent="onContextMenu($event, selectedStudentId, row.assessmentId)"
-                      >
-                        <!-- Inline Editor -->
-                        <div v-if="editingCell?.sId === selectedStudentId && editingCell?.aId === row.assessmentId" class="grades__cell-edit">
-                          <input 
-                            ref="editInput"
-                            v-model.number="editingCell.value"
-                            type="number"
-                            min="0"
-                            :max="row.totalPoints"
-                            class="grades__input-inline"
-                            @blur="saveEdit"
-                            @keydown.enter.prevent="onEnterKey"
-                            @keydown.tab.prevent="onEnterKey"
-                            @keydown.up.prevent="onArrowKey('up')"
-                            @keydown.down.prevent="onArrowKey('down')"
-                            @keydown.esc.prevent="cancelEdit"
-                          />
-                        </div>
-
-                        <div v-else-if="gradeMap[row.assessmentId]?.[selectedStudentId]" class="grades__cell-content">
-                          <span v-if="row.missing" class="grades__cell-missing">M</span>
-                          <span v-else-if="row.excluded" class="grades__cell-excluded">EX</span>
-                          <span v-else-if="row.resolvedScore !== null">{{ Math.round(row.resolvedScore * 10) / 10 }} / {{ row.totalPoints }}</span>
-                          <span v-else class="grades__cell-placeholder">—</span>
-                        </div>
-                        <div v-else class="grades__cell-placeholder">—</div>
-                      </td>
-                      <td>
-                        <span v-if="row.resolvedScore !== null">{{ Math.round((row.resolvedScore / row.totalPoints) * 100) }}%</span>
-                      </td>
-                      <td>
-                        <button 
-                          v-if="row.attempts > 1" 
-                          class="grades__dot-indicator" 
-                          @click="openAttempts($event, selectedStudentId, row.assessmentId)"
-                        >•</button>
-                        <button class="grades__icon-btn" @click="onEditAssessment(row)">
-                          <Pencil :size="14" />
-                        </button>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-              <div v-else class="grades__empty-state">
-                No individual assessments for this student.
-              </div>
-            </div>
-
-            <div class="grades__dossier-grid">
-              <!-- Trend Graph (Step 4) -->
-              <div class="grades__section grades__section--graph">
-                <h3 class="grades__section-title">Grade Trend</h3>
-                <div class="grades__graph-container">
-                  <div v-if="dossierTrendData.length < 3" class="grades__graph-placeholder">
-                    <BarChart2 :size="32" />
-                    <p>Not enough data for trend</p>
-                  </div>
-                  <div v-else class="grades__graph-render">
-                    <GradeTrendChart :assessments="dossierTrendData" :categories="activeClassRecord.gradebookCategories" />
-                  </div>
-                </div>
-              </div>
-
-              <div class="grades__side-stats">
-                <!-- Demographics & Contacts -->
-                <div class="grades__section">
-                  <div class="grades__section-header">
-                    <h3 class="grades__section-title">Demographics & Contacts</h3>
-                    <button class="grades__icon-btn" title="Edit Contact Info" @click="startEditDemographics">
-                      <Pencil :size="14" />
-                    </button>
-                  </div>
-                  
-                  <div v-if="isEditingDemographics" class="grades__contacts-edit">
-                    <div class="grades__contact-edit-row">
-                      <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-secondary)">Student Email:</label>
-                      <input v-model="editableDemographics.studentEmail" placeholder="Student Email" class="grades__input-ghost" style="width: 100%; border-bottom: 1px solid var(--border-color); margin-bottom: 0.5rem" />
-                    </div>
-                    <div class="grades__contact-edit-row">
-                      <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-secondary)">Living With:</label>
-                      <input v-model="editableDemographics.livingWith" placeholder="e.g. Both Parents" class="grades__input-ghost" style="width: 100%; border-bottom: 1px solid var(--border-color); margin-bottom: 0.5rem" />
-                    </div>
-                    <div class="grades__contact-edit-row">
-                      <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-secondary)">Custody:</label>
-                      <input v-model="editableDemographics.custody" placeholder="e.g. Joint, Mother" class="grades__input-ghost" style="width: 100%; border-bottom: 1px solid var(--border-color); margin-bottom: 0.5rem" />
-                    </div>
-                    <div class="grades__contact-edit-row">
-                      <label style="font-size: 0.8rem; font-weight: 600; color: var(--text-secondary)">Date of Birth:</label>
-                      <input v-model="editableDemographics.birthDate" placeholder="YYYY-MM-DD or MM/DD/YYYY" class="grades__input-ghost" style="width: 100%; border-bottom: 1px solid var(--border-color); margin-bottom: 1rem" />
-                    </div>
-                    
-                    <strong style="font-size: 0.8rem; font-weight: 600; color: var(--text-secondary)">Parents / Guardians</strong>
-                    <div v-for="(contact, index) in editableDemographics.parentContacts" :key="index" class="grades__contact-edit-row" style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem; margin-top: 0.25rem;">
-                      <input v-model="contact.name" placeholder="Name" class="grades__input-ghost" style="flex: 1; border-bottom: 1px solid var(--border-color); min-width: 100px" />
-                      <input v-model="contact.email" placeholder="Email" class="grades__input-ghost" style="flex: 1; border-bottom: 1px solid var(--border-color); min-width: 120px" />
-                      <input v-model="contact.phone" placeholder="Phone" class="grades__input-ghost" style="flex: 1; border-bottom: 1px solid var(--border-color); min-width: 100px" />
-                      <button class="grades__icon-btn" style="flex: 0 0 auto;" @click="editableDemographics.parentContacts.splice(index, 1)"><X :size="14"/></button>
-                    </div>
-                    <div class="grades__inline-actions" style="margin-top: 0.5rem">
-                      <button class="grades__btn-ghost" @click="editableDemographics.parentContacts.push({name:'', email:'', phone:''})"><Plus :size="14"/> Add Parent</button>
-                      <button class="grades__btn-primary" style="padding: 0.25rem 0.6rem" @click="saveDemographics">Save</button>
-                      <button class="grades__btn-ghost" style="padding: 0.25rem 0.6rem" @click="isEditingDemographics = false">Cancel</button>
-                    </div>
-                  </div>
-                  <div v-else class="grades__contacts-view">
-                    <div class="grades__demographics-summary" style="margin-bottom: 0.75rem; font-size: 0.85rem">
-                        <div v-if="activeClassRecord.students[selectedStudentId]?.birthDate" style="margin-bottom: 0.25rem;">
-                            <strong>Age:</strong>&nbsp;
-                            <span v-if="computeAge(activeClassRecord.students[selectedStudentId].birthDate) >= 18" style="color: #d9534f; font-weight: 600;">
-                                {{ computeAge(activeClassRecord.students[selectedStudentId].birthDate) }}
-                                <UserCheck :size="14" style="vertical-align: middle; margin-top: -2px; margin-left: 2px;" />
-                            </span>
-                            <span v-else>
-                                {{ computeAge(activeClassRecord.students[selectedStudentId].birthDate) }}
-                            </span>
-                            <br>
-                            <span style="color: var(--text-secondary); font-size: 0.75rem">DOB: {{ activeClassRecord.students[selectedStudentId].birthDate }}</span>
-                        </div>
-                        <div v-if="activeClassRecord.students[selectedStudentId]?.studentEmail">
-                            <strong>Student Email:</strong> <a :href="'mailto:' + activeClassRecord.students[selectedStudentId].studentEmail" class="grades__student-link" style="color: var(--primary-color)">{{ activeClassRecord.students[selectedStudentId].studentEmail }}</a>
-                        </div>
-                        <div v-if="activeClassRecord.students[selectedStudentId]?.livingWith">
-                            <strong>Living With:</strong> {{ activeClassRecord.students[selectedStudentId].livingWith }}
-                        </div>
-                        <div v-if="activeClassRecord.students[selectedStudentId]?.custody">
-                            <strong>Custody:</strong> {{ activeClassRecord.students[selectedStudentId].custody }}
-                        </div>
-                    </div>
-                    
-                    <div v-if="!activeClassRecord?.students[selectedStudentId]?.parentContacts?.length">
-                      <span class="grades__stat-empty">No parent contacts on file</span>
-                    </div>
-                    <div v-else class="grades__contacts-list">
-                      <div v-for="(contact, index) in activeClassRecord.students[selectedStudentId].parentContacts" :key="index" class="grades__contact-item" style="display: flex; flex-direction: column; margin-bottom: 0.5rem; font-size: 0.85rem; border-left: 2px solid var(--border-color); padding-left: 0.5rem">
-                        <span class="grades__contact-name" style="font-weight: 600">{{ contact.name || 'Unknown' }}</span>
-                        <a v-if="contact.email" :href="'mailto:' + contact.email" class="grades__student-link" style="color: var(--primary-color)">{{ contact.email }}</a>
-                        <span v-if="contact.phone">{{ contact.phone }}</span>
-                      </div>
-                      <button class="grades__btn-primary" style="display: flex; gap: 0.5rem; justify-content: center; margin-top: 0.75rem; width: 100%" @click="openEmailModal">
-                        <Activity :size="16" /> Email Progress Report
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Attendance Summary (Step 6) -->
-                <div class="grades__section">
-                  <h3 class="grades__section-title">Attendance Summary</h3>
-                  <div class="grades__attendance-summary" @click="$emit('navigate', 'Reports', { studentId: selectedStudentId, classId: activeClassRecord.classId, from: 'Grades' })">
-                    <div class="grades__stat-row">
-                      <span>Absences:</span>
-                      <span class="grades__stat-val">{{ studentAttendance.absences }}</span>
-                    </div>
-                    <div class="grades__stat-row">
-                      <span>Lates:</span>
-                      <span class="grades__stat-val">{{ studentAttendance.lates }}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Overrides (Step 7) -->
-                <details class="grades__overrides-disclosure">
-                  <summary>Manage Overrides</summary>
-                  <div class="grades__overrides-content">
-                    <div v-for="cat in activeClassRecord.gradebookCategories" :key="cat.categoryId" class="grades__override-row">
-                      <span class="grades__override-name">{{ cat.name }}</span>
-                      <div class="grades__override-inputs">
-                        <input 
-                          type="number" 
-                          placeholder="%" 
-                          class="grades__input-inline"
-                          :value="getOverride(cat.categoryId)"
-                          @blur="e => saveOverride(cat.categoryId, e.target.valueAsNumber)"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </details>
-              </div>
-            </div>
-
-            <!-- Conversations (Step 5) -->
-            <div v-if="acEvents.length" class="grades__section">
-              <h3 class="grades__section-title">
-                <GraduationCap :size="16" /> Assessment Conversations
-              </h3>
-              <div class="grades__events-list">
-                <div v-for="evt in acEvents" :key="evt.eventId" class="grades__event-card">
-                   <div class="grades__event-header">
-                     <span class="grades__event-date">{{ formatDateShort(evt.timestamp) }}</span>
-                     <button class="grades__icon-btn grades__icon-btn--danger" @click="onDeleteEvent(evt.eventId)">
-                       <Trash2 :size="14" />
-                     </button>
-                   </div>
-                   <div class="grades__event-note">{{ evt.note }}</div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Notes (Step 8) -->
-            <div class="grades__section">
-              <h3 class="grades__section-title">Gradebook Notes</h3>
-              <textarea 
-                class="grades__notes-area"
-                placeholder="Notes about this student's grades, accommodations, or grading decisions..."
-                :value="activeClassRecord.students[selectedStudentId]?.gradebookNote || ''"
-                @blur="e => saveGradebookNote(e.target.value)"
-              ></textarea>
-            </div>
-          </div>
+          <Student360 
+            :student-id="selectedStudentId" 
+            :class-id="activeClass?.classId"
+            @close="selectedStudentId = null"
+          />
         </div>
 
         <!-- Shared Popovers & Context Menus -->
@@ -1397,12 +932,11 @@
           </div>
         </div>
 
-        <!-- Add Assessment Modal -->
-        <div v-if="showAddModal" class="grades__modal-backdrop">
+        <div v-if="showAddAssessmentModal" class="grades__modal-backdrop">
           <div class="grades__modal" role="dialog" aria-modal="true">
             <header class="grades__modal-header">
               <h3 class="grades__modal-title">{{ isEditingAssessment ? 'Edit Assessment' : 'New Assessment' }}</h3>
-              <button class="grades__icon-btn" @click="showAddModal = false"><X :size="20" /></button>
+              <button class="grades__icon-btn" @click="closeAddAssessment"><X :size="20" /></button>
             </header>
             
             <form class="grades__modal-form" @submit.prevent="saveAssessment">
@@ -1510,57 +1044,7 @@
           </div>
         </div>
 
-        <!-- Email Configuration Modal -->
-        <div v-if="showEmailModal" class="grades__modal-backdrop" @click="showEmailModal = false">
-          <div class="grades__modal" role="dialog" aria-modal="true" @click.stop style="max-width: 480px; width: 100%">
-            <header class="grades__modal-header">
-              <h3 class="grades__modal-title">Configure Email Report</h3>
-              <button class="grades__icon-btn" @click="showEmailModal = false"><X :size="20" /></button>
-            </header>
-            
-            <div class="grades__modal-body" style="padding: 1.5rem">
-              <div style="margin-bottom: 1.5rem">
-                <h4 style="margin: 0 0 0.75rem 0; font-size: 0.95rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em">Recipients</h4>
-                
-                <label v-if="activeClassRecord.students[selectedStudentId]?.studentEmail" style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; cursor: pointer">
-                  <input type="checkbox" v-model="emailConfig.recipients.student">
-                  <strong>Student:</strong> {{ activeClassRecord.students[selectedStudentId].studentEmail }}
-                </label>
-                
-                <label v-for="(contact, index) in activeClassRecord.students[selectedStudentId]?.parentContacts" :key="'p'+index" style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; cursor: pointer" :style="{ opacity: contact.email ? 1 : 0.5 }">
-                  <input type="checkbox" v-model="emailConfig.recipients.parents[index]" :disabled="!contact.email">
-                  <strong>{{ contact.name || 'Parent' }}:</strong> {{ contact.email || 'No email provided' }}
-                </label>
-              </div>
-
-              <div style="margin-bottom: 1rem">
-                <h4 style="margin: 0 0 0.75rem 0; font-size: 0.95rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em">Include in Report</h4>
-                <label style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; cursor: pointer">
-                  <input type="checkbox" v-model="emailConfig.content.overallGrade">
-                  Current Overall Grade
-                </label>
-                <label style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; cursor: pointer">
-                  <input type="checkbox" v-model="emailConfig.content.missingAssessments">
-                  Missing Assessments List
-                </label>
-                <label style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; cursor: pointer">
-                  <input type="checkbox" v-model="emailConfig.content.attendance">
-                  Attendance Summary (Absences & Lates)
-                </label>
-                <label style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; cursor: pointer">
-                  <input type="checkbox" v-model="emailConfig.content.events">
-                  Washroom & Out-of-Class Logs
-                </label>
-              </div>
-
-              <div class="grades__modal-actions" style="margin-top: 1.5rem; display: flex; justify-content: flex-end; gap: 0.5rem">
-                <button class="grades__btn-ghost" @click="showEmailModal = false">Cancel</button>
-                <button class="grades__btn-primary" @click="generateCustomMailto">Generate Draft & Open Mail</button>
-              </div>
-            </div>
-          </div>
-        </div>
-  </div>
+    </div>
 </template>
 
 <script setup>
@@ -1578,15 +1062,11 @@ import {
   assessments,
   grades,
   classGrades, 
-  selectedStudentId, 
   selectedMilestone,
   globalMilestones,
   gradeMap,
   assessmentStats,
   loadGradebook,
-  refreshGrades,
-  enterGrade,
-  changeGrade,
   clearGrade,
   markMissing,
   markExcluded,
@@ -1606,9 +1086,18 @@ import {
   toggleOutlierExclusion,
   toggleStudentFromAnalytics,
   resetAnalyticsState,
-  distributionMode
+  distributionMode,
+  showAddAssessmentModal,
+  isEditingAssessment,
+  currentAssessmentId,
+  newAssessment,
+  openAddAssessment,
+  closeAddAssessment,
+  enterGrade,
+  changeGrade
 } from '../composables/useGradebook.js'
 import { Plus, BarChart2, Settings, Pencil, XCircle, AlertCircle, Trash2, X, MoreVertical, ArrowLeft, Check, ArrowUp, ArrowDown, Minus, GraduationCap, Eye, EyeOff, ChevronLeft, ChevronRight, UserCheck, Activity, FilePlus, Target, Hash, Calendar, Award, AlertTriangle, ChevronUp, ChevronDown } from 'lucide-vue-next'
+import Student360 from '../components/dossier/Student360.vue'
 import GradeTrendChart from '../components/GradeTrendChart.vue'
 import {
   Chart as ChartJS,
@@ -1645,7 +1134,6 @@ watch(activeClass, async (newVal, oldVal) => {
 const isLoading = ref(false)
 const isCalculating = ref(false)
 const displayMode = ref('percent') // 'raw' | 'percent'
-const showAddModal = ref(false)
 const analyticsSortBy = ref('date')
 const analyticsSortOrder = ref('asc')
 const isExclusionsOpen = ref(false)
@@ -1654,16 +1142,19 @@ const editingCell = ref(null) // { sId, aId, value }
 const editInput = ref(null)
 const contextMenu = ref(null) // { x, y, sId, aId }
 const attemptsPopover = ref(null) // { x, y, sId, aId, studentName, attempts, totalPoints }
-const editOriginalValue = ref(null)
 const assessmentMenu = ref(null) // { x, y, assessment }
-const isEditingAssessment = ref(false)
-const currentAssessmentId = ref(null)
+const editOriginalValue = ref(null)
+const currentAssessmentIdLocal = null // Removed unused local ref
+const selectedStudentId = ref(null)
 const selectedAssessmentId = ref(null)
 const studentActionMenu = ref(null) // { x, y, studentId }
+
+function showStudentDossier(studentId) {
+  selectedStudentId.value = studentId
+  selectedAssessmentId.value = null
+  analyticsMode.value = false
+}
 const newAttemptForm = ref(null) // { studentId, points, date, comment }
-const filterCategory = ref(null)
-const acEvents = ref([])
-const studentAttendance = ref({ absences: 0, lates: 0 })
 const isPrivacyMode = ref(false)
 const isSidebarCollapsed = ref(false)
 const isChangeMode = ref(false)
@@ -1671,233 +1162,26 @@ const gridSortBy = ref('name') // 'name' | 'grade'
 const gridSortOrder = ref('asc') // 'asc' | 'desc'
 const showMissingModal = ref(false)
 
-// Added state for Demographics
-const isEditingDemographics = ref(false)
-const editableDemographics = ref({ studentEmail: '', custody: '', livingWith: '', birthDate: '', parentContacts: [] })
-
-function startEditDemographics() {
-  const current = activeClassRecord.value?.students[selectedStudentId.value]
-  editableDemographics.value = {
-      studentEmail: current?.studentEmail || '',
-      custody: current?.custody || '',
-      livingWith: current?.livingWith || '',
-      birthDate: current?.birthDate || '',
-      parentContacts: JSON.parse(JSON.stringify(current?.parentContacts || []))
-  }
-  isEditingDemographics.value = true
-}
-
-function computeAge(dobString) {
-  if (!dobString) return null
-  let dob = new Date(dobString)
-  if (isNaN(dob) && /^\d{1,2}\/\d{1,2}\/\d{4}$/.test(dobString)) {
-    const parts = dobString.split('/')
-    if (parts[0] > 12) {
-      // DD/MM/YYYY
-      dob = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`)
-    } else {
-      // MM/DD/YYYY
-      dob = new Date(`${parts[2]}-${parts[0]}-${parts[1]}`)
-    }
-  }
-  if (isNaN(dob)) return 'Unknown'
-  
-  const diff = Date.now() - dob.getTime()
-  const ageDate = new Date(diff)
-  return Math.abs(ageDate.getUTCFullYear() - 1970)
-}
-
-async function saveDemographics() {
-  editableDemographics.value.parentContacts = editableDemographics.value.parentContacts.filter(c => c.name.trim() || c.email.trim() || c.phone?.trim())
-  await saveStudentDemographics(selectedStudentId.value, editableDemographics.value)
-  isEditingDemographics.value = false
-}
-
-const showEmailModal = ref(false)
-const emailConfig = reactive({
-  recipients: {
-    student: true,
-    parents: {}
-  },
-  content: {
-    overallGrade: true,
-    missingAssessments: true,
-    attendance: true,
-    events: false
-  }
-})
-
-function openEmailModal() {
-  const student = activeClassRecord.value?.students[selectedStudentId.value]
-  if (!student) return
-  
-  emailConfig.recipients.student = true
-  emailConfig.recipients.parents = {}
-  
-  if (student.parentContacts && student.parentContacts.length > 0) {
-    student.parentContacts.forEach((contact, i) => {
-      // Default to selected if they have an email
-      emailConfig.recipients.parents[i] = !!contact.email
-    })
-  }
-  
-  emailConfig.content.overallGrade = true
-  emailConfig.content.attendance = true
-  emailConfig.content.missingAssessments = true
-  emailConfig.content.events = false
-  
-  showEmailModal.value = true
-}
-
-function generateCustomMailto() {
-  const student = activeClassRecord.value?.students[selectedStudentId.value]
-  if (!student) return
-
-  // Recipient gathering
-  const emails = []
-  if (emailConfig.recipients.student && student.studentEmail) {
-    emails.push(student.studentEmail)
-  }
-  if (student.parentContacts) {
-    student.parentContacts.forEach((c, i) => {
-      if (emailConfig.recipients.parents[i] && c.email) {
-        emails.push(c.email)
-      }
-    })
-  }
-
-  const emailStr = emails.filter(e => e).join(',')
-  if (!emailStr) {
-    alert("No recipients selected or no valid email addresses available.")
-    return
-  }
-
-  const subject = `Update on ${student.firstName} ${student.lastName} - ${activeClassRecord.value.name || 'Class'}`
-  let body = `Hello,\n\nI am writing to provide an update on ${student.firstName}'s progress in class.\n\n`
-
-  if (emailConfig.content.overallGrade) {
-    const grade = classGrades.value[selectedStudentId.value]?.overallGrade
-    const gradeStr = grade !== undefined && grade !== null ? formatGrade(grade) : 'N/A'
-    body += `Current Overall Grade: ${gradeStr}\n\n`
-  }
-
-  if (emailConfig.content.attendance) {
-    body += `Attendance Summary\n`
-    body += `Absences: ${studentAttendance.value.absences} | Lates: ${studentAttendance.value.lates}\n\n`
-  }
-
-  if (emailConfig.content.missingAssessments) {
-    const missing = []
-    if (assessments.value && gradeMap.value) {
-      for (const a of assessments.value) {
-        if (a.excluded) continue
-        const g = gradeMap.value[a.assessmentId]?.[selectedStudentId.value]
-        if (g?.excluded) continue
-        const isPastDate = a.date <= new Date().toISOString().slice(0, 10)
-        if (g?.missing || (isPastDate && (!g?.attempts || g.attempts.length === 0))) {
-          missing.push(a.name)
-        }
-      }
-    }
-    
-    if (missing.length > 0) {
-      body += `Missing or Incomplete Assessments:\n`
-      missing.forEach(m => body += `- ${m}\n`)
-      body += '\n'
-    } else {
-      body += `Missing Assessments: None\n\n`
-    }
-  }
-
-  if (emailConfig.content.events) {
-    if (acEvents.value && acEvents.value.length > 0) {
-      const totalTrips = acEvents.value.length;
-      let totalDuration = 0;
-      let tripsWithDuration = 0;
-      
-      acEvents.value.forEach(ev => {
-        if (ev.duration !== undefined && ev.duration !== null) {
-          totalDuration += Number(ev.duration);
-          tripsWithDuration++;
-        }
-      });
-      
-      body += `Washroom & Out-of-Class Summary:\n`;
-      body += `Total Trips Logged: ${totalTrips}\n`;
-      if (tripsWithDuration > 0) {
-        body += `Total Time Out of Class: ${totalDuration} minutes\n`;
-        body += `Average Time per Trip: ${Math.round(totalDuration / tripsWithDuration)} minutes\n`;
-      }
-      body += '\n';
-    } else {
-      body += `Washroom & Out-of-Class Summary:\nTotal Trips Logged: 0\n\n`;
-    }
-  }
-
-  body += `Please contact me if you have any questions.\n\nBest regards,\n`
-
-  const link = `mailto:${emailStr}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
-  window.location.href = link
-  showEmailModal.value = false
-}
-
 const assessmentTypes = [
   { value: 'product', label: 'Product' },
   { value: 'conversation', label: 'Conversation' },
   { value: 'observation', label: 'Observation' }
 ]
-const newAssessment = reactive({
-  name: '',
-  categoryId: '',
-  assessmentType: 'product',
-  unit: null,
-  target: 'class',
-  targetStudentId: null,
-  date: new Date().toISOString().slice(0, 10),
-  totalPoints: 10,
-  scaledTotal: null,
-  retestPolicy: 'Highest'
-})
+const newAssessmentLocal = reactive({}) // Removing local reactive to use the one from useGradebook
 
-watch(showAddModal, (val) => {
+watch(showAddAssessmentModal, (val) => {
   if (val) {
     if (!isEditingAssessment.value && activeClassRecord.value?.gradebookCategories?.length) {
-      newAssessment.categoryId = activeClassRecord.value.gradebookCategories[0].categoryId
+      newAssessment.value.categoryId = activeClassRecord.value.gradebookCategories[0].categoryId
     }
   } else {
-    // Reset edit state when closed
-    isEditingAssessment.value = false
-    currentAssessmentId.value = null
-    // Reset form for next 'Add' use
-    newAssessment.name = ''
-    newAssessment.unit = null
-    newAssessment.assessmentType = 'product'
-    newAssessment.target = 'class'
-    newAssessment.targetStudentId = null
-    newAssessment.totalPoints = 10
-    newAssessment.scaledTotal = null
-    newAssessment.retestPolicy = 'Highest'
+    // Reset is handled by closeAddAssessment in composable if needed, 
+    // but here we align with old logic if it had specific sidebar resets
   }
 })
 
 function openAddIndividualAssessment() {
-  newAssessment.name = ''
-  newAssessment.unit = sortedUnits.value.length > 0 ? sortedUnits.value[0].unitId : null
-  newAssessment.assessmentType = 'product'
-  newAssessment.target = 'individual'
-  newAssessment.targetStudentId = selectedStudentId.value
-  newAssessment.date = new Date().toISOString().slice(0, 10)
-  newAssessment.totalPoints = 10
-  newAssessment.scaledTotal = null
-  newAssessment.retestPolicy = 'Highest'
-  
-  if (activeClassRecord.value?.gradebookCategories?.length) {
-    newAssessment.categoryId = activeClassRecord.value.gradebookCategories[0].categoryId
-  }
-  
-  isEditingAssessment.value = false
-  currentAssessmentId.value = null
-  showAddModal.value = true
+  openAddAssessment('individual', selectedStudentId.value)
 }
 
 // --- Sorting ---
@@ -2215,9 +1499,6 @@ const bucketChartOptions = {
   }
 }
 
-const studentOverallGrade = computed(() => {
-  return classGrades.value[selectedStudentId.value]?.overallGrade ?? null
-})
 
 /**
  * Step 3: Rollup of most consistent level across class
@@ -2277,130 +1558,8 @@ function getCoverageColor(percent) {
   return 'var(--grade-mid-low)'
 }
 
-const gradeTrendInfo = computed(() => {
-  if (!selectedStudentId.value || !activeClassRecord.value?.gradebookMilestones?.length) return null
-  
-  const current = studentOverallGrade.value
-  if (current === null) return null
 
-  // Find most recent milestone that is in the past
-  const now = new Date()
-  const milestone = [...activeClassRecord.value.gradebookMilestones]
-    .filter(m => new Date(m.date) <= now)
-    .sort((a, b) => new Date(b.date) - new Date(a.date))[0]
-  
-  if (!milestone) return null
 
-  // For real trend, we'd need historical grades. For now, since we only have current and milestone context:
-  // If a milestone is SELECTED in sidebar, we compare current with THAT milestone.
-  const milestoneId = selectedMilestone.value || milestone.milestoneId
-  const midtermGrade = classGrades.value[selectedStudentId.value]?.milestoneGrades?.[milestoneId]
-  
-  if (midtermGrade === undefined || midtermGrade === null) return null
-
-  const diff = current - midtermGrade
-  let trend = 'flat'
-  let color = 'var(--text-secondary)'
-  
-  if (diff > 2) {
-    trend = 'up'
-    color = '#1a6b3a'
-  } else if (diff < -2) {
-    trend = 'down'
-    color = '#c0392b'
-  }
-
-  return { midterm: midtermGrade, trend, color }
-})
-
-const studentCategoryBreakdown = computed(() => {
-  if (!selectedStudentId.value || !activeClassRecord.value) return []
-  const studentData = classGrades.value[selectedStudentId.value]
-  if (!studentData) return []
-
-  const overrides = activeClassRecord.value.students[selectedStudentId.value]?.categoryOverrides || {}
-
-  return (activeClassRecord.value.gradebookCategories || []).map(cat => {
-    let percentage = null
-    let isOverridden = false
-    const override = overrides[cat.categoryId]
-
-    if (override !== undefined && override !== null) {
-      const overrideValue = Number(override.overridePercentage ?? override)
-      if (isNaN(overrideValue)) {
-        // Fall back to calculated grade if override data is corrupt/NaN
-        percentage = studentData.categoryResults[cat.categoryId]?.percentage ?? null
-        isOverridden = false // It was an attempt at override, but invalid, so treat as not overridden
-      } else {
-        percentage = overrideValue
-        isOverridden = true
-      }
-    } else {
-      percentage = studentData.categoryResults[cat.categoryId]?.percentage ?? null
-    }
-
-    const consistentData = studentData.mostConsistent?.categoryBreakdown?.[cat.categoryId]
-
-    return {
-      categoryId: cat.categoryId,
-      name: cat.name,
-      percent: percentage,
-      overridden: isOverridden,
-      consistent: consistentData?.percentage ?? null,
-      consistentLabel: consistentData?.bucketLabel ?? null,
-      consistentCount: consistentData?.count ?? null,
-      consistentTotalCount: consistentData?.totalCount ?? null,
-      consistentIsFallback: consistentData?.isFallback ?? false
-    }
-  })
-})
-
-const filteredStudentAssessments = computed(() => {
-  if (!selectedStudentId.value || !assessments.value) return []
-  
-  const classAs = sortedAssessments.value.map(a => {
-    const g = gradeMap.value[a.assessmentId]?.[selectedStudentId.value]
-    return {
-      assessmentId: a.assessmentId,
-      name: a.name,
-      categoryId: a.categoryId,
-      type: a.assessmentType,
-      date: a.date,
-      totalPoints: a.totalPoints,
-      scaledTotal: a.scaledTotal,
-      resolvedScore: g?.resolvedScore ?? null,
-      missing: g?.missing,
-      excluded: g?.excluded,
-      attempts: g?.attempts?.length || 0
-    }
-  })
-
-  const individualAs = individualStudentAssessments.value.map(a => ({
-      assessmentId: a.assessmentId,
-      name: a.name,
-      categoryId: a.categoryId,
-      type: a.assessmentType,
-      date: a.date,
-      totalPoints: a.totalPoints,
-      scaledTotal: a.scaledTotal,
-      resolvedScore: a.resolvedScore ?? null,
-      missing: a.missing,
-      excluded: a.excluded,
-      attempts: a.attempts?.length || 0
-  }))
-
-  return [...classAs, ...individualAs]
-    .filter(a => !filterCategory.value || a.categoryId === filterCategory.value)
-    .sort((a, b) => new Date(a.date) - new Date(b.date))
-})
-
-const dossierTrendData = computed(() => {
-  // Logic for building the trend line: array of running average after each assessment
-  if (!selectedStudentId.value) return []
-  // This requires sequential calculation which is complex for a computed.
-  // We'll simplify: return assessments that have grades.
-  return filteredStudentAssessments.value.filter(a => a.resolvedScore !== null)
-})
 
 function toggleGridSort(column) {
   if (gridSortBy.value === column) {
@@ -2684,16 +1843,20 @@ function startEditAssessment(assessment) {
   isEditingAssessment.value = true
   currentAssessmentId.value = assessment.assessmentId
   
-  newAssessment.name = assessment.name
-  newAssessment.categoryId = assessment.categoryId
-  newAssessment.assessmentType = assessment.assessmentType
-  newAssessment.unit = assessment.unit || ''
-  newAssessment.date = assessment.date
-  newAssessment.totalPoints = assessment.totalPoints
-  newAssessment.scaledTotal = assessment.scaledTotal
-  newAssessment.retestPolicy = assessment.retestPolicy
+  newAssessment.value = {
+    name: assessment.name,
+    categoryId: assessment.categoryId,
+    assessmentType: assessment.assessmentType,
+    unit: assessment.unit || '',
+    target: assessment.target || 'class',
+    targetStudentId: assessment.targetStudentId || null,
+    date: assessment.date,
+    totalPoints: assessment.totalPoints,
+    scaledTotal: assessment.scaledTotal,
+    retestPolicy: assessment.retestPolicy
+  }
   
-  showAddModal.value = true
+  showAddAssessmentModal.value = true
 }
 
 async function confirmDeleteAssessment(assessment) {
@@ -2778,20 +1941,9 @@ function onTargetChange() {
 
 // --- Assessment Modal ---
 async function saveAssessment() {
-  if (!newAssessment.name || !newAssessment.categoryId) return
+  if (!newAssessment.value.name || !newAssessment.value.categoryId) return
   
-  const data = {
-    name:           newAssessment.name,
-    categoryId:     newAssessment.categoryId,
-    assessmentType: newAssessment.assessmentType,
-    unit:           newAssessment.unit,
-    date:           newAssessment.date,
-    target:         newAssessment.target,
-    targetStudentId: newAssessment.targetStudentId,
-    totalPoints:    newAssessment.totalPoints,
-    scaledTotal:    newAssessment.scaledTotal,
-    retestPolicy:   newAssessment.retestPolicy
-  }
+  const data = { ...newAssessment.value }
 
   if (isEditingAssessment.value) {
     await editAssessment(currentAssessmentId.value, data)
@@ -2799,8 +1951,7 @@ async function saveAssessment() {
     await addAssessment(data)
   }
 
-  // Close (Reset is handled by watch)
-  showAddModal.value = false
+  showAddAssessmentModal.value = false
 }
 
 // --- Assessment View Methods ---
@@ -2900,38 +2051,6 @@ async function saveNewAttempt() {
 }
 
 // --- Dossier Methods ---
-function isPostMilestone(date) {
-  if (!selectedMilestone.value || !activeClassRecord.value) return false
-  const m = activeClassRecord.value.gradebookMilestones.find(mil => mil.milestoneId === selectedMilestone.value)
-  return m && new Date(date) > new Date(m.date)
-}
-
-async function loadDossierData() {
-  if (!selectedStudentId.value) return
-  const { acEvents: events, summary } = await fetchStudentDossierData(selectedStudentId.value)
-  acEvents.value = events
-  studentAttendance.value = summary
-}
-
-function getOverride(catId) {
-  const override = activeClassRecord.value.students[selectedStudentId.value]?.categoryOverrides?.[catId]
-  if (override === undefined || override === null) return ''
-  return typeof override === 'object' ? (override.overridePercentage ?? '') : override
-}
-
-async function saveOverride(catId, value) {
-  await saveStudentOverride(selectedStudentId.value, catId, value)
-}
-
-async function saveGradebookNote(note) {
-  await saveStudentGradebookNote(selectedStudentId.value, note)
-}
-
-async function onDeleteEvent(eventId) {
-  if (!window.confirm('Delete this assessment conversation record?')) return
-  await deleteGradebookEvent(eventId)
-  acEvents.value = acEvents.value.filter(e => e.eventId !== eventId)
-}
 
 // --- Lifecycle ---
 onMounted(async () => {
@@ -2954,8 +2073,7 @@ watch(selectedMilestone, () => {
 
 watch(selectedStudentId, (val) => {
   if (val) {
-    loadDossierData()
-    filterCategory.value = null
+    // Reset any student-specific view state if needed
   }
 })
 
@@ -3161,6 +2279,14 @@ watch(selectedAssessmentId, (val) => {
 }
 
 /* ── Main Panel ─────────────────────────────────────────────────────── */
+.grades__dossier-container {
+  height:     100%;
+  min-height: 100vh;
+  box-shadow: var(--shadow-2xl);
+  z-index:    20;
+  position:   relative;
+}
+
 .grades__main {
   flex: 1;
   overflow: hidden;

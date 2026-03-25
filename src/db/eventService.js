@@ -292,8 +292,8 @@ export async function importAllData(backupObj) {
             `Invalid schema version: backup must have a numeric schemaVersion. Aborting \u2014 no data was changed.`
         )
     }
-    // Hard check: version 16 is current. Avoid importing future structure that this app doesn't understand.
-    if (backupObj.schemaVersion > 16) {
+    // Hard check: version 18 is current. Avoid importing future structure that this app doesn't understand.
+    if (backupObj.schemaVersion > 18) {
         throw new Error(
             `The backup file is from a newer version of the app (v${backupObj.schemaVersion}). Please update your app before importing.`
         )

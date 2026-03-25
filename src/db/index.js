@@ -7,7 +7,7 @@
  * Rules (CLAUDE.md §4, §5):
  *  - Uses the `idb` wrapper exclusively (no raw IDBRequest chains)
  *  - Database name:  classroomTrackerDB
- *  - Schema version: 16 (includes gradebook and triangulation data)
+ *  - Schema version: 18 (includes behavior category split)
  *  - Stores: settings | classes | events | assessments | grades
  *  - All indexes are created or migrated using the upgrade() callback to ensure
  *    consistency for both fresh installs and existing users.

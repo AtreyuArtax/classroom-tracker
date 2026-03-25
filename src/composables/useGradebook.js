@@ -23,6 +23,22 @@ export const analyticsMode = ref(false) // false = grid, true = analytics panel
 export const excludeOutliers = ref(false) // analytics-only display toggle, not persisted
 export const distributionMode = ref('buckets') // 'buckets' (10%) or 'levels' (Ontario GS)
 export const classAnalytics = ref(null) // result of calculateClassAnalytics
+export const showAddAssessmentModal = ref(false)
+export const isEditingAssessment = ref(false)
+export const currentAssessmentId = ref(null)
+
+export const newAssessment = ref({
+  name: '',
+  categoryId: '',
+  assessmentType: 'product',
+  unit: null,
+  target: 'class',
+  targetStudentId: null,
+  date: new Date().toISOString().slice(0, 10),
+  totalPoints: 10,
+  scaledTotal: null,
+  retestPolicy: 'Highest'
+})
 
 // ─── Public API ──────────────────────────────────────────────────────────────
 
@@ -148,7 +164,6 @@ export async function editAssessment(assessmentId, updates) {
   await refreshGrades()
   return updated
 }
-
 /**
  * Deletes an assessment and refreshes state.
  */
@@ -160,6 +175,36 @@ export async function deleteAssessment(assessmentId) {
   
   // Refresh grades as they are now orphaned/removed
   await refreshGrades()
+}
+
+/**
+ * Opens the Add Assessment modal with optional pre-filled data.
+ */
+export function openAddAssessment(target = 'class', studentId = null) {
+  isEditingAssessment.value = false
+  currentAssessmentId.value = null
+  
+  newAssessment.value = {
+    name: '',
+    categoryId: activeClassRecord.value?.gradebookCategories?.[0]?.categoryId || '',
+    assessmentType: 'product',
+    unit: activeClassRecord.value?.gradebookUnits?.[0]?.name || null,
+    target,
+    targetStudentId: studentId,
+    date: new Date().toISOString().slice(0, 10),
+    totalPoints: 10,
+    scaledTotal: null,
+    retestPolicy: 'Highest'
+  }
+  
+  showAddAssessmentModal.value = true
+}
+
+/**
+ * Closes the Add Assessment modal.
+ */
+export function closeAddAssessment() {
+  showAddAssessmentModal.value = false
 }
 
 // ─── Debounced Async DB Save System ──────────────────────────────────────────
