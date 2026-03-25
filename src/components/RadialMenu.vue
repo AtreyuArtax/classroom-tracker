@@ -247,7 +247,9 @@ function onProfileTap() {
 
 .radial-btn--positive      .radial-btn__icon-circle { background: #c8f0d0; }
 .radial-btn--redirect      .radial-btn__icon-circle { background: #fff3cd; }
-.radial-btn--attendance    .radial-btn__icon-circle { background: #fde8e8; }
+.radial-btn--attendance    .radial-btn__icon-circle,
+.radial-btn--absence       .radial-btn__icon-circle,
+.radial-btn--late          .radial-btn__icon-circle { background: #fde8e8; }
 .radial-btn--note          .radial-btn__icon-circle { background: #dce8ff; }
 .radial-btn--neutral       .radial-btn__icon-circle { background: #ddeeff; }
 .radial-btn--communication .radial-btn__icon-circle { background: #dce8ff; }

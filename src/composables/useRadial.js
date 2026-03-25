@@ -92,9 +92,15 @@ const profileStudent = ref(null)
  *
  * 'sub' mode — flat list of code objects for activeCategory only.
  */
+const ATTENDANCE_CATEGORIES = ['attendance', 'absence', 'late']
+
 const visibleItems = computed(() => {
     if (viewMode.value === 'sub') {
-        return allCodes.value.filter(c => c.category === activeCategory.value)
+        const active = activeCategory.value
+        if (ATTENDANCE_CATEGORIES.includes(active)) {
+            return allCodes.value.filter(c => ATTENDANCE_CATEGORIES.includes(c.category))
+        }
+        return allCodes.value.filter(c => c.category === active)
     }
 
     // 'first' mode: build the hybrid list
@@ -107,13 +113,18 @@ const visibleItems = computed(() => {
             firstLevel.push({ ...code, isCategory: false })
         } else {
             // Category drill-down — show one button per category
-            if (!categoryButtonsSeen.has(code.category)) {
-                categoryButtonsSeen.add(code.category)
+            let groupCategory = code.category
+            if (ATTENDANCE_CATEGORIES.includes(groupCategory)) {
+                groupCategory = 'attendance'
+            }
+
+            if (!categoryButtonsSeen.has(groupCategory)) {
+                categoryButtonsSeen.add(groupCategory)
                 firstLevel.push({
                     isCategory: true,
-                    categoryKey: code.category,
-                    label: _categoryLabel(code.category),
-                    icon: _categoryIcon(code.category, code.icon),
+                    categoryKey: groupCategory,
+                    label: _categoryLabel(groupCategory),
+                    icon: _categoryIcon(groupCategory, code.icon),
                 })
             }
         }
@@ -222,6 +233,8 @@ function _categoryLabel(category) {
         note: 'Notes',
         communication: 'Contact',
         attendance: 'Attendance',
+        absence: 'Attendance',
+        late: 'Attendance',
     }
     return map[category] ?? category
 }
@@ -234,6 +247,8 @@ function _categoryIcon(category, fallbackIcon) {
         note: 'NotebookText',
         communication: 'MessageSquare',
         attendance: 'CalendarClock',
+        absence: 'CalendarClock',
+        late: 'CalendarClock',
     }
     return map[category] ?? fallbackIcon
 }

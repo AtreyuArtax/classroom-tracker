@@ -253,11 +253,11 @@ async function init() {
     let codesUpdated = false
     const codesMap = Object.fromEntries(codes.map(c => [c.codeKey, c]))
     if (!codesMap.a) {
-        settings.behaviorCodes.a = { icon: '🚫', label: 'Absent', category: 'attendance', type: 'attendance', requiresNote: false }
+        settings.behaviorCodes.a = { icon: '🚫', label: 'Absent', category: 'absence', type: 'attendance', requiresNote: false }
         codesUpdated = true
     }
     if (!codesMap.l) {
-        settings.behaviorCodes.l = { icon: '⏰', label: 'Late', category: 'attendance', type: 'attendance', requiresNote: false }
+        settings.behaviorCodes.l = { icon: '⏰', label: 'Late', category: 'late', type: 'attendance', requiresNote: false }
         codesUpdated = true
     }
 
