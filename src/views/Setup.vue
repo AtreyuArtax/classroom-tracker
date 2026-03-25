@@ -411,7 +411,7 @@
           <p v-if="categoryWeightTotal !== 100" class="setup__error-msg">Weights must total 100%.</p>
           
           <div class="setup__gb-list">
-            <div v-for="cat in activeClass.gradebookCategories" :key="cat.categoryId" class="setup__gb-item">
+            <div v-for="(cat, index) in activeClass.gradebookCategories" :key="cat.categoryId" class="setup__gb-item">
               <input 
                 v-model="cat.name" 
                 class="setup__input setup__input--naked" 
@@ -427,6 +427,24 @@
                     class="setup__input setup__input--weight"
                   />
                   <span>%</span>
+                </div>
+                <div class="setup__reorder-actions">
+                  <button 
+                    class="setup__icon-btn" 
+                    title="Move Up"
+                    :disabled="index === 0"
+                    @click="moveCategory(index, -1)"
+                  >
+                    <ChevronUp :size="16" />
+                  </button>
+                  <button 
+                    class="setup__icon-btn" 
+                    title="Move Down"
+                    :disabled="index === activeClass.gradebookCategories.length - 1"
+                    @click="moveCategory(index, 1)"
+                  >
+                    <ChevronDown :size="16" />
+                  </button>
                 </div>
                 <button 
                   class="setup__icon-btn setup__icon-btn--danger" 
@@ -447,13 +465,31 @@
         <div class="setup__card">
           <h2 class="setup__card-title">Units</h2>
           <div class="setup__gb-list">
-            <div v-for="unit in activeClass.gradebookUnits" :key="unit.unitId" class="setup__gb-item">
+            <div v-for="(unit, index) in activeClass.gradebookUnits" :key="unit.unitId" class="setup__gb-item">
               <input 
                 v-model="unit.name" 
                 class="setup__input setup__input--naked" 
                 placeholder="Unit Name"
               />
               <div class="setup__gb-actions">
+                <div class="setup__reorder-actions">
+                  <button 
+                    class="setup__icon-btn" 
+                    title="Move Up"
+                    :disabled="index === 0"
+                    @click="moveUnit(index, -1)"
+                  >
+                    <ChevronUp :size="16" />
+                  </button>
+                  <button 
+                    class="setup__icon-btn" 
+                    title="Move Down"
+                    :disabled="index === activeClass.gradebookUnits.length - 1"
+                    @click="moveUnit(index, 1)"
+                  >
+                    <ChevronDown :size="16" />
+                  </button>
+                </div>
                 <button 
                   class="setup__icon-btn setup__icon-btn--danger" 
                   title="Delete Unit"
@@ -1049,6 +1085,34 @@ async function addCategory() {
     activeClass.value.gradebookCategories = []
   }
   activeClass.value.gradebookCategories.push(newCat)
+  await saveGradebookSettings()
+}
+
+async function moveCategory(index, direction) {
+  if (!activeClass.value) return
+  const cats = activeClass.value.gradebookCategories
+  const newIndex = index + direction
+  if (newIndex < 0 || newIndex >= cats.length) return
+
+  // Swap elements
+  const temp = cats[index]
+  cats[index] = cats[newIndex]
+  cats[newIndex] = temp
+
+  await saveGradebookSettings()
+}
+
+async function moveUnit(index, direction) {
+  if (!activeClass.value) return
+  const units = activeClass.value.gradebookUnits
+  const newIndex = index + direction
+  if (newIndex < 0 || newIndex >= units.length) return
+
+  // Swap elements
+  const temp = units[index]
+  units[index] = units[newIndex]
+  units[newIndex] = temp
+
   await saveGradebookSettings()
 }
 
@@ -1972,7 +2036,16 @@ function formatDate(iso) {
 .setup__gb-actions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
+}
+
+.setup__reorder-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  border-right: 1px solid var(--border);
+  padding-right: 8px;
+  margin-right: 4px;
 }
 
 .setup__weight-input {

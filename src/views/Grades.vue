@@ -1996,8 +1996,7 @@ function getSparklinePath(data, width, height) {
 }
 
 const sortedUnits = computed(() => {
-  if (!activeClassRecord.value?.gradebookUnits) return []
-  return [...activeClassRecord.value.gradebookUnits].sort((a, b) => (a.order || 0) - (b.order || 0))
+  return activeClassRecord.value?.gradebookUnits || []
 })
 
 const studentEvidenceBalance = computed(() => {
