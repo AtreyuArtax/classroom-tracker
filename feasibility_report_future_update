@@ -1,0 +1,46 @@
+# Feasibility Report: Year and Semester Support
+
+Adding academic year and semester support to the Classroom Tracker app is **highly feasible** and aligns well with the existing architecture. The current system is already class-centric, using `classId` as a unique identifier for all events, assessments, and grades.
+
+## Proposed Architectural Changes
+
+### 1. Data Model Enhancements
+- **Classes Store**: Add `year` (e.g., 2025) and `semester` (e.g., "Semester 1") fields to the class object.
+- **Settings Store**: Add `currentYear` and `currentSemester` to the global settings singleton to track the user's active context.
+- **Migration**: A small migration (v20) would be needed to add default year/semester values to existing classes.
+
+### 2. Academic Date Configuration
+- **Settings Storage**: Add a `academicSessions` list to global settings where users can define typical start and end dates for each year/semester (e.g., *Semester 1: Sept 1 – Jan 30*).
+- **Auto-Defaulting**: On application load, the system will compare the current system date against these ranges to set the "active" year and semester automatically.
+- **Manual Override**: The user retains full control via the header selector to jump between terms for planning or archiving.
+
+### 3. UI/UX Refinement
+- **Global Selector**: A dual-dropdown selector for Year and Semester can be added to the main header ([App.vue](file:///c:/Users/kstashuk/OneDrive%20-%20Simcoe%20County%20District%20School%20Board/Courses/TOOLS/classroom_tracker/src/App.vue)).
+- **Filtering**: The Dashboard and Reports views would filter classes based on the global selector. This naturally "archives" past data without needing manual archival, though the manual "Archive" flag could remain for mid-semester cleanup.
+
+### 4. Recurring Student Management
+- **Student ID Anchor**: The system uses the board-provided `studentId` as the primary key. This allows the app to recognize the same student across different semesters and courses automatically.
+- **Historical Data Isolation**: 
+    - **Events & Grades**: Already indexed by both `studentId` and `classId`. This ensures that a student's current grades aren't mixed with past ones.
+    - **Demographics**: While metadata (parent email, phone) is duplicated per class for historical accuracy, the app can offer a "Sync from Most Recent" feature to pull the latest contact info into a new class.
+- **Student History View**: The "Student 360" (Dossier) can be expanded with a **History Tab**. This would query the `events` and `grades` stores for all records matching the `studentId`, allowing the teacher to see behavioral trends and academic performance across multiple years.
+
+### 5. CSV Import Automation
+The CSV parser ([Setup.vue](file:///c:/Users/kstashuk/OneDrive%20-%20Simcoe%20County%20District%20School%20Board/Courses/TOOLS/classroom_tracker/src/views/Setup.vue)) and roster import logic ([useClassroom.js](file:///c:/Users/kstashuk/OneDrive%20-%20Simcoe%20County%20District%20School%20Board/Courses/TOOLS/classroom_tracker/src/composables/useClassroom.js)) can be extended to:
+- **Scan for Metadata**: Look for [schedule](file:///c:/Users/kstashuk/OneDrive%20-%20Simcoe%20County%20District%20School%20Board/Courses/TOOLS/classroom_tracker/src/composables/useClassroom.js#1104-1115) (Sem 1/2), `period` (1-4), and `sec` (section name) columns.
+- **Auto-Class Creation**: If a row contains a semester/period/section combo that doesn't exist, the app can automatically create the class record.
+- **Split Class Handling**: If multiple section names are found for the same period (e.g., a split MCC2D/MCV4U class), the app can default to the first section name or prompt the user.
+
+### 6. Advanced Considerations & Long-term Benefits
+- **Automated Template Matching**: When the CSV parser detects a new class (e.g., *Grade 10 Science*), the system can suggest applying a saved template from a previous year, instantly setting up categories, units, and common assessments.
+- **Longitudinal Analytics**: Teachers can track student growth (grades) and behavioral trends (attendance, incidents) over multiple years, providing a holistic "360-degree" view of the student's journey.
+- **Data Volume Management**: While IndexedDB handles large datasets well, the app should eventually include a "Prune/Archive to File" tool to keep the local database responsive after 5+ years of use.
+- **Privacy & Sharing**: When exporting data to share with colleagues, we should consider a "Strip Personal History" option to only share the class structure (templates) without the students' behavioral logs.
+
+## Technical Considerations
+- **Unique IDs**: To prevent collisions across years, `classId` generation should include the year/semester (e.g., `2025-S1-P3-SCH3U`).
+- **Performance**: Filtering in IndexedDB by year/semester is efficient using indexes.
+- **Compatibility**: Existing data remains safe as it will be tagged with a default "Legacy" year/semester during migration.
+
+## Conclusion
+This feature set transforms the Classroom Tracker from a "real-time" tool into a powerful **historical academic record**. The implementation is highly feasible within the current architecture and provides significant long-term value for teacher organization and student support.
