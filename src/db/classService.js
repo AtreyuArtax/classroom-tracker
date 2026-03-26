@@ -289,7 +289,10 @@ export async function importRoster(classId, studentsArray) {
 
     for (const { studentId, firstName, lastName, parentContacts, studentEmail, custody, livingWith, birthDate } of studentsArray) {
         if (cls.students[studentId]) {
-            // Upsert — preserve seat, activeStates, AND manual name changes
+            // Upsert — preserve seat and activeStates, but update names
+            cls.students[studentId].firstName = firstName
+            cls.students[studentId].lastName = lastName
+
             if (parentContacts && parentContacts.length > 0) {
                 // Replace parent contacts if new ones are provided in CSV
                 cls.students[studentId].parentContacts = parentContacts

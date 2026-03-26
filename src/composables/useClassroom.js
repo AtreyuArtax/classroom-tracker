@@ -409,20 +409,36 @@ async function importRoster(parsedRows) {
     const { inserted, updated } = await classService.importRoster(classId, validRows)
 
     // Update local reactive state immediately (no re-fetch)
+    // Update local reactive state immediately (no re-fetch)
     const cls = activeClass.value
-    for (const { studentId, firstName, lastName } of validRows) {
+    for (const row of validRows) {
+        const { studentId, firstName, lastName } = row
+        
         if (students.value[studentId]) {
-            students.value[studentId].firstName = firstName
-            students.value[studentId].lastName = lastName
+            // Apply all fields from the row to the reactive object
+            Object.assign(students.value[studentId], row)
+            
+            // Sync the master record as well to prevent stale overwrites on next save
+            if (cls.students[studentId]) {
+                Object.assign(cls.students[studentId], row)
+            }
         } else {
-            students.value[studentId] = {
+            // Insert with defaults (merged with any CSV data)
+            const newSt = {
                 firstName,
                 lastName,
+                parentContacts: row.parentContacts || [],
+                studentEmail: row.studentEmail || '',
+                custody: row.custody || '',
+                livingWith: row.livingWith || '',
+                birthDate: row.birthDate || '',
                 seat: null,
                 generalNote: '',
                 activeStates: { isOut: false, outTime: null },
                 excludeFromAnalytics: false,
             }
+            students.value[studentId] = newSt
+            if (cls.students) cls.students[studentId] = JSON.parse(JSON.stringify(newSt))
         }
     }
 
