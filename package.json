@@ -11,6 +11,8 @@
     "deploy": "gh-pages -d dist"
   },
   "dependencies": {
+    "exceljs": "^4.4.0",
+    "file-saver": "^2.0.5",
     "idb": "^8.0.0",
     "lucide-vue-next": "^0.577.0",
     "papaparse": "^5.4.1",

@@ -193,6 +193,22 @@
                     </div>
                   </div>
                 </div>
+
+                <!-- Data Management & Export -->
+                <div class="reports__dashboard-card">
+                  <div class="reports__card-header">
+                    <h3 class="reports__card-title"><Database :size="18" /> Data & Export</h3>
+                  </div>
+                  <div class="reports__card-body" style="padding: 16px; display: flex; flex-direction: column; gap: 12px;">
+                    <p class="reports__hint" style="font-size: 0.85rem; color: var(--text-secondary); margin: 0;">
+                      Generate professional Excel documents for external use or offline analysis.
+                    </p>
+                    <button class="reports__btn-primary" @click="handleExportExcel" style="width: 100%; justify-content: center;">
+                       <Download :size="18" /> Export to Excel (.xlsx)
+                    </button>
+                    <!-- Backup/Restore buttons removed as per user request -->
+                  </div>
+                </div>
               </div>
             </template>
           </template>
@@ -317,7 +333,7 @@ import { ref, reactive, computed, watch, defineComponent, h, onMounted, onUnmoun
 import { 
   BarChart2, Download, Trash2, PlusCircle, ChevronLeft, 
   LayoutDashboard, Database, UserCheck, Toilet, Activity, 
-  FolderOpen, GraduationCap, Printer
+  FolderOpen, GraduationCap, Printer, X
 } from 'lucide-vue-next'
 import { resolveIcon }         from '../utils/icons.js'
 import { useClassroom }        from '../composables/useClassroom.js'
@@ -330,6 +346,7 @@ import StudentTrendGraph       from '../components/StudentTrendGraph.vue'
 import ClassSwitcher           from '../components/ClassSwitcher.vue'
 import ProgressReport          from '../components/dossier/ProgressReport.vue'
 import { calculateClassGrades } from '../db/gradebookService.js'
+import { exportGradebookToExcel } from '../db/exportService.js'
 import { Bar } from 'vue-chartjs'
 import { 
   Chart as ChartJS, 
@@ -479,7 +496,69 @@ const printConfig = reactive({
 })
 
 import { nextTick } from 'vue'
-import { loadGradebook } from '../composables/useGradebook.js'
+import { loadGradebook, activeClassRecord, assessments, gradeMap } from '../composables/useGradebook.js'
+
+const { teacherName } = useClassroom()
+
+async function handleExportExcel() {
+  console.log('Exporting Excel...', { 
+    activeClass: activeClass.value, 
+    activeRecord: activeClassRecord.value,
+    classGrades: classGrades.value 
+  })
+
+  // Ensure we have a class selected
+  if (!activeClass.value) {
+    console.warn('Export failed: no active class.')
+    return
+  }
+
+  // Ensure gradebook data is loaded for this class
+  if (!activeClassRecord.value || activeClassRecord.value.classId !== activeClass.value.classId) {
+    console.log('Gradebook not loaded or class mismatch. Loading now...')
+    await loadGradebook(activeClass.value)
+  }
+  
+  // Ensure we have grades calculated (runReport might not have been called yet if view just opened)
+  if (!classGrades.value || Object.keys(classGrades.value).length === 0) {
+    console.log('Grades not calculated. Running report...')
+    await runReport()
+  }
+
+  try {
+    // Transform classGrades (map studentId -> summary) into an array for exportService
+    const summaryArray = Object.entries(classGrades.value).map(([studentId, summary]) => {
+      const student = activeClassRecord.value.students[studentId] || {}
+      
+      // Calculate attendance for this student from reportData (events)
+      const studentEvents = (reportData.value || []).filter(e => e.studentId === studentId && !e.superseded)
+      const absences = studentEvents.filter(e => e.code === 'a').length
+      const lates = studentEvents.filter(e => e.code === 'l').length
+
+      return {
+        ...summary,
+        studentId,
+        firstName: student.firstName || '',
+        lastName: student.lastName || '',
+        absences,
+        lates
+      }
+    })
+
+    await exportGradebookToExcel({
+      className: activeClass.value.name,
+      teacherName: teacherName.value,
+      students: sidebarStudents.value, // sidebarStudents is already a sorted array of { studentId, firstName, lastName }
+      assessments: assessments.value,
+      gradeMap: gradeMap.value,
+      summaryData: summaryArray
+    })
+    console.log('Export complete.')
+  } catch (err) {
+    console.error('Excel Export Error:', err)
+    alert('Failed to export Excel: ' + err.message)
+  }
+}
 
 async function triggerBatchPrint() {
   showPrintModal.value = false

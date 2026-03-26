@@ -144,7 +144,7 @@
 
     <!-- Page Footer -->
     <footer class="report-page-footer">
-      <p>This report generated automatically via Classroom Tracker. Values reflect data currently on record.</p>
+      <p>Values reflect data currently on record.</p>
     </footer>
   </div>
 </template>
