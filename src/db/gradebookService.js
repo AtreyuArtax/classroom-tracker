@@ -19,7 +19,7 @@ import { hasUnsyncedChanges } from './eventService.js'
 export async function createAssessment({
   classId, categoryId, name, date,
   assessmentType = 'product',
-  unit = null,
+  unitId = null,
   target = 'class',
   targetStudentId = null,
   totalPoints,
@@ -30,7 +30,7 @@ export async function createAssessment({
   const db = await getDB()
   const assessment = {
     classId, categoryId, name, date,
-    assessmentType, unit,
+    assessmentType, unitId,
     target, targetStudentId,
     totalPoints, scaledTotal,
     excluded, retestPolicy,

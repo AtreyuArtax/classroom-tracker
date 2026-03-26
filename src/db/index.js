@@ -7,7 +7,7 @@
  * Rules (CLAUDE.md §4, §5):
  *  - Uses the `idb` wrapper exclusively (no raw IDBRequest chains)
  *  - Database name:  classroomTrackerDB
- *  - Schema version: 18 (includes behavior category split)
+ *  - Schema version: 19 (Unit ID refactor)
  *  - Stores: settings | classes | events | assessments | grades
  *  - All indexes are created or migrated using the upgrade() callback to ensure
  *    consistency for both fresh installs and existing users.
@@ -16,7 +16,7 @@
 import { openDB } from 'idb'
 
 const DB_NAME = 'classroomTrackerDB'
-const DB_VERSION = 18
+const DB_VERSION = 19
 
 /**
  * Cached promise — set synchronously before the first await so every
@@ -87,7 +87,7 @@ export function getDB() {
       if (oldVersion === 0) {
         transaction.objectStore('settings').put(
           {
-            schemaVersion: 17,
+            schemaVersion: 19,
             gridSize: { rows: 6, cols: 6 },
             behaviorCodes: {
               m: { icon: 'Smartphone', label: 'On Device', category: 'redirect', type: 'standard', requiresNote: false, isTopLevel: true },
@@ -107,28 +107,15 @@ export function getDB() {
           },
           'singleton'
         )
-
-        // Seed class fields if any classes are created during seed (none usually)
-        // However, the rules implies updating seed logic for future classes too.
-        // The getDB() itself doesn't create classes, that's classService.
-        // But if we had a seed class here, we'd adds those fields.
-
-        // Wait — we don't return here so that v16+ migrations can add indexes and other logic
-        // in a single source of truth (Source: User Feedback).
       }
 
       // ── version 6 migration (fixing previously silent failures) ───────────
-      // The previous migrations (v2-v5) used raw IndexedDB `onsuccess` callbacks
-      // which do not work with `idb` Promise wrappers. They failed silently.
-      // This version 6 block awaits the promises and applies all missing logic.
       if (oldVersion < 6) {
         const settingsStore = transaction.objectStore('settings')
         const settings = await settingsStore.get('singleton')
 
         if (settings) {
           const codes = settings.behaviorCodes ?? {}
-
-          // Recover v2 logic: Missing fields and missing codes
           for (const key of Object.keys(codes)) {
             if (codes[key].requiresNote === undefined) codes[key].requiresNote = false
           }
@@ -136,7 +123,6 @@ export function getDB() {
           if (!codes.cv) codes.cv = { icon: 'MessageSquare', label: 'Conversation', category: 'note', type: 'standard', requiresNote: true }
           if (!codes.pc) codes.pc = { icon: 'Phone', label: 'Parent', category: 'communication', type: 'standard', requiresNote: true }
 
-          // Recover v3/4 logic: Map emoji to Lucide string, resolve Washroom icon back to Toilet
           const emojiMap = {
             '✋': 'Hand', '📱': 'Smartphone', '🚽': 'Toilet', '🚫': 'UserX',
             '⏰': 'Clock', '👁️': 'Eye', '💬': 'MessageSquare', '📞': 'Phone'
@@ -147,7 +133,6 @@ export function getDB() {
             if (codes[key].icon === 'Droplets') codes[key].icon = 'Toilet'
           }
 
-          // Recover v5 logic: Top Level toggle default assignment
           const directCategories = new Set(['neutral', 'redirect', 'communication'])
           for (const key of Object.keys(codes)) {
             if (codes[key].isTopLevel === undefined) {
@@ -159,7 +144,6 @@ export function getDB() {
           await settingsStore.put(settings, 'singleton')
         }
 
-        // Recover v2 logic for classes: Add generalNote
         const classesStore = transaction.objectStore('classes')
         const classes = await classesStore.getAll()
         for (const cls of classes) {
@@ -175,35 +159,27 @@ export function getDB() {
       }
 
       // ── version 7 migration ────────────────────────────────────────────────
-      // Add behavior component thresholds to settings
       if (oldVersion < 7) {
         const settingsStore = transaction.objectStore('settings')
         const settings = await settingsStore.get('singleton')
-        if (settings) {
-          if (settings.thresholds === undefined) {
-            settings.thresholds = {
-              washroomTripsPerWeek: 4,
-              deviceIncidentsPerWeek: 3
-            }
-            await settingsStore.put(settings, 'singleton')
+        if (settings && settings.thresholds === undefined) {
+          settings.thresholds = {
+            washroomTripsPerWeek: 4,
+            deviceIncidentsPerWeek: 3
           }
+          await settingsStore.put(settings, 'singleton')
         }
       }
 
       // ── version 8 migration ────────────────────────────────────────────────
-      // Retroactively mark absences as superseded if they were followed by a Late arrival
       if (oldVersion < 8) {
         const eventStore = transaction.objectStore('events')
         const events = await eventStore.getAll()
-        
-        // Group events by student and date for easier lookup
         const lateEventsWithSuperseded = events.filter(e => e.code === 'l' && e.supersededAbsent === true)
         
         for (const lateEvt of lateEventsWithSuperseded) {
           const studentId = lateEvt.studentId
           const dateStr = lateEvt.timestamp.slice(0, 10)
-          
-          // Find the 'a' event for the same student on the same day
           const targetAbsent = events.find(e => 
             e.studentId === studentId && 
             e.code === 'a' && 
@@ -223,13 +199,8 @@ export function getDB() {
         const tx9 = transaction.objectStore('settings')
         const settings = await tx9.get('singleton')
         if (settings && settings.behaviorCodes) {
-          // Remove participation code
           delete settings.behaviorCodes['p']
-
-          // Remove cv if it exists
           delete settings.behaviorCodes['cv']
-
-          // Rename ob to note if ob exists
           if (settings.behaviorCodes['ob']) {
             settings.behaviorCodes['note'] = {
               ...settings.behaviorCodes['ob'],
@@ -243,8 +214,6 @@ export function getDB() {
             }
             delete settings.behaviorCodes['ob']
           }
-
-          // Add ac if it doesn't exist
           if (!settings.behaviorCodes['ac']) {
             settings.behaviorCodes['ac'] = {
               key: 'ac',
@@ -256,16 +225,15 @@ export function getDB() {
               isTopLevel: true
             }
           }
-
           await tx9.put(settings, 'singleton')
         }
       }
 
-      // ── version 10 migration (move note to top level) ──────────────────────
+      // ── version 10 migration ───────────────────────────────────────────────
       if (oldVersion < 10) {
         const tx10 = transaction.objectStore('settings')
         const settings = await tx10.get('singleton')
-        if (settings && settings.behaviorCodes && settings.behaviorCodes.note) {
+        if (settings?.behaviorCodes?.note) {
           settings.behaviorCodes.note.isTopLevel = true
           await tx10.put(settings, 'singleton')
         }
@@ -273,17 +241,13 @@ export function getDB() {
 
       // ── version 11 migration ───────────────────────────────────────────────
       if (oldVersion < 11) {
-        // Update all class records
         const tx11 = transaction.objectStore('classes')
         const allClasses = await tx11.getAll()
         for (const cls of allClasses) {
-          // Add gradebook fields to class record
           if (cls.gradingMethod === undefined) cls.gradingMethod = 'traditional'
           if (cls.gradebookCategories === undefined) cls.gradebookCategories = []
           if (cls.gradebookMilestones === undefined) cls.gradebookMilestones = []
           if (cls.gradebookNotes === undefined) cls.gradebookNotes = ''
-
-          // Add categoryOverrides and gradebookNote to each student
           if (cls.students) {
             for (const studentId of Object.keys(cls.students)) {
               if (cls.students[studentId].categoryOverrides === undefined) {
@@ -296,21 +260,16 @@ export function getDB() {
           }
           await tx11.put(cls)
         }
-
-        // Update settings singleton
         const settingsStore = transaction.objectStore('settings')
         const settings = await settingsStore.get('singleton')
-        if (settings) {
-          if (settings.gradebookTemplates === undefined) {
-            settings.gradebookTemplates = []
-          }
+        if (settings && settings.gradebookTemplates === undefined) {
+          settings.gradebookTemplates = []
           await settingsStore.put(settings, 'singleton')
         }
       }
 
       // ── version 12 migration ───────────────────────────────────────────────
       if (oldVersion < 12) {
-        // Update all class records to include gradebookUnits
         const tx12 = transaction.objectStore('classes')
         const allClasses = await tx12.getAll()
         for (const cls of allClasses) {
@@ -319,8 +278,6 @@ export function getDB() {
             await tx12.put(cls)
           }
         }
-
-        // Update settings singleton version
         const settingsStore = transaction.objectStore('settings')
         const settings = await settingsStore.get('singleton')
         if (settings) {
@@ -331,34 +288,22 @@ export function getDB() {
 
       // ── version 13 migration ───────────────────────────────────────────────
       if (oldVersion < 13) {
-        // Update all assessments: overhaul types and replace units with null
         const assessmentStore = transaction.objectStore('assessments')
         const allAssessments = await assessmentStore.getAll()
-        
         const oldTypes = new Set(['test', 'quiz', 'assignment', 'lab', 'other'])
-        
         for (const assessment of allAssessments) {
           let mutated = false
-          
-          // Overhaul type
           const currentType = (assessment.assessmentType || '').toLowerCase()
           if (oldTypes.has(currentType)) {
             assessment.assessmentType = 'product'
             mutated = true
           }
-          
-          // Clear unit field (from free text to null)
           if (assessment.unit !== null) {
             assessment.unit = null
             mutated = true
           }
-          
-          if (mutated) {
-            await assessmentStore.put(assessment)
-          }
+          if (mutated) await assessmentStore.put(assessment)
         }
-
-        // Update settings singleton version
         const settingsStore = transaction.objectStore('settings')
         const settings = await settingsStore.get('singleton')
         if (settings) {
@@ -369,10 +314,8 @@ export function getDB() {
 
       // ── version 14 migration ───────────────────────────────────────────────
       if (oldVersion < 14) {
-        // Add target and targetStudentId to all existing assessments
         const assessmentStore = transaction.objectStore('assessments')
         const allAssessments = await assessmentStore.getAll()
-        
         for (const assessment of allAssessments) {
           let mutated = false
           if (assessment.target === undefined) {
@@ -383,12 +326,8 @@ export function getDB() {
             assessment.targetStudentId = null
             mutated = true
           }
-          if (mutated) {
-            await assessmentStore.put(assessment)
-          }
+          if (mutated) await assessmentStore.put(assessment)
         }
-
-        // Update settings singleton version
         const settingsStore = transaction.objectStore('settings')
         const settings = await settingsStore.get('singleton')
         if (settings) {
@@ -414,8 +353,6 @@ export function getDB() {
             await tx15.put(plain)
           }
         }
-
-        // Update settings singleton version
         const settingsStore = transaction.objectStore('settings')
         const settings = await settingsStore.get('singleton')
         if (settings) {
@@ -423,19 +360,14 @@ export function getDB() {
           await settingsStore.put(settings, 'singleton')
         }
       }
-      // ── version 16 migration (Add by_classId index to grades) ─────────────
+
+      // ── version 16 migration ───────────────────────────────────────────────
       if (oldVersion < 16) {
         const gradeStore = transaction.objectStore('grades')
         const assessmentStore = transaction.objectStore('assessments')
-        
-        // 1. Fetch all assessments to build a map of association [id] -> classId
         const assessments = await assessmentStore.getAll()
         const assessmentClassMap = {}
-        for (const a of assessments) {
-          assessmentClassMap[a.assessmentId] = a.classId
-        }
-
-        // 2. Backfill classId into all existing grades
+        for (const a of assessments) assessmentClassMap[a.assessmentId] = a.classId
         const grades = await gradeStore.getAll()
         for (const g of grades) {
           const classId = assessmentClassMap[g.assessmentId]
@@ -444,13 +376,9 @@ export function getDB() {
             await gradeStore.put(g)
           }
         }
-
-        // 3. Add the index (if not already added by fresh install logic)
         if (!gradeStore.indexNames.contains('by_classId')) {
           gradeStore.createIndex('by_classId', 'classId')
         }
-
-        // 4. Update settings singleton version
         const settingsStore = transaction.objectStore('settings')
         const settings = await settingsStore.get('singleton')
         if (settings) {
@@ -459,19 +387,16 @@ export function getDB() {
         }
       }
 
-      // ── version 17 migration (Globalize milestones) ──────────────────────
+      // ── version 17 migration ───────────────────────────────────────────────
       if (oldVersion < 17) {
         const settingsStore = transaction.objectStore('settings')
         const classesStore = transaction.objectStore('classes')
-        
         const settings = await settingsStore.get('singleton')
         if (settings) {
           if (!settings.gradebookMilestones) settings.gradebookMilestones = []
-          
           const allClasses = await classesStore.getAll()
           const globalMilestones = []
           const seenNames = new Set()
-
           for (const cls of allClasses) {
             if (cls.gradebookMilestones && Array.isArray(cls.gradebookMilestones)) {
               for (const ms of cls.gradebookMilestones) {
@@ -481,39 +406,27 @@ export function getDB() {
                   seenNames.add(uniqueKey)
                 }
               }
-              // Optional: Clear per-class milestones to avoid confusion
-              // delete cls.gradebookMilestones
-              // await classesStore.put(cls)
             }
           }
-
-          // If no milestones existed but we are migrating, ensure we don't overwrite if settings already had some (e.g. from seed)
-          if (globalMilestones.length > 0) {
-            settings.gradebookMilestones = globalMilestones
-          }
-          
+          if (globalMilestones.length > 0) settings.gradebookMilestones = globalMilestones
           settings.schemaVersion = 17
           await settingsStore.put(settings, 'singleton')
         }
       }
-      // ── version 18 migration (Split behavior categories) ──────────────────
+
+      // ── version 18 migration ───────────────────────────────────────────────
       if (oldVersion < 18) {
         const settingsStore = transaction.objectStore('settings')
         const eventStore = transaction.objectStore('events')
-        
-        // 1. Update behavior codes in settings
         const settings = await settingsStore.get('singleton')
         if (settings && settings.behaviorCodes) {
           const codes = settings.behaviorCodes
           if (codes.w) codes.w.category = 'washroom'
           if (codes.a) codes.a.category = 'absence'
           if (codes.l) codes.l.category = 'late'
-          
           settings.schemaVersion = 18
           await settingsStore.put(settings, 'singleton')
         }
-
-        // 2. Update all historical events
         const events = await eventStore.getAll()
         for (const evt of events) {
           let mutated = false
@@ -527,10 +440,63 @@ export function getDB() {
             evt.category = 'late'
             mutated = true
           }
+          if (mutated) await eventStore.put(evt)
+        }
+      }
 
-          if (mutated) {
-            await eventStore.put(evt)
+      // ── version 19 migration (Unit IDs) ───────────────────────────────────
+      if (oldVersion < 19) {
+        const classesStore = transaction.objectStore('classes')
+        const assessmentStore = transaction.objectStore('assessments')
+        const allClasses = await classesStore.getAll()
+        const allAssessments = await assessmentStore.getAll()
+
+        for (const cls of allClasses) {
+          let classMutated = false
+          const units = cls.gradebookUnits || []
+          
+          // 1. Ensure all units are objects with unitId
+          const updatedUnits = units.map(unit => {
+            if (typeof unit === 'string') {
+              classMutated = true
+              return { unitId: crypto.randomUUID(), name: unit }
+            }
+            if (typeof unit === 'object' && unit !== null && !unit.unitId) {
+              classMutated = true
+              return { ...unit, unitId: crypto.randomUUID() }
+            }
+            return unit
+          })
+
+          if (classMutated) {
+            cls.gradebookUnits = updatedUnits
+            await classesStore.put(cls)
           }
+
+          if (updatedUnits.length === 0) continue
+
+          // 2. Map assessments to unitId if they have a legacy unit name
+          const classAssessments = allAssessments.filter(a => a.classId === cls.classId)
+          for (const assessment of classAssessments) {
+            if (assessment.unit && typeof assessment.unit === 'string') {
+              const matchedUnit = updatedUnits.find(u => 
+                typeof u === 'object' && u !== null && u.name === assessment.unit
+              )
+              
+              if (matchedUnit && matchedUnit.unitId) {
+                assessment.unitId = matchedUnit.unitId
+                delete assessment.unit
+                await assessmentStore.put(assessment)
+              }
+            }
+          }
+        }
+        
+        const settingsStore = transaction.objectStore('settings')
+        const settings = await settingsStore.get('singleton')
+        if (settings) {
+          settings.schemaVersion = 19
+          await settingsStore.put(settings, 'singleton')
         }
       }
     },

@@ -1174,7 +1174,7 @@ async function onDeleteUnit(unitId) {
   // Check if assessment exist for this unit
   const assessments = await gradebookService.getAssessmentsByClass(activeClass.value.classId)
   const unit = activeClass.value.gradebookUnits.find(u => u.unitId === unitId)
-  const inUse = assessments.some(a => a.unit === unit?.name)
+  const inUse = assessments.some(a => a.unitId === unitId)
   
   if (inUse) {
     window.alert(`Cannot delete unit "${unit?.name || 'this unit'}" because it has assessments assigned to it. Remove all assessments in this unit before deleting.`)

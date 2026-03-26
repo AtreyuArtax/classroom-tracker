@@ -67,9 +67,9 @@
                       <Target :size="14" />
                       <span>/{{ currentAssessment.totalPoints }}</span>
                     </div>
-                    <div v-if="currentAssessment.unit" class="grades__meta-item" title="Unit/Category">
+                    <div v-if="currentAssessment.unitId" class="grades__meta-item" title="Unit/Category">
                       <Hash :size="14" />
-                      <span>{{ currentAssessment.unit }}</span>
+                      <span>{{ getUnitName(currentAssessment.unitId) }}</span>
                     </div>
                     <div class="grades__meta-item" title="Date">
                       <Calendar :size="14" />
@@ -633,7 +633,7 @@
                         <span class="grades__assessment-name" :title="a.name">{{ a.name }}</span>
                         <div class="grades__assessment-meta">
                           <span class="grades__assessment-points">/{{ a.totalPoints }}</span>
-                          <span v-if="a.unit" class="grades__assessment-unit">{{ a.unit }}</span>
+                          <span v-if="a.unitId" class="grades__assessment-unit">{{ getUnitName(a.unitId) }}</span>
                         </div>
                       </div>
                       <button class="grades__header-menu-btn" @click.stop="onHeaderMenu($event, a)">
@@ -947,12 +947,12 @@
                 <div class="grades__form-group">
                   <label class="grades__label">Unit</label>
                   <select 
-                    v-model="newAssessment.unit" 
+                    v-model="newAssessment.unitId" 
                     class="grades__input"
                     :disabled="!activeClassRecord?.gradebookUnits?.length"
                   >
                     <option :value="null">Unassigned</option>
-                    <option v-for="u in sortedUnits" :key="u.unitId" :value="u.name">
+                    <option v-for="u in sortedUnits" :key="u.unitId" :value="u.unitId">
                       {{ u.name }}
                     </option>
                     <template v-if="!activeClassRecord?.gradebookUnits?.length">
@@ -1564,6 +1564,11 @@ const getCategoryName = (categoryId) => {
     .find(c => c.categoryId === categoryId)?.name ?? '—'
 }
 
+const getUnitName = (unitId) => {
+  return activeClassRecord.value?.gradebookUnits
+    ?.find(u => u.unitId === unitId)?.name ?? '—'
+}
+
 function formatGrade(grade) {
   if (grade === null || grade === undefined) return '—'
   return Math.round(grade * 10) / 10 + '%'
@@ -1796,7 +1801,7 @@ function startEditAssessment(assessment) {
     name: assessment.name,
     categoryId: assessment.categoryId,
     assessmentType: assessment.assessmentType,
-    unit: assessment.unit || '',
+    unitId: assessment.unitId || null,
     target: assessment.target || 'class',
     targetStudentId: assessment.targetStudentId || null,
     date: assessment.date,
