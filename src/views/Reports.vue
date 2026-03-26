@@ -413,6 +413,15 @@ watch(activeClass, (newClass, oldClass) => {
   }
 })
 const isSidebarCollapsed = ref(false)
+
+// Trigger global resize event when sidebar collapses/expands to fix Chart.js layout
+watch(isSidebarCollapsed, () => {
+  // Wait for the 0.3s CSS transition to complete
+  setTimeout(() => {
+    window.dispatchEvent(new Event('resize'))
+  }, 350)
+})
+
 /** 'dossier' | 'overview' */
 const rightMode      = ref('overview')
 

@@ -28,6 +28,9 @@ export default defineConfig({
 
             // Workbox configuration
             workbox: {
+                // Increase the default 2MB limit to 5MB to accommodate larger bundles
+                maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
+
                 // Cache ALL application routes and static assets
                 globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
 
@@ -81,4 +84,29 @@ export default defineConfig({
 
     // Base path — set to match the GitHub Pages repository name
     base: '/classroom-tracker/',
+
+    build: {
+        // Suppress warning for large chunks as we are managing them via manualChunks
+        chunkSizeWarningLimit: 1000,
+
+        rollupOptions: {
+            output: {
+                // Manual chunking to divide vendor libraries into separate files
+                manualChunks(id) {
+                    // Separate ExcelJS (heavy dependency) into its own chunk
+                    if (id.includes('exceljs')) {
+                        return 'vendor-excel'
+                    }
+                    // Separate Chart.js and related into their own chunk
+                    if (id.includes('chart.js') || id.includes('vue-chartjs')) {
+                        return 'vendor-charts'
+                    }
+                    // Separate all other node_modules into a general vendor chunk
+                    if (id.includes('node_modules')) {
+                        return 'vendor'
+                    }
+                }
+            }
+        }
+    }
 })

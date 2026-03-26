@@ -6,14 +6,16 @@
       Not enough data to show a trend. Log more events over multiple weeks.
     </div>
     
-    <div v-else class="trend__chart-wrap" style="height: 220px">
+    <div v-else class="trend__chart-wrap" ref="chartContainer" style="height: 220px">
       <Bar 
         v-if="period === 'week'"
+        ref="barChart"
         :data="chartData" 
         :options="chartOptions" 
       />
       <Line 
         v-else
+        ref="lineChart"
         :data="chartData" 
         :options="chartOptions" 
       />
@@ -22,7 +24,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { Line, Bar } from 'vue-chartjs'
 import {
   Chart as ChartJS,
@@ -36,6 +38,30 @@ const props = defineProps({
   weeklyTrend: { type: Array, required: true },
   categories:  { type: Array, required: true },
   period:      { type: String, required: true },
+})
+
+const chartContainer = ref(null)
+const barChart = ref(null)
+const lineChart = ref(null)
+
+let resizeObserver = null
+
+onMounted(() => {
+  if (chartContainer.value) {
+    resizeObserver = new ResizeObserver(() => {
+      const chart = barChart.value || lineChart.value
+      if (chart && chart.chart) {
+        chart.chart.resize()
+      }
+    })
+    resizeObserver.observe(chartContainer.value)
+  }
+})
+
+onUnmounted(() => {
+  if (resizeObserver) {
+    resizeObserver.disconnect()
+  }
 })
 
 const CATEGORY_COLOURS = {

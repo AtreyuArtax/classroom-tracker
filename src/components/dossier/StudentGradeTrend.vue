@@ -12,14 +12,14 @@
       Insufficient data to visualize a trend.
     </div>
     
-    <div v-else class="grade-trend__chart-wrap" :style="{ height: isPrint ? '150px' : '240px' }">
-      <Line :data="chartData" :options="chartOptions" />
+    <div v-else class="grade-trend__chart-wrap" ref="chartContainer" :style="{ height: isPrint ? '150px' : '240px' }">
+      <Line ref="lineChart" :data="chartData" :options="chartOptions" />
     </div>
   </div>
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { Line } from 'vue-chartjs'
 import {
   Chart as ChartJS,
@@ -40,6 +40,28 @@ const props = defineProps({
   gradeMap:    { type: Object, required: true },
   studentId:   { type: String, required: true },
   isPrint:     { type: Boolean, default: false }
+})
+
+const chartContainer = ref(null)
+const lineChart = ref(null)
+
+let resizeObserver = null
+
+onMounted(() => {
+  if (chartContainer.value && !props.isPrint) {
+    resizeObserver = new ResizeObserver(() => {
+      if (lineChart.value && lineChart.value.chart) {
+        lineChart.value.chart.resize()
+      }
+    })
+    resizeObserver.observe(chartContainer.value)
+  }
+})
+
+onUnmounted(() => {
+  if (resizeObserver) {
+    resizeObserver.disconnect()
+  }
 })
 
 /**

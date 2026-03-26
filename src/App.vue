@@ -71,12 +71,15 @@
  * Do NOT install or use vue-router.
  */
 
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, defineAsyncComponent } from 'vue'
 import { ClipboardList, LayoutDashboard, Settings, BarChart2, Cloud, CloudUpload, CloudCheck, CloudOff, GraduationCap } from 'lucide-vue-next'
-import Dashboard from './views/Dashboard.vue'
-import Setup     from './views/Setup.vue'
-import Reports   from './views/Reports.vue'
-import Grades    from './views/Grades.vue'
+
+// Lazy-load views to reduce initial bundle size
+const Dashboard = defineAsyncComponent(() => import('./views/Dashboard.vue'))
+const Setup     = defineAsyncComponent(() => import('./views/Setup.vue'))
+const Reports   = defineAsyncComponent(() => import('./views/Reports.vue'))
+const Grades    = defineAsyncComponent(() => import('./views/Grades.vue'))
+
 import { useClassroom } from './composables/useClassroom.js'
 import * as settingsService from './db/settingsService.js'
 import * as eventService from './db/eventService.js'
