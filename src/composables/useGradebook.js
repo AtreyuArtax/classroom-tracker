@@ -40,6 +40,17 @@ export const newAssessment = ref({
   retestPolicy: 'Highest'
 })
 
+export const assessmentTypes = [
+  { value: 'product', label: 'Product' },
+  { value: 'conversation', label: 'Conversation' },
+  { value: 'observation', label: 'Observation' }
+]
+
+export const sortedUnits = computed(() => {
+  if (!activeClassRecord.value?.gradebookUnits) return []
+  return [...activeClassRecord.value.gradebookUnits].sort((a, b) => (a.order || 0) - (b.order || 0))
+})
+
 // ─── Public API ──────────────────────────────────────────────────────────────
 
 /**
@@ -187,7 +198,7 @@ export function openAddAssessment(target = 'class', studentId = null) {
   newAssessment.value = {
     name: '',
     categoryId: activeClassRecord.value?.gradebookCategories?.[0]?.categoryId || '',
-    assessmentType: 'product',
+    assessmentType: (target === 'individual') ? 'conversation' : 'product',
     unitId: activeClassRecord.value?.gradebookUnits?.[0]?.unitId || null,
     target,
     targetStudentId: studentId,
@@ -204,6 +215,26 @@ export function openAddAssessment(target = 'class', studentId = null) {
  * Closes the Add Assessment modal.
  */
 export function closeAddAssessment() {
+  showAddAssessmentModal.value = false
+}
+
+export function onTargetChange() {
+  if (newAssessment.value.target === 'individual') {
+    newAssessment.value.assessmentType = 'conversation'
+  }
+}
+
+export async function saveAssessment() {
+  if (!newAssessment.value.name || !newAssessment.value.categoryId) return
+  
+  const data = { ...newAssessment.value }
+
+  if (isEditingAssessment.value) {
+    await editAssessment(currentAssessmentId.value, data)
+  } else {
+    await addAssessment(data)
+  }
+
   showAddAssessmentModal.value = false
 }
 
@@ -464,34 +495,6 @@ export async function saveStudentDemographics(studentId, demographics) {
   await saveClass(JSON.parse(JSON.stringify(activeClassRecord.value)))
 }
 
-/**
- * Fetches events and calculates basic stats for a student dossier.
- */
-export async function fetchStudentDossierData(studentId) {
-  const { getEventsByStudent } = await import('../db/eventService.js')
-  const events = await getEventsByStudent(studentId)
-  
-  const acEvents = events
-    .filter(e => e.code === 'ac')
-    .sort((a, b) => (b.timestamp || '').localeCompare(a.timestamp || ''))
-
-  const summary = {
-    absences: events.filter(e => e.code === 'a' && !e.superseded).length,
-    lates: events.filter(e => e.code === 'l').length
-  }
-
-  return { acEvents, summary }
-}
-
-
-/**
- * Deletes an event and refreshes grades.
- */
-export async function deleteGradebookEvent(eventId) {
-  const { deleteEvent } = await import('../db/eventService.js')
-  await deleteEvent(eventId)
-  await refreshGrades()
-}
 
 // ─── Computeds ───────────────────────────────────────────────────────────────
 

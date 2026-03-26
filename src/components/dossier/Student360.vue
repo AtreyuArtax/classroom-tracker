@@ -275,6 +275,17 @@
              </div>
           </div>
         </div>
+
+        <!-- Internal Gradebook Notes -->
+        <div class="student-360__gradebook-note">
+          <h3 class="academics-section__title">Internal Gradebook Notes</h3>
+          <textarea 
+            class="student-360__notes-area"
+            v-model="student.gradebookNote"
+            placeholder="Add private observations about this student's grading context..."
+            @blur="saveStudentGradebookNote(student.studentId, student.gradebookNote)"
+          ></textarea>
+        </div>
       </section>
 
       <!-- Timeline Tab -->
@@ -308,7 +319,8 @@
           <div class="profile-grid">
             <div class="profile-item">
               <span class="profile-item__label">Age / DOB</span>
-              <span class="profile-item__value">
+              <span class="profile-item__value" :class="{ 'profile-item__value--adult': isAdult }">
+                <ShieldCheck v-if="isAdult" :size="14" class="adult-icon" />
                 {{ student.birthDate ? `${computeAge(student.birthDate)} (${student.birthDate})` : '—' }}
               </span>
             </div>
@@ -668,7 +680,8 @@ import {
   CheckCircle2,
   ChevronRight,
   Printer,
-  Activity // Added Activity icon for preview
+  Activity, // Added Activity icon for preview
+  ShieldCheck // Added ShieldCheck icon
 } from 'lucide-vue-next'
 import DossierCategoryGrid from './DossierCategoryGrid.vue'
 import DossierEvidenceMix  from './DossierEvidenceMix.vue'
@@ -694,7 +707,8 @@ import {
   clearGrade,
   removeAttempt,
   setPrimaryAttempt,
-  deleteAssessment
+  deleteAssessment,
+  saveStudentGradebookNote
 } from '../../composables/useGradebook.js'
 import { getDateBoundary } from '../../db/eventService.js'
 
@@ -704,9 +718,10 @@ const props = defineProps({
 })
 
 const { 
-  students, 
+  students,
   behaviorCodes,
   activeClass,
+  activeStudentEvents,
   getStudentEventHistory,
   logStandardEvent,
 } = useClassroom()
@@ -863,12 +878,16 @@ const tabs = [
 ]
 
 // Data Fetching
-const events = ref([])
+const events = activeStudentEvents
 const behaviorCodesMap = computed(() => 
   Object.fromEntries(behaviorCodes.value.map(c => [c.codeKey, c]))
 )
 
 const student = computed(() => students.value[props.studentId] || {})
+const isAdult = computed(() => {
+  if (!student.value.birthDate) return false
+  return computeAge(student.value.birthDate) >= 18
+})
 const loading = ref(false)
 
 // Academic Data from useGradebook
@@ -1666,6 +1685,18 @@ onMounted(loadData)
 .profile-item__value {
   font-size: 0.9rem;
   color:     var(--text);
+  display:   flex;
+  align-items: center;
+  gap:       6px;
+}
+
+.profile-item__value--adult {
+  color: #b45309; /* Amber/Dark Orange */
+  font-weight: 700;
+}
+
+.adult-icon {
+  color: #f59e0b; /* Bright Amber */
 }
 
 .contacts-list {
@@ -1711,6 +1742,12 @@ onMounted(loadData)
   font-size:     0.9rem;
   resize:        vertical;
   color:         var(--text);
+}
+
+.student-360__gradebook-note {
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 2px solid var(--border-color-light);
 }
 
 .profile-actions {

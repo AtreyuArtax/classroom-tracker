@@ -55,6 +55,9 @@
       />
     </main>
 
+    <!-- ── Global Modals ────────────────────────────────────────────────── -->
+    <AddAssessmentModal />
+
   </div>
 </template>
 
@@ -81,6 +84,7 @@ const Reports   = defineAsyncComponent(() => import('./views/Reports.vue'))
 const Grades    = defineAsyncComponent(() => import('./views/Grades.vue'))
 
 import { useClassroom } from './composables/useClassroom.js'
+import AddAssessmentModal from './components/dossier/AddAssessmentModal.vue'
 import * as settingsService from './db/settingsService.js'
 import * as eventService from './db/eventService.js'
 import { hasUnsyncedChanges, getLastSyncedAt } from './db/eventService.js'

@@ -56,6 +56,9 @@ const teacherName = ref('')
 /** @type {import('vue').Ref<boolean>} Flag for special "Test Day" mode */
 export const isTestDay = ref(false)
 
+/** @type {import('vue').Ref<Array>} Events for the student currently in focus (Dossier) */
+const activeStudentEvents = ref([])
+
 // ─── computed ─────────────────────────────────────────────────────────────────
 
 /** Students sorted by last name for display in roster lists */
@@ -634,9 +637,12 @@ async function getAttendanceOnDate(studentId, date) {
 
 /**
  * Returns all behavior and attendance events for a student.
+ * Also synchronizes the reactive activeStudentEvents singleton.
  */
 async function getStudentEventHistory(studentId) {
-    return await eventService.getEventsByStudent(studentId)
+    const evs = await eventService.getEventsByStudent(studentId)
+    activeStudentEvents.value = evs
+    return evs
 }
 
 async function syncLateActiveState(classId, studentId, oldDuration, newDuration, eventTimestamp) {
@@ -799,6 +805,61 @@ async function logToggleEvent(studentId, code) {
             }
         })
     }
+}
+
+/**
+ * Update an existing event and sync reactive state.
+ */
+async function editEvent(eventId, updates) {
+    const db = await (await import('../db/index.js')).getDB()
+    const original = await db.get('events', eventId)
+    if (!original) return
+
+    await eventService.updateEvent(eventId, updates)
+
+    // Sync reactive stats if duration or code changed
+    if (updates.duration !== undefined || updates.code !== undefined) {
+        await computeWeeklyStats(activeClass.value.classId, Object.keys(students.value))
+    }
+
+    // Reactively update the active student events list if this event is in it
+    activeStudentEvents.value = activeStudentEvents.value.map(e => 
+        String(e.eventId) === String(eventId) ? { ...e, ...updates } : e
+    )
+
+    // Special case: if it was a late event from today, sync active state
+    if (original.code === 'l' && updates.duration !== undefined) {
+        await syncLateActiveState(original.classId, original.studentId, original.duration, updates.duration, original.timestamp)
+    }
+}
+
+/**
+ * Remove an event and sync reactive state.
+ */
+async function removeEvent(eventId) {
+    const db = await (await import('../db/index.js')).getDB()
+    const original = await db.get('events', eventId)
+    if (!original) return
+
+    await eventService.deleteEvent(eventId)
+
+    // Sync reactive stats
+    await computeWeeklyStats(activeClass.value.classId, Object.keys(students.value))
+
+    // Special case: if it was the active late/absent state, clear it
+    const st = students.value[original.studentId]
+    if (st && st.activeStates) {
+        if (original.code === 'a' && st.activeStates.isAbsent) {
+            await classService.clearStudentAbsent(original.classId, original.studentId)
+            st.activeStates.isAbsent = false
+        } else if (original.code === 'l' && st.activeStates.lateMinutes === original.duration) {
+            await classService.clearStudentLate(original.classId, original.studentId)
+            st.activeStates.lateMinutes = null
+        }
+    }
+
+    // Reactively remove from the active events list
+    activeStudentEvents.value = activeStudentEvents.value.filter(e => String(e.eventId) !== String(eventId))
 }
 
 // ─── grid resize ──────────────────────────────────────────────────────────────
@@ -975,6 +1036,7 @@ export function useClassroom() {
         gridSize,
         isTestDay,
         teacherName,
+        activeStudentEvents,
         // computed
         sortedRoster,
         unseatedStudents,
@@ -1000,6 +1062,8 @@ export function useClassroom() {
         logAssessmentEvent,
         getAttendanceOnDate,
         getStudentEventHistory,
+        editEvent,
+        removeEvent,
         checkResize,
         confirmResize,
         reloadBehaviorCodes,

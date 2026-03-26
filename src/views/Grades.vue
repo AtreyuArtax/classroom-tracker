@@ -879,118 +879,6 @@
           </div>
         </div>
 
-        <div v-if="showAddAssessmentModal" class="grades__modal-backdrop">
-          <div class="grades__modal" role="dialog" aria-modal="true">
-            <header class="grades__modal-header">
-              <h3 class="grades__modal-title">{{ isEditingAssessment ? 'Edit Assessment' : 'New Assessment' }}</h3>
-              <button class="grades__icon-btn" @click="closeAddAssessment"><X :size="20" /></button>
-            </header>
-            
-            <form class="grades__modal-form" @submit.prevent="saveAssessment">
-              <!-- Target Toggle (Step 2) -->
-              <div class="grades__form-group">
-                <label class="grades__label">Scope</label>
-                <div class="grades__toggle-group grades__toggle-group--large">
-                  <button 
-                    type="button" 
-                    class="grades__toggle-btn" 
-                    :class="{ 'grades__toggle-btn--active': newAssessment.target === 'class' }"
-                    @click="newAssessment.target = 'class'; onTargetChange()"
-                  >Class Assessment</button>
-                  <button 
-                    type="button" 
-                    class="grades__toggle-btn" 
-                    :class="{ 'grades__toggle-btn--active': newAssessment.target === 'individual' }"
-                    @click="newAssessment.target = 'individual'; onTargetChange()"
-                  >Individual Assessment</button>
-                </div>
-              </div>
-
-              <!-- Student Picker (Individual Only) -->
-              <div v-if="newAssessment.target === 'individual'" class="grades__form-group">
-                <label class="grades__label">Target Student</label>
-                <select v-model="newAssessment.targetStudentId" class="grades__input" required>
-                  <option :value="null" disabled>Select student...</option>
-                  <option v-for="s in sortedRoster" :key="s.studentId" :value="s.studentId">
-                    {{ s.lastName }}, {{ s.firstName }}
-                  </option>
-                </select>
-              </div>
-
-              <div class="grades__form-group">
-                <label class="grades__label">Name</label>
-                <input v-model="newAssessment.name" class="grades__input" placeholder="e.g. Unit 1 Test" required />
-              </div>
-
-              <div class="grades__form-row">
-                <div class="grades__form-group">
-                  <label class="grades__label">Category</label>
-                  <select v-model="newAssessment.categoryId" class="grades__input" required>
-                    <option v-for="cat in activeClassRecord.gradebookCategories" :key="cat.categoryId" :value="cat.categoryId">
-                      {{ cat.name }}
-                    </option>
-                  </select>
-                </div>
-                <div class="grades__form-group">
-                  <label class="grades__label">Type</label>
-                  <select v-model="newAssessment.assessmentType" class="grades__input" required>
-                    <option v-for="type in assessmentTypes" :key="type.value" :value="type.value">{{ type.label }}</option>
-                  </select>
-                </div>
-              </div>
-
-              <div class="grades__form-row">
-                <div class="grades__form-group">
-                  <label class="grades__label">Date</label>
-                  <input v-model="newAssessment.date" type="date" class="grades__input" required />
-                </div>
-                <div class="grades__form-group">
-                  <label class="grades__label">Unit</label>
-                  <select 
-                    v-model="newAssessment.unitId" 
-                    class="grades__input"
-                    :disabled="!activeClassRecord?.gradebookUnits?.length"
-                  >
-                    <option :value="null">Unassigned</option>
-                    <option v-for="u in sortedUnits" :key="u.unitId" :value="u.unitId">
-                      {{ u.name }}
-                    </option>
-                    <template v-if="!activeClassRecord?.gradebookUnits?.length">
-                      <option disabled value="">No units defined — add units in Setup</option>
-                    </template>
-                  </select>
-                </div>
-              </div>
-
-              <div class="grades__form-row">
-                <div class="grades__form-group">
-                  <label class="grades__label">Total Points</label>
-                  <input v-model.number="newAssessment.totalPoints" type="number" min="1" class="grades__input" required />
-                </div>
-                <div class="grades__form-group">
-                  <label class="grades__label">Scaled Total (Optional)</label>
-                  <input v-model.number="newAssessment.scaledTotal" type="number" min="1" class="grades__input" placeholder="Raw" />
-                </div>
-              </div>
-
-              <div class="grades__form-group">
-                <label class="grades__label">Retest Policy</label>
-                <select v-model="newAssessment.retestPolicy" class="grades__input">
-                  <option value="Highest">Highest Attempt</option>
-                  <option value="Latest">Latest Attempt</option>
-                  <option value="Average">Average of Attempts</option>
-                  <option value="Manual">Manual Selection</option>
-                </select>
-              </div>
-
-              <div class="grades__modal-actions">
-                <button type="button" class="grades__btn-ghost" @click="showAddModal = false">Cancel</button>
-                <button type="submit" class="grades__btn-primary">{{ isEditingAssessment ? 'Update Assessment' : 'Create Assessment' }}</button>
-              </div>
-            </form>
-          </div>
-        </div>
-
     </div>
 </template>
 
@@ -1024,8 +912,6 @@ import {
   saveStudentOverride,
   saveStudentGradebookNote,
   saveStudentDemographics,
-  fetchStudentDossierData,
-  deleteGradebookEvent,
   analyticsMode,
   excludeOutliers,
   classAnalytics,
@@ -1040,6 +926,10 @@ import {
   newAssessment,
   openAddAssessment,
   closeAddAssessment,
+  onTargetChange,
+  saveAssessment,
+  assessmentTypes,
+  sortedUnits,
   enterGrade,
   changeGrade
 } from '../composables/useGradebook.js'
@@ -1110,12 +1000,7 @@ const gridSortBy = ref('name') // 'name' | 'grade'
 const gridSortOrder = ref('asc') // 'asc' | 'desc'
 const showMissingModal = ref(false)
 
-const assessmentTypes = [
-  { value: 'product', label: 'Product' },
-  { value: 'conversation', label: 'Conversation' },
-  { value: 'observation', label: 'Observation' }
-]
-const newAssessmentLocal = reactive({}) // Removing local reactive to use the one from useGradebook
+// Removed local assessmentTypes & newAssessmentLocal
 
 watch(showAddAssessmentModal, (val) => {
   if (val) {
@@ -1228,9 +1113,6 @@ function getSparklinePath(data, width, height) {
   return d
 }
 
-const sortedUnits = computed(() => {
-  return activeClassRecord.value?.gradebookUnits || []
-})
 
 const studentEvidenceBalance = computed(() => {
   if (!selectedStudentId.value || !activeClassRecord.value) return null
@@ -1886,27 +1768,7 @@ async function onDeleteAttempt(attemptId) {
   }
 }
 
-// --- Assessment Modal Helpers ---
-function onTargetChange() {
-  if (newAssessment.target === 'individual') {
-    newAssessment.assessmentType = 'conversation'
-  }
-}
-
-// --- Assessment Modal ---
-async function saveAssessment() {
-  if (!newAssessment.value.name || !newAssessment.value.categoryId) return
-  
-  const data = { ...newAssessment.value }
-
-  if (isEditingAssessment.value) {
-    await editAssessment(currentAssessmentId.value, data)
-  } else {
-    await addAssessment(data)
-  }
-
-  showAddAssessmentModal.value = false
-}
+// Removed local saveAssessment & onTargetChange
 
 // --- Assessment View Methods ---
 function getStudentStatus(studentId) {
@@ -3620,10 +3482,10 @@ verall-trend {
   color: var(--text);
 }
 
-.grades__ath-student { width: 40%; }
-.grades__ath-score   { width: 150px; }
-.grades__ath-percent { width: 100px; text-align: center; }
-.grades__ath-status  { width: 150px; }
+.grades__ath-student { width: auto; }
+.grades__ath-score   { width: 140px; text-align: center !important; }
+.grades__ath-percent { width: 100px; text-align: center !important; }
+.grades__ath-status  { width: 150px; text-align: center !important; }
 
 .grades__atd-student { font-weight: 600; }
 .grades__atd-percent { text-align: center; font-weight: 500; }
@@ -3696,7 +3558,7 @@ verall-trend {
 }
 
 .grades__focused-view {
-  max-width: 1000px;
+  max-width: 850px;
   margin: 0 auto;
   width: 100%;
   display: flex;
@@ -3943,6 +3805,7 @@ verall-trend {
 .grades__atd-score {
   padding: 8px 16px;
   width: 140px;
+  text-align: center;
 }
 
 .grades__score-input-wrapper {
@@ -3958,8 +3821,8 @@ verall-trend {
   width: 100%;
   max-width: 60px;
   padding: 6px 8px;
-  background: transparent;
-  border: 1px solid transparent;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
   border-radius: var(--radius-md);
   font-size: 1rem;
   font-weight: 700;
@@ -4047,6 +3910,7 @@ verall-trend {
 .grades__atd-status {
   padding: 14px 16px;
   width: 140px;
+  text-align: center;
 }
 
 .grades__atd-actions {
