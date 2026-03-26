@@ -172,7 +172,7 @@ const props = defineProps({
     includeMedians: false,
     includeGradeTrend: true,
     includeTriangulation: false,
-    includeCategorySummary: false
+    includeCategorySummary: true
   }) },
   isBatch:   { type: Boolean, default: false }
 })

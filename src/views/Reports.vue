@@ -457,6 +457,7 @@ async function onSelectStudent(studentId) {
 // --- Batch Print Logic ---
 const showPrintModal = ref(false)
 const showPreview = ref(false)
+const isSystemPrinting = ref(false)
 
 // Watch for changes in isSystemPrinting to apply/remove print styles
 watch(isSystemPrinting, (newValue) => {
@@ -466,7 +467,7 @@ watch(isSystemPrinting, (newValue) => {
     document.body.classList.remove('is-printing')
   }
 })
-const isSystemPrinting = ref(false)
+
 const printConfig = reactive({
   includeAttendance: true,
   includeBehavior: false,
@@ -474,7 +475,7 @@ const printConfig = reactive({
   includeMedians: false,
   includeGradeTrend: true,
   includeTriangulation: false,
-  includeCategorySummary: false
+  includeCategorySummary: true
 })
 
 import { nextTick } from 'vue'
@@ -482,14 +483,19 @@ import { loadGradebook } from '../composables/useGradebook.js'
 
 async function triggerBatchPrint() {
   showPrintModal.value = false
+  isSystemPrinting.value = true
+  
   // Ensure all student dossiers are loaded or that ProgressReport can handle its own data.
   // We use loadGradebook to refresh the reactive state for the current class.
   if (reportClass.value) {
     await loadGradebook(reportClass.value)
   }
   
-  nextTick(() => {
+  nextTick(async () => {
+    // Give charts 1500ms to render properly on the now-visible canvas
+    await new Promise(resolve => setTimeout(resolve, 1500))
     window.print()
+    isSystemPrinting.value = false
   })
 }
 

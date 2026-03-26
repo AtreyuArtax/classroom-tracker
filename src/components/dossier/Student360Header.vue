@@ -205,8 +205,9 @@ const statusIcon = computed(() => {
 .dossier-header__actions {
   display:        flex;
   align-items:    center;
+  gap:            8px;
   border-left:    1px solid var(--border);
-  padding-left:   24px;
+  padding-left:   16px;
   margin-left:    8px;
   height:         40px;
 }

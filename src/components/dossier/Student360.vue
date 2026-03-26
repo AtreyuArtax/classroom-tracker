@@ -10,13 +10,13 @@
     >
       <template #actions>
         <button class="student-360__action-btn" title="Email Progress Report" @click="showEmailModal = true">
-          <Mail :size="20" />
+          <Mail :size="18" />
         </button>
         <button class="student-360__action-btn" title="Print Progress Report" @click="showPrintModal = true">
-          <Printer :size="20" />
+          <Printer :size="18" />
         </button>
         <button class="student-360__close-btn" @click="$emit('close')">
-          <X :size="20" />
+          <X :size="18" />
         </button>
       </template>
     </Student360Header>
@@ -795,6 +795,16 @@ function generateEmailLink() {
 const showPrintModal = ref(false)
 const showPrintPreview = ref(false)
 const isSystemPrinting = ref(false)
+
+// Watch for changes in isSystemPrinting to apply/remove print styles
+watch(isSystemPrinting, (newValue) => {
+  if (newValue) {
+    document.body.classList.add('is-printing')
+  } else {
+    document.body.classList.remove('is-printing')
+  }
+})
+
 const printConfig    = reactive({
   includeAttendance: true,
   includeBehavior: false,
@@ -802,7 +812,7 @@ const printConfig    = reactive({
   includeMedians: false,
   includeGradeTrend: true,
   includeTriangulation: false,
-  includeCategorySummary: false
+  includeCategorySummary: true
 })
 
 async function triggerPrint() {
@@ -2332,12 +2342,13 @@ onMounted(loadData)
   cursor: not-allowed;
 }
 
-.student-360__action-btn {
+.student-360__action-btn,
+.student-360__close-btn {
   background: var(--bg-secondary);
   border: 1px solid var(--border);
   color: var(--text-secondary);
-  padding: 8px;
-  border-radius: var(--radius-md);
+  padding: 6px;
+  border-radius: 8px;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -2345,10 +2356,11 @@ onMounted(loadData)
   transition: all 0.2s;
 }
 
-.student-360__action-btn:hover {
-  background: var(--primary-light);
-  color: var(--primary);
-  border-color: var(--primary-light);
+.student-360__action-btn:hover,
+.student-360__close-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text);
+  border-color: var(--text-secondary);
 }
 
 .recipient-empty {
