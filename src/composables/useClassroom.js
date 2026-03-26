@@ -691,14 +691,24 @@ async function syncLateActiveState(classId, studentId, oldDuration, newDuration,
  * @param {string} studentId
  * @param {string} code  The behavior code key
  * @param {string|null} [note]  Optional note text (from EventNoteModal for requiresNote codes)
+ * @param {Object} [options]  Optional settings like { timestamp }
  * @returns {Promise<void>}
  */
-async function logStandardEvent(studentId, code, note = null) {
+async function logStandardEvent(studentId, code, note = null, options = {}) {
     const classId = activeClass.value?.classId
-    const eventId = await eventService.logEvent({ studentId, classId, code, note })
+    const eventId = await eventService.logEvent({ 
+        studentId, 
+        classId, 
+        code, 
+        note,
+        _overrideTimestamp: options.timestamp 
+    })
 
     // Reactive update: store last event for desk tile flash
     students.value[studentId].lastEvent = { code, ts: Date.now() }
+
+    // Update event history immediately to reflect in UI (e.g. Student 360 Timeline)
+    await getStudentEventHistory(studentId)
 
     // Optimistic update for stats dot
     const category = behaviorCodes.value.find(c => c.codeKey === code)?.category

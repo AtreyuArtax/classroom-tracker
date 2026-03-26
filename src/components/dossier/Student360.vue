@@ -858,15 +858,29 @@ const absenceDate = ref(new Date().toISOString().split('T')[0])
 
 async function logAbsence() {
   if (!absenceDate.value) return
+  
+  // Duplicate check: see if an absence ('a' code) already exists for this date
+  const isDuplicate = events.value.some(ev => 
+    ev.code === 'a' && 
+    !ev.superseded && 
+    ev.timestamp.startsWith(absenceDate.value)
+  )
+
+  if (isDuplicate) {
+    alert(`An absence is already recorded for ${absenceDate.value}.`)
+    return
+  }
+
   try {
-    // Call existing logStandardEvent from useClassroom
+    // Call updated logStandardEvent with timestamp option
     await logStandardEvent(props.studentId, 'a', 'Past Absence Logged', { 
       timestamp: new Date(absenceDate.value + 'T12:00:00Z').toISOString() 
     })
     showAbsenceForm.value = false
-    // Refresh timeline if needed (StudentTimeline should handle it via watcher)
+    absenceDate.value = new Date().toISOString().split('T')[0] // Reset to today
   } catch (err) {
     console.error('Failed to log absence:', err)
+    alert('Failed to log absence. Please try again.')
   }
 }
 
@@ -1790,6 +1804,7 @@ onMounted(loadData)
 }
 
 .absence-input {
+  max-width: 220px;
   padding: 10px;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
