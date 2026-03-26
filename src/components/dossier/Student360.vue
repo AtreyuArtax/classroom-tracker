@@ -74,13 +74,24 @@
           />
         </div>
 
-        <!-- Behavior Trend Graph -->
-        <div class="student-360__trend-section">
-          <StudentTrendGraph 
-            :weekly-trend="behaviorWeeklyTrend"
-            :categories="['washroom', 'absence', 'late']"
-            :period="selectedPeriod"
-          />
+        <!-- Trends Section (Side-by-Side) -->
+        <div class="student-360__trends-row">
+          <div class="trend-item">
+            <h4 class="trend-item__title">Grade Performance</h4>
+            <StudentGradeTrend 
+              :assessments="allDossierAssessments" 
+              :grade-map="gradeMap" 
+              :student-id="props.studentId" 
+            />
+          </div>
+          <div class="trend-item">
+            <h4 class="trend-item__title">Behavior Trend</h4>
+            <StudentTrendGraph 
+              :weekly-trend="behaviorWeeklyTrend"
+              :categories="['washroom', 'absence', 'late']"
+              :period="selectedPeriod"
+            />
+          </div>
         </div>
 
         <!-- Coaching Insight Alert -->
@@ -105,17 +116,82 @@
         </div>
 
         <div class="academics-section">
-          <StudentGradeTrend 
-            :assessments="allDossierAssessments" 
-            :grade-map="gradeMap" 
-            :student-id="props.studentId" 
-          />
-        </div>
-
-        <div class="academics-section">
           <DossierEvidenceMix :mix="evidenceMix" />
         </div>
 
+        <!-- Class Assessments (Priority First) -->
+        <div class="academics-section">
+          <h3 class="academics-section__title">Class Assessments</h3>
+          <div class="academics-table-wrapper">
+            <table class="academics-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Assessment</th>
+                  <th>Type</th>
+                  <th>Impact</th>
+                  <th>Points</th>
+                  <th>%</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="a in classAssessments" :key="a.assessmentId" @contextmenu.prevent="onContextMenu($event, a.assessmentId)">
+                  <td class="td-date">{{ new Date(a.date).toLocaleDateString([], { month: 'short', day: 'numeric' }) }}</td>
+                  <td class="td-name">{{ a.name }}</td>
+                  <td><span class="badge" :class="'badge--' + a.assessmentType">{{ a.assessmentType }}</span></td>
+                  <td>
+                    <span 
+                      class="impact-badge" 
+                      :class="'impact-badge--' + getImpactLevel(a.weight).id"
+                      :title="'Weight: ' + (a.weight || 1)"
+                    >
+                      {{ getImpactLevel(a.weight).label }}
+                    </span>
+                  </td>
+                  <td class="td-score">
+                    <div class="score-cell-wrapper">
+                        <!-- Inline Edit Mode -->
+                        <template v-if="editingCell?.assessmentId === a.assessmentId">
+                          <input 
+                            type="number" 
+                            v-model="editInput" 
+                            class="cell-edit-input"
+                            @blur="saveEdit"
+                            @keydown="handleCellKey"
+                          />
+                        </template>
+                        
+                        <!-- Visual Display Mode -->
+                        <template v-else>
+                          <div v-if="a.missing" class="score-missing" @click="startEdit(a.assessmentId)">
+                            <span class="text-danger">Missing</span>
+                            <span v-if="a.wasAbsent" class="badge-red-a" title="Absent on this date">A</span>
+                          </div>
+                          <span v-else-if="a.excluded" class="text-muted" @click="startEdit(a.assessmentId)">EX</span>
+                          <span v-else class="score-value" @click="startEdit(a.assessmentId)">
+                            {{ a.score }} / {{ a.totalPoints }}
+                          </span>
+                          
+                          <!-- Multiple Attempts Indicator -->
+                          <div 
+                            v-if="gradeMap[a.assessmentId]?.[props.studentId]?.attempts?.length > 1"
+                            class="attempts-dot"
+                            @click.stop="openAttempts($event, a.assessmentId)"
+                            title="Multiple attempts - click to view history"
+                          ></div>
+                        </template>
+                      </div>
+                  </td>
+                  <td class="td-percent" :style="{ color: getGradeColor((a.score / a.totalPoints) * 100) }">
+                    {{ a.score !== null ? Math.round((a.score / a.totalPoints) * 100) + '%' : 'N/A' }}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Individual Assessments (Secondary) -->
         <div class="academics-section">
           <div class="academics-section__header">
             <h3 class="academics-section__title">Individual Assessments</h3>
@@ -130,6 +206,7 @@
                    <th>Date</th>
                    <th>Assessment</th>
                    <th>Type</th>
+                   <th>Impact</th>
                    <th>Points</th>
                    <th>%</th>
                  </tr>
@@ -139,6 +216,15 @@
                    <td class="td-date">{{ new Date(a.date).toLocaleDateString([], { month: 'short', day: 'numeric' }) }}</td>
                    <td class="td-name">{{ a.name }}</td>
                    <td><span class="badge" :class="'badge--' + a.assessmentType">{{ a.assessmentType }}</span></td>
+                   <td>
+                     <span 
+                       class="impact-badge" 
+                       :class="'impact-badge--' + getImpactLevel(a.weight).id"
+                       :title="'Weight: ' + (a.weight || 1)"
+                     >
+                       {{ getImpactLevel(a.weight).label }}
+                     </span>
+                   </td>
                    <td class="td-score">
                      <div class="score-cell-wrapper">
                         <!-- Inline Edit Mode -->
@@ -181,67 +267,6 @@
              <div v-else class="academics-empty-state">
                No student-specific assessments. Click "Add Task" to create one.
              </div>
-          </div>
-        </div>
-
-        <div class="academics-section">
-          <h3 class="academics-section__title">Class Assessments</h3>
-          <div class="academics-table-wrapper">
-            <table class="academics-table">
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>Assessment</th>
-                  <th>Type</th>
-                  <th>Points</th>
-                  <th>%</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="a in classAssessments" :key="a.assessmentId" @contextmenu.prevent="onContextMenu($event, a.assessmentId)">
-                  <td class="td-date">{{ new Date(a.date).toLocaleDateString([], { month: 'short', day: 'numeric' }) }}</td>
-                  <td class="td-name">{{ a.name }}</td>
-                  <td><span class="badge" :class="'badge--' + a.assessmentType">{{ a.assessmentType }}</span></td>
-                  <td class="td-score">
-                    <div class="score-cell-wrapper">
-                        <!-- Inline Edit Mode -->
-                        <template v-if="editingCell?.assessmentId === a.assessmentId">
-                          <input 
-                            type="number" 
-                            v-model="editInput" 
-                            class="cell-edit-input"
-                            @blur="saveEdit"
-                            @keydown="handleCellKey"
-                          />
-                        </template>
-                        
-                        <!-- Visual Display Mode -->
-                        <template v-else>
-                          <div v-if="a.missing" class="score-missing" @click="startEdit(a.assessmentId)">
-                            <span class="text-danger">Missing</span>
-                            <span v-if="a.wasAbsent" class="badge-red-a" title="Absent on this date">A</span>
-                          </div>
-                          <span v-else-if="a.excluded" class="text-muted" @click="startEdit(a.assessmentId)">EX</span>
-                          <span v-else class="score-value" @click="startEdit(a.assessmentId)">
-                            {{ a.score }} / {{ a.totalPoints }}
-                          </span>
-                          
-                          <!-- Multiple Attempts Indicator -->
-                          <div 
-                            v-if="gradeMap[a.assessmentId]?.[props.studentId]?.attempts?.length > 1"
-                            class="attempts-dot"
-                            @click.stop="openAttempts($event, a.assessmentId)"
-                            title="Multiple attempts - click to view history"
-                          ></div>
-                        </template>
-                      </div>
-                  </td>
-                  <td class="td-percent" :style="{ color: getGradeColor((a.score / a.totalPoints) * 100) }">
-                    {{ a.score !== null ? Math.round((a.score / a.totalPoints) * 100) + '%' : 'N/A' }}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
           </div>
         </div>
       </section>
@@ -351,6 +376,10 @@
         </button>
         <button class="context-menu__item" @click="toggleExcluded(contextMenu.assessmentId)">
           <XCircle :size="14" /> {{ gradeMap[contextMenu.assessmentId]?.[studentId]?.excluded ? 'Unmark Excluded' : 'Mark Excluded' }}
+        </button>
+        <div class="context-menu__divider"></div>
+        <button class="context-menu__item text-danger" @click="doDeleteAssessment(contextMenu.assessmentId)">
+          <Trash2 :size="14" /> Delete Assessment
         </button>
       </div>
     </div>
@@ -473,7 +502,8 @@ import {
   markExcluded,
   clearGrade,
   removeAttempt,
-  setPrimaryAttempt
+  setPrimaryAttempt,
+  deleteAssessment
 } from '../../composables/useGradebook.js'
 import { getDateBoundary } from '../../db/eventService.js'
 
@@ -847,15 +877,29 @@ function cancelEdit() {
 }
 
 function onContextMenu(e, assessmentId) {
-  // Simple viewport-aware positioning
-  const x = e.clientX
-  const y = e.clientY
+  const menuWidth  = 200
+  const menuHeight = 280
+  
+  let x = e.clientX
+  let y = e.clientY
+  
+  // Viewport-aware positioning
+  if (x + menuWidth > window.innerWidth)   x = Math.max(10, window.innerWidth - menuWidth - 20)
+  if (y + menuHeight > window.innerHeight) y = Math.max(10, window.innerHeight - menuHeight - 20)
+  
   contextMenu.value = { x, y, assessmentId }
 }
 
 function openAttempts(e, assessmentId) {
-  const x = e.clientX
-  const y = e.clientY
+  const popoverWidth  = 200
+  const popoverHeight = 300
+  
+  let x = e.clientX
+  let y = e.clientY
+  
+  if (x + popoverWidth > window.innerWidth)   x = Math.max(10, window.innerWidth - popoverWidth - 20)
+  if (y + popoverHeight > window.innerHeight) y = Math.max(10, window.innerHeight - popoverHeight - 20)
+  
   attemptsPopover.value = { x, y, assessmentId }
 }
 
@@ -868,6 +912,27 @@ async function toggleMissing(assessmentId) {
 async function toggleExcluded(assessmentId) {
   const g = gradeMap.value[assessmentId]?.[props.studentId]
   await markExcluded(assessmentId, props.studentId, !g?.excluded)
+  contextMenu.value = null
+}
+
+async function doDeleteAssessment(assessmentId) {
+  const assessment = assessments.value.find(a => a.assessmentId === assessmentId)
+  if (!assessment) {
+    contextMenu.value = null
+    return
+  }
+  
+  const typeLabel = assessment.target === 'individual' ? 'individual assessment' : 'class-wide assessment'
+  const warning = assessment.target === 'class' 
+    ? '\n\nWARNING: This is a class-wide assessment. Deleting it will remove it for ALL students in this class.'
+    : ''
+    
+  if (!confirm(`Are you sure you want to delete this ${typeLabel}?${warning}`)) {
+    contextMenu.value = null
+    return
+  }
+  
+  await deleteAssessment(assessmentId)
   contextMenu.value = null
 }
 
@@ -895,6 +960,13 @@ async function doDeleteAttempt(assessmentId, attemptId) {
 
 async function doSetPrimary(assessmentId, attemptId) {
   await setPrimaryAttempt(assessmentId, props.studentId, attemptId)
+}
+
+function getImpactLevel(weight) {
+  const w = weight || 1
+  if (w >= 10) return { id: 'high', label: 'High' }
+  if (w >= 3)  return { id: 'med',  label: 'Med'  }
+  return { id: 'low',  label: 'Low'  }
 }
 
 async function onArrowKey(direction) {
@@ -1026,7 +1098,7 @@ onMounted(loadData)
 .student-360__pane {
   display:        flex;
   flex-direction: column;
-  gap:            24px;
+  gap:            16px;
 }
 
 .student-360__stats-grid {
@@ -1067,8 +1139,77 @@ onMounted(loadData)
   box-shadow: var(--shadow-sm);
 }
 
+/* ── Trends Row ─────────────────────────────────────────────────────────── */
+.student-360__trends-row {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+.trend-item {
+  flex: 1;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+}
+
+.trend-item__title {
+  margin: 0 0 12px 0;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.student-360__trends-row :deep(.grade-trend) {
+  margin-top: 0;
+  border: none;
+  padding: 0;
+}
+
+.student-360__trends-row :deep(.student-trend-graph) {
+  border: none;
+  padding: 0;
+  background: transparent;
+}
+
+/* ── Impact Badges ──────────────────────────────────────────────────────── */
+.impact-badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.impact-badge--high {
+  background: #fff0f0;
+  color: #d70015;
+}
+
+.impact-badge--med {
+  background: #fdf8f0;
+  color: #9f6600;
+}
+
+.impact-badge--low {
+  background: #f0f7ff;
+  color: #0056b3;
+}
+
+@media (max-width: 1024px) {
+  .student-360__trends-row {
+    flex-direction: column;
+  }
+}
+
 .academics-section {
-  margin-bottom: 32px;
+  margin-bottom: 8px;
 }
 
 .academics-section__header {

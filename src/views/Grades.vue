@@ -2,73 +2,20 @@
   <div class="grades">
     <div class="grades__layout">
       
-      <!-- Left Sidebar (Dossier Mode only) -->
-      <aside v-if="selectedStudentId && !isLoading && !isSidebarCollapsed" class="grades__sidebar">
-        <!-- Sidebar Header with Class Selector -->
-        <div class="grades__sidebar-header">
-          <ClassSwitcher @navigate="$emit('navigate', $event)" />
-          <div class="grades__sidebar-actions">
-            <button 
-              class="grades__icon-btn" 
-              :title="isPrivacyMode ? 'Show Grades' : 'Privacy Mode'"
-              @click="isPrivacyMode = !isPrivacyMode"
-            >
-              <Eye v-if="!isPrivacyMode" :size="16" />
-              <EyeOff v-else :size="16" />
-            </button>
-            <button 
-              class="grades__icon-btn" 
-              title="Collapse Sidebar"
-              @click="isSidebarCollapsed = true"
-            >
-              <ChevronLeft :size="16" />
-            </button>
-          </div>
-        </div>
-
-        <!-- Student List -->
-        <div class="grades__roster-container">
-          <ul class="grades__roster">
-            <li 
-              v-for="student in sortedRoster" 
-              :key="student.studentId"
-              class="grades__roster-item"
-              :class="{ 'grades__roster-item--active': selectedStudentId === student.studentId }"
-              @click="showStudentDossier(student.studentId)"
-            >
-                <div class="grades__roster-info">
-                  <div class="grades__roster-name-group">
-                    <span class="grades__roster-name">{{ student.lastName }}, {{ student.firstName }}</span>
-                    <div class="grades__sparkline-mini" v-if="studentTrends[student.studentId]?.length > 1 && !isPrivacyMode">
-                      <svg width="60" height="12" viewBox="0 0 60 12">
-                        <path
-                          fill="none"
-                          :stroke="getGradeColor(studentTrends[student.studentId][studentTrends[student.studentId].length - 1])"
-                          stroke-width="1.5"
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          :d="getSparklinePath(studentTrends[student.studentId], 60, 12)"
-                        />
-                      </svg>
-                    </div>
-                  </div>
-                <span 
-                  v-if="classGrades[student.studentId]" 
-                  class="grades__roster-grade"
-                  :style="{ color: isPrivacyMode ? 'var(--text-secondary)' : getGradeColor(classGrades[student.studentId].overallGrade) }"
-                >
-                  <template v-if="isPrivacyMode">**</template>
-                  <template v-else>{{ formatGrade(classGrades[student.studentId].overallGrade) }}</template>
-                </span>
-                <span v-else class="grades__roster-grade grades__roster-grade--empty">
-                  —
-                </span>
-              </div>
-            </li>
-          </ul>
-        </div>
-
-      </aside>
+      <StudentSidebar 
+        v-if="selectedStudentId && !isLoading"
+        :students="sortedRoster"
+        :selected-student-id="selectedStudentId"
+        :show-academics="true"
+        :is-privacy-mode="isPrivacyMode"
+        :class-grades="classGrades"
+        :student-trends="studentTrends"
+        :is-collapsed="isSidebarCollapsed"
+        @select-student="showStudentDossier"
+        @navigate="$emit('navigate', $event)"
+        @toggle-privacy="isPrivacyMode = !isPrivacyMode"
+        @toggle-collapse="isSidebarCollapsed = !isSidebarCollapsed"
+      />
 
       <!-- Main Panel -->
       <main class="grades__main">
@@ -1098,6 +1045,7 @@ import {
 } from '../composables/useGradebook.js'
 import { Plus, BarChart2, Settings, Pencil, XCircle, AlertCircle, Trash2, X, MoreVertical, ArrowLeft, Check, ArrowUp, ArrowDown, Minus, GraduationCap, Eye, EyeOff, ChevronLeft, ChevronRight, UserCheck, Activity, FilePlus, Target, Hash, Calendar, Award, AlertTriangle, ChevronUp, ChevronDown } from 'lucide-vue-next'
 import Student360 from '../components/dossier/Student360.vue'
+import StudentSidebar from '../components/StudentSidebar.vue'
 import GradeTrendChart from '../components/GradeTrendChart.vue'
 import {
   Chart as ChartJS,
@@ -1200,14 +1148,15 @@ const sortedRoster = computed(() => {
     }))
 
   return students.sort((a, b) => {
-    let result = 0
-    if (gridSortBy.value === 'name') {
-      result = a.lastName.localeCompare(b.lastName)
-    } else if (gridSortBy.value === 'grade') {
-      result = a.overallGrade - b.overallGrade
+    if (gridSortBy.value === 'grade') {
+      const gA = a.overallGrade
+      const gB = b.overallGrade
+      return gridSortOrder.value === 'asc' ? gA - gB : gB - gA
     }
-    
-    return gridSortOrder.value === 'asc' ? result : -result
+    const nameA = a.lastName.toLowerCase()
+    const nameB = b.lastName.toLowerCase()
+    if (gridSortOrder.value === 'asc') return nameA.localeCompare(nameB)
+    return nameB.localeCompare(nameA)
   })
 })
 
@@ -2109,174 +2058,6 @@ watch(selectedAssessmentId, (val) => {
   min-width: 0; /* Ensure layout doesn't push beyond parent */
 }
 
-/* ── Sidebar ────────────────────────────────────────────────────────── */
-.grades__sidebar {
-  width: 210px;
-  background: var(--surface);
-  border-right: 1px solid var(--border);
-  display: flex;
-  flex-direction: column;
-  overflow: visible;
-  transition: all 0.3s ease;
-}
-
-.grades__sidebar-section {
-  padding: 16px;
-  border-bottom: 1px solid var(--border);
-}
-
-.grades__sidebar-label {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.grades__sidebar-title {
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-bottom: 12px;
-}
-
-.grades__input--sidebar {
-  width: 100%;
-  padding: 8px 12px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  background: var(--bg-secondary);
-  font-size: 0.9rem;
-  font-family: inherit;
-}
-
-.grades__no-data {
-  font-size: 0.8rem;
-  color: var(--text-secondary);
-  font-style: italic;
-  line-height: 1.4;
-}
-
-.grades__category-list {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.grades__category-item {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.75rem;
-  color: var(--text-secondary);
-}
-
-.grades__category-weight {
-  font-weight: 600;
-}
-
-/* ── Milestones ─────────────────────────────────────────────────────── */
-.grades__milestone-row {
-  display: flex;
-  background: var(--bg-secondary);
-  padding: 2px;
-  border-radius: var(--radius-sm);
-  gap: 2px;
-}
-
-.grades__milestone-btn {
-  flex: 1;
-  padding: 6px 4px;
-  border: none;
-  background: transparent;
-  border-radius: calc(var(--radius-sm) - 2px);
-  font-size: 0.7rem;
-  font-weight: 500;
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: all 0.2s ease;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.grades__milestone-btn--active {
-  background: var(--surface);
-  color: var(--primary);
-  box-shadow: var(--shadow-sm);
-  font-weight: 700;
-}
-
-/* ── Student List ───────────────────────────────────────────────────── */
-.grades__roster-container {
-  flex: 1;
-  overflow-y: auto;
-}
-
-.grades__roster {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.grades__roster-item {
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--border);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  cursor: pointer;
-  transition: background 0.15s ease;
-}
-
-.grades__roster-item:hover {
-  background: var(--bg-secondary);
-}
-
-.grades__roster-item--active {
-  background: var(--primary-light);
-  border-left: 4px solid var(--primary);
-  padding-left: 12px;
-}
-
-.grades__roster-name {
-  font-size: 0.85rem;
-  font-weight: 500;
-  color: var(--text);
-}
-
-.grades__roster-grade {
-  font-size: 0.85rem;
-  font-weight: 700;
-}
-
-.grades__roster-grade--empty {
-  color: var(--text-secondary);
-  font-weight: 400;
-}
-
-.grades__manage-link {
-  padding: 12px;
-  border: none;
-  background: transparent;
-  color: var(--text-secondary);
-  font-size: 0.75rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  cursor: pointer;
-  border-top: 1px solid var(--border);
-}
-
-.grades__manage-link:hover {
-  color: var(--primary);
-  background: var(--bg-secondary);
-}
 
 /* ── Main Panel ─────────────────────────────────────────────────────── */
 .grades__dossier-container {
@@ -2834,20 +2615,6 @@ verall-trend {
   gap: 16px;
 }
 
-.grades__sidebar-header {
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--border);
-  background: var(--bg-primary);
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.grades__sidebar-actions {
-  display: flex;
-  gap: 8px;
-  justify-content: flex-end;
-}
 
 .grades__toolbar-center {
   display: flex;

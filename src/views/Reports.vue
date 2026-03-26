@@ -3,33 +3,15 @@
     <div class="reports__layout">
 
       <!-- ══ LEFT SIDEBAR ══════════════════════════════════════════════ -->
-      <aside class="reports__sidebar">
-
-        <!-- Class selector -->
-        <div class="reports__sidebar-header">
-          <ClassSwitcher @navigate="$emit('navigate', $event)" />
-        </div>
-
-        <!-- Mobile toggle -->
-        <button class="reports__roster-toggle" @click="rosterOpen = !rosterOpen">
-          {{ rosterOpen ? '▲ Hide Students' : '▼ Show Students' }}
-        </button>
-
-        <!-- Student roster list -->
-        <ul class="reports__roster" :class="{ 'reports__roster--open': rosterOpen }">
-          <li
-            v-for="s in sidebarStudents"
-            :key="s.studentId"
-            class="reports__roster-item"
-            :class="{ 'reports__roster-item--active': dossier.selectedStudentId.value === s.studentId && rightMode === 'dossier' }"
-            @click="onSelectStudent(s.studentId)"
-          >
-            {{ s.lastName }}, {{ s.firstName }}
-          </li>
-          <li v-if="sidebarStudents.length === 0" class="reports__roster-empty">No students</li>
-        </ul>
-
-      </aside>
+      <StudentSidebar 
+        :students="sidebarStudents"
+        :selected-student-id="dossier.selectedStudentId.value"
+        :show-academics="false"
+        :is-collapsed="isSidebarCollapsed"
+        @select-student="onSelectStudent"
+        @navigate="$emit('navigate', $event)"
+        @toggle-collapse="isSidebarCollapsed = !isSidebarCollapsed"
+      />
 
       <!-- ══ RIGHT PANEL ════════════════════════════════════════════════ -->
       <main class="reports__main">
@@ -238,6 +220,7 @@ import { useStudentDossier }   from '../composables/useStudentDossier.js'
 import { useUndo }             from '../composables/useUndo.js'
 import * as eventService       from '../db/eventService.js'
 import Student360            from '../components/dossier/Student360.vue'
+import StudentSidebar        from '../components/StudentSidebar.vue'
 import StudentTrendGraph       from '../components/StudentTrendGraph.vue'
 import ClassSwitcher           from '../components/ClassSwitcher.vue'
 import { calculateClassGrades } from '../db/gradebookService.js'
@@ -306,8 +289,7 @@ watch(activeClass, (newClass, oldClass) => {
     runReport()
   }
 })
-/** Whether the roster list is visible (mobile toggle) */
-const rosterOpen     = ref(true)
+const isSidebarCollapsed = ref(false)
 /** 'dossier' | 'overview' */
 const rightMode      = ref('overview')
 
@@ -403,15 +385,6 @@ async function editEvent(evt) {
     if (evt.code === 'l') {
         await syncLateActiveState(evt.classId, evt.studentId, evt.oldDuration, evt.newDuration)
     }
-    
-    // Push the inverse onto the undo stack
-    pushUndo(async () => {
-      await eventService.updateEvent(evt.eventId, { duration: evt.oldDuration })
-      if (evt.code === 'l') {
-          await syncLateActiveState(evt.classId, evt.studentId, evt.newDuration, evt.oldDuration)
-      }
-      await dossier.loadStudent(sidebarClassId.value, dossier.selectedStudentId.value)
-    })
     
     // Refresh dossier safely
     await dossier.loadStudent(sidebarClassId.value, dossier.selectedStudentId.value)
@@ -915,95 +888,6 @@ const washroomChartOptions = {
   }
 }
 
-/* ── Sidebar ─────────────────────────────────────────────────────── */
-.reports__sidebar {
-  background:    var(--surface);
-  border-right:  none;
-  border-bottom: 1px solid var(--border);
-  display:       flex;
-  flex-direction: column;
-  flex-shrink:   0;
-  z-index:       10;
-}
-
-@media (min-width: 768px) {
-  .reports__sidebar {
-    width:         240px;
-    border-right:  1px solid var(--border);
-    border-bottom: none;
-  }
-}
-
-.reports__sidebar-header {
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--border);
-  background: var(--bg-primary);
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.reports__sidebar-section {
-  padding:       16px;
-  border-bottom: 1px solid var(--border);
-}
-
-.reports__roster-toggle {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 16px;
-  background: var(--surface);
-  border: none;
-  border-bottom: 1px solid var(--border);
-  width: 100%;
-  font-weight: 600;
-  color: var(--primary);
-  font-size: 0.9rem;
-  cursor: pointer;
-}
-
-@media (min-width: 768px) {
-  .reports__roster-toggle { display: none; }
-}
-
-.reports__roster {
-  list-style: none;
-  margin:     0;
-  padding:    0;
-  overflow-y: auto;
-  flex:       1;
-  display:    none;
-}
-
-.reports__roster--open {
-  display: block;
-}
-
-@media (min-width: 768px) {
-  .reports__roster { display: block; }
-}
-
-.reports__roster-item {
-  padding:       12px 16px;
-  font-size:     0.95rem;
-  color:         var(--text);
-  cursor:        pointer;
-  border-left:   3px solid transparent;
-  border-bottom: 1px solid var(--bg-secondary);
-  transition:    background 0.15s, border-color 0.15s;
-}
-
-.reports__roster-item:hover {
-  background: var(--bg-secondary);
-}
-
-.reports__roster-item--active {
-  background:   var(--primary-light);
-  border-left:  3px solid var(--primary);
-  font-weight:  600;
-  color:        var(--primary-dark);
-}
 
 /* ── Main Panel ──────────────────────────────────────────────────── */
 .reports__main {
