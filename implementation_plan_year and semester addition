@@ -1,0 +1,76 @@
+# Year and Semester Support Implementation Plan
+
+Implement a robust Year and Semester management system for the Classroom Tracker, enabling historical data retention, automated term detection, and seamless roster importing from board CSVs.
+
+## User Review Required
+> [!IMPORTANT]
+> **Schema Migration**: This requires a database version bump (v19). Existing classes will be assigned to a default "Current" year/semester (e.g., 2025-26, Sem 2) during migration.
+> [!WARNING]
+> **Roster Import Conflicts**: The system will use the board's `studentId` as the unique anchor. If a student appears in multiple classes across years, their history will be aggregated under this ID.
+
+---
+
+## Stage 1: Database Foundation & Schema
+**Goal**: Prepare the data layer to support multi-term scoping.
+
+#### [MODIFY] [index.js](file:///c:/Users/kstashuk/OneDrive%20-%20Simcoe%20County%20District%20School%20Board/Courses/TOOLS/classroom_tracker/src/db/index.js)
+- Increment `DB_VERSION` to 19.
+- In the [upgrade](file:///c:/Users/kstashuk/OneDrive%20-%20Simcoe%20County%20District%20School%20Board/Courses/TOOLS/classroom_tracker/src/db/index.js#37-503) callback, add `year` and `semester` indices to the `classes` store.
+- Implement migration logic to populate these fields for existing "Active" and "Archived" classes.
+
+#### [MODIFY] [classService.js](file:///c:/Users/kstashuk/OneDrive%20-%20Simcoe%20County%20District%20School%20Board/Courses/TOOLS/classroom_tracker/src/db/classService.js)
+- Update [createClass](file:///c:/Users/kstashuk/OneDrive%20-%20Simcoe%20County%20District%20School%20Board/Courses/TOOLS/classroom_tracker/src/composables/useClassroom.js#313-332) and [saveClass](file:///c:/Users/kstashuk/OneDrive%20-%20Simcoe%20County%20District%20School%20Board/Courses/TOOLS/classroom_tracker/src/db/classService.js#48-61) to support year/semester fields.
+- Ensure `getClasses` (used by the dashboard) supports filtering by these new fields.
+
+---
+
+## Stage 2: Global Terms & Auto-Defaulting
+**Goal**: Implement the logic to know "what semester it is" based on the date.
+
+#### [MODIFY] [settingsService.js](file:///c:/Users/kstashuk/OneDrive%20-%20Simcoe%20County%20District%20School%20Board/Courses/TOOLS/classroom_tracker/src/db/settingsService.js)
+- Add helper functions to save and retrieve `academicTerms` (e.g., `2025-26 Sem 1: Sept 1 - Jan 31`).
+
+#### [MODIFY] [Setup.vue](file:///c:/Users/kstashuk/OneDrive%20-%20Simcoe%20County%20District%20School%20Board/Courses/TOOLS/classroom_tracker/src/views/Setup.vue)
+- Add a simple UI section in the "Gradebook" or "Backup" tab for teachers to define their semester start/end dates.
+
+---
+
+## Stage 3: Global Header Selector
+**Goal**: Allow manual switching between historical and current terms.
+
+#### [MODIFY] [App.vue](file:///c:/Users/kstashuk/OneDrive%20-%20Simcoe%20County%20District%20School%20Board/Courses/TOOLS/classroom_tracker/src/App.vue)
+- Integrate the session selector into the header (matching the current CSS style).
+- On mount, determine the "default" session based on the current date and the settings from Stage 2.
+- Update the application-wide `activeClass` state to only show classes from the selected session.
+
+---
+
+## Stage 4: CSV Roster Import Automation
+**Goal**: Drastically reduce setup time when a new semester starts.
+
+#### [MODIFY] [Setup.vue](file:///c:/Users/kstashuk/OneDrive%20-%20Simcoe%20County%20District%20School%20Board/Courses/TOOLS/classroom_tracker/src/views/Setup.vue)
+- Enhance [onFileSelected](file:///c:/Users/kstashuk/OneDrive%20-%20Simcoe%20County%20District%20School%20Board/Courses/TOOLS/classroom_tracker/src/views/Setup.vue#813-891) (CSV Parser) to look for [schedule](file:///c:/Users/kstashuk/OneDrive%20-%20Simcoe%20County%20District%20School%20Board/Courses/TOOLS/classroom_tracker/src/composables/useClassroom.js#1104-1115) (Sem 1/2) and `period` (1, 2, 3, 4) columns.
+- Implement logic to "Auto-Create" classes if they don't exist for the detected sections.
+
+---
+
+## Stage 5: Student History (Dossier Expansion)
+**Goal**: Leverage the new data structure to show a student's journey.
+
+#### [MODIFY] [Student360.vue](file:///c:/Users/kstashuk/OneDrive%20-%20Simcoe%20County%20District%20School%20Board/Courses/TOOLS/classroom_tracker/src/components/dossier/Student360.vue)
+- Add a new "History" tab to the student dossier window.
+- Fetch and display events and final grades from all historical class records matching the `studentId`.
+
+---
+
+## Verification Plan
+
+### Automated Tests
+- **Schema Migration**: Run a migration test script to ensure existing data is not lost and that new indices are active.
+- **Filtering Logic**: Verify that changing the global session correctly filters the `classList` in [useClassroom](file:///c:/Users/kstashuk/OneDrive%20-%20Simcoe%20County%20District%20School%20Board/Courses/TOOLS/classroom_tracker/src/composables/useClassroom.js#1050-1103).
+
+### Manual Verification
+1. **Initial Setup**: Define academic terms in Setup.
+2. **Import**: Drop a board CSV and verify that classes for "Semester 2" are automatically suggested/created.
+3. **Switching**: Switch the header to a previous year and verify that the dashboard clears (or shows archived classes for that year).
+4. **Student History**: Log an event for a student in "Math", then switch to "Science" for that same student. Verify that "Math" events appear in their History tab.
