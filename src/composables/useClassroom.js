@@ -51,6 +51,7 @@ const students = ref({})
 const behaviorCodes = ref([])
 
 const gridSize = ref({ rows: 6, cols: 6 })
+const teacherName = ref('')
 
 /** @type {import('vue').Ref<boolean>} Flag for special "Test Day" mode */
 export const isTestDay = ref(false)
@@ -273,6 +274,7 @@ async function init() {
     classList.value = active
     archivedClasses.value = archived
     gridSize.value = settings.gridSize
+    teacherName.value = settings.teacherName || ''
 
     if (active.length > 0) {
         // Try to find the best class for the current time
@@ -851,6 +853,14 @@ async function reloadBehaviorCodes() {
 }
 
 /**
+ * Update the global teacher name.
+ */
+async function updateTeacherName(name) {
+    await settingsService.saveTeacherName(name)
+    teacherName.value = name
+}
+
+/**
  * Archive (soft-delete) a class. Hides it from classList, saves archived flag to IDB.
  * If the archived class was active, switches to the first remaining class (or null).
  */
@@ -964,6 +974,7 @@ export function useClassroom() {
         behaviorCodes,
         gridSize,
         isTestDay,
+        teacherName,
         // computed
         sortedRoster,
         unseatedStudents,
@@ -992,6 +1003,7 @@ export function useClassroom() {
         checkResize,
         confirmResize,
         reloadBehaviorCodes,
+        updateTeacherName,
         archiveClass,
         restoreClass,
         deleteClass,

@@ -1,6 +1,6 @@
 <template>
-  <div class="evidence-mix">
-    <div class="evidence-mix__header">
+  <div class="evidence-mix" :class="{ 'evidence-mix--print': isPrint }">
+    <div v-if="!isPrint" class="evidence-mix__header">
       <h4 class="evidence-mix__title">Triangulation of Evidence</h4>
       <div class="evidence-mix__legend">
         <span class="legend-item"><span class="dot dot--product"></span> Product</span>
@@ -43,6 +43,10 @@ const props = defineProps({
     type: Object, 
     required: true,
     default: () => ({ product: 0, observation: 0, conversation: 0 })
+  },
+  isPrint: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -59,6 +63,12 @@ const balanceAlert = computed(() => {
   border:        1px solid var(--border);
   border-radius: var(--radius-lg);
   padding:       16px;
+}
+
+.evidence-mix--print {
+  background: none;
+  border:     none;
+  padding:    0;
 }
 
 .evidence-mix__header {
@@ -110,6 +120,10 @@ const balanceAlert = computed(() => {
 .evidence-segment {
   height:     100%;
   transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.evidence-mix--print .evidence-segment {
+  transition: none !important;
 }
 
 .segment--product      { background: var(--primary); }

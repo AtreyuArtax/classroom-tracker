@@ -47,7 +47,6 @@
                   >{{ p.label }}</button>
                 </div>
                 <div style="flex: 1"></div>
-                <!-- Export Sectioned Button -->
                 <div class="reports__export-group" ref="exportContainer">
                   <button class="reports__btn-export" @click="showExportMenu = !showExportMenu">
                     <Download :size="16" /> Export Summary
@@ -58,6 +57,10 @@
                     <button @click="downloadAggregateCsv('behavior')">Behavior</button>
                   </div>
                 </div>
+                <!-- Batch Print Button -->
+                <button class="reports__btn-export" style="margin-left: 8px;" @click="showPrintModal = true">
+                  <Printer :size="16" /> Print Reports
+                </button>
               </div>
 
               <div v-if="loading" class="reports__loading" aria-live="polite">Loading…</div>
@@ -196,6 +199,108 @@
 
       </main>
     </div>
+
+    <!-- Batch Print Configuration Modal -->
+    <div v-if="showPrintModal" class="reports__modal-overlay" @click.self="showPrintModal = false">
+      <div class="reports__print-modal reports__print-modal--wide">
+        <header class="reports__modal-header">
+          <div class="header-content">
+            <Printer class="header-icon" :size="24" />
+            <div>
+              <h3 class="header-title">Batch Print Progress Reports</h3>
+              <p class="header-subtitle">Generating professional reports for {{ sidebarStudents.length }} students.</p>
+            </div>
+          </div>
+          <button class="header-close" @click="showPrintModal = false">
+            <X :size="20" />
+          </button>
+        </header>
+
+        <div class="reports__modal-body">
+          <div class="config-section">
+            <div class="config-section-header">
+              <h4 class="config-section-title">Include in Documents</h4>
+              <button class="reports__btn-preview" @click="showPreview = !showPreview">
+                {{ showPreview ? 'Hide Preview' : 'Show Preview' }}
+              </button>
+            </div>
+            <div class="print-modal__options">
+              <div class="print-modal__section-title">Report Content</div>
+              <label class="print-modal__option">
+                <input type="checkbox" v-model="printConfig.includeOverallGrade" />
+                Overall Grade Badge
+              </label>
+              <label class="print-modal__option">
+                <input type="checkbox" v-model="printConfig.includeMedians" />
+                Weighted Median & Consistent Grade
+              </label>
+              <label class="print-modal__option">
+                <input type="checkbox" v-model="printConfig.includeGradeTrend" />
+                Performance Trend Graph
+              </label>
+              <label class="print-modal__option">
+                <input type="checkbox" v-model="printConfig.includeTriangulation" />
+                Evidence Triangulation (Pie)
+              </label>
+              <label class="print-modal__option">
+                <input type="checkbox" v-model="printConfig.includeCategorySummary" />
+                Category Performance Summary
+              </label>
+              <div class="print-modal__divider"></div>
+              <label class="print-modal__option">
+                <input type="checkbox" v-model="printConfig.includeAttendance" />
+                Attendance Summary
+              </label>
+              <label class="print-modal__option">
+                <input type="checkbox" v-model="printConfig.includeBehavior" />
+                Behavior Observations
+              </label>
+            </div>
+          </div>
+
+          <!-- Live Preview Section -->
+          <div v-if="showPreview" class="reports__print-preview-area">
+            <header class="preview-banner">
+              <Activity :size="14" /> LIVE PREVIEW (First Student)
+            </header>
+            <div class="preview-content">
+              <ProgressReport 
+                v-if="sidebarStudents.length > 0"
+                :student-id="sidebarStudents[0].studentId" 
+                :class-id="sidebarClassId" 
+                :config="printConfig" 
+                :is-batch="false"
+              />
+            </div>
+          </div>
+
+          <div v-else class="report-preview-mini">
+            <p>Each student's report will start on a new page. Ideal for printing or saving as a single class PDF.</p>
+          </div>
+        </div>
+
+        <footer class="reports__modal-footer">
+          <button class="reports__btn-ghost" @click="showPrintModal = false">Cancel</button>
+          <button class="reports__btn-primary" @click="triggerBatchPrint">
+            Open Print Dialog
+            <Printer :size="18" />
+          </button>
+        </footer>
+      </div>
+    </div>
+
+    <!-- Hidden/Active Batch Print Container -->
+    <div class="print-only-container" :class="{ 'print-only-container--active': isSystemPrinting }">
+      <ProgressReport 
+        v-if="isSystemPrinting || showPreview"
+        v-for="s in sidebarStudents" 
+        :key="s.studentId"
+        :student-id="s.studentId" 
+        :class-id="sidebarClassId" 
+        :config="printConfig" 
+        :is-batch="true"
+      />
+    </div>
   </div>
 </template>
 
@@ -212,7 +317,7 @@ import { ref, reactive, computed, watch, defineComponent, h, onMounted, onUnmoun
 import { 
   BarChart2, Download, Trash2, PlusCircle, ChevronLeft, 
   LayoutDashboard, Database, UserCheck, Toilet, Activity, 
-  FolderOpen, GraduationCap
+  FolderOpen, GraduationCap, Printer
 } from 'lucide-vue-next'
 import { resolveIcon }         from '../utils/icons.js'
 import { useClassroom }        from '../composables/useClassroom.js'
@@ -223,6 +328,7 @@ import Student360            from '../components/dossier/Student360.vue'
 import StudentSidebar        from '../components/StudentSidebar.vue'
 import StudentTrendGraph       from '../components/StudentTrendGraph.vue'
 import ClassSwitcher           from '../components/ClassSwitcher.vue'
+import ProgressReport          from '../components/dossier/ProgressReport.vue'
 import { calculateClassGrades } from '../db/gradebookService.js'
 import { Bar } from 'vue-chartjs'
 import { 
@@ -346,6 +452,45 @@ watch(selectedPeriod, () => {
 async function onSelectStudent(studentId) {
   rightMode.value = 'dossier'
   await dossier.loadStudent(sidebarClassId.value, studentId)
+}
+
+// --- Batch Print Logic ---
+const showPrintModal = ref(false)
+const showPreview = ref(false)
+
+// Watch for changes in isSystemPrinting to apply/remove print styles
+watch(isSystemPrinting, (newValue) => {
+  if (newValue) {
+    document.body.classList.add('is-printing')
+  } else {
+    document.body.classList.remove('is-printing')
+  }
+})
+const isSystemPrinting = ref(false)
+const printConfig = reactive({
+  includeAttendance: true,
+  includeBehavior: false,
+  includeOverallGrade: true,
+  includeMedians: false,
+  includeGradeTrend: true,
+  includeTriangulation: false,
+  includeCategorySummary: false
+})
+
+import { nextTick } from 'vue'
+import { loadGradebook } from '../composables/useGradebook.js'
+
+async function triggerBatchPrint() {
+  showPrintModal.value = false
+  // Ensure all student dossiers are loaded or that ProgressReport can handle its own data.
+  // We use loadGradebook to refresh the reactive state for the current class.
+  if (reportClass.value) {
+    await loadGradebook(reportClass.value)
+  }
+  
+  nextTick(() => {
+    window.print()
+  })
 }
 
 // Ensure active class syncs with rightmost class selector if on overview */
@@ -1620,5 +1765,292 @@ const washroomChartOptions = {
 .reports__insight-diff--low {
   background: var(--bg-secondary);
   color: var(--text-secondary);
+}
+
+/* --- Print Styles --- */
+.print-only-container {
+  display: none;
+}
+
+@media print {
+  /* Hide the Actual App UI Classes, but keep .reports root visible */
+  .reports__layout,
+  .reports__modal-overlay,
+  .reports__placeholder,
+  .reports__filter,
+  :global(.app-nav), 
+  :global(.student-sidebar) {
+    display: none !important;
+  }
+
+  .print-only-container {
+    display: block !important;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background: white;
+    z-index: 9999;
+  }
+
+  body {
+    background: white !important;
+    overflow: visible !important;
+  }
+}
+
+.print-only-container {
+  display: none;
+}
+
+/* This is the secret sauce: keep it visible on screen but covering the app briefly 
+   so Chart.js can draw on a visible canvas before print is called */
+.print-only-container--active {
+  display: block;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 10000;
+  background: white;
+  overflow-y: auto;
+}
+
+.reports__btn-preview {
+  background: none;
+  border: 1px solid var(--primary-light);
+  color: var(--primary);
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.config-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.reports__print-preview-area {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.print-modal__options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 24px;
+  background: var(--bg-hover);
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+}
+
+.print-modal__section-title {
+  grid-column: 1 / -1;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+  letter-spacing: 0.05em;
+}
+
+.print-modal__divider {
+  grid-column: 1 / -1;
+  height: 1px;
+  background: var(--border-color);
+  margin: 4px 0;
+}
+
+.preview-banner {
+  background: #333;
+  color: white;
+  padding: 6px 12px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.preview-content {
+  height: 450px;
+  overflow-y: auto;
+  background: #f1f5f9;
+  padding: 30px;
+  display: flex;
+  justify-content: center;
+}
+
+.preview-content :deep(.progress-report) {
+  transform: scale(0.65);
+  transform-origin: top center;
+  margin-bottom: -150px; /* Offset the scale-down space */
+  box-shadow: var(--shadow-lg);
+}
+
+/* --- Modal Styles --- */
+.reports__modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.reports__print-modal {
+  background: var(--surface);
+  width: 95%;
+  max-width: 500px;
+  max-height: calc(100vh - 40px);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-2xl);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  animation: modalEnter 0.3s ease-out;
+  transition: max-width 0.3s ease;
+}
+
+.reports__print-modal--wide {
+  max-width: 700px;
+}
+
+@keyframes modalEnter {
+  from { opacity: 0; transform: translateY(20px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.reports__modal-header {
+  padding: 16px 20px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header-content {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.header-icon {
+  color: var(--primary);
+  background: var(--primary-light);
+  padding: 8px;
+  border-radius: var(--radius-md);
+  box-sizing: content-box;
+}
+
+.header-title {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.header-subtitle {
+  margin: 2px 0 0;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.header-close {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: var(--radius-sm);
+  transition: all 0.2s;
+}
+
+.header-close:hover {
+  background: var(--bg-secondary);
+  color: var(--text);
+}
+
+.reports__modal-body {
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow-y: auto;
+}
+
+.config-section-title {
+  margin: 0 0 12px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+}
+
+.options-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
+.option-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.option-item:hover {
+  background: var(--bg-secondary);
+}
+
+.option-item input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+
+.option-label {
+  font-size: 0.95rem;
+  color: var(--text);
+}
+
+.reports__modal-footer {
+  padding: 12px 20px;
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.report-preview-mini {
+  padding: 12px;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  line-height: 1.4;
 }
 </style>

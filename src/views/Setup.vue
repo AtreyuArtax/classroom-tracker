@@ -391,6 +391,20 @@
         <p>Select a class to manage its gradebook settings.</p>
       </div>
       <template v-else>
+        <!-- Global Settings -->
+        <div class="setup__card">
+          <h2 class="setup__card-title">Global Settings</h2>
+          <label class="setup__label">
+            Teacher Name (viewed on reports)
+            <input 
+              :value="teacherName" 
+              class="setup__input" 
+              placeholder="e.g. Mr. Stashuk" 
+              @change="e => updateTeacherName(e.target.value.trim())"
+            />
+          </label>
+        </div>
+
         <!-- Grading Method -->
         <div class="setup__card">
           <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -698,6 +712,8 @@ const {
   restoreClass,
   deleteClass,
   reloadBehaviorCodes,
+  teacherName,
+  updateTeacherName,
 } = useClassroom()
 
 const showArchived = ref(false)

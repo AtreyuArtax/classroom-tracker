@@ -9,6 +9,12 @@
       :attendance-stats="attendanceStats"
     >
       <template #actions>
+        <button class="student-360__action-btn" title="Email Progress Report" @click="showEmailModal = true">
+          <Mail :size="20" />
+        </button>
+        <button class="student-360__action-btn" title="Print Progress Report" @click="showPrintModal = true">
+          <Printer :size="20" />
+        </button>
         <button class="student-360__close-btn" @click="$emit('close')">
           <X :size="20" />
         </button>
@@ -452,11 +458,190 @@
         </div>
       </div>
     </div>
+
+    <!-- Email Progress Report Modal -->
+    <div v-if="showEmailModal" class="student-360__modal-overlay" @click.self="showEmailModal = false">
+      <div class="email-config-modal">
+        <header class="email-config-modal__header">
+          <div class="header-content">
+            <Mail class="header-icon" :size="24" />
+            <div>
+              <h3 class="header-title">Configure Email Report</h3>
+              <p class="header-subtitle">Select recipients and data points to include.</p>
+            </div>
+          </div>
+          <button class="header-close" @click="showEmailModal = false">
+            <X :size="20" />
+          </button>
+        </header>
+
+        <div class="email-config-modal__body">
+          <!-- Recipients Selection -->
+          <div class="config-section">
+            <h4 class="config-section-title">Recipients</h4>
+            <div class="recipient-list">
+              <div 
+                v-for="r in emailRecipients" 
+                :key="r.email" 
+                class="recipient-item"
+                :class="{ 'recipient-item--active': selectedRecipientEmails.has(r.email) }"
+                @click="toggleRecipient(r.email)"
+              >
+                <div class="recipient-info">
+                  <span class="recipient-label">{{ r.label }}</span>
+                  <span class="recipient-email">{{ r.email }}</span>
+                </div>
+                <div class="recipient-checkbox">
+                  <CheckCircle2 v-if="selectedRecipientEmails.has(r.email)" :size="20" class="icon-checked" />
+                  <div v-else class="checkbox-placeholder"></div>
+                </div>
+              </div>
+              <div v-if="emailRecipients.length === 0" class="recipient-empty">
+                No email addresses found for this student or their parents.
+              </div>
+            </div>
+          </div>
+
+          <!-- Content Options -->
+          <div class="config-section">
+            <h4 class="config-section-title">Include in Report</h4>
+            <div class="options-grid">
+              <label class="option-item">
+                <input type="checkbox" v-model="emailConfig.content.grade" />
+                <span class="option-label">Current Overall Grade</span>
+              </label>
+              <label class="option-item">
+                <input type="checkbox" v-model="emailConfig.content.missing" />
+                <span class="option-label">Missing Assessments List</span>
+              </label>
+              <label class="option-item">
+                <input type="checkbox" v-model="emailConfig.content.attendance" />
+                <span class="option-label">Attendance Summary</span>
+              </label>
+              <label class="option-item">
+                <input type="checkbox" v-model="emailConfig.content.washroom" />
+                <span class="option-label">Washroom & Out-of-Class Logs</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <footer class="email-config-modal__footer">
+          <button class="btn-cancel" @click="showEmailModal = false">Cancel</button>
+          <button 
+            class="btn-generate" 
+            :disabled="selectedRecipientEmails.size === 0"
+            @click="generateEmailLink"
+          >
+            Generate Draft & Open Mail
+            <ChevronRight :size="18" />
+          </button>
+        </footer>
+      </div>
+    </div>
+
+    <!-- Print Report Configuration Modal -->
+    <div v-if="showPrintModal" class="student-360__modal-overlay" @click.self="showPrintModal = false">
+      <div class="email-config-modal email-config-modal--wide">
+        <header class="email-config-modal__header">
+          <div class="header-content">
+            <Printer class="header-icon" :size="24" />
+            <div>
+              <h3 class="header-title">Print Progress Report</h3>
+              <p class="header-subtitle">Format a professional document for this student.</p>
+            </div>
+          </div>
+          <button class="header-close" @click="showPrintModal = false">
+            <X :size="20" />
+          </button>
+        </header>
+
+        <div class="email-config-modal__body">
+          <div class="config-section">
+            <div class="config-section-header">
+              <h4 class="config-section-title">Include in Document</h4>
+              <button class="reports__btn-preview" @click="showPrintPreview = !showPrintPreview">
+                {{ showPrintPreview ? 'Hide Preview' : 'Show Preview' }}
+              </button>
+            </div>
+            <div class="print-modal__options">
+              <div class="print-modal__section-title">Report Content</div>
+              <label class="print-modal__option">
+                <input type="checkbox" v-model="printConfig.includeOverallGrade" />
+                Overall Grade Badge
+              </label>
+              <label class="print-modal__option">
+                <input type="checkbox" v-model="printConfig.includeMedians" />
+                Weighted Median & Consistent Grade
+              </label>
+              <label class="print-modal__option">
+                <input type="checkbox" v-model="printConfig.includeGradeTrend" />
+                Performance Trend Graph
+              </label>
+              <label class="print-modal__option">
+                <input type="checkbox" v-model="printConfig.includeTriangulation" />
+                Evidence Triangulation (Pie)
+              </label>
+              <label class="print-modal__option">
+                <input type="checkbox" v-model="printConfig.includeCategorySummary" />
+                Category Performance Summary
+              </label>
+              <div class="print-modal__divider"></div>
+              <label class="print-modal__option">
+                <input type="checkbox" v-model="printConfig.includeAttendance" />
+                Attendance Summary
+              </label>
+              <label class="print-modal__option">
+                <input type="checkbox" v-model="printConfig.includeBehavior" />
+                Behavior Observations
+              </label>
+            </div>
+          </div>
+
+          <!-- Live Preview Section -->
+          <div v-if="showPrintPreview" class="reports__print-preview-area">
+            <header class="preview-banner">
+              <Activity :size="14" /> LIVE PREVIEW
+            </header>
+            <div class="preview-content">
+              <ProgressReport 
+                :student-id="studentId" 
+                :class-id="classId" 
+                :config="printConfig" 
+                :is-batch="false"
+              />
+            </div>
+          </div>
+
+          <div v-else class="report-preview-mini">
+            <p>This will generate a formal PDF/Print document containing overall grades, performance trends, and assessment history.</p>
+          </div>
+        </div>
+
+        <footer class="email-config-modal__footer">
+          <button class="btn-cancel" @click="showPrintModal = false">Cancel</button>
+          <button class="btn-generate" @click="triggerPrint">
+            Open Print Dialog
+            <Printer :size="18" />
+          </button>
+        </footer>
+      </div>
+    </div>
+
+    <!-- Hidden/Active Print Container -->
+    <div class="print-only-container" :class="{ 'print-only-container--active': isSystemPrinting }">
+      <ProgressReport 
+        v-if="isSystemPrinting || showPrintModal"
+        :student-id="props.studentId" 
+        :class-id="props.classId" 
+        :config="printConfig" 
+      />
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted, nextTick } from 'vue'
+import { ref, computed, watch, onMounted, nextTick, reactive } from 'vue'
 import { 
   LayoutDashboard, 
   GraduationCap, 
@@ -478,7 +663,12 @@ import {
   Trash2,
   Check,
   Pencil, // Added Pencil icon
-  XCircle // Added XCircle icon
+  XCircle, // Added XCircle icon
+  Mail,
+  CheckCircle2,
+  ChevronRight,
+  Printer,
+  Activity // Added Activity icon for preview
 } from 'lucide-vue-next'
 import DossierCategoryGrid from './DossierCategoryGrid.vue'
 import DossierEvidenceMix  from './DossierEvidenceMix.vue'
@@ -487,6 +677,7 @@ import StudentStatCard     from './StudentStatCard.vue'
 import StudentTimeline     from './StudentTimeline.vue'
 import StudentTrendGraph    from '../StudentTrendGraph.vue'
 import StudentGradeTrend    from './StudentGradeTrend.vue'
+import ProgressReport       from './ProgressReport.vue'
 import { useClassroom }  from '../../composables/useClassroom.js'
 import { 
   classGrades, 
@@ -519,6 +710,112 @@ const {
   getStudentEventHistory,
   logStandardEvent,
 } = useClassroom()
+
+// --- Email Progress Report State ---
+const showEmailModal = ref(false)
+const emailConfig = ref({
+  recipients: { student: true, parents: true },
+  content: { grade: true, missing: true, attendance: true, washroom: false }
+})
+
+const emailRecipients = computed(() => {
+  const list = []
+  if (student.value.studentEmail) {
+    list.push({ id: 'student', label: 'Student', email: student.value.studentEmail })
+  }
+  if (student.value.parentContacts) {
+    student.value.parentContacts.forEach((pc, idx) => {
+      if (pc.email) {
+        list.push({ id: `parent_${idx}`, label: pc.name || `Parent ${idx + 1}`, email: pc.email })
+      }
+    })
+  }
+  return list
+})
+
+const selectedRecipientEmails = ref(new Set())
+
+// Initialize selected emails when modal opens
+watch(showEmailModal, (open) => {
+  if (open) {
+    selectedRecipientEmails.value = new Set(emailRecipients.value.map(r => r.email))
+  }
+})
+
+function toggleRecipient(email) {
+  if (selectedRecipientEmails.value.has(email)) {
+    selectedRecipientEmails.value.delete(email)
+  } else {
+    selectedRecipientEmails.value.add(email)
+  }
+}
+
+function generateEmailLink() {
+  const emails = Array.from(selectedRecipientEmails.value).join(',')
+  const subject = `Progress Report Update: ${student.value.firstName} ${student.value.lastName}`
+  
+  let body = `Hello,\n\nI am sharing a progress update for ${student.value.firstName}.\n\n`
+  
+  if (emailConfig.value.content.grade) {
+    body += `Current Overall Grade: ${formattedGrade.value}\n`
+  }
+  
+  if (emailConfig.value.content.missing) {
+    const missing = [
+      ...classAssessments.value.filter(a => a.missing),
+      ...individualAssessments.value.filter(a => a.missing)
+    ]
+    if (missing.length > 0) {
+      body += `\nMissing Assessments:\n`
+      missing.forEach(m => body += `- ${m.name}\n`)
+    } else {
+      body += `\nNo missing assessments at this time.\n`
+    }
+  }
+  
+  if (emailConfig.value.content.attendance) {
+    body += `\nAttendance Summary:\n`
+    body += `- Absences: ${attendanceStats.value.absences}\n`
+    body += `- Lates: ${attendanceStats.value.lates}\n`
+  }
+  
+  if (emailConfig.value.content.washroom) {
+    body += `\nOut of Class Logs:\n`
+    body += `- Washroom/Water trips in period: ${washroomCount.value}\n`
+  }
+  
+  body += `\nPlease let me know if you have any questions.\n\nBest regards,\n${activeClass.value?.teacherName || 'Teacher'}`
+  
+  const mailto = `mailto:${emails}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
+  window.location.href = mailto
+  showEmailModal.value = false
+}
+
+// --- Print Progress Report Logic ---
+const showPrintModal = ref(false)
+const showPrintPreview = ref(false)
+const isSystemPrinting = ref(false)
+const printConfig    = reactive({
+  includeAttendance: true,
+  includeBehavior: false,
+  includeOverallGrade: true,
+  includeMedians: false,
+  includeGradeTrend: true,
+  includeTriangulation: false,
+  includeCategorySummary: false
+})
+
+async function triggerPrint() {
+  showPrintModal.value = false
+  isSystemPrinting.value = true
+  
+  nextTick(async () => {
+    // Give charts 1500ms to render properly on the now-visible canvas
+    await new Promise(resolve => setTimeout(resolve, 1500))
+    window.print()
+    isSystemPrinting.value = false
+  })
+}
 
 const activeTab = ref('summary')
 const selectedPeriod = ref('month')
@@ -1762,4 +2059,420 @@ onMounted(loadData)
 .btn-icon-sm:hover { border-color: var(--primary); color: var(--primary); }
 
 .btn-icon-sm--danger:hover { background: #fff1f0; border-color: #ff3b30; color: #ff3b30; }
+
+/* --- Email Modal Styles --- */
+.student-360__modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.email-config-modal {
+  background: var(--surface);
+  width: 95%;
+  max-width: 500px;
+  max-height: calc(100vh - 40px);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-2xl);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  animation: modalEnter 0.3s ease-out;
+  transition: max-width 0.3s ease;
+}
+
+.email-config-modal--wide {
+  max-width: 700px;
+}
+
+@keyframes modalEnter {
+  from { opacity: 0; transform: translateY(20px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.email-config-modal__header {
+  padding: 16px 20px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header-content {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.header-icon {
+  color: var(--primary);
+  background: var(--primary-light);
+  padding: 8px;
+  border-radius: var(--radius-md);
+  box-sizing: content-box;
+}
+
+.header-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.print-modal__options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 24px;
+  background: var(--bg-hover);
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+}
+
+.print-modal__section-title {
+  grid-column: 1 / -1;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+  letter-spacing: 0.05em;
+}
+
+.print-modal__divider {
+  grid-column: 1 / -1;
+  height: 1px;
+  background: var(--border-color);
+  margin: 4px 0;
+}
+
+.header-subtitle {
+  margin: 2px 0 0;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.header-close {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: var(--radius-sm);
+  transition: all 0.2s;
+}
+
+.header-close:hover {
+  background: var(--bg-hover);
+  color: var(--text);
+}
+
+.email-config-modal__body {
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  overflow-y: auto;
+}
+
+.config-section-title {
+  margin: 0 0 12px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+}
+
+.recipient-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.recipient-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.recipient-item:hover {
+  border-color: var(--primary-light);
+  transform: translateX(4px);
+}
+
+.recipient-item--active {
+  background: var(--surface);
+  border-color: var(--primary);
+  box-shadow: var(--shadow-sm);
+}
+
+.recipient-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.recipient-label {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--text);
+}
+
+.recipient-email {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.icon-checked {
+  color: var(--primary);
+}
+
+.checkbox-placeholder {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--border);
+  border-radius: 50%;
+}
+
+.options-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
+.option-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 10px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.option-item:hover {
+  background: var(--bg-secondary);
+}
+
+.option-item input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+
+.option-label {
+  font-size: 0.9rem;
+  color: var(--text);
+}
+
+.email-config-modal__footer {
+  padding: 12px 20px;
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.btn-cancel {
+  padding: 10px 20px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font-weight: 600;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-cancel:hover {
+  background: var(--bg-hover);
+}
+
+.btn-generate {
+  padding: 10px 24px;
+  background: var(--primary);
+  color: white;
+  border: none;
+  font-weight: 600;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s;
+}
+
+.btn-generate:hover:not(:disabled) {
+  background: var(--primary-dark);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.btn-generate:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.student-360__action-btn {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  padding: 8px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.student-360__action-btn:hover {
+  background: var(--primary-light);
+  color: var(--primary);
+  border-color: var(--primary-light);
+}
+
+.recipient-empty {
+  padding: 12px;
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  font-style: italic;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  border: 1px dashed var(--border);
+}
+
+/* --- Print Styles --- */
+.print-only-container {
+  display: none;
+}
+
+@media print {
+  /* Hide UI children but keep .student-360 root visible */
+  .student-360__header,
+  .student-360__tabs,
+  .student-360__content,
+  .student-360__modal-overlay,
+  :global(.app-nav), 
+  :global(.student-sidebar) {
+    display: none !important;
+  }
+
+  .print-only-container {
+    display: block !important;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background: white;
+    z-index: 9999;
+  }
+
+  body {
+    background: white !important;
+    overflow: visible !important;
+  }
+}
+
+.print-only-container {
+  display: none;
+}
+
+/* This is the secret sauce: keep it visible on screen but covering the app briefly 
+   so Chart.js can draw on a visible canvas before print is called */
+.print-only-container--active {
+  display: block;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 10000;
+  background: white;
+  overflow-y: auto;
+}
+
+/* These helpers were missing in Student360.vue but used in the new modal UI */
+.reports__btn-preview {
+  background: none;
+  border: 1px solid var(--primary-light);
+  color: var(--primary);
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.config-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.reports__print-preview-area {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: #eee;
+  margin-top: 8px;
+}
+
+.preview-banner {
+  background: #333;
+  color: white;
+  padding: 6px 12px;
+  font-size: 0.70rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.preview-content {
+  height: 450px;
+  overflow-y: auto;
+  background: #f1f5f9;
+  padding: 30px;
+  display: flex;
+  justify-content: center;
+}
+
+.preview-content :deep(.progress-report) {
+  transform: scale(0.65);
+  transform-origin: top center;
+  margin-bottom: -150px; /* Offset the scale-down space */
+  box-shadow: var(--shadow-lg);
+}
+
+.report-preview-mini {
+  padding: 12px;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  line-height: 1.4;
+}
 </style>

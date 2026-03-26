@@ -105,6 +105,7 @@ async function _readSettings() {
         },
         backupFileHandle: null,
         gradebookMilestones: [],
+        teacherName: ''
     }
     await db.put('settings', defaults, SETTINGS_KEY)
     hasUnsyncedChanges.value = true
@@ -222,6 +223,30 @@ export async function saveGlobalMilestones(milestones) {
     const db = await getDB()
     const settings = await db.get('settings', 'singleton')
     settings.gradebookMilestones = milestones
+    await db.put('settings', settings, 'singleton')
+    hasUnsyncedChanges.value = true
+}
+
+/**
+ * Returns the global teacher name.
+ *
+ * @returns {Promise<string>}
+ */
+export async function getTeacherName() {
+    const settings = await _readSettings()
+    return settings.teacherName || ''
+}
+
+/**
+ * Saves the global teacher name.
+ *
+ * @param {string} name
+ * @returns {Promise<void>}
+ */
+export async function saveTeacherName(name) {
+    const db = await getDB()
+    const settings = await db.get('settings', 'singleton')
+    settings.teacherName = name
     await db.put('settings', settings, 'singleton')
     hasUnsyncedChanges.value = true
 }

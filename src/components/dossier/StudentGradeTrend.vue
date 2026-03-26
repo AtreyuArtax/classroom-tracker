@@ -1,6 +1,6 @@
 <template>
-  <div class="grade-trend">
-    <div class="grade-trend__header">
+  <div class="grade-trend" :class="{ 'grade-trend--print': isPrint }">
+    <div v-if="!isPrint" class="grade-trend__header">
       <h3 class="grade-trend__title">Grade Performance Trend</h3>
       <div class="grade-trend__legend">
         <div class="legend-item"><span class="dot dot--primary"></span> Overall Average</div>
@@ -12,7 +12,7 @@
       Insufficient data to visualize a trend.
     </div>
     
-    <div v-else class="grade-trend__chart-wrap" style="height: 240px">
+    <div v-else class="grade-trend__chart-wrap" :style="{ height: isPrint ? '150px' : '240px' }">
       <Line :data="chartData" :options="chartOptions" />
     </div>
   </div>
@@ -38,7 +38,8 @@ ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip,
 const props = defineProps({
   assessments: { type: Array, required: true },
   gradeMap:    { type: Object, required: true },
-  studentId:   { type: String, required: true }
+  studentId:   { type: String, required: true },
+  isPrint:     { type: Boolean, default: false }
 })
 
 /**
@@ -149,9 +150,10 @@ const chartData = computed(() => {
   }
 })
 
-const chartOptions = {
+const chartOptions = computed(() => ({
   responsive: true,
   maintainAspectRatio: false,
+  animation: props.isPrint ? false : { duration: 1000 },
   plugins: {
     legend: { display: false },
     tooltip: {
@@ -178,7 +180,7 @@ const chartOptions = {
       grid: { display: false }
     }
   }
-}
+}))
 </script>
 
 <style scoped>
@@ -188,6 +190,13 @@ const chartOptions = {
   border-radius: var(--radius-lg);
   padding:       20px;
   margin-top:    16px;
+}
+
+.grade-trend--print {
+  background: none;
+  border:     none;
+  padding:    0;
+  margin:     0;
 }
 
 .grade-trend__header {
