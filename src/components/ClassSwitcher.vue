@@ -20,21 +20,24 @@
       role="listbox"
       :aria-label="`Select class, currently ${activeClass?.name}`"
     >
-      <button
-        v-for="cls in sortedClassList"
-        :key="cls.classId"
-        class="class-switcher__option"
-        :class="{ 'class-switcher__option--active': cls.classId === activeClass?.classId }"
-        role="option"
-        :aria-selected="cls.classId === activeClass?.classId"
-        @click="selectClass(cls.classId)"
-      >
-        <span class="class-switcher__option-name">{{ cls.name }}</span>
-        <span class="class-switcher__option-period">P{{ cls.periodNumber }}</span>
-      </button>
+      <div v-for="(group, termName) in classesByTerm" :key="termName" class="class-switcher__group">
+        <div class="class-switcher__group-header">{{ termName }}</div>
+        <button
+          v-for="cls in group"
+          :key="cls.classId"
+          class="class-switcher__option"
+          :class="{ 'class-switcher__option--active': cls.classId === activeClass?.classId }"
+          role="option"
+          :aria-selected="cls.classId === activeClass?.classId"
+          @click="selectClass(cls.classId)"
+        >
+          <span class="class-switcher__option-name">{{ cls.name }}</span>
+          <span class="class-switcher__option-period">P{{ cls.periodNumber }}</span>
+        </button>
+      </div>
 
-      <div v-if="classList.length === 0" class="class-switcher__empty">
-        No classes yet — add one in Setup
+      <div v-if="filteredClassList.length === 0" class="class-switcher__empty">
+        No classes for this term — switch term or add one in Setup
       </div>
 
       <!-- Divider + new class link -->
@@ -74,25 +77,25 @@ import { ChevronDown } from 'lucide-vue-next'
 import { useClassroom } from '../composables/useClassroom.js'
 
 const { 
-  classList, 
   activeClass, 
   suggestedClass, 
   switchClass,
-  dismissSuggestion
+  dismissSuggestion,
+  filteredClassList
 } = useClassroom()
 
 const emit  = defineEmits(['navigate'])
 const isOpen = ref(false)
 
-const sortedClassList = computed(() => {
-  return [...classList.value].sort((a, b) => {
-    // Both falsy -> 0, one falsy -> it goes after
-    if (!a.periodNumber && !b.periodNumber) return 0;
-    if (!a.periodNumber) return 1;
-    if (!b.periodNumber) return -1;
-    // Compare numeric values
-    return Number(a.periodNumber) - Number(b.periodNumber);
-  });
+const classesByTerm = computed(() => {
+  const groups = {}
+  // use filteredClassList to respect global year/semester filter
+  for (const cls of filteredClassList.value) {
+    const term = `${cls.year || '2025-26'} — Semester ${cls.semester || '2'}`
+    if (!groups[term]) groups[term] = []
+    groups[term].push(cls)
+  }
+  return groups
 })
 
 async function selectClass(classId) {
@@ -196,6 +199,22 @@ async function acceptSuggestion() {
 @keyframes dropdown-in {
   from { opacity: 0; transform: translateY(-6px); }
   to   { opacity: 1; transform: translateY(0); }
+}
+
+.class-switcher__group-header {
+  padding: 8px 16px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+  background: var(--bg-hover);
+  border-bottom: 1px solid var(--border);
+  border-top: 1px solid var(--border);
+}
+
+.class-switcher__group:first-child .class-switcher__group-header {
+  border-top: none;
 }
 
 .class-switcher__option {

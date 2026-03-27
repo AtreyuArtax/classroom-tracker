@@ -6,15 +6,30 @@
       </slot>
     </div>
     
-    <div class="stat-card__content">
+    <div class="stat-card__content" :class="{ 'stat-card__content--dual': value2 }">
       <span class="stat-card__label">{{ label }}</span>
-      <div class="stat-card__value-row">
-        <span class="stat-card__value">{{ value }}</span>
-        <span v-if="trend !== undefined" class="stat-card__trend" :class="trendClass">
-          <TrendingUp v-if="trend > 0" :size="14" />
-          <TrendingDown v-if="trend < 0" :size="14" />
-          {{ Math.abs(trend) }}%
-        </span>
+      
+      <div class="stat-card__stats-row">
+        <!-- Primary Column -->
+        <div class="stat-card__stat-col">
+          <div class="stat-card__value-row">
+            <span class="stat-card__value">{{ value }}</span>
+            <span v-if="trend !== undefined && !value2" class="stat-card__trend" :class="trendClass">
+              <TrendingUp v-if="trend > 0" :size="14" />
+              <TrendingDown v-if="trend < 0" :size="14" />
+              {{ Math.abs(trend) }}%
+            </span>
+          </div>
+          <div v-if="subValue" class="stat-card__sub-value">{{ subValue }}</div>
+        </div>
+
+        <!-- Secondary Column (Optional) -->
+        <div v-if="value2" class="stat-card__stat-col stat-card__stat-col--secondary">
+          <div class="stat-card__value-row">
+            <span class="stat-card__value">{{ value2 }}</span>
+          </div>
+          <div v-if="subValue2" class="stat-card__sub-value">{{ subValue2 }}</div>
+        </div>
       </div>
     </div>
   </div>
@@ -25,11 +40,14 @@ import { computed } from 'vue'
 import { TrendingUp, TrendingDown } from 'lucide-vue-next'
 
 const props = defineProps({
-  label: { type: String, required: true },
-  value: { type: [String, Number], required: true },
-  icon:  { type: [Object, Function], default: null }, // Lucide icon component
-  color: { type: String, default: 'neutral' }, // neutral, primary, success, warning, danger
-  trend: { type: Number, default: undefined }
+  label:     { type: String, required: true },
+  value:     { type: [String, Number], required: true },
+  subValue:  { type: String, default: null },
+  value2:    { type: [String, Number], default: null },
+  subValue2: { type: String, default: null },
+  icon:      { type: [Object, Function], default: null },
+  color:     { type: String, default: 'neutral' },
+  trend:     { type: Number, default: undefined }
 })
 
 const trendClass = computed(() => {
@@ -98,6 +116,34 @@ const trendClass = computed(() => {
   gap:         2px;
   font-size:   0.75rem;
   font-weight: 700;
+}
+
+.stat-card__sub-value {
+  font-size:   0.7rem;
+  font-weight: 700;
+  color:       var(--text-secondary);
+  white-space: nowrap;
+}
+
+.stat-card__stats-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.stat-card__stat-col {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.stat-card__stat-col--secondary {
+  padding-left: 16px;
+  border-left: 1px solid var(--border);
+}
+
+.stat-card__content--dual {
+  min-width: 200px;
 }
 
 .stat-card__trend--up { color: var(--state-safe); }

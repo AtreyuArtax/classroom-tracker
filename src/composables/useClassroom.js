@@ -59,6 +59,11 @@ export const isTestDay = ref(false)
 /** @type {import('vue').Ref<Array>} Events for the student currently in focus (Dossier) */
 const activeStudentEvents = ref([])
 
+/** @type {import('vue').Ref<string>} Global year filter */
+const selectedYear = ref('')
+/** @type {import('vue').Ref<string>} Global semester filter */
+const selectedSemester = ref('')
+
 // ─── computed ─────────────────────────────────────────────────────────────────
 
 /** Students sorted by last name for display in roster lists */
@@ -67,6 +72,15 @@ const sortedRoster = computed(() =>
         .map(([studentId, s]) => ({ studentId, ...s }))
         .sort((a, b) => a.lastName.localeCompare(b.lastName))
 )
+
+/** Filtered class list based on global year/semester */
+const filteredClassList = computed(() => {
+    return classList.value.filter(c => {
+        const matchesYear = !selectedYear.value || c.year === selectedYear.value
+        const matchesSem  = !selectedSemester.value || c.semester === selectedSemester.value
+        return matchesYear && matchesSem
+    })
+})
 
 // ─── weekly stats ─────────────────────────────────────────────────────────────
 
@@ -247,10 +261,11 @@ function dismissSuggestion() {
 async function init() {
     loadDismissedSuggestions()
 
-    const [classes, codes, settings] = await Promise.all([
+    const [classes, codes, settings, terms] = await Promise.all([
         classService.getAllClasses(),
         settingsService.getBehaviorCodes(),
         settingsService.getSettings(),
+        settingsService.getAcademicTerms(),
     ])
 
     // Inject 'a' and 'l' if missing (migrating existing dbs smoothly)
@@ -272,27 +287,78 @@ async function init() {
         behaviorCodes.value = codes
     }
 
-    const active = classes.filter(c => !c.archived)
+    const active = classes.filter(c => !c.archived).sort((a, b) => {
+        // 1. Year (desc) - show latest year first
+        const yearA = a.year || ''
+        const yearB = b.year || ''
+        if (yearA > yearB) return -1
+        if (yearA < yearB) return 1
+        
+        // 2. Semester (desc) - show latest semester first
+        const semA = a.semester || ''
+        const semB = b.semester || ''
+        if (semA > semB) return -1
+        if (semA < semB) return 1
+        
+        // 3. Period (asc)
+        return (a.periodNumber || 0) - (b.periodNumber || 0)
+    })
     const archived = classes.filter(c => c.archived)
     classList.value = active
     archivedClasses.value = archived
-    gridSize.value = settings.gridSize
+    
+    // gridSize.value will be updated per-class in _activateClass
+    // We store the global default from settings for new classes
     teacherName.value = settings.teacherName || ''
 
-    if (active.length > 0) {
-        // Try to find the best class for the current time
+    // ── Determine default term ──
+    const now = new Date().toISOString().split('T')[0]
+    const currentTerm = terms.find(t => now >= t.startDate && now <= t.endDate)
+    
+    if (currentTerm) {
+        selectedYear.value = currentTerm.year
+        selectedSemester.value = currentTerm.semester
+    } else if (active.length > 0) {
+        // Fallback to the first class's term
+        selectedYear.value = active[0].year || '2025-26'
+        selectedSemester.value = active[0].semester || '2'
+    } else {
+        selectedYear.value = '2025-26'
+        selectedSemester.value = '2'
+    }
+
+    if (filteredClassList.value.length > 0) {
+        // Try to find the best class for the current time within the filtered list
         const bestClassFromTime = computeSuggestedClass()
-        if (bestClassFromTime) {
+        if (bestClassFromTime && filteredClassList.value.some(c => c.classId === bestClassFromTime.classId)) {
             // Because it's a fresh boot, load this optimal class directly
             await _activateClass(bestClassFromTime)
             suggestedClass.value = null // Clear suggestion since we are now on it
             return
         }
 
-        // Fallback to the first active class if no time matches at all
-        await _activateClass(active[0])
+        // Fallback to the first class in the filtered list
+        await _activateClass(filteredClassList.value[0])
     }
 }
+
+/**
+ * Watch for changes to global filters and auto-switch class if needed.
+ */
+watch([selectedYear, selectedSemester], async ([newYear, newSem]) => {
+    if (!activeClass.value) return
+    
+    // If current active class fits the new filter, stay on it
+    if (activeClass.value.year === newYear && activeClass.value.semester === newSem) return
+    
+    // Otherwise, switch to the first class in the newly filtered list
+    if (filteredClassList.value.length > 0) {
+        await _activateClass(filteredClassList.value[0])
+    } else {
+        activeClass.value = null
+        students.value = {}
+    }
+})
 
 // ─── class management ─────────────────────────────────────────────────────────
 
@@ -317,11 +383,26 @@ async function switchClass(classId) {
  * @returns {Promise<void>}
  */
 async function createClass(opts) {
+    // 1. Determine current academic term
+    const terms = await settingsService.getAcademicTerms()
+    const now = new Date().toISOString().split('T')[0]
+    const currentTerm = terms.find(t => now >= t.startDate && now <= t.endDate)
+    
+    const year = opts.year || currentTerm?.year || '2025-26'
+    const semester = opts.semester || currentTerm?.semester || '2'
+
+    // 2. Use global default grid size as template
+    const settings = await settingsService.getSettings()
+    const defaultGrid = settings.gridSize || { rows: 6, cols: 6 }
+
     const newCls = {
         classId: opts.classId,
         name: opts.name,
         periodNumber: opts.periodNumber,
         periodStartTime: opts.periodStartTime ?? '08:45',
+        year,
+        semester,
+        gridSize: defaultGrid,
         gradebookUnits: [],
         students: {},
     }
@@ -363,20 +444,18 @@ async function updateActiveClass(updates) {
 // ─── roster import ────────────────────────────────────────────────────────────
 
 /**
- * Import a parsed roster array into the active class.
- * Handles cross-class conflict detection.
+ * Import a list of students from a CSV/Parsed array into a specific class.
  *
- * @param {Array<{ studentId: string, firstName: string, lastName: string }>} parsedRows
- * @returns {Promise<{
- *   inserted: number,
- *   updated: number,
- *   skipped: Array<{ studentId: string, reason: string }>,
- *   crossClassConflicts: Array<{ studentId: string, existingClassId: string, student: Object }>
- * }>}
+ * @param {Array} parsedRows - Array of { studentId, firstName, lastName, ... }
+ * @param {string} [targetClassId] - Optional class ID to import into (defaults to active)
+ * @returns {Promise<{ inserted: number, updated: number, skipped: Array, crossClassConflicts: Array }>}
  */
-async function importRoster(parsedRows) {
-    const classId = activeClass.value?.classId
-    if (!classId) throw new Error('No active class')
+async function importRoster(parsedRows, targetClassId = null) {
+    const classId = targetClassId || activeClass.value?.classId
+    if (!classId) throw new Error('No class selected')
+
+    const cls = classList.value.find(c => c.classId === classId)
+    if (!cls) throw new Error('Target class not found')
 
     const skipped = []
     const crossClassConflicts = []
@@ -408,22 +487,19 @@ async function importRoster(parsedRows) {
     // Write valid rows to IDB
     const { inserted, updated } = await classService.importRoster(classId, validRows)
 
-    // Update local reactive state immediately (no re-fetch)
-    // Update local reactive state immediately (no re-fetch)
-    const cls = activeClass.value
+    // Update local reactive state
+    const isActive = classId === activeClass.value?.classId
     for (const row of validRows) {
         const { studentId, firstName, lastName } = row
         
-        if (students.value[studentId]) {
-            // Apply all fields from the row to the reactive object
-            Object.assign(students.value[studentId], row)
-            
-            // Sync the master record as well to prevent stale overwrites on next save
-            if (cls.students[studentId]) {
-                Object.assign(cls.students[studentId], row)
+        if (!cls.students) cls.students = {}
+        
+        if (cls.students[studentId]) {
+            Object.assign(cls.students[studentId], row)
+            if (isActive && students.value[studentId]) {
+                Object.assign(students.value[studentId], row)
             }
         } else {
-            // Insert with defaults (merged with any CSV data)
             const newSt = {
                 firstName,
                 lastName,
@@ -437,12 +513,44 @@ async function importRoster(parsedRows) {
                 activeStates: { isOut: false, outTime: null },
                 excludeFromAnalytics: false,
             }
-            students.value[studentId] = newSt
-            if (cls.students) cls.students[studentId] = JSON.parse(JSON.stringify(newSt))
+            cls.students[studentId] = newSt
+            if (isActive) {
+                students.value[studentId] = JSON.parse(JSON.stringify(newSt))
+            }
         }
     }
 
     return { inserted, updated, skipped, crossClassConflicts }
+}
+
+/**
+ * Bulk import multiple classes and rosters from grouped data.
+ * @param {Array<{ name, year, semester, periodNumber, students: Array }>} groups
+ */
+async function bulkImportClasses(groups) {
+    for (const group of groups) {
+        let cls = classList.value.find(c => 
+            c.year === group.year && 
+            c.semester === group.semester && 
+            c.periodNumber === group.periodNumber
+        )
+        
+        let classId = cls?.classId
+        
+        if (!cls) {
+            classId = `class_${Date.now()}_${Math.random()}`
+            await createClass({
+                classId,
+                name: group.name,
+                year: group.year,
+                semester: group.semester,
+                periodNumber: group.periodNumber,
+                periodStartTime: group.periodStartTime || '08:45'
+            })
+        }
+        
+        await importRoster(group.students, classId)
+    }
 }
 
 /**
@@ -792,7 +900,7 @@ async function logToggleEvent(studentId, code) {
         // ── Toggle IN ────────────────────────────────────────────────────────────
         // CLAUDE.md §9 critical note: capture outTime BEFORE writing the IN event
         const originalOutTime = currentState.outTime
-        const duration = Date.now() - new Date(originalOutTime).getTime()
+        const duration = Math.round((Date.now() - new Date(originalOutTime).getTime()) / 60000)
 
         const eventId = await eventService.logEvent({
             studentId,
@@ -919,15 +1027,15 @@ function checkResize(newSize) {
 async function confirmResize(newSize) {
     const { affected } = checkResize(newSize)
     const classId = activeClass.value?.classId
+    if (!classId) return
 
     for (const s of affected) {
         await classService.updateStudentSeat(classId, s.studentId, null)
         students.value[s.studentId].seat = null
     }
 
-    gridSize.value = newSize
-    const settings = await settingsService.getSettings()
-    await settingsService.saveSettings({ ...settings, gridSize: newSize })
+    // Save to the ACTIVE CLASS
+    await updateActiveClass({ gridSize: newSize })
 }
 
 // ─── settings ─────────────────────────────────────────────────────────────────
@@ -1039,6 +1147,14 @@ async function _activateClass(cls) {
         await classService.saveClass(cls)
     }
 
+    // Load class-specific grid size, falling back to global settings if missing
+    if (cls.gridSize) {
+        gridSize.value = cls.gridSize
+    } else {
+        const settings = await settingsService.getSettings()
+        gridSize.value = settings.gridSize || { rows: 6, cols: 6 }
+    }
+
     activeClass.value = cls
     // Deep-copy students map so Vue can track nested mutations
     students.value = JSON.parse(JSON.stringify(cls.students ?? {}))
@@ -1063,10 +1179,13 @@ export function useClassroom() {
         isTestDay,
         teacherName,
         activeStudentEvents,
+        selectedYear,
+        selectedSemester,
         // computed
         sortedRoster,
         unseatedStudents,
         studentsOut,
+        filteredClassList,
         // actions
         init: async () => {
             await init()
@@ -1097,7 +1216,8 @@ export function useClassroom() {
         archiveClass,
         restoreClass,
         deleteClass,
-        dismissSuggestion
+        dismissSuggestion,
+        bulkImportClasses
     }
 }
 

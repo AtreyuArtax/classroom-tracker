@@ -72,6 +72,7 @@
                     <h3 class="reports__card-title"><UserCheck :size="18" /> Attendance</h3>
                   </div>
                   <div class="reports__card-grid">
+                    <!-- Primary Row -->
                     <div class="reports__metric">
                       <span class="reports__metric-label">Total Absences</span>
                       <span class="reports__metric-value">{{ aggregates.attendance.totalAbsences }}</span>
@@ -84,8 +85,22 @@
                       <span class="reports__metric-value">{{ aggregates.attendance.totalLates }}</span>
                     </div>
                     <div class="reports__metric">
-                      <span class="reports__metric-label">Avg Absences / Student</span>
+                      <span class="reports__metric-label">Avg / Student</span>
                       <span class="reports__metric-value">{{ aggregates.attendance.avgAbsences }}</span>
+                    </div>
+
+                    <!-- Secondary Row: Weekly & Duration Metrics -->
+                    <div class="reports__metric reports__metric--border">
+                      <span class="reports__metric-label">Absent / Week</span>
+                      <span class="reports__metric-value reports__metric-value--small">{{ aggregates.attendance.avgAbsencesPerWeek }}</span>
+                    </div>
+                    <div class="reports__metric reports__metric--border">
+                      <span class="reports__metric-label">Late / Week</span>
+                      <span class="reports__metric-value reports__metric-value--small">{{ aggregates.attendance.avgLatesPerWeek }}</span>
+                    </div>
+                    <div class="reports__metric reports__metric--border">
+                      <span class="reports__metric-label">Avg Late Time</span>
+                      <span class="reports__metric-value reports__metric-value--small">{{ aggregates.attendance.avgLateDuration }}<small>min</small></span>
                     </div>
                   </div>
                   <div class="reports__card-section">
@@ -106,17 +121,28 @@
                     <h3 class="reports__card-title"><Toilet :size="18" /> Washroom</h3>
                   </div>
                   <div class="reports__card-grid">
+                    <!-- Primary row -->
                     <div class="reports__metric">
                       <span class="reports__metric-label">Total Trips</span>
                       <span class="reports__metric-value">{{ aggregates.washroom.totalTrips }}</span>
                     </div>
                     <div class="reports__metric">
-                      <span class="reports__metric-label">Total Time (min)</span>
-                      <span class="reports__metric-value">{{ aggregates.washroom.totalDuration }}</span>
+                      <span class="reports__metric-label">Total Time</span>
+                      <span class="reports__metric-value">{{ aggregates.washroom.totalDuration }}<small>min</small></span>
                     </div>
                     <div class="reports__metric">
-                      <span class="reports__metric-label">Avg Duration (min)</span>
-                      <span class="reports__metric-value">{{ aggregates.washroom.avgDuration }}</span>
+                      <span class="reports__metric-label">Avg Duration</span>
+                      <span class="reports__metric-value">{{ aggregates.washroom.avgDuration }}<small>min</small></span>
+                    </div>
+                    
+                    <!-- Secondary row -->
+                    <div class="reports__metric reports__metric--border">
+                      <span class="reports__metric-label">Trips / Week</span>
+                      <span class="reports__metric-value reports__metric-value--small">{{ aggregates.washroom.avgTripsPerWeek }}</span>
+                    </div>
+                    <div class="reports__metric reports__metric--border">
+                      <span class="reports__metric-label">Mins / Week</span>
+                      <span class="reports__metric-value reports__metric-value--small">{{ aggregates.washroom.avgMinsPerWeek }}<small>m</small></span>
                     </div>
                   </div>
                   <!-- Chart -->
@@ -370,6 +396,7 @@ const {
   activeClass,
   behaviorCodes,
   classList,
+  filteredClassList,
   syncLateActiveState,
   switchClass
 } = useClassroom()
@@ -378,7 +405,7 @@ const { push: pushUndo } = useUndo()
 
 // --- Sorted Class List for Dropdowns ---
 const sortedClassList = computed(() => {
-  return [...classList.value].sort((a, b) => {
+  return [...filteredClassList.value].sort((a, b) => {
     if (!a.periodNumber && !b.periodNumber) return 0;
     if (!a.periodNumber) return 1;
     if (!b.periodNumber) return -1;
@@ -401,7 +428,20 @@ const PERIODS = [
 // ─── sidebar state ────────────────────────────────────────────────────────────
 
 /** Class selected in the sidebar dropdown */
-const sidebarClassId = ref(activeClass.value?.classId || classList.value[0]?.classId || null)
+const sidebarClassId = ref(activeClass.value?.classId || filteredClassList.value[0]?.classId || null)
+
+// Watch filteredClassList to ensure sidebarClassId remains valid for the selected term
+watch(filteredClassList, (newList) => {
+  if (newList.length > 0) {
+    const stillExists = newList.find(c => c.classId === sidebarClassId.value)
+    if (!stillExists) {
+      sidebarClassId.value = newList[0].classId
+      runReport()
+    }
+  } else {
+    sidebarClassId.value = null
+  }
+}, { immediate: true })
 
 watch(activeClass, (newClass, oldClass) => {
   if (newClass && (!oldClass || newClass.classId !== oldClass.classId)) {
@@ -606,6 +646,13 @@ function parseNote(note) {
   return { text: note, tag: null }
 }
 
+// --- Duration Normalization Helper ---
+const toMinutes = (d) => {
+  if (d === null || d === undefined) return 0
+  // Heuristic: if duration > 1000, it's likely historical milliseconds
+  return d > 1000 ? Math.round(d / 60000) : Math.round(d)
+}
+
 /** Delete an event from the dossier (sync or note feed) */
 async function onDossierDelete(eventId) {
   if (!confirm('Delete this event? This cannot be undone.')) return
@@ -673,12 +720,16 @@ const aggregates = reactive({
     testDayAbsences: 0,
     totalLates: 0,
     avgAbsences: 0,
+    avgAbsencesPerWeek: 0,
+    avgLatesPerWeek: 0,
+    avgLateDuration: 0,
     topAbsentees: []
   },
   washroom: {
     totalTrips: 0,
     totalDuration: 0, // minutes
     avgDuration: 0,
+    avgTripsPerWeek: 0,
     studentTrips: [], // { name, count }
     longTrips: [] // { name, date, duration }
   },
@@ -768,9 +819,25 @@ async function runReport() {
     // --- Process Attendance ---
     const attEvents = events.filter(e => (e.code === 'a' || e.code === 'l') && !e.superseded)
     const absenceEvents = attEvents.filter(e => e.code === 'a')
+    const lateEvents = attEvents.filter(e => e.code === 'l')
+    
     const absences = absenceEvents.length
     const testDayAbsences = absenceEvents.filter(e => e.testDay).length
-    const lates = attEvents.filter(e => e.code === 'l').length
+    const lates = lateEvents.length
+    
+    // Calculate weeks in the reporting period
+    let weeks = 1
+    if (selectedPeriod.value === 'month') weeks = 4.3
+    else if (selectedPeriod.value === 'semester') weeks = 20
+    else if (selectedPeriod.value === 'all' && events.length > 0) {
+      const first = new Date(events[0].timestamp)
+      const last = new Date(events[events.length - 1].timestamp)
+      const diffMs = Math.abs(last - first)
+      weeks = Math.max(1, diffMs / (1000 * 60 * 60 * 24 * 7))
+    }
+
+    const totalLateMs = lateEvents.reduce((acc, e) => acc + (e.duration || 0), 0)
+    const avgLateDuration = lates ? Math.round(totalLateMs / lates / 60000) : 0
     
     const absCounts = {}
     attEvents.filter(e => e.code === 'a').forEach(e => {
@@ -789,6 +856,9 @@ async function runReport() {
       testDayAbsences,
       totalLates: lates,
       avgAbsences: studentCount ? (absences / studentCount).toFixed(1) : 0,
+      avgAbsencesPerWeek: (absences / weeks).toFixed(1),
+      avgLatesPerWeek: (lates / weeks).toFixed(1),
+      avgLateDuration: avgLateDuration,
       topAbsentees
     }
 
@@ -796,8 +866,7 @@ async function runReport() {
     const washCodes = behaviorCodes.value.filter(c => c.type === 'toggle').map(c => c.codeKey)
     const washEvents = events.filter(e => washCodes.includes(e.code) && e.duration != null)
     const totalTrips = washEvents.length
-    const totalMs = washEvents.reduce((acc, e) => acc + (e.duration || 0), 0)
-    const totalMins = Math.round(totalMs / 60000)
+    const totalMins = washEvents.reduce((acc, e) => acc + toMinutes(e.duration), 0)
     
     const tripCounts = {}
     washEvents.forEach(e => {
@@ -810,20 +879,20 @@ async function runReport() {
       }))
       .sort((a, b) => b.count - a.count)
 
-    const longTrips = washEvents
-      .filter(e => e.duration > 15 * 60000)
-      .map(e => ({
-        name: studentsMap[e.studentId] ? `${studentsMap[e.studentId].lastName}, ${studentsMap[e.studentId].firstName}` : e.studentId,
-        date: formatTimestamp(e.timestamp),
-        duration: Math.round(e.duration / 60000)
-      }))
-
     aggregates.washroom = {
       totalTrips,
       totalDuration: totalMins,
-      avgDuration: totalTrips ? (totalMs / totalTrips / 60000).toFixed(1) : 0,
+      avgDuration: totalTrips ? (totalMins / totalTrips).toFixed(1) : 0,
+      avgTripsPerWeek: (totalTrips / weeks).toFixed(1),
+      avgMinsPerWeek: (totalMins / weeks).toFixed(1),
       studentTrips: studentTripsData,
-      longTrips
+      longTrips: washEvents
+        .filter(e => toMinutes(e.duration) > 15)
+        .map(e => ({
+          name: studentsMap[e.studentId] ? `${studentsMap[e.studentId].lastName}, ${studentsMap[e.studentId].firstName}` : e.studentId,
+          date: formatTimestamp(e.timestamp),
+          duration: toMinutes(e.duration)
+        }))
     }
 
     // --- Process Behavior ---
@@ -1009,7 +1078,7 @@ function downloadAggregateCsv(section) {
     csvContent = 'Student,Absences,Test Day Absences,Lates,Avg Late (min)\n'
     Object.entries(studentsMap).forEach(([id, s]) => {
       const stats = summary[id] || { absences: 0, testDayAbsences: 0, lates: 0, lateTotal: 0, lateCount: 0 }
-      const avg = stats.lateCount > 0 ? (stats.lateTotal / stats.lateCount / 60000).toFixed(1) : 0
+      const avg = stats.lateCount > 0 ? (toMinutes(stats.lateTotal) / stats.lateCount).toFixed(1) : 0
       csvContent += `"${s.lastName}, ${s.firstName}",${stats.absences},${stats.testDayAbsences},${stats.lates},${avg}\n`
     })
 
@@ -1020,18 +1089,18 @@ function downloadAggregateCsv(section) {
     reportData.value.forEach(evt => {
       if (washCodes.includes(evt.code) && evt.duration != null) {
         if (!summary[evt.studentId]) {
-          summary[evt.studentId] = { trips: 0, totalMs: 0 }
+          summary[evt.studentId] = { trips: 0, totalMins: 0 }
         }
         summary[evt.studentId].trips++
-        summary[evt.studentId].totalMs += evt.duration
+        summary[evt.studentId].totalMins += toMinutes(evt.duration)
       }
     })
     
     csvContent = 'Student,Trips,Total Duration (min),Avg Duration (min)\n'
     Object.entries(studentsMap).forEach(([id, s]) => {
-      const stats = summary[id] || { trips: 0, totalMs: 0 }
-      const totalMin = Math.round(stats.totalMs / 60000)
-      const avg = stats.trips > 0 ? (stats.totalMs / stats.trips / 60000).toFixed(1) : 0
+      const stats = summary[id] || { trips: 0, totalMins: 0 }
+      const totalMin = stats.totalMins
+      const avg = stats.trips > 0 ? (stats.totalMins / stats.trips).toFixed(1) : 0
       csvContent += `"${s.lastName}, ${s.firstName}",${stats.trips},${totalMin},${avg}\n`
     })
 
@@ -1282,10 +1351,21 @@ const washroomChartOptions = {
   line-height: 1.2;
 }
 
-.reports__metric-sub {
-  font-size: 0.7rem;
-  color: var(--text-secondary);
+.reports__metric-value--small {
+  font-size: 1.1rem;
+}
+
+.reports__metric-value small {
+  font-size: 0.65em;
   font-weight: 600;
+  margin-left: 2px;
+  color: var(--text-secondary);
+}
+
+.reports__metric--border {
+  border-top: 1px solid var(--bg-secondary);
+  padding-top: 12px;
+  margin-top: 4px;
 }
 
 .reports__card-section {

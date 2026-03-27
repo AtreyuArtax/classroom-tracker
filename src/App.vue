@@ -30,6 +30,10 @@
         </button>
       </div>
 
+      <div class="app-nav__center">
+        <YearSemesterSelector />
+      </div>
+
       <div class="app-nav__tabs" role="tablist">
         <button
           v-for="view in views"
@@ -85,6 +89,7 @@ const Grades    = defineAsyncComponent(() => import('./views/Grades.vue'))
 
 import { useClassroom } from './composables/useClassroom.js'
 import AddAssessmentModal from './components/dossier/AddAssessmentModal.vue'
+import YearSemesterSelector from './components/YearSemesterSelector.vue'
 import * as settingsService from './db/settingsService.js'
 import * as eventService from './db/eventService.js'
 import { hasUnsyncedChanges, getLastSyncedAt } from './db/eventService.js'
@@ -234,6 +239,13 @@ async function doQuickSync() {
   font-size:   1rem;
   font-weight: 700;
   color:       var(--text);
+}
+
+.app-nav__center {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  padding: 0 20px;
 }
 
 .app-nav__sync-btn {

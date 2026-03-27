@@ -16,7 +16,7 @@
 import { openDB } from 'idb'
 
 const DB_NAME = 'classroomTrackerDB'
-const DB_VERSION = 19
+const DB_VERSION = 20
 
 /**
  * Cached promise — set synchronously before the first await so every
@@ -43,7 +43,9 @@ export function getDB() {
 
       // ── classes store ────────────────────────────────────────────────────
       if (!db.objectStoreNames.contains('classes')) {
-        db.createObjectStore('classes', { keyPath: 'classId' })
+        const classStore = db.createObjectStore('classes', { keyPath: 'classId' })
+        classStore.createIndex('by_year', 'year')
+        classStore.createIndex('by_semester', 'semester')
       }
 
       // ── events store ─────────────────────────────────────────────────────
@@ -87,7 +89,7 @@ export function getDB() {
       if (oldVersion === 0) {
         transaction.objectStore('settings').put(
           {
-            schemaVersion: 19,
+            schemaVersion: 20,
             gridSize: { rows: 6, cols: 6 },
             behaviorCodes: {
               m: { icon: 'Smartphone', label: 'On Device', category: 'redirect', type: 'standard', requiresNote: false, isTopLevel: true },
@@ -496,6 +498,31 @@ export function getDB() {
         const settings = await settingsStore.get('singleton')
         if (settings) {
           settings.schemaVersion = 19
+          await settingsStore.put(settings, 'singleton')
+        }
+      }
+
+      // ── version 20 migration (Year/Semester support) ──────────────────────
+      if (oldVersion < 20) {
+        const classesStore = transaction.objectStore('classes')
+        if (!classesStore.indexNames.contains('by_year')) {
+          classesStore.createIndex('by_year', 'year')
+        }
+        if (!classesStore.indexNames.contains('by_semester')) {
+          classesStore.createIndex('by_semester', 'semester')
+        }
+
+        const allClasses = await classesStore.getAll()
+        for (const cls of allClasses) {
+          cls.year = cls.year || '2025-26'
+          cls.semester = cls.semester || '2'
+          await classesStore.put(cls)
+        }
+
+        const settingsStore = transaction.objectStore('settings')
+        const settings = await settingsStore.get('singleton')
+        if (settings) {
+          settings.schemaVersion = 20
           await settingsStore.put(settings, 'singleton')
         }
       }

@@ -208,6 +208,44 @@ export function useStudentDossier() {
         await loadStudent(selectedClassId.value, selectedStudentId.value)
     }
 
+    const allTimeHistory = ref([])
+    async function fetchAllTimeHistory(studentId) {
+        if (!studentId) return
+        try {
+            const allClasses = await classService.getAllClasses()
+            const history = []
+            
+            for (const cls of allClasses) {
+                const s = cls.students[studentId]
+                if (s) {
+                    history.push({
+                        classId: cls.classId,
+                        name: cls.name,
+                        year: cls.year,
+                        semester: cls.semester,
+                        period: cls.periodNumber,
+                        overallGrade: s.overallGrade,
+                        lastModified: cls.lastModified
+                    })
+                }
+            }
+            
+            // Sort by Year desc, Semester desc
+            allTimeHistory.value = history.sort((a, b) => {
+                const yearA = a.year || ''
+                const yearB = b.year || ''
+                if (yearA !== yearB) return yearB.localeCompare(yearA)
+                
+                const semA = a.semester || ''
+                const semB = b.semester || ''
+                return semB.localeCompare(semA)
+            })
+        } catch (err) {
+            console.error('fetchAllTimeHistory failed:', err)
+            allTimeHistory.value = []
+        }
+    }
+
     // ─── export ───────────────────────────────────────────────────────────────
 
     return {
@@ -227,10 +265,12 @@ export function useStudentDossier() {
         loading,
         stats,
         assessmentEvents,
+        allTimeHistory,
         // actions
         loadStudent,
         reload,
         clearStudent,
+        fetchAllTimeHistory,
     }
 }
 

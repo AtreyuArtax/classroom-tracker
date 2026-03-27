@@ -67,14 +67,18 @@
           <StudentStatCard 
             label="Lates" 
             :value="attendanceStats.lates" 
-            :sub-value="attendanceAverages.latesAvg + ' total min'"
+            :sub-value="attendanceAverages.latesAvg + '/wk'"
+            :value2="attendanceAverages.latesTotal + 'm'"
+            :sub-value2="attendanceAverages.latesAvgDuration + 'm avg'"
             :icon="Clock"
             :color="attendanceStats.lates > 4 ? 'warning' : 'neutral'"
           />
           <StudentStatCard 
             label="Washroom" 
             :value="washroomCount" 
-            :sub-value="attendanceAverages.washroomAvg + '/wk avg'"
+            :sub-value="attendanceAverages.washroomAvg + '/wk'"
+            :value2="attendanceAverages.washroomTotal + 'm'"
+            :sub-value2="attendanceAverages.washroomAvgPerVisit + 'm avg'"
             :icon="Toilet"
             :color="washroomCount > 3 ? 'warning' : 'neutral'"
           />
@@ -371,6 +375,34 @@
             <ClipboardList :size="16" />
             {{ isCopied ? 'Copied to Clipboard!' : 'Copy for Report Card' }}
           </button>
+        </div>
+      </section>
+
+      <!-- History Tab -->
+      <section v-if="activeTab === 'history'" class="student-360__pane student-360__pane--history">
+        <div class="history-container">
+          <h3 class="history-title">Academic Journey</h3>
+          <p class="history-subtitle">Historical records across all semesters and years.</p>
+          
+          <div v-if="allTimeHistory.length === 0" class="history-empty">
+            <History :size="48" class="history-empty-icon" />
+            <p>No historical records found for this student.</p>
+          </div>
+          
+          <div v-else class="history-list">
+            <div v-for="h in allTimeHistory" :key="h.classId" class="history-item">
+              <div class="history-item__left">
+                <div class="history-term-badge">{{ h.year }} • {{ h.semester }}</div>
+                <div class="history-class-name">{{ h.name }}</div>
+                <div class="history-period" v-if="h.period">Period {{ h.period }}</div>
+              </div>
+              <div class="history-item__right">
+                <div class="history-grade-pill" :style="{ backgroundColor: getGradeColor(h.overallGrade) }">
+                  {{ h.overallGrade != null ? Math.round(h.overallGrade) + '%' : '—' }}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
     </main>
@@ -726,6 +758,10 @@ const {
   logStandardEvent,
 } = useClassroom()
 
+import { useStudentDossier } from '../../composables/useStudentDossier.js'
+const dossier = useStudentDossier()
+const { allTimeHistory, fetchAllTimeHistory } = dossier
+
 // --- Email Progress Report State ---
 const showEmailModal = ref(false)
 const emailConfig = ref({
@@ -887,7 +923,8 @@ async function logAbsence() {
 const tabs = [
   { id: 'summary',   label: 'Summary',   icon: LayoutDashboard },
   { id: 'academics', label: 'Academics', icon: GraduationCap },
-  { id: 'timeline',  label: 'Timeline',  icon: History },
+  { id: 'timeline',  label: 'Timeline',  icon: Activity },
+  { id: 'history',   label: 'History',   icon: History },
   { id: 'profile',   label: 'Profile',   icon: UserCircle }
 ]
 
@@ -1051,6 +1088,11 @@ function computeAge(dob) {
   return age
 }
 
+const toMinutes = (d) => {
+  if (d === null || d === undefined) return 0
+  return d > 1000 ? Math.round(d / 60000) : Math.round(d)
+}
+
 const behaviorWeeklyTrend = computed(() => {
   if (!filteredEvents.value.length) return []
   const weeks = {}
@@ -1081,19 +1123,30 @@ const attendanceAverages = computed(() => {
   
   // Determine actual divisor based on period
   let weekCount = 1
-  if (selectedPeriod.value === 'month') weekCount = 4
+  if (selectedPeriod.value === 'month') weekCount = 4.3
   else if (selectedPeriod.value === 'all') weekCount = Math.max(1, trend.length)
   
   const totalAbs = attendanceStats.value.absences
+  const totalLates = attendanceStats.value.lates
   const totalWash = washroomCount.value
+  
   const totalLateMins = filteredEvents.value
     .filter(e => e.code === 'l')
-    .reduce((acc, e) => acc + (e.duration || 0), 0)
+    .reduce((acc, e) => acc + toMinutes(e.duration), 0)
+    
+  const totalWashMins = filteredEvents.value
+    .filter(e => e.code === 'w')
+    .reduce((acc, e) => acc + toMinutes(e.duration), 0)
 
   return {
     absencesAvg: (totalAbs / weekCount).toFixed(1),
+    latesAvg: (totalLates / weekCount).toFixed(1),
     washroomAvg: (totalWash / weekCount).toFixed(1),
-    latesAvg: Math.round(totalLateMins)
+    latesTotal: totalLateMins,
+    washroomTotal: totalWashMins,
+    washroomMinsAvg: (totalWashMins / weekCount).toFixed(1),
+    washroomAvgPerVisit: totalWash ? (totalWashMins / totalWash).toFixed(1) : 0,
+    latesAvgDuration: totalLates ? (totalLateMins / totalLates).toFixed(1) : 0
   }
 })
 
@@ -1347,6 +1400,7 @@ async function loadData() {
   }
   
   events.value = await getStudentEventHistory(props.studentId)
+  await fetchAllTimeHistory(props.studentId)
   loading.value = false
 }
 
@@ -2538,5 +2592,106 @@ onMounted(loadData)
   color: var(--text-secondary);
   border: 1px solid var(--border);
   line-height: 1.4;
+}
+/* History Tab Styles */
+.student-360__pane--history {
+  padding: 24px;
+  overflow-y: auto;
+}
+
+.history-container {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.history-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.history-subtitle {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin-bottom: 24px;
+}
+
+.history-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px;
+  background: var(--bg-hover);
+  border-radius: var(--radius-xl);
+  border: 2px dashed var(--border);
+  color: var(--text-secondary);
+  gap: 16px;
+}
+
+.history-empty-icon {
+  opacity: 0.3;
+}
+
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.history-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  transition: transform 0.2s ease;
+}
+
+.history-item:hover {
+  transform: translateX(4px);
+  border-color: var(--primary);
+}
+
+.history-item__left {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.history-term-badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--primary);
+  background: var(--primary-light);
+  padding: 2px 8px;
+  border-radius: 100px;
+  width: fit-content;
+}
+
+.history-class-name {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.history-period {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.history-grade-pill {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: white;
+  padding: 8px 16px;
+  border-radius: var(--radius-md);
+  min-width: 80px;
+  text-align: center;
+  box-shadow: var(--shadow-sm);
 }
 </style>

@@ -105,6 +105,7 @@ async function _readSettings() {
         },
         backupFileHandle: null,
         gradebookMilestones: [],
+        academicTerms: [],
         teacherName: ''
     }
     await db.put('settings', defaults, SETTINGS_KEY)
@@ -247,6 +248,30 @@ export async function saveTeacherName(name) {
     const db = await getDB()
     const settings = await db.get('settings', 'singleton')
     settings.teacherName = name
+    await db.put('settings', settings, 'singleton')
+    hasUnsyncedChanges.value = true
+}
+
+/**
+ * Returns the defined academic terms.
+ *
+ * @returns {Promise<Array<Object>>}
+ */
+export async function getAcademicTerms() {
+    const settings = await _readSettings()
+    return settings.academicTerms || []
+}
+
+/**
+ * Saves the academic terms list.
+ *
+ * @param {Array<Object>} terms Array of { name, semester, start, end }
+ * @returns {Promise<void>}
+ */
+export async function saveAcademicTerms(terms) {
+    const db = await getDB()
+    const settings = await db.get('settings', 'singleton')
+    settings.academicTerms = terms
     await db.put('settings', settings, 'singleton')
     hasUnsyncedChanges.value = true
 }
