@@ -61,6 +61,7 @@
 
     <!-- ── Global Modals ────────────────────────────────────────────────── -->
     <AddAssessmentModal />
+    <QRScanner v-if="isScannerOpen" @close="isScannerOpen = false" />
 
   </div>
 </template>
@@ -89,6 +90,7 @@ const Grades    = defineAsyncComponent(() => import('./views/Grades.vue'))
 
 import { useClassroom } from './composables/useClassroom.js'
 import AddAssessmentModal from './components/dossier/AddAssessmentModal.vue'
+import QRScanner          from './components/QRScanner.vue'
 import YearSemesterSelector from './components/YearSemesterSelector.vue'
 import * as settingsService from './db/settingsService.js'
 import * as eventService from './db/eventService.js'
@@ -121,7 +123,7 @@ function navigateTo(viewId, params = {}) {
 
 // ─── init — load IDB data before first render ─────────────────────────────
 
-const { init } = useClassroom()
+const { init, isScannerOpen } = useClassroom()
 
 const isSyncLinked   = ref(false)
 const isSyncing      = ref(false)

@@ -64,6 +64,9 @@ const selectedYear = ref(localStorage.getItem('selectedYear') || '')
 /** @type {import('vue').Ref<string>} Global semester filter */
 const selectedSemester = ref(localStorage.getItem('selectedSemester') || '')
 
+/** @type {import('vue').Ref<boolean>} Controls visibility of the QR Scanner component */
+const isScannerOpen = ref(false)
+
 // Watch for changes and persist to localStorage
 watch(selectedYear, (val) => localStorage.setItem('selectedYear', val))
 watch(selectedSemester, (val) => localStorage.setItem('selectedSemester', val))
@@ -1198,6 +1201,7 @@ export function useClassroom() {
         // Year/Semester context
         selectedYear,
         selectedSemester,
+        isScannerOpen,
         filteredClassList,
         filteredArchivedClasses,
         // computed

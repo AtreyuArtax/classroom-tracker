@@ -13,9 +13,11 @@
   "dependencies": {
     "exceljs": "^4.4.0",
     "file-saver": "^2.0.5",
+    "html5-qrcode": "^2.3.8",
     "idb": "^8.0.0",
     "lucide-vue-next": "^0.577.0",
     "papaparse": "^5.4.1",
+    "qrcode": "^1.5.3",
     "vue": "^3.4.0"
   },
   "devDependencies": {

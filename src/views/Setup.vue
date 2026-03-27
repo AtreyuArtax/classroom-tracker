@@ -324,7 +324,12 @@
 
         <!-- Roster -->
         <div class="setup__card">
-          <h2 class="setup__card-title">Roster — {{ sortedRoster.length }} Students</h2>
+          <div class="setup__card-header-row">
+            <h2 class="setup__card-title">Roster — {{ sortedRoster.length }} Students</h2>
+            <button class="setup__pill-btn" @click="openQRGenerator">
+              <QrCode :size="16" /> Generate QR Codes
+            </button>
+          </div>
           
           <!-- Manual Add -->
           <form class="setup__form setup__form--inline" @submit.prevent="addSingleStudent">
@@ -538,6 +543,42 @@
       </div>
     </section>
 
+    <!-- ── QR Generation Modal ─── -->
+    <div v-if="isQRModalOpen" class="setup__dialog setup__dialog--qr" role="dialog" aria-modal="true">
+      <div class="setup__dialog-box setup__dialog-box--large">
+        <div class="setup__dialog-header">
+          <h3 class="setup__dialog-title">Student QR Codes</h3>
+          <div class="setup__dialog-actions">
+            <button class="setup__btn-primary" @click="printQRs" :disabled="isGeneratingQRs">
+              <Printer :size="18" /> Print
+            </button>
+            <button class="setup__btn-ghost" @click="isQRModalOpen = false">
+              <X :size="18" /> Close
+            </button>
+          </div>
+        </div>
+        
+        <p class="setup__dialog-body print:hidden">
+          These QR codes are tied to student ID numbers. Print this page to create student cards.
+        </p>
+
+        <div class="setup__qr-grid" :class="{ 'setup__qr-grid--loading': isGeneratingQRs }">
+          <div v-if="isGeneratingQRs" class="setup__qr-loading">
+            <QrCode :size="48" class="setup__qr-pulse" />
+            <p>Generating codes...</p>
+          </div>
+          <div v-for="qr in qrCodes" :key="qr.studentId" class="setup__qr-card">
+            <img :src="qr.qrUrl" :alt="qr.name" class="setup__qr-img" />
+            <div class="setup__qr-info">
+              <span class="setup__qr-name">{{ qr.name }}</span>
+              <span class="setup__qr-id">{{ qr.studentId }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="setup__dialog-backdrop" @click="isQRModalOpen = false" />
+    </div>
+
 
   </div>
 </template>
@@ -558,7 +599,8 @@
 
 import { ref, reactive, computed, watch, onMounted } from 'vue'
 import Papa from 'papaparse'
-import { Archive, ChevronDown, ChevronUp, FolderOpen, Trash2, FileText, Pencil, Download, Database, Cloud, Settings2, Plus, X, Save, FileUp, FileDown, GraduationCap, ArrowLeft, Zap, LayoutDashboard, Settings } from 'lucide-vue-next'
+import { Archive, ChevronDown, ChevronUp, FolderOpen, Trash2, FileText, Pencil, Download, Database, Cloud, Settings2, Plus, X, Save, FileUp, FileDown, GraduationCap, ArrowLeft, Zap, LayoutDashboard, Settings, QrCode, Printer } from 'lucide-vue-next'
+import QRCode from 'qrcode'
 import { resolveIcon } from '../utils/icons.js'
 import { useClassroom } from '../composables/useClassroom.js'
 import * as eventService from '../db/eventService.js'
@@ -600,6 +642,46 @@ const isUnsynced = eventService.hasUnsyncedChanges
 const academicTerms = ref([])
 const isArchivedPanelVisible = ref(false)
 const showAllSessions = ref(false)
+
+// --- QR Generation State ---
+const isQRModalOpen = ref(false)
+const qrCodes = ref([]) // Array of { studentId, name, qrUrl }
+const isGeneratingQRs = ref(false)
+
+async function openQRGenerator() {
+  if (!activeClass.value || sortedRoster.value.length === 0) return
+  
+  isGeneratingQRs.value = true
+  isQRModalOpen.value = true
+  
+  const codes = []
+  for (const student of sortedRoster.value) {
+    try {
+      const url = await QRCode.toDataURL(student.studentId, {
+        width: 200,
+        margin: 2,
+        color: {
+          dark: '#1c1c1e',
+          light: '#ffffff'
+        }
+      })
+      codes.push({
+        studentId: student.studentId,
+        name: `${student.firstName} ${student.lastName}`,
+        qrUrl: url
+      })
+    } catch (err) {
+      console.error(`Failed to generate QR for ${student.studentId}`, err)
+    }
+  }
+  
+  qrCodes.value = codes
+  isGeneratingQRs.value = false
+}
+
+function printQRs() {
+  window.print()
+}
 
 onMounted(async () => {
     const [terms, ms, tpls, settings] = await Promise.all([
@@ -2483,5 +2565,115 @@ function formatDate(iso) {
 .setup__badge--update {
   background: #fff3e0;
   color: #f57c00;
+}
+
+/* ── QR Codes Grid ───────────────────────────────────────────────── */
+.setup__qr-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 16px;
+  max-height: 60vh;
+  overflow-y: auto;
+  padding: 4px;
+}
+
+.setup__qr-grid--loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+}
+
+.setup__qr-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  color: var(--text-secondary);
+}
+
+.setup__qr-pulse {
+  animation: setupPulse 1.5s infinite ease-in-out;
+  color: var(--primary);
+}
+
+.setup__qr-card {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+}
+
+.setup__qr-img {
+  width: 100%;
+  aspect-ratio: 1;
+  image-rendering: pixelated;
+}
+
+.setup__qr-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.setup__qr-name {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 120px;
+}
+
+.setup__qr-id {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  font-family: monospace;
+}
+
+.setup__dialog-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+/* Print Overrides */
+@media print {
+  .app-shell, .app-nav, .print\:hidden, .setup__dialog-backdrop, .setup__dialog-header button:not(.setup__btn-primary) {
+    display: none !important;
+  }
+  
+  .setup__dialog {
+    position: static !important;
+    background: white !important;
+  }
+  
+  .setup__dialog-box {
+    box-shadow: none !important;
+    border: none !important;
+    width: 100% !important;
+    max-width: none !important;
+    padding: 0 !important;
+  }
+
+  .setup__qr-grid {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 20px !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  .setup__qr-card {
+    break-inside: avoid;
+    border: 1px solid #eee !important;
+  }
 }
 </style>

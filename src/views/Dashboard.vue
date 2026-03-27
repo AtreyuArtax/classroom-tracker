@@ -37,8 +37,22 @@
         </button>
 
         <UndoButton />
+
+        <!-- QR Scanner Toggle -->
+        <button 
+          v-if="activeClass"
+          class="dashboard__qr-btn" 
+          @click="isScannerOpen = !isScannerOpen"
+          :class="{ 'dashboard__qr-btn--active': isScannerOpen }"
+          title="Toggle QR Scanner"
+        >
+          <QrCode :size="20" />
+        </button>
       </div>
     </header>
+
+    <!-- ── QR Scanner Component ─── -->
+    <!-- MOVED TO App.vue for persistence -->
 
     <!-- ── Content area ─────────────────────────────────────────────── -->
     <div class="dashboard__content">
@@ -136,7 +150,7 @@ import UndoButton          from '../components/UndoButton.vue'
 import EventNoteModal      from '../components/EventNoteModal.vue'
 import AssessmentConversationModal from '../components/AssessmentConversationModal.vue'
 import StudentProfileModal from '../components/StudentProfileModal.vue'
-import { Toilet, Users, GripVertical, Calendar, CalendarCheck } from 'lucide-vue-next'
+import { Toilet, Users, GripVertical, Calendar, CalendarCheck, QrCode } from 'lucide-vue-next'
 import { useClassroom }    from '../composables/useClassroom.js'
 import { useRadial }       from '../composables/useRadial.js'
 
@@ -152,6 +166,7 @@ const {
   logStandardEvent,
   logAssessmentEvent,
   isTestDay,
+  isScannerOpen,
 } = useClassroom()
 
 const {
@@ -380,6 +395,31 @@ watch(profileStudent, (student) => {
   font-size:     0.85rem;
   font-weight:   600;
   min-height:    44px;
+}
+
+/* QR Scanner Button */
+.dashboard__qr-btn {
+  display:         flex;
+  align-items:     center;
+  justify-content: center;
+  width:           44px;
+  height:          44px;
+  background:      var(--bg-secondary);
+  border:          1px solid var(--border);
+  border-radius:   var(--radius-md);
+  color:           var(--text);
+  cursor:          pointer;
+  transition:      all 0.15s ease;
+}
+
+.dashboard__qr-btn:hover {
+  background: var(--border);
+}
+
+.dashboard__qr-btn--active {
+  background:   var(--primary-light);
+  border-color: var(--primary);
+  color:        var(--primary);
 }
 
 /* ── Grid area ───────────────────────────────────────────────────── */
