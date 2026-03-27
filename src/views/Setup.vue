@@ -43,166 +43,178 @@
     <!-- PILLAR 1: Class Manager                                  -->
     <!-- ══════════════════════════════════════════════════════════ -->
     <section v-if="activeTab === 'manage'" class="setup__panel">
-      <!-- Bulk Setup Wizard (Smart CSV Interceptor) -->
-      <div class="setup__card setup__card--accent">
-        <h2 class="setup__card-title">Bulk Setup / New Semester</h2>
-        <p class="setup__hint">
-          Drop your board-provided CSV here to automatically detect, create, and update classes for the new term.
-        </p>
-        <label 
-          class="setup__file-label" 
-          for="roster-file"
-          :class="{ 'setup__file-label--drag': isDraggingRoster }"
-          @dragover.prevent="isDraggingRoster = true"
-          @dragleave.prevent="isDraggingRoster = false"
-          @drop.prevent="isDraggingRoster = false; onFileSelected($event)"
-        >
-          <FolderOpen :size="16" /> {{ isDraggingRoster ? 'Drop CSV here...' : 'Choose CSV file or drag & drop here' }}
-          <input
-            id="roster-file"
-            type="file"
-            accept=".csv,text/csv"
-            class="setup__file-input"
-            @change="onFileSelected"
-          />
-        </label>
-      </div>
-
-      <!-- Current Classes List -->
-      <div class="setup__card">
-        <h2 class="setup__card-title">All Classes</h2>
-        <div v-if="classList.length === 0" class="setup__empty">No active classes yet.</div>
-        <ul class="setup__class-list">
-          <li
-            v-for="cls in classList"
-            :key="cls.classId"
-            class="setup__class-item"
-            :class="{ 'setup__class-item--active': cls.classId === activeClass?.classId }"
+      <div class="setup__panel-content">
+        <!-- Bulk Setup Wizard (Smart CSV Interceptor) -->
+        <div class="setup__card setup__card--accent">
+          <h2 class="setup__card-title">Bulk Setup / New Semester</h2>
+          <p class="setup__hint">
+            Drop your board-provided CSV here to automatically detect, create, and update classes for the new term.
+          </p>
+          <label 
+            class="setup__file-label" 
+            for="roster-file"
+            :class="{ 'setup__file-label--drag': isDraggingRoster }"
+            @dragover.prevent="isDraggingRoster = true"
+            @dragleave.prevent="isDraggingRoster = false"
+            @drop.prevent="isDraggingRoster = false; onFileSelected($event)"
           >
-            <div>
-              <div class="setup__class-name">{{ cls.name }}</div>
-              <div class="setup__class-meta">
-                Period {{ cls.periodNumber }} · {{ cls.year }} Sem {{ cls.semester }} · {{ studentCount(cls) }} students
-              </div>
-            </div>
-            <div class="setup__class-actions">
-              <button class="setup__pill-btn" @click="switchToClass(cls.classId)">
-                {{ cls.classId === activeClass?.classId ? 'Active' : 'Configure' }}
-              </button>
-              <button class="setup__pill-btn setup__pill-btn--danger" @click="onArchiveClass(cls.classId)">Archive</button>
-            </div>
-          </li>
-        </ul>
-      </div>
-
-      <!-- Archived Classes -->
-      <div v-if="archivedClasses.length > 0" class="setup__card setup__card--archived">
-        <button class="setup__archived-toggle" @click="showArchived = !showArchived">
-          <span class="setup__archived-label"><Archive :size="16" /> Archived ({{ archivedClasses.length }})</span>
-          <span class="setup__archived-chevron"><component :is="showArchived ? ChevronUp : ChevronDown" :size="16" /></span>
-        </button>
-        <ul v-if="showArchived" class="setup__class-list setup__archived-list">
-          <li v-for="cls in archivedClasses" :key="cls.classId" class="setup__class-item setup__class-item--archived">
-            <div>
-              <div class="setup__class-name">{{ cls.name }}</div>
-              <div class="setup__class-meta">Period {{ cls.periodNumber }} · {{ studentCount(cls) }} students</div>
-            </div>
-            <div class="setup__class-actions">
-              <button class="setup__pill-btn" @click="onRestoreClass(cls.classId)">Restore</button>
-              <button class="setup__pill-btn setup__pill-btn--danger" @click="onDeleteClass(cls.classId)">Delete</button>
-            </div>
-          </li>
-        </ul>
-      </div>
-
-      <!-- Create individual class -->
-      <div class="setup__card">
-        <h2 class="setup__card-title">Create Single Class</h2>
-        <form class="setup__form" @submit.prevent="createNewClass">
-          <label class="setup__label">
-            Class name
-            <input v-model="newClass.name" class="setup__input" placeholder="e.g. Period 1 — Science" required />
+            <FolderOpen :size="16" /> {{ isDraggingRoster ? 'Drop CSV here...' : 'Choose CSV file or drag & drop here' }}
+            <input
+              id="roster-file"
+              type="file"
+              accept=".csv,text/csv"
+              class="setup__file-input"
+              @change="onFileSelected"
+            />
           </label>
-          <div class="setup__form-grid">
-            <label class="setup__label">
-              Term (from Calendar)
-              <select v-model="newClassTermKey" class="setup__input" required>
-                <option v-for="t in academicTerms" :key="t.year + t.semester" :value="t.year + '|' + t.semester">
-                  {{ t.year }} Sem {{ t.semester }}
-                </option>
-              </select>
-            </label>
-            <label class="setup__label">
-              Period
-              <select v-model="newClass.periodNumber" class="setup__input" required>
-                <option v-for="opt in periodOptions" :key="opt" :value="opt">{{ opt }}</option>
-              </select>
-            </label>
-            <label class="setup__label">
-              Start time
-              <input v-model="newClass.periodStartTime" type="time" class="setup__input" required />
-            </label>
-          </div>
-          <button type="submit" class="setup__btn-primary">Create Class</button>
-        </form>
-        <p v-if="classError" class="setup__error">{{ classError }}</p>
-      </div>
+        </div>
 
-      <!-- Bulk dialogs (maintained for cross-context safety) -->
-      <div v-if="bulkImportGroups" class="setup__dialog" role="dialog" aria-modal="true">
-        <div class="setup__dialog-box setup__dialog-box--large">
-          <h3 class="setup__dialog-title">Multi-Class Import Detected</h3>
-          <p class="setup__dialog-body">This CSV contains students for multiple classes. Select the ones you want to create or update.</p>
-          <div class="setup__bulk-header">
-            <label class="setup__label setup__label--checkbox setup__bulk-select-all">
-              <input type="checkbox" :checked="isAllSelected" @change="toggleAllBulk" />
-              Select All
+        <!-- Current Classes List -->
+        <div class="setup__card">
+          <div class="setup__card-header-row">
+            <h2 class="setup__card-title">All Classes</h2>
+            <label class="setup__label setup__label--checkbox setup__show-all">
+              <input type="checkbox" v-model="showAllSessions" />
+              Show All Sessions
             </label>
-            <span class="setup__bulk-summary">{{ selectedBulkCount }} of {{ Object.keys(bulkImportGroups).length }} selected</span>
           </div>
-          <div class="setup__bulk-list">
-            <div v-for="(group, key) in bulkImportGroups" :key="key" class="setup__bulk-item">
-              <div class="setup__bulk-item-main">
-                <input type="checkbox" v-model="group.selected" class="setup__checkbox" />
-                <div class="setup__bulk-info">
-                  <strong>{{ group.name }}</strong>
-                  <div style="display: flex; gap: 4px; align-items: center;">
-                    <span class="setup__chip">{{ group.year }} · Sem {{ group.semester }} · P{{ group.periodNumber }}</span>
-                    <span v-if="isExistingClass(group)" class="setup__badge setup__badge--update">Update Existing</span>
-                    <span v-else class="setup__badge setup__badge--new">New Class</span>
-                  </div>
+          <div v-if="(showAllSessions ? classList : filteredClassList).length === 0" class="setup__empty">
+            No active classes for this session.
+          </div>
+          <ul class="setup__class-list">
+            <li
+                v-for="cls in (showAllSessions ? classList : filteredClassList)"
+                :key="cls.classId"
+                class="setup__class-item"
+                :class="{ 'setup__class-item--active': cls.classId === activeClass?.classId }"
+            >
+              <div>
+                <div class="setup__class-name">{{ cls.name }}</div>
+                <div class="setup__class-meta">
+                  Period {{ cls.periodNumber }} · {{ cls.year }} Sem {{ cls.semester }} · {{ studentCount(cls) }} students
                 </div>
               </div>
-              <div class="setup__bulk-count">{{ group.students.length }} students</div>
-            </div>
-          </div>
-          <div class="setup__dialog-actions">
-            <button class="setup__btn-primary" @click="confirmBulkImport" :disabled="selectedBulkCount === 0">
-              Import {{ selectedBulkCount }} Classes
-            </button>
-            <button class="setup__btn-ghost" @click="bulkImportGroups = null">Cancel</button>
-          </div>
-        </div>
-        <div class="setup__dialog-backdrop" @click="bulkImportGroups = null" />
-      </div>
-
-      <!-- Conflict dialog (maintained) -->
-      <div v-if="crossClassConflicts.length > 0" class="setup__dialog" role="dialog" aria-modal="true">
-        <div class="setup__dialog-box">
-          <h3 class="setup__dialog-title">Student ID Conflict</h3>
-          <p class="setup__dialog-body">The following Student IDs already exist in another class. What would you like to do?</p>
-          <ul class="setup__dialog-list">
-            <li v-for="c in crossClassConflicts" :key="c.studentId">
-              <strong>{{ c.student.firstName }} {{ c.student.lastName }}</strong>
-              ({{ c.studentId }}) — currently in <em>{{ classNameById(c.existingClassId) }}</em>
+              <div class="setup__class-actions">
+                <button class="setup__pill-btn" @click="switchToClass(cls.classId)">
+                  {{ cls.classId === activeClass?.classId ? 'Active' : 'Configure' }}
+                </button>
+                <button class="setup__pill-btn setup__pill-btn--danger" @click="onArchiveClass(cls.classId)">Archive</button>
+              </div>
             </li>
           </ul>
-          <div class="setup__dialog-actions">
-            <button class="setup__btn-primary" @click="resolveConflicts('move')">Move to this class</button>
-            <button class="setup__btn-ghost"   @click="resolveConflicts('skip')">Skip these students</button>
-          </div>
         </div>
-        <div class="setup__dialog-backdrop" />
+
+        <!-- Archived Classes -->
+        <div v-if="(showAllSessions ? archivedClasses : filteredArchivedClasses).length > 0" class="setup__card setup__card--archived">
+          <button class="setup__archived-toggle" @click="isArchivedPanelVisible = !isArchivedPanelVisible">
+            <span class="setup__archived-label">
+              <Archive :size="16" /> Archived ({{ (showAllSessions ? archivedClasses : filteredArchivedClasses).length }})
+            </span>
+            <span class="setup__archived-chevron"><component :is="isArchivedPanelVisible ? ChevronUp : ChevronDown" :size="16" /></span>
+          </button>
+          <ul v-if="isArchivedPanelVisible" class="setup__class-list setup__archived-list">
+            <li v-for="cls in (showAllSessions ? archivedClasses : filteredArchivedClasses)" :key="cls.classId" class="setup__class-item setup__class-item--archived">
+              <div>
+                <div class="setup__class-name">{{ cls.name }}</div>
+                <div class="setup__class-meta">Period {{ cls.periodNumber }} · {{ cls.year }} Sem {{ cls.semester }} · {{ studentCount(cls) }} students</div>
+              </div>
+              <div class="setup__class-actions">
+                <button class="setup__pill-btn" @click="onRestoreClass(cls.classId)">Restore</button>
+                <button class="setup__pill-btn setup__pill-btn--danger" @click="onDeleteClass(cls.classId)">Delete</button>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Create individual class -->
+        <div class="setup__card">
+          <h2 class="setup__card-title">Create Single Class</h2>
+          <form class="setup__form" @submit.prevent="createNewClass">
+            <label class="setup__label">
+              Class name
+              <input v-model="newClass.name" class="setup__input" placeholder="e.g. Period 1 — Science" required />
+            </label>
+            <div class="setup__form-grid">
+              <label class="setup__label">
+                Term (from Calendar)
+                <select v-model="newClassTermKey" class="setup__input" required>
+                  <option v-for="t in academicTerms" :key="t.year + t.semester" :value="t.year + '|' + t.semester">
+                    {{ t.year }} Sem {{ t.semester }}
+                  </option>
+                </select>
+              </label>
+              <label class="setup__label">
+                Period
+                <select v-model="newClass.periodNumber" class="setup__input" required>
+                  <option v-for="opt in periodOptions" :key="opt" :value="opt">{{ opt }}</option>
+                </select>
+              </label>
+              <label class="setup__label">
+                Start time
+                <input v-model="newClass.periodStartTime" type="time" class="setup__input" required />
+              </label>
+            </div>
+            <button type="submit" class="setup__btn-primary">Create Class</button>
+          </form>
+          <p v-if="classError" class="setup__error">{{ classError }}</p>
+        </div>
+
+        <!-- Bulk dialogs (maintained for cross-context safety) -->
+        <div v-if="bulkImportGroups" class="setup__dialog" role="dialog" aria-modal="true">
+          <div class="setup__dialog-box setup__dialog-box--large">
+            <h3 class="setup__dialog-title">Multi-Class Import Detected</h3>
+            <p class="setup__dialog-body">This CSV contains students for multiple classes. Select the ones you want to create or update.</p>
+            <div class="setup__bulk-header">
+              <label class="setup__label setup__label--checkbox setup__bulk-select-all">
+                <input type="checkbox" :checked="isAllSelected" @change="toggleAllBulk" />
+                Select All
+              </label>
+              <span class="setup__bulk-summary">{{ selectedBulkCount }} of {{ Object.keys(bulkImportGroups).length }} selected</span>
+            </div>
+            <div class="setup__bulk-list">
+              <div v-for="(group, key) in bulkImportGroups" :key="key" class="setup__bulk-item">
+                <div class="setup__bulk-item-main">
+                  <input type="checkbox" v-model="group.selected" class="setup__checkbox" />
+                  <div class="setup__bulk-info">
+                    <strong>{{ group.name }}</strong>
+                    <div style="display: flex; gap: 4px; align-items: center;">
+                      <span class="setup__chip">{{ group.year }} · Sem {{ group.semester }} · P{{ group.periodNumber }}</span>
+                      <span v-if="isExistingClass(group)" class="setup__badge setup__badge--update">Update Existing</span>
+                      <span v-else class="setup__badge setup__badge--new">New Class</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="setup__bulk-count">{{ group.students.length }} students</div>
+              </div>
+            </div>
+            <div class="setup__dialog-actions">
+              <button class="setup__btn-primary" @click="confirmBulkImport" :disabled="selectedBulkCount === 0">
+                Import {{ selectedBulkCount }} Classes
+              </button>
+              <button class="setup__btn-ghost" @click="bulkImportGroups = null">Cancel</button>
+            </div>
+          </div>
+          <div class="setup__dialog-backdrop" @click="bulkImportGroups = null" />
+        </div>
+
+        <!-- Conflict dialog (maintained) -->
+        <div v-if="crossClassConflicts.length > 0" class="setup__dialog" role="dialog" aria-modal="true">
+          <div class="setup__dialog-box">
+            <h3 class="setup__dialog-title">Student ID Conflict</h3>
+            <p class="setup__dialog-body">The following Student IDs already exist in another class. What would you like to do?</p>
+            <ul class="setup__dialog-list">
+              <li v-for="c in crossClassConflicts" :key="c.studentId">
+                <strong>{{ c.student.firstName }} {{ c.student.lastName }}</strong>
+                ({{ c.studentId }}) — currently in <em>{{ classNameById(c.existingClassId) }}</em>
+              </li>
+            </ul>
+            <div class="setup__dialog-actions">
+              <button class="setup__btn-primary" @click="resolveConflicts('move')">Move to this class</button>
+              <button class="setup__btn-ghost"   @click="resolveConflicts('skip')">Skip these students</button>
+            </div>
+          </div>
+          <div class="setup__dialog-backdrop" />
+        </div>
       </div>
     </section>
 
@@ -210,13 +222,17 @@
     <!-- PILLAR 2: Active Class Configuration                     -->
     <!-- ══════════════════════════════════════════════════════════ -->
     <section v-else-if="activeTab === 'active'" class="setup__panel">
-      <div v-if="!activeClass" class="setup__empty">
+      <div v-if="!activeClass" class="setup__panel-content setup__empty">
         <Zap :size="48" style="opacity: 0.2; margin-bottom: 1rem;" />
         <p>Select a class in the header or manager to configure it.</p>
         <button class="setup__btn-primary" @click="activeTab = 'manage'">Go to Class Manager</button>
       </div>
-      
-      <template v-else>
+      <div v-else class="setup__panel-content">
+        <!-- Section: Class Logistics -->
+        <div class="setup__section-header">
+          <Settings2 :size="18" />
+          <span>Class Logistics</span>
+        </div>
         <!-- Class Metadata -->
         <div class="setup__card">
           <h2 class="setup__card-title">General Info</h2>
@@ -336,6 +352,12 @@
           </ul>
         </div>
 
+        <!-- Section: Grading & Assessments -->
+        <div class="setup__section-header" style="margin-top: 1rem;">
+          <GraduationCap :size="18" />
+          <span>Grading & Assessments</span>
+        </div>
+
         <!-- Assessment Framework -->
         <div class="setup__card">
           <h2 class="setup__card-title">Assessment Framework</h2>
@@ -366,26 +388,6 @@
             </div>
           </div>
           <button class="setup__btn-ghost setup__btn--full" @click="addUnit"><Plus :size="14" /> Add Unit</button>
-        </div>
-
-        <!-- Milestones (Global) -->
-        <div class="setup__card">
-          <h2 class="setup__card-title">Academic Milestones (Global)</h2>
-          <p class="setup__hint">Define key dates (e.g., Progress Reports, Term End) that appear across all class gradebooks.</p>
-          <div class="setup__gb-list">
-            <div v-for="ms in globalMilestones" :key="ms.milestoneId" class="setup__gb-item">
-              <input v-model="ms.name" class="setup__input setup__input--naked" placeholder="Milestone Name" @change="debouncedSave" />
-              <div class="setup__gb-actions">
-                <input v-model="ms.date" type="date" class="setup__input setup__input--date" @change="debouncedSave" />
-                <button class="setup__icon-btn setup__icon-btn--danger" title="Delete Milestone" @click="onDeleteMilestone(ms.milestoneId)">
-                  <Trash2 :size="16" />
-                </button>
-              </div>
-            </div>
-          </div>
-          <button class="setup__btn-ghost setup__btn--full" @click="addMilestone">
-            <Plus :size="14" /> Add Milestone
-          </button>
         </div>
 
         <!-- Gradebook Notes -->
@@ -425,38 +427,69 @@
             </div>
           </div>
         </div>
-      </template>
+      </div>
     </section>
 
     <!-- ══════════════════════════════════════════════════════════ -->
     <!-- PILLAR 3: Global App Settings                            -->
     <!-- ══════════════════════════════════════════════════════════ -->
     <section v-else-if="activeTab === 'app'" class="setup__panel">
-      <!-- Profile -->
-      <div class="setup__card">
-        <h2 class="setup__card-title">General Settings</h2>
-        <label class="setup__label">
-          Teacher Name (for Reports)
-          <input :value="teacherName" class="setup__input" placeholder="e.g. Mr. Stashuk" @change="e => updateTeacherName(e.target.value)" />
-        </label>
-      </div>
-
-      <!-- School Calendar -->
-      <div class="setup__card">
-        <h2 class="setup__card-title">School Calendar</h2>
-        <p class="setup__hint">Define semester date boundaries to enable automated class setup and historical tracking.</p>
-        <div class="setup__gb-list">
-          <div v-for="(term, idx) in academicTerms" :key="idx" class="setup__gb-item setup__gb-item--term">
-            <input v-model="term.year" class="setup__input setup__input--sm" placeholder="Year" @change="saveTerms" />
-            <input v-model="term.semester" class="setup__input setup__input--xs" placeholder="Sem" @change="saveTerms" />
-            <input v-model="term.startDate" type="date" class="setup__input" @change="saveTerms" />
-            <span>—</span>
-            <input v-model="term.endDate" type="date" class="setup__input" @change="saveTerms" />
-            <button class="setup__icon-btn setup__icon-btn--danger" @click="removeTerm(idx)"><Trash2 :size="16" /></button>
-          </div>
+      <div class="setup__panel-content">
+        <!-- Profile -->
+        <div class="setup__card">
+          <h2 class="setup__card-title">General Settings</h2>
+          <label class="setup__label">
+            Teacher Name (for Reports)
+            <input :value="teacherName" class="setup__input" placeholder="e.g. Mr. Stashuk" @change="e => updateTeacherName(e.target.value)" />
+          </label>
         </div>
-        <button class="setup__btn-ghost setup__btn--full" @click="addTerm"><Plus :size="14" /> Add Term</button>
-      </div>
+
+        <!-- School Calendar -->
+        <div class="setup__card">
+          <h2 class="setup__card-title">School Calendar</h2>
+          <p class="setup__hint">Define semester date boundaries to enable automated class setup and historical tracking.</p>
+          <div class="setup__gb-list">
+            <div v-for="(term, idx) in academicTerms" :key="idx" class="setup__gb-item setup__gb-item--term">
+              <div class="setup__term-row">
+                <input v-model="term.year" class="setup__input setup__input--sm" placeholder="e.g. 2025-26" @change="saveTerms" />
+                <select v-model="term.semester" class="setup__input setup__input--xs" @change="saveTerms">
+                  <option value="1">Sem 1</option>
+                  <option value="2">Sem 2</option>
+                  <option value="Full">Full</option>
+                </select>
+                <input v-model="term.startDate" type="date" class="setup__input" @change="saveTerms" />
+                <span>—</span>
+                <input v-model="term.endDate" type="date" class="setup__input" @change="saveTerms" />
+              </div>
+              <button class="setup__icon-btn setup__icon-btn--danger" @click="removeTerm(idx)"><Trash2 :size="16" /></button>
+            </div>
+          </div>
+          <p class="setup__hint" style="margin-top: 8px; font-style: italic;">
+            Use the <b>2025-26</b> format for Year to match auto-detection from board CSVs.
+          </p>
+          <button class="setup__btn-ghost setup__btn--full" @click="addTerm"><Plus :size="14" /> Add Term</button>
+        </div>
+
+        <!-- Milestones (Moved from Class settings) -->
+        <div class="setup__card">
+          <h2 class="setup__card-title">Academic Milestones ({{ selectedYear }})</h2>
+          <p class="setup__hint">Define key dates (e.g., Progress Reports) that apply to all classes for the current year.</p>
+          <div v-if="filteredMilestones.length === 0" class="setup__empty">No milestones for this year.</div>
+          <div class="setup__gb-list">
+            <div v-for="ms in filteredMilestones" :key="ms.milestoneId" class="setup__gb-item">
+              <input v-model="ms.name" class="setup__input setup__input--naked" placeholder="Milestone Name" @change="debouncedSave" />
+              <div class="setup__gb-actions">
+                <input v-model="ms.date" type="date" class="setup__input setup__input--date" @change="debouncedSave" />
+                <button class="setup__icon-btn setup__icon-btn--danger" title="Delete Milestone" @click="onDeleteMilestone(ms.milestoneId)">
+                  <Trash2 :size="16" />
+                </button>
+              </div>
+            </div>
+          </div>
+          <button class="setup__btn-ghost setup__btn--full" @click="addMilestone">
+            <Plus :size="14" /> Add Milestone
+          </button>
+        </div>
 
       <!-- Behavior Strategy -->
       <div class="setup__card">
@@ -502,6 +535,7 @@
         </button>
         <input ref="backupFileInput" type="file" accept=".json" class="setup__file-input" @change="onBackupFileSelected" />
       </div>
+      </div>
     </section>
 
 
@@ -522,16 +556,16 @@
  * reloadBehaviorCodes() to keep the reactive ref in sync.
  */
 
-import { ref, reactive, computed, onMounted, watch } from 'vue'
+import { ref, reactive, computed, watch, onMounted } from 'vue'
 import Papa from 'papaparse'
 import { Archive, ChevronDown, ChevronUp, FolderOpen, Trash2, FileText, Pencil, Download, Database, Cloud, Settings2, Plus, X, Save, FileUp, FileDown, GraduationCap, ArrowLeft, Zap, LayoutDashboard, Settings } from 'lucide-vue-next'
-import { resolveIcon }       from '../utils/icons.js'
-import { useClassroom }      from '../composables/useClassroom.js'
-import * as eventService       from '../db/eventService.js'
-import * as settingsService  from '../db/settingsService.js'
-import * as classService     from '../db/classService.js'
+import { resolveIcon } from '../utils/icons.js'
+import { useClassroom } from '../composables/useClassroom.js'
+import * as eventService from '../db/eventService.js'
+import * as settingsService from '../db/settingsService.js'
+import * as classService from '../db/classService.js'
 import * as gradebookService from '../db/gradebookService.js'
-import { globalMilestones }  from '../composables/useGradebook.js'
+import { globalMilestones, refreshGrades } from '../composables/useGradebook.js'
 
 const {
   classList,
@@ -541,31 +575,49 @@ const {
   thresholds: classroomThresholds,
   behaviorCodes,
   gridSize,
+  isTestDay,
   sortedRoster,
   unseatedStudents,
+  filteredClassList,
+  filteredArchivedClasses,
+  selectedYear,
+  selectedSemester,
   switchClass,
   createClass,
+  updateActiveClass,
   importRoster,
+  archiveClass,
+  restoreClass,
+  deleteClass,
   moveStudentFromClass,
   removeStudent,
   checkResize,
   confirmResize,
-  updateActiveClass,
-  archiveClass,
-  restoreClass,
-  deleteClass,
-  teacherName,
-  updateTeacherName,
-  bulkImportClasses,
+  updateTeacherName: serviceUpdateTeacherName
 } = useClassroom()
 
+const isUnsynced = eventService.hasUnsyncedChanges
 const academicTerms = ref([])
+const isArchivedPanelVisible = ref(false)
+const showAllSessions = ref(false)
 
 onMounted(async () => {
-    academicTerms.value = await settingsService.getAcademicTerms()
+    const [terms, ms, tpls, settings] = await Promise.all([
+      settingsService.getAcademicTerms(),
+      settingsService.getGlobalMilestones(),
+      gradebookService.getGradebookTemplates(),
+      settingsService.getSettings()
+    ])
     
-    // Set smart defaults for the term dropdown
-    if (academicTerms.value.length > 0) {
+    academicTerms.value = terms
+    globalMilestones.value = ms
+    templates.value = tpls
+    isSyncLinked.value = !!settings.backupFileHandle
+
+    // Set smart defaults for the term dropdown based on active header session
+    if (selectedYear.value && selectedSemester.value) {
+      newClassTermKey.value = `${selectedYear.value}|${selectedSemester.value}`
+    } else if (academicTerms.value.length > 0) {
       const cur = currentSchoolYear.value
       // Try to find current term, else default to first
       const found = academicTerms.value.find(t => t.year === cur) || academicTerms.value[0]
@@ -574,6 +626,11 @@ onMounted(async () => {
       // Fallback if no terms defined yet
       newClass.year = currentSchoolYear.value
       newClass.semester = '1'
+    }
+
+    // Ensure a class is selected if any exist
+    if (!activeClass.value && classList.value.length > 0) {
+      await switchToClass(classList.value[0].classId)
     }
 })
 
@@ -639,7 +696,7 @@ function normalizeSemester(raw) {
 }
 
 const addTerm = () => {
-    academicTerms.value.push({ year: '', semester: '', startDate: '', endDate: '' })
+    academicTerms.value.push({ year: '', semester: '1', startDate: '', endDate: '' })
 }
 
 const removeTerm = async (index) => {
@@ -650,8 +707,6 @@ const removeTerm = async (index) => {
 const saveTerms = async () => {
     await settingsService.saveAcademicTerms(JSON.parse(JSON.stringify(academicTerms.value)))
 }
-
-const showArchived = ref(false)
 
 async function onArchiveClass(classId) {
   await archiveClass(classId)
@@ -918,7 +973,7 @@ function isExistingClass(group) {
   return classList.value.some(c => 
     c.year === group.year && 
     c.semester === group.semester && 
-    c.periodNumber === group.periodNumber
+    Number(c.periodNumber) === Number(group.periodNumber)
   )
 }
 
@@ -1240,11 +1295,16 @@ async function onDeleteUnit(unitId) {
   await saveGradebookSettings()
 }
 
+const filteredMilestones = computed(() => {
+  return globalMilestones.value.filter(m => !m.year || m.year === selectedYear.value)
+})
+
 async function addMilestone() {
   const newMs = {
     milestoneId: crypto.randomUUID(),
-    name: 'Milestone',
-    date: new Date().toISOString().slice(0, 10)
+    name: 'New Milestone',
+    date: new Date().toISOString().slice(0, 10),
+    year: selectedYear.value
   }
   globalMilestones.value.push(newMs)
   await settingsService.saveGlobalMilestones(JSON.parse(JSON.stringify(globalMilestones.value)))
@@ -1460,14 +1520,34 @@ function formatDate(iso) {
 /* ── Panel ───────────────────────────────────────────────────────── */
 .setup__panel {
   flex:           1;
+  width:          100%;
+  overflow-y:     auto; /* Scrollbar is here, at the edge */
+  display:        flex;
+  flex-direction: column;
+}
+
+.setup__panel-content {
+  max-width:      1000px;
+  margin:         0 auto;
+  width:          100%;
   padding:        24px;
   display:        flex;
   flex-direction: column;
   gap:            24px;
-  overflow-y:     auto;
-  max-width:      1000px;
-  margin:         0 auto;
-  width:          100%;
+}
+
+.setup__section-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border-light);
+  margin-bottom: -8px;
 }
 
 /* ── Cards ───────────────────────────────────────────────────────── */
@@ -1662,6 +1742,34 @@ function formatDate(iso) {
   font-size: 0.75rem !important;
 }
 
+.setup__card-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.setup__card-header-row .setup__card-title {
+  margin-bottom: 0;
+}
+
+.setup__show-all {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  transition: background 0.2s;
+}
+
+.setup__show-all:hover {
+  background: var(--bg-hover);
+}
+
 .setup__input--sm {
   min-height: 32px !important;
   padding: 4px 8px !important;
@@ -1835,8 +1943,6 @@ function formatDate(iso) {
   display:    flex;
   flex-direction: column;
   gap:        6px;
-  max-height: 320px;
-  overflow-y: auto;
 }
 
 .setup__roster-item {
@@ -2273,8 +2379,6 @@ function formatDate(iso) {
 }
 
 .setup__bulk-list {
-  max-height: 300px;
-  overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: 10px;

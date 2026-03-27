@@ -81,12 +81,12 @@
 
                 <div v-if="currentAssessmentSummary" class="grades__assessment-stats">
                   <div class="grades__stats-main-row">
-                    <div class="grades__stat-card" :style="{ borderLeft: `4px solid ${getHeatColor(currentAssessmentSummary.average || currentAssessmentSummary.mean)}` }">
+                    <div class="grades__stat-card" :style="{ borderLeft: `4px solid ${getHeatColor(currentAssessmentSummary.mean)}` }">
                       <div class="grades__stat-card-label">Class Average</div>
                       <div class="grades__stat-card-value-row">
-                        <span class="grades__stat-card-value">{{ currentAssessmentSummary.average || currentAssessmentSummary.mean || '—' }} <small>/{{ currentAssessment.totalPoints }}</small></span>
-                        <span v-if="currentAssessmentSummary.mean" class="grades__stat-card-percent">
-                          {{ Math.round((currentAssessmentSummary.mean / 100) * 1000) / 10 }}%
+                        <span class="grades__stat-card-value">{{ Math.round(currentAssessmentSummary.mean) }}%</span>
+                        <span v-if="currentAssessmentSummary.average !== null" class="grades__stat-card-percent">
+                          {{ Math.round(currentAssessmentSummary.average * 10) / 10 }} <small>/{{ currentAssessment.totalPoints }}</small>
                         </span>
                       </div>
                     </div>
@@ -317,14 +317,14 @@
                 >Analytics</button>
               </div>
 
-              <div v-if="globalMilestones?.length" class="grades__milestone-toggle">
+              <div v-if="filteredMilestones?.length" class="grades__milestone-toggle">
                 <button 
                   class="grades__toggle-btn"
                   :class="{ 'grades__toggle-btn--active': selectedMilestone === null }"
                   @click="selectedMilestone = null"
                 >Current</button>
                 <button 
-                  v-for="m in globalMilestones"
+                  v-for="m in filteredMilestones"
                   :key="m.milestoneId"
                   class="grades__toggle-btn"
                   :class="{ 'grades__toggle-btn--active': selectedMilestone === m.milestoneId }"
@@ -899,6 +899,7 @@ import {
   classGrades, 
   selectedMilestone,
   globalMilestones,
+  filteredMilestones,
   gradeMap,
   assessmentStats,
   loadGradebook,
@@ -909,6 +910,7 @@ import {
   addAssessment,
   deleteAssessment,
   removeAttempt,
+  refreshGrades,
   saveStudentOverride,
   saveStudentGradebookNote,
   saveStudentDemographics,

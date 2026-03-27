@@ -60,9 +60,13 @@ export const isTestDay = ref(false)
 const activeStudentEvents = ref([])
 
 /** @type {import('vue').Ref<string>} Global year filter */
-const selectedYear = ref('')
+const selectedYear = ref(localStorage.getItem('selectedYear') || '')
 /** @type {import('vue').Ref<string>} Global semester filter */
-const selectedSemester = ref('')
+const selectedSemester = ref(localStorage.getItem('selectedSemester') || '')
+
+// Watch for changes and persist to localStorage
+watch(selectedYear, (val) => localStorage.setItem('selectedYear', val))
+watch(selectedSemester, (val) => localStorage.setItem('selectedSemester', val))
 
 // ─── computed ─────────────────────────────────────────────────────────────────
 
@@ -76,6 +80,15 @@ const sortedRoster = computed(() =>
 /** Filtered class list based on global year/semester */
 const filteredClassList = computed(() => {
     return classList.value.filter(c => {
+        const matchesYear = !selectedYear.value || c.year === selectedYear.value
+        const matchesSem  = !selectedSemester.value || c.semester === selectedSemester.value
+        return matchesYear && matchesSem
+    })
+})
+
+/** Filtered archived classes */
+const filteredArchivedClasses = computed(() => {
+    return archivedClasses.value.filter(c => {
         const matchesYear = !selectedYear.value || c.year === selectedYear.value
         const matchesSem  = !selectedSemester.value || c.semester === selectedSemester.value
         return matchesYear && matchesSem
@@ -315,16 +328,19 @@ async function init() {
     const now = new Date().toISOString().split('T')[0]
     const currentTerm = terms.find(t => now >= t.startDate && now <= t.endDate)
     
-    if (currentTerm) {
-        selectedYear.value = currentTerm.year
-        selectedSemester.value = currentTerm.semester
-    } else if (active.length > 0) {
-        // Fallback to the first class's term
-        selectedYear.value = active[0].year || '2025-26'
-        selectedSemester.value = active[0].semester || '2'
-    } else {
-        selectedYear.value = '2025-26'
-        selectedSemester.value = '2'
+    // Only auto-default if we don't already have a valid stored session
+    if (!selectedYear.value || !selectedSemester.value) {
+        if (currentTerm) {
+            selectedYear.value = currentTerm.year
+            selectedSemester.value = currentTerm.semester
+        } else if (active.length > 0) {
+            // Fallback to the first class's term
+            selectedYear.value = active[0].year || '2025-26'
+            selectedSemester.value = active[0].semester || '2'
+        } else {
+            selectedYear.value = '2025-26'
+            selectedSemester.value = '2'
+        }
     }
 
     if (filteredClassList.value.length > 0) {
@@ -532,7 +548,7 @@ async function bulkImportClasses(groups) {
         let cls = classList.value.find(c => 
             c.year === group.year && 
             c.semester === group.semester && 
-            c.periodNumber === group.periodNumber
+            Number(c.periodNumber) === Number(group.periodNumber)
         )
         
         let classId = cls?.classId
@@ -1177,15 +1193,17 @@ export function useClassroom() {
         behaviorCodes,
         gridSize,
         isTestDay,
-        teacherName,
         activeStudentEvents,
+        
+        // Year/Semester context
         selectedYear,
         selectedSemester,
+        filteredClassList,
+        filteredArchivedClasses,
         // computed
         sortedRoster,
         unseatedStudents,
         studentsOut,
-        filteredClassList,
         // actions
         init: async () => {
             await init()

@@ -810,11 +810,7 @@ export async function calculateClassGrades(classRecord, { asOf = null } = {}) {
 export function calculateAssessmentAnalytics(assessmentId, grades, assessment, options = {}) {
   const { excludeOutliers = false, excludedStudentIds = new Set() } = options
 
-  // Only run analytics on Product assessments (Step 17.1 Bug 3)
-  const type = (assessment.assessmentType || 'product').toLowerCase()
-  if (type !== 'product') return null
-  
-  // Skip individual assessments
+  // Skip individual assessments as they don't have "class averages"
   if (assessment.target === 'individual') return null
 
   // Collect all valid scores
@@ -874,6 +870,7 @@ export function calculateAssessmentAnalytics(assessmentId, grades, assessment, o
     count: activePercentages.length,
     totalCount: allPercentages.length,
     mean: Math.round(mean * 10) / 10,
+    average: (mean / 100) * (assessment.totalPoints || 1),
     median: Math.round(median * 10) / 10,
     sd: sd !== null ? Math.round(sd * 10) / 10 : null,
     highest: Math.round(highest * 10) / 10,

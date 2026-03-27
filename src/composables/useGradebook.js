@@ -51,6 +51,12 @@ export const sortedUnits = computed(() => {
   return [...activeClassRecord.value.gradebookUnits].sort((a, b) => (a.order || 0) - (b.order || 0))
 })
 
+export const filteredMilestones = computed(() => {
+  if (!activeClassRecord.value) return []
+  const year = activeClassRecord.value.year
+  return globalMilestones.value.filter(m => !m.year || m.year === year)
+})
+
 // ─── Public API ──────────────────────────────────────────────────────────────
 
 /**
@@ -84,7 +90,7 @@ export async function refreshGrades() {
   
   // Find date boundary if a milestone is selected
   const asOf = selectedMilestone.value
-    ? globalMilestones.value?.find(m => m.milestoneId === selectedMilestone.value)?.date
+    ? filteredMilestones.value?.find(m => m.milestoneId === selectedMilestone.value)?.date
     : null
     
     
