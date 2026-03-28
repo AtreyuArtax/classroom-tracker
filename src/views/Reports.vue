@@ -445,11 +445,13 @@ watch(filteredClassList, (newList) => {
   }
 }, { immediate: true })
 
-watch(activeClass, (newClass, oldClass) => {
+watch(activeClass, async (newClass, oldClass) => {
   if (newClass && (!oldClass || newClass.classId !== oldClass.classId)) {
     sidebarClassId.value = newClass.classId
     dossier.clearStudent()
     dossier.loadSidebarClass(newClass.classId)
+    // Synchronize the academic state for the new class
+    await loadGradebook(newClass)
     rightMode.value = 'overview'
     runReport()
   }

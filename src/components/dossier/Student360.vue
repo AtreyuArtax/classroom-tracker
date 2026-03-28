@@ -752,12 +752,14 @@ const props = defineProps({
 })
 
 const { 
+  classList,
   students,
   behaviorCodes,
   activeClass,
   activeStudentEvents,
   getStudentEventHistory,
   logStandardEvent,
+  getClass
 } = useClassroom()
 
 import { useStudentDossier } from '../../composables/useStudentDossier.js'
@@ -1394,11 +1396,11 @@ function handleCellKey(e) {
 
 async function loadData() {
   loading.value = true
-  if (activeClassRecord.value) {
-    // If we're already locked into a class, ensure grades are refreshed for student
-    // assessments.value should be pre-loaded by Grades.vue
-  } else if (activeClass.value) {
-    await loadGradebook(activeClass.value)
+  
+  // Ensure the gradebook is loaded for the correct class context
+  if (!activeClassRecord.value || activeClassRecord.value.classId !== props.classId) {
+    const cls = classList.value.find(c => c.classId === props.classId) || await getClass(props.classId)
+    if (cls) await loadGradebook(cls)
   }
   
   events.value = await getStudentEventHistory(props.studentId)
@@ -1407,6 +1409,7 @@ async function loadData() {
 }
 
 watch(() => props.studentId, loadData)
+watch(() => props.classId, loadData)
 
 onMounted(loadData)
 </script>
