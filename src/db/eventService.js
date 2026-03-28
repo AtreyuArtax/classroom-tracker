@@ -26,6 +26,7 @@
 import { getDB } from './index.js'
 import { getClass } from './classService.js'
 import { getSettings } from './settingsService.js'
+import { migrateData } from './migrations.js'
 import { ref } from 'vue'
 
 export const hasUnsyncedChanges = ref(false)
@@ -292,14 +293,22 @@ export async function importAllData(backupObj) {
             `Invalid schema version: backup must have a numeric schemaVersion. Aborting \u2014 no data was changed.`
         )
     }
-    // Hard check: version 18 is current. Avoid importing future structure that this app doesn't understand.
-    if (backupObj.schemaVersion > 18) {
+
+    // Latest version is 20
+    if (backupObj.schemaVersion > 20) {
         throw new Error(
             `The backup file is from a newer version of the app (v${backupObj.schemaVersion}). Please update your app before importing.`
         )
     }
 
-    const { settings, classes = [], events = [], assessments = [], grades = [] } = backupObj
+    // Apply migrations if legacy
+    let data = backupObj
+    if (data.schemaVersion < 20) {
+        console.log(`Migrating backup from v${data.schemaVersion} to v20...`)
+        data = migrateData(data)
+    }
+
+    const { settings, classes = [], events = [], assessments = [], grades = [] } = data
 
     const db = await getDB()
 

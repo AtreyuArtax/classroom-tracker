@@ -165,27 +165,39 @@
             <h3 class="setup__dialog-title">Multi-Class Import Detected</h3>
             <p class="setup__dialog-body">This CSV contains students for multiple classes. Select the ones you want to create or update.</p>
             <div class="setup__bulk-header">
-              <label class="setup__label setup__label--checkbox setup__bulk-select-all">
-                <input type="checkbox" :checked="isAllSelected" @change="toggleAllBulk" />
-                Select All
-              </label>
+              <div class="setup__bulk-header-left">
+                <label class="setup__label setup__label--checkbox setup__bulk-select-all">
+                  <input type="checkbox" :checked="isAllSelected" @change="toggleAllBulk" />
+                  Select All
+                </label>
+                <button
+                  v-for="sem in bulkAvailableSemesters"
+                  :key="sem"
+                  class="setup__bulk-sem-btn"
+                  :class="{ 'setup__bulk-sem-btn--active': isSemesterAllSelected(sem) }"
+                  @click="selectSemesterBulk(sem)"
+                >Sem {{ sem }}</button>
+              </div>
               <span class="setup__bulk-summary">{{ selectedBulkCount }} of {{ Object.keys(bulkImportGroups).length }} selected</span>
             </div>
             <div class="setup__bulk-list">
-              <div v-for="(group, key) in bulkImportGroups" :key="key" class="setup__bulk-item">
-                <div class="setup__bulk-item-main">
-                  <input type="checkbox" v-model="group.selected" class="setup__checkbox" />
-                  <div class="setup__bulk-info">
-                    <strong>{{ group.name }}</strong>
-                    <div style="display: flex; gap: 4px; align-items: center;">
-                      <span class="setup__chip">{{ group.year }} · Sem {{ group.semester }} · P{{ group.periodNumber }}</span>
-                      <span v-if="isExistingClass(group)" class="setup__badge setup__badge--update">Update Existing</span>
-                      <span v-else class="setup__badge setup__badge--new">New Class</span>
+              <template v-for="section in bulkImportSemesters" :key="section.label">
+                <div class="setup__bulk-section-heading">{{ section.label }}</div>
+                <div v-for="{ key, group } in section.groups" :key="key" class="setup__bulk-item">
+                  <div class="setup__bulk-item-main">
+                    <input type="checkbox" v-model="group.selected" class="setup__checkbox" />
+                    <div class="setup__bulk-info">
+                      <strong>{{ group.name }}</strong>
+                      <div style="display: flex; gap: 4px; align-items: center;">
+                        <span class="setup__chip">{{ group.year }} · Sem {{ group.semester }} · P{{ group.periodNumber }}</span>
+                        <span v-if="isExistingClass(group)" class="setup__badge setup__badge--update">Update Existing</span>
+                        <span v-else class="setup__badge setup__badge--new">New Class</span>
+                      </div>
                     </div>
                   </div>
+                  <div class="setup__bulk-count">{{ group.students.length }} students</div>
                 </div>
-                <div class="setup__bulk-count">{{ group.students.length }} students</div>
-              </div>
+              </template>
             </div>
             <div class="setup__dialog-actions">
               <button class="setup__btn-primary" @click="confirmBulkImport" :disabled="selectedBulkCount === 0">
@@ -267,7 +279,11 @@
                 <select
                   :value="activeClass.periodNumber"
                   class="setup__input"
-                  @change="e => updateActiveClass({ periodNumber: parseInt(e.target.value) })"
+                  @change="e => {
+                    const p = parseInt(e.target.value);
+                    const time = periodStartTimes[p] || activeClass.periodStartTime;
+                    updateActiveClass({ periodNumber: p, periodStartTime: time });
+                  }"
                 >
                   <option v-for="opt in periodOptions" :key="opt" :value="opt">{{ opt }}</option>
                 </select>
@@ -445,7 +461,7 @@
           <h2 class="setup__card-title">General Settings</h2>
           <label class="setup__label">
             Teacher Name (for Reports)
-            <input :value="teacherName" class="setup__input" placeholder="e.g. Mr. Stashuk" @change="e => updateTeacherName(e.target.value)" />
+            <input :value="teacherName" class="setup__input" placeholder="" @change="e => updateTeacherName(e.target.value)" />
           </label>
         </div>
 
@@ -528,6 +544,23 @@
         </button>
       </div>
 
+      <!-- Period Defaults -->
+      <div class="setup__card">
+        <h2 class="setup__card-title">Period Start Times</h2>
+        <p class="setup__hint">Define the default start time for each period. These will autopopulate when creating or editing a class.</p>
+        <div class="setup__period-grid">
+          <div v-for="p in [1,2,3,4,5,6,7,8]" :key="p" class="setup__period-row">
+            <span class="setup__period-label">Period {{ p }}</span>
+            <input 
+              v-model="periodStartTimes[p]" 
+              type="time" 
+              class="setup__input" 
+              @change="updatePeriodStartTimes({...periodStartTimes})" 
+            />
+          </div>
+        </div>
+      </div>
+
       <!-- Data Engine -->
       <div class="setup__card">
         <h2 class="setup__card-title">Data Engine</h2>
@@ -539,9 +572,33 @@
           Restore from Backup File
         </button>
         <input ref="backupFileInput" type="file" accept=".json" class="setup__file-input" @change="onBackupFileSelected" />
-      </div>
+        
+        <div v-if="restoreMsg" class="setup__msg" :class="{ 'setup__msg--error': restoreMsg.startsWith('❌') }" style="margin-top: 1rem; text-align: center;">
+          {{ restoreMsg }}
+        </div>
+        </div>
       </div>
     </section>
+
+    <!-- ── Restore Confirmation Modal ─── -->
+    <div v-if="importPreview" class="setup__dialog" role="dialog" aria-modal="true">
+      <div class="setup__dialog-box" style="max-width: 400px;">
+        <h3 class="setup__dialog-title">Confirm Restore</h3>
+        <div class="setup__dialog-body">
+          <p>This will <strong>permanently overwrite</strong> all current data with the backup from <em>{{ new Date(importPreview.exportedAt).toLocaleDateString() }}</em>.</p>
+          <ul class="setup__list" style="margin-top: 1rem;">
+            <li>{{ importPreview.classes.length }} Classes</li>
+            <li>{{ importPreview.events.length }} Events</li>
+            <li>Schema Version: {{ importPreview.schemaVersion }}</li>
+          </ul>
+          <p style="margin-top: 1rem; color: var(--state-out); font-weight: 600;">This action cannot be undone.</p>
+        </div>
+        <div class="setup__dialog-actions">
+          <button class="setup__btn-danger" @click="doImport">Confirm & Restore</button>
+          <button class="setup__btn-ghost" @click="importPreview = null">Cancel</button>
+        </div>
+      </div>
+    </div>
 
     <!-- ── QR Generation Modal ─── -->
     <div v-if="isQRModalOpen" class="setup__dialog setup__dialog--qr" role="dialog" aria-modal="true">
@@ -624,6 +681,8 @@ const {
   filteredArchivedClasses,
   selectedYear,
   selectedSemester,
+  teacherName,
+  periodStartTimes,
   switchClass,
   createClass,
   updateActiveClass,
@@ -635,7 +694,9 @@ const {
   removeStudent,
   checkResize,
   confirmResize,
-  updateTeacherName: serviceUpdateTeacherName
+  updateTeacherName,
+  updatePeriodStartTimes,
+  bulkImportClasses
 } = useClassroom()
 
 const isUnsynced = eventService.hasUnsyncedChanges
@@ -782,6 +843,9 @@ const addTerm = () => {
 }
 
 const removeTerm = async (index) => {
+    const term = academicTerms.value[index]
+    const label = term ? `${term.year} Sem ${term.semester}` : 'this term'
+    if (!window.confirm(`Are you sure you want to remove the academic term "${label}"?`)) return
     academicTerms.value.splice(index, 1)
     await saveTerms()
 }
@@ -853,6 +917,13 @@ watch(newClassTermKey, (val) => {
     newClass.semester = s
   }
 })
+
+// Watch period number to autopopulate start time
+watch(() => newClass.periodNumber, (newVal) => {
+  if (periodStartTimes.value[newVal]) {
+    newClass.periodStartTime = periodStartTimes.value[newVal]
+  }
+})
 const classError = ref('')
 
 function studentCount(cls) {
@@ -881,13 +952,22 @@ async function createNewClass() {
   // Reset
   newClass.name = ''
   newClass.periodNumber = 1
-  newClass.periodStartTime = '08:45'
+  newClass.periodStartTime = periodStartTimes.value[1] || '08:00'
   // Keep the same term selection for convenience
 }
 
 // ─── grid resize (§11) ────────────────────────────────────────────────────────
 
 const newGrid        = reactive({ rows: 6, cols: 6 })
+
+// Watch for active class changes to sync the resize form
+watch(() => activeClass.value?.gridSize, (val) => {
+  if (val) {
+    newGrid.rows = val.rows
+    newGrid.cols = val.cols
+  }
+}, { immediate: true })
+
 const resizeConflict = ref([])
 let   pendingGridSize = null
 
@@ -917,7 +997,10 @@ const isDraggingRoster    = ref(false)
 function onFileSelected(evt) {
   const file = evt.dataTransfer?.files?.[0] || evt.target?.files?.[0]
   if (!file) return
-  if (!activeClass.value) return
+
+  // NOTE: Do NOT guard on activeClass.value here — bulk import creates classes
+  // from scratch and doesn't need one pre-selected. The guard lives inside the
+  // single-class branch below where importRoster() requires an active class.
 
   // CLAUDE.md §6: Use papaparse — never split(',')
   Papa.parse(file, {
@@ -1011,7 +1094,11 @@ function onFileSelected(evt) {
           // Multiple classes detected, show bulk import dialog
           bulkImportGroups.value = groups
       } else {
-          // Single class (likely the active one)
+          // Single class — requires an active class to import into
+          if (!activeClass.value) {
+            alert('This CSV contains only one class group. Please select or create a class first, then re-import. Alternatively, make sure your CSV contains a "Period" or "Semester" column so the bulk importer can detect multiple classes.')
+            return
+          }
           const result = await importRoster(rows)
           importResult.value = result
 
@@ -1033,6 +1120,31 @@ function onFileSelected(evt) {
 }
 
 // --- Bulk Import Selection Helpers ---
+
+/**
+ * Returns the bulk groups sorted and sectioned by semester then period,
+ * ready for the template to render with headings.
+ */
+const bulkImportSemesters = computed(() => {
+  if (!bulkImportGroups.value) return []
+  
+  // Keep REFERENCES to the original group objects (not copies) so that
+  // v-model mutations on group.selected are visible to selectedBulkCount.
+  // We attach the map key as a non-spread sibling property on a wrapper.
+  const entries = Object.entries(bulkImportGroups.value).map(([key, group]) => ({ key, group }))
+  
+  // Collect unique semesters, sorted: 1 before 2 before Full
+  const semOrder = (s) => s === 'Full' ? 99 : Number(s)
+  const sems = [...new Set(entries.map(e => e.group.semester))].sort((a, b) => semOrder(a) - semOrder(b))
+  
+  return sems.map(sem => ({
+    label: sem === 'Full' ? 'Full Year' : `Semester ${sem}`,
+    groups: entries
+      .filter(e => e.group.semester === sem)
+      .sort((a, b) => Number(a.group.periodNumber) - Number(b.group.periodNumber))
+  }))
+})
+
 const isAllSelected = computed(() => {
   if (!bulkImportGroups.value) return false
   const keys = Object.keys(bulkImportGroups.value)
@@ -1048,6 +1160,31 @@ function toggleAllBulk() {
   const target = !isAllSelected.value
   for (const k in bulkImportGroups.value) {
     bulkImportGroups.value[k].selected = target
+  }
+}
+
+/** Unique semesters present in the current import, sorted. */
+const bulkAvailableSemesters = computed(() => {
+  if (!bulkImportGroups.value) return []
+  const sems = new Set(Object.values(bulkImportGroups.value).map(g => g.semester))
+  return [...sems].filter(s => s !== 'Full').sort((a, b) => Number(a) - Number(b))
+})
+
+/** True if every class in the given semester is currently selected. */
+function isSemesterAllSelected(sem) {
+  if (!bulkImportGroups.value) return false
+  return Object.values(bulkImportGroups.value)
+    .filter(g => g.semester === sem)
+    .every(g => g.selected)
+}
+
+/** Toggle-select all classes for a specific semester, leaving others untouched. */
+function selectSemesterBulk(sem) {
+  const target = !isSemesterAllSelected(sem)
+  for (const k in bulkImportGroups.value) {
+    if (bulkImportGroups.value[k].semester === sem) {
+      bulkImportGroups.value[k].selected = target
+    }
   }
 }
 
@@ -2457,14 +2594,35 @@ function formatDate(iso) {
   flex: 1;
 }
 .setup__dialog-box--large {
-  max-width: 500px !important;
+  max-width: 540px !important;
+  max-height: calc(100vh - 48px);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .setup__bulk-list {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  margin: 10px 0;
+  gap: 8px;
+  margin: 4px 0;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+  padding-right: 4px;
+}
+
+.setup__bulk-section-heading {
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-secondary);
+  padding: 6px 4px 2px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 2px;
+  margin-top: 4px;
+  flex-shrink: 0;
 }
 
 .setup__bulk-item {
@@ -2523,6 +2681,27 @@ function formatDate(iso) {
   background: var(--bg-hover);
   color: var(--primary);
 }
+
+.setup__period-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 16px;
+  margin-top: 12px;
+}
+
+.setup__period-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.setup__period-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
 .setup__bulk-header {
   display: flex;
   justify-content: space-between;
@@ -2531,16 +2710,48 @@ function formatDate(iso) {
   padding: 0 4px;
 }
 
+.setup__bulk-header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
 .setup__bulk-select-all {
   margin: 0 !important;
   font-weight: 700;
   color: var(--text);
 }
 
+.setup__bulk-sem-btn {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--border);
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.setup__bulk-sem-btn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: var(--primary-light);
+}
+
+.setup__bulk-sem-btn--active {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: white;
+}
+
 .setup__bulk-summary {
   font-size: 0.8rem;
   font-weight: 600;
   color: var(--text-secondary);
+  white-space: nowrap;
 }
 
 .setup__bulk-item-main {

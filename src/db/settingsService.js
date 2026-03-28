@@ -106,7 +106,13 @@ async function _readSettings() {
         backupFileHandle: null,
         gradebookMilestones: [],
         academicTerms: [],
-        teacherName: ''
+        teacherName: '',
+        periodStartTimes: {
+            '1': '08:00',
+            '2': '09:20',
+            '3': '11:40',
+            '4': '13:00'
+        }
     }
     await db.put('settings', defaults, SETTINGS_KEY)
     hasUnsyncedChanges.value = true
@@ -275,3 +281,33 @@ export async function saveAcademicTerms(terms) {
     await db.put('settings', settings, 'singleton')
     hasUnsyncedChanges.value = true
 }
+
+/**
+ * Returns the default start times for each period.
+ *
+ * @returns {Promise<Object>}
+ */
+export async function getPeriodStartTimes() {
+    const settings = await _readSettings()
+    return settings.periodStartTimes || {
+        '1': '08:00',
+        '2': '09:20',
+        '3': '11:40',
+        '4': '13:00'
+    }
+}
+
+/**
+ * Saves default start times for periods.
+ *
+ * @param {Object} timesObj Map of { periodNumber: startTime }
+ * @returns {Promise<void>}
+ */
+export async function savePeriodStartTimes(timesObj) {
+    const db = await getDB()
+    const settings = await db.get('settings', 'singleton')
+    settings.periodStartTimes = timesObj
+    await db.put('settings', settings, 'singleton')
+    hasUnsyncedChanges.value = true
+}
+

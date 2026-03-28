@@ -52,6 +52,7 @@ const behaviorCodes = ref([])
 
 const gridSize = ref({ rows: 6, cols: 6 })
 const teacherName = ref('')
+const periodStartTimes = ref({})
 
 /** @type {import('vue').Ref<boolean>} Flag for special "Test Day" mode */
 export const isTestDay = ref(false)
@@ -66,10 +67,13 @@ const selectedSemester = ref(localStorage.getItem('selectedSemester') || '')
 
 /** @type {import('vue').Ref<boolean>} Controls visibility of the QR Scanner component */
 const isScannerOpen = ref(false)
+/** @type {import('vue').Ref<number>} Max students allowed out (0 = infinite) */
+const maxStudentsOut = ref(parseInt(localStorage.getItem('maxStudentsOut')) || 0)
 
 // Watch for changes and persist to localStorage
 watch(selectedYear, (val) => localStorage.setItem('selectedYear', val))
 watch(selectedSemester, (val) => localStorage.setItem('selectedSemester', val))
+watch(maxStudentsOut, (val) => localStorage.setItem('maxStudentsOut', val.toString()))
 
 // ─── computed ─────────────────────────────────────────────────────────────────
 
@@ -326,6 +330,12 @@ async function init() {
     // gridSize.value will be updated per-class in _activateClass
     // We store the global default from settings for new classes
     teacherName.value = settings.teacherName || ''
+    periodStartTimes.value = settings.periodStartTimes || {
+        '1': '08:00',
+        '2': '09:20',
+        '3': '11:40',
+        '4': '13:00'
+    }
 
     // ── Determine default term ──
     const now = new Date().toISOString().split('T')[0]
@@ -413,12 +423,13 @@ async function createClass(opts) {
     // 2. Use global default grid size as template
     const settings = await settingsService.getSettings()
     const defaultGrid = settings.gridSize || { rows: 6, cols: 6 }
+    const defaultStartTime = periodStartTimes.value[opts.periodNumber] || '08:45'
 
     const newCls = {
         classId: opts.classId,
         name: opts.name,
         periodNumber: opts.periodNumber,
-        periodStartTime: opts.periodStartTime ?? '08:45',
+        periodStartTime: opts.periodStartTime ?? defaultStartTime,
         year,
         semester,
         gridSize: defaultGrid,
@@ -457,6 +468,11 @@ async function updateActiveClass(updates) {
         activeClass.value[key] = val
         const cls = classList.value.find(c => c.classId === classId)
         if (cls) cls[key] = val
+
+        // Special case: if gridSize is updated, sync the global ref
+        if (key === 'gridSize') {
+            gridSize.value = val
+        }
     }
 }
 
@@ -558,13 +574,14 @@ async function bulkImportClasses(groups) {
         
         if (!cls) {
             classId = `class_${Date.now()}_${Math.random()}`
+            const defaultStartTime = periodStartTimes.value[group.periodNumber] || '08:45'
             await createClass({
                 classId,
                 name: group.name,
                 year: group.year,
                 semester: group.semester,
                 periodNumber: group.periodNumber,
-                periodStartTime: group.periodStartTime || '08:45'
+                periodStartTime: group.periodStartTime || defaultStartTime
             })
         }
         
@@ -1075,6 +1092,14 @@ async function updateTeacherName(name) {
 }
 
 /**
+ * Update the default period start times.
+ */
+async function updatePeriodStartTimes(times) {
+    await settingsService.savePeriodStartTimes(times)
+    periodStartTimes.value = times
+}
+
+/**
  * Archive (soft-delete) a class. Hides it from classList, saves archived flag to IDB.
  * If the archived class was active, switches to the first remaining class (or null).
  */
@@ -1201,7 +1226,10 @@ export function useClassroom() {
         // Year/Semester context
         selectedYear,
         selectedSemester,
+        teacherName,
+        periodStartTimes,
         isScannerOpen,
+        maxStudentsOut,
         filteredClassList,
         filteredArchivedClasses,
         // computed
@@ -1235,6 +1263,7 @@ export function useClassroom() {
         confirmResize,
         reloadBehaviorCodes,
         updateTeacherName,
+        updatePeriodStartTimes,
         archiveClass,
         restoreClass,
         deleteClass,

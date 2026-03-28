@@ -128,3 +128,46 @@ textarea {
   clip: rect(0, 0, 0, 0);
   border: 0;
 }
+
+/* ── 9. Global Print Utilities ────────────────────────────────────────── */
+@media print {
+  @page {
+    margin: 10mm;
+    size: auto;
+  }
+
+  html, body {
+    height: auto !important;
+    overflow: visible !important;
+    background: white !important;
+  }
+
+  /* 
+   * When printing, we hide the entire #app root.
+   * This works because the report content is teleported to <body>.
+   */
+  #app {
+    display: none !important;
+  }
+
+  .print-only-container {
+    display: block !important;
+    position: static !important;
+    width: 100% !important;
+    background: white !important;
+  }
+}
+
+/* Screen visibility for the print container when actively preparing for print */
+.print-only-container {
+  display: none;
+}
+
+.print-only-container--active {
+  display: block;
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  background: white;
+  overflow-y: auto;
+}

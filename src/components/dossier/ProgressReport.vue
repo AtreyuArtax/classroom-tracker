@@ -124,18 +124,30 @@
               <span class="f-val">{{ attendanceStats.lates }}</span>
               <span class="f-lab">Late Arrivals</span>
             </div>
+            <div v-if="attendanceStats.lates > 0" class="f-stat">
+              <span class="f-val">{{ attendanceStats.totalMinutes }}<small>m</small></span>
+              <span class="f-lab">Total Late</span>
+            </div>
+            <div v-if="attendanceStats.lates > 0" class="f-stat">
+              <span class="f-val">{{ attendanceStats.average }}<small>m</small></span>
+              <span class="f-lab">Avg Delay</span>
+            </div>
           </div>
         </div>
         <div v-if="config.includeBehavior" class="footer-card">
-          <h4 class="footer-card-title">Classroom Observations</h4>
+          <h4 class="footer-card-title">Out-of-Class Summary</h4>
           <div class="footer-stats">
             <div class="f-stat">
-              <span class="f-val">{{ washroomCount }}</span>
-              <span class="f-lab">Out-of-Class Trips</span>
+              <span class="f-val">{{ outOfClassStats.count }}</span>
+              <span class="f-lab">Total Trips</span>
             </div>
-            <div v-if="topBehavior" class="f-stat">
-              <span class="f-val">{{ topBehavior.count }}</span>
-              <span class="f-lab">{{ topBehavior.label }}</span>
+            <div v-if="outOfClassStats.count > 0" class="f-stat">
+              <span class="f-val">{{ outOfClassStats.totalMinutes }}<small>m</small></span>
+              <span class="f-lab">Total Time</span>
+            </div>
+            <div v-if="outOfClassStats.count > 0" class="f-stat">
+              <span class="f-val">{{ outOfClassStats.average }}<small>m</small></span>
+              <span class="f-lab">Avg Duration</span>
             </div>
           </div>
         </div>
@@ -261,16 +273,30 @@ const evidenceMix = computed(() => {
   }
 })
 
+const toMinutes = (d) => {
+  if (d === null || d === undefined) return 0
+  return d > 1000 ? Math.round(d / 60000) : Math.round(d)
+}
+
 // Stats (Real data from events)
 const attendanceStats = computed(() => {
   const filteredEvents = events.value.filter(e => !e.superseded)
   const absences = filteredEvents.filter(e => e.code === 'a').length
-  const lates = filteredEvents.filter(e => e.code === 'l').length
-  return { absences, lates }
+  const lateEvents = filteredEvents.filter(e => e.code === 'l')
+  const lates = lateEvents.length
+  const totalMinutes = lateEvents.reduce((acc, e) => acc + toMinutes(e.duration), 0)
+  const average = lates > 0 ? (totalMinutes / lates).toFixed(1) : 0
+
+  return { absences, lates, totalMinutes, average }
 })
 
-const washroomCount = computed(() => {
-  return events.value.filter(e => e.code === 'w').length
+const outOfClassStats = computed(() => {
+  const ocEvents = events.value.filter(e => e.code === 'w')
+  const count = ocEvents.length
+  const totalMinutes = ocEvents.reduce((acc, e) => acc + toMinutes(e.duration), 0)
+  const average = count > 0 ? (totalMinutes / count).toFixed(1) : 0
+  
+  return { count, totalMinutes, average }
 })
 
 const behaviorCodesMap = computed(() => 
@@ -562,17 +588,28 @@ const categoryPerformance = computed(() => {
 
 .footer-stats {
   display: flex;
-  gap: 24px;
+  flex-wrap: wrap;
+  gap: 20px;
 }
 
 .f-stat {
   display: flex;
   flex-direction: column;
+  min-width: 60px;
 }
 
 .f-val {
   font-size: 1.25rem;
   font-weight: 700;
+  display: flex;
+  align-items: baseline;
+  gap: 1px;
+}
+
+.f-val small {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--print-text-muted);
 }
 
 .f-lab {
@@ -597,6 +634,12 @@ const categoryPerformance = computed(() => {
     margin: 0;
     width: 100%;
     min-height: auto;
+    box-shadow: none;
+    border: none;
+    border-radius: 0;
+    page-break-after: always;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
   }
 }
 </style>

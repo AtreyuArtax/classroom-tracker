@@ -637,7 +637,7 @@
               </label>
               <label class="print-modal__option">
                 <input type="checkbox" v-model="printConfig.includeBehavior" />
-                Behavior Observations
+                Out-of-Class Summary
               </label>
             </div>
           </div>
@@ -673,14 +673,16 @@
     </div>
 
     <!-- Hidden/Active Print Container -->
-    <div class="print-only-container" :class="{ 'print-only-container--active': isSystemPrinting }">
-      <ProgressReport 
-        v-if="isSystemPrinting || showPrintModal"
-        :student-id="props.studentId" 
-        :class-id="props.classId" 
-        :config="printConfig" 
-      />
-    </div>
+    <Teleport to="body">
+      <div class="print-only-container" :class="{ 'print-only-container--active': isSystemPrinting }">
+        <ProgressReport 
+          v-if="isSystemPrinting || showPrintModal"
+          :student-id="props.studentId" 
+          :class-id="props.classId" 
+          :config="printConfig" 
+        />
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -2481,54 +2483,7 @@ onMounted(loadData)
 }
 
 /* --- Print Styles --- */
-.print-only-container {
-  display: none;
-}
-
-@media print {
-  /* Hide UI children but keep .student-360 root visible */
-  .student-360__header,
-  .student-360__tabs,
-  .student-360__content,
-  .student-360__modal-overlay,
-  :global(.app-nav), 
-  :global(.student-sidebar) {
-    display: none !important;
-  }
-
-  .print-only-container {
-    display: block !important;
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    background: white;
-    z-index: 9999;
-  }
-
-  body {
-    background: white !important;
-    overflow: visible !important;
-  }
-}
-
-.print-only-container {
-  display: none;
-}
-
-/* This is the secret sauce: keep it visible on screen but covering the app briefly 
-   so Chart.js can draw on a visible canvas before print is called */
-.print-only-container--active {
-  display: block;
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  z-index: 10000;
-  background: white;
-  overflow-y: auto;
-}
+/* (Replaced by global rules in main.css) */
 
 /* These helpers were missing in Student360.vue but used in the new modal UI */
 .reports__btn-preview {
