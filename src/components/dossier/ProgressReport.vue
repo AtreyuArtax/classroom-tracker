@@ -480,9 +480,8 @@ const categoryPerformance = computed(() => {
 /* --- Tables & Lists --- */
 .category-pills {
   display: flex;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   gap: 6px;
-  overflow: hidden;
 }
 
 .category-pill {
