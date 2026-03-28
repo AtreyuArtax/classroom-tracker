@@ -480,20 +480,22 @@ const categoryPerformance = computed(() => {
 /* --- Tables & Lists --- */
 .category-pills {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+  flex-wrap: nowrap;
+  gap: 6px;
+  overflow: hidden;
 }
 
 .category-pill {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   background: #f8fafc;
   border: 1px solid var(--print-border);
-  padding: 6px 12px;
+  padding: 4px 10px;
   border-radius: 50px;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   font-weight: 600;
+  flex-shrink: 0;
 }
 
 .cp-name { color: var(--print-text); }
