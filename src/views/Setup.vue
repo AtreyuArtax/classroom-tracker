@@ -628,7 +628,6 @@
             <img :src="qr.qrUrl" :alt="qr.name" class="setup__qr-img" />
             <div class="setup__qr-info">
               <span class="setup__qr-name">{{ qr.name }}</span>
-              <span class="setup__qr-id">{{ qr.studentId }}</span>
             </div>
           </div>
         </div>
@@ -636,7 +635,22 @@
       <div class="setup__dialog-backdrop" @click="isQRModalOpen = false" />
     </div>
 
-
+    <!-- ── Hidden Batch Print Container ─── -->
+    <Teleport to="body">
+      <div class="print-only-container" :class="{ 'print-only-container--active': isSystemPrinting }">
+        <div class="setup__qr-print-grid">
+          <div v-for="qr in qrCodes" :key="qr.studentId" class="setup__qr-print-card">
+            <div class="setup__qr-print-header">
+              <span class="setup__qr-print-class">{{ activeClass?.name }}</span>
+            </div>
+            <img :src="qr.qrUrl" :alt="qr.name" class="setup__qr-print-img" />
+            <div class="setup__qr-print-info">
+              <span class="setup__qr-print-name">{{ qr.name }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -654,7 +668,7 @@
  * reloadBehaviorCodes() to keep the reactive ref in sync.
  */
 
-import { ref, reactive, computed, watch, onMounted } from 'vue'
+import { ref, reactive, computed, watch, onMounted, nextTick } from 'vue'
 import Papa from 'papaparse'
 import { Archive, ChevronDown, ChevronUp, FolderOpen, Trash2, FileText, Pencil, Download, Database, Cloud, Settings2, Plus, X, Save, FileUp, FileDown, GraduationCap, ArrowLeft, Zap, LayoutDashboard, Settings, QrCode, Printer } from 'lucide-vue-next'
 import QRCode from 'qrcode'
@@ -708,6 +722,16 @@ const showAllSessions = ref(false)
 const isQRModalOpen = ref(false)
 const qrCodes = ref([]) // Array of { studentId, name, qrUrl }
 const isGeneratingQRs = ref(false)
+const isSystemPrinting = ref(false)
+
+// Watch for changes in isSystemPrinting to apply/remove print styles
+watch(isSystemPrinting, (newValue) => {
+  if (newValue) {
+    document.body.classList.add('is-printing')
+  } else {
+    document.body.classList.remove('is-printing')
+  }
+})
 
 async function openQRGenerator() {
   if (!activeClass.value || sortedRoster.value.length === 0) return
@@ -740,8 +764,15 @@ async function openQRGenerator() {
   isGeneratingQRs.value = false
 }
 
-function printQRs() {
+async function printQRs() {
+  isSystemPrinting.value = true
+  
+  await nextTick()
+  // Wait for QR codes to render and layout to settle
+  await new Promise(resolve => setTimeout(resolve, 1000))
+  
   window.print()
+  isSystemPrinting.value = false
 }
 
 onMounted(async () => {
@@ -2842,11 +2873,6 @@ function formatDate(iso) {
   max-width: 120px;
 }
 
-.setup__qr-id {
-  font-size: 0.7rem;
-  color: var(--text-secondary);
-  font-family: monospace;
-}
 
 .setup__dialog-header {
   display: flex;
@@ -2886,5 +2912,62 @@ function formatDate(iso) {
     break-inside: avoid;
     border: 1px solid #eee !important;
   }
+}
+
+/* ── QR Print Grid (Credit Card Size) ────────────────────────────────── */
+.setup__qr-print-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10mm;
+  padding: 10mm;
+  width: 100%;
+}
+
+.setup__qr-print-card {
+  width: 85.6mm;
+  height: 54mm;
+  border: 1px solid #000;
+  border-radius: 4mm;
+  padding: 4mm;
+  display: flex;
+  flex-direction: row; /* Horizontal layout for credit card look */
+  align-items: center;
+  gap: 4mm;
+  background: white;
+  break-inside: avoid;
+  page-break-inside: avoid;
+  box-sizing: border-box;
+}
+
+.setup__qr-print-img {
+  height: 100%;
+  aspect-ratio: 1;
+  image-rendering: pixelated;
+}
+
+.setup__qr-print-info {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  flex: 1;
+  min-width: 0;
+}
+
+.setup__qr-print-name {
+  font-size: 14pt;
+  font-weight: 700;
+  color: #000;
+  line-height: 1.2;
+}
+
+.setup__qr-print-header {
+  display: none; /* Can add school/class info here if requested */
+}
+
+.setup__qr-print-class {
+  font-size: 8pt;
+  color: #666;
+  margin-bottom: 2mm;
+  display: block;
 }
 </style>

@@ -25,6 +25,7 @@
       <button 
         v-for="tab in tabs" 
         :key="tab.id"
+        v-memo="[tab.id, activeTab === tab.id]"
         class="student-360__tab-btn"
         :class="{ 'student-360__tab-btn--active': activeTab === tab.id }"
         @click="activeTab = tab.id"
@@ -145,7 +146,7 @@
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="a in classAssessments" :key="a.assessmentId" @contextmenu.prevent="onContextMenu($event, a.assessmentId)">
+                <tr v-for="a in classAssessments" :key="a.assessmentId" v-memo="[a.assessmentId, a.score, a.missing, a.excluded, editingCell?.assessmentId === a.assessmentId]" @contextmenu.prevent="onContextMenu($event, a.assessmentId)">
                   <td class="td-date">{{ new Date(a.date).toLocaleDateString([], { month: 'short', day: 'numeric' }) }}</td>
                   <td class="td-name">{{ a.name }}</td>
                   <td><span class="badge" :class="'badge--' + a.assessmentType">{{ a.assessmentType }}</span></td>
@@ -222,7 +223,7 @@
                  </tr>
                </thead>
                <tbody>
-                 <tr v-for="a in individualAssessments" :key="a.assessmentId" @contextmenu.prevent="onContextMenu($event, a.assessmentId)">
+                 <tr v-for="a in individualAssessments" :key="a.assessmentId" v-memo="[a.assessmentId, a.score, a.missing, a.excluded, editingCell?.assessmentId === a.assessmentId]" @contextmenu.prevent="onContextMenu($event, a.assessmentId)">
                    <td class="td-date">{{ new Date(a.date).toLocaleDateString([], { month: 'short', day: 'numeric' }) }}</td>
                    <td class="td-name">{{ a.name }}</td>
                    <td><span class="badge" :class="'badge--' + a.assessmentType">{{ a.assessmentType }}</span></td>
@@ -350,7 +351,7 @@
           <h3 class="profile-section__title">Parent / Guardian Contacts</h3>
           <div v-if="!student.parentContacts?.length" class="text-muted">No contacts on file.</div>
           <div v-else class="contacts-list">
-            <div v-for="(c, i) in student.parentContacts" :key="i" class="contact-card">
+            <div v-for="(c, i) in student.parentContacts" :key="i" v-memo="[c.name, c.email, c.phone]" class="contact-card">
               <div class="contact-card__name">{{ c.name }}</div>
               <div class="contact-card__meta">
                 <a :href="'mailto:' + c.email" v-if="c.email">{{ c.email }}</a>
@@ -390,7 +391,7 @@
           </div>
           
           <div v-else class="history-list">
-            <div v-for="h in allTimeHistory" :key="h.classId" class="history-item">
+            <div v-for="h in allTimeHistory" :key="h.classId" v-memo="[h.classId, h.overallGrade]" class="history-item">
               <div class="history-item__left">
                 <div class="history-term-badge">{{ h.year }} • {{ h.semester }}</div>
                 <div class="history-class-name">{{ h.name }}</div>

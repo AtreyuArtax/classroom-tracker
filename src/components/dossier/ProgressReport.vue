@@ -57,7 +57,7 @@
     <section v-if="config.includeCategorySummary" class="report-section">
       <h3 class="section-title">Category Performance</h3>
       <div class="category-pills">
-        <div v-for="cat in categoryPerformance" :key="cat.categoryId" class="category-pill">
+        <div v-for="cat in categoryPerformance" :key="cat.categoryId" v-memo="[cat.categoryId, cat.percentage]" class="category-pill">
           <span class="cp-name">{{ cat.name }}</span>
           <span class="cp-weight">{{ cat.weight }}%</span>
           <span class="cp-pct" :style="{ color: getGradeColor(cat.percentage) }">
@@ -75,7 +75,7 @@
       <div v-if="missingAssessments.length" class="report-alert report-alert--missing">
         <h4 class="alert-title">Missing Assessments ({{ missingAssessments.length }})</h4>
         <ul class="missing-list">
-          <li v-for="a in missingAssessments" :key="a.assessmentId">
+          <li v-for="a in missingAssessments" :key="a.assessmentId" v-memo="[a.assessmentId]">
             <span class="m-date">{{ formatDate(a.date) }}</span>
             <span class="m-name">{{ a.name }}</span>
             <span class="m-cat">{{ getCategoryName(a.categoryId) }}</span>
@@ -96,7 +96,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="a in recentGradedAssessments" :key="a.assessmentId">
+            <tr v-for="a in recentGradedAssessments" :key="a.assessmentId" v-memo="[a.assessmentId, a.score]">
               <td class="td-date">{{ formatDate(a.date) }}</td>
               <td class="td-name">{{ a.name }}</td>
               <td class="td-cat">{{ getCategoryName(a.categoryId) }}</td>
