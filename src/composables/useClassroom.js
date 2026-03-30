@@ -878,12 +878,7 @@ async function logStandardEvent(studentId, code, note = null, options = {}) {
     })
 }
 
-/**
- * Log a specialized Assessment Conversation event.
- *
- * @param {Object} payload { studentId, note, acContext, acOutcome }
- */
-async function logAssessmentEvent({ studentId, note, acContext, acOutcome }) {
+async function logAssessmentEvent({ studentId, note, acType, acContext, acOutcome }) {
     const classId = activeClass.value?.classId
     const code = 'ac'
     const category = 'assessment'
@@ -893,6 +888,7 @@ async function logAssessmentEvent({ studentId, note, acContext, acOutcome }) {
         classId, 
         code, 
         note,
+        acType,
         acContext,
         acOutcome
     })

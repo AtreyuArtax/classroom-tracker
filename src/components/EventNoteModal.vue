@@ -10,31 +10,18 @@
     >
       <div class="enm-card" @keydown.esc="onCancel">
         <h2 class="enm-title">
-          {{ behaviorCode?.icon }} {{ behaviorCode?.label }}
+          <component :is="resolveIcon(behaviorCode?.icon)" :size="20" class="enm-icon" />
+          {{ behaviorCode?.label }}
           <span v-if="studentName" class="enm-title-student">— {{ studentName }}</span>
         </h2>
 
-        <!-- ob/cv Toggle (only for general 'note' code) -->
-        <div v-if="isNoteCode" class="enm-toggle-row">
-          <span class="enm-toggle-label">Type</span>
-          <div class="enm-toggle-group">
-            <button
-              :class="['enm-toggle-btn', noteType === 'ob' ? 'enm-toggle-btn--active' : '']"
-              @click="noteType = 'ob'"
-            >Observation</button>
-            <button
-              :class="['enm-toggle-btn', noteType === 'cv' ? 'enm-toggle-btn--active' : '']"
-              @click="noteType = 'cv'"
-            >Conversation</button>
-          </div>
-        </div>
 
         <!-- Note textarea -->
         <textarea
           ref="textareaRef"
           v-model="noteText"
           class="enm-textarea"
-          placeholder="Add a note..."
+          placeholder="e.g., Away next week, Laptop borrowed, Needs extra time..."
           rows="4"
           @keydown.esc.prevent="onCancel"
         ></textarea>
@@ -61,6 +48,7 @@
  */
 
 import { ref, watch, nextTick, computed } from 'vue'
+import { resolveIcon } from '../utils/icons.js'
 
 const props = defineProps({
   /** Displayed in the modal title */
@@ -74,16 +62,12 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue', 'save', 'cancel'])
 
 const noteText   = ref('')
-const noteType   = ref('ob')
 const textareaRef = ref(null)
-
-const isNoteCode = computed(() => props.behaviorCode?.key === 'note')
 
 // Autofocus + clear text each time the modal opens
 watch(() => props.modelValue, async (open) => {
   if (open) {
     noteText.value = ''
-    noteType.value = 'ob'
     await nextTick()
     textareaRef.value?.focus()
   }
@@ -91,11 +75,7 @@ watch(() => props.modelValue, async (open) => {
 
 function onSave() {
   const note = noteText.value.trim()
-  if (isNoteCode.value) {
-    emit('save', { note, noteType: noteType.value })
-  } else {
-    emit('save', note)
-  }
+  emit('save', note)
   emit('update:modelValue', false)
 }
 
@@ -154,6 +134,12 @@ function onCancel() {
 .enm-title-student {
   font-weight: 500;
   color:       var(--text-secondary);
+}
+
+.enm-icon {
+  vertical-align: middle;
+  margin-right: 8px;
+  color: var(--primary);
 }
 
 /* ── Textarea ─────────────────────────────────────────────────────── */

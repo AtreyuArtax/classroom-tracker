@@ -220,6 +220,27 @@
                   </div>
                 </div>
 
+                <!-- Recent Situational Notes Card -->
+                <div class="reports__dashboard-card">
+                  <div class="reports__card-header">
+                    <h3 class="reports__card-title"><ClipboardList :size="18" /> Recent Classroom Logs</h3>
+                  </div>
+                  <div class="reports__card-body" style="padding: 0;">
+                    <ul v-if="recentNotes.length" class="reports__note-list">
+                      <li v-for="note in recentNotes" :key="note.eventId" class="reports__note-item">
+                        <div class="reports__note-meta">
+                          <span class="reports__note-student">{{ studentsMap[note.studentId]?.firstName }} {{ studentsMap[note.studentId]?.lastName }}</span>
+                          <span class="reports__note-date">{{ formatTimestamp(note.timestamp) }}</span>
+                        </div>
+                        <p class="reports__note-text">{{ note.note }}</p>
+                      </li>
+                    </ul>
+                    <div v-else class="reports__no-data" style="padding: 40px; text-align: center;">
+                      No situational notes recorded in this period.
+                    </div>
+                  </div>
+                </div>
+
                 <!-- Data Management & Export -->
                 <div class="reports__dashboard-card">
                   <div class="reports__card-header">
@@ -361,7 +382,7 @@ import { ref, reactive, computed, watch, defineComponent, h, onMounted, onUnmoun
 import { 
   BarChart2, Download, Trash2, PlusCircle, ChevronLeft, 
   LayoutDashboard, Database, UserCheck, Toilet, Activity, 
-  FolderOpen, GraduationCap, Printer, X
+  FolderOpen, GraduationCap, Printer, X, ClipboardList
 } from 'lucide-vue-next'
 import { resolveIcon }         from '../utils/icons.js'
 import { useClassroom }        from '../composables/useClassroom.js'
@@ -746,6 +767,21 @@ const aggregates = reactive({
 })
 
 const classGrades = ref({})
+
+/** Aggregated notes for the class overview */
+const recentNotes = computed(() => {
+  const studentsMap = reportStudents.value
+  return reportData.value
+    .filter(e => e.note && e.code !== 'a' && e.code !== 'l' && e.code !== 'w' && !e.superseded)
+    .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+    .map(e => ({
+      ...e,
+      studentName: studentsMap[e.studentId] ? `${studentsMap[e.studentId].firstName} ${studentsMap[e.studentId].lastName}` : 'Unknown Student'
+    }))
+    .slice(0, 12)
+})
+
+const studentsMap = computed(() => reportStudents.value)
 
 /** Class-wide correlation insights */
 const correlationInsights = computed(() => {
@@ -1510,6 +1546,54 @@ const washroomChartOptions = {
   border-radius: var(--radius-lg);
   border: 1px solid var(--border);
   box-shadow: var(--shadow-sm);
+}
+
+/* ── Recent Notes ────────────────────────────────────────────────── */
+.reports__note-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.reports__note-item {
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.2s;
+}
+
+.reports__note-item:hover {
+  background: var(--bg-secondary);
+}
+
+.reports__note-item:last-child {
+  border-bottom: none;
+}
+
+.reports__note-meta {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.reports__note-student {
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--primary);
+}
+
+.reports__note-date {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.reports__note-text {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text);
+  line-height: 1.4;
+  white-space: pre-wrap;
 }
 
 .reports__card-title {

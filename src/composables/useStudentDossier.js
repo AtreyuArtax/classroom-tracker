@@ -20,8 +20,10 @@ import { ref, computed, watch } from 'vue'
 import * as classService from '../db/classService.js'
 import * as eventService from '../db/eventService.js'
 import { getDateBoundary } from '../db/eventService.js'
+import { useClassroom } from './useClassroom.js'
 
 export function useStudentDossier() {
+    const { activeStudentEvents, getStudentEventHistory } = useClassroom()
 
     // ─── selection state ──────────────────────────────────────────────────────
 
@@ -64,9 +66,10 @@ export function useStudentDossier() {
     }
 
     // ─── dossier data ─────────────────────────────────────────────────────────
-
-    const events = ref([])
-    const student = ref(null) // full student object including generalNote
+    
+    /** Base event history shared with useClassroom */
+    const events = activeStudentEvents
+    const student = ref(null)
     const loading = ref(false)
 
     /**
@@ -81,37 +84,31 @@ export function useStudentDossier() {
         selectedStudentId.value = studentId
         loading.value = true
         try {
-            const [cls] = await Promise.all([
-                classService.getClass(classId),
-                _fetchEvents(),
-            ])
-            student.value = cls?.students?.[studentId] ?? null
+            // Load student record
+            const cls = await classService.getClass(classId)
+            student.value = cls?.students[studentId] || null
+            
+            // Re-fetch global student event history
+            await getStudentEventHistory(studentId)
         } catch (err) {
             console.error('useStudentDossier.loadStudent failed:', err)
-            events.value = []
             student.value = null
         } finally {
             loading.value = false
         }
     }
 
-    async function _fetchEvents() {
-        if (!selectedStudentId.value) return
-        const boundary = getDateBoundary(selectedPeriod.value)
-        const range = boundary ? { from: boundary } : {}
-        events.value = await eventService.getEventsByStudent(selectedStudentId.value, range)
+    /** Reload current student */
+    async function reload() {
+        if (selectedClassId.value && selectedStudentId.value) {
+            await loadStudent(selectedClassId.value, selectedStudentId.value)
+        }
     }
 
-    // Re-fetch when period changes (student already loaded)
-    watch(selectedPeriod, async () => {
-        if (!selectedStudentId.value) return
-        loading.value = true
-        try {
-            await _fetchEvents()
-        } finally {
-            loading.value = false
-        }
-    })
+    async function _fetchEvents() {
+        // Redundant - we now use the global activeStudentEvents + getStudentEventHistory
+        return
+    }
 
     // ─── computed stats ───────────────────────────────────────────────────────
 
@@ -141,25 +138,32 @@ export function useStudentDossier() {
             redirects,
             parentContactCount: parentContacts.length,
             noteCount: noteEvents.length,
-            assessmentConversations: assessmentEvents.value.length,
-            demonstratesUnderstanding: assessmentEvents.value.filter(e => e.acOutcome === 'demonstrates_understanding').length,
-            gapConfirmed: assessmentEvents.value.filter(e => e.acOutcome === 'gap_confirmed').length,
+            assessmentConversations: qualitativeEvents.value.length,
+            demonstratesUnderstanding: qualitativeEvents.value.filter(e => e.acOutcome === 'demonstrates_understanding').length,
+            gapConfirmed: qualitativeEvents.value.filter(e => e.acOutcome === 'gap_confirmed').length,
         }
     })
 
     // ─── Assessment / Note feeds ───────────────────────────────────────────
 
-    /** Assessment conversations — separate from general noteEvents */
-    const assessmentEvents = computed(() =>
+    /** Qualitative evidence — 'ac' events (Assessment Observation/Conversation) */
+    const qualitativeEvents = computed(() =>
         [...events.value]
             .filter(e => e.code === 'ac')
             .sort((a, b) => (b.timestamp ?? '').localeCompare(a.timestamp ?? ''))
     )
 
-    /** General notes — ob/cv merged note code and pc, excluding ac */
+    /** Parent/Guardian interactions — 'pc' events */
+    const communicationEvents = computed(() =>
+        [...events.value]
+            .filter(e => e.code === 'pc' || e.category === 'communication')
+            .sort((a, b) => (b.timestamp ?? '').localeCompare(a.timestamp ?? ''))
+    )
+
+    /** General notes — situational notes, excluding academic/comm items */
     const noteEvents = computed(() =>
         [...events.value]
-            .filter(e => e.note && e.code !== 'ac')
+            .filter(e => e.note && e.code !== 'ac' && e.code !== 'pc' && e.category !== 'communication')
             .sort((a, b) => (b.timestamp ?? '').localeCompare(a.timestamp ?? ''))
     )
 
@@ -259,12 +263,13 @@ export function useStudentDossier() {
         // dossier
         events,
         noteEvents,
+        communicationEvents,
+        qualitativeEvents,
         weeklyTrend,
         trendCategories,
         student,
         loading,
         stats,
-        assessmentEvents,
         allTimeHistory,
         // actions
         loadStudent,

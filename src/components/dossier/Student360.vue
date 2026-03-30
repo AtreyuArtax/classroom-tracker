@@ -281,6 +281,12 @@
           </div>
         </div>
 
+        <!-- Qualitative Evidence (Observations/Conversations) -->
+        <DossierQualitativeEvidence 
+          :events="qualitativeEvents" 
+          @delete="handleDeleteHistoryItem"
+        />
+
         <!-- Internal Gradebook Notes -->
         <div class="student-360__gradebook-note">
           <h3 class="academics-section__title">Internal Gradebook Notes</h3>
@@ -291,6 +297,13 @@
             @blur="saveStudentGradebookNote(student.studentId, student.gradebookNote)"
           ></textarea>
         </div>
+      </section>
+
+      <section v-if="activeTab === 'communication'" class="student-360__pane">
+        <DossierCommunicationLog 
+          :events="communicationEvents" 
+          @delete="handleDeleteHistoryItem"
+        />
       </section>
 
       <!-- Timeline Tab -->
@@ -715,14 +728,17 @@ import {
   CheckCircle2,
   ChevronRight,
   Printer,
-  Activity, // Added Activity icon for preview
-  ShieldCheck // Added ShieldCheck icon
+  Activity, 
+  ShieldCheck,
+  MessageSquare
 } from 'lucide-vue-next'
 import DossierCategoryGrid from './DossierCategoryGrid.vue'
 import DossierEvidenceMix  from './DossierEvidenceMix.vue'
 import Student360Header    from './Student360Header.vue'
 import StudentStatCard     from './StudentStatCard.vue'
 import StudentTimeline     from './StudentTimeline.vue'
+import DossierCommunicationLog from './DossierCommunicationLog.vue'
+import DossierQualitativeEvidence from './DossierQualitativeEvidence.vue'
 import StudentTrendGraph    from '../StudentTrendGraph.vue'
 import StudentGradeTrend    from './StudentGradeTrend.vue'
 import ProgressReport       from './ProgressReport.vue'
@@ -760,12 +776,16 @@ const {
   activeStudentEvents,
   getStudentEventHistory,
   logStandardEvent,
+  removeEvent,
   getClass
 } = useClassroom()
 
 import { useStudentDossier } from '../../composables/useStudentDossier.js'
 const dossier = useStudentDossier()
-const { allTimeHistory, fetchAllTimeHistory } = dossier
+const { 
+  allTimeHistory, 
+  fetchAllTimeHistory 
+} = dossier
 
 // --- Email Progress Report State ---
 const showEmailModal = ref(false)
@@ -926,11 +946,12 @@ async function logAbsence() {
 }
 
 const tabs = [
-  { id: 'summary',   label: 'Summary',   icon: LayoutDashboard },
-  { id: 'academics', label: 'Academics', icon: GraduationCap },
-  { id: 'timeline',  label: 'Timeline',  icon: Activity },
-  { id: 'history',   label: 'History',   icon: History },
-  { id: 'profile',   label: 'Profile',   icon: UserCircle }
+  { id: 'summary',       label: 'Summary',       icon: LayoutDashboard },
+  { id: 'academics',     label: 'Academics',     icon: GraduationCap },
+  { id: 'communication', label: 'Communication', icon: MessageSquare },
+  { id: 'timeline',      label: 'Timeline',      icon: Activity },
+  { id: 'history',       label: 'History',       icon: History },
+  { id: 'profile',       label: 'Profile',       icon: UserCircle }
 ]
 
 // Data Fetching
@@ -940,6 +961,21 @@ const behaviorCodesMap = computed(() =>
 )
 
 const student = computed(() => students.value[props.studentId] || {})
+
+/** Qualitative evidence — 'ac' events derived from history */
+const qualitativeEvents = computed(() =>
+  [...events.value]
+    .filter(e => e.code === 'ac')
+    .sort((a, b) => (b.timestamp ?? '').localeCompare(a.timestamp ?? ''))
+)
+
+/** Communication log — 'pc' events derived from history */
+const communicationEvents = computed(() =>
+  [...events.value]
+    .filter(e => e.code === 'pc' || e.category === 'communication')
+    .sort((a, b) => (b.timestamp ?? '').localeCompare(a.timestamp ?? ''))
+)
+
 const isAdult = computed(() => {
   if (!student.value.birthDate) return false
   return computeAge(student.value.birthDate) >= 18
@@ -1137,23 +1173,29 @@ const attendanceAverages = computed(() => {
   
   const totalLateMins = filteredEvents.value
     .filter(e => e.code === 'l')
-    .reduce((acc, e) => acc + toMinutes(e.duration), 0)
+    .reduce((acc, e) => acc + (e.duration || 0), 0)
     
   const totalWashMins = filteredEvents.value
     .filter(e => e.code === 'w')
-    .reduce((acc, e) => acc + toMinutes(e.duration), 0)
+    .reduce((acc, e) => acc + ((e.duration || 0) / 60000), 0)
 
   return {
     absencesAvg: (totalAbs / weekCount).toFixed(1),
     latesAvg: (totalLates / weekCount).toFixed(1),
     washroomAvg: (totalWash / weekCount).toFixed(1),
     latesTotal: totalLateMins,
-    washroomTotal: totalWashMins,
+    washroomTotal: totalWashMins.toFixed(0),
     washroomMinsAvg: (totalWashMins / weekCount).toFixed(1),
     washroomAvgPerVisit: totalWash ? (totalWashMins / totalWash).toFixed(1) : 0,
     latesAvgDuration: totalLates ? (totalLateMins / totalLates).toFixed(1) : 0
   }
 })
+
+async function handleDeleteHistoryItem(eventId) {
+  if (confirm('Are you sure you want to delete this entry? This will also update student statistics.')) {
+    await removeEvent(eventId)
+  }
+}
 
 async function saveGeneralNote(note) {
   // We'll use the classroom composable's method if available, or classService

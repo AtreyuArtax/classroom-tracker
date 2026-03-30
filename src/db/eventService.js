@@ -88,6 +88,10 @@ export async function logEvent(eventObj) {
         duration: eventObj.duration ?? null,
         note: eventObj.note ?? null,
         testDay: eventObj.testDay ?? false,
+        // Assessment fields
+        acType: eventObj.acType ?? null,
+        acContext: eventObj.acContext ?? null,
+        acOutcome: eventObj.acOutcome ?? null,
     }
     if (eventObj.supersededAbsent !== undefined) {
         record.supersededAbsent = eventObj.supersededAbsent
@@ -253,6 +257,11 @@ export async function quickSyncBackup() {
 
         const data = await exportAllData()
         const json = JSON.stringify(data, null, 2)
+
+        if (typeof handle.createWritable !== 'function') {
+            console.warn('Backup handle is invalid or stale (not a FileSystemHandle).')
+            return false
+        }
 
         const writable = await handle.createWritable()
         await writable.write(json)

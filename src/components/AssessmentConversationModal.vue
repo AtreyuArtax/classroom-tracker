@@ -6,15 +6,30 @@
       @click.self="onCancel"
       role="dialog"
       aria-modal="true"
-      aria-label="Assessment Conversation Modal"
+      aria-label="Assessment Data Entry"
     >
       <div class="acm-card" @keydown.esc="onCancel">
         <!-- Title -->
         <h2 class="acm-title">
           <GraduationCap :size="20" class="acm-title-icon" />
-          Assessment Conversation
+          Assessment {{ acType === 'observation' ? 'Observation' : 'Conversation' }}
           <span v-if="studentName" class="acm-title-student">— {{ studentName }}</span>
         </h2>
+
+        <!-- Type Toggle (Observation vs Conversation) -->
+        <div class="acm-field">
+          <label class="acm-label">Evidence Type</label>
+          <div class="acm-toggle-group">
+            <button
+              :class="['acm-toggle-btn', acType === 'observation' ? 'acm-toggle-btn--active' : '']"
+              @click="acType = 'observation'"
+            >Observation</button>
+            <button
+              :class="['acm-toggle-btn', acType === 'conversation' ? 'acm-toggle-btn--active' : '']"
+              @click="acType = 'conversation'"
+            >Conversation</button>
+          </div>
+        </div>
 
         <!-- Context Toggle -->
         <div class="acm-field">
@@ -61,12 +76,12 @@
 
         <!-- Note Textarea -->
         <div class="acm-field">
-          <label class="acm-label">Observation Details</label>
+          <label class="acm-label">{{ acType === 'observation' ? 'Observation' : 'Conversation' }} Details</label>
           <textarea
             ref="textareaRef"
             v-model="noteText"
             class="acm-textarea"
-            placeholder="What did the student say or demonstrate?"
+            :placeholder="acType === 'observation' ? 'What was demonstrated?' : 'What did the student say?'"
             rows="3"
             @keydown.esc.prevent="onCancel"
           ></textarea>
@@ -78,7 +93,7 @@
             class="acm-btn acm-btn--primary" 
             :disabled="!isFormValid"
             @click="onSave"
-          >Save Assessment</button>
+          >Save Evidence</button>
           <button class="acm-btn acm-btn--ghost" @click="onCancel">Cancel</button>
         </div>
       </div>
@@ -90,8 +105,8 @@
 /**
  * AssessmentConversationModal.vue
  *
- * Specialized modal for logging Assessment Conversation (ac) events.
- * Captures context, outcome, and detailed notes.
+ * Specialized modal for logging Assessment (ac) events.
+ * Captures type (Observation/Conversation), context, outcome, and detailed notes.
  */
 
 import { ref, watch, nextTick, computed } from 'vue'
@@ -104,6 +119,7 @@ const props = defineProps({
 
 const emit = defineEmits(['update:modelValue', 'save', 'cancel'])
 
+const acType    = ref('observation') // 'observation' | 'conversation'
 const context   = ref(null) // 'after_assessment' | 'proactive'
 const outcome   = ref(null) // 'demonstrates_understanding' | 'gap_confirmed' | 'inconclusive'
 const noteText  = ref('')
@@ -116,6 +132,7 @@ const isFormValid = computed(() => {
 // Reset + focus on open
 watch(() => props.modelValue, async (val) => {
   if (val) {
+    acType.value = 'observation'
     context.value = null
     outcome.value = null
     noteText.value = ''
@@ -129,6 +146,7 @@ function onSave() {
   
   emit('save', {
     note: noteText.value.trim(),
+    acType: acType.value,
     acContext: context.value,
     acOutcome: outcome.value
   })

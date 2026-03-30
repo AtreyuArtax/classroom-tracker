@@ -124,7 +124,6 @@
       v-model="profileModalOpen"
       :student-id="profileStudentId"
       :class-id="profileClassId"
-      :behavior-codes-map="behaviorCodesMap"
     />
 
   </div>
@@ -228,34 +227,26 @@ watch(pendingNoteCode, (code) => {
   if (code) noteModalOpen.value = true
 })
 
-async function onNoteSave(payload) {
+async function onNoteSave(note) {
   const student = pendingNoteStudent.value
   const code    = pendingNoteCode.value
   if (!student || !code) return
 
-  let finalNote = ''
-  if (typeof payload === 'object') {
-    // If it's the structured note payload from Update 08
-    finalNote = `[${payload.noteType}] ${payload.note}`.trim()
-  } else {
-    // Legacy string payload (e.g. for Parent Contact)
-    finalNote = payload
-  }
-
-  await logStandardEvent(student.studentId, code.codeKey, finalNote)
+  await logStandardEvent(student.studentId, code.codeKey, note)
 
   // Clear pending state
   pendingNoteCode.value    = null
   pendingNoteStudent.value = null
 }
 
-async function onAssessmentSave({ note, acContext, acOutcome }) {
+async function onAssessmentSave({ note, acType, acContext, acOutcome }) {
   const student = pendingNoteStudent.value
   if (!student) return
 
   await logAssessmentEvent({
     studentId: student.studentId,
     note,
+    acType,
     acContext,
     acOutcome
   })
