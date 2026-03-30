@@ -58,7 +58,7 @@
                   </div>
                 </div>
                 <!-- Batch Print Button -->
-                <button class="reports__btn-export" style="margin-left: 8px;" @click="showPrintModal = true">
+                <button class="reports__btn-export" style="margin-left: 8px;" @click="openPrintModal">
                   <Printer :size="16" /> Print Reports
                 </button>
               </div>
@@ -546,6 +546,13 @@ import { loadGradebook, activeClassRecord, assessments, gradeMap } from '../comp
 
 const { teacherName } = useClassroom()
 
+async function openPrintModal() {
+  if (reportClass.value) {
+    await loadGradebook(reportClass.value)
+  }
+  showPrintModal.value = true
+}
+
 async function triggerBatchPrint() {
   showPrintModal.value = false
   isSystemPrinting.value = true
@@ -684,7 +691,7 @@ const classGrades = ref({})
 const recentNotes = computed(() => {
   const studentsMap = reportStudents.value
   return reportData.value
-    .filter(e => e.note && e.code !== 'a' && e.code !== 'l' && e.code !== 'w' && e.code !== 'pc' && !e.superseded)
+    .filter(e => e.note && e.code !== 'a' && e.code !== 'ac' && e.code !== 'l' && e.code !== 'w' && e.code !== 'pc' && !e.superseded && !e.note.startsWith('[ob]') && !e.note.startsWith('[cv]'))
     .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
     .map(e => ({
       ...e,
@@ -1227,46 +1234,49 @@ const washroomChartOptions = {
 .reports__card-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-  padding: 20px;
+  gap: 16px 12px;
+  padding: 24px 20px;
   background: var(--surface);
 }
 
 .reports__metric {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
 }
 
 .reports__metric-label {
-  font-size: 0.75rem;
+  font-size: 0.7rem;
+  font-weight: 700;
   color: var(--text-secondary);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0;
 }
 
 .reports__metric-value {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--primary);
-  line-height: 1.2;
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--text);
+  line-height: 1.1;
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
 }
 
 .reports__metric-value--small {
-  font-size: 1.1rem;
+  font-size: 1.15rem;
 }
 
 .reports__metric-value small {
-  font-size: 0.65em;
+  font-size: 0.75rem;
   font-weight: 600;
-  margin-left: 2px;
   color: var(--text-secondary);
 }
 
 .reports__metric--border {
-  border-top: 1px solid var(--bg-secondary);
-  padding-top: 12px;
-  margin-top: 4px;
+  border-top: 1px dashed var(--border);
+  padding-top: 16px;
+  margin-top: 0;
 }
 
 .reports__card-section {

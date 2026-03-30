@@ -255,16 +255,16 @@
         <div class="setup__card">
           <h2 class="setup__card-title">General Info</h2>
           <form class="setup__form">
-            <label class="setup__label">
-              Class Name
-              <input
-                type="text"
-                :value="activeClass.name"
-                class="setup__input"
-                @change="e => updateActiveClass({ name: e.target.value.trim() || activeClass.name })"
-              />
-            </label>
             <div class="setup__form-grid">
+              <label class="setup__label">
+                Class Name
+                <input
+                  type="text"
+                  :value="activeClass.name"
+                  class="setup__input"
+                  @change="e => updateActiveClass({ name: e.target.value.trim() || activeClass.name })"
+                />
+              </label>
               <label class="setup__label">
                 Academic Term
                 <select
@@ -352,7 +352,7 @@
           
           <!-- Manual Add -->
           <form class="setup__form setup__form--inline" @submit.prevent="addSingleStudent">
-            <input v-model="newStudent.studentId" class="setup__input setup__input--sm" placeholder="ID" required />
+            <input v-model="newStudent.studentId" class="setup__input" placeholder="ID" required />
             <input v-model="newStudent.firstName" class="setup__input" placeholder="First Name" required />
             <input v-model="newStudent.lastName" class="setup__input" placeholder="Last Name" required />
             <button type="submit" class="setup__btn-primary">Add</button>
@@ -361,16 +361,13 @@
           <!-- Roster List -->
           <ul class="setup__roster-list" style="margin-top: 1rem;">
             <li v-for="s in sortedRoster" :key="s.studentId" class="setup__roster-item">
-              <div>
+              <div class="setup__roster-info">
                 <span class="setup__roster-name">{{ s.lastName }}, {{ s.firstName }}</span>
                 <span class="setup__roster-id">{{ s.studentId }}</span>
               </div>
               <div class="setup__roster-actions">
-                <span class="setup__seat-badge" :class="s.seat ? 'setup__seat-badge--seated' : 'setup__seat-badge--pool'">
-                  {{ s.seat ? `R${s.seat.row} C${s.seat.col}` : 'Pool' }}
-                </span>
-                <button class="setup__icon-btn" @click="onEditStudent(s)"><Pencil :size="14" /></button>
-                <button class="setup__icon-btn setup__icon-btn--danger" @click="onRemoveStudent(s)"><Trash2 :size="14" /></button>
+                <button class="setup__icon-btn" @click="onEditStudent(s)" title="Edit"><Pencil :size="14" /></button>
+                <button class="setup__icon-btn setup__icon-btn--danger" @click="onRemoveStudent(s)" title="Remove"><Trash2 :size="14" /></button>
               </div>
             </li>
           </ul>
@@ -2216,7 +2213,16 @@ function formatDate(iso) {
 }
 
 /* ── Forms ───────────────────────────────────────────────────────── */
+.setup__form--inline {
+  display: grid;
+  grid-template-columns: 1fr 2.5fr 2.5fr auto;
+  align-items: center;
+  gap: 8px;
+}
 
+.setup__form--inline .setup__input {
+  width: 100% !important;
+}
 
 .setup__icon-btn {
   border:     none;
@@ -2306,10 +2312,16 @@ function formatDate(iso) {
   display:         flex;
   align-items:     center;
   justify-content: space-between;
-  padding:         10px 12px;
+  padding:         6px 12px;
   border-radius:   var(--radius-sm);
   background:      var(--bg-secondary);
   gap:             12px;
+}
+
+.setup__roster-info {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
 }
 
 .setup__roster-name {
@@ -2319,9 +2331,15 @@ function formatDate(iso) {
 }
 
 .setup__roster-id {
-  display:    block;
-  font-size:  0.72rem;
+  font-size:  0.75rem;
   color:      var(--text-secondary);
+  font-family: monospace;
+}
+
+.setup__roster-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .setup__seat-badge {
