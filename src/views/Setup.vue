@@ -14,8 +14,8 @@
             :value="activeClass?.classId"
             @change="e => switchToClass(e.target.value)"
           >
-            <option v-if="classList.length === 0" value="">No Classes</option>
-            <option v-for="cls in classList" :key="cls.classId" :value="cls.classId">
+            <option v-if="filteredClassList.length === 0" value="">No Classes</option>
+            <option v-for="cls in filteredClassList" :key="cls.classId" :value="cls.classId">
               {{ cls.name }} (P{{ cls.periodNumber }})
             </option>
           </select>

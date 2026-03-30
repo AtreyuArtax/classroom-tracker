@@ -789,7 +789,8 @@ const {
   getStudentEventHistory,
   logStandardEvent,
   removeEvent,
-  getClass
+  getClass,
+  updateStudentNote
 } = useClassroom()
 
 import { useStudentDossier } from '../../composables/useStudentDossier.js'
@@ -1221,10 +1222,9 @@ async function handleDeleteHistoryItem(eventId) {
 }
 
 async function saveGeneralNote(note) {
-  // We'll use the classroom composable's method if available, or classService
-  // For now, let's assume we update the student object in the store
-  student.value.generalNote = note
-  // In a real app, this would call an API/DB update
+  if (student.value.generalNote !== note) {
+    await updateStudentNote(props.studentId, note)
+  }
 }
 
 const isCopied = ref(false)

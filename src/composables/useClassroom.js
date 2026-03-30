@@ -654,6 +654,22 @@ async function removeStudent(studentId) {
 }
 
 /**
+ * Updates a student's general note and persists it.
+ *
+ * @param {string} studentId
+ * @param {string} note
+ * @returns {Promise<void>}
+ */
+async function updateStudentNote(studentId, note) {
+    const classId = activeClass.value?.classId
+    if (!classId) return
+    await classService.updateStudentNote(classId, studentId, note)
+    if (students.value[studentId]) {
+        students.value[studentId].generalNote = note
+    }
+}
+
+/**
  * Assign a student to a seat (or null to send to roster pool).
  * Pushes an undo entry per CLAUDE.md §9.
  *
@@ -1256,6 +1272,7 @@ export function useClassroom() {
         editEvent,
         removeEvent,
         checkResize,
+        updateStudentNote,
         confirmResize,
         reloadBehaviorCodes,
         updateTeacherName,

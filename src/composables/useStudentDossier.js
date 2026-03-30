@@ -119,8 +119,8 @@ export function useStudentDossier() {
         const absences = e.filter(ev => ev.code === 'a').length
         const lates = e.filter(ev => ev.code === 'l')
         const redirects = e.filter(ev => ev.category === 'redirect').length
-        const parentContacts = e.filter(ev => ev.code === 'pc')
-        const noteEvents = e.filter(ev => ev.note)
+        const parentContacts = e.filter(ev => ev.code === 'pc' || ev.category === 'communication')
+        const noteEvents = e.filter(ev => ev.note && ev.code !== 'ac' && ev.code !== 'pc' && ev.category !== 'communication')
 
         return {
             washroomTrips: washroomEvents.length,
@@ -207,10 +207,6 @@ export function useStudentDossier() {
         student.value = null
     }
 
-    async function reload() {
-        if (!selectedClassId.value || !selectedStudentId.value) return
-        await loadStudent(selectedClassId.value, selectedStudentId.value)
-    }
 
     const allTimeHistory = ref([])
     async function fetchAllTimeHistory(studentId) {
