@@ -4,18 +4,32 @@
       Loading timeline...
     </div>
     <div v-else class="student-timeline__container">
-      <!-- Filter Pills -->
-      <div class="student-timeline__filters">
-        <button 
-          v-for="f in availableFilters" 
-          :key="f.id"
-          class="filter-pill"
-          :class="{ 'filter-pill--active': activeFilter === f.id }"
-          @click="activeFilter = f.id"
-        >
-          {{ f.label }}
-          <span class="filter-pill__count">{{ f.count }}</span>
-        </button>
+      <!-- Filter Bar -->
+      <div class="student-timeline__filter-bar">
+        <!-- Category Pills -->
+        <div class="student-timeline__filters">
+          <button 
+            v-for="f in availableFilters" 
+            :key="f.id"
+            class="filter-pill"
+            :class="{ 'filter-pill--active': activeFilter === f.id }"
+            @click="activeFilter = f.id"
+          >
+            {{ f.label }}
+            <span class="filter-pill__count">{{ f.count }}</span>
+          </button>
+        </div>
+
+        <!-- Date Dropdown -->
+        <div class="student-timeline__date-select">
+          <label class="date-select-label">Showing:</label>
+          <select v-model="selectedMonth" class="date-select-input">
+            <option value="all">All Dates</option>
+            <option v-for="m in availableMonths" :key="m.value" :value="m.value">
+              {{ m.label }}
+            </option>
+          </select>
+        </div>
       </div>
 
       <div v-if="filteredSortedItems.length === 0" class="student-timeline__empty">
@@ -138,6 +152,7 @@ const { editEvent, removeEvent } = useClassroom()
 
 const loading = ref(false)
 const activeFilter = ref('all')
+const selectedMonth = ref('all') // Format: 'YYYY-MM'
 
 // Edit state
 const editingItem = ref(null)
@@ -261,9 +276,40 @@ const availableFilters = computed(() => {
   return filters
 })
 
+const availableMonths = computed(() => {
+  const months = new Map()
+  
+  sortedItems.value.forEach(item => {
+    const d = item.date
+    const value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+    if (!months.has(value)) {
+      const label = d.toLocaleString('default', { month: 'long', year: 'numeric' })
+      months.set(value, { value, label, time: d.getTime() })
+    }
+  })
+  
+  // Sort chronologically descending
+  return Array.from(months.values()).sort((a, b) => b.time - a.time)
+})
+
 const filteredSortedItems = computed(() => {
-  if (activeFilter.value === 'all') return sortedItems.value
-  return sortedItems.value.filter(item => item.category === activeFilter.value)
+  let items = sortedItems.value
+  
+  // 1. Filter by category
+  if (activeFilter.value !== 'all') {
+    items = items.filter(item => item.category === activeFilter.value)
+  }
+  
+  // 2. Filter by month
+  if (selectedMonth.value !== 'all') {
+    items = items.filter(item => {
+      const d = item.date
+      const itemMonth = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+      return itemMonth === selectedMonth.value
+    })
+  }
+  
+  return items
 })
 
 const groupedItems = computed(() => {
@@ -380,6 +426,49 @@ function formatOutcome(outcome) {
   color: #fff;
   border-color: var(--primary);
   box-shadow: var(--shadow-sm);
+}
+
+/* ── Date Select ────────────────────────────────────────────────── */
+.student-timeline__filter-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.student-timeline__date-select {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--surface);
+  padding: 4px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+}
+
+.date-select-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+.date-select-input {
+  background: transparent;
+  border: none;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+  padding-right: 8px;
+  outline: none;
+}
+
+.date-select-input:focus {
+  color: var(--primary);
 }
 
 .filter-pill__count {
