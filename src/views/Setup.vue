@@ -98,7 +98,13 @@
                 <button class="setup__pill-btn" @click="switchToClass(cls.classId)">
                   {{ cls.classId === activeClass?.classId ? 'Active' : 'Configure' }}
                 </button>
-                <button class="setup__pill-btn setup__pill-btn--danger" @click="onArchiveClass(cls.classId)">Archive</button>
+                <button class="setup__pill-btn" @click.stop="openQRGenerator(cls)">
+                  <QrCode :size="14" /> QR
+                </button>
+                <button class="setup__pill-btn" @click.stop="openPrintList(cls)">
+                  <Printer :size="14" /> List
+                </button>
+                <button class="setup__pill-btn" @click="onArchiveClass(cls.classId)">Archive</button>
               </div>
             </li>
           </ul>
@@ -342,9 +348,6 @@
         <div class="setup__card">
           <div class="setup__card-header-row">
             <h2 class="setup__card-title">Roster — {{ sortedRoster.length }} Students</h2>
-            <button class="setup__pill-btn" @click="openQRGenerator">
-              <QrCode :size="16" /> Generate QR Codes
-            </button>
           </div>
           
           <!-- Manual Add -->
@@ -704,7 +707,7 @@
 
     <!-- ── Hidden Batch Print Container ─── -->
     <Teleport to="body">
-      <div class="print-only-container" :class="{ 'print-only-container--active': isSystemPrinting }">
+      <div class="qr-print-only" :class="{ 'print-only-container--active': isSystemPrinting }">
         <div class="setup__qr-print-grid">
           <div v-for="qr in qrCodes" :key="qr.studentId" class="setup__qr-print-card">
             <div class="setup__qr-print-header">
@@ -718,6 +721,13 @@
         </div>
       </div>
     </Teleport>
+    <!-- ── Print List Modal ─── -->
+    <PrintClassListModal
+      v-if="isPrintListModalOpen"
+      :classRecord="classToPrint"
+      :teacherName="teacherName"
+      @close="isPrintListModalOpen = false"
+    />
   </div>
 </template>
 
@@ -748,6 +758,7 @@ import * as settingsService from '../db/settingsService.js'
 import * as classService from '../db/classService.js'
 import * as gradebookService from '../db/gradebookService.js'
 import { globalMilestones, refreshGrades } from '../composables/useGradebook.js'
+import PrintClassListModal from '../components/PrintClassListModal.vue'
 
 const {
   classList,
@@ -793,6 +804,10 @@ const qrCodes = ref([]) // Array of { studentId, name, qrUrl }
 const isGeneratingQRs = ref(false)
 const isSystemPrinting = ref(false)
 
+// --- Print List State ---
+const isPrintListModalOpen = ref(false)
+const classToPrint = ref(null)
+
 // Watch for changes in isSystemPrinting to apply/remove print styles
 watch(isSystemPrinting, (newValue) => {
   if (newValue) {
@@ -802,14 +817,24 @@ watch(isSystemPrinting, (newValue) => {
   }
 })
 
-async function openQRGenerator() {
-  if (!activeClass.value || sortedRoster.value.length === 0) return
+async function openQRGenerator(clsRecord = null) {
+  const targetClass = clsRecord || activeClass.value
+  if (!targetClass) return
+  
+  // Extract and sort roster from target class
+  const roster = targetClass.students 
+    ? Object.entries(targetClass.students)
+        .map(([studentId, s]) => ({ studentId, ...s }))
+        .sort((a, b) => a.lastName.localeCompare(b.lastName))
+    : []
+    
+  if (roster.length === 0) return
   
   isGeneratingQRs.value = true
   isQRModalOpen.value = true
   
   const codes = []
-  for (const student of sortedRoster.value) {
+  for (const student of roster) {
     try {
       const url = await QRCode.toDataURL(student.studentId, {
         width: 200,
@@ -831,6 +856,11 @@ async function openQRGenerator() {
   
   qrCodes.value = codes
   isGeneratingQRs.value = false
+}
+
+function openPrintList(cls) {
+  classToPrint.value = cls
+  isPrintListModalOpen.value = true
 }
 
 async function printQRs() {
@@ -2186,88 +2216,7 @@ function formatDate(iso) {
 }
 
 /* ── Forms ───────────────────────────────────────────────────────── */
-.setup__form {
-  display:        flex;
-  flex-direction: column;
-  gap:            10px;
-}
 
-.setup__label {
-  display:        flex;
-  flex-direction: column;
-  gap:            4px;
-  font-size:      0.82rem;
-  font-weight:    600;
-  color:          var(--text-secondary);
-}
-
-.setup__input {
-  padding:       10px 12px;
-  border:        1px solid var(--border);
-  border-radius: var(--radius-sm);
-  background:    var(--bg-secondary);
-  min-height:    44px;
-  font-size:     0.9rem;
-  color:         var(--text);
-  transition:    border-color 0.15s ease;
-}
-
-.setup__input:focus {
-  outline:      none;
-  border-color: var(--primary);
-}
-
-/* ── Buttons ─────────────────────────────────────────────────────── */
-.setup__btn-primary {
-  padding:       12px 20px;
-  border:        none;
-  border-radius: var(--radius-md);
-  background:    var(--primary);
-  color:         #fff;
-  font-size:     0.9rem;
-  font-weight:   600;
-  cursor:        pointer;
-  min-height:    44px;
-  transition:    opacity 0.15s ease;
-}
-.setup__btn-primary:active { opacity: 0.8; }
-
-.setup__btn-danger {
-  padding:       12px 20px;
-  border:        none;
-  border-radius: var(--radius-md);
-  background:    var(--state-out);
-  color:         #fff;
-  font-size:     0.9rem;
-  font-weight:   600;
-  cursor:        pointer;
-  min-height:    44px;
-}
-
-.setup__btn-ghost {
-  padding:       12px 20px;
-  border:        1px solid var(--border);
-  border-radius: var(--radius-md);
-  background:    transparent;
-  color:         var(--text-secondary);
-  font-size:     0.9rem;
-  cursor:        pointer;
-  min-height:    44px;
-}
-
-.setup__pill-btn {
-  padding:       6px 14px;
-  border:        none;
-  border-radius: var(--radius-sm);
-  background:    var(--primary);
-  color:         #fff;
-  font-size:     0.78rem;
-  font-weight:   600;
-  cursor:        pointer;
-  min-height:    36px;
-  white-space:   nowrap;
-  flex-shrink:   0;
-}
 
 .setup__icon-btn {
   border:     none;
@@ -2451,83 +2400,8 @@ function formatDate(iso) {
   width:         fit-content;
 }
 
-/* Checkbox label row in Add Code form */
-.setup__label--checkbox {
-  flex-direction: row !important;
-  align-items:    center !important;
-  gap:            8px !important;
-  font-size:      0.82rem !important;
-  font-weight:    500 !important;
-  color:          var(--text) !important;
-  cursor:         pointer;
-}
-
-.setup__checkbox {
-  width:  18px;
-  height: 18px;
-  accent-color: var(--primary);
-  cursor: pointer;
-  flex-shrink: 0;
-}
 
 /* ── Dialog ──────────────────────────────────────────────────────── */
-.setup__dialog {
-  position: fixed;
-  inset:    0;
-  z-index:  900;
-  display:  flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.setup__dialog-backdrop {
-  position: absolute;
-  inset:    0;
-  background: rgba(0, 0, 0, 0.35);
-  backdrop-filter: blur(2px);
-}
-
-.setup__dialog-box {
-  position:      relative;
-  z-index:       1;
-  background:    var(--surface);
-  border-radius: var(--radius-lg);
-  box-shadow:    var(--shadow-md);
-  padding:       24px;
-  max-width:     360px;
-  width:         90%;
-  display:       flex;
-  flex-direction: column;
-  gap:           12px;
-}
-
-.setup__dialog-title {
-  font-size:   1.05rem;
-  font-weight: 700;
-  color:       var(--text);
-}
-
-.setup__dialog-body {
-  font-size:   0.88rem;
-  color:       var(--text-secondary);
-  line-height: 1.5;
-}
-
-.setup__dialog-list {
-  padding-left: 16px;
-  font-size:    0.85rem;
-  color:        var(--text);
-  display:      flex;
-  flex-direction: column;
-  gap:          4px;
-}
-
-.setup__dialog-actions {
-  display:   flex;
-  gap:       10px;
-  flex-wrap: wrap;
-  margin-top: 4px;
-}
 /* ── Header ─────────────────────────────────────────────────────── */
 .setup__header {
   padding: 16px;

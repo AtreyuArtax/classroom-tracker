@@ -150,7 +150,12 @@ textarea {
     display: none !important;
   }
 
-  .print-only-container {
+  /* 
+   * Specific print containers for different modules to prevent collision.
+   * They must remain display:none unless explicitly activated.
+   */
+  .qr-print-only.print-only-container--active,
+  .sheet-print-only.print-only-container--active {
     display: block !important;
     position: static !important;
     width: 100% !important;
@@ -158,8 +163,9 @@ textarea {
   }
 }
 
-/* Screen visibility for the print container when actively preparing for print */
-.print-only-container {
+/* Screen visibility for the active print container */
+.qr-print-only:not(.print-only-container--active),
+.sheet-print-only:not(.print-only-container--active) {
   display: none;
 }
 
@@ -170,4 +176,198 @@ textarea {
   z-index: 99999;
   background: white;
   overflow-y: auto;
+}
+
+/* ── 10. Global Setup Dialog / Modal Utilities ───────────────────────── */
+.setup__dialog {
+  position: fixed;
+  inset:    0;
+  z-index:  900;
+  display:  flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.setup__dialog-backdrop {
+  position: absolute;
+  inset:    0;
+  background: rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(2px);
+}
+
+.setup__dialog-box {
+  position:      relative;
+  z-index:       1;
+  background:    var(--surface);
+  border-radius: var(--radius-lg);
+  box-shadow:    var(--shadow-md);
+  padding:       24px;
+  max-width:     360px;
+  width:         90%;
+  display:       flex;
+  flex-direction: column;
+  gap:           12px;
+}
+
+.setup__dialog-title {
+  font-size:   1.05rem;
+  font-weight: 700;
+  color:       var(--text);
+}
+
+.setup__dialog-body {
+  font-size:   0.88rem;
+  color:       var(--text-secondary);
+  line-height: 1.5;
+}
+
+.setup__dialog-list {
+  padding-left: 16px;
+  font-size:    0.85rem;
+  color:        var(--text);
+  display:      flex;
+  flex-direction: column;
+  gap:          4px;
+}
+
+.setup__dialog-actions {
+  display:   flex;
+  gap:       10px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+/* ── 11. Global Setup UI Tokens ──────────────────────────────────────── */
+.setup__form {
+  display:        flex;
+  flex-direction: column;
+  gap:            10px;
+}
+
+.setup__label {
+  display:        flex;
+  flex-direction: column;
+  gap:            4px;
+  font-size:      0.82rem;
+  font-weight:    600;
+  color:          var(--text-secondary);
+}
+
+.setup__input {
+  padding:       10px 12px;
+  border:        1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background:    var(--bg-secondary);
+  min-height:    44px;
+  font-size:     0.9rem;
+  color:         var(--text);
+  transition:    border-color 0.15s ease;
+}
+
+.setup__input:focus {
+  outline:      none;
+  border-color: var(--primary);
+}
+
+.setup__btn-primary {
+  padding:       12px 20px;
+  border:        none;
+  border-radius: var(--radius-md);
+  background:    var(--primary);
+  color:         #fff;
+  font-size:     0.9rem;
+  font-weight:   600;
+  cursor:        pointer;
+  min-height:    44px;
+  transition:    opacity 0.15s ease;
+  display:       flex;
+  align-items:   center;
+  justify-content: center;
+  gap:           8px;
+}
+.setup__btn-primary:active { opacity: 0.8; }
+.setup__btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.setup__btn-danger {
+  padding:       12px 20px;
+  border:        none;
+  border-radius: var(--radius-md);
+  background:    var(--state-out);
+  color:         #fff;
+  font-size:     0.9rem;
+  font-weight:   600;
+  cursor:        pointer;
+  min-height:    44px;
+  display:       flex;
+  align-items:   center;
+  justify-content: center;
+  gap:           8px;
+}
+
+.setup__btn-ghost {
+  padding:       12px 20px;
+  border:        1px solid var(--border);
+  border-radius: var(--radius-md);
+  background:    transparent;
+  color:         var(--text-secondary);
+  font-size:     0.9rem;
+  cursor:        pointer;
+  min-height:    44px;
+  display:       flex;
+  align-items:   center;
+  justify-content: center;
+  gap:           8px;
+  transition:    all 0.2s;
+}
+.setup__btn-ghost:hover {
+  background: var(--bg-secondary);
+  border-color: var(--text-secondary);
+  color: var(--text);
+}
+
+.setup__pill-btn {
+  padding:       6px 14px;
+  border:        none;
+  border-radius: var(--radius-sm);
+  background:    var(--primary);
+  color:         #fff;
+  font-size:     0.78rem;
+  font-weight:   600;
+  cursor:        pointer;
+  min-height:    36px;
+  white-space:   nowrap;
+  flex-shrink:   0;
+  display:       inline-flex;
+  align-items:   center;
+  gap:           6px;
+  transition:    opacity 0.15s ease, background 0.15s ease;
+}
+.setup__pill-btn:hover { opacity: 0.9; }
+
+.setup__pill-btn--secondary {
+  background: var(--primary-light);
+  color:      var(--primary);
+}
+
+.setup__pill-btn--danger {
+  background: color-mix(in srgb, var(--state-out) 10%, white);
+  color:      var(--state-out);
+}
+
+.setup__label--checkbox {
+  flex-direction: row !important;
+  align-items:    center !important;
+  gap:            8px !important;
+  font-size:      0.82rem !important;
+  font-weight:    500 !important;
+  color:          var(--text) !important;
+  cursor:         pointer;
+}
+
+.setup__checkbox {
+  width:  18px;
+  height: 18px;
+  accent-color: var(--primary);
+  cursor: pointer;
+  flex-shrink: 0;
 }
