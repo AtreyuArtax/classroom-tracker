@@ -83,6 +83,12 @@
             :icon="Toilet"
             :color="washroomCount > 3 ? 'warning' : 'neutral'"
           />
+          <StudentStatCard 
+            label="Redirect" 
+            :value="redirectCount"
+            :icon="AlertTriangle"
+            :color="redirectCount >= 3 ? 'danger' : redirectCount >= 1 ? 'warning' : 'neutral'"
+          />
         </div>
 
         <!-- Trends Section (Side-by-Side) -->
@@ -1101,6 +1107,10 @@ const washroomCount = computed(() => {
   return filteredEvents.value.filter(e => e.code === 'w').length
 })
 
+const redirectCount = computed(() => {
+  return filteredEvents.value.filter(e => e.category === 'redirect').length
+})
+
 const coachingInsight = computed(() => {
   const grade = overallGrade.value
   const absences = attendanceStats.value.absences
@@ -1545,8 +1555,14 @@ onMounted(loadData)
 
 .student-360__stats-grid {
   display:               grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap:                   16px;
+  grid-template-columns: repeat(5, 1fr);
+  gap:                   12px;
+}
+
+@media (max-width: 800px) {
+  .student-360__stats-grid {
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  }
 }
 
 .student-360__period-toggle {

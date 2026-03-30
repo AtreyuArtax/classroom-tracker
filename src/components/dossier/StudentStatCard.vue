@@ -2,7 +2,7 @@
   <div class="stat-card" :class="[`stat-card--${color}`]">
     <div class="stat-card__icon-wrapper">
       <slot name="icon">
-        <component :is="icon" v-if="icon" :size="20" />
+        <component :is="icon" v-if="icon" :size="16" />
       </slot>
     </div>
     
@@ -60,13 +60,13 @@ const trendClass = computed(() => {
 .stat-card {
   display:       flex;
   align-items:   center;
-  gap:           12px;
-  padding:       12px 16px;
+  gap:           8px;
+  padding:       10px;
   background:    var(--surface);
   border:        1px solid var(--border);
   border-radius: var(--radius-lg);
   transition:    transform 0.2s ease, box-shadow 0.2s ease;
-  min-width:     140px;
+  min-width:     120px;
 }
 
 .stat-card:hover {
@@ -78,8 +78,8 @@ const trendClass = computed(() => {
   display:         flex;
   align-items:     center;
   justify-content: center;
-  width:           40px;
-  height:          40px;
+  width:           32px;
+  height:          32px;
   border-radius:   var(--radius-md);
   flex-shrink:     0;
 }
@@ -128,7 +128,7 @@ const trendClass = computed(() => {
 .stat-card__stats-row {
   display: flex;
   align-items: flex-start;
-  gap: 16px;
+  gap: 12px;
 }
 
 .stat-card__stat-col {
@@ -138,12 +138,12 @@ const trendClass = computed(() => {
 }
 
 .stat-card__stat-col--secondary {
-  padding-left: 16px;
+  padding-left: 12px;
   border-left: 1px solid var(--border);
 }
 
 .stat-card__content--dual {
-  min-width: 200px;
+  min-width: 160px;
 }
 
 .stat-card__trend--up { color: var(--state-safe); }

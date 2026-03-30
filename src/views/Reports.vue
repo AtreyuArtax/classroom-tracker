@@ -176,24 +176,9 @@
                     <h3 class="reports__card-title"><Activity :size="18" /> Behavior</h3>
                   </div>
                   <div class="reports__card-grid">
-                    <div class="reports__metric reports__metric--top-code">
-                      <span class="reports__metric-label">Most Common</span>
-                      <div v-if="aggregates.behavior.topCode" class="reports__top-code">
-                        <component :is="resolveIcon(aggregates.behavior.topCode.icon)" :size="28" class="reports__top-code-icon" />
-                        <div class="reports__top-code-info">
-                          <span class="reports__top-code-label">{{ aggregates.behavior.topCode.label }}</span>
-                          <span class="reports__top-code-count">{{ aggregates.behavior.topCode.count }} logs</span>
-                        </div>
-                      </div>
-                      <span v-else class="reports__metric-value">—</span>
-                    </div>
                     <div class="reports__metric">
                       <span class="reports__metric-label">Redirect/Device</span>
                       <span class="reports__metric-value">{{ aggregates.behavior.totalRedirects }}</span>
-                    </div>
-                    <div class="reports__metric">
-                      <span class="reports__metric-label">Parent Contacts</span>
-                      <span class="reports__metric-value">{{ aggregates.behavior.totalParentContacts }}</span>
                     </div>
                   </div>
                   <div v-if="aggregates.behavior.redirectAlerts.length" class="reports__card-section">
@@ -911,12 +896,8 @@ async function runReport() {
         }))
     }
 
-    // --- Process Behavior ---
-    const behaviorEvents = events.filter(e => {
-      const isAttendance = e.category === 'attendance' || e.category === 'absence' || e.category === 'late'
-      const isWashroom = e.category === 'washroom' || washCodes.includes(e.code)
-      return !isAttendance && !isWashroom
-    })
+    // --- Process Behavior (Redirect/Device entries only) ---
+    const behaviorEvents = events.filter(e => e.category === 'redirect')
     const codeCounts = {}
     behaviorEvents.forEach(e => {
       codeCounts[e.code] = (codeCounts[e.code] ?? 0) + 1
