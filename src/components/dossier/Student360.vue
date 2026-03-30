@@ -41,13 +41,13 @@
         <!-- Period Toggle -->
         <div class="student-360__period-toggle">
           <button 
-            v-for="p in ['week', 'month', 'all']" 
+            v-for="p in ['week', 'last_week', 'month', 'all']" 
             :key="p"
             class="period-btn"
             :class="{ 'period-btn--active': selectedPeriod === p }"
             @click="selectedPeriod = p"
           >
-            {{ p.charAt(0).toUpperCase() + p.slice(1) }}
+            {{ p === 'last_week' ? 'Last Week' : p.charAt(0).toUpperCase() + p.slice(1) }}
           </button>
         </div>
 
@@ -321,7 +321,13 @@
         </div>
 
         <div v-if="showAbsenceForm" class="absence-form">
-          <input type="date" v-model="absenceDate" class="absence-input" />
+          <div class="absence-form-inputs">
+            <input type="date" v-model="absenceDate" class="absence-input" />
+            <label class="absence-checkbox-label">
+              <input type="checkbox" v-model="absenceIsTestDay" />
+              Test/Assessment Day
+            </label>
+          </div>
           <div class="absence-actions">
             <button class="btn-primary" @click="logAbsence">Save</button>
             <button class="btn-ghost" @click="showAbsenceForm = false">Cancel</button>
@@ -767,7 +773,7 @@ import {
   deleteAssessment,
   saveStudentGradebookNote
 } from '../../composables/useGradebook.js'
-import { getDateBoundary } from '../../db/eventService.js'
+import { getDateRangeForPeriod } from '../../db/eventService.js'
 
 const props = defineProps({
   studentId: { type: String, required: true },
@@ -912,16 +918,21 @@ async function triggerPrint() {
 const activeTab = ref('summary')
 const selectedPeriod = ref('month')
 
-// Filtered data based on period
 const filteredEvents = computed(() => {
-  const boundary = getDateBoundary(selectedPeriod.value)
-  if (!boundary) return events.value
-  return events.value.filter(e => e.timestamp >= boundary)
+  const range = getDateRangeForPeriod(selectedPeriod.value)
+  if (!range || (!range.from && !range.to)) return events.value
+  
+  return events.value.filter(e => {
+    if (range.from && e.timestamp < range.from) return false;
+    if (range.to && e.timestamp > range.to + 'T23:59:59') return false;
+    return true;
+  })
 })
 
 // Past Absence Logic
 const showAbsenceForm = ref(false)
 const absenceDate = ref(new Date().toISOString().split('T')[0])
+const absenceIsTestDay = ref(false)
 
 async function logAbsence() {
   if (!absenceDate.value) return
@@ -941,10 +952,12 @@ async function logAbsence() {
   try {
     // Call updated logStandardEvent with timestamp option
     await logStandardEvent(props.studentId, 'a', 'Past Absence Logged', { 
-      timestamp: new Date(absenceDate.value + 'T12:00:00Z').toISOString() 
+      timestamp: new Date(absenceDate.value + 'T12:00:00Z').toISOString(),
+      testDay: absenceIsTestDay.value
     })
     showAbsenceForm.value = false
     absenceDate.value = new Date().toISOString().split('T')[0] // Reset to today
+    absenceIsTestDay.value = false // Reset checkbox
   } catch (err) {
     console.error('Failed to log absence:', err)
     alert('Failed to log absence. Please try again.')
@@ -2710,5 +2723,28 @@ onMounted(loadData)
   min-width: 80px;
   text-align: center;
   box-shadow: var(--shadow-sm);
+}
+
+.absence-form-inputs {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.absence-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.absence-checkbox-label input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--primary);
+  cursor: pointer;
 }
 </style>

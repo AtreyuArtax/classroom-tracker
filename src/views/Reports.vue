@@ -21,11 +21,6 @@
 
         <!-- ── NEW UNIFIED STUDENT 360 DOSSIER ────────────────────────── -->
         <template v-else-if="rightMode === 'dossier' && dossier.selectedStudentId.value">
-          <div class="reports__student-header">
-            <button class="reports__btn-ghost reports__btn-ghost--sm" @click="openPastAbsencePanel">
-              <Calendar :size="14" /> Log Past Absence
-            </button>
-          </div>
           <Student360 
             :student-id="dossier.selectedStudentId.value" 
             :class-id="sidebarClassId"
@@ -237,52 +232,6 @@
       </main>
     </div>
 
-    <!-- Add Past Absence Modal -->
-    <div v-if="showPastAbsencePanel" class="reports__modal-overlay" @click.self="closePastAbsencePanel">
-      <div class="reports__modal reports__modal--small">
-        <header class="reports__modal-header">
-          <div class="header-content">
-            <Calendar :size="24" class="header-icon" />
-            <div>
-              <h3 class="header-title">Log Past Absence</h3>
-              <p class="header-subtitle">Adding 1 record for {{ dossierStudentName }}</p>
-            </div>
-          </div>
-          <button class="header-close" @click="closePastAbsencePanel">
-            <X :size="20" />
-          </button>
-        </header>
-
-        <div class="reports__modal-body" style="gap: 16px;">
-          <div class="reports__input-group">
-            <label class="reports__label" style="display: block; margin-bottom: 8px; font-weight: 600;">Date of Absence</label>
-            <input 
-              v-model="pastAbsenceDate" 
-              type="date" 
-              class="reports__input" 
-              :max="pastAbsenceMaxDate"
-              style="width: 100%;"
-            />
-          </div>
-
-          <label class="reports__checkbox-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-            <input type="checkbox" v-model="pastAbsenceTestDay" style="width: 18px; height: 18px;" />
-            <span>Was this a test/assessment day?</span>
-          </label>
-
-          <div v-if="pastAbsenceError" class="reports__error-alert" style="padding: 10px; background: #fff5f5; border-left: 4px solid #f87171; color: #b91c1c; font-size: 0.85rem;">
-            {{ pastAbsenceError }}
-          </div>
-        </div>
-
-        <footer class="reports__modal-footer">
-          <button class="reports__btn-ghost" @click="closePastAbsencePanel">Cancel</button>
-          <button class="reports__btn-primary" @click="submitPastAbsence" :disabled="!pastAbsenceDate">
-            Log Absence
-          </button>
-        </footer>
-      </div>
-    </div>
 
     <!-- Batch Print Configuration Modal -->
     <div v-if="showPrintModal" class="reports__modal-overlay" @click.self="showPrintModal = false">
@@ -464,6 +413,7 @@ const dossier = useStudentDossier()
 // Period toggle options
 const PERIODS = [
   { label: 'This Week',     value: 'week'     },
+  { label: 'Last Week',     value: 'last_week'},
   { label: 'This Month',    value: 'month'    },
   { label: 'This Semester', value: 'semester' },
   { label: 'All Time',      value: 'all'      },
@@ -552,6 +502,7 @@ function onSidebarClassChange() {
 const selectedPeriod = ref('week')
 const PERIOD_OPTIONS = [
   { label: 'This Week', value: 'week' },
+  { label: 'Last Week', value: 'last_week' },
   { label: 'This Month', value: 'month' },
   { label: 'This Semester', value: 'semester' },
 ]
@@ -805,9 +756,8 @@ async function runReport() {
   if (!sidebarClassId.value) return
   loading.value = true
   try {
-    const from = eventService.getDateBoundary(selectedPeriod.value)
-    const dr = { from }
-    const events = await eventService.getEventsByClass(sidebarClassId.value, dr)
+    const dr = eventService.getDateRangeForPeriod(selectedPeriod.value)
+    const events = await eventService.getEventsByClass(sidebarClassId.value, Object.keys(dr).length ? dr : undefined)
     reportData.value = events
 
     // Fetch Academic Grades
@@ -956,67 +906,6 @@ const behaviorCodesMap = computed(() =>
   Object.fromEntries(behaviorCodes.value.map(c => [c.codeKey, c]))
 )
 
-// ─── past absence logging ─────────────────────────────────────────────────────
-
-const showPastAbsencePanel = ref(false)
-const pastAbsenceDate = ref('')
-const pastAbsenceTestDay = ref(false)
-const pastAbsenceMaxDate = ref('')
-const pastAbsenceError = ref('')
-
-function openPastAbsencePanel() {
-  const d = new Date()
-  pastAbsenceMaxDate.value = d.toISOString().slice(0, 10)
-  d.setDate(d.getDate() - 1)
-  pastAbsenceDate.value = d.toISOString().slice(0, 10)
-  pastAbsenceTestDay.value = false
-  pastAbsenceError.value = ''
-  showPastAbsencePanel.value = true
-}
-
-function closePastAbsencePanel() {
-  showPastAbsencePanel.value = false
-  pastAbsenceError.value = ''
-}
-
-async function submitPastAbsence() {
-  if (!pastAbsenceDate.value) return
-  const selectedDateStr = pastAbsenceDate.value
-  
-  const isAlreadyAbsent = dossier.events.value.some(e => {
-    if (e.code !== 'a' || !e.timestamp) return false
-    const parseStr = e.timestamp.includes('Z') || e.timestamp.match(/[+-]\d{2}:\d{2}$/) ? e.timestamp : e.timestamp + 'Z'
-    const evDate = new Date(parseStr)
-    const evLocalStr = evDate.getFullYear() + '-' + String(evDate.getMonth() + 1).padStart(2, '0') + '-' + String(evDate.getDate()).padStart(2, '0')
-    return evLocalStr === selectedDateStr
-  })
-  
-  if (isAlreadyAbsent) {
-    pastAbsenceError.value = 'Already marked absent on this date'
-    return
-  }
-  
-  try {
-    const timestampStr = `${selectedDateStr}T09:00:00`
-    const localDateObj = new Date(timestampStr)
-    
-    await eventService.logEvent({
-      studentId: dossier.selectedStudentId.value,
-      classId: dossier.selectedClassId.value,
-      code: 'a',
-      testDay: pastAbsenceTestDay.value,
-      _overrideTimestamp: localDateObj.toISOString(),
-      duration: null,
-      note: null,
-      supersededAbsent: false
-    })
-    
-    await dossier.loadStudent(dossier.selectedClassId.value, dossier.selectedStudentId.value)
-    closePastAbsencePanel()
-  } catch (err) {
-    pastAbsenceError.value = 'Error: ' + err.message
-  }
-}
 
 const showExportMenu = ref(false)
 const exportContainer = ref(null)

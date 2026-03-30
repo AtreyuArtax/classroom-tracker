@@ -19,7 +19,7 @@
 import { ref, computed, watch } from 'vue'
 import * as classService from '../db/classService.js'
 import * as eventService from '../db/eventService.js'
-import { getDateBoundary } from '../db/eventService.js'
+import { getDateRangeForPeriod } from '../db/eventService.js'
 import { useClassroom } from './useClassroom.js'
 
 export function useStudentDossier() {

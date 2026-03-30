@@ -375,31 +375,53 @@ export async function importAllData(backupObj) {
 }
 
 /**
- * Returns an ISO string representing the start of the given reporting period,
- * or null for 'all time'. Used by useStudentDossier to build { from } date ranges.
+ * Returns a date range object representing the start and end of the given reporting period.
+ * Used by UI components to build { from, to } date filters.
  *
- * @param {'week'|'month'|'semester'|'all'} period
- * @returns {string|null}
+ * @param {'week'|'last_week'|'month'|'semester'|'all'} period
+ * @returns {{ from?: string, to?: string }}
  */
-export function getDateBoundary(period) {
+export function getDateRangeForPeriod(period) {
     const now = new Date()
-    if (period === 'all') return null
+    if (period === 'all') return {}
+
+    // Helper to get local YYYY-MM-DD
+    const formatYMD = (d) => {
+        const offset = d.getTimezoneOffset()
+        const local = new Date(d.getTime() - (offset * 60 * 1000))
+        return local.toISOString().split('T')[0]
+    }
+
+    const getMonday = (d) => {
+        const date = new Date(d);
+        const day = date.getDay();
+        const diff = date.getDate() - day + (day === 0 ? -6 : 1);
+        date.setDate(diff);
+        return date;
+    }
+
     if (period === 'week') {
-        const d = new Date(now)
-        d.setDate(d.getDate() - 7)
-        return d.toISOString()
+        return { from: formatYMD(getMonday(now)) }
+    }
+    if (period === 'last_week') {
+        const thisMonday = getMonday(now);
+        const lastMonday = new Date(thisMonday);
+        lastMonday.setDate(lastMonday.getDate() - 7);
+        const lastSunday = new Date(thisMonday);
+        lastSunday.setDate(lastSunday.getDate() - 1);
+        return { from: formatYMD(lastMonday), to: formatYMD(lastSunday) }
     }
     if (period === 'month') {
         const d = new Date(now)
         d.setMonth(d.getMonth() - 1)
-        return d.toISOString()
+        return { from: formatYMD(d) }
     }
     if (period === 'semester') {
         const d = new Date(now)
         d.setMonth(d.getMonth() - 5)
-        return d.toISOString()
+        return { from: formatYMD(d) }
     }
-    return null
+    return {}
 }
 
 /**
