@@ -21,6 +21,11 @@
 
         <!-- ── NEW UNIFIED STUDENT 360 DOSSIER ────────────────────────── -->
         <template v-else-if="rightMode === 'dossier' && dossier.selectedStudentId.value">
+          <div class="reports__student-header">
+            <button class="reports__btn-ghost reports__btn-ghost--sm" @click="openPastAbsencePanel">
+              <Calendar :size="14" /> Log Past Absence
+            </button>
+          </div>
           <Student360 
             :student-id="dossier.selectedStudentId.value" 
             :class-id="sidebarClassId"
@@ -225,7 +230,7 @@
                   <div class="reports__card-header">
                     <h3 class="reports__card-title"><ClipboardList :size="18" /> Recent Classroom Logs</h3>
                   </div>
-                  <div class="reports__card-body" style="padding: 0;">
+                  <div class="reports__card-section">
                     <ul v-if="recentNotes.length" class="reports__note-list">
                       <li v-for="note in recentNotes" :key="note.eventId" class="reports__note-item">
                         <div class="reports__note-meta">
@@ -240,27 +245,58 @@
                     </div>
                   </div>
                 </div>
-
-                <!-- Data Management & Export -->
-                <div class="reports__dashboard-card">
-                  <div class="reports__card-header">
-                    <h3 class="reports__card-title"><Database :size="18" /> Data & Export</h3>
-                  </div>
-                  <div class="reports__card-body" style="padding: 16px; display: flex; flex-direction: column; gap: 12px;">
-                    <p class="reports__hint" style="font-size: 0.85rem; color: var(--text-secondary); margin: 0;">
-                      Generate professional Excel documents for external use or offline analysis.
-                    </p>
-                    <button class="reports__btn-primary" @click="handleExportExcel" style="width: 100%; justify-content: center;">
-                       <Download :size="18" /> Export to Excel (.xlsx)
-                    </button>
-                    <!-- Backup/Restore buttons removed as per user request -->
-                  </div>
-                </div>
               </div>
             </template>
           </template>
 
       </main>
+    </div>
+
+    <!-- Add Past Absence Modal -->
+    <div v-if="showPastAbsencePanel" class="reports__modal-overlay" @click.self="closePastAbsencePanel">
+      <div class="reports__modal reports__modal--small">
+        <header class="reports__modal-header">
+          <div class="header-content">
+            <Calendar :size="24" class="header-icon" />
+            <div>
+              <h3 class="header-title">Log Past Absence</h3>
+              <p class="header-subtitle">Adding 1 record for {{ dossierStudentName }}</p>
+            </div>
+          </div>
+          <button class="header-close" @click="closePastAbsencePanel">
+            <X :size="20" />
+          </button>
+        </header>
+
+        <div class="reports__modal-body" style="gap: 16px;">
+          <div class="reports__input-group">
+            <label class="reports__label" style="display: block; margin-bottom: 8px; font-weight: 600;">Date of Absence</label>
+            <input 
+              v-model="pastAbsenceDate" 
+              type="date" 
+              class="reports__input" 
+              :max="pastAbsenceMaxDate"
+              style="width: 100%;"
+            />
+          </div>
+
+          <label class="reports__checkbox-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+            <input type="checkbox" v-model="pastAbsenceTestDay" style="width: 18px; height: 18px;" />
+            <span>Was this a test/assessment day?</span>
+          </label>
+
+          <div v-if="pastAbsenceError" class="reports__error-alert" style="padding: 10px; background: #fff5f5; border-left: 4px solid #f87171; color: #b91c1c; font-size: 0.85rem;">
+            {{ pastAbsenceError }}
+          </div>
+        </div>
+
+        <footer class="reports__modal-footer">
+          <button class="reports__btn-ghost" @click="closePastAbsencePanel">Cancel</button>
+          <button class="reports__btn-primary" @click="submitPastAbsence" :disabled="!pastAbsenceDate">
+            Log Absence
+          </button>
+        </footer>
+      </div>
     </div>
 
     <!-- Batch Print Configuration Modal -->
@@ -382,7 +418,7 @@ import { ref, reactive, computed, watch, defineComponent, h, onMounted, onUnmoun
 import { 
   BarChart2, Download, Trash2, PlusCircle, ChevronLeft, 
   LayoutDashboard, Database, UserCheck, Toilet, Activity, 
-  FolderOpen, GraduationCap, Printer, X, ClipboardList
+  FolderOpen, GraduationCap, Printer, X, ClipboardList, Calendar
 } from 'lucide-vue-next'
 import { resolveIcon }         from '../utils/icons.js'
 import { useClassroom }        from '../composables/useClassroom.js'
@@ -574,66 +610,6 @@ import { loadGradebook, activeClassRecord, assessments, gradeMap } from '../comp
 
 const { teacherName } = useClassroom()
 
-async function handleExportExcel() {
-  console.log('Exporting Excel...', { 
-    activeClass: activeClass.value, 
-    activeRecord: activeClassRecord.value,
-    classGrades: classGrades.value 
-  })
-
-  // Ensure we have a class selected
-  if (!activeClass.value) {
-    console.warn('Export failed: no active class.')
-    return
-  }
-
-  // Ensure gradebook data is loaded for this class
-  if (!activeClassRecord.value || activeClassRecord.value.classId !== activeClass.value.classId) {
-    console.log('Gradebook not loaded or class mismatch. Loading now...')
-    await loadGradebook(activeClass.value)
-  }
-  
-  // Ensure we have grades calculated (runReport might not have been called yet if view just opened)
-  if (!classGrades.value || Object.keys(classGrades.value).length === 0) {
-    console.log('Grades not calculated. Running report...')
-    await runReport()
-  }
-
-  try {
-    // Transform classGrades (map studentId -> summary) into an array for exportService
-    const summaryArray = Object.entries(classGrades.value).map(([studentId, summary]) => {
-      const student = activeClassRecord.value.students[studentId] || {}
-      
-      // Calculate attendance for this student from reportData (events)
-      const studentEvents = (reportData.value || []).filter(e => e.studentId === studentId && !e.superseded)
-      const absences = studentEvents.filter(e => e.code === 'a').length
-      const lates = studentEvents.filter(e => e.code === 'l').length
-
-      return {
-        ...summary,
-        studentId,
-        firstName: student.firstName || '',
-        lastName: student.lastName || '',
-        absences,
-        lates
-      }
-    })
-
-    await exportGradebookToExcel({
-      className: activeClass.value.name,
-      teacherName: teacherName.value,
-      students: sidebarStudents.value, // sidebarStudents is already a sorted array of { studentId, firstName, lastName }
-      assessments: assessments.value,
-      gradeMap: gradeMap.value,
-      summaryData: summaryArray
-    })
-    console.log('Export complete.')
-  } catch (err) {
-    console.error('Excel Export Error:', err)
-    alert('Failed to export Excel: ' + err.message)
-  }
-}
-
 async function triggerBatchPrint() {
   showPrintModal.value = false
   isSystemPrinting.value = true
@@ -772,7 +748,7 @@ const classGrades = ref({})
 const recentNotes = computed(() => {
   const studentsMap = reportStudents.value
   return reportData.value
-    .filter(e => e.note && e.code !== 'a' && e.code !== 'l' && e.code !== 'w' && !e.superseded)
+    .filter(e => e.note && e.code !== 'a' && e.code !== 'l' && e.code !== 'w' && e.code !== 'pc' && !e.superseded)
     .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
     .map(e => ({
       ...e,
@@ -1220,6 +1196,21 @@ const washroomChartOptions = {
   flex-direction: column;
   overflow:       hidden;
   background:     var(--bg-secondary);
+}
+
+.reports__student-header {
+  display: flex;
+  justify-content: flex-end;
+  padding: 10px 20px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  gap: 12px;
+}
+
+.reports__btn-ghost--sm {
+  padding: 6px 12px;
+  font-size: 0.8rem;
+  min-height: 32px;
 }
 
 /* ── Layout ──────────────────────────────────────────────────────── */

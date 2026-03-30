@@ -94,7 +94,7 @@ import QRScanner          from './components/QRScanner.vue'
 import YearSemesterSelector from './components/YearSemesterSelector.vue'
 import * as settingsService from './db/settingsService.js'
 import * as eventService from './db/eventService.js'
-import { hasUnsyncedChanges, getLastSyncedAt } from './db/eventService.js'
+import { hasUnsyncedChanges, getLastSyncedAt, isSyncActive } from './db/eventService.js'
 
 // Wrap external ref in computed to guarantee template unwrapping inside object literals
 const isUnsynced = computed(() => hasUnsyncedChanges.value)
@@ -141,8 +141,7 @@ watch(currentView, (newView) => {
 })
 
 async function checkSyncStatus() {
-  const settings = await settingsService.getSettings()
-  isSyncLinked.value = !!settings.backupFileHandle
+  isSyncLinked.value = await isSyncActive()
 }
 
 onMounted(async () => {

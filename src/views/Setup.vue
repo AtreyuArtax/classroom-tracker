@@ -561,22 +561,89 @@
         </div>
       </div>
 
-      <!-- Data Engine -->
-      <div class="setup__card">
-        <h2 class="setup__card-title">Data Engine</h2>
-        <div class="setup__grid-actions" style="margin-top: 0;">
-          <button class="setup__btn-primary" @click="doExport">Download Backup</button>
-          <button class="setup__btn-ghost" @click="linkBackupFile">Cloud Sync Link</button>
-        </div>
-        <button class="setup__btn-danger setup__btn--full" style="margin-top: 1rem;" @click="$refs.backupFileInput.click()">
-          Restore from Backup File
-        </button>
-        <input ref="backupFileInput" type="file" accept=".json" class="setup__file-input" @change="onBackupFileSelected" />
+      <!-- Data Engine (Moved to Data Tab) -->
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <!-- PILLAR 4: Data Management                                 -->
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <section v-else-if="activeTab === 'data'" class="setup__panel">
+      <div class="setup__panel-content">
         
-        <div v-if="restoreMsg" class="setup__msg" :class="{ 'setup__msg--error': restoreMsg.startsWith('❌') }" style="margin-top: 1rem; text-align: center;">
-          {{ restoreMsg }}
+        <!-- Excel Export -->
+        <div class="setup__card">
+          <h2 class="setup__card-title"><FileSpreadsheet :size="20" /> Excel Export</h2>
+          <p class="setup__hint">
+            Generate a professional Gradebook export for <strong>{{ activeClass?.name || 'the selected class' }}</strong>.
+          </p>
+          <button 
+            class="setup__btn-primary" 
+            :disabled="!activeClass"
+            @click="handleExportExcel"
+            style="display: flex; align-items: center; justify-content: center; gap: 8px;"
+          >
+            <Download :size="18" /> Export {{ activeClass?.name }} to Excel (.xlsx)
+          </button>
         </div>
+
+        <!-- Quick Sync (Local Folder) -->
+        <div class="setup__card">
+          <h2 class="setup__card-title"><RefreshCcw :size="20" /> Local Folder Sync</h2>
+          <p class="setup__hint">
+            Automate backups by linking a local folder (e.g., your OneDrive or Google Drive folder). 
+            The app will attempt to save a <code>quick-sync-backup.json</code> file after every major change.
+          </p>
+          
+          <div class="setup__sync-status">
+            <div v-if="isSyncLinked" class="setup__status-badge setup__status-badge--success">
+              <Cloud :size="14" /> Folder Linked
+            </div>
+            <div v-else class="setup__status-badge">
+              <X :size="14" /> No Folder Linked
+            </div>
+          </div>
+
+          <div class="setup__grid-actions" style="margin-top: 0;">
+            <button class="setup__btn-primary" @click="linkBackupFile">
+              {{ isSyncLinked ? 'Change Sync Folder' : 'Setup Sync Folder' }}
+            </button>
+            <button 
+              class="setup__btn-ghost" 
+              :disabled="!isSyncLinked" 
+              @click="onQuickSyncNow"
+            >
+              Sync Now
+            </button>
+          </div>
         </div>
+
+        <!-- Manual Backup & Restore -->
+        <div class="setup__card">
+          <h2 class="setup__card-title"><DatabaseIcon :size="20" /> Manual Backup & Restore</h2>
+          <p class="setup__hint">
+            Download a full snapshot of your database (all classes, students, and events) as a JSON file.
+          </p>
+          <div class="setup__grid-actions" style="margin-top: 0;">
+            <button class="setup__btn-primary" @click="doExport">Download JSON Backup</button>
+            <button class="setup__btn-ghost" @click="$refs.backupFileInput.click()">Restore from File</button>
+          </div>
+          <input ref="backupFileInput" type="file" accept=".json" class="setup__file-input" @change="onBackupFileSelected" />
+          
+          <div v-if="restoreMsg" class="setup__msg" :class="{ 'setup__msg--error': restoreMsg.startsWith('❌') }" style="margin-top: 1rem; text-align: center;">
+            {{ restoreMsg }}
+          </div>
+        </div>
+
+        <!-- Maintenance / Danger Zone -->
+        <div class="setup__card setup__card--danger">
+          <h2 class="setup__card-title"><AlertTriangle :size="20" /> Danger Zone</h2>
+          <p class="setup__hint">Actions that can permanently delete data.</p>
+          <button class="setup__btn-danger" @click="onClearAllData">
+            Clear All Application Data
+          </button>
+        </div>
+
       </div>
     </section>
 
@@ -668,12 +735,14 @@
  * reloadBehaviorCodes() to keep the reactive ref in sync.
  */
 
-import { ref, reactive, computed, watch, onMounted, nextTick } from 'vue'
+import { ref, reactive, computed, watch, onMounted, nextTick, onUnmounted } from 'vue'
 import Papa from 'papaparse'
-import { Archive, ChevronDown, ChevronUp, FolderOpen, Trash2, FileText, Pencil, Download, Database, Cloud, Settings2, Plus, X, Save, FileUp, FileDown, GraduationCap, ArrowLeft, Zap, LayoutDashboard, Settings, QrCode, Printer } from 'lucide-vue-next'
+import { Archive, ChevronDown, ChevronUp, FolderOpen, Trash2, FileText, Pencil, Download, Database, Cloud, Settings2, Plus, X, Save, FileUp, FileDown, GraduationCap, ArrowLeft, Zap, LayoutDashboard, Settings, QrCode, Printer, RefreshCcw, FileSpreadsheet, DatabaseIcon, AlertTriangle } from 'lucide-vue-next'
 import QRCode from 'qrcode'
+import { exportGradebookToExcel } from '../db/exportService.js'
 import { resolveIcon } from '../utils/icons.js'
 import { useClassroom } from '../composables/useClassroom.js'
+import { hasUnsyncedChanges, isSyncActive, getLastSyncedAt } from '../db/eventService.js'
 import * as eventService from '../db/eventService.js'
 import * as settingsService from '../db/settingsService.js'
 import * as classService from '../db/classService.js'
@@ -786,7 +855,7 @@ onMounted(async () => {
     academicTerms.value = terms
     globalMilestones.value = ms
     templates.value = tpls
-    isSyncLinked.value = !!settings.backupFileHandle
+    isSyncLinked.value = await isSyncActive()
 
     // Set smart defaults for the term dropdown based on active header session
     if (selectedYear.value && selectedSemester.value) {
@@ -913,6 +982,7 @@ const setupTabs = [
   { id: 'manage', label: 'Class Manager',  icon: LayoutDashboard },
   { id: 'active', label: 'Class Settings', icon: Zap },
   { id: 'app',    label: 'App Settings',   icon: Settings },
+  { id: 'data',   label: 'Data',           icon: Database },
 ]
 
 // Fallback for props.tab mapping if coming from old links
@@ -1713,6 +1783,94 @@ async function doImport() {
   } catch (err) {
     importPreview.value = null
     restoreMsg.value = `❌ Restore failed: ${err.message}`
+  }
+}
+
+async function onLinkSyncFolder() {
+  await linkBackupFile()
+}
+
+async function onQuickSyncNow() {
+  await manualQuickSync()
+}
+
+async function onClearAllData() {
+  if (!window.confirm('WARNING: This will permanently delete ALL classes, students, and events from this device. Are you absolutely sure?')) return
+  if (!window.confirm('FINAL CONFIRMATION: You are about to erase the entire database. This cannot be undone unless you have a backup file. Proceed?')) return
+  
+  try {
+    await classService.clearAllData()
+    window.location.reload()
+  } catch (err) {
+    alert('Failed to clear data: ' + err.message)
+  }
+}
+
+async function handleExportExcel() {
+  if (!activeClass.value) return
+  
+  try {
+    // 1. Ensure we have the gradebook loaded for this class
+    const record = await classService.getClass(activeClass.value.classId)
+    if (!record) throw new Error('No class data found for this class.')
+    
+    // 2. Fetch all events for this class (no date filter for the "Master Export")
+    const events = await eventService.getEventsByClass(activeClass.value.classId)
+    
+    // 3. Calculate grades (the aggregate data)
+    const classGrades = await gradebookService.calculateClassGrades(activeClass.value)
+    
+    // 4. Get the student list (sorted)
+    const roster = Object.values(record.students || {}).sort((a, b) => 
+      a.lastName.localeCompare(b.lastName) || a.firstName.localeCompare(b.firstName)
+    )
+
+    // 5. Get assessments & grade map from DB
+    const assessments = await gradebookService.getAssessmentsByClass(activeClass.value.classId)
+    const rawGrades = await gradebookService.getGradesByClass(activeClass.value.classId)
+    
+    // 6. Format gradeMap as { [assessmentId]: { [studentId]: score } } for exportService
+    const gradeMap = {}
+    rawGrades.forEach(g => {
+      if (!gradeMap[g.assessmentId]) gradeMap[g.assessmentId] = {}
+      
+      // Calculate a flat score for the excel grid sheet (Step 11 refinement)
+      const earned = gradebookService.resolveAttemptScore(g.attempts, 'highest') 
+      gradeMap[g.assessmentId][g.studentId] = {
+        ...g,
+        score: earned
+      }
+    })
+
+    // 7. Transform classGrades into the summary array required by exportService
+    const summaryArray = Object.entries(classGrades).map(([studentId, summary]) => {
+      const student = record.students[studentId] || {}
+      const studentEvents = events.filter(e => e.studentId === studentId && !e.superseded)
+      const absences = studentEvents.filter(e => e.code === 'a').length
+      const lates = studentEvents.filter(e => e.code === 'l').length
+
+      return {
+        ...summary,
+        studentId,
+        firstName: student.firstName || '',
+        lastName: student.lastName || '',
+        absences,
+        lates
+      }
+    })
+
+    // 8. Run the export
+    await exportGradebookToExcel({
+      className: activeClass.value.name,
+      teacherName: teacherName.value,
+      students: roster,
+      assessments,
+      gradeMap,
+      summaryData: summaryArray
+    })
+  } catch (err) {
+    console.error('Excel Export Error:', err)
+    alert('Failed to export Excel: ' + err.message)
   }
 }
 

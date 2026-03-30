@@ -259,7 +259,13 @@ export async function quickSyncBackup() {
         const json = JSON.stringify(data, null, 2)
 
         if (typeof handle.createWritable !== 'function') {
-            console.warn('Backup handle is invalid or stale (not a FileSystemHandle).')
+            console.warn('Backup handle is invalid or stale (not a FileSystemHandle). Clearing from settings.')
+            // Clear the stale handle so the UI can reflect the disconnected state
+            const freshSettings = await db.get('settings', 'singleton')
+            if (freshSettings) {
+                delete freshSettings.backupFileHandle
+                await db.put('settings', freshSettings, 'singleton')
+            }
             return false
         }
 
@@ -398,13 +404,20 @@ export function getDateBoundary(period) {
 
 /**
  * Returns the ISO timestamp of the last successful quick sync, or null.
- * Used by App.vue on mount to initialize the sync status indicator correctly
- * so it doesn't falsely show "needs sync" after a page reload.
- *
- * @returns {Promise<string|null>}
  */
 export async function getLastSyncedAt() {
     const db = await getDB()
     const settings = await db.get('settings', 'singleton')
     return settings?.lastSyncedAt ?? null
+}
+
+/**
+ * Returns true if the backup handle in settings is a live, valid FileSystemHandle.
+ * Used by Setup.vue to determine if the "Folder Linked" status is truly active.
+ */
+export async function isSyncActive() {
+    const db = await getDB()
+    const settings = await db.get('settings', 'singleton')
+    const handle = settings?.backupFileHandle
+    return !!(handle && typeof handle.createWritable === 'function')
 }

@@ -21,7 +21,7 @@
           ref="textareaRef"
           v-model="noteText"
           class="enm-textarea"
-          placeholder="e.g., Away next week, Laptop borrowed, Needs extra time..."
+          :placeholder="placeholderText"
           rows="4"
           @keydown.esc.prevent="onCancel"
         ></textarea>
@@ -63,6 +63,14 @@ const emit = defineEmits(['update:modelValue', 'save', 'cancel'])
 
 const noteText   = ref('')
 const textareaRef = ref(null)
+
+const placeholderText = computed(() => {
+  // 'pc' is the code for Parent Contact
+  if (props.behaviorCode?.codeKey === 'pc') {
+    return "e.g., Discussed attendance, Sent email about project, Phone call regarding behavior..."
+  }
+  return "e.g., Away next week, Laptop borrowed, Needs extra time..."
+})
 
 // Autofocus + clear text each time the modal opens
 watch(() => props.modelValue, async (open) => {
