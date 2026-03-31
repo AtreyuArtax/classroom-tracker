@@ -101,12 +101,26 @@ export async function deleteAssessment(assessmentId) {
  * Usually called from within other transactional operations.
  */
 async function _getGradeInTransaction(tx, assessmentId, studentId, classId) {
-  const existing = await tx.objectStore('grades').index('by_assessmentAndStudent').get([assessmentId, studentId])
-  if (existing) return existing
+  // Normalize types: assessmentId should be Number, studentId should be String
+  const normAssessmentId = Number(assessmentId)
+  const normStudentId = String(studentId)
+
+  const existing = await tx.objectStore('grades').index('by_assessmentAndStudent').get([normAssessmentId, normStudentId])
+  
+  if (existing) {
+    // HEAL: If classId is missing or null, update it now.
+    // This fixes the "disappearing marks" bug where orphan records (classId: null) 
+    // are excluded from the class-view list.
+    if (!existing.classId && classId) {
+      existing.classId = classId
+      await tx.objectStore('grades').put(existing)
+    }
+    return existing
+  }
 
   const grade = {
-    assessmentId,
-    studentId,
+    assessmentId: normAssessmentId,
+    studentId: normStudentId,
     classId: classId || null, // classId is required for performance index
     missing: false,
     excluded: false,

@@ -4,7 +4,7 @@
  * Reactive bridge for the Gradebook V4 feature.
  */
 
-import { ref, computed } from 'vue'
+import { ref, computed, triggerRef } from 'vue'
 import * as gradebookService from '../db/gradebookService.js'
 import * as classService from '../db/classService.js'
 
@@ -313,10 +313,10 @@ export function enterGrade(assessmentId, studentId, pointsEarned, date = null, c
     return
   }
   
-  let grade = grades.value.find(g => g.assessmentId === assessmentId && g.studentId === studentId)
+  let grade = grades.value.find(g => Number(g.assessmentId) === Number(assessmentId) && String(g.studentId) === String(studentId))
   if (!grade) {
     grade = {
-      assessmentId, studentId, classId: activeClassRecord.value.classId,
+      assessmentId: Number(assessmentId), studentId: String(studentId), classId: activeClassRecord.value.classId,
       missing: false, excluded: false, attempts: []
     }
     grades.value.push(grade)
@@ -331,6 +331,7 @@ export function enterGrade(assessmentId, studentId, pointsEarned, date = null, c
   })
 
   // 1. Refresh UI instantly for this student
+  triggerRef(grades)
   refreshSingleStudent(studentId)
   
   // 2. Debounce IDB save
@@ -345,11 +346,12 @@ export function enterGrade(assessmentId, studentId, pointsEarned, date = null, c
 export function changeGrade(assessmentId, studentId, pointsEarned) {
   if (!activeClassRecord.value) return
   
-  const grade = grades.value.find(g => g.assessmentId === assessmentId && g.studentId === studentId)
+  const grade = grades.value.find(g => Number(g.assessmentId) === Number(assessmentId) && String(g.studentId) === String(studentId))
   if (grade && grade.attempts.length > 0) {
     grade.attempts[grade.attempts.length - 1].pointsEarned = pointsEarned
   }
   
+  triggerRef(grades)
   refreshSingleStudent(studentId)
   
   enqueueDBSave(`${assessmentId}_${studentId}_change`, () => 
@@ -363,11 +365,12 @@ export function changeGrade(assessmentId, studentId, pointsEarned) {
 export function removeAttempt(assessmentId, studentId, attemptId) {
   if (!activeClassRecord.value) return
   
-  const grade = grades.value.find(g => g.assessmentId === assessmentId && g.studentId === studentId)
+  const grade = grades.value.find(g => Number(g.assessmentId) === Number(assessmentId) && String(g.studentId) === String(studentId))
   if (grade) {
     grade.attempts = grade.attempts.filter(a => a.attemptId !== attemptId)
   }
   
+  triggerRef(grades)
   refreshSingleStudent(studentId)
   
   enqueueDBSave(`${assessmentId}_${studentId}_rem_${attemptId}`, () => 
@@ -381,11 +384,12 @@ export function removeAttempt(assessmentId, studentId, attemptId) {
 export function setPrimaryAttempt(assessmentId, studentId, attemptId) {
   if (!activeClassRecord.value) return
   
-  const grade = grades.value.find(g => g.assessmentId === assessmentId && g.studentId === studentId)
+  const grade = grades.value.find(g => Number(g.assessmentId) === Number(assessmentId) && String(g.studentId) === String(studentId))
   if (grade) {
     grade.attempts.forEach(a => a.isPrimary = (a.attemptId === attemptId))
   }
   
+  triggerRef(grades)
   refreshSingleStudent(studentId)
   
   enqueueDBSave(`${assessmentId}_${studentId}_prim`, () => 
@@ -399,8 +403,9 @@ export function setPrimaryAttempt(assessmentId, studentId, attemptId) {
 export function clearGrade(assessmentId, studentId) {
   if (!activeClassRecord.value) return
   
-  grades.value = grades.value.filter(g => !(g.assessmentId === assessmentId && g.studentId === studentId))
+  grades.value = grades.value.filter(g => !(Number(g.assessmentId) === Number(assessmentId) && String(g.studentId) === String(studentId)))
   
+  triggerRef(grades)
   refreshSingleStudent(studentId)
   
   enqueueDBSave(`${assessmentId}_${studentId}_clear`, () => 
@@ -414,13 +419,14 @@ export function clearGrade(assessmentId, studentId) {
 export function markMissing(assessmentId, studentId, missing) {
   if (!activeClassRecord.value) return
   
-  let grade = grades.value.find(g => g.assessmentId === assessmentId && g.studentId === studentId)
+  let grade = grades.value.find(g => Number(g.assessmentId) === Number(assessmentId) && String(g.studentId) === String(studentId))
   if (!grade) {
-    grade = { assessmentId, studentId, classId: activeClassRecord.value.classId, attempts: [] }
+    grade = { assessmentId: Number(assessmentId), studentId: String(studentId), classId: activeClassRecord.value.classId, attempts: [] }
     grades.value.push(grade)
   }
   grade.missing = missing
   
+  triggerRef(grades)
   refreshSingleStudent(studentId)
   
   enqueueDBSave(`${assessmentId}_${studentId}_miss`, () => 
@@ -434,13 +440,14 @@ export function markMissing(assessmentId, studentId, missing) {
 export function markExcluded(assessmentId, studentId, excluded) {
   if (!activeClassRecord.value) return
   
-  let grade = grades.value.find(g => g.assessmentId === assessmentId && g.studentId === studentId)
+  let grade = grades.value.find(g => Number(g.assessmentId) === Number(assessmentId) && String(g.studentId) === String(studentId))
   if (!grade) {
-    grade = { assessmentId, studentId, classId: activeClassRecord.value.classId, attempts: [] }
+    grade = { assessmentId: Number(assessmentId), studentId: String(studentId), classId: activeClassRecord.value.classId, attempts: [] }
     grades.value.push(grade)
   }
   grade.excluded = excluded
   
+  triggerRef(grades)
   refreshSingleStudent(studentId)
   
   enqueueDBSave(`${assessmentId}_${studentId}_exc`, () => 
