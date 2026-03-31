@@ -140,6 +140,7 @@ import {
   Activity
 } from 'lucide-vue-next'
 import { useClassroom } from '../../composables/useClassroom.js'
+import { toMinutes } from '../../db/eventService.js'
 
 const props = defineProps({
   studentId: { type: String, required: true },
@@ -180,16 +181,16 @@ const sortedItems = computed(() => {
       category = 'attendance'
       icon = UserMinus
       title = 'Absent'
-    } else if (e.code === 'l') {
       type = 'attendance'
       category = 'attendance'
       icon = Clock
-      title = `Late (${e.duration} min)`
+      const mins = toMinutes(e.duration).toFixed(1)
+      title = `Late (${mins} min)`
     } else if (e.code === 'w') {
       type = 'behavior'
       category = 'washroom'
-      const minutes = Math.round((e.duration || 0) / 60000)
-      title = `${code.label || 'Washroom'} (${minutes} min)`
+      const mins = toMinutes(e.duration).toFixed(1)
+      title = `${code.label || 'Washroom'} (${mins} min)`
     } else if (e.code === 'ac') {
       type = 'assessment'
       category = 'academics'
@@ -335,7 +336,7 @@ const groupedItems = computed(() => {
 
 function startEdit(item) {
     editingItem.value = item
-    editForm.duration = item.rawCode === 'w' ? Math.round((item.raw.duration || 0) / 60000) : (item.raw.duration || 0)
+    editForm.duration = toMinutes(item.raw.duration).toFixed(1)
     editForm.note = item.description || ''
 }
 
@@ -346,10 +347,9 @@ async function saveEdit() {
         note: editForm.note
     }
     
-    if (editingItem.value.rawCode === 'l') {
-        updates.duration = parseInt(editForm.duration)
-    } else if (editingItem.value.rawCode === 'w') {
-        updates.duration = parseInt(editForm.duration) * 60000 // Convert back to ms
+    if (editingItem.value.rawCode === 'l' || editingItem.value.rawCode === 'w') {
+        const mins = parseFloat(editForm.duration)
+        updates.duration = Math.round(mins * 60000) // Convert back to ms for storage
     }
     
     await editEvent(editingItem.value.id, updates)

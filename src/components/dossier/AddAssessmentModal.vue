@@ -42,6 +42,11 @@
             <label class="form-label">Name</label>
             <input v-model="newAssessment.name" class="form-input" placeholder="e.g. Unit 1 Test" required />
           </div>
+          
+          <div class="form-group">
+            <label class="form-label">Description (Optional)</label>
+            <textarea v-model="newAssessment.description" class="form-input" placeholder="Extra details about this assessment..." rows="2"></textarea>
+          </div>
 
           <div class="form-row">
             <div class="form-group">

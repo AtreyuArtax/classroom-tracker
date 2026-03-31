@@ -729,8 +729,9 @@ async function logAttendanceEvent(studentId, code) {
         const [h, m] = periodStart.split(':').map(Number)
         const start = new Date()
         start.setHours(h, m, 0, 0)
-        let minutesLate = Math.round((Date.now() - start.getTime()) / 60000)
-        if (minutesLate < 0) minutesLate = 0
+        let msLate = Math.round(Date.now() - start.getTime())
+        if (msLate < 0) msLate = 0
+        const minutesLate = Math.round(msLate / 60000)
 
         const wasAbsent = student.activeStates?.isAbsent === true
 
@@ -766,7 +767,7 @@ async function logAttendanceEvent(studentId, code) {
             studentId,
             classId,
             code,
-            duration: minutesLate,
+            duration: msLate,
             supersededAbsent: wasAbsent
         })
         student.lastEvent = { code, ts: Date.now() }
@@ -948,13 +949,13 @@ async function logToggleEvent(studentId, code) {
         // ── Toggle IN ────────────────────────────────────────────────────────────
         // CLAUDE.md §9 critical note: capture outTime BEFORE writing the IN event
         const originalOutTime = currentState.outTime
-        const duration = Math.round((Date.now() - new Date(originalOutTime).getTime()) / 60000)
+        const durationMs = Date.now() - new Date(originalOutTime).getTime()
 
         const eventId = await eventService.logEvent({
             studentId,
             classId,
             code,
-            duration,
+            duration: durationMs,
         })
 
         await classService.clearStudentActiveState(classId, studentId)

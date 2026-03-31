@@ -725,6 +725,16 @@
       :teacherName="teacherName"
       @close="isPrintListModalOpen = false"
     />
+
+    <!-- ── Super Confirm Modal ─── -->
+    <SuperConfirmModal
+      v-model="isSuperConfirmOpen"
+      :title="superConfirmConfig.title"
+      :message="superConfirmConfig.message"
+      :requireText="superConfirmConfig.requireText"
+      :danger="superConfirmConfig.danger"
+      @confirm="superConfirmConfig.onConfirm"
+    />
   </div>
 </template>
 
@@ -756,6 +766,7 @@ import * as classService from '../db/classService.js'
 import * as gradebookService from '../db/gradebookService.js'
 import { globalMilestones, refreshGrades } from '../composables/useGradebook.js'
 import PrintClassListModal from '../components/PrintClassListModal.vue'
+import SuperConfirmModal from '../components/SuperConfirmModal.vue'
 
 const {
   classList,
@@ -804,6 +815,16 @@ const isSystemPrinting = ref(false)
 // --- Print List State ---
 const isPrintListModalOpen = ref(false)
 const classToPrint = ref(null)
+
+// --- Super Confirm State ---
+const isSuperConfirmOpen = ref(false)
+const superConfirmConfig = reactive({
+  title: '',
+  message: '',
+  requireText: '',
+  danger: false,
+  onConfirm: null
+})
 
 // Watch for changes in isSystemPrinting to apply/remove print styles
 watch(isSystemPrinting, (newValue) => {
@@ -1822,15 +1843,19 @@ async function onQuickSyncNow() {
 }
 
 async function onClearAllData() {
-  if (!window.confirm('WARNING: This will permanently delete ALL classes, students, and events from this device. Are you absolutely sure?')) return
-  if (!window.confirm('FINAL CONFIRMATION: You are about to erase the entire database. This cannot be undone unless you have a backup file. Proceed?')) return
-  
-  try {
-    await classService.clearAllData()
-    window.location.reload()
-  } catch (err) {
-    alert('Failed to clear data: ' + err.message)
+  superConfirmConfig.title = 'Clear All Application Data'
+  superConfirmConfig.message = 'This will permanently delete ALL classes, students, and events from this device. THIS ACTION IS IRREVERSIBLE.'
+  superConfirmConfig.requireText = 'ERASE'
+  superConfirmConfig.danger = true
+  superConfirmConfig.onConfirm = async () => {
+    try {
+      await classService.clearAllData()
+      window.location.reload()
+    } catch (err) {
+      alert('Failed to clear data: ' + err.message)
+    }
   }
+  isSuperConfirmOpen.value = true
 }
 
 async function handleExportExcel() {

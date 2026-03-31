@@ -29,6 +29,7 @@ export const currentAssessmentId = ref(null)
 
 export const newAssessment = ref({
   name: '',
+  description: '',
   categoryId: '',
   assessmentType: 'product',
   unitId: null,
@@ -203,6 +204,7 @@ export function openAddAssessment(target = 'class', studentId = null) {
   
   newAssessment.value = {
     name: '',
+    description: '',
     categoryId: activeClassRecord.value?.gradebookCategories?.[0]?.categoryId || '',
     assessmentType: (target === 'individual') ? 'conversation' : 'product',
     unitId: activeClassRecord.value?.gradebookUnits?.[0]?.unitId || null,

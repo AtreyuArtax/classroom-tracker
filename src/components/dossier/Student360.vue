@@ -755,6 +755,7 @@ import StudentTrendGraph    from '../StudentTrendGraph.vue'
 import StudentGradeTrend    from './StudentGradeTrend.vue'
 import ProgressReport       from './ProgressReport.vue'
 import { useClassroom }  from '../../composables/useClassroom.js'
+import { toMinutes }     from '../../db/eventService.js'
 import { 
   classGrades, 
   assessments, 
@@ -851,8 +852,8 @@ function generateEmailLink() {
   
   if (emailConfig.value.content.missing) {
     const missing = [
-      ...classAssessments.value.filter(a => a.missing),
-      ...individualAssessments.value.filter(a => a.missing)
+      ...classAssessments.value.filter(a => (a.missing || a.score === null) && !a.excluded),
+      ...individualAssessments.value.filter(a => (a.missing || a.score === null) && !a.excluded)
     ]
     if (missing.length > 0) {
       body += `\nMissing Assessments:\n`
@@ -1153,10 +1154,7 @@ function computeAge(dob) {
   return age
 }
 
-const toMinutes = (d) => {
-  if (d === null || d === undefined) return 0
-  return d > 1000 ? Math.round(d / 60000) : Math.round(d)
-}
+
 
 const behaviorWeeklyTrend = computed(() => {
   if (!filteredEvents.value.length) return []
@@ -1197,21 +1195,21 @@ const attendanceAverages = computed(() => {
   
   const totalLateMins = filteredEvents.value
     .filter(e => e.code === 'l')
-    .reduce((acc, e) => acc + (e.duration || 0), 0)
+    .reduce((acc, e) => acc + toMinutes(e.duration), 0)
     
   const totalWashMins = filteredEvents.value
     .filter(e => e.code === 'w')
-    .reduce((acc, e) => acc + ((e.duration || 0) / 60000), 0)
+    .reduce((acc, e) => acc + toMinutes(e.duration), 0)
 
   return {
     absencesAvg: (totalAbs / weekCount).toFixed(1),
     latesAvg: (totalLates / weekCount).toFixed(1),
     washroomAvg: (totalWash / weekCount).toFixed(1),
-    latesTotal: totalLateMins,
-    washroomTotal: totalWashMins.toFixed(0),
+    latesTotal: totalLateMins.toFixed(1),
+    washroomTotal: totalWashMins.toFixed(1),
     washroomMinsAvg: (totalWashMins / weekCount).toFixed(1),
-    washroomAvgPerVisit: totalWash ? (totalWashMins / totalWash).toFixed(1) : 0,
-    latesAvgDuration: totalLates ? (totalLateMins / totalLates).toFixed(1) : 0
+    washroomAvgPerVisit: totalWash ? (totalWashMins / totalWash).toFixed(1) : '0.0',
+    latesAvgDuration: totalLates ? (totalLateMins / totalLates).toFixed(1) : '0.0'
   }
 })
 

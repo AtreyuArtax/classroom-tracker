@@ -31,6 +31,23 @@ import { ref } from 'vue'
 
 export const hasUnsyncedChanges = ref(false)
 
+// ─── duration normalization ──────────────────────────────────────────────────
+
+/**
+ * Resilient helper to convert a raw duration (ms or minutes) into a numeric minute value.
+ * Heuristic: if d > 1000, it's likely historical milliseconds.
+ * Returns a number rounded to the nearest 0.5.
+ *
+ * @param {number|null} d
+ * @returns {number}
+ */
+export function toMinutes(d) {
+    if (d === null || d === undefined) return 0
+    const mins = d > 1000 ? (d / 60000) : d
+    return Math.round(mins * 2) / 2
+}
+
+
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
 /**

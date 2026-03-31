@@ -159,7 +159,7 @@
                     <ul class="reports__list reports__list--alert">
                       <li v-for="t in aggregates.washroom.longTrips" :key="t.date">
                         <span>{{ t.name }} — {{ t.date }}</span>
-                        <span class="reports__list-count">{{ t.duration }}m</span>
+                        <span class="reports__list-count">{{ toMinutes(t.duration).toFixed(1) }}m</span>
                       </li>
                     </ul>
                   </div>
@@ -359,6 +359,7 @@ import { useClassroom }        from '../composables/useClassroom.js'
 import { useStudentDossier }   from '../composables/useStudentDossier.js'
 import { useUndo }             from '../composables/useUndo.js'
 import * as eventService       from '../db/eventService.js'
+import { toMinutes }          from '../db/eventService.js'
 import Student360            from '../components/dossier/Student360.vue'
 import StudentSidebar        from '../components/StudentSidebar.vue'
 import StudentTrendGraph       from '../components/StudentTrendGraph.vue'
@@ -591,11 +592,7 @@ function parseNote(note) {
 }
 
 // --- Duration Normalization Helper ---
-const toMinutes = (d) => {
-  if (d === null || d === undefined) return 0
-  // Heuristic: if duration > 1000, it's likely historical milliseconds
-  return d > 1000 ? Math.round(d / 60000) : Math.round(d)
-}
+
 
 /** Delete an event from the dossier (sync or note feed) */
 async function onDossierDelete(eventId) {
@@ -794,8 +791,8 @@ async function runReport() {
       weeks = Math.max(1, diffMs / (1000 * 60 * 60 * 24 * 7))
     }
 
-    const totalLateMs = lateEvents.reduce((acc, e) => acc + (e.duration || 0), 0)
-    const avgLateDuration = lates ? Math.round(totalLateMs / lates / 60000) : 0
+    const totalLateMins = lateEvents.reduce((acc, e) => acc + toMinutes(e.duration), 0)
+    const avgLateDuration = lates.length ? (totalLateMins / lates.length).toFixed(1) : '0.0'
     
     const absCounts = {}
     attEvents.filter(e => e.code === 'a').forEach(e => {
@@ -839,8 +836,8 @@ async function runReport() {
 
     aggregates.washroom = {
       totalTrips,
-      totalDuration: totalMins,
-      avgDuration: totalTrips ? (totalMins / totalTrips).toFixed(1) : 0,
+      totalDuration: totalMins.toFixed(1),
+      avgDuration: totalTrips ? (totalMins / totalTrips).toFixed(1) : '0.0',
       avgTripsPerWeek: (totalTrips / weeks).toFixed(1),
       avgMinsPerWeek: (totalMins / weeks).toFixed(1),
       studentTrips: studentTripsData,
@@ -961,7 +958,7 @@ function downloadAggregateCsv(section) {
         else if (evt.code === 'l') {
           summary[evt.studentId].lates++
           if (evt.duration != null) {
-            summary[evt.studentId].lateTotal += evt.duration
+            summary[evt.studentId].lateTotalMins += toMinutes(evt.duration)
             summary[evt.studentId].lateCount++
           }
         }
@@ -970,8 +967,8 @@ function downloadAggregateCsv(section) {
     
     csvContent = 'Student,Absences,Test Day Absences,Lates,Avg Late (min)\n'
     Object.entries(studentsMap).forEach(([id, s]) => {
-      const stats = summary[id] || { absences: 0, testDayAbsences: 0, lates: 0, lateTotal: 0, lateCount: 0 }
-      const avg = stats.lateCount > 0 ? (toMinutes(stats.lateTotal) / stats.lateCount).toFixed(1) : 0
+      const stats = summary[id] || { absences: 0, testDayAbsences: 0, lates: 0, lateTotalMins: 0, lateCount: 0 }
+      const avg = stats.lateCount > 0 ? (stats.lateTotalMins / stats.lateCount).toFixed(1) : 0
       csvContent += `"${s.lastName}, ${s.firstName}",${stats.absences},${stats.testDayAbsences},${stats.lates},${avg}\n`
     })
 
@@ -992,8 +989,8 @@ function downloadAggregateCsv(section) {
     csvContent = 'Student,Trips,Total Duration (min),Avg Duration (min)\n'
     Object.entries(studentsMap).forEach(([id, s]) => {
       const stats = summary[id] || { trips: 0, totalMins: 0 }
-      const totalMin = stats.totalMins
-      const avg = stats.trips > 0 ? (stats.totalMins / stats.trips).toFixed(1) : 0
+      const totalMin = stats.totalMins.toFixed(1)
+      const avg = stats.trips > 0 ? (stats.totalMins / stats.trips).toFixed(1) : '0.0'
       csvContent += `"${s.lastName}, ${s.firstName}",${stats.trips},${totalMin},${avg}\n`
     })
 

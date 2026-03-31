@@ -17,6 +17,7 @@
  *   archiveClass(classId)
  *   restoreClass(classId)
  *   deleteClass(classId)
+ *   clearAllData()
  */
 
 import { getDB } from './index.js'
@@ -449,3 +450,49 @@ export async function toggleStudentAnalyticsExclusion(classId, studentId) {
     hasUnsyncedChanges.value = true
     return cls.students[studentId].excludeFromAnalytics
 }
+
+/**
+ * Permanently wipes all application data from all object stores.
+ * DANGER: This action is irreversible.
+ * 
+ * @returns {Promise<void>}
+ */
+export async function clearAllData() {
+    const db = await getDB()
+    const stores = ['settings', 'classes', 'events', 'assessments', 'grades']
+    const tx = db.transaction(stores, 'readwrite')
+    
+    for (const storeName of stores) {
+        await tx.objectStore(storeName).clear()
+    }
+    
+    // Seed default settings so the app isn't in a broken state after reload
+    const settings = {
+        schemaVersion: 20,
+        gridSize: { rows: 6, cols: 6 },
+        behaviorCodes: {
+            m: { icon: 'Smartphone', label: 'On Device', category: 'redirect', type: 'standard', requiresNote: false, isTopLevel: true },
+            w: { icon: 'Toilet', label: 'Washroom', category: 'neutral', type: 'toggle', requiresNote: false, isTopLevel: true },
+            a: { icon: 'UserX', label: 'Absent', category: 'attendance', type: 'attendance', requiresNote: false, isTopLevel: false },
+            l: { icon: 'Clock', label: 'Late', category: 'attendance', type: 'attendance', requiresNote: false, isTopLevel: false },
+            note: { icon: 'NotebookPen', label: 'Note', category: 'note', type: 'standard', requiresNote: true, isTopLevel: true },
+            ac: { icon: 'GraduationCap', label: 'Assessment', category: 'assessment', type: 'standard', requiresNote: true, isTopLevel: true },
+            pc: { icon: 'Phone', label: 'Parent', category: 'communication', type: 'standard', requiresNote: true, isTopLevel: true },
+        },
+        thresholds: {
+            washroomTripsPerWeek: 4,
+            deviceIncidentsPerWeek: 3
+        },
+        gradebookTemplates: [],
+        gradebookMilestones: [],
+        periodStartTimes: {
+            1: '08:45', 2: '10:05', 3: '11:25', 4: '12:45',
+            5: '08:45', 6: '10:05', 7: '11:25', 8: '12:45'
+        }
+    }
+    await tx.objectStore('settings').put(settings, 'singleton')
+    
+    await tx.done
+    hasUnsyncedChanges.value = false
+}
+

@@ -170,7 +170,7 @@ import {
   gradeMap, 
   activeClassRecord 
 } from '../../composables/useGradebook.js'
-import { getEventsByStudent } from '../../db/eventService.js'
+import { getEventsByStudent, toMinutes } from '../../db/eventService.js'
 import StudentGradeTrend from './StudentGradeTrend.vue'
 import DossierEvidenceMix from './DossierEvidenceMix.vue'
 
@@ -273,10 +273,7 @@ const evidenceMix = computed(() => {
   }
 })
 
-const toMinutes = (d) => {
-  if (d === null || d === undefined) return 0
-  return d > 1000 ? Math.round(d / 60000) : Math.round(d)
-}
+
 
 // Stats (Real data from events)
 const attendanceStats = computed(() => {
@@ -284,19 +281,20 @@ const attendanceStats = computed(() => {
   const absences = filteredEvents.filter(e => e.code === 'a').length
   const lateEvents = filteredEvents.filter(e => e.code === 'l')
   const lates = lateEvents.length
-  const totalMinutes = lateEvents.reduce((acc, e) => acc + toMinutes(e.duration), 0)
-  const average = lates > 0 ? (totalMinutes / lates).toFixed(1) : 0
+  
+  const totalMinTotal = lateEvents.reduce((acc, e) => acc + toMinutes(e.duration), 0)
+  const average = lates > 0 ? (totalMinTotal / lates).toFixed(1) : '0.0'
 
-  return { absences, lates, totalMinutes, average }
+  return { absences, lates, totalMinutes: totalMinTotal.toFixed(1), average }
 })
 
 const outOfClassStats = computed(() => {
   const ocEvents = events.value.filter(e => e.code === 'w')
   const count = ocEvents.length
-  const totalMinutes = ocEvents.reduce((acc, e) => acc + toMinutes(e.duration), 0)
-  const average = count > 0 ? (totalMinutes / count).toFixed(1) : 0
+  const totalMinTotal = ocEvents.reduce((acc, e) => acc + toMinutes(e.duration), 0)
+  const average = count > 0 ? (totalMinTotal / count).toFixed(1) : '0.0'
   
-  return { count, totalMinutes, average }
+  return { count, totalMinutes: totalMinTotal.toFixed(1), average }
 })
 
 const behaviorCodesMap = computed(() => 

@@ -19,7 +19,7 @@
 import { ref, computed, watch } from 'vue'
 import * as classService from '../db/classService.js'
 import * as eventService from '../db/eventService.js'
-import { getDateRangeForPeriod } from '../db/eventService.js'
+import { getDateRangeForPeriod, toMinutes } from '../db/eventService.js'
 import { useClassroom } from './useClassroom.js'
 
 export function useStudentDossier() {
@@ -110,31 +110,30 @@ export function useStudentDossier() {
         return
     }
 
-    // ─── computed stats ───────────────────────────────────────────────────────
-
     const stats = computed(() => {
         const e = events.value.filter(ev => !ev.superseded)
 
-        const washroomEvents = e.filter(ev => ev.code === 'w' && ev.duration != null)
+        const washroomEvents = e.filter(ev => (ev.code === 'w' || (behaviorCodes.value && behaviorCodes.value.find(c => c.codeKey === ev.code)?.type === 'toggle')) && ev.duration != null)
         const absences = e.filter(ev => ev.code === 'a').length
         const lates = e.filter(ev => ev.code === 'l')
         const redirects = e.filter(ev => ev.category === 'redirect').length
         const parentContacts = e.filter(ev => ev.code === 'pc' || ev.category === 'communication')
         const noteEvents = e.filter(ev => ev.note && ev.code !== 'ac' && ev.code !== 'pc' && ev.category !== 'communication')
 
+        const totalWashroomMins = washroomEvents.reduce((sum, ev) => sum + toMinutes(ev.duration), 0)
+        const totalLateMins = lates.reduce((sum, ev) => sum + toMinutes(ev.duration), 0)
+
         return {
             washroomTrips: washroomEvents.length,
-            washroomMinutes: Math.round(
-                washroomEvents.reduce((sum, ev) => sum + (ev.duration || 0), 0) / 60000
-            ),
+            washroomMinutes: totalWashroomMins.toFixed(1),
             avgWashroomMinutes: washroomEvents.length
-                ? (washroomEvents.reduce((sum, ev) => sum + (ev.duration || 0), 0) / washroomEvents.length / 60000).toFixed(1)
-                : 0,
+                ? (totalWashroomMins / washroomEvents.length).toFixed(1)
+                : '0.0',
             absences,
             lateCount: lates.length,
             avgLateMinutes: lates.length
-                ? Math.round(lates.reduce((s, ev) => s + (ev.duration || 0), 0) / lates.length)
-                : 0,
+                ? (totalLateMins / lates.length).toFixed(1)
+                : '0.0',
             redirects,
             parentContactCount: parentContacts.length,
             noteCount: noteEvents.length,

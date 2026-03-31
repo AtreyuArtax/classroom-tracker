@@ -58,7 +58,9 @@
                         <Trash2 :size="16" />
                       </button>
                     </div>
-                  </div>                  <div class="grades__assessment-metadata">
+                  </div>
+                  <p v-if="currentAssessment.description" class="grades__card-description">{{ currentAssessment.description }}</p>
+                  <div class="grades__assessment-metadata">
                     <div class="grades__meta-item" title="Assessment Type">
                       <FilePlus :size="14" />
                       <span>{{ currentAssessment.assessmentType }}</span>
@@ -518,7 +520,7 @@
                       </thead>
                       <tbody>
                         <tr v-for="a in sortedAnalyticsAssessments" :key="a.assessmentId">
-                          <td class="grades__td-assessment-name" @click="selectedAssessmentId = a.assessmentId">
+                          <td class="grades__td-assessment-name" :title="a.description || a.name" @click="selectedAssessmentId = a.assessmentId">
                             {{ a.name }}
                           </td>
                           <td>{{ getCategoryName(a.categoryId) }}</td>
@@ -630,7 +632,7 @@
                   >
                     <div class="grades__assessment-header">
                       <div class="grades__assessment-info" @click="selectedAssessmentId = a.assessmentId">
-                        <span class="grades__assessment-name" :title="a.name">{{ a.name }}</span>
+                        <span class="grades__assessment-name" :title="a.description || a.name">{{ a.name }}</span>
                         <div class="grades__assessment-meta">
                           <span class="grades__assessment-points">/{{ a.totalPoints }}</span>
                           <span v-if="a.unitId" class="grades__assessment-unit">{{ getUnitName(a.unitId) }}</span>
@@ -1683,6 +1685,7 @@ function startEditAssessment(assessment) {
   
   newAssessment.value = {
     name: assessment.name,
+    description: assessment.description || '',
     categoryId: assessment.categoryId,
     assessmentType: assessment.assessmentType,
     unitId: assessment.unitId || null,
@@ -4519,5 +4522,14 @@ verall-trend {
   0% { r: 2.5; opacity: 1; }
   50% { r: 3.5; opacity: 0.7; }
   100% { r: 2.5; opacity: 1; }
+}
+
+.grades__card-description {
+  margin: 4px 0 16px;
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  white-space: pre-wrap;
+  max-width: 800px;
 }
 </style>

@@ -17,7 +17,7 @@ import { hasUnsyncedChanges } from './eventService.js'
  * @returns {Promise<Object>} The created assessment object with its ID.
  */
 export async function createAssessment({
-  classId, categoryId, name, date,
+  classId, categoryId, name, description = '', date,
   assessmentType = 'product',
   unitId = null,
   target = 'class',
@@ -29,7 +29,7 @@ export async function createAssessment({
 }) {
   const db = await getDB()
   const assessment = {
-    classId, categoryId, name, date,
+    classId, categoryId, name, description, date,
     assessmentType, unitId,
     target, targetStudentId,
     totalPoints, scaledTotal,
