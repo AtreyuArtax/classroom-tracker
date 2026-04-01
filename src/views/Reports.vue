@@ -819,7 +819,7 @@ async function runReport() {
 
     // --- Process Washroom ---
     const washCodes = behaviorCodes.value.filter(c => c.type === 'toggle').map(c => c.codeKey)
-    const washEvents = events.filter(e => washCodes.includes(e.code) && e.duration != null)
+    const washEvents = events.filter(e => washCodes.includes(e.code) && e.duration != null && !e.superseded)
     const totalTrips = washEvents.length
     const totalMins = washEvents.reduce((acc, e) => acc + toMinutes(e.duration), 0)
     
@@ -851,7 +851,7 @@ async function runReport() {
     }
 
     // --- Process Behavior (Redirect/Device entries only) ---
-    const behaviorEvents = events.filter(e => e.category === 'redirect')
+    const behaviorEvents = events.filter(e => e.category === 'redirect' && !e.superseded)
     const codeCounts = {}
     behaviorEvents.forEach(e => {
       codeCounts[e.code] = (codeCounts[e.code] ?? 0) + 1
@@ -871,11 +871,11 @@ async function runReport() {
       count: maxCount
     } : null
 
-    const redirects = events.filter(e => e.category === 'redirect').length
-    const parentContacts = events.filter(e => behaviorCodesMap.value[e.code]?.label?.toLowerCase().includes('parent')).length
+    const redirects = events.filter(e => e.category === 'redirect' && !e.superseded).length
+    const parentContacts = events.filter(e => behaviorCodesMap.value[e.code]?.label?.toLowerCase().includes('parent') && !e.superseded).length
     
     const redCounts = {}
-    events.filter(e => e.category === 'redirect').forEach(e => {
+    events.filter(e => e.category === 'redirect' && !e.superseded).forEach(e => {
       redCounts[e.studentId] = (redCounts[e.studentId] ?? 0) + 1
     })
     const redirectAlerts = Object.entries(redCounts)

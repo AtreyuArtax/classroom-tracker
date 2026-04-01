@@ -36,7 +36,6 @@
     <!-- Visuals Row -->
     <div v-if="config.includeGradeTrend || config.includeTriangulation" class="report-row report-row--visuals">
       <div v-if="config.includeGradeTrend" class="report-card report-card--trend">
-        <h3 class="card-title">Grade Performance Trend</h3>
         <div class="chart-container">
           <StudentGradeTrend 
             v-if="allDossierAssessments.length"
@@ -68,22 +67,8 @@
     </section>
 
     <!-- Assignments Section -->
-    <section class="report-section">
-      <h3 class="section-title">Academic Record</h3>
-      
-      <!-- Missing Assignments (Call to Action) -->
-      <div v-if="missingAssessments.length" class="report-alert report-alert--missing">
-        <h4 class="alert-title">Missing Assessments ({{ missingAssessments.length }})</h4>
-        <ul class="missing-list">
-          <li v-for="a in missingAssessments" :key="a.assessmentId" v-memo="[a.assessmentId]">
-            <span class="m-date">{{ formatDate(a.date) }}</span>
-            <span class="m-name">{{ a.name }}</span>
-            <span class="m-cat">{{ getCategoryName(a.categoryId) }}</span>
-          </li>
-        </ul>
-      </div>
-
-      <!-- Recent Graded Work -->
+    <section v-if="recentClassWork.length" class="report-section">
+      <h3 class="section-title">Assessments</h3>
       <div class="report-table-wrapper">
         <table class="report-table">
           <thead>
@@ -96,11 +81,56 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="a in recentGradedAssessments" :key="a.assessmentId" v-memo="[a.assessmentId, a.score]">
+            <tr v-for="a in recentClassWork" :key="a.assessmentId" v-memo="[a.assessmentId, a.score, a.attempts.length]">
               <td class="td-date">{{ formatDate(a.date) }}</td>
               <td class="td-name">{{ a.name }}</td>
               <td class="td-cat">{{ getCategoryName(a.categoryId) }}</td>
-              <td class="td-score text-right">{{ a.score }} / {{ a.totalPoints }}</td>
+              <td class="td-score text-right">
+                <div class="score-val">{{ a.score }} / {{ a.totalPoints }}</div>
+                <div v-if="a.attempts.length > 1" class="score-history">
+                  <span class="history-label">Attempts:</span>
+                  <span v-for="(att, idx) in a.attempts" :key="att.attemptId" class="attempt-crumb">
+                    {{ att.pointsEarned }}<template v-if="idx < a.attempts.length - 1">, </template>
+                  </span>
+                </div>
+              </td>
+              <td class="td-pct text-right" :style="{ color: getGradeColor((a.score / a.totalPoints) * 100) }">
+                {{ Math.round((a.score / a.totalPoints) * 100) }}%
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Individual Assignments Section -->
+    <section v-if="individualTasks.length" class="report-section">
+      <h3 class="section-title">Individual Assessments</h3>
+      <div class="report-table-wrapper">
+        <table class="report-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Assessment</th>
+              <th>Category</th>
+              <th class="text-right">Score</th>
+              <th class="text-right">%</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="a in individualTasks" :key="a.assessmentId" v-memo="[a.assessmentId, a.score, a.attempts.length]">
+              <td class="td-date">{{ formatDate(a.date) }}</td>
+              <td class="td-name">{{ a.name }}</td>
+              <td class="td-cat">{{ getCategoryName(a.categoryId) }}</td>
+              <td class="td-score text-right">
+                <div class="score-val">{{ a.score }} / {{ a.totalPoints }}</div>
+                <div v-if="a.attempts.length > 1" class="score-history">
+                  <span class="history-label">Attempts:</span>
+                  <span v-for="(att, idx) in a.attempts" :key="att.attemptId" class="attempt-crumb">
+                    {{ att.pointsEarned }}<template v-if="idx < a.attempts.length - 1">, </template>
+                  </span>
+                </div>
+              </td>
               <td class="td-pct text-right" :style="{ color: getGradeColor((a.score / a.totalPoints) * 100) }">
                 {{ Math.round((a.score / a.totalPoints) * 100) }}%
               </td>
@@ -171,6 +201,7 @@ import {
   activeClassRecord 
 } from '../../composables/useGradebook.js'
 import { getEventsByStudent, toMinutes } from '../../db/eventService.js'
+import { formatLocalDisplay } from '../../utils/dates.js'
 import StudentGradeTrend from './StudentGradeTrend.vue'
 import DossierEvidenceMix from './DossierEvidenceMix.vue'
 
@@ -216,7 +247,7 @@ const overallMostConsistent = computed(() => studentGrades.value.mostConsistent?
 const overallWeightedMedian = computed(() => studentGrades.value.median ?? null)
 
 function formatDate(d) {
-  return new Date(d).toLocaleDateString([], { month: 'short', day: 'numeric' })
+  return formatLocalDisplay(d)
 }
 
 function getCategoryName(catId) {
@@ -236,7 +267,13 @@ const studentAssessments = computed(() => {
   return assessments.value
     .map(a => {
       const g = gradeMap.value[a.assessmentId]?.[props.studentId]
-      return { ...a, score: g?.resolvedScore ?? null, missing: g?.missing, excluded: g?.excluded }
+      return { 
+        ...a, 
+        score: g?.resolvedScore ?? null, 
+        attempts: g?.attempts || [],
+        missing: g?.missing, 
+        excluded: g?.excluded 
+      }
     })
     .filter(a => !a.excluded && (a.target === 'class' || (a.target === 'individual' && String(a.targetStudentId) === String(props.studentId))))
 })
@@ -246,7 +283,14 @@ const recentGradedAssessments = computed(() =>
   studentAssessments.value
     .filter(a => a.score !== null)
     .sort((a, b) => new Date(b.date) - new Date(a.date))
-    .slice(0, 15) // Show top 15 recent
+)
+
+const recentClassWork = computed(() => 
+  recentGradedAssessments.value.filter(a => a.target === 'class')
+)
+
+const individualTasks = computed(() => 
+  recentGradedAssessments.value.filter(a => a.target === 'individual')
 )
 
 const allDossierAssessments = computed(() => {
@@ -564,6 +608,21 @@ const categoryPerformance = computed(() => {
 .td-date { width: 80px; font-weight: 600; color: var(--print-text-muted); }
 .td-name { font-weight: 600; }
 .td-pct { font-weight: 700; }
+
+.score-history {
+  font-size: 0.65rem;
+  color: var(--print-text-muted);
+  font-weight: 500;
+  margin-top: 2px;
+  line-height: 1;
+}
+
+.history-label {
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 0.6rem;
+  margin-right: 2px;
+}
 
 /* --- Footer Stats --- */
 .footer-grid {

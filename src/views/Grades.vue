@@ -75,7 +75,7 @@
                     </div>
                     <div class="grades__meta-item" title="Date">
                       <Calendar :size="14" />
-                      <span>{{ new Date(currentAssessment.date).toLocaleDateString() }}</span>
+                      <span>{{ formatLocalDisplay(currentAssessment.date) }}</span>
                     </div>
                     
                   </div>
@@ -941,6 +941,7 @@ import { Plus, BarChart2, Settings, Pencil, XCircle, AlertCircle, Trash2, X, Mor
 import Student360 from '../components/dossier/Student360.vue'
 import StudentSidebar from '../components/StudentSidebar.vue'
 import GradeTrendChart from '../components/GradeTrendChart.vue'
+import { formatLocalDisplay } from '../utils/dates.js'
 import {
   Chart as ChartJS,
   Title,
@@ -1461,9 +1462,7 @@ function formatGrade(grade) {
 }
 
 function formatDateShort(dateStr) {
-  if (!dateStr) return ''
-  const d = new Date(dateStr)
-  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
+  return formatLocalDisplay(dateStr)
 }
 
 function formatCellGrade(value, totalPoints) {
