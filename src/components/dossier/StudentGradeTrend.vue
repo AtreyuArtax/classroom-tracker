@@ -1,7 +1,7 @@
 <template>
   <div class="grade-trend" :class="{ 'grade-trend--print': isPrint }">
-    <div v-if="!isPrint" class="grade-trend__header">
-      <h3 class="grade-trend__title">Grade Performance Trend</h3>
+    <div class="grade-trend__header">
+      <h3 class="grade-trend__title" :class="{ 'grade-trend__title--print': isPrint }">Grade Performance Trend</h3>
       <div class="grade-trend__legend">
         <div class="legend-item"><span class="dot dot--primary"></span> Overall Average</div>
         <div class="legend-item"><span class="dot dot--secondary"></span> Recent Trend</div>
@@ -225,7 +225,7 @@ const chartOptions = computed(() => ({
   display:         flex;
   justify-content: space-between;
   align-items:     center;
-  margin-bottom:   20px;
+  margin-bottom:   16px;
 }
 
 .grade-trend__title {
@@ -235,9 +235,22 @@ const chartOptions = computed(() => ({
   color:       var(--text);
 }
 
+.grade-trend__title--print {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--print-text-muted);
+  margin-bottom: 0;
+}
+
 .grade-trend__legend {
   display: flex;
   gap: 16px;
+  align-items: center;
+}
+
+.grade-trend__legend--print {
+  margin-top: -6px; /* Pull it closer to the parent card title in the report */
 }
 
 .legend-item {

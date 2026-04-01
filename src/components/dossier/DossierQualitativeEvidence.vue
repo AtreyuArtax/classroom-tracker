@@ -65,6 +65,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { Eye, MessageSquare, Trash2 } from 'lucide-vue-next'
+import { formatLocalDisplay } from '../../utils/dates.js'
 
 const props = defineProps({
   events: { type: Array, default: () => [] }
@@ -80,12 +81,7 @@ const filteredEvents = computed(() => {
 })
 
 function formatDate(ts) {
-  if (!ts) return ''
-  return new Date(ts).toLocaleDateString('en-CA', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric'
-  })
+  return formatLocalDisplay(ts, { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
 function formatOutcome(outcome) {

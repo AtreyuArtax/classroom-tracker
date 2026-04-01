@@ -66,21 +66,21 @@
             :color="attendanceStats.absences > 0 ? 'danger' : 'success'"
           />
           <StudentStatCard 
-            label="Lates" 
+            :label="behaviorCodesMap['l']?.label || 'Lates'" 
             :value="attendanceStats.lates" 
             :sub-value="attendanceAverages.latesAvg + '/wk'"
             :value2="attendanceAverages.latesTotal + 'm'"
             :sub-value2="attendanceAverages.latesAvgDuration + 'm avg'"
-            :icon="Clock"
+            :icon="resolveIcon(behaviorCodesMap['l']?.icon) || Clock"
             :color="attendanceStats.lates > 4 ? 'warning' : 'neutral'"
           />
           <StudentStatCard 
-            label="Washroom" 
+            :label="behaviorCodesMap['w']?.label || 'Washroom'" 
             :value="washroomCount" 
             :sub-value="attendanceAverages.washroomAvg + '/wk'"
             :value2="attendanceAverages.washroomTotal + 'm'"
             :sub-value2="attendanceAverages.washroomAvgPerVisit + 'm avg'"
-            :icon="Toilet"
+            :icon="resolveIcon(behaviorCodesMap['w']?.icon) || Toilet"
             :color="washroomCount > 3 ? 'warning' : 'neutral'"
           />
           <StudentStatCard 
@@ -153,7 +153,7 @@
               </thead>
               <tbody>
                 <tr v-for="a in classAssessments" :key="a.assessmentId" v-memo="[a.assessmentId, a.score, a.missing, a.excluded, editingCell?.assessmentId === a.assessmentId]" @contextmenu.prevent="onContextMenu($event, a.assessmentId)">
-                  <td class="td-date">{{ new Date(a.date).toLocaleDateString([], { month: 'short', day: 'numeric' }) }}</td>
+                   <td class="td-date">{{ formatLocalDisplay(a.date) }}</td>
                   <td class="td-name">{{ a.name }}</td>
                   <td><span class="badge" :class="'badge--' + a.assessmentType">{{ a.assessmentType }}</span></td>
                   <td>
@@ -230,7 +230,7 @@
                </thead>
                <tbody>
                  <tr v-for="a in individualAssessments" :key="a.assessmentId" v-memo="[a.assessmentId, a.score, a.missing, a.excluded, editingCell?.assessmentId === a.assessmentId]" @contextmenu.prevent="onContextMenu($event, a.assessmentId)">
-                   <td class="td-date">{{ new Date(a.date).toLocaleDateString([], { month: 'short', day: 'numeric' }) }}</td>
+                   <td class="td-date">{{ formatLocalDisplay(a.date) }}</td>
                    <td class="td-name">{{ a.name }}</td>
                    <td><span class="badge" :class="'badge--' + a.assessmentType">{{ a.assessmentType }}</span></td>
                    <td>
@@ -585,12 +585,12 @@
                 <span class="option-label">Missing Assessments List</span>
               </label>
               <label class="option-item">
-                <input type="checkbox" v-model="emailConfig.content.attendance" />
-                <span class="option-label">Attendance Summary</span>
-              </label>
-              <label class="option-item">
                 <input type="checkbox" v-model="emailConfig.content.washroom" />
                 <span class="option-label">Washroom & Out-of-Class Logs</span>
+              </label>
+              <label class="option-item">
+                <input type="checkbox" v-model="emailConfig.content.assessments" />
+                <span class="option-label">Detailed Assessment List & Attempts</span>
               </label>
             </div>
           </div>
@@ -756,6 +756,7 @@ import StudentGradeTrend    from './StudentGradeTrend.vue'
 import ProgressReport       from './ProgressReport.vue'
 import { useClassroom }  from '../../composables/useClassroom.js'
 import { toMinutes }     from '../../db/eventService.js'
+import { resolveIcon }   from '../../utils/icons.js'
 import { 
   classGrades, 
   assessments, 
@@ -795,17 +796,15 @@ const {
 } = useClassroom()
 
 import { useStudentDossier } from '../../composables/useStudentDossier.js'
+import { parseLocal, formatLocalDisplay } from '../../utils/dates.js'
+
 const dossier = useStudentDossier()
-const { 
-  allTimeHistory, 
-  fetchAllTimeHistory 
-} = dossier
 
 // --- Email Progress Report State ---
 const showEmailModal = ref(false)
 const emailConfig = ref({
   recipients: { student: true, parents: true },
-  content: { grade: true, missing: true, attendance: true, washroom: false }
+  content: { grade: true, missing: true, attendance: true, washroom: false, assessments: true }
 })
 
 const emailRecipients = computed(() => {
@@ -850,6 +849,27 @@ function generateEmailLink() {
     body += `Current Overall Grade: ${formattedGrade.value}\n`
   }
   
+  if (emailConfig.value.content.assessments) {
+    const list = [...allDossierAssessments.value]
+      .filter(a => a.score !== null && !a.excluded)
+      .sort((a, b) => new Date(b.date) - new Date(a.date))
+    
+    if (list.length > 0) {
+      body += `\nAcademic Record & Recent Progress:\n`
+      list.forEach(a => {
+        const date = new Date(a.date).toLocaleDateString([], { month: 'short', day: 'numeric' })
+        let line = `${date} - ${a.name}: ${Math.round((a.score / a.totalPoints) * 100)}%`
+        if (a.attempts?.length > 1) {
+          const history = a.attempts
+            .map(att => Math.round((att.pointsEarned / a.totalPoints) * 100) + '%')
+            .join(', ')
+          line += ` (Attempts history: ${history})`
+        }
+        body += `- ${line}\n`
+      })
+    }
+  }
+
   if (emailConfig.value.content.missing) {
     const missing = [
       ...classAssessments.value.filter(a => (a.missing || a.score === null) && !a.excluded),
@@ -1054,6 +1074,7 @@ const classAssessments = computed(() => {
       return {
         ...a,
         score,
+        attempts: g?.attempts || [],
         missing: g?.missing,
         excluded: g?.excluded,
         wasAbsent
@@ -1073,6 +1094,7 @@ const individualAssessments = computed(() => {
       return {
         ...a,
         score,
+        attempts: g?.attempts || [],
         missing: g?.missing,
         excluded: g?.excluded
       }
@@ -1114,16 +1136,19 @@ const evidenceMix = computed(() => {
 
 const attendanceStats = computed(() => {
   const absences = filteredEvents.value.filter(e => e.code === 'a' && !e.superseded).length
-  const lates = filteredEvents.value.filter(e => e.code === 'l').length
+  const lates = filteredEvents.value.filter(e => e.code === 'l' && !e.superseded).length
   return { absences, lates }
 })
 
 const washroomCount = computed(() => {
-  return filteredEvents.value.filter(e => e.code === 'w').length
+  return filteredEvents.value.filter(e => {
+    const config = behaviorCodesMap.value[e.code]
+    return config?.type === 'toggle' && !e.superseded
+  }).length
 })
 
 const redirectCount = computed(() => {
-  return filteredEvents.value.filter(e => e.category === 'redirect').length
+  return filteredEvents.value.filter(e => e.category === 'redirect' && !e.superseded).length
 })
 
 const coachingInsight = computed(() => {
@@ -1172,9 +1197,10 @@ const behaviorWeeklyTrend = computed(() => {
       weeks[monday] = { week: monday, washroom: 0, absence: 0, late: 0 }
     }
     
-    if (e.code === 'w') weeks[monday].washroom++
+    const config = behaviorCodesMap.value[e.code]
+    if (config?.type === 'toggle' && !e.superseded) weeks[monday].washroom++
     else if (e.code === 'a' && !e.superseded) weeks[monday].absence++
-    else if (e.code === 'l') weeks[monday].late++
+    else if (e.code === 'l' && !e.superseded) weeks[monday].late++
   })
   
   // Sort by date
@@ -1194,11 +1220,14 @@ const attendanceAverages = computed(() => {
   const totalWash = washroomCount.value
   
   const totalLateMins = filteredEvents.value
-    .filter(e => e.code === 'l')
+    .filter(e => e.code === 'l' && !e.superseded)
     .reduce((acc, e) => acc + toMinutes(e.duration), 0)
     
   const totalWashMins = filteredEvents.value
-    .filter(e => e.code === 'w')
+    .filter(e => {
+      const config = behaviorCodesMap.value[e.code]
+      return config?.type === 'toggle' && !e.superseded
+    })
     .reduce((acc, e) => acc + toMinutes(e.duration), 0)
 
   return {
@@ -1231,12 +1260,29 @@ async function copyForReportCard() {
   const absences = attendanceStats.value.absences
   const lates = attendanceStats.value.lates
   
+  const academicList = [...allDossierAssessments.value]
+    .filter(a => a.score !== null && !a.excluded)
+    .sort((a, b) => new Date(b.date) - new Date(a.date))
+
   const text = [
     `${s.firstName} ${s.lastName} — Progress Summary`,
     `Current Grade: ${formattedGrade.value}`,
     `Attendance: ${absences} Absences, ${lates} Lates`,
     '',
-    'Academic Performance:',
+    'Academic Record & Recent Progress:',
+    ...academicList.map(a => {
+      const date = new Date(a.date).toLocaleDateString([], { month: 'short', day: 'numeric' })
+      let line = `- ${date} - ${a.name}: ${Math.round((a.score / a.totalPoints) * 100)}%`
+      if (a.attempts?.length > 1) {
+        const history = a.attempts
+          .map(att => Math.round((att.pointsEarned / a.totalPoints) * 100) + '%')
+          .join(', ')
+        line += ` (Attempts history: ${history})`
+      }
+      return line
+    }),
+    '',
+    'Category Averages:',
     ...academicCategories.value.map(c => `- ${c.name}: ${c.score !== null ? Math.round(c.score) + '%' : 'N/A'}`),
     '',
     'General Notes:',

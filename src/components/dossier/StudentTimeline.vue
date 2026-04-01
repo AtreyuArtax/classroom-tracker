@@ -142,6 +142,7 @@ import {
 } from 'lucide-vue-next'
 import { useClassroom } from '../../composables/useClassroom.js'
 import { toMinutes } from '../../db/eventService.js'
+import { resolveIcon } from '../../utils/icons.js'
 
 const props = defineProps({
   studentId: { type: String, required: true },
@@ -171,39 +172,30 @@ const sortedItems = computed(() => {
   props.events.forEach(e => {
     if (e.superseded) return // Skip replaced events
 
-    const code = props.behaviorCodesMap[e.code] || {}
+    const config = props.behaviorCodesMap[e.code] || {}
     let type = 'behavior'
-    let icon = AlertCircle
-    let title = code.label || e.code
-    let category = code.category || 'behavior'
+    let category = config.category || 'behavior'
+    let icon = config.icon ? resolveIcon(config.icon) : AlertCircle
+    let title = config.label || e.code
 
+    // Specialized Logic for Attendance/Out-of-Class
     if (e.code === 'a') {
       type = 'attendance'
       category = 'absence'
-      icon = UserMinus
-      title = 'Absent'
-    } else if (e.code === 'l') {
-      type = 'attendance'
-      category = 'late'
-      icon = Clock
+      icon = config.icon ? resolveIcon(config.icon) : UserMinus
+    } else if (e.code === 'l' || (config.type === 'toggle' && e.duration != null)) {
+      if (e.code === 'l') { type = 'attendance'; category = 'late' }
       const mins = toMinutes(e.duration).toFixed(1)
-      title = `Late (${mins} min)`
-    } else if (e.code === 'w') {
-      type = 'behavior'
-      category = 'washroom'
-      icon = Toilet
-      const mins = toMinutes(e.duration).toFixed(1)
-      title = `${code.label || 'Washroom'} (${mins} min)`
+      title = `${config.label || (e.code === 'l' ? 'Late' : 'Out')} (${mins} min)`
+      icon = config.icon ? resolveIcon(config.icon) : (e.code === 'l' ? Clock : Toilet)
     } else if (e.code === 'ac') {
       type = 'assessment'
       category = 'academics'
-      icon = MessageSquare
-      title = 'Assessment Evidence'
+      icon = config.icon ? resolveIcon(config.icon) : MessageSquare
     } else if (e.code === 'pc' || category === 'communication') {
       type = 'communication'
       category = 'communication'
-      icon = MessageSquare
-      title = 'Communication'
+      icon = config.icon ? resolveIcon(config.icon) : MessageSquare
     }
 
     items.push({
