@@ -137,7 +137,8 @@ import {
   Trash2,
   X,
   UserCheck,
-  Activity
+  Activity,
+  Toilet
 } from 'lucide-vue-next'
 import { useClassroom } from '../../composables/useClassroom.js'
 import { toMinutes } from '../../db/eventService.js'
@@ -178,17 +179,19 @@ const sortedItems = computed(() => {
 
     if (e.code === 'a') {
       type = 'attendance'
-      category = 'attendance'
+      category = 'absence'
       icon = UserMinus
       title = 'Absent'
+    } else if (e.code === 'l') {
       type = 'attendance'
-      category = 'attendance'
+      category = 'late'
       icon = Clock
       const mins = toMinutes(e.duration).toFixed(1)
       title = `Late (${mins} min)`
     } else if (e.code === 'w') {
       type = 'behavior'
       category = 'washroom'
+      icon = Toilet
       const mins = toMinutes(e.duration).toFixed(1)
       title = `${code.label || 'Washroom'} (${mins} min)`
     } else if (e.code === 'ac') {
