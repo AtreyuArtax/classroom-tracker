@@ -34,16 +34,15 @@ export const hasUnsyncedChanges = ref(false)
 // ─── duration normalization ──────────────────────────────────────────────────
 
 /**
- * Resilient helper to convert a raw duration (ms or minutes) into a numeric minute value.
- * Heuristic: if d > 1000, it's likely historical milliseconds.
- * Returns a number rounded to the nearest 0.5.
+ * Converts a raw duration (ms) into a numeric minute value with 0.1 precision.
+ * Now exclusively millisecond-based (CLAUDE.md §18).
  *
- * @param {number|null} d
- * @returns {number}
+ * @param {number|null} d Milliseconds
+ * @returns {number} Minutes rounded to 0.1
  */
 export function toMinutes(d) {
     if (d === null || d === undefined) return 0
-    const mins = d > 1000 ? (d / 60000) : d
+    const mins = d / 60000
     return Math.round(mins * 2) / 2
 }
 
@@ -326,8 +325,8 @@ export async function importAllData(backupObj) {
         )
     }
 
-    // Latest version is 20
-    if (backupObj.schemaVersion > 20) {
+    // Latest version is 21
+    if (backupObj.schemaVersion > 21) {
         throw new Error(
             `The backup file is from a newer version of the app (v${backupObj.schemaVersion}). Please update your app before importing.`
         )
@@ -335,8 +334,8 @@ export async function importAllData(backupObj) {
 
     // Apply migrations if legacy
     let data = backupObj
-    if (data.schemaVersion < 20) {
-        console.log(`Migrating backup from v${data.schemaVersion} to v20...`)
+    if (data.schemaVersion < 21) {
+        console.log(`Migrating backup from v${backupObj.schemaVersion || 1} to v21...`)
         data = migrateData(data)
     }
 

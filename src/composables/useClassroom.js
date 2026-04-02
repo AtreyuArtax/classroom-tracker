@@ -709,7 +709,7 @@ async function logAttendanceEvent(studentId, code) {
 
         if (!student.activeStates) student.activeStates = {}
         student.activeStates.isAbsent = true
-        student.activeStates.lateMinutes = null
+        student.activeStates.lateMs = null
 
         const eventId = await eventService.logEvent({ studentId, classId, code, duration: null, testDay: isTestDay.value })
         student.lastEvent = { code, ts: Date.now() }
@@ -732,7 +732,6 @@ async function logAttendanceEvent(studentId, code) {
         start.setHours(h, m, 0, 0)
         let msLate = Math.round(Date.now() - start.getTime())
         if (msLate < 0) msLate = 0
-        const minutesLate = Math.round(msLate / 60000)
 
         const wasAbsent = student.activeStates?.isAbsent === true
 
@@ -757,12 +756,12 @@ async function logAttendanceEvent(studentId, code) {
             }
         }
 
-        // Persist lateMinutes to IDB so it survives page refresh
-        await classService.setStudentLate(classId, studentId, minutesLate)
+        // Persist lateMs to IDB so it survives page refresh
+        await classService.setStudentLate(classId, studentId, msLate)
 
         if (!student.activeStates) student.activeStates = {}
         student.activeStates.isAbsent = false
-        student.activeStates.lateMinutes = minutesLate
+        student.activeStates.lateMs = msLate
 
         const eventId = await eventService.logEvent({
             studentId,
@@ -776,7 +775,7 @@ async function logAttendanceEvent(studentId, code) {
         pushUndo(async () => {
             await eventService.deleteEvent(eventId)
             await classService.clearStudentLate(classId, studentId)
-            student.activeStates.lateMinutes = null
+            student.activeStates.lateMs = null
 
             if (wasAbsent) {
                 await classService.setStudentAbsent(classId, studentId)
@@ -797,7 +796,7 @@ async function logAttendanceEvent(studentId, code) {
  *
  * @param {string} studentId
  * @param {string|Date} date  The date to check (YYYY-MM-DD or Date object)
- * @returns {Promise<{ isAbsent: boolean, isLate: boolean, lateMinutes: number|null }>}
+ * @returns {Promise<{ isAbsent: boolean, isLate: boolean, lateMs: number|null }>}
  */
 async function getAttendanceOnDate(studentId, date) {
     const dayStr = (typeof date === 'string') ? date.slice(0, 10) : date.toISOString().slice(0, 10)
@@ -809,7 +808,7 @@ async function getAttendanceOnDate(studentId, date) {
     return {
         isAbsent:    !!absent,
         isLate:      !!late,
-        lateMinutes: late ? toMinutes(late.duration) : null
+        lateMs:      late ? late.duration : null
     }
 }
 
@@ -831,15 +830,15 @@ async function syncLateActiveState(classId, studentId, oldDuration, newDuration,
 
     // Only update if the active state matches the old duration (meaning it's the current active late state)
     // Or if the event is from today (fallback to fix desynced DBs)
-    if (st && st.activeStates && st.activeStates.lateMinutes != null) {
-        if (st.activeStates.lateMinutes === toMinutes(oldDuration) || isToday) {
-            await classService.setStudentLate(classId, studentId, toMinutes(newDuration))
+    if (st && st.activeStates && st.activeStates.lateMs != null) {
+        if (st.activeStates.lateMs === oldDuration || isToday) {
+            await classService.setStudentLate(classId, studentId, newDuration)
             // If the user happens to have this class active right now, sync the reactive UI
             if (activeClass.value?.classId === classId && students.value[studentId]) {
                 // Force triggering Vue reactivity by assigning a new object
                 students.value[studentId].activeStates = {
                     ...students.value[studentId].activeStates,
-                    lateMinutes: toMinutes(newDuration)
+                    lateMs: newDuration
                 }
             }
         }
@@ -1036,9 +1035,9 @@ async function removeEvent(eventId) {
         if (original.code === 'a' && st.activeStates.isAbsent) {
             await classService.clearStudentAbsent(original.classId, original.studentId)
             st.activeStates.isAbsent = false
-        } else if (original.code === 'l' && st.activeStates.lateMinutes === toMinutes(original.duration)) {
+        } else if (original.code === 'l' && st.activeStates.lateMs === original.duration) {
             await classService.clearStudentLate(original.classId, original.studentId)
-            st.activeStates.lateMinutes = null
+            st.activeStates.lateMs = null
         }
     }
 
@@ -1170,11 +1169,11 @@ async function _activateClass(cls) {
         if (!states) continue
 
         // Check for stale attendance (absent/late but no event today)
-        if (states.isAbsent || states.lateMinutes != null) {
+        if (states.isAbsent || states.lateMs != null) {
             const hasAtt = eventsToday.some(e => e.studentId === studentId && (e.code === 'a' || e.code === 'l'))
             if (!hasAtt) {
                 states.isAbsent = false
-                states.lateMinutes = null
+                states.lateMs = null
                 needsSave = true
             }
         }

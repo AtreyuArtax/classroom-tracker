@@ -1233,11 +1233,11 @@ const attendanceAverages = computed(() => {
     absencesAvg: (totalAbs / weekCount).toFixed(1),
     latesAvg: (totalLates / weekCount).toFixed(1),
     washroomAvg: (totalWash / weekCount).toFixed(1),
-    latesTotal: totalLateMins.toFixed(1),
-    washroomTotal: totalWashMins.toFixed(1),
-    washroomMinsAvg: (totalWashMins / weekCount).toFixed(1),
-    washroomAvgPerVisit: totalWash ? (totalWashMins / totalWash).toFixed(1) : '0.0',
-    latesAvgDuration: totalLates ? (totalLateMins / totalLates).toFixed(1) : '0.0'
+    latesTotal: totalLateMins,
+    washroomTotal: totalWashMins,
+    washroomMinsAvg: Math.round((totalWashMins / weekCount) * 2) / 2,
+    washroomAvgPerVisit: totalWash ? Math.round((totalWashMins / totalWash) * 2) / 2 : 0,
+    latesAvgDuration: totalLates ? Math.round((totalLateMins / totalLates) * 2) / 2 : 0
   }
 })
 

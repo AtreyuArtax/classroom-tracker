@@ -512,6 +512,9 @@
           </button>
         </div>
 
+        <!-- Grade Buckets (Grading Levels) -->
+        <GradeBucketsSettings />
+
       <!-- Behavior Strategy -->
       <div class="setup__card">
         <h2 class="setup__card-title">Behavior Strategy</h2>
@@ -767,6 +770,7 @@ import * as gradebookService from '../db/gradebookService.js'
 import { globalMilestones, refreshGrades } from '../composables/useGradebook.js'
 import PrintClassListModal from '../components/PrintClassListModal.vue'
 import SuperConfirmModal from '../components/SuperConfirmModal.vue'
+import GradeBucketsSettings from '../components/setup/GradeBucketsSettings.vue'
 
 const {
   classList,

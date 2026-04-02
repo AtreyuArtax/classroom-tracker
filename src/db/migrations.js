@@ -14,7 +14,7 @@
  */
 export function migrateData(data) {
   let version = data.schemaVersion || (data.settings?.schemaVersion) || 1
-  const currentVersion = 20
+  const currentVersion = 21
 
   if (version >= currentVersion) return data
 
@@ -283,12 +283,29 @@ export function migrateData(data) {
 
   // ── Version 20 ───────────────────────────────────────────────────────
   if (version < 20) {
-    for (const cls of migrated.classes) {
-      cls.year = cls.year || '2025-26'
-      cls.semester = cls.semester || '2'
+      version = 20
     }
-    version = 20
-  }
+
+    // ── Version 21 (Duration Normalization) ──────────────────────────────
+    if (version < 21) {
+      for (const evt of migrated.events) {
+        if (evt.duration !== null && evt.duration !== undefined && evt.duration < 1000) {
+          evt.duration = evt.duration * 60000
+        }
+      }
+      for (const cls of migrated.classes) {
+        if (cls.students) {
+          for (const studentId of Object.keys(cls.students)) {
+            const s = cls.students[studentId]
+            if (s.activeStates && s.activeStates.lateMinutes !== undefined && s.activeStates.lateMinutes !== null) {
+              s.activeStates.lateMs = s.activeStates.lateMinutes * 60000
+              delete s.activeStates.lateMinutes
+            }
+          }
+        }
+      }
+      version = 21
+    }
 
   migrated.schemaVersion = currentVersion
   if (migrated.settings) migrated.settings.schemaVersion = currentVersion

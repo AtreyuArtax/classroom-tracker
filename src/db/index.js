@@ -14,9 +14,10 @@
  */
 
 import { openDB } from 'idb'
+import { getCurrentSchoolYear, getCurrentSemester } from '../utils/dates.js'
 
 const DB_NAME = 'classroomTrackerDB'
-const DB_VERSION = 20
+const DB_VERSION = 22
 
 /**
  * Cached promise — set synchronously before the first await so every
@@ -91,6 +92,8 @@ export function getDB() {
           {
             schemaVersion: 20,
             gridSize: { rows: 6, cols: 6 },
+            currentYear: getCurrentSchoolYear(),
+            currentSemester: getCurrentSemester(),
             behaviorCodes: {
               m: { icon: 'Smartphone', label: 'On Device', category: 'redirect', type: 'standard', requiresNote: false, isTopLevel: true },
               w: { icon: 'Toilet', label: 'Washroom', category: 'neutral', type: 'toggle', requiresNote: false, isTopLevel: true },
@@ -514,8 +517,8 @@ export function getDB() {
 
         const allClasses = await classesStore.getAll()
         for (const cls of allClasses) {
-          cls.year = cls.year || '2025-26'
-          cls.semester = cls.semester || '2'
+          cls.year = cls.year || getCurrentSchoolYear()
+          cls.semester = cls.semester || getCurrentSemester()
           await classesStore.put(cls)
         }
 
@@ -524,6 +527,64 @@ export function getDB() {
         if (settings) {
           settings.schemaVersion = 20
           await settingsStore.put(settings, 'singleton')
+        }
+      }
+
+      // ── version 21 migration (Duration Normalization) ────────────────────
+      if (oldVersion < 21) {
+        // 1. Normalize events duration
+        const eventStore = transaction.objectStore('events')
+        const allEvents = await eventStore.getAll()
+        for (const evt of allEvents) {
+          if (evt.duration !== null && evt.duration !== undefined && evt.duration < 1000) {
+            evt.duration = evt.duration * 60000
+            await eventStore.put(evt)
+          }
+        }
+
+        // 2. Normalize student activeStates.lateMinutes -> lateMs
+        const classesStore = transaction.objectStore('classes')
+        const allClasses = await classesStore.getAll()
+        for (const cls of allClasses) {
+          let classMutated = false
+          if (cls.students) {
+            for (const studentId of Object.keys(cls.students)) {
+              const s = cls.students[studentId]
+              if (s.activeStates && s.activeStates.lateMinutes !== undefined && s.activeStates.lateMinutes !== null) {
+                // Convert minutes to ms and rename key
+                s.activeStates.lateMs = s.activeStates.lateMinutes * 60000
+                delete s.activeStates.lateMinutes
+                classMutated = true
+              }
+            }
+          }
+          if (classMutated) {
+            await classesStore.put(cls)
+          }
+        }
+
+        const settingsStore = transaction.objectStore('settings')
+        const settings = await settingsStore.get('singleton')
+        if (settings) {
+          settings.schemaVersion = 21
+          await settingsStore.put(settings, 'singleton')
+        }
+        // --- VERSION 22 MIGRATION ---
+        if (oldVersion < 22) {
+          console.log('[IDB] Migrating to v22: Seeding gradeBuckets in settings...')
+          const settingsStore = tx.objectStore('settings')
+          const settings = await settingsStore.get('singleton')
+          
+          if (settings && !settings.gradeBuckets) {
+            settings.gradeBuckets = [
+              { label: 'R', min: 0, max: 49, color: '#ff3b30' },
+              { label: 'L1', min: 50, max: 59, color: '#ff9500' },
+              { label: 'L2', min: 60, max: 69, color: '#ffcc00' },
+              { label: 'L3', min: 70, max: 79, color: '#30b0c7' },
+              { label: 'L4', min: 80, max: 100, color: '#34c759' }
+            ]
+            await settingsStore.put(settings, 'singleton')
+          }
         }
       }
     },
