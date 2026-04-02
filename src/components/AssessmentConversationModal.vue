@@ -1,104 +1,100 @@
 <template>
-  <Teleport to="body">
-    <div
-      v-if="modelValue"
-      class="acm-overlay"
-      @click.self="onCancel"
-      role="dialog"
-      aria-modal="true"
-      aria-label="Assessment Data Entry"
-    >
-      <div class="acm-card" @keydown.esc="onCancel">
-        <!-- Title -->
-        <h2 class="acm-title">
-          <GraduationCap :size="20" class="acm-title-icon" />
-          Assessment {{ acType === 'observation' ? 'Observation' : 'Conversation' }}
-          <span v-if="studentName" class="acm-title-student">— {{ studentName }}</span>
-        </h2>
+  <BaseModal
+    :show="modelValue"
+    @close="onCancel"
+    max-width="520px"
+  >
+    <template #header>
+      <h2 class="acm-title">
+        <GraduationCap :size="20" class="acm-title-icon" />
+        Assessment {{ acType === 'observation' ? 'Observation' : 'Conversation' }}
+        <span v-if="studentName" class="acm-title-student">— {{ studentName }}</span>
+      </h2>
+    </template>
 
-        <!-- Type Toggle (Observation vs Conversation) -->
-        <div class="acm-field">
-          <label class="acm-label">Evidence Type</label>
-          <div class="acm-toggle-group">
-            <button
-              :class="['acm-toggle-btn', acType === 'observation' ? 'acm-toggle-btn--active' : '']"
-              @click="acType = 'observation'"
-            >Observation</button>
-            <button
-              :class="['acm-toggle-btn', acType === 'conversation' ? 'acm-toggle-btn--active' : '']"
-              @click="acType = 'conversation'"
-            >Conversation</button>
-          </div>
-        </div>
-
-        <!-- Context Toggle -->
-        <div class="acm-field">
-          <label class="acm-label">Context</label>
-          <div class="acm-toggle-group">
-            <button
-              :class="['acm-toggle-btn', context === 'after_assessment' ? 'acm-toggle-btn--active' : '']"
-              @click="context = 'after_assessment'"
-            >After Assessment</button>
-            <button
-              :class="['acm-toggle-btn', context === 'proactive' ? 'acm-toggle-btn--active' : '']"
-              @click="context = 'proactive'"
-            >Proactive</button>
-          </div>
-        </div>
-
-        <!-- Outcome Toggle -->
-        <div class="acm-field">
-          <label class="acm-label">Outcome</label>
-          <div class="acm-toggle-group">
-            <button
-              :class="[
-                'acm-toggle-btn', 
-                outcome === 'demonstrates_understanding' ? 'acm-toggle-btn--success' : ''
-              ]"
-              @click="outcome = 'demonstrates_understanding'"
-            >Demonstrates Understanding</button>
-            <button
-              :class="[
-                'acm-toggle-btn', 
-                outcome === 'gap_confirmed' ? 'acm-toggle-btn--danger' : ''
-              ]"
-              @click="outcome = 'gap_confirmed'"
-            >Gap Confirmed</button>
-            <button
-              :class="[
-                'acm-toggle-btn', 
-                outcome === 'inconclusive' ? 'acm-toggle-btn--warning' : ''
-              ]"
-              @click="outcome = 'inconclusive'"
-            >Inconclusive</button>
-          </div>
-        </div>
-
-        <!-- Note Textarea -->
-        <div class="acm-field">
-          <label class="acm-label">{{ acType === 'observation' ? 'Observation' : 'Conversation' }} Details</label>
-          <textarea
-            ref="textareaRef"
-            v-model="noteText"
-            class="acm-textarea"
-            :placeholder="acType === 'observation' ? 'What was demonstrated?' : 'What did the student say?'"
-            rows="3"
-            @keydown.esc.prevent="onCancel"
-          ></textarea>
-        </div>
-
-        <!-- Actions -->
-        <div class="acm-actions">
-          <button 
-            class="acm-btn acm-btn--primary" 
-            :disabled="!isFormValid"
-            @click="onSave"
-          >Save Evidence</button>
-          <button class="acm-btn acm-btn--ghost" @click="onCancel">Cancel</button>
+    <div class="acm-content">
+      <!-- Type Toggle (Observation vs Conversation) -->
+      <div class="acm-field">
+        <label class="acm-label">Evidence Type</label>
+        <div class="acm-toggle-group">
+          <button
+            :class="['acm-toggle-btn', acType === 'observation' ? 'acm-toggle-btn--active' : '']"
+            @click="acType = 'observation'"
+          >Observation</button>
+          <button
+            :class="['acm-toggle-btn', acType === 'conversation' ? 'acm-toggle-btn--active' : '']"
+            @click="acType = 'conversation'"
+          >Conversation</button>
         </div>
       </div>
+
+      <!-- Context Toggle -->
+      <div class="acm-field">
+        <label class="acm-label">Context</label>
+        <div class="acm-toggle-group">
+          <button
+            :class="['acm-toggle-btn', context === 'after_assessment' ? 'acm-toggle-btn--active' : '']"
+            @click="context = 'after_assessment'"
+          >After Assessment</button>
+          <button
+            :class="['acm-toggle-btn', context === 'proactive' ? 'acm-toggle-btn--active' : '']"
+            @click="context = 'proactive'"
+          >Proactive</button>
+        </div>
+      </div>
+
+      <!-- Outcome Toggle -->
+      <div class="acm-field">
+        <label class="acm-label">Outcome</label>
+        <div class="acm-toggle-group">
+          <button
+            :class="[
+              'acm-toggle-btn', 
+              outcome === 'demonstrates_understanding' ? 'acm-toggle-btn--success' : ''
+            ]"
+            @click="outcome = 'demonstrates_understanding'"
+          >Demonstrates Understanding</button>
+          <button
+            :class="[
+              'acm-toggle-btn', 
+              outcome === 'gap_confirmed' ? 'acm-toggle-btn--danger' : ''
+            ]"
+            @click="outcome = 'gap_confirmed'"
+          >Gap Confirmed</button>
+          <button
+            :class="[
+              'acm-toggle-btn', 
+              outcome === 'inconclusive' ? 'acm-toggle-btn--warning' : ''
+            ]"
+            @click="outcome = 'inconclusive'"
+          >Inconclusive</button>
+        </div>
+      </div>
+
+      <!-- Note Textarea -->
+      <div class="acm-field">
+        <label class="acm-label">{{ acType === 'observation' ? 'Observation' : 'Conversation' }} Details</label>
+        <textarea
+          ref="textareaRef"
+          v-model="noteText"
+          class="acm-textarea"
+          :placeholder="acType === 'observation' ? 'What was demonstrated?' : 'What did the student say?'"
+          rows="3"
+          @keydown.esc.prevent="onCancel"
+        ></textarea>
+      </div>
+
+      <!-- Actions -->
+      <div class="acm-actions">
+        <button 
+          class="acm-btn acm-btn--primary" 
+          :disabled="!isFormValid"
+          @click="onSave"
+        >Save Evidence</button>
+        <button class="acm-btn acm-btn--ghost" @click="onCancel">Cancel</button>
+      </div>
     </div>
-  </Teleport>
+  </BaseModal>
 </template>
 
 <script setup>
@@ -111,6 +107,7 @@
 
 import { ref, watch, nextTick, computed } from 'vue'
 import { GraduationCap } from 'lucide-vue-next'
+import BaseModal from './BaseModal.vue'
 
 const props = defineProps({
   modelValue: { type: Boolean, required: true },
@@ -160,40 +157,11 @@ function onCancel() {
 </script>
 
 <style scoped>
-/* ── Overlay ──────────────────────────────────────────────────────── */
-.acm-overlay {
-  position:        fixed;
-  inset:           0;
-  display:         flex;
-  align-items:     center;
-  justify-content: center;
-  background:      rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(2px);
-  z-index:         1100;
-  animation:       acm-fade-in 0.15s ease;
-}
-
-@keyframes acm-fade-in {
-  from { opacity: 0; }
-  to   { opacity: 1; }
-}
-
-/* ── Card ─────────────────────────────────────────────────────────── */
-.acm-card {
-  background:    var(--surface);
-  border-radius: var(--radius-lg);
-  box-shadow:    var(--shadow-md);
-  padding:       24px;
-  width:         min(520px, 94vw);
+/* ── Content ─────────────────────────────────────────────────────────── */
+.acm-content {
   display:       flex;
   flex-direction: column;
   gap:           20px;
-  animation:     acm-pop-in 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-@keyframes acm-pop-in {
-  from { transform: scale(0.88); opacity: 0; }
-  to   { transform: scale(1);   opacity: 1; }
 }
 
 /* ── Title ────────────────────────────────────────────────────────── */

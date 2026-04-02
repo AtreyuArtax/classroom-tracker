@@ -430,39 +430,46 @@
                   </div>
                 </div>
 
-                <!-- Triangulation Coverage (Step 4) -->
+                <!-- Evidence Blend / Triangulation (Step 4 Upgrade) -->
                 <div class="grades__analytics-section">
-                  <h3 class="grades__analytics-subtitle">TRIANGULATION COVERAGE</h3>
-                  <div class="grades__coverage-grid">
-                    <div class="grades__coverage-item">
-                      <div class="grades__coverage-labels">
-                        <span>Products</span>
-                        <span>{{ classAnalytics.totalStudentCount }}/{{ classAnalytics.totalStudentCount }} students (100%)</span>
-                      </div>
-                      <div class="grades__progress-bg">
-                        <div class="grades__progress-bar" style="width: 100%; background: var(--grade-high);"></div>
-                      </div>
+                  <h3 class="grades__analytics-subtitle">TRIPLE EVIDENCE BLEND</h3>
+                  
+                  <div v-if="classEvidenceBlend" class="grades__blend-container">
+                    <div class="grades__blend-bar">
+                      <div 
+                        class="grades__blend-segment grades__blend-segment--product" 
+                        :style="{ width: classEvidenceBlend.product.percentage + '%' }"
+                        :title="`Product: ${classEvidenceBlend.product.count} assessments (${classEvidenceBlend.product.percentage}%)`"
+                      ></div>
+                      <div 
+                        class="grades__blend-segment grades__blend-segment--observation" 
+                        :style="{ width: classEvidenceBlend.observation.percentage + '%' }"
+                        :title="`Observation: ${classEvidenceBlend.observation.count} assessments (${classEvidenceBlend.observation.percentage}%)`"
+                      ></div>
+                      <div 
+                        class="grades__blend-segment grades__blend-segment--conversation" 
+                        :style="{ width: classEvidenceBlend.conversation.percentage + '%' }"
+                        :title="`Conversation: ${classEvidenceBlend.conversation.count} assessments (${classEvidenceBlend.conversation.percentage}%)`"
+                      ></div>
                     </div>
-                    <div class="grades__coverage-item">
-                      <div class="grades__coverage-labels">
-                        <span>Conversations</span>
-                        <span>{{ classAnalytics.conversationCoverage.studentsWithEvidence }}/{{ classAnalytics.totalStudentCount }} students ({{ classAnalytics.conversationCoverage.percentage }}%)</span>
+                    
+                    <div class="grades__blend-legend">
+                      <div class="grades__legend-item">
+                        <span class="grades__legend-dot grades__legend-dot--product"></span>
+                        <span class="grades__legend-text">Product: {{ classAnalytics.totalStudentCount }}/{{ classAnalytics.totalStudentCount }} students (100%)</span>
                       </div>
-                      <div class="grades__progress-bg">
-                        <div class="grades__progress-bar" :style="{ width: classAnalytics.conversationCoverage.percentage + '%', background: getCoverageColor(classAnalytics.conversationCoverage.percentage) }"></div>
+                      <div class="grades__legend-item">
+                        <span class="grades__legend-dot grades__legend-dot--observation"></span>
+                        <span class="grades__legend-text">Observation Coverage: {{ classAnalytics.observationCoverage.percentage }}%</span>
                       </div>
-                    </div>
-                    <div class="grades__coverage-item">
-                      <div class="grades__coverage-labels">
-                        <span>Observations</span>
-                        <span>{{ classAnalytics.observationCoverage.studentsWithEvidence }}/{{ classAnalytics.totalStudentCount }} students ({{ classAnalytics.observationCoverage.percentage }}%)</span>
-                      </div>
-                      <div class="grades__progress-bg">
-                        <div class="grades__progress-bar" :style="{ width: classAnalytics.observationCoverage.percentage + '%', background: getCoverageColor(classAnalytics.observationCoverage.percentage) }"></div>
+                      <div class="grades__legend-item">
+                        <span class="grades__legend-dot grades__legend-dot--conversation"></span>
+                        <span class="grades__legend-text">Conversation Coverage: {{ classAnalytics.conversationCoverage.percentage }}%</span>
                       </div>
                     </div>
                   </div>
-                  <p class="grades__analytics-hint">Conversations and Observations show % of students with at least one recorded grade.</p>
+                  
+                  <p class="grades__analytics-hint">Coverage shows the % of students with at least one entry for that evidence type.</p>
                 </div>
 
                 <!-- Grade Distribution Histogram (Step 5) -->
@@ -492,86 +499,156 @@
                   </p>
                 </div>
 
-                <!-- Per-Assessment Breakdown (Step 6) -->
+                <!-- Per-Assessment Breakdowns (Grouped) -->
                 <div class="grades__analytics-section">
-                  <h3 class="grades__analytics-subtitle">PRODUCT ASSESSMENTS BREAKDOWN</h3>
-                  <div class="grades__analytics-table-wrapper">
-                    <table class="grades__analytics-table">
-                      <thead>
-                        <tr>
-                          <th @click="analyticsSortBy = 'name'; analyticsSortOrder = analyticsSortOrder === 'asc' ? 'desc' : 'asc'">
-                            Assessment {{ analyticsSortBy === 'name' ? (analyticsSortOrder === 'asc' ? '↑' : '↓') : '' }}
-                          </th>
-                          <th>Category</th>
-                          <th @click="analyticsSortBy = 'mean'; analyticsSortOrder = analyticsSortOrder === 'asc' ? 'desc' : 'asc'">
-                            Avg {{ analyticsSortBy === 'mean' ? (analyticsSortOrder === 'asc' ? '↑' : '↓') : '' }}
-                          </th>
-                          <th @click="analyticsSortBy = 'median'; analyticsSortOrder = analyticsSortOrder === 'asc' ? 'desc' : 'asc'">
-                            Med {{ analyticsSortBy === 'median' ? (analyticsSortOrder === 'asc' ? '↑' : '↓') : '' }}
-                          </th>
-                          <th @click="analyticsSortBy = 'sd'; analyticsSortOrder = analyticsSortOrder === 'asc' ? 'desc' : 'asc'">
-                            SD {{ analyticsSortBy === 'sd' ? (analyticsSortOrder === 'asc' ? '↑' : '↓') : '' }}
-                          </th>
-                          <th>High</th>
-                          <th>Low</th>
-                          <th>Flag</th>
-                          <th>Distribution</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <tr v-for="a in sortedAnalyticsAssessments" :key="a.assessmentId">
-                          <td class="grades__td-assessment-name" :title="a.description || a.name" @click="selectedAssessmentId = a.assessmentId">
-                            {{ a.name }}
-                          </td>
-                          <td>{{ getCategoryName(a.categoryId) }}</td>
-                          <td :style="{ color: getHeatTextColor(a.stats.mean), fontWeight: 'bold' }">{{ formatGrade(a.stats.mean) }}</td>
-                          <td>{{ formatGrade(a.stats.median) }}</td>
-                          <td>{{ a.stats.sd !== null ? a.stats.sd.toFixed(1) + '%' : '—' }}</td>
-                          <td>{{ formatGrade(a.stats.highest) }}</td>
-                          <td>{{ formatGrade(a.stats.lowest) }}</td>
-                          <td>
-                            <div class="grades__flag-group">
-                              <span v-if="a.stats.calibrationFlag === 'too_hard'" class="grades__flag grades__flag--red" title="Too Hard / Calibration needed">🔴</span>
-                              <span v-else-if="a.stats.calibrationFlag === 'too_easy'" class="grades__flag grades__flag--amber" title="Too Easy / Calibration needed">🟡</span>
-                              <span v-else class="grades__flag grades__flag--green" title="Well calibrated">✓</span>
-                            </div>
-                          </td>
-                          <td>
-                            <!-- Sparkline (Step 6) -->
-                            <div class="grades__sparkline" v-if="a.stats.distributionBuckets">
-                              <template v-if="distributionMode === 'buckets'">
-                                <div 
-                                  v-for="bucket in a.stats.distributionBuckets" 
-                                  :key="bucket.label"
-                                  class="grades__sparkline-bar"
-                                  :style="{ 
-                                    height: (bucket.count / a.stats.totalCount * 100) + '%',
-                                    background: getHeatColorHex(bucket.range[0])
-                                  }"
-                                  :title="`${bucket.label}: ${bucket.count} students`"
-                                ></div>
-                              </template>
-                              <template v-else>
-                                <div 
-                                  v-for="bucket in a.stats.levelBuckets" 
-                                  :key="bucket.label"
-                                  class="grades__sparkline-bar"
-                                  :style="{ 
-                                    height: (bucket.count / a.stats.totalCount * 100) + '%',
-                                    background: getHeatColorHex(bucket.range[0])
-                                  }"
-                                  :title="`${bucket.label}: ${bucket.count} students`"
-                                ></div>
-                              </template>
-                            </div>
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
+                  <div class="grades__analytics-groups">
+                    
+                    <!-- Product Assessments Table -->
+                    <div class="grades__analytics-group-box">
+                      <h3 class="grades__analytics-subtitle">PRODUCT ASSESSMENTS BREAKDOWN</h3>
+                      <div class="grades__analytics-table-wrapper">
+                        <table class="grades__analytics-table">
+                          <thead>
+                            <tr>
+                              <th @click="analyticsSortBy = 'name'; analyticsSortOrder = analyticsSortOrder === 'asc' ? 'desc' : 'asc'">
+                                Assessment {{ analyticsSortBy === 'name' ? (analyticsSortOrder === 'asc' ? '↑' : '↓') : '' }}
+                              </th>
+                              <th>Category</th>
+                              <th @click="analyticsSortBy = 'mean'; analyticsSortOrder = analyticsSortOrder === 'asc' ? 'desc' : 'asc'">
+                                Avg {{ analyticsSortBy === 'mean' ? (analyticsSortOrder === 'asc' ? '↑' : '↓') : '' }}
+                              </th>
+                              <th @click="analyticsSortBy = 'median'; analyticsSortOrder = analyticsSortOrder === 'asc' ? 'desc' : 'asc'">
+                                Med {{ analyticsSortBy === 'median' ? (analyticsSortOrder === 'asc' ? '↑' : '↓') : '' }}
+                              </th>
+                              <th @click="analyticsSortBy = 'sd'; analyticsSortOrder = analyticsSortOrder === 'asc' ? 'desc' : 'asc'">
+                                SD {{ analyticsSortBy === 'sd' ? (analyticsSortOrder === 'asc' ? '↑' : '↓') : '' }}
+                              </th>
+                              <th>High</th>
+                              <th>Low</th>
+                              <th>Flag</th>
+                              <th>Distribution</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr v-for="a in sortedProductAssessments" :key="a.assessmentId">
+                              <td class="grades__td-assessment-name" :title="a.description || a.name" @click="selectedAssessmentId = a.assessmentId">
+                                {{ a.name }}
+                              </td>
+                              <td>{{ getCategoryName(a.categoryId) }}</td>
+                              <td :style="{ color: getHeatTextColor(a.stats.mean), fontWeight: 'bold' }">{{ formatGrade(a.stats.mean) }}</td>
+                              <td>{{ formatGrade(a.stats.median) }}</td>
+                              <td>{{ a.stats.sd !== null ? a.stats.sd.toFixed(1) + '%' : '—' }}</td>
+                              <td>{{ formatGrade(a.stats.highest) }}</td>
+                              <td>{{ formatGrade(a.stats.lowest) }}</td>
+                              <td>
+                                <div class="grades__flag-group">
+                                  <span v-if="a.stats.calibrationFlag === 'too_hard'" class="grades__flag grades__flag--red" title="Too Hard / Calibration needed">🔴</span>
+                                  <span v-else-if="a.stats.calibrationFlag === 'too_easy'" class="grades__flag grades__flag--amber" title="Too Easy / Calibration needed">🟡</span>
+                                  <span v-else class="grades__flag grades__flag--green" title="Well calibrated">✓</span>
+                                </div>
+                              </td>
+                              <td>
+                                <div class="grades__sparkline" v-if="a.stats.distributionBuckets">
+                                  <div 
+                                    v-for="bucket in (distributionMode === 'buckets' ? a.stats.distributionBuckets : a.stats.levelBuckets)" 
+                                    :key="bucket.label"
+                                    class="grades__sparkline-bar"
+                                    :style="{ 
+                                      height: (bucket.count / a.stats.totalCount * 100) + '%',
+                                      background: getHeatColorHex(bucket.range[0])
+                                    }"
+                                    :title="`${bucket.label}: ${bucket.count} students`"
+                                  ></div>
+                                </div>
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                      <p v-if="!sortedProductAssessments.length" class="grades__analytics-hint">No product assessments found.</p>
+                    </div>
+
+                    <!-- Observation Assessments Table -->
+                    <div v-if="sortedObservationAssessments.length" class="grades__analytics-group-box">
+                      <h3 class="grades__analytics-subtitle">OBSERVATION LABS BREAKDOWN</h3>
+                      <div class="grades__analytics-table-wrapper">
+                        <table class="grades__analytics-table">
+                          <thead>
+                            <tr>
+                              <th @click="analyticsSortBy = 'name'; analyticsSortOrder = analyticsSortOrder === 'asc' ? 'desc' : 'asc'">Observation Assessment</th>
+                              <th>Avg</th>
+                              <th>Med</th>
+                              <th>SD</th>
+                              <th>Distribution</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr v-for="a in sortedObservationAssessments" :key="a.assessmentId">
+                              <td class="grades__td-assessment-name" @click="selectedAssessmentId = a.assessmentId">{{ a.name }}</td>
+                              <td :style="{ color: getHeatTextColor(a.stats.mean), fontWeight: 'bold' }">{{ formatGrade(a.stats.mean) }}</td>
+                              <td>{{ formatGrade(a.stats.median) }}</td>
+                              <td>{{ a.stats.sd !== null ? a.stats.sd.toFixed(1) + '%' : '—' }}</td>
+                              <td>
+                                <div class="grades__sparkline" v-if="a.stats.distributionBuckets">
+                                  <div 
+                                    v-for="bucket in (distributionMode === 'buckets' ? a.stats.distributionBuckets : a.stats.levelBuckets)" 
+                                    :key="bucket.label"
+                                    class="grades__sparkline-bar"
+                                    :style="{ 
+                                      height: (bucket.count / a.stats.totalCount * 100) + '%',
+                                      background: getHeatColorHex(bucket.range[0])
+                                    }"
+                                    :title="`${bucket.label}: ${bucket.count} students`"
+                                  ></div>
+                                </div>
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+
+                    <!-- Conversation Assessments Table -->
+                    <div v-if="sortedConversationAssessments.length" class="grades__analytics-group-box">
+                      <h3 class="grades__analytics-subtitle">CONVERSATION ASSESSMENTS BREAKDOWN</h3>
+                      <div class="grades__analytics-table-wrapper">
+                        <table class="grades__analytics-table">
+                          <thead>
+                            <tr>
+                              <th @click="analyticsSortBy = 'name'; analyticsSortOrder = analyticsSortOrder === 'asc' ? 'desc' : 'asc'">Conversation Assessment</th>
+                              <th>Avg</th>
+                              <th>Med</th>
+                              <th>Coverage</th>
+                              <th>Distribution</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr v-for="a in sortedConversationAssessments" :key="a.assessmentId">
+                              <td class="grades__td-assessment-name" @click="selectedAssessmentId = a.assessmentId">{{ a.name }}</td>
+                              <td :style="{ color: getHeatTextColor(a.stats.mean), fontWeight: 'bold' }">{{ formatGrade(a.stats.mean) }}</td>
+                              <td>{{ formatGrade(a.stats.median) }}</td>
+                              <td>{{ a.stats.totalCount }} Students</td>
+                              <td>
+                                <div class="grades__sparkline" v-if="a.stats.distributionBuckets">
+                                  <div 
+                                    v-for="bucket in (distributionMode === 'buckets' ? a.stats.distributionBuckets : a.stats.levelBuckets)" 
+                                    :key="bucket.label"
+                                    class="grades__sparkline-bar"
+                                    :style="{ 
+                                      height: (bucket.count / a.stats.totalCount * 100) + '%',
+                                      background: getHeatColorHex(bucket.range[0])
+                                    }"
+                                    :title="`${bucket.label}: ${bucket.count} students`"
+                                  ></div>
+                                </div>
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+
                   </div>
-                  <p v-if="!sortedAnalyticsAssessments.length" class="grades__analytics-hint">
-                    No product assessments yet — add tests, quizzes, or assignments to see breakdown.
-                  </p>
                 </div>
 
                 <!-- Student Exclusion (Step 8) -->
@@ -1256,16 +1333,29 @@ const currentAssessmentSummary = computed(() => {
 })
 
 /**
- * Step 6: Sorted Assessment Analytics
+ * Step 6: Typed Assessment Analytics (Split by Product, Observation, Conversation)
  */
-const sortedAnalyticsAssessments = computed(() => {
-  if (!classAnalytics.value?.assessmentAnalytics) return []
-  
+const sortedProductAssessments = computed(() => {
+  if (!classAnalytics.value?.productAnalytics) return []
+  return processTypedAssessments(classAnalytics.value.productAnalytics)
+})
+
+const sortedObservationAssessments = computed(() => {
+  if (!classAnalytics.value?.observationAnalytics) return []
+  return processTypedAssessments(classAnalytics.value.observationAnalytics)
+})
+
+const sortedConversationAssessments = computed(() => {
+  if (!classAnalytics.value?.conversationAnalytics) return []
+  return processTypedAssessments(classAnalytics.value.conversationAnalytics)
+})
+
+function processTypedAssessments(analyticsMap) {
   return assessments.value
-    .filter(a => classAnalytics.value.assessmentAnalytics[a.assessmentId])
+    .filter(a => analyticsMap[a.assessmentId])
     .map(a => ({
       ...a,
-      stats: classAnalytics.value.assessmentAnalytics[a.assessmentId]
+      stats: analyticsMap[a.assessmentId]
     }))
     .sort((a, b) => {
       let valA = analyticsSortBy.value === 'name' ? a.name : a.stats[analyticsSortBy.value]
@@ -1280,6 +1370,36 @@ const sortedAnalyticsAssessments = computed(() => {
       if (valA > valB) return analyticsSortOrder.value === 'asc' ? 1 : -1
       return 0
     })
+}
+
+/**
+ * Calculates the class-wide "Evidence Blend" ratio
+ */
+const classEvidenceBlend = computed(() => {
+  if (!classAnalytics.value || !assessments.value) return null
+  
+  const productCount = Object.keys(classAnalytics.value.productAnalytics || {}).length
+  const observationCount = Object.keys(classAnalytics.value.observationAnalytics || {}).length
+  const conversationCount = Object.keys(classAnalytics.value.conversationAnalytics || {}).length
+  
+  const total = productCount + observationCount + conversationCount
+  if (total === 0) return null
+  
+  return {
+    total,
+    product: { 
+      percentage: Math.round((productCount / total) * 100),
+      count: productCount
+    },
+    observation: { 
+      percentage: Math.round((observationCount / total) * 100),
+      count: observationCount
+    },
+    conversation: { 
+      percentage: Math.round((conversationCount / total) * 100),
+      count: conversationCount
+    }
+  }
 })
 
 const overallClassAvg = computed(() => {
@@ -4582,5 +4702,97 @@ verall-trend {
   line-height: 1.5;
   white-space: pre-wrap;
   max-width: 800px;
+}
+
+.grades__analytics-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.grades__analytics-group-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 20px;
+  box-shadow: var(--shadow-sm);
+}
+
+.grades__analytics-group-box .grades__analytics-subtitle {
+  margin-top: 0;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--border-light);
+  padding-bottom: 8px;
+}
+
+/* ── Evidence Blend / Triangulation Styling ── */
+.grades__blend-container {
+  background: var(--bg-secondary);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  margin: 16px 0;
+  border: 1px solid var(--border-light);
+}
+
+.grades__blend-bar {
+  display: flex;
+  height: 24px;
+  background: var(--bg-tertiary);
+  border-radius: 100px;
+  overflow: hidden;
+  margin-bottom: 20px;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.grades__blend-segment {
+  height: 100%;
+  transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.grades__blend-segment--product { 
+  background: linear-gradient(90deg, #10b981, #059669); /* Emerald */
+}
+.grades__blend-segment--observation { 
+  background: linear-gradient(90deg, #0ea5e9, #0284c7); /* Ocean */
+}
+.grades__blend-segment--conversation { 
+  background: linear-gradient(90deg, #f59e0b, #d97706); /* Amber */
+}
+
+.grades__blend-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  justify-content: center;
+}
+
+.grades__legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.grades__legend-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.grades__legend-dot--product { background: #10b981; }
+.grades__legend-dot--observation { background: #0ea5e9; }
+.grades__legend-dot--conversation { background: #f59e0b; }
+
+.grades__legend-text {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.grades__analytics-hint {
+  font-size: 0.8rem;
+  color: var(--text-tertiary);
+  margin-top: 8px;
+  font-style: italic;
 }
 </style>

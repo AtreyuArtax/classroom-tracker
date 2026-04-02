@@ -17,6 +17,7 @@
 import { ref, computed, watch } from 'vue'
 import * as classService from '../db/classService.js'
 import * as eventService from '../db/eventService.js'
+import { toMinutes } from '../db/eventService.js'
 import * as settingsService from '../db/settingsService.js'
 import { useUndo } from './useUndo.js'
 
@@ -808,7 +809,7 @@ async function getAttendanceOnDate(studentId, date) {
     return {
         isAbsent:    !!absent,
         isLate:      !!late,
-        lateMinutes: late ? late.duration : null
+        lateMinutes: late ? toMinutes(late.duration) : null
     }
 }
 
@@ -831,14 +832,14 @@ async function syncLateActiveState(classId, studentId, oldDuration, newDuration,
     // Only update if the active state matches the old duration (meaning it's the current active late state)
     // Or if the event is from today (fallback to fix desynced DBs)
     if (st && st.activeStates && st.activeStates.lateMinutes != null) {
-        if (st.activeStates.lateMinutes === oldDuration || isToday) {
-            await classService.setStudentLate(classId, studentId, newDuration)
+        if (st.activeStates.lateMinutes === toMinutes(oldDuration) || isToday) {
+            await classService.setStudentLate(classId, studentId, toMinutes(newDuration))
             // If the user happens to have this class active right now, sync the reactive UI
             if (activeClass.value?.classId === classId && students.value[studentId]) {
                 // Force triggering Vue reactivity by assigning a new object
                 students.value[studentId].activeStates = {
                     ...students.value[studentId].activeStates,
-                    lateMinutes: newDuration
+                    lateMinutes: toMinutes(newDuration)
                 }
             }
         }
@@ -1035,7 +1036,7 @@ async function removeEvent(eventId) {
         if (original.code === 'a' && st.activeStates.isAbsent) {
             await classService.clearStudentAbsent(original.classId, original.studentId)
             st.activeStates.isAbsent = false
-        } else if (original.code === 'l' && st.activeStates.lateMinutes === original.duration) {
+        } else if (original.code === 'l' && st.activeStates.lateMinutes === toMinutes(original.duration)) {
             await classService.clearStudentLate(original.classId, original.studentId)
             st.activeStates.lateMinutes = null
         }

@@ -1,58 +1,52 @@
 <template>
-  <!-- Full-screen overlay — tap outside to close -->
-  <Teleport to="body">
-    <div
-      v-if="isOpen"
-      class="radial-overlay"
-      aria-modal="true"
-      role="dialog"
-      :aria-label="`Radial menu for ${targetStudent?.firstName ?? 'student'}`"
-      @click.self="close"
-    >
-      <!-- Radial ring ──────────────────────────────────────────────── -->
-      <div class="radial-ring" :style="ringStyle">
+  <BaseModal
+    :show="isOpen"
+    unstyled
+    close-on-backdrop
+    @close="close"
+  >
+    <div class="radial-ring" :style="ringStyle">
 
-        <!-- Sector buttons (behavior codes only) -->
-        <button
-          v-for="(item, idx) in visibleItems"
-          :key="item.codeKey ?? item.categoryKey"
-          :class="['radial-btn', 'radial-btn--' + item.category, { 'radial-btn--active': isActiveToggle(item) }]"
-          :style="slotPositionStyle(idx, totalSlots)"
-          :aria-label="item.label"
-          @click.stop="onItemTap(item)"
-        >
-          <div class="radial-btn__icon-circle">
-            <component :is="resolveIcon(item.icon)" :size="20" class="radial-btn__icon" />
-          </div>
-          <span class="radial-btn__label">{{ item.label }}</span>
-        </button>
+      <!-- Sector buttons (behavior codes only) -->
+      <button
+        v-for="(item, idx) in visibleItems"
+        :key="item.codeKey ?? item.categoryKey"
+        :class="['radial-btn', 'radial-btn--' + item.category, { 'radial-btn--active': isActiveToggle(item) }]"
+        :style="slotPositionStyle(idx, totalSlots)"
+        :aria-label="item.label"
+        @click.stop="onItemTap(item)"
+      >
+        <div class="radial-btn__icon-circle">
+          <component :is="resolveIcon(item.icon)" :size="20" class="radial-btn__icon" />
+        </div>
+        <span class="radial-btn__label">{{ item.label }}</span>
+      </button>
 
-        <!-- Permanent 👤 Profile button — first level only -->
-        <button
-          v-if="showProfile"
-          class="radial-btn radial-btn--profile"
-          :style="profilePositionStyle"
-          aria-label="Student Profile"
-          @click.stop="onProfileTap"
-        >
-          <div class="radial-btn__icon-circle">
-            <User :size="20" class="radial-btn__icon" />
-          </div>
-          <span class="radial-btn__label">Profile</span>
-        </button>
+      <!-- Permanent 👤 Profile button — first level only -->
+      <button
+        v-if="showProfile"
+        class="radial-btn radial-btn--profile"
+        :style="profilePositionStyle"
+        aria-label="Student Profile"
+        @click.stop="onProfileTap"
+      >
+        <div class="radial-btn__icon-circle">
+          <User :size="20" class="radial-btn__icon" />
+        </div>
+        <span class="radial-btn__label">Profile</span>
+      </button>
 
-        <!-- Centre button (cancel / go-back) -->
-        <button
-          class="radial-centre"
-          :aria-label="centreGoesBack ? 'Back' : 'Close menu'"
-          @click.stop="handleCentre"
-        >
-          <component :is="centreGoesBack ? ChevronLeft : X" :size="18" />
-        </button>
+      <!-- Centre button (cancel / go-back) -->
+      <button
+        class="radial-centre"
+        :aria-label="centreGoesBack ? 'Back' : 'Close menu'"
+        @click.stop="handleCentre"
+      >
+        <component :is="centreGoesBack ? ChevronLeft : X" :size="18" />
+      </button>
 
-      </div>
     </div>
-  </Teleport>
+  </BaseModal>
 </template>
 
 <script setup>
@@ -60,23 +54,6 @@
  * RadialMenu.vue
  *
  * Circular action menu that appears when a DeskTile is tapped.
- *
- * CLAUDE.md §7 rules enforced:
- *  - Tapping outside the overlay closes without logging
- *  - Category drill-down implemented from day one (not deferred)
- *  - Centre button: cancel in flat/category mode, go-back in sub mode
- *  - Toggle items render with active style when student is currently out
- *  - 44×44px minimum touch targets on all buttons
- *  - Circular layout via absolute positioning + calc()
- *
- * Update 01: permanent 👤 Profile button added at a fixed bottom position.
- *  - Not sourced from behaviorCodes — always rendered regardless of viewMode
- *  - Does not count toward the 6-item limit for behavior codes
- *  - Has a visually distinct secondary style
- *  - On tap: calls handleProfileTap() from useRadial
- *
- * This component ONLY calls useRadial and useClassroom.
- * No direct imports from src/db/.
  */
 
 import { computed } from 'vue'
@@ -84,6 +61,7 @@ import { User, X, ChevronLeft } from 'lucide-vue-next'
 import { resolveIcon }  from '../utils/icons.js'
 import { useRadial }    from '../composables/useRadial.js'
 import { useClassroom } from '../composables/useClassroom.js'
+import BaseModal from './BaseModal.vue'
 
 // ─── composables ──────────────────────────────────────────────────────────────
 
@@ -117,11 +95,6 @@ const ringStyle = {
 
 /**
  * Evenly distribute ALL N+1 items (N behavior items + 1 Profile) around 360°.
- * Profile is always the last slot (idx = visibleItems.length).
- * This guarantees no overlap regardless of item count or view mode.
- *
- * @param {number} idx    Button index (0-based)
- * @param {number} total  TOTAL slots including the Profile button (visibleItems.length + 1)
  */
 function slotPositionStyle(idx, total) {
   const angleDeg = -90 + (360 / total) * idx   // start at top (-90°)
@@ -152,10 +125,6 @@ const profilePositionStyle = computed(() =>
 
 // ─── active toggle styling ────────────────────────────────────────────────────
 
-/**
- * A toggle code button should render as "active" (student currently out)
- * when the student is already out and this is the toggle code.
- */
 function isActiveToggle(item) {
   if (!item.codeKey) return false
   const code = behaviorCodes.value.find(c => c.codeKey === item.codeKey)
@@ -166,8 +135,8 @@ function isActiveToggle(item) {
 // ─── item tap handler ─────────────────────────────────────────────────────────
 
 async function onItemTap(item) {
-  const result = handleItemTap(item) // returns {student, code} or null (category drill or requiresNote intercept)
-  if (!result) return // drilled into category, or note modal will handle it
+  const result = handleItemTap(item)
+  if (!result) return
 
   const { student, code } = result
 
@@ -188,24 +157,6 @@ function onProfileTap() {
 </script>
 
 <style scoped>
-/* ── Full-screen overlay ──────────────────────────────────────────── */
-.radial-overlay {
-  position:        fixed;
-  inset:           0;
-  display:         flex;
-  align-items:     center;
-  justify-content: center;
-  background:      rgba(0, 0, 0, 0.35);
-  backdrop-filter: blur(2px);
-  z-index:         1000;
-  animation:       overlay-in 0.15s ease;
-}
-
-@keyframes overlay-in {
-  from { opacity: 0; }
-  to   { opacity: 1; }
-}
-
 /* ── Ring container ──────────────────────────────────────────────── */
 .radial-ring {
   position: relative;

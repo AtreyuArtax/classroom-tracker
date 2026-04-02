@@ -502,201 +502,198 @@
     </div>
 
     <!-- New Attempt Modal -->
-    <div v-if="newAttemptForm" class="modal-overlay" @click="newAttemptForm = null">
-      <div class="modal-content" @click.stop>
-        <div class="modal-header">
-          <h3>Record New Attempt</h3>
-          <button class="modal-close" @click="newAttemptForm = null"><X :size="20" /></button>
+    <BaseModal
+      :show="!!newAttemptForm"
+      title="Record New Attempt"
+      @close="newAttemptForm = null"
+    >
+      <div class="modal-body-content">
+        <div class="form-group">
+          <label>Points Earned</label>
+          <input type="number" v-model="newAttemptForm.points" autofocus />
         </div>
-        <div class="modal-body">
-          <div class="form-group">
-            <label>Points Earned</label>
-            <input type="number" v-model="newAttemptForm.points" autofocus />
-          </div>
-          <div class="form-group">
-            <label>Date</label>
-            <input type="date" v-model="newAttemptForm.date" />
-          </div>
-          <div class="form-group">
-            <label>Comment (Optional)</label>
-            <textarea v-model="newAttemptForm.comment" rows="2"></textarea>
-          </div>
+        <div class="form-group">
+          <label>Date</label>
+          <input type="date" v-model="newAttemptForm.date" />
         </div>
-        <div class="modal-footer">
-          <button class="btn-ghost" @click="newAttemptForm = null">Cancel</button>
-          <button class="btn-primary" @click="submitNewAttempt">Save Attempt</button>
+        <div class="form-group">
+          <label>Comment (Optional)</label>
+          <textarea v-model="newAttemptForm.comment" rows="2"></textarea>
         </div>
       </div>
-    </div>
+      <template #footer>
+        <button class="btn-ghost" @click="newAttemptForm = null">Cancel</button>
+        <button class="btn-primary" @click="submitNewAttempt">Save Attempt</button>
+      </template>
+    </BaseModal>
 
     <!-- Email Progress Report Modal -->
-    <div v-if="showEmailModal" class="student-360__modal-overlay" @click.self="showEmailModal = false">
-      <div class="email-config-modal">
-        <header class="email-config-modal__header">
-          <div class="header-content">
-            <Mail class="header-icon" :size="24" />
-            <div>
-              <h3 class="header-title">Configure Email Report</h3>
-              <p class="header-subtitle">Select recipients and data points to include.</p>
-            </div>
+    <BaseModal
+      :show="showEmailModal"
+      title="Configure Email Report"
+      @close="showEmailModal = false"
+    >
+      <template #header>
+        <div class="header-content">
+          <Mail class="header-icon" :size="24" />
+          <div>
+            <h3 class="header-title">Configure Email Report</h3>
+            <p class="header-subtitle">Select recipients and data points to include.</p>
           </div>
-          <button class="header-close" @click="showEmailModal = false">
-            <X :size="20" />
-          </button>
-        </header>
+        </div>
+      </template>
 
-        <div class="email-config-modal__body">
-          <!-- Recipients Selection -->
-          <div class="config-section">
-            <h4 class="config-section-title">Recipients</h4>
-            <div class="recipient-list">
-              <div 
-                v-for="r in emailRecipients" 
-                :key="r.email" 
-                class="recipient-item"
-                :class="{ 'recipient-item--active': selectedRecipientEmails.has(r.email) }"
-                @click="toggleRecipient(r.email)"
-              >
-                <div class="recipient-info">
-                  <span class="recipient-label">{{ r.label }}</span>
-                  <span class="recipient-email">{{ r.email }}</span>
-                </div>
-                <div class="recipient-checkbox">
-                  <CheckCircle2 v-if="selectedRecipientEmails.has(r.email)" :size="20" class="icon-checked" />
-                  <div v-else class="checkbox-placeholder"></div>
-                </div>
+      <div class="email-config-modal-body">
+        <!-- Recipients Selection -->
+        <div class="config-section">
+          <h4 class="config-section-title">Recipients</h4>
+          <div class="recipient-list">
+            <div 
+              v-for="r in emailRecipients" 
+              :key="r.email" 
+              class="recipient-item"
+              :class="{ 'recipient-item--active': selectedRecipientEmails.has(r.email) }"
+              @click="toggleRecipient(r.email)"
+            >
+              <div class="recipient-info">
+                <span class="recipient-label">{{ r.label }}</span>
+                <span class="recipient-email">{{ r.email }}</span>
               </div>
-              <div v-if="emailRecipients.length === 0" class="recipient-empty">
-                No email addresses found for this student or their parents.
+              <div class="recipient-checkbox">
+                <CheckCircle2 v-if="selectedRecipientEmails.has(r.email)" :size="20" class="icon-checked" />
+                <div v-else class="checkbox-placeholder"></div>
               </div>
             </div>
-          </div>
-
-          <!-- Content Options -->
-          <div class="config-section">
-            <h4 class="config-section-title">Include in Report</h4>
-            <div class="options-grid">
-              <label class="option-item">
-                <input type="checkbox" v-model="emailConfig.content.grade" />
-                <span class="option-label">Current Overall Grade</span>
-              </label>
-              <label class="option-item">
-                <input type="checkbox" v-model="emailConfig.content.missing" />
-                <span class="option-label">Missing Assessments List</span>
-              </label>
-              <label class="option-item">
-                <input type="checkbox" v-model="emailConfig.content.washroom" />
-                <span class="option-label">Washroom & Out-of-Class Logs</span>
-              </label>
-              <label class="option-item">
-                <input type="checkbox" v-model="emailConfig.content.assessments" />
-                <span class="option-label">Detailed Assessment List & Attempts</span>
-              </label>
+            <div v-if="emailRecipients.length === 0" class="recipient-empty">
+              No email addresses found for this student or their parents.
             </div>
           </div>
         </div>
 
-        <footer class="email-config-modal__footer">
-          <button class="btn-cancel" @click="showEmailModal = false">Cancel</button>
-          <button 
-            class="btn-generate" 
-            :disabled="selectedRecipientEmails.size === 0"
-            @click="generateEmailLink"
-          >
-            Generate Draft & Open Mail
-            <ChevronRight :size="18" />
-          </button>
-        </footer>
+        <!-- Content Options -->
+        <div class="config-section">
+          <h4 class="config-section-title">Include in Report</h4>
+          <div class="options-grid">
+            <label class="option-item">
+              <input type="checkbox" v-model="emailConfig.content.grade" />
+              <span class="option-label">Current Overall Grade</span>
+            </label>
+            <label class="option-item">
+              <input type="checkbox" v-model="emailConfig.content.missing" />
+              <span class="option-label">Missing Assessments List</span>
+            </label>
+            <label class="option-item">
+              <input type="checkbox" v-model="emailConfig.content.washroom" />
+              <span class="option-label">Washroom & Out-of-Class Logs</span>
+            </label>
+            <label class="option-item">
+              <input type="checkbox" v-model="emailConfig.content.assessments" />
+              <span class="option-label">Detailed Assessment List & Attempts</span>
+            </label>
+          </div>
+        </div>
       </div>
-    </div>
+
+      <template #footer>
+        <button class="btn-cancel" @click="showEmailModal = false">Cancel</button>
+        <button 
+          class="btn-generate" 
+          :disabled="selectedRecipientEmails.size === 0"
+          @click="generateEmailLink"
+        >
+          Generate Draft & Open Mail
+          <ChevronRight :size="18" />
+        </button>
+      </template>
+    </BaseModal>
 
     <!-- Print Report Configuration Modal -->
-    <div v-if="showPrintModal" class="student-360__modal-overlay" @click.self="showPrintModal = false">
-      <div class="email-config-modal email-config-modal--wide">
-        <header class="email-config-modal__header">
-          <div class="header-content">
-            <Printer class="header-icon" :size="24" />
-            <div>
-              <h3 class="header-title">Print Progress Report</h3>
-              <p class="header-subtitle">Format a professional document for this student.</p>
-            </div>
+    <BaseModal
+      :show="showPrintModal"
+      title="Print Progress Report"
+      max-width="700px"
+      @close="showPrintModal = false"
+    >
+      <template #header>
+        <div class="header-content">
+          <Printer class="header-icon" :size="24" />
+          <div>
+            <h3 class="header-title">Print Progress Report</h3>
+            <p class="header-subtitle">Format a professional document for this student.</p>
           </div>
-          <button class="header-close" @click="showPrintModal = false">
-            <X :size="20" />
-          </button>
-        </header>
+        </div>
+      </template>
 
-        <div class="email-config-modal__body">
-          <div class="config-section">
-            <div class="config-section-header">
-              <h4 class="config-section-title">Include in Document</h4>
-              <button class="reports__btn-preview" @click="showPrintPreview = !showPrintPreview">
-                {{ showPrintPreview ? 'Hide Preview' : 'Show Preview' }}
-              </button>
-            </div>
-            <div class="print-modal__options">
-              <div class="print-modal__section-title">Report Content</div>
-              <label class="print-modal__option">
-                <input type="checkbox" v-model="printConfig.includeOverallGrade" />
-                Overall Grade Badge
-              </label>
-              <label class="print-modal__option">
-                <input type="checkbox" v-model="printConfig.includeMedians" />
-                Weighted Median & Consistent Grade
-              </label>
-              <label class="print-modal__option">
-                <input type="checkbox" v-model="printConfig.includeGradeTrend" />
-                Performance Trend Graph
-              </label>
-              <label class="print-modal__option">
-                <input type="checkbox" v-model="printConfig.includeTriangulation" />
-                Evidence Triangulation (Pie)
-              </label>
-              <label class="print-modal__option">
-                <input type="checkbox" v-model="printConfig.includeCategorySummary" />
-                Category Performance Summary
-              </label>
-              <div class="print-modal__divider"></div>
-              <label class="print-modal__option">
-                <input type="checkbox" v-model="printConfig.includeAttendance" />
-                Attendance Summary
-              </label>
-              <label class="print-modal__option">
-                <input type="checkbox" v-model="printConfig.includeBehavior" />
-                Out-of-Class Summary
-              </label>
-            </div>
+      <div class="email-config-modal-body">
+        <div class="config-section">
+          <div class="config-section-header">
+            <h4 class="config-section-title">Include in Document</h4>
+            <button class="reports__btn-preview" @click="showPrintPreview = !showPrintPreview">
+              {{ showPrintPreview ? 'Hide Preview' : 'Show Preview' }}
+            </button>
           </div>
-
-          <!-- Live Preview Section -->
-          <div v-if="showPrintPreview" class="reports__print-preview-area">
-            <header class="preview-banner">
-              <Activity :size="14" /> LIVE PREVIEW
-            </header>
-            <div class="preview-content">
-              <ProgressReport 
-                :student-id="studentId" 
-                :class-id="classId" 
-                :config="printConfig" 
-                :is-batch="false"
-              />
-            </div>
-          </div>
-
-          <div v-else class="report-preview-mini">
-            <p>This will generate a formal PDF/Print document containing overall grades, performance trends, and assessment history.</p>
+          <div class="print-modal__options">
+            <div class="print-modal__section-title">Report Content</div>
+            <label class="print-modal__option">
+              <input type="checkbox" v-model="printConfig.includeOverallGrade" />
+              Overall Grade Badge
+            </label>
+            <label class="print-modal__option">
+              <input type="checkbox" v-model="printConfig.includeMedians" />
+              Weighted Median & Consistent Grade
+            </label>
+            <label class="print-modal__option">
+              <input type="checkbox" v-model="printConfig.includeGradeTrend" />
+              Performance Trend Graph
+            </label>
+            <label class="print-modal__option">
+              <input type="checkbox" v-model="printConfig.includeTriangulation" />
+              Evidence Triangulation (Pie)
+            </label>
+            <label class="print-modal__option">
+              <input type="checkbox" v-model="printConfig.includeCategorySummary" />
+              Category Performance Summary
+            </label>
+            <div class="print-modal__divider"></div>
+            <label class="print-modal__option">
+              <input type="checkbox" v-model="printConfig.includeAttendance" />
+              Attendance Summary
+            </label>
+            <label class="print-modal__option">
+              <input type="checkbox" v-model="printConfig.includeBehavior" />
+              Out-of-Class Summary
+            </label>
           </div>
         </div>
 
-        <footer class="email-config-modal__footer">
-          <button class="btn-cancel" @click="showPrintModal = false">Cancel</button>
-          <button class="btn-generate" @click="triggerPrint">
-            Open Print Dialog
-            <Printer :size="18" />
-          </button>
-        </footer>
+        <!-- Live Preview Section -->
+        <div v-if="showPrintPreview" class="reports__print-preview-area">
+          <header class="preview-banner">
+            <Activity :size="14" /> LIVE PREVIEW
+          </header>
+          <div class="preview-content">
+            <ProgressReport 
+              :student-id="studentId" 
+              :class-id="classId" 
+              :config="printConfig" 
+              :is-batch="false"
+            />
+          </div>
+        </div>
+
+        <div v-else class="report-preview-mini">
+          <p>This will generate a formal PDF/Print document containing overall grades, performance trends, and assessment history.</p>
+        </div>
       </div>
-    </div>
+
+      <template #footer>
+        <button class="btn-cancel" @click="showPrintModal = false">Cancel</button>
+        <button class="btn-generate" @click="triggerPrint">
+          Open Print Dialog
+          <Printer :size="18" />
+        </button>
+      </template>
+    </BaseModal>
 
     <!-- Hidden/Active Print Container -->
     <Teleport to="body">
@@ -754,6 +751,7 @@ import DossierQualitativeEvidence from './DossierQualitativeEvidence.vue'
 import StudentTrendGraph    from '../StudentTrendGraph.vue'
 import StudentGradeTrend    from './StudentGradeTrend.vue'
 import ProgressReport       from './ProgressReport.vue'
+import BaseModal            from '../BaseModal.vue'
 import { useClassroom }  from '../../composables/useClassroom.js'
 import { toMinutes }     from '../../db/eventService.js'
 import { resolveIcon }   from '../../utils/icons.js'
@@ -2241,110 +2239,13 @@ onMounted(loadData)
 }
 
 /* Modals */
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 3000;
-  background: rgba(0, 0, 0, 0.4);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  backdrop-filter: blur(4px);
-}
+.modal-body-content { padding: 0; display: flex; flex-direction: column; gap: 16px; }
 
-.modal-content {
-  background: var(--surface);
-  border-radius: var(--radius-lg);
-  width: 400px;
-  max-width: 90vw;
-  box-shadow: var(--shadow-2xl);
-  overflow: hidden;
-}
-
-.modal-header {
-  padding: 20px;
-  border-bottom: 1px solid var(--border);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.modal-header h3 { margin: 0; font-size: 1.1rem; }
-
-.modal-close {
-  background: none; border: none; cursor: pointer; color: var(--text-secondary);
-}
-
-.modal-body { padding: 20px; display: flex; flex-direction: column; gap: 16px; }
-
-.form-group { display: flex; flex-direction: column; gap: 6px; }
-
-.form-group label { font-size: 0.8rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; }
-
-.form-group input, .form-group textarea {
-  padding: 10px; border: 1px solid var(--border); border-radius: var(--radius-md); font-family: inherit; background: var(--bg);
-}
-
-.modal-footer {
-  padding: 16px 20px; background: var(--bg-secondary); display: flex; justify-content: flex-end; gap: 12px;
-}
-
-.btn-icon-sm {
-  width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;
-  background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 6px; cursor: pointer; transition: all 0.2s;
-}
-
-.btn-icon-sm:hover { border-color: var(--primary); color: var(--primary); }
-
-.btn-icon-sm--danger:hover { background: #fff1f0; border-color: #ff3b30; color: #ff3b30; }
-
-/* --- Email Modal Styles --- */
-.student-360__modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(4px);
-  z-index: 1000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-}
-
-.email-config-modal {
-  background: var(--surface);
-  width: 95%;
-  max-width: 500px;
-  max-height: calc(100vh - 40px);
-  border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-2xl);
+.email-config-modal-body {
+  padding: 0;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
-  border: 1px solid var(--border);
-  animation: modalEnter 0.3s ease-out;
-  transition: max-width 0.3s ease;
-}
-
-.email-config-modal--wide {
-  max-width: 700px;
-}
-
-@keyframes modalEnter {
-  from { opacity: 0; transform: translateY(20px) scale(0.98); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
-}
-
-.email-config-modal__header {
-  padding: 16px 20px;
-  background: var(--bg-secondary);
-  border-bottom: 1px solid var(--border);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  gap: 20px;
 }
 
 .header-content {
