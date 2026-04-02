@@ -33,3 +33,38 @@ export function parseLocal(dateString) {
   const normalizedString = isoMatch ? `${dateString}T00:00:00` : dateString;
   return new Date(normalizedString);
 }
+
+/**
+ * Returns the current school year string (e.g., "2025-26").
+ * Academic year flips on August 1st.
+ */
+export function getCurrentSchoolYear() {
+  const now = new Date()
+  const year = now.getFullYear()
+  const month = now.getMonth() // 0-indexed
+
+  if (month < 7) { // Jan - July: we are in the second half of the year
+    const start = year - 1
+    const end = String(year).slice(-2)
+    return `${start}-${end}`
+  } else { // Aug - Dec: we are in the first half of the new year
+    const start = year
+    const end = String(year + 1).slice(-2)
+    return `${start}-${end}`
+  }
+}
+
+/**
+ * Returns the current semester ("1" or "2") based on a best-guess threshold.
+ * Semester 2 is assumed to start around February 1st.
+ */
+export function getCurrentSemester() {
+  const now = new Date()
+  const month = now.getMonth() // 0-indexed
+
+  // Feb (1) through July (6) is usually Semester 2
+  if (month >= 1 && month <= 6) {
+    return '2'
+  }
+  return '1'
+}

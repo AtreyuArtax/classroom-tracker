@@ -17,6 +17,7 @@ export const classGrades = ref({})
 export const selectedStudentId = ref(null)
 export const selectedMilestone = ref(null) // null = current
 export const globalMilestones = ref([])
+export const gradeBuckets = ref([])
 
 // Reactive state for analytics (Step 6)
 export const analyticsMode = ref(false) // false = grid, true = analytics panel
@@ -76,9 +77,10 @@ export async function loadGradebook(classRecord) {
   assessments.value = await gradebookService.getAssessmentsByClass(classRecord.classId)
   grades.value = await gradebookService.getGradesByClass(classRecord.classId)
   
-  // Load global milestones
-  const { getGlobalMilestones } = await import('../db/settingsService.js')
+  // Load global settings
+  const { getGlobalMilestones, getGradeBuckets } = await import('../db/settingsService.js')
   globalMilestones.value = await getGlobalMilestones()
+  gradeBuckets.value = await getGradeBuckets()
   
   // Compute student grades
   await refreshGrades()
@@ -120,7 +122,8 @@ export async function refreshClassAnalytics() {
     { 
       exclusionMode: exclusionMode.value, 
       exclusionThreshold: fixedExclusionThreshold.value,
-      asOf 
+      asOf,
+      gradeBuckets: gradeBuckets.value
     }
   )
 }
@@ -477,8 +480,10 @@ export async function saveStudentOverride(studentId, catId, value) {
     student.categoryOverrides[catId] = Number(value)
   }
 
-  const { saveClass } = await import('../db/classService.js')
-  await saveClass(JSON.parse(JSON.stringify(activeClassRecord.value)))
+  const { patchStudent } = await import('../db/classService.js')
+  await patchStudent(activeClassRecord.value.classId, studentId, { 
+    categoryOverrides: student.categoryOverrides 
+  })
   await refreshGrades()
 }
 
@@ -492,8 +497,8 @@ export async function saveStudentGradebookNote(studentId, note) {
   if (!student || student.gradebookNote === note) return
 
   student.gradebookNote = note
-  const { saveClass } = await import('../db/classService.js')
-  await saveClass(JSON.parse(JSON.stringify(activeClassRecord.value)))
+  const { patchStudent } = await import('../db/classService.js')
+  await patchStudent(activeClassRecord.value.classId, studentId, { gradebookNote: note })
 }
 
 /**
@@ -505,14 +510,17 @@ export async function saveStudentDemographics(studentId, demographics) {
   const student = activeClassRecord.value.students[studentId]
   if (!student) return
 
-  student.parentContacts = demographics.parentContacts || []
-  student.studentEmail = demographics.studentEmail || ''
-  student.custody = demographics.custody || ''
-  student.livingWith = demographics.livingWith || ''
-  student.birthDate = demographics.birthDate || ''
+  const updates = {
+    parentContacts: demographics.parentContacts || [],
+    studentEmail: demographics.studentEmail || '',
+    custody: demographics.custody || '',
+    livingWith: demographics.livingWith || '',
+    birthDate: demographics.birthDate || ''
+  }
 
-  const { saveClass } = await import('../db/classService.js')
-  await saveClass(JSON.parse(JSON.stringify(activeClassRecord.value)))
+  Object.assign(student, updates)
+  const { patchStudent } = await import('../db/classService.js')
+  await patchStudent(activeClassRecord.value.classId, studentId, updates)
 }
 
 
@@ -556,7 +564,8 @@ export const assessmentStats = computed(() => {
         excludedStudentIds: new Set(
           Object.keys(activeClassRecord.value?.students ?? {})
             .filter(id => activeClassRecord.value.students[id].excludeFromAnalytics)
-        )
+        ),
+        gradeBuckets: gradeBuckets.value
       }
     )
   }

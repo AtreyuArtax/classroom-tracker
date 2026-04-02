@@ -125,15 +125,15 @@ export function useStudentDossier() {
 
         return {
             washroomTrips: washroomEvents.length,
-            washroomMinutes: totalWashroomMins.toFixed(1),
+            washroomMinutes: totalWashroomMins,
             avgWashroomMinutes: washroomEvents.length
-                ? (totalWashroomMins / washroomEvents.length).toFixed(1)
-                : '0.0',
+                ? Math.round((totalWashroomMins / washroomEvents.length) * 2) / 2
+                : 0,
             absences,
             lateCount: lates.length,
             avgLateMinutes: lates.length
-                ? (totalLateMins / lates.length).toFixed(1)
-                : '0.0',
+                ? Math.round((totalLateMins / lates.length) * 2) / 2
+                : 0,
             redirects,
             parentContactCount: parentContacts.length,
             noteCount: noteEvents.length,

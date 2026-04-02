@@ -19,7 +19,7 @@
     :class="{
       'desk-tile--out':    student.activeStates?.isOut,
       'desk-tile--absent': student.activeStates?.isAbsent,
-      'desk-tile--late':   student.activeStates?.lateMinutes > 0,
+      'desk-tile--late':   student.activeStates?.lateMs > 0,
       'desk-tile--flash':  flashing,
     }"
     :aria-label="`${student.firstName} ${student.lastName}`"
@@ -60,9 +60,9 @@
     </div>
 
     <!-- Late indicator -->
-    <div v-else-if="student.activeStates?.lateMinutes > 0" class="desk-tile__status-info desk-tile__status-info--late">
+    <div v-else-if="student.activeStates?.lateMs > 0" class="desk-tile__status-info desk-tile__status-info--late">
       <Clock :size="16" class="desk-tile__status-icon" />
-      <span class="desk-tile__status-label">Late {{ student.activeStates.lateMinutes }}m</span>
+      <span class="desk-tile__status-label">Late {{ toMinutes(student.activeStates.lateMs) }}m</span>
     </div>
   </div>
 </template>
@@ -89,6 +89,7 @@
 import { ref, computed, watch, onUnmounted } from 'vue'
 import { HelpCircle, UserX, Clock, Droplets } from 'lucide-vue-next'
 import { resolveIcon }    from '../utils/icons.js'
+import { toMinutes }      from '../db/eventService.js'
 import { useRadial }    from '../composables/useRadial.js'
 import { useClassroom } from '../composables/useClassroom.js'
 

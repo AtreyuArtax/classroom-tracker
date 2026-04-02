@@ -11,17 +11,15 @@
  *   setStudentActiveState(classId, studentId, activeStateObj)
  *   clearStudentActiveState(classId, studentId)
  *   importRoster(classId, studentsArray)
- *   setPeriodStartTime(classId, timeString)
- *   setStudentAbsent(classId, studentId)
- *   clearStudentAbsent(classId, studentId)
- *   archiveClass(classId)
- *   restoreClass(classId)
- *   deleteClass(classId)
- *   clearAllData()
+ *   setStudentLate(classId, studentId, lateMs)
+ *   clearStudentLate(classId, studentId)
+ *   patchStudent(classId, studentId, updates)
+ *   updateStudentNote(classId, studentId, note)
  */
 
 import { getDB } from './index.js'
 import { hasUnsyncedChanges } from './eventService.js'
+import { getCurrentSchoolYear, getCurrentSemester } from '../utils/dates.js'
 
 // ─── public API ───────────────────────────────────────────────────────────────
 
@@ -69,25 +67,8 @@ export async function saveClass(classObj) {
  * @param {{ row: number, col: number } | null} seat
  * @returns {Promise<void>}
  */
-/**
- * Updates a student's seat assignment within a class.
- * Uses an atomic transaction to prevent concurrent write conflicts.
- */
 export async function updateStudentSeat(classId, studentId, seat) {
-    const db = await getDB()
-    const tx = db.transaction('classes', 'readwrite')
-    const store = tx.objectStore('classes')
-    const cls = await store.get(classId)
-    
-    if (!cls) throw new Error(`Class not found: ${classId}`)
-    if (!cls.students[studentId]) throw new Error(`Student not found: ${studentId} in ${classId}`)
-
-    cls.students[studentId].seat = seat
-    const plain = JSON.parse(JSON.stringify(cls))
-    await store.put(plain)
-    await tx.done
-
-    hasUnsyncedChanges.value = true
+    await patchStudent(classId, studentId, { seat })
 }
 
 /**
@@ -96,27 +77,11 @@ export async function updateStudentSeat(classId, studentId, seat) {
  *
  * @param {string} classId
  * @param {string} studentId
- * @param {{ isOut: boolean, outTime: string|null }} activeStateObj
+ * @param {Object} activeStateObj
  * @returns {Promise<void>}
  */
-/**
- * Sets the activeStates sub-object for a student.
- */
 export async function setStudentActiveState(classId, studentId, activeStateObj) {
-    const db = await getDB()
-    const tx = db.transaction('classes', 'readwrite')
-    const store = tx.objectStore('classes')
-    const cls = await store.get(classId)
-    
-    if (!cls) throw new Error(`Class not found: ${classId}`)
-    if (!cls.students[studentId]) throw new Error(`Student not found: ${studentId} in ${classId}`)
-
-    cls.students[studentId].activeStates = activeStateObj
-    const plain = JSON.parse(JSON.stringify(cls))
-    await store.put(plain)
-    await tx.done
-
-    hasUnsyncedChanges.value = true
+    await patchStudent(classId, studentId, { activeStates: activeStateObj })
 }
 
 /**
@@ -128,7 +93,9 @@ export async function setStudentActiveState(classId, studentId, activeStateObj) 
  * @returns {Promise<void>}
  */
 export async function clearStudentActiveState(classId, studentId) {
-    return setStudentActiveState(classId, studentId, { isOut: false, outTime: null })
+    await patchStudent(classId, studentId, { 
+        activeStates: { isOut: false, outTime: null, isAbsent: false, lateMs: null } 
+    })
 }
 
 /**
@@ -156,27 +123,14 @@ export async function setPeriodStartTime(classId, timeString) {
  * @param {string} studentId
  * @returns {Promise<void>}
  */
-/**
- * Marks a student as absent.
- */
 export async function setStudentAbsent(classId, studentId) {
     const db = await getDB()
-    const tx = db.transaction('classes', 'readwrite')
-    const store = tx.objectStore('classes')
-    const cls = await store.get(classId)
-    
-    if (!cls) throw new Error(`Class not found: ${classId}`)
-    if (!cls.students[studentId]) throw new Error(`Student not found: ${studentId} in ${classId}`)
+    const cls = await db.get('classes', classId)
+    const st = cls?.students[studentId]
+    if (!st) throw new Error('Student not found')
 
-    if (!cls.students[studentId].activeStates) {
-        cls.students[studentId].activeStates = { isOut: false, outTime: null, isAbsent: false }
-    }
-    cls.students[studentId].activeStates.isAbsent = true
-    const plain = JSON.parse(JSON.stringify(cls))
-    await store.put(plain)
-    await tx.done
-
-    hasUnsyncedChanges.value = true
+    const activeStates = { ...(st.activeStates || { isOut: false, outTime: null, lateMs: null }), isAbsent: true }
+    await patchStudent(classId, studentId, { activeStates })
 }
 
 /**
@@ -186,59 +140,46 @@ export async function setStudentAbsent(classId, studentId) {
  * @param {string} studentId
  * @returns {Promise<void>}
  */
-/**
- * Clears the absent state for a student.
- */
 export async function clearStudentAbsent(classId, studentId) {
     const db = await getDB()
-    const tx = db.transaction('classes', 'readwrite')
-    const store = tx.objectStore('classes')
-    const cls = await store.get(classId)
-    
-    if (!cls) throw new Error(`Class not found: ${classId}`)
-    if (!cls.students[studentId]) throw new Error(`Student not found: ${studentId} in ${classId}`)
+    const cls = await db.get('classes', classId)
+    const st = cls?.students[studentId]
+    if (!st || !st.activeStates) return
 
-    if (cls.students[studentId].activeStates) {
-        cls.students[studentId].activeStates.isAbsent = false
-    }
-    const plain = JSON.parse(JSON.stringify(cls))
-    await store.put(plain)
-    await tx.done
-
-    hasUnsyncedChanges.value = true
+    const activeStates = { ...st.activeStates, isAbsent: false }
+    await patchStudent(classId, studentId, { activeStates })
 }
 
 /**
- * Marks a student as late with the given number of minutes.
+ * Marks a student as late with the given milliseconds.
  * Clears isAbsent at the same time (late supersedes absent).
  *
  * @param {string} classId
  * @param {string} studentId
- * @param {number} lateMinutes
+ * @param {number} lateMs
  * @returns {Promise<void>}
  */
 /**
- * Marks a student as late.
+ * Marks a student as late with the given milliseconds.
+ * Clears isAbsent at the same time (late supersedes absent).
+ *
+ * @param {string} classId
+ * @param {string} studentId
+ * @param {number} lateMs
+ * @returns {Promise<void>}
  */
-export async function setStudentLate(classId, studentId, lateMinutes) {
+export async function setStudentLate(classId, studentId, lateMs) {
     const db = await getDB()
-    const tx = db.transaction('classes', 'readwrite')
-    const store = tx.objectStore('classes')
-    const cls = await store.get(classId)
-    
-    if (!cls) throw new Error(`Class not found: ${classId}`)
-    if (!cls.students[studentId]) throw new Error(`Student not found: ${studentId} in ${classId}`)
+    const cls = await db.get('classes', classId)
+    const st = cls?.students[studentId]
+    if (!st) throw new Error('Student not found')
 
-    if (!cls.students[studentId].activeStates) {
-        cls.students[studentId].activeStates = { isOut: false, outTime: null, isAbsent: false }
+    const activeStates = { 
+        ...(st.activeStates || { isOut: false, outTime: null }), 
+        isAbsent: false, 
+        lateMs 
     }
-    cls.students[studentId].activeStates.isAbsent = false
-    cls.students[studentId].activeStates.lateMinutes = lateMinutes
-    const plain = JSON.parse(JSON.stringify(cls))
-    await store.put(plain)
-    await tx.done
-
-    hasUnsyncedChanges.value = true
+    await patchStudent(classId, studentId, { activeStates })
 }
 
 /**
@@ -250,20 +191,12 @@ export async function setStudentLate(classId, studentId, lateMinutes) {
  */
 export async function clearStudentLate(classId, studentId) {
     const db = await getDB()
-    const tx = db.transaction('classes', 'readwrite')
-    const store = tx.objectStore('classes')
-    const cls = await store.get(classId)
-    
-    if (!cls) throw new Error(`Class not found: ${classId}`)
-    if (!cls.students[studentId]) throw new Error(`Student not found: ${studentId} in ${classId}`)
+    const cls = await db.get('classes', classId)
+    const st = cls?.students[studentId]
+    if (!st || !st.activeStates) return
 
-    if (cls.students[studentId].activeStates) {
-        cls.students[studentId].activeStates.lateMinutes = null
-    }
-    const plain = JSON.parse(JSON.stringify(cls))
-    await store.put(plain)
-    await tx.done
-    hasUnsyncedChanges.value = true
+    const activeStates = { ...st.activeStates, lateMs: null }
+    await patchStudent(classId, studentId, { activeStates })
 }
 
 /**
@@ -317,7 +250,7 @@ export async function importRoster(classId, studentsArray) {
                 birthDate: birthDate || '',
                 seat: null,
                 generalNote: '',
-                activeStates: { isOut: false, outTime: null, isAbsent: false },
+                activeStates: { isOut: false, outTime: null, isAbsent: false, lateMs: null },
                 excludeFromAnalytics: false,
             }
             inserted++
@@ -340,9 +273,15 @@ export async function importRoster(classId, studentsArray) {
  * @returns {Promise<void>}
  */
 /**
- * Updates a student's general note.
+ * Performs an atomic, transactional update of a subset of student fields.
+ * This is the "surgical" alternative to saveClass() for student-level edits.
+ * 
+ * @param {string} classId
+ * @param {string} studentId
+ * @param {Object} updates Map of student fields to update (e.g. { lastName: 'NewName' })
+ * @returns {Promise<void>}
  */
-export async function updateStudentNote(classId, studentId, note) {
+export async function patchStudent(classId, studentId, updates) {
     const db = await getDB()
     const tx = db.transaction('classes', 'readwrite')
     const store = tx.objectStore('classes')
@@ -350,13 +289,28 @@ export async function updateStudentNote(classId, studentId, note) {
     
     if (!cls) throw new Error(`Class not found: ${classId}`)
     if (!cls.students[studentId]) throw new Error(`Student not found: ${studentId} in ${classId}`)
+
+    // Shallow merge updates into the student record
+    Object.assign(cls.students[studentId], updates)
     
-    cls.students[studentId].generalNote = note
     const plain = JSON.parse(JSON.stringify(cls))
     await store.put(plain)
     await tx.done
 
     hasUnsyncedChanges.value = true
+}
+
+/**
+ * Updates a student's general note.
+ * Called by StudentProfileModal on textarea blur.
+ *
+ * @param {string} classId
+ * @param {string} studentId
+ * @param {string} note
+ * @returns {Promise<void>}
+ */
+export async function updateStudentNote(classId, studentId, note) {
+    await patchStudent(classId, studentId, { generalNote: note })
 }
 
 /**
@@ -442,13 +396,12 @@ export async function updateClass(classId, updates) {
 export async function toggleStudentAnalyticsExclusion(classId, studentId) {
     const db = await getDB()
     const cls = await db.get('classes', classId)
-    if (!cls || !cls.students[studentId]) throw new Error('Student not found')
+    const st = cls?.students[studentId]
+    if (!st) throw new Error('Student not found')
     
-    cls.students[studentId].excludeFromAnalytics = !cls.students[studentId].excludeFromAnalytics
-    const plain = JSON.parse(JSON.stringify(cls))
-    await db.put('classes', plain)
-    hasUnsyncedChanges.value = true
-    return cls.students[studentId].excludeFromAnalytics
+    const newState = !st.excludeFromAnalytics
+    await patchStudent(classId, studentId, { excludeFromAnalytics: newState })
+    return newState
 }
 
 /**
@@ -470,6 +423,8 @@ export async function clearAllData() {
     const settings = {
         schemaVersion: 20,
         gridSize: { rows: 6, cols: 6 },
+        currentYear: getCurrentSchoolYear(),
+        currentSemester: getCurrentSemester(),
         behaviorCodes: {
             m: { icon: 'Smartphone', label: 'On Device', category: 'redirect', type: 'standard', requiresNote: false, isTopLevel: true },
             w: { icon: 'Toilet', label: 'Washroom', category: 'neutral', type: 'toggle', requiresNote: false, isTopLevel: true },

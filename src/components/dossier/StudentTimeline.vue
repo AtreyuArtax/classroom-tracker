@@ -184,7 +184,7 @@ const sortedItems = computed(() => {
       icon = config.icon ? resolveIcon(config.icon) : UserMinus
     } else if (e.code === 'l' || (config.type === 'toggle' && e.duration != null)) {
       if (e.code === 'l') { type = 'attendance'; category = 'late' }
-      const mins = toMinutes(e.duration).toFixed(1)
+      const mins = toMinutes(e.duration)
       title = `${config.label || (e.code === 'l' ? 'Late' : 'Out')} (${mins} min)`
       icon = config.icon ? resolveIcon(config.icon) : (e.code === 'l' ? Clock : Toilet)
     } else if (e.code === 'ac') {
@@ -330,7 +330,7 @@ const groupedItems = computed(() => {
 
 function startEdit(item) {
     editingItem.value = item
-    editForm.duration = toMinutes(item.raw.duration).toFixed(1)
+    editForm.duration = toMinutes(item.raw.duration)
     editForm.note = item.description || ''
 }
 

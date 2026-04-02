@@ -133,14 +133,10 @@ async function _getGradeInTransaction(tx, assessmentId, studentId, classId) {
 
 /**
  * Retrieves a grade record for a student/assessment pair, or creates one if missing.
- * Now requires classId for the index.
- * 
- * @param {number} assessmentId
- * @param {string} studentId
- * @param {string} classId
- * @returns {Promise<Object>}
+ * Requires classId to prevent orphan records and ensure index performance.
  */
 export async function getOrCreateGrade(assessmentId, studentId, classId) {
+  if (!classId) throw new Error('[gradebookService] getOrCreateGrade: classId is required.')
   const db = await getDB()
   const tx = db.transaction('grades', 'readwrite')
   const grade = await _getGradeInTransaction(tx, assessmentId, studentId, classId)
@@ -438,27 +434,26 @@ export function buildDistributionBuckets(percentages) {
  * @param {Array<number>} percentages 
  * @returns {Array<Object>}
  */
-export function buildLevelDistributionBuckets(percentages) {
-  const buckets = [
-    { label: 'R', range: [0, 49], count: 0, scores: [] },
-    { label: 'L1', range: [50, 59], count: 0, scores: [] },
-    { label: 'L2', range: [60, 69], count: 0, scores: [] },
-    { label: 'L3', range: [70, 79], count: 0, scores: [] },
-    { label: 'L4', range: [80, 100], count: 0, scores: [] }
-  ]
+export function buildLevelDistributionBuckets(percentages, customBuckets = null) {
+  const buckets = (customBuckets && customBuckets.length > 0)
+    ? customBuckets.map(b => ({ ...b, count: 0, scores: [], range: [b.min, b.max] }))
+    : [
+        { label: 'R', range: [0, 49], count: 0, scores: [] },
+        { label: 'L1', range: [50, 59], count: 0, scores: [] },
+        { label: 'L2', range: [60, 69], count: 0, scores: [] },
+        { label: 'L3', range: [70, 79], count: 0, scores: [] },
+        { label: 'L4', range: [80, 100], count: 0, scores: [] }
+      ]
 
   for (const p of percentages) {
     if (p === null || p === undefined || isNaN(p)) continue
     
-    let idx = -1
-    if (p < 50) idx = 0
-    else if (p < 60) idx = 1
-    else if (p < 70) idx = 2
-    else if (p < 80) idx = 3
-    else idx = 4
-
-    buckets[idx].count++
-    buckets[idx].scores.push(p)
+    // Find the matching bucket
+    const bucket = buckets.find(b => p >= b.range[0] && p <= b.range[1])
+    if (bucket) {
+      bucket.count++
+      bucket.scores.push(p)
+    }
   }
   return buckets
 }
@@ -490,6 +485,48 @@ export function resolveAttemptScore(attempts, retestPolicy) {
     default:
       return Math.max(...valid.map(a => a.pointsEarned))
   }
+}
+
+/**
+ * Calculates a single category grade from a set of assessments and a map of student grades.
+ * Shared by calculateStudentGrade and calculateClassAnalytics to ensure consistency.
+ * 
+ * @param {Array<Object>} catAssessments 
+ * @param {Object} gradeMap Map of grades keyed by assessmentId
+ * @returns {number|null} The calculated percentage, or null if no data
+ */
+function _calculateCategoryGrade(catAssessments, gradeMap) {
+  let totalEarned = 0
+  let totalPossible = 0
+
+  for (const assessment of catAssessments) {
+    const grade = gradeMap[assessment.assessmentId]
+    if (!grade || grade.excluded) continue
+
+    const possible = assessment.scaledTotal ?? assessment.totalPoints
+
+    if (grade.missing) {
+      // Missing counts as 0 against the scaled total
+      totalPossible += possible
+      continue
+    }
+
+    if (!grade.attempts || grade.attempts.length === 0) continue
+
+    const earned = resolveAttemptScore(grade.attempts, assessment.retestPolicy)
+    if (earned === null) continue
+
+    // Guard against division by zero
+    const divisor = assessment.totalPoints || 1
+    const scaledEarned = assessment.scaledTotal
+      ? (earned / divisor) * assessment.scaledTotal
+      : earned
+
+    totalEarned += scaledEarned
+    totalPossible += possible
+  }
+
+  return totalPossible > 0 ? (totalEarned / totalPossible) * 100 : null
 }
 
 /**
@@ -706,67 +743,25 @@ export async function calculateStudentGrade(studentId, classRecord, { asOf = nul
       catAssessments = catAssessments.filter(a => a.date <= asOf)
     }
 
-    if (catAssessments.length === 0) {
-      categoryResults[category.categoryId] = null
-      continue
-    }
+    const calculatedPercentage = _calculateCategoryGrade(catAssessments, gradeMap)
 
-    let totalEarned = 0
-    let totalPossible = 0
-
-    for (const assessment of catAssessments) {
-      const grade = gradeMap[assessment.assessmentId]
-      
-      // Skip if individual grade is excluded
-      if (!grade || grade.excluded) continue
-      
-      if (grade.missing) {
-        // Missing counts as 0 against the scaled total
-        const possible = assessment.scaledTotal ?? assessment.totalPoints
-        totalPossible += possible
-        continue
-      }
-      
-      if (!grade.attempts || grade.attempts.length === 0) continue // not entered yet
-
-      const earned = resolveAttemptScore(grade.attempts, assessment.retestPolicy)
-      if (earned === null) continue
-
-      const possible = assessment.scaledTotal ?? assessment.totalPoints
-      // Guard against division by zero
-      const divisor = assessment.totalPoints || 1
-      const scaledEarned = assessment.scaledTotal
-        ? (earned / divisor) * assessment.scaledTotal
-        : earned
-
-      totalEarned += scaledEarned
-      totalPossible += possible
-    }
-
-    if (totalPossible === 0) {
+    if (calculatedPercentage === null) {
       categoryResults[category.categoryId] = null
       continue
     }
 
     // Check for manual category override
     const override = classRecord.students[studentId]?.categoryOverrides?.[category.categoryId]
+    const overrideValue = Number(override?.overridePercentage ?? override)
     
-    if (override !== undefined && override !== null) {
-      const percentage = Number(override.overridePercentage ?? override)
-      if (isNaN(percentage)) {
-        categoryResults[category.categoryId] = {
-          percentage: (totalEarned / totalPossible) * 100,
-          isOverridden: false
-        }
-      } else {
-        categoryResults[category.categoryId] = {
-          percentage,
-          isOverridden: true
-        }
+    if (override !== undefined && override !== null && !isNaN(overrideValue)) {
+      categoryResults[category.categoryId] = {
+        percentage: overrideValue,
+        isOverridden: true
       }
     } else {
       categoryResults[category.categoryId] = {
-        percentage: (totalEarned / totalPossible) * 100,
+        percentage: calculatedPercentage,
         isOverridden: false
       }
     }
@@ -838,7 +833,8 @@ export function calculateAssessmentAnalytics(assessmentId, grades, assessment, o
   const { 
     exclusionMode = 'none', 
     exclusionThreshold = 40, 
-    excludedStudentIds = new Set() 
+    excludedStudentIds = new Set(),
+    gradeBuckets = null
   } = options
 
   // Skip individual assessments as they don't have "class averages"
@@ -897,7 +893,7 @@ export function calculateAssessmentAnalytics(assessmentId, grades, assessment, o
     highest: Math.round(highest * 10) / 10,
     lowest: Math.round(lowest * 10) / 10,
     distributionBuckets,
-    levelBuckets: buildLevelDistributionBuckets(activePercentages),
+    levelBuckets: buildLevelDistributionBuckets(activePercentages, gradeBuckets),
     outlierCount: outlierStudentIds.length,
     outlierStudentIds,
     excludeOutliersActive: exclusionMode !== 'none',
@@ -919,7 +915,8 @@ export async function calculateClassAnalytics(classRecord, assessments, grades, 
   const { 
     exclusionMode = 'none', 
     exclusionThreshold = 40,
-    asOf = null 
+    asOf = null,
+    gradeBuckets = null
   } = options
 
   const studentIds = Object.keys(classRecord.students ?? {})
@@ -958,33 +955,26 @@ export async function calculateClassAnalytics(classRecord, assessments, grades, 
 
     for (const cat of classRecord.gradebookCategories) {
       const catAssessments = productAssessments.filter(a => a.categoryId === cat.categoryId)
-      let catEarned = 0
-      let catPossible = 0
-
+      const catGrade = _calculateCategoryGrade(catAssessments, gradeMap[cat.categoryId] ? { [cat.categoryId]: gradeMap[cat.categoryId][studentId] } : {}) 
+      // Wait, gradeMap here is nested gradeMap[assessmentId][studentId]
+      // In calculateClassAnalytics, gradeMap is built at line 943:
+      // const gradeMap = {}
+      // for (const g of grades) {
+      //   if (!gradeMap[g.assessmentId]) gradeMap[g.assessmentId] = {}
+      //   gradeMap[g.assessmentId][g.studentId] = g
+      // }
+      // So passed to _calculateCategoryGrade, it should be a flatter map for that student.
+      
+      const studentGradeMap = {}
       for (const a of catAssessments) {
-        const grade = gradeMap[a.assessmentId]?.[studentId]
-        if (!grade || grade.excluded || grade.missing) {
-          if (grade?.missing) catPossible += a.scaledTotal ?? a.totalPoints
-          continue
+        if (gradeMap[a.assessmentId]?.[studentId]) {
+          studentGradeMap[a.assessmentId] = gradeMap[a.assessmentId][studentId]
         }
-        if (!grade.attempts || grade.attempts.length === 0) continue
-
-        const earned = resolveAttemptScore(grade.attempts, a.retestPolicy)
-        if (earned === null) continue
-
-        const possible = a.scaledTotal ?? a.totalPoints
-        // Guard against division by zero
-        const divisor = a.totalPoints || 1
-        const scaledEarned = a.scaledTotal
-          ? (earned / divisor) * a.scaledTotal
-          : earned
-
-        catEarned += scaledEarned
-        catPossible += possible
       }
-
-      if (catPossible > 0) {
-        categoryResults[cat.categoryId] = (catEarned / catPossible) * 100
+      
+      const catPercentage = _calculateCategoryGrade(catAssessments, studentGradeMap)
+      if (catPercentage !== null) {
+        categoryResults[cat.categoryId] = catPercentage
       }
     }
 
@@ -1019,22 +1009,21 @@ export async function calculateClassAnalytics(classRecord, assessments, grades, 
   const sd = calculateStandardDeviation(activePercentages)
   const median = calculateMedian(activePercentages)
   const distributionBuckets = buildDistributionBuckets(activePercentages)
-  const levelBuckets = buildLevelDistributionBuckets(activePercentages)
+  const levelBuckets = buildLevelDistributionBuckets(activePercentages, gradeBuckets)
 
     // Per-assessment analytics (Grouped by type)
     const productAnalytics = {}
     const observationAnalytics = {}
     const conversationAnalytics = {}
 
-    // We process ALL assessments that are target === 'class'
-    // but we categorize them so the UI can render separate tables.
     for (const a of assessments.filter(a => a.target === 'class' && !a.excluded)) {
         const stats = calculateAssessmentAnalytics(
             a.assessmentId, grades, a,
             { 
               exclusionMode, 
               exclusionThreshold, 
-              excludedStudentIds 
+              excludedStudentIds,
+              gradeBuckets
             }
         )
         if (stats) {

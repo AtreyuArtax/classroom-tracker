@@ -112,7 +112,14 @@ async function _readSettings() {
             '2': '09:20',
             '3': '11:40',
             '4': '13:00'
-        }
+        },
+        gradeBuckets: [
+            { label: 'R', min: 0, max: 49, color: '#ff3b30' },
+            { label: 'L1', min: 50, max: 59, color: '#ff9500' },
+            { label: 'L2', min: 60, max: 69, color: '#ffcc00' },
+            { label: 'L3', min: 70, max: 79, color: '#30b0c7' },
+            { label: 'L4', min: 80, max: 100, color: '#34c759' }
+        ]
     }
     await db.put('settings', defaults, SETTINGS_KEY)
     hasUnsyncedChanges.value = true
@@ -311,3 +318,27 @@ export async function savePeriodStartTimes(timesObj) {
     hasUnsyncedChanges.value = true
 }
 
+/**
+ * Returns the global grade buckets for level distribution.
+ */
+export async function getGradeBuckets() {
+    const settings = await _readSettings()
+    return settings.gradeBuckets || [
+        { label: 'R', min: 0, max: 49, color: '#ff3b30' },
+        { label: 'L1', min: 50, max: 59, color: '#ff9500' },
+        { label: 'L2', min: 60, max: 69, color: '#ffcc00' },
+        { label: 'L3', min: 70, max: 79, color: '#30b0c7' },
+        { label: 'L4', min: 80, max: 100, color: '#34c759' }
+    ]
+}
+
+/**
+ * Saves global grade buckets.
+ */
+export async function saveGradeBuckets(buckets) {
+    const db = await getDB()
+    const settings = await db.get('settings', 'singleton')
+    settings.gradeBuckets = buckets
+    await db.put('settings', settings, 'singleton')
+    hasUnsyncedChanges.value = true
+}

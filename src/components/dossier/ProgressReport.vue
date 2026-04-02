@@ -327,18 +327,18 @@ const attendanceStats = computed(() => {
   const lates = lateEvents.length
   
   const totalMinTotal = lateEvents.reduce((acc, e) => acc + toMinutes(e.duration), 0)
-  const average = lates > 0 ? (totalMinTotal / lates).toFixed(1) : '0.0'
+  const average = lates > 0 ? Math.round((totalMinTotal / lates) * 2) / 2 : 0
 
-  return { absences, lates, totalMinutes: totalMinTotal.toFixed(1), average }
+  return { absences, lates, totalMinutes: totalMinTotal, average }
 })
 
 const outOfClassStats = computed(() => {
   const ocEvents = events.value.filter(e => e.code === 'w')
   const count = ocEvents.length
   const totalMinTotal = ocEvents.reduce((acc, e) => acc + toMinutes(e.duration), 0)
-  const average = count > 0 ? (totalMinTotal / count).toFixed(1) : '0.0'
+  const average = count > 0 ? Math.round((totalMinTotal / count) * 2) / 2 : 0
   
-  return { count, totalMinutes: totalMinTotal.toFixed(1), average }
+  return { count, totalMinutes: totalMinTotal, average }
 })
 
 const behaviorCodesMap = computed(() => 
