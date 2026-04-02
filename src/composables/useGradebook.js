@@ -20,7 +20,8 @@ export const globalMilestones = ref([])
 
 // Reactive state for analytics (Step 6)
 export const analyticsMode = ref(false) // false = grid, true = analytics panel
-export const excludeOutliers = ref(false) // analytics-only display toggle, not persisted
+export const exclusionMode = ref('none') // 'none', 'fixed', 'auto'
+export const fixedExclusionThreshold = ref(40) // Default cutoff %
 export const distributionMode = ref('buckets') // 'buckets' (10%) or 'levels' (Ontario GS)
 export const classAnalytics = ref(null) // result of calculateClassAnalytics
 export const showAddAssessmentModal = ref(false)
@@ -116,15 +117,19 @@ export async function refreshClassAnalytics() {
     activeClassRecord.value,
     assessments.value,
     grades.value,
-    { excludeOutliers: excludeOutliers.value, asOf }
+    { 
+      exclusionMode: exclusionMode.value, 
+      exclusionThreshold: fixedExclusionThreshold.value,
+      asOf 
+    }
   )
 }
 
 /**
- * Toggle outlier exclusion — recomputes analytics immediately.
+ * Set exclusion mode and refresh analytics.
  */
-export async function toggleOutlierExclusion() {
-  excludeOutliers.value = !excludeOutliers.value
+export async function setExclusionMode(mode) {
+  exclusionMode.value = mode
   await refreshClassAnalytics()
 }
 
@@ -144,7 +149,7 @@ export async function toggleStudentFromAnalytics(studentId) {
  * Reset analytics state when leaving the analytics panel.
  */
 export function resetAnalyticsState() {
-  excludeOutliers.value = false
+  exclusionMode.value = 'none'
   distributionMode.value = 'buckets'
   classAnalytics.value = null
   analyticsMode.value = false
@@ -546,7 +551,8 @@ export const assessmentStats = computed(() => {
       grades.value,
       assessment,
       { 
-        excludeOutliers: excludeOutliers.value,
+        exclusionMode: exclusionMode.value,
+        exclusionThreshold: fixedExclusionThreshold.value,
         excludedStudentIds: new Set(
           Object.keys(activeClassRecord.value?.students ?? {})
             .filter(id => activeClassRecord.value.students[id].excludeFromAnalytics)

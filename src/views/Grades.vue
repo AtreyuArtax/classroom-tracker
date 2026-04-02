@@ -358,33 +358,51 @@
           <div v-if="analyticsMode" class="grades__analytics-panel">
             <!-- Outlier Toggle & Notice (Step 7) -->
             <div class="grades__analytics-header">
-              <div v-if="excludeOutliers" class="grades__outlier-notice">
+              <div v-if="exclusionMode !== 'none'" class="grades__outlier-notice" :title="excludedNames">
                 <AlertCircle :size="16" />
-                <span>Outlier exclusion active: {{ classAnalytics?.excludedStudentCount || 0 }} students hidden.</span>
+                <span>Exclusion active: {{ classAnalytics?.outlierCount || 0 }} {{ classAnalytics?.outlierCount === 1 ? 'student' : 'students' }} hidden.</span>
               </div>
               <div class="grades__outlier-toggle">
-                <!-- Bug 4: Segmented Outlier Toggle -->
+                <span class="grades__toggle-label">Exclusion Filter:</span>
                 <div class="grades__toggle-group">
                   <button 
                     class="grades__toggle-btn" 
-                    :class="{ 'grades__toggle-btn--active': !excludeOutliers }"
-                    @click="excludeOutliers = false"
+                    :class="{ 'grades__toggle-btn--active': exclusionMode === 'none' }"
+                    @click="setExclusionMode('none')"
                   >Include All</button>
                   <button 
                     class="grades__toggle-btn" 
-                    :class="{ 'grades__toggle-btn--active': excludeOutliers }"
-                    @click="excludeOutliers = true"
-                  >Exclude Outliers</button>
+                    :class="{ 'grades__toggle-btn--active': exclusionMode === 'fixed' }"
+                    @click="setExclusionMode('fixed')"
+                  >
+                    <span v-if="exclusionMode !== 'fixed'">Below {{ fixedExclusionThreshold }}%</span>
+                    <div v-else class="grades__threshold-editor">
+                      Below <input 
+                        type="number" 
+                        v-model.number="fixedExclusionThreshold" 
+                        @blur="refreshClassAnalytics"
+                        @keyup.enter="refreshClassAnalytics"
+                        class="grades__threshold-input"
+                      />%
+                    </div>
+                  </button>
+                  <button 
+                    class="grades__toggle-btn" 
+                    :class="{ 'grades__toggle-btn--active': exclusionMode === 'auto' }"
+                    @click="setExclusionMode('auto')"
+                  >Auto Outliers</button>
                 </div>
               </div>
             </div>
 
+            <!-- Overlay sits on top without removing content -->
             <div v-if="isCalculating" class="grades__calculating-overlay">
               <div class="grades__spinner"></div>
               <p>Calculating analytics...</p>
             </div>
 
-            <div v-else-if="!classAnalytics" class="grades__empty-analytics">
+            <!-- Empty state only if no data and NOT calculating -->
+            <div v-if="!classAnalytics && !isCalculating" class="grades__empty-analytics">
               <div class="grades__empty-content">
                 <BarChart2 :size="64" class="grades__empty-icon" />
                 <h3>No analytics available yet.</h3>
@@ -395,7 +413,8 @@
               </div>
             </div>
 
-            <div v-else class="grades__analytics-scrollable">
+            <!-- Main content - always stays in DOM if it exists to preserve scroll -->
+            <div v-if="classAnalytics" class="grades__analytics-scrollable">
               <div class="grades__analytics-sections">
                 <!-- Class Overview Cards (Step 3) -->
                 <div class="grades__analytics-row">
@@ -1009,10 +1028,11 @@ import {
   saveStudentGradebookNote,
   saveStudentDemographics,
   analyticsMode,
-  excludeOutliers,
+  exclusionMode,
+  fixedExclusionThreshold,
   classAnalytics,
   refreshClassAnalytics,
-  toggleOutlierExclusion,
+  setExclusionMode,
   toggleStudentFromAnalytics,
   resetAnalyticsState,
   distributionMode,
@@ -1107,6 +1127,32 @@ watch(showAddAssessmentModal, (val) => {
   } else {
     // Reset is handled by closeAddAssessment in composable if needed, 
     // but here we align with old logic if it had specific sidebar resets
+  }
+})
+
+/**
+ * Bug Fix: Watch exclusionMode to ensure analytics are recalculated 
+ * immediately when the toggle is flipped.
+ */
+watch(exclusionMode, async () => {
+  if (analyticsMode.value) {
+    isCalculating.value = true
+    try {
+      await refreshClassAnalytics()
+    } finally {
+      isCalculating.value = false
+    }
+  }
+})
+
+watch(fixedExclusionThreshold, async () => {
+  if (analyticsMode.value && exclusionMode.value === 'fixed') {
+    isCalculating.value = true
+    try {
+      await refreshClassAnalytics()
+    } finally {
+      isCalculating.value = false
+    }
   }
 })
 
@@ -1402,25 +1448,56 @@ const classEvidenceBlend = computed(() => {
   }
 })
 
+const filteredClassGrades = computed(() => {
+  if (!classGrades.value) return {}
+  
+  // 1. Manual Exclusions (tracked in classRecord)
+  const manualExcludes = new Set(
+    Object.keys(activeClassRecord.value?.students ?? {})
+      .filter(id => activeClassRecord.value.students[id].excludeFromAnalytics)
+  )
+
+  // 2. Filtered IDs from Analytics
+  const isToggleActive = exclusionMode.value !== 'none' && classAnalytics.value?.outlierStudentIds
+  const outlierIds = isToggleActive ? new Set(classAnalytics.value.outlierStudentIds) : new Set()
+
+  const filtered = {}
+  Object.keys(classGrades.value).forEach(studentId => {
+    // Skip if in either exclusion list
+    if (!manualExcludes.has(studentId) && !outlierIds.has(studentId)) {
+      filtered[studentId] = classGrades.value[studentId]
+    }
+  })
+  return filtered
+})
+
+const excludedNames = computed(() => {
+  if (!classAnalytics.value?.outlierStudentIds?.length) return ''
+  const names = classAnalytics.value.outlierStudentIds
+    .map(id => {
+      const s = activeClassRecord.value?.students[id]
+      return s ? `${s.firstName} ${s.lastName}` : 'Unknown Student'
+    })
+  return 'Hidden students: ' + names.join(', ')
+})
+
 const overallClassAvg = computed(() => {
-  if (!classGrades.value) return null
-  const gradesValues = Object.values(classGrades.value)
+  const grades = Object.values(filteredClassGrades.value)
     .filter(g => g && g.overallGrade !== null)
     .map(g => g.overallGrade)
   
-  if (gradesValues.length === 0) return null
-  const sum = gradesValues.reduce((acc, g) => acc + g, 0)
-  return sum / gradesValues.length
+  if (grades.length === 0) return null
+  const sum = grades.reduce((acc, g) => acc + g, 0)
+  return sum / grades.length
 })
 
 const overallClassMedian = computed(() => {
-  if (!classGrades.value) return null
-  const gradesValues = Object.values(classGrades.value)
+  const grades = Object.values(filteredClassGrades.value)
     .filter(g => g && g.overallGrade !== null)
     .map(g => g.overallGrade)
   
-  if (gradesValues.length === 0) return null
-  const sorted = [...gradesValues].sort((a, b) => a - b)
+  if (grades.length === 0) return null
+  const sorted = [...grades].sort((a, b) => a - b)
   const mid = Math.floor(sorted.length / 2)
   if (sorted.length % 2 === 0) {
     return (sorted[mid - 1] + sorted[mid]) / 2
@@ -1429,15 +1506,14 @@ const overallClassMedian = computed(() => {
 })
 
 const overallClassSD = computed(() => {
-  if (!classGrades.value) return null
-  const gradesValues = Object.values(classGrades.value)
+  const grades = Object.values(filteredClassGrades.value)
     .filter(g => g && g.overallGrade !== null)
     .map(g => g.overallGrade)
   
-  if (gradesValues.length === 0) return null
+  if (grades.length === 0) return null
   const mean = overallClassAvg.value
-  const squareDiffs = gradesValues.map(v => Math.pow(v - mean, 2))
-  const avgSquareDiff = squareDiffs.reduce((a, b) => a + b, 0) / squareDiffs.length
+  const squareDiffs = grades.map(v => Math.pow(v - mean, 2))
+  const avgSquareDiff = squareDiffs.reduce((a, b) => a + b, 0) / (grades.length - 1)
   return Math.sqrt(avgSquareDiff)
 })
 
@@ -1494,23 +1570,24 @@ const bucketChartOptions = {
  * Step 3: Rollup of most consistent level across class
  */
 const classMostConsistent = computed(() => {
-  if (!classGrades.value) return null
+  const dataset = Object.values(filteredClassGrades.value)
+  if (dataset.length === 0) return null
   
   const bucketCounts = {} // label -> count
   const bucketRanges = {} // label -> range
   
-  Object.values(classGrades.value).forEach(sg => {
-    // Bug 1: Aggregate categoryBreakdown across all students
-    const cb = sg?.mostConsistent?.categoryBreakdown
-    if (cb) {
-      Object.values(cb).forEach(cat => {
-        if (cat && cat.bucketLabel && !cat.isFallback) {
-          bucketCounts[cat.bucketLabel] = (bucketCounts[cat.bucketLabel] || 0) + 1
-          if (!bucketRanges[cat.bucketLabel]) {
-            bucketRanges[cat.bucketLabel] = cat.bucketRange
-          }
-        }
-      })
+  dataset.forEach(sg => {
+    const mc = sg?.mostConsistent
+    if (mc && mc.percentage !== undefined && mc.percentage !== null) {
+      const p = mc.percentage
+      const idx = p >= 100 ? 9 : Math.floor(p / 10)
+      const label = `${idx * 10}-${idx * 10 + 9}%`
+      const range = [idx * 10, idx * 10 + 9]
+
+      bucketCounts[label] = (bucketCounts[label] || 0) + 1
+      if (!bucketRanges[label]) {
+        bucketRanges[label] = range
+      }
     }
   })
   
@@ -1522,7 +1599,7 @@ const classMostConsistent = computed(() => {
     label,
     count,
     range: bucketRanges[label],
-    total: Object.keys(classGrades.value).length
+    total: dataset.length
   }
 })
 
@@ -4794,5 +4871,57 @@ verall-trend {
   color: var(--text-tertiary);
   margin-top: 8px;
   font-style: italic;
+}
+
+.grades__outlier-toggle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.grades__toggle-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.grades__threshold-editor {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.grades__threshold-input {
+  width: 38px;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: inherit;
+  border-radius: 4px;
+  padding: 0 4px;
+  font-size: inherit;
+  font-family: inherit;
+  font-weight: 700;
+  text-align: center;
+}
+
+.grades__toggle-btn--active .grades__threshold-input {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.4);
+  color: white;
+}
+
+.grades__threshold-input:focus {
+  outline: none;
+  background: rgba(255, 255, 255, 0.25);
+  border-color: var(--primary);
+}
+
+/* Remove arrows for chrome/safari */
+.grades__threshold-input::-webkit-outer-spin-button,
+.grades__threshold-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }
 </style>

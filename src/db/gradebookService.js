@@ -381,6 +381,7 @@ export function calculateStandardDeviation(values) {
 
 /**
  * Detects outliers using standard deviation (default 1.5 SD below mean).
+ * Includes a "Hard Zero" rule for non-attending students in healthy classes.
  * @param {Array<number>} values 
  * @param {number} threshold 
  * @returns {Object} { clean, outliers, cutoff, mean, sd }
@@ -390,7 +391,19 @@ export function detectOutliers(values, threshold = 1.5) {
   const mean = values.reduce((a, b) => a + b, 0) / values.length
   const sd = calculateStandardDeviation(values)
   if (sd === null || sd === 0) return { clean: values, outliers: [] }
-  const cutoff = mean - (threshold * sd)
+
+  let cutoff = mean - (threshold * sd)
+
+  // Hard Zero / Extreme Deviation Rule:
+  // If the class mean is healthy (>50%), any student at 0% is statistically
+  // likely to be a non-participator (outlier) unless >25% of the class also has 0%.
+  const zeroCount = values.filter(v => v === 0).length
+  const zeroRatio = zeroCount / values.length
+  if (mean > 50 && zeroRatio < 0.25) {
+    // Ensure cutoff is at least 1% to catch hard zeros/Missing entries
+    if (cutoff < 1) cutoff = 1
+  }
+
   const clean = values.filter(v => v >= cutoff)
   const outliers = values.filter(v => v < cutoff)
   return { clean, outliers, cutoff, mean, sd }
@@ -818,11 +831,15 @@ export async function calculateClassGrades(classRecord, { asOf = null } = {}) {
  * @param {number} assessmentId
  * @param {Array<Object>} grades All grades for this class.
  * @param {Object} assessment The assessment metadata.
- * @param {Object} options { excludeOutliers: boolean, excludedStudentIds: Set<string> }
+ * @param {Object} options { exclusionMode: string, exclusionThreshold: number, excludedStudentIds: Set<string> }
  * @returns {Object|null}
  */
 export function calculateAssessmentAnalytics(assessmentId, grades, assessment, options = {}) {
-  const { excludeOutliers = false, excludedStudentIds = new Set() } = options
+  const { 
+    exclusionMode = 'none', 
+    exclusionThreshold = 40, 
+    excludedStudentIds = new Set() 
+  } = options
 
   // Skip individual assessments as they don't have "class averages"
   if (assessment.target === 'individual') return null
@@ -851,21 +868,11 @@ export function calculateAssessmentAnalytics(assessmentId, grades, assessment, o
 
   const allPercentages = allScores.map(s => s.percentage)
 
-  // Outlier detection
-  const outlierResult = detectOutliers(allPercentages)
-  const activePercentages = excludeOutliers ? outlierResult.clean : allPercentages
+  // Filtering logic
+  const exclusionResults = getExclusionResults(allScores, exclusionMode, exclusionThreshold)
+  const activePercentages = exclusionResults.activePercentages
+  const outlierStudentIds = exclusionResults.excludedIds
   
-  // Bug 5: Safe outlier mapping by studentId
-  const outlierStudentIds = []
-  if (excludeOutliers && outlierResult.outliers.length > 0) {
-    const outlierThreshold = outlierResult.cutoff
-    allScores.forEach(s => {
-      if (s.percentage < outlierThreshold) {
-        outlierStudentIds.push(s.studentId)
-      }
-    })
-  }
-
   if (activePercentages.length === 0) return null
 
   // Core stats on active (possibly filtered) set
@@ -876,8 +883,8 @@ export function calculateAssessmentAnalytics(assessmentId, grades, assessment, o
   const highest = sorted[sorted.length - 1]
   const lowest = sorted[0]
 
-  // Distribution buckets on full unfiltered set (always show full picture)
-  const distributionBuckets = buildDistributionBuckets(allPercentages)
+  // Distribution buckets on filtered set
+  const distributionBuckets = buildDistributionBuckets(activePercentages)
 
   return {
     assessmentId,
@@ -890,10 +897,10 @@ export function calculateAssessmentAnalytics(assessmentId, grades, assessment, o
     highest: Math.round(highest * 10) / 10,
     lowest: Math.round(lowest * 10) / 10,
     distributionBuckets,
-    levelBuckets: buildLevelDistributionBuckets(allPercentages),
-    outlierCount: outlierResult.outliers.length,
+    levelBuckets: buildLevelDistributionBuckets(activePercentages),
+    outlierCount: outlierStudentIds.length,
     outlierStudentIds,
-    excludeOutliersActive: excludeOutliers,
+    excludeOutliersActive: exclusionMode !== 'none',
     // Calibration signal: low mean + high SD = poorly calibrated assessment
     calibrationFlag: mean < 60 && sd !== null && sd > 15 ? 'too_hard' :
                      mean > 90 && sd !== null && sd < 5 ? 'too_easy' : null
@@ -906,10 +913,14 @@ export function calculateAssessmentAnalytics(assessmentId, grades, assessment, o
  * @param {Object} classRecord
  * @param {Array<Object>} assessments
  * @param {Array<Object>} grades
- * @param {Object} options { excludeOutliers: boolean, asOf: string | null }
+ * @param {Object} options { exclusionMode: string, exclusionThreshold: number, asOf: string | null }
  */
 export async function calculateClassAnalytics(classRecord, assessments, grades, options = {}) {
-  const { excludeOutliers = false, asOf = null } = options
+  const { 
+    exclusionMode = 'none', 
+    exclusionThreshold = 40,
+    asOf = null 
+  } = options
 
   const studentIds = Object.keys(classRecord.students ?? {})
   const excludedStudentIds = new Set(
@@ -999,24 +1010,16 @@ export async function calculateClassAnalytics(classRecord, assessments, grades, 
 
   const allPercentages = studentGrades.map(s => s.percentage)
 
-  // Apply outlier exclusion if toggled
-  const outlierResult = detectOutliers(allPercentages)
-  const activePercentages = excludeOutliers ? outlierResult.clean : allPercentages
-  
-  const outlierStudentIds = []
-  if (excludeOutliers && outlierResult.outliers.length > 0) {
-    const outlierThreshold = outlierResult.cutoff
-    studentGrades.forEach(s => {
-      if (s.percentage < outlierThreshold) {
-        outlierStudentIds.push(s.studentId)
-      }
-    })
-  }
+  // Apply filtering
+  const exclusionResults = getExclusionResults(studentGrades, exclusionMode, exclusionThreshold)
+  const activePercentages = exclusionResults.activePercentages
+  const outlierStudentIds = exclusionResults.excludedIds
 
   const mean = activePercentages.reduce((a, b) => a + b, 0) / activePercentages.length
   const sd = calculateStandardDeviation(activePercentages)
   const median = calculateMedian(activePercentages)
-  const distributionBuckets = buildDistributionBuckets(allPercentages)
+  const distributionBuckets = buildDistributionBuckets(activePercentages)
+  const levelBuckets = buildLevelDistributionBuckets(activePercentages)
 
     // Per-assessment analytics (Grouped by type)
     const productAnalytics = {}
@@ -1028,7 +1031,11 @@ export async function calculateClassAnalytics(classRecord, assessments, grades, 
     for (const a of assessments.filter(a => a.target === 'class' && !a.excluded)) {
         const stats = calculateAssessmentAnalytics(
             a.assessmentId, grades, a,
-            { excludeOutliers, excludedStudentIds }
+            { 
+              exclusionMode, 
+              exclusionThreshold, 
+              excludedStudentIds 
+            }
         )
         if (stats) {
             if (a.assessmentType === 'observation') observationAnalytics[a.assessmentId] = stats
@@ -1075,12 +1082,12 @@ export async function calculateClassAnalytics(classRecord, assessments, grades, 
         median: Math.round(median * 10) / 10,
         sd: sd !== null ? Math.round(sd * 10) / 10 : null,
         distributionBuckets,
-        levelBuckets: buildLevelDistributionBuckets(allPercentages),
+        levelBuckets,
         studentCount: activePercentages.length,
         totalStudentCount: allPercentages.length,
-        outlierCount: outlierResult.outliers.length,
+        outlierCount: outlierStudentIds.length,
         outlierStudentIds,
-        excludeOutliersActive: excludeOutliers,
+        excludeOutliersActive: exclusionMode !== 'none',
 
         // Grouped assessment breakdowns
         productAnalytics,
@@ -1094,6 +1101,36 @@ export async function calculateClassAnalytics(classRecord, assessments, grades, 
         // Milestone context
         asOf
     }
+}
+
+/**
+ * Helper to get active percentages and excluded student IDs based on mode.
+ * Internal to this file.
+ */
+function getExclusionResults(studentGrades, mode, threshold) {
+  const allPercentages = studentGrades.map(s => s.percentage)
+  
+  if (!mode || mode === 'none') {
+    return { activePercentages: allPercentages, excludedIds: [] }
+  }
+
+  if (mode === 'fixed') {
+    const clean = allPercentages.filter(p => p >= threshold)
+    const hiddenIds = studentGrades
+      .filter(s => s.percentage < threshold)
+      .map(s => s.studentId)
+    return { activePercentages: clean, excludedIds: hiddenIds }
+  }
+
+  if (mode === 'auto') {
+    const res = detectOutliers(allPercentages)
+    const hiddenIds = studentGrades
+      .filter(s => s.percentage < res.cutoff)
+      .map(s => s.studentId)
+    return { activePercentages: res.clean, excludedIds: hiddenIds }
+  }
+
+  return { activePercentages: allPercentages, excludedIds: [] }
 }
 
 // ─── Template Management ─────────────────────────────────────────────────────
