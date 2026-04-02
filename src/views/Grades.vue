@@ -703,22 +703,32 @@
               <thead>
                 <!-- Top Header -->
                 <tr>
-                  <th class="grades__th-student" @click="toggleGridSort('name')">
-                    <div class="grades__sort-header">
-                      Student Name
-                      <span v-if="gridSortBy === 'name'" class="grades__sort-icon">
-                        <ChevronUp v-if="gridSortOrder === 'asc'" :size="14" />
-                        <ChevronDown v-else :size="14" />
-                      </span>
+                  <th class="grades__th-student">
+                    <div class="grades__assessment-header">
+                      <div class="grades__sort-header" @click="toggleGridSort('name')">
+                        Student Name
+                        <span v-if="gridSortBy === 'name'" class="grades__sort-icon">
+                          <ChevronUp v-if="gridSortOrder === 'asc'" :size="14" />
+                          <ChevronDown v-else :size="14" />
+                        </span>
+                      </div>
+                      <button class="grades__header-menu-btn" @click.stop="onHeaderMenu($event, 'name')">
+                        <MoreVertical :size="14" />
+                      </button>
                     </div>
                   </th>
-                  <th class="grades__th-overall" @click="toggleGridSort('grade')">
-                    <div class="grades__sort-header">
-                      Overall
-                      <span v-if="gridSortBy === 'grade'" class="grades__sort-icon">
-                        <ChevronUp v-if="gridSortOrder === 'asc'" :size="14" />
-                        <ChevronDown v-else :size="14" />
-                      </span>
+                  <th class="grades__th-overall">
+                    <div class="grades__assessment-header">
+                      <div class="grades__sort-header" @click="toggleGridSort('grade')">
+                        Overall
+                        <span v-if="gridSortBy === 'grade'" class="grades__sort-icon">
+                          <ChevronUp v-if="gridSortOrder === 'asc'" :size="14" />
+                          <ChevronDown v-else :size="14" />
+                        </span>
+                      </div>
+                      <button class="grades__header-menu-btn" @click.stop="onHeaderMenu($event, 'grade')">
+                        <MoreVertical :size="14" />
+                      </button>
                     </div>
                   </th>
                   <th 
@@ -740,7 +750,7 @@
                           <span v-if="a.unitId" class="grades__assessment-unit">{{ getUnitName(a.unitId) }}</span>
                         </div>
                       </div>
-                      <button class="grades__header-menu-btn" @click.stop="onHeaderMenu($event, a)">
+                      <button class="grades__header-menu-btn" @click.stop="onHeaderMenu($event, 'assessment', a)">
                         <MoreVertical :size="14" />
                       </button>
                     </div>
@@ -773,7 +783,11 @@
               
               <tbody>
                 <tr v-for="student in sortedRoster" :key="student.studentId">
-                  <td class="grades__td-student" @click="showStudentDossier(student.studentId)">
+                  <td 
+                    class="grades__td-student" 
+                    :class="{ 'grades__td--highlighted': highlightedColumnId === 'name' }"
+                    @click="showStudentDossier(student.studentId)"
+                  >
                     <div class="grades__student-name-group">
                       <span class="grades__student-link">{{ student.lastName }}, {{ student.firstName }}</span>
                       <div class="grades__sparkline-mini" v-if="studentTrends[student.studentId]?.length > 1 && !isPrivacyMode">
@@ -792,6 +806,7 @@
                   </td>
                   <td 
                     class="grades__td-overall"
+                    :class="{ 'grades__td--highlighted': highlightedColumnId === 'grade' }"
                     :style="{ background: getHeatColor(classGrades[student.studentId]?.overallGrade) }"
                   >
                     {{ formatGrade(classGrades[student.studentId]?.overallGrade) }}
@@ -800,6 +815,7 @@
                     v-for="a in sortedAssessments" 
                     :key="a.assessmentId"
                     class="grades__td-assessment"
+                    :class="{ 'grades__td-assessment--highlighted': highlightedColumnId === a.assessmentId }"
                     :style="getCellStyle(student.studentId, a.assessmentId, a.totalPoints)"
                     @click="startEdit(student.studentId, a.assessmentId)"
                     @contextmenu.prevent="onContextMenu($event, student.studentId, a.assessmentId)"
@@ -898,17 +914,40 @@
       </div>
     </div>
 
-    <div v-if="assessmentMenu" class="grades__context-backdrop grades__context-backdrop--dim" @click="assessmentMenu = null" @contextmenu.prevent="assessmentMenu = null">
-      <div class="grades__context-menu" :style="{ top: assessmentMenu.y + 'px', left: assessmentMenu.x + 'px' }">
-        <button class="grades__context-btn" @click="toggleGridSort(assessmentMenu.assessment.assessmentId); assessmentMenu = null">
-          <BarChart2 :size="14" /> Sort by Assessment
-        </button>
-        <button class="grades__context-btn" @click="startEditAssessment(assessmentMenu.assessment); assessmentMenu = null">
-          <Pencil :size="14" /> Edit Assessment
-        </button>
-        <button class="grades__context-btn grades__context-btn--danger" @click="confirmDeleteAssessment(assessmentMenu.assessment); assessmentMenu = null">
-          <Trash2 :size="14" /> Delete Assessment
-        </button>
+    <div v-if="headerMenu" class="grades__context-backdrop grades__context-backdrop--dim" @click="headerMenu = null" @contextmenu.prevent="headerMenu = null">
+      <div class="grades__context-menu" :style="{ top: headerMenu.y + 'px', left: headerMenu.x + 'px' }">
+        <template v-if="headerMenu.type === 'name'">
+          <button class="grades__context-btn" @click="toggleGridSort('name'); headerMenu = null">
+            <BarChart2 :size="14" /> Sort by Name
+          </button>
+          <button class="grades__context-btn" @click="copyStudentNames(); headerMenu = null">
+            <Copy :size="14" /> Copy Names List
+          </button>
+        </template>
+
+        <template v-if="headerMenu.type === 'grade'">
+          <button class="grades__context-btn" @click="toggleGridSort('grade'); headerMenu = null">
+            <BarChart2 :size="14" /> Sort by Grade
+          </button>
+          <button class="grades__context-btn" @click="copyOverallGrades(); headerMenu = null">
+            <Copy :size="14" /> Copy Overall Marks
+          </button>
+        </template>
+
+        <template v-if="headerMenu.type === 'assessment'">
+          <button class="grades__context-btn" @click="toggleGridSort(headerMenu.assessment.assessmentId); headerMenu = null">
+            <BarChart2 :size="14" /> Sort by Assessment
+          </button>
+          <button class="grades__context-btn" @click="startEditAssessment(headerMenu.assessment); headerMenu = null">
+            <Pencil :size="14" /> Edit Assessment
+          </button>
+          <button class="grades__context-btn" @click="copyAssessmentGrades(headerMenu.assessment); headerMenu = null">
+            <Copy :size="14" /> Copy Column (Scores)
+          </button>
+          <button class="grades__context-btn grades__context-btn--danger" @click="confirmDeleteAssessment(headerMenu.assessment); headerMenu = null">
+            <Trash2 :size="14" /> Delete Assessment
+          </button>
+        </template>
       </div>
     </div>
 
@@ -1049,7 +1088,7 @@ import {
   enterGrade,
   changeGrade
 } from '../composables/useGradebook.js'
-import { Plus, BarChart2, Settings, Pencil, XCircle, AlertCircle, Trash2, X, MoreVertical, ArrowLeft, Check, ArrowUp, ArrowDown, Minus, GraduationCap, Eye, EyeOff, ChevronLeft, ChevronRight, UserCheck, Activity, FilePlus, Target, Hash, Calendar, Award, AlertTriangle, ChevronUp, ChevronDown } from 'lucide-vue-next'
+import { Plus, BarChart2, Settings, Pencil, XCircle, AlertCircle, Trash2, X, MoreVertical, ArrowLeft, Check, ArrowUp, ArrowDown, Minus, GraduationCap, Eye, EyeOff, ChevronLeft, ChevronRight, UserCheck, Activity, FilePlus, Target, Hash, Calendar, Award, AlertTriangle, ChevronUp, ChevronDown, Copy } from 'lucide-vue-next'
 import Student360 from '../components/dossier/Student360.vue'
 import StudentSidebar from '../components/StudentSidebar.vue'
 import GradeTrendChart from '../components/GradeTrendChart.vue'
@@ -1097,7 +1136,8 @@ const editingCell = ref(null) // { sId, aId, value }
 const editInput = ref(null)
 const contextMenu = ref(null) // { x, y, sId, aId }
 const attemptsPopover = ref(null) // { x, y, sId, aId, studentName, attempts, totalPoints }
-const assessmentMenu = ref(null) // { x, y, assessment }
+const headerMenu = ref(null) // { x, y, type, assessment? }
+const highlightedColumnId = ref(null) // assessmentId or 'name' or 'grade'
 const editOriginalValue = ref(null)
 const currentAssessmentIdLocal = null // Removed unused local ref
 const selectedStudentId = ref(null)
@@ -1901,10 +1941,11 @@ function onEditAssessment(assessment) {
   startEditAssessment(assessment)
 }
 
-function onHeaderMenu(e, assessment) {
-  const { x, y } = getAdjustedPosition(e, 160, 100)
-  assessmentMenu.value = {
+function onHeaderMenu(e, type, assessment = null) {
+  const { x, y } = getAdjustedPosition(e, 180, 120)
+  headerMenu.value = {
     x, y,
+    type,
     assessment
   }
 }
@@ -1934,6 +1975,57 @@ async function confirmDeleteAssessment(assessment) {
   if (!window.confirm(`Delete ${assessment.name}? This will permanently remove all grades for this assessment and cannot be undone.`)) return
   
   await deleteAssessment(assessment.assessmentId)
+}
+
+function copyStudentNames() {
+  const text = sortedRoster.value.map(s => `${s.lastName}, ${s.firstName}`).join("\n")
+  navigator.clipboard.writeText(text).then(() => {
+    highlightedColumnId.value = 'name'
+    setTimeout(() => { highlightedColumnId.value = null }, 1500)
+  })
+}
+
+function copyOverallGrades() {
+  const text = sortedRoster.value.map(s => {
+    const grade = classGrades.value[s.studentId]?.overallGrade
+    return grade !== undefined ? formatGrade(grade).replace('%', '') : ""
+  }).join("\n")
+  
+  navigator.clipboard.writeText(text).then(() => {
+    highlightedColumnId.value = 'grade'
+    setTimeout(() => { highlightedColumnId.value = null }, 1500)
+  })
+}
+
+function copyAssessmentGrades(assessment) {
+  if (!assessment) return
+  
+  const assessmentId = assessment.assessmentId
+  const totalPoints = assessment.totalPoints
+  
+  const text = sortedRoster.value.map(student => {
+    const grade = gradeMap.value[assessmentId]?.[student.studentId]
+    if (!grade) return ""
+    if (grade.missing) return "Missing"
+    if (grade.excluded) return "Excluded"
+    if (grade.resolvedScore === null || grade.resolvedScore === undefined) return ""
+    
+    // Format based on current display mode
+    if (displayMode.value === 'raw') {
+      return Math.round(grade.resolvedScore * 10) / 10
+    }
+    return Math.round((grade.resolvedScore / totalPoints) * 100)
+  }).join("\n")
+
+  navigator.clipboard.writeText(text).then(() => {
+    // Show visual highlight feedback
+    highlightedColumnId.value = assessmentId
+    setTimeout(() => {
+      highlightedColumnId.value = null
+    }, 1500)
+  }).catch(err => {
+    console.error('Failed to copy column:', err)
+  })
 }
 
 // --- Attempt Management ---
@@ -4175,6 +4267,13 @@ verall-trend {
 .grades__inline-actions {
   display: flex;
   gap: 4px;
+}
+
+.grades__td-assessment--highlighted,
+.grades__td--highlighted {
+  box-shadow: inset 0 0 0 2px var(--primary) !important;
+  transition: box-shadow 0.3s ease;
+  background-color: var(--primary-light) !important;
 }
 
 .grades__input-ghost--date { font-size: 0.8rem; width: 130px; font-weight: 500; }
