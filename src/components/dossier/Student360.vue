@@ -798,7 +798,8 @@ const {
 import { useStudentDossier } from '../../composables/useStudentDossier.js'
 import { parseLocal, formatLocalDisplay } from '../../utils/dates.js'
 
-const dossier = useStudentDossier()
+const { allTimeHistory, fetchAllTimeHistory } = useStudentDossier()
+
 
 // --- Email Progress Report State ---
 const showEmailModal = ref(false)
