@@ -1,54 +1,53 @@
 <template>
-  <Teleport to="body">
-    <div
-      v-if="modelValue"
-      class="scm-overlay"
-      @click.self="onCancel"
-      role="dialog"
-      aria-modal="true"
-    >
-      <div class="scm-card" @keydown.esc="onCancel">
-        <div class="scm-header">
-          <AlertTriangle v-if="danger" class="scm-icon scm-icon--danger" :size="24" />
-          <Info v-else class="scm-icon scm-icon--info" :size="24" />
-          <h2 class="scm-title">{{ title }}</h2>
-        </div>
+  <BaseModal
+    :show="modelValue"
+    @close="onCancel"
+    max-width="420px"
+  >
+    <template #header>
+      <div class="scm-header">
+        <AlertTriangle v-if="danger" class="scm-icon scm-icon--danger" :size="24" />
+        <Info v-else class="scm-icon scm-icon--info" :size="24" />
+        <h2 class="scm-title">{{ title }}</h2>
+      </div>
+    </template>
 
-        <p class="scm-message">{{ message }}</p>
+    <div class="scm-content" @keydown.esc="onCancel">
+      <p class="scm-message">{{ message }}</p>
 
-        <div v-if="requireText" class="scm-prompt">
-          <label class="scm-label">Type <strong>{{ requireText }}</strong> to proceed:</label>
-          <input
-            ref="inputRef"
-            v-model="userInput"
-            type="text"
-            class="scm-input"
-            :placeholder="requireText"
-            @keydown.enter="onConfirm"
-          />
-        </div>
+      <div v-if="requireText" class="scm-prompt">
+        <label class="scm-label">Type <strong>{{ requireText }}</strong> to proceed:</label>
+        <input
+          ref="inputRef"
+          v-model="userInput"
+          type="text"
+          class="scm-input"
+          :placeholder="requireText"
+          @keydown.enter="onConfirm"
+        />
+      </div>
 
-        <div class="scm-actions">
-          <button
-            class="scm-btn"
-            :class="[danger ? 'scm-btn--danger' : 'scm-btn--primary']"
-            :disabled="isConfirmDisabled"
-            @click="onConfirm"
-          >
-            {{ confirmLabel }}
-          </button>
-          <button class="scm-btn scm-btn--ghost" @click="onCancel">
-            {{ cancelLabel }}
-          </button>
-        </div>
+      <div class="scm-actions">
+        <button
+          class="scm-btn"
+          :class="[danger ? 'scm-btn--danger' : 'scm-btn--primary']"
+          :disabled="isConfirmDisabled"
+          @click="onConfirm"
+        >
+          {{ confirmLabel }}
+        </button>
+        <button class="scm-btn scm-btn--ghost" @click="onCancel">
+          {{ cancelLabel }}
+        </button>
       </div>
     </div>
-  </Teleport>
+  </BaseModal>
 </template>
 
 <script setup>
 import { ref, watch, nextTick, computed } from 'vue'
 import { AlertTriangle, Info } from 'lucide-vue-next'
+import BaseModal from './BaseModal.vue'
 
 const props = defineProps({
   modelValue:   { type: Boolean, required: true },
@@ -91,39 +90,10 @@ function onCancel() {
 </script>
 
 <style scoped>
-.scm-overlay {
-  position:        fixed;
-  inset:           0;
-  display:         flex;
-  align-items:     center;
-  justify-content: center;
-  background:      rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(4px);
-  z-index:         2000;
-  animation:       scm-fade-in 0.2s ease;
-}
-
-@keyframes scm-fade-in {
-  from { opacity: 0; }
-  to   { opacity: 1; }
-}
-
-.scm-card {
-  background:    var(--surface);
-  border-radius: var(--radius-lg);
-  box-shadow:    var(--shadow-lg);
-  border:        1px solid var(--border);
-  padding:       28px;
-  width:         min(420px, 92vw);
+.scm-content {
   display:       flex;
   flex-direction: column;
   gap:           20px;
-  animation:     scm-pop-in 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-@keyframes scm-pop-in {
-  from { transform: scale(0.9) translateY(10px); opacity: 0; }
-  to   { transform: scale(1)   translateY(0);    opacity: 1; }
 }
 
 .scm-header {

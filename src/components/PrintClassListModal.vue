@@ -1,7 +1,12 @@
 <template>
-  <div class="setup__dialog" role="dialog" aria-modal="true">
-    <div class="setup__dialog-box" style="max-width: 500px;">
-      <div class="setup__dialog-header">
+  <BaseModal
+    :show="true"
+    @close="$emit('close')"
+    max-width="500px"
+    title="Print Class List"
+  >
+    <template #header>
+      <div class="setup__dialog-header-custom">
         <h3 class="setup__dialog-title">Print Class List</h3>
         <div class="setup__dialog-actions">
           <button class="setup__btn-primary" @click="handlePrint" :disabled="isPrinting">
@@ -12,49 +17,48 @@
           </button>
         </div>
       </div>
-      
-      <div class="setup__dialog-body">
-        <form class="setup__form" @submit.prevent="handlePrint">
+    </template>
+
+    <div class="setup__dialog-body">
+      <form class="setup__form" @submit.prevent="handlePrint">
+        <label class="setup__label">
+          Sheet Title
+          <input v-model="form.title" class="setup__input" required placeholder="e.g. ATTENDANCE January 2024" />
+        </label>
+        <div class="modal-form-grid">
           <label class="setup__label">
-            Sheet Title
-            <input v-model="form.title" class="setup__input" required placeholder="e.g. ATTENDANCE January 2024" />
+            Blank Columns
+            <input v-model.number="form.blankColumns" type="number" min="1" max="40" class="setup__input" required />
           </label>
-          <div class="modal-form-grid">
-            <label class="setup__label">
-              Blank Columns
-              <input v-model.number="form.blankColumns" type="number" min="1" max="40" class="setup__input" required />
+          <label class="setup__label">
+            Top Blank Rows
+            <input v-model.number="form.headerRows" type="number" min="0" max="10" class="setup__input" required />
+          </label>
+          <label class="setup__label">
+            Extra Footer Rows
+            <input 
+              v-model.number="form.footerRows" 
+              type="number" 
+              min="0" 
+              max="50" 
+              class="setup__input" 
+              :disabled="form.autoFill"
+              required 
+            />
+          </label>
+          <div class="setup__label" style="justify-content: flex-end; padding-bottom: 8px;">
+            <label class="setup__label--checkbox">
+              <input type="checkbox" v-model="form.autoFill" class="setup__checkbox" />
+              Auto-Fill to Page
             </label>
-            <label class="setup__label">
-              Top Blank Rows
-              <input v-model.number="form.headerRows" type="number" min="0" max="10" class="setup__input" required />
-            </label>
-            <label class="setup__label">
-              Extra Footer Rows
-              <input 
-                v-model.number="form.footerRows" 
-                type="number" 
-                min="0" 
-                max="50" 
-                class="setup__input" 
-                :disabled="form.autoFill"
-                required 
-              />
-            </label>
-            <div class="setup__label" style="justify-content: flex-end; padding-bottom: 8px;">
-              <label class="setup__label--checkbox">
-                <input type="checkbox" v-model="form.autoFill" class="setup__checkbox" />
-                Auto-Fill to Page
-              </label>
-            </div>
           </div>
-          
-          <div v-if="form.autoFill" class="form-hint">
-            Will automatically add <strong>{{ effectiveFooterRows }}</strong> blank rows to fit exactly one page (target: {{ form.targetTotalRows }} rows).
-          </div>
-        </form>
-      </div>
+        </div>
+        
+        <div v-if="form.autoFill" class="form-hint">
+          Will automatically add <strong>{{ effectiveFooterRows }}</strong> blank rows to fit exactly one page (target: {{ form.targetTotalRows }} rows).
+        </div>
+      </form>
     </div>
-    <div class="setup__dialog-backdrop" @click="$emit('close')" />
 
     <!-- ── Hidden Print Container ─── -->
     <Teleport to="body" v-if="mounted">
@@ -91,12 +95,13 @@
         </div>
       </div>
     </Teleport>
-  </div>
+  </BaseModal>
 </template>
 
 <script setup>
 import { ref, computed, nextTick, onMounted } from 'vue'
 import { Printer, X } from 'lucide-vue-next'
+import BaseModal from './BaseModal.vue'
 
 const props = defineProps({
   classRecord: { type: Object, required: true },

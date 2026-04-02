@@ -1,119 +1,115 @@
 <template>
-  <Teleport to="body">
-    <div v-if="showAddAssessmentModal" class="add-assessment-modal-backdrop">
-      <div class="add-assessment-modal" role="dialog" aria-modal="true">
-        <header class="modal-header">
-          <h3 class="modal-title">{{ isEditingAssessment ? 'Edit Assessment' : 'New Assessment' }}</h3>
-          <button class="icon-btn" @click="closeAddAssessment"><X :size="20" /></button>
-        </header>
-        
-        <form class="modal-form" @submit.prevent="saveAssessment">
-          <!-- Target Toggle -->
-          <div class="form-group">
-            <label class="form-label">Scope</label>
-            <div class="toggle-group toggle-group--large">
-              <button 
-                type="button" 
-                class="toggle-btn" 
-                :class="{ 'toggle-btn--active': newAssessment.target === 'class' }"
-                @click="newAssessment.target = 'class'; onTargetChange()"
-              >Class Assessment</button>
-              <button 
-                type="button" 
-                class="toggle-btn" 
-                :class="{ 'toggle-btn--active': newAssessment.target === 'individual' }"
-                @click="newAssessment.target = 'individual'; onTargetChange()"
-              >Individual Assessment</button>
-            </div>
-          </div>
-
-          <!-- Student Picker (Individual Only) -->
-          <div v-if="newAssessment.target === 'individual'" class="form-group">
-            <label class="form-label">Target Student</label>
-            <select v-model="newAssessment.targetStudentId" class="form-input" required>
-              <option :value="null" disabled>Select student...</option>
-              <option v-for="s in sortedRoster" :key="s.studentId" :value="s.studentId">
-                {{ s.lastName }}, {{ s.firstName }}
-              </option>
-            </select>
-          </div>
-
-          <div class="form-group">
-            <label class="form-label">Name</label>
-            <input v-model="newAssessment.name" class="form-input" placeholder="e.g. Unit 1 Test" required />
-          </div>
-          
-          <div class="form-group">
-            <label class="form-label">Description (Optional)</label>
-            <textarea v-model="newAssessment.description" class="form-input" placeholder="Extra details about this assessment..." rows="2"></textarea>
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label class="form-label">Category</label>
-              <select v-model="newAssessment.categoryId" class="form-input" required>
-                <option v-for="cat in activeClassRecord?.gradebookCategories" :key="cat.categoryId" :value="cat.categoryId">
-                  {{ cat.name }}
-                </option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Type</label>
-              <select v-model="newAssessment.assessmentType" class="form-input" required>
-                <option v-for="type in assessmentTypes" :key="type.value" :value="type.value">{{ type.label }}</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label class="form-label">Date</label>
-              <input v-model="newAssessment.date" type="date" class="form-input" required />
-            </div>
-            <div class="form-group">
-              <label class="form-label">Unit</label>
-              <select 
-                v-model="newAssessment.unitId" 
-                class="form-input"
-                :disabled="!activeClassRecord?.gradebookUnits?.length"
-              >
-                <option :value="null">Unassigned</option>
-                <option v-for="u in sortedUnits" :key="u.unitId" :value="u.unitId">
-                  {{ u.name }}
-                </option>
-              </select>
-            </div>
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label class="form-label">Total Points</label>
-              <input v-model.number="newAssessment.totalPoints" type="number" min="1" class="form-input" required />
-            </div>
-            <div class="form-group">
-              <label class="form-label">Scaled Total (Optional)</label>
-              <input v-model.number="newAssessment.scaledTotal" type="number" min="1" class="form-input" placeholder="Raw" />
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label class="form-label">Retest Policy</label>
-            <select v-model="newAssessment.retestPolicy" class="form-input">
-              <option value="Highest">Highest Attempt</option>
-              <option value="Latest">Latest Attempt</option>
-              <option value="Average">Average of Attempts</option>
-              <option value="Manual">Manual Selection</option>
-            </select>
-          </div>
-
-          <div class="modal-actions">
-            <button type="button" class="btn-ghost" @click="closeAddAssessment">Cancel</button>
-            <button type="submit" class="btn-primary">{{ isEditingAssessment ? 'Update Assessment' : 'Create Assessment' }}</button>
-          </div>
-        </form>
+  <BaseModal
+    :show="showAddAssessmentModal"
+    @close="closeAddAssessment"
+    :title="isEditingAssessment ? 'Edit Assessment' : 'New Assessment'"
+    max-width="500px"
+  >
+    <form class="modal-form" @submit.prevent="saveAssessment">
+      <!-- Target Toggle -->
+      <div class="form-group">
+        <label class="form-label">Scope</label>
+        <div class="toggle-group toggle-group--large">
+          <button 
+            type="button" 
+            class="toggle-btn" 
+            :class="{ 'toggle-btn--active': newAssessment.target === 'class' }"
+            @click="newAssessment.target = 'class'; onTargetChange()"
+          >Class Assessment</button>
+          <button 
+            type="button" 
+            class="toggle-btn" 
+            :class="{ 'toggle-btn--active': newAssessment.target === 'individual' }"
+            @click="newAssessment.target = 'individual'; onTargetChange()"
+          >Individual Assessment</button>
+        </div>
       </div>
-    </div>
-  </Teleport>
+
+      <!-- Student Picker (Individual Only) -->
+      <div v-if="newAssessment.target === 'individual'" class="form-group">
+        <label class="form-label">Target Student</label>
+        <select v-model="newAssessment.targetStudentId" class="form-input" required>
+          <option :value="null" disabled>Select student...</option>
+          <option v-for="s in sortedRoster" :key="s.studentId" :value="s.studentId">
+            {{ s.lastName }}, {{ s.firstName }}
+          </option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Name</label>
+        <input v-model="newAssessment.name" class="form-input" placeholder="e.g. Unit 1 Test" required />
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">Description (Optional)</label>
+        <textarea v-model="newAssessment.description" class="form-input" placeholder="Extra details about this assessment..." rows="2"></textarea>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Category</label>
+          <select v-model="newAssessment.categoryId" class="form-input" required>
+            <option v-for="cat in activeClassRecord?.gradebookCategories" :key="cat.categoryId" :value="cat.categoryId">
+              {{ cat.name }}
+            </option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Type</label>
+          <select v-model="newAssessment.assessmentType" class="form-input" required>
+            <option v-for="type in assessmentTypes" :key="type.value" :value="type.value">{{ type.label }}</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Date</label>
+          <input v-model="newAssessment.date" type="date" class="form-input" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Unit</label>
+          <select 
+            v-model="newAssessment.unitId" 
+            class="form-input"
+            :disabled="!activeClassRecord?.gradebookUnits?.length"
+          >
+            <option :value="null">Unassigned</option>
+            <option v-for="u in sortedUnits" :key="u.unitId" :value="u.unitId">
+              {{ u.name }}
+            </option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Total Points</label>
+          <input v-model.number="newAssessment.totalPoints" type="number" min="1" class="form-input" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Scaled Total (Optional)</label>
+          <input v-model.number="newAssessment.scaledTotal" type="number" min="1" class="form-input" placeholder="Raw" />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Retest Policy</label>
+        <select v-model="newAssessment.retestPolicy" class="form-input">
+          <option value="Highest">Highest Attempt</option>
+          <option value="Latest">Latest Attempt</option>
+          <option value="Average">Average of Attempts</option>
+          <option value="Manual">Manual Selection</option>
+        </select>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn-ghost" @click="closeAddAssessment">Cancel</button>
+        <button type="submit" class="btn-primary">{{ isEditingAssessment ? 'Update Assessment' : 'Create Assessment' }}</button>
+      </div>
+    </form>
+  </BaseModal>
 </template>
 
 <script setup>
@@ -130,56 +126,13 @@ import {
   saveAssessment
 } from '../../composables/useGradebook.js'
 import { useClassroom } from '../../composables/useClassroom.js'
+import BaseModal from '../BaseModal.vue'
 
 const { sortedRoster } = useClassroom()
 </script>
 
 <style scoped>
-.add-assessment-modal-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(4px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 2500; /* Above everything */
-}
-
-.add-assessment-modal {
-  background: var(--surface);
-  width: min(500px, 95vw);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-2xl);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  max-height: 95vh;
-  animation: modal-enter 0.3s ease-out;
-}
-
-@keyframes modal-enter {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.modal-header {
-  padding: 1.25rem 1.5rem;
-  border-bottom: 1px solid var(--border);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.modal-title {
-  margin: 0;
-  font-size: 1.15rem;
-  font-weight: 700;
-  color: var(--text);
-}
-
 .modal-form {
-  padding: 1.5rem;
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
@@ -272,22 +225,5 @@ const { sortedRoster } = useClassroom()
   border-radius: var(--radius-md);
   font-weight: 700;
   cursor: pointer;
-}
-
-.icon-btn {
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  color: var(--text-secondary);
-  padding: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  transition: background 0.2s;
-}
-
-.icon-btn:hover {
-  background: var(--bg-secondary);
 }
 </style>

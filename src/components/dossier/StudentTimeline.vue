@@ -95,33 +95,31 @@
     </div>
 
     <!-- Edit Modal -->
-    <div v-if="editingItem" class="timeline-modal-overlay" @click.self="editingItem = null">
-      <div class="timeline-modal">
-        <header class="timeline-modal__header">
-          <h3>Edit {{ editingItem.title }}</h3>
-          <button class="close-btn" @click="editingItem = null"><X :size="20" /></button>
-        </header>
-        
-        <div class="timeline-modal__body">
-          <!-- Duration (for Late or Washroom) -->
-          <div v-if="editingItem.rawCode === 'l' || editingItem.rawCode === 'w'" class="form-group">
-            <label>{{ editingItem.rawCode === 'l' ? 'Minutes Late' : 'Duration (minutes)' }}</label>
-            <input type="number" v-model="editForm.duration" />
-          </div>
-
-          <!-- Note -->
-          <div class="form-group">
-            <label>Note</label>
-            <textarea v-model="editForm.note" rows="3" placeholder="Add a note..."></textarea>
-          </div>
+    <BaseModal 
+      :show="!!editingItem" 
+      :title="editingItem ? `Edit ${editingItem.title}` : ''"
+      max-width="440px"
+      @close="editingItem = null"
+    >
+      <div class="timeline-modal-body">
+        <!-- Duration (for Late or Washroom) -->
+        <div v-if="editingItem?.rawCode === 'l' || editingItem?.rawCode === 'w'" class="form-group">
+          <label>{{ editingItem.rawCode === 'l' ? 'Minutes Late' : 'Duration (minutes)' }}</label>
+          <input type="number" v-model="editForm.duration" />
         </div>
 
-        <footer class="timeline-modal__footer">
-          <button class="btn-ghost" @click="editingItem = null">Cancel</button>
-          <button class="btn-primary" @click="saveEdit">Save Changes</button>
-        </footer>
+        <!-- Note -->
+        <div class="form-group">
+          <label>Note</label>
+          <textarea v-model="editForm.note" rows="3" placeholder="Add a note..."></textarea>
+        </div>
       </div>
-    </div>
+
+      <template #footer>
+        <button class="btn-ghost" @click="editingItem = null">Cancel</button>
+        <button class="btn-primary" @click="saveEdit">Save Changes</button>
+      </template>
+    </BaseModal>
   </div>
 </template>
 
@@ -143,6 +141,7 @@ import {
 import { useClassroom } from '../../composables/useClassroom.js'
 import { toMinutes } from '../../db/eventService.js'
 import { resolveIcon } from '../../utils/icons.js'
+import BaseModal from '../BaseModal.vue'
 
 const props = defineProps({
   studentId: { type: String, required: true },
@@ -673,42 +672,7 @@ function formatOutcome(outcome) {
 }
 
 /* Modal Styling */
-.timeline-modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(4px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 2000;
-}
-
-.timeline-modal {
-  background: var(--surface);
-  border-radius: var(--radius-lg);
-  width: min(440px, 90vw);
-  box-shadow: var(--shadow-xl);
-  display: flex;
-  flex-direction: column;
-}
-
-.timeline-modal__header {
-  padding: 18px 24px;
-  border-bottom: 1px solid var(--border);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.timeline-modal__header h3 {
-  font-size: 1.1rem;
-  font-weight: 700;
-  margin: 0;
-}
-
-.timeline-modal__body {
-  padding: 24px;
+.timeline-modal-body {
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -743,13 +707,6 @@ function formatOutcome(outcome) {
   border-color: var(--primary);
 }
 
-.timeline-modal__footer {
-  padding: 18px 24px;
-  border-top: 1px solid var(--border);
-  display: flex;
-  gap: 12px;
-}
-
 .btn-ghost {
   flex: 1;
   padding: 12px;
@@ -770,15 +727,5 @@ function formatOutcome(outcome) {
   border-radius: var(--radius-md);
   cursor: pointer;
   font-weight: 700;
-}
-
-.close-btn {
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  color: var(--text-secondary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 </style>

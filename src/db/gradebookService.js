@@ -1018,71 +1018,82 @@ export async function calculateClassAnalytics(classRecord, assessments, grades, 
   const median = calculateMedian(activePercentages)
   const distributionBuckets = buildDistributionBuckets(allPercentages)
 
-  // Per-assessment analytics
-  const assessmentAnalytics = {}
-  for (const a of productAssessments) {
-    const stats = calculateAssessmentAnalytics(
-      a.assessmentId, grades, a,
-      { excludeOutliers, excludedStudentIds }
-    )
-    if (stats) assessmentAnalytics[a.assessmentId] = stats
-  }
+    // Per-assessment analytics (Grouped by type)
+    const productAnalytics = {}
+    const observationAnalytics = {}
+    const conversationAnalytics = {}
 
-  // Conversation and Observation coverage
-  // Count how many students have at least one entered Conversation/Observation
-  const conversationStudents = new Set()
-  const observationStudents = new Set()
-  for (const a of assessments.filter(a => a.target === 'class' && !a.excluded)) {
-    const aGrades = grades.filter(g =>
-      g.assessmentId === a.assessmentId &&
-      g.attempts &&
-      g.attempts.length > 0
-    )
-    for (const g of aGrades) {
-      if (a.assessmentType === 'conversation') conversationStudents.add(g.studentId)
-      if (a.assessmentType === 'observation') observationStudents.add(g.studentId)
+    // We process ALL assessments that are target === 'class'
+    // but we categorize them so the UI can render separate tables.
+    for (const a of assessments.filter(a => a.target === 'class' && !a.excluded)) {
+        const stats = calculateAssessmentAnalytics(
+            a.assessmentId, grades, a,
+            { excludeOutliers, excludedStudentIds }
+        )
+        if (stats) {
+            if (a.assessmentType === 'observation') observationAnalytics[a.assessmentId] = stats
+            else if (a.assessmentType === 'conversation') conversationAnalytics[a.assessmentId] = stats
+            else productAnalytics[a.assessmentId] = stats // Default/Product
+        }
     }
-  }
-
-  const totalStudents = studentIds.length
-  const conversationCoverage = {
-    studentsWithEvidence: conversationStudents.size,
-    totalStudents,
-    percentage: totalStudents > 0
-      ? Math.round((conversationStudents.size / totalStudents) * 100)
-      : 0
-  }
-  const observationCoverage = {
-    studentsWithEvidence: observationStudents.size,
-    totalStudents,
-    percentage: totalStudents > 0
-      ? Math.round((observationStudents.size / totalStudents) * 100)
-      : 0
-  }
-
-  return {
-    // Class-level stats (Product assessments only)
-    mean: Math.round(mean * 10) / 10,
-    median: Math.round(median * 10) / 10,
-    sd: sd !== null ? Math.round(sd * 10) / 10 : null,
-    distributionBuckets,
-    levelBuckets: buildLevelDistributionBuckets(allPercentages),
-    studentCount: activePercentages.length,
-    totalStudentCount: allPercentages.length,
-    outlierCount: outlierResult.outliers.length,
-    outlierStudentIds,
-    excludeOutliersActive: excludeOutliers,
-
-    // Per-assessment breakdown
-    assessmentAnalytics,
 
     // Triangulation coverage
-    conversationCoverage,
-    observationCoverage,
+    // Count how many students have at least one entered Conversation/Observation
+    const conversationStudents = new Set()
+    const observationStudents = new Set()
+    for (const a of assessments.filter(a => a.target === 'class' && !a.excluded)) {
+        const aGrades = grades.filter(g =>
+            g.assessmentId === a.assessmentId &&
+            g.attempts &&
+            g.attempts.length > 0
+        )
+        for (const g of aGrades) {
+            if (a.assessmentType === 'conversation') conversationStudents.add(g.studentId)
+            if (a.assessmentType === 'observation') observationStudents.add(g.studentId)
+        }
+    }
 
-    // Milestone context
-    asOf
-  }
+    const totalStudents = studentIds.length
+    const conversationCoverage = {
+        studentsWithEvidence: conversationStudents.size,
+        totalStudents,
+        percentage: totalStudents > 0
+            ? Math.round((conversationStudents.size / totalStudents) * 100)
+            : 0
+    }
+    const observationCoverage = {
+        studentsWithEvidence: observationStudents.size,
+        totalStudents,
+        percentage: totalStudents > 0
+            ? Math.round((observationStudents.size / totalStudents) * 100)
+            : 0
+    }
+
+    return {
+        // Class-level stats (Product assessments only)
+        mean: Math.round(mean * 10) / 10,
+        median: Math.round(median * 10) / 10,
+        sd: sd !== null ? Math.round(sd * 10) / 10 : null,
+        distributionBuckets,
+        levelBuckets: buildLevelDistributionBuckets(allPercentages),
+        studentCount: activePercentages.length,
+        totalStudentCount: allPercentages.length,
+        outlierCount: outlierResult.outliers.length,
+        outlierStudentIds,
+        excludeOutliersActive: excludeOutliers,
+
+        // Grouped assessment breakdowns
+        productAnalytics,
+        observationAnalytics,
+        conversationAnalytics,
+
+        // Triangulation coverage
+        conversationCoverage,
+        observationCoverage,
+
+        // Milestone context
+        asOf
+    }
 }
 
 // ─── Template Management ─────────────────────────────────────────────────────
