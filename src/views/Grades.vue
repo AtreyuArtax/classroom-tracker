@@ -632,7 +632,13 @@
                   >
                     <div class="grades__assessment-header">
                       <div class="grades__assessment-info" @click="selectedAssessmentId = a.assessmentId">
-                        <span class="grades__assessment-name" :title="a.description || a.name">{{ a.name }}</span>
+                        <span class="grades__assessment-name" :title="a.description || a.name">
+                          {{ a.name }}
+                          <span v-if="gridSortBy == a.assessmentId" class="grades__sort-icon">
+                            <ChevronUp v-if="gridSortOrder === 'asc'" :size="12" />
+                            <ChevronDown v-else :size="12" />
+                          </span>
+                        </span>
                         <div class="grades__assessment-meta">
                           <span class="grades__assessment-points">/{{ a.totalPoints }}</span>
                           <span v-if="a.unitId" class="grades__assessment-unit">{{ getUnitName(a.unitId) }}</span>
@@ -648,13 +654,19 @@
                 <!-- Class Avg Row (Sticky below headers) -->
                 <tr class="grades__tr-avg">
                   <td class="grades__td-student">Class Average</td>
-                  <td class="grades__td-overall grades__td-avg">
+                  <td 
+                    class="grades__td-overall grades__td-avg"
+                    @click="toggleGridSort('grade')"
+                    title="Sort by overall mark"
+                  >
                     {{ formatGrade(overallClassAvg) }}
                   </td>
                   <td 
                     v-for="a in sortedAssessments" 
                     :key="a.assessmentId"
                     class="grades__td-assessment grades__td-avg"
+                    @click="toggleGridSort(a.assessmentId)"
+                    title="Sort by this assessment"
                   >
                     <div v-if="assessmentStats[a.assessmentId]">
                       {{ formatCellGrade(assessmentStats[a.assessmentId].average, a.totalPoints) }}
@@ -792,6 +804,9 @@
 
     <div v-if="assessmentMenu" class="grades__context-backdrop grades__context-backdrop--dim" @click="assessmentMenu = null" @contextmenu.prevent="assessmentMenu = null">
       <div class="grades__context-menu" :style="{ top: assessmentMenu.y + 'px', left: assessmentMenu.x + 'px' }">
+        <button class="grades__context-btn" @click="toggleGridSort(assessmentMenu.assessment.assessmentId); assessmentMenu = null">
+          <BarChart2 :size="14" /> Sort by Assessment
+        </button>
         <button class="grades__context-btn" @click="startEditAssessment(assessmentMenu.assessment); assessmentMenu = null">
           <Pencil :size="14" /> Edit Assessment
         </button>
@@ -1042,7 +1057,26 @@ const sortedRoster = computed(() => {
       const gA = a.overallGrade
       const gB = b.overallGrade
       return gridSortOrder.value === 'asc' ? gA - gB : gB - gA
+    } else if (gridSortBy.value !== 'name') {
+      // Sort by Assessment ID
+      const aId = gridSortBy.value
+      const gradeA = gradeMap.value[aId]?.[a.studentId]
+      const gradeB = gradeMap.value[aId]?.[b.studentId]
+      
+      // Treat missing as 0, excluded as very low/bottom (-1), non-existent as -1
+      const getVal = (g) => {
+        if (!g) return -1
+        if (g.excluded) return -1
+        if (g.missing) return 0
+        return g.resolvedScore ?? -1
+      }
+      
+      const valA = getVal(gradeA)
+      const valB = getVal(gradeB)
+      
+      return gridSortOrder.value === 'asc' ? valA - valB : valB - valA
     }
+    
     const nameA = a.lastName.toLowerCase()
     const nameB = b.lastName.toLowerCase()
     if (gridSortOrder.value === 'asc') return nameA.localeCompare(nameB)
@@ -1402,8 +1436,8 @@ function toggleGridSort(column) {
     gridSortOrder.value = gridSortOrder.value === 'asc' ? 'desc' : 'asc'
   } else {
     gridSortBy.value = column
-    // Default to descending for grades, ascending for name
-    gridSortOrder.value = column === 'grade' ? 'desc' : 'asc'
+    // Default to descending for grades and assessments, ascending for name
+    gridSortOrder.value = (column === 'grade' || column !== 'name') ? 'desc' : 'asc'
   }
 }
 
@@ -2977,6 +3011,24 @@ verall-trend {
 .grades__input-inline::-webkit-inner-spin-button {
   -webkit-appearance: none;
   margin: 0;
+}
+
+.grades__td-avg {
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.grades__td-avg:hover {
+  background-color: var(--bg-secondary) !important;
+  color: var(--primary);
+}
+
+.grades__sort-icon {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 4px;
+  vertical-align: middle;
+  color: var(--primary);
 }
 
 /* ── Context Menu ───────────────────────────────────────────────────── */
