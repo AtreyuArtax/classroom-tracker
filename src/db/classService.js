@@ -136,8 +136,9 @@ export async function setStudentAbsent(classId, studentId) {
     if (!st) throw new Error('Student not found')
 
     st.activeStates = { 
-        ...(st.activeStates || { isOut: false, outTime: null, lateMs: null }), 
-        isAbsent: true 
+        ...(st.activeStates || { isOut: false, outTime: null }), 
+        isAbsent: true,
+        lateMs: null // Mutual exclusion
     }
     const plain = JSON.parse(JSON.stringify(cls))
     await store.put(plain)
@@ -167,15 +168,6 @@ export async function clearStudentAbsent(classId, studentId) {
     hasUnsyncedChanges.value = true
 }
 
-/**
- * Marks a student as late with the given milliseconds.
- * Clears isAbsent at the same time (late supersedes absent).
- *
- * @param {string} classId
- * @param {string} studentId
- * @param {number} lateMs
- * @returns {Promise<void>}
- */
 /**
  * Marks a student as late with the given milliseconds.
  * Clears isAbsent at the same time (late supersedes absent).
