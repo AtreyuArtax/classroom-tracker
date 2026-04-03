@@ -7,6 +7,7 @@
 
 import { getDB } from './index.js'
 import { hasUnsyncedChanges } from './eventService.js'
+import { preciseRound } from '../utils/math.js'
 
 // ─── Assessment CRUD ─────────────────────────────────────────────────────────
 
@@ -526,7 +527,7 @@ function _calculateCategoryGrade(catAssessments, gradeMap) {
     totalPossible += possible
   }
 
-  return totalPossible > 0 ? (totalEarned / totalPossible) * 100 : null
+  return totalPossible > 0 ? preciseRound((totalEarned / totalPossible) * 100) : null
 }
 
 /**
@@ -642,14 +643,15 @@ function calculateMostConsistent(studentId, classRecord, gradeMap, assessments) 
     }
 
     if (percentage !== null) {
+      const rounded = preciseRound(percentage)
       breakdown[cat.categoryId] = { 
-        percentage, 
+        percentage: rounded, 
         bucketLabel, 
         count, 
         totalCount: scores.length,
         isFallback 
       }
-      weightedSum += percentage * (cat.weight / 100)
+      weightedSum += rounded * (cat.weight / 100)
       totalWeight += cat.weight
     } else {
       breakdown[cat.categoryId] = null
@@ -659,7 +661,7 @@ function calculateMostConsistent(studentId, classRecord, gradeMap, assessments) 
   if (totalWeight === 0) return null
 
   return {
-    percentage: (weightedSum / totalWeight) * 100,
+    percentage: preciseRound((weightedSum / totalWeight) * 100),
     isFallback: Object.values(breakdown).some(b => b?.isFallback),
     categoryBreakdown: breakdown
   }
@@ -693,11 +695,12 @@ function calculateWeightedMedian(studentId, classRecord, gradeMap, assessments) 
 
     if (scores.length > 0) {
       const median = calculateMedian(scores)
+      const rounded = preciseRound(median)
       breakdown[cat.categoryId] = { 
-        percentage: median, 
+        percentage: rounded, 
         count: scores.length 
       }
-      weightedSum += median * (cat.weight / 100)
+      weightedSum += rounded * (cat.weight / 100)
       totalWeight += cat.weight
     }
   }
@@ -705,7 +708,7 @@ function calculateWeightedMedian(studentId, classRecord, gradeMap, assessments) 
   if (totalWeight === 0) return null
 
   return {
-    percentage: (weightedSum / totalWeight) * 100,
+    percentage: preciseRound((weightedSum / totalWeight) * 100),
     categoryBreakdown: breakdown
   }
 }
@@ -756,12 +759,12 @@ export async function calculateStudentGrade(studentId, classRecord, { asOf = nul
     
     if (override !== undefined && override !== null && !isNaN(overrideValue)) {
       categoryResults[category.categoryId] = {
-        percentage: overrideValue,
+        percentage: preciseRound(overrideValue),
         isOverridden: true
       }
     } else {
       categoryResults[category.categoryId] = {
-        percentage: calculatedPercentage,
+        percentage: preciseRound(calculatedPercentage),
         isOverridden: false
       }
     }
@@ -773,13 +776,13 @@ export async function calculateStudentGrade(studentId, classRecord, { asOf = nul
 
   for (const category of categories) {
     const result = categoryResults[category.categoryId]
-    if (result === null) continue
+    if (!result) continue
     
     weightedSum += result.percentage * (category.weight / 100)
     weightUsed += category.weight
   }
 
-  const overallGrade = weightUsed === 0 ? null : (weightedSum / weightUsed) * 100
+  const overallGrade = weightUsed === 0 ? null : preciseRound((weightedSum / weightUsed) * 100)
 
   // New Metrics
   const mostConsistent = calculateMostConsistent(studentId, classRecord, gradeMap, assessments)
@@ -801,14 +804,20 @@ export async function calculateStudentGrade(studentId, classRecord, { asOf = nul
  * NOW BATCHED: Loads data once for the whole class instead of per student.
  */
 export async function calculateClassGrades(classRecord, { asOf = null } = {}) {
-  // Batch fetch all data once
+  // 1. Batch fetch all data once
   const assessments = await getAssessmentsByClass(classRecord.classId)
   const allGrades = await getGradesByClass(classRecord.classId)
 
+  // 2. Index grades by studentId for O(1) retrieval
+  const studentGradeMap = new Map()
+  for (const g of allGrades) {
+    if (!studentGradeMap.has(g.studentId)) studentGradeMap.set(g.studentId, [])
+    studentGradeMap.get(g.studentId).push(g)
+  }
+
   const results = {}
   for (const studentId of Object.keys(classRecord.students)) {
-    // Filter the batched data for this specific student
-    const studentGrades = allGrades.filter(g => g.studentId === studentId)
+    const studentGrades = studentGradeMap.get(studentId) || []
     
     results[studentId] = await calculateStudentGrade(studentId, classRecord, { 
       asOf, 
@@ -886,12 +895,12 @@ export function calculateAssessmentAnalytics(assessmentId, grades, assessment, o
     assessmentId,
     count: activePercentages.length,
     totalCount: allPercentages.length,
-    mean: Math.round(mean * 10) / 10,
+    mean: preciseRound(mean),
     average: (mean / 100) * (assessment.totalPoints || 1),
-    median: Math.round(median * 10) / 10,
-    sd: sd !== null ? Math.round(sd * 10) / 10 : null,
-    highest: Math.round(highest * 10) / 10,
-    lowest: Math.round(lowest * 10) / 10,
+    median: preciseRound(median),
+    sd: preciseRound(sd),
+    highest: preciseRound(highest),
+    lowest: preciseRound(lowest),
     distributionBuckets,
     levelBuckets: buildLevelDistributionBuckets(activePercentages, gradeBuckets),
     outlierCount: outlierStudentIds.length,
