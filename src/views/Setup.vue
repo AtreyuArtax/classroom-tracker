@@ -386,16 +386,28 @@
           <h3 class="setup__card-subtitle">Categories (Weights)</h3>
           <div class="setup__gb-list">
             <div v-for="(cat, idx) in activeClass.gradebookCategories" :key="cat.categoryId" class="setup__gb-item">
-              <input v-model="cat.name" class="setup__input setup__input--naked" />
+              <input v-model="cat.name" class="setup__input setup__input--naked" @change="saveGradebookSettings" />
               <div class="setup__gb-actions">
-                <input v-model.number="cat.weight" type="number" class="setup__input setup__input--weight" /><span>%</span>
+                <input v-model.number="cat.weight" type="number" class="setup__input setup__input--weight" @change="saveGradebookSettings" /><span>%</span>
                 <button class="setup__icon-btn" :disabled="idx === 0" @click="moveCategory(idx, -1)"><ChevronUp :size="16" /></button>
                 <button class="setup__icon-btn" :disabled="idx === activeClass.gradebookCategories.length - 1" @click="moveCategory(idx, 1)"><ChevronDown :size="16" /></button>
                 <button class="setup__icon-btn setup__icon-btn--danger" @click="onDeleteCategory(cat)"><Trash2 :size="14" /></button>
               </div>
             </div>
           </div>
-          <button class="setup__btn-ghost setup__btn--full" @click="addCategory"><Plus :size="14" /> Add Category</button>
+          
+          <div class="setup__category-footer">
+            <button class="setup__btn-ghost setup__btn--full" @click="addCategory">
+              <Plus :size="14" /> Add Category
+            </button>
+            <div class="setup__weight-total" :class="{ 
+              'setup__weight-total--under': totalWeight < 100 && totalWeight > 0,
+              'setup__weight-total--over': totalWeight > 100 
+            }">
+              Total: <strong>{{ totalWeight }}%</strong>
+              <AlertTriangle v-if="totalWeight !== 100" :size="14" />
+            </div>
+          </div>
 
           <h3 class="setup__card-subtitle" style="margin-top: 1.5rem;">Units</h3>
           <div class="setup__gb-list">
@@ -638,6 +650,60 @@
           </div>
         </div>
 
+        <!-- Data Health Audit -->
+        <div class="setup__card">
+          <h2 class="setup__card-title"><ShieldCheck :size="20" /> Data Health Scanner</h2>
+          <p class="setup__hint">
+            Scan your internal database for "orphaned" records (e.g. marks from a deleted quiz) or legacy data issues.
+          </p>
+          
+          <div v-if="auditReport" class="setup__audit-results">
+            <div class="setup__audit-item" :class="{ 'setup__audit-item--warn': auditReport.orphanedGrades.length > 0 }">
+              <div class="setup__audit-label">Orphaned Marks:</div>
+              <div class="setup__audit-value">{{ auditReport.orphanedGrades.length }}</div>
+              <button v-if="auditReport.orphanedGrades.length > 0" class="setup__pill-btn setup__pill-btn--danger" @click="fixOrphans">Delete Orphans</button>
+              <button v-if="auditReport.orphanedGrades.length > 0" class="setup__btn-text" @click="toggleAuditDetails('orphans')">
+                {{ showAuditDetails.orphans ? 'Hide' : 'Details' }}
+              </button>
+            </div>
+            <ul v-if="showAuditDetails.orphans && auditReport.orphanedGrades.length > 0" class="setup__audit-detail-list">
+              <li v-for="item in auditReport.orphanedGrades" :key="item.id">{{ item.context }}</li>
+            </ul>
+            
+            <div class="setup__audit-item" :class="{ 'setup__audit-item--warn': auditReport.missingClassIds.length > 0 }">
+              <div class="setup__audit-label">Incomplete Records:</div>
+              <div class="setup__audit-value">{{ auditReport.missingClassIds.length }}</div>
+              <button v-if="auditReport.missingClassIds.length > 0" class="setup__pill-btn" @click="fixMissingIds">Heal Records</button>
+              <button v-if="auditReport.missingClassIds.length > 0" class="setup__btn-text" @click="toggleAuditDetails('incomplete')">
+                {{ showAuditDetails.incomplete ? 'Hide' : 'Details' }}
+              </button>
+            </div>
+            <ul v-if="showAuditDetails.incomplete && auditReport.missingClassIds.length > 0" class="setup__audit-detail-list">
+              <li v-for="item in auditReport.missingClassIds" :key="item.id">{{ item.context }}</li>
+            </ul>
+
+            <div class="setup__audit-item" :class="{ 'setup__audit-item--warn': auditReport.invalidCategories.length > 0 }">
+              <div class="setup__audit-label">Category Mismatches:</div>
+              <div class="setup__audit-value">{{ auditReport.invalidCategories.length }}</div>
+              <button v-if="auditReport.invalidCategories.length > 0" class="setup__btn-text" @click="toggleAuditDetails('categories')">
+                {{ showAuditDetails.categories ? 'Hide' : 'Details' }}
+              </button>
+            </div>
+            <ul v-if="showAuditDetails.categories && auditReport.invalidCategories.length > 0" class="setup__audit-detail-list">
+              <li v-for="item in auditReport.invalidCategories" :key="item.id">{{ item.context }}</li>
+            </ul>
+
+            <div v-if="auditReport.orphanedGrades.length === 0 && auditReport.missingClassIds.length === 0 && auditReport.invalidCategories.length === 0" class="setup__result-ok">
+              ✨ Database is clean and perfectly consistent.
+            </div>
+          </div>
+
+          <button class="setup__btn-ghost setup__btn--full" :disabled="isAuditing" @click="runDataAudit">
+            <Search :size="16" /> {{ isAuditing ? 'Scanning...' : 'Scan Database for Integrity Issues' }}
+          </button>
+          <p v-if="auditMsg" class="setup__result-ok" style="margin-top: 8px;">{{ auditMsg }}</p>
+        </div>
+
         <!-- Maintenance / Danger Zone -->
         <div class="setup__card setup__card--danger">
           <h2 class="setup__card-title"><AlertTriangle :size="20" /> Danger Zone</h2>
@@ -757,7 +823,7 @@
 
 import { ref, reactive, computed, watch, onMounted, nextTick, onUnmounted } from 'vue'
 import Papa from 'papaparse'
-import { Archive, ChevronDown, ChevronUp, FolderOpen, Trash2, FileText, Pencil, Download, Database, Cloud, Settings2, Plus, X, Save, FileUp, FileDown, GraduationCap, ArrowLeft, Zap, LayoutDashboard, Settings, QrCode, Printer, RefreshCcw, FileSpreadsheet, DatabaseIcon, AlertTriangle } from 'lucide-vue-next'
+import { Archive, ChevronDown, ChevronUp, FolderOpen, Trash2, FileText, Pencil, Download, Database, Cloud, Settings2, Plus, X, Save, FileUp, FileDown, GraduationCap, ArrowLeft, Zap, LayoutDashboard, Settings, QrCode, Printer, RefreshCcw, FileSpreadsheet, DatabaseIcon, AlertTriangle, ShieldCheck, Search } from 'lucide-vue-next'
 import QRCode from 'qrcode'
 import { exportGradebookToExcel } from '../db/exportService.js'
 import { resolveIcon } from '../utils/icons.js'
@@ -961,6 +1027,55 @@ const yearOptions = computed(() => {
   
   return Array.from(years).sort().reverse()
 })
+
+// ─── Data Health / Audit ───────────────────────────────────────────────────────
+const isAuditing = ref(false)
+const auditReport = ref(null)
+const auditMsg = ref('')
+const showAuditDetails = reactive({
+  orphans: false,
+  incomplete: false,
+  categories: false
+})
+
+const totalWeight = computed(() => {
+  if (!activeClass.value?.gradebookCategories) return 0
+  return activeClass.value.gradebookCategories.reduce((sum, cat) => sum + (Number(cat.weight) || 0), 0)
+})
+
+function toggleAuditDetails(key) {
+  showAuditDetails[key] = !showAuditDetails[key]
+}
+
+async function runDataAudit() {
+  isAuditing.value = true
+  auditReport.value = null
+  try {
+    auditReport.value = await gradebookService.auditGradebookData()
+  } catch (err) {
+    auditMsg.value = `Audit failed: ${err.message}`
+  } finally {
+    isAuditing.value = false
+  }
+}
+
+async function fixOrphans() {
+  if (!auditReport.value?.orphanedGrades.length) return
+  if (!window.confirm(`Permanently delete ${auditReport.value.orphanedGrades.length} orphaned mark records?`)) return
+  
+  const ids = auditReport.value.orphanedGrades.map(g => g.id)
+  await gradebookService.repairGradebookOrphans(ids)
+  auditMsg.value = 'Orphans cleared!'
+  await runDataAudit()
+  setTimeout(() => auditMsg.value = '', 3000)
+}
+
+async function fixMissingIds() {
+  await gradebookService.repairMissingClassIds()
+  auditMsg.value = 'Data healing complete!'
+  await runDataAudit()
+  setTimeout(() => auditMsg.value = '', 3000)
+}
 
 // --- Smart CSV Cleaning Helpers ---
 function cleanPeriod(raw) {
@@ -2693,7 +2808,7 @@ function formatDate(iso) {
 }
 
 .setup__input--xs {
-  width: 60px !important;
+  width: 90px !important;
   min-height: 32px !important;
   padding: 4px 8px !important;
   font-size: 0.8rem !important;
@@ -2773,9 +2888,6 @@ function formatDate(iso) {
   margin-bottom: 16px;
 }
 
-.setup__input--xs {
-  width: 70px !important;
-}
 .setup__grid-actions {
   display: flex;
   gap: 12px;
@@ -3048,5 +3160,124 @@ function formatDate(iso) {
   color: #666;
   margin-bottom: 2mm;
   display: block;
+}
+
+/* ── Data Health Audit Styles ────────────────────────────────────────── */
+.setup__audit-results {
+  margin-top: 1rem;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  border: 1px solid var(--border);
+}
+
+.setup__audit-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.92rem;
+  padding: 4px 0;
+}
+
+.setup__audit-item--warn {
+  color: var(--state-out);
+  font-weight: 600;
+}
+
+.setup__audit-label {
+  flex: 1;
+  color: var(--text);
+}
+
+.setup__audit-value {
+  font-weight: 800;
+  min-width: 32px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  padding-right: 8px;
+}
+
+.setup__audit-hint {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  font-weight: 400;
+  max-width: 180px;
+  line-height: 1.3;
+}
+
+.setup__result-ok {
+  color: var(--state-success);
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-align: center;
+  padding: 0.5rem;
+}
+
+.setup__category-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.setup__weight-total {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+  padding: 8px 12px;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-sm);
+}
+
+.setup__weight-total--under {
+  color: #b45309; /* Deep Amber */
+  font-weight: 700;
+  background: #fef3c7; /* Amber 100 */
+  border: 1px solid #fde68a;
+}
+
+.setup__weight-total--over {
+  color: #b91c1c; /* Red 700 */
+  font-weight: 700;
+  background: #fee2e2; /* Red 100 */
+  border: 1px solid #fecaca;
+}
+
+.setup__btn-text {
+  background: none;
+  border: none;
+  color: var(--primary);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 8px;
+  text-decoration: underline;
+  margin-left: auto;
+}
+
+.setup__audit-detail-list {
+  list-style: none;
+  padding: 0;
+  margin: 0.5rem 1rem 1rem 1rem;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: var(--radius-sm);
+}
+
+.setup__audit-detail-list li {
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.setup__audit-detail-list li:last-child {
+  border-bottom: none;
 }
 </style>
