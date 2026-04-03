@@ -17,7 +17,7 @@ import { openDB } from 'idb'
 import { getCurrentSchoolYear, getCurrentSemester } from '../utils/dates.js'
 
 const DB_NAME = 'classroomTrackerDB'
-const DB_VERSION = 22
+const DB_VERSION = 23
 
 /**
  * Cached promise — set synchronously before the first await so every
@@ -569,22 +569,40 @@ export function getDB() {
           settings.schemaVersion = 21
           await settingsStore.put(settings, 'singleton')
         }
-        // --- VERSION 22 MIGRATION ---
-        if (oldVersion < 22) {
-          console.log('[IDB] Migrating to v22: Seeding gradeBuckets in settings...')
-          const settingsStore = tx.objectStore('settings')
-          const settings = await settingsStore.get('singleton')
-          
-          if (settings && !settings.gradeBuckets) {
-            settings.gradeBuckets = [
-              { label: 'R', min: 0, max: 49, color: '#ff3b30' },
-              { label: 'L1', min: 50, max: 59, color: '#ff9500' },
-              { label: 'L2', min: 60, max: 69, color: '#ffcc00' },
-              { label: 'L3', min: 70, max: 79, color: '#30b0c7' },
-              { label: 'L4', min: 80, max: 100, color: '#34c759' }
-            ]
-            await settingsStore.put(settings, 'singleton')
-          }
+      }
+
+      // --- VERSION 22 MIGRATION ---
+      if (oldVersion < 22) {
+        console.log('[IDB] Migrating to v22: Seeding gradeBuckets in settings...')
+        const settingsStore = transaction.objectStore('settings')
+        const settings = await settingsStore.get('singleton')
+        
+        if (settings && !settings.gradeBuckets) {
+          settings.gradeBuckets = [
+            { label: 'R', min: 0, max: 49, color: '#ff3b30' },
+            { label: 'L1', min: 50, max: 59, color: '#ff9500' },
+            { label: 'L2', min: 60, max: 69, color: '#ffcc00' },
+            { label: 'L3', min: 70, max: 79, color: '#30b0c7' },
+            { label: 'L4', min: 80, max: 100, color: '#34c759' }
+          ]
+          await settingsStore.put(settings, 'singleton')
+        }
+      }
+
+      // --- VERSION 23 MIGRATION (Composite Indices) ---
+      if (oldVersion < 23) {
+        console.log('[IDB] Migrating to v23: Creating composite indices for performance...')
+        const eventStore = transaction.objectStore('events')
+        if (!eventStore.indexNames.contains('by_classId_studentId')) {
+          eventStore.createIndex('by_classId_studentId', ['classId', 'studentId'])
+        }
+        if (!eventStore.indexNames.contains('by_classId_timestamp')) {
+          eventStore.createIndex('by_classId_timestamp', ['classId', 'timestamp'])
+        }
+
+        const gradeStore = transaction.objectStore('grades')
+        if (!gradeStore.indexNames.contains('by_classId_studentId')) {
+          gradeStore.createIndex('by_classId_studentId', ['classId', 'studentId'])
         }
       }
     },

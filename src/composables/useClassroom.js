@@ -14,7 +14,7 @@
  *               reactive ref updated → Vue re-renders
  */
 
-import { ref, computed, watch } from 'vue'
+import { ref, shallowRef, computed, watch, triggerRef } from 'vue'
 import * as classService from '../db/classService.js'
 import * as eventService from '../db/eventService.js'
 import { toMinutes } from '../db/eventService.js'
@@ -32,7 +32,7 @@ const classList = ref([])
 const archivedClasses = ref([])
 
 /** @type {import('vue').Ref<Object|null>} The currently active class record */
-const activeClass = ref(null)
+const activeClass = shallowRef(null)
 
 /** @type {import('vue').Ref<{ classId: string, name: string, periodNumber: number, minutesUntil: number }|null>} Suggested class based on time of day */
 const suggestedClass = ref(null)
@@ -459,6 +459,7 @@ async function updateActiveClass(updates) {
             gridSize.value = val
         }
     }
+    triggerRef(activeClass)
 }
 
 // ─── roster import ────────────────────────────────────────────────────────────
@@ -540,6 +541,7 @@ async function importRoster(parsedRows, targetClassId = null) {
         }
     }
 
+    if (targetClassId === activeClass.value?.classId) triggerRef(activeClass)
     return { inserted, updated, skipped, crossClassConflicts }
 }
 
@@ -610,6 +612,7 @@ async function moveStudentFromClass(fromClassId, student) {
         delete src.students[student.studentId]
         await classService.saveClass(src)
         classList.value = classList.value.map(c => c.classId === fromClassId ? src : c)
+        if (activeClass.value?.classId === fromClassId) triggerRef(activeClass)
     }
 
     // Add to destination (upsert)
@@ -622,6 +625,7 @@ async function moveStudentFromClass(fromClassId, student) {
         activeStates: { isOut: false, outTime: null },
         excludeFromAnalytics: false,
     }
+    triggerRef(activeClass)
 }
 
 // ─── seat management ──────────────────────────────────────────────────────────
@@ -654,6 +658,7 @@ async function removeStudent(studentId) {
     if (clsInList?.students?.[studentId]) {
         delete clsInList.students[studentId]
     }
+    triggerRef(activeClass)
 }
 
 /**
@@ -1284,7 +1289,8 @@ export function useClassroom() {
         restoreClass,
         deleteClass,
         dismissSuggestion,
-        bulkImportClasses
+        bulkImportClasses,
+        triggerActiveClass: () => triggerRef(activeClass)
     }
 }
 
