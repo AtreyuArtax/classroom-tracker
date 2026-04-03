@@ -450,4 +450,95 @@ export async function clearAllData() {
     await tx.done
     hasUnsyncedChanges.value = false
 }
+/**
+ * Bulk imports multiple classes and their rosters in a single database transaction.
+ * This ensures that either every class in the import is created/updated, or none are.
+ * 
+ * @param {Array<Object>} groups Array of { name, year, semester, periodNumber, periodStartTime, students: [{studentId, ...}] }
+ * @returns {Promise<{ created: number, updated: number, studentsInserted: number, studentsUpdated: number }>}
+ */
+export async function bulkImportClasses(groups) {
+    const db = await getDB()
+    const tx = db.transaction('classes', 'readwrite')
+    const store = tx.objectStore('classes')
+    
+    let created = 0
+    let updated = 0
+    let studentsInserted = 0
+    let studentsUpdated = 0
 
+    // To prevent duplicate IDs during a single bulk import when multiple classes are created fast
+    const now = Date.now()
+    let idCounter = 0
+
+    for (const group of groups) {
+        // Find existing class by year/sem/period
+        const all = await store.getAll()
+        let cls = all.find(c => 
+            c.year === group.year && 
+            c.semester === group.semester && 
+            Number(c.periodNumber) === Number(group.periodNumber)
+        )
+
+        if (!cls) {
+            const classId = `class_${now}_${idCounter++}`
+            cls = {
+                classId,
+                name: group.name,
+                year: group.year,
+                semester: group.semester,
+                periodNumber: group.periodNumber,
+                periodStartTime: group.periodStartTime || '08:45',
+                gridSize: { rows: 6, cols: 6 },
+                gradebookUnits: [],
+                gradebookCategories: [
+                    { categoryId: 'cat_prod', name: 'Product', weight: 70 },
+                    { categoryId: 'cat_obs',  name: 'Observation', weight: 15 },
+                    { categoryId: 'cat_conv', name: 'Conversation', weight: 15 }
+                ],
+                students: {}
+            }
+            created++
+        } else {
+            updated++
+        }
+
+        // Process students for this class
+        for (const row of group.students) {
+            const { studentId, firstName, lastName, parentContacts, studentEmail, custody, livingWith, birthDate } = row
+            if (cls.students[studentId]) {
+                cls.students[studentId].firstName = firstName
+                cls.students[studentId].lastName = lastName
+                if (parentContacts && parentContacts.length > 0) cls.students[studentId].parentContacts = parentContacts
+                if (studentEmail) cls.students[studentId].studentEmail = studentEmail
+                if (custody) cls.students[studentId].custody = custody
+                if (livingWith) cls.students[studentId].livingWith = livingWith
+                if (birthDate) cls.students[studentId].birthDate = birthDate
+                studentsUpdated++
+            } else {
+                cls.students[studentId] = {
+                    firstName,
+                    lastName,
+                    parentContacts: parentContacts || [],
+                    studentEmail: studentEmail || '',
+                    custody: custody || '',
+                    livingWith: livingWith || '',
+                    birthDate: birthDate || '',
+                    seat: null,
+                    generalNote: '',
+                    activeStates: { isOut: false, outTime: null, isAbsent: false, lateMs: null },
+                    excludeFromAnalytics: false,
+                }
+                studentsInserted++
+            }
+        }
+
+        const plain = JSON.parse(JSON.stringify(cls))
+        await store.put(plain)
+    }
+
+    await tx.done
+    hasUnsyncedChanges.value = true
+    
+    return { created, updated, studentsInserted, studentsUpdated }
+}

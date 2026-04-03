@@ -308,23 +308,7 @@ async function init() {
         behaviorCodes.value = codes
     }
 
-    const active = classes.filter(c => !c.archived).sort((a, b) => {
-        // 1. Year (desc) - show latest year first
-        const yearA = a.year || ''
-        const yearB = b.year || ''
-        if (yearA > yearB) return -1
-        if (yearA < yearB) return 1
-        
-        // 2. Semester (desc) - show latest semester first
-        const semA = a.semester || ''
-        const semB = b.semester || ''
-        if (semA > semB) return -1
-        if (semA < semB) return 1
-        
-        // 3. Period (asc)
-        return (a.periodNumber || 0) - (b.periodNumber || 0)
-    })
-    const archived = classes.filter(c => c.archived)
+    const [active, archived] = _sortAndSplitClasses(classes)
     classList.value = active
     archivedClasses.value = archived
     
@@ -561,32 +545,50 @@ async function importRoster(parsedRows, targetClassId = null) {
 
 /**
  * Bulk import multiple classes and rosters from grouped data.
+ * All classes and student records are created/updated in a SINGLE database transaction.
+ * 
  * @param {Array<{ name, year, semester, periodNumber, students: Array }>} groups
  */
 async function bulkImportClasses(groups) {
-    for (const group of groups) {
-        let cls = classList.value.find(c => 
-            c.year === group.year && 
-            c.semester === group.semester && 
-            Number(c.periodNumber) === Number(group.periodNumber)
-        )
-        
-        let classId = cls?.classId
-        
-        if (!cls) {
-            classId = `class_${Date.now()}_${Math.random()}`
-            const defaultStartTime = periodStartTimes.value[group.periodNumber] || '08:45'
-            await createClass({
-                classId,
-                name: group.name,
-                year: group.year,
-                semester: group.semester,
-                periodNumber: group.periodNumber,
-                periodStartTime: group.periodStartTime || defaultStartTime
-            })
+    await classService.bulkImportClasses(groups)
+    await _reloadClasses()
+}
+
+/**
+ * Helper to sort and split classes into active/archived arrays.
+ */
+function _sortAndSplitClasses(classes) {
+    const active = classes.filter(c => !c.archived).sort((a, b) => {
+        const yearA = a.year || '', yearB = b.year || ''
+        if (yearA > yearB) return -1
+        if (yearA < yearB) return 1
+        const semA = a.semester || '', semB = b.semester || ''
+        if (semA > semB) return -1
+        if (semA < semB) return 1
+        return (a.periodNumber || 0) - (b.periodNumber || 0)
+    })
+    const archived = classes.filter(c => c.archived)
+    return [active, archived]
+}
+
+/**
+ * Re-fetches all classes from DB and updates reactive singleton state.
+ */
+async function _reloadClasses() {
+    const classes = await classService.getAllClasses()
+    const [active, archived] = _sortAndSplitClasses(classes)
+    classList.value = active
+    archivedClasses.value = archived
+    
+    // If the active class was updated in the background, refresh its reference
+    if (activeClass.value) {
+        const fresh = active.find(c => c.classId === activeClass.value.classId)
+        if (fresh) {
+            // We use Object.assign to keep the same reactive proxy reference
+            // but update its contents to match the new DB state.
+            Object.assign(activeClass.value, fresh)
+            students.value = JSON.parse(JSON.stringify(fresh.students || {}))
         }
-        
-        await importRoster(group.students, classId)
     }
 }
 

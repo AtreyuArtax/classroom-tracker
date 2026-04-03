@@ -955,15 +955,6 @@ export async function calculateClassAnalytics(classRecord, assessments, grades, 
 
     for (const cat of classRecord.gradebookCategories) {
       const catAssessments = productAssessments.filter(a => a.categoryId === cat.categoryId)
-      const catGrade = _calculateCategoryGrade(catAssessments, gradeMap[cat.categoryId] ? { [cat.categoryId]: gradeMap[cat.categoryId][studentId] } : {}) 
-      // Wait, gradeMap here is nested gradeMap[assessmentId][studentId]
-      // In calculateClassAnalytics, gradeMap is built at line 943:
-      // const gradeMap = {}
-      // for (const g of grades) {
-      //   if (!gradeMap[g.assessmentId]) gradeMap[g.assessmentId] = {}
-      //   gradeMap[g.assessmentId][g.studentId] = g
-      // }
-      // So passed to _calculateCategoryGrade, it should be a flatter map for that student.
       
       const studentGradeMap = {}
       for (const a of catAssessments) {
@@ -1167,5 +1158,124 @@ export async function deleteGradebookTemplate(templateId) {
   settings.gradebookTemplates = settings.gradebookTemplates.filter(t => t.templateId !== templateId)
   const plain = JSON.parse(JSON.stringify(settings))
   await db.put('settings', plain, 'singleton')
+  hasUnsyncedChanges.value = true
+}
+
+// ─── Data Integrity & Audit ──────────────────────────────────────────────────
+
+/**
+ * Scans the database for orphaned or inconsistent gradebook records.
+ * Returns a report of any issues found. (Read-only)
+ */
+export async function auditGradebookData() {
+  const db = await getDB()
+  
+  const [allGrades, allAssessments, allClasses] = await Promise.all([
+    db.getAll('grades'),
+    db.getAll('assessments'),
+    db.getAll('classes')
+  ])
+
+  const assessmentIds = new Set(allAssessments.map(a => a.assessmentId))
+  const classIds = new Set(allClasses.map(c => c.classId))
+  
+  const report = {
+    orphanedGrades: [], // Grade records where assessmentId is missing
+    missingClassIds: [], // Records (Grade or Assessment) where classId is null
+    invalidCategories: [] // Assessments where categoryId isn't in its class
+  }
+
+  // 1. Audit Grades
+  for (const grade of allGrades) {
+    const ass = allAssessments.find(a => a.assessmentId === grade.assessmentId)
+    const cls = allClasses.find(c => c.classId === (grade.classId || (ass && ass.classId)))
+    const student = cls && cls.students && cls.students[grade.studentId]
+      ? cls.students[grade.studentId]
+      : null
+    
+    const studentName = student ? `${student.firstName} ${student.lastName}` : `Student ID: ${grade.studentId}`
+    const assName = ass ? ass.name : `Assessment ID: ${grade.assessmentId}`
+
+    if (!assessmentIds.has(grade.assessmentId)) {
+      report.orphanedGrades.push({
+        id: grade.gradeId,
+        studentId: grade.studentId,
+        assessmentId: grade.assessmentId,
+        context: `${studentName} - ${assName}`
+      })
+    }
+    if (!grade.classId || !classIds.has(grade.classId)) {
+      report.missingClassIds.push({
+        type: 'grade',
+        id: grade.gradeId,
+        context: `${studentName} mark in "${assName}"`
+      })
+    }
+  }
+
+  // 2. Audit Assessments
+  for (const ass of allAssessments) {
+    const cls = allClasses.find(c => c.classId === ass.classId)
+    if (!ass.classId || !classIds.has(ass.classId)) {
+      report.missingClassIds.push({
+        type: 'assessment',
+        id: ass.assessmentId,
+        context: `Assessment "${ass.name}" missing class link`
+      })
+    } else if (cls) {
+      // Check category validity
+      const catIds = new Set(cls.gradebookCategories?.map(c => c.categoryId) || [])
+      if (!catIds.has(ass.categoryId)) {
+        report.invalidCategories.push({
+          id: ass.assessmentId,
+          name: ass.name,
+          class: cls.name,
+          context: `Assessment "${ass.name}" in ${cls.name} has invalid category`
+        })
+      }
+    }
+  }
+
+  return report
+}
+
+/**
+ * Deletes orphaned grade records from the database.
+ */
+export async function repairGradebookOrphans(gradeIds) {
+  const db = await getDB()
+  const tx = db.transaction('grades', 'readwrite')
+  const store = tx.objectStore('grades')
+  for (const id of gradeIds) {
+    await store.delete(id)
+  }
+  await tx.done
+  hasUnsyncedChanges.value = true
+}
+
+/**
+ * Attempts to heal records missing Class IDs by cross-referencing.
+ */
+export async function repairMissingClassIds() {
+  const db = await getDB()
+  const [allGrades, allAssessments] = await Promise.all([
+    db.getAll('grades'),
+    db.getAll('assessments')
+  ])
+
+  const txGrades = db.transaction('grades', 'readwrite')
+
+  // 1. Heal Grades using Assessment's classId
+  for (const grade of allGrades) {
+    if (!grade.classId) {
+      const ass = allAssessments.find(a => a.assessmentId === grade.assessmentId)
+      if (ass && ass.classId) {
+        grade.classId = ass.classId
+        await txGrades.objectStore('grades').put(grade)
+      }
+    }
+  }
+
+  await txGrades.done
   hasUnsyncedChanges.value = true
 }

@@ -3,65 +3,59 @@
     <div class="setup__card">
       <div class="setup__card-header-row">
         <h2 class="setup__card-title">Grading Standards (Levels)</h2>
-        <button class="setup__pill-btn" @click="resetToOntario">Reset to Ontario Defaults</button>
+        <button class="setup__pill-btn" @click="resetToOntario">Reset Defaults</button>
       </div>
       <p class="setup__hint">
-        Define how percentage ranges map to descriptive levels (e.g., R, L1, L2, L3, L4). 
-        These apply globally to analytics and reports across all classes.
+        Define how percentage ranges map to descriptive levels. These apply globally 
+        across all classes.
       </p>
 
-      <div class="grade-buckets__list">
+      <div class="setup__gb-list">
         <div 
           v-for="(bucket, idx) in localBuckets" 
           :key="idx" 
-          class="grade-buckets__item"
-          :class="{ 'grade-buckets__item--error': validationErrors[idx] }"
+          class="setup__gb-item"
         >
-          <div class="grade-buckets__color-swatch" :style="{ backgroundColor: bucket.color }">
-            <input type="color" v-model="bucket.color" class="grade-buckets__color-input" title="Choose Label Color" />
+          <div class="grade-buckets__swatch" :style="{ backgroundColor: bucket.color }">
+            <input type="color" v-model="bucket.color" class="grade-buckets__color-picker" />
           </div>
           
           <input 
             v-model="bucket.label" 
-            class="setup__input grade-buckets__input-label" 
-            placeholder="Label (e.g. L4)" 
+            class="setup__input setup__input--naked" 
+            style="flex: 1;"
+            placeholder="Level Label" 
           />
           
-          <div class="grade-buckets__range">
-            <input 
-              v-model.number="bucket.min" 
-              type="number" 
-              class="setup__input grade-buckets__input-num" 
-              placeholder="Min %"
-              @input="validate"
-            />
-            <span>to</span>
-            <input 
-              v-model.number="bucket.max" 
-              type="number" 
-              class="setup__input grade-buckets__input-num" 
-              placeholder="Max %"
-              @input="validate"
-            />
-            <span>%</span>
+          <div class="setup__gb-actions">
+            <div class="grade-buckets__range-inputs">
+              <input v-model.number="bucket.min" type="number" class="setup__input setup__input--weight" />
+              <span class="grade-buckets__to">to</span>
+              <input v-model.number="bucket.max" type="number" class="setup__input setup__input--weight" />
+              <span class="grade-buckets__percent">%</span>
+            </div>
+            
+            <button class="setup__icon-btn" :disabled="idx === 0" @click="moveBucket(idx, -1)"><ChevronUp :size="16" /></button>
+            <button class="setup__icon-btn" :disabled="idx === localBuckets.length - 1" @click="moveBucket(idx, 1)"><ChevronDown :size="16" /></button>
+            <button class="setup__icon-btn setup__icon-btn--danger" @click="removeBucket(idx)" title="Remove Level">
+              <Trash2 :size="16" />
+            </button>
           </div>
-
-          <button class="setup__icon-btn setup__icon-btn--danger" @click="removeBucket(idx)" title="Remove Level">
-            <Trash2 :size="16" />
-          </button>
         </div>
       </div>
+
+      <button class="setup__btn-ghost setup__btn--full" style="margin-top: 1rem;" @click="addBucket">
+        <Plus :size="14" /> Add Level
+      </button>
 
       <div v-if="globalError" class="grade-buckets__error-msg">
         <AlertCircle :size="16" /> {{ globalError }}
       </div>
 
-      <div class="grade-buckets__actions">
-        <button class="setup__btn-ghost" @click="addBucket">
-          <Plus :size="14" /> Add Level
-        </button>
+      <div class="grade-buckets__footer">
         <button 
           class="setup__btn-primary" 
+          style="margin-left: auto;"
           :disabled="!!globalError || hasFieldErrors" 
           @click="saveBuckets"
         >
@@ -74,7 +68,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { Trash2, Plus, AlertCircle } from 'lucide-vue-next'
+import { Trash2, Plus, AlertCircle, ChevronUp, ChevronDown } from 'lucide-vue-next'
 import * as settingsService from '../../db/settingsService.js'
 
 const localBuckets = ref([])
@@ -115,7 +109,16 @@ function removeBucket(idx) {
     validate()
 }
 
+function moveBucket(idx, dir) {
+    const target = idx + dir
+    if (target < 0 || target >= localBuckets.value.length) return
+    const temp = localBuckets.value[idx]
+    localBuckets.value[idx] = localBuckets.value[target]
+    localBuckets.value[target] = temp
+}
+
 function resetToOntario() {
+    if (!window.confirm('Reset to standard Ontario levels?')) return
     localBuckets.value = JSON.parse(JSON.stringify(ONTARIO_DEFAULTS))
     validate()
 }
@@ -125,117 +128,136 @@ function validate() {
     globalError.value = ''
 
     if (localBuckets.value.length === 0) {
-        globalError.value = 'At least one grade level must be defined.'
+        globalError.value = 'At least one level is required.'
         return
     }
 
-    // Sort by min for validation
-    const sorted = [...localBuckets.value].sort((a, b) => a.min - b.min)
-    
-    for (let i = 0; i < sorted.length; i++) {
-        const b = sorted[i]
-        
-        // Basic range check
+    for (let i = 0; i < localBuckets.value.length; i++) {
+        const b = localBuckets.value[i]
         if (b.min > b.max) {
-            globalError.value = `Level "${b.label}" has an invalid range: Min cannot be greater than Max.`
+            globalError.value = `Level "${b.label}" has an invalid range.`
             return
         }
-
-        // Overlap check
-        if (i > 0) {
-            const prev = sorted[i-1]
-            if (b.min <= prev.max) {
-                globalError.value = `Overlap detected between "${prev.label}" and "${b.label}".`
-                return
-            }
-            if (b.min > prev.max + 1) {
-                // Gap check (optional, but good for UX)
-                // We'll allow gaps but maybe show a warning? 
-                // The user specifically asked to "make sure we don't have bucket overlap".
-            }
-        }
-    }
-
-    // Range coverage check
-    const lowest = Math.min(...localBuckets.value.map(b => b.min))
-    const highest = Math.max(...localBuckets.value.map(b => b.max))
-    if (lowest > 0) {
-        // globalError.value = 'Grading levels should start at 0%.'
     }
 }
 
 async function saveBuckets() {
     validate()
     if (globalError.value) return
-    
-    await settingsService.saveGradeBuckets(JSON.parse(JSON.stringify(localBuckets.value)))
-    
-    // Refresh the gradebook state if possible (or just rely on re-navigation)
-    // In this app, Setup is a separate view, so re-navigation will reload state.
+    const sorted = [...localBuckets.value].sort((a, b) => a.min - b.min)
+    await settingsService.saveGradeBuckets(JSON.parse(JSON.stringify(sorted)))
+    localBuckets.value = JSON.parse(JSON.stringify(sorted))
     alert('Grading standards saved successfully!')
 }
 </script>
 
 <style scoped>
-.grade-buckets__list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
+.grade-buckets {
   margin-top: 1rem;
 }
 
-.grade-buckets__item {
+/* ── Standardized Card Styles (Matched to Setup view) ── */
+.setup__card {
+  background:    var(--surface);
+  padding:       24px;
+  border-radius: var(--radius-lg);
+  box-shadow:    var(--shadow-sm);
+  border:        1px solid var(--border);
+  display:       flex;
+  flex-direction: column;
+  gap:           16px;
+}
+
+.setup__card-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.setup__card-title {
+  font-size:     1.1rem;
+  font-weight:   700;
+  color:         var(--text);
+  margin-bottom: 4px;
+}
+
+.setup__hint {
+  font-size: 0.82rem;
+  color:     var(--text-secondary);
+  line-height: 1.5;
+}
+
+.setup__gb-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 1rem;
+}
+
+.setup__gb-item {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  background: var(--bg-card);
-  padding: 0.5rem;
-  border-radius: 8px;
-  border: 1px solid var(--border-color);
-  transition: all 0.2s ease;
+  gap: 12px;
+  padding: 8px 16px;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  min-height: 52px;
+  border: 1px solid transparent;
+  transition: all 0.2s;
 }
 
-.grade-buckets__item--error {
-  border-color: var(--state-out);
-  background: rgba(255, 59, 48, 0.05);
+.setup__gb-item:hover {
+  border-color: var(--border);
+  background: color-mix(in srgb, var(--bg-secondary) 95%, black);
 }
 
-.grade-buckets__color-swatch {
-  width: 32px;
-  height: 32px;
-  border-radius: 6px;
+.grade-buckets__swatch {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
   position: relative;
   overflow: hidden;
-  border: 1px solid rgba(0,0,0,0.1);
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,0.1);
   flex-shrink: 0;
 }
 
-.grade-buckets__color-input {
+.grade-buckets__color-picker {
   position: absolute;
   top: -5px;
   left: -5px;
-  width: 50px;
-  height: 50px;
+  width: 40px;
+  height: 40px;
   cursor: pointer;
   opacity: 0;
 }
 
-.grade-buckets__input-label {
-  flex: 1;
-  font-weight: 600;
-}
-
-.grade-buckets__range {
+.setup__gb-actions {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  color: var(--text-secondary);
-  font-size: 0.9rem;
+  gap: 8px;
+  margin-left: auto;
 }
 
-.grade-buckets__input-num {
-  width: 70px;
-  text-align: center;
+.grade-buckets__range-inputs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-right: 12px;
+}
+
+.grade-buckets__to {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.grade-buckets__percent {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  font-weight: 500;
 }
 
 .grade-buckets__error-msg {
@@ -245,21 +267,88 @@ async function saveBuckets() {
   align-items: center;
   gap: 0.5rem;
   font-size: 0.9rem;
-  font-weight: 500;
-  padding: 0.75rem;
-  background: rgba(255, 59, 48, 0.1);
-  border-radius: 8px;
+  font-weight: 600;
+  padding: 12px;
+  background: color-mix(in srgb, var(--state-out) 10%, white);
+  border-radius: var(--radius-md);
 }
 
-.grade-buckets__actions {
+.grade-buckets__footer {
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
   display: flex;
-  justify-content: space-between;
+}
+
+.setup__input--weight {
+  width: 65px;
+  text-align: center;
+  background: var(--surface) !important;
+  font-weight: 600;
+  border-color: var(--border) !important;
+}
+
+.setup__input--naked {
+  border: none !important;
+  background: transparent !important;
+  font-weight: 700;
+  padding-left: 0 !important;
+  font-size: 0.95rem;
+  color: var(--text);
+}
+
+.setup__icon-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
   align-items: center;
-  margin-top: 1.5rem;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.setup__icon-btn:not(:disabled):hover {
+  background: var(--surface);
+  color: var(--primary);
+  box-shadow: var(--shadow-sm);
+}
+
+.setup__icon-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.setup__icon-btn--danger:hover {
+  background: #fff5f5 !important;
+  color: var(--state-out) !important;
+}
+
+.setup__pill-btn {
+  font-size: 0.72rem;
+  padding: 4px 12px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  color: var(--text-secondary);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.setup__pill-btn:hover {
+  background: var(--primary-light);
+  color: var(--primary);
+  border-color: var(--primary-light);
 }
 
 .setup__btn--full {
-    width: 100%;
-    margin-top: 0.5rem;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
 </style>

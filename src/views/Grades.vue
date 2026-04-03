@@ -395,6 +395,14 @@
               </div>
             </div>
 
+            <!-- Category Weight Audit Warning -->
+            <div v-if="isWeightWarningVisible" 
+              class="grades__weight-warning"
+              :class="categoryWeightTotal > 100 ? 'grades__weight-warning--over' : 'grades__weight-warning--under'">
+              <AlertTriangle :size="16" />
+              <span>Audit Note: Category weights sum to {{ categoryWeightTotal }}%. Averages will be scaled, but 100% is recommended for audit clarity.</span>
+            </div>
+
             <!-- Overlay sits on top without removing content -->
             <div v-if="isCalculating" class="grades__calculating-overlay">
               <div class="grades__spinner"></div>
@@ -1377,6 +1385,15 @@ const individualStudentAssessments = computed(() => {
 const currentAssessment = computed(() => {
   if (!selectedAssessmentId.value) return null
   return assessments.value.find(a => a.assessmentId === selectedAssessmentId.value)
+})
+
+const categoryWeightTotal = computed(() => {
+  if (!activeClassRecord.value?.gradebookCategories) return 0
+  return activeClassRecord.value.gradebookCategories.reduce((sum, cat) => sum + (cat.weight || 0), 0)
+})
+
+const isWeightWarningVisible = computed(() => {
+  return categoryWeightTotal.value !== 100
 })
 
 const missingStudentsList = computed(() => {
@@ -5022,5 +5039,34 @@ verall-trend {
 .grades__threshold-input::-webkit-inner-spin-button {
   -webkit-appearance: none;
   margin: 0;
+}
+
+.grades__weight-warning {
+  margin: 0.5rem 1rem 1rem 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-md);
+  font-size: 0.85rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  animation: fadeInDown 0.3s ease-out;
+}
+
+.grades__weight-warning--under {
+  background: #fef3c7; /* Amber 100 */
+  border: 1px solid #fde68a;
+  color: #b45309; /* Deep Amber */
+}
+
+.grades__weight-warning--over {
+  background: #fee2e2; /* Red 100 */
+  border: 1px solid #fecaca;
+  color: #b91c1c; /* Red 700 */
+}
+
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 </style>
