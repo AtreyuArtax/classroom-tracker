@@ -4,13 +4,13 @@
  * Reactive bridge for the Gradebook V4 feature.
  */
 
-import { ref, computed, triggerRef } from 'vue'
+import { ref, shallowRef, computed, triggerRef } from 'vue'
 import * as gradebookService from '../db/gradebookService.js'
 import * as classService from '../db/classService.js'
 
 // ─── Reactive State ──────────────────────────────────────────────────────────
 
-export const activeClassRecord = ref(null)
+export const activeClassRecord = shallowRef(null)
 export const assessments = ref([])
 export const grades = ref([])
 export const classGrades = ref({})
@@ -25,6 +25,7 @@ export const exclusionMode = ref('none') // 'none', 'fixed', 'auto'
 export const fixedExclusionThreshold = ref(40) // Default cutoff %
 export const distributionMode = ref('buckets') // 'buckets' (10%) or 'levels' (Ontario GS)
 export const classAnalytics = ref(null) // result of calculateClassAnalytics
+export const assessmentStats = ref({}) // Manual cache for assessment stats
 export const showAddAssessmentModal = ref(false)
 export const isEditingAssessment = ref(false)
 export const currentAssessmentId = ref(null)
@@ -82,8 +83,9 @@ export async function loadGradebook(classRecord) {
   globalMilestones.value = await getGlobalMilestones()
   gradeBuckets.value = await getGradeBuckets()
   
-  // Compute student grades
+  // Compute student grades and stats
   await refreshGrades()
+  refreshAllAssessmentStats()
 }
 
 /**
@@ -305,6 +307,60 @@ async function refreshSingleStudent(studentId) {
 }
 
 /**
+ * Recalculates stats for a SINGLE assessment and updates the cache.
+ */
+export function refreshSingleAssessmentStats(assessmentId) {
+  if (!activeClassRecord.value) return
+  
+  const assessment = assessments.value.find(a => a.assessmentId === assessmentId)
+  if (!assessment) return
+
+  const stats = gradebookService.calculateAssessmentAnalytics(
+    assessmentId,
+    grades.value,
+    assessment,
+    { 
+      exclusionMode: exclusionMode.value,
+      exclusionThreshold: fixedExclusionThreshold.value,
+      excludedStudentIds: new Set(
+        Object.keys(activeClassRecord.value?.students ?? {})
+          .filter(id => activeClassRecord.value.students[id].excludeFromAnalytics)
+      ),
+      gradeBuckets: gradeBuckets.value
+    }
+  )
+
+  assessmentStats.value = {
+    ...assessmentStats.value,
+    [assessmentId]: stats
+  }
+}
+
+/**
+ * Full refresh of all assessment stats (e.g. on class load).
+ */
+export function refreshAllAssessmentStats() {
+  const stats = {}
+  for (const assessment of assessments.value) {
+    stats[assessment.assessmentId] = gradebookService.calculateAssessmentAnalytics(
+      assessment.assessmentId,
+      grades.value,
+      assessment,
+      { 
+        exclusionMode: exclusionMode.value,
+        exclusionThreshold: fixedExclusionThreshold.value,
+        excludedStudentIds: new Set(
+          Object.keys(activeClassRecord.value?.students ?? {})
+            .filter(id => activeClassRecord.value.students[id].excludeFromAnalytics)
+        ),
+        gradeBuckets: gradeBuckets.value
+      }
+    )
+  }
+  assessmentStats.value = stats
+}
+
+/**
  * Records a grade (points earned) for a student and refreshes state.
  * 
  * @param {number} assessmentId
@@ -338,9 +394,10 @@ export function enterGrade(assessmentId, studentId, pointsEarned, date = null, c
     isPrimary: grade.attempts.length === 0
   })
 
-  // 1. Refresh UI instantly for this student
+  // 1. Refresh UI instantly for this student and assessment stats
   triggerRef(grades)
   refreshSingleStudent(studentId)
+  refreshSingleAssessmentStats(assessmentId)
   
   // 2. Debounce IDB save
   enqueueDBSave(`${assessmentId}_${studentId}_enter`, () => 
@@ -361,6 +418,7 @@ export function changeGrade(assessmentId, studentId, pointsEarned) {
   
   triggerRef(grades)
   refreshSingleStudent(studentId)
+  refreshSingleAssessmentStats(assessmentId)
   
   enqueueDBSave(`${assessmentId}_${studentId}_change`, () => 
     gradebookService.updateLastAttempt(assessmentId, studentId, pointsEarned)
@@ -380,6 +438,7 @@ export function removeAttempt(assessmentId, studentId, attemptId) {
   
   triggerRef(grades)
   refreshSingleStudent(studentId)
+  refreshSingleAssessmentStats(assessmentId)
   
   enqueueDBSave(`${assessmentId}_${studentId}_rem_${attemptId}`, () => 
     gradebookService.deleteAttempt(assessmentId, studentId, attemptId)
@@ -399,6 +458,7 @@ export function setPrimaryAttempt(assessmentId, studentId, attemptId) {
   
   triggerRef(grades)
   refreshSingleStudent(studentId)
+  refreshSingleAssessmentStats(assessmentId)
   
   enqueueDBSave(`${assessmentId}_${studentId}_prim`, () => 
     gradebookService.setPrimaryAttempt(assessmentId, studentId, attemptId)
@@ -415,6 +475,7 @@ export function clearGrade(assessmentId, studentId) {
   
   triggerRef(grades)
   refreshSingleStudent(studentId)
+  refreshSingleAssessmentStats(assessmentId)
   
   enqueueDBSave(`${assessmentId}_${studentId}_clear`, () => 
     gradebookService.deleteGrade(assessmentId, studentId)
@@ -436,6 +497,7 @@ export function markMissing(assessmentId, studentId, missing) {
   
   triggerRef(grades)
   refreshSingleStudent(studentId)
+  refreshSingleAssessmentStats(assessmentId)
   
   enqueueDBSave(`${assessmentId}_${studentId}_miss`, () => 
     gradebookService.updateGradeFlags(assessmentId, studentId, { missing })
@@ -457,6 +519,7 @@ export function markExcluded(assessmentId, studentId, excluded) {
   
   triggerRef(grades)
   refreshSingleStudent(studentId)
+  refreshSingleAssessmentStats(assessmentId)
   
   enqueueDBSave(`${assessmentId}_${studentId}_exc`, () => 
     gradebookService.updateGradeFlags(assessmentId, studentId, { excluded })
@@ -480,6 +543,9 @@ export async function saveStudentOverride(studentId, catId, value) {
     student.categoryOverrides[catId] = Number(value)
   }
 
+  // Force trigger because we are using shallowRef
+  triggerRef(activeClassRecord)
+
   const { patchStudent } = await import('../db/classService.js')
   await patchStudent(activeClassRecord.value.classId, studentId, { 
     categoryOverrides: student.categoryOverrides 
@@ -497,6 +563,7 @@ export async function saveStudentGradebookNote(studentId, note) {
   if (!student || student.gradebookNote === note) return
 
   student.gradebookNote = note
+  triggerRef(activeClassRecord)
   const { patchStudent } = await import('../db/classService.js')
   await patchStudent(activeClassRecord.value.classId, studentId, { gradebookNote: note })
 }
@@ -519,6 +586,7 @@ export async function saveStudentDemographics(studentId, demographics) {
   }
 
   Object.assign(student, updates)
+  triggerRef(activeClassRecord)
   const { patchStudent } = await import('../db/classService.js')
   await patchStudent(activeClassRecord.value.classId, studentId, updates)
 }
@@ -548,26 +616,3 @@ export const gradeMap = computed(() => {
   return map
 })
 
-/**
- * Returns summary stats for all assessments in the current view.
- */
-export const assessmentStats = computed(() => {
-  const stats = {}
-  for (const assessment of assessments.value) {
-    stats[assessment.assessmentId] = gradebookService.calculateAssessmentAnalytics(
-      assessment.assessmentId,
-      grades.value,
-      assessment,
-      { 
-        exclusionMode: exclusionMode.value,
-        exclusionThreshold: fixedExclusionThreshold.value,
-        excludedStudentIds: new Set(
-          Object.keys(activeClassRecord.value?.students ?? {})
-            .filter(id => activeClassRecord.value.students[id].excludeFromAnalytics)
-        ),
-        gradeBuckets: gradeBuckets.value
-      }
-    )
-  }
-  return stats
-})

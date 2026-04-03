@@ -685,6 +685,7 @@
             <div class="setup__audit-item" :class="{ 'setup__audit-item--warn': auditReport.invalidCategories.length > 0 }">
               <div class="setup__audit-label">Category Mismatches:</div>
               <div class="setup__audit-value">{{ auditReport.invalidCategories.length }}</div>
+              <button v-if="auditReport.invalidCategories.length > 0" class="setup__pill-btn" @click="fixInvalidCategories">Repair Categories</button>
               <button v-if="auditReport.invalidCategories.length > 0" class="setup__btn-text" @click="toggleAuditDetails('categories')">
                 {{ showAuditDetails.categories ? 'Hide' : 'Details' }}
               </button>
@@ -868,7 +869,8 @@ const {
   confirmResize,
   updateTeacherName,
   updatePeriodStartTimes,
-  bulkImportClasses
+  bulkImportClasses,
+  triggerActiveClass
 } = useClassroom()
 
 const isUnsynced = eventService.hasUnsyncedChanges
@@ -1077,6 +1079,17 @@ async function fixMissingIds() {
   setTimeout(() => auditMsg.value = '', 3000)
 }
 
+async function fixInvalidCategories() {
+  if (!auditReport.value?.invalidCategories.length) return
+  if (!window.confirm(`Repair ${auditReport.value.invalidCategories.length} assessment category mismatches? assessments will be re-assigned to the first valid category in their class.`)) return
+  
+  const ids = auditReport.value.invalidCategories.map(a => a.id)
+  await gradebookService.repairInvalidCategories(ids)
+  auditMsg.value = 'Categories repaired!'
+  await runDataAudit()
+  setTimeout(() => auditMsg.value = '', 3000)
+}
+
 // --- Smart CSV Cleaning Helpers ---
 function cleanPeriod(raw) {
   if (!raw) return '1'
@@ -1132,8 +1145,23 @@ async function onRestoreClass(classId) {
 async function onDeleteClass(classId) {
   const cls = archivedClasses.value.find(c => c.classId === classId)
   const name = cls?.name ?? 'this class'
-  if (!window.confirm(`Permanently delete "${name}"? This cannot be undone. Event history will be retained.`)) return
-  await deleteClass(classId)
+  
+  // Level 1: Visibility check (button is in archived list)
+  
+  // Level 2: Standard confirm
+  if (!window.confirm(`Permanently delete "${name}"? This cannot be undone. All assessment, grade, and event history for this class will be permanently deleted.`)) return
+  
+  // Level 3: Super Confirm Modal
+  superConfirmConfig.title = 'Final Security Check'
+  superConfirmConfig.message = `You are about to PERMANENTLY wipe "${name}" and all its historical data. This action is irreversible. Please type the name of the class below to confirm.`
+  superConfirmConfig.requireText = name
+  superConfirmConfig.danger = true
+  superConfirmConfig.onConfirm = async () => {
+    await deleteClass(classId)
+    // Optional: add a small success notification logic if desired
+  }
+  
+  isSuperConfirmOpen.value = true
 }
 
 const props = defineProps({
@@ -1681,6 +1709,7 @@ async function saveGradebookSettings() {
     gradebookUnits: activeClass.value.gradebookUnits,
     gradebookNotes: activeClass.value.gradebookNotes
   })
+  triggerActiveClass()
   // Milestones are now global and saved to settings independently
   await settingsService.saveGlobalMilestones(JSON.parse(JSON.stringify(globalMilestones.value)))
 }

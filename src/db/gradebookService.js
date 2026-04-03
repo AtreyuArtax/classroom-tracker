@@ -1279,3 +1279,33 @@ export async function repairMissingClassIds() {
   await txGrades.done
   hasUnsyncedChanges.value = true
 }
+
+/**
+ * Heals assessments with invalid or missing category IDs.
+ * Re-assigns them to the first available category in the class.
+ */
+export async function repairInvalidCategories(assessmentIds) {
+  const db = await getDB()
+  const [allAssessments, allClasses] = await Promise.all([
+    db.getAll('assessments'),
+    db.getAll('classes')
+  ])
+
+  const tx = db.transaction('assessments', 'readwrite')
+  const store = tx.objectStore('assessments')
+
+  for (const assId of assessmentIds) {
+    const ass = allAssessments.find(a => a.assessmentId === assId)
+    if (!ass) continue
+
+    const cls = allClasses.find(c => c.classId === ass.classId)
+    if (!cls || !cls.gradebookCategories || cls.gradebookCategories.length === 0) continue
+
+    // Re-assign to the first category in the class
+    ass.categoryId = cls.gradebookCategories[0].categoryId
+    await store.put(ass)
+  }
+
+  await tx.done
+  hasUnsyncedChanges.value = true
+}

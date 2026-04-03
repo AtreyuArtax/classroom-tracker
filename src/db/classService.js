@@ -107,12 +107,16 @@ export async function clearStudentActiveState(classId, studentId) {
  */
 export async function setPeriodStartTime(classId, timeString) {
     const db = await getDB()
-    const cls = await db.get('classes', classId)
+    const tx = db.transaction('classes', 'readwrite')
+    const store = tx.objectStore('classes')
+    const cls = await store.get(classId)
+    
     if (!cls) throw new Error(`Class not found: ${classId}`)
 
     cls.periodStartTime = timeString
     const plain = JSON.parse(JSON.stringify(cls))
-    await db.put('classes', plain)
+    await store.put(plain)
+    await tx.done
     hasUnsyncedChanges.value = true
 }
 
@@ -125,12 +129,20 @@ export async function setPeriodStartTime(classId, timeString) {
  */
 export async function setStudentAbsent(classId, studentId) {
     const db = await getDB()
-    const cls = await db.get('classes', classId)
+    const tx = db.transaction('classes', 'readwrite')
+    const store = tx.objectStore('classes')
+    const cls = await store.get(classId)
     const st = cls?.students[studentId]
     if (!st) throw new Error('Student not found')
 
-    const activeStates = { ...(st.activeStates || { isOut: false, outTime: null, lateMs: null }), isAbsent: true }
-    await patchStudent(classId, studentId, { activeStates })
+    st.activeStates = { 
+        ...(st.activeStates || { isOut: false, outTime: null, lateMs: null }), 
+        isAbsent: true 
+    }
+    const plain = JSON.parse(JSON.stringify(cls))
+    await store.put(plain)
+    await tx.done
+    hasUnsyncedChanges.value = true
 }
 
 /**
@@ -142,12 +154,17 @@ export async function setStudentAbsent(classId, studentId) {
  */
 export async function clearStudentAbsent(classId, studentId) {
     const db = await getDB()
-    const cls = await db.get('classes', classId)
+    const tx = db.transaction('classes', 'readwrite')
+    const store = tx.objectStore('classes')
+    const cls = await store.get(classId)
     const st = cls?.students[studentId]
     if (!st || !st.activeStates) return
 
-    const activeStates = { ...st.activeStates, isAbsent: false }
-    await patchStudent(classId, studentId, { activeStates })
+    st.activeStates.isAbsent = false
+    const plain = JSON.parse(JSON.stringify(cls))
+    await store.put(plain)
+    await tx.done
+    hasUnsyncedChanges.value = true
 }
 
 /**
@@ -170,16 +187,21 @@ export async function clearStudentAbsent(classId, studentId) {
  */
 export async function setStudentLate(classId, studentId, lateMs) {
     const db = await getDB()
-    const cls = await db.get('classes', classId)
+    const tx = db.transaction('classes', 'readwrite')
+    const store = tx.objectStore('classes')
+    const cls = await store.get(classId)
     const st = cls?.students[studentId]
     if (!st) throw new Error('Student not found')
 
-    const activeStates = { 
+    st.activeStates = { 
         ...(st.activeStates || { isOut: false, outTime: null }), 
         isAbsent: false, 
         lateMs 
     }
-    await patchStudent(classId, studentId, { activeStates })
+    const plain = JSON.parse(JSON.stringify(cls))
+    await store.put(plain)
+    await tx.done
+    hasUnsyncedChanges.value = true
 }
 
 /**
@@ -191,12 +213,17 @@ export async function setStudentLate(classId, studentId, lateMs) {
  */
 export async function clearStudentLate(classId, studentId) {
     const db = await getDB()
-    const cls = await db.get('classes', classId)
+    const tx = db.transaction('classes', 'readwrite')
+    const store = tx.objectStore('classes')
+    const cls = await store.get(classId)
     const st = cls?.students[studentId]
     if (!st || !st.activeStates) return
 
-    const activeStates = { ...st.activeStates, lateMs: null }
-    await patchStudent(classId, studentId, { activeStates })
+    st.activeStates.lateMs = null
+    const plain = JSON.parse(JSON.stringify(cls))
+    await store.put(plain)
+    await tx.done
+    hasUnsyncedChanges.value = true
 }
 
 /**
@@ -322,11 +349,15 @@ export async function updateStudentNote(classId, studentId, note) {
  */
 export async function archiveClass(classId) {
     const db = await getDB()
-    const cls = await db.get('classes', classId)
+    const tx = db.transaction('classes', 'readwrite')
+    const store = tx.objectStore('classes')
+    const cls = await store.get(classId)
     if (!cls) throw new Error(`Class not found: ${classId}`)
+    
     cls.archived = true
     const plain = JSON.parse(JSON.stringify(cls))
-    await db.put('classes', plain)
+    await store.put(plain)
+    await tx.done
     hasUnsyncedChanges.value = true
 }
 
@@ -338,24 +369,53 @@ export async function archiveClass(classId) {
  */
 export async function restoreClass(classId) {
     const db = await getDB()
-    const cls = await db.get('classes', classId)
+    const tx = db.transaction('classes', 'readwrite')
+    const store = tx.objectStore('classes')
+    const cls = await store.get(classId)
     if (!cls) throw new Error(`Class not found: ${classId}`)
+    
     cls.archived = false
     const plain = JSON.parse(JSON.stringify(cls))
-    await db.put('classes', plain)
+    await store.put(plain)
+    await tx.done
     hasUnsyncedChanges.value = true
 }
 
-/**
- * Permanently deletes a class record and all its student data.
- * Event history is NOT deleted — orphaned events remain in the events store.
- *
- * @param {string} classId
- * @returns {Promise<void>}
- */
 export async function deleteClass(classId) {
     const db = await getDB()
-    await db.delete('classes', classId)
+    
+    // 1. Identify all child records that belong to this class
+    const [assessments, grades, events] = await Promise.all([
+        db.getAllFromIndex('assessments', 'by_classId', classId),
+        db.getAllFromIndex('grades', 'by_classId', classId),
+        db.getAllFromIndex('events', 'by_classId', classId)
+    ])
+
+    // 2. Perform deep delete in a single atomic transaction
+    const tx = db.transaction(['classes', 'assessments', 'grades', 'events'], 'readwrite')
+    
+    // Delete Grades
+    const gradeStore = tx.objectStore('grades')
+    for (const g of grades) {
+        await gradeStore.delete(g.gradeId)
+    }
+    
+    // Delete Assessments
+    const assessmentStore = tx.objectStore('assessments')
+    for (const a of assessments) {
+        await assessmentStore.delete(a.assessmentId)
+    }
+    
+    // Delete Events
+    const eventStore = tx.objectStore('events')
+    for (const e of events) {
+        await eventStore.delete(e.eventId)
+    }
+    
+    // Finally, delete the class record itself
+    await tx.objectStore('classes').delete(classId)
+
+    await tx.done
     hasUnsyncedChanges.value = true
 }
 /**
