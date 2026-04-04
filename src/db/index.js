@@ -90,7 +90,7 @@ export function getDB() {
       if (oldVersion === 0) {
         transaction.objectStore('settings').put(
           {
-            schemaVersion: 20,
+            schemaVersion: 23,
             gridSize: { rows: 6, cols: 6 },
             currentYear: getCurrentSchoolYear(),
             currentSemester: getCurrentSemester(),
@@ -107,8 +107,24 @@ export function getDB() {
               washroomTripsPerWeek: 4,
               deviceIncidentsPerWeek: 3
             },
+            gradeBuckets: [
+              { label: 'R', min: 0, max: 49, color: '#ff3b30' },
+              { label: 'L1', min: 50, max: 59, color: '#ff9500' },
+              { label: 'L2', min: 60, max: 69, color: '#ffcc00' },
+              { label: 'L3', min: 70, max: 79, color: '#30b0c7' },
+              { label: 'L4', min: 80, max: 100, color: '#34c759' }
+            ],
+            capGradesAt100: true,
             gradebookTemplates: [],
-            gradebookMilestones: []
+            gradebookMilestones: [],
+            academicTerms: [],
+            teacherName: '',
+            periodStartTimes: {
+              '1': '08:00',
+              '2': '09:20',
+              '3': '11:40',
+              '4': '13:00'
+            }
           },
           'singleton'
         )

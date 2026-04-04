@@ -203,6 +203,7 @@ export async function updateLastAttempt(assessmentId, studentId, pointsEarned) {
       attemptId: crypto.randomUUID(),
       pointsEarned,
       date: new Date().toISOString(),
+      isPrimary: true,
       comment: ''
     })
   }
@@ -317,12 +318,6 @@ export async function deleteGrade(assessmentId, studentId) {
   }
 }
 
-/**
- * Returns all grades for all students in a class.
- * 
- * @param {string} classId
- * @returns {Promise<Array<Object>>}
- */
 /**
  * Returns all grades for all students in a class.
  * NOW OPTIMIZED with single-query by_classId index!
