@@ -2072,10 +2072,10 @@ async function handleExportExcel() {
     // 3. Calculate grades (the aggregate data)
     const classGrades = await gradebookService.calculateClassGrades(activeClass.value)
     
-    // 4. Get the student list (sorted)
-    const roster = Object.values(record.students || {}).sort((a, b) => 
-      a.lastName.localeCompare(b.lastName) || a.firstName.localeCompare(b.firstName)
-    )
+    // 4. Get the student list (sorted) — include studentId since it is the map key, not a property
+    const roster = Object.entries(record.students || {})
+      .map(([studentId, s]) => ({ studentId, ...s }))
+      .sort((a, b) => a.lastName.localeCompare(b.lastName) || a.firstName.localeCompare(b.firstName))
 
     // 5. Get assessments & grade map from DB
     const assessments = await gradebookService.getAssessmentsByClass(activeClass.value.classId)
@@ -2118,7 +2118,8 @@ async function handleExportExcel() {
       students: roster,
       assessments,
       gradeMap,
-      summaryData: summaryArray
+      summaryData: summaryArray,
+      categories: record.gradebookCategories || []
     })
   } catch (err) {
     console.error('Excel Export Error:', err)
