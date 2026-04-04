@@ -498,13 +498,14 @@ export async function clearAllData() {
             { label: 'L4', min: 80, max: 100, color: '#34c759' }
         ],
         capGradesAt100: true,
+        backupFileHandle: null,
+        teacherName: '',
         gradebookTemplates: [],
         gradebookMilestones: [],
         academicTerms: [],
-        teacherName: '',
         periodStartTimes: {
-            1: '08:45', 2: '10:05', 3: '11:25', 4: '12:45',
-            5: '08:45', 6: '10:05', 7: '11:25', 8: '12:45'
+            '1': '08:45', '2': '10:05', '3': '11:25', '4': '12:45',
+            '5': '08:45', '6': '10:05', '7': '11:25', '8': '12:45'
         }
     }
     await tx.objectStore('settings').put(settings, 'singleton')
@@ -554,9 +555,9 @@ export async function bulkImportClasses(groups) {
                 gridSize: { rows: 6, cols: 6 },
                 gradebookUnits: [],
                 gradebookCategories: [
-                    { categoryId: 'cat_prod', name: 'Product', weight: 70 },
-                    { categoryId: 'cat_obs',  name: 'Observation', weight: 15 },
-                    { categoryId: 'cat_conv', name: 'Conversation', weight: 15 }
+                    { categoryId: crypto.randomUUID(), name: 'Product', weight: 70 },
+                    { categoryId: crypto.randomUUID(), name: 'Observation', weight: 15 },
+                    { categoryId: crypto.randomUUID(), name: 'Conversation', weight: 15 }
                 ],
                 students: {}
             }

@@ -481,6 +481,26 @@ export function resolveAttemptScore(attempts, retestPolicy) {
 }
 
 /**
+ * Calculates the percentage score for an assessment.
+ * Centralizing this logic to ensure consistent reporting across grid and analytics.
+ * 
+ * @param {Object} assessment Assessment metadata
+ * @param {Object} grade Grade record with attempts
+ * @returns {number|null}
+ */
+export function getAssessmentPercentage(assessment, grade) {
+  if (!grade || grade.excluded) return null
+  if (grade.missing) return 0
+  if (!grade.attempts || grade.attempts.length === 0) return null
+  
+  const earned = resolveAttemptScore(grade.attempts, assessment.retestPolicy)
+  if (earned === null) return null
+  
+  const divisor = assessment.totalPoints || 1
+  return (earned / divisor) * 100
+}
+
+/**
  * Calculates a single category grade from a set of assessments and a map of student grades.
  * Shared by calculateStudentGrade and calculateClassAnalytics to ensure consistency.
  * 
@@ -612,13 +632,8 @@ function calculateMostConsistent(studentId, classRecord, gradeMap, assessments, 
     const scores = []
     for (const a of catAssessments) {
       const g = gradeMap[a.assessmentId]
-      if (!g || g.excluded || g.missing || !g.attempts || g.attempts.length === 0) continue
-      
-      const earned = resolveAttemptScore(g.attempts, a.retestPolicy)
-      if (earned === null) continue
-      
-      const divisor = a.totalPoints || 1
-      const percentage = (earned / divisor) * 100
+      const percentage = getAssessmentPercentage(a, g)
+      if (percentage === null) continue
       
       scores.push({
         percentage: percentage,
@@ -686,13 +701,10 @@ function calculateWeightedMedian(studentId, classRecord, gradeMap, assessments, 
     const scores = []
     for (const a of catAssessments) {
       const g = gradeMap[a.assessmentId]
-      if (!g || g.excluded || g.missing || !g.attempts || g.attempts.length === 0) continue
-      
-      const earned = resolveAttemptScore(g.attempts, a.retestPolicy)
-      if (earned === null) continue
-      
-      const divisor = a.totalPoints || 1
-      scores.push((earned / divisor) * 100)
+      const percentage = getAssessmentPercentage(a, g)
+      if (percentage !== null) {
+        scores.push(percentage)
+      }
     }
 
     if (scores.length > 0) {

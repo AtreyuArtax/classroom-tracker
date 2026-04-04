@@ -113,8 +113,9 @@ export async function refreshGrades() {
  */
 export async function refreshClassAnalytics() {
   if (!activeClassRecord.value) return
+  // Use filteredMilestones (same as refreshGrades) so grades and analytics always match
   const asOf = selectedMilestone.value
-    ? globalMilestones.value?.find(m => m.milestoneId === selectedMilestone.value)?.date
+    ? filteredMilestones.value?.find(m => m.milestoneId === selectedMilestone.value)?.date
     : null
 
   classAnalytics.value = await gradebookService.calculateClassAnalytics(
