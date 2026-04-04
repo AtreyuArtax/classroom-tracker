@@ -715,6 +715,14 @@
   </div>
 </template>
 
+<script>
+import { ref } from 'vue'
+// Shared session state: ensures the current tab/period persists when switching students
+const activeTab = ref('summary')
+const selectedPeriod = ref('month')
+export default {}
+</script>
+
 <script setup>
 import { ref, computed, watch, onMounted, nextTick, reactive } from 'vue'
 import { 
@@ -942,8 +950,8 @@ async function triggerPrint() {
   })
 }
 
-const activeTab = ref('summary')
-const selectedPeriod = ref('month')
+
+// Shared state is now handled in the <script> block above
 
 const filteredEvents = computed(() => {
   const range = getDateRangeForPeriod(selectedPeriod.value)
