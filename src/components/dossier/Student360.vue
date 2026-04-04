@@ -15,7 +15,7 @@
         <button class="student-360__action-btn" title="Print Progress Report" @click="showPrintModal = true">
           <Printer :size="18" />
         </button>
-        <button class="student-360__close-btn" @click="$emit('close')">
+        <button class="student-360__close-btn" @click="handleClose">
           <X :size="18" />
         </button>
       </template>
@@ -717,14 +717,19 @@
 
 <script>
 import { ref } from 'vue'
-// Shared session state: ensures the current tab/period persists when switching students
+
+// Shared session state
 const activeTab = ref('summary')
 const selectedPeriod = ref('month')
-export default {}
+let resetTimer = null
+
+export default {
+  inheritAttrs: false
+}
 </script>
 
 <script setup>
-import { ref, computed, watch, onMounted, nextTick, reactive } from 'vue'
+import { ref, computed, watch, onMounted, nextTick, reactive, onUnmounted } from 'vue'
 import { 
   LayoutDashboard, 
   GraduationCap, 
@@ -793,6 +798,14 @@ const props = defineProps({
   studentId: { type: String, required: true },
   classId:   { type: String, required: true }
 })
+
+const emit = defineEmits(['close'])
+
+function handleClose() {
+  activeTab.value = 'summary'
+  selectedPeriod.value = 'month'
+  emit('close')
+}
 
 const { 
   classList,
@@ -1538,7 +1551,19 @@ async function loadData() {
 watch(() => props.studentId, loadData)
 watch(() => props.classId, loadData)
 
-onMounted(loadData)
+onMounted(() => {
+  if (resetTimer) clearTimeout(resetTimer)
+  loadData()
+})
+
+onUnmounted(() => {
+  // If we unmount, start a timer to reset the tab.
+  // If we remount quickly (switching students), the timer is cleared.
+  resetTimer = setTimeout(() => {
+    activeTab.value = 'summary'
+    selectedPeriod.value = 'month'
+  }, 100)
+})
 </script>
 
 <style scoped>
