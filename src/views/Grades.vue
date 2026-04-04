@@ -201,7 +201,6 @@
                               v-model.number="newAttemptForm.points" 
                               type="number" 
                               min="0" 
-                              :max="currentAssessment.totalPoints"
                               class="grades__input-ghost grades__input-ghost--score"
                               placeholder="Score"
                             />
@@ -522,7 +521,7 @@
                   <p class="grades__analytics-hint">
                     {{ distributionMode === 'buckets' 
                         ? 'Number of students within each 10% grade bracket.' 
-                        : 'Number of students within each Ontario level (Growing Success).' }}
+                        : 'Student count by achievement level.' }}
                   </p>
                 </div>
 
@@ -1855,15 +1854,10 @@ async function saveEdit() {
   const assessment = assessments.value.find(a => a.assessmentId === aId)
   if (!assessment) return
 
-  // Clamp value (Safety guard)
+  // Score validation (Safety guard)
   const points = Math.max(0, normalizedNew)
   
-  // Validation: alert user of typos
-  if (points > assessment.totalPoints) {
-    alert(`Entry error: ${points} exceeds assessment max of ${assessment.totalPoints}. Score not saved.`)
-    editingCell.value = null
-    return
-  }
+  // Note: High scores (> max) are allowed for bonus marks and manual scaling
   
   if (isChangeMode.value) {
     await changeGrade(aId, sId, points)
@@ -2134,12 +2128,7 @@ async function onAssessmentViewBlur(studentId, value) {
   const newVal = Number(value)
   
   const assessment = currentAssessment.value
-  if (assessment && newVal > assessment.totalPoints) {
-    alert(`Entry error: ${newVal} exceeds assessment max of ${assessment.totalPoints}. Score not saved.`)
-    // Optional: could reset the field here if we had a ref to the specific DOM element easily, 
-    // but Blur navigation usually handles this by ignoring the change and moving on.
-    return
-  }
+  // Note: High scores are allowed
 
   if (oldVal !== newVal) {
     await enterGrade(selectedAssessmentId.value, studentId, newVal)
@@ -2201,11 +2190,7 @@ async function saveNewAttempt() {
   const { studentId, points, date, comment } = newAttemptForm.value
   
   const assessment = currentAssessment.value
-  if (assessment && points > assessment.totalPoints) {
-    alert(`Entry error: ${points} exceeds assessment max of ${assessment.totalPoints}. Attempt not saved.`)
-    return
-  }
-
+  
   await enterGrade(selectedAssessmentId.value, studentId, points, date, comment)
   newAttemptForm.value = null
 }

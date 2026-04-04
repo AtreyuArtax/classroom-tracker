@@ -161,10 +161,7 @@ export async function addAttempt(assessmentId, studentId, { pointsEarned, date, 
   const store = tx.objectStore('grades')
   const grade = await _getGradeInTransaction(tx, assessmentId, studentId, assessment.classId)
   
-  // Validation: Catch typos where score exceeds total possible
-  if (pointsEarned > assessment.totalPoints) {
-    throw new Error(`Invalid score: ${pointsEarned} exceeds assessment total of ${assessment.totalPoints}`)
-  }
+  // Note: We allow raw scores higher than total points for bonus marks and scaling
   
   const attempt = {
     attemptId: crypto.randomUUID(),
@@ -191,10 +188,7 @@ export async function updateLastAttempt(assessmentId, studentId, pointsEarned) {
   const assessment = await db.get('assessments', assessmentId)
   if (!assessment) throw new Error(`Assessment not found: ${assessmentId}`)
 
-  if (pointsEarned > assessment.totalPoints) {
-    throw new Error(`Invalid score: ${pointsEarned} exceeds assessment total of ${assessment.totalPoints}`)
-  }
-
+  // Note: We allow raw scores higher than total points for bonus marks and scaling
   const tx = db.transaction('grades', 'readwrite')
   const store = tx.objectStore('grades')
   const grade = await _getGradeInTransaction(tx, assessmentId, studentId, assessment.classId)
@@ -450,7 +444,13 @@ export function buildLevelDistributionBuckets(percentages, customBuckets = null)
     if (p === null || p === undefined || isNaN(p)) continue
     
     // Find the matching bucket
-    const bucket = buckets.find(b => p >= b.range[0] && p <= b.range[1])
+    let bucket = buckets.find(b => p >= b.range[0] && p <= b.range[1])
+    
+    // If no matching bucket (e.g. score > 100) and it's a high score, add to the last bucket
+    if (!bucket && p > buckets[buckets.length - 1].range[1]) {
+      bucket = buckets[buckets.length - 1]
+    }
+
     if (bucket) {
       bucket.count++
       bucket.scores.push(p)
