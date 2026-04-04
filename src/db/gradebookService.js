@@ -8,6 +8,7 @@
 import { getDB } from './index.js'
 import { hasUnsyncedChanges } from './eventService.js'
 import { preciseRound } from '../utils/math.js'
+import { getSettings } from './settingsService.js'
 
 // ─── Assessment CRUD ─────────────────────────────────────────────────────────
 
@@ -407,15 +408,15 @@ export function detectOutliers(values, threshold = 1.5) {
  */
 export function buildDistributionBuckets(percentages) {
   const buckets = Array(10).fill(0).map((_, i) => ({
-    label: `${i * 10}-${i * 10 + 9}%`,
-    range: [i * 10, i * 10 + 9],
+    label: i === 9 ? '90%+' : `${i * 10}-${i * 10 + 9}%`,
+    range: [i * 10, i === 9 ? Infinity : i * 10 + 9],
     count: 0,
     scores: []
   }))
-  // Handle 100% edge case — goes in the last bucket
+
   for (const p of percentages) {
     if (p === null || p === undefined || isNaN(p)) continue
-    const idx = p >= 100 ? 9 : Math.floor(p / 10)
+    const idx = Math.floor(p / 10)
     const safeIdx = Math.max(0, Math.min(9, idx))
     buckets[safeIdx].count++
     buckets[safeIdx].scores.push(p)
@@ -496,7 +497,7 @@ export function resolveAttemptScore(attempts, retestPolicy) {
  * @param {Object} gradeMap Map of grades keyed by assessmentId
  * @returns {number|null} The calculated percentage, or null if no data
  */
-function _calculateCategoryGrade(catAssessments, gradeMap) {
+function _calculateCategoryGrade(catAssessments, gradeMap, capAt100 = false) {
   let totalEarned = 0
   let totalPossible = 0
 
@@ -527,7 +528,9 @@ function _calculateCategoryGrade(catAssessments, gradeMap) {
     totalPossible += possible
   }
 
-  return totalPossible > 0 ? preciseRound((totalEarned / totalPossible) * 100) : null
+  if (totalPossible === 0) return null
+  const result = (totalEarned / totalPossible) * 100
+  return preciseRound(capAt100 ? Math.min(100, result) : result)
 }
 
 /**
@@ -573,8 +576,8 @@ function getBucketMode(scores) {
   const mean = bucketScores.reduce((a, b) => a + b, 0) / bucketScores.length
   
   const low = bestBucketIndex * 10
-  const high = bestBucketIndex === 10 ? 100 : low + 9
-  const label = `${low}-${high}%`
+  const high = bestBucketIndex >= 9 ? '' : (low + 9)
+  const label = bestBucketIndex >= 9 ? '90%+' : `${low}-${high}%`
 
   return { 
     result: mean, 
@@ -713,14 +716,6 @@ function calculateWeightedMedian(studentId, classRecord, gradeMap, assessments) 
   }
 }
 
-/**
- * Calculates a student's weighted average for a class.
- * 
- * @param {string} studentId
- * @param {Object} classRecord
- * @param {Object} options { asOf: string ISO date, assessmentsPreRef: Array, gradesPreRef: Array }
- * @returns {Promise<Object>} Result object with overall grade and category breakdowns.
- */
 export async function calculateStudentGrade(studentId, classRecord, { asOf = null, assessmentsPreRef = null, gradesPreRef = null } = {}) {
   const assessments = assessmentsPreRef || await getAssessmentsByClass(classRecord.classId)
   const grades = gradesPreRef || await getGradesByStudent(studentId, classRecord.classId)
@@ -730,6 +725,9 @@ export async function calculateStudentGrade(studentId, classRecord, { asOf = nul
 
   const categories = classRecord.gradebookCategories
   if (!categories || categories.length === 0) return null
+
+  const settings = await getSettings()
+  const capAt100 = settings.capGradesAt100 ?? true
 
   const categoryResults = {}
 
@@ -746,7 +744,7 @@ export async function calculateStudentGrade(studentId, classRecord, { asOf = nul
       catAssessments = catAssessments.filter(a => a.date <= asOf)
     }
 
-    const calculatedPercentage = _calculateCategoryGrade(catAssessments, gradeMap)
+    const calculatedPercentage = _calculateCategoryGrade(catAssessments, gradeMap, capAt100)
 
     if (calculatedPercentage === null) {
       categoryResults[category.categoryId] = null
