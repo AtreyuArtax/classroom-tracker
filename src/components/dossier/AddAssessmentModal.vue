@@ -97,10 +97,10 @@
       <div class="form-group">
         <label class="form-label">Retest Policy</label>
         <select v-model="newAssessment.retestPolicy" class="form-input">
-          <option value="Highest">Highest Attempt</option>
-          <option value="Latest">Latest Attempt</option>
-          <option value="Average">Average of Attempts</option>
-          <option value="Manual">Manual Selection</option>
+          <option value="highest">Highest Attempt</option>
+          <option value="latest">Latest Attempt</option>
+          <option value="average">Average of Attempts</option>
+          <option value="manual">Manual Selection</option>
         </select>
       </div>
 

@@ -6,15 +6,17 @@
  * representing the full database state.
  */
 
+export const CURRENT_SCHEMA = 23
+
 /**
- * Migrates a backup data object to the current schema version (20).
+ * Migrates a backup data object to the current schema version (23).
  *
  * @param {Object} data - { settings, classes, events, assessments, grades, schemaVersion }
  * @returns {Object} - The migrated data object.
  */
 export function migrateData(data) {
   let version = data.schemaVersion || (data.settings?.schemaVersion) || 1
-  const currentVersion = 21
+  const currentVersion = CURRENT_SCHEMA
 
   if (version >= currentVersion) return data
 
@@ -280,32 +282,48 @@ export function migrateData(data) {
     }
     version = 19
   }
-
-  // ── Version 20 ───────────────────────────────────────────────────────
-  if (version < 20) {
-      version = 20
-    }
-
-    // ── Version 21 (Duration Normalization) ──────────────────────────────
-    if (version < 21) {
-      for (const evt of migrated.events) {
-        if (evt.duration !== null && evt.duration !== undefined && evt.duration < 1000) {
-          evt.duration = evt.duration * 60000
-        }
+  // ── Version 21 (Duration Normalization) ──────────────────────────────
+  if (version < 21) {
+    for (const evt of migrated.events) {
+      if (evt.duration !== null && evt.duration !== undefined && evt.duration < 1000) {
+        evt.duration = evt.duration * 60000
       }
-      for (const cls of migrated.classes) {
-        if (cls.students) {
-          for (const studentId of Object.keys(cls.students)) {
-            const s = cls.students[studentId]
-            if (s.activeStates && s.activeStates.lateMinutes !== undefined && s.activeStates.lateMinutes !== null) {
-              s.activeStates.lateMs = s.activeStates.lateMinutes * 60000
-              delete s.activeStates.lateMinutes
-            }
+    }
+    for (const cls of migrated.classes) {
+      if (cls.students) {
+        for (const studentId of Object.keys(cls.students)) {
+          const s = cls.students[studentId]
+          if (s.activeStates && s.activeStates.lateMinutes !== undefined && s.activeStates.lateMinutes !== null) {
+            s.activeStates.lateMs = s.activeStates.lateMinutes * 60000
+            delete s.activeStates.lateMinutes
           }
         }
       }
-      version = 21
     }
+    version = 21
+  }
+
+  // ── Version 22 (Grade Buckets) ───────────────────────────────────────
+  if (version < 22) {
+    if (migrated.settings && !migrated.settings.gradeBuckets) {
+      migrated.settings.gradeBuckets = [
+        { label: 'R', min: 0, max: 49, color: '#ff3b30' },
+        { label: 'L1', min: 50, max: 59, color: '#ff9500' },
+        { label: 'L2', min: 60, max: 69, color: '#ffcc00' },
+        { label: 'L3', min: 70, max: 79, color: '#30b0c7' },
+        { label: 'L4', min: 80, max: 100, color: '#34c759' }
+      ]
+      if (migrated.settings.capGradesAt100 === undefined) {
+        migrated.settings.capGradesAt100 = true
+      }
+    }
+    version = 22
+  }
+
+  // ── Version 23 (Composite Indices - no object change needed) ─────────
+  if (version < 23) {
+    version = 23
+  }
 
   migrated.schemaVersion = currentVersion
   if (migrated.settings) migrated.settings.schemaVersion = currentVersion

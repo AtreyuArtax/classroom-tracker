@@ -168,6 +168,7 @@ export async function addAttempt(assessmentId, studentId, { pointsEarned, date, 
     attemptId: crypto.randomUUID(),
     pointsEarned,
     date: date || new Date().toISOString(),
+    isPrimary: grade.attempts.length === 0,
     comment
   }
   
@@ -197,7 +198,6 @@ export async function updateLastAttempt(assessmentId, studentId, pointsEarned) {
   if (grade.attempts.length > 0) {
     const lastIdx = grade.attempts.length - 1
     grade.attempts[lastIdx].pointsEarned = pointsEarned
-    grade.attempts[lastIdx].date = new Date().toISOString()
   } else {
     grade.attempts.push({
       attemptId: crypto.randomUUID(),
@@ -218,15 +218,12 @@ export async function updateLastAttempt(assessmentId, studentId, pointsEarned) {
 
 /**
  * Removes a specific attempt from a grade record.
+ * Transaction-guarded to prevent data loss.
  * 
  * @param {number} assessmentId
  * @param {string} studentId
  * @param {string} attemptId
  * @returns {Promise<Object>} The updated grade record.
- */
-/**
- * Removes a specific attempt from a grade record.
- * Transaction-guarded to prevent data loss.
  */
 export async function deleteAttempt(assessmentId, studentId, attemptId) {
   const db = await getDB()
@@ -250,9 +247,11 @@ export async function deleteAttempt(assessmentId, studentId, attemptId) {
 
 /**
  * Sets a specific attempt as the primary (counting) one.
- */
-/**
- * Sets a specific attempt as the primary (counting) one.
+ * 
+ * @param {number} assessmentId
+ * @param {string} studentId
+ * @param {string} attemptId
+ * @returns {Promise<Object>} The updated grade record.
  */
 export async function setPrimaryAttempt(assessmentId, studentId, attemptId) {
   const db = await getDB()
@@ -283,9 +282,6 @@ export async function setPrimaryAttempt(assessmentId, studentId, attemptId) {
  * @param {string} studentId
  * @param {Object} flags { missing: boolean, excluded: boolean }
  * @returns {Promise<Object>} The updated grade record.
- */
-/**
- * Updates boolean flags on a grade record.
  */
 export async function updateGradeFlags(assessmentId, studentId, flags) {
   const db = await getDB()
@@ -626,8 +622,11 @@ function calculateMostConsistent(studentId, classRecord, gradeMap, assessments, 
       const earned = resolveAttemptScore(g.attempts, a.retestPolicy)
       if (earned === null) continue
       
+      const divisor = a.totalPoints || 1
+      const percentage = (earned / divisor) * 100
+      
       scores.push({
-        percentage: (earned / (a.totalPoints || 1)) * 100,
+        percentage: percentage,
         date: a.date
       })
     }
@@ -697,7 +696,8 @@ function calculateWeightedMedian(studentId, classRecord, gradeMap, assessments, 
       const earned = resolveAttemptScore(g.attempts, a.retestPolicy)
       if (earned === null) continue
       
-      scores.push((earned / (a.totalPoints || 1)) * 100)
+      const divisor = a.totalPoints || 1
+      scores.push((earned / divisor) * 100)
     }
 
     if (scores.length > 0) {

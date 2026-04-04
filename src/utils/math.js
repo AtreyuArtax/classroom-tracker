@@ -23,6 +23,7 @@ export function preciseRound(value, decimals = 1) {
  * Percent variation helper for analytics.
  */
 export function calculatePercentChange(oldVal, newVal) {
-  if (!oldVal || !newVal) return null
+  if (oldVal === null || newVal === null || isNaN(oldVal) || isNaN(newVal)) return null
+  if (oldVal === 0) return newVal > 0 ? 100 : 0
   return preciseRound(((newVal - oldVal) / oldVal) * 100)
 }

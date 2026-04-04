@@ -141,7 +141,16 @@ function validate() {
     for (let i = 0; i < localBuckets.value.length; i++) {
         const b = localBuckets.value[i]
         if (b.min > b.max) {
-            globalError.value = `Level "${b.label}" has an invalid range.`
+            globalError.value = `Level "${b.label}" has an invalid range (min > max).`
+            return
+        }
+    }
+
+    // Check for overlaps
+    const sorted = [...localBuckets.value].sort((a, b) => a.min - b.min)
+    for (let i = 0; i < sorted.length - 1; i++) {
+        if (sorted[i].max >= sorted[i + 1].min) {
+            globalError.value = `Levels "${sorted[i].label}" and "${sorted[i+1].label}" have overlapping ranges.`
             return
         }
     }
