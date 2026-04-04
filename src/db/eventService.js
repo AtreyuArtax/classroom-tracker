@@ -347,13 +347,20 @@ export async function importAllData(backupObj) {
 
     const db = await getDB()
 
+    // Preserve current machine's backup file handle — the one in the backup
+    // may be from a different machine and would be invalid here.
+    const currentSettings = await db.get('settings', 'singleton')
+    const existingHandle = currentSettings?.backupFileHandle ?? null
+
     // Single transaction across all stores
     const tx = db.transaction(['settings', 'classes', 'events', 'assessments', 'grades'], 'readwrite')
 
     // Clear and rewrite settings
     await tx.objectStore('settings').clear()
     if (settings) {
-        await tx.objectStore('settings').put(settings, 'singleton')
+        // Restore our machine's file handle, not the one from the backup
+        const restoredSettings = { ...settings, backupFileHandle: existingHandle }
+        await tx.objectStore('settings').put(restoredSettings, 'singleton')
     }
 
     // Clear and rewrite classes

@@ -115,15 +115,14 @@ export function getDB() {
               { label: 'L4', min: 80, max: 100, color: '#34c759' }
             ],
             capGradesAt100: true,
+            backupFileHandle: null,
             gradebookTemplates: [],
             gradebookMilestones: [],
             academicTerms: [],
             teacherName: '',
             periodStartTimes: {
-              '1': '08:00',
-              '2': '09:20',
-              '3': '11:40',
-              '4': '13:00'
+              '1': '08:45', '2': '10:05', '3': '11:25', '4': '12:45',
+              '5': '08:45', '6': '10:05', '7': '11:25', '8': '12:45'
             }
           },
           'singleton'

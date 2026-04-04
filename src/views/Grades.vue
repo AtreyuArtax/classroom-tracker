@@ -501,7 +501,7 @@
                 <!-- Grade Distribution Histogram (Step 5) -->
                 <div class="grades__analytics-section">
                   <div class="grades__section-header-row">
-                    <h3 class="grades__analytics-subtitle">GRADE DISTRIBUTION</h3>
+                    <h3 class="grades__analytics-subtitle">PRODUCT GRADE DISTRIBUTION</h3>
                     <div class="grades__toggle-group">
                       <button 
                         class="grades__toggle-btn"
@@ -520,8 +520,8 @@
                   </div>
                   <p class="grades__analytics-hint">
                     {{ distributionMode === 'buckets' 
-                        ? 'Number of students within each 10% grade bracket.' 
-                        : 'Student count by achievement level.' }}
+                        ? 'Number of students within each 10% grade bracket (Product assessments only).' 
+                        : 'Student count by achievement level (Product assessments only).' }}
                   </p>
                 </div>
 
@@ -1099,6 +1099,7 @@ import { Plus, BarChart2, Settings, Pencil, XCircle, AlertCircle, Trash2, X, Mor
 import Student360 from '../components/dossier/Student360.vue'
 import StudentSidebar from '../components/StudentSidebar.vue'
 import GradeTrendChart from '../components/GradeTrendChart.vue'
+import { getAssessmentPercentage } from '../db/gradebookService.js'
 import { formatLocalDisplay } from '../utils/dates.js'
 import {
   Chart as ChartJS,
@@ -1268,10 +1269,9 @@ const studentTrends = computed(() => {
     const data = []
     productAssessments.forEach(a => {
       const grade = gradeMap.value[a.assessmentId]?.[studentId]
-      if (grade && grade.resolvedScore !== null && !grade.excluded) {
-        data.push((grade.resolvedScore / (a.totalPoints || 1)) * 100)
-      } else if (grade?.missing) {
-        data.push(0)
+      const percentage = getAssessmentPercentage(a, grade)
+      if (percentage !== null) {
+        data.push(percentage)
       }
     })
     trends[studentId] = data
@@ -1757,7 +1757,7 @@ function formatCellGrade(value, totalPoints) {
   if (displayMode.value === 'raw') {
     return Math.round(value * 10) / 10
   }
-  return Math.round((value / totalPoints) * 100) + '%'
+  return Math.round((value / totalPoints) * 1000) / 10 + '%'
 }
 
 function getCellStyle(studentId, assessmentId, totalPoints) {

@@ -55,8 +55,11 @@ const gridSize = ref({ rows: 6, cols: 6 })
 const teacherName = ref('')
 const periodStartTimes = ref({})
 
-/** @type {import('vue').Ref<boolean>} Flag for special "Test Day" mode */
-export const isTestDay = ref(false)
+/** @type {import('vue').Ref<boolean>} Flag for special "Test Day" mode — persisted in sessionStorage so a
+ *  page reload mid-class doesn't silently reset it. Cleared at midnight and on tab close. */
+export const isTestDay = ref(sessionStorage.getItem('isTestDay') === 'true')
+// Keep sessionStorage in sync so reloads preserve the flag within the same session
+watch(isTestDay, (val) => sessionStorage.setItem('isTestDay', String(val)))
 
 /** @type {import('vue').Ref<Array>} Events for the student currently in focus (Dossier) */
 const activeStudentEvents = ref([])

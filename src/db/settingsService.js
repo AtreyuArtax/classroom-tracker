@@ -105,13 +105,18 @@ async function _readSettings() {
         },
         backupFileHandle: null,
         gradebookMilestones: [],
+        gradebookTemplates: [],
         academicTerms: [],
         teacherName: '',
         periodStartTimes: {
-            '1': '08:00',
-            '2': '09:20',
-            '3': '11:40',
-            '4': '13:00'
+            '1': '08:45',
+            '2': '10:05',
+            '3': '11:25',
+            '4': '12:45',
+            '5': '08:45',
+            '6': '10:05',
+            '7': '11:25',
+            '8': '12:45'
         },
         gradeBuckets: [
             { label: 'R', min: 0, max: 49, color: '#ff3b30' },
