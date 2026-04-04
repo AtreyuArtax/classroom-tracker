@@ -348,15 +348,10 @@
         <div class="setup__card">
           <div class="setup__card-header-row">
             <h2 class="setup__card-title">Roster — {{ sortedRoster.length }} Students</h2>
+            <button class="setup__btn-primary setup__btn-add-student" @click="openAddStudentModal">
+              <PlusCircle :size="16" /> Add Student
+            </button>
           </div>
-          
-          <!-- Manual Add -->
-          <form class="setup__form setup__form--inline" @submit.prevent="addSingleStudent">
-            <input v-model="newStudent.studentId" class="setup__input" placeholder="ID" required />
-            <input v-model="newStudent.firstName" class="setup__input" placeholder="First Name" required />
-            <input v-model="newStudent.lastName" class="setup__input" placeholder="Last Name" required />
-            <button type="submit" class="setup__btn-primary">Add</button>
-          </form>
 
           <!-- Roster List -->
           <ul class="setup__roster-list" style="margin-top: 1rem;">
@@ -805,6 +800,52 @@
       :danger="superConfirmConfig.danger"
       @confirm="superConfirmConfig.onConfirm"
     />
+
+    <!-- ── Student Entry Modal ─── -->
+    <BaseModal
+      :show="isStudentModalOpen"
+      @close="cancelEditStudent"
+      max-width="500px"
+      :title="isEditingStudent ? 'Edit Student' : 'Add New Student'"
+    >
+      <div class="student-modal-content">
+        <form class="setup__form" @submit.prevent="addSingleStudent">
+          <label class="setup__label">
+            Student ID
+            <input 
+              v-model="newStudent.studentId" 
+              class="setup__input" 
+              :placeholder="isEditingStudent ? '' : 'e.g. 123456789'" 
+              :disabled="isEditingStudent"
+              required 
+            />
+            <span v-if="isEditingStudent" class="setup__hint" style="margin-top: 4px;">Student ID cannot be changed.</span>
+          </label>
+          
+          <div class="setup__form-grid">
+            <label class="setup__label">
+              First Name
+              <input v-model="newStudent.firstName" class="setup__input" placeholder="First Name" required />
+            </label>
+            <label class="setup__label">
+              Last Name
+              <input v-model="newStudent.lastName" class="setup__input" placeholder="Last Name" required />
+            </label>
+          </div>
+
+          <div v-if="singleAddError" class="setup__error" style="margin-top: 10px;">
+            <AlertTriangle :size="14" /> {{ singleAddError }}
+          </div>
+
+          <div class="modal-footer" style="margin-top: 20px;">
+            <button type="button" class="setup__btn-ghost" @click="cancelEditStudent">Cancel</button>
+            <button type="submit" class="setup__btn-primary">
+              {{ isEditingStudent ? 'Save Changes' : 'Add Student' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </BaseModal>
   </div>
 </template>
 
@@ -824,7 +865,7 @@
 
 import { ref, reactive, computed, watch, onMounted, nextTick, onUnmounted } from 'vue'
 import Papa from 'papaparse'
-import { Archive, ChevronDown, ChevronUp, FolderOpen, Trash2, FileText, Pencil, Download, Database, Cloud, Settings2, Plus, X, Save, FileUp, FileDown, GraduationCap, ArrowLeft, Zap, LayoutDashboard, Settings, QrCode, Printer, RefreshCcw, FileSpreadsheet, DatabaseIcon, AlertTriangle, ShieldCheck, Search } from 'lucide-vue-next'
+import { Archive, ChevronDown, ChevronUp, FolderOpen, Trash2, FileText, Pencil, Download, Database, Cloud, Settings2, Plus, PlusCircle, X, Save, FileUp, FileDown, GraduationCap, ArrowLeft, Zap, LayoutDashboard, Settings, QrCode, Printer, RefreshCcw, FileSpreadsheet, DatabaseIcon, AlertTriangle, ShieldCheck, Search } from 'lucide-vue-next'
 import QRCode from 'qrcode'
 import { exportGradebookToExcel } from '../db/exportService.js'
 import { resolveIcon } from '../utils/icons.js'
@@ -837,6 +878,7 @@ import * as gradebookService from '../db/gradebookService.js'
 import { globalMilestones, refreshGrades } from '../composables/useGradebook.js'
 import PrintClassListModal from '../components/PrintClassListModal.vue'
 import SuperConfirmModal from '../components/SuperConfirmModal.vue'
+import BaseModal from '../components/BaseModal.vue'
 import GradeBucketsSettings from '../components/setup/GradeBucketsSettings.vue'
 
 const {
@@ -1506,7 +1548,18 @@ const newStudent = reactive({ studentId: '', firstName: '', lastName: '' })
 const singleAddError = ref('')
 const singleAddSuccess = ref('')
 const isEditingStudent = ref(false)
+const isStudentModalOpen = ref(false)
 const singleStudentCardRef = ref(null)
+
+function openAddStudentModal() {
+  isEditingStudent.value = false
+  newStudent.studentId = ''
+  newStudent.firstName = ''
+  newStudent.lastName = ''
+  singleAddError.value = ''
+  singleAddSuccess.value = ''
+  isStudentModalOpen.value = true
+}
 
 function onEditStudent(student) {
   isEditingStudent.value = true
@@ -1515,14 +1568,12 @@ function onEditStudent(student) {
   newStudent.lastName = student.lastName
   singleAddError.value = ''
   singleAddSuccess.value = ''
-  
-  if (singleStudentCardRef.value) {
-    singleStudentCardRef.value.scrollIntoView({ behavior: 'smooth', block: 'center' })
-  }
+  isStudentModalOpen.value = true
 }
 
 function cancelEditStudent() {
   isEditingStudent.value = false
+  isStudentModalOpen.value = false
   newStudent.studentId = ''
   newStudent.firstName = ''
   newStudent.lastName = ''
@@ -1556,6 +1607,7 @@ async function addSingleStudent() {
     } else {
       singleAddSuccess.value = isEditingStudent.value ? 'Student updated!' : 'Student added to roster!'
       isEditingStudent.value = false
+      isStudentModalOpen.value = false
       newStudent.studentId = ''
       newStudent.firstName = ''
       newStudent.lastName = ''
@@ -2359,6 +2411,32 @@ function formatDate(iso) {
 
 .setup__card-header-row .setup__card-title {
   margin-bottom: 0;
+}
+
+.setup__btn-add-student {
+  padding: 8px 16px !important;
+  font-size: 0.85rem !important;
+  height: 36px !important;
+}
+
+.student-modal-content {
+  padding: 4px 0;
+}
+
+.student-modal-content .modal-footer {
+  display: flex !important;
+  flex-direction: row !important;
+  justify-content: flex-end !important;
+  gap: 12px !important;
+  margin-top: 24px !important;
+}
+
+.setup__input:disabled {
+  background-color: var(--bg-hover) !important;
+  color: var(--text-secondary) !important;
+  cursor: not-allowed;
+  opacity: 0.7;
+  border-color: var(--border) !important;
 }
 
 .setup__show-all {

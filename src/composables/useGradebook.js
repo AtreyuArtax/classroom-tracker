@@ -372,10 +372,7 @@ export function enterGrade(assessmentId, studentId, pointsEarned, date = null, c
   if (!activeClassRecord.value) return
   
   const assessment = assessments.value.find(a => a.assessmentId === assessmentId)
-  if (assessment && pointsEarned > assessment.totalPoints) {
-    console.warn(`[useGradebook] enterGrade: ${pointsEarned} exceeds assessment max ${assessment.totalPoints}`)
-    return
-  }
+  // Note: We allow raw scores higher than total points for bonus marks and scaling
   
   let grade = grades.value.find(g => Number(g.assessmentId) === Number(assessmentId) && String(g.studentId) === String(studentId))
   if (!grade) {
@@ -553,19 +550,32 @@ export async function saveStudentOverride(studentId, catId, value) {
   await refreshGrades()
 }
 
+import { useClassroom } from './useClassroom.js'
+
 /**
  * Saves a gradebook note for a student.
  */
 export async function saveStudentGradebookNote(studentId, note) {
-  if (!activeClassRecord.value) return
-  
-  const student = activeClassRecord.value.students[studentId]
-  if (!student || student.gradebookNote === note) return
+    if (!activeClassRecord.value) return
+    
+    const student = activeClassRecord.value.students[studentId]
+    if (!student) return
 
-  student.gradebookNote = note
-  triggerRef(activeClassRecord)
-  const { patchStudent } = await import('../db/classService.js')
-  await patchStudent(activeClassRecord.value.classId, studentId, { gradebookNote: note })
+    // Only save if the note has actually changed
+    if (student.gradebookNote === note) return
+    
+    student.gradebookNote = note
+    triggerRef(activeClassRecord)
+
+    // Synchronize with useClassroom state if active
+    const { students: classroomStudents } = useClassroom()
+    if (classroomStudents.value[studentId]) {
+        classroomStudents.value[studentId].gradebookNote = note
+    }
+
+    // Persist to IDB
+    const { patchStudent } = await import('../db/classService.js')
+    await patchStudent(activeClassRecord.value.classId, studentId, { gradebookNote: note })
 }
 
 /**

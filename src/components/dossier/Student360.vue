@@ -53,17 +53,12 @@
 
         <div class="student-360__stats-grid">
           <StudentStatCard 
-            label="Overall Grade" 
-            :value="formattedGrade" 
-            :icon="GraduationCap"
-            color="primary"
-          />
-          <StudentStatCard 
             label="Absences" 
             :value="attendanceStats.absences" 
-            :sub-value="attendanceAverages.absencesAvg + '/wk avg'"
+            :sub-value="`${attendanceAverages.absencesAvg}/wk avg • ${attendanceStats.testDayAbsences} Test Day${attendanceStats.testDayAbsences !== 1 ? 's' : ''}`"
             :icon="UserMinus"
-            :color="attendanceStats.absences > 0 ? 'danger' : 'success'"
+            :alert-icon="testDayAlert ? AlertTriangle : null"
+            :color="testDayAlert ? 'danger' : (attendanceStats.absences > 0 ? 'warning' : 'success')"
           />
           <StudentStatCard 
             :label="behaviorCodesMap['l']?.label || 'Lates'" 
@@ -298,9 +293,9 @@
           <h3 class="academics-section__title">Internal Gradebook Notes</h3>
           <textarea 
             class="student-360__notes-area"
-            v-model="student.gradebookNote"
+            :value="student.gradebookNote || ''"
             placeholder="Add private observations about this student's grading context..."
-            @blur="saveStudentGradebookNote(student.studentId, student.gradebookNote)"
+            @blur="e => saveStudentGradebookNote(props.studentId, e.target.value)"
           ></textarea>
         </div>
       </section>
@@ -315,24 +310,35 @@
       <!-- Timeline Tab -->
       <section v-if="activeTab === 'timeline'" class="student-360__pane">
         <div class="timeline-header">
-           <button class="btn-log-absence" @click="showAbsenceForm = !showAbsenceForm">
+           <button class="btn-log-absence" @click="showAbsenceForm = true">
              <PlusCircle :size="16" /> Log Past Absence
            </button>
         </div>
 
-        <div v-if="showAbsenceForm" class="absence-form">
-          <div class="absence-form-inputs">
-            <input type="date" v-model="absenceDate" class="absence-input" />
-            <label class="absence-checkbox-label">
-              <input type="checkbox" v-model="absenceIsTestDay" />
-              Test/Assessment Day
-            </label>
-          </div>
-          <div class="absence-actions">
-            <button class="btn-primary" @click="logAbsence">Save</button>
-            <button class="btn-ghost" @click="showAbsenceForm = false">Cancel</button>
-          </div>
-        </div>
+         <BaseModal
+           :show="showAbsenceForm"
+           title="Log Past Absence"
+           @close="showAbsenceForm = false"
+           maxWidth="400px"
+         >
+           <div class="absence-modal-content">
+             <div class="form-group">
+               <label>Absence Date</label>
+               <input type="date" v-model="absenceDate" class="absence-input" />
+             </div>
+             
+             <label class="absence-checkbox-container">
+               <input type="checkbox" v-model="absenceIsTestDay" />
+               <div class="checkbox-custom"></div>
+               <span class="checkbox-label">Mark as Assessment Day</span>
+             </label>
+
+             <div class="modal-footer">
+               <button class="btn-ghost" @click="showAbsenceForm = false">Cancel</button>
+               <button class="btn-primary" @click="logAbsence">Save Record</button>
+             </div>
+           </div>
+         </BaseModal>
 
         <StudentTimeline 
           :student-id="studentId" 
@@ -1134,10 +1140,18 @@ const evidenceMix = computed(() => {
 })
 
 const attendanceStats = computed(() => {
-  const absences = filteredEvents.value.filter(e => e.code === 'a' && !e.superseded).length
-  const lates = filteredEvents.value.filter(e => e.code === 'l' && !e.superseded).length
-  return { absences, lates }
+  const absences = filteredEvents.value.filter(e => e.code === 'a' && !e.superseded)
+  const lates = filteredEvents.value.filter(e => e.code === 'l' && !e.superseded)
+  const testDayAbsences = absences.filter(e => e.testDay).length
+  
+  return { 
+    absences: absences.length, 
+    lates: lates.length,
+    testDayAbsences
+  }
 })
+
+const testDayAlert = computed(() => attendanceStats.value.testDayAbsences > 1)
 
 const washroomCount = computed(() => {
   return filteredEvents.value.filter(e => {
@@ -1360,11 +1374,7 @@ async function saveEdit() {
   // Clamp value
   const points = Math.max(0, normalizedNew)
   
-  if (points > assessment.totalPoints) {
-    alert(`Entry error: ${points} exceeds assessment max of ${assessment.totalPoints}. Score not saved.`)
-    editingCell.value = null
-    return
-  }
+  // Note: High scores are allowed for bonus/scaling
 
   if (isChangeMode.value) {
     await changeGrade(assessmentId, props.studentId, points)
@@ -1611,13 +1621,13 @@ onMounted(loadData)
 
 .student-360__stats-grid {
   display:               grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
   gap:                   12px;
 }
 
 @media (max-width: 800px) {
   .student-360__stats-grid {
-    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   }
 }
 
@@ -2287,6 +2297,46 @@ onMounted(loadData)
   color: var(--text-secondary);
   margin-bottom: 4px;
   letter-spacing: 0.05em;
+}
+
+.absence-modal-content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.absence-checkbox-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  padding: 12px;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  transition: background 0.2s;
+}
+
+.absence-checkbox-container:hover {
+  background: var(--bg-hover);
+}
+
+.absence-checkbox-container input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--primary);
+}
+
+.checkbox-label {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 10px;
 }
 
 .print-modal__divider {

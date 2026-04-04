@@ -68,9 +68,12 @@
                   <span v-if="item.description" class="timeline-row__desc">{{ item.description }}</span>
                 </div>
                 
-                <div v-if="item.tags?.length" class="timeline-row__tags">
+                <div class="timeline-row__tags">
+                  <span v-if="item.testDay" class="timeline-row__tag timeline-row__tag--test-day">
+                    Assessment Day
+                  </span>
                   <span v-for="tag in item.tags" :key="tag" class="timeline-row__tag">
-                    {{ tag }}
+                    {{ formatTag(tag) }}
                   </span>
                 </div>
 
@@ -112,6 +115,14 @@
         <div class="form-group">
           <label>Note</label>
           <textarea v-model="editForm.note" rows="3" placeholder="Add a note..."></textarea>
+        </div>
+
+        <!-- Test Day Toggle -->
+        <div v-if="editingItem?.rawCode === 'a'" class="form-group-checkbox">
+          <label class="checkbox-label">
+            <input type="checkbox" v-model="editForm.testDay" />
+            Mark as Assessment Day
+          </label>
         </div>
       </div>
 
@@ -160,6 +171,7 @@ const selectedMonth = ref('all') // Format: 'YYYY-MM'
 const editingItem = ref(null)
 const editForm = reactive({
     duration: 0,
+    testDay: false,
     note: ''
 })
 
@@ -209,6 +221,7 @@ const sortedItems = computed(() => {
       icon,
       outcome: e.acOutcome,
       tags: e.acContext ? [e.acContext] : [],
+      testDay: e.testDay,
       raw: e
     })
   })
@@ -331,6 +344,7 @@ const groupedItems = computed(() => {
 function startEdit(item) {
     editingItem.value = item
     editForm.duration = toMinutes(item.raw.duration)
+    editForm.testDay = item.raw.testDay || false
     editForm.note = item.description || ''
 }
 
@@ -344,6 +358,10 @@ async function saveEdit() {
     if (editingItem.value.rawCode === 'l' || editingItem.value.rawCode === 'w') {
         const mins = parseFloat(editForm.duration)
         updates.duration = Math.round(mins * 60000) // Convert back to ms for storage
+    }
+
+    if (editingItem.value.rawCode === 'a') {
+        updates.testDay = editForm.testDay
     }
     
     await editEvent(editingItem.value.id, updates)
@@ -368,7 +386,12 @@ function formatTime(date) {
 
 function formatOutcome(outcome) {
   if (!outcome) return ''
-  return outcome.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
+  return outcome.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ')
+}
+
+function formatTag(tag) {
+  if (!tag) return ''
+  return tag.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ')
 }
 </script>
 
@@ -614,11 +637,35 @@ function formatOutcome(outcome) {
   font-size: 0.65rem;
   font-weight: 700;
   padding: 2px 8px;
-  background: var(--surface);
+  background: var(--bg-secondary);
   border: 1px solid var(--border);
-  border-radius: var(--radius-full);
+  border-radius: 4px;
   color: var(--text-secondary);
-  text-transform: uppercase;
+  text-transform: none; /* Allow formatTag to handle case */
+  letter-spacing: 0.02em;
+}
+
+.timeline-row__tag--test-day {
+  background: #ff3b30;
+  border-color: #ff3b30;
+  color: #fff;
+}
+
+.form-group-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
 }
 
 .timeline-row__outcome {

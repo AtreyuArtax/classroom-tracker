@@ -7,7 +7,10 @@
     </div>
     
     <div class="stat-card__content" :class="{ 'stat-card__content--dual': value2 }">
-      <span class="stat-card__label">{{ label }}</span>
+      <div class="stat-card__label-row">
+        <span class="stat-card__label">{{ label }}</span>
+        <component :is="alertIcon" v-if="alertIcon" :size="14" class="stat-card__alert-icon" />
+      </div>
       
       <div class="stat-card__stats-row">
         <!-- Primary Column -->
@@ -46,6 +49,7 @@ const props = defineProps({
   value2:    { type: [String, Number], default: null },
   subValue2: { type: String, default: null },
   icon:      { type: [Object, Function], default: null },
+  alertIcon: { type: [Object, Function], default: null },
   color:     { type: String, default: 'neutral' },
   trend:     { type: Number, default: undefined }
 })
@@ -90,12 +94,30 @@ const trendClass = computed(() => {
   gap:            2px;
 }
 
+.stat-card__label-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .stat-card__label {
   font-size:   0.75rem;
   font-weight: 600;
   color:       var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+.stat-card__alert-icon {
+  color: #ff3b30;
+  animation: pulse-warning 2s infinite;
+}
+
+@keyframes pulse-warning {
+  0% { opacity: 1; }
+  50% { opacity: 0.5; }
+  100% { opacity: 1; }
 }
 
 .stat-card__value-row {
@@ -119,16 +141,16 @@ const trendClass = computed(() => {
 }
 
 .stat-card__sub-value {
-  font-size:   0.7rem;
+  font-size:   0.65rem;
   font-weight: 700;
   color:       var(--text-secondary);
-  white-space: nowrap;
+  line-height: 1.1;
 }
 
 .stat-card__stats-row {
   display: flex;
   align-items: flex-start;
-  gap: 12px;
+  gap: 10px;
 }
 
 .stat-card__stat-col {
@@ -138,7 +160,7 @@ const trendClass = computed(() => {
 }
 
 .stat-card__stat-col--secondary {
-  padding-left: 12px;
+  padding-left: 10px;
   border-left: 1px solid var(--border);
 }
 

@@ -189,7 +189,7 @@ const chartOptions = computed(() => ({
   scales: {
     y: {
       min: 0,
-      max: 100,
+      suggestedMax: 100,
       ticks: {
         stepSize: 10,
         callback: (value) => value + '%'

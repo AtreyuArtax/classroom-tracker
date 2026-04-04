@@ -204,14 +204,30 @@ function handlePrint() {
 }
 
 @media print {
+  /* Hide everything except the printable sheet */
+  #app, .bm-overlay, .bm-card {
+    display: none !important;
+  }
+
+  .sheet-print-only {
+    display: block !important;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+  }
+
   @page {
     margin: 10mm;
     size: portrait;
   }
 
   html, body {
-    height: 100%;
-    overflow: hidden !important;
+    height: auto !important;
+    overflow: visible !important;
+    background: white !important;
   }
 
   .sheet-print-page {
