@@ -603,7 +603,7 @@ function calculateMedian(scores) {
 /**
  * Calculates Most Consistent grade based on bucket mode per category.
  */
-function calculateMostConsistent(studentId, classRecord, gradeMap, assessments) {
+function calculateMostConsistent(studentId, classRecord, gradeMap, assessments, capAt100 = false) {
   const categories = classRecord.gradebookCategories
   if (!categories || categories.length === 0) return null
 
@@ -646,7 +646,8 @@ function calculateMostConsistent(studentId, classRecord, gradeMap, assessments) 
     }
 
     if (percentage !== null) {
-      const rounded = preciseRound(percentage)
+      const finalPerc = capAt100 ? Math.min(100, percentage) : percentage
+      const rounded = preciseRound(finalPerc)
       breakdown[cat.categoryId] = { 
         percentage: rounded, 
         bucketLabel, 
@@ -663,14 +664,17 @@ function calculateMostConsistent(studentId, classRecord, gradeMap, assessments) 
 
   if (totalWeight === 0) return null
 
+  const result = (weightedSum / totalWeight) * 100
+  const finalPerc = capAt100 ? Math.min(100, result) : result
+
   return {
-    percentage: preciseRound((weightedSum / totalWeight) * 100),
+    percentage: preciseRound(finalPerc),
     isFallback: Object.values(breakdown).some(b => b?.isFallback),
     categoryBreakdown: breakdown
   }
 }
 
-function calculateWeightedMedian(studentId, classRecord, gradeMap, assessments) {
+function calculateWeightedMedian(studentId, classRecord, gradeMap, assessments, capAt100 = false) {
   const categories = classRecord.gradebookCategories
   if (!categories || categories.length === 0) return null
 
@@ -710,8 +714,11 @@ function calculateWeightedMedian(studentId, classRecord, gradeMap, assessments) 
 
   if (totalWeight === 0) return null
 
+  const result = (weightedSum / totalWeight) * 100
+  const finalPerc = capAt100 ? Math.min(100, result) : result
+
   return {
-    percentage: preciseRound((weightedSum / totalWeight) * 100),
+    percentage: preciseRound(finalPerc),
     categoryBreakdown: breakdown
   }
 }
@@ -783,8 +790,8 @@ export async function calculateStudentGrade(studentId, classRecord, { asOf = nul
   const overallGrade = weightUsed === 0 ? null : preciseRound((weightedSum / weightUsed) * 100)
 
   // New Metrics
-  const mostConsistent = calculateMostConsistent(studentId, classRecord, gradeMap, assessments)
-  const median = calculateWeightedMedian(studentId, classRecord, gradeMap, assessments)
+  const mostConsistent = calculateMostConsistent(studentId, classRecord, gradeMap, assessments, capAt100)
+  const median = calculateWeightedMedian(studentId, classRecord, gradeMap, assessments, capAt100)
 
   return {
     overallGrade: overallGrade !== null ? Math.round(overallGrade * 10) / 10 : null,
@@ -919,6 +926,9 @@ export function calculateAssessmentAnalytics(assessmentId, grades, assessment, o
  * @param {Object} options { exclusionMode: string, exclusionThreshold: number, asOf: string | null }
  */
 export async function calculateClassAnalytics(classRecord, assessments, grades, options = {}) {
+  const settings = await getSettings()
+  const capAt100 = settings.capGradesAt100 ?? true
+
   const { 
     exclusionMode = 'none', 
     exclusionThreshold = 40,
@@ -970,7 +980,7 @@ export async function calculateClassAnalytics(classRecord, assessments, grades, 
         }
       }
       
-      const catPercentage = _calculateCategoryGrade(catAssessments, studentGradeMap)
+      const catPercentage = _calculateCategoryGrade(catAssessments, studentGradeMap, capAt100)
       if (catPercentage !== null) {
         categoryResults[cat.categoryId] = catPercentage
       }
