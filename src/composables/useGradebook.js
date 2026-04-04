@@ -41,7 +41,7 @@ export const newAssessment = ref({
   date: new Date().toISOString().slice(0, 10),
   totalPoints: 10,
   scaledTotal: null,
-  retestPolicy: 'Highest'
+  retestPolicy: 'highest'
 })
 
 export const assessmentTypes = [
@@ -223,7 +223,7 @@ export function openAddAssessment(target = 'class', studentId = null) {
     date: new Date().toISOString().slice(0, 10),
     totalPoints: 10,
     scaledTotal: null,
-    retestPolicy: 'Highest'
+    retestPolicy: 'highest'
   }
   
   showAddAssessmentModal.value = true
@@ -383,12 +383,13 @@ export function enterGrade(assessmentId, studentId, pointsEarned, date = null, c
     grades.value.push(grade)
   }
   
+  const isFirst = grade.attempts.length === 0
   grade.attempts.push({
     attemptId: crypto.randomUUID(),
     pointsEarned,
     date: date || new Date().toISOString(),
     comment,
-    isPrimary: grade.attempts.length === 0
+    isPrimary: isFirst
   })
 
   // 1. Refresh UI instantly for this student and assessment stats
@@ -397,7 +398,7 @@ export function enterGrade(assessmentId, studentId, pointsEarned, date = null, c
   refreshSingleAssessmentStats(assessmentId)
   
   // 2. Debounce IDB save
-  enqueueDBSave(`${assessmentId}_${studentId}_enter`, () => 
+  enqueueDBSave(`${assessmentId}_${studentId}`, () => 
     gradebookService.addAttempt(assessmentId, studentId, { pointsEarned, date, comment })
   )
 }
@@ -417,7 +418,7 @@ export function changeGrade(assessmentId, studentId, pointsEarned) {
   refreshSingleStudent(studentId)
   refreshSingleAssessmentStats(assessmentId)
   
-  enqueueDBSave(`${assessmentId}_${studentId}_change`, () => 
+  enqueueDBSave(`${assessmentId}_${studentId}`, () => 
     gradebookService.updateLastAttempt(assessmentId, studentId, pointsEarned)
   )
 }

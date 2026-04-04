@@ -419,6 +419,11 @@ async function createClass(opts) {
         semester,
         gridSize: defaultGrid,
         gradebookUnits: [],
+        gradebookCategories: [
+            { categoryId: `cat_prod_${Date.now()}`, name: 'Product', weight: 70 },
+            { categoryId: `cat_obs_${Date.now()}`, name: 'Observation', weight: 15 },
+            { categoryId: `cat_conv_${Date.now()}`, name: 'Conversation', weight: 15 }
+        ],
         students: {},
     }
     await classService.saveClass(newCls)
@@ -1188,16 +1193,22 @@ async function _activateClass(cls) {
         // Check for stale out-of-room state (left the room yesterday and never returned)
         if (states.isOut && states.outTime) {
             if (!states.outTime.startsWith(todayStr)) {
-                // Retroactively log the forgotten trip as 5 minutes on the day it occurred
-                const FIVE_MINUTES_MS = 5 * 60 * 1000
-                await eventService.logEvent({
-                    studentId,
-                    classId: cls.classId,
-                    code: states.code || 'w', // Fallback to 'w' just in case
-                    duration: FIVE_MINUTES_MS,
-                    // Use a special property to override the timestamp in logEvent
-                    _overrideTimestamp: states.outTime
-                })
+                const originalOutTime = states.outTime
+                const dateOnly = originalOutTime.slice(0, 10)
+                const existing = await eventService.getEventsByStudent(studentId, { from: dateOnly, to: dateOnly })
+                const isAlreadyLogged = existing.some(e => e.timestamp === originalOutTime)
+
+                if (!isAlreadyLogged) {
+                    // Retroactively log the forgotten trip as 5 minutes on the day it occurred
+                    const FIVE_MINUTES_MS = 5 * 60 * 1000
+                    await eventService.logEvent({
+                        studentId,
+                        classId: cls.classId,
+                        code: states.code || 'w', 
+                        duration: FIVE_MINUTES_MS,
+                        _overrideTimestamp: originalOutTime
+                    })
+                }
 
                 states.isOut = false
                 states.outTime = null

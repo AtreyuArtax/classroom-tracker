@@ -473,7 +473,7 @@ export async function clearAllData() {
     
     // Seed default settings so the app isn't in a broken state after reload
     const settings = {
-        schemaVersion: 20,
+        schemaVersion: 23,
         gridSize: { rows: 6, cols: 6 },
         currentYear: getCurrentSchoolYear(),
         currentSemester: getCurrentSemester(),
@@ -490,6 +490,14 @@ export async function clearAllData() {
             washroomTripsPerWeek: 4,
             deviceIncidentsPerWeek: 3
         },
+        gradeBuckets: [
+            { label: 'R', min: 0, max: 49, color: '#ff3b30' },
+            { label: 'L1', min: 50, max: 59, color: '#ff9500' },
+            { label: 'L2', min: 60, max: 69, color: '#ffcc00' },
+            { label: 'L3', min: 70, max: 79, color: '#30b0c7' },
+            { label: 'L4', min: 80, max: 100, color: '#34c759' }
+        ],
+        capGradesAt100: true,
         gradebookTemplates: [],
         gradebookMilestones: [],
         periodStartTimes: {

@@ -188,15 +188,18 @@ async function doQuickSync() {
   if (isSyncing.value) return
   clearTimeout(autoSyncTimer)  // cancel pending auto-sync if user clicked manually
   isSyncing.value = true
-  const result = await eventService.quickSyncBackup()
-  isSyncing.value = false
-  if (result) {
-    lastSyncedAt.value = result
-    syncBroken.value = false
-    syncSuccess.value = true
-    setTimeout(() => syncSuccess.value = false, 2500)
-  } else {
-    syncBroken.value = true
+  try {
+    const result = await eventService.quickSyncBackup()
+    if (result) {
+      lastSyncedAt.value = result
+      syncBroken.value = false
+      syncSuccess.value = true
+      setTimeout(() => syncSuccess.value = false, 2500)
+    } else {
+      syncBroken.value = true
+    }
+  } finally {
+    isSyncing.value = false
   }
 }
 </script>

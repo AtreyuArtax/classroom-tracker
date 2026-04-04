@@ -26,7 +26,7 @@
 import { getDB } from './index.js'
 import { getClass } from './classService.js'
 import { getSettings } from './settingsService.js'
-import { migrateData } from './migrations.js'
+import { migrateData, CURRENT_SCHEMA } from './migrations.js'
 import { ref } from 'vue'
 
 export const hasUnsyncedChanges = ref(false)
@@ -34,11 +34,11 @@ export const hasUnsyncedChanges = ref(false)
 // ─── duration normalization ──────────────────────────────────────────────────
 
 /**
- * Converts a raw duration (ms) into a numeric minute value with 0.1 precision.
+ * Converts a raw duration (ms) into a numeric minute value with 0.5-minute precision.
  * Now exclusively millisecond-based (CLAUDE.md §18).
  *
  * @param {number|null} d Milliseconds
- * @returns {number} Minutes rounded to 0.1
+ * @returns {number} Minutes rounded to 0.5
  */
 export function toMinutes(d) {
     if (d === null || d === undefined) return 0
@@ -61,7 +61,11 @@ function _applyDateRange(events, dateRange = {}) {
     const { from, to } = dateRange
     return events.filter(evt => {
         if (from && evt.timestamp < from) return false
-        if (to && evt.timestamp > to + 'T23:59:59') return false
+        // Ensure "to" covers the entire day up to 11:59:59.999Z
+        if (to) {
+            const toBoundary = to.includes('T') ? to : `${to}T23:59:59.999Z`
+            if (evt.timestamp > toBoundary) return false
+        }
         return true
     })
 }
@@ -325,8 +329,8 @@ export async function importAllData(backupObj) {
         )
     }
 
-    // Latest version is 21
-    if (backupObj.schemaVersion > 21) {
+    // Latest version check
+    if (backupObj.schemaVersion > CURRENT_SCHEMA) {
         throw new Error(
             `The backup file is from a newer version of the app (v${backupObj.schemaVersion}). Please update your app before importing.`
         )
@@ -334,8 +338,8 @@ export async function importAllData(backupObj) {
 
     // Apply migrations if legacy
     let data = backupObj
-    if (data.schemaVersion < 21) {
-        console.log(`Migrating backup from v${backupObj.schemaVersion || 1} to v21...`)
+    if (data.schemaVersion < CURRENT_SCHEMA) {
+        console.log(`Migrating backup from v${backupObj.schemaVersion || 1} to v${CURRENT_SCHEMA}...`)
         data = migrateData(data)
     }
 
