@@ -53,7 +53,14 @@ function push(inverseFn) {
 async function undo() {
     if (_stack.value.length === 0) return
     const inverseFn = _stack.value.pop()
-    await inverseFn()
+    try {
+        await inverseFn()
+    } catch (err) {
+        console.error('Undo operation failed:', err)
+        alert('Failed to undo the last action. It may have already been changed or deleted.')
+        // Put it back on the stack so it's not lost forever if it was a transient error
+        _stack.value.push(inverseFn)
+    }
 }
 
 /**

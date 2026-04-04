@@ -144,11 +144,16 @@ export async function setExclusionMode(mode) {
  */
 export async function toggleStudentFromAnalytics(studentId) {
   if (!activeClassRecord.value) return
-  await classService.toggleStudentAnalyticsExclusion(activeClassRecord.value.classId, studentId)
-  // Reload class record to pick up the change
-  const updated = await classService.getClass(activeClassRecord.value.classId)
-  activeClassRecord.value = updated
-  await refreshClassAnalytics()
+  try {
+    await classService.toggleStudentAnalyticsExclusion(activeClassRecord.value.classId, studentId)
+    // Reload class record to pick up the change
+    const updated = await classService.getClass(activeClassRecord.value.classId)
+    activeClassRecord.value = updated
+    await refreshClassAnalytics()
+  } catch (err) {
+    console.error('[useGradebook] toggleStudentFromAnalytics failed:', err)
+    alert('Failed to update analytics exclusion.')
+  }
 }
 
 /**
@@ -169,41 +174,56 @@ export function resetAnalyticsState() {
 export async function addAssessment(assessmentData) {
   if (!activeClassRecord.value) return
   
-  const assessment = await gradebookService.createAssessment({
-    classId: activeClassRecord.value.classId,
-    ...assessmentData
-  })
-  
-  assessments.value.push(assessment)
-  return assessment
+  try {
+    const assessment = await gradebookService.createAssessment({
+      classId: activeClassRecord.value.classId,
+      ...assessmentData
+    })
+    
+    assessments.value.push(assessment)
+    return assessment
+  } catch (err) {
+    console.error('[useGradebook] addAssessment failed:', err)
+    alert('Failed to save assessment.')
+  }
 }
 
 /**
  * Updates an assessment and refreshes grades.
  */
 export async function editAssessment(assessmentId, updates) {
-  const updated = await gradebookService.updateAssessment(assessmentId, updates)
-  
-  // Update local ref
-  const index = assessments.value.findIndex(a => a.assessmentId === assessmentId)
-  if (index !== -1) {
-    assessments.value[index] = updated
+  try {
+    const updated = await gradebookService.updateAssessment(assessmentId, updates)
+    
+    // Update local ref
+    const index = assessments.value.findIndex(a => a.assessmentId === assessmentId)
+    if (index !== -1) {
+      assessments.value[index] = updated
+    }
+    
+    await refreshGrades()
+    return updated
+  } catch (err) {
+    console.error('[useGradebook] editAssessment failed:', err)
+    alert('Failed to update assessment.')
   }
-  
-  await refreshGrades()
-  return updated
 }
 /**
  * Deletes an assessment and refreshes state.
  */
 export async function deleteAssessment(assessmentId) {
-  await gradebookService.deleteAssessment(assessmentId)
-  
-  // Update local ref
-  assessments.value = assessments.value.filter(a => a.assessmentId !== assessmentId)
-  
-  // Refresh grades as they are now orphaned/removed
-  await refreshGrades()
+  try {
+    await gradebookService.deleteAssessment(assessmentId)
+    
+    // Update local ref
+    assessments.value = assessments.value.filter(a => a.assessmentId !== assessmentId)
+    
+    // Refresh grades as they are now orphaned/removed
+    await refreshGrades()
+  } catch (err) {
+    console.error('[useGradebook] deleteAssessment failed:', err)
+    alert('Failed to delete assessment.')
+  }
 }
 
 /**
@@ -248,13 +268,17 @@ export async function saveAssessment() {
   
   const data = { ...newAssessment.value }
 
-  if (isEditingAssessment.value) {
-    await editAssessment(currentAssessmentId.value, data)
-  } else {
-    await addAssessment(data)
-  }
+  try {
+    if (isEditingAssessment.value) {
+      await editAssessment(currentAssessmentId.value, data)
+    } else {
+      await addAssessment(data)
+    }
 
-  showAddAssessmentModal.value = false
+    showAddAssessmentModal.value = false
+  } catch (err) {
+    // Error already alerted in add/editAssessment
+  }
 }
 
 // ─── Debounced Async DB Save System ──────────────────────────────────────────
@@ -272,6 +296,7 @@ function enqueueDBSave(key, saveFn) {
         await task()
       } catch (err) {
         console.error('[useGradebook] Background DB save failed:', err)
+        alert('Data sync error: Some recent mark changes may not have saved. Please check your connection or refresh.')
       }
     }
     // Optional: silently refresh background state after a batch saves to solidify tracking IDs
@@ -531,25 +556,30 @@ export function markExcluded(assessmentId, studentId, excluded) {
 export async function saveStudentOverride(studentId, catId, value) {
   if (!activeClassRecord.value) return
   
-  const student = activeClassRecord.value.students[studentId]
-  if (!student) return
-  
-  if (!student.categoryOverrides) student.categoryOverrides = {}
+  try {
+    const student = activeClassRecord.value.students[studentId]
+    if (!student) return
+    
+    if (!student.categoryOverrides) student.categoryOverrides = {}
 
-  if (value === '' || value === null || isNaN(Number(value))) {
-    delete student.categoryOverrides[catId]
-  } else {
-    student.categoryOverrides[catId] = Number(value)
+    if (value === '' || value === null || isNaN(Number(value))) {
+      delete student.categoryOverrides[catId]
+    } else {
+      student.categoryOverrides[catId] = Number(value)
+    }
+
+    // Force trigger because we are using shallowRef
+    triggerRef(activeClassRecord)
+
+    const { patchStudent } = await import('../db/classService.js')
+    await patchStudent(activeClassRecord.value.classId, studentId, { 
+      categoryOverrides: student.categoryOverrides 
+    })
+    await refreshGrades()
+  } catch (err) {
+    console.error('[useGradebook] saveStudentOverride failed:', err)
+    alert('Failed to save grade override.')
   }
-
-  // Force trigger because we are using shallowRef
-  triggerRef(activeClassRecord)
-
-  const { patchStudent } = await import('../db/classService.js')
-  await patchStudent(activeClassRecord.value.classId, studentId, { 
-    categoryOverrides: student.categoryOverrides 
-  })
-  await refreshGrades()
 }
 
 import { useClassroom } from './useClassroom.js'
@@ -560,24 +590,29 @@ import { useClassroom } from './useClassroom.js'
 export async function saveStudentGradebookNote(studentId, note) {
     if (!activeClassRecord.value) return
     
-    const student = activeClassRecord.value.students[studentId]
-    if (!student) return
+    try {
+        const student = activeClassRecord.value.students[studentId]
+        if (!student) return
 
-    // Only save if the note has actually changed
-    if (student.gradebookNote === note) return
-    
-    student.gradebookNote = note
-    triggerRef(activeClassRecord)
+        // Only save if the note has actually changed
+        if (student.gradebookNote === note) return
+        
+        student.gradebookNote = note
+        triggerRef(activeClassRecord)
 
-    // Synchronize with useClassroom state if active
-    const { students: classroomStudents } = useClassroom()
-    if (classroomStudents.value[studentId]) {
-        classroomStudents.value[studentId].gradebookNote = note
+        // Synchronize with useClassroom state if active
+        const { students: classroomStudents } = useClassroom()
+        if (classroomStudents.value[studentId]) {
+            classroomStudents.value[studentId].gradebookNote = note
+        }
+
+        // Persist to IDB
+        const { patchStudent } = await import('../db/classService.js')
+        await patchStudent(activeClassRecord.value.classId, studentId, { gradebookNote: note })
+    } catch (err) {
+        console.error('[useGradebook] saveStudentGradebookNote failed:', err)
+        alert('Failed to save student note.')
     }
-
-    // Persist to IDB
-    const { patchStudent } = await import('../db/classService.js')
-    await patchStudent(activeClassRecord.value.classId, studentId, { gradebookNote: note })
 }
 
 /**
@@ -586,21 +621,26 @@ export async function saveStudentGradebookNote(studentId, note) {
 export async function saveStudentDemographics(studentId, demographics) {
   if (!activeClassRecord.value) return
   
-  const student = activeClassRecord.value.students[studentId]
-  if (!student) return
+  try {
+    const student = activeClassRecord.value.students[studentId]
+    if (!student) return
 
-  const updates = {
-    parentContacts: demographics.parentContacts || [],
-    studentEmail: demographics.studentEmail || '',
-    custody: demographics.custody || '',
-    livingWith: demographics.livingWith || '',
-    birthDate: demographics.birthDate || ''
+    const updates = {
+      parentContacts: demographics.parentContacts || [],
+      studentEmail: demographics.studentEmail || '',
+      custody: demographics.custody || '',
+      livingWith: demographics.livingWith || '',
+      birthDate: demographics.birthDate || ''
+    }
+
+    Object.assign(student, updates)
+    triggerRef(activeClassRecord)
+    const { patchStudent } = await import('../db/classService.js')
+    await patchStudent(activeClassRecord.value.classId, studentId, updates)
+  } catch (err) {
+    console.error('[useGradebook] saveStudentDemographics failed:', err)
+    alert('Failed to save student info.')
   }
-
-  Object.assign(student, updates)
-  triggerRef(activeClassRecord)
-  const { patchStudent } = await import('../db/classService.js')
-  await patchStudent(activeClassRecord.value.classId, studentId, updates)
 }
 
 

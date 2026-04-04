@@ -22,6 +22,7 @@ import * as settingsService from '../db/settingsService.js'
 import { useUndo } from './useUndo.js'
 
 const { push: pushUndo, clear: clearUndo } = useUndo()
+let midnightTimer = null
 
 // ─── module-level singleton reactive state ────────────────────────────────────
 
@@ -645,28 +646,35 @@ async function moveStudentFromClass(fromClassId, student) {
  * @returns {Promise<void>}
  */
 async function removeStudent(studentId) {
-    const classId = activeClass.value?.classId
-    if (!classId) return
+    if (!confirm('Are you sure you want to remove this student? Their event history will remain in the database, but they will be removed from this class roster.')) return
 
-    // 1. Remove from DB
-    const fresh = await classService.getClass(classId)
-    if (fresh?.students?.[studentId]) {
-        delete fresh.students[studentId]
-        await classService.saveClass(fresh)
+    try {
+        const classId = activeClass.value?.classId
+        if (!classId) return
+
+        // 1. Remove from DB
+        const fresh = await classService.getClass(classId)
+        if (fresh?.students?.[studentId]) {
+            delete fresh.students[studentId]
+            await classService.saveClass(fresh)
+        }
+
+        // 2. Remove from reactive state
+        delete students.value[studentId]
+
+        if (activeClass.value?.students?.[studentId]) {
+            delete activeClass.value.students[studentId]
+        }
+
+        const clsInList = classList.value.find(c => c.classId === classId)
+        if (clsInList?.students?.[studentId]) {
+            delete clsInList.students[studentId]
+        }
+        triggerRef(activeClass)
+    } catch (err) {
+        console.error('removeStudent failed:', err)
+        alert('Failed to remove student from roster.')
     }
-
-    // 2. Remove from reactive state
-    delete students.value[studentId]
-
-    if (activeClass.value?.students?.[studentId]) {
-        delete activeClass.value.students[studentId]
-    }
-
-    const clsInList = classList.value.find(c => c.classId === classId)
-    if (clsInList?.students?.[studentId]) {
-        delete clsInList.students[studentId]
-    }
-    triggerRef(activeClass)
 }
 
 /**
@@ -677,11 +685,16 @@ async function removeStudent(studentId) {
  * @returns {Promise<void>}
  */
 async function updateStudentNote(studentId, note) {
-    const classId = activeClass.value?.classId
-    if (!classId) return
-    await classService.updateStudentNote(classId, studentId, note)
-    if (students.value[studentId]) {
-        students.value[studentId].generalNote = note
+    try {
+        const classId = activeClass.value?.classId
+        if (!classId) return
+        await classService.updateStudentNote(classId, studentId, note)
+        if (students.value[studentId]) {
+            students.value[studentId].generalNote = note
+        }
+    } catch (err) {
+        console.error('updateStudentNote failed:', err)
+        alert('Failed to save student note.')
     }
 }
 
@@ -694,16 +707,26 @@ async function updateStudentNote(studentId, note) {
  * @returns {Promise<void>}
  */
 async function assignSeat(studentId, newSeat) {
-    const classId = activeClass.value?.classId
-    const previousSeat = students.value[studentId]?.seat ?? null
+    try {
+        const classId = activeClass.value?.classId
+        const previousSeat = students.value[studentId]?.seat ?? null
 
-    await classService.updateStudentSeat(classId, studentId, newSeat)
-    students.value[studentId].seat = newSeat
+        await classService.updateStudentSeat(classId, studentId, newSeat)
+        students.value[studentId].seat = newSeat
 
-    pushUndo(async () => {
-        await classService.updateStudentSeat(classId, studentId, previousSeat)
-        students.value[studentId].seat = previousSeat
-    })
+        pushUndo(async () => {
+            try {
+                await classService.updateStudentSeat(classId, studentId, previousSeat)
+                students.value[studentId].seat = previousSeat
+            } catch (err) {
+                console.error('Undo assignSeat failed:', err)
+                alert('Failed to undo seat assignment.')
+            }
+        })
+    } catch (err) {
+        console.error('assignSeat failed:', err)
+        alert('Failed to save seat assignment. Please check your connection or storage.')
+    }
 }
 
 // ─── event logging ────────────────────────────────────────────────────────────
@@ -712,96 +735,115 @@ async function assignSeat(studentId, newSeat) {
  * Log an attendance event (Absent or Late).
  */
 async function logAttendanceEvent(studentId, code) {
-    const classId = activeClass.value?.classId
-    if (!classId) return
+    try {
+        const classId = activeClass.value?.classId
+        if (!classId) return
 
-    const student = students.value[studentId]
+        const student = students.value[studentId]
 
-    if (code === 'a') {
-        if (student.activeStates?.isAbsent) return
+        if (code === 'a') {
+            if (student.activeStates?.isAbsent) return
 
-        await classService.setStudentAbsent(classId, studentId)
+            await classService.setStudentAbsent(classId, studentId)
 
-        if (!student.activeStates) student.activeStates = {}
-        student.activeStates.isAbsent = true
-        student.activeStates.lateMs = null
-
-        const eventId = await eventService.logEvent({ studentId, classId, code, duration: null, testDay: isTestDay.value })
-        student.lastEvent = { code, ts: Date.now() }
-
-        pushUndo(async () => {
-            await classService.clearStudentAbsent(classId, studentId)
-            await eventService.deleteEvent(eventId)
-            student.activeStates.isAbsent = false
-            student.lastEvent = null
-        })
-    } else if (code === 'l') {
-        const periodStart = activeClass.value.periodStartTime
-        if (!periodStart) {
-            alert('Set a period start time in Setup to calculate lateness.')
-            return
-        }
-
-        const [h, m] = periodStart.split(':').map(Number)
-        const start = new Date()
-        start.setHours(h, m, 0, 0)
-        let msLate = Math.round(Date.now() - start.getTime())
-        if (msLate < 0) msLate = 0
-
-        const wasAbsent = student.activeStates?.isAbsent === true
-
-        const todayStr = new Date().toISOString().slice(0, 10)
-        const eventsToday = await eventService.getEventsByStudent(studentId, { from: todayStr, to: todayStr })
-        const existingLateEvent = eventsToday.find(e => e.code === 'l')
-
-        if (existingLateEvent) {
-            await eventService.deleteEvent(existingLateEvent.eventId)
-        }
-
-        let supersededAbsentId = null
-        if (wasAbsent) {
-            await classService.clearStudentAbsent(classId, studentId)
-            // Find the 'a' event for today and mark it superseded
-            const todayStr = new Date().toISOString().slice(0, 10)
-            const eventsToday = await eventService.getEventsByStudent(studentId, { from: todayStr, to: todayStr })
-            const absentEvent = eventsToday.find(e => e.code === 'a' && !e.superseded)
-            if (absentEvent) {
-                supersededAbsentId = absentEvent.eventId
-                await eventService.updateEvent(supersededAbsentId, { superseded: true })
-            }
-        }
-
-        // Persist lateMs to IDB so it survives page refresh
-        await classService.setStudentLate(classId, studentId, msLate)
-
-        if (!student.activeStates) student.activeStates = {}
-        student.activeStates.isAbsent = false
-        student.activeStates.lateMs = msLate
-
-        const eventId = await eventService.logEvent({
-            studentId,
-            classId,
-            code,
-            duration: msLate,
-            supersededAbsent: wasAbsent
-        })
-        student.lastEvent = { code, ts: Date.now() }
-
-        pushUndo(async () => {
-            await eventService.deleteEvent(eventId)
-            await classService.clearStudentLate(classId, studentId)
+            if (!student.activeStates) student.activeStates = {}
+            student.activeStates.isAbsent = true
             student.activeStates.lateMs = null
 
+            const eventId = await eventService.logEvent({ studentId, classId, code, duration: null, testDay: isTestDay.value })
+            student.lastEvent = { code, ts: Date.now() }
+
+            pushUndo(async () => {
+                try {
+                    await classService.clearStudentAbsent(classId, studentId)
+                    await eventService.deleteEvent(eventId)
+                    student.activeStates.isAbsent = false
+                    student.lastEvent = null
+                } catch (err) {
+                    console.error('Undo attendance event failed:', err)
+                    alert('Failed to undo attendance change.')
+                }
+            })
+        } else if (code === 'l') {
+            const periodStart = activeClass.value.periodStartTime
+            if (!periodStart) {
+                alert('Set a period start time in Setup to calculate lateness.')
+                return
+            }
+
+            const [h, m] = periodStart.split(':').map(Number)
+            const start = new Date()
+            start.setHours(h, m, 0, 0)
+            let msLate = Math.round(Date.now() - start.getTime())
+            if (msLate < 0) msLate = 0
+            
+            // UX3 — Cap late time at 240 minutes (4 hours) to prevent extreme outliers
+            const MAX_LATE_MS = 240 * 60 * 1000
+            if (msLate > MAX_LATE_MS) msLate = MAX_LATE_MS
+
+            const wasAbsent = student.activeStates?.isAbsent === true
+
+            const todayStr = new Date().toISOString().slice(0, 10)
+            const eventsToday = await eventService.getEventsByStudent(studentId, { from: todayStr, to: todayStr })
+            const existingLateEvent = eventsToday.find(e => e.code === 'l')
+
+            if (existingLateEvent) {
+                await eventService.deleteEvent(existingLateEvent.eventId)
+            }
+
+            let supersededAbsentId = null
             if (wasAbsent) {
-                await classService.setStudentAbsent(classId, studentId)
-                student.activeStates.isAbsent = true
-                // Restore the superseded absent event
-                if (supersededAbsentId) {
-                    await eventService.updateEvent(supersededAbsentId, { superseded: false })
+                await classService.clearStudentAbsent(classId, studentId)
+                // Find the 'a' event for today and mark it superseded
+                const todayStr = new Date().toISOString().slice(0, 10)
+                const eventsToday = await eventService.getEventsByStudent(studentId, { from: todayStr, to: todayStr })
+                const absentEvent = eventsToday.find(e => e.code === 'a' && !e.superseded)
+                if (absentEvent) {
+                    supersededAbsentId = absentEvent.eventId
+                    await eventService.updateEvent(supersededAbsentId, { superseded: true })
                 }
             }
-            student.lastEvent = null
-        })
+
+            // Persist lateMs to IDB so it survives page refresh
+            await classService.setStudentLate(classId, studentId, msLate)
+
+            if (!student.activeStates) student.activeStates = {}
+            student.activeStates.isAbsent = false
+            student.activeStates.lateMs = msLate
+
+            const eventId = await eventService.logEvent({
+                studentId,
+                classId,
+                code,
+                duration: msLate,
+                supersededAbsent: wasAbsent
+            })
+            student.lastEvent = { code, ts: Date.now() }
+
+            pushUndo(async () => {
+                try {
+                    await eventService.deleteEvent(eventId)
+                    await classService.clearStudentLate(classId, studentId)
+                    student.activeStates.lateMs = null
+
+                    if (wasAbsent) {
+                        await classService.setStudentAbsent(classId, studentId)
+                        student.activeStates.isAbsent = true
+                        // Restore the superseded absent event
+                        if (supersededAbsentId) {
+                            await eventService.updateEvent(supersededAbsentId, { superseded: false })
+                        }
+                    }
+                    student.lastEvent = null
+                } catch (err) {
+                    console.error('Undo attendance event failed:', err)
+                    alert('Failed to undo attendance change.')
+                }
+            })
+        }
+    } catch (err) {
+        console.error('logAttendanceEvent failed:', err)
+        alert('Failed to save attendance. Please try again.')
     }
 }
 
@@ -871,67 +913,86 @@ async function syncLateActiveState(classId, studentId, oldDuration, newDuration,
  * @returns {Promise<void>}
  */
 async function logStandardEvent(studentId, code, note = null, options = {}) {
-    const classId = activeClass.value?.classId
-    const eventId = await eventService.logEvent({ 
-        studentId, 
-        classId, 
-        code, 
-        note,
-        _overrideTimestamp: options.timestamp 
-    })
+    try {
+        const classId = activeClass.value?.classId
+        const eventId = await eventService.logEvent({ 
+            studentId, 
+            classId, 
+            code, 
+            note,
+            _overrideTimestamp: options.timestamp 
+        })
 
-    // Reactive update: store last event for desk tile flash
-    students.value[studentId].lastEvent = { code, ts: Date.now() }
+        // Reactive update: store last event for desk tile flash
+        students.value[studentId].lastEvent = { code, ts: Date.now() }
 
-    // Update event history immediately to reflect in UI (e.g. Student 360 Timeline)
-    await getStudentEventHistory(studentId)
+        // Update event history immediately to reflect in UI (e.g. Student 360 Timeline)
+        await getStudentEventHistory(studentId)
 
-    // Optimistic update for stats dot
-    const category = behaviorCodes.value.find(c => c.codeKey === code)?.category
-    if (code === 'w' || category === 'redirect') {
-        const current = studentWeeklyStats.value[studentId] || { washroomTrips: 0, deviceIncidents: 0 }
-        studentWeeklyStats.value[studentId] = {
-            washroomTrips: code === 'w' ? current.washroomTrips + 1 : current.washroomTrips,
-            deviceIncidents: category === 'redirect' ? current.deviceIncidents + 1 : current.deviceIncidents
-        }
-    }
-
-    pushUndo(async () => {
-        await eventService.deleteEvent(eventId)
-        students.value[studentId].lastEvent = null
-
+        // Optimistic update for stats dot
+        const category = behaviorCodes.value.find(c => c.codeKey === code)?.category
         if (code === 'w' || category === 'redirect') {
             const current = studentWeeklyStats.value[studentId] || { washroomTrips: 0, deviceIncidents: 0 }
             studentWeeklyStats.value[studentId] = {
-                washroomTrips: code === 'w' ? Math.max(0, current.washroomTrips - 1) : current.washroomTrips,
-                deviceIncidents: category === 'redirect' ? Math.max(0, current.deviceIncidents - 1) : current.deviceIncidents
+                washroomTrips: code === 'w' ? current.washroomTrips + 1 : current.washroomTrips,
+                deviceIncidents: category === 'redirect' ? current.deviceIncidents + 1 : current.deviceIncidents
             }
         }
-    })
+
+        pushUndo(async () => {
+            try {
+                await eventService.deleteEvent(eventId)
+                students.value[studentId].lastEvent = null
+
+                if (code === 'w' || category === 'redirect') {
+                    const current = studentWeeklyStats.value[studentId] || { washroomTrips: 0, deviceIncidents: 0 }
+                    studentWeeklyStats.value[studentId] = {
+                        washroomTrips: code === 'w' ? Math.max(0, current.washroomTrips - 1) : current.washroomTrips,
+                        deviceIncidents: category === 'redirect' ? Math.max(0, current.deviceIncidents - 1) : current.deviceIncidents
+                    }
+                }
+            } catch (err) {
+                console.error('Undo standard event failed:', err)
+                alert('Failed to undo event.')
+            }
+        })
+    } catch (err) {
+        console.error('logStandardEvent failed:', err)
+        alert('Failed to save event. Please try again.')
+    }
 }
 
 async function logAssessmentEvent({ studentId, note, acType, acContext, acOutcome }) {
-    const classId = activeClass.value?.classId
-    const code = 'ac'
-    const category = 'assessment'
-    
-    const eventId = await eventService.logEvent({ 
-        studentId, 
-        classId, 
-        code, 
-        note,
-        acType,
-        acContext,
-        acOutcome
-    })
+    try {
+        const classId = activeClass.value?.classId
+        const code = 'ac'
+        
+        const eventId = await eventService.logEvent({ 
+            studentId, 
+            classId, 
+            code, 
+            note,
+            acType,
+            acContext,
+            acOutcome
+        })
 
-    // Reactive update
-    students.value[studentId].lastEvent = { code, ts: Date.now() }
+        // Reactive update
+        students.value[studentId].lastEvent = { code, ts: Date.now() }
 
-    pushUndo(async () => {
-        await eventService.deleteEvent(eventId)
-        students.value[studentId].lastEvent = null
-    })
+        pushUndo(async () => {
+            try {
+                await eventService.deleteEvent(eventId)
+                students.value[studentId].lastEvent = null
+            } catch (err) {
+                console.error('Undo assessment event failed:', err)
+                alert('Failed to undo assessment log.')
+            }
+        })
+    } catch (err) {
+        console.error('logAssessmentEvent failed:', err)
+        alert('Failed to save assessment observation.')
+    }
 }
 
 /**
@@ -943,65 +1004,80 @@ async function logAssessmentEvent({ studentId, note, acType, acContext, acOutcom
  * @returns {Promise<void>}
  */
 async function logToggleEvent(studentId, code) {
-    const classId = activeClass.value?.classId
-    const currentState = students.value[studentId].activeStates
+    try {
+        const classId = activeClass.value?.classId
+        const currentState = students.value[studentId].activeStates
 
-    if (!currentState.isOut) {
-        // ── Toggle OUT ───────────────────────────────────────────────────────────
-        const outTime = new Date().toISOString()
-        const newState = { isOut: true, outTime, code }
+        if (!currentState.isOut) {
+            // ── Toggle OUT ───────────────────────────────────────────────────────────
+            const outTime = new Date().toISOString()
+            const newState = { isOut: true, outTime, code }
 
-        await classService.setStudentActiveState(classId, studentId, newState)
-        students.value[studentId].activeStates = newState
-        students.value[studentId].lastEvent = { code, ts: Date.now() }
+            await classService.setStudentActiveState(classId, studentId, newState)
+            students.value[studentId].activeStates = newState
+            students.value[studentId].lastEvent = { code, ts: Date.now() }
 
-        // Undo: clear the active state (no event was written for OUT, only state)
-        pushUndo(async () => {
+            // Undo: clear the active state (no event was written for OUT, only state)
+            pushUndo(async () => {
+                try {
+                    await classService.clearStudentActiveState(classId, studentId)
+                    students.value[studentId].activeStates = { isOut: false, outTime: null }
+                } catch (err) {
+                    console.error('Undo toggle OUT failed:', err)
+                    alert('Failed to undo room exit.')
+                }
+            })
+        } else {
+            // ── Toggle IN ────────────────────────────────────────────────────────────
+            // capture outTime BEFORE writing the IN event
+            const originalOutTime = currentState.outTime
+            const durationMs = Date.now() - new Date(originalOutTime).getTime()
+
+            const eventId = await eventService.logEvent({
+                studentId,
+                classId,
+                code,
+                duration: durationMs,
+            })
+
             await classService.clearStudentActiveState(classId, studentId)
             students.value[studentId].activeStates = { isOut: false, outTime: null }
-        })
-    } else {
-        // ── Toggle IN ────────────────────────────────────────────────────────────
-        // CLAUDE.md §9 critical note: capture outTime BEFORE writing the IN event
-        const originalOutTime = currentState.outTime
-        const durationMs = Date.now() - new Date(originalOutTime).getTime()
+            students.value[studentId].lastEvent = { code, ts: Date.now() }
 
-        const eventId = await eventService.logEvent({
-            studentId,
-            classId,
-            code,
-            duration: durationMs,
-        })
-
-        await classService.clearStudentActiveState(classId, studentId)
-        students.value[studentId].activeStates = { isOut: false, outTime: null }
-        students.value[studentId].lastEvent = { code, ts: Date.now() }
-
-        // Optimistic update for stats dot
-        if (code === 'w') {
-            const current = studentWeeklyStats.value[studentId] || { washroomTrips: 0, deviceIncidents: 0 }
-            studentWeeklyStats.value[studentId] = {
-                ...current,
-                washroomTrips: current.washroomTrips + 1,
-            }
-        }
-
-        // Undo: restore the exact original state (with original outTime) + delete event
-        pushUndo(async () => {
-            const restoredState = { isOut: true, outTime: originalOutTime }
-            await classService.setStudentActiveState(classId, studentId, restoredState)
-            await eventService.deleteEvent(eventId)
-            students.value[studentId].activeStates = restoredState
-            students.value[studentId].lastEvent = null
-
+            // Optimistic update for stats dot
             if (code === 'w') {
                 const current = studentWeeklyStats.value[studentId] || { washroomTrips: 0, deviceIncidents: 0 }
                 studentWeeklyStats.value[studentId] = {
                     ...current,
-                    washroomTrips: Math.max(0, current.washroomTrips - 1),
+                    washroomTrips: current.washroomTrips + 1,
                 }
             }
-        })
+
+            // Undo: restore the exact original state (with original outTime) + delete event
+            pushUndo(async () => {
+                try {
+                    const restoredState = { isOut: true, outTime: originalOutTime }
+                    await classService.setStudentActiveState(classId, studentId, restoredState)
+                    await eventService.deleteEvent(eventId)
+                    students.value[studentId].activeStates = restoredState
+                    students.value[studentId].lastEvent = null
+
+                    if (code === 'w') {
+                        const current = studentWeeklyStats.value[studentId] || { washroomTrips: 0, deviceIncidents: 0 }
+                        studentWeeklyStats.value[studentId] = {
+                            ...current,
+                            washroomTrips: Math.max(0, current.washroomTrips - 1),
+                        }
+                    }
+                } catch (err) {
+                    console.error('Undo toggle IN failed:', err)
+                    alert('Failed to undo room return.')
+                }
+            })
+        }
+    } catch (err) {
+        console.error('logToggleEvent failed:', err)
+        alert('Failed to process room entry/exit.')
     }
 }
 
@@ -1310,11 +1386,13 @@ export function useClassroom() {
 
 /** Midnight reset scheduler for isTestDay */
 function _scheduleMidnightReset() {
+    if (midnightTimer) clearTimeout(midnightTimer)
+    
     const now = new Date()
     const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0)
     const msToMidnight = midnight.getTime() - now.getTime()
 
-    setTimeout(() => {
+    midnightTimer = setTimeout(() => {
         isTestDay.value = false
         _scheduleMidnightReset()
     }, msToMidnight)

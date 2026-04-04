@@ -234,7 +234,7 @@
 
 
     <!-- Batch Print Configuration Modal -->
-    <div v-if="showPrintModal" class="reports__modal-overlay" @click.self="showPrintModal = false">
+    <div v-if="showPrintModal" class="reports__modal-overlay">
       <div class="reports__print-modal reports__print-modal--wide">
         <header class="reports__modal-header">
           <div class="header-content">
@@ -764,8 +764,8 @@ async function runReport() {
     const events = await eventService.getEventsByClass(sidebarClassId.value, Object.keys(dr).length ? dr : undefined)
     reportData.value = events
 
-    // Fetch Academic Grades
-    const grades = await calculateClassGrades(reportClass.value)
+    // Fetch Academic Grades — respect the 'to' date of the reporting period
+    const grades = await calculateClassGrades(reportClass.value, { asOf: dr.to || null })
     classGrades.value = grades
 
     const studentsMap = reportStudents.value
@@ -949,7 +949,7 @@ function downloadAggregateCsv(section) {
     reportData.value.forEach(evt => {
       if ((evt.code === 'a' || evt.code === 'l') && !evt.superseded) {
         if (!summary[evt.studentId]) {
-          summary[evt.studentId] = { absences: 0, testDayAbsences: 0, lates: 0, lateTotal: 0, lateCount: 0 }
+          summary[evt.studentId] = { absences: 0, testDayAbsences: 0, lates: 0, lateTotalMins: 0, lateCount: 0 }
         }
         if (evt.code === 'a') {
           summary[evt.studentId].absences++

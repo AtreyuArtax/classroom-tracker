@@ -10,8 +10,12 @@ export async function exportGradebookToExcel({
   students, 
   assessments, 
   gradeMap, 
-  summaryData 
+  summaryData,
+  categories = []
 }) {
+  // Build a quick lookup from categoryId -> category name
+  const categoryNameMap = {}
+  categories.forEach(c => { categoryNameMap[c.categoryId] = c.name })
   const workbook = new ExcelJS.Workbook();
   workbook.creator = teacherName || 'Classroom Tracker';
   workbook.created = new Date();
@@ -41,10 +45,15 @@ export async function exportGradebookToExcel({
   summaryData.forEach(row => {
     const fullName = `${row.lastName || ''}, ${row.firstName || ''}`.replace(/^, /, '').trim() || row.studentId;
     
+    // mostConsistent is an object { percentage, categoryBreakdown } — unwrap it
+    const consistentPct = (row.mostConsistent && typeof row.mostConsistent === 'object')
+      ? row.mostConsistent.percentage
+      : (typeof row.mostConsistent === 'number' ? row.mostConsistent : null)
+
     summarySheet.addRow({
       name: fullName,
       grade: (typeof row.overallGrade === 'number' && !isNaN(row.overallGrade)) ? `${Math.round(row.overallGrade)}%` : '—',
-      consistent: (typeof row.mostConsistent === 'number' && !isNaN(row.mostConsistent)) ? `${Math.round(row.mostConsistent)}%` : '—',
+      consistent: (typeof consistentPct === 'number' && !isNaN(consistentPct)) ? `${Math.round(consistentPct)}%` : '—',
       median: (typeof row.median === 'number' && !isNaN(row.median)) ? `${Math.round(row.median)}%` : '—',
       absences: row.absences || 0,
       lates: row.lates || 0
@@ -58,7 +67,7 @@ export async function exportGradebookToExcel({
     views: [{ state: 'frozen', xSplit: 1 }]
   });
 
-  const classAssessments = assessments.filter(a => !a.isIndividual);
+  const classAssessments = assessments.filter(a => a.target !== 'individual');
   
   // Headers
   const gridHeaders = ['Student Name', ...classAssessments.map(a => a.name)];
@@ -140,21 +149,22 @@ export async function exportGradebookToExcel({
       }];
 
       attempts.forEach((att, idx) => {
-        const score = typeof att.score === 'number' ? att.score : 0;
+        // attempts store pointsEarned, not score
+        const score = typeof att.pointsEarned === 'number' ? att.pointsEarned : 0;
         const total = a.totalPoints || 1;
         const pct = (score / total);
 
         rawSheet.addRow({
           student: fullName,
           assessment: a.name,
-          category: a.categoryName || 'General',
+          category: categoryNameMap[a.categoryId] || a.categoryId || 'General',
           date: att.date ? new Date(att.date).toLocaleDateString() : (a.date ? new Date(a.date).toLocaleDateString() : '—'),
           attempt: idx + 1,
           score: isNaN(score) ? 0 : score,
           total: total,
           pct: isNaN(pct) ? 0 : pct,
           weight: a.weight || 1,
-          type: a.isIndividual ? 'Individual' : 'Class',
+          type: a.target === 'individual' ? 'Individual' : 'Class',
           status: entry.missing ? 'Missing' : (entry.excluded ? 'Excluded' : 'Graded')
         }).getCell('pct').numFmt = '0%';
       });
