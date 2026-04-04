@@ -53,6 +53,10 @@
       </div>
 
       <div class="grade-buckets__footer">
+        <label class="grade-buckets__cap-toggle">
+          <input type="checkbox" v-model="capGradesAt100" />
+          <span>Cap overall student grades at 100% (Safety)</span>
+        </label>
         <button 
           class="setup__btn-primary" 
           style="margin-left: auto;"
@@ -72,6 +76,7 @@ import { Trash2, Plus, AlertCircle, ChevronUp, ChevronDown } from 'lucide-vue-ne
 import * as settingsService from '../../db/settingsService.js'
 
 const localBuckets = ref([])
+const capGradesAt100 = ref(true)
 const validationErrors = ref({})
 const globalError = ref('')
 
@@ -84,8 +89,9 @@ const ONTARIO_DEFAULTS = [
 ]
 
 onMounted(async () => {
-    const buckets = await settingsService.getGradeBuckets()
-    localBuckets.value = JSON.parse(JSON.stringify(buckets))
+    const settings = await settingsService.getSettings()
+    localBuckets.value = JSON.parse(JSON.stringify(settings.gradeBuckets || ONTARIO_DEFAULTS))
+    capGradesAt100.value = settings.capGradesAt100 ?? true
     validate()
 })
 
@@ -145,7 +151,13 @@ async function saveBuckets() {
     validate()
     if (globalError.value) return
     const sorted = [...localBuckets.value].sort((a, b) => a.min - b.min)
-    await settingsService.saveGradeBuckets(JSON.parse(JSON.stringify(sorted)))
+    
+    // Fetch latest settings to avoid overwriting other fields (gridSize, etc)
+    const settings = await settingsService.getSettings()
+    settings.gradeBuckets = JSON.parse(JSON.stringify(sorted))
+    settings.capGradesAt100 = capGradesAt100.value
+    
+    await settingsService.saveSettings(settings)
     localBuckets.value = JSON.parse(JSON.stringify(sorted))
     alert('Grading standards saved successfully!')
 }
@@ -154,6 +166,31 @@ async function saveBuckets() {
 <style scoped>
 .grade-buckets {
   margin-top: 1rem;
+}
+
+.grade-buckets__footer {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border);
+}
+
+.grade-buckets__cap-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+  user-select: none;
+}
+
+.grade-buckets__cap-toggle input {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
 }
 
 /* ── Standardized Card Styles (Matched to Setup view) ── */

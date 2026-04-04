@@ -119,7 +119,8 @@ async function _readSettings() {
             { label: 'L2', min: 60, max: 69, color: '#ffcc00' },
             { label: 'L3', min: 70, max: 79, color: '#30b0c7' },
             { label: 'L4', min: 80, max: 100, color: '#34c759' }
-        ]
+        ],
+        capGradesAt100: true
     }
     await db.put('settings', defaults, SETTINGS_KEY)
     hasUnsyncedChanges.value = true
