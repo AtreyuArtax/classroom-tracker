@@ -79,9 +79,9 @@
             >
               <template v-if="day.date">
                 <span class="day-num">{{ day.dayNum }}</span>
+                <div v-if="day.isHoliday" class="day-holiday-label">{{ day.holidayLabel }}</div>
                 <div class="day-events">
-                  <div v-if="day.isHoliday" class="day-holiday-label">{{ day.holidayLabel }}</div>
-                  <template v-else>
+                  <template v-if="!day.isHoliday">
                     <div v-if="day.events.absent" class="event-tag event-tag--absent">A</div>
                     <div v-if="day.events.late" class="event-tag event-tag--late">
                       L <small>{{ day.events.lateMinutes }}m</small>
@@ -161,8 +161,25 @@ const calendar = computed(() => {
   const start = termRange.value.start
   const end = termRange.value.end
   
+  // Pre-calculate holiday map for ranges
+  const holidayCache = {}
+  nonSchoolDays.value.forEach(h => {
+    if (!h.date) return
+    const s = h.date
+    const e = h.endDate || h.date
+    if (s === e) {
+      holidayCache[s] = h.label
+    } else {
+      let curH = new Date(s + 'T12:00:00')
+      let endH = new Date(e + 'T12:00:00')
+      while (curH <= endH) {
+        holidayCache[curH.toISOString().split('T')[0]] = h.label
+        curH.setDate(curH.getDate() + 1)
+      }
+    }
+  })
+  
   let curr = new Date(start.getFullYear(), start.getMonth(), 1)
-  const holidayMap = Object.fromEntries(nonSchoolDays.value.map(d => [d.date, d.label]))
   
   // Collect 5-6 months until we pass the end date
   while (curr <= end) {
@@ -199,8 +216,8 @@ const calendar = computed(() => {
         date,
         dateStr,
         dayNum: d,
-        isHoliday: !!holidayMap[dateStr],
-        holidayLabel: holidayMap[dateStr],
+        isHoliday: !!holidayCache[dateStr],
+        holidayLabel: holidayCache[dateStr],
         isOutsideRange,
         events: {
           absent: dayEvents.some(e => e.code === 'a'),
@@ -411,19 +428,21 @@ const stats = computed(() => {
 .day-num {
   position: absolute;
   top: 1px;
-  right: 2px;
-  font-size: 0.55rem;
+  right: 1px;
+  font-size: 0.5rem;
   font-weight: 700;
   color: var(--print-text-muted);
 }
 
 .day-events {
+  position: absolute;
+  top: 1px;
+  left: 1px;
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
   gap: 1px;
-  margin-top: 5px;
-  max-width: 100%;
+  max-width: 80%;
 }
 
 .event-tag {
@@ -445,11 +464,17 @@ const stats = computed(() => {
 .event-tag small { font-size: 0.45rem; opacity: 0.9; font-weight: 600; }
 
 .day-holiday-label {
-  font-size: 0.45rem;
-  font-weight: 600;
+  position: absolute;
+  bottom: 2px;
+  left: 2px;
+  right: 2px;
+  font-size: 0.4rem;
+  font-weight: 700;
   color: var(--print-text-muted);
   text-align: center;
   line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: -0.01em;
 }
 
 @media print {

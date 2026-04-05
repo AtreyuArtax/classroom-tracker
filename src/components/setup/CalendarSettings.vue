@@ -61,9 +61,9 @@
       </p>
 
       <!-- CSV Bulk Import for Holidays -->
-      <div class="calendar-import-box">
+      <div class="calendar-import-box" style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
         <label class="setup__btn-primary setup__btn-sm" for="holiday-csv" style="cursor: pointer; position: relative; overflow: hidden;">
-          <FileUp :size="14" /> Import Holidays CSV
+          <FileUp :size="14" /> Import CSV
           <input 
             id="holiday-csv" 
             type="file" 
@@ -72,20 +72,62 @@
             @change="handleCsvImport" 
           />
         </label>
-        <span class="setup__hint">Format: <code>YYYY-MM-DD, Label</code></span>
+
+        <button class="setup__btn-ghost setup__btn-sm" @click="showPasteModal = true">
+          <FileCode :size="14" /> Paste CSV
+        </button>
+
+        <span class="setup__hint" style="margin-left: auto;">Format: <code>Date, [EndDate], Label</code></span>
       </div>
+
+      <BaseModal 
+        v-if="showPasteModal" 
+        :show="showPasteModal" 
+        title="Paste Holiday CSV Data" 
+        @close="showPasteModal = false"
+      >
+        <div class="setup__paste-container">
+          <p class="setup__hint" style="margin-bottom: 12px;">
+            Paste your CSV data below. One line per holiday. <br/>
+            Example: <code>2025-12-22, 2026-01-02, Winter Break</code>
+          </p>
+          <textarea 
+            v-model="pastedCsv" 
+            class="setup__input setup__input--white" 
+            style="width: 100%; height: 200px; font-family: monospace; font-size: 0.85rem; padding: 12px;"
+            placeholder="YYYY-MM-DD, [EndDate], Label..."
+          ></textarea>
+        </div>
+
+        <template #footer>
+          <button class="setup__btn-primary" @click="processPastedCsv" :disabled="!pastedCsv.trim()">
+            Import Data
+          </button>
+          <button class="setup__btn-ghost" @click="showPasteModal = false">Cancel</button>
+        </template>
+      </BaseModal>
 
       <div class="setup__gb-list scrollable-list">
         <div v-for="(day, idx) in nonSchoolDays" :key="idx" class="setup__gb-item">
-          <div class="setup__term-group">
-            <input v-model="day.date" type="date" class="setup__input setup__input--white" style="width: 160px;" @change="saveNonSchoolDays" />
-            <input 
-              v-model="day.label" 
-              class="setup__input setup__input--white" 
-              placeholder="e.g. Family Day" 
-              style="flex: 1;"
-              @change="saveNonSchoolDays" 
-            />
+          <div class="setup__term-row">
+            <div class="setup__term-unit">
+              <span class="setup__mini-label">Start Date</span>
+              <input v-model="day.date" type="date" class="setup__input setup__input--white" style="width: 140px;" @change="saveNonSchoolDays" />
+            </div>
+            <span class="setup__range-sep" style="padding-bottom: 8px;">to</span>
+            <div class="setup__term-unit">
+              <span class="setup__mini-label">End Date (Opt)</span>
+              <input v-model="day.endDate" type="date" class="setup__input setup__input--white" style="width: 140px;" @change="saveNonSchoolDays" />
+            </div>
+            <div class="setup__term-unit" style="flex: 1;">
+              <span class="setup__mini-label">Holiday Name</span>
+              <input 
+                v-model="day.label" 
+                class="setup__input setup__input--white" 
+                placeholder="e.g. Winter Break" 
+                @change="saveNonSchoolDays" 
+              />
+            </div>
           </div>
           <button class="setup__icon-btn setup__icon-btn--danger" @click="removeNonSchoolDay(idx)">
             <Trash2 :size="16" />
@@ -97,7 +139,7 @@
       </div>
 
       <button class="setup__btn-ghost setup__btn--full" @click="addNonSchoolDay">
-        <Plus :size="14" /> Add Day
+        <Plus :size="14" /> Add Holiday/PD Day
       </button>
     </div>
 
@@ -146,10 +188,11 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { CalendarDays, Palmtree, Trash2, Plus, FileUp, Flag } from 'lucide-vue-next'
+import { CalendarDays, Palmtree, Trash2, Plus, FileUp, Flag, FileCode } from 'lucide-vue-next'
 import { useClassroom } from '../../composables/useClassroom.js'
 import { globalMilestones } from '../../composables/useGradebook.js'
 import * as settingsService from '../../db/settingsService.js'
+import BaseModal from '../BaseModal.vue'
 import Papa from 'papaparse'
 
 const { 
@@ -159,6 +202,9 @@ const {
   updateAcademicTerms,
   updateNonSchoolDays
 } = useClassroom()
+
+const showPasteModal = ref(false)
+const pastedCsv = ref('')
 
 onMounted(async () => {
   if (globalMilestones.value.length === 0) {
@@ -185,7 +231,7 @@ async function saveTerms() {
 }
 
 function addNonSchoolDay() {
-  const newDays = [{ date: '', label: '' }, ...nonSchoolDays.value]
+  const newDays = [{ date: '', endDate: '', label: '' }, ...nonSchoolDays.value]
   updateNonSchoolDays(newDays)
 }
 
@@ -234,26 +280,58 @@ function handleCsvImport(event) {
     header: true,
     skipEmptyLines: true,
     complete: async (results) => {
-      const newDays = results.data
-        .map(row => {
-          const date = row.Date || row.date || Object.values(row)[0]
-          const label = row.Label || row.label || row.Description || row.description || Object.values(row)[1] || 'Holiday'
-          return { date: date?.trim(), label: label?.trim() }
-        })
-        .filter(d => d.date && /^\d{4}-\d{2}-\d{2}$/.test(d.date))
-
-      if (newDays.length > 0) {
-        const existingDates = new Set(nonSchoolDays.value.map(d => d.date))
-        const uniqueNew = newDays.filter(d => !existingDates.has(d.date))
-        
-        nonSchoolDays.value = [...nonSchoolDays.value, ...uniqueNew]
-        await saveNonSchoolDays()
-        alert(`Imported ${uniqueNew.length} new non-school days.`)
-      } else {
-        alert('No valid dates found in CSV. Ensure format is YYYY-MM-DD.')
-      }
+      await importHolidays(results.data)
     }
   })
+}
+
+function processPastedCsv() {
+  if (!pastedCsv.value.trim()) return
+
+  // Auto-detect if header exists, otherwise force columns
+  const firstLine = pastedCsv.value.trim().split('\n')[0]
+  const hasHeader = firstLine.toLowerCase().includes('date') || firstLine.toLowerCase().includes('label')
+
+  Papa.parse(pastedCsv.value, {
+    header: hasHeader,
+    skipEmptyLines: true,
+    complete: async (results) => {
+      // If no header, transform array of arrays to objects
+      let data = results.data
+      if (!hasHeader) {
+        data = data.map(arr => ({
+          date: arr[0],
+          endDate: arr.length > 2 ? arr[1] : '',
+          label: arr.length > 2 ? arr[2] : (arr[1] || 'Holiday')
+        }))
+      }
+      await importHolidays(data)
+      showPasteModal.value = false
+      pastedCsv.value = ''
+    }
+  })
+}
+
+async function importHolidays(rawData) {
+  const newDays = rawData
+    .map(row => {
+      const date = row.Date || row.date || row.StartDate || row.startDate || Object.values(row)[0]
+      const endDate = row.EndDate || row.endDate || ''
+      const label = row.Label || row.label || row.Description || row.description || Object.values(row)[1] || 'Holiday'
+      return { date: date?.trim(), endDate: endDate?.trim(), label: label?.trim() }
+    })
+    .filter(d => d.date && /^\d{4}-\d{2}-\d{2}$/.test(d.date))
+
+  if (newDays.length > 0) {
+    const existingDates = new Set(nonSchoolDays.value.map(d => d.date))
+    const uniqueNew = newDays.filter(d => !existingDates.has(d.date))
+    
+    nonSchoolDays.value = [...nonSchoolDays.value, ...uniqueNew]
+    await saveNonSchoolDays()
+    alert(`Imported ${uniqueNew.length} new holidays/PD days.`)
+  } else {
+    alert('No valid dates found in data. Ensure format is YYYY-MM-DD.')
+  }
 }
 </script>
 
