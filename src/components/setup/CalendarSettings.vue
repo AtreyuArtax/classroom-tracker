@@ -46,9 +46,38 @@
         </div>
       </div>
       
-      <button class="setup__btn-ghost setup__btn--full" @click="addTerm">
-        <Plus :size="14" /> Add Term
-      </button>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 16px;">
+        <button class="setup__btn-ghost" @click="addTerm">
+          <Plus :size="14" /> Add Term
+        </button>
+        <button 
+          class="setup__btn-primary" 
+          :disabled="!activeTerm" 
+          @click="showCalendarModal = true"
+        >
+          <CalendarDays :size="14" /> Print Semester Calendar
+        </button>
+      </div>
+
+      <!-- Semester Calendar Modal -->
+      <BaseModal 
+        v-if="showCalendarModal" 
+        :show="showCalendarModal" 
+        title="Semester Overview Calendar" 
+        maxWidth="1000px"
+        @close="showCalendarModal = false"
+      >
+        <SemesterCalendar 
+          :term="activeTerm"
+          :non-school-days="nonSchoolDays"
+          :milestones="filteredMilestones"
+          :teacher-name="teacherName"
+        />
+        
+        <template #footer>
+          <button class="setup__btn-ghost" @click="showCalendarModal = false">Close</button>
+        </template>
+      </BaseModal>
     </div>
 
     <!-- Non-School Days (Holidays/PD Days) -->
@@ -193,18 +222,26 @@ import { useClassroom } from '../../composables/useClassroom.js'
 import { globalMilestones } from '../../composables/useGradebook.js'
 import * as settingsService from '../../db/settingsService.js'
 import BaseModal from '../BaseModal.vue'
+import SemesterCalendar from './SemesterCalendar.vue'
 import Papa from 'papaparse'
 
 const { 
   academicTerms: terms, 
   nonSchoolDays, 
   selectedYear,
+  selectedSemester,
+  teacherName,
   updateAcademicTerms,
   updateNonSchoolDays
 } = useClassroom()
 
 const showPasteModal = ref(false)
+const showCalendarModal = ref(false)
 const pastedCsv = ref('')
+
+const activeTerm = computed(() => {
+  return terms.value.find(t => t.year === selectedYear.value && t.semester === selectedSemester.value)
+})
 
 onMounted(async () => {
   if (globalMilestones.value.length === 0) {
