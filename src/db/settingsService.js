@@ -125,7 +125,8 @@ async function _readSettings() {
             { label: 'L3', min: 70, max: 79, color: '#30b0c7' },
             { label: 'L4', min: 80, max: 100, color: '#34c759' }
         ],
-        capGradesAt100: true
+        capGradesAt100: true,
+        nonSchoolDays: []
     }
     await db.put('settings', defaults, SETTINGS_KEY)
     hasUnsyncedChanges.value = true
@@ -345,6 +346,30 @@ export async function saveGradeBuckets(buckets) {
     const db = await getDB()
     const settings = await db.get('settings', 'singleton')
     settings.gradeBuckets = buckets
+    await db.put('settings', settings, 'singleton')
+    hasUnsyncedChanges.value = true
+}
+
+/**
+ * Returns the defined holidays and PD days.
+ *
+ * @returns {Promise<Array<{date: string, label: string}>>}
+ */
+export async function getNonSchoolDays() {
+    const settings = await _readSettings()
+    return settings.nonSchoolDays || []
+}
+
+/**
+ * Saves the non-school days list.
+ *
+ * @param {Array<{date: string, label: string}>} days
+ * @returns {Promise<void>}
+ */
+export async function saveNonSchoolDays(days) {
+    const db = await getDB()
+    const settings = await db.get('settings', 'singleton')
+    settings.nonSchoolDays = days
     await db.put('settings', settings, 'singleton')
     hasUnsyncedChanges.value = true
 }

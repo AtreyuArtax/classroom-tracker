@@ -282,11 +282,11 @@
               <div class="print-modal__divider"></div>
               <label class="print-modal__option">
                 <input type="checkbox" v-model="printConfig.includeAttendance" />
-                Attendance Summary
+                Attendance Table
               </label>
               <label class="print-modal__option">
                 <input type="checkbox" v-model="printConfig.includeBehavior" />
-                Out-of-Class Summary
+                Out-of-Class Table
               </label>
             </div>
           </div>
@@ -325,15 +325,16 @@
     <!-- Hidden/Active Batch Print Container -->
     <Teleport to="body">
       <div class="print-only-container" :class="{ 'print-only-container--active': isSystemPrinting }">
-        <ProgressReport 
-          v-if="isSystemPrinting || showPreview"
-          v-for="s in sidebarStudents" 
-          :key="s.studentId"
-          :student-id="s.studentId" 
-          :class-id="sidebarClassId" 
-          :config="printConfig" 
-          :is-batch="true"
-        />
+        <template v-if="isSystemPrinting">
+          <ProgressReport 
+            v-for="s in sidebarStudents" 
+            :key="s.studentId"
+            :student-id="s.studentId" 
+            :class-id="sidebarClassId" 
+            :config="printConfig" 
+            :is-batch="true"
+          />
+        </template>
       </div>
     </Teleport>
   </div>
@@ -352,7 +353,7 @@ import { ref, reactive, computed, watch, defineComponent, h, onMounted, onUnmoun
 import { 
   BarChart2, Download, Trash2, PlusCircle, ChevronLeft, 
   LayoutDashboard, Database, UserCheck, Toilet, Activity, 
-  FolderOpen, GraduationCap, Printer, X, ClipboardList, Calendar
+  FolderOpen, GraduationCap, Printer, X, ClipboardList
 } from 'lucide-vue-next'
 import { resolveIcon }         from '../utils/icons.js'
 import { useClassroom }        from '../composables/useClassroom.js'
@@ -533,6 +534,7 @@ watch(isSystemPrinting, (newValue) => {
 })
 
 const printConfig = reactive({
+  reportType: 'progress',
   includeAttendance: true,
   includeBehavior: false,
   includeOverallGrade: true,
@@ -1934,6 +1936,47 @@ const washroomChartOptions = {
   border: 1px solid var(--border-color);
 }
 
+.print-modal__type-selector {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.print-modal__type-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px;
+  border: 2px solid var(--border-color);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  transition: all 0.2s;
+}
+
+.print-modal__type-btn input {
+  display: none;
+}
+
+.print-modal__type-btn--active {
+  border-color: var(--primary);
+  background: var(--primary-light);
+  color: var(--primary);
+}
+
+.print-modal__option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
 .print-modal__section-title {
   grid-column: 1 / -1;
   font-size: 0.7rem;
@@ -1971,7 +2014,8 @@ const washroomChartOptions = {
   justify-content: center;
 }
 
-.preview-content :deep(.progress-report) {
+.preview-content :deep(.progress-report),
+.preview-content :deep(.attendance-report) {
   transform: scale(0.65);
   transform-origin: top center;
   margin-bottom: -150px; /* Offset the scale-down space */

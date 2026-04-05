@@ -55,6 +55,8 @@ const behaviorCodes = ref([])
 const gridSize = ref({ rows: 6, cols: 6 })
 const teacherName = ref('')
 const periodStartTimes = ref({})
+const academicTerms = ref([])
+const nonSchoolDays = ref([])
 
 /** @type {import('vue').Ref<boolean>} Flag for special "Test Day" mode — persisted in sessionStorage so a
  *  page reload mid-class doesn't silently reset it. Cleared at midnight and on tab close. */
@@ -275,6 +277,26 @@ function dismissSuggestion() {
     suggestedClass.value = null
 }
 
+// ─── academic terms & non-school days ──────────────────────────────────────────
+
+async function refreshAcademicTerms() {
+    academicTerms.value = await settingsService.getAcademicTerms()
+}
+
+async function refreshNonSchoolDays() {
+    nonSchoolDays.value = await settingsService.getNonSchoolDays()
+}
+
+async function updateAcademicTerms(terms) {
+    await settingsService.saveAcademicTerms(JSON.parse(JSON.stringify(terms)))
+    academicTerms.value = terms
+}
+
+async function updateNonSchoolDays(days) {
+    await settingsService.saveNonSchoolDays(JSON.parse(JSON.stringify(days)))
+    nonSchoolDays.value = days
+}
+
 // ─── init ─────────────────────────────────────────────────────────────────────
 
 /**
@@ -286,12 +308,16 @@ function dismissSuggestion() {
 async function init() {
     loadDismissedSuggestions()
 
-    const [classes, codes, settings, terms] = await Promise.all([
+    const [classes, codes, settings, terms, nsd] = await Promise.all([
         classService.getAllClasses(),
         settingsService.getBehaviorCodes(),
         settingsService.getSettings(),
         settingsService.getAcademicTerms(),
+        settingsService.getNonSchoolDays()
     ])
+
+    academicTerms.value = terms
+    nonSchoolDays.value = nsd
 
     // Inject 'a' and 'l' if missing (migrating existing dbs smoothly)
     let codesUpdated = false
@@ -1336,6 +1362,8 @@ export function useClassroom() {
         // Year/Semester context
         selectedYear,
         selectedSemester,
+        academicTerms,
+        nonSchoolDays,
         teacherName,
         periodStartTimes,
         isScannerOpen,
@@ -1373,6 +1401,10 @@ export function useClassroom() {
         updateStudentNote,
         confirmResize,
         reloadBehaviorCodes,
+        refreshAcademicTerms,
+        refreshNonSchoolDays,
+        updateAcademicTerms,
+        updateNonSchoolDays,
         updateTeacherName,
         updatePeriodStartTimes,
         archiveClass,
