@@ -40,6 +40,15 @@
     </div>
 
     <!-- ══════════════════════════════════════════════════════════ -->
+    <!-- PILLAR 0: Calendar Manager (Modular)                      -->
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <section v-if="activeTab === 'calendar'" class="setup__panel">
+      <div class="setup__panel-content">
+        <CalendarSettings />
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════════ -->
     <!-- PILLAR 1: Class Manager                                  -->
     <!-- ══════════════════════════════════════════════════════════ -->
     <section v-if="activeTab === 'manage'" class="setup__panel">
@@ -472,55 +481,9 @@
           </label>
         </div>
 
-        <!-- School Calendar -->
-        <div class="setup__card">
-          <h2 class="setup__card-title">School Calendar</h2>
-          <p class="setup__hint">Define semester date boundaries to enable automated class setup and historical tracking.</p>
-          <div class="setup__gb-list">
-            <div v-for="(term, idx) in academicTerms" :key="idx" class="setup__gb-item setup__gb-item--term">
-              <div class="setup__term-row">
-                <input v-model="term.year" class="setup__input setup__input--sm" placeholder="e.g. 2025-26" @change="saveTerms" />
-                <select v-model="term.semester" class="setup__input setup__input--xs" @change="saveTerms">
-                  <option value="1">Sem 1</option>
-                  <option value="2">Sem 2</option>
-                  <option value="Full">Full</option>
-                </select>
-                <input v-model="term.startDate" type="date" class="setup__input" @change="saveTerms" />
-                <span>—</span>
-                <input v-model="term.endDate" type="date" class="setup__input" @change="saveTerms" />
-              </div>
-              <button class="setup__icon-btn setup__icon-btn--danger" @click="removeTerm(idx)"><Trash2 :size="16" /></button>
-            </div>
-          </div>
-          <p class="setup__hint" style="margin-top: 8px; font-style: italic;">
-            Use the <b>2025-26</b> format for Year to match auto-detection from board CSVs.
-          </p>
-          <button class="setup__btn-ghost setup__btn--full" @click="addTerm"><Plus :size="14" /> Add Term</button>
-        </div>
-
-        <!-- Milestones (Moved from Class settings) -->
-        <div class="setup__card">
-          <h2 class="setup__card-title">Academic Milestones ({{ selectedYear }})</h2>
-          <p class="setup__hint">Define key dates (e.g., Progress Reports) that apply to all classes for the current year.</p>
-          <div v-if="filteredMilestones.length === 0" class="setup__empty">No milestones for this year.</div>
-          <div class="setup__gb-list">
-            <div v-for="ms in filteredMilestones" :key="ms.milestoneId" class="setup__gb-item">
-              <input v-model="ms.name" class="setup__input setup__input--naked" placeholder="Milestone Name" @change="debouncedSave" />
-              <div class="setup__gb-actions">
-                <input v-model="ms.date" type="date" class="setup__input setup__input--date" @change="debouncedSave" />
-                <button class="setup__icon-btn setup__icon-btn--danger" title="Delete Milestone" @click="onDeleteMilestone(ms.milestoneId)">
-                  <Trash2 :size="16" />
-                </button>
-              </div>
-            </div>
-          </div>
-          <button class="setup__btn-ghost setup__btn--full" @click="addMilestone">
-            <Plus :size="14" /> Add Milestone
-          </button>
-        </div>
-
         <!-- Grade Buckets (Grading Levels) -->
         <GradeBucketsSettings />
+
 
       <!-- Behavior Strategy -->
       <div class="setup__card">
@@ -570,10 +533,8 @@
           </div>
         </div>
       </div>
-
-      <!-- Data Engine (Moved to Data Tab) -->
-      </div>
-    </section>
+    </div>
+  </section>
 
     <!-- ══════════════════════════════════════════════════════════ -->
     <!-- PILLAR 4: Data Management                                 -->
@@ -865,7 +826,7 @@
 
 import { ref, reactive, computed, watch, onMounted, nextTick, onUnmounted } from 'vue'
 import Papa from 'papaparse'
-import { Archive, ChevronDown, ChevronUp, FolderOpen, Trash2, FileText, Pencil, Download, Database, Cloud, Settings2, Plus, PlusCircle, X, Save, FileUp, FileDown, GraduationCap, ArrowLeft, Zap, LayoutDashboard, Settings, QrCode, Printer, RefreshCcw, FileSpreadsheet, DatabaseIcon, AlertTriangle, ShieldCheck, Search } from 'lucide-vue-next'
+import { Archive, ChevronDown, ChevronUp, FolderOpen, Trash2, FileText, Pencil, Download, Database, Cloud, Settings2, Plus, PlusCircle, X, Save, FileUp, FileDown, GraduationCap, ArrowLeft, Zap, LayoutDashboard, Settings, QrCode, Printer, RefreshCcw, FileSpreadsheet, DatabaseIcon, AlertTriangle, ShieldCheck, Search, CalendarDays } from 'lucide-vue-next'
 import QRCode from 'qrcode'
 import { exportGradebookToExcel } from '../db/exportService.js'
 import { resolveIcon } from '../utils/icons.js'
@@ -880,6 +841,7 @@ import PrintClassListModal from '../components/PrintClassListModal.vue'
 import SuperConfirmModal from '../components/SuperConfirmModal.vue'
 import BaseModal from '../components/BaseModal.vue'
 import GradeBucketsSettings from '../components/setup/GradeBucketsSettings.vue'
+import CalendarSettings from '../components/setup/CalendarSettings.vue'
 
 const {
   classList,
@@ -912,11 +874,12 @@ const {
   updateTeacherName,
   updatePeriodStartTimes,
   bulkImportClasses,
-  triggerActiveClass
+  triggerActiveClass,
+  academicTerms,
+  nonSchoolDays
 } = useClassroom()
 
 const isUnsynced = eventService.hasUnsyncedChanges
-const academicTerms = ref([])
 const isArchivedPanelVisible = ref(false)
 const showAllSessions = ref(false)
 
@@ -1007,15 +970,11 @@ async function printQRs() {
 }
 
 onMounted(async () => {
-    const [terms, ms, tpls, settings] = await Promise.all([
-      settingsService.getAcademicTerms(),
-      settingsService.getGlobalMilestones(),
+    const [tpls, settings] = await Promise.all([
       gradebookService.getGradebookTemplates(),
       settingsService.getSettings()
     ])
     
-    academicTerms.value = terms
-    globalMilestones.value = ms
     templates.value = tpls
     isSyncLinked.value = await isSyncActive()
 
@@ -1160,22 +1119,6 @@ function normalizeSemester(raw) {
   return '1'
 }
 
-const addTerm = () => {
-    academicTerms.value.push({ year: '', semester: '1', startDate: '', endDate: '' })
-}
-
-const removeTerm = async (index) => {
-    const term = academicTerms.value[index]
-    const label = term ? `${term.year} Sem ${term.semester}` : 'this term'
-    if (!window.confirm(`Are you sure you want to remove the academic term "${label}"?`)) return
-    academicTerms.value.splice(index, 1)
-    await saveTerms()
-}
-
-const saveTerms = async () => {
-    await settingsService.saveAcademicTerms(JSON.parse(JSON.stringify(academicTerms.value)))
-}
-
 async function onArchiveClass(classId) {
   await archiveClass(classId)
 }
@@ -1216,10 +1159,11 @@ const emit = defineEmits(['navigate'])
 
 // ─── setup pillars (reorganized Stage 10) ──────────────────────────────────
 const setupTabs = [
-  { id: 'manage', label: 'Class Manager',  icon: LayoutDashboard },
-  { id: 'active', label: 'Class Settings', icon: Zap },
-  { id: 'app',    label: 'App Settings',   icon: Settings },
-  { id: 'data',   label: 'Data',           icon: Database },
+  { id: 'manage',   label: 'Class Manager',  icon: LayoutDashboard },
+  { id: 'active',   label: 'Class Settings', icon: Zap },
+  { id: 'calendar', label: 'Calendar',       icon: CalendarDays },
+  { id: 'app',      label: 'App Settings',   icon: Settings },
+  { id: 'data',     label: 'Data',           icon: Database },
 ]
 
 // Fallback for props.tab mapping if coming from old links

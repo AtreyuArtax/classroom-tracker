@@ -616,7 +616,7 @@
     <!-- Print Report Configuration Modal -->
     <BaseModal
       :show="showPrintModal"
-      title="Print Progress Report"
+      title="Print Report"
       max-width="700px"
       @close="showPrintModal = false"
     >
@@ -624,7 +624,7 @@
         <div class="header-content">
           <Printer class="header-icon" :size="24" />
           <div>
-            <h3 class="header-title">Print Progress Report</h3>
+            <h3 class="header-title">Print Report</h3>
             <p class="header-subtitle">Format a professional document for this student.</p>
           </div>
         </div>
@@ -633,13 +633,23 @@
       <div class="email-config-modal-body">
         <div class="config-section">
           <div class="config-section-header">
-            <h4 class="config-section-title">Include in Document</h4>
-            <button class="reports__btn-preview" @click="showPrintPreview = !showPrintPreview">
-              {{ showPrintPreview ? 'Hide Preview' : 'Show Preview' }}
-            </button>
+            <h4 class="config-section-title">Report Type</h4>
+            <div class="report-type-toggle">
+              <button 
+                class="reports__toggle-btn" 
+                :class="{ 'reports__toggle-btn--active': printConfig.reportType === 'progress' }"
+                @click="printConfig.reportType = 'progress'"
+              >Progress</button>
+              <button 
+                class="reports__toggle-btn" 
+                :class="{ 'reports__toggle-btn--active': printConfig.reportType === 'attendance' }"
+                @click="printConfig.reportType = 'attendance'"
+              >Attendance</button>
+            </div>
           </div>
-          <div class="print-modal__options">
-            <div class="print-modal__section-title">Report Content</div>
+
+          <div v-if="printConfig.reportType === 'progress'" class="print-modal__options" style="margin-top: 1rem;">
+            <div class="print-modal__section-title">Include in Document</div>
             <label class="print-modal__option">
               <input type="checkbox" v-model="printConfig.includeOverallGrade" />
               Overall Grade Badge
@@ -670,25 +680,45 @@
               Out-of-Class Summary
             </label>
           </div>
+
+          <div v-else class="print-modal__options" style="margin-top: 1rem;">
+             <div class="print-modal__section-title">Report Content</div>
+             <p class="setup__hint">The Attendance & Activity report generates a visual 5-month grid for the current semester based on your School Calendar settings.</p>
+          </div>
+
+          <div class="config-section-header" style="margin-top: 1.5rem;">
+            <h4 class="config-section-title">Preview</h4>
+            <button class="reports__btn-preview" @click="showPrintPreview = !showPrintPreview">
+              {{ showPrintPreview ? 'Hide Preview' : 'Show Preview' }}
+            </button>
+          </div>
         </div>
 
         <!-- Live Preview Section -->
         <div v-if="showPrintPreview" class="reports__print-preview-area">
           <header class="preview-banner">
-            <Activity :size="14" /> LIVE PREVIEW
+            <Activity :size="14" /> LIVE PREVIEW ({{ printConfig.reportType === 'progress' ? 'Progress' : 'Attendance' }})
           </header>
           <div class="preview-content">
             <ProgressReport 
+              v-if="printConfig.reportType === 'progress'"
               :student-id="studentId" 
               :class-id="classId" 
               :config="printConfig" 
+              :is-batch="false"
+            />
+            <AttendanceActivityReport
+              v-else
+              :student-id="studentId"
+              :class-id="classId"
               :is-batch="false"
             />
           </div>
         </div>
 
         <div v-else class="report-preview-mini">
-          <p>This will generate a formal PDF/Print document containing overall grades, performance trends, and assessment history.</p>
+          <p v-if="printConfig.reportType === 'progress'">This will generate a formal PDF/Print document containing overall grades, performance trends, and assessment history.</p>
+          <p v-else>This will generate a visual 5-month attendance calendar with behavioral metrics and totals.</p>
         </div>
       </div>
 
@@ -705,10 +735,15 @@
     <Teleport to="body">
       <div class="print-only-container" :class="{ 'print-only-container--active': isSystemPrinting }">
         <ProgressReport 
-          v-if="isSystemPrinting || showPrintModal"
+          v-if="printConfig.reportType === 'progress'"
           :student-id="props.studentId" 
           :class-id="props.classId" 
           :config="printConfig" 
+        />
+        <AttendanceActivityReport
+          v-else
+          :student-id="props.studentId"
+          :class-id="props.classId"
         />
       </div>
     </Teleport>
@@ -769,6 +804,7 @@ import DossierCommunicationLog from './DossierCommunicationLog.vue'
 import DossierQualitativeEvidence from './DossierQualitativeEvidence.vue'
 import StudentTrendGraph    from '../StudentTrendGraph.vue'
 import StudentGradeTrend    from './StudentGradeTrend.vue'
+import AttendanceActivityReport from './AttendanceActivityReport.vue'
 import ProgressReport       from './ProgressReport.vue'
 import BaseModal            from '../BaseModal.vue'
 import { useClassroom }  from '../../composables/useClassroom.js'
@@ -942,6 +978,7 @@ watch(isSystemPrinting, (newValue) => {
 })
 
 const printConfig    = reactive({
+  reportType: 'progress', // 'progress' or 'attendance'
   includeAttendance: true,
   includeBehavior: false,
   includeOverallGrade: true,
@@ -2636,11 +2673,45 @@ onUnmounted(() => {
   justify-content: center;
 }
 
-.preview-content :deep(.progress-report) {
+.preview-content :deep(.progress-report),
+.preview-content :deep(.attendance-report) {
   transform: scale(0.65);
   transform-origin: top center;
   margin-bottom: -150px; /* Offset the scale-down space */
   box-shadow: var(--shadow-lg);
+}
+
+.report-type-toggle {
+  display: flex;
+  background: var(--bg-secondary);
+  padding: 4px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  gap: 4px;
+}
+
+.reports__toggle-btn {
+  flex: 1;
+  padding: 6px 12px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.reports__toggle-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text);
+}
+
+.reports__toggle-btn--active {
+  background: var(--surface);
+  color: var(--primary);
+  box-shadow: var(--shadow-sm);
 }
 
 .report-preview-mini {
