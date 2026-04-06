@@ -183,6 +183,16 @@ const termOptions = computed(() => {
     })
 })
 
+/**
+ * Universal Period Options.
+ * Based on keys in periodStartTimes.
+ */
+const periodOptionsList = computed(() => {
+    return Object.keys(periodStartTimes.value)
+        .map(Number)
+        .sort((a, b) => a - b)
+})
+
 // ─── auto-suggest ─────────────────────────────────────────────────────────────
 
 /**
@@ -1511,6 +1521,7 @@ export function useClassroom() {
         bulkImportClasses,
         getTermRange,
         termOptions,
+        periodOptions: periodOptionsList,
         triggerActiveClass: () => triggerRef(activeClass)
     }
 }
