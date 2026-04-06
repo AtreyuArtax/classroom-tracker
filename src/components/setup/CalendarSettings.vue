@@ -2,62 +2,117 @@
   <div class="calendar-settings">
     <!-- Semester Boundaries -->
     <div class="setup__card">
-      <h2 class="setup__card-title">
-        <CalendarDays :size="20" /> Academic Terms
-      </h2>
-      <p class="setup__hint">
-        Define semester date boundaries to enable automated class setup, historical tracking, and term reports.
-      </p>
-      
-      <div class="setup__gb-list">
-        <div v-for="(term, idx) in terms" :key="idx" class="setup__gb-item setup__gb-item--term">
-          <div class="setup__term-row">
-            <div class="setup__term-unit">
-              <span class="setup__mini-label">Year</span>
-              <input 
-                v-model="term.year" 
-                class="setup__input setup__input--white" 
-                placeholder="2025-26" 
-                style="width: 110px;"
-                @change="saveTerms" 
-              />
-            </div>
-            <div class="setup__term-unit">
-              <span class="setup__mini-label">Sem</span>
-              <select v-model="term.semester" class="setup__input setup__input--white" style="width: 90px;" @change="saveTerms">
-                <option value="1">1</option>
-                <option value="2">2</option>
-                <option value="Full">Full</option>
-              </select>
-            </div>
-            <div class="setup__term-unit" style="flex: 1;">
-              <span class="setup__mini-label">Start Date</span>
-              <input v-model="term.startDate" type="date" class="setup__input setup__input--white" @change="saveTerms" />
-            </div>
-            <span class="setup__range-sep">—</span>
-            <div class="setup__term-unit" style="flex: 1;">
-              <span class="setup__mini-label">End Date</span>
-              <input v-model="term.endDate" type="date" class="setup__input setup__input--white" @change="saveTerms" />
-            </div>
-          </div>
-          <button class="setup__icon-btn setup__icon-btn--danger" @click="removeTerm(idx)">
-            <Trash2 :size="16" />
-          </button>
-        </div>
+      <div class="setup__card-header-row">
+        <h2 class="setup__card-title">
+          <CalendarDays :size="20" /> School Year and Semester
+        </h2>
+        <button class="setup__btn-ghost setup__btn-sm" @click="showAdvancedModal = true">
+          Advanced Settings
+        </button>
       </div>
       
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 16px;">
-        <button class="setup__btn-ghost" @click="addTerm">
-          <Plus :size="14" /> Add Term
-        </button>
+      <div class="setup__term-summary">
+        <div v-if="activeTermDetails" class="setup__term-status">
+          <div class="setup__term-badge" :class="{ 'setup__term-badge--custom': activeTermDetails.isCustom }">
+            {{ activeTermDetails.isCustom ? 'Custom Dates' : 'Standard Dates' }}
+          </div>
+          <div class="setup__term-info">
+            <strong>{{ selectedYear }} Sem {{ selectedSemester }}</strong>
+            <span class="setup__term-dates">
+              {{ activeTermDetails.start.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' }) }} 
+              – 
+              {{ activeTermDetails.end.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' }) }}
+            </span>
+          </div>
+        </div>
+        <p v-else class="setup__hint" style="padding: 10px; background: rgba(0,0,0,0.05); border-radius: 4px;">
+          No year or semester selected in the top filter.
+        </p>
+        
+        <p class="setup__hint" style="margin-top: 12px;">
+          Define boundaries to enable automated class setup, historical tracking, and semester reports. 
+          By default, the app assumes a standard Sept–June calendar.
+        </p>
+      </div>
+      
+      <div style="display: flex; justify-content: flex-end; margin-top: 16px;">
         <button 
           class="setup__btn-primary" 
-          :disabled="!activeTerm" 
+          :disabled="!activeTermDetails" 
           @click="showCalendarModal = true"
         >
           <CalendarDays :size="14" /> Print Semester Calendar
         </button>
       </div>
+
+      <!-- Advanced Terms Modal -->
+      <BaseModal
+        v-if="showAdvancedModal"
+        :show="showAdvancedModal"
+        title="Advanced Calendar Settings"
+        maxWidth="800px"
+        @close="showAdvancedModal = false"
+      >
+        <div class="advanced-terms-modal">
+          <p class="setup__hint" style="margin-bottom: 20px;">
+            Customize start and end dates for your semesters. These are used for attendance reporting and automated setup.
+            Old years are preserved for historical reports.
+          </p>
+
+          <div class="setup__gb-list scrollable-list">
+            <template v-for="group in termsByYear" :key="group.year">
+              <div class="setup__year-group-header">{{ group.year || 'Unknown Year' }}</div>
+              
+              <div v-for="term in group.terms" :key="term.idx" class="setup__gb-item setup__gb-item--term">
+                <div class="setup__term-row">
+                  <div class="setup__term-unit">
+                    <span class="setup__mini-label">Year</span>
+                    <input 
+                      v-model="terms[term.idx].year" 
+                      class="setup__input setup__input--white" 
+                      placeholder="2025-26" 
+                      style="width: 110px;"
+                      @change="saveTerms" 
+                    />
+                  </div>
+                  <div class="setup__term-unit">
+                    <span class="setup__mini-label">Sem</span>
+                    <select v-model="terms[term.idx].semester" class="setup__input setup__input--white" style="width: 90px;" @change="saveTerms">
+                      <option value="1">1</option>
+                      <option value="2">2</option>
+                      <option value="Full">Full</option>
+                    </select>
+                  </div>
+                  <div class="setup__term-unit" style="flex: 1;">
+                    <span class="setup__mini-label">Start Date</span>
+                    <input v-model="terms[term.idx].startDate" type="date" class="setup__input setup__input--white" @change="saveTerms" />
+                  </div>
+                  <span class="setup__range-sep">—</span>
+                  <div class="setup__term-unit" style="flex: 1;">
+                    <span class="setup__mini-label">End Date</span>
+                    <input v-model="terms[term.idx].endDate" type="date" class="setup__input setup__input--white" @change="saveTerms" />
+                  </div>
+                </div>
+                <button class="setup__icon-btn setup__icon-btn--danger" @click="removeTerm(term.idx)">
+                  <Trash2 :size="16" />
+                </button>
+              </div>
+            </template>
+
+            <div v-if="terms.length === 0" class="setup__empty-state">
+              No custom calendar settings defined. Using standard defaults.
+            </div>
+          </div>
+
+          <button class="setup__btn-ghost setup__btn--full" style="margin-top: 16px;" @click="addTerm">
+            <Plus :size="14" /> Add Custom Term
+          </button>
+        </div>
+        
+        <template #footer>
+          <button class="setup__btn-primary" @click="showAdvancedModal = false">Done</button>
+        </template>
+      </BaseModal>
 
       <!-- Semester Calendar Modal -->
       <BaseModal 
@@ -68,7 +123,7 @@
         @close="showCalendarModal = false"
       >
         <SemesterCalendar 
-          :term="activeTerm"
+          :term="activeTermForCalendar"
           :non-school-days="nonSchoolDays"
           :milestones="filteredMilestones"
           :teacher-name="teacherName"
@@ -232,15 +287,50 @@ const {
   selectedSemester,
   teacherName,
   updateAcademicTerms,
-  updateNonSchoolDays
+  updateNonSchoolDays,
+  getTermRange
 } = useClassroom()
 
 const showPasteModal = ref(false)
 const showCalendarModal = ref(false)
+const showAdvancedModal = ref(false)
 const pastedCsv = ref('')
 
-const activeTerm = computed(() => {
-  return terms.value.find(t => t.year === selectedYear.value && t.semester === selectedSemester.value)
+const activeTermDetails = computed(() => {
+  if (!selectedYear.value || !selectedSemester.value) return null
+  return getTermRange(selectedYear.value, selectedSemester.value)
+})
+
+// For the calendar modal, we need an object that looks like the DB term record
+const activeTermForCalendar = computed(() => {
+  const details = activeTermDetails.value
+  if (!details) return null
+  return {
+    year: selectedYear.value,
+    semester: selectedSemester.value,
+    startDate: details.start.toISOString().split('T')[0],
+    endDate: details.end.toISOString().split('T')[0]
+  }
+})
+
+/**
+ * Groups custom terms by school year for better organization in the modal.
+ */
+const termsByYear = computed(() => {
+  const groups = {}
+  terms.value.forEach((t, idx) => {
+    const year = t.year || 'Unknown'
+    if (!groups[year]) groups[year] = []
+    groups[year].push({ ...t, idx })
+  })
+  
+  // Sort years descending
+  return Object.keys(groups)
+    .sort((a, b) => b.localeCompare(a))
+    .map(year => ({
+      year,
+      terms: groups[year].sort((a, b) => a.semester.localeCompare(b.semester))
+    }))
 })
 
 onMounted(async () => {
@@ -250,7 +340,7 @@ onMounted(async () => {
 })
 
 function addTerm() {
-  const newTerms = [...terms.value, { year: '', semester: '1', startDate: '', endDate: '' }]
+  const newTerms = [...terms.value, { year: selectedYear.value, semester: '1', startDate: '', endDate: '' }]
   updateAcademicTerms(newTerms)
 }
 
@@ -386,6 +476,71 @@ async function importHolidays(rawData) {
   border: 1.5px solid var(--border);
   box-shadow: var(--shadow-sm);
   padding: 24px;
+}
+
+.setup__card-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.setup__term-summary {
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  padding: 20px;
+  border-left: 5px solid var(--primary);
+}
+
+.setup__term-status {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.setup__term-badge {
+  display: inline-block;
+  align-self: flex-start;
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #34c759;
+  color: white;
+  text-transform: uppercase;
+}
+
+.setup__term-badge--custom {
+  background: #5856d6;
+}
+
+.setup__term-info {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.setup__term-info strong {
+  font-size: 1.2rem;
+  color: var(--text);
+}
+
+.setup__term-dates {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.setup__year-group-header {
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: var(--text-secondary);
+  margin-top: 16px;
+  margin-bottom: 8px;
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .setup__gb-list {

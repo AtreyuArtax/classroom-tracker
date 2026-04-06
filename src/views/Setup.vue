@@ -151,9 +151,9 @@
             </label>
             <div class="setup__form-grid">
               <label class="setup__label">
-                Term (from Calendar)
+                School Year and Semester
                 <select v-model="newClassTermKey" class="setup__input" required>
-                  <option v-for="t in academicTerms" :key="t.year + t.semester" :value="t.year + '|' + t.semester">
+                  <option v-for="t in termOptions" :key="t.year + t.semester" :value="t.year + '|' + t.semester">
                     {{ t.year }} Sem {{ t.semester }}
                   </option>
                 </select>
@@ -275,7 +275,7 @@
                 />
               </label>
               <label class="setup__label">
-                Academic Term
+                School Year and Semester
                 <select
                   :value="activeClass.year + '|' + activeClass.semester"
                   class="setup__input"
@@ -284,7 +284,7 @@
                     updateActiveClass({ year: y, semester: s });
                   }"
                 >
-                  <option v-for="t in academicTerms" :key="t.year + t.semester" :value="t.year + '|' + t.semester">
+                  <option v-for="t in termOptions" :key="t.year + t.semester" :value="t.year + '|' + t.semester">
                     {{ t.year }} Sem {{ t.semester }}
                   </option>
                 </select>
@@ -876,6 +876,7 @@ const {
   bulkImportClasses,
   triggerActiveClass,
   academicTerms,
+  termOptions,
   nonSchoolDays
 } = useClassroom()
 
@@ -981,15 +982,13 @@ onMounted(async () => {
     // Set smart defaults for the term dropdown based on active header session
     if (selectedYear.value && selectedSemester.value) {
       newClassTermKey.value = `${selectedYear.value}|${selectedSemester.value}`
-    } else if (academicTerms.value.length > 0) {
-      const cur = currentSchoolYear.value
-      // Try to find current term, else default to first
-      const found = academicTerms.value.find(t => t.year === cur) || academicTerms.value[0]
-      newClassTermKey.value = `${found.year}|${found.semester}`
-    } else {
-      // Fallback if no terms defined yet
-      newClass.year = currentSchoolYear.value
-      newClass.semester = '1'
+    } else if (termOptions.value.length > 0) {
+      newClassTermKey.value = `${termOptions.value[0].year}|${termOptions.value[0].semester}`
+    }
+
+    // Set smart default for start time based on period 1 settings
+    if (periodStartTimes.value[newClass.periodNumber]) {
+      newClass.periodStartTime = periodStartTimes.value[newClass.periodNumber]
     }
 
     // Ensure a class is selected if any exist

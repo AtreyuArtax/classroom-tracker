@@ -138,6 +138,51 @@ async function computeWeeklyStats(classId, studentIds) {
     studentWeeklyStats.value = stats
 }
 
+/**
+ * Universal Term Options for dropdowns.
+ * Combines:
+ * 1. Custom terms from Settings
+ * 2. Standard terms for Prev, Current, and Next years
+ * 3. Any terms found in existing classes
+ */
+const termOptions = computed(() => {
+    const options = new Map() // Use Map to deduplicate by "year|semester"
+
+    // Helper to add if not exists
+    const add = (year, semester) => {
+        if (!year || !semester) return
+        const key = `${year}|${semester}`
+        if (!options.has(key)) {
+            options.set(key, { year, semester })
+        }
+    }
+
+    // 1. Custom terms from DB
+    academicTerms.value.forEach(t => add(t.year, t.semester))
+
+    // 2. Terms from existing classes (Legacy Safety)
+    classList.value.forEach(c => add(c.year, c.semester))
+    archivedClasses.value.forEach(c => add(c.year, c.semester))
+
+    // 3. Standard Smart Defaults (Prev, Current, Next)
+    const nowCheck = new Date()
+    const month = nowCheck.getMonth()
+    const yearNum = nowCheck.getFullYear()
+    const currentYearStart = (month >= 6) ? yearNum : yearNum - 1
+
+    for (let y = currentYearStart - 1; y <= currentYearStart + 1; y++) {
+        const yearStr = `${y}-${(y + 1).toString().slice(-2)}`
+        add(yearStr, '1')
+        add(yearStr, '2')
+    }
+
+    return Array.from(options.values()).sort((a, b) => {
+        // Sort descending by Year, then Semester
+        if (a.year !== b.year) return b.year.localeCompare(a.year)
+        return b.semester.localeCompare(a.semester)
+    })
+})
+
 // ─── auto-suggest ─────────────────────────────────────────────────────────────
 
 /**
@@ -279,6 +324,46 @@ function dismissSuggestion() {
 
 // ─── academic terms & non-school days ──────────────────────────────────────────
 
+/**
+ * Returns the date range for a given year and semester.
+ * Priority:
+ * 1. Custom defined academicTerm in DB
+ * 2. Smart Default: Sem 1 = Sept 1 - Jan 31, Sem 2 = Feb 1 - June 30
+ * 
+ * @param {string} year e.g. "2025-26"
+ * @param {string} semester "1", "2", or "Full"
+ * @returns {{ start: Date, end: Date, isCustom: boolean }}
+ */
+function getTermRange(year, semester) {
+    const term = academicTerms.value.find(t => t.year === year && t.semester === semester)
+    
+    if (term) {
+        return {
+            start: new Date(term.startDate + 'T00:00:00'),
+            end: new Date(term.endDate + 'T23:59:59'),
+            isCustom: true
+        }
+    }
+
+    // Smart Defaults
+    const startYear = parseInt(year.split('-')[0])
+    let startDate, endDate
+
+    if (semester === '1') {
+        startDate = new Date(startYear, 8, 1) // Sept 1
+        endDate = new Date(startYear + 1, 0, 31, 23, 59, 59) // Jan 31
+    } else if (semester === '2') {
+        startDate = new Date(startYear + 1, 1, 1) // Feb 1
+        endDate = new Date(startYear + 1, 5, 30, 23, 59, 59) // June 30
+    } else {
+        // Full year fallback
+        startDate = new Date(startYear, 8, 1)
+        endDate = new Date(startYear + 1, 5, 30, 23, 59, 59)
+    }
+
+    return { start: startDate, end: endDate, isCustom: false }
+}
+
 async function refreshAcademicTerms() {
     academicTerms.value = await settingsService.getAcademicTerms()
 }
@@ -353,21 +438,25 @@ async function init() {
     }
 
     // ── Determine default term ──
-    const now = new Date().toISOString().split('T')[0]
-    const currentTerm = terms.find(t => now >= t.startDate && now <= t.endDate)
+    const nowCheck = new Date()
+    const nowISO = nowCheck.toISOString().split('T')[0]
+    const currentTerm = terms.find(t => nowISO >= t.startDate && nowISO <= t.endDate)
     
     // Only auto-default if we don't already have a valid stored session
     if (!selectedYear.value || !selectedSemester.value) {
         if (currentTerm) {
             selectedYear.value = currentTerm.year
             selectedSemester.value = currentTerm.semester
-        } else if (active.length > 0) {
-            // Fallback to the first class's term
-            selectedYear.value = active[0].year || '2025-26'
-            selectedSemester.value = active[0].semester || '2'
         } else {
-            selectedYear.value = '2025-26'
-            selectedSemester.value = '2'
+            // Smart Year Detection: If we are in July-Dec, it's the start of YYYY-(YYYY+1)
+            // If Jan-June, it's the end of (YYYY-1)-YYYY
+            const month = nowCheck.getMonth() // 0-indexed
+            const yearNum = nowCheck.getFullYear()
+            const yearStr = (month >= 6) ? `${yearNum}-${(yearNum + 1).toString().slice(-2)}` : `${yearNum - 1}-${yearNum.toString().slice(-2)}`
+            const semStr = (month >= 1 && month <= 6) ? '2' : '1'
+
+            selectedYear.value = yearStr
+            selectedSemester.value = semStr
         }
     }
 
@@ -429,11 +518,19 @@ async function switchClass(classId) {
 async function createClass(opts) {
     // 1. Determine current academic term
     const terms = await settingsService.getAcademicTerms()
-    const now = new Date().toISOString().split('T')[0]
-    const currentTerm = terms.find(t => now >= t.startDate && now <= t.endDate)
+    const nowCheck = new Date()
+    const nowISO = nowCheck.toISOString().split('T')[0]
+    const currentTerm = terms.find(t => nowISO >= t.startDate && nowISO <= t.endDate)
     
-    const year = opts.year || currentTerm?.year || '2025-26'
-    const semester = opts.semester || currentTerm?.semester || '2'
+    let year = opts.year || currentTerm?.year
+    let semester = opts.semester || currentTerm?.semester
+
+    if (!year || !semester) {
+        const month = nowCheck.getMonth()
+        const yearNum = nowCheck.getFullYear()
+        year = (month >= 6) ? `${yearNum}-${(yearNum + 1).toString().slice(-2)}` : `${yearNum - 1}-${yearNum.toString().slice(-2)}`
+        semester = (month >= 1 && month <= 6) ? '2' : '1'
+    }
 
     // 2. Use global default grid size as template
     const settings = await settingsService.getSettings()
@@ -1412,6 +1509,8 @@ export function useClassroom() {
         deleteClass,
         dismissSuggestion,
         bulkImportClasses,
+        getTermRange,
+        termOptions,
         triggerActiveClass: () => triggerRef(activeClass)
     }
 }
