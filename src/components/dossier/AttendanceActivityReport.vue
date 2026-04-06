@@ -116,7 +116,7 @@ const {
   students, 
   activeClass, 
   teacherName, 
-  academicTerms, 
+  getTermRange, 
   nonSchoolDays 
 } = useClassroom()
 
@@ -128,19 +128,8 @@ const student = computed(() => students.value[props.studentId] || {})
 // Determined semester range
 const termRange = computed(() => {
   const cls = activeClass.value
-  if (!cls) return null
-  
-  const term = academicTerms.value.find(t => t.year === cls.year && t.semester === cls.semester)
-  if (term) {
-    return { start: new Date(term.startDate + 'T00:00:00'), end: new Date(term.endDate + 'T23:59:59') }
-  }
-  
-  // Fallback to 5 months from start of September or February
-  const now = new Date()
-  const startMonth = cls.semester === '2' ? 1 : 8 // Feb or Sept
-  const startDate = new Date(now.getFullYear(), startMonth, 1)
-  const endDate = new Date(now.getFullYear(), startMonth + 5, 0)
-  return { start: startDate, end: endDate }
+  if (!cls || !cls.year || !cls.semester) return null
+  return getTermRange(cls.year, cls.semester)
 })
 
 onMounted(async () => {
