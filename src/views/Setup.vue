@@ -195,6 +195,15 @@
               </div>
               <span class="setup__bulk-summary">{{ selectedBulkCount }} of {{ Object.keys(bulkImportGroups).length }} selected</span>
             </div>
+
+            <!-- New Periods Advisory -->
+            <div v-if="newPeriodsDetected.length > 0" class="setup__advisory">
+              <AlertTriangle :size="16" />
+              <div>
+                <strong>New Periods Detected ({{ newPeriodsDetected.join(', ') }})</strong>
+                <p>These periods were added to your settings. Please review their start times after importing.</p>
+              </div>
+            </div>
             <div class="setup__bulk-list">
               <template v-for="section in bulkImportSemesters" :key="section.label">
                 <div class="setup__bulk-section-heading">{{ section.label }}</div>
@@ -522,16 +531,27 @@
         <h2 class="setup__card-title">Period Start Times</h2>
         <p class="setup__hint">Define the default start time for each period. These will autopopulate when creating or editing a class.</p>
         <div class="setup__period-grid">
-          <div v-for="p in [1,2,3,4,5,6,7,8]" :key="p" class="setup__period-row">
-            <span class="setup__period-label">Period {{ p }}</span>
+          <div v-for="p in periodOptions" :key="p" class="setup__period-row">
+            <div class="setup__period-header">
+              <span class="setup__period-label">Period {{ p }}</span>
+              <button v-if="p !== 1" class="setup__icon-btn setup__icon-btn--danger" @click="onRemovePeriod(p)">
+                <Trash2 :size="14" />
+              </button>
+            </div>
             <input 
-              v-model="periodStartTimes[p]" 
+              :value="periodStartTimes[p]" 
               type="time" 
               class="setup__input" 
-              @change="updatePeriodStartTimes({...periodStartTimes})" 
+              @change="e => {
+                const updated = { ...periodStartTimes, [p]: e.target.value };
+                updatePeriodStartTimes(updated);
+              }" 
             />
           </div>
         </div>
+        <button class="setup__btn-ghost setup__btn--full" style="margin-top: 1rem" @click="onAddPeriod">
+          <Plus :size="14" /> Add Period
+        </button>
       </div>
     </div>
   </section>
@@ -877,6 +897,7 @@ const {
   triggerActiveClass,
   academicTerms,
   termOptions,
+  periodOptions,
   nonSchoolDays
 } = useClassroom()
 
@@ -999,7 +1020,6 @@ onMounted(async () => {
 
 // --- Standardized Options ---
 const semesterOptions = ['1', '2']
-const periodOptions = ['1', '2', '3', '4', '5', '6', '7', '8']
 
 const currentSchoolYear = computed(() => {
   const now = new Date()
@@ -1205,6 +1225,26 @@ watch(() => newClass.periodNumber, (newVal) => {
     newClass.periodStartTime = periodStartTimes.value[newVal]
   }
 })
+
+// --- Dynamic Period Management ---
+async function onAddPeriod() {
+  const next = Math.max(...periodOptions.value, 0) + 1
+  const lastTime = periodStartTimes.value[next - 1] || '08:00'
+  const [h, m] = lastTime.split(':').map(Number)
+  const nextTime = new Date(0, 0, 0, h + 1, m + 30).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
+  
+  const updated = { ...periodStartTimes.value, [next]: nextTime }
+  await updatePeriodStartTimes(updated)
+}
+
+async function onRemovePeriod(p) {
+  if (p === 1) return // Keep P1 for safety
+  if (confirm(`Are you sure you want to remove Period ${p}? This will remove it from your settings, but existing classes will not be affected.`)) {
+    const updated = { ...periodStartTimes.value }
+    delete updated[p]
+    await updatePeriodStartTimes(updated)
+  }
+}
 const classError = ref('')
 
 function studentCount(cls) {
@@ -1274,6 +1314,7 @@ const crossClassConflicts = ref([])
 const bulkImportGroups    = ref(null)
 let   _pendingConflicts   = []
 const isDraggingRoster    = ref(false)
+const newPeriodsDetected  = ref([]) // List of period numbers added during this import
 
 function onFileSelected(evt) {
   const file = evt.dataTransfer?.files?.[0] || evt.target?.files?.[0]
@@ -1367,6 +1408,25 @@ function onFileSelected(evt) {
               }
           }
           groups[key].students.push(row)
+      }
+
+      // --- Smart Heal: Detect and add new periods found in CSV ---
+      const detectedPeriods = [...new Set(rows.map(r => Number(r.periodNumber)))].filter(p => !isNaN(p))
+      const missingPeriods = detectedPeriods.filter(p => !periodOptions.value.includes(p))
+      
+      if (missingPeriods.length > 0) {
+        const updated = { ...periodStartTimes.value }
+        missingPeriods.forEach(p => {
+          // Simple guess: 90 mins after previous or fallback
+          const prev = p - 1
+          const lastTime = updated[prev] || '08:00'
+          const [h, m] = lastTime.split(':').map(Number)
+          updated[p] = new Date(0, 0, 0, h + 1, m + 30).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
+        })
+        await updatePeriodStartTimes(updated)
+        newPeriodsDetected.value = missingPeriods.sort((a, b) => a - b)
+      } else {
+        newPeriodsDetected.value = []
       }
 
       const groupKeys = Object.keys(groups)
@@ -2433,8 +2493,12 @@ function formatDate(iso) {
 }
 
 .setup__icon-btn:hover {
-  background: var(--bg-secondary);
+  background: var(--bg-hover);
   color:      var(--text);
+}
+.setup__icon-btn--danger:hover {
+  background: #fee2e2 !important; /* Red 100 */
+  color:      #dc2626 !important; /* Red 600 */
 }
 
 .setup__code-actions {
@@ -2974,6 +3038,12 @@ function formatDate(iso) {
   color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.05em;
+}
+.setup__period-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  min-height: 28px;
 }
 .setup__bulk-header {
   display: flex;
