@@ -159,7 +159,7 @@
                     <ul class="reports__list reports__list--alert">
                       <li v-for="t in aggregates.washroom.longTrips" :key="t.date">
                         <span>{{ t.name }} — {{ t.date }}</span>
-                        <span class="reports__list-count">{{ toMinutes(t.duration).toFixed(1) }}m</span>
+                        <span class="reports__list-count">{{ t.duration.toFixed(1) }}m</span>
                       </li>
                     </ul>
                   </div>
