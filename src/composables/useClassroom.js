@@ -444,10 +444,10 @@ async function init() {
     // ── Smart Heal: Period Start Times Migration ──
     let periodTimesChanged = false
     let currentPeriodTimes = settings.periodStartTimes || {
-        '1': '08:45',
-        '2': '10:05',
-        '3': '11:25',
-        '4': '12:45'
+        '1': '08:00',
+        '2': '09:20',
+        '3': '11:40',
+        '4': '13:00'
     }
 
     // Ensure any existing classes have their periods registered so they aren't lost from dropdowns
@@ -564,7 +564,7 @@ async function createClass(opts) {
     // 2. Use global default grid size as template
     const settings = await settingsService.getSettings()
     const defaultGrid = settings.gridSize || { rows: 6, cols: 6 }
-    const defaultStartTime = periodStartTimes.value[opts.periodNumber] || '08:45'
+    const defaultStartTime = periodStartTimes.value[opts.periodNumber] || '08:00'
 
     const newCls = {
         classId: opts.classId,
