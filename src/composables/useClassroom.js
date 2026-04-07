@@ -440,12 +440,31 @@ async function init() {
     // gridSize.value will be updated per-class in _activateClass
     // We store the global default from settings for new classes
     teacherName.value = settings.teacherName || ''
-    periodStartTimes.value = settings.periodStartTimes || {
-        '1': '08:00',
-        '2': '09:20',
-        '3': '11:40',
-        '4': '13:00'
+
+    // ── Smart Heal: Period Start Times Migration ──
+    let periodTimesChanged = false
+    let currentPeriodTimes = settings.periodStartTimes || {
+        '1': '08:45',
+        '2': '10:05',
+        '3': '11:25',
+        '4': '12:45'
     }
+
+    // Ensure any existing classes have their periods registered so they aren't lost from dropdowns
+    classes.forEach(c => {
+        const pNum = Number(c.periodNumber)
+        if (!isNaN(pNum) && !currentPeriodTimes[pNum]) {
+            currentPeriodTimes[pNum] = c.periodStartTime || '08:00'
+            periodTimesChanged = true
+        }
+    })
+
+    if (periodTimesChanged || !settings.periodStartTimes) {
+        settings.periodStartTimes = currentPeriodTimes
+        await settingsService.saveSettings(settings)
+    }
+    
+    periodStartTimes.value = currentPeriodTimes
 
     // ── Determine default term ──
     const nowCheck = new Date()
