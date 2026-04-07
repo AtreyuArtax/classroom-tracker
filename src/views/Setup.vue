@@ -316,7 +316,7 @@
                 Start Time
                 <input
                   type="time"
-                  :value="activeClass.periodStartTime || '08:45'"
+                  :value="activeClass.periodStartTime || '08:00'"
                   class="setup__input"
                   @change="e => updateActiveClass({ periodStartTime: e.target.value })"
                 />
@@ -1204,7 +1204,7 @@ watch(() => props.tab, (newTab) => {
 const newClass  = reactive({ 
   name: '', 
   periodNumber: 1, 
-  periodStartTime: '08:45',
+  periodStartTime: '08:00',
   year: '',
   semester: ''
 })
@@ -1231,7 +1231,7 @@ async function onAddPeriod() {
   const next = Math.max(...periodOptions.value, 0) + 1
   const lastTime = periodStartTimes.value[next - 1] || '08:00'
   const [h, m] = lastTime.split(':').map(Number)
-  const nextTime = new Date(0, 0, 0, h + 1, m + 30).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
+  const nextTime = new Date(0, 0, 0, h, m + 80).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
   
   const updated = { ...periodStartTimes.value, [next]: nextTime }
   await updatePeriodStartTimes(updated)
@@ -1421,7 +1421,7 @@ function onFileSelected(evt) {
           const prev = p - 1
           const lastTime = updated[prev] || '08:00'
           const [h, m] = lastTime.split(':').map(Number)
-          updated[p] = new Date(0, 0, 0, h + 1, m + 30).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
+          updated[p] = new Date(0, 0, 0, h, m + 80).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
         })
         await updatePeriodStartTimes(updated)
         newPeriodsDetected.value = missingPeriods.sort((a, b) => a - b)
