@@ -109,6 +109,7 @@ onUnmounted(() => {
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-2xl);
   width: min(100%, 95vw);
+  max-height: 90vh; /* Prevent modal from exceeding viewport */
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -127,6 +128,7 @@ onUnmounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-shrink: 0; /* Header stays pinned */
 }
 
 .bm-title {
@@ -157,7 +159,8 @@ onUnmounted(() => {
 .bm-body {
   padding: 1.5rem;
   overflow-y: auto;
-  max-height: 85vh;
+  flex: 1; /* Body takes all available space */
+  min-height: 0; /* Important for flex-scroll */
 }
 
 .bm-footer {

@@ -1195,15 +1195,11 @@ const washroomChartOptions = {
 /* ── Dashboard Cards ──────────────────────────────────────────────── */
 .reports__dashboard {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: 20px;
 }
 
-@media (min-width: 1100px) {
-  .reports__dashboard {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
+/* Removed fixed 3-column media query in favor of auto-fit */
 
 .reports__dashboard-card {
   background: var(--surface);
@@ -1232,10 +1228,15 @@ const washroomChartOptions = {
 
 .reports__card-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
   gap: 16px 12px;
   padding: 24px 20px;
   background: var(--surface);
+}
+@media (max-width: 400px) {
+  .reports__card-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 .reports__metric {
@@ -2119,6 +2120,8 @@ const washroomChartOptions = {
   flex-direction: column;
   gap: 16px;
   overflow-y: auto;
+  flex: 1;
+  min-height: 0;
 }
 
 .config-section-title {

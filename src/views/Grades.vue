@@ -2800,8 +2800,27 @@ verall-trend {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 20px;
+  gap: 16px;
   z-index: 20;
+}
+
+@media (max-width: 1024px) {
+  .grades__toolbar {
+    padding: 10px 12px;
+    gap: 12px;
+  }
+}
+@media (max-width: 850px) {
+  .grades__toolbar {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+  .grades__toolbar-center {
+    order: 3;
+    width: 100%;
+    margin-top: 8px;
+    justify-content: flex-start;
+  }
 }
 
 .grades__toolbar-left,
@@ -4677,7 +4696,7 @@ verall-trend {
 /* ── Class Overview Cards ── */
 .grades__analytics-row {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 1.25rem;
 }
 

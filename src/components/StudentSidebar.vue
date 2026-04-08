@@ -200,7 +200,13 @@ function getSparklinePath(data, width, height) {
   width: 0;
   overflow: hidden;
   border-right: none;
-  pointer-events: none; /* Prevent interaction while hidden */
+  pointer-events: none;
+}
+
+@media (max-width: 1100px) {
+  .student-sidebar {
+    width: 200px;
+  }
 }
 
 /* Show Handle Styles */
