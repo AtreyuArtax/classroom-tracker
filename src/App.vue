@@ -249,7 +249,7 @@ async function doQuickSync() {
   flex: 1;
   display: flex;
   justify-content: center;
-  padding: 0 20px;
+  padding: 0 12px;
 }
 
 .app-nav__sync-btn {
@@ -320,7 +320,7 @@ async function doQuickSync() {
 /* ── Tab strip ───────────────────────────────────────────────────────── */
 .app-nav__tabs {
   display: flex;
-  gap:     4px;
+  gap:     2px;
 }
 
 .app-nav__tab {
@@ -328,13 +328,13 @@ async function doQuickSync() {
   flex-direction:  column;
   align-items:     center;
   gap:             2px;
-  padding:         6px 14px;
+  padding:         6px 10px;
   border:          none;
   border-radius:   var(--radius-sm);
   background:      transparent;
   cursor:          pointer;
   min-height:      44px;
-  min-width:       64px;
+  min-width:       44px;
   transition:      background 0.15s ease, color 0.15s ease;
 }
 
@@ -359,6 +359,21 @@ async function doQuickSync() {
   font-size:  0.68rem;
   color:      var(--text-secondary);
   font-weight: 500;
+}
+
+@media (max-width: 850px) {
+  .app-nav__tab-label {
+    display: none;
+  }
+  .app-nav__tab {
+    padding: 8px;
+  }
+  .app-nav__brand {
+    gap: 4px;
+  }
+  .app-nav__title {
+    display: none;
+  }
 }
 
 /* ── Main content area ───────────────────────────────────────────────── */

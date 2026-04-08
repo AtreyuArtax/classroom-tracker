@@ -1651,6 +1651,11 @@ onUnmounted(() => {
   padding:       0 24px;
   background:    var(--surface);
   border-bottom: 1px solid var(--border);
+  overflow-x:    auto;
+  scrollbar-width: none; /* Hide scrollbar Firefox */
+}
+.student-360__tabs::-webkit-scrollbar {
+  display: none; /* Hide scrollbar Chrome/Safari */
 }
 
 .student-360__tab-btn {
@@ -1677,10 +1682,30 @@ onUnmounted(() => {
   border-bottom: 2px solid var(--primary);
 }
 
+@media (max-width: 1100px) {
+  .student-360__tab-btn {
+    padding: 12px 10px;
+    gap: 4px;
+    font-size: 0.85rem;
+  }
+}
+
 .student-360__content {
   flex:     1;
   overflow: auto;
   padding:  24px;
+}
+
+@media (max-width: 1024px) {
+  .student-360__content {
+    padding: 16px;
+  }
+}
+
+@media (max-width: 768px) {
+  .student-360__content {
+    padding: 12px;
+  }
 }
 
 .student-360__pane {
@@ -2651,6 +2676,13 @@ onUnmounted(() => {
   overflow: hidden;
   background: #eee;
   margin-top: 8px;
+  max-height: 500px; /* Cap overall preview container */
+  display: flex;
+  flex-direction: column;
+}
+
+@media (max-height: 800px) {
+  .reports__print-preview-area { max-height: 350px; }
 }
 
 .preview-banner {
@@ -2665,12 +2697,21 @@ onUnmounted(() => {
 }
 
 .preview-content {
-  height: 450px;
+  height: auto; /* Allow dynamic height based on container */
+  min-height: 300px;
+  max-height: 450px;
   overflow-y: auto;
   background: #f1f5f9;
   padding: 30px;
   display: flex;
   justify-content: center;
+}
+
+@media (max-height: 800px) {
+  .preview-content { 
+    max-height: 300px;
+    padding: 15px;
+  }
 }
 
 .preview-content :deep(.progress-report),

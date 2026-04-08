@@ -123,16 +123,25 @@ const statusIcon = computed(() => {
   display:         flex;
   align-items:     center;
   justify-content: space-between;
-  padding:         24px;
+  padding:         20px 24px;
   background:      var(--surface);
   border-bottom:   1px solid var(--border);
-  gap:             24px;
+  gap:             16px;
+}
+
+@media (max-width: 900px) {
+  .dossier-header {
+    padding: 16px 20px;
+    gap: 12px;
+  }
 }
 
 .dossier-header__identity {
   display:     flex;
   align-items: center;
   gap:         16px;
+  min-width:   0; /* Allow identity to shrink for ellipsis */
+  flex:        1; /* Identity takes available space after right-side items */
 }
 
 .dossier-header__avatar {
@@ -153,14 +162,26 @@ const statusIcon = computed(() => {
   display:        flex;
   flex-direction: column;
   gap:            4px;
+  min-width:      0; /* Allow info to shrink for ellipsis */
 }
 
 .dossier-header__name {
-  margin:      0;
-  font-size:   1.75rem;
-  font-weight: 800;
-  color:       var(--text);
-  line-height: 1.1;
+  margin:         0;
+  font-size:      1.75rem;
+  font-weight:    800;
+  color:          var(--text);
+  line-height:    1.1;
+  white-space:    nowrap;
+  overflow:       hidden;
+  text-overflow:  ellipsis;
+}
+
+@media (max-width: 1024px) {
+  .dossier-header__name { font-size: 1.5rem; }
+}
+
+@media (max-width: 900px) {
+  .dossier-header__name { font-size: 1.25rem; }
 }
 
 .dossier-header__status-badges {
@@ -193,13 +214,31 @@ const statusIcon = computed(() => {
 .dossier-header__metrics {
   display:     flex;
   align-items: center;
-  gap:         32px;
+  gap:         24px; /* Reduced default gap from 32px */
+}
+
+@media (max-width: 1200px) {
+  .dossier-header__metrics { gap: 16px; }
+  .dossier-header__metric--secondary { display: none; }
+}
+
+@media (max-width: 900px) {
+  .dossier-header__metrics { gap: 12px; }
+}
+
+@media (max-width: 900px) {
+  .dossier-header__metrics { gap: 12px; }
 }
 
 .dossier-header__right {
-  display:     flex;
-  align-items: center;
-  gap:         24px;
+  display:      flex;
+  align-items:  center;
+  gap:          24px;
+  flex-shrink:  0; /* Ensure right side stays visible */
+}
+
+@media (max-width: 1024px) {
+  .dossier-header__right { gap: 16px; }
 }
 
 .dossier-header__actions {
@@ -231,6 +270,14 @@ const statusIcon = computed(() => {
   font-weight: 800;
   color:       var(--text);
   line-height: 1;
+}
+
+@media (max-width: 1024px) {
+  .dossier-header__metric-value { font-size: 1.25rem; }
+}
+
+@media (max-width: 900px) {
+  .dossier-header__metric-value { font-size: 1.1rem; }
 }
 
 .dossier-header__metric-value--smaller {
@@ -267,6 +314,8 @@ const statusIcon = computed(() => {
   .dossier-header {
     flex-direction: column;
     align-items:    flex-start;
+    padding: 16px;
+    gap: 16px;
   }
 }
 </style>

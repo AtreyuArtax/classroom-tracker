@@ -305,6 +305,19 @@ watch(profileStudent, (student) => {
   gap:         10px;
 }
 
+@media (max-width: 1000px) {
+  .dashboard__header-right {
+    gap: 6px;
+  }
+  .dashboard__pool-toggle,
+  .dashboard__test-day-btn,
+  .dashboard__out-badge {
+    padding: 8px 10px;
+    min-width: 44px;
+    justify-content: center;
+  }
+}
+
 /* Pool Toggle Button */
 .dashboard__pool-toggle {
   display:         flex;
@@ -333,7 +346,7 @@ watch(profileStudent, (student) => {
   color:        var(--primary);
 }
 
-@media (max-width: 480px) {
+@media (max-width: 1000px) {
   .dashboard__pool-toggle-label {
     display: none;
   }
@@ -367,7 +380,7 @@ watch(profileStudent, (student) => {
   color:        #fff;
 }
 
-@media (max-width: 480px) {
+@media (max-width: 1000px) {
   .dashboard__pool-toggle-label,
   .dashboard__test-day-label {
     display: none;
