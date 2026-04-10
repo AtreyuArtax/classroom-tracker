@@ -968,6 +968,7 @@ async function logAttendanceEvent(studentId, code) {
                 classId,
                 code,
                 duration: msLate,
+                testDay: isTestDay.value,
                 supersededAbsent: wasAbsent
             })
             student.lastEvent = { code, ts: Date.now() }
@@ -1072,6 +1073,7 @@ async function logStandardEvent(studentId, code, note = null, options = {}) {
             classId, 
             code, 
             note,
+            testDay: isTestDay.value,
             _overrideTimestamp: options.timestamp 
         })
 
@@ -1126,7 +1128,8 @@ async function logAssessmentEvent({ studentId, note, acType, acContext, acOutcom
             note,
             acType,
             acContext,
-            acOutcome
+            acOutcome,
+            testDay: isTestDay.value
         })
 
         // Reactive update
@@ -1190,6 +1193,7 @@ async function logToggleEvent(studentId, code) {
                 classId,
                 code,
                 duration: durationMs,
+                testDay: isTestDay.value,
             })
 
             await classService.clearStudentActiveState(classId, studentId)
