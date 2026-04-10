@@ -83,6 +83,9 @@
                     <div class="reports__metric">
                       <span class="reports__metric-label">Total Lates</span>
                       <span class="reports__metric-value">{{ aggregates.attendance.totalLates }}</span>
+                      <span v-if="aggregates.attendance.testDayLates > 0" class="reports__metric-sub">
+                        {{ aggregates.attendance.testDayLates }} on test days
+                      </span>
                     </div>
                     <div class="reports__metric">
                       <span class="reports__metric-label">Avg / Student</span>
@@ -125,6 +128,9 @@
                     <div class="reports__metric">
                       <span class="reports__metric-label">Total Trips</span>
                       <span class="reports__metric-value">{{ aggregates.washroom.totalTrips }}</span>
+                      <span v-if="aggregates.washroom.testDayTrips > 0" class="reports__metric-sub">
+                        {{ aggregates.washroom.testDayTrips }} on test days
+                      </span>
                     </div>
                     <div class="reports__metric">
                       <span class="reports__metric-label">Total Time</span>
@@ -174,6 +180,9 @@
                     <div class="reports__metric">
                       <span class="reports__metric-label">Redirect/Device</span>
                       <span class="reports__metric-value">{{ aggregates.behavior.totalRedirects }}</span>
+                      <span v-if="aggregates.behavior.testDayRedirects > 0" class="reports__metric-sub">
+                        {{ aggregates.behavior.testDayRedirects }} on test days
+                      </span>
                     </div>
                   </div>
                   <div v-if="aggregates.behavior.redirectAlerts.length" class="reports__card-section">
@@ -662,6 +671,7 @@ const aggregates = reactive({
     totalAbsences: 0,
     testDayAbsences: 0,
     totalLates: 0,
+    testDayLates: 0,
     avgAbsences: 0,
     avgAbsencesPerWeek: 0,
     avgLatesPerWeek: 0,
@@ -670,6 +680,7 @@ const aggregates = reactive({
   },
   washroom: {
     totalTrips: 0,
+    testDayTrips: 0,
     totalDuration: 0, // minutes
     avgDuration: 0,
     avgTripsPerWeek: 0,
@@ -679,6 +690,7 @@ const aggregates = reactive({
   behavior: {
     topCode: null, // { icon, label, count }
     totalRedirects: 0,
+    testDayRedirects: 0,
     totalParentContacts: 0,
     redirectAlerts: [] // names
   }
@@ -781,6 +793,7 @@ async function runReport() {
     const absences = absenceEvents.length
     const testDayAbsences = absenceEvents.filter(e => e.testDay).length
     const lates = lateEvents.length
+    const testDayLates = lateEvents.filter(e => e.testDay).length
     
     // Calculate weeks in the reporting period
     let weeks = 1
@@ -812,6 +825,7 @@ async function runReport() {
       totalAbsences: absences,
       testDayAbsences,
       totalLates: lates,
+      testDayLates,
       avgAbsences: studentCount ? (absences / studentCount).toFixed(1) : 0,
       avgAbsencesPerWeek: (absences / weeks).toFixed(1),
       avgLatesPerWeek: (lates / weeks).toFixed(1),
@@ -823,6 +837,7 @@ async function runReport() {
     const washCodes = behaviorCodes.value.filter(c => c.type === 'toggle').map(c => c.codeKey)
     const washEvents = events.filter(e => washCodes.includes(e.code) && e.duration != null && !e.superseded)
     const totalTrips = washEvents.length
+    const testDayTrips = washEvents.filter(e => e.testDay).length
     const totalMins = washEvents.reduce((acc, e) => acc + toMinutes(e.duration), 0)
     
     const tripCounts = {}
@@ -838,6 +853,7 @@ async function runReport() {
 
     aggregates.washroom = {
       totalTrips,
+      testDayTrips,
       totalDuration: totalMins.toFixed(1),
       avgDuration: totalTrips ? (totalMins / totalTrips).toFixed(1) : '0.0',
       avgTripsPerWeek: (totalTrips / weeks).toFixed(1),
@@ -873,7 +889,8 @@ async function runReport() {
       count: maxCount
     } : null
 
-    const redirects = events.filter(e => e.category === 'redirect' && !e.superseded).length
+    const redirects = behaviorEvents.length
+    const testDayRedirects = behaviorEvents.filter(e => e.testDay).length
     const parentContacts = events.filter(e => behaviorCodesMap.value[e.code]?.label?.toLowerCase().includes('parent') && !e.superseded).length
     
     const redCounts = {}
@@ -887,6 +904,7 @@ async function runReport() {
     aggregates.behavior = {
       topCode: topCodeObject,
       totalRedirects: redirects,
+      testDayRedirects,
       totalParentContacts: parentContacts,
       redirectAlerts
     }
@@ -951,7 +969,7 @@ function downloadAggregateCsv(section) {
     reportData.value.forEach(evt => {
       if ((evt.code === 'a' || evt.code === 'l') && !evt.superseded) {
         if (!summary[evt.studentId]) {
-          summary[evt.studentId] = { absences: 0, testDayAbsences: 0, lates: 0, lateTotalMins: 0, lateCount: 0 }
+          summary[evt.studentId] = { absences: 0, testDayAbsences: 0, lates: 0, testDayLates: 0, lateTotalMins: 0, lateCount: 0 }
         }
         if (evt.code === 'a') {
           summary[evt.studentId].absences++
@@ -959,6 +977,7 @@ function downloadAggregateCsv(section) {
         }
         else if (evt.code === 'l') {
           summary[evt.studentId].lates++
+          if (evt.testDay) summary[evt.studentId].testDayLates++
           if (evt.duration != null) {
             summary[evt.studentId].lateTotalMins += toMinutes(evt.duration)
             summary[evt.studentId].lateCount++
@@ -967,11 +986,11 @@ function downloadAggregateCsv(section) {
       }
     })
     
-    csvContent = 'Student,Absences,Test Day Absences,Lates,Avg Late (min)\n'
+    csvContent = 'Student,Absences,Test Day Absences,Lates,Test Day Lates,Avg Late (min)\n'
     Object.entries(studentsMap).forEach(([id, s]) => {
-      const stats = summary[id] || { absences: 0, testDayAbsences: 0, lates: 0, lateTotalMins: 0, lateCount: 0 }
+      const stats = summary[id] || { absences: 0, testDayAbsences: 0, lates: 0, testDayLates: 0, lateTotalMins: 0, lateCount: 0 }
       const avg = stats.lateCount > 0 ? (stats.lateTotalMins / stats.lateCount).toFixed(1) : 0
-      csvContent += `"${s.lastName}, ${s.firstName}",${stats.absences},${stats.testDayAbsences},${stats.lates},${avg}\n`
+      csvContent += `"${s.lastName}, ${s.firstName}",${stats.absences},${stats.testDayAbsences},${stats.lates},${stats.testDayLates},${avg}\n`
     })
 
   } else if (section === 'washroom') {
@@ -981,19 +1000,20 @@ function downloadAggregateCsv(section) {
     reportData.value.forEach(evt => {
       if (washCodes.includes(evt.code) && evt.duration != null) {
         if (!summary[evt.studentId]) {
-          summary[evt.studentId] = { trips: 0, totalMins: 0 }
+          summary[evt.studentId] = { trips: 0, testDayTrips: 0, totalMins: 0 }
         }
         summary[evt.studentId].trips++
+        if (evt.testDay) summary[evt.studentId].testDayTrips++
         summary[evt.studentId].totalMins += toMinutes(evt.duration)
       }
     })
     
-    csvContent = 'Student,Trips,Total Duration (min),Avg Duration (min)\n'
+    csvContent = 'Student,Trips,Test Day Trips,Total Duration (min),Avg Duration (min)\n'
     Object.entries(studentsMap).forEach(([id, s]) => {
-      const stats = summary[id] || { trips: 0, totalMins: 0 }
+      const stats = summary[id] || { trips: 0, testDayTrips: 0, totalMins: 0 }
       const totalMin = stats.totalMins.toFixed(1)
       const avg = stats.trips > 0 ? (stats.totalMins / stats.trips).toFixed(1) : '0.0'
-      csvContent += `"${s.lastName}, ${s.firstName}",${stats.trips},${totalMin},${avg}\n`
+      csvContent += `"${s.lastName}, ${s.firstName}",${stats.trips},${stats.testDayTrips},${totalMin},${avg}\n`
     })
 
   } else if (section === 'behavior') {

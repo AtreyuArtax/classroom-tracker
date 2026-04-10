@@ -118,7 +118,7 @@
         </div>
 
         <!-- Test Day Toggle -->
-        <div v-if="editingItem?.rawCode === 'a'" class="form-group-checkbox">
+        <div v-if="['a', 'l', 'w'].includes(editingItem?.rawCode)" class="form-group-checkbox">
           <label class="checkbox-label">
             <input type="checkbox" v-model="editForm.testDay" />
             Mark as Assessment Day
@@ -360,7 +360,7 @@ async function saveEdit() {
         updates.duration = Math.round(mins * 60000) // Convert back to ms for storage
     }
 
-    if (editingItem.value.rawCode === 'a') {
+    if (['a', 'l', 'w'].includes(editingItem.value.rawCode)) {
         updates.testDay = editForm.testDay
     }
     
