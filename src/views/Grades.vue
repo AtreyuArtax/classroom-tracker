@@ -335,6 +335,18 @@
             </div>
 
             <div class="grades__toolbar-right">
+              <div v-if="!analyticsMode" class="grades__toggle-group" style="margin-right: 0.5rem;" title="Column Order">
+                <button 
+                  class="grades__toggle-btn"
+                  :class="{ 'grades__toggle-btn--active': assessmentSortOrder === 'desc' }"
+                  @click="assessmentSortOrder = 'desc'"
+                >Newest</button>
+                <button 
+                  class="grades__toggle-btn"
+                  :class="{ 'grades__toggle-btn--active': assessmentSortOrder === 'asc' }"
+                  @click="assessmentSortOrder = 'asc'"
+                >Oldest</button>
+              </div>
               <div v-if="!analyticsMode" class="grades__toggle-group">
                 <button 
                   class="grades__toggle-btn"
@@ -1163,6 +1175,7 @@ const isSidebarCollapsed = ref(false)
 const isChangeMode = ref(false)
 const gridSortBy = ref('name') // 'name' | 'grade'
 const gridSortOrder = ref('asc') // 'asc' | 'desc'
+const assessmentSortOrder = ref('desc') // 'desc' = Newest first, 'asc' = Oldest first
 const showMissingModal = ref(false)
 
 // Removed local assessmentTypes & newAssessmentLocal
@@ -1362,7 +1375,10 @@ const selectedStudentName = computed(() => {
 const sortedAssessments = computed(() => {
   return [...assessments.value]
     .filter(a => a.target === 'class')
-    .sort((a, b) => new Date(a.date) - new Date(b.date))
+    .sort((a, b) => {
+      const diff = new Date(a.date) - new Date(b.date)
+      return assessmentSortOrder.value === 'asc' ? diff : -diff
+    })
 })
 
 const individualStudentAssessments = computed(() => {
