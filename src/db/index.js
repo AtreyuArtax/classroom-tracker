@@ -17,7 +17,7 @@ import { openDB } from 'idb'
 import { getCurrentSchoolYear, getCurrentSemester } from '../utils/dates.js'
 
 const DB_NAME = 'classroomTrackerDB'
-const DB_VERSION = 23
+const DB_VERSION = 24
 
 /**
  * Cached promise — set synchronously before the first await so every
@@ -617,6 +617,28 @@ export function getDB() {
         const gradeStore = transaction.objectStore('grades')
         if (!gradeStore.indexNames.contains('by_classId_studentId')) {
           gradeStore.createIndex('by_classId_studentId', ['classId', 'studentId'])
+        }
+      }
+
+      // --- VERSION 24 MIGRATION (Student Archive) ---
+      if (oldVersion < 24) {
+        console.log('[IDB] Migrating to v24: Initializing archived flag for all students...')
+        const classesStore = transaction.objectStore('classes')
+        const allClasses = await classesStore.getAll()
+        
+        for (const cls of allClasses) {
+          let mutated = false
+          if (cls.students) {
+            for (const studentId of Object.keys(cls.students)) {
+              if (cls.students[studentId].archived === undefined) {
+                cls.students[studentId].archived = false
+                mutated = true
+              }
+            }
+          }
+          if (mutated) {
+            await classesStore.put(cls)
+          }
         }
       }
     },

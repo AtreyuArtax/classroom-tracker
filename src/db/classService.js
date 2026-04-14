@@ -513,6 +513,101 @@ export async function clearAllData() {
     hasUnsyncedChanges.value = false
 }
 /**
+ * Soft-archives a student within a class.
+ * Sets archived = true and clears their seat (they leave the grid).
+ * All event/grade data is preserved.
+ *
+ * @param {string} classId
+ * @param {string} studentId
+ * @returns {Promise<void>}
+ */
+export async function archiveStudent(classId, studentId) {
+    const db = await getDB()
+    const tx = db.transaction('classes', 'readwrite')
+    const store = tx.objectStore('classes')
+    const cls = await store.get(classId)
+    if (!cls) throw new Error(`Class not found: ${classId}`)
+    if (!cls.students[studentId]) throw new Error(`Student not found: ${studentId}`)
+
+    cls.students[studentId].archived = true
+    cls.students[studentId].seat = null // remove from seating grid
+    const plain = JSON.parse(JSON.stringify(cls))
+    await store.put(plain)
+    await tx.done
+    hasUnsyncedChanges.value = true
+}
+
+/**
+ * Restores a previously archived student back to the active roster.
+ *
+ * @param {string} classId
+ * @param {string} studentId
+ * @returns {Promise<void>}
+ */
+export async function unarchiveStudent(classId, studentId) {
+    const db = await getDB()
+    const tx = db.transaction('classes', 'readwrite')
+    const store = tx.objectStore('classes')
+    const cls = await store.get(classId)
+    if (!cls) throw new Error(`Class not found: ${classId}`)
+    if (!cls.students[studentId]) throw new Error(`Student not found: ${studentId}`)
+
+    cls.students[studentId].archived = false
+    const plain = JSON.parse(JSON.stringify(cls))
+    await store.put(plain)
+    await tx.done
+    hasUnsyncedChanges.value = true
+}
+
+/**
+ * Permanently deletes a student and ALL of their data scoped to this class only.
+ * Removes: events (by_classId_studentId), grades (by_classId_studentId), 
+ * and the student entry from the class record.
+ *
+ * NOTE: If this student exists in other classes, those records are NOT affected.
+ *
+ * @param {string} classId
+ * @param {string} studentId
+ * @returns {Promise<void>}
+ */
+export async function permanentlyDeleteStudent(classId, studentId) {
+    const db = await getDB()
+
+    // 1. Find all events and grades scoped to this specific class + student
+    const [events, grades] = await Promise.all([
+        db.getAllFromIndex('events', 'by_classId_studentId', [classId, studentId]),
+        db.getAllFromIndex('grades', 'by_classId_studentId', [classId, studentId]),
+    ])
+
+    // 2. Atomic transaction across all affected stores
+    const tx = db.transaction(['classes', 'events', 'grades'], 'readwrite')
+
+    // Delete events for this student in this class only
+    const eventStore = tx.objectStore('events')
+    for (const e of events) {
+        await eventStore.delete(e.eventId)
+    }
+
+    // Delete grades for this student in this class only
+    const gradeStore = tx.objectStore('grades')
+    for (const g of grades) {
+        await gradeStore.delete(g.gradeId)
+    }
+
+    // Remove the student from the class roster
+    const classStore = tx.objectStore('classes')
+    const cls = await classStore.get(classId)
+    if (cls?.students?.[studentId]) {
+        delete cls.students[studentId]
+        const plain = JSON.parse(JSON.stringify(cls))
+        await classStore.put(plain)
+    }
+
+    await tx.done
+    hasUnsyncedChanges.value = true
+}
+
+/**
  * Bulk imports multiple classes and their rosters in a single database transaction.
  * This ensures that either every class in the import is created/updated, or none are.
  * 

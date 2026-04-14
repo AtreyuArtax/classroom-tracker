@@ -41,6 +41,7 @@ export function useStudentDossier() {
         const cls = _sidebarClassRecord.value
         if (!cls?.students) return []
         return Object.entries(cls.students)
+            .filter(([, s]) => !s.archived)
             .map(([studentId, s]) => ({
                 studentId,
                 firstName: s.firstName,

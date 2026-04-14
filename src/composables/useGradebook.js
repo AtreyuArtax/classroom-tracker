@@ -350,7 +350,7 @@ export function refreshSingleAssessmentStats(assessmentId) {
       exclusionThreshold: fixedExclusionThreshold.value,
       excludedStudentIds: new Set(
         Object.keys(activeClassRecord.value?.students ?? {})
-          .filter(id => activeClassRecord.value.students[id].excludeFromAnalytics)
+          .filter(id => activeClassRecord.value.students[id].excludeFromAnalytics || activeClassRecord.value.students[id].archived)
       ),
       gradeBuckets: gradeBuckets.value
     }
@@ -377,7 +377,7 @@ export function refreshAllAssessmentStats() {
         exclusionThreshold: fixedExclusionThreshold.value,
         excludedStudentIds: new Set(
           Object.keys(activeClassRecord.value?.students ?? {})
-            .filter(id => activeClassRecord.value.students[id].excludeFromAnalytics)
+            .filter(id => activeClassRecord.value.students[id].excludeFromAnalytics || activeClassRecord.value.students[id].archived)
         ),
         gradeBuckets: gradeBuckets.value
       }

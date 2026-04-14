@@ -657,7 +657,14 @@ const reportClass = computed(() =>
 
 // (Redundant watcher on classList removed)
 
-const reportStudents = computed(() => reportClass.value?.students ?? {})
+const reportStudents = computed(() => {
+  const students = reportClass.value?.students ?? {}
+  const active = {}
+  for (const [id, s] of Object.entries(students)) {
+    if (!s.archived) active[id] = s
+  }
+  return active
+})
 
 
 
@@ -775,15 +782,17 @@ async function runReport() {
   loading.value = true
   try {
     const dr = eventService.getDateRangeForPeriod(selectedPeriod.value)
-    const events = await eventService.getEventsByClass(sidebarClassId.value, Object.keys(dr).length ? dr : undefined)
+    const rawEvents = await eventService.getEventsByClass(sidebarClassId.value, Object.keys(dr).length ? dr : undefined)
+    const studentsMap = reportStudents.value
+    const studentCount = Object.keys(studentsMap).length
+
+    // Filter events to only include active students
+    const events = rawEvents.filter(e => studentsMap[e.studentId])
     reportData.value = events
 
     // Fetch Academic Grades — respect the 'to' date of the reporting period
     const grades = await calculateClassGrades(reportClass.value, { asOf: dr.to || null })
     classGrades.value = grades
-
-    const studentsMap = reportStudents.value
-    const studentCount = Object.keys(studentsMap).length
 
     // --- Process Attendance ---
     const attEvents = events.filter(e => (e.code === 'a' || e.code === 'l') && !e.superseded)

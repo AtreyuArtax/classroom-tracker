@@ -1230,6 +1230,7 @@ const sortedRoster = computed(() => {
   if (!activeClassRecord.value?.students) return []
   
   const students = Object.keys(activeClassRecord.value.students)
+    .filter(id => !activeClassRecord.value.students[id].archived)
     .map(id => ({ 
       studentId: id, 
       ...activeClassRecord.value.students[id],
@@ -1279,6 +1280,7 @@ const studentTrends = computed(() => {
   
   const trends = {}
   Object.keys(activeClassRecord.value.students).forEach(studentId => {
+    if (activeClassRecord.value.students[studentId].archived) return
     const data = []
     productAssessments.forEach(a => {
       const grade = gradeMap.value[a.assessmentId]?.[studentId]
