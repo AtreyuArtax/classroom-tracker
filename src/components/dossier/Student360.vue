@@ -853,7 +853,8 @@ const {
   logStandardEvent,
   removeEvent,
   getClass,
-  updateStudentNote
+  updateStudentNote,
+  teacherName
 } = useClassroom()
 
 import { useStudentDossier } from '../../composables/useStudentDossier.js'
@@ -956,7 +957,7 @@ function generateEmailLink() {
     body += `- Washroom/Water trips in period: ${washroomCount.value}\n`
   }
   
-  body += `\nPlease let me know if you have any questions.\n\nBest regards,\n${activeClass.value?.teacherName || 'Teacher'}`
+  body += `\nPlease let me know if you have any questions.\n\nBest regards,\n${teacherName.value || 'Teacher'}`
   
   const mailto = `mailto:${emails}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
   window.location.href = mailto
