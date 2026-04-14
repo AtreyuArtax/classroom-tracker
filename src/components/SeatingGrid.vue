@@ -54,7 +54,7 @@ const { gridSize, students, activeClass, assignSeat } = useClassroom()
 const seatMap = computed(() => {
   const map = {}
   for (const [studentId, s] of Object.entries(students.value)) {
-    if (s.seat) {
+    if (s.seat && !s.archived) {
       map[`${s.seat.row}-${s.seat.col}`] = studentId
     }
   }

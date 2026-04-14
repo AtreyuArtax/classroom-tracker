@@ -380,10 +380,32 @@
               </div>
               <div class="setup__roster-actions">
                 <button class="setup__icon-btn" @click="onEditStudent(s)" title="Edit"><Pencil :size="14" /></button>
-                <button class="setup__icon-btn setup__icon-btn--danger" @click="onRemoveStudent(s)" title="Remove"><Trash2 :size="14" /></button>
+                <button class="setup__icon-btn setup__icon-btn--warn" @click="onArchiveStudent(s)" title="Archive (Unenroll)"><UserMinus :size="14" /></button>
               </div>
             </li>
           </ul>
+
+          <!-- Unenrolled Panel -->
+          <div v-if="archivedRoster.length > 0" class="setup__archived-roster" style="margin-top: 1rem; border-top: 1px solid var(--border-light); padding-top: 1rem;">
+            <button class="setup__archived-toggle" @click="isArchivedPanelVisible = !isArchivedPanelVisible">
+              <span class="setup__archived-label">
+                <UserMinus :size="16" style="opacity: 0.6" /> Unenrolled ({{ archivedRoster.length }})
+              </span>
+              <span class="setup__archived-chevron"><component :is="isArchivedPanelVisible ? ChevronUp : ChevronDown" :size="16" /></span>
+            </button>
+            <ul v-if="isArchivedPanelVisible" class="setup__roster-list" style="margin-top: 0.5rem; opacity: 0.7;">
+              <li v-for="s in archivedRoster" :key="s.studentId" class="setup__roster-item">
+                <div class="setup__roster-info">
+                  <span class="setup__roster-name">{{ s.lastName }}, {{ s.firstName }}</span>
+                  <span class="setup__roster-id">{{ s.studentId }}</span>
+                </div>
+                <div class="setup__roster-actions">
+                  <button class="setup__icon-btn" @click="onUnarchiveStudent(s)" title="Re-enrol"><UserCheck :size="14" /></button>
+                  <button class="setup__icon-btn setup__icon-btn--danger" @click="onPermanentDeleteStudent(s)" title="Permanently delete all records in this class"><Trash2 :size="14" /></button>
+                </div>
+              </li>
+            </ul>
+          </div>
         </div>
 
         <!-- Section: Grading & Assessments -->
@@ -846,7 +868,7 @@
 
 import { ref, reactive, computed, watch, onMounted, nextTick, onUnmounted } from 'vue'
 import Papa from 'papaparse'
-import { Archive, ChevronDown, ChevronUp, FolderOpen, Trash2, FileText, Pencil, Download, Database, Cloud, Settings2, Plus, PlusCircle, X, Save, FileUp, FileDown, GraduationCap, ArrowLeft, Zap, LayoutDashboard, Settings, QrCode, Printer, RefreshCcw, FileSpreadsheet, DatabaseIcon, AlertTriangle, ShieldCheck, Search, CalendarDays } from 'lucide-vue-next'
+import { Archive, ChevronDown, ChevronUp, FolderOpen, Trash2, FileText, Pencil, Download, Database, Cloud, Settings2, Plus, PlusCircle, X, Save, FileUp, FileDown, GraduationCap, ArrowLeft, Zap, LayoutDashboard, Settings, QrCode, Printer, RefreshCcw, FileSpreadsheet, DatabaseIcon, AlertTriangle, ShieldCheck, Search, CalendarDays, UserMinus, UserCheck } from 'lucide-vue-next'
 import QRCode from 'qrcode'
 import { exportGradebookToExcel } from '../db/exportService.js'
 import { resolveIcon } from '../utils/icons.js'
@@ -889,6 +911,10 @@ const {
   deleteClass,
   moveStudentFromClass,
   removeStudent,
+  archiveStudent,
+  unarchiveStudent,
+  permanentlyDeleteStudent,
+  archivedRoster,
   checkResize,
   confirmResize,
   updateTeacherName,
@@ -947,6 +973,7 @@ async function openQRGenerator(clsRecord = null) {
   const roster = targetClass.students 
     ? Object.entries(targetClass.students)
         .map(([studentId, s]) => ({ studentId, ...s }))
+        .filter(s => !s.archived)
         .sort((a, b) => a.lastName.localeCompare(b.lastName))
     : []
     
@@ -1646,10 +1673,26 @@ async function setGlobalDefaultGrid() {
   window.alert(`Saved ${newGrid.rows}x${newGrid.cols} as the default for future classes.`)
 }
 
-async function onRemoveStudent(student) {
-  if (window.confirm(`Are you sure you want to remove ${student.firstName} ${student.lastName} from this class? This will not delete their past events.`)) {
-    await removeStudent(student.studentId)
+async function onArchiveStudent(student) {
+  if (window.confirm(`Are you sure you want to archive ${student.firstName} ${student.lastName}? They will be moved to the Unenrolled list.`)) {
+    await archiveStudent(student.studentId)
   }
+}
+
+async function onUnarchiveStudent(student) {
+  await unarchiveStudent(student.studentId)
+}
+
+async function onPermanentDeleteStudent(student) {
+  superConfirmConfig.title = 'Permanently Delete Student'
+  superConfirmConfig.message = `This will permanently delete ALL events, attendance, and grades for ${student.firstName} ${student.lastName} in this specific class (${activeClass.value?.name}). This cannot be undone.`
+  superConfirmConfig.requireText = student.studentId
+  superConfirmConfig.danger = true
+  superConfirmConfig.onConfirm = async () => {
+    isSuperConfirmOpen.value = false
+    await permanentlyDeleteStudent(student.studentId)
+  }
+  isSuperConfirmOpen.value = true
 }
 
 function classNameById(classId) {
@@ -2082,6 +2125,7 @@ async function handleExportExcel() {
     
     // 4. Get the student list (sorted) — include studentId since it is the map key, not a property
     const roster = Object.entries(record.students || {})
+      .filter(([_, s]) => !s.archived)
       .map(([studentId, s]) => ({ studentId, ...s }))
       .sort((a, b) => a.lastName.localeCompare(b.lastName) || a.firstName.localeCompare(b.firstName))
 
@@ -2103,8 +2147,10 @@ async function handleExportExcel() {
     })
 
     // 7. Transform classGrades into the summary array required by exportService
-    const summaryArray = Object.entries(classGrades).map(([studentId, summary]) => {
-      const student = record.students[studentId] || {}
+    // Force summaryArray to only include our active roster
+    const summaryArray = roster.map(student => {
+      const studentId = student.studentId
+      const summary = classGrades[studentId] || {}
       const studentEvents = events.filter(e => e.studentId === studentId && !e.superseded)
       const absences = studentEvents.filter(e => e.code === 'a').length
       const lates = studentEvents.filter(e => e.code === 'l').length
@@ -2504,6 +2550,13 @@ function formatDate(iso) {
 .setup__icon-btn--danger:hover {
   background: #fee2e2 !important; /* Red 100 */
   color:      #dc2626 !important; /* Red 600 */
+}
+.setup__icon-btn--warn {
+  color: var(--accent-amber, hsl(38 95% 55%));
+}
+.setup__icon-btn--warn:hover {
+  background: hsl(38 95% 55% / 0.12) !important;
+  color: hsl(38 90% 45%) !important;
 }
 
 .setup__code-actions {

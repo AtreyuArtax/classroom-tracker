@@ -84,10 +84,19 @@ watch(maxStudentsOut, (val) => localStorage.setItem('maxStudentsOut', val.toStri
 
 // ─── computed ─────────────────────────────────────────────────────────────────
 
-/** Students sorted by last name for display in roster lists */
+/** Students sorted by last name for display in roster lists. Excludes archived students. */
 const sortedRoster = computed(() =>
     Object.entries(students.value)
         .map(([studentId, s]) => ({ studentId, ...s }))
+        .filter(s => !s.archived)
+        .sort((a, b) => a.lastName.localeCompare(b.lastName))
+)
+
+/** Archived students sorted by last name. */
+const archivedRoster = computed(() =>
+    Object.entries(students.value)
+        .map(([studentId, s]) => ({ studentId, ...s }))
+        .filter(s => s.archived)
         .sort((a, b) => a.lastName.localeCompare(b.lastName))
 )
 
@@ -830,6 +839,103 @@ async function removeStudent(studentId) {
 }
 
 /**
+ * Soft-archives a student in the active class.
+ * 
+ * @param {string} studentId 
+ */
+async function archiveStudent(studentId) {
+    try {
+        const classId = activeClass.value?.classId
+        if (!classId) return
+
+        await classService.archiveStudent(classId, studentId)
+
+        if (students.value[studentId]) {
+            students.value[studentId].archived = true
+            students.value[studentId].seat = null
+        }
+        
+        if (activeClass.value?.students?.[studentId]) {
+            activeClass.value.students[studentId].archived = true
+            activeClass.value.students[studentId].seat = null
+        }
+        
+        const clsInList = classList.value.find(c => c.classId === classId)
+        if (clsInList?.students?.[studentId]) {
+            clsInList.students[studentId].archived = true
+            clsInList.students[studentId].seat = null
+        }
+
+        triggerRef(activeClass)
+    } catch (err) {
+        console.error('archiveStudent failed:', err)
+        alert('Failed to archive student.')
+    }
+}
+
+/**
+ * Unarchives a student in the active class.
+ * 
+ * @param {string} studentId 
+ */
+async function unarchiveStudent(studentId) {
+    try {
+        const classId = activeClass.value?.classId
+        if (!classId) return
+
+        await classService.unarchiveStudent(classId, studentId)
+
+        if (students.value[studentId]) {
+            students.value[studentId].archived = false
+        }
+        
+        if (activeClass.value?.students?.[studentId]) {
+            activeClass.value.students[studentId].archived = false
+        }
+        
+        const clsInList = classList.value.find(c => c.classId === classId)
+        if (clsInList?.students?.[studentId]) {
+            clsInList.students[studentId].archived = false
+        }
+
+        triggerRef(activeClass)
+    } catch (err) {
+        console.error('unarchiveStudent failed:', err)
+        alert('Failed to unarchive student.')
+    }
+}
+
+/**
+ * Permanently deletes a student's data scoped ONLY to the active class.
+ * 
+ * @param {string} studentId 
+ */
+async function permanentlyDeleteStudent(studentId) {
+    try {
+        const classId = activeClass.value?.classId
+        if (!classId) return
+        
+        await classService.permanentlyDeleteStudent(classId, studentId)
+        
+        delete students.value[studentId]
+
+        if (activeClass.value?.students?.[studentId]) {
+            delete activeClass.value.students[studentId]
+        }
+
+        const clsInList = classList.value.find(c => c.classId === classId)
+        if (clsInList?.students?.[studentId]) {
+            delete clsInList.students[studentId]
+        }
+        
+        triggerRef(activeClass)
+    } catch (err) {
+        console.error('permanentlyDeleteStudent failed:', err)
+        alert('Failed to permanently delete student data.')
+    }
+}
+
+/**
  * Updates a student's general note and persists it.
  *
  * @param {string} studentId
@@ -1502,6 +1608,7 @@ export function useClassroom() {
         filteredArchivedClasses,
         // computed
         sortedRoster,
+        archivedRoster,
         unseatedStudents,
         studentsOut,
         // actions
@@ -1516,6 +1623,9 @@ export function useClassroom() {
         importRoster,
         moveStudentFromClass,
         removeStudent,
+        archiveStudent,
+        unarchiveStudent,
+        permanentlyDeleteStudent,
         assignSeat,
         computeSuggestedClass,
         logAttendanceEvent,
