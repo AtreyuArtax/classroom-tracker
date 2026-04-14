@@ -293,9 +293,9 @@
           <h3 class="academics-section__title">Internal Gradebook Notes</h3>
           <textarea 
             class="student-360__notes-area"
-            :value="student.gradebookNote || ''"
+            v-model="localGradebookNote"
             placeholder="Add private observations about this student's grading context..."
-            @blur="e => saveStudentGradebookNote(props.studentId, e.target.value)"
+            @blur="updateGradebookNoteLocal"
           ></textarea>
         </div>
       </section>
@@ -397,8 +397,8 @@
           <textarea 
             class="student-360__notes-area"
             placeholder="Seating needs, accommodations, etc..."
-            :value="student.generalNote || ''"
-            @blur="e => saveGeneralNote(e.target.value)"
+            v-model="localGeneralNote"
+            @blur="updateGeneralNoteLocal"
           ></textarea>
         </div>
 
@@ -1323,6 +1323,22 @@ async function handleDeleteHistoryItem(eventId) {
 async function saveGeneralNote(note) {
   if (student.value.generalNote !== note) {
     await updateStudentNote(props.studentId, note)
+  }
+}
+
+const localGeneralNote = ref('')
+const localGradebookNote = ref('')
+
+watch(() => student.value?.generalNote, (v) => { localGeneralNote.value = v || '' }, { immediate: true })
+watch(() => student.value?.gradebookNote, (v) => { localGradebookNote.value = v || '' }, { immediate: true })
+
+async function updateGeneralNoteLocal() {
+  await saveGeneralNote(localGeneralNote.value.trim())
+}
+async function updateGradebookNoteLocal() {
+  const note = localGradebookNote.value.trim()
+  if (student.value.gradebookNote !== note) {
+    await saveStudentGradebookNote(props.studentId, note)
   }
 }
 
