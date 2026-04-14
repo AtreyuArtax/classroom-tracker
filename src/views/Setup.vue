@@ -486,7 +486,7 @@
           <h2 class="setup__card-title">General Settings</h2>
           <label class="setup__label">
             Teacher Name (for Reports)
-            <input :value="teacherName" class="setup__input" placeholder="" @change="e => updateTeacherName(e.target.value)" />
+            <input v-model="localTeacherName" class="setup__input" placeholder="" @blur="saveTeacherName" />
           </label>
         </div>
 
@@ -904,6 +904,11 @@ const {
 const isUnsynced = eventService.hasUnsyncedChanges
 const isArchivedPanelVisible = ref(false)
 const showAllSessions = ref(false)
+
+// Local copy of teacher name to prevent singleton re-renders from resetting the input mid-type
+const localTeacherName = ref(teacherName.value)
+watch(teacherName, (v) => { localTeacherName.value = v }, { immediate: true })
+async function saveTeacherName() { await updateTeacherName(localTeacherName.value) }
 
 // --- QR Generation State ---
 const isQRModalOpen = ref(false)
