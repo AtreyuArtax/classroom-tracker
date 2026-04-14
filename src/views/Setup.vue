@@ -278,9 +278,10 @@
                 Class Name
                 <input
                   type="text"
-                  :value="activeClass.name"
+                  v-model="localClassName"
                   class="setup__input"
-                  @change="e => updateActiveClass({ name: e.target.value.trim() || activeClass.name })"
+                  @blur="saveClassName"
+                  @keydown.enter="saveClassName"
                 />
               </label>
               <label class="setup__label">
@@ -935,6 +936,17 @@ const showAllSessions = ref(false)
 const localTeacherName = ref(teacherName.value)
 watch(teacherName, (v) => { localTeacherName.value = v }, { immediate: true })
 async function saveTeacherName() { await updateTeacherName(localTeacherName.value) }
+
+// Local copy of class name to prevent resetting mid-type
+const localClassName = ref('')
+watch(() => activeClass.value?.name, (v) => { localClassName.value = v || '' }, { immediate: true })
+async function saveClassName() {
+  if (!activeClass.value) return
+  const val = localClassName.value.trim() || activeClass.value.name
+  if (val !== activeClass.value.name) {
+    await updateActiveClass({ name: val })
+  }
+}
 
 // --- QR Generation State ---
 const isQRModalOpen = ref(false)
