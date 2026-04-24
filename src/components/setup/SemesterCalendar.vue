@@ -318,17 +318,19 @@ function printNow() {
   #app, .bm-overlay, .bm-card { display: none !important; } 
   .semester-print-root { display: block !important; position: absolute; top: 0; left: 0; width: 100%; } 
   @page { margin: 10mm; size: portrait; }
+  .sheet-print-page { height: calc(100vh - 22mm); display: flex; flex-direction: column; page-break-inside: avoid; }
   .sheet--duplex-page { page-break-after: always; }
   .sheet--batch-page-break { page-break-after: always; }
 }
-.sheet-cal-table { width: 100%; border-collapse: collapse; table-layout: fixed; border: 2px solid black; }
+.sheet-print-page { display: flex; flex-direction: column; }
+.sheet-cal-table { flex: 1; width: 100%; border-collapse: collapse; table-layout: fixed; border: 2px solid black; height: 100%; }
 .sheet-cal-table th, .sheet-cal-table td { border: 1px solid black; padding: 0; }
+.sheet-cal-header-row { height: 24px; }
 .sheet-cal-header-row th { background: #f1f1f1 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; font-size: 10px; font-weight: bold; padding: 6px 2px; }
 .sheet-month-col-head { width: 30px; border: none; }
 .sheet-month-cell { width: 30px; background: #fdfdfd !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; vertical-align: middle; text-align: center; }
 .sheet-month-vlabel { writing-mode: vertical-rl; transform: rotate(180deg); font-size: 10px; font-weight: bold; text-transform: uppercase; color: #666; }
-.sheet-day-cell { height: 40px; vertical-align: top; }
-.sheet-cal-table--large .sheet-day-cell { height: 75px; }
+.sheet-day-cell { vertical-align: top; }
 .sheet-day--holiday { background-color: #f5f5f5 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 .sheet-day-inner { padding: 2px 4px; height: 100%; display: flex; flex-direction: column; }
 .sheet-day-number { font-size: 9px; font-weight: bold; margin-bottom: 1px; }
@@ -336,7 +338,7 @@ function printNow() {
 .sheet-event-text { font-size: 8px; line-height: 1.1; }
 .sheet-event--holiday { color: #444; text-transform: uppercase; font-weight: bold; }
 .sheet-event--milestone { font-weight: bold; border-left: 2px solid black; padding-left: 2px; }
-.sheet-header-main { margin-bottom: 4px; border-bottom: 1px solid #000; padding-bottom: 2px; }
+.sheet-header-main { margin-bottom: 4px; border-bottom: 1px solid #000; padding-bottom: 2px; flex-shrink: 0; }
 .sheet-header-row-flex { display: flex; justify-content: space-between; align-items: baseline; }
 .sheet-title-text { font-size: 14px; font-weight: bold; margin: 0; text-transform: uppercase; }
 .sheet-header-teacher { font-size: 11px; font-weight: bold; color: #444; }
