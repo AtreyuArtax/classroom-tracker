@@ -578,6 +578,7 @@ async function createClass(opts) {
     const newCls = {
         classId: opts.classId,
         name: opts.name,
+        courseCode: opts.courseCode || '',
         periodNumber: opts.periodNumber,
         periodStartTime: opts.periodStartTime ?? defaultStartTime,
         year,

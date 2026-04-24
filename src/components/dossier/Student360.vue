@@ -403,10 +403,20 @@
         </div>
 
         <div class="profile-actions">
-          <button class="btn-copy-report" @click="copyForReportCard">
-            <ClipboardList :size="16" />
-            {{ isCopied ? 'Copied to Clipboard!' : 'Copy for Report Card' }}
-          </button>
+          <div class="profile-actions__label">
+            <ClipboardList :size="14" />
+            Copy for Report Card Comment
+          </div>
+          <div class="profile-actions__buttons">
+            <button class="btn-copy-report btn-copy-report--anon" @click="copyForReportCard(false)">
+              <ShieldCheck :size="15" />
+              {{ isCopiedAnon ? '✓ Copied!' : 'Without Name' }}
+            </button>
+            <button class="btn-copy-report btn-copy-report--named" @click="copyForReportCard(true)">
+              <ClipboardList :size="15" />
+              {{ isCopiedNamed ? '✓ Copied!' : 'With Name' }}
+            </button>
+          </div>
         </div>
       </section>
 
@@ -1336,8 +1346,10 @@ async function updateGradebookNoteLocal() {
   }
 }
 
-const isCopied = ref(false)
-async function copyForReportCard() {
+const isCopiedAnon = ref(false)
+const isCopiedNamed = ref(false)
+
+async function copyForReportCard(includeName = false) {
   const s = student.value
   const absences = attendanceStats.value.absences
   const lates = attendanceStats.value.lates
@@ -1346,8 +1358,13 @@ async function copyForReportCard() {
     .filter(a => a.score !== null && !a.excluded)
     .sort((a, b) => new Date(b.date) - new Date(a.date))
 
+  const classCode = activeClass.value?.courseCode ? ` (${activeClass.value.courseCode})` : ''
+  const header = includeName
+    ? `${s.firstName} ${s.lastName}${classCode} — Progress Summary`
+    : `Student${classCode} — Progress Summary`
+
   const text = [
-    `${s.firstName} ${s.lastName} — Progress Summary`,
+    header,
     `Current Grade: ${formattedGrade.value}`,
     `Attendance: ${absences} Absences, ${lates} Lates`,
     '',
@@ -1372,8 +1389,14 @@ async function copyForReportCard() {
   ].join('\n')
   
   await navigator.clipboard.writeText(text)
-  isCopied.value = true
-  setTimeout(() => isCopied.value = false, 2000)
+
+  if (includeName) {
+    isCopiedNamed.value = true
+    setTimeout(() => isCopiedNamed.value = false, 2000)
+  } else {
+    isCopiedAnon.value = true
+    setTimeout(() => isCopiedAnon.value = false, 2000)
+  }
 }
 
 // ─── High-Fidelity Editing State ──────────────────────────────────────────────
@@ -2052,6 +2075,23 @@ onUnmounted(() => {
   margin-top: 12px;
 }
 
+.profile-actions__label {
+  display:     flex;
+  align-items: center;
+  gap:         6px;
+  font-size:   0.75rem;
+  font-weight: 700;
+  color:       var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 8px;
+}
+
+.profile-actions__buttons {
+  display: flex;
+  gap: 10px;
+}
+
 .timeline-header {
   margin-bottom: 16px;
   display: flex;
@@ -2125,20 +2165,38 @@ onUnmounted(() => {
   align-items:     center;
   justify-content: center;
   gap:             8px;
-  width:           100%;
-  padding:         14px;
-  background:      var(--primary);
-  color:           #fff;
+  flex:            1;
+  padding:         12px 16px;
   border:          none;
   border-radius:   var(--radius-lg);
+  font-size:       0.875rem;
   font-weight:     700;
   cursor:          pointer;
   transition:      all 0.2s ease;
 }
 
 .btn-copy-report:hover {
-  opacity: 0.9;
+  opacity: 0.88;
   transform: translateY(-1px);
+}
+
+/* Anonymous (no name) — subdued, privacy-forward */
+.btn-copy-report--anon {
+  background: var(--bg-secondary);
+  color:      var(--text);
+  border:     1.5px solid var(--border);
+}
+
+.btn-copy-report--anon:hover {
+  background: var(--surface);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+/* Named — primary CTA */
+.btn-copy-report--named {
+  background: var(--primary);
+  color:      #fff;
 }
 
 .student-360__trend-section {
