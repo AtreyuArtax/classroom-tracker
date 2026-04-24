@@ -858,7 +858,8 @@ const {
   removeEvent,
   getClass,
   updateStudentNote,
-  teacherName
+  teacherName,
+  thresholds
 } = useClassroom()
 
 import { useStudentDossier } from '../../composables/useStudentDossier.js'
@@ -1384,8 +1385,21 @@ async function copyForReportCard(includeName = false) {
     'Category Averages:',
     ...academicCategories.value.map(c => `- ${c.name}: ${c.score !== null ? Math.round(c.score) + '%' : 'N/A'}`),
     '',
-    'General Notes:',
-    s.generalNote || 'None recorded.'
+    'Professional Judgment (Observations & Conversations):',
+    ...(activeStudentEvents.value
+      .filter(e => e.code === 'ac')
+      .sort((a, b) => (b.ts || b.timestamp) - (a.ts || a.timestamp))
+      .slice(0, 5)
+      .map(e => {
+        const date = new Date(e.ts || e.timestamp).toLocaleDateString([], { month: 'short', day: 'numeric' })
+        const type = e.acType === 'observation' ? 'Obs' : 'Conv'
+        const outcome = e.acOutcome ? ` [${e.acOutcome.replace(/_/g, ' ')}]` : ''
+        return `- ${date} (${type}): ${e.note}${outcome}`
+      })),
+    activeStudentEvents.value.filter(e => e.code === 'ac').length === 0 ? '- No specific entries recorded.' : '',
+    '',
+    'Teacher Working Notes (Comment Ideas):',
+    student.value.gradebookNote || 'None recorded.'
   ].join('\n')
   
   await navigator.clipboard.writeText(text)
