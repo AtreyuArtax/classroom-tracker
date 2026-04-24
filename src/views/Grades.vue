@@ -108,64 +108,13 @@
 
               <!-- New Full-Width Analysis Bar -->
               <div v-if="currentAssessmentSummary" class="grades__analysis-bar">
-                <div class="grades__analysis-group">
-                  <div class="grades__stat-pill">
-                    <span class="grades__stat-pill-label">Median</span>
-                    <span class="grades__stat-pill-value">{{ currentAssessmentSummary.median }}%</span>
-                  </div>
-                  <div class="grades__stat-pill">
-                    <span class="grades__stat-pill-label">Std Dev</span>
-                    <span class="grades__stat-pill-value" :style="{ color: getSDColor(currentAssessmentSummary.sd) }">±{{ currentAssessmentSummary.sd }}</span>
-                  </div>
-                  <div class="grades__stat-pill">
-                    <span class="grades__stat-pill-label">Range</span>
-                    <span class="grades__stat-pill-value">{{ currentAssessmentSummary.lowest }}% – {{ currentAssessmentSummary.highest }}%</span>
-                  </div>
-                  
-                  <!-- Professional Interpretation Flag -->
-                  <div :class="['grades__calibration-pill', 'grades__calibration-pill--' + (currentAssessmentSummary.calibrationFlag || 'fair')]">
-                    <Award v-if="!currentAssessmentSummary.calibrationFlag" :size="14" />
-                    <AlertTriangle v-else :size="14" />
-                    <span class="grades__stat-pill-label">Interpretation</span>
-                    <span class="grades__stat-pill-value">
-                      {{ 
-                        currentAssessmentSummary.calibrationFlag === 'too_hard' ? 'Tough Assessment' : 
-                        currentAssessmentSummary.calibrationFlag === 'too_easy' ? 'Easy Assessment' : 
-                        'Well Calibrated (Fair)' 
-                      }}
-                    </span>
-                  </div>
-                </div>
-
-                <!-- Sparkline Distribution -->
-                <div v-if="currentAssessmentSummary.distributionBuckets" class="grades__sparkline-card grades__sparkline-card--large">
-                  <div class="grades__sparkline grades__sparkline--large">
-                    <template v-if="distributionMode === 'buckets'">
-                      <div 
-                        v-for="(bucket, idx) in currentAssessmentSummary.distributionBuckets" 
-                        :key="'bucket-'+idx"
-                        class="grades__sparkline-bar"
-                        :style="{ 
-                          height: bucket.count > 0 ? Math.max(8, (bucket.count / currentAssessmentSummary.totalCount * 100)) + '%' : '0px',
-                          backgroundColor: getHeatColorHex(bucket.range[0])
-                        }"
-                        :title="bucket.label + ': ' + bucket.count + ' students'"
-                      ></div>
-                    </template>
-                    <template v-else>
-                      <div 
-                        v-for="(bucket, idx) in currentAssessmentSummary.levelBuckets" 
-                        :key="'level-'+idx"
-                        class="grades__sparkline-bar"
-                        :style="{ 
-                          height: bucket.count > 0 ? Math.max(8, (bucket.count / currentAssessmentSummary.totalCount * 100)) + '%' : '0px',
-                          backgroundColor: getHeatColorHex(bucket.range[0])
-                        }"
-                        :title="bucket.label + ': ' + bucket.count + ' students'"
-                      ></div>
-                    </template>
-                  </div>
-                  <span class="grades__sparkline-label">Grade Distribution ({{ distributionMode === 'buckets' ? '10% Buckets' : 'Levels' }})</span>
+                <div class="grades__analytics-card">
+                  <h4>At-Risk (Exclusion)</h4>
+                  <p v-if="filteredStudents.length > 0">
+                    <AlertTriangle :size="14" class="text-danger" style="margin-right:4px;" />
+                    {{ filteredStudents.length }} student{{ filteredStudents.length === 1 ? ' is' : 's are' }} marked for exclusion.
+                  </p>
+                  <p v-else>All students are included.</p>
                 </div>
               </div>
             </div>
@@ -808,7 +757,13 @@
                     @click="showStudentDossier(student.studentId)"
                   >
                     <div class="grades__student-name-group">
-                      <span class="grades__student-link">{{ student.lastName }}, {{ student.firstName }}</span>
+                      <div class="grades__student-name-container">
+                      <div class="grades__student-name">{{ student.lastName }}, {{ student.firstName }}</div>
+                      <TestDayWarning 
+                        v-if="studentAbsenceTotals[student.studentId]?.testDays >= 2" 
+                        :count="studentAbsenceTotals[student.studentId].testDays" 
+                      />
+                    </div>
                       <div class="grades__sparkline-mini" v-if="studentTrends[student.studentId]?.length > 1 && !isPrivacyMode">
                         <svg width="80" height="14" viewBox="0 0 80 14">
                           <path
@@ -865,6 +820,13 @@
                       </span>
                       <span v-else class="grades__cell-placeholder">—</span>
                       
+                      <!-- Absent on Test Day Dot -->
+                      <div 
+                        v-if="assessmentAbsenceMap[student.studentId]?.[a.assessmentId]" 
+                        class="grades__cell-absent-dot" 
+                        title="Student was marked absent on the date of this assessment"
+                      ></div>
+                      
                       <!-- Retest Indicator -->
                       <button 
                         v-if="gradeMap[a.assessmentId][student.studentId].attempts?.length > 1" 
@@ -910,19 +872,13 @@
         <button class="grades__context-btn" @click="startNewAttempt(studentActionMenu.studentId); studentActionMenu = null">
           <Plus :size="14" /> Add New Attempt
         </button>
-        <button v-if="gradeMap[selectedAssessmentId]?.[studentActionMenu.studentId]?.attempts?.length > 0" class="grades__context-btn" @click="startEdit(studentActionMenu.studentId, selectedAssessmentId, true); studentActionMenu = null">
-          <Pencil :size="14" /> Change Mark
-        </button>
       </div>
     </div>
 
     <div v-if="contextMenu" class="grades__context-backdrop grades__context-backdrop--dim" @click="contextMenu = null" @contextmenu.prevent="contextMenu = null">
       <div class="grades__context-menu" :style="{ top: contextMenu.y + 'px', left: contextMenu.x + 'px' }">
-        <button class="grades__context-btn" @click="startEdit(contextMenu.sId, contextMenu.aId, false); contextMenu = null">
+        <button class="grades__context-btn" @click="startEdit(contextMenu.sId, contextMenu.aId); contextMenu = null">
           <Plus :size="14" /> New Attempt
-        </button>
-        <button v-if="gradeMap[contextMenu.aId]?.[contextMenu.sId]?.attempts?.length > 0" class="grades__context-btn" @click="startEdit(contextMenu.sId, contextMenu.aId, true); contextMenu = null">
-          <Pencil :size="14" /> Change Mark
         </button>
         <button class="grades__context-btn" @click="toggleMissing">
           <AlertCircle :size="14" /> {{ isMissing(contextMenu.sId, contextMenu.aId) ? 'Unmark Missing' : 'Mark Missing' }}
@@ -1104,13 +1060,14 @@ import {
   saveAssessment,
   assessmentTypes,
   sortedUnits,
-  enterGrade,
-  changeGrade
+  enterGrade
 } from '../composables/useGradebook.js'
+import { useAttendanceInsights } from '../composables/useAttendanceInsights.js'
 import { Plus, BarChart2, Settings, Pencil, XCircle, AlertCircle, Trash2, X, MoreVertical, ArrowLeft, Check, ArrowUp, ArrowDown, Minus, GraduationCap, Eye, EyeOff, ChevronLeft, ChevronRight, UserCheck, Activity, FilePlus, Target, Hash, Calendar, Award, AlertTriangle, ChevronUp, ChevronDown, Copy } from 'lucide-vue-next'
 import Student360 from '../components/dossier/Student360.vue'
 import StudentSidebar from '../components/StudentSidebar.vue'
 import GradeTrendChart from '../components/GradeTrendChart.vue'
+import TestDayWarning from '../components/TestDayWarning.vue'
 import { getAssessmentPercentage } from '../db/gradebookService.js'
 import { formatLocalDisplay } from '../utils/dates.js'
 import {
@@ -1135,8 +1092,8 @@ const props = defineProps({
 defineEmits(['navigate'])
 
 const { classList, activeClass, getClass, switchClass } = useClassroom()
-
 const sidebarClassId = ref(activeClass.value?.classId || '')
+const { assessmentAbsenceMap, studentAbsenceTotals, attendanceCorrelationStats } = useAttendanceInsights(sidebarClassId, assessments, classGrades)
 
 watch(activeClass, async (newVal, oldVal) => {
   if (newVal && newVal.classId !== oldVal?.classId) {
@@ -1172,7 +1129,6 @@ function showStudentDossier(studentId) {
 const newAttemptForm = ref(null) // { studentId, points, date, comment }
 const isPrivacyMode = ref(false)
 const isSidebarCollapsed = ref(false)
-const isChangeMode = ref(false)
 const gridSortBy = ref('name') // 'name' | 'grade'
 const gridSortOrder = ref('asc') // 'asc' | 'desc'
 const assessmentSortOrder = ref('desc') // 'desc' = Newest first, 'asc' = Oldest first
@@ -1819,11 +1775,10 @@ function getHeatTextColor(percent) {
   return '#b91c1c'               // Dark Red
 }
 
-async function startEdit(studentId, assessmentId, isChange = false) {
+async function startEdit(studentId, assessmentId) {
   const current = gradeMap.value[assessmentId]?.[studentId]
   const val = current ? current.resolvedScore : null
   editOriginalValue.value = val
-  isChangeMode.value = isChange
   editingCell.value = {
     sId: studentId,
     aId: assessmentId,
@@ -1877,13 +1832,8 @@ async function saveEdit() {
   
   // Note: High scores (> max) are allowed for bonus marks and manual scaling
   
-  if (isChangeMode.value) {
-    await changeGrade(aId, sId, points)
-  } else {
-    await enterGrade(aId, sId, points)
-  }
+  await enterGrade(aId, sId, points)
   editingCell.value = null
-  isChangeMode.value = false
 }
 
 async function onEnterKey() {
@@ -3628,6 +3578,39 @@ verall-trend {
 .grades__stats-main-row {
   display: flex;
   gap: 12px;
+}
+
+.grades__student-name-group {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.grades__student-name-container {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  flex: 1;
+}
+
+.grades__student-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-shrink: 1;
+}
+
+.grades__cell-absent-dot {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #ff3b30;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.5);
+  pointer-events: auto;
 }
 
 .grades__analysis-bar {
