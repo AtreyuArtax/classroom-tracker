@@ -77,7 +77,7 @@
             <tbody>
               <!-- Top blank rows before students -->
               <tr v-for="r in form.headerRows" :key="'top'+r" class="sheet-student-row">
-                <td class="sheet-name-cell"></td>
+                <td class="sheet-name-cell">&nbsp;</td>
                 <td v-for="c in form.blankColumns" :key="'blank'+c" class="sheet-blank-cell"></td>
               </tr>
               <!-- Student List -->
@@ -87,7 +87,7 @@
               </tr>
               <!-- Bottom blank rows -->
               <tr v-for="r in effectiveFooterRows" :key="'bot'+r" class="sheet-student-row">
-                <td class="sheet-name-cell"></td>
+                <td class="sheet-name-cell">&nbsp;</td>
                 <td v-for="c in form.blankColumns" :key="'bc'+c" class="sheet-blank-cell"></td>
               </tr>
             </tbody>
@@ -232,7 +232,7 @@ function handlePrint() {
 
   .sheet-print-page {
     width: 100%;
-    height: 100%;
+    height: calc(100vh - 22mm);
     margin: 0;
     padding: 0;
     display: flex;
@@ -257,6 +257,8 @@ function handlePrint() {
   }
   
   .sheet-table {
+    flex: 1;
+    height: 100%;
     width: 100%;
     border-collapse: collapse;
     border: 3px solid black;
@@ -291,7 +293,6 @@ function handlePrint() {
   }
   
   .sheet-student-row td {
-    height: 20px;
     padding: 2px 4px;
     font-size: 11px;
   }
