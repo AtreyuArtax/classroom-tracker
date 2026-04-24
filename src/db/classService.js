@@ -642,6 +642,7 @@ export async function bulkImportClasses(groups) {
             cls = {
                 classId,
                 name: group.name,
+                courseCode: group.courseCode || '',
                 year: group.year,
                 semester: group.semester,
                 periodNumber: group.periodNumber,
@@ -657,6 +658,7 @@ export async function bulkImportClasses(groups) {
             }
             created++
         } else {
+            if (group.courseCode) cls.courseCode = group.courseCode
             updated++
         }
 

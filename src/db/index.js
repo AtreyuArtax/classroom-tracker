@@ -17,7 +17,7 @@ import { openDB } from 'idb'
 import { getCurrentSchoolYear, getCurrentSemester } from '../utils/dates.js'
 
 const DB_NAME = 'classroomTrackerDB'
-const DB_VERSION = 24
+const DB_VERSION = 25
 
 /**
  * Cached promise — set synchronously before the first await so every
@@ -638,6 +638,20 @@ export function getDB() {
           }
           if (mutated) {
             await classesStore.put(cls)
+          }
+        }
+      }
+      // --- VERSION 25 MIGRATION (Course Code) ---
+      if (oldVersion < 25) {
+        console.log('[IDB] Migrating to v25: Initializing courseCode flag for all classes...')
+        const classesStore = transaction.objectStore('classes')
+        const allClasses = await classesStore.getAll()
+        
+        for (const cls of allClasses) {
+          if (cls.courseCode === undefined) {
+            cls.courseCode = ''
+            const plain = JSON.parse(JSON.stringify(cls))
+            await classesStore.put(plain)
           }
         }
       }

@@ -149,6 +149,10 @@
               Class name
               <input v-model="newClass.name" class="setup__input" placeholder="e.g. Period 1 — Science" required />
             </label>
+            <label class="setup__label">
+              Course Code (Optional)
+              <input v-model="newClass.courseCode" class="setup__input" placeholder="e.g. SNC2D1" />
+            </label>
             <div class="setup__form-grid">
               <label class="setup__label">
                 School Year and Semester
@@ -214,6 +218,7 @@
                       <strong>{{ group.name }}</strong>
                       <div style="display: flex; gap: 4px; align-items: center;">
                         <span class="setup__chip">{{ group.year }} · Sem {{ group.semester }} · P{{ group.periodNumber }}</span>
+                        <span v-if="group.courseCode" class="setup__chip setup__chip--blue">{{ group.courseCode }}</span>
                         <span v-if="isExistingClass(group)" class="setup__badge setup__badge--update">Update Existing</span>
                         <span v-else class="setup__badge setup__badge--new">New Class</span>
                       </div>
@@ -282,6 +287,17 @@
                   class="setup__input"
                   @blur="saveClassName"
                   @keydown.enter="saveClassName"
+                />
+              </label>
+              <label class="setup__label">
+                Course Code
+                <input
+                  type="text"
+                  v-model="localCourseCode"
+                  class="setup__input"
+                  placeholder="Optional"
+                  @blur="saveCourseCode"
+                  @keydown.enter="saveCourseCode"
                 />
               </label>
               <label class="setup__label">
@@ -948,6 +964,17 @@ async function saveClassName() {
   }
 }
 
+// Local copy of course code
+const localCourseCode = ref('')
+watch(() => activeClass.value?.courseCode, (v) => { localCourseCode.value = v || '' }, { immediate: true })
+async function saveCourseCode() {
+  if (!activeClass.value) return
+  const val = localCourseCode.value.trim()
+  if (val !== (activeClass.value.courseCode || '')) {
+    await updateActiveClass({ courseCode: val })
+  }
+}
+
 // --- QR Generation State ---
 const isQRModalOpen = ref(false)
 const qrCodes = ref([]) // Array of { studentId, name, qrUrl }
@@ -1162,6 +1189,17 @@ function cleanPeriod(raw) {
   return match ? match[1] : raw.toString()
 }
 
+function extractCourseCode(raw) {
+  if (!raw) return ''
+  // 1. Split by hyphen to remove section suffix (e.g. "SPH3U1-2" -> "SPH3U1")
+  const base = raw.toString().split('-')[0].trim()
+  
+  // 2. Ontario curriculum codes are 5 chars (e.g. "SPH3U"). 
+  // Often there is a 6th char for school use (e.g. "SPH3U1").
+  // We keep only the first 5 chars to get the standard course identifier.
+  return base.length > 5 ? base.slice(0, 5) : base
+}
+
 function extractYearFromPeriod(raw) {
   if (!raw) return null
   // Detect pattern "2(Y25)" -> extract "25"
@@ -1247,6 +1285,7 @@ watch(() => props.tab, (newTab) => {
 
 const newClass  = reactive({ 
   name: '', 
+  courseCode: '',
   periodNumber: 1, 
   periodStartTime: '08:00',
   year: '',
@@ -1308,6 +1347,7 @@ async function createNewClass() {
   await createClass({
     classId: classId,
     name: newClass.name.trim(),
+    courseCode: newClass.courseCode.trim(),
     periodNumber: newClass.periodNumber,
     periodStartTime: newClass.periodStartTime,
     year: newClass.year,
@@ -1316,6 +1356,7 @@ async function createNewClass() {
   
   // Reset
   newClass.name = ''
+  newClass.courseCode = ''
   newClass.periodNumber = 1
   newClass.periodStartTime = periodStartTimes.value[1] || '08:00'
   // Keep the same term selection for convenience
@@ -1413,13 +1454,15 @@ function onFileSelected(evt) {
 
         // Extract Academic/Schedule Scoping
         const rawSem = row['Semester'] ?? row['Sem'] ?? row['Schedule'] ?? ''
-        const rawPeriod = row['Period'] ?? row['Section'] ?? ''
+        const rawPeriod = row['Period'] ?? ''
+        const rawSection = row['Section'] ?? row['Sec Section'] ?? ''
         
-        // Smart detected year from Period column pattern "2(Y25)"
-        const detectedYear = extractYearFromPeriod(rawPeriod)
+        // Smart detected year from Period/Section column pattern "2(Y25)"
+        const detectedYear = extractYearFromPeriod(rawPeriod || rawSection)
         const year = row['Year'] ?? detectedYear ?? (activeClass.value?.year || currentSchoolYear.value)
         
-        const periodNumber = rawPeriod ? cleanPeriod(rawPeriod) : (activeClass.value?.periodNumber || '1')
+        const periodNumber = (rawPeriod || rawSection) ? cleanPeriod(rawPeriod || rawSection) : (activeClass.value?.periodNumber || '1')
+        const courseCode = row['Course Code'] ?? row['CourseCode'] ?? (rawSection ? extractCourseCode(rawSection) : '')
         const semester = normalizeSemester(rawSem || (activeClass.value?.semester || '1'))
 
         return { 
@@ -1433,7 +1476,8 @@ function onFileSelected(evt) {
           birthDate: birthDate.trim(),
           semester,
           periodNumber,
-          year
+          year,
+          courseCode
         }
       })
 
@@ -1447,6 +1491,7 @@ function onFileSelected(evt) {
                   year: row.year,
                   semester: row.semester,
                   periodNumber: row.periodNumber,
+                  courseCode: row.courseCode,
                   students: [],
                   selected: true
               }
