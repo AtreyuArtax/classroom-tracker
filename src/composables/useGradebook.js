@@ -418,36 +418,25 @@ export function enterGrade(assessmentId, studentId, pointsEarned, date = null, c
     isPrimary: isFirst
   })
 
+  // If a grade is entered, it is no longer missing
+  const wasMissing = grade.missing
+  grade.missing = false
+
   // 1. Refresh UI instantly for this student and assessment stats
   triggerRef(grades)
   refreshSingleStudent(studentId)
   refreshSingleAssessmentStats(assessmentId)
   
   // 2. Debounce IDB save
-  enqueueDBSave(`${assessmentId}_${studentId}`, () => 
-    gradebookService.addAttempt(assessmentId, studentId, { pointsEarned, date, comment })
-  )
+  enqueueDBSave(`${assessmentId}_${studentId}`, async () => {
+    await gradebookService.addAttempt(assessmentId, studentId, { pointsEarned, date, comment })
+    // If it was previously missing, we need to ensure the DB flag is also cleared
+    if (wasMissing) {
+      await gradebookService.updateGradeFlags(assessmentId, studentId, { missing: false })
+    }
+  })
 }
 
-/**
- * Changes/overwrites the latest grade attempt.
- */
-export function changeGrade(assessmentId, studentId, pointsEarned) {
-  if (!activeClassRecord.value) return
-  
-  const grade = grades.value.find(g => Number(g.assessmentId) === Number(assessmentId) && String(g.studentId) === String(studentId))
-  if (grade && grade.attempts.length > 0) {
-    grade.attempts[grade.attempts.length - 1].pointsEarned = pointsEarned
-  }
-  
-  triggerRef(grades)
-  refreshSingleStudent(studentId)
-  refreshSingleAssessmentStats(assessmentId)
-  
-  enqueueDBSave(`${assessmentId}_${studentId}`, () => 
-    gradebookService.updateLastAttempt(assessmentId, studentId, pointsEarned)
-  )
-}
 
 /**
  * Removes an attempt and refreshes state.
@@ -517,14 +506,20 @@ export function markMissing(assessmentId, studentId, missing) {
     grade = { assessmentId: Number(assessmentId), studentId: String(studentId), classId: activeClassRecord.value.classId, attempts: [] }
     grades.value.push(grade)
   }
+  
   grade.missing = missing
+  // Mutual Exclusivity: If marking as missing, it cannot be excluded
+  if (missing) grade.excluded = false
   
   triggerRef(grades)
   refreshSingleStudent(studentId)
   refreshSingleAssessmentStats(assessmentId)
   
-  enqueueDBSave(`${assessmentId}_${studentId}_miss`, () => 
-    gradebookService.updateGradeFlags(assessmentId, studentId, { missing })
+  enqueueDBSave(`${assessmentId}_${studentId}_flags`, () => 
+    gradebookService.updateGradeFlags(assessmentId, studentId, { 
+      missing: grade.missing, 
+      excluded: grade.excluded 
+    })
   )
 }
 
@@ -539,14 +534,20 @@ export function markExcluded(assessmentId, studentId, excluded) {
     grade = { assessmentId: Number(assessmentId), studentId: String(studentId), classId: activeClassRecord.value.classId, attempts: [] }
     grades.value.push(grade)
   }
+  
   grade.excluded = excluded
+  // Mutual Exclusivity: If excluding, it cannot be missing
+  if (excluded) grade.missing = false
   
   triggerRef(grades)
   refreshSingleStudent(studentId)
   refreshSingleAssessmentStats(assessmentId)
   
-  enqueueDBSave(`${assessmentId}_${studentId}_exc`, () => 
-    gradebookService.updateGradeFlags(assessmentId, studentId, { excluded })
+  enqueueDBSave(`${assessmentId}_${studentId}_flags`, () => 
+    gradebookService.updateGradeFlags(assessmentId, studentId, { 
+      missing: grade.missing, 
+      excluded: grade.excluded 
+    })
   )
 }
 

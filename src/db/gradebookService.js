@@ -181,40 +181,6 @@ export async function addAttempt(assessmentId, studentId, { pointsEarned, date, 
   return plain
 }
 
-/**
- * Updates the most recent attempt for a grade record.
- * If no attempts exist, it behaves like addAttempt.
- */
-export async function updateLastAttempt(assessmentId, studentId, pointsEarned) {
-  const db = await getDB()
-  const assessment = await db.get('assessments', assessmentId)
-  if (!assessment) throw new Error(`Assessment not found: ${assessmentId}`)
-
-  // Note: We allow raw scores higher than total points for bonus marks and scaling
-  const tx = db.transaction('grades', 'readwrite')
-  const store = tx.objectStore('grades')
-  const grade = await _getGradeInTransaction(tx, assessmentId, studentId, assessment.classId)
-  
-  if (grade.attempts.length > 0) {
-    const lastIdx = grade.attempts.length - 1
-    grade.attempts[lastIdx].pointsEarned = pointsEarned
-  } else {
-    grade.attempts.push({
-      attemptId: crypto.randomUUID(),
-      pointsEarned,
-      date: new Date().toISOString(),
-      isPrimary: true,
-      comment: ''
-    })
-  }
-  
-  const plain = JSON.parse(JSON.stringify(grade))
-  await store.put(plain)
-  await tx.done
-
-  hasUnsyncedChanges.value = true
-  return plain
-}
 
 
 /**

@@ -449,9 +449,6 @@
         <button class="context-menu__item" @click="startNewAttempt(contextMenu.assessmentId)">
           <Plus :size="14" /> New Attempt...
         </button>
-        <button v-if="gradeMap[contextMenu.assessmentId]?.[studentId]?.attempts?.length > 0" class="context-menu__item" @click="startEdit(contextMenu.assessmentId, true)">
-          <Pencil :size="14" /> Change Mark
-        </button>
         <div class="context-menu__divider"></div>
         <button class="context-menu__item" @click="toggleMissing(contextMenu.assessmentId)">
           <AlertCircle :size="14" /> {{ gradeMap[contextMenu.assessmentId]?.[studentId]?.missing ? 'Unmark Missing' : 'Mark Missing' }}
@@ -819,9 +816,6 @@ import {
   gradeMap, 
   openAddAssessment,
   enterGrade,
-  changeGrade,
-  markMissing,
-  markExcluded,
   clearGrade,
   removeAttempt,
   setPrimaryAttempt,
@@ -1388,17 +1382,15 @@ const editInput = ref(null)
 const editOriginalValue = ref(null)
 const contextMenu = ref(null) // { x, y, assessmentId }
 const attemptsPopover = ref(null) // { x, y, assessmentId }
-const isChangeMode = ref(false)
 const newAttemptForm = ref(null)
 
 // ─── High-Fidelity Methods ────────────────────────────────────────────────────
-function startEdit(assessmentId, changeMode = false) {
+function startEdit(assessmentId) {
   const g = gradeMap.value[assessmentId]?.[props.studentId]
   const val = g?.resolvedScore ?? null
   editingCell.value = { assessmentId }
   editOriginalValue.value = val
   editInput.value = val
-  isChangeMode.value = changeMode
   
   // Focus the input in the next tick
   setTimeout(() => {
@@ -1451,11 +1443,7 @@ async function saveEdit() {
   
   // Note: High scores are allowed for bonus/scaling
 
-  if (isChangeMode.value) {
-    await changeGrade(assessmentId, props.studentId, points)
-  } else {
-    await enterGrade(assessmentId, props.studentId, points)
-  }
+  await enterGrade(assessmentId, props.studentId, points)
   
   editingCell.value = null
   editOriginalValue.value = null
