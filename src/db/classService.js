@@ -473,7 +473,7 @@ export async function clearAllData() {
     
     // Seed default settings so the app isn't in a broken state after reload
     const settings = {
-        schemaVersion: 23,
+        schemaVersion: 26,
         gridSize: { rows: 6, cols: 6 },
         currentYear: getCurrentSchoolYear(),
         currentSemester: getCurrentSemester(),

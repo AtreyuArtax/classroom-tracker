@@ -6,10 +6,10 @@
  * representing the full database state.
  */
 
-export const CURRENT_SCHEMA = 23
+export const CURRENT_SCHEMA = 26
 
 /**
- * Migrates a backup data object to the current schema version (23).
+ * Migrates a backup data object to the current schema version (25).
  *
  * @param {Object} data - { settings, classes, events, assessments, grades, schemaVersion }
  * @returns {Object} - The migrated data object.
@@ -323,6 +323,40 @@ export function migrateData(data) {
   // ── Version 23 (Composite Indices - no object change needed) ─────────
   if (version < 23) {
     version = 23
+  }
+
+  // ── Version 24 (Student Archive) ─────────────────────────────────────
+  if (version < 24) {
+    for (const cls of migrated.classes) {
+      if (cls.students) {
+        for (const studentId of Object.keys(cls.students)) {
+          if (cls.students[studentId].archived === undefined) {
+            cls.students[studentId].archived = false
+          }
+        }
+      }
+    }
+    version = 24
+  }
+
+  // ── Version 25 (Course Code) ─────────────────────────────────────────
+  if (version < 25) {
+    for (const cls of migrated.classes) {
+      if (cls.courseCode === undefined) {
+        cls.courseCode = ''
+      }
+    }
+    version = 25
+  }
+
+  // ── Version 26 (Retest Policy Default) ───────────────────────────────
+  if (version < 26) {
+    for (const assessment of migrated.assessments) {
+      if (!assessment.retestPolicy) {
+        assessment.retestPolicy = 'highest'
+      }
+    }
+    version = 26
   }
 
   migrated.schemaVersion = currentVersion

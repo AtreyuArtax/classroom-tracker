@@ -941,7 +941,7 @@
                 <span class="grades__attempt-date">{{ formatDateShort(att.date) }}</span>
               </div>
               <div class="grades__attempt-counting">
-                <template v-if="attemptsPopover.retestPolicy === 'Manual'">
+                <template v-if="attemptsPopover.retestPolicy === 'manual'">
                   <input 
                     type="radio" 
                     :name="'primary-' + attemptsPopover.sId" 
@@ -1253,9 +1253,9 @@ const studentTrends = computed(() => {
 
 const studentCorrelationAlert = computed(() => {
   const studentId = selectedStudentId.value
-  if (!studentId || !studentAttendance.value) return null
+  const stats = studentAbsenceTotals.value[studentId]
+  if (!studentId || !stats) return null
 
-  const stats = studentAttendance.value
   const grade = classGrades.value[studentId]?.overallGrade
 
   // Alert if grade < 70% and absences >= 3
@@ -1944,7 +1944,7 @@ function startEditAssessment(assessment) {
     date: assessment.date,
     totalPoints: assessment.totalPoints,
     scaledTotal: assessment.scaledTotal,
-    retestPolicy: assessment.retestPolicy
+    retestPolicy: assessment.retestPolicy || 'highest'
   }
   
   showAddAssessmentModal.value = true
@@ -2037,7 +2037,7 @@ function openAttempts(e, studentId, assessmentId) {
     aId,
     studentName: `${student.firstName} ${student.lastName}`,
     assessmentName: assessment.name,
-    retestPolicy: assessment.retestPolicy,
+    retestPolicy: assessment.retestPolicy || 'highest',
     attempts: grade.attempts || [],
     totalPoints: assessment.totalPoints,
     resolvedScore: grade.resolvedScore

@@ -17,7 +17,7 @@ import { openDB } from 'idb'
 import { getCurrentSchoolYear, getCurrentSemester } from '../utils/dates.js'
 
 const DB_NAME = 'classroomTrackerDB'
-const DB_VERSION = 25
+const DB_VERSION = 26
 
 /**
  * Cached promise — set synchronously before the first await so every
@@ -90,7 +90,7 @@ export function getDB() {
       if (oldVersion === 0) {
         transaction.objectStore('settings').put(
           {
-            schemaVersion: 23,
+            schemaVersion: 26,
             gridSize: { rows: 6, cols: 6 },
             currentYear: getCurrentSchoolYear(),
             currentSemester: getCurrentSemester(),
@@ -652,6 +652,19 @@ export function getDB() {
             cls.courseCode = ''
             const plain = JSON.parse(JSON.stringify(cls))
             await classesStore.put(plain)
+          }
+        }
+      }
+      // --- VERSION 26 MIGRATION (Retest Policy) ---
+      if (oldVersion < 26) {
+        console.log('[IDB] Migrating to v26: Initializing retestPolicy for all assessments...')
+        const assessmentsStore = transaction.objectStore('assessments')
+        const allAssessments = await assessmentsStore.getAll()
+        
+        for (const assessment of allAssessments) {
+          if (!assessment.retestPolicy) {
+            assessment.retestPolicy = 'highest'
+            await assessmentsStore.put(assessment)
           }
         }
       }

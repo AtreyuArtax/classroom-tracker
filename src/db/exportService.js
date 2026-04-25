@@ -96,7 +96,7 @@ export async function exportGradebookToExcel({
       } else if (entry.missing) {
         rowData.push('MISSING');
       } else {
-        const score = typeof entry.score === 'number' ? entry.score : 0;
+        const score = typeof entry.resolvedScore === 'number' ? entry.resolvedScore : 0;
         const total = a.totalPoints || 1;
         const pct = (score / total);
         rowData.push(isNaN(pct) ? 0 : pct); 
