@@ -586,9 +586,10 @@ async function createClass(opts) {
         gridSize: defaultGrid,
         gradebookUnits: [],
         gradebookCategories: [
-            { categoryId: `cat_prod_${Date.now()}`, name: 'Product', weight: 70 },
-            { categoryId: `cat_obs_${Date.now()}`, name: 'Observation', weight: 15 },
-            { categoryId: `cat_conv_${Date.now()}`, name: 'Conversation', weight: 15 }
+            { categoryId: `cat_asmt_${Date.now()}`, name: 'Assessments', weight: 60 },
+            { categoryId: `cat_act_${Date.now()}`, name: 'Activities', weight: 10 },
+            { categoryId: `cat_culm_${Date.now()}`, name: 'Culminating', weight: 15 },
+            { categoryId: `cat_exam_${Date.now()}`, name: 'Final Exam', weight: 15 }
         ],
         students: {},
     }

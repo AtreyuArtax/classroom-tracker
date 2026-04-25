@@ -650,9 +650,10 @@ export async function bulkImportClasses(groups) {
                 gridSize: { rows: 6, cols: 6 },
                 gradebookUnits: [],
                 gradebookCategories: [
-                    { categoryId: crypto.randomUUID(), name: 'Product', weight: 70 },
-                    { categoryId: crypto.randomUUID(), name: 'Observation', weight: 15 },
-                    { categoryId: crypto.randomUUID(), name: 'Conversation', weight: 15 }
+                    { categoryId: crypto.randomUUID(), name: 'Assessments', weight: 60 },
+                    { categoryId: crypto.randomUUID(), name: 'Activities', weight: 10 },
+                    { categoryId: crypto.randomUUID(), name: 'Culminating', weight: 15 },
+                    { categoryId: crypto.randomUUID(), name: 'Final Exam', weight: 15 }
                 ],
                 students: {}
             }
