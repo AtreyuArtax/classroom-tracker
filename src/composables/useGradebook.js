@@ -286,6 +286,7 @@ const dbSaveQueue = new Map()
 let dbSaveTimer = null
 
 function enqueueDBSave(key, saveFn) {
+  const currentClassId = activeClassRecord.value?.classId // Capture current class context
   dbSaveQueue.set(key, saveFn)
   if (dbSaveTimer) clearTimeout(dbSaveTimer)
   dbSaveTimer = setTimeout(async () => {
@@ -299,8 +300,8 @@ function enqueueDBSave(key, saveFn) {
         alert('Data sync error: Some recent mark changes may not have saved. Please check your connection or refresh.')
       }
     }
-    // Optional: silently refresh background state after a batch saves to solidify tracking IDs
-    if (activeClassRecord.value) {
+    // Guard against class switch during the 500ms debounce window
+    if (activeClassRecord.value && activeClassRecord.value.classId === currentClassId) {
       grades.value = await gradebookService.getGradesByClass(activeClassRecord.value.classId)
       if (analyticsMode.value) refreshClassAnalytics() // Keep analytics in sync if it was open
     }
