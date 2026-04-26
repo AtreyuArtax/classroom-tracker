@@ -19,17 +19,58 @@
 import { ref, computed, watch } from 'vue'
 import * as classService from '../db/classService.js'
 import * as eventService from '../db/eventService.js'
+import { getDB } from '../db/index.js'
 import { getDateRangeForPeriod, toMinutes } from '../db/eventService.js'
 import { useClassroom } from './useClassroom.js'
 
-export function useStudentDossier() {
-    const { activeStudentEvents, getStudentEventHistory } = useClassroom()
+export function useStudentDossier(periodRef = null, classIdRef = null) {
+    const { activeStudentEvents, getStudentEventHistory, behaviorCodes, academicTerms } = useClassroom()
 
     // ─── selection state ──────────────────────────────────────────────────────
 
     const selectedStudentId = ref(null)
     const selectedClassId = ref(null)
-    const selectedPeriod = ref('month')  // 'week' | 'month' | 'semester' | 'all'
+    const classStartDate = ref(null)
+    const selectedClassRecord = ref(null)
+    const selectedPeriod = periodRef || ref('month')
+
+    const matchingTerm = computed(() => {
+        const cls = selectedClassRecord.value
+        if (!cls) return null
+        return academicTerms.value.find(t => t.year === cls.year && String(t.semester) === String(cls.semester))
+    })
+
+    /** Fetch the earliest class event to anchor the "All" period rate */
+    async function _fetchClassData(id) {
+        if (!id) { 
+            classStartDate.value = null
+            selectedClassRecord.value = null
+            return 
+        }
+        try {
+            const db = await getDB()
+            
+            // 1. Fetch class record for matchingTerm
+            selectedClassRecord.value = await classService.getClass(id)
+
+            // 2. Fetch earliest event (fallback anchor)
+            const firstEvent = await db.getFromIndex('events', 'by_classId_timestamp', id)
+            classStartDate.value = firstEvent ? firstEvent.timestamp.slice(0, 10) : null
+        } catch (err) {
+            console.error('Failed to fetch class data:', err)
+            classStartDate.value = null
+            selectedClassRecord.value = null
+        }
+    }
+
+    // Watch external classIdRef (for Student360)
+    if (classIdRef) {
+        watch(classIdRef, (newId) => _fetchClassData(newId), { immediate: true })
+    }
+    // Watch internal selectedClassId (for sidebar/loadStudent)
+    watch(selectedClassId, (newId) => {
+        if (!classIdRef || !classIdRef.value) _fetchClassData(newId)
+    })
 
     // ─── sidebar roster ───────────────────────────────────────────────────────
 
@@ -57,9 +98,11 @@ export function useStudentDossier() {
      * @param {string} classId
      */
     async function loadSidebarClass(classId) {
-        if (!classId) { _sidebarClassRecord.value = null; return }
+        if (!classId) { _sidebarClassRecord.value = null; selectedClassRecord.value = null; return }
         try {
-            _sidebarClassRecord.value = await classService.getClass(classId)
+            const cls = await classService.getClass(classId)
+            _sidebarClassRecord.value = cls
+            selectedClassRecord.value = cls
         } catch (err) {
             console.error('useStudentDossier.loadSidebarClass failed:', err)
             _sidebarClassRecord.value = null
@@ -85,8 +128,8 @@ export function useStudentDossier() {
         selectedStudentId.value = studentId
         loading.value = true
         try {
-            // Load student record
             const cls = await classService.getClass(classId)
+            selectedClassRecord.value = cls
             student.value = cls?.students[studentId] || null
             
             // Re-fetch global student event history
@@ -106,23 +149,83 @@ export function useStudentDossier() {
         }
     }
 
-    async function _fetchEvents() {
-        // Redundant - we now use the global activeStudentEvents + getStudentEventHistory
-        return
+    /**
+     * Helper to count school days (weekdays) in a range.
+     * @param {Object} range - { from, to }
+     * @param {string} fallbackStart - ISO date string
+     * @param {number} cap - max days (instructionalDays)
+     * @returns {number|null}
+     */
+    function _countSchoolDays(range, fallbackStart, cap = 999) {
+        const toDate = range.to ? new Date(range.to + 'T23:59:59') : new Date()
+        let fromDate
+
+        if (range.from) {
+            fromDate = new Date(range.from)
+        } else if (fallbackStart) {
+            fromDate = new Date(fallbackStart)
+        } else {
+            return null
+        }
+
+        let count = 0
+        let cur = new Date(fromDate)
+        while (cur <= toDate) {
+            const day = cur.getDay()
+            if (day !== 0 && day !== 6) count++
+            cur.setDate(cur.getDate() + 1)
+        }
+
+        return Math.min(count, cap)
     }
 
+    /**
+     * Period-aware slice of events. Exported so callers (Student360.vue) can use it
+     * for downstream computeds without re-implementing the same filter.
+     */
+    const filteredEvents = computed(() => {
+        const range = getDateRangeForPeriod(selectedPeriod.value)
+        if (!range || (!range.from && !range.to)) return events.value
+        return events.value.filter(e => {
+            if (range.from && e.timestamp < range.from) return false
+            if (range.to && e.timestamp > range.to + 'T23:59:59') return false
+            return true
+        })
+    })
+
     const stats = computed(() => {
-        const e = events.value.filter(ev => !ev.superseded)
+        // Operate on the period-filtered, non-superseded slice
+        const e = filteredEvents.value.filter(ev => !ev.superseded)
 
-        const washroomEvents = e.filter(ev => (ev.code === 'w' || (behaviorCodes.value && behaviorCodes.value.find(c => c.codeKey === ev.code)?.type === 'toggle')) && ev.duration != null)
-        const absences = e.filter(ev => ev.code === 'a').length
-        const lates = e.filter(ev => ev.code === 'l')
-        const redirects = e.filter(ev => ev.category === 'redirect').length
+        const washroomEvents = e.filter(ev => {
+            const config = behaviorCodes.value.find(c => c.codeKey === ev.code)
+            return config?.type === 'toggle' && ev.duration != null
+        })
+        const absenceEvents = e.filter(ev => ev.code === 'a')
+        const lateEvents    = e.filter(ev => ev.code === 'l')
+        const redirects     = e.filter(ev => ev.category === 'redirect').length
         const parentContacts = e.filter(ev => ev.code === 'pc' || ev.category === 'communication')
-        const noteEvents = e.filter(ev => ev.note && ev.code !== 'ac' && ev.code !== 'pc' && ev.category !== 'communication')
+        const noteEvents    = e.filter(ev => ev.note && ev.code !== 'ac' && ev.code !== 'pc' && ev.category !== 'communication')
 
+        const absences         = absenceEvents.length
+        const testDayAbsences  = absenceEvents.filter(ev => ev.testDay).length
         const totalWashroomMins = washroomEvents.reduce((sum, ev) => sum + toMinutes(ev.duration), 0)
-        const totalLateMins = lates.reduce((sum, ev) => sum + toMinutes(ev.duration), 0)
+        const totalLateMins     = lateEvents.reduce((sum, ev) => sum + toMinutes(ev.duration), 0)
+
+        // Count actual weekdays in the period as the school-day denominator.
+        // This avoids the old bug where students with only absences logged would
+        // get 0% because classDays equalled absences.
+        const range = getDateRangeForPeriod(selectedPeriod.value)
+        
+        // Determine anchor and cap for 'all'
+        const term = matchingTerm.value
+        const anchor = (selectedPeriod.value === 'all' && term?.startDate) ? term.startDate : classStartDate.value
+        const cap = (selectedPeriod.value === 'all' && term?.instructionalDays) ? term.instructionalDays : 999
+
+        const classDays = _countSchoolDays(range, anchor, cap)
+        const attendanceRate = classDays
+            ? Math.round(Math.min(100, Math.max(0, ((classDays - absences) / classDays) * 100)))
+            : (absences === 0 && anchor ? 100 : (absences === 0 ? null : 0))
 
         return {
             washroomTrips: washroomEvents.length,
@@ -131,9 +234,10 @@ export function useStudentDossier() {
                 ? Math.round((totalWashroomMins / washroomEvents.length) * 2) / 2
                 : 0,
             absences,
-            lateCount: lates.length,
-            avgLateMinutes: lates.length
-                ? Math.round((totalLateMins / lates.length) * 2) / 2
+            testDayAbsences,
+            lates: lateEvents.length,
+            avgLateMinutes: lateEvents.length
+                ? Math.round((totalLateMins / lateEvents.length) * 2) / 2
                 : 0,
             redirects,
             parentContactCount: parentContacts.length,
@@ -141,6 +245,8 @@ export function useStudentDossier() {
             assessmentConversations: qualitativeEvents.value.length,
             demonstratesUnderstanding: qualitativeEvents.value.filter(e => e.acOutcome === 'demonstrates_understanding').length,
             gapConfirmed: qualitativeEvents.value.filter(e => e.acOutcome === 'gap_confirmed').length,
+            attendanceRate,
+            classDays,
         }
     })
 
@@ -258,6 +364,7 @@ export function useStudentDossier() {
         loadSidebarClass,
         // dossier
         events,
+        filteredEvents,   // period-aware slice — export so callers don't re-implement
         noteEvents,
         communicationEvents,
         qualitativeEvents,

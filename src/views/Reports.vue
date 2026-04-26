@@ -65,181 +65,99 @@
 
               <div v-if="loading" class="reports__loading" aria-live="polite">Loading…</div>
 
-              <div v-else class="reports__dashboard">
-                <!-- Row 1: Attendance -->
-                <div class="reports__dashboard-card">
-                  <div class="reports__card-header">
-                    <h3 class="reports__card-title"><UserCheck :size="18" /> Attendance</h3>
-                  </div>
-                  <div class="reports__card-grid">
-                    <!-- Primary Row -->
-                    <div class="reports__metric">
-                      <span class="reports__metric-label">Total Absences</span>
-                      <span class="reports__metric-value">{{ aggregates.attendance.totalAbsences }}</span>
-                      <span v-if="aggregates.attendance.testDayAbsences > 0" class="reports__metric-sub">
-                        {{ aggregates.attendance.testDayAbsences }} on test days
-                      </span>
-                    </div>
-                    <div class="reports__metric">
-                      <span class="reports__metric-label">Total Lates</span>
-                      <span class="reports__metric-value">{{ aggregates.attendance.totalLates }}</span>
-                      <span v-if="aggregates.attendance.testDayLates > 0" class="reports__metric-sub">
-                        {{ aggregates.attendance.testDayLates }} on test days
-                      </span>
-                    </div>
-                    <div class="reports__metric">
-                      <span class="reports__metric-label">Avg / Student</span>
-                      <span class="reports__metric-value">{{ aggregates.attendance.avgAbsences }}</span>
-                    </div>
+              <div v-else class="reports__overview">
 
-                    <!-- Secondary Row: Weekly & Duration Metrics -->
-                    <div class="reports__metric reports__metric--border">
-                      <span class="reports__metric-label">Absent / Week</span>
-                      <span class="reports__metric-value reports__metric-value--small">{{ aggregates.attendance.avgAbsencesPerWeek }}</span>
-                    </div>
-                    <div class="reports__metric reports__metric--border">
-                      <span class="reports__metric-label">Late / Week</span>
-                      <span class="reports__metric-value reports__metric-value--small">{{ aggregates.attendance.avgLatesPerWeek }}</span>
-                    </div>
-                    <div class="reports__metric reports__metric--border">
-                      <span class="reports__metric-label">Avg Late Time</span>
-                      <span class="reports__metric-value reports__metric-value--small">{{ aggregates.attendance.avgLateDuration }}<small>min</small></span>
-                    </div>
+                <!-- ── Section 1: Headline Stats ──────────────────────────── -->
+                <div class="reports__headline-grid">
+
+                  <!-- Card 1: Attendance -->
+                  <div class="reports__headline-card">
+                    <div class="reports__headline-label"><UserCheck :size="13" /> CLASS ATTENDANCE</div>
+                    <div v-if="attendanceRate !== null" class="reports__headline-rate">{{ attendanceRate }}<span class="reports__headline-unit">%</span></div>
+                    <div class="reports__headline-sub">{{ aggregates.attendance.totalAbsences }} absences · {{ aggregates.attendance.totalLates }} lates</div>
+                    <div v-if="attendanceRate === null" class="reports__headline-sub">No attendance data for rate</div>
+                    <div v-if="aggregates.attendance.testDayAbsences > 0" class="reports__headline-detail">{{ aggregates.attendance.testDayAbsences }} absences on test days</div>
+                    <div v-if="chronicallyAbsentCount > 0" class="reports__headline-alert"><AlertTriangle :size="12" /> {{ chronicallyAbsentCount }} chronically absent (5+)</div>
                   </div>
-                  <div class="reports__card-section">
-                    <h4 class="reports__section-title">Highest Absentees</h4>
-                    <ul v-if="aggregates.attendance.topAbsentees.length" class="reports__list">
-                      <li v-for="s in aggregates.attendance.topAbsentees" :key="s.name">
-                        <span class="reports__list-name">{{ s.name }}</span>
-                        <span class="reports__list-count">{{ s.count }}</span>
-                      </li>
-                    </ul>
-                    <p v-else class="reports__no-data">No absences recorded.</p>
+
+                  <!-- Card 2: Washroom -->
+                  <div class="reports__headline-card">
+                    <div class="reports__headline-label"><Toilet :size="13" /> WASHROOM</div>
+                    <div class="reports__headline-rate">{{ tripsPerStudentAvg }}<span class="reports__headline-unit"> trips/student</span></div>
+                    <div class="reports__headline-sub">{{ aggregates.washroom.avgDuration }} min/trip · {{ aggregates.washroom.totalTrips }} total</div>
+                    <div v-if="aggregates.washroom.testDayTrips > 0" class="reports__headline-detail">{{ aggregates.washroom.testDayTrips }} trips on test days</div>
+                    <div v-if="aggregates.washroom.longTrips.length > 0" class="reports__headline-alert"><AlertTriangle :size="12" /> {{ aggregates.washroom.longTrips.length }} long trip{{ aggregates.washroom.longTrips.length !== 1 ? 's' : '' }} (&gt; 15 min)</div>
                   </div>
+
+                  <!-- Card 3: Behavior -->
+                  <div class="reports__headline-card">
+                    <div class="reports__headline-label"><Activity :size="13" /> BEHAVIOR</div>
+                    <div class="reports__headline-rate">{{ aggregates.behavior.totalRedirects }}<span class="reports__headline-unit"> redirect/device</span></div>
+                    <div class="reports__headline-sub">{{ aggregates.behavior.totalParentContacts }} parent contacts</div>
+                    <div class="reports__headline-detail">{{ notesLoggedCount }} notes logged</div>
+                    <div v-if="aggregates.behavior.redirectAlerts.length > 0" class="reports__headline-alert"><AlertTriangle :size="12" /> {{ aggregates.behavior.redirectAlerts.length }} student{{ aggregates.behavior.redirectAlerts.length !== 1 ? 's' : '' }} with 3+ redirects</div>
+                  </div>
+
                 </div>
 
-                <!-- Row 2: Washroom -->
-                <div class="reports__dashboard-card">
-                  <div class="reports__card-header">
-                    <h3 class="reports__card-title"><Toilet :size="18" /> Washroom</h3>
+                <!-- ── Section 2: Follow Up + Washroom Detail ─────────────── -->
+                <div class="reports__two-col">
+
+                  <!-- Left: Follow Up -->
+                  <div class="reports__followup-col">
+                    <h4 class="reports__col-title">FOLLOW UP</h4>
+                    <div v-if="followUpItems.length === 0" class="reports__followup-empty">
+                      <span class="reports__followup-ok">✓ No students flagged for follow up this period</span>
+                    </div>
+                    <ul v-else class="reports__followup-list">
+                      <li
+                        v-for="item in followUpVisible"
+                        :key="item.studentId + '-' + item.reason"
+                        class="reports__followup-item"
+                        :class="`reports__followup-item--${item.severity}`"
+                        role="button"
+                        tabindex="0"
+                        @click="onSelectStudent(item.studentId)"
+                        @keydown.enter="onSelectStudent(item.studentId)"
+                      >
+                        <span class="reports__followup-name">{{ item.name }}</span>
+                        <span class="reports__followup-reason">{{ item.reason }}</span>
+                        <span class="reports__followup-arrow">→</span>
+                      </li>
+                    </ul>
+                    <button
+                      v-if="followUpItems.length > 8 && !followUpExpanded"
+                      class="reports__followup-more"
+                      @click="followUpExpanded = true"
+                    >and {{ followUpItems.length - 8 }} more →</button>
                   </div>
-                  <div class="reports__card-grid">
-                    <!-- Primary row -->
-                    <div class="reports__metric">
-                      <span class="reports__metric-label">Total Trips</span>
-                      <span class="reports__metric-value">{{ aggregates.washroom.totalTrips }}</span>
-                      <span v-if="aggregates.washroom.testDayTrips > 0" class="reports__metric-sub">
-                        {{ aggregates.washroom.testDayTrips }} on test days
-                      </span>
-                    </div>
-                    <div class="reports__metric">
-                      <span class="reports__metric-label">Total Time</span>
-                      <span class="reports__metric-value">{{ aggregates.washroom.totalDuration }}<small>min</small></span>
-                    </div>
-                    <div class="reports__metric">
-                      <span class="reports__metric-label">Avg Duration</span>
-                      <span class="reports__metric-value">{{ aggregates.washroom.avgDuration }}<small>min</small></span>
-                    </div>
-                    
-                    <!-- Secondary row -->
-                    <div class="reports__metric reports__metric--border">
-                      <span class="reports__metric-label">Trips / Week</span>
-                      <span class="reports__metric-value reports__metric-value--small">{{ aggregates.washroom.avgTripsPerWeek }}</span>
-                    </div>
-                    <div class="reports__metric reports__metric--border">
-                      <span class="reports__metric-label">Mins / Week</span>
-                      <span class="reports__metric-value reports__metric-value--small">{{ aggregates.washroom.avgMinsPerWeek }}<small>m</small></span>
-                    </div>
-                  </div>
-                  <!-- Chart -->
-                  <div class="reports__card-section">
-                    <h4 class="reports__section-title">Trips per Student</h4>
+
+                  <!-- Right: Washroom Detail -->
+                  <div class="reports__washroom-col">
+                    <h4 class="reports__col-title">WASHROOM DETAIL</h4>
                     <div v-if="aggregates.washroom.studentTrips.length" class="reports__chart-container">
                       <Bar :data="washroomChartData" :options="washroomChartOptions" />
                     </div>
                     <p v-else class="reports__no-data">No washroom trips recorded.</p>
-                  </div>
-                  <!-- Long Trips -->
-                  <div v-if="aggregates.washroom.longTrips.length" class="reports__card-section">
-                    <h4 class="reports__section-title reports__section-title--alert">Long Trips (> 15m)</h4>
-                    <ul class="reports__list reports__list--alert">
-                      <li v-for="t in aggregates.washroom.longTrips" :key="t.date">
-                        <span>{{ t.name }} — {{ t.date }}</span>
-                        <span class="reports__list-count">{{ t.duration.toFixed(1) }}m</span>
-                      </li>
-                    </ul>
-                  </div>
-                </div>
-
-                <!-- Row 3: Behavior -->
-                <div class="reports__dashboard-card">
-                  <div class="reports__card-header">
-                    <h3 class="reports__card-title"><Activity :size="18" /> Behavior</h3>
-                  </div>
-                  <div class="reports__card-grid">
-                    <div class="reports__metric">
-                      <span class="reports__metric-label">Redirect/Device</span>
-                      <span class="reports__metric-value">{{ aggregates.behavior.totalRedirects }}</span>
-                      <span v-if="aggregates.behavior.testDayRedirects > 0" class="reports__metric-sub">
-                        {{ aggregates.behavior.testDayRedirects }} on test days
-                      </span>
+                    <div v-if="aggregates.washroom.longTrips.length" class="reports__long-trips">
+                      <h4 class="reports__section-title reports__section-title--alert">Long Trips (&gt; 15 min)</h4>
+                      <ul class="reports__list reports__list--alert">
+                        <li v-for="t in aggregates.washroom.longTrips" :key="t.date + t.name">
+                          <span>{{ t.name }} — {{ t.date }}</span>
+                          <span class="reports__list-count">{{ t.duration.toFixed(1) }} min</span>
+                        </li>
+                      </ul>
                     </div>
                   </div>
-                  <div v-if="aggregates.behavior.redirectAlerts.length" class="reports__card-section">
-                    <h4 class="reports__section-title reports__section-title--alert">Multiple Redirects (3+)</h4>
-                    <ul class="reports__list reports__list--alert">
-                      <li v-for="name in aggregates.behavior.redirectAlerts" :key="name">
-                        <span class="reports__list-name">{{ name }}</span>
-                      </li>
-                    </ul>
-                  </div>
+
                 </div>
 
-                <!-- Correlations Card -->
-                <div v-if="correlationInsights" class="reports__dashboard-card reports__dashboard-card--insight">
-                  <div class="reports__card-header">
-                    <h3 class="reports__card-title"><LayoutDashboard :size="18" /> Trends & Correlations</h3>
-                  </div>
-                  <div class="reports__insight-content">
-                    <p class="reports__insight-text">
-                      Students with <strong>high absences (3+)</strong> average <span class="reports__insight-val">{{ correlationInsights.highAbsenceAvg }}%</span>, 
-                      compared to <span class="reports__insight-val">{{ correlationInsights.lowAbsenceAvg }}%</span> for those with regular attendance.
-                    </p>
-                    <div class="reports__insight-stat">
-                      <span class="reports__insight-label">Attendance Impact:</span>
-                      <span class="reports__insight-diff" :class="'reports__insight-diff--' + (correlationInsights.diff > 0 ? 'bad' : 'good')">
-                        {{ correlationInsights.diff > 0 ? '-' : '+' }}{{ Math.abs(correlationInsights.diff) }}% {{ correlationInsights.impactLevel }}
-                      </span>
-                    </div>
-                  </div>
                 </div>
-
-                <!-- Recent Situational Notes Card -->
-                <div class="reports__dashboard-card">
-                  <div class="reports__card-header">
-                    <h3 class="reports__card-title"><ClipboardList :size="18" /> Recent Classroom Logs</h3>
-                  </div>
-                  <div class="reports__card-section">
-                    <ul v-if="recentNotes.length" class="reports__note-list">
-                      <li v-for="note in recentNotes" :key="note.eventId" class="reports__note-item">
-                        <div class="reports__note-meta">
-                          <span class="reports__note-student">{{ studentsMap[note.studentId]?.firstName }} {{ studentsMap[note.studentId]?.lastName }}</span>
-                          <span class="reports__note-date">{{ formatTimestamp(note.timestamp) }}</span>
-                        </div>
-                        <p class="reports__note-text">{{ note.note }}</p>
-                      </li>
-                    </ul>
-                    <div v-else class="reports__no-data" style="padding: 40px; text-align: center;">
-                      No situational notes recorded in this period.
-                    </div>
-                  </div>
-                </div>
-              </div>
+              </template>
             </template>
-          </template>
 
-      </main>
-    </div>
+        </main>
+      </div>
 
 
     <!-- Batch Print Configuration Modal -->
@@ -362,7 +280,7 @@ import { ref, reactive, computed, watch, defineComponent, h, onMounted, onUnmoun
 import { 
   BarChart2, Download, Trash2, PlusCircle, ChevronLeft, 
   LayoutDashboard, Database, UserCheck, Toilet, Activity, 
-  FolderOpen, GraduationCap, Printer, X, ClipboardList
+  FolderOpen, GraduationCap, Printer, X, ClipboardList, AlertTriangle
 } from 'lucide-vue-next'
 import { resolveIcon }         from '../utils/icons.js'
 import { useClassroom }        from '../composables/useClassroom.js'
@@ -1078,6 +996,129 @@ const washroomChartData = computed(() => {
     }]
   }
 })
+
+// ─── New overview computed properties ────────────────────────────────────────
+
+/** Attendance rate as a percentage string, or null if data is insufficient */
+const attendanceRate = computed(() => {
+  const studentCount = Object.keys(reportStudents.value).length
+  if (studentCount === 0) return null
+  const dates = new Set(
+    reportData.value.filter(e => !e.superseded).map(e => e.timestamp.slice(0, 10))
+  )
+  const distinctDays = dates.size
+  if (distinctDays === 0) return null
+  const possible = studentCount * distinctDays
+  const absences = aggregates.attendance.totalAbsences
+  return ((possible - absences) / possible * 100).toFixed(1)
+})
+
+/** Count of students with 5+ absences in the selected period */
+const chronicallyAbsentCount = computed(() => {
+  const map = {}
+  reportData.value.forEach(e => {
+    if (e.code === 'a' && !e.superseded) {
+      map[e.studentId] = (map[e.studentId] ?? 0) + 1
+    }
+  })
+  return Object.values(map).filter(c => c >= 5).length
+})
+
+/** Average washroom trips per student (total trips / active student count) */
+const tripsPerStudentAvg = computed(() => {
+  const studentCount = Object.keys(reportStudents.value).length
+  if (studentCount === 0) return '0.0'
+  return (aggregates.washroom.totalTrips / studentCount).toFixed(1)
+})
+
+/** Count of events with notes (excluding attendance/washroom codes) */
+const notesLoggedCount = computed(() =>
+  reportData.value.filter(e => e.note && e.code !== 'a' && e.code !== 'l' && e.code !== 'w' && !e.superseded).length
+)
+
+/** Toggle for showing all Follow Up items beyond the first 8 */
+const followUpExpanded = ref(false)
+
+/** Ranked Follow Up list — built fresh from reportData, sorted High→Medium→Low */
+const followUpItems = computed(() => {
+  const items = []
+  const students = reportStudents.value
+  const washCodes = behaviorCodes.value.filter(c => c.type === 'toggle').map(c => c.codeKey)
+
+  // Build per-student absence and washroom maps directly from raw events
+  const absMap = {}
+  const washMap = {}
+  reportData.value.forEach(e => {
+    if (e.superseded) return
+    if (e.code === 'a') {
+      absMap[e.studentId] = (absMap[e.studentId] ?? 0) + 1
+    }
+    if (washCodes.includes(e.code) && e.duration != null) {
+      if (!washMap[e.studentId]) washMap[e.studentId] = []
+      washMap[e.studentId].push(toMinutes(e.duration))
+    }
+  })
+
+  const nameFor = id => students[id] ? `${students[id].lastName}, ${students[id].firstName}` : id
+
+  // 1. High: 5+ absences
+  Object.entries(absMap).forEach(([id, count]) => {
+    if (count >= 5 && students[id]) {
+      items.push({ studentId: id, name: nameFor(id), reason: `${count} absences`, severity: 'high', sortVal: count })
+    }
+  })
+
+  // 2. High: Grade below 60% (optional, only when grades loaded)
+  if (classGrades.value && Object.keys(classGrades.value).length > 0) {
+    Object.entries(classGrades.value).forEach(([id, data]) => {
+      if (data.overallGrade != null && data.overallGrade < 60 && students[id]) {
+        const alreadyHigh = items.some(i => i.studentId === id && i.severity === 'high')
+        if (!alreadyHigh) {
+          items.push({ studentId: id, name: nameFor(id), reason: `Grade at ${Math.round(data.overallGrade)}%`, severity: 'high', sortVal: 100 - data.overallGrade })
+        }
+      }
+    })
+  }
+
+  // 3. Medium: 3–4 absences
+  Object.entries(absMap).forEach(([id, count]) => {
+    if (count >= 3 && count < 5 && students[id]) {
+      items.push({ studentId: id, name: nameFor(id), reason: `${count} absences`, severity: 'medium', sortVal: count })
+    }
+  })
+
+  // 4. Medium: Longest washroom trip > 15 min (one entry per student)
+  Object.entries(washMap).forEach(([id, durations]) => {
+    if (!students[id]) return
+    const longest = Math.max(...durations)
+    if (longest > 15) {
+      items.push({ studentId: id, name: nameFor(id), reason: `${longest.toFixed(0)}min washroom trip`, severity: 'medium', sortVal: longest })
+    }
+  })
+
+  // 5. Low: 3+ washroom trips in period (skip if already listed for long trip)
+  Object.entries(washMap).forEach(([id, durations]) => {
+    if (!students[id]) return
+    if (durations.length >= 3) {
+      const alreadyListed = items.some(i => i.studentId === id && i.reason.includes('washroom'))
+      if (!alreadyListed) {
+        items.push({ studentId: id, name: nameFor(id), reason: `${durations.length} washroom trips`, severity: 'low', sortVal: durations.length })
+      }
+    }
+  })
+
+  const order = { high: 0, medium: 1, low: 2 }
+  items.sort((a, b) => {
+    if (order[a.severity] !== order[b.severity]) return order[a.severity] - order[b.severity]
+    return b.sortVal - a.sortVal
+  })
+  return items
+})
+
+/** Slice of followUpItems shown before the "and X more" button */
+const followUpVisible = computed(() =>
+  followUpExpanded.value ? followUpItems.value : followUpItems.value.slice(0, 8)
+)
 
 const washroomChartOptions = {
   indexAxis: 'y',
@@ -2212,4 +2253,214 @@ const washroomChartOptions = {
   border: 1px solid var(--border);
   line-height: 1.4;
 }
+
+/* ── Redesigned Overview Container ───────────────────────────────── */
+.reports__overview {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ── Section 1: Headline Stats Grid ──────────────────────────────── */
+.reports__headline-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+@media (max-width: 900px) {
+  .reports__headline-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.reports__headline-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-height: 0;
+}
+
+.reports__headline-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 2px;
+}
+
+.reports__headline-rate {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--text);
+  line-height: 1.1;
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.reports__headline-unit {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.reports__headline-sub {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  line-height: 1.3;
+}
+
+.reports__headline-detail {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+
+.reports__headline-alert {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #c0392b;
+  margin-top: 4px;
+}
+
+/* ── Section 2: Two-Column Layout ────────────────────────────────── */
+.reports__two-col {
+  display: grid;
+  grid-template-columns: 42% 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .reports__two-col {
+    grid-template-columns: 1fr;
+  }
+}
+
+.reports__col-title {
+  margin: 0 0 10px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+/* ── Follow Up Column ─────────────────────────────────────────────── */
+.reports__followup-col {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  padding: 14px 16px;
+}
+
+.reports__followup-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.reports__followup-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px 8px 12px;
+  border-left: 3px solid transparent;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  cursor: pointer;
+  transition: background 0.15s;
+  font-size: 0.87rem;
+}
+
+.reports__followup-item:hover {
+  background: var(--bg-secondary);
+}
+
+.reports__followup-item--high {
+  border-left-color: var(--state-out);
+}
+
+.reports__followup-item--medium {
+  border-left-color: #e67e22;
+}
+
+.reports__followup-item--low {
+  border-left-color: var(--primary);
+}
+
+.reports__followup-name {
+  font-weight: 600;
+  color: var(--text);
+  flex: 0 0 auto;
+  min-width: 0;
+}
+
+.reports__followup-reason {
+  flex: 1;
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.reports__followup-arrow {
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  flex: 0 0 auto;
+}
+
+.reports__followup-empty {
+  padding: 20px 0;
+}
+
+.reports__followup-ok {
+  font-size: 0.88rem;
+  color: #27ae60;
+  font-weight: 600;
+}
+
+.reports__followup-more {
+  margin-top: 8px;
+  background: none;
+  border: none;
+  color: var(--primary);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 0;
+  display: block;
+}
+
+/* ── Washroom Column ─────────────────────────────────────────────── */
+.reports__washroom-col {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  padding: 14px 16px;
+}
+
+.reports__long-trips {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
 </style>
+

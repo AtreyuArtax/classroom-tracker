@@ -6,7 +6,8 @@
       :most-consistent="overallMostConsistent"
       :consistent-is-fallback="consistentIsFallback"
       :weighted-median="overallWeightedMedian"
-      :attendance-stats="attendanceStats"
+      :attendance-stats="stats"
+      :attendance-rate="stats.attendanceRate"
     >
       <template #actions>
         <button class="student-360__action-btn" title="Email Progress Report" @click="showEmailModal = true">
@@ -54,20 +55,20 @@
         <div class="student-360__stats-grid">
           <StudentStatCard 
             label="Absences" 
-            :value="attendanceStats.absences" 
-            :sub-value="`${attendanceAverages.absencesAvg}/wk avg • ${attendanceStats.testDayAbsences} Test Day${attendanceStats.testDayAbsences !== 1 ? 's' : ''}`"
+            :value="stats.absences" 
+            :sub-value="`${attendanceAverages.absencesAvg}/wk avg • ${stats.testDayAbsences} Test Day${stats.testDayAbsences !== 1 ? 's' : ''}`"
             :icon="UserMinus"
             :alert-icon="testDayAlert ? AlertTriangle : null"
-            :color="testDayAlert ? 'danger' : (attendanceStats.absences > 0 ? 'warning' : 'success')"
+            :color="testDayAlert ? 'danger' : (stats.absences > 0 ? 'warning' : 'success')"
           />
           <StudentStatCard 
             :label="behaviorCodesMap['l']?.label || 'Lates'" 
-            :value="attendanceStats.lates" 
+            :value="stats.lates" 
             :sub-value="attendanceAverages.latesAvg + '/wk'"
             :value2="attendanceAverages.latesTotal + 'm'"
             :sub-value2="attendanceAverages.latesAvgDuration + 'm avg'"
             :icon="resolveIcon(behaviorCodesMap['l']?.icon) || Clock"
-            :color="attendanceStats.lates > 4 ? 'warning' : 'neutral'"
+            :color="stats.lates > 4 ? 'warning' : 'neutral'"
           />
           <StudentStatCard 
             :label="behaviorCodesMap['w']?.label || 'Washroom'" 
@@ -832,7 +833,7 @@ import {
   deleteAssessment,
   saveStudentGradebookNote
 } from '../../composables/useGradebook.js'
-import { getDateRangeForPeriod } from '../../db/eventService.js'
+// getDateRangeForPeriod is now used internally by useStudentDossier — no direct import needed here.
 
 const props = defineProps({
   studentId: { type: String, required: true },
@@ -865,7 +866,8 @@ const {
 import { useStudentDossier } from '../../composables/useStudentDossier.js'
 import { parseLocal, formatLocalDisplay } from '../../utils/dates.js'
 
-const { allTimeHistory, fetchAllTimeHistory } = useStudentDossier()
+import { toRef } from 'vue'
+const { allTimeHistory, fetchAllTimeHistory, stats, filteredEvents } = useStudentDossier(selectedPeriod, toRef(props, 'classId'))
 
 
 // --- Email Progress Report State ---
@@ -953,8 +955,8 @@ function generateEmailLink() {
   
   if (emailConfig.value.content.attendance) {
     body += `\nAttendance Summary:\n`
-    body += `- Absences: ${attendanceStats.value.absences}\n`
-    body += `- Lates: ${attendanceStats.value.lates}\n`
+    body += `- Absences: ${stats.value.absences}\n`
+    body += `- Lates: ${stats.value.lates}\n`
   }
   
   if (emailConfig.value.content.washroom) {
@@ -1009,16 +1011,7 @@ async function triggerPrint() {
 
 // Shared state is now handled in the <script> block above
 
-const filteredEvents = computed(() => {
-  const range = getDateRangeForPeriod(selectedPeriod.value)
-  if (!range || (!range.from && !range.to)) return events.value
-  
-  return events.value.filter(e => {
-    if (range.from && e.timestamp < range.from) return false;
-    if (range.to && e.timestamp > range.to + 'T23:59:59') return false;
-    return true;
-  })
-})
+
 
 // Past Absence Logic
 const showAbsenceForm = ref(false)
@@ -1203,19 +1196,7 @@ const evidenceMix = computed(() => {
   }
 })
 
-const attendanceStats = computed(() => {
-  const absences = filteredEvents.value.filter(e => e.code === 'a' && !e.superseded)
-  const lates = filteredEvents.value.filter(e => e.code === 'l' && !e.superseded)
-  const testDayAbsences = absences.filter(e => e.testDay).length
-  
-  return { 
-    absences: absences.length, 
-    lates: lates.length,
-    testDayAbsences
-  }
-})
-
-const testDayAlert = computed(() => attendanceStats.value.testDayAbsences > 1)
+const testDayAlert = computed(() => stats.value.testDayAbsences > 1)
 
 const washroomCount = computed(() => {
   return filteredEvents.value.filter(e => {
@@ -1230,7 +1211,7 @@ const redirectCount = computed(() => {
 
 const coachingInsight = computed(() => {
   const grade = overallGrade.value
-  const absences = attendanceStats.value.absences
+  const absences = stats.value.absences
 
   // Alert if grade < 70% and absences >= 3
   if (grade !== null && grade < 70 && absences >= 3) {
@@ -1292,8 +1273,8 @@ const attendanceAverages = computed(() => {
   if (selectedPeriod.value === 'month') weekCount = 4.3
   else if (selectedPeriod.value === 'all') weekCount = Math.max(1, trend.length)
   
-  const totalAbs = attendanceStats.value.absences
-  const totalLates = attendanceStats.value.lates
+  const totalAbs = stats.value.absences
+  const totalLates = stats.value.lates
   const totalWash = washroomCount.value
   
   const totalLateMins = filteredEvents.value
@@ -1352,8 +1333,8 @@ const isCopiedNamed = ref(false)
 
 async function copyForReportCard(includeName = false) {
   const s = student.value
-  const absences = attendanceStats.value.absences
-  const lates = attendanceStats.value.lates
+  const absences = stats.value.absences
+  const lates = stats.value.lates
   
   const academicList = [...allDossierAssessments.value]
     .filter(a => a.score !== null && !a.excluded)

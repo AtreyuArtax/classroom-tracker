@@ -17,7 +17,7 @@ import { openDB } from 'idb'
 import { getCurrentSchoolYear, getCurrentSemester } from '../utils/dates.js'
 
 const DB_NAME = 'classroomTrackerDB'
-const DB_VERSION = 26
+const DB_VERSION = 27
 
 /**
  * Cached promise — set synchronously before the first await so every
@@ -666,6 +666,21 @@ export function getDB() {
             assessment.retestPolicy = 'highest'
             await assessmentsStore.put(assessment)
           }
+        }
+      }
+
+      // --- VERSION 27 MIGRATION (Instructional Days) ---
+      if (oldVersion < 27) {
+        console.log('[IDB] Migrating to v27: Initializing instructionalDays for academicTerms...')
+        const settingsStore = transaction.objectStore('settings')
+        const settings = await settingsStore.get('singleton')
+        
+        if (settings && settings.academicTerms) {
+          settings.academicTerms = settings.academicTerms.map(term => ({
+            ...term,
+            instructionalDays: term.semester === '2' ? 93 : (term.semester === '1' ? 94 : 187)
+          }))
+          await settingsStore.put(settings, 'singleton')
         }
       }
     },

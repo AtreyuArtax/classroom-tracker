@@ -92,6 +92,10 @@
                     <span class="setup__mini-label">End Date</span>
                     <input v-model="terms[term.idx].endDate" type="date" class="setup__input setup__input--white" @change="saveTerms" />
                   </div>
+                  <div class="setup__term-unit" style="width: 80px;">
+                    <span class="setup__mini-label">Days</span>
+                    <input v-model.number="terms[term.idx].instructionalDays" type="number" class="setup__input setup__input--white" @change="saveTerms" />
+                  </div>
                 </div>
                 <button class="setup__icon-btn setup__icon-btn--danger" @click="removeTerm(term.idx)">
                   <Trash2 :size="16" />
@@ -340,7 +344,13 @@ onMounted(async () => {
 })
 
 function addTerm() {
-  const newTerms = [...terms.value, { year: selectedYear.value, semester: '1', startDate: '', endDate: '' }]
+  const newTerms = [...terms.value, { 
+    year: selectedYear.value, 
+    semester: '1', 
+    startDate: '', 
+    endDate: '',
+    instructionalDays: 94
+  }]
   updateAcademicTerms(newTerms)
 }
 
