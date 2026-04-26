@@ -334,6 +334,7 @@ import { resolveIcon }         from '../utils/icons.js'
 import { useClassroom }        from '../composables/useClassroom.js'
 import { useStudentDossier }   from '../composables/useStudentDossier.js'
 import { useUndo }             from '../composables/useUndo.js'
+import * as classService       from '../db/classService.js'
 import * as eventService       from '../db/eventService.js'
 import { toMinutes }          from '../db/eventService.js'
 import Student360            from '../components/dossier/Student360.vue'
@@ -491,6 +492,13 @@ const PERIOD_OPTIONS = [
 
 watch(selectedPeriod, () => {
   if (rightMode.value === 'overview') runReport()
+})
+
+// Reset expansion and toggle states when switching classes
+watch(sidebarClassId, () => {
+  followUpExpanded.value = false
+  longTripsExpanded.value = false
+  showCompletedNotes.value = false
 })
 
 /** Called when a student row is tapped */
@@ -775,15 +783,23 @@ async function runReport() {
   try {
     const dr = eventService.getDateRangeForPeriod(selectedPeriod.value)
     const rawEvents = await eventService.getEventsByClass(sidebarClassId.value, Object.keys(dr).length ? dr : undefined)
-    const studentsMap = reportStudents.value
-    const studentCount = Object.keys(studentsMap).length
+    
+    // Independent active student check to ensure robustness during transitions
+    const currentClass = await classService.getClass(sidebarClassId.value)
+    const activeStudents = {}
+    Object.entries(currentClass?.students || {}).forEach(([id, s]) => {
+      if (!s.archived) activeStudents[id] = s
+    })
+    const activeStudentIds = new Set(Object.keys(activeStudents))
+    const studentsMap = activeStudents // used by legacy code in this function
+    const studentCount = activeStudentIds.size
 
     // Filter events to only include active students
-    const events = rawEvents.filter(e => studentsMap[e.studentId])
+    const events = rawEvents.filter(e => activeStudentIds.has(e.studentId))
     reportData.value = events
 
     const allEventsRaw = await eventService.getEventsByClass(sidebarClassId.value)
-    allClassEvents.value = allEventsRaw.filter(e => studentsMap[e.studentId])
+    allClassEvents.value = allEventsRaw.filter(e => activeStudentIds.has(e.studentId))
 
     // Fetch Academic Grades — respect the 'to' date of the reporting period
     const grades = await calculateClassGrades(reportClass.value, { asOf: dr.to || null })
