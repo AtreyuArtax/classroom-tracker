@@ -32,7 +32,7 @@ async function _readSettings() {
 
     // Fallback: seed defaults (should have been written during upgrade, but guard anyway)
     const defaults = {
-        schemaVersion: 23,
+        schemaVersion: 27,
         gridSize: { rows: 6, cols: 6 },
         behaviorCodes: {
             note: {
@@ -368,4 +368,44 @@ export async function saveNonSchoolDays(days) {
     settings.nonSchoolDays = days
     await db.put('settings', settings, 'singleton')
     hasUnsyncedChanges.value = true
+}
+/**
+ * Audits settings for integrity issues.
+ * @returns {Promise<Object>} { issues: Array<string>, fixedCount: number }
+ */
+export async function auditSettingsIntegrity() {
+    const db = await getDB()
+    const settings = await db.get('settings', SETTINGS_KEY)
+    if (!settings) return { issues: [], fixedCount: 0 }
+
+    const issues = []
+    let fixedCount = 0
+    let changed = false
+
+    // 1. Check academicTerms for missing instructionalDays
+    if (settings.academicTerms) {
+        for (const term of settings.academicTerms) {
+            if (term.instructionalDays === undefined) {
+                term.instructionalDays = term.semester === '2' ? 93 : (term.semester === '1' ? 94 : 187)
+                issues.push(`Fixed missing instructionalDays for term: ${term.year} ${term.semester}`)
+                fixedCount++
+                changed = true
+            }
+        }
+    }
+
+    // 2. Check schemaVersion
+    if (settings.schemaVersion < 27) {
+        settings.schemaVersion = 27
+        issues.push(`Updated schemaVersion to 27`)
+        fixedCount++
+        changed = true
+    }
+
+    if (changed) {
+        await db.put('settings', settings, SETTINGS_KEY)
+        hasUnsyncedChanges.value = true
+    }
+
+    return { issues, fixedCount }
 }
