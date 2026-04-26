@@ -2153,8 +2153,12 @@ async function doImport() {
   restoreMsg.value = ''
   try {
     const result = await eventService.importAllData(JSON.parse(JSON.stringify(importPreview.value)))
+    
+    // Auto-heal settings after import (e.g. add missing instructionalDays from older backups)
+    await settingsService.auditSettingsIntegrity()
+    
     importPreview.value = null
-    restoreMsg.value = `✅ Restore complete — ${result.classCount} classes, ${result.eventCount} events. Refreshing…`
+    restoreMsg.value = `✅ Restore complete — ${result.classCount} classes, ${result.eventCount} events. Data healed. Refreshing…`
     setTimeout(() => window.location.reload(), 1500)
   } catch (err) {
     importPreview.value = null
