@@ -46,8 +46,14 @@
         <div class="dossier-header__divider"></div>
         <div class="dossier-header__metric">
           <span class="dossier-header__metric-label">Attendance</span>
-          <span class="dossier-header__metric-value">
-            {{ attendanceSummary }}
+          <span 
+            class="dossier-header__metric-value"
+            :style="{ color: attendanceRate === 100 ? '#34c759' : attendanceRate !== null && attendanceRate < 80 ? '#ff9500' : 'var(--text)' }"
+          >
+            {{ attendanceRate === null ? '--' : attendanceRate === 100 ? 'Perfect' : attendanceRate + '%' }}
+          </span>
+          <span class="dossier-header__metric-subvalue">
+            {{ attendanceStats.absences }}A &middot; {{ attendanceStats.lates }}L
           </span>
         </div>
       </div>
@@ -69,7 +75,8 @@ const props = defineProps({
   mostConsistent: { type: Number, default: null },
   consistentIsFallback: { type: Boolean, default: false },
   weightedMedian: { type: Number, default: null },
-  attendanceStats: { type: Object, default: () => ({ absences: 0, lates: 0 }) }
+  attendanceStats: { type: Object, default: () => ({ absences: 0, lates: 0, testDayAbsences: 0 }) },
+  attendanceRate:  { type: Number, default: null }
 })
 
 const initials = computed(() => {
@@ -90,11 +97,7 @@ const gradeColor = computed(() => {
   return '#ff3b30'
 })
 
-const attendanceSummary = computed(() => {
-  const { absences, lates } = props.attendanceStats
-  if (absences === 0 && lates === 0) return 'Perfect'
-  return `${absences}A / ${lates}L`
-})
+// attendanceSummary is no longer needed — the template renders rate and raw counts separately.
 
 const statusLabel = computed(() => {
   const s = props.student.activeStates
@@ -302,6 +305,15 @@ const statusIcon = computed(() => {
 .dossier-header__metric-tip:hover {
   opacity: 1;
   color: var(--primary);
+}
+
+.dossier-header__metric-subvalue {
+  font-size:    0.72rem;
+  font-weight:  600;
+  color:        var(--text-secondary);
+  letter-spacing: 0.02em;
+  margin-top:   2px;
+  line-height:  1;
 }
 
 .dossier-header__divider {
