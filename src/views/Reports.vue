@@ -126,10 +126,12 @@
                       </li>
                     </ul>
                     <button
-                      v-if="followUpItems.length > 8 && !followUpExpanded"
+                      v-if="followUpItems.length > 8"
                       class="reports__followup-more"
-                      @click="followUpExpanded = true"
-                    >and {{ followUpItems.length - 8 }} more →</button>
+                      @click="followUpExpanded = !followUpExpanded"
+                    >
+                      {{ followUpExpanded ? 'show less ↑' : `and ${followUpItems.length - 8} more →` }}
+                    </button>
                   </div>
 
                   <!-- Right: Washroom Detail -->
@@ -142,11 +144,57 @@
                     <div v-if="aggregates.washroom.longTrips.length" class="reports__long-trips">
                       <h4 class="reports__section-title reports__section-title--alert">Long Trips (&gt; 15 min)</h4>
                       <ul class="reports__list reports__list--alert">
-                        <li v-for="t in aggregates.washroom.longTrips" :key="t.date + t.name">
+                        <li v-for="t in longTripsVisible" :key="t.date + t.name">
                           <span>{{ t.name }} — {{ t.date }}</span>
                           <span class="reports__list-count">{{ t.duration.toFixed(1) }} min</span>
                         </li>
                       </ul>
+                      <button
+                        v-if="aggregates.washroom.longTrips.length > 5"
+                        class="reports__followup-more"
+                        @click="longTripsExpanded = !longTripsExpanded"
+                      >
+                        {{ longTripsExpanded ? 'show less ↑' : `and ${aggregates.washroom.longTrips.length - 5} more →` }}
+                      </button>
+                    </div>
+
+                    <!-- Recent Logs Sub-section -->
+                    <div v-if="hasAnyNotes" class="reports__logs-section">
+                      <div class="reports__section-header-row">
+                        <h4 class="reports__section-title">RECENT CLASSROOM LOGS</h4>
+                        <button class="reports__btn-text" @click="showCompletedNotes = !showCompletedNotes">
+                          {{ showCompletedNotes ? 'Hide Completed' : 'Show Completed' }}
+                        </button>
+                      </div>
+                      
+                      <div v-if="recentNotes.length > 0" class="reports__logs-grid">
+                        <div 
+                          v-for="note in recentNotes" 
+                          :key="note.eventId" 
+                          class="reports__log-card"
+                          :class="{ 'reports__log-card--completed': note.completed }"
+                        >
+                          <div class="reports__log-header">
+                            <span class="reports__log-student">{{ note.studentName }}</span>
+                            <div class="reports__log-actions">
+                              <span class="reports__log-date">{{ formatTimestamp(note.timestamp) }}</span>
+                              <button 
+                                class="reports__log-check" 
+                                :class="{ 'reports__log-check--active': note.completed }"
+                                @click.stop="onToggleNoteComplete(note.eventId, note.completed)"
+                                :title="note.completed ? 'Mark Incomplete' : 'Mark Complete'"
+                              >
+                                <Check :size="14" />
+                              </button>
+                            </div>
+                          </div>
+                          <p class="reports__log-content">{{ note.note }}</p>
+                        </div>
+                      </div>
+                      <div v-else class="reports__logs-empty">
+                        <Check :size="24" class="reports__logs-empty-icon" />
+                        <p>All logs for this period are completed!</p>
+                      </div>
                     </div>
                   </div>
 
@@ -280,7 +328,7 @@ import { ref, reactive, computed, watch, defineComponent, h, onMounted, onUnmoun
 import { 
   BarChart2, Download, Trash2, PlusCircle, ChevronLeft, 
   LayoutDashboard, Database, UserCheck, Toilet, Activity, 
-  FolderOpen, GraduationCap, Printer, X, ClipboardList, AlertTriangle
+  FolderOpen, GraduationCap, Printer, X, ClipboardList, AlertTriangle, Check
 } from 'lucide-vue-next'
 import { resolveIcon }         from '../utils/icons.js'
 import { useClassroom }        from '../composables/useClassroom.js'
@@ -365,6 +413,11 @@ watch(filteredClassList, (newList) => {
     sidebarClassId.value = null
   }
 }, { immediate: true })
+
+watch(sidebarClassId, () => {
+  followUpExpanded.value = false
+  longTripsExpanded.value = false
+})
 
 watch(activeClass, async (newClass, oldClass) => {
   if (newClass && (!oldClass || newClass.classId !== oldClass.classId)) {
@@ -589,6 +642,7 @@ const reportStudents = computed(() => {
 // ─── aggregate query runner ───────────────────────────────────────────────────
 
 const reportData = ref([])
+const allClassEvents = ref([])
 const loading    = ref(false)
 
 const aggregates = reactive({
@@ -623,17 +677,29 @@ const aggregates = reactive({
 
 const classGrades = ref({})
 
+const showCompletedNotes = ref(false)
+
 /** Aggregated notes for the class overview */
 const recentNotes = computed(() => {
   const studentsMap = reportStudents.value
-  return reportData.value
+  let filtered = allClassEvents.value
     .filter(e => e.note && e.code !== 'a' && e.code !== 'ac' && e.code !== 'l' && e.code !== 'w' && e.code !== 'pc' && !e.superseded && !e.note.startsWith('[ob]') && !e.note.startsWith('[cv]'))
+  
+  if (!showCompletedNotes.value) {
+    filtered = filtered.filter(e => !e.completed)
+  }
+
+  return filtered
     .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
     .map(e => ({
       ...e,
       studentName: studentsMap[e.studentId] ? `${studentsMap[e.studentId].firstName} ${studentsMap[e.studentId].lastName}` : 'Unknown Student'
     }))
     .slice(0, 12)
+})
+
+const hasAnyNotes = computed(() => {
+  return allClassEvents.value.some(e => e.note && e.code !== 'a' && e.code !== 'ac' && e.code !== 'l' && e.code !== 'w' && e.code !== 'pc' && !e.superseded && !e.note.startsWith('[ob]') && !e.note.startsWith('[cv]'))
 })
 
 const studentsMap = computed(() => reportStudents.value)
@@ -695,6 +761,14 @@ const studentCorrelationAlert = computed(() => {
   return null
 })
 
+async function onToggleNoteComplete(eventId, currentStatus) {
+  await eventService.updateEvent(eventId, { completed: !currentStatus })
+  // We need to trigger a re-render of the overview. 
+  // Since reportData is a ref, and we just updated IDB, we should re-run the report or update local state.
+  // Re-running is safest and fairly fast with indexes.
+  await runReport()
+}
+
 async function runReport() {
   if (!sidebarClassId.value) return
   loading.value = true
@@ -707,6 +781,9 @@ async function runReport() {
     // Filter events to only include active students
     const events = rawEvents.filter(e => studentsMap[e.studentId])
     reportData.value = events
+
+    const allEventsRaw = await eventService.getEventsByClass(sidebarClassId.value)
+    allClassEvents.value = allEventsRaw.filter(e => studentsMap[e.studentId])
 
     // Fetch Academic Grades — respect the 'to' date of the reporting period
     const grades = await calculateClassGrades(reportClass.value, { asOf: dr.to || null })
@@ -793,6 +870,7 @@ async function runReport() {
           date: formatTimestamp(e.timestamp),
           duration: toMinutes(e.duration)
         }))
+        .sort((a, b) => b.duration - a.duration)
     }
 
     // --- Process Behavior (Redirect/Device entries only) ---
@@ -1036,8 +1114,8 @@ const notesLoggedCount = computed(() =>
   reportData.value.filter(e => e.note && e.code !== 'a' && e.code !== 'l' && e.code !== 'w' && !e.superseded).length
 )
 
-/** Toggle for showing all Follow Up items beyond the first 8 */
 const followUpExpanded = ref(false)
+const longTripsExpanded = ref(false)
 
 /** Ranked Follow Up list — built fresh from reportData, sorted High→Medium→Low */
 const followUpItems = computed(() => {
@@ -1115,9 +1193,13 @@ const followUpItems = computed(() => {
   return items
 })
 
-/** Slice of followUpItems shown before the "and X more" button */
 const followUpVisible = computed(() =>
   followUpExpanded.value ? followUpItems.value : followUpItems.value.slice(0, 8)
+)
+
+/** Slice of longTrips shown before toggle */
+const longTripsVisible = computed(() =>
+  longTripsExpanded.value ? aggregates.washroom.longTrips : aggregates.washroom.longTrips.slice(0, 5)
 )
 
 const washroomChartOptions = {
@@ -2461,6 +2543,141 @@ const washroomChartOptions = {
   margin-top: 16px;
   padding-top: 12px;
   border-top: 1px solid var(--border);
+}
+
+.reports__logs-section {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.reports__logs-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.reports__log-card {
+  padding: 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  border-left: 3px solid var(--primary-light);
+  transition: all 0.2s ease;
+}
+
+.reports__log-card--completed {
+  opacity: 0.6;
+  border-left-color: var(--state-success);
+  background: var(--bg-secondary);
+}
+
+.reports__log-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.reports__log-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.reports__log-student {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.reports__log-date {
+  font-size: 0.65rem;
+  color: var(--text-secondary);
+}
+
+.reports__log-check {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.reports__log-check:hover {
+  border-color: var(--state-success);
+  color: var(--state-success);
+  background: rgba(52, 199, 89, 0.1);
+}
+
+.reports__log-check--active {
+  background: var(--state-success);
+  border-color: var(--state-success);
+  color: white;
+}
+
+.reports__log-content {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.reports__section-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.reports__btn-text {
+  background: none;
+  border: none;
+  color: var(--primary);
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  transition: all 0.2s;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.reports__btn-text:hover {
+  background: var(--bg-hover);
+  color: var(--primary-dark);
+}
+
+.reports__logs-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 30px 20px;
+  color: var(--text-secondary);
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  border: 1px dashed var(--border);
+  gap: 8px;
+}
+
+.reports__logs-empty p {
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.reports__logs-empty-icon {
+  color: var(--state-success);
+  opacity: 0.6;
 }
 </style>
 

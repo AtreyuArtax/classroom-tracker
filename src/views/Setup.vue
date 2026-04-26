@@ -709,6 +709,18 @@
               <li v-for="item in auditReport.invalidCategories" :key="item.id">{{ item.context }}</li>
             </ul>
 
+            <!-- Settings Integrity -->
+            <div v-if="auditReport.settingsIssues && auditReport.settingsIssues.length > 0" class="setup__audit-item setup__audit-item--ok">
+              <div class="setup__audit-label">System Settings Healed:</div>
+              <div class="setup__audit-value">{{ auditReport.settingsFixed }}</div>
+              <button class="setup__btn-text" @click="showAuditDetails.settings = !showAuditDetails.settings">
+                {{ showAuditDetails.settings ? 'Hide' : 'Details' }}
+              </button>
+            </div>
+            <ul v-if="showAuditDetails.settings && auditReport.settingsIssues.length > 0" class="setup__audit-detail-list">
+              <li v-for="issue in auditReport.settingsIssues" :key="issue">✅ {{ issue }}</li>
+            </ul>
+
             <div v-if="auditReport.orphanedGrades.length === 0 && auditReport.missingClassIds.length === 0 && auditReport.invalidCategories.length === 0" class="setup__result-ok">
               ✨ Database is clean and perfectly consistent.
             </div>
@@ -1128,7 +1140,8 @@ const auditMsg = ref('')
 const showAuditDetails = reactive({
   orphans: false,
   incomplete: false,
-  categories: false
+  categories: false,
+  settings: false
 })
 
 const totalWeight = computed(() => {
@@ -1144,7 +1157,14 @@ async function runDataAudit() {
   isAuditing.value = true
   auditReport.value = null
   try {
-    auditReport.value = await gradebookService.auditGradebookData()
+    const report = await gradebookService.auditGradebookData()
+    const settingsAudit = await settingsService.auditSettingsIntegrity()
+    
+    // Merge settings audit into report for display
+    report.settingsIssues = settingsAudit.issues
+    report.settingsFixed = settingsAudit.fixedCount
+    
+    auditReport.value = report
   } catch (err) {
     auditMsg.value = `Audit failed: ${err.message}`
   } finally {
