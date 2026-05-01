@@ -56,7 +56,7 @@
     <section v-if="config.includeCategorySummary" class="report-section">
       <h3 class="section-title">Category Performance</h3>
       <div class="category-pills">
-        <div v-for="cat in categoryPerformance" :key="cat.categoryId" v-memo="[cat.categoryId, cat.percentage]" class="category-pill">
+        <div v-for="cat in categoryPerformance" :key="cat.categoryId" v-memo="[cat.categoryId, cat.percentage, cat.name, cat.weight]" class="category-pill">
           <span class="cp-name">{{ cat.name }}</span>
           <span class="cp-weight">{{ cat.weight }}%</span>
           <span class="cp-pct" :style="{ color: getGradeColor(cat.percentage) }">
@@ -81,7 +81,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="a in recentClassWork" :key="a.assessmentId" v-memo="[a.assessmentId, a.score, a.attempts.length]">
+            <tr v-for="a in recentClassWork" :key="a.assessmentId" v-memo="[a.assessmentId, a.score, a.attempts.length, a.name, a.date]">
               <td class="td-date">{{ formatDate(a.date) }}</td>
               <td class="td-name">{{ a.name }}</td>
               <td class="td-cat">{{ getCategoryName(a.categoryId) }}</td>
@@ -118,7 +118,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="a in individualTasks" :key="a.assessmentId" v-memo="[a.assessmentId, a.score, a.attempts.length]">
+            <tr v-for="a in individualTasks" :key="a.assessmentId" v-memo="[a.assessmentId, a.score, a.attempts.length, a.name, a.date]">
               <td class="td-date">{{ formatDate(a.date) }}</td>
               <td class="td-name">{{ a.name }}</td>
               <td class="td-cat">{{ getCategoryName(a.categoryId) }}</td>

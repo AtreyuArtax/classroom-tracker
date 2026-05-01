@@ -148,7 +148,7 @@
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="a in classAssessments" :key="a.assessmentId" v-memo="[a.assessmentId, a.score, a.missing, a.excluded, editingCell?.assessmentId === a.assessmentId]" @contextmenu.prevent="onContextMenu($event, a.assessmentId)">
+                <tr v-for="a in classAssessments" :key="a.assessmentId" v-memo="[a.assessmentId, a.score, a.missing, a.excluded, a.attempts?.length, editingCell?.assessmentId === a.assessmentId]" @contextmenu.prevent="onContextMenu($event, a.assessmentId)">
                    <td class="td-date">{{ formatLocalDisplay(a.date) }}</td>
                   <td class="td-name">{{ a.name }}</td>
                   <td><span class="badge" :class="'badge--' + a.assessmentType">{{ a.assessmentType }}</span></td>
@@ -187,7 +187,7 @@
                           
                           <!-- Multiple Attempts Indicator -->
                           <div 
-                            v-if="gradeMap[a.assessmentId]?.[props.studentId]?.attempts?.length > 1"
+                            v-if="a.attempts?.length > 1"
                             class="attempts-dot"
                             @click.stop="openAttempts($event, a.assessmentId)"
                             title="Multiple attempts - click to view history"
@@ -225,7 +225,7 @@
                  </tr>
                </thead>
                <tbody>
-                 <tr v-for="a in individualAssessments" :key="a.assessmentId" v-memo="[a.assessmentId, a.score, a.missing, a.excluded, editingCell?.assessmentId === a.assessmentId]" @contextmenu.prevent="onContextMenu($event, a.assessmentId)">
+                 <tr v-for="a in individualAssessments" :key="a.assessmentId" v-memo="[a.assessmentId, a.score, a.missing, a.excluded, a.attempts?.length, editingCell?.assessmentId === a.assessmentId]" @contextmenu.prevent="onContextMenu($event, a.assessmentId)">
                    <td class="td-date">{{ formatLocalDisplay(a.date) }}</td>
                    <td class="td-name">{{ a.name }}</td>
                    <td><span class="badge" :class="'badge--' + a.assessmentType">{{ a.assessmentType }}</span></td>
@@ -263,7 +263,7 @@
                           
                           <!-- Multiple Attempts Indicator -->
                           <div 
-                            v-if="gradeMap[a.assessmentId]?.[props.studentId]?.attempts?.length > 1"
+                            v-if="a.attempts?.length > 1"
                             class="attempts-dot"
                             @click.stop="openAttempts($event, a.assessmentId)"
                             title="Multiple attempts - click to view history"
