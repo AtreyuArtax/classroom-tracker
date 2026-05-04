@@ -48,7 +48,7 @@ import { computed } from 'vue'
 import DeskTile       from './DeskTile.vue'
 import { useClassroom } from '../composables/useClassroom.js'
 
-const { gridSize, students, activeClass, assignSeat } = useClassroom()
+const { gridSize, students, activeClass, assignSeat, studentWeeklyStats } = useClassroom()
 
 // ─── computed ─────────────────────────────────────────────────────────────────
 

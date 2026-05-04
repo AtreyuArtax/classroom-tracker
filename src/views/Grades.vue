@@ -32,9 +32,9 @@
           <p>Select a class to view the gradebook</p>
         </div>
         <div v-else-if="selectedAssessmentId && currentAssessment" class="grades__assessment-view">
-          <div class="grades__focused-view">
-            <!-- Assessment View Header -->
-            <div class="grades__view-header">
+          <!-- Assessment View Header (Full Width) -->
+          <div class="grades__view-header">
+            <div class="grades__view-header-top">
               <nav class="grades__breadcrumb">
                 <button class="grades__breadcrumb-link" @click="selectedAssessmentId = null">
                   <ArrowLeft :size="14" /> Class Grid
@@ -42,83 +42,85 @@
                 <span class="grades__breadcrumb-sep">/</span>
                 <span class="grades__breadcrumb-current">Assessment Details</span>
               </nav>
-
-              <div class="grades__assessment-card">
-                <div class="grades__card-main">
-                  <div class="grades__card-header-row">
-                    <h2 class="grades__card-title">{{ currentAssessment.name }}</h2>
-                    <div class="grades__header-actions">
-                      <button class="grades__btn-action" title="Edit Assessment" @click="startEditAssessment(currentAssessment)">
-                        <Pencil :size="16" />
-                      </button>
-                      <button class="grades__btn-action" title="View Missing Students" @click="showMissingModal = true">
-                        <AlertCircle :size="16" />
-                      </button>
-                      <button class="grades__btn-action grades__btn-action--danger" title="Delete Assessment" @click="confirmDeleteAssessment(currentAssessment)">
-                        <Trash2 :size="16" />
-                      </button>
-                    </div>
-                  </div>
-                  <p v-if="currentAssessment.description" class="grades__card-description">{{ currentAssessment.description }}</p>
-                  <div class="grades__assessment-metadata">
-                    <div class="grades__meta-item" title="Assessment Type">
-                      <FilePlus :size="14" />
-                      <span>{{ currentAssessment.assessmentType }}</span>
-                    </div>
-                    <div class="grades__meta-item" title="Total Points">
-                      <Target :size="14" />
-                      <span>/{{ currentAssessment.totalPoints }}</span>
-                    </div>
-                    <div v-if="currentAssessment.unitId" class="grades__meta-item" title="Unit/Category">
-                      <Hash :size="14" />
-                      <span>{{ getUnitName(currentAssessment.unitId) }}</span>
-                    </div>
-                    <div class="grades__meta-item" title="Date">
-                      <Calendar :size="14" />
-                      <span>{{ formatLocalDisplay(currentAssessment.date) }}</span>
-                    </div>
-                    
-                  </div>
-                </div>
-
-                <div v-if="currentAssessmentSummary" class="grades__assessment-stats">
-                  <div class="grades__stats-main-row">
-                    <div class="grades__stat-card" :style="{ borderLeft: `4px solid ${getHeatColor(currentAssessmentSummary.mean)}` }">
-                      <div class="grades__stat-card-label">Class Average</div>
-                      <div class="grades__stat-card-value-row">
-                        <span class="grades__stat-card-value">{{ Math.round(currentAssessmentSummary.mean) }}%</span>
-                        <span v-if="currentAssessmentSummary.average !== null" class="grades__stat-card-percent">
-                          {{ Math.round(currentAssessmentSummary.average * 10) / 10 }} <small>/{{ currentAssessment.totalPoints }}</small>
-                        </span>
-                      </div>
-                    </div>
-
-                    <div class="grades__stat-card">
-                      <div class="grades__stat-card-label">Entry Progress</div>
-                      <div class="grades__stat-card-value-row">
-                        <span class="grades__stat-card-value">{{ currentAssessmentSummary.enteredCount }} <small>/{{ currentAssessmentSummary.totalStudents }}</small></span>
-                        <div class="grades__mini-progress">
-                          <div class="grades__mini-progress-fill" :style="{ width: (currentAssessmentSummary.enteredCount / currentAssessmentSummary.totalStudents * 100) + '%' }"></div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- New Full-Width Analysis Bar -->
-              <div v-if="currentAssessmentSummary" class="grades__analysis-bar">
-                <div class="grades__analytics-card">
-                  <h4>At-Risk (Exclusion)</h4>
-                  <p v-if="filteredStudents.length > 0">
-                    <AlertTriangle :size="14" class="text-danger" style="margin-right:4px;" />
-                    {{ filteredStudents.length }} student{{ filteredStudents.length === 1 ? ' is' : 's are' }} marked for exclusion.
-                  </p>
-                  <p v-else>All students are included.</p>
-                </div>
-              </div>
             </div>
 
+            <header class="assessment-header">
+              <div class="assessment-header__identity">
+                <div class="assessment-header__icon">
+                  <FilePlus :size="24" />
+                </div>
+                <div class="assessment-header__info">
+                  <h1 class="assessment-header__name">{{ currentAssessment.name }}</h1>
+                  <div class="assessment-header__status-badges">
+                    <span class="assessment-header__badge assessment-header__badge--type">
+                      {{ currentAssessment.assessmentType }}
+                    </span>
+                    <span class="assessment-header__badge assessment-header__badge--points">
+                      <Target :size="12" /> /{{ currentAssessment.totalPoints }}
+                    </span>
+                    <span v-if="currentAssessment.unitId" class="assessment-header__badge assessment-header__badge--unit">
+                      <Hash :size="12" /> {{ getUnitName(currentAssessment.unitId) }}
+                    </span>
+                    <span class="assessment-header__badge assessment-header__badge--date">
+                      <Calendar :size="12" /> {{ formatLocalDisplay(currentAssessment.date) }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="assessment-header__right">
+                <div v-if="currentAssessmentSummary" class="assessment-header__metrics">
+                  <div class="assessment-header__metric">
+                    <span class="assessment-header__metric-label">Class Average</span>
+                    <span class="assessment-header__metric-value" :style="{ color: getHeatTextColor(currentAssessmentSummary.mean) }">
+                      {{ Math.round(currentAssessmentSummary.mean) }}%
+                    </span>
+                    <span v-if="currentAssessmentSummary.average !== null" class="assessment-header__metric-subvalue">
+                      {{ Math.round(currentAssessmentSummary.average * 10) / 10 }} <small>/{{ currentAssessment.totalPoints }}</small>
+                    </span>
+                  </div>
+                  
+                  <div class="assessment-header__metric assessment-header__metric--secondary">
+                    <span class="assessment-header__metric-label">Entry Progress</span>
+                    <span class="assessment-header__metric-value">
+                      {{ currentAssessmentSummary.enteredCount }}<small>/{{ currentAssessmentSummary.totalStudents }}</small>
+                    </span>
+                    <div class="assessment-header__mini-progress">
+                      <div class="assessment-header__mini-progress-fill" :style="{ width: (currentAssessmentSummary.enteredCount / currentAssessmentSummary.totalStudents * 100) + '%' }"></div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="assessment-header__actions">
+                  <button class="grades__btn-action" title="Edit Assessment" @click="startEditAssessment(currentAssessment)">
+                    <Edit2 :size="18" />
+                  </button>
+                  <button class="grades__btn-action" title="View Missing Students" @click="showMissingModal = true">
+                    <UserMinus :size="18" />
+                  </button>
+                  <button class="grades__btn-action grades__btn-action--danger" title="Delete Assessment" @click="confirmDeleteAssessment(currentAssessment)">
+                    <Trash2 :size="18" />
+                  </button>
+                  <div class="assessment-header__divider"></div>
+                  <button class="grades__close-btn" @click="selectedAssessmentId = null" title="Close Assessment View">
+                    <X :size="18" />
+                  </button>
+                </div>
+              </div>
+            </header>
+
+            <!-- Description & At-Risk Strip -->
+            <div v-if="currentAssessment.description || (currentAssessmentSummary && filteredStudents.length > 0)" class="assessment-header__sub-bar">
+              <p v-if="currentAssessment.description" class="assessment-header__description">{{ currentAssessment.description }}</p>
+              <div v-if="currentAssessmentSummary && filteredStudents.length > 0" class="assessment-header__at-risk">
+                <AlertTriangle :size="14" />
+                <span>{{ filteredStudents.length }} student{{ filteredStudents.length === 1 ? ' is' : 's are' }} marked for exclusion.</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="grades__focused-view">
+            <!-- Student List for Assessment (Premium Table) -->
             <!-- Student List for Assessment (Premium Table) -->
             <div class="grades__table-card">
               <div class="grades__table-scroll-area">
@@ -829,7 +831,7 @@
                       
                       <!-- Retest Indicator -->
                       <button 
-                        v-if="gradeMap[a.assessmentId][student.studentId].attempts?.length > 1" 
+                        v-if="gradeMap[a.assessmentId]?.[student.studentId]?.attempts?.length > 1" 
                         class="grades__cell-retest-btn"
                         title="View attempts"
                         @click.stop="openAttempts($event, student.studentId, a.assessmentId)"
@@ -1063,7 +1065,7 @@ import {
   enterGrade
 } from '../composables/useGradebook.js'
 import { useAttendanceInsights } from '../composables/useAttendanceInsights.js'
-import { Plus, BarChart2, Settings, Pencil, XCircle, AlertCircle, Trash2, X, MoreVertical, ArrowLeft, Check, ArrowUp, ArrowDown, Minus, GraduationCap, Eye, EyeOff, ChevronLeft, ChevronRight, UserCheck, Activity, FilePlus, Target, Hash, Calendar, Award, AlertTriangle, ChevronUp, ChevronDown, Copy } from 'lucide-vue-next'
+import { Plus, BarChart2, Settings, Pencil, XCircle, AlertCircle, Trash2, X, MoreVertical, ArrowLeft, Check, ArrowUp, ArrowDown, Minus, GraduationCap, Eye, EyeOff, ChevronLeft, ChevronRight, UserCheck, Activity, FilePlus, Target, Hash, Calendar, Award, AlertTriangle, ChevronUp, ChevronDown, Copy, Edit2, UserMinus } from 'lucide-vue-next'
 import Student360 from '../components/dossier/Student360.vue'
 import StudentSidebar from '../components/StudentSidebar.vue'
 import GradeTrendChart from '../components/GradeTrendChart.vue'
@@ -1180,6 +1182,13 @@ function openAddIndividualAssessment() {
 // --- Sorting ---
 const sortedClassList = computed(() => {
   return [...classList.value].sort((a, b) => (a.periodNumber || 0) - (b.periodNumber || 0))
+})
+
+const filteredStudents = computed(() => {
+  if (!activeClassRecord.value?.students) return []
+  return Object.keys(activeClassRecord.value.students)
+    .filter(id => activeClassRecord.value.students[id].excludeFromAnalytics && !activeClassRecord.value.students[id].archived)
+    .map(id => ({ studentId: id, ...activeClassRecord.value.students[id] }))
 })
 
 const sortedRoster = computed(() => {
@@ -1397,7 +1406,7 @@ const currentAssessmentSummary = computed(() => {
   const totalStudents = sortedRoster.value.length
   const enteredCount = sortedRoster.value.filter(s => {
     const grade = gradeMap.value[selectedAssessmentId.value]?.[s.studentId]
-    return grade && (grade.attempts.length > 0 || grade.missing || grade.excluded)
+    return grade && (grade.attempts?.length > 0 || grade.missing || grade.excluded)
   }).length
 
   return {
@@ -2067,7 +2076,7 @@ async function onDeleteAttempt(attemptId) {
   
   // Refresh attempts in popover or close if none left
   const updatedGrade = gradeMap.value[aId]?.[sId]
-  if (!updatedGrade || updatedGrade.attempts.length === 0) {
+  if (!updatedGrade || updatedGrade.attempts?.length === 0) {
     attemptsPopover.value = null
   } else {
     attemptsPopover.value.attempts = updatedGrade.attempts
@@ -2222,12 +2231,11 @@ watch(selectedAssessmentId, (val) => {
   min-width: 0; /* Ensure layout doesn't push beyond parent */
 }
 
-
 /* ── Main Panel ─────────────────────────────────────────────────────── */
 .grades__dossier-container {
   height:     100%;
   min-height: 100vh;
-  box-shadow: var(--shadow-2xl);
+  box-shadow: var(--shadow-xl);
   z-index:    20;
   position:   relative;
 }
@@ -2259,6 +2267,55 @@ watch(selectedAssessmentId, (val) => {
   justify-content: center;
   gap: 12px;
   color: var(--text-secondary);
+}
+
+/* ── Assessment Actions ─────────────────────────────────────────── */
+.grades__btn-action {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.grades__btn-action:hover {
+  background: var(--primary-light);
+  border-color: var(--primary);
+  color: var(--primary);
+  transform: translateY(-1px);
+}
+
+.grades__btn-action--danger:hover {
+  background: #fff1f0;
+  border-color: #ffccc7;
+  color: #ff3b30;
+}
+
+.grades__close-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.grades__close-btn:hover {
+  background: var(--bg-secondary);
+  color: var(--text);
+  border-color: var(--text-secondary);
+  transform: translateY(-1px);
 }
 
 /* ── Student Dossier View ───────────────────────────────────────────── */
@@ -2392,7 +2449,7 @@ watch(selectedAssessmentId, (val) => {
   color: #065f46;
   border: 1px solid #a7f3d0;
 }
-verall-trend {
+.overall-trend {
   font-size: 0.85rem;
   display: flex;
   align-items: center;
@@ -3529,10 +3586,18 @@ verall-trend {
 }
 
 .grades__view-header {
-  padding: 24px 32px;
+  padding: 20px 32px;
   background: var(--surface);
   border-bottom: 1px solid var(--border);
 }
+
+.grades__view-header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
 
 .grades__back-btn {
   background: transparent;
@@ -3917,192 +3982,237 @@ verall-trend {
 .grades__status-tag--empty { color: var(--text-secondary); opacity: 0.5; }
 
 /* ── New Assessment View Styles ─────────────────────────── */
+/* ── Assessment View Overhaul ─────────────────────────── */
 .grades__assessment-view {
-  background: var(--bg);
+  display: flex;
+  flex-direction: column;
   height: 100%;
-  overflow-y: auto;
-  padding: 32px;
+  background: var(--bg);
+  overflow: hidden;
 }
 
-.grades__focused-view {
-  max-width: 850px;
-  margin: 0 auto;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-}
-
-.grades__breadcrumb {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 20px;
-  font-size: 0.85rem;
-  color: var(--text-secondary);
-}
-
-.grades__breadcrumb-link {
-  background: transparent;
-  border: none;
+.grades__view-header {
   padding: 0;
-  color: var(--primary);
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  cursor: pointer;
-  transition: opacity 0.2s;
-}
-
-.grades__breadcrumb-link:hover {
-  opacity: 0.7;
-}
-
-.grades__breadcrumb-sep {
-  opacity: 0.5;
-}
-
-.grades__assessment-card {
-  display: grid;
-  grid-template-columns: 1fr 400px;
-  gap: 32px;
   background: var(--surface);
-  padding: 12px 0;
-  align-items: center;
-}
-
-.grades__card-main {
+  border-bottom: 1px solid var(--border);
   display: flex;
   flex-direction: column;
+  flex-shrink: 0;
+}
+
+.grades__view-header-top {
+  padding: 12px 24px 0;
+  display: flex;
+  align-items: center;
+}
+
+.assessment-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px 20px;
   gap: 16px;
 }
 
-.grades__card-header-row {
+.assessment-header__identity {
   display: flex;
   align-items: center;
   gap: 16px;
+  flex: 1;
+  min-width: 0;
 }
 
-.grades__header-actions {
-  display: flex;
-  gap: 8px;
-}
-
-.grades__card-title {
-  font-size: 1.85rem;
-  font-weight: 800;
-  color: var(--text);
-  margin: 0;
-  letter-spacing: -0.02em;
-}
-
-.grades__btn-action {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  border: 1px solid var(--border);
-  background: var(--bg-secondary);
-  color: var(--text-secondary);
+.assessment-header__icon {
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.grades__btn-action:hover {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
   background: var(--primary-light);
-  border-color: var(--primary);
   color: var(--primary);
-  transform: translateY(-1px);
+  flex-shrink: 0;
 }
 
-.grades__btn-action--danger:hover {
-  background: #fff1f0;
-  border-color: var(--state-out);
-  color: var(--state-out);
-}
-
-.grades__assessment-metadata {
+.assessment-header__info {
   display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
 }
 
-.grades__meta-item {
+.assessment-header__name {
+  margin: 0;
+  font-size: 1.65rem;
+  font-weight: 800;
+  color: var(--text);
+  line-height: 1.1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.assessment-header__status-badges {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 6px 12px;
-  background: var(--bg-secondary);
-  border-radius: var(--radius-md);
-  color: var(--text-secondary);
-  font-size: 0.85rem;
-  font-weight: 600;
-  border: 1px solid transparent;
+  flex-wrap: wrap;
 }
 
-.grades__meta-item:hover {
-  border-color: var(--border);
-  color: var(--text);
-}
-
-.grades__assessment-stats {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-}
-
-.grades__stat-card-label {
+.assessment-header__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
   font-size: 0.7rem;
   font-weight: 700;
   text-transform: uppercase;
+  background: var(--bg-secondary);
   color: var(--text-secondary);
-  letter-spacing: 0.05em;
-  margin-bottom: 4px;
+  border: 1px solid var(--border);
 }
 
-.grades__stat-card-value-row {
+.assessment-header__right {
   display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 10px;
+  align-items: center;
+  gap: 24px;
+  flex-shrink: 0;
 }
 
-.grades__stat-card-value {
-  font-size: 1.5rem;
+.assessment-header__metrics {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.assessment-header__metric {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.assessment-header__metric-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.assessment-header__metric-value {
+  font-size: 1.35rem;
   font-weight: 800;
   color: var(--text);
   line-height: 1;
 }
 
-.grades__stat-card-value small {
-  font-size: 0.9rem;
-  opacity: 0.5;
-  font-weight: 500;
+.assessment-header__metric-value small {
+  font-size: 0.85rem;
+  opacity: 0.6;
 }
 
-.grades__stat-card-percent {
-  font-size: 1rem;
-  font-weight: 700;
+.assessment-header__metric-subvalue {
+  font-size: 0.7rem;
+  font-weight: 600;
   color: var(--text-secondary);
+  margin-top: 2px;
+  line-height: 1;
 }
 
-.grades__mini-progress {
+.assessment-header__metric--secondary {
+  border-left: 1px solid var(--border);
+  padding-left: 24px;
+}
+
+.assessment-header__mini-progress {
   width: 60px;
-  height: 6px;
+  height: 5px;
   background: var(--bg-secondary);
   border-radius: 3px;
   overflow: hidden;
-  margin-bottom: 4px;
+  margin-top: 4px;
 }
 
-.grades__mini-progress-fill {
+.assessment-header__mini-progress-fill {
   height: 100%;
   background: var(--primary);
-  border-radius: 3px;
 }
 
+.assessment-header__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-left: 1px solid var(--border);
+  padding-left: 16px;
+  margin-left: 8px;
+  height: 40px;
+}
+
+.assessment-header__divider {
+  width: 1px;
+  height: 32px;
+  background: var(--border);
+  margin: 0 4px;
+}
+
+.assessment-header__sub-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 24px;
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border);
+  gap: 24px;
+  flex-shrink: 0;
+}
+
+.assessment-header__description {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  font-style: italic;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.assessment-header__at-risk {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #ff3b30;
+  font-size: 0.8rem;
+  font-weight: 600;
+  background: #fff1f0;
+  padding: 4px 12px;
+  border-radius: 20px;
+  border: 1px solid #ffccc7;
+  white-space: nowrap;
+}
+
+.grades__focused-view {
+  max-width: 1100px;
+  margin: 0 auto;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 24px 32px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+@media (max-width: 1100px) {
+  .assessment-header__metrics { gap: 16px; }
+  .assessment-header__metric--secondary { display: none; }
+}
+
+@media (max-width: 900px) {
+  .assessment-header { flex-direction: column; align-items: flex-start; }
+  .assessment-header__right { width: 100%; justify-content: space-between; margin-top: 8px; }
+  .grades__focused-view { padding: 16px; }
+}
 /* ── Premium Table Overhaul ──────────────────────────── */
 .grades__table-card {
   background: var(--surface);
