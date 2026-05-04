@@ -81,16 +81,16 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="a in recentClassWork" :key="a.assessmentId" v-memo="[a.assessmentId, a.score, a.attempts.length, a.name, a.date]">
+            <tr v-for="a in recentClassWork" :key="a.assessmentId" v-memo="[a.assessmentId, a.score, a.attempts?.length, a.name, a.date]">
               <td class="td-date">{{ formatDate(a.date) }}</td>
               <td class="td-name">{{ a.name }}</td>
               <td class="td-cat">{{ getCategoryName(a.categoryId) }}</td>
               <td class="td-score text-right">
                 <div class="score-val">{{ a.score }} / {{ a.totalPoints }}</div>
-                <div v-if="a.attempts.length > 1" class="score-history">
+                <div v-if="a.attempts?.length > 1" class="score-history">
                   <span class="history-label">Attempts:</span>
                   <span v-for="(att, idx) in a.attempts" :key="att.attemptId" class="attempt-crumb">
-                    {{ att.pointsEarned }}<template v-if="idx < a.attempts.length - 1">, </template>
+                    {{ att.pointsEarned }}<template v-if="idx < (a.attempts?.length || 0) - 1">, </template>
                   </span>
                 </div>
               </td>
@@ -118,16 +118,16 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="a in individualTasks" :key="a.assessmentId" v-memo="[a.assessmentId, a.score, a.attempts.length, a.name, a.date]">
+            <tr v-for="a in individualTasks" :key="a.assessmentId" v-memo="[a.assessmentId, a.score, a.attempts?.length, a.name, a.date]">
               <td class="td-date">{{ formatDate(a.date) }}</td>
               <td class="td-name">{{ a.name }}</td>
               <td class="td-cat">{{ getCategoryName(a.categoryId) }}</td>
               <td class="td-score text-right">
                 <div class="score-val">{{ a.score }} / {{ a.totalPoints }}</div>
-                <div v-if="a.attempts.length > 1" class="score-history">
+                <div v-if="a.attempts?.length > 1" class="score-history">
                   <span class="history-label">Attempts:</span>
                   <span v-for="(att, idx) in a.attempts" :key="att.attemptId" class="attempt-crumb">
-                    {{ att.pointsEarned }}<template v-if="idx < a.attempts.length - 1">, </template>
+                    {{ att.pointsEarned }}<template v-if="idx < (a.attempts?.length || 0) - 1">, </template>
                   </span>
                 </div>
               </td>

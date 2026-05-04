@@ -410,7 +410,7 @@ export function enterGrade(assessmentId, studentId, pointsEarned, date = null, c
     grades.value.push(grade)
   }
   
-  const isFirst = grade.attempts.length === 0
+  const isFirst = (grade.attempts?.length || 0) === 0
   grade.attempts.push({
     attemptId: crypto.randomUUID(),
     pointsEarned,
