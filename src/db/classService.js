@@ -240,7 +240,7 @@ export async function importRoster(classId, studentsArray) {
     let inserted = 0
     let updated = 0
 
-    for (const { studentId, firstName, lastName, parentContacts, studentEmail, custody, livingWith, birthDate } of studentsArray) {
+    for (const { studentId, firstName, lastName, parentContacts, studentEmail, custody, livingWith, birthDate, rfidTag } of studentsArray) {
         if (cls.students[studentId]) {
             // Upsert — preserve seat and activeStates, but update names
             cls.students[studentId].firstName = firstName
@@ -256,6 +256,7 @@ export async function importRoster(classId, studentsArray) {
             if (custody) cls.students[studentId].custody = custody
             if (livingWith) cls.students[studentId].livingWith = livingWith
             if (birthDate) cls.students[studentId].birthDate = birthDate
+            if (rfidTag !== undefined) cls.students[studentId].rfidTag = rfidTag
             updated++
         } else {
             // Insert with defaults
@@ -269,6 +270,7 @@ export async function importRoster(classId, studentsArray) {
                 birthDate: birthDate || '',
                 seat: null,
                 generalNote: '',
+                rfidTag: rfidTag || '',
                 activeStates: { isOut: false, outTime: null, isAbsent: false, lateMs: null },
                 excludeFromAnalytics: false,
             }
@@ -665,7 +667,7 @@ export async function bulkImportClasses(groups) {
 
         // Process students for this class
         for (const row of group.students) {
-            const { studentId, firstName, lastName, parentContacts, studentEmail, custody, livingWith, birthDate } = row
+            const { studentId, firstName, lastName, parentContacts, studentEmail, custody, livingWith, birthDate, rfidTag } = row
             if (cls.students[studentId]) {
                 cls.students[studentId].firstName = firstName
                 cls.students[studentId].lastName = lastName
@@ -674,6 +676,7 @@ export async function bulkImportClasses(groups) {
                 if (custody) cls.students[studentId].custody = custody
                 if (livingWith) cls.students[studentId].livingWith = livingWith
                 if (birthDate) cls.students[studentId].birthDate = birthDate
+                if (rfidTag !== undefined) cls.students[studentId].rfidTag = rfidTag
                 studentsUpdated++
             } else {
                 cls.students[studentId] = {
@@ -684,6 +687,7 @@ export async function bulkImportClasses(groups) {
                     custody: custody || '',
                     livingWith: livingWith || '',
                     birthDate: birthDate || '',
+                    rfidTag: rfidTag || '',
                     seat: null,
                     generalNote: '',
                     activeStates: { isOut: false, outTime: null, isAbsent: false, lateMs: null },
