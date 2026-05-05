@@ -865,6 +865,41 @@
             </label>
           </div>
 
+          <!-- RFID Tag Section -->
+          <div class="setup__label" style="margin-top: 15px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <span>RFID Card Mapping</span>
+              <button 
+                v-if="newStudent.rfidTag" 
+                type="button" 
+                class="setup__btn-text setup__btn-text--danger" 
+                @click="clearRFID"
+              >
+                Unlink Card
+              </button>
+            </div>
+            
+            <div class="setup__rfid-enroll-box" :class="{ 'setup__rfid-enroll-box--active': isEnrollingRFID }">
+              <template v-if="!isEnrollingRFID">
+                <div class="setup__rfid-display">
+                  <Rss :size="16" />
+                  <span v-if="newStudent.rfidTag" class="setup__rfid-hex">{{ newStudent.rfidTag }}</span>
+                  <span v-else class="setup__rfid-empty">No card linked</span>
+                </div>
+                <button type="button" class="setup__pill-btn" @click="startEnrollment">
+                  {{ newStudent.rfidTag ? 'Replace Card' : 'Scan to Link' }}
+                </button>
+              </template>
+              <template v-else>
+                <div class="setup__rfid-listening">
+                  <div class="setup__rfid-spinner"></div>
+                  <span>Waiting for scan...</span>
+                </div>
+                <button type="button" class="setup__pill-btn" @click="stopEnrollment">Cancel</button>
+              </template>
+            </div>
+          </div>
+
           <div v-if="singleAddError" class="setup__error" style="margin-top: 10px;">
             <AlertTriangle :size="14" /> {{ singleAddError }}
           </div>
@@ -897,7 +932,7 @@
 
 import { ref, reactive, computed, watch, onMounted, nextTick, onUnmounted } from 'vue'
 import Papa from 'papaparse'
-import { Archive, ChevronDown, ChevronUp, FolderOpen, Trash2, FileText, Pencil, Download, Database, Cloud, Settings2, Plus, PlusCircle, X, Save, FileUp, FileDown, GraduationCap, ArrowLeft, Zap, LayoutDashboard, Settings, QrCode, Printer, RefreshCcw, FileSpreadsheet, DatabaseIcon, AlertTriangle, ShieldCheck, Search, CalendarDays, UserMinus, UserCheck } from 'lucide-vue-next'
+import { Archive, ChevronDown, ChevronUp, FolderOpen, Trash2, FileText, Pencil, Download, Database, Cloud, Settings2, Plus, PlusCircle, X, Save, FileUp, FileDown, GraduationCap, ArrowLeft, Zap, LayoutDashboard, Settings, QrCode, Printer, RefreshCcw, FileSpreadsheet, DatabaseIcon, AlertTriangle, ShieldCheck, Search, CalendarDays, UserMinus, UserCheck, Rss } from 'lucide-vue-next'
 import QRCode from 'qrcode'
 import { exportGradebookToExcel } from '../db/exportService.js'
 import { resolveIcon } from '../utils/icons.js'
@@ -913,6 +948,7 @@ import SuperConfirmModal from '../components/SuperConfirmModal.vue'
 import BaseModal from '../components/BaseModal.vue'
 import GradeBucketsSettings from '../components/setup/GradeBucketsSettings.vue'
 import CalendarSettings from '../components/setup/CalendarSettings.vue'
+import { useKeyboardWedge } from '../composables/useKeyboardWedge.js'
 
 const {
   classList,
@@ -1656,7 +1692,7 @@ async function confirmBulkImport() {
   window.alert('Bulk import complete!')
 }
 
-const newStudent = reactive({ studentId: '', firstName: '', lastName: '' })
+const newStudent = reactive({ studentId: '', firstName: '', lastName: '', rfidTag: '' })
 const singleAddError = ref('')
 const singleAddSuccess = ref('')
 const isEditingStudent = ref(false)
@@ -1668,6 +1704,7 @@ function openAddStudentModal() {
   newStudent.studentId = ''
   newStudent.firstName = ''
   newStudent.lastName = ''
+  newStudent.rfidTag = ''
   singleAddError.value = ''
   singleAddSuccess.value = ''
   isStudentModalOpen.value = true
@@ -1678,6 +1715,7 @@ function onEditStudent(student) {
   newStudent.studentId = student.studentId
   newStudent.firstName = student.firstName
   newStudent.lastName = student.lastName
+  newStudent.rfidTag = student.rfidTag || ''
   singleAddError.value = ''
   singleAddSuccess.value = ''
   isStudentModalOpen.value = true
@@ -1689,8 +1727,57 @@ function cancelEditStudent() {
   newStudent.studentId = ''
   newStudent.firstName = ''
   newStudent.lastName = ''
+  newStudent.rfidTag = ''
   singleAddError.value = ''
   singleAddSuccess.value = ''
+}
+
+// --- RFID Enrollment logic ---
+const isEnrollingRFID = ref(false)
+const enrollTimer = ref(null)
+
+const onRFIDEnroll = (hex) => {
+  // Check if this tag is already in use by another student
+  const duplicate = sortedRoster.value.find(s => s.rfidTag?.toLowerCase() === hex.toLowerCase() && s.studentId !== newStudent.studentId)
+  if (duplicate) {
+    singleAddError.value = `This card is already linked to ${duplicate.firstName} ${duplicate.lastName}.`
+    stopEnrollment()
+    return
+  }
+
+  newStudent.rfidTag = hex.toUpperCase()
+  singleAddSuccess.value = 'Card detected!'
+  stopEnrollment()
+  setTimeout(() => { if (singleAddSuccess.value === 'Card detected!') singleAddSuccess.value = '' }, 3000)
+}
+
+const rfidWedge = useKeyboardWedge(onRFIDEnroll)
+
+function startEnrollment() {
+  isEnrollingRFID.value = true
+  singleAddError.value = ''
+  rfidWedge.start()
+  
+  // Auto-timeout if no scan
+  if (enrollTimer.value) clearTimeout(enrollTimer.value)
+  enrollTimer.value = setTimeout(() => {
+    if (isEnrollingRFID.value) {
+      stopEnrollment()
+      singleAddError.value = 'Enrollment timed out. Please try again.'
+    }
+  }, 15000)
+}
+
+function stopEnrollment() {
+  isEnrollingRFID.value = false
+  rfidWedge.stop()
+  if (enrollTimer.value) clearTimeout(enrollTimer.value)
+}
+
+function clearRFID() {
+  newStudent.rfidTag = ''
+  singleAddSuccess.value = 'Card unlinked.'
+  setTimeout(() => { if (singleAddSuccess.value === 'Card unlinked.') singleAddSuccess.value = '' }, 3000)
 }
 
 async function addSingleStudent() {
@@ -1706,6 +1793,7 @@ async function addSingleStudent() {
     studentId: newStudent.studentId.trim(),
     firstName: newStudent.firstName.trim(),
     lastName: newStudent.lastName.trim(),
+    rfidTag: newStudent.rfidTag.trim(),
     parentContacts: []
   }
 
@@ -1723,6 +1811,7 @@ async function addSingleStudent() {
       newStudent.studentId = ''
       newStudent.firstName = ''
       newStudent.lastName = ''
+      newStudent.rfidTag = ''
       setTimeout(() => singleAddSuccess.value = '', 3000)
     }
   } catch (err) {
@@ -3540,4 +3629,66 @@ function formatDate(iso) {
 .setup__audit-detail-list li:last-child {
   border-bottom: none;
 }
+
+/* ── RFID Enrollment Styles ───────────────────────────────────────── */
+.setup__rfid-enroll-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 8px 12px;
+  transition: all 0.2s ease;
+}
+
+.setup__rfid-enroll-box--active {
+  border-color: var(--primary);
+  background: var(--primary-light);
+  box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.1);
+}
+
+.setup__rfid-display {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-secondary);
+}
+
+.setup__rfid-hex {
+  font-family: monospace;
+  font-weight: 700;
+  color: var(--text);
+  font-size: 0.9rem;
+}
+
+.setup__rfid-empty {
+  font-size: 0.85rem;
+  font-style: italic;
+  opacity: 0.6;
+}
+
+.setup__rfid-listening {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--primary);
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.setup__rfid-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--primary);
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: setup-spin 0.8s linear infinite;
+}
+
+@keyframes setup-spin {
+  to { transform: rotate(360deg); }
+}
+
+.setup__btn-text--danger { color: var(--state-out) !important; }
 </style>

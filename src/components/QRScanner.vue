@@ -6,18 +6,36 @@
     @pointermove="onDrag"
     @pointerup="endDrag"
   >
-    <div id="qr-scanner-container" class="qr-scanner" :class="{ 'qr-scanner--pip': isPiP }">
+    <div id="qr-scanner-container" class="qr-scanner" :class="{ 'qr-scanner--pip': isPiP, 'qr-scanner--rfid': scannerMode === 'rfid', 'qr-scanner--minimized': isMinimized }">
 
       <!-- ── Header / Drag Handle ───────────────────────────────────── -->
       <div class="qr-scanner__header" @pointerdown="startDrag">
         <div class="qr-scanner__title">
-          <QrCode :size="16" />
-          <span>Washroom Scanner</span>
+          <div class="qr-scanner__mode-toggle">
+            <button 
+              class="qr-scanner__mode-btn" 
+              :class="{ 'qr-scanner__mode-btn--active': scannerMode === 'qr' }"
+              @click="scannerMode = 'qr'"
+              title="Camera Scan"
+            >
+              <QrCode :size="14" />
+              <span>QR</span>
+            </button>
+            <button 
+              class="qr-scanner__mode-btn" 
+              :class="{ 'qr-scanner__mode-btn--active': scannerMode === 'rfid' }"
+              @click="scannerMode = 'rfid'"
+              title="RFID Scan"
+            >
+              <Rss :size="14" />
+              <span>RFID</span>
+            </button>
+          </div>
         </div>
         <div class="qr-scanner__actions">
           <!-- Minimize: only when camera is running and NOT in PiP -->
           <button
-            v-if="isScanning && !isPiP"
+            v-if="(isScanning || scannerMode === 'rfid') && !isPiP"
             class="qr-scanner__icon-btn"
             @click.stop="isMinimized = !isMinimized"
             :title="isMinimized ? 'Expand' : 'Minimize'"
@@ -44,15 +62,19 @@
       <div
         class="qr-scanner__status-bar"
         :class="{ 'qr-scanner__status-bar--clickable': isMinimized && !isPiP }"
-        @click="isMinimized && !isPiP ? (isMinimized = false) : undefined"
-        :title="isMinimized ? 'Click to expand' : ''"
+        @pointerdown="isMinimized && !isPiP ? startDrag($event) : undefined"
+        @click="isMinimized && !isPiP && !hasDragged ? (isMinimized = false) : undefined"
+        :title="isMinimized ? 'Drag to move • Click to expand' : ''"
       >
         <div class="qr-scanner__count" :class="{ 'qr-scanner__count--full': maxStudentsOut > 0 && studentsOut.length >= maxStudentsOut }">
           <span class="qr-scanner__count-num">{{ studentsOut.length }}</span>
-          <span class="qr-scanner__count-sep" v-if="maxStudentsOut > 0"> / {{ maxStudentsOut }}</span>
-          <span class="qr-scanner__count-label"> OUT</span>
+          <span class="qr-scanner__count-sep" v-if="maxStudentsOut > 0 && (!isMinimized || scannerMode === 'qr')"> / {{ maxStudentsOut }}</span>
+          <span class="qr-scanner__count-label" v-if="!isMinimized || scannerMode === 'qr'"> OUT</span>
+          
+          <!-- Micro-Pill indicator -->
+          <div v-if="isMinimized && scannerMode === 'rfid'" class="qr-scanner__pill-dot"></div>
         </div>
-        <div class="qr-scanner__limits">
+        <div class="qr-scanner__limits" v-if="!isMinimized || scannerMode === 'qr'">
           <span class="qr-scanner__limit-label">LIMIT</span>
           <div class="qr-scanner__limit-btns">
             <button
@@ -71,33 +93,46 @@
       <!-- ── Body (hidden when minimized) ──────────────────────────── -->
       <div class="qr-scanner__body" v-show="!isMinimized || isPiP">
         <div class="qr-scanner__viewfinder">
-          <div id="qr-reader" class="qr-scanner__reader"></div>
+          <!-- QR Camera View (Hidden in RFID) -->
+          <div v-show="scannerMode === 'qr'" id="qr-reader" class="qr-scanner__reader"></div>
 
-          <!-- Idle Overlay -->
-          <div v-if="!isScanning && !isPiPStarting" class="qr-scanner__overlay qr-scanner__overlay--idle">
+          <!-- RFID Compact Listening View -->
+          <div v-if="scannerMode === 'rfid' && !cooldownActive" class="qr-scanner__rfid-status">
+            <div class="qr-scanner__rfid-listening">
+              <div class="qr-scanner__rfid-dot"></div>
+              <span>RFID Listening...</span>
+            </div>
+          </div>
+
+          <!-- QR Idle Overlay -->
+          <div v-if="!isScanning && !isPiPStarting && scannerMode === 'qr'" class="qr-scanner__overlay qr-scanner__overlay--idle">
             <CameraOff :size="40" style="opacity: 0.2;" />
             <p>Scanner Offline</p>
             <button class="qr-scanner__start-btn" @click.stop="startScanner">Start Camera</button>
           </div>
 
-          <!-- PiP Reinit Overlay -->
-          <div v-if="isPiPStarting" class="qr-scanner__overlay qr-scanner__overlay--idle">
+          <!-- QR PiP Reinit Overlay -->
+          <div v-if="isPiPStarting && scannerMode === 'qr'" class="qr-scanner__overlay qr-scanner__overlay--idle">
             <QrCode :size="40" style="opacity: 0.2;" />
             <p>Starting scanner…</p>
           </div>
 
-          <!-- Scan Feedback Overlay -->
+          <!-- Scan Feedback Overlay (Unified for both modes) -->
           <div
             v-if="cooldownActive"
             class="qr-scanner__overlay"
             :class="isError ? 'qr-scanner__overlay--error' : 'qr-scanner__overlay--success'"
           >
-            <div class="qr-scanner__status-icon">
-              <Check :size="28" v-if="!isError" />
-              <AlertTriangle :size="28" v-else />
+            <div class="qr-scanner__status-row">
+              <div class="qr-scanner__status-icon-mini">
+                <Check :size="16" v-if="!isError" />
+                <AlertTriangle :size="16" v-else />
+              </div>
+              <div class="qr-scanner__status-text">
+                <span class="qr-scanner__status-name">{{ lastScannedName }}</span>
+                <span class="qr-scanner__status-msg">{{ lastScannedStatus }}</span>
+              </div>
             </div>
-            <p class="qr-scanner__status-name">{{ lastScannedName }}</p>
-            <p class="qr-scanner__status-msg">{{ lastScannedStatus }}</p>
           </div>
         </div>
 
@@ -120,10 +155,11 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
 import { Html5Qrcode } from 'html5-qrcode'
-import { QrCode, X, ExternalLink, Minimize2, CameraOff, Check, Camera, AlertTriangle, ChevronDown, ChevronUp } from 'lucide-vue-next'
+import { QrCode, X, ExternalLink, Minimize2, CameraOff, Check, Camera, AlertTriangle, ChevronDown, ChevronUp, Rss } from 'lucide-vue-next'
 import { useClassroom } from '../composables/useClassroom.js'
+import { useKeyboardWedge } from '../composables/useKeyboardWedge.js'
 
 const emit = defineEmits(['close'])
 
@@ -140,18 +176,86 @@ const lastScannedStatus = ref('')
 const cameras        = ref([])
 const selectedCamera = ref(null)
 
+// ── Scanner Mode ─────────────────────────────────────────────────────────────
+const scannerMode = ref(localStorage.getItem('scanner-mode') || 'qr')
+watch(scannerMode, (newMode) => {
+  localStorage.setItem('scanner-mode', newMode)
+  if (newMode === 'rfid') {
+    stopScanner()
+    rfidWedge.start()
+  } else {
+    rfidWedge.stop()
+  }
+})
+
+// ── RFID Wedge ────────────────────────────────────────────────────────────────
+const rfidMap = computed(() => {
+  const map = {}
+  for (const [id, s] of Object.entries(students.value)) {
+    if (s.rfidTag) map[s.rfidTag.toLowerCase()] = id
+  }
+  return map
+})
+
+const onRFIDScan = (hex) => {
+  const studentId = rfidMap.value[hex.toLowerCase()]
+  if (studentId) {
+    handleScan(studentId)
+  } else {
+    // Show error for unknown tag
+    lastScannedName.value = 'Unknown Card'
+    lastScannedStatus.value = hex.toUpperCase()
+    isError.value = true
+    playBeep(true)
+    
+    cooldownActive.value = true
+    setTimeout(() => {
+      cooldownActive.value = false
+      isError.value = false
+    }, 5000)
+  }
+}
+
+const rfidWedge = useKeyboardWedge(onRFIDScan)
+
 // ── PiP ───────────────────────────────────────────────────────────────────────
 const pipSupported = ref('documentPictureInPicture' in window)
 const isPiP        = ref(false)
 let pipWindowObj   = null
 
-// ── Drag ──────────────────────────────────────────────────────────────────────
-const dragPos = ref({ x: null, y: null })   // null = use CSS default
+// ── Drag & Dock ─────────────────────────────────────────────────────────────
+const dragPos = ref({ x: null, y: null })
+const expandedPos = ref({ x: null, y: null })
+const minimizedPos = ref({ x: 165, y: 8 }) // Default 'Dock' near title
 let isDragging    = false
+let hasDragged    = false // To distinguish click from drag
 let dragStartX    = 0
 let dragStartY    = 0
 let dragStartPosX = 0
 let dragStartPosY = 0
+
+// Auto-Docking logic
+watch(isMinimized, (minimized) => {
+  if (scannerMode.value !== 'rfid' || isPiP.value) return
+
+  if (minimized) {
+    // Save current pos as expanded
+    expandedPos.value = dragPos.value.x !== null ? { ...dragPos.value } : null
+    // Move to dock
+    dragPos.value = { ...minimizedPos.value }
+  } else {
+    // If they were in pill mode and moved it, save that as the new minimizedPos
+    if (dragPos.value.x !== null && dragPos.value.x !== minimizedPos.value.x) {
+      minimizedPos.value = { ...dragPos.value }
+    }
+    // Restore expanded pos
+    if (expandedPos.value) {
+      dragPos.value = { ...expandedPos.value }
+    } else {
+      dragPos.value = { x: null, y: null } // Reset to default
+    }
+  }
+})
 
 const mountStyle = computed(() => {
   if (isPiP.value || dragPos.value.x === null) return {}
@@ -160,14 +264,14 @@ const mountStyle = computed(() => {
 
 function startDrag(e) {
   if (isPiP.value) return
-  if (e.target.closest('button, select')) return   // let controls work normally
+  if (e.target.closest('button, select')) return
 
   isDragging = true
+  hasDragged = false
 
   const mount = document.getElementById('qr-scanner-mount')
   const rect  = mount.getBoundingClientRect()
 
-  // Latch current painted position on first drag
   if (dragPos.value.x === null) {
     dragPos.value = { x: rect.left, y: rect.top }
   }
@@ -182,6 +286,12 @@ function startDrag(e) {
 
 function onDrag(e) {
   if (!isDragging) return
+  
+  // Movement threshold to count as a 'drag' (3 pixels)
+  if (!hasDragged && (Math.abs(e.clientX - dragStartX) > 3 || Math.abs(e.clientY - dragStartY) > 3)) {
+    hasDragged = true
+  }
+
   const mount = document.getElementById('qr-scanner-mount')
   if (!mount) return
   const rect = mount.getBoundingClientRect()
@@ -191,7 +301,12 @@ function onDrag(e) {
   dragPos.value = { x, y }
 }
 
-function endDrag() { isDragging = false }
+function endDrag() { 
+  isDragging = false 
+  // We keep hasDragged true briefly so the @click handler can check it,
+  // but it needs to be reset for the next interaction.
+  setTimeout(() => { hasDragged = false }, 50)
+}
 
 // ── Audio ─────────────────────────────────────────────────────────────────────
 let audioCtx = null
@@ -252,6 +367,14 @@ const handleScan = async (decodedText) => {
   }, DEBOUNCE_MS)
 }
 
+const handleStartByMode = async () => {
+  if (scannerMode.value === 'qr') {
+    await startScanner()
+  } else {
+    rfidWedge.start()
+  }
+}
+
 // ── Scanner Lifecycle ─────────────────────────────────────────────────────────
 let html5QrCode = null
 
@@ -293,6 +416,7 @@ async function _startInstance(elementId) {
 }
 
 const startScanner = async () => {
+  if (scannerMode.value !== 'qr') return
   if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)()
   if (audioCtx.state === 'suspended') audioCtx.resume()
 
@@ -401,10 +525,15 @@ const togglePiP = async () => {
 onMounted(() => {
   window.addEventListener('pointermove', onDrag, { passive: true })
   window.addEventListener('pointerup',   endDrag)
+  
+  if (scannerMode.value === 'rfid') {
+    rfidWedge.start()
+  }
 })
 
 onUnmounted(async () => {
   await stopScanner()
+  rfidWedge.stop()
   if (pipWindowObj) pipWindowObj.close()
   window.removeEventListener('pointermove', onDrag)
   window.removeEventListener('pointerup',   endDrag)
@@ -431,6 +560,18 @@ onUnmounted(async () => {
   display:       flex;
   flex-direction: column;
   overflow:      hidden;
+  transition:    width 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
+                 height 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                 transform 0.2s ease;
+}
+
+.qr-scanner--minimized.qr-scanner--rfid {
+  width: 72px;
+  border-radius: 40px;
+}
+
+.qr-scanner--minimized.qr-scanner--rfid:hover {
+  transform: scale(1.05);
 }
 
 .qr-scanner--pip {
@@ -451,6 +592,9 @@ onUnmounted(async () => {
   align-items: center;
   cursor:     grab;
 }
+.qr-scanner--minimized.qr-scanner--rfid .qr-scanner__header {
+  display: none;
+}
 
 .qr-scanner__header:active { cursor: grabbing; }
 
@@ -461,7 +605,39 @@ onUnmounted(async () => {
   font-weight: 700;
   font-size:   0.85rem;
   color:       var(--text);
-  pointer-events: none;   /* let drag bubble to header */
+}
+
+.qr-scanner__mode-toggle {
+  display: flex;
+  background: var(--bg);
+  padding: 2px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+}
+
+.qr-scanner__mode-btn {
+  border: none;
+  background: none;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 15px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.qr-scanner__mode-btn:hover {
+  color: var(--text);
+}
+
+.qr-scanner__mode-btn--active {
+  background: var(--surface);
+  color: var(--primary);
+  box-shadow: var(--shadow-sm);
 }
 
 .qr-scanner__actions {
@@ -497,6 +673,11 @@ onUnmounted(async () => {
   align-items: center;
   gap:        12px;
 }
+.qr-scanner--minimized.qr-scanner--rfid .qr-scanner__status-bar {
+  padding: 6px 10px;
+  border-bottom: none;
+  justify-content: center;
+}
 
 .qr-scanner__status-bar--clickable {
   cursor:  pointer;
@@ -527,6 +708,16 @@ onUnmounted(async () => {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.03em;
+}
+
+.qr-scanner__pill-dot {
+  width: 6px;
+  height: 6px;
+  background: var(--primary);
+  border-radius: 50%;
+  margin-left: 4px;
+  box-shadow: 0 0 5px var(--primary);
+  animation: rfid-glow 2s infinite ease-in-out;
 }
 
 .qr-scanner__limits {
@@ -586,10 +777,16 @@ onUnmounted(async () => {
 .qr-scanner__viewfinder {
   position:      relative;
   width:         100%;
-  aspect-ratio:  1;  /* Always square — no wide/narrow stretch */
+  aspect-ratio:  1;
   background:    #000;
   border-radius: var(--radius-md);
   overflow:      hidden;
+  transition:    all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.qr-scanner--rfid .qr-scanner__viewfinder {
+  aspect-ratio: auto;
+  height:       48px;
 }
 
 /* In PiP: constrain to a centered square within the available space */
@@ -599,6 +796,39 @@ onUnmounted(async () => {
 }
 
 .qr-scanner__reader { width: 100%; height: 100%; }
+
+.qr-scanner__rfid-status {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+}
+
+.qr-scanner__rfid-listening {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  letter-spacing: 0.02em;
+  color: var(--primary);
+}
+
+.qr-scanner__rfid-dot {
+  width: 8px;
+  height: 8px;
+  background: var(--primary);
+  border-radius: 50%;
+  box-shadow: 0 0 10px var(--primary);
+  animation: rfid-glow 1.5s infinite ease-in-out;
+}
+
+@keyframes rfid-glow {
+  0%, 100% { opacity: 0.4; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); }
+}
 
 /* ── Overlays ──────────────────────────────────────────────── */
 .qr-scanner__overlay {
@@ -632,30 +862,50 @@ onUnmounted(async () => {
   animation:       shake 0.35s ease-in-out;
 }
 
-.qr-scanner__status-icon {
-  width:         56px;
-  height:        56px;
-  background:    var(--state-success);
-  color:         #fff;
-  border-radius: 50%;
-  display:       flex;
-  align-items:   center;
-  justify-content: center;
-  margin-bottom: 10px;
-  box-shadow:    0 3px 10px rgba(0,0,0,.12);
+.qr-scanner__status-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 15px;
+  width: 100%;
 }
-.qr-scanner__overlay--error .qr-scanner__status-icon { background: var(--state-out); }
+
+.qr-scanner__status-icon-mini {
+  width: 28px;
+  height: 28px;
+  background: var(--state-success);
+  color: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.qr-scanner__overlay--error .qr-scanner__status-icon-mini { background: var(--state-out); }
+
+.qr-scanner__status-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+}
 
 .qr-scanner__status-name {
   font-weight: 700;
-  font-size:   1rem;
+  font-size: 0.9rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+  text-align: left;
 }
+
 .qr-scanner__status-msg {
-  font-weight:    700;
+  font-weight: 800;
   text-transform: uppercase;
-  font-size:      0.8rem;
-  letter-spacing: 1px;
-  opacity:        0.75;
+  font-size: 0.65rem;
+  letter-spacing: 0.5px;
+  opacity: 0.8;
 }
 
 .qr-scanner__start-btn {
