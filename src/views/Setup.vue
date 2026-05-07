@@ -383,9 +383,14 @@
         <div class="setup__card">
           <div class="setup__card-header-row">
             <h2 class="setup__card-title">Roster — {{ sortedRoster.length }} Students</h2>
-            <button class="setup__btn-primary setup__btn-add-student" @click="openAddStudentModal">
-              <PlusCircle :size="16" /> Add Student
-            </button>
+            <div class="setup__card-actions">
+              <button class="setup__btn-ghost" @click="openRapidRFID">
+                <Zap :size="16" /> Rapid RFID
+              </button>
+              <button class="setup__btn-primary setup__btn-add-student" @click="openAddStudentModal">
+                <PlusCircle :size="16" /> Add Student
+              </button>
+            </div>
           </div>
 
           <!-- Roster List -->
@@ -911,6 +916,69 @@
             </button>
           </div>
         </form>
+      </div>
+    </BaseModal>
+    
+    <!-- ── Rapid RFID Enrollment Modal ─── -->
+    <BaseModal
+      :show="isRapidRFIDOpen"
+      @close="stopRapidRFID"
+      max-width="600px"
+      title="Rapid RFID Linker"
+    >
+      <div class="rapid-rfid-linker">
+        <div class="rapid-rfid-active" v-if="currentRapidStudent">
+          <div class="rapid-rfid-label">Currently Linking</div>
+          <div class="rapid-rfid-name">{{ currentRapidStudent.firstName }} {{ currentRapidStudent.lastName }}</div>
+          <div class="rapid-rfid-id">{{ currentRapidStudent.studentId }}</div>
+          
+          <div class="rapid-rfid-status" :class="{ 'rapid-rfid-status--error': rapidRFIError, 'rapid-rfid-status--success': rapidRFIDSuccess }">
+            <template v-if="rapidRFIError">
+              <AlertTriangle :size="18" /> {{ rapidRFIError }}
+            </template>
+            <template v-else-if="rapidRFIDSuccess">
+              <UserCheck :size="18" /> {{ rapidRFIDSuccess }}
+            </template>
+            <template v-else>
+              <div class="rapid-rfid-pulse"></div>
+              <span>Ready for scan...</span>
+            </template>
+          </div>
+        </div>
+
+        <div class="rapid-rfid-list-container">
+          <div class="rapid-rfid-list-header">Class Roster ({{ rapidRFIDList.length }})</div>
+          <div class="rapid-rfid-list">
+            <div 
+              v-for="(s, idx) in rapidRFIDList" 
+              :key="s.studentId" 
+              class="rapid-rfid-item"
+              :class="{ 'rapid-rfid-item--active': idx === rapidRFIDIndex, 'rapid-rfid-item--linked': s.rfidTag }"
+              @click="rapidRFIDIndex = idx; rapidRFIError = ''; rapidRFIDSuccess = ''"
+            >
+              <div class="rapid-rfid-item-info">
+                <span class="rapid-rfid-item-name">{{ s.lastName }}, {{ s.firstName }}</span>
+                <span v-if="s.rfidTag" class="rapid-rfid-tag-hex">{{ s.rfidTag }}</span>
+              </div>
+              <div class="rapid-rfid-item-status">
+                <UserCheck v-if="s.rfidTag" :size="14" />
+                <div v-else-if="idx === rapidRFIDIndex" class="rapid-rfid-mini-pulse"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="rapid-rfid-footer">
+          <button type="button" class="setup__btn-ghost" @click="stopRapidRFID">Close Linker</button>
+          <button 
+            type="button" 
+            class="setup__btn-primary" 
+            style="min-width: 120px;"
+            @click="rapidRFIDIndex = (rapidRFIDIndex + 1) % rapidRFIDList.length"
+          >
+            Skip Student
+          </button>
+        </div>
       </div>
     </BaseModal>
   </div>
@@ -1730,6 +1798,90 @@ function cancelEditStudent() {
   newStudent.rfidTag = ''
   singleAddError.value = ''
   singleAddSuccess.value = ''
+}
+
+// --- Rapid RFID Enrollment ---
+const isRapidRFIDOpen = ref(false)
+const rapidRFIDIndex = ref(0)
+const rapidRFIError = ref('')
+const rapidRFIDSuccess = ref('')
+
+const rapidRFIDList = computed(() => {
+  return sortedRoster.value
+})
+
+const currentRapidStudent = computed(() => rapidRFIDList.value[rapidRFIDIndex.value])
+
+const onRapidRFIDScan = async (hex) => {
+  if (!isRapidRFIDOpen.value || !currentRapidStudent.value) return
+
+  // Check duplicate in current class
+  const duplicate = rapidRFIDList.value.find(s => s.rfidTag?.toLowerCase() === hex.toLowerCase() && s.studentId !== currentRapidStudent.value.studentId)
+  if (duplicate) {
+    rapidRFIError.value = `Already linked to ${duplicate.firstName} ${duplicate.lastName}`
+    playRapidBeep(true)
+    return
+  }
+
+  // Update student
+  try {
+    await classService.patchStudent(activeClass.value.classId, currentRapidStudent.value.studentId, { rfidTag: hex.toUpperCase() })
+    triggerActiveClass() // Refresh roster
+    
+    rapidRFIDSuccess.value = `Linked to ${currentRapidStudent.value.firstName}!`
+    playRapidBeep(false)
+    
+    // Auto-advance
+    setTimeout(() => {
+      rapidRFIDSuccess.value = ''
+      rapidRFIError.value = ''
+      
+      let next = rapidRFIDIndex.value + 1
+      if (next < rapidRFIDList.value.length) {
+        rapidRFIDIndex.value = next
+      } else {
+        // End of list
+        stopRapidRFID()
+        window.alert('Rapid enrollment complete!')
+      }
+    }, 1000)
+  } catch (err) {
+    rapidRFIError.value = err.message
+  }
+}
+
+const rapidRFIDWedge = useKeyboardWedge(onRapidRFIDScan)
+
+function openRapidRFID() {
+  if (!activeClass.value) return
+  isRapidRFIDOpen.value = true
+  rapidRFIError.value = ''
+  rapidRFIDSuccess.value = ''
+  
+  // Find first student without a tag
+  const firstEmpty = rapidRFIDList.value.findIndex(s => !s.rfidTag)
+  rapidRFIDIndex.value = firstEmpty !== -1 ? firstEmpty : 0
+  
+  rapidRFIDWedge.start()
+}
+
+function stopRapidRFID() {
+  isRapidRFIDOpen.value = false
+  rapidRFIDWedge.stop()
+}
+
+function playRapidBeep(isErr = false) {
+  const audioCtx = new (window.AudioContext || window.webkitAudioContext)()
+  const osc = audioCtx.createOscillator()
+  const gain = audioCtx.createGain()
+  osc.type = 'sine'
+  osc.frequency.setValueAtTime(isErr ? 220 : 880, audioCtx.currentTime)
+  gain.gain.setValueAtTime(0.1, audioCtx.currentTime)
+  osc.connect(gain)
+  gain.connect(audioCtx.destination)
+  osc.start()
+  gain.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + (isErr ? 0.35 : 0.15))
+  osc.stop(audioCtx.currentTime + (isErr ? 0.35 : 0.15))
 }
 
 // --- RFID Enrollment logic ---
@@ -2632,6 +2784,12 @@ function formatDate(iso) {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1rem;
+}
+
+.setup__card-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
 }
 
 .setup__card-header-row .setup__card-title {
@@ -3691,4 +3849,168 @@ function formatDate(iso) {
 }
 
 .setup__btn-text--danger { color: var(--state-out) !important; }
+
+/* ── Rapid RFID Linker ────────────────────────────────────────────── */
+.rapid-rfid-linker {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.rapid-rfid-active {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.rapid-rfid-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  letter-spacing: 0.05em;
+  margin-bottom: 4px;
+}
+
+.rapid-rfid-name {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.rapid-rfid-id {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin-bottom: 20px;
+}
+
+.rapid-rfid-status {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  border-radius: 100px;
+  background: white;
+  border: 1px solid var(--border);
+  font-weight: 600;
+  font-size: 0.9rem;
+  min-width: 200px;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.rapid-rfid-status--error {
+  color: var(--state-out);
+  background: #fef2f2;
+  border-color: #fca5a5;
+}
+
+.rapid-rfid-status--success {
+  color: var(--state-success);
+  background: #f0fdf4;
+  border-color: #86efac;
+}
+
+.rapid-rfid-pulse {
+  width: 12px;
+  height: 12px;
+  background: var(--primary);
+  border-radius: 50%;
+  animation: setupPulse 1.5s infinite ease-in-out;
+}
+
+.rapid-rfid-list-container {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.rapid-rfid-list-header {
+  background: var(--bg-secondary);
+  padding: 10px 16px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  border-bottom: 1px solid var(--border);
+}
+
+.rapid-rfid-list {
+  max-height: 250px;
+  overflow-y: auto;
+}
+
+.rapid-rfid-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border-light);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.rapid-rfid-item:hover {
+  background: var(--bg-secondary);
+}
+
+.rapid-rfid-item:last-child {
+  border-bottom: none;
+}
+
+.rapid-rfid-item--active {
+  background: var(--primary-light) !important;
+  border-left: 4px solid var(--primary);
+}
+
+.rapid-rfid-item--linked {
+  opacity: 0.8;
+}
+
+.rapid-rfid-item-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.rapid-rfid-item-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.rapid-rfid-tag-hex {
+  font-size: 0.75rem;
+  font-family: monospace;
+  color: var(--primary);
+  font-weight: 700;
+}
+
+.rapid-rfid-item-status {
+  color: var(--state-success);
+}
+
+.rapid-rfid-mini-pulse {
+  width: 8px;
+  height: 8px;
+  background: var(--primary);
+  border-radius: 50%;
+  animation: setupPulse 1.5s infinite ease-in-out;
+}
+
+@keyframes setupPulse {
+  0% { transform: scale(0.9); opacity: 0.6; }
+  50% { transform: scale(1.1); opacity: 1; }
+  100% { transform: scale(0.9); opacity: 0.6; }
+}
+
+.rapid-rfid-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border-light);
+}
 </style>
