@@ -62,7 +62,7 @@
     <!-- ── Global Modals ────────────────────────────────────────────────── -->
     <AddAssessmentModal />
     <QRScanner v-if="isScannerOpen" @close="isScannerOpen = false" />
-
+    <MessageOverlay />
   </div>
 </template>
 
@@ -92,6 +92,7 @@ import { useClassroom } from './composables/useClassroom.js'
 import AddAssessmentModal from './components/dossier/AddAssessmentModal.vue'
 import QRScanner          from './components/QRScanner.vue'
 import YearSemesterSelector from './components/YearSemesterSelector.vue'
+import MessageOverlay      from './components/MessageOverlay.vue'
 import * as settingsService from './db/settingsService.js'
 import * as eventService from './db/eventService.js'
 import { hasUnsyncedChanges, getLastSyncedAt, isSyncActive } from './db/eventService.js'

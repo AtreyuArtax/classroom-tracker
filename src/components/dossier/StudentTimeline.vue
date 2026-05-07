@@ -152,6 +152,7 @@ import {
 import { useClassroom } from '../../composables/useClassroom.js'
 import { toMinutes } from '../../db/eventService.js'
 import { resolveIcon } from '../../utils/icons.js'
+import { useMessage } from '../../composables/useMessage.js'
 import BaseModal from '../BaseModal.vue'
 
 const props = defineProps({
@@ -164,6 +165,7 @@ const props = defineProps({
 const { editEvent, removeEvent } = useClassroom()
 
 const loading = ref(false)
+const { confirm } = useMessage()
 const activeFilter = ref('all')
 const selectedMonth = ref('all') // Format: 'YYYY-MM'
 
@@ -369,7 +371,7 @@ async function saveEdit() {
 }
 
 async function confirmDelete(eventId) {
-    if (confirm('Are you sure you want to delete this entry? This will also update student statistics.')) {
+    if (await confirm('Are you sure you want to delete this entry? This will also update student statistics.', 'Delete Entry', { danger: true })) {
         await removeEvent(eventId)
     }
 }

@@ -800,9 +800,11 @@ import {
   ChevronRight,
   Printer,
   Activity, 
+  ExternalLink,
   ShieldCheck,
   MessageSquare
 } from 'lucide-vue-next'
+import { useMessage } from '../../composables/useMessage.js'
 import DossierCategoryGrid from './DossierCategoryGrid.vue'
 import DossierEvidenceMix  from './DossierEvidenceMix.vue'
 import Student360Header    from './Student360Header.vue'
@@ -848,6 +850,7 @@ function handleClose() {
   emit('close')
 }
 
+const { alert, confirm } = useMessage()
 const { 
   classList,
   students,
@@ -1029,7 +1032,7 @@ async function logAbsence() {
   )
 
   if (isDuplicate) {
-    alert(`An absence is already recorded for ${absenceDate.value}.`)
+    await alert(`An absence is already recorded for ${absenceDate.value}.`)
     return
   }
 
@@ -1044,7 +1047,7 @@ async function logAbsence() {
     absenceIsTestDay.value = false // Reset checkbox
   } catch (err) {
     console.error('Failed to log absence:', err)
-    alert('Failed to log absence. Please try again.')
+    await alert('Failed to log absence. Please try again.')
   }
 }
 
@@ -1301,7 +1304,7 @@ const attendanceAverages = computed(() => {
 })
 
 async function handleDeleteHistoryItem(eventId) {
-  if (confirm('Are you sure you want to delete this entry? This will also update student statistics.')) {
+  if (await confirm('Are you sure you want to delete this entry? This will also update student statistics.', 'Delete Entry', { danger: true })) {
     await removeEvent(eventId)
   }
 }
@@ -1438,7 +1441,7 @@ async function saveEdit() {
   if (normalizedNew === null) {
     const grade = gradeMap.value[assessmentId]?.[props.studentId]
     if (grade?.attempts?.length > 1) {
-      alert('Cannot clear: This student has multiple attempts. Use the attempt history menu to manage specific entries.')
+      await alert('Cannot clear: This student has multiple attempts. Use the attempt history menu to manage specific entries.')
       editingCell.value = null
       return
     }
@@ -1524,7 +1527,7 @@ async function doDeleteAssessment(assessmentId) {
     ? '\n\nWARNING: This is a class-wide assessment. Deleting it will remove it for ALL students in this class.'
     : ''
     
-  if (!confirm(`Are you sure you want to delete this ${typeLabel}?${warning}`)) {
+  if (!await confirm(`Are you sure you want to delete this ${typeLabel}?${warning}`, 'Delete Assessment', { danger: true })) {
     contextMenu.value = null
     return
   }
@@ -1551,7 +1554,7 @@ async function submitNewAttempt() {
 }
 
 async function doDeleteAttempt(assessmentId, attemptId) {
-  if (!confirm('Are you sure you want to delete this attempt?')) return
+  if (!await confirm('Are you sure you want to delete this attempt?', 'Delete Attempt', { danger: true })) return
   await removeAttempt(assessmentId, props.studentId, attemptId)
 }
 

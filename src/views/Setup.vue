@@ -828,15 +828,6 @@
       @close="isPrintListModalOpen = false"
     />
 
-    <!-- ── Super Confirm Modal ─── -->
-    <SuperConfirmModal
-      v-model="isSuperConfirmOpen"
-      :title="superConfirmConfig.title"
-      :message="superConfirmConfig.message"
-      :requireText="superConfirmConfig.requireText"
-      :danger="superConfirmConfig.danger"
-      @confirm="superConfirmConfig.onConfirm"
-    />
 
     <!-- ── Student Entry Modal ─── -->
     <BaseModal
@@ -1005,6 +996,7 @@ import QRCode from 'qrcode'
 import { exportGradebookToExcel } from '../db/exportService.js'
 import { resolveIcon } from '../utils/icons.js'
 import { useClassroom } from '../composables/useClassroom.js'
+import { useMessage }   from '../composables/useMessage.js'
 import { hasUnsyncedChanges, isSyncActive, getLastSyncedAt } from '../db/eventService.js'
 import * as eventService from '../db/eventService.js'
 import * as settingsService from '../db/settingsService.js'
@@ -1012,11 +1004,12 @@ import * as classService from '../db/classService.js'
 import * as gradebookService from '../db/gradebookService.js'
 import { globalMilestones, refreshGrades } from '../composables/useGradebook.js'
 import PrintClassListModal from '../components/PrintClassListModal.vue'
-import SuperConfirmModal from '../components/SuperConfirmModal.vue'
 import BaseModal from '../components/BaseModal.vue'
 import GradeBucketsSettings from '../components/setup/GradeBucketsSettings.vue'
 import CalendarSettings from '../components/setup/CalendarSettings.vue'
 import { useKeyboardWedge } from '../composables/useKeyboardWedge.js'
+
+const { alert, confirm } = useMessage()
 
 const {
   classList,
@@ -1278,7 +1271,7 @@ async function runDataAudit() {
 
 async function fixOrphans() {
   if (!auditReport.value?.orphanedGrades.length) return
-  if (!window.confirm(`Permanently delete ${auditReport.value.orphanedGrades.length} orphaned mark records?`)) return
+  if (!await confirm(`Permanently delete ${auditReport.value.orphanedGrades.length} orphaned mark records?`)) return
   
   const ids = auditReport.value.orphanedGrades.map(g => g.id)
   await gradebookService.repairGradebookOrphans(ids)
@@ -1296,7 +1289,7 @@ async function fixMissingIds() {
 
 async function fixInvalidCategories() {
   if (!auditReport.value?.invalidCategories.length) return
-  if (!window.confirm(`Repair ${auditReport.value.invalidCategories.length} assessment category mismatches? assessments will be re-assigned to the first valid category in their class.`)) return
+  if (!await confirm(`Repair ${auditReport.value.invalidCategories.length} assessment category mismatches? assessments will be re-assigned to the first valid category in their class.`)) return
   
   const ids = auditReport.value.invalidCategories.map(a => a.id)
   await gradebookService.repairInvalidCategories(ids)
@@ -1356,22 +1349,14 @@ async function onDeleteClass(classId) {
   const cls = archivedClasses.value.find(c => c.classId === classId)
   const name = cls?.name ?? 'this class'
   
-  // Level 1: Visibility check (button is in archived list)
-  
-  // Level 2: Standard confirm
-  if (!window.confirm(`Permanently delete "${name}"? This cannot be undone. All assessment, grade, and event history for this class will be permanently deleted.`)) return
-  
-  // Level 3: Super Confirm Modal
-  superConfirmConfig.title = 'Final Security Check'
-  superConfirmConfig.message = `You are about to PERMANENTLY wipe "${name}" and all its historical data. This action is irreversible. Please type the name of the class below to confirm.`
-  superConfirmConfig.requireText = name
-  superConfirmConfig.danger = true
-  superConfirmConfig.onConfirm = async () => {
-    await deleteClass(classId)
-    // Optional: add a small success notification logic if desired
-  }
-  
-  isSuperConfirmOpen.value = true
+  // Combined Multi-Level Confirm
+  if (!await confirm(
+    `You are about to PERMANENTLY wipe "${name}" and all its historical data. This action is irreversible. Please type the name of the class below to confirm.`, 
+    'Final Security Check', 
+    { danger: true, requireText: name }
+  )) return
+
+  await deleteClass(classId)
 }
 
 const props = defineProps({
@@ -1446,7 +1431,7 @@ async function onAddPeriod() {
 
 async function onRemovePeriod(p) {
   if (p === 1) return // Keep P1 for safety
-  if (confirm(`Are you sure you want to remove Period ${p}? This will remove it from your settings, but existing classes will not be affected.`)) {
+  if (await confirm(`Are you sure you want to remove Period ${p}? This will remove it from your settings, but existing classes will not be affected.`)) {
     const updated = { ...periodStartTimes.value }
     delete updated[p]
     await updatePeriodStartTimes(updated)
@@ -1650,7 +1635,7 @@ function onFileSelected(evt) {
       } else {
           // Single class — requires an active class to import into
           if (!activeClass.value) {
-            alert('This CSV contains only one class group. Please select or create a class first, then re-import. Alternatively, make sure your CSV contains a "Period" or "Semester" column so the bulk importer can detect multiple classes.')
+            await alert('This CSV contains only one class group. Please select or create a class first, then re-import. Alternatively, make sure your CSV contains a "Period" or "Semester" column so the bulk importer can detect multiple classes.')
             return
           }
           const result = await importRoster(rows)
@@ -1757,7 +1742,7 @@ async function confirmBulkImport() {
   await bulkImportClasses(selectedGroups)
   bulkImportGroups.value = null
   importResult.value = { inserted: 'Multiple', updated: 'Classes', skipped: [] }
-  window.alert('Bulk import complete!')
+  await alert('Bulk import complete!')
 }
 
 const newStudent = reactive({ studentId: '', firstName: '', lastName: '', rfidTag: '' })
@@ -1832,7 +1817,7 @@ const onRapidRFIDScan = async (hex) => {
     playRapidBeep(false)
     
     // Auto-advance
-    setTimeout(() => {
+    setTimeout(async () => {
       rapidRFIDSuccess.value = ''
       rapidRFIError.value = ''
       
@@ -1842,7 +1827,7 @@ const onRapidRFIDScan = async (hex) => {
       } else {
         // End of list
         stopRapidRFID()
-        window.alert('Rapid enrollment complete!')
+        await alert('Rapid enrollment complete!')
       }
     }, 1000)
   } catch (err) {
@@ -1988,11 +1973,11 @@ async function setGlobalDefaultGrid() {
     ...settings, 
     gridSize: { rows: newGrid.rows, cols: newGrid.cols } 
   })
-  window.alert(`Saved ${newGrid.rows}x${newGrid.cols} as the default for future classes.`)
+  await alert(`Saved ${newGrid.rows}x${newGrid.cols} as the default for future classes.`)
 }
 
 async function onArchiveStudent(student) {
-  if (window.confirm(`Are you sure you want to archive ${student.firstName} ${student.lastName}? They will be moved to the Unenrolled list.`)) {
+  if (await confirm(`Are you sure you want to archive ${student.firstName} ${student.lastName}? They will be moved to the Unenrolled list.`)) {
     await archiveStudent(student.studentId)
   }
 }
@@ -2002,15 +1987,13 @@ async function onUnarchiveStudent(student) {
 }
 
 async function onPermanentDeleteStudent(student) {
-  superConfirmConfig.title = 'Permanently Delete Student'
-  superConfirmConfig.message = `This will permanently delete ALL events, attendance, and grades for ${student.firstName} ${student.lastName} in this specific class (${activeClass.value?.name}). This cannot be undone.`
-  superConfirmConfig.requireText = student.studentId
-  superConfirmConfig.danger = true
-  superConfirmConfig.onConfirm = async () => {
-    isSuperConfirmOpen.value = false
-    await permanentlyDeleteStudent(student.studentId)
-  }
-  isSuperConfirmOpen.value = true
+  if (!await confirm(
+    `This will permanently delete ALL events, attendance, and grades for ${student.firstName} ${student.lastName} in this specific class (${activeClass.value?.name}). This cannot be undone.`,
+    'Permanently Delete Student',
+    { danger: true, requireText: student.studentId }
+  )) return
+  
+  await permanentlyDeleteStudent(student.studentId)
 }
 
 function classNameById(classId) {
@@ -2059,7 +2042,7 @@ async function saveCode() {
       }
     }
     if (pinnedCount >= 6) {
-      window.alert('The main menu is full (Max 6 custom items). Please unpin an existing behavior first by editing it.')
+      await alert('The main menu is full (Max 6 custom items). Please unpin an existing behavior first by editing it.')
       return
     }
   }
@@ -2084,7 +2067,7 @@ function editCode(code) {
 async function deleteCode(codeKey) {
   const codeToDelete = behaviorCodes.value.find(c => c.codeKey === codeKey)
   const name = codeToDelete?.label ?? codeKey
-  if (!window.confirm(`Delete behavior code "${name}"? This will not affect past events, but will remove it from the radial menu.`)) return
+  if (!await confirm(`Delete behavior code "${name}"? This will not affect past events, but will remove it from the radial menu.`)) return
   await settingsService.deleteBehaviorCode(codeKey)
   await reloadBehaviorCodes()
 }
@@ -2185,14 +2168,14 @@ async function onDeleteCategory(cat) {
   const inUse = assessments.some(a => a.categoryId === cat.categoryId)
   
   if (inUse) {
-    window.alert(`Cannot delete category "${cat.name}" because it has assessments assigned to it. Remove all assessments in this category first.`)
+    await alert(`Cannot delete category "${cat.name}" because it has assessments assigned to it. Remove all assessments in this category first.`)
     return
   }
 
-  if (!window.confirm(`Delete category "${cat.name}"?`)) return
+  if (!await confirm(`Delete category "${cat.name}"?`)) return
 
   if (activeClass.value.gradebookCategories.length <= 1) {
-    window.alert('At least one category is required.')
+    await alert('At least one category is required.')
     return
   }
 
@@ -2222,11 +2205,11 @@ async function onDeleteUnit(unitId) {
   const inUse = assessments.some(a => a.unitId === unitId)
   
   if (inUse) {
-    window.alert(`Cannot delete unit "${unit?.name || 'this unit'}" because it has assessments assigned to it. Remove all assessments in this unit before deleting.`)
+    await alert(`Cannot delete unit "${unit?.name || 'this unit'}" because it has assessments assigned to it. Remove all assessments in this unit before deleting.`)
     return
   }
 
-  if (!window.confirm(`Delete unit "${unit?.name || 'this unit'}"?`)) return
+  if (!await confirm(`Delete unit "${unit?.name || 'this unit'}"?`)) return
 
   activeClass.value.gradebookUnits = activeClass.value.gradebookUnits.filter(u => u.unitId !== unitId)
   await saveGradebookSettings()
@@ -2249,7 +2232,7 @@ async function addMilestone() {
 
 async function onDeleteMilestone(milestoneId) {
   const ms = globalMilestones.value.find(m => m.milestoneId === milestoneId)
-  if (!window.confirm(`Delete milestone "${ms?.name || 'this milestone'}"?`)) return
+  if (!await confirm(`Delete milestone "${ms?.name || 'this milestone'}"?`)) return
   globalMilestones.value = globalMilestones.value.filter(m => m.milestoneId !== milestoneId)
   await settingsService.saveGlobalMilestones(JSON.parse(JSON.stringify(globalMilestones.value)))
 }
@@ -2260,7 +2243,7 @@ async function saveTemplate() {
   // Check for uniqueness
   const existing = templates.value.some(t => t.name.toLowerCase() === newTemplateName.value.trim().toLowerCase())
   if (existing) {
-    window.alert('A template with this name already exists.')
+    await alert('A template with this name already exists.')
     return
   }
 
@@ -2271,7 +2254,7 @@ async function saveTemplate() {
 
 async function onApplyTemplate(template) {
   if (!activeClass.value) return
-  if (!window.confirm('This will replace the current categories and milestones. Continue?')) return
+  if (!await confirm('This will replace the current categories and milestones. Continue?')) return
   
   // Copy categories and milestones with new UUIDs (as per service implementation)
   // Actually, applying a template usually means we just overwrite the class record.
@@ -2288,7 +2271,7 @@ async function onApplyTemplate(template) {
 }
 
 async function onDeleteTemplate(templateId) {
-  if (!window.confirm('Delete this template?')) return
+  if (!await confirm('Delete this template?')) return
   await gradebookService.deleteGradebookTemplate(templateId)
   templates.value = templates.value.filter(t => t.templateId !== templateId)
 }
@@ -2416,19 +2399,18 @@ async function onQuickSyncNow() {
 }
 
 async function onClearAllData() {
-  superConfirmConfig.title = 'Clear All Application Data'
-  superConfirmConfig.message = 'This will permanently delete ALL classes, students, and events from this device. THIS ACTION IS IRREVERSIBLE.'
-  superConfirmConfig.requireText = 'ERASE'
-  superConfirmConfig.danger = true
-  superConfirmConfig.onConfirm = async () => {
-    try {
-      await classService.clearAllData()
-      window.location.reload()
-    } catch (err) {
-      alert('Failed to clear data: ' + err.message)
-    }
+  if (!await confirm(
+    'This will permanently delete ALL classes, students, and events from this device. THIS ACTION IS IRREVERSIBLE.',
+    'Clear All Application Data',
+    { danger: true, requireText: 'ERASE' }
+  )) return
+
+  try {
+    await classService.clearAllData()
+    window.location.reload()
+  } catch (err) {
+    await alert('Failed to clear data: ' + err.message)
   }
-  isSuperConfirmOpen.value = true
 }
 
 async function handleExportExcel() {
@@ -2499,7 +2481,7 @@ async function handleExportExcel() {
     })
   } catch (err) {
     console.error('Excel Export Error:', err)
-    alert('Failed to export Excel: ' + err.message)
+    await alert('Failed to export Excel: ' + err.message)
   }
 }
 

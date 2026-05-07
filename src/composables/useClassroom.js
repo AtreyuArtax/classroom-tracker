@@ -20,6 +20,7 @@ import * as eventService from '../db/eventService.js'
 import { toMinutes } from '../db/eventService.js'
 import * as settingsService from '../db/settingsService.js'
 import { useUndo } from './useUndo.js'
+import { useMessage } from './useMessage.js'
 
 const { push: pushUndo, clear: clearUndo } = useUndo()
 let midnightTimer = null
@@ -809,7 +810,8 @@ async function moveStudentFromClass(fromClassId, student) {
  * @returns {Promise<void>}
  */
 async function removeStudent(studentId) {
-    if (!confirm('Are you sure you want to remove this student? Their event history will remain in the database, but they will be removed from this class roster.')) return
+    const { confirm } = useMessage()
+    if (!await confirm('Are you sure you want to remove this student? Their event history will remain in the database, but they will be removed from this class roster.', 'Remove Student', { danger: true })) return
 
     try {
         const classId = activeClass.value?.classId
@@ -836,7 +838,8 @@ async function removeStudent(studentId) {
         triggerRef(activeClass)
     } catch (err) {
         console.error('removeStudent failed:', err)
-        alert('Failed to remove student from roster.')
+        const { alert } = useMessage()
+        await alert('Failed to remove student from roster.')
     }
 }
 
@@ -871,7 +874,8 @@ async function archiveStudent(studentId) {
         triggerRef(activeClass)
     } catch (err) {
         console.error('archiveStudent failed:', err)
-        alert('Failed to archive student.')
+        const { alert } = useMessage()
+        await alert('Failed to archive student.')
     }
 }
 
@@ -903,7 +907,8 @@ async function unarchiveStudent(studentId) {
         triggerRef(activeClass)
     } catch (err) {
         console.error('unarchiveStudent failed:', err)
-        alert('Failed to unarchive student.')
+        const { alert } = useMessage()
+        await alert('Failed to unarchive student.')
     }
 }
 
@@ -933,7 +938,8 @@ async function permanentlyDeleteStudent(studentId) {
         triggerRef(activeClass)
     } catch (err) {
         console.error('permanentlyDeleteStudent failed:', err)
-        alert('Failed to permanently delete student data.')
+        const { alert } = useMessage()
+        await alert('Failed to permanently delete student data.')
     }
 }
 
@@ -954,7 +960,8 @@ async function updateStudentNote(studentId, note) {
         }
     } catch (err) {
         console.error('updateStudentNote failed:', err)
-        alert('Failed to save student note.')
+        const { alert } = useMessage()
+        await alert('Failed to save student note.')
     }
 }
 
@@ -980,12 +987,14 @@ async function assignSeat(studentId, newSeat) {
                 students.value[studentId].seat = previousSeat
             } catch (err) {
                 console.error('Undo assignSeat failed:', err)
-                alert('Failed to undo seat assignment.')
+                const { alert } = useMessage()
+                await alert('Failed to undo seat assignment.')
             }
         })
     } catch (err) {
         console.error('assignSeat failed:', err)
-        alert('Failed to save seat assignment. Please check your connection or storage.')
+        const { alert } = useMessage()
+        await alert('Failed to save seat assignment. Please check your connection or storage.')
     }
 }
 
@@ -1021,13 +1030,15 @@ async function logAttendanceEvent(studentId, code) {
                     student.lastEvent = null
                 } catch (err) {
                     console.error('Undo attendance event failed:', err)
-                    alert('Failed to undo attendance change.')
+                    const { alert } = useMessage()
+                    await alert('Failed to undo attendance change.')
                 }
             })
         } else if (code === 'l') {
             const periodStart = activeClass.value.periodStartTime
             if (!periodStart) {
-                alert('Set a period start time in Setup to calculate lateness.')
+                const { alert } = useMessage()
+                await alert('Set a period start time in Setup to calculate lateness.')
                 return
             }
 
@@ -1098,13 +1109,15 @@ async function logAttendanceEvent(studentId, code) {
                     student.lastEvent = null
                 } catch (err) {
                     console.error('Undo attendance event failed:', err)
-                    alert('Failed to undo attendance change.')
+                    const { alert } = useMessage()
+                    await alert('Failed to undo attendance change.')
                 }
             })
         }
     } catch (err) {
         console.error('logAttendanceEvent failed:', err)
-        alert('Failed to save attendance. Please try again.')
+        const { alert } = useMessage()
+        await alert('Failed to save attendance. Please try again.')
     }
 }
 
@@ -1215,12 +1228,14 @@ async function logStandardEvent(studentId, code, note = null, options = {}) {
                 }
             } catch (err) {
                 console.error('Undo standard event failed:', err)
-                alert('Failed to undo event.')
+                const { alert } = useMessage()
+                await alert('Failed to undo event.')
             }
         })
     } catch (err) {
         console.error('logStandardEvent failed:', err)
-        alert('Failed to save event. Please try again.')
+        const { alert } = useMessage()
+        await alert('Failed to save event. Please try again.')
     }
 }
 
@@ -1249,12 +1264,14 @@ async function logAssessmentEvent({ studentId, note, acType, acContext, acOutcom
                 students.value[studentId].lastEvent = null
             } catch (err) {
                 console.error('Undo assessment event failed:', err)
-                alert('Failed to undo assessment log.')
+                const { alert } = useMessage()
+                await alert('Failed to undo assessment log.')
             }
         })
     } catch (err) {
         console.error('logAssessmentEvent failed:', err)
-        alert('Failed to save assessment observation.')
+        const { alert } = useMessage()
+        await alert('Failed to save assessment observation.')
     }
 }
 
@@ -1287,7 +1304,8 @@ async function logToggleEvent(studentId, code) {
                     students.value[studentId].activeStates = { isOut: false, outTime: null }
                 } catch (err) {
                     console.error('Undo toggle OUT failed:', err)
-                    alert('Failed to undo room exit.')
+                    const { alert } = useMessage()
+                    await alert('Failed to undo room exit.')
                 }
             })
         } else {
@@ -1335,13 +1353,15 @@ async function logToggleEvent(studentId, code) {
                     }
                 } catch (err) {
                     console.error('Undo toggle IN failed:', err)
-                    alert('Failed to undo room return.')
+                    const { alert } = useMessage()
+                    await alert('Failed to undo room return.')
                 }
             })
         }
     } catch (err) {
         console.error('logToggleEvent failed:', err)
-        alert('Failed to process room entry/exit.')
+        const { alert } = useMessage()
+        await alert('Failed to process room entry/exit.')
     }
 }
 

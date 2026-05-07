@@ -24,6 +24,7 @@
  */
 
 import { ref, computed } from 'vue'
+import { useMessage } from './useMessage.js'
 
 const STACK_DEPTH = 10
 
@@ -57,7 +58,8 @@ async function undo() {
         await inverseFn()
     } catch (err) {
         console.error('Undo operation failed:', err)
-        alert('Failed to undo the last action. It may have already been changed or deleted.')
+        const { alert } = useMessage()
+        await alert('Failed to undo the last action. It may have already been changed or deleted.')
         // Put it back on the stack so it's not lost forever if it was a transient error
         _stack.value.push(inverseFn)
     }
