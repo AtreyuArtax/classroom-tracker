@@ -1070,6 +1070,7 @@ import Student360 from '../components/dossier/Student360.vue'
 import StudentSidebar from '../components/StudentSidebar.vue'
 import GradeTrendChart from '../components/GradeTrendChart.vue'
 import TestDayWarning from '../components/TestDayWarning.vue'
+import { useMessage } from '../composables/useMessage.js'
 import { getAssessmentPercentage } from '../db/gradebookService.js'
 import { formatLocalDisplay } from '../utils/dates.js'
 import {
@@ -1092,6 +1093,8 @@ const props = defineProps({
 })
 
 defineEmits(['navigate'])
+
+const { alert, confirm } = useMessage()
 
 const { classList, activeClass, getClass, switchClass } = useClassroom()
 const sidebarClassId = ref(activeClass.value?.classId || '')
@@ -1823,7 +1826,7 @@ async function saveEdit() {
     const hasMultipleAttempts = grade?.attempts?.length > 1
 
     if (hasMultipleAttempts) {
-      alert('Cannot clear: This student has multiple attempts. Use the attempt history menu (•) to manage or delete specific entries.')
+      await alert('Cannot clear: This student has multiple attempts. Use the attempt history menu (•) to manage or delete specific entries.')
       editingCell.value = null
       return
     }
@@ -1960,7 +1963,7 @@ function startEditAssessment(assessment) {
 }
 
 async function confirmDeleteAssessment(assessment) {
-  if (!window.confirm(`Delete ${assessment.name}? This will permanently remove all grades for this assessment and cannot be undone.`)) return
+  if (!await confirm(`Delete ${assessment.name}? This will permanently remove all grades for this assessment and cannot be undone.`, 'Delete Assessment', { danger: true })) return
   
   await deleteAssessment(assessment.assessmentId)
 }
@@ -2070,7 +2073,7 @@ async function onDeleteAttempt(attemptId) {
   if (!attemptsPopover.value) return
   const { sId, aId } = attemptsPopover.value
   
-  if (!window.confirm('Delete this attempt? This cannot be undone.')) return
+  if (!await confirm('Delete this attempt? This cannot be undone.', 'Delete Attempt', { danger: true })) return
   
   await removeAttempt(aId, sId, attemptId)
   

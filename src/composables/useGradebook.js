@@ -5,6 +5,7 @@
  */
 
 import { ref, shallowRef, computed, triggerRef } from 'vue'
+import { useMessage } from './useMessage.js'
 import * as gradebookService from '../db/gradebookService.js'
 import * as classService from '../db/classService.js'
 
@@ -152,7 +153,8 @@ export async function toggleStudentFromAnalytics(studentId) {
     await refreshClassAnalytics()
   } catch (err) {
     console.error('[useGradebook] toggleStudentFromAnalytics failed:', err)
-    alert('Failed to update analytics exclusion.')
+    const { alert } = useMessage()
+    await alert('Failed to update analytics exclusion.')
   }
 }
 
@@ -184,7 +186,8 @@ export async function addAssessment(assessmentData) {
     return assessment
   } catch (err) {
     console.error('[useGradebook] addAssessment failed:', err)
-    alert('Failed to save assessment.')
+    const { alert } = useMessage()
+    await alert('Failed to save assessment.')
   }
 }
 
@@ -205,7 +208,8 @@ export async function editAssessment(assessmentId, updates) {
     return updated
   } catch (err) {
     console.error('[useGradebook] editAssessment failed:', err)
-    alert('Failed to update assessment.')
+    const { alert } = useMessage()
+    await alert('Failed to update assessment.')
   }
 }
 /**
@@ -222,7 +226,8 @@ export async function deleteAssessment(assessmentId) {
     await refreshGrades()
   } catch (err) {
     console.error('[useGradebook] deleteAssessment failed:', err)
-    alert('Failed to delete assessment.')
+    const { alert } = useMessage()
+    await alert('Failed to delete assessment.')
   }
 }
 
@@ -297,7 +302,8 @@ function enqueueDBSave(key, saveFn) {
         await task()
       } catch (err) {
         console.error('[useGradebook] Background DB save failed:', err)
-        alert('Data sync error: Some recent mark changes may not have saved. Please check your connection or refresh.')
+        const { alert } = useMessage()
+        await alert('Data sync error: Some recent mark changes may not have saved. Please check your connection or refresh.')
       }
     }
     // Guard against class switch during the 500ms debounce window
@@ -580,7 +586,8 @@ export async function saveStudentOverride(studentId, catId, value) {
     await refreshGrades()
   } catch (err) {
     console.error('[useGradebook] saveStudentOverride failed:', err)
-    alert('Failed to save grade override.')
+    const { alert } = useMessage()
+    await alert('Failed to save grade override.')
   }
 }
 
@@ -613,7 +620,8 @@ export async function saveStudentGradebookNote(studentId, note) {
         await patchStudent(activeClassRecord.value.classId, studentId, { gradebookNote: note })
     } catch (err) {
         console.error('[useGradebook] saveStudentGradebookNote failed:', err)
-        alert('Failed to save student note.')
+        const { alert } = useMessage()
+        await alert('Failed to save student note.')
     }
 }
 
@@ -641,7 +649,8 @@ export async function saveStudentDemographics(studentId, demographics) {
     await patchStudent(activeClassRecord.value.classId, studentId, updates)
   } catch (err) {
     console.error('[useGradebook] saveStudentDemographics failed:', err)
-    alert('Failed to save student info.')
+    const { alert } = useMessage()
+    await alert('Failed to save student info.')
   }
 }
 

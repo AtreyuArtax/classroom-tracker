@@ -160,10 +160,12 @@ import { Html5Qrcode } from 'html5-qrcode'
 import { QrCode, X, ExternalLink, Minimize2, CameraOff, Check, Camera, AlertTriangle, ChevronDown, ChevronUp, Rss } from 'lucide-vue-next'
 import { useClassroom } from '../composables/useClassroom.js'
 import { useKeyboardWedge } from '../composables/useKeyboardWedge.js'
+import { useMessage } from '../composables/useMessage.js'
 
 const emit = defineEmits(['close'])
 
 const { students, logToggleEvent, studentsOut, maxStudentsOut } = useClassroom()
+const { alert } = useMessage()
 
 // ── UI State ──────────────────────────────────────────────────────────────────
 const isScanning    = ref(false)
@@ -453,7 +455,7 @@ const startScanner = async () => {
     await _startInstance('qr-reader')
   } catch (err) {
     console.error('Scanner start failed:', err)
-    alert('Could not start camera. Please check browser permissions.')
+    await alert('Could not start camera. Please check browser permissions.')
   }
 }
 

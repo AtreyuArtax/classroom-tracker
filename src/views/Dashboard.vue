@@ -44,9 +44,9 @@
           class="dashboard__qr-btn" 
           @click="isScannerOpen = !isScannerOpen"
           :class="{ 'dashboard__qr-btn--active': isScannerOpen }"
-          title="Toggle QR Scanner"
+          title="Toggle Student Scanner"
         >
-          <QrCode :size="20" />
+          <Scan :size="20" />
         </button>
       </div>
     </header>
@@ -149,7 +149,7 @@ import UndoButton          from '../components/UndoButton.vue'
 import EventNoteModal      from '../components/EventNoteModal.vue'
 import AssessmentConversationModal from '../components/AssessmentConversationModal.vue'
 import StudentProfileModal from '../components/StudentProfileModal.vue'
-import { Toilet, Users, GripVertical, Calendar, CalendarCheck, QrCode } from 'lucide-vue-next'
+import { Toilet, Users, GripVertical, Calendar, CalendarCheck, Scan } from 'lucide-vue-next'
 import { useClassroom }    from '../composables/useClassroom.js'
 import { useRadial }       from '../composables/useRadial.js'
 

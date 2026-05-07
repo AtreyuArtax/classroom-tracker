@@ -74,11 +74,13 @@
 import { ref, computed, onMounted } from 'vue'
 import { Trash2, Plus, AlertCircle, ChevronUp, ChevronDown } from 'lucide-vue-next'
 import * as settingsService from '../../db/settingsService.js'
+import { useMessage } from '../../composables/useMessage.js'
 
 const localBuckets = ref([])
 const capGradesAt100 = ref(true)
 const validationErrors = ref({})
 const globalError = ref('')
+const { alert, confirm } = useMessage()
 
 const ONTARIO_DEFAULTS = [
     { label: 'R', min: 0, max: 49, color: '#ff3b30' },
@@ -110,7 +112,10 @@ function addBucket() {
     validate()
 }
 
-function removeBucket(idx) {
+async function removeBucket(idx) {
+    const bucket = localBuckets.value[idx]
+    const label = bucket?.label || 'this grading level'
+    if (!await confirm(`Are you sure you want to remove ${label}?`, 'Remove Grading Level', { danger: true })) return
     localBuckets.value.splice(idx, 1)
     validate()
 }
@@ -123,8 +128,8 @@ function moveBucket(idx, dir) {
     localBuckets.value[target] = temp
 }
 
-function resetToOntario() {
-    if (!window.confirm('Reset to standard Ontario levels?')) return
+async function resetToOntario() {
+    if (!await confirm('Reset to standard Ontario levels?')) return
     localBuckets.value = JSON.parse(JSON.stringify(ONTARIO_DEFAULTS))
     validate()
 }
@@ -168,7 +173,7 @@ async function saveBuckets() {
     
     await settingsService.saveSettings(settings)
     localBuckets.value = JSON.parse(JSON.stringify(sorted))
-    alert('Grading standards saved successfully!')
+    await alert('Grading standards saved successfully!')
 }
 </script>
 

@@ -280,6 +280,7 @@ import { CalendarDays, Palmtree, Trash2, Plus, FileUp, Flag, FileCode } from 'lu
 import { useClassroom } from '../../composables/useClassroom.js'
 import { globalMilestones } from '../../composables/useGradebook.js'
 import * as settingsService from '../../db/settingsService.js'
+import { useMessage } from '../../composables/useMessage.js'
 import BaseModal from '../BaseModal.vue'
 import SemesterCalendar from './SemesterCalendar.vue'
 import Papa from 'papaparse'
@@ -299,6 +300,7 @@ const showPasteModal = ref(false)
 const showCalendarModal = ref(false)
 const showAdvancedModal = ref(false)
 const pastedCsv = ref('')
+const { alert, confirm } = useMessage()
 
 const activeTermDetails = computed(() => {
   if (!selectedYear.value || !selectedSemester.value) return null
@@ -357,7 +359,7 @@ function addTerm() {
 async function removeTerm(index) {
   const term = terms.value[index]
   const label = term ? `${term.year} Sem ${term.semester}` : 'this term'
-  if (!window.confirm(`Are you sure you want to remove ${label}?`)) return
+  if (!await confirm(`Are you sure you want to remove ${label}?`, 'Remove Term', { danger: true })) return
   const newTerms = [...terms.value]
   newTerms.splice(index, 1)
   await updateAcademicTerms(newTerms)
@@ -373,6 +375,9 @@ function addNonSchoolDay() {
 }
 
 async function removeNonSchoolDay(index) {
+  const day = nonSchoolDays.value[index]
+  const label = day?.label || day?.date || 'this entry'
+  if (!await confirm(`Are you sure you want to remove ${label}?`, 'Remove Holiday/PD Day', { danger: true })) return
   const newDays = [...nonSchoolDays.value]
   newDays.splice(index, 1)
   await updateNonSchoolDays(newDays)
@@ -405,6 +410,9 @@ function addMilestone() {
 }
 
 async function deleteMilestone(id) {
+  const ms = globalMilestones.value.find(ms => ms.milestoneId === id)
+  const label = ms?.name || 'this milestone'
+  if (!await confirm(`Are you sure you want to delete ${label}?`, 'Delete Milestone', { danger: true })) return
   globalMilestones.value = globalMilestones.value.filter(ms => ms.milestoneId !== id)
   await saveMilestones()
 }
@@ -465,9 +473,9 @@ async function importHolidays(rawData) {
     
     nonSchoolDays.value = [...nonSchoolDays.value, ...uniqueNew]
     await saveNonSchoolDays()
-    alert(`Imported ${uniqueNew.length} new holidays/PD days.`)
+    await alert(`Imported ${uniqueNew.length} new holidays/PD days.`)
   } else {
-    alert('No valid dates found in data. Ensure format is YYYY-MM-DD.')
+    await alert('No valid dates found in data. Ensure format is YYYY-MM-DD.')
   }
 }
 </script>

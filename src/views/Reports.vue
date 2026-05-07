@@ -330,6 +330,7 @@ import {
   LayoutDashboard, Database, UserCheck, Toilet, Activity, 
   FolderOpen, GraduationCap, Printer, X, ClipboardList, AlertTriangle, Check
 } from 'lucide-vue-next'
+import { useMessage }        from '../composables/useMessage.js'
 import { resolveIcon }         from '../utils/icons.js'
 import { useClassroom }        from '../composables/useClassroom.js'
 import { useStudentDossier }   from '../composables/useStudentDossier.js'
@@ -373,6 +374,7 @@ const {
 } = useClassroom()
 
 const { push: pushUndo } = useUndo()
+const { alert, confirm } = useMessage()
 
 // --- Sorted Class List for Dropdowns ---
 const sortedClassList = computed(() => {
@@ -586,12 +588,12 @@ function parseNote(note) {
 
 /** Delete an event from the dossier (sync or note feed) */
 async function onDossierDelete(eventId) {
-  if (!confirm('Delete this event? This cannot be undone.')) return
+  if (!await confirm('Delete this event? This cannot be undone.', 'Delete Event', { danger: true })) return
   try {
     await eventService.deleteEvent(eventId)
     await dossier.loadStudent(sidebarClassId.value, dossier.selectedStudentId.value)
   } catch (err) {
-    alert('Failed to delete event: ' + err.message)
+    await alert('Failed to delete event: ' + err.message)
   }
 }
 
@@ -606,7 +608,7 @@ async function editEvent(evt) {
     // Refresh dossier safely
     await dossier.loadStudent(sidebarClassId.value, dossier.selectedStudentId.value)
   } catch (err) {
-    alert('Failed to edit event: ' + err.message)
+    await alert('Failed to edit event: ' + err.message)
   }
 }
 
@@ -936,12 +938,12 @@ async function runReport() {
 }
 
 async function deleteEvent(eventId) {
-  if (!confirm('Delete this event? This cannot be undone.')) return
+  if (!await confirm('Delete this event? This cannot be undone.', 'Delete Event', { danger: true })) return
   try {
     await eventService.deleteEvent(eventId)
     await runReport()
   } catch (err) {
-    alert('Failed to delete event: ' + err.message)
+    await alert('Failed to delete event: ' + err.message)
   }
 }
 
