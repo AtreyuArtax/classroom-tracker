@@ -31,21 +31,10 @@ export function useKeyboardWedge(onComplete, options = {}) {
     if (['Shift', 'Control', 'Alt', 'Meta'].includes(e.key)) return
 
     const now = Date.now()
-    const gap = now - lastKeyTime
     
-    // If this is coming in fast, it's likely a scanner.
-    // Prevent default so it doesn't leak into focused input fields.
-    // We don't prevent the very first key (buffer.length === 0) because we don't know yet if it's a burst,
-    // but we prevent every subsequent fast key.
-    if (buffer.length > 0 && gap < maxGapMs) {
-      e.preventDefault()
-    }
-
     // If this is the first char or it came in quickly enough, keep it
-    if (buffer.length === 0 || gap < maxGapMs) {
+    if (buffer.length === 0 || (now - lastKeyTime) < maxGapMs) {
       if (e.key === terminator) {
-        // If it's the terminator, we ALWAYS prevent default to avoid "Enter" submitting forms
-        e.preventDefault()
         if (buffer.length >= minLength) {
           onComplete(buffer)
         }

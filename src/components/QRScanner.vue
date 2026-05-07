@@ -210,9 +210,12 @@ const onRFIDScan = (hex) => {
     
     cooldownActive.value = true
     setTimeout(() => {
-      cooldownActive.value = false
-      isError.value = false
-    }, 5000)
+      // Only clear if no other scan has taken over the cooldown
+      if (lastScannedName.value === 'Unknown Card') {
+        cooldownActive.value = false
+        isError.value = false
+      }
+    }, 2000) // Reduced from 5s
   }
 }
 
@@ -332,12 +335,16 @@ function playBeep(isErr = false) {
 }
 
 // ── Scan Handling ─────────────────────────────────────────────────────────────
-let lastScanTime = 0
-const DEBOUNCE_MS = 5000
+const studentCooldowns = new Map()
+const MIN_TRIP_MS = 30000 // 30 seconds minimum out time
+const RECENT_TAP_LOCKOUT_MS = 2000 // 2 seconds to prevent rapid double-bounce
 
 const handleScan = async (decodedText) => {
   const now = Date.now()
-  if (now - lastScanTime < DEBOUNCE_MS) return
+  const lastTime = studentCooldowns.get(decodedText) || 0
+  
+  // 1. Prevent "Rapid Double-Tap" (Bounce)
+  if (now - lastTime < RECENT_TAP_LOCKOUT_MS) return
 
   const student = students.value[decodedText]
   if (!student) {
@@ -348,6 +355,26 @@ const handleScan = async (decodedText) => {
   const isCurrentlyOut = student.activeStates?.isOut
   lastScannedName.value = `${student.firstName} ${student.lastName}`
 
+  // 2. Enforce "Minimum Out Time" (Prevent accidental immediate Sign-In)
+  if (isCurrentlyOut) {
+    const outTime = new Date(student.activeStates.outTime).getTime()
+    if (now - outTime < MIN_TRIP_MS) {
+      isError.value = true
+      lastScannedStatus.value = 'Too Soon!'
+      playBeep(true)
+      
+      cooldownActive.value = true
+      setTimeout(() => {
+        if (lastScannedName.value === `${student.firstName} ${student.lastName}`) {
+          cooldownActive.value = false
+          isError.value = false
+        }
+      }, 2000)
+      return
+    }
+  }
+
+  // 3. Limit Check
   if (!isCurrentlyOut && maxStudentsOut.value > 0 && studentsOut.value.length >= maxStudentsOut.value) {
     isError.value = true
     lastScannedStatus.value = 'Limit Reached'
@@ -359,12 +386,14 @@ const handleScan = async (decodedText) => {
     await logToggleEvent(decodedText, 'w')
   }
 
-  lastScanTime = now
+  studentCooldowns.set(decodedText, now)
   cooldownActive.value = true
   setTimeout(() => {
-    cooldownActive.value = false
-    isError.value = false
-  }, DEBOUNCE_MS)
+    if (lastScannedName.value === `${student.firstName} ${student.lastName}`) {
+      cooldownActive.value = false
+      isError.value = false
+    }
+  }, 3000) // General feedback duration
 }
 
 const handleStartByMode = async () => {
