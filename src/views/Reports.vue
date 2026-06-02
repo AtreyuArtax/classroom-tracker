@@ -55,6 +55,8 @@
                     <button @click="downloadAggregateCsv('attendance')">Attendance</button>
                     <button @click="downloadAggregateCsv('washroom')">Washroom</button>
                     <button @click="downloadAggregateCsv('behavior')">Behavior</button>
+                    <button @click="downloadReportCardCsv(true)">Comments (names)</button>
+                    <button @click="downloadReportCardCsv(false)">Comments (no names)</button>
                   </div>
                 </div>
                 <!-- Batch Print Button -->
@@ -977,6 +979,184 @@ onUnmounted(() => {
   window.removeEventListener('click', handleClickOutside)
 })
 
+async function downloadReportCardCsv(includeName) {
+  showExportMenu.value = false
+  const classObj = reportClass.value
+  if (!classObj) return
+  
+  const className = classObj.name ?? 'Class'
+  const date = new Date().toISOString().slice(0, 10)
+  const filename = `${className}-report-card-comments-${includeName ? 'with-names' : 'anonymous'}-${date}.csv`
+  
+  console.log(`[CSV Export] Starting report card comment export for class: ${className}`);
+  
+  try {
+    // Ensure gradebook data is loaded
+    await loadGradebook(classObj)
+  } catch (err) {
+    console.error('[CSV Export] Failed to load gradebook:', err)
+    await alert('Failed to load gradebook data for export: ' + err.message)
+    return
+  }
+  
+  // Ensure all class events are loaded
+  let classEvents = allClassEvents.value
+  if (!classEvents || classEvents.length === 0) {
+    try {
+      const activeStudentIds = new Set(sidebarStudents.value.map(s => s.studentId))
+      const allEventsRaw = await eventService.getEventsByClass(sidebarClassId.value)
+      classEvents = allEventsRaw.filter(e => activeStudentIds.has(e.studentId))
+    } catch (err) {
+      console.error('[CSV Export] Failed to load class events:', err)
+      classEvents = []
+    }
+  }
+  
+  const dr = eventService.getDateRangeForPeriod(selectedPeriod.value)
+  const classCode = classObj.courseCode ? ` (${classObj.courseCode})` : ''
+  
+  let csvContent = includeName 
+    ? 'Student,Progress Summary\r\n'
+    : 'Row,Progress Summary\r\n'
+    
+  sidebarStudents.value.forEach((studentItem, index) => {
+    const sId = studentItem.studentId
+    const s = classObj.students[sId]
+    if (!s) return
+    
+    try {
+      // 1. Header
+      const header = includeName
+        ? `${s.firstName} ${s.lastName}${classCode} — Progress Summary`
+        : `Student${classCode} — Progress Summary`
+        
+      // 2. Current Grade
+      const studentGrades = classGrades.value?.[sId] || {}
+      const overallGrade = studentGrades.overallGrade ?? null
+      const formattedGrade = overallGrade !== null ? `${Math.round(overallGrade)}%` : 'N/A'
+      
+      // 3. Attendance
+      const studentEvents = classEvents.filter(e => {
+        if (e.studentId !== sId) return false
+        if (dr.from && e.timestamp < dr.from) return false
+        if (dr.to && e.timestamp > dr.to + 'T23:59:59') return false
+        return true
+      })
+      const nonSupersededEvents = studentEvents.filter(e => !e.superseded)
+      const absences = nonSupersededEvents.filter(e => e.code === 'a').length
+      const lates = nonSupersededEvents.filter(e => e.code === 'l').length
+      
+      // 4. Academic Record & Recent Progress
+      const studentAssessments = assessments.value
+        .map(a => {
+          const g = gradeMap.value[a.assessmentId]?.[sId]
+          return {
+            ...a,
+            score: g?.resolvedScore ?? null,
+            attempts: g?.attempts || [],
+            missing: g?.missing,
+            excluded: g?.excluded
+          }
+        })
+        .filter(a => !a.excluded && (a.target === 'class' || (a.target === 'individual' && String(a.targetStudentId) === String(sId))))
+        
+      const academicList = studentAssessments
+        .filter(a => a.score !== null)
+        .sort((a, b) => new Date(b.date) - new Date(a.date))
+        
+      const academicLines = academicList.map(a => {
+        const displayDate = new Date(a.date).toLocaleDateString([], { month: 'short', day: 'numeric' })
+        let line = `- ${displayDate} - ${a.name}: ${Math.round((a.score / a.totalPoints) * 100)}%`
+        if (a.attempts?.length > 1) {
+          const history = a.attempts
+            .map(att => Math.round((att.pointsEarned / a.totalPoints) * 100) + '%')
+            .join(', ')
+          line += ` (Attempts history: ${history})`
+        }
+        return line
+      })
+      
+      // 5. Category Averages
+      const results = studentGrades.categoryResults || {}
+      const categoryLines = (classObj.gradebookCategories || []).map(cat => {
+        const score = results[cat.categoryId]?.percentage ?? null
+        return `- ${cat.name}: ${score !== null ? Math.round(score) + '%' : 'N/A'}`
+      })
+      
+      // 6. Professional Judgment
+      const activeStudentEventsFiltered = studentEvents
+        .filter(e => e.code === 'ac')
+        .sort((a, b) => new Date(b.ts || b.timestamp) - new Date(a.ts || a.timestamp))
+        .slice(0, 5)
+        
+      const judgmentLines = activeStudentEventsFiltered.map(e => {
+        const displayDate = new Date(e.ts || e.timestamp).toLocaleDateString([], { month: 'short', day: 'numeric' })
+        const type = e.acType === 'observation' ? 'Obs' : 'Conv'
+        const outcome = e.acOutcome ? ` [${e.acOutcome.replace(/_/g, ' ')}]` : ''
+        return `- ${displayDate} (${type}): ${e.note}${outcome}`
+      })
+      if (activeStudentEventsFiltered.length === 0) {
+        judgmentLines.push('- No specific entries recorded.')
+      }
+      
+      // 7. Teacher Working Notes
+      const notesLine = s.gradebookNote || 'None recorded.'
+      
+      // Assemble the complete progress block text
+      const text = [
+        header,
+        `Current Grade: ${formattedGrade}`,
+        `Attendance: ${absences} Absences, ${lates} Lates`,
+        '',
+        'Academic Record & Recent Progress:',
+        ...academicLines,
+        '',
+        'Category Averages:',
+        ...categoryLines,
+        '',
+        'Professional Judgment (Observations & Conversations):',
+        ...judgmentLines,
+        '',
+        'Teacher Working Notes (Comment Ideas):',
+        notesLine
+      ].join('\r\n')
+      
+      if (index === 0) {
+        console.log(`[CSV Export] Sample output for first student (${s.firstName}):`, text);
+      }
+      
+      // Escape quotes for CSV format: double any double quotes, and wrap in double quotes
+      const escapedText = `"${text.replace(/"/g, '""')}"`
+      
+      if (includeName) {
+        const escapedName = `"${`${s.lastName}, ${s.firstName}`.replace(/"/g, '""')}"`
+        csvContent += `${escapedName},${escapedText}\r\n`
+      } else {
+        csvContent += `${index + 1},${escapedText}\r\n`
+      }
+    } catch (studentErr) {
+      console.error(`[CSV Export] Error generating comment block for student ${sId} (${s.lastName}, ${s.firstName}):`, studentErr)
+      const fallbackText = `"${`Error compiling progress summary for ${s.firstName} ${s.lastName}: ${studentErr.message}`.replace(/"/g, '""')}"`
+      if (includeName) {
+        const escapedName = `"${`${s.lastName}, ${s.firstName}`.replace(/"/g, '""')}"`
+        csvContent += `${escapedName},${fallbackText}\r\n`
+      } else {
+        csvContent += `${index + 1},${fallbackText}\r\n`
+      }
+    }
+  })
+  
+  // Prepend UTF-8 BOM (\uFEFF) to guarantee Excel reads it as UTF-8 encoded
+  const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  a.click()
+  URL.revokeObjectURL(url)
+  console.log('[CSV Export] File download triggered successfully.');
+}
+
 function downloadAggregateCsv(section) {
   showExportMenu.value = false
   const classObj = reportClass.value
@@ -1554,7 +1734,7 @@ const washroomChartOptions = {
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-lg);
   z-index: 100;
-  min-width: 140px;
+  min-width: 180px;
   display: flex;
   flex-direction: column;
 }
@@ -1567,6 +1747,7 @@ const washroomChartOptions = {
   cursor: pointer;
   font-size: 0.9rem;
   color: var(--text);
+  white-space: nowrap;
 }
 
 .reports__export-menu button:hover {
