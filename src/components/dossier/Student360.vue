@@ -321,6 +321,7 @@
            title="Log Past Absence"
            @close="showAbsenceForm = false"
            maxWidth="400px"
+           :z-index="3000"
          >
            <div class="absence-modal-content">
              <div class="form-group">
@@ -491,7 +492,7 @@
           >
             <div class="attempt-item__main">
               <span class="attempt-item__score">{{ att.pointsEarned }}</span>
-              <span class="attempt-item__date">{{ new Date(att.date).toLocaleDateString([], { month: 'short', day: 'numeric' }) }}</span>
+              <span class="attempt-item__date">{{ formatLocalDisplay(att.date, { month: 'short', day: 'numeric' }) }}</span>
             </div>
             <div class="attempt-item__actions">
               <button 
@@ -519,6 +520,7 @@
     <BaseModal
       :show="!!newAttemptForm"
       title="Record New Attempt"
+      :z-index="3000"
       @close="newAttemptForm = null"
     >
       <div class="modal-body-content">
@@ -545,6 +547,7 @@
     <BaseModal
       :show="showEmailModal"
       title="Configure Email Report"
+      :z-index="3000"
       @close="showEmailModal = false"
     >
       <template #header>
@@ -626,6 +629,7 @@
       :show="showPrintModal"
       title="Print Report"
       max-width="700px"
+      :z-index="3000"
       @close="showPrintModal = false"
     >
       <template #header>
@@ -833,7 +837,11 @@ import {
   removeAttempt,
   setPrimaryAttempt,
   deleteAssessment,
-  saveStudentGradebookNote
+  saveStudentGradebookNote,
+  filteredMilestones,
+  globalMilestones,
+  markMissing,
+  markExcluded
 } from '../../composables/useGradebook.js'
 // getDateRangeForPeriod is now used internally by useStudentDossier — no direct import needed here.
 
@@ -930,7 +938,7 @@ function generateEmailLink() {
     if (list.length > 0) {
       body += `\nAcademic Record & Recent Progress:\n`
       list.forEach(a => {
-        const date = new Date(a.date).toLocaleDateString([], { month: 'short', day: 'numeric' })
+        const date = formatLocalDisplay(a.date, { month: 'short', day: 'numeric' })
         let line = `${date} - ${a.name}: ${Math.round((a.score / a.totalPoints) * 100)}%`
         if (a.attempts?.length > 1) {
           const history = a.attempts
@@ -1339,52 +1347,86 @@ async function copyForReportCard(includeName = false) {
   const absences = stats.value.absences
   const lates = stats.value.lates
   
+  const isFinal = await confirm(
+    'Select the report card term for this comment copy.',
+    'Select Report Type',
+    { confirmLabel: 'Final', cancelLabel: 'Midterm' }
+  )
+  const reportType = isFinal ? 'Final' : 'Midterm'
+  
+  const midtermMs = filteredMilestones.value?.find(m => m.name?.toLowerCase() === 'midterm') || 
+                    globalMilestones.value?.find(m => m.name?.toLowerCase() === 'midterm')
+  const midtermDate = midtermMs?.date || 'N/A'
+  
   const academicList = [...allDossierAssessments.value]
     .filter(a => a.score !== null && !a.excluded)
-    .sort((a, b) => new Date(b.date) - new Date(a.date))
+    .sort((a, b) => new Date(a.date) - new Date(b.date))
 
   const classCode = activeClass.value?.courseCode ? ` (${activeClass.value.courseCode})` : ''
   const header = includeName
-    ? `${s.firstName} ${s.lastName}${classCode} — Progress Summary`
+    ? `Student Name: ${s.firstName} ${s.lastName}${classCode}`
     : `Student${classCode} — Progress Summary`
 
-  const text = [
-    header,
-    `Current Grade: ${formattedGrade.value}`,
-    `Attendance: ${absences} Absences, ${lates} Lates`,
-    '',
-    'Academic Record & Recent Progress:',
-    ...academicList.map(a => {
-      const date = new Date(a.date).toLocaleDateString([], { month: 'short', day: 'numeric' })
-      let line = `- ${date} - ${a.name}: ${Math.round((a.score / a.totalPoints) * 100)}%`
-      if (a.attempts?.length > 1) {
-        const history = a.attempts
-          .map(att => Math.round((att.pointsEarned / a.totalPoints) * 100) + '%')
-          .join(', ')
-        line += ` (Attempts history: ${history})`
-      }
-      return line
-    }),
-    '',
-    'Category Averages:',
-    ...academicCategories.value.map(c => `- ${c.name}: ${c.score !== null ? Math.round(c.score) + '%' : 'N/A'}`),
-    '',
-    'Professional Judgment (Observations & Conversations):',
-    ...(activeStudentEvents.value
-      .filter(e => e.code === 'ac')
-      .sort((a, b) => (b.ts || b.timestamp) - (a.ts || a.timestamp))
-      .slice(0, 5)
-      .map(e => {
-        const date = new Date(e.ts || e.timestamp).toLocaleDateString([], { month: 'short', day: 'numeric' })
-        const type = e.acType === 'observation' ? 'Obs' : 'Conv'
-        const outcome = e.acOutcome ? ` [${e.acOutcome.replace(/_/g, ' ')}]` : ''
-        return `- ${date} (${type}): ${e.note}${outcome}`
-      })),
-    activeStudentEvents.value.filter(e => e.code === 'ac').length === 0 ? '- No specific entries recorded.' : '',
-    '',
-    'Teacher Working Notes (Comment Ideas):',
-    student.value.gradebookNote || 'None recorded.'
-  ].join('\n')
+  let boundaryInserted = false
+  const academicLines = []
+  academicList.forEach(a => {
+    if (midtermDate !== 'N/A' && a.date > midtermDate && !boundaryInserted) {
+      academicLines.push('--- MIDTERM CUTOFF BOUNDARY ---')
+      boundaryInserted = true
+    }
+    const date = formatLocalDisplay(a.date, { month: 'short', day: 'numeric' })
+    const classObj = activeClassRecord.value || activeClass.value
+    const unit = classObj?.gradebookUnits?.find(u => u.unitId === a.unitId)
+    const unitPrefix = unit ? `[${unit.name}] ` : ''
+    let line = `- ${date} - ${unitPrefix}${a.name}: ${Math.round((a.score / a.totalPoints) * 100)}%`
+    if (a.attempts?.length > 1) {
+      const history = a.attempts
+        .map(att => Math.round((att.pointsEarned / a.totalPoints) * 100) + '%')
+        .join(', ')
+      line += ` (Attempts history: ${history})`
+    }
+    academicLines.push(line)
+  })
+
+  const textLines = [
+    header
+  ]
+  const courseCode = activeClassRecord.value?.courseCode || activeClass.value?.courseCode
+  if (courseCode) {
+    textLines.push(`Course: ${courseCode}`)
+  }
+  textLines.push(`Current Grade: ${formattedGrade.value}`)
+  if (midtermDate !== 'N/A') {
+    textLines.push(`Midterm Cutoff Date: ${midtermDate}`)
+  }
+  textLines.push(`Report Type: ${reportType}`)
+  textLines.push(`Attendance: ${absences} Absences, ${lates} Lates`)
+  textLines.push('')
+  textLines.push('Gradebook Log (Chronological):')
+  textLines.push(...academicLines)
+  textLines.push('')
+  textLines.push('Category Averages:')
+  textLines.push(...academicCategories.value.map(c => `- ${c.name}: ${c.score !== null ? Math.round(c.score) + '%' : 'N/A'}`))
+  textLines.push('')
+  textLines.push('Professional Judgment (Observations & Conversations):')
+  textLines.push(...(activeStudentEvents.value
+    .filter(e => e.code === 'ac')
+    .sort((a, b) => (b.ts || b.timestamp) - (a.ts || a.timestamp))
+    .slice(0, 5)
+    .map(e => {
+      const date = new Date(e.ts || e.timestamp).toLocaleDateString([], { month: 'short', day: 'numeric' })
+      const type = e.acType === 'observation' ? 'Obs' : 'Conv'
+      const outcome = e.acOutcome ? ` [${e.acOutcome.replace(/_/g, ' ')}]` : ''
+      return `- ${date} (${type}): ${e.note}${outcome}`
+    })))
+  if (activeStudentEvents.value.filter(e => e.code === 'ac').length === 0) {
+    textLines.push('None')
+  }
+  textLines.push('')
+  textLines.push('Teacher Working Notes (Comment Ideas):')
+  textLines.push(student.value.gradebookNote?.trim() || 'None')
+
+  const text = textLines.join('\n')
   
   await navigator.clipboard.writeText(text)
 

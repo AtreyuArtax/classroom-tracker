@@ -32,6 +32,7 @@ import {
   Filler
 } from 'chart.js'
 import { activeClassRecord } from '../../composables/useGradebook.js'
+import { formatLocalDisplay } from '../../utils/dates.js'
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend, Filler)
 
@@ -133,7 +134,7 @@ const history = computed(() => {
       : null
 
     points.push({
-      date: new Date(currentAsOf).toLocaleDateString([], { month: 'short', day: 'numeric' }),
+      date: formatLocalDisplay(currentAsOf, { month: 'short', day: 'numeric' }),
       overall: overall !== null ? Math.round(overall * 10) / 10 : null,
       trending: trending !== null ? Math.round(trending * 10) / 10 : null
     })

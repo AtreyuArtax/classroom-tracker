@@ -5,6 +5,7 @@
         v-if="show" 
         class="bm-overlay"
         :class="{ 'bm-overlay--clickable': closeOnBackdrop }"
+        :style="{ zIndex: zIndex }"
         @click="onBackdropClick"
         role="dialog" 
         aria-modal="true"
@@ -63,6 +64,7 @@ const props = defineProps({
   closeOnBackdrop: { type: Boolean, default: false },
   unstyled: { type: Boolean, default: false },
   maxWidth: { type: String, default: '500px' },
+  zIndex: { type: [Number, String], default: 2000 },
 })
 
 const emit = defineEmits(['close'])

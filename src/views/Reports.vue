@@ -335,6 +335,7 @@ import {
 import { useMessage }        from '../composables/useMessage.js'
 import { resolveIcon }         from '../utils/icons.js'
 import { useClassroom }        from '../composables/useClassroom.js'
+import { formatLocalDisplay }  from '../utils/dates.js'
 import { useStudentDossier }   from '../composables/useStudentDossier.js'
 import { useUndo }             from '../composables/useUndo.js'
 import * as classService       from '../db/classService.js'
@@ -537,7 +538,7 @@ const printConfig = reactive({
 })
 
 import { nextTick } from 'vue'
-import { loadGradebook, activeClassRecord, assessments, gradeMap } from '../composables/useGradebook.js'
+import { loadGradebook, activeClassRecord, assessments, gradeMap, filteredMilestones, globalMilestones } from '../composables/useGradebook.js'
 
 const { teacherName } = useClassroom()
 
@@ -984,9 +985,16 @@ async function downloadReportCardCsv(includeName) {
   const classObj = reportClass.value
   if (!classObj) return
   
+  const isFinal = await confirm(
+    'Select the report card term for this comment export.',
+    'Select Report Type',
+    { confirmLabel: 'Final', cancelLabel: 'Midterm' }
+  )
+  const reportType = isFinal ? 'Final' : 'Midterm'
+  
   const className = classObj.name ?? 'Class'
   const date = new Date().toISOString().slice(0, 10)
-  const filename = `${className}-report-card-comments-${includeName ? 'with-names' : 'anonymous'}-${date}.csv`
+  const filename = `${className}-report-card-comments-${reportType.toLowerCase()}-${includeName ? 'with-names' : 'anonymous'}-${date}.csv`
   
   console.log(`[CSV Export] Starting report card comment export for class: ${className}`);
   
@@ -1015,9 +1023,13 @@ async function downloadReportCardCsv(includeName) {
   const dr = eventService.getDateRangeForPeriod(selectedPeriod.value)
   const classCode = classObj.courseCode ? ` (${classObj.courseCode})` : ''
   
+  const midtermMs = filteredMilestones.value?.find(m => m.name?.toLowerCase() === 'midterm') || 
+                    globalMilestones.value?.find(m => m.name?.toLowerCase() === 'midterm')
+  const midtermDate = midtermMs?.date || 'N/A'
+  
   let csvContent = includeName 
-    ? 'Student,Progress Summary\r\n'
-    : 'Row,Progress Summary\r\n'
+    ? 'Student,Course,Progress Summary\r\n'
+    : 'Row,Course,Progress Summary\r\n'
     
   sidebarStudents.value.forEach((studentItem, index) => {
     const sId = studentItem.studentId
@@ -1027,7 +1039,7 @@ async function downloadReportCardCsv(includeName) {
     try {
       // 1. Header
       const header = includeName
-        ? `${s.firstName} ${s.lastName}${classCode} — Progress Summary`
+        ? `Student Name: ${s.firstName} ${s.lastName}${classCode}`
         : `Student${classCode} — Progress Summary`
         
       // 2. Current Grade
@@ -1046,7 +1058,7 @@ async function downloadReportCardCsv(includeName) {
       const absences = nonSupersededEvents.filter(e => e.code === 'a').length
       const lates = nonSupersededEvents.filter(e => e.code === 'l').length
       
-      // 4. Academic Record & Recent Progress
+      // 4. Academic Record & Recent Progress (Chronological Gradebook Log)
       const studentAssessments = assessments.value
         .map(a => {
           const g = gradeMap.value[a.assessmentId]?.[sId]
@@ -1058,22 +1070,30 @@ async function downloadReportCardCsv(includeName) {
             excluded: g?.excluded
           }
         })
-        .filter(a => !a.excluded && (a.target === 'class' || (a.target === 'individual' && String(a.targetStudentId) === String(sId))))
+        .filter(a => !a.excluded && (a.target !== 'individual' || (a.target === 'individual' && String(a.targetStudentId) === String(sId))))
         
       const academicList = studentAssessments
         .filter(a => a.score !== null)
-        .sort((a, b) => new Date(b.date) - new Date(a.date))
+        .sort((a, b) => new Date(a.date) - new Date(b.date))
         
-      const academicLines = academicList.map(a => {
-        const displayDate = new Date(a.date).toLocaleDateString([], { month: 'short', day: 'numeric' })
-        let line = `- ${displayDate} - ${a.name}: ${Math.round((a.score / a.totalPoints) * 100)}%`
+      let boundaryInserted = false
+      const academicLines = []
+      academicList.forEach(a => {
+        if (midtermDate !== 'N/A' && a.date > midtermDate && !boundaryInserted) {
+          academicLines.push('--- MIDTERM CUTOFF BOUNDARY ---')
+          boundaryInserted = true
+        }
+        const displayDate = formatLocalDisplay(a.date, { month: 'short', day: 'numeric' })
+        const unit = classObj.gradebookUnits?.find(u => u.unitId === a.unitId)
+        const unitPrefix = unit ? `[${unit.name}] ` : ''
+        let line = `- ${displayDate} - ${unitPrefix}${a.name}: ${Math.round((a.score / a.totalPoints) * 100)}%`
         if (a.attempts?.length > 1) {
           const history = a.attempts
             .map(att => Math.round((att.pointsEarned / a.totalPoints) * 100) + '%')
             .join(', ')
           line += ` (Attempts history: ${history})`
         }
-        return line
+        academicLines.push(line)
       })
       
       // 5. Category Averages
@@ -1096,30 +1116,39 @@ async function downloadReportCardCsv(includeName) {
         return `- ${displayDate} (${type}): ${e.note}${outcome}`
       })
       if (activeStudentEventsFiltered.length === 0) {
-        judgmentLines.push('- No specific entries recorded.')
+        judgmentLines.push('None')
       }
       
       // 7. Teacher Working Notes
-      const notesLine = s.gradebookNote || 'None recorded.'
+      const notesLine = s.gradebookNote?.trim() || 'None'
       
       // Assemble the complete progress block text
-      const text = [
-        header,
-        `Current Grade: ${formattedGrade}`,
-        `Attendance: ${absences} Absences, ${lates} Lates`,
-        '',
-        'Academic Record & Recent Progress:',
-        ...academicLines,
-        '',
-        'Category Averages:',
-        ...categoryLines,
-        '',
-        'Professional Judgment (Observations & Conversations):',
-        ...judgmentLines,
-        '',
-        'Teacher Working Notes (Comment Ideas):',
-        notesLine
-      ].join('\r\n')
+      const textLines = [
+        header
+      ]
+      if (classObj.courseCode) {
+        textLines.push(`Course: ${classObj.courseCode}`)
+      }
+      textLines.push(`Current Grade: ${formattedGrade}`)
+      if (midtermDate !== 'N/A') {
+        textLines.push(`Midterm Cutoff Date: ${midtermDate}`)
+      }
+      textLines.push(`Report Type: ${reportType}`)
+      textLines.push(`Attendance: ${absences} Absences, ${lates} Lates`)
+      textLines.push('')
+      textLines.push('Gradebook Log (Chronological):')
+      textLines.push(...academicLines)
+      textLines.push('')
+      textLines.push('Category Averages:')
+      textLines.push(...categoryLines)
+      textLines.push('')
+      textLines.push('Professional Judgment (Observations & Conversations):')
+      textLines.push(...judgmentLines)
+      textLines.push('')
+      textLines.push('Teacher Working Notes (Comment Ideas):')
+      textLines.push(notesLine)
+      
+      const text = textLines.join('\r\n')
       
       if (index === 0) {
         console.log(`[CSV Export] Sample output for first student (${s.firstName}):`, text);
@@ -1127,21 +1156,23 @@ async function downloadReportCardCsv(includeName) {
       
       // Escape quotes for CSV format: double any double quotes, and wrap in double quotes
       const escapedText = `"${text.replace(/"/g, '""')}"`
+      const escapedCourse = `"${(classObj.courseCode || '').replace(/"/g, '""')}"`
       
       if (includeName) {
         const escapedName = `"${`${s.lastName}, ${s.firstName}`.replace(/"/g, '""')}"`
-        csvContent += `${escapedName},${escapedText}\r\n`
+        csvContent += `${escapedName},${escapedCourse},${escapedText}\r\n`
       } else {
-        csvContent += `${index + 1},${escapedText}\r\n`
+        csvContent += `${index + 1},${escapedCourse},${escapedText}\r\n`
       }
     } catch (studentErr) {
       console.error(`[CSV Export] Error generating comment block for student ${sId} (${s.lastName}, ${s.firstName}):`, studentErr)
       const fallbackText = `"${`Error compiling progress summary for ${s.firstName} ${s.lastName}: ${studentErr.message}`.replace(/"/g, '""')}"`
+      const escapedCourse = `"${(classObj.courseCode || '').replace(/"/g, '""')}"`
       if (includeName) {
         const escapedName = `"${`${s.lastName}, ${s.firstName}`.replace(/"/g, '""')}"`
-        csvContent += `${escapedName},${fallbackText}\r\n`
+        csvContent += `${escapedName},${escapedCourse},${fallbackText}\r\n`
       } else {
-        csvContent += `${index + 1},${fallbackText}\r\n`
+        csvContent += `${index + 1},${escapedCourse},${fallbackText}\r\n`
       }
     }
   })

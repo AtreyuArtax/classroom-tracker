@@ -1241,7 +1241,7 @@ const studentTrends = computed(() => {
   if (!activeClassRecord.value?.students || !assessments.value || !gradeMap.value) return {}
   
   const productAssessments = [...assessments.value]
-    .filter(a => a.assessmentType === 'product' && !a.excluded && a.target === 'class')
+    .filter(a => a.assessmentType === 'product' && !a.excluded && a.target !== 'individual')
     .sort((a, b) => new Date(a.date) - new Date(b.date))
     
   if (productAssessments.length === 0) return {}
@@ -1314,7 +1314,7 @@ const studentEvidenceBalance = computed(() => {
   let total = 0
   
   for (const grade of studentGrades) {
-    const assessment = assessments.value.find(a => a.assessmentId === grade.assessmentId)
+    const assessment = assessments.value.find(a => Number(a.assessmentId) === Number(grade.assessmentId))
     if (!assessment) continue
     if (assessment.excluded || grade.excluded || grade.missing) continue
     if (!grade.attempts || grade.attempts.length === 0) continue
@@ -1344,7 +1344,7 @@ const selectedStudentName = computed(() => {
 
 const sortedAssessments = computed(() => {
   return [...assessments.value]
-    .filter(a => a.target === 'class')
+    .filter(a => a.target !== 'individual')
     .sort((a, b) => {
       const diff = new Date(a.date) - new Date(b.date)
       return assessmentSortOrder.value === 'asc' ? diff : -diff

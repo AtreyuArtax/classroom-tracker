@@ -275,7 +275,7 @@ const studentAssessments = computed(() => {
         excluded: g?.excluded 
       }
     })
-    .filter(a => !a.excluded && (a.target === 'class' || (a.target === 'individual' && String(a.targetStudentId) === String(props.studentId))))
+    .filter(a => !a.excluded && (a.target !== 'individual' || (a.target === 'individual' && String(a.targetStudentId) === String(props.studentId))))
 })
 
 const missingAssessments = computed(() => studentAssessments.value.filter(a => a.missing))
@@ -286,7 +286,7 @@ const recentGradedAssessments = computed(() =>
 )
 
 const recentClassWork = computed(() => 
-  recentGradedAssessments.value.filter(a => a.target === 'class')
+  recentGradedAssessments.value.filter(a => a.target !== 'individual')
 )
 
 const individualTasks = computed(() => 

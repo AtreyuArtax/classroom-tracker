@@ -6,6 +6,7 @@
 
 <script setup>
 import { computed } from 'vue'
+import { formatLocalDisplay } from '../utils/dates.js'
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -105,7 +106,7 @@ const chartData = computed(() => {
   })
 
   return {
-    labels: sorted.map(a => new Date(a.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })),
+    labels: sorted.map(a => formatLocalDisplay(a.date, { month: 'short', day: 'numeric' })),
     datasets: [
       {
         label: 'Overall Grade',
