@@ -4,6 +4,7 @@
     @close="closeAddAssessment"
     :title="isEditingAssessment ? 'Edit Assessment' : 'New Assessment'"
     max-width="500px"
+    :z-index="3000"
   >
     <form class="modal-form" @submit.prevent="saveAssessment">
       <!-- Target Toggle -->

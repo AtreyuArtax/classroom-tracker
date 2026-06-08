@@ -666,7 +666,7 @@ export const gradeMap = computed(() => {
     if (!map[grade.assessmentId]) map[grade.assessmentId] = {}
     
     // Pre-resolve the score based on assessment policy
-    const assessment = assessments.value.find(a => a.assessmentId === grade.assessmentId)
+    const assessment = assessments.value.find(a => Number(a.assessmentId) === Number(grade.assessmentId))
     const resolvedScore = assessment 
       ? gradebookService.resolveAttemptScore(grade.attempts, assessment.retestPolicy)
       : null

@@ -3,6 +3,7 @@
     :show="state.show"
     :max-width="'420px'"
     :show-x="false"
+    :z-index="4000"
     @close="handleAction(false)"
   >
     <div class="msg-content" @keydown.enter="onEnter" @keydown.esc="handleAction(false)">

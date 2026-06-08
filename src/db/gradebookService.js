@@ -590,7 +590,7 @@ function calculateMostConsistent(studentId, classRecord, gradeMap, assessments, 
 
   for (const cat of categories) {
     const catAssessments = assessments.filter(a => 
-      a.target === 'class' && 
+      a.target !== 'individual' && 
       a.categoryId === cat.categoryId && 
       !a.excluded
     )
@@ -659,7 +659,7 @@ function calculateWeightedMedian(studentId, classRecord, gradeMap, assessments, 
 
   for (const cat of categories) {
     const catAssessments = assessments.filter(a => 
-      a.target === 'class' && 
+      a.target !== 'individual' && 
       a.categoryId === cat.categoryId && 
       !a.excluded
     )
@@ -716,7 +716,7 @@ export async function calculateStudentGrade(studentId, classRecord, { asOf = nul
     let catAssessments = assessments.filter(a =>
       a.categoryId === category.categoryId &&
       !a.excluded &&
-      (a.target === 'class' || (a.target === 'individual' && a.targetStudentId === studentId))
+      (a.target !== 'individual' || (a.target === 'individual' && String(a.targetStudentId) === String(studentId)))
     )
 
     // Apply asOf date filter if provided
@@ -909,15 +909,16 @@ export async function calculateClassAnalytics(classRecord, assessments, grades, 
     gradeBuckets = null
   } = options
 
-  const studentIds = Object.keys(classRecord.students ?? {})
+  const allStudentIds = Object.keys(classRecord.students ?? {})
+  const studentIds = allStudentIds.filter(id => !classRecord.students[id].archived)
   const excludedStudentIds = new Set(
-    studentIds.filter(id => classRecord.students[id].excludeFromAnalytics)
+    allStudentIds.filter(id => classRecord.students[id].excludeFromAnalytics || classRecord.students[id].archived)
   )
 
   // Filter to Product, class-target assessments only
   let productAssessments = assessments.filter(a =>
     a.assessmentType === 'product' &&
-    a.target === 'class' &&
+    a.target !== 'individual' &&
     !a.excluded
   )
 
@@ -997,7 +998,7 @@ export async function calculateClassAnalytics(classRecord, assessments, grades, 
     const observationAnalytics = {}
     const conversationAnalytics = {}
 
-    for (const a of assessments.filter(a => a.target === 'class' && !a.excluded)) {
+    for (const a of assessments.filter(a => a.target !== 'individual' && !a.excluded)) {
         const stats = calculateAssessmentAnalytics(
             a.assessmentId, grades, a,
             { 
@@ -1018,7 +1019,7 @@ export async function calculateClassAnalytics(classRecord, assessments, grades, 
     // Count how many students have at least one entered Conversation/Observation
     const conversationStudents = new Set()
     const observationStudents = new Set()
-    for (const a of assessments.filter(a => a.target === 'class' && !a.excluded)) {
+    for (const a of assessments.filter(a => a.target !== 'individual' && !a.excluded)) {
         const aGrades = grades.filter(g =>
             g.assessmentId === a.assessmentId &&
             g.attempts &&
@@ -1177,7 +1178,7 @@ export async function auditGradebookData() {
 
   // 1. Audit Grades
   for (const grade of allGrades) {
-    const ass = allAssessments.find(a => a.assessmentId === grade.assessmentId)
+    const ass = allAssessments.find(a => Number(a.assessmentId) === Number(grade.assessmentId))
     const cls = allClasses.find(c => c.classId === (grade.classId || (ass && ass.classId)))
     const student = cls && cls.students && cls.students[grade.studentId]
       ? cls.students[grade.studentId]
@@ -1258,7 +1259,7 @@ export async function repairMissingClassIds() {
   // 1. Heal Grades using Assessment's classId
   for (const grade of allGrades) {
     if (!grade.classId) {
-      const ass = allAssessments.find(a => a.assessmentId === grade.assessmentId)
+      const ass = allAssessments.find(a => Number(a.assessmentId) === Number(grade.assessmentId))
       if (ass && ass.classId) {
         grade.classId = ass.classId
         await txGrades.objectStore('grades').put(grade)
@@ -1285,7 +1286,7 @@ export async function repairInvalidCategories(assessmentIds) {
   const store = tx.objectStore('assessments')
 
   for (const assId of assessmentIds) {
-    const ass = allAssessments.find(a => a.assessmentId === assId)
+    const ass = allAssessments.find(a => Number(a.assessmentId) === Number(assId))
     if (!ass) continue
 
     const cls = allClasses.find(c => c.classId === ass.classId)

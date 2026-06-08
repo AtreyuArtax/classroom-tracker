@@ -1,5 +1,6 @@
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
+import { parseLocal } from '../utils/dates.js';
 
 /**
  * Generates and downloads a multi-sheet Excel report for the gradebook.
@@ -73,7 +74,7 @@ export async function exportGradebookToExcel({
   const gridHeaders = ['Student Name', ...classAssessments.map(a => a.name)];
   gridSheet.addRow(gridHeaders);
   
-  const gridDates = ['', ...classAssessments.map(a => a.date ? new Date(a.date).toLocaleDateString() : '—')];
+  const gridDates = ['', ...classAssessments.map(a => a.date ? parseLocal(a.date).toLocaleDateString() : '—')];
   gridSheet.addRow(gridDates);
 
   [1, 2].forEach(num => {
@@ -158,7 +159,7 @@ export async function exportGradebookToExcel({
           student: fullName,
           assessment: a.name,
           category: categoryNameMap[a.categoryId] || a.categoryId || 'General',
-          date: att.date ? new Date(att.date).toLocaleDateString() : (a.date ? new Date(a.date).toLocaleDateString() : '—'),
+          date: att.date ? parseLocal(att.date).toLocaleDateString() : (a.date ? parseLocal(a.date).toLocaleDateString() : '—'),
           attempt: idx + 1,
           score: isNaN(score) ? 0 : score,
           total: total,

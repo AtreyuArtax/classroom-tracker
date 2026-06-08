@@ -102,6 +102,7 @@
       :show="!!editingItem" 
       :title="editingItem ? `Edit ${editingItem.title}` : ''"
       max-width="440px"
+      :z-index="3000"
       @close="editingItem = null"
     >
       <div class="timeline-modal-body">
