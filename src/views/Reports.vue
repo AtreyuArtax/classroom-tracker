@@ -1073,7 +1073,7 @@ async function downloadReportCardCsv(includeName) {
         .filter(a => !a.excluded && (a.target !== 'individual' || (a.target === 'individual' && String(a.targetStudentId) === String(sId))))
         
       const academicList = studentAssessments
-        .filter(a => a.score !== null)
+        .filter(a => a.score !== null || a.missing || a.attempts?.some(att => att.comment?.trim()))
         .sort((a, b) => new Date(a.date) - new Date(b.date))
         
       let boundaryInserted = false
@@ -1086,13 +1086,41 @@ async function downloadReportCardCsv(includeName) {
         const displayDate = formatLocalDisplay(a.date, { month: 'short', day: 'numeric' })
         const unit = classObj.gradebookUnits?.find(u => u.unitId === a.unitId)
         const unitPrefix = unit ? `[${unit.name}] ` : ''
-        let line = `- ${displayDate} - ${unitPrefix}${a.name}: ${Math.round((a.score / a.totalPoints) * 100)}%`
+        
+        let line = `- ${displayDate} - ${unitPrefix}${a.name}: `
+        if (a.missing) {
+          line += 'Missing'
+        } else if (a.score !== null) {
+          line += `${Math.round((a.score / (a.totalPoints || 1)) * 100)}%`
+        } else {
+          line += 'Ungraded'
+        }
+
         if (a.attempts?.length > 1) {
           const history = a.attempts
-            .map(att => Math.round((att.pointsEarned / a.totalPoints) * 100) + '%')
+            .map(att => {
+              if (att.pointsEarned === null || att.pointsEarned === undefined) return 'Ungraded'
+              return Math.round((att.pointsEarned / (a.totalPoints || 1)) * 100) + '%'
+            })
             .join(', ')
           line += ` (Attempts history: ${history})`
         }
+        const comments = (a.attempts || [])
+          .map((att, idx) => {
+            const trimmed = att.comment?.trim()
+            if (!trimmed) return null
+            if ((a.attempts || []).length === 1) return `[Note] ${trimmed}`
+            if (att.pointsEarned === null || att.pointsEarned === undefined) {
+              return `[Note - Attempt ${idx + 1}] ${trimmed}`
+            }
+            const pct = Math.round((att.pointsEarned / (a.totalPoints || 1)) * 100)
+            return `[Note - Attempt ${idx + 1} (${pct}%)] ${trimmed}`
+          })
+          .filter(Boolean)
+        
+        comments.forEach(c => {
+          line += `\n  ↳ ${c}`
+        })
         academicLines.push(line)
       })
       
