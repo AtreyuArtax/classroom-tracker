@@ -243,6 +243,36 @@ export async function setPrimaryAttempt(assessmentId, studentId, attemptId) {
 }
 
 /**
+ * Updates the comment on a specific attempt.
+ *
+ * @param {number} assessmentId
+ * @param {string} studentId
+ * @param {string} attemptId
+ * @param {string} comment
+ * @returns {Promise<Object>} The updated grade record.
+ */
+export async function updateAttemptComment(assessmentId, studentId, attemptId, comment) {
+  const db = await getDB()
+  const assessment = await db.get('assessments', assessmentId)
+  if (!assessment) throw new Error(`Assessment not found: ${assessmentId}`)
+
+  const tx = db.transaction('grades', 'readwrite')
+  const store = tx.objectStore('grades')
+  const grade = await _getGradeInTransaction(tx, assessmentId, studentId, assessment.classId)
+
+  grade.attempts = grade.attempts.map(a =>
+    a.attemptId === attemptId ? { ...a, comment: comment ?? '' } : a
+  )
+
+  const plain = JSON.parse(JSON.stringify(grade))
+  await store.put(plain)
+  await tx.done
+
+  hasUnsyncedChanges.value = true
+  return plain
+}
+
+/**
  * Updates boolean flags on a grade record.
  * 
  * @param {number} assessmentId

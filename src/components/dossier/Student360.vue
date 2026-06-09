@@ -139,20 +139,20 @@
             <table class="academics-table">
               <thead>
                 <tr>
-                  <th>Date</th>
-                  <th>Assessment</th>
-                  <th>Type</th>
-                  <th>Impact</th>
-                  <th>Points</th>
-                  <th>%</th>
+                  <th class="th-date">Date</th>
+                  <th class="th-name">Assessment</th>
+                  <th class="th-type">Type</th>
+                  <th class="th-impact">Impact</th>
+                  <th class="th-score">Points</th>
+                  <th class="th-percent">%</th>
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="a in classAssessments" :key="a.assessmentId" v-memo="[a.assessmentId, a.score, a.missing, a.excluded, a.attempts?.length, editingCell?.assessmentId === a.assessmentId]" @contextmenu.prevent="onContextMenu($event, a.assessmentId)">
+                <tr v-for="a in classAssessments" :key="a.assessmentId" @contextmenu.prevent="onContextMenu($event, a.assessmentId)">
                    <td class="td-date">{{ formatLocalDisplay(a.date) }}</td>
                   <td class="td-name">{{ a.name }}</td>
-                  <td><span class="badge" :class="'badge--' + a.assessmentType">{{ a.assessmentType }}</span></td>
-                  <td>
+                  <td class="td-type"><span class="badge" :class="'badge--' + a.assessmentType">{{ a.assessmentType }}</span></td>
+                  <td class="td-impact">
                     <span 
                       class="impact-badge" 
                       :class="'impact-badge--' + getImpactLevel(a.weight).id"
@@ -185,13 +185,21 @@
                             {{ a.score }} / {{ a.totalPoints }}
                           </span>
                           
-                          <!-- Multiple Attempts Indicator -->
-                          <div 
-                            v-if="a.attempts?.length > 1"
-                            class="attempts-dot"
-                            @click.stop="openAttempts($event, a.assessmentId)"
-                            title="Multiple attempts - click to view history"
-                          ></div>
+                          <!-- Attempts / Comment Indicators -->
+                          <div class="cell-indicators" v-if="a.attempts?.length >= 1">
+                            <div 
+                              v-if="a.attempts?.length > 1"
+                              class="attempts-dot"
+                              @click.stop="openAttempts($event, a.assessmentId)"
+                              title="Multiple attempts - click to view history"
+                            ></div>
+                            <span
+                              class="comment-dot"
+                              :class="{ 'comment-dot--active': a.attempts?.some(x => x.comment?.trim()) }"
+                              @click.stop="openAttempts($event, a.assessmentId)"
+                              :title="a.attempts?.some(x => x.comment?.trim()) ? 'Has note — click to edit' : 'Add a note'"
+                            >📝</span>
+                          </div>
                         </template>
                       </div>
                   </td>
@@ -216,20 +224,20 @@
              <table v-if="individualAssessments.length" class="academics-table">
                <thead>
                  <tr>
-                   <th>Date</th>
-                   <th>Assessment</th>
-                   <th>Type</th>
-                   <th>Impact</th>
-                   <th>Points</th>
-                   <th>%</th>
+                   <th class="th-date">Date</th>
+                   <th class="th-name">Assessment</th>
+                   <th class="th-type">Type</th>
+                   <th class="th-impact">Impact</th>
+                   <th class="th-score">Points</th>
+                   <th class="th-percent">%</th>
                  </tr>
                </thead>
                <tbody>
-                 <tr v-for="a in individualAssessments" :key="a.assessmentId" v-memo="[a.assessmentId, a.score, a.missing, a.excluded, a.attempts?.length, editingCell?.assessmentId === a.assessmentId]" @contextmenu.prevent="onContextMenu($event, a.assessmentId)">
+                 <tr v-for="a in individualAssessments" :key="a.assessmentId" @contextmenu.prevent="onContextMenu($event, a.assessmentId)">
                    <td class="td-date">{{ formatLocalDisplay(a.date) }}</td>
                    <td class="td-name">{{ a.name }}</td>
-                   <td><span class="badge" :class="'badge--' + a.assessmentType">{{ a.assessmentType }}</span></td>
-                   <td>
+                   <td class="td-type"><span class="badge" :class="'badge--' + a.assessmentType">{{ a.assessmentType }}</span></td>
+                   <td class="td-impact">
                      <span 
                        class="impact-badge" 
                        :class="'impact-badge--' + getImpactLevel(a.weight).id"
@@ -261,13 +269,21 @@
                             {{ a.score }} / {{ a.totalPoints }}
                           </span>
                           
-                          <!-- Multiple Attempts Indicator -->
-                          <div 
-                            v-if="a.attempts?.length > 1"
-                            class="attempts-dot"
-                            @click.stop="openAttempts($event, a.assessmentId)"
-                            title="Multiple attempts - click to view history"
-                          ></div>
+                          <!-- Attempts / Comment Indicators -->
+                          <div class="cell-indicators" v-if="a.attempts?.length >= 1">
+                            <div 
+                              v-if="a.attempts?.length > 1"
+                              class="attempts-dot"
+                              @click.stop="openAttempts($event, a.assessmentId)"
+                              title="Multiple attempts - click to view history"
+                            ></div>
+                            <span
+                              class="comment-dot"
+                              :class="{ 'comment-dot--active': a.attempts?.some(x => x.comment?.trim()) }"
+                              @click.stop="openAttempts($event, a.assessmentId)"
+                              :title="a.attempts?.some(x => x.comment?.trim()) ? 'Has note — click to edit' : 'Add a note'"
+                            >📝</span>
+                          </div>
                         </template>
                       </div>
                    </td>
@@ -384,7 +400,7 @@
           <h3 class="profile-section__title">Parent / Guardian Contacts</h3>
           <div v-if="!student.parentContacts?.length" class="text-muted">No contacts on file.</div>
           <div v-else class="contacts-list">
-            <div v-for="(c, i) in student.parentContacts" :key="i" v-memo="[c.name, c.email, c.phone]" class="contact-card">
+            <div v-for="(c, i) in student.parentContacts" :key="i" class="contact-card">
               <div class="contact-card__name">{{ c.name }}</div>
               <div class="contact-card__meta">
                 <a :href="'mailto:' + c.email" v-if="c.email">{{ c.email }}</a>
@@ -434,7 +450,7 @@
           </div>
           
           <div v-else class="history-list">
-            <div v-for="h in allTimeHistory" :key="h.classId" v-memo="[h.classId, h.overallGrade]" class="history-item">
+            <div v-for="h in allTimeHistory" :key="h.classId" class="history-item">
               <div class="history-item__left">
                 <div class="history-term-badge">{{ h.year }} • {{ h.semester }}</div>
                 <div class="history-class-name">{{ h.name }}</div>
@@ -460,6 +476,13 @@
       >
         <button class="context-menu__item" @click="startNewAttempt(contextMenu.assessmentId)">
           <Plus :size="14" /> New Attempt...
+        </button>
+        <button 
+          v-if="gradeMap[contextMenu.assessmentId]?.[studentId]?.attempts?.length >= 1"
+          class="context-menu__item" 
+          @click="openAttemptsFromMenu($event, contextMenu.assessmentId)"
+        >
+          <Calendar :size="14" /> View Notes
         </button>
         <div class="context-menu__divider"></div>
         <button class="context-menu__item" @click="toggleMissing(contextMenu.assessmentId)">
@@ -490,27 +513,37 @@
             class="attempt-item"
             :class="{ 'attempt-item--primary': att.isPrimary }"
           >
-            <div class="attempt-item__main">
-              <span class="attempt-item__score">{{ att.pointsEarned }}</span>
-              <span class="attempt-item__date">{{ formatLocalDisplay(att.date, { month: 'short', day: 'numeric' }) }}</span>
+            <div class="attempt-item__row">
+              <div class="attempt-item__main">
+                <span class="attempt-item__score">{{ att.pointsEarned }}</span>
+                <span class="attempt-item__date">{{ formatLocalDisplay(att.date, { month: 'short', day: 'numeric' }) }}</span>
+              </div>
+              <div class="attempt-item__actions">
+                <button 
+                  v-if="!att.isPrimary" 
+                  class="btn-icon-sm" 
+                  title="Set as Primary"
+                  @click="doSetPrimary(attemptsPopover.assessmentId, att.attemptId)"
+                >
+                  <Check :size="12" />
+                </button>
+                <button 
+                  class="btn-icon-sm btn-icon-sm--danger" 
+                  title="Delete Attempt"
+                  @click="doDeleteAttempt(attemptsPopover.assessmentId, att.attemptId)"
+                >
+                  <Trash2 :size="12" />
+                </button>
+              </div>
             </div>
-            <div class="attempt-item__actions">
-              <button 
-                v-if="!att.isPrimary" 
-                class="btn-icon-sm" 
-                title="Set as Primary"
-                @click="doSetPrimary(attemptsPopover.assessmentId, att.attemptId)"
-              >
-                <Check :size="12" />
-              </button>
-              <button 
-                class="btn-icon-sm btn-icon-sm--danger" 
-                title="Delete Attempt"
-                @click="doDeleteAttempt(attemptsPopover.assessmentId, att.attemptId)"
-              >
-                <Trash2 :size="12" />
-              </button>
-            </div>
+            <!-- Per-attempt comment -->
+            <textarea
+              class="attempt-comment-input"
+              :value="att.comment || ''"
+              placeholder="Add a note about this attempt…"
+              rows="2"
+              @change="doUpdateComment(attemptsPopover.assessmentId, att.attemptId, $event.target.value)"
+            ></textarea>
           </div>
         </div>
       </div>
@@ -793,6 +826,7 @@ import {
   PlusCircle,
   TrendingUp,
   Plus,
+  Calendar,
   MoreVertical,
   AlertCircle,
   Trash2,
@@ -836,6 +870,7 @@ import {
   clearGrade,
   removeAttempt,
   setPrimaryAttempt,
+  updateAttemptComment,
   deleteAssessment,
   saveStudentGradebookNote,
   filteredMilestones,
@@ -1359,7 +1394,7 @@ async function copyForReportCard(includeName = false) {
   const midtermDate = midtermMs?.date || 'N/A'
   
   const academicList = [...allDossierAssessments.value]
-    .filter(a => a.score !== null && !a.excluded)
+    .filter(a => !a.excluded && (a.score !== null || a.missing || a.attempts?.some(att => att.comment?.trim())))
     .sort((a, b) => new Date(a.date) - new Date(b.date))
 
   const classCode = activeClass.value?.courseCode ? ` (${activeClass.value.courseCode})` : ''
@@ -1378,13 +1413,41 @@ async function copyForReportCard(includeName = false) {
     const classObj = activeClassRecord.value || activeClass.value
     const unit = classObj?.gradebookUnits?.find(u => u.unitId === a.unitId)
     const unitPrefix = unit ? `[${unit.name}] ` : ''
-    let line = `- ${date} - ${unitPrefix}${a.name}: ${Math.round((a.score / a.totalPoints) * 100)}%`
+    
+    let line = `- ${date} - ${unitPrefix}${a.name}: `
+    if (a.missing) {
+      line += 'Missing'
+    } else if (a.score !== null) {
+      line += `${Math.round((a.score / (a.totalPoints || 1)) * 100)}%`
+    } else {
+      line += 'Ungraded'
+    }
+
     if (a.attempts?.length > 1) {
       const history = a.attempts
-        .map(att => Math.round((att.pointsEarned / a.totalPoints) * 100) + '%')
+        .map(att => {
+          if (att.pointsEarned === null || att.pointsEarned === undefined) return 'Ungraded'
+          return Math.round((att.pointsEarned / (a.totalPoints || 1)) * 100) + '%'
+        })
         .join(', ')
       line += ` (Attempts history: ${history})`
     }
+    const comments = (a.attempts || [])
+      .map((att, idx) => {
+        const trimmed = att.comment?.trim()
+        if (!trimmed) return null
+        if ((a.attempts || []).length === 1) return `[Note] ${trimmed}`
+        if (att.pointsEarned === null || att.pointsEarned === undefined) {
+          return `[Note - Attempt ${idx + 1}] ${trimmed}`
+        }
+        const pct = Math.round((att.pointsEarned / (a.totalPoints || 1)) * 100)
+        return `[Note - Attempt ${idx + 1} (${pct}%)] ${trimmed}`
+      })
+      .filter(Boolean)
+    
+    comments.forEach(c => {
+      line += `\n  ↳ ${c}`
+    })
     academicLines.push(line)
   })
 
@@ -1532,8 +1595,17 @@ function onContextMenu(e, assessmentId) {
   contextMenu.value = { x, y, assessmentId }
 }
 
+function openAttemptsFromMenu(e, assessmentId) {
+  const mockEvent = {
+    clientX: contextMenu.value?.x || e.clientX,
+    clientY: contextMenu.value?.y || e.clientY
+  }
+  contextMenu.value = null
+  openAttempts(mockEvent, assessmentId)
+}
+
 function openAttempts(e, assessmentId) {
-  const popoverWidth  = 200
+  const popoverWidth  = 280
   const popoverHeight = 300
   
   let x = e.clientX
@@ -1602,6 +1674,10 @@ async function doDeleteAttempt(assessmentId, attemptId) {
 
 async function doSetPrimary(assessmentId, attemptId) {
   await setPrimaryAttempt(assessmentId, props.studentId, attemptId)
+}
+
+function doUpdateComment(assessmentId, attemptId, comment) {
+  updateAttemptComment(assessmentId, props.studentId, attemptId, comment)
 }
 
 function getImpactLevel(weight) {
@@ -1971,10 +2047,14 @@ onUnmounted(() => {
   font-size:     0.9rem;
 }
 
-.td-date     { color: var(--text-secondary); font-variant-numeric: tabular-nums; }
-.td-name     { font-weight: 600; }
-.td-score    { font-variant-numeric: tabular-nums; }
-.td-percent  { font-weight: 700; text-align: right; }
+.th-date, .td-date     { width: 80px; color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+.td-name                 { font-weight: 600; }
+.th-type, .td-type       { width: 90px; }
+.th-impact, .td-impact   { width: 90px; }
+.th-score, .td-score     { width: 115px; }
+.td-score                { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.th-percent, .td-percent { width: 70px; text-align: right !important; }
+.td-percent              { font-weight: 700; }
 
 .badge {
   padding:       2px 8px;
@@ -2304,6 +2384,7 @@ onUnmounted(() => {
   align-items: center;
   gap: 8px;
   min-height: 24px;
+  padding-right: 24px;
 }
 
 .cell-edit-input {
@@ -2370,6 +2451,10 @@ onUnmounted(() => {
   z-index: 2001;
 }
 
+.attempts-popover {
+  min-width: 280px;
+}
+
 .context-menu__item {
   width: 100%;
   display: flex;
@@ -2416,10 +2501,17 @@ onUnmounted(() => {
 
 .attempt-item {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
+  gap: 6px;
   padding: 8px 12px;
   border-radius: var(--radius-sm);
+}
+
+.attempt-item__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
 }
 
 .attempt-item--primary {
@@ -2444,6 +2536,59 @@ onUnmounted(() => {
 .attempt-item__actions {
   display: flex;
   gap: 4px;
+}
+
+.attempt-comment-input {
+  width: 100%;
+  box-sizing: border-box;
+  font-size: 0.78rem;
+  font-family: inherit;
+  color: var(--text);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 5px 8px;
+  resize: vertical;
+  min-height: 42px;
+  line-height: 1.4;
+  transition: border-color 0.15s;
+}
+
+.attempt-comment-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  background: var(--surface);
+}
+
+.attempt-comment-input::placeholder {
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.cell-indicators {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  position: absolute;
+  top: 2px;
+  right: 2px;
+}
+
+.comment-dot {
+  font-size: 0.65rem;
+  cursor: pointer;
+  line-height: 1;
+  opacity: 0.2;
+  transition: opacity 0.15s, transform 0.15s;
+}
+
+.comment-dot:hover {
+  opacity: 0.8;
+}
+
+.comment-dot--active {
+  opacity: 1;
+  font-size: 0.7rem;
 }
 
 /* Modals */

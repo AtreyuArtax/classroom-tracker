@@ -209,11 +209,20 @@
                               @keydown.down.prevent="e => onAssessmentViewEnter(s.studentId, 'down', e)"
                               @contextmenu.prevent="onContextMenu($event, s.studentId, selectedAssessmentId)"
                             />
-                            <button 
-                              v-if="gradeMap[selectedAssessmentId]?.[s.studentId]?.attempts?.length > 1" 
-                              class="grades__dot-indicator"
-                              @click="openAttempts($event, s.studentId, selectedAssessmentId)"
-                            >•</button>
+                            <div class="grades__cell-indicators" v-if="gradeMap[selectedAssessmentId]?.[s.studentId]?.attempts?.length >= 1">
+                              <div 
+                                v-if="gradeMap[selectedAssessmentId]?.[s.studentId]?.attempts?.length > 1"
+                                class="grades__attempts-dot"
+                                @click.stop="openAttempts($event, s.studentId, selectedAssessmentId)"
+                                title="Multiple attempts - click to view history"
+                              ></div>
+                              <span
+                                class="grades__comment-dot"
+                                :class="{ 'grades__comment-dot--active': gradeMap[selectedAssessmentId]?.[s.studentId]?.attempts?.some(x => x.comment?.trim()) }"
+                                @click.stop="openAttempts($event, s.studentId, selectedAssessmentId)"
+                                :title="gradeMap[selectedAssessmentId]?.[s.studentId]?.attempts?.some(x => x.comment?.trim()) ? 'Has note — click to edit' : 'Add a note'"
+                              >📝</span>
+                            </div>
                           </template>
                         </div>
                       </td>
@@ -882,6 +891,13 @@
         <button class="grades__context-btn" @click="startEdit(contextMenu.sId, contextMenu.aId); contextMenu = null">
           <Plus :size="14" /> New Attempt
         </button>
+        <button 
+          v-if="gradeMap[contextMenu.aId]?.[contextMenu.sId]?.attempts?.length >= 1" 
+          class="grades__context-btn" 
+          @click="openAttemptsFromMenu($event, contextMenu.sId, contextMenu.aId)"
+        >
+          <Calendar :size="14" /> View Notes
+        </button>
         <button class="grades__context-btn" @click="toggleMissing">
           <AlertCircle :size="14" /> {{ isMissing(contextMenu.sId, contextMenu.aId) ? 'Unmark Missing' : 'Mark Missing' }}
         </button>
@@ -935,31 +951,40 @@
           <div class="grades__popover-subtitle">{{ attemptsPopover.assessmentName }} (/{{ attemptsPopover.totalPoints }}) · Policy: {{ attemptsPopover.retestPolicy }}</div>
         </div>
         <ul class="grades__attempts-list">
-          <li v-for="att in attemptsPopover.attempts" :key="att.attemptId" class="grades__attempt-item">
-            <div class="grades__attempt-main">
-              <div class="grades__attempt-info">
-                <span class="grades__attempt-score">{{ att.pointsEarned }} / {{ attemptsPopover.totalPoints }}</span>
-                <span class="grades__attempt-percent">({{ Math.round((att.pointsEarned / attemptsPopover.totalPoints) * 100) }}%)</span>
-                <span class="grades__attempt-date">{{ formatDateShort(att.date) }}</span>
+          <li v-for="att in attemptsPopover.attempts" :key="att.attemptId" class="grades__attempt-item" :class="{ 'grades__attempt-item--primary': att.isPrimary }">
+            <div class="grades__attempt-main-row">
+              <div class="grades__attempt-main">
+                <div class="grades__attempt-info">
+                  <span class="grades__attempt-score">{{ att.pointsEarned }} / {{ attemptsPopover.totalPoints }}</span>
+                  <span class="grades__attempt-percent">({{ Math.round((att.pointsEarned / attemptsPopover.totalPoints) * 100) }}%)</span>
+                  <span class="grades__attempt-date">{{ formatDateShort(att.date) }}</span>
+                </div>
+                <div class="grades__attempt-counting">
+                  <template v-if="attemptsPopover.retestPolicy === 'manual'">
+                    <input 
+                      type="radio" 
+                      :name="'primary-' + attemptsPopover.sId" 
+                      :checked="att.isPrimary"
+                      @change="onSetPrimary(att.attemptId)"
+                    /> Primary
+                  </template>
+                  <template v-else>
+                    <span v-if="att.pointsEarned === attemptsPopover.resolvedScore" class="grades__counting-badge">counting ✓</span>
+                    <span v-else class="grades__not-counting-badge">not counting</span>
+                  </template>
+                </div>
               </div>
-              <div class="grades__attempt-counting">
-                <template v-if="attemptsPopover.retestPolicy === 'manual'">
-                  <input 
-                    type="radio" 
-                    :name="'primary-' + attemptsPopover.sId" 
-                    :checked="att.isPrimary"
-                    @change="onSetPrimary(att.attemptId)"
-                  /> Primary
-                </template>
-                <template v-else>
-                  <span v-if="att.pointsEarned === attemptsPopover.resolvedScore" class="grades__counting-badge">counting ✓</span>
-                  <span v-else class="grades__not-counting-badge">not counting</span>
-                </template>
-              </div>
+              <button class="grades__icon-btn grades__icon-btn--danger" @click="onDeleteAttempt(att.attemptId)">
+                <Trash2 :size="14" />
+              </button>
             </div>
-            <button class="grades__icon-btn grades__icon-btn--danger" @click="onDeleteAttempt(att.attemptId)">
-              <Trash2 :size="14" />
-            </button>
+            <textarea
+              class="grades__attempt-comment"
+              :value="att.comment || ''"
+              placeholder="Add a note about this attempt…"
+              rows="2"
+              @change="onUpdateComment(att.attemptId, $event.target.value)"
+            ></textarea>
           </li>
         </ul>
       </div>
@@ -1039,6 +1064,8 @@ import {
   addAssessment,
   deleteAssessment,
   removeAttempt,
+  setPrimaryAttempt,
+  updateAttemptComment,
   refreshGrades,
   saveStudentOverride,
   saveStudentGradebookNote,
@@ -1904,6 +1931,31 @@ function onContextMenu(e, studentId, assessmentId) {
   }
 }
 
+function openAttemptsFromMenu(e, studentId, assessmentId) {
+  const x = contextMenu.value?.x || e.clientX
+  const y = contextMenu.value?.y || e.clientY
+  contextMenu.value = null // Close context menu
+  
+  const sId = String(studentId)
+  const aId = Number(assessmentId)
+  const grade = gradeMap.value[aId]?.[sId] || gradeMap.value[String(aId)]?.[sId]
+  const student = activeClassRecord.value?.students?.[sId]
+  const assessment = assessments.value.find(a => a.assessmentId === aId)
+  
+  if (grade && student && assessment) {
+    attemptsPopover.value = {
+      x, y,
+      sId, aId,
+      studentName: `${student.firstName} ${student.lastName}`,
+      assessmentName: assessment.name,
+      retestPolicy: assessment.retestPolicy || 'highest',
+      attempts: grade.attempts || [],
+      totalPoints: assessment.totalPoints,
+      resolvedScore: grade.resolvedScore
+    }
+  }
+}
+
 function isMissing(sId, aId) {
   return gradeMap.value[aId]?.[sId]?.missing
 }
@@ -2083,6 +2135,18 @@ async function onDeleteAttempt(attemptId) {
     attemptsPopover.value = null
   } else {
     attemptsPopover.value.attempts = updatedGrade.attempts
+  }
+}
+
+async function onUpdateComment(attemptId, comment) {
+  if (!attemptsPopover.value) return
+  const { sId, aId } = attemptsPopover.value
+  await updateAttemptComment(aId, sId, attemptId, comment)
+  
+  // Refresh local popover snapshot comment field
+  const att = attemptsPopover.value.attempts.find(a => a.attemptId === attemptId)
+  if (att) {
+    att.comment = comment ?? ''
   }
 }
 
@@ -3246,7 +3310,7 @@ watch(selectedAssessmentId, (val) => {
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-md);
   border: 1px solid var(--border);
-  min-width: 220px;
+  min-width: 280px;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -3274,7 +3338,7 @@ watch(selectedAssessmentId, (val) => {
   list-style: none;
   padding: 0;
   margin: 0;
-  max-height: 200px;
+  max-height: 250px;
   overflow-y: auto;
 }
 
@@ -3282,12 +3346,29 @@ watch(selectedAssessmentId, (val) => {
   padding: 10px 14px;
   border-bottom: 1px solid var(--border);
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.grades__attempt-item--primary {
+  background: var(--primary-light, rgba(79, 70, 229, 0.05));
 }
 
 .grades__attempt-item:last-child {
   border-bottom: none;
+}
+
+.grades__attempt-main-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.grades__attempt-main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 .grades__attempt-info {
@@ -3305,6 +3386,32 @@ watch(selectedAssessmentId, (val) => {
 .grades__attempt-date {
   font-size: 0.7rem;
   color: var(--text-secondary);
+}
+
+.grades__attempt-comment {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 0.8rem;
+  background: var(--bg-secondary);
+  color: var(--text);
+  resize: vertical;
+  line-height: 1.4;
+  transition: border-color 0.15s;
+  margin-top: 4px;
+}
+
+.grades__attempt-comment:focus {
+  outline: none;
+  border-color: var(--primary);
+  background: var(--surface);
+}
+
+.grades__attempt-comment::placeholder {
+  color: var(--text-secondary);
+  font-style: italic;
 }
 
 .grades__icon-btn--danger:hover {
@@ -3918,9 +4025,9 @@ watch(selectedAssessmentId, (val) => {
 }
 
 .grades__ath-student { width: auto; }
-.grades__ath-score   { width: 140px; text-align: center !important; }
-.grades__ath-percent { width: 100px; text-align: center !important; }
-.grades__ath-status  { width: 150px; text-align: center !important; }
+.grades__ath-score   { width: 110px; text-align: center !important; }
+.grades__ath-percent { width: 80px; text-align: center !important; }
+.grades__ath-status  { width: 130px; text-align: center !important; }
 
 .grades__atd-student { font-weight: 600; }
 .grades__atd-percent { text-align: center; font-weight: 500; }
@@ -3964,19 +4071,45 @@ watch(selectedAssessmentId, (val) => {
 .grades__input-inline--date { width: 120px; }
 .grades__input-inline--note { width: 100px; flex: 1; }
 
-.grades__dot-indicator {
-  background: transparent;
-  border: none;
-  color: var(--primary);
-  font-size: 1.4rem;
-  line-height: 1;
-  padding: 0 4px;
-  cursor: pointer;
+.grades__cell-indicators {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
 }
 
-.grades__dot-indicator:hover {
+.grades__attempts-dot {
+  width: 8px;
+  height: 8px;
+  background: #ff3b30;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 0 0 1.5px var(--surface);
+  flex-shrink: 0;
+}
+
+.grades__attempts-dot:hover {
   transform: scale(1.2);
-  font-weight: 700;
+}
+
+.grades__comment-dot {
+  font-size: 0.65rem;
+  cursor: pointer;
+  line-height: 1;
+  opacity: 0.2;
+  transition: opacity 0.15s, transform 0.15s;
+}
+
+.grades__comment-dot:hover {
+  opacity: 0.8;
+}
+
+.grades__comment-dot--active {
+  opacity: 1;
+  font-size: 0.7rem;
 }
 
 .grades__status-tag--entered { color: #1a6b3a; font-weight: 500; }
@@ -4284,7 +4417,7 @@ watch(selectedAssessmentId, (val) => {
 
 .grades__atd-score {
   padding: 8px 16px;
-  width: 140px;
+  width: 110px;
   text-align: center;
 }
 
@@ -4294,6 +4427,7 @@ watch(selectedAssessmentId, (val) => {
   align-items: center;
   justify-content: center;
   gap: 8px;
+  padding-right: 24px;
 }
 
 /* Ghost Input Styling */

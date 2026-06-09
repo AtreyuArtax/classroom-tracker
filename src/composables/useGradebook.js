@@ -486,6 +486,25 @@ export function setPrimaryAttempt(assessmentId, studentId, attemptId) {
 }
 
 /**
+ * Updates the comment on a specific attempt and refreshes state.
+ */
+export function updateAttemptComment(assessmentId, studentId, attemptId, comment) {
+  if (!activeClassRecord.value) return
+
+  const grade = grades.value.find(g => Number(g.assessmentId) === Number(assessmentId) && String(g.studentId) === String(studentId))
+  if (grade) {
+    const attempt = grade.attempts.find(a => a.attemptId === attemptId)
+    if (attempt) attempt.comment = comment ?? ''
+  }
+
+  triggerRef(grades)
+
+  enqueueDBSave(`${assessmentId}_${studentId}_comment_${attemptId}`, () =>
+    gradebookService.updateAttemptComment(assessmentId, studentId, attemptId, comment)
+  )
+}
+
+/**
  * Clears all attempts and removes the grade record for a student on an assessment.
  */
 export function clearGrade(assessmentId, studentId) {

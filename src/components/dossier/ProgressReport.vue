@@ -81,23 +81,34 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="a in recentClassWork" :key="a.assessmentId" v-memo="[a.assessmentId, a.score, a.attempts?.length, a.name, a.date]">
-              <td class="td-date">{{ formatDate(a.date) }}</td>
-              <td class="td-name">{{ a.name }}</td>
-              <td class="td-cat">{{ getCategoryName(a.categoryId) }}</td>
-              <td class="td-score text-right">
-                <div class="score-val">{{ a.score }} / {{ a.totalPoints }}</div>
-                <div v-if="a.attempts?.length > 1" class="score-history">
-                  <span class="history-label">Attempts:</span>
-                  <span v-for="(att, idx) in a.attempts" :key="att.attemptId" class="attempt-crumb">
-                    {{ att.pointsEarned }}<template v-if="idx < (a.attempts?.length || 0) - 1">, </template>
-                  </span>
-                </div>
-              </td>
-              <td class="td-pct text-right" :style="{ color: getGradeColor((a.score / a.totalPoints) * 100) }">
-                {{ Math.round((a.score / a.totalPoints) * 100) }}%
-              </td>
-            </tr>
+            <template v-for="a in recentClassWork" :key="a.assessmentId">
+              <tr v-memo="[a.assessmentId, a.score, a.attempts?.length, a.name, a.date]">
+                <td class="td-date">{{ formatDate(a.date) }}</td>
+                <td class="td-name">{{ a.name }}</td>
+                <td class="td-cat">{{ getCategoryName(a.categoryId) }}</td>
+                <td class="td-score text-right">
+                  <div class="score-val">{{ a.score }} / {{ a.totalPoints }}</div>
+                  <div v-if="a.attempts?.length > 1" class="score-history">
+                    <span class="history-label">Attempts:</span>
+                    <span v-for="(att, idx) in a.attempts" :key="att.attemptId" class="attempt-crumb">
+                      {{ att.pointsEarned }}<template v-if="idx < (a.attempts?.length || 0) - 1">, </template>
+                    </span>
+                  </div>
+                </td>
+                <td class="td-pct text-right" :style="{ color: getGradeColor((a.score / a.totalPoints) * 100) }">
+                  {{ Math.round((a.score / a.totalPoints) * 100) }}%
+                </td>
+              </tr>
+              <!-- Comment row -->
+              <tr
+                v-if="a.attempts?.find(x => x.comment?.trim())"
+                class="comment-row"
+              >
+                <td colspan="5" class="comment-cell">
+                  {{ a.attempts?.find(x => x.comment?.trim())?.comment }}
+                </td>
+              </tr>
+            </template>
           </tbody>
         </table>
       </div>
@@ -118,23 +129,34 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="a in individualTasks" :key="a.assessmentId" v-memo="[a.assessmentId, a.score, a.attempts?.length, a.name, a.date]">
-              <td class="td-date">{{ formatDate(a.date) }}</td>
-              <td class="td-name">{{ a.name }}</td>
-              <td class="td-cat">{{ getCategoryName(a.categoryId) }}</td>
-              <td class="td-score text-right">
-                <div class="score-val">{{ a.score }} / {{ a.totalPoints }}</div>
-                <div v-if="a.attempts?.length > 1" class="score-history">
-                  <span class="history-label">Attempts:</span>
-                  <span v-for="(att, idx) in a.attempts" :key="att.attemptId" class="attempt-crumb">
-                    {{ att.pointsEarned }}<template v-if="idx < (a.attempts?.length || 0) - 1">, </template>
-                  </span>
-                </div>
-              </td>
-              <td class="td-pct text-right" :style="{ color: getGradeColor((a.score / a.totalPoints) * 100) }">
-                {{ Math.round((a.score / a.totalPoints) * 100) }}%
-              </td>
-            </tr>
+            <template v-for="a in individualTasks" :key="a.assessmentId">
+              <tr v-memo="[a.assessmentId, a.score, a.attempts?.length, a.name, a.date]">
+                <td class="td-date">{{ formatDate(a.date) }}</td>
+                <td class="td-name">{{ a.name }}</td>
+                <td class="td-cat">{{ getCategoryName(a.categoryId) }}</td>
+                <td class="td-score text-right">
+                  <div class="score-val">{{ a.score }} / {{ a.totalPoints }}</div>
+                  <div v-if="a.attempts?.length > 1" class="score-history">
+                    <span class="history-label">Attempts:</span>
+                    <span v-for="(att, idx) in a.attempts" :key="att.attemptId" class="attempt-crumb">
+                      {{ att.pointsEarned }}<template v-if="idx < (a.attempts?.length || 0) - 1">, </template>
+                    </span>
+                  </div>
+                </td>
+                <td class="td-pct text-right" :style="{ color: getGradeColor((a.score / a.totalPoints) * 100) }">
+                  {{ Math.round((a.score / a.totalPoints) * 100) }}%
+                </td>
+              </tr>
+              <!-- Comment row -->
+              <tr
+                v-if="a.attempts?.find(x => x.comment?.trim())"
+                class="comment-row"
+              >
+                <td colspan="5" class="comment-cell">
+                  {{ a.attempts?.find(x => x.comment?.trim())?.comment }}
+                </td>
+              </tr>
+            </template>
           </tbody>
         </table>
       </div>
@@ -622,6 +644,24 @@ const categoryPerformance = computed(() => {
   text-transform: uppercase;
   font-size: 0.6rem;
   margin-right: 2px;
+}
+
+.comment-row td {
+  border-bottom: 1px solid var(--print-border);
+}
+
+.comment-cell {
+  font-size: 0.78rem;
+  font-style: italic;
+  color: var(--print-text-muted);
+  padding: 2px 12px 8px 24px;
+}
+
+.comment-cell::before {
+  content: '↳ ';
+  font-style: normal;
+  font-weight: 600;
+  opacity: 0.6;
 }
 
 /* --- Footer Stats --- */
