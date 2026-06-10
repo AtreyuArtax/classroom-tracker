@@ -12,6 +12,14 @@
           <span v-if="cat.isOverridden" class="dossier-cat-card__override-badge">Overridden</span>
           <span class="dossier-cat-card__weight">{{ cat.weight }}%</span>
           <button 
+            v-if="cat.isOverridden && editingCatId !== cat.categoryId"
+            class="dossier-cat-card__remove-btn" 
+            title="Remove Override"
+            @click="removeOverride(cat.categoryId)"
+          >
+            <Trash2 :size="12" />
+          </button>
+          <button 
             v-if="editingCatId !== cat.categoryId"
             class="dossier-cat-card__edit-btn" 
             title="Override Category"
@@ -37,6 +45,7 @@
             />
             <div class="dossier-cat-card__edit-actions">
               <button class="btn-save" @click="saveOverride(cat.categoryId)"><Check :size="14" /></button>
+              <button v-if="cat.isOverridden" class="btn-remove" title="Remove Override" @click="removeOverride(cat.categoryId)"><Trash2 :size="14" /></button>
               <button class="btn-cancel" @click="cancelEdit"><X :size="14" /></button>
             </div>
           </div>
@@ -69,13 +78,16 @@
 
 <script setup>
 import { ref, nextTick } from 'vue'
-import { Pencil, Check, X } from 'lucide-vue-next'
+import { Pencil, Check, X, Trash2 } from 'lucide-vue-next'
 import { saveStudentOverride } from '../../composables/useGradebook.js'
+import { useMessage } from '../../composables/useMessage.js'
 
 const props = defineProps({
   categories: { type: Array, required: true },
   studentId:  { type: String, required: true }
 })
+
+const { confirm } = useMessage()
 
 const editingCatId = ref(null)
 const overrideValue = ref('')
@@ -97,6 +109,13 @@ function cancelEdit() {
 async function saveOverride(catId) {
   await saveStudentOverride(props.studentId, catId, overrideValue.value)
   cancelEdit()
+}
+
+async function removeOverride(catId) {
+  if (await confirm('Are you sure you want to remove this category override?')) {
+    await saveStudentOverride(props.studentId, catId, '')
+    cancelEdit()
+  }
 }
 
 function formatScore(score) {
@@ -172,10 +191,10 @@ function getGradeColor(score) {
   text-transform: uppercase;
 }
 
-.dossier-cat-card__edit-btn {
+.dossier-cat-card__edit-btn,
+.dossier-cat-card__remove-btn {
   background: transparent;
   border: none;
-  color: var(--text-secondary);
   cursor: pointer;
   padding: 4px;
   border-radius: 4px;
@@ -183,13 +202,26 @@ function getGradeColor(score) {
   transition: all 0.2s ease;
 }
 
-.dossier-cat-card:hover .dossier-cat-card__edit-btn {
+.dossier-cat-card__edit-btn {
+  color: var(--text-secondary);
+}
+
+.dossier-cat-card__remove-btn {
+  color: var(--danger);
+}
+
+.dossier-cat-card:hover .dossier-cat-card__edit-btn,
+.dossier-cat-card:hover .dossier-cat-card__remove-btn {
   opacity: 1;
 }
 
 .dossier-cat-card__edit-btn:hover {
   background: var(--bg-secondary);
   color: var(--primary);
+}
+
+.dossier-cat-card__remove-btn:hover {
+  background: rgba(255, 59, 48, 0.1);
 }
 
 .dossier-cat-card__main-metrics {
@@ -266,8 +298,10 @@ function getGradeColor(score) {
 
 .btn-save { color: var(--success); }
 .btn-save:hover { background: rgba(52, 199, 89, 0.1); }
-.btn-cancel { color: var(--danger); }
-.btn-cancel:hover { background: rgba(255, 59, 48, 0.1); }
+.btn-remove { color: var(--danger); }
+.btn-remove:hover { background: rgba(255, 59, 48, 0.1); }
+.btn-cancel { color: var(--text-secondary); }
+.btn-cancel:hover { background: var(--bg-secondary); }
 
 .dossier-cat-card__bucket-info {
   font-size: 0.65rem;
