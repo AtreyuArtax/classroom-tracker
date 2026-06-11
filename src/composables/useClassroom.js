@@ -1826,6 +1826,58 @@ async function updateAttendanceConfig(mode, gracePeriod) {
 }
 
 /**
+ * Marks all students in a class present for today by superseding today's 'a' and 'l' events
+ * and clearing the activeState isAbsent and lateMs fields.
+ *
+ * @param {string} classId
+ * @returns {Promise<void>}
+ */
+async function markAllPresentToday(classId) {
+    const isActive = classId === activeClass.value?.classId
+    const clsObj = isActive ? activeClass.value : classList.value.find(c => c.classId === classId)
+    if (!clsObj) return
+
+    const todayStr = new Date().toISOString().slice(0, 10)
+    let classNeedsSave = false
+
+    for (const [studentId, student] of Object.entries(clsObj.students || {})) {
+        if (student.archived) continue
+
+        const isAbsent = student.activeStates?.isAbsent === true
+        const isLate = student.activeStates?.lateMs !== null && student.activeStates?.lateMs !== undefined
+        
+        if (isAbsent || isLate) {
+            // Find and supersede today's attendance events ('a' and 'l') for this student
+            const eventsToday = await eventService.getEventsByStudent(studentId, { from: todayStr, to: todayStr })
+            for (const evt of eventsToday) {
+                if ((evt.code === 'a' || evt.code === 'l') && !evt.superseded) {
+                    await eventService.updateEvent(evt.eventId, { superseded: true })
+                }
+            }
+
+            if (!student.activeStates) student.activeStates = {}
+            student.activeStates.isAbsent = false
+            student.activeStates.lateMs = null
+            classNeedsSave = true
+
+            if (isActive && students.value[studentId]) {
+                if (!students.value[studentId].activeStates) students.value[studentId].activeStates = {}
+                students.value[studentId].activeStates.isAbsent = false
+                students.value[studentId].activeStates.lateMs = null
+            }
+        }
+    }
+
+    if (classNeedsSave) {
+        const plain = JSON.parse(JSON.stringify(clsObj))
+        await classService.saveClass(plain)
+        if (isActive) {
+            triggerRef(activeClass)
+        }
+    }
+}
+
+/**
  * Archive (soft-delete) a class. Hides it from classList, saves archived flag to IDB.
  * If the archived class was active, switches to the first remaining class (or null).
  */
@@ -2020,6 +2072,7 @@ export function useClassroom() {
         updateTeacherName,
         updatePeriodStartTimes,
         updateAttendanceConfig,
+        markAllPresentToday,
         handleRfidAttendanceScan,
         archiveClass,
         restoreClass,
