@@ -539,13 +539,13 @@
           <h2 class="setup__card-title">Attendance Tracking</h2>
           <p class="setup__hint">Choose how daily student attendance is registered.</p>
           <div class="setup__form" style="display: flex; flex-direction: column; gap: 12px; margin-top: 10px;">
-            <div :key="radioGroupKey" class="setup__attendance-modes" style="display: flex; flex-direction: column; gap: 8px;">
-              <label class="setup__label setup__label--radio" style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 600;">
-                <input type="radio" name="attendanceMode" :checked="localAttendanceMode === 'natural'" value="natural" @change="onAttendanceModeChange('natural')" />
+            <div :key="radioGroupKey" class="setup__attendance-modes" style="display: flex; flex-direction: row; gap: 24px; align-items: center; flex-wrap: wrap; margin-top: 4px;">
+              <label class="setup__label setup__label--radio" style="display: flex; flex-direction: row; align-items: center; gap: 8px; cursor: pointer; font-weight: 600;">
+                <input type="radio" name="attendanceMode" :checked="localAttendanceMode === 'natural'" value="natural" @change="onAttendanceModeChange('natural')" style="margin: 0; cursor: pointer;" />
                 <span>Natural Mode (Present by default)</span>
               </label>
-              <label class="setup__label setup__label--radio" style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 600;">
-                <input type="radio" name="attendanceMode" :checked="localAttendanceMode === 'rfid'" value="rfid" @change="onAttendanceModeChange('rfid')" />
+              <label class="setup__label setup__label--radio" style="display: flex; flex-direction: row; align-items: center; gap: 8px; cursor: pointer; font-weight: 600;">
+                <input type="radio" name="attendanceMode" :checked="localAttendanceMode === 'rfid'" value="rfid" @change="onAttendanceModeChange('rfid')" style="margin: 0; cursor: pointer;" />
                 <span>RFID/QR Sign-In Mode (All start absent)</span>
               </label>
             </div>
@@ -555,6 +555,13 @@
                 Lateness Grace Period: <strong>{{ localGracePeriod }} minutes</strong>
                 <input type="range" v-model.number="localGracePeriod" min="0" max="15" step="1" @change="saveAttendanceConfig" style="width: 100%; cursor: pointer;" />
               </label>
+            </div>
+
+            <!-- Manual Override Reset -->
+            <div v-if="activeClass" class="setup__attendance-actions" style="margin-top: 4px; display: flex; align-items: center; gap: 12px; border-top: 1px solid var(--border); padding-top: 12px;">
+              <button class="setup__btn-ghost" style="height: 36px; padding: 0 16px; font-size: 0.85rem; min-height: unset;" @click="onMarkAllPresent">
+                Mark All Present in {{ activeClass.name }}
+              </button>
             </div>
           </div>
         </div>
@@ -1102,6 +1109,7 @@ const {
   updateTeacherName,
   updatePeriodStartTimes,
   updateAttendanceConfig,
+  markAllPresentToday,
   bulkImportClasses,
   triggerActiveClass,
   academicTerms,
@@ -1164,6 +1172,14 @@ function cancelAttendanceModeChange() {
 
 async function saveAttendanceConfig() {
   await updateAttendanceConfig(localAttendanceMode.value, localGracePeriod.value)
+}
+
+async function onMarkAllPresent() {
+  if (!activeClass.value) return
+  const confirmed = await confirm(`Are you sure you want to mark all students present in ${activeClass.value.name} for today? This will clear all absences and late markers logged today.`)
+  if (confirmed) {
+    await markAllPresentToday(activeClass.value.classId)
+  }
 }
 
 // Local copy of class name to prevent resetting mid-type
