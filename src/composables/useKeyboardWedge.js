@@ -24,6 +24,24 @@ export function useKeyboardWedge(onComplete, options = {}) {
   let lastKeyTime = 0
   let timer = null
 
+  // Snapshot variables for active text fields to prevent character leakage
+  let activeEl = null
+  let savedValue = ''
+  let savedStart = 0
+  let savedEnd = 0
+
+  const trySnapshot = () => {
+    const el = document.activeElement
+    if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA')) {
+      activeEl = el
+      savedValue = el.value
+      savedStart = el.selectionStart
+      savedEnd = el.selectionEnd
+    } else {
+      activeEl = null
+    }
+  }
+
   const handleKeyDown = (e) => {
     if (!isListening.value) return
 
@@ -41,15 +59,27 @@ export function useKeyboardWedge(onComplete, options = {}) {
       e.preventDefault()
     }
 
+    // Snapshot state when starting a new buffer
+    if (buffer.length === 0) {
+      trySnapshot()
+    }
+
     // If this is the first char or it came in quickly enough, keep it
     if (buffer.length === 0 || gap < maxGapMs) {
       if (e.key === terminator) {
         // If it's the terminator, we ALWAYS prevent default to avoid "Enter" submitting forms
         e.preventDefault()
         if (buffer.length >= minLength) {
+          // Self-Healing Rollback: clean up any leaked first character
+          if (activeEl && document.activeElement === activeEl) {
+            activeEl.value = savedValue
+            activeEl.setSelectionRange(savedStart, savedEnd)
+            activeEl.dispatchEvent(new Event('input', { bubbles: true }))
+          }
           onComplete(buffer)
         }
         buffer = '' // Clear after terminator regardless of length
+        activeEl = null
       } else if (e.key.length === 1) {
         // Only append single characters (printable)
         buffer += e.key
@@ -58,6 +88,9 @@ export function useKeyboardWedge(onComplete, options = {}) {
       // Gap too large, treat as manual typing. 
       // Start a new buffer with this key if it's printable.
       buffer = e.key.length === 1 ? e.key : ''
+      if (buffer.length > 0) {
+        trySnapshot()
+      }
     }
 
     lastKeyTime = now
@@ -66,6 +99,7 @@ export function useKeyboardWedge(onComplete, options = {}) {
     if (timer) clearTimeout(timer)
     timer = setTimeout(() => {
       buffer = ''
+      activeEl = null
     }, maxGapMs * 2)
   }
 

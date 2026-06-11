@@ -1283,10 +1283,127 @@ async function logAssessmentEvent({ studentId, note, acType, acContext, acOutcom
  * @param {string} code  The toggle behavior code key
  * @returns {Promise<void>}
  */
-async function logToggleEvent(studentId, code) {
+/**
+ * Reconciles any stale trips for all active classes.
+ * Runs on every scan and checks if class periods have ended.
+ */
+async function reconcileStaleTrips() {
+    const now = new Date()
+    const todayStr = now.toISOString().slice(0, 10)
+    const currentMinutes = now.getHours() * 60 + now.getMinutes()
+    const startTimes = periodStartTimes.value || {}
+
+    // Convert period start times to minutes of the day
+    const periodMinutes = {}
+    for (const [pNum, timeStr] of Object.entries(startTimes)) {
+        const [h, m] = timeStr.split(':').map(Number)
+        periodMinutes[pNum] = h * 60 + m
+    }
+
+    // Sort periods keys numerically
+    const sortedPeriods = Object.keys(startTimes).map(Number).sort((a, b) => a - b)
+
+    for (const cls of classList.value) {
+        const classPeriod = Number(cls.periodNumber)
+        const classStartMins = periodMinutes[classPeriod]
+        if (classStartMins === undefined) continue
+
+        // Determine the class end time in minutes
+        let classEndMins = classStartMins + 75 // Default 75 minutes fallback
+        const nextPeriodNum = sortedPeriods.find(p => p > classPeriod)
+        if (nextPeriodNum && periodMinutes[nextPeriodNum] !== undefined) {
+            classEndMins = periodMinutes[nextPeriodNum]
+        }
+
+        // Check if the class period has ended today
+        const hasEnded = currentMinutes >= classEndMins
+        const elapsedSinceCheckOutLimit = 90 * 60 * 1000 // 90 mins
+
+        let classNeedsSave = false
+        for (const [studentId, student] of Object.entries(cls.students || {})) {
+            const states = student.activeStates
+            if (states?.isOut && states.outTime && states.outTime.startsWith(todayStr)) {
+                const outDate = new Date(states.outTime)
+                const elapsedMs = now.getTime() - outDate.getTime()
+                const isStale = hasEnded || elapsedMs > elapsedSinceCheckOutLimit
+
+                if (isStale) {
+                    // Calculate periodEndTime
+                    let periodEndTime = null
+                    if (nextPeriodNum && startTimes[nextPeriodNum]) {
+                        const [h, m] = startTimes[nextPeriodNum].split(':').map(Number)
+                        const d = new Date(states.outTime)
+                        d.setHours(h, m, 0, 0)
+                        periodEndTime = d
+                    } else {
+                        // Last period of the day: end time is class start time + 75 minutes
+                        const [h, m] = (cls.periodStartTime || '08:00').split(':').map(Number)
+                        const d = new Date(states.outTime)
+                        d.setHours(h, m, 0, 0)
+                        d.setTime(d.getTime() + 75 * 60 * 1000)
+                        periodEndTime = d
+                    }
+
+                    // Calculate duration
+                    let durationMs = periodEndTime.getTime() - outDate.getTime()
+                    if (durationMs < 0) durationMs = 5 * 60 * 1000 // Min fallback
+                    const MAX_DURATION_MS = 75 * 60 * 1000
+                    if (durationMs > MAX_DURATION_MS) durationMs = MAX_DURATION_MS
+
+                    // Retroactively log the trip to IDB
+                    await eventService.logEvent({
+                        studentId,
+                        classId: cls.classId,
+                        code: states.code || 'w',
+                        duration: durationMs,
+                        testDay: false,
+                        _overrideTimestamp: states.outTime
+                    })
+
+                    // Clear state
+                    states.isOut = false
+                    states.outTime = null
+                    states.code = null
+                    classNeedsSave = true
+
+                    // Sync viewed class if it was the active class
+                    if (activeClass.value?.classId === cls.classId && students.value[studentId]) {
+                        students.value[studentId].activeStates = { isOut: false, outTime: null }
+                    }
+                }
+            }
+        }
+
+        if (classNeedsSave) {
+            await classService.saveClass(cls)
+        }
+    }
+}
+
+/**
+ * Toggle a washroom (or other toggle-type) event.
+ * Follows CLAUDE.md §7 toggle rules and §9 undo closure rules.
+ *
+ * @param {string} studentId
+ * @param {string} code  The toggle behavior code key
+ * @param {string} [targetClassId] Optional target class ID
+ * @returns {Promise<void>}
+ */
+async function logToggleEvent(studentId, code, targetClassId = null) {
     try {
-        const classId = activeClass.value?.classId
-        const currentState = students.value[studentId].activeStates
+        await reconcileStaleTrips()
+
+        const classId = targetClassId || activeClass.value?.classId
+        if (!classId) return
+
+        const isActive = classId === activeClass.value?.classId
+        const clsObj = isActive ? activeClass.value : classList.value.find(c => c.classId === classId)
+        if (!clsObj) return
+
+        const student = clsObj.students[studentId]
+        if (!student) return
+
+        const currentState = student.activeStates || { isOut: false, outTime: null }
 
         if (!currentState.isOut) {
             // ── Toggle OUT ───────────────────────────────────────────────────────────
@@ -1294,14 +1411,22 @@ async function logToggleEvent(studentId, code) {
             const newState = { isOut: true, outTime, code }
 
             await classService.setStudentActiveState(classId, studentId, newState)
-            students.value[studentId].activeStates = newState
-            students.value[studentId].lastEvent = { code, ts: Date.now() }
+            student.activeStates = newState
+            student.lastEvent = { code, ts: Date.now() }
+
+            if (isActive) {
+                students.value[studentId].activeStates = newState
+                students.value[studentId].lastEvent = { code, ts: Date.now() }
+            }
 
             // Undo: clear the active state (no event was written for OUT, only state)
             pushUndo(async () => {
                 try {
                     await classService.clearStudentActiveState(classId, studentId)
-                    students.value[studentId].activeStates = { isOut: false, outTime: null }
+                    student.activeStates = { isOut: false, outTime: null }
+                    if (isActive) {
+                        students.value[studentId].activeStates = { isOut: false, outTime: null }
+                    }
                 } catch (err) {
                     console.error('Undo toggle OUT failed:', err)
                     const { alert } = useMessage()
@@ -1323,15 +1448,24 @@ async function logToggleEvent(studentId, code) {
             })
 
             await classService.clearStudentActiveState(classId, studentId)
-            students.value[studentId].activeStates = { isOut: false, outTime: null }
-            students.value[studentId].lastEvent = { code, ts: Date.now() }
+            
+            const newState = { isOut: false, outTime: null }
+            student.activeStates = newState
+            student.lastEvent = { code, ts: Date.now() }
+
+            if (isActive) {
+                students.value[studentId].activeStates = newState
+                students.value[studentId].lastEvent = { code, ts: Date.now() }
+            }
 
             // Optimistic update for stats dot
             if (code === 'w') {
                 const current = studentWeeklyStats.value[studentId] || { washroomTrips: 0, deviceIncidents: 0 }
-                studentWeeklyStats.value[studentId] = {
-                    ...current,
-                    washroomTrips: current.washroomTrips + 1,
+                if (isActive) {
+                    studentWeeklyStats.value[studentId] = {
+                        ...current,
+                        washroomTrips: current.washroomTrips + 1,
+                    }
                 }
             }
 
@@ -1341,10 +1475,16 @@ async function logToggleEvent(studentId, code) {
                     const restoredState = { isOut: true, outTime: originalOutTime }
                     await classService.setStudentActiveState(classId, studentId, restoredState)
                     await eventService.deleteEvent(eventId)
-                    students.value[studentId].activeStates = restoredState
-                    students.value[studentId].lastEvent = null
+                    
+                    student.activeStates = restoredState
+                    student.lastEvent = null
 
-                    if (code === 'w') {
+                    if (isActive) {
+                        students.value[studentId].activeStates = restoredState
+                        students.value[studentId].lastEvent = null
+                    }
+
+                    if (code === 'w' && isActive) {
                         const current = studentWeeklyStats.value[studentId] || { washroomTrips: 0, deviceIncidents: 0 }
                         studentWeeklyStats.value[studentId] = {
                             ...current,
@@ -1534,6 +1674,9 @@ async function deleteClass(classId) {
 // ─── private helpers ──────────────────────────────────────────────────────────
 
 async function _activateClass(cls) {
+    // Reconcile same-day stale trips across all classes
+    await reconcileStaleTrips()
+
     // Reconcile stale activeStates from previous days before activating
     const todayStr = new Date().toISOString().slice(0, 10)
     const eventsToday = await eventService.getEventsByClass(cls.classId, { from: todayStr, to: todayStr })
@@ -1654,6 +1797,7 @@ export function useClassroom() {
         syncLateActiveState,
         logStandardEvent,
         logToggleEvent,
+        reconcileStaleTrips,
         logAssessmentEvent,
         getAttendanceOnDate,
         getStudentEventHistory,
