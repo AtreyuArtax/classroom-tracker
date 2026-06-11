@@ -55,6 +55,8 @@ const behaviorCodes = ref([])
 
 const gridSize = ref({ rows: 6, cols: 6 })
 const teacherName = ref('')
+const attendanceMode = ref('natural')
+const latenessGracePeriod = ref(5)
 const periodStartTimes = ref({})
 const academicTerms = ref([])
 const nonSchoolDays = ref([])
@@ -291,6 +293,25 @@ const studentsOut = computed(() =>
     sortedRoster.value.filter(s => s.activeStates?.isOut === true)
 )
 
+/** Students who are currently out of the room across all classes */
+const globalStudentsOut = computed(() => {
+    // Bug 3 fix: explicitly reference students.value so Vue tracks deep mutations on
+    // the active class's student states. classList uses a shallow ref so deep property
+    // changes don't trigger recomputes on their own — this forces re-evaluation.
+    void students.value
+    const list = []
+    classList.value.forEach(cls => {
+        if (cls.students) {
+            Object.entries(cls.students).forEach(([studentId, s]) => {
+                if (!s.archived && s.activeStates?.isOut === true) {
+                    list.push({ studentId, classId: cls.classId, className: cls.name, ...s })
+                }
+            })
+        }
+    })
+    return list.sort((a, b) => a.lastName.localeCompare(b.lastName))
+})
+
 // ─── suggestion dismissal tracking ────────────────────────────────────────────
 
 // Map of date string -> array of classIds dismissed
@@ -450,6 +471,8 @@ async function init() {
     // gridSize.value will be updated per-class in _activateClass
     // We store the global default from settings for new classes
     teacherName.value = settings.teacherName || ''
+    attendanceMode.value = settings.attendanceMode || 'natural'
+    latenessGracePeriod.value = settings.latenessGracePeriod !== undefined ? settings.latenessGracePeriod : 5
 
     // ── Smart Heal: Period Start Times Migration ──
     let periodTimesChanged = false
@@ -1384,6 +1407,165 @@ async function reconcileStaleTrips() {
 }
 
 /**
+ * Initializes RFID-based attendance for a class on class activation if needed.
+ * Marks all non-archived students as absent and creates 'a' database events.
+ *
+ * @param {string} classId
+ * @returns {Promise<void>}
+ */
+async function initializeRfidAttendance(classId) {
+    if (attendanceMode.value !== 'rfid') return
+
+    const clsObj = classList.value.find(c => c.classId === classId)
+    if (!clsObj) return
+
+    const todayStr = new Date().toISOString().slice(0, 10)
+
+    // Check if any attendance events (a or l) exist for this class today.
+    // If they do, it means we have already initialized or the day is in progress, so do nothing.
+    const existingEvents = await eventService.getEventsByClass(classId, { from: todayStr, to: todayStr })
+    const hasAttendanceLogs = existingEvents.some(e => e.code === 'a' || e.code === 'l')
+    if (hasAttendanceLogs) return
+
+    let classNeedsSave = false
+    for (const [studentId, student] of Object.entries(clsObj.students || {})) {
+        if (student.archived) continue
+
+        // Initialize active state to absent
+        if (!student.activeStates) student.activeStates = {}
+        student.activeStates.isAbsent = true
+        student.activeStates.lateMs = null
+        classNeedsSave = true
+
+        // Log the 'a' event to IndexedDB
+        await eventService.logEvent({
+            studentId,
+            classId,
+            code: 'a',
+            duration: null,
+            testDay: false
+        })
+    }
+
+    if (classNeedsSave) {
+        await classService.saveClass(clsObj)
+        // If this class is the active class, sync local view model
+        if (activeClass.value?.classId === classId) {
+            for (const [studentId, student] of Object.entries(students.value)) {
+                if (student.archived) continue
+                if (!student.activeStates) student.activeStates = {}
+                student.activeStates.isAbsent = true
+                student.activeStates.lateMs = null
+            }
+        }
+    }
+}
+
+/**
+ * Handles the first RFID/QR tap for an absent student under RFID-Based Attendance Mode.
+ * Marks the student present or late based on the period start time and grace period.
+ *
+ * @param {string} studentId
+ * @param {string} classId
+ * @returns {Promise<{ type: 'present'|'late', statusText: string }>}
+ */
+async function handleRfidAttendanceScan(studentId, classId) {
+    const isActive = classId === activeClass.value?.classId
+    const clsObj = isActive ? activeClass.value : classList.value.find(c => c.classId === classId)
+    // Bug 2 fix: return a safe fallback instead of undefined to prevent runtime crash in QRScanner
+    if (!clsObj) return { type: 'error', statusText: 'Class not found' }
+
+    const student = clsObj.students[studentId]
+    if (!student) return { type: 'error', statusText: 'Student not found' }
+
+    const todayStr = new Date().toISOString().slice(0, 10)
+
+    // Find and supersede today's 'a' event for this student
+    const eventsToday = await eventService.getEventsByStudent(studentId, { from: todayStr, to: todayStr })
+    const absentEvent = eventsToday.find(e => e.code === 'a' && !e.superseded)
+    if (absentEvent) {
+        await eventService.updateEvent(absentEvent.eventId, { superseded: true })
+    }
+
+    // Determine if student is late or on-time
+    const periodStart = clsObj.periodStartTime
+    let isLate = false
+    let msLate = 0
+
+    if (periodStart) {
+        const [h, m] = periodStart.split(':').map(Number)
+        const start = new Date()
+        start.setHours(h, m, 0, 0)
+        
+        const scanTime = Date.now()
+        msLate = Math.round(scanTime - start.getTime())
+
+        // Calculate late threshold in milliseconds
+        // Bug 4 fix: use >= so grace=0 only flags students scanning AFTER the bell, not at the exact moment
+        const gracePeriodMinutes = latenessGracePeriod.value !== undefined ? latenessGracePeriod.value : 5
+        const graceMs = gracePeriodMinutes * 60 * 1000
+        if (msLate > 0 && msLate > graceMs) {
+            isLate = true
+            // Cap late time at 240 minutes (4 hours)
+            const MAX_LATE_MS = 240 * 60 * 1000
+            if (msLate > MAX_LATE_MS) msLate = MAX_LATE_MS
+        }
+    }
+
+    if (isLate) {
+        // Persist lateMs state
+        // Bug 6 fix: setStudentLate already spreads activeStates and sets isAbsent=false,
+        // but we also need to clear isOut if the student was somehow manually sent out while absent
+        await classService.setStudentLate(classId, studentId, msLate)
+        
+        if (!student.activeStates) student.activeStates = {}
+        student.activeStates.isAbsent = false
+        student.activeStates.isOut = false   // Bug 6: clear impossible dual state
+        student.activeStates.outTime = null
+        student.activeStates.lateMs = msLate
+
+        if (isActive && students.value[studentId]) {
+            students.value[studentId].activeStates.isAbsent = false
+            students.value[studentId].activeStates.isOut = false
+            students.value[studentId].activeStates.outTime = null
+            students.value[studentId].activeStates.lateMs = msLate
+        }
+
+        // Log late event
+        await eventService.logEvent({
+            studentId,
+            classId,
+            code: 'l',
+            duration: msLate,
+            testDay: isTestDay.value,
+            supersededAbsent: true
+        })
+
+        const minsLate = Math.round(msLate / 60000)
+        return { type: 'late', statusText: `LATE ${minsLate}m` }
+    } else {
+        // Mark Present
+        // Bug 6 fix: also clear isOut in case teacher manually sent student out while they were absent
+        await classService.clearStudentAbsent(classId, studentId)
+
+        if (!student.activeStates) student.activeStates = {}
+        student.activeStates.isAbsent = false
+        student.activeStates.isOut = false   // Bug 6: clear impossible dual state
+        student.activeStates.outTime = null
+        student.activeStates.lateMs = null
+
+        if (isActive && students.value[studentId]) {
+            students.value[studentId].activeStates.isAbsent = false
+            students.value[studentId].activeStates.isOut = false
+            students.value[studentId].activeStates.outTime = null
+            students.value[studentId].activeStates.lateMs = null
+        }
+
+        return { type: 'present', statusText: 'PRESENT' }
+    }
+}
+
+/**
  * Toggle a washroom (or other toggle-type) event.
  * Follows CLAUDE.md §7 toggle rules and §9 undo closure rules.
  *
@@ -1635,6 +1817,15 @@ async function updatePeriodStartTimes(times) {
 }
 
 /**
+ * Update the global attendance configuration.
+ */
+async function updateAttendanceConfig(mode, gracePeriod) {
+    await settingsService.saveAttendanceConfig({ mode, gracePeriod })
+    attendanceMode.value = mode
+    latenessGracePeriod.value = gracePeriod
+}
+
+/**
  * Archive (soft-delete) a class. Hides it from classList, saves archived flag to IDB.
  * If the archived class was active, switches to the first remaining class (or null).
  */
@@ -1683,6 +1874,11 @@ async function deleteClass(classId) {
 async function _activateClass(cls) {
     // Reconcile same-day stale trips across all classes
     await reconcileStaleTrips()
+
+    // Initialize RFID attendance if active class matches
+    if (attendanceMode.value === 'rfid') {
+        await initializeRfidAttendance(cls.classId)
+    }
 
     // Reconcile stale activeStates from previous days before activating
     const todayStr = new Date().toISOString().slice(0, 10)
@@ -1773,6 +1969,8 @@ export function useClassroom() {
         academicTerms,
         nonSchoolDays,
         teacherName,
+        attendanceMode,
+        latenessGracePeriod,
         periodStartTimes,
         isScannerOpen,
         maxStudentsOut,
@@ -1783,6 +1981,7 @@ export function useClassroom() {
         archivedRoster,
         unseatedStudents,
         studentsOut,
+        globalStudentsOut,
         // actions
         init: async () => {
             await init()
@@ -1820,6 +2019,8 @@ export function useClassroom() {
         updateNonSchoolDays,
         updateTeacherName,
         updatePeriodStartTimes,
+        updateAttendanceConfig,
+        handleRfidAttendanceScan,
         archiveClass,
         restoreClass,
         deleteClass,

@@ -386,13 +386,13 @@ function onDrop(evt) {
 
 /* ── Late state ──────────────────────────────────────────────────────────── */
 .desk-tile--late {
-  background: #FFF9E6 !important; /* light amber */
-  border: 1px solid #FFCC00;
-  box-shadow: 0 0 8px rgba(255, 204, 0, 0.2), var(--shadow-sm);
+  background: var(--state-late-bg) !important;
+  border: 1px solid var(--state-late);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--state-late) 30%, transparent), var(--shadow-sm);
 }
 
 .desk-tile--late .desk-tile__status-label {
-  color: #B28F00;
+  color: var(--state-late-text);
 }
 
 /* ── Out-of-room state (§10) ─────────────────────────────────────────────── */

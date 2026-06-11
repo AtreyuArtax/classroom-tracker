@@ -66,8 +66,8 @@
         @click="isMinimized && !isPiP && !hasDragged ? (isMinimized = false) : undefined"
         :title="minimizedTitle"
       >
-        <div class="qr-scanner__count" :class="{ 'qr-scanner__count--full': maxStudentsOut > 0 && studentsOut.length >= maxStudentsOut }">
-          <span class="qr-scanner__count-num">{{ studentsOut.length }}</span>
+        <div class="qr-scanner__count" :class="{ 'qr-scanner__count--full': maxStudentsOut > 0 && globalStudentsOut.length >= maxStudentsOut }">
+          <span class="qr-scanner__count-num">{{ globalStudentsOut.length }}</span>
           <span class="qr-scanner__count-sep" v-if="maxStudentsOut > 0 && (!isMinimized || scannerMode === 'qr')"> / {{ maxStudentsOut }}</span>
           <span class="qr-scanner__count-label" v-if="!isMinimized || scannerMode === 'qr'"> OUT</span>
           
@@ -94,21 +94,21 @@
       <div class="qr-scanner__body" v-show="!isMinimized || isPiP">
         
         <!-- Currently Out Students List -->
-        <div v-if="studentsOut.length > 0" class="qr-scanner__out-list">
+        <div v-if="globalStudentsOut.length > 0" class="qr-scanner__out-list">
           <div class="qr-scanner__out-title">
             <span>Currently Out</span>
           </div>
           <div class="qr-scanner__out-items">
-            <div v-for="student in studentsOut" :key="student.studentId" class="qr-scanner__out-item">
+            <div v-for="student in globalStudentsOut" :key="student.studentId" class="qr-scanner__out-item">
               <div class="qr-scanner__out-info">
-                <span class="qr-scanner__out-name">{{ student.firstName }} {{ student.lastName }}</span>
+                <span class="qr-scanner__out-name">{{ student.firstName }} {{ student.lastName }} <span class="qr-scanner__out-classname" style="font-size: 10px; opacity: 0.6; font-weight: normal;">({{ student.className }})</span></span>
                 <span class="qr-scanner__out-time" v-if="student.activeStates?.outTime">
                   out since {{ formatTime(student.activeStates.outTime) }}
                 </span>
               </div>
               <button 
                 class="qr-scanner__out-signin-btn" 
-                @click.stop="manualSignIn(student.studentId)"
+                @click.stop="manualSignIn(student.studentId, student.classId)"
                 title="Sign back in"
               >
                 <Check :size="12" />
@@ -190,7 +190,7 @@ import { useMessage } from '../composables/useMessage.js'
 
 const emit = defineEmits(['close'])
 
-const { students, logToggleEvent, studentsOut, maxStudentsOut, classList, activeClass, periodStartTimes, reconcileStaleTrips } = useClassroom()
+const { students, logToggleEvent, studentsOut, globalStudentsOut, maxStudentsOut, classList, activeClass, periodStartTimes, reconcileStaleTrips, attendanceMode, handleRfidAttendanceScan } = useClassroom()
 const { alert } = useMessage()
 
 // ── UI State ──────────────────────────────────────────────────────────────────
@@ -217,6 +217,9 @@ watch(scannerMode, (newMode) => {
 })
 
 // ── RFID / QR Time-Based Resolution & Routing ────────────────────────────────
+// Issue 5 fix: single source of truth for the transition window — used in both getScheduledClass and resolveScan
+const TRANSITION_WINDOW_MINS = 5
+
 const getScheduledClass = () => {
   const startTimes = periodStartTimes.value || {}
   
@@ -236,6 +239,16 @@ const getScheduledClass = () => {
   const now = new Date()
   const currentMinutes = now.getHours() * 60 + now.getMinutes()
 
+  // 1. Check if scan falls within transition window before any upcoming class
+  for (const cls of sortedClasses) {
+    const [h, m] = cls.periodStartTime.split(':').map(Number)
+    const classMinutes = h * 60 + m
+    if (currentMinutes >= classMinutes - TRANSITION_WINDOW_MINS && currentMinutes < classMinutes) {
+      return cls
+    }
+  }
+
+  // 2. Otherwise, find the class that has most recently started
   let bestClass = null
   for (let i = sortedClasses.length - 1; i >= 0; i--) {
     const cls = sortedClasses[i]
@@ -294,6 +307,8 @@ const resolveScan = (scannedText, isRFID) => {
     return { error: 'student_not_in_class', className: targetClass.name }
   }
 
+  const student = targetClass.students[foundStudentId]
+
   // Check if period has ended/not started (only if schedules are configured)
   const startTimes = periodStartTimes.value || {}
   const sortedPeriods = Object.keys(startTimes).map(Number).sort((a, b) => a - b)
@@ -316,11 +331,21 @@ const resolveScan = (scannedText, isRFID) => {
     }
 
     if (currentMinutes < classStartMins) {
+      if (attendanceMode.value === 'rfid' && student?.activeStates?.isAbsent === true) {
+        // Issue 5 fix: use the shared TRANSITION_WINDOW_MINS constant
+        if (currentMinutes >= classStartMins - TRANSITION_WINDOW_MINS) {
+          return { studentId: foundStudentId, classId: targetClass.classId, type: 'attendance_checkin', class: targetClass }
+        }
+      }
       return { studentId: foundStudentId, classId: targetClass.classId, type: 'signout_blocked_not_started', class: targetClass }
     }
     if (currentMinutes >= classEndMins) {
       return { studentId: foundStudentId, classId: targetClass.classId, type: 'signout_blocked_over', class: targetClass }
     }
+  }
+
+  if (attendanceMode.value === 'rfid' && student?.activeStates?.isAbsent === true) {
+    return { studentId: foundStudentId, classId: targetClass.classId, type: 'attendance_checkin', class: targetClass }
   }
 
   return { studentId: foundStudentId, classId: targetClass.classId, type: 'signout', class: targetClass }
@@ -342,8 +367,7 @@ const formatTime = (timeStr) => {
   }
 }
 
-const manualSignIn = async (studentId) => {
-  const classId = activeClass.value?.classId
+const manualSignIn = async (studentId, classId) => {
   if (!classId) return
   await logToggleEvent(studentId, 'w', classId)
 }
@@ -351,8 +375,8 @@ const manualSignIn = async (studentId) => {
 const minimizedTitle = computed(() => {
   if (!isMinimized.value) return ''
   const base = 'Drag to move • Click to expand'
-  if (studentsOut.value.length > 0) {
-    const names = studentsOut.value.map(s => `${s.firstName} ${s.lastName}`).join(', ')
+  if (globalStudentsOut.value.length > 0) {
+    const names = globalStudentsOut.value.map(s => `${s.firstName} ${s.lastName} (${s.className || 'Unknown Class'})`).join(', ')
     return `${base}\nCurrently Out: ${names}`
   }
   return base
@@ -473,7 +497,7 @@ function playBeep(isErr = false) {
 
 // ── Scan Handling ─────────────────────────────────────────────────────────────
 const studentCooldowns = new Map()
-const MIN_TRIP_MS = 30000 // 30 seconds minimum out time
+const MIN_TRIP_MS = 15000 // 15 seconds minimum out time
 const RECENT_TAP_LOCKOUT_MS = 2000 // 2 seconds to prevent rapid double-bounce
 
 const handleScan = async (scannedText, isRFID = false) => {
@@ -527,6 +551,35 @@ const handleScan = async (scannedText, isRFID = false) => {
         isError.value = false
       }
     }, 2000)
+    return
+  }
+
+  // ── RFID Attendance Integration: First scan checks student in (Present/Late) ──
+  // Bug 1 fix: also explicitly handle 'attendance_checkin' type returned by resolveScan
+  const isCurrentlyAbsent = student.activeStates?.isAbsent === true
+  if (attendanceMode.value === 'rfid' && (isCurrentlyAbsent || type === 'attendance_checkin')) {
+    isError.value = false
+    playBeep(false)
+    const result = await handleRfidAttendanceScan(studentId, classId)
+    // Bug 2 fix: guard against error result returned from handleRfidAttendanceScan
+    if (!result || result.type === 'error') {
+      isError.value = true
+      lastScannedStatus.value = result?.statusText || 'Attendance Error'
+      playBeep(true)
+      cooldownActive.value = true
+      setTimeout(() => { cooldownActive.value = false; isError.value = false }, 2000)
+      return
+    }
+    lastScannedStatus.value = `${result.statusText} (${targetClass.name})`
+    
+    studentCooldowns.set(studentId, now)
+    cooldownActive.value = true
+    setTimeout(() => {
+      if (lastScannedName.value === `${student.firstName} ${student.lastName}`) {
+        cooldownActive.value = false
+        isError.value = false
+      }
+    }, 3000)
     return
   }
 
