@@ -106,8 +106,9 @@ async function _readSettings() {
         backupFileHandle: null,
         gradebookMilestones: [],
         gradebookTemplates: [],
-        academicTerms: [],
         teacherName: '',
+        attendanceMode: 'natural',
+        latenessGracePeriod: 5,
         periodStartTimes: {
             '1': '08:00',
             '2': '09:20',
@@ -264,6 +265,34 @@ export async function saveTeacherName(name) {
     const db = await getDB()
     const settings = await db.get('settings', 'singleton')
     settings.teacherName = name
+    await db.put('settings', settings, 'singleton')
+    hasUnsyncedChanges.value = true
+}
+
+/**
+ * Returns the attendance configuration (mode, gracePeriod).
+ *
+ * @returns {Promise<{attendanceMode: string, latenessGracePeriod: number}>}
+ */
+export async function getAttendanceConfig() {
+    const settings = await _readSettings()
+    return {
+        attendanceMode: settings.attendanceMode || 'natural',
+        latenessGracePeriod: settings.latenessGracePeriod !== undefined ? settings.latenessGracePeriod : 5
+    }
+}
+
+/**
+ * Saves the attendance configuration.
+ *
+ * @param {{mode: string, gracePeriod: number}} config
+ * @returns {Promise<void>}
+ */
+export async function saveAttendanceConfig({ mode, gracePeriod }) {
+    const db = await getDB()
+    const settings = await db.get('settings', 'singleton')
+    settings.attendanceMode = mode
+    settings.latenessGracePeriod = gracePeriod
     await db.put('settings', settings, 'singleton')
     hasUnsyncedChanges.value = true
 }

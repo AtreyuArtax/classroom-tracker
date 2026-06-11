@@ -534,6 +534,60 @@
           </label>
         </div>
 
+        <!-- Attendance Tracking Configuration -->
+        <div class="setup__card">
+          <h2 class="setup__card-title">Attendance Tracking</h2>
+          <p class="setup__hint">Choose how daily student attendance is registered.</p>
+          <div class="setup__form" style="display: flex; flex-direction: column; gap: 12px; margin-top: 10px;">
+            <div :key="radioGroupKey" class="setup__attendance-modes" style="display: flex; flex-direction: column; gap: 8px;">
+              <label class="setup__label setup__label--radio" style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 600;">
+                <input type="radio" name="attendanceMode" :checked="localAttendanceMode === 'natural'" value="natural" @change="onAttendanceModeChange('natural')" />
+                <span>Natural Mode (Present by default)</span>
+              </label>
+              <label class="setup__label setup__label--radio" style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 600;">
+                <input type="radio" name="attendanceMode" :checked="localAttendanceMode === 'rfid'" value="rfid" @change="onAttendanceModeChange('rfid')" />
+                <span>RFID/QR Sign-In Mode (All start absent)</span>
+              </label>
+            </div>
+            
+            <div v-if="localAttendanceMode === 'rfid'" class="setup__grace-period" style="margin-top: 8px;">
+              <label class="setup__label" style="display: flex; flex-direction: column; gap: 6px;">
+                Lateness Grace Period: <strong>{{ localGracePeriod }} minutes</strong>
+                <input type="range" v-model.number="localGracePeriod" min="0" max="15" step="1" @change="saveAttendanceConfig" style="width: 100%; cursor: pointer;" />
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Attendance Mode Change Confirmation Modal -->
+        <div v-if="isAttendanceModeModalOpen" class="setup__dialog" role="dialog" aria-modal="true" aria-labelledby="att-modal-title">
+          <div class="setup__dialog-backdrop" @click="cancelAttendanceModeChange" />
+          <div class="setup__dialog-box" style="max-width: 420px;">
+            <h3 id="att-modal-title" class="setup__dialog-title" style="display: flex; align-items: center; gap: 8px;">
+              <span style="font-size: 1.2rem;">⚠️</span>
+              Change Attendance Mode?
+            </h3>
+
+            <div class="setup__dialog-body" style="display: flex; flex-direction: column; gap: 10px;">
+              <p v-if="pendingAttendanceMode === 'rfid'">
+                <strong>Switching to RFID/QR Sign-In Mode</strong> will immediately mark <strong>every student absent</strong> in all classes for today. Students must scan their card or QR code to be marked present.
+              </p>
+              <p v-else>
+                <strong>Switching to Natural Mode</strong> will stop requiring scan-based check-in. Any students still marked absent from today's RFID session will remain absent until they scan in or you manually clear them.
+              </p>
+              <div style="background: var(--bg-secondary); border-radius: var(--radius-sm); padding: 10px 12px; font-size: 0.83rem; color: var(--text-secondary); border-left: 3px solid var(--primary);">
+                <strong style="color: var(--text);">Self-healing:</strong> Any attendance state set today will automatically reset tonight at midnight. Changing this setting again tomorrow starts fresh — no permanent damage.
+              </div>
+              <p style="font-size: 0.82rem; color: var(--text-secondary);">Are you sure you want to switch?</p>
+            </div>
+
+            <div class="setup__dialog-actions">
+              <button class="setup__btn-primary" @click="confirmAttendanceModeChange">Yes, switch mode</button>
+              <button class="setup__btn-ghost" @click="cancelAttendanceModeChange">Cancel</button>
+            </div>
+          </div>
+        </div>
+
         <!-- Grade Buckets (Grading Levels) -->
         <GradeBucketsSettings />
 
@@ -1027,6 +1081,8 @@ const {
   selectedYear,
   selectedSemester,
   teacherName,
+  attendanceMode,
+  latenessGracePeriod,
   periodStartTimes,
   switchClass,
   createClass,
@@ -1045,6 +1101,7 @@ const {
   confirmResize,
   updateTeacherName,
   updatePeriodStartTimes,
+  updateAttendanceConfig,
   bulkImportClasses,
   triggerActiveClass,
   academicTerms,
@@ -1061,6 +1118,53 @@ const showAllSessions = ref(false)
 const localTeacherName = ref(teacherName.value)
 watch(teacherName, (v) => { localTeacherName.value = v }, { immediate: true })
 async function saveTeacherName() { await updateTeacherName(localTeacherName.value) }
+
+// Local copy of attendance configuration
+const localAttendanceMode = ref(attendanceMode.value)
+const localGracePeriod = ref(latenessGracePeriod.value)
+
+watch(attendanceMode, (v) => { localAttendanceMode.value = v }, { immediate: true })
+watch(latenessGracePeriod, (v) => { localGracePeriod.value = v }, { immediate: true })
+
+// Attendance mode confirmation modal state
+const isAttendanceModeModalOpen = ref(false)
+const pendingAttendanceMode = ref(null)
+const radioGroupKey = ref(0) // incremented on cancel to force radio DOM reset
+
+/**
+ * Intercept mode changes — show a confirmation modal before persisting.
+ * If the user is clicking the already-active mode, do nothing.
+ */
+function onAttendanceModeChange(newMode) {
+  if (newMode === localAttendanceMode.value) return  // no-op if already selected
+  pendingAttendanceMode.value = newMode
+  isAttendanceModeModalOpen.value = true
+}
+
+/** User confirmed — persist the change and close the modal. */
+async function confirmAttendanceModeChange() {
+  localAttendanceMode.value = pendingAttendanceMode.value
+  await updateAttendanceConfig(localAttendanceMode.value, localGracePeriod.value)
+  isAttendanceModeModalOpen.value = false
+  pendingAttendanceMode.value = null
+}
+
+/** User cancelled — snap the radio back to the current saved value and close. */
+function cancelAttendanceModeChange() {
+  isAttendanceModeModalOpen.value = false
+  pendingAttendanceMode.value = null
+  // Force the radio to reflect the persisted value (not the clicked-but-unsaved one).
+  // We must also bump radioGroupKey so Vue recreates the inputs — without this,
+  // Vue skips the DOM update because localAttendanceMode hasn't changed from its
+  // perspective (it was already the saved value), leaving the browser's native
+  // checked state pointing at the wrong radio.
+  localAttendanceMode.value = attendanceMode.value
+  radioGroupKey.value++
+}
+
+async function saveAttendanceConfig() {
+  await updateAttendanceConfig(localAttendanceMode.value, localGracePeriod.value)
+}
 
 // Local copy of class name to prevent resetting mid-type
 const localClassName = ref('')
@@ -1800,10 +1904,12 @@ const currentRapidStudent = computed(() => rapidRFIDList.value[rapidRFIDIndex.va
 const onRapidRFIDScan = async (hex) => {
   if (!isRapidRFIDOpen.value || !currentRapidStudent.value) return
 
-  // Check duplicate in current class
-  const duplicate = rapidRFIDList.value.find(s => s.rfidTag?.toLowerCase() === hex.toLowerCase() && s.studentId !== currentRapidStudent.value.studentId)
+  // Issue 9 fix: check duplicate across ALL classes, not just the current one
+  const duplicate = classList.value
+    .flatMap(c => Object.entries(c.students || {}).map(([sid, s]) => ({ ...s, studentId: sid, className: c.name })))
+    .find(s => s.rfidTag?.toLowerCase() === hex.toLowerCase() && s.studentId !== currentRapidStudent.value.studentId)
   if (duplicate) {
-    rapidRFIError.value = `Already linked to ${duplicate.firstName} ${duplicate.lastName}`
+    rapidRFIError.value = `Already linked to ${duplicate.firstName} ${duplicate.lastName}${duplicate.className !== activeClass.value?.name ? ` (${duplicate.className})` : ''}`
     playRapidBeep(true)
     return
   }
@@ -1874,10 +1980,12 @@ const isEnrollingRFID = ref(false)
 const enrollTimer = ref(null)
 
 const onRFIDEnroll = (hex) => {
-  // Check if this tag is already in use by another student
-  const duplicate = sortedRoster.value.find(s => s.rfidTag?.toLowerCase() === hex.toLowerCase() && s.studentId !== newStudent.studentId)
+  // Issue 9 fix: check duplicate across ALL classes, not just the active roster
+  const duplicate = classList.value
+    .flatMap(c => Object.entries(c.students || {}).map(([sid, s]) => ({ ...s, studentId: sid, className: c.name })))
+    .find(s => s.rfidTag?.toLowerCase() === hex.toLowerCase() && s.studentId !== newStudent.studentId)
   if (duplicate) {
-    singleAddError.value = `This card is already linked to ${duplicate.firstName} ${duplicate.lastName}.`
+    singleAddError.value = `This card is already linked to ${duplicate.firstName} ${duplicate.lastName}${duplicate.className !== activeClass.value?.name ? ` in ${duplicate.className}` : ''}.`
     stopEnrollment()
     return
   }
