@@ -64,7 +64,7 @@
         :class="{ 'qr-scanner__status-bar--clickable': isMinimized && !isPiP }"
         @pointerdown="isMinimized && !isPiP ? startDrag($event) : undefined"
         @click="isMinimized && !isPiP && !hasDragged ? (isMinimized = false) : undefined"
-        :title="isMinimized ? 'Drag to move • Click to expand' : ''"
+        :title="minimizedTitle"
       >
         <div class="qr-scanner__count" :class="{ 'qr-scanner__count--full': maxStudentsOut > 0 && studentsOut.length >= maxStudentsOut }">
           <span class="qr-scanner__count-num">{{ studentsOut.length }}</span>
@@ -92,6 +92,32 @@
 
       <!-- ── Body (hidden when minimized) ──────────────────────────── -->
       <div class="qr-scanner__body" v-show="!isMinimized || isPiP">
+        
+        <!-- Currently Out Students List -->
+        <div v-if="studentsOut.length > 0" class="qr-scanner__out-list">
+          <div class="qr-scanner__out-title">
+            <span>Currently Out</span>
+          </div>
+          <div class="qr-scanner__out-items">
+            <div v-for="student in studentsOut" :key="student.studentId" class="qr-scanner__out-item">
+              <div class="qr-scanner__out-info">
+                <span class="qr-scanner__out-name">{{ student.firstName }} {{ student.lastName }}</span>
+                <span class="qr-scanner__out-time" v-if="student.activeStates?.outTime">
+                  out since {{ formatTime(student.activeStates.outTime) }}
+                </span>
+              </div>
+              <button 
+                class="qr-scanner__out-signin-btn" 
+                @click.stop="manualSignIn(student.studentId)"
+                title="Sign back in"
+              >
+                <Check :size="12" />
+                <span>Return</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
         <div class="qr-scanner__viewfinder">
           <!-- QR Camera View (Hidden in RFID) -->
           <div v-show="scannerMode === 'qr'" id="qr-reader" class="qr-scanner__reader"></div>
@@ -164,7 +190,7 @@ import { useMessage } from '../composables/useMessage.js'
 
 const emit = defineEmits(['close'])
 
-const { students, logToggleEvent, studentsOut, maxStudentsOut } = useClassroom()
+const { students, logToggleEvent, studentsOut, maxStudentsOut, classList, activeClass, periodStartTimes, reconcileStaleTrips } = useClassroom()
 const { alert } = useMessage()
 
 // ── UI State ──────────────────────────────────────────────────────────────────
@@ -190,38 +216,147 @@ watch(scannerMode, (newMode) => {
   }
 })
 
-// ── RFID Wedge ────────────────────────────────────────────────────────────────
-const rfidMap = computed(() => {
-  const map = {}
-  for (const [id, s] of Object.entries(students.value)) {
-    if (s.rfidTag) map[s.rfidTag.toLowerCase()] = id
+// ── RFID / QR Time-Based Resolution & Routing ────────────────────────────────
+const getScheduledClass = () => {
+  const startTimes = periodStartTimes.value || {}
+  
+  // Filter and sort active classes that have start times
+  const sortedClasses = classList.value
+    .filter(c => !c.archived && c.periodStartTime)
+    .sort((a, b) => {
+      const timeA = a.periodStartTime.split(':').map(Number)
+      const timeB = b.periodStartTime.split(':').map(Number)
+      return (timeA[0] * 60 + timeA[1]) - (timeB[0] * 60 + timeB[1])
+    })
+
+  if (sortedClasses.length === 0) {
+    return activeClass.value // Fallback to active class if no schedules configured
   }
-  return map
-})
+
+  const now = new Date()
+  const currentMinutes = now.getHours() * 60 + now.getMinutes()
+
+  let bestClass = null
+  for (let i = sortedClasses.length - 1; i >= 0; i--) {
+    const cls = sortedClasses[i]
+    const [h, m] = cls.periodStartTime.split(':').map(Number)
+    const classMinutes = h * 60 + m
+
+    if (classMinutes <= currentMinutes) {
+      bestClass = cls
+      break
+    }
+  }
+
+  // If before the first class of the day, default to first class
+  return bestClass || sortedClasses[0]
+}
+
+const resolveScan = (scannedText, isRFID) => {
+  const searchKey = scannedText.toLowerCase()
+
+  // 1. Check for existing "OUT" status first (Return / Sign-In)
+  for (const cls of classList.value) {
+    for (const [studentId, student] of Object.entries(cls.students || {})) {
+      const isMatch = isRFID 
+        ? (student.rfidTag && student.rfidTag.toLowerCase() === searchKey)
+        : (studentId.toLowerCase() === searchKey)
+      
+      if (isMatch && student.activeStates?.isOut) {
+        return { studentId, classId: cls.classId, type: 'signin', class: cls }
+      }
+    }
+  }
+
+  // 2. If no one is currently OUT, resolve by schedule (New Sign-Out)
+  const targetClass = getScheduledClass()
+  if (!targetClass) {
+    return { error: 'no_class' }
+  }
+
+  // Look up student in targetClass
+  let foundStudentId = null
+  if (isRFID) {
+    for (const [studentId, student] of Object.entries(targetClass.students || {})) {
+      if (student.rfidTag && student.rfidTag.toLowerCase() === searchKey) {
+        foundStudentId = studentId
+        break
+      }
+    }
+  } else {
+    // QR code: check if key exists directly
+    if (targetClass.students && targetClass.students[scannedText]) {
+      foundStudentId = scannedText
+    }
+  }
+
+  if (!foundStudentId) {
+    return { error: 'student_not_in_class', className: targetClass.name }
+  }
+
+  // Check if period has ended/not started (only if schedules are configured)
+  const startTimes = periodStartTimes.value || {}
+  const sortedPeriods = Object.keys(startTimes).map(Number).sort((a, b) => a - b)
+  
+  const classPeriod = Number(targetClass.periodNumber)
+  const timeStr = startTimes[classPeriod]
+
+  if (targetClass.periodStartTime && timeStr) {
+    const now = new Date()
+    const currentMinutes = now.getHours() * 60 + now.getMinutes()
+    
+    const [startH, startM] = targetClass.periodStartTime.split(':').map(Number)
+    const classStartMins = startH * 60 + startM
+
+    let classEndMins = classStartMins + 75 // Default 75 minutes fallback
+    const nextPeriodNum = sortedPeriods.find(p => p > classPeriod)
+    if (nextPeriodNum && startTimes[nextPeriodNum]) {
+      const [endH, endM] = startTimes[nextPeriodNum].split(':').map(Number)
+      classEndMins = endH * 60 + endM
+    }
+
+    if (currentMinutes < classStartMins) {
+      return { studentId: foundStudentId, classId: targetClass.classId, type: 'signout_blocked_not_started', class: targetClass }
+    }
+    if (currentMinutes >= classEndMins) {
+      return { studentId: foundStudentId, classId: targetClass.classId, type: 'signout_blocked_over', class: targetClass }
+    }
+  }
+
+  return { studentId: foundStudentId, classId: targetClass.classId, type: 'signout', class: targetClass }
+}
 
 const onRFIDScan = (hex) => {
-  const studentId = rfidMap.value[hex.toLowerCase()]
-  if (studentId) {
-    handleScan(studentId)
-  } else {
-    // Show error for unknown tag
-    lastScannedName.value = 'Unknown Card'
-    lastScannedStatus.value = hex.toUpperCase()
-    isError.value = true
-    playBeep(true)
-    
-    cooldownActive.value = true
-    setTimeout(() => {
-      // Only clear if no other scan has taken over the cooldown
-      if (lastScannedName.value === 'Unknown Card') {
-        cooldownActive.value = false
-        isError.value = false
-      }
-    }, 2000) // Reduced from 5s
-  }
+  handleScan(hex, true)
 }
 
 const rfidWedge = useKeyboardWedge(onRFIDScan)
+
+const formatTime = (timeStr) => {
+  if (!timeStr) return ''
+  try {
+    const d = new Date(timeStr)
+    return d.toLocaleString('en-CA', { hour: 'numeric', minute: '2-digit', hour12: true })
+  } catch (e) {
+    return ''
+  }
+}
+
+const manualSignIn = async (studentId) => {
+  const classId = activeClass.value?.classId
+  if (!classId) return
+  await logToggleEvent(studentId, 'w', classId)
+}
+
+const minimizedTitle = computed(() => {
+  if (!isMinimized.value) return ''
+  const base = 'Drag to move • Click to expand'
+  if (studentsOut.value.length > 0) {
+    const names = studentsOut.value.map(s => `${s.firstName} ${s.lastName}`).join(', ')
+    return `${base}\nCurrently Out: ${names}`
+  }
+  return base
+})
 
 // ── PiP ───────────────────────────────────────────────────────────────────────
 const pipSupported = ref('documentPictureInPicture' in window)
@@ -341,23 +476,63 @@ const studentCooldowns = new Map()
 const MIN_TRIP_MS = 30000 // 30 seconds minimum out time
 const RECENT_TAP_LOCKOUT_MS = 2000 // 2 seconds to prevent rapid double-bounce
 
-const handleScan = async (decodedText) => {
+const handleScan = async (scannedText, isRFID = false) => {
   const now = Date.now()
-  const lastTime = studentCooldowns.get(decodedText) || 0
   
-  // 1. Prevent "Rapid Double-Tap" (Bounce)
+  // Reconcile same-day stale trips first so the scan lookup is up-to-date
+  await reconcileStaleTrips()
+  
+  // 1. Resolve scan to target class and student
+  const resolved = resolveScan(scannedText, isRFID)
+  
+  if (resolved.error) {
+    lastScannedName.value = resolved.error === 'student_not_in_class'
+      ? 'Not in class'
+      : 'Unknown Card'
+    lastScannedStatus.value = resolved.error === 'student_not_in_class'
+      ? resolved.className
+      : (isRFID ? scannedText.toUpperCase() : 'Unknown ID')
+    isError.value = true
+    playBeep(true)
+    
+    cooldownActive.value = true
+    setTimeout(() => {
+      if (lastScannedName.value === 'Not in class' || lastScannedName.value === 'Unknown Card') {
+        cooldownActive.value = false
+        isError.value = false
+      }
+    }, 2000)
+    return
+  }
+
+  const { studentId, classId, type, class: targetClass } = resolved
+  const lastTime = studentCooldowns.get(studentId) || 0
+  
+  // 2. Prevent "Rapid Double-Tap" (Bounce)
   if (now - lastTime < RECENT_TAP_LOCKOUT_MS) return
 
-  const student = students.value[decodedText]
-  if (!student) {
-    console.warn(`Scan ignored: Student ID "${decodedText}" not in active class.`)
+  const student = targetClass.students[studentId]
+  lastScannedName.value = `${student.firstName} ${student.lastName}`
+
+  // 3. Enforce Period bounds (Block sign-out after school ends or before class starts)
+  if (type === 'signout_blocked_not_started' || type === 'signout_blocked_over') {
+    isError.value = true
+    lastScannedStatus.value = type === 'signout_blocked_over' ? 'Class is Over' : 'Class not started'
+    playBeep(true)
+    
+    cooldownActive.value = true
+    setTimeout(() => {
+      if (lastScannedName.value === `${student.firstName} ${student.lastName}`) {
+        cooldownActive.value = false
+        isError.value = false
+      }
+    }, 2000)
     return
   }
 
   const isCurrentlyOut = student.activeStates?.isOut
-  lastScannedName.value = `${student.firstName} ${student.lastName}`
 
-  // 2. Enforce "Minimum Out Time" (Prevent accidental immediate Sign-In)
+  // 4. Enforce "Minimum Out Time" (Prevent accidental immediate Sign-In)
   if (isCurrentlyOut) {
     const outTime = new Date(student.activeStates.outTime).getTime()
     if (now - outTime < MIN_TRIP_MS) {
@@ -376,19 +551,22 @@ const handleScan = async (decodedText) => {
     }
   }
 
-  // 3. Limit Check
-  if (!isCurrentlyOut && maxStudentsOut.value > 0 && studentsOut.value.length >= maxStudentsOut.value) {
+  // 5. Occupancy Limit Check (Specifically against the target class)
+  const targetClassStudentsOut = Object.values(targetClass.students)
+    .filter(s => s.activeStates?.isOut === true)
+
+  if (!isCurrentlyOut && maxStudentsOut.value > 0 && targetClassStudentsOut.length >= maxStudentsOut.value) {
     isError.value = true
-    lastScannedStatus.value = 'Limit Reached'
+    lastScannedStatus.value = `Limit Reached (${targetClass.name})`
     playBeep(true)
   } else {
     isError.value = false
-    lastScannedStatus.value = isCurrentlyOut ? 'IN' : 'OUT'
+    lastScannedStatus.value = isCurrentlyOut ? `IN (${targetClass.name})` : `OUT (${targetClass.name})`
     playBeep(false)
-    await logToggleEvent(decodedText, 'w')
+    await logToggleEvent(studentId, 'w', classId)
   }
 
-  studentCooldowns.set(decodedText, now)
+  studentCooldowns.set(studentId, now)
   cooldownActive.value = true
   setTimeout(() => {
     if (lastScannedName.value === `${student.firstName} ${student.lastName}`) {
@@ -739,6 +917,94 @@ onUnmounted(async () => {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.03em;
+}
+
+.qr-scanner__out-list {
+  margin-bottom: 12px;
+  background:    var(--bg-secondary);
+  border:        1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding:       8px 10px;
+}
+
+.qr-scanner__out-title {
+  font-size:      0.72rem;
+  font-weight:    800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color:          var(--text-secondary);
+  margin-bottom:  6px;
+  display:        flex;
+  align-items:    center;
+  justify-content: space-between;
+}
+
+.qr-scanner__out-items {
+  display:        flex;
+  flex-direction: column;
+  gap:            6px;
+  max-height:     110px;
+  overflow-y:     auto;
+  scrollbar-width: thin;
+}
+
+.qr-scanner__out-item {
+  display:         flex;
+  align-items:     center;
+  justify-content: space-between;
+  background:      var(--surface);
+  border:          1px solid var(--border);
+  border-radius:   var(--radius-sm);
+  padding:         6px 8px;
+  gap:             8px;
+  transition:      border-color 0.15s ease;
+}
+
+.qr-scanner__out-item:hover {
+  border-color:    var(--primary-light);
+}
+
+.qr-scanner__out-info {
+  display:        flex;
+  flex-direction: column;
+  min-width:      0;
+}
+
+.qr-scanner__out-name {
+  font-size:      0.82rem;
+  font-weight:    700;
+  color:          var(--text);
+  white-space:    nowrap;
+  overflow:       hidden;
+  text-overflow:  ellipsis;
+}
+
+.qr-scanner__out-time {
+  font-size:      0.68rem;
+  color:          var(--text-secondary);
+  font-weight:    500;
+}
+
+.qr-scanner__out-signin-btn {
+  display:         flex;
+  align-items:     center;
+  gap:             4px;
+  background:      var(--primary-light);
+  border:          1px solid transparent;
+  color:           var(--primary);
+  font-size:       0.7rem;
+  font-weight:     700;
+  padding:         3px 8px;
+  border-radius:   var(--radius-sm);
+  cursor:          pointer;
+  transition:      all 0.12s ease;
+  line-height:     1;
+  flex-shrink:     0;
+}
+
+.qr-scanner__out-signin-btn:hover {
+  background:      var(--primary);
+  color:           #fff;
 }
 
 .qr-scanner__pill-dot {
