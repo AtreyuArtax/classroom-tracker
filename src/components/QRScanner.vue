@@ -731,9 +731,15 @@ const togglePiP = async () => {
 }
 
 // ── Lifecycle ─────────────────────────────────────────────────────────────────
+const handleExtensionScan = (e) => {
+  const code = e.detail
+  handleScan(code, true)
+}
+
 onMounted(() => {
   window.addEventListener('pointermove', onDrag, { passive: true })
   window.addEventListener('pointerup',   endDrag)
+  window.addEventListener('classroom-tracker-scan', handleExtensionScan)
   
   if (scannerMode.value === 'rfid') {
     rfidWedge.start()
@@ -746,6 +752,7 @@ onUnmounted(async () => {
   if (pipWindowObj) pipWindowObj.close()
   window.removeEventListener('pointermove', onDrag)
   window.removeEventListener('pointerup',   endDrag)
+  window.removeEventListener('classroom-tracker-scan', handleExtensionScan)
 })
 </script>
 

@@ -1,0 +1,17 @@
+{
+  "manifest_version": 3,
+  "name": "Classroom Tracker Scanner Router",
+  "version": "1.0",
+  "description": "Routes RFID/QR keyboard wedge scanner data to the Classroom Tracker app even when presenting on other browser tabs.",
+  "permissions": ["tabs"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_start"
+    }
+  ]
+}
