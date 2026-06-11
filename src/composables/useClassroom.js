@@ -1288,6 +1288,7 @@ async function logAssessmentEvent({ studentId, note, acType, acContext, acOutcom
  * Runs on every scan and checks if class periods have ended.
  */
 async function reconcileStaleTrips() {
+    const reconciled = new Set()
     const now = new Date()
     const todayStr = now.toISOString().slice(0, 10)
     const currentMinutes = now.getHours() * 60 + now.getMinutes()
@@ -1365,6 +1366,7 @@ async function reconcileStaleTrips() {
                     states.outTime = null
                     states.code = null
                     classNeedsSave = true
+                    reconciled.add(`${cls.classId}-${studentId}`)
 
                     // Sync viewed class if it was the active class
                     if (activeClass.value?.classId === cls.classId && students.value[studentId]) {
@@ -1378,6 +1380,7 @@ async function reconcileStaleTrips() {
             await classService.saveClass(cls)
         }
     }
+    return reconciled
 }
 
 /**
@@ -1391,10 +1394,14 @@ async function reconcileStaleTrips() {
  */
 async function logToggleEvent(studentId, code, targetClassId = null) {
     try {
-        await reconcileStaleTrips()
+        const reconciled = await reconcileStaleTrips()
 
         const classId = targetClassId || activeClass.value?.classId
         if (!classId) return
+
+        if (reconciled.has(`${classId}-${studentId}`)) {
+            return
+        }
 
         const isActive = classId === activeClass.value?.classId
         const clsObj = isActive ? activeClass.value : classList.value.find(c => c.classId === classId)
