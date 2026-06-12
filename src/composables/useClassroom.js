@@ -2074,6 +2074,7 @@ export function useClassroom() {
         updateAttendanceConfig,
         markAllPresentToday,
         handleRfidAttendanceScan,
+        initializeRfidAttendance,
         archiveClass,
         restoreClass,
         deleteClass,
