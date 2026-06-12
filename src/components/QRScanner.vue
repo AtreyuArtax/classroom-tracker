@@ -190,7 +190,7 @@ import { useMessage } from '../composables/useMessage.js'
 
 const emit = defineEmits(['close'])
 
-const { students, logToggleEvent, studentsOut, globalStudentsOut, maxStudentsOut, classList, activeClass, periodStartTimes, reconcileStaleTrips, attendanceMode, handleRfidAttendanceScan } = useClassroom()
+const { students, logToggleEvent, studentsOut, globalStudentsOut, maxStudentsOut, classList, activeClass, periodStartTimes, reconcileStaleTrips, attendanceMode, handleRfidAttendanceScan, initializeRfidAttendance } = useClassroom()
 const { alert } = useMessage()
 
 // ── UI State ──────────────────────────────────────────────────────────────────
@@ -508,6 +508,14 @@ const handleScan = async (scannedText, isRFID = false) => {
   
   // 1. Resolve scan to target class and student
   const resolved = resolveScan(scannedText, isRFID)
+
+  // Lazy RFID initialization: if this scan targets a class that hasn't been
+  // activated today yet (e.g. teacher scanned P2 without ever visiting P2's
+  // dashboard), initialize its absence states now before checking isAbsent.
+  // initializeRfidAttendance is idempotent — it no-ops if already initialized.
+  if (attendanceMode.value === 'rfid' && resolved.classId) {
+    await initializeRfidAttendance(resolved.classId)
+  }
   
   if (resolved.error) {
     lastScannedName.value = resolved.error === 'student_not_in_class'
