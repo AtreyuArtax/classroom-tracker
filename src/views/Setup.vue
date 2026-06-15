@@ -534,35 +534,71 @@
           </label>
         </div>
 
-        <!-- Attendance Tracking Configuration -->
+        <!-- Attendance & Cloud Mode Settings -->
         <div class="setup__card">
-          <h2 class="setup__card-title">Attendance Tracking</h2>
-          <p class="setup__hint">Choose how daily student attendance is registered.</p>
-          <div class="setup__form" style="display: flex; flex-direction: column; gap: 12px; margin-top: 10px;">
-            <div :key="radioGroupKey" class="setup__attendance-modes" style="display: flex; flex-direction: row; gap: 24px; align-items: center; flex-wrap: wrap; margin-top: 4px;">
-              <label class="setup__label setup__label--radio" style="display: flex; flex-direction: row; align-items: center; gap: 8px; cursor: pointer; font-weight: 600;">
-                <input type="radio" name="attendanceMode" :checked="localAttendanceMode === 'natural'" value="natural" @change="onAttendanceModeChange('natural')" style="margin: 0; cursor: pointer;" />
-                <span>Natural Mode (Present by default)</span>
-              </label>
-              <label class="setup__label setup__label--radio" style="display: flex; flex-direction: row; align-items: center; gap: 8px; cursor: pointer; font-weight: 600;">
-                <input type="radio" name="attendanceMode" :checked="localAttendanceMode === 'rfid'" value="rfid" @change="onAttendanceModeChange('rfid')" style="margin: 0; cursor: pointer;" />
-                <span>RFID/QR Sign-In Mode (All start absent)</span>
-              </label>
+          <h2 class="setup__card-title">
+            <GraduationCap :size="18" /> Attendance & Cloud Settings
+          </h2>
+          <p class="setup__hint">Configure how daily student attendance is registered and set up two-device scanning sync.</p>
+          
+          <div class="setup__settings-grid">
+            
+            <!-- Left Column: Attendance Mode -->
+            <div class="setup__settings-col setup__settings-col--left">
+              <h3 class="setup__card-subtitle" style="margin-top: 0; margin-bottom: 4px;">Attendance Mode</h3>
+              <div :key="radioGroupKey" class="setup__attendance-modes" style="display: flex; flex-direction: column; gap: 12px; margin-top: 4px;">
+                <label class="setup__label setup__label--radio" style="display: flex; flex-direction: row; align-items: center; gap: 8px; cursor: pointer; font-weight: 600; margin: 0;">
+                  <input type="radio" name="attendanceMode" :checked="localAttendanceMode === 'natural'" value="natural" @change="onAttendanceModeChange('natural')" style="margin: 0; cursor: pointer;" />
+                  <span>Natural Mode (Present by default)</span>
+                </label>
+                <label class="setup__label setup__label--radio" style="display: flex; flex-direction: row; align-items: center; gap: 8px; cursor: pointer; font-weight: 600; margin: 0;">
+                  <input type="radio" name="attendanceMode" :checked="localAttendanceMode === 'rfid'" value="rfid" @change="onAttendanceModeChange('rfid')" style="margin: 0; cursor: pointer;" />
+                  <span>RFID/QR Sign-In Mode (All start absent)</span>
+                </label>
+              </div>
+              
+              <div v-if="localAttendanceMode === 'rfid'" class="setup__grace-period" style="margin-top: 8px;">
+                <label class="setup__label" style="display: flex; flex-direction: column; gap: 6px; margin: 0;">
+                  Lateness Grace Period: <strong>{{ localGracePeriod }} minutes</strong>
+                  <input type="range" v-model.number="localGracePeriod" min="0" max="15" step="1" @change="saveAttendanceConfig" style="width: 100%; cursor: pointer; margin: 0;" />
+                </label>
+              </div>
+
+              <!-- Manual Override Reset -->
+              <div v-if="activeClass" class="setup__attendance-actions" style="margin-top: auto; padding-top: 12px; border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 8px;">
+                <button class="setup__btn-ghost" style="height: 36px; padding: 0 16px; font-size: 0.85rem; min-height: unset; width: 100%; margin: 0;" @click="onMarkAllPresent">
+                  Mark All Present in {{ activeClass.name }}
+                </button>
+              </div>
             </div>
             
-            <div v-if="localAttendanceMode === 'rfid'" class="setup__grace-period" style="margin-top: 8px;">
-              <label class="setup__label" style="display: flex; flex-direction: column; gap: 6px;">
-                Lateness Grace Period: <strong>{{ localGracePeriod }} minutes</strong>
-                <input type="range" v-model.number="localGracePeriod" min="0" max="15" step="1" @change="saveAttendanceConfig" style="width: 100%; cursor: pointer;" />
+            <!-- Right Column: Cloud Settings -->
+            <div class="setup__settings-col">
+              <h3 class="setup__card-subtitle" style="margin-top: 0; margin-bottom: 4px;">Supabase Two-Device Sync</h3>
+              <p class="setup__hint" style="margin: 0; font-size: 0.8rem; line-height: 1.4;">Enable Cloud Mode to scan cards on a door device and receive updates here.</p>
+              
+              <div class="setup__switch-container" style="margin: 8px 0 0 0;">
+                <label class="setup__switch">
+                  <input type="checkbox" v-model="localCloudMode" @change="saveCloudConfig" />
+                  <span class="setup__switch-slider"></span>
+                </label>
+                <span class="setup__switch-label">Enable Cloud Mode</span>
+              </div>
+              
+              <label class="setup__label" v-if="localCloudMode" style="display: flex; flex-direction: column; gap: 6px; margin: 4px 0 0 0;">
+                User Code (Room PIN / Teacher ID)
+                <input type="text" v-model="localUserCode" placeholder="e.g. ROOM-101" class="setup__input" style="margin: 0;" @blur="saveCloudConfig" @keyup.enter="saveCloudConfig" />
               </label>
-            </div>
 
-            <!-- Manual Override Reset -->
-            <div v-if="activeClass" class="setup__attendance-actions" style="margin-top: 4px; display: flex; align-items: center; gap: 12px; border-top: 1px solid var(--border); padding-top: 12px;">
-              <button class="setup__btn-ghost" style="height: 36px; padding: 0 16px; font-size: 0.85rem; min-height: unset;" @click="onMarkAllPresent">
-                Mark All Present in {{ activeClass.name }}
-              </button>
+              <div class="setup__switch-container" style="margin: 16px 0 0 0;">
+                <label class="setup__switch">
+                  <input type="checkbox" v-model="autoStartRFID" />
+                  <span class="setup__switch-slider"></span>
+                </label>
+                <span class="setup__switch-label">Auto-Start RFID on Load</span>
+              </div>
             </div>
+            
           </div>
         </div>
 
@@ -595,21 +631,6 @@
           </div>
         </div>
 
-        <!-- Supabase Cloud Settings -->
-        <div class="setup__card">
-          <h2 class="setup__card-title">Supabase Cloud Settings</h2>
-          <p class="setup__hint">Enable Cloud Mode to scan cards on a door device and receive updates here.</p>
-          <div class="setup__form" style="display: flex; flex-direction: column; gap: 12px; margin-top: 10px;">
-            <label class="setup__label" style="display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none;">
-              <input type="checkbox" v-model="localCloudMode" @change="saveCloudConfig" style="cursor: pointer;" />
-              <span>Enable Cloud Mode (Two-Device WebSocket Sync)</span>
-            </label>
-            <label class="setup__label" v-if="localCloudMode">
-              User Code (Room PIN / Teacher ID)
-              <input type="text" v-model="localUserCode" placeholder="e.g. ROOM-101" class="setup__input" @blur="saveCloudConfig" @keyup.enter="saveCloudConfig" />
-            </label>
-          </div>
-        </div>
 
         <!-- Grade Buckets (Grading Levels) -->
         <GradeBucketsSettings />
@@ -1134,7 +1155,8 @@ const {
   nonSchoolDays,
   cloudModeEnabled,
   userCode,
-  updateCloudConfig
+  updateCloudConfig,
+  autoStartRFID
 } = useClassroom()
 
 const localCloudMode = ref(cloudModeEnabled.value)
@@ -2730,6 +2752,92 @@ function formatDate(iso) {
   display:       flex;
   flex-direction: column;
   gap:           16px;
+}
+
+.setup__settings-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+  margin-top: 8px;
+}
+
+@media (min-width: 768px) {
+  .setup__settings-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.setup__settings-col {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+@media (min-width: 768px) {
+  .setup__settings-col--left {
+    border-right: 1px solid var(--border);
+    padding-right: 24px;
+  }
+}
+
+/* ── Custom Switch Toggle ────────────────────────────────────────── */
+.setup__switch-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  user-select: none;
+}
+
+.setup__switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+}
+
+.setup__switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.setup__switch-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--border);
+  transition: .2s ease;
+  border-radius: 24px;
+}
+
+.setup__switch-slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: .2s ease;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+.setup__switch input:checked + .setup__switch-slider {
+  background-color: var(--primary);
+}
+
+.setup__switch input:checked + .setup__switch-slider:before {
+  transform: translateX(20px);
+}
+
+.setup__switch-label {
+  font-weight: 600;
+  color: var(--text);
+  font-size: 0.9rem;
 }
 
 .setup__card--accent {

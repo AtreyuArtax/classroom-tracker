@@ -78,6 +78,7 @@ const selectedSemester = ref(localStorage.getItem('selectedSemester') || '')
 
 /** @type {import('vue').Ref<boolean>} Controls visibility of the QR Scanner component */
 const isScannerOpen = ref(false)
+const autoStartRFID = ref(localStorage.getItem('autoStartRFID') === 'true')
 /** @type {import('vue').Ref<number>} Max students allowed out (0 = infinite) */
 const maxStudentsOut = ref(parseInt(localStorage.getItem('maxStudentsOut')) || 0)
 
@@ -85,6 +86,7 @@ const maxStudentsOut = ref(parseInt(localStorage.getItem('maxStudentsOut')) || 0
 watch(selectedYear, (val) => localStorage.setItem('selectedYear', val))
 watch(selectedSemester, (val) => localStorage.setItem('selectedSemester', val))
 watch(maxStudentsOut, (val) => localStorage.setItem('maxStudentsOut', val.toString()))
+watch(autoStartRFID, (val) => localStorage.setItem('autoStartRFID', String(val)))
 
 const cloudModeEnabled = ref(false)
 const userCode = ref('')
@@ -543,6 +545,11 @@ async function init() {
             selectedYear.value = yearStr
             selectedSemester.value = semStr
         }
+    }
+
+    if (autoStartRFID.value) {
+        localStorage.setItem('scanner-mode', 'rfid')
+        isScannerOpen.value = true
     }
 
     if (filteredClassList.value.length > 0) {
@@ -2060,6 +2067,7 @@ export function useClassroom() {
         latenessGracePeriod,
         periodStartTimes,
         isScannerOpen,
+        autoStartRFID,
         maxStudentsOut,
         filteredClassList,
         filteredArchivedClasses,
