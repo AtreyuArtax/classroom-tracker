@@ -606,6 +606,23 @@
                 </span>
               </label>
 
+              <div v-if="localCloudMode" class="setup__link-box">
+                <span class="setup__link-title">
+                  <ExternalLink :size="14" /> Door Scanner URL
+                </span>
+                <span class="setup__link-text">
+                  Open this link on your dedicated scanning machine and enter your User Code:
+                </span>
+                <div class="setup__link-input-group">
+                  <input type="text" :value="scanStationUrl" readonly class="setup__input" style="margin: 0; flex-grow: 1; cursor: text; font-family: monospace; font-size: 0.8rem;" @click="$event.target.select()" />
+                  <button type="button" class="setup__btn-ghost" @click="copyScanStationUrl" style="min-height: 44px; padding: 0 16px; margin: 0; white-space: nowrap; display: flex; align-items: center; gap: 6px; font-size: 0.85rem;" :title="urlCopied ? 'Copied' : 'Copy URL'">
+                    <Check v-if="urlCopied" :size="14" style="color: var(--state-success);" />
+                    <Copy v-else :size="14" />
+                    {{ urlCopied ? 'Copied!' : 'Copy' }}
+                  </button>
+                </div>
+              </div>
+
               <div class="setup__switch-container" style="margin: 16px 0 0 0;">
                 <label class="setup__switch">
                   <input type="checkbox" v-model="autoStartRFID" />
@@ -1105,7 +1122,7 @@
 
 import { ref, reactive, computed, watch, onMounted, nextTick, onUnmounted } from 'vue'
 import Papa from 'papaparse'
-import { Archive, ChevronDown, ChevronUp, FolderOpen, Trash2, FileText, Pencil, Download, Database, Cloud, Settings2, Plus, PlusCircle, X, Save, FileUp, FileDown, GraduationCap, ArrowLeft, Zap, LayoutDashboard, Settings, QrCode, Printer, RefreshCcw, FileSpreadsheet, DatabaseIcon, AlertTriangle, ShieldCheck, Search, CalendarDays, UserMinus, UserCheck, Rss, Info } from 'lucide-vue-next'
+import { Archive, ChevronDown, ChevronUp, FolderOpen, Trash2, FileText, Pencil, Download, Database, Cloud, Settings2, Plus, PlusCircle, X, Save, FileUp, FileDown, GraduationCap, ArrowLeft, Zap, LayoutDashboard, Settings, QrCode, Printer, RefreshCcw, FileSpreadsheet, DatabaseIcon, AlertTriangle, ShieldCheck, Search, CalendarDays, UserMinus, UserCheck, Rss, Info, ExternalLink, Copy, Check } from 'lucide-vue-next'
 import QRCode from 'qrcode'
 import { exportGradebookToExcel } from '../db/exportService.js'
 import { resolveIcon } from '../utils/icons.js'
@@ -1191,6 +1208,20 @@ async function saveCloudConfig() {
 async function regenerateUserCode() {
   localUserCode.value = await generateUniqueUserCode()
   await saveCloudConfig()
+}
+
+const scanStationUrl = computed(() => {
+  return `${window.location.origin}/scan`
+})
+const urlCopied = ref(false)
+async function copyScanStationUrl() {
+  try {
+    await navigator.clipboard.writeText(scanStationUrl.value)
+    urlCopied.value = true
+    setTimeout(() => { urlCopied.value = false }, 2000)
+  } catch (err) {
+    console.error('Failed to copy text: ', err)
+  }
 }
 
 const isUnsynced = eventService.hasUnsyncedChanges
@@ -2959,6 +2990,39 @@ function formatDate(iso) {
   padding:       1px 5px;
   border-radius: var(--radius-sm);
   font-size:     0.8rem;
+}
+
+.setup__link-box {
+  margin-top: 16px;
+  padding: 16px;
+  border-radius: var(--radius-lg);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.setup__link-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.setup__link-text {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.setup__link-input-group {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  width: 100%;
 }
 
 .setup__empty {
