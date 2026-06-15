@@ -1064,7 +1064,44 @@ async function logAttendanceEvent(studentId, code) {
         const student = students.value[studentId]
 
         if (code === 'a') {
-            if (student.activeStates?.isAbsent) return
+            if (student.activeStates?.isAbsent) {
+                // Toggle off: clear absent and delete today's 'a' event
+                const todayStr = new Date().toISOString().slice(0, 10)
+                const eventsToday = await eventService.getEventsByStudent(studentId, { from: todayStr, to: todayStr })
+                const absentEvent = eventsToday.find(e => e.code === 'a' && !e.superseded)
+                let wasDeleted = false
+                let originalTimestamp = null
+                if (absentEvent) {
+                    await eventService.deleteEvent(absentEvent.eventId)
+                    wasDeleted = true
+                    originalTimestamp = absentEvent.timestamp
+                }
+                await classService.clearStudentAbsent(classId, studentId)
+                student.activeStates.isAbsent = false
+                student.lastEvent = null
+
+                pushUndo(async () => {
+                    try {
+                        await classService.setStudentAbsent(classId, studentId)
+                        student.activeStates.isAbsent = true
+                        if (wasDeleted) {
+                            await eventService.logEvent({
+                                studentId,
+                                classId,
+                                code: 'a',
+                                duration: null,
+                                testDay: isTestDay.value,
+                                _overrideTimestamp: originalTimestamp
+                            })
+                        }
+                    } catch (err) {
+                        console.error('Undo clear absent failed:', err)
+                        const { alert } = useMessage()
+                        await alert('Failed to undo attendance change.')
+                    }
+                })
+                return
+            }
 
             await classService.setStudentAbsent(classId, studentId)
 
@@ -1088,6 +1125,50 @@ async function logAttendanceEvent(studentId, code) {
                 }
             })
         } else if (code === 'l') {
+            if (student.activeStates?.lateMs != null && student.activeStates?.lateMs > 0) {
+                // Toggle off: clear lateMs state and delete today's 'l' event
+                const todayStr = new Date().toISOString().slice(0, 10)
+                const eventsToday = await eventService.getEventsByStudent(studentId, { from: todayStr, to: todayStr })
+                const lateEvent = eventsToday.find(e => e.code === 'l')
+                let wasDeleted = false
+                let originalTimestamp = null
+                let originalDuration = student.activeStates.lateMs
+                let wasSupersededAbsent = false
+                if (lateEvent) {
+                    await eventService.deleteEvent(lateEvent.eventId)
+                    wasDeleted = true
+                    originalTimestamp = lateEvent.timestamp
+                    wasSupersededAbsent = lateEvent.supersededAbsent === true
+                }
+                await classService.clearStudentLate(classId, studentId)
+                student.activeStates.lateMs = null
+                student.lastEvent = null
+
+                pushUndo(async () => {
+                    try {
+                        await classService.setStudentLate(classId, studentId, originalDuration)
+                        student.activeStates.isAbsent = false
+                        student.activeStates.lateMs = originalDuration
+                        if (wasDeleted) {
+                            await eventService.logEvent({
+                                studentId,
+                                classId,
+                                code: 'l',
+                                duration: originalDuration,
+                                testDay: isTestDay.value,
+                                supersededAbsent: wasSupersededAbsent,
+                                _overrideTimestamp: originalTimestamp
+                            })
+                        }
+                    } catch (err) {
+                        console.error('Undo clear late failed:', err)
+                        const { alert } = useMessage()
+                        await alert('Failed to undo attendance change.')
+                    }
+                })
+                return
+            }
+
             const periodStart = activeClass.value.periodStartTime
             if (!periodStart) {
                 const { alert } = useMessage()
@@ -1344,7 +1425,6 @@ async function reconcileStaleTrips() {
     const reconciled = new Set()
     const now = new Date()
     const todayStr = now.toISOString().slice(0, 10)
-    const currentMinutes = now.getHours() * 60 + now.getMinutes()
     const startTimes = periodStartTimes.value || {}
 
     // Convert period start times to minutes of the day
@@ -1362,42 +1442,39 @@ async function reconcileStaleTrips() {
         const classStartMins = periodMinutes[classPeriod]
         if (classStartMins === undefined) continue
 
-        // Determine the class end time in minutes
-        let classEndMins = classStartMins + 75 // Default 75 minutes fallback
         const nextPeriodNum = sortedPeriods.find(p => p > classPeriod)
-        if (nextPeriodNum && periodMinutes[nextPeriodNum] !== undefined) {
-            classEndMins = periodMinutes[nextPeriodNum]
-        }
-
-        // Check if the class period has ended today
-        const hasEnded = currentMinutes >= classEndMins
         const elapsedSinceCheckOutLimit = 90 * 60 * 1000 // 90 mins
 
         let classNeedsSave = false
         for (const [studentId, student] of Object.entries(cls.students || {})) {
             const states = student.activeStates
-            if (states?.isOut && states.outTime && states.outTime.startsWith(todayStr)) {
+            if (states?.isOut && states.outTime) {
                 const outDate = new Date(states.outTime)
+                const isDifferentDay = !states.outTime.startsWith(todayStr)
                 const elapsedMs = now.getTime() - outDate.getTime()
-                const isStale = hasEnded || elapsedMs > elapsedSinceCheckOutLimit
+
+                // Calculate periodEndTime for the day of check-out
+                let periodEndTime = null
+                if (nextPeriodNum && startTimes[nextPeriodNum]) {
+                    const [h, m] = startTimes[nextPeriodNum].split(':').map(Number)
+                    const d = new Date(states.outTime)
+                    d.setHours(h, m, 0, 0)
+                    periodEndTime = d
+                } else {
+                    // Last period of the day: end time is class start time + 75 minutes
+                    const [h, m] = (cls.periodStartTime || '08:00').split(':').map(Number)
+                    const d = new Date(states.outTime)
+                    d.setHours(h, m, 0, 0)
+                    d.setTime(d.getTime() + 75 * 60 * 1000)
+                    periodEndTime = d
+                }
+
+                // A trip is only stale due to period end if checkout occurred *during* the class period and that period has since ended
+                const periodHasEndedSinceCheckout = outDate.getTime() < periodEndTime.getTime() && now.getTime() >= periodEndTime.getTime()
+
+                const isStale = isDifferentDay || periodHasEndedSinceCheckout || elapsedMs > elapsedSinceCheckOutLimit
 
                 if (isStale) {
-                    // Calculate periodEndTime
-                    let periodEndTime = null
-                    if (nextPeriodNum && startTimes[nextPeriodNum]) {
-                        const [h, m] = startTimes[nextPeriodNum].split(':').map(Number)
-                        const d = new Date(states.outTime)
-                        d.setHours(h, m, 0, 0)
-                        periodEndTime = d
-                    } else {
-                        // Last period of the day: end time is class start time + 75 minutes
-                        const [h, m] = (cls.periodStartTime || '08:00').split(':').map(Number)
-                        const d = new Date(states.outTime)
-                        d.setHours(h, m, 0, 0)
-                        d.setTime(d.getTime() + 75 * 60 * 1000)
-                        periodEndTime = d
-                    }
-
                     // Calculate duration
                     let durationMs = periodEndTime.getTime() - outDate.getTime()
                     if (durationMs < 0) durationMs = 5 * 60 * 1000 // Min fallback
@@ -1853,6 +1930,11 @@ async function updateAttendanceConfig(mode, gracePeriod) {
     await settingsService.saveAttendanceConfig({ mode, gracePeriod })
     attendanceMode.value = mode
     latenessGracePeriod.value = gracePeriod
+    if (mode === 'rfid') {
+        for (const cls of classList.value) {
+            await initializeRfidAttendance(cls.classId)
+        }
+    }
 }
 
 /**
@@ -2133,7 +2215,7 @@ export function useClassroom() {
     }
 }
 
-/** Midnight reset scheduler for isTestDay */
+/** Midnight reset scheduler for isTestDay and stale states */
 function _scheduleMidnightReset() {
     if (midnightTimer) clearTimeout(midnightTimer)
     
@@ -2141,8 +2223,15 @@ function _scheduleMidnightReset() {
     const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0)
     const msToMidnight = midnight.getTime() - now.getTime()
 
-    midnightTimer = setTimeout(() => {
+    midnightTimer = setTimeout(async () => {
         isTestDay.value = false
+        if (activeClass.value) {
+            try {
+                await _activateClass(activeClass.value)
+            } catch (err) {
+                console.error('Midnight active class refresh failed:', err)
+            }
+        }
         _scheduleMidnightReset()
     }, msToMidnight)
 }
