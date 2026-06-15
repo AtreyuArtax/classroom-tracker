@@ -93,6 +93,12 @@
       <!-- ── Body (hidden when minimized) ──────────────────────────── -->
       <div class="qr-scanner__body" v-show="!isMinimized || isPiP">
         
+        <!-- Connection warning banner -->
+        <div v-if="isConnectionBroken" class="qr-scanner__connection-warning">
+          <AlertTriangle :size="16" />
+          <span>Connection Lost! Move scanner / use Local Mode.</span>
+        </div>
+
         <!-- Currently Out Students List -->
         <div v-if="globalStudentsOut.length > 0" class="qr-scanner__out-list">
           <div class="qr-scanner__out-title">
@@ -124,9 +130,9 @@
 
           <!-- RFID Compact Listening View -->
           <div v-if="scannerMode === 'rfid' && !cooldownActive" class="qr-scanner__rfid-status">
-            <div class="qr-scanner__rfid-listening">
+            <div class="qr-scanner__rfid-listening" :class="{ 'qr-scanner__rfid-listening--cloud': cloudModeEnabled }">
               <div class="qr-scanner__rfid-dot"></div>
-              <span>RFID Listening...</span>
+              <span>{{ cloudModeEnabled ? 'Cloud RFID Listening...' : 'RFID Listening...' }}</span>
             </div>
           </div>
 
@@ -187,10 +193,11 @@ import { QrCode, X, ExternalLink, Minimize2, CameraOff, Check, Camera, AlertTria
 import { useClassroom } from '../composables/useClassroom.js'
 import { useKeyboardWedge } from '../composables/useKeyboardWedge.js'
 import { useMessage } from '../composables/useMessage.js'
+import { supabase } from '../utils/supabase.js'
 
 const emit = defineEmits(['close'])
 
-const { students, logToggleEvent, studentsOut, globalStudentsOut, maxStudentsOut, classList, activeClass, periodStartTimes, reconcileStaleTrips, attendanceMode, handleRfidAttendanceScan, initializeRfidAttendance } = useClassroom()
+const { students, logToggleEvent, studentsOut, globalStudentsOut, maxStudentsOut, classList, activeClass, periodStartTimes, reconcileStaleTrips, attendanceMode, handleRfidAttendanceScan, initializeRfidAttendance, cloudModeEnabled, userCode } = useClassroom()
 const { alert } = useMessage()
 
 // ── UI State ──────────────────────────────────────────────────────────────────
@@ -204,15 +211,34 @@ const lastScannedStatus = ref('')
 const cameras        = ref([])
 const selectedCamera = ref(null)
 
+// ── Supabase Realtime & Network Status ─────────────────────────────────────────
+const supabaseStatus = ref('connecting')
+const isOffline = ref(!navigator.onLine)
+const updateNetworkStatus = () => { isOffline.value = !navigator.onLine }
+const isConnectionBroken = computed(() => isOffline.value || (cloudModeEnabled.value && supabaseStatus.value === 'offline'))
+
+watch(isConnectionBroken, (broken) => {
+  if (broken && cloudModeEnabled.value) {
+    alert('Cloud Connection Lost. Please check your network/wifi connection or verify your Supabase service hosting.', 'Connection Warning')
+  }
+})
+
 // ── Scanner Mode ─────────────────────────────────────────────────────────────
 const scannerMode = ref(localStorage.getItem('scanner-mode') || 'qr')
 watch(scannerMode, (newMode) => {
   localStorage.setItem('scanner-mode', newMode)
   if (newMode === 'rfid') {
     stopScanner()
-    rfidWedge.start()
+    if (cloudModeEnabled.value) {
+      rfidWedge.stop()
+      startSupabaseListener()
+    } else {
+      stopSupabaseListener()
+      rfidWedge.start()
+    }
   } else {
     rfidWedge.stop()
+    stopSupabaseListener()
   }
 })
 
@@ -495,6 +521,56 @@ function playBeep(isErr = false) {
   osc.stop(audioCtx.currentTime + dur)
 }
 
+// ── Supabase Realtime Listener ────────────────────────────────────────────────
+let scanSubscription = null
+
+const startSupabaseListener = () => {
+  if (scanSubscription || !supabase) return
+  
+  supabaseStatus.value = 'connecting'
+  scanSubscription = supabase
+    .channel('dashboard-scans')
+    .on(
+      'postgres_changes',
+      {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'incoming_scans',
+        filter: `user_code=eq.${userCode.value}`
+      },
+      async (payload) => {
+        if (payload.new && payload.new.rfid_string) {
+          const result = await handleScan(payload.new.rfid_string, true)
+          if (result) {
+            await supabase
+              .from('incoming_scans')
+              .update({
+                status: result.success ? 'success' : 'error',
+                scan_action: result.action,
+                message: result.message,
+                processed_at: new Date().toISOString()
+              })
+              .eq('id', payload.new.id)
+          }
+        }
+      }
+    )
+    .subscribe((status) => {
+      if (status === 'SUBSCRIBED') {
+        supabaseStatus.value = 'connected'
+      } else if (status === 'CLOSED' || status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+        supabaseStatus.value = 'offline'
+      }
+    })
+}
+
+const stopSupabaseListener = () => {
+  if (scanSubscription && supabase) {
+    supabase.removeChannel(scanSubscription)
+    scanSubscription = null
+  }
+}
+
 // ── Scan Handling ─────────────────────────────────────────────────────────────
 const studentCooldowns = new Map()
 const MIN_TRIP_MS = 15000 // 15 seconds minimum out time
@@ -534,14 +610,14 @@ const handleScan = async (scannedText, isRFID = false) => {
         isError.value = false
       }
     }, 2000)
-    return
+    return { success: false, action: 'error', message: resolved.error === 'student_not_in_class' ? 'Not in class' : 'Unknown Card' }
   }
 
   const { studentId, classId, type, class: targetClass } = resolved
   const lastTime = studentCooldowns.get(studentId) || 0
   
   // 2. Prevent "Rapid Double-Tap" (Bounce)
-  if (now - lastTime < RECENT_TAP_LOCKOUT_MS) return
+  if (now - lastTime < RECENT_TAP_LOCKOUT_MS) return null
 
   const student = targetClass.students[studentId]
   lastScannedName.value = `${student.firstName} ${student.lastName}`
@@ -559,7 +635,7 @@ const handleScan = async (scannedText, isRFID = false) => {
         isError.value = false
       }
     }, 2000)
-    return
+    return { success: false, action: 'error', message: type === 'signout_blocked_over' ? 'Class is Over' : 'Class not started' }
   }
 
   // ── RFID Attendance Integration: First scan checks student in (Present/Late) ──
@@ -576,7 +652,7 @@ const handleScan = async (scannedText, isRFID = false) => {
       playBeep(true)
       cooldownActive.value = true
       setTimeout(() => { cooldownActive.value = false; isError.value = false }, 2000)
-      return
+      return { success: false, action: 'error', message: result?.statusText || 'Attendance Error' }
     }
     lastScannedStatus.value = `${result.statusText} (${targetClass.name})`
     
@@ -588,7 +664,7 @@ const handleScan = async (scannedText, isRFID = false) => {
         isError.value = false
       }
     }, 3000)
-    return
+    return { success: true, action: 'checkin', message: result.statusText || 'Marked Present' }
   }
 
   const isCurrentlyOut = student.activeStates?.isOut
@@ -608,7 +684,7 @@ const handleScan = async (scannedText, isRFID = false) => {
           isError.value = false
         }
       }, 2000)
-      return
+      return { success: false, action: 'error', message: 'Too Soon!' }
     }
   }
 
@@ -616,15 +692,23 @@ const handleScan = async (scannedText, isRFID = false) => {
   const targetClassStudentsOut = Object.values(targetClass.students)
     .filter(s => s.activeStates?.isOut === true)
 
+  let success = false
+  let action = 'error'
+  let message = ''
+
   if (!isCurrentlyOut && maxStudentsOut.value > 0 && targetClassStudentsOut.length >= maxStudentsOut.value) {
     isError.value = true
     lastScannedStatus.value = `Limit Reached (${targetClass.name})`
     playBeep(true)
+    message = 'Limit Reached'
   } else {
     isError.value = false
     lastScannedStatus.value = isCurrentlyOut ? `IN (${targetClass.name})` : `OUT (${targetClass.name})`
     playBeep(false)
     await logToggleEvent(studentId, 'w', classId)
+    success = true
+    action = isCurrentlyOut ? 'washroom_in' : 'washroom_out'
+    message = isCurrentlyOut ? 'Returned' : 'Washroom Out'
   }
 
   studentCooldowns.set(studentId, now)
@@ -635,6 +719,7 @@ const handleScan = async (scannedText, isRFID = false) => {
       isError.value = false
     }
   }, 3000) // General feedback duration
+  return { success, action, message }
 }
 
 const handleStartByMode = async () => {
@@ -801,19 +886,28 @@ onMounted(() => {
   window.addEventListener('pointermove', onDrag, { passive: true })
   window.addEventListener('pointerup',   endDrag)
   window.addEventListener('classroom-tracker-scan', handleExtensionScan)
+  window.addEventListener('online', updateNetworkStatus)
+  window.addEventListener('offline', updateNetworkStatus)
   
   if (scannerMode.value === 'rfid') {
-    rfidWedge.start()
+    if (cloudModeEnabled.value) {
+      startSupabaseListener()
+    } else {
+      rfidWedge.start()
+    }
   }
 })
 
 onUnmounted(async () => {
   await stopScanner()
   rfidWedge.stop()
+  stopSupabaseListener()
   if (pipWindowObj) pipWindowObj.close()
   window.removeEventListener('pointermove', onDrag)
   window.removeEventListener('pointerup',   endDrag)
   window.removeEventListener('classroom-tracker-scan', handleExtensionScan)
+  window.removeEventListener('online', updateNetworkStatus)
+  window.removeEventListener('offline', updateNetworkStatus)
 })
 </script>
 
@@ -1322,6 +1416,27 @@ onUnmounted(async () => {
   font-size:     0.85rem;
 }
 .qr-scanner__stop-btn:hover { opacity: 0.88; }
+
+.qr-scanner__connection-warning {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 59, 48, 0.1);
+  color: var(--state-out);
+  border: 1px solid rgba(255, 59, 48, 0.2);
+  border-radius: var(--radius-md);
+  padding: 8px 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+.qr-scanner__rfid-listening--cloud {
+  color: var(--state-success) !important;
+}
+.qr-scanner__rfid-listening--cloud .qr-scanner__rfid-dot {
+  background: var(--state-success) !important;
+  box-shadow: 0 0 10px var(--state-success) !important;
+}
 
 /* ── Animations ────────────────────────────────────────────── */
 @keyframes fadeIn {

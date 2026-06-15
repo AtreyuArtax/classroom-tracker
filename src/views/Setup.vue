@@ -595,6 +595,22 @@
           </div>
         </div>
 
+        <!-- Supabase Cloud Settings -->
+        <div class="setup__card">
+          <h2 class="setup__card-title">Supabase Cloud Settings</h2>
+          <p class="setup__hint">Enable Cloud Mode to scan cards on a door device and receive updates here.</p>
+          <div class="setup__form" style="display: flex; flex-direction: column; gap: 12px; margin-top: 10px;">
+            <label class="setup__label" style="display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none;">
+              <input type="checkbox" v-model="localCloudMode" @change="saveCloudConfig" style="cursor: pointer;" />
+              <span>Enable Cloud Mode (Two-Device WebSocket Sync)</span>
+            </label>
+            <label class="setup__label" v-if="localCloudMode">
+              User Code (Room PIN / Teacher ID)
+              <input type="text" v-model="localUserCode" placeholder="e.g. ROOM-101" class="setup__input" @blur="saveCloudConfig" @keyup.enter="saveCloudConfig" />
+            </label>
+          </div>
+        </div>
+
         <!-- Grade Buckets (Grading Levels) -->
         <GradeBucketsSettings />
 
@@ -1115,8 +1131,19 @@ const {
   academicTerms,
   termOptions,
   periodOptions,
-  nonSchoolDays
+  nonSchoolDays,
+  cloudModeEnabled,
+  userCode,
+  updateCloudConfig
 } = useClassroom()
+
+const localCloudMode = ref(cloudModeEnabled.value)
+const localUserCode = ref(userCode.value)
+watch(cloudModeEnabled, (v) => { localCloudMode.value = v }, { immediate: true })
+watch(userCode, (v) => { localUserCode.value = v }, { immediate: true })
+async function saveCloudConfig() {
+  await updateCloudConfig(localCloudMode.value, localUserCode.value.trim().toUpperCase())
+}
 
 const isUnsynced = eventService.hasUnsyncedChanges
 const isArchivedPanelVisible = ref(false)
