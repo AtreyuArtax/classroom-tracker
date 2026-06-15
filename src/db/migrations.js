@@ -6,7 +6,7 @@
  * representing the full database state.
  */
 
-export const CURRENT_SCHEMA = 26
+export const CURRENT_SCHEMA = 27
 
 /**
  * Migrates a backup data object to the current schema version (25).
@@ -357,6 +357,17 @@ export function migrateData(data) {
       }
     }
     version = 26
+  }
+
+  // ── Version 27 (Instructional Days) ───────────────────────────────
+  if (version < 27) {
+    if (migrated.settings && migrated.settings.academicTerms) {
+      migrated.settings.academicTerms = migrated.settings.academicTerms.map(term => ({
+        ...term,
+        instructionalDays: term.semester === '2' ? 93 : (term.semester === '1' ? 94 : 187)
+      }))
+    }
+    version = 27
   }
 
   migrated.schemaVersion = currentVersion
