@@ -90,7 +90,7 @@ export function getDB() {
       if (oldVersion === 0) {
         transaction.objectStore('settings').put(
           {
-            schemaVersion: 26,
+            schemaVersion: 27,
             gridSize: { rows: 6, cols: 6 },
             currentYear: getCurrentSchoolYear(),
             currentSemester: getCurrentSemester(),
