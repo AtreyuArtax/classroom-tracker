@@ -220,6 +220,10 @@ watch(
   () => props.student?.lastEvent?.ts,
   (ts) => {
     if (!ts) return
+    // Only flash if the event occurred within the last 3 seconds
+    // to prevent stale events from flashing when switching classes / reusing components
+    if (Date.now() - ts > 3000) return
+    
     flashing.value = true
     clearTimeout(_flashTimeout)
     _flashTimeout = setTimeout(() => { flashing.value = false }, 700)
