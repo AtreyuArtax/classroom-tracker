@@ -1950,6 +1950,48 @@ async function updateCloudConfig(enabled, code) {
 }
 
 /**
+ * Auto-generates a unique, short TV-pairing-style user code.
+ * Excludes confusing characters (0, O, 1, I, L) and checks uniqueness in Supabase if online.
+ */
+async function generateUniqueUserCode() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+    let unique = false
+    let code = ''
+    
+    while (!unique) {
+        code = ''
+        for (let i = 0; i < 6; i++) {
+            if (i === 3) code += '-'
+            code += chars.charAt(Math.floor(Math.random() * chars.length))
+        }
+        
+        if (!supabase) {
+            unique = true
+            break
+        }
+        
+        try {
+            const { data, error } = await supabase
+                .from('room_status')
+                .select('user_code')
+                .eq('user_code', code)
+            
+            if (error) {
+                console.warn('Error checking user_code uniqueness in Supabase:', error)
+                unique = true
+            } else if (!data || data.length === 0) {
+                unique = true
+            }
+        } catch (err) {
+            console.warn('Failed to check code uniqueness, assuming unique:', err)
+            unique = true
+        }
+    }
+    
+    return code
+}
+
+/**
  * Marks all students in a class present for today by superseding today's 'a' and 'l' events
  * and clearing the activeState isAbsent and lateMs fields.
  *
@@ -2211,7 +2253,8 @@ export function useClassroom() {
         triggerActiveClass: () => triggerRef(activeClass),
         cloudModeEnabled,
         userCode,
-        updateCloudConfig
+        updateCloudConfig,
+        generateUniqueUserCode
     }
 }
 

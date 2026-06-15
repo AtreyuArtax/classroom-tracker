@@ -595,7 +595,15 @@
               
               <label class="setup__label" v-if="localCloudMode" style="display: flex; flex-direction: column; gap: 6px; margin: 4px 0 0 0;">
                 User Code (Room PIN / Teacher ID)
-                <input type="text" v-model="localUserCode" placeholder="e.g. ROOM-101" class="setup__input" style="margin: 0;" @blur="saveCloudConfig" @keyup.enter="saveCloudConfig" />
+                <div style="display: flex; gap: 8px; align-items: center; width: 100%;">
+                  <input type="text" v-model="localUserCode" readonly class="setup__input" style="margin: 0; flex-grow: 1; cursor: default;" />
+                  <button type="button" class="setup__btn-ghost" @click="regenerateUserCode" style="min-height: 44px; padding: 0 16px; margin: 0; white-space: nowrap; display: flex; align-items: center; gap: 6px;" title="Generate random unique code">
+                    <RefreshCcw :size="14" /> Generate
+                  </button>
+                </div>
+                <span style="font-size: 0.75rem; color: var(--text-secondary); font-weight: normal; margin-top: 2px; line-height: 1.3;">
+                  We recommend using a unique auto-generated code (e.g. <strong>B7F-K9X</strong>) to prevent conflicts with other classrooms.
+                </span>
               </label>
 
               <div class="setup__switch-container" style="margin: 16px 0 0 0;">
@@ -1164,6 +1172,7 @@ const {
   cloudModeEnabled,
   userCode,
   updateCloudConfig,
+  generateUniqueUserCode,
   autoStartRFID
 } = useClassroom()
 
@@ -1171,8 +1180,17 @@ const localCloudMode = ref(cloudModeEnabled.value)
 const localUserCode = ref(userCode.value)
 watch(cloudModeEnabled, (v) => { localCloudMode.value = v }, { immediate: true })
 watch(userCode, (v) => { localUserCode.value = v }, { immediate: true })
+
 async function saveCloudConfig() {
+  if (localCloudMode.value && !localUserCode.value.trim()) {
+    localUserCode.value = await generateUniqueUserCode()
+  }
   await updateCloudConfig(localCloudMode.value, localUserCode.value.trim().toUpperCase())
+}
+
+async function regenerateUserCode() {
+  localUserCode.value = await generateUniqueUserCode()
+  await saveCloudConfig()
 }
 
 const isUnsynced = eventService.hasUnsyncedChanges
