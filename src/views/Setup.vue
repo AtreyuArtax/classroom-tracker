@@ -574,7 +574,15 @@
             
             <!-- Right Column: Cloud Settings -->
             <div class="setup__settings-col">
-              <h3 class="setup__card-subtitle" style="margin-top: 0; margin-bottom: 4px;">Supabase Two-Device Sync</h3>
+              <h3 class="setup__card-subtitle" style="margin-top: 0; margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">
+                Supabase Two-Device Sync
+                <span class="setup__tooltip-container" aria-label="Database Inactivity Warning">
+                  <Info :size="14" class="setup__info-icon" />
+                  <span class="setup__tooltip-text">
+                    <strong>Inactivity Note:</strong> Supabase pauses free databases after 7 days of idle time (like Summer/Winter breaks). If it stops working, simply log into your Supabase Dashboard and click "Restore Project" to wake it up!
+                  </span>
+                </span>
+              </h3>
               <p class="setup__hint" style="margin: 0; font-size: 0.8rem; line-height: 1.4;">Enable Cloud Mode to scan cards on a door device and receive updates here.</p>
               
               <div class="setup__switch-container" style="margin: 8px 0 0 0;">
@@ -1089,7 +1097,7 @@
 
 import { ref, reactive, computed, watch, onMounted, nextTick, onUnmounted } from 'vue'
 import Papa from 'papaparse'
-import { Archive, ChevronDown, ChevronUp, FolderOpen, Trash2, FileText, Pencil, Download, Database, Cloud, Settings2, Plus, PlusCircle, X, Save, FileUp, FileDown, GraduationCap, ArrowLeft, Zap, LayoutDashboard, Settings, QrCode, Printer, RefreshCcw, FileSpreadsheet, DatabaseIcon, AlertTriangle, ShieldCheck, Search, CalendarDays, UserMinus, UserCheck, Rss } from 'lucide-vue-next'
+import { Archive, ChevronDown, ChevronUp, FolderOpen, Trash2, FileText, Pencil, Download, Database, Cloud, Settings2, Plus, PlusCircle, X, Save, FileUp, FileDown, GraduationCap, ArrowLeft, Zap, LayoutDashboard, Settings, QrCode, Printer, RefreshCcw, FileSpreadsheet, DatabaseIcon, AlertTriangle, ShieldCheck, Search, CalendarDays, UserMinus, UserCheck, Rss, Info } from 'lucide-vue-next'
 import QRCode from 'qrcode'
 import { exportGradebookToExcel } from '../db/exportService.js'
 import { resolveIcon } from '../utils/icons.js'
@@ -2838,6 +2846,63 @@ function formatDate(iso) {
   font-weight: 600;
   color: var(--text);
   font-size: 0.9rem;
+}
+
+/* ── Tooltip ────────────────────────────────────────────────────── */
+.setup__tooltip-container {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  cursor: help;
+  color: var(--text-secondary);
+}
+
+.setup__tooltip-container:hover {
+  color: var(--primary);
+}
+
+.setup__tooltip-text {
+  visibility: hidden;
+  width: 260px;
+  background-color: #1c1c1e;
+  color: #ffffff;
+  text-align: left;
+  border-radius: var(--radius-md);
+  padding: 12px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-md);
+  font-size: 0.78rem;
+  line-height: 1.4;
+  font-weight: normal;
+  text-transform: none;
+  letter-spacing: normal;
+  
+  /* Positioning */
+  position: absolute;
+  z-index: 100;
+  bottom: 125%;
+  left: 50%;
+  transform: translateX(-50%);
+  
+  /* Fade-in */
+  opacity: 0;
+  transition: opacity 0.2s ease, visibility 0.2s ease;
+}
+
+.setup__tooltip-container:hover .setup__tooltip-text {
+  visibility: visible;
+  opacity: 1;
+}
+
+.setup__tooltip-text::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: var(--border) transparent transparent transparent;
 }
 
 .setup__card--accent {

@@ -194,6 +194,7 @@ import { useClassroom } from '../composables/useClassroom.js'
 import { useKeyboardWedge } from '../composables/useKeyboardWedge.js'
 import { useMessage } from '../composables/useMessage.js'
 import { supabase } from '../utils/supabase.js'
+import { isSyncActive } from '../db/eventService.js'
 
 const emit = defineEmits(['close'])
 
@@ -417,6 +418,19 @@ let pipWindowObj   = null
 const dragPos = ref({ x: null, y: null })
 const expandedPos = ref({ x: null, y: null })
 const minimizedPos = ref({ x: 165, y: 8 }) // Default 'Dock' near title
+const hasCustomMinimizedPos = ref(false)
+
+const checkSyncOffset = async () => {
+  const isSyncLinked = await isSyncActive()
+  const targetX = isSyncLinked ? 205 : 165
+  if (!hasCustomMinimizedPos.value) {
+    minimizedPos.value.x = targetX
+    if (isMinimized.value) {
+      dragPos.value.x = targetX
+    }
+  }
+}
+
 let isDragging    = false
 let hasDragged    = false // To distinguish click from drag
 let dragStartX    = 0
@@ -480,6 +494,9 @@ function onDrag(e) {
   // Movement threshold to count as a 'drag' (3 pixels)
   if (!hasDragged && (Math.abs(e.clientX - dragStartX) > 3 || Math.abs(e.clientY - dragStartY) > 3)) {
     hasDragged = true
+    if (isMinimized.value) {
+      hasCustomMinimizedPos.value = true
+    }
   }
 
   const mount = document.getElementById('qr-scanner-mount')
@@ -882,12 +899,15 @@ const handleExtensionScan = (e) => {
   handleScan(code, true)
 }
 
-onMounted(() => {
+onMounted(async () => {
   window.addEventListener('pointermove', onDrag, { passive: true })
   window.addEventListener('pointerup',   endDrag)
   window.addEventListener('classroom-tracker-scan', handleExtensionScan)
   window.addEventListener('online', updateNetworkStatus)
   window.addEventListener('offline', updateNetworkStatus)
+  window.addEventListener('backup-linked', checkSyncOffset)
+
+  await checkSyncOffset()
   
   if (scannerMode.value === 'rfid') {
     if (cloudModeEnabled.value) {
@@ -908,6 +928,7 @@ onUnmounted(async () => {
   window.removeEventListener('classroom-tracker-scan', handleExtensionScan)
   window.removeEventListener('online', updateNetworkStatus)
   window.removeEventListener('offline', updateNetworkStatus)
+  window.removeEventListener('backup-linked', checkSyncOffset)
 })
 </script>
 
