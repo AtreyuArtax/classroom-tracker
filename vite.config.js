@@ -2,6 +2,8 @@ import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import { VitePWA } from 'vite-plugin-pwa'
 
+const basePath = process.env.VITE_BASE_URL || '/classroom-tracker/'
+
 /**
  * vite.config.js
  *
@@ -71,7 +73,7 @@ export default defineConfig({
                 ],
 
                 // Never let the service worker skip routes to IndexedDB or manifest
-                navigateFallback: '/classroom-tracker/index.html',
+                navigateFallback: `${basePath}index.html`,
                 navigateFallbackDenylist: [/^\/api/],
 
                 // Clean up old caches on activation
@@ -82,8 +84,8 @@ export default defineConfig({
         }),
     ],
 
-    // Base path — set to match the GitHub Pages repository name
-    base: '/classroom-tracker/',
+    // Base path — set to match the GitHub Pages repository name or dynamic environment
+    base: basePath,
 
     build: {
         // Suppress warning for large chunks as we are managing them via manualChunks

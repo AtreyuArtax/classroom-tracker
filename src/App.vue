@@ -2,7 +2,7 @@
   <div class="app-shell">
 
     <!-- ── Navigation bar ─────────────────────────────────────────────── -->
-    <nav class="app-nav" role="navigation" aria-label="Main navigation">
+    <nav v-if="currentView !== 'ScanStation'" class="app-nav" role="navigation" aria-label="Main navigation">
       <div class="app-nav__brand">
         <ClipboardList :size="24" class="app-nav__logo" />
         <span class="app-nav__title">Class Tracker</span>
@@ -87,6 +87,7 @@ const Dashboard = defineAsyncComponent(() => import('./views/Dashboard.vue'))
 const Setup     = defineAsyncComponent(() => import('./views/Setup.vue'))
 const Reports   = defineAsyncComponent(() => import('./views/Reports.vue'))
 const Grades    = defineAsyncComponent(() => import('./views/Grades.vue'))
+const ScanStation = defineAsyncComponent(() => import('./views/ScanStation.vue'))
 
 import { useClassroom } from './composables/useClassroom.js'
 import AddAssessmentModal from './components/dossier/AddAssessmentModal.vue'
@@ -102,7 +103,10 @@ const isUnsynced = computed(() => hasUnsyncedChanges.value)
 
 // ─── navigation ──────────────────────────────────────────────────────────────
 
-const currentView = ref('Dashboard')
+const queryParams = new URLSearchParams(window.location.search)
+const normalizedPath = window.location.pathname.replace(/\/$/, '')
+const isScanRoute = normalizedPath.endsWith('/scan') || queryParams.get('view') === 'scan'
+const currentView = ref(isScanRoute ? 'ScanStation' : 'Dashboard')
 const viewParams  = ref({})
 
 const views = [
@@ -112,7 +116,7 @@ const views = [
   { id: 'Setup',     label: 'Setup',     icon: Settings },
 ]
 
-const viewComponents = { Dashboard, Setup, Reports, Grades }
+const viewComponents = { Dashboard, Setup, Reports, Grades, ScanStation }
 const currentComponent = computed(() => viewComponents[currentView.value])
 
 function navigateTo(viewId, params = {}) {

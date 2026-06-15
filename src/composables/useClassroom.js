@@ -21,6 +21,7 @@ import { toMinutes } from '../db/eventService.js'
 import * as settingsService from '../db/settingsService.js'
 import { useUndo } from './useUndo.js'
 import { useMessage } from './useMessage.js'
+import { supabase } from '../utils/supabase.js'
 
 const { push: pushUndo, clear: clearUndo } = useUndo()
 let midnightTimer = null
@@ -84,6 +85,9 @@ const maxStudentsOut = ref(parseInt(localStorage.getItem('maxStudentsOut')) || 0
 watch(selectedYear, (val) => localStorage.setItem('selectedYear', val))
 watch(selectedSemester, (val) => localStorage.setItem('selectedSemester', val))
 watch(maxStudentsOut, (val) => localStorage.setItem('maxStudentsOut', val.toString()))
+
+const cloudModeEnabled = ref(false)
+const userCode = ref('')
 
 // ─── computed ─────────────────────────────────────────────────────────────────
 
@@ -312,6 +316,23 @@ const globalStudentsOut = computed(() => {
     return list.sort((a, b) => a.lastName.localeCompare(b.lastName))
 })
 
+watch([globalStudentsOut, maxStudentsOut], async ([list, maxLimit]) => {
+    if (cloudModeEnabled.value && userCode.value && supabase) {
+        try {
+            await supabase
+                .from('room_status')
+                .upsert({
+                    user_code: userCode.value,
+                    active_students_out: list.length,
+                    max_students_out: maxLimit,
+                    updated_at: new Date().toISOString()
+                })
+        } catch (err) {
+            console.error('Failed to sync room status to Supabase:', err)
+        }
+    }
+}, { deep: true, immediate: true })
+
 // ─── suggestion dismissal tracking ────────────────────────────────────────────
 
 // Map of date string -> array of classIds dismissed
@@ -473,6 +494,8 @@ async function init() {
     teacherName.value = settings.teacherName || ''
     attendanceMode.value = settings.attendanceMode || 'natural'
     latenessGracePeriod.value = settings.latenessGracePeriod !== undefined ? settings.latenessGracePeriod : 5
+    cloudModeEnabled.value = settings.cloudModeEnabled || false
+    userCode.value = settings.userCode || ''
 
     // ── Smart Heal: Period Start Times Migration ──
     let periodTimesChanged = false
@@ -1826,6 +1849,18 @@ async function updateAttendanceConfig(mode, gracePeriod) {
 }
 
 /**
+ * Update the global cloud configuration.
+ */
+async function updateCloudConfig(enabled, code) {
+    const settings = await settingsService.getSettings()
+    settings.cloudModeEnabled = enabled
+    settings.userCode = code
+    await settingsService.saveSettings(settings)
+    cloudModeEnabled.value = enabled
+    userCode.value = code
+}
+
+/**
  * Marks all students in a class present for today by superseding today's 'a' and 'l' events
  * and clearing the activeState isAbsent and lateMs fields.
  *
@@ -2083,7 +2118,10 @@ export function useClassroom() {
         getTermRange,
         termOptions,
         periodOptions: periodOptionsList,
-        triggerActiveClass: () => triggerRef(activeClass)
+        triggerActiveClass: () => triggerRef(activeClass),
+        cloudModeEnabled,
+        userCode,
+        updateCloudConfig
     }
 }
 
