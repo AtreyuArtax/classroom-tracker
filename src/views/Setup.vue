@@ -21,6 +21,11 @@
           </select>
         </div>
       </div>
+      <div class="setup__header-right">
+        <button class="setup__btn-ghost" style="min-height: 38px; padding: 0 16px;" @click="isHelpModalOpen = true">
+          <HelpCircle :size="16" /> User Guide
+        </button>
+      </div>
     </div>
 
     <!-- ── Page tabs ─────────────────────────────────────────────── -->
@@ -76,6 +81,21 @@
               @change="onFileSelected"
             />
           </label>
+          
+          <div class="setup__csv-help-container">
+            <button 
+              type="button" 
+              class="setup__csv-help-toggle" 
+              @click="isCsvHelpOpen = !isCsvHelpOpen"
+            >
+              <Info :size="14" />
+              <span>{{ isCsvHelpOpen ? 'Hide CSV Format Guide' : 'Show Roster Format & PowerSchool CSV Help' }}</span>
+              <component :is="isCsvHelpOpen ? ChevronUp : ChevronDown" :size="14" />
+            </button>
+            <Transition name="csv-fade">
+              <CsvHelpGuide v-if="isCsvHelpOpen" />
+            </Transition>
+          </div>
         </div>
 
         <!-- Current Classes List -->
@@ -1103,6 +1123,9 @@
         </div>
       </div>
     </BaseModal>
+
+    <!-- User Guide Modal -->
+    <HelpModal :show="isHelpModalOpen" @close="isHelpModalOpen = false" />
   </div>
 </template>
 
@@ -1122,7 +1145,7 @@
 
 import { ref, reactive, computed, watch, onMounted, nextTick } from 'vue'
 import Papa from 'papaparse'
-import { Archive, ChevronDown, ChevronUp, FolderOpen, Trash2, Pencil, Download, Database, Cloud, Settings2, Plus, PlusCircle, X, Save, GraduationCap, ArrowLeft, Zap, LayoutDashboard, Settings, QrCode, Printer, RefreshCcw, FileSpreadsheet, DatabaseIcon, AlertTriangle, ShieldCheck, Search, CalendarDays, UserMinus, UserCheck, Rss, Info, ExternalLink, Copy, Check } from 'lucide-vue-next'
+import { Archive, ChevronDown, ChevronUp, FolderOpen, Trash2, Pencil, Download, Database, Cloud, Settings2, Plus, PlusCircle, X, Save, GraduationCap, ArrowLeft, Zap, LayoutDashboard, Settings, QrCode, Printer, RefreshCcw, FileSpreadsheet, DatabaseIcon, AlertTriangle, ShieldCheck, Search, CalendarDays, UserMinus, UserCheck, Rss, Info, ExternalLink, Copy, Check, HelpCircle } from 'lucide-vue-next'
 import QRCode from 'qrcode'
 import { exportGradebookToExcel } from '../db/exportService.js'
 import { resolveIcon } from '../utils/icons.js'
@@ -1139,6 +1162,8 @@ import BaseModal from '../components/BaseModal.vue'
 import GradeBucketsSettings from '../components/setup/GradeBucketsSettings.vue'
 import CalendarSettings from '../components/setup/CalendarSettings.vue'
 import { useKeyboardWedge } from '../composables/useKeyboardWedge.js'
+import CsvHelpGuide from '../components/setup/CsvHelpGuide.vue'
+import HelpModal from '../components/setup/HelpModal.vue'
 
 const { alert, confirm } = useMessage()
 
@@ -1192,6 +1217,9 @@ const {
   generateUniqueUserCode,
   autoStartRFID
 } = useClassroom()
+
+const isHelpModalOpen = ref(false)
+const isCsvHelpOpen = ref(false)
 
 const localCloudMode = ref(cloudModeEnabled.value)
 const localUserCode = ref(userCode.value)
@@ -4400,5 +4428,42 @@ function formatDate(iso) {
   margin-top: 24px;
   padding-top: 20px;
   border-top: 1px solid var(--border-light);
+}
+
+/* CSV Help Guide container */
+.setup__csv-help-container {
+  margin-top: 12px;
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+}
+
+.setup__csv-help-toggle {
+  background: transparent;
+  border: none;
+  color: var(--primary);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  transition: background 0.15s ease;
+}
+
+.setup__csv-help-toggle:hover {
+  background: var(--primary-light);
+}
+
+.csv-fade-enter-active,
+.csv-fade-leave-active {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.csv-fade-enter-from,
+.csv-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-8px);
 }
 </style>

@@ -60,9 +60,19 @@
       <!-- Grid fills all remaining space -->
       <section class="dashboard__grid-area" aria-label="Seating chart">
         <SeatingGrid v-if="activeClass" />
+        <div v-else-if="classList.length === 0" class="dashboard__getting-started">
+          <div class="dashboard__getting-started-card">
+            <GettingStartedGuide />
+            <div class="dashboard__getting-started-actions">
+              <button class="dashboard__go-setup" @click="emit('navigate', 'Setup')">
+                Go to Setup & Import CSV →
+              </button>
+            </div>
+          </div>
+        </div>
         <div v-else class="dashboard__empty">
           <p class="dashboard__empty-title">No class selected</p>
-          <p class="dashboard__empty-sub">Go to <strong>Setup</strong> to create your first class.</p>
+          <p class="dashboard__empty-sub">Go to <strong>Setup</strong> to select or create a class.</p>
           <button class="dashboard__go-setup" @click="emit('navigate', 'Setup')">Go to Setup →</button>
         </div>
       </section>
@@ -152,11 +162,13 @@ import StudentProfileModal from '../components/StudentProfileModal.vue'
 import { Toilet, Users, GripVertical, Calendar, CalendarCheck, Scan } from 'lucide-vue-next'
 import { useClassroom }    from '../composables/useClassroom.js'
 import { useRadial }       from '../composables/useRadial.js'
+import GettingStartedGuide from '../components/setup/GettingStartedGuide.vue'
 
 const emit = defineEmits(['navigate'])
 
 const {
   activeClass,
+  classList,
   studentsOut,
   unseatedStudents,
   assignSeat,
@@ -575,5 +587,35 @@ watch(profileStudent, (student) => {
   opacity:   0;
   transform: scale(0.92) translateY(8px);
   transform-origin: bottom right;
+}
+
+/* Getting Started / Onboarding */
+.dashboard__getting-started {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 24px 16px;
+  overflow-y: auto;
+  height: 100%;
+}
+
+.dashboard__getting-started-card {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  max-width: 900px;
+  width: 100%;
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.dashboard__getting-started-actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 12px;
+  border-top: 1px solid var(--border);
+  padding-top: 24px;
 }
 </style>
