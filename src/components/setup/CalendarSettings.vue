@@ -196,7 +196,7 @@
       </BaseModal>
 
       <div class="setup__gb-list scrollable-list">
-        <div v-for="(day, idx) in nonSchoolDays" :key="idx" class="setup__gb-item">
+        <div v-for="(day, idx) in filteredNonSchoolDays" :key="idx" class="setup__gb-item">
           <div class="setup__term-row">
             <div class="setup__term-unit">
               <span class="setup__mini-label">Start Date</span>
@@ -217,12 +217,12 @@
               />
             </div>
           </div>
-          <button class="setup__icon-btn setup__icon-btn--danger" @click="removeNonSchoolDay(idx)">
+          <button class="setup__icon-btn setup__icon-btn--danger" @click="removeNonSchoolDay(day)">
             <Trash2 :size="16" />
           </button>
         </div>
-        <div v-if="nonSchoolDays.length === 0" class="setup__empty-state">
-          No holidays or PD days added yet.
+        <div v-if="filteredNonSchoolDays.length === 0" class="setup__empty-state">
+          No holidays or PD days added for this year.
         </div>
       </div>
 
@@ -369,17 +369,28 @@ async function saveTerms() {
   await updateAcademicTerms(terms.value)
 }
 
+const filteredNonSchoolDays = computed(() => {
+  if (!selectedYear.value) return nonSchoolDays.value
+  const startYear = parseInt(selectedYear.value.split('-')[0])
+  const startRange = `${startYear}-08-01`
+  const endRange = `${startYear + 1}-07-31`
+  return nonSchoolDays.value.filter(d => {
+    if (!d.date) return true // Keep blanks visible during creation
+    return d.date >= startRange && d.date <= endRange
+  })
+})
+
 function addNonSchoolDay() {
-  const newDays = [{ date: '', endDate: '', label: '' }, ...nonSchoolDays.value]
+  const startYear = selectedYear.value ? parseInt(selectedYear.value.split('-')[0]) : new Date().getFullYear()
+  const defaultDate = `${startYear}-09-01` // Pre-fill to fit current school year filter
+  const newDays = [{ date: defaultDate, endDate: '', label: '' }, ...nonSchoolDays.value]
   updateNonSchoolDays(newDays)
 }
 
-async function removeNonSchoolDay(index) {
-  const day = nonSchoolDays.value[index]
+async function removeNonSchoolDay(day) {
   const label = day?.label || day?.date || 'this entry'
   if (!await confirm(`Are you sure you want to remove ${label}?`, 'Remove Holiday/PD Day', { danger: true })) return
-  const newDays = [...nonSchoolDays.value]
-  newDays.splice(index, 1)
+  const newDays = nonSchoolDays.value.filter(d => d !== day)
   await updateNonSchoolDays(newDays)
 }
 

@@ -219,6 +219,9 @@ async function fetchCurrentStatus() {
 
 function initSubscriptions() {
   if (!configuredUserCode.value || !supabase) return
+  // Guard: tear down any existing channels before creating new ones
+  // (prevents duplicate subscriptions on hot reload or repeated initSubscriptions calls)
+  if (statusSubscription || scanResultSubscription) stopSubscriptions()
   fetchCurrentStatus()
 
   // Subscribe to count updates

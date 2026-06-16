@@ -145,9 +145,19 @@ async function computeWeeklyStats(classId, studentIds) {
     monday.setHours(0, 0, 0, 0)
     const fromISO = monday.toISOString()
 
+    // Batch: single IDB query for the whole class instead of N per-student queries
+    const allEvents = await eventService.getEventsByClass(classId, { from: fromISO })
+
+    // Group in memory by studentId — O(events) instead of O(students * IDB round-trips)
+    const eventsByStudent = {}
+    for (const e of allEvents) {
+        if (!eventsByStudent[e.studentId]) eventsByStudent[e.studentId] = []
+        eventsByStudent[e.studentId].push(e)
+    }
+
     const stats = {}
     for (const studentId of studentIds) {
-        const events = await eventService.getEventsByStudent(studentId, { from: fromISO })
+        const events = eventsByStudent[studentId] || []
         stats[studentId] = {
             washroomTrips: events.filter(e => e.code === 'w').length,
             deviceIncidents: events.filter(e => e.category === 'redirect').length
@@ -1199,9 +1209,7 @@ async function logAttendanceEvent(studentId, code) {
             let supersededAbsentId = null
             if (wasAbsent) {
                 await classService.clearStudentAbsent(classId, studentId)
-                // Find the 'a' event for today and mark it superseded
-                const todayStr = new Date().toISOString().slice(0, 10)
-                const eventsToday = await eventService.getEventsByStudent(studentId, { from: todayStr, to: todayStr })
+                // Re-use eventsToday (already fetched above) — no extra IDB call needed
                 const absentEvent = eventsToday.find(e => e.code === 'a' && !e.superseded)
                 if (absentEvent) {
                     supersededAbsentId = absentEvent.eventId

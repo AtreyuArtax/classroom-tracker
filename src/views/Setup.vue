@@ -1120,9 +1120,9 @@
  * reloadBehaviorCodes() to keep the reactive ref in sync.
  */
 
-import { ref, reactive, computed, watch, onMounted, nextTick, onUnmounted } from 'vue'
+import { ref, reactive, computed, watch, onMounted, nextTick } from 'vue'
 import Papa from 'papaparse'
-import { Archive, ChevronDown, ChevronUp, FolderOpen, Trash2, FileText, Pencil, Download, Database, Cloud, Settings2, Plus, PlusCircle, X, Save, FileUp, FileDown, GraduationCap, ArrowLeft, Zap, LayoutDashboard, Settings, QrCode, Printer, RefreshCcw, FileSpreadsheet, DatabaseIcon, AlertTriangle, ShieldCheck, Search, CalendarDays, UserMinus, UserCheck, Rss, Info, ExternalLink, Copy, Check } from 'lucide-vue-next'
+import { Archive, ChevronDown, ChevronUp, FolderOpen, Trash2, Pencil, Download, Database, Cloud, Settings2, Plus, PlusCircle, X, Save, GraduationCap, ArrowLeft, Zap, LayoutDashboard, Settings, QrCode, Printer, RefreshCcw, FileSpreadsheet, DatabaseIcon, AlertTriangle, ShieldCheck, Search, CalendarDays, UserMinus, UserCheck, Rss, Info, ExternalLink, Copy, Check } from 'lucide-vue-next'
 import QRCode from 'qrcode'
 import { exportGradebookToExcel } from '../db/exportService.js'
 import { resolveIcon } from '../utils/icons.js'

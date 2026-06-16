@@ -7,7 +7,9 @@
 
 ## 1. Project Overview
 
-A self-hosted, offline-first Progressive Web App for teachers to track student behavior via a visual seating chart. Tablet-optimized. No server. No cloud. No accounts. All data stays on the device.
+A self-hosted, offline-first Progressive Web App for teachers to track student behavior via a visual seating chart. Tablet-optimized. All **student data** stays on the device — no names, IDs, or academic records are ever transmitted.
+
+The app has one optional cloud feature: a **door scanner** (ScanStation) that syncs anonymous room-status counts and random hex RFID strings via Supabase Realtime. No student PII is transmitted. This feature is opt-in and requires explicit teacher configuration.
 
 **The only anticipated future growth is adding new trackable behavior items. Every architectural decision reflects this.**
 
@@ -25,8 +27,12 @@ A self-hosted, offline-first Progressive Web App for teachers to track student b
 | Styling | CSS Custom Properties + CSS Grid. No CSS framework. |
 | Language | JavaScript (ES6+). No TypeScript. |
 | CSV Parsing | `papaparse` — do not write a custom CSV parser |
+| Cloud Sync | Supabase (optional, door scanner only) — transmits anonymous hex codes and room counts only. Zero student PII. |
 
-**No backend. No Firebase. No Supabase. No external APIs. No analytics. Nothing leaves the device.**
+**Privacy rule:** Student names, IDs, events, and grades never leave the device. The only data that touches Supabase is:
+- `user_code`: a random hex string generated per teacher installation (no identity link)
+- `incoming_scans.rfid_string`: the raw RFID tag value scanned at the door
+- `room_status.active_students_out`: an integer count
 
 ### Navigation implementation (App.vue)
 ```js
@@ -87,24 +93,41 @@ Touch targets minimum 44×44px throughout. Use `--shadow-md` for overlays and th
 │   ├── main.js
 │   ├── App.vue
 │   ├── db/
-│   │   ├── index.js          ← IDB open/init/migration. Exports the db instance only.
+│   │   ├── index.js            ← IDB open/init/migration. Exports getDB() only.
 │   │   ├── settingsService.js
 │   │   ├── classService.js
-│   │   └── eventService.js
+│   │   ├── eventService.js
+│   │   ├── gradebookService.js ← Grade calculation, analytics, distribution
+│   │   └── exportService.js    ← Excel/JSON export
 │   ├── composables/
-│   │   ├── useClassroom.js
+│   │   ├── useClassroom.js     ← Primary reactive bridge (class/student state)
+│   │   ├── useGradebook.js     ← Gradebook state and debounced IDB saves
+│   │   ├── useStudentDossier.js
+│   │   ├── useAttendanceInsights.js
 │   │   ├── useRadial.js
-│   │   └── useUndo.js
+│   │   ├── useUndo.js
+│   │   ├── useMessage.js       ← Singleton modal system (alert/confirm/prompt)
+│   │   └── useKeyboardWedge.js
 │   ├── components/
 │   │   ├── SeatingGrid.vue
 │   │   ├── DeskTile.vue
 │   │   ├── RadialMenu.vue
 │   │   ├── ClassSwitcher.vue
-│   │   └── UndoButton.vue
+│   │   ├── StudentSidebar.vue
+│   │   ├── UndoButton.vue
+│   │   ├── QRScanner.vue
+│   │   ├── setup/              ← Setup-specific sub-components
+│   │   └── dossier/            ← Student360 dossier sub-components
 │   ├── views/
-│   │   ├── Dashboard.vue     ← View A: active instruction
-│   │   ├── Setup.vue         ← View B: seat assignment + behavior code editor
-│   │   └── Reports.vue       ← View C: reporting + backup hub
+│   │   ├── Dashboard.vue       ← View A: active instruction
+│   │   ├── Setup.vue           ← View B: seat assignment + behavior code editor
+│   │   ├── Reports.vue         ← View C: reporting + backup hub
+│   │   ├── Grades.vue          ← View D: gradebook
+│   │   └── ScanStation.vue     ← View E: door scanner (Supabase, opt-in)
+│   ├── utils/
+│   │   ├── dates.js
+│   │   ├── icons.js
+│   │   └── supabase.js         ← Supabase client (door scanner only)
 │   └── styles/
 │       └── main.css
 ```
@@ -121,7 +144,9 @@ All reads and writes go through the service modules in `src/db/`. Components cal
 DeskTile.vue  →  useUndo.js / useClassroom.js  →  eventService.js  →  IndexedDB
 ```
 
-**Never import `src/db/` files inside `src/components/` or `src/views/`. Ever.**
+**Strict rule for components:** Files in `src/components/` must never import from `src/db/`. The only exception is pure utility functions that perform no IDB operations (e.g., `toMinutes` from `eventService.js` is a math helper, not a DB call).
+
+**Relaxed rule for views:** Files in `src/views/` may import directly from `src/db/` when the operation is view-specific and doesn't belong in a shared composable (e.g. one-off report generation, Excel export). Prefer composables when the logic is reused across views.
 
 ### Use the `idb` library for all IndexedDB access
 
@@ -429,7 +454,8 @@ Build in this order. Do not skip ahead. Each layer depends on the one before.
 
 ## 16. Hard Rules — Never Violate
 
-- Vue components never import from `src/db/`
+- Presentational components (`src/components/`) never import from `src/db/` — use composables
+- Views (`src/views/`) may import from `src/db/` for view-specific logic (reports, exports); prefer composables for anything reused
 - Do not install or use `vue-router` — navigation is a single reactive `ref` in `App.vue`
 - Use `papaparse` for CSV parsing — never `split(',')` or any custom parser
 - Use the `idb` library for all IndexedDB access — no raw `IDBRequest` callback chains
@@ -437,7 +463,8 @@ Build in this order. Do not skip ahead. Each layer depends on the one before.
 - Student ID from CSV is always the database key — never generate a substitute
 - Every event record must have `periodNumber`, `dayOfWeek`, and `category` written at log time
 - Radial menu is the only event entry point — no desk-icon shortcuts
-- No external network calls of any kind
-- No localStorage — IndexedDB only
+- **Student data never leaves the device.** The only permitted external calls are to Supabase for the door scanner feature, and only anonymous hex codes and integer counts may be transmitted
+- `localStorage` is acceptable for lightweight UI preferences only (e.g., selected year/semester, scanner mode, max students out). Never store student names, IDs, events, or grades in localStorage.
 - `periodNumber` on a class is a fixed integer set at class creation — never derived from a schedule map
 - Category drill-down radial must be implemented from day one, not deferred
+- Composition API only — never use Options API (`export default { ... }`). Use `defineOptions()` inside `<script setup>` for component options like `inheritAttrs`.

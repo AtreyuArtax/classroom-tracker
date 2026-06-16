@@ -795,21 +795,17 @@
   </div>
 </template>
 
-<script>
-import { ref } from 'vue'
+<script setup>
+import { ref, computed, watch, onMounted, nextTick, reactive, onUnmounted } from 'vue'
 
-// Shared session state
+// Eliminates the separate Options API <script> block
+defineOptions({ inheritAttrs: false })
+
+// Shared session state (module-level — persists across re-renders without losing tab)
 const activeTab = ref('summary')
 const selectedPeriod = ref('month')
 let resetTimer = null
 
-export default {
-  inheritAttrs: false
-}
-</script>
-
-<script setup>
-import { ref, computed, watch, onMounted, nextTick, reactive, onUnmounted } from 'vue'
 import { 
   LayoutDashboard, 
   GraduationCap, 
