@@ -326,11 +326,11 @@
  * CLAUDE.md §4  — composables handle IDB; eventService used only for backup/restore
  */
 
-import { ref, reactive, computed, watch, defineComponent, h, onMounted, onUnmounted } from 'vue'
+import { ref, reactive, computed, watch, onMounted, onUnmounted } from 'vue'
 import { 
   BarChart2, Download, Trash2, PlusCircle, ChevronLeft, 
-  LayoutDashboard, Database, UserCheck, Toilet, Activity, 
-  FolderOpen, GraduationCap, Printer, X, ClipboardList, AlertTriangle, Check
+  UserCheck, Toilet, Activity, 
+  Printer, X, AlertTriangle, Check
 } from 'lucide-vue-next'
 import { useMessage }        from '../composables/useMessage.js'
 import { resolveIcon }         from '../utils/icons.js'

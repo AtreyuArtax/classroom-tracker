@@ -198,7 +198,7 @@ import { isSyncActive } from '../db/eventService.js'
 
 const emit = defineEmits(['close'])
 
-const { students, logToggleEvent, studentsOut, globalStudentsOut, maxStudentsOut, classList, activeClass, periodStartTimes, reconcileStaleTrips, attendanceMode, handleRfidAttendanceScan, initializeRfidAttendance, cloudModeEnabled, userCode } = useClassroom()
+const { students, logToggleEvent, studentsOut, globalStudentsOut, maxStudentsOut, filteredClassList, activeClass, periodStartTimes, reconcileStaleTrips, attendanceMode, handleRfidAttendanceScan, initializeRfidAttendance, cloudModeEnabled, userCode } = useClassroom()
 const { alert } = useMessage()
 
 // ── UI State ──────────────────────────────────────────────────────────────────
@@ -251,7 +251,7 @@ const getScheduledClass = () => {
   const startTimes = periodStartTimes.value || {}
   
   // Filter and sort active classes that have start times
-  const sortedClasses = classList.value
+  const sortedClasses = filteredClassList.value
     .filter(c => !c.archived && c.periodStartTime)
     .sort((a, b) => {
       const timeA = a.periodStartTime.split(':').map(Number)
@@ -296,7 +296,7 @@ const resolveScan = (scannedText, isRFID) => {
   const searchKey = scannedText.toLowerCase()
 
   // 1. Check for existing "OUT" status first (Return / Sign-In)
-  for (const cls of classList.value) {
+  for (const cls of filteredClassList.value) {
     for (const [studentId, student] of Object.entries(cls.students || {})) {
       const isMatch = isRFID 
         ? (student.rfidTag && student.rfidTag.toLowerCase() === searchKey)

@@ -45,6 +45,8 @@
   /* Semantic states — derived from primary */
   --state-out: #ff3b30;
   /* iOS red — student is out of room */
+  --state-danger: var(--state-out);
+  /* Alias — same iOS red, used for error/danger UI states */
   --state-success: #34c759;
   /* iOS green — confirmation flash */
   --state-late: #ffcc00;

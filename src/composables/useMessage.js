@@ -16,6 +16,8 @@ const state = reactive({
 
 export function useMessage() {
   const alert = (message, title = 'Alert') => {
+    // Guard: if a modal is already open, don't overwrite state.resolve (leaks the first Promise)
+    if (state.show) return Promise.resolve(true)
     return new Promise((resolve) => {
       state.type = 'alert'
       state.title = title
@@ -29,6 +31,7 @@ export function useMessage() {
   }
 
   const confirm = (message, title = 'Confirm', options = {}) => {
+    if (state.show) return Promise.resolve(false)
     return new Promise((resolve) => {
       state.type = 'confirm'
       state.title = title
@@ -44,6 +47,7 @@ export function useMessage() {
   }
 
   const prompt = (message, defaultValue = '', title = 'Input Required') => {
+    if (state.show) return Promise.resolve(null)
     return new Promise((resolve) => {
       state.type = 'prompt'
       state.title = title

@@ -178,6 +178,8 @@ export async function getBehaviorCodes() {
 export async function saveBehaviorCode(codeObj) {
     const db = await getDB()
     const settings = await db.get('settings', 'singleton')
+    // Guard: heal missing behaviorCodes map (data corruption safety)
+    if (!settings.behaviorCodes) settings.behaviorCodes = {}
     settings.behaviorCodes[codeObj.codeKey] = codeObj
     await db.put('settings', settings, 'singleton')
     hasUnsyncedChanges.value = true

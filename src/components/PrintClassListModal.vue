@@ -127,7 +127,7 @@ const form = ref({
   headerRows: 2,
   footerRows: 12,
   autoFill: true,
-  targetTotalRows: 36 // Updated from 42 to 36 based on user printer fit
+  targetTotalRows: 35 // Target 35 rows to fit Letter paper with adjusted header height
 })
 
 // Watch for changes in class/header and auto-calculate footer rows
@@ -211,58 +211,65 @@ function handlePrint() {
 
   .sheet-print-only {
     display: block !important;
-    position: absolute;
-    top: 0;
-    left: 0;
+    position: relative;
     width: 100%;
+    height: 100%;
     margin: 0;
     padding: 0;
+    box-sizing: border-box;
   }
 
   @page {
-    margin: 10mm;
-    size: portrait;
+    margin: 12mm;
   }
 
   html, body {
-    height: auto !important;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
     overflow: visible !important;
     background: white !important;
   }
 
+  /* Fill the printable page area — overflow:hidden clips any stray fraction of a row */
   .sheet-print-page {
     width: 100%;
-    height: calc(100vh - 22mm);
+    height: 100vh;
+    max-height: 100vh;
+    box-sizing: border-box;
     margin: 0;
     padding: 0;
+    overflow: hidden;
     display: flex;
     flex-direction: column;
-    page-break-inside: avoid;
-    break-inside: avoid;
   }
   
   .sheet-title {
+    flex-shrink: 0;
     text-align: center;
     font-size: 18px;
     font-weight: bold;
-    margin: 0 0 16px 0;
+    margin: 0 0 10px 0;
     text-transform: uppercase;
   }
   
   .sheet-subtitle {
+    flex-shrink: 0;
     font-size: 14px;
     font-weight: bold;
-    margin: 0 0 8px 0;
+    margin: 0 0 6px 0;
     text-align: left;
   }
-  
+
+  /* Table stretches to fill remaining vertical space */
   .sheet-table {
-    flex: 1;
-    height: 100%;
+    flex: 1 1 0%;
+    min-height: 0;
     width: 100%;
     border-collapse: collapse;
     border: 3px solid black;
-    table-layout: auto; /* Allow auto-sizing to fill space */
+    table-layout: auto;
   }
   
   .sheet-table th.sheet-name-col,
@@ -284,7 +291,7 @@ function handlePrint() {
   }
   
   .sheet-header-row th {
-    height: 120px;
+    height: 85px;
     border-bottom: 3px solid black;
   }
   
@@ -297,6 +304,7 @@ function handlePrint() {
     font-size: 11px;
   }
   
+  .sheet-table th.sheet-name-col,
   .sheet-name-cell {
     width: 110px;
     min-width: 110px;

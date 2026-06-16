@@ -1044,7 +1044,7 @@
  * Two-column sidebar + main panel layout mirroring Reports.vue
  */
 
-import { ref, computed, onMounted, watch, reactive } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useClassroom } from '../composables/useClassroom.js'
 import { 
   activeClassRecord, 
@@ -1092,7 +1092,7 @@ import {
   enterGrade
 } from '../composables/useGradebook.js'
 import { useAttendanceInsights } from '../composables/useAttendanceInsights.js'
-import { Plus, BarChart2, Settings, Pencil, XCircle, AlertCircle, Trash2, X, MoreVertical, ArrowLeft, Check, ArrowUp, ArrowDown, Minus, GraduationCap, Eye, EyeOff, ChevronLeft, ChevronRight, UserCheck, Activity, FilePlus, Target, Hash, Calendar, Award, AlertTriangle, ChevronUp, ChevronDown, Copy, Edit2, UserMinus } from 'lucide-vue-next'
+import { Plus, BarChart2, Settings, Pencil, XCircle, AlertCircle, Trash2, X, MoreVertical, ArrowLeft, Check, ArrowUp, ArrowDown, Minus, GraduationCap, Eye, ChevronLeft, ChevronRight, UserCheck, Activity, FilePlus, Target, Hash, Calendar, AlertTriangle, ChevronUp, ChevronDown, Copy, Edit2, UserMinus } from 'lucide-vue-next'
 import Student360 from '../components/dossier/Student360.vue'
 import StudentSidebar from '../components/StudentSidebar.vue'
 import GradeTrendChart from '../components/GradeTrendChart.vue'
