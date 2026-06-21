@@ -130,9 +130,30 @@
 
           <!-- RFID Compact Listening View -->
           <div v-if="scannerMode === 'rfid' && !cooldownActive" class="qr-scanner__rfid-status">
-            <div class="qr-scanner__rfid-listening" :class="{ 'qr-scanner__rfid-listening--cloud': cloudModeEnabled }">
+            <div
+              class="qr-scanner__rfid-listening"
+              :class="{
+                'qr-scanner__rfid-listening--cloud': cloudModeEnabled,
+                'qr-scanner__rfid-listening--companion': localCompanionEnabled && !cloudModeEnabled
+              }"
+            >
               <div class="qr-scanner__rfid-dot"></div>
-              <span>{{ cloudModeEnabled ? 'Cloud RFID Listening...' : 'RFID Listening...' }}</span>
+              <span>
+                {{ cloudModeEnabled ? 'Cloud RFID Listening...' : localCompanionEnabled ? 'Local Companion...' : 'RFID Listening...' }}
+              </span>
+            </div>
+            <!-- Local Companion toggle + status badge -->
+            <div v-if="!cloudModeEnabled" class="qr-scanner__companion-row">
+              <button
+                id="rfid-companion-toggle"
+                class="qr-scanner__companion-toggle"
+                :class="{ 'qr-scanner__companion-toggle--active': localCompanionEnabled }"
+                @click.stop="toggleLocalCompanion"
+                :title="localCompanionEnabled ? 'Disable Local Companion (use keyboard wedge)' : 'Enable Local Companion app on this machine'"
+              >
+                <span class="qr-scanner__companion-dot" :class="'qr-scanner__companion-dot--' + companionStatus"></span>
+                {{ localCompanionEnabled ? 'Local' : 'Local OFF' }}
+              </button>
             </div>
           </div>
 
@@ -212,6 +233,59 @@ const lastScannedStatus = ref('')
 const cameras        = ref([])
 const selectedCamera = ref(null)
 
+// ── Local Companion (loopback polling) ───────────────────────────────────────
+const localCompanionEnabled = ref(localStorage.getItem('local-rfid-companion') === 'true')
+// 'idle' | 'connected' | 'error'
+const companionStatus = ref('idle')
+let _companionPollTimer = null
+const COMPANION_URL = 'http://127.0.0.1:5000/scan'
+const COMPANION_POLL_MS = 500
+
+const startLocalPolling = () => {
+  if (_companionPollTimer) return
+  companionStatus.value = 'idle'
+  const poll = async () => {
+    if (!localCompanionEnabled.value) return
+    try {
+      const res = await fetch(COMPANION_URL, { signal: AbortSignal.timeout(400) })
+      if (!res.ok) throw new Error('Non-200')
+      const data = await res.json()
+      companionStatus.value = 'connected'
+      if (data.status === 'scanned' && data.tag) {
+        handleScan(data.tag, true)
+      }
+    } catch {
+      companionStatus.value = 'error'
+    }
+    if (localCompanionEnabled.value) {
+      _companionPollTimer = setTimeout(poll, COMPANION_POLL_MS)
+    }
+  }
+  _companionPollTimer = setTimeout(poll, 0)
+}
+
+const stopLocalPolling = () => {
+  if (_companionPollTimer) {
+    clearTimeout(_companionPollTimer)
+    _companionPollTimer = null
+  }
+  companionStatus.value = 'idle'
+}
+
+const toggleLocalCompanion = () => {
+  localCompanionEnabled.value = !localCompanionEnabled.value
+  localStorage.setItem('local-rfid-companion', String(localCompanionEnabled.value))
+  if (scannerMode.value !== 'rfid') return
+  if (localCompanionEnabled.value) {
+    rfidWedge.stop()
+    stopSupabaseListener()
+    startLocalPolling()
+  } else {
+    stopLocalPolling()
+    rfidWedge.start()
+  }
+}
+
 // ── Supabase Realtime & Network Status ─────────────────────────────────────────
 const supabaseStatus = ref('connecting')
 const isOffline = ref(!navigator.onLine)
@@ -232,14 +306,21 @@ watch(scannerMode, (newMode) => {
     stopScanner()
     if (cloudModeEnabled.value) {
       rfidWedge.stop()
+      stopLocalPolling()
       startSupabaseListener()
+    } else if (localCompanionEnabled.value) {
+      rfidWedge.stop()
+      stopSupabaseListener()
+      startLocalPolling()
     } else {
       stopSupabaseListener()
+      stopLocalPolling()
       rfidWedge.start()
     }
   } else {
     rfidWedge.stop()
     stopSupabaseListener()
+    stopLocalPolling()
   }
 })
 
@@ -912,6 +993,8 @@ onMounted(async () => {
   if (scannerMode.value === 'rfid') {
     if (cloudModeEnabled.value) {
       startSupabaseListener()
+    } else if (localCompanionEnabled.value) {
+      startLocalPolling()
     } else {
       rfidWedge.start()
     }
@@ -922,6 +1005,7 @@ onUnmounted(async () => {
   await stopScanner()
   rfidWedge.stop()
   stopSupabaseListener()
+  stopLocalPolling()
   if (pipWindowObj) pipWindowObj.close()
   window.removeEventListener('pointermove', onDrag)
   window.removeEventListener('pointerup',   endDrag)
@@ -1458,6 +1542,60 @@ onUnmounted(async () => {
   background: var(--state-success) !important;
   box-shadow: 0 0 10px var(--state-success) !important;
 }
+
+/* Companion mode — distinct amber colour */
+.qr-scanner__rfid-listening--companion {
+  color: #f59e0b !important;
+}
+.qr-scanner__rfid-listening--companion .qr-scanner__rfid-dot {
+  background: #f59e0b !important;
+  box-shadow: 0 0 10px #f59e0b !important;
+}
+
+/* Companion row (toggle + status) */
+.qr-scanner__companion-row {
+  display:        flex;
+  align-items:    center;
+  justify-content: center;
+  margin-top:     6px;
+}
+
+.qr-scanner__companion-toggle {
+  display:        flex;
+  align-items:    center;
+  gap:            5px;
+  background:     var(--bg-secondary);
+  border:         1px solid var(--border);
+  border-radius:  var(--radius-sm);
+  padding:        3px 10px;
+  font-size:      0.68rem;
+  font-weight:    700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color:          var(--text-secondary);
+  cursor:         pointer;
+  transition:     all 0.15s ease;
+}
+.qr-scanner__companion-toggle:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+.qr-scanner__companion-toggle--active {
+  background:   color-mix(in srgb, #f59e0b 12%, white);
+  border-color: #f59e0b;
+  color:        #b45309;
+}
+
+/* Status dot on the companion toggle button */
+.qr-scanner__companion-dot {
+  width:         6px;
+  height:        6px;
+  border-radius: 50%;
+  flex-shrink:   0;
+}
+.qr-scanner__companion-dot--idle      { background: var(--text-secondary); }
+.qr-scanner__companion-dot--connected { background: var(--state-success); box-shadow: 0 0 5px var(--state-success); }
+.qr-scanner__companion-dot--error     { background: var(--state-out); box-shadow: 0 0 5px var(--state-out); }
 
 /* ── Animations ────────────────────────────────────────────── */
 @keyframes fadeIn {

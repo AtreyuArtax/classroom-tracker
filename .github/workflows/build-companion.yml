@@ -1,0 +1,72 @@
+name: Build RFID Companion App
+
+on:
+  push:
+    paths:
+      - 'rfid-companion/**'
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: 'Reason for manual build'
+        required: false
+        default: 'Manual build triggered'
+
+jobs:
+  build-windows:
+    name: Build rfid_app.exe (Windows)
+    runs-on: windows-latest
+
+    defaults:
+      run:
+        working-directory: rfid-companion
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      - name: Build standalone executable
+        run: |
+          pyinstaller `
+            --onefile `
+            --windowed `
+            --name rfid_app `
+            --add-data "config.json;." `
+            rfid_app.py
+
+      - name: Verify build succeeded
+        run: |
+          if (Test-Path "dist/rfid_app.exe") {
+            Write-Host "✅ rfid_app.exe built successfully."
+            $size = (Get-Item "dist/rfid_app.exe").length / 1MB
+            Write-Host "   Size: $([math]::Round($size, 1)) MB"
+          } else {
+            Write-Error "❌ rfid_app.exe not found — build failed."
+            exit 1
+          }
+
+      - name: Upload executable as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: rfid_app-windows
+          path: |
+            rfid-companion/dist/rfid_app.exe
+            rfid-companion/config.json
+          retention-days: 30
+
+      - name: Upload find_rfid helper
+        uses: actions/upload-artifact@v4
+        with:
+          name: rfid_find-helper
+          path: rfid-companion/find_rfid.py
+          retention-days: 30

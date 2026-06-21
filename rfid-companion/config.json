@@ -1,0 +1,32 @@
+{
+  "_comment": "RFID Companion App — Configuration File",
+
+  "mode": "serial",
+  "_mode_options": ["serial", "keyboard"],
+
+  "serial": {
+    "port": "COM3",
+    "_port_help": "Run find_rfid.py to discover the correct COM port for your scanner",
+    "baud_rate": 9600,
+    "terminator": "\r",
+    "_terminator_help": "Character that signals end-of-scan. Usually CR (\\r) or LF (\\n) for serial mode"
+  },
+
+  "keyboard": {
+    "target_device_id": "PLACEHOLDER_ID",
+    "_target_device_id_help": "Run find_rfid.py and scan a card to discover your scanner's hardware ID (VID_xxxx&PID_xxxx)",
+    "min_chars": 6,
+    "max_gap_ms": 80,
+    "_max_gap_ms_help": "Max milliseconds between characters from scanner bursts. Increase if you see missed characters"
+  },
+
+  "server": {
+    "host": "127.0.0.1",
+    "port": 5000,
+    "_port_help": "Local loopback port. Must match the port in your classroom web app settings"
+  },
+
+  "tray": {
+    "show_notifications": true
+  }
+}
