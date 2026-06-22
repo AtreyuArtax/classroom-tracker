@@ -373,7 +373,8 @@ const {
   classList,
   filteredClassList,
   syncLateActiveState,
-  switchClass
+  switchClass,
+  academicTerms
 } = useClassroom()
 
 const { push: pushUndo } = useUndo()
@@ -786,7 +787,7 @@ async function runReport() {
   if (!sidebarClassId.value) return
   loading.value = true
   try {
-    const dr = eventService.getDateRangeForPeriod(selectedPeriod.value)
+    const dr = eventService.getDateRangeForClassPeriod(selectedPeriod.value, reportClass.value, academicTerms.value)
     const rawEvents = await eventService.getEventsByClass(sidebarClassId.value, Object.keys(dr).length ? dr : undefined)
     
     // Independent active student check to ensure robustness during transitions
@@ -1020,7 +1021,7 @@ async function downloadReportCardCsv(includeName) {
     }
   }
   
-  const dr = eventService.getDateRangeForPeriod(selectedPeriod.value)
+  const dr = eventService.getDateRangeForClassPeriod(selectedPeriod.value, reportClass.value, academicTerms.value)
   const classCode = classObj.courseCode ? ` (${classObj.courseCode})` : ''
   
   const midtermMs = filteredMilestones.value?.find(m => m.name?.toLowerCase() === 'midterm') || 

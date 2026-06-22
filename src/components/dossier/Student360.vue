@@ -6,8 +6,8 @@
       :most-consistent="overallMostConsistent"
       :consistent-is-fallback="consistentIsFallback"
       :weighted-median="overallWeightedMedian"
-      :attendance-stats="stats"
-      :attendance-rate="stats.attendanceRate"
+      :attendance-stats="overallStats"
+      :attendance-rate="overallStats.attendanceRate"
     >
       <template #actions>
         <button class="student-360__action-btn" title="Email Progress Report" @click="showEmailModal = true">
@@ -42,13 +42,13 @@
         <!-- Period Toggle -->
         <div class="student-360__period-toggle">
           <button 
-            v-for="p in ['week', 'last_week', 'month', 'all']" 
+            v-for="p in ['week', 'last_week', 'month', 'semester']" 
             :key="p"
             class="period-btn"
             :class="{ 'period-btn--active': selectedPeriod === p }"
             @click="selectedPeriod = p"
           >
-            {{ p === 'last_week' ? 'Last Week' : p.charAt(0).toUpperCase() + p.slice(1) }}
+            {{ p === 'last_week' ? 'Last Week' : p === 'semester' ? 'This Semester' : p.charAt(0).toUpperCase() + p.slice(1) }}
           </button>
         </div>
 
@@ -911,6 +911,10 @@ import { parseLocal, formatLocalDisplay } from '../../utils/dates.js'
 import { toRef } from 'vue'
 const { allTimeHistory, fetchAllTimeHistory, stats, filteredEvents } = useStudentDossier(selectedPeriod, toRef(props, 'classId'))
 
+// Decouple dossier profile header stats from the active tab's selected period (lock header to overall semester stats)
+const semesterPeriod = ref('semester')
+const { stats: overallStats } = useStudentDossier(semesterPeriod, toRef(props, 'classId'))
+
 
 // --- Email Progress Report State ---
 const showEmailModal = ref(false)
@@ -1313,7 +1317,7 @@ const attendanceAverages = computed(() => {
   // Determine actual divisor based on period
   let weekCount = 1
   if (selectedPeriod.value === 'month') weekCount = 4.3
-  else if (selectedPeriod.value === 'all') weekCount = Math.max(1, trend.length)
+  else if (selectedPeriod.value === 'semester') weekCount = Math.max(1, trend.length)
   
   const totalAbs = stats.value.absences
   const totalLates = stats.value.lates
