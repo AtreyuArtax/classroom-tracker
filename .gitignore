@@ -6,3 +6,13 @@ dist
 .env.*.local
 *.local.md
 
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.log
+rfid_app_log.txt
+rfid-companion/build/
+rfid-companion/dist/
+rfid-companion/*.spec
