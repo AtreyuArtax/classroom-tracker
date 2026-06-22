@@ -803,7 +803,7 @@ defineOptions({ inheritAttrs: false })
 
 // Shared session state (module-level — persists across re-renders without losing tab)
 const activeTab = ref('summary')
-const selectedPeriod = ref('month')
+const selectedPeriod = ref('semester')
 let resetTimer = null
 
 import { 
@@ -885,7 +885,7 @@ const emit = defineEmits(['close'])
 
 function handleClose() {
   activeTab.value = 'summary'
-  selectedPeriod.value = 'month'
+  selectedPeriod.value = 'semester'
   emit('close')
 }
 
@@ -1742,7 +1742,7 @@ onUnmounted(() => {
   // If we remount quickly (switching students), the timer is cleared.
   resetTimer = setTimeout(() => {
     activeTab.value = 'summary'
-    selectedPeriod.value = 'month'
+    selectedPeriod.value = 'semester'
   }, 100)
 })
 </script>
