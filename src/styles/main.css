@@ -158,6 +158,17 @@ textarea {
     display: none !important;
   }
 
+  /*
+   * BaseModal (and any other dialogs) teleport directly to <body>, so they
+   * are NOT inside #app and would otherwise remain visible during printing,
+   * overlapping the print-only report content. Hide them explicitly.
+   */
+  .bm-overlay,
+  .setup__dialog,
+  .reports__modal-overlay {
+    display: none !important;
+  }
+
   /* 
    * Specific print containers for different modules to prevent collision.
    * They must remain display:none unless explicitly activated.
