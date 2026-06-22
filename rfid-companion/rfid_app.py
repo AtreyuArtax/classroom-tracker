@@ -26,10 +26,51 @@ from pathlib import Path
 
 
 # ─────────────────────────────────────────────
-# Globals
+# Helper Functions & Logging Setup
 # ─────────────────────────────────────────────
 
-DEBUG = "--debug" in sys.argv
+def get_app_dir() -> Path:
+    """
+    Return the directory where config.json and log files should be found.
+    - When running as a PyInstaller .exe: the folder containing rfid_app.exe
+    - When running as a plain Python script: the folder containing rfid_app.py
+    """
+    if getattr(sys, 'frozen', False):
+        # PyInstaller sets sys.frozen = True and sys.executable = path to .exe
+        return Path(sys.executable).parent
+    return Path(__file__).parent
+
+
+# Automatically redirect stdout and stderr to rfid_app_log.txt if frozen/windowed
+# to capture all print statement, exceptions, and third-party logs.
+try:
+    log_file_path = get_app_dir() / "rfid_app_log.txt"
+    # Open log file in append mode with line buffering (buffering=1)
+    log_file = open(log_file_path, "a", encoding="utf-8", buffering=1)
+    # Redirect if frozen (no terminal window) or if stdout/stderr are None
+    if sys.stdout is None or getattr(sys, 'frozen', False):
+        sys.stdout = log_file
+    if sys.stderr is None or getattr(sys, 'frozen', False):
+        sys.stderr = log_file
+except Exception:
+    pass
+
+
+DEBUG = "--debug" in sys.argv or getattr(sys, 'frozen', False)
+
+
+def log(msg):
+    log_line = f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] [rfid_app] {msg}"
+    print(log_line)
+    try:
+        sys.stdout.flush()
+    except Exception:
+        pass
+
+
+# ─────────────────────────────────────────────
+# Globals
+# ─────────────────────────────────────────────
 
 # The pending scan queue. Holds at most one scan at a time.
 # The web app polls /scan and atomically consumes it.
@@ -41,26 +82,9 @@ _reader_running = threading.Event()
 _reader_running.set()
 
 
-def log(msg):
-    if DEBUG:
-        print(f"[rfid_app] {msg}")
-
-
 # ─────────────────────────────────────────────
 # Config Loading
 # ─────────────────────────────────────────────
-
-def get_app_dir() -> Path:
-    """
-    Return the directory where config.json should be found.
-    - When running as a PyInstaller .exe: the folder containing rfid_app.exe
-    - When running as a plain Python script: the folder containing rfid_app.py
-    """
-    if getattr(sys, 'frozen', False):
-        # PyInstaller sets sys.frozen = True and sys.executable = path to .exe
-        return Path(sys.executable).parent
-    return Path(__file__).parent
-
 
 def load_config():
     """Load config.json from the same directory as the executable (or script)."""
@@ -75,6 +99,7 @@ def load_config():
 
     data = json.loads(raw)
     return data
+
 
 
 # ─────────────────────────────────────────────
@@ -311,11 +336,15 @@ def start_tray(config):
     global TRAY_ICON_AVAILABLE, _tray_icon
 
     try:
+        log("Importing pystray and PIL.Image...")
         import pystray
         from PIL import Image
         TRAY_ICON_AVAILABLE = True
-    except ImportError:
-        log("pystray/Pillow not available. Running headless (no tray icon).")
+        log("Import successful.")
+    except Exception as e:
+        log(f"ERROR: failed to import pystray or Pillow: {e}")
+        log(traceback.format_exc())
+        log("Running headless (no tray icon).")
         # Keep running in headless mode — the HTTP server still works
         try:
             while True:
@@ -324,35 +353,50 @@ def start_tray(config):
             pass
         return
 
-    def on_exit(icon, item):
-        _reader_running.clear()
-        icon.stop()
+    try:
+        def on_exit(icon, item):
+            log("Tray exit menu item clicked.")
+            _reader_running.clear()
+            icon.stop()
 
-    def on_open_status(icon, item):
-        import webbrowser
-        host = config["server"]["host"]
-        port = config["server"]["port"]
-        webbrowser.open(f"http://{host}:{port}/health")
+        def on_open_status(icon, item):
+            import webbrowser
+            host = config["server"]["host"]
+            port = config["server"]["port"]
+            url = f"http://{host}:{port}/health"
+            log(f"Opening status page: {url}")
+            webbrowser.open(url)
 
-    menu = pystray.Menu(
-        pystray.MenuItem("RFID Companion — Running", None, enabled=False),
-        pystray.MenuItem(f"Mode: {config['mode'].upper()}", None, enabled=False),
-        pystray.Menu.SEPARATOR,
-        pystray.MenuItem("Open Status Page", on_open_status),
-        pystray.Menu.SEPARATOR,
-        pystray.MenuItem("Exit", on_exit),
-    )
+        menu = pystray.Menu(
+            pystray.MenuItem("RFID Companion — Running", None, enabled=False),
+            pystray.MenuItem(f"Mode: {config['mode'].upper()}", None, enabled=False),
+            pystray.Menu.SEPARATOR,
+            pystray.MenuItem("Open Status Page", on_open_status),
+            pystray.Menu.SEPARATOR,
+            pystray.MenuItem("Exit", on_exit),
+        )
 
-    icon_image = _create_tray_icon_image()
-    _tray_icon = pystray.Icon(
-        "rfid_companion",
-        icon_image,
-        "RFID Companion",
-        menu=menu
-    )
+        icon_image = _create_tray_icon_image()
+        _tray_icon = pystray.Icon(
+            "rfid_companion",
+            icon_image,
+            "RFID Companion",
+            menu=menu
+        )
 
-    log("System tray icon started.")
-    _tray_icon.run()  # Blocking — runs the tray event loop
+        log("System tray icon starting via run().")
+        _tray_icon.run()  # Blocking — runs the tray event loop
+        log("System tray icon event loop stopped.")
+    except Exception as e:
+        log(f"ERROR: exception in tray loop or creation: {e}")
+        log(traceback.format_exc())
+        log("Falling back to headless mode due to tray execution error.")
+        try:
+            while True:
+                time.sleep(60)
+        except KeyboardInterrupt:
+            pass
+
 
 
 # ─────────────────────────────────────────────
