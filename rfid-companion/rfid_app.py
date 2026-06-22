@@ -24,6 +24,13 @@ import traceback
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 
+# Force-initialize 'six' package namespace early.
+# PyInstaller needs this run before pystray attempts to access 'six.moves'.
+try:
+    import six
+except ImportError:
+    pass
+
 
 # ─────────────────────────────────────────────
 # Helper Functions & Logging Setup
