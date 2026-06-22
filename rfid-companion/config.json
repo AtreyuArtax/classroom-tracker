@@ -1,7 +1,7 @@
 {
   "_comment": "RFID Companion App — Configuration File",
 
-  "mode": "serial",
+  "mode": "keyboard",
   "_mode_options": ["serial", "keyboard"],
 
   "serial": {
@@ -13,7 +13,7 @@
   },
 
   "keyboard": {
-    "target_device_id": "PLACEHOLDER_ID",
+    "target_device_id": "VID_FFFF&PID_0035",
     "_target_device_id_help": "Run find_rfid.py and scan a card to discover your scanner's hardware ID (VID_xxxx&PID_xxxx)",
     "min_chars": 6,
     "max_gap_ms": 80,
