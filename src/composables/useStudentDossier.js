@@ -20,7 +20,7 @@ import { ref, computed, watch } from 'vue'
 import * as classService from '../db/classService.js'
 import * as eventService from '../db/eventService.js'
 import { getDB } from '../db/index.js'
-import { getDateRangeForPeriod, toMinutes } from '../db/eventService.js'
+import { getDateRangeForClassPeriod, toMinutes } from '../db/eventService.js'
 import { useClassroom } from './useClassroom.js'
 
 export function useStudentDossier(periodRef = null, classIdRef = null) {
@@ -32,7 +32,7 @@ export function useStudentDossier(periodRef = null, classIdRef = null) {
     const selectedClassId = ref(null)
     const classStartDate = ref(null)
     const selectedClassRecord = ref(null)
-    const selectedPeriod = periodRef || ref('month')
+    const selectedPeriod = periodRef || ref('semester')
 
     const matchingTerm = computed(() => {
         const cls = selectedClassRecord.value
@@ -184,7 +184,7 @@ export function useStudentDossier(periodRef = null, classIdRef = null) {
      * for downstream computeds without re-implementing the same filter.
      */
     const filteredEvents = computed(() => {
-        const range = getDateRangeForPeriod(selectedPeriod.value)
+        const range = getDateRangeForClassPeriod(selectedPeriod.value, selectedClassRecord.value, academicTerms.value)
         if (!range || (!range.from && !range.to)) return events.value
         return events.value.filter(e => {
             if (range.from && e.timestamp < range.from) return false
@@ -215,12 +215,12 @@ export function useStudentDossier(periodRef = null, classIdRef = null) {
         // Count actual weekdays in the period as the school-day denominator.
         // This avoids the old bug where students with only absences logged would
         // get 0% because classDays equalled absences.
-        const range = getDateRangeForPeriod(selectedPeriod.value)
+        const range = getDateRangeForClassPeriod(selectedPeriod.value, selectedClassRecord.value, academicTerms.value)
         
-        // Determine anchor and cap for 'all'
+        // Determine anchor and cap for 'semester'
         const term = matchingTerm.value
-        const anchor = (selectedPeriod.value === 'all' && term?.startDate) ? term.startDate : classStartDate.value
-        const cap = (selectedPeriod.value === 'all' && term?.instructionalDays) ? term.instructionalDays : 999
+        const anchor = (selectedPeriod.value === 'semester' && term?.startDate) ? term.startDate : classStartDate.value
+        const cap = (selectedPeriod.value === 'semester' && term?.instructionalDays) ? term.instructionalDays : 999
 
         const classDays = _countSchoolDays(range, anchor, cap)
         const attendanceRate = classDays

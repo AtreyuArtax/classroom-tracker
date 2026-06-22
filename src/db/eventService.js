@@ -452,6 +452,42 @@ export function getDateRangeForPeriod(period) {
 }
 
 /**
+ * Returns a date range object representing the start and end of the given reporting period,
+ * optionally anchoring the 'semester' period to actual term boundaries.
+ *
+ * @param {'week'|'last_week'|'month'|'semester'|'all'} period
+ * @param {Object} [classObj]
+ * @param {Array<Object>} [academicTerms]
+ * @returns {{ from?: string, to?: string }}
+ */
+export function getDateRangeForClassPeriod(period, classObj, academicTerms = []) {
+    if (period === 'semester') {
+        if (classObj) {
+            const term = academicTerms.find(t => t.year === classObj.year && String(t.semester) === String(classObj.semester))
+            if (term && term.startDate && term.endDate) {
+                const todayStr = new Date().toISOString().slice(0, 10)
+                // Cap at today's date if the semester is still running
+                const toDate = term.endDate < todayStr ? term.endDate : todayStr
+                return { from: term.startDate, to: toDate }
+            }
+        }
+
+        // Fallback: Rolling 5-month window
+        const now = new Date()
+        const d = new Date(now)
+        d.setMonth(d.getMonth() - 5)
+        const formatYMD = (date) => {
+            const offset = date.getTimezoneOffset()
+            const local = new Date(date.getTime() - (offset * 60 * 1000))
+            return local.toISOString().split('T')[0]
+        }
+        return { from: formatYMD(d) }
+    }
+
+    return getDateRangeForPeriod(period)
+}
+
+/**
  * Returns the ISO timestamp of the last successful quick sync, or null.
  */
 export async function getLastSyncedAt() {
