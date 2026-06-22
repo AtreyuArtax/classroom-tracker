@@ -42,6 +42,11 @@ jobs:
             --windowed `
             --name rfid_app `
             --add-data "config.json;." `
+            --hidden-import "pystray._win32" `
+            --hidden-import "PIL" `
+            --hidden-import "PIL.Image" `
+            --hidden-import "PIL.ImageDraw" `
+            --collect-all pystray `
             rfid_app.py
 
       - name: Copy config.json alongside executable
