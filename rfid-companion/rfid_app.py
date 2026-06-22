@@ -50,18 +50,29 @@ def log(msg):
 # Config Loading
 # ─────────────────────────────────────────────
 
+def get_app_dir() -> Path:
+    """
+    Return the directory where config.json should be found.
+    - When running as a PyInstaller .exe: the folder containing rfid_app.exe
+    - When running as a plain Python script: the folder containing rfid_app.py
+    """
+    if getattr(sys, 'frozen', False):
+        # PyInstaller sets sys.frozen = True and sys.executable = path to .exe
+        return Path(sys.executable).parent
+    return Path(__file__).parent
+
+
 def load_config():
-    """Load config.json from the same directory as this script."""
-    config_path = Path(__file__).parent / "config.json"
+    """Load config.json from the same directory as the executable (or script)."""
+    config_path = get_app_dir() / "config.json"
     if not config_path.exists():
         raise FileNotFoundError(
-            f"config.json not found at {config_path}. "
-            "Copy it from the rfid-companion directory."
+            f"config.json not found at {config_path}.\n"
+            "Place config.json in the same folder as rfid_app.exe."
         )
     with open(config_path, "r") as f:
         raw = f.read()
 
-    # Strip comment keys before parsing (keys starting with _)
     data = json.loads(raw)
     return data
 
