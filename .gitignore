@@ -16,3 +16,8 @@ rfid_app_log.txt
 rfid-companion/build/
 rfid-companion/dist/
 rfid-companion/*.spec
+
+# Graphify
+graphify-out/cache/
+graphify-out/cost.json
+
