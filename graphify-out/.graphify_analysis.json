@@ -1,0 +1,1027 @@
+{
+  "communities": {
+    "0": [
+      "composables_useclassroom",
+      "composables_useclassroom_academicterms",
+      "composables_useclassroom_activeclass",
+      "composables_useclassroom_activestudentevents",
+      "composables_useclassroom_archivedclasses",
+      "composables_useclassroom_archivedroster",
+      "composables_useclassroom_attendancemode",
+      "composables_useclassroom_autostartrfid",
+      "composables_useclassroom_behaviorcodes",
+      "composables_useclassroom_classlist",
+      "composables_useclassroom_cloudmodeenabled",
+      "composables_useclassroom_deleteclass",
+      "composables_useclassroom_dismissedsuggestions",
+      "composables_useclassroom_filteredarchivedclasses",
+      "composables_useclassroom_filteredclasslist",
+      "composables_useclassroom_generateuniqueusercode",
+      "composables_useclassroom_getattendanceondate",
+      "composables_useclassroom_gettermrange",
+      "composables_useclassroom_globalstudentsout",
+      "composables_useclassroom_gridsize",
+      "composables_useclassroom_handlerfidattendancescan",
+      "composables_useclassroom_isscanneropen",
+      "composables_useclassroom_istestday",
+      "composables_useclassroom_latenessgraceperiod",
+      "composables_useclassroom_markallpresenttoday",
+      "composables_useclassroom_maxstudentsout",
+      "composables_useclassroom_nonschooldays",
+      "composables_useclassroom_periodoptionslist",
+      "composables_useclassroom_periodstarttimes",
+      "composables_useclassroom_push_pushundo_clear_clearundo",
+      "composables_useclassroom_refreshacademicterms",
+      "composables_useclassroom_refreshnonschooldays",
+      "composables_useclassroom_reloadbehaviorcodes",
+      "composables_useclassroom_restoreclass",
+      "composables_useclassroom_schedulemidnightreset",
+      "composables_useclassroom_selectedsemester",
+      "composables_useclassroom_selectedyear",
+      "composables_useclassroom_sortedroster",
+      "composables_useclassroom_students",
+      "composables_useclassroom_studentsout",
+      "composables_useclassroom_studentweeklystats",
+      "composables_useclassroom_suggestedclass",
+      "composables_useclassroom_teachername",
+      "composables_useclassroom_termoptions",
+      "composables_useclassroom_thresholds",
+      "composables_useclassroom_unseatedstudents",
+      "composables_useclassroom_updateacademicterms",
+      "composables_useclassroom_updatecloudconfig",
+      "composables_useclassroom_updatenonschooldays",
+      "composables_useclassroom_updateperiodstarttimes",
+      "composables_useclassroom_updateteachername",
+      "composables_useclassroom_usercode",
+      "utils_supabase"
+    ],
+    "1": [
+      "composables_usegradebook",
+      "composables_usegradebook_activeclassrecord",
+      "composables_usegradebook_addassessment",
+      "composables_usegradebook_analyticsmode",
+      "composables_usegradebook_assessments",
+      "composables_usegradebook_assessmentstats",
+      "composables_usegradebook_assessmenttypes",
+      "composables_usegradebook_classanalytics",
+      "composables_usegradebook_classgrades",
+      "composables_usegradebook_cleargrade",
+      "composables_usegradebook_closeaddassessment",
+      "composables_usegradebook_currentassessmentid",
+      "composables_usegradebook_dbsavequeue",
+      "composables_usegradebook_deleteassessment",
+      "composables_usegradebook_distributionmode",
+      "composables_usegradebook_editassessment",
+      "composables_usegradebook_enqueuedbsave",
+      "composables_usegradebook_entergrade",
+      "composables_usegradebook_exclusionmode",
+      "composables_usegradebook_filteredmilestones",
+      "composables_usegradebook_fixedexclusionthreshold",
+      "composables_usegradebook_globalmilestones",
+      "composables_usegradebook_gradebuckets",
+      "composables_usegradebook_grademap",
+      "composables_usegradebook_grades",
+      "composables_usegradebook_iseditingassessment",
+      "composables_usegradebook_markexcluded",
+      "composables_usegradebook_markmissing",
+      "composables_usegradebook_newassessment",
+      "composables_usegradebook_ontargetchange",
+      "composables_usegradebook_openaddassessment",
+      "composables_usegradebook_refreshclassanalytics",
+      "composables_usegradebook_refreshgrades",
+      "composables_usegradebook_refreshsingleassessmentstats",
+      "composables_usegradebook_refreshsinglestudent",
+      "composables_usegradebook_removeattempt",
+      "composables_usegradebook_resetanalyticsstate",
+      "composables_usegradebook_saveassessment",
+      "composables_usegradebook_savestudentoverride",
+      "composables_usegradebook_selectedmilestone",
+      "composables_usegradebook_selectedstudentid",
+      "composables_usegradebook_setexclusionmode",
+      "composables_usegradebook_setprimaryattempt",
+      "composables_usegradebook_showaddassessmentmodal",
+      "composables_usegradebook_sortedunits",
+      "composables_usegradebook_togglestudentfromanalytics",
+      "composables_usegradebook_updateattemptcomment"
+    ],
+    "2": [
+      "db_gradebookservice",
+      "db_gradebookservice_addattempt",
+      "db_gradebookservice_auditgradebookdata",
+      "db_gradebookservice_builddistributionbuckets",
+      "db_gradebookservice_buildleveldistributionbuckets",
+      "db_gradebookservice_calculateassessmentanalytics",
+      "db_gradebookservice_calculatecategorygrade",
+      "db_gradebookservice_calculateclassanalytics",
+      "db_gradebookservice_calculateclassgrades",
+      "db_gradebookservice_calculatemedian",
+      "db_gradebookservice_calculatemostconsistent",
+      "db_gradebookservice_calculatestandarddeviation",
+      "db_gradebookservice_calculatestudentgrade",
+      "db_gradebookservice_calculateweightedmedian",
+      "db_gradebookservice_createassessment",
+      "db_gradebookservice_deleteassessment",
+      "db_gradebookservice_deleteattempt",
+      "db_gradebookservice_deletegrade",
+      "db_gradebookservice_deletegradebooktemplate",
+      "db_gradebookservice_detectoutliers",
+      "db_gradebookservice_getassessmentpercentage",
+      "db_gradebookservice_getassessmentsbyclass",
+      "db_gradebookservice_getbucketmode",
+      "db_gradebookservice_getexclusionresults",
+      "db_gradebookservice_getgradebooktemplates",
+      "db_gradebookservice_getgradeintransaction",
+      "db_gradebookservice_getgradesbyclass",
+      "db_gradebookservice_getgradesbystudent",
+      "db_gradebookservice_getorcreategrade",
+      "db_gradebookservice_repairgradebookorphans",
+      "db_gradebookservice_repairinvalidcategories",
+      "db_gradebookservice_repairmissingclassids",
+      "db_gradebookservice_resolveattemptscore",
+      "db_gradebookservice_savegradebooktemplate",
+      "db_gradebookservice_setprimaryattempt",
+      "db_gradebookservice_updateassessment",
+      "db_gradebookservice_updateattemptcomment",
+      "db_gradebookservice_updategradeflags",
+      "db_settingsservice_getsettings",
+      "utils_math",
+      "utils_math_calculatepercentchange",
+      "utils_math_preciseround"
+    ],
+    "3": [
+      "components_messageoverlay",
+      "components_yearsemesterselector",
+      "components_yearsemesterselector_allpossibleclasses",
+      "components_yearsemesterselector_classlist_archivedclasses_selectedyear_selectedsemester",
+      "components_yearsemesterselector_uniquesemesters",
+      "components_yearsemesterselector_uniqueyears",
+      "db_eventservice_issyncactive",
+      "dossier_addassessmentmodal",
+      "src_app",
+      "src_app_checksyncstatus",
+      "src_app_computesuggestedclass",
+      "src_app_currentcomponent",
+      "src_app_currentview",
+      "src_app_doquicksync",
+      "src_app_formatsynctime",
+      "src_app_grades",
+      "src_app_init_isscanneropen",
+      "src_app_issyncing",
+      "src_app_issynclinked",
+      "src_app_isunsynced",
+      "src_app_lastsyncedat",
+      "src_app_navigateto",
+      "src_app_normalizedpath",
+      "src_app_queryparams",
+      "src_app_reports",
+      "src_app_scanstation",
+      "src_app_syncbroken",
+      "src_app_syncsuccess",
+      "src_app_viewcomponents",
+      "src_app_viewparams",
+      "src_app_views",
+      "src_main",
+      "src_main_app",
+      "src_main_requestpersistentstorage"
+    ],
+    "4": [
+      "basehttprequesthandler",
+      "path",
+      "rfid_companion_rfid_app",
+      "rfid_companion_rfid_app_consume_scan",
+      "rfid_companion_rfid_app_create_tray_icon_image",
+      "rfid_companion_rfid_app_get_app_dir",
+      "rfid_companion_rfid_app_keyboard_reader",
+      "rfid_companion_rfid_app_load_config",
+      "rfid_companion_rfid_app_log",
+      "rfid_companion_rfid_app_main",
+      "rfid_companion_rfid_app_notify",
+      "rfid_companion_rfid_app_rationale_1",
+      "rfid_companion_rfid_app_rationale_117",
+      "rfid_companion_rfid_app_rationale_130",
+      "rfid_companion_rfid_app_rationale_143",
+      "rfid_companion_rfid_app_rationale_197",
+      "rfid_companion_rfid_app_rationale_210",
+      "rfid_companion_rfid_app_rationale_248",
+      "rfid_companion_rfid_app_rationale_317",
+      "rfid_companion_rfid_app_rationale_332",
+      "rfid_companion_rfid_app_rationale_342",
+      "rfid_companion_rfid_app_rationale_40",
+      "rfid_companion_rfid_app_rationale_97",
+      "rfid_companion_rfid_app_rfidhandler",
+      "rfid_companion_rfid_app_rfidhandler_do_get",
+      "rfid_companion_rfid_app_rfidhandler_do_options",
+      "rfid_companion_rfid_app_rfidhandler_log_message",
+      "rfid_companion_rfid_app_rfidhandler_send_cors_headers",
+      "rfid_companion_rfid_app_serial_reader",
+      "rfid_companion_rfid_app_start_http_server",
+      "rfid_companion_rfid_app_start_tray",
+      "rfid_companion_rfid_app_store_scan"
+    ],
+    "5": [
+      "dev_dist_workbox_ca84f546",
+      "dev_dist_workbox_ca84f546_addroute",
+      "dev_dist_workbox_ca84f546_cachematchignoreparams",
+      "dev_dist_workbox_ca84f546_cachewillupdate",
+      "dev_dist_workbox_ca84f546_canconstructresponsefrombodystream",
+      "dev_dist_workbox_ca84f546_cleanupoutdatedcaches",
+      "dev_dist_workbox_ca84f546_clientsclaim",
+      "dev_dist_workbox_ca84f546_copyresponse",
+      "dev_dist_workbox_ca84f546_createhandlerboundtourl",
+      "dev_dist_workbox_ca84f546_deferred",
+      "dev_dist_workbox_ca84f546_deferred_constructor",
+      "dev_dist_workbox_ca84f546_extends",
+      "dev_dist_workbox_ca84f546_navigationroute",
+      "dev_dist_workbox_ca84f546_navigationroute_constructor",
+      "dev_dist_workbox_ca84f546_navigationroute_match",
+      "dev_dist_workbox_ca84f546_nestedgroup",
+      "dev_dist_workbox_ca84f546_precache",
+      "dev_dist_workbox_ca84f546_precacheandroute",
+      "dev_dist_workbox_ca84f546_precacheroute",
+      "dev_dist_workbox_ca84f546_precacheroute_constructor",
+      "dev_dist_workbox_ca84f546_printcleanupdetails",
+      "dev_dist_workbox_ca84f546_printinstalldetails",
+      "dev_dist_workbox_ca84f546_regexproute",
+      "dev_dist_workbox_ca84f546_regexproute_constructor",
+      "dev_dist_workbox_ca84f546_registerroute",
+      "dev_dist_workbox_ca84f546_replacetraps",
+      "dev_dist_workbox_ca84f546_set",
+      "dev_dist_workbox_ca84f546_stripparams",
+      "dev_dist_workbox_ca84f546_workboxerror",
+      "dev_dist_workbox_ca84f546_workboxerror_constructor"
+    ],
+    "6": [
+      "dev_dist_workbox_ca84f546_cachefirst",
+      "dev_dist_workbox_ca84f546_cachefirst_handle",
+      "dev_dist_workbox_ca84f546_executequotaerrorcallbacks",
+      "dev_dist_workbox_ca84f546_precachestrategy",
+      "dev_dist_workbox_ca84f546_precachestrategy_constructor",
+      "dev_dist_workbox_ca84f546_precachestrategy_handle",
+      "dev_dist_workbox_ca84f546_precachestrategy_handlefetch",
+      "dev_dist_workbox_ca84f546_precachestrategy_handleinstall",
+      "dev_dist_workbox_ca84f546_precachestrategy_usedefaultcacheabilitypluginifneeded",
+      "dev_dist_workbox_ca84f546_strategy",
+      "dev_dist_workbox_ca84f546_strategy_awaitcomplete",
+      "dev_dist_workbox_ca84f546_strategy_constructor",
+      "dev_dist_workbox_ca84f546_strategy_getresponse",
+      "dev_dist_workbox_ca84f546_strategy_handle",
+      "dev_dist_workbox_ca84f546_strategy_handleall",
+      "dev_dist_workbox_ca84f546_strategyhandler",
+      "dev_dist_workbox_ca84f546_strategyhandler_cachematch",
+      "dev_dist_workbox_ca84f546_strategyhandler_cacheput",
+      "dev_dist_workbox_ca84f546_strategyhandler_destroy",
+      "dev_dist_workbox_ca84f546_strategyhandler_donewaiting",
+      "dev_dist_workbox_ca84f546_strategyhandler_ensureresponsesafetocache",
+      "dev_dist_workbox_ca84f546_strategyhandler_fetch",
+      "dev_dist_workbox_ca84f546_strategyhandler_fetchandcacheput",
+      "dev_dist_workbox_ca84f546_strategyhandler_getcachekey",
+      "dev_dist_workbox_ca84f546_strategyhandler_hascallback",
+      "dev_dist_workbox_ca84f546_strategyhandler_iteratecallbacks",
+      "dev_dist_workbox_ca84f546_strategyhandler_runcallbacks",
+      "dev_dist_workbox_ca84f546_strategyhandler_waituntil",
+      "dev_dist_workbox_ca84f546_timeout",
+      "dev_dist_workbox_ca84f546_torequest"
+    ],
+    "7": [
+      "package",
+      "package_dependencies",
+      "package_dependencies_exceljs",
+      "package_dependencies_file_saver",
+      "package_dependencies_html5_qrcode",
+      "package_dependencies_idb",
+      "package_dependencies_lucide_vue_next",
+      "package_dependencies_papaparse",
+      "package_dependencies_qrcode",
+      "package_dependencies_supabase_supabase_js",
+      "package_dependencies_vue",
+      "package_devdependencies",
+      "package_devdependencies_chart_js",
+      "package_devdependencies_gh_pages",
+      "package_devdependencies_vite",
+      "package_devdependencies_vite_plugin_pwa",
+      "package_devdependencies_vitejs_plugin_vue",
+      "package_devdependencies_vue_chartjs",
+      "package_name",
+      "package_private",
+      "package_scripts",
+      "package_scripts_build",
+      "package_scripts_deploy",
+      "package_scripts_dev",
+      "package_scripts_predeploy",
+      "package_scripts_preview",
+      "package_type",
+      "package_version"
+    ],
+    "8": [
+      "composables_usegradebook_savestudentdemographics",
+      "db_classservice",
+      "db_classservice_archiveclass",
+      "db_classservice_archivestudent",
+      "db_classservice_bulkimportclasses",
+      "db_classservice_clearstudentabsent",
+      "db_classservice_clearstudentactivestate",
+      "db_classservice_clearstudentlate",
+      "db_classservice_deleteclass",
+      "db_classservice_getallclasses",
+      "db_classservice_getclass",
+      "db_classservice_importroster",
+      "db_classservice_patchstudent",
+      "db_classservice_permanentlydeletestudent",
+      "db_classservice_restoreclass",
+      "db_classservice_saveclass",
+      "db_classservice_setperiodstarttime",
+      "db_classservice_setstudentabsent",
+      "db_classservice_setstudentactivestate",
+      "db_classservice_setstudentlate",
+      "db_classservice_togglestudentanalyticsexclusion",
+      "db_classservice_unarchivestudent",
+      "db_classservice_updateclass",
+      "db_classservice_updatestudentnote",
+      "db_classservice_updatestudentseat",
+      "db_index_getdb"
+    ],
+    "9": [
+      "composables_useattendanceinsights",
+      "composables_useattendanceinsights_useattendanceinsights",
+      "composables_useclassroom_useclassroom",
+      "composables_usegradebook_savestudentgradebooknote",
+      "composables_usestudentdossier",
+      "composables_usestudentdossier_usestudentdossier",
+      "db_eventservice",
+      "db_eventservice_applydaterange",
+      "db_eventservice_deleteevent",
+      "db_eventservice_exportalldata",
+      "db_eventservice_getallevents",
+      "db_eventservice_getdaterangeforclassperiod",
+      "db_eventservice_getdaterangeforperiod",
+      "db_eventservice_geteventsbyclass",
+      "db_eventservice_geteventsbyperiod",
+      "db_eventservice_geteventsbystudent",
+      "db_eventservice_getlastsyncedat",
+      "db_eventservice_hasunsyncedchanges",
+      "db_eventservice_importalldata",
+      "db_eventservice_logevent",
+      "db_eventservice_quicksyncbackup",
+      "db_eventservice_tominutes",
+      "db_eventservice_updateevent",
+      "db_migrations",
+      "db_migrations_migratedata"
+    ],
+    "10": [
+      "composables_usegradebook_loadgradebook",
+      "composables_usegradebook_refreshallassessmentstats",
+      "db_settingsservice",
+      "db_settingsservice_auditsettingsintegrity",
+      "db_settingsservice_deletebehaviorcode",
+      "db_settingsservice_getacademicterms",
+      "db_settingsservice_getattendanceconfig",
+      "db_settingsservice_getbehaviorcodes",
+      "db_settingsservice_getglobalmilestones",
+      "db_settingsservice_getgradebuckets",
+      "db_settingsservice_getnonschooldays",
+      "db_settingsservice_getperiodstarttimes",
+      "db_settingsservice_getteachername",
+      "db_settingsservice_getthresholds",
+      "db_settingsservice_readsettings",
+      "db_settingsservice_saveacademicterms",
+      "db_settingsservice_saveattendanceconfig",
+      "db_settingsservice_savebehaviorcode",
+      "db_settingsservice_saveglobalmilestones",
+      "db_settingsservice_savegradebuckets",
+      "db_settingsservice_savenonschooldays",
+      "db_settingsservice_saveperiodstarttimes",
+      "db_settingsservice_savesettings",
+      "db_settingsservice_saveteachername",
+      "db_settingsservice_savethresholds"
+    ],
+    "11": [
+      "composables_useradial",
+      "composables_useradial_activecategory",
+      "composables_useradial_allcodes",
+      "composables_useradial_attendance_categories",
+      "composables_useradial_categoryicon",
+      "composables_useradial_categorylabel",
+      "composables_useradial_centregoesback",
+      "composables_useradial_close",
+      "composables_useradial_handlecentre",
+      "composables_useradial_handleitemtap",
+      "composables_useradial_handleprofiletap",
+      "composables_useradial_isopen",
+      "composables_useradial_open",
+      "composables_useradial_pendingnotecode",
+      "composables_useradial_pendingnotestudent",
+      "composables_useradial_profilestudent",
+      "composables_useradial_showprofile",
+      "composables_useradial_targetstudent",
+      "composables_useradial_useradial",
+      "composables_useradial_viewmode",
+      "composables_useradial_visibleitems"
+    ],
+    "12": [
+      "dev_dist_workbox_ca84f546_createcachekey",
+      "dev_dist_workbox_ca84f546_precachecachekeyplugin",
+      "dev_dist_workbox_ca84f546_precachecachekeyplugin_cachekeywillbeused",
+      "dev_dist_workbox_ca84f546_precachecachekeyplugin_constructor",
+      "dev_dist_workbox_ca84f546_precachecontroller",
+      "dev_dist_workbox_ca84f546_precachecontroller_activate",
+      "dev_dist_workbox_ca84f546_precachecontroller_addtocachelist",
+      "dev_dist_workbox_ca84f546_precachecontroller_constructor",
+      "dev_dist_workbox_ca84f546_precachecontroller_createhandlerboundtourl",
+      "dev_dist_workbox_ca84f546_precachecontroller_getcachedurls",
+      "dev_dist_workbox_ca84f546_precachecontroller_getcachekeyforurl",
+      "dev_dist_workbox_ca84f546_precachecontroller_geturlstocachekeys",
+      "dev_dist_workbox_ca84f546_precachecontroller_install",
+      "dev_dist_workbox_ca84f546_precachecontroller_matchprecache",
+      "dev_dist_workbox_ca84f546_precachecontroller_precache",
+      "dev_dist_workbox_ca84f546_precachecontroller_strategy",
+      "dev_dist_workbox_ca84f546_strategyhandler_constructor",
+      "dev_dist_workbox_ca84f546_waituntil"
+    ],
+    "13": [
+      "dev_dist_workbox_ca84f546_cacheexpiration",
+      "dev_dist_workbox_ca84f546_cacheexpiration_constructor",
+      "dev_dist_workbox_ca84f546_cacheexpiration_delete",
+      "dev_dist_workbox_ca84f546_cacheexpiration_expireentries",
+      "dev_dist_workbox_ca84f546_cacheexpiration_isurlexpired",
+      "dev_dist_workbox_ca84f546_cacheexpiration_updatetimestamp",
+      "dev_dist_workbox_ca84f546_dontwaitfor",
+      "dev_dist_workbox_ca84f546_expirationplugin",
+      "dev_dist_workbox_ca84f546_expirationplugin_cachedidupdate",
+      "dev_dist_workbox_ca84f546_expirationplugin_cachedresponsewillbeused",
+      "dev_dist_workbox_ca84f546_expirationplugin_constructor",
+      "dev_dist_workbox_ca84f546_expirationplugin_deletecacheandmetadata",
+      "dev_dist_workbox_ca84f546_expirationplugin_getcacheexpiration",
+      "dev_dist_workbox_ca84f546_expirationplugin_getdateheadertimestamp",
+      "dev_dist_workbox_ca84f546_expirationplugin_isresponsedatefresh",
+      "dev_dist_workbox_ca84f546_registerquotaerrorcallback",
+      "dev_dist_workbox_ca84f546_removeignoredsearchparams"
+    ],
+    "14": [
+      "dossier_progressreport",
+      "dossier_progressreport_alldossierassessments",
+      "dossier_progressreport_attendancestats",
+      "dossier_progressreport_behaviorcodesmap",
+      "dossier_progressreport_evidencemix",
+      "dossier_progressreport_formatdate",
+      "dossier_progressreport_getcategoryname",
+      "dossier_progressreport_getgradecolor",
+      "dossier_progressreport_individualtasks",
+      "dossier_progressreport_missingassessments",
+      "dossier_progressreport_outofclassstats",
+      "dossier_progressreport_overallmostconsistent",
+      "dossier_progressreport_overallweightedmedian",
+      "dossier_progressreport_recentclasswork",
+      "dossier_progressreport_recentgradedassessments",
+      "dossier_progressreport_studentassessments",
+      "dossier_progressreport_topbehavior"
+    ],
+    "15": [
+      "dev_dist_workbox_ca84f546_get",
+      "dev_dist_workbox_ca84f546_getmethod",
+      "dev_dist_workbox_ca84f546_has",
+      "dev_dist_workbox_ca84f546_precachecontroller_getintegrityforcachekey",
+      "dev_dist_workbox_ca84f546_router",
+      "dev_dist_workbox_ca84f546_router_addcachelistener",
+      "dev_dist_workbox_ca84f546_router_addfetchlistener",
+      "dev_dist_workbox_ca84f546_router_constructor",
+      "dev_dist_workbox_ca84f546_router_findmatchingroute",
+      "dev_dist_workbox_ca84f546_router_handlerequest",
+      "dev_dist_workbox_ca84f546_router_registerroute",
+      "dev_dist_workbox_ca84f546_router_routes",
+      "dev_dist_workbox_ca84f546_router_setcatchhandler",
+      "dev_dist_workbox_ca84f546_router_setdefaulthandler",
+      "dev_dist_workbox_ca84f546_router_unregisterroute"
+    ],
+    "16": [
+      "setup_gradebucketssettings",
+      "setup_gradebucketssettings_addbucket",
+      "setup_gradebucketssettings_alert_confirm",
+      "setup_gradebucketssettings_capgradesat100",
+      "setup_gradebucketssettings_globalerror",
+      "setup_gradebucketssettings_hasfielderrors",
+      "setup_gradebucketssettings_localbuckets",
+      "setup_gradebucketssettings_movebucket",
+      "setup_gradebucketssettings_ontario_defaults",
+      "setup_gradebucketssettings_removebucket",
+      "setup_gradebucketssettings_resettoontario",
+      "setup_gradebucketssettings_savebuckets",
+      "setup_gradebucketssettings_validate",
+      "setup_gradebucketssettings_validationerrors"
+    ],
+    "17": [
+      "components_qrscanner",
+      "components_qrscanner_ensurecameras",
+      "components_qrscanner_handleextensionscan",
+      "components_qrscanner_handlestartbymode",
+      "components_qrscanner_if",
+      "components_qrscanner_qrboxfn",
+      "components_qrscanner_startinstance",
+      "components_qrscanner_startscanner",
+      "components_qrscanner_stopscanner",
+      "components_qrscanner_switchcamera",
+      "components_qrscanner_targetclassstudentsout",
+      "components_qrscanner_togglepip"
+    ],
+    "18": [
+      "composables_useclassroom_activateclass",
+      "composables_useclassroom_archiveclass",
+      "composables_useclassroom_computeweeklystats",
+      "composables_useclassroom_createclass",
+      "composables_useclassroom_editevent",
+      "composables_useclassroom_initializerfidattendance",
+      "composables_useclassroom_logtoggleevent",
+      "composables_useclassroom_reconcilestaletrips",
+      "composables_useclassroom_removeevent",
+      "composables_useclassroom_synclateactivestate",
+      "composables_useclassroom_updateattendanceconfig"
+    ],
+    "19": [
+      "composables_useclassroom_archivestudent",
+      "composables_useclassroom_assignseat",
+      "composables_useclassroom_getstudenteventhistory",
+      "composables_useclassroom_logassessmentevent",
+      "composables_useclassroom_logattendanceevent",
+      "composables_useclassroom_logstandardevent",
+      "composables_useclassroom_permanentlydeletestudent",
+      "composables_useclassroom_removestudent",
+      "composables_useclassroom_unarchivestudent",
+      "composables_useclassroom_updatestudentnote",
+      "composables_usemessage_usemessage"
+    ],
+    "20": [
+      "db_classservice_clearalldata",
+      "db_exportservice",
+      "db_exportservice_exportgradebooktoexcel",
+      "db_index",
+      "tmp_test_dates",
+      "tmp_test_dates_testyear",
+      "utils_dates",
+      "utils_dates_formatlocaldisplay",
+      "utils_dates_getcurrentschoolyear",
+      "utils_dates_getcurrentsemester",
+      "utils_dates_parselocal"
+    ],
+    "21": [
+      "dev_dist_workbox_ca84f546_cachetimestampsmodel",
+      "dev_dist_workbox_ca84f546_cachetimestampsmodel_constructor",
+      "dev_dist_workbox_ca84f546_cachetimestampsmodel_expireentries",
+      "dev_dist_workbox_ca84f546_cachetimestampsmodel_getdb",
+      "dev_dist_workbox_ca84f546_cachetimestampsmodel_getid",
+      "dev_dist_workbox_ca84f546_cachetimestampsmodel_gettimestamp",
+      "dev_dist_workbox_ca84f546_cachetimestampsmodel_settimestamp",
+      "dev_dist_workbox_ca84f546_cachetimestampsmodel_upgradedb",
+      "dev_dist_workbox_ca84f546_cachetimestampsmodel_upgradedbanddeleteolddbs",
+      "dev_dist_workbox_ca84f546_deletedb"
+    ],
+    "22": [
+      "public_manifest",
+      "public_manifest_background_color",
+      "public_manifest_description",
+      "public_manifest_display",
+      "public_manifest_icons",
+      "public_manifest_name",
+      "public_manifest_orientation",
+      "public_manifest_short_name",
+      "public_manifest_start_url",
+      "public_manifest_theme_color"
+    ],
+    "23": [
+      "components_classswitcher",
+      "components_classswitcher_acceptsuggestion",
+      "components_classswitcher_activeclass_suggestedclass_switchclass_dismisssuggestion_filteredclasslist",
+      "components_classswitcher_classesbyterm",
+      "components_classswitcher_emit",
+      "components_classswitcher_isopen",
+      "components_classswitcher_selectclass",
+      "components_classswitcher_suggestiontext",
+      "composables_useclassroom_switchclass"
+    ],
+    "24": [
+      "composables_usemessage",
+      "composables_usemessage_state",
+      "composables_useundo",
+      "composables_useundo_canundo",
+      "composables_useundo_clear",
+      "composables_useundo_push",
+      "composables_useundo_stack",
+      "composables_useundo_undo",
+      "composables_useundo_useundo"
+    ],
+    "25": [
+      "extension_manifest",
+      "extension_manifest_background",
+      "extension_manifest_background_service_worker",
+      "extension_manifest_content_scripts",
+      "extension_manifest_description",
+      "extension_manifest_manifest_version",
+      "extension_manifest_name",
+      "extension_manifest_permissions",
+      "extension_manifest_version"
+    ],
+    "26": [
+      "dev_dist_workbox_ca84f546_cachedonepromisefortransaction",
+      "dev_dist_workbox_ca84f546_getcursoradvancemethods",
+      "dev_dist_workbox_ca84f546_getidbproxyabletypes",
+      "dev_dist_workbox_ca84f546_opendb",
+      "dev_dist_workbox_ca84f546_promisifyrequest",
+      "dev_dist_workbox_ca84f546_transformcachablevalue",
+      "dev_dist_workbox_ca84f546_wrap",
+      "dev_dist_workbox_ca84f546_wrapfunction"
+    ],
+    "27": [
+      "rfid_companion_find_rfid",
+      "rfid_companion_find_rfid_list_raw_input_devices",
+      "rfid_companion_find_rfid_list_serial_ports",
+      "rfid_companion_find_rfid_rationale_1",
+      "rfid_companion_find_rfid_rationale_109",
+      "rfid_companion_find_rfid_rationale_26",
+      "rfid_companion_find_rfid_rationale_47",
+      "rfid_companion_find_rfid_sniff_keyboard_device"
+    ],
+    "28": [
+      "composables_useclassroom_bulkimportclasses",
+      "composables_useclassroom_computesuggestedclass",
+      "composables_useclassroom_hasbeendismissedtoday",
+      "composables_useclassroom_init",
+      "composables_useclassroom_loaddismissedsuggestions",
+      "composables_useclassroom_reloadclasses",
+      "composables_useclassroom_sortandsplitclasses"
+    ],
+    "29": [
+      "tmp_test_outliers",
+      "tmp_test_outliers_calculatestandarddeviation",
+      "tmp_test_outliers_classstats",
+      "tmp_test_outliers_detectoutliers",
+      "tmp_test_outliers_result",
+      "tmp_test_outliers_result2",
+      "tmp_test_outliers_spreadclass"
+    ],
+    "30": [
+      "dev_dist_workbox_ca84f546_cacheableresponse",
+      "dev_dist_workbox_ca84f546_cacheableresponse_constructor",
+      "dev_dist_workbox_ca84f546_cacheableresponse_isresponsecacheable",
+      "dev_dist_workbox_ca84f546_cacheableresponseplugin",
+      "dev_dist_workbox_ca84f546_cacheableresponseplugin_cachewillupdate",
+      "dev_dist_workbox_ca84f546_cacheableresponseplugin_constructor"
+    ],
+    "31": [
+      "components_radialmenu",
+      "components_radialmenu_isactivetoggle",
+      "components_radialmenu_onitemtap",
+      "components_radialmenu_onprofiletap",
+      "components_radialmenu_profilepositionstyle"
+    ],
+    "32": [
+      "components_studentprofilemodal",
+      "components_studentprofilemodal_close",
+      "components_studentprofilemodal_emit",
+      "components_studentprofilemodal_props",
+      "dossier_student360"
+    ],
+    "33": [
+      "dev_dist_workbox_ca84f546_precacheinstallreportplugin",
+      "dev_dist_workbox_ca84f546_precacheinstallreportplugin_cachedresponsewillbeused",
+      "dev_dist_workbox_ca84f546_precacheinstallreportplugin_constructor",
+      "dev_dist_workbox_ca84f546_precacheinstallreportplugin_handlerwillstart"
+    ],
+    "34": [
+      "views_setup",
+      "views_setup_catch",
+      "views_setup_for",
+      "views_setup_if"
+    ],
+    "35": [
+      "composables_useclassroom_checkresize",
+      "composables_useclassroom_confirmresize",
+      "composables_useclassroom_updateactiveclass"
+    ],
+    "36": [
+      "dev_dist_workbox_ca84f546_route",
+      "dev_dist_workbox_ca84f546_route_constructor",
+      "dev_dist_workbox_ca84f546_route_setcatchhandler"
+    ],
+    "37": [
+      "views_grades",
+      "views_grades_if",
+      "views_grades_startedit"
+    ],
+    "38": [
+      "views_reports",
+      "views_reports_if",
+      "views_reports_loadstudent"
+    ],
+    "39": [
+      "components_gradetrendchart",
+      "components_gradetrendchart_regressionline"
+    ],
+    "40": [
+      "components_seatinggrid",
+      "components_seatinggrid_if"
+    ],
+    "41": [
+      "composables_useclassroom_dismisssuggestion",
+      "composables_useclassroom_savedismissedsuggestions"
+    ],
+    "42": [
+      "composables_useclassroom_importroster",
+      "composables_useclassroom_movestudentfromclass"
+    ],
+    "43": [
+      "composables_usekeyboardwedge",
+      "composables_usekeyboardwedge_usekeyboardwedge"
+    ],
+    "44": [
+      "extension_content",
+      "extension_content_scanbuffer"
+    ],
+    "45": [
+      "setup_semestercalendar",
+      "setup_semestercalendar_if"
+    ],
+    "46": [
+      "utils_icons",
+      "utils_icons_resolveicon"
+    ],
+    "47": [
+      "vercel",
+      "vercel_rewrites"
+    ],
+    "48": [
+      "views_scanstation",
+      "views_scanstation_scan_station_active_at_limit"
+    ],
+    "49": [
+      "vite_config",
+      "vite_config_manualchunks"
+    ],
+    "50": [
+      "components_assessmentconversationmodal"
+    ],
+    "51": [
+      "components_basemodal"
+    ],
+    "52": [
+      "components_desktile"
+    ],
+    "53": [
+      "components_eventnotemodal"
+    ],
+    "54": [
+      "components_printclasslistmodal"
+    ],
+    "55": [
+      "components_studentsidebar"
+    ],
+    "56": [
+      "components_studenttrendgraph"
+    ],
+    "57": [
+      "components_testdaywarning"
+    ],
+    "58": [
+      "components_undobutton"
+    ],
+    "59": [
+      "dev_dist_registersw"
+    ],
+    "60": [
+      "dev_dist_sw"
+    ],
+    "61": [
+      "dossier_attendanceactivityreport"
+    ],
+    "62": [
+      "dossier_dossiercategorygrid"
+    ],
+    "63": [
+      "dossier_dossiercommunicationlog"
+    ],
+    "64": [
+      "dossier_dossierevidencemix"
+    ],
+    "65": [
+      "dossier_dossierqualitativeevidence"
+    ],
+    "66": [
+      "dossier_student360header"
+    ],
+    "67": [
+      "dossier_studentgradetrend"
+    ],
+    "68": [
+      "dossier_studentstatcard"
+    ],
+    "69": [
+      "dossier_studenttimeline"
+    ],
+    "70": [
+      "extension_background"
+    ],
+    "71": [
+      "setup_calendarsettings"
+    ],
+    "72": [
+      "setup_csvhelpguide"
+    ],
+    "73": [
+      "setup_gettingstartedguide"
+    ],
+    "74": [
+      "setup_helpmodal"
+    ],
+    "75": [
+      "views_dashboard"
+    ]
+  },
+  "cohesion": {
+    "0": 0.03773584905660377,
+    "1": 0.06753006475485661,
+    "2": 0.09988385598141696,
+    "3": 0.06060606060606061,
+    "4": 0.09475806451612903,
+    "5": 0.08275862068965517,
+    "6": 0.1471264367816092,
+    "7": 0.07142857142857142,
+    "8": 0.15384615384615385,
+    "9": 0.12,
+    "10": 0.11666666666666667,
+    "11": 0.10952380952380952,
+    "12": 0.13725490196078433,
+    "13": 0.19117647058823528,
+    "14": 0.11764705882352941,
+    "15": 0.19047619047619047,
+    "16": 0.18681318681318682,
+    "17": 0.2727272727272727,
+    "18": 0.18181818181818182,
+    "19": 0.18181818181818182,
+    "20": 0.2727272727272727,
+    "21": 0.3333333333333333,
+    "22": 0.2,
+    "23": 0.25,
+    "24": 0.25,
+    "25": 0.2222222222222222,
+    "26": 0.2857142857142857,
+    "27": 0.25,
+    "28": 0.2857142857142857,
+    "29": 0.3333333333333333,
+    "30": 0.3333333333333333,
+    "31": 0.4,
+    "32": 0.5,
+    "33": 0.5,
+    "34": 0.5,
+    "35": 0.6666666666666666,
+    "36": 0.6666666666666666,
+    "37": 0.6666666666666666,
+    "38": 0.6666666666666666,
+    "39": 1.0,
+    "40": 1.0,
+    "41": 1.0,
+    "42": 1.0,
+    "43": 1.0,
+    "44": 1.0,
+    "45": 1.0,
+    "46": 1.0,
+    "47": 1.0,
+    "48": 1.0,
+    "49": 1.0,
+    "50": 1.0,
+    "51": 1.0,
+    "52": 1.0,
+    "53": 1.0,
+    "54": 1.0,
+    "55": 1.0,
+    "56": 1.0,
+    "57": 1.0,
+    "58": 1.0,
+    "59": 1.0,
+    "60": 1.0,
+    "61": 1.0,
+    "62": 1.0,
+    "63": 1.0,
+    "64": 1.0,
+    "65": 1.0,
+    "66": 1.0,
+    "67": 1.0,
+    "68": 1.0,
+    "69": 1.0,
+    "70": 1.0,
+    "71": 1.0,
+    "72": 1.0,
+    "73": 1.0,
+    "74": 1.0,
+    "75": 1.0
+  },
+  "gods": [
+    {
+      "id": "db_index_getdb",
+      "label": "getDB()",
+      "degree": 72
+    },
+    {
+      "id": "composables_usemessage_usemessage",
+      "label": "useMessage()",
+      "degree": 24
+    },
+    {
+      "id": "dev_dist_workbox_ca84f546_get",
+      "label": "get()",
+      "degree": 16
+    },
+    {
+      "id": "dev_dist_workbox_ca84f546_strategyhandler",
+      "label": "StrategyHandler",
+      "degree": 14
+    },
+    {
+      "id": "dev_dist_workbox_ca84f546_precachecontroller",
+      "label": "PrecacheController",
+      "degree": 13
+    },
+    {
+      "id": "db_settingsservice_readsettings",
+      "label": "_readSettings()",
+      "degree": 12
+    },
+    {
+      "id": "dev_dist_workbox_ca84f546_router",
+      "label": "Router",
+      "degree": 11
+    },
+    {
+      "id": "db_classservice_patchstudent",
+      "label": "patchStudent()",
+      "degree": 10
+    },
+    {
+      "id": "dev_dist_workbox_ca84f546_cachetimestampsmodel",
+      "label": "CacheTimestampsModel",
+      "degree": 9
+    },
+    {
+      "id": "composables_usegradebook_enqueuedbsave",
+      "label": "enqueueDBSave()",
+      "degree": 9
+    }
+  ],
+  "surprises": [
+    {
+      "source": "getDB()",
+      "target": "openDB()",
+      "source_files": [
+        "src/db/index.js",
+        "dev-dist/workbox-ca84f546.js"
+      ],
+      "confidence": "INFERRED",
+      "relation": "calls",
+      "why": "inferred connection - not explicitly stated in source; connects across different repos/directories; bridges separate communities"
+    },
+    {
+      "source": "logEvent()",
+      "target": "getDB()",
+      "source_files": [
+        "src/db/eventService.js",
+        "src/db/index.js"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "why": "bridges separate communities; peripheral node `logEvent()` unexpectedly reaches hub `getDB()`"
+    },
+    {
+      "source": "deleteEvent()",
+      "target": "getDB()",
+      "source_files": [
+        "src/db/eventService.js",
+        "src/db/index.js"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "why": "bridges separate communities; peripheral node `deleteEvent()` unexpectedly reaches hub `getDB()`"
+    },
+    {
+      "source": "updateEvent()",
+      "target": "getDB()",
+      "source_files": [
+        "src/db/eventService.js",
+        "src/db/index.js"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "why": "bridges separate communities; peripheral node `updateEvent()` unexpectedly reaches hub `getDB()`"
+    },
+    {
+      "source": "createAssessment()",
+      "target": "getDB()",
+      "source_files": [
+        "src/db/gradebookService.js",
+        "src/db/index.js"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "why": "bridges separate communities; peripheral node `createAssessment()` unexpectedly reaches hub `getDB()`"
+    }
+  ],
+  "tokens": {
+    "input": 0,
+    "output": 0
+  }
+}
