@@ -1,15 +1,16 @@
-# Graph Report - .  (2026-06-24)
+# Graph Report - classroom-tracker  (2026-06-25)
 
 ## Corpus Check
-- cluster-only mode — file stats not available
+- 78 files · ~155,189 words
+- Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 680 nodes · 1057 edges · 76 communities (66 shown, 10 thin omitted)
+- 683 nodes · 1064 edges · 77 communities (67 shown, 10 thin omitted)
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 3 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `ac023370`
+- Built from commit: `f52de9a1`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -58,13 +59,13 @@
 
 ## God Nodes (most connected - your core abstractions)
 1. `getDB()` - 72 edges
-2. `useMessage()` - 24 edges
+2. `useMessage()` - 25 edges
 3. `get()` - 16 edges
 4. `StrategyHandler` - 14 edges
 5. `PrecacheController` - 13 edges
 6. `_readSettings()` - 12 edges
 7. `Router` - 11 edges
-8. `patchStudent()` - 10 edges
+8. `patchStudent()` - 11 edges
 9. `CacheTimestampsModel` - 9 edges
 10. `enqueueDBSave()` - 9 edges
 
@@ -83,19 +84,19 @@
 ## Import Cycles
 - None detected.
 
-## Communities (76 total, 10 thin omitted)
+## Communities (77 total, 10 thin omitted)
 
 ### Community 0 - "Community 0"
 Cohesion: 0.04
 Nodes (35): academicTerms, activeClass, activeStudentEvents, archivedClasses, archivedRoster, attendanceMode, autoStartRFID, behaviorCodes (+27 more)
 
 ### Community 1 - "Community 1"
-Cohesion: 0.07
-Nodes (42): activeClassRecord, addAssessment(), analyticsMode, assessments, assessmentStats, assessmentTypes, classAnalytics, classGrades (+34 more)
+Cohesion: 0.06
+Nodes (45): activeClassRecord, addAssessment(), adjustStudentGrade(), analyticsMode, assessments, assessmentStats, assessmentTypes, classAnalytics (+37 more)
 
 ### Community 2 - "Community 2"
 Cohesion: 0.10
-Nodes (40): addAttempt(), auditGradebookData(), buildDistributionBuckets(), buildLevelDistributionBuckets(), calculateAssessmentAnalytics(), _calculateCategoryGrade(), calculateClassAnalytics(), calculateClassGrades() (+32 more)
+Nodes (39): addAttempt(), auditGradebookData(), buildDistributionBuckets(), buildLevelDistributionBuckets(), calculateAssessmentAnalytics(), _calculateCategoryGrade(), calculateClassAnalytics(), calculateClassGrades() (+31 more)
 
 ### Community 3 - "Community 3"
 Cohesion: 0.06
@@ -111,12 +112,12 @@ Cohesion: 0.09
 Nodes (27): BaseHTTPRequestHandler, Path, consume_scan(), _create_tray_icon_image(), get_app_dir(), keyboard_reader(), load_config(), log() (+19 more)
 
 ### Community 5 - "Community 5"
-Cohesion: 0.08
-Nodes (16): addRoute(), cacheMatchIgnoreParams(), cacheWillUpdate(), canConstructResponseFromBodyStream(), copyResponse(), Deferred, NavigationRoute, _nestedGroup() (+8 more)
+Cohesion: 0.07
+Nodes (19): addRoute(), CacheFirst, cacheMatchIgnoreParams(), cacheWillUpdate(), canConstructResponseFromBodyStream(), copyResponse(), Deferred, executeQuotaErrorCallbacks() (+11 more)
 
 ### Community 6 - "Community 6"
-Cohesion: 0.15
-Nodes (7): CacheFirst, executeQuotaErrorCallbacks(), PrecacheStrategy, Strategy, StrategyHandler, timeout(), toRequest()
+Cohesion: 0.17
+Nodes (4): PrecacheStrategy, Strategy, StrategyHandler, toRequest()
 
 ### Community 7 - "Community 7"
 Cohesion: 0.07
@@ -132,7 +133,7 @@ Nodes (20): useClassroom(), saveStudentGradebookNote(), useStudentDossier(), _ap
 
 ### Community 10 - "Community 10"
 Cohesion: 0.12
-Nodes (24): loadGradebook(), refreshAllAssessmentStats(), auditSettingsIntegrity(), deleteBehaviorCode(), getAcademicTerms(), getAttendanceConfig(), getBehaviorCodes(), getGlobalMilestones() (+16 more)
+Nodes (24): loadGradebook(), auditSettingsIntegrity(), deleteBehaviorCode(), getAcademicTerms(), getAttendanceConfig(), getBehaviorCodes(), getGlobalMilestones(), getGradeBuckets() (+16 more)
 
 ### Community 11 - "Community 11"
 Cohesion: 0.11
@@ -143,7 +144,7 @@ Cohesion: 0.14
 Nodes (4): createCacheKey(), PrecacheCacheKeyPlugin, PrecacheController, waitUntil()
 
 ### Community 13 - "Community 13"
-Cohesion: 0.19
+Cohesion: 0.21
 Nodes (5): CacheExpiration, dontWaitFor(), ExpirationPlugin, registerQuotaErrorCallback(), removeIgnoredSearchParams()
 
 ### Community 14 - "Community 14"
@@ -198,7 +199,7 @@ Nodes (8): background, service_worker, content_scripts, description, manifest_ve
 
 ### Community 26 - "Community 26"
 Cohesion: 0.29
-Nodes (8): cacheDonePromiseForTransaction(), getCursorAdvanceMethods(), getIdbProxyableTypes(), openDB(), promisifyRequest(), transformCachableValue(), wrap(), wrapFunction()
+Nodes (8): cacheDonePromiseForTransaction(), deleteDB(), getCursorAdvanceMethods(), getIdbProxyableTypes(), promisifyRequest(), transformCachableValue(), wrap(), wrapFunction()
 
 ### Community 27 - "Community 27"
 Cohesion: 0.25
@@ -228,10 +229,10 @@ Nodes (3): checkResize(), confirmResize(), updateActiveClass()
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `getDB()` connect `Community 8` to `Community 2`, `Community 3`, `Community 9`, `Community 10`, `Community 20`, `Community 26`?**
+- **Why does `getDB()` connect `Community 8` to `Community 2`, `Community 3`, `Community 9`, `Community 10`, `Community 20`, `Community 21`?**
   _High betweenness centrality (0.240) - this node is a cross-community bridge._
-- **Why does `openDB()` connect `Community 26` to `Community 8`, `Community 21`, `Community 5`?**
-  _High betweenness centrality (0.209) - this node is a cross-community bridge._
+- **Why does `openDB()` connect `Community 21` to `Community 8`, `Community 26`, `Community 5`?**
+  _High betweenness centrality (0.208) - this node is a cross-community bridge._
 - **Why does `PrecacheController` connect `Community 12` to `Community 5`, `Community 15`?**
   _High betweenness centrality (0.018) - this node is a cross-community bridge._
 - **What connects `scanBuffer`, `manifest_version`, `name` to the rest of the system?**
@@ -239,6 +240,6 @@ _Questions this graph is uniquely positioned to answer:_
 - **Should `Community 0` be split into smaller, more focused modules?**
   _Cohesion score 0.03773584905660377 - nodes in this community are weakly interconnected._
 - **Should `Community 1` be split into smaller, more focused modules?**
-  _Cohesion score 0.06753006475485661 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.0636734693877551 - nodes in this community are weakly interconnected._
 - **Should `Community 2` be split into smaller, more focused modules?**
-  _Cohesion score 0.09988385598141696 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.10121951219512196 - nodes in this community are weakly interconnected._

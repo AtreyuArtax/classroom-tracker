@@ -250,9 +250,9 @@
     "semantic_hash": "6bea4791320a28161ac47d79ea21ef56"
   },
   "src/composables/useGradebook.js": {
-    "mtime": 1780950637.4885337,
-    "ast_hash": "6f4cea2cd938c9c9e17d430a492a784a",
-    "semantic_hash": "6f4cea2cd938c9c9e17d430a492a784a"
+    "mtime": 1782409288.083407,
+    "ast_hash": "5fb03f86a88e492b36b30e4a4ba6d9a9",
+    "semantic_hash": ""
   },
   "src/composables/useKeyboardWedge.js": {
     "mtime": 1781185125.2494822,
@@ -295,9 +295,9 @@
     "semantic_hash": "b2b2d8a2b2999173ec25994086a59239"
   },
   "src/db/gradebookService.js": {
-    "mtime": 1780950572.7130673,
-    "ast_hash": "92671b5827e02ba2a7fd638d6e2e2254",
-    "semantic_hash": "92671b5827e02ba2a7fd638d6e2e2254"
+    "mtime": 1782409278.2596898,
+    "ast_hash": "f50fd287a28985e89e7da95d38997b0c",
+    "semantic_hash": ""
   },
   "src/db/index.js": {
     "mtime": 1781537184.7888575,
@@ -345,14 +345,14 @@
     "semantic_hash": "ae14c425c71865e9fe085b7f22239626"
   },
   "src/views/Grades.vue": {
-    "mtime": 1781613390.0753818,
-    "ast_hash": "caead2dc4719026b767b803a4a1522c0",
-    "semantic_hash": "caead2dc4719026b767b803a4a1522c0"
+    "mtime": 1782409345.3111165,
+    "ast_hash": "eddaea9a0cbe9711094822026eb53810",
+    "semantic_hash": ""
   },
   "src/views/Reports.vue": {
-    "mtime": 1782156078.1817346,
-    "ast_hash": "fceef1f2f1b279ad03a14982c7ef1fee",
-    "semantic_hash": "fceef1f2f1b279ad03a14982c7ef1fee"
+    "mtime": 1782395823.8262353,
+    "ast_hash": "89c902c9e794676e0a54db8016349e4a",
+    "semantic_hash": ""
   },
   "src/views/ScanStation.vue": {
     "mtime": 1781613499.0838692,
@@ -383,5 +383,10 @@
     "mtime": 1781516097.6639473,
     "ast_hash": "e4fe3444aaad844cbc4b9f3975ed773c",
     "semantic_hash": "e4fe3444aaad844cbc4b9f3975ed773c"
+  },
+  "src/components/PrintGradesGridModal.vue": {
+    "mtime": 1782409270.083167,
+    "ast_hash": "df53716a632daa2741e3bcaef552b646",
+    "semantic_hash": ""
   }
 }

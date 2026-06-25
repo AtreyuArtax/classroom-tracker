@@ -257,6 +257,10 @@
                 <Settings :size="20" />
               </button>
               
+              <button class="grades__btn-settings" title="Print Final Grades Grid" @click="showPrintGridModal = true">
+                <Printer :size="20" />
+              </button>
+
               <ClassSwitcher @navigate="$emit('navigate', $event)" />
             </div>
 
@@ -790,11 +794,40 @@
                     </div>
                   </td>
                   <td 
-                    class="grades__td-overall"
-                    :class="{ 'grades__td--highlighted': highlightedColumnId === 'grade' }"
+                    class="grades__td-overall grades__td-overall--editable"
+                    :class="{ 
+                      'grades__td--highlighted': highlightedColumnId === 'grade',
+                      'grades__td-overall--adjusted': classGrades[student.studentId]?.isGradeAdjusted
+                    }"
                     :style="{ background: getHeatColor(classGrades[student.studentId]?.overallGrade) }"
+                    @click="startEdit(student.studentId, 'overall')"
+                    @contextmenu.prevent="onContextMenu($event, student.studentId, 'overall')"
                   >
-                    {{ formatGrade(classGrades[student.studentId]?.overallGrade) }}
+                    <!-- Inline Editor -->
+                    <div v-if="editingCell?.sId === student.studentId && editingCell?.aId === 'overall'" class="grades__cell-edit">
+                      <input 
+                        ref="editInput"
+                        v-model.number="editingCell.value"
+                        type="number"
+                        min="0"
+                        max="100"
+                        class="grades__input-inline"
+                        @blur="saveEdit"
+                        @keydown.enter.prevent="onEnterKey"
+                        @keydown.tab.prevent="onEnterKey"
+                        @keydown.esc.prevent="cancelEdit"
+                      />
+                    </div>
+                    <div v-else class="grades__overall-cell-content">
+                      <span>{{ formatGrade(classGrades[student.studentId]?.overallGrade) }}</span>
+                      <span 
+                        v-if="classGrades[student.studentId]?.isGradeAdjusted" 
+                        class="grades__adjusted-asterisk"
+                        :title="'Adjusted (Calculated: ' + formatGrade(classGrades[student.studentId]?.calculatedOverallGrade) + ')'"
+                      >
+                        *
+                      </span>
+                    </div>
                   </td>
                   <td 
                     v-for="a in sortedAssessments" 
@@ -888,22 +921,36 @@
 
     <div v-if="contextMenu" class="grades__context-backdrop grades__context-backdrop--dim" @click="contextMenu = null" @contextmenu.prevent="contextMenu = null">
       <div class="grades__context-menu" :style="{ top: contextMenu.y + 'px', left: contextMenu.x + 'px' }">
-        <button class="grades__context-btn" @click="startEdit(contextMenu.sId, contextMenu.aId); contextMenu = null">
-          <Plus :size="14" /> New Attempt
-        </button>
-        <button 
-          v-if="gradeMap[contextMenu.aId]?.[contextMenu.sId]?.attempts?.length >= 1" 
-          class="grades__context-btn" 
-          @click="openAttemptsFromMenu($event, contextMenu.sId, contextMenu.aId)"
-        >
-          <Calendar :size="14" /> View Notes
-        </button>
-        <button class="grades__context-btn" @click="toggleMissing">
-          <AlertCircle :size="14" /> {{ isMissing(contextMenu.sId, contextMenu.aId) ? 'Unmark Missing' : 'Mark Missing' }}
-        </button>
-        <button class="grades__context-btn" @click="toggleExcluded">
-          <XCircle :size="14" /> {{ isExcluded(contextMenu.sId, contextMenu.aId) ? 'Include in Grade' : 'Mark Excluded' }}
-        </button>
+        <template v-if="contextMenu.aId === 'overall'">
+          <button class="grades__context-btn" @click="startEdit(contextMenu.sId, 'overall'); contextMenu = null">
+            <Pencil :size="14" /> Adjust Grade
+          </button>
+          <button 
+            v-if="classGrades[contextMenu.sId]?.isGradeAdjusted" 
+            class="grades__context-btn" 
+            @click="undoStudentGradeAdjustment(contextMenu.sId); contextMenu = null"
+          >
+            <RotateCcw :size="14" /> Reset to Calculated
+          </button>
+        </template>
+        <template v-else>
+          <button class="grades__context-btn" @click="startEdit(contextMenu.sId, contextMenu.aId); contextMenu = null">
+            <Plus :size="14" /> New Attempt
+          </button>
+          <button 
+            v-if="gradeMap[contextMenu.aId]?.[contextMenu.sId]?.attempts?.length >= 1" 
+            class="grades__context-btn" 
+            @click="openAttemptsFromMenu($event, contextMenu.sId, contextMenu.aId)"
+          >
+            <Calendar :size="14" /> View Notes
+          </button>
+          <button class="grades__context-btn" @click="toggleMissing">
+            <AlertCircle :size="14" /> {{ isMissing(contextMenu.sId, contextMenu.aId) ? 'Unmark Missing' : 'Mark Missing' }}
+          </button>
+          <button class="grades__context-btn" @click="toggleExcluded">
+            <XCircle :size="14" /> {{ isExcluded(contextMenu.sId, contextMenu.aId) ? 'Include in Grade' : 'Mark Excluded' }}
+          </button>
+        </template>
       </div>
     </div>
 
@@ -1033,6 +1080,15 @@
           </div>
         </div>
 
+        <!-- Print Final Grades Grid Modal -->
+        <PrintGradesGridModal
+          v-if="showPrintGridModal"
+          :class-record="activeClassRecord"
+          :class-grades="classGrades"
+          :teacher-name="teacherName"
+          @close="showPrintGridModal = false"
+        />
+
     </div>
 </template>
 
@@ -1089,11 +1145,14 @@ import {
   saveAssessment,
   assessmentTypes,
   sortedUnits,
-  enterGrade
+  enterGrade,
+  adjustStudentGrade,
+  undoStudentGradeAdjustment
 } from '../composables/useGradebook.js'
 import { useAttendanceInsights } from '../composables/useAttendanceInsights.js'
-import { Plus, BarChart2, Settings, Pencil, XCircle, AlertCircle, Trash2, X, MoreVertical, ArrowLeft, Check, ArrowUp, ArrowDown, Minus, GraduationCap, Eye, ChevronLeft, ChevronRight, UserCheck, Activity, FilePlus, Target, Hash, Calendar, AlertTriangle, ChevronUp, ChevronDown, Copy, Edit2, UserMinus } from 'lucide-vue-next'
+import { Plus, BarChart2, Settings, Pencil, XCircle, AlertCircle, Trash2, X, MoreVertical, ArrowLeft, Check, ArrowUp, ArrowDown, Minus, GraduationCap, Eye, ChevronLeft, ChevronRight, UserCheck, Activity, FilePlus, Target, Hash, Calendar, AlertTriangle, ChevronUp, ChevronDown, Copy, Edit2, UserMinus, Printer, RotateCcw } from 'lucide-vue-next'
 import Student360 from '../components/dossier/Student360.vue'
+import PrintGradesGridModal from '../components/PrintGradesGridModal.vue'
 import StudentSidebar from '../components/StudentSidebar.vue'
 import GradeTrendChart from '../components/GradeTrendChart.vue'
 import TestDayWarning from '../components/TestDayWarning.vue'
@@ -1123,7 +1182,7 @@ defineEmits(['navigate'])
 
 const { alert, confirm } = useMessage()
 
-const { classList, activeClass, getClass, switchClass } = useClassroom()
+const { classList, activeClass, getClass, switchClass, teacherName } = useClassroom()
 const sidebarClassId = ref(activeClass.value?.classId || '')
 const { assessmentAbsenceMap, studentAbsenceTotals, attendanceCorrelationStats } = useAttendanceInsights(sidebarClassId, assessments, classGrades)
 
@@ -1136,6 +1195,7 @@ watch(activeClass, async (newVal, oldVal) => {
 })
 const isLoading = ref(false)
 const isCalculating = ref(false)
+const showPrintGridModal = ref(false)
 const displayMode = ref('percent') // 'raw' | 'percent'
 const analyticsSortBy = ref('date')
 const analyticsSortOrder = ref('asc')
@@ -1815,8 +1875,14 @@ function getHeatTextColor(percent) {
 }
 
 async function startEdit(studentId, assessmentId) {
-  const current = gradeMap.value[assessmentId]?.[studentId]
-  const val = current ? current.resolvedScore : null
+  let val = null
+  if (assessmentId === 'overall') {
+    const gradesObj = classGrades.value[studentId]
+    val = gradesObj?.isGradeAdjusted ? gradesObj.adjustedGrade : gradesObj?.calculatedOverallGrade
+  } else {
+    const current = gradeMap.value[assessmentId]?.[studentId]
+    val = current ? current.resolvedScore : null
+  }
   editOriginalValue.value = val
   editingCell.value = {
     sId: studentId,
@@ -1843,6 +1909,18 @@ async function saveEdit() {
   const normalizedOld = (editOriginalValue.value === null || editOriginalValue.value === undefined || editOriginalValue.value === '') ? null : Number(editOriginalValue.value)
 
   if (normalizedNew === normalizedOld) {
+    editingCell.value = null
+    return
+  }
+
+  // Handle overall grade override (adjusted grade)
+  if (aId === 'overall') {
+    if (normalizedNew === null) {
+      await undoStudentGradeAdjustment(sId)
+    } else {
+      const adjusted = Math.max(0, normalizedNew)
+      await adjustStudentGrade(sId, adjusted)
+    }
     editingCell.value = null
     return
   }
@@ -3264,6 +3342,27 @@ watch(selectedAssessmentId, (val) => {
 
 .grades__td-overall {
   font-weight: 700;
+}
+
+.grades__td-overall--editable {
+  cursor: pointer;
+}
+
+.grades__overall-cell-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  position: relative;
+}
+
+.grades__adjusted-asterisk {
+  color: var(--primary);
+  font-weight: 900;
+  font-size: 1.15rem;
+  line-height: 0;
+  margin-top: -6px;
+  margin-left: 1px;
 }
 
 .grades__cell-placeholder {
