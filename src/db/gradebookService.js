@@ -792,12 +792,24 @@ export async function calculateStudentGrade(studentId, classRecord, { asOf = nul
 
   const overallGrade = weightUsed === 0 ? null : preciseRound((weightedSum / weightUsed) * 100)
 
+  // Check for manual overall grade override (adjusted grade)
+  const studentRecord = classRecord.students?.[studentId]
+  const adjustedGrade = studentRecord?.adjustedGrade
+  const isAdjusted = adjustedGrade !== undefined && adjustedGrade !== null
+
+  const displayOverallGrade = isAdjusted
+    ? Math.round(Number(adjustedGrade) * 10) / 10
+    : (overallGrade !== null ? Math.round(overallGrade * 10) / 10 : null)
+
   // New Metrics
   const mostConsistent = calculateMostConsistent(studentId, classRecord, gradeMap, assessments, capAt100)
   const median = calculateWeightedMedian(studentId, classRecord, gradeMap, assessments, capAt100)
 
   return {
-    overallGrade: overallGrade !== null ? Math.round(overallGrade * 10) / 10 : null,
+    overallGrade: displayOverallGrade,
+    calculatedOverallGrade: overallGrade !== null ? Math.round(overallGrade * 10) / 10 : null,
+    isGradeAdjusted: isAdjusted,
+    adjustedGrade: isAdjusted ? Math.round(Number(adjustedGrade) * 10) / 10 : null,
     mostConsistent,
     median: median && median.percentage !== null ? Math.round(median.percentage * 10) / 10 : null,
     medianData: median,

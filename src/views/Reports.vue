@@ -63,6 +63,10 @@
                 <button class="reports__btn-export" style="margin-left: 8px;" @click="openPrintModal">
                   <Printer :size="16" /> Print Reports
                 </button>
+                <!-- Print Grades Grid Button -->
+                <button class="reports__btn-export" style="margin-left: 8px;" @click="showPrintGridModal = true">
+                  <Printer :size="16" /> Print Grades Grid
+                </button>
               </div>
 
               <div v-if="loading" class="reports__loading" aria-live="polite">Loading…</div>
@@ -314,6 +318,15 @@
         </template>
       </div>
     </Teleport>
+
+    <!-- Print Final Grades Grid Modal -->
+    <PrintGradesGridModal
+      v-if="showPrintGridModal"
+      :class-record="reportClass"
+      :class-grades="classGrades"
+      :teacher-name="teacherName"
+      @close="showPrintGridModal = false"
+    />
   </div>
 </template>
 
@@ -346,6 +359,7 @@ import StudentSidebar        from '../components/StudentSidebar.vue'
 import StudentTrendGraph       from '../components/StudentTrendGraph.vue'
 import ClassSwitcher           from '../components/ClassSwitcher.vue'
 import ProgressReport          from '../components/dossier/ProgressReport.vue'
+import PrintGradesGridModal    from '../components/PrintGradesGridModal.vue'
 import { calculateClassGrades } from '../db/gradebookService.js'
 import { exportGradebookToExcel } from '../db/exportService.js'
 import { Bar } from 'vue-chartjs'
@@ -515,6 +529,7 @@ async function onSelectStudent(studentId) {
 
 // --- Batch Print Logic ---
 const showPrintModal = ref(false)
+const showPrintGridModal = ref(false)
 const showPreview = ref(false)
 const isSystemPrinting = ref(false)
 

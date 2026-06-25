@@ -698,3 +698,40 @@ export const gradeMap = computed(() => {
   return map
 })
 
+/**
+ * Saves a manual overall grade override (adjusted grade) for a student.
+ */
+export async function adjustStudentGrade(studentId, adjustedGrade) {
+  if (!activeClassRecord.value) return
+  
+  try {
+    const student = activeClassRecord.value.students[studentId]
+    if (!student) return
+    
+    const newVal = adjustedGrade === '' || adjustedGrade === null || isNaN(Number(adjustedGrade))
+      ? null
+      : Number(adjustedGrade)
+
+    student.adjustedGrade = newVal
+
+    // Force trigger because we are using shallowRef
+    triggerRef(activeClassRecord)
+
+    const { patchStudent } = await import('../db/classService.js')
+    await patchStudent(activeClassRecord.value.classId, studentId, { 
+      adjustedGrade: newVal 
+    })
+    await refreshGrades()
+  } catch (err) {
+    console.error('[useGradebook] adjustStudentGrade failed:', err)
+    const { alert } = useMessage()
+    await alert('Failed to adjust student grade.')
+  }
+}
+
+/**
+ * Reverts an adjusted overall grade back to its calculated value.
+ */
+export async function undoStudentGradeAdjustment(studentId) {
+  await adjustStudentGrade(studentId, null)
+}
