@@ -154,7 +154,7 @@
                           {{ formatGradeValue(getCategoryClassAverage(cat.categoryId)) }}
                         </td>
                       </template>
-                      <td class="text-right font-bold overall-col-cell">{{ formatGradeValue(overallClassAverage) }}</td>
+                      <td class="text-right font-bold overall-col-cell">{{ formatGradeValue(overallClassAverage !== null ? Math.round(overallClassAverage) : null) }}</td>
                     </tr>
                   </tbody>
                 </table>
@@ -234,7 +234,7 @@
                     {{ formatGradeValue(getCategoryClassAverage(cat.categoryId)) }}
                   </td>
                 </template>
-                <td class="print-overall-cell font-bold">{{ formatGradeValue(overallClassAverage) }}</td>
+                <td class="print-overall-cell font-bold">{{ formatGradeValue(overallClassAverage !== null ? Math.round(overallClassAverage) : null) }}</td>
               </tr>
             </tbody>
           </table>

@@ -1818,7 +1818,7 @@ const getUnitName = (unitId) => {
 
 function formatGrade(grade) {
   if (grade === null || grade === undefined) return '—'
-  return Math.round(grade * 10) / 10 + '%'
+  return Math.round(grade) + '%'
 }
 
 function formatDateShort(dateStr) {

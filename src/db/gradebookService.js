@@ -790,7 +790,7 @@ export async function calculateStudentGrade(studentId, classRecord, { asOf = nul
     weightUsed += category.weight
   }
 
-  const overallGrade = weightUsed === 0 ? null : preciseRound((weightedSum / weightUsed) * 100)
+  const overallGrade = weightUsed === 0 ? null : preciseRound((weightedSum / weightUsed) * 100, 0)
 
   // Check for manual overall grade override (adjusted grade)
   const studentRecord = classRecord.students?.[studentId]
@@ -798,8 +798,8 @@ export async function calculateStudentGrade(studentId, classRecord, { asOf = nul
   const isAdjusted = adjustedGrade !== undefined && adjustedGrade !== null
 
   const displayOverallGrade = isAdjusted
-    ? Math.round(Number(adjustedGrade) * 10) / 10
-    : (overallGrade !== null ? Math.round(overallGrade * 10) / 10 : null)
+    ? preciseRound(Number(adjustedGrade), 0)
+    : (overallGrade !== null ? preciseRound(overallGrade, 0) : null)
 
   // New Metrics
   const mostConsistent = calculateMostConsistent(studentId, classRecord, gradeMap, assessments, capAt100)
@@ -807,9 +807,9 @@ export async function calculateStudentGrade(studentId, classRecord, { asOf = nul
 
   return {
     overallGrade: displayOverallGrade,
-    calculatedOverallGrade: overallGrade !== null ? Math.round(overallGrade * 10) / 10 : null,
+    calculatedOverallGrade: overallGrade !== null ? preciseRound(overallGrade, 0) : null,
     isGradeAdjusted: isAdjusted,
-    adjustedGrade: isAdjusted ? Math.round(Number(adjustedGrade) * 10) / 10 : null,
+    adjustedGrade: isAdjusted ? preciseRound(Number(adjustedGrade), 0) : null,
     mostConsistent,
     median: median && median.percentage !== null ? Math.round(median.percentage * 10) / 10 : null,
     medianData: median,
