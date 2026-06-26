@@ -104,10 +104,11 @@
               <div class="preview-meta-date">Date: {{ formattedDate }}</div>
               
               <div class="preview-table-wrapper">
-                <table class="preview-table" :class="{ 'zebra-striping': form.showZebraStriping }">
+                <table class="preview-table" :class="{ 'zebra-striping': form.showZebraStriping, 'table--two-columns': !form.showAssessments && !form.showCategories }">
                   <thead>
                     <tr>
                       <th>Student Name</th>
+                      <th class="text-right font-bold overall-col-header">Overall Grade</th>
                       <template v-if="form.showAssessments">
                         <th v-for="a in sortedAssessments" :key="'prev-h-ass-'+a.assessmentId" class="text-right prev-ass-header">
                           <div class="prev-ass-header-content">
@@ -121,12 +122,14 @@
                           {{ cat.name }} <span class="prev-weight">({{ cat.weight }}%)</span>
                         </th>
                       </template>
-                      <th class="text-right font-bold overall-col-header">Overall Grade</th>
                     </tr>
                   </thead>
                   <tbody>
                     <tr v-for="s in sortedStudents" :key="'prev-s-'+s.studentId">
                       <td>{{ s.lastName }}, {{ s.firstName }}</td>
+                      <td class="text-right font-bold overall-col-cell">
+                        {{ formatGradeValue(classGrades[s.studentId]?.overallGrade) }}
+                      </td>
                       <template v-if="form.showAssessments">
                         <td v-for="a in sortedAssessments" :key="'prev-c-ass-'+s.studentId+'-'+a.assessmentId" class="text-right num-col prev-ass-cell">
                           {{ formatAssessmentScore(s.studentId, a.assessmentId, a.totalPoints) }}
@@ -137,13 +140,11 @@
                           {{ formatGradeValue(classGrades[s.studentId]?.categoryResults?.[cat.categoryId]?.percentage) }}
                         </td>
                       </template>
-                      <td class="text-right font-bold overall-col-cell">
-                        {{ formatGradeValue(classGrades[s.studentId]?.overallGrade) }}
-                      </td>
                     </tr>
                     
                     <tr v-if="form.showClassAverages" class="prev-avg-row">
                       <td>Class Average</td>
+                      <td class="text-right font-bold overall-col-cell">{{ formatGradeValue(overallClassAverage !== null ? Math.round(overallClassAverage) : null) }}</td>
                       <template v-if="form.showAssessments">
                         <td v-for="a in sortedAssessments" :key="'prev-avg-ass-'+a.assessmentId" class="text-right font-bold num-col prev-ass-cell">
                           {{ formatAssessmentAvg(getAssessmentClassAverage(a.assessmentId), a.totalPoints) }}
@@ -154,7 +155,6 @@
                           {{ formatGradeValue(getCategoryClassAverage(cat.categoryId)) }}
                         </td>
                       </template>
-                      <td class="text-right font-bold overall-col-cell">{{ formatGradeValue(overallClassAverage !== null ? Math.round(overallClassAverage) : null) }}</td>
                     </tr>
                   </tbody>
                 </table>
@@ -186,10 +186,11 @@
             <div class="print-meta-date">Generated: {{ formattedDate }}</div>
           </header>
 
-          <table class="print-table">
+          <table class="print-table" :class="{ 'zebra-striping': form.showZebraStriping, 'table--two-columns': !form.showAssessments && !form.showCategories }">
             <thead>
               <tr class="print-header-row">
                 <th class="print-name-col">Student Name</th>
+                <th class="print-overall-col">Overall Grade</th>
                 <template v-if="form.showAssessments">
                   <th v-for="a in sortedAssessments" :key="'print-h-ass-'+a.assessmentId" class="print-ass-col">
                     <span class="ass-name">{{ a.name }}</span>
@@ -202,12 +203,12 @@
                     <span class="cat-weight">{{ cat.weight }}%</span>
                   </th>
                 </template>
-                <th class="print-overall-col">Overall Grade</th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="s in sortedStudents" :key="'print-row-'+s.studentId" class="print-student-row">
                 <td class="print-name-cell">{{ s.lastName }}, {{ s.firstName }}</td>
+                <td class="print-overall-cell">{{ formatGradeValue(classGrades[s.studentId]?.overallGrade) }}</td>
                 <template v-if="form.showAssessments">
                   <td v-for="a in sortedAssessments" :key="'print-cell-ass-'+s.studentId+'-'+a.assessmentId" class="print-ass-cell">
                     {{ formatAssessmentScore(s.studentId, a.assessmentId, a.totalPoints) }}
@@ -218,12 +219,12 @@
                     {{ formatGradeValue(classGrades[s.studentId]?.categoryResults?.[cat.categoryId]?.percentage) }}
                   </td>
                 </template>
-                <td class="print-overall-cell">{{ formatGradeValue(classGrades[s.studentId]?.overallGrade) }}</td>
               </tr>
               
               <!-- Optional Class Averages Row -->
               <tr v-if="form.showClassAverages" class="print-avg-row">
                 <td class="print-name-cell">Class Average</td>
+                <td class="print-overall-cell font-bold">{{ formatGradeValue(overallClassAverage !== null ? Math.round(overallClassAverage) : null) }}</td>
                 <template v-if="form.showAssessments">
                   <td v-for="a in sortedAssessments" :key="'print-avg-cell-ass-'+a.assessmentId" class="print-ass-cell font-bold">
                     {{ formatAssessmentAvg(getAssessmentClassAverage(a.assessmentId), a.totalPoints) }}
@@ -234,7 +235,6 @@
                     {{ formatGradeValue(getCategoryClassAverage(cat.categoryId)) }}
                   </td>
                 </template>
-                <td class="print-overall-cell font-bold">{{ formatGradeValue(overallClassAverage !== null ? Math.round(overallClassAverage) : null) }}</td>
               </tr>
             </tbody>
           </table>
@@ -273,8 +273,8 @@ const form = ref({
   title: 'Final Grades Summary Grid',
   orientation: 'portrait',
   fontSize: 'auto',
-  showCategories: true,
-  showClassAverages: true,
+  showCategories: false,
+  showClassAverages: false,
   showZebraStriping: true,
   showAssessments: false,
   assessmentScoreFormat: 'raw'
@@ -600,6 +600,10 @@ function handlePrint() {
   margin-top: 10px;
 }
 
+.preview-table.table--two-columns {
+  max-width: 450px;
+}
+
 .preview-table th {
   border-bottom: 2px solid #222;
   padding: 6px 8px;
@@ -628,7 +632,7 @@ function handlePrint() {
 }
 
 .preview-table.zebra-striping tbody tr:nth-child(even) {
-  background-color: #fafafa;
+  background-color: #f2f2f2;
 }
 
 .preview-table .num-col {
@@ -786,6 +790,10 @@ function handlePrint() {
     margin-top: 10px;
   }
 
+  .print-table.table--two-columns {
+    max-width: 450px;
+  }
+
   .print-table th {
     border-bottom: 2px solid black;
     padding: 6px 8px;
@@ -855,7 +863,7 @@ function handlePrint() {
   }
 
   .zebra-striping tbody tr:nth-child(even) {
-    background-color: #fcfcfc !important;
+    background-color: #f2f2f2 !important;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
