@@ -6,7 +6,7 @@
  * representing the full database state.
  */
 
-export const CURRENT_SCHEMA = 27
+export const CURRENT_SCHEMA = 28
 
 /**
  * Migrates a backup data object to the current schema version (25).

@@ -394,9 +394,14 @@ const isCalculating = ref(false)
 
 // Outliers lists and display helpers
 const excludedNames = computed(() => {
-  if (!classAnalytics.value?.excludedStudents || classAnalytics.value.excludedStudents.length === 0) return ""
-  const names = classAnalytics.value.excludedStudents.map(s => `${s.firstName} ${s.lastName}`)
-  return "Excluded: " + names.join(", ")
+  if (!classAnalytics.value?.outlierStudentIds || classAnalytics.value.outlierStudentIds.length === 0) return ""
+  if (!activeClassRecord.value?.students) return ""
+  const names = classAnalytics.value.outlierStudentIds
+    .map(id => {
+      const s = activeClassRecord.value.students[id]
+      return s ? `${s.firstName} ${s.lastName}` : id
+    })
+  return "Hidden students: " + names.join(", ")
 })
 
 // Trigger calculation when threshold input is updated
@@ -699,6 +704,17 @@ function processTypedAssessments(type) {
 
 .grades__outlier-toggle {
   margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.grades__toggle-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
 }
 
 .grades__calculating-overlay {
@@ -946,9 +962,15 @@ function processTypedAssessments(type) {
 }
 
 .grades__toggle-btn--active {
-  background: var(--surface);
-  color: var(--primary);
+  background: var(--primary) !important;
+  color: #ffffff !important;
   box-shadow: var(--shadow-sm);
+}
+
+.grades__toggle-btn--active .grades__threshold-input {
+  background: rgba(255, 255, 255, 0.15) !important;
+  border-color: rgba(255, 255, 255, 0.3) !important;
+  color: #ffffff !important;
 }
 
 .grades__threshold-editor {

@@ -446,10 +446,20 @@ onMounted(async () => {
 }
 
 .setup__input--weight {
-  width: 50px !important;
-  text-align: right;
+  width: 65px !important;
+  text-align: center;
   min-height: 32px !important;
-  padding: 4px 8px !important;
+  padding: 4px 6px !important;
+}
+
+/* Hide spin buttons to maximize typing area */
+.setup__input--weight::-webkit-outer-spin-button,
+.setup__input--weight::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.setup__input--weight {
+  -moz-appearance: textfield;
 }
 
 .setup__textarea {

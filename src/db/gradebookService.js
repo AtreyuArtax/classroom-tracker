@@ -1039,6 +1039,7 @@ export async function calculateClassAnalytics(classRecord, assessments, grades, 
     const productAnalytics = {}
     const observationAnalytics = {}
     const conversationAnalytics = {}
+    const assessmentBreakdowns = []
 
     for (const a of assessments.filter(a => a.target !== 'individual' && !a.excluded)) {
         const stats = calculateAssessmentAnalytics(
@@ -1051,6 +1052,13 @@ export async function calculateClassAnalytics(classRecord, assessments, grades, 
             }
         )
         if (stats) {
+            const catName = classRecord.gradebookCategories?.find(c => c.categoryId === a.categoryId)?.name ?? ''
+            assessmentBreakdowns.push({
+                ...a,
+                category: catName,
+                stats
+            })
+
             if (a.assessmentType === 'observation') observationAnalytics[a.assessmentId] = stats
             else if (a.assessmentType === 'conversation') conversationAnalytics[a.assessmentId] = stats
             else productAnalytics[a.assessmentId] = stats // Default/Product
@@ -1106,6 +1114,7 @@ export async function calculateClassAnalytics(classRecord, assessments, grades, 
         productAnalytics,
         observationAnalytics,
         conversationAnalytics,
+        assessmentBreakdowns,
 
         // Triangulation coverage
         conversationCoverage,

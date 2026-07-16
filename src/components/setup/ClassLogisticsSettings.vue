@@ -1,0 +1,664 @@
+<template>
+  <div v-if="!activeClass" class="setup__panel-content setup__empty">
+    <Zap :size="48" style="opacity: 0.2; margin-bottom: 1rem;" />
+    <p>Select a class in the header or manager to configure it.</p>
+  </div>
+  <div v-else class="setup__panel-content">
+    <!-- Section: Class Logistics -->
+    <div class="setup__section-header">
+      <Settings2 :size="18" />
+      <span>Class Logistics</span>
+    </div>
+
+    <!-- Class Metadata -->
+    <div class="setup__card">
+      <h2 class="setup__card-title">General Info</h2>
+      <form class="setup__form">
+        <div class="setup__form-grid">
+          <label class="setup__label">
+            Class Name
+            <input
+              type="text"
+              v-model="localClassName"
+              class="setup__input"
+              @blur="saveClassName"
+              @keydown.enter="saveClassName"
+            />
+          </label>
+          <label class="setup__label">
+            Course Code
+            <input
+              type="text"
+              v-model="localCourseCode"
+              class="setup__input"
+              placeholder="Optional"
+              @blur="saveCourseCode"
+              @keydown.enter="saveCourseCode"
+            />
+          </label>
+          <label class="setup__label">
+            School Year and Semester
+            <select
+              :value="activeClass.year + '|' + activeClass.semester"
+              class="setup__input"
+              @change="e => {
+                const [y, s] = e.target.value.split('|');
+                updateActiveClass({ year: y, semester: s });
+              }"
+            >
+              <option v-for="t in termOptions" :key="t.year + t.semester" :value="t.year + '|' + t.semester">
+                {{ t.year }} Sem {{ t.semester }}
+              </option>
+            </select>
+          </label>
+          <label class="setup__label">
+            Period
+            <select
+              :value="activeClass.periodNumber"
+              class="setup__input"
+              @change="e => {
+                const p = parseInt(e.target.value);
+                const time = periodStartTimes[p] || activeClass.periodStartTime;
+                updateActiveClass({ periodNumber: p, periodStartTime: time });
+              }"
+            >
+              <option v-for="opt in periodOptions" :key="opt" :value="opt">{{ opt }}</option>
+            </select>
+          </label>
+          <label class="setup__label">
+            Start Time
+            <input
+              type="time"
+              :value="activeClass.periodStartTime || '08:00'"
+              class="setup__input"
+              @change="e => updateActiveClass({ periodStartTime: e.target.value })"
+            />
+          </label>
+        </div>
+      </form>
+    </div>
+
+    <!-- Seating Plan -->
+    <div class="setup__card">
+      <h2 class="setup__card-title">Seating Plan</h2>
+      <p class="setup__hint">Adjust rows and columns for this specific classroom layout.</p>
+      <form class="setup__form" @submit.prevent="requestResize">
+        <div class="setup__form-grid">
+          <label class="setup__label">
+            Rows
+            <input v-model.number="newGrid.rows" type="number" min="1" max="10" class="setup__input" required />
+          </label>
+          <label class="setup__label">
+            Columns
+            <input v-model.number="newGrid.cols" type="number" min="1" max="10" class="setup__input" required />
+          </label>
+        </div>
+        <div class="setup__grid-actions" style="margin-top: 1rem; display: flex; gap: 8px;">
+          <button type="submit" class="setup__btn-primary">Apply Grid Size</button>
+          <button type="button" class="setup__btn-ghost" @click="setGlobalDefaultGrid">Save as Global Default</button>
+        </div>
+      </form>
+      <!-- Resize conflict dialog -->
+      <div v-if="resizeConflict.length > 0" class="setup__dialog" role="dialog" aria-modal="true">
+        <div class="setup__dialog-box">
+          <h3 class="setup__dialog-title">⚠️ Students will be moved</h3>
+          <p class="setup__dialog-body">The following students fall outside the new grid and will be moved to the pool:</p>
+          <ul class="setup__dialog-list">
+            <li v-for="s in resizeConflict" :key="s.studentId">{{ s.firstName }} {{ s.lastName }} ({{ s.seat.row }},{{ s.seat.col }})</li>
+          </ul>
+          <div class="setup__dialog-actions">
+            <button class="setup__btn-danger" @click="applyResize">Move to pool & resize</button>
+            <button class="setup__btn-ghost" @click="resizeConflict = []">Cancel</button>
+          </div>
+        </div>
+        <div class="setup__dialog-backdrop" @click="resizeConflict = []" />
+      </div>
+    </div>
+
+    <!-- Roster -->
+    <div class="setup__card">
+      <div class="setup__card-header-row" style="display: flex; justify-content: space-between; align-items: center; wrap: wrap; gap: 12px;">
+        <h2 class="setup__card-title">Roster — {{ sortedRoster.length }} Students</h2>
+        <div class="setup__card-actions" style="display: flex; gap: 8px;">
+          <button class="setup__btn-ghost" @click="openRapidRFID">
+            <Zap :size="16" /> Rapid RFID
+          </button>
+          <button class="setup__btn-primary setup__btn-add-student" @click="openAddStudentModal">
+            <PlusCircle :size="16" /> Add Student
+          </button>
+        </div>
+      </div>
+
+      <!-- Roster List -->
+      <ul class="setup__roster-list" style="margin-top: 1rem;">
+        <li v-for="s in sortedRoster" :key="s.studentId" class="setup__roster-item">
+          <div class="setup__roster-info">
+            <span class="setup__roster-name">{{ s.lastName }}, {{ s.firstName }}</span>
+            <span class="setup__roster-id">{{ s.studentId }}</span>
+          </div>
+          <div class="setup__roster-actions">
+            <button class="setup__icon-btn" @click="onEditStudent(s)" title="Edit"><Pencil :size="14" /></button>
+            <button class="setup__icon-btn setup__icon-btn--warn" @click="onArchiveStudent(s)" title="Archive (Unenroll)"><UserMinus :size="14" /></button>
+          </div>
+        </li>
+      </ul>
+
+      <!-- Unenrolled Panel -->
+      <div v-if="archivedRoster.length > 0" class="setup__archived-roster" style="margin-top: 1rem; border-top: 1px solid var(--border); padding-top: 1rem;">
+        <button class="setup__archived-toggle" @click="isArchivedPanelVisible = !isArchivedPanelVisible">
+          <span class="setup__archived-label">
+            <UserMinus :size="16" style="opacity: 0.6" /> Unenrolled ({{ archivedRoster.length }})
+          </span>
+          <span class="setup__archived-chevron"><component :is="isArchivedPanelVisible ? ChevronUp : ChevronDown" :size="16" /></span>
+        </button>
+        <ul v-if="isArchivedPanelVisible" class="setup__roster-list" style="margin-top: 0.5rem; opacity: 0.7;">
+          <li v-for="s in archivedRoster" :key="s.studentId" class="setup__roster-item">
+            <div class="setup__roster-info">
+              <span class="setup__roster-name">{{ s.lastName }}, {{ s.firstName }}</span>
+              <span class="setup__roster-id">{{ s.studentId }}</span>
+            </div>
+            <div class="setup__roster-actions">
+              <button class="setup__icon-btn" @click="onUnarchiveStudent(s)" title="Re-enrol"><UserCheck :size="14" /></button>
+              <button class="setup__icon-btn setup__icon-btn--danger" @click="onPermanentDeleteStudent(s)" title="Permanently delete all records in this class"><Trash2 :size="14" /></button>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Section: Grading & Assessments -->
+    <div class="setup__section-header" style="margin-top: 1rem;">
+      <GraduationCap :size="18" />
+      <span>Grading & Assessments</span>
+    </div>
+
+    <!-- Assessment Framework -->
+    <AssessmentFrameworkSettings />
+
+    <!-- ── Student Entry Modal ─── -->
+    <BaseModal
+      :show="isStudentModalOpen"
+      @close="cancelEditStudent"
+      max-width="500px"
+      :title="isEditingStudent ? 'Edit Student' : 'Add New Student'"
+    >
+      <div class="student-modal-content">
+        <form class="setup__form" @submit.prevent="addSingleStudent">
+          <label class="setup__label">
+            Student ID
+            <input 
+              v-model="newStudent.studentId" 
+              class="setup__input" 
+              :placeholder="isEditingStudent ? '' : 'e.g. 123456789'" 
+              :disabled="isEditingStudent"
+              required 
+            />
+            <span v-if="isEditingStudent" class="setup__hint" style="margin-top: 4px;">Student ID cannot be changed.</span>
+          </label>
+          
+          <div class="setup__form-grid">
+            <label class="setup__label">
+              First Name
+              <input v-model="newStudent.firstName" class="setup__input" placeholder="First Name" required />
+            </label>
+            <label class="setup__label">
+              Last Name
+              <input v-model="newStudent.lastName" class="setup__input" placeholder="Last Name" required />
+            </label>
+          </div>
+
+          <!-- RFID Tag Section -->
+          <div class="setup__label" style="margin-top: 15px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <span>RFID Card Mapping</span>
+              <button 
+                v-if="newStudent.rfidTag" 
+                type="button" 
+                class="setup__btn-text setup__btn-text--danger" 
+                @click="clearRFID"
+              >
+                Unlink Card
+              </button>
+            </div>
+            
+            <div class="setup__rfid-enroll-box" :class="{ 'setup__rfid-enroll-box--active': isEnrollingRFID }">
+              <template v-if="!isEnrollingRFID">
+                <div class="setup__rfid-display">
+                  <Rss :size="16" />
+                  <span v-if="newStudent.rfidTag" class="setup__rfid-hex">{{ newStudent.rfidTag }}</span>
+                  <span v-else class="setup__rfid-empty">No card linked</span>
+                </div>
+                <button type="button" class="setup__pill-btn" @click="startEnrollment">
+                  {{ newStudent.rfidTag ? 'Replace Card' : 'Scan to Link' }}
+                </button>
+              </template>
+              <template v-else>
+                <div class="setup__rfid-listening">
+                  <span class="setup__rfid-pulse">Waiting for scan...</span>
+                </div>
+                <button type="button" class="setup__pill-btn" @click="stopEnrollment">Cancel</button>
+              </template>
+            </div>
+          </div>
+
+          <div v-if="singleAddError" class="setup__error" style="margin-top: 10px;">
+            <AlertTriangle :size="14" /> {{ singleAddError }}
+          </div>
+
+          <div class="modal-footer" style="margin-top: 20px; display: flex; justify-content: flex-end; gap: 8px;">
+            <button type="button" class="setup__btn-ghost" @click="cancelEditStudent">Cancel</button>
+            <button type="submit" class="setup__btn-primary">
+              {{ isEditingStudent ? 'Save Changes' : 'Add Student' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </BaseModal>
+
+    <!-- ── Rapid RFID Enrollment Modal ─── -->
+    <BaseModal
+      :show="isRapidRFIDOpen"
+      @close="stopRapidRFID"
+      max-width="600px"
+      title="Rapid RFID Linker"
+    >
+      <div class="rapid-rfid-linker">
+        <div class="rapid-rfid-active" v-if="currentRapidStudent" style="text-align: center; margin-bottom: 20px; padding: 16px; background: rgba(255,255,255,0.02); border-radius: 8px; border: 1px solid var(--border);">
+          <div class="rapid-rfid-label" style="font-size: 0.8rem; color: var(--text-secondary); text-transform: uppercase;">Currently Linking</div>
+          <div class="rapid-rfid-name" style="font-size: 1.4rem; font-weight: 700;">{{ currentRapidStudent.firstName }} {{ currentRapidStudent.lastName }}</div>
+          <div class="rapid-rfid-id" style="font-family: monospace; color: var(--text-secondary);">{{ currentRapidStudent.studentId }}</div>
+          
+          <div class="rapid-rfid-status" style="margin-top: 12px; font-weight: 600;" :style="{ color: rapidRFIError ? 'var(--state-out)' : rapidRFIDSuccess ? 'var(--state-success)' : 'var(--primary)' }">
+            <template v-if="rapidRFIError">
+              <AlertTriangle :size="18" /> {{ rapidRFIError }}
+            </template>
+            <template v-else-if="rapidRFIDSuccess">
+              <UserCheck :size="18" /> {{ rapidRFIDSuccess }}
+            </template>
+            <template v-else>
+              <span class="setup__rfid-pulse">Ready for scan...</span>
+            </template>
+          </div>
+        </div>
+
+        <div class="rapid-rfid-list-container">
+          <div class="rapid-rfid-list-header" style="font-weight: 700; margin-bottom: 8px;">Class Roster ({{ rapidRFIDList.length }})</div>
+          <div class="rapid-rfid-list" style="max-height: 250px; overflow-y: auto; border: 1px solid var(--border); border-radius: 6px;">
+            <div 
+              v-for="(s, idx) in rapidRFIDList" 
+              :key="s.studentId" 
+              class="rapid-rfid-item"
+              :class="{ 'rapid-rfid-item--active': idx === rapidRFIDIndex, 'rapid-rfid-item--linked': s.rfidTag }"
+              style="padding: 10px 14px; display: flex; justify-content: space-between; border-bottom: 1px solid var(--border); cursor: pointer;"
+              :style="idx === rapidRFIDIndex ? 'background: rgba(99, 102, 241, 0.08); border-left: 3px solid var(--primary);' : ''"
+              @click="rapidRFIDIndex = idx; rapidRFIError = ''; rapidRFIDSuccess = ''"
+            >
+              <div class="rapid-rfid-item-info">
+                <span class="rapid-rfid-item-name" :style="s.rfidTag ? 'opacity: 0.6;' : 'font-weight: 600;'">{{ s.lastName }}, {{ s.firstName }}</span>
+                <span v-if="s.rfidTag" class="rapid-rfid-tag-hex" style="font-family: monospace; font-size: 0.8rem; margin-left: 8px; color: var(--primary);">{{ s.rfidTag }}</span>
+              </div>
+              <div class="rapid-rfid-item-status">
+                <UserCheck v-if="s.rfidTag" :size="14" style="color: var(--state-success);" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </BaseModal>
+
+    <!-- Cross-Class Conflicts Dialog -->
+    <div v-if="crossClassConflicts.length > 0" class="setup__dialog" role="dialog" aria-modal="true">
+      <div class="setup__dialog-box setup__dialog-box--large">
+        <h3 class="setup__dialog-title">⚠️ Student Conflict Detected</h3>
+        <p class="setup__dialog-body">The following students are currently registered in another class this semester. Moving them will unenroll them from their current class.</p>
+        <ul class="setup__dialog-list">
+          <li v-for="c in crossClassConflicts" :key="c.student.studentId">
+            <strong>{{ c.student.firstName }} {{ c.student.lastName }}</strong> (ID: {{ c.student.studentId }}) is in <em>{{ c.existingClassName }}</em>
+          </li>
+        </ul>
+        <div class="setup__dialog-actions">
+          <button class="setup__btn-danger" @click="resolveConflicts('move')">Move students to this class</button>
+          <button class="setup__btn-ghost" @click="resolveConflicts('skip')">Skip / Cancel Import</button>
+        </div>
+      </div>
+      <div class="setup__dialog-backdrop" @click="resolveConflicts('skip')" />
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { ref, reactive, watch, computed, onMounted } from 'vue'
+import { useClassroom } from '../../composables/useClassroom.js'
+import { useKeyboardWedge } from '../../composables/useKeyboardWedge.js'
+import { useMessage } from '../../composables/useMessage.js'
+import * as classService from '../../db/classService.js'
+import BaseModal from '../BaseModal.vue'
+import AssessmentFrameworkSettings from './AssessmentFrameworkSettings.vue'
+
+import { 
+  Settings2, 
+  Zap, 
+  PlusCircle, 
+  Pencil, 
+  UserMinus, 
+  UserCheck, 
+  Trash2, 
+  ChevronUp, 
+  ChevronDown, 
+  Rss, 
+  AlertTriangle, 
+  GraduationCap 
+} from 'lucide-vue-next'
+
+const {
+  activeClass,
+  classList,
+  sortedRoster,
+  archivedRoster,
+  termOptions,
+  periodOptions,
+  periodStartTimes,
+  updateActiveClass,
+  triggerActiveClass,
+  archiveStudent,
+  unarchiveStudent,
+  permanentlyDeleteStudent,
+  moveStudentFromClass,
+  importRoster,
+  checkResize,
+  confirmResize
+} = useClassroom()
+
+const { confirm, alert } = useMessage()
+
+// Local copy of class name to prevent resetting mid-type
+const localClassName = ref('')
+watch(() => activeClass.value?.name, (v) => { localClassName.value = v || '' }, { immediate: true })
+async function saveClassName() {
+  if (!activeClass.value) return
+  const val = localClassName.value.trim() || activeClass.value.name
+  if (val !== activeClass.value.name) {
+    await updateActiveClass({ name: val })
+  }
+}
+
+// Local copy of course code
+const localCourseCode = ref('')
+watch(() => activeClass.value?.courseCode, (v) => { localCourseCode.value = v || '' }, { immediate: true })
+async function saveCourseCode() {
+  if (!activeClass.value) return
+  const val = localCourseCode.value.trim()
+  if (val !== (activeClass.value.courseCode || '')) {
+    await updateActiveClass({ courseCode: val })
+  }
+}
+
+// --- Seating Plan Resize Grid ---
+const newGrid = reactive({ rows: 6, cols: 6 })
+watch(() => activeClass.value?.gridSize, (val) => {
+  if (val) {
+    newGrid.rows = val.rows
+    newGrid.cols = val.cols
+  }
+}, { immediate: true })
+
+const resizeConflict = ref([])
+let pendingGridSize = null
+
+function requestResize() {
+  pendingGridSize = { rows: newGrid.rows, cols: newGrid.cols }
+  const { affected } = checkResize(pendingGridSize)
+  if (affected.length > 0) {
+    resizeConflict.value = affected
+  } else {
+    applyResize()
+  }
+}
+
+async function applyResize() {
+  await confirmResize(pendingGridSize)
+  resizeConflict.value = []
+}
+
+async function setGlobalDefaultGrid() {
+  localStorage.setItem('defaultRows', newGrid.rows.toString())
+  localStorage.setItem('defaultCols', newGrid.cols.toString())
+  await alert(`Global default grid size set to ${newGrid.rows}x${newGrid.cols}.`)
+}
+
+// --- Roster Management & Modals ---
+const isArchivedPanelVisible = ref(false)
+const isStudentModalOpen = ref(false)
+const isEditingStudent = ref(false)
+const newStudent = reactive({ studentId: '', firstName: '', lastName: '', rfidTag: '' })
+const singleAddError = ref('')
+const singleAddSuccess = ref('')
+
+function openAddStudentModal() {
+  isEditingStudent.value = false
+  newStudent.studentId = ''
+  newStudent.firstName = ''
+  newStudent.lastName = ''
+  newStudent.rfidTag = ''
+  singleAddError.value = ''
+  singleAddSuccess.value = ''
+  isStudentModalOpen.value = true
+}
+
+function onEditStudent(student) {
+  isEditingStudent.value = true
+  newStudent.studentId = student.studentId
+  newStudent.firstName = student.firstName
+  newStudent.lastName = student.lastName
+  newStudent.rfidTag = student.rfidTag || ''
+  singleAddError.value = ''
+  singleAddSuccess.value = ''
+  isStudentModalOpen.value = true
+}
+
+function cancelEditStudent() {
+  isEditingStudent.value = false
+  isStudentModalOpen.value = false
+  newStudent.studentId = ''
+  newStudent.firstName = ''
+  newStudent.lastName = ''
+  newStudent.rfidTag = ''
+  singleAddError.value = ''
+  singleAddSuccess.value = ''
+}
+
+async function onArchiveStudent(student) {
+  if (await confirm(`Are you sure you want to unenroll ${student.firstName} ${student.lastName}?`)) {
+    await archiveStudent(student.studentId)
+  }
+}
+
+async function onUnarchiveStudent(student) {
+  await unarchiveStudent(student.studentId)
+}
+
+async function onPermanentDeleteStudent(student) {
+  if (await confirm(`PERMANENTLY delete ${student.firstName} ${student.lastName} and all their event history in this class? This cannot be undone.`, 'Danger Zone', { danger: true })) {
+    await permanentlyDeleteStudent(student.studentId)
+  }
+}
+
+// --- RFID Scanning wedge ---
+const isEnrollingRFID = ref(false)
+const enrollTimer = ref(null)
+
+const onRFIDEnroll = (hex) => {
+  const duplicate = classList.value
+    .flatMap(c => Object.entries(c.students || {}).map(([sid, s]) => ({ ...s, studentId: sid, className: c.name })))
+    .find(s => s.rfidTag?.toLowerCase() === hex.toLowerCase() && s.studentId !== newStudent.studentId)
+  if (duplicate) {
+    singleAddError.value = `This card is already linked to ${duplicate.firstName} ${duplicate.lastName}${duplicate.className !== activeClass.value?.name ? ` in ${duplicate.className}` : ''}.`
+    stopEnrollment()
+    return
+  }
+
+  newStudent.rfidTag = hex.toUpperCase()
+  singleAddSuccess.value = 'Card detected!'
+  stopEnrollment()
+  setTimeout(() => { if (singleAddSuccess.value === 'Card detected!') singleAddSuccess.value = '' }, 3000)
+}
+
+const rfidWedge = useKeyboardWedge(onRFIDEnroll)
+
+function startEnrollment() {
+  isEnrollingRFID.value = true
+  singleAddError.value = ''
+  rfidWedge.start()
+  
+  if (enrollTimer.value) clearTimeout(enrollTimer.value)
+  enrollTimer.value = setTimeout(() => {
+    if (isEnrollingRFID.value) {
+      stopEnrollment()
+      singleAddError.value = 'Enrollment timed out. Please try again.'
+    }
+  }, 15000)
+}
+
+function stopEnrollment() {
+  isEnrollingRFID.value = false
+  rfidWedge.stop()
+  if (enrollTimer.value) clearTimeout(enrollTimer.value)
+}
+
+function clearRFID() {
+  newStudent.rfidTag = ''
+  singleAddSuccess.value = 'Card unlinked.'
+  setTimeout(() => { if (singleAddSuccess.value === 'Card unlinked.') singleAddSuccess.value = '' }, 3000)
+}
+
+// --- Rapid RFID wedge ---
+const isRapidRFIDOpen = ref(false)
+const rapidRFIDIndex = ref(0)
+const rapidRFIError = ref('')
+const rapidRFIDSuccess = ref('')
+
+const rapidRFIDList = computed(() => sortedRoster.value)
+const currentRapidStudent = computed(() => rapidRFIDList.value[rapidRFIDIndex.value])
+
+const onRapidRFIDScan = async (hex) => {
+  if (!isRapidRFIDOpen.value || !currentRapidStudent.value) return
+
+  const duplicate = classList.value
+    .flatMap(c => Object.entries(c.students || {}).map(([sid, s]) => ({ ...s, studentId: sid, className: c.name })))
+    .find(s => s.rfidTag?.toLowerCase() === hex.toLowerCase() && s.studentId !== currentRapidStudent.value.studentId)
+  if (duplicate) {
+    rapidRFIError.value = `Already linked to ${duplicate.firstName} ${duplicate.lastName}${duplicate.className !== activeClass.value?.name ? ` (${duplicate.className})` : ''}`
+    playRapidBeep(true)
+    return
+  }
+
+  try {
+    await classService.patchStudent(activeClass.value.classId, currentRapidStudent.value.studentId, { rfidTag: hex.toUpperCase() })
+    triggerActiveClass()
+    
+    rapidRFIDSuccess.value = `Linked to ${currentRapidStudent.value.firstName}!`
+    playRapidBeep(false)
+    
+    setTimeout(async () => {
+      rapidRFIDSuccess.value = ''
+      rapidRFIError.value = ''
+      
+      let next = rapidRFIDIndex.value + 1
+      if (next < rapidRFIDList.value.length) {
+        rapidRFIDIndex.value = next
+      } else {
+        stopRapidRFID()
+        await alert('Rapid enrollment complete!')
+      }
+    }, 1000)
+  } catch (err) {
+    rapidRFIError.value = err.message
+  }
+}
+
+const rapidRFIDWedge = useKeyboardWedge(onRapidRFIDScan)
+
+function openRapidRFID() {
+  if (!activeClass.value) return
+  isRapidRFIDOpen.value = true
+  rapidRFIError.value = ''
+  rapidRFIDSuccess.value = ''
+  
+  const firstEmpty = rapidRFIDList.value.findIndex(s => !s.rfidTag)
+  rapidRFIDIndex.value = firstEmpty !== -1 ? firstEmpty : 0
+  
+  rapidRFIDWedge.start()
+}
+
+function stopRapidRFID() {
+  isRapidRFIDOpen.value = false
+  rapidRFIDWedge.stop()
+}
+
+function playRapidBeep(isErr = false) {
+  const audioCtx = new (window.AudioContext || window.webkitAudioContext)()
+  const osc = audioCtx.createOscillator()
+  const gain = audioCtx.createGain()
+  osc.type = 'sine'
+  osc.frequency.setValueAtTime(isErr ? 220 : 880, audioCtx.currentTime)
+  gain.gain.setValueAtTime(0.1, audioCtx.currentTime)
+  osc.connect(gain)
+  gain.connect(audioCtx.destination)
+  osc.start()
+  gain.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + (isErr ? 0.35 : 0.15))
+  osc.stop(audioCtx.currentTime + (isErr ? 0.35 : 0.15))
+}
+
+// --- Add Single Student / Conflict Handling ---
+const crossClassConflicts = ref([])
+let _pendingConflicts = []
+
+async function addSingleStudent() {
+  singleAddError.value = ''
+  singleAddSuccess.value = ''
+  if (!activeClass.value) return
+  if (!newStudent.studentId.trim() || !newStudent.firstName.trim() || !newStudent.lastName.trim()) {
+    singleAddError.value = 'All fields are required.'
+    return
+  }
+
+  const row = {
+    studentId: newStudent.studentId.trim(),
+    firstName: newStudent.firstName.trim(),
+    lastName: newStudent.lastName.trim(),
+    rfidTag: newStudent.rfidTag.trim(),
+    parentContacts: []
+  }
+
+  try {
+    const result = await importRoster([row])
+    
+    if (result.crossClassConflicts.length > 0) {
+      _pendingConflicts = result.crossClassConflicts
+      crossClassConflicts.value = result.crossClassConflicts
+    } else {
+      singleAddSuccess.value = isEditingStudent.value ? 'Student updated!' : 'Student added to roster!'
+      isEditingStudent.value = false
+      isStudentModalOpen.value = false
+      newStudent.studentId = ''
+      newStudent.firstName = ''
+      newStudent.lastName = ''
+      newStudent.rfidTag = ''
+      setTimeout(() => singleAddSuccess.value = '', 3000)
+    }
+  } catch (err) {
+    singleAddError.value = err.message
+  }
+}
+
+async function resolveConflicts(action) {
+  if (action === 'move') {
+    for (const conflict of _pendingConflicts) {
+      await moveStudentFromClass(conflict.existingClassId, conflict.student)
+    }
+  }
+  crossClassConflicts.value = []
+  _pendingConflicts = []
+  isStudentModalOpen.value = false
+}
+</script>

@@ -332,11 +332,23 @@ async function saveBuckets() {
 }
 
 .setup__input--weight {
-  width: 65px;
+  width: 72px;
+  padding-left: 8px !important;
+  padding-right: 8px !important;
   text-align: center;
   background: var(--surface) !important;
   font-weight: 600;
   border-color: var(--border) !important;
+}
+
+/* Hide spin buttons to maximize typing area */
+.setup__input--weight::-webkit-outer-spin-button,
+.setup__input--weight::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.setup__input--weight {
+  -moz-appearance: textfield;
 }
 
 .setup__input--naked {
