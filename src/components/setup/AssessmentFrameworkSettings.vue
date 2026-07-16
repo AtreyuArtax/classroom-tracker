@@ -300,6 +300,141 @@ onMounted(async () => {
   gap: 12px;
 }
 
+/* ── Inherited parent layout classes ─────────────────────────────── */
+.setup__card {
+  background:    var(--surface);
+  padding:       24px;
+  border-radius: var(--radius-lg);
+  box-shadow:    var(--shadow-sm);
+  border:        1px solid var(--border);
+  display:       flex;
+  flex-direction: column;
+  gap:           16px;
+  margin-bottom: 24px;
+}
+
+.setup__card-title {
+  font-size:     1.1rem;
+  font-weight:   700;
+  color:         var(--text);
+  margin-bottom: 4px;
+  display:       flex;
+  align-items:   center;
+  gap:           10px;
+}
+
+.setup__hint {
+  font-size: 0.82rem;
+  color:     var(--text-secondary);
+  line-height: 1.5;
+}
+
+.setup__input {
+  width:           100%;
+  min-height:      44px;
+  padding:         10px 14px;
+  border:          1px solid var(--border);
+  border-radius:   var(--radius-md);
+  background:      var(--bg-input, rgba(255,255,255,0.04));
+  color:           var(--text);
+  font-size:       0.9rem;
+  font-weight:     600;
+  transition:      border-color 0.15s ease, box-shadow 0.15s ease;
+  box-sizing:      border-box;
+}
+
+.setup__input:focus {
+  outline:      none;
+  border-color: var(--primary);
+}
+
+.setup__btn-primary {
+  min-height:      44px;
+  padding:         0 20px;
+  border:          none;
+  border-radius:   var(--radius-md);
+  background:      var(--primary);
+  color:           #ffffff;
+  font-size:       0.9rem;
+  font-weight:     600;
+  cursor:          pointer;
+  transition:      background 0.15s ease, transform 0.1s ease;
+  display:         inline-flex;
+  align-items:     center;
+  justify-content: center;
+  gap:             8px;
+}
+
+.setup__btn-primary:hover:not(:disabled) {
+  background: var(--primary-hover);
+}
+
+.setup__btn-primary:disabled {
+  opacity: 0.5;
+  cursor:  not-allowed;
+}
+
+.setup__btn-ghost {
+  min-height:      44px;
+  padding:         0 20px;
+  border:          1px solid var(--border);
+  border-radius:   var(--radius-md);
+  background:      transparent;
+  color:           var(--text);
+  font-size:       0.9rem;
+  font-weight:     600;
+  cursor:          pointer;
+  transition:      background 0.15s ease;
+  display:         inline-flex;
+  align-items:     center;
+  justify-content: center;
+  gap:             8px;
+}
+
+.setup__btn-ghost:hover:not(:disabled) {
+  background: var(--bg-hover);
+}
+
+.setup__pill-btn {
+  padding:       6px 12px;
+  border-radius: 100px;
+  border:        1px solid var(--border);
+  background:    transparent;
+  color:         var(--text-secondary);
+  font-size:     0.78rem;
+  font-weight:   600;
+  cursor:        pointer;
+  transition:    all 0.15s ease;
+}
+
+.setup__pill-btn:hover {
+  border-color: var(--primary);
+  color:        var(--primary);
+}
+
+.setup__icon-btn {
+  background: transparent;
+  border:     none;
+  color:      var(--text-secondary);
+  cursor:     pointer;
+  padding:    6px;
+  border-radius: 50%;
+  display:    flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.setup__icon-btn:hover {
+  background: var(--bg-hover);
+  color:      var(--text);
+}
+
+.setup__icon-btn--danger:hover {
+  background: #fee2e2 !important;
+  color:      #dc2626 !important;
+}
+
 .setup__input--naked {
   background: transparent !important;
   border: none !important;
@@ -393,3 +528,4 @@ onMounted(async () => {
   color: #b91c1c;
 }
 </style>
+
