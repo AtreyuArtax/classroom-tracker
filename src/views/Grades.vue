@@ -328,563 +328,22 @@
               </div>
             </div>
           </div>
-          
-          <!-- Analytics Panel (Step 2) -->
-          <div v-if="analyticsMode" class="grades__analytics-panel">
-            <!-- Outlier Toggle & Notice (Step 7) -->
-            <div class="grades__analytics-header">
-              <div v-if="exclusionMode !== 'none'" class="grades__outlier-notice" :title="excludedNames">
-                <AlertCircle :size="16" />
-                <span>Exclusion active: {{ classAnalytics?.outlierCount || 0 }} {{ classAnalytics?.outlierCount === 1 ? 'student' : 'students' }} hidden.</span>
-              </div>
-              <div class="grades__outlier-toggle">
-                <span class="grades__toggle-label">Exclusion Filter:</span>
-                <div class="grades__toggle-group">
-                  <button 
-                    class="grades__toggle-btn" 
-                    :class="{ 'grades__toggle-btn--active': exclusionMode === 'none' }"
-                    @click="setExclusionMode('none')"
-                  >Include All</button>
-                  <button 
-                    class="grades__toggle-btn" 
-                    :class="{ 'grades__toggle-btn--active': exclusionMode === 'fixed' }"
-                    @click="setExclusionMode('fixed')"
-                  >
-                    <span v-if="exclusionMode !== 'fixed'">Below {{ fixedExclusionThreshold }}%</span>
-                    <div v-else class="grades__threshold-editor">
-                      Below <input 
-                        type="number" 
-                        v-model.number="fixedExclusionThreshold" 
-                        @blur="refreshClassAnalytics"
-                        @keyup.enter="refreshClassAnalytics"
-                        class="grades__threshold-input"
-                      />%
-                    </div>
-                  </button>
-                  <button 
-                    class="grades__toggle-btn" 
-                    :class="{ 'grades__toggle-btn--active': exclusionMode === 'auto' }"
-                    @click="setExclusionMode('auto')"
-                  >Auto Outliers</button>
-                </div>
-              </div>
-            </div>
-
-            <!-- Category Weight Audit Warning -->
-            <div v-if="isWeightWarningVisible" 
-              class="grades__weight-warning"
-              :class="categoryWeightTotal > 100 ? 'grades__weight-warning--over' : 'grades__weight-warning--under'">
-              <AlertTriangle :size="16" />
-              <span>Audit Note: Category weights sum to {{ categoryWeightTotal }}%. Averages will be scaled, but 100% is recommended for audit clarity.</span>
-            </div>
-
-            <!-- Overlay sits on top without removing content -->
-            <div v-if="isCalculating" class="grades__calculating-overlay">
-              <div class="grades__spinner"></div>
-              <p>Calculating analytics...</p>
-            </div>
-
-            <!-- Empty state only if no data and NOT calculating -->
-            <div v-if="!classAnalytics && !isCalculating" class="grades__empty-analytics">
-              <div class="grades__empty-content">
-                <BarChart2 :size="64" class="grades__empty-icon" />
-                <h3>No analytics available yet.</h3>
-                <p>Enter grades in the Grid view to see class performance data.</p>
-                <button class="grades__btn-primary" @click="analyticsMode = false">
-                  <ArrowLeft :size="16" /> Switch to Grid
-                </button>
-              </div>
-            </div>
-
-            <!-- Main content - always stays in DOM if it exists to preserve scroll -->
-            <div v-if="classAnalytics" class="grades__analytics-scrollable">
-              <div class="grades__analytics-sections">
-                <!-- Class Overview Cards (Step 3) -->
-                <div class="grades__analytics-row">
-                  <div class="grades__analytics-card" :style="{ borderLeft: `4px solid ${getHeatColor(overallClassAvg)}` }">
-                    <div class="grades__card-label">CLASS AVERAGE</div>
-                    <div class="grades__card-value-group">
-                      <div class="grades__card-value">{{ formatGrade(overallClassAvg) }}</div>
-                      <div class="grades__card-hint">{{ formatGrade(classAnalytics.mean) }} products only</div>
-                    </div>
-                  </div>
-                  <div class="grades__analytics-card" :style="{ borderLeft: `4px solid ${getHeatColor(overallClassMedian)}` }">
-                    <div class="grades__card-label">WEIGHTED MEDIAN</div>
-                    <div class="grades__card-value-group">
-                      <div class="grades__card-value">{{ formatGrade(overallClassMedian) }}</div>
-                      <div class="grades__card-hint">{{ formatGrade(classAnalytics.median) }} products only</div>
-                    </div>
-                  </div>
-                  <div class="grades__analytics-card" :style="{ borderLeft: `4px solid ${getHeatColor(classMostConsistent?.range?.[0])}` }">
-                    <div class="grades__card-label">MOST CONSISTENT</div>
-                    <div v-if="classMostConsistent" class="grades__card-value-group">
-                      <div class="grades__card-value">{{ classMostConsistent.label }}</div>
-                      <div class="grades__card-hint">{{ classMostConsistent.count }} of {{ classMostConsistent.total }} students</div>
-                    </div>
-                    <div v-else class="grades__card-value">—</div>
-                  </div>
-                  <div class="grades__analytics-card" :style="{ borderLeft: `4px solid ${getSDColor(overallClassSD)}` }">
-                    <div class="grades__card-label">STD DEVIATION</div>
-                    <div class="grades__card-value-group">
-                      <div class="grades__card-value">{{ overallClassSD !== null ? overallClassSD.toFixed(1) + '%' : '—' }}</div>
-                      <div class="grades__card-hint">{{ classAnalytics.sd !== null ? classAnalytics.sd.toFixed(1) + '%' : '—' }} products only</div>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Evidence Blend / Triangulation (Step 4 Upgrade) -->
-                <div class="grades__analytics-section">
-                  <h3 class="grades__analytics-subtitle">TRIPLE EVIDENCE BLEND</h3>
-                  
-                  <div v-if="classEvidenceBlend" class="grades__blend-container">
-                    <div class="grades__blend-bar">
-                      <div 
-                        class="grades__blend-segment grades__blend-segment--product" 
-                        :style="{ width: classEvidenceBlend.product.percentage + '%' }"
-                        :title="`Product: ${classEvidenceBlend.product.count} assessments (${classEvidenceBlend.product.percentage}%)`"
-                      ></div>
-                      <div 
-                        class="grades__blend-segment grades__blend-segment--observation" 
-                        :style="{ width: classEvidenceBlend.observation.percentage + '%' }"
-                        :title="`Observation: ${classEvidenceBlend.observation.count} assessments (${classEvidenceBlend.observation.percentage}%)`"
-                      ></div>
-                      <div 
-                        class="grades__blend-segment grades__blend-segment--conversation" 
-                        :style="{ width: classEvidenceBlend.conversation.percentage + '%' }"
-                        :title="`Conversation: ${classEvidenceBlend.conversation.count} assessments (${classEvidenceBlend.conversation.percentage}%)`"
-                      ></div>
-                    </div>
-                    
-                    <div class="grades__blend-legend">
-                      <div class="grades__legend-item">
-                        <span class="grades__legend-dot grades__legend-dot--product"></span>
-                        <span class="grades__legend-text">Product: {{ classAnalytics.totalStudentCount }}/{{ classAnalytics.totalStudentCount }} students (100%)</span>
-                      </div>
-                      <div class="grades__legend-item">
-                        <span class="grades__legend-dot grades__legend-dot--observation"></span>
-                        <span class="grades__legend-text">Observation Coverage: {{ classAnalytics.observationCoverage.percentage }}%</span>
-                      </div>
-                      <div class="grades__legend-item">
-                        <span class="grades__legend-dot grades__legend-dot--conversation"></span>
-                        <span class="grades__legend-text">Conversation Coverage: {{ classAnalytics.conversationCoverage.percentage }}%</span>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <p class="grades__analytics-hint">Coverage shows the % of students with at least one entry for that evidence type.</p>
-                </div>
-
-                <!-- Grade Distribution Histogram (Step 5) -->
-                <div class="grades__analytics-section">
-                  <div class="grades__section-header-row">
-                    <h3 class="grades__analytics-subtitle">PRODUCT GRADE DISTRIBUTION</h3>
-                    <div class="grades__toggle-group">
-                      <button 
-                        class="grades__toggle-btn"
-                        :class="{ 'grades__toggle-btn--active': distributionMode === 'buckets' }"
-                        @click="distributionMode = 'buckets'"
-                      >10% Buckets</button>
-                      <button 
-                        class="grades__toggle-btn"
-                        :class="{ 'grades__toggle-btn--active': distributionMode === 'levels' }"
-                        @click="distributionMode = 'levels'"
-                      >Levels</button>
-                    </div>
-                  </div>
-                  <div class="grades__chart-container" style="height: 200px;">
-                    <Bar :data="bucketChartData" :options="bucketChartOptions" />
-                  </div>
-                  <p class="grades__analytics-hint">
-                    {{ distributionMode === 'buckets' 
-                        ? 'Number of students within each 10% grade bracket (Product assessments only).' 
-                        : 'Student count by achievement level (Product assessments only).' }}
-                  </p>
-                </div>
-
-                <!-- Per-Assessment Breakdowns (Grouped) -->
-                <div class="grades__analytics-section">
-                  <div class="grades__analytics-groups">
-                    
-                    <!-- Product Assessments Table -->
-                    <div class="grades__analytics-group-box">
-                      <h3 class="grades__analytics-subtitle">PRODUCT ASSESSMENTS BREAKDOWN</h3>
-                      <div class="grades__analytics-table-wrapper">
-                        <table class="grades__analytics-table">
-                          <thead>
-                            <tr>
-                              <th @click="analyticsSortBy = 'name'; analyticsSortOrder = analyticsSortOrder === 'asc' ? 'desc' : 'asc'">
-                                Assessment {{ analyticsSortBy === 'name' ? (analyticsSortOrder === 'asc' ? '↑' : '↓') : '' }}
-                              </th>
-                              <th>Category</th>
-                              <th @click="analyticsSortBy = 'mean'; analyticsSortOrder = analyticsSortOrder === 'asc' ? 'desc' : 'asc'">
-                                Avg {{ analyticsSortBy === 'mean' ? (analyticsSortOrder === 'asc' ? '↑' : '↓') : '' }}
-                              </th>
-                              <th @click="analyticsSortBy = 'median'; analyticsSortOrder = analyticsSortOrder === 'asc' ? 'desc' : 'asc'">
-                                Med {{ analyticsSortBy === 'median' ? (analyticsSortOrder === 'asc' ? '↑' : '↓') : '' }}
-                              </th>
-                              <th @click="analyticsSortBy = 'sd'; analyticsSortOrder = analyticsSortOrder === 'asc' ? 'desc' : 'asc'">
-                                SD {{ analyticsSortBy === 'sd' ? (analyticsSortOrder === 'asc' ? '↑' : '↓') : '' }}
-                              </th>
-                              <th>High</th>
-                              <th>Low</th>
-                              <th>Flag</th>
-                              <th>Distribution</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            <tr v-for="a in sortedProductAssessments" :key="a.assessmentId">
-                              <td class="grades__td-assessment-name" :title="a.description || a.name" @click="selectedAssessmentId = a.assessmentId">
-                                {{ a.name }}
-                              </td>
-                              <td>{{ getCategoryName(a.categoryId) }}</td>
-                              <td :style="{ color: getHeatTextColor(a.stats.mean), fontWeight: 'bold' }">{{ formatGrade(a.stats.mean) }}</td>
-                              <td>{{ formatGrade(a.stats.median) }}</td>
-                              <td>{{ a.stats.sd !== null ? a.stats.sd.toFixed(1) + '%' : '—' }}</td>
-                              <td>{{ formatGrade(a.stats.highest) }}</td>
-                              <td>{{ formatGrade(a.stats.lowest) }}</td>
-                              <td>
-                                <div class="grades__flag-group">
-                                  <span v-if="a.stats.calibrationFlag === 'too_hard'" class="grades__flag grades__flag--red" title="Too Hard / Calibration needed">🔴</span>
-                                  <span v-else-if="a.stats.calibrationFlag === 'too_easy'" class="grades__flag grades__flag--amber" title="Too Easy / Calibration needed">🟡</span>
-                                  <span v-else class="grades__flag grades__flag--green" title="Well calibrated">✓</span>
-                                </div>
-                              </td>
-                              <td>
-                                <div class="grades__sparkline" v-if="a.stats.distributionBuckets">
-                                  <div 
-                                    v-for="bucket in (distributionMode === 'buckets' ? a.stats.distributionBuckets : a.stats.levelBuckets)" 
-                                    :key="bucket.label"
-                                    class="grades__sparkline-bar"
-                                    :style="{ 
-                                      height: (bucket.count / a.stats.totalCount * 100) + '%',
-                                      background: getHeatColorHex(bucket.range[0])
-                                    }"
-                                    :title="`${bucket.label}: ${bucket.count} students`"
-                                  ></div>
-                                </div>
-                              </td>
-                            </tr>
-                          </tbody>
-                        </table>
-                      </div>
-                      <p v-if="!sortedProductAssessments.length" class="grades__analytics-hint">No product assessments found.</p>
-                    </div>
-
-                    <!-- Observation Assessments Table -->
-                    <div v-if="sortedObservationAssessments.length" class="grades__analytics-group-box">
-                      <h3 class="grades__analytics-subtitle">OBSERVATION LABS BREAKDOWN</h3>
-                      <div class="grades__analytics-table-wrapper">
-                        <table class="grades__analytics-table">
-                          <thead>
-                            <tr>
-                              <th @click="analyticsSortBy = 'name'; analyticsSortOrder = analyticsSortOrder === 'asc' ? 'desc' : 'asc'">Observation Assessment</th>
-                              <th>Avg</th>
-                              <th>Med</th>
-                              <th>SD</th>
-                              <th>Distribution</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            <tr v-for="a in sortedObservationAssessments" :key="a.assessmentId">
-                              <td class="grades__td-assessment-name" @click="selectedAssessmentId = a.assessmentId">{{ a.name }}</td>
-                              <td :style="{ color: getHeatTextColor(a.stats.mean), fontWeight: 'bold' }">{{ formatGrade(a.stats.mean) }}</td>
-                              <td>{{ formatGrade(a.stats.median) }}</td>
-                              <td>{{ a.stats.sd !== null ? a.stats.sd.toFixed(1) + '%' : '—' }}</td>
-                              <td>
-                                <div class="grades__sparkline" v-if="a.stats.distributionBuckets">
-                                  <div 
-                                    v-for="bucket in (distributionMode === 'buckets' ? a.stats.distributionBuckets : a.stats.levelBuckets)" 
-                                    :key="bucket.label"
-                                    class="grades__sparkline-bar"
-                                    :style="{ 
-                                      height: (bucket.count / a.stats.totalCount * 100) + '%',
-                                      background: getHeatColorHex(bucket.range[0])
-                                    }"
-                                    :title="`${bucket.label}: ${bucket.count} students`"
-                                  ></div>
-                                </div>
-                              </td>
-                            </tr>
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-
-                    <!-- Conversation Assessments Table -->
-                    <div v-if="sortedConversationAssessments.length" class="grades__analytics-group-box">
-                      <h3 class="grades__analytics-subtitle">CONVERSATION ASSESSMENTS BREAKDOWN</h3>
-                      <div class="grades__analytics-table-wrapper">
-                        <table class="grades__analytics-table">
-                          <thead>
-                            <tr>
-                              <th @click="analyticsSortBy = 'name'; analyticsSortOrder = analyticsSortOrder === 'asc' ? 'desc' : 'asc'">Conversation Assessment</th>
-                              <th>Avg</th>
-                              <th>Med</th>
-                              <th>Coverage</th>
-                              <th>Distribution</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            <tr v-for="a in sortedConversationAssessments" :key="a.assessmentId">
-                              <td class="grades__td-assessment-name" @click="selectedAssessmentId = a.assessmentId">{{ a.name }}</td>
-                              <td :style="{ color: getHeatTextColor(a.stats.mean), fontWeight: 'bold' }">{{ formatGrade(a.stats.mean) }}</td>
-                              <td>{{ formatGrade(a.stats.median) }}</td>
-                              <td>{{ a.stats.totalCount }} Students</td>
-                              <td>
-                                <div class="grades__sparkline" v-if="a.stats.distributionBuckets">
-                                  <div 
-                                    v-for="bucket in (distributionMode === 'buckets' ? a.stats.distributionBuckets : a.stats.levelBuckets)" 
-                                    :key="bucket.label"
-                                    class="grades__sparkline-bar"
-                                    :style="{ 
-                                      height: (bucket.count / a.stats.totalCount * 100) + '%',
-                                      background: getHeatColorHex(bucket.range[0])
-                                    }"
-                                    :title="`${bucket.label}: ${bucket.count} students`"
-                                  ></div>
-                                </div>
-                              </td>
-                            </tr>
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-
-                  </div>
-                </div>
-
-                <!-- Student Exclusion (Step 8) -->
-                <div class="grades__analytics-section">
-                  <header class="grades__analytics-collapsible-header" @click="isExclusionsOpen = !isExclusionsOpen">
-                    <h3 class="grades__analytics-subtitle">STUDENT EXCLUSIONS</h3>
-                    <ChevronRight :size="20" :style="{ transform: isExclusionsOpen ? 'rotate(90deg)' : 'none', transition: 'transform 0.2s' }" />
-                  </header>
-                  
-                  <div v-if="isExclusionsOpen" class="grades__exclusion-list">
-                    <p class="grades__analytics-hint">Students excluded here are permanently removed from all analytics calculations for this class. Their grades are unaffected.</p>
-                    <div class="grades__exclusion-grid">
-                      <div v-for="s in sortedRoster" :key="s.studentId" class="grades__exclusion-item">
-                        <label class="grades__checkbox-label">
-                          <input 
-                            type="checkbox" 
-                            :checked="s.excludeFromAnalytics" 
-                            @change="toggleStudentFromAnalytics(s.studentId)"
-                          />
-                          {{ s.firstName }} {{ s.lastName }}
-                        </label>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+                <!-- Analytics Panel (Step 2) -->
+          <GradesAnalyticsPanel
+            v-if="analyticsMode"
+            @select-assessment="selectedAssessmentId = $event"
+          />
 
           <!-- The Scrollable Grid -->
-          <div v-else class="grades__grid-wrapper">
-            <table class="grades__grid">
-              <thead>
-                <!-- Top Header -->
-                <tr>
-                  <th class="grades__th-student">
-                    <div class="grades__assessment-header">
-                      <div class="grades__sort-header" @click="toggleGridSort('name')">
-                        Student Name
-                        <span v-if="gridSortBy === 'name'" class="grades__sort-icon">
-                          <ChevronUp v-if="gridSortOrder === 'asc'" :size="14" />
-                          <ChevronDown v-else :size="14" />
-                        </span>
-                      </div>
-                      <button class="grades__header-menu-btn" @click.stop="onHeaderMenu($event, 'name')">
-                        <MoreVertical :size="14" />
-                      </button>
-                    </div>
-                  </th>
-                  <th class="grades__th-overall">
-                    <div class="grades__assessment-header">
-                      <div class="grades__sort-header" @click="toggleGridSort('grade')">
-                        Overall
-                        <span v-if="gridSortBy === 'grade'" class="grades__sort-icon">
-                          <ChevronUp v-if="gridSortOrder === 'asc'" :size="14" />
-                          <ChevronDown v-else :size="14" />
-                        </span>
-                      </div>
-                      <button class="grades__header-menu-btn" @click.stop="onHeaderMenu($event, 'grade')">
-                        <MoreVertical :size="14" />
-                      </button>
-                    </div>
-                  </th>
-                  <th 
-                    v-for="a in sortedAssessments" 
-                    :key="a.assessmentId"
-                    class="grades__th-assessment"
-                  >
-                    <div class="grades__assessment-header">
-                      <div class="grades__assessment-info" @click="selectedAssessmentId = a.assessmentId">
-                        <span class="grades__assessment-name" :title="a.description || a.name">
-                          {{ a.name }}
-                          <span v-if="gridSortBy == a.assessmentId" class="grades__sort-icon">
-                            <ChevronUp v-if="gridSortOrder === 'asc'" :size="12" />
-                            <ChevronDown v-else :size="12" />
-                          </span>
-                        </span>
-                        <div class="grades__assessment-meta">
-                          <span class="grades__assessment-points">/{{ a.totalPoints }}</span>
-                          <span v-if="a.unitId" class="grades__assessment-unit">{{ getUnitName(a.unitId) }}</span>
-                        </div>
-                      </div>
-                      <button class="grades__header-menu-btn" @click.stop="onHeaderMenu($event, 'assessment', a)">
-                        <MoreVertical :size="14" />
-                      </button>
-                    </div>
-                  </th>
-                </tr>
-
-                <!-- Class Avg Row (Sticky below headers) -->
-                <tr class="grades__tr-avg">
-                  <td class="grades__td-student">Class Average</td>
-                  <td 
-                    class="grades__td-overall grades__td-avg"
-                    @click="toggleGridSort('grade')"
-                    title="Sort by overall mark"
-                  >
-                    {{ formatGrade(overallClassAvg) }}
-                  </td>
-                  <td 
-                    v-for="a in sortedAssessments" 
-                    :key="a.assessmentId"
-                    class="grades__td-assessment grades__td-avg"
-                    @click="toggleGridSort(a.assessmentId)"
-                    title="Sort by this assessment"
-                  >
-                    <div v-if="assessmentStats[a.assessmentId]">
-                      {{ formatCellGrade(assessmentStats[a.assessmentId].average, a.totalPoints) }}
-                    </div>
-                  </td>
-                </tr>
-              </thead>
-              
-              <tbody>
-                <tr v-for="student in sortedRoster" :key="student.studentId">
-                  <td 
-                    class="grades__td-student" 
-                    :class="{ 'grades__td--highlighted': highlightedColumnId === 'name' }"
-                    @click="showStudentDossier(student.studentId)"
-                  >
-                    <div class="grades__student-name-group">
-                      <div class="grades__student-name-container">
-                      <div class="grades__student-name">{{ student.lastName }}, {{ student.firstName }}</div>
-                      <TestDayWarning 
-                        v-if="studentAbsenceTotals[student.studentId]?.testDays >= 2" 
-                        :count="studentAbsenceTotals[student.studentId].testDays" 
-                      />
-                    </div>
-                      <div class="grades__sparkline-mini" v-if="studentTrends[student.studentId]?.length > 1 && !isPrivacyMode">
-                        <svg width="80" height="14" viewBox="0 0 80 14">
-                          <path
-                            fill="none"
-                            :stroke="getGradeColor(classGrades[student.studentId]?.overallGrade)"
-                            stroke-width="2"
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            :d="getSparklinePath(studentTrends[student.studentId], 80, 14)"
-                          />
-                        </svg>
-                      </div>
-                    </div>
-                  </td>
-                  <td 
-                    class="grades__td-overall grades__td-overall--editable"
-                    :class="{ 
-                      'grades__td--highlighted': highlightedColumnId === 'grade',
-                      'grades__td-overall--adjusted': classGrades[student.studentId]?.isGradeAdjusted
-                    }"
-                    :style="{ background: getHeatColor(classGrades[student.studentId]?.overallGrade) }"
-                    @click="startEdit(student.studentId, 'overall')"
-                    @contextmenu.prevent="onContextMenu($event, student.studentId, 'overall')"
-                  >
-                    <!-- Inline Editor -->
-                    <div v-if="editingCell?.sId === student.studentId && editingCell?.aId === 'overall'" class="grades__cell-edit">
-                      <input 
-                        ref="editInput"
-                        v-model.number="editingCell.value"
-                        type="number"
-                        min="0"
-                        max="100"
-                        class="grades__input-inline"
-                        @blur="saveEdit"
-                        @keydown.enter.prevent="onEnterKey"
-                        @keydown.tab.prevent="onEnterKey"
-                        @keydown.esc.prevent="cancelEdit"
-                      />
-                    </div>
-                    <div v-else class="grades__overall-cell-content">
-                      <span>{{ formatGrade(classGrades[student.studentId]?.overallGrade) }}</span>
-                      <span 
-                        v-if="classGrades[student.studentId]?.isGradeAdjusted" 
-                        class="grades__adjusted-asterisk"
-                        :title="'Adjusted (Calculated: ' + formatGrade(classGrades[student.studentId]?.calculatedOverallGrade) + ')'"
-                      >
-                        *
-                      </span>
-                    </div>
-                  </td>
-                  <td 
-                    v-for="a in sortedAssessments" 
-                    :key="a.assessmentId"
-                    class="grades__td-assessment"
-                    :class="{ 'grades__td-assessment--highlighted': highlightedColumnId === a.assessmentId }"
-                    :style="getCellStyle(student.studentId, a.assessmentId, a.totalPoints)"
-                    @click="startEdit(student.studentId, a.assessmentId)"
-                    @contextmenu.prevent="onContextMenu($event, student.studentId, a.assessmentId)"
-                  >
-                    <!-- Inline Editor -->
-                    <div v-if="editingCell?.sId === student.studentId && editingCell?.aId === a.assessmentId" class="grades__cell-edit">
-                      <input 
-                        ref="editInput"
-                        v-model.number="editingCell.value"
-                        type="number"
-                        min="0"
-                        :max="a.totalPoints"
-                        class="grades__input-inline"
-                        @blur="saveEdit"
-                        @keydown.enter.prevent="onEnterKey"
-                        @keydown.tab.prevent="onEnterKey"
-                        @keydown.up.prevent="onArrowKey('up')"
-                        @keydown.down.prevent="onArrowKey('down')"
-                        @keydown.esc.prevent="cancelEdit"
-                      />
-                    </div>
-
-                    <div v-else-if="gradeMap[a.assessmentId]?.[student.studentId]" class="grades__cell-content">
-                      <span v-if="gradeMap[a.assessmentId][student.studentId].missing" class="grades__cell-missing">M</span>
-                      <span v-else-if="gradeMap[a.assessmentId][student.studentId].excluded" class="grades__cell-excluded">EX</span>
-                      <span v-else-if="gradeMap[a.assessmentId][student.studentId].resolvedScore !== null">
-                        {{ formatCellGrade(gradeMap[a.assessmentId][student.studentId].resolvedScore, a.totalPoints) }}
-                      </span>
-                      <span v-else class="grades__cell-placeholder">—</span>
-                      
-                      <!-- Absent on Test Day Dot -->
-                      <div 
-                        v-if="assessmentAbsenceMap[student.studentId]?.[a.assessmentId]" 
-                        class="grades__cell-absent-dot" 
-                        title="Student was marked absent on the date of this assessment"
-                      ></div>
-                      
-                      <!-- Retest Indicator -->
-                      <button 
-                        v-if="gradeMap[a.assessmentId]?.[student.studentId]?.attempts?.length > 1" 
-                        class="grades__cell-retest-btn"
-                        title="View attempts"
-                        @click.stop="openAttempts($event, student.studentId, a.assessmentId)"
-                      >•</button>
-                    </div>
-                    <div v-else class="grades__cell-placeholder">—</div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div> <!-- End grid-wrapper -->
+          <GradesGrid
+            v-else
+            :is-privacy-mode="isPrivacyMode"
+            :student-absence-totals="studentAbsenceTotals"
+            :assessment-absence-map="assessmentAbsenceMap"
+            @select-assessment="selectedAssessmentId = $event"
+            @open-dossier="showStudentDossier"
+            @edit-assessment="startEditAssessment"
+          />
         </div> <!-- End grid-container -->
 
         <div v-else class="grades__student-view">
@@ -916,124 +375,6 @@
         <button class="grades__context-btn" @click="startNewAttempt(studentActionMenu.studentId); studentActionMenu = null">
           <Plus :size="14" /> Add New Attempt
         </button>
-      </div>
-    </div>
-
-    <div v-if="contextMenu" class="grades__context-backdrop grades__context-backdrop--dim" @click="contextMenu = null" @contextmenu.prevent="contextMenu = null">
-      <div class="grades__context-menu" :style="{ top: contextMenu.y + 'px', left: contextMenu.x + 'px' }">
-        <template v-if="contextMenu.aId === 'overall'">
-          <button class="grades__context-btn" @click="startEdit(contextMenu.sId, 'overall'); contextMenu = null">
-            <Pencil :size="14" /> Adjust Grade
-          </button>
-          <button 
-            v-if="classGrades[contextMenu.sId]?.isGradeAdjusted" 
-            class="grades__context-btn" 
-            @click="undoStudentGradeAdjustment(contextMenu.sId); contextMenu = null"
-          >
-            <RotateCcw :size="14" /> Reset to Calculated
-          </button>
-        </template>
-        <template v-else>
-          <button class="grades__context-btn" @click="startEdit(contextMenu.sId, contextMenu.aId); contextMenu = null">
-            <Plus :size="14" /> New Attempt
-          </button>
-          <button 
-            v-if="gradeMap[contextMenu.aId]?.[contextMenu.sId]?.attempts?.length >= 1" 
-            class="grades__context-btn" 
-            @click="openAttemptsFromMenu($event, contextMenu.sId, contextMenu.aId)"
-          >
-            <Calendar :size="14" /> View Notes
-          </button>
-          <button class="grades__context-btn" @click="toggleMissing">
-            <AlertCircle :size="14" /> {{ isMissing(contextMenu.sId, contextMenu.aId) ? 'Unmark Missing' : 'Mark Missing' }}
-          </button>
-          <button class="grades__context-btn" @click="toggleExcluded">
-            <XCircle :size="14" /> {{ isExcluded(contextMenu.sId, contextMenu.aId) ? 'Include in Grade' : 'Mark Excluded' }}
-          </button>
-        </template>
-      </div>
-    </div>
-
-    <div v-if="headerMenu" class="grades__context-backdrop grades__context-backdrop--dim" @click="headerMenu = null" @contextmenu.prevent="headerMenu = null">
-      <div class="grades__context-menu" :style="{ top: headerMenu.y + 'px', left: headerMenu.x + 'px' }">
-        <template v-if="headerMenu.type === 'name'">
-          <button class="grades__context-btn" @click="toggleGridSort('name'); headerMenu = null">
-            <BarChart2 :size="14" /> Sort by Name
-          </button>
-          <button class="grades__context-btn" @click="copyStudentNames(); headerMenu = null">
-            <Copy :size="14" /> Copy Names List
-          </button>
-        </template>
-
-        <template v-if="headerMenu.type === 'grade'">
-          <button class="grades__context-btn" @click="toggleGridSort('grade'); headerMenu = null">
-            <BarChart2 :size="14" /> Sort by Grade
-          </button>
-          <button class="grades__context-btn" @click="copyOverallGrades(); headerMenu = null">
-            <Copy :size="14" /> Copy Overall Marks
-          </button>
-        </template>
-
-        <template v-if="headerMenu.type === 'assessment'">
-          <button class="grades__context-btn" @click="toggleGridSort(headerMenu.assessment.assessmentId); headerMenu = null">
-            <BarChart2 :size="14" /> Sort by Assessment
-          </button>
-          <button class="grades__context-btn" @click="startEditAssessment(headerMenu.assessment); headerMenu = null">
-            <Pencil :size="14" /> Edit Assessment
-          </button>
-          <button class="grades__context-btn" @click="copyAssessmentGrades(headerMenu.assessment); headerMenu = null">
-            <Copy :size="14" /> Copy Column (Scores)
-          </button>
-          <button class="grades__context-btn grades__context-btn--danger" @click="confirmDeleteAssessment(headerMenu.assessment); headerMenu = null">
-            <Trash2 :size="14" /> Delete Assessment
-          </button>
-        </template>
-      </div>
-    </div>
-
-    <div v-if="attemptsPopover" class="grades__context-backdrop grades__context-backdrop--dim" @click="attemptsPopover = null" @contextmenu.prevent="attemptsPopover = null">
-      <div class="grades__attempts-popover" :style="{ top: attemptsPopover.y + 'px', left: attemptsPopover.x + 'px' }" @click.stop>
-        <div class="grades__popover-header">
-          <h4 class="grades__popover-title">Attempt History — {{ attemptsPopover.studentName }}</h4>
-          <div class="grades__popover-subtitle">{{ attemptsPopover.assessmentName }} (/{{ attemptsPopover.totalPoints }}) · Policy: {{ attemptsPopover.retestPolicy }}</div>
-        </div>
-        <ul class="grades__attempts-list">
-          <li v-for="att in attemptsPopover.attempts" :key="att.attemptId" class="grades__attempt-item" :class="{ 'grades__attempt-item--primary': att.isPrimary }">
-            <div class="grades__attempt-main-row">
-              <div class="grades__attempt-main">
-                <div class="grades__attempt-info">
-                  <span class="grades__attempt-score">{{ att.pointsEarned }} / {{ attemptsPopover.totalPoints }}</span>
-                  <span class="grades__attempt-percent">({{ Math.round((att.pointsEarned / attemptsPopover.totalPoints) * 100) }}%)</span>
-                  <span class="grades__attempt-date">{{ formatDateShort(att.date) }}</span>
-                </div>
-                <div class="grades__attempt-counting">
-                  <template v-if="attemptsPopover.retestPolicy === 'manual'">
-                    <input 
-                      type="radio" 
-                      :name="'primary-' + attemptsPopover.sId" 
-                      :checked="att.isPrimary"
-                      @change="onSetPrimary(att.attemptId)"
-                    /> Primary
-                  </template>
-                  <template v-else>
-                    <span v-if="att.pointsEarned === attemptsPopover.resolvedScore" class="grades__counting-badge">counting ✓</span>
-                    <span v-else class="grades__not-counting-badge">not counting</span>
-                  </template>
-                </div>
-              </div>
-              <button class="grades__icon-btn grades__icon-btn--danger" @click="onDeleteAttempt(att.attemptId)">
-                <Trash2 :size="14" />
-              </button>
-            </div>
-            <textarea
-              class="grades__attempt-comment"
-              :value="att.comment || ''"
-              placeholder="Add a note about this attempt…"
-              rows="2"
-              @change="onUpdateComment(att.attemptId, $event.target.value)"
-            ></textarea>
-          </li>
-        </ul>
       </div>
     </div>
 
@@ -1147,11 +488,26 @@ import {
   sortedUnits,
   enterGrade,
   adjustStudentGrade,
-  undoStudentGradeAdjustment
+  undoStudentGradeAdjustment,
+  displayMode,
+  assessmentSortOrder,
+  gridSortBy,
+  gridSortOrder
 } from '../composables/useGradebook.js'
+import {
+  getHeatColor,
+  getHeatColorHex,
+  getHeatTextColor,
+  getGradeColorMuted as getGradeColor,
+  getSDColor,
+  getCoverageColor,
+  formatGrade
+} from '../utils/gradeColors.js'
 import { useAttendanceInsights } from '../composables/useAttendanceInsights.js'
 import { Plus, BarChart2, Settings, Pencil, XCircle, AlertCircle, Trash2, X, MoreVertical, ArrowLeft, Check, ArrowUp, ArrowDown, Minus, GraduationCap, Eye, ChevronLeft, ChevronRight, UserCheck, Activity, FilePlus, Target, Hash, Calendar, AlertTriangle, ChevronUp, ChevronDown, Copy, Edit2, UserMinus, Printer, RotateCcw } from 'lucide-vue-next'
 import Student360 from '../components/dossier/Student360.vue'
+import GradesGrid from '../components/GradesGrid.vue'
+import GradesAnalyticsPanel from '../components/GradesAnalyticsPanel.vue'
 import PrintGradesGridModal from '../components/PrintGradesGridModal.vue'
 import StudentSidebar from '../components/StudentSidebar.vue'
 import GradeTrendChart from '../components/GradeTrendChart.vue'
@@ -1196,19 +552,7 @@ watch(activeClass, async (newVal, oldVal) => {
 const isLoading = ref(false)
 const isCalculating = ref(false)
 const showPrintGridModal = ref(false)
-const displayMode = ref('percent') // 'raw' | 'percent'
-const analyticsSortBy = ref('date')
-const analyticsSortOrder = ref('asc')
-const isExclusionsOpen = ref(false)
 
-const editingCell = ref(null) // { sId, aId, value }
-const editInput = ref(null)
-const contextMenu = ref(null) // { x, y, sId, aId }
-const attemptsPopover = ref(null) // { x, y, sId, aId, studentName, attempts, totalPoints }
-const headerMenu = ref(null) // { x, y, type, assessment? }
-const highlightedColumnId = ref(null) // assessmentId or 'name' or 'grade'
-const editOriginalValue = ref(null)
-const currentAssessmentIdLocal = null // Removed unused local ref
 const selectedStudentId = ref(null)
 const selectedAssessmentId = ref(null)
 const studentActionMenu = ref(null) // { x, y, studentId }
@@ -1218,12 +562,9 @@ function showStudentDossier(studentId) {
   selectedAssessmentId.value = null
   analyticsMode.value = false
 }
+const isSidebarCollapsed = ref(false)
 const newAttemptForm = ref(null) // { studentId, points, date, comment }
 const isPrivacyMode = ref(false)
-const isSidebarCollapsed = ref(false)
-const gridSortBy = ref('name') // 'name' | 'grade'
-const gridSortOrder = ref('asc') // 'asc' | 'desc'
-const assessmentSortOrder = ref('desc') // 'desc' = Newest first, 'asc' = Oldest first
 const showMissingModal = ref(false)
 
 // Removed local assessmentTypes & newAssessmentLocal
@@ -1507,76 +848,6 @@ const currentAssessmentSummary = computed(() => {
   }
 })
 
-/**
- * Step 6: Typed Assessment Analytics (Split by Product, Observation, Conversation)
- */
-const sortedProductAssessments = computed(() => {
-  if (!classAnalytics.value?.productAnalytics) return []
-  return processTypedAssessments(classAnalytics.value.productAnalytics)
-})
-
-const sortedObservationAssessments = computed(() => {
-  if (!classAnalytics.value?.observationAnalytics) return []
-  return processTypedAssessments(classAnalytics.value.observationAnalytics)
-})
-
-const sortedConversationAssessments = computed(() => {
-  if (!classAnalytics.value?.conversationAnalytics) return []
-  return processTypedAssessments(classAnalytics.value.conversationAnalytics)
-})
-
-function processTypedAssessments(analyticsMap) {
-  return assessments.value
-    .filter(a => analyticsMap[a.assessmentId])
-    .map(a => ({
-      ...a,
-      stats: analyticsMap[a.assessmentId]
-    }))
-    .sort((a, b) => {
-      let valA = analyticsSortBy.value === 'name' ? a.name : a.stats[analyticsSortBy.value]
-      let valB = analyticsSortBy.value === 'name' ? b.name : b.stats[analyticsSortBy.value]
-      
-      if (analyticsSortBy.value === 'date') {
-        valA = new Date(a.date)
-        valB = new Date(b.date)
-      }
-      
-      if (valA < valB) return analyticsSortOrder.value === 'asc' ? -1 : 1
-      if (valA > valB) return analyticsSortOrder.value === 'asc' ? 1 : -1
-      return 0
-    })
-}
-
-/**
- * Calculates the class-wide "Evidence Blend" ratio
- */
-const classEvidenceBlend = computed(() => {
-  if (!classAnalytics.value || !assessments.value) return null
-  
-  const productCount = Object.keys(classAnalytics.value.productAnalytics || {}).length
-  const observationCount = Object.keys(classAnalytics.value.observationAnalytics || {}).length
-  const conversationCount = Object.keys(classAnalytics.value.conversationAnalytics || {}).length
-  
-  const total = productCount + observationCount + conversationCount
-  if (total === 0) return null
-  
-  return {
-    total,
-    product: { 
-      percentage: Math.round((productCount / total) * 100),
-      count: productCount
-    },
-    observation: { 
-      percentage: Math.round((observationCount / total) * 100),
-      count: observationCount
-    },
-    conversation: { 
-      percentage: Math.round((conversationCount / total) * 100),
-      count: conversationCount
-    }
-  }
-})
-
 const filteredClassGrades = computed(() => {
   if (!classGrades.value) return {}
   
@@ -1600,16 +871,6 @@ const filteredClassGrades = computed(() => {
   return filtered
 })
 
-const excludedNames = computed(() => {
-  if (!classAnalytics.value?.outlierStudentIds?.length) return ''
-  const names = classAnalytics.value.outlierStudentIds
-    .map(id => {
-      const s = activeClassRecord.value?.students[id]
-      return s ? `${s.firstName} ${s.lastName}` : 'Unknown Student'
-    })
-  return 'Hidden students: ' + names.join(', ')
-})
-
 const overallClassAvg = computed(() => {
   const grades = Object.values(filteredClassGrades.value)
     .filter(g => g && g.overallGrade !== null)
@@ -1619,153 +880,6 @@ const overallClassAvg = computed(() => {
   const sum = grades.reduce((acc, g) => acc + g, 0)
   return sum / grades.length
 })
-
-const overallClassMedian = computed(() => {
-  const grades = Object.values(filteredClassGrades.value)
-    .filter(g => g && g.overallGrade !== null)
-    .map(g => g.overallGrade)
-  
-  if (grades.length === 0) return null
-  const sorted = [...grades].sort((a, b) => a - b)
-  const mid = Math.floor(sorted.length / 2)
-  if (sorted.length % 2 === 0) {
-    return (sorted[mid - 1] + sorted[mid]) / 2
-  }
-  return sorted[mid]
-})
-
-const overallClassSD = computed(() => {
-  const grades = Object.values(filteredClassGrades.value)
-    .filter(g => g && g.overallGrade !== null)
-    .map(g => g.overallGrade)
-  
-  if (grades.length === 0) return null
-  const mean = overallClassAvg.value
-  const squareDiffs = grades.map(v => Math.pow(v - mean, 2))
-  const avgSquareDiff = squareDiffs.reduce((a, b) => a + b, 0) / (grades.length - 1)
-  return Math.sqrt(avgSquareDiff)
-})
-
-/**
- * Step 5: Grade Distribution Chart Data
- */
-const bucketChartData = computed(() => {
-  if (!classAnalytics.value) return { labels: [], datasets: [] }
-  
-  const buckets = distributionMode.value === 'buckets' 
-    ? classAnalytics.value.distributionBuckets 
-    : classAnalytics.value.levelBuckets
-
-  if (!buckets) return { labels: [], datasets: [] }
-  
-  return {
-    labels: buckets.map(b => b.label),
-    datasets: [
-      {
-        label: 'Students',
-        backgroundColor: buckets.map(b => getHeatColorHex(b.range[0])),
-        data: buckets.map(b => b.count),
-        borderRadius: 4
-      }
-    ]
-  }
-})
-
-const bucketChartOptions = {
-  responsive: true,
-  maintainAspectRatio: false,
-  plugins: {
-    legend: { display: false },
-    tooltip: {
-      callbacks: {
-        label: (context) => `${context.parsed.y} students`
-      }
-    }
-  },
-  scales: {
-    y: {
-      beginAtZero: true,
-      ticks: { stepSize: 1 },
-      grid: { color: 'rgba(0, 0, 0, 0.05)' }
-    },
-    x: {
-      grid: { display: false }
-    }
-  }
-}
-
-
-/**
- * Step 3: Rollup of most consistent level across class
- */
-const classMostConsistent = computed(() => {
-  const dataset = Object.values(filteredClassGrades.value)
-  if (dataset.length === 0) return null
-  
-  const bucketCounts = {} // label -> count
-  const bucketRanges = {} // label -> range
-  
-  dataset.forEach(sg => {
-    const mc = sg?.mostConsistent
-    if (mc && mc.percentage !== undefined && mc.percentage !== null) {
-      const p = mc.percentage
-      const idx = p >= 100 ? 9 : Math.floor(p / 10)
-      const label = `${idx * 10}-${idx * 10 + 9}%`
-      const range = [idx * 10, idx * 10 + 9]
-
-      bucketCounts[label] = (bucketCounts[label] || 0) + 1
-      if (!bucketRanges[label]) {
-        bucketRanges[label] = range
-      }
-    }
-  })
-  
-  const sorted = Object.entries(bucketCounts).sort((a, b) => b[1] - a[1])
-  if (sorted.length === 0) return null
-  
-  const [label, count] = sorted[0]
-  return {
-    label,
-    count,
-    range: bucketRanges[label],
-    total: dataset.length
-  }
-})
-
-function getHeatColorHex(percent) {
-  if (percent === null || percent === undefined) return '#6c757d'
-  if (percent >= 80) return '#d4edda' // High (Green)
-  if (percent >= 70) return '#d0e8f5' // Mid-High (Blue)
-  if (percent >= 60) return '#fff3cd' // Mid-Low (Amber)
-  return '#f8d7da' // Low (Red)
-}
-
-function getSDColor(sd) {
-  if (sd === null) return 'var(--text-secondary)'
-  if (sd < 5) return '#15803d'   // Dark Green
-  if (sd <= 12) return '#1d4ed8' // Dark Blue
-  if (sd <= 18) return '#b45309' // Dark Amber
-  return '#b91c1c'               // Dark Red
-}
-
-function getCoverageColor(percent) {
-  if (percent >= 80) return 'var(--grade-high)'
-  if (percent >= 50) return 'var(--grade-mid-high)'
-  return 'var(--grade-mid-low)'
-}
-
-
-
-
-function toggleGridSort(column) {
-  if (gridSortBy.value === column) {
-    gridSortOrder.value = gridSortOrder.value === 'asc' ? 'desc' : 'asc'
-  } else {
-    gridSortBy.value = column
-    // Default to descending for grades and assessments, ascending for name
-    gridSortOrder.value = (column === 'grade' || column !== 'name') ? 'desc' : 'asc'
-  }
-}
 
 // --- Methods ---
 async function onClassChange() {
@@ -1816,11 +930,6 @@ const getUnitName = (unitId) => {
     ?.find(u => u.unitId === unitId)?.name ?? '—'
 }
 
-function formatGrade(grade) {
-  if (grade === null || grade === undefined) return '—'
-  return Math.round(grade) + '%'
-}
-
 function formatDateShort(dateStr) {
   return formatLocalDisplay(dateStr)
 }
@@ -1831,244 +940,6 @@ function formatCellGrade(value, totalPoints) {
     return Math.round(value * 10) / 10
   }
   return Math.round((value / totalPoints) * 1000) / 10 + '%'
-}
-
-function getCellStyle(studentId, assessmentId, totalPoints) {
-  const grade = gradeMap.value[assessmentId]?.[studentId]
-  if (!grade) return {}
-  
-  if (grade.missing) return { background: 'rgba(192, 57, 43, 0.1)', color: '#c0392b' }
-  if (grade.excluded) return { background: 'var(--bg-secondary)', opacity: 0.6, textDecoration: 'line-through' }
-  
-  const score = grade.resolvedScore
-  if (score === null || score === undefined) return {}
-  
-  const percent = (score / totalPoints) * 100
-  if (percent >= 80) return { background: 'var(--grade-high)' }
-  if (percent >= 70) return { background: 'var(--grade-mid-high)' }
-  if (percent >= 60) return { background: 'var(--grade-mid-low)' }
-  return { background: 'var(--grade-low)' }
-}
-
-function getGradeColor(grade) {
-  if (grade === null || grade === undefined) return 'var(--text-secondary)'
-  if (grade >= 80) return '#1a6b3a' // muted green
-  if (grade >= 70) return '#1a5276' // muted blue
-  if (grade >= 60) return '#7d6608' // muted amber
-  return '#c0392b' // muted red
-}
-
-function getHeatColor(percent) {
-  if (percent === null || percent === undefined) return 'var(--bg-secondary)'
-  if (percent >= 80) return 'var(--grade-high)'
-  if (percent >= 70) return 'var(--grade-mid-high)'
-  if (percent >= 60) return 'var(--grade-mid-low)'
-  return 'var(--grade-low)'
-}
-
-function getHeatTextColor(percent) {
-  if (percent === null || percent === undefined) return 'var(--text-secondary)'
-  if (percent >= 80) return '#15803d' // Dark Green
-  if (percent >= 70) return '#1d4ed8' // Dark Blue
-  if (percent >= 60) return '#b45309' // Dark Amber
-  return '#b91c1c'               // Dark Red
-}
-
-async function startEdit(studentId, assessmentId) {
-  let val = null
-  if (assessmentId === 'overall') {
-    const gradesObj = classGrades.value[studentId]
-    val = gradesObj?.isGradeAdjusted ? gradesObj.adjustedGrade : gradesObj?.calculatedOverallGrade
-  } else {
-    const current = gradeMap.value[assessmentId]?.[studentId]
-    val = current ? current.resolvedScore : null
-  }
-  editOriginalValue.value = val
-  editingCell.value = {
-    sId: studentId,
-    aId: assessmentId,
-    value: val
-  }
-  
-  // Focus on next tick
-  setTimeout(() => {
-    if (editInput.value?.[0]) editInput.value[0].focus()
-  }, 0)
-}
-
-function cancelEdit() {
-  editingCell.value = null
-}
-
-async function saveEdit() {
-  if (!editingCell.value) return
-  const { sId, aId, value } = editingCell.value
-  
-  // Normalize values
-  const normalizedNew = (value === null || value === undefined || value === '') ? null : Number(value)
-  const normalizedOld = (editOriginalValue.value === null || editOriginalValue.value === undefined || editOriginalValue.value === '') ? null : Number(editOriginalValue.value)
-
-  if (normalizedNew === normalizedOld) {
-    editingCell.value = null
-    return
-  }
-
-  // Handle overall grade override (adjusted grade)
-  if (aId === 'overall') {
-    if (normalizedNew === null) {
-      await undoStudentGradeAdjustment(sId)
-    } else {
-      const adjusted = Math.max(0, normalizedNew)
-      await adjustStudentGrade(sId, adjusted)
-    }
-    editingCell.value = null
-    return
-  }
-
-  // If new value is null (cleared), call clearGrade
-  if (normalizedNew === null) {
-    const grade = gradeMap.value[aId]?.[sId]
-    const hasMultipleAttempts = grade?.attempts?.length > 1
-
-    if (hasMultipleAttempts) {
-      await alert('Cannot clear: This student has multiple attempts. Use the attempt history menu (•) to manage or delete specific entries.')
-      editingCell.value = null
-      return
-    }
-
-    await clearGrade(aId, sId)
-    editingCell.value = null
-    return
-  }
-
-  const assessment = assessments.value.find(a => a.assessmentId === aId)
-  if (!assessment) return
-
-  // Score validation (Safety guard)
-  const points = Math.max(0, normalizedNew)
-  
-  // Note: High scores (> max) are allowed for bonus marks and manual scaling
-  
-  await enterGrade(aId, sId, points)
-  editingCell.value = null
-}
-
-async function onEnterKey() {
-  await onArrowKey('down')
-}
-
-async function onArrowKey(direction) {
-  if (!editingCell.value) return
-  const { sId, aId } = editingCell.value
-  await saveEdit()
-  
-  if (selectedStudentId.value) {
-    // Dossier Mode: Navigate vertical (assessments)
-    // We'll combine them for navigation ease, though they are in separate tables
-    const combined = [...filteredStudentAssessments.value, ...individualStudentAssessments.value]
-    const currentIndex = combined.findIndex(a => a.assessmentId === aId)
-    if (direction === 'up' && currentIndex > 0) {
-      startEdit(sId, combined[currentIndex - 1].assessmentId)
-    } else if (direction === 'down' && currentIndex < combined.length - 1) {
-      startEdit(sId, combined[currentIndex + 1].assessmentId)
-    }
-  } else {
-    // Grid Mode: Navigate vertical (students)
-    const currentIndex = sortedRoster.value.findIndex(s => s.studentId === sId)
-    if (direction === 'up' && currentIndex > 0) {
-      const prevStudent = sortedRoster.value[currentIndex - 1]
-      startEdit(prevStudent.studentId, aId)
-    } else if (direction === 'down' && currentIndex < sortedRoster.value.length - 1) {
-      const nextStudent = sortedRoster.value[currentIndex + 1]
-      startEdit(nextStudent.studentId, aId)
-    }
-  }
-}
-
-// --- Context Menu ---
-function getAdjustedPosition(e, width, height) {
-  let x = e.clientX - width / 2
-  let y = e.clientY + 10
-
-  if (x < 10) x = 10
-  if (x + width > window.innerWidth - 10) x = window.innerWidth - width - 10
-
-  if (y + height > window.innerHeight - 10) {
-    y = Math.max(10, e.clientY - height - 10)
-  }
-
-  return { x, y }
-}
-
-function onContextMenu(e, studentId, assessmentId) {
-  const { x, y } = getAdjustedPosition(e, 160, 150)
-  contextMenu.value = {
-    x, y,
-    sId: studentId,
-    aId: assessmentId
-  }
-}
-
-function openAttemptsFromMenu(e, studentId, assessmentId) {
-  const x = contextMenu.value?.x || e.clientX
-  const y = contextMenu.value?.y || e.clientY
-  contextMenu.value = null // Close context menu
-  
-  const sId = String(studentId)
-  const aId = Number(assessmentId)
-  const grade = gradeMap.value[aId]?.[sId] || gradeMap.value[String(aId)]?.[sId]
-  const student = activeClassRecord.value?.students?.[sId]
-  const assessment = assessments.value.find(a => a.assessmentId === aId)
-  
-  if (grade && student && assessment) {
-    attemptsPopover.value = {
-      x, y,
-      sId, aId,
-      studentName: `${student.firstName} ${student.lastName}`,
-      assessmentName: assessment.name,
-      retestPolicy: assessment.retestPolicy || 'highest',
-      attempts: grade.attempts || [],
-      totalPoints: assessment.totalPoints,
-      resolvedScore: grade.resolvedScore
-    }
-  }
-}
-
-function isMissing(sId, aId) {
-  return gradeMap.value[aId]?.[sId]?.missing
-}
-
-function isExcluded(sId, aId) {
-  return gradeMap.value[aId]?.[sId]?.excluded
-}
-
-async function toggleMissing() {
-  if (!contextMenu.value) return
-  const { sId, aId } = contextMenu.value
-  const current = isMissing(sId, aId)
-  await markMissing(aId, sId, !current)
-  contextMenu.value = null
-}
-
-async function toggleExcluded() {
-  if (!contextMenu.value) return
-  const { sId, aId } = contextMenu.value
-  const current = isExcluded(sId, aId)
-  await markExcluded(aId, sId, !current)
-  contextMenu.value = null
-}
-
-function onEditAssessment(assessment) {
-  startEditAssessment(assessment)
-}
-
-function onHeaderMenu(e, type, assessment = null) {
-  const { x, y } = getAdjustedPosition(e, 180, 120)
-  headerMenu.value = {
-    x, y,
-    type,
-    assessment
-  }
 }
 
 function startEditAssessment(assessment) {
@@ -2281,7 +1152,13 @@ async function onAssessmentViewEnter(studentId, direction, e) {
 }
 
 function onStudentActionMenu(e, studentId) {
-  const { x, y } = getAdjustedPosition(e, 180, 200)
+  let x = e.clientX - 90
+  let y = e.clientY + 10
+  if (x < 10) x = 10
+  if (x + 180 > window.innerWidth - 10) x = window.innerWidth - 190
+  if (y + 200 > window.innerHeight - 10) {
+    y = Math.max(10, e.clientY - 210)
+  }
   studentActionMenu.value = {
     x, y,
     studentId
@@ -2289,12 +1166,12 @@ function onStudentActionMenu(e, studentId) {
 }
 
 async function toggleMissingFromView(studentId) {
-  const current = isMissing(studentId, selectedAssessmentId.value)
+  const current = gradeMap.value[selectedAssessmentId.value]?.[studentId]?.missing
   await markMissing(selectedAssessmentId.value, studentId, !current)
 }
 
 async function toggleExcludedFromView(studentId) {
-  const current = isExcluded(studentId, selectedAssessmentId.value)
+  const current = gradeMap.value[selectedAssessmentId.value]?.[studentId]?.excluded
   await markExcluded(selectedAssessmentId.value, studentId, !current)
 }
 

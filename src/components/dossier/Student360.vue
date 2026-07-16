@@ -123,198 +123,12 @@
 
       <!-- Academics Tab -->
       <section v-if="activeTab === 'academics'" class="student-360__pane student-360__pane--academics">
-        <div class="academics-section">
-          <h3 class="academics-section__title">Category Performance</h3>
-          <DossierCategoryGrid :categories="academicCategories" :student-id="props.studentId" />
-        </div>
-
-        <div class="academics-section">
-          <DossierEvidenceMix :mix="evidenceMix" />
-        </div>
-
-        <!-- Class Assessments (Priority First) -->
-        <div class="academics-section">
-          <h3 class="academics-section__title">Class Assessments</h3>
-          <div class="academics-table-wrapper">
-            <table class="academics-table">
-              <thead>
-                <tr>
-                  <th class="th-date">Date</th>
-                  <th class="th-name">Assessment</th>
-                  <th class="th-type">Type</th>
-                  <th class="th-impact">Impact</th>
-                  <th class="th-score">Points</th>
-                  <th class="th-percent">%</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="a in classAssessments" :key="a.assessmentId" @contextmenu.prevent="onContextMenu($event, a.assessmentId)">
-                   <td class="td-date">{{ formatLocalDisplay(a.date) }}</td>
-                  <td class="td-name">{{ a.name }}</td>
-                  <td class="td-type"><span class="badge" :class="'badge--' + a.assessmentType">{{ a.assessmentType }}</span></td>
-                  <td class="td-impact">
-                    <span 
-                      class="impact-badge" 
-                      :class="'impact-badge--' + getImpactLevel(a.weight).id"
-                      :title="'Weight: ' + (a.weight || 1)"
-                    >
-                      {{ getImpactLevel(a.weight).label }}
-                    </span>
-                  </td>
-                  <td class="td-score">
-                    <div class="score-cell-wrapper">
-                        <!-- Inline Edit Mode -->
-                        <template v-if="editingCell?.assessmentId === a.assessmentId">
-                          <input 
-                            type="number" 
-                            v-model="editInput" 
-                            class="cell-edit-input"
-                            @blur="saveEdit"
-                            @keydown="handleCellKey"
-                          />
-                        </template>
-                        
-                        <!-- Visual Display Mode -->
-                        <template v-else>
-                          <div v-if="a.missing" class="score-missing" @click="startEdit(a.assessmentId)">
-                            <span class="text-danger">Missing</span>
-                            <span v-if="a.wasAbsent" class="badge-red-a" title="Absent on this date">A</span>
-                          </div>
-                          <span v-else-if="a.excluded" class="text-muted" @click="startEdit(a.assessmentId)">EX</span>
-                          <span v-else class="score-value" @click="startEdit(a.assessmentId)">
-                            {{ a.score }} / {{ a.totalPoints }}
-                          </span>
-                          
-                          <!-- Attempts / Comment Indicators -->
-                          <div class="cell-indicators" v-if="a.attempts?.length >= 1">
-                            <div 
-                              v-if="a.attempts?.length > 1"
-                              class="attempts-dot"
-                              @click.stop="openAttempts($event, a.assessmentId)"
-                              title="Multiple attempts - click to view history"
-                            ></div>
-                            <span
-                              class="comment-dot"
-                              :class="{ 'comment-dot--active': a.attempts?.some(x => x.comment?.trim()) }"
-                              @click.stop="openAttempts($event, a.assessmentId)"
-                              :title="a.attempts?.some(x => x.comment?.trim()) ? 'Has note — click to edit' : 'Add a note'"
-                            >📝</span>
-                          </div>
-                        </template>
-                      </div>
-                  </td>
-                  <td class="td-percent" :style="{ color: getGradeColor((a.score / a.totalPoints) * 100) }">
-                    {{ a.score !== null ? Math.round((a.score / a.totalPoints) * 100) + '%' : 'N/A' }}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- Individual Assessments (Secondary) -->
-        <div class="academics-section">
-          <div class="academics-section__header">
-            <h3 class="academics-section__title">Individual Assessments</h3>
-            <button class="btn-add-individual" @click="openAddAssessment('individual', props.studentId)">
-              <Plus :size="14" /> Add Task
-            </button>
-          </div>
-          <div class="academics-table-wrapper">
-             <table v-if="individualAssessments.length" class="academics-table">
-               <thead>
-                 <tr>
-                   <th class="th-date">Date</th>
-                   <th class="th-name">Assessment</th>
-                   <th class="th-type">Type</th>
-                   <th class="th-impact">Impact</th>
-                   <th class="th-score">Points</th>
-                   <th class="th-percent">%</th>
-                 </tr>
-               </thead>
-               <tbody>
-                 <tr v-for="a in individualAssessments" :key="a.assessmentId" @contextmenu.prevent="onContextMenu($event, a.assessmentId)">
-                   <td class="td-date">{{ formatLocalDisplay(a.date) }}</td>
-                   <td class="td-name">{{ a.name }}</td>
-                   <td class="td-type"><span class="badge" :class="'badge--' + a.assessmentType">{{ a.assessmentType }}</span></td>
-                   <td class="td-impact">
-                     <span 
-                       class="impact-badge" 
-                       :class="'impact-badge--' + getImpactLevel(a.weight).id"
-                       :title="'Weight: ' + (a.weight || 1)"
-                     >
-                       {{ getImpactLevel(a.weight).label }}
-                     </span>
-                   </td>
-                   <td class="td-score">
-                     <div class="score-cell-wrapper">
-                        <!-- Inline Edit Mode -->
-                        <template v-if="editingCell?.assessmentId === a.assessmentId">
-                          <input 
-                            type="number" 
-                            v-model="editInput" 
-                            class="cell-edit-input"
-                            @blur="saveEdit"
-                            @keydown="handleCellKey"
-                          />
-                        </template>
-                        
-                        <!-- Visual Display Mode -->
-                        <template v-else>
-                          <div v-if="a.missing" class="score-missing" @click="startEdit(a.assessmentId)">
-                            <span class="text-danger">Missing</span>
-                          </div>
-                          <span v-else-if="a.excluded" class="text-muted" @click="startEdit(a.assessmentId)">EX</span>
-                          <span v-else class="score-value" @click="startEdit(a.assessmentId)">
-                            {{ a.score }} / {{ a.totalPoints }}
-                          </span>
-                          
-                          <!-- Attempts / Comment Indicators -->
-                          <div class="cell-indicators" v-if="a.attempts?.length >= 1">
-                            <div 
-                              v-if="a.attempts?.length > 1"
-                              class="attempts-dot"
-                              @click.stop="openAttempts($event, a.assessmentId)"
-                              title="Multiple attempts - click to view history"
-                            ></div>
-                            <span
-                              class="comment-dot"
-                              :class="{ 'comment-dot--active': a.attempts?.some(x => x.comment?.trim()) }"
-                              @click.stop="openAttempts($event, a.assessmentId)"
-                              :title="a.attempts?.some(x => x.comment?.trim()) ? 'Has note — click to edit' : 'Add a note'"
-                            >📝</span>
-                          </div>
-                        </template>
-                      </div>
-                   </td>
-                   <td class="td-percent" :style="{ color: getGradeColor((a.score / a.totalPoints) * 100) }">
-                     {{ a.score !== null ? Math.round((a.score / a.totalPoints) * 100) + '%' : 'N/A' }}
-                   </td>
-                 </tr>
-               </tbody>
-             </table>
-             <div v-else class="academics-empty-state">
-               No student-specific assessments. Click "Add Task" to create one.
-             </div>
-          </div>
-        </div>
-
-        <!-- Qualitative Evidence (Observations/Conversations) -->
-        <DossierQualitativeEvidence 
-          :events="qualitativeEvents" 
-          @delete="handleDeleteHistoryItem"
+        <StudentAcademicsTab
+          :student-id="props.studentId"
+          :student="student"
+          :events="events"
+          @delete-event="handleDeleteHistoryItem"
         />
-
-        <!-- Internal Gradebook Notes -->
-        <div class="student-360__gradebook-note">
-          <h3 class="academics-section__title">Internal Gradebook Notes</h3>
-          <textarea 
-            class="student-360__notes-area"
-            v-model="localGradebookNote"
-            placeholder="Add private observations about this student's grading context..."
-            @blur="updateGradebookNoteLocal"
-          ></textarea>
-        </div>
       </section>
 
       <section v-if="activeTab === 'communication'" class="student-360__pane">
@@ -850,6 +664,7 @@ import StudentTrendGraph    from '../StudentTrendGraph.vue'
 import StudentGradeTrend    from './StudentGradeTrend.vue'
 import AttendanceActivityReport from './AttendanceActivityReport.vue'
 import ProgressReport       from './ProgressReport.vue'
+import StudentAcademicsTab  from './StudentAcademicsTab.vue'
 import BaseModal            from '../BaseModal.vue'
 import { useClassroom }  from '../../composables/useClassroom.js'
 import { toMinutes }     from '../../db/eventService.js'
@@ -868,12 +683,10 @@ import {
   setPrimaryAttempt,
   updateAttemptComment,
   deleteAssessment,
-  saveStudentGradebookNote,
   filteredMilestones,
-  globalMilestones,
-  markMissing,
-  markExcluded
+  globalMilestones
 } from '../../composables/useGradebook.js'
+import { getGradeColor } from '../../utils/gradeColors.js'
 // getDateRangeForPeriod is now used internally by useStudentDossier — no direct import needed here.
 
 const props = defineProps({
@@ -1140,14 +953,6 @@ const overallMostConsistent = computed(() => studentGrades.value.mostConsistent?
 const overallWeightedMedian = computed(() => studentGrades.value.median ?? null)
 const consistentIsFallback = computed(() => studentGrades.value.mostConsistent?.isFallback ?? false)
 
-function getGradeColor(score) {
-  if (score === null || score === undefined) return 'var(--text-secondary)'
-  if (score >= 80) return '#34c759'
-  if (score >= 70) return '#30b0c7'
-  if (score >= 60) return '#ff9500'
-  return '#ff3b30'
-}
-
 const academicCategories = computed(() => {
   if (!activeClassRecord.value?.gradebookCategories) return []
   const results = studentGrades.value.categoryResults || {}
@@ -1359,19 +1164,11 @@ async function saveGeneralNote(note) {
 }
 
 const localGeneralNote = ref('')
-const localGradebookNote = ref('')
 
 watch(() => student.value?.generalNote, (v) => { localGeneralNote.value = v || '' }, { immediate: true })
-watch(() => student.value?.gradebookNote, (v) => { localGradebookNote.value = v || '' }, { immediate: true })
 
 async function updateGeneralNoteLocal() {
   await saveGeneralNote(localGeneralNote.value.trim())
-}
-async function updateGradebookNoteLocal() {
-  const note = localGradebookNote.value.trim()
-  if (student.value.gradebookNote !== note) {
-    await saveStudentGradebookNote(props.studentId, note)
-  }
 }
 
 const isCopiedAnon = ref(false)
@@ -1501,220 +1298,6 @@ async function copyForReportCard(includeName = false) {
     setTimeout(() => isCopiedAnon.value = false, 2000)
   }
 }
-
-// ─── High-Fidelity Editing State ──────────────────────────────────────────────
-const editingCell = ref(null) // { assessmentId }
-const editInput = ref(null)
-const editOriginalValue = ref(null)
-const contextMenu = ref(null) // { x, y, assessmentId }
-const attemptsPopover = ref(null) // { x, y, assessmentId }
-const newAttemptForm = ref(null)
-
-// ─── High-Fidelity Methods ────────────────────────────────────────────────────
-function startEdit(assessmentId) {
-  const g = gradeMap.value[assessmentId]?.[props.studentId]
-  const val = g?.resolvedScore ?? null
-  editingCell.value = { assessmentId }
-  editOriginalValue.value = val
-  editInput.value = val
-  
-  // Focus the input in the next tick
-  setTimeout(() => {
-    const input = document.querySelector('.cell-edit-input')
-    if (input) {
-      input.focus()
-      input.select()
-    }
-  }, 10)
-}
-
-async function saveEdit() {
-  if (!editingCell.value) return
-  const { assessmentId } = editingCell.value
-  
-  // Normalize values
-  const normalizedNew = (editInput.value === null || editInput.value === undefined || editInput.value === '') ? null : Number(editInput.value)
-  const normalizedOld = (editOriginalValue.value === null || editOriginalValue.value === undefined || editOriginalValue.value === '') ? null : Number(editOriginalValue.value)
-
-  // 1. Change Detection
-  if (normalizedNew === normalizedOld) {
-    editingCell.value = null
-    return
-  }
-
-  // 2. Clear Handling
-  if (normalizedNew === null) {
-    const grade = gradeMap.value[assessmentId]?.[props.studentId]
-    if (grade?.attempts?.length > 1) {
-      await alert('Cannot clear: This student has multiple attempts. Use the attempt history menu to manage specific entries.')
-      editingCell.value = null
-      return
-    }
-
-    await clearGrade(assessmentId, props.studentId)
-    editingCell.value = null
-    return
-  }
-
-  // 3. Validation
-  const assessment = classAssessments.value.find(a => a.assessmentId === assessmentId) || 
-                     individualAssessments.value.find(a => a.assessmentId === assessmentId)
-  if (!assessment) {
-    editingCell.value = null
-    return
-  }
-
-  // Clamp value
-  const points = Math.max(0, normalizedNew)
-  
-  // Note: High scores are allowed for bonus/scaling
-
-  await enterGrade(assessmentId, props.studentId, points)
-  
-  editingCell.value = null
-  editOriginalValue.value = null
-  editInput.value = null
-}
-
-function cancelEdit() {
-  editingCell.value = null
-  editInput.value = null
-}
-
-function onContextMenu(e, assessmentId) {
-  const menuWidth  = 200
-  const menuHeight = 280
-  
-  let x = e.clientX
-  let y = e.clientY
-  
-  // Viewport-aware positioning
-  if (x + menuWidth > window.innerWidth)   x = Math.max(10, window.innerWidth - menuWidth - 20)
-  if (y + menuHeight > window.innerHeight) y = Math.max(10, window.innerHeight - menuHeight - 20)
-  
-  contextMenu.value = { x, y, assessmentId }
-}
-
-function openAttemptsFromMenu(e, assessmentId) {
-  const mockEvent = {
-    clientX: contextMenu.value?.x || e.clientX,
-    clientY: contextMenu.value?.y || e.clientY
-  }
-  contextMenu.value = null
-  openAttempts(mockEvent, assessmentId)
-}
-
-function openAttempts(e, assessmentId) {
-  const popoverWidth  = 280
-  const popoverHeight = 300
-  
-  let x = e.clientX
-  let y = e.clientY
-  
-  if (x + popoverWidth > window.innerWidth)   x = Math.max(10, window.innerWidth - popoverWidth - 20)
-  if (y + popoverHeight > window.innerHeight) y = Math.max(10, window.innerHeight - popoverHeight - 20)
-  
-  attemptsPopover.value = { x, y, assessmentId }
-}
-
-async function toggleMissing(assessmentId) {
-  const g = gradeMap.value[assessmentId]?.[props.studentId]
-  await markMissing(assessmentId, props.studentId, !g?.missing)
-  contextMenu.value = null
-}
-
-async function toggleExcluded(assessmentId) {
-  const g = gradeMap.value[assessmentId]?.[props.studentId]
-  await markExcluded(assessmentId, props.studentId, !g?.excluded)
-  contextMenu.value = null
-}
-
-async function doDeleteAssessment(assessmentId) {
-  const assessment = assessments.value.find(a => a.assessmentId === assessmentId)
-  if (!assessment) {
-    contextMenu.value = null
-    return
-  }
-  
-  const typeLabel = assessment.target === 'individual' ? 'individual assessment' : 'class-wide assessment'
-  const warning = assessment.target === 'class' 
-    ? '\n\nWARNING: This is a class-wide assessment. Deleting it will remove it for ALL students in this class.'
-    : ''
-    
-  if (!await confirm(`Are you sure you want to delete this ${typeLabel}?${warning}`, 'Delete Assessment', { danger: true })) {
-    contextMenu.value = null
-    return
-  }
-  
-  await deleteAssessment(assessmentId)
-  contextMenu.value = null
-}
-
-async function startNewAttempt(assessmentId) {
-  newAttemptForm.value = {
-    assessmentId,
-    points: null,
-    date: new Date().toISOString().slice(0, 10),
-    comment: ''
-  }
-  contextMenu.value = null
-}
-
-async function submitNewAttempt() {
-  if (!newAttemptForm.value || newAttemptForm.value.points === null) return
-  const { assessmentId, points, date, comment } = newAttemptForm.value
-  await enterGrade(assessmentId, props.studentId, points, date, comment)
-  newAttemptForm.value = null
-}
-
-async function doDeleteAttempt(assessmentId, attemptId) {
-  if (!await confirm('Are you sure you want to delete this attempt?', 'Delete Attempt', { danger: true })) return
-  await removeAttempt(assessmentId, props.studentId, attemptId)
-}
-
-async function doSetPrimary(assessmentId, attemptId) {
-  await setPrimaryAttempt(assessmentId, props.studentId, attemptId)
-}
-
-function doUpdateComment(assessmentId, attemptId, comment) {
-  updateAttemptComment(assessmentId, props.studentId, attemptId, comment)
-}
-
-function getImpactLevel(weight) {
-  const w = weight || 1
-  if (w >= 10) return { id: 'high', label: 'High' }
-  if (w >= 3)  return { id: 'med',  label: 'Med'  }
-  return { id: 'low',  label: 'Low'  }
-}
-
-async function onArrowKey(direction) {
-  if (!editingCell.value) return
-  const { assessmentId } = editingCell.value
-  await saveEdit()
-  
-  const combined = orderedAssessmentsForNav.value
-  const currentIndex = combined.findIndex(a => a.assessmentId === assessmentId)
-  
-  if (direction === 'up' && currentIndex > 0) {
-    startEdit(combined[currentIndex - 1].assessmentId)
-  } else if (direction === 'down' && currentIndex < combined.length - 1) {
-    startEdit(combined[currentIndex + 1].assessmentId)
-  }
-}
-
-function handleCellKey(e) {
-  if (e.key === 'Enter') saveEdit()
-  if (e.key === 'ArrowUp') {
-    e.preventDefault()
-    onArrowKey('up')
-  }
-  if (e.key === 'ArrowDown') {
-    e.preventDefault()
-    onArrowKey('down')
-  }
-  if (e.key === 'Escape') cancelEdit()
-}
-
 async function loadData() {
   loading.value = true
   

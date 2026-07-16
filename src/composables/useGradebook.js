@@ -31,6 +31,11 @@ export const showAddAssessmentModal = ref(false)
 export const isEditingAssessment = ref(false)
 export const currentAssessmentId = ref(null)
 
+export const displayMode = ref('percent') // 'raw' | 'percent'
+export const assessmentSortOrder = ref('desc') // 'desc' = Newest first, 'asc' = Oldest first
+export const gridSortBy = ref('name') // 'name' | 'grade' | assessmentId
+export const gridSortOrder = ref('asc') // 'asc' | 'desc'
+
 export const newAssessment = ref({
   name: '',
   description: '',
