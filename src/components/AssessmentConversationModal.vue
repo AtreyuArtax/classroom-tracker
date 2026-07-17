@@ -7,7 +7,7 @@
     <template #header>
       <h2 class="acm-title">
         <GraduationCap :size="20" class="acm-title-icon" />
-        Assessment {{ acType === 'observation' ? 'Observation' : 'Conversation' }}
+        {{ initialData ? 'Edit' : 'Assessment' }} {{ acType === 'observation' ? 'Observation' : 'Conversation' }}
         <span v-if="studentName" class="acm-title-student">— {{ studentName }}</span>
       </h2>
     </template>
@@ -18,13 +18,13 @@
         <label class="acm-label">Evidence Type</label>
         <div class="acm-toggle-group">
           <button
-            :class="['acm-toggle-btn', acType === 'observation' ? 'acm-toggle-btn--active' : '']"
-            @click="acType = 'observation'"
-          >Observation</button>
-          <button
             :class="['acm-toggle-btn', acType === 'conversation' ? 'acm-toggle-btn--active' : '']"
             @click="acType = 'conversation'"
           >Conversation</button>
+          <button
+            :class="['acm-toggle-btn', acType === 'observation' ? 'acm-toggle-btn--active' : '']"
+            @click="acType = 'observation'"
+          >Observation</button>
         </div>
       </div>
 
@@ -33,13 +33,13 @@
         <label class="acm-label">Context</label>
         <div class="acm-toggle-group">
           <button
-            :class="['acm-toggle-btn', context === 'after_assessment' ? 'acm-toggle-btn--active' : '']"
-            @click="context = 'after_assessment'"
-          >After Assessment</button>
-          <button
             :class="['acm-toggle-btn', context === 'proactive' ? 'acm-toggle-btn--active' : '']"
             @click="context = 'proactive'"
           >Proactive</button>
+          <button
+            :class="['acm-toggle-btn', context === 'after_assessment' ? 'acm-toggle-btn--active' : '']"
+            @click="context = 'after_assessment'"
+          >After Assessment</button>
         </div>
       </div>
 
@@ -53,21 +53,44 @@
               outcome === 'demonstrates_understanding' ? 'acm-toggle-btn--success' : ''
             ]"
             @click="outcome = 'demonstrates_understanding'"
-          >Demonstrates Understanding</button>
-          <button
-            :class="[
-              'acm-toggle-btn', 
-              outcome === 'gap_confirmed' ? 'acm-toggle-btn--danger' : ''
-            ]"
-            @click="outcome = 'gap_confirmed'"
-          >Gap Confirmed</button>
+          >Mastered</button>
           <button
             :class="[
               'acm-toggle-btn', 
               outcome === 'inconclusive' ? 'acm-toggle-btn--warning' : ''
             ]"
             @click="outcome = 'inconclusive'"
-          >Inconclusive</button>
+          >Developing</button>
+          <button
+            :class="[
+              'acm-toggle-btn', 
+              outcome === 'gap_confirmed' ? 'acm-toggle-btn--danger' : ''
+            ]"
+            @click="outcome = 'gap_confirmed'"
+          >Needs Support</button>
+        </div>
+      </div>
+
+      <!-- Optional Unit & Expectation Selection -->
+      <div v-if="activeClass?.gradebookUnits?.length" class="acm-field-row">
+        <div class="acm-field">
+          <label class="acm-label">Unit (Optional)</label>
+          <select v-model="selectedUnitId" class="acm-select" @change="selectedExpectationId = null">
+            <option :value="null">General / No Unit</option>
+            <option v-for="unit in activeClass.gradebookUnits" :key="unit.unitId" :value="unit.unitId">
+              {{ unit.name }}
+            </option>
+          </select>
+        </div>
+
+        <div class="acm-field" v-if="selectedUnitId && unitExpectations.length">
+          <label class="acm-label">Expectation (Optional)</label>
+          <select v-model="selectedExpectationId" class="acm-select">
+            <option :value="null">None / General Unit Comment</option>
+            <option v-for="exp in unitExpectations" :key="exp.expectationId" :value="exp.expectationId">
+              {{ exp.code }}: {{ exp.description }}
+            </option>
+          </select>
         </div>
       </div>
 
@@ -112,15 +135,29 @@ import BaseModal from './BaseModal.vue'
 const props = defineProps({
   modelValue: { type: Boolean, required: true },
   studentName: { type: String, default: '' },
+  activeClass: { type: Object, default: () => null },
+  initialData: { type: Object, default: () => null }
 })
 
 const emit = defineEmits(['update:modelValue', 'save', 'cancel'])
 
-const acType    = ref('observation') // 'observation' | 'conversation'
-const context   = ref(null) // 'after_assessment' | 'proactive'
+const acType    = ref('conversation') // 'observation' | 'conversation'
+const context   = ref('proactive') // 'after_assessment' | 'proactive'
 const outcome   = ref(null) // 'demonstrates_understanding' | 'gap_confirmed' | 'inconclusive'
 const noteText  = ref('')
 const textareaRef = ref(null)
+
+const selectedUnitId = ref(null)
+const selectedExpectationId = ref(null)
+
+const selectedUnit = computed(() => {
+  if (!props.activeClass?.gradebookUnits || !selectedUnitId.value) return null
+  return props.activeClass.gradebookUnits.find(u => u.unitId === selectedUnitId.value)
+})
+
+const unitExpectations = computed(() => {
+  return selectedUnit.value?.expectations || []
+})
 
 const isFormValid = computed(() => {
   return context.value && outcome.value && noteText.value.trim().length > 0
@@ -129,14 +166,25 @@ const isFormValid = computed(() => {
 // Reset + focus on open
 watch(() => props.modelValue, async (val) => {
   if (val) {
-    acType.value = 'observation'
-    context.value = null
-    outcome.value = null
-    noteText.value = ''
+    if (props.initialData) {
+      acType.value = props.initialData.acType || 'observation'
+      context.value = props.initialData.acContext || null
+      outcome.value = props.initialData.acOutcome || null
+      noteText.value = props.initialData.note || ''
+      selectedUnitId.value = props.initialData.unitId || null
+      selectedExpectationId.value = props.initialData.expectationId || null
+    } else {
+      acType.value = 'conversation'
+      context.value = 'proactive'
+      outcome.value = null
+      noteText.value = ''
+      selectedUnitId.value = null
+      selectedExpectationId.value = null
+    }
     await nextTick()
     textareaRef.value?.focus()
   }
-})
+}, { immediate: true })
 
 function onSave() {
   if (!isFormValid.value) return
@@ -145,7 +193,9 @@ function onSave() {
     note: noteText.value.trim(),
     acType: acType.value,
     acContext: context.value,
-    acOutcome: outcome.value
+    acOutcome: outcome.value,
+    unitId: selectedUnitId.value,
+    expectationId: selectedExpectationId.value
   })
   emit('update:modelValue', false)
 }
@@ -305,5 +355,33 @@ function onCancel() {
   background:   transparent;
   border:       1px solid var(--border);
   color:        var(--text-secondary);
+}
+
+/* Select and row layouts */
+.acm-field-row {
+  display: flex;
+  gap: 12px;
+}
+
+.acm-field-row > .acm-field {
+  flex: 1;
+}
+
+.acm-select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-secondary);
+  font-size: 0.85rem;
+  color: var(--text);
+  font-weight: 600;
+  outline: none;
+  transition: border-color 0.15s ease;
+  box-sizing: border-box;
+}
+
+.acm-select:focus {
+  border-color: var(--primary);
 }
 </style>

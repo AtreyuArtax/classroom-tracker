@@ -693,9 +693,9 @@ function copyAssessmentGrades(assessment) {
   left: 160px;
   z-index: 11;
   background: var(--surface);
-  width: 90px;
-  min-width: 70px;
-  max-width: 90px;
+  width: 100px;
+  min-width: 100px;
+  max-width: 100px;
   border-right: 2px solid var(--border);
   text-align: center;
   font-weight: 700;
@@ -715,6 +715,7 @@ function copyAssessmentGrades(assessment) {
   align-items: center;
   gap: 6px;
   justify-content: flex-start;
+  white-space: nowrap;
 }
 
 .grades__th-overall .grades__sort-header {

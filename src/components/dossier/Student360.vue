@@ -131,6 +131,15 @@
         />
       </section>
 
+      <!-- Qualitative Evidence Tab -->
+      <section v-if="activeTab === 'qualitative'" class="student-360__pane student-360__pane--qualitative">
+        <DossierQualitativeEvidence 
+          :events="qualitativeEvents" 
+          :active-class="activeClassRecord"
+          @delete="handleDeleteHistoryItem"
+        />
+      </section>
+
       <section v-if="activeTab === 'communication'" class="student-360__pane">
         <DossierCommunicationLog 
           :events="communicationEvents" 
@@ -910,6 +919,7 @@ async function logAbsence() {
 const tabs = [
   { id: 'summary',       label: 'Summary',       icon: LayoutDashboard },
   { id: 'academics',     label: 'Academics',     icon: GraduationCap },
+  { id: 'qualitative',   label: 'Qualitative Evidence', icon: ClipboardList },
   { id: 'communication', label: 'Communication', icon: MessageSquare },
   { id: 'timeline',      label: 'Timeline',      icon: Activity },
   { id: 'history',       label: 'History',       icon: History },
@@ -1269,18 +1279,94 @@ async function copyForReportCard(includeName = false) {
   textLines.push(...academicCategories.value.map(c => `- ${c.name}: ${c.score !== null ? Math.round(c.score) + '%' : 'N/A'}`))
   textLines.push('')
   textLines.push('Professional Judgment (Observations & Conversations):')
-  textLines.push(...(activeStudentEvents.value
+  const rawAcEvents = activeStudentEvents.value
     .filter(e => e.code === 'ac')
     .sort((a, b) => (b.ts || b.timestamp) - (a.ts || a.timestamp))
     .slice(0, 5)
-    .map(e => {
-      const date = new Date(e.ts || e.timestamp).toLocaleDateString([], { month: 'short', day: 'numeric' })
-      const type = e.acType === 'observation' ? 'Obs' : 'Conv'
-      const outcome = e.acOutcome ? ` [${e.acOutcome.replace(/_/g, ' ')}]` : ''
-      return `- ${date} (${type}): ${e.note}${outcome}`
-    })))
-  if (activeStudentEvents.value.filter(e => e.code === 'ac').length === 0) {
+
+  if (rawAcEvents.length === 0) {
     textLines.push('None')
+  } else {
+    const classObj = activeClassRecord.value || activeClass.value
+    const units = classObj?.gradebookUnits || []
+    
+    const byUnit = {}
+    const generalEvents = []
+    
+    rawAcEvents.forEach(e => {
+      if (!e.unitId) {
+        generalEvents.push(e)
+      } else {
+        if (!byUnit[e.unitId]) byUnit[e.unitId] = []
+        byUnit[e.unitId].push(e)
+      }
+    })
+    
+    Object.keys(byUnit).forEach(unitId => {
+      const unitRecord = units.find(u => u.unitId === unitId)
+      const unitName = unitRecord ? unitRecord.name : 'Unknown Unit'
+      textLines.push(`${unitName}:`)
+      
+      const byExp = {}
+      const unitGeneralEvents = []
+      
+      byUnit[unitId].forEach(e => {
+        if (!e.expectationId) {
+          unitGeneralEvents.push(e)
+        } else {
+          if (!byExp[e.expectationId]) byExp[e.expectationId] = []
+          byExp[e.expectationId].push(e)
+        }
+      })
+      
+      Object.keys(byExp).forEach(expId => {
+        const expRecord = unitRecord?.expectations?.find(exp => exp.expectationId === expId)
+        const expCode = expRecord ? expRecord.code : 'Unknown Expectation'
+        textLines.push(`  ${expCode}:`)
+        
+        const sortedEvts = byExp[expId].sort((a, b) => (a.ts || a.timestamp) - (b.ts || b.timestamp))
+        sortedEvts.forEach(e => {
+          const date = new Date(e.ts || e.timestamp).toLocaleDateString([], { month: 'short', day: 'numeric' })
+          const type = e.acType === 'observation' ? 'Obs' : 'Conv'
+          let outcomeLabel = ''
+          if (e.acOutcome === 'demonstrates_understanding') outcomeLabel = 'Mastered'
+          else if (e.acOutcome === 'gap_confirmed') outcomeLabel = 'Needs Support'
+          else if (e.acOutcome === 'inconclusive') outcomeLabel = 'Developing'
+          const outcome = outcomeLabel ? ` [${outcomeLabel}]` : ''
+          textLines.push(`    - ${date} (${type})${outcome}: ${e.note}`)
+        })
+      })
+      
+      if (unitGeneralEvents.length > 0) {
+        textLines.push(`  General:`)
+        const sortedEvts = unitGeneralEvents.sort((a, b) => (a.ts || a.timestamp) - (b.ts || b.timestamp))
+        sortedEvts.forEach(e => {
+          const date = new Date(e.ts || e.timestamp).toLocaleDateString([], { month: 'short', day: 'numeric' })
+          const type = e.acType === 'observation' ? 'Obs' : 'Conv'
+          let outcomeLabel = ''
+          if (e.acOutcome === 'demonstrates_understanding') outcomeLabel = 'Mastered'
+          else if (e.acOutcome === 'gap_confirmed') outcomeLabel = 'Needs Support'
+          else if (e.acOutcome === 'inconclusive') outcomeLabel = 'Developing'
+          const outcome = outcomeLabel ? ` [${outcomeLabel}]` : ''
+          textLines.push(`    - ${date} (${type})${outcome}: ${e.note}`)
+        })
+      }
+    })
+    
+    if (generalEvents.length > 0) {
+      textLines.push('General Observations & Conversations:')
+      const sortedEvts = generalEvents.sort((a, b) => (a.ts || a.timestamp) - (b.ts || b.timestamp))
+      sortedEvts.forEach(e => {
+        const date = new Date(e.ts || e.timestamp).toLocaleDateString([], { month: 'short', day: 'numeric' })
+        const type = e.acType === 'observation' ? 'Obs' : 'Conv'
+        let outcomeLabel = ''
+        if (e.acOutcome === 'demonstrates_understanding') outcomeLabel = 'Mastered'
+        else if (e.acOutcome === 'gap_confirmed') outcomeLabel = 'Needs Support'
+        else if (e.acOutcome === 'inconclusive') outcomeLabel = 'Developing'
+        const outcome = outcomeLabel ? ` [${outcomeLabel}]` : ''
+        textLines.push(`  - ${date} (${type})${outcome}: ${e.note}`)
+      })
+    }
   }
   textLines.push('')
   textLines.push('Teacher Working Notes (Comment Ideas):')

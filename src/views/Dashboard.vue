@@ -80,7 +80,16 @@
       <!-- Pool: fixed-width scrollable column to the right of the grid -->
       <Transition name="pop-pool">
         <aside v-if="activeClass && isPoolOpen" class="dashboard__pool" aria-label="Unassigned students">
-          <h3 class="dashboard__pool-title">Unassigned ({{ unseatedStudents.length }})</h3>
+          <div class="dashboard__pool-header">
+            <h3 class="dashboard__pool-title">Unassigned ({{ unseatedStudents.length }})</h3>
+            <button 
+              class="dashboard__pool-auto-assign"
+              title="Automatically assign seats"
+              @click="onAutoAssign"
+            >
+              Auto
+            </button>
+          </div>
           <div 
             class="dashboard__pool-list"
             @dragover.prevent="isPoolDragOver = true"
@@ -121,9 +130,10 @@
     />
 
     <AssessmentConversationModal
-      v-if="isAssessmentCode"
+      v-slot:modal v-if="isAssessmentCode"
       v-model="noteModalOpen"
       :student-name="pendingStudentName"
+      :active-class="activeClass"
       @save="onAssessmentSave"
       @cancel="onNoteCancel"
     />
@@ -172,6 +182,7 @@ const {
   studentsOut,
   unseatedStudents,
   assignSeat,
+  autoAssignSeats,
   students,
   behaviorCodes,
   logStandardEvent,
@@ -213,6 +224,10 @@ async function onPoolDrop(evt) {
   }
 }
 
+async function onAutoAssign() {
+  await autoAssignSeats()
+}
+
 // ─── behavior codes map for passing to StudentProfileModal ────────────────────
 
 const behaviorCodesMap = computed(() =>
@@ -251,7 +266,7 @@ async function onNoteSave(note) {
   pendingNoteStudent.value = null
 }
 
-async function onAssessmentSave({ note, acType, acContext, acOutcome }) {
+async function onAssessmentSave({ note, acType, acContext, acOutcome, unitId, expectationId }) {
   const student = pendingNoteStudent.value
   if (!student) return
 
@@ -260,7 +275,9 @@ async function onAssessmentSave({ note, acType, acContext, acOutcome }) {
     note,
     acType,
     acContext,
-    acOutcome
+    acOutcome,
+    unitId,
+    expectationId
   })
 
   // Clear pending state
@@ -506,14 +523,40 @@ watch(profileStudent, (student) => {
   overflow:       hidden;
 }
 
+.dashboard__pool-header {
+  display:         flex;
+  justify-content: space-between;
+  align-items:     center;
+  padding:         6px 12px;
+  background:      var(--bg-secondary);
+  border-bottom:   1px solid var(--border);
+}
+
 .dashboard__pool-title {
   font-size:     0.8rem;
   font-weight:   700;
   color:         var(--text-secondary);
-  padding:       10px 12px;
-  background:    var(--bg-secondary);
-  border-bottom: 1px solid var(--border);
   margin:        0;
+}
+
+.dashboard__pool-auto-assign {
+  background:    var(--primary);
+  color:         white;
+  border:        none;
+  border-radius: var(--radius-sm);
+  padding:       4px 8px;
+  font-size:     0.75rem;
+  font-weight:   600;
+  cursor:        pointer;
+  transition:    background 0.15s ease, transform 0.1s ease;
+}
+
+.dashboard__pool-auto-assign:hover {
+  background:    var(--primary-hover);
+}
+
+.dashboard__pool-auto-assign:active {
+  transform:     scale(0.95);
 }
 
 .dashboard__pool-list {

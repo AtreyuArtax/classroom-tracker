@@ -29,7 +29,8 @@ import {
   unarchiveStudent,
   permanentlyDeleteStudent,
   updateStudentNote,
-  assignSeat
+  assignSeat,
+  autoAssignSeats
 } from './useRosterOperations.js'
 import {
   logAttendanceEvent,
@@ -910,7 +911,7 @@ async function logStandardEvent(studentId, code, note = null, options = {}) {
     }
 }
 
-async function logAssessmentEvent({ studentId, note, acType, acContext, acOutcome }) {
+async function logAssessmentEvent({ studentId, note, acType, acContext, acOutcome, unitId, expectationId }) {
     try {
         const classId = activeClass.value?.classId
         const code = 'ac'
@@ -923,6 +924,8 @@ async function logAssessmentEvent({ studentId, note, acType, acContext, acOutcom
             acType,
             acContext,
             acOutcome,
+            unitId,
+            expectationId,
             testDay: isTestDay.value
         })
 
@@ -1453,6 +1456,7 @@ export function useClassroom() {
         unarchiveStudent,
         permanentlyDeleteStudent,
         assignSeat,
+        autoAssignSeats,
         computeSuggestedClass,
         logAttendanceEvent,
         syncLateActiveState,

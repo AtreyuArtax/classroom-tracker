@@ -132,6 +132,17 @@
         <button class="btn-primary" @click="saveEdit">Save Changes</button>
       </template>
     </BaseModal>
+
+    <!-- Assessment Edit Modal -->
+    <AssessmentConversationModal
+      v-if="assessmentModalOpen && editingAssessmentData"
+      v-model="assessmentModalOpen"
+      student-name=""
+      :active-class="activeClass"
+      :initial-data="editingAssessmentData"
+      @save="onAssessmentSave"
+      @cancel="onAssessmentCancel"
+    />
   </div>
 </template>
 
@@ -155,6 +166,7 @@ import { toMinutes } from '../../db/eventService.js'
 import { resolveIcon } from '../../utils/icons.js'
 import { useMessage } from '../../composables/useMessage.js'
 import BaseModal from '../BaseModal.vue'
+import AssessmentConversationModal from '../AssessmentConversationModal.vue'
 
 const props = defineProps({
   studentId: { type: String, required: true },
@@ -163,7 +175,7 @@ const props = defineProps({
   behaviorCodesMap: { type: Object, default: () => ({}) }
 })
 
-const { editEvent, removeEvent } = useClassroom()
+const { editEvent, removeEvent, activeClass } = useClassroom()
 
 const loading = ref(false)
 const { confirm } = useMessage()
@@ -177,6 +189,9 @@ const editForm = reactive({
     testDay: false,
     note: ''
 })
+
+const assessmentModalOpen = ref(false)
+const editingAssessmentData = ref(null)
 
 // Process events and assessments into a unified timeline format
 const sortedItems = computed(() => {
@@ -223,7 +238,24 @@ const sortedItems = computed(() => {
       description: e.note,
       icon,
       outcome: e.acOutcome,
-      tags: e.acContext ? [e.acContext] : [],
+      tags: (() => {
+        let t = e.acContext ? [e.acContext] : []
+        if (e.code === 'ac' && activeClass.value) {
+          if (e.unitId) {
+            const unit = activeClass.value.gradebookUnits?.find(u => u.unitId === e.unitId)
+            if (unit) {
+              t.push(`Unit: ${unit.name}`)
+              if (e.expectationId) {
+                const exp = unit.expectations?.find(exp => exp.expectationId === e.expectationId)
+                if (exp) {
+                  t.push(`Expectation: ${exp.code}`)
+                }
+              }
+            }
+          }
+        }
+        return t
+      })(),
       testDay: e.testDay,
       raw: e
     })
@@ -345,10 +377,15 @@ const groupedItems = computed(() => {
 })
 
 function startEdit(item) {
+  if (item.rawCode === 'ac') {
+    editingAssessmentData.value = item.raw
+    assessmentModalOpen.value = true
+  } else {
     editingItem.value = item
     editForm.duration = toMinutes(item.raw.duration)
     editForm.testDay = item.raw.testDay || false
     editForm.note = item.description || ''
+  }
 }
 
 async function saveEdit() {
@@ -371,6 +408,26 @@ async function saveEdit() {
     editingItem.value = null
 }
 
+function onAssessmentCancel() {
+  assessmentModalOpen.value = false
+  editingAssessmentData.value = null
+}
+
+async function onAssessmentSave(updatedData) {
+  if (!editingAssessmentData.value) return
+  const updates = {
+    note: updatedData.note,
+    acType: updatedData.acType,
+    acContext: updatedData.acContext,
+    acOutcome: updatedData.acOutcome,
+    unitId: updatedData.unitId,
+    expectationId: updatedData.expectationId
+  }
+  await editEvent(editingAssessmentData.value.eventId, updates)
+  assessmentModalOpen.value = false
+  editingAssessmentData.value = null
+}
+
 async function confirmDelete(eventId) {
     if (await confirm('Are you sure you want to delete this entry? This will also update student statistics.', 'Delete Entry', { danger: true })) {
         await removeEvent(eventId)
@@ -388,8 +445,10 @@ function formatTime(date) {
 }
 
 function formatOutcome(outcome) {
-  if (!outcome) return ''
-  return outcome.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ')
+  if (outcome === 'demonstrates_understanding') return 'Mastered'
+  if (outcome === 'gap_confirmed') return 'Needs Support'
+  if (outcome === 'inconclusive') return 'Developing'
+  return ''
 }
 
 function formatTag(tag) {

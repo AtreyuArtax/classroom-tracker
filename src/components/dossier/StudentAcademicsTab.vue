@@ -176,11 +176,7 @@
       </div>
     </div>
 
-    <!-- Qualitative Evidence (Observations/Conversations) -->
-    <DossierQualitativeEvidence 
-      :events="qualitativeEvents" 
-      @delete="$emit('delete-event', $event)"
-    />
+
 
     <!-- Internal Gradebook Notes -->
     <div class="student-360__gradebook-note">
@@ -381,7 +377,7 @@ import { useMessage } from '../../composables/useMessage.js'
 import { Plus, Trash2, X, ChevronRight, Calendar, AlertCircle, XCircle } from 'lucide-vue-next'
 import DossierCategoryGrid from './DossierCategoryGrid.vue'
 import DossierEvidenceMix from './DossierEvidenceMix.vue'
-import DossierQualitativeEvidence from './DossierQualitativeEvidence.vue'
+
 
 const props = defineProps({
   studentId: { type: String, required: true },
@@ -510,11 +506,7 @@ const evidenceMix = computed(() => {
   return mix
 })
 
-const qualitativeEvents = computed(() =>
-  [...props.events]
-    .filter(e => e.code === 'ac')
-    .sort((a, b) => (b.timestamp ?? '').localeCompare(a.timestamp ?? ''))
-)
+
 
 // Focus directive
 const vFocus = {

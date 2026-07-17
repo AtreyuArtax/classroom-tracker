@@ -30,14 +30,71 @@
         </div>
       </div>
 
-      <h3 class="setup__card-subtitle" style="margin-top: 1.5rem;">Units</h3>
+      <h3 class="setup__card-subtitle" style="margin-top: 1.5rem;">Units & Expectations</h3>
       <div class="setup__gb-list">
-        <div v-for="(unit, idx) in activeClass.gradebookUnits" :key="unit.unitId" class="setup__gb-item">
-          <input v-model="unit.name" class="setup__input setup__input--naked" @change="saveGradebookSettings" />
-          <div class="setup__gb-actions">
-            <button class="setup__icon-btn" :disabled="idx === 0" @click="moveUnit(idx, -1)"><ChevronUp :size="16" /></button>
-            <button class="setup__icon-btn" :disabled="idx === activeClass.gradebookUnits.length - 1" @click="moveUnit(idx, 1)"><ChevronDown :size="16" /></button>
-            <button class="setup__icon-btn setup__icon-btn--danger" @click="onDeleteUnit(unit.unitId)"><Trash2 :size="14" /></button>
+        <div v-for="(unit, idx) in activeClass.gradebookUnits" :key="unit.unitId" class="setup__unit-container">
+          <div class="setup__gb-item">
+            <div class="setup__unit-title-group">
+              <button 
+                type="button"
+                class="setup__icon-btn setup__expand-btn"
+                @click="toggleUnitExpand(unit.unitId)"
+              >
+                <component :is="expandedUnitId === unit.unitId ? ChevronDown : ChevronRight" :size="16" />
+              </button>
+              <input v-model="unit.name" class="setup__input setup__input--naked" @change="saveGradebookSettings" />
+            </div>
+            <div class="setup__gb-actions">
+              <button type="button" class="setup__icon-btn" :disabled="idx === 0" @click="moveUnit(idx, -1)"><ChevronUp :size="16" /></button>
+              <button type="button" class="setup__icon-btn" :disabled="idx === activeClass.gradebookUnits.length - 1" @click="moveUnit(idx, 1)"><ChevronDown :size="16" /></button>
+              <button type="button" class="setup__icon-btn setup__icon-btn--danger" @click="onDeleteUnit(unit.unitId)"><Trash2 :size="14" /></button>
+            </div>
+          </div>
+
+          <!-- Expectations Panel (Expandable) -->
+          <div v-if="expandedUnitId === unit.unitId" class="setup__expectations-panel">
+            <h4 class="setup__expectations-title">Curriculum Expectations</h4>
+            
+            <div class="setup__expectations-list" v-if="unit.expectations?.length">
+              <div v-for="exp in unit.expectations" :key="exp.expectationId" class="setup__expectation-item">
+                <span class="setup__expectation-code">{{ exp.code }}</span>
+                <span class="setup__expectation-desc">{{ exp.description }}</span>
+                <button 
+                  type="button" 
+                  class="setup__icon-btn setup__icon-btn--danger" 
+                  @click="deleteExpectation(unit, exp.expectationId)"
+                >
+                  <Trash2 :size="12" />
+                </button>
+              </div>
+            </div>
+            <div v-else class="setup__expectations-empty">
+              No expectations defined for this unit.
+            </div>
+
+            <!-- Add Expectation Form -->
+            <div class="setup__expectation-form">
+              <input 
+                v-model="newExpectationCode" 
+                class="setup__input setup__input--exp-code" 
+                placeholder="Code (e.g. B1.2)" 
+                @keydown.enter.prevent="addExpectation(unit)"
+              />
+              <input 
+                v-model="newExpectationDesc" 
+                class="setup__input setup__input--exp-desc" 
+                placeholder="Description" 
+                @keydown.enter.prevent="addExpectation(unit)"
+              />
+              <button 
+                type="button"
+                class="setup__btn-ghost setup__btn--small" 
+                @click="addExpectation(unit)"
+                :disabled="!newExpectationCode.trim()"
+              >
+                Add
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -92,13 +149,44 @@ import { useMessage } from '../../composables/useMessage.js'
 import * as gradebookService from '../../db/gradebookService.js'
 import * as classService from '../../db/classService.js'
 import * as settingsService from '../../db/settingsService.js'
-import { ChevronUp, ChevronDown, Trash2, Plus, AlertTriangle } from 'lucide-vue-next'
+import { ChevronUp, ChevronDown, Trash2, Plus, AlertTriangle, ChevronRight } from 'lucide-vue-next'
 
 const { activeClass, triggerActiveClass } = useClassroom()
 const { alert, confirm } = useMessage()
 
 const templates = ref([])
 const newTemplateName = ref('')
+
+const expandedUnitId = ref(null)
+const newExpectationCode = ref('')
+const newExpectationDesc = ref('')
+
+function toggleUnitExpand(unitId) {
+  expandedUnitId.value = expandedUnitId.value === unitId ? null : unitId
+  newExpectationCode.value = ''
+  newExpectationDesc.value = ''
+}
+
+async function addExpectation(unit) {
+  if (!newExpectationCode.value.trim()) return
+  if (!unit.expectations) {
+    unit.expectations = []
+  }
+  unit.expectations.push({
+    expectationId: crypto.randomUUID(),
+    code: newExpectationCode.value.trim().toUpperCase(),
+    description: newExpectationDesc.value.trim()
+  })
+  newExpectationCode.value = ''
+  newExpectationDesc.value = ''
+  await saveGradebookSettings()
+}
+
+async function deleteExpectation(unit, expectationId) {
+  if (!await confirm('Delete this expectation?')) return
+  unit.expectations = unit.expectations.filter(e => e.expectationId !== expectationId)
+  await saveGradebookSettings()
+}
 
 const totalWeight = computed(() => {
   if (!activeClass.value?.gradebookCategories) return 0
@@ -536,6 +624,121 @@ onMounted(async () => {
 
 .setup__weight-total--over {
   color: #b91c1c;
+}
+
+/* ── Expectations styles ─────────────────────────────────────────── */
+.setup__unit-container {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+
+.setup__unit-container .setup__gb-item {
+  border-radius: 0;
+  background: transparent;
+  border: none;
+}
+
+.setup__unit-title-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
+.setup__expand-btn {
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+}
+
+.setup__expectations-panel {
+  padding: 12px 16px 16px 16px;
+  background: rgba(0, 0, 0, 0.15);
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.setup__expectations-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  letter-spacing: 0.05em;
+  margin: 0;
+}
+
+.setup__expectations-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.setup__expectation-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 10px;
+  background: var(--surface);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  font-size: 0.85rem;
+}
+
+.setup__expectation-code {
+  font-weight: 700;
+  color: var(--primary);
+  background: rgba(59, 130, 246, 0.1);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+}
+
+.setup__expectation-desc {
+  flex: 1;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.setup__expectations-empty {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.setup__expectation-form {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.setup__input--exp-code {
+  width: 120px !important;
+  min-height: 36px !important;
+  padding: 6px 10px !important;
+  font-size: 0.8rem !important;
+}
+
+.setup__input--exp-desc {
+  flex: 1;
+  min-height: 36px !important;
+  padding: 6px 10px !important;
+  font-size: 0.8rem !important;
+}
+
+.setup__btn--small {
+  min-height: 36px !important;
+  padding: 0 12px !important;
+  font-size: 0.8rem !important;
 }
 </style>
 

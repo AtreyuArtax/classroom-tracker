@@ -8,7 +8,8 @@ import { triggerRef } from 'vue'
 import { 
   activeClass, 
   students, 
-  classList 
+  classList,
+  gridSize
 } from './useClassroomState.js'
 import * as classService from '../db/classService.js'
 import { useUndo } from './useUndo.js'
@@ -244,3 +245,110 @@ export async function assignSeat(studentId, newSeat) {
         await alert('Failed to save seat assignment. Please check your connection or storage.')
     }
 }
+
+/**
+ * Automatically assigns all unassigned students to empty seats in the grid.
+ * Combines all changes into a single transactional operation and a single undo entry.
+ *
+ * @returns {Promise<void>}
+ */
+export async function autoAssignSeats() {
+    const classId = activeClass.value?.classId
+    if (!classId) return
+
+    // Find all active (non-archived) students in this class
+    const allStudents = Object.entries(students.value)
+        .map(([studentId, s]) => ({ studentId, ...s }))
+        .filter(s => !s.archived)
+
+    // Shuffle the students array to completely randomize seat assignments
+    for (let i = allStudents.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [allStudents[i], allStudents[j]] = [allStudents[j], allStudents[i]];
+    }
+
+    if (allStudents.length === 0) return
+
+    // Check if any student is currently seated
+    const anySeated = allStudents.some(s => s.seat !== null)
+
+    if (anySeated) {
+        const { confirm } = useMessage()
+        const proceed = await confirm(
+            'This will clear all current seat assignments and reassign all students. Are you sure you want to proceed?',
+            'Reassign All Seats'
+        )
+        if (!proceed) return
+    }
+
+    // Determine the assignments from bottom-up (rows from max down to 1), left-to-right
+    const availableSeats = []
+    for (let r = gridSize.value.rows; r >= 1; r--) {
+        for (let c = 1; c <= gridSize.value.cols; c++) {
+            availableSeats.push({ row: r, col: c })
+        }
+    }
+
+    // Match students to seats
+    const assignments = []
+    const limit = Math.min(allStudents.length, availableSeats.length)
+    for (let i = 0; i < limit; i++) {
+        assignments.push({
+            studentId: allStudents[i].studentId,
+            seat: availableSeats[i]
+        })
+    }
+
+    // Any remaining students who exceed the grid size will be sent to the pool (null seat)
+    for (let i = limit; i < allStudents.length; i++) {
+        assignments.push({
+            studentId: allStudents[i].studentId,
+            seat: null
+        })
+    }
+
+    // Save previous seats for undo functionality
+    const previousSeats = {}
+    for (const s of allStudents) {
+        previousSeats[s.studentId] = s.seat
+    }
+
+    // Apply the updates
+    try {
+        for (const assign of assignments) {
+            await classService.updateStudentSeat(classId, assign.studentId, assign.seat)
+            if (students.value[assign.studentId]) {
+                students.value[assign.studentId].seat = assign.seat
+            }
+            if (activeClass.value?.students?.[assign.studentId]) {
+                activeClass.value.students[assign.studentId].seat = assign.seat
+            }
+        }
+        triggerRef(activeClass)
+
+        // Push a single batch undo operation
+        pushUndo(async () => {
+            try {
+                for (const [studentId, seat] of Object.entries(previousSeats)) {
+                    await classService.updateStudentSeat(classId, studentId, seat)
+                    if (students.value[studentId]) {
+                        students.value[studentId].seat = seat
+                    }
+                    if (activeClass.value?.students?.[studentId]) {
+                        activeClass.value.students[studentId].seat = seat
+                    }
+                }
+                triggerRef(activeClass)
+            } catch (err) {
+                console.error('Undo autoAssignSeats failed:', err)
+                const { alert } = useMessage()
+                await alert('Failed to undo automatic seat assignment.')
+            }
+        })
+    } catch (err) {
+        console.error('autoAssignSeats failed:', err)
+        const { alert } = useMessage()
+        await alert('Failed to auto-assign seats. Please check your connection or storage.')
+    }
+}
+
