@@ -3210,7 +3210,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "components_yearsemesterselector",
-      "community": 79,
+      "community": 35,
       "norm_label": "yearsemesterselector.vue"
     },
     {
@@ -3220,7 +3220,7 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "components_yearsemesterselector_classlist_archivedclasses_selectedyear_selectedsemester",
-      "community": 79,
+      "community": 35,
       "norm_label": "{ \n  classlist, \n  archivedclasses, \n  selectedyear, \n  selectedsemester \n}"
     },
     {
@@ -3230,7 +3230,7 @@
       "source_location": "L40",
       "_origin": "ast",
       "id": "components_yearsemesterselector_allpossibleclasses",
-      "community": 79,
+      "community": 35,
       "norm_label": "allpossibleclasses"
     },
     {
@@ -3240,7 +3240,7 @@
       "source_location": "L42",
       "_origin": "ast",
       "id": "components_yearsemesterselector_uniqueyears",
-      "community": 79,
+      "community": 35,
       "norm_label": "uniqueyears"
     },
     {
@@ -3250,7 +3250,7 @@
       "source_location": "L49",
       "_origin": "ast",
       "id": "components_yearsemesterselector_uniquesemesters",
-      "community": 79,
+      "community": 35,
       "norm_label": "uniquesemesters"
     },
     {
@@ -6707,7 +6707,7 @@
       "label": "curriculumPresets",
       "file_type": "code",
       "source_file": "src/data/curriculum/index.js",
-      "source_location": "L5",
+      "source_location": "L7",
       "_origin": "ast",
       "id": "curriculum_index_curriculumpresets",
       "community": 78,
@@ -6717,7 +6717,7 @@
       "label": "getPresetsByPanel()",
       "file_type": "code",
       "source_file": "src/data/curriculum/index.js",
-      "source_location": "L11",
+      "source_location": "L15",
       "_origin": "ast",
       "id": "curriculum_index_getpresetsbypanel",
       "community": 78,
@@ -23109,5 +23109,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "ce3319b10dce7df13b19ea5008aa9bdfc54fa603"
+  "built_at_commit": "b1588c586f6cffbc1a29b491085f6e45f7e73719"
 }

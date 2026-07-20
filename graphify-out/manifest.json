@@ -470,8 +470,8 @@
     "semantic_hash": ""
   },
   "src/data/curriculum/index.js": {
-    "mtime": 1784555857.7503135,
-    "ast_hash": "34cd710f80e7d80a205b94f68755fe24",
+    "mtime": 1784561945.3093314,
+    "ast_hash": "3439628b3136be8f0050064f453ea7c6",
     "semantic_hash": ""
   },
   "src/data/curriculum/secondary/ontario-mth1w.json": {
@@ -482,6 +482,16 @@
   "src/data/curriculum/secondary/ontario-snc1w.json": {
     "mtime": 1784561188.615618,
     "ast_hash": "7bb17cfd6c4d17c9f72c82759f722ba6",
+    "semantic_hash": ""
+  },
+  "src/data/curriculum/secondary/ontario-sph3u.json": {
+    "mtime": 1784561778.73769,
+    "ast_hash": "90ac94c298bd86664b0836aa71270b61",
+    "semantic_hash": ""
+  },
+  "src/data/curriculum/secondary/ontario-sph4u.json": {
+    "mtime": 1784561860.820596,
+    "ast_hash": "9e5f22531e240ffd479694d3aae22ca1",
     "semantic_hash": ""
   }
 }

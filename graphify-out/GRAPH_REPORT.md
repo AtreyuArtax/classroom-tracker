@@ -1,16 +1,16 @@
 # Graph Report - classroom-tracker  (2026-07-20)
 
 ## Corpus Check
-- 97 files · ~168,442 words
+- 99 files · ~176,096 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 876 nodes · 1375 edges · 84 communities (77 shown, 7 thin omitted)
+- 876 nodes · 1375 edges · 85 communities (78 shown, 7 thin omitted)
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 3 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `ce3319b1`
+- Built from commit: `b1588c58`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -48,6 +48,7 @@
 - [[_COMMUNITY_Community 31|Community 31]]
 - [[_COMMUNITY_Community 32|Community 32]]
 - [[_COMMUNITY_Community 33|Community 33]]
+- [[_COMMUNITY_Community 35|Community 35]]
 - [[_COMMUNITY_Community 37|Community 37]]
 - [[_COMMUNITY_Community 39|Community 39]]
 - [[_COMMUNITY_Community 41|Community 41]]
@@ -87,7 +88,7 @@
 ## Import Cycles
 - None detected.
 
-## Communities (84 total, 7 thin omitted)
+## Communities (85 total, 7 thin omitted)
 
 ### Community 0 - "Community 0"
 Cohesion: 0.06
@@ -215,6 +216,15 @@ Nodes (6): calculateStandardDeviation(), classStats, detectOutliers(), result, r
 Cohesion: 0.50
 Nodes (3): close(), emit, props
 
+### Community 35 - "Community 35"
+Cohesion: 0.40
+Nodes (4): allPossibleClasses, { 
+  classList, 
+  archivedClasses, 
+  selectedYear, 
+  selectedSemester 
+}, uniqueSemesters, uniqueYears
+
 ### Community 37 - "Community 37"
 Cohesion: 0.04
 Nodes (18): categoryWeightTotal, currentAssessment, currentAssessmentSummary, filteredClassGrades, filteredStudents, individualStudentAssessments, isWeightWarningVisible, missingStudentsList (+10 more)
@@ -247,13 +257,8 @@ Cohesion: 0.10
 Nodes (22): curriculumPresets, getPresetsByPanel(), activeTab, canSubmit, emit, getStrandExpectations(), granularity, isStrandFullySelected() (+14 more)
 
 ### Community 79 - "Community 79"
-Cohesion: 0.20
-Nodes (9): allPossibleClasses, { 
-  classList, 
-  archivedClasses, 
-  selectedYear, 
-  selectedSemester 
-}, uniqueSemesters, uniqueYears, useClassroom(), useStudentDossier(), getDateRangeForClassPeriod(), getDateRangeForPeriod() (+1 more)
+Cohesion: 0.40
+Nodes (5): useClassroom(), useStudentDossier(), getDateRangeForClassPeriod(), getDateRangeForPeriod(), toMinutes()
 
 ### Community 85 - "Community 85"
 Cohesion: 0.11

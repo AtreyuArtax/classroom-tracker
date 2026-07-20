@@ -1,0 +1,212 @@
+{
+  "presetId": "ontario-sph4u",
+  "title": "Ontario Grade 12 Physics (SPH4U)",
+  "panel": "secondary",
+  "region": "Ontario",
+  "grade": "Grade 12",
+  "strands": [
+    {
+      "name": "Strand A: Scientific Investigation Skills and Career Exploration",
+      "overalls": [
+        {
+          "code": "A1",
+          "description": "Scientific Investigation Skills",
+          "specifics": [
+            { "code": "A1.1", "description": "formulate relevant scientific questions about observed relationships, ideas, problems, or issues, make informed predictions, and/or formulate educated hypotheses to focus inquiries or research" },
+            { "code": "A1.2", "description": "select appropriate instruments (e.g., pendulums, springs, ripple tanks, lasers) and materials (e.g., sliding blocks, inclined planes), and identify appropriate methods, techniques, and procedures, for each inquiry" },
+            { "code": "A1.3", "description": "identify and locate a variety of print and electronic sources that enable them to address research topics fully and appropriately" },
+            { "code": "A1.4", "description": "apply knowledge and understanding of safe laboratory practices and procedures when planning investigations by correctly interpreting Workplace Hazardous Materials Information System (WHMIS) symbols; by using appropriate techniques for handling and storing laboratory equipment and materials and disposing of laboratory materials; and by using appropriate personal protection" },
+            { "code": "A1.5", "description": "conduct inquiries, controlling relevant variables, adapting or extending procedures as required, and using appropriate materials and equipment safely, accurately, and effectively, to collect observations and data" },
+            { "code": "A1.6", "description": "compile accurate data from laboratory and other sources, and organize and record the data, using appropriate formats, including tables, flow charts, graphs, and/or diagrams" },
+            { "code": "A1.7", "description": "select, organize, and record relevant information on research topics from a variety of appropriate sources, including electronic, print, and/or human sources, using suitable formats and an accepted form of academic documentation" },
+            { "code": "A1.8", "description": "synthesize, analyse, interpret, and evaluate qualitative and quantitative data; solve problems involving quantitative data; determine whether the evidence supports or refutes the initial prediction or hypothesis and whether it is consistent with scientific theory; identify sources of bias and/or error; and suggest improvements to the inquiry to reduce the likelihood of error" },
+            { "code": "A1.9", "description": "analyse the information gathered from research sources for logic, accuracy, reliability, adequacy, and bias" },
+            { "code": "A1.10", "description": "draw conclusions based on inquiry results and research findings, and justify their conclusions with reference to scientific knowledge" },
+            { "code": "A1.11", "description": "communicate ideas, plans, procedures, results, and conclusions orally, in writing, and/or in electronic presentations, using appropriate language and a variety of formats (e.g., data tables, laboratory reports, presentations, debates, simulations, models)" },
+            { "code": "A1.12", "description": "use appropriate numeric (e.g., SI and imperial units), symbolic, and graphic modes of representation (e.g., vector diagrams, free-body diagrams, vector components, and algebraic equations)" },
+            { "code": "A1.13", "description": "express the results of any calculations involving data accurately and precisely, to the appropriate number of decimal places or significant figures" }
+          ]
+        },
+        {
+          "code": "A2",
+          "description": "Career Exploration",
+          "specifics": [
+            { "code": "A2.1", "description": "identify and describe a variety of careers related to the fields of science under study (e.g., laser optics researcher, geoscientist, photonics researcher, aerospace engineer) and the education and training necessary for these careers" },
+            { "code": "A2.2", "description": "describe the contributions of scientists, including Canadians (e.g., Elizabeth MacGill, Pierre Coulombe, Allan Carswell, Gerhard Herzberg), to the fields under study" }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Strand B: Dynamics",
+      "overalls": [
+        {
+          "code": "B1",
+          "description": "Relating Science to Technology, Society, and the Environment",
+          "specifics": [
+            { "code": "B1.1", "description": "analyse a technological device that applies the principles of linear or circular motion (e.g., a slingshot, a rocket launcher, a race car, a trebuchet)" },
+            { "code": "B1.2", "description": "assess the impact on society and the environment of technological devices that use linear or circular motion (e.g., projectile weapons, centrifuges, elevators)" }
+          ]
+        },
+        {
+          "code": "B2",
+          "description": "Developing Skills of Investigation and Communication",
+          "specifics": [
+            { "code": "B2.1", "description": "use appropriate terminology related to dynamics, including, but not limited to: inertial and non-inertial frames of reference, components, centripetal, period, frequency, static friction, and kinetic friction" },
+            { "code": "B2.2", "description": "solve problems related to motion, including projectile and relative motion, by adding and subtracting two-dimensional vector quantities, using vector diagrams, vector components, and algebraic methods" },
+            { "code": "B2.3", "description": "analyse, in qualitative and quantitative terms, the relationships between the force of gravity, normal force, applied force, force of friction, coefficient of static friction, and coefficient of kinetic friction, and solve related two-dimensional problems using free-body diagrams, vector components, and algebraic equations (e.g., calculate the acceleration of a block sliding along an inclined plane or the force acting on a vehicle navigating a curve)" },
+            { "code": "B2.4", "description": "predict, in qualitative and quantitative terms, the forces acting on systems of objects (e.g., masses in a vertical pulley system [a \"dumb waiter\"], a block sliding off an accelerating vehicle, masses in an inclined-plane pulley system), and plan and conduct an inquiry to test their predictions" },
+            { "code": "B2.5", "description": "analyse, in qualitative and quantitative terms, the relationships between the motion of a system and the forces involved (e.g., a block sliding on an inclined plane, acceleration of a pulley system), and use free-body diagrams and algebraic equations to solve related problems" },
+            { "code": "B2.6", "description": "analyse, in qualitative and quantitative terms, the forces acting on and the acceleration experienced by an object in uniform circular motion in horizontal and vertical planes, and use free-body diagrams and algebraic equations to solve related problems" },
+            { "code": "B2.7", "description": "conduct inquiries into the uniform circular motion of an object (e.g., using video analysis of an amusement park ride, measuring the forces and period of a tether ball), and analyse, in qualitative and quantitative terms, the relationships between centripetal acceleration, centripetal force, radius of orbit, period, frequency, mass, and speed" }
+          ]
+        },
+        {
+          "code": "B3",
+          "description": "Understanding Basic Concepts",
+          "specifics": [
+            { "code": "B3.1", "description": "distinguish between reference systems (inertial and non-inertial) with respect to the real and apparent forces acting within such systems (e.g., apparent force in a rotating frame, apparent gravitational force in a vertically accelerating frame, real force pulling on the elastic of a ball-and-paddle toy)" },
+            { "code": "B3.2", "description": "explain the advantages and disadvantages of static and kinetic friction in situations involving various planes (e.g., a horizontal plane, a variety of inclined planes)" },
+            { "code": "B3.3", "description": "explain the derivation of equations for uniform circular motion that involve the variables frequency, period, radius speed, and mass" }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Strand C: Energy and Momentum",
+      "overalls": [
+        {
+          "code": "C1",
+          "description": "Relating Science to Technology, Society, and the Environment",
+          "specifics": [
+            { "code": "C1.1", "description": "analyse, with reference to the principles of energy and momentum, and propose practical ways to improve, a technology or procedure that applies these principles (e.g., fireworks, rocket propulsion, protective equipment, forensic analysis of vehicle crashes, demolition of buildings)" },
+            { "code": "C1.2", "description": "assess the impact on society and the environment of technologies or procedures that apply the principles of energy and momentum (e.g., crumple zones, safety restraints, strategic building implosion)" }
+          ]
+        },
+        {
+          "code": "C2",
+          "description": "Developing Skills of Investigation and Communication",
+          "specifics": [
+            { "code": "C2.1", "description": "use appropriate terminology related to energy and momentum, including, but not limited to: work, work-energy theorem, kinetic energy, gravitational potential energy, elastic potential energy, thermal energy, impulse, change in momentum-impulse theorem, elastic collision, and inelastic collision" },
+            { "code": "C2.2", "description": "analyse, in qualitative and quantitative terms, the relationship between work and energy, using the work-energy theorem and the law of conservation of energy, and solve related problems in one and two dimensions" },
+            { "code": "C2.3", "description": "use an inquiry process to analyse, in qualitative and quantitative terms, situations involving work, gravitational potential energy, kinetic energy, thermal energy, and elastic potential energy, in one and two dimensions (e.g., a block sliding along an inclined plane with friction; a cart rising and falling on a roller coaster track; an object, such as a mass attached to a spring pendulum, that undergoes simple harmonic motion), and use the law of conservation of energy to solve related problems" },
+            { "code": "C2.4", "description": "conduct a laboratory inquiry or computer simulation to test the law of conservation of energy during energy transformations that involve gravitational potential energy, kinetic energy, thermal energy, and elastic potential energy (e.g., using a bouncing ball, a simple pendulum, a computer simulation of a bungee jump)" },
+            { "code": "C2.5", "description": "analyse, in qualitative and quantitative terms, the relationships between mass, velocity, kinetic energy, momentum, and impulse for a system of objects moving in one and two dimensions (e.g., an off-centre collision of two masses on an air table, two carts recoiling from opposite ends of a released spring), and solve problems involving these concepts" },
+            { "code": "C2.6", "description": "analyse, in qualitative and quantitative terms, elastic and inelastic collisions in one and two dimensions, using the laws of conservation of momentum and conservation of energy, and solve related problems" },
+            { "code": "C2.7", "description": "conduct laboratory inquiries or computer simulations involving collisions and explosions in one and two dimensions (e.g., interactions between masses on an air track, the collision of two pucks on an air table, collisions between spheres of similar and different masses) to test the laws of conservation of momentum and conservation of energy" }
+          ]
+        },
+        {
+          "code": "C3",
+          "description": "Understanding Basic Concepts",
+          "specifics": [
+            { "code": "C3.1", "description": "describe and explain Hooke's law, and explain the relationships between that law, work, and elastic potential energy in a system of objects" },
+            { "code": "C3.2", "description": "describe and explain the simple harmonic motion (SHM) of an object, and explain the relationship between SHM, Hooke's law, and uniform circular motion" },
+            { "code": "C3.3", "description": "distinguish between elastic and inelastic collisions" },
+            { "code": "C3.4", "description": "explain the implications of the laws of conservation of energy and conservation of momentum with reference to mechanical systems (e.g., damped harmonic motion in shock absorbers, the impossibility of developing a perpetual motion machine)" },
+            { "code": "C3.5", "description": "explain how the laws of conservation of energy and conservation of momentum were used to predict the existence and properties of the neutrino" }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Strand D: Gravitational, Electric, and Magnetic Fields",
+      "overalls": [
+        {
+          "code": "D1",
+          "description": "Relating Science to Technology, Society, and the Environment",
+          "specifics": [
+            { "code": "D1.1", "description": "analyse the operation of a technological system that uses gravitational, electric, or magnetic fields (e.g., a home entertainment system, a computer, magnetic strips on credit cards)" },
+            { "code": "D1.2", "description": "assess the impact on society and the environment of technologies that use gravitational, electric, or magnetic fields (e.g., satellites used in surveillance or storm tracking, particle accelerators that provide high-energy particles for medical imaging)" }
+          ]
+        },
+        {
+          "code": "D2",
+          "description": "Developing Skills of Investigation and Communication",
+          "specifics": [
+            { "code": "D2.1", "description": "use appropriate terminology related to fields, including, but not limited to: forces, potential energies, potential, and exchange particles" },
+            { "code": "D2.2", "description": "analyse, and solve problems relating to, Newton's law of universal gravitation and circular motion (e.g., with respect to satellite orbits, black holes, dark matter)" },
+            { "code": "D2.3", "description": "analyse, and solve problems involving, electric force, field strength, potential energy, and potential as they apply to uniform and non-uniform electric fields (e.g., the fields produced by a parallel plate and by point charges)" },
+            { "code": "D2.4", "description": "analyse, and solve problems involving, the force on charges moving in a uniform magnetic field (e.g., the force on a current-carrying conductor or a free electron)" },
+            { "code": "D2.5", "description": "conduct a laboratory inquiry or computer simulation to examine the behaviour of a particle in a field (e.g., test Coulomb's law; replicate Millikan's experiment or Rutherford's scattering experiment; use a bubble or cloud chamber)" }
+          ]
+        },
+        {
+          "code": "D3",
+          "description": "Understanding Basic Concepts",
+          "specifics": [
+            { "code": "D3.1", "description": "identify, and compare the properties of, fundamental forces that are associated with different theories and models of physics (e.g., the theory of general relativity and the standard model of particle physics)" },
+            { "code": "D3.2", "description": "compare and contrast the corresponding properties of gravitational, electric, and magnetic fields (e.g., the strength of each field; the relationship between charge in electric fields and mass in gravitational fields)" },
+            { "code": "D3.3", "description": "use field diagrams to explain differences in the sources and directions of fields, including, but not limited to, differences between near-Earth and distant fields, parallel plates and point charges, straight line conductors and solenoids" }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Strand E: The Wave Nature of Light",
+      "overalls": [
+        {
+          "code": "E1",
+          "description": "Relating Science to Technology, Society, and the Environment",
+          "specifics": [
+            { "code": "E1.1", "description": "analyse, with reference to the principles related to the wave nature of light, a technology that uses these principles (e.g., Xeon lights, spectroscopes, polarized sunglasses)" },
+            { "code": "E1.2", "description": "assess the impact on society and the environment of technologies that use the wave nature of light (e.g., DVDs, polarized lenses, night vision goggles, wireless networks)" }
+          ]
+        },
+        {
+          "code": "E2",
+          "description": "Developing Skills of Investigation and Communication",
+          "specifics": [
+            { "code": "E2.1", "description": "use appropriate terminology related to the wave nature of light, including, but not limited to: diffraction, dispersion, wave interference, nodal line, phase, oscillate, polarization, and electromagnetic radiation" },
+            { "code": "E2.2", "description": "conduct inquiries involving the diffraction and interference of waves, using ripple tanks or computer simulations" },
+            { "code": "E2.3", "description": "conduct inquiries involving the diffraction, refraction, polarization, and interference of light waves (e.g., shine lasers through single, double, and multiple slits; observe a computer simulation of Young's double-slit experiment; measure the index of refraction of different materials; observe the effect of crossed polarizing filters on transmitted light)" },
+            { "code": "E2.4", "description": "analyse diffraction and interference of water waves and light waves (e.g., with reference to two-point source interference in a ripple tank, thin-film interference, multiple-slit interference), and solve related problems" }
+          ]
+        },
+        {
+          "code": "E3",
+          "description": "Understanding Basic Concepts",
+          "specifics": [
+            { "code": "E3.1", "description": "describe and explain the diffraction and interference of water waves in two dimensions" },
+            { "code": "E3.2", "description": "describe and explain the diffraction, refraction, polarization, and interference of light waves (e.g., reduced resolution caused by diffraction, mirages caused by refraction, polarization caused by reflection and filters, thin-film interference in soap films and air wedges, interference of light on CDs)" },
+            { "code": "E3.3", "description": "use the concepts of refraction, diffraction, polarization, and wave interference to explain the separation of light into colours in various situations (e.g., light travelling through a prism; light contacting thin film, soap film, stressed plastic between two polarizing filters)" },
+            { "code": "E3.4", "description": "describe, in qualitative terms, the production of electromagnetic radiation by an oscillating electric dipole (e.g., a radio transmitter, a microwave emitter, an X-ray emitter, electron energy transitions in an atom)" }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Strand F: Revolutions in Modern Physics: Quantum Mechanics and Special Relativity",
+      "overalls": [
+        {
+          "code": "F1",
+          "description": "Relating Science to Technology, Society, and the Environment",
+          "specifics": [
+            { "code": "F1.1", "description": "analyse the development of the two major revolutions in modern physics (e.g., the impact of the discovery of the photoelectric effect on the development of quantum mechanics; the impact of thought experiments on the development of the theory of relativity), and assess how they changed scientific thought" },
+            { "code": "F1.2", "description": "assess the importance of relativity and quantum mechanics to the development of various technologies (e.g., nuclear power; light sensors; diagnostic tools such as magnetic resonance imaging [MRI], computerized axial tomography [CAT], positron emission tomography [PET])" }
+          ]
+        },
+        {
+          "code": "F2",
+          "description": "Developing Skills of Investigation and Communication",
+          "specifics": [
+            { "code": "F2.1", "description": "use appropriate terminology related to quantum mechanics and special relativity, including, but not limited to: quantum theory, photoelectric effect, matter waves, time dilation, and mass-energy transformation" },
+            { "code": "F2.2", "description": "solve problems related to the photoelectric effect, the Compton effect, and de Broglie's matter waves" },
+            { "code": "F2.3", "description": "solve problems related to Einstein's theory of special relativity in order to calculate the effects of relativistic motion on time, length, and mass (e.g., the half-life of cosmic ray muons, how far into the future a fast space ship would travel, the magnetic field strength necessary to keep protons in the Large Hadron Collider)" },
+            { "code": "F2.4", "description": "conduct a laboratory inquiry or computer simulation to analyse data (e.g., on emission spectra, the photoelectric effect, relativistic momentum in accelerators) that support a scientific theory related to relativity or quantum mechanics" }
+          ]
+        },
+        {
+          "code": "F3",
+          "description": "Understanding Basic Concepts",
+          "specifics": [
+            { "code": "F3.1", "description": "describe the experimental evidence that supports a particle model of light (e.g., the photoelectric effect, the Compton effect, pair creation, de Broglie's matter waves)" },
+            { "code": "F3.2", "description": "describe the experimental evidence that supports a wave model of matter (e.g., electron diffraction)" },
+            { "code": "F3.3", "description": "identify Einstein's two postulates for the theory of special relativity, and describe the evidence supporting the theory (e.g., thought experiments, half lives of elementary particles, relativistic momentum in accelerators, the conversion of matter into energy in a nuclear power plant)" },
+            { "code": "F3.4", "description": "describe the standard model of elementary particles in terms of the characteristics of quarks, hadrons, and field particles" }
+          ]
+        }
+      ]
+    }
+  ]
+}
