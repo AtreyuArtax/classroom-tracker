@@ -1203,6 +1203,9 @@ async function downloadReportCardCsv(includeName) {
               else if (e.acOutcome === 'inconclusive') outcomeLabel = 'Developing'
               const outcome = outcomeLabel ? ` [${outcomeLabel}]` : ''
               judgmentLines.push(`    - ${date} (${type})${outcome}: ${e.note}`)
+              if (e.nextSteps) {
+                judgmentLines.push(`      Next Steps: ${e.nextSteps}`)
+              }
             })
           })
           
@@ -1218,6 +1221,9 @@ async function downloadReportCardCsv(includeName) {
               else if (e.acOutcome === 'inconclusive') outcomeLabel = 'Developing'
               const outcome = outcomeLabel ? ` [${outcomeLabel}]` : ''
               judgmentLines.push(`    - ${date} (${type})${outcome}: ${e.note}`)
+              if (e.nextSteps) {
+                judgmentLines.push(`      Next Steps: ${e.nextSteps}`)
+              }
             })
           }
         })
@@ -1234,6 +1240,9 @@ async function downloadReportCardCsv(includeName) {
             else if (e.acOutcome === 'inconclusive') outcomeLabel = 'Developing'
             const outcome = outcomeLabel ? ` [${outcomeLabel}]` : ''
             judgmentLines.push(`  - ${date} (${type})${outcome}: ${e.note}`)
+            if (e.nextSteps) {
+              judgmentLines.push(`    Next Steps: ${e.nextSteps}`)
+            }
           })
         }
       }

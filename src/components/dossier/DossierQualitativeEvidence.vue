@@ -80,6 +80,10 @@
             <div class="general-comment-card__note">
               {{ event.note }}
             </div>
+            <div v-if="event.nextSteps" class="general-comment-card__next-steps">
+              <h6 class="next-steps-title">Next Steps</h6>
+              <p class="next-steps-text">{{ event.nextSteps }}</p>
+            </div>
           </div>
         </div>
       </div>
@@ -164,26 +168,36 @@
                   class="comments-box__arrow" 
                   :style="getCaretStyle(unit.unitId, exp.expectationId)"
                 ></div>
-                <h5 class="comments-box__title">Comments</h5>
+
+                <div class="comments-box__header">
+                  <h5 class="comments-box__title">
+                    Comments
+                    <span class="comments-box__meta-type">
+                      — {{ getSelectedEvent(unit.unitId, exp.expectationId).acType === 'observation' ? 'Observation' : 'Conversation' }}
+                      ({{ formatContext(getSelectedEvent(unit.unitId, exp.expectationId).acContext) }})
+                    </span>
+                  </h5>
+                  <div style="flex: 1"></div>
+                  <span class="comments-box__date">{{ formatDate(getSelectedEvent(unit.unitId, exp.expectationId).timestamp) }}</span>
+                  <button 
+                    class="comment-item__delete" 
+                    @click="$emit('delete', getSelectedEvent(unit.unitId, exp.expectationId).eventId)"
+                    title="Delete Comment"
+                  >
+                    <Trash2 :size="12" />
+                  </button>
+                </div>
                 
                 <div class="comments-box__content">
                   <div class="comment-item comment-item--timeline-active">
-                    <div class="comment-item__header">
-                      <span class="comment-item__type">
-                        {{ getSelectedEvent(unit.unitId, exp.expectationId).acType === 'observation' ? 'Observation' : 'Conversation' }}
-                      </span>
-                      <span class="comment-item__context">({{ formatContext(getSelectedEvent(unit.unitId, exp.expectationId).acContext) }})</span>
-                      <div style="flex: 1"></div>
-                      <span class="comment-item__date">{{ formatDate(getSelectedEvent(unit.unitId, exp.expectationId).timestamp) }}</span>
-                      <button 
-                        class="comment-item__delete" 
-                        @click="$emit('delete', getSelectedEvent(unit.unitId, exp.expectationId).eventId)"
-                        title="Delete Comment"
-                      >
-                        <Trash2 :size="12" />
-                      </button>
-                    </div>
                     <p class="comment-item__text">{{ getSelectedEvent(unit.unitId, exp.expectationId).note }}</p>
+                    <div 
+                      v-if="getSelectedEvent(unit.unitId, exp.expectationId).nextSteps" 
+                      class="comment-item__next-steps"
+                    >
+                      <h6 class="next-steps-title">Next Steps</h6>
+                      <p class="next-steps-text">{{ getSelectedEvent(unit.unitId, exp.expectationId).nextSteps }}</p>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -242,6 +256,10 @@
                       </button>
                     </div>
                     <p class="comment-item__text">{{ evt.note }}</p>
+                    <div v-if="evt.nextSteps" class="comment-item__next-steps">
+                      <h6 class="next-steps-title">Next Steps</h6>
+                      <p class="next-steps-text">{{ evt.nextSteps }}</p>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -503,13 +521,13 @@ function formatContext(ctx) {
 }
 
 .qualitative-section__title {
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--text-secondary);
-  background: rgba(0, 0, 0, 0.1);
-  padding: 10px 20px;
+  background: rgba(0, 0, 0, 0.08);
+  padding: 6px 16px;
   margin: 0;
   border-bottom: 1px solid var(--border);
 }
@@ -637,8 +655,8 @@ function formatContext(ctx) {
   border-bottom: 1px solid var(--border);
   display: flex;
   flex-direction: column;
-  padding: 16px 20px;
-  gap: 12px;
+  padding: 10px 16px;
+  gap: 6px;
   transition: background 0.15s ease;
 }
 
@@ -677,6 +695,10 @@ function formatContext(ctx) {
   font-weight: 600;
   color: var(--text);
   line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .font-italic {
@@ -697,20 +719,20 @@ function formatContext(ctx) {
 
 /* ── Horizontal Progress Timeline ───────────────────────────────── */
 .exp-card__timeline-wrapper {
-  padding: 8px 12px 12px 56px;
+  padding: 4px 12px 6px 56px;
 }
 
 .timeline {
   position: relative;
   display: flex;
   align-items: center;
-  padding: 12px 0;
+  padding: 4px 0;
   margin-right: 48px;
 }
 
 .timeline__line {
   position: absolute;
-  top: 18px;
+  top: 12px;
   left: 24px;
   right: 24px;
   height: 2px;
@@ -731,7 +753,7 @@ function formatContext(ctx) {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
+  gap: 2px;
   position: relative;
   cursor: pointer;
   transition: transform 0.2s ease;
@@ -742,9 +764,9 @@ function formatContext(ctx) {
 }
 
 .timeline__badge {
-  padding: 4px 12px;
+  padding: 2px 8px;
   border-radius: var(--radius-full);
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   font-weight: 700;
   color: #fff;
   box-shadow: 0 1px 3px rgba(0,0,0,0.15);
@@ -777,7 +799,7 @@ function formatContext(ctx) {
 }
 
 .timeline__label {
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   font-weight: 700;
   color: var(--text-secondary);
 }
@@ -802,8 +824,19 @@ function formatContext(ctx) {
   background: var(--bg-secondary);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  padding: 16px;
+  padding: 10px 14px;
   position: relative;
+}
+
+.comments-box__expectation-desc {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  background: var(--bg-hover);
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  margin-bottom: 8px;
+  border-left: 3px solid var(--primary);
+  line-height: 1.4;
 }
 
 /* Speech bubble caret */
@@ -819,13 +852,36 @@ function formatContext(ctx) {
   transition: left 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
+.comments-box__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
 .comments-box__title {
   font-size: 0.75rem;
   font-weight: 700;
   text-transform: uppercase;
   color: var(--text-secondary);
-  margin: 0 0 12px 0;
+  margin: 0;
   letter-spacing: 0.05em;
+  display: flex;
+  align-items: center;
+}
+
+.comments-box__meta-type {
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  text-transform: none;
+  margin-left: 6px;
+  opacity: 0.85;
+}
+
+.comments-box__date {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
 }
 
 .comments-box__list {
@@ -913,6 +969,32 @@ function formatContext(ctx) {
   margin: 0;
   font-size: 0.85rem;
   color: var(--text);
+  line-height: 1.4;
+  white-space: pre-wrap;
+}
+
+.comment-item__next-steps,
+.general-comment-card__next-steps {
+  margin-top: 10px;
+  padding: 8px 12px;
+  background: var(--bg-hover);
+  border-left: 3px solid var(--primary-light);
+  border-radius: var(--radius-sm);
+}
+
+.next-steps-title {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  margin: 0 0 4px 0;
+  letter-spacing: 0.05em;
+}
+
+.next-steps-text {
+  font-size: 0.8rem;
+  color: var(--text);
+  margin: 0;
   line-height: 1.4;
   white-space: pre-wrap;
 }

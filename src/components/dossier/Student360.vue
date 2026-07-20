@@ -1334,6 +1334,9 @@ async function copyForReportCard(includeName = false) {
           else if (e.acOutcome === 'inconclusive') outcomeLabel = 'Developing'
           const outcome = outcomeLabel ? ` [${outcomeLabel}]` : ''
           textLines.push(`    - ${date} (${type})${outcome}: ${e.note}`)
+          if (e.nextSteps) {
+            textLines.push(`      Next Steps: ${e.nextSteps}`)
+          }
         })
       })
       
@@ -1349,6 +1352,9 @@ async function copyForReportCard(includeName = false) {
           else if (e.acOutcome === 'inconclusive') outcomeLabel = 'Developing'
           const outcome = outcomeLabel ? ` [${outcomeLabel}]` : ''
           textLines.push(`    - ${date} (${type})${outcome}: ${e.note}`)
+          if (e.nextSteps) {
+            textLines.push(`      Next Steps: ${e.nextSteps}`)
+          }
         })
       }
     })
@@ -1365,6 +1371,9 @@ async function copyForReportCard(includeName = false) {
         else if (e.acOutcome === 'inconclusive') outcomeLabel = 'Developing'
         const outcome = outcomeLabel ? ` [${outcomeLabel}]` : ''
         textLines.push(`  - ${date} (${type})${outcome}: ${e.note}`)
+        if (e.nextSteps) {
+          textLines.push(`    Next Steps: ${e.nextSteps}`)
+        }
       })
     }
   }

@@ -266,7 +266,7 @@ async function onNoteSave(note) {
   pendingNoteStudent.value = null
 }
 
-async function onAssessmentSave({ note, acType, acContext, acOutcome, unitId, expectationId }) {
+async function onAssessmentSave({ note, acType, acContext, acOutcome, unitId, expectationId, nextSteps }) {
   const student = pendingNoteStudent.value
   if (!student) return
 
@@ -277,7 +277,8 @@ async function onAssessmentSave({ note, acType, acContext, acOutcome, unitId, ex
     acContext,
     acOutcome,
     unitId,
-    expectationId
+    expectationId,
+    nextSteps
   })
 
   // Clear pending state

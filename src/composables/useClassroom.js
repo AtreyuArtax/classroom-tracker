@@ -911,7 +911,7 @@ async function logStandardEvent(studentId, code, note = null, options = {}) {
     }
 }
 
-async function logAssessmentEvent({ studentId, note, acType, acContext, acOutcome, unitId, expectationId }) {
+async function logAssessmentEvent({ studentId, note, acType, acContext, acOutcome, unitId, expectationId, nextSteps }) {
     try {
         const classId = activeClass.value?.classId
         const code = 'ac'
@@ -926,6 +926,7 @@ async function logAssessmentEvent({ studentId, note, acType, acContext, acOutcom
             acOutcome,
             unitId,
             expectationId,
+            nextSteps,
             testDay: isTestDay.value
         })
 

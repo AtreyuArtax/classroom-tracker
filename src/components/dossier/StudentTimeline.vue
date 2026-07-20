@@ -66,6 +66,9 @@
                 <div class="timeline-row__main">
                   <span class="timeline-row__title">{{ item.title }}</span>
                   <span v-if="item.description" class="timeline-row__desc">{{ item.description }}</span>
+                  <div v-if="item.raw?.nextSteps" class="timeline-row__next-steps">
+                    <strong>Next Steps:</strong> {{ item.raw.nextSteps }}
+                  </div>
                 </div>
                 
                 <div class="timeline-row__tags">
@@ -421,7 +424,8 @@ async function onAssessmentSave(updatedData) {
     acContext: updatedData.acContext,
     acOutcome: updatedData.acOutcome,
     unitId: updatedData.unitId,
-    expectationId: updatedData.expectationId
+    expectationId: updatedData.expectationId,
+    nextSteps: updatedData.nextSteps
   }
   await editEvent(editingAssessmentData.value.eventId, updates)
   assessmentModalOpen.value = false
@@ -687,6 +691,17 @@ function formatTag(tag) {
   color: var(--text-secondary);
   line-height: 1.4;
   word-break: break-word;
+}
+
+.timeline-row__next-steps {
+  font-size: 0.8rem;
+  color: var(--text);
+  line-height: 1.4;
+  margin-top: 4px;
+  background: var(--bg-hover);
+  padding: 4px 8px;
+  border-left: 2px solid var(--primary-light);
+  border-radius: 2px;
 }
 
 .timeline-row__tags {

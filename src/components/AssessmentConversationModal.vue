@@ -13,6 +13,29 @@
     </template>
 
     <div class="acm-content">
+      <!-- Optional Unit & Expectation Selection -->
+      <div v-if="activeClass?.gradebookUnits?.length" class="acm-field-row">
+        <div class="acm-field">
+          <label class="acm-label">Unit (Optional)</label>
+          <select v-model="selectedUnitId" class="acm-select" @change="selectedExpectationId = null">
+            <option :value="null">General / No Unit</option>
+            <option v-for="unit in activeClass.gradebookUnits" :key="unit.unitId" :value="unit.unitId">
+              {{ unit.name }}
+            </option>
+          </select>
+        </div>
+
+        <div class="acm-field" v-if="selectedUnitId && unitExpectations.length">
+          <label class="acm-label">Expectation (Optional)</label>
+          <select v-model="selectedExpectationId" class="acm-select">
+            <option :value="null">None / General Unit Comment</option>
+            <option v-for="exp in unitExpectations" :key="exp.expectationId" :value="exp.expectationId">
+              {{ exp.code }}: {{ truncateExpectation(exp.description) }}
+            </option>
+          </select>
+        </div>
+      </div>
+
       <!-- Type Toggle (Observation vs Conversation) -->
       <div class="acm-field">
         <label class="acm-label">Evidence Type</label>
@@ -71,29 +94,6 @@
         </div>
       </div>
 
-      <!-- Optional Unit & Expectation Selection -->
-      <div v-if="activeClass?.gradebookUnits?.length" class="acm-field-row">
-        <div class="acm-field">
-          <label class="acm-label">Unit (Optional)</label>
-          <select v-model="selectedUnitId" class="acm-select" @change="selectedExpectationId = null">
-            <option :value="null">General / No Unit</option>
-            <option v-for="unit in activeClass.gradebookUnits" :key="unit.unitId" :value="unit.unitId">
-              {{ unit.name }}
-            </option>
-          </select>
-        </div>
-
-        <div class="acm-field" v-if="selectedUnitId && unitExpectations.length">
-          <label class="acm-label">Expectation (Optional)</label>
-          <select v-model="selectedExpectationId" class="acm-select">
-            <option :value="null">None / General Unit Comment</option>
-            <option v-for="exp in unitExpectations" :key="exp.expectationId" :value="exp.expectationId">
-              {{ exp.code }}: {{ exp.description }}
-            </option>
-          </select>
-        </div>
-      </div>
-
       <!-- Note Textarea -->
       <div class="acm-field">
         <label class="acm-label">{{ acType === 'observation' ? 'Observation' : 'Conversation' }} Details</label>
@@ -103,6 +103,18 @@
           class="acm-textarea"
           :placeholder="acType === 'observation' ? 'What was demonstrated?' : 'What did the student say?'"
           rows="3"
+          @keydown.esc.prevent="onCancel"
+        ></textarea>
+      </div>
+
+      <!-- Next Steps Textarea -->
+      <div class="acm-field">
+        <label class="acm-label">Next Steps (Optional)</label>
+        <textarea
+          v-model="nextStepsText"
+          class="acm-textarea"
+          placeholder="What is the plan for this student on this topic?"
+          rows="2"
           @keydown.esc.prevent="onCancel"
         ></textarea>
       </div>
@@ -145,6 +157,7 @@ const acType    = ref('conversation') // 'observation' | 'conversation'
 const context   = ref('proactive') // 'after_assessment' | 'proactive'
 const outcome   = ref(null) // 'demonstrates_understanding' | 'gap_confirmed' | 'inconclusive'
 const noteText  = ref('')
+const nextStepsText = ref('')
 const textareaRef = ref(null)
 
 const selectedUnitId = ref(null)
@@ -171,6 +184,7 @@ watch(() => props.modelValue, async (val) => {
       context.value = props.initialData.acContext || null
       outcome.value = props.initialData.acOutcome || null
       noteText.value = props.initialData.note || ''
+      nextStepsText.value = props.initialData.nextSteps || ''
       selectedUnitId.value = props.initialData.unitId || null
       selectedExpectationId.value = props.initialData.expectationId || null
     } else {
@@ -178,6 +192,7 @@ watch(() => props.modelValue, async (val) => {
       context.value = 'proactive'
       outcome.value = null
       noteText.value = ''
+      nextStepsText.value = ''
       selectedUnitId.value = null
       selectedExpectationId.value = null
     }
@@ -185,6 +200,12 @@ watch(() => props.modelValue, async (val) => {
     textareaRef.value?.focus()
   }
 }, { immediate: true })
+
+function truncateExpectation(desc, maxLen = 60) {
+  if (!desc) return ''
+  if (desc.length <= maxLen) return desc
+  return desc.slice(0, maxLen) + '...'
+}
 
 function onSave() {
   if (!isFormValid.value) return
@@ -195,7 +216,8 @@ function onSave() {
     acContext: context.value,
     acOutcome: outcome.value,
     unitId: selectedUnitId.value,
-    expectationId: selectedExpectationId.value
+    expectationId: selectedExpectationId.value,
+    nextSteps: nextStepsText.value.trim()
   })
   emit('update:modelValue', false)
 }

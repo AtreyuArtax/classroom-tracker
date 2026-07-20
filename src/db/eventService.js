@@ -114,6 +114,7 @@ export async function logEvent(eventObj) {
         acOutcome: eventObj.acOutcome ?? null,
         unitId: eventObj.unitId ?? null,
         expectationId: eventObj.expectationId ?? null,
+        nextSteps: eventObj.nextSteps ?? null,
     }
     if (eventObj.supersededAbsent !== undefined) {
         record.supersededAbsent = eventObj.supersededAbsent
