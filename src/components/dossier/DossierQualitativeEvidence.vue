@@ -11,13 +11,13 @@
         <!-- Type Filters (All, Observations, Conversations) -->
         <div class="filter-pills">
           <button 
-            v-for="type in ['all', 'observation', 'conversation']" 
+            v-for="type in ['all', 'observation', 'conversation', 'product']" 
             :key="type"
             class="filter-pill"
             :class="{ 'filter-pill--active': activeFilter === type }"
             @click="activeFilter = type"
           >
-            {{ type.charAt(0).toUpperCase() + type.slice(1) + (type === 'all' ? '' : 's') }}
+            {{ type === 'all' ? 'All' : (type === 'product' ? 'Products' : type.charAt(0).toUpperCase() + type.slice(1) + 's') }}
           </button>
         </div>
 
@@ -98,111 +98,141 @@
 
         <div class="expectations-grid">
           <!-- Render Expectations defined under this Unit -->
-          <div 
-            v-for="exp in unit.expectations || []" 
-            :key="exp.expectationId" 
-            class="exp-card"
-            :class="{ 'exp-card--expanded': isCardExpanded(unit.unitId, exp.expectationId) }"
-          >
-            <!-- Card Header (Always Visible) -->
-            <div 
-              class="exp-card__header" 
-              @click="toggleCard(unit.unitId, exp.expectationId)"
-            >
-              <div class="exp-card__code-badge">{{ exp.code }}</div>
-              <div class="exp-card__title-desc">
-                {{ exp.description }}
-              </div>
-              <div class="exp-card__arrow">
-                <component 
-                  :is="isCardExpanded(unit.unitId, exp.expectationId) ? ChevronUp : ChevronDown" 
-                  :size="18" 
-                />
-              </div>
+          <template v-for="exp in getGroupedUnitExpectations(unit)" :key="exp.expectationId">
+            <!-- Overall subheader -->
+            <div v-if="exp.isHeader" class="exp-strand-subheader">
+              <span class="exp-strand-subheader__code">{{ exp.code }}</span>
+              <span class="exp-strand-subheader__text">{{ exp.description }}</span>
             </div>
 
-            <!-- Card Body / Timeline -->
+            <!-- Specific expectation row (standard exp-card) -->
             <div 
-              v-if="getExpectationEvents(unit.unitId, exp.expectationId).length > 0" 
-              class="exp-card__timeline-wrapper"
+              v-else
+              class="exp-card"
+              :class="{ 'exp-card--expanded': isCardExpanded(unit.unitId, getExpKey(exp)) }"
             >
-              <div class="timeline">
-                <div class="timeline__line"></div>
-                <div class="timeline__steps">
-                  <div 
-                    v-for="(evt, idx) in getExpectationEvents(unit.unitId, exp.expectationId)" 
-                    :key="evt.eventId"
-                    class="timeline__step"
-                    :class="[
-                      `timeline__step--${evt.acOutcome}`,
-                      { 'timeline__step--active': getSelectedEvent(unit.unitId, exp.expectationId)?.eventId === evt.eventId }
-                    ]"
-                    @click.stop="selectEvent(unit.unitId, exp.expectationId, evt.eventId)"
-                  >
-                    <div class="timeline__badge" :class="`timeline__badge--${evt.acOutcome}`">
-                      {{ formatTimelineDate(evt.timestamp) }}
-                    </div>
-                    <div class="timeline__label">
-                      {{ formatOutcomeLabel(evt.acOutcome) }}
-                    </div>
-                  </div>
+              <!-- Card Header (Always Visible) -->
+              <div 
+                class="exp-card__header" 
+                @click="toggleCard(unit.unitId, getExpKey(exp))"
+              >
+                <div class="exp-card__code-badge">{{ exp.code }}</div>
+                <div class="exp-card__title-desc">
+                  {{ exp.description }}
+                </div>
+                <div class="exp-card__arrow">
+                  <component 
+                    :is="isCardExpanded(unit.unitId, getExpKey(exp)) ? ChevronUp : ChevronDown" 
+                    :size="18" 
+                  />
                 </div>
               </div>
-            </div>
 
-            <div 
-              v-else 
-              class="exp-card__no-events"
-            >
-              No observations recorded yet for this expectation.
-            </div>
-
-            <!-- Expanded Comments Panel (Interactive / Shows Selected Event only) -->
-            <div 
-              v-if="isCardExpanded(unit.unitId, exp.expectationId) && getExpectationEvents(unit.unitId, exp.expectationId).length > 0" 
-              class="exp-card__comments-panel"
-            >
-              <div class="comments-box" v-if="getSelectedEvent(unit.unitId, exp.expectationId)">
-                <!-- Sliding Caret Arrow -->
-                <div 
-                  class="comments-box__arrow" 
-                  :style="getCaretStyle(unit.unitId, exp.expectationId)"
-                ></div>
-
-                <div class="comments-box__header">
-                  <h5 class="comments-box__title">
-                    Comments
-                    <span class="comments-box__meta-type">
-                      — {{ getSelectedEvent(unit.unitId, exp.expectationId).acType === 'observation' ? 'Observation' : 'Conversation' }}
-                      ({{ formatContext(getSelectedEvent(unit.unitId, exp.expectationId).acContext) }})
-                    </span>
-                  </h5>
-                  <div style="flex: 1"></div>
-                  <span class="comments-box__date">{{ formatDate(getSelectedEvent(unit.unitId, exp.expectationId).timestamp) }}</span>
-                  <button 
-                    class="comment-item__delete" 
-                    @click="$emit('delete', getSelectedEvent(unit.unitId, exp.expectationId).eventId)"
-                    title="Delete Comment"
-                  >
-                    <Trash2 :size="12" />
-                  </button>
-                </div>
-                
-                <div class="comments-box__content">
-                  <div class="comment-item comment-item--timeline-active">
-                    <p class="comment-item__text">{{ getSelectedEvent(unit.unitId, exp.expectationId).note }}</p>
+              <!-- Card Body / Timeline -->
+              <div 
+                v-if="getExpectationEvents(unit.unitId, getExpKey(exp)).length > 0" 
+                class="exp-card__timeline-wrapper"
+              >
+                <div class="timeline">
+                  <div class="timeline__line"></div>
+                  <div class="timeline__steps">
                     <div 
-                      v-if="getSelectedEvent(unit.unitId, exp.expectationId).nextSteps" 
-                      class="comment-item__next-steps"
+                      v-for="(evt, idx) in getExpectationEvents(unit.unitId, getExpKey(exp))" 
+                      :key="evt.eventId"
+                      class="timeline__step"
+                      :class="[
+                        evt.eventId === getSelectedEvent(unit.unitId, getExpKey(exp))?.eventId ? 'timeline__step--active' : '',
+                        `timeline__step--${evt.acOutcome}`
+                      ]"
+                      @click.stop="selectEvent(unit.unitId, getExpKey(exp), evt.eventId)"
                     >
-                      <h6 class="next-steps-title">Next Steps</h6>
-                      <p class="next-steps-text">{{ getSelectedEvent(unit.unitId, exp.expectationId).nextSteps }}</p>
+                      <div :class="['timeline__badge', `timeline__badge--${evt.acOutcome}`]">
+                        {{ formatDate(evt.timestamp) }}
+                      </div>
+                      <span class="timeline__label">{{ formatOutcomeLabel(evt) }}</span>
                     </div>
                   </div>
                 </div>
               </div>
+
+              <!-- Expanded Comments Panel (Interactive / Shows Selected Event only) -->
+              <div 
+                v-if="isCardExpanded(unit.unitId, getExpKey(exp)) && getExpectationEvents(unit.unitId, getExpKey(exp)).length > 0" 
+                class="exp-card__comments-panel"
+              >
+                <div class="comments-box" v-if="getSelectedEvent(unit.unitId, getExpKey(exp))">
+                  <!-- Sliding Caret Arrow -->
+                  <div 
+                    class="comments-box__arrow" 
+                    :style="getCaretStyle(unit.unitId, getExpKey(exp))"
+                  ></div>
+
+                  <!-- PRODUCT DETAILS -->
+                  <template v-if="getSelectedEvent(unit.unitId, getExpKey(exp)).acType === 'product'">
+                    <div class="comments-box__header">
+                      <h5 class="comments-box__title">
+                        Product Details
+                        <span class="comments-box__meta-type">
+                          — {{ getSelectedEvent(unit.unitId, getExpKey(exp)).assessmentName }}
+                        </span>
+                      </h5>
+                      <div style="flex: 1"></div>
+                      <span class="comments-box__date">{{ formatDate(getSelectedEvent(unit.unitId, getExpKey(exp)).timestamp) }}</span>
+                    </div>
+                    
+                    <div class="comments-box__content">
+                      <div class="comment-item comment-item--timeline-active" style="display: flex; flex-direction: column; gap: 6px;">
+                        <div>
+                          <span class="text-secondary font-weight-600" style="font-size: 0.8rem; color: var(--text-secondary);">Score:</span>
+                          <strong style="margin-left: 6px; font-size: 0.95rem; color: var(--text);">{{ getSelectedEvent(unit.unitId, getExpKey(exp)).scoreLabel }}</strong>
+                          <span class="eim-code-badge" style="margin-left: 8px;">{{ getSelectedEvent(unit.unitId, getExpKey(exp)).pctLabel }}</span>
+                        </div>
+                        <div>
+                          <span class="text-secondary font-weight-600" style="font-size: 0.8rem; color: var(--text-secondary);">Category:</span>
+                          <span style="margin-left: 6px; font-size: 0.85rem; font-weight: 500; color: var(--text);">{{ getSelectedEvent(unit.unitId, getExpKey(exp)).categoryName }}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </template>
+
+                  <!-- OBS/CONV DETAILS (DEFAULT) -->
+                  <template v-else>
+                    <div class="comments-box__header">
+                      <h5 class="comments-box__title">
+                        Comments
+                        <span class="comments-box__meta-type">
+                          — {{ getSelectedEvent(unit.unitId, getExpKey(exp)).acType === 'observation' ? 'Observation' : 'Conversation' }}
+                          ({{ formatContext(getSelectedEvent(unit.unitId, getExpKey(exp)).acContext) }})
+                        </span>
+                      </h5>
+                      <div style="flex: 1"></div>
+                      <span class="comments-box__date">{{ formatDate(getSelectedEvent(unit.unitId, getExpKey(exp)).timestamp) }}</span>
+                      <button 
+                        class="comment-item__delete" 
+                        @click="$emit('delete', getSelectedEvent(unit.unitId, getExpKey(exp)).eventId)"
+                        title="Delete Comment"
+                      >
+                        <Trash2 :size="12" />
+                      </button>
+                    </div>
+                    
+                    <div class="comments-box__content">
+                      <div class="comment-item comment-item--timeline-active">
+                        <p class="comment-item__text">{{ getSelectedEvent(unit.unitId, getExpKey(exp)).note }}</p>
+                        <div 
+                          v-if="getSelectedEvent(unit.unitId, getExpKey(exp)).nextSteps" 
+                          class="comment-item__next-steps"
+                        >
+                          <h6 class="next-steps-title">Next Steps</h6>
+                          <p class="next-steps-text">{{ getSelectedEvent(unit.unitId, getExpKey(exp)).nextSteps }}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </template>
+                </div>
+              </div>
             </div>
-          </div>
+          </template>
 
           <!-- General Unit Comments (Comments with unitId but no expectationId) -->
           <div 
@@ -238,28 +268,53 @@
                     :key="evt.eventId"
                     class="comment-item"
                   >
-                    <div class="comment-item__header">
-                      <span class="comment-item__type">
-                        {{ evt.acType === 'observation' ? 'Observation' : 'Conversation' }}
-                      </span>
-                      <span class="comment-item__context">({{ formatContext(evt.acContext) }})</span>
-                      <span class="comment-item__outcome-dot" :class="`dot--${evt.acOutcome}`"></span>
-                      <span class="comment-item__outcome-text">{{ formatOutcome(evt.acOutcome) }}</span>
-                      <div style="flex: 1"></div>
-                      <span class="comment-item__date">{{ formatDate(evt.timestamp) }}</span>
-                      <button 
-                        class="comment-item__delete" 
-                        @click="$emit('delete', evt.eventId)"
-                        title="Delete Comment"
-                      >
-                        <Trash2 :size="12" />
-                      </button>
-                    </div>
-                    <p class="comment-item__text">{{ evt.note }}</p>
-                    <div v-if="evt.nextSteps" class="comment-item__next-steps">
-                      <h6 class="next-steps-title">Next Steps</h6>
-                      <p class="next-steps-text">{{ evt.nextSteps }}</p>
-                    </div>
+                    <!-- Product Detail item -->
+                    <template v-if="evt.acType === 'product'">
+                      <div class="comment-item__header">
+                        <span class="comment-item__type" style="color: var(--primary); font-weight: 700;">
+                          Product — {{ evt.assessmentName }}
+                        </span>
+                        <div style="flex: 1"></div>
+                        <span class="comment-item__date">{{ formatDate(evt.timestamp) }}</span>
+                      </div>
+                      <div style="display: flex; flex-direction: column; gap: 4px; padding: 4px 0;">
+                        <div>
+                          <span style="font-size: 0.8rem; color: var(--text-secondary);">Score:</span>
+                          <strong style="margin-left: 6px; font-size: 0.9rem; color: var(--text);">{{ evt.scoreLabel }}</strong>
+                          <span class="eim-code-badge" style="margin-left: 8px;">{{ evt.pctLabel }}</span>
+                        </div>
+                        <div>
+                          <span style="font-size: 0.8rem; color: var(--text-secondary);">Category:</span>
+                          <span style="margin-left: 6px; font-size: 0.8rem; color: var(--text);">{{ evt.categoryName }}</span>
+                        </div>
+                      </div>
+                    </template>
+
+                    <!-- Standard Obs/Conv comment item -->
+                    <template v-else>
+                      <div class="comment-item__header">
+                        <span class="comment-item__type">
+                          {{ evt.acType === 'observation' ? 'Observation' : 'Conversation' }}
+                        </span>
+                        <span class="comment-item__context">({{ formatContext(evt.acContext) }})</span>
+                        <span class="comment-item__outcome-dot" :class="`dot--${evt.acOutcome}`"></span>
+                        <span class="comment-item__outcome-text">{{ formatOutcome(evt.acOutcome) }}</span>
+                        <div style="flex: 1"></div>
+                        <span class="comment-item__date">{{ formatDate(evt.timestamp) }}</span>
+                        <button 
+                          class="comment-item__delete" 
+                          @click="$emit('delete', evt.eventId)"
+                          title="Delete Comment"
+                        >
+                          <Trash2 :size="12" />
+                        </button>
+                      </div>
+                      <p class="comment-item__text">{{ evt.note }}</p>
+                      <div v-if="evt.nextSteps" class="comment-item__next-steps">
+                        <h6 class="next-steps-title">Next Steps</h6>
+                        <p class="next-steps-text">{{ evt.nextSteps }}</p>
+                      </div>
+                    </template>
                   </div>
                 </div>
               </div>
@@ -279,7 +334,8 @@ import { formatLocalDisplay } from '../../utils/dates.js'
 
 const props = defineProps({
   events: { type: Array, default: () => [] },
-  activeClass: { type: Object, default: () => null }
+  activeClass: { type: Object, default: () => null },
+  assessments: { type: Array, default: () => [] }
 })
 
 const emit = defineEmits(['delete'])
@@ -353,6 +409,7 @@ function getCaretStyle(unitId, expectationId) {
   }
 }
 
+
 // Filter units list based on unit filter dropdown
 const filteredUnits = computed(() => {
   if (!props.activeClass?.gradebookUnits) return []
@@ -378,18 +435,95 @@ const generalComments = computed(() => {
     .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
 })
 
+function getExpKey(exp) {
+  if (!exp) return null
+  return exp.expectationId || exp.code
+}
+
+function matchesUnit(targetUnitId, targetUnitName, eventUnitId) {
+  if (!eventUnitId) return false
+  if (eventUnitId === targetUnitId) return true
+  if (targetUnitName && String(eventUnitId).toLowerCase() === String(targetUnitName).toLowerCase()) return true
+  return false
+}
+
+function matchesExpectation(expId, expCode, eventExpId) {
+  if (!eventExpId) return false
+  if (eventExpId === expId) return true
+  if (expCode && String(eventExpId).toLowerCase() === String(expCode).toLowerCase()) return true
+  return false
+}
+
 // Get events for a specific expectation, sorted chronologically (past to present for timeline)
 function getExpectationEvents(unitId, expectationId) {
-  return filteredTypeEvents.value
-    .filter(e => e.unitId === unitId && e.expectationId === expectationId)
+  const unitObj = props.activeClass?.gradebookUnits?.find(u => u.unitId === unitId || u.name?.toLowerCase() === String(unitId).toLowerCase())
+  const expObj = unitObj?.expectations?.find(e => 
+    (e.expectationId && e.expectationId === expectationId) || 
+    (e.code && String(e.code).toLowerCase() === String(expectationId).toLowerCase())
+  )
+
+  const targetCode = expObj?.code || (typeof expectationId === 'string' ? expectationId : null)
+
+  const dbEvents = filteredTypeEvents.value.filter(e => {
+    const isUnitMatch = matchesUnit(unitId, unitObj?.name, e.unitId)
+    const isExpMatch = matchesExpectation(expectationId, targetCode, e.expectationId)
+    return isUnitMatch && isExpMatch
+  })
+  
+  const productEvents = (activeFilter.value === 'all' || activeFilter.value === 'product')
+    ? getSyntheticProductEvents(unitId, expectationId, unitObj, targetCode)
+    : []
+    
+  return [...dbEvents, ...productEvents]
     .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
 }
 
 // Get unit-level general comments (unitId matches, but expectationId is null)
 function getUnitGeneralEvents(unitId) {
-  return filteredTypeEvents.value
-    .filter(e => e.unitId === unitId && !e.expectationId)
+  const unitObj = props.activeClass?.gradebookUnits?.find(u => u.unitId === unitId || u.name?.toLowerCase() === String(unitId).toLowerCase())
+
+  const dbEvents = filteredTypeEvents.value.filter(e => {
+    const isUnitMatch = matchesUnit(unitId, unitObj?.name, e.unitId)
+    return isUnitMatch && !e.expectationId
+  })
+    
+  const productEvents = (activeFilter.value === 'all' || activeFilter.value === 'product')
+    ? getSyntheticProductEvents(unitId, null, unitObj, null)
+    : []
+
+  return [...dbEvents, ...productEvents]
     .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+}
+
+function getSyntheticProductEvents(unitId, expectationId, unitObj = null, targetCode = null) {
+  if (!props.assessments?.length) return []
+  return props.assessments
+    .filter(a => {
+      if (a.score === null) return false
+      const isUnitMatch = matchesUnit(unitId, unitObj?.name, a.unitId)
+      if (!isUnitMatch) return false
+
+      if (expectationId === null) {
+        return !a.expectationId
+      } else {
+        return matchesExpectation(expectationId, targetCode, a.expectationId)
+      }
+    })
+    .map(a => {
+      const pct = a.scaledTotal ? (a.score / a.scaledTotal) * 100 : (a.score / a.totalPoints) * 100
+      return {
+        eventId: `product-${a.assessmentId}`,
+        timestamp: a.date,
+        note: `Score: ${a.score} / ${a.totalPoints} (${Math.round(pct)}%)`,
+        acOutcome: 'product',
+        acType: 'product',
+        acContext: a.categoryId,
+        assessmentName: a.name,
+        scoreLabel: `${a.score} / ${a.totalPoints}`,
+        pctLabel: `${Math.round(pct)}%`,
+        categoryName: props.activeClass?.gradebookCategories?.find(c => c.categoryId === a.categoryId)?.name || 'Product'
+      }
+    })
 }
 
 function formatTimelineDate(ts) {
@@ -406,9 +540,17 @@ function formatOutcome(outcome) {
   return 'Developing'
 }
 
-function formatOutcomeLabel(outcome) {
-  if (outcome === 'demonstrates_understanding') return 'Mastered'
-  if (outcome === 'gap_confirmed') return 'Needs Support'
+function formatOutcomeLabel(evt) {
+  if (typeof evt === 'string') {
+    if (evt === 'demonstrates_understanding') return 'Mastered'
+    if (evt === 'gap_confirmed') return 'Needs Support'
+    return 'Developing'
+  }
+  if (evt?.acType === 'product') {
+    return `${evt.pctLabel} (Product)`
+  }
+  if (evt?.acOutcome === 'demonstrates_understanding') return 'Mastered'
+  if (evt?.acOutcome === 'gap_confirmed') return 'Needs Support'
   return 'Developing'
 }
 
@@ -418,6 +560,38 @@ function formatContext(ctx) {
     .split('_')
     .map(word => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ')
+}
+
+function getGroupedUnitExpectations(unit) {
+  const rawExps = unit.expectations || []
+  const hasSpecifics = rawExps.some(e => e.code.includes('.'))
+  
+  if (!hasSpecifics) {
+    return rawExps.map(e => ({ ...e, isHeader: false }))
+  }
+  
+  const overalls = rawExps.filter(e => !e.code.includes('.'))
+  const specifics = rawExps.filter(e => e.code.includes('.'))
+  const result = []
+  
+  overalls.forEach(ov => {
+    result.push({ ...ov, isHeader: true })
+    const children = specifics.filter(sp => sp.code.startsWith(ov.code + '.'))
+    children.forEach(ch => {
+      result.push({ ...ch, isHeader: false })
+    })
+  })
+  
+  const remainingSpecifics = specifics.filter(sp => 
+    !overalls.some(ov => sp.code.startsWith(ov.code + '.'))
+  )
+  if (remainingSpecifics.length > 0) {
+    remainingSpecifics.forEach(ch => {
+      result.push({ ...ch, isHeader: false })
+    })
+  }
+  
+  return result
 }
 </script>
 
@@ -786,6 +960,10 @@ function formatContext(ctx) {
   box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px #ff3b30;
 }
 
+.timeline__step--active.timeline__step--product .timeline__badge {
+  box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--primary);
+}
+
 .timeline__badge--demonstrates_understanding {
   background: #34c759;
 }
@@ -796,6 +974,10 @@ function formatContext(ctx) {
 
 .timeline__badge--gap_confirmed {
   background: #ff3b30;
+}
+
+.timeline__badge--product {
+  background: var(--primary);
 }
 
 .timeline__label {
@@ -997,5 +1179,37 @@ function formatContext(ctx) {
   margin: 0;
   line-height: 1.4;
   white-space: pre-wrap;
+}
+
+.exp-strand-subheader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 16px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+  font-weight: 700;
+  font-size: 0.8rem;
+}
+
+.exp-strand-subheader__code {
+  background: var(--bg-hover);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  font-size: 0.7rem;
+  font-weight: 800;
+  min-width: 32px;
+  text-align: center;
+}
+
+.exp-strand-subheader__text {
+  flex: 1;
+}
+
+.timeline__step--product {
+  border-radius: var(--radius-sm) !important;
 }
 </style>

@@ -931,12 +931,33 @@ async function logAssessmentEvent({ studentId, note, acType, acContext, acOutcom
         })
 
         // Reactive update
-        students.value[studentId].lastEvent = { code, ts: Date.now() }
+        const newEvt = {
+            eventId,
+            studentId,
+            classId,
+            code,
+            note,
+            acType,
+            acContext,
+            acOutcome,
+            unitId,
+            expectationId,
+            nextSteps,
+            testDay: isTestDay.value,
+            timestamp: new Date().toISOString()
+        }
+        activeStudentEvents.value = [newEvt, ...activeStudentEvents.value]
+        if (students.value[studentId]) {
+            students.value[studentId].lastEvent = { code, ts: Date.now() }
+        }
 
         pushUndo(async () => {
             try {
                 await eventService.deleteEvent(eventId)
-                students.value[studentId].lastEvent = null
+                activeStudentEvents.value = activeStudentEvents.value.filter(e => String(e.eventId) !== String(eventId))
+                if (students.value[studentId]) {
+                    students.value[studentId].lastEvent = null
+                }
             } catch (err) {
                 console.error('Undo assessment event failed:', err)
                 const { alert } = useMessage()

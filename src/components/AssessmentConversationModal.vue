@@ -29,7 +29,7 @@
           <label class="acm-label">Expectation (Optional)</label>
           <select v-model="selectedExpectationId" class="acm-select">
             <option :value="null">None / General Unit Comment</option>
-            <option v-for="exp in unitExpectations" :key="exp.expectationId" :value="exp.expectationId">
+            <option v-for="exp in unitExpectations" :key="exp.expectationId || exp.code" :value="exp.expectationId || exp.code">
               {{ exp.code }}: {{ truncateExpectation(exp.description) }}
             </option>
           </select>
@@ -169,7 +169,12 @@ const selectedUnit = computed(() => {
 })
 
 const unitExpectations = computed(() => {
-  return selectedUnit.value?.expectations || []
+  const rawExps = selectedUnit.value?.expectations || []
+  const hasSpecifics = rawExps.some(e => e.code.includes('.'))
+  if (hasSpecifics) {
+    return rawExps.filter(e => e.code.includes('.'))
+  }
+  return rawExps
 })
 
 const isFormValid = computed(() => {

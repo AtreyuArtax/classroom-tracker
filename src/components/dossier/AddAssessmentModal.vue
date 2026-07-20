@@ -84,6 +84,17 @@
         </div>
       </div>
 
+      <!-- Expectation Tagging (Optional) -->
+      <div v-if="newAssessment.unitId && unitExpectations.length" class="form-group">
+        <label class="form-label">Expectation (Optional)</label>
+        <select v-model="newAssessment.expectationId" class="form-input">
+          <option :value="null">General / Unit-Level Assessment</option>
+          <option v-for="exp in unitExpectations" :key="exp.expectationId || exp.code" :value="exp.expectationId || exp.code">
+            {{ exp.code }}: {{ exp.description }}
+          </option>
+        </select>
+      </div>
+
       <div class="form-row">
         <div class="form-group">
           <label class="form-label">Total Points</label>
@@ -112,8 +123,8 @@
     </form>
   </BaseModal>
 </template>
-
 <script setup>
+import { ref, computed, watch } from 'vue'
 import { X } from 'lucide-vue-next'
 import {
   showAddAssessmentModal,
@@ -130,6 +141,21 @@ import { useClassroom } from '../../composables/useClassroom.js'
 import BaseModal from '../BaseModal.vue'
 
 const { sortedRoster } = useClassroom()
+
+const unitExpectations = computed(() => {
+  if (!newAssessment.value.unitId || !activeClassRecord.value?.gradebookUnits) return []
+  const unit = activeClassRecord.value.gradebookUnits.find(u => u.unitId === newAssessment.value.unitId)
+  const rawExps = unit?.expectations || []
+  const hasSpecifics = rawExps.some(e => e.code.includes('.'))
+  if (hasSpecifics) {
+    return rawExps.filter(e => e.code.includes('.'))
+  }
+  return rawExps
+})
+
+watch(() => newAssessment.value.unitId, () => {
+  newAssessment.value.expectationId = null
+})
 </script>
 
 <style scoped>

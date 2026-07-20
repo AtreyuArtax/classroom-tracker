@@ -509,3 +509,43 @@ export async function isSyncActive() {
     const handle = settings?.backupFileHandle
     return !!(handle && typeof handle.createWritable === 'function')
 }
+
+export async function detachEventsForDeletedExpectation(classId, expectationId) {
+    const db = await getDB()
+    const tx = db.transaction('events', 'readwrite')
+    const store = tx.objectStore('events')
+    const events = await store.index('by_classId').getAll(classId)
+    
+    let count = 0
+    for (const e of events) {
+        if (e.expectationId === expectationId) {
+            e.expectationId = null
+            e.unitId = null
+            await store.put(e)
+            count++
+        }
+    }
+    await tx.done
+    hasUnsyncedChanges.value = true
+    return count
+}
+
+export async function detachEventsForDeletedUnit(classId, unitId) {
+    const db = await getDB()
+    const tx = db.transaction('events', 'readwrite')
+    const store = tx.objectStore('events')
+    const events = await store.index('by_classId').getAll(classId)
+    
+    let count = 0
+    for (const e of events) {
+        if (e.unitId === unitId) {
+            e.expectationId = null
+            e.unitId = null
+            await store.put(e)
+            count++
+        }
+    }
+    await tx.done
+    hasUnsyncedChanges.value = true
+    return count
+}

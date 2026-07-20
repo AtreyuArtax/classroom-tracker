@@ -952,6 +952,7 @@ function startEditAssessment(assessment) {
     categoryId: assessment.categoryId,
     assessmentType: assessment.assessmentType,
     unitId: assessment.unitId || null,
+    expectationId: assessment.expectationId || null,
     target: assessment.target || 'class',
     targetStudentId: assessment.targetStudentId || null,
     date: assessment.date,

@@ -1,0 +1,89 @@
+{
+  "presetId": "ontario-snc1w",
+  "title": "Ontario Grade 9 Science (SNC1W)",
+  "panel": "secondary",
+  "region": "Ontario",
+  "grade": "Grade 9",
+  "strands": [
+    {
+      "name": "Strand A: STEM Skills & Careers",
+      "overalls": [
+        {
+          "code": "A1",
+          "description": "STEM Investigation & Design Skills",
+          "specifics": [
+            { "code": "A1.1", "description": "Apply scientific processes and skills in research and experimentation." },
+            { "code": "A1.2", "description": "Apply engineering design processes to address practical problems." }
+          ]
+        },
+        {
+          "code": "A2",
+          "description": "STEM Careers and Connections",
+          "specifics": [
+            { "code": "A2.1", "description": "Explore careers in STEM fields and their societal impacts." }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Strand B: Sustainable Ecosystems",
+      "overalls": [
+        {
+          "code": "B1",
+          "description": "Relating Science to Technology, Society, and the Environment",
+          "specifics": [
+            { "code": "B1.1", "description": "Assess impacts of human activities on ecosystem sustainability and ecosystem services." },
+            { "code": "B1.2", "description": "Evaluate effectiveness of local or global initiatives supporting biodiversity." }
+          ]
+        },
+        {
+          "code": "B2",
+          "description": "Developing Investigation and Communication Skills",
+          "specifics": [
+            { "code": "B2.1", "description": "Investigate interactions between biotic and abiotic factors in ecosystems." },
+            { "code": "B2.2", "description": "Explain flow of energy and cycling of matter through sustainable ecosystems." }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Strand C: Chemical Reactions",
+      "overalls": [
+        {
+          "code": "C1",
+          "description": "Relating Science to Technology, Society, and the Environment",
+          "specifics": [
+            { "code": "C1.1", "description": "Assess social, economic, and environmental impacts of chemical processes." }
+          ]
+        },
+        {
+          "code": "C2",
+          "description": "Properties & Structure of Matter",
+          "specifics": [
+            { "code": "C2.1", "description": "Investigate physical and chemical properties of elements and compounds." },
+            { "code": "C2.2", "description": "Demonstrate understanding of atomic structure and periodic table trends." }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Strand D: Earth and Space Science",
+      "overalls": [
+        {
+          "code": "D1",
+          "description": "Impacts of Space Exploration",
+          "specifics": [
+            { "code": "D1.1", "description": "Assess environmental, technological, and social impacts of space exploration." }
+          ]
+        },
+        {
+          "code": "D2",
+          "description": "Characteristics of the Universe",
+          "specifics": [
+            { "code": "D2.1", "description": "Investigate characteristics and components of the solar system and celestial bodies." }
+          ]
+        }
+      ]
+    }
+  ]
+}

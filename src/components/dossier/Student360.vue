@@ -130,12 +130,12 @@
           @delete-event="handleDeleteHistoryItem"
         />
       </section>
-
       <!-- Qualitative Evidence Tab -->
       <section v-if="activeTab === 'qualitative'" class="student-360__pane student-360__pane--qualitative">
         <DossierQualitativeEvidence 
           :events="qualitativeEvents" 
           :active-class="activeClassRecord"
+          :assessments="allDossierAssessments"
           @delete="handleDeleteHistoryItem"
         />
       </section>
@@ -704,6 +704,10 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['close'])
+
+const contextMenu = ref(null)
+const attemptsPopover = ref(null)
+const newAttemptForm = ref(null)
 
 function handleClose() {
   activeTab.value = 'summary'

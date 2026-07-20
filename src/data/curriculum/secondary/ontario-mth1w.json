@@ -1,0 +1,68 @@
+{
+  "presetId": "ontario-mth1w",
+  "title": "Ontario Grade 9 Mathematics (MTH1W)",
+  "panel": "secondary",
+  "region": "Ontario",
+  "grade": "Grade 9",
+  "strands": [
+    {
+      "name": "Strand A: Mathematical Thinking & Connections",
+      "overalls": [
+        {
+          "code": "AA1",
+          "description": "Mathematical Modeling & Coding",
+          "specifics": [
+            { "code": "AA1.1", "description": "Apply problem-solving processes and mathematical modeling to real-life situations." },
+            { "code": "AA1.2", "description": "Coding: Read, alter, and execute code to solve mathematical problems." }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Strand B: Number Sense & Algebra",
+      "overalls": [
+        {
+          "code": "B1",
+          "description": "Development of Real Numbers",
+          "specifics": [
+            { "code": "B1.1", "description": "Demonstrate understanding of real numbers, powers, and scientific notation." }
+          ]
+        },
+        {
+          "code": "B2",
+          "description": "Algebraic Expressions & Equations",
+          "specifics": [
+            { "code": "B2.1", "description": "Simplify algebraic expressions involving exponent laws and polynomial operations." },
+            { "code": "B2.2", "description": "Solve first-degree linear equations and inequalities." }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Strand C: Data Literacy",
+      "overalls": [
+        {
+          "code": "C1",
+          "description": "Collection, Analysis & Representation of Data",
+          "specifics": [
+            { "code": "C1.1", "description": "Analyze data sets using scatter plots, line of best fit, and statistical measures." },
+            { "code": "C1.2", "description": "Evaluate data sources for bias, sampling techniques, and misrepresentation." }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Strand D: Geometry & Measurement",
+      "overalls": [
+        {
+          "code": "D1",
+          "description": "Geometric Properties & Measurement",
+          "specifics": [
+            { "code": "D1.1", "description": "Apply geometric concepts and perimeter, area, and volume formulas in 2D and 3D." },
+            { "code": "D1.2", "description": "Investigate dynamic relationships involving linear relations and slope." }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -22,6 +22,7 @@ export async function createAssessment({
   classId, categoryId, name, description = '', date,
   assessmentType = 'product',
   unitId = null,
+  expectationId = null,
   target = 'class',
   targetStudentId = null,
   totalPoints,
@@ -32,7 +33,7 @@ export async function createAssessment({
   const db = await getDB()
   const assessment = {
     classId, categoryId, name, description, date,
-    assessmentType, unitId,
+    assessmentType, unitId, expectationId,
     target, targetStudentId,
     totalPoints, scaledTotal,
     excluded, retestPolicy,
@@ -1177,7 +1178,15 @@ export async function saveGradebookTemplate(name, classRecord, milestones) {
     templateId: crypto.randomUUID(),
     name,
     categories: classRecord.gradebookCategories.map(c => ({ ...c, categoryId: crypto.randomUUID() })),
-    milestones: milestones.map(m => ({ ...m, milestoneId: crypto.randomUUID() }))
+    milestones: milestones.map(m => ({ ...m, milestoneId: crypto.randomUUID() })),
+    gradebookUnits: (classRecord.gradebookUnits || []).map(u => ({
+      ...u,
+      unitId: crypto.randomUUID(),
+      expectations: (u.expectations || []).map(e => ({
+        ...e,
+        expectationId: crypto.randomUUID()
+      }))
+    }))
   }
   
   if (!settings.gradebookTemplates) settings.gradebookTemplates = []

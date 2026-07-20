@@ -30,7 +30,16 @@
         </div>
       </div>
 
-      <h3 class="setup__card-subtitle" style="margin-top: 1.5rem;">Units & Expectations</h3>
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 1.5rem;">
+        <h3 class="setup__card-subtitle" style="margin: 0;">Units & Expectations</h3>
+        <button 
+          type="button" 
+          class="setup__btn-ghost setup__btn--small" 
+          @click="showImportModal = true"
+        >
+          <BookOpen :size="14" /> Import Expectations
+        </button>
+      </div>
       <div class="setup__gb-list">
         <div v-for="(unit, idx) in activeClass.gradebookUnits" :key="unit.unitId" class="setup__unit-container">
           <div class="setup__gb-item">
@@ -138,6 +147,13 @@
         </div>
       </div>
     </div>
+
+    <!-- Expectation Importer Modal -->
+    <ExpectationImportModal
+      v-model="showImportModal"
+      :existing-units="activeClass.gradebookUnits || []"
+      @import="onExpectationImport"
+    />
   </div>
 </template>
 
@@ -149,13 +165,16 @@ import { useMessage } from '../../composables/useMessage.js'
 import * as gradebookService from '../../db/gradebookService.js'
 import * as classService from '../../db/classService.js'
 import * as settingsService from '../../db/settingsService.js'
-import { ChevronUp, ChevronDown, Trash2, Plus, AlertTriangle, ChevronRight } from 'lucide-vue-next'
+import * as eventService from '../../db/eventService.js'
+import { ChevronUp, ChevronDown, Trash2, Plus, AlertTriangle, ChevronRight, BookOpen } from 'lucide-vue-next'
+import ExpectationImportModal from './ExpectationImportModal.vue'
 
 const { activeClass, triggerActiveClass } = useClassroom()
 const { alert, confirm } = useMessage()
 
 const templates = ref([])
 const newTemplateName = ref('')
+const showImportModal = ref(false)
 
 const expandedUnitId = ref(null)
 const newExpectationCode = ref('')
@@ -165,6 +184,68 @@ function toggleUnitExpand(unitId) {
   expandedUnitId.value = expandedUnitId.value === unitId ? null : unitId
   newExpectationCode.value = ''
   newExpectationDesc.value = ''
+}
+
+function onExpectationImport(payload) {
+  if (!activeClass.value) return
+  if (!activeClass.value.gradebookUnits) {
+    activeClass.value.gradebookUnits = []
+  }
+
+  if (payload.mode === 'auto-units') {
+    // Mode A: Auto-Create Units from preset strands
+    payload.preset.strands.forEach(strand => {
+      const expList = []
+      if (strand.overalls) {
+        strand.overalls.forEach(ov => {
+          expList.push({ code: ov.code, description: ov.description })
+          if (payload.granularity === 'all' && ov.specifics) {
+            ov.specifics.forEach(sp => {
+              expList.push({ code: sp.code, description: sp.description })
+            })
+          }
+        })
+      } else if (strand.expectations) {
+        strand.expectations.forEach(e => expList.push(e))
+      }
+
+      activeClass.value.gradebookUnits.push({
+        unitId: crypto.randomUUID(),
+        name: strand.name,
+        expectations: expList.map(e => ({
+          expectationId: crypto.randomUUID(),
+          code: e.code,
+          description: e.description
+        }))
+      })
+    })
+  } else if (payload.mode === 'attach-expectations') {
+    // Mode B: Attach expectations to a target unit (or new unit)
+    let targetUnit = null
+    if (payload.targetUnitChoice === 'new') {
+      targetUnit = {
+        unitId: crypto.randomUUID(),
+        name: payload.newUnitName || 'Imported Unit',
+        expectations: []
+      }
+      activeClass.value.gradebookUnits.push(targetUnit)
+    } else {
+      targetUnit = activeClass.value.gradebookUnits.find(u => u.unitId === payload.targetUnitChoice)
+    }
+
+    if (targetUnit) {
+      if (!targetUnit.expectations) targetUnit.expectations = []
+      payload.expectations.forEach(e => {
+        targetUnit.expectations.push({
+          expectationId: crypto.randomUUID(),
+          code: e.code,
+          description: e.description
+        })
+      })
+    }
+  }
+
+  saveGradebookSettings()
 }
 
 async function addExpectation(unit) {
@@ -183,7 +264,21 @@ async function addExpectation(unit) {
 }
 
 async function deleteExpectation(unit, expectationId) {
-  if (!await confirm('Delete this expectation?')) return
+  if (!activeClass.value) return
+  const classEvents = await eventService.getEventsByClass(activeClass.value.classId)
+  const count = classEvents.filter(e => e.expectationId === expectationId).length
+
+  let confirmMsg = 'Delete this expectation?'
+  if (count > 0) {
+    confirmMsg = `Delete this expectation? Warning: There are ${count} logged student observations/conversations associated with it. Deleting it will convert these comments into general observations.`
+  }
+
+  if (!await confirm(confirmMsg)) return
+
+  if (count > 0) {
+    await eventService.detachEventsForDeletedExpectation(activeClass.value.classId, expectationId)
+  }
+
   unit.expectations = unit.expectations.filter(e => e.expectationId !== expectationId)
   await saveGradebookSettings()
 }
@@ -310,7 +405,19 @@ async function onDeleteUnit(unitId) {
     return
   }
 
-  if (!await confirm(`Delete unit "${unit?.name || 'this unit'}"?`)) return
+  const classEvents = await eventService.getEventsByClass(activeClass.value.classId)
+  const count = classEvents.filter(e => e.unitId === unitId).length
+
+  let confirmMsg = `Delete unit "${unit?.name || 'this unit'}"?`
+  if (count > 0) {
+    confirmMsg = `Delete unit "${unit?.name || 'this unit'}"? Warning: There are ${count} logged student observations/conversations associated with it. Deleting it will convert these comments into general observations.`
+  }
+
+  if (!await confirm(confirmMsg)) return
+
+  if (count > 0) {
+    await eventService.detachEventsForDeletedUnit(activeClass.value.classId, unitId)
+  }
 
   activeClass.value.gradebookUnits = activeClass.value.gradebookUnits.filter(u => u.unitId !== unitId)
   await saveGradebookSettings()
@@ -344,13 +451,22 @@ async function onApplyTemplate(template) {
   
   const categories = template.categories.map(c => ({ ...c, categoryId: crypto.randomUUID() }))
   const milestones = template.milestones.map(m => ({ ...m, milestoneId: crypto.randomUUID() }))
+  const gradebookUnits = (template.gradebookUnits || []).map(u => ({
+    ...u,
+    unitId: crypto.randomUUID(),
+    expectations: (u.expectations || []).map(e => ({
+      ...e,
+      expectationId: crypto.randomUUID()
+    }))
+  }))
 
-  activeClassClassCategoriesUpdate(categories, milestones)
+  activeClassClassCategoriesUpdate(categories, milestones, gradebookUnits)
 }
 
-async function activeClassClassCategoriesUpdate(categories, milestones) {
+async function activeClassClassCategoriesUpdate(categories, milestones, gradebookUnits = []) {
   activeClass.value.gradebookCategories = categories
   globalMilestones.value = milestones
+  activeClass.value.gradebookUnits = gradebookUnits
   await saveGradebookSettings()
 }
 

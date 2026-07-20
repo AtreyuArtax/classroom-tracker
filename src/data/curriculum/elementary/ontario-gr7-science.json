@@ -1,0 +1,79 @@
+{
+  "presetId": "ontario-gr7-science",
+  "title": "Ontario Grade 7 Science & Technology",
+  "panel": "elementary",
+  "region": "Ontario",
+  "grade": "Grade 7",
+  "strands": [
+    {
+      "name": "Strand A: STEM Skills & Connections",
+      "overalls": [
+        {
+          "code": "A1",
+          "description": "STEM Skills & Research",
+          "specifics": [
+            { "code": "A1.1", "description": "Apply scientific and engineering design processes in problem solving." },
+            { "code": "A1.2", "description": "Explore practical applications of science in emerging technologies and careers." }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Strand B: Interactions in the Environment",
+      "overalls": [
+        {
+          "code": "B1",
+          "description": "Assessing Human Impacts on Ecosystems",
+          "specifics": [
+            { "code": "B1.1", "description": "Assess impacts of human activities and technologies on the environment." }
+          ]
+        },
+        {
+          "code": "B2",
+          "description": "Ecosystem Dynamics & Matter Cycling",
+          "specifics": [
+            { "code": "B2.1", "description": "Demonstrate understanding of ecosystem components, energy flow, and matter cycling." }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Strand C: Pure Substances and Mixtures",
+      "overalls": [
+        {
+          "code": "C1",
+          "description": "Impacts of Pollutants & Mixtures",
+          "specifics": [
+            { "code": "C1.1", "description": "Assess social and environmental impacts of environmental pollutants and mixtures." }
+          ]
+        },
+        {
+          "code": "C2",
+          "description": "Particle Theory & Separation Methods",
+          "specifics": [
+            { "code": "C2.1", "description": "Demonstrate understanding of particle theory of matter and separation solutions." }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Strand D: Form and Function (Structures)",
+      "overalls": [
+        {
+          "code": "D1",
+          "description": "Structural Efficiency & Ergonomics",
+          "specifics": [
+            { "code": "D1.1", "description": "Assess structural efficiency and ergonomic/environmental factors of structures." }
+          ]
+        },
+        {
+          "code": "D2",
+          "description": "Strength & Stability of Structures",
+          "specifics": [
+            { "code": "D2.1", "description": "Investigate factors affecting structural strength and stability under loads." }
+          ]
+        }
+      ]
+    }
+  ]
+}
