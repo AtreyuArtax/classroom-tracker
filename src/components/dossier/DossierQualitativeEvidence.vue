@@ -35,7 +35,7 @@
     </div>
 
     <!-- Empty States -->
-    <div v-if="events.length === 0" class="qualitative-evidence__empty">
+    <div v-if="!hasAnyEvidence" class="qualitative-evidence__empty">
       <p>No qualitative evidence recorded for this student yet.</p>
     </div>
 
@@ -339,6 +339,11 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['delete'])
+
+const hasAnyEvidence = computed(() => {
+  if (props.activeClass?.gradebookUnits?.length > 0) return true
+  return props.events?.length > 0
+})
 
 const activeFilter = ref('all')
 const activeUnitFilter = ref('all')
