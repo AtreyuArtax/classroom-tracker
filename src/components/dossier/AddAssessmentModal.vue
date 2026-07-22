@@ -89,10 +89,18 @@
         <label class="form-label">Expectation (Optional)</label>
         <select v-model="newAssessment.expectationId" class="form-input">
           <option :value="null">General / Unit-Level Assessment</option>
-          <option v-for="exp in unitExpectations" :key="exp.expectationId || exp.code" :value="exp.expectationId || exp.code">
+          <option 
+            v-for="exp in unitExpectations" 
+            :key="exp.expectationId || exp.code" 
+            :value="exp.expectationId || exp.code"
+          >
             {{ exp.code }}: {{ exp.description }}
           </option>
         </select>
+        <div v-if="selectedExpectationObj" class="exp-preview-card">
+          <span class="exp-preview-code">{{ selectedExpectationObj.code }}</span>
+          <span class="exp-preview-desc">{{ selectedExpectationObj.description }}</span>
+        </div>
       </div>
 
       <div class="form-row">
@@ -151,6 +159,11 @@ const unitExpectations = computed(() => {
     return rawExps.filter(e => e.code.includes('.'))
   }
   return rawExps
+})
+
+const selectedExpectationObj = computed(() => {
+  if (!newAssessment.value.expectationId || !unitExpectations.value?.length) return null
+  return unitExpectations.value.find(e => (e.expectationId || e.code) === newAssessment.value.expectationId)
 })
 
 watch(() => newAssessment.value.unitId, () => {
@@ -252,5 +265,34 @@ watch(() => newAssessment.value.unitId, () => {
   border-radius: var(--radius-md);
   font-weight: 700;
   cursor: pointer;
+}
+
+.exp-preview-card {
+  margin-top: 10px;
+  padding: 10px 14px;
+  background: var(--bg-hover);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  font-size: 0.82rem;
+  line-height: 1.45;
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.exp-preview-code {
+  font-weight: 700;
+  color: var(--primary);
+  background: rgba(52, 152, 219, 0.12);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.72rem;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.exp-preview-desc {
+  color: var(--text);
+  flex: 1;
 }
 </style>

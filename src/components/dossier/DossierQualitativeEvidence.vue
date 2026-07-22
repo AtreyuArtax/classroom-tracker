@@ -42,47 +42,107 @@
     <!-- Main Content List -->
     <div v-else class="qualitative-evidence__content">
       
-      <!-- General Class Comments (No Unit) -->
+      <!-- General Class Evidence (Horizontal Timeline Format) -->
       <div 
-        v-if="activeUnitFilter === 'all' || activeUnitFilter === 'general'" 
-        class="qualitative-section"
+        v-if="(activeUnitFilter === 'all' || activeUnitFilter === 'general') && (generalCommentsTimeline.length > 0 || activeUnitFilter === 'general')" 
+        class="qualitative-section qualitative-section--general"
       >
-        <h4 class="qualitative-section__title">General Observations & Conversations</h4>
-        
-        <div v-if="generalComments.length === 0" class="qualitative-section__empty">
-          No general observations recorded.
-        </div>
-        
-        <div v-else class="general-comments-list">
-          <div v-for="event in generalComments" :key="event.eventId" class="general-comment-card">
-            <div class="general-comment-card__header">
-              <div class="general-comment-card__type">
-                <component :is="event.acType === 'observation' ? Eye : MessageSquare" :size="14" />
-                <span>{{ event.acType === 'observation' ? 'Observation' : 'Conversation' }}</span>
+        <h4 class="qualitative-section__title" style="padding: 6px 16px; background: rgba(0, 0, 0, 0.08); border-bottom: 1px solid var(--border);">
+          General Observations & Conversations
+        </h4>
+
+        <div class="expectations-grid">
+          <div 
+            class="exp-card"
+            :class="{ 
+              'exp-card--expanded': isCardExpanded('general', 'general'),
+              'exp-card--has-data': generalCommentsTimeline.length > 0,
+              'exp-card--empty': generalCommentsTimeline.length === 0
+            }"
+          >
+            <!-- Card Header -->
+            <div 
+              class="exp-card__header" 
+              :class="{ 'exp-card__header--clickable': generalCommentsTimeline.length > 0 }"
+              @click="generalCommentsTimeline.length > 0 && toggleCard('general', 'general')"
+            >
+              <div class="exp-card__code-badge exp-card__code-badge--general">General</div>
+              <div class="exp-card__title-desc font-italic">
+                Course-Wide / General Observations & Conversations
               </div>
-              <span class="general-comment-card__context">{{ formatContext(event.acContext) }}</span>
-              <span 
-                class="general-comment-card__outcome-badge" 
-                :class="`outcome-badge--${event.acOutcome}`"
-              >
-                {{ formatOutcome(event.acOutcome) }}
-              </span>
-              <div style="flex: 1"></div>
-              <span class="general-comment-card__date">{{ formatDate(event.timestamp) }}</span>
-              <button 
-                class="general-comment-card__delete" 
-                @click="$emit('delete', event.eventId)"
-                title="Delete Entry"
-              >
-                <Trash2 :size="14" />
-              </button>
+              <div v-if="generalCommentsTimeline.length > 0" class="exp-card__count-pill">
+                {{ generalCommentsTimeline.length }} {{ generalCommentsTimeline.length === 1 ? 'entry' : 'entries' }}
+              </div>
+              <div v-if="generalCommentsTimeline.length > 0" class="exp-card__arrow">
+                <component 
+                  :is="isCardExpanded('general', 'general') ? ChevronUp : ChevronDown" 
+                  :size="18" 
+                />
+              </div>
             </div>
-            <div class="general-comment-card__note">
-              {{ event.note }}
+
+            <!-- Card Body / Timeline -->
+            <div v-if="generalCommentsTimeline.length > 0" class="exp-card__timeline-wrapper">
+              <div class="timeline">
+                <div class="timeline__line"></div>
+                <div class="timeline__steps">
+                  <div 
+                    v-for="evt in generalCommentsTimeline" 
+                    :key="evt.eventId"
+                    class="timeline__step"
+                    :class="[
+                      evt.eventId === getSelectedGeneralEvent()?.eventId ? 'timeline__step--active' : '',
+                      `timeline__step--${evt.acOutcome}`
+                    ]"
+                    @click.stop="selectGeneralEvent(evt.eventId)"
+                  >
+                    <div :class="['timeline__badge', `timeline__badge--${evt.acOutcome}`]">
+                      {{ formatDate(evt.timestamp) }}
+                    </div>
+                    <span class="timeline__label">{{ formatOutcomeLabel(evt) }}</span>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div v-if="event.nextSteps" class="general-comment-card__next-steps">
-              <h6 class="next-steps-title">Next Steps</h6>
-              <p class="next-steps-text">{{ event.nextSteps }}</p>
+
+            <!-- Expanded Comments Panel -->
+            <div 
+              v-if="isCardExpanded('general', 'general') && generalCommentsTimeline.length > 0" 
+              class="exp-card__comments-panel"
+            >
+              <div class="comments-box" v-if="getSelectedGeneralEvent()">
+                <!-- Sliding Caret Arrow -->
+                <div class="comments-box__arrow" :style="getGeneralCaretStyle()"></div>
+
+                <div class="comments-box__header">
+                  <h5 class="comments-box__title">
+                    General Entry
+                    <span class="comments-box__meta-type">
+                      — {{ getSelectedGeneralEvent().acType === 'observation' ? 'Observation' : 'Conversation' }}
+                      ({{ formatContext(getSelectedGeneralEvent().acContext) }})
+                    </span>
+                  </h5>
+                  <div style="flex: 1"></div>
+                  <span class="comments-box__date">{{ formatDate(getSelectedGeneralEvent().timestamp) }}</span>
+                  <button 
+                    class="comment-item__delete" 
+                    @click="$emit('delete', getSelectedGeneralEvent().eventId)"
+                    title="Delete Entry"
+                  >
+                    <Trash2 :size="12" />
+                  </button>
+                </div>
+
+                <div class="comments-box__content">
+                  <div class="comment-item comment-item--timeline-active">
+                    <p class="comment-item__text">{{ getSelectedGeneralEvent().note }}</p>
+                    <div v-if="getSelectedGeneralEvent().nextSteps" class="comment-item__next-steps">
+                      <h6 class="next-steps-title">Next Steps</h6>
+                      <p class="next-steps-text">{{ getSelectedGeneralEvent().nextSteps }}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -109,18 +169,32 @@
             <div 
               v-else
               class="exp-card"
-              :class="{ 'exp-card--expanded': isCardExpanded(unit.unitId, getExpKey(exp)) }"
+              :class="{ 
+                'exp-card--expanded': isCardExpanded(unit.unitId, getExpKey(exp)),
+                'exp-card--has-data': getExpectationEvents(unit.unitId, getExpKey(exp)).length > 0,
+                'exp-card--empty': getExpectationEvents(unit.unitId, getExpKey(exp)).length === 0
+              }"
             >
-              <!-- Card Header (Always Visible) -->
+              <!-- Card Header (Clickable only if events exist) -->
               <div 
                 class="exp-card__header" 
-                @click="toggleCard(unit.unitId, getExpKey(exp))"
+                :class="{ 'exp-card__header--clickable': getExpectationEvents(unit.unitId, getExpKey(exp)).length > 0 }"
+                @click="getExpectationEvents(unit.unitId, getExpKey(exp)).length > 0 && toggleCard(unit.unitId, getExpKey(exp))"
               >
                 <div class="exp-card__code-badge">{{ exp.code }}</div>
                 <div class="exp-card__title-desc">
                   {{ exp.description }}
                 </div>
-                <div class="exp-card__arrow">
+                <div 
+                  v-if="getExpectationEvents(unit.unitId, getExpKey(exp)).length > 0" 
+                  class="exp-card__count-pill"
+                >
+                  {{ getExpectationEvents(unit.unitId, getExpKey(exp)).length }} {{ getExpectationEvents(unit.unitId, getExpKey(exp)).length === 1 ? 'entry' : 'entries' }}
+                </div>
+                <div 
+                  v-if="getExpectationEvents(unit.unitId, getExpKey(exp)).length > 0" 
+                  class="exp-card__arrow"
+                >
                   <component 
                     :is="isCardExpanded(unit.unitId, getExpKey(exp)) ? ChevronUp : ChevronDown" 
                     :size="18" 
@@ -234,19 +308,26 @@
             </div>
           </template>
 
-          <!-- General Unit Comments (Comments with unitId but no expectationId) -->
+          <!-- General Unit Evidence (Horizontal Timeline Format) -->
           <div 
             v-if="getUnitGeneralEvents(unit.unitId).length > 0" 
             class="exp-card"
-            :class="{ 'exp-card--expanded': isCardExpanded(unit.unitId, 'general') }"
+            :class="{ 
+              'exp-card--expanded': isCardExpanded(unit.unitId, 'general'),
+              'exp-card--has-data': getUnitGeneralEvents(unit.unitId).length > 0
+            }"
           >
+            <!-- Card Header -->
             <div 
-              class="exp-card__header" 
+              class="exp-card__header exp-card__header--clickable" 
               @click="toggleCard(unit.unitId, 'general')"
             >
               <div class="exp-card__code-badge exp-card__code-badge--general">Unit</div>
               <div class="exp-card__title-desc font-italic">
-                General comments for {{ unit.name }}
+                General evidence for {{ unit.name }}
+              </div>
+              <div class="exp-card__count-pill">
+                {{ getUnitGeneralEvents(unit.unitId).length }} {{ getUnitGeneralEvents(unit.unitId).length === 1 ? 'entry' : 'entries' }}
               </div>
               <div class="exp-card__arrow">
                 <component 
@@ -256,67 +337,104 @@
               </div>
             </div>
 
-            <!-- Comments List -->
-            <div 
-              v-if="isCardExpanded(unit.unitId, 'general')" 
-              class="exp-card__comments-panel exp-card__comments-panel--flat"
-            >
-              <div class="comments-box comments-box--general">
-                <div class="comments-box__list">
+            <!-- Card Body / Timeline -->
+            <div class="exp-card__timeline-wrapper">
+              <div class="timeline">
+                <div class="timeline__line"></div>
+                <div class="timeline__steps">
                   <div 
                     v-for="evt in getUnitGeneralEvents(unit.unitId)" 
                     :key="evt.eventId"
-                    class="comment-item"
+                    class="timeline__step"
+                    :class="[
+                      evt.eventId === getSelectedEvent(unit.unitId, 'general')?.eventId ? 'timeline__step--active' : '',
+                      `timeline__step--${evt.acOutcome}`
+                    ]"
+                    @click.stop="selectEvent(unit.unitId, 'general', evt.eventId)"
                   >
-                    <!-- Product Detail item -->
-                    <template v-if="evt.acType === 'product'">
-                      <div class="comment-item__header">
-                        <span class="comment-item__type" style="color: var(--primary); font-weight: 700;">
-                          Product — {{ evt.assessmentName }}
-                        </span>
-                        <div style="flex: 1"></div>
-                        <span class="comment-item__date">{{ formatDate(evt.timestamp) }}</span>
-                      </div>
-                      <div style="display: flex; flex-direction: column; gap: 4px; padding: 4px 0;">
-                        <div>
-                          <span style="font-size: 0.8rem; color: var(--text-secondary);">Score:</span>
-                          <strong style="margin-left: 6px; font-size: 0.9rem; color: var(--text);">{{ evt.scoreLabel }}</strong>
-                          <span class="eim-code-badge" style="margin-left: 8px;">{{ evt.pctLabel }}</span>
-                        </div>
-                        <div>
-                          <span style="font-size: 0.8rem; color: var(--text-secondary);">Category:</span>
-                          <span style="margin-left: 6px; font-size: 0.8rem; color: var(--text);">{{ evt.categoryName }}</span>
-                        </div>
-                      </div>
-                    </template>
-
-                    <!-- Standard Obs/Conv comment item -->
-                    <template v-else>
-                      <div class="comment-item__header">
-                        <span class="comment-item__type">
-                          {{ evt.acType === 'observation' ? 'Observation' : 'Conversation' }}
-                        </span>
-                        <span class="comment-item__context">({{ formatContext(evt.acContext) }})</span>
-                        <span class="comment-item__outcome-dot" :class="`dot--${evt.acOutcome}`"></span>
-                        <span class="comment-item__outcome-text">{{ formatOutcome(evt.acOutcome) }}</span>
-                        <div style="flex: 1"></div>
-                        <span class="comment-item__date">{{ formatDate(evt.timestamp) }}</span>
-                        <button 
-                          class="comment-item__delete" 
-                          @click="$emit('delete', evt.eventId)"
-                          title="Delete Comment"
-                        >
-                          <Trash2 :size="12" />
-                        </button>
-                      </div>
-                      <p class="comment-item__text">{{ evt.note }}</p>
-                      <div v-if="evt.nextSteps" class="comment-item__next-steps">
-                        <h6 class="next-steps-title">Next Steps</h6>
-                        <p class="next-steps-text">{{ evt.nextSteps }}</p>
-                      </div>
-                    </template>
+                    <div :class="['timeline__badge', `timeline__badge--${evt.acOutcome}`]">
+                      {{ formatDate(evt.timestamp) }}
+                    </div>
+                    <span class="timeline__label">{{ formatOutcomeLabel(evt) }}</span>
                   </div>
                 </div>
+              </div>
+            </div>
+
+            <!-- Expanded Comments Panel (Interactive / Shows Selected Event only) -->
+            <div 
+              v-if="isCardExpanded(unit.unitId, 'general')" 
+              class="exp-card__comments-panel"
+            >
+              <div class="comments-box" v-if="getSelectedEvent(unit.unitId, 'general')">
+                <!-- Sliding Caret Arrow -->
+                <div 
+                  class="comments-box__arrow" 
+                  :style="getCaretStyle(unit.unitId, 'general')"
+                ></div>
+
+                <!-- PRODUCT DETAILS -->
+                <template v-if="getSelectedEvent(unit.unitId, 'general').acType === 'product'">
+                  <div class="comments-box__header">
+                    <h5 class="comments-box__title">
+                      Product Details
+                      <span class="comments-box__meta-type">
+                        — {{ getSelectedEvent(unit.unitId, 'general').assessmentName }}
+                      </span>
+                    </h5>
+                    <div style="flex: 1"></div>
+                    <span class="comments-box__date">{{ formatDate(getSelectedEvent(unit.unitId, 'general').timestamp) }}</span>
+                  </div>
+                  
+                  <div class="comments-box__content">
+                    <div class="comment-item comment-item--timeline-active" style="display: flex; flex-direction: column; gap: 6px;">
+                      <div>
+                        <span class="text-secondary font-weight-600" style="font-size: 0.8rem; color: var(--text-secondary);">Score:</span>
+                        <strong style="margin-left: 6px; font-size: 0.95rem; color: var(--text);">{{ getSelectedEvent(unit.unitId, 'general').scoreLabel }}</strong>
+                        <span class="eim-code-badge" style="margin-left: 8px;">{{ getSelectedEvent(unit.unitId, 'general').pctLabel }}</span>
+                      </div>
+                      <div>
+                        <span class="text-secondary font-weight-600" style="font-size: 0.8rem; color: var(--text-secondary);">Category:</span>
+                        <span style="margin-left: 6px; font-size: 0.85rem; font-weight: 500; color: var(--text);">{{ getSelectedEvent(unit.unitId, 'general').categoryName }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </template>
+
+                <!-- OBS/CONV DETAILS (DEFAULT) -->
+                <template v-else>
+                  <div class="comments-box__header">
+                    <h5 class="comments-box__title">
+                      Comments
+                      <span class="comments-box__meta-type">
+                        — {{ getSelectedEvent(unit.unitId, 'general').acType === 'observation' ? 'Observation' : 'Conversation' }}
+                        ({{ formatContext(getSelectedEvent(unit.unitId, 'general').acContext) }})
+                      </span>
+                    </h5>
+                    <div style="flex: 1"></div>
+                    <span class="comments-box__date">{{ formatDate(getSelectedEvent(unit.unitId, 'general').timestamp) }}</span>
+                    <button 
+                      class="comment-item__delete" 
+                      @click="$emit('delete', getSelectedEvent(unit.unitId, 'general').eventId)"
+                      title="Delete Comment"
+                    >
+                      <Trash2 :size="12" />
+                    </button>
+                  </div>
+                  
+                  <div class="comments-box__content">
+                    <div class="comment-item comment-item--timeline-active">
+                      <p class="comment-item__text">{{ getSelectedEvent(unit.unitId, 'general').note }}</p>
+                      <div 
+                        v-if="getSelectedEvent(unit.unitId, 'general').nextSteps" 
+                        class="comment-item__next-steps"
+                      >
+                        <h6 class="next-steps-title">Next Steps</h6>
+                        <p class="next-steps-text">{{ getSelectedEvent(unit.unitId, 'general').nextSteps }}</p>
+                      </div>
+                    </div>
+                  </div>
+                </template>
               </div>
             </div>
           </div>
@@ -347,6 +465,7 @@ const hasAnyEvidence = computed(() => {
 
 const activeFilter = ref('all')
 const activeUnitFilter = ref('all')
+const isGeneralSectionCollapsed = ref(true)
 const expandedCards = ref({}) // key format: `unitId-expectationId`
 const selectedEventIdMap = ref({}) // key format: `unitId-expectationId` -> eventId
 
@@ -433,12 +552,49 @@ const filteredTypeEvents = computed(() => {
   return props.events.filter(e => e.acType === activeFilter.value)
 })
 
-// General comments (no unitId at all)
-const generalComments = computed(() => {
+// General comments (no unitId at all), sorted chronologically past-to-present for timeline track
+const generalCommentsTimeline = computed(() => {
   return filteredTypeEvents.value
     .filter(e => !e.unitId)
-    .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+    .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
 })
+
+function selectGeneralEvent(eventId) {
+  const key = 'general-general'
+  const currentActive = getSelectedGeneralEvent()
+  if (currentActive?.eventId === eventId && expandedCards.value[key]) {
+    expandedCards.value[key] = false
+  } else {
+    selectedEventIdMap.value[key] = eventId
+    expandedCards.value[key] = true
+  }
+}
+
+function getSelectedGeneralEvent() {
+  const list = generalCommentsTimeline.value
+  if (list.length === 0) return null
+  const key = 'general-general'
+  const selectedId = selectedEventIdMap.value[key]
+  if (selectedId) {
+    const found = list.find(e => e.eventId === selectedId)
+    if (found) return found
+  }
+  return list[list.length - 1]
+}
+
+function getGeneralCaretStyle() {
+  const list = generalCommentsTimeline.value
+  if (list.length === 0) return {}
+  const selectedEvt = getSelectedGeneralEvent()
+  if (!selectedEvt) return {}
+  const idx = list.findIndex(e => e.eventId === selectedEvt.eventId)
+  if (idx === -1) return {}
+  if (list.length === 1) return { left: '50%' }
+  const percent = (idx / (list.length - 1)) * 100
+  return {
+    left: `calc(24px + (${percent}% - ${48 * (idx / (list.length - 1))}px) - 5px)`
+  }
+}
 
 function getExpKey(exp) {
   if (!exp) return null
@@ -461,6 +617,9 @@ function matchesExpectation(expId, expCode, eventExpId) {
 
 // Get events for a specific expectation, sorted chronologically (past to present for timeline)
 function getExpectationEvents(unitId, expectationId) {
+  if (expectationId === 'general') {
+    return getUnitGeneralEvents(unitId)
+  }
   const unitObj = props.activeClass?.gradebookUnits?.find(u => u.unitId === unitId || u.name?.toLowerCase() === String(unitId).toLowerCase())
   const expObj = unitObj?.expectations?.find(e => 
     (e.expectationId && e.expectationId === expectationId) || 
@@ -699,16 +858,54 @@ function getGroupedUnitExpectations(unit) {
   flex-direction: column;
 }
 
+.qualitative-section__header-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(0, 0, 0, 0.08);
+  padding: 6px 16px;
+  border-bottom: 1px solid var(--border);
+  cursor: default;
+}
+
+.qualitative-section__header-toggle--clickable {
+  cursor: pointer;
+}
+
 .qualitative-section__title {
   font-size: 0.7rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--text-secondary);
-  background: rgba(0, 0, 0, 0.08);
-  padding: 6px 16px;
+  background: transparent;
+  padding: 0;
   margin: 0;
-  border-bottom: 1px solid var(--border);
+  border-bottom: none;
+}
+
+.qualitative-section__badge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #a855f7;
+  background: rgba(168, 85, 247, 0.12);
+  border: 1px solid rgba(168, 85, 247, 0.25);
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  line-height: 1;
+}
+
+.qualitative-section__badge--empty {
+  color: var(--text-secondary);
+  background: var(--bg-hover);
+  border-color: var(--border);
+  opacity: 0.6;
+}
+
+.qualitative-section__arrow {
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
 }
 
 .qualitative-section__empty {
@@ -847,7 +1044,45 @@ function getGroupedUnitExpectations(unit) {
   display: flex;
   align-items: center;
   gap: 12px;
+  cursor: default;
+}
+
+.exp-card__header--clickable {
   cursor: pointer;
+}
+
+.exp-card--empty {
+  opacity: 0.72;
+}
+
+.exp-card--empty .exp-card__code-badge {
+  background: var(--bg-hover);
+  border-color: var(--border);
+  color: var(--text-secondary);
+  font-weight: 700;
+  opacity: 0.65;
+}
+
+.exp-card--empty .exp-card__title-desc {
+  color: var(--text-secondary);
+}
+
+.exp-card--has-data .exp-card__code-badge {
+  background: rgba(52, 152, 219, 0.14);
+  color: var(--primary);
+  border-color: rgba(52, 152, 219, 0.3);
+  box-shadow: 0 1px 2px rgba(52, 152, 219, 0.08);
+}
+
+.exp-card__count-pill {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--primary);
+  background: rgba(52, 152, 219, 0.12);
+  border: 1px solid rgba(52, 152, 219, 0.2);
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  white-space: nowrap;
 }
 
 .exp-card__code-badge {

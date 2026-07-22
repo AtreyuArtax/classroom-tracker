@@ -370,7 +370,7 @@
       "source_location": "L1465",
       "_origin": "ast",
       "id": "dev_dist_workbox_ca84f546_opendb",
-      "community": 13,
+      "community": 5,
       "norm_label": "opendb()"
     },
     {
@@ -380,7 +380,7 @@
       "source_location": "L1496",
       "_origin": "ast",
       "id": "dev_dist_workbox_ca84f546_deletedb",
-      "community": 5,
+      "community": 35,
       "norm_label": "deletedb()"
     },
     {
@@ -400,7 +400,7 @@
       "source_location": "L1567",
       "_origin": "ast",
       "id": "dev_dist_workbox_ca84f546_cachetimestampsmodel",
-      "community": 13,
+      "community": 35,
       "norm_label": "cachetimestampsmodel"
     },
     {
@@ -410,7 +410,7 @@
       "source_location": "L1574",
       "_origin": "ast",
       "id": "dev_dist_workbox_ca84f546_cachetimestampsmodel_constructor",
-      "community": 13,
+      "community": 35,
       "norm_label": ".constructor()"
     },
     {
@@ -420,7 +420,7 @@
       "source_location": "L1585",
       "_origin": "ast",
       "id": "dev_dist_workbox_ca84f546_cachetimestampsmodel_upgradedb",
-      "community": 13,
+      "community": 35,
       "norm_label": "._upgradedb()"
     },
     {
@@ -430,7 +430,7 @@
       "source_location": "L1610",
       "_origin": "ast",
       "id": "dev_dist_workbox_ca84f546_cachetimestampsmodel_upgradedbanddeleteolddbs",
-      "community": 13,
+      "community": 35,
       "norm_label": "._upgradedbanddeleteolddbs()"
     },
     {
@@ -440,7 +440,7 @@
       "source_location": "L1622",
       "_origin": "ast",
       "id": "dev_dist_workbox_ca84f546_cachetimestampsmodel_settimestamp",
-      "community": 13,
+      "community": 35,
       "norm_label": ".settimestamp()"
     },
     {
@@ -450,7 +450,7 @@
       "source_location": "L1648",
       "_origin": "ast",
       "id": "dev_dist_workbox_ca84f546_cachetimestampsmodel_gettimestamp",
-      "community": 13,
+      "community": 35,
       "norm_label": ".gettimestamp()"
     },
     {
@@ -460,7 +460,7 @@
       "source_location": "L1664",
       "_origin": "ast",
       "id": "dev_dist_workbox_ca84f546_cachetimestampsmodel_expireentries",
-      "community": 13,
+      "community": 35,
       "norm_label": ".expireentries()"
     },
     {
@@ -470,7 +470,7 @@
       "source_location": "L1711",
       "_origin": "ast",
       "id": "dev_dist_workbox_ca84f546_cachetimestampsmodel_getid",
-      "community": 13,
+      "community": 35,
       "norm_label": "._getid()"
     },
     {
@@ -480,7 +480,7 @@
       "source_location": "L1722",
       "_origin": "ast",
       "id": "dev_dist_workbox_ca84f546_cachetimestampsmodel_getdb",
-      "community": 13,
+      "community": 35,
       "norm_label": ".getdb()"
     },
     {
@@ -730,7 +730,7 @@
       "source_location": "L2388",
       "_origin": "ast",
       "id": "dev_dist_workbox_ca84f546_executequotaerrorcallbacks",
-      "community": 6,
+      "community": 5,
       "norm_label": "executequotaerrorcallbacks()"
     },
     {
@@ -740,7 +740,7 @@
       "source_location": "L2417",
       "_origin": "ast",
       "id": "dev_dist_workbox_ca84f546_timeout",
-      "community": 6,
+      "community": 5,
       "norm_label": "timeout()"
     },
     {
@@ -960,7 +960,7 @@
       "source_location": "L3196",
       "_origin": "ast",
       "id": "dev_dist_workbox_ca84f546_cachefirst",
-      "community": 6,
+      "community": 5,
       "norm_label": "cachefirst"
     },
     {
@@ -1400,7 +1400,7 @@
       "source_location": "L4431",
       "_origin": "ast",
       "id": "dev_dist_workbox_ca84f546_navigationroute",
-      "community": 5,
+      "community": 51,
       "norm_label": "navigationroute"
     },
     {
@@ -1410,7 +1410,7 @@
       "source_location": "L4456",
       "_origin": "ast",
       "id": "dev_dist_workbox_ca84f546_navigationroute_constructor",
-      "community": 5,
+      "community": 51,
       "norm_label": ".constructor()"
     },
     {
@@ -1420,7 +1420,7 @@
       "source_location": "L4488",
       "_origin": "ast",
       "id": "dev_dist_workbox_ca84f546_navigationroute_match",
-      "community": 5,
+      "community": 51,
       "norm_label": "._match()"
     },
     {
@@ -2580,7 +2580,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "components_basemodal",
-      "community": 51,
+      "community": 1,
       "norm_label": "basemodal.vue"
     },
     {
@@ -3210,7 +3210,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "components_yearsemesterselector",
-      "community": 35,
+      "community": 3,
       "norm_label": "yearsemesterselector.vue"
     },
     {
@@ -3220,7 +3220,7 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "components_yearsemesterselector_classlist_archivedclasses_selectedyear_selectedsemester",
-      "community": 35,
+      "community": 3,
       "norm_label": "{ \n  classlist, \n  archivedclasses, \n  selectedyear, \n  selectedsemester \n}"
     },
     {
@@ -3230,7 +3230,7 @@
       "source_location": "L40",
       "_origin": "ast",
       "id": "components_yearsemesterselector_allpossibleclasses",
-      "community": 35,
+      "community": 3,
       "norm_label": "allpossibleclasses"
     },
     {
@@ -3240,7 +3240,7 @@
       "source_location": "L42",
       "_origin": "ast",
       "id": "components_yearsemesterselector_uniqueyears",
-      "community": 35,
+      "community": 3,
       "norm_label": "uniqueyears"
     },
     {
@@ -3250,7 +3250,7 @@
       "source_location": "L49",
       "_origin": "ast",
       "id": "components_yearsemesterselector_uniquesemesters",
-      "community": 35,
+      "community": 3,
       "norm_label": "uniquesemesters"
     },
     {
@@ -3260,8 +3260,38 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dossier_addassessmentmodal",
-      "community": 3,
+      "community": 1,
       "norm_label": "addassessmentmodal.vue"
+    },
+    {
+      "label": "{ sortedRoster }",
+      "file_type": "code",
+      "source_file": "src/components/dossier/AddAssessmentModal.vue",
+      "source_location": "L151",
+      "_origin": "ast",
+      "id": "dossier_addassessmentmodal_sortedroster",
+      "community": 1,
+      "norm_label": "{ sortedroster }"
+    },
+    {
+      "label": "unitExpectations",
+      "file_type": "code",
+      "source_file": "src/components/dossier/AddAssessmentModal.vue",
+      "source_location": "L153",
+      "_origin": "ast",
+      "id": "dossier_addassessmentmodal_unitexpectations",
+      "community": 1,
+      "norm_label": "unitexpectations"
+    },
+    {
+      "label": "selectedExpectationObj",
+      "file_type": "code",
+      "source_file": "src/components/dossier/AddAssessmentModal.vue",
+      "source_location": "L164",
+      "_origin": "ast",
+      "id": "dossier_addassessmentmodal_selectedexpectationobj",
+      "community": 1,
+      "norm_label": "selectedexpectationobj"
     },
     {
       "label": "AttendanceActivityReport.vue",
@@ -5410,7 +5440,7 @@
       "source_location": "L1430",
       "_origin": "ast",
       "id": "composables_useclassroom_useclassroom",
-      "community": 79,
+      "community": 41,
       "norm_label": "useclassroom()"
     },
     {
@@ -5460,7 +5490,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "composables_useclassroomstate_activeclass",
-      "community": 26,
+      "community": 24,
       "norm_label": "activeclass"
     },
     {
@@ -5480,7 +5510,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "composables_useclassroomstate_students",
-      "community": 26,
+      "community": 24,
       "norm_label": "students"
     },
     {
@@ -5500,7 +5530,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "composables_useclassroomstate_gridsize",
-      "community": 20,
+      "community": 24,
       "norm_label": "gridsize"
     },
     {
@@ -5670,7 +5700,7 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "composables_usegradeediting_usegradeediting",
-      "community": 1,
+      "community": 24,
       "norm_label": "usegradeediting()"
     },
     {
@@ -6610,7 +6640,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "composables_usestudentdossier",
-      "community": 79,
+      "community": 41,
       "norm_label": "usestudentdossier.js"
     },
     {
@@ -6620,7 +6650,7 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "composables_usestudentdossier_usestudentdossier",
-      "community": 79,
+      "community": 41,
       "norm_label": "usestudentdossier()"
     },
     {
@@ -7000,7 +7030,7 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "db_eventservice_tominutes",
-      "community": 79,
+      "community": 41,
       "norm_label": "tominutes()"
     },
     {
@@ -7120,7 +7150,7 @@
       "source_location": "L414",
       "_origin": "ast",
       "id": "db_eventservice_getdaterangeforperiod",
-      "community": 79,
+      "community": 41,
       "norm_label": "getdaterangeforperiod()"
     },
     {
@@ -7130,7 +7160,7 @@
       "source_location": "L466",
       "_origin": "ast",
       "id": "db_eventservice_getdaterangeforclassperiod",
-      "community": 79,
+      "community": 41,
       "norm_label": "getdaterangeforclassperiod()"
     },
     {
@@ -7250,7 +7280,7 @@
       "source_location": "L106",
       "_origin": "ast",
       "id": "db_gradebookservice_getgradeintransaction",
-      "community": 8,
+      "community": 2,
       "norm_label": "_getgradeintransaction()"
     },
     {
@@ -7260,7 +7290,7 @@
       "source_location": "L141",
       "_origin": "ast",
       "id": "db_gradebookservice_getorcreategrade",
-      "community": 8,
+      "community": 2,
       "norm_label": "getorcreategrade()"
     },
     {
@@ -7270,7 +7300,7 @@
       "source_location": "L154",
       "_origin": "ast",
       "id": "db_gradebookservice_addattempt",
-      "community": 8,
+      "community": 2,
       "norm_label": "addattempt()"
     },
     {
@@ -7280,7 +7310,7 @@
       "source_location": "L196",
       "_origin": "ast",
       "id": "db_gradebookservice_deleteattempt",
-      "community": 8,
+      "community": 2,
       "norm_label": "deleteattempt()"
     },
     {
@@ -7290,7 +7320,7 @@
       "source_location": "L224",
       "_origin": "ast",
       "id": "db_gradebookservice_setprimaryattempt",
-      "community": 8,
+      "community": 2,
       "norm_label": "setprimaryattempt()"
     },
     {
@@ -7300,7 +7330,7 @@
       "source_location": "L255",
       "_origin": "ast",
       "id": "db_gradebookservice_updateattemptcomment",
-      "community": 8,
+      "community": 2,
       "norm_label": "updateattemptcomment()"
     },
     {
@@ -7310,7 +7340,7 @@
       "source_location": "L284",
       "_origin": "ast",
       "id": "db_gradebookservice_updategradeflags",
-      "community": 8,
+      "community": 2,
       "norm_label": "updategradeflags()"
     },
     {
@@ -7860,7 +7890,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_main",
-      "community": 77,
+      "community": 3,
       "norm_label": "main.js"
     },
     {
@@ -7870,7 +7900,7 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "src_main_requestpersistentstorage",
-      "community": 77,
+      "community": 3,
       "norm_label": "requestpersistentstorage()"
     },
     {
@@ -7880,7 +7910,7 @@
       "source_location": "L44",
       "_origin": "ast",
       "id": "src_main_app",
-      "community": 77,
+      "community": 3,
       "norm_label": "app"
     },
     {
@@ -12856,6 +12886,17 @@
       "target": "db_eventservice_issyncactive"
     },
     {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/dossier/AddAssessmentModal.vue",
+      "source_location": "L150",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "dossier_addassessmentmodal",
+      "target": "components_basemodal"
+    },
+    {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/components/ClassSwitcher.vue",
@@ -13509,6 +13550,168 @@
       "confidence_score": 1.0,
       "source": "components_yearsemesterselector",
       "target": "composables_useclassroom_useclassroom"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/dossier/AddAssessmentModal.vue",
+      "source_location": "L149",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "dossier_addassessmentmodal",
+      "target": "composables_useclassroom"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/dossier/AddAssessmentModal.vue",
+      "source_location": "L149",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "dossier_addassessmentmodal",
+      "target": "composables_useclassroom_useclassroom"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/dossier/AddAssessmentModal.vue",
+      "source_location": "L138",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "dossier_addassessmentmodal",
+      "target": "composables_usegradebook"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/dossier/AddAssessmentModal.vue",
+      "source_location": "L138",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "dossier_addassessmentmodal",
+      "target": "composables_usegradebook_activeclassrecord"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/dossier/AddAssessmentModal.vue",
+      "source_location": "L138",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "dossier_addassessmentmodal",
+      "target": "composables_usegradebook_assessmenttypes"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/dossier/AddAssessmentModal.vue",
+      "source_location": "L138",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "dossier_addassessmentmodal",
+      "target": "composables_usegradebook_closeaddassessment"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/dossier/AddAssessmentModal.vue",
+      "source_location": "L138",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "dossier_addassessmentmodal",
+      "target": "composables_usegradebook_iseditingassessment"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/dossier/AddAssessmentModal.vue",
+      "source_location": "L138",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "dossier_addassessmentmodal",
+      "target": "composables_usegradebook_newassessment"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/dossier/AddAssessmentModal.vue",
+      "source_location": "L138",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "dossier_addassessmentmodal",
+      "target": "composables_usegradebook_ontargetchange"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/dossier/AddAssessmentModal.vue",
+      "source_location": "L138",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "dossier_addassessmentmodal",
+      "target": "composables_usegradebook_saveassessment"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/dossier/AddAssessmentModal.vue",
+      "source_location": "L138",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "dossier_addassessmentmodal",
+      "target": "composables_usegradebook_showaddassessmentmodal"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/dossier/AddAssessmentModal.vue",
+      "source_location": "L138",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "dossier_addassessmentmodal",
+      "target": "composables_usegradebook_sortedunits"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/dossier/AddAssessmentModal.vue",
+      "source_location": "L165",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "dossier_addassessmentmodal",
+      "target": "dossier_addassessmentmodal_selectedexpectationobj"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/dossier/AddAssessmentModal.vue",
+      "source_location": "L152",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "dossier_addassessmentmodal",
+      "target": "dossier_addassessmentmodal_sortedroster"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/dossier/AddAssessmentModal.vue",
+      "source_location": "L154",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "dossier_addassessmentmodal",
+      "target": "dossier_addassessmentmodal_unitexpectations"
     },
     {
       "relation": "contains",
@@ -23109,5 +23312,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "b1588c586f6cffbc1a29b491085f6e45f7e73719"
+  "built_at_commit": "58f4898340f5eae7ac4650a8547d5e7d47fdbb32"
 }

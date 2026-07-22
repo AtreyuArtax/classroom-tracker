@@ -14,25 +14,36 @@
 
     <div class="acm-content">
       <!-- Optional Unit & Expectation Selection -->
-      <div v-if="activeClass?.gradebookUnits?.length" class="acm-field-row">
-        <div class="acm-field">
-          <label class="acm-label">Unit (Optional)</label>
-          <select v-model="selectedUnitId" class="acm-select" @change="selectedExpectationId = null">
-            <option :value="null">General / No Unit</option>
-            <option v-for="unit in activeClass.gradebookUnits" :key="unit.unitId" :value="unit.unitId">
-              {{ unit.name }}
-            </option>
-          </select>
+      <div v-if="activeClass?.gradebookUnits?.length" class="acm-field-group">
+        <div class="acm-field-row">
+          <div class="acm-field">
+            <label class="acm-label">Unit (Optional)</label>
+            <select v-model="selectedUnitId" class="acm-select" @change="selectedExpectationId = null">
+              <option :value="null">General / No Unit</option>
+              <option v-for="unit in activeClass.gradebookUnits" :key="unit.unitId" :value="unit.unitId">
+                {{ unit.name }}
+              </option>
+            </select>
+          </div>
+
+          <div class="acm-field" v-if="selectedUnitId && unitExpectations.length">
+            <label class="acm-label">Expectation (Optional)</label>
+            <select v-model="selectedExpectationId" class="acm-select">
+              <option :value="null">None / General Unit Comment</option>
+              <option 
+                v-for="exp in unitExpectations" 
+                :key="exp.expectationId || exp.code" 
+                :value="exp.expectationId || exp.code"
+              >
+                {{ exp.code }}: {{ exp.description }}
+              </option>
+            </select>
+          </div>
         </div>
 
-        <div class="acm-field" v-if="selectedUnitId && unitExpectations.length">
-          <label class="acm-label">Expectation (Optional)</label>
-          <select v-model="selectedExpectationId" class="acm-select">
-            <option :value="null">None / General Unit Comment</option>
-            <option v-for="exp in unitExpectations" :key="exp.expectationId || exp.code" :value="exp.expectationId || exp.code">
-              {{ exp.code }}: {{ truncateExpectation(exp.description) }}
-            </option>
-          </select>
+        <div v-if="selectedExpectationObj" class="acm-exp-preview">
+          <span class="acm-exp-preview-code">{{ selectedExpectationObj.code }}</span>
+          <span class="acm-exp-preview-desc">{{ selectedExpectationObj.description }}</span>
         </div>
       </div>
 
@@ -175,6 +186,11 @@ const unitExpectations = computed(() => {
     return rawExps.filter(e => e.code.includes('.'))
   }
   return rawExps
+})
+
+const selectedExpectationObj = computed(() => {
+  if (!selectedExpectationId.value || !unitExpectations.value?.length) return null
+  return unitExpectations.value.find(e => (e.expectationId || e.code) === selectedExpectationId.value)
 })
 
 const isFormValid = computed(() => {
@@ -410,5 +426,34 @@ function onCancel() {
 
 .acm-select:focus {
   border-color: var(--primary);
+}
+
+.acm-exp-preview {
+  margin-top: 10px;
+  padding: 10px 14px;
+  background: var(--bg-hover);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  font-size: 0.82rem;
+  line-height: 1.45;
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.acm-exp-preview-code {
+  font-weight: 700;
+  color: var(--primary);
+  background: rgba(52, 152, 219, 0.12);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.72rem;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.acm-exp-preview-desc {
+  color: var(--text);
+  flex: 1;
 }
 </style>
