@@ -94,9 +94,13 @@
                       evt.eventId === getSelectedGeneralEvent()?.eventId ? 'timeline__step--active' : '',
                       `timeline__step--${evt.acOutcome}`
                     ]"
+                    :style="evt.eventId === getSelectedGeneralEvent()?.eventId && evt.acType === 'product' && evt.pctValue !== undefined ? { boxShadow: `0 0 0 2px var(--surface), 0 0 0 4px ${getProductColor(evt.pctValue)}` } : {}"
                     @click.stop="selectGeneralEvent(evt.eventId)"
                   >
-                    <div :class="['timeline__badge', `timeline__badge--${evt.acOutcome}`]">
+                    <div 
+                      :class="['timeline__badge', `timeline__badge--${evt.acOutcome}`]"
+                      :style="evt.acType === 'product' && evt.pctValue !== undefined ? { backgroundColor: getProductColor(evt.pctValue), color: '#ffffff', borderColor: getProductColor(evt.pctValue) } : {}"
+                    >
                       {{ formatDate(evt.timestamp) }}
                     </div>
                     <span class="timeline__label">{{ formatOutcomeLabel(evt) }}</span>
@@ -218,9 +222,13 @@
                         evt.eventId === getSelectedEvent(unit.unitId, getExpKey(exp))?.eventId ? 'timeline__step--active' : '',
                         `timeline__step--${evt.acOutcome}`
                       ]"
+                      :style="evt.eventId === getSelectedEvent(unit.unitId, getExpKey(exp))?.eventId && evt.acType === 'product' && evt.pctValue !== undefined ? { boxShadow: `0 0 0 2px var(--surface), 0 0 0 4px ${getProductColor(evt.pctValue)}` } : {}"
                       @click.stop="selectEvent(unit.unitId, getExpKey(exp), evt.eventId)"
                     >
-                      <div :class="['timeline__badge', `timeline__badge--${evt.acOutcome}`]">
+                      <div 
+                        :class="['timeline__badge', `timeline__badge--${evt.acOutcome}`]"
+                        :style="evt.acType === 'product' && evt.pctValue !== undefined ? { backgroundColor: getProductColor(evt.pctValue), color: '#ffffff', borderColor: getProductColor(evt.pctValue) } : {}"
+                      >
                         {{ formatDate(evt.timestamp) }}
                       </div>
                       <span class="timeline__label">{{ formatOutcomeLabel(evt) }}</span>
@@ -350,9 +358,13 @@
                       evt.eventId === getSelectedEvent(unit.unitId, 'general')?.eventId ? 'timeline__step--active' : '',
                       `timeline__step--${evt.acOutcome}`
                     ]"
+                    :style="evt.eventId === getSelectedEvent(unit.unitId, 'general')?.eventId && evt.acType === 'product' && evt.pctValue !== undefined ? { boxShadow: `0 0 0 2px var(--surface), 0 0 0 4px ${getProductColor(evt.pctValue)}` } : {}"
                     @click.stop="selectEvent(unit.unitId, 'general', evt.eventId)"
                   >
-                    <div :class="['timeline__badge', `timeline__badge--${evt.acOutcome}`]">
+                    <div 
+                      :class="['timeline__badge', `timeline__badge--${evt.acOutcome}`]"
+                      :style="evt.acType === 'product' && evt.pctValue !== undefined ? { backgroundColor: getProductColor(evt.pctValue), color: '#ffffff', borderColor: getProductColor(evt.pctValue) } : {}"
+                    >
                       {{ formatDate(evt.timestamp) }}
                     </div>
                     <span class="timeline__label">{{ formatOutcomeLabel(evt) }}</span>
@@ -446,9 +458,43 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { Eye, MessageSquare, Trash2, ChevronDown, ChevronUp } from 'lucide-vue-next'
 import { formatLocalDisplay } from '../../utils/dates.js'
+import { getGradeBuckets } from '../../db/settingsService.js'
+
+const gradeBucketsList = ref([])
+
+onMounted(async () => {
+  try {
+    gradeBucketsList.value = await getGradeBuckets()
+  } catch (e) {
+    console.warn('Could not load grade buckets:', e)
+  }
+})
+
+function getProductColor(pct) {
+  if (pct === null || pct === undefined || isNaN(pct)) return 'var(--primary)'
+  const buckets = gradeBucketsList.value?.length > 0 
+    ? gradeBucketsList.value 
+    : [
+        { label: 'R', min: 0, max: 49, color: '#ff3b30' },
+        { label: 'L1', min: 50, max: 59, color: '#ff9500' },
+        { label: 'L2', min: 60, max: 69, color: '#ffcc00' },
+        { label: 'L3', min: 70, max: 79, color: '#30b0c7' },
+        { label: 'L4', min: 80, max: 100, color: '#34c759' }
+      ]
+
+  const rounded = Math.round(pct)
+  let matched = buckets.find(b => rounded >= b.min && rounded <= b.max)
+  if (!matched && rounded > buckets[buckets.length - 1].max) {
+    matched = buckets[buckets.length - 1]
+  }
+  if (!matched && rounded < buckets[0].min) {
+    matched = buckets[0]
+  }
+  return matched?.color || 'var(--primary)'
+}
 
 const props = defineProps({
   events: { type: Array, default: () => [] },
@@ -685,7 +731,8 @@ function getSyntheticProductEvents(unitId, expectationId, unitObj = null, target
         assessmentName: a.name,
         scoreLabel: `${a.score} / ${a.totalPoints}`,
         pctLabel: `${Math.round(pct)}%`,
-        categoryName: props.activeClass?.gradebookCategories?.find(c => c.categoryId === a.categoryId)?.name || 'Product'
+        categoryName: props.activeClass?.gradebookCategories?.find(c => c.categoryId === a.categoryId)?.name || 'Product',
+        pctValue: Math.round(pct)
       }
     })
 }
