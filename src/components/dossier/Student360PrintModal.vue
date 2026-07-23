@@ -1,0 +1,352 @@
+<template>
+  <div>
+    <!-- Print Report Configuration Modal -->
+    <BaseModal
+      :show="show"
+      title="Print Report"
+      max-width="700px"
+      :z-index="3000"
+      @close="$emit('close')"
+    >
+      <template #header>
+        <div class="header-content">
+          <Printer class="header-icon" :size="24" />
+          <div>
+            <h3 class="header-title">Print Report</h3>
+            <p class="header-subtitle">Format a professional document for this student.</p>
+          </div>
+        </div>
+      </template>
+
+      <div class="email-config-modal-body">
+        <div class="config-section">
+          <div class="config-section-header">
+            <h4 class="config-section-title">Report Type</h4>
+            <div class="report-type-toggle">
+              <button 
+                class="reports__toggle-btn" 
+                :class="{ 'reports__toggle-btn--active': printConfig.reportType === 'progress' }"
+                @click="printConfig.reportType = 'progress'"
+              >Progress</button>
+              <button 
+                class="reports__toggle-btn" 
+                :class="{ 'reports__toggle-btn--active': printConfig.reportType === 'attendance' }"
+                @click="printConfig.reportType = 'attendance'"
+              >Attendance</button>
+            </div>
+          </div>
+
+          <div v-if="printConfig.reportType === 'progress'" class="print-modal__options" style="margin-top: 1rem;">
+            <div class="print-modal__section-title">Include in Document</div>
+            <label class="print-modal__option">
+              <input type="checkbox" v-model="printConfig.includeOverallGrade" />
+              Overall Grade Badge
+            </label>
+            <label class="print-modal__option">
+              <input type="checkbox" v-model="printConfig.includeMedians" />
+              Weighted Median & Consistent Grade
+            </label>
+            <label class="print-modal__option">
+              <input type="checkbox" v-model="printConfig.includeGradeTrend" />
+              Performance Trend Graph
+            </label>
+            <label class="print-modal__option">
+              <input type="checkbox" v-model="printConfig.includeTriangulation" />
+              Evidence Triangulation (Pie)
+            </label>
+            <label class="print-modal__option">
+              <input type="checkbox" v-model="printConfig.includeCategorySummary" />
+              Category Performance Summary
+            </label>
+            <div class="print-modal__divider"></div>
+            <label class="print-modal__option">
+              <input type="checkbox" v-model="printConfig.includeAttendance" />
+              Attendance Summary
+            </label>
+            <label class="print-modal__option">
+              <input type="checkbox" v-model="printConfig.includeBehavior" />
+              Out-of-Class Summary
+            </label>
+          </div>
+
+          <div v-else class="print-modal__options" style="margin-top: 1rem;">
+             <div class="print-modal__section-title">Report Content</div>
+             <p class="setup__hint">The Attendance & Activity report generates a visual 5-month grid for the current semester based on your School Calendar settings.</p>
+          </div>
+
+          <div class="config-section-header" style="margin-top: 1.5rem;">
+            <h4 class="config-section-title">Preview</h4>
+            <button class="reports__btn-preview" @click="showPrintPreview = !showPrintPreview">
+              {{ showPrintPreview ? 'Hide Preview' : 'Show Preview' }}
+            </button>
+          </div>
+        </div>
+
+        <!-- Live Preview Section -->
+        <div v-if="showPrintPreview" class="reports__print-preview-area">
+          <header class="preview-banner">
+            <Activity :size="14" /> LIVE PREVIEW ({{ printConfig.reportType === 'progress' ? 'Progress' : 'Attendance' }})
+          </header>
+          <div class="preview-content">
+            <ProgressReport 
+              v-if="printConfig.reportType === 'progress'"
+              :student-id="studentId" 
+              :class-id="classId" 
+              :config="printConfig" 
+              :is-batch="false"
+            />
+            <AttendanceActivityReport
+              v-else
+              :student-id="studentId"
+              :class-id="classId"
+              :is-batch="false"
+            />
+          </div>
+        </div>
+
+        <div v-else class="report-preview-mini">
+          <p v-if="printConfig.reportType === 'progress'">This will generate a formal PDF/Print document containing overall grades, performance trends, and assessment history.</p>
+          <p v-else>This will generate a visual 5-month attendance calendar with behavioral metrics and totals.</p>
+        </div>
+      </div>
+
+      <template #footer>
+        <button class="btn-cancel" @click="$emit('close')">Cancel</button>
+        <button class="btn-generate" @click="triggerPrint">
+          Open Print Dialog
+          <Printer :size="18" />
+        </button>
+      </template>
+    </BaseModal>
+
+    <!-- Hidden/Active Print Container -->
+    <Teleport to="body">
+      <div class="print-only-container" :class="{ 'print-only-container--active': isSystemPrinting }">
+        <ProgressReport 
+          v-if="printConfig.reportType === 'progress'"
+          :student-id="studentId" 
+          :class-id="classId" 
+          :config="printConfig" 
+        />
+        <AttendanceActivityReport
+          v-else
+          :student-id="studentId"
+          :class-id="classId"
+        />
+      </div>
+    </Teleport>
+  </div>
+</template>
+
+<script setup>
+import { ref, reactive, watch, nextTick } from 'vue'
+import { Printer, Activity } from 'lucide-vue-next'
+import BaseModal from '../BaseModal.vue'
+import ProgressReport from './ProgressReport.vue'
+import AttendanceActivityReport from './AttendanceActivityReport.vue'
+
+const props = defineProps({
+  show: { type: Boolean, default: false },
+  studentId: { type: String, required: true },
+  classId: { type: String, required: true }
+})
+
+const emit = defineEmits(['close'])
+
+const showPrintPreview = ref(false)
+const isSystemPrinting = ref(false)
+
+watch(isSystemPrinting, (newValue) => {
+  if (newValue) {
+    document.body.classList.add('is-printing')
+  } else {
+    document.body.classList.remove('is-printing')
+  }
+})
+
+const printConfig = reactive({
+  reportType: 'progress',
+  includeAttendance: true,
+  includeBehavior: false,
+  includeOverallGrade: true,
+  includeMedians: false,
+  includeGradeTrend: true,
+  includeTriangulation: false,
+  includeCategorySummary: true
+})
+
+async function triggerPrint() {
+  emit('close')
+  isSystemPrinting.value = true
+  
+  nextTick(async () => {
+    await new Promise(resolve => setTimeout(resolve, 1500))
+    window.print()
+    isSystemPrinting.value = false
+  })
+}
+</script>
+
+<style scoped>
+.header-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.header-icon {
+  color: var(--primary);
+}
+.header-title {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+.header-subtitle {
+  margin: 2px 0 0 0;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.config-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.config-section-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0;
+}
+
+.report-type-toggle {
+  display: flex;
+  background: var(--bg-secondary);
+  padding: 3px;
+  border-radius: var(--radius-md);
+  gap: 4px;
+}
+
+.reports__toggle-btn {
+  padding: 6px 14px;
+  border: none;
+  background: none;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: all 0.2s ease;
+}
+
+.reports__toggle-btn--active {
+  background: var(--surface);
+  color: var(--primary);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.print-modal__options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.print-modal__section-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+}
+
+.print-modal__option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.print-modal__divider {
+  height: 1px;
+  background: var(--border);
+  margin: 8px 0;
+}
+
+.reports__btn-preview {
+  padding: 4px 10px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.reports__print-preview-area {
+  margin-top: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.preview-banner {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg-secondary);
+  padding: 6px 12px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--primary);
+  border-bottom: 1px solid var(--border);
+}
+
+.report-preview-mini {
+  margin-top: 12px;
+  padding: 16px;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.btn-cancel {
+  padding: 8px 16px;
+  border: 1px solid var(--border);
+  background: transparent;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-generate {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* Teleport container for printing */
+.print-only-container {
+  display: none;
+}
+
+.print-only-container--active {
+  display: block;
+  position: fixed;
+  inset: 0;
+  background: white;
+  z-index: 999999;
+}
+</style>

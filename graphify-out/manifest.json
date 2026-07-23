@@ -185,8 +185,8 @@
     "semantic_hash": "561bf8bd5746113ff902a94fb2a31f6e"
   },
   "src/components/dossier/Student360.vue": {
-    "mtime": 1784559178.8389683,
-    "ast_hash": "7cb9a7d5ff16b9bef54883b9525a9fa2",
+    "mtime": 1784812542.92596,
+    "ast_hash": "e089fdc81686f01bd59190026607c712",
     "semantic_hash": ""
   },
   "src/components/dossier/Student360Header.vue": {
@@ -492,6 +492,31 @@
   "src/data/curriculum/secondary/ontario-sph4u.json": {
     "mtime": 1784561860.820596,
     "ast_hash": "9e5f22531e240ffd479694d3aae22ca1",
+    "semantic_hash": ""
+  },
+  "src/components/dossier/Student360AttemptsModal.vue": {
+    "mtime": 1784812532.3295655,
+    "ast_hash": "b181de7bc65f0418cc10add6f0aa245f",
+    "semantic_hash": ""
+  },
+  "src/components/dossier/Student360EmailModal.vue": {
+    "mtime": 1784812507.0741627,
+    "ast_hash": "e78df81f2188ac7bcf96563f682c6133",
+    "semantic_hash": ""
+  },
+  "src/components/dossier/Student360HistoryTab.vue": {
+    "mtime": 1784812526.369526,
+    "ast_hash": "cdc5afc2dc7295d1f3227cbe1cbe3f8f",
+    "semantic_hash": ""
+  },
+  "src/components/dossier/Student360PrintModal.vue": {
+    "mtime": 1784812514.651324,
+    "ast_hash": "a8cfdb27d7cccc41c1b9f4f1da30d642",
+    "semantic_hash": ""
+  },
+  "src/components/dossier/Student360ProfileTab.vue": {
+    "mtime": 1784812521.287555,
+    "ast_hash": "2474eef326453a9fafbadda8da777afd",
     "semantic_hash": ""
   }
 }

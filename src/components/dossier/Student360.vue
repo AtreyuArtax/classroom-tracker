@@ -87,7 +87,7 @@
           />
         </div>
 
-        <!-- Trends Section (Side-by-Side) -->
+        <!-- Trends Section -->
         <div class="student-360__trends-row">
           <div class="trend-item">
             <h4 class="trend-item__title">Grade Performance</h4>
@@ -130,6 +130,7 @@
           @delete-event="handleDeleteHistoryItem"
         />
       </section>
+
       <!-- Qualitative Evidence Tab -->
       <section v-if="activeTab === 'qualitative'" class="student-360__pane student-360__pane--qualitative">
         <DossierQualitativeEvidence 
@@ -140,6 +141,7 @@
         />
       </section>
 
+      <!-- Communication Log Tab -->
       <section v-if="activeTab === 'communication'" class="student-360__pane">
         <DossierCommunicationLog 
           :events="communicationEvents" 
@@ -190,441 +192,79 @@
       </section>
 
       <!-- Profile Tab -->
-      <section v-if="activeTab === 'profile'" class="student-360__pane student-360__pane--profile">
-        <div class="profile-section">
-          <h3 class="profile-section__title">Demographics</h3>
-          <div class="profile-grid">
-            <div class="profile-item">
-              <span class="profile-item__label">Age / DOB</span>
-              <span class="profile-item__value" :class="{ 'profile-item__value--adult': isAdult }">
-                <ShieldCheck v-if="isAdult" :size="14" class="adult-icon" />
-                {{ student.birthDate ? `${computeAge(student.birthDate)} (${student.birthDate})` : '—' }}
-              </span>
-            </div>
-            <div class="profile-item">
-              <span class="profile-item__label">Student Email</span>
-              <span class="profile-item__value">
-                <a :href="'mailto:' + student.studentEmail" v-if="student.studentEmail">{{ student.studentEmail }}</a>
-                <span v-else>—</span>
-              </span>
-            </div>
-            <div class="profile-item">
-              <span class="profile-item__label">Living With</span>
-              <span class="profile-item__value">{{ student.livingWith || '—' }}</span>
-            </div>
-            <div class="profile-item">
-              <span class="profile-item__label">Custody</span>
-              <span class="profile-item__value">{{ student.custody || '—' }}</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="profile-section">
-          <h3 class="profile-section__title">Parent / Guardian Contacts</h3>
-          <div v-if="!student.parentContacts?.length" class="text-muted">No contacts on file.</div>
-          <div v-else class="contacts-list">
-            <div v-for="(c, i) in student.parentContacts" :key="i" class="contact-card">
-              <div class="contact-card__name">{{ c.name }}</div>
-              <div class="contact-card__meta">
-                <a :href="'mailto:' + c.email" v-if="c.email">{{ c.email }}</a>
-                <span v-if="c.phone">{{ c.phone }}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="profile-section">
-          <h3 class="profile-section__title">General Notes</h3>
-          <textarea 
-            class="student-360__notes-area"
-            placeholder="Seating needs, accommodations, etc..."
-            v-model="localGeneralNote"
-            @blur="updateGeneralNoteLocal"
-          ></textarea>
-        </div>
-
-        <div class="profile-actions">
-          <div class="profile-actions__label">
-            <ClipboardList :size="14" />
-            Copy for Report Card Comment
-          </div>
-          <div class="profile-actions__buttons">
-            <button class="btn-copy-report btn-copy-report--anon" @click="copyForReportCard(false)">
-              <ShieldCheck :size="15" />
-              {{ isCopiedAnon ? '✓ Copied!' : 'Without Name' }}
-            </button>
-            <button class="btn-copy-report btn-copy-report--named" @click="copyForReportCard(true)">
-              <ClipboardList :size="15" />
-              {{ isCopiedNamed ? '✓ Copied!' : 'With Name' }}
-            </button>
-          </div>
-        </div>
-      </section>
+      <Student360ProfileTab
+        v-if="activeTab === 'profile'"
+        :student="student"
+        :stats="stats"
+        :all-dossier-assessments="allDossierAssessments"
+        :active-class="activeClass"
+        :active-class-record="activeClassRecord"
+        :filtered-milestones="filteredMilestones"
+        :global-milestones="globalMilestones"
+        :active-student-events="activeStudentEvents"
+        :academic-categories="academicCategories"
+        :formatted-grade="formattedGrade"
+        @update-note="saveGeneralNote"
+      />
 
       <!-- History Tab -->
-      <section v-if="activeTab === 'history'" class="student-360__pane student-360__pane--history">
-        <div class="history-container">
-          <h3 class="history-title">Academic Journey</h3>
-          <p class="history-subtitle">Historical records across all semesters and years.</p>
-          
-          <div v-if="allTimeHistory.length === 0" class="history-empty">
-            <History :size="48" class="history-empty-icon" />
-            <p>No historical records found for this student.</p>
-          </div>
-          
-          <div v-else class="history-list">
-            <div v-for="h in allTimeHistory" :key="h.classId" class="history-item">
-              <div class="history-item__left">
-                <div class="history-term-badge">{{ h.year }} • {{ h.semester }}</div>
-                <div class="history-class-name">{{ h.name }}</div>
-                <div class="history-period" v-if="h.period">Period {{ h.period }}</div>
-              </div>
-              <div class="history-item__right">
-                <div class="history-grade-pill" :style="{ backgroundColor: getGradeColor(h.overallGrade) }">
-                  {{ h.overallGrade != null ? Math.round(h.overallGrade) + '%' : '—' }}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      <Student360HistoryTab
+        v-if="activeTab === 'history'"
+        :all-time-history="allTimeHistory"
+      />
     </main>
 
-    <!-- Context Menu -->
-    <div v-if="contextMenu" class="context-menu-backdrop" @click="contextMenu = null">
-      <div 
-        class="context-menu"
-        :style="{ top: contextMenu.y + 'px', left: contextMenu.x + 'px' }"
-        @click.stop
-      >
-        <button class="context-menu__item" @click="startNewAttempt(contextMenu.assessmentId)">
-          <Plus :size="14" /> New Attempt...
-        </button>
-        <button 
-          v-if="gradeMap[contextMenu.assessmentId]?.[studentId]?.attempts?.length >= 1"
-          class="context-menu__item" 
-          @click="openAttemptsFromMenu($event, contextMenu.assessmentId)"
-        >
-          <Calendar :size="14" /> View Notes
-        </button>
-        <div class="context-menu__divider"></div>
-        <button class="context-menu__item" @click="toggleMissing(contextMenu.assessmentId)">
-          <AlertCircle :size="14" /> {{ gradeMap[contextMenu.assessmentId]?.[studentId]?.missing ? 'Unmark Missing' : 'Mark Missing' }}
-        </button>
-        <button class="context-menu__item" @click="toggleExcluded(contextMenu.assessmentId)">
-          <XCircle :size="14" /> {{ gradeMap[contextMenu.assessmentId]?.[studentId]?.excluded ? 'Unmark Excluded' : 'Mark Excluded' }}
-        </button>
-        <div class="context-menu__divider"></div>
-        <button class="context-menu__item text-danger" @click="doDeleteAssessment(contextMenu.assessmentId)">
-          <Trash2 :size="14" /> Delete Assessment
-        </button>
-      </div>
-    </div>
-
-    <!-- Attempts Popover -->
-    <div v-if="attemptsPopover" class="context-menu-backdrop" @click="attemptsPopover = null">
-      <div 
-        class="attempts-popover"
-        :style="{ top: attemptsPopover.y + 'px', left: attemptsPopover.x + 'px' }"
-        @click.stop
-      >
-        <div class="attempts-popover__header">Attempt History</div>
-        <div class="attempts-popover__list">
-          <div 
-            v-for="att in gradeMap[attemptsPopover.assessmentId]?.[studentId]?.attempts" 
-            :key="att.attemptId"
-            class="attempt-item"
-            :class="{ 'attempt-item--primary': att.isPrimary }"
-          >
-            <div class="attempt-item__row">
-              <div class="attempt-item__main">
-                <span class="attempt-item__score">{{ att.pointsEarned }}</span>
-                <span class="attempt-item__date">{{ formatLocalDisplay(att.date, { month: 'short', day: 'numeric' }) }}</span>
-              </div>
-              <div class="attempt-item__actions">
-                <button 
-                  v-if="!att.isPrimary" 
-                  class="btn-icon-sm" 
-                  title="Set as Primary"
-                  @click="doSetPrimary(attemptsPopover.assessmentId, att.attemptId)"
-                >
-                  <Check :size="12" />
-                </button>
-                <button 
-                  class="btn-icon-sm btn-icon-sm--danger" 
-                  title="Delete Attempt"
-                  @click="doDeleteAttempt(attemptsPopover.assessmentId, att.attemptId)"
-                >
-                  <Trash2 :size="12" />
-                </button>
-              </div>
-            </div>
-            <!-- Per-attempt comment -->
-            <textarea
-              class="attempt-comment-input"
-              :value="att.comment || ''"
-              placeholder="Add a note about this attempt…"
-              rows="2"
-              @change="doUpdateComment(attemptsPopover.assessmentId, att.attemptId, $event.target.value)"
-            ></textarea>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- New Attempt Modal -->
-    <BaseModal
-      :show="!!newAttemptForm"
-      title="Record New Attempt"
-      :z-index="3000"
-      @close="newAttemptForm = null"
-    >
-      <div class="modal-body-content">
-        <div class="form-group">
-          <label>Points Earned</label>
-          <input type="number" v-model="newAttemptForm.points" autofocus />
-        </div>
-        <div class="form-group">
-          <label>Date</label>
-          <input type="date" v-model="newAttemptForm.date" />
-        </div>
-        <div class="form-group">
-          <label>Comment (Optional)</label>
-          <textarea v-model="newAttemptForm.comment" rows="2"></textarea>
-        </div>
-      </div>
-      <template #footer>
-        <button class="btn-ghost" @click="newAttemptForm = null">Cancel</button>
-        <button class="btn-primary" @click="submitNewAttempt">Save Attempt</button>
-      </template>
-    </BaseModal>
+    <!-- Context Menu & Attempts Dialogs -->
+    <Student360AttemptsModal
+      :context-menu="contextMenu"
+      :attempts-popover="attemptsPopover"
+      :new-attempt-form="newAttemptForm"
+      :grade-map="gradeMap"
+      :student-id="studentId"
+      @close-context-menu="contextMenu = null"
+      @close-attempts-popover="attemptsPopover = null"
+      @close-new-attempt="newAttemptForm = null"
+      @start-new-attempt="startNewAttempt"
+      @open-attempts="openAttemptsFromMenu"
+      @toggle-missing="toggleMissing"
+      @toggle-excluded="toggleExcluded"
+      @delete-assessment="doDeleteAssessment"
+      @set-primary="doSetPrimary"
+      @delete-attempt="doDeleteAttempt"
+      @update-comment="doUpdateComment"
+      @submit-new-attempt="submitNewAttempt"
+    />
 
     <!-- Email Progress Report Modal -->
-    <BaseModal
+    <Student360EmailModal
       :show="showEmailModal"
-      title="Configure Email Report"
-      :z-index="3000"
+      :student="student"
+      :formatted-grade="formattedGrade"
+      :all-dossier-assessments="allDossierAssessments"
+      :class-assessments="classAssessments"
+      :individual-assessments="individualAssessments"
+      :stats="stats"
+      :washroom-count="washroomCount"
+      :teacher-name="teacherName"
       @close="showEmailModal = false"
-    >
-      <template #header>
-        <div class="header-content">
-          <Mail class="header-icon" :size="24" />
-          <div>
-            <h3 class="header-title">Configure Email Report</h3>
-            <p class="header-subtitle">Select recipients and data points to include.</p>
-          </div>
-        </div>
-      </template>
+    />
 
-      <div class="email-config-modal-body">
-        <!-- Recipients Selection -->
-        <div class="config-section">
-          <h4 class="config-section-title">Recipients</h4>
-          <div class="recipient-list">
-            <div 
-              v-for="r in emailRecipients" 
-              :key="r.email" 
-              class="recipient-item"
-              :class="{ 'recipient-item--active': selectedRecipientEmails.has(r.email) }"
-              @click="toggleRecipient(r.email)"
-            >
-              <div class="recipient-info">
-                <span class="recipient-label">{{ r.label }}</span>
-                <span class="recipient-email">{{ r.email }}</span>
-              </div>
-              <div class="recipient-checkbox">
-                <CheckCircle2 v-if="selectedRecipientEmails.has(r.email)" :size="20" class="icon-checked" />
-                <div v-else class="checkbox-placeholder"></div>
-              </div>
-            </div>
-            <div v-if="emailRecipients.length === 0" class="recipient-empty">
-              No email addresses found for this student or their parents.
-            </div>
-          </div>
-        </div>
-
-        <!-- Content Options -->
-        <div class="config-section">
-          <h4 class="config-section-title">Include in Report</h4>
-          <div class="options-grid">
-            <label class="option-item">
-              <input type="checkbox" v-model="emailConfig.content.grade" />
-              <span class="option-label">Current Overall Grade</span>
-            </label>
-            <label class="option-item">
-              <input type="checkbox" v-model="emailConfig.content.missing" />
-              <span class="option-label">Missing Assessments List</span>
-            </label>
-            <label class="option-item">
-              <input type="checkbox" v-model="emailConfig.content.washroom" />
-              <span class="option-label">Washroom & Out-of-Class Logs</span>
-            </label>
-            <label class="option-item">
-              <input type="checkbox" v-model="emailConfig.content.assessments" />
-              <span class="option-label">Detailed Assessment List & Attempts</span>
-            </label>
-          </div>
-        </div>
-      </div>
-
-      <template #footer>
-        <button class="btn-cancel" @click="showEmailModal = false">Cancel</button>
-        <button 
-          class="btn-generate" 
-          :disabled="selectedRecipientEmails.size === 0"
-          @click="generateEmailLink"
-        >
-          Generate Draft & Open Mail
-          <ChevronRight :size="18" />
-        </button>
-      </template>
-    </BaseModal>
-
-    <!-- Print Report Configuration Modal -->
-    <BaseModal
+    <!-- Print Report Modal -->
+    <Student360PrintModal
       :show="showPrintModal"
-      title="Print Report"
-      max-width="700px"
-      :z-index="3000"
+      :student-id="props.studentId"
+      :class-id="props.classId"
       @close="showPrintModal = false"
-    >
-      <template #header>
-        <div class="header-content">
-          <Printer class="header-icon" :size="24" />
-          <div>
-            <h3 class="header-title">Print Report</h3>
-            <p class="header-subtitle">Format a professional document for this student.</p>
-          </div>
-        </div>
-      </template>
-
-      <div class="email-config-modal-body">
-        <div class="config-section">
-          <div class="config-section-header">
-            <h4 class="config-section-title">Report Type</h4>
-            <div class="report-type-toggle">
-              <button 
-                class="reports__toggle-btn" 
-                :class="{ 'reports__toggle-btn--active': printConfig.reportType === 'progress' }"
-                @click="printConfig.reportType = 'progress'"
-              >Progress</button>
-              <button 
-                class="reports__toggle-btn" 
-                :class="{ 'reports__toggle-btn--active': printConfig.reportType === 'attendance' }"
-                @click="printConfig.reportType = 'attendance'"
-              >Attendance</button>
-            </div>
-          </div>
-
-          <div v-if="printConfig.reportType === 'progress'" class="print-modal__options" style="margin-top: 1rem;">
-            <div class="print-modal__section-title">Include in Document</div>
-            <label class="print-modal__option">
-              <input type="checkbox" v-model="printConfig.includeOverallGrade" />
-              Overall Grade Badge
-            </label>
-            <label class="print-modal__option">
-              <input type="checkbox" v-model="printConfig.includeMedians" />
-              Weighted Median & Consistent Grade
-            </label>
-            <label class="print-modal__option">
-              <input type="checkbox" v-model="printConfig.includeGradeTrend" />
-              Performance Trend Graph
-            </label>
-            <label class="print-modal__option">
-              <input type="checkbox" v-model="printConfig.includeTriangulation" />
-              Evidence Triangulation (Pie)
-            </label>
-            <label class="print-modal__option">
-              <input type="checkbox" v-model="printConfig.includeCategorySummary" />
-              Category Performance Summary
-            </label>
-            <div class="print-modal__divider"></div>
-            <label class="print-modal__option">
-              <input type="checkbox" v-model="printConfig.includeAttendance" />
-              Attendance Summary
-            </label>
-            <label class="print-modal__option">
-              <input type="checkbox" v-model="printConfig.includeBehavior" />
-              Out-of-Class Summary
-            </label>
-          </div>
-
-          <div v-else class="print-modal__options" style="margin-top: 1rem;">
-             <div class="print-modal__section-title">Report Content</div>
-             <p class="setup__hint">The Attendance & Activity report generates a visual 5-month grid for the current semester based on your School Calendar settings.</p>
-          </div>
-
-          <div class="config-section-header" style="margin-top: 1.5rem;">
-            <h4 class="config-section-title">Preview</h4>
-            <button class="reports__btn-preview" @click="showPrintPreview = !showPrintPreview">
-              {{ showPrintPreview ? 'Hide Preview' : 'Show Preview' }}
-            </button>
-          </div>
-        </div>
-
-        <!-- Live Preview Section -->
-        <div v-if="showPrintPreview" class="reports__print-preview-area">
-          <header class="preview-banner">
-            <Activity :size="14" /> LIVE PREVIEW ({{ printConfig.reportType === 'progress' ? 'Progress' : 'Attendance' }})
-          </header>
-          <div class="preview-content">
-            <ProgressReport 
-              v-if="printConfig.reportType === 'progress'"
-              :student-id="studentId" 
-              :class-id="classId" 
-              :config="printConfig" 
-              :is-batch="false"
-            />
-            <AttendanceActivityReport
-              v-else
-              :student-id="studentId"
-              :class-id="classId"
-              :is-batch="false"
-            />
-          </div>
-        </div>
-
-        <div v-else class="report-preview-mini">
-          <p v-if="printConfig.reportType === 'progress'">This will generate a formal PDF/Print document containing overall grades, performance trends, and assessment history.</p>
-          <p v-else>This will generate a visual 5-month attendance calendar with behavioral metrics and totals.</p>
-        </div>
-      </div>
-
-      <template #footer>
-        <button class="btn-cancel" @click="showPrintModal = false">Cancel</button>
-        <button class="btn-generate" @click="triggerPrint">
-          Open Print Dialog
-          <Printer :size="18" />
-        </button>
-      </template>
-    </BaseModal>
-
-    <!-- Hidden/Active Print Container -->
-    <Teleport to="body">
-      <div class="print-only-container" :class="{ 'print-only-container--active': isSystemPrinting }">
-        <ProgressReport 
-          v-if="printConfig.reportType === 'progress'"
-          :student-id="props.studentId" 
-          :class-id="props.classId" 
-          :config="printConfig" 
-        />
-        <AttendanceActivityReport
-          v-else
-          :student-id="props.studentId"
-          :class-id="props.classId"
-        />
-      </div>
-    </Teleport>
+    />
   </div>
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted, nextTick, reactive, onUnmounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted, toRef } from 'vue'
 
-// Eliminates the separate Options API <script> block
 defineOptions({ inheritAttrs: false })
 
-// Shared session state (module-level — persists across re-renders without losing tab)
+// Shared session state
 const activeTab = ref('summary')
 const selectedPeriod = ref('semester')
 let resetTimer = null
@@ -640,54 +280,39 @@ import {
   UserMinus,
   Clock,
   Toilet,
-  HelpCircle,
   X,
   PlusCircle,
-  TrendingUp,
-  Plus,
-  Calendar,
-  MoreVertical,
-  AlertCircle,
-  Trash2,
-  Check,
-  Pencil, // Added Pencil icon
-  XCircle, // Added XCircle icon
   Mail,
-  CheckCircle2,
-  ChevronRight,
   Printer,
   Activity, 
-  ExternalLink,
-  ShieldCheck,
   MessageSquare
 } from 'lucide-vue-next'
 import { useMessage } from '../../composables/useMessage.js'
-import DossierCategoryGrid from './DossierCategoryGrid.vue'
-import DossierEvidenceMix  from './DossierEvidenceMix.vue'
-import Student360Header    from './Student360Header.vue'
-import StudentStatCard     from './StudentStatCard.vue'
-import StudentTimeline     from './StudentTimeline.vue'
+import Student360Header from './Student360Header.vue'
+import StudentStatCard from './StudentStatCard.vue'
+import StudentTimeline from './StudentTimeline.vue'
 import DossierCommunicationLog from './DossierCommunicationLog.vue'
 import DossierQualitativeEvidence from './DossierQualitativeEvidence.vue'
-import StudentTrendGraph    from '../StudentTrendGraph.vue'
-import StudentGradeTrend    from './StudentGradeTrend.vue'
-import AttendanceActivityReport from './AttendanceActivityReport.vue'
-import ProgressReport       from './ProgressReport.vue'
-import StudentAcademicsTab  from './StudentAcademicsTab.vue'
-import BaseModal            from '../BaseModal.vue'
-import { useClassroom }  from '../../composables/useClassroom.js'
-import { toMinutes }     from '../../db/eventService.js'
-import { resolveIcon }   from '../../utils/icons.js'
+import StudentTrendGraph from '../StudentTrendGraph.vue'
+import StudentGradeTrend from './StudentGradeTrend.vue'
+import StudentAcademicsTab from './StudentAcademicsTab.vue'
+import Student360ProfileTab from './Student360ProfileTab.vue'
+import Student360HistoryTab from './Student360HistoryTab.vue'
+import Student360EmailModal from './Student360EmailModal.vue'
+import Student360PrintModal from './Student360PrintModal.vue'
+import Student360AttemptsModal from './Student360AttemptsModal.vue'
+import BaseModal from '../BaseModal.vue'
+
+import { useClassroom } from '../../composables/useClassroom.js'
+import { toMinutes } from '../../db/eventService.js'
+import { resolveIcon } from '../../utils/icons.js'
 import { 
   classGrades, 
   assessments, 
-  grades, 
   loadGradebook, 
   activeClassRecord, 
-  gradeMap, 
-  openAddAssessment,
+  gradeMap,
   enterGrade,
-  clearGrade,
   removeAttempt,
   setPrimaryAttempt,
   updateAttemptComment,
@@ -695,8 +320,7 @@ import {
   filteredMilestones,
   globalMilestones
 } from '../../composables/useGradebook.js'
-import { getGradeColor } from '../../utils/gradeColors.js'
-// getDateRangeForPeriod is now used internally by useStudentDossier — no direct import needed here.
+import { useStudentDossier } from '../../composables/useStudentDossier.js'
 
 const props = defineProps({
   studentId: { type: String, required: true },
@@ -727,177 +351,26 @@ const {
   removeEvent,
   getClass,
   updateStudentNote,
-  teacherName,
-  thresholds
+  teacherName
 } = useClassroom()
 
-import { useStudentDossier } from '../../composables/useStudentDossier.js'
-import { parseLocal, formatLocalDisplay } from '../../utils/dates.js'
-
-import { toRef } from 'vue'
 const { allTimeHistory, fetchAllTimeHistory, stats, filteredEvents } = useStudentDossier(selectedPeriod, toRef(props, 'classId'))
-
-// Decouple dossier profile header stats from the active tab's selected period (lock header to overall semester stats)
 const semesterPeriod = ref('semester')
 const { stats: overallStats } = useStudentDossier(semesterPeriod, toRef(props, 'classId'))
 
-
-// --- Email Progress Report State ---
+// Email & Print Modal states
 const showEmailModal = ref(false)
-const emailConfig = ref({
-  recipients: { student: true, parents: true },
-  content: { grade: true, missing: true, attendance: true, washroom: false, assessments: true }
-})
-
-const emailRecipients = computed(() => {
-  const list = []
-  if (student.value.studentEmail) {
-    list.push({ id: 'student', label: 'Student', email: student.value.studentEmail })
-  }
-  if (student.value.parentContacts) {
-    student.value.parentContacts.forEach((pc, idx) => {
-      if (pc.email) {
-        list.push({ id: `parent_${idx}`, label: pc.name || `Parent ${idx + 1}`, email: pc.email })
-      }
-    })
-  }
-  return list
-})
-
-const selectedRecipientEmails = ref(new Set())
-
-// Initialize selected emails when modal opens
-watch(showEmailModal, (open) => {
-  if (open) {
-    selectedRecipientEmails.value = new Set(emailRecipients.value.map(r => r.email))
-  }
-})
-
-function toggleRecipient(email) {
-  if (selectedRecipientEmails.value.has(email)) {
-    selectedRecipientEmails.value.delete(email)
-  } else {
-    selectedRecipientEmails.value.add(email)
-  }
-}
-
-function generateEmailLink() {
-  const emails = Array.from(selectedRecipientEmails.value).join(',')
-  const subject = `Progress Report Update: ${student.value.firstName} ${student.value.lastName}`
-  
-  let body = `Hello,\n\nI am sharing a progress update for ${student.value.firstName}.\n\n`
-  
-  if (emailConfig.value.content.grade) {
-    body += `Current Overall Grade: ${formattedGrade.value}\n`
-  }
-  
-  if (emailConfig.value.content.assessments) {
-    const list = [...allDossierAssessments.value]
-      .filter(a => a.score !== null && !a.excluded)
-      .sort((a, b) => new Date(b.date) - new Date(a.date))
-    
-    if (list.length > 0) {
-      body += `\nAcademic Record & Recent Progress:\n`
-      list.forEach(a => {
-        const date = formatLocalDisplay(a.date, { month: 'short', day: 'numeric' })
-        let line = `${date} - ${a.name}: ${Math.round((a.score / a.totalPoints) * 100)}%`
-        if (a.attempts?.length > 1) {
-          const history = a.attempts
-            .map(att => Math.round((att.pointsEarned / a.totalPoints) * 100) + '%')
-            .join(', ')
-          line += ` (Attempts history: ${history})`
-        }
-        body += `- ${line}\n`
-      })
-    }
-  }
-
-  if (emailConfig.value.content.missing) {
-    const missing = [
-      ...classAssessments.value.filter(a => (a.missing || a.score === null) && !a.excluded),
-      ...individualAssessments.value.filter(a => (a.missing || a.score === null) && !a.excluded)
-    ]
-    if (missing.length > 0) {
-      body += `\nMissing Assessments:\n`
-      missing.forEach(m => body += `- ${m.name}\n`)
-    } else {
-      body += `\nNo missing assessments at this time.\n`
-    }
-  }
-  
-  if (emailConfig.value.content.attendance) {
-    body += `\nAttendance Summary:\n`
-    body += `- Absences: ${stats.value.absences}\n`
-    body += `- Lates: ${stats.value.lates}\n`
-  }
-  
-  if (emailConfig.value.content.washroom) {
-    body += `\nOut of Class Logs:\n`
-    body += `- Washroom/Water trips in period: ${washroomCount.value}\n`
-  }
-  
-  body += `\nPlease let me know if you have any questions.\n\nBest regards,\n${teacherName.value || 'Teacher'}`
-  
-  const mailto = `mailto:${emails}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
-  window.location.href = mailto
-  showEmailModal.value = false
-}
-
-// --- Print Progress Report Logic ---
 const showPrintModal = ref(false)
-const showPrintPreview = ref(false)
-const isSystemPrinting = ref(false)
 
-// Watch for changes in isSystemPrinting to apply/remove print styles
-watch(isSystemPrinting, (newValue) => {
-  if (newValue) {
-    document.body.classList.add('is-printing')
-  } else {
-    document.body.classList.remove('is-printing')
-  }
-})
-
-const printConfig    = reactive({
-  reportType: 'progress', // 'progress' or 'attendance'
-  includeAttendance: true,
-  includeBehavior: false,
-  includeOverallGrade: true,
-  includeMedians: false,
-  includeGradeTrend: true,
-  includeTriangulation: false,
-  includeCategorySummary: true
-})
-
-async function triggerPrint() {
-  showPrintModal.value = false
-  isSystemPrinting.value = true
-  
-  nextTick(async () => {
-    // Give charts 1500ms to render properly on the now-visible canvas
-    await new Promise(resolve => setTimeout(resolve, 1500))
-    window.print()
-    isSystemPrinting.value = false
-  })
-}
-
-
-// Shared state is now handled in the <script> block above
-
-
-
-// Past Absence Logic
+// Past Absence Form State
 const showAbsenceForm = ref(false)
 const absenceDate = ref(new Date().toISOString().split('T')[0])
 const absenceIsTestDay = ref(false)
 
 async function logAbsence() {
   if (!absenceDate.value) return
-  
-  // Duplicate check: see if an absence ('a' code) already exists for this date
   const isDuplicate = events.value.some(ev => 
-    ev.code === 'a' && 
-    !ev.superseded && 
-    ev.timestamp.startsWith(absenceDate.value)
+    ev.code === 'a' && !ev.superseded && ev.timestamp.startsWith(absenceDate.value)
   )
 
   if (isDuplicate) {
@@ -906,14 +379,13 @@ async function logAbsence() {
   }
 
   try {
-    // Call updated logStandardEvent with timestamp option
     await logStandardEvent(props.studentId, 'a', 'Past Absence Logged', { 
       timestamp: new Date(absenceDate.value + 'T12:00:00Z').toISOString(),
       testDay: absenceIsTestDay.value
     })
     showAbsenceForm.value = false
-    absenceDate.value = new Date().toISOString().split('T')[0] // Reset to today
-    absenceIsTestDay.value = false // Reset checkbox
+    absenceDate.value = new Date().toISOString().split('T')[0]
+    absenceIsTestDay.value = false
   } catch (err) {
     console.error('Failed to log absence:', err)
     await alert('Failed to log absence. Please try again.')
@@ -930,7 +402,6 @@ const tabs = [
   { id: 'profile',       label: 'Profile',       icon: UserCircle }
 ]
 
-// Data Fetching
 const events = activeStudentEvents
 const behaviorCodesMap = computed(() => 
   Object.fromEntries(behaviorCodes.value.map(c => [c.codeKey, c]))
@@ -938,27 +409,20 @@ const behaviorCodesMap = computed(() =>
 
 const student = computed(() => students.value[props.studentId] || {})
 
-/** Qualitative evidence — 'ac' events derived from history */
 const qualitativeEvents = computed(() =>
   [...events.value]
     .filter(e => e.code === 'ac')
     .sort((a, b) => (b.timestamp ?? '').localeCompare(a.timestamp ?? ''))
 )
 
-/** Communication log — 'pc' events derived from history */
 const communicationEvents = computed(() =>
   [...events.value]
     .filter(e => e.code === 'pc' || e.category === 'communication')
     .sort((a, b) => (b.timestamp ?? '').localeCompare(a.timestamp ?? ''))
 )
 
-const isAdult = computed(() => {
-  if (!student.value.birthDate) return false
-  return computeAge(student.value.birthDate) >= 18
-})
 const loading = ref(false)
 
-// Academic Data from useGradebook
 const studentGrades = computed(() => classGrades.value?.[props.studentId] || {})
 const overallGrade  = computed(() => studentGrades.value.overallGrade ?? null)
 const formattedGrade = computed(() => overallGrade.value !== null ? `${Math.round(overallGrade.value)}%` : 'N/A')
@@ -983,19 +447,15 @@ const academicCategories = computed(() => {
   }))
 })
 
-// Class assessments for this student
 const classAssessments = computed(() => {
   return assessments.value
     .filter(a => a.target !== 'individual')
     .map(a => {
       const g = gradeMap.value[a.assessmentId]?.[props.studentId]
       const score = g?.resolvedScore ?? null
-      
       const aDate = a.date.split('T')[0]
       const wasAbsent = events.value.some(ev => 
-        ev.code === 'a' && 
-        !ev.superseded && 
-        ev.timestamp.startsWith(aDate)
+        ev.code === 'a' && !ev.superseded && ev.timestamp.startsWith(aDate)
       )
 
       return {
@@ -1010,14 +470,12 @@ const classAssessments = computed(() => {
     .sort((a, b) => new Date(b.date) - new Date(a.date))
 })
 
-// Individual assessments for this student
 const individualAssessments = computed(() => {
   return assessments.value
     .filter(a => a.target === 'individual' && String(a.targetStudentId) === String(props.studentId))
     .map(a => {
       const g = gradeMap.value[a.assessmentId]?.[props.studentId]
       const score = g?.resolvedScore ?? null
-      
       return {
         ...a,
         score,
@@ -1029,36 +487,9 @@ const individualAssessments = computed(() => {
     .sort((a, b) => new Date(b.date) - new Date(a.date))
 })
 
-// Combined assessments for trend graph
 const allDossierAssessments = computed(() => {
   return [...classAssessments.value, ...individualAssessments.value]
     .sort((a, b) => new Date(a.date) - new Date(b.date))
-})
-
-const orderedAssessmentsForNav = computed(() => {
-  // Matches the UI layout: Individual table first, then Class table
-  return [...individualAssessments.value, ...classAssessments.value]
-})
-
-const evidenceMix = computed(() => {
-  const mix = { product: 0, observation: 0, conversation: 0 }
-  const valid = allDossierAssessments.value.filter(a => a.score !== null)
-  if (!valid.length) return mix
-  
-  valid.forEach(a => {
-    const type = a.assessmentType?.toLowerCase() || 'product'
-    if (type.includes('prod')) mix.product++
-    else if (type.includes('obs')) mix.observation++
-    else if (type.includes('conv')) mix.conversation++
-  })
-
-  // Convert to percentages
-  const total = valid.length
-  return {
-    product:      (mix.product      / total) * 100,
-    observation:  (mix.observation  / total) * 100,
-    conversation: (mix.conversation / total) * 100
-  }
 })
 
 const testDayAlert = computed(() => stats.value.testDayAbsences > 1)
@@ -1078,7 +509,6 @@ const coachingInsight = computed(() => {
   const grade = overallGrade.value
   const absences = stats.value.absences
 
-  // Alert if grade < 70% and absences >= 3
   if (grade !== null && grade < 70 && absences >= 3) {
     return {
       type: 'warning',
@@ -1090,26 +520,11 @@ const coachingInsight = computed(() => {
   return null
 })
 
-function computeAge(dob) {
-  if (!dob) return ''
-  const birthDate = new Date(dob)
-  const today = new Date()
-  let age = today.getFullYear() - birthDate.getFullYear()
-  const m = today.getMonth() - birthDate.getMonth()
-  if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-    age--
-  }
-  return age
-}
-
-
-
 const behaviorWeeklyTrend = computed(() => {
   if (!filteredEvents.value.length) return []
   const weeks = {}
   
   filteredEvents.value.forEach(e => {
-    // Determine the week starting Monday
     const d = new Date(e.timestamp)
     const day = d.getDay()
     const diff = d.getDate() - day + (day === 0 ? -6 : 1)
@@ -1126,14 +541,11 @@ const behaviorWeeklyTrend = computed(() => {
     else if (e.code === 'l' && !e.superseded) weeks[monday].late++
   })
   
-  // Sort by date
   return Object.values(weeks).sort((a, b) => a.week.localeCompare(b.week))
 })
 
 const attendanceAverages = computed(() => {
   const trend = behaviorWeeklyTrend.value
-  
-  // Determine actual divisor based on period
   let weekCount = 1
   if (selectedPeriod.value === 'month') weekCount = 4.3
   else if (selectedPeriod.value === 'semester') weekCount = Math.max(1, trend.length)
@@ -1177,235 +589,75 @@ async function saveGeneralNote(note) {
   }
 }
 
-const localGeneralNote = ref('')
-
-watch(() => student.value?.generalNote, (v) => { localGeneralNote.value = v || '' }, { immediate: true })
-
-async function updateGeneralNoteLocal() {
-  await saveGeneralNote(localGeneralNote.value.trim())
+// Attempt Management Handlers
+function startNewAttempt(assessmentId) {
+  contextMenu.value = null
+  newAttemptForm.value = {
+    assessmentId,
+    points: null,
+    date: new Date().toISOString().split('T')[0],
+    comment: ''
+  }
 }
 
-const isCopiedAnon = ref(false)
-const isCopiedNamed = ref(false)
+function openAttemptsFromMenu(event, assessmentId) {
+  contextMenu.value = null
+  attemptsPopover.value = {
+    assessmentId,
+    x: event.clientX,
+    y: event.clientY
+  }
+}
 
-async function copyForReportCard(includeName = false) {
-  const s = student.value
-  const absences = stats.value.absences
-  const lates = stats.value.lates
-  
-  const isFinal = await confirm(
-    'Select the report card term for this comment copy.',
-    'Select Report Type',
-    { confirmLabel: 'Final', cancelLabel: 'Midterm' }
-  )
-  const reportType = isFinal ? 'Final' : 'Midterm'
-  
-  const midtermMs = filteredMilestones.value?.find(m => m.name?.toLowerCase() === 'midterm') || 
-                    globalMilestones.value?.find(m => m.name?.toLowerCase() === 'midterm')
-  const midtermDate = midtermMs?.date || 'N/A'
-  
-  const academicList = [...allDossierAssessments.value]
-    .filter(a => !a.excluded && (a.score !== null || a.missing || a.attempts?.some(att => att.comment?.trim())))
-    .sort((a, b) => new Date(a.date) - new Date(b.date))
+async function toggleMissing(assessmentId) {
+  const current = gradeMap.value[assessmentId]?.[props.studentId]?.missing
+  await enterGrade(assessmentId, props.studentId, { missing: !current })
+  contextMenu.value = null
+}
 
-  const classCode = activeClass.value?.courseCode ? ` (${activeClass.value.courseCode})` : ''
-  const header = includeName
-    ? `Student Name: ${s.firstName} ${s.lastName}${classCode}`
-    : `Student${classCode} — Progress Summary`
+async function toggleExcluded(assessmentId) {
+  const current = gradeMap.value[assessmentId]?.[props.studentId]?.excluded
+  await enterGrade(assessmentId, props.studentId, { excluded: !current })
+  contextMenu.value = null
+}
 
-  let boundaryInserted = false
-  const academicLines = []
-  academicList.forEach(a => {
-    if (midtermDate !== 'N/A' && a.date > midtermDate && !boundaryInserted) {
-      academicLines.push('--- MIDTERM CUTOFF BOUNDARY ---')
-      boundaryInserted = true
-    }
-    const date = formatLocalDisplay(a.date, { month: 'short', day: 'numeric' })
-    const classObj = activeClassRecord.value || activeClass.value
-    const unit = classObj?.gradebookUnits?.find(u => u.unitId === a.unitId)
-    const unitPrefix = unit ? `[${unit.name}] ` : ''
-    
-    let line = `- ${date} - ${unitPrefix}${a.name}: `
-    if (a.missing) {
-      line += 'Missing'
-    } else if (a.score !== null) {
-      line += `${Math.round((a.score / (a.totalPoints || 1)) * 100)}%`
-    } else {
-      line += 'Ungraded'
-    }
+async function doDeleteAssessment(assessmentId) {
+  contextMenu.value = null
+  if (await confirm('Delete this assessment? This will remove all student scores for it.', 'Delete Assessment', { danger: true })) {
+    await deleteAssessment(assessmentId)
+  }
+}
 
-    if (a.attempts?.length > 1) {
-      const history = a.attempts
-        .map(att => {
-          if (att.pointsEarned === null || att.pointsEarned === undefined) return 'Ungraded'
-          return Math.round((att.pointsEarned / (a.totalPoints || 1)) * 100) + '%'
-        })
-        .join(', ')
-      line += ` (Attempts history: ${history})`
-    }
-    const comments = (a.attempts || [])
-      .map((att, idx) => {
-        const trimmed = att.comment?.trim()
-        if (!trimmed) return null
-        if ((a.attempts || []).length === 1) return `[Note] ${trimmed}`
-        if (att.pointsEarned === null || att.pointsEarned === undefined) {
-          return `[Note - Attempt ${idx + 1}] ${trimmed}`
-        }
-        const pct = Math.round((att.pointsEarned / (a.totalPoints || 1)) * 100)
-        return `[Note - Attempt ${idx + 1} (${pct}%)] ${trimmed}`
-      })
-      .filter(Boolean)
-    
-    comments.forEach(c => {
-      line += `\n  ↳ ${c}`
-    })
-    academicLines.push(line)
+async function doSetPrimary(assessmentId, attemptId) {
+  await setPrimaryAttempt(assessmentId, props.studentId, attemptId)
+}
+
+async function doDeleteAttempt(assessmentId, attemptId) {
+  if (await confirm('Delete this attempt?', 'Delete Attempt', { danger: true })) {
+    await removeAttempt(assessmentId, props.studentId, attemptId)
+  }
+}
+
+async function doUpdateComment(assessmentId, attemptId, comment) {
+  await updateAttemptComment(assessmentId, props.studentId, attemptId, comment)
+}
+
+async function submitNewAttempt() {
+  if (!newAttemptForm.value || newAttemptForm.value.points === null) return
+  await enterGrade(newAttemptForm.value.assessmentId, props.studentId, {
+    pointsEarned: Number(newAttemptForm.value.points),
+    date: newAttemptForm.value.date,
+    comment: newAttemptForm.value.comment
   })
-
-  const textLines = [
-    header
-  ]
-  const courseCode = activeClassRecord.value?.courseCode || activeClass.value?.courseCode
-  if (courseCode) {
-    textLines.push(`Course: ${courseCode}`)
-  }
-  textLines.push(`Current Grade: ${formattedGrade.value}`)
-  if (midtermDate !== 'N/A') {
-    textLines.push(`Midterm Cutoff Date: ${midtermDate}`)
-  }
-  textLines.push(`Report Type: ${reportType}`)
-  textLines.push(`Attendance: ${absences} Absences, ${lates} Lates`)
-  textLines.push('')
-  textLines.push('Gradebook Log (Chronological):')
-  textLines.push(...academicLines)
-  textLines.push('')
-  textLines.push('Category Averages:')
-  textLines.push(...academicCategories.value.map(c => `- ${c.name}: ${c.score !== null ? Math.round(c.score) + '%' : 'N/A'}`))
-  textLines.push('')
-  textLines.push('Professional Judgment (Observations & Conversations):')
-  const rawAcEvents = activeStudentEvents.value
-    .filter(e => e.code === 'ac')
-    .sort((a, b) => (b.ts || b.timestamp) - (a.ts || a.timestamp))
-    .slice(0, 5)
-
-  if (rawAcEvents.length === 0) {
-    textLines.push('None')
-  } else {
-    const classObj = activeClassRecord.value || activeClass.value
-    const units = classObj?.gradebookUnits || []
-    
-    const byUnit = {}
-    const generalEvents = []
-    
-    rawAcEvents.forEach(e => {
-      if (!e.unitId) {
-        generalEvents.push(e)
-      } else {
-        if (!byUnit[e.unitId]) byUnit[e.unitId] = []
-        byUnit[e.unitId].push(e)
-      }
-    })
-    
-    Object.keys(byUnit).forEach(unitId => {
-      const unitRecord = units.find(u => u.unitId === unitId)
-      const unitName = unitRecord ? unitRecord.name : 'Unknown Unit'
-      textLines.push(`${unitName}:`)
-      
-      const byExp = {}
-      const unitGeneralEvents = []
-      
-      byUnit[unitId].forEach(e => {
-        if (!e.expectationId) {
-          unitGeneralEvents.push(e)
-        } else {
-          if (!byExp[e.expectationId]) byExp[e.expectationId] = []
-          byExp[e.expectationId].push(e)
-        }
-      })
-      
-      Object.keys(byExp).forEach(expId => {
-        const expRecord = unitRecord?.expectations?.find(exp => exp.expectationId === expId)
-        const expCode = expRecord ? expRecord.code : 'Unknown Expectation'
-        textLines.push(`  ${expCode}:`)
-        
-        const sortedEvts = byExp[expId].sort((a, b) => (a.ts || a.timestamp) - (b.ts || b.timestamp))
-        sortedEvts.forEach(e => {
-          const date = new Date(e.ts || e.timestamp).toLocaleDateString([], { month: 'short', day: 'numeric' })
-          const type = e.acType === 'observation' ? 'Obs' : 'Conv'
-          let outcomeLabel = ''
-          if (e.acOutcome === 'demonstrates_understanding') outcomeLabel = 'Mastered'
-          else if (e.acOutcome === 'gap_confirmed') outcomeLabel = 'Needs Support'
-          else if (e.acOutcome === 'inconclusive') outcomeLabel = 'Developing'
-          const outcome = outcomeLabel ? ` [${outcomeLabel}]` : ''
-          textLines.push(`    - ${date} (${type})${outcome}: ${e.note}`)
-          if (e.nextSteps) {
-            textLines.push(`      Next Steps: ${e.nextSteps}`)
-          }
-        })
-      })
-      
-      if (unitGeneralEvents.length > 0) {
-        textLines.push(`  General:`)
-        const sortedEvts = unitGeneralEvents.sort((a, b) => (a.ts || a.timestamp) - (b.ts || b.timestamp))
-        sortedEvts.forEach(e => {
-          const date = new Date(e.ts || e.timestamp).toLocaleDateString([], { month: 'short', day: 'numeric' })
-          const type = e.acType === 'observation' ? 'Obs' : 'Conv'
-          let outcomeLabel = ''
-          if (e.acOutcome === 'demonstrates_understanding') outcomeLabel = 'Mastered'
-          else if (e.acOutcome === 'gap_confirmed') outcomeLabel = 'Needs Support'
-          else if (e.acOutcome === 'inconclusive') outcomeLabel = 'Developing'
-          const outcome = outcomeLabel ? ` [${outcomeLabel}]` : ''
-          textLines.push(`    - ${date} (${type})${outcome}: ${e.note}`)
-          if (e.nextSteps) {
-            textLines.push(`      Next Steps: ${e.nextSteps}`)
-          }
-        })
-      }
-    })
-    
-    if (generalEvents.length > 0) {
-      textLines.push('General Observations & Conversations:')
-      const sortedEvts = generalEvents.sort((a, b) => (a.ts || a.timestamp) - (b.ts || b.timestamp))
-      sortedEvts.forEach(e => {
-        const date = new Date(e.ts || e.timestamp).toLocaleDateString([], { month: 'short', day: 'numeric' })
-        const type = e.acType === 'observation' ? 'Obs' : 'Conv'
-        let outcomeLabel = ''
-        if (e.acOutcome === 'demonstrates_understanding') outcomeLabel = 'Mastered'
-        else if (e.acOutcome === 'gap_confirmed') outcomeLabel = 'Needs Support'
-        else if (e.acOutcome === 'inconclusive') outcomeLabel = 'Developing'
-        const outcome = outcomeLabel ? ` [${outcomeLabel}]` : ''
-        textLines.push(`  - ${date} (${type})${outcome}: ${e.note}`)
-        if (e.nextSteps) {
-          textLines.push(`    Next Steps: ${e.nextSteps}`)
-        }
-      })
-    }
-  }
-  textLines.push('')
-  textLines.push('Teacher Working Notes (Comment Ideas):')
-  textLines.push(student.value.gradebookNote?.trim() || 'None')
-
-  const text = textLines.join('\n')
-  
-  await navigator.clipboard.writeText(text)
-
-  if (includeName) {
-    isCopiedNamed.value = true
-    setTimeout(() => isCopiedNamed.value = false, 2000)
-  } else {
-    isCopiedAnon.value = true
-    setTimeout(() => isCopiedAnon.value = false, 2000)
-  }
+  newAttemptForm.value = null
 }
+
 async function loadData() {
   loading.value = true
-  
-  // Ensure the gradebook is loaded for the correct class context
   if (!activeClassRecord.value || activeClassRecord.value.classId !== props.classId) {
     const cls = classList.value.find(c => c.classId === props.classId) || await getClass(props.classId)
     if (cls) await loadGradebook(cls)
   }
-  
   events.value = await getStudentEventHistory(props.studentId)
   await fetchAllTimeHistory(props.studentId)
   loading.value = false
@@ -1420,8 +672,6 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
-  // If we unmount, start a timer to reset the tab.
-  // If we remount quickly (switching students), the timer is cleared.
   resetTimer = setTimeout(() => {
     activeTab.value = 'summary'
     selectedPeriod.value = 'semester'
@@ -1431,72 +681,79 @@ onUnmounted(() => {
 
 <style scoped>
 .student-360 {
-  display:        flex;
+  display: flex;
   flex-direction: column;
-  height:         100%;
-  background:     var(--bg-secondary);
-  overflow:       hidden;
-  position:       relative;
-}
-
-.student-360__loading-overlay {
-  position:        absolute;
-  inset:           0;
-  background:      rgba(255, 255, 255, 0.8);
-  display:         flex;
-  align-items:     center;
-  justify-content: center;
-  z-index:         100;
-  font-weight:     600;
-  color:           var(--primary);
+  height: 100%;
+  background: var(--bg-secondary);
+  overflow: hidden;
+  position: relative;
 }
 
 .student-360__close-btn {
-  display:         flex;
-  align-items:     center;
+  display: flex;
+  align-items: center;
   justify-content: center;
-  width:           40px;
-  height:          40px;
-  border-radius:   50%;
-  border:          none;
-  background:      var(--bg-secondary);
-  color:           var(--text-secondary);
-  cursor:          pointer;
-  transition:      all 0.2s ease;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
 .student-360__close-btn:hover {
   background: rgba(255, 59, 48, 0.1);
-  color:      #ff3b30;
-  transform:  rotate(90deg);
+  color: #ff3b30;
+  transform: rotate(90deg);
+}
+
+.student-360__action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.student-360__action-btn:hover {
+  background: var(--bg-secondary);
+  color: var(--primary);
 }
 
 .student-360__tabs {
-  display:       flex;
-  gap:           8px;
-  padding:       0 24px;
-  background:    var(--surface);
+  display: flex;
+  gap: 8px;
+  padding: 0 24px;
+  background: var(--surface);
   border-bottom: 1px solid var(--border);
-  overflow-x:    auto;
-  scrollbar-width: none; /* Hide scrollbar Firefox */
+  overflow-x: auto;
+  scrollbar-width: none;
 }
 .student-360__tabs::-webkit-scrollbar {
-  display: none; /* Hide scrollbar Chrome/Safari */
+  display: none;
 }
 
 .student-360__tab-btn {
-  display:         flex;
-  align-items:     center;
-  gap:             8px;
-  padding:         12px 16px;
-  background:      none;
-  border:          none;
-  border-bottom:   2px solid transparent;
-  font-size:       0.9rem;
-  font-weight:     600;
-  color:           var(--text-secondary);
-  cursor:          pointer;
-  transition:      all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
 .student-360__tab-btn:hover {
@@ -1504,7 +761,7 @@ onUnmounted(() => {
 }
 
 .student-360__tab-btn--active {
-  color:         var(--primary);
+  color: var(--primary);
   border-bottom: 2px solid var(--primary);
 }
 
@@ -1517,9 +774,9 @@ onUnmounted(() => {
 }
 
 .student-360__content {
-  flex:     1;
+  flex: 1;
   overflow: auto;
-  padding:  24px;
+  padding: 24px;
 }
 
 @media (max-width: 1024px) {
@@ -1528,28 +785,16 @@ onUnmounted(() => {
   }
 }
 
-@media (max-width: 768px) {
-  .student-360__content {
-    padding: 12px;
-  }
-}
-
 .student-360__pane {
-  display:        flex;
+  display: flex;
   flex-direction: column;
-  gap:            16px;
+  gap: 16px;
 }
 
 .student-360__stats-grid {
-  display:               grid;
+  display: grid;
   grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-  gap:                   12px;
-}
-
-@media (max-width: 800px) {
-  .student-360__stats-grid {
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  }
+  gap: 12px;
 }
 
 .student-360__period-toggle {
@@ -1584,7 +829,6 @@ onUnmounted(() => {
   box-shadow: var(--shadow-sm);
 }
 
-/* ── Trends Row ─────────────────────────────────────────────────────────── */
 .student-360__trends-row {
   display: flex;
   gap: 20px;
@@ -1610,1212 +854,98 @@ onUnmounted(() => {
   letter-spacing: 0.05em;
 }
 
-.student-360__trends-row :deep(.grade-trend) {
-  margin-top: 0;
-  border: none;
-  padding: 0;
-}
-
-.student-360__trends-row :deep(.student-trend-graph) {
-  border: none;
-  padding: 0;
-  background: transparent;
-}
-
-/* ── Impact Badges ──────────────────────────────────────────────────────── */
-.impact-badge {
-  font-size: 0.7rem;
-  font-weight: 700;
-  padding: 2px 6px;
-  border-radius: 4px;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-
-.impact-badge--high {
-  background: #fff0f0;
-  color: #d70015;
-}
-
-.impact-badge--med {
-  background: #fdf8f0;
-  color: #9f6600;
-}
-
-.impact-badge--low {
-  background: #f0f7ff;
-  color: #0056b3;
-}
-
-@media (max-width: 1024px) {
-  .student-360__trends-row {
-    flex-direction: column;
-  }
-}
-
-.academics-section {
-  margin-bottom: 8px;
-}
-
-.academics-section__header {
+.student-360__insight-card {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
+  gap: 12px;
+  padding: 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  border-left: 4px solid var(--warning);
 }
 
-.academics-section__title {
-  font-size: 1rem;
+.insight-icon {
+  color: var(--warning);
+}
+
+.insight-title {
+  margin: 0 0 4px 0;
+  font-size: 0.9rem;
   font-weight: 700;
-  color: var(--text);
-  margin: 0;
 }
 
-.btn-add-individual {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  background: var(--primary);
-  color: white;
-  border: none;
-  border-radius: var(--radius-sm);
-  font-size: 0.8rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.btn-add-individual:hover {
-  opacity: 0.9;
-  transform: translateY(-1px);
-}
-
-.academics-empty-state {
-  padding: 24px;
-  background: var(--bg-secondary);
-  border: 1px dashed var(--border);
-  border-radius: var(--radius-md);
-  text-align: center;
+.insight-message {
+  margin: 0 0 4px 0;
+  font-size: 0.85rem;
   color: var(--text-secondary);
-  font-size: 0.9rem;
 }
 
-.academics-table-wrapper {
-  background:    var(--surface);
-  border:        1px solid var(--border);
-  border-radius: var(--radius-lg);
-  overflow:      hidden;
-}
-
-.academics-table {
-  width:           100%;
-  border-collapse: collapse;
-}
-
-.academics-table th {
-  text-align:     left;
-  padding:        12px 16px;
-  background:     var(--bg-secondary);
-  font-size:      0.75rem;
-  font-weight:    700;
-  color:          var(--text-secondary);
-  text-transform: uppercase;
-}
-
-.academics-table td {
-  padding:       12px 16px;
-  border-bottom: 1px solid var(--border);
-  font-size:     0.9rem;
-}
-
-.th-date, .td-date     { width: 80px; color: var(--text-secondary); font-variant-numeric: tabular-nums; }
-.td-name                 { font-weight: 600; }
-.th-type, .td-type       { width: 90px; }
-.th-impact, .td-impact   { width: 90px; }
-.th-score, .td-score     { width: 115px; }
-.td-score                { font-variant-numeric: tabular-nums; white-space: nowrap; }
-.th-percent, .td-percent { width: 70px; text-align: right !important; }
-.td-percent              { font-weight: 700; }
-
-.badge {
-  padding:       2px 8px;
-  background:    var(--bg-secondary);
-  border-radius: var(--radius-sm);
-  font-size:     0.75rem;
-  font-weight:   600;
-  color:         var(--text-secondary);
-}
-
-.score-missing {
-  display:     flex;
-  align-items: center;
-  gap:         6px;
-}
-
-.badge-red-a {
-  display:         flex;
-  align-items:     center;
-  justify-content: center;
-  width:           18px;
-  height:          18px;
-  background:      #ff3b30;
-  color:           #fff;
-  font-size:       0.7rem;
-  font-weight:     800;
-  border-radius:   4px;
-  line-height:     1;
-}
-
-.text-danger { color: #ff3b30; font-weight: 600; }
-.text-muted  { color: var(--text-secondary); font-style: italic; }
-
-.profile-section {
-  background:    var(--surface);
-  border:        1px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding:       20px;
-}
-
-.profile-section__title {
-  margin:        0 0 16px 0;
-  font-size:     1rem;
-  font-weight:   700;
-  color:         var(--text);
-  border-bottom: 1px solid var(--border);
-  padding-bottom: 8px;
-}
-
-.profile-grid {
-  display:               grid;
-  grid-template-columns: 1fr 1fr;
-  gap:                   20px;
-}
-
-.profile-item {
-  display:        flex;
-  flex-direction: column;
-  gap:            4px;
-}
-
-.profile-item__label {
-  font-size:   0.75rem;
-  font-weight: 600;
-  color:       var(--text-secondary);
-  text-transform: uppercase;
-}
-
-.profile-item__value {
-  font-size: 0.9rem;
-  color:     var(--text);
-  display:   flex;
-  align-items: center;
-  gap:       6px;
-}
-
-.profile-item__value--adult {
-  color: #b45309; /* Amber/Dark Orange */
-  font-weight: 700;
-}
-
-.adult-icon {
-  color: #f59e0b; /* Bright Amber */
-}
-
-.contacts-list {
-  display:        flex;
-  flex-direction: column;
-  gap:            12px;
-}
-
-.contact-card {
-  padding:       12px;
-  background:    var(--bg-secondary);
-  border-radius: var(--radius-md);
-  border:        1px solid var(--border);
-}
-
-.contact-card__name {
-  font-weight: 700;
-  font-size:   0.9rem;
-  color:       var(--text);
-  margin-bottom: 4px;
-}
-
-.contact-card__meta {
-  display:     flex;
-  gap:         16px;
-  font-size:   0.8rem;
-  color:       var(--text-secondary);
-}
-
-.contact-card__meta a {
-  color:           var(--primary);
-  text-decoration: none;
-}
-
-.student-360__notes-area {
-  width:         100%;
-  min-height:    120px;
-  padding:       12px;
-  background:    var(--bg-secondary);
-  border:        1px solid var(--border);
-  border-radius: var(--radius-md);
-  font-family:   inherit;
-  font-size:     0.9rem;
-  resize:        vertical;
-  color:         var(--text);
-}
-
-.student-360__gradebook-note {
-  margin-top: 24px;
-  padding-top: 24px;
-  border-top: 2px solid var(--border-color-light);
-}
-
-.profile-actions {
-  margin-top: 12px;
-}
-
-.profile-actions__label {
-  display:     flex;
-  align-items: center;
-  gap:         6px;
-  font-size:   0.75rem;
-  font-weight: 700;
-  color:       var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-bottom: 8px;
-}
-
-.profile-actions__buttons {
-  display: flex;
-  gap: 10px;
+.insight-recommendation {
+  margin: 0;
+  font-size: 0.85rem;
 }
 
 .timeline-header {
-  margin-bottom: 16px;
   display: flex;
   justify-content: flex-end;
+  margin-bottom: 8px;
 }
 
 .btn-log-absence {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 8px 12px;
-  background: var(--bg-secondary);
+  padding: 6px 12px;
+  background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  font-size: 0.85rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.btn-log-absence:hover {
-  background: var(--border);
-}
-
-.absence-form {
-  background: var(--bg-secondary);
-  padding: 16px;
-  border-radius: var(--radius-md);
-  margin-bottom: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  border: 1px solid var(--primary-light);
-}
-
-.absence-input {
-  max-width: 220px;
-  padding: 10px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  background: var(--surface);
-  color: var(--text);
-}
-
-.absence-actions {
-  display: flex;
-  gap: 8px;
-}
-
-.btn-primary {
-  padding: 8px 16px;
-  background: var(--primary);
-  color: #fff;
-  border: none;
-  border-radius: var(--radius-sm);
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.btn-ghost {
-  padding: 8px 16px;
-  background: transparent;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  color: var(--text-secondary);
-  cursor: pointer;
-}
-
-.btn-copy-report {
-  display:         flex;
-  align-items:     center;
-  justify-content: center;
-  gap:             8px;
-  flex:            1;
-  padding:         12px 16px;
-  border:          none;
-  border-radius:   var(--radius-lg);
-  font-size:       0.875rem;
-  font-weight:     700;
-  cursor:          pointer;
-  transition:      all 0.2s ease;
-}
-
-.btn-copy-report:hover {
-  opacity: 0.88;
-  transform: translateY(-1px);
-}
-
-/* Anonymous (no name) — subdued, privacy-forward */
-.btn-copy-report--anon {
-  background: var(--bg-secondary);
-  color:      var(--text);
-  border:     1.5px solid var(--border);
-}
-
-.btn-copy-report--anon:hover {
-  background: var(--surface);
-  border-color: var(--primary);
-  color: var(--primary);
-}
-
-/* Named — primary CTA */
-.btn-copy-report--named {
-  background: var(--primary);
-  color:      #fff;
-}
-
-.student-360__trend-section {
-  background:    var(--surface);
-  padding:       24px;
-  border-radius: var(--radius-lg);
-  border:        1px solid var(--border);
-  box-shadow:    var(--shadow-sm);
-  margin-top:    8px;
-}
-
-.student-360__insight-card {
-  display:       flex;
-  gap:           16px;
-  padding:       20px;
-  background:    rgba(255, 149, 0, 0.05);
-  border:        1px solid rgba(255, 149, 0, 0.2);
-  border-radius: var(--radius-lg);
-  margin-top:    8px;
-}
-
-.insight-icon {
-  display:         flex;
-  align-items:     center;
-  justify-content: center;
-  width:           40px;
-  height:          40px;
-  border-radius:   50%;
-  flex-shrink:     0;
-}
-
-.insight-icon--warning {
-  background: rgba(255, 149, 0, 0.1);
-  color:      #ff9500;
-}
-
-.insight-content {
-  flex: 1;
-}
-
-.insight-title {
-  margin:      0 0 4px 0;
-  font-size:   0.95rem;
-  font-weight: 700;
-  color:       #8e44ad; /* Use a distinct "coaching" color */
-}
-
-.insight-message {
-  margin:    0 0 8px 0;
-  font-size: 0.9rem;
-  color:     var(--text);
-}
-
-.insight-recommendation {
-  margin:    0;
-  font-size: 0.85rem;
-  color:     var(--text-secondary);
-  font-style: italic;
-}
-
-/* ── Interactive Grading ─────────────────────────────────────────────── */
-.score-cell-wrapper {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 24px;
-  padding-right: 24px;
-}
-
-.cell-edit-input {
-  width: 60px;
-  padding: 4px 8px;
-  border: 1px solid var(--primary);
-  border-radius: var(--radius-sm);
-  font-size: 0.9rem;
-  font-weight: 700;
-  text-align: center;
-  background: var(--bg);
-  box-shadow: 0 0 0 3px var(--primary-light);
-  outline: none;
-}
-
-.score-value {
-  cursor: pointer;
-  padding: 2px 4px;
-  border-radius: 4px;
-  transition: background 0.2s;
-}
-
-.score-value:hover {
-  background: var(--bg-secondary);
-}
-
-.score-missing {
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.attempts-dot {
-  width: 10px;
-  height: 10px;
-  background: #ff3b30;
-  border-radius: 50%;
-  cursor: pointer;
-  box-shadow: 0 0 0 2px var(--surface);
-  flex-shrink: 0;
-}
-
-.attempts-dot:hover {
-  transform: scale(1.2);
-}
-
-/* Context Menu & Popovers */
-.context-menu-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 2000;
-  background: transparent;
-}
-
-.context-menu, .attempts-popover {
-  position: absolute;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-md);
-  padding: 8px;
-  min-width: 180px;
-  z-index: 2001;
-}
-
-.attempts-popover {
-  min-width: 280px;
-}
-
-.context-menu__item {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 12px;
-  border: none;
-  background: transparent;
-  color: var(--text);
-  font-size: 0.85rem;
-  font-weight: 500;
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  text-align: left;
-}
-
-.context-menu__item:hover {
-  background: var(--bg-secondary);
-  color: var(--primary);
-}
-
-.context-menu__divider {
-  height: 1px;
-  background: var(--border);
-  margin: 4px 0;
-}
-
-/* Attempts Popover */
-.attempts-popover__header {
-  padding: 8px 12px;
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: var(--text-secondary);
-  text-transform: uppercase;
-  border-bottom: 1px solid var(--border);
-  margin-bottom: 4px;
-}
-
-.attempts-popover__list {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.attempt-item {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 8px 12px;
-  border-radius: var(--radius-sm);
-}
-
-.attempt-item__row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-}
-
-.attempt-item--primary {
-  background: var(--primary-light);
-}
-
-.attempt-item__main {
-  display: flex;
-  flex-direction: column;
-}
-
-.attempt-item__score {
-  font-weight: 700;
-  font-size: 0.9rem;
-}
-
-.attempt-item__date {
-  font-size: 0.7rem;
-  color: var(--text-secondary);
-}
-
-.attempt-item__actions {
-  display: flex;
-  gap: 4px;
-}
-
-.attempt-comment-input {
-  width: 100%;
-  box-sizing: border-box;
-  font-size: 0.78rem;
-  font-family: inherit;
-  color: var(--text);
-  background: var(--bg-secondary);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 5px 8px;
-  resize: vertical;
-  min-height: 42px;
-  line-height: 1.4;
-  transition: border-color 0.15s;
-}
-
-.attempt-comment-input:focus {
-  outline: none;
-  border-color: var(--primary);
-  background: var(--surface);
-}
-
-.attempt-comment-input::placeholder {
-  color: var(--text-secondary);
-  font-style: italic;
-}
-
-.cell-indicators {
-  display: flex;
-  align-items: center;
-  gap: 3px;
-  position: absolute;
-  top: 2px;
-  right: 2px;
-}
-
-.comment-dot {
-  font-size: 0.65rem;
-  cursor: pointer;
-  line-height: 1;
-  opacity: 0.2;
-  transition: opacity 0.15s, transform 0.15s;
-}
-
-.comment-dot:hover {
-  opacity: 0.8;
-}
-
-.comment-dot--active {
-  opacity: 1;
-  font-size: 0.7rem;
-}
-
-/* Modals */
-.modal-body-content { padding: 0; display: flex; flex-direction: column; gap: 16px; }
-
-.email-config-modal-body {
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.header-content {
-  display: flex;
-  gap: 16px;
-  align-items: center;
-}
-
-.header-icon {
-  color: var(--primary);
-  background: var(--primary-light);
-  padding: 8px;
-  border-radius: var(--radius-md);
-  box-sizing: content-box;
-}
-
-.header-title {
-  margin: 0;
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: var(--text);
-}
-
-.print-modal__options {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px 24px;
-  background: var(--bg-hover);
-  padding: 16px;
-  border-radius: 8px;
-  border: 1px solid var(--border-color);
-}
-
-.print-modal__section-title {
-  grid-column: 1 / -1;
-  font-size: 0.7rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  color: var(--text-secondary);
-  margin-bottom: 4px;
-  letter-spacing: 0.05em;
 }
 
 .absence-modal-content {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 16px;
+}
+
+.absence-input {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
 }
 
 .absence-checkbox-container {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   cursor: pointer;
-  padding: 12px;
-  background: var(--bg-secondary);
-  border-radius: var(--radius-md);
-  transition: background 0.2s;
-}
-
-.absence-checkbox-container:hover {
-  background: var(--bg-hover);
-}
-
-.absence-checkbox-container input {
-  width: 18px;
-  height: 18px;
-  accent-color: var(--primary);
-}
-
-.checkbox-label {
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: var(--text);
+  font-size: 0.85rem;
 }
 
 .modal-footer {
   display: flex;
   justify-content: flex-end;
-  gap: 12px;
-  margin-top: 10px;
-}
-
-.print-modal__divider {
-  grid-column: 1 / -1;
-  height: 1px;
-  background: var(--border-color);
-  margin: 4px 0;
-}
-
-.header-subtitle {
-  margin: 2px 0 0;
-  font-size: 0.85rem;
-  color: var(--text-secondary);
-}
-
-.header-close {
-  background: transparent;
-  border: none;
-  color: var(--text-secondary);
-  cursor: pointer;
-  padding: 4px;
-  border-radius: var(--radius-sm);
-  transition: all 0.2s;
-}
-
-.header-close:hover {
-  background: var(--bg-hover);
-  color: var(--text);
-}
-
-.email-config-modal__body {
-  padding: 16px 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  overflow-y: auto;
-}
-
-.config-section-title {
-  margin: 0 0 12px;
-  font-size: 0.75rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--text-secondary);
-}
-
-.recipient-list {
-  display: flex;
-  flex-direction: column;
   gap: 8px;
+  margin-top: 12px;
 }
 
-.recipient-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 12px;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.recipient-item:hover {
-  border-color: var(--primary-light);
-  transform: translateX(4px);
-}
-
-.recipient-item--active {
-  background: var(--surface);
-  border-color: var(--primary);
-  box-shadow: var(--shadow-sm);
-}
-
-.recipient-info {
-  display: flex;
-  flex-direction: column;
-}
-
-.recipient-label {
-  font-weight: 600;
-  font-size: 0.9rem;
-  color: var(--text);
-}
-
-.recipient-email {
-  font-size: 0.75rem;
-  color: var(--text-secondary);
-}
-
-.icon-checked {
-  color: var(--primary);
-}
-
-.checkbox-placeholder {
-  width: 20px;
-  height: 20px;
-  border: 2px solid var(--border);
-  border-radius: 50%;
-}
-
-.options-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 10px;
-}
-
-.option-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 6px 10px;
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.option-item:hover {
-  background: var(--bg-secondary);
-}
-
-.option-item input {
-  width: 18px;
-  height: 18px;
-  accent-color: var(--primary);
+.btn-ghost {
+  padding: 8px 16px;
+  border: none;
+  background: transparent;
   cursor: pointer;
 }
 
-.option-label {
-  font-size: 0.9rem;
-  color: var(--text);
-}
-
-.email-config-modal__footer {
-  padding: 12px 20px;
-  background: var(--bg-secondary);
-  border-top: 1px solid var(--border);
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-}
-
-.btn-cancel {
-  padding: 10px 20px;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  color: var(--text);
-  font-weight: 600;
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btn-cancel:hover {
-  background: var(--bg-hover);
-}
-
-.btn-generate {
-  padding: 10px 24px;
+.btn-primary {
+  padding: 8px 16px;
   background: var(--primary);
   color: white;
   border: none;
+  border-radius: var(--radius-sm);
   font-weight: 600;
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  transition: all 0.2s;
-}
-
-.btn-generate:hover:not(:disabled) {
-  background: var(--primary-dark);
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-md);
-}
-
-.btn-generate:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.student-360__action-btn,
-.student-360__close-btn {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border);
-  color: var(--text-secondary);
-  padding: 6px;
-  border-radius: 8px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
-}
-
-.student-360__action-btn:hover,
-.student-360__close-btn:hover {
-  background: var(--bg-hover);
-  color: var(--text);
-  border-color: var(--text-secondary);
-}
-
-.recipient-empty {
-  padding: 12px;
-  text-align: center;
-  font-size: 0.85rem;
-  color: var(--text-secondary);
-  font-style: italic;
-  background: var(--bg-secondary);
-  border-radius: var(--radius-md);
-  border: 1px dashed var(--border);
-}
-
-/* --- Print Styles --- */
-/* (Replaced by global rules in main.css) */
-
-/* These helpers were missing in Student360.vue but used in the new modal UI */
-.reports__btn-preview {
-  background: none;
-  border: 1px solid var(--primary-light);
-  color: var(--primary);
-  font-size: 0.75rem;
-  font-weight: 600;
-  padding: 4px 10px;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.config-section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-}
-
-.reports__print-preview-area {
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  overflow: hidden;
-  background: #eee;
-  margin-top: 8px;
-  max-height: 500px; /* Cap overall preview container */
-  display: flex;
-  flex-direction: column;
-}
-
-@media (max-height: 800px) {
-  .reports__print-preview-area { max-height: 350px; }
-}
-
-.preview-banner {
-  background: #333;
-  color: white;
-  padding: 6px 12px;
-  font-size: 0.70rem;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.preview-content {
-  height: auto; /* Allow dynamic height based on container */
-  min-height: 300px;
-  max-height: 450px;
-  overflow-y: auto;
-  background: #f1f5f9;
-  padding: 30px;
-  display: flex;
-  justify-content: center;
-}
-
-@media (max-height: 800px) {
-  .preview-content { 
-    max-height: 300px;
-    padding: 15px;
-  }
-}
-
-.preview-content :deep(.progress-report),
-.preview-content :deep(.attendance-report) {
-  transform: scale(0.65);
-  transform-origin: top center;
-  margin-bottom: -150px; /* Offset the scale-down space */
-  box-shadow: var(--shadow-lg);
-}
-
-.report-type-toggle {
-  display: flex;
-  background: var(--bg-secondary);
-  padding: 4px;
-  border-radius: 8px;
-  border: 1px solid var(--border);
-  gap: 4px;
-}
-
-.reports__toggle-btn {
-  flex: 1;
-  padding: 6px 12px;
-  border: none;
-  background: transparent;
-  color: var(--text-secondary);
-  font-size: 0.8rem;
-  font-weight: 600;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.reports__toggle-btn:hover {
-  background: var(--bg-hover);
-  color: var(--text);
-}
-
-.reports__toggle-btn--active {
-  background: var(--surface);
-  color: var(--primary);
-  box-shadow: var(--shadow-sm);
-}
-
-.report-preview-mini {
-  padding: 12px;
-  background: var(--bg-secondary);
-  border-radius: var(--radius-md);
-  font-size: 0.85rem;
-  color: var(--text-secondary);
-  border: 1px solid var(--border);
-  line-height: 1.4;
-}
-/* History Tab Styles */
-.student-360__pane--history {
-  padding: 24px;
-  overflow-y: auto;
-}
-
-.history-container {
-  max-width: 800px;
-  margin: 0 auto;
-}
-
-.history-title {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--text);
-  margin-bottom: 4px;
-}
-
-.history-subtitle {
-  font-size: 0.9rem;
-  color: var(--text-secondary);
-  margin-bottom: 24px;
-}
-
-.history-empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 60px;
-  background: var(--bg-hover);
-  border-radius: var(--radius-xl);
-  border: 2px dashed var(--border);
-  color: var(--text-secondary);
-  gap: 16px;
-}
-
-.history-empty-icon {
-  opacity: 0.3;
-}
-
-.history-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.history-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px 20px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  transition: transform 0.2s ease;
-}
-
-.history-item:hover {
-  transform: translateX(4px);
-  border-color: var(--primary);
-}
-
-.history-item__left {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.history-term-badge {
-  font-size: 0.7rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  color: var(--primary);
-  background: var(--primary-light);
-  padding: 2px 8px;
-  border-radius: 100px;
-  width: fit-content;
-}
-
-.history-class-name {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: var(--text);
-}
-
-.history-period {
-  font-size: 0.8rem;
-  color: var(--text-secondary);
-}
-
-.history-grade-pill {
-  font-size: 1.25rem;
-  font-weight: 800;
-  color: white;
-  padding: 8px 16px;
-  border-radius: var(--radius-md);
-  min-width: 80px;
-  text-align: center;
-  box-shadow: var(--shadow-sm);
-}
-
-.absence-form-inputs {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.absence-checkbox-label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 0.9rem;
-  font-weight: 500;
-  color: var(--text);
-  cursor: pointer;
-}
-
-.absence-checkbox-label input[type="checkbox"] {
-  width: 16px;
-  height: 16px;
-  accent-color: var(--primary);
   cursor: pointer;
 }
 </style>
