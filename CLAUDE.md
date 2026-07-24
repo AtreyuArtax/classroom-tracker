@@ -81,6 +81,14 @@ Touch targets minimum 44×44px throughout. Use `--shadow-md` for overlays and th
 
 ---
 
+## 2.1 Component Architecture & File Size Rules
+
+1. **Strict File Line Limit (1,000 Lines Max)**: No single `.vue` or `.js` file should exceed **1,000 lines**. When adding new features or expanding existing views, extract logical sub-components immediately.
+2. **Modular Sub-Component Strategy**: Always build new modals, sub-tabs, toolbars, export dialogs, and detail views as dedicated components in their corresponding component subdirectory (`src/components/grades/`, `src/components/reports/`, `src/components/dossier/`, `src/components/setup/`).
+3. **Orchestrator Pattern**: Main view files (`Dashboard.vue`, `Setup.vue`, `Reports.vue`, `Grades.vue`, `Student360.vue`) must function as clean orchestrators, delegating presentational UI, modals, and tab content to focused sub-components.
+
+---
+
 ## 3. Folder Structure — Generate Exactly This
 
 ```

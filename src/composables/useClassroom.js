@@ -21,6 +21,7 @@ import { toMinutes } from '../db/eventService.js'
 import * as settingsService from '../db/settingsService.js'
 import { useUndo } from './useUndo.js'
 import { useMessage } from './useMessage.js'
+import { getDB } from '../db/index.js'
 import { supabase } from '../utils/supabase.js'
 import {
   moveStudentFromClass,
@@ -1114,7 +1115,7 @@ async function logToggleEvent(studentId, code, targetClassId = null) {
  * Update an existing event and sync reactive state.
  */
 async function editEvent(eventId, updates) {
-    const db = await (await import('../db/index.js')).getDB()
+    const db = await getDB()
     const original = await db.get('events', eventId)
     if (!original) return
 
@@ -1140,7 +1141,7 @@ async function editEvent(eventId, updates) {
  * Remove an event and sync reactive state.
  */
 async function removeEvent(eventId) {
-    const db = await (await import('../db/index.js')).getDB()
+    const db = await getDB()
     const original = await db.get('events', eventId)
     if (!original) return
 

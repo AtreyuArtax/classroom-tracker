@@ -8,6 +8,7 @@ import { ref, shallowRef, computed, triggerRef } from 'vue'
 import { useMessage } from './useMessage.js'
 import * as gradebookService from '../db/gradebookService.js'
 import * as classService from '../db/classService.js'
+import { getGlobalMilestones, getGradeBuckets } from '../db/settingsService.js'
 
 // ─── Reactive State ──────────────────────────────────────────────────────────
 
@@ -86,9 +87,12 @@ export async function loadGradebook(classRecord) {
   grades.value = await gradebookService.getGradesByClass(classRecord.classId)
   
   // Load global settings
-  const { getGlobalMilestones, getGradeBuckets } = await import('../db/settingsService.js')
-  globalMilestones.value = await getGlobalMilestones()
-  gradeBuckets.value = await getGradeBuckets()
+  const [gMilestones, gBuckets] = await Promise.all([
+    getGlobalMilestones(),
+    getGradeBuckets()
+  ])
+  globalMilestones.value = gMilestones
+  gradeBuckets.value = gBuckets
   
   // Compute student grades and stats
   await refreshGrades()
@@ -605,8 +609,7 @@ export async function saveStudentOverride(studentId, catId, value) {
     // Force trigger because we are using shallowRef
     triggerRef(activeClassRecord)
 
-    const { patchStudent } = await import('../db/classService.js')
-    await patchStudent(activeClassRecord.value.classId, studentId, { 
+    await classService.patchStudent(activeClassRecord.value.classId, studentId, { 
       categoryOverrides: student.categoryOverrides 
     })
     await refreshGrades()
@@ -642,8 +645,7 @@ export async function saveStudentGradebookNote(studentId, note) {
         }
 
         // Persist to IDB
-        const { patchStudent } = await import('../db/classService.js')
-        await patchStudent(activeClassRecord.value.classId, studentId, { gradebookNote: note })
+        await classService.patchStudent(activeClassRecord.value.classId, studentId, { gradebookNote: note })
     } catch (err) {
         console.error('[useGradebook] saveStudentGradebookNote failed:', err)
         const { alert } = useMessage()
@@ -671,8 +673,7 @@ export async function saveStudentDemographics(studentId, demographics) {
 
     Object.assign(student, updates)
     triggerRef(activeClassRecord)
-    const { patchStudent } = await import('../db/classService.js')
-    await patchStudent(activeClassRecord.value.classId, studentId, updates)
+    await classService.patchStudent(activeClassRecord.value.classId, studentId, updates)
   } catch (err) {
     console.error('[useGradebook] saveStudentDemographics failed:', err)
     const { alert } = useMessage()
@@ -724,8 +725,7 @@ export async function adjustStudentGrade(studentId, adjustedGrade) {
     // Force trigger because we are using shallowRef
     triggerRef(activeClassRecord)
 
-    const { patchStudent } = await import('../db/classService.js')
-    await patchStudent(activeClassRecord.value.classId, studentId, { 
+    await classService.patchStudent(activeClassRecord.value.classId, studentId, { 
       adjustedGrade: newVal 
     })
     await refreshGrades()
