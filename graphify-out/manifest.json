@@ -185,8 +185,8 @@
     "semantic_hash": "561bf8bd5746113ff902a94fb2a31f6e"
   },
   "src/components/dossier/Student360.vue": {
-    "mtime": 1784812542.92596,
-    "ast_hash": "e089fdc81686f01bd59190026607c712",
+    "mtime": 1784935831.7306058,
+    "ast_hash": "39ef289012725cd9c5bea8a49bb7425e",
     "semantic_hash": ""
   },
   "src/components/dossier/Student360Header.vue": {
@@ -205,8 +205,8 @@
     "semantic_hash": "776bd6fa0a53c8399f2c312805135960"
   },
   "src/components/dossier/StudentTimeline.vue": {
-    "mtime": 1784554875.910283,
-    "ast_hash": "4ddeb85806fbba86eb81357f93750f72",
+    "mtime": 1784936052.5535576,
+    "ast_hash": "8f62bfb839aec38262c5016bbf76df71",
     "semantic_hash": ""
   },
   "src/components/setup/CalendarSettings.vue": {

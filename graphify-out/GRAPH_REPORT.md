@@ -1,7 +1,7 @@
 # Graph Report - classroom-tracker  (2026-07-24)
 
 ## Corpus Check
-- 110 files · ~167,944 words
+- 110 files · ~167,990 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `15993db1`
+- Built from commit: `29fe8ca7`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -188,7 +188,7 @@ Nodes (9): background_color, description, display, icons, name, orientation, sho
 
 ### Community 23 - "Community 23"
 Cohesion: 0.13
-Nodes (14): filteredMilestones, globalMilestones, gradeMap, loadGradebook(), refreshAllAssessmentStats(), getDateRangeForClassPeriod(), getDateRangeForPeriod(), getGlobalMilestones() (+6 more)
+Nodes (14): assessments, filteredMilestones, globalMilestones, loadGradebook(), refreshAllAssessmentStats(), getDateRangeForClassPeriod(), getDateRangeForPeriod(), getGlobalMilestones() (+6 more)
 
 ### Community 24 - "Community 24"
 Cohesion: 0.12
@@ -255,7 +255,7 @@ Nodes (3): computeWeeklyStats(), editEvent(), removeEvent()
 
 ### Community 94 - "Community 94"
 Cohesion: 0.29
-Nodes (14): activeClassRecord, assessments, classGrades, clearGrade(), enqueueDBSave(), enterGrade(), markExcluded(), markMissing() (+6 more)
+Nodes (14): activeClassRecord, classGrades, clearGrade(), enqueueDBSave(), enterGrade(), gradeMap, markExcluded(), markMissing() (+6 more)
 
 ### Community 95 - "Community 95"
 Cohesion: 0.17

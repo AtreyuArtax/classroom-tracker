@@ -71,7 +71,7 @@
                   </div>
                 </div>
                 
-                <div class="timeline-row__tags">
+                <div v-if="item.tags?.length || item.testDay" class="timeline-row__tags">
                   <span v-if="item.testDay" class="timeline-row__tag timeline-row__tag--test-day">
                     Assessment Day
                   </span>
@@ -83,16 +83,16 @@
                 <div v-if="item.outcome" class="timeline-row__outcome" :class="`timeline-row__outcome--${item.raw.acOutcome}`">
                   {{ formatOutcome(item.outcome) }}
                 </div>
-              </div>
 
-              <!-- Actions (only for managed events) -->
-              <div v-if="item.isEvent" class="timeline-row__actions">
-                <button class="action-btn" title="Edit Entry" @click="startEdit(item)">
-                  <Pencil :size="14" />
-                </button>
-                <button class="action-btn action-btn--danger" title="Delete Entry" @click="confirmDelete(item.id)">
-                  <Trash2 :size="14" />
-                </button>
+                <!-- Inline Actions (next to entry content) -->
+                <div v-if="item.isEvent" class="timeline-row__actions">
+                  <button class="action-btn" title="Edit Entry" @click="startEdit(item)">
+                    <Pencil :size="13" />
+                  </button>
+                  <button class="action-btn action-btn--danger" title="Delete Entry" @click="confirmDelete(item.id)">
+                    <Trash2 :size="13" />
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -470,7 +470,8 @@ function formatTag(tag) {
 .student-timeline__container {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 12px;
+  max-width: 800px;
 }
 
 /* ── Filter Pills ────────────────────────────────────────────────── */
@@ -487,11 +488,11 @@ function formatTag(tag) {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 16px;
+  padding: 6px 14px;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-full);
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   font-weight: 600;
   color: var(--text-secondary);
   cursor: pointer;
@@ -573,7 +574,7 @@ function formatTag(tag) {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 60px 20px;
+  padding: 40px 20px;
   color: var(--text-secondary);
   text-align: center;
   background: var(--bg-secondary);
@@ -595,14 +596,14 @@ function formatTag(tag) {
 
 /* Group styling */
 .timeline-group {
-  margin-bottom: 24px;
+  margin-bottom: 10px;
 }
 
 .timeline-group__header {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 12px;
+  gap: 8px;
+  margin-bottom: 4px;
 }
 
 .timeline-group__date {
@@ -612,13 +613,13 @@ function formatTag(tag) {
 }
 
 .timeline-group__day {
-  font-size: 1.25rem;
+  font-size: 1.1rem;
   font-weight: 800;
   color: var(--text);
 }
 
 .timeline-group__month {
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   font-weight: 700;
   color: var(--text-secondary);
   text-transform: uppercase;
@@ -628,16 +629,16 @@ function formatTag(tag) {
   height: 1px;
   flex: 1;
   background: var(--border);
-  opacity: 0.3;
+  opacity: 0.25;
 }
 
 /* Row Styling */
 .timeline-row {
   display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 10px;
-  border-radius: var(--radius-md);
+  align-items: center;
+  gap: 10px;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
   transition: background 0.15s ease;
 }
 
@@ -646,18 +647,19 @@ function formatTag(tag) {
 }
 
 .timeline-row__time {
-  width: 70px;
+  width: 65px;
   font-size: 0.75rem;
   color: var(--text-secondary);
   font-weight: 600;
-  padding-top: 4px;
+  flex-shrink: 0;
 }
 
 .timeline-row__marker {
   display: flex;
   justify-content: center;
-  width: 20px;
-  padding-top: 4px;
+  align-items: center;
+  width: 18px;
+  flex-shrink: 0;
 }
 
 .timeline-row__icon {
@@ -669,56 +671,59 @@ function formatTag(tag) {
 .timeline-row__content {
   flex: 1;
   display: flex;
-  flex-direction: column;
-  gap: 6px;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
   min-width: 0;
 }
 
 .timeline-row__main {
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
   min-width: 0;
 }
 
 .timeline-row__title {
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   font-weight: 700;
   color: var(--text);
 }
 
 .timeline-row__desc {
-  font-size: 0.82rem;
+  font-size: 0.8rem;
   color: var(--text-secondary);
-  line-height: 1.4;
+  line-height: 1.3;
   word-break: break-word;
 }
 
 .timeline-row__next-steps {
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   color: var(--text);
-  line-height: 1.4;
-  margin-top: 4px;
+  line-height: 1.3;
   background: var(--bg-hover);
-  padding: 4px 8px;
+  padding: 2px 6px;
   border-left: 2px solid var(--primary-light);
   border-radius: 2px;
 }
 
 .timeline-row__tags {
   display: flex;
-  gap: 6px;
+  gap: 4px;
   flex-wrap: wrap;
+  align-items: center;
 }
 
 .timeline-row__tag {
   font-size: 0.65rem;
   font-weight: 700;
-  padding: 2px 8px;
+  padding: 2px 6px;
   background: var(--bg-secondary);
   border: 1px solid var(--border);
   border-radius: 4px;
   color: var(--text-secondary);
-  text-transform: none; /* Allow formatTag to handle case */
+  text-transform: none;
   letter-spacing: 0.02em;
 }
 
@@ -746,9 +751,9 @@ function formatTag(tag) {
 }
 
 .timeline-row__outcome {
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   font-weight: 700;
-  padding: 2px 8px;
+  padding: 2px 6px;
   border-radius: var(--radius-sm);
   width: fit-content;
 }
@@ -757,15 +762,18 @@ function formatTag(tag) {
 .timeline-row__outcome--gap_confirmed { background: #ff3b30; color: #fff; }
 .timeline-row__outcome--inconclusive { background: #ff9500; color: #fff; }
 
-/* Actions */
+/* Inline Actions */
 .timeline-row__actions {
-  display: flex;
+  display: inline-flex;
+  align-items: center;
   gap: 4px;
-  opacity: 0;
+  margin-left: 4px;
+  opacity: 0.5;
   transition: opacity 0.15s ease;
 }
 
-.timeline-row:hover .timeline-row__actions {
+.timeline-row:hover .timeline-row__actions,
+.timeline-row__actions:focus-within {
   opacity: 1;
 }
 
@@ -773,9 +781,9 @@ function formatTag(tag) {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
-  border: none;
+  width: 26px;
+  height: 26px;
+  border: 1px solid var(--border);
   background: var(--surface);
   border-radius: 50%;
   cursor: pointer;
@@ -787,12 +795,14 @@ function formatTag(tag) {
 .action-btn:hover {
   background: var(--primary-light);
   color: var(--primary);
+  border-color: var(--primary-light);
   transform: translateY(-1px);
 }
 
 .action-btn--danger:hover {
   background: rgba(255, 59, 48, 0.1);
   color: #ff3b30;
+  border-color: rgba(255, 59, 48, 0.3);
 }
 
 /* Modal Styling */

@@ -392,15 +392,32 @@ async function logAbsence() {
   }
 }
 
-const tabs = [
-  { id: 'summary',       label: 'Summary',       icon: LayoutDashboard },
-  { id: 'academics',     label: 'Academics',     icon: GraduationCap },
-  { id: 'qualitative',   label: 'Qualitative Evidence', icon: ClipboardList },
-  { id: 'communication', label: 'Communication', icon: MessageSquare },
-  { id: 'timeline',      label: 'Timeline',      icon: Activity },
-  { id: 'history',       label: 'History',       icon: History },
-  { id: 'profile',       label: 'Profile',       icon: UserCircle }
-]
+const hasHistory = computed(() => {
+  return allTimeHistory.value.length > 1 || allTimeHistory.value.some(h => h.classId !== props.classId)
+})
+
+const tabs = computed(() => {
+  const list = [
+    { id: 'summary',       label: 'Summary',       icon: LayoutDashboard },
+    { id: 'academics',     label: 'Academics',     icon: GraduationCap },
+    { id: 'qualitative',   label: 'Qualitative Evidence', icon: ClipboardList },
+    { id: 'communication', label: 'Communication', icon: MessageSquare },
+    { id: 'timeline',      label: 'Timeline',      icon: Activity }
+  ]
+
+  if (hasHistory.value) {
+    list.push({ id: 'history', label: 'History', icon: History })
+  }
+
+  list.push({ id: 'profile', label: 'Profile', icon: UserCircle })
+  return list
+})
+
+watch(hasHistory, (valid) => {
+  if (!valid && activeTab.value === 'history') {
+    activeTab.value = 'summary'
+  }
+})
 
 const events = activeStudentEvents
 const behaviorCodesMap = computed(() => 
