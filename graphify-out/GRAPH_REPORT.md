@@ -1,16 +1,16 @@
 # Graph Report - classroom-tracker  (2026-07-24)
 
 ## Corpus Check
-- 111 files · ~168,360 words
+- 112 files · ~168,949 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 865 nodes · 1395 edges · 94 communities (84 shown, 10 thin omitted)
+- 866 nodes · 1395 edges · 95 communities (85 shown, 10 thin omitted)
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 3 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `a5e6133e`
+- Built from commit: `040fa3e4`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -87,7 +87,7 @@
 ## Import Cycles
 - None detected.
 
-## Communities (94 total, 10 thin omitted)
+## Communities (95 total, 10 thin omitted)
 
 ### Community 0 - "Community 0"
 Cohesion: 0.06
@@ -256,9 +256,9 @@ Nodes (4): allPossibleClasses, {
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `getDB()` connect `Community 8` to `Community 0`, `Community 2`, `Community 3`, `Community 94`?**
-  _High betweenness centrality (0.216) - this node is a cross-community bridge._
+  _High betweenness centrality (0.215) - this node is a cross-community bridge._
 - **Why does `openDB()` connect `Community 94` to `Community 8`, `Community 5`, `Community 95`?**
-  _High betweenness centrality (0.181) - this node is a cross-community bridge._
+  _High betweenness centrality (0.180) - this node is a cross-community bridge._
 - **Why does `useMessage()` connect `Community 24` to `Community 96`, `Community 0`, `Community 1`, `Community 8`, `Community 9`, `Community 72`, `Community 16`, `Community 18`, `Community 85`, `Community 26`?**
   _High betweenness centrality (0.025) - this node is a cross-community bridge._
 - **What connects `scanBuffer`, `manifest_version`, `name` to the rest of the system?**

@@ -1,5 +1,5 @@
 <template>
-  <div class="setup__panel-content">
+  <div class="database-maintenance" style="display: flex; flex-direction: column; gap: 24px;">
     
     <!-- Excel Export -->
     <div class="setup__card">

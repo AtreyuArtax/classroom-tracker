@@ -3,14 +3,10 @@
     <Zap :size="48" style="opacity: 0.2; margin-bottom: 1rem;" />
     <p>Select a class in the header or manager to configure it.</p>
   </div>
-  <div v-else class="setup__panel-content">
-    <!-- Section: Class Logistics -->
-    <div class="setup__section-header">
-      <Settings2 :size="18" />
-      <span>Class Logistics</span>
-    </div>
-
-    <!-- Class Metadata -->
+  <div v-else class="setup__layout">
+    <SetupQuickJumpNav activeTab="active" />
+    <div class="setup__main-content">
+      <!-- Class Metadata -->
     <div class="setup__card">
       <h2 class="setup__card-title">General Info</h2>
       <form class="setup__form">
@@ -323,6 +319,7 @@
       </div>
       <div class="setup__dialog-backdrop" @click="resolveConflicts('skip')" />
     </div>
+    </div>
   </div>
 </template>
 
@@ -334,6 +331,7 @@ import { useMessage } from '../../composables/useMessage.js'
 import * as classService from '../../db/classService.js'
 import BaseModal from '../BaseModal.vue'
 import AssessmentFrameworkSettings from './AssessmentFrameworkSettings.vue'
+import SetupQuickJumpNav from './SetupQuickJumpNav.vue'
 
 import { 
   Settings2, 

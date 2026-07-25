@@ -48,8 +48,11 @@
     <!-- PILLAR 0: Calendar Manager (Modular)                      -->
     <!-- ══════════════════════════════════════════════════════════ -->
     <section v-if="activeTab === 'calendar'" class="setup__panel">
-      <div class="setup__panel-content">
-        <CalendarSettings />
+      <div class="setup__layout">
+        <SetupQuickJumpNav :activeTab="activeTab" />
+        <div class="setup__main-content">
+          <CalendarSettings />
+        </div>
       </div>
     </section>
 
@@ -57,7 +60,9 @@
     <!-- PILLAR 1: Class Manager                                  -->
     <!-- ══════════════════════════════════════════════════════════ -->
     <section v-if="activeTab === 'manage'" class="setup__panel">
-      <div class="setup__panel-content">
+      <div class="setup__layout">
+        <SetupQuickJumpNav :activeTab="activeTab" />
+        <div class="setup__main-content">
         <!-- Bulk Setup Wizard (Smart CSV Interceptor) -->
         <div class="setup__card setup__card--accent">
           <h2 class="setup__card-title">Bulk Setup / New Semester</h2>
@@ -276,6 +281,7 @@
           </div>
           <div class="setup__dialog-backdrop" />
         </div>
+        </div>
       </div>
     </section>
 
@@ -290,7 +296,9 @@
     <!-- PILLAR 3: Global App Settings                            -->
     <!-- ══════════════════════════════════════════════════════════ -->
     <section v-else-if="activeTab === 'app'" class="setup__panel">
-      <div class="setup__panel-content">
+      <div class="setup__layout">
+        <SetupQuickJumpNav :activeTab="activeTab" />
+        <div class="setup__main-content">
         <!-- Profile -->
         <div class="setup__card">
           <h2 class="setup__card-title">General Settings</h2>
@@ -465,14 +473,20 @@
           <Plus :size="14" /> Add Period
         </button>
       </div>
-    </div>
-  </section>
+        </div>
+      </div>
+    </section>
 
     <!-- ══════════════════════════════════════════════════════════ -->
     <!-- PILLAR 4: Data Management                                 -->
     <!-- ══════════════════════════════════════════════════════════ -->
     <section v-else-if="activeTab === 'data'" class="setup__panel">
-      <DatabaseMaintenanceSettings />
+      <div class="setup__layout">
+        <SetupQuickJumpNav :activeTab="activeTab" />
+        <div class="setup__main-content">
+          <DatabaseMaintenanceSettings />
+        </div>
+      </div>
     </section>
     <!-- User Guide Modal -->
     <HelpModal :show="isHelpModalOpen" @close="isHelpModalOpen = false" />
@@ -539,6 +553,7 @@ import CsvHelpGuide from '../components/setup/CsvHelpGuide.vue'
 import BehaviorSettings from '../components/setup/BehaviorSettings.vue'
 import PrintClassListModal from '../components/PrintClassListModal.vue'
 import QrCodeGeneratorModal from '../components/setup/QrCodeGeneratorModal.vue'
+import SetupQuickJumpNav from '../components/setup/SetupQuickJumpNav.vue'
 
 const { alert, confirm } = useMessage()
 

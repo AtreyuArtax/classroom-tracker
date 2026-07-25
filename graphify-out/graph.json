@@ -4177,7 +4177,7 @@
       "label": "for()",
       "file_type": "code",
       "source_file": "src/components/setup/ClassLogisticsSettings.vue",
-      "source_location": "L657",
+      "source_location": "L655",
       "_origin": "ast",
       "id": "setup_classlogisticssettings_for",
       "community": 19,
@@ -5122,6 +5122,16 @@
       "id": "setup_semestercalendar_if",
       "community": 45,
       "norm_label": "if()"
+    },
+    {
+      "label": "SetupQuickJumpNav.vue",
+      "file_type": "code",
+      "source_file": "src/components/setup/SetupQuickJumpNav.vue",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "setup_setupquickjumpnav",
+      "community": 17,
+      "norm_label": "setupquickjumpnav.vue"
     },
     {
       "label": "useAttendanceInsights.js",
@@ -8507,7 +8517,7 @@
       "label": "if()",
       "file_type": "code",
       "source_file": "src/views/Setup.vue",
-      "source_location": "L1002",
+      "source_location": "L1017",
       "_origin": "ast",
       "id": "views_setup_if",
       "community": 34,
@@ -8517,7 +8527,7 @@
       "label": "for()",
       "file_type": "code",
       "source_file": "src/views/Setup.vue",
-      "source_location": "L1059",
+      "source_location": "L1074",
       "_origin": "ast",
       "id": "views_setup_for",
       "community": 34,
@@ -23242,5 +23252,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "a5e6133e66833500e0659ec6b39f1d198314c57a"
+  "built_at_commit": "040fa3e45a8941f7c6ca116c920714387f5e1b4c"
 }

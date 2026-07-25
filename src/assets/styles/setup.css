@@ -61,6 +61,24 @@
   gap:            24px;
 }
 
+.setup__layout {
+  max-width:      1180px;
+  margin:         0 auto;
+  width:          100%;
+  padding:        24px;
+  display:        flex;
+  gap:            24px;
+  align-items:    flex-start;
+}
+
+.setup__main-content {
+  flex:           1;
+  min-width:      0;
+  display:        flex;
+  flex-direction: column;
+  gap:            24px;
+}
+
 .setup__section-header {
   display: flex;
   align-items: center;

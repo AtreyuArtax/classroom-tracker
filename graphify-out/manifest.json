@@ -360,8 +360,8 @@
     "semantic_hash": "8ca2dc5307b5ae89c3f9ade5a9f052c4"
   },
   "src/views/Setup.vue": {
-    "mtime": 1784243483.4055407,
-    "ast_hash": "cf8e8bbcb1b758c0fbb1a4360477ca9c",
+    "mtime": 1784943940.340882,
+    "ast_hash": "89781ec1a633c893ca621ed31a1ed1a5",
     "semantic_hash": ""
   },
   "tmp/test_dates.js": {
@@ -450,13 +450,13 @@
     "semantic_hash": ""
   },
   "src/components/setup/ClassLogisticsSettings.vue": {
-    "mtime": 1784943306.9754093,
-    "ast_hash": "94d4d72007bfffd08aeafabc1ecb16d4",
+    "mtime": 1784943690.210766,
+    "ast_hash": "77793426dfc303c9bdb89bada1e683d7",
     "semantic_hash": ""
   },
   "src/components/setup/DatabaseMaintenanceSettings.vue": {
-    "mtime": 1784233718.7193563,
-    "ast_hash": "fe83617a425ee9463ddab8d73bd93e51",
+    "mtime": 1784943952.0653033,
+    "ast_hash": "80542aedd335f74e53cc5f594758e12d",
     "semantic_hash": ""
   },
   "src/components/setup/ExpectationImportModal.vue": {
@@ -552,6 +552,11 @@
   "src/utils/reportFormatter.js": {
     "mtime": 1784942845.9504902,
     "ast_hash": "2c34d66ec48dbac661a9023efc9dae46",
+    "semantic_hash": ""
+  },
+  "src/components/setup/SetupQuickJumpNav.vue": {
+    "mtime": 1784943751.0802193,
+    "ast_hash": "41a36d5e662362d003c60032327c2946",
     "semantic_hash": ""
   }
 }
