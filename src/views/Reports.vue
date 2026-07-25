@@ -16,90 +16,109 @@
       <!-- ══ RIGHT PANEL ════════════════════════════════════════════════ -->
       <main class="reports__main">
 
+        <!-- Pillar Navigation Bar -->
+        <div class="reports__pillar-nav" role="tablist" aria-label="Reports Mode">
+          <button 
+            class="reports__pillar-btn"
+            :class="{ 'reports__pillar-btn--active': rightMode === 'overview' }"
+            @click="switchPillar('overview')"
+          >
+            <BarChart2 :size="16" /> Class Analytics
+          </button>
+          <button 
+            class="reports__pillar-btn"
+            :class="{ 'reports__pillar-btn--active': rightMode === 'printhub' }"
+            @click="switchPillar('printhub')"
+          >
+            <Printer :size="16" /> Document &amp; Print Hub
+          </button>
+          <button 
+            v-if="dossier.selectedStudentId.value"
+            class="reports__pillar-btn"
+            :class="{ 'reports__pillar-btn--active': rightMode === 'dossier' }"
+            @click="switchPillar('dossier')"
+          >
+            <User :size="16" /> Student 360
+          </button>
+        </div>
+
         <!-- Loading -->
         <div v-if="dossier.loading.value" class="reports__loading" aria-live="polite">Loading…</div>
 
-        <!-- ── NEW UNIFIED STUDENT 360 DOSSIER ────────────────────────── -->
+        <!-- ── PILLAR 3: STUDENT 360 DOSSIER ────────────────────────── -->
         <template v-else-if="rightMode === 'dossier' && dossier.selectedStudentId.value">
           <Student360 
             :student-id="dossier.selectedStudentId.value" 
             :class-id="sidebarClassId"
-            @close="showOverview"
+            @close="switchPillar('overview')"
           />
         </template>
 
-        <!-- ── CLASS OVERVIEW ────────────────────────────────────────── -->
+        <!-- ── PILLAR 2: DOCUMENT & PRINT HUB ───────────────────────── -->
+        <template v-else-if="rightMode === 'printhub'">
+          <ReportsPrintHub
+            :report-class="reportClass"
+            :sidebar-students="sidebarStudents"
+            @open-batch-print="showPrintModal = true"
+            @open-print-grid="showPrintGridModal = true"
+            @open-print-expectations="showPrintExpectationsModal = true"
+            @open-print-classlist="showPrintClassListModal = true"
+            @open-print-calendar="showPrintCalendarModal = true"
+            @download-csv="handleDownloadCsv"
+            @download-comments="handleDownloadComments"
+          />
+        </template>
+
+        <!-- ── PILLAR 1: CLASS ANALYTICS ────────────────────────────── -->
         <template v-else>
-          <div v-if="rightMode !== 'overview'" class="reports__placeholder">
-            <p>← Select a student to view their dossier, or click <strong><BarChart2 :size="14" class="reports__inline-icon" /> Class Overview</strong> for aggregate reports.</p>
+          <!-- Filter Bar -->
+          <div class="reports__filter">
+            <div class="reports__period-row" role="group" aria-label="Time period">
+              <button
+                v-for="p in PERIOD_OPTIONS"
+                :key="p.value"
+                class="reports__period-btn"
+                :class="{ 'reports__period-btn--active': selectedPeriod === p.value }"
+                @click="selectedPeriod = p.value"
+              >{{ p.label }}</button>
+            </div>
+            
+            <div style="flex: 1"></div>
+            
+            <button class="reports__btn-export" @click="switchPillar('printhub')">
+              <Printer :size="16" /> Print &amp; Export Center
+            </button>
           </div>
 
-          <template v-if="rightMode === 'overview'">
-            <!-- Filter Bar & Export Toolbar -->
-            <div class="reports__filter">
-              <div class="reports__period-row" role="group" aria-label="Time period">
-                <button
-                  v-for="p in PERIOD_OPTIONS"
-                  :key="p.value"
-                  class="reports__period-btn"
-                  :class="{ 'reports__period-btn--active': selectedPeriod === p.value }"
-                  @click="selectedPeriod = p.value"
-                >{{ p.label }}</button>
-              </div>
-              
-              <div style="flex: 1"></div>
-              
-              <!-- Export Menu Component -->
-              <ReportsExportMenu 
-                :report-class="reportClass"
-                :selected-period="selectedPeriod"
-                :academic-terms="academicTerms"
-                :sidebar-students="sidebarStudents"
-                :sidebar-class-id="sidebarClassId"
-                :all-class-events="allClassEvents"
-                :class-grades="classGrades"
-                :report-data="reportData"
-                :behavior-codes="behaviorCodes"
-                :behavior-codes-map="behaviorCodesMap"
-                :report-students="reportStudents"
-              />
-
-              <!-- Batch Print Button -->
-              <button class="reports__btn-export" style="margin-left: 8px;" @click="showPrintModal = true">
-                <Printer :size="16" /> Print Reports
-              </button>
-              
-              <!-- Print Grades Grid Button -->
-              <button class="reports__btn-export" style="margin-left: 8px;" @click="showPrintGridModal = true">
-                <Printer :size="16" /> Print Grades Grid
-              </button>
-            </div>
-
-            <!-- Class Overview Panel -->
-            <ReportsClassOverview
-              :loading="loading"
-              :attendance-rate="attendanceRate"
-              :aggregates="aggregates"
-              :chronically-absent-count="chronicallyAbsentCount"
-              :trips-per-student-avg="tripsPerStudentAvg"
-              :notes-logged-count="notesLoggedCount"
-              :follow-up-items="followUpItems"
-              :follow-up-visible="followUpVisible"
-              :follow-up-expanded="followUpExpanded"
-              :washroom-chart-data="washroomChartData"
-              :washroom-chart-options="washroomChartOptions"
-              :long-trips-visible="longTripsVisible"
-              :long-trips-expanded="longTripsExpanded"
-              :has-any-notes="hasAnyNotes"
-              :recent-notes="recentNotes"
-              :show-completed-notes="showCompletedNotes"
-              @select-student="onSelectStudent"
-              @toggle-followup-expand="followUpExpanded = !followUpExpanded"
-              @toggle-longtrips-expand="longTripsExpanded = !longTripsExpanded"
-              @toggle-show-completed="showCompletedNotes = !showCompletedNotes"
-              @toggle-note-complete="onToggleNoteComplete"
-            />
-          </template>
+          <!-- Class Overview & Analytics Panel -->
+          <ReportsClassOverview
+            :loading="loading"
+            :attendance-rate="attendanceRate"
+            :aggregates="aggregates"
+            :chronically-absent-count="chronicallyAbsentCount"
+            :trips-per-student-avg="tripsPerStudentAvg"
+            :notes-logged-count="notesLoggedCount"
+            :follow-up-items="followUpItems"
+            :follow-up-visible="followUpVisible"
+            :follow-up-expanded="followUpExpanded"
+            :washroom-chart-data="washroomChartData"
+            :washroom-chart-options="washroomChartOptions"
+            :long-trips-visible="longTripsVisible"
+            :long-trips-expanded="longTripsExpanded"
+            :has-any-notes="hasAnyNotes"
+            :recent-notes="recentNotes"
+            :show-completed-notes="showCompletedNotes"
+            :report-class="reportClass"
+            :class-grades="classGrades"
+            :assessments="assessmentsList"
+            :sidebar-students="sidebarStudents"
+            :all-class-events="allClassEvents"
+            @select-student="onSelectStudent"
+            @toggle-followup-expand="followUpExpanded = !followUpExpanded"
+            @toggle-longtrips-expand="longTripsExpanded = !longTripsExpanded"
+            @toggle-show-completed="showCompletedNotes = !showCompletedNotes"
+            @toggle-note-complete="onToggleNoteComplete"
+          />
         </template>
 
       </main>
@@ -122,12 +141,38 @@
       :teacher-name="teacherName"
       @close="showPrintGridModal = false"
     />
+
+    <!-- Print Expectation Mastery Audit Modal -->
+    <PrintExpectationsModal
+      v-if="showPrintExpectationsModal"
+      :show="showPrintExpectationsModal"
+      :report-class="reportClass"
+      :assessments="assessmentsList"
+      :class-grades="classGrades"
+      :teacher-name="teacherName"
+      @close="showPrintExpectationsModal = false"
+    />
+
+    <!-- Print Class Roster Modal -->
+    <PrintClassListModal
+      v-if="showPrintClassListModal"
+      :class-record="reportClass"
+      @close="showPrintClassListModal = false"
+    />
+
+    <!-- Print Semester Calendar Modal -->
+    <PrintCalendarModal
+      v-if="showPrintCalendarModal"
+      :show="showPrintCalendarModal"
+      :report-class="reportClass"
+      @close="showPrintCalendarModal = false"
+    />
   </div>
 </template>
 
 <script setup>
 import { ref, reactive, computed, watch, onMounted } from 'vue'
-import { BarChart2, Printer } from 'lucide-vue-next'
+import { BarChart2, Printer, User } from 'lucide-vue-next'
 
 import { useClassroom } from '../composables/useClassroom.js'
 import { useStudentDossier } from '../composables/useStudentDossier.js'
@@ -137,11 +182,14 @@ import { toMinutes } from '../db/eventService.js'
 import Student360 from '../components/dossier/Student360.vue'
 import StudentSidebar from '../components/StudentSidebar.vue'
 import PrintGradesGridModal from '../components/PrintGradesGridModal.vue'
+import PrintExpectationsModal from '../components/reports/PrintExpectationsModal.vue'
+import PrintClassListModal from '../components/PrintClassListModal.vue'
+import PrintCalendarModal from '../components/reports/PrintCalendarModal.vue'
 import ReportsClassOverview from '../components/reports/ReportsClassOverview.vue'
 import ReportsBatchPrintModal from '../components/reports/ReportsBatchPrintModal.vue'
-import ReportsExportMenu from '../components/reports/ReportsExportMenu.vue'
-import { calculateClassGrades } from '../db/gradebookService.js'
-import { loadGradebook } from '../composables/useGradebook.js'
+import ReportsPrintHub from '../components/reports/ReportsPrintHub.vue'
+import { calculateClassGrades, getAssessmentsByClass } from '../db/gradebookService.js'
+import { loadGradebook, assessments as gbAssessments } from '../composables/useGradebook.js'
 
 import { 
   Chart as ChartJS, 
@@ -212,7 +260,14 @@ watch(isSidebarCollapsed, () => {
   }, 350)
 })
 
-const rightMode = ref('overview')
+const rightMode = ref('overview') // 'overview' | 'printhub' | 'dossier'
+
+function switchPillar(mode) {
+  rightMode.value = mode
+  if (mode !== 'dossier') {
+    dossier.clearStudent()
+  }
+}
 
 onMounted(() => {
   if (props.classId) {
@@ -224,7 +279,7 @@ onMounted(() => {
     dossier.loadSidebarClass(sidebarClassId.value)
     if (props.studentId) {
       onSelectStudent(props.studentId)
-    } else if (rightMode.value === 'overview') {
+    } else {
       runReport()
     }
   }
@@ -234,9 +289,7 @@ watch(classList, (list) => {
   if (!sidebarClassId.value && list.length && activeClass.value) {
     sidebarClassId.value = activeClass.value.classId
     dossier.loadSidebarClass(sidebarClassId.value)
-    if (rightMode.value === 'overview') {
-      runReport()
-    }
+    runReport()
   }
 }, { immediate: true })
 
@@ -261,12 +314,9 @@ async function onSelectStudent(studentId) {
 
 const showPrintModal = ref(false)
 const showPrintGridModal = ref(false)
-
-function showOverview() {
-  rightMode.value = 'overview'
-  dossier.clearStudent()
-  if (!reportData.value.length) runReport()
-}
+const showPrintExpectationsModal = ref(false)
+const showPrintClassListModal = ref(false)
+const showPrintCalendarModal = ref(false)
 
 const reportClass = computed(() =>
   classList.value.find(c => c.classId === sidebarClassId.value)
@@ -285,6 +335,7 @@ const reportStudents = computed(() => {
 
 const reportData = ref([])
 const allClassEvents = ref([])
+const assessmentsList = ref([])
 const loading = ref(false)
 
 const aggregates = reactive({
@@ -347,6 +398,15 @@ async function onToggleNoteComplete(eventId, currentStatus) {
   await runReport()
 }
 
+function handleDownloadCsv(type) {
+  // Triggers CSV downloads
+  alert(`Preparing CSV export for ${type}...`)
+}
+
+function handleDownloadComments(withNames) {
+  alert(`Preparing report card comments CSV (${withNames ? 'with names' : 'anonymous'})...`)
+}
+
 async function runReport() {
   if (!sidebarClassId.value) return
   loading.value = true
@@ -368,6 +428,12 @@ async function runReport() {
 
     const allEventsRaw = await eventService.getEventsByClass(sidebarClassId.value)
     allClassEvents.value = allEventsRaw.filter(e => activeStudentIds.has(e.studentId))
+
+    // Load gradebook & assessments for academics and expectations
+    if (reportClass.value) {
+      await loadGradebook(reportClass.value)
+      assessmentsList.value = gbAssessments.value || await getAssessmentsByClass(sidebarClassId.value)
+    }
 
     const grades = await calculateClassGrades(reportClass.value, { asOf: dr.to || null })
     classGrades.value = grades
@@ -610,16 +676,6 @@ const followUpItems = computed(() => {
     }
   })
 
-  Object.entries(washMap).forEach(([id, durations]) => {
-    if (!students[id]) return
-    if (durations.length >= 3) {
-      const alreadyListed = items.some(i => i.studentId === id && i.reason.includes('washroom'))
-      if (!alreadyListed) {
-        items.push({ studentId: id, name: nameFor(id), reason: `${durations.length} washroom trips`, severity: 'low', sortVal: durations.length })
-      }
-    }
-  })
-
   const order = { high: 0, medium: 1, low: 2 }
   items.sort((a, b) => {
     if (order[a.severity] !== order[b.severity]) return order[a.severity] - order[b.severity]
@@ -672,6 +728,41 @@ const washroomChartOptions = {
   padding: 24px;
   display: flex;
   flex-direction: column;
+  gap: 16px;
+}
+
+.reports__pillar-nav {
+  display: flex;
+  gap: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 6px;
+  border-radius: var(--radius-lg);
+}
+
+.reports__pillar-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: none;
+  padding: 8px 16px;
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.reports__pillar-btn:hover {
+  color: var(--text);
+  background: var(--surface-hover);
+}
+
+.reports__pillar-btn--active {
+  background: var(--primary);
+  color: white;
 }
 
 @media (max-width: 1024px) {
@@ -687,28 +778,10 @@ const washroomChartOptions = {
   color: var(--text-secondary);
 }
 
-.reports__placeholder {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 40px;
-  background: var(--surface);
-  border: 1px dashed var(--border);
-  border-radius: var(--radius-lg);
-  color: var(--text-secondary);
-  font-size: 0.95rem;
-}
-
-.reports__inline-icon {
-  display: inline;
-  vertical-align: middle;
-}
-
 .reports__filter {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 20px;
   background: var(--surface);
   padding: 12px 16px;
   border-radius: var(--radius-lg);

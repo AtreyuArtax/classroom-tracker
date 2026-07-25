@@ -350,8 +350,8 @@
     "semantic_hash": ""
   },
   "src/views/Reports.vue": {
-    "mtime": 1784813529.612248,
-    "ast_hash": "049738bdad587feda6fe6a6de9593190",
+    "mtime": 1785003111.9479458,
+    "ast_hash": "74ac720b7c0c0bc296141a1c9a3904ab",
     "semantic_hash": ""
   },
   "src/views/ScanStation.vue": {
@@ -525,8 +525,8 @@
     "semantic_hash": ""
   },
   "src/components/reports/ReportsClassOverview.vue": {
-    "mtime": 1784812722.17089,
-    "ast_hash": "2ccb35d97d0558f8617ba431a19a772e",
+    "mtime": 1785002882.25764,
+    "ast_hash": "7bfed923017a37ad62d5ff25977ef1b9",
     "semantic_hash": ""
   },
   "src/components/reports/ReportsExportMenu.vue": {
@@ -557,6 +557,31 @@
   "src/components/setup/SetupQuickJumpNav.vue": {
     "mtime": 1784943751.0802193,
     "ast_hash": "41a36d5e662362d003c60032327c2946",
+    "semantic_hash": ""
+  },
+  "src/components/reports/ExpectationMasteryHeatmap.vue": {
+    "mtime": 1785002630.607064,
+    "ast_hash": "9d148e134fb2e5f8e342725b8b94bee2",
+    "semantic_hash": ""
+  },
+  "src/components/reports/ReportsPrintHub.vue": {
+    "mtime": 1785003095.3656433,
+    "ast_hash": "d7b5cb21b6e44f548148f0b9ab38da89",
+    "semantic_hash": ""
+  },
+  "src/components/reports/StudentRiskScatterPlot.vue": {
+    "mtime": 1785002815.1725,
+    "ast_hash": "17e53d25711ae20395954153f732f841",
+    "semantic_hash": ""
+  },
+  "src/components/reports/PrintExpectationsModal.vue": {
+    "mtime": 1785003426.6500487,
+    "ast_hash": "c98d1eb95b5607a8259be5ba58a55264",
+    "semantic_hash": ""
+  },
+  "src/components/reports/PrintCalendarModal.vue": {
+    "mtime": 1785003353.2887595,
+    "ast_hash": "27d42da96b957a91c7f04557311be595",
     "semantic_hash": ""
   }
 }
