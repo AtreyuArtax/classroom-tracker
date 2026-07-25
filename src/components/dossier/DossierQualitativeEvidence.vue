@@ -702,7 +702,7 @@ function getUnitGeneralEvents(unitId) {
     : []
 
   return [...dbEvents, ...productEvents]
-    .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+    .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
 }
 
 function getSyntheticProductEvents(unitId, expectationId, unitObj = null, targetCode = null) {

@@ -1067,12 +1067,14 @@ export async function calculateClassAnalytics(classRecord, assessments, grades, 
     }
 
     // Triangulation coverage
-    // Count how many students have at least one entered Conversation/Observation
+    // Count how many active students have at least one entered Conversation/Observation
+    const activeStudentIdSet = new Set(studentIds)
     const conversationStudents = new Set()
     const observationStudents = new Set()
     for (const a of assessments.filter(a => a.target !== 'individual' && !a.excluded)) {
         const aGrades = grades.filter(g =>
             g.assessmentId === a.assessmentId &&
+            activeStudentIdSet.has(g.studentId) &&
             g.attempts &&
             g.attempts.length > 0
         )
@@ -1087,14 +1089,14 @@ export async function calculateClassAnalytics(classRecord, assessments, grades, 
         studentsWithEvidence: conversationStudents.size,
         totalStudents,
         percentage: totalStudents > 0
-            ? Math.round((conversationStudents.size / totalStudents) * 100)
+            ? Math.min(100, Math.round((conversationStudents.size / totalStudents) * 100))
             : 0
     }
     const observationCoverage = {
         studentsWithEvidence: observationStudents.size,
         totalStudents,
         percentage: totalStudents > 0
-            ? Math.round((observationStudents.size / totalStudents) * 100)
+            ? Math.min(100, Math.round((observationStudents.size / totalStudents) * 100))
             : 0
     }
 
@@ -1116,6 +1118,10 @@ export async function calculateClassAnalytics(classRecord, assessments, grades, 
         observationAnalytics,
         conversationAnalytics,
         assessmentBreakdowns,
+        productCount: Object.keys(productAnalytics).length,
+        observationCount: Object.keys(observationAnalytics).length,
+        conversationCount: Object.keys(conversationAnalytics).length,
+        totalAssessmentsCount: assessments.filter(a => a.target !== 'individual' && !a.excluded).length,
 
         // Triangulation coverage
         conversationCoverage,

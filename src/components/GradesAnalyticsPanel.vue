@@ -127,15 +127,15 @@
             <div class="grades__blend-legend">
               <div class="grades__legend-item">
                 <span class="grades__legend-dot grades__legend-dot--product"></span>
-                <span class="grades__legend-text">Product: {{ classAnalytics.totalStudentCount }}/{{ classAnalytics.totalStudentCount }} students (100%)</span>
+                <span class="grades__legend-text">Product: {{ classEvidenceBlend.product.count }} assessment{{ classEvidenceBlend.product.count !== 1 ? 's' : '' }} ({{ classEvidenceBlend.product.percentage }}%)</span>
               </div>
               <div class="grades__legend-item">
                 <span class="grades__legend-dot grades__legend-dot--observation"></span>
-                <span class="grades__legend-text">Observation Coverage: {{ classAnalytics.observationCoverage.percentage }}%</span>
+                <span class="grades__legend-text">Observation: {{ classEvidenceBlend.observation.count }} assessment{{ classEvidenceBlend.observation.count !== 1 ? 's' : '' }} ({{ classEvidenceBlend.observation.percentage }}%) • {{ classAnalytics.observationCoverage.percentage }}% student coverage</span>
               </div>
               <div class="grades__legend-item">
                 <span class="grades__legend-dot grades__legend-dot--conversation"></span>
-                <span class="grades__legend-text">Conversation Coverage: {{ classAnalytics.conversationCoverage.percentage }}%</span>
+                <span class="grades__legend-text">Conversation: {{ classEvidenceBlend.conversation.count }} assessment{{ classEvidenceBlend.conversation.count !== 1 ? 's' : '' }} ({{ classEvidenceBlend.conversation.percentage }}%) • {{ classAnalytics.conversationCoverage.percentage }}% student coverage</span>
               </div>
             </div>
           </div>
@@ -544,9 +544,9 @@ const classMostConsistent = computed(() => {
 })
 
 const classEvidenceBlend = computed(() => {
-  if (!classAnalytics.value) return null
+  const activeAssessments = (assessments.value || []).filter(a => a.target !== 'individual' && !a.excluded)
+  const total = classAnalytics.value?.totalAssessmentsCount ?? activeAssessments.length
   
-  const total = classAnalytics.value.totalAssessmentsCount
   if (total === 0) {
     return {
       product: { count: 0, percentage: 0 },
@@ -555,19 +555,18 @@ const classEvidenceBlend = computed(() => {
     }
   }
   
+  const pCount = classAnalytics.value?.productCount ?? activeAssessments.filter(a => (a.assessmentType || 'product') === 'product').length
+  const oCount = classAnalytics.value?.observationCount ?? activeAssessments.filter(a => a.assessmentType === 'observation').length
+  const cCount = classAnalytics.value?.conversationCount ?? activeAssessments.filter(a => a.assessmentType === 'conversation').length
+
+  const pPct = Math.round((pCount / total) * 100)
+  const oPct = Math.round((oCount / total) * 100)
+  const cPct = total > 0 && (oCount > 0 || cCount > 0) ? Math.max(0, 100 - pPct - oPct) : Math.round((cCount / total) * 100)
+
   return {
-    product: {
-      count: classAnalytics.value.productCount,
-      percentage: Math.round((classAnalytics.value.productCount / total) * 100)
-    },
-    observation: {
-      count: classAnalytics.value.observationCount,
-      percentage: Math.round((classAnalytics.value.observationCount / total) * 100)
-    },
-    conversation: {
-      count: classAnalytics.value.conversationCount,
-      percentage: Math.round((classAnalytics.value.conversationCount / total) * 100)
-    }
+    product: { count: pCount, percentage: pPct },
+    observation: { count: oCount, percentage: oPct },
+    conversation: { count: cCount, percentage: cPct }
   }
 })
 
