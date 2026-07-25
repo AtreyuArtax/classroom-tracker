@@ -1,12 +1,20 @@
 <template>
   <div class="trend">
-    <h3 class="trend__title">Behavior Trend</h3>
+    <div class="trend__header">
+      <h3 class="trend__title">{{ title }}</h3>
+      <div class="trend__legend">
+        <div v-for="cat in categories" :key="cat" class="legend-item">
+          <span class="dot" :style="{ backgroundColor: CATEGORY_COLOURS[cat] || '#8e8e93' }"></span>
+          <span>{{ formatCategoryLabel(cat) }}</span>
+        </div>
+      </div>
+    </div>
     
     <div v-if="weeklyTrend.length < 2" class="trend__empty">
       Not enough data to show a trend. Log more events over multiple weeks.
     </div>
     
-    <div v-else class="trend__chart-wrap" ref="chartContainer" style="height: 220px">
+    <div v-else class="trend__chart-wrap" ref="chartContainer" style="height: 240px">
       <Bar 
         v-if="period === 'week'"
         ref="barChart"
@@ -35,6 +43,7 @@ import {
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Tooltip, Legend)
 
 const props = defineProps({
+  title:       { type: String, default: 'Attendance & Habits Trend' },
   weeklyTrend: { type: Array, required: true },
   categories:  { type: Array, required: true },
   period:      { type: String, required: true },
@@ -75,17 +84,26 @@ const CATEGORY_COLOURS = {
   neutral:       '#8e8e93',
 }
 
+function formatCategoryLabel(cat) {
+  if (cat === 'washroom') return 'Washroom'
+  if (cat === 'absence') return 'Absence'
+  if (cat === 'late') return 'Late'
+  if (cat === 'redirect') return 'Redirect'
+  return cat.charAt(0).toUpperCase() + cat.slice(1)
+}
+
 function formatWeekLabel(isoDateString) {
+  if (!isoDateString) return ''
   const [year, month, day] = isoDateString.split('-').map(Number)
   const date = new Date(year, month - 1, day)
-  return date.toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
 const chartData = computed(() => {
   return {
     labels: props.weeklyTrend.map(w => formatWeekLabel(w.week)),
     datasets: props.categories.map(cat => ({
-      label: cat,
+      label: formatCategoryLabel(cat),
       data: props.weeklyTrend.map(w => w[cat] || 0),
       borderColor: CATEGORY_COLOURS[cat] || '#aaaaaa',
       backgroundColor: props.period === 'week' 
@@ -98,36 +116,78 @@ const chartData = computed(() => {
   }
 })
 
-const chartOptions = {
+const chartOptions = computed(() => ({
   responsive: true,
   maintainAspectRatio: false,
   plugins: {
-    legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } },
+    legend: { display: false },
     tooltip: { mode: 'index', intersect: false }
   },
   scales: {
-    y: { beginAtZero: true, ticks: { stepSize: 1, precision: 0 } },
-    x: { grid: { display: false } }
+    y: {
+      beginAtZero: true,
+      ticks: {
+        stepSize: 1,
+        precision: 0,
+        color: '#64748b',
+        font: { size: 11 }
+      },
+      grid: {
+        color: 'rgba(0, 0, 0, 0.05)'
+      }
+    },
+    x: {
+      ticks: {
+        color: '#64748b',
+        font: { size: 11 }
+      },
+      grid: { display: false }
+    }
   }
-}
+}))
 </script>
 
 <style scoped>
 .trend {
   background: var(--surface);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-sm);
-  padding: 16px;
-  margin-bottom: 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+}
+
+.trend__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
 }
 
 .trend__title {
-  color: var(--text-secondary);
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  margin: 0 0 16px 0;
+  margin: 0;
+  font-size: 1rem;
   font-weight: 700;
+  color: var(--text);
+}
+
+.trend__legend {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
 }
 
 .trend__empty {

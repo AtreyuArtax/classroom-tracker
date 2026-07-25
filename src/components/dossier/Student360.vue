@@ -90,7 +90,6 @@
         <!-- Trends Section -->
         <div class="student-360__trends-row">
           <div class="trend-item">
-            <h4 class="trend-item__title">Grade Performance</h4>
             <StudentGradeTrend 
               :assessments="allDossierAssessments" 
               :grade-map="gradeMap" 
@@ -98,8 +97,8 @@
             />
           </div>
           <div class="trend-item">
-            <h4 class="trend-item__title">Behavior Trend</h4>
             <StudentTrendGraph 
+              title="Attendance &amp; Habits Trend"
               :weekly-trend="behaviorWeeklyTrend"
               :categories="['washroom', 'absence', 'late']"
               :period="selectedPeriod"
@@ -117,6 +116,33 @@
             <h4 class="insight-title">{{ coachingInsight.title }}</h4>
             <p class="insight-message">{{ coachingInsight.message }}</p>
             <p class="insight-recommendation"><strong>Recommendation:</strong> {{ coachingInsight.recommendation }}</p>
+          </div>
+        </div>
+
+        <!-- Recent Activity & Assessment Feed -->
+        <div v-if="recentActivityFeed && recentActivityFeed.length > 0" class="student-360__recent-activity">
+          <div class="recent-activity__header">
+            <h4 class="recent-activity__title">
+              <Clock :size="16" /> RECENT ACTIVITY &amp; MARKS
+            </h4>
+          </div>
+          <div class="recent-activity__grid">
+            <div 
+              v-for="item in recentActivityFeed" 
+              :key="item.id" 
+              class="recent-activity__card"
+              :class="{ 'recent-activity__card--failing': item.isFailing }"
+            >
+              <div class="activity-date">{{ formatDateShort(item.date) }}</div>
+              <div class="activity-main">
+                <span class="activity-badge" :class="'activity-badge--' + item.type">{{ item.category }}</span>
+                <span class="activity-name" :title="item.title">{{ item.title }}</span>
+              </div>
+              <div v-if="item.value" class="activity-score" :class="{ 'activity-score--failing': item.isFailing }">
+                <strong>{{ item.value }}</strong>
+                <span v-if="item.subText" class="activity-sub">({{ item.subText }})</span>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -465,14 +491,15 @@ const academicCategories = computed(() => {
 })
 
 const classAssessments = computed(() => {
-  return assessments.value
-    .filter(a => a.target !== 'individual')
+  const assList = Array.isArray(assessments.value) ? assessments.value : []
+  return assList
+    .filter(a => a && a.target !== 'individual')
     .map(a => {
-      const g = gradeMap.value[a.assessmentId]?.[props.studentId]
+      const g = gradeMap.value?.[a.assessmentId]?.[props.studentId]
       const score = g?.resolvedScore ?? null
-      const aDate = a.date.split('T')[0]
-      const wasAbsent = events.value.some(ev => 
-        ev.code === 'a' && !ev.superseded && ev.timestamp.startsWith(aDate)
+      const aDate = (a.date || '').split('T')[0]
+      const wasAbsent = (events.value || []).some(ev => 
+        ev.code === 'a' && !ev.superseded && (ev.timestamp || '').startsWith(aDate)
       )
 
       return {
@@ -484,14 +511,15 @@ const classAssessments = computed(() => {
         wasAbsent
       }
     })
-    .sort((a, b) => new Date(b.date) - new Date(a.date))
+    .sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0))
 })
 
 const individualAssessments = computed(() => {
-  return assessments.value
-    .filter(a => a.target === 'individual' && String(a.targetStudentId) === String(props.studentId))
+  const assList = Array.isArray(assessments.value) ? assessments.value : []
+  return assList
+    .filter(a => a && a.target === 'individual' && String(a.targetStudentId) === String(props.studentId))
     .map(a => {
-      const g = gradeMap.value[a.assessmentId]?.[props.studentId]
+      const g = gradeMap.value?.[a.assessmentId]?.[props.studentId]
       const score = g?.resolvedScore ?? null
       return {
         ...a,
@@ -501,25 +529,26 @@ const individualAssessments = computed(() => {
         excluded: g?.excluded
       }
     })
-    .sort((a, b) => new Date(b.date) - new Date(a.date))
+    .sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0))
 })
 
 const allDossierAssessments = computed(() => {
-  return [...classAssessments.value, ...individualAssessments.value]
-    .sort((a, b) => new Date(a.date) - new Date(b.date))
+  const cList = Array.isArray(classAssessments.value) ? classAssessments.value : []
+  const iList = Array.isArray(individualAssessments.value) ? individualAssessments.value : []
+  return [...cList, ...iList].sort((a, b) => new Date(a.date || 0) - new Date(b.date || 0))
 })
 
 const testDayAlert = computed(() => stats.value.testDayAbsences > 1)
 
 const washroomCount = computed(() => {
-  return filteredEvents.value.filter(e => {
-    const config = behaviorCodesMap.value[e.code]
+  return (filteredEvents.value || []).filter(e => {
+    const config = behaviorCodesMap.value?.[e.code]
     return config?.type === 'toggle' && !e.superseded
   }).length
 })
 
 const redirectCount = computed(() => {
-  return filteredEvents.value.filter(e => e.category === 'redirect' && !e.superseded).length
+  return (filteredEvents.value || []).filter(e => e.category === 'redirect' && !e.superseded).length
 })
 
 const coachingInsight = computed(() => {
@@ -536,6 +565,69 @@ const coachingInsight = computed(() => {
   }
   return null
 })
+
+const recentActivityFeed = computed(() => {
+  const items = []
+
+  // 1. Graded assessments for this student
+  const assList = Array.isArray(allDossierAssessments.value) ? allDossierAssessments.value : []
+  assList.forEach(ass => {
+    if (ass && ass.score !== null && ass.score !== undefined) {
+      const total = ass.scaledTotal || ass.totalPoints || 100
+      const pct = Math.round((ass.score / total) * 100)
+      items.push({
+        id: 'ass-' + ass.assessmentId,
+        date: ass.date || '',
+        title: ass.name,
+        type: 'grade',
+        category: ass.category || 'Assessment',
+        value: `${pct}%`,
+        subText: `${ass.score}/${total}`,
+        isFailing: pct < 50
+      })
+    }
+  })
+
+  // 2. Logged student events (Notes, parent contact, lates, absences, redirects, washroom)
+  const evtList = Array.isArray(events.value) ? events.value : []
+  evtList.forEach(evt => {
+    if (!evt || evt.superseded) return
+    const evtType = evt.code || evt.type || ''
+    if (['a', 'l', 'w', 'pc', 'ac', 'redirect', 'note'].includes(evtType) || evt.category === 'communication') {
+      let cat = 'EVENT'
+      if (evtType === 'a') cat = 'ABSENCE'
+      else if (evtType === 'l') cat = 'LATE'
+      else if (evtType === 'w') cat = `WASHROOM (${evt.durationMinutes || toMinutes(evt.duration) || 0}m)`
+      else if (evtType === 'pc') cat = 'PARENT CONTACT'
+      else if (evtType === 'ac') cat = 'NOTE'
+      else if (evtType === 'redirect' || evt.category === 'redirect') cat = 'REDIRECT'
+
+      items.push({
+        id: 'evt-' + (evt.eventId || evt.id || Math.random()),
+        date: evt.timestamp || evt.date || '',
+        title: evt.note || evt.details || evt.label || cat,
+        type: 'event',
+        category: cat,
+        value: null,
+        subText: null,
+        isFailing: false
+      })
+    }
+  })
+
+  return items
+    .sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0))
+    .slice(0, 4)
+})
+
+function formatDateShort(dStr) {
+  if (!dStr) return ''
+  try {
+    return new Date(dStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  } catch (e) {
+    return dStr
+  }
+}
 
 const behaviorWeeklyTrend = computed(() => {
   if (!filteredEvents.value.length) return []
@@ -964,5 +1056,111 @@ onUnmounted(() => {
   border-radius: var(--radius-sm);
   font-weight: 600;
   cursor: pointer;
+}
+
+/* ── Recent Activity & Assessment Feed Styles ── */
+.student-360__recent-activity {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.recent-activity__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.recent-activity__title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  letter-spacing: 0.05em;
+  margin: 0;
+}
+
+.recent-activity__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 12px;
+}
+
+.recent-activity__card {
+  background: var(--surface-hover);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.recent-activity__card--failing {
+  border-color: rgba(239, 68, 68, 0.3);
+  background: rgba(239, 68, 68, 0.04);
+}
+
+.activity-date {
+  font-size: 0.725rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.activity-main {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.activity-badge {
+  display: inline-block;
+  width: fit-content;
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
+  text-transform: uppercase;
+}
+
+.activity-badge--event {
+  background: rgba(107, 114, 128, 0.1);
+  color: var(--text-secondary);
+}
+
+.activity-name {
+  font-size: 0.825rem;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.activity-score {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-top: 2px;
+  font-size: 0.9rem;
+  color: var(--primary);
+}
+
+.activity-score--failing {
+  color: #ef4444;
+}
+
+.activity-sub {
+  font-size: 0.725rem;
+  color: var(--text-secondary);
+  font-weight: normal;
 }
 </style>

@@ -85,8 +85,8 @@
     "semantic_hash": ""
   },
   "components/StudentTrendGraph.vue": {
-    "mtime": 1776472682.866196,
-    "ast_hash": "6458a87d08af7a93f45be5ad2e3ed8c0",
+    "mtime": 1785004626.77091,
+    "ast_hash": "d45adcad20199bc60395671bde07f4c9",
     "semantic_hash": ""
   },
   "components/TestDayWarning.vue": {
@@ -140,8 +140,8 @@
     "semantic_hash": ""
   },
   "components/dossier/Student360.vue": {
-    "mtime": 1784935831.7306058,
-    "ast_hash": "39ef289012725cd9c5bea8a49bb7425e",
+    "mtime": 1785004568.6337376,
+    "ast_hash": "4c562773b6031f36971fe4999d6d6982",
     "semantic_hash": ""
   },
   "components/dossier/Student360AttemptsModal.vue": {
@@ -180,8 +180,8 @@
     "semantic_hash": ""
   },
   "components/dossier/StudentGradeTrend.vue": {
-    "mtime": 1780947509.3169224,
-    "ast_hash": "1ed94146fe005e7b220c663bd5398779",
+    "mtime": 1785004634.9851859,
+    "ast_hash": "d0c29362a4c9df8b198b526746da5141",
     "semantic_hash": ""
   },
   "components/dossier/StudentStatCard.vue": {

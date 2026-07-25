@@ -193,13 +193,19 @@ const chartOptions = computed(() => ({
       suggestedMax: 100,
       ticks: {
         stepSize: 10,
-        callback: (value) => value + '%'
+        callback: (value) => value + '%',
+        color: '#64748b',
+        font: { size: 11 }
       },
       grid: {
         color: 'rgba(0, 0, 0, 0.05)'
       }
     },
     x: {
+      ticks: {
+        color: '#64748b',
+        font: { size: 11 }
+      },
       grid: { display: false }
     }
   }
@@ -212,7 +218,6 @@ const chartOptions = computed(() => ({
   border:        1px solid var(--border);
   border-radius: var(--radius-lg);
   padding:       20px;
-  margin-top:    16px;
 }
 
 .grade-trend--print {
