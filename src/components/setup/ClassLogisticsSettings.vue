@@ -357,7 +357,7 @@ const {
   archivedRoster,
   termOptions,
   periodOptions,
-  periodStartTimes,
+  gridSize,
   updateActiveClass,
   triggerActiveClass,
   archiveStudent,
@@ -395,12 +395,13 @@ async function saveCourseCode() {
 
 // --- Seating Plan Resize Grid ---
 const newGrid = reactive({ rows: 6, cols: 6 })
-watch(() => activeClass.value?.gridSize, (val) => {
-  if (val) {
-    newGrid.rows = val.rows
-    newGrid.cols = val.cols
+watch([() => activeClass.value?.gridSize, gridSize], ([classGrid, globalGrid]) => {
+  const effective = classGrid || globalGrid
+  if (effective) {
+    newGrid.rows = effective.rows
+    newGrid.cols = effective.cols
   }
-}, { immediate: true })
+}, { immediate: true, deep: true })
 
 const resizeConflict = ref([])
 let pendingGridSize = null

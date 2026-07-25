@@ -1417,6 +1417,7 @@ async function _activateClass(cls) {
     } else {
         const settings = await settingsService.getSettings()
         gridSize.value = settings.gridSize || { rows: 6, cols: 6 }
+        cls.gridSize = { ...gridSize.value }
     }
 
     activeClass.value = cls

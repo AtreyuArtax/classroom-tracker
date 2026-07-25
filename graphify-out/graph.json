@@ -4177,7 +4177,7 @@
       "label": "for()",
       "file_type": "code",
       "source_file": "src/components/setup/ClassLogisticsSettings.vue",
-      "source_location": "L656",
+      "source_location": "L657",
       "_origin": "ast",
       "id": "setup_classlogisticssettings_for",
       "community": 19,
@@ -5747,7 +5747,7 @@
       "label": "useClassroom()",
       "file_type": "code",
       "source_file": "src/composables/useClassroom.js",
-      "source_location": "L1431",
+      "source_location": "L1432",
       "_origin": "ast",
       "id": "composables_useclassroom_useclassroom",
       "community": 8,
@@ -5757,7 +5757,7 @@
       "label": "_scheduleMidnightReset()",
       "file_type": "code",
       "source_file": "src/composables/useClassroom.js",
-      "source_location": "L1525",
+      "source_location": "L1526",
       "_origin": "ast",
       "id": "composables_useclassroom_schedulemidnightreset",
       "community": 0,
@@ -13892,9 +13892,9 @@
       "source_file": "src/components/dossier/Student360ProfileTab.vue",
       "source_location": "L224",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "dossier_student360profiletab",
-      "target": "dossier_student360profiletab_judgmentlines",
-      "confidence_score": 1.0
+      "target": "dossier_student360profiletab_judgmentlines"
     },
     {
       "relation": "imports_from",
@@ -14127,9 +14127,9 @@
       "source_file": "src/components/reports/ReportsExportMenu.vue",
       "source_location": "L21",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "reports_reportsexportmenu",
-      "target": "utils_reportformatter",
-      "confidence_score": 1.0
+      "target": "utils_reportformatter"
     },
     {
       "relation": "imports",
@@ -14138,9 +14138,9 @@
       "source_file": "src/components/reports/ReportsExportMenu.vue",
       "source_location": "L21",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "reports_reportsexportmenu",
-      "target": "utils_reportformatter_formatqualitativeevidenceforreport",
-      "confidence_score": 1.0
+      "target": "utils_reportformatter_formatqualitativeevidenceforreport"
     },
     {
       "relation": "calls",
@@ -22941,9 +22941,9 @@
       "source_file": "src/utils/reportFormatter.js",
       "source_location": "L1",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "utils_reportformatter",
-      "target": "utils_dates",
-      "confidence_score": 1.0
+      "target": "utils_dates"
     },
     {
       "relation": "imports",
@@ -22952,9 +22952,9 @@
       "source_file": "src/utils/reportFormatter.js",
       "source_location": "L1",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "utils_reportformatter",
-      "target": "utils_dates_formatlocaldisplay",
-      "confidence_score": 1.0
+      "target": "utils_dates_formatlocaldisplay"
     },
     {
       "relation": "imports",
@@ -23105,9 +23105,9 @@
       "source_file": "src/utils/reportFormatter.js",
       "source_location": "L7",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "utils_reportformatter",
-      "target": "utils_reportformatter_formatqualitativeevidenceforreport",
-      "confidence_score": 1.0
+      "target": "utils_reportformatter_formatqualitativeevidenceforreport"
     },
     {
       "relation": "contains",
@@ -23242,5 +23242,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "75e9978a2a79977ce2edd8ee449c62a23a6da48e"
+  "built_at_commit": "a5e6133e66833500e0659ec6b39f1d198314c57a"
 }
