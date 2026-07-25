@@ -20,6 +20,7 @@
           <Info v-else-if="state.type === 'alert'" :size="24" />
           <HelpCircle v-else-if="state.type === 'confirm'" :size="24" />
           <Edit3 v-else-if="state.type === 'prompt'" :size="24" />
+          <FileText v-else-if="state.type === 'select'" :size="24" />
         </div>
         <h2 class="msg-title">{{ state.title }}</h2>
       </div>
@@ -44,21 +45,39 @@
       </div>
 
       <div class="msg-footer">
-        <button 
-          v-if="state.type !== 'alert'"
-          class="msg-btn msg-btn--ghost" 
-          @click="handleAction(false)"
-        >
-          {{ state.cancelLabel }}
-        </button>
-        <button 
-          class="msg-btn" 
-          :class="state.danger ? 'msg-btn--danger' : 'msg-btn--primary'"
-          :disabled="isConfirmDisabled"
-          @click="handleAction(true)"
-        >
-          {{ state.confirmLabel }}
-        </button>
+        <template v-if="state.type === 'select'">
+          <button 
+            class="msg-btn msg-btn--ghost" 
+            @click="handleAction(false)"
+          >
+            {{ state.cancelLabel }}
+          </button>
+          <button 
+            v-for="choice in state.choices"
+            :key="choice.value"
+            class="msg-btn msg-btn--primary"
+            @click="handleSelectChoice(choice.value)"
+          >
+            {{ choice.label }}
+          </button>
+        </template>
+        <template v-else>
+          <button 
+            v-if="state.type !== 'alert'"
+            class="msg-btn msg-btn--ghost" 
+            @click="handleAction(false)"
+          >
+            {{ state.cancelLabel }}
+          </button>
+          <button 
+            class="msg-btn" 
+            :class="state.danger ? 'msg-btn--danger' : 'msg-btn--primary'"
+            :disabled="isConfirmDisabled"
+            @click="handleAction(true)"
+          >
+            {{ state.confirmLabel }}
+          </button>
+        </template>
       </div>
     </div>
   </BaseModal>
@@ -66,11 +85,11 @@
 
 <script setup>
 import { ref, watch, nextTick, computed } from 'vue'
-import { AlertTriangle, Info, HelpCircle, Edit3 } from 'lucide-vue-next'
+import { AlertTriangle, Info, HelpCircle, Edit3, FileText } from 'lucide-vue-next'
 import BaseModal from './BaseModal.vue'
 import { useMessage } from '../composables/useMessage.js'
 
-const { state, handleAction } = useMessage()
+const { state, handleAction, handleSelectChoice } = useMessage()
 const inputRef = ref(null)
 
 const isConfirmDisabled = computed(() => {

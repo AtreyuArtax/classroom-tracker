@@ -95,9 +95,9 @@
     "semantic_hash": "3e96540436c457ec19874a165448d794"
   },
   "src/components/MessageOverlay.vue": {
-    "mtime": 1780947189.4979377,
-    "ast_hash": "3b4383c72e0a0cdd487c917c26f82c3d",
-    "semantic_hash": "3b4383c72e0a0cdd487c917c26f82c3d"
+    "mtime": 1784942541.8021374,
+    "ast_hash": "7475628a165fdf16653dde03e7c736a0",
+    "semantic_hash": ""
   },
   "src/components/PrintClassListModal.vue": {
     "mtime": 1781614937.4152446,
@@ -260,9 +260,9 @@
     "semantic_hash": "d0c95474460aae28e134c653bb4873ad"
   },
   "src/composables/useMessage.js": {
-    "mtime": 1781613474.3022757,
-    "ast_hash": "ea9a03988b5d84146470c9b720059f6b",
-    "semantic_hash": "ea9a03988b5d84146470c9b720059f6b"
+    "mtime": 1784942412.41529,
+    "ast_hash": "cdc01cf884e1f0e06ac05a2e7ef1f119",
+    "semantic_hash": ""
   },
   "src/composables/useRadial.js": {
     "mtime": 1776472682.8683898,
@@ -515,8 +515,8 @@
     "semantic_hash": ""
   },
   "src/components/dossier/Student360ProfileTab.vue": {
-    "mtime": 1784812521.287555,
-    "ast_hash": "2474eef326453a9fafbadda8da777afd",
+    "mtime": 1784942860.4853585,
+    "ast_hash": "c74bac0ce42c8964ca9078ddb960cb46",
     "semantic_hash": ""
   },
   "src/components/reports/ReportsBatchPrintModal.vue": {
@@ -530,8 +530,8 @@
     "semantic_hash": ""
   },
   "src/components/reports/ReportsExportMenu.vue": {
-    "mtime": 1784812736.5472705,
-    "ast_hash": "ff9ca2665925c54aa55071ab9821c2d9",
+    "mtime": 1784942877.2170255,
+    "ast_hash": "bddb508cee4f9de19364fc7174552e66",
     "semantic_hash": ""
   },
   "src/components/grades/GradesAssessmentDetailView.vue": {
@@ -547,6 +547,11 @@
   "src/components/grades/GradesMissingModal.vue": {
     "mtime": 1784913802.9078047,
     "ast_hash": "cc2640a3a83777e3e36ed3e98e38f705",
+    "semantic_hash": ""
+  },
+  "src/utils/reportFormatter.js": {
+    "mtime": 1784942845.9504902,
+    "ast_hash": "2c34d66ec48dbac661a9023efc9dae46",
     "semantic_hash": ""
   }
 }

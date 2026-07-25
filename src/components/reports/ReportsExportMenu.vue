@@ -18,6 +18,7 @@ import { ref, watch, onUnmounted } from 'vue'
 import { Download } from 'lucide-vue-next'
 import { useMessage } from '../../composables/useMessage.js'
 import { formatLocalDisplay } from '../../utils/dates.js'
+import { formatQualitativeEvidenceForReport } from '../../utils/reportFormatter.js'
 import { 
   loadGradebook, 
   assessments, 
@@ -45,7 +46,7 @@ const props = defineProps({
   reportStudents: { type: Object, default: () => ({}) }
 })
 
-const { alert, confirm } = useMessage()
+const { alert, confirm, select } = useMessage()
 
 const showExportMenu = ref(false)
 const exportContainer = ref(null)
@@ -75,12 +76,12 @@ async function downloadReportCardCsv(includeName) {
   const classObj = props.reportClass
   if (!classObj) return
   
-  const isFinal = await confirm(
+  const reportType = await select(
     'Select the report card term for this comment export.',
-    'Select Report Type',
-    { confirmLabel: 'Final', cancelLabel: 'Midterm' }
+    ['Midterm', 'Final'],
+    'Select Report Type'
   )
-  const reportType = isFinal ? 'Final' : 'Midterm'
+  if (!reportType) return
   
   const className = classObj.name ?? 'Class'
   const date = new Date().toISOString().slice(0, 10)
@@ -212,103 +213,7 @@ async function downloadReportCardCsv(includeName) {
         return `- ${cat.name}: ${score !== null ? Math.round(score) + '%' : 'N/A'}`
       })
       
-      const activeStudentEventsFiltered = studentEvents
-        .filter(e => e.code === 'ac')
-        .sort((a, b) => new Date(b.ts || b.timestamp) - new Date(a.ts || a.timestamp))
-        .slice(0, 5)
-        
-      const judgmentLines = []
-      if (activeStudentEventsFiltered.length === 0) {
-        judgmentLines.push('None')
-      } else {
-        const units = classObj?.gradebookUnits || []
-        const byUnit = {}
-        const generalEvents = []
-        
-        activeStudentEventsFiltered.forEach(e => {
-          if (!e.unitId) {
-            generalEvents.push(e)
-          } else {
-            if (!byUnit[e.unitId]) byUnit[e.unitId] = []
-            byUnit[e.unitId].push(e)
-          }
-        })
-        
-        Object.keys(byUnit).forEach(unitId => {
-          const unitRecord = units.find(u => u.unitId === unitId)
-          const unitName = unitRecord ? unitRecord.name : 'Unknown Unit'
-          judgmentLines.push(`${unitName}:`)
-          
-          const byExp = {}
-          const unitGeneralEvents = []
-          
-          byUnit[unitId].forEach(e => {
-            if (!e.expectationId) {
-              unitGeneralEvents.push(e)
-            } else {
-              if (!byExp[e.expectationId]) byExp[e.expectationId] = []
-              byExp[e.expectationId].push(e)
-            }
-          })
-          
-          Object.keys(byExp).forEach(expId => {
-            const expRecord = unitRecord?.expectations?.find(exp => exp.expectationId === expId)
-            const expCode = expRecord ? expRecord.code : 'Unknown Expectation'
-            judgmentLines.push(`  ${expCode}:`)
-            
-            const sortedEvts = byExp[expId].sort((a, b) => (a.ts || a.timestamp) - (b.ts || b.timestamp))
-            sortedEvts.forEach(e => {
-              const dateStr = new Date(e.ts || e.timestamp).toLocaleDateString([], { month: 'short', day: 'numeric' })
-              const type = e.acType === 'observation' ? 'Obs' : 'Conv'
-              let outcomeLabel = ''
-              if (e.acOutcome === 'demonstrates_understanding') outcomeLabel = 'Mastered'
-              else if (e.acOutcome === 'gap_confirmed') outcomeLabel = 'Needs Support'
-              else if (e.acOutcome === 'inconclusive') outcomeLabel = 'Developing'
-              const outcome = outcomeLabel ? ` [${outcomeLabel}]` : ''
-              judgmentLines.push(`    - ${dateStr} (${type})${outcome}: ${e.note}`)
-              if (e.nextSteps) {
-                judgmentLines.push(`      Next Steps: ${e.nextSteps}`)
-              }
-            })
-          })
-          
-          if (unitGeneralEvents.length > 0) {
-            judgmentLines.push(`  General:`)
-            const sortedEvts = unitGeneralEvents.sort((a, b) => (a.ts || a.timestamp) - (b.ts || b.timestamp))
-            sortedEvts.forEach(e => {
-              const dateStr = new Date(e.ts || e.timestamp).toLocaleDateString([], { month: 'short', day: 'numeric' })
-              const type = e.acType === 'observation' ? 'Obs' : 'Conv'
-              let outcomeLabel = ''
-              if (e.acOutcome === 'demonstrates_understanding') outcomeLabel = 'Mastered'
-              else if (e.acOutcome === 'gap_confirmed') outcomeLabel = 'Needs Support'
-              else if (e.acOutcome === 'inconclusive') outcomeLabel = 'Developing'
-              const outcome = outcomeLabel ? ` [${outcomeLabel}]` : ''
-              judgmentLines.push(`    - ${dateStr} (${type})${outcome}: ${e.note}`)
-              if (e.nextSteps) {
-                judgmentLines.push(`      Next Steps: ${e.nextSteps}`)
-              }
-            })
-          }
-        })
-        
-        if (generalEvents.length > 0) {
-          judgmentLines.push('General Observations & Conversations:')
-          const sortedEvts = generalEvents.sort((a, b) => (a.ts || a.timestamp) - (b.ts || b.timestamp))
-          sortedEvts.forEach(e => {
-            const dateStr = new Date(e.ts || e.timestamp).toLocaleDateString([], { month: 'short', day: 'numeric' })
-            const type = e.acType === 'observation' ? 'Obs' : 'Conv'
-            let outcomeLabel = ''
-            if (e.acOutcome === 'demonstrates_understanding') outcomeLabel = 'Mastered'
-            else if (e.acOutcome === 'gap_confirmed') outcomeLabel = 'Needs Support'
-            else if (e.acOutcome === 'inconclusive') outcomeLabel = 'Developing'
-            const outcome = outcomeLabel ? ` [${outcomeLabel}]` : ''
-            judgmentLines.push(`  - ${dateStr} (${type})${outcome}: ${e.note}`)
-            if (e.nextSteps) {
-              judgmentLines.push(`    Next Steps: ${e.nextSteps}`)
-            }
-          })
-        }
-      }
+      const judgmentLines = formatQualitativeEvidenceForReport(studentEvents, classObj)
       
       const notesLine = s.gradebookNote?.trim() || 'None'
       

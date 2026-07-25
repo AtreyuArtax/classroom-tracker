@@ -76,6 +76,7 @@ import { ref, computed, watch } from 'vue'
 import { ShieldCheck, ClipboardList } from 'lucide-vue-next'
 import { formatLocalDisplay } from '../../utils/dates.js'
 import { useMessage } from '../../composables/useMessage.js'
+import { formatQualitativeEvidenceForReport } from '../../utils/reportFormatter.js'
 
 const props = defineProps({
   student: { type: Object, required: true },
@@ -92,7 +93,7 @@ const props = defineProps({
 
 const emit = defineEmits(['update-note'])
 
-const { confirm } = useMessage()
+const { confirm, select } = useMessage()
 
 const isAdult = computed(() => {
   if (!props.student.birthDate) return false
@@ -129,12 +130,12 @@ async function copyForReportCard(includeName = false) {
   const absences = props.stats.absences
   const lates = props.stats.lates
   
-  const isFinal = await confirm(
+  const reportType = await select(
     'Select the report card term for this comment copy.',
-    'Select Report Type',
-    { confirmLabel: 'Final', cancelLabel: 'Midterm' }
+    ['Midterm', 'Final'],
+    'Select Report Type'
   )
-  const reportType = isFinal ? 'Final' : 'Midterm'
+  if (!reportType) return
   
   const midtermMs = props.filteredMilestones?.find(m => m.name?.toLowerCase() === 'midterm') || 
                     props.globalMilestones?.find(m => m.name?.toLowerCase() === 'midterm')
@@ -219,18 +220,9 @@ async function copyForReportCard(includeName = false) {
   textLines.push(...props.academicCategories.map(c => `- ${c.name}: ${c.score !== null ? Math.round(c.score) + '%' : 'N/A'}`))
   textLines.push('')
   textLines.push('Professional Judgment (Observations & Conversations):')
-  const rawAcEvents = props.activeStudentEvents
-    .filter(e => e.code === 'ac')
-    .sort((a, b) => (b.ts || b.timestamp) - (a.ts || a.timestamp))
-    .slice(0, 5)
-
-  if (rawAcEvents.length === 0) {
-    textLines.push('None')
-  } else {
-    rawAcEvents.forEach(e => {
-      textLines.push(`- [${formatLocalDisplay(e.timestamp || e.date, { month: 'short', day: 'numeric' })}] ${e.note || e.title || 'Observation'}`)
-    })
-  }
+  const classObj = props.activeClassRecord || props.activeClass
+  const judgmentLines = formatQualitativeEvidenceForReport(props.activeStudentEvents, classObj)
+  textLines.push(...judgmentLines)
 
   const fullText = textLines.join('\n')
   await navigator.clipboard.writeText(fullText)
