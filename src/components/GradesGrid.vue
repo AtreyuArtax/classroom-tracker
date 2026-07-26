@@ -1,5 +1,30 @@
 <template>
   <div class="grades__grid-wrapper">
+    <!-- Unit Filter Bar -->
+    <div v-if="availableUnits.length > 0" class="grades__filter-bar">
+      <span class="grades__filter-label">Unit:</span>
+      <div class="grades__filter-chips">
+        <button 
+          class="grid-chip" 
+          :class="{ 'grid-chip--active': selectedUnitId === null }"
+          @click="selectedUnitId = null"
+        >
+          All Units ({{ assessments.filter(a => a.target !== 'individual').length }})
+        </button>
+        <button 
+          v-for="u in availableUnits" 
+          :key="u.unitId"
+          class="grid-chip"
+          :class="{ 'grid-chip--active': selectedUnitId === u.unitId }"
+          :style="selectedUnitId === u.unitId ? { background: getUnitColor(u.unitId), borderColor: getUnitColor(u.unitId), color: '#fff' } : {}"
+          @click="selectedUnitId = u.unitId"
+        >
+          <span class="grid-chip__dot" :style="{ background: selectedUnitId === u.unitId ? '#fff' : getUnitColor(u.unitId) }"></span>
+          {{ u.name }}
+        </button>
+      </div>
+    </div>
+
     <table class="grades__grid">
       <thead>
         <!-- Top Header -->
@@ -36,6 +61,7 @@
             v-for="a in sortedAssessments" 
             :key="a.assessmentId"
             class="grades__th-assessment"
+            :style="{ borderTop: '3px solid ' + (getUnitColor(a.unitId) !== '#64748b' ? getUnitColor(a.unitId) : getCategoryColor(a.categoryId)) }"
           >
             <div class="grades__assessment-header">
               <div class="grades__assessment-info" @click="$emit('select-assessment', a.assessmentId)">
@@ -48,7 +74,10 @@
                 </span>
                 <div class="grades__assessment-meta">
                   <span class="grades__assessment-points">/{{ a.totalPoints }}</span>
-                  <span v-if="a.unitId" class="grades__assessment-unit">{{ getUnitName(a.unitId) }}</span>
+                  <span v-if="a.categoryId" class="grades__assessment-cat-tag" :style="{ color: getCategoryColor(a.categoryId) }">
+                    {{ getCategoryName(a.categoryId) }}
+                  </span>
+                  <span v-else-if="a.unitId" class="grades__assessment-unit">{{ getUnitName(a.unitId) }}</span>
                 </div>
               </div>
               <button class="grades__header-menu-btn" @click.stop="onHeaderMenu($event, 'assessment', a)">
@@ -466,13 +495,68 @@ const overallClassAvg = computed(() => {
   return values.reduce((sum, val) => sum + val, 0) / values.length
 })
 
+const selectedUnitId = ref(null)
+const selectedCategoryId = ref(null)
+
+const UNIT_COLORS = [
+  '#0284c7', // sky blue
+  '#059669', // emerald
+  '#7c3aed', // violet
+  '#d97706', // amber
+  '#db2777', // pink
+  '#0891b2', // cyan
+  '#4f46e5'  // indigo
+]
+
+const CATEGORY_COLORS = [
+  '#3b82f6', // blue
+  '#10b981', // green
+  '#8b5cf6', // purple
+  '#f59e0b', // amber
+  '#ec4899', // pink
+  '#06b6d4', // cyan
+  '#6366f1'  // indigo
+]
+
+function getUnitColor(unitId) {
+  if (!unitId || !activeClassRecord.value?.gradebookUnits) return '#64748b'
+  const idx = activeClassRecord.value.gradebookUnits.findIndex(u => u.unitId === unitId)
+  if (idx < 0) return '#64748b'
+  return UNIT_COLORS[idx % UNIT_COLORS.length]
+}
+
+function getCategoryColor(categoryId) {
+  if (!categoryId || !activeClassRecord.value?.gradebookCategories) return '#64748b'
+  const idx = activeClassRecord.value.gradebookCategories.findIndex(c => c.categoryId === categoryId)
+  if (idx < 0) return '#64748b'
+  return CATEGORY_COLORS[idx % CATEGORY_COLORS.length]
+}
+
+function getCategoryName(categoryId) {
+  if (!categoryId || !activeClassRecord.value?.gradebookCategories) return ''
+  return activeClassRecord.value.gradebookCategories.find(c => c.categoryId === categoryId)?.name ?? ''
+}
+
+const availableUnits = computed(() => {
+  return activeClassRecord.value?.gradebookUnits || []
+})
+
+const availableCategories = computed(() => {
+  return activeClassRecord.value?.gradebookCategories || []
+})
+
 const sortedAssessments = computed(() => {
-  return [...assessments.value]
-    .filter(a => a.target !== 'individual')
-    .sort((a, b) => {
-      const diff = new Date(a.date) - new Date(b.date)
-      return assessmentSortOrder.value === 'asc' ? diff : -diff
-    })
+  let list = [...assessments.value].filter(a => a.target !== 'individual')
+  if (selectedUnitId.value) {
+    list = list.filter(a => a.unitId === selectedUnitId.value)
+  }
+  if (selectedCategoryId.value) {
+    list = list.filter(a => a.categoryId === selectedCategoryId.value)
+  }
+  return list.sort((a, b) => {
+    const diff = new Date(a.date) - new Date(b.date)
+    return assessmentSortOrder.value === 'asc' ? diff : -diff
+  })
 })
 
 const sortedRoster = computed(() => {
@@ -622,6 +706,69 @@ function copyAssessmentGrades(assessment) {
 
 <style scoped>
 /* Scoped overrides to target grid components and layout */
+.grades__filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 16px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.grades__filter-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.grades__filter-chips {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.grid-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.grid-chip:hover {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+
+.grid-chip--active {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
+.grid-chip__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.grades__assessment-cat-tag {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
 .grades__grid-wrapper {
   flex: 1;
   overflow: auto;
@@ -699,6 +846,7 @@ function copyAssessmentGrades(assessment) {
   border-right: 2px solid var(--border);
   text-align: center;
   font-weight: 700;
+  box-shadow: 4px 0 8px -2px rgba(0, 0, 0, 0.08);
 }
 
 .grades__th-overall {
