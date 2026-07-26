@@ -1,6 +1,6 @@
 <template>
-  <div class="grades__grid-wrapper">
-    <!-- Unit Filter Bar -->
+  <div class="grades__grid-container-outer">
+    <!-- Unit Filter Bar (Fixed above table) -->
     <div v-if="availableUnits.length > 0" class="grades__filter-bar">
       <span class="grades__filter-label">Unit:</span>
       <div class="grades__filter-chips">
@@ -25,7 +25,9 @@
       </div>
     </div>
 
-    <table class="grades__grid">
+    <!-- Scrollable Table Wrapper -->
+    <div class="grades__grid-wrapper">
+      <table class="grades__grid">
       <thead>
         <!-- Top Header -->
         <tr>
@@ -104,9 +106,10 @@
             @click="toggleGridSort(a.assessmentId)"
             title="Sort by this assessment"
           >
-            <div v-if="assessmentStats[a.assessmentId]">
-              {{ formatCellGrade(assessmentStats[a.assessmentId].average, a.totalPoints) }}
+            <div v-if="getAssessmentAvg(a.assessmentId) !== null">
+              {{ formatCellGrade(getAssessmentAvg(a.assessmentId), a.totalPoints) }}
             </div>
+            <div v-else class="text-muted">—</div>
           </td>
         </tr>
       </thead>
@@ -351,6 +354,7 @@
       </div>
     </div>
   </div>
+</div>
 </template>
 
 <script setup>
@@ -444,6 +448,25 @@ function formatCellGrade(value, totalPoints) {
     return Math.round(value * 10) / 10
   }
   return Math.round((value / totalPoints) * 1000) / 10 + '%'
+}
+
+function getAssessmentAvg(assessmentId) {
+  let sum = 0
+  let count = 0
+
+  sortedRoster.value.forEach(s => {
+    const g = gradeMap.value[assessmentId]?.[s.studentId]
+    if (g && !g.missing && !g.excluded && g.resolvedScore !== null && g.resolvedScore !== undefined) {
+      const num = Number(g.resolvedScore)
+      if (!isNaN(num)) {
+        sum += num
+        count++
+      }
+    }
+  })
+
+  if (count === 0) return null
+  return sum / count
 }
 
 function getCellStyle(studentId, assessmentId, totalPoints) {
@@ -767,6 +790,14 @@ function copyAssessmentGrades(assessment) {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.03em;
+}
+
+.grades__grid-container-outer {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  position: relative;
 }
 
 .grades__grid-wrapper {

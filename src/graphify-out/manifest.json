@@ -40,8 +40,8 @@
     "semantic_hash": ""
   },
   "components/GradesGrid.vue": {
-    "mtime": 1785031934.7630332,
-    "ast_hash": "80b30ab9bbb8c1bbe36173da2cd06357",
+    "mtime": 1785063564.3650746,
+    "ast_hash": "1a39be002745fd57d9eb2da8ff22d466",
     "semantic_hash": ""
   },
   "components/MessageOverlay.vue": {
@@ -195,8 +195,8 @@
     "semantic_hash": ""
   },
   "components/grades/GradesAssessmentDetailView.vue": {
-    "mtime": 1784913798.2866833,
-    "ast_hash": "31cde556c28dfa5194b863639d461bae",
+    "mtime": 1785063233.6686733,
+    "ast_hash": "1edc6c6975c6fb913e1caa51ee33a1b8",
     "semantic_hash": ""
   },
   "components/grades/GradesContextMenu.vue": {

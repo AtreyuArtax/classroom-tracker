@@ -1,7 +1,7 @@
-# Graph Report - src  (2026-07-25)
+# Graph Report - src  (2026-07-26)
 
 ## Corpus Check
-- 101 files · ~130,597 words
+- 101 files · ~133,384 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `c6488eba`
+- Built from commit: `a85456f1`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -122,7 +122,7 @@ Nodes (16): {
 
 ### Community 8 - "Community 8"
 Cohesion: 0.13
-Nodes (20): auditSettingsIntegrity(), deleteBehaviorCode(), getAcademicTerms(), getAttendanceConfig(), getBehaviorCodes(), getNonSchoolDays(), getPeriodStartTimes(), getTeacherName() (+12 more)
+Nodes (18): _applyDateRange(), deleteEvent(), detachEventsForDeletedExpectation(), detachEventsForDeletedUnit(), exportAllData(), getAllEvents(), getDateRangeForClassPeriod(), getDateRangeForPeriod() (+10 more)
 
 ### Community 9 - "Community 9"
 Cohesion: 0.10
@@ -130,7 +130,7 @@ Nodes (22): curriculumPresets, getPresetsByPanel(), activeTab, canSubmit, emit, 
 
 ### Community 10 - "Community 10"
 Cohesion: 0.13
-Nodes (18): _applyDateRange(), deleteEvent(), detachEventsForDeletedExpectation(), detachEventsForDeletedUnit(), exportAllData(), getAllEvents(), getDateRangeForClassPeriod(), getDateRangeForPeriod() (+10 more)
+Nodes (20): auditSettingsIntegrity(), deleteBehaviorCode(), getAcademicTerms(), getAttendanceConfig(), getBehaviorCodes(), getNonSchoolDays(), getPeriodStartTimes(), getTeacherName() (+12 more)
 
 ### Community 11 - "Community 11"
 Cohesion: 0.12

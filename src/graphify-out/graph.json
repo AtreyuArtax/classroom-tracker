@@ -1600,7 +1600,7 @@
       "source_location": "L74",
       "_origin": "ast",
       "id": "reports_reportsexportmenu_downloadreportcardcsv",
-      "community": 10,
+      "community": 8,
       "norm_label": "downloadreportcardcsv()"
     },
     {
@@ -2900,7 +2900,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "composables_useattendanceinsights",
-      "community": 10,
+      "community": 8,
       "norm_label": "useattendanceinsights.js"
     },
     {
@@ -2910,7 +2910,7 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "composables_useattendanceinsights_useattendanceinsights",
-      "community": 10,
+      "community": 8,
       "norm_label": "useattendanceinsights()"
     },
     {
@@ -5090,7 +5090,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "db_eventservice",
-      "community": 10,
+      "community": 8,
       "norm_label": "eventservice.js"
     },
     {
@@ -5100,7 +5100,7 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "db_eventservice_hasunsyncedchanges",
-      "community": 10,
+      "community": 8,
       "norm_label": "hasunsyncedchanges"
     },
     {
@@ -5120,7 +5120,7 @@
       "source_location": "L60",
       "_origin": "ast",
       "id": "db_eventservice_applydaterange",
-      "community": 10,
+      "community": 8,
       "norm_label": "_applydaterange()"
     },
     {
@@ -5130,7 +5130,7 @@
       "source_location": "L79",
       "_origin": "ast",
       "id": "db_eventservice_logevent",
-      "community": 10,
+      "community": 8,
       "norm_label": "logevent()"
     },
     {
@@ -5140,7 +5140,7 @@
       "source_location": "L138",
       "_origin": "ast",
       "id": "db_eventservice_deleteevent",
-      "community": 10,
+      "community": 8,
       "norm_label": "deleteevent()"
     },
     {
@@ -5150,7 +5150,7 @@
       "source_location": "L147",
       "_origin": "ast",
       "id": "db_eventservice_updateevent",
-      "community": 10,
+      "community": 8,
       "norm_label": "updateevent()"
     },
     {
@@ -5160,7 +5160,7 @@
       "source_location": "L171",
       "_origin": "ast",
       "id": "db_eventservice_geteventsbystudent",
-      "community": 10,
+      "community": 8,
       "norm_label": "geteventsbystudent()"
     },
     {
@@ -5170,7 +5170,7 @@
       "source_location": "L192",
       "_origin": "ast",
       "id": "db_eventservice_geteventsbyclass",
-      "community": 10,
+      "community": 8,
       "norm_label": "geteventsbyclass()"
     },
     {
@@ -5180,7 +5180,7 @@
       "source_location": "L206",
       "_origin": "ast",
       "id": "db_eventservice_geteventsbyperiod",
-      "community": 10,
+      "community": 8,
       "norm_label": "geteventsbyperiod()"
     },
     {
@@ -5190,7 +5190,7 @@
       "source_location": "L224",
       "_origin": "ast",
       "id": "db_eventservice_getallevents",
-      "community": 10,
+      "community": 8,
       "norm_label": "getallevents()"
     },
     {
@@ -5200,7 +5200,7 @@
       "source_location": "L237",
       "_origin": "ast",
       "id": "db_eventservice_exportalldata",
-      "community": 10,
+      "community": 8,
       "norm_label": "exportalldata()"
     },
     {
@@ -5210,7 +5210,7 @@
       "source_location": "L265",
       "_origin": "ast",
       "id": "db_eventservice_quicksyncbackup",
-      "community": 10,
+      "community": 8,
       "norm_label": "quicksyncbackup()"
     },
     {
@@ -5220,7 +5220,7 @@
       "source_location": "L325",
       "_origin": "ast",
       "id": "db_eventservice_importalldata",
-      "community": 10,
+      "community": 8,
       "norm_label": "importalldata()"
     },
     {
@@ -5230,7 +5230,7 @@
       "source_location": "L414",
       "_origin": "ast",
       "id": "db_eventservice_getdaterangeforperiod",
-      "community": 10,
+      "community": 8,
       "norm_label": "getdaterangeforperiod()"
     },
     {
@@ -5240,7 +5240,7 @@
       "source_location": "L466",
       "_origin": "ast",
       "id": "db_eventservice_getdaterangeforclassperiod",
-      "community": 10,
+      "community": 8,
       "norm_label": "getdaterangeforclassperiod()"
     },
     {
@@ -5270,7 +5270,7 @@
       "source_location": "L513",
       "_origin": "ast",
       "id": "db_eventservice_detacheventsfordeletedexpectation",
-      "community": 10,
+      "community": 8,
       "norm_label": "detacheventsfordeletedexpectation()"
     },
     {
@@ -5280,7 +5280,7 @@
       "source_location": "L533",
       "_origin": "ast",
       "id": "db_eventservice_detacheventsfordeletedunit",
-      "community": 10,
+      "community": 8,
       "norm_label": "detacheventsfordeletedunit()"
     },
     {
@@ -5710,7 +5710,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "db_migrations",
-      "community": 10,
+      "community": 8,
       "norm_label": "migrations.js"
     },
     {
@@ -5720,7 +5720,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "db_migrations_migratedata",
-      "community": 10,
+      "community": 8,
       "norm_label": "migratedata()"
     },
     {
@@ -5730,7 +5730,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "db_settingsservice",
-      "community": 8,
+      "community": 10,
       "norm_label": "settingsservice.js"
     },
     {
@@ -5740,7 +5740,7 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "db_settingsservice_readsettings",
-      "community": 8,
+      "community": 10,
       "norm_label": "_readsettings()"
     },
     {
@@ -5760,7 +5760,7 @@
       "source_location": "L151",
       "_origin": "ast",
       "id": "db_settingsservice_savesettings",
-      "community": 8,
+      "community": 10,
       "norm_label": "savesettings()"
     },
     {
@@ -5770,7 +5770,7 @@
       "source_location": "L163",
       "_origin": "ast",
       "id": "db_settingsservice_getbehaviorcodes",
-      "community": 8,
+      "community": 10,
       "norm_label": "getbehaviorcodes()"
     },
     {
@@ -5780,7 +5780,7 @@
       "source_location": "L178",
       "_origin": "ast",
       "id": "db_settingsservice_savebehaviorcode",
-      "community": 8,
+      "community": 10,
       "norm_label": "savebehaviorcode()"
     },
     {
@@ -5790,7 +5790,7 @@
       "source_location": "L194",
       "_origin": "ast",
       "id": "db_settingsservice_deletebehaviorcode",
-      "community": 8,
+      "community": 10,
       "norm_label": "deletebehaviorcode()"
     },
     {
@@ -5800,7 +5800,7 @@
       "source_location": "L207",
       "_origin": "ast",
       "id": "db_settingsservice_getthresholds",
-      "community": 8,
+      "community": 10,
       "norm_label": "getthresholds()"
     },
     {
@@ -5810,7 +5810,7 @@
       "source_location": "L218",
       "_origin": "ast",
       "id": "db_settingsservice_savethresholds",
-      "community": 8,
+      "community": 10,
       "norm_label": "savethresholds()"
     },
     {
@@ -5830,7 +5830,7 @@
       "source_location": "L242",
       "_origin": "ast",
       "id": "db_settingsservice_saveglobalmilestones",
-      "community": 8,
+      "community": 10,
       "norm_label": "saveglobalmilestones()"
     },
     {
@@ -5840,7 +5840,7 @@
       "source_location": "L255",
       "_origin": "ast",
       "id": "db_settingsservice_getteachername",
-      "community": 8,
+      "community": 10,
       "norm_label": "getteachername()"
     },
     {
@@ -5850,7 +5850,7 @@
       "source_location": "L266",
       "_origin": "ast",
       "id": "db_settingsservice_saveteachername",
-      "community": 8,
+      "community": 10,
       "norm_label": "saveteachername()"
     },
     {
@@ -5860,7 +5860,7 @@
       "source_location": "L279",
       "_origin": "ast",
       "id": "db_settingsservice_getattendanceconfig",
-      "community": 8,
+      "community": 10,
       "norm_label": "getattendanceconfig()"
     },
     {
@@ -5870,7 +5870,7 @@
       "source_location": "L293",
       "_origin": "ast",
       "id": "db_settingsservice_saveattendanceconfig",
-      "community": 8,
+      "community": 10,
       "norm_label": "saveattendanceconfig()"
     },
     {
@@ -5880,7 +5880,7 @@
       "source_location": "L307",
       "_origin": "ast",
       "id": "db_settingsservice_getacademicterms",
-      "community": 8,
+      "community": 10,
       "norm_label": "getacademicterms()"
     },
     {
@@ -5890,7 +5890,7 @@
       "source_location": "L318",
       "_origin": "ast",
       "id": "db_settingsservice_saveacademicterms",
-      "community": 8,
+      "community": 10,
       "norm_label": "saveacademicterms()"
     },
     {
@@ -5900,7 +5900,7 @@
       "source_location": "L331",
       "_origin": "ast",
       "id": "db_settingsservice_getperiodstarttimes",
-      "community": 8,
+      "community": 10,
       "norm_label": "getperiodstarttimes()"
     },
     {
@@ -5910,7 +5910,7 @@
       "source_location": "L347",
       "_origin": "ast",
       "id": "db_settingsservice_saveperiodstarttimes",
-      "community": 8,
+      "community": 10,
       "norm_label": "saveperiodstarttimes()"
     },
     {
@@ -5930,7 +5930,7 @@
       "source_location": "L372",
       "_origin": "ast",
       "id": "db_settingsservice_savegradebuckets",
-      "community": 8,
+      "community": 10,
       "norm_label": "savegradebuckets()"
     },
     {
@@ -5940,7 +5940,7 @@
       "source_location": "L385",
       "_origin": "ast",
       "id": "db_settingsservice_getnonschooldays",
-      "community": 8,
+      "community": 10,
       "norm_label": "getnonschooldays()"
     },
     {
@@ -5950,7 +5950,7 @@
       "source_location": "L396",
       "_origin": "ast",
       "id": "db_settingsservice_savenonschooldays",
-      "community": 8,
+      "community": 10,
       "norm_label": "savenonschooldays()"
     },
     {
@@ -5960,7 +5960,7 @@
       "source_location": "L407",
       "_origin": "ast",
       "id": "db_settingsservice_auditsettingsintegrity",
-      "community": 8,
+      "community": 10,
       "norm_label": "auditsettingsintegrity()"
     },
     {
@@ -7835,9 +7835,9 @@
       "source_file": "components/dossier/StudentStatCard.vue",
       "source_location": "L37",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "dossier_studentstatcard",
-      "target": "dossier_studentstatcard_props",
-      "confidence_score": 1.0
+      "target": "dossier_studentstatcard_props"
     },
     {
       "relation": "imports_from",
@@ -16951,5 +16951,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "c6488eba16e36f19c3a9c68ad3e2ee2edba567b6"
+  "built_at_commit": "a85456f19aac284cfd4dee4ed77b7ca6d3f9fbc1"
 }
