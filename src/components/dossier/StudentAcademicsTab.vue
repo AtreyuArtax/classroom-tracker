@@ -9,9 +9,65 @@
       <DossierEvidenceMix :mix="evidenceMix" />
     </div>
 
-    <!-- Class Assessments (Priority First) -->
+    <!-- Master Unified Assessment Table (Full Width) -->
     <div class="academics-section">
-      <h3 class="academics-section__title">Class Assessments</h3>
+      <div class="academics-section__header">
+        <h3 class="academics-section__title" style="margin:0;">Assessments &amp; Tasks</h3>
+        
+        <div class="academics-header-actions">
+          <!-- Filter Chips -->
+          <div class="assessment-filter-chips">
+            <button 
+              class="chip-btn" 
+              :class="{ 'chip-btn--active': activeAssessmentFilter === 'all' }"
+              @click="activeAssessmentFilter = 'all'"
+            >
+              All ({{ combinedAssessments.length }})
+            </button>
+
+            <button 
+              class="chip-btn" 
+              :class="{ 'chip-btn--active': activeAssessmentFilter === 'class' }"
+              @click="activeAssessmentFilter = 'class'"
+            >
+              Classwide ({{ classCount }})
+            </button>
+
+            <button 
+              v-if="individualCount > 0"
+              class="chip-btn chip-btn--purple" 
+              :class="{ 'chip-btn--active': activeAssessmentFilter === 'individual' }"
+              @click="activeAssessmentFilter = 'individual'"
+            >
+              👤 Student Tasks ({{ individualCount }})
+            </button>
+
+            <button 
+              v-if="missingCount > 0"
+              class="chip-btn chip-btn--danger" 
+              :class="{ 'chip-btn--active': activeAssessmentFilter === 'missing' }"
+              @click="activeAssessmentFilter = 'missing'"
+            >
+              ⚠️ Missing ({{ missingCount }})
+            </button>
+
+            <button 
+              v-if="failingCount > 0"
+              class="chip-btn chip-btn--warning" 
+              :class="{ 'chip-btn--active': activeAssessmentFilter === 'failing' }"
+              @click="activeAssessmentFilter = 'failing'"
+            >
+              🔴 &lt;50% ({{ failingCount }})
+            </button>
+          </div>
+
+          <!-- + Add Task Button -->
+          <button class="btn-add-individual" @click="openAddAssessment('individual', props.studentId)">
+            <Plus :size="13" /> Add Task
+          </button>
+        </div>
+      </div>
+
       <div class="academics-table-wrapper">
         <table class="academics-table">
           <thead>
@@ -19,25 +75,19 @@
               <th class="th-date">Date</th>
               <th class="th-name">Assessment</th>
               <th class="th-type">Type</th>
-              <th class="th-impact">Impact</th>
               <th class="th-score">Points</th>
               <th class="th-percent">%</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="a in classAssessments" :key="a.assessmentId" @contextmenu.prevent="onContextMenu($event, a.assessmentId)">
+            <tr v-for="a in filteredMasterAssessments" :key="a.assessmentId" @contextmenu.prevent="onContextMenu($event, a.assessmentId)">
               <td class="td-date">{{ formatLocalDisplay(a.date) }}</td>
-              <td class="td-name">{{ a.name }}</td>
-              <td class="td-type"><span class="badge" :class="'badge--' + a.assessmentType">{{ a.assessmentType }}</span></td>
-              <td class="td-impact">
-                <span 
-                  class="impact-badge" 
-                  :class="'impact-badge--' + getImpactLevel(a.weight).id"
-                  :title="'Weight: ' + (a.weight || 1)"
-                >
-                  {{ getImpactLevel(a.weight).label }}
-                </span>
+              <td class="td-name">
+                <span>{{ a.name }}</span>
+                <span v-if="a.target === 'individual' || a.isIndividual" class="badge-student-task" title="Individual student task">👤 Student Task</span>
+                <span v-else-if="getImpactLevel(a.weight).id === 'high'" class="badge-high-weight" title="High grade weight item">🔥 High Weight</span>
               </td>
+              <td class="td-type"><span class="badge" :class="'badge--' + a.assessmentType">{{ a.assessmentType }}</span></td>
               <td class="td-score">
                 <div class="score-cell-wrapper">
                   <!-- Inline Edit Mode -->
@@ -89,102 +139,14 @@
       </div>
     </div>
 
-    <!-- Individual Assessments (Secondary) -->
-    <div class="academics-section">
-      <div class="academics-section__header">
-        <h3 class="academics-section__title">Individual Assessments</h3>
-        <button class="btn-add-individual" @click="openAddAssessment('individual', props.studentId)">
-          <Plus :size="14" /> Add Task
-        </button>
-      </div>
-      <div class="academics-table-wrapper">
-         <table v-if="individualAssessments.length" class="academics-table">
-           <thead>
-             <tr>
-               <th class="th-date">Date</th>
-               <th class="th-name">Assessment</th>
-               <th class="th-type">Type</th>
-               <th class="th-impact">Impact</th>
-               <th class="th-score">Points</th>
-               <th class="th-percent">%</th>
-             </tr>
-           </thead>
-           <tbody>
-             <tr v-for="a in individualAssessments" :key="a.assessmentId" @contextmenu.prevent="onContextMenu($event, a.assessmentId)">
-               <td class="td-date">{{ formatLocalDisplay(a.date) }}</td>
-               <td class="td-name">{{ a.name }}</td>
-               <td class="td-type"><span class="badge" :class="'badge--' + a.assessmentType">{{ a.assessmentType }}</span></td>
-               <td class="td-impact">
-                 <span 
-                   class="impact-badge" 
-                   :class="'impact-badge--' + getImpactLevel(a.weight).id"
-                   :title="'Weight: ' + (a.weight || 1)"
-                 >
-                   {{ getImpactLevel(a.weight).label }}
-                 </span>
-               </td>
-               <td class="td-score">
-                 <div class="score-cell-wrapper">
-                   <!-- Inline Edit Mode -->
-                   <template v-if="editingCell?.assessmentId === a.assessmentId">
-                     <input 
-                       type="number" 
-                       v-model="editInput" 
-                       class="cell-edit-input"
-                       @blur="saveEdit"
-                       @keydown="handleCellKey"
-                     />
-                   </template>
-                   
-                   <!-- Visual Display Mode -->
-                   <template v-else>
-                     <div v-if="a.missing" class="score-missing" @click="startEdit(a.assessmentId)">
-                       <span class="text-danger">Missing</span>
-                     </div>
-                     <span v-else-if="a.excluded" class="text-muted" @click="startEdit(a.assessmentId)">EX</span>
-                     <span v-else class="score-value" @click="startEdit(a.assessmentId)">
-                       {{ a.score }} / {{ a.totalPoints }}
-                     </span>
-                     
-                     <!-- Attempts / Comment Indicators -->
-                     <div class="cell-indicators" v-if="a.attempts?.length >= 1">
-                       <div 
-                         v-if="a.attempts?.length > 1"
-                         class="attempts-dot"
-                         @click.stop="openAttempts($event, a.assessmentId)"
-                         title="Multiple attempts - click to view history"
-                       ></div>
-                       <span
-                         class="comment-dot"
-                         :class="{ 'comment-dot--active': a.attempts?.some(x => x.comment?.trim()) }"
-                         @click.stop="openAttempts($event, a.assessmentId)"
-                         :title="a.attempts?.some(x => x.comment?.trim()) ? 'Has note — click to edit' : 'Add a note'"
-                       >📝</span>
-                     </div>
-                   </template>
-                 </div>
-               </td>
-               <td class="td-percent" :style="{ color: getGradeColor((a.score / a.totalPoints) * 100) }">
-                 {{ a.score !== null ? Math.round((a.score / a.totalPoints) * 100) + '%' : 'N/A' }}
-               </td>
-             </tr>
-           </tbody>
-         </table>
-         <div v-else class="academics-empty-state">
-           No student-specific assessments. Click "Add Task" to create one.
-         </div>
-      </div>
-    </div>
-
-
-
-    <!-- Internal Gradebook Notes -->
-    <div class="student-360__gradebook-note">
-      <h3 class="academics-section__title">Internal Gradebook Notes</h3>
+    <!-- Compact Internal Gradebook Notes Card (Full Width) -->
+    <div class="student-360__gradebook-note-card">
+      <h3 class="academics-section__title" style="margin:0;">Internal Gradebook Notes</h3>
       <textarea 
         class="student-360__notes-area"
         v-model="localGradebookNote"
         placeholder="Add private observations about this student's grading context..."
+        rows="2"
         @blur="updateGradebookNoteLocal"
       ></textarea>
     </div>
@@ -460,6 +422,45 @@ const classAssessments = computed(() => {
       }
     })
     .sort((a, b) => new Date(b.date) - new Date(a.date))
+})
+
+const activeAssessmentFilter = ref('all')
+
+const combinedAssessments = computed(() => {
+  const cList = classAssessments.value || []
+  const iList = (individualAssessments.value || []).map(item => ({ ...item, isIndividual: true }))
+  return [...cList, ...iList].sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0))
+})
+
+const classCount = computed(() => classAssessments.value.length)
+const individualCount = computed(() => individualAssessments.value.length)
+const missingCount = computed(() => combinedAssessments.value.filter(a => a.missing).length)
+
+const failingCount = computed(() => combinedAssessments.value.filter(a => {
+  if (a.missing || a.excluded || a.score === null) return false
+  const total = a.scaledTotal || a.totalPoints || 100
+  return (a.score / total) < 0.5
+}).length)
+
+const filteredMasterAssessments = computed(() => {
+  const list = combinedAssessments.value || []
+  if (activeAssessmentFilter.value === 'class') {
+    return list.filter(a => !a.isIndividual && a.target !== 'individual')
+  }
+  if (activeAssessmentFilter.value === 'individual') {
+    return list.filter(a => a.isIndividual || a.target === 'individual')
+  }
+  if (activeAssessmentFilter.value === 'missing') {
+    return list.filter(a => a.missing)
+  }
+  if (activeAssessmentFilter.value === 'failing') {
+    return list.filter(a => {
+      if (a.missing || a.excluded || a.score === null) return false
+      const total = a.scaledTotal || a.totalPoints || 100
+      return (a.score / total) < 0.5
+    })
+  }
+  return list
 })
 
 const individualAssessments = computed(() => {
@@ -1132,5 +1133,149 @@ async function updateGradebookNoteLocal() {
 .btn-submit:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* ── 2-Column Side-by-Side Academics Layout ── */
+.academics-bottom-grid {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 20px;
+  align-items: start;
+}
+
+@media (max-width: 1024px) {
+  .academics-bottom-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.academics-main-col {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.academics-card-block {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.academics-title-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.academics-subtitle {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.academics-side-col {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.academics-side-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.badge-high-weight {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+.badge-student-task {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: rgba(147, 51, 234, 0.1);
+  color: #9333ea;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+.academics-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.assessment-filter-chips {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.chip-btn {
+  padding: 4px 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.chip-btn:hover {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+
+.chip-btn--active {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
+.chip-btn--purple.chip-btn--active {
+  background: #9333ea;
+  border-color: #9333ea;
+}
+
+.chip-btn--danger.chip-btn--active {
+  background: #ef4444;
+  border-color: #ef4444;
+}
+
+.chip-btn--warning.chip-btn--active {
+  background: #f59e0b;
+  border-color: #f59e0b;
+}
+
+.student-360__gradebook-note-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 16px;
 }
 </style>

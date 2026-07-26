@@ -1,39 +1,31 @@
 <template>
   <div class="stat-card" :class="[`stat-card--${color}`]">
-    <div class="stat-card__icon-wrapper">
-      <slot name="icon">
-        <component :is="icon" v-if="icon" :size="16" />
-      </slot>
-    </div>
-    
-    <div class="stat-card__content" :class="{ 'stat-card__content--dual': value2 }">
-      <div class="stat-card__label-row">
+    <div class="stat-card__main">
+      <div class="stat-card__header">
+        <div class="stat-card__icon-wrapper">
+          <slot name="icon">
+            <component :is="icon" v-if="icon" :size="13" />
+          </slot>
+        </div>
         <span class="stat-card__label">{{ label }}</span>
-        <component :is="alertIcon" v-if="alertIcon" :size="14" class="stat-card__alert-icon" />
+        <component :is="alertIcon" v-if="alertIcon" :size="12" class="stat-card__alert-icon" />
       </div>
-      
-      <div class="stat-card__stats-row">
-        <!-- Primary Column -->
-        <div class="stat-card__stat-col">
-          <div class="stat-card__value-row">
-            <span class="stat-card__value">{{ value }}</span>
-            <span v-if="trend !== undefined && !value2" class="stat-card__trend" :class="trendClass">
-              <TrendingUp v-if="trend > 0" :size="14" />
-              <TrendingDown v-if="trend < 0" :size="14" />
-              {{ Math.abs(trend) }}%
-            </span>
-          </div>
-          <div v-if="subValue" class="stat-card__sub-value">{{ subValue }}</div>
-        </div>
 
-        <!-- Secondary Column (Optional) -->
-        <div v-if="value2" class="stat-card__stat-col stat-card__stat-col--secondary">
-          <div class="stat-card__value-row">
-            <span class="stat-card__value">{{ value2 }}</span>
-          </div>
-          <div v-if="subValue2" class="stat-card__sub-value">{{ subValue2 }}</div>
-        </div>
+      <div class="stat-card__value-group">
+        <span class="stat-card__value">{{ value }}</span>
+        <span v-if="value2" class="stat-card__value-sep">·</span>
+        <span v-if="value2" class="stat-card__value2">{{ value2 }}</span>
+        <span v-if="trend !== undefined && !value2" class="stat-card__trend" :class="trendClass">
+          <TrendingUp v-if="trend > 0" :size="11" />
+          <TrendingDown v-if="trend < 0" :size="11" />
+          {{ Math.abs(trend) }}%
+        </span>
       </div>
+    </div>
+
+    <div v-if="subValue || subValue2" class="stat-card__sub-group">
+      <span v-if="subValue" class="stat-card__sub-value">{{ subValue }}</span>
+      <span v-if="subValue2" class="stat-card__sub-value">{{ subValue2 }}</span>
     </div>
   </div>
 </template>
@@ -62,50 +54,48 @@ const trendClass = computed(() => {
 
 <style scoped>
 .stat-card {
-  display:       flex;
-  align-items:   center;
-  gap:           8px;
-  padding:       10px;
-  background:    var(--surface);
-  border:        1px solid var(--border);
-  border-radius: var(--radius-lg);
-  transition:    transform 0.2s ease, box-shadow 0.2s ease;
-  min-width:     120px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  min-height: 44px;
 }
 
 .stat-card:hover {
-  transform:  translateY(-2px);
-  box-shadow: var(--shadow-md);
+  border-color: var(--primary);
+  box-shadow: var(--shadow-sm);
+}
+
+.stat-card__main {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.stat-card__header {
+  display: flex;
+  align-items: center;
+  gap: 5px;
 }
 
 .stat-card__icon-wrapper {
-  display:         flex;
-  align-items:     center;
-  justify-content: center;
-  width:           32px;
-  height:          32px;
-  border-radius:   var(--radius-md);
-  flex-shrink:     0;
-}
-
-.stat-card__content {
-  display:        flex;
-  flex-direction: column;
-  gap:            2px;
-}
-
-.stat-card__label-row {
   display: flex;
   align-items: center;
-  gap: 6px;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
 .stat-card__label {
-  font-size:   0.75rem;
-  font-weight: 600;
-  color:       var(--text-secondary);
+  font-size: 0.675rem;
+  font-weight: 700;
+  color: var(--text-secondary);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.04em;
   white-space: nowrap;
 }
 
@@ -120,61 +110,61 @@ const trendClass = computed(() => {
   100% { opacity: 1; }
 }
 
-.stat-card__value-row {
-  display:     flex;
+.stat-card__value-group {
+  display: flex;
   align-items: baseline;
-  gap:         6px;
+  gap: 4px;
 }
 
 .stat-card__value {
-  font-size:   1.25rem;
-  font-weight: 700;
-  color:       var(--text);
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--text);
+  line-height: 1;
 }
 
-.stat-card__trend {
-  display:     inline-flex;
-  align-items: center;
-  gap:         2px;
-  font-size:   0.75rem;
+.stat-card__value-sep {
+  color: var(--border);
+  font-size: 0.8rem;
+}
+
+.stat-card__value2 {
+  font-size: 0.95rem;
   font-weight: 700;
+  color: var(--text);
+  line-height: 1;
+}
+
+.stat-card__sub-group {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
 }
 
 .stat-card__sub-value {
-  font-size:   0.65rem;
-  font-weight: 700;
-  color:       var(--text-secondary);
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--text-secondary);
   line-height: 1.1;
+  white-space: nowrap;
 }
 
-.stat-card__stats-row {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-}
-
-.stat-card__stat-col {
-  display: flex;
-  flex-direction: column;
+.stat-card__trend {
+  display: inline-flex;
+  align-items: center;
   gap: 2px;
-}
-
-.stat-card__stat-col--secondary {
-  padding-left: 10px;
-  border-left: 1px solid var(--border);
-}
-
-.stat-card__content--dual {
-  min-width: 160px;
+  font-size: 0.675rem;
+  font-weight: 700;
 }
 
 .stat-card__trend--up { color: var(--state-safe); }
 .stat-card__trend--down { color: var(--state-danger); }
 
-/* Color variants */
-.stat-card--neutral .stat-card__icon-wrapper { background: var(--bg-secondary); color: var(--text-secondary); }
-.stat-card--primary .stat-card__icon-wrapper { background: var(--primary-light); color: var(--primary); }
-.stat-card--success .stat-card__icon-wrapper { background: rgba(52, 199, 89, 0.1); color: #34c759; }
-.stat-card--warning .stat-card__icon-wrapper { background: rgba(255, 149, 0, 0.1); color: #ff9500; }
-.stat-card--danger  .stat-card__icon-wrapper { background: rgba(255, 59, 48, 0.1); color: #ff3b30; }
+/* Color variants for header icons */
+.stat-card--neutral .stat-card__icon-wrapper { color: var(--text-secondary); }
+.stat-card--primary .stat-card__icon-wrapper { color: var(--primary); }
+.stat-card--success .stat-card__icon-wrapper { color: #34c759; }
+.stat-card--warning .stat-card__icon-wrapper { color: #ff9500; }
+.stat-card--danger  .stat-card__icon-wrapper { color: #ff3b30; }
 </style>

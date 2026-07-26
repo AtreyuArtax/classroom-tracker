@@ -175,8 +175,8 @@
     "semantic_hash": ""
   },
   "components/dossier/StudentAcademicsTab.vue": {
-    "mtime": 1784320545.367601,
-    "ast_hash": "aa8d85487e9237793fe9066fce165c4d",
+    "mtime": 1785031396.6095128,
+    "ast_hash": "f335efe319348ae56fd922f2046f682a",
     "semantic_hash": ""
   },
   "components/dossier/StudentGradeTrend.vue": {
@@ -185,8 +185,8 @@
     "semantic_hash": ""
   },
   "components/dossier/StudentStatCard.vue": {
-    "mtime": 1776472682.867633,
-    "ast_hash": "776bd6fa0a53c8399f2c312805135960",
+    "mtime": 1785030455.8848965,
+    "ast_hash": "7cd1d74b32f4b3b190060e60df15540f",
     "semantic_hash": ""
   },
   "components/dossier/StudentTimeline.vue": {
