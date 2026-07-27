@@ -43,6 +43,24 @@
     </div>
 
     <div class="profile-section">
+      <h3 class="profile-section__title">Student Support & Accommodations</h3>
+      <div class="profile-iep-card">
+        <label class="iep-toggle-label">
+          <input 
+            type="checkbox" 
+            class="iep-checkbox" 
+            :checked="student.hasIEP" 
+            @change="toggleIEP($event.target.checked)" 
+          />
+          <span class="iep-toggle-title">Student has IEP / Accommodations Plan</span>
+        </label>
+        <p class="iep-toggle-desc">
+          Enabling this adds a subtle discreet indicator on the teacher's seating plan for quick accommodation reference.
+        </p>
+      </div>
+    </div>
+
+    <div class="profile-section">
       <h3 class="profile-section__title">General Notes</h3>
       <textarea 
         class="student-360__notes-area"
@@ -91,7 +109,11 @@ const props = defineProps({
   formattedGrade: { type: String, default: 'N/A' }
 })
 
-const emit = defineEmits(['update-note'])
+const emit = defineEmits(['update-note', 'update-iep'])
+
+function toggleIEP(val) {
+  emit('update-iep', Boolean(val))
+}
 
 const { confirm, select } = useMessage()
 
@@ -379,5 +401,39 @@ async function copyForReportCard(includeName = false) {
 .text-muted {
   color: var(--text-secondary);
   font-size: 0.85rem;
+}
+
+.profile-iep-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+}
+
+.iep-toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.iep-checkbox {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+
+.iep-toggle-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.iep-toggle-desc {
+  margin: 6px 0 0 28px;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  line-height: 1.35;
 }
 </style>

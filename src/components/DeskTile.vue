@@ -46,6 +46,20 @@
       <Smartphone :size="10" />
     </span>
 
+    <!-- Discreet Accommodations Indicator — bottom left corner -->
+    <span
+      v-if="student.hasIEP"
+      class="desk-tile__iep-dot"
+      title="Accommodations Plan"
+    />
+
+    <!-- Discreet Academic At-Risk Indicator — bottom right corner -->
+    <span
+      v-if="showAtRiskDot"
+      class="desk-tile__at-risk-dot"
+      :title="atRiskDotTooltip"
+    />
+
     <!-- Student name -->
     <div class="desk-tile__name">
       <span class="desk-tile__first">{{ student.firstName }}</span>
@@ -97,6 +111,7 @@ import { resolveIcon }    from '../utils/icons.js'
 import { toMinutes }      from '../db/eventService.js'
 import { useRadial }    from '../composables/useRadial.js'
 import { useClassroom } from '../composables/useClassroom.js'
+import { classGrades }  from '../composables/useGradebook.js'
 
 // ─── props ────────────────────────────────────────────────────────────────────
 
@@ -114,6 +129,23 @@ const emit = defineEmits(['seat-drop']) // emitted to SeatingGrid for drag/drop 
 
 const { open: openRadial } = useRadial()
 const { behaviorCodes, assignSeat, studentWeeklyStats, thresholds } = useClassroom()
+
+const studentOverallGrade = computed(() => {
+  if (!props.studentId) return null
+  const sg = classGrades.value?.[props.studentId]
+  return sg?.overallGrade ?? null
+})
+
+const showAtRiskDot = computed(() => {
+  if (studentOverallGrade.value === null || studentOverallGrade.value === undefined || !thresholds.value) return false
+  const limit = Number(thresholds.value.atRiskThreshold ?? 50)
+  return Number(studentOverallGrade.value) < limit
+})
+
+const atRiskDotTooltip = computed(() => {
+  if (studentOverallGrade.value === null) return ''
+  return `Academic Review (Overall: ${Math.round(studentOverallGrade.value)}%)`
+})
 
 const showWashroomDot = computed(() => {
   const stats = studentWeeklyStats.value[props.studentId]
@@ -447,5 +479,31 @@ function onDrop(evt) {
   background: rgba(220, 252, 231, 0.95) !important;
   border-color: #22c55e !important;
   box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.25) !important;
+}
+
+/* ── Discreet IEP / Accommodations Indicator ────────────────────────────────── */
+.desk-tile__iep-dot {
+  position: absolute;
+  bottom: 6px;
+  left: 6px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #8b5cf6;
+  opacity: 0.85;
+  box-shadow: 0 0 5px rgba(139, 92, 246, 0.45);
+}
+
+/* ── Discreet Academic At-Risk Indicator ────────────────────────────────── */
+.desk-tile__at-risk-dot {
+  position: absolute;
+  bottom: 6px;
+  right: 6px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #f59e0b;
+  opacity: 0.85;
+  box-shadow: 0 0 5px rgba(245, 158, 11, 0.45);
 }
 </style>

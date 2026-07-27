@@ -108,8 +108,8 @@ const filteredArchivedClasses = computed(() => {
 
 // ─── weekly stats ─────────────────────────────────────────────────────────────
 
-/** @type {import('vue').Ref<{washroomTripsPerWeek: number, deviceIncidentsPerWeek: number}>} */
-const thresholds = ref({ washroomTripsPerWeek: 4, deviceIncidentsPerWeek: 3 })
+/** @type {import('vue').Ref<{washroomTripsPerWeek: number, deviceIncidentsPerWeek: number, atRiskThreshold: number}>} */
+const thresholds = ref({ washroomTripsPerWeek: 4, deviceIncidentsPerWeek: 3, atRiskThreshold: 50 })
 
 /** @type {import('vue').Ref<Object>} Shape: { [studentId]: { washroomTrips: N, deviceIncidents: N } } */
 const studentWeeklyStats = ref({})
@@ -1166,6 +1166,15 @@ async function removeEvent(eventId) {
     activeStudentEvents.value = activeStudentEvents.value.filter(e => String(e.eventId) !== String(eventId))
 }
 
+async function updateStudentIEP(studentId, hasIEP) {
+    const classId = activeClass.value?.classId
+    if (!classId) return
+    await classService.updateStudentIEP(classId, studentId, hasIEP)
+    if (students.value[studentId]) {
+        students.value[studentId].hasIEP = Boolean(hasIEP)
+    }
+}
+
 // ─── grid resize ──────────────────────────────────────────────────────────────
 
 /**
@@ -1494,6 +1503,7 @@ export function useClassroom() {
         removeEvent,
         checkResize,
         updateStudentNote,
+        updateStudentIEP,
         confirmResize,
         reloadBehaviorCodes,
         refreshAcademicTerms,

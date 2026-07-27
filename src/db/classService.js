@@ -335,6 +335,18 @@ export async function updateStudentNote(classId, studentId, note) {
 }
 
 /**
+ * Updates a student's IEP / accommodation flag.
+ *
+ * @param {string} classId
+ * @param {string} studentId
+ * @param {boolean} hasIEP
+ * @returns {Promise<void>}
+ */
+export async function updateStudentIEP(classId, studentId, hasIEP) {
+    await patchStudent(classId, studentId, { hasIEP: Boolean(hasIEP) })
+}
+
+/**
  * Soft-deletes a class by setting archived = true.
  * The record is kept in IDB; it is simply hidden from normal views.
  *

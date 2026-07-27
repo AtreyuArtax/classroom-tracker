@@ -172,6 +172,7 @@ import StudentProfileModal from '../components/StudentProfileModal.vue'
 import { Toilet, Users, GripVertical, Calendar, CalendarCheck, Scan } from 'lucide-vue-next'
 import { useClassroom }    from '../composables/useClassroom.js'
 import { useRadial }       from '../composables/useRadial.js'
+import { loadGradebook }   from '../composables/useGradebook.js'
 import GettingStartedGuide from '../components/setup/GettingStartedGuide.vue'
 
 const emit = defineEmits(['navigate'])
@@ -189,7 +190,17 @@ const {
   logAssessmentEvent,
   isTestDay,
   isScannerOpen,
+  getClass,
 } = useClassroom()
+
+watch(() => activeClass.value?.classId, async (newClassId) => {
+  if (newClassId) {
+    const cls = await getClass(newClassId)
+    if (cls) {
+      await loadGradebook(cls)
+    }
+  }
+}, { immediate: true })
 
 const {
   pendingNoteCode,

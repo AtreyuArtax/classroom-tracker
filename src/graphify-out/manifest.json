@@ -20,8 +20,8 @@
     "semantic_hash": ""
   },
   "components/DeskTile.vue": {
-    "mtime": 1785181024.3135135,
-    "ast_hash": "34afc31e5319bbf60b3e7228e8abd1b7",
+    "mtime": 1785185763.2939973,
+    "ast_hash": "fd000e8be4289137b4c064e5bf657a3d",
     "semantic_hash": ""
   },
   "components/EventNoteModal.vue": {
@@ -140,8 +140,8 @@
     "semantic_hash": ""
   },
   "components/dossier/Student360.vue": {
-    "mtime": 1785004568.6337376,
-    "ast_hash": "4c562773b6031f36971fe4999d6d6982",
+    "mtime": 1785182812.7545328,
+    "ast_hash": "35ba003fd37645cce840e889dae670cd",
     "semantic_hash": ""
   },
   "components/dossier/Student360AttemptsModal.vue": {
@@ -170,8 +170,8 @@
     "semantic_hash": ""
   },
   "components/dossier/Student360ProfileTab.vue": {
-    "mtime": 1784942860.4853585,
-    "ast_hash": "c74bac0ce42c8964ca9078ddb960cb46",
+    "mtime": 1785182785.9391623,
+    "ast_hash": "4153385400a3c29941f660b49e0b2ed1",
     "semantic_hash": ""
   },
   "components/dossier/StudentAcademicsTab.vue": {
@@ -255,8 +255,8 @@
     "semantic_hash": ""
   },
   "components/setup/BehaviorSettings.vue": {
-    "mtime": 1784243016.5691206,
-    "ast_hash": "828e0b8da8641487c0fa3b04653a3071",
+    "mtime": 1785185587.3892808,
+    "ast_hash": "bb2fa68fedd20e28248d97ae56679b4a",
     "semantic_hash": ""
   },
   "components/setup/CalendarSettings.vue": {
@@ -330,8 +330,8 @@
     "semantic_hash": ""
   },
   "composables/useClassroom.js": {
-    "mtime": 1784943299.9729292,
-    "ast_hash": "c62bc024c7b7775d1eb5d0a8025bc831",
+    "mtime": 1785185570.406028,
+    "ast_hash": "b13eb4a9105cb679cbf061103dfe9c27",
     "semantic_hash": ""
   },
   "composables/useClassroomState.js": {
@@ -410,8 +410,8 @@
     "semantic_hash": ""
   },
   "db/classService.js": {
-    "mtime": 1781537180.3112822,
-    "ast_hash": "a53621be83b68df99c8ab515e95e0265",
+    "mtime": 1785182744.294639,
+    "ast_hash": "24ff7b77933cd1c976059a1c12e7eebf",
     "semantic_hash": ""
   },
   "db/eventService.js": {
@@ -440,8 +440,8 @@
     "semantic_hash": ""
   },
   "db/settingsService.js": {
-    "mtime": 1781613497.069752,
-    "ast_hash": "3d7f1caca2200ec6ba51fc1cb8e7a9b4",
+    "mtime": 1785185565.6085691,
+    "ast_hash": "308b34c89cd8136664b543e80c1c7e6b",
     "semantic_hash": ""
   },
   "main.js": {
@@ -480,8 +480,8 @@
     "semantic_hash": ""
   },
   "views/Dashboard.vue": {
-    "mtime": 1784554618.7267246,
-    "ast_hash": "f8f11996de0a6a77cf49f5e1956008f7",
+    "mtime": 1785185757.9174576,
+    "ast_hash": "90626a2fd7eaecb8b88c55972cd71731",
     "semantic_hash": ""
   },
   "views/Grades.vue": {

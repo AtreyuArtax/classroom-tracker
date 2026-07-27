@@ -231,6 +231,7 @@
         :academic-categories="academicCategories"
         :formatted-grade="formattedGrade"
         @update-note="saveGeneralNote"
+        @update-iep="saveStudentIEP"
       />
 
       <!-- History Tab -->
@@ -377,6 +378,7 @@ const {
   removeEvent,
   getClass,
   updateStudentNote,
+  updateStudentIEP,
   teacherName
 } = useClassroom()
 
@@ -695,6 +697,12 @@ async function handleDeleteHistoryItem(eventId) {
 async function saveGeneralNote(note) {
   if (student.value.generalNote !== note) {
     await updateStudentNote(props.studentId, note)
+  }
+}
+
+async function saveStudentIEP(hasIEP) {
+  if (Boolean(student.value.hasIEP) !== hasIEP) {
+    await updateStudentIEP(props.studentId, hasIEP)
   }
 }
 

@@ -206,7 +206,7 @@ export async function deleteBehaviorCode(codeKey) {
  */
 export async function getThresholds() {
     const settings = await _readSettings()
-    return settings.thresholds || { washroomTripsPerWeek: 4, deviceIncidentsPerWeek: 3 }
+    return settings.thresholds || { washroomTripsPerWeek: 4, deviceIncidentsPerWeek: 3, atRiskThreshold: 50 }
 }
 
 /**
