@@ -1,16 +1,16 @@
 # Graph Report - src  (2026-07-26)
 
 ## Corpus Check
-- 101 files · ~133,384 words
+- 101 files · ~135,078 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 629 nodes · 1017 edges · 82 communities (77 shown, 5 thin omitted)
+- 654 nodes · 1062 edges · 81 communities (76 shown, 5 thin omitted)
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `a85456f1`
+- Built from commit: `e7cb4526`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -37,14 +37,15 @@
 - [[_COMMUNITY_Community 19|Community 19]]
 - [[_COMMUNITY_Community 20|Community 20]]
 - [[_COMMUNITY_Community 21|Community 21]]
+- [[_COMMUNITY_Community 22|Community 22]]
 - [[_COMMUNITY_Community 23|Community 23]]
 - [[_COMMUNITY_Community 24|Community 24]]
 - [[_COMMUNITY_Community 25|Community 25]]
 - [[_COMMUNITY_Community 27|Community 27]]
 - [[_COMMUNITY_Community 30|Community 30]]
+- [[_COMMUNITY_Community 38|Community 38]]
 - [[_COMMUNITY_Community 58|Community 58]]
 - [[_COMMUNITY_Community 78|Community 78]]
-- [[_COMMUNITY_Community 79|Community 79]]
 - [[_COMMUNITY_Community 80|Community 80]]
 - [[_COMMUNITY_Community 81|Community 81]]
 
@@ -61,6 +62,8 @@
 10. `calculateAssessmentAnalytics()` - 8 edges
 
 ## Surprising Connections (you probably didn't know these)
+- `onThresholdChange()` --calls--> `refreshClassAnalytics()`  [EXTRACTED]
+  components/GradesAnalyticsPanel.vue → composables/useGradebook.js
 - `downloadReportCardCsv()` --calls--> `loadGradebook()`  [EXTRACTED]
   components/reports/ReportsExportMenu.vue → composables/useGradebook.js
 - `editEvent()` --calls--> `getDB()`  [EXTRACTED]
@@ -69,25 +72,23 @@
   composables/useClassroom.js → db/index.js
 - `checkSyncStatus()` --calls--> `isSyncActive()`  [EXTRACTED]
   App.vue → db/eventService.js
-- `selectClass()` --calls--> `switchClass()`  [EXTRACTED]
-  components/ClassSwitcher.vue → composables/useClassroom.js
 
 ## Import Cycles
 - None detected.
 
-## Communities (82 total, 5 thin omitted)
+## Communities (81 total, 5 thin omitted)
 
 ### Community 0 - "Community 0"
 Cohesion: 0.08
-Nodes (32): addAssessment(), adjustStudentGrade(), analyticsMode, assessmentSortOrder, assessmentStats, classAnalytics, currentAssessmentId, dbSaveQueue (+24 more)
+Nodes (33): addAssessment(), assessmentSortOrder, assessmentStats, assessmentTypes, classAnalytics, closeAddAssessment(), currentAssessmentId, dbSaveQueue (+25 more)
 
 ### Community 1 - "Community 1"
 Cohesion: 0.05
-Nodes (29): checkSyncStatus(), { computeSuggestedClass }, currentComponent, currentView, Grades, { init, isScannerOpen }, isSyncing, isSyncLinked (+21 more)
+Nodes (28): checkSyncStatus(), { computeSuggestedClass }, currentComponent, currentView, Grades, { init, isScannerOpen }, isSyncing, isSyncLinked (+20 more)
 
 ### Community 2 - "Community 2"
 Cohesion: 0.13
-Nodes (34): addAttempt(), auditGradebookData(), buildDistributionBuckets(), buildLevelDistributionBuckets(), calculateAssessmentAnalytics(), _calculateCategoryGrade(), calculateClassAnalytics(), calculateClassGrades() (+26 more)
+Nodes (34): addAttempt(), buildDistributionBuckets(), buildLevelDistributionBuckets(), calculateAssessmentAnalytics(), _calculateCategoryGrade(), calculateClassAnalytics(), calculateClassGrades(), calculateMedian() (+26 more)
 
 ### Community 3 - "Community 3"
 Cohesion: 0.06
@@ -121,8 +122,8 @@ Nodes (16): {
 }, { alert, confirm }, bulkAvailableSemesters, bulkImportGroups, bulkImportSemesters, crossClassConflicts, currentSchoolYear, importResult (+8 more)
 
 ### Community 8 - "Community 8"
-Cohesion: 0.13
-Nodes (18): _applyDateRange(), deleteEvent(), detachEventsForDeletedExpectation(), detachEventsForDeletedUnit(), exportAllData(), getAllEvents(), getDateRangeForClassPeriod(), getDateRangeForPeriod() (+10 more)
+Cohesion: 0.16
+Nodes (15): _applyDateRange(), deleteEvent(), detachEventsForDeletedExpectation(), detachEventsForDeletedUnit(), exportAllData(), getAllEvents(), getEventsByPeriod(), getEventsByStudent() (+7 more)
 
 ### Community 9 - "Community 9"
 Cohesion: 0.10
@@ -153,8 +154,8 @@ Cohesion: 0.12
 Nodes (13): allDossierAssessments, attendanceStats, behaviorCodesMap, evidenceMix, individualTasks, missingAssessments, outOfClassStats, overallMostConsistent (+5 more)
 
 ### Community 16 - "Community 16"
-Cohesion: 0.29
-Nodes (14): activeClassRecord, assessments, classGrades, clearGrade(), enqueueDBSave(), enterGrade(), markExcluded(), markMissing() (+6 more)
+Cohesion: 0.22
+Nodes (17): activeClassRecord, adjustStudentGrade(), assessments, classGrades, clearGrade(), enqueueDBSave(), enterGrade(), gradeMap (+9 more)
 
 ### Community 17 - "Community 17"
 Cohesion: 0.19
@@ -182,17 +183,21 @@ Nodes (8): acceptSuggestion(), {
   filteredClassList
 }, classesByTerm, emit, isOpen, selectClass(), suggestionText, switchClass()
 
+### Community 22 - "Community 22"
+Cohesion: 0.06
+Nodes (28): analyticsSortBy, analyticsSortOrder, bucketChartData, bucketChartOptions, categoryWeightTotal, classEvidenceBlend, classMostConsistent, emit (+20 more)
+
 ### Community 23 - "Community 23"
 Cohesion: 0.25
 Nodes (8): bulkImportClasses(), computeSuggestedClass(), hasBeenDismissedToday(), init(), loadDismissedSuggestions(), _reloadClasses(), _sortAndSplitClasses(), confirmBulkImport()
 
-### Community 78 - "Community 78"
-Cohesion: 0.18
-Nodes (9): filteredMilestones, globalMilestones, gradeMap, { alert, confirm, select }, exportContainer, props, showExportMenu, formatLocalDisplay() (+1 more)
+### Community 38 - "Community 38"
+Cohesion: 0.50
+Nodes (4): onThresholdChange(), refreshClassAnalytics(), setExclusionMode(), toggleStudentFromAnalytics()
 
-### Community 79 - "Community 79"
-Cohesion: 0.18
-Nodes (10): assessmentTypes, closeAddAssessment(), isEditingAssessment, newAssessment, onTargetChange(), showAddAssessmentModal, sortedUnits, selectedExpectationObj (+2 more)
+### Community 78 - "Community 78"
+Cohesion: 0.14
+Nodes (12): filteredMilestones, globalMilestones, getDateRangeForClassPeriod(), getDateRangeForPeriod(), getEventsByClass(), { alert, confirm, select }, downloadReportCardCsv(), exportContainer (+4 more)
 
 ### Community 80 - "Community 80"
 Cohesion: 0.50
@@ -203,24 +208,24 @@ Cohesion: 0.70
 Nodes (3): clearAllData(), getCurrentSchoolYear(), getCurrentSemester()
 
 ## Knowledge Gaps
-- **174 isolated node(s):** `Reports`, `Grades`, `ScanStation`, `isUnsynced`, `queryParams` (+169 more)
+- **188 isolated node(s):** `Reports`, `Grades`, `ScanStation`, `isUnsynced`, `queryParams` (+183 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **5 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `getDB()` connect `Community 11` to `Community 1`, `Community 2`, `Community 3`, `Community 8`, `Community 10`, `Community 80`, `Community 81`, `Community 20`?**
-  _High betweenness centrality (0.064) - this node is a cross-community bridge._
-- **Why does `useMessage()` connect `Community 13` to `Community 0`, `Community 1`, `Community 3`, `Community 5`, `Community 6`, `Community 7`, `Community 78`, `Community 16`, `Community 80`, `Community 17`, `Community 19`, `Community 20`?**
-  _High betweenness centrality (0.045) - this node is a cross-community bridge._
-- **Why does `useClassroom()` connect `Community 80` to `Community 0`, `Community 1`, `Community 3`, `Community 5`, `Community 6`, `Community 7`, `Community 79`, `Community 21`?**
-  _High betweenness centrality (0.025) - this node is a cross-community bridge._
+- **Why does `getDB()` connect `Community 11` to `Community 1`, `Community 2`, `Community 3`, `Community 8`, `Community 10`, `Community 78`, `Community 80`, `Community 81`, `Community 20`?**
+  _High betweenness centrality (0.060) - this node is a cross-community bridge._
+- **Why does `useMessage()` connect `Community 13` to `Community 0`, `Community 1`, `Community 3`, `Community 5`, `Community 38`, `Community 6`, `Community 7`, `Community 78`, `Community 16`, `Community 80`, `Community 17`, `Community 19`, `Community 20`?**
+  _High betweenness centrality (0.048) - this node is a cross-community bridge._
+- **Why does `useClassroom()` connect `Community 80` to `Community 0`, `Community 1`, `Community 3`, `Community 5`, `Community 6`, `Community 7`, `Community 21`?**
+  _High betweenness centrality (0.028) - this node is a cross-community bridge._
 - **What connects `Reports`, `Grades`, `ScanStation` to the rest of the system?**
-  _174 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _188 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Community 0` be split into smaller, more focused modules?**
-  _Cohesion score 0.08067226890756303 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.07957957957957958 - nodes in this community are weakly interconnected._
 - **Should `Community 1` be split into smaller, more focused modules?**
-  _Cohesion score 0.05263157894736842 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.05405405405405406 - nodes in this community are weakly interconnected._
 - **Should `Community 2` be split into smaller, more focused modules?**
   _Cohesion score 0.12698412698412698 - nodes in this community are weakly interconnected._

@@ -44,7 +44,8 @@
           :selected-assessment-id="selectedAssessmentId"
           :excluded-students-count="filteredStudents.length"
           :active-class-record="activeClassRecord"
-          @close="selectedAssessmentId = null"
+          :return-tab="returnTabMode"
+          @close="closeAssessmentView"
           @start-edit="startEditAssessment"
           @show-missing-modal="showMissingModal = true"
           @confirm-delete="confirmDeleteAssessment"
@@ -143,7 +144,7 @@
           <!-- Analytics Panel -->
           <GradesAnalyticsPanel
             v-if="analyticsMode"
-            @select-assessment="selectedAssessmentId = $event"
+            @select-assessment="openAssessmentView($event, 'analytics')"
           />
 
           <!-- The Scrollable Grid -->
@@ -152,7 +153,7 @@
             :is-privacy-mode="isPrivacyMode"
             :student-absence-totals="studentAbsenceTotals"
             :assessment-absence-map="assessmentAbsenceMap"
-            @select-assessment="selectedAssessmentId = $event"
+            @select-assessment="openAssessmentView($event, 'grid')"
             @open-dossier="showStudentDossier"
             @edit-assessment="startEditAssessment"
           />
@@ -162,7 +163,7 @@
           <Student360 
             :student-id="selectedStudentId" 
             :class-id="activeClass?.classId"
-            @close="selectedStudentId = null"
+            @close="closeStudentDossier"
           />
         </div>
 
@@ -282,10 +283,95 @@ const studentActionMenu = ref(null)
 const editingCell = ref(null)
 const attemptsPopover = ref(null)
 
-function showStudentDossier(studentId) {
-  selectedStudentId.value = studentId
+const returnTabMode = ref('grid') // 'grid' | 'analytics'
+const savedAnalyticsScrollY = ref(0)
+const savedGridScrollY = ref(0)
+const savedGridScrollX = ref(0)
+
+function openAssessmentView(assessmentId, source = 'grid') {
+  returnTabMode.value = source
+
+  if (source === 'analytics') {
+    const el = document.querySelector('.grades__analytics-scrollable')
+    if (el) savedAnalyticsScrollY.value = el.scrollTop
+  } else {
+    const el = document.querySelector('.grades__grid-wrapper')
+    if (el) {
+      savedGridScrollY.value = el.scrollTop
+      savedGridScrollX.value = el.scrollLeft
+    }
+  }
+
+  selectedAssessmentId.value = assessmentId
+}
+
+function closeAssessmentView() {
   selectedAssessmentId.value = null
-  analyticsMode.value = false
+  analyticsMode.value = (returnTabMode.value === 'analytics')
+
+  nextTick(() => {
+    requestAnimationFrame(() => {
+      if (returnTabMode.value === 'analytics') {
+        const el = document.querySelector('.grades__analytics-scrollable')
+        if (el) el.scrollTop = savedAnalyticsScrollY.value
+      } else {
+        const el = document.querySelector('.grades__grid-wrapper')
+        if (el) {
+          el.scrollTop = savedGridScrollY.value
+          el.scrollLeft = savedGridScrollX.value
+        }
+      }
+    })
+  })
+}
+
+const previousAssessmentId = ref(null)
+
+function showStudentDossier(studentId) {
+  if (selectedAssessmentId.value) {
+    previousAssessmentId.value = selectedAssessmentId.value
+    selectedAssessmentId.value = null
+  } else if (!previousAssessmentId.value) {
+    returnTabMode.value = analyticsMode.value ? 'analytics' : 'grid'
+    if (analyticsMode.value) {
+      const el = document.querySelector('.grades__analytics-scrollable')
+      if (el) savedAnalyticsScrollY.value = el.scrollTop
+    } else {
+      const el = document.querySelector('.grades__grid-wrapper')
+      if (el) {
+        savedGridScrollY.value = el.scrollTop
+        savedGridScrollX.value = el.scrollLeft
+      }
+    }
+  }
+
+  selectedStudentId.value = studentId
+}
+
+function closeStudentDossier() {
+  selectedStudentId.value = null
+
+  if (previousAssessmentId.value) {
+    selectedAssessmentId.value = previousAssessmentId.value
+    previousAssessmentId.value = null
+  } else {
+    analyticsMode.value = (returnTabMode.value === 'analytics')
+
+    nextTick(() => {
+      requestAnimationFrame(() => {
+        if (returnTabMode.value === 'analytics') {
+          const el = document.querySelector('.grades__analytics-scrollable')
+          if (el) el.scrollTop = savedAnalyticsScrollY.value
+        } else {
+          const el = document.querySelector('.grades__grid-wrapper')
+          if (el) {
+            el.scrollTop = savedGridScrollY.value
+            el.scrollLeft = savedGridScrollX.value
+          }
+        }
+      })
+    })
+  }
 }
 
 const isSidebarCollapsed = ref(false)

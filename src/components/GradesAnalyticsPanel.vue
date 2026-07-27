@@ -1,11 +1,13 @@
 <template>
   <div class="grades__analytics-panel">
-    <!-- Outlier Toggle & Notice (Step 7) -->
+    <!-- Analytics Header Controls -->
     <div class="grades__analytics-header">
-      <div v-if="exclusionMode !== 'none'" class="grades__outlier-notice" :title="excludedNames">
-        <AlertCircle :size="16" />
-        <span>Exclusion active: {{ classAnalytics?.outlierCount || 0 }} {{ classAnalytics?.outlierCount === 1 ? 'student' : 'students' }} hidden.</span>
+      <div class="header-title-group">
+        <h2 class="analytics-main-title">Class Analytics & Performance</h2>
+        <span class="analytics-subtitle-text">Statistical insights, evidence triangulation & outlier filtering</span>
       </div>
+
+      <!-- Exclusion Filter Control Bar -->
       <div class="grades__outlier-toggle">
         <span class="grades__toggle-label">Exclusion Filter:</span>
         <div class="grades__toggle-group">
@@ -13,7 +15,9 @@
             class="grades__toggle-btn" 
             :class="{ 'grades__toggle-btn--active': exclusionMode === 'none' }"
             @click="setExclusionMode('none')"
-          >Include All</button>
+          >
+            Include All ({{ sortedRoster.length }})
+          </button>
           <button 
             class="grades__toggle-btn" 
             :class="{ 'grades__toggle-btn--active': exclusionMode === 'fixed' }"
@@ -34,9 +38,17 @@
             class="grades__toggle-btn" 
             :class="{ 'grades__toggle-btn--active': exclusionMode === 'auto' }"
             @click="setExclusionMode('auto')"
-          >Auto Outliers</button>
+          >
+            Auto Outliers
+          </button>
         </div>
       </div>
+    </div>
+
+    <!-- Active Exclusion Notice Banner -->
+    <div v-if="exclusionMode !== 'none'" class="grades__outlier-notice" :title="excludedNames">
+      <AlertCircle :size="16" />
+      <span><strong>Exclusion Active:</strong> {{ classAnalytics?.outlierCount || 0 }} {{ classAnalytics?.outlierCount === 1 ? 'student is' : 'students are' }} excluded from class calculations. ({{ excludedNames }})</span>
     </div>
 
     <!-- Category Weight Audit Warning -->
@@ -47,13 +59,13 @@
       <span>Audit Note: Category weights sum to {{ categoryWeightTotal }}%. Averages will be scaled, but 100% is recommended for audit clarity.</span>
     </div>
 
-    <!-- Overlay sits on top without removing content -->
+    <!-- Calculating Overlay -->
     <div v-if="isCalculating" class="grades__calculating-overlay">
       <div class="grades__spinner"></div>
       <p>Calculating analytics...</p>
     </div>
 
-    <!-- Empty state only if no data and NOT calculating -->
+    <!-- Empty state -->
     <div v-if="!classAnalytics && !isCalculating" class="grades__empty-analytics">
       <div class="grades__empty-content">
         <BarChart2 :size="64" class="grades__empty-icon" />
@@ -65,45 +77,74 @@
       </div>
     </div>
 
-    <!-- Main content - always stays in DOM if it exists to preserve scroll -->
+    <!-- Main Content -->
     <div v-if="classAnalytics" class="grades__analytics-scrollable">
       <div class="grades__analytics-sections">
-        <!-- Class Overview Cards (Step 3) -->
+        
+        <!-- Top 4 KPI Overview Cards -->
         <div class="grades__analytics-row">
-          <div class="grades__analytics-card" :style="{ borderLeft: `4px solid ${getHeatColor(overallClassAvg)}` }">
-            <div class="grades__card-label">CLASS AVERAGE</div>
-            <div class="grades__card-value-group">
-              <div class="grades__card-value">{{ formatGrade(overallClassAvg) }}</div>
-              <div class="grades__card-hint">{{ formatGrade(classAnalytics.mean) }} products only</div>
+          <div class="kpi-card">
+            <div class="kpi-card__header">
+              <span class="kpi-card__label">Class Average</span>
+              <div class="kpi-card__icon kpi-card__icon--blue"><BarChart3 :size="16" /></div>
+            </div>
+            <div class="kpi-card__body">
+              <span class="kpi-card__value" :style="{ color: getHeatTextColor(overallClassAvg) }">
+                {{ formatGrade(overallClassAvg) }}
+              </span>
+              <span class="kpi-card__subtext">{{ formatGrade(classAnalytics.mean) }} products only</span>
             </div>
           </div>
-          <div class="grades__analytics-card" :style="{ borderLeft: `4px solid ${getHeatColor(overallClassMedian)}` }">
-            <div class="grades__card-label">WEIGHTED MEDIAN</div>
-            <div class="grades__card-value-group">
-              <div class="grades__card-value">{{ formatGrade(overallClassMedian) }}</div>
-              <div class="grades__card-hint">{{ formatGrade(classAnalytics.median) }} products only</div>
+
+          <div class="kpi-card">
+            <div class="kpi-card__header">
+              <span class="kpi-card__label">Weighted Median</span>
+              <div class="kpi-card__icon kpi-card__icon--green"><CheckCircle2 :size="16" /></div>
+            </div>
+            <div class="kpi-card__body">
+              <span class="kpi-card__value" :style="{ color: getHeatTextColor(overallClassMedian) }">
+                {{ formatGrade(overallClassMedian) }}
+              </span>
+              <span class="kpi-card__subtext">{{ formatGrade(classAnalytics.median) }} products only</span>
             </div>
           </div>
-          <div class="grades__analytics-card" :style="{ borderLeft: `4px solid ${getHeatColor(classMostConsistent?.range?.[0])}` }">
-            <div class="grades__card-label">MOST CONSISTENT</div>
-            <div v-if="classMostConsistent" class="grades__card-value-group">
-              <div class="grades__card-value">{{ classMostConsistent.label }}</div>
-              <div class="grades__card-hint">{{ classMostConsistent.count }} of {{ classMostConsistent.total }} students</div>
+
+          <div class="kpi-card">
+            <div class="kpi-card__header">
+              <span class="kpi-card__label">Most Consistent Tier</span>
+              <div class="kpi-card__icon kpi-card__icon--purple"><Target :size="16" /></div>
             </div>
-            <div class="grades__card-value" v-else>—</div>
+            <div class="kpi-card__body">
+              <span v-if="classMostConsistent" class="kpi-card__value">{{ classMostConsistent.label }}</span>
+              <span v-else class="kpi-card__value">—</span>
+              <span v-if="classMostConsistent" class="kpi-card__subtext">
+                {{ classMostConsistent.count }} of {{ classMostConsistent.total }} students
+              </span>
+            </div>
           </div>
-          <div class="grades__analytics-card" :style="{ borderLeft: `4px solid ${getSDColor(overallClassSD)}` }">
-            <div class="grades__card-label">STD DEVIATION</div>
-            <div class="grades__card-value-group">
-              <div class="grades__card-value">{{ overallClassSD !== null ? overallClassSD.toFixed(1) + '%' : '—' }}</div>
-              <div class="grades__card-hint">{{ classAnalytics.sd !== null ? classAnalytics.sd.toFixed(1) + '%' : '—' }} products only</div>
+
+          <div class="kpi-card">
+            <div class="kpi-card__header">
+              <span class="kpi-card__label">Std Deviation</span>
+              <div class="kpi-card__icon kpi-card__icon--amber"><TrendingUp :size="16" /></div>
+            </div>
+            <div class="kpi-card__body">
+              <span class="kpi-card__value">
+                {{ overallClassSD !== null ? overallClassSD.toFixed(1) + '%' : '—' }}
+              </span>
+              <span class="kpi-card__subtext">
+                {{ classAnalytics.sd !== null ? classAnalytics.sd.toFixed(1) + '%' : '—' }} products only
+              </span>
             </div>
           </div>
         </div>
 
-        <!-- Evidence Blend / Triangulation (Step 4 Upgrade) -->
+        <!-- Triple Evidence Blend / Triangulation -->
         <div class="grades__analytics-section">
-          <h3 class="grades__analytics-subtitle">TRIPLE EVIDENCE BLEND</h3>
+          <div class="section-title-row">
+            <h3 class="grades__analytics-subtitle">TRIPLE EVIDENCE BLEND</h3>
+            <span class="coverage-hint-text">Coverage indicates % of roster with at least 1 entry</span>
+          </div>
           
           <div v-if="classEvidenceBlend" class="grades__blend-container">
             <div class="grades__blend-bar">
@@ -125,25 +166,23 @@
             </div>
             
             <div class="grades__blend-legend">
-              <div class="grades__legend-item">
-                <span class="grades__legend-dot grades__legend-dot--product"></span>
-                <span class="grades__legend-text">Product: {{ classEvidenceBlend.product.count }} assessment{{ classEvidenceBlend.product.count !== 1 ? 's' : '' }} ({{ classEvidenceBlend.product.percentage }}%)</span>
+              <div class="legend-chip legend-chip--product">
+                <FileText :size="14" />
+                <span>Product: <strong>{{ classEvidenceBlend.product.count }}</strong> ({{ classEvidenceBlend.product.percentage }}%)</span>
               </div>
-              <div class="grades__legend-item">
-                <span class="grades__legend-dot grades__legend-dot--observation"></span>
-                <span class="grades__legend-text">Observation: {{ classEvidenceBlend.observation.count }} assessment{{ classEvidenceBlend.observation.count !== 1 ? 's' : '' }} ({{ classEvidenceBlend.observation.percentage }}%) • {{ classAnalytics.observationCoverage.percentage }}% student coverage</span>
+              <div class="legend-chip legend-chip--observation">
+                <Eye :size="14" />
+                <span>Observation: <strong>{{ classEvidenceBlend.observation.count }}</strong> ({{ classEvidenceBlend.observation.percentage }}%) · <strong>{{ classAnalytics.observationCoverage.percentage }}%</strong> coverage</span>
               </div>
-              <div class="grades__legend-item">
-                <span class="grades__legend-dot grades__legend-dot--conversation"></span>
-                <span class="grades__legend-text">Conversation: {{ classEvidenceBlend.conversation.count }} assessment{{ classEvidenceBlend.conversation.count !== 1 ? 's' : '' }} ({{ classEvidenceBlend.conversation.percentage }}%) • {{ classAnalytics.conversationCoverage.percentage }}% student coverage</span>
+              <div class="legend-chip legend-chip--conversation">
+                <MessageSquare :size="14" />
+                <span>Conversation: <strong>{{ classEvidenceBlend.conversation.count }}</strong> ({{ classEvidenceBlend.conversation.percentage }}%) · <strong>{{ classAnalytics.conversationCoverage.percentage }}%</strong> coverage</span>
               </div>
             </div>
           </div>
-          
-          <p class="grades__analytics-hint">Coverage shows the % of students with at least one entry for that evidence type.</p>
         </div>
 
-        <!-- Grade Distribution Histogram (Step 5) -->
+        <!-- Grade Distribution Histogram -->
         <div class="grades__analytics-section">
           <div class="grades__section-header-row">
             <h3 class="grades__analytics-subtitle">PRODUCT GRADE DISTRIBUTION</h3>
@@ -163,14 +202,9 @@
           <div class="grades__chart-container" style="height: 200px;">
             <Bar :data="bucketChartData" :options="bucketChartOptions" />
           </div>
-          <p class="grades__analytics-hint">
-            {{ distributionMode === 'buckets' 
-                ? 'Number of students within each 10% grade bracket (Product assessments only).' 
-                : 'Student count by achievement level (Product assessments only).' }}
-          </p>
         </div>
 
-        <!-- Per-Assessment Breakdowns (Grouped) -->
+        <!-- Per-Assessment Breakdowns -->
         <div class="grades__analytics-section">
           <div class="grades__analytics-groups">
             
@@ -182,41 +216,51 @@
                   <thead>
                     <tr>
                       <th @click="toggleSort('name')">
-                        Assessment {{ analyticsSortBy === 'name' ? (analyticsSortOrder === 'asc' ? '↑' : '↓') : '' }}
+                        ASSESSMENT {{ analyticsSortBy === 'name' ? (analyticsSortOrder === 'asc' ? '↑' : '↓') : '' }}
                       </th>
-                      <th>Category</th>
+                      <th>CATEGORY</th>
                       <th @click="toggleSort('mean')">
-                        Avg {{ analyticsSortBy === 'mean' ? (analyticsSortOrder === 'asc' ? '↑' : '↓') : '' }}
+                        AVERAGE {{ analyticsSortBy === 'mean' ? (analyticsSortOrder === 'asc' ? '↑' : '↓') : '' }}
                       </th>
                       <th @click="toggleSort('median')">
-                        Med {{ analyticsSortBy === 'median' ? (analyticsSortOrder === 'asc' ? '↑' : '↓') : '' }}
+                        MEDIAN {{ analyticsSortBy === 'median' ? (analyticsSortOrder === 'asc' ? '↑' : '↓') : '' }}
                       </th>
                       <th @click="toggleSort('sd')">
-                        SD {{ analyticsSortBy === 'sd' ? (analyticsSortOrder === 'asc' ? '↑' : '↓') : '' }}
+                        STD DEV {{ analyticsSortBy === 'sd' ? (analyticsSortOrder === 'asc' ? '↑' : '↓') : '' }}
                       </th>
-                      <th>High</th>
-                      <th>Low</th>
-                      <th>Flag</th>
-                      <th>Distribution</th>
+                      <th>RANGE (LOW–HIGH)</th>
+                      <th>CONSISTENCY</th>
+                      <th>DISTRIBUTION</th>
                     </tr>
                   </thead>
                   <tbody>
-                    <tr v-for="a in sortedProductAssessments" :key="a.assessmentId">
-                      <td class="grades__td-assessment-name" :title="a.description || a.name" @click="$emit('select-assessment', a.assessmentId)">
+                    <tr 
+                      v-for="a in sortedProductAssessments" 
+                      :key="a.assessmentId"
+                      class="analytics-table-row"
+                      @click="$emit('select-assessment', a.assessmentId)"
+                      title="Click to view assessment details"
+                    >
+                      <td class="grades__td-assessment-name">
                         {{ a.name }}
                       </td>
-                      <td>{{ getCategoryName(a.categoryId) }}</td>
+                      <td><span class="category-chip">{{ getCategoryName(a.categoryId) }}</span></td>
                       <td :style="{ color: getHeatTextColor(a.stats.mean), fontWeight: 'bold' }">{{ formatGrade(a.stats.mean) }}</td>
                       <td>{{ formatGrade(a.stats.median) }}</td>
                       <td>{{ a.stats.sd !== null ? a.stats.sd.toFixed(1) + '%' : '—' }}</td>
-                      <td>{{ formatGrade(a.stats.highest) }}</td>
-                      <td>{{ formatGrade(a.stats.lowest) }}</td>
                       <td>
-                        <div class="grades__flag-group">
-                          <span v-if="a.stats.calibrationFlag === 'too_hard'" class="grades__flag grades__flag--red" title="Too Hard / Calibration needed">🔴</span>
-                          <span v-else-if="a.stats.calibrationFlag === 'too_easy'" class="grades__flag grades__flag--amber" title="Too Easy / Calibration needed">🟡</span>
-                          <span v-else class="grades__flag grades__flag--green" title="Well calibrated">✓</span>
-                        </div>
+                        <span class="range-text-pill" v-if="a.stats.lowest != null && a.stats.highest != null">
+                          {{ formatGrade(a.stats.lowest) }} – {{ formatGrade(a.stats.highest) }}
+                        </span>
+                        <span v-else class="text-muted">—</span>
+                      </td>
+                      <td>
+                        <span 
+                          class="consistency-badge"
+                          :class="'consistency-badge--' + getConsistencyInfo(a.stats.sd).class"
+                        >
+                          {{ getConsistencyInfo(a.stats.sd).icon }} {{ getConsistencyInfo(a.stats.sd).label }}
+                        </span>
                       </td>
                       <td>
                         <div class="grades__sparkline" v-if="a.stats.distributionBuckets">
@@ -246,16 +290,21 @@
                 <table class="grades__analytics-table">
                   <thead>
                     <tr>
-                      <th @click="toggleSort('name')">Observation Assessment</th>
-                      <th>Avg</th>
-                      <th>Med</th>
-                      <th>SD</th>
-                      <th>Distribution</th>
+                      <th @click="toggleSort('name')">OBSERVATION ASSESSMENT</th>
+                      <th>AVERAGE</th>
+                      <th>MEDIAN</th>
+                      <th>STD DEV</th>
+                      <th>DISTRIBUTION</th>
                     </tr>
                   </thead>
                   <tbody>
-                    <tr v-for="a in sortedObservationAssessments" :key="a.assessmentId">
-                      <td class="grades__td-assessment-name" @click="$emit('select-assessment', a.assessmentId)">{{ a.name }}</td>
+                    <tr 
+                      v-for="a in sortedObservationAssessments" 
+                      :key="a.assessmentId"
+                      class="analytics-table-row"
+                      @click="$emit('select-assessment', a.assessmentId)"
+                    >
+                      <td class="grades__td-assessment-name">{{ a.name }}</td>
                       <td :style="{ color: getHeatTextColor(a.stats.mean), fontWeight: 'bold' }">{{ formatGrade(a.stats.mean) }}</td>
                       <td>{{ formatGrade(a.stats.median) }}</td>
                       <td>{{ a.stats.sd !== null ? a.stats.sd.toFixed(1) + '%' : '—' }}</td>
@@ -286,16 +335,21 @@
                 <table class="grades__analytics-table">
                   <thead>
                     <tr>
-                      <th @click="toggleSort('name')">Conversation Assessment</th>
-                      <th>Avg</th>
-                      <th>Med</th>
-                      <th>Coverage</th>
-                      <th>Distribution</th>
+                      <th @click="toggleSort('name')">CONVERSATION ASSESSMENT</th>
+                      <th>AVERAGE</th>
+                      <th>MEDIAN</th>
+                      <th>COVERAGE</th>
+                      <th>DISTRIBUTION</th>
                     </tr>
                   </thead>
                   <tbody>
-                    <tr v-for="a in sortedConversationAssessments" :key="a.assessmentId">
-                      <td class="grades__td-assessment-name" @click="$emit('select-assessment', a.assessmentId)">{{ a.name }}</td>
+                    <tr 
+                      v-for="a in sortedConversationAssessments" 
+                      :key="a.assessmentId"
+                      class="analytics-table-row"
+                      @click="$emit('select-assessment', a.assessmentId)"
+                    >
+                      <td class="grades__td-assessment-name">{{ a.name }}</td>
                       <td :style="{ color: getHeatTextColor(a.stats.mean), fontWeight: 'bold' }">{{ formatGrade(a.stats.mean) }}</td>
                       <td>{{ formatGrade(a.stats.median) }}</td>
                       <td>{{ a.stats.totalCount }} Students</td>
@@ -322,15 +376,18 @@
           </div>
         </div>
 
-        <!-- Student Exclusion (Step 8) -->
+        <!-- Student Exclusion Drawer Card -->
         <div class="grades__analytics-section">
           <header class="grades__analytics-collapsible-header" @click="isExclusionsOpen = !isExclusionsOpen">
-            <h3 class="grades__analytics-subtitle">STUDENT EXCLUSIONS</h3>
+            <div class="collapsible-title-group">
+              <Users :size="18" />
+              <h3 class="grades__analytics-subtitle">INDIVIDUAL STUDENT EXCLUSIONS</h3>
+            </div>
             <ChevronRight :size="20" :style="{ transform: isExclusionsOpen ? 'rotate(90deg)' : 'none', transition: 'transform 0.2s' }" />
           </header>
           
           <div v-if="isExclusionsOpen" class="grades__exclusion-list">
-            <p class="grades__analytics-hint">Students excluded here are permanently removed from all analytics calculations for this class. Their grades are unaffected.</p>
+            <p class="grades__analytics-hint">Students checked below are excluded from all class analytics calculations. Their actual grades remain intact.</p>
             <div class="grades__exclusion-grid">
               <div v-for="s in sortedRoster" :key="s.studentId" class="grades__exclusion-item">
                 <label class="grades__checkbox-label">
@@ -339,12 +396,13 @@
                     :checked="s.excludeFromAnalytics" 
                     @change="toggleStudentFromAnalytics(s.studentId)"
                   />
-                  {{ s.firstName }} {{ s.lastName }}
+                  <span>{{ s.lastName }}, {{ s.firstName }}</span>
                 </label>
               </div>
             </div>
           </div>
         </div>
+
       </div>
     </div>
   </div>
@@ -383,7 +441,21 @@ import {
   LinearScale
 } from 'chart.js'
 import { Bar } from 'vue-chartjs'
-import { AlertCircle, AlertTriangle, BarChart2, ArrowLeft, ChevronRight } from 'lucide-vue-next'
+import { 
+  AlertCircle, 
+  AlertTriangle, 
+  BarChart2, 
+  BarChart3, 
+  CheckCircle2, 
+  Target, 
+  TrendingUp, 
+  ArrowLeft, 
+  ChevronRight, 
+  FileText, 
+  Eye, 
+  MessageSquare, 
+  Users 
+} from 'lucide-vue-next'
 
 ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale)
 
@@ -391,6 +463,13 @@ const emit = defineEmits(['select-assessment'])
 
 const isExclusionsOpen = ref(false)
 const isCalculating = ref(false)
+
+function getConsistencyInfo(sd) {
+  if (sd === null || sd === undefined) return { label: '—', class: 'muted', icon: '' }
+  if (sd < 10) return { label: 'Consistent', class: 'consistent', icon: '🟢' }
+  if (sd <= 18) return { label: 'Normal', class: 'normal', icon: '🔵' }
+  return { label: 'High Spread', class: 'spread', icon: '⚠️' }
+}
 
 // Outliers lists and display helpers
 const excludedNames = computed(() => {
@@ -1083,6 +1162,182 @@ function processTypedAssessments(type) {
   flex: 1;
   min-width: 4px;
   border-radius: 1px;
+}
+
+.header-title-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.analytics-main-title {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.analytics-subtitle-text {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+/* Glassmorphic KPI Cards */
+.kpi-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.kpi-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+}
+
+.kpi-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.kpi-card__label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.kpi-card__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+}
+
+.kpi-card__icon--blue { background: rgba(59, 130, 246, 0.1); color: #3b82f6; }
+.kpi-card__icon--green { background: rgba(34, 197, 94, 0.1); color: #22c55e; }
+.kpi-card__icon--purple { background: rgba(147, 51, 234, 0.1); color: #9333ea; }
+.kpi-card__icon--amber { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
+
+.kpi-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.kpi-card__value {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.kpi-card__subtext {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+/* Evidence Blend Legend Chips */
+.section-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.coverage-hint-text {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.legend-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.legend-chip--product { border-color: rgba(59, 130, 246, 0.3); color: #2563eb; background: rgba(59, 130, 246, 0.05); }
+.legend-chip--observation { border-color: rgba(6, 182, 212, 0.3); color: #0891b2; background: rgba(6, 182, 212, 0.05); }
+.legend-chip--conversation { border-color: rgba(236, 72, 153, 0.3); color: #db2777; background: rgba(236, 72, 153, 0.05); }
+
+/* Table Enhancements */
+.analytics-table-row {
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.analytics-table-row:hover {
+  background-color: var(--bg-secondary) !important;
+}
+
+.category-chip {
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+}
+
+.range-text-pill {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text);
+  background: var(--bg);
+  padding: 2px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+}
+
+.consistency-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+}
+
+.consistency-badge--consistent {
+  background: rgba(34, 197, 94, 0.12);
+  color: #15803d;
+  border-color: rgba(34, 197, 94, 0.25);
+}
+
+.consistency-badge--normal {
+  background: rgba(59, 130, 246, 0.12);
+  color: #1d4ed8;
+  border-color: rgba(59, 130, 246, 0.25);
+}
+
+.consistency-badge--spread {
+  background: rgba(245, 158, 11, 0.12);
+  color: #b45309;
+  border-color: rgba(245, 158, 11, 0.25);
+}
+
+.collapsible-title-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text);
 }
 
 .grades__btn-primary {

@@ -35,8 +35,8 @@
     "semantic_hash": ""
   },
   "components/GradesAnalyticsPanel.vue": {
-    "mtime": 1784941517.6034787,
-    "ast_hash": "67304d1123fbf56bde9fc809d66bcd21",
+    "mtime": 1785063925.5720963,
+    "ast_hash": "48399fcd876c9c75b7f6b6de851d8486",
     "semantic_hash": ""
   },
   "components/GradesGrid.vue": {
@@ -195,8 +195,8 @@
     "semantic_hash": ""
   },
   "components/grades/GradesAssessmentDetailView.vue": {
-    "mtime": 1785063233.6686733,
-    "ast_hash": "1edc6c6975c6fb913e1caa51ee33a1b8",
+    "mtime": 1785111152.0871658,
+    "ast_hash": "abcb1f5b89e51dce3a074e674d5a8bc3",
     "semantic_hash": ""
   },
   "components/grades/GradesContextMenu.vue": {
@@ -425,8 +425,8 @@
     "semantic_hash": ""
   },
   "db/gradebookService.js": {
-    "mtime": 1784941500.4275684,
-    "ast_hash": "6121f03f18e6e66496effe073a2af8dc",
+    "mtime": 1785115321.3973162,
+    "ast_hash": "811f01c3ef066cca6d920cd87e29fec4",
     "semantic_hash": ""
   },
   "db/index.js": {
@@ -485,8 +485,8 @@
     "semantic_hash": ""
   },
   "views/Grades.vue": {
-    "mtime": 1784913818.2739594,
-    "ast_hash": "2a3c8fd58315d8837fd93a886d160681",
+    "mtime": 1785115116.552192,
+    "ast_hash": "37c23dcce50288ca2d8b07caad659654",
     "semantic_hash": ""
   },
   "views/Reports.vue": {

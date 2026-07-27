@@ -4,7 +4,7 @@
     <div class="assessment-view__top-bar">
       <nav class="grades__breadcrumb">
         <button class="grades__breadcrumb-link" @click="$emit('close')">
-          <ArrowLeft :size="14" /> Class Grid
+          <ArrowLeft :size="14" /> {{ returnTab === 'analytics' ? 'Analytics View' : 'Class Grid' }}
         </button>
         <span class="grades__breadcrumb-sep">/</span>
         <span class="grades__breadcrumb-current">Assessment Details</span>
@@ -479,7 +479,8 @@ const props = defineProps({
   newAttemptForm: { type: Object, default: null },
   selectedAssessmentId: { type: [String, Number], required: true },
   excludedStudentsCount: { type: Number, default: 0 },
-  activeClassRecord: { type: Object, default: null }
+  activeClassRecord: { type: Object, default: null },
+  returnTab: { type: String, default: 'grid' }
 })
 
 const emit = defineEmits([

@@ -488,23 +488,23 @@ export function resolveAttemptScore(attempts, retestPolicy) {
 export function getAssessmentPercentage(assessment, grade) {
   if (!grade || grade.excluded) return null
   if (grade.missing) return 0
-  if (!grade.attempts || grade.attempts.length === 0) return null
   
-  const earned = resolveAttemptScore(grade.attempts, assessment.retestPolicy)
-  if (earned === null) return null
+  let earned = null
+  if (grade.attempts && grade.attempts.length > 0) {
+    earned = resolveAttemptScore(grade.attempts, assessment?.retestPolicy)
+  }
+  if (earned === null && grade.resolvedScore !== null && grade.resolvedScore !== undefined) {
+    earned = Number(grade.resolvedScore)
+  }
+  if (earned === null && grade.score !== null && grade.score !== undefined) {
+    earned = Number(grade.score)
+  }
+  if (earned === null || isNaN(earned)) return null
   
-  const divisor = assessment.totalPoints || 1
+  const divisor = assessment?.totalPoints || 1
   return (earned / divisor) * 100
 }
 
-/**
- * Calculates a single category grade from a set of assessments and a map of student grades.
- * Shared by calculateStudentGrade and calculateClassAnalytics to ensure consistency.
- * 
- * @param {Array<Object>} catAssessments 
- * @param {Object} gradeMap Map of grades keyed by assessmentId
- * @returns {number|null} The calculated percentage, or null if no data
- */
 function _calculateCategoryGrade(catAssessments, gradeMap, capAt100 = false) {
   let totalEarned = 0
   let totalPossible = 0
@@ -521,10 +521,18 @@ function _calculateCategoryGrade(catAssessments, gradeMap, capAt100 = false) {
       continue
     }
 
-    if (!grade.attempts || grade.attempts.length === 0) continue
+    let earned = null
+    if (grade.attempts && grade.attempts.length > 0) {
+      earned = resolveAttemptScore(grade.attempts, assessment.retestPolicy)
+    }
+    if (earned === null && grade.resolvedScore !== null && grade.resolvedScore !== undefined) {
+      earned = Number(grade.resolvedScore)
+    }
+    if (earned === null && grade.score !== null && grade.score !== undefined) {
+      earned = Number(grade.score)
+    }
 
-    const earned = resolveAttemptScore(grade.attempts, assessment.retestPolicy)
-    if (earned === null) continue
+    if (earned === null || isNaN(earned)) continue
 
     // Guard against division by zero
     const divisor = assessment.totalPoints || 1
@@ -745,7 +753,7 @@ export async function calculateStudentGrade(studentId, classRecord, { asOf = nul
   for (const category of categories) {
     // Filter assessments for this category
     let catAssessments = assessments.filter(a =>
-      a.categoryId === category.categoryId &&
+      String(a.categoryId) === String(category.categoryId) &&
       !a.excluded &&
       (a.target !== 'individual' || (a.target === 'individual' && String(a.targetStudentId) === String(studentId)))
     )
