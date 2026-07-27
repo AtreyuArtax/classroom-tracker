@@ -28,19 +28,23 @@
     @dragend="isDragging = false"
     @click="openRadialForStudent"
   >
-    <!-- Washroom dot — top left corner -->
+    <!-- Washroom badge — top left corner -->
     <span
       v-if="showWashroomDot"
-      class="desk-tile__stats-dot desk-tile__stats-dot--washroom"
+      class="desk-tile__stats-badge desk-tile__stats-badge--washroom"
       :title="washroomDotTooltip"
-    />
+    >
+      <Footprints :size="10" />
+    </span>
 
-    <!-- Device dot — top right corner -->
+    <!-- Device badge — top right corner -->
     <span
       v-if="showDeviceDot"
-      class="desk-tile__stats-dot desk-tile__stats-dot--device"
+      class="desk-tile__stats-badge desk-tile__stats-badge--device"
       :title="deviceDotTooltip"
-    />
+    >
+      <Smartphone :size="10" />
+    </span>
 
     <!-- Student name -->
     <div class="desk-tile__name">
@@ -48,20 +52,21 @@
       <span class="desk-tile__last">{{ student.lastName }}</span>
     </div>
 
+    <!-- Active Out timer pill -->
     <div v-if="student.activeStates?.isOut" class="desk-tile__status-info desk-tile__status-info--out">
-      <component :is="activeOutIcon" :size="16" class="desk-tile__status-icon" />
+      <component :is="activeOutIcon" :size="12" class="desk-tile__status-icon" />
       <span class="desk-tile__timer">{{ elapsedFormatted }}</span>
     </div>
 
-    <!-- Absent indicator -->
+    <!-- Absent status pill -->
     <div v-else-if="student.activeStates?.isAbsent" class="desk-tile__status-info desk-tile__status-info--absent">
-      <UserX :size="16" class="desk-tile__status-icon" />
+      <UserX :size="12" class="desk-tile__status-icon" />
       <span class="desk-tile__status-label">Absent</span>
     </div>
 
-    <!-- Late indicator -->
+    <!-- Late status pill -->
     <div v-else-if="student.activeStates?.lateMs > 0" class="desk-tile__status-info desk-tile__status-info--late">
-      <Clock :size="16" class="desk-tile__status-icon" />
+      <Clock :size="12" class="desk-tile__status-icon" />
       <span class="desk-tile__status-label">Late {{ toMinutes(student.activeStates.lateMs) }}m</span>
     </div>
   </div>
@@ -87,7 +92,7 @@
  */
 
 import { ref, computed, watch, onUnmounted } from 'vue'
-import { HelpCircle, UserX, Clock, Droplets } from 'lucide-vue-next'
+import { HelpCircle, UserX, Clock, Footprints, Smartphone, Toilet } from 'lucide-vue-next'
 import { resolveIcon }    from '../utils/icons.js'
 import { toMinutes }      from '../db/eventService.js'
 import { useRadial }    from '../composables/useRadial.js'
@@ -160,7 +165,7 @@ const activeOutIcon = computed(() => {
   }
   
   // Backward compatibility fallback for old sessions missing the 'code' in activeStates
-  return Droplets
+  return Toilet
 })
 
 // ─── elapsed timer ────────────────────────────────────────────────────────────
@@ -301,10 +306,18 @@ function onDrop(evt) {
 
 /* ── Empty seat ─────────────────────────────────────────────────────────── */
 .desk-tile--empty {
-  background: var(--bg-secondary);
+  background: rgba(248, 250, 252, 0.7);
+  border:     1.5px dashed var(--border);
   box-shadow: none;
   cursor:     default;
-  opacity:    0.55;
+  opacity:    0.7;
+  transition: all 0.15s ease;
+}
+
+.desk-tile--empty:hover {
+  background: var(--surface);
+  border-color: var(--primary);
+  opacity: 1;
 }
 
 .desk-tile--drop-target {
@@ -314,30 +327,36 @@ function onDrop(evt) {
 }
 
 .desk-tile__empty-label {
-  font-size:  0.65rem;
-  color:      var(--text-secondary);
-  text-align: center;
+  font-size:   0.65rem;
+  font-weight: 600;
+  color:       var(--text-secondary);
+  text-align:  center;
 }
 
-/* ── Stats dots (§10 / Update 07) ───────────────────────────────────────── */
-.desk-tile__stats-dot {
+/* ── Micro Stats Badges ─────────────────────────────────────────────────── */
+.desk-tile__stats-badge {
   position: absolute;
-  top: 6px;
-  width: 10px;
-  height: 10px;
+  top: 5px;
+  width: 16px;
+  height: 16px;
   border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  border: 1px solid rgba(255,255,255,0.8);
 }
 
-.desk-tile__stats-dot--washroom {
-  left: 6px;
-  background: #5ac8fa;
-  box-shadow: 0 1px 3px rgba(90, 200, 250, 0.4);
+.desk-tile__stats-badge--washroom {
+  left: 5px;
+  background: rgba(224, 242, 254, 0.95);
+  color: #0284c7;
 }
 
-.desk-tile__stats-dot--device {
-  right: 6px;
-  background: #ff9500;
-  box-shadow: 0 1px 3px rgba(255, 149, 0, 0.4);
+.desk-tile__stats-badge--device {
+  right: 5px;
+  background: rgba(254, 243, 199, 0.95);
+  color: #d97706;
 }
 
 /* ── Student name ────────────────────────────────────────────────────────── */
@@ -362,59 +381,71 @@ function onDrop(evt) {
 
 .desk-tile__timer {
   font-size:   0.7rem;
-  font-weight: 600;
-  color:       var(--state-out);
+  font-weight: 700;
+  color:       #ffffff;
   font-variant-numeric: tabular-nums;
 }
 
-/* ── Status Info (Generic) ───────────────────────────────────────────────── */
+/* ── Status Info Badges ───────────────────────────────────────────────── */
 .desk-tile__status-info {
-  display:     flex;
-  align-items: center;
-  gap:         4px;
-  margin-top:  2px;
+  display:       inline-flex;
+  align-items:   center;
+  gap:           3px;
+  margin-top:    4px;
+  padding:       2px 7px;
+  border-radius: 10px;
+  line-height:   1;
 }
 
 .desk-tile__status-icon {
-  font-size: 0.85rem;
+  font-size: 0.75rem;
 }
 
 .desk-tile__status-label {
-  font-size:   0.6rem;
+  font-size:   0.62rem;
   font-weight: 700;
   text-transform: uppercase;
 }
 
-/* ── Absent state ────────────────────────────────────────────────────────── */
-.desk-tile--absent {
-  background: var(--bg-secondary) !important;
-  opacity:    0.7;
+/* ── Out-of-room state ───────────────────────────────────────────────────── */
+.desk-tile--out {
+  background: rgba(254, 242, 242, 0.95) !important;
+  border:     1.5px solid #ef4444 !important;
+  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.18) !important;
 }
 
-.desk-tile--absent .desk-tile__status-label {
-  color: var(--text-secondary);
+.desk-tile__status-info--out {
+  background: #ef4444;
+  color:      #ffffff;
+  box-shadow: 0 2px 6px rgba(239, 68, 68, 0.35);
+}
+
+/* ── Absent state ────────────────────────────────────────────────────────── */
+.desk-tile--absent {
+  background: rgba(255, 241, 242, 0.85) !important;
+  border:     1.5px solid #fda4af !important;
+}
+
+.desk-tile__status-info--absent {
+  background: rgba(225, 29, 72, 0.12);
+  color:      #e11d48;
 }
 
 /* ── Late state ──────────────────────────────────────────────────────────── */
 .desk-tile--late {
-  background: var(--state-late-bg) !important;
-  border: 1px solid var(--state-late);
-  box-shadow: 0 0 8px color-mix(in srgb, var(--state-late) 30%, transparent), var(--shadow-sm);
+  background: rgba(254, 243, 199, 0.85) !important;
+  border:     1.5px solid #fcd34d !important;
 }
 
-.desk-tile--late .desk-tile__status-label {
-  color: var(--state-late-text);
+.desk-tile__status-info--late {
+  background: rgba(217, 119, 6, 0.12);
+  color:      #d97706;
 }
 
-/* ── Out-of-room state (§10) ─────────────────────────────────────────────── */
-.desk-tile--out {
-  border:     2px solid var(--state-out);
-  box-shadow: 0 0 0 3px rgba(255, 59, 48, 0.15);
-}
-
-/* ── Event flash (§10) — green for ~700ms ─────────────────────────────── */
+/* ── Event flash — green for ~700ms ─────────────────────────────────────── */
 .desk-tile--flash {
-  background: var(--state-success) !important;
-  box-shadow: 0 0 0 3px rgba(52, 199, 89, 0.25);
+  background: rgba(220, 252, 231, 0.95) !important;
+  border-color: #22c55e !important;
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.25) !important;
 }
 </style>
