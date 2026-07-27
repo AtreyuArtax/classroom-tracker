@@ -82,11 +82,11 @@ const { logStandardEvent, logToggleEvent, logAttendanceEvent, behaviorCodes } = 
 // ─── geometry ─────────────────────────────────────────────────────────────────
 
 /** Diameter of the ring container in px */
-const RING_SIZE  = 280
+const RING_SIZE  = 320
 /** Radius of the orbit on which all buttons (codes + Profile) sit */
-const ORBIT_R    = 108
+const ORBIT_R    = 120
 /** Size of each sector button */
-const BTN_SIZE   = 72
+const BTN_SIZE   = 76
 
 const ringStyle = {
   width:  `${RING_SIZE}px`,
@@ -160,12 +160,12 @@ function onProfileTap() {
 /* ── Ring container ──────────────────────────────────────────────── */
 .radial-ring {
   position: relative;
-  animation: ring-pop 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  animation: ring-pop 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 @keyframes ring-pop {
-  from { transform: scale(0.6); opacity: 0; }
-  to   { transform: scale(1);   opacity: 1; }
+  from { transform: scale(0.65); opacity: 0; }
+  to   { transform: scale(1);    opacity: 1; }
 }
 
 /* ── Sector buttons ──────────────────────────────────────────────── */
@@ -173,65 +173,65 @@ function onProfileTap() {
   display:         flex;
   flex-direction:  column;
   align-items:     center;
-  gap:             4px;
+  gap:             3px;
   background:      transparent;
   box-shadow:      none;
   border:          none;
-  width:           72px;
+  width:           76px;
   cursor:          pointer;
   padding:         0;
-  transition:      transform 0.1s ease;
+  transition:      transform 0.15s ease, opacity 0.15s ease;
+}
+
+.radial-btn:hover {
+  transform: translateY(-2px) scale(1.05);
+}
+
+.radial-btn:active {
+  transform: scale(0.94);
 }
 
 .radial-btn__icon-circle {
-  width:           56px;
-  height:          56px;
+  width:           52px;
+  height:          52px;
   border-radius:   50%;
   display:         flex;
   align-items:     center;
   justify-content: center;
-  box-shadow:      0 3px 10px rgba(0,0,0,0.15), 0 1px 3px rgba(0,0,0,0.1);
-  border:          1px solid rgba(0,0,0,0.07);
-  background:      var(--surface);
-  transition:      background 0.15s ease, box-shadow 0.1s ease;
-}
-
-.radial-btn--positive      .radial-btn__icon-circle { background: #c8f0d0; }
-.radial-btn--redirect      .radial-btn__icon-circle { background: #fff3cd; }
-.radial-btn--attendance    .radial-btn__icon-circle,
-.radial-btn--absence       .radial-btn__icon-circle,
-.radial-btn--late          .radial-btn__icon-circle { background: #fde8e8; }
-.radial-btn--note          .radial-btn__icon-circle { background: #dce8ff; }
-.radial-btn--neutral       .radial-btn__icon-circle { background: #ddeeff; }
-.radial-btn--communication .radial-btn__icon-circle { background: #dce8ff; }
-
-.radial-btn:active {
-  transform: scale(0.92);
+  background:      #ffffff;
+  color:           #374151;
+  box-shadow:      0 6px 16px rgba(0,0,0,0.12), 0 2px 4px rgba(0,0,0,0.06);
+  border:          1px solid rgba(0,0,0,0.08);
+  transition:      all 0.15s ease;
 }
 
 /* Active toggle: student is currently out */
 .radial-btn--active .radial-btn__icon-circle {
-  background: #c0392b;
-  box-shadow: 0 2px 8px rgba(192,57,43,0.35);
-  color: white;
+  background: #ef4444 !important;
+  border-color: #dc2626 !important;
+  box-shadow: 0 6px 18px rgba(239, 68, 68, 0.45) !important;
+  color: #ffffff !important;
 }
 
 .radial-btn--active .radial-btn__label {
-  color: #c0392b;
+  color: #ef4444 !important;
+  font-weight: 700;
 }
 
-/* Profile slot: distinct secondary appearance */
+/* Profile slot: clean unified styling */
 .radial-btn--profile .radial-btn__icon-circle {
-  background:  var(--primary-light);
-  box-shadow: 0 2px 8px rgba(70,99,172,0.25);
+  background: #ffffff;
+  color: #4f46e5;
+  border-color: rgba(79, 70, 229, 0.3);
 }
 
 .radial-btn--profile .radial-btn__label {
-  color: var(--primary);
+  color: #4338ca;
+  font-weight: 600;
 }
 
 .radial-btn__icon {
-  font-size:   1.25rem;
+  font-size: 1.25rem;
   line-height: 1;
 }
 
@@ -239,7 +239,7 @@ function onProfileTap() {
   font-size:   11px;
   font-weight: 600;
   white-space: nowrap;
-  color:       #6e6e73;
+  color:       #374151;
   text-align:  center;
 }
 
@@ -250,24 +250,29 @@ function onProfileTap() {
   left:            50%;
   transform:       translate(-50%, -50%);
 
-  width:           52px;
-  height:          52px;
+  width:           48px;
+  height:          48px;
   border-radius:   50%;
-  border:          none;
-  background:      #e0e0e5;
-  box-shadow:      0 1px 4px rgba(0,0,0,0.1);
+  border:          1px solid var(--border);
+  background:      var(--surface);
+  box-shadow:      0 4px 12px rgba(0,0,0,0.15);
   cursor:          pointer;
 
   display:         flex;
   align-items:     center;
   justify-content: center;
 
-  font-size:       1.2rem;
-  color:           #555;
-  transition:      transform 0.1s ease, background 0.15s ease;
+  color:           var(--text-secondary);
+  transition:      all 0.15s ease;
+}
+
+.radial-centre:hover {
+  background:      var(--bg-secondary);
+  color:           var(--text);
+  transform:       translate(-50%, -50%) scale(1.06);
 }
 
 .radial-centre:active {
-  transform: translate(-50%, -50%) scale(0.92);
+  transform: translate(-50%, -50%) scale(0.94);
 }
 </style>

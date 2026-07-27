@@ -277,15 +277,22 @@ function onDrop(evt) {
 
   background:    var(--surface);
   border-radius: var(--radius-md);
-  box-shadow:    var(--shadow-sm);
-  padding:       6px 8px;
+  box-shadow:    0 2px 6px rgba(0,0,0,0.03);
+  border:        1px solid var(--border);
+  padding:       8px 10px;
   cursor:        pointer;
 
   /* smooth transition for flash */
-  transition: background 0.15s ease, box-shadow 0.15s ease;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
 
   user-select: none;
   -webkit-user-select: none;
+}
+
+.desk-tile:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 14px rgba(0,0,0,0.07);
+  border-color: rgba(79, 70, 229, 0.3);
 }
 
 .desk-tile:active {
