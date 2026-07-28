@@ -1,11 +1,12 @@
 <template>
-  <div class="test-day-warning" :title="`Warning: Missed ${count} Assessment Days`">
-    <AlertTriangle :size="14" />
+  <div class="test-day-warning" :title="`Missed ${count} assessment/test days`">
+    <CalendarX :size="11" />
+    <span class="test-day-warning__count">{{ count }}</span>
   </div>
 </template>
 
 <script setup>
-import { AlertTriangle } from 'lucide-vue-next'
+import { CalendarX } from 'lucide-vue-next'
 
 defineProps({
   count: {
@@ -19,15 +20,27 @@ defineProps({
 .test-day-warning {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  color: #ff3b30;
-  margin-left: 6px;
+  gap: 3px;
+  padding: 1px 5px;
+  border-radius: 10px;
+  background-color: rgba(245, 158, 11, 0.14);
+  border: 1px solid rgba(245, 158, 11, 0.32);
+  color: #d97706;
+  font-size: 0.65rem;
+  font-weight: 700;
   cursor: help;
-  opacity: 0.8;
-  transition: opacity 0.2s ease;
+  white-space: nowrap;
+  line-height: 1;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
 }
 
 .test-day-warning:hover {
-  opacity: 1;
+  background-color: rgba(245, 158, 11, 0.24);
+  border-color: rgba(245, 158, 11, 0.5);
+}
+
+.test-day-warning__count {
+  font-variant-numeric: tabular-nums;
 }
 </style>

@@ -15,6 +15,14 @@
             <component :is="statusIcon" :size="14" />
             {{ statusLabel }}
           </span>
+          <span 
+            v-if="attendanceStats?.testDayAbsences > 0" 
+            class="dossier-header__badge dossier-header__badge--warning"
+            :title="`Student missed ${attendanceStats.testDayAbsences} test/evaluation days`"
+          >
+            <CalendarX :size="13" />
+            {{ attendanceStats.testDayAbsences }} Missed Test Day{{ attendanceStats.testDayAbsences > 1 ? 's' : '' }}
+          </span>
           <span v-if="student.studentId" class="dossier-header__id">#{{ student.studentId }}</span>
         </div>
       </div>
@@ -67,7 +75,7 @@
 
 <script setup>
 import { computed } from 'vue'
-import { UserCheck, UserMinus, Clock, Toilet, X, HelpCircle } from 'lucide-vue-next'
+import { UserCheck, UserMinus, Clock, Toilet, X, HelpCircle, CalendarX } from 'lucide-vue-next'
 
 const props = defineProps({
   student: { type: Object, required: true },

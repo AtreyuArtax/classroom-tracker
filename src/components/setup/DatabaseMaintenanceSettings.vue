@@ -15,6 +15,9 @@
       >
         <Download :size="18" /> Export {{ activeClass?.name }} to Excel (.xlsx)
       </button>
+      <div v-if="exportMsg" class="setup__inline-banner setup__inline-banner--warning" style="margin-top: 10px;">
+        <span>{{ exportMsg }}</span>
+      </div>
     </div>
 
     <!-- Quick Sync (Local Folder) -->
@@ -248,11 +251,11 @@ async function handleExportExcel() {
     })
   } catch (err) {
     console.error('Excel Export Error:', err)
-    await alert('Failed to export Excel: ' + err.message)
+    exportMsg.value = 'Failed to export Excel: ' + err.message
   }
 }
 
-// --- Backup & Restore & Folder Sync ---
+const exportMsg = ref('')
 const backupMsg = ref('')
 const restoreMsg = ref('')
 const syncMsg = ref('')

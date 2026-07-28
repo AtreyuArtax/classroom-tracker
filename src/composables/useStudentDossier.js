@@ -21,6 +21,7 @@ import * as classService from '../db/classService.js'
 import * as eventService from '../db/eventService.js'
 import { getDB } from '../db/index.js'
 import { getDateRangeForClassPeriod, toMinutes } from '../db/eventService.js'
+import { getAssessmentsByClass } from '../db/gradebookService.js'
 import { useClassroom } from './useClassroom.js'
 
 export function useStudentDossier(periodRef = null, classIdRef = null) {
@@ -32,6 +33,7 @@ export function useStudentDossier(periodRef = null, classIdRef = null) {
     const selectedClassId = ref(null)
     const classStartDate = ref(null)
     const selectedClassRecord = ref(null)
+    const classAssessments = ref([])
     const selectedPeriod = periodRef || ref('semester')
 
     const matchingTerm = computed(() => {
@@ -45,6 +47,7 @@ export function useStudentDossier(periodRef = null, classIdRef = null) {
         if (!id) { 
             classStartDate.value = null
             selectedClassRecord.value = null
+            classAssessments.value = []
             return 
         }
         try {
@@ -52,6 +55,7 @@ export function useStudentDossier(periodRef = null, classIdRef = null) {
             
             // 1. Fetch class record for matchingTerm
             selectedClassRecord.value = await classService.getClass(id)
+            classAssessments.value = await getAssessmentsByClass(id)
 
             // 2. Fetch earliest event (fallback anchor)
             const firstEvent = await db.getFromIndex('events', 'by_classId_timestamp', id)
@@ -60,6 +64,7 @@ export function useStudentDossier(periodRef = null, classIdRef = null) {
             console.error('Failed to fetch class data:', err)
             classStartDate.value = null
             selectedClassRecord.value = null
+            classAssessments.value = []
         }
     }
 
@@ -208,7 +213,11 @@ export function useStudentDossier(periodRef = null, classIdRef = null) {
         const noteEvents    = e.filter(ev => ev.note && ev.code !== 'ac' && ev.code !== 'pc' && ev.category !== 'communication')
 
         const absences         = absenceEvents.length
-        const testDayAbsences  = absenceEvents.filter(ev => ev.testDay).length
+        const testDayAbsences  = absenceEvents.filter(ev => {
+            if (ev.testDay) return true
+            const eDate = ev.timestamp ? ev.timestamp.slice(0, 10) : null
+            return eDate && classAssessments.value.some(a => a.date && a.date.slice(0, 10) === eDate)
+        }).length
         const totalWashroomMins = washroomEvents.reduce((sum, ev) => sum + toMinutes(ev.duration), 0)
         const totalLateMins     = lateEvents.reduce((sum, ev) => sum + toMinutes(ev.duration), 0)
 

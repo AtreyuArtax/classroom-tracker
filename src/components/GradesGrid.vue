@@ -121,14 +121,15 @@
             :class="{ 'grades__td--highlighted': highlightedColumnId === 'name' }"
             @click="$emit('open-dossier', student.studentId)"
           >
-            <div class="grades__student-name-group">
+            <div class="grades__student-name-group" :title="`${student.lastName}, ${student.firstName}`">
               <div class="grades__student-name-container">
-                <div class="grades__student-name">{{ student.lastName }}, {{ student.firstName }}</div>
+                <div class="grades__student-lastname">{{ student.lastName }}</div>
                 <TestDayWarning 
                   v-if="studentAbsenceTotals[student.studentId]?.testDays >= 2" 
                   :count="studentAbsenceTotals[student.studentId].testDays" 
                 />
               </div>
+              <div class="grades__student-firstname">{{ student.firstName }}</div>
               <div class="grades__sparkline-mini" v-if="studentTrends[student.studentId]?.length > 1 && !props.isPrivacyMode">
                 <svg width="80" height="14" viewBox="0 0 80 14">
                   <path
@@ -1350,17 +1351,36 @@ function copyAssessmentGrades(assessment) {
 .grades__student-name-group {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 1px;
+  width: 100%;
 }
 
 .grades__student-name-container {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 6px;
+  width: 100%;
 }
 
-.grades__student-name {
-  font-weight: 600;
+.grades__student-lastname {
+  font-weight: 700;
+  color: var(--text-primary);
+  font-size: 0.86rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  min-width: 0;
+}
+
+.grades__student-firstname {
+  font-weight: 500;
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .grades__sparkline-mini svg {

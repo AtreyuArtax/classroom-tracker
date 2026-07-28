@@ -57,14 +57,16 @@
           <input type="checkbox" v-model="capGradesAt100" />
           <span>Cap overall student grades at 100% (Safety)</span>
         </label>
-        <button 
-          class="setup__btn-primary" 
-          style="margin-left: auto;"
-          :disabled="!!globalError || hasFieldErrors" 
-          @click="saveBuckets"
-        >
-          Save Grading Standards
-        </button>
+        <div style="margin-left: auto; display: flex; align-items: center; gap: 12px;">
+          <span v-if="saveSuccess" class="grade-buckets__save-success">Saved ✓</span>
+          <button 
+            class="setup__btn-primary" 
+            :disabled="!!globalError || hasFieldErrors" 
+            @click="saveBuckets"
+          >
+            Save Grading Standards
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -161,6 +163,8 @@ function validate() {
     }
 }
 
+const saveSuccess = ref(false)
+
 async function saveBuckets() {
     validate()
     if (globalError.value) return
@@ -173,7 +177,11 @@ async function saveBuckets() {
     
     await settingsService.saveSettings(settings)
     localBuckets.value = JSON.parse(JSON.stringify(sorted))
-    await alert('Grading standards saved successfully!')
+    
+    saveSuccess.value = true
+    setTimeout(() => {
+        saveSuccess.value = false
+    }, 2500)
 }
 </script>
 
@@ -413,5 +421,11 @@ async function saveBuckets() {
   align-items: center;
   justify-content: center;
   gap: 8px;
+}
+
+.grade-buckets__save-success {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #10b981;
 }
 </style>

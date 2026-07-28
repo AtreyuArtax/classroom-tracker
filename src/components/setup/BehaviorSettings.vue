@@ -102,6 +102,10 @@
       :title="isEditing ? 'Edit Behavior Code' : 'Add Behavior Code'"
     >
       <form class="setup__form" @submit.prevent="saveCode">
+        <div v-if="modalError" class="setup__inline-banner setup__inline-banner--warning" style="margin-bottom: 12px;">
+          <AlertTriangle :size="16" />
+          <span>{{ modalError }}</span>
+        </div>
         <div class="setup__form-grid">
           <label class="setup__label">
             Code (Unique Key)
@@ -202,7 +206,7 @@ import { useMessage } from '../../composables/useMessage.js'
 import { resolveIcon } from '../../utils/icons.js'
 import * as settingsService from '../../db/settingsService.js'
 import BaseModal from '../BaseModal.vue'
-import { Pencil, Trash2, Plus } from 'lucide-vue-next'
+import { Pencil, Trash2, Plus, AlertTriangle } from 'lucide-vue-next'
 
 const { thresholds: classroomThresholds, behaviorCodes, reloadBehaviorCodes } = useClassroom()
 const { alert, confirm } = useMessage()
@@ -285,14 +289,17 @@ function editCode(code) {
     requiresNote: !!code.requiresNote,
     isTopLevel: !!code.isTopLevel 
   })
+  modalError.value = ''
   isModalOpen.value = true
 }
 
 function closeModal() {
   isModalOpen.value = false
+  modalError.value = ''
 }
 
 async function saveCode() {
+  modalError.value = ''
   const codeKeyFormatted = formCode.codeKey.trim().toUpperCase()
   if (!codeKeyFormatted) return
 
@@ -301,7 +308,7 @@ async function saveCode() {
       c => c.codeKey.toUpperCase() !== codeKeyFormatted && c.isTopLevel
     ).length
     if (pinnedCount >= 6) {
-      await alert('The radial menu is full (Max 6 pinned items). Please unpin an existing action first.')
+      modalError.value = 'The radial menu is full (Max 6 pinned items). Please unpin an existing action first.'
       return
     }
   }
@@ -318,11 +325,13 @@ async function saveCode() {
 }
 
 async function deleteCode(codeKey) {
+  behaviorWarning.value = ''
   const codeToDelete = behaviorCodes.value.find(c => c.codeKey === codeKey)
   const name = codeToDelete?.label ?? codeKey
   
   if (isSystemCode(codeKey)) {
-    await alert(`"${name}" is a core system code and cannot be deleted.`)
+    behaviorWarning.value = `"${name}" is a core system code and cannot be deleted.`
+    setTimeout(() => { behaviorWarning.value = '' }, 5000)
     return
   }
 

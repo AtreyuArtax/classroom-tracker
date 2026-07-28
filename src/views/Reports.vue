@@ -82,12 +82,6 @@
                 @click="selectedPeriod = p.value"
               >{{ p.label }}</button>
             </div>
-            
-            <div style="flex: 1"></div>
-            
-            <button class="reports__btn-export" @click="switchPillar('printhub')">
-              <Printer :size="16" /> Print &amp; Export Center
-            </button>
           </div>
 
           <!-- Class Overview & Analytics Panel -->

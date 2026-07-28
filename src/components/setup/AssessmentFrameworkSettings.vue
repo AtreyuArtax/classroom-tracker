@@ -4,6 +4,12 @@
     <div class="setup__card">
       <h2 class="setup__card-title">Assessment Framework</h2>
       
+      <div v-if="frameworkWarning" class="setup__inline-banner setup__inline-banner--warning">
+        <AlertTriangle :size="16" />
+        <span>{{ frameworkWarning }}</span>
+        <button type="button" class="setup__inline-banner-close" @click="frameworkWarning = ''">&times;</button>
+      </div>
+      
       <h3 class="setup__card-subtitle">Categories (Weights)</h3>
       <div class="setup__gb-list">
         <div v-for="(cat, idx) in activeClass.gradebookCategories" :key="cat.categoryId" class="setup__gb-item">
@@ -40,6 +46,13 @@
           <BookOpen :size="14" /> Import Expectations
         </button>
       </div>
+
+      <div v-if="frameworkWarning" class="setup__inline-banner setup__inline-banner--warning" style="margin-top: 10px;">
+        <AlertTriangle :size="16" />
+        <span>{{ frameworkWarning }}</span>
+        <button type="button" class="setup__inline-banner-close" @click="frameworkWarning = ''">&times;</button>
+      </div>
+
       <div class="setup__gb-list">
         <div v-for="(unit, idx) in activeClass.gradebookUnits" :key="unit.unitId" class="setup__unit-container">
           <div class="setup__gb-item">
@@ -358,6 +371,15 @@ async function moveUnit(index, direction) {
   await saveGradebookSettings()
 }
 
+const frameworkWarning = ref('')
+
+function showWarning(msg) {
+  frameworkWarning.value = msg
+  setTimeout(() => {
+    if (frameworkWarning.value === msg) frameworkWarning.value = ''
+  }, 6000)
+}
+
 async function onDeleteCategory(cat) {
   if (!activeClass.value) return
   
@@ -365,14 +387,14 @@ async function onDeleteCategory(cat) {
   const inUse = assessments.some(a => a.categoryId === cat.categoryId)
   
   if (inUse) {
-    await alert(`Cannot delete category "${cat.name}" because it has assessments assigned to it. Remove all assessments in this category first.`)
+    showWarning(`Cannot delete category "${cat.name}" because it has assessments assigned to it. Remove all assessments in this category first.`)
     return
   }
 
   if (!await confirm(`Delete category "${cat.name}"?`)) return
 
   if (activeClass.value.gradebookCategories.length <= 1) {
-    await alert('At least one category is required.')
+    showWarning('At least one category is required.')
     return
   }
 
@@ -398,10 +420,10 @@ async function onDeleteUnit(unitId) {
   
   const assessments = await gradebookService.getAssessmentsByClass(activeClass.value.classId)
   const unit = activeClass.value.gradebookUnits.find(u => u.unitId === unitId)
-  const inUse = assessments.some(a => a.unitId === unitId)
+  const inUse = assessments.some(a => a.unitId === unitId || (unit && a.unitId === unit.name))
   
   if (inUse) {
-    await alert(`Cannot delete unit "${unit?.name || 'this unit'}" because it has assessments assigned to it. Remove all assessments in this unit before deleting.`)
+    showWarning(`Cannot delete unit "${unit?.name || 'this unit'}" because it has assessments assigned to it. Remove or reassign all assessments in this unit before deleting.`)
     return
   }
 
@@ -428,7 +450,7 @@ async function saveTemplate() {
   
   const existing = templates.value.some(t => t.name.toLowerCase() === newTemplateName.value.trim().toLowerCase())
   if (existing) {
-    await alert('A template with this name already exists.')
+    showWarning('A template with this name already exists.')
     return
   }
 
@@ -443,7 +465,7 @@ async function onApplyTemplate(template) {
   // Check if assessments exist for this class to avoid orphaning grades
   const classAssessments = await gradebookService.getAssessmentsByClass(activeClass.value.classId)
   if (classAssessments && classAssessments.length > 0) {
-    await alert('Cannot apply template: This class already has assessments. Templates can only be applied to empty classes to prevent breaking existing student grades.')
+    showWarning('Cannot apply template: This class already has assessments. Templates can only be applied to empty classes to prevent breaking existing student grades.')
     return
   }
   
@@ -855,6 +877,43 @@ onMounted(async () => {
   min-height: 36px !important;
   padding: 0 12px !important;
   font-size: 0.8rem !important;
+}
+
+.setup__inline-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  margin-bottom: 1rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  line-height: 1.3;
+}
+
+.setup__inline-banner--warning {
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  color: #f59e0b;
+}
+
+.setup__inline-banner--success {
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: #10b981;
+}
+
+.setup__inline-banner-close {
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: currentColor;
+  font-size: 1.1rem;
+  cursor: pointer;
+  opacity: 0.7;
+  padding: 0 4px;
+}
+.setup__inline-banner-close:hover {
+  opacity: 1;
 }
 </style>
 

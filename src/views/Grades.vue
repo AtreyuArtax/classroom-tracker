@@ -65,33 +65,27 @@
           <!-- Unified Toolbar -->
           <div v-if="activeClassRecord && !isLoading && !selectedAssessmentId" class="grades__toolbar">
             <div class="grades__toolbar-left">
-              <button class="grades__btn-settings" title="Manage Gradebook" @click="$emit('navigate', 'Setup', { from: 'Grades', tab: 'gradebook' })">
-                <Settings :size="20" />
-              </button>
-              
-              <button class="grades__btn-settings" title="Print Final Grades Grid" @click="showPrintGridModal = true">
-                <Printer :size="20" />
-              </button>
-
               <ClassSwitcher @navigate="$emit('navigate', $event)" />
             </div>
 
             <div class="grades__toolbar-center">
-              <button v-if="!analyticsMode" class="grades__btn-add" @click="openAddAssessment('class')">
-                <Plus :size="16" /> Add Assessment
-              </button>
-              
               <div class="grades__toggle-group">
                 <button 
                   class="grades__toggle-btn"
                   :class="{ 'grades__toggle-btn--active': !analyticsMode }"
                   @click="exitAnalyticsMode"
-                >Grid</button>
+                  style="display: flex; align-items: center; gap: 4px;"
+                >
+                  <LayoutGrid :size="13" /> Grid
+                </button>
                 <button 
                   class="grades__toggle-btn"
                   :class="{ 'grades__toggle-btn--active': analyticsMode }"
                   @click="enterAnalyticsMode"
-                >Analytics</button>
+                  style="display: flex; align-items: center; gap: 4px;"
+                >
+                  <BarChart2 :size="13" /> Analytics
+                </button>
               </div>
 
               <div v-if="filteredMilestones?.length" class="grades__milestone-toggle">
@@ -108,10 +102,8 @@
                   @click="selectedMilestone = m.milestoneId"
                 >{{ m.name }}</button>
               </div>
-            </div>
 
-            <div class="grades__toolbar-right">
-              <div v-if="!analyticsMode" class="grades__toggle-group" style="margin-right: 0.5rem;" title="Column Order">
+              <div v-if="!analyticsMode" class="grades__toggle-group" title="Column Order">
                 <button 
                   class="grades__toggle-btn"
                   :class="{ 'grades__toggle-btn--active': assessmentSortOrder === 'desc' }"
@@ -123,6 +115,7 @@
                   @click="assessmentSortOrder = 'asc'"
                 >Oldest</button>
               </div>
+
               <div v-if="!analyticsMode" class="grades__toggle-group">
                 <button 
                   class="grades__toggle-btn"
@@ -135,9 +128,24 @@
                   @click="displayMode = 'percent'"
                 >%</button>
               </div>
+            </div>
+
+            <div class="grades__toolbar-right">
               <div class="grades__class-avg-display">
                 Class Avg: <span class="grades__avg-value">{{ formatGrade(overallClassAvg) }}</span>
               </div>
+
+              <button class="grades__btn-settings" title="Print Final Grades Grid" @click="showPrintGridModal = true">
+                <Printer :size="18" />
+              </button>
+
+              <button class="grades__btn-settings" title="Manage Gradebook Setup" @click="$emit('navigate', 'Setup', { from: 'Grades', tab: 'gradebook' })">
+                <Settings :size="18" />
+              </button>
+
+              <button v-if="!analyticsMode" class="grades__btn-add" @click="openAddAssessment('class')">
+                <Plus :size="16" /> Add Assessment
+              </button>
             </div>
           </div>
 
@@ -240,7 +248,7 @@ import {
 } from '../composables/useGradebook.js'
 import { formatGrade } from '../utils/gradeColors.js'
 import { useAttendanceInsights } from '../composables/useAttendanceInsights.js'
-import { Plus, BarChart2, Settings, Printer } from 'lucide-vue-next'
+import { Plus, BarChart2, Settings, Printer, LayoutGrid } from 'lucide-vue-next'
 import Student360 from '../components/dossier/Student360.vue'
 import GradesGrid from '../components/GradesGrid.vue'
 import GradesAnalyticsPanel from '../components/GradesAnalyticsPanel.vue'

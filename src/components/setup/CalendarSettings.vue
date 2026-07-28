@@ -168,6 +168,10 @@
         <span class="setup__hint" style="margin-left: auto;">Format: <code>Date, [EndDate], Label</code></span>
       </div>
 
+      <div v-if="calendarStatus.text" class="setup__inline-banner" :class="'setup__inline-banner--' + calendarStatus.type" style="margin-top: 12px;">
+        <span>{{ calendarStatus.text }}</span>
+      </div>
+
       <BaseModal 
         v-if="showPasteModal" 
         :show="showPasteModal" 
@@ -468,6 +472,15 @@ function processPastedCsv() {
   })
 }
 
+const calendarStatus = ref({ text: '', type: 'success' })
+
+function setCalendarStatus(text, type = 'success') {
+  calendarStatus.value = { text, type }
+  setTimeout(() => {
+    if (calendarStatus.value.text === text) calendarStatus.value.text = ''
+  }, 4000)
+}
+
 async function importHolidays(rawData) {
   const newDays = rawData
     .map(row => {
@@ -484,9 +497,9 @@ async function importHolidays(rawData) {
     
     nonSchoolDays.value = [...nonSchoolDays.value, ...uniqueNew]
     await saveNonSchoolDays()
-    await alert(`Imported ${uniqueNew.length} new holidays/PD days.`)
+    setCalendarStatus(`Imported ${uniqueNew.length} new holidays/PD days.`, 'success')
   } else {
-    await alert('No valid dates found in data. Ensure format is YYYY-MM-DD.')
+    setCalendarStatus('No valid dates found in data. Ensure format is YYYY-MM-DD.', 'warning')
   }
 }
 </script>

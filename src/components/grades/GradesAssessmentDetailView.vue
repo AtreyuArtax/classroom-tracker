@@ -1,212 +1,119 @@
 <template>
   <div class="grades__assessment-view">
-    <!-- Top Navigation Bar -->
-    <div class="assessment-view__top-bar">
-      <nav class="grades__breadcrumb">
-        <button class="grades__breadcrumb-link" @click="$emit('close')">
+    <!-- Compact Top Header Row -->
+    <div class="compact-header-card" :style="{ borderLeft: '4px solid ' + unitColor }">
+      <div class="compact-header-left">
+        <button class="grades__breadcrumb-link" @click="$emit('close')" title="Return to Previous View">
           <ArrowLeft :size="14" /> {{ returnTab === 'analytics' ? 'Analytics View' : 'Class Grid' }}
         </button>
         <span class="grades__breadcrumb-sep">/</span>
-        <span class="grades__breadcrumb-current">Assessment Details</span>
-      </nav>
+        <h1 class="compact-title">{{ currentAssessment.name }}</h1>
+        <div class="compact-meta-chips">
+          <span class="meta-chip meta-chip--type">{{ currentAssessment.assessmentType }}</span>
+          <span class="meta-chip meta-chip--points"><Target :size="11" /> /{{ currentAssessment.totalPoints }}</span>
+          <span v-if="currentAssessment.unitId" class="meta-chip meta-chip--unit" :style="{ color: unitColor }">
+            <Hash :size="11" /> {{ getUnitName(currentAssessment.unitId) }}
+          </span>
+          <span class="meta-chip meta-chip--date"><Calendar :size="11" /> {{ formatLocalDisplay(currentAssessment.date) }}</span>
+          <span v-if="currentAssessment.weight" class="meta-chip meta-chip--weight">🔥 {{ currentAssessment.weight }}%</span>
+        </div>
+      </div>
 
       <!-- Action Buttons Top Right -->
       <div class="assessment-header__actions">
         <button class="btn-secondary-sm" title="Edit Assessment Setup" @click="$emit('start-edit', currentAssessment)">
-          <Edit2 :size="14" /> Edit Setup
+          <Edit2 :size="13" /> Edit Setup
         </button>
         <button class="btn-secondary-sm" title="View Missing Students" @click="$emit('show-missing-modal')">
-          <UserMinus :size="14" /> Missing
+          <UserMinus :size="13" /> Missing
         </button>
         <button class="btn-danger-sm" title="Delete Assessment" @click="$emit('confirm-delete', currentAssessment)">
-          <Trash2 :size="14" />
-        </button>
-        <div class="header-v-divider"></div>
-        <button class="grades__close-btn" @click="$emit('close')" title="Close Assessment View">
-          <X :size="16" />
+          <Trash2 :size="13" />
         </button>
       </div>
     </div>
 
-    <!-- Glassmorphic Hero Banner Card -->
-    <div class="assessment-hero-card" :style="{ borderTop: '4px solid ' + unitColor }">
-      <div class="hero-identity">
-        <div class="hero-icon-wrap" :style="{ background: unitColor + '18', color: unitColor }">
-          <FileText :size="24" />
-        </div>
-        <div class="hero-details">
-          <h1 class="hero-title">{{ currentAssessment.name }}</h1>
-          <div class="hero-meta-row">
-            <span class="meta-chip meta-chip--type">{{ currentAssessment.assessmentType }}</span>
-            <span class="meta-chip meta-chip--points"><Target :size="12" /> /{{ currentAssessment.totalPoints }}</span>
-            <span v-if="currentAssessment.unitId" class="meta-chip meta-chip--unit" :style="{ color: unitColor }">
-              <Hash :size="12" /> {{ getUnitName(currentAssessment.unitId) }}
-            </span>
-            <span class="meta-chip meta-chip--date"><Calendar :size="12" /> {{ formatLocalDisplay(currentAssessment.date) }}</span>
-            <span v-if="currentAssessment.weight" class="meta-chip meta-chip--weight">🔥 {{ currentAssessment.weight }}% Weight</span>
-          </div>
-          <p v-if="currentAssessment.description" class="hero-description">{{ currentAssessment.description }}</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- 4 KPI Summary Stat Cards -->
-    <div class="assessment-kpi-grid">
-      <!-- Stat 1: Class Average -->
-      <div class="kpi-card">
-        <div class="kpi-card__header">
-          <span class="kpi-card__label">Class Average</span>
-          <div class="kpi-card__icon kpi-card__icon--blue"><BarChart3 :size="16" /></div>
-        </div>
-        <div class="kpi-card__body">
-          <span class="kpi-card__value" :style="{ color: getHeatTextColor(liveAssessmentStats.mean) }">
-            {{ liveAssessmentStats.mean != null ? liveAssessmentStats.mean + '%' : '—' }}
-          </span>
-          <span v-if="liveAssessmentStats.average != null" class="kpi-card__subtext">
-            {{ liveAssessmentStats.average }} / {{ currentAssessment.totalPoints }} pts
-          </span>
-          <span v-else class="kpi-card__subtext">No grades entered yet</span>
-        </div>
+    <!-- Compact 1-Row Metrics & Distribution Strip -->
+    <div class="compact-metrics-strip">
+      <div class="metric-pill">
+        <span class="metric-pill__label">CLASS AVG</span>
+        <strong class="metric-pill__val" :style="{ color: getHeatTextColor(liveAssessmentStats.mean) }">
+          {{ liveAssessmentStats.mean != null ? liveAssessmentStats.mean + '%' : '—' }}
+        </strong>
+        <span v-if="liveAssessmentStats.average != null" class="metric-pill__sub">({{ liveAssessmentStats.average }}/{{ currentAssessment.totalPoints }} pts)</span>
       </div>
 
-      <!-- Stat 2: Entry Progress -->
-      <div class="kpi-card">
-        <div class="kpi-card__header">
-          <span class="kpi-card__label">Entry Progress</span>
-          <div class="kpi-card__icon kpi-card__icon--green"><CheckCircle2 :size="16" /></div>
-        </div>
-        <div class="kpi-card__body">
-          <span class="kpi-card__value">
-            {{ currentAssessmentSummary?.enteredCount || levelBreakdown.graded }} <small>/ {{ currentAssessmentSummary?.totalStudents || sortedRoster.length }}</small>
-          </span>
-          <div class="kpi-progress-bar">
-            <div class="kpi-progress-fill" :style="{ width: entryPercent + '%' }"></div>
-          </div>
-        </div>
+      <div class="metric-divider"></div>
+
+      <div class="metric-pill">
+        <span class="metric-pill__label">PROGRESS</span>
+        <strong class="metric-pill__val">{{ currentAssessmentSummary?.enteredCount || levelBreakdown.graded }}/{{ currentAssessmentSummary?.totalStudents || sortedRoster.length }}</strong>
       </div>
 
-      <!-- Stat 3: Score Range -->
-      <div class="kpi-card">
-        <div class="kpi-card__header">
-          <span class="kpi-card__label">Score Range</span>
-          <div class="kpi-card__icon kpi-card__icon--purple"><TrendingUp :size="16" /></div>
-        </div>
-        <div class="kpi-card__body">
-          <div class="kpi-card__hero-row" v-if="liveAssessmentStats.median != null">
-            <span class="kpi-card__value">{{ liveAssessmentStats.median }}%</span>
-            <span class="kpi-card__hero-sub">Median</span>
-          </div>
-          <span class="kpi-card__value" v-else>—</span>
+      <div class="metric-divider"></div>
 
-          <div class="kpi-range-pills" v-if="liveAssessmentStats.highest != null">
-            <span class="range-pill range-pill--high" title="Highest score achieved">
-              🟢 High: <strong>{{ liveAssessmentStats.highest }}%</strong>
-            </span>
-            <span class="range-pill range-pill--low" title="Lowest score achieved">
-              🔴 Low: <strong>{{ liveAssessmentStats.lowest }}%</strong>
-            </span>
-          </div>
-          <span v-else class="kpi-card__subtext">No grade data</span>
-        </div>
+      <div class="metric-pill" v-if="liveAssessmentStats.median != null">
+        <span class="metric-pill__label">MEDIAN</span>
+        <strong class="metric-pill__val">{{ liveAssessmentStats.median }}%</strong>
+        <span class="metric-pill__sub">(High: {{ liveAssessmentStats.highest }}% · Low: {{ liveAssessmentStats.lowest }}%)</span>
       </div>
 
-      <!-- Stat 4: Action Items -->
-      <div class="kpi-card">
-        <div class="kpi-card__header">
-          <span class="kpi-card__label">Alerts &amp; Action</span>
-          <div class="kpi-card__icon kpi-card__icon--amber"><AlertCircle :size="16" /></div>
-        </div>
-        <div class="kpi-card__body">
-          <div class="kpi-alerts-row">
-            <span class="alert-tag alert-tag--danger" @click="activeFilter = 'missing'">
-              ⚠️ {{ levelBreakdown.missing }} Missing
-            </span>
-            <span class="alert-tag alert-tag--warning" @click="activeFilter = 'at-risk'">
-              🔴 {{ levelBreakdown.level1 }} At-Risk (&lt;50%)
-            </span>
-          </div>
-        </div>
-      </div>
-    </div>
+      <div class="metric-divider" v-if="levelBreakdown.graded > 0"></div>
 
-    <!-- Grade Performance Distribution Bar -->
-    <div class="distribution-card" v-if="levelBreakdown.graded > 0">
-      <div class="distribution-header">
-        <span class="distribution-title">Grade Performance Tiers</span>
-        <!-- Interactive Legend Pills -->
-        <div class="distribution-legend">
-          <span 
-            class="legend-pill legend-pill--l4" 
-            :class="{ 'legend-pill--active': activeFilter === 'l4' }"
+      <!-- Self-Contained Mini Stacked Bar Pill -->
+      <div class="mini-stacked-bar-container" v-if="levelBreakdown.graded > 0">
+        <span class="mini-bar-label">TIERS:</span>
+        <div class="mini-stacked-bar" title="Click segment to filter table by performance level">
+          <div 
+            v-if="levelBreakdown.level4 > 0"
+            class="mini-bar-segment mini-bar-segment--l4" 
+            :style="{ flex: levelBreakdown.level4 }" 
+            :class="{ 'mini-bar-segment--active': activeFilter === 'l4' }"
+            :title="'Level 4 (80%+): ' + levelBreakdown.level4 + ' students'"
             @click="activeFilter = activeFilter === 'l4' ? 'all' : 'l4'"
           >
-            Level 4 (80%+): {{ levelBreakdown.level4 }}
-          </span>
-          <span 
-            class="legend-pill legend-pill--l3" 
-            :class="{ 'legend-pill--active': activeFilter === 'l3' }"
+            <span>{{ levelBreakdown.level4 }}</span>
+          </div>
+          <div 
+            v-if="levelBreakdown.level3 > 0"
+            class="mini-bar-segment mini-bar-segment--l3" 
+            :style="{ flex: levelBreakdown.level3 }" 
+            :class="{ 'mini-bar-segment--active': activeFilter === 'l3' }"
+            :title="'Level 3 (70-79%): ' + levelBreakdown.level3 + ' students'"
             @click="activeFilter = activeFilter === 'l3' ? 'all' : 'l3'"
           >
-            Level 3 (70-79%): {{ levelBreakdown.level3 }}
-          </span>
-          <span 
-            class="legend-pill legend-pill--l2" 
-            :class="{ 'legend-pill--active': activeFilter === 'l2' }"
+            <span>{{ levelBreakdown.level3 }}</span>
+          </div>
+          <div 
+            v-if="levelBreakdown.level2 > 0"
+            class="mini-bar-segment mini-bar-segment--l2" 
+            :style="{ flex: levelBreakdown.level2 }" 
+            :class="{ 'mini-bar-segment--active': activeFilter === 'l2' }"
+            :title="'Level 2 (60-69%): ' + levelBreakdown.level2 + ' students'"
             @click="activeFilter = activeFilter === 'l2' ? 'all' : 'l2'"
           >
-            Level 2 (60-69%): {{ levelBreakdown.level2 }}
-          </span>
-          <span 
-            class="legend-pill legend-pill--l1" 
-            :class="{ 'legend-pill--active': activeFilter === 'l1' }"
+            <span>{{ levelBreakdown.level2 }}</span>
+          </div>
+          <div 
+            v-if="levelBreakdown.level1 > 0"
+            class="mini-bar-segment mini-bar-segment--l1" 
+            :style="{ flex: levelBreakdown.level1 }" 
+            :class="{ 'mini-bar-segment--active': activeFilter === 'l1' }"
+            :title="'Level 1 (<60%): ' + levelBreakdown.level1 + ' students'"
             @click="activeFilter = activeFilter === 'l1' ? 'all' : 'l1'"
           >
-            Level 1 (&lt;60%): {{ levelBreakdown.level1 }}
-          </span>
-          <span 
-            v-if="levelBreakdown.missing > 0"
-            class="legend-pill legend-pill--missing" 
-            :class="{ 'legend-pill--active': activeFilter === 'missing' }"
-            @click="activeFilter = activeFilter === 'missing' ? 'all' : 'missing'"
-          >
-            Missing: {{ levelBreakdown.missing }}
-          </span>
+            <span>{{ levelBreakdown.level1 }}</span>
+          </div>
         </div>
       </div>
 
-      <!-- Clean Visual Segmented Bar -->
-      <div class="distribution-bar">
-        <div 
-          class="dist-segment dist-segment--l4" 
-          :style="{ flex: levelBreakdown.level4 || 0.02 }" 
-          :title="'Level 4 (80%+): ' + levelBreakdown.level4 + ' students'"
-          @click="activeFilter = activeFilter === 'l4' ? 'all' : 'l4'"
-        ></div>
-        <div 
-          class="dist-segment dist-segment--l3" 
-          :style="{ flex: levelBreakdown.level3 || 0.02 }" 
-          :title="'Level 3 (70-79%): ' + levelBreakdown.level3 + ' students'"
-          @click="activeFilter = activeFilter === 'l3' ? 'all' : 'l3'"
-        ></div>
-        <div 
-          class="dist-segment dist-segment--l2" 
-          :style="{ flex: levelBreakdown.level2 || 0.02 }" 
-          :title="'Level 2 (60-69%): ' + levelBreakdown.level2 + ' students'"
-          @click="activeFilter = activeFilter === 'l2' ? 'all' : 'l2'"
-        ></div>
-        <div 
-          class="dist-segment dist-segment--l1" 
-          :style="{ flex: levelBreakdown.level1 || 0.02 }" 
-          :title="'Level 1 (<60%): ' + levelBreakdown.level1 + ' students'"
-          @click="activeFilter = activeFilter === 'l1' ? 'all' : 'l1'"
-        ></div>
-        <div 
-          v-if="levelBreakdown.missing > 0"
-          class="dist-segment dist-segment--missing" 
-          :style="{ flex: levelBreakdown.missing }" 
-          :title="'Missing: ' + levelBreakdown.missing + ' students'"
-          @click="activeFilter = activeFilter === 'missing' ? 'all' : 'missing'"
-        ></div>
+      <div class="compact-alerts-group">
+        <span v-if="levelBreakdown.missing > 0" class="alert-chip alert-chip--missing" @click="activeFilter = 'missing'">
+          ⚠️ {{ levelBreakdown.missing }} Missing
+        </span>
+        <span v-if="levelBreakdown.level1 > 0" class="alert-chip alert-chip--risk" @click="activeFilter = 'at-risk'">
+          🔴 {{ levelBreakdown.level1 }} At-Risk (&lt;50%)
+        </span>
       </div>
     </div>
 
@@ -1568,4 +1475,155 @@ const filteredRoster = computed(() => {
   display: flex;
   justify-content: flex-end;
 }
+
+/* Compact Header & Metrics Strip */
+.compact-header-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 10px 14px;
+  margin-bottom: 8px;
+  gap: 12px;
+}
+
+.compact-header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.compact-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+  line-height: 1.2;
+}
+
+.compact-meta-chips {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.compact-metrics-strip {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  background: var(--surface-subtle, rgba(241, 245, 249, 0.6));
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 8px 14px;
+  margin-bottom: 10px;
+}
+
+.metric-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.82rem;
+}
+
+.metric-pill__label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--text-tertiary, #94a3b8);
+  text-transform: uppercase;
+}
+
+.metric-pill__val {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.metric-pill__sub {
+  font-size: 0.76rem;
+  color: var(--text-secondary);
+}
+
+.metric-divider {
+  width: 1px;
+  height: 18px;
+  background: var(--border);
+}
+
+.mini-stacked-bar-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mini-bar-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--text-tertiary, #94a3b8);
+  letter-spacing: 0.04em;
+}
+
+.mini-stacked-bar {
+  display: flex;
+  height: 20px;
+  min-width: 140px;
+  max-width: 200px;
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--border);
+  cursor: pointer;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.12);
+}
+
+.mini-bar-segment {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-size: 0.72rem;
+  font-weight: 800;
+  line-height: 1;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.mini-bar-segment:hover, .mini-bar-segment--active {
+  filter: brightness(1.15);
+  box-shadow: inset 0 0 0 1.5px rgba(255,255,255,0.6);
+}
+
+.mini-bar-segment--l4 { background-color: #34c759; }
+.mini-bar-segment--l3 { background-color: #3b82f6; }
+.mini-bar-segment--l2 { background-color: #f59e0b; }
+.mini-bar-segment--l1 { background-color: #ef4444; }
+.tier-chip--l1 { background: rgba(239, 68, 68, 0.12); color: #dc2626; }
+
+.tier-chip:hover, .tier-chip--active {
+  transform: translateY(-1px);
+  filter: brightness(0.95);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.compact-alerts-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.alert-chip {
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.alert-chip--missing { background: rgba(239, 68, 68, 0.12); color: #dc2626; }
+.alert-chip--risk { background: rgba(245, 158, 11, 0.12); color: #d97706; }
 </style>
