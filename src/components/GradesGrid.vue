@@ -9,7 +9,7 @@
           :class="{ 'grid-chip--active': selectedUnitId === null }"
           @click="selectedUnitId = null"
         >
-          All Units ({{ assessments.filter(a => a.target !== 'individual').length }})
+          All Units
         </button>
         <button 
           v-for="u in availableUnits" 
