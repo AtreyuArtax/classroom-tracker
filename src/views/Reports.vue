@@ -6,10 +6,14 @@
       <StudentSidebar 
         :students="sidebarStudents"
         :selected-student-id="dossier.selectedStudentId.value"
-        :show-academics="false"
+        :show-academics="rightMode === 'dossier'"
+        :is-privacy-mode="isPrivacyMode"
+        :class-grades="classGrades"
+        :student-trends="studentTrends"
         :is-collapsed="isSidebarCollapsed"
         @select-student="onSelectStudent"
         @navigate="$emit('navigate', $event)"
+        @toggle-privacy="isPrivacyMode = !isPrivacyMode"
         @toggle-collapse="isSidebarCollapsed = !isSidebarCollapsed"
       />
 
@@ -182,8 +186,8 @@ import PrintCalendarModal from '../components/reports/PrintCalendarModal.vue'
 import ReportsClassOverview from '../components/reports/ReportsClassOverview.vue'
 import ReportsBatchPrintModal from '../components/reports/ReportsBatchPrintModal.vue'
 import ReportsPrintHub from '../components/reports/ReportsPrintHub.vue'
-import { calculateClassGrades, getAssessmentsByClass } from '../db/gradebookService.js'
-import { loadGradebook, assessments as gbAssessments } from '../composables/useGradebook.js'
+import { calculateClassGrades, getAssessmentsByClass, getAssessmentPercentage } from '../db/gradebookService.js'
+import { loadGradebook, assessments as gbAssessments, gradeMap } from '../composables/useGradebook.js'
 
 import { 
   Chart as ChartJS, 
@@ -247,6 +251,32 @@ watch(activeClass, async (newClass, oldClass) => {
 })
 
 const isSidebarCollapsed = ref(false)
+const isPrivacyMode = ref(false)
+
+const studentTrends = computed(() => {
+  if (!reportClass.value?.students || !gbAssessments.value || !gradeMap.value) return {}
+  
+  const productAssessments = [...gbAssessments.value]
+    .filter(a => a.assessmentType === 'product' && !a.excluded && a.target !== 'individual')
+    .sort((a, b) => new Date(a.date) - new Date(b.date))
+    
+  if (productAssessments.length === 0) return {}
+  
+  const trends = {}
+  Object.keys(reportClass.value.students).forEach(studentId => {
+    if (reportClass.value.students[studentId].archived) return
+    const data = []
+    productAssessments.forEach(a => {
+      const grade = gradeMap.value[a.assessmentId]?.[studentId]
+      const percentage = getAssessmentPercentage ? getAssessmentPercentage(a, grade) : null
+      if (percentage !== null) {
+        data.push(percentage)
+      }
+    })
+    trends[studentId] = data
+  })
+  return trends
+})
 
 watch(isSidebarCollapsed, () => {
   setTimeout(() => {

@@ -125,8 +125,8 @@
     "semantic_hash": "8e50e6b9c81d179509f72782b70b61fa"
   },
   "src/components/StudentSidebar.vue": {
-    "mtime": 1782482775.8079267,
-    "ast_hash": "22600bb91e4afdf5cc3152d8f6c0c582",
+    "mtime": 1785252878.607261,
+    "ast_hash": "487af58b1dca47d6ed6547315e7801d4",
     "semantic_hash": ""
   },
   "src/components/StudentTrendGraph.vue": {
@@ -185,8 +185,8 @@
     "semantic_hash": "561bf8bd5746113ff902a94fb2a31f6e"
   },
   "src/components/dossier/Student360.vue": {
-    "mtime": 1785182812.7545328,
-    "ast_hash": "35ba003fd37645cce840e889dae670cd",
+    "mtime": 1785252887.3773713,
+    "ast_hash": "1adae89e683e5266981aa6699b1474b2",
     "semantic_hash": ""
   },
   "src/components/dossier/Student360Header.vue": {
@@ -345,13 +345,13 @@
     "semantic_hash": ""
   },
   "src/views/Grades.vue": {
-    "mtime": 1785246497.2165504,
-    "ast_hash": "ab34da5e6ab848d9768306b6a6307e00",
+    "mtime": 1785252757.772062,
+    "ast_hash": "42b598f7f709aeb1f039291c4e691bc7",
     "semantic_hash": ""
   },
   "src/views/Reports.vue": {
-    "mtime": 1785246047.854297,
-    "ast_hash": "0527eb43f36aeb77559916c99625655b",
+    "mtime": 1785253137.6129673,
+    "ast_hash": "c4432b0cce4166f575fd93669787d179",
     "semantic_hash": ""
   },
   "src/views/ScanStation.vue": {

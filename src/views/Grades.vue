@@ -719,7 +719,9 @@ onMounted(async () => {
 
 .grades__main {
   flex: 1;
+  min-width: 0;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 24px;
   display: flex;
   flex-direction: column;

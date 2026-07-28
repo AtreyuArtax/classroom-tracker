@@ -84,10 +84,10 @@
               <span 
                 v-if="classGrades && classGrades[student.studentId]" 
                 class="student-sidebar__roster-grade"
+                :class="{ 'student-sidebar__roster-grade--privacy': isPrivacyMode }"
                 :style="{ color: isPrivacyMode ? 'var(--text-secondary)' : getGradeColor(classGrades[student.studentId].overallGrade) }"
               >
-                <template v-if="isPrivacyMode">**</template>
-                <template v-else>{{ formatGrade(classGrades[student.studentId].overallGrade) }}</template>
+                {{ formatGrade(classGrades[student.studentId].overallGrade) }}
               </span>
               <span v-else class="student-sidebar__roster-grade student-sidebar__roster-grade--empty">
                 —
@@ -389,6 +389,13 @@ function getSparklinePath(data, width, height) {
   font-size: 0.85rem;
   font-weight: 700;
   flex-shrink: 0;
+  transition: filter 0.2s ease, opacity 0.2s ease;
+}
+
+.student-sidebar__roster-grade--privacy {
+  filter: blur(5px);
+  user-select: none;
+  opacity: 0.75;
 }
 
 .student-sidebar__roster-grade--empty {

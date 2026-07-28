@@ -801,6 +801,8 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   height: 100%;
+  width: 100%;
+  min-width: 0;
   background: var(--bg-secondary);
   overflow: hidden;
   position: relative;
@@ -892,7 +894,10 @@ onUnmounted(() => {
 
 .student-360__content {
   flex: 1;
-  overflow: auto;
+  min-width: 0;
+  width: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
   padding: 24px;
 }
 
@@ -906,6 +911,8 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  min-width: 0;
+  width: 100%;
 }
 
 .student-360__stats-grid {
@@ -950,10 +957,15 @@ onUnmounted(() => {
   display: flex;
   gap: 20px;
   margin-bottom: 24px;
+  min-width: 0;
+  width: 100%;
 }
 
 .trend-item {
-  flex: 1;
+  flex: 1 1 0px;
+  min-width: 0;
+  width: 100%;
+  overflow: hidden;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
