@@ -309,14 +309,17 @@ function onDrop(evt) {
   justify-content: center;
   gap:             2px;
 
-  min-width:  44px;   /* §2 touch target */
-  min-height: 44px;
+  width:      100%;
+  height:     100%;
+  min-width:  0;
+  min-height: 0;
+  overflow:   hidden;
 
   background:    var(--surface);
   border-radius: var(--radius-md);
   box-shadow:    0 2px 6px rgba(0,0,0,0.03);
   border:        1px solid var(--border);
-  padding:       8px 10px;
+  padding:       4px 6px;
   cursor:        pointer;
 
   /* smooth transition for flash */

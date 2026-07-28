@@ -59,6 +59,19 @@
 
       <!-- Grid fills all remaining space -->
       <section class="dashboard__grid-area" aria-label="Seating chart">
+        <!-- Test Day Active Banner -->
+        <div v-if="activeClass && isTestDay" class="dashboard__test-day-banner">
+          <div class="dashboard__test-day-banner-content">
+            <CalendarCheck :size="16" class="dashboard__test-day-banner-icon" />
+            <span class="dashboard__test-day-banner-text">
+              <strong>Test Day Active</strong> — Attendance, lates, hall departures & incidents are tagged for evaluation analytics.
+            </span>
+          </div>
+          <button class="dashboard__test-day-banner-dismiss" @click="isTestDay = false" title="Turn off Test Day">
+            Turn Off
+          </button>
+        </div>
+
         <SeatingGrid v-if="activeClass" />
         <div v-else-if="classList.length === 0" class="dashboard__getting-started">
           <div class="dashboard__getting-started-card">
@@ -469,9 +482,62 @@ watch(profileStudent, (student) => {
 
 /* ── Grid area ───────────────────────────────────────────────────── */
 .dashboard__grid-area {
-  flex:     1;
-  overflow: auto;
-  padding:  8px;
+  flex:           1;
+  display:        flex;
+  flex-direction: column;
+  overflow:       hidden;
+  padding:        8px;
+  min-height:     0;
+}
+
+/* ── Test Day Active Banner ────────────────────────────────────────── */
+.dashboard__test-day-banner {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 12px;
+  margin-bottom: 6px;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(139, 92, 246, 0.12));
+  border: 1px solid rgba(99, 102, 241, 0.28);
+  border-radius: var(--radius-md);
+  color: var(--text);
+  font-size: 0.84rem;
+  backdrop-filter: blur(8px);
+}
+
+.dashboard__test-day-banner-content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.dashboard__test-day-banner-icon {
+  color: #6366f1;
+  flex-shrink: 0;
+}
+
+.dashboard__test-day-banner-text {
+  line-height: 1.3;
+}
+
+.dashboard__test-day-banner-dismiss {
+  background: rgba(99, 102, 241, 0.14);
+  color: #6366f1;
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.dashboard__test-day-banner-dismiss:hover {
+  background: #6366f1;
+  color: white;
 }
 
 /* ── Empty state ─────────────────────────────────────────────────── */

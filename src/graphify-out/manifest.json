@@ -20,8 +20,8 @@
     "semantic_hash": ""
   },
   "components/DeskTile.vue": {
-    "mtime": 1785185763.2939973,
-    "ast_hash": "fd000e8be4289137b4c064e5bf657a3d",
+    "mtime": 1785233959.7570484,
+    "ast_hash": "3f4b3ccfa42769491d1676812bfe05df",
     "semantic_hash": ""
   },
   "components/EventNoteModal.vue": {
@@ -70,8 +70,8 @@
     "semantic_hash": ""
   },
   "components/SeatingGrid.vue": {
-    "mtime": 1777894110.436209,
-    "ast_hash": "b72b19d8cdf54124a493c9bf6e14eff6",
+    "mtime": 1785186400.9816215,
+    "ast_hash": "63320eb4dbfa3d0647497fb2845da6ed",
     "semantic_hash": ""
   },
   "components/StudentProfileModal.vue": {
@@ -480,8 +480,8 @@
     "semantic_hash": ""
   },
   "views/Dashboard.vue": {
-    "mtime": 1785185757.9174576,
-    "ast_hash": "90626a2fd7eaecb8b88c55972cd71731",
+    "mtime": 1785233879.4657512,
+    "ast_hash": "9e123cae532294ca0f606b7646cef74d",
     "semantic_hash": ""
   },
   "views/Grades.vue": {

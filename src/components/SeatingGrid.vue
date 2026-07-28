@@ -96,12 +96,14 @@ async function onSeatDrop({ studentId, fromRow, fromCol, toRow, toCol, toStudent
 
 <style scoped>
 .seating-grid {
-  display: grid;
-  gap:     8px;
-  padding: 12px;
+  display:    grid;
+  gap:        6px;
+  padding:    4px;
 
-  /* Grid fills the available space in the dashboard */
-  width:  100%;
-  height: 100%;
+  /* Grid fills the available space in the dashboard without scrolling */
+  width:      100%;
+  height:     100%;
+  flex:       1;
+  min-height: 0;
 }
 </style>
