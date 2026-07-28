@@ -12,18 +12,6 @@
           {{ studentsOut.length }} out
         </div>
         
-        <!-- Toggle Pool Button -->
-        <button 
-          v-if="activeClass"
-          class="dashboard__pool-toggle" 
-          @click="isPoolOpen = !isPoolOpen"
-          :class="{ 'dashboard__pool-toggle--active': isPoolOpen }"
-          title="Toggle Unassigned List"
-        >
-          <Users :size="20" />
-          <span class="dashboard__pool-toggle-label">Pool</span>
-        </button>
-
         <!-- Test Day Button -->
         <button
           v-if="activeClass"
@@ -36,17 +24,30 @@
           <span class="dashboard__test-day-label">Test Day</span>
         </button>
 
-        <UndoButton />
-
         <!-- QR Scanner Toggle -->
         <button 
-          v-if="activeClass"
+          v-if="activeClass && showScannerButton"
           class="dashboard__qr-btn" 
           @click="isScannerOpen = !isScannerOpen"
           :class="{ 'dashboard__qr-btn--active': isScannerOpen }"
-          title="Toggle Student Scanner"
+          title="Toggle Student Kiosk Scanner"
         >
           <Scan :size="20" />
+          <span class="dashboard__qr-label">Scanner</span>
+        </button>
+
+        <UndoButton />
+
+        <!-- Toggle Unassigned Roster Button -->
+        <button 
+          v-if="activeClass"
+          class="dashboard__pool-toggle" 
+          @click="isPoolOpen = !isPoolOpen"
+          :class="{ 'dashboard__pool-toggle--active': isPoolOpen }"
+          title="Toggle Unassigned Students Roster"
+        >
+          <Users :size="20" />
+          <span class="dashboard__pool-toggle-label">Unassigned</span>
         </button>
       </div>
     </header>
@@ -203,6 +204,7 @@ const {
   logAssessmentEvent,
   isTestDay,
   isScannerOpen,
+  showScannerButton,
   getClass,
 } = useClassroom()
 
@@ -436,7 +438,8 @@ watch(profileStudent, (student) => {
 
 @media (max-width: 1000px) {
   .dashboard__pool-toggle-label,
-  .dashboard__test-day-label {
+  .dashboard__test-day-label,
+  .dashboard__qr-label {
     display: none;
   }
 }
@@ -460,13 +463,16 @@ watch(profileStudent, (student) => {
   display:         flex;
   align-items:     center;
   justify-content: center;
-  width:           44px;
-  height:          44px;
+  gap:             6px;
+  padding:         8px 12px;
   background:      var(--bg-secondary);
   border:          1px solid var(--border);
   border-radius:   var(--radius-md);
+  font-size:       0.85rem;
+  font-weight:     600;
   color:           var(--text);
   cursor:          pointer;
+  min-height:      44px;
   transition:      all 0.15s ease;
 }
 

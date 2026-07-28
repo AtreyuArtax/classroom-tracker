@@ -140,9 +140,9 @@
     "semantic_hash": ""
   },
   "src/components/UndoButton.vue": {
-    "mtime": 1776472682.8665009,
-    "ast_hash": "d68f654c7c89b8d8b719a9a71605edf6",
-    "semantic_hash": "d68f654c7c89b8d8b719a9a71605edf6"
+    "mtime": 1785247629.4527707,
+    "ast_hash": "f55dfc73da072ca6327c2e8b73b00f96",
+    "semantic_hash": ""
   },
   "src/components/YearSemesterSelector.vue": {
     "mtime": 1776472682.8665671,
@@ -245,8 +245,8 @@
     "semantic_hash": "68f077cda9561ec51fbe56d0aa61fb3e"
   },
   "src/composables/useClassroom.js": {
-    "mtime": 1785185570.406028,
-    "ast_hash": "b13eb4a9105cb679cbf061103dfe9c27",
+    "mtime": 1785247834.2212322,
+    "ast_hash": "6cd4efb9119e1dac6bb25c9375680901",
     "semantic_hash": ""
   },
   "src/composables/useGradebook.js": {
@@ -340,8 +340,8 @@
     "semantic_hash": "322ce1010d35f76a380b2df551af302f"
   },
   "src/views/Dashboard.vue": {
-    "mtime": 1785233993.1753137,
-    "ast_hash": "aa9c43c9795d89614c3ab1bdb865cf54",
+    "mtime": 1785248011.768136,
+    "ast_hash": "3e3c69fb8d499a4ddfeda3d6fc0513bd",
     "semantic_hash": ""
   },
   "src/views/Grades.vue": {
@@ -360,8 +360,8 @@
     "semantic_hash": "8ca2dc5307b5ae89c3f9ade5a9f052c4"
   },
   "src/views/Setup.vue": {
-    "mtime": 1784943940.340882,
-    "ast_hash": "89781ec1a633c893ca621ed31a1ed1a5",
+    "mtime": 1785247877.916735,
+    "ast_hash": "c91a35369e14438261eaf84fb5fbbbe0",
     "semantic_hash": ""
   },
   "tmp/test_dates.js": {
@@ -440,8 +440,8 @@
     "semantic_hash": ""
   },
   "src/composables/useClassroomState.js": {
-    "mtime": 1784230817.1785376,
-    "ast_hash": "92170b6635021d7763468eeb159d98dc",
+    "mtime": 1785247797.7081828,
+    "ast_hash": "b2f99b07165b31be7197e129eff81382",
     "semantic_hash": ""
   },
   "src/composables/useRosterOperations.js": {

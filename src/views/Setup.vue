@@ -338,6 +338,15 @@
                 </label>
               </div>
 
+              <!-- Show/Hide Kiosk Scanner Toggle -->
+              <div class="setup__switch-container" style="margin-top: 14px; padding-top: 10px; border-top: 1px solid var(--border); display: flex; align-items: center; gap: 10px;">
+                <label class="setup__switch" style="margin: 0;">
+                  <input type="checkbox" v-model="localShowScannerButton" @change="saveScannerConfig" />
+                  <span class="setup__switch-slider"></span>
+                </label>
+                <span class="setup__switch-label" style="font-size: 0.85rem; font-weight: 600;">Show Kiosk Scanner Button on Dashboard</span>
+              </div>
+
               <!-- Manual Override Reset -->
               <div v-if="activeClass" class="setup__attendance-actions" style="margin-top: auto; padding-top: 12px; border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 8px;">
                 <button class="setup__btn-ghost" style="height: 36px; padding: 0 16px; font-size: 0.85rem; min-height: unset; width: 100%; margin: 0;" @click="onMarkAllPresent">
@@ -565,6 +574,8 @@ const {
   attendanceMode,
   latenessGracePeriod,
   periodStartTimes,
+  showScannerButton,
+  updateShowScannerButton,
   switchClass,
   createClass,
   archiveClass,
@@ -635,9 +646,15 @@ async function saveTeacherName() { await updateTeacherName(localTeacherName.valu
 // --- Attendance configuration ---
 const localAttendanceMode = ref(attendanceMode.value)
 const localGracePeriod = ref(latenessGracePeriod.value)
+const localShowScannerButton = ref(showScannerButton.value)
 
 watch(attendanceMode, (v) => { localAttendanceMode.value = v }, { immediate: true })
 watch(latenessGracePeriod, (v) => { localGracePeriod.value = v }, { immediate: true })
+watch(showScannerButton, (v) => { localShowScannerButton.value = v }, { immediate: true })
+
+async function saveScannerConfig() {
+  await updateShowScannerButton(localShowScannerButton.value)
+}
 
 const isAttendanceModeModalOpen = ref(false)
 const pendingAttendanceMode = ref(null)

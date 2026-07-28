@@ -1,27 +1,23 @@
 <template>
-  <button
-    class="undo-btn"
-    :class="{ 'undo-btn--disabled': !canUndo }"
-    :disabled="!canUndo"
-    aria-label="Undo last action"
-    @click="onUndo"
-  >
-    <span class="undo-btn__icon" aria-hidden="true">↩</span>
-    <span class="undo-btn__label">Undo</span>
-  </button>
+  <Transition name="fade-undo">
+    <button
+      v-if="canUndo"
+      class="undo-btn"
+      aria-label="Undo last action"
+      @click="onUndo"
+    >
+      <span class="undo-btn__icon" aria-hidden="true">↩</span>
+      <span class="undo-btn__label">Undo</span>
+    </button>
+  </Transition>
 </template>
 
 <script setup>
 /**
  * UndoButton.vue
  *
- * Always rendered in the Dashboard header.
- * Visually disabled (not hidden) when the undo stack is empty.
- *
- * CLAUDE.md §9:
- *  - Undo button always visible during View A (Dashboard)
- *  - Stack is in-memory only — composable handles all logic
- *  - No direct imports from src/db/
+ * Rendered in the Dashboard header.
+ * Conditionally visible only when the undo stack contains reversible actions.
  */
 
 import { useUndo } from '../composables/useUndo.js'
@@ -55,22 +51,27 @@ async function onUndo() {
   transition: opacity 0.2s ease, box-shadow 0.15s ease, transform 0.1s ease;
 }
 
-.undo-btn:active:not(:disabled) {
+.undo-btn:hover {
+  background: var(--surface-hover, rgba(0, 0, 0, 0.04));
+}
+
+.undo-btn:active {
   transform:  scale(0.95);
   box-shadow: none;
 }
 
-.undo-btn--disabled {
-  opacity: 0.35;
-  cursor:  default;
-}
-
 .undo-btn__icon {
   font-size: 1.1rem;
-  line-height: 1;
 }
 
-.undo-btn__label {
-  font-size: 0.85rem;
+.fade-undo-enter-active,
+.fade-undo-leave-active {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.fade-undo-enter-from,
+.fade-undo-leave-to {
+  opacity: 0;
+  transform: scale(0.9);
 }
 </style>

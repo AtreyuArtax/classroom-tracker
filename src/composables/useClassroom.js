@@ -57,6 +57,7 @@ import {
   attendanceMode, 
   latenessGracePeriod, 
   periodStartTimes, 
+  showScannerButton,
   academicTerms, 
   nonSchoolDays, 
   isTestDay, 
@@ -485,6 +486,7 @@ async function init() {
     teacherName.value = settings.teacherName || ''
     attendanceMode.value = settings.attendanceMode || 'natural'
     latenessGracePeriod.value = settings.latenessGracePeriod !== undefined ? settings.latenessGracePeriod : 5
+    showScannerButton.value = settings.showScannerButton !== undefined ? settings.showScannerButton : true
     cloudModeEnabled.value = settings.cloudModeEnabled || false
     userCode.value = settings.userCode || ''
 
@@ -1257,6 +1259,16 @@ async function updateAttendanceConfig(mode, gracePeriod) {
 }
 
 /**
+ * Update global show scanner button preference.
+ */
+async function updateShowScannerButton(enabled) {
+    showScannerButton.value = enabled
+    const settings = await settingsService.getSettings()
+    settings.showScannerButton = enabled
+    await settingsService.saveSettings(settings)
+}
+
+/**
  * Update the global cloud configuration.
  */
 async function updateCloudConfig(enabled, code) {
@@ -1462,6 +1474,7 @@ export function useClassroom() {
         attendanceMode,
         latenessGracePeriod,
         periodStartTimes,
+        showScannerButton,
         isScannerOpen,
         autoStartRFID,
         maxStudentsOut,
@@ -1513,6 +1526,7 @@ export function useClassroom() {
         updateTeacherName,
         updatePeriodStartTimes,
         updateAttendanceConfig,
+        updateShowScannerButton,
         markAllPresentToday,
         handleRfidAttendanceScan,
         initializeRfidAttendance,
