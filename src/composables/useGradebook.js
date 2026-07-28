@@ -9,6 +9,9 @@ import { useMessage } from './useMessage.js'
 import * as gradebookService from '../db/gradebookService.js'
 import * as classService from '../db/classService.js'
 import { getGlobalMilestones, getGradeBuckets } from '../db/settingsService.js'
+import { useUndo } from './useUndo.js'
+
+const { push: pushUndo } = useUndo()
 
 // ─── Reactive State ──────────────────────────────────────────────────────────
 
@@ -415,9 +418,6 @@ export function refreshAllAssessmentStats() {
 export function enterGrade(assessmentId, studentId, pointsEarned, date = null, comment = '') {
   if (!activeClassRecord.value) return
   
-  const assessment = assessments.value.find(a => a.assessmentId === assessmentId)
-  // Note: We allow raw scores higher than total points for bonus marks and scaling
-  
   let grade = grades.value.find(g => Number(g.assessmentId) === Number(assessmentId) && String(g.studentId) === String(studentId))
   if (!grade) {
     grade = {
@@ -428,13 +428,14 @@ export function enterGrade(assessmentId, studentId, pointsEarned, date = null, c
   }
   
   const isFirst = (grade.attempts?.length || 0) === 0
-  grade.attempts.push({
+  const attemptObj = {
     attemptId: crypto.randomUUID(),
     pointsEarned,
     date: date || new Date().toISOString(),
     comment,
     isPrimary: isFirst
-  })
+  }
+  grade.attempts.push(attemptObj)
 
   // If a grade is entered, it is no longer missing
   const wasMissing = grade.missing
@@ -453,6 +454,41 @@ export function enterGrade(assessmentId, studentId, pointsEarned, date = null, c
       await gradebookService.updateGradeFlags(assessmentId, studentId, { missing: false })
     }
   })
+
+  // Push atomic attempt undo and redo operations
+  pushUndo(
+    async () => {
+      const g = grades.value.find(item => Number(item.assessmentId) === Number(assessmentId) && String(item.studentId) === String(studentId))
+      if (g) {
+        g.attempts = g.attempts.filter(a => a.attemptId !== attemptObj.attemptId)
+        if (wasMissing) g.missing = true
+        if (g.attempts.length === 0 && !g.missing && !g.excluded) {
+          grades.value = grades.value.filter(item => !(Number(item.assessmentId) === Number(assessmentId) && String(item.studentId) === String(studentId)))
+          await gradebookService.deleteGrade(assessmentId, studentId)
+        } else {
+          await gradebookService.saveFullGradeRecord(g)
+        }
+      }
+      triggerRef(grades)
+      refreshSingleStudent(studentId)
+      refreshSingleAssessmentStats(assessmentId)
+    },
+    async () => {
+      let g = grades.value.find(item => Number(item.assessmentId) === Number(assessmentId) && String(item.studentId) === String(studentId))
+      if (!g) {
+        g = { assessmentId: Number(assessmentId), studentId: String(studentId), classId: activeClassRecord.value.classId, missing: false, excluded: false, attempts: [] }
+        grades.value.push(g)
+      }
+      if (!g.attempts.some(a => a.attemptId === attemptObj.attemptId)) {
+        g.attempts.push(attemptObj)
+      }
+      g.missing = false
+      await gradebookService.saveFullGradeRecord(g)
+      triggerRef(grades)
+      refreshSingleStudent(studentId)
+      refreshSingleAssessmentStats(assessmentId)
+    }
+  )
 }
 
 
@@ -463,9 +499,13 @@ export function removeAttempt(assessmentId, studentId, attemptId) {
   if (!activeClassRecord.value) return
   
   const grade = grades.value.find(g => Number(g.assessmentId) === Number(assessmentId) && String(g.studentId) === String(studentId))
-  if (grade) {
-    grade.attempts = grade.attempts.filter(a => a.attemptId !== attemptId)
-  }
+  if (!grade) return
+
+  const attemptObj = grade.attempts.find(a => a.attemptId === attemptId)
+  if (!attemptObj) return
+
+  const attemptIndex = grade.attempts.findIndex(a => a.attemptId === attemptId)
+  grade.attempts = grade.attempts.filter(a => a.attemptId !== attemptId)
   
   triggerRef(grades)
   refreshSingleStudent(studentId)
@@ -473,6 +513,40 @@ export function removeAttempt(assessmentId, studentId, attemptId) {
   
   enqueueDBSave(`${assessmentId}_${studentId}_rem_${attemptId}`, () => 
     gradebookService.deleteAttempt(assessmentId, studentId, attemptId)
+  )
+
+  // Push atomic attempt deletion undo and redo operations
+  pushUndo(
+    async () => {
+      let g = grades.value.find(item => Number(item.assessmentId) === Number(assessmentId) && String(item.studentId) === String(studentId))
+      if (!g) {
+        g = { assessmentId: Number(assessmentId), studentId: String(studentId), classId: activeClassRecord.value.classId, missing: false, excluded: false, attempts: [] }
+        grades.value.push(g)
+      }
+      if (!g.attempts.some(a => a.attemptId === attemptId)) {
+        const insertAt = Math.min(attemptIndex, g.attempts.length)
+        g.attempts.splice(insertAt, 0, attemptObj)
+      }
+      await gradebookService.saveFullGradeRecord(g)
+      triggerRef(grades)
+      refreshSingleStudent(studentId)
+      refreshSingleAssessmentStats(assessmentId)
+    },
+    async () => {
+      const g = grades.value.find(item => Number(item.assessmentId) === Number(assessmentId) && String(item.studentId) === String(studentId))
+      if (g) {
+        g.attempts = g.attempts.filter(a => a.attemptId !== attemptId)
+        if (g.attempts.length === 0 && !g.missing && !g.excluded) {
+          grades.value = grades.value.filter(item => !(Number(item.assessmentId) === Number(assessmentId) && String(item.studentId) === String(studentId)))
+          await gradebookService.deleteGrade(assessmentId, studentId)
+        } else {
+          await gradebookService.saveFullGradeRecord(g)
+        }
+      }
+      triggerRef(grades)
+      refreshSingleStudent(studentId)
+      refreshSingleAssessmentStats(assessmentId)
+    }
   )
 }
 
@@ -521,6 +595,9 @@ export function updateAttemptComment(assessmentId, studentId, attemptId, comment
 export function clearGrade(assessmentId, studentId) {
   if (!activeClassRecord.value) return
   
+  const existingGrade = grades.value.find(g => Number(g.assessmentId) === Number(assessmentId) && String(g.studentId) === String(studentId))
+  const prevSnapshot = existingGrade ? JSON.parse(JSON.stringify(existingGrade)) : null
+
   grades.value = grades.value.filter(g => !(Number(g.assessmentId) === Number(assessmentId) && String(g.studentId) === String(studentId)))
   
   triggerRef(grades)
@@ -530,6 +607,25 @@ export function clearGrade(assessmentId, studentId) {
   enqueueDBSave(`${assessmentId}_${studentId}_clear`, () => 
     gradebookService.deleteGrade(assessmentId, studentId)
   )
+
+  if (prevSnapshot) {
+    pushUndo(
+      async () => {
+        grades.value.push(prevSnapshot)
+        await gradebookService.saveFullGradeRecord(prevSnapshot)
+        triggerRef(grades)
+        refreshSingleStudent(studentId)
+        refreshSingleAssessmentStats(assessmentId)
+      },
+      async () => {
+        grades.value = grades.value.filter(g => !(Number(g.assessmentId) === Number(assessmentId) && String(g.studentId) === String(studentId)))
+        await gradebookService.deleteGrade(assessmentId, studentId)
+        triggerRef(grades)
+        refreshSingleStudent(studentId)
+        refreshSingleAssessmentStats(assessmentId)
+      }
+    )
+  }
 }
 
 /**
@@ -538,16 +634,20 @@ export function clearGrade(assessmentId, studentId) {
 export function markMissing(assessmentId, studentId, missing) {
   if (!activeClassRecord.value) return
   
-  let grade = grades.value.find(g => Number(g.assessmentId) === Number(assessmentId) && String(g.studentId) === String(studentId))
+  const existingGrade = grades.value.find(g => Number(g.assessmentId) === Number(assessmentId) && String(g.studentId) === String(studentId))
+  const prevSnapshot = existingGrade ? JSON.parse(JSON.stringify(existingGrade)) : null
+
+  let grade = existingGrade
   if (!grade) {
     grade = { assessmentId: Number(assessmentId), studentId: String(studentId), classId: activeClassRecord.value.classId, attempts: [] }
     grades.value.push(grade)
   }
   
   grade.missing = missing
-  // Mutual Exclusivity: If marking as missing, it cannot be excluded
   if (missing) grade.excluded = false
   
+  const newSnapshot = JSON.parse(JSON.stringify(grade))
+
   triggerRef(grades)
   refreshSingleStudent(studentId)
   refreshSingleAssessmentStats(assessmentId)
@@ -558,6 +658,32 @@ export function markMissing(assessmentId, studentId, missing) {
       excluded: grade.excluded 
     })
   )
+
+  pushUndo(
+    async () => {
+      if (prevSnapshot) {
+        const idx = grades.value.findIndex(g => Number(g.assessmentId) === Number(assessmentId) && String(g.studentId) === String(studentId))
+        if (idx !== -1) grades.value[idx] = prevSnapshot
+        else grades.value.push(prevSnapshot)
+        await gradebookService.saveFullGradeRecord(prevSnapshot)
+      } else {
+        grades.value = grades.value.filter(g => !(Number(g.assessmentId) === Number(assessmentId) && String(g.studentId) === String(studentId)))
+        await gradebookService.deleteGrade(assessmentId, studentId)
+      }
+      triggerRef(grades)
+      refreshSingleStudent(studentId)
+      refreshSingleAssessmentStats(assessmentId)
+    },
+    async () => {
+      const idx = grades.value.findIndex(g => Number(g.assessmentId) === Number(assessmentId) && String(g.studentId) === String(studentId))
+      if (idx !== -1) grades.value[idx] = newSnapshot
+      else grades.value.push(newSnapshot)
+      await gradebookService.saveFullGradeRecord(newSnapshot)
+      triggerRef(grades)
+      refreshSingleStudent(studentId)
+      refreshSingleAssessmentStats(assessmentId)
+    }
+  )
 }
 
 /**
@@ -566,16 +692,20 @@ export function markMissing(assessmentId, studentId, missing) {
 export function markExcluded(assessmentId, studentId, excluded) {
   if (!activeClassRecord.value) return
   
-  let grade = grades.value.find(g => Number(g.assessmentId) === Number(assessmentId) && String(g.studentId) === String(studentId))
+  const existingGrade = grades.value.find(g => Number(g.assessmentId) === Number(assessmentId) && String(g.studentId) === String(studentId))
+  const prevSnapshot = existingGrade ? JSON.parse(JSON.stringify(existingGrade)) : null
+
+  let grade = existingGrade
   if (!grade) {
     grade = { assessmentId: Number(assessmentId), studentId: String(studentId), classId: activeClassRecord.value.classId, attempts: [] }
     grades.value.push(grade)
   }
   
   grade.excluded = excluded
-  // Mutual Exclusivity: If excluding, it cannot be missing
   if (excluded) grade.missing = false
   
+  const newSnapshot = JSON.parse(JSON.stringify(grade))
+
   triggerRef(grades)
   refreshSingleStudent(studentId)
   refreshSingleAssessmentStats(assessmentId)
@@ -585,6 +715,32 @@ export function markExcluded(assessmentId, studentId, excluded) {
       missing: grade.missing, 
       excluded: grade.excluded 
     })
+  )
+
+  pushUndo(
+    async () => {
+      if (prevSnapshot) {
+        const idx = grades.value.findIndex(g => Number(g.assessmentId) === Number(assessmentId) && String(g.studentId) === String(studentId))
+        if (idx !== -1) grades.value[idx] = prevSnapshot
+        else grades.value.push(prevSnapshot)
+        await gradebookService.saveFullGradeRecord(prevSnapshot)
+      } else {
+        grades.value = grades.value.filter(g => !(Number(g.assessmentId) === Number(assessmentId) && String(g.studentId) === String(studentId)))
+        await gradebookService.deleteGrade(assessmentId, studentId)
+      }
+      triggerRef(grades)
+      refreshSingleStudent(studentId)
+      refreshSingleAssessmentStats(assessmentId)
+    },
+    async () => {
+      const idx = grades.value.findIndex(g => Number(g.assessmentId) === Number(assessmentId) && String(g.studentId) === String(studentId))
+      if (idx !== -1) grades.value[idx] = newSnapshot
+      else grades.value.push(newSnapshot)
+      await gradebookService.saveFullGradeRecord(newSnapshot)
+      triggerRef(grades)
+      refreshSingleStudent(studentId)
+      refreshSingleAssessmentStats(assessmentId)
+    }
   )
 }
 

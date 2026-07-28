@@ -163,8 +163,7 @@
                 max="100"
                 class="grades__input-inline"
                 @blur="saveEdit"
-                @keydown.enter.prevent="onEnterKey"
-                @keydown.tab.prevent="onEnterKey"
+                @keydown="onKeyNavigate"
                 @keydown.esc.prevent="cancelEdit"
               />
             </div>
@@ -198,10 +197,7 @@
                 :max="a.totalPoints"
                 class="grades__input-inline"
                 @blur="saveEdit"
-                @keydown.enter.prevent="onEnterKey"
-                @keydown.tab.prevent="onEnterKey"
-                @keydown.up.prevent="onArrowKey('up')"
-                @keydown.down.prevent="onArrowKey('down')"
+                @keydown="onKeyNavigate"
                 @keydown.esc.prevent="cancelEdit"
               />
             </div>
@@ -658,22 +654,56 @@ function toggleGridSort(column) {
   }
 }
 
-async function onEnterKey() {
-  await onArrowKey('down')
+async function onKeyNavigate(e) {
+  if (!editingCell.value) return
+
+  const isShift = e.shiftKey
+  let direction = null
+
+  if (e.key === 'Enter') {
+    direction = isShift ? 'up' : 'down'
+  } else if (e.key === 'Tab') {
+    direction = isShift ? 'left' : 'right'
+  } else if (e.key === 'ArrowUp') {
+    direction = 'up'
+  } else if (e.key === 'ArrowDown') {
+    direction = 'down'
+  }
+
+  if (direction) {
+    e.preventDefault()
+    await onNavigate(direction)
+  }
 }
 
-async function onArrowKey(direction) {
+async function onNavigate(direction) {
   if (!editingCell.value) return
   const { sId, aId } = editingCell.value
   await saveEdit()
   
-  const currentIndex = sortedRoster.value.findIndex(s => s.studentId === sId)
-  if (direction === 'up' && currentIndex > 0) {
-    const prevStudent = sortedRoster.value[currentIndex - 1]
-    startEdit(prevStudent.studentId, aId)
-  } else if (direction === 'down' && currentIndex < sortedRoster.value.length - 1) {
-    const nextStudent = sortedRoster.value[currentIndex + 1]
+  const studentIdx = sortedRoster.value.findIndex(s => String(s.studentId) === String(sId))
+  const assessIdx = sortedAssessments.value.findIndex(a => Number(a.assessmentId) === Number(aId))
+
+  if (direction === 'down' && studentIdx < sortedRoster.value.length - 1) {
+    const nextStudent = sortedRoster.value[studentIdx + 1]
     startEdit(nextStudent.studentId, aId)
+  } else if (direction === 'up' && studentIdx > 0) {
+    const prevStudent = sortedRoster.value[studentIdx - 1]
+    startEdit(prevStudent.studentId, aId)
+  } else if (direction === 'right') {
+    if (aId === 'overall' && sortedAssessments.value.length > 0) {
+      startEdit(sId, sortedAssessments.value[0].assessmentId)
+    } else if (assessIdx >= 0 && assessIdx < sortedAssessments.value.length - 1) {
+      const nextAssess = sortedAssessments.value[assessIdx + 1]
+      startEdit(sId, nextAssess.assessmentId)
+    }
+  } else if (direction === 'left') {
+    if (assessIdx === 0) {
+      startEdit(sId, 'overall')
+    } else if (assessIdx > 0) {
+      const prevAssess = sortedAssessments.value[assessIdx - 1]
+      startEdit(sId, prevAssess.assessmentId)
+    }
   }
 }
 

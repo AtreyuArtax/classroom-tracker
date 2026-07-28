@@ -1,26 +1,8 @@
 /**
  * src/composables/useUndo.js
  *
- * In-memory undo stack. Never persisted to IndexedDB.
- * CLAUDE.md §9 rules:
- *  - Stack depth: 10. Drop oldest when full.
- *  - Cleared on page refresh — intentional.
- *  - Lives here, not distributed across components.
- *
- * Each stack entry is a plain async function (the inverse operation closure).
- * The composable is a singleton — exported as a module-level instance so
- * every component that imports it shares the same stack.
- *
- * Stack operations by action (CLAUDE.md §9):
- *  | Action                | Push to stack                                              |
- *  |-----------------------|------------------------------------------------------------|
- *  | Log standard event    | () => deleteEvent(eventId)                                 |
- *  | Toggle washroom OUT   | () => clearStudentActiveState(classId, studentId)          |
- *  | Toggle washroom IN    | () => setStudentActiveState(..., previousState)            |
- *  |                       |     + deleteEvent(eventId)   (compound closure)            |
- *  |                       |     NOTE: previousState must include original outTime      |
- *  | Assign to seat        | () => updateStudentSeat(classId, studentId, null)          |
- *  | Move between seats    | () => updateStudentSeat(classId, studentId, previousSeat)  |
+ * View-scoped, in-memory Undo & Redo stacks (LIFO depth: 10).
+ * Cleared on page refresh or view switching — intentional.
  */
 
 import { ref, computed } from 'vue'
@@ -28,54 +10,124 @@ import { useMessage } from './useMessage.js'
 
 const STACK_DEPTH = 10
 
-// ─── module-level singleton ────────────────────────────────────────────────────
-/** @type {import('vue').Ref<Array<() => Promise<void>>>} */
-const _stack = ref([])
+// ─── module-level singleton stacks ──────────────────────────────────────────────
+/** @type {import('vue').Ref<Array<{undo: () => Promise<void>, redo: (() => Promise<void>)|null}>>} */
+const _undoStack = ref([])
+/** @type {import('vue').Ref<Array<{undo: () => Promise<void>, redo: (() => Promise<void>)|null}>>} */
+const _redoStack = ref([])
 
 /**
- * Push a new inverse-operation closure onto the undo stack.
- * Drops the oldest entry when the stack is full.
+ * Push an undo/redo operation onto the stack.
  *
- * @param {() => Promise<void>} inverseFn
+ * @param {() => Promise<void>} inverseFn Function that reverts the action
+ * @param {(() => Promise<void>)|null} redoFn Optional function that re-applies the action
  */
-function push(inverseFn) {
-    if (_stack.value.length >= STACK_DEPTH) {
-        _stack.value.shift() // drop oldest
+function push(inverseFn, redoFn = null) {
+    if (_undoStack.value.length >= STACK_DEPTH) {
+        _undoStack.value.shift() // drop oldest
     }
-    _stack.value.push(inverseFn)
+    _undoStack.value.push({ undo: inverseFn, redo: redoFn })
+    _redoStack.value = [] // New action invalidates redo history
 }
 
 /**
  * Execute and remove the most-recent inverse operation.
- * No-ops if the stack is empty.
- *
- * @returns {Promise<void>}
  */
 async function undo() {
-    if (_stack.value.length === 0) return
-    const inverseFn = _stack.value.pop()
+    if (_undoStack.value.length === 0) return
+    const entry = _undoStack.value.pop()
     try {
-        await inverseFn()
+        await entry.undo()
+        _redoStack.value.push(entry)
     } catch (err) {
         console.error('Undo operation failed:', err)
         const { alert } = useMessage()
-        await alert('Failed to undo the last action. It may have already been changed or deleted.')
-        // Put it back on the stack so it's not lost forever if it was a transient error
-        _stack.value.push(inverseFn)
+        await alert('Failed to undo the last action.')
+        _undoStack.value.push(entry)
     }
 }
 
 /**
- * Clear the entire stack (called after class switch, etc.).
+ * Re-apply the most-recently undone operation.
+ */
+async function redo() {
+    if (_redoStack.value.length === 0) return
+    const entry = _redoStack.value.pop()
+    try {
+        if (entry.redo) {
+            await entry.redo()
+        }
+        _undoStack.value.push(entry)
+    } catch (err) {
+        console.error('Redo operation failed:', err)
+        const { alert } = useMessage()
+        await alert('Failed to redo the action.')
+        _redoStack.value.push(entry)
+    }
+}
+
+/**
+ * Clear undo and redo stacks (called on view switch, class change, etc.).
  */
 function clear() {
-    _stack.value = []
+    _undoStack.value = []
+    _redoStack.value = []
 }
 
 /** Whether there is anything to undo. */
-const canUndo = computed(() => _stack.value.length > 0)
+const canUndo = computed(() => _undoStack.value.length > 0)
+/** Whether there is anything to redo. */
+const canRedo = computed(() => _redoStack.value.length > 0)
+
+// ─── global shortcut listener (Cmd+Z / Ctrl+Z & Cmd+Shift+Z / Ctrl+Y) ─────────
+if (typeof window !== 'undefined') {
+    window.addEventListener('keydown', (e) => {
+        const isCmdOrCtrl = e.metaKey || e.ctrlKey
+        if (!isCmdOrCtrl) return
+
+        const key = e.key.toLowerCase()
+        const isShift = e.shiftKey
+
+        // Check if user is typing inside an active text input/textarea vs inline grade grid cell
+        const target = e.target
+        const isInlineGridInput = target && target.classList && (
+            target.classList.contains('grades__input-inline') ||
+            target.classList.contains('cell-edit-input')
+        )
+        const isEditingText = target && !isInlineGridInput && (
+            target.tagName === 'INPUT' || 
+            target.tagName === 'TEXTAREA' || 
+            target.isContentEditable
+        )
+        if (isEditingText) return
+
+        if (isInlineGridInput && target.blur) {
+            target.blur()
+        }
+
+        if (key === 'z' && isShift) {
+            // Cmd+Shift+Z => Redo
+            if (canRedo.value) {
+                e.preventDefault()
+                redo()
+            }
+        } else if (key === 'y' && !isShift) {
+            // Cmd+Y / Ctrl+Y => Redo
+            if (canRedo.value) {
+                e.preventDefault()
+                redo()
+            }
+        } else if (key === 'z' && !isShift) {
+            // Cmd+Z / Ctrl+Z => Undo
+            if (canUndo.value) {
+                e.preventDefault()
+                undo()
+            }
+        }
+    })
+}
 
 // ─── export ────────────────────────────────────────────────────────────────────
 export function useUndo() {
-    return { push, undo, clear, canUndo }
+    return { push, undo, redo, clear, canUndo, canRedo }
 }

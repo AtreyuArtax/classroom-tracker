@@ -1,7 +1,7 @@
 {
   "App.vue": {
-    "mtime": 1781516037.3669405,
-    "ast_hash": "79e2ea339cf46c0b1a96fc49d7256c8e",
+    "mtime": 1785234472.4796212,
+    "ast_hash": "29d6558bd6e0918c1ebbf81096743925",
     "semantic_hash": ""
   },
   "components/AssessmentConversationModal.vue": {
@@ -20,8 +20,8 @@
     "semantic_hash": ""
   },
   "components/DeskTile.vue": {
-    "mtime": 1785233959.7570484,
-    "ast_hash": "3f4b3ccfa42769491d1676812bfe05df",
+    "mtime": 1785233993.174322,
+    "ast_hash": "b8631ffb4f1e55a40c253672c3e134e3",
     "semantic_hash": ""
   },
   "components/EventNoteModal.vue": {
@@ -40,8 +40,8 @@
     "semantic_hash": ""
   },
   "components/GradesGrid.vue": {
-    "mtime": 1785063564.3650746,
-    "ast_hash": "1a39be002745fd57d9eb2da8ff22d466",
+    "mtime": 1785235124.5348845,
+    "ast_hash": "c2848d60027ab72d11b8cf006c63cab6",
     "semantic_hash": ""
   },
   "components/MessageOverlay.vue": {
@@ -345,8 +345,8 @@
     "semantic_hash": ""
   },
   "composables/useGradebook.js": {
-    "mtime": 1784915068.6377316,
-    "ast_hash": "27a28a1f3d02b542cf640bc0712bf605",
+    "mtime": 1785234965.0126548,
+    "ast_hash": "16783d69040a05a0dc1c6104e64cb06a",
     "semantic_hash": ""
   },
   "composables/useKeyboardWedge.js": {
@@ -375,8 +375,8 @@
     "semantic_hash": ""
   },
   "composables/useUndo.js": {
-    "mtime": 1778119043.1775908,
-    "ast_hash": "460d20cd0ee2b1560ee6c632f2208dbd",
+    "mtime": 1785234640.754133,
+    "ast_hash": "551e456fc0450e309501662ef1f0d557",
     "semantic_hash": ""
   },
   "data/curriculum/elementary/ontario-gr7-science.json": {
@@ -425,8 +425,8 @@
     "semantic_hash": ""
   },
   "db/gradebookService.js": {
-    "mtime": 1785115321.3973162,
-    "ast_hash": "811f01c3ef066cca6d920cd87e29fec4",
+    "mtime": 1785234139.9132934,
+    "ast_hash": "777c67750639cf12851fcf4493bb5969",
     "semantic_hash": ""
   },
   "db/index.js": {
@@ -480,8 +480,8 @@
     "semantic_hash": ""
   },
   "views/Dashboard.vue": {
-    "mtime": 1785233879.4657512,
-    "ast_hash": "9e123cae532294ca0f606b7646cef74d",
+    "mtime": 1785233993.1753137,
+    "ast_hash": "aa9c43c9795d89614c3ab1bdb865cf54",
     "semantic_hash": ""
   },
   "views/Grades.vue": {

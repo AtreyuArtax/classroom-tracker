@@ -116,11 +116,17 @@ const views = [
   { id: 'Setup',     label: 'Setup',     icon: Settings },
 ]
 
+import { useUndo } from './composables/useUndo.js'
+
+const { clear: clearUndo } = useUndo()
 const viewComponents = { Dashboard, Setup, Reports, Grades, ScanStation }
 const currentComponent = computed(() => viewComponents[currentView.value])
 
 function navigateTo(viewId, params = {}) {
   if (viewComponents[viewId]) {
+    if (currentView.value !== viewId) {
+      clearUndo()
+    }
     currentView.value = viewId
     viewParams.value = params
   }

@@ -316,6 +316,21 @@ export async function deleteGrade(assessmentId, studentId) {
 }
 
 /**
+ * Persists/overwrites a complete grade object in IndexedDB (used by Undo).
+ * 
+ * @param {Object} gradeRecord
+ */
+export async function saveFullGradeRecord(gradeRecord) {
+  const db = await getDB()
+  const tx = db.transaction('grades', 'readwrite')
+  const store = tx.objectStore('grades')
+  const plain = JSON.parse(JSON.stringify(gradeRecord))
+  await store.put(plain)
+  await tx.done
+  hasUnsyncedChanges.value = true
+}
+
+/**
  * Returns all grades for all students in a class.
  * NOW OPTIMIZED with single-query by_classId index!
  * 
