@@ -728,13 +728,13 @@ function openAttemptsFromMenu(event, assessmentId) {
 
 async function toggleMissing(assessmentId) {
   const current = gradeMap.value[assessmentId]?.[props.studentId]?.missing
-  await enterGrade(assessmentId, props.studentId, { missing: !current })
+  await markMissing(assessmentId, props.studentId, !current)
   contextMenu.value = null
 }
 
 async function toggleExcluded(assessmentId) {
   const current = gradeMap.value[assessmentId]?.[props.studentId]?.excluded
-  await enterGrade(assessmentId, props.studentId, { excluded: !current })
+  await markExcluded(assessmentId, props.studentId, !current)
   contextMenu.value = null
 }
 
@@ -761,11 +761,13 @@ async function doUpdateComment(assessmentId, attemptId, comment) {
 
 async function submitNewAttempt() {
   if (!newAttemptForm.value || newAttemptForm.value.points === null) return
-  await enterGrade(newAttemptForm.value.assessmentId, props.studentId, {
-    pointsEarned: Number(newAttemptForm.value.points),
-    date: newAttemptForm.value.date,
-    comment: newAttemptForm.value.comment
-  })
+  await enterGrade(
+    newAttemptForm.value.assessmentId,
+    props.studentId,
+    Number(newAttemptForm.value.points),
+    newAttemptForm.value.date,
+    newAttemptForm.value.comment
+  )
   newAttemptForm.value = null
 }
 

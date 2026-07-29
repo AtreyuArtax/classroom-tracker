@@ -225,6 +225,7 @@ import {
   loadGradebook,
   markMissing,
   markExcluded,
+  clearGrade,
   isEditingAssessment,
   currentAssessmentId,
   newAssessment,
@@ -662,22 +663,62 @@ function startNewAttempt(studentId) {
 
 async function saveNewAttempt() {
   if (!newAttemptForm.value || !selectedAssessmentId.value) return
-  await enterGrade(selectedAssessmentId.value, newAttemptForm.value.studentId, {
-    pointsEarned: Number(newAttemptForm.value.points),
-    date: newAttemptForm.value.date,
-    comment: newAttemptForm.value.comment
-  })
+  await enterGrade(
+    selectedAssessmentId.value,
+    newAttemptForm.value.studentId,
+    Number(newAttemptForm.value.points),
+    newAttemptForm.value.date,
+    newAttemptForm.value.comment
+  )
   newAttemptForm.value = null
 }
 
 async function onAssessmentViewBlur(studentId, value) {
   if (!selectedAssessmentId.value) return
-  const num = value === '' ? null : Number(value)
-  await enterGrade(selectedAssessmentId.value, studentId, { pointsEarned: num })
+
+  if (value === '' || value === null || value === undefined) {
+    const currentGrade = gradeMap.value[selectedAssessmentId.value]?.[studentId]
+    if (!currentGrade || (currentGrade.attempts?.length || 0) === 0) {
+      return
+    }
+
+    if ((currentGrade.attempts?.length || 0) > 1) {
+      await alert('Cannot clear: This student has multiple attempts. Use the attempt history menu (•) to manage or delete specific entries.')
+      await nextTick()
+      return
+    }
+
+    await clearGrade(selectedAssessmentId.value, studentId)
+    return
+  }
+
+  const num = Number(value)
+  if (isNaN(num)) return
+
+  const currentGrade = gradeMap.value[selectedAssessmentId.value]?.[studentId]
+  if (currentGrade && currentGrade.resolvedScore === num) {
+    return
+  }
+
+  await enterGrade(selectedAssessmentId.value, studentId, num)
 }
 
 async function onAssessmentViewEnter(studentId, direction, event) {
-  await onAssessmentViewBlur(studentId, event.target.value)
+  const inputEl = event?.target
+  const val = inputEl ? inputEl.value : ''
+  await onAssessmentViewBlur(studentId, val)
+
+  if (inputEl) {
+    const allInputs = Array.from(document.querySelectorAll('.grades__input-ghost'))
+    const currentIndex = allInputs.indexOf(inputEl)
+    if (currentIndex !== -1) {
+      let targetIndex = direction === 'down' ? currentIndex + 1 : currentIndex - 1
+      if (targetIndex >= 0 && targetIndex < allInputs.length) {
+        allInputs[targetIndex].focus()
+        allInputs[targetIndex].select()
+      }
+    }
+  }
 }
 
 function saveEdit() {

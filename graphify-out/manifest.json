@@ -95,8 +95,8 @@
     "semantic_hash": "3e96540436c457ec19874a165448d794"
   },
   "src/components/MessageOverlay.vue": {
-    "mtime": 1784942541.8021374,
-    "ast_hash": "7475628a165fdf16653dde03e7c736a0",
+    "mtime": 1785334494.6556199,
+    "ast_hash": "22452f97f5e4e2ac0723e79ed0fdf86a",
     "semantic_hash": ""
   },
   "src/components/PrintClassListModal.vue": {
@@ -185,8 +185,8 @@
     "semantic_hash": "561bf8bd5746113ff902a94fb2a31f6e"
   },
   "src/components/dossier/Student360.vue": {
-    "mtime": 1785252887.3773713,
-    "ast_hash": "1adae89e683e5266981aa6699b1474b2",
+    "mtime": 1785333866.5571523,
+    "ast_hash": "94ef8cf34ccdc8ced9a7632d94ec5bc6",
     "semantic_hash": ""
   },
   "src/components/dossier/Student360Header.vue": {
@@ -345,8 +345,8 @@
     "semantic_hash": ""
   },
   "src/views/Grades.vue": {
-    "mtime": 1785252757.772062,
-    "ast_hash": "42b598f7f709aeb1f039291c4e691bc7",
+    "mtime": 1785334308.8841069,
+    "ast_hash": "c03d849db289ca7b2fe68934659b3a4e",
     "semantic_hash": ""
   },
   "src/views/Reports.vue": {
@@ -395,8 +395,8 @@
     "semantic_hash": ""
   },
   "src/components/GradesGrid.vue": {
-    "mtime": 1785248119.629503,
-    "ast_hash": "cfb4fb39494ff628d42825b437c1bd56",
+    "mtime": 1785334641.652672,
+    "ast_hash": "67843976cf8c7be3bde73ff024099f7f",
     "semantic_hash": ""
   },
   "src/components/dossier/StudentAcademicsTab.vue": {
@@ -535,8 +535,8 @@
     "semantic_hash": ""
   },
   "src/components/grades/GradesAssessmentDetailView.vue": {
-    "mtime": 1785247469.4768505,
-    "ast_hash": "8126d7e25772c8d6558260e1c25173f6",
+    "mtime": 1785334737.7038743,
+    "ast_hash": "ee05f1c78cc633f52b92ee79c8e83534",
     "semantic_hash": ""
   },
   "src/components/grades/GradesContextMenu.vue": {
@@ -602,6 +602,11 @@
   "src/db/gradebook/gradeService.js": {
     "mtime": 1785245880.1766276,
     "ast_hash": "173c145d2bfcb347e4e860b62d4b4cff",
+    "semantic_hash": ""
+  },
+  "src/components/grades/GradesAttemptHistoryModal.vue": {
+    "mtime": 1785334596.9887097,
+    "ast_hash": "183642d9efebf314fdfa551b99ea6820",
     "semantic_hash": ""
   }
 }

@@ -70,6 +70,7 @@
             {{ state.cancelLabel }}
           </button>
           <button 
+            ref="confirmBtnRef"
             class="msg-btn" 
             :class="state.danger ? 'msg-btn--danger' : 'msg-btn--primary'"
             :disabled="isConfirmDisabled"
@@ -91,6 +92,7 @@ import { useMessage } from '../composables/useMessage.js'
 
 const { state, handleAction, handleSelectChoice } = useMessage()
 const inputRef = ref(null)
+const confirmBtnRef = ref(null)
 
 const isConfirmDisabled = computed(() => {
   if (!state.requireText) return false
@@ -104,11 +106,15 @@ function onEnter() {
 }
 
 watch(() => state.show, async (show) => {
-  if (show && (state.type === 'prompt' || state.requireText)) {
+  if (show) {
     await nextTick()
-    inputRef.value?.focus()
-    if (state.type === 'prompt') {
-      inputRef.value?.select()
+    if (state.type === 'prompt' || state.requireText) {
+      inputRef.value?.focus()
+      if (state.type === 'prompt') {
+        inputRef.value?.select()
+      }
+    } else {
+      confirmBtnRef.value?.focus()
     }
   }
 })

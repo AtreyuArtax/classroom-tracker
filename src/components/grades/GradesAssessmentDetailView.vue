@@ -294,76 +294,20 @@
       </div>
     </div>
 
-    <!-- Attempt History & Teacher Note Popover Modal -->
-    <Teleport to="body">
-      <div 
-        v-if="attemptsPopover" 
-        class="grades__attempts-backdrop" 
-        @click="attemptsPopover = null" 
-        @contextmenu.prevent="attemptsPopover = null"
-      >
-        <div 
-          class="grades__attempts-popover" 
-          :style="popoverStyle" 
-          @click.stop
-        >
-          <div class="popover-header">
-            <div>
-              <h4 class="popover-title">Attempt History & Notes</h4>
-              <div class="popover-subtitle">
-                {{ attemptsPopover.studentName }} — {{ currentAssessment.name }}
-              </div>
-            </div>
-            <button class="popover-close-btn" @click="attemptsPopover = null">
-              <X :size="14" />
-            </button>
-          </div>
-
-          <div class="popover-body">
-            <div v-if="popoverAttempts.length > 0" class="attempts-list">
-              <div 
-                v-for="(att, idx) in popoverAttempts" 
-                :key="att.attemptId || idx" 
-                class="attempt-card"
-                :class="{ 'attempt-card--primary': att.isPrimary }"
-              >
-                <div class="attempt-card__header">
-                  <span class="attempt-score-tag">
-                    {{ att.pointsEarned }} / {{ currentAssessment.totalPoints }}
-                    <small>({{ Math.round((att.pointsEarned / currentAssessment.totalPoints) * 100) }}%)</small>
-                  </span>
-                  <span class="attempt-date-tag" v-if="att.date">{{ att.date }}</span>
-                  <button 
-                    class="attempt-delete-btn" 
-                    @click="handleDeleteAttempt(att.attemptId)"
-                    title="Delete attempt"
-                  >
-                    <Trash2 :size="12" />
-                  </button>
-                </div>
-                <textarea
-                  class="attempt-note-input"
-                  :value="att.comment || ''"
-                  placeholder="Add teacher note or observations..."
-                  rows="2"
-                  @change="handleUpdateComment(att.attemptId, $event.target.value)"
-                ></textarea>
-              </div>
-            </div>
-
-            <div v-else class="popover-empty">
-              <p>No attempts recorded for this student yet.</p>
-            </div>
-          </div>
-
-          <div class="popover-footer">
-            <button class="btn-secondary-sm" @click="handleAddAttempt">
-              + Add Re-test / Attempt
-            </button>
-          </div>
-        </div>
-      </div>
-    </Teleport>
+    <!-- Attempt History Modal -->
+    <GradesAttemptHistoryModal
+      :show="!!attemptsPopover"
+      :student-name="attemptsPopover?.studentName"
+      :assessment-name="currentAssessment.name"
+      :total-points="currentAssessment.totalPoints"
+      :retest-policy="currentAssessment.retestPolicy || 'highest'"
+      :resolved-score="gradeMap[selectedAssessmentId]?.[attemptsPopover?.studentId]?.resolvedScore"
+      :attempts="popoverAttempts"
+      @close="attemptsPopover = null"
+      @delete-attempt="handleDeleteAttempt"
+      @update-comment="handleUpdateComment"
+      @start-new-attempt="handleAddAttempt"
+    />
   </div>
 </template>
 
@@ -376,6 +320,10 @@ import {
 import { getHeatTextColor } from '../../utils/gradeColors.js'
 import { formatLocalDisplay } from '../../utils/dates.js'
 import { removeAttempt, updateAttemptComment } from '../../composables/useGradebook.js'
+import { useMessage } from '../../composables/useMessage.js'
+import GradesAttemptHistoryModal from './GradesAttemptHistoryModal.vue'
+
+const { confirm } = useMessage()
 
 const props = defineProps({
   currentAssessment: { type: Object, required: true },
@@ -447,7 +395,9 @@ function openAttemptsPopover(event, studentId) {
 
 async function handleDeleteAttempt(attemptId) {
   if (!attemptsPopover.value) return
-  await removeAttempt(props.selectedAssessmentId, attemptsPopover.value.studentId, attemptId)
+  if (await confirm('Delete this attempt score?', 'Delete Attempt', { danger: true })) {
+    await removeAttempt(props.selectedAssessmentId, attemptsPopover.value.studentId, attemptId)
+  }
 }
 
 async function handleUpdateComment(attemptId, comment) {

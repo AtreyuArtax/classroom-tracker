@@ -305,51 +305,20 @@
       </div>
     </div>
 
-    <div v-if="attemptsPopover" class="grades__context-backdrop grades__context-backdrop--dim" @click="attemptsPopover = null" @contextmenu.prevent="attemptsPopover = null">
-      <div class="grades__attempts-popover" :style="{ top: attemptsPopover.y + 'px', left: attemptsPopover.x + 'px' }" @click.stop>
-        <div class="grades__popover-header">
-          <h4 class="grades__popover-title">Attempt History — {{ attemptsPopover.studentName }}</h4>
-          <div class="grades__popover-subtitle">{{ attemptsPopover.assessmentName }} (/{{ attemptsPopover.totalPoints }}) · Policy: {{ attemptsPopover.retestPolicy }}</div>
-        </div>
-        <ul class="grades__attempts-list">
-          <li v-for="att in attemptsPopover.attempts" :key="att.attemptId" class="grades__attempt-item" :class="{ 'grades__attempt-item--primary': att.isPrimary }">
-            <div class="grades__attempt-main-row">
-              <div class="grades__attempt-main">
-                <div class="grades__attempt-info">
-                  <span class="grades__attempt-score">{{ att.pointsEarned }} / {{ attemptsPopover.totalPoints }}</span>
-                  <span class="grades__attempt-percent">({{ Math.round((att.pointsEarned / attemptsPopover.totalPoints) * 100) }}%)</span>
-                  <span class="grades__attempt-date">{{ formatDateShort(att.date) }}</span>
-                </div>
-                <div class="grades__attempt-counting">
-                  <template v-if="attemptsPopover.retestPolicy === 'manual'">
-                    <input 
-                      type="radio" 
-                      :name="'primary-' + attemptsPopover.sId" 
-                      :checked="att.isPrimary"
-                      @change="onSetPrimary(att.attemptId)"
-                    /> Primary
-                  </template>
-                  <template v-else>
-                    <span v-if="att.pointsEarned === attemptsPopover.resolvedScore" class="grades__counting-badge">counting ✓</span>
-                    <span v-else class="grades__not-counting-badge">not counting</span>
-                  </template>
-                </div>
-              </div>
-              <button class="grades__icon-btn grades__icon-btn--danger" @click="onDeleteAttempt(att.attemptId)">
-                <Trash2 :size="14" />
-              </button>
-            </div>
-            <textarea
-              class="grades__attempt-comment"
-              :value="att.comment || ''"
-              placeholder="Add a note about this attempt…"
-              rows="2"
-              @change="onUpdateComment(att.attemptId, $event.target.value)"
-            ></textarea>
-          </li>
-        </ul>
-      </div>
-    </div>
+    <!-- Unified Attempt History Modal -->
+    <GradesAttemptHistoryModal
+      :show="!!attemptsPopover"
+      :student-name="attemptsPopover?.studentName"
+      :assessment-name="attemptsPopover?.assessmentName"
+      :total-points="attemptsPopover?.totalPoints"
+      :retest-policy="attemptsPopover?.retestPolicy"
+      :resolved-score="attemptsPopover?.resolvedScore"
+      :attempts="attemptsPopover?.attempts || []"
+      @close="attemptsPopover = null"
+      @delete-attempt="attId => onDeleteAttempt(attId)"
+      @update-comment="(attId, val) => onUpdateComment(attId, val)"
+      @start-new-attempt="attemptsPopover = null"
+    />
   </div>
 </div>
 </template>
@@ -388,6 +357,7 @@ import {
   ChevronUp, ChevronDown, Copy, Calendar, RotateCcw, BarChart2 
 } from 'lucide-vue-next'
 import TestDayWarning from './TestDayWarning.vue'
+import GradesAttemptHistoryModal from './grades/GradesAttemptHistoryModal.vue'
 
 const props = defineProps({
   isPrivacyMode: Boolean,
