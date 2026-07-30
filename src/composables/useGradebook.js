@@ -23,7 +23,7 @@ export const selectedStudentId = ref(null)
 export const selectedMilestone = ref(null) // null = current
 export const globalMilestones = ref([])
 export const gradeBuckets = ref([])
-export const lastDossierTab = ref('summary')
+export const initialDossierTab = ref('summary')
 
 // Reactive state for analytics (Step 6)
 export const analyticsMode = ref(false) // false = grid, true = analytics panel

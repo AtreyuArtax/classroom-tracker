@@ -266,7 +266,8 @@ import {
   displayMode,
   assessmentSortOrder,
   gridSortBy,
-  gridSortOrder
+  gridSortOrder,
+  initialDossierTab
 } from '../composables/useGradebook.js'
 import { formatGrade } from '../utils/gradeColors.js'
 import { useAttendanceInsights } from '../composables/useAttendanceInsights.js'
@@ -367,6 +368,7 @@ function closeAssessmentView() {
 const previousAssessmentId = ref(null)
 
 function showStudentDossier(studentId) {
+  initialDossierTab.value = 'summary'
   if (selectedAssessmentId.value) {
     previousAssessmentId.value = selectedAssessmentId.value
     selectedAssessmentId.value = null

@@ -1,13 +1,21 @@
 <template>
   <div class="academics-tab-content">
-    <div class="academics-section">
-      <h3 class="academics-section__title">Category Performance</h3>
-      <DossierCategoryGrid :categories="academicCategories" :student-id="props.studentId" />
-    </div>
+    <template v-if="isSBARMode">
+      <SBARExpectationMasteryGrid 
+        :student-id="props.studentId" 
+        @select-assessment="onSelectAssessment" 
+      />
+    </template>
+    <template v-else>
+      <div class="academics-section">
+        <h3 class="academics-section__title">Category Performance</h3>
+        <DossierCategoryGrid :categories="academicCategories" :student-id="props.studentId" />
+      </div>
 
-    <div class="academics-section">
-      <DossierEvidenceMix :mix="evidenceMix" />
-    </div>
+      <div class="academics-section">
+        <DossierEvidenceMix :mix="evidenceMix" />
+      </div>
+    </template>
 
     <!-- Master Unified Assessment Table (Full Width) -->
     <div class="academics-section">
@@ -85,7 +93,7 @@
               <td class="td-name">
                 <span 
                   :class="{ 'clickable-sbar-name': isSBARTask(a) }" 
-                  @click="isSBARTask(a) && $emit('select-assessment', a.assessmentId)"
+                  @click="isSBARTask(a) && onSelectAssessment(a.assessmentId)"
                   :title="isSBARTask(a) ? 'Click to open SBAR evaluation matrix' : ''"
                 >{{ a.name }}</span>
                 <span v-if="a.target === 'individual' || a.isIndividual" class="badge-student-task" title="Individual student task">👤 Student Task</span>
@@ -107,12 +115,12 @@
                   
                   <!-- Visual Display Mode -->
                   <template v-else>
-                    <div v-if="a.missing" class="score-missing" @click="isSBARTask(a) ? $emit('select-assessment', a.assessmentId) : startEdit(a.assessmentId)">
+                    <div v-if="a.missing" class="score-missing" @click="isSBARTask(a) ? onSelectAssessment(a.assessmentId) : startEdit(a.assessmentId)">
                       <span class="text-danger">Missing</span>
                       <span v-if="a.wasAbsent" class="badge-red-a" title="Absent on this date">A</span>
                     </div>
-                    <span v-else-if="a.excluded" class="text-muted" @click="isSBARTask(a) ? $emit('select-assessment', a.assessmentId) : startEdit(a.assessmentId)">EX</span>
-                    <span v-else class="score-value" @click="isSBARTask(a) ? $emit('select-assessment', a.assessmentId) : startEdit(a.assessmentId)">
+                    <span v-else-if="a.excluded" class="text-muted" @click="isSBARTask(a) ? onSelectAssessment(a.assessmentId) : startEdit(a.assessmentId)">EX</span>
+                    <span v-else class="score-value" @click="isSBARTask(a) ? onSelectAssessment(a.assessmentId) : startEdit(a.assessmentId)">
                       <template v-if="isSBARTask(a)">
                         <span 
                           v-if="a.score !== null" 
@@ -347,7 +355,8 @@ import {
   openAddAssessment,
   deleteAssessment,
   saveStudentGradebookNote,
-  clearGrade
+  clearGrade,
+  initialDossierTab
 } from '../../composables/useGradebook.js'
 import { useGradeEditing } from '../../composables/useGradeEditing.js'
 import { getGradeColor } from '../../utils/gradeColors.js'
@@ -357,9 +366,17 @@ import { getSBARLevelBadge } from '../../db/gradebook/gradeCalcSBAR.js'
 import { Plus, Trash2, X, ChevronRight, Calendar, AlertCircle, XCircle } from 'lucide-vue-next'
 import DossierCategoryGrid from './DossierCategoryGrid.vue'
 import DossierEvidenceMix from './DossierEvidenceMix.vue'
+import SBARExpectationMasteryGrid from './SBARExpectationMasteryGrid.vue'
+
+const isSBARMode = computed(() => activeClassRecord.value?.gradingFramework === 'sbar')
 
 function isSBARTask(a) {
   return a.categoryId === 'sbar_general' || (a.expectationIds && a.expectationIds.length > 0)
+}
+
+function onSelectAssessment(astId) {
+  initialDossierTab.value = 'academics'
+  emit('select-assessment', astId)
 }
 
 
@@ -369,7 +386,7 @@ const props = defineProps({
   events: { type: Array, default: () => [] }
 })
 
-defineEmits(['delete-event', 'select-assessment'])
+const emit = defineEmits(['delete-event', 'select-assessment'])
 
 const { alert, confirm } = useMessage()
 
@@ -491,8 +508,13 @@ const filteredMasterAssessments = computed(() => {
 })
 
 const individualAssessments = computed(() => {
+  const isSBAR = activeClassRecord.value?.gradingFramework === 'sbar'
   return assessments.value
-    .filter(a => a.target === 'individual' && String(a.targetStudentId) === String(props.studentId))
+    .filter(a => {
+      if (a.target !== 'individual' || String(a.targetStudentId) !== String(props.studentId)) return false
+      const isSBARTask = a.categoryId === 'sbar_general' || (a.expectationIds && a.expectationIds.length > 0)
+      return isSBAR ? isSBARTask : !isSBARTask
+    })
     .map(a => {
       const g = gradeMap.value[a.assessmentId]?.[props.studentId]
       const score = g?.resolvedScore ?? null

@@ -139,7 +139,10 @@
                 <span class="activity-name" :title="item.title">{{ item.title }}</span>
               </div>
               <div v-if="item.value" class="activity-score" :class="{ 'activity-score--failing': item.isFailing }">
-                <strong>{{ item.value }}</strong>
+                <span v-if="item.levelColor" class="sbar-level-badge" :style="{ background: item.levelColor, color: 'white', padding: '2px 8px', borderRadius: '12px', fontWeight: 'bold' }">
+                  {{ item.value }}
+                </span>
+                <strong v-else>{{ item.value }}</strong>
                 <span v-if="item.subText" class="activity-sub">({{ item.subText }})</span>
               </div>
             </div>
@@ -292,10 +295,10 @@ import { ref, computed, watch, onMounted, onUnmounted, toRef } from 'vue'
 
 defineOptions({ inheritAttrs: false })
 
-import { lastDossierTab } from '../../composables/useGradebook.js'
+import { initialDossierTab } from '../../composables/useGradebook.js'
 
 // Shared session state
-const activeTab = lastDossierTab
+const activeTab = ref(initialDossierTab.value || 'summary')
 const selectedPeriod = ref('semester')
 let resetTimer = null
 
@@ -332,6 +335,7 @@ import Student360EmailModal from './Student360EmailModal.vue'
 import Student360PrintModal from './Student360PrintModal.vue'
 import Student360AttemptsModal from './Student360AttemptsModal.vue'
 import BaseModal from '../BaseModal.vue'
+import { getSBARLevelBadge } from '../../db/gradebook/gradeCalcSBAR.js'
 
 import { useClassroom } from '../../composables/useClassroom.js'
 import { toMinutes } from '../../db/eventService.js'
@@ -572,11 +576,35 @@ const coachingInsight = computed(() => {
 
 const recentActivityFeed = computed(() => {
   const items = []
+  const isSBARMode = activeClassRecord.value?.gradingFramework === 'sbar'
 
   // 1. Graded assessments for this student
   const assList = Array.isArray(allDossierAssessments.value) ? allDossierAssessments.value : []
   assList.forEach(ass => {
-    if (ass && ass.score !== null && ass.score !== undefined) {
+    if (!ass || ass.score === null || ass.score === undefined) return
+
+    const isSBAR = ass.categoryId === 'sbar_general' || (ass.expectationIds && ass.expectationIds.length > 0)
+    
+    // Strict isolation based on active mode
+    if (isSBARMode && !isSBAR) return
+    if (!isSBARMode && isSBAR) return
+
+    if (isSBAR) {
+      const pct = Math.round(Number(ass.score))
+      const badge = getSBARLevelBadge(pct)
+      const expCount = ass.expectationIds?.length || 1
+      items.push({
+        id: 'ass-' + ass.assessmentId,
+        date: ass.date || '',
+        title: ass.name,
+        type: 'grade',
+        category: 'SBAR EVALUATION',
+        value: badge.level,
+        levelColor: badge.color,
+        subText: `${expCount} Standard${expCount !== 1 ? 's' : ''}`,
+        isFailing: pct < 50
+      })
+    } else {
       const total = ass.scaledTotal || ass.totalPoints || 100
       const pct = Math.round((ass.score / total) * 100)
       items.push({
