@@ -44,6 +44,42 @@ export async function _getGradeInTransaction(tx, assessmentId, studentId, classI
 }
 
 /**
+ * Saves SBAR expectation scores and overall mastery level for a grade record.
+ */
+export async function saveSBARGrade(assessmentId, studentId, expectationScores, masteryLevel, classId = null) {
+  const normAssessmentId = Number(assessmentId)
+  const normStudentId = String(studentId)
+  const db = await getDB()
+  const tx = db.transaction('grades', 'readwrite')
+  const store = tx.objectStore('grades')
+  const existing = await store.index('by_assessmentAndStudent').get([normAssessmentId, normStudentId])
+
+  if (existing) {
+    if (!existing.classId && classId) existing.classId = classId
+    existing.expectationScores = { ...existing.expectationScores, ...expectationScores }
+    existing.masteryLevel = masteryLevel
+    existing.resolvedScore = masteryLevel
+    existing.missing = false
+    await store.put(existing)
+  } else {
+    const newGrade = {
+      assessmentId: normAssessmentId,
+      studentId: normStudentId,
+      classId: classId || null,
+      expectationScores,
+      masteryLevel,
+      resolvedScore: masteryLevel,
+      missing: false,
+      excluded: false,
+      attempts: []
+    }
+    await store.add(newGrade)
+  }
+  await tx.done
+  hasUnsyncedChanges.value = true
+}
+
+/**
  * Retrieves a grade record for a student/assessment pair, or creates one if missing.
  * Requires classId to prevent orphan records and ensure index performance.
  */
@@ -246,7 +282,49 @@ export async function saveFullGradeRecord(gradeRecord) {
  */
 export async function getGradesByClass(classId) {
   const db = await getDB()
-  return await db.getAllFromIndex('grades', 'by_classId', classId)
+  const assessments = await getAssessmentsByClass(classId)
+  const classAssessmentIds = new Set(assessments.map(a => Number(a.assessmentId)))
+
+  const allGrades = await db.getAll('grades')
+  const resultMap = new Map()
+
+  const hasContent = item => Boolean(
+    (item.attempts && item.attempts.length > 0) || 
+    item.resolvedScore != null || 
+    item.score != null || 
+    item.pointsEarned != null || 
+    item.masteryLevel != null || 
+    item.expectationScores != null || 
+    item.missing || 
+    item.excluded
+  )
+
+  for (const g of allGrades) {
+    const isForClass = (g.classId === classId) || classAssessmentIds.has(Number(g.assessmentId))
+    if (isForClass) {
+      const key = `${Number(g.assessmentId)}_${String(g.studentId)}`
+      const existing = resultMap.get(key)
+
+      if (!existing || (!hasContent(existing) && hasContent(g))) {
+        resultMap.set(key, g)
+      }
+    }
+  }
+
+  const result = Array.from(resultMap.values())
+  const tx = db.transaction('grades', 'readwrite')
+  const store = tx.objectStore('grades')
+  let changed = false
+  for (const g of result) {
+    if (g.classId !== classId) {
+      g.classId = classId
+      await store.put(g)
+      changed = true
+    }
+  }
+  if (changed) await tx.done
+
+  return result
 }
 
 /**

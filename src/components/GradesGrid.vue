@@ -536,7 +536,12 @@ const availableCategories = computed(() => {
 })
 
 const sortedAssessments = computed(() => {
-  let list = [...assessments.value].filter(a => a.target !== 'individual')
+  let list = [...assessments.value].filter(a => {
+    if (a.target === 'individual') return false
+    if (a.categoryId === 'sbar_general') return false
+    if (a.expectationIds && a.expectationIds.length > 0) return false
+    return true
+  })
   if (selectedUnitId.value) {
     list = list.filter(a => a.unitId === selectedUnitId.value)
   }
@@ -592,8 +597,13 @@ const sortedRoster = computed(() => {
 const studentTrends = computed(() => {
   if (!activeClassRecord.value?.students || !assessments.value || !gradeMap.value) return {}
   
+  const isSBAR = activeClassRecord.value?.gradingFramework === 'sbar'
   const productAssessments = [...assessments.value]
-    .filter(a => a.assessmentType === 'product' && !a.excluded && a.target !== 'individual')
+    .filter(a => {
+      if (a.assessmentType !== 'product' || a.excluded || a.target === 'individual') return false
+      const isSBARTask = a.categoryId === 'sbar_general' || (a.expectationIds && a.expectationIds.length > 0)
+      return isSBAR ? isSBARTask : !isSBARTask
+    })
     .sort((a, b) => new Date(a.date) - new Date(b.date))
     
   if (productAssessments.length === 0) return {}

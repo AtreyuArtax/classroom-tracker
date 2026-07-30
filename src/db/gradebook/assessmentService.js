@@ -18,9 +18,10 @@ export async function createAssessment({
   assessmentType = 'product',
   unitId = null,
   expectationId = null,
+  expectationIds = [],
   target = 'class',
   targetStudentId = null,
-  totalPoints,
+  totalPoints = 10,
   scaledTotal = null,
   excluded = false,
   retestPolicy = 'highest'
@@ -28,9 +29,9 @@ export async function createAssessment({
   const db = await getDB()
   const assessment = {
     classId, categoryId, name, description, date,
-    assessmentType, unitId, expectationId,
+    assessmentType, unitId, expectationId, expectationIds,
     target, targetStudentId,
-    totalPoints, scaledTotal,
+    totalPoints: totalPoints || 10, scaledTotal,
     excluded, retestPolicy,
     createdAt: new Date().toISOString()
   }
@@ -77,16 +78,19 @@ export async function updateAssessment(assessmentId, updates) {
  * @returns {Promise<void>}
  */
 export async function deleteAssessment(assessmentId) {
+  if (!assessmentId) return
+  const normId = Number(assessmentId)
   const db = await getDB()
   
-  // Find all grades for this assessment first
-  const grades = await db.getAllFromIndex('grades', 'by_assessmentId', assessmentId)
+  const grades = await db.getAllFromIndex('grades', 'by_assessmentId', normId)
   
   const tx = db.transaction(['assessments', 'grades'], 'readwrite')
   for (const grade of grades) {
-    await tx.objectStore('grades').delete(grade.gradeId)
+    if (grade.gradeId != null) {
+      await tx.objectStore('grades').delete(grade.gradeId)
+    }
   }
-  await tx.objectStore('assessments').delete(assessmentId)
+  await tx.objectStore('assessments').delete(normId)
   await tx.done
   
   hasUnsyncedChanges.value = true

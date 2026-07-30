@@ -74,6 +74,52 @@
       </form>
     </div>
 
+    <!-- Grading Framework & Assessment Model -->
+    <div class="setup__card">
+      <h2 class="setup__card-title">Grading System &amp; Framework</h2>
+      <p class="setup__hint">Choose how student performance is evaluated and displayed for this class.</p>
+      
+      <div class="setup__form-grid" style="grid-template-columns: 1fr 1fr; gap: 16px;">
+        <label class="setup__label">
+          Grading Framework
+          <select
+            :value="activeClass.gradingFramework || 'traditional'"
+            class="setup__input"
+            @change="e => updateActiveClass({ gradingFramework: e.target.value })"
+          >
+            <option value="traditional">Traditional Secondary (% / Points / Weighted Categories)</option>
+            <option value="sbar">Standards-Based (SBAR / Levels 1–4 Heatmap)</option>
+          </select>
+        </label>
+
+        <label v-if="activeClass.gradingFramework === 'sbar'" class="setup__label">
+          SBAR Mastery Engine
+          <select
+            :value="activeClass.sbarAlgorithm || 'decaying_average'"
+            class="setup__input"
+            @change="e => updateActiveClass({ sbarAlgorithm: e.target.value })"
+          >
+            <option value="decaying_average">Decaying Average (65% Newest / 35% Historical)</option>
+            <option value="most_recent">Most Recent (Last 3 Evaluations Average)</option>
+            <option value="highest">Highest Level Score</option>
+          </select>
+        </label>
+
+        <label v-if="activeClass.gradingFramework === 'sbar'" class="setup__label">
+          Default SBAR Input Mode
+          <select
+            :value="activeClass.sbarInputMode || 'fine'"
+            class="setup__input"
+            @change="e => updateActiveClass({ sbarInputMode: e.target.value })"
+          >
+            <option value="fine">Granular Levels (L1- to L4+)</option>
+            <option value="simple">Simple Levels (L1 to L4)</option>
+            <option value="numeric">Exact % / Math Precision Mode</option>
+          </select>
+        </label>
+      </div>
+    </div>
+
     <!-- Seating Plan -->
     <div class="setup__card">
       <h2 class="setup__card-title">Seating Plan</h2>

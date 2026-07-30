@@ -31,12 +31,17 @@
     <div class="dossier-header__right">
       <div class="dossier-header__metrics">
         <div class="dossier-header__metric">
-          <span class="dossier-header__metric-label">Grade</span>
-          <span class="dossier-header__metric-value" :style="{ color: gradeColor }">
-            {{ formattedGrade }}
+          <span class="dossier-header__metric-label">{{ isSBAR ? 'Overall Mastery' : 'Grade' }}</span>
+          <span class="dossier-header__metric-value" :style="{ color: isSBAR ? sbarBadge.color : gradeColor }">
+            <template v-if="isSBAR">
+              {{ sbarBadge.level }}
+            </template>
+            <template v-else>
+              {{ formattedGrade }}
+            </template>
           </span>
         </div>
-        <div v-if="mostConsistent !== null" class="dossier-header__metric dossier-header__metric--secondary">
+        <div v-if="!isSBAR && mostConsistent !== null" class="dossier-header__metric dossier-header__metric--secondary">
           <span class="dossier-header__metric-label">Consistent</span>
           <span class="dossier-header__metric-value dossier-header__metric-value--smaller">
             {{ Math.round(mostConsistent) }}%
@@ -45,7 +50,7 @@
             </span>
           </span>
         </div>
-        <div v-if="weightedMedian !== null" class="dossier-header__metric dossier-header__metric--secondary">
+        <div v-if="!isSBAR && weightedMedian !== null" class="dossier-header__metric dossier-header__metric--secondary">
           <span class="dossier-header__metric-label">Median</span>
           <span class="dossier-header__metric-value dossier-header__metric-value--smaller">
             {{ Math.round(weightedMedian) }}%
@@ -76,6 +81,8 @@
 <script setup>
 import { computed } from 'vue'
 import { UserCheck, UserMinus, Clock, Toilet, X, HelpCircle, CalendarX } from 'lucide-vue-next'
+import { activeClassRecord } from '../../composables/useGradebook.js'
+import { getSBARLevelBadge } from '../../db/gradebook/gradeCalcSBAR.js'
 
 const props = defineProps({
   student: { type: Object, required: true },
@@ -87,8 +94,15 @@ const props = defineProps({
   attendanceRate:  { type: Number, default: null }
 })
 
+const isSBAR = computed(() => activeClassRecord.value?.gradingFramework === 'sbar')
+
 const initials = computed(() => {
   return `${props.student.firstName?.[0] || ''}${props.student.lastName?.[0] || ''}`.toUpperCase()
+})
+
+const sbarBadge = computed(() => {
+  if (props.overallGrade === null) return { level: '—', color: 'var(--text-secondary)' }
+  return getSBARLevelBadge(props.overallGrade)
 })
 
 const formattedGrade = computed(() => {

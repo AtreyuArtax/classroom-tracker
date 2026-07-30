@@ -294,7 +294,12 @@ const sortedAssessments = computed(() => {
     ? filteredMilestones.value?.find(m => m.milestoneId === selectedMilestone.value)?.date
     : null
     
-  let list = [...assessments.value].filter(a => a.target !== 'individual')
+  const isSBAR = props.classRecord?.gradingFramework === 'sbar'
+  let list = [...assessments.value].filter(a => {
+    if (a.target === 'individual') return false
+    const isSBARTask = a.categoryId === 'sbar_general' || (a.expectationIds && a.expectationIds.length > 0)
+    return isSBAR ? isSBARTask : !isSBARTask
+  })
   if (asOf) {
     list = list.filter(a => a.date <= asOf)
   }

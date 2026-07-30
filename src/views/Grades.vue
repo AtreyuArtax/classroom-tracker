@@ -32,7 +32,19 @@
           <p>Select a class to view the gradebook</p>
         </div>
 
-        <!-- Detailed Assessment View Component -->
+        <!-- Detailed Assessment View Component Dispatcher -->
+        <GradesAssessmentDetailSBAR
+          v-else-if="selectedAssessmentId && currentAssessment && activeClassRecord?.gradingFramework === 'sbar'"
+          :current-assessment="currentAssessment"
+          :sorted-roster="sortedRoster"
+          :focused-student-id="focusedStudentId"
+          :return-tab-mode="returnTabMode"
+          @close="closeAssessmentView"
+          @start-edit="startEditAssessment"
+          @confirm-delete="confirmDeleteAssessment"
+          @show-dossier="showStudentDossier"
+        />
+
         <GradesAssessmentDetailView
           v-else-if="selectedAssessmentId && currentAssessment"
           :current-assessment="currentAssessment"
@@ -155,7 +167,15 @@
             @select-assessment="openAssessmentView($event, 'analytics')"
           />
 
-          <!-- The Scrollable Grid -->
+          <!-- SBAR Grid vs Traditional Grid Dispatcher -->
+          <GradesGridSBAR
+            v-else-if="activeClassRecord?.gradingFramework === 'sbar'"
+            :is-privacy-mode="isPrivacyMode"
+            @select-assessment="openAssessmentView($event, 'grid')"
+            @open-dossier="showStudentDossier"
+          />
+
+          <!-- The Scrollable Traditional Grid -->
           <GradesGrid
             v-else
             :is-privacy-mode="isPrivacyMode"
@@ -172,6 +192,7 @@
             :student-id="selectedStudentId" 
             :class-id="activeClass?.classId"
             @close="closeStudentDossier"
+            @select-assessment="openAssessmentView($event, 'dossier')"
           />
         </div>
 
@@ -252,10 +273,12 @@ import { useAttendanceInsights } from '../composables/useAttendanceInsights.js'
 import { Plus, BarChart2, Settings, Printer, LayoutGrid } from 'lucide-vue-next'
 import Student360 from '../components/dossier/Student360.vue'
 import GradesGrid from '../components/GradesGrid.vue'
+import GradesGridSBAR from '../components/grades/GradesGridSBAR.vue'
 import GradesAnalyticsPanel from '../components/GradesAnalyticsPanel.vue'
 import PrintGradesGridModal from '../components/PrintGradesGridModal.vue'
 import StudentSidebar from '../components/StudentSidebar.vue'
 import GradesAssessmentDetailView from '../components/grades/GradesAssessmentDetailView.vue'
+import GradesAssessmentDetailSBAR from '../components/grades/GradesAssessmentDetailSBAR.vue'
 import GradesMissingModal from '../components/grades/GradesMissingModal.vue'
 import GradesContextMenu from '../components/grades/GradesContextMenu.vue'
 import ClassSwitcher from '../components/ClassSwitcher.vue'
@@ -297,13 +320,20 @@ const savedAnalyticsScrollY = ref(0)
 const savedGridScrollY = ref(0)
 const savedGridScrollX = ref(0)
 
+const focusedStudentId = ref(null)
+
 function openAssessmentView(assessmentId, source = 'grid') {
   returnTabMode.value = source
+  if (source === 'dossier') {
+    focusedStudentId.value = selectedStudentId.value
+  } else {
+    focusedStudentId.value = null
+  }
 
   if (source === 'analytics') {
     const el = document.querySelector('.grades__analytics-scrollable')
     if (el) savedAnalyticsScrollY.value = el.scrollTop
-  } else {
+  } else if (source === 'grid') {
     const el = document.querySelector('.grades__grid-wrapper')
     if (el) {
       savedGridScrollY.value = el.scrollTop
@@ -460,8 +490,13 @@ const sortedRoster = computed(() => {
 const studentTrends = computed(() => {
   if (!activeClassRecord.value?.students || !assessments.value || !gradeMap.value) return {}
   
+  const isSBAR = activeClassRecord.value?.gradingFramework === 'sbar'
   const productAssessments = [...assessments.value]
-    .filter(a => a.assessmentType === 'product' && !a.excluded && a.target !== 'individual')
+    .filter(a => {
+      if (a.assessmentType !== 'product' || a.excluded || a.target === 'individual') return false
+      const isSBARTask = a.categoryId === 'sbar_general' || (a.expectationIds && a.expectationIds.length > 0)
+      return isSBAR ? isSBARTask : !isSBARTask
+    })
     .sort((a, b) => new Date(a.date) - new Date(b.date))
     
   if (productAssessments.length === 0) return {}
@@ -485,7 +520,7 @@ const studentTrends = computed(() => {
 
 const currentAssessment = computed(() => {
   if (!selectedAssessmentId.value) return null
-  return assessments.value.find(a => a.assessmentId === selectedAssessmentId.value)
+  return assessments.value.find(a => String(a.assessmentId) === String(selectedAssessmentId.value))
 })
 
 const missingStudentsList = computed(() => {

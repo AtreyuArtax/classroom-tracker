@@ -8,6 +8,7 @@ import { preciseRound } from '../../utils/math.js'
 import { getSettings } from '../settingsService.js'
 import { getAssessmentsByClass } from './assessmentService.js'
 import { getGradesByClass, getGradesByStudent } from './gradeService.js'
+import { calculateSBARStudentOverallMastery } from './gradeCalcSBAR.js'
 
 /**
  * Calculates standard deviation for an array of numbers.
@@ -121,21 +122,24 @@ export function buildLevelDistributionBuckets(percentages, customBuckets = null)
  */
 export function resolveAttemptScore(attempts, retestPolicy) {
   if (!attempts || attempts.length === 0) return null
-  const valid = attempts.filter(a => a.pointsEarned != null)
-  if (valid.length === 0) return null
+  const getVal = a => (a.pointsEarned != null ? Number(a.pointsEarned) : (a.score != null ? Number(a.score) : (a.points != null ? Number(a.points) : null)))
+  const validObjects = attempts.filter(a => getVal(a) !== null)
+  if (validObjects.length === 0) return null
+  const valid = validObjects.map(getVal)
 
   switch (retestPolicy) {
     case 'highest':
-      return Math.max(...valid.map(a => a.pointsEarned))
+      return Math.max(...valid)
     case 'latest':
-      return valid[valid.length - 1].pointsEarned
+      return valid[valid.length - 1]
     case 'average':
-      return valid.reduce((sum, a) => sum + a.pointsEarned, 0) / valid.length
+      return valid.reduce((sum, v) => sum + v, 0) / valid.length
     case 'manual':
-      const primary = valid.find(a => a.isPrimary)
-      return primary ? primary.pointsEarned : valid[valid.length - 1].pointsEarned
+      const primaryAttempt = validObjects.find(a => a.isPrimary)
+      const primaryVal = primaryAttempt ? getVal(primaryAttempt) : null
+      return primaryVal !== null ? primaryVal : valid[valid.length - 1]
     default:
-      return Math.max(...valid.map(a => a.pointsEarned))
+      return Math.max(...valid)
   }
 }
 
@@ -293,7 +297,9 @@ export function calculateMostConsistent(studentId, classRecord, gradeMap, assess
     const catAssessments = assessments.filter(a => 
       a.target !== 'individual' && 
       a.categoryId === cat.categoryId && 
-      !a.excluded
+      !a.excluded &&
+      a.categoryId !== 'sbar_general' &&
+      (!a.expectationIds || a.expectationIds.length === 0)
     )
 
     const scores = []
@@ -404,6 +410,19 @@ export async function calculateStudentGrade(studentId, classRecord, { asOf = nul
   const gradeMap = {}
   for (const g of grades) gradeMap[g.assessmentId] = g
 
+  if (classRecord.gradingFramework === 'sbar') {
+    const sbarMasteryPct = calculateSBARStudentOverallMastery(studentId, classRecord, assessments, gradeMap)
+    return {
+      overallGrade: sbarMasteryPct,
+      displayOverallGrade: sbarMasteryPct,
+      categoryResults: {},
+      isAdjusted: false,
+      mostConsistent: null,
+      median: null,
+      sbarMasteryPct
+    }
+  }
+
   const categories = classRecord.gradebookCategories
   if (!categories || categories.length === 0) return null
 
@@ -417,6 +436,8 @@ export async function calculateStudentGrade(studentId, classRecord, { asOf = nul
     let catAssessments = assessments.filter(a =>
       String(a.categoryId) === String(category.categoryId) &&
       !a.excluded &&
+      a.categoryId !== 'sbar_general' &&
+      (!a.expectationIds || a.expectationIds.length === 0) &&
       (a.target !== 'individual' || (a.target === 'individual' && String(a.targetStudentId) === String(studentId)))
     )
 

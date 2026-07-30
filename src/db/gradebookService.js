@@ -9,4 +9,5 @@
 export * from './gradebook/assessmentService.js'
 export * from './gradebook/gradeService.js'
 export * from './gradebook/gradeCalc.js'
+export * from './gradebook/gradeCalcSBAR.js'
 export * from './gradebook/gradeAnalytics.js'

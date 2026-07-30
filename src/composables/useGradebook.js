@@ -23,6 +23,7 @@ export const selectedStudentId = ref(null)
 export const selectedMilestone = ref(null) // null = current
 export const globalMilestones = ref([])
 export const gradeBuckets = ref([])
+export const lastDossierTab = ref('summary')
 
 // Reactive state for analytics (Step 6)
 export const analyticsMode = ref(false) // false = grid, true = analytics panel
@@ -232,8 +233,8 @@ export async function deleteAssessment(assessmentId) {
   try {
     await gradebookService.deleteAssessment(assessmentId)
     
-    // Update local ref
-    assessments.value = assessments.value.filter(a => a.assessmentId !== assessmentId)
+    // Update local ref with loose number matching
+    assessments.value = assessments.value.filter(a => Number(a.assessmentId) !== Number(assessmentId))
     
     // Refresh grades as they are now orphaned/removed
     await refreshGrades()
@@ -258,6 +259,7 @@ export function openAddAssessment(target = 'class', studentId = null) {
     assessmentType: (target === 'individual') ? 'conversation' : 'product',
     unitId: activeClassRecord.value?.gradebookUnits?.[0]?.unitId || null,
     expectationId: null,
+    expectationIds: [],
     target,
     targetStudentId: studentId,
     date: new Date().toISOString().slice(0, 10),
@@ -283,7 +285,14 @@ export function onTargetChange() {
 }
 
 export async function saveAssessment() {
-  if (!newAssessment.value.name || !newAssessment.value.categoryId) return
+  if (!newAssessment.value.name) return
+  
+  if (!newAssessment.value.categoryId && activeClassRecord.value?.gradebookCategories?.[0]?.categoryId) {
+    newAssessment.value.categoryId = activeClassRecord.value.gradebookCategories[0].categoryId
+  }
+  if (!newAssessment.value.categoryId) {
+    newAssessment.value.categoryId = 'sbar_general'
+  }
   
   const data = { ...newAssessment.value }
 
@@ -427,6 +436,9 @@ export function enterGrade(assessmentId, studentId, pointsEarned, date = null, c
     grades.value.push(grade)
   }
   
+  grade.masteryLevel = pointsEarned
+  grade.resolvedScore = pointsEarned
+  
   const isFirst = (grade.attempts?.length || 0) === 0
   const attemptObj = {
     attemptId: crypto.randomUUID(),
@@ -446,15 +458,6 @@ export function enterGrade(assessmentId, studentId, pointsEarned, date = null, c
   refreshSingleStudent(studentId)
   refreshSingleAssessmentStats(assessmentId)
   
-  // 2. Debounce IDB save
-  enqueueDBSave(`${assessmentId}_${studentId}`, async () => {
-    await gradebookService.addAttempt(assessmentId, studentId, { pointsEarned, date, comment })
-    // If it was previously missing, we need to ensure the DB flag is also cleared
-    if (wasMissing) {
-      await gradebookService.updateGradeFlags(assessmentId, studentId, { missing: false })
-    }
-  })
-
   // Push atomic attempt undo and redo operations
   pushUndo(
     async () => {
@@ -489,6 +492,49 @@ export function enterGrade(assessmentId, studentId, pointsEarned, date = null, c
       refreshSingleAssessmentStats(assessmentId)
     }
   )
+}
+
+/**
+ * Enters an SBAR expectation level grade for a specific expectation standard.
+ */
+export function enterGradeSBAR(assessmentId, studentId, expCode, percentage) {
+  if (!activeClassRecord.value) return
+
+  let grade = grades.value.find(g => Number(g.assessmentId) === Number(assessmentId) && String(g.studentId) === String(studentId))
+  if (!grade) {
+    grade = {
+      assessmentId: Number(assessmentId),
+      studentId: String(studentId),
+      classId: activeClassRecord.value.classId,
+      missing: false,
+      excluded: false,
+      attempts: [],
+      expectationScores: {}
+    }
+    grades.value.push(grade)
+  }
+
+  if (!grade.expectationScores) {
+    grade.expectationScores = {}
+  }
+
+  grade.expectationScores[expCode] = percentage
+  grade.masteryLevel = percentage
+  grade.resolvedScore = percentage
+  grade.missing = false
+
+  grades.value = [...grades.value]
+  refreshSingleStudent(studentId)
+
+  enqueueDBSave(`${assessmentId}_${studentId}`, async () => {
+    await gradebookService.saveSBARGrade(
+      assessmentId, 
+      studentId, 
+      grade.expectationScores, 
+      percentage,
+      activeClassRecord.value?.classId
+    )
+  })
 }
 
 
@@ -846,18 +892,41 @@ export async function saveStudentDemographics(studentId, demographics) {
 export const gradeMap = computed(() => {
   const map = {}
   for (const grade of grades.value) {
-    if (!map[grade.assessmentId]) map[grade.assessmentId] = {}
-    
-    // Pre-resolve the score based on assessment policy
+    const astIdNum = Number(grade.assessmentId)
+    const astIdStr = String(grade.assessmentId)
+    const stIdNum = Number(grade.studentId)
+    const stIdStr = String(grade.studentId)
+
+    if (!map[astIdStr]) map[astIdStr] = {}
+    if (!map[astIdNum]) map[astIdNum] = map[astIdStr]
+
     const assessment = assessments.value.find(a => Number(a.assessmentId) === Number(grade.assessmentId))
-    const resolvedScore = assessment 
-      ? gradebookService.resolveAttemptScore(grade.attempts, assessment.retestPolicy)
+    const resolvedAttemptScore = assessment 
+      ? gradebookService.resolveAttemptScore(grade.attempts, assessment?.retestPolicy)
       : null
-      
-    map[grade.assessmentId][grade.studentId] = {
+
+    let resolvedScore = null
+    if (resolvedAttemptScore !== null && resolvedAttemptScore !== undefined) {
+      resolvedScore = resolvedAttemptScore
+    } else if (grade.resolvedScore !== undefined && grade.resolvedScore !== null) {
+      resolvedScore = Number(grade.resolvedScore)
+    } else if (grade.score !== undefined && grade.score !== null) {
+      resolvedScore = Number(grade.score)
+    } else if (grade.pointsEarned !== undefined && grade.pointsEarned !== null) {
+      resolvedScore = Number(grade.pointsEarned)
+    } else if (grade.masteryLevel !== undefined && grade.masteryLevel !== null) {
+      resolvedScore = Number(grade.masteryLevel)
+    }
+
+    const entry = {
       ...grade,
       resolvedScore
     }
+
+    map[astIdStr][stIdStr] = entry
+    map[astIdStr][stIdNum] = entry
+    if (!isNaN(stIdNum)) map[astIdNum][stIdNum] = entry
+    map[astIdNum][stIdStr] = entry
   }
   return map
 })

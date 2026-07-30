@@ -71,9 +71,15 @@ onUnmounted(() => {
 const history = computed(() => {
   if (!props.assessments.length || !activeClassRecord.value) return []
 
-  // Ensure assessments are sorted by date
+  // Ensure assessments are sorted by date and filter SBAR tasks in traditional framework
+  const isSBAR = activeClassRecord.value?.gradingFramework === 'sbar'
   const sorted = [...props.assessments]
-    .filter(a => !a.excluded && (props.gradeMap[a.assessmentId]?.[props.studentId]?.resolvedScore !== null || props.gradeMap[a.assessmentId]?.[props.studentId]?.missing))
+    .filter(a => {
+      if (a.excluded) return false
+      const isSBARTask = a.categoryId === 'sbar_general' || (a.expectationIds && a.expectationIds.length > 0)
+      if (isSBAR ? !isSBARTask : isSBARTask) return false
+      return props.gradeMap[a.assessmentId]?.[props.studentId]?.resolvedScore !== null || props.gradeMap[a.assessmentId]?.[props.studentId]?.missing
+    })
     .sort((a, b) => new Date(a.date) - new Date(b.date))
 
   if (sorted.length === 0) return []
@@ -101,13 +107,19 @@ const history = computed(() => {
         const grade = props.gradeMap[a.assessmentId]?.[props.studentId]
         if (!grade || grade.excluded) continue
 
-        const possible = a.scaledTotal ?? a.totalPoints
+        const isSBART = a.categoryId === 'sbar_general' || (a.expectationIds && a.expectationIds.length > 0)
+        const possible = isSBART ? 100 : (a.scaledTotal ?? a.totalPoints)
         if (grade.missing) {
           catPossible += possible
         } else if (grade.resolvedScore !== null) {
-          const divisor = a.totalPoints || 1
-          catEarned += a.scaledTotal ? (grade.resolvedScore / divisor) * a.scaledTotal : grade.resolvedScore
-          catPossible += possible
+          if (isSBART) {
+            catEarned += grade.resolvedScore
+            catPossible += 100
+          } else {
+            const divisor = a.totalPoints || 1
+            catEarned += a.scaledTotal ? (grade.resolvedScore / divisor) * a.scaledTotal : grade.resolvedScore
+            catPossible += possible
+          }
         }
       }
 
@@ -126,6 +138,10 @@ const history = computed(() => {
       const g = props.gradeMap[a.assessmentId]?.[props.studentId]
       if (!g || g.excluded) return null
       if (g.missing) return 0
+      const isSBART = a.categoryId === 'sbar_general' || (a.expectationIds && a.expectationIds.length > 0)
+      if (isSBART) {
+        return g.resolvedScore
+      }
       return (g.resolvedScore / (a.totalPoints || 1)) * 100
     }).filter(s => s !== null)
     

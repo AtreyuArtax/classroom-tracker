@@ -83,7 +83,11 @@
             <tr v-for="a in filteredMasterAssessments" :key="a.assessmentId" @contextmenu.prevent="onContextMenu($event, a.assessmentId)">
               <td class="td-date">{{ formatLocalDisplay(a.date) }}</td>
               <td class="td-name">
-                <span>{{ a.name }}</span>
+                <span 
+                  :class="{ 'clickable-sbar-name': isSBARTask(a) }" 
+                  @click="isSBARTask(a) && $emit('select-assessment', a.assessmentId)"
+                  :title="isSBARTask(a) ? 'Click to open SBAR evaluation matrix' : ''"
+                >{{ a.name }}</span>
                 <span v-if="a.target === 'individual' || a.isIndividual" class="badge-student-task" title="Individual student task">👤 Student Task</span>
                 <span v-else-if="getImpactLevel(a.weight).id === 'high'" class="badge-high-weight" title="High grade weight item">🔥 High Weight</span>
               </td>
@@ -103,13 +107,26 @@
                   
                   <!-- Visual Display Mode -->
                   <template v-else>
-                    <div v-if="a.missing" class="score-missing" @click="startEdit(a.assessmentId)">
+                    <div v-if="a.missing" class="score-missing" @click="isSBARTask(a) ? $emit('select-assessment', a.assessmentId) : startEdit(a.assessmentId)">
                       <span class="text-danger">Missing</span>
                       <span v-if="a.wasAbsent" class="badge-red-a" title="Absent on this date">A</span>
                     </div>
-                    <span v-else-if="a.excluded" class="text-muted" @click="startEdit(a.assessmentId)">EX</span>
-                    <span v-else class="score-value" @click="startEdit(a.assessmentId)">
-                      {{ a.score }} / {{ a.totalPoints }}
+                    <span v-else-if="a.excluded" class="text-muted" @click="isSBARTask(a) ? $emit('select-assessment', a.assessmentId) : startEdit(a.assessmentId)">EX</span>
+                    <span v-else class="score-value" @click="isSBARTask(a) ? $emit('select-assessment', a.assessmentId) : startEdit(a.assessmentId)">
+                      <template v-if="isSBARTask(a)">
+                        <span 
+                          v-if="a.score !== null" 
+                          class="sbar-level-badge sbar-level-badge--clickable" 
+                          :style="{ background: getSBARLevelBadge(a.score).color, color: 'white', padding: '2px 8px', borderRadius: '12px', fontWeight: 'bold', cursor: 'pointer' }"
+                          title="Click to open SBAR evaluation matrix"
+                        >
+                          {{ getSBARLevelBadge(a.score).level }}
+                        </span>
+                        <span v-else class="text-muted" style="cursor: pointer;" title="Click to open SBAR evaluation matrix">—</span>
+                      </template>
+                      <template v-else>
+                        {{ a.score !== null ? a.score : '—' }} / {{ a.totalPoints }}
+                      </template>
                     </span>
                     
                     <!-- Attempts / Comment Indicators -->
@@ -130,8 +147,8 @@
                   </template>
                 </div>
               </td>
-              <td class="td-percent" :style="{ color: getGradeColor((a.score / a.totalPoints) * 100) }">
-                {{ a.score !== null ? Math.round((a.score / a.totalPoints) * 100) + '%' : 'N/A' }}
+              <td class="td-percent" :style="{ color: getGradeColor(a.score !== null ? (isSBARTask(a) ? a.score : (a.score / (a.totalPoints || 1)) * 100) : null) }">
+                {{ a.score !== null ? (isSBARTask(a) ? Math.round(a.score) + '%' : Math.round((a.score / (a.totalPoints || 1)) * 100) + '%') : 'N/A' }}
               </td>
             </tr>
           </tbody>
@@ -336,9 +353,14 @@ import { useGradeEditing } from '../../composables/useGradeEditing.js'
 import { getGradeColor } from '../../utils/gradeColors.js'
 import { formatLocalDisplay } from '../../utils/dates.js'
 import { useMessage } from '../../composables/useMessage.js'
+import { getSBARLevelBadge } from '../../db/gradebook/gradeCalcSBAR.js'
 import { Plus, Trash2, X, ChevronRight, Calendar, AlertCircle, XCircle } from 'lucide-vue-next'
 import DossierCategoryGrid from './DossierCategoryGrid.vue'
 import DossierEvidenceMix from './DossierEvidenceMix.vue'
+
+function isSBARTask(a) {
+  return a.categoryId === 'sbar_general' || (a.expectationIds && a.expectationIds.length > 0)
+}
 
 
 const props = defineProps({
@@ -347,7 +369,7 @@ const props = defineProps({
   events: { type: Array, default: () => [] }
 })
 
-defineEmits(['delete-event'])
+defineEmits(['delete-event', 'select-assessment'])
 
 const { alert, confirm } = useMessage()
 
@@ -399,8 +421,13 @@ const academicCategories = computed(() => {
 })
 
 const classAssessments = computed(() => {
+  const isSBAR = activeClassRecord.value?.gradingFramework === 'sbar'
   return assessments.value
-    .filter(a => a.target !== 'individual')
+    .filter(a => {
+      if (a.target === 'individual') return false
+      const isSBARTask = a.categoryId === 'sbar_general' || (a.expectationIds && a.expectationIds.length > 0)
+      return isSBAR ? isSBARTask : !isSBARTask
+    })
     .map(a => {
       const g = gradeMap.value[a.assessmentId]?.[props.studentId]
       const score = g?.resolvedScore ?? null

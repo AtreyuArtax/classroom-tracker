@@ -154,6 +154,7 @@
           :student="student"
           :events="events"
           @delete-event="handleDeleteHistoryItem"
+          @select-assessment="emit('select-assessment', $event)"
         />
       </section>
 
@@ -291,8 +292,10 @@ import { ref, computed, watch, onMounted, onUnmounted, toRef } from 'vue'
 
 defineOptions({ inheritAttrs: false })
 
+import { lastDossierTab } from '../../composables/useGradebook.js'
+
 // Shared session state
-const activeTab = ref('summary')
+const activeTab = lastDossierTab
 const selectedPeriod = ref('semester')
 let resetTimer = null
 
@@ -354,14 +357,13 @@ const props = defineProps({
   classId:   { type: String, required: true }
 })
 
-const emit = defineEmits(['close'])
+const emit = defineEmits(['close', 'select-assessment'])
 
 const contextMenu = ref(null)
 const attemptsPopover = ref(null)
 const newAttemptForm = ref(null)
 
 function handleClose() {
-  activeTab.value = 'summary'
   selectedPeriod.value = 'semester'
   emit('close')
 }

@@ -85,9 +85,9 @@
                 v-if="classGrades && classGrades[student.studentId]" 
                 class="student-sidebar__roster-grade"
                 :class="{ 'student-sidebar__roster-grade--privacy': isPrivacyMode }"
-                :style="{ color: isPrivacyMode ? 'var(--text-secondary)' : getGradeColor(classGrades[student.studentId].overallGrade) }"
+                :style="{ color: isPrivacyMode ? 'var(--text-secondary)' : (isSBAR ? getSBARLevelBadge(classGrades[student.studentId].overallGrade).color : getGradeColor(classGrades[student.studentId].overallGrade)) }"
               >
-                {{ formatGrade(classGrades[student.studentId].overallGrade) }}
+                {{ isSBAR ? getSBARLevelBadge(classGrades[student.studentId].overallGrade).level : formatGrade(classGrades[student.studentId].overallGrade) }}
               </span>
               <span v-else class="student-sidebar__roster-grade student-sidebar__roster-grade--empty">
                 —
@@ -103,7 +103,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { Eye, EyeOff, ChevronLeft, ChevronRight } from 'lucide-vue-next'
 import ClassSwitcher from './ClassSwitcher.vue'
 
@@ -140,6 +140,11 @@ const props = defineProps({
 })
 
 defineEmits(['select-student', 'navigate', 'toggle-privacy', 'toggle-collapse'])
+
+import { activeClassRecord } from '../composables/useGradebook.js'
+import { getSBARLevelBadge } from '../db/gradebook/gradeCalcSBAR.js'
+
+const isSBAR = computed(() => activeClassRecord.value?.gradingFramework === 'sbar')
 
 const isMobileOpen = ref(false)
 

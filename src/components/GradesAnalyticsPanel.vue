@@ -623,7 +623,12 @@ const classMostConsistent = computed(() => {
 })
 
 const classEvidenceBlend = computed(() => {
-  const activeAssessments = (assessments.value || []).filter(a => a.target !== 'individual' && !a.excluded)
+  const isSBAR = activeClassRecord.value?.gradingFramework === 'sbar'
+  const activeAssessments = (assessments.value || []).filter(a => {
+    if (a.target === 'individual' || a.excluded) return false
+    const isSBARTask = a.categoryId === 'sbar_general' || (a.expectationIds && a.expectationIds.length > 0)
+    return isSBAR ? isSBARTask : !isSBARTask
+  })
   const total = classAnalytics.value?.totalAssessmentsCount ?? activeAssessments.length
   
   if (total === 0) {
