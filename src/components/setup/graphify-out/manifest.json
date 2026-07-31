@@ -1,0 +1,72 @@
+{
+  "AssessmentFrameworkSettings.vue": {
+    "mtime": 1785504546.532876,
+    "ast_hash": "8d5802017af39927f7a94d146dd611e0",
+    "semantic_hash": ""
+  },
+  "BehaviorSettings.vue": {
+    "mtime": 1785245637.4716172,
+    "ast_hash": "5a3ffba16eafd4001f4339a131047a8f",
+    "semantic_hash": ""
+  },
+  "CalendarSettings.vue": {
+    "mtime": 1785245564.4156275,
+    "ast_hash": "5648def56597b87755b38f7679b9d391",
+    "semantic_hash": ""
+  },
+  "ClassLogisticsSettings.vue": {
+    "mtime": 1785492999.1662862,
+    "ast_hash": "51f5bf1ad0e894ede9641ccfc9cc019d",
+    "semantic_hash": ""
+  },
+  "CsvHelpGuide.vue": {
+    "mtime": 1781619911.7201061,
+    "ast_hash": "0794c0177a8a0b5d3b9f3d8bad8c1024",
+    "semantic_hash": ""
+  },
+  "DatabaseMaintenanceSettings.vue": {
+    "mtime": 1785245575.0214186,
+    "ast_hash": "43f1dfb8610ad62169e1c792114e3fb5",
+    "semantic_hash": ""
+  },
+  "ExpectationImportModal.vue": {
+    "mtime": 1784557477.6529622,
+    "ast_hash": "e7a8dd8e859f911cd228eb86522ffe06",
+    "semantic_hash": ""
+  },
+  "GettingStartedGuide.vue": {
+    "mtime": 1781619901.9248884,
+    "ast_hash": "a6d997c87c39dd617f64298c0b2e7d76",
+    "semantic_hash": ""
+  },
+  "GradeBucketsSettings.vue": {
+    "mtime": 1785245527.6019673,
+    "ast_hash": "1e496ca416b0d358f8508611757bebe8",
+    "semantic_hash": ""
+  },
+  "HelpModal.vue": {
+    "mtime": 1781619917.8151672,
+    "ast_hash": "6c3aaa4c7aef55b077102c0fe1d1d96c",
+    "semantic_hash": ""
+  },
+  "QrCodeGeneratorModal.vue": {
+    "mtime": 1784223573.807283,
+    "ast_hash": "0147d3e8bbca6d74ea564a21ba44844a",
+    "semantic_hash": ""
+  },
+  "RosterCsvImporter.vue": {
+    "mtime": 1784223849.838415,
+    "ast_hash": "801d8b2f6cbfa9f7bc987a327c33f073",
+    "semantic_hash": ""
+  },
+  "SemesterCalendar.vue": {
+    "mtime": 1777043677.8446665,
+    "ast_hash": "399790f47d2f02f072811dda1fbf2418",
+    "semantic_hash": ""
+  },
+  "SetupQuickJumpNav.vue": {
+    "mtime": 1784943751.0802193,
+    "ast_hash": "41a36d5e662362d003c60032327c2946",
+    "semantic_hash": ""
+  }
+}

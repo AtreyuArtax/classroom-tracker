@@ -10,31 +10,34 @@
         <button type="button" class="setup__inline-banner-close" @click="frameworkWarning = ''">&times;</button>
       </div>
       
-      <h3 class="setup__card-subtitle">Categories (Weights)</h3>
-      <div class="setup__gb-list">
-        <div v-for="(cat, idx) in activeClass.gradebookCategories" :key="cat.categoryId" class="setup__gb-item">
-          <input v-model="cat.name" class="setup__input setup__input--naked" @change="saveGradebookSettings" />
-          <div class="setup__gb-actions">
-            <input v-model.number="cat.weight" type="number" class="setup__input setup__input--weight" @change="saveGradebookSettings" /><span>%</span>
-            <button class="setup__icon-btn" :disabled="idx === 0" @click="moveCategory(idx, -1)"><ChevronUp :size="16" /></button>
-            <button class="setup__icon-btn" :disabled="idx === activeClass.gradebookCategories.length - 1" @click="moveCategory(idx, 1)"><ChevronDown :size="16" /></button>
-            <button class="setup__icon-btn setup__icon-btn--danger" @click="onDeleteCategory(cat)"><Trash2 :size="14" /></button>
+      <!-- Traditional Mode: Categories & Weights -->
+      <template v-if="!isSBAR">
+        <h3 class="setup__card-subtitle">Categories (Weights)</h3>
+        <div class="setup__gb-list">
+          <div v-for="(cat, idx) in activeClass.gradebookCategories" :key="cat.categoryId" class="setup__gb-item">
+            <input v-model="cat.name" class="setup__input setup__input--naked" @change="saveGradebookSettings" />
+            <div class="setup__gb-actions">
+              <input v-model.number="cat.weight" type="number" class="setup__input setup__input--weight" @change="saveGradebookSettings" /><span>%</span>
+              <button class="setup__icon-btn" :disabled="idx === 0" @click="moveCategory(idx, -1)"><ChevronUp :size="16" /></button>
+              <button class="setup__icon-btn" :disabled="idx === activeClass.gradebookCategories.length - 1" @click="moveCategory(idx, 1)"><ChevronDown :size="16" /></button>
+              <button class="setup__icon-btn setup__icon-btn--danger" @click="onDeleteCategory(cat)"><Trash2 :size="14" /></button>
+            </div>
           </div>
         </div>
-      </div>
-      
-      <div class="setup__category-footer">
-        <button class="setup__btn-ghost setup__btn--full" @click="addCategory">
-          <Plus :size="14" /> Add Category
-        </button>
-        <div class="setup__weight-total" :class="{ 
-          'setup__weight-total--under': totalWeight < 100 && totalWeight > 0,
-          'setup__weight-total--over': totalWeight > 100 
-        }">
-          Total: <strong>{{ totalWeight }}%</strong>
-          <AlertTriangle v-if="totalWeight !== 100" :size="14" />
+        
+        <div class="setup__category-footer">
+          <button class="setup__btn-ghost setup__btn--full" @click="addCategory">
+            <Plus :size="14" /> Add Category
+          </button>
+          <div class="setup__weight-total" :class="{ 
+            'setup__weight-total--under': totalWeight < 100 && totalWeight > 0,
+            'setup__weight-total--over': totalWeight > 100 
+          }">
+            Total: <strong>{{ totalWeight }}%</strong>
+            <AlertTriangle v-if="totalWeight !== 100" :size="14" />
+          </div>
         </div>
-      </div>
+      </template>
 
       <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 1.5rem;">
         <h3 class="setup__card-subtitle" style="margin: 0;">Units & Expectations</h3>
@@ -184,6 +187,8 @@ import ExpectationImportModal from './ExpectationImportModal.vue'
 
 const { activeClass, triggerActiveClass } = useClassroom()
 const { alert, confirm } = useMessage()
+
+const isSBAR = computed(() => activeClass.value?.gradingFramework === 'sbar')
 
 const templates = ref([])
 const newTemplateName = ref('')
