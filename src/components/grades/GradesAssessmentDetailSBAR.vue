@@ -9,6 +9,12 @@
           </button>
           <h2 class="sbar-detail-title">{{ currentAssessment.name }}</h2>
           <div class="sbar-header-tags">
+            <span 
+              class="sbar-tag" 
+              :class="(currentAssessment.isFormative || currentAssessment.purpose === 'formative') ? 'sbar-tag--formative' : 'sbar-tag--summative'"
+            >
+              {{ (currentAssessment.isFormative || currentAssessment.purpose === 'formative') ? 'FORMATIVE' : 'SUMMATIVE' }}
+            </span>
             <span class="sbar-tag sbar-tag--type">SBAR TASK</span>
             <span class="sbar-tag sbar-tag--date" v-if="currentAssessment.date">{{ currentAssessment.date }}</span>
           </div>
@@ -605,5 +611,19 @@ async function assignNumericPercentage(studentId, expCode, val) {
   cursor: pointer;
   width: 130px;
   text-align: center;
+}
+
+.sbar-tag--formative {
+  background: rgba(59, 130, 246, 0.15);
+  color: #3b82f6;
+  border: 1px solid rgba(59, 130, 246, 0.35);
+  font-weight: 700;
+}
+
+.sbar-tag--summative {
+  background: rgba(22, 163, 74, 0.15);
+  color: #16a34a;
+  border: 1px solid rgba(22, 163, 74, 0.35);
+  font-weight: 700;
 }
 </style>

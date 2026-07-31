@@ -5,32 +5,96 @@
         <h4 class="expectation-heatmap__title">Curriculum Expectation Mastery</h4>
         <p class="expectation-heatmap__subtitle">Overview of student performance per curriculum expectation and strand.</p>
       </div>
-      <div v-if="strugglingCount > 0" class="expectation-heatmap__alert-chip">
+      <div 
+        v-if="strugglingCount > 0" 
+        class="expectation-heatmap__alert-chip"
+        :class="{ 'expectation-heatmap__alert-chip--active': selectedUnitFilter === 'needs_reteaching' }"
+        @click="selectedUnitFilter = selectedUnitFilter === 'needs_reteaching' ? 'all' : 'needs_reteaching'"
+        title="Click to filter struggling standards"
+      >
         <AlertCircle :size="14" />
         <span>{{ strugglingCount }} expectation{{ strugglingCount !== 1 ? 's' : '' }} need re-teaching (&lt;65%)</span>
       </div>
     </div>
 
+    <!-- Filter Pills Bar & Quick Toggles -->
+    <div v-if="unitsWithExpectations.length" class="expectation-heatmap__filter-bar">
+      <div class="filter-pills">
+        <button 
+          class="filter-pill"
+          :class="{ 'filter-pill--active': selectedUnitFilter === 'all' }"
+          @click="selectedUnitFilter = 'all'"
+        >
+          All Units ({{ totalExpectationsInFilter }} exps)
+        </button>
+        <button 
+          v-for="u in unitsWithExpectations" 
+          :key="u.unitId"
+          class="filter-pill"
+          :class="{ 'filter-pill--active': selectedUnitFilter === u.unitId }"
+          @click="selectedUnitFilter = u.unitId"
+        >
+          {{ u.name }}
+        </button>
+        <button 
+          v-if="strugglingCount > 0"
+          class="filter-pill filter-pill--danger"
+          :class="{ 'filter-pill--active': selectedUnitFilter === 'needs_reteaching' }"
+          @click="selectedUnitFilter = 'needs_reteaching'"
+        >
+          ⚠️ Needs Re-Teaching ({{ strugglingCount }})
+        </button>
+      </div>
+
+      <div class="expand-toggles">
+        <button class="btn-toggle-all" @click="expandAllUnits">Expand All</button>
+        <span class="divider">·</span>
+        <button class="btn-toggle-all" @click="collapseAllUnits">Collapse All</button>
+      </div>
+    </div>
+
     <!-- Empty State -->
-    <div v-if="!unitsWithExpectations.length" class="expectation-heatmap__empty">
+    <div v-if="!filteredUnitsWithExpectations.length" class="expectation-heatmap__empty">
       <BookOpen :size="36" class="expectation-heatmap__empty-icon" />
-      <p class="expectation-heatmap__empty-text">No specific expectations imported or linked yet.</p>
-      <p class="expectation-heatmap__empty-sub">Import expectations in <strong>Setup → Framework</strong> to unlock standard-based tracking.</p>
+      <template v-if="!unitsWithExpectations.length">
+        <p class="expectation-heatmap__empty-text">No curriculum expectations configured for this class.</p>
+        <p class="expectation-heatmap__empty-sub">Import or add expectations in <strong>Setup → Framework</strong> to unlock standards-based tracking.</p>
+      </template>
+      <template v-else>
+        <p class="expectation-heatmap__empty-text">No expectations match the selected filter.</p>
+        <button class="btn-reset-filter" @click="selectedUnitFilter = 'all'">Show All Units</button>
+      </template>
     </div>
 
     <!-- Units & Expectations List -->
     <div v-else class="expectation-heatmap__content">
       <div 
-        v-for="unit in unitsWithExpectations" 
+        v-for="unit in filteredUnitsWithExpectations" 
         :key="unit.unitId"
         class="expectation-heatmap__unit-card"
       >
-        <div class="expectation-heatmap__unit-header">
-          <span class="expectation-heatmap__unit-name">{{ unit.name }}</span>
-          <span class="expectation-heatmap__unit-badge">{{ unit.expectations.length }} Expectations</span>
+        <div 
+          class="expectation-heatmap__unit-header"
+          @click="toggleUnitCollapse(unit.unitId)"
+        >
+          <div class="unit-header-left">
+            <span class="expectation-heatmap__unit-name">{{ unit.name }}</span>
+            <span v-if="isSBAR && unit.unitSbarBadge" class="unit-mastery-badge" :style="{ backgroundColor: getHeatColor(unit.unitAvg) }">
+              Unit {{ unit.unitSbarBadge.level }}
+            </span>
+            <span v-else-if="unit.unitAvg !== null" class="unit-mastery-badge" :style="{ backgroundColor: getHeatColor(unit.unitAvg) }">
+              {{ unit.unitAvg.toFixed(1) }}%
+            </span>
+          </div>
+
+          <div class="unit-header-right">
+            <span class="expectation-heatmap__unit-badge">{{ unit.expectations.length }} Expectations</span>
+            <ChevronUp v-if="!collapsedUnits.has(unit.unitId)" :size="16" class="chevron-icon" />
+            <ChevronDown v-else :size="16" class="chevron-icon" />
+          </div>
         </div>
 
-        <div class="expectation-heatmap__grid">
+        <div v-if="!collapsedUnits.has(unit.unitId)" class="expectation-heatmap__grid">
           <div 
             v-for="exp in unit.expectations" 
             :key="exp.expectationId || exp.code"
@@ -48,24 +112,52 @@
             </div>
 
             <div class="expectation-heatmap__bar-col">
-              <div class="expectation-heatmap__progress-track">
+              <div 
+                v-if="exp.distribution && exp.distribution.total > 0" 
+                class="expectation-heatmap__stacked-track"
+                :title="`L4: ${exp.distribution.L4} | L3: ${exp.distribution.L3} | L2: ${exp.distribution.L2} | L1: ${exp.distribution.L1}`"
+              >
                 <div 
-                  class="expectation-heatmap__progress-fill" 
-                  :style="{ 
-                    width: (exp.average !== null ? Math.min(100, exp.average) : 0) + '%',
-                    backgroundColor: getHeatColor(exp.average)
-                  }"
+                  v-if="exp.distribution.L4 > 0" 
+                  class="expectation-heatmap__stacked-seg seg--l4" 
+                  :style="{ width: (exp.distribution.L4 / exp.distribution.total * 100) + '%' }"
+                ></div>
+                <div 
+                  v-if="exp.distribution.L3 > 0" 
+                  class="expectation-heatmap__stacked-seg seg--l3" 
+                  :style="{ width: (exp.distribution.L3 / exp.distribution.total * 100) + '%' }"
+                ></div>
+                <div 
+                  v-if="exp.distribution.L2 > 0" 
+                  class="expectation-heatmap__stacked-seg seg--l2" 
+                  :style="{ width: (exp.distribution.L2 / exp.distribution.total * 100) + '%' }"
+                ></div>
+                <div 
+                  v-if="exp.distribution.L1 > 0" 
+                  class="expectation-heatmap__stacked-seg seg--l1" 
+                  :style="{ width: (exp.distribution.L1 / exp.distribution.total * 100) + '%' }"
                 ></div>
               </div>
+              <div v-else class="expectation-heatmap__empty-track"></div>
             </div>
 
             <div class="expectation-heatmap__score-col">
-              <span 
-                class="expectation-heatmap__score-val"
-                :style="{ color: getHeatColor(exp.average) }"
-              >
-                {{ exp.average !== null ? exp.average.toFixed(1) + '%' : '—' }}
-              </span>
+              <template v-if="isSBAR && exp.sbarBadge">
+                <span 
+                  class="sbar-level-pill"
+                  :style="{ backgroundColor: getHeatColor(exp.average) }"
+                >
+                  {{ exp.sbarBadge.level }}
+                </span>
+              </template>
+              <template v-else>
+                <span 
+                  class="expectation-heatmap__score-val"
+                  :style="{ color: getHeatColor(exp.average) }"
+                >
+                  {{ exp.average !== null ? exp.average.toFixed(1) + '%' : '—' }}
+                </span>
+              </template>
             </div>
           </div>
         </div>
@@ -75,8 +167,10 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
-import { BookOpen, AlertCircle } from 'lucide-vue-next'
+import { ref, computed } from 'vue'
+import { BookOpen, AlertCircle, ChevronDown, ChevronUp } from 'lucide-vue-next'
+import { calculateSBARExpectationMastery, getSBARLevelBadge } from '../../db/gradebookService.js'
+import { gradeMap } from '../../composables/useGradebook.js'
 
 const props = defineProps({
   activeClass: { type: Object, default: null },
@@ -84,57 +178,153 @@ const props = defineProps({
   classGrades: { type: Object, default: () => ({}) }
 })
 
-const unitsWithExpectations = computed(() => {
-  if (!props.activeClass?.gradebookUnits) return []
+const isSBAR = computed(() => props.activeClass?.gradingFramework === 'sbar')
+const selectedUnitFilter = ref('all') // 'all' | 'needs_reteaching' | unitId
+const collapsedUnits = ref(new Set()) // set of unitIds that are collapsed
 
-  // Create a map of expectationId -> array of grade scores across students
+const rawUnits = computed(() => {
+  if (!props.activeClass) return []
+  if (props.activeClass.gradebookUnits && props.activeClass.gradebookUnits.length) {
+    return props.activeClass.gradebookUnits
+  }
+  if (props.activeClass.units && props.activeClass.units.length) {
+    return props.activeClass.units
+  }
+  if (props.activeClass.expectations && Array.isArray(props.activeClass.expectations) && props.activeClass.expectations.length) {
+    return [{
+      unitId: 'general',
+      name: 'General Expectations',
+      expectations: props.activeClass.expectations
+    }]
+  }
+  return []
+})
+
+const unitsWithExpectations = computed(() => {
+  const unitsList = rawUnits.value
+  if (!unitsList.length) return []
+
   const expScores = {}
   const expAssessmentCounts = {}
 
+  // Count assessments linking expectations (supports expectationIds array & expectationId)
   props.assessments.forEach(ass => {
-    if (!ass.expectationId || ass.excluded) return
-    const expId = String(ass.expectationId)
-    expAssessmentCounts[expId] = (expAssessmentCounts[expId] || 0) + 1
-  })
-
-  // Also collect grades from students if available
-  Object.values(props.classGrades).forEach(studentGradeObj => {
-    if (!studentGradeObj || !studentGradeObj.assessmentGrades) return
-    Object.entries(studentGradeObj.assessmentGrades).forEach(([assId, markObj]) => {
-      if (!markObj || markObj.score === null || markObj.score === undefined) return
-      const ass = props.assessments.find(a => String(a.assessmentId) === String(assId))
-      if (ass && ass.expectationId) {
-        const expId = String(ass.expectationId)
-        if (!expScores[expId]) expScores[expId] = []
-        // calculate percentage for score
-        const total = ass.scaledTotal || ass.totalPoints || 100
-        const pct = (markObj.score / total) * 100
-        expScores[expId].push(pct)
-      }
+    if (ass.excluded) return
+    const ids = ass.expectationIds && Array.isArray(ass.expectationIds) ? ass.expectationIds : (ass.expectationId ? [ass.expectationId] : [])
+    ids.forEach(id => {
+      const sId = String(id)
+      expAssessmentCounts[sId] = (expAssessmentCounts[sId] || 0) + 1
     })
   })
 
-  return props.activeClass.gradebookUnits
+  if (isSBAR.value) {
+    const algo = props.activeClass?.sbarAlgorithm || 'decaying_average'
+    const sbarMasteryMap = calculateSBARExpectationMastery(props.activeClass, props.assessments, gradeMap.value, algo)
+    
+    Object.values(sbarMasteryMap).forEach(studentExpMap => {
+      if (!studentExpMap) return
+      Object.entries(studentExpMap).forEach(([expCode, mObj]) => {
+        if (mObj && mObj.score !== null && mObj.score !== undefined) {
+          if (!expScores[expCode]) expScores[expCode] = []
+          expScores[expCode].push(mObj.score)
+        }
+      })
+    })
+  } else {
+    // Traditional Mode: Read directly from gradeMap.value (supports assessment scores & qualitative radial entries)
+    if (gradeMap.value) {
+      Object.entries(gradeMap.value).forEach(([assId, studentMap]) => {
+        if (!studentMap) return
+        const ass = props.assessments.find(a => String(a.assessmentId) === String(assId))
+        const ids = ass ? (ass.expectationIds && Array.isArray(ass.expectationIds) ? ass.expectationIds : (ass.expectationId ? [ass.expectationId] : [])) : []
+        const total = ass ? (ass.scaledTotal || ass.totalPoints || 100) : 100
+
+        Object.values(studentMap).forEach(gRecord => {
+          if (!gRecord || gRecord.excluded || gRecord.missing) return
+
+          // 1. Qualitative expectationScores inside grade record
+          if (gRecord.expectationScores) {
+            Object.entries(gRecord.expectationScores).forEach(([expCode, val]) => {
+              if (val != null && !isNaN(val)) {
+                if (!expScores[expCode]) expScores[expCode] = []
+                expScores[expCode].push(Number(val))
+              }
+            })
+          }
+
+          // 2. Assessment score mapped to expectationIds
+          if (ids.length > 0 && gRecord.resolvedScore != null && !isNaN(gRecord.resolvedScore)) {
+            const pct = (Number(gRecord.resolvedScore) / total) * 100
+            ids.forEach(id => {
+              const sId = String(id)
+              if (!expScores[sId]) expScores[sId] = []
+              expScores[sId].push(pct)
+            })
+          }
+        })
+      })
+    }
+  }
+
+  return unitsList
     .filter(u => u.expectations && u.expectations.length > 0)
     .map(unit => {
       const expectations = unit.expectations.map(exp => {
         const expId = String(exp.expectationId || exp.code)
-        const count = expAssessmentCounts[expId] || 0
-        const scores = expScores[expId] || []
+        const count = expAssessmentCounts[expId] || expAssessmentCounts[exp.code] || 0
+        const scores = expScores[expId] || expScores[exp.code] || []
         const avg = scores.length > 0 ? (scores.reduce((a, b) => a + b, 0) / scores.length) : null
+        const sbarBadge = avg !== null ? getSBARLevelBadge(avg) : null
+
+        const distribution = { L4: 0, L3: 0, L2: 0, L1: 0, total: scores.length }
+        scores.forEach(s => {
+          if (s >= 80) distribution.L4++
+          else if (s >= 70) distribution.L3++
+          else if (s >= 60) distribution.L2++
+          else distribution.L1++
+        })
 
         return {
           ...exp,
           assessmentCount: count,
-          average: avg
+          average: avg,
+          sbarBadge,
+          distribution
         }
       })
 
+      const unitAvgs = expectations.map(e => e.average).filter(a => a !== null)
+      const unitAvg = unitAvgs.length ? (unitAvgs.reduce((a, b) => a + b, 0) / unitAvgs.length) : null
+      const unitSbarBadge = unitAvg !== null ? getSBARLevelBadge(unitAvg) : null
+
       return {
         ...unit,
-        expectations
+        expectations,
+        unitAvg,
+        unitSbarBadge
       }
     })
+})
+
+const totalExpectationsInFilter = computed(() => {
+  return unitsWithExpectations.value.reduce((acc, u) => acc + u.expectations.length, 0)
+})
+
+const filteredUnitsWithExpectations = computed(() => {
+  const units = unitsWithExpectations.value
+
+  if (selectedUnitFilter.value === 'needs_reteaching') {
+    return units.map(u => ({
+      ...u,
+      expectations: u.expectations.filter(e => e.average !== null && e.average < 65)
+    })).filter(u => u.expectations.length > 0)
+  }
+
+  if (selectedUnitFilter.value !== 'all') {
+    return units.filter(u => String(u.unitId) === String(selectedUnitFilter.value))
+  }
+
+  return units
 })
 
 const strugglingCount = computed(() => {
@@ -146,6 +336,23 @@ const strugglingCount = computed(() => {
   })
   return count
 })
+
+function toggleUnitCollapse(unitId) {
+  const s = new Set(collapsedUnits.value)
+  if (s.has(unitId)) s.delete(unitId)
+  else s.add(unitId)
+  collapsedUnits.value = s
+}
+
+function expandAllUnits() {
+  collapsedUnits.value = new Set()
+}
+
+function collapseAllUnits() {
+  const s = new Set()
+  unitsWithExpectations.value.forEach(u => s.add(u.unitId))
+  collapsedUnits.value = s
+}
 
 function getHeatColor(avg) {
   if (avg === null || avg === undefined) return 'var(--text-secondary)'
@@ -194,13 +401,103 @@ function getHeatColor(avg) {
   border-radius: var(--radius-md);
   font-size: 0.775rem;
   font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.expectation-heatmap__alert-chip:hover,
+.expectation-heatmap__alert-chip--active {
+  background: #ef4444;
+  color: #fff;
+}
+
+.expectation-heatmap__filter-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.filter-pills {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.filter-pill {
+  font-size: 0.775rem;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.filter-pill:hover {
+  background: var(--bg-secondary);
+  color: var(--text);
+}
+
+.filter-pill--active {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+
+.filter-pill--danger {
+  color: #dc2626;
+  border-color: rgba(220, 38, 38, 0.3);
+}
+
+.filter-pill--danger.filter-pill--active {
+  background: #dc2626;
+  color: #fff;
+}
+
+.expand-toggles {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.775rem;
+  color: var(--text-secondary);
+}
+
+.btn-toggle-all {
+  background: none;
+  border: none;
+  color: var(--primary);
+  font-size: 0.775rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 2px 4px;
+}
+
+.btn-toggle-all:hover {
+  text-decoration: underline;
+}
+
+.btn-reset-filter {
+  margin-top: 10px;
+  padding: 6px 14px;
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
 }
 
 .expectation-heatmap__empty {
   text-align: center;
   padding: 32px 16px;
   background: var(--surface);
-  border: 1px border-dashed var(--border);
+  border: 1px dashed var(--border);
   border-radius: var(--radius-lg);
   color: var(--text-secondary);
 }
@@ -231,43 +528,71 @@ function getHeatColor(avg) {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  padding: 16px;
+  padding: 0;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
-  gap: 12px;
 }
 
 .expectation-heatmap__unit-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-bottom: 8px;
-  border-bottom: 1px solid var(--border);
+  padding: 12px 16px;
+  background: var(--surface);
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.15s ease;
+}
+
+.expectation-heatmap__unit-header:hover {
+  background: var(--bg-secondary);
+}
+
+.unit-header-left, .unit-header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .expectation-heatmap__unit-name {
   font-weight: 700;
-  font-size: 0.875rem;
+  font-size: 0.9rem;
   color: var(--text);
+}
+
+.unit-mastery-badge {
+  font-size: 0.725rem;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 4px;
+  color: #fff;
 }
 
 .expectation-heatmap__unit-badge {
   font-size: 0.75rem;
   color: var(--text-secondary);
-  background: var(--surface-hover);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
   padding: 2px 8px;
-  border-radius: var(--radius-sm);
+  border-radius: 12px;
+}
+
+.chevron-icon {
+  color: var(--text-secondary);
 }
 
 .expectation-heatmap__grid {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  padding: 12px 16px 16px 16px;
+  border-top: 1px solid var(--border);
 }
 
 .expectation-heatmap__row {
   display: grid;
-  grid-template-columns: 200px 110px 1fr 70px;
+  grid-template-columns: minmax(320px, 1fr) 110px 140px 70px;
   align-items: center;
   gap: 12px;
   padding: 6px 0;
@@ -307,23 +632,47 @@ function getHeatColor(avg) {
   color: var(--text-secondary);
 }
 
-.expectation-heatmap__progress-track {
+.expectation-heatmap__stacked-track {
   height: 8px;
-  background: var(--surface-hover);
+  width: 100%;
+  max-width: 140px;
+  background: var(--bg-secondary);
   border-radius: 4px;
   overflow: hidden;
-  width: 100%;
+  display: flex;
 }
 
-.expectation-heatmap__progress-fill {
-  height: 100%;
+.expectation-heatmap__empty-track {
+  height: 8px;
+  width: 100%;
+  max-width: 140px;
+  background: var(--bg-secondary);
   border-radius: 4px;
+  opacity: 0.4;
+}
+
+.expectation-heatmap__stacked-seg {
+  height: 100%;
   transition: width 0.3s ease;
 }
+
+.seg--l4 { background: #10b981; } /* Green */
+.seg--l3 { background: #3b82f6; } /* Blue */
+.seg--l2 { background: #f59e0b; } /* Yellow */
+.seg--l1 { background: #ef4444; } /* Red */
 
 .expectation-heatmap__score-col {
   text-align: right;
   font-weight: 700;
   font-size: 0.875rem;
+}
+
+.sbar-level-pill {
+  font-size: 0.75rem;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 4px;
+  color: #fff;
+  display: inline-block;
 }
 </style>

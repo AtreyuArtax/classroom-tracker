@@ -163,6 +163,8 @@ function onSelectTaskToGrade(e) {
 
 const algorithmLabel = computed(() => {
   const algo = activeClassRecord.value?.sbarAlgorithm || 'decaying_average'
+  if (algo === 'power_law') return 'Power Law (Marzano)'
+  if (algo === 'mode') return 'Mode (Most Consistent)'
   if (algo === 'most_recent') return 'Most Recent (3)'
   if (algo === 'highest') return 'Highest Score'
   return 'Decaying Avg (65/35)'

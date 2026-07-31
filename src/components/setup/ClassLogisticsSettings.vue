@@ -100,6 +100,8 @@
             @change="e => updateActiveClass({ sbarAlgorithm: e.target.value })"
           >
             <option value="decaying_average">Decaying Average (65% Newest / 35% Historical)</option>
+            <option value="power_law">Power Law (Marzano Logarithmic Trajectory)</option>
+            <option value="mode">Mode / Most Consistent (Most Frequent Level)</option>
             <option value="most_recent">Most Recent (Last 3 Evaluations Average)</option>
             <option value="highest">Highest Level Score</option>
           </select>

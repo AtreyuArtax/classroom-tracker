@@ -442,8 +442,11 @@ const classAssessments = computed(() => {
   return assessments.value
     .filter(a => {
       if (a.target === 'individual') return false
-      const isSBARTask = a.categoryId === 'sbar_general' || (a.expectationIds && a.expectationIds.length > 0)
-      return isSBAR ? isSBARTask : !isSBARTask
+      if (isSBAR) {
+        return a.categoryId === 'sbar_general' || (a.expectationIds && a.expectationIds.length > 0)
+      } else {
+        return a.categoryId !== 'sbar_general'
+      }
     })
     .map(a => {
       const g = gradeMap.value[a.assessmentId]?.[props.studentId]

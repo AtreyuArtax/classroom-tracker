@@ -161,9 +161,15 @@
             </div>
           </div>
 
-          <!-- Analytics Panel -->
+          <!-- Analytics Panel Dispatcher -->
+          <GradesAnalyticsPanelSBAR
+            v-if="analyticsMode && activeClassRecord?.gradingFramework === 'sbar'"
+            @select-assessment="openAssessmentView($event, 'analytics')"
+            @show-dossier="showStudentDossier"
+          />
+
           <GradesAnalyticsPanel
-            v-if="analyticsMode"
+            v-else-if="analyticsMode"
             @select-assessment="openAssessmentView($event, 'analytics')"
           />
 
@@ -276,6 +282,7 @@ import Student360 from '../components/dossier/Student360.vue'
 import GradesGrid from '../components/GradesGrid.vue'
 import GradesGridSBAR from '../components/grades/GradesGridSBAR.vue'
 import GradesAnalyticsPanel from '../components/GradesAnalyticsPanel.vue'
+import GradesAnalyticsPanelSBAR from '../components/grades/GradesAnalyticsPanelSBAR.vue'
 import PrintGradesGridModal from '../components/PrintGradesGridModal.vue'
 import StudentSidebar from '../components/StudentSidebar.vue'
 import GradesAssessmentDetailView from '../components/grades/GradesAssessmentDetailView.vue'

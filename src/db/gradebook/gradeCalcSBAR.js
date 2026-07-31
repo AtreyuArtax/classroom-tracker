@@ -58,13 +58,89 @@ export function getSBARLevelBadge(pct) {
 }
 
 /**
+ * Calculates Power Law (Marzano Trajectory) model over chronologically sorted score percentages.
+ * Projects true current mastery using log-log regression.
+ *
+ * @param {Array<number>} scores - Scores sorted from oldest to newest.
+ * @returns {number|null}
+ */
+export function calculatePowerLaw(scores) {
+  if (!scores || scores.length === 0) return null
+  if (scores.length === 1) return scores[0]
+
+  const safeScores = scores.map(s => Math.max(1, Math.min(100, s)))
+  const n = safeScores.length
+
+  const logX = []
+  const logY = []
+  for (let i = 0; i < n; i++) {
+    logX.push(Math.log(i + 1))
+    logY.push(Math.log(safeScores[i]))
+  }
+
+  const meanLogX = logX.reduce((a, b) => a + b, 0) / n
+  const meanLogY = logY.reduce((a, b) => a + b, 0) / n
+
+  let num = 0
+  let den = 0
+  for (let i = 0; i < n; i++) {
+    num += (logX[i] - meanLogX) * (logY[i] - meanLogY)
+    den += Math.pow(logX[i] - meanLogX, 2)
+  }
+
+  if (den === 0) return safeScores[safeScores.length - 1]
+
+  const B = num / den
+  const logA = meanLogY - B * meanLogX
+
+  const projectedLogY = logA + B * Math.log(n)
+  const projectedY = Math.exp(projectedLogY)
+
+  return Math.round(Math.max(0, Math.min(100, projectedY)) * 10) / 10
+}
+
+/**
+ * Calculates Mode (Most Consistent) rubric level score.
+ * Finds the most frequent SBAR rubric level across attempts.
+ *
+ * @param {Array<number>} scores - Scores sorted from oldest to newest.
+ * @returns {number|null}
+ */
+export function calculateMode(scores) {
+  if (!scores || scores.length === 0) return null
+  if (scores.length === 1) return scores[0]
+
+  const counts = new Map()
+  scores.forEach(s => {
+    const key = getSBARLevelBadge(s).level
+    counts.set(key, (counts.get(key) || 0) + 1)
+  })
+
+  let maxCount = 0
+  let modeLevelKey = null
+
+  for (let i = scores.length - 1; i >= 0; i--) {
+    const key = getSBARLevelBadge(scores[i]).level
+    const cnt = counts.get(key)
+    if (cnt > maxCount) {
+      maxCount = cnt
+      modeLevelKey = key
+    }
+  }
+
+  const modeScores = scores.filter(s => getSBARLevelBadge(s).level === modeLevelKey)
+  const avgModeScore = modeScores.reduce((a, b) => a + b, 0) / modeScores.length
+  return Math.round(avgModeScore * 10) / 10
+}
+
+/**
  * Computes Expectation Mastery for a class across all students and curriculum expectations.
  *
  * @param {Object} classRecord
  * @param {Array<Object>} assessments
  * @param {Object} gradeMap
  * @param {string} [algorithm='decaying_average']
- * @returns {Object} { [studentId]: { [expectationCode]: { score, badge, trend, evaluations } } }
+ * @returns {Object} { [studentId]: { [expectationCode]: { score, badge, trend, isProvisional, evaluations } } }
  */
 export function calculateSBARExpectationMastery(classRecord, assessments, gradeMap, algorithm = 'decaying_average') {
   if (!classRecord?.students || !assessments || !gradeMap) return {}
@@ -93,7 +169,6 @@ export function calculateSBARExpectationMastery(classRecord, assessments, gradeM
   Object.keys(masteryMap).forEach(studentId => {
     Object.keys(expectationEvaluations).forEach(expCode => {
       const astList = [...expectationEvaluations[expCode]].sort((a, b) => new Date(a.date) - new Date(b.date))
-      const scores = []
       const evaluations = []
 
       astList.forEach(ast => {
@@ -111,32 +186,46 @@ export function calculateSBARExpectationMastery(classRecord, assessments, gradeM
         }
 
         if (percentage != null) {
-          scores.push(percentage)
+          const type = (ast.assessmentType === 'formative' || ast.type === 'formative' || ast.isFormative) ? 'formative' : 'summative'
           evaluations.push({
             assessmentId: ast.assessmentId,
             name: ast.name,
             date: ast.date,
             score: percentage,
+            type,
             badge: getSBARLevelBadge(percentage)
           })
         }
       })
 
-      if (scores.length > 0) {
+      if (evaluations.length > 0) {
+        // Formative vs Summative Rule:
+        // If summative evidence exists, calculate ONLY from summative evidence.
+        // Otherwise, calculate provisionally from formative evidence.
+        const summativeEvals = evaluations.filter(e => e.type === 'summative')
+        const hasSummative = summativeEvals.length > 0
+        const activeEvals = hasSummative ? summativeEvals : evaluations
+        const scoresToCalculate = activeEvals.map(e => e.score)
+
         let finalScore = null
-        if (algorithm === 'most_recent') {
-          const recent = scores.slice(-3)
+        if (algorithm === 'power_law') {
+          finalScore = calculatePowerLaw(scoresToCalculate)
+        } else if (algorithm === 'mode') {
+          finalScore = calculateMode(scoresToCalculate)
+        } else if (algorithm === 'most_recent') {
+          const recent = scoresToCalculate.slice(-3)
           finalScore = Math.round(recent.reduce((a, b) => a + b, 0) / recent.length)
         } else if (algorithm === 'highest') {
-          finalScore = Math.max(...scores)
+          finalScore = Math.max(...scoresToCalculate)
         } else {
-          finalScore = calculateDecayingAverage(scores, 0.65)
+          finalScore = calculateDecayingAverage(scoresToCalculate, 0.65)
         }
 
-        // Calculate growth trend (improving / steady / declining)
+        // Calculate growth trend (improving / steady / declining) using all chronological evaluations
+        const allScores = evaluations.map(e => e.score)
         let trend = 'steady'
-        if (scores.length >= 2) {
-          const delta = scores[scores.length - 1] - scores[0]
+        if (allScores.length >= 2) {
+          const delta = allScores[allScores.length - 1] - allScores[0]
           if (delta >= 5) trend = 'improving'
           else if (delta <= -5) trend = 'declining'
         }
@@ -145,6 +234,7 @@ export function calculateSBARExpectationMastery(classRecord, assessments, gradeM
           score: finalScore,
           badge: getSBARLevelBadge(finalScore),
           trend,
+          isProvisional: !hasSummative,
           evaluations
         }
       }
@@ -160,7 +250,8 @@ export function calculateSBARExpectationMastery(classRecord, assessments, gradeM
  */
 export function calculateSBARStudentOverallMastery(studentId, classRecord, assessments, gradeMap, algorithm = 'decaying_average') {
   if (!studentId || !classRecord || !assessments || !gradeMap) return null
-  const masteryMap = calculateSBARExpectationMastery(classRecord, assessments, gradeMap, algorithm)
+  const activeAlgorithm = algorithm || classRecord.sbarAlgorithm || 'decaying_average'
+  const masteryMap = calculateSBARExpectationMastery(classRecord, assessments, gradeMap, activeAlgorithm)
   const studentExpMap = masteryMap[studentId] || {}
   const scores = Object.values(studentExpMap).map(e => e.score).filter(s => s != null && !isNaN(s))
   if (scores.length === 0) return null

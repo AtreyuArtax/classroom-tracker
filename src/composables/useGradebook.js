@@ -46,6 +46,8 @@ export const newAssessment = ref({
   description: '',
   categoryId: '',
   assessmentType: 'product',
+  purpose: 'summative', // 'summative' | 'formative'
+  isFormative: false,
   unitId: null,
   expectationId: null,
   target: 'class',
@@ -257,6 +259,8 @@ export function openAddAssessment(target = 'class', studentId = null) {
     description: '',
     categoryId: activeClassRecord.value?.gradebookCategories?.[0]?.categoryId || '',
     assessmentType: (target === 'individual') ? 'conversation' : 'product',
+    purpose: 'summative',
+    isFormative: false,
     unitId: activeClassRecord.value?.gradebookUnits?.[0]?.unitId || null,
     expectationId: null,
     expectationIds: [],
@@ -294,6 +298,8 @@ export async function saveAssessment() {
     newAssessment.value.categoryId = 'sbar_general'
   }
   
+  newAssessment.value.isFormative = (newAssessment.value.purpose === 'formative')
+
   const data = { ...newAssessment.value }
 
   try {

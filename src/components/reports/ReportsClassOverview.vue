@@ -9,15 +9,30 @@
       <!-- Card 1: Academics -->
       <div class="reports__headline-card reports__headline-card--academics">
         <div class="reports__headline-label"><GraduationCap :size="14" /> ACADEMICS</div>
-        <div v-if="classAverage !== null" class="reports__headline-rate">{{ classAverage.toFixed(1) }}<span class="reports__headline-unit">%</span></div>
-        <div v-else class="reports__headline-rate">—<span class="reports__headline-unit">%</span></div>
-        <div class="reports__headline-sub">
-          Median: {{ classMedian !== null ? classMedian.toFixed(1) + '%' : '—' }} · {{ totalAssessmentsCount }} assessments
-        </div>
-        <div v-if="failingStudentsCount > 0" class="reports__headline-alert">
-          <AlertTriangle :size="12" /> {{ failingStudentsCount }} student{{ failingStudentsCount !== 1 ? 's' : '' }} failing (&lt;50%)
-        </div>
-        <div v-else class="reports__headline-detail">All students currently passing</div>
+        <template v-if="isSBAR">
+          <div v-if="classAverageBadge !== null" class="reports__headline-rate">
+            {{ classAverageBadge.level }}
+          </div>
+          <div v-else class="reports__headline-rate">—</div>
+          <div class="reports__headline-sub">
+            Median: {{ classMedianBadge ? classMedianBadge.level : '—' }} · {{ totalAssessmentsCount }} assessments
+          </div>
+          <div v-if="failingStudentsCount > 0" class="reports__headline-alert">
+            <AlertTriangle :size="12" /> {{ failingStudentsCount }} student{{ failingStudentsCount !== 1 ? 's' : '' }} at Level 1 / R
+          </div>
+          <div v-else class="reports__headline-detail">All students at Level 2+ target</div>
+        </template>
+        <template v-else>
+          <div v-if="classAverage !== null" class="reports__headline-rate">{{ classAverage.toFixed(1) }}<span class="reports__headline-unit">%</span></div>
+          <div v-else class="reports__headline-rate">—<span class="reports__headline-unit">%</span></div>
+          <div class="reports__headline-sub">
+            Median: {{ classMedian !== null ? classMedian.toFixed(1) + '%' : '—' }} · {{ totalAssessmentsCount }} assessments
+          </div>
+          <div v-if="failingStudentsCount > 0" class="reports__headline-alert">
+            <AlertTriangle :size="12" /> {{ failingStudentsCount }} student{{ failingStudentsCount !== 1 ? 's' : '' }} failing (&lt;50%)
+          </div>
+          <div v-else class="reports__headline-detail">All students currently passing</div>
+        </template>
       </div>
 
       <!-- Card 2: Expectations -->
@@ -95,7 +110,7 @@
               </div>
               <span class="reports__followup-meta">
                 <span v-if="item.grade !== null" class="reports__grade-badge" :class="{ 'reports__grade-badge--failing': item.grade < 50 }">
-                  {{ item.grade }}%
+                  {{ formatGradeDisplay(item.grade) }}
                 </span>
                 <span class="reports__followup-reason">{{ item.reason }}</span>
               </span>
@@ -201,6 +216,7 @@
             :class-grades="classGrades"
             :aggregates="aggregates"
             :all-class-events="allClassEvents"
+            :is-sbar="isSBAR"
             @select-student="$emit('select-student', $event)"
           />
         </div>
@@ -248,6 +264,7 @@ import {
 import { Bar } from 'vue-chartjs'
 import ExpectationMasteryHeatmap from './ExpectationMasteryHeatmap.vue'
 import StudentRiskScatterPlot from './StudentRiskScatterPlot.vue'
+import { getSBARLevelBadge } from '../../db/gradebookService.js'
 
 const props = defineProps({
   loading: { type: Boolean, default: false },
@@ -288,6 +305,8 @@ const followUpExpandedLocal = ref(false)
 // Active enrolled student ID set
 const activeStudentIds = computed(() => new Set((props.sidebarStudents || []).map(s => String(s.studentId))))
 
+const isSBAR = computed(() => props.reportClass?.gradingFramework === 'sbar')
+
 // Academic Calculations
 const classAverage = computed(() => {
   const gradesArr = Object.entries(props.classGrades)
@@ -296,6 +315,11 @@ const classAverage = computed(() => {
     .filter(g => g !== undefined && g !== null)
   if (gradesArr.length === 0) return null
   return gradesArr.reduce((a, b) => a + b, 0) / gradesArr.length
+})
+
+const classAverageBadge = computed(() => {
+  if (classAverage.value === null) return null
+  return getSBARLevelBadge(classAverage.value)
 })
 
 const classMedian = computed(() => {
@@ -309,6 +333,20 @@ const classMedian = computed(() => {
   return gradesArr.length % 2 !== 0 ? gradesArr[mid] : (gradesArr[mid - 1] + gradesArr[mid]) / 2
 })
 
+const classMedianBadge = computed(() => {
+  if (classMedian.value === null) return null
+  return getSBARLevelBadge(classMedian.value)
+})
+
+function formatGradeDisplay(overallPct) {
+  if (overallPct === null || overallPct === undefined) return '—'
+  if (isSBAR.value) {
+    const badge = getSBARLevelBadge(overallPct)
+    return badge.level
+  }
+  return `${Math.round(overallPct)}%`
+}
+
 const totalAssessmentsCount = computed(() => props.assessments.length)
 
 const failingStudentsCount = computed(() => {
@@ -319,14 +357,24 @@ const failingStudentsCount = computed(() => {
 
 // Expectation Calculations
 const totalExpectationsCount = computed(() => {
-  if (!props.reportClass?.gradebookUnits) return 0
-  return props.reportClass.gradebookUnits.reduce((acc, u) => acc + (u.expectations?.length || 0), 0)
+  const units = props.reportClass?.gradebookUnits || props.reportClass?.units || []
+  if (units.length) {
+    return units.reduce((acc, u) => acc + (u.expectations?.length || 0), 0)
+  }
+  if (props.reportClass?.expectations && Array.isArray(props.reportClass.expectations)) {
+    return props.reportClass.expectations.length
+  }
+  return 0
 })
 
 const assessedExpectationsCount = computed(() => {
   const set = new Set()
   props.assessments.forEach(a => {
-    if (a.expectationId) set.add(String(a.expectationId))
+    if (a.expectationIds && Array.isArray(a.expectationIds)) {
+      a.expectationIds.forEach(id => set.add(String(id)))
+    } else if (a.expectationId) {
+      set.add(String(a.expectationId))
+    }
   })
   return set.size
 })
@@ -337,7 +385,7 @@ const strugglingExpectationsCount = computed(() => 0) // Calculated dynamically 
 const multiActionItems = computed(() => {
   const items = []
   
-  // 1. Add Academic Risk (Failing < 50%) - ONLY for active enrolled students
+  // 1. Add Academic Risk (Failing < 50% or Level 1 / R) - ONLY for active enrolled students
   Object.entries(props.classGrades).forEach(([sId, gObj]) => {
     if (!activeStudentIds.value.has(String(sId))) return
     if (gObj && gObj.overallGrade !== undefined && gObj.overallGrade !== null && gObj.overallGrade < 50) {
@@ -347,7 +395,7 @@ const multiActionItems = computed(() => {
         studentId: String(sId),
         name: student.name || `${student.firstName} ${student.lastName}`,
         grade: Math.round(gObj.overallGrade),
-        reason: 'Failing Grade (<50%)',
+        reason: isSBAR.value ? 'Level 1 / Remediation Needed' : 'Failing Grade (<50%)',
         severity: 'danger'
       })
     }
