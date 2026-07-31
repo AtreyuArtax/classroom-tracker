@@ -40,3 +40,12 @@ watch(autoStartRFID, (val) => localStorage.setItem('autoStartRFID', String(val))
 
 export const cloudModeEnabled = ref(false)
 export const userCode = ref('')
+
+export const activeSubjectId = ref(localStorage.getItem('activeSubjectId') || '')
+watch(activeSubjectId, (val) => localStorage.setItem('activeSubjectId', val || ''))
+
+export const teachingMode = ref(localStorage.getItem('teachingMode') || 'secondary')
+watch(teachingMode, (val) => localStorage.setItem('teachingMode', val || 'secondary'))
+
+
+

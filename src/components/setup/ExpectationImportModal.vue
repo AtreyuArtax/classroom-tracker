@@ -5,7 +5,7 @@
       <div class="eim-header">
         <div class="eim-header__title">
           <BookOpen :size="20" class="eim-header__icon" />
-          <h3>Import Curriculum Expectations</h3>
+          <h3>Import Expectations into {{ targetSubjectName || 'Subject' }}</h3>
         </div>
         <button class="eim-close-btn" @click="onClose" title="Close">
           <X :size="18" />
@@ -77,25 +77,9 @@
               </div>
             </div>
 
-            <div class="eim-field">
-              <label class="eim-label">Import Mode</label>
-              <div class="eim-radio-group">
-                <label class="eim-radio-label">
-                  <input type="radio" v-model="presetImportMode" value="auto-units" />
-                  <div>
-                    <strong>Auto-Create Units from Curriculum Strands (Recommended)</strong>
-                    <p class="eim-hint">Automatically creates units for each strand in the course and populates all expectations under them.</p>
-                  </div>
-                </label>
-
-                <label class="eim-radio-label">
-                  <input type="radio" v-model="presetImportMode" value="existing-unit" />
-                  <div>
-                    <strong>Import Expectations into a Single Unit</strong>
-                    <p class="eim-hint">Select a specific unit and choose which expectations to attach to it.</p>
-                  </div>
-                </label>
-              </div>
+            <div class="eim-preset-info-banner">
+              <Zap :size="16" class="eim-info-icon" />
+              <span>Importing this preset will automatically organize expectations into their respective curriculum strands/units.</span>
             </div>
 
             <!-- Single Unit Selection for Mode B -->
@@ -226,12 +210,15 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue'
-import { BookOpen, X } from 'lucide-vue-next'
+import { BookOpen, X, Zap } from 'lucide-vue-next'
 import { curriculumPresets, getPresetsByPanel } from '../../data/curriculum/index.js'
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
-  existingUnits: { type: Array, default: () => [] }
+  existingUnits: { type: Array, default: () => [] },
+  targetSubjectId: { type: String, default: null },
+  targetSubjectName: { type: String, default: '' },
+  initialPresetId: { type: String, default: null }
 })
 
 const emit = defineEmits(['update:modelValue', 'import'])
@@ -279,6 +266,12 @@ const totalPresetExpectations = computed(() => {
 watch(selectedPreset, () => {
   deselectAllGlobal()
 })
+
+watch(() => props.modelValue, (isOpen) => {
+  if (isOpen && props.initialPresetId) {
+    selectedPresetId.value = props.initialPresetId
+  }
+}, { immediate: true })
 
 watch(granularity, () => {
   deselectAllGlobal()
@@ -388,14 +381,16 @@ function onSubmit() {
       emit('import', {
         mode: 'auto-units',
         preset: selectedPreset.value,
-        granularity: granularity.value
+        granularity: granularity.value,
+        targetSubjectId: props.targetSubjectId
       })
     } else {
       emit('import', {
         mode: 'attach-expectations',
         targetUnitChoice: targetUnitChoice.value,
         newUnitName: newUnitName.value.trim(),
-        expectations: selectedExpectations.value
+        expectations: selectedExpectations.value,
+        targetSubjectId: props.targetSubjectId
       })
     }
   } else if (activeTab.value === 'paste') {
@@ -564,6 +559,22 @@ function onSubmit() {
   padding: 10px 14px;
   border-radius: var(--radius-md);
   border-left: 3px solid var(--primary);
+}
+
+.eim-preset-info-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.8rem;
+  color: var(--primary);
+  background: rgba(59, 130, 246, 0.08);
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.eim-info-icon {
+  flex-shrink: 0;
 }
 
 .eim-radio-group {

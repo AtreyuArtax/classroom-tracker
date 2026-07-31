@@ -240,11 +240,16 @@ export async function importRoster(classId, studentsArray) {
     let inserted = 0
     let updated = 0
 
-    for (const { studentId, firstName, lastName, parentContacts, studentEmail, custody, livingWith, birthDate, rfidTag } of studentsArray) {
+    for (const row of studentsArray) {
+        const { studentId, firstName, lastName, parentContacts, studentEmail, custody, livingWith, birthDate, rfidTag, gradeLevel, grade } = row
+        const rawG = (gradeLevel || grade || '').toString().trim()
+        const parsedG = rawG ? (rawG.toLowerCase().startsWith('grade') ? rawG : `Grade ${parseInt(rawG, 10) || rawG}`) : ''
+
         if (cls.students[studentId]) {
-            // Upsert — preserve seat and activeStates, but update names
+            // Upsert — preserve seat and activeStates, but update names and gradeLevel
             cls.students[studentId].firstName = firstName
             cls.students[studentId].lastName = lastName
+            if (parsedG) cls.students[studentId].gradeLevel = parsedG
 
             if (parentContacts && parentContacts.length > 0) {
                 // Replace parent contacts if new ones are provided in CSV
@@ -263,6 +268,7 @@ export async function importRoster(classId, studentsArray) {
             cls.students[studentId] = {
                 firstName,
                 lastName,
+                gradeLevel: parsedG,
                 parentContacts: parentContacts || [],
                 studentEmail: studentEmail || '',
                 custody: custody || '',

@@ -70,9 +70,9 @@
     "semantic_hash": "5571438f191671e9bf9fb47f7205a9f9"
   },
   "src/components/ClassSwitcher.vue": {
-    "mtime": 1776472682.8655844,
-    "ast_hash": "d7021a326bca84ba393a88b74bab07d8",
-    "semantic_hash": "d7021a326bca84ba393a88b74bab07d8"
+    "mtime": 1785515754.4434912,
+    "ast_hash": "cb980dc6b779ae1c657f381a016fa534",
+    "semantic_hash": ""
   },
   "src/components/DeskTile.vue": {
     "mtime": 1785233993.174322,
@@ -120,8 +120,8 @@
     "semantic_hash": "8e50e6b9c81d179509f72782b70b61fa"
   },
   "src/components/StudentSidebar.vue": {
-    "mtime": 1785379466.6804583,
-    "ast_hash": "3434dbfb55caeedfadb634797f36c1ec",
+    "mtime": 1785515291.9843962,
+    "ast_hash": "6a05f5bbceee9aadd5ca3b7a414643c9",
     "semantic_hash": ""
   },
   "src/components/StudentTrendGraph.vue": {
@@ -140,9 +140,9 @@
     "semantic_hash": ""
   },
   "src/components/YearSemesterSelector.vue": {
-    "mtime": 1776472682.8665671,
-    "ast_hash": "1150fd7d1bbad3f876491d862e41f76f",
-    "semantic_hash": "1150fd7d1bbad3f876491d862e41f76f"
+    "mtime": 1785515441.1755314,
+    "ast_hash": "638d895d9eb7e1abf928e3ddf428994d",
+    "semantic_hash": ""
   },
   "src/components/dossier/AddAssessmentModal.vue": {
     "mtime": 1785493663.555268,
@@ -240,13 +240,13 @@
     "semantic_hash": "68f077cda9561ec51fbe56d0aa61fb3e"
   },
   "src/composables/useClassroom.js": {
-    "mtime": 1785247834.2212322,
-    "ast_hash": "6cd4efb9119e1dac6bb25c9375680901",
+    "mtime": 1785521427.4697227,
+    "ast_hash": "2932baa7f8872a82bd18c4cbce89dd32",
     "semantic_hash": ""
   },
   "src/composables/useGradebook.js": {
-    "mtime": 1785493020.763781,
-    "ast_hash": "189955846ff6a2a64a77d846cc1d2a06",
+    "mtime": 1785515279.0933383,
+    "ast_hash": "b1761724c96e710ada5ee7b11115c3b1",
     "semantic_hash": ""
   },
   "src/composables/useKeyboardWedge.js": {
@@ -275,8 +275,8 @@
     "semantic_hash": ""
   },
   "src/db/classService.js": {
-    "mtime": 1785182744.294639,
-    "ast_hash": "24ff7b77933cd1c976059a1c12e7eebf",
+    "mtime": 1785521227.1487284,
+    "ast_hash": "be2710893618f4a80a54b8eab4ce98df",
     "semantic_hash": ""
   },
   "src/db/eventService.js": {
@@ -355,8 +355,8 @@
     "semantic_hash": "8ca2dc5307b5ae89c3f9ade5a9f052c4"
   },
   "src/views/Setup.vue": {
-    "mtime": 1785247877.916735,
-    "ast_hash": "c91a35369e14438261eaf84fb5fbbbe0",
+    "mtime": 1785521640.4216459,
+    "ast_hash": "99f448cdb4bf7c242901b134285d2b81",
     "semantic_hash": ""
   },
   "tmp/test_dates.js": {
@@ -390,18 +390,18 @@
     "semantic_hash": ""
   },
   "src/components/GradesGrid.vue": {
-    "mtime": 1785497784.959522,
-    "ast_hash": "0f8b626da67b474dbb693a85a8bd4be8",
+    "mtime": 1785515285.6763942,
+    "ast_hash": "5a27a68867f9c71cf0aaf90e35f6d105",
     "semantic_hash": ""
   },
   "src/components/dossier/StudentAcademicsTab.vue": {
-    "mtime": 1785497696.3828583,
-    "ast_hash": "b9b0205a96058762215c377f441a6184",
+    "mtime": 1785504923.38928,
+    "ast_hash": "18ddb373794431180fe375436849c454",
     "semantic_hash": ""
   },
   "src/components/setup/AssessmentFrameworkSettings.vue": {
-    "mtime": 1785245709.3704343,
-    "ast_hash": "e5aaad8e354439d462330e1858e48aac",
+    "mtime": 1785504546.532876,
+    "ast_hash": "8d5802017af39927f7a94d146dd611e0",
     "semantic_hash": ""
   },
   "src/composables/useGradeEditing.js": {
@@ -425,8 +425,8 @@
     "semantic_hash": ""
   },
   "src/components/setup/RosterCsvImporter.vue": {
-    "mtime": 1784223849.838415,
-    "ast_hash": "801d8b2f6cbfa9f7bc987a327c33f073",
+    "mtime": 1785521647.0363204,
+    "ast_hash": "de74cb61e124bd910097147f87882317",
     "semantic_hash": ""
   },
   "src/composables/useAttendanceTracker.js": {
@@ -435,8 +435,8 @@
     "semantic_hash": ""
   },
   "src/composables/useClassroomState.js": {
-    "mtime": 1785247797.7081828,
-    "ast_hash": "b2f99b07165b31be7197e129eff81382",
+    "mtime": 1785505660.4732347,
+    "ast_hash": "ea7400bfd6c8ed2904dbb82305290908",
     "semantic_hash": ""
   },
   "src/composables/useRosterOperations.js": {
@@ -445,8 +445,8 @@
     "semantic_hash": ""
   },
   "src/components/setup/ClassLogisticsSettings.vue": {
-    "mtime": 1785492999.1662862,
-    "ast_hash": "51f5bf1ad0e894ede9641ccfc9cc019d",
+    "mtime": 1785521232.051842,
+    "ast_hash": "e9f9a2ed0be97423a33093d8b588dc40",
     "semantic_hash": ""
   },
   "src/components/setup/DatabaseMaintenanceSettings.vue": {
@@ -455,8 +455,8 @@
     "semantic_hash": ""
   },
   "src/components/setup/ExpectationImportModal.vue": {
-    "mtime": 1784557477.6529622,
-    "ast_hash": "e7a8dd8e859f911cd228eb86522ffe06",
+    "mtime": 1785516137.037977,
+    "ast_hash": "96b7b35636a7056c297e37656ea30a99",
     "semantic_hash": ""
   },
   "src/data/curriculum/elementary/ontario-gr7-science.json": {
@@ -465,8 +465,8 @@
     "semantic_hash": ""
   },
   "src/data/curriculum/index.js": {
-    "mtime": 1784561945.3093314,
-    "ast_hash": "3439628b3136be8f0050064f453ea7c6",
+    "mtime": 1785520881.1781628,
+    "ast_hash": "5c361a009e606fc4b8432634b7897203",
     "semantic_hash": ""
   },
   "src/data/curriculum/secondary/ontario-mth1w.json": {
@@ -510,8 +510,8 @@
     "semantic_hash": ""
   },
   "src/components/dossier/Student360ProfileTab.vue": {
-    "mtime": 1785182785.9391623,
-    "ast_hash": "4153385400a3c29941f660b49e0b2ed1",
+    "mtime": 1785505274.1595533,
+    "ast_hash": "685669c7470fd96a2d242b99fe584645",
     "semantic_hash": ""
   },
   "src/components/reports/ReportsBatchPrintModal.vue": {
@@ -627,6 +627,26 @@
   "src/components/grades/GradesAnalyticsPanelSBAR.vue": {
     "mtime": 1785494769.8891644,
     "ast_hash": "c65728205a312cb02a5b9e70ea648834",
+    "semantic_hash": ""
+  },
+  "src/components/setup/ElementaryCsvImporter.vue": {
+    "mtime": 1785521070.8925078,
+    "ast_hash": "efd397bad55cebc776f0d11f1e489358",
+    "semantic_hash": ""
+  },
+  "src/components/setup/ElementarySubjectManager.vue": {
+    "mtime": 1785520921.9595253,
+    "ast_hash": "dc4ac5d29377dc46383d12f17160a516",
+    "semantic_hash": ""
+  },
+  "src/utils/elementarySubjects.js": {
+    "mtime": 1785504798.2681668,
+    "ast_hash": "8d6c21c4fb9ad6e6d0b443bb48eda30a",
+    "semantic_hash": ""
+  },
+  "src/composables/useElementary.js": {
+    "mtime": 1785520900.527795,
+    "ast_hash": "0b99b4b2c573d07455ab0e18f2a55d31",
     "semantic_hash": ""
   }
 }

@@ -16,7 +16,7 @@
           >
             <option v-if="filteredClassList.length === 0" value="">No Classes</option>
             <option v-for="cls in filteredClassList" :key="cls.classId" :value="cls.classId">
-              {{ cls.name }} (P{{ cls.periodNumber }})
+              {{ cls.classType === 'elementary' ? cls.name : `${cls.name} (P${cls.periodNumber})` }}
             </option>
           </select>
         </div>
@@ -125,8 +125,10 @@
               <div>
                 <div class="setup__class-name">{{ cls.name }}</div>
                 <div class="setup__class-meta">
-                  Period {{ cls.periodNumber }} · {{ cls.year }} Sem {{ cls.semester }} · {{ studentCount(cls) }} students
+                  <template v-if="cls.classType === 'elementary'">Full Year {{ cls.year }} · {{ studentCount(cls) }} students</template>
+                  <template v-else>Period {{ cls.periodNumber }} · {{ cls.year }} Sem {{ cls.semester }} · {{ studentCount(cls) }} students</template>
                 </div>
+
               </div>
               <div class="setup__class-actions">
                 <button class="setup__pill-btn" @click="switchToClass(cls.classId)">
@@ -156,7 +158,11 @@
             <li v-for="cls in (showAllSessions ? archivedClasses : filteredArchivedClasses)" :key="cls.classId" class="setup__class-item setup__class-item--archived">
               <div>
                 <div class="setup__class-name">{{ cls.name }}</div>
-                <div class="setup__class-meta">Period {{ cls.periodNumber }} · {{ cls.year }} Sem {{ cls.semester }} · {{ studentCount(cls) }} students</div>
+                <div class="setup__class-meta">
+                  <template v-if="cls.classType === 'elementary'">Full Year {{ cls.year }} · {{ studentCount(cls) }} students</template>
+                  <template v-else>Period {{ cls.periodNumber }} · {{ cls.year }} Sem {{ cls.semester }} · {{ studentCount(cls) }} students</template>
+                </div>
+
               </div>
               <div class="setup__class-actions">
                 <button class="setup__pill-btn" @click="onRestoreClass(cls.classId)">Restore</button>
@@ -172,28 +178,61 @@
           <form class="setup__form" @submit.prevent="createNewClass">
             <label class="setup__label">
               Class name
-              <input v-model="newClass.name" class="setup__input" placeholder="e.g. Period 1 — Science" required />
+              <input v-model="newClass.name" class="setup__input" :placeholder="teachingMode === 'elementary' ? 'e.g. Grade 4 Homeroom' : 'e.g. Period 1 — Science'" required />
             </label>
-            <label class="setup__label">
+            <label v-if="teachingMode !== 'elementary'" class="setup__label">
               Course Code (Optional)
               <input v-model="newClass.courseCode" class="setup__input" placeholder="e.g. SNC2D1" />
             </label>
             <div class="setup__form-grid">
               <label class="setup__label">
-                School Year and Semester
-                <select v-model="newClassTermKey" class="setup__input" required>
+                {{ teachingMode === 'elementary' ? 'School Year' : 'School Year and Semester' }}
+                <select v-if="teachingMode === 'elementary'" v-model="newClassYear" class="setup__input" required>
+                  <option v-for="y in yearOptions" :key="y" :value="y">
+                    {{ y }}
+                  </option>
+                </select>
+                <select v-else v-model="newClassTermKey" class="setup__input" required>
                   <option v-for="t in termOptions" :key="t.year + t.semester" :value="t.year + '|' + t.semester">
                     {{ t.year }} Sem {{ t.semester }}
                   </option>
                 </select>
               </label>
-              <label class="setup__label">
+
+              <label v-if="teachingMode === 'elementary'" class="setup__label">
+                Grade Level
+                <select v-model="newClassGradeLevel" class="setup__input" required>
+                  <optgroup label="Single Grade">
+                    <option value="Kindergarten">Kindergarten</option>
+                    <option value="Grade 1">Grade 1</option>
+                    <option value="Grade 2">Grade 2</option>
+                    <option value="Grade 3">Grade 3</option>
+                    <option value="Grade 4">Grade 4</option>
+                    <option value="Grade 5">Grade 5</option>
+                    <option value="Grade 6">Grade 6</option>
+                    <option value="Grade 7">Grade 7</option>
+                    <option value="Grade 8">Grade 8</option>
+                  </optgroup>
+                  <optgroup label="Split / Multi-Grade">
+                    <option value="Grade 1/2">Grade 1/2 Split</option>
+                    <option value="Grade 2/3">Grade 2/3 Split</option>
+                    <option value="Grade 3/4">Grade 3/4 Split</option>
+                    <option value="Grade 4/5">Grade 4/5 Split</option>
+                    <option value="Grade 5/6">Grade 5/6 Split</option>
+                    <option value="Grade 6/7">Grade 6/7 Split</option>
+                    <option value="Grade 7/8">Grade 7/8 Split</option>
+                  </optgroup>
+                </select>
+              </label>
+
+
+              <label v-if="teachingMode !== 'elementary'" class="setup__label">
                 Period
                 <select v-model="newClass.periodNumber" class="setup__input" required>
                   <option v-for="opt in periodOptions" :key="opt" :value="opt">{{ opt }}</option>
                 </select>
               </label>
-              <label class="setup__label">
+              <label v-if="teachingMode !== 'elementary'" class="setup__label">
                 Start time
                 <input v-model="newClass.periodStartTime" type="time" class="setup__input" required />
               </label>
@@ -202,6 +241,8 @@
           </form>
           <p v-if="classError" class="setup__error">{{ classError }}</p>
         </div>
+
+
 
         <!-- Bulk dialogs (maintained for cross-context safety) -->
         <div v-if="bulkImportGroups" class="setup__dialog" role="dialog" aria-modal="true">
@@ -263,6 +304,57 @@
           <div class="setup__dialog-backdrop" @click="bulkImportGroups = null" />
         </div>
 
+        <!-- ── Elementary Import Preview Dialog ─────────────────── -->
+        <div v-if="elementaryPreview" class="setup__dialog" role="dialog" aria-modal="true">
+          <div class="setup__dialog-box setup__dialog-box--large">
+            <h3 class="setup__dialog-title">
+              📋 Import Elementary Homeroom
+            </h3>
+
+            <div class="setup__elm-preview-meta">
+              <div class="setup__elm-preview-row">
+                <span class="setup__elm-label">Homeroom</span>
+                <span class="setup__elm-value">{{ elementaryPreview.homeroomName }}</span>
+                <span v-if="elementaryPreview.existingHomeroom" class="setup__badge setup__badge--update">Update Existing</span>
+                <span v-else class="setup__badge setup__badge--new">New Class</span>
+              </div>
+              <div class="setup__elm-preview-row">
+                <span class="setup__elm-label">School Year</span>
+                <span class="setup__elm-value">{{ elementaryPreview.csvYear }}</span>
+              </div>
+              <div class="setup__elm-preview-row">
+                <span class="setup__elm-label">Students</span>
+                <span class="setup__elm-value"><strong>{{ elementaryPreview.validRows.length }}</strong> students detected</span>
+              </div>
+            </div>
+
+            <p class="setup__dialog-body" style="margin-top: 0.5rem;">
+              The following students will be added to your homeroom roster.
+              After importing, go to <strong>Class Settings</strong> to configure subjects.
+            </p>
+
+            <!-- Student preview list -->
+            <div class="setup__bulk-list" style="max-height: 220px;">
+              <div
+                v-for="s in elementaryPreview.validRows"
+                :key="s.studentId"
+                class="setup__elm-student-row"
+              >
+                <span class="setup__elm-student-name">{{ s.lastName }}, {{ s.firstName }}</span>
+                <span class="setup__elm-student-id">{{ s.studentId }}</span>
+              </div>
+            </div>
+
+            <div class="setup__dialog-actions" style="margin-top: 1rem;">
+              <button class="setup__btn-primary" @click="confirmElementaryImport">
+                {{ elementaryPreview.existingHomeroom ? '✅ Update Roster' : '🏫 Create Class &amp; Import' }}
+              </button>
+              <button class="setup__btn-ghost" @click="elementaryPreview = null">Cancel</button>
+            </div>
+          </div>
+          <div class="setup__dialog-backdrop" @click="elementaryPreview = null" />
+        </div>
+
         <!-- Conflict dialog (maintained) -->
         <div v-if="crossClassConflicts.length > 0" class="setup__dialog" role="dialog" aria-modal="true">
           <div class="setup__dialog-box">
@@ -302,11 +394,22 @@
         <!-- Profile -->
         <div class="setup__card">
           <h2 class="setup__card-title">General Settings</h2>
-          <label class="setup__label">
-            Teacher Name (for Reports)
-            <input v-model="localTeacherName" class="setup__input" placeholder="" @blur="saveTeacherName" />
-          </label>
+          <div class="setup__form-grid" style="grid-template-columns: 1fr 1fr; gap: 16px;">
+            <label class="setup__label">
+              Teacher Name (for Reports)
+              <input v-model="localTeacherName" class="setup__input" placeholder="" @blur="saveTeacherName" />
+            </label>
+            <label class="setup__label">
+              Teaching Mode
+              <select v-model="teachingMode" class="setup__input">
+                <option value="secondary">Secondary / High School Mode (Single-Subject Periods)</option>
+                <option value="elementary">Elementary / K–8 Mode (Homeroom Multi-Subject)</option>
+              </select>
+            </label>
+
+          </div>
         </div>
+
 
         <!-- Attendance & Cloud Mode Settings -->
         <div class="setup__card">
@@ -552,6 +655,7 @@ import {
 } from 'lucide-vue-next'
 import { useClassroom } from '../composables/useClassroom.js'
 import { useMessage } from '../composables/useMessage.js'
+import { detectGradeFromClassName } from '../composables/useElementary.js'
 
 import CalendarSettings from '../components/setup/CalendarSettings.vue'
 import GradeBucketsSettings from '../components/setup/GradeBucketsSettings.vue'
@@ -586,6 +690,7 @@ const {
   updateAttendanceConfig,
   markAllPresentToday,
   termOptions,
+  yearOptions,
   periodOptions,
   cloudModeEnabled,
   userCode,
@@ -598,8 +703,11 @@ const {
   bulkImportClasses,
   importRoster,
   moveStudentFromClass,
-  autoStartRFID
+  autoStartRFID,
+  teachingMode
 } = useClassroom()
+
+
 
 const isHelpModalOpen = ref(false)
 const isCsvHelpOpen = ref(false)
@@ -721,6 +829,7 @@ watch(() => props.tab, (newTab) => {
 })
 
 const newClass = reactive({ 
+  classType: 'secondary',
   name: '', 
   courseCode: '',
   periodNumber: 1, 
@@ -729,6 +838,8 @@ const newClass = reactive({
   semester: ''
 })
 const newClassTermKey = ref('')
+const newClassYear = ref('')
+const newClassGradeLevel = ref('Grade 7')
 
 watch(newClassTermKey, (val) => {
   if (val && val.includes('|')) {
@@ -775,18 +886,26 @@ async function switchToClass(classId) {
 async function createNewClass() {
   classError.value = ''
   if (!newClass.name.trim()) { classError.value = 'Name is required.'; return }
-  if (!newClass.year || !newClass.semester) { classError.value = 'Academic term required.'; return }
+
+  const isElem = teachingMode.value === 'elementary'
+  const yearToUse = isElem ? (newClassYear.value || currentSchoolYear.value) : newClass.year
+  const semToUse = isElem ? '1' : newClass.semester
+
+  if (!yearToUse || !semToUse) { classError.value = 'Academic term required.'; return }
 
   const classId = `class_${Date.now()}`
   await createClass({
     classId: classId,
+    classType: isElem ? 'elementary' : 'secondary',
     name: newClass.name.trim(),
     courseCode: newClass.courseCode.trim(),
+    gradeLevel: isElem ? (newClassGradeLevel.value || 'Grade 7') : undefined,
     periodNumber: newClass.periodNumber,
     periodStartTime: newClass.periodStartTime,
-    year: newClass.year,
-    semester: newClass.semester
+    year: yearToUse,
+    semester: semToUse
   })
+
   
   newClass.name = ''
   newClass.courseCode = ''
@@ -823,6 +942,9 @@ let _pendingConflicts = []
 const isDraggingRoster = ref(false)
 const newPeriodsDetected = ref([])
 
+// Elementary homeroom import preview
+const elementaryPreview = ref(null) // { homeroomName, csvYear, validRows, existingHomeroom }
+
 function cleanPeriod(raw) {
   if (!raw) return '1'
   const match = raw.toString().match(/^(\d+)/)
@@ -831,8 +953,9 @@ function cleanPeriod(raw) {
 
 function extractCourseCode(raw) {
   if (!raw) return ''
-  const base = raw.toString().split('-')[0].trim()
-  return base.length > 5 ? base.slice(0, 5) : base
+  // SCDSB Sec Section format: "SPH3U1-2" — code is everything before the last "-N" section suffix
+  const base = raw.toString().replace(/-\d+$/, '').trim()
+  return base
 }
 
 function extractYearFromPeriod(raw) {
@@ -848,10 +971,19 @@ function extractYearFromPeriod(raw) {
 
 function normalizeSemester(raw) {
   if (!raw) return '1'
-  const str = raw.toString().toLowerCase()
-  if (str.includes('2')) return '2'
+  const str = raw.toString().trim()
+  // Bare digit — e.g. Semester column = "2"
+  if (str === '2') return '2'
+  if (str === '1') return '1'
+  // Full year strings like "2025-2026" are NOT semester numbers
+  if (/^\d{4}-\d{2,4}$/.test(str)) return '1'
+  const lower = str.toLowerCase()
+  if (lower.includes('sem 2') || lower.includes('semester 2') || /\bs2\b/.test(lower) || /\bsem2\b/.test(lower)) {
+    return '2'
+  }
   return '1'
 }
+
 
 const currentSchoolYear = computed(() => {
   const now = new Date()
@@ -911,10 +1043,16 @@ function onFileSelected(evt) {
         const courseCode = row['Course Code'] ?? row['CourseCode'] ?? (rawSection ? extractCourseCode(rawSection) : '')
         const semester = normalizeSemester(rawSem || (activeClass.value?.semester || '1'))
 
+        const rawGrade = row['Grade'] ?? row['Grade Level'] ?? row['GradeLevel'] ?? row['grade'] ?? ''
+        const gNum = parseInt(rawGrade, 10)
+        const parsedG = rawGrade ? (!isNaN(gNum) ? `Grade ${gNum}` : (rawGrade.toLowerCase().startsWith('grade') ? rawGrade : `Grade ${rawGrade}`)) : ''
+
         return { 
           studentId: studentId.trim(), 
           firstName: firstName.trim(), 
           lastName: lastName.trim(),
+          grade: parsedG,
+          gradeLevel: parsedG,
           parentContacts,
           studentEmail: studentEmail.trim(),
           custody: custody.trim(),
@@ -962,15 +1100,51 @@ function onFileSelected(evt) {
         newPeriodsDetected.value = []
       }
 
-      const groupKeys = Object.keys(groups)
+      // In Elementary mode: show preview dialog before committing anything
+      if (teachingMode.value === 'elementary') {
+        const validRows = rows.filter(r => r.firstName.trim() || r.lastName.trim() || r.studentId.trim())
+        if (validRows.length === 0) return
+
+        // Extract homeroom name and year directly from raw CSV rows
+        const firstRaw = results.data.find(r => r['Student Number'] || r['Student Name'])
+        const homeroomCode = firstRaw?.['Sec Section'] || firstRaw?.['Home Room'] || 'Homeroom'
+        // Normalize: "HRM.130" → "HRM-130", strip any trailing -N section suffix
+        const homeroomName = homeroomCode.replace(/\./g, '-').replace(/-\d+$/, '').trim()
+
+        // Parse year from Schedule column ("2025-2026" → "2025-26")
+        const rawSchedule = firstRaw?.['Schedule'] || ''
+        const yearMatch = rawSchedule.match(/(\d{4})-(\d{4})/)
+        const csvYear = yearMatch ? `${yearMatch[1]}-${yearMatch[2].slice(-2)}` : currentSchoolYear.value
+
+        // Find existing elementary class with same homeroom code + year
+        const existingHomeroom = classList.value.find(c =>
+          c.classType === 'elementary' &&
+          c.year === csvYear &&
+          (c.name === homeroomName || c.courseCode === homeroomName)
+        )
+
+        // Show preview dialog — don't commit yet
+        elementaryPreview.value = { homeroomName, csvYear, validRows, existingHomeroom: existingHomeroom || null }
+        return
+      }
+
+
+      const validRows = rows.filter(r => r.firstName.trim() || r.lastName.trim() || r.studentId.trim())
+      const validGroups = {}
+      for (const row of validRows) {
+        const key = `${row.year}-${row.semester}-P${row.periodNumber}`
+        if (groups[key]) validGroups[key] = groups[key]
+      }
+
+      const groupKeys = Object.keys(validGroups)
       if (groupKeys.length > 1) {
-          bulkImportGroups.value = groups
+          bulkImportGroups.value = validGroups
       } else {
           if (!activeClass.value) {
-            await alert('This CSV contains only one class group. Please select or create a class first, then re-import. Alternatively, make sure your CSV contains a "Period" or "Semester" column so the bulk importer can detect multiple classes.')
+            await alert('This CSV contains only one class group. Please select or create a class first, then re-import.')
             return
           }
-          const result = await importRoster(rows)
+          const result = await importRoster(validRows)
           importResult.value = result
       }
     },
@@ -1045,6 +1219,35 @@ function isExistingClass(group) {
   )
 }
 
+async function confirmElementaryImport() {
+  if (!elementaryPreview.value) return
+  const { homeroomName, csvYear, validRows, existingHomeroom } = elementaryPreview.value
+  elementaryPreview.value = null
+
+  if (existingHomeroom) {
+    await switchClass(existingHomeroom.classId)
+  } else {
+    const studentGrades = [...new Set(validRows.map(r => r.gradeLevel || r.grade).filter(Boolean))]
+    const autoGrade = studentGrades.length > 0
+      ? (studentGrades.length > 1 ? studentGrades.sort().join('/') : studentGrades[0])
+      : (detectGradeFromClassName(homeroomName) || 'Grade 7')
+
+    await createClass({
+      classId: `class_${Date.now()}`,
+      name: homeroomName,
+      courseCode: homeroomName,
+      gradeLevel: autoGrade,
+      year: csvYear,
+      semester: '1',
+      periodNumber: 1,
+      classType: 'elementary',
+    })
+  }
+
+  const result = await importRoster(validRows)
+  importResult.value = result
+}
+
 async function confirmBulkImport() {
   const selectedGroups = Object.values(bulkImportGroups.value).filter(g => g.selected)
   if (selectedGroups.length === 0) return
@@ -1097,6 +1300,7 @@ async function resolveConflicts(action) {
 }
 
 onMounted(async () => {
+    newClassYear.value = selectedYear.value || currentSchoolYear.value
     if (selectedYear.value && selectedSemester.value) {
       newClassTermKey.value = `${selectedYear.value}|${selectedSemester.value}`
     } else if (termOptions.value.length > 0) {
@@ -1107,9 +1311,10 @@ onMounted(async () => {
       newClass.periodStartTime = periodStartTimes.value[newClass.periodNumber]
     }
 
-    if (!activeClass.value && classList.value.length > 0) {
-      await switchToClass(classList.value[0].classId)
+    if (!activeClass.value && filteredClassList.value.length > 0) {
+      await switchToClass(filteredClassList.value[0].classId)
     }
+
 })
 </script>
 <style src="../assets/styles/setup.css"></style>

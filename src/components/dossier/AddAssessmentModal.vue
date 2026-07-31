@@ -157,9 +157,24 @@
               <label class="form-label">Tagged Standards (Expectations)</label>
               <span class="exp-count-badge" v-if="selectedExpCount > 0">{{ selectedExpCount }} selected</span>
             </div>
+
+            <!-- Split Class Grade Filter Pills -->
+            <div v-if="availableGradeFilters.length > 1" class="exp-grade-filters">
+              <button
+                v-for="gFilter in availableGradeFilters"
+                :key="gFilter"
+                type="button"
+                class="exp-grade-btn"
+                :class="{ 'exp-grade-btn--active': selectedGradeFilter === gFilter }"
+                @click="selectedGradeFilter = gFilter"
+              >
+                {{ gFilter === 'all' ? 'All Grades' : gFilter }}
+              </button>
+            </div>
+
             <div class="exp-pill-selector">
               <label 
-                v-for="exp in allAvailableExpectations" 
+                v-for="exp in filteredAvailableExpectations" 
                 :key="exp.code"
                 class="exp-checkbox-pill"
                 :class="{ 'exp-checkbox-pill--active': isExpSelected(exp.code) }"
@@ -171,9 +186,20 @@
                   @change="toggleExpSelection(exp.code)"
                   style="display: none;"
                 />
+                <span v-if="exp.gradeLevel" class="exp-grade-tag">{{ exp.gradeLevel.replace('Grade ', 'Gr ') }}</span>
                 <span class="exp-code-pill">{{ exp.code }}</span>
                 <span class="exp-desc-pill">{{ exp.name || exp.description }}</span>
               </label>
+            </div>
+          </div>
+          <div v-else class="form-group exp-section">
+            <label class="form-label">Tagged Standards (Expectations)</label>
+            <div class="exp-empty-box">
+              <BookOpen :size="20" class="exp-empty-icon" />
+              <div>
+                <div>No expectations loaded for <strong>{{ activeClassRecord?.activeSubjectName || 'this subject' }}</strong> yet.</div>
+                <div class="exp-empty-sub">Load expectations under Setup ➔ Class Settings ➔ Subject Expectations.</div>
+              </div>
             </div>
           </div>
 
@@ -200,7 +226,8 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { ref, computed } from 'vue'
+import { BookOpen } from 'lucide-vue-next'
 import {
   showAddAssessmentModal,
   isEditingAssessment,
@@ -230,13 +257,39 @@ const unitExpectations = computed(() => {
 
 const allAvailableExpectations = computed(() => {
   if (unitExpectations.value.length > 0) return unitExpectations.value
-  return activeClassRecord.value?.curriculumExpectations || [
-    { code: 'A1.1', name: 'Inquiry & Experimentation', description: 'Formulate hypotheses and execute laboratory inquiries.' },
-    { code: 'A1.2', name: 'Data Analysis', description: 'Analyze experimental data using statistical tools.' },
-    { code: 'B2.1', name: 'Kinematics Equations', description: 'Apply 1D/2D displacement and velocity equations.' },
-    { code: 'B2.2', name: 'Force & Motion', description: 'Evaluate Newton laws of motion in dynamics problems.' },
-    { code: 'C1.1', name: 'Conservation of Energy', description: 'Calculate kinetic, potential, and thermal energy transfers.' }
-  ]
+
+  const classExps = activeClassRecord.value?.expectations || activeClassRecord.value?.curriculumExpectations || []
+  if (classExps.length > 0) return classExps
+
+  const unitExps = (activeClassRecord.value?.gradebookUnits || []).flatMap(u => u.expectations || [])
+  if (unitExps.length > 0) return unitExps
+
+  if (activeClassRecord.value?.classType !== 'elementary') {
+    return [
+      { code: 'A1.1', name: 'Inquiry & Experimentation', description: 'Formulate hypotheses and execute laboratory inquiries.' },
+      { code: 'A1.2', name: 'Data Analysis', description: 'Analyze experimental data using statistical tools.' },
+      { code: 'B2.1', name: 'Kinematics Equations', description: 'Apply 1D/2D displacement and velocity equations.' },
+      { code: 'B2.2', name: 'Force & Motion', description: 'Evaluate Newton laws of motion in dynamics problems.' },
+      { code: 'C1.1', name: 'Conservation of Energy', description: 'Calculate kinetic, potential, and thermal energy transfers.' }
+    ]
+  }
+
+  return []
+})
+
+const selectedGradeFilter = ref('all')
+
+const availableGradeFilters = computed(() => {
+  const grades = new Set(allAvailableExpectations.value.map(e => e.gradeLevel).filter(Boolean))
+  if (grades.size <= 1) return []
+  return ['all', ...Array.from(grades).sort()]
+})
+
+const filteredAvailableExpectations = computed(() => {
+  if (selectedGradeFilter.value === 'all' || !availableGradeFilters.value.length) {
+    return allAvailableExpectations.value
+  }
+  return allAvailableExpectations.value.filter(e => e.gradeLevel === selectedGradeFilter.value)
 })
 
 const selectedExpCount = computed(() => {
@@ -374,6 +427,45 @@ function toggleExpSelection(code) {
   border-radius: 12px;
 }
 
+.exp-grade-filters {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.exp-grade-btn {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  border-radius: 12px;
+  padding: 3px 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.exp-grade-btn:hover {
+  color: var(--text);
+  border-color: var(--primary);
+}
+
+.exp-grade-btn--active {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
+.exp-grade-tag {
+  font-size: 0.7rem;
+  font-weight: 700;
+  background: rgba(59, 130, 246, 0.15);
+  color: var(--primary);
+  padding: 2px 6px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
 .exp-pill-selector {
   display: flex;
   flex-direction: column;
@@ -418,6 +510,32 @@ function toggleExpSelection(code) {
   border-radius: 4px;
   font-size: 0.75rem;
   flex-shrink: 0;
+}
+
+.exp-empty-box {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  background: var(--bg-secondary);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  font-size: 0.83rem;
+  line-height: 1.4;
+}
+
+.exp-empty-icon {
+  color: var(--text-secondary);
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
+.exp-empty-sub {
+  display: block;
+  font-size: 0.75rem;
+  opacity: 0.8;
+  margin-top: 2px;
 }
 
 .exp-checkbox-pill--active .exp-code-pill {

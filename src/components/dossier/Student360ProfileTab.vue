@@ -1,6 +1,18 @@
 <template>
   <div class="student-360__pane student-360__pane--profile">
+    <!-- Custody & Safety Alert Callout (If imported from SIS CSV) -->
+    <div v-if="student.notes" class="profile-section">
+      <div class="profile-alert-card">
+        <div class="profile-alert-card__header">
+          <AlertTriangle :size="18" class="profile-alert-card__icon" />
+          <h3 class="profile-alert-card__title">Safety &amp; Custody Alerts</h3>
+        </div>
+        <p class="profile-alert-card__body">{{ student.notes }}</p>
+      </div>
+    </div>
+
     <div class="profile-section">
+
       <h3 class="profile-section__title">Demographics</h3>
       <div class="profile-grid">
         <div class="profile-item">
@@ -91,7 +103,8 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue'
-import { ShieldCheck, ClipboardList } from 'lucide-vue-next'
+import { ShieldCheck, ClipboardList, AlertTriangle } from 'lucide-vue-next'
+
 import { formatLocalDisplay } from '../../utils/dates.js'
 import { useMessage } from '../../composables/useMessage.js'
 import { formatQualitativeEvidenceForReport } from '../../utils/reportFormatter.js'
@@ -436,4 +449,40 @@ async function copyForReportCard(includeName = false) {
   color: var(--text-secondary);
   line-height: 1.35;
 }
+
+/* Safety & Custody Alerts Card */
+.profile-alert-card {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  border-left: 4px solid #ef4444;
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+}
+
+.profile-alert-card__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.profile-alert-card__icon {
+  color: #ef4444;
+}
+
+.profile-alert-card__title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #fca5a5;
+}
+
+.profile-alert-card__body {
+  margin: 0;
+  font-size: 0.88rem;
+  color: #f8fafc;
+  line-height: 1.45;
+  white-space: pre-wrap;
+}
 </style>
+

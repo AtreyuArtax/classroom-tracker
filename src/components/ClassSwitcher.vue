@@ -1,63 +1,95 @@
 <template>
-  <div class="class-switcher">
-    <!-- Current class label + dropdown trigger -->
-    <button
-      class="class-switcher__trigger"
-      :aria-expanded="isOpen"
-      aria-haspopup="listbox"
-      @click="isOpen = !isOpen"
-    >
-      <span class="class-switcher__label">
-        {{ activeClass?.name ?? 'No class selected' }}
-      </span>
-      <ChevronDown :size="16" class="class-switcher__chevron" :class="{ 'class-switcher__chevron--open': isOpen }" aria-hidden="true" />
-    </button>
+  <div class="class-switcher-wrapper">
+    <div class="class-switcher">
+      <!-- Current class label + dropdown trigger -->
+      <button
+        class="class-switcher__trigger"
+        :aria-expanded="isOpen"
+        aria-haspopup="listbox"
+        @click="isOpen = !isOpen"
+      >
+        <span class="class-switcher__label">
+          {{ activeClass?.name ?? 'No class selected' }}
+        </span>
+        <ChevronDown :size="16" class="class-switcher__chevron" :class="{ 'class-switcher__chevron--open': isOpen }" aria-hidden="true" />
+      </button>
 
-    <!-- Dropdown list -->
-    <div
-      v-if="isOpen"
-      class="class-switcher__dropdown"
-      role="listbox"
-      :aria-label="`Select class, currently ${activeClass?.name}`"
-    >
-      <div v-for="(group, termName) in classesByTerm" :key="termName" class="class-switcher__group">
-        <div class="class-switcher__group-header">{{ termName }}</div>
-        <button
-          v-for="cls in group"
-          :key="cls.classId"
-          class="class-switcher__option"
-          :class="{ 'class-switcher__option--active': cls.classId === activeClass?.classId }"
-          role="option"
-          :aria-selected="cls.classId === activeClass?.classId"
-          @click="selectClass(cls.classId)"
-        >
-          <span class="class-switcher__option-name">{{ cls.name }}</span>
-          <span class="class-switcher__option-period">P{{ cls.periodNumber }}</span>
+      <!-- Dropdown list -->
+      <div
+        v-if="isOpen"
+        class="class-switcher__dropdown"
+        role="listbox"
+        :aria-label="`Select class, currently ${activeClass?.name}`"
+      >
+        <div v-for="(group, termName) in classesByTerm" :key="termName" class="class-switcher__group">
+          <div class="class-switcher__group-header">{{ termName }}</div>
+          <button
+            v-for="cls in group"
+            :key="cls.classId"
+            class="class-switcher__option"
+            :class="{ 'class-switcher__option--active': cls.classId === activeClass?.classId }"
+            role="option"
+            :aria-selected="cls.classId === activeClass?.classId"
+            @click="selectClass(cls.classId)"
+          >
+            <span class="class-switcher__option-name">{{ cls.name }}</span>
+            <span v-if="cls.classType === 'elementary'" class="class-switcher__option-period">Elementary</span>
+            <span v-else class="class-switcher__option-period">P{{ cls.periodNumber }}</span>
+          </button>
+        </div>
+
+        <div v-if="filteredClassList.length === 0" class="class-switcher__empty">
+          No classes for this term — switch term or add one in Setup
+        </div>
+
+        <!-- Divider + new class link -->
+        <div class="class-switcher__divider" />
+        <button class="class-switcher__add" @click="emit('navigate', 'Setup')">
+          <span aria-hidden="true">＋</span> Manage classes
         </button>
       </div>
 
-      <div v-if="filteredClassList.length === 0" class="class-switcher__empty">
-        No classes for this term — switch term or add one in Setup
+      <!-- Click-outside backdrop -->
+      <div v-if="isOpen" class="class-switcher__backdrop" @click="isOpen = false" />
+      
+      <!-- Time-based Suggestion Banner -->
+      <div v-if="suggestedClass" class="class-suggestion">
+        <span class="class-suggestion__text">{{ suggestionText }}</span>
+        <button class="class-suggestion__accept" @click="acceptSuggestion">Switch</button>
+        <button class="class-suggestion__dismiss" @click="dismissSuggestion">✕</button>
       </div>
-
-      <!-- Divider + new class link -->
-      <div class="class-switcher__divider" />
-      <button class="class-switcher__add" @click="emit('navigate', 'Setup')">
-        <span aria-hidden="true">＋</span> Manage classes
-      </button>
     </div>
 
-    <!-- Click-outside backdrop -->
-    <div v-if="isOpen" class="class-switcher__backdrop" @click="isOpen = false" />
-    
-    <!-- Time-based Suggestion Banner -->
-    <div v-if="suggestedClass" class="class-suggestion">
-      <span class="class-suggestion__text">{{ suggestionText }}</span>
-      <button class="class-suggestion__accept" @click="acceptSuggestion">Switch</button>
-      <button class="class-suggestion__dismiss" @click="dismissSuggestion">✕</button>
+    <!-- Header Subject Switcher Dropdown (Only visible for Elementary classes) -->
+    <div v-if="activeClass?.classType === 'elementary' && activeClassSubjects.length > 0" class="subject-switcher">
+      <div class="subject-switcher__select-wrap">
+        <SubjectIcon 
+          :code="currentActiveSubject?.code" 
+          :icon="currentActiveSubject?.icon" 
+          :name="currentActiveSubject?.name" 
+          :size="15" 
+          class="subject-switcher__icon"
+        />
+        <select
+          :value="activeSubjectId || activeClassSubjects[0]?.subjectId"
+          class="subject-switcher__select"
+          aria-label="Select Subject"
+          @change="e => switchSubject(e.target.value)"
+        >
+          <option
+            v-for="sub in activeClassSubjects"
+            :key="sub.subjectId"
+            :value="sub.subjectId"
+          >
+            {{ sub.name }} ({{ sub.code || 'SUBJ' }})
+          </option>
+        </select>
+        <ChevronDown :size="14" class="subject-switcher__arrow" />
+      </div>
     </div>
   </div>
 </template>
+
 
 <script setup>
 /**
@@ -74,24 +106,48 @@
 
 import { ref, computed } from 'vue'
 import { ChevronDown } from 'lucide-vue-next'
+import SubjectIcon from './SubjectIcon.vue'
 import { useClassroom } from '../composables/useClassroom.js'
+import { activeSubjectId } from '../composables/useClassroomState.js'
+import { setActiveSubject } from '../composables/useGradebook.js'
+import { DEFAULT_ELEMENTARY_SUBJECTS } from '../utils/elementarySubjects.js'
 
 const { 
   activeClass, 
   suggestedClass, 
   switchClass,
   dismissSuggestion,
-  filteredClassList
+  filteredClassList,
+  teachingMode
 } = useClassroom()
 
 const emit  = defineEmits(['navigate'])
 const isOpen = ref(false)
 
+const activeClassSubjects = computed(() => {
+  if (!activeClass.value || activeClass.value.classType !== 'elementary') return []
+  return activeClass.value.subjects && activeClass.value.subjects.length > 0
+    ? activeClass.value.subjects
+    : DEFAULT_ELEMENTARY_SUBJECTS
+})
+
+const currentActiveSubject = computed(() => {
+  if (!activeClassSubjects.value.length) return null
+  return activeClassSubjects.value.find(s => s.subjectId === activeSubjectId.value) || activeClassSubjects.value[0]
+})
+
+async function switchSubject(subjectId) {
+  await setActiveSubject(subjectId)
+}
+
+
 const classesByTerm = computed(() => {
   const groups = {}
   // use filteredClassList to respect global year/semester filter
   for (const cls of filteredClassList.value) {
-    const term = `${cls.year || '2025-26'} — Semester ${cls.semester || '2'}`
+    const term = (cls.classType === 'elementary' || teachingMode.value === 'elementary')
+      ? `${cls.year || '2025-26'} — Full Year`
+      : `${cls.year || '2025-26'} — Semester ${cls.semester || '1'}`
     if (!groups[term]) groups[term] = []
     groups[term].push(cls)
   }
@@ -360,4 +416,66 @@ async function acceptSuggestion() {
 .class-suggestion__dismiss:hover {
   opacity: 1;
 }
+
+/* ── Elementary Subject Switcher Dropdown ─────────────────────────────────── */
+.class-switcher-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.subject-switcher {
+  display: inline-flex;
+  align-items: center;
+}
+
+.subject-switcher__select-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 0 10px 0 12px;
+  height: 36px;
+  transition: border-color 0.15s ease;
+}
+
+.subject-switcher__select-wrap:hover {
+  border-color: var(--primary);
+}
+
+.subject-switcher__icon {
+  color: var(--primary);
+  margin-right: 8px;
+  pointer-events: none;
+}
+
+.subject-switcher__select {
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+  border: none;
+  color: var(--text);
+  font-size: 0.88rem;
+  font-weight: 600;
+  padding-right: 20px;
+  cursor: pointer;
+  outline: none;
+}
+
+.subject-switcher__select option {
+  background: var(--surface);
+  color: var(--text);
+  font-weight: 500;
+}
+
+.subject-switcher__arrow {
+  position: absolute;
+  right: 10px;
+  color: var(--text-secondary);
+  pointer-events: none;
+}
 </style>
+

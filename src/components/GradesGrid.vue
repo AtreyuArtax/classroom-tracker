@@ -478,8 +478,8 @@ function getSparklinePath(data, width, height) {
 
 // Computed grid properties
 const overallClassAvg = computed(() => {
-  const values = Object.values(classGrades.value)
-    .map(g => g.overallGrade)
+  const values = Object.values(classGrades.value || {})
+    .map(g => g?.overallGrade)
     .filter(val => val !== null && val !== undefined)
   if (values.length === 0) return null
   return values.reduce((sum, val) => sum + val, 0) / values.length

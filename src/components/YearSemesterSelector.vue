@@ -11,9 +11,10 @@
         </option>
       </select>
 
-      <div class="term-selector__divider"></div>
+      <div v-if="teachingMode !== 'elementary'" class="term-selector__divider"></div>
 
       <select 
+        v-if="teachingMode !== 'elementary'"
         v-model="selectedSemester" 
         class="term-selector__select term-selector__select--sem"
         aria-label="Select Semester"
@@ -34,7 +35,8 @@ const {
   classList, 
   archivedClasses, 
   selectedYear, 
-  selectedSemester 
+  selectedSemester,
+  teachingMode
 } = useClassroom()
 
 const allPossibleClasses = computed(() => [...classList.value, ...archivedClasses.value])

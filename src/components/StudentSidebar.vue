@@ -82,7 +82,7 @@
             <!-- Grade Display (Only if showAcademics is true) -->
             <template v-if="showAcademics">
               <span 
-                v-if="classGrades && classGrades[student.studentId]" 
+                v-if="classGrades && classGrades[student.studentId] && classGrades[student.studentId].overallGrade !== null && classGrades[student.studentId].overallGrade !== undefined" 
                 class="student-sidebar__roster-grade"
                 :class="{ 'student-sidebar__roster-grade--privacy': isPrivacyMode }"
                 :style="{ color: isPrivacyMode ? 'var(--text-secondary)' : (isSBAR ? getSBARLevelBadge(classGrades[student.studentId].overallGrade).color : getGradeColor(classGrades[student.studentId].overallGrade)) }"

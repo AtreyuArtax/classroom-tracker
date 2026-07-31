@@ -2,7 +2,20 @@
   <div class="grades-grid-sbar">
     <!-- Strand & Unit Filter Pills + Task Selector -->
     <div class="sbar-toolbar">
-      <div class="sbar-strand-pills">
+      <!-- Split Class Grade Filter Pills -->
+      <div v-if="availableGradeFilters.length > 1" class="sbar-grade-pills">
+        <button 
+          v-for="gFilter in availableGradeFilters" 
+          :key="gFilter" 
+          class="grade-pill"
+          :class="{ 'grade-pill--active': activeGradeFilter === gFilter }"
+          @click="activeGradeFilter = gFilter"
+        >
+          {{ gFilter === 'all' ? 'All Grades' : gFilter }}
+        </button>
+      </div>
+
+      <div v-if="availableStrands.length > 1 && (availableGradeFilters.length <= 1 || activeGradeFilter !== 'all')" class="sbar-strand-pills">
         <button 
           class="strand-pill" 
           :class="{ 'strand-pill--active': activeStrandFilter === 'all' }"
@@ -15,9 +28,10 @@
           :key="strand.id || strand.code" 
           class="strand-pill"
           :class="{ 'strand-pill--active': activeStrandFilter === (strand.id || strand.code) }"
+          :title="strand.name"
           @click="activeStrandFilter = (strand.id || strand.code)"
         >
-          {{ strand.code || strand.name }}: {{ strand.name }}
+          {{ formatStrandPillLabel(strand.name) }}
         </button>
       </div>
 
@@ -49,8 +63,12 @@
               :key="'grp-' + (strand.id || strand.code)" 
               :colspan="strand.expectations.length"
               class="strand-group-header"
+              :class="{
+                'strand-group--gr7': strand.gradeLevel === 'Grade 7',
+                'strand-group--gr8': strand.gradeLevel === 'Grade 8'
+              }"
             >
-              {{ strand.code || strand.name }} — {{ strand.name }}
+              {{ strand.name }}
             </th>
           </tr>
 
@@ -64,7 +82,10 @@
               class="exp-code-header"
               :title="exp.code + ': ' + exp.description"
             >
-              {{ exp.code }}
+              <div>{{ exp.code }}</div>
+              <div v-if="exp.gradeLevel && availableGradeFilters.length > 1" class="exp-grade-sub-tag">
+                {{ exp.gradeLevel.replace('Grade ', 'Gr ') }}
+              </div>
             </th>
           </tr>
         </thead>
@@ -73,7 +94,12 @@
           <tr v-for="student in sortedRoster" :key="student.studentId" class="sbar-row">
             <!-- Student Name Column -->
             <td class="sticky-col sticky-col--name sbar-student-cell" @click="$emit('open-dossier', student.studentId)">
-              <span class="sbar-student-name">{{ student.lastName }}, {{ student.firstName }}</span>
+              <span class="sbar-student-name">
+                {{ student.lastName }}, {{ student.firstName }}
+                <span v-if="student.gradeLevel && availableGradeFilters.length > 1" class="sbar-student-grade-tag">
+                  {{ student.gradeLevel.replace('Grade ', 'Gr ') }}
+                </span>
+              </span>
             </td>
 
             <!-- Overall Mastery Badge Column -->
@@ -145,6 +171,22 @@ const props = defineProps({
 const emit = defineEmits(['open-dossier', 'select-expectation', 'select-assessment'])
 
 const activeStrandFilter = ref('all')
+const activeGradeFilter = ref('all')
+
+const availableGradeFilters = computed(() => {
+  const grades = new Set()
+  if (activeClassRecord.value?.students) {
+    Object.values(activeClassRecord.value.students).forEach(st => {
+      if (st.gradeLevel && !st.archived) grades.add(st.gradeLevel)
+    })
+  }
+  const classExps = activeClassRecord.value?.expectations || activeClassRecord.value?.curriculumExpectations || []
+  classExps.forEach(e => {
+    if (e.gradeLevel) grades.add(e.gradeLevel)
+  })
+  if (grades.size <= 1) return []
+  return ['all', ...Array.from(grades).sort()]
+})
 
 const sortedAssessments = computed(() => {
   if (!assessments.value) return []
@@ -172,10 +214,15 @@ const algorithmLabel = computed(() => {
 
 const sortedRoster = computed(() => {
   if (!activeClassRecord.value?.students) return []
-  return Object.keys(activeClassRecord.value.students)
+  let list = Object.keys(activeClassRecord.value.students)
     .filter(id => !activeClassRecord.value.students[id].archived)
     .map(id => ({ studentId: id, ...activeClassRecord.value.students[id] }))
     .sort((a, b) => a.lastName.localeCompare(b.lastName))
+
+  if (activeGradeFilter.value !== 'all' && availableGradeFilters.value.length > 1) {
+    list = list.filter(st => (st.gradeLevel || '').toLowerCase() === activeGradeFilter.value.toLowerCase())
+  }
+  return list
 })
 
 const allExpectations = computed(() => {
@@ -187,12 +234,17 @@ const allExpectations = computed(() => {
       if (u.expectations && Array.isArray(u.expectations)) {
         u.expectations.forEach(exp => {
           if (exp.code) {
-            const strandCode = exp.code.charAt(0).toUpperCase()
-            map[exp.code] = {
+            const strandCode = exp.strand || exp.code.charAt(0).toUpperCase()
+            const gLevel = exp.gradeLevel || u.gradeLevel || ''
+            const key = gLevel ? `${gLevel}_${exp.code}` : exp.code
+            map[key] = {
               code: exp.code,
               name: exp.name || exp.description || `Expectation ${exp.code}`,
               strand: strandCode,
-              description: exp.description || exp.name || ''
+              unitId: u.unitId,
+              unitName: u.name,
+              description: exp.description || exp.name || '',
+              gradeLevel: gLevel
             }
           }
         })
@@ -200,16 +252,23 @@ const allExpectations = computed(() => {
     })
   }
 
-  // 2. Gather expectations from curriculumExpectations
-  if (activeClassRecord.value?.curriculumExpectations) {
-    activeClassRecord.value.curriculumExpectations.forEach(exp => {
-      if (exp.code && !map[exp.code]) {
-        const strandCode = exp.code.charAt(0).toUpperCase()
-        map[exp.code] = {
-          code: exp.code,
-          name: exp.name || exp.description || `Expectation ${exp.code}`,
-          strand: exp.strand || strandCode,
-          description: exp.description || ''
+  // 2. Gather expectations from expectations or curriculumExpectations
+  const classExps = activeClassRecord.value?.expectations || activeClassRecord.value?.curriculumExpectations
+  if (classExps && Array.isArray(classExps)) {
+    classExps.forEach(exp => {
+      if (exp.code) {
+        const strandCode = exp.strand || exp.code.charAt(0).toUpperCase()
+        const gLevel = exp.gradeLevel || ''
+        const key = gLevel ? `${gLevel}_${exp.code}` : exp.code
+        if (!map[key]) {
+          map[key] = {
+            code: exp.code,
+            name: exp.name || exp.description || `Expectation ${exp.code}`,
+            strand: strandCode,
+            unitId: exp.unitId,
+            description: exp.description || '',
+            gradeLevel: gLevel
+          }
         }
       }
     })
@@ -222,19 +281,25 @@ const allExpectations = computed(() => {
       expCodes.forEach(rawCode => {
         if (rawCode) {
           let realCode = rawCode
-          const found = activeClassRecord.value?.gradebookUnits?.flatMap(u => u.expectations || []).find(e => e.expectationId === rawCode || e.code === rawCode)
+          const found = activeClassRecord.value?.gradebookUnits?.flatMap(u => u.expectations || [])
+            .concat(activeClassRecord.value?.expectations || [])
+            .find(e => e.expectationId === rawCode || e.code === rawCode)
           if (found && found.code) realCode = found.code
 
           // Ignore raw UUIDs if no code matches
           if (realCode.includes('-') && realCode.length > 20) return
 
-          if (!map[realCode]) {
+          const gLevel = found?.gradeLevel || ''
+          const key = gLevel ? `${gLevel}_${realCode}` : realCode
+
+          if (!map[key]) {
             const strandCode = realCode.charAt(0).toUpperCase()
-            map[realCode] = {
+            map[key] = {
               code: realCode,
               name: `Expectation ${realCode}`,
               strand: strandCode,
-              description: `Evaluated in ${ast.name}`
+              description: `Evaluated in ${ast.name}`,
+              gradeLevel: gLevel
             }
           }
         }
@@ -242,17 +307,46 @@ const allExpectations = computed(() => {
     })
   }
 
-  return Object.values(map).sort((a, b) => a.code.localeCompare(b.code))
+  let list = Object.values(map)
+  if (activeGradeFilter.value !== 'all' && availableGradeFilters.value.length > 1) {
+    list = list.filter(e => !e.gradeLevel || e.gradeLevel.toLowerCase() === activeGradeFilter.value.toLowerCase())
+  }
+  return list.sort((a, b) => a.code.localeCompare(b.code))
 })
+
+function stripGradePrefix(name) {
+  if (!name) return ''
+  return name.replace(/^\[Grade\s*\d+\]\s*/i, '').trim()
+}
+
+function formatStrandPillLabel(fullName) {
+  if (!fullName) return ''
+  let clean = stripGradePrefix(fullName).replace(/\s*\([^)]*\)/g, '').trim()
+  if (clean.includes(':')) {
+    const [codePart, descPart] = clean.split(':')
+    const shortDesc = descPart.split('&')[0].trim()
+    return `${codePart.trim()}: ${shortDesc}`
+  }
+  return clean
+}
 
 const availableStrands = computed(() => {
   const map = {}
+  const units = activeClassRecord.value?.gradebookUnits || []
+
   allExpectations.value.forEach(exp => {
-    const sCode = exp.strand || 'General'
-    if (!map[sCode]) {
-      map[sCode] = { id: sCode, code: sCode, name: `Strand ${sCode}`, expectations: [] }
+    const sCode = exp.strand || exp.code?.charAt(0).toUpperCase() || 'General'
+    const key = exp.gradeLevel ? `${exp.gradeLevel}_${sCode}` : sCode
+    if (!map[key]) {
+      const matchingUnit = units.find(u => 
+        u.unitId === exp.unitId ||
+        ((!u.gradeLevel || !exp.gradeLevel || u.gradeLevel === exp.gradeLevel) && u.name && (u.name.startsWith(`Strand ${sCode}`) || u.name.startsWith(sCode) || u.name.toLowerCase().includes(`strand ${sCode.toLowerCase()}`)))
+      )
+      const rawName = matchingUnit?.name || exp.unitName || (sCode.length === 1 ? `Strand ${sCode}` : sCode)
+      const strandName = stripGradePrefix(rawName)
+      map[key] = { id: key, code: sCode, gradeLevel: exp.gradeLevel, name: strandName, expectations: [] }
     }
-    map[sCode].expectations.push(exp)
+    map[key].expectations.push(exp)
   })
   return Object.values(map)
 })
@@ -333,11 +427,93 @@ function openExpectationDetail(studentId, expCode) {
   background: rgba(37, 99, 235, 0.15);
 }
 
-.sbar-strand-pills {
+.sbar-grade-pills {
   display: flex;
   align-items: center;
   gap: 6px;
-  overflow-x: auto;
+  border-right: 1px solid var(--border);
+  padding-right: 10px;
+}
+
+.grade-pill {
+  padding: 5px 12px;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.grade-pill:hover {
+  background: var(--bg-hover);
+  color: var(--text);
+  border-color: var(--primary);
+}
+
+.grade-pill--active {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+
+.sbar-grade-pills .grade-pill:nth-child(2) {
+  background: rgba(99, 102, 241, 0.08);
+  border-color: rgba(99, 102, 241, 0.3);
+  color: #6366f1;
+}
+
+.sbar-grade-pills .grade-pill:nth-child(2).grade-pill--active {
+  background: #6366f1;
+  color: #fff;
+  border-color: #6366f1;
+}
+
+.sbar-grade-pills .grade-pill:nth-child(3) {
+  background: rgba(14, 165, 233, 0.08);
+  border-color: rgba(14, 165, 233, 0.3);
+  color: #0ea5e9;
+}
+
+.sbar-grade-pills .grade-pill:nth-child(3).grade-pill--active {
+  background: #0ea5e9;
+  color: #fff;
+  border-color: #0ea5e9;
+}
+
+.strand-group--gr7 {
+  background: rgba(99, 102, 241, 0.12) !important;
+  color: #6366f1 !important;
+  border-bottom: 2px solid rgba(99, 102, 241, 0.4) !important;
+}
+
+.strand-group--gr8 {
+  background: rgba(14, 165, 233, 0.12) !important;
+  color: #0ea5e9 !important;
+  border-bottom: 2px solid rgba(14, 165, 233, 0.4) !important;
+}
+
+.exp-grade-sub-tag {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--primary);
+  opacity: 0.85;
+  margin-top: 1px;
+}
+
+.sbar-student-grade-tag {
+  display: inline-block;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--primary);
+  background: rgba(59, 130, 246, 0.12);
+  padding: 1px 5px;
+  border-radius: 4px;
+  margin-left: 4px;
+  vertical-align: middle;
 }
 
 .strand-pill {

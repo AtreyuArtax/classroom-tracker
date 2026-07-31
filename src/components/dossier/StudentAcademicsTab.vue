@@ -1,6 +1,30 @@
 <template>
   <div class="academics-tab-content">
+    <!-- Elementary Homeroom Subjects Overview -->
+    <div v-if="activeClassRecord?.classType === 'elementary' && homeroomSubjects.length > 0" class="elementary-summary-section">
+      <h3 class="academics-section__title">Homeroom Subjects Overview</h3>
+      <div class="elementary-summary-grid">
+        <div 
+          v-for="sub in homeroomSubjects" 
+          :key="sub.subjectId"
+          class="elementary-summary-card"
+          :class="{ 'elementary-summary-card--active': sub.subjectId === activeSubjectId }"
+          @click="setActiveSubject(sub.subjectId)"
+        >
+          <div class="elementary-summary-card__header">
+            <span class="elementary-summary-card__icon">{{ sub.icon || '📚' }}</span>
+            <span class="elementary-summary-card__name">{{ sub.name }}</span>
+          </div>
+          <div class="elementary-summary-card__meta">
+            <span>{{ sub.gradingFramework === 'sbar' ? 'SBAR (Levels 1–4)' : 'Traditional (%)' }}</span>
+            <span v-if="sub.subjectId === activeSubjectId" class="elementary-summary-card__badge">Active View</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <template v-if="isSBARMode">
+
       <SBARExpectationMasteryGrid 
         :student-id="props.studentId" 
         @select-assessment="onSelectAssessment" 
@@ -356,8 +380,11 @@ import {
   deleteAssessment,
   saveStudentGradebookNote,
   clearGrade,
-  initialDossierTab
+  initialDossierTab,
+  setActiveSubject
 } from '../../composables/useGradebook.js'
+import { activeSubjectId } from '../../composables/useClassroomState.js'
+import { useClassroom } from '../../composables/useClassroom.js'
 import { useGradeEditing } from '../../composables/useGradeEditing.js'
 import { getGradeColor } from '../../utils/gradeColors.js'
 import { formatLocalDisplay } from '../../utils/dates.js'
@@ -368,7 +395,16 @@ import DossierCategoryGrid from './DossierCategoryGrid.vue'
 import DossierEvidenceMix from './DossierEvidenceMix.vue'
 import SBARExpectationMasteryGrid from './SBARExpectationMasteryGrid.vue'
 
+const { activeClass } = useClassroom()
+
+const homeroomSubjects = computed(() => {
+  if (!activeClassRecord.value || activeClassRecord.value.classType !== 'elementary') return []
+  const cls = activeClass.value || activeClassRecord.value
+  return cls.subjects && cls.subjects.length > 0 ? cls.subjects : []
+})
+
 const isSBARMode = computed(() => activeClassRecord.value?.gradingFramework === 'sbar')
+
 
 function isSBARTask(a) {
   return a.categoryId === 'sbar_general' || (a.expectationIds && a.expectationIds.length > 0)
@@ -1330,4 +1366,75 @@ async function updateGradebookNoteLocal() {
   gap: 8px;
   margin-top: 16px;
 }
+
+/* Elementary Homeroom Summary Section */
+.elementary-summary-section {
+  margin-bottom: 20px;
+}
+
+.elementary-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.elementary-summary-card {
+  background: var(--bg-card, rgba(30, 41, 59, 0.6));
+  border: 1px solid var(--border, #334155);
+  border-radius: 10px;
+  padding: 12px 14px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: all 0.15s ease;
+}
+
+.elementary-summary-card:hover {
+  border-color: #3b82f6;
+  transform: translateY(-1px);
+}
+
+.elementary-summary-card--active {
+  border-color: #3b82f6;
+  background: rgba(59, 130, 246, 0.1);
+  box-shadow: 0 0 10px rgba(59, 130, 246, 0.15);
+}
+
+.elementary-summary-card__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.elementary-summary-card__icon {
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+.elementary-summary-card__name {
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--text-primary, #f8fafc);
+}
+
+.elementary-summary-card__meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.75rem;
+  color: var(--text-secondary, #94a3b8);
+}
+
+.elementary-summary-card__badge {
+  background: #3b82f6;
+  color: white;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
 </style>
+

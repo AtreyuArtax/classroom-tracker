@@ -224,10 +224,16 @@ function onFileSelected(evt) {
         const courseCode = row['Course Code'] ?? row['CourseCode'] ?? (rawSection ? extractCourseCode(rawSection) : '')
         const semester = normalizeSemester(rawSem || (activeClass.value?.semester || '1'))
 
+        const rawGrade = row['Grade'] ?? row['Grade Level'] ?? row['GradeLevel'] ?? row['grade'] ?? ''
+        const gNum = parseInt(rawGrade, 10)
+        const parsedG = rawGrade ? (!isNaN(gNum) ? `Grade ${gNum}` : (rawGrade.toLowerCase().startsWith('grade') ? rawGrade : `Grade ${rawGrade}`)) : ''
+
         return { 
           studentId: studentId.trim(), 
           firstName: firstName.trim(), 
           lastName: lastName.trim(),
+          grade: parsedG,
+          gradeLevel: parsedG,
           parentContacts,
           studentEmail: studentEmail.trim(),
           custody: custody.trim(),
@@ -240,15 +246,22 @@ function onFileSelected(evt) {
         }
       })
 
+      const validRows = rows.filter(r => r.firstName.trim() || r.lastName.trim() || r.studentId.trim())
+
       const groups = {}
-      for (const row of rows) {
+      for (const row of validRows) {
         const key = `${row.year}-${row.semester}-P${row.periodNumber}`
         if (!groups[key]) {
+          const isHRM = (row.courseCode && row.courseCode.includes('HRM')) || row.periodNumber.toString().includes('AM-PM')
+          const displayName = isHRM 
+            ? `${row.courseCode || 'Homeroom'} — ${row.year}` 
+            : `Period ${row.periodNumber} — ${row.year}`
+
           groups[key] = {
-            name: `Period ${row.periodNumber} — ${row.year}`,
+            name: displayName,
             year: row.year,
             semester: row.semester,
-            periodNumber: row.periodNumber,
+            periodNumber: isNaN(Number(row.periodNumber)) ? 1 : Number(row.periodNumber),
             courseCode: row.courseCode,
             students: [],
             selected: true
@@ -257,7 +270,8 @@ function onFileSelected(evt) {
         groups[key].students.push(row)
       }
 
-      const detectedPeriods = [...new Set(rows.map(r => Number(r.periodNumber)))].filter(p => !isNaN(p))
+      const detectedPeriods = [...new Set(validRows.map(r => Number(r.periodNumber)))].filter(p => !isNaN(p))
+
       const missingPeriods = detectedPeriods.filter(p => !periodOptions.value.includes(p))
       
       if (missingPeriods.length > 0) {
@@ -397,9 +411,11 @@ function cleanPeriod(raw) {
 
 function extractCourseCode(raw) {
   if (!raw) return ''
-  const base = raw.toString().split('-')[0].trim()
-  return base.length > 5 ? base.slice(0, 5) : base
+  // SCDSB Sec Section format: "SPH3U1-2" — code is everything before the trailing "-N" section suffix
+  const base = raw.toString().replace(/-\d+$/, '').trim()
+  return base
 }
+
 
 function extractYearFromPeriod(raw) {
   if (!raw) return null
@@ -414,10 +430,19 @@ function extractYearFromPeriod(raw) {
 
 function normalizeSemester(raw) {
   if (!raw) return '1'
-  const str = raw.toString().toLowerCase()
-  if (str.includes('2')) return '2'
+  const str = raw.toString().trim()
+  // Bare digit — e.g. Semester column = "2"
+  if (str === '2') return '2'
+  if (str === '1') return '1'
+  // Full year strings like "2025-2026" are NOT semester numbers
+  if (/^\d{4}-\d{2,4}$/.test(str)) return '1'
+  const lower = str.toLowerCase()
+  if (lower.includes('sem 2') || lower.includes('semester 2') || /\bs2\b/.test(lower) || /\bsem2\b/.test(lower)) {
+    return '2'
+  }
   return '1'
 }
+
 </script>
 
 <style scoped>

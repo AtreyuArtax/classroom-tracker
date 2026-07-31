@@ -23,6 +23,7 @@ import { useUndo } from './useUndo.js'
 import { useMessage } from './useMessage.js'
 import { getDB } from '../db/index.js'
 import { supabase } from '../utils/supabase.js'
+import { autoPopulateAllElementarySubjects } from './useElementary.js'
 import {
   moveStudentFromClass,
   removeStudent,
@@ -68,8 +69,13 @@ import {
   autoStartRFID, 
   maxStudentsOut, 
   cloudModeEnabled, 
-  userCode 
+  userCode,
+  activeSubjectId,
+  teachingMode
 } from './useClassroomState.js'
+
+import { createDefaultElementarySubjects } from '../utils/elementarySubjects.js'
+
 
 // ─── computed ─────────────────────────────────────────────────────────────────
 
@@ -89,12 +95,14 @@ const archivedRoster = computed(() =>
         .sort((a, b) => a.lastName.localeCompare(b.lastName))
 )
 
-/** Filtered class list based on global year/semester */
+/** Filtered class list based on global year/semester and teaching mode */
 const filteredClassList = computed(() => {
     return classList.value.filter(c => {
         const matchesYear = !selectedYear.value || c.year === selectedYear.value
-        const matchesSem  = !selectedSemester.value || c.semester === selectedSemester.value
-        return matchesYear && matchesSem
+        const matchesSem  = !selectedSemester.value || teachingMode.value === 'elementary' || c.semester === selectedSemester.value
+        const cType = c.classType || 'secondary'
+        const matchesType = cType === teachingMode.value
+        return matchesYear && matchesSem && matchesType
     })
 })
 
@@ -102,10 +110,15 @@ const filteredClassList = computed(() => {
 const filteredArchivedClasses = computed(() => {
     return archivedClasses.value.filter(c => {
         const matchesYear = !selectedYear.value || c.year === selectedYear.value
-        const matchesSem  = !selectedSemester.value || c.semester === selectedSemester.value
-        return matchesYear && matchesSem
+        const matchesSem  = !selectedSemester.value || teachingMode.value === 'elementary' || c.semester === selectedSemester.value
+        const cType = c.classType || 'secondary'
+        const matchesType = cType === teachingMode.value
+        return matchesYear && matchesSem && matchesType
     })
 })
+
+
+
 
 // ─── weekly stats ─────────────────────────────────────────────────────────────
 
@@ -191,6 +204,13 @@ const termOptions = computed(() => {
     })
 })
 
+const yearOptions = computed(() => {
+    const years = new Set()
+    termOptions.value.forEach(t => years.add(t.year))
+    return Array.from(years).sort().reverse()
+})
+
+
 /**
  * Universal Period Options.
  * Based on keys in periodStartTimes.
@@ -207,11 +227,16 @@ const periodOptionsList = computed(() => {
  * Calculates if a class matches the current time boundary.
  */
 function computeSuggestedClass() {
+    if (teachingMode.value === 'elementary') {
+        suggestedClass.value = null
+        return null
+    }
+
     const now = new Date()
     const currentMinutes = now.getHours() * 60 + now.getMinutes()
 
     // Sort classes chronologically by start time, ignoring those without times
-    const sortedClasses = classList.value
+    const sortedClasses = filteredClassList.value
         .filter(c => !c.archived && c.periodStartTime)
         .sort((a, b) => {
             const timeA = a.periodStartTime.split(':').map(Number)
@@ -555,19 +580,29 @@ async function init() {
 
         // Fallback to the first class in the filtered list
         await _activateClass(filteredClassList.value[0])
+    } else {
+        activeClass.value = null
+        students.value = {}
     }
 }
+
 
 /**
  * Watch for changes to global filters and auto-switch class if needed.
  */
-watch([selectedYear, selectedSemester], async ([newYear, newSem]) => {
-    if (!activeClass.value) return
+watch([selectedYear, selectedSemester, teachingMode], async () => {
+    if (!activeClass.value) {
+        if (filteredClassList.value.length > 0) {
+            await _activateClass(filteredClassList.value[0])
+        }
+        return
+    }
     
-    // If current active class fits the new filter, stay on it
-    if (activeClass.value.year === newYear && activeClass.value.semester === newSem) return
+    // Check if current active class fits the new filtered list (year, semester, teachingMode)
+    const isCurrentActiveValid = filteredClassList.value.some(c => c.classId === activeClass.value.classId)
+    if (isCurrentActiveValid) return
     
-    // Otherwise, switch to the first class in the newly filtered list
+    // Otherwise, switch to the first class in the newly filtered list, or reset active class
     if (filteredClassList.value.length > 0) {
         await _activateClass(filteredClassList.value[0])
     } else {
@@ -575,6 +610,7 @@ watch([selectedYear, selectedSemester], async ([newYear, newSem]) => {
         students.value = {}
     }
 })
+
 
 // ─── class management ─────────────────────────────────────────────────────────
 
@@ -606,13 +642,13 @@ async function createClass(opts) {
     const currentTerm = terms.find(t => nowISO >= t.startDate && nowISO <= t.endDate)
     
     let year = opts.year || currentTerm?.year
-    let semester = opts.semester || currentTerm?.semester
+    let semester = opts.classType === 'elementary' ? '1' : (opts.semester || currentTerm?.semester)
 
     if (!year || !semester) {
         const month = nowCheck.getMonth()
         const yearNum = nowCheck.getFullYear()
         year = (month >= 6) ? `${yearNum}-${(yearNum + 1).toString().slice(-2)}` : `${yearNum - 1}-${yearNum.toString().slice(-2)}`
-        semester = (month >= 1 && month <= 6) ? '2' : '1'
+        semester = '1'
     }
 
     // 2. Use global default grid size as template
@@ -620,15 +656,23 @@ async function createClass(opts) {
     const defaultGrid = settings.gridSize || { rows: 6, cols: 6 }
     const defaultStartTime = periodStartTimes.value[opts.periodNumber] || '08:00'
 
+    const classType = opts.classType || 'secondary'
+    const subjects = classType === 'elementary'
+        ? (opts.subjects && opts.subjects.length > 0 ? opts.subjects : createDefaultElementarySubjects())
+        : []
+
     const newCls = {
         classId: opts.classId,
         name: opts.name,
         courseCode: opts.courseCode || '',
-        periodNumber: opts.periodNumber,
+        gradeLevel: opts.gradeLevel || '',
+        periodNumber: opts.periodNumber || 1,
         periodStartTime: opts.periodStartTime ?? defaultStartTime,
         year,
         semester,
         gridSize: defaultGrid,
+        classType,
+        subjects,
         gradebookUnits: [],
         gradebookCategories: [
             { categoryId: `cat_asmt_${Date.now()}`, name: 'Assessments', weight: 60 },
@@ -638,9 +682,16 @@ async function createClass(opts) {
         ],
         students: {},
     }
-    await classService.saveClass(newCls)
-    classList.value = [...classList.value, newCls]
-    await _activateClass(newCls)
+
+    const finalCls = autoPopulateAllElementarySubjects(newCls)
+
+    if (classType === 'elementary' && finalCls.subjects && finalCls.subjects.length > 0) {
+        activeSubjectId.value = finalCls.subjects[0].subjectId
+    }
+
+    await classService.saveClass(finalCls)
+    classList.value = [...classList.value, finalCls]
+    await _activateClass(finalCls)
 }
 
 /**
@@ -660,8 +711,28 @@ async function updateActiveClass(updates) {
     const fresh = await classService.getClass(classId)
     if (!fresh) return
 
+    // Subject-specific settings when in Elementary mode
+    const SUBJECT_KEYS = ['gradingFramework', 'sbarAlgorithm', 'sbarInputMode', 'gradebookCategories', 'gradebookUnits', 'expectations']
+    const hasSubjectKeys = Object.keys(updates).some(k => SUBJECT_KEYS.includes(k))
+
+    if (fresh.classType === 'elementary' && hasSubjectKeys) {
+        const curSubId = activeSubjectId.value || fresh.subjects?.[0]?.subjectId
+        if (fresh.subjects && fresh.subjects.length > 0) {
+            const subIdx = fresh.subjects.findIndex(s => s.subjectId === curSubId)
+            const targetIdx = subIdx >= 0 ? subIdx : 0
+            for (const key of SUBJECT_KEYS) {
+                if (key in updates) {
+                    fresh.subjects[targetIdx][key] = updates[key]
+                }
+            }
+        }
+    }
+
     // Apply updates on top of the plain record
-    const updated = { ...fresh, ...updates }
+    let updated = { ...fresh, ...updates }
+    if (updated.classType === 'elementary') {
+        updated = autoPopulateAllElementarySubjects(updated)
+    }
     await classService.saveClass(updated)
 
     // Patch only the changed keys in reactive state — don't replace the whole object
@@ -675,6 +746,9 @@ async function updateActiveClass(updates) {
         if (key === 'gridSize') {
             gridSize.value = val
         }
+    }
+    if (fresh.classType === 'elementary' && hasSubjectKeys) {
+        activeClass.value.subjects = fresh.subjects
     }
     triggerRef(activeClass)
 }
@@ -732,15 +806,20 @@ async function importRoster(parsedRows, targetClassId = null) {
         
         if (!cls.students) cls.students = {}
         
+        const rawG = (row.gradeLevel || row.grade || '').toString().trim()
+        const parsedG = rawG ? (rawG.toLowerCase().startsWith('grade') ? rawG : `Grade ${parseInt(rawG, 10) || rawG}`) : ''
+
         if (cls.students[studentId]) {
-            Object.assign(cls.students[studentId], row)
+            const updatedSt = { ...row, gradeLevel: parsedG || cls.students[studentId].gradeLevel }
+            Object.assign(cls.students[studentId], updatedSt)
             if (isActive && students.value[studentId]) {
-                Object.assign(students.value[studentId], row)
+                Object.assign(students.value[studentId], updatedSt)
             }
         } else {
             const newSt = {
                 firstName,
                 lastName,
+                gradeLevel: parsedG,
                 parentContacts: row.parentContacts || [],
                 studentEmail: row.studentEmail || '',
                 custody: row.custody || '',
@@ -758,7 +837,10 @@ async function importRoster(parsedRows, targetClassId = null) {
         }
     }
 
-    if (targetClassId === activeClass.value?.classId) triggerRef(activeClass)
+    if (classId === activeClass.value?.classId) {
+        triggerRef(students)
+        triggerRef(activeClass)
+    }
     return { inserted, updated, skipped, crossClassConflicts }
 }
 
@@ -1480,7 +1562,10 @@ export function useClassroom() {
         maxStudentsOut,
         filteredClassList,
         filteredArchivedClasses,
+        teachingMode,
         // computed
+
+
         sortedRoster,
         archivedRoster,
         unseatedStudents,
@@ -1537,6 +1622,7 @@ export function useClassroom() {
         bulkImportClasses,
         getTermRange,
         termOptions,
+        yearOptions,
         periodOptions: periodOptionsList,
         triggerActiveClass: () => triggerRef(activeClass),
         cloudModeEnabled,

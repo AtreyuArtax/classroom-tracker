@@ -21,3 +21,6 @@ rfid-companion/*.spec
 graphify-out/cache/
 graphify-out/cost.json
 
+# Local CSV Data & Backups
+*.csv
+*-backup.json

@@ -400,6 +400,14 @@ const expectationStatsList = computed(() => {
       }
     })
   }
+  const classExps = activeClassRecord.value?.expectations || activeClassRecord.value?.curriculumExpectations
+  if (classExps && Array.isArray(classExps)) {
+    classExps.forEach(exp => {
+      if (exp.code && !expCodeMap[exp.code]) {
+        expCodeMap[exp.code] = exp.name || exp.description || `Expectation ${exp.code}`
+      }
+    })
+  }
 
   const result = []
 

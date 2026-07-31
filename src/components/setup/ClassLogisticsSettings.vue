@@ -21,7 +21,38 @@
               @keydown.enter="saveClassName"
             />
           </label>
-          <label class="setup__label">
+
+          <label v-if="activeClass.classType === 'elementary'" class="setup__label">
+            Grade Level
+            <select
+              :value="activeClass.gradeLevel || detectedGradeLevel"
+              class="setup__input"
+              @change="e => updateActiveClass({ gradeLevel: e.target.value })"
+            >
+              <optgroup label="Single Grade">
+                <option value="Kindergarten">Kindergarten</option>
+                <option value="Grade 1">Grade 1</option>
+                <option value="Grade 2">Grade 2</option>
+                <option value="Grade 3">Grade 3</option>
+                <option value="Grade 4">Grade 4</option>
+                <option value="Grade 5">Grade 5</option>
+                <option value="Grade 6">Grade 6</option>
+                <option value="Grade 7">Grade 7</option>
+                <option value="Grade 8">Grade 8</option>
+              </optgroup>
+              <optgroup label="Split / Multi-Grade">
+                <option value="Grade 1/2">Grade 1/2 Split</option>
+                <option value="Grade 2/3">Grade 2/3 Split</option>
+                <option value="Grade 3/4">Grade 3/4 Split</option>
+                <option value="Grade 4/5">Grade 4/5 Split</option>
+                <option value="Grade 5/6">Grade 5/6 Split</option>
+                <option value="Grade 6/7">Grade 6/7 Split</option>
+                <option value="Grade 7/8">Grade 7/8 Split</option>
+              </optgroup>
+            </select>
+          </label>
+
+          <label v-if="activeClass.classType !== 'elementary'" class="setup__label">
             Course Code
             <input
               type="text"
@@ -33,8 +64,19 @@
             />
           </label>
           <label class="setup__label">
-            School Year and Semester
+            {{ activeClass.classType === 'elementary' ? 'School Year' : 'School Year and Semester' }}
             <select
+              v-if="activeClass.classType === 'elementary'"
+              :value="activeClass.year"
+              class="setup__input"
+              @change="e => updateActiveClass({ year: e.target.value })"
+            >
+              <option v-for="y in yearOptions" :key="y" :value="y">
+                {{ y }}
+              </option>
+            </select>
+            <select
+              v-else
               :value="activeClass.year + '|' + activeClass.semester"
               class="setup__input"
               @change="e => {
@@ -47,7 +89,8 @@
               </option>
             </select>
           </label>
-          <label class="setup__label">
+
+          <label v-if="activeClass.classType !== 'elementary'" class="setup__label">
             Period
             <select
               :value="activeClass.periodNumber"
@@ -61,7 +104,7 @@
               <option v-for="opt in periodOptions" :key="opt" :value="opt">{{ opt }}</option>
             </select>
           </label>
-          <label class="setup__label">
+          <label v-if="activeClass.classType !== 'elementary'" class="setup__label">
             Start Time
             <input
               type="time"
@@ -74,8 +117,12 @@
       </form>
     </div>
 
-    <!-- Grading Framework & Assessment Model -->
-    <div class="setup__card">
+    <!-- Elementary Subjects Manager (Only shown when Elementary Mode is active) -->
+    <ElementarySubjectManager v-if="activeClass.classType === 'elementary'" style="margin-top: 1rem;" />
+
+
+    <!-- Grading Framework & Assessment Model (Secondary only) -->
+    <div v-if="activeClass.classType !== 'elementary'" class="setup__card">
       <h2 class="setup__card-title">Grading System &amp; Framework</h2>
       <p class="setup__hint">Choose how student performance is evaluated and displayed for this class.</p>
       
@@ -164,6 +211,9 @@
       <div class="setup__card-header-row" style="display: flex; justify-content: space-between; align-items: center; wrap: wrap; gap: 12px;">
         <h2 class="setup__card-title">Roster — {{ sortedRoster.length }} Students</h2>
         <div class="setup__card-actions" style="display: flex; gap: 8px;">
+          <button class="setup__btn-ghost" @click="isElementaryImporterOpen = true">
+            <Upload :size="16" /> Import CSV
+          </button>
           <button class="setup__btn-ghost" @click="openRapidRFID">
             <Zap :size="16" /> Rapid RFID
           </button>
@@ -173,12 +223,16 @@
         </div>
       </div>
 
+
       <!-- Roster List -->
       <ul class="setup__roster-list" style="margin-top: 1rem;">
         <li v-for="s in sortedRoster" :key="s.studentId" class="setup__roster-item">
           <div class="setup__roster-info">
             <span class="setup__roster-name">{{ s.lastName }}, {{ s.firstName }}</span>
             <span class="setup__roster-id">{{ s.studentId }}</span>
+            <span v-if="activeClass.classType === 'elementary' && s.gradeLevel" class="elementary-subjects__tag" style="margin-left: 8px;">
+              {{ s.gradeLevel }}
+            </span>
           </div>
           <div class="setup__roster-actions">
             <button class="setup__icon-btn" @click="onEditStudent(s)" title="Edit"><Pencil :size="14" /></button>
@@ -210,14 +264,16 @@
       </div>
     </div>
 
-    <!-- Section: Grading & Assessments -->
-    <div class="setup__section-header" style="margin-top: 1rem;">
-      <GraduationCap :size="18" />
-      <span>Grading & Assessments</span>
-    </div>
+    <!-- Section: Grading & Assessments (Secondary only) -->
+    <template v-if="activeClass.classType !== 'elementary'">
+      <div class="setup__section-header" style="margin-top: 1rem;">
+        <GraduationCap :size="18" />
+        <span>Grading &amp; Assessments</span>
+      </div>
 
-    <!-- Assessment Framework -->
-    <AssessmentFrameworkSettings />
+      <!-- Assessment Framework -->
+      <AssessmentFrameworkSettings />
+    </template>
 
     <!-- ── Student Entry Modal ─── -->
     <BaseModal
@@ -248,6 +304,20 @@
             <label class="setup__label">
               Last Name
               <input v-model="newStudent.lastName" class="setup__input" placeholder="Last Name" required />
+            </label>
+            <label v-if="activeClass.classType === 'elementary'" class="setup__label">
+              Student Grade Level
+              <select v-model="newStudent.gradeLevel" class="setup__input">
+                <option value="">Auto (Homeroom Grade)</option>
+                <option value="Grade 1">Grade 1</option>
+                <option value="Grade 2">Grade 2</option>
+                <option value="Grade 3">Grade 3</option>
+                <option value="Grade 4">Grade 4</option>
+                <option value="Grade 5">Grade 5</option>
+                <option value="Grade 6">Grade 6</option>
+                <option value="Grade 7">Grade 7</option>
+                <option value="Grade 8">Grade 8</option>
+              </select>
             </label>
           </div>
 
@@ -350,6 +420,17 @@
       </div>
     </BaseModal>
 
+    <!-- ── Elementary / Roster CSV Importer Modal ─── -->
+    <BaseModal
+      :show="isElementaryImporterOpen"
+      @close="isElementaryImporterOpen = false"
+      max-width="700px"
+      title="Import Roster from CSV"
+    >
+      <ElementaryCsvImporter @imported="handleElementaryImport" />
+    </BaseModal>
+
+
     <!-- Cross-Class Conflicts Dialog -->
     <div v-if="crossClassConflicts.length > 0" class="setup__dialog" role="dialog" aria-modal="true">
       <div class="setup__dialog-box setup__dialog-box--large">
@@ -379,12 +460,15 @@ import { useMessage } from '../../composables/useMessage.js'
 import * as classService from '../../db/classService.js'
 import BaseModal from '../BaseModal.vue'
 import AssessmentFrameworkSettings from './AssessmentFrameworkSettings.vue'
+import ElementarySubjectManager from './ElementarySubjectManager.vue'
+import ElementaryCsvImporter from './ElementaryCsvImporter.vue'
 import SetupQuickJumpNav from './SetupQuickJumpNav.vue'
 
 import { 
   Settings2, 
   Zap, 
   PlusCircle, 
+  Upload,
   Pencil, 
   UserMinus, 
   UserCheck, 
@@ -395,6 +479,8 @@ import {
   AlertTriangle, 
   GraduationCap 
 } from 'lucide-vue-next'
+import { getEffectiveGradeLevel } from '../../composables/useElementary.js'
+
 
 const {
   activeClass,
@@ -402,6 +488,7 @@ const {
   sortedRoster,
   archivedRoster,
   termOptions,
+  yearOptions,
   periodOptions,
   gridSize,
   updateActiveClass,
@@ -417,8 +504,23 @@ const {
 
 const { confirm, alert } = useMessage()
 
+const detectedGradeLevel = computed(() => getEffectiveGradeLevel(activeClass.value))
+
+const isElementaryImporterOpen = ref(false)
+
+async function handleElementaryImport({ students: importedStudents, subjects: importedSubjects }) {
+  if (!activeClass.value) return
+  await importRoster(importedStudents)
+  if (activeClass.value.classType === 'elementary' && importedSubjects && importedSubjects.length > 0) {
+    await updateActiveClass({ subjects: importedSubjects })
+  }
+  isElementaryImporterOpen.value = false
+  await alert(`Successfully imported ${importedStudents.length} students into ${activeClass.value.name}!`)
+}
+
 // Local copy of class name to prevent resetting mid-type
 const localClassName = ref('')
+
 watch(() => activeClass.value?.name, (v) => { localClassName.value = v || '' }, { immediate: true })
 async function saveClassName() {
   if (!activeClass.value) return
@@ -477,7 +579,7 @@ async function setGlobalDefaultGrid() {
 const isArchivedPanelVisible = ref(false)
 const isStudentModalOpen = ref(false)
 const isEditingStudent = ref(false)
-const newStudent = reactive({ studentId: '', firstName: '', lastName: '', rfidTag: '' })
+const newStudent = reactive({ studentId: '', firstName: '', lastName: '', rfidTag: '', gradeLevel: '' })
 const singleAddError = ref('')
 const singleAddSuccess = ref('')
 
@@ -487,6 +589,7 @@ function openAddStudentModal() {
   newStudent.firstName = ''
   newStudent.lastName = ''
   newStudent.rfidTag = ''
+  newStudent.gradeLevel = ''
   singleAddError.value = ''
   singleAddSuccess.value = ''
   isStudentModalOpen.value = true
@@ -498,6 +601,7 @@ function onEditStudent(student) {
   newStudent.firstName = student.firstName
   newStudent.lastName = student.lastName
   newStudent.rfidTag = student.rfidTag || ''
+  newStudent.gradeLevel = student.gradeLevel || ''
   singleAddError.value = ''
   singleAddSuccess.value = ''
   isStudentModalOpen.value = true
@@ -510,6 +614,7 @@ function cancelEditStudent() {
   newStudent.firstName = ''
   newStudent.lastName = ''
   newStudent.rfidTag = ''
+  newStudent.gradeLevel = ''
   singleAddError.value = ''
   singleAddSuccess.value = ''
 }
@@ -673,6 +778,7 @@ async function addSingleStudent() {
     studentId: newStudent.studentId.trim(),
     firstName: newStudent.firstName.trim(),
     lastName: newStudent.lastName.trim(),
+    gradeLevel: newStudent.gradeLevel || '',
     rfidTag: newStudent.rfidTag.trim(),
     parentContacts: []
   }

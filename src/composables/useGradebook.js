@@ -10,8 +10,14 @@ import * as gradebookService from '../db/gradebookService.js'
 import * as classService from '../db/classService.js'
 import { getGlobalMilestones, getGradeBuckets } from '../db/settingsService.js'
 import { useUndo } from './useUndo.js'
+import { activeClass, activeSubjectId } from './useClassroomState.js'
+import { getEffectiveClassRecord } from './useElementary.js'
 
 const { push: pushUndo } = useUndo()
+
+export { getEffectiveClassRecord }
+
+
 
 // ─── Reactive State ──────────────────────────────────────────────────────────
 
@@ -77,19 +83,37 @@ export const filteredMilestones = computed(() => {
 
 // ─── Public API ──────────────────────────────────────────────────────────────
 
+export async function setActiveSubject(subjectId) {
+  activeSubjectId.value = subjectId
+  if (activeClassRecord.value) {
+    const origClass = activeClass.value || await classService.getClass(activeClassRecord.value.classId)
+    if (origClass) {
+      await loadGradebook(origClass, subjectId)
+    }
+  }
+}
+
 /**
  * Loads all gradebook data for a class and initializes reactive state.
  * 
  * @param {Object} classRecord
+ * @param {string|null} targetSubjectId
  */
-export async function loadGradebook(classRecord) {
-  activeClassRecord.value = classRecord
+export async function loadGradebook(classRecord, targetSubjectId = null) {
+  const effectiveRecord = getEffectiveClassRecord(classRecord, targetSubjectId)
+  activeClassRecord.value = effectiveRecord
   // Reset selection
   selectedStudentId.value = null
   selectedMilestone.value = null
   
   // Load data from DB
-  assessments.value = await gradebookService.getAssessmentsByClass(classRecord.classId)
+  const rawAssessments = await gradebookService.getAssessmentsByClass(classRecord.classId)
+  if (classRecord.classType === 'elementary' && effectiveRecord?.activeSubjectId) {
+    const curSubId = effectiveRecord.activeSubjectId
+    assessments.value = rawAssessments.filter(a => a.subjectId === curSubId || !a.subjectId)
+  } else {
+    assessments.value = rawAssessments
+  }
   grades.value = await gradebookService.getGradesByClass(classRecord.classId)
   
   // Load global settings
@@ -104,6 +128,7 @@ export async function loadGradebook(classRecord) {
   await refreshGrades()
   refreshAllAssessmentStats()
 }
+
 
 /**
  * Recalculates all student grades based on active class and current data.
@@ -193,8 +218,12 @@ export async function addAssessment(assessmentData) {
   if (!activeClassRecord.value) return
   
   try {
+    const isElem = activeClassRecord.value.classType === 'elementary'
+    const curSubId = isElem ? (activeClassRecord.value.activeSubjectId || activeSubjectId.value) : undefined
+
     const assessment = await gradebookService.createAssessment({
       classId: activeClassRecord.value.classId,
+      ...(curSubId ? { subjectId: curSubId } : {}),
       ...assessmentData
     })
     

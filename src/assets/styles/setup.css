@@ -1732,3 +1732,58 @@
   opacity: 0;
   transform: translateY(-8px);
 }
+
+/* ── Elementary Import Preview Dialog ───────────────────────────── */
+.setup__elm-preview-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: var(--surface-2, rgba(255,255,255,0.04));
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 12px;
+}
+
+.setup__elm-preview-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.875rem;
+}
+
+.setup__elm-label {
+  width: 100px;
+  font-weight: 600;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.setup__elm-value {
+  color: var(--text);
+}
+
+.setup__elm-student-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  transition: background 0.15s;
+}
+
+.setup__elm-student-row:hover {
+  background: var(--surface-2, rgba(255,255,255,0.05));
+}
+
+.setup__elm-student-name {
+  font-weight: 500;
+  color: var(--text);
+}
+
+.setup__elm-student-id {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  font-family: monospace;
+}
