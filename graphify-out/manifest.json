@@ -565,8 +565,8 @@
     "semantic_hash": ""
   },
   "src/components/reports/StudentRiskScatterPlot.vue": {
-    "mtime": 1785498565.800108,
-    "ast_hash": "dfa5687f9fed67c6966fd47114377216",
+    "mtime": 1785504052.5627167,
+    "ast_hash": "9995604b5fdf9f3c08c87fe194227dc5",
     "semantic_hash": ""
   },
   "src/components/reports/PrintExpectationsModal.vue": {

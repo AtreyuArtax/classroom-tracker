@@ -1,23 +1,45 @@
 <template>
   <div class="risk-plot">
     <div class="risk-plot__header">
-      <div>
+      <div class="risk-plot__header-left">
         <h4 class="risk-plot__title">Student Risk & Engagement Matrix</h4>
         <p class="risk-plot__subtitle">
           Comparing {{ isSbar ? 'Academic Level (SBAR)' : 'Academic Mark (%)' }} vs. Attendance Rate
         </p>
       </div>
-      <div class="risk-plot__legend">
-        <span class="risk-plot__legend-item risk-plot__legend-item--green">● Thriving</span>
-        <span class="risk-plot__legend-item risk-plot__legend-item--yellow">● Academic</span>
-        <span class="risk-plot__legend-item risk-plot__legend-item--orange">● Attendance</span>
-        <span class="risk-plot__legend-item risk-plot__legend-item--red">● Critical</span>
-        <span v-if="unassessedCount > 0" class="risk-plot__legend-item risk-plot__legend-item--slate">● Pending</span>
+
+      <!-- View Switcher -->
+      <div class="risk-plot__view-switcher">
+        <button 
+          class="risk-plot__view-btn"
+          :class="{ 'risk-plot__view-btn--active': viewMode === 'scatter' }"
+          @click="viewMode = 'scatter'"
+          title="Visual Scatter Matrix"
+        >
+          <ScatterPlotIcon :size="13" /> Scatter Plot
+        </button>
+        <button 
+          class="risk-plot__view-btn"
+          :class="{ 'risk-plot__view-btn--active': viewMode === 'list' }"
+          @click="viewMode = 'list'"
+          title="Structured Quadrant Lists"
+        >
+          <List :size="13" /> Quadrant Lists
+        </button>
       </div>
     </div>
 
-    <!-- 4 Quadrants Canvas / Grid -->
-    <div class="risk-plot__canvas">
+    <!-- Integrated Responsive Legend Sub-Bar -->
+    <div v-if="viewMode === 'scatter'" class="risk-plot__legend-bar">
+      <span class="legend-pill legend-pill--green">● Thriving</span>
+      <span class="legend-pill legend-pill--yellow">● Academic Risk</span>
+      <span class="legend-pill legend-pill--orange">● Attendance Risk</span>
+      <span class="legend-pill legend-pill--red">● Critical Intervention</span>
+      <span v-if="unassessedCount > 0" class="legend-pill legend-pill--slate">● Pending Marks</span>
+    </div>
+
+    <!-- VIEW 1: 4 Quadrants Visual Scatter Canvas -->
+    <div v-if="viewMode === 'scatter'" class="risk-plot__canvas">
 
       <!-- Quadrant Background Labels -->
       <div class="risk-plot__quadrant risk-plot__quadrant--top-left">
@@ -41,7 +63,7 @@
       <div class="risk-plot__axis-x"></div>
       <div class="risk-plot__axis-y"></div>
 
-      <!-- Student Dots -->
+      <!-- Student Dots (using crisp 2-letter initials) -->
       <div 
         v-for="s in studentPoints" 
         :key="s.studentId"
@@ -50,7 +72,7 @@
         :style="{ left: s.xPercent + '%', bottom: s.yPercent + '%' }"
         @click="$emit('select-student', s.studentId)"
       >
-        <span class="risk-plot__dot-label">{{ s.shortName }}</span>
+        <span class="risk-plot__dot-label">{{ s.initials }}</span>
         
         <!-- Multi-Student Cluster Tooltip if overlapping, otherwise Single Student Tooltip -->
         <div 
@@ -106,25 +128,69 @@
 
     </div>
 
+    <!-- VIEW 2: Structured Quadrant Card Lists -->
+    <div v-else class="risk-plot__list-view">
+      <div 
+        v-for="group in quadrantGroups" 
+        :key="group.key" 
+        class="risk-plot__list-card"
+        :class="'list-card--' + group.key"
+      >
+        <div class="list-card__header">
+          <span class="list-card__title">
+            <span class="list-card__dot" :class="'dot--' + group.key">●</span>
+            {{ group.title }}
+          </span>
+          <span class="list-card__badge">{{ group.students.length }}</span>
+        </div>
+
+        <ul v-if="group.students.length > 0" class="list-card__student-list">
+          <li 
+            v-for="st in group.students" 
+            :key="st.studentId" 
+            class="list-card__student-item"
+            @click="$emit('select-student', st.studentId)"
+          >
+            <div class="list-card__student-left">
+              <span class="list-card__avatar" :class="'avatar--' + group.key">{{ st.initials }}</span>
+              <span class="list-card__name">{{ st.fullName }}</span>
+            </div>
+            <div class="list-card__student-right">
+              <span class="list-card__score">
+                <template v-if="isSbar">
+                  {{ st.sbarBadge ? st.sbarBadge.level : 'N/A' }}
+                </template>
+                <template v-else>
+                  {{ st.grade !== null ? st.grade + '%' : 'N/A' }}
+                </template>
+              </span>
+              <span class="list-card__att">{{ st.attendanceRate }}% Att ({{ st.absences }} abs)</span>
+            </div>
+          </li>
+        </ul>
+        <div v-else class="list-card__empty">No students in this quadrant</div>
+      </div>
+    </div>
+
     <!-- Bottom summary pills (5 columns single-row) -->
     <div class="risk-plot__summary" :class="{ 'risk-plot__summary--5col': unassessedCount > 0 }">
-      <div class="risk-plot__summary-card risk-plot__summary-card--red">
+      <div class="risk-plot__summary-card risk-plot__summary-card--red" @click="viewMode = 'list'">
         <span class="count">{{ criticalCount }}</span>
         <span class="label">Critical</span>
       </div>
-      <div class="risk-plot__summary-card risk-plot__summary-card--yellow">
+      <div class="risk-plot__summary-card risk-plot__summary-card--yellow" @click="viewMode = 'list'">
         <span class="count">{{ academicRiskCount }}</span>
         <span class="label">Academic Risk</span>
       </div>
-      <div class="risk-plot__summary-card risk-plot__summary-card--orange">
+      <div class="risk-plot__summary-card risk-plot__summary-card--orange" @click="viewMode = 'list'">
         <span class="count">{{ attendanceRiskCount }}</span>
         <span class="label">Attendance</span>
       </div>
-      <div class="risk-plot__summary-card risk-plot__summary-card--green">
+      <div class="risk-plot__summary-card risk-plot__summary-card--green" @click="viewMode = 'list'">
         <span class="count">{{ thrivingCount }}</span>
         <span class="label">Thriving</span>
       </div>
-      <div v-if="unassessedCount > 0" class="risk-plot__summary-card risk-plot__summary-card--slate">
+      <div v-if="unassessedCount > 0" class="risk-plot__summary-card risk-plot__summary-card--slate" @click="viewMode = 'list'">
         <span class="count">{{ unassessedCount }}</span>
         <span class="label">Pending</span>
       </div>
@@ -133,8 +199,9 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { ref, computed } from 'vue'
 import { getSBARLevelBadge } from '../../db/gradebookService.js'
+import { LayoutGrid as ScatterPlotIcon, List } from 'lucide-vue-next'
 
 const props = defineProps({
   sidebarStudents: { type: Array, default: () => [] },
@@ -145,6 +212,22 @@ const props = defineProps({
 })
 
 defineEmits(['select-student'])
+
+const viewMode = ref('scatter') // 'scatter' | 'list'
+
+function getInitials(name, firstName, lastName) {
+  if (firstName && lastName) {
+    return `${firstName[0]}${lastName[0]}`.toUpperCase()
+  }
+  if (name) {
+    const parts = name.trim().split(/\s+/)
+    if (parts.length >= 2) {
+      return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase()
+    }
+    return parts[0].substring(0, 2).toUpperCase()
+  }
+  return 'ST'
+}
 
 const studentPoints = computed(() => {
   if (!props.sidebarStudents || props.sidebarStudents.length === 0) return []
@@ -194,12 +277,12 @@ const studentPoints = computed(() => {
       baseY = Math.max(55, Math.min(88, grade))
     }
 
-    const shortName = student.firstName ? `${student.firstName} ${student.lastName ? student.lastName[0] + '.' : ''}` : student.name
+    const initials = getInitials(student.name, student.firstName, student.lastName)
 
     return {
       studentId: sId,
       fullName: student.name || `${student.firstName} ${student.lastName}`,
-      shortName,
+      initials,
       grade,
       sbarBadge,
       attendanceRate: attendancePct,
@@ -222,7 +305,7 @@ const studentPoints = computed(() => {
     let offsetY = 0
     if (count > 0) {
       const angle = count * 2.39996 // Golden angle in radians
-      const radius = 5.5 + Math.sqrt(count) * 4.5 // Wider radial expansion %
+      const radius = 5.5 + Math.sqrt(count) * 4.5 // Radial expansion %
       offsetX = Math.cos(angle) * radius
       offsetY = Math.sin(angle) * radius
     }
@@ -251,6 +334,17 @@ const studentPoints = computed(() => {
   })
 })
 
+const quadrantGroups = computed(() => {
+  const points = studentPoints.value
+  return [
+    { key: 'red', title: 'Critical Intervention', students: points.filter(p => p.quadrant === 'red') },
+    { key: 'yellow', title: 'Academic Risk', students: points.filter(p => p.quadrant === 'yellow') },
+    { key: 'orange', title: 'Attendance Risk', students: points.filter(p => p.quadrant === 'orange') },
+    { key: 'green', title: 'Thriving', students: points.filter(p => p.quadrant === 'green') },
+    { key: 'unassessed', title: 'Pending Marks', students: points.filter(p => p.quadrant === 'unassessed') }
+  ].filter(g => g.students.length > 0)
+})
+
 const criticalCount = computed(() => studentPoints.value.filter(p => p.quadrant === 'red').length)
 const academicRiskCount = computed(() => studentPoints.value.filter(p => p.quadrant === 'yellow').length)
 const attendanceRiskCount = computed(() => studentPoints.value.filter(p => p.quadrant === 'orange').length)
@@ -268,7 +362,7 @@ const unassessedCount = computed(() => studentPoints.value.filter(p => p.quadran
 .risk-plot__header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
   gap: 16px;
 }
 
@@ -286,24 +380,28 @@ const unassessedCount = computed(() => studentPoints.value.filter(p => p.quadran
   white-space: nowrap;
 }
 
-.risk-plot__legend {
+.risk-plot__legend-bar {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px 10px;
-  font-size: 0.725rem;
+  align-items: center;
+  gap: 8px 14px;
+  font-size: 0.75rem;
   font-weight: 600;
-  justify-content: flex-end;
+  padding: 4px 0;
 }
 
-.risk-plot__legend-item {
+.legend-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   white-space: nowrap;
 }
 
-.risk-plot__legend-item--green  { color: #10b981; }
-.risk-plot__legend-item--yellow { color: #f59e0b; }
-.risk-plot__legend-item--orange { color: #f97316; }
-.risk-plot__legend-item--red    { color: #ef4444; }
-.risk-plot__legend-item--slate  { color: #64748b; }
+.legend-pill--green  { color: #10b981; }
+.legend-pill--yellow { color: #f59e0b; }
+.legend-pill--orange { color: #f97316; }
+.legend-pill--red    { color: #ef4444; }
+.legend-pill--slate  { color: #64748b; }
 
 .risk-plot__canvas {
   position: relative;
@@ -507,38 +605,223 @@ const unassessedCount = computed(() => studentPoints.value.filter(p => p.quadran
   color: #38bdf8;
 }
 
-.risk-plot__summary {
+.risk-plot__header-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.risk-plot__view-switcher {
+  display: flex;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  padding: 2px;
+  border-radius: var(--radius-md);
+  gap: 2px;
+}
+
+.risk-plot__view-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  font-size: 0.725rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.risk-plot__view-btn:hover {
+  color: var(--text);
+}
+
+.risk-plot__view-btn--active {
+  background: var(--surface);
+  color: var(--primary);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* List View Styles */
+.risk-plot__list-view {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 14px;
+  min-height: 380px;
+}
+
+.risk-plot__list-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
   gap: 10px;
 }
 
-.risk-plot__summary--5col {
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+.list-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
 }
 
-.risk-plot__summary-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
+.list-card__title {
+  font-weight: 800;
+  font-size: 0.825rem;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.list-card__dot {
+  font-size: 0.75rem;
+}
+.dot--green { color: #10b981; }
+.dot--yellow { color: #f59e0b; }
+.dot--orange { color: #f97316; }
+.dot--red { color: #ef4444; }
+.dot--unassessed { color: #64748b; }
+
+.list-card__badge {
+  font-size: 0.725rem;
+  font-weight: 800;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+.list-card__student-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.list-card__student-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 8px;
   border-radius: var(--radius-md);
-  padding: 8px 10px;
+  background: var(--bg-secondary);
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+
+.list-card__student-item:hover {
+  background: var(--surface-hover);
+  transform: translateX(2px);
+}
+
+.list-card__student-left {
   display: flex;
   align-items: center;
   gap: 8px;
+  overflow: hidden;
+}
+
+.list-card__avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  font-size: 0.65rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.avatar--green  { background: #e6f4ea; border: 1px solid #10b981; color: #047857; }
+.avatar--yellow { background: #fef3c7; border: 1px solid #f59e0b; color: #b45309; }
+.avatar--orange { background: #ffedd5; border: 1px solid #f97316; color: #c2410c; }
+.avatar--red    { background: #fee2e2; border: 1px solid #ef4444; color: #b91c1c; }
+.avatar--unassessed { background: #f1f5f9; border: 1px dashed #64748b; color: #334155; }
+
+.list-card__name {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.list-card__student-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.list-card__score {
+  font-size: 0.775rem;
+  font-weight: 800;
+  color: var(--primary);
+}
+
+.list-card__att {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+}
+
+.list-card__empty {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-style: italic;
+  padding: 12px 0;
+  text-align: center;
+}
+
+.risk-plot__summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  width: 100%;
+}
+
+.risk-plot__summary-card {
+  flex: 1 1 140px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  cursor: pointer;
+  transition: transform 0.15s ease, border-color 0.15s ease;
   min-width: 0;
 }
 
+.risk-plot__summary-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--primary);
+}
+
 .risk-plot__summary-card .count {
-  font-size: 1.1rem;
+  font-size: 1.15rem;
   font-weight: 800;
   flex-shrink: 0;
 }
 
 .risk-plot__summary-card .label {
-  font-size: 0.7rem;
+  font-size: 0.725rem;
   color: var(--text-secondary);
   font-weight: 600;
-  line-height: 1.1;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
