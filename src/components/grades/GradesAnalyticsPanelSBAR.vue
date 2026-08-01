@@ -418,28 +418,55 @@ const levelDistribution = computed(() => {
   }
 })
 
+const filteredStudentIdSet = computed(() => new Set(filteredStudents.value.map(s => String(s.studentId))))
+
+const filteredAssessments = computed(() => {
+  let list = assessments.value || []
+  if (activeGradeFilter.value !== 'all' && availableGradeFilters.value.length > 1) {
+    const gLower = activeGradeFilter.value.toLowerCase()
+    const validStudentIds = filteredStudentIdSet.value
+
+    list = list.filter(a => {
+      if (a.gradeLevel && a.gradeLevel.toLowerCase() === gLower) return true
+      if (gradeMap.value?.[a.assessmentId]) {
+        const hasEval = Object.keys(gradeMap.value[a.assessmentId]).some(sId => validStudentIds.has(String(sId)))
+        if (hasEval) return true
+      }
+      return false
+    })
+  }
+  return list
+})
+
 // 2. Expectation Level Analytics (Hotspots & Mastered)
 const expectationStatsList = computed(() => {
   const map = sbarMasteryMap.value
+  const validStudentIds = filteredStudentIdSet.value
   const expCodeMap = {}
 
-  // Gather expectations metadata
-  if (activeClassRecord.value?.gradebookUnits) {
-    activeClassRecord.value.gradebookUnits.forEach(u => {
-      if (u.expectations) {
-        u.expectations.forEach(exp => {
-          if (exp.code) {
-            expCodeMap[exp.code] = exp.name || exp.description || `Expectation ${exp.code}`
-          }
-        })
+  const gLower = activeGradeFilter.value.toLowerCase()
+
+  // Gather expectations metadata filtered by activeGradeFilter
+  const units = activeClassRecord.value?.gradebookUnits || []
+  units.forEach(u => {
+    const uGrade = u.gradeLevel || (u.name && u.name.toLowerCase().includes('grade 7') ? 'grade 7' : (u.name && u.name.toLowerCase().includes('grade 8') ? 'grade 8' : ''))
+    if (activeGradeFilter.value !== 'all' && uGrade && uGrade.toLowerCase() !== gLower) return
+
+    const uExps = u.expectations || []
+    uExps.forEach(exp => {
+      if (exp.code && (!exp.gradeLevel || activeGradeFilter.value === 'all' || exp.gradeLevel.toLowerCase() === gLower)) {
+        expCodeMap[exp.code] = exp.name || exp.description || `Expectation ${exp.code}`
       }
     })
-  }
-  const classExps = activeClassRecord.value?.expectations || activeClassRecord.value?.curriculumExpectations
-  if (classExps && Array.isArray(classExps)) {
+  })
+
+  const classExps = activeClassRecord.value?.expectations || activeClassRecord.value?.curriculumExpectations || []
+  if (Array.isArray(classExps)) {
     classExps.forEach(exp => {
-      if (exp.code && !expCodeMap[exp.code]) {
-        expCodeMap[exp.code] = exp.name || exp.description || `Expectation ${exp.code}`
+      if (exp.code && (!exp.gradeLevel || activeGradeFilter.value === 'all' || exp.gradeLevel.toLowerCase() === gLower)) {
+        if (!expCodeMap[exp.code] || activeGradeFilter.value !== 'all') {
+          expCodeMap[exp.code] = exp.name || exp.description || `Expectation ${exp.code}`
+        }
       }
     })
   }
@@ -451,7 +478,7 @@ const expectationStatsList = computed(() => {
     let belowL3Count = 0
     let atL3PlusCount = 0
 
-    Object.keys(map).forEach(studentId => {
+    validStudentIds.forEach(studentId => {
       const expObj = map[studentId]?.[code]
       if (expObj && expObj.score != null) {
         totalEvaluated++
@@ -497,9 +524,11 @@ const masteredExpectations = computed(() => {
 // 3. Growth Velocity
 const growthVelocity = computed(() => {
   const map = sbarMasteryMap.value
+  const validStudentIds = filteredStudentIdSet.value
   let improving = 0, steady = 0, declining = 0
 
-  Object.keys(map).forEach(studentId => {
+  validStudentIds.forEach(studentId => {
+    if (!map[studentId]) return
     Object.keys(map[studentId]).forEach(code => {
       const expObj = map[studentId][code]
       if (expObj?.trend === 'improving') improving++
@@ -521,7 +550,7 @@ const growthVelocity = computed(() => {
 
 // 4. Triangulation & Purpose Ratios
 const triangulation = computed(() => {
-  const asts = assessments.value || []
+  const asts = filteredAssessments.value || []
   let productCount = 0, observationCount = 0, conversationCount = 0
   let summativeCount = 0, formativeCount = 0
 

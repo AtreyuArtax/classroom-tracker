@@ -38,7 +38,7 @@
         </div>
         <div class="sbar-metric-item">
           <span class="sbar-metric-label">EVALUATED:</span>
-          <span class="sbar-metric-value">{{ evaluatedCount }} / {{ sortedRoster.length }} Students</span>
+          <span class="sbar-metric-value">{{ evaluatedCount }} / {{ displayedRoster.length }} Students</span>
         </div>
         <div class="sbar-metric-item" v-if="focusedStudentId">
           <span class="sbar-metric-label">VIEW MODE:</span>
@@ -164,6 +164,8 @@ import { ref, computed, watch } from 'vue'
 import { ArrowLeft, Edit2, Trash2 } from 'lucide-vue-next'
 import { enterGradeSBAR, gradeMap, activeClassRecord } from '../../composables/useGradebook.js'
 import { getSBARLevelBadge } from '../../db/gradebookService.js'
+import { getEffectiveClassRecord } from '../../composables/useElementary.js'
+import { activeSubjectId } from '../../composables/useClassroomState.js'
 
 const props = defineProps({
   currentAssessment: { type: Object, required: true },
@@ -180,12 +182,54 @@ watch(() => props.focusedStudentId, (newVal) => {
   isSingleStudentMode.value = Boolean(newVal)
 }, { immediate: true })
 
+const effectiveClass = computed(() => {
+  if (!activeClassRecord.value) return null
+  if (activeClassRecord.value.classType === 'elementary') {
+    return getEffectiveClassRecord(activeClassRecord.value, activeSubjectId.value)
+  }
+  return activeClassRecord.value
+})
+
 const displayedRoster = computed(() => {
+  let roster = props.sortedRoster
   if (isSingleStudentMode.value && props.focusedStudentId) {
-    const found = props.sortedRoster.filter(s => String(s.studentId) === String(props.focusedStudentId))
+    const found = roster.filter(s => String(s.studentId) === String(props.focusedStudentId))
     if (found.length > 0) return found
   }
-  return props.sortedRoster
+
+  const cls = effectiveClass.value
+  const astGrade = props.currentAssessment.gradeLevel
+  const taggedGrades = new Set()
+
+  if (props.currentAssessment.unitId && cls?.gradebookUnits) {
+    const u = cls.gradebookUnits.find(unit => String(unit.unitId) === String(props.currentAssessment.unitId))
+    if (u) {
+      const g = u.gradeLevel || (u.name && u.name.includes('Grade 7') ? 'Grade 7' : (u.name && u.name.includes('Grade 8') ? 'Grade 8' : ''))
+      if (g) taggedGrades.add(g.toLowerCase())
+    }
+  }
+
+  const expCodes = props.currentAssessment.expectationIds || (props.currentAssessment.expectationId ? [props.currentAssessment.expectationId] : [])
+  if (cls?.gradebookUnits) {
+    cls.gradebookUnits.forEach(u => {
+      const uGrade = u.gradeLevel || (u.name && u.name.includes('Grade 7') ? 'Grade 7' : (u.name && u.name.includes('Grade 8') ? 'Grade 8' : ''))
+      ;(u.expectations || []).forEach(e => {
+        if (expCodes.includes(e.code) || expCodes.includes(e.expectationId)) {
+          const g = e.gradeLevel || uGrade
+          if (g) taggedGrades.add(g.toLowerCase())
+        }
+      })
+    })
+  }
+
+  const targetGrade = astGrade ? astGrade.toLowerCase() : (taggedGrades.size === 1 ? Array.from(taggedGrades)[0] : null)
+
+  if (targetGrade) {
+    const filtered = roster.filter(s => s.gradeLevel && s.gradeLevel.toLowerCase() === targetGrade)
+    if (filtered.length > 0) return filtered
+  }
+
+  return roster
 })
 
 const inputMode = ref(activeClassRecord.value?.sbarInputMode || 'fine') // 'simple' | 'fine' | 'numeric'

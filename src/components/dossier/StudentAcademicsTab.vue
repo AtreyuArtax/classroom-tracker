@@ -11,13 +11,42 @@
           :class="{ 'elementary-summary-card--active': sub.subjectId === activeSubjectId }"
           @click="setActiveSubject(sub.subjectId)"
         >
-          <div class="elementary-summary-card__header">
-            <span class="elementary-summary-card__icon">{{ sub.icon || '📚' }}</span>
-            <span class="elementary-summary-card__name">{{ sub.name }}</span>
+          <div class="elementary-summary-card__top">
+            <div class="elementary-summary-card__icon-wrap">
+              <SubjectIcon 
+                :code="sub.code" 
+                :icon="sub.icon" 
+                :name="sub.name" 
+                :size="18" 
+              />
+            </div>
+            
+            <div class="elementary-summary-card__top-badges">
+              <!-- Live Student Subject Mastery Badge -->
+              <span 
+                v-if="getSubjectStudentMastery(sub.subjectId)" 
+                class="elementary-summary-card__mastery-badge"
+                :style="getSubjectStudentMastery(sub.subjectId).type === 'sbar'
+                  ? {
+                      background: getSubjectStudentMastery(sub.subjectId).badge.color + '22',
+                      color: getSubjectStudentMastery(sub.subjectId).badge.color,
+                      borderColor: getSubjectStudentMastery(sub.subjectId).badge.color + '55'
+                    }
+                  : {
+                      background: getSubjectStudentMastery(sub.subjectId).color + '22',
+                      color: getSubjectStudentMastery(sub.subjectId).color,
+                      borderColor: getSubjectStudentMastery(sub.subjectId).color + '55'
+                    }"
+              >
+                {{ getSubjectStudentMastery(sub.subjectId).type === 'sbar' ? getSubjectStudentMastery(sub.subjectId).badge.level : getSubjectStudentMastery(sub.subjectId).value }}
+              </span>
+            </div>
           </div>
-          <div class="elementary-summary-card__meta">
-            <span>{{ sub.gradingFramework === 'sbar' ? 'SBAR (Levels 1–4)' : 'Traditional (%)' }}</span>
-            <span v-if="sub.subjectId === activeSubjectId" class="elementary-summary-card__badge">Active View</span>
+          <div class="elementary-summary-card__body">
+            <div class="elementary-summary-card__name">{{ sub.name }}</div>
+            <div class="elementary-summary-card__framework">
+              {{ sub.gradingFramework === 'sbar' ? 'SBAR (Levels 1–4)' : 'Traditional (%)' }}
+            </div>
           </div>
         </div>
       </div>
@@ -390,7 +419,10 @@ import { getGradeColor } from '../../utils/gradeColors.js'
 import { formatLocalDisplay } from '../../utils/dates.js'
 import { useMessage } from '../../composables/useMessage.js'
 import { getSBARLevelBadge } from '../../db/gradebook/gradeCalcSBAR.js'
+import { getEffectiveClassRecord } from '../../composables/useElementary.js'
+import { calculateSBARExpectationMastery } from '../../db/gradebookService.js'
 import { Plus, Trash2, X, ChevronRight, Calendar, AlertCircle, XCircle } from 'lucide-vue-next'
+import SubjectIcon from '../SubjectIcon.vue'
 import DossierCategoryGrid from './DossierCategoryGrid.vue'
 import DossierEvidenceMix from './DossierEvidenceMix.vue'
 import SBARExpectationMasteryGrid from './SBARExpectationMasteryGrid.vue'
@@ -402,6 +434,67 @@ const homeroomSubjects = computed(() => {
   const cls = activeClass.value || activeClassRecord.value
   return cls.subjects && cls.subjects.length > 0 ? cls.subjects : []
 })
+
+function getSubjectStudentMastery(subjectId) {
+  if (!activeClassRecord.value || !props.studentId) return null
+  const effClass = getEffectiveClassRecord(activeClassRecord.value, subjectId)
+  if (!effClass) return null
+
+  // Collect unit IDs and expectation codes/IDs belonging to THIS subject
+  const subjectUnitIds = new Set((effClass.gradebookUnits || []).map(u => String(u.unitId)))
+  const subjectExpCodes = new Set()
+  if (effClass.gradebookUnits) {
+    effClass.gradebookUnits.forEach(u => {
+      (u.expectations || []).forEach(e => {
+        if (e.code) subjectExpCodes.add(e.code)
+        if (e.expectationId) subjectExpCodes.add(e.expectationId)
+      })
+    })
+  }
+
+  const subAssessments = (assessments.value || []).filter(a => {
+    if (a.subjectId) return a.subjectId === subjectId
+
+    if (a.unitId && subjectUnitIds.has(String(a.unitId))) return true
+
+    const expIds = a.expectationIds || (a.expectationId ? [a.expectationId] : [])
+    if (expIds.length > 0) {
+      return expIds.some(code => subjectExpCodes.has(code))
+    }
+
+    return false
+  })
+
+  if (subAssessments.length === 0) return null
+
+  if (effClass.gradingFramework === 'sbar') {
+    const algo = effClass.sbarAlgorithm || 'decaying_average'
+    const masteryMap = calculateSBARExpectationMastery(effClass, subAssessments, gradeMap.value, algo)
+    const studentMap = masteryMap[props.studentId]
+    if (!studentMap) return null
+    
+    const validScores = Object.values(studentMap)
+      .map(m => m?.score)
+      .filter(s => s !== null && s !== undefined && !isNaN(s))
+    
+    if (validScores.length === 0) return null
+    const avg = validScores.reduce((a, b) => a + b, 0) / validScores.length
+    return {
+      type: 'sbar',
+      badge: getSBARLevelBadge(avg)
+    }
+  } else {
+    const studentGradeObj = classGrades.value?.[props.studentId]
+    if (subjectId === activeSubjectId.value && studentGradeObj?.overallGrade !== undefined && studentGradeObj?.overallGrade !== null) {
+      return {
+        type: 'percent',
+        value: `${Math.round(studentGradeObj.overallGrade)}%`,
+        color: getGradeColor(studentGradeObj.overallGrade)
+      }
+    }
+  }
+  return null
+}
 
 const isSBARMode = computed(() => activeClassRecord.value?.gradingFramework === 'sbar')
 
@@ -1374,67 +1467,99 @@ async function updateGradebookNoteLocal() {
 
 .elementary-summary-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
   gap: 12px;
-  margin-top: 10px;
+  margin-top: 12px;
 }
 
 .elementary-summary-card {
-  background: var(--bg-card, rgba(30, 41, 59, 0.6));
-  border: 1px solid var(--border, #334155);
-  border-radius: 10px;
-  padding: 12px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
   cursor: pointer;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  transition: all 0.15s ease;
+  gap: 10px;
+  transition: all 0.2s ease;
+  box-shadow: var(--shadow-sm);
 }
 
 .elementary-summary-card:hover {
-  border-color: #3b82f6;
-  transform: translateY(-1px);
+  border-color: var(--primary);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
 }
 
 .elementary-summary-card--active {
-  border-color: #3b82f6;
-  background: rgba(59, 130, 246, 0.1);
-  box-shadow: 0 0 10px rgba(59, 130, 246, 0.15);
+  border-color: var(--primary);
+  background: var(--primary-light, rgba(99, 102, 241, 0.08));
+  box-shadow: 0 0 0 1px var(--primary), var(--shadow-sm);
 }
 
-.elementary-summary-card__header {
+.elementary-summary-card__top {
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: space-between;
 }
 
-.elementary-summary-card__icon {
-  font-size: 1.2rem;
-  line-height: 1;
+.elementary-summary-card__icon-wrap {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--bg-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary);
+}
+
+.elementary-summary-card--active .elementary-summary-card__icon-wrap {
+  background: var(--primary);
+  color: white;
+}
+
+.elementary-summary-card__top-badges {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.elementary-summary-card__mastery-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  border: 1px solid transparent;
+}
+
+.elementary-summary-card__badge {
+  background: var(--primary);
+  color: white;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.elementary-summary-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .elementary-summary-card__name {
   font-weight: 700;
-  font-size: 0.9rem;
-  color: var(--text-primary, #f8fafc);
+  font-size: 0.92rem;
+  color: var(--text);
 }
 
-.elementary-summary-card__meta {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 0.75rem;
-  color: var(--text-secondary, #94a3b8);
-}
-
-.elementary-summary-card__badge {
-  background: #3b82f6;
-  color: white;
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-size: 0.68rem;
-  font-weight: 700;
-  text-transform: uppercase;
+.elementary-summary-card__framework {
+  font-size: 0.76rem;
+  color: var(--text-secondary);
+  font-weight: 500;
 }
 </style>
 

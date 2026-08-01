@@ -26,8 +26,8 @@
           <select v-model="activeUnitFilter" class="filter-select">
             <option value="all">All Units</option>
             <option value="general">General (No Unit)</option>
-            <option v-for="u in activeClass.gradebookUnits" :key="u.unitId" :value="u.unitId">
-              {{ u.name }}
+            <option v-for="u in filteredUnits" :key="u.unitId" :value="u.unitId">
+              {{ cleanUnitName(u.name) }}
             </option>
           </select>
         </div>
@@ -158,15 +158,15 @@
         :key="unit.unitId" 
         class="qualitative-section"
       >
-        <h4 class="qualitative-section__title">{{ unit.name }}</h4>
+        <h4 class="qualitative-section__title">{{ cleanUnitName(unit.name) }}</h4>
 
         <div class="expectations-grid">
           <!-- Render Expectations defined under this Unit -->
           <template v-for="exp in getGroupedUnitExpectations(unit)" :key="exp.expectationId">
             <!-- Overall subheader -->
-            <div v-if="exp.isHeader" class="exp-strand-subheader">
+            <div v-if="exp.isHeader && exp.childrenCount > 0" class="exp-strand-subheader">
               <span class="exp-strand-subheader__code">{{ exp.code }}</span>
-              <span class="exp-strand-subheader__text">{{ exp.description }}</span>
+              <span class="exp-strand-subheader__text">{{ exp.name || exp.description }}</span>
             </div>
 
             <!-- Specific expectation row (standard exp-card) -->
@@ -332,7 +332,7 @@
             >
               <div class="exp-card__code-badge exp-card__code-badge--general">Unit</div>
               <div class="exp-card__title-desc font-italic">
-                General evidence for {{ unit.name }}
+                General evidence for {{ cleanUnitName(unit.name) }}
               </div>
               <div class="exp-card__count-pill">
                 {{ getUnitGeneralEvents(unit.unitId).length }} {{ getUnitGeneralEvents(unit.unitId).length === 1 ? 'entry' : 'entries' }}
@@ -462,6 +462,10 @@ import { ref, computed, onMounted } from 'vue'
 import { Eye, MessageSquare, Trash2, ChevronDown, ChevronUp } from 'lucide-vue-next'
 import { formatLocalDisplay } from '../../utils/dates.js'
 import { getGradeBuckets } from '../../db/settingsService.js'
+import { getEffectiveClassRecord } from '../../composables/useElementary.js'
+import { activeSubjectId } from '../../composables/useClassroomState.js'
+import { gradeMap } from '../../composables/useGradebook.js'
+import { getSBARLevelBadge } from '../../db/gradebookService.js'
 
 const gradeBucketsList = ref([])
 
@@ -472,6 +476,11 @@ onMounted(async () => {
     console.warn('Could not load grade buckets:', e)
   }
 })
+
+function cleanUnitName(name) {
+  if (!name) return ''
+  return String(name).replace(/^\[Grade\s*\d+\]\s*/i, '').trim()
+}
 
 function getProductColor(pct) {
   if (pct === null || pct === undefined || isNaN(pct)) return 'var(--primary)'
@@ -499,7 +508,17 @@ function getProductColor(pct) {
 const props = defineProps({
   events: { type: Array, default: () => [] },
   activeClass: { type: Object, default: () => null },
-  assessments: { type: Array, default: () => [] }
+  assessments: { type: Array, default: () => [] },
+  studentId: { type: String, default: null },
+  studentGradeLevel: { type: String, default: null }
+})
+
+const effectiveClass = computed(() => {
+  if (!props.activeClass) return null
+  if (props.activeClass.classType === 'elementary') {
+    return getEffectiveClassRecord(props.activeClass, activeSubjectId.value)
+  }
+  return props.activeClass
 })
 
 const emit = defineEmits(['delete'])
@@ -580,16 +599,32 @@ function getCaretStyle(unitId, expectationId) {
 }
 
 
-// Filter units list based on unit filter dropdown
+// Filter units list based on unit filter dropdown & student grade level
 const filteredUnits = computed(() => {
-  if (!props.activeClass?.gradebookUnits) return []
+  const cls = effectiveClass.value
+  if (!cls?.gradebookUnits) return []
+
+  let units = cls.gradebookUnits
+
+  if (props.studentGradeLevel) {
+    const sGrade = props.studentGradeLevel.toLowerCase()
+    const clsExps = cls.expectations || []
+    units = units.filter(u => {
+      const uGrade = u.gradeLevel || (u.name && u.name.toLowerCase().includes('grade 7') ? 'grade 7' : (u.name && u.name.toLowerCase().includes('grade 8') ? 'grade 8' : ''))
+      if (uGrade && uGrade.toLowerCase() === sGrade) return true
+      const unitExps = u.expectations || clsExps.filter(e => e.unitId === u.unitId)
+      if (unitExps.some(e => e.gradeLevel && e.gradeLevel.toLowerCase() === sGrade)) return true
+      return !uGrade
+    })
+  }
+
   if (activeUnitFilter.value === 'all') {
-    return props.activeClass.gradebookUnits
+    return units
   }
   if (activeUnitFilter.value === 'general') {
     return []
   }
-  return props.activeClass.gradebookUnits.filter(u => u.unitId === activeUnitFilter.value)
+  return units.filter(u => u.unitId === activeUnitFilter.value)
 })
 
 // Filtered observations list by type (Observation / Conversation)
@@ -666,11 +701,16 @@ function getExpectationEvents(unitId, expectationId) {
   if (expectationId === 'general') {
     return getUnitGeneralEvents(unitId)
   }
-  const unitObj = props.activeClass?.gradebookUnits?.find(u => u.unitId === unitId || u.name?.toLowerCase() === String(unitId).toLowerCase())
-  const expObj = unitObj?.expectations?.find(e => 
+  const clsUnits = effectiveClass.value?.gradebookUnits || props.activeClass?.gradebookUnits || []
+  const clsExps = effectiveClass.value?.expectations || props.activeClass?.expectations || []
+
+  const unitObj = clsUnits.find(u => u.unitId === unitId || u.name?.toLowerCase() === String(unitId).toLowerCase())
+  const unitExps = unitObj?.expectations || clsExps.filter(e => e.unitId === unitId)
+
+  const expObj = unitExps.find(e => 
     (e.expectationId && e.expectationId === expectationId) || 
     (e.code && String(e.code).toLowerCase() === String(expectationId).toLowerCase())
-  )
+  ) || clsExps.find(e => (e.expectationId && e.expectationId === expectationId) || (e.code && String(e.code).toLowerCase() === String(expectationId).toLowerCase()))
 
   const targetCode = expObj?.code || (typeof expectationId === 'string' ? expectationId : null)
 
@@ -690,51 +730,110 @@ function getExpectationEvents(unitId, expectationId) {
 
 // Get unit-level general comments (unitId matches, but expectationId is null)
 function getUnitGeneralEvents(unitId) {
-  const unitObj = props.activeClass?.gradebookUnits?.find(u => u.unitId === unitId || u.name?.toLowerCase() === String(unitId).toLowerCase())
+  const unitObj = effectiveClass.value?.gradebookUnits?.find(u => u.unitId === unitId || u.name?.toLowerCase() === String(unitId).toLowerCase()) || props.activeClass?.gradebookUnits?.find(u => u.unitId === unitId || u.name?.toLowerCase() === String(unitId).toLowerCase())
 
   const dbEvents = filteredTypeEvents.value.filter(e => {
     const isUnitMatch = matchesUnit(unitId, unitObj?.name, e.unitId)
-    return isUnitMatch && !e.expectationId
+    return isUnitMatch && (!e.expectationId || e.expectationId === 'general')
   })
     
   const productEvents = (activeFilter.value === 'all' || activeFilter.value === 'product')
-    ? getSyntheticProductEvents(unitId, null, unitObj, null)
+    ? getSyntheticProductEvents(unitId, 'general', unitObj, null)
     : []
 
   return [...dbEvents, ...productEvents]
     .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
 }
 
+const isSBAR = computed(() => {
+  const cls = effectiveClass.value || props.activeClass
+  return cls?.gradingFramework === 'sbar'
+})
+
+function isSBARAssessment(a) {
+  if (!a) return false
+  if (a.gradingFramework === 'sbar') return true
+  if (a.gradingFramework === 'traditional') return false
+  if (a.categoryId === 'sbar_general') return true
+  const expIds = a.expectationIds || (a.expectationId ? [a.expectationId] : [])
+  return expIds.length > 0
+}
+
 function getSyntheticProductEvents(unitId, expectationId, unitObj = null, targetCode = null) {
   if (!props.assessments?.length) return []
-  return props.assessments
-    .filter(a => {
-      if (a.score === null) return false
-      const isUnitMatch = matchesUnit(unitId, unitObj?.name, a.unitId)
-      if (!isUnitMatch) return false
+  const list = []
 
-      if (expectationId === null) {
-        return !a.expectationId
-      } else {
-        return matchesExpectation(expectationId, targetCode, a.expectationId)
+  props.assessments.forEach(a => {
+    const astIsSBAR = isSBARAssessment(a)
+
+    // Filter by framework matching:
+    if (isSBAR.value && !astIsSBAR) return
+    if (!isSBAR.value && astIsSBAR) return
+    const expIds = a.expectationIds || (a.expectationId ? [a.expectationId] : [])
+    const isUnitMatch = (!unitId || unitId === 'general') ? true : matchesUnit(unitId, unitObj?.name, a.unitId)
+    
+    let matchesExp = false
+    if (!expectationId || expectationId === 'general') {
+      // General row: ONLY match assessments that have NO specific expectation tags
+      matchesExp = (expIds.length === 0)
+    } else {
+      matchesExp = expIds.some(id => matchesExpectation(expectationId, targetCode, id))
+    }
+
+    if (!isUnitMatch || !matchesExp) return
+
+    if (isSBAR.value) {
+      // SBAR assessment score from gradeMap
+      if (props.studentId) {
+        const astMap = gradeMap.value?.[a.assessmentId] || gradeMap.value?.[String(a.assessmentId)] || gradeMap.value?.[Number(a.assessmentId)]
+        const stGrade = astMap?.[props.studentId] || astMap?.[String(props.studentId)]
+        if (stGrade) {
+          const expScore = stGrade.expectationScores?.[targetCode] || stGrade.expectationScores?.[expectationId]
+          const lvl = (expScore && typeof expScore === 'object') ? expScore.level : null
+          const scoreNum = typeof expScore === 'number' ? expScore : (expScore?.pct ?? stGrade.resolvedScore ?? stGrade.masteryLevel)
+          const pct = scoreNum != null && !isNaN(scoreNum) ? Number(scoreNum) : null
+
+          if (lvl || pct != null) {
+            const lvlBadge = getSBARLevelBadge(pct ?? 75)
+            const finalLvl = lvl || lvlBadge.level
+            list.push({
+              eventId: `sbar-${a.assessmentId}-${targetCode || expectationId}`,
+              timestamp: a.date,
+              note: `SBAR Evaluation: ${a.name} — Mastery Level ${finalLvl}`,
+              acOutcome: 'product',
+              acType: 'product',
+              acContext: a.categoryId || 'sbar_general',
+              assessmentName: a.name,
+              scoreLabel: finalLvl,
+              pctLabel: finalLvl,
+              categoryName: a.name,
+              pctValue: pct != null ? Math.round(pct) : 88
+            })
+          }
+        }
       }
-    })
-    .map(a => {
-      const pct = a.scaledTotal ? (a.score / a.scaledTotal) * 100 : (a.score / a.totalPoints) * 100
-      return {
-        eventId: `product-${a.assessmentId}`,
-        timestamp: a.date,
-        note: `Score: ${a.score} / ${a.totalPoints} (${Math.round(pct)}%)`,
-        acOutcome: 'product',
-        acType: 'product',
-        acContext: a.categoryId,
-        assessmentName: a.name,
-        scoreLabel: `${a.score} / ${a.totalPoints}`,
-        pctLabel: `${Math.round(pct)}%`,
-        categoryName: props.activeClass?.gradebookCategories?.find(c => c.categoryId === a.categoryId)?.name || 'Product',
-        pctValue: Math.round(pct)
+    } else {
+      // Traditional mode: ONLY include point/percentage scores
+      if (a.score !== null && a.score !== undefined && !isNaN(a.score)) {
+        const pct = a.scaledTotal ? (a.score / a.scaledTotal) * 100 : (a.score / a.totalPoints) * 100
+        list.push({
+          eventId: `product-${a.assessmentId}`,
+          timestamp: a.date,
+          note: `Score: ${a.score} / ${a.totalPoints} (${Math.round(pct)}%)`,
+          acOutcome: 'product',
+          acType: 'product',
+          acContext: a.categoryId,
+          assessmentName: a.name,
+          scoreLabel: `${a.score} / ${a.totalPoints}`,
+          pctLabel: `${Math.round(pct)}%`,
+          categoryName: props.activeClass?.gradebookCategories?.find(c => c.categoryId === a.categoryId)?.name || 'Product',
+          pctValue: Math.round(pct)
+        })
       }
-    })
+    }
+  })
+
+  return list
 }
 
 function formatTimelineDate(ts) {
@@ -774,23 +873,44 @@ function formatContext(ctx) {
 }
 
 function getGroupedUnitExpectations(unit) {
-  const rawExps = unit.expectations || []
-  const hasSpecifics = rawExps.some(e => e.code.includes('.'))
+  let rawExps = unit.expectations
+  
+  if (!rawExps || rawExps.length === 0) {
+    const clsExps = effectiveClass.value?.expectations || props.activeClass?.expectations || []
+    rawExps = clsExps.filter(e => {
+      if (e.unitId === unit.unitId) return true
+      if (unit.name && e.unitName && String(e.unitName).toLowerCase() === String(unit.name).toLowerCase()) return true
+      return false
+    })
+  }
+
+  if (props.studentGradeLevel) {
+    const sGrade = props.studentGradeLevel.toLowerCase()
+    rawExps = rawExps.filter(e => !e.gradeLevel || e.gradeLevel.toLowerCase() === sGrade)
+  }
+
+  if (rawExps.length === 0) return []
+
+  const hasSpecifics = rawExps.some(e => e.code && e.code.includes('.'))
   
   if (!hasSpecifics) {
     return rawExps.map(e => ({ ...e, isHeader: false }))
   }
   
-  const overalls = rawExps.filter(e => !e.code.includes('.'))
-  const specifics = rawExps.filter(e => e.code.includes('.'))
+  const overalls = rawExps.filter(e => e.code && !e.code.includes('.'))
+  const specifics = rawExps.filter(e => e.code && e.code.includes('.'))
   const result = []
   
   overalls.forEach(ov => {
-    result.push({ ...ov, isHeader: true })
     const children = specifics.filter(sp => sp.code.startsWith(ov.code + '.'))
-    children.forEach(ch => {
-      result.push({ ...ch, isHeader: false })
-    })
+    if (children.length > 0) {
+      result.push({ ...ov, isHeader: true, childrenCount: children.length })
+      children.forEach(ch => {
+        result.push({ ...ch, isHeader: false })
+      })
+    } else {
+      result.push({ ...ov, isHeader: false })
+    }
   })
   
   const remainingSpecifics = specifics.filter(sp => 

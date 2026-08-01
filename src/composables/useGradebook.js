@@ -30,6 +30,7 @@ export const selectedMilestone = ref(null) // null = current
 export const globalMilestones = ref([])
 export const gradeBuckets = ref([])
 export const initialDossierTab = ref('summary')
+export const activeGradeFilter = ref('all') // 'all' | 'Grade 7' | 'Grade 8'
 
 // Reactive state for analytics (Step 6)
 export const analyticsMode = ref(false) // false = grid, true = analytics panel
@@ -71,8 +72,14 @@ export const assessmentTypes = [
 ]
 
 export const sortedUnits = computed(() => {
-  if (!activeClassRecord.value?.gradebookUnits) return []
-  return [...activeClassRecord.value.gradebookUnits].sort((a, b) => (a.order || 0) - (b.order || 0))
+  const cls = activeClassRecord.value?.classType === 'elementary'
+    ? getEffectiveClassRecord(activeClassRecord.value, activeSubjectId.value)
+    : activeClassRecord.value
+  if (!cls?.gradebookUnits) return []
+  return [...cls.gradebookUnits].map(u => ({
+    ...u,
+    name: (u.name || 'Strand').replace(/\[Grade \d+\]\s*/g, '')
+  })).sort((a, b) => (a.order || 0) - (b.order || 0))
 })
 
 export const filteredMilestones = computed(() => {
@@ -328,6 +335,41 @@ export async function saveAssessment() {
   }
   
   newAssessment.value.isFormative = (newAssessment.value.purpose === 'formative')
+
+  if (activeClassRecord.value?.classType === 'elementary' && activeSubjectId.value && !newAssessment.value.subjectId) {
+    newAssessment.value.subjectId = activeSubjectId.value
+  }
+
+  const effClass = activeClassRecord.value?.classType === 'elementary'
+    ? getEffectiveClassRecord(activeClassRecord.value, activeSubjectId.value)
+    : activeClassRecord.value
+
+  if (activeGradeFilter.value && activeGradeFilter.value !== 'all') {
+    newAssessment.value.gradeLevel = activeGradeFilter.value
+  } else if (newAssessment.value.unitId && effClass?.gradebookUnits) {
+    const u = effClass.gradebookUnits.find(unit => String(unit.unitId) === String(newAssessment.value.unitId))
+    if (u) {
+      const g = u.gradeLevel || (u.name && u.name.includes('Grade 7') ? 'Grade 7' : (u.name && u.name.includes('Grade 8') ? 'Grade 8' : ''))
+      if (g) newAssessment.value.gradeLevel = g
+    }
+  }
+
+  if (!newAssessment.value.gradeLevel && effClass?.gradebookUnits) {
+    const expCodes = newAssessment.value.expectationIds || (newAssessment.value.expectationId ? [newAssessment.value.expectationId] : [])
+    const foundGrades = new Set()
+    effClass.gradebookUnits.forEach(u => {
+      const uGrade = u.gradeLevel || (u.name && u.name.includes('Grade 7') ? 'Grade 7' : (u.name && u.name.includes('Grade 8') ? 'Grade 8' : ''))
+      ;(u.expectations || []).forEach(e => {
+        if (expCodes.includes(e.code) || expCodes.includes(e.expectationId)) {
+          const g = e.gradeLevel || uGrade
+          if (g) foundGrades.add(g)
+        }
+      })
+    })
+    if (foundGrades.size === 1) {
+      newAssessment.value.gradeLevel = Array.from(foundGrades)[0]
+    }
+  }
 
   const data = { ...newAssessment.value }
 

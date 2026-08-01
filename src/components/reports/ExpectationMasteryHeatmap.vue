@@ -171,6 +171,8 @@ import { ref, computed } from 'vue'
 import { BookOpen, AlertCircle, ChevronDown, ChevronUp } from 'lucide-vue-next'
 import { calculateSBARExpectationMastery, getSBARLevelBadge } from '../../db/gradebookService.js'
 import { gradeMap } from '../../composables/useGradebook.js'
+import { getEffectiveClassRecord } from '../../composables/useElementary.js'
+import { activeSubjectId } from '../../composables/useClassroomState.js'
 
 const props = defineProps({
   activeClass: { type: Object, default: null },
@@ -179,34 +181,78 @@ const props = defineProps({
   activeGradeFilter: { type: String, default: 'all' }
 })
 
-const isSBAR = computed(() => props.activeClass?.gradingFramework === 'sbar')
+const effectiveClass = computed(() => {
+  if (!props.activeClass) return null
+  if (props.activeClass.classType === 'elementary') {
+    return getEffectiveClassRecord(props.activeClass, activeSubjectId.value)
+  }
+  return props.activeClass
+})
+
+const isSBAR = computed(() => effectiveClass.value?.gradingFramework === 'sbar')
 const selectedUnitFilter = ref('all') // 'all' | 'needs_reteaching' | unitId
 const collapsedUnits = ref(new Set()) // set of unitIds that are collapsed
 
 const rawUnits = computed(() => {
-  if (!props.activeClass) return []
-  let units = []
-  if (props.activeClass.gradebookUnits && props.activeClass.gradebookUnits.length) {
-    units = props.activeClass.gradebookUnits
-  } else if (props.activeClass.units && props.activeClass.units.length) {
-    units = props.activeClass.units
-  } else if (props.activeClass.expectations && Array.isArray(props.activeClass.expectations) && props.activeClass.expectations.length) {
-    units = [{
-      unitId: 'general',
-      name: 'General Expectations',
-      expectations: props.activeClass.expectations
-    }]
+  const cls = effectiveClass.value
+  if (!cls) return []
+
+  const targetGrade = props.activeGradeFilter && props.activeGradeFilter !== 'all' ? props.activeGradeFilter.toLowerCase() : null
+  const unitMap = {}
+
+  // 1. Gather from gradebookUnits (Strands)
+  if (cls.gradebookUnits && Array.isArray(cls.gradebookUnits)) {
+    cls.gradebookUnits.forEach(u => {
+      const uGrade = u.gradeLevel || (u.name && u.name.includes('Grade 7') ? 'Grade 7' : (u.name && u.name.includes('Grade 8') ? 'Grade 8' : ''))
+
+      if (targetGrade && uGrade && uGrade.toLowerCase() !== targetGrade) {
+        return
+      }
+
+      const validExps = (u.expectations || []).filter(e => {
+        if (!e.code) return false
+        const eGrade = e.gradeLevel || uGrade
+        if (targetGrade && eGrade && eGrade.toLowerCase() !== targetGrade) return false
+        return true
+      })
+
+      if (!unitMap[u.unitId]) {
+        unitMap[u.unitId] = {
+          unitId: u.unitId,
+          name: (u.name || 'Strand').replace(/\[Grade \d+\]\s*/g, ''),
+          expectations: [...validExps]
+        }
+      }
+    })
   }
 
-  if (props.activeGradeFilter && props.activeGradeFilter !== 'all') {
-    const targetGrade = props.activeGradeFilter.toLowerCase()
-    units = units.map(u => ({
-      ...u,
-      expectations: (u.expectations || []).filter(e => !e.gradeLevel || e.gradeLevel.toLowerCase() === targetGrade)
-    })).filter(u => (!u.gradeLevel || u.gradeLevel.toLowerCase() === targetGrade) && u.expectations.length > 0)
+  // 2. Gather from flat expectations list if gradebookUnits empty or incomplete
+  const flatExps = cls.expectations || cls.curriculumExpectations || []
+  if (flatExps.length > 0) {
+    flatExps.forEach(exp => {
+      if (!exp.code) return
+      const eGrade = exp.gradeLevel || ''
+      if (targetGrade && eGrade && eGrade.toLowerCase() !== targetGrade) return
+
+      const strandCode = exp.strand || exp.code.charAt(0).toUpperCase()
+      const uId = exp.unitId || `strand-${strandCode}`
+      const uName = exp.strandName || `Strand ${strandCode}`
+
+      if (!unitMap[uId]) {
+        unitMap[uId] = {
+          unitId: uId,
+          name: uName,
+          expectations: []
+        }
+      }
+
+      if (!unitMap[uId].expectations.some(e => e.code === exp.code)) {
+        unitMap[uId].expectations.push(exp)
+      }
+    })
   }
 
-  return units
+  return Object.values(unitMap).filter(u => u.expectations.length > 0)
 })
 
 const unitsWithExpectations = computed(() => {
@@ -227,8 +273,8 @@ const unitsWithExpectations = computed(() => {
   })
 
   if (isSBAR.value) {
-    const algo = props.activeClass?.sbarAlgorithm || 'decaying_average'
-    const sbarMasteryMap = calculateSBARExpectationMastery(props.activeClass, props.assessments, gradeMap.value, algo)
+    const algo = effectiveClass.value?.sbarAlgorithm || 'decaying_average'
+    const sbarMasteryMap = calculateSBARExpectationMastery(effectiveClass.value, props.assessments, gradeMap.value, algo)
     
     Object.values(sbarMasteryMap).forEach(studentExpMap => {
       if (!studentExpMap) return

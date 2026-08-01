@@ -16,6 +16,14 @@
             {{ statusLabel }}
           </span>
           <span 
+            v-if="student.gradeLevel" 
+            class="dossier-header__badge dossier-header__badge--grade"
+            title="Student Grade Level"
+          >
+            <GraduationCap :size="13" />
+            {{ student.gradeLevel }}
+          </span>
+          <span 
             v-if="attendanceStats?.testDayAbsences > 0" 
             class="dossier-header__badge dossier-header__badge--warning"
             :title="`Student missed ${attendanceStats.testDayAbsences} test/evaluation days`"
@@ -80,7 +88,7 @@
 
 <script setup>
 import { computed } from 'vue'
-import { UserCheck, UserMinus, Clock, Toilet, X, HelpCircle, CalendarX } from 'lucide-vue-next'
+import { UserCheck, UserMinus, Clock, Toilet, X, HelpCircle, CalendarX, GraduationCap } from 'lucide-vue-next'
 import { activeClassRecord } from '../../composables/useGradebook.js'
 import { getSBARLevelBadge } from '../../db/gradebook/gradeCalcSBAR.js'
 
@@ -229,6 +237,7 @@ const statusIcon = computed(() => {
 .dossier-header__badge--success { background: rgba(52, 199, 89, 0.1); color: #34c759; }
 .dossier-header__badge--warning { background: rgba(255, 149, 0, 0.1); color: #ff9500; }
 .dossier-header__badge--danger  { background: rgba(255, 59, 48, 0.1); color: #ff3b30; }
+.dossier-header__badge--grade   { background: rgba(99, 102, 241, 0.12); color: #6366f1; border: 1px solid rgba(99, 102, 241, 0.25); }
 
 .dossier-header__id {
   font-size:   0.8rem;

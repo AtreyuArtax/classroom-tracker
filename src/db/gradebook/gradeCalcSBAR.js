@@ -153,6 +153,10 @@ export function calculateSBARExpectationMastery(classRecord, assessments, gradeM
   })
 
   // Map expectation codes to assessments that evaluate them
+  const validExpSet = (classRecord.expectations && classRecord.expectations.length > 0)
+    ? new Set(classRecord.expectations.map(e => String(e.code || e.expectationId).toLowerCase()))
+    : null
+
   const expectationEvaluations = {}
 
   assessments.forEach(ast => {
@@ -160,6 +164,9 @@ export function calculateSBARExpectationMastery(classRecord, assessments, gradeM
     if (!expCodes.length) return
 
     expCodes.forEach(code => {
+      const codeStr = String(code).toLowerCase()
+      if (validExpSet && !validExpSet.has(codeStr)) return
+
       if (!expectationEvaluations[code]) expectationEvaluations[code] = []
       expectationEvaluations[code].push(ast)
     })

@@ -104,8 +104,8 @@
                 :disabled="!activeClassRecord?.gradebookUnits?.length"
               >
                 <option :value="null">Unassigned</option>
-                <option v-for="u in sortedUnits" :key="u.unitId" :value="u.unitId">
-                  {{ u.name }}
+                <option v-for="u in filteredUnits" :key="u.unitId" :value="u.unitId">
+                  {{ selectedGradeFilter === 'all' && u.gradeLevel ? '[' + u.gradeLevel + '] ' + u.name : u.name }}
                 </option>
               </select>
             </div>
@@ -130,8 +130,8 @@
               :disabled="!activeClassRecord?.gradebookUnits?.length"
             >
               <option :value="null">Unassigned</option>
-              <option v-for="u in sortedUnits" :key="u.unitId" :value="u.unitId">
-                {{ u.name }}
+              <option v-for="u in filteredUnits" :key="u.unitId" :value="u.unitId">
+                {{ selectedGradeFilter === 'all' && u.gradeLevel ? '[' + u.gradeLevel + '] ' + u.name : u.name }}
               </option>
             </select>
           </div>
@@ -226,7 +226,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { BookOpen } from 'lucide-vue-next'
 import {
   showAddAssessmentModal,
@@ -235,6 +235,7 @@ import {
   assessmentTypes,
   sortedUnits,
   activeClassRecord,
+  activeGradeFilter,
   closeAddAssessment,
   onTargetChange,
   saveAssessment
@@ -242,29 +243,57 @@ import {
 import { useClassroom } from '../../composables/useClassroom.js'
 import BaseModal from '../BaseModal.vue'
 
+import { getEffectiveClassRecord } from '../../composables/useElementary.js'
+import { activeSubjectId } from '../../composables/useClassroomState.js'
+
 const { sortedRoster } = useClassroom()
 
-const unitExpectations = computed(() => {
-  if (!newAssessment.value.unitId || !activeClassRecord.value?.gradebookUnits) return []
-  const unit = activeClassRecord.value.gradebookUnits.find(u => u.unitId === newAssessment.value.unitId)
-  const rawExps = unit?.expectations || []
-  const hasSpecifics = rawExps.some(e => e.code && e.code.includes('.'))
-  if (hasSpecifics) {
-    return rawExps.filter(e => e.code && e.code.includes('.'))
+const effectiveClass = computed(() => {
+  if (!activeClassRecord.value) return null
+  if (activeClassRecord.value.classType === 'elementary') {
+    return getEffectiveClassRecord(activeClassRecord.value, activeSubjectId.value)
   }
-  return rawExps
+  return activeClassRecord.value
 })
 
 const allAvailableExpectations = computed(() => {
-  if (unitExpectations.value.length > 0) return unitExpectations.value
+  const cls = effectiveClass.value
+  if (!cls) return []
 
-  const classExps = activeClassRecord.value?.expectations || activeClassRecord.value?.curriculumExpectations || []
-  if (classExps.length > 0) return classExps
+  const expMap = {}
 
-  const unitExps = (activeClassRecord.value?.gradebookUnits || []).flatMap(u => u.expectations || [])
-  if (unitExps.length > 0) return unitExps
+  // 1. From gradebookUnits
+  if (cls.gradebookUnits && Array.isArray(cls.gradebookUnits)) {
+    cls.gradebookUnits.forEach(u => {
+      const uGrade = u.gradeLevel || (u.name && u.name.includes('Grade 7') ? 'Grade 7' : (u.name && u.name.includes('Grade 8') ? 'Grade 8' : ''))
+      ;(u.expectations || []).forEach(e => {
+        if (!e.code) return
+        const key = `${u.unitId}::${e.code}`
+        expMap[key] = {
+          ...e,
+          unitId: e.unitId || u.unitId,
+          gradeLevel: e.gradeLevel || uGrade
+        }
+      })
+    })
+  }
 
-  if (activeClassRecord.value?.classType !== 'elementary') {
+  // 2. From flat expectations list
+  const flatExps = cls.expectations || cls.curriculumExpectations || []
+  if (flatExps.length > 0) {
+    flatExps.forEach(e => {
+      if (!e.code) return
+      const key = `${e.unitId || 'flat'}::${e.code}`
+      if (!expMap[key]) {
+        expMap[key] = { ...e }
+      }
+    })
+  }
+
+  const list = Object.values(expMap)
+  if (list.length > 0) return list
+
+  if (cls.classType !== 'elementary') {
     return [
       { code: 'A1.1', name: 'Inquiry & Experimentation', description: 'Formulate hypotheses and execute laboratory inquiries.' },
       { code: 'A1.2', name: 'Data Analysis', description: 'Analyze experimental data using statistical tools.' },
@@ -285,11 +314,57 @@ const availableGradeFilters = computed(() => {
   return ['all', ...Array.from(grades).sort()]
 })
 
-const filteredAvailableExpectations = computed(() => {
-  if (selectedGradeFilter.value === 'all' || !availableGradeFilters.value.length) {
-    return allAvailableExpectations.value
+watch(showAddAssessmentModal, (open) => {
+  if (open) {
+    if (activeGradeFilter.value && availableGradeFilters.value.includes(activeGradeFilter.value)) {
+      selectedGradeFilter.value = activeGradeFilter.value
+    } else {
+      selectedGradeFilter.value = 'all'
+    }
   }
-  return allAvailableExpectations.value.filter(e => e.gradeLevel === selectedGradeFilter.value)
+}, { immediate: true })
+
+const filteredUnits = computed(() => {
+  let units = sortedUnits.value || []
+  if (selectedGradeFilter.value !== 'all' && availableGradeFilters.value.length > 1) {
+    const targetG = selectedGradeFilter.value.toLowerCase()
+    units = units.filter(u => {
+      const uGrade = u.gradeLevel || (u.name && u.name.includes('Grade 7') ? 'Grade 7' : (u.name && u.name.includes('Grade 8') ? 'Grade 8' : ''))
+      if (uGrade && uGrade.toLowerCase() === targetG) return true
+      if (u.expectations && u.expectations.some(e => e.gradeLevel && e.gradeLevel.toLowerCase() === targetG)) return true
+      return !uGrade
+    })
+  }
+  return units
+})
+
+watch(selectedGradeFilter, () => {
+  if (newAssessment.value.unitId) {
+    const exists = filteredUnits.value.some(u => String(u.unitId) === String(newAssessment.value.unitId))
+    if (!exists) {
+      newAssessment.value.unitId = null
+    }
+  }
+})
+
+const filteredAvailableExpectations = computed(() => {
+  let list = allAvailableExpectations.value
+
+  // 1. Filter by Grade Pill (if split class)
+  if (selectedGradeFilter.value !== 'all' && availableGradeFilters.value.length > 1) {
+    const targetG = selectedGradeFilter.value.toLowerCase()
+    list = list.filter(e => e.gradeLevel && e.gradeLevel.toLowerCase() === targetG)
+  }
+
+  // 2. Filter by Selected Unit / Strand Dropdown
+  if (newAssessment.value.unitId) {
+    const selectedUnitIdStr = String(newAssessment.value.unitId)
+    list = list.filter(e => e.unitId && String(e.unitId) === selectedUnitIdStr)
+  }
+
+  // Prefer specific expectations (e.g. A1.1, A1.2) over overalls if specifics exist
+  const specifics = list.filter(e => e.code && e.code.includes('.'))
+  return specifics.length > 0 ? specifics : list
 })
 
 const selectedExpCount = computed(() => {

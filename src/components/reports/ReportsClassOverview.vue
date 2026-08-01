@@ -311,6 +311,7 @@ const isSBAR = computed(() => props.reportClass?.gradingFramework === 'sbar')
 
 // Academic Calculations
 const classAverage = computed(() => {
+  if (totalAssessmentsCount.value === 0) return null
   const gradesArr = Object.entries(props.classGrades)
     .filter(([sId]) => activeStudentIds.value.has(String(sId)))
     .map(([, g]) => g?.overallGrade)
@@ -325,6 +326,7 @@ const classAverageBadge = computed(() => {
 })
 
 const classMedian = computed(() => {
+  if (totalAssessmentsCount.value === 0) return null
   const gradesArr = Object.entries(props.classGrades)
     .filter(([sId]) => activeStudentIds.value.has(String(sId)))
     .map(([, g]) => g?.overallGrade)
@@ -349,7 +351,27 @@ function formatGradeDisplay(overallPct) {
   return `${Math.round(overallPct)}%`
 }
 
-const totalAssessmentsCount = computed(() => props.assessments.length)
+const subjectAssessments = computed(() => {
+  if (!props.assessments || props.assessments.length === 0) return []
+  const cls = props.reportClass
+  if (!cls) return props.assessments
+
+  const subId = cls.activeSubjectId
+  const unitIds = new Set((cls.gradebookUnits || []).map(u => String(u.unitId)))
+  const expCodes = new Set((cls.expectations || []).map(e => String(e.code || e.expectationId).toLowerCase()))
+
+  if (unitIds.size === 0 && expCodes.size === 0) return []
+
+  return props.assessments.filter(a => {
+    if (a.subjectId && subId && a.subjectId === subId) return true
+    if (a.unitId && unitIds.has(String(a.unitId))) return true
+    const aExpIds = a.expectationIds || (a.expectationId ? [a.expectationId] : [])
+    if (aExpIds.some(id => expCodes.has(String(id).toLowerCase()))) return true
+    return false
+  })
+})
+
+const totalAssessmentsCount = computed(() => subjectAssessments.value.length)
 
 const failingStudentsCount = computed(() => {
   return Object.entries(props.classGrades)
@@ -359,24 +381,43 @@ const failingStudentsCount = computed(() => {
 
 // Expectation Calculations
 const totalExpectationsCount = computed(() => {
-  const units = props.reportClass?.gradebookUnits || props.reportClass?.units || []
-  if (units.length) {
-    return units.reduce((acc, u) => acc + (u.expectations?.length || 0), 0)
+  const cls = props.reportClass
+  if (!cls) return 0
+
+  if (cls.expectations && Array.isArray(cls.expectations) && cls.expectations.length > 0) {
+    if (props.activeGradeFilter && props.activeGradeFilter !== 'all') {
+      const gLower = props.activeGradeFilter.toLowerCase()
+      const filtered = cls.expectations.filter(e => !e.gradeLevel || e.gradeLevel.toLowerCase() === gLower)
+      return filtered.length
+    }
+    return cls.expectations.length
   }
-  if (props.reportClass?.expectations && Array.isArray(props.reportClass.expectations)) {
-    return props.reportClass.expectations.length
-  }
-  return 0
+
+  const units = cls.gradebookUnits || cls.units || []
+  let total = 0
+  units.forEach(u => {
+    if (u.expectations && Array.isArray(u.expectations)) {
+      total += u.expectations.length
+    }
+  })
+  return total
 })
 
 const assessedExpectationsCount = computed(() => {
+  if (totalExpectationsCount.value === 0) return 0
+
+  const clsExps = props.reportClass?.expectations || []
+  const validExpCodes = new Set(clsExps.map(e => String(e.code || e.expectationId).toLowerCase()))
+
   const set = new Set()
   props.assessments.forEach(a => {
-    if (a.expectationIds && Array.isArray(a.expectationIds)) {
-      a.expectationIds.forEach(id => set.add(String(id)))
-    } else if (a.expectationId) {
-      set.add(String(a.expectationId))
-    }
+    const expIds = a.expectationIds || (a.expectationId ? [a.expectationId] : [])
+    expIds.forEach(id => {
+      const strId = String(id).toLowerCase()
+      if (validExpCodes.size === 0 || validExpCodes.has(strId)) {
+        set.add(strId)
+      }
+    })
   })
   return set.size
 })

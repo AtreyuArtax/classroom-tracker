@@ -7,9 +7,10 @@
         <button 
           v-for="gFilter in availableGradeFilters" 
           :key="gFilter" 
+          type="button"
           class="grade-pill"
-          :class="{ 'grade-pill--active': activeGradeFilter === gFilter }"
-          @click="activeGradeFilter = gFilter"
+          :class="{ 'grade-pill--active': String(activeGradeFilter).toLowerCase() === String(gFilter).toLowerCase() }"
+          @click="setGradeFilter(gFilter)"
         >
           {{ gFilter === 'all' ? 'All Grades' : gFilter }}
         </button>
@@ -78,7 +79,7 @@
             <th class="sticky-col sticky-col--mastery">Mastery</th>
             <th 
               v-for="exp in displayedExpectations" 
-              :key="exp.code"
+              :key="(exp.gradeLevel || 'all') + '-' + exp.code"
               class="exp-code-header"
               :title="exp.code + ': ' + exp.description"
             >
@@ -127,7 +128,7 @@
             <!-- Expectation Cells -->
             <td 
               v-for="exp in displayedExpectations" 
-              :key="student.studentId + '-' + exp.code"
+              :key="student.studentId + '-' + (exp.gradeLevel || 'all') + '-' + exp.code"
               class="sbar-exp-cell"
               @click="openExpectationDetail(student.studentId, exp.code)"
             >
@@ -165,7 +166,8 @@ import { ref, computed } from 'vue'
 import { 
   activeClassRecord, 
   assessments, 
-  gradeMap
+  gradeMap,
+  activeGradeFilter
 } from '../../composables/useGradebook.js'
 import {
   calculateSBARExpectationMastery,
@@ -173,6 +175,8 @@ import {
 } from '../../db/gradebookService.js'
 
 import { formatLocalDisplay } from '../../utils/dates.js'
+import { getEffectiveClassRecord } from '../../composables/useElementary.js'
+import { activeSubjectId } from '../../composables/useClassroomState.js'
 
 const props = defineProps({
   isPrivacyMode: Boolean
@@ -181,7 +185,6 @@ const props = defineProps({
 const emit = defineEmits(['open-dossier', 'select-expectation', 'select-assessment'])
 
 const activeStrandFilter = ref('all')
-const activeGradeFilter = ref('all')
 
 const availableGradeFilters = computed(() => {
   const grades = new Set()
@@ -198,11 +201,71 @@ const availableGradeFilters = computed(() => {
   return ['all', ...Array.from(grades).sort()]
 })
 
+const effectiveClass = computed(() => {
+  if (!activeClassRecord.value) return null
+  if (activeClassRecord.value.classType === 'elementary') {
+    return getEffectiveClassRecord(activeClassRecord.value, activeSubjectId.value)
+  }
+  return activeClassRecord.value
+})
+
+function setGradeFilter(gFilter) {
+  activeGradeFilter.value = gFilter
+  activeStrandFilter.value = 'all'
+}
+
+function getAssessmentGradeLevel(a) {
+  if (a.gradeLevel) return a.gradeLevel.toLowerCase()
+  
+  const cls = effectiveClass.value
+  if (!cls) return null
+
+  if (a.unitId && cls.gradebookUnits) {
+    const u = cls.gradebookUnits.find(unit => String(unit.unitId) === String(a.unitId))
+    if (u) {
+      const g = u.gradeLevel || (u.name && u.name.toLowerCase().includes('grade 7') ? 'grade 7' : (u.name && u.name.toLowerCase().includes('grade 8') ? 'grade 8' : ''))
+      if (g) return g.toLowerCase()
+    }
+  }
+
+  const expIds = a.expectationIds || (a.expectationId ? [a.expectationId] : [])
+  if (expIds.length > 0 && cls.gradebookUnits) {
+    for (const u of cls.gradebookUnits) {
+      const uGrade = u.gradeLevel || (u.name && u.name.toLowerCase().includes('grade 7') ? 'grade 7' : (u.name && u.name.toLowerCase().includes('grade 8') ? 'grade 8' : ''))
+      for (const e of (u.expectations || [])) {
+        if (expIds.includes(e.code) || expIds.includes(e.expectationId)) {
+          const g = e.gradeLevel || uGrade
+          if (g) return g.toLowerCase()
+        }
+      }
+    }
+  }
+
+  if (a.targetStudentId && activeClassRecord.value?.students?.[a.targetStudentId]?.gradeLevel) {
+    return activeClassRecord.value.students[a.targetStudentId].gradeLevel.toLowerCase()
+  }
+
+  return null
+}
+
 const sortedAssessments = computed(() => {
   if (!assessments.value) return []
-  return [...assessments.value]
-    .filter(a => a.categoryId === 'sbar_general' || (a.expectationIds && a.expectationIds.length > 0))
-    .sort((a, b) => new Date(b.date) - new Date(a.date))
+  let list = [...assessments.value]
+    .filter(a => a.categoryId === 'sbar_general' || (a.expectationIds && a.expectationIds.length > 0) || a.expectationId)
+
+  if (activeGradeFilter.value !== 'all' && availableGradeFilters.value.length > 1) {
+    const targetG = activeGradeFilter.value.toLowerCase()
+
+    list = list.filter(a => {
+      const aGrade = getAssessmentGradeLevel(a)
+      if (aGrade) {
+        return aGrade === targetG
+      }
+      return true
+    })
+  }
+
+  return list.sort((a, b) => new Date(b.date) - new Date(a.date))
 })
 
 function onSelectTaskToGrade(e) {

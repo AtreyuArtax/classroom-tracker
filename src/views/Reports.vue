@@ -514,7 +514,8 @@ async function runReport() {
       assessmentsList.value = gbAssessments.value || await getAssessmentsByClass(sidebarClassId.value)
     }
 
-    const grades = await calculateClassGrades(reportClass.value, { asOf: dr.to || null })
+    const targetClassRecord = effectiveReportClass.value || reportClass.value
+    const grades = await calculateClassGrades(targetClassRecord, { asOf: dr.to || null })
     classGrades.value = grades
 
     const attEvents = events.filter(e => (e.code === 'a' || e.code === 'l') && !e.superseded)

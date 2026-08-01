@@ -167,6 +167,8 @@
           :events="qualitativeEvents" 
           :active-class="activeClassRecord"
           :assessments="allDossierAssessments"
+          :student-id="props.studentId"
+          :student-grade-level="student?.gradeLevel"
           @delete="handleDeleteHistoryItem"
         />
       </section>
