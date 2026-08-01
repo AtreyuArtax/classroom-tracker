@@ -115,7 +115,7 @@
                 >{{ m.name }}</button>
               </div>
 
-              <div v-if="!analyticsMode" class="grades__toggle-group" title="Column Order">
+              <div v-if="!analyticsMode && !isSBAR" class="grades__toggle-group" title="Column Order">
                 <button 
                   class="grades__toggle-btn"
                   :class="{ 'grades__toggle-btn--active': assessmentSortOrder === 'desc' }"
@@ -128,7 +128,7 @@
                 >Oldest</button>
               </div>
 
-              <div v-if="!analyticsMode" class="grades__toggle-group">
+              <div v-if="!analyticsMode && !isSBAR" class="grades__toggle-group">
                 <button 
                   class="grades__toggle-btn"
                   :class="{ 'grades__toggle-btn--active': displayMode === 'raw' }"
@@ -144,7 +144,17 @@
 
             <div class="grades__toolbar-right">
               <div class="grades__class-avg-display">
-                Class Avg: <span class="grades__avg-value">{{ formatGrade(overallClassAvg) }}</span>
+                <template v-if="isSBAR">
+                  Class Avg: <span 
+                    v-if="sbarClassAverageBadge" 
+                    class="grades__avg-value"
+                    :style="{ color: sbarClassAverageBadge.color }"
+                  >{{ sbarClassAverageBadge.level }}</span>
+                  <span v-else class="grades__avg-value">—</span>
+                </template>
+                <template v-else>
+                  Class Avg: <span class="grades__avg-value">{{ formatGrade(overallClassAvg) }}</span>
+                </template>
               </div>
 
               <button class="grades__btn-settings" title="Print Final Grades Grid" @click="showPrintGridModal = true">
@@ -276,6 +286,7 @@ import {
   initialDossierTab
 } from '../composables/useGradebook.js'
 import { formatGrade } from '../utils/gradeColors.js'
+import { getSBARLevelBadge } from '../db/gradebookService.js'
 import { useAttendanceInsights } from '../composables/useAttendanceInsights.js'
 import { Plus, BarChart2, Settings, Printer, LayoutGrid } from 'lucide-vue-next'
 import Student360 from '../components/dossier/Student360.vue'
@@ -303,6 +314,13 @@ defineEmits(['navigate'])
 const { alert, confirm } = useMessage()
 const { classList, activeClass, getClass, switchClass, teacherName } = useClassroom()
 const sidebarClassId = ref(activeClass.value?.classId || '')
+
+const isSBAR = computed(() => activeClassRecord.value?.gradingFramework === 'sbar')
+
+const sbarClassAverageBadge = computed(() => {
+  if (overallClassAvg.value === null || overallClassAvg.value === undefined || isNaN(overallClassAvg.value)) return null
+  return getSBARLevelBadge(overallClassAvg.value)
+})
 const { assessmentAbsenceMap, studentAbsenceTotals } = useAttendanceInsights(sidebarClassId, assessments, classGrades)
 
 watch(activeClass, async (newVal, oldVal) => {

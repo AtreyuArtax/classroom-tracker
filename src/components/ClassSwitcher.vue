@@ -420,25 +420,31 @@ async function acceptSuggestion() {
 /* ── Elementary Subject Switcher Dropdown ─────────────────────────────────── */
 .class-switcher-wrapper {
   display: flex;
+  flex-direction: row;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   flex-wrap: wrap;
 }
 
 .subject-switcher {
   display: inline-flex;
   align-items: center;
+  min-width: 180px;
+  max-width: 320px;
 }
 
 .subject-switcher__select-wrap {
   position: relative;
-  display: inline-flex;
+  display: flex;
   align-items: center;
   background: var(--bg-secondary);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   padding: 0 10px 0 12px;
   height: 36px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
   transition: border-color 0.15s ease;
 }
 
@@ -450,6 +456,7 @@ async function acceptSuggestion() {
   color: var(--primary);
   margin-right: 8px;
   pointer-events: none;
+  flex-shrink: 0;
 }
 
 .subject-switcher__select {
@@ -463,6 +470,11 @@ async function acceptSuggestion() {
   padding-right: 20px;
   cursor: pointer;
   outline: none;
+  width: 100%;
+  max-width: 100%;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
 }
 
 .subject-switcher__select option {

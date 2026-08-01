@@ -175,7 +175,8 @@ import { gradeMap } from '../../composables/useGradebook.js'
 const props = defineProps({
   activeClass: { type: Object, default: null },
   assessments: { type: Array, default: () => [] },
-  classGrades: { type: Object, default: () => ({}) }
+  classGrades: { type: Object, default: () => ({}) },
+  activeGradeFilter: { type: String, default: 'all' }
 })
 
 const isSBAR = computed(() => props.activeClass?.gradingFramework === 'sbar')
@@ -184,20 +185,28 @@ const collapsedUnits = ref(new Set()) // set of unitIds that are collapsed
 
 const rawUnits = computed(() => {
   if (!props.activeClass) return []
+  let units = []
   if (props.activeClass.gradebookUnits && props.activeClass.gradebookUnits.length) {
-    return props.activeClass.gradebookUnits
-  }
-  if (props.activeClass.units && props.activeClass.units.length) {
-    return props.activeClass.units
-  }
-  if (props.activeClass.expectations && Array.isArray(props.activeClass.expectations) && props.activeClass.expectations.length) {
-    return [{
+    units = props.activeClass.gradebookUnits
+  } else if (props.activeClass.units && props.activeClass.units.length) {
+    units = props.activeClass.units
+  } else if (props.activeClass.expectations && Array.isArray(props.activeClass.expectations) && props.activeClass.expectations.length) {
+    units = [{
       unitId: 'general',
       name: 'General Expectations',
       expectations: props.activeClass.expectations
     }]
   }
-  return []
+
+  if (props.activeGradeFilter && props.activeGradeFilter !== 'all') {
+    const targetGrade = props.activeGradeFilter.toLowerCase()
+    units = units.map(u => ({
+      ...u,
+      expectations: (u.expectations || []).filter(e => !e.gradeLevel || e.gradeLevel.toLowerCase() === targetGrade)
+    })).filter(u => (!u.gradeLevel || u.gradeLevel.toLowerCase() === targetGrade) && u.expectations.length > 0)
+  }
+
+  return units
 })
 
 const unitsWithExpectations = computed(() => {

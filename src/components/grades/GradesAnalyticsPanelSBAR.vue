@@ -3,8 +3,21 @@
     <!-- Header Summary Banner -->
     <header class="sbar-analytics__header">
       <div class="sbar-analytics__title-group">
-        <h2 class="sbar-analytics__title">SBAR Mastery & Learning Analytics</h2>
-        <p class="sbar-analytics__subtitle">Cohort proficiency distribution, curriculum hotspots & growth velocity</p>
+        <div class="sbar-analytics__title-row" style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
+          <h2 class="sbar-analytics__title">SBAR Mastery &amp; Learning Analytics</h2>
+          <div v-if="availableGradeFilters.length > 1" class="sbar-grade-pills">
+            <button 
+              v-for="gFilter in availableGradeFilters" 
+              :key="gFilter" 
+              class="grade-pill"
+              :class="{ 'grade-pill--active': activeGradeFilter === gFilter }"
+              @click="activeGradeFilter = gFilter"
+            >
+              {{ gFilter === 'all' ? 'All Grades' : gFilter }}
+            </button>
+          </div>
+        </div>
+        <p class="sbar-analytics__subtitle">Cohort proficiency distribution, curriculum hotspots &amp; growth velocity</p>
       </div>
 
       <div class="sbar-analytics__algo-badge">
@@ -255,7 +268,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { ref, computed } from 'vue'
 import { AlertTriangle, CheckCircle2, TrendingUp, TrendingDown, Minus, Sparkles } from 'lucide-vue-next'
 import {
   activeClassRecord,
@@ -269,6 +282,20 @@ import {
 } from '../../db/gradebookService.js'
 
 const emit = defineEmits(['select-assessment', 'show-dossier'])
+
+const activeGradeFilter = ref('all')
+
+const availableGradeFilters = computed(() => {
+  if (!activeClassRecord.value?.students) return ['all']
+  const grades = new Set()
+  Object.values(activeClassRecord.value.students).forEach(st => {
+    if (!st.archived && st.gradeLevel) {
+      grades.add(st.gradeLevel)
+    }
+  })
+  const sorted = Array.from(grades).sort()
+  return sorted.length > 1 ? ['all', ...sorted] : ['all']
+})
 
 const algorithmLabel = computed(() => {
   const algo = activeClassRecord.value?.sbarAlgorithm || 'decaying_average'
@@ -286,6 +313,14 @@ const activeStudents = computed(() => {
     .map(id => ({ studentId: id, ...activeClassRecord.value.students[id] }))
 })
 
+const filteredStudents = computed(() => {
+  let list = activeStudents.value
+  if (activeGradeFilter.value !== 'all' && availableGradeFilters.value.length > 1) {
+    list = list.filter(s => s.gradeLevel && s.gradeLevel.toLowerCase() === activeGradeFilter.value.toLowerCase())
+  }
+  return list
+})
+
 const sbarMasteryMap = computed(() => {
   if (!activeClassRecord.value || !assessments.value || !gradeMap.value) return {}
   const algo = activeClassRecord.value?.sbarAlgorithm || 'decaying_average'
@@ -296,7 +331,7 @@ const sbarInputMode = computed(() => activeClassRecord.value?.sbarInputMode || '
 
 // 1. Overall Student Level Distribution
 const levelDistribution = computed(() => {
-  const total = activeStudents.value.length
+  const total = filteredStudents.value.length
   if (total === 0) {
     return {
       l4: { count: 0, pct: 0, subFine: '', avgPct: null },
@@ -315,7 +350,7 @@ const levelDistribution = computed(() => {
     'L1+': 0, 'L1': 0, 'L1-': 0, 'R': 0
   }
 
-  activeStudents.value.forEach(st => {
+  filteredStudents.value.forEach(st => {
     const overallPct = calculateSBARStudentOverallMastery(
       st.studentId, 
       activeClassRecord.value, 
@@ -538,6 +573,63 @@ const triangulation = computed(() => {
   font-size: 0.875rem;
   color: var(--text-secondary);
   margin: 0.25rem 0 0 0;
+}
+
+/* ── Split Class Grade Filter Pills ────────────────────────────────────────── */
+.sbar-grade-pills {
+  display: inline-flex;
+  gap: 4px;
+  background: var(--surface-2, rgba(0,0,0,0.04));
+  padding: 3px;
+  border-radius: var(--radius-md, 8px);
+  border: 1px solid var(--border);
+}
+
+.sbar-grade-pills .grade-pill {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm, 6px);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.sbar-grade-pills .grade-pill:hover {
+  background: var(--bg-hover);
+  color: var(--text);
+}
+
+.sbar-grade-pills .grade-pill--active {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+
+.sbar-grade-pills .grade-pill:nth-child(2) {
+  background: rgba(99, 102, 241, 0.08);
+  border-color: rgba(99, 102, 241, 0.3);
+  color: #6366f1;
+}
+
+.sbar-grade-pills .grade-pill:nth-child(2).grade-pill--active {
+  background: #6366f1;
+  color: #fff;
+  border-color: #6366f1;
+}
+
+.sbar-grade-pills .grade-pill:nth-child(3) {
+  background: rgba(14, 165, 233, 0.08);
+  border-color: rgba(14, 165, 233, 0.3);
+  color: #0ea5e9;
+}
+
+.sbar-grade-pills .grade-pill:nth-child(3).grade-pill--active {
+  background: #0ea5e9;
+  color: #fff;
+  border-color: #0ea5e9;
 }
 
 .sbar-analytics__algo-badge {

@@ -146,6 +146,7 @@
     <AssessmentConversationModal
       v-slot:modal v-if="isAssessmentCode"
       v-model="noteModalOpen"
+      :student-id="pendingNoteStudent?.studentId"
       :student-name="pendingStudentName"
       :active-class="activeClass"
       @save="onAssessmentSave"

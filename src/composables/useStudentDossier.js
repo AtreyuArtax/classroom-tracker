@@ -92,6 +92,7 @@ export function useStudentDossier(periodRef = null, classIdRef = null) {
                 studentId,
                 firstName: s.firstName,
                 lastName: s.lastName,
+                gradeLevel: s.gradeLevel || '',
             }))
             .sort((a, b) => a.lastName.localeCompare(b.lastName))
     })

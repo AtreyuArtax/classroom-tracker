@@ -4,7 +4,7 @@
 
       <!-- ══ LEFT SIDEBAR ══════════════════════════════════════════════ -->
       <StudentSidebar 
-        :students="sidebarStudents"
+        :students="filteredSidebarStudents"
         :selected-student-id="dossier.selectedStudentId.value"
         :show-academics="rightMode === 'dossier'"
         :is-privacy-mode="isPrivacyMode"
@@ -20,30 +20,45 @@
       <!-- ══ RIGHT PANEL ════════════════════════════════════════════════ -->
       <main class="reports__main">
 
-        <!-- Pillar Navigation Bar -->
-        <div class="reports__pillar-nav" role="tablist" aria-label="Reports Mode">
-          <button 
-            class="reports__pillar-btn"
-            :class="{ 'reports__pillar-btn--active': rightMode === 'overview' }"
-            @click="switchPillar('overview')"
-          >
-            <BarChart2 :size="16" /> Class Analytics
-          </button>
-          <button 
-            class="reports__pillar-btn"
-            :class="{ 'reports__pillar-btn--active': rightMode === 'printhub' }"
-            @click="switchPillar('printhub')"
-          >
-            <Printer :size="16" /> Document &amp; Print Hub
-          </button>
-          <button 
-            v-if="dossier.selectedStudentId.value"
-            class="reports__pillar-btn"
-            :class="{ 'reports__pillar-btn--active': rightMode === 'dossier' }"
-            @click="switchPillar('dossier')"
-          >
-            <User :size="16" /> Student 360
-          </button>
+        <!-- Pillar Navigation Bar + Grade Filter Pills -->
+        <div class="reports__header-bar" style="display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
+          <div class="reports__pillar-nav" role="tablist" aria-label="Reports Mode">
+            <button 
+              class="reports__pillar-btn"
+              :class="{ 'reports__pillar-btn--active': rightMode === 'overview' }"
+              @click="switchPillar('overview')"
+            >
+              <BarChart2 :size="16" /> Class Analytics
+            </button>
+            <button 
+              class="reports__pillar-btn"
+              :class="{ 'reports__pillar-btn--active': rightMode === 'printhub' }"
+              @click="switchPillar('printhub')"
+            >
+              <Printer :size="16" /> Document &amp; Print Hub
+            </button>
+            <button 
+              v-if="dossier.selectedStudentId.value"
+              class="reports__pillar-btn"
+              :class="{ 'reports__pillar-btn--active': rightMode === 'dossier' }"
+              @click="switchPillar('dossier')"
+            >
+              <User :size="16" /> Student 360
+            </button>
+          </div>
+
+          <!-- Split Class Grade Filter Pills (Applies to Entire Page) -->
+          <div v-if="availableGradeFilters.length > 1" class="sbar-grade-pills">
+            <button 
+              v-for="gFilter in availableGradeFilters" 
+              :key="gFilter" 
+              class="grade-pill"
+              :class="{ 'grade-pill--active': activeGradeFilter === gFilter }"
+              @click="activeGradeFilter = gFilter"
+            >
+              {{ gFilter === 'all' ? 'All Grades' : gFilter }}
+            </button>
+          </div>
         </div>
 
         <!-- Loading -->
@@ -106,11 +121,12 @@
             :has-any-notes="hasAnyNotes"
             :recent-notes="recentNotes"
             :show-completed-notes="showCompletedNotes"
-            :report-class="reportClass"
+            :report-class="effectiveReportClass"
             :class-grades="classGrades"
             :assessments="assessmentsList"
-            :sidebar-students="sidebarStudents"
+            :sidebar-students="filteredSidebarStudents"
             :all-class-events="allClassEvents"
+            :active-grade-filter="activeGradeFilter"
             @select-student="onSelectStudent"
             @toggle-followup-expand="followUpExpanded = !followUpExpanded"
             @toggle-longtrips-expand="longTripsExpanded = !longTripsExpanded"
@@ -173,6 +189,8 @@ import { ref, reactive, computed, watch, onMounted } from 'vue'
 import { BarChart2, Printer, User } from 'lucide-vue-next'
 
 import { useClassroom } from '../composables/useClassroom.js'
+import { getEffectiveClassRecord } from '../composables/useElementary.js'
+import { activeSubjectId } from '../composables/useClassroomState.js'
 import { useStudentDossier } from '../composables/useStudentDossier.js'
 import * as classService from '../db/classService.js'
 import * as eventService from '../db/eventService.js'
@@ -239,11 +257,13 @@ watch(sidebarClassId, () => {
   showCompletedNotes.value = false
 })
 
-watch(activeClass, async (newClass, oldClass) => {
-  if (newClass && (!oldClass || newClass.classId !== oldClass.classId)) {
-    sidebarClassId.value = newClass.classId
-    dossier.clearStudent()
-    dossier.loadSidebarClass(newClass.classId)
+watch([activeClass, activeSubjectId], async ([newClass, newSub], [oldClass, oldSub]) => {
+  if (newClass) {
+    if (!oldClass || newClass.classId !== oldClass.classId) {
+      sidebarClassId.value = newClass.classId
+      dossier.clearStudent()
+      dossier.loadSidebarClass(newClass.classId)
+    }
     await loadGradebook(newClass)
     rightMode.value = 'overview'
     runReport()
@@ -319,6 +339,18 @@ watch(classList, (list) => {
 
 const sidebarStudents = dossier.sidebarStudents
 
+const activeGradeFilter = ref('all')
+
+
+
+const filteredSidebarStudents = computed(() => {
+  let list = sidebarStudents.value || []
+  if (activeGradeFilter.value !== 'all' && availableGradeFilters.value.length > 1) {
+    list = list.filter(s => s.gradeLevel && s.gradeLevel.toLowerCase() === activeGradeFilter.value.toLowerCase())
+  }
+  return list
+})
+
 const selectedPeriod = ref('week')
 const PERIOD_OPTIONS = [
   { label: 'This Week', value: 'week' },
@@ -347,6 +379,29 @@ const reportClass = computed(() =>
   ?? classList.value[0]
   ?? null
 )
+
+const effectiveReportClass = computed(() => {
+  if (!reportClass.value) return null
+  return getEffectiveClassRecord(reportClass.value, activeSubjectId.value)
+})
+
+const availableGradeFilters = computed(() => {
+  const rawClass = classList.value.find(c => c.classId === sidebarClassId.value) ?? activeClass.value
+  const studentsMap = rawClass?.students ?? {}
+  const grades = new Set()
+  Object.values(studentsMap).forEach(st => {
+    if (!st.archived && st.gradeLevel) {
+      grades.add(st.gradeLevel)
+    }
+  })
+  if (sidebarStudents.value) {
+    sidebarStudents.value.forEach(st => {
+      if (st.gradeLevel) grades.add(st.gradeLevel)
+    })
+  }
+  const sorted = Array.from(grades).sort()
+  return sorted.length > 1 ? ['all', ...sorted] : ['all']
+})
 
 const reportStudents = computed(() => {
   const studentsMap = reportClass.value?.students ?? {}
@@ -810,6 +865,64 @@ const washroomChartOptions = {
   padding: 12px 16px;
   border-radius: var(--radius-lg);
   border: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+/* ── Split Class Grade Filter Pills ────────────────────────────────────────── */
+.sbar-grade-pills {
+  display: inline-flex;
+  gap: 4px;
+  background: var(--bg-secondary);
+  padding: 3px;
+  border-radius: var(--radius-md, 8px);
+  border: 1px solid var(--border);
+}
+
+.sbar-grade-pills .grade-pill {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm, 6px);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.sbar-grade-pills .grade-pill:hover {
+  background: var(--bg-hover);
+  color: var(--text);
+}
+
+.sbar-grade-pills .grade-pill--active {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+
+.sbar-grade-pills .grade-pill:nth-child(2) {
+  background: rgba(99, 102, 241, 0.08);
+  border-color: rgba(99, 102, 241, 0.3);
+  color: #6366f1;
+}
+
+.sbar-grade-pills .grade-pill:nth-child(2).grade-pill--active {
+  background: #6366f1;
+  color: #fff;
+  border-color: #6366f1;
+}
+
+.sbar-grade-pills .grade-pill:nth-child(3) {
+  background: rgba(14, 165, 233, 0.08);
+  border-color: rgba(14, 165, 233, 0.3);
+  color: #0ea5e9;
+}
+
+.sbar-grade-pills .grade-pill:nth-child(3).grade-pill--active {
+  background: #0ea5e9;
+  color: #fff;
+  border-color: #0ea5e9;
 }
 
 .reports__period-row {

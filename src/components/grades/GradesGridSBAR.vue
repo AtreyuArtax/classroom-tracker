@@ -94,12 +94,22 @@
           <tr v-for="student in sortedRoster" :key="student.studentId" class="sbar-row">
             <!-- Student Name Column -->
             <td class="sticky-col sticky-col--name sbar-student-cell" @click="$emit('open-dossier', student.studentId)">
-              <span class="sbar-student-name">
-                {{ student.lastName }}, {{ student.firstName }}
-                <span v-if="student.gradeLevel && availableGradeFilters.length > 1" class="sbar-student-grade-tag">
-                  {{ student.gradeLevel.replace('Grade ', 'Gr ') }}
-                </span>
-              </span>
+              <div class="sbar-student-name-group" :title="`${student.lastName}, ${student.firstName}`">
+                <div class="sbar-student-lastname">{{ student.lastName }}</div>
+                <div class="sbar-student-firstname-row">
+                  <span class="sbar-student-firstname">{{ student.firstName }}</span>
+                  <span 
+                    v-if="student.gradeLevel && availableGradeFilters.length > 1" 
+                    class="sbar-student-grade-tag"
+                    :class="{
+                      'sbar-student-grade-tag--gr7': student.gradeLevel === 'Grade 7',
+                      'sbar-student-grade-tag--gr8': student.gradeLevel === 'Grade 8'
+                    }"
+                  >
+                    {{ student.gradeLevel.replace('Grade ', 'Gr ') }}
+                  </span>
+                </div>
+              </div>
             </td>
 
             <!-- Overall Mastery Badge Column -->
@@ -589,22 +599,43 @@ function openExpectationDetail(studentId, expCode) {
 
 .sticky-col {
   position: sticky;
-  z-index: 5;
-  background: var(--surface);
+  z-index: 10;
+  background-color: var(--surface);
+}
+
+thead th.sticky-col {
+  z-index: 20;
+}
+
+.sbar-header-group th.sticky-col {
+  background-color: var(--bg-secondary);
+}
+
+.sbar-header-sub th.sticky-col {
+  background-color: var(--surface);
 }
 
 .sticky-col--name {
   left: 0;
+  width: 180px;
   min-width: 180px;
+  max-width: 180px;
+  box-sizing: border-box;
   text-align: left !important;
-  border-right: 2px solid var(--border) !important;
+  border-right: 1px solid var(--border) !important;
+  background-color: var(--surface);
 }
 
 .sticky-col--mastery {
   left: 180px;
+  width: 120px;
   min-width: 120px;
+  max-width: 120px;
+  box-sizing: border-box;
   text-align: center !important;
   border-right: 2px solid var(--border) !important;
+  background-color: var(--surface);
+  box-shadow: 3px 0 6px -2px rgba(0, 0, 0, 0.12);
 }
 
 .exp-code-header {
@@ -613,7 +644,11 @@ function openExpectationDetail(studentId, expCode) {
 }
 
 .sbar-row:hover td {
-  background: var(--surface-hover);
+  background-color: var(--bg-secondary);
+}
+
+.sbar-row:hover td.sticky-col {
+  background-color: var(--bg-secondary) !important;
 }
 
 .sbar-row td {
@@ -628,9 +663,55 @@ function openExpectationDetail(studentId, expCode) {
   cursor: pointer;
 }
 
-.sbar-student-name {
-  font-weight: 600;
+.sbar-student-name-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  line-height: 1.2;
+}
+
+.sbar-student-lastname {
+  font-weight: 700;
+  font-size: 0.88rem;
   color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sbar-student-firstname-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+
+.sbar-student-firstname {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sbar-student-grade-tag {
+  display: inline-block;
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.sbar-student-grade-tag--gr7 {
+  background: rgba(99, 102, 241, 0.12);
+  color: #6366f1;
+  border: 1px solid rgba(99, 102, 241, 0.3);
+}
+
+.sbar-student-grade-tag--gr8 {
+  background: rgba(14, 165, 233, 0.12);
+  color: #0ea5e9;
+  border: 1px solid rgba(14, 165, 233, 0.3);
 }
 
 .sbar-mastery-cell {

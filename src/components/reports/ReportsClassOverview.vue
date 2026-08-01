@@ -206,6 +206,7 @@
             :active-class="reportClass"
             :assessments="assessments"
             :class-grades="classGrades"
+            :active-grade-filter="activeGradeFilter"
           />
         </div>
 
@@ -288,7 +289,8 @@ const props = defineProps({
   classGrades: { type: Object, default: () => ({}) },
   assessments: { type: Array, default: () => [] },
   sidebarStudents: { type: Array, default: () => [] },
-  allClassEvents: { type: Array, default: () => [] }
+  allClassEvents: { type: Array, default: () => [] },
+  activeGradeFilter: { type: String, default: 'all' }
 })
 
 defineEmits([
