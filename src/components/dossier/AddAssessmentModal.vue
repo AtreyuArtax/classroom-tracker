@@ -321,6 +321,9 @@ watch(showAddAssessmentModal, (open) => {
     } else {
       selectedGradeFilter.value = 'all'
     }
+    if (!newAssessment.value.categoryId && activeClassRecord.value?.gradebookCategories?.length > 0) {
+      newAssessment.value.categoryId = activeClassRecord.value.gradebookCategories[0].categoryId
+    }
   }
 }, { immediate: true })
 

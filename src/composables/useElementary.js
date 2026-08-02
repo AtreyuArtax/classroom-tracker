@@ -1,6 +1,6 @@
 import { ref, computed } from 'vue'
 import { activeSubjectId, teachingMode } from './useClassroomState.js'
-import { DEFAULT_ELEMENTARY_SUBJECTS } from '../utils/elementarySubjects.js'
+import { DEFAULT_ELEMENTARY_SUBJECTS, DEFAULT_TRADITIONAL_CATEGORIES } from '../utils/elementarySubjects.js'
 import { findElementaryPreset, findElementaryPresets } from '../data/curriculum/index.js'
 
 export { findElementaryPreset, findElementaryPresets }
@@ -25,7 +25,13 @@ export { findElementaryPreset, findElementaryPresets }
 export function getEffectiveClassRecord(classRecord, targetSubjectId = null) {
   if (!classRecord) return null
   if (classRecord.classType !== 'elementary') {
-    return classRecord
+    const cats = (classRecord.gradebookCategories && classRecord.gradebookCategories.length > 0)
+      ? classRecord.gradebookCategories
+      : DEFAULT_TRADITIONAL_CATEGORIES
+    return {
+      ...classRecord,
+      gradebookCategories: cats
+    }
   }
 
   const subs = classRecord.subjects && classRecord.subjects.length > 0
@@ -36,6 +42,12 @@ export function getEffectiveClassRecord(classRecord, targetSubjectId = null) {
   const activeSub = subs.find(s => s.subjectId === subId) || subs[0]
   if (!activeSub) return classRecord
 
+  const effectiveCategories = (activeSub.gradebookCategories && activeSub.gradebookCategories.length > 0)
+    ? activeSub.gradebookCategories
+    : ((classRecord.gradebookCategories && classRecord.gradebookCategories.length > 0)
+        ? classRecord.gradebookCategories
+        : DEFAULT_TRADITIONAL_CATEGORIES)
+
   return {
     ...classRecord,
     activeSubjectId: activeSub.subjectId,
@@ -45,7 +57,7 @@ export function getEffectiveClassRecord(classRecord, targetSubjectId = null) {
     gradingFramework: activeSub.gradingFramework || 'sbar',
     sbarAlgorithm: activeSub.sbarAlgorithm || 'decaying_average',
     sbarInputMode: activeSub.sbarInputMode || 'fine',
-    gradebookCategories: activeSub.gradebookCategories || [],
+    gradebookCategories: effectiveCategories,
     gradebookUnits: activeSub.gradebookUnits || [],
     expectations: activeSub.expectations || []
   }

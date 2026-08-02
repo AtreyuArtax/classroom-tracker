@@ -93,6 +93,18 @@
               <span>Strands</span>
             </button>
 
+            <button
+              v-if="sub.gradingFramework === 'traditional'"
+              type="button"
+              class="elementary-subjects__btn-ghost"
+              style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.8rem; padding: 6px 10px;"
+              title="Edit Category Weights"
+              @click="expandedCategorySubjectId = expandedCategorySubjectId === sub.subjectId ? null : sub.subjectId"
+            >
+              <ChevronDown :size="14" :style="{ transform: expandedCategorySubjectId === sub.subjectId ? 'rotate(180deg)' : 'none' }" />
+              <span>Categories ({{ (sub.gradebookCategories && sub.gradebookCategories.length > 0 ? sub.gradebookCategories : DEFAULT_TRADITIONAL_CATEGORIES).length }})</span>
+            </button>
+
             <select 
               :value="sub.gradingFramework || 'sbar'"
               class="elementary-subjects__select"
@@ -118,6 +130,52 @@
               @click="removeSubject(sub.subjectId)"
             >
               <Trash2 :size="16" />
+            </button>
+          </div>
+        </div>
+
+        <!-- Expandable Category & Weight Editor for Traditional Subjects -->
+        <div v-if="sub.gradingFramework === 'traditional' && expandedCategorySubjectId === sub.subjectId" class="elementary-subjects__strands-editor">
+          <div class="elementary-subjects__strands-header" style="display: flex; justify-content: space-between; align-items: center;">
+            <strong>Category Weights for {{ sub.name }}:</strong>
+            <span class="elementary-subjects__weight-total" :style="{ color: getSubjectTotalWeight(sub) === 100 ? 'var(--text-secondary)' : '#ef4444' }">
+              Total Weight: <strong>{{ getSubjectTotalWeight(sub) }}%</strong>
+            </span>
+          </div>
+          
+          <div v-for="cat in (sub.gradebookCategories && sub.gradebookCategories.length > 0 ? sub.gradebookCategories : DEFAULT_TRADITIONAL_CATEGORIES)" :key="cat.categoryId" class="elementary-subjects__strand-row">
+            <input 
+              v-model="cat.name" 
+              type="text" 
+              class="elementary-subjects__strand-input"
+              placeholder="Category Name"
+              @change="saveSubjectCategories(sub.subjectId)"
+            />
+            <div style="display: flex; align-items: center; gap: 4px;">
+              <input 
+                v-model.number="cat.weight" 
+                type="number" 
+                class="elementary-subjects__strand-input"
+                style="width: 70px; text-align: right;"
+                min="0"
+                max="100"
+                @change="saveSubjectCategories(sub.subjectId)"
+              />
+              <span style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary);">%</span>
+              <button 
+                type="button" 
+                class="elementary-subjects__btn-delete"
+                title="Remove Category"
+                @click="removeSubjectCategory(sub.subjectId, cat.categoryId)"
+              >
+                <Trash2 :size="14" />
+              </button>
+            </div>
+          </div>
+
+          <div style="margin-top: 8px; display: flex; justify-content: flex-start;">
+            <button type="button" class="elementary-subjects__btn-ghost" style="font-size: 0.8rem; padding: 4px 10px;" @click="addSubjectCategory(sub.subjectId)">
+              + Add Category
             </button>
           </div>
         </div>
@@ -200,7 +258,7 @@ import { Plus, Check, Trash2, Zap, BookOpen, ChevronDown } from 'lucide-vue-next
 import SubjectIcon from '../SubjectIcon.vue'
 import { useClassroom } from '../../composables/useClassroom.js'
 import { activeSubjectId } from '../../composables/useClassroomState.js'
-import { DEFAULT_ELEMENTARY_SUBJECTS } from '../../utils/elementarySubjects.js'
+import { DEFAULT_ELEMENTARY_SUBJECTS, DEFAULT_TRADITIONAL_CATEGORIES } from '../../utils/elementarySubjects.js'
 import { 
   parseGradesFromClass,
   detectGradeFromClassName, 
@@ -217,6 +275,7 @@ const showAddModal = ref(false)
 const showExpectationModal = ref(false)
 const activeImportSubject = ref(null)
 const expandedStrandSubjectId = ref(null)
+const expandedCategorySubjectId = ref(null)
 
 function cleanUnitName(name) {
   if (!name) return ''
@@ -355,10 +414,65 @@ async function togglePreset(preset) {
   await updateActiveClass({ subjects: existing })
 }
 
+function getSubjectTotalWeight(sub) {
+  const cats = (sub.gradebookCategories && sub.gradebookCategories.length > 0)
+    ? sub.gradebookCategories
+    : DEFAULT_TRADITIONAL_CATEGORIES
+  return cats.reduce((sum, c) => sum + (c.weight || 0), 0)
+}
+
+async function addSubjectCategory(subjectId) {
+  const existing = currentSubjects.value.map(s => {
+    if (s.subjectId === subjectId) {
+      const cats = (s.gradebookCategories && s.gradebookCategories.length > 0)
+        ? [...s.gradebookCategories]
+        : JSON.parse(JSON.stringify(DEFAULT_TRADITIONAL_CATEGORIES))
+      cats.push({
+        categoryId: crypto.randomUUID(),
+        name: 'New Category',
+        weight: 0
+      })
+      return { ...s, gradebookCategories: cats }
+    }
+    return s
+  })
+  await updateActiveClass({ subjects: existing })
+}
+
+async function removeSubjectCategory(subjectId, categoryId) {
+  const existing = currentSubjects.value.map(s => {
+    if (s.subjectId === subjectId) {
+      const baseCats = (s.gradebookCategories && s.gradebookCategories.length > 0)
+        ? s.gradebookCategories
+        : DEFAULT_TRADITIONAL_CATEGORIES
+      const cats = baseCats.filter(c => c.categoryId !== categoryId)
+      return { ...s, gradebookCategories: cats }
+    }
+    return s
+  })
+  await updateActiveClass({ subjects: existing })
+}
+
+async function saveSubjectCategories(subjectId) {
+  const existing = currentSubjects.value.map(s => {
+    if (s.subjectId === subjectId) {
+      if (!s.gradebookCategories || s.gradebookCategories.length === 0) {
+        s.gradebookCategories = JSON.parse(JSON.stringify(DEFAULT_TRADITIONAL_CATEGORIES))
+      }
+    }
+    return s
+  })
+  await updateActiveClass({ subjects: existing })
+}
+
 async function updateSubjectFramework(subjectId, framework) {
   const existing = currentSubjects.value.map(s => {
     if (s.subjectId === subjectId) {
-      return { ...s, gradingFramework: framework }
+      const updated = { ...s, gradingFramework: framework }
+      if (framework === 'traditional' && (!updated.gradebookCategories || updated.gradebookCategories.length === 0)) {
+        updated.gradebookCategories = JSON.parse(JSON.stringify(DEFAULT_TRADITIONAL_CATEGORIES))
+      }
+      return updated
     }
     return s
   })

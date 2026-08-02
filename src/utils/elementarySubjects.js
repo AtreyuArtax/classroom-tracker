@@ -4,6 +4,12 @@
  * Pre-populated subject templates and icons for Elementary K-8 Homerooms.
  */
 
+export const DEFAULT_TRADITIONAL_CATEGORIES = [
+  { categoryId: 'cat_assignments', name: 'Assignments', weight: 40 },
+  { categoryId: 'cat_tests', name: 'Tests & Quizzes', weight: 40 },
+  { categoryId: 'cat_projects', name: 'Projects & Labs', weight: 20 }
+]
+
 export const DEFAULT_ELEMENTARY_SUBJECTS = [
   {
     subjectId: 'subj_math',

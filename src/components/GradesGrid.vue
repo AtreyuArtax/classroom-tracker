@@ -1,27 +1,47 @@
 <template>
   <div class="grades__grid-container-outer">
-    <!-- Unit Filter Bar (Fixed above table) -->
-    <div v-if="availableUnits.length > 0" class="grades__filter-bar">
-      <span class="grades__filter-label">Unit:</span>
-      <div class="grades__filter-chips">
-        <button 
-          class="grid-chip" 
-          :class="{ 'grid-chip--active': selectedUnitId === null }"
-          @click="selectedUnitId = null"
-        >
-          All Units
-        </button>
-        <button 
-          v-for="u in availableUnits" 
-          :key="u.unitId"
-          class="grid-chip"
-          :class="{ 'grid-chip--active': selectedUnitId === u.unitId }"
-          :style="selectedUnitId === u.unitId ? { background: getUnitColor(u.unitId), borderColor: getUnitColor(u.unitId), color: '#fff' } : {}"
-          @click="selectedUnitId = u.unitId"
-        >
-          <span class="grid-chip__dot" :style="{ background: selectedUnitId === u.unitId ? '#fff' : getUnitColor(u.unitId) }"></span>
-          {{ u.name }}
-        </button>
+    <!-- Unit & Grade Filter Bar (Fixed above table) -->
+    <div v-if="availableGradeFilters.length > 1 || availableUnits.length > 0" class="grades__filter-bar">
+      <!-- Grade Filter Pills -->
+      <div v-if="availableGradeFilters.length > 1" class="grades__filter-group">
+        <span class="grades__filter-label">Grade:</span>
+        <div class="grades__filter-chips">
+          <button 
+            v-for="gFilter in availableGradeFilters" 
+            :key="gFilter" 
+            type="button"
+            class="grid-chip"
+            :class="{ 'grid-chip--active': String(selectedGradeFilter).toLowerCase() === String(gFilter).toLowerCase() }"
+            @click="selectedGradeFilter = gFilter; selectedUnitId = null"
+          >
+            {{ gFilter === 'all' ? 'All Grades' : gFilter }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Unit Filter Pills -->
+      <div v-if="availableUnits.length > 0 && (availableGradeFilters.length <= 1 || selectedGradeFilter !== 'all')" class="grades__filter-group">
+        <span class="grades__filter-label">Unit:</span>
+        <div class="grades__filter-chips">
+          <button 
+            class="grid-chip" 
+            :class="{ 'grid-chip--active': selectedUnitId === null }"
+            @click="selectedUnitId = null"
+          >
+            All Units
+          </button>
+          <button 
+            v-for="u in availableUnits" 
+            :key="u.unitId"
+            class="grid-chip"
+            :class="{ 'grid-chip--active': selectedUnitId === u.unitId }"
+            :style="selectedUnitId === u.unitId ? { background: getUnitColor(u.unitId), borderColor: getUnitColor(u.unitId), color: '#fff' } : {}"
+            @click="selectedUnitId = u.unitId"
+          >
+            <span class="grid-chip__dot" :style="{ background: selectedUnitId === u.unitId ? '#fff' : getUnitColor(u.unitId) }"></span>
+            {{ cleanUnitPillName(u.name) }}
+          </button>
+        </div>
       </div>
     </div>
 
@@ -129,7 +149,20 @@
                   :count="studentAbsenceTotals[student.studentId].testDays" 
                 />
               </div>
-              <div class="grades__student-firstname">{{ student.firstName }}</div>
+              <div class="grades__student-firstname">
+                {{ student.firstName }}
+                <span 
+                  v-if="student.gradeLevel && availableGradeFilters.length > 1" 
+                  class="sbar-student-grade-tag"
+                  :class="{
+                    'sbar-student-grade-tag--gr7': student.gradeLevel === 'Grade 7',
+                    'sbar-student-grade-tag--gr8': student.gradeLevel === 'Grade 8'
+                  }"
+                  style="margin-left: 6px;"
+                >
+                  {{ student.gradeLevel.replace('Grade ', 'Gr ') }}
+                </span>
+              </div>
               <div class="grades__sparkline-mini" v-if="studentTrends[student.studentId]?.length > 1 && !props.isPrivacyMode">
                 <svg width="80" height="14" viewBox="0 0 80 14">
                   <path
@@ -478,8 +511,10 @@ function getSparklinePath(data, width, height) {
 
 // Computed grid properties
 const overallClassAvg = computed(() => {
-  const values = Object.values(classGrades.value || {})
-    .map(g => g?.overallGrade)
+  const visibleStudentIds = new Set(sortedRoster.value.map(s => s.studentId))
+  const values = Object.entries(classGrades.value || {})
+    .filter(([id]) => visibleStudentIds.has(id))
+    .map(([, g]) => g?.overallGrade)
     .filter(val => val !== null && val !== undefined)
   if (values.length === 0) return null
   return values.reduce((sum, val) => sum + val, 0) / values.length
@@ -527,8 +562,44 @@ function getCategoryName(categoryId) {
   return activeClassRecord.value.gradebookCategories.find(c => c.categoryId === categoryId)?.name ?? ''
 }
 
+function cleanUnitPillName(name) {
+  if (!name) return ''
+  return name.replace(/^\[Grade\s*\d+\]\s*/i, '').trim()
+}
+
+const selectedGradeFilter = ref('all')
+
+const availableGradeFilters = computed(() => {
+  const grades = new Set()
+  if (activeClassRecord.value?.students) {
+    Object.values(activeClassRecord.value.students).forEach(st => {
+      if (st.gradeLevel && !st.archived) grades.add(st.gradeLevel)
+    })
+  }
+  const units = activeClassRecord.value?.gradebookUnits || []
+  units.forEach(u => {
+    const uGrade = u.gradeLevel || (u.name && u.name.includes('Grade 7') ? 'Grade 7' : (u.name && u.name.includes('Grade 8') ? 'Grade 8' : ''))
+    if (uGrade) grades.add(uGrade)
+    if (u.expectations) {
+      u.expectations.forEach(e => { if (e.gradeLevel) grades.add(e.gradeLevel) })
+    }
+  })
+  if (grades.size <= 1) return []
+  return ['all', ...Array.from(grades).sort()]
+})
+
 const availableUnits = computed(() => {
-  return activeClassRecord.value?.gradebookUnits || []
+  const units = activeClassRecord.value?.gradebookUnits || []
+  if (selectedGradeFilter.value === 'all' || availableGradeFilters.value.length <= 1) {
+    return units
+  }
+  const targetG = selectedGradeFilter.value.toLowerCase()
+  return units.filter(u => {
+    const uGrade = u.gradeLevel || (u.name && u.name.includes('Grade 7') ? 'Grade 7' : (u.name && u.name.includes('Grade 8') ? 'Grade 8' : ''))
+    if (uGrade && uGrade.toLowerCase() === targetG) return true
+    if (u.expectations && u.expectations.some(e => e.gradeLevel && e.gradeLevel.toLowerCase() === targetG)) return true
+    return !uGrade
+  })
 })
 
 const availableCategories = computed(() => {
@@ -544,6 +615,10 @@ const sortedAssessments = computed(() => {
     if (isSBAR.value && (!a.expectationIds || a.expectationIds.length === 0)) return false
     return true
   })
+  if (selectedGradeFilter.value !== 'all' && availableGradeFilters.value.length > 1) {
+    const validUnitIds = new Set(availableUnits.value.map(u => u.unitId))
+    list = list.filter(a => !a.unitId || validUnitIds.has(a.unitId))
+  }
   if (selectedUnitId.value) {
     list = list.filter(a => a.unitId === selectedUnitId.value)
   }
@@ -559,13 +634,18 @@ const sortedAssessments = computed(() => {
 const sortedRoster = computed(() => {
   if (!activeClassRecord.value?.students) return []
   
-  const students = Object.keys(activeClassRecord.value.students)
+  let students = Object.keys(activeClassRecord.value.students)
     .filter(id => !activeClassRecord.value.students[id].archived)
     .map(id => ({ 
       studentId: id, 
       ...activeClassRecord.value.students[id],
       overallGrade: classGrades.value[id]?.overallGrade ?? -1
     }))
+
+  if (selectedGradeFilter.value !== 'all' && availableGradeFilters.value.length > 1) {
+    const targetG = selectedGradeFilter.value.toLowerCase()
+    students = students.filter(st => (st.gradeLevel || '').toLowerCase() === targetG)
+  }
 
   return students.sort((a, b) => {
     if (gridSortBy.value === 'grade') {
@@ -747,10 +827,38 @@ function copyAssessmentGrades(assessment) {
 .grades__filter-bar {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
   padding: 6px 16px;
   background: var(--surface);
   border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.sbar-student-grade-tag {
+  display: inline-block;
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.sbar-student-grade-tag--gr7 {
+  background: rgba(99, 102, 241, 0.12);
+  color: #6366f1;
+  border: 1px solid rgba(99, 102, 241, 0.3);
+}
+
+.sbar-student-grade-tag--gr8 {
+  background: rgba(14, 165, 233, 0.12);
+  color: #0ea5e9;
+  border: 1px solid rgba(14, 165, 233, 0.3);
+}
+
+.grades__filter-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .grades__filter-label {

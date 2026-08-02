@@ -40,8 +40,8 @@
     "semantic_hash": ""
   },
   "components/GradesGrid.vue": {
-    "mtime": 1785515285.6763942,
-    "ast_hash": "5a27a68867f9c71cf0aaf90e35f6d105",
+    "mtime": 1785707878.4256372,
+    "ast_hash": "ce12d1836c137fb19c74e7cea7254bc2",
     "semantic_hash": ""
   },
   "components/MessageOverlay.vue": {
@@ -105,8 +105,8 @@
     "semantic_hash": ""
   },
   "components/dossier/AddAssessmentModal.vue": {
-    "mtime": 1785577650.9697683,
-    "ast_hash": "7212d0cb6d6fef94313edd26985a3b1b",
+    "mtime": 1785707373.137608,
+    "ast_hash": "11227fae02d07e44dc9b097b0532f6fb",
     "semantic_hash": ""
   },
   "components/dossier/AttendanceActivityReport.vue": {
@@ -265,7 +265,7 @@
     "semantic_hash": ""
   },
   "components/setup/ClassLogisticsSettings.vue": {
-    "mtime": 1785521232.051842,
+    "mtime": 1785707728.7909732,
     "ast_hash": "e9f9a2ed0be97423a33093d8b588dc40",
     "semantic_hash": ""
   },
@@ -535,8 +535,8 @@
     "semantic_hash": ""
   },
   "components/setup/ElementarySubjectManager.vue": {
-    "mtime": 1785524805.8755066,
-    "ast_hash": "0f38f5740eaa5c4277523dfecd3277fd",
+    "mtime": 1785707757.4696774,
+    "ast_hash": "dc18cb18b7ee3e53ebc77d1012e655ae",
     "semantic_hash": ""
   },
   "db/gradebook/assessmentService.js": {
@@ -565,8 +565,8 @@
     "semantic_hash": ""
   },
   "utils/elementarySubjects.js": {
-    "mtime": 1785522014.4205966,
-    "ast_hash": "8dc6af4020f482ed3ce5e11986dfd1e6",
+    "mtime": 1785707358.844351,
+    "ast_hash": "a4fa51f138103507638578114bfca035",
     "semantic_hash": ""
   },
   "components/SubjectIcon.vue": {
@@ -575,8 +575,8 @@
     "semantic_hash": ""
   },
   "composables/useElementary.js": {
-    "mtime": 1785524791.618851,
-    "ast_hash": "0a57e623ca70dfac83c1df550ec4a522",
+    "mtime": 1785707366.5634248,
+    "ast_hash": "bf8e80507669cf2bc5bf1fcb9859e440",
     "semantic_hash": ""
   },
   "data/curriculum/elementary/ontario-gr8-science.json": {
