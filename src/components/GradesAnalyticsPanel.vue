@@ -436,6 +436,7 @@ import {
   distributionMode,
   classAnalytics,
   refreshClassAnalytics,
+  selectedCourseFilter,
   setExclusionMode,
   toggleStudentFromAnalytics,
   analyticsMode
@@ -479,8 +480,6 @@ const emit = defineEmits(['select-assessment'])
 
 const isExclusionsOpen = ref(false)
 const isCalculating = ref(false)
-
-const selectedCourseFilter = ref('all')
 
 const availableCourseFilters = computed(() => {
   const codes = new Set()
@@ -541,6 +540,15 @@ watch(exclusionMode, async () => {
   isCalculating.value = true
   try {
     await refreshClassAnalytics()
+  } finally {
+    isCalculating.value = false
+  }
+})
+
+watch(selectedCourseFilter, async (val) => {
+  isCalculating.value = true
+  try {
+    await refreshClassAnalytics(val)
   } finally {
     isCalculating.value = false
   }
@@ -689,10 +697,16 @@ const classEvidenceBlend = computed(() => {
 // Roster for checklist
 const sortedRoster = computed(() => {
   if (!activeClassRecord.value?.students) return []
-  return Object.keys(activeClassRecord.value.students)
+  let list = Object.keys(activeClassRecord.value.students)
     .filter(id => !activeClassRecord.value.students[id].archived)
     .map(id => ({ studentId: id, ...activeClassRecord.value.students[id] }))
-    .sort((a, b) => a.lastName.toLowerCase().localeCompare(b.lastName.toLowerCase()))
+  
+  if (selectedCourseFilter.value && selectedCourseFilter.value !== 'all') {
+    const tC = selectedCourseFilter.value.toLowerCase()
+    list = list.filter(s => s.courseCode && s.courseCode.toLowerCase() === tC)
+  }
+
+  return list.sort((a, b) => a.lastName.toLowerCase().localeCompare(b.lastName.toLowerCase()))
 })
 
 // Chart.js bindings

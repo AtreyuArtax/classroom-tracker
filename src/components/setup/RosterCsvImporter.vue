@@ -90,7 +90,7 @@
                   <strong>{{ group.name }}</strong>
                   <div style="display: flex; gap: 4px; align-items: center;">
                     <span class="setup__chip">{{ group.year }} · Sem {{ group.semester }} · P{{ group.periodNumber }}</span>
-                    <span v-if="group.courseCode" class="setup__chip setup__chip--blue">{{ group.courseCode }}</span>
+                    <span v-if="group.courseCode || group.isSplitClass" class="setup__chip setup__chip--blue">{{ group.isSplitClass && group.courseSections ? group.courseSections.join('/') : group.courseCode }}</span>
                     <span v-if="isExistingClass(group)" class="setup__badge setup__badge--update">Update Existing</span>
                     <span v-else class="setup__badge setup__badge--new">New Class</span>
                   </div>
@@ -275,6 +275,7 @@ function onFileSelected(evt) {
         if (uniqueCourses.length > 1) {
           groups[k].isSplitClass = true
           groups[k].courseSections = uniqueCourses
+          groups[k].courseCode = uniqueCourses.join('/')
           groups[k].name = `Period ${groups[k].periodNumber} (${uniqueCourses.join('/')}) — ${groups[k].year}`
         }
       }

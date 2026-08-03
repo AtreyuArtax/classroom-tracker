@@ -845,6 +845,12 @@
   border-radius: var(--radius-sm);
 }
 
+.setup__chip--blue {
+  background: rgba(59, 130, 246, 0.12);
+  color: #2563eb;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
 .setup__total-weight {
   font-size: 0.85rem;
   font-weight: 700;

@@ -116,7 +116,7 @@ import { loadGradebook } from '../../composables/useGradebook.js'
 const props = defineProps({
   show: { type: Boolean, default: false },
   sidebarStudents: { type: Array, default: () => [] },
-  sidebarClassId: { type: String, required: true },
+  sidebarClassId: { type: String, default: null },
   reportClass: { type: Object, default: null }
 })
 

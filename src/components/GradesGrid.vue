@@ -169,7 +169,7 @@
               <div class="grades__student-firstname">
                 {{ student.firstName }}
                 <span 
-                  v-if="student.gradeLevel && availableGradeFilters.length > 1" 
+                  v-if="activeClassRecord?.classType === 'elementary' && student.gradeLevel && availableGradeFilters.length > 1" 
                   class="sbar-student-grade-tag"
                   :class="{
                     'sbar-student-grade-tag--gr7': student.gradeLevel === 'Grade 7',
@@ -242,8 +242,8 @@
             class="grades__td-assessment"
             :class="{ 'grades__td-assessment--highlighted': highlightedColumnId === a.assessmentId }"
             :style="getCellStyle(student.studentId, a.assessmentId, a.totalPoints)"
-            @click="startEdit(student.studentId, a.assessmentId)"
-            @contextmenu.prevent="onContextMenu($event, student.studentId, a.assessmentId)"
+            @click="isCellApplicable(student.studentId, a) && startEdit(student.studentId, a.assessmentId)"
+            @contextmenu.prevent="isCellApplicable(student.studentId, a) && onContextMenu($event, student.studentId, a.assessmentId)"
           >
             <!-- Inline Editor -->
             <div v-if="editingCell?.sId === student.studentId && editingCell?.aId === a.assessmentId" class="grades__cell-edit">
@@ -258,6 +258,10 @@
                 @keydown="onKeyNavigate"
                 @keydown.esc.prevent="cancelEdit"
               />
+            </div>
+
+            <div v-else-if="!isCellApplicable(student.studentId, a)" class="grades__cell-content">
+              <span style="color: #9ca3af; font-size: 0.72rem; font-style: italic;">N/A</span>
             </div>
 
             <div v-else-if="gradeMap[a.assessmentId]?.[student.studentId]" class="grades__cell-content">
@@ -382,6 +386,7 @@
 
 <script setup>
 import { ref, computed, watch, nextTick } from 'vue'
+import { getEffectiveClassRecord } from '../composables/useElementary.js'
 import { 
   activeClassRecord, 
   assessments, 
@@ -394,7 +399,8 @@ import {
   deleteAssessment,
   assessmentStats,
   gridSortBy,
-  gridSortOrder
+  gridSortOrder,
+  selectedCourseFilter
 } from '../composables/useGradebook.js'
 import { useGradeEditing } from '../composables/useGradeEditing.js'
 import {
@@ -493,7 +499,19 @@ function getAssessmentAvg(assessmentId) {
   return sum / count
 }
 
+function isCellApplicable(studentId, assessment) {
+  if (!assessment || !assessment.targetCourseCode || assessment.targetCourseCode === 'all') return true
+  const st = activeClassRecord.value?.students?.[studentId]
+  if (!st || !st.courseCode) return true
+  return assessment.targetCourseCode.toLowerCase() === st.courseCode.toLowerCase()
+}
+
 function getCellStyle(studentId, assessmentId, totalPoints) {
+  const assessment = assessments.value.find(a => String(a.assessmentId) === String(assessmentId))
+  if (assessment && !isCellApplicable(studentId, assessment)) {
+    return { background: 'rgba(0,0,0,0.03)', color: '#9ca3af', cursor: 'not-allowed' }
+  }
+
   const grade = gradeMap.value[assessmentId]?.[studentId]
   if (!grade) return {}
   
@@ -591,8 +609,6 @@ function cleanUnitPillName(name) {
   return name.replace(/^\[Grade\s*\d+\]\s*/i, '').trim()
 }
 
-const selectedCourseFilter = ref('all')
-
 const availableCourseFilters = computed(() => {
   const codes = new Set()
   if (activeClassRecord.value?.courseSections) {
@@ -610,6 +626,7 @@ const availableCourseFilters = computed(() => {
 const selectedGradeFilter = ref('all')
 
 const availableGradeFilters = computed(() => {
+  if (activeClassRecord.value?.classType !== 'elementary') return []
   const grades = new Set()
   if (activeClassRecord.value?.students) {
     Object.values(activeClassRecord.value.students).forEach(st => {
@@ -629,7 +646,8 @@ const availableGradeFilters = computed(() => {
 })
 
 const availableUnits = computed(() => {
-  const units = activeClassRecord.value?.gradebookUnits || []
+  const eff = getEffectiveClassRecord(activeClassRecord.value, null, selectedCourseFilter.value)
+  const units = eff?.gradebookUnits || []
   if (selectedGradeFilter.value === 'all' || availableGradeFilters.value.length <= 1) {
     return units
   }

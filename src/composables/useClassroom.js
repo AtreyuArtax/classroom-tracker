@@ -890,6 +890,9 @@ async function _reloadClasses() {
             Object.assign(activeClass.value, fresh)
             students.value = JSON.parse(JSON.stringify(fresh.students || {}))
         }
+    } else if (active.length > 0) {
+        activeClass.value = active[0]
+        students.value = JSON.parse(JSON.stringify(active[0].students || {}))
     }
 }
 

@@ -13,26 +13,31 @@ import { hasUnsyncedChanges } from '../eventService.js'
  * @param {Object} data Assessment data (classId, categoryId, name, date, etc.)
  * @returns {Promise<Object>} The created assessment object with its ID.
  */
-export async function createAssessment({
-  classId, categoryId, name, description = '', date,
-  assessmentType = 'product',
-  unitId = null,
-  expectationId = null,
-  expectationIds = [],
-  target = 'class',
-  targetStudentId = null,
-  totalPoints = 10,
-  scaledTotal = null,
-  excluded = false,
-  retestPolicy = 'highest'
-}) {
+export async function createAssessment(data) {
+  const {
+    classId, categoryId, name, description = '', date,
+    assessmentType = 'product',
+    unitId = null,
+    expectationId = null,
+    expectationIds = [],
+    target = 'class',
+    targetStudentId = null,
+    targetCourseCode = 'all',
+    totalPoints = 10,
+    scaledTotal = null,
+    excluded = false,
+    retestPolicy = 'highest',
+    ...rest
+  } = data || {}
+
   const db = await getDB()
   const assessment = {
     classId, categoryId, name, description, date,
     assessmentType, unitId, expectationId, expectationIds,
-    target, targetStudentId,
+    target, targetStudentId, targetCourseCode,
     totalPoints: totalPoints || 10, scaledTotal,
     excluded, retestPolicy,
+    ...rest,
     createdAt: new Date().toISOString()
   }
   const plain = JSON.parse(JSON.stringify(assessment))

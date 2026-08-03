@@ -117,12 +117,19 @@ export async function calculateClassAnalytics(classRecord, assessments, grades, 
   const { 
     exclusionMode = 'none', 
     exclusionThreshold = 40,
+    targetCourseCode = 'all',
     asOf = null,
     gradeBuckets = null
   } = options
 
   const allStudentIds = Object.keys(classRecord.students ?? {})
-  const studentIds = allStudentIds.filter(id => !classRecord.students[id].archived)
+  let studentIds = allStudentIds.filter(id => !classRecord.students[id].archived)
+
+  if (targetCourseCode && targetCourseCode !== 'all') {
+    const tC = targetCourseCode.toLowerCase()
+    studentIds = studentIds.filter(id => classRecord.students[id].courseCode && classRecord.students[id].courseCode.toLowerCase() === tC)
+  }
+
   const excludedStudentIds = new Set(
     allStudentIds.filter(id => classRecord.students[id].excludeFromAnalytics || classRecord.students[id].archived)
   )
@@ -133,6 +140,11 @@ export async function calculateClassAnalytics(classRecord, assessments, grades, 
     a.target !== 'individual' &&
     !a.excluded
   )
+
+  if (targetCourseCode && targetCourseCode !== 'all') {
+    const tC = targetCourseCode.toLowerCase()
+    productAssessments = productAssessments.filter(a => !a.targetCourseCode || a.targetCourseCode === 'all' || a.targetCourseCode.toLowerCase() === tC)
+  }
 
   // Apply asOf date filter if milestone selected
   if (asOf) {

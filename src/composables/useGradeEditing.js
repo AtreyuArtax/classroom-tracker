@@ -130,7 +130,7 @@ export function useGradeEditing(defaultStudentIdRef = null) {
       return
     }
 
-    const assessment = assessments.value.find(a => a.assessmentId === assessmentId)
+    const assessment = assessments.value.find(a => String(a.assessmentId) === String(assessmentId))
     if (!assessment) {
       editingCell.value = null
       return
@@ -177,7 +177,7 @@ export function useGradeEditing(defaultStudentIdRef = null) {
     const { x, y } = getAdjustedPosition(e, 280, 300)
     const grade = gradeMap.value[assessmentId]?.[studentId]
     const student = activeClassRecord.value?.students?.[studentId]
-    const assessment = assessments.value.find(a => a.assessmentId === assessmentId)
+    const assessment = assessments.value.find(a => String(a.assessmentId) === String(assessmentId))
 
     if (grade && student && assessment) {
       attemptsPopover.value = {

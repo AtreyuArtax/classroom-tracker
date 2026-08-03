@@ -59,7 +59,11 @@
         >
           <div class="student-sidebar__roster-info">
             <div class="student-sidebar__roster-name-group">
-              <span class="student-sidebar__roster-name">{{ student.lastName }}, {{ student.firstName }}</span>
+              <span class="student-sidebar__roster-lastname">{{ student.lastName }}</span>
+              <div class="student-sidebar__roster-subline">
+                <span class="student-sidebar__roster-firstname">{{ student.firstName }}</span>
+                <span v-if="student.courseCode" class="student-sidebar__course-tag">{{ student.courseCode }}</span>
+              </div>
               
               <!-- Sparkline (Only if showAcademics and trends exist) -->
               <div 
@@ -380,14 +384,47 @@ function getSparklinePath(data, width, height) {
   flex-direction: column;
   gap: 2px;
   min-width: 0;
+  flex: 1;
 }
 
-.student-sidebar__roster-name {
-  font-size: 0.9rem;
+.student-sidebar__roster-lastname {
+  font-size: 0.88rem;
+  font-weight: 700;
   color: var(--text);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  line-height: 1.2;
+}
+
+.student-sidebar__roster-subline {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.student-sidebar__roster-firstname {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.2;
+}
+
+.student-sidebar__course-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  background: rgba(59, 130, 246, 0.12);
+  color: #3b82f6;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  line-height: 1.2;
+  flex-shrink: 0;
 }
 
 .student-sidebar__roster-grade {

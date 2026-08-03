@@ -230,10 +230,10 @@
           <div class="setup__roster-info">
             <span class="setup__roster-name">{{ s.lastName }}, {{ s.firstName }}</span>
             <span class="setup__roster-id">{{ s.studentId }}</span>
-            <span v-if="s.gradeLevel" class="elementary-subjects__tag" style="margin-left: 8px;">
+            <span v-if="activeClass?.classType === 'elementary' && s.gradeLevel" class="setup__chip" style="margin-left: 8px;">
               {{ s.gradeLevel }}
             </span>
-            <span v-if="s.courseCode" class="elementary-subjects__tag" style="margin-left: 6px; background: rgba(59, 130, 246, 0.12); color: #3b82f6; border-color: rgba(59, 130, 246, 0.3);">
+            <span v-if="s.courseCode" class="setup__chip setup__chip--blue" style="margin-left: 8px;">
               {{ s.courseCode }}
             </span>
           </div>

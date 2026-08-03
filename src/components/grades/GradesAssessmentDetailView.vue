@@ -47,7 +47,7 @@
 
       <div class="metric-pill">
         <span class="metric-pill__label">PROGRESS</span>
-        <strong class="metric-pill__val">{{ currentAssessmentSummary?.enteredCount || levelBreakdown.graded }}/{{ currentAssessmentSummary?.totalStudents || sortedRoster.length }}</strong>
+        <strong class="metric-pill__val">{{ currentAssessmentSummary?.enteredCount || levelBreakdown.graded }}/{{ targetCourseRoster.length }}</strong>
       </div>
 
       <div class="metric-divider"></div>
@@ -137,7 +137,7 @@
           <!-- Filter Chips -->
           <div class="table-filter-chips">
             <button class="chip-btn" :class="{ 'chip-btn--active': activeFilter === 'all' }" @click="activeFilter = 'all'">
-              All ({{ sortedRoster.length }})
+              All ({{ targetCourseRoster.length }})
             </button>
             <button class="chip-btn" :class="{ 'chip-btn--active': activeFilter === 'graded' }" @click="activeFilter = 'graded'">
               Graded ({{ levelBreakdown.graded }})
@@ -488,11 +488,19 @@ function getGradeBadgeStyle(percent) {
   return { background: 'rgba(239, 68, 68, 0.12)', color: '#b91c1c', border: '1px solid rgba(239, 68, 68, 0.25)' }
 }
 
+const targetCourseRoster = computed(() => {
+  const targetCode = props.currentAssessment?.targetCourseCode
+  if (!targetCode || targetCode === 'all') {
+    return props.sortedRoster || []
+  }
+  return (props.sortedRoster || []).filter(s => s.courseCode && s.courseCode.toLowerCase() === targetCode.toLowerCase())
+})
+
 const levelBreakdown = computed(() => {
   const bd = { level4: 0, level3: 0, level2: 0, level1: 0, missing: 0, excluded: 0, ungraded: 0, graded: 0 }
   const total = props.currentAssessment.totalPoints || 100
 
-  props.sortedRoster.forEach(s => {
+  targetCourseRoster.value.forEach(s => {
     const g = props.gradeMap[props.selectedAssessmentId]?.[s.studentId]
     if (!g) {
       bd.ungraded++
@@ -526,7 +534,7 @@ const liveAssessmentStats = computed(() => {
   const pointsList = []
   const percentList = []
 
-  props.sortedRoster.forEach(s => {
+  targetCourseRoster.value.forEach(s => {
     const g = props.gradeMap[props.selectedAssessmentId]?.[s.studentId]
     if (g && !g.missing && !g.excluded && g.resolvedScore !== null && g.resolvedScore !== undefined) {
       const num = Number(g.resolvedScore)
@@ -557,7 +565,7 @@ const liveAssessmentStats = computed(() => {
 })
 
 const filteredRoster = computed(() => {
-  let list = props.sortedRoster || []
+  let list = targetCourseRoster.value || []
   const total = props.currentAssessment.totalPoints || 100
 
   // Search filter

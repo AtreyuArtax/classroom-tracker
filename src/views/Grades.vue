@@ -277,6 +277,7 @@ import {
   fixedExclusionThreshold,
   classAnalytics,
   refreshClassAnalytics,
+  selectedCourseFilter,
   resetAnalyticsState,
   showAddAssessmentModal,
   displayMode,
@@ -467,6 +468,17 @@ watch(fixedExclusionThreshold, async () => {
   }
 })
 
+watch(selectedCourseFilter, async () => {
+  if (analyticsMode.value) {
+    isCalculating.value = true
+    try {
+      await refreshClassAnalytics()
+    } finally {
+      isCalculating.value = false
+    }
+  }
+})
+
 const filteredStudents = computed(() => {
   if (!activeClassRecord.value?.students) return []
   return Object.keys(activeClassRecord.value.students)
@@ -616,7 +628,21 @@ const filteredClassGrades = computed(() => {
 })
 
 const overallClassAvg = computed(() => {
-  const gradeList = Object.values(filteredClassGrades.value)
+  let studentMap = filteredClassGrades.value
+  if (selectedCourseFilter.value && selectedCourseFilter.value !== 'all') {
+    const targetC = selectedCourseFilter.value.toLowerCase()
+    const validStudentIds = new Set(
+      Object.keys(activeClassRecord.value?.students || {})
+        .filter(id => (activeClassRecord.value.students[id].courseCode || '').toLowerCase() === targetC)
+    )
+    const filtered = {}
+    Object.keys(studentMap).forEach(id => {
+      if (validStudentIds.has(id)) filtered[id] = studentMap[id]
+    })
+    studentMap = filtered
+  }
+
+  const gradeList = Object.values(studentMap)
     .filter(g => g && g.overallGrade !== null)
     .map(g => g.overallGrade)
   
@@ -666,6 +692,7 @@ function startEditAssessment(assessment) {
     expectationId: assessment.expectationId || null,
     target: assessment.target || 'class',
     targetStudentId: assessment.targetStudentId || null,
+    targetCourseCode: assessment.targetCourseCode || 'all',
     date: assessment.date,
     totalPoints: assessment.totalPoints,
     scaledTotal: assessment.scaledTotal,

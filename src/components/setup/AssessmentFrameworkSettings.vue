@@ -2,7 +2,23 @@
   <div class="setup__framework-container" v-if="activeClass">
     <!-- Assessment Framework -->
     <div class="setup__card">
-      <h2 class="setup__card-title">Assessment Framework</h2>
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 1rem;">
+        <h2 class="setup__card-title" style="margin: 0;">Assessment Framework</h2>
+        
+        <!-- Course Section Tabs for Split Classes -->
+        <div v-if="availableCourseSections.length > 1" class="setup__toggle-group" style="display: flex; gap: 6px;">
+          <button 
+            v-for="section in availableCourseSections" 
+            :key="section"
+            type="button"
+            class="setup__btn-ghost"
+            :style="activeCourseSection === section ? { background: '#3b82f6', color: '#fff', borderColor: '#3b82f6', fontWeight: 'bold' } : {}"
+            @click="activeCourseSection = section"
+          >
+            {{ section }}
+          </button>
+        </div>
+      </div>
       
       <div v-if="frameworkWarning" class="setup__inline-banner setup__inline-banner--warning">
         <AlertTriangle :size="16" />
@@ -14,12 +30,12 @@
       <template v-if="!isSBAR">
         <h3 class="setup__card-subtitle">Categories (Weights)</h3>
         <div class="setup__gb-list">
-          <div v-for="(cat, idx) in activeClass.gradebookCategories" :key="cat.categoryId" class="setup__gb-item">
+          <div v-for="(cat, idx) in activeCategories" :key="cat.categoryId" class="setup__gb-item">
             <input v-model="cat.name" class="setup__input setup__input--naked" @change="saveGradebookSettings" />
             <div class="setup__gb-actions">
               <input v-model.number="cat.weight" type="number" class="setup__input setup__input--weight" @change="saveGradebookSettings" /><span>%</span>
               <button class="setup__icon-btn" :disabled="idx === 0" @click="moveCategory(idx, -1)"><ChevronUp :size="16" /></button>
-              <button class="setup__icon-btn" :disabled="idx === activeClass.gradebookCategories.length - 1" @click="moveCategory(idx, 1)"><ChevronDown :size="16" /></button>
+              <button class="setup__icon-btn" :disabled="idx === activeCategories.length - 1" @click="moveCategory(idx, 1)"><ChevronDown :size="16" /></button>
               <button class="setup__icon-btn setup__icon-btn--danger" @click="onDeleteCategory(cat)"><Trash2 :size="14" /></button>
             </div>
           </div>
@@ -39,15 +55,42 @@
         </div>
       </template>
 
-      <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 1.5rem;">
-        <h3 class="setup__card-subtitle" style="margin: 0;">Units & Expectations</h3>
-        <button 
-          type="button" 
-          class="setup__btn-ghost setup__btn--small" 
-          @click="showImportModal = true"
-        >
-          <BookOpen :size="14" /> Import Expectations
-        </button>
+      <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-top: 1.5rem;">
+        <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+          <h3 class="setup__card-subtitle" style="margin: 0;">Units & Expectations</h3>
+          <!-- Course Section Tabs for Split Classes (Units & Expectations) -->
+          <div v-if="availableCourseSections.length > 1" class="setup__toggle-group" style="display: flex; gap: 6px;">
+            <button 
+              v-for="section in availableCourseSections" 
+              :key="section"
+              type="button"
+              class="setup__btn-ghost setup__btn--small"
+              :style="activeCourseSection === section ? { background: '#3b82f6', color: '#fff', borderColor: '#3b82f6', fontWeight: 'bold' } : {}"
+              @click="activeCourseSection = section"
+            >
+              {{ section }}
+            </button>
+          </div>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+          <button 
+            v-if="availableCourseSections.length > 1"
+            type="button" 
+            class="setup__btn-ghost setup__btn--small" 
+            @click="copyUnitsToAllSections"
+            title="Mirror unit names from active course tab to all other courses"
+          >
+            <Copy :size="14" /> Mirror Units to All Courses
+          </button>
+          <button 
+            type="button" 
+            class="setup__btn-ghost setup__btn--small" 
+            @click="showImportModal = true"
+          >
+            <BookOpen :size="14" /> Import Expectations
+          </button>
+        </div>
       </div>
 
       <div v-if="frameworkWarning" class="setup__inline-banner setup__inline-banner--warning" style="margin-top: 10px;">
@@ -57,7 +100,7 @@
       </div>
 
       <div class="setup__gb-list">
-        <div v-for="(unit, idx) in activeClass.gradebookUnits" :key="unit.unitId" class="setup__unit-container">
+        <div v-for="(unit, idx) in activeUnits" :key="unit.unitId" class="setup__unit-container">
           <div class="setup__gb-item">
             <div class="setup__unit-title-group">
               <button 
@@ -71,7 +114,7 @@
             </div>
             <div class="setup__gb-actions">
               <button type="button" class="setup__icon-btn" :disabled="idx === 0" @click="moveUnit(idx, -1)"><ChevronUp :size="16" /></button>
-              <button type="button" class="setup__icon-btn" :disabled="idx === activeClass.gradebookUnits.length - 1" @click="moveUnit(idx, 1)"><ChevronDown :size="16" /></button>
+              <button type="button" class="setup__icon-btn" :disabled="idx === activeUnits.length - 1" @click="moveUnit(idx, 1)"><ChevronDown :size="16" /></button>
               <button type="button" class="setup__icon-btn setup__icon-btn--danger" @click="onDeleteUnit(unit.unitId)"><Trash2 :size="14" /></button>
             </div>
           </div>
@@ -168,6 +211,7 @@
     <ExpectationImportModal
       v-model="showImportModal"
       :existing-units="activeClass.gradebookUnits || []"
+      :class-type="activeClass.classType || 'secondary'"
       @import="onExpectationImport"
     />
   </div>
@@ -182,7 +226,7 @@ import * as gradebookService from '../../db/gradebookService.js'
 import * as classService from '../../db/classService.js'
 import * as settingsService from '../../db/settingsService.js'
 import * as eventService from '../../db/eventService.js'
-import { ChevronUp, ChevronDown, Trash2, Plus, AlertTriangle, ChevronRight, BookOpen } from 'lucide-vue-next'
+import { ChevronUp, ChevronDown, Trash2, Plus, AlertTriangle, ChevronRight, BookOpen, Copy } from 'lucide-vue-next'
 import ExpectationImportModal from './ExpectationImportModal.vue'
 
 const { activeClass, triggerActiveClass } = useClassroom()
@@ -206,8 +250,17 @@ function toggleUnitExpand(unitId) {
 
 function onExpectationImport(payload) {
   if (!activeClass.value) return
-  if (!activeClass.value.gradebookUnits) {
+  
+  let targetUnitsList = activeClass.value.gradebookUnits || []
+  if (availableCourseSections.value.length > 1 && activeCourseSection.value) {
+    _ensureSectionFramework(activeCourseSection.value)
+    if (!activeClass.value.courseFrameworks[activeCourseSection.value].gradebookUnits) {
+      activeClass.value.courseFrameworks[activeCourseSection.value].gradebookUnits = []
+    }
+    targetUnitsList = activeClass.value.courseFrameworks[activeCourseSection.value].gradebookUnits
+  } else if (!activeClass.value.gradebookUnits) {
     activeClass.value.gradebookUnits = []
+    targetUnitsList = activeClass.value.gradebookUnits
   }
 
   if (payload.mode === 'auto-units') {
@@ -227,7 +280,7 @@ function onExpectationImport(payload) {
         strand.expectations.forEach(e => expList.push(e))
       }
 
-      activeClass.value.gradebookUnits.push({
+      targetUnitsList.push({
         unitId: crypto.randomUUID(),
         name: strand.name,
         expectations: expList.map(e => ({
@@ -246,9 +299,9 @@ function onExpectationImport(payload) {
         name: payload.newUnitName || 'Imported Unit',
         expectations: []
       }
-      activeClass.value.gradebookUnits.push(targetUnit)
+      targetUnitsList.push(targetUnit)
     } else {
-      targetUnit = activeClass.value.gradebookUnits.find(u => u.unitId === payload.targetUnitChoice)
+      targetUnit = targetUnitsList.find(u => u.unitId === payload.targetUnitChoice)
     }
 
     if (targetUnit) {
@@ -264,6 +317,51 @@ function onExpectationImport(payload) {
   }
 
   saveGradebookSettings()
+}
+
+async function copyUnitsToAllSections() {
+  if (!activeClass.value || availableCourseSections.value.length <= 1 || !activeCourseSection.value) return
+  
+  const currentUnits = activeUnits.value
+  if (!currentUnits || currentUnits.length === 0) {
+    showWarning('The current section has no units to mirror.')
+    return
+  }
+
+  const sourceName = activeCourseSection.value
+  const targetSections = availableCourseSections.value.filter(s => s !== sourceName)
+
+  if (!await confirm(`Mirror ${currentUnits.length} unit name(s) from ${sourceName} to ${targetSections.join(', ')}? Existing unit names will be matched and preserved.`)) return
+
+  if (!activeClass.value.courseFrameworks) activeClass.value.courseFrameworks = {}
+
+  targetSections.forEach(sec => {
+    if (!activeClass.value.courseFrameworks[sec]) {
+      activeClass.value.courseFrameworks[sec] = {
+        gradebookCategories: JSON.parse(JSON.stringify(activeClass.value.gradebookCategories || [])),
+        gradebookUnits: []
+      }
+    }
+    const existingTargetUnits = activeClass.value.courseFrameworks[sec].gradebookUnits || []
+    
+    // For each unit in active section, ensure a unit with matching name exists in target section
+    const newTargetUnits = currentUnits.map(srcU => {
+      const match = existingTargetUnits.find(u => u.name && u.name.trim().toLowerCase() === srcU.name.trim().toLowerCase())
+      if (match) {
+        return match // Preserve target unit and its expectations
+      }
+      return {
+        unitId: crypto.randomUUID(),
+        name: srcU.name,
+        expectations: []
+      }
+    })
+    
+    activeClass.value.courseFrameworks[sec].gradebookUnits = newTargetUnits
+  })
+
+  await saveGradebookSettings()
+  showWarning(`Units mirrored from ${sourceName} to ${targetSections.join(', ')}!`)
 }
 
 async function addExpectation(unit) {
@@ -301,9 +399,61 @@ async function deleteExpectation(unit, expectationId) {
   await saveGradebookSettings()
 }
 
+const activeCourseSection = ref('')
+
+const availableCourseSections = computed(() => {
+  if (!activeClass.value) return []
+  if (activeClass.value.courseSections && activeClass.value.courseSections.length > 1) {
+    return activeClass.value.courseSections
+  }
+  const codes = new Set()
+  if (activeClass.value.students) {
+    Object.values(activeClass.value.students).forEach(st => {
+      if (st.courseCode && !st.archived) codes.add(st.courseCode)
+    })
+  }
+  if (codes.size <= 1) return []
+  return Array.from(codes).sort()
+})
+
+watch(availableCourseSections, (list) => {
+  if (list.length > 0 && (!activeCourseSection.value || !list.includes(activeCourseSection.value))) {
+    activeCourseSection.value = list[0]
+  }
+}, { immediate: true })
+
+function _ensureSectionFramework(section) {
+  if (!activeClass.value || !section) return
+  if (!activeClass.value.courseFrameworks) {
+    activeClass.value.courseFrameworks = {}
+  }
+  if (!activeClass.value.courseFrameworks[section]) {
+    activeClass.value.courseFrameworks[section] = {
+      gradebookCategories: JSON.parse(JSON.stringify(activeClass.value.gradebookCategories || [])),
+      gradebookUnits: JSON.parse(JSON.stringify(activeClass.value.gradebookUnits || []))
+    }
+  }
+}
+
+const activeCategories = computed(() => {
+  if (availableCourseSections.value.length > 1 && activeCourseSection.value) {
+    _ensureSectionFramework(activeCourseSection.value)
+    return activeClass.value.courseFrameworks[activeCourseSection.value].gradebookCategories
+  }
+  return activeClass.value?.gradebookCategories || []
+})
+
+const activeUnits = computed(() => {
+  if (availableCourseSections.value.length > 1 && activeCourseSection.value) {
+    _ensureSectionFramework(activeCourseSection.value)
+    return activeClass.value.courseFrameworks[activeCourseSection.value].gradebookUnits
+  }
+  return activeClass.value?.gradebookUnits || []
+})
+
 const totalWeight = computed(() => {
-  if (!activeClass.value?.gradebookCategories) return 0
-  return activeClass.value.gradebookCategories.reduce((sum, c) => sum + (c.weight || 0), 0)
+  if (!activeCategories.value) return 0
+  return activeCategories.value.reduce((sum, c) => sum + (c.weight || 0), 0)
 })
 
 let saveTimer = null
@@ -324,15 +474,21 @@ watch(
   { deep: true }
 )
 
+watch(
+  () => activeClass.value?.courseFrameworks,
+  () => debouncedSave(),
+  { deep: true }
+)
+
 async function saveGradebookSettings() {
   if (!activeClass.value) return
   await classService.updateClass(activeClass.value.classId, {
     gradebookCategories: activeClass.value.gradebookCategories,
     gradebookUnits: activeClass.value.gradebookUnits,
-    gradebookNotes: activeClass.value.gradebookNotes
+    gradebookNotes: activeClass.value.gradebookNotes,
+    courseFrameworks: activeClass.value.courseFrameworks
   })
   triggerActiveClass()
-  // Milestones are now global and saved to settings independently
   await settingsService.saveGlobalMilestones(JSON.parse(JSON.stringify(globalMilestones.value)))
 }
 
@@ -343,16 +499,24 @@ async function addCategory() {
     name: 'New Category',
     weight: 0
   }
-  if (!activeClass.value.gradebookCategories) {
-    activeClass.value.gradebookCategories = []
+  if (availableCourseSections.value.length > 1 && activeCourseSection.value) {
+    _ensureSectionFramework(activeCourseSection.value)
+    if (!activeClass.value.courseFrameworks[activeCourseSection.value].gradebookCategories) {
+      activeClass.value.courseFrameworks[activeCourseSection.value].gradebookCategories = []
+    }
+    activeClass.value.courseFrameworks[activeCourseSection.value].gradebookCategories.push(newCat)
+  } else {
+    if (!activeClass.value.gradebookCategories) {
+      activeClass.value.gradebookCategories = []
+    }
+    activeClass.value.gradebookCategories.push(newCat)
   }
-  activeClass.value.gradebookCategories.push(newCat)
   await saveGradebookSettings()
 }
 
 async function moveCategory(index, direction) {
   if (!activeClass.value) return
-  const cats = activeClass.value.gradebookCategories
+  const cats = activeCategories.value
   const newIndex = index + direction
   if (newIndex < 0 || newIndex >= cats.length) return
 
@@ -365,7 +529,7 @@ async function moveCategory(index, direction) {
 
 async function moveUnit(index, direction) {
   if (!activeClass.value) return
-  const units = activeClass.value.gradebookUnits
+  const units = activeUnits.value
   const newIndex = index + direction
   if (newIndex < 0 || newIndex >= units.length) return
 
@@ -398,12 +562,17 @@ async function onDeleteCategory(cat) {
 
   if (!await confirm(`Delete category "${cat.name}"?`)) return
 
-  if (activeClass.value.gradebookCategories.length <= 1) {
+  if (activeCategories.value.length <= 1) {
     showWarning('At least one category is required.')
     return
   }
 
-  activeClass.value.gradebookCategories = activeClass.value.gradebookCategories.filter(c => c.categoryId !== cat.categoryId)
+  const updated = activeCategories.value.filter(c => c.categoryId !== cat.categoryId)
+  if (availableCourseSections.value.length > 1 && activeCourseSection.value) {
+    activeClass.value.courseFrameworks[activeCourseSection.value].gradebookCategories = updated
+  } else {
+    activeClass.value.gradebookCategories = updated
+  }
   await saveGradebookSettings()
 }
 
@@ -411,12 +580,21 @@ async function addUnit() {
   if (!activeClass.value) return
   const newUnit = {
     unitId: crypto.randomUUID(),
-    name: 'New Unit'
+    name: 'New Unit',
+    expectations: []
   }
-  if (!activeClass.value.gradebookUnits) {
-    activeClass.value.gradebookUnits = []
+  if (availableCourseSections.value.length > 1 && activeCourseSection.value) {
+    _ensureSectionFramework(activeCourseSection.value)
+    if (!activeClass.value.courseFrameworks[activeCourseSection.value].gradebookUnits) {
+      activeClass.value.courseFrameworks[activeCourseSection.value].gradebookUnits = []
+    }
+    activeClass.value.courseFrameworks[activeCourseSection.value].gradebookUnits.push(newUnit)
+  } else {
+    if (!activeClass.value.gradebookUnits) {
+      activeClass.value.gradebookUnits = []
+    }
+    activeClass.value.gradebookUnits.push(newUnit)
   }
-  activeClass.value.gradebookUnits.push(newUnit)
   await saveGradebookSettings()
 }
 
@@ -424,7 +602,7 @@ async function onDeleteUnit(unitId) {
   if (!activeClass.value) return
   
   const assessments = await gradebookService.getAssessmentsByClass(activeClass.value.classId)
-  const unit = activeClass.value.gradebookUnits.find(u => u.unitId === unitId)
+  const unit = activeUnits.value.find(u => u.unitId === unitId)
   const inUse = assessments.some(a => a.unitId === unitId || (unit && a.unitId === unit.name))
   
   if (inUse) {
@@ -446,7 +624,12 @@ async function onDeleteUnit(unitId) {
     await eventService.detachEventsForDeletedUnit(activeClass.value.classId, unitId)
   }
 
-  activeClass.value.gradebookUnits = activeClass.value.gradebookUnits.filter(u => u.unitId !== unitId)
+  const updated = activeUnits.value.filter(u => u.unitId !== unitId)
+  if (availableCourseSections.value.length > 1 && activeCourseSection.value) {
+    activeClass.value.courseFrameworks[activeCourseSection.value].gradebookUnits = updated
+  } else {
+    activeClass.value.gradebookUnits = updated
+  }
   await saveGradebookSettings()
 }
 

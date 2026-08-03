@@ -77,70 +77,75 @@
               </div>
             </div>
 
-            <div class="eim-preset-info-banner">
-              <Zap :size="16" class="eim-info-icon" />
-              <span>Importing this preset will automatically organize expectations into their respective curriculum strands/units.</span>
-            </div>
-
-            <!-- Single Unit Selection for Mode B -->
-            <div v-if="presetImportMode === 'existing-unit'" class="eim-unit-selection">
-              <div class="eim-field">
-                <label class="eim-label">Target Unit</label>
-                <select v-model="targetUnitChoice" class="eim-select">
-                  <option value="new">-- Create New Unit --</option>
-                  <option v-for="u in existingUnits" :key="u.unitId" :value="u.unitId">
-                    Attach to: {{ u.name }}
-                  </option>
-                </select>
+            <!-- ELEMENTARY: Auto-organizes into strands -->
+            <template v-if="classType === 'elementary'">
+              <div class="eim-preset-info-banner">
+                <Zap :size="16" class="eim-info-icon" />
+                <span>Importing this preset will automatically organize expectations into their respective curriculum strands/units.</span>
               </div>
+            </template>
 
-              <div v-if="targetUnitChoice === 'new'" class="eim-field">
-                <label class="eim-label">New Unit Name</label>
-                <input v-model="newUnitName" type="text" class="eim-input" placeholder="e.g. Ecology Foundations" />
-              </div>
-
-              <!-- Checklist of expectations -->
-              <div class="eim-checklist-section">
-                <div style="display: flex; align-items: center; justify-content: space-between;">
-                  <label class="eim-label">Select Expectations to Import</label>
-                  <div class="eim-checklist-actions">
-                    <button type="button" class="eim-action-link" @click="selectAllGlobal">Select All</button>
-                    <span class="eim-action-separator">|</span>
-                    <button type="button" class="eim-action-link" @click="deselectAllGlobal">Deselect All</button>
-                  </div>
+            <!-- SECONDARY: Unit picker + expectation checklist -->
+            <template v-else>
+              <div class="eim-secondary-import">
+                <div class="eim-field">
+                  <label class="eim-label">Target Unit</label>
+                  <select v-model="targetUnitChoice" class="eim-select">
+                    <option value="new">-- Create New Unit --</option>
+                    <option v-for="u in existingUnits" :key="u.unitId" :value="u.unitId">
+                      Attach to: {{ u.name }}
+                    </option>
+                  </select>
                 </div>
-                
-                <div class="eim-checklist">
-                  <div v-for="strand in selectedPreset.strands" :key="strand.name" class="eim-checklist-strand">
-                    <div class="eim-strand-header">
-                      <h5 class="eim-strand-name">{{ strand.name }}</h5>
-                      <button 
-                        type="button" 
-                        class="eim-action-link eim-action-link--small" 
-                        @click="toggleStrandSelection(strand)"
-                      >
-                        {{ isStrandFullySelected(strand) ? 'Deselect Strand' : 'Select Strand' }}
-                      </button>
+
+                <div v-if="targetUnitChoice === 'new'" class="eim-field">
+                  <label class="eim-label">New Unit Name</label>
+                  <input v-model="newUnitName" type="text" class="eim-input" placeholder="e.g. Space & Earth Systems" />
+                </div>
+
+                <!-- Checklist of expectations -->
+                <div class="eim-checklist-section">
+                  <div style="display: flex; align-items: center; justify-content: space-between;">
+                    <label class="eim-label">Select Expectations to Import</label>
+                    <div class="eim-checklist-actions">
+                      <button type="button" class="eim-action-link" @click="selectAllGlobal">Select All</button>
+                      <span class="eim-action-separator">|</span>
+                      <button type="button" class="eim-action-link" @click="deselectAllGlobal">Deselect All</button>
                     </div>
-                    <label 
-                      v-for="exp in getStrandExpectations(strand)" 
-                      :key="exp.code" 
-                      :class="['eim-checkbox-item', exp.isOverall ? 'eim-checkbox-item--overall' : 'eim-checkbox-item--specific']"
-                    >
-                      <input 
-                        type="checkbox" 
-                        :value="exp" 
-                        v-model="selectedExpectations" 
-                      />
-                      <span>
-                        <strong :class="{ 'eim-code-overall': exp.isOverall }">{{ exp.code }}:</strong> 
-                        {{ exp.description }}
-                      </span>
-                    </label>
+                  </div>
+                  
+                  <div class="eim-checklist">
+                    <div v-for="strand in selectedPreset.strands" :key="strand.name" class="eim-checklist-strand">
+                      <div class="eim-strand-header">
+                        <h5 class="eim-strand-name">{{ strand.name }}</h5>
+                        <button 
+                          type="button" 
+                          class="eim-action-link eim-action-link--small" 
+                          @click="toggleStrandSelection(strand)"
+                        >
+                          {{ isStrandFullySelected(strand) ? 'Deselect Strand' : 'Select Strand' }}
+                        </button>
+                      </div>
+                      <label 
+                        v-for="exp in getStrandExpectations(strand)" 
+                        :key="exp.code" 
+                        :class="['eim-checkbox-item', exp.isOverall ? 'eim-checkbox-item--overall' : 'eim-checkbox-item--specific']"
+                      >
+                        <input 
+                          type="checkbox" 
+                          :value="exp" 
+                          v-model="selectedExpectations" 
+                        />
+                        <span>
+                          <strong :class="{ 'eim-code-overall': exp.isOverall }">{{ exp.code }}:</strong> 
+                          {{ exp.description }}
+                        </span>
+                      </label>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
+            </template>
           </div>
         </div>
 
@@ -218,7 +223,8 @@ const props = defineProps({
   existingUnits: { type: Array, default: () => [] },
   targetSubjectId: { type: String, default: null },
   targetSubjectName: { type: String, default: '' },
-  initialPresetId: { type: String, default: null }
+  initialPresetId: { type: String, default: null },
+  classType: { type: String, default: 'secondary' } // 'elementary' | 'secondary'
 })
 
 const emit = defineEmits(['update:modelValue', 'import'])
@@ -352,12 +358,12 @@ const parsedPasteExpectations = computed(() => {
 const canSubmit = computed(() => {
   if (activeTab.value === 'presets') {
     if (!selectedPreset.value) return false
-    if (presetImportMode.value === 'auto-units') return true
-    if (presetImportMode.value === 'existing-unit') {
-      if (selectedExpectations.value.length === 0) return false
-      if (targetUnitChoice.value === 'new' && !newUnitName.value.trim()) return false
-      return true
-    }
+    // Elementary: auto-units, no extra requirements
+    if (props.classType === 'elementary') return true
+    // Secondary: needs unit choice + at least one expectation
+    if (selectedExpectations.value.length === 0) return false
+    if (targetUnitChoice.value === 'new' && !newUnitName.value.trim()) return false
+    return true
   }
 
   if (activeTab.value === 'paste') {
@@ -377,7 +383,8 @@ function onSubmit() {
   if (!canSubmit.value) return
 
   if (activeTab.value === 'presets') {
-    if (presetImportMode.value === 'auto-units') {
+    if (props.classType === 'elementary') {
+      // Elementary: auto-create units from strands
       emit('import', {
         mode: 'auto-units',
         preset: selectedPreset.value,
@@ -385,6 +392,7 @@ function onSubmit() {
         targetSubjectId: props.targetSubjectId
       })
     } else {
+      // Secondary: attach selected expectations to chosen unit
       emit('import', {
         mode: 'attach-expectations',
         targetUnitChoice: targetUnitChoice.value,

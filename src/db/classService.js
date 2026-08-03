@@ -667,16 +667,21 @@ export async function bulkImportClasses(groups) {
             Number(c.periodNumber) === Number(group.periodNumber)
         )
 
+        const isSplit = group.isSplitClass || (group.courseSections && group.courseSections.length > 1)
+        const coursePill = isSplit && group.courseSections ? group.courseSections.join('/') : (group.courseCode || '')
+
         if (!cls) {
             const classId = `class_${now}_${idCounter++}`
             cls = {
                 classId,
                 name: group.name,
-                courseCode: group.courseCode || '',
+                courseCode: coursePill,
                 year: group.year,
                 semester: group.semester,
                 periodNumber: group.periodNumber,
                 periodStartTime: group.periodStartTime || '08:00',
+                isSplitClass: isSplit,
+                courseSections: group.courseSections || [],
                 gridSize: { rows: 6, cols: 6 },
                 gradebookUnits: [],
                 gradebookCategories: [
@@ -689,16 +694,25 @@ export async function bulkImportClasses(groups) {
             }
             created++
         } else {
-            if (group.courseCode) cls.courseCode = group.courseCode
+            if (coursePill) cls.courseCode = coursePill
+            if (isSplit) {
+                cls.isSplitClass = true
+                cls.courseSections = group.courseSections || []
+            }
             updated++
         }
 
         // Process students for this class
         for (const row of group.students) {
-            const { studentId, firstName, lastName, parentContacts, studentEmail, custody, livingWith, birthDate, rfidTag } = row
+            const { studentId, firstName, lastName, parentContacts, studentEmail, custody, livingWith, birthDate, rfidTag, gradeLevel, grade, courseCode } = row
+            const rawG = (gradeLevel || grade || '').toString().trim()
+            const parsedG = rawG ? (rawG.toLowerCase().startsWith('grade') ? rawG : `Grade ${parseInt(rawG, 10) || rawG}`) : ''
+
             if (cls.students[studentId]) {
                 cls.students[studentId].firstName = firstName
                 cls.students[studentId].lastName = lastName
+                if (parsedG) cls.students[studentId].gradeLevel = parsedG
+                if (courseCode) cls.students[studentId].courseCode = courseCode
                 if (parentContacts && parentContacts.length > 0) cls.students[studentId].parentContacts = parentContacts
                 if (studentEmail) cls.students[studentId].studentEmail = studentEmail
                 if (custody) cls.students[studentId].custody = custody
@@ -710,6 +724,8 @@ export async function bulkImportClasses(groups) {
                 cls.students[studentId] = {
                     firstName,
                     lastName,
+                    gradeLevel: parsedG,
+                    courseCode: courseCode || '',
                     parentContacts: parentContacts || [],
                     studentEmail: studentEmail || '',
                     custody: custody || '',
@@ -723,6 +739,13 @@ export async function bulkImportClasses(groups) {
                 }
                 studentsInserted++
             }
+        }
+
+        const uniqueCourses = new Set(Object.values(cls.students).map(s => s.courseCode).filter(Boolean))
+        if (uniqueCourses.size > 1) {
+            cls.isSplitClass = true
+            cls.courseSections = Array.from(uniqueCourses).sort()
+            cls.courseCode = cls.courseSections.join('/')
         }
 
         const plain = JSON.parse(JSON.stringify(cls))

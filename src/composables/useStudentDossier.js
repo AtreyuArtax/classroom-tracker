@@ -93,6 +93,7 @@ export function useStudentDossier(periodRef = null, classIdRef = null) {
                 firstName: s.firstName,
                 lastName: s.lastName,
                 gradeLevel: s.gradeLevel || '',
+                courseCode: s.courseCode || '',
             }))
             .sort((a, b) => a.lastName.localeCompare(b.lastName))
     })

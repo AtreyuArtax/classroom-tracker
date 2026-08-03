@@ -425,6 +425,7 @@ const effectiveReportClass = computed(() => {
 
 const availableGradeFilters = computed(() => {
   const rawClass = classList.value.find(c => c.classId === sidebarClassId.value) ?? activeClass.value
+  if (rawClass?.classType !== 'elementary') return ['all']
   const studentsMap = rawClass?.students ?? {}
   const grades = new Set()
   Object.values(studentsMap).forEach(st => {

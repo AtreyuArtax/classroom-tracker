@@ -22,15 +22,43 @@ export { findElementaryPreset, findElementaryPresets }
  * @param {string|null} targetSubjectId 
  * @returns {Object|null}
  */
-export function getEffectiveClassRecord(classRecord, targetSubjectId = null) {
+export function getEffectiveClassRecord(classRecord, targetSubjectId = null, targetCourseCode = null) {
   if (!classRecord) return null
   if (classRecord.classType !== 'elementary') {
-    const cats = (classRecord.gradebookCategories && classRecord.gradebookCategories.length > 0)
+    let cats = (classRecord.gradebookCategories && classRecord.gradebookCategories.length > 0)
       ? classRecord.gradebookCategories
       : DEFAULT_TRADITIONAL_CATEGORIES
+    let units = classRecord.gradebookUnits || []
+
+    if (targetCourseCode && targetCourseCode !== 'all' && classRecord.courseFrameworks?.[targetCourseCode]) {
+      const fw = classRecord.courseFrameworks[targetCourseCode]
+      if (fw.gradebookCategories && fw.gradebookCategories.length > 0) cats = fw.gradebookCategories
+      if (fw.gradebookUnits && fw.gradebookUnits.length > 0) units = fw.gradebookUnits
+    } else if ((!targetCourseCode || targetCourseCode === 'all') && classRecord.courseFrameworks && Object.keys(classRecord.courseFrameworks).length > 0) {
+      const unitList = []
+      const seenIds = new Set()
+      for (const [code, fw] of Object.entries(classRecord.courseFrameworks)) {
+        if (fw.gradebookUnits && Array.isArray(fw.gradebookUnits)) {
+          fw.gradebookUnits.forEach(u => {
+            if (u && u.unitId && !seenIds.has(u.unitId)) {
+              seenIds.add(u.unitId)
+              unitList.push({
+                ...u,
+                courseCode: code
+              })
+            }
+          })
+        }
+      }
+      if (unitList.length > 0) {
+        units = unitList
+      }
+    }
+
     return {
       ...classRecord,
-      gradebookCategories: cats
+      gradebookCategories: cats,
+      gradebookUnits: units
     }
   }
 

@@ -31,6 +31,7 @@ export const globalMilestones = ref([])
 export const gradeBuckets = ref([])
 export const initialDossierTab = ref('summary')
 export const activeGradeFilter = ref('all') // 'all' | 'Grade 7' | 'Grade 8'
+export const selectedCourseFilter = ref('all') // 'all' | 'SNC2D1' | 'SNC2P1'
 
 // Reactive state for analytics (Step 6)
 export const analyticsMode = ref(false) // false = grid, true = analytics panel
@@ -160,7 +161,7 @@ export async function refreshGrades() {
 /**
  * Step 6: Compute class analytics.
  */
-export async function refreshClassAnalytics() {
+export async function refreshClassAnalytics(targetCourseCode = null) {
   if (!activeClassRecord.value) return
   // Use filteredMilestones (same as refreshGrades) so grades and analytics always match
   const asOf = selectedMilestone.value
@@ -174,6 +175,7 @@ export async function refreshClassAnalytics() {
     { 
       exclusionMode: exclusionMode.value, 
       exclusionThreshold: fixedExclusionThreshold.value,
+      targetCourseCode: targetCourseCode || selectedCourseFilter.value || 'all',
       asOf,
       gradeBuckets: gradeBuckets.value
     }
@@ -302,6 +304,7 @@ export function openAddAssessment(target = 'class', studentId = null) {
     expectationIds: [],
     target,
     targetStudentId: studentId,
+    targetCourseCode: 'all',
     date: new Date().toISOString().slice(0, 10),
     totalPoints: 10,
     scaledTotal: null,
@@ -371,7 +374,10 @@ export async function saveAssessment() {
     }
   }
 
-  const data = { ...newAssessment.value }
+  const data = { 
+    ...newAssessment.value,
+    targetCourseCode: newAssessment.value.targetCourseCode || 'all'
+  }
 
   try {
     if (isEditingAssessment.value) {
@@ -534,6 +540,10 @@ export function enterGrade(assessmentId, studentId, pointsEarned, date = null, c
   triggerRef(grades)
   refreshSingleStudent(studentId)
   refreshSingleAssessmentStats(assessmentId)
+  
+  enqueueDBSave(`${assessmentId}_${studentId}`, () =>
+    gradebookService.saveFullGradeRecord(grade)
+  )
   
   // Push atomic attempt undo and redo operations
   pushUndo(

@@ -104,8 +104,8 @@
             <div class="form-group" v-else>
               <label class="form-label">Category</label>
               <select v-model="newAssessment.categoryId" class="form-input" required>
-                <option v-for="cat in activeClassRecord?.gradebookCategories" :key="cat.categoryId" :value="cat.categoryId">
-                  {{ cat.name }}
+                <option v-for="cat in effectiveClass?.gradebookCategories" :key="cat.categoryId" :value="cat.categoryId">
+                  {{ cat.name }} ({{ cat.weight }}%)
                 </option>
               </select>
             </div>
@@ -118,11 +118,11 @@
               <select 
                 v-model="newAssessment.unitId" 
                 class="form-input"
-                :disabled="!activeClassRecord?.gradebookUnits?.length"
+                :disabled="!effectiveUnits.length"
               >
                 <option :value="null">Unassigned</option>
                 <option v-for="u in filteredUnits" :key="u.unitId" :value="u.unitId">
-                  {{ selectedGradeFilter === 'all' && u.gradeLevel ? '[' + u.gradeLevel + '] ' + u.name : u.name }}
+                  {{ (u.courseCode && newAssessment.targetCourseCode === 'all' ? '[' + u.courseCode + '] ' : (selectedGradeFilter === 'all' && u.gradeLevel ? '[' + u.gradeLevel + '] ' : '')) + u.name }}
                 </option>
               </select>
             </div>
@@ -144,11 +144,11 @@
             <select 
               v-model="newAssessment.unitId" 
               class="form-input"
-              :disabled="!activeClassRecord?.gradebookUnits?.length"
+              :disabled="!effectiveUnits.length"
             >
               <option :value="null">Unassigned</option>
               <option v-for="u in filteredUnits" :key="u.unitId" :value="u.unitId">
-                {{ selectedGradeFilter === 'all' && u.gradeLevel ? '[' + u.gradeLevel + '] ' + u.name : u.name }}
+                {{ (u.courseCode && newAssessment.targetCourseCode === 'all' ? '[' + u.courseCode + '] ' : (selectedGradeFilter === 'all' && u.gradeLevel ? '[' + u.gradeLevel + '] ' : '')) + u.name }}
               </option>
             </select>
           </div>
@@ -253,6 +253,7 @@ import {
   sortedUnits,
   activeClassRecord,
   activeGradeFilter,
+  selectedCourseFilter,
   closeAddAssessment,
   onTargetChange,
   saveAssessment
@@ -270,7 +271,19 @@ const effectiveClass = computed(() => {
   if (activeClassRecord.value.classType === 'elementary') {
     return getEffectiveClassRecord(activeClassRecord.value, activeSubjectId.value)
   }
-  return activeClassRecord.value
+  const targetCourse = (newAssessment.value?.targetCourseCode && newAssessment.value.targetCourseCode !== 'all')
+    ? newAssessment.value.targetCourseCode
+    : null
+  return getEffectiveClassRecord(activeClassRecord.value, null, targetCourse)
+})
+
+const effectiveUnits = computed(() => {
+  const cls = effectiveClass.value
+  if (!cls?.gradebookUnits) return []
+  return [...cls.gradebookUnits].map(u => ({
+    ...u,
+    name: (u.name || 'Strand').replace(/\[Grade \d+\]\s*/g, '')
+  })).sort((a, b) => (a.order || 0) - (b.order || 0))
 })
 
 const allAvailableExpectations = computed(() => {
@@ -307,20 +320,7 @@ const allAvailableExpectations = computed(() => {
     })
   }
 
-  const list = Object.values(expMap)
-  if (list.length > 0) return list
-
-  if (cls.classType !== 'elementary') {
-    return [
-      { code: 'A1.1', name: 'Inquiry & Experimentation', description: 'Formulate hypotheses and execute laboratory inquiries.' },
-      { code: 'A1.2', name: 'Data Analysis', description: 'Analyze experimental data using statistical tools.' },
-      { code: 'B2.1', name: 'Kinematics Equations', description: 'Apply 1D/2D displacement and velocity equations.' },
-      { code: 'B2.2', name: 'Force & Motion', description: 'Evaluate Newton laws of motion in dynamics problems.' },
-      { code: 'C1.1', name: 'Conservation of Energy', description: 'Calculate kinetic, potential, and thermal energy transfers.' }
-    ]
-  }
-
-  return []
+  return Object.values(expMap)
 })
 
 const selectedGradeFilter = ref('all')
@@ -340,6 +340,7 @@ const availableCourseFilters = computed(() => {
 })
 
 const availableGradeFilters = computed(() => {
+  if (activeClassRecord.value?.classType !== 'elementary') return []
   const grades = new Set(allAvailableExpectations.value.map(e => e.gradeLevel).filter(Boolean))
   if (grades.size <= 1) return []
   return ['all', ...Array.from(grades).sort()]
@@ -352,14 +353,20 @@ watch(showAddAssessmentModal, (open) => {
     } else {
       selectedGradeFilter.value = 'all'
     }
-    if (!newAssessment.value.categoryId && activeClassRecord.value?.gradebookCategories?.length > 0) {
-      newAssessment.value.categoryId = activeClassRecord.value.gradebookCategories[0].categoryId
+    if (!isEditingAssessment.value && (!newAssessment.value.targetCourseCode || newAssessment.value.targetCourseCode === 'all')) {
+      if (selectedCourseFilter.value && availableCourseFilters.value.includes(selectedCourseFilter.value)) {
+        newAssessment.value.targetCourseCode = selectedCourseFilter.value
+      }
+    }
+    const cats = effectiveClass.value?.gradebookCategories || []
+    if (!newAssessment.value.categoryId && cats.length > 0) {
+      newAssessment.value.categoryId = cats[0].categoryId
     }
   }
 }, { immediate: true })
 
 const filteredUnits = computed(() => {
-  let units = sortedUnits.value || []
+  let units = effectiveUnits.value || []
   if (selectedGradeFilter.value !== 'all' && availableGradeFilters.value.length > 1) {
     const targetG = selectedGradeFilter.value.toLowerCase()
     units = units.filter(u => {
@@ -376,6 +383,22 @@ watch(selectedGradeFilter, () => {
   if (newAssessment.value.unitId) {
     const exists = filteredUnits.value.some(u => String(u.unitId) === String(newAssessment.value.unitId))
     if (!exists) {
+      newAssessment.value.unitId = null
+    }
+  }
+})
+
+watch(() => newAssessment.value?.targetCourseCode, () => {
+  const cats = effectiveClass.value?.gradebookCategories || []
+  if (cats.length > 0) {
+    const exists = cats.some(c => c.categoryId === newAssessment.value.categoryId)
+    if (!exists) {
+      newAssessment.value.categoryId = cats[0].categoryId
+    }
+  }
+  if (newAssessment.value?.unitId) {
+    const unitExists = filteredUnits.value.some(u => String(u.unitId) === String(newAssessment.value.unitId))
+    if (!unitExists) {
       newAssessment.value.unitId = null
     }
   }
