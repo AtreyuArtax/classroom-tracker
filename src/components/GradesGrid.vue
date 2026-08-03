@@ -1,7 +1,24 @@
 <template>
   <div class="grades__grid-container-outer">
-    <!-- Unit & Grade Filter Bar (Fixed above table) -->
-    <div v-if="availableGradeFilters.length > 1 || availableUnits.length > 0" class="grades__filter-bar">
+    <!-- Unit, Grade & Course Filter Bar (Fixed above table) -->
+    <div v-if="availableCourseFilters.length > 1 || availableGradeFilters.length > 1 || availableUnits.length > 0" class="grades__filter-bar">
+      <!-- Course Filter Pills (Secondary Split Classes) -->
+      <div v-if="availableCourseFilters.length > 1" class="grades__filter-group">
+        <span class="grades__filter-label">Course:</span>
+        <div class="grades__filter-chips">
+          <button 
+            v-for="cFilter in availableCourseFilters" 
+            :key="cFilter" 
+            type="button"
+            class="grid-chip"
+            :class="{ 'grid-chip--active': String(selectedCourseFilter).toLowerCase() === String(cFilter).toLowerCase() }"
+            @click="selectedCourseFilter = cFilter"
+          >
+            {{ cFilter === 'all' ? 'All Courses' : cFilter }}
+          </button>
+        </div>
+      </div>
+
       <!-- Grade Filter Pills -->
       <div v-if="availableGradeFilters.length > 1" class="grades__filter-group">
         <span class="grades__filter-label">Grade:</span>
@@ -161,6 +178,13 @@
                   style="margin-left: 6px;"
                 >
                   {{ student.gradeLevel.replace('Grade ', 'Gr ') }}
+                </span>
+                <span 
+                  v-if="student.courseCode && availableCourseFilters.length > 1" 
+                  class="sbar-student-grade-tag"
+                  style="margin-left: 6px; background: rgba(59, 130, 246, 0.12); color: #3b82f6; border-color: rgba(59, 130, 246, 0.3);"
+                >
+                  {{ student.courseCode }}
                 </span>
               </div>
               <div class="grades__sparkline-mini" v-if="studentTrends[student.studentId]?.length > 1 && !props.isPrivacyMode">
@@ -567,6 +591,22 @@ function cleanUnitPillName(name) {
   return name.replace(/^\[Grade\s*\d+\]\s*/i, '').trim()
 }
 
+const selectedCourseFilter = ref('all')
+
+const availableCourseFilters = computed(() => {
+  const codes = new Set()
+  if (activeClassRecord.value?.courseSections) {
+    activeClassRecord.value.courseSections.forEach(c => codes.add(c))
+  }
+  if (activeClassRecord.value?.students) {
+    Object.values(activeClassRecord.value.students).forEach(st => {
+      if (st.courseCode && !st.archived) codes.add(st.courseCode)
+    })
+  }
+  if (codes.size <= 1) return []
+  return ['all', ...Array.from(codes).sort()]
+})
+
 const selectedGradeFilter = ref('all')
 
 const availableGradeFilters = computed(() => {
@@ -615,6 +655,10 @@ const sortedAssessments = computed(() => {
     if (isSBAR.value && (!a.expectationIds || a.expectationIds.length === 0)) return false
     return true
   })
+  if (selectedCourseFilter.value !== 'all' && availableCourseFilters.value.length > 1) {
+    const targetC = selectedCourseFilter.value.toLowerCase()
+    list = list.filter(a => !a.targetCourseCode || a.targetCourseCode === 'all' || a.targetCourseCode.toLowerCase() === targetC)
+  }
   if (selectedGradeFilter.value !== 'all' && availableGradeFilters.value.length > 1) {
     const validUnitIds = new Set(availableUnits.value.map(u => u.unitId))
     list = list.filter(a => !a.unitId || validUnitIds.has(a.unitId))
@@ -641,6 +685,11 @@ const sortedRoster = computed(() => {
       ...activeClassRecord.value.students[id],
       overallGrade: classGrades.value[id]?.overallGrade ?? -1
     }))
+
+  if (selectedCourseFilter.value !== 'all' && availableCourseFilters.value.length > 1) {
+    const targetC = selectedCourseFilter.value.toLowerCase()
+    students = students.filter(st => (st.courseCode || '').toLowerCase() === targetC)
+  }
 
   if (selectedGradeFilter.value !== 'all' && availableGradeFilters.value.length > 1) {
     const targetG = selectedGradeFilter.value.toLowerCase()

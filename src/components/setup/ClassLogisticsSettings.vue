@@ -230,8 +230,11 @@
           <div class="setup__roster-info">
             <span class="setup__roster-name">{{ s.lastName }}, {{ s.firstName }}</span>
             <span class="setup__roster-id">{{ s.studentId }}</span>
-            <span v-if="activeClass.classType === 'elementary' && s.gradeLevel" class="elementary-subjects__tag" style="margin-left: 8px;">
+            <span v-if="s.gradeLevel" class="elementary-subjects__tag" style="margin-left: 8px;">
               {{ s.gradeLevel }}
+            </span>
+            <span v-if="s.courseCode" class="elementary-subjects__tag" style="margin-left: 6px; background: rgba(59, 130, 246, 0.12); color: #3b82f6; border-color: rgba(59, 130, 246, 0.3);">
+              {{ s.courseCode }}
             </span>
           </div>
           <div class="setup__roster-actions">
@@ -318,6 +321,10 @@
                 <option value="Grade 7">Grade 7</option>
                 <option value="Grade 8">Grade 8</option>
               </select>
+            </label>
+            <label v-else class="setup__label">
+              Course / Section Code
+              <input v-model="newStudent.courseCode" class="setup__input" placeholder="e.g. SNC2D1" />
             </label>
           </div>
 
@@ -579,7 +586,7 @@ async function setGlobalDefaultGrid() {
 const isArchivedPanelVisible = ref(false)
 const isStudentModalOpen = ref(false)
 const isEditingStudent = ref(false)
-const newStudent = reactive({ studentId: '', firstName: '', lastName: '', rfidTag: '', gradeLevel: '' })
+const newStudent = reactive({ studentId: '', firstName: '', lastName: '', rfidTag: '', gradeLevel: '', courseCode: '' })
 const singleAddError = ref('')
 const singleAddSuccess = ref('')
 
@@ -590,6 +597,7 @@ function openAddStudentModal() {
   newStudent.lastName = ''
   newStudent.rfidTag = ''
   newStudent.gradeLevel = ''
+  newStudent.courseCode = ''
   singleAddError.value = ''
   singleAddSuccess.value = ''
   isStudentModalOpen.value = true
@@ -602,6 +610,7 @@ function onEditStudent(student) {
   newStudent.lastName = student.lastName
   newStudent.rfidTag = student.rfidTag || ''
   newStudent.gradeLevel = student.gradeLevel || ''
+  newStudent.courseCode = student.courseCode || ''
   singleAddError.value = ''
   singleAddSuccess.value = ''
   isStudentModalOpen.value = true
@@ -615,6 +624,7 @@ function cancelEditStudent() {
   newStudent.lastName = ''
   newStudent.rfidTag = ''
   newStudent.gradeLevel = ''
+  newStudent.courseCode = ''
   singleAddError.value = ''
   singleAddSuccess.value = ''
 }

@@ -241,7 +241,7 @@ export async function importRoster(classId, studentsArray) {
     let updated = 0
 
     for (const row of studentsArray) {
-        const { studentId, firstName, lastName, parentContacts, studentEmail, custody, livingWith, birthDate, rfidTag, gradeLevel, grade } = row
+        const { studentId, firstName, lastName, parentContacts, studentEmail, custody, livingWith, birthDate, rfidTag, gradeLevel, grade, courseCode } = row
         const rawG = (gradeLevel || grade || '').toString().trim()
         const parsedG = rawG ? (rawG.toLowerCase().startsWith('grade') ? rawG : `Grade ${parseInt(rawG, 10) || rawG}`) : ''
 
@@ -250,6 +250,7 @@ export async function importRoster(classId, studentsArray) {
             cls.students[studentId].firstName = firstName
             cls.students[studentId].lastName = lastName
             if (parsedG) cls.students[studentId].gradeLevel = parsedG
+            if (courseCode) cls.students[studentId].courseCode = courseCode
 
             if (parentContacts && parentContacts.length > 0) {
                 // Replace parent contacts if new ones are provided in CSV
@@ -269,6 +270,7 @@ export async function importRoster(classId, studentsArray) {
                 firstName,
                 lastName,
                 gradeLevel: parsedG,
+                courseCode: courseCode || '',
                 parentContacts: parentContacts || [],
                 studentEmail: studentEmail || '',
                 custody: custody || '',
@@ -278,10 +280,18 @@ export async function importRoster(classId, studentsArray) {
                 generalNote: '',
                 rfidTag: rfidTag || '',
                 activeStates: { isOut: false, outTime: null, isAbsent: false, lateMs: null },
+                flags: { IEPAcommodations: false, ELL: false, medicalAlert: false, behaviorPlan: false },
+                flagNotes: { IEP: '', ELL: '', medical: '', behavior: '' },
                 excludeFromAnalytics: false,
             }
             inserted++
         }
+    }
+
+    const uniqueCourses = new Set(Object.values(cls.students).map(s => s.courseCode).filter(Boolean))
+    if (uniqueCourses.size > 1) {
+        cls.isSplitClass = true
+        cls.courseSections = Array.from(uniqueCourses).sort()
     }
 
     const plain = JSON.parse(JSON.stringify(cls))

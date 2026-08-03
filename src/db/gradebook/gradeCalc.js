@@ -432,13 +432,14 @@ export async function calculateStudentGrade(studentId, classRecord, { asOf = nul
   const categoryResults = {}
 
   for (const category of categories) {
-    // Filter assessments for this category
+    const studentCourseCode = classRecord.students[studentId]?.courseCode
     let catAssessments = assessments.filter(a =>
       String(a.categoryId) === String(category.categoryId) &&
       !a.excluded &&
       a.categoryId !== 'sbar_general' &&
       (!a.expectationIds || a.expectationIds.length === 0) &&
-      (a.target !== 'individual' || (a.target === 'individual' && String(a.targetStudentId) === String(studentId)))
+      (a.target !== 'individual' || (a.target === 'individual' && String(a.targetStudentId) === String(studentId))) &&
+      (!a.targetCourseCode || a.targetCourseCode === 'all' || !studentCourseCode || String(a.targetCourseCode).toLowerCase() === String(studentCourseCode).toLowerCase())
     )
 
     // Apply asOf date filter if provided

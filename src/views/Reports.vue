@@ -47,6 +47,19 @@
             </button>
           </div>
 
+          <!-- Split Class Course Filter Pills -->
+          <div v-if="availableCourseFilters.length > 1" class="sbar-grade-pills" style="margin-right: 8px;">
+            <button 
+              v-for="cFilter in availableCourseFilters" 
+              :key="cFilter" 
+              class="grade-pill"
+              :class="{ 'grade-pill--active': activeCourseFilter === cFilter }"
+              @click="activeCourseFilter = cFilter"
+            >
+              {{ cFilter === 'all' ? 'All Courses' : cFilter }}
+            </button>
+          </div>
+
           <!-- Split Class Grade Filter Pills (Applies to Entire Page) -->
           <div v-if="availableGradeFilters.length > 1" class="sbar-grade-pills">
             <button 
@@ -339,12 +352,37 @@ watch(classList, (list) => {
 
 const sidebarStudents = dossier.sidebarStudents
 
+const activeCourseFilter = ref('all')
+
+const availableCourseFilters = computed(() => {
+  const rawClass = classList.value?.find(c => c.classId === sidebarClassId.value) ?? activeClass.value
+  if (!rawClass) return []
+  const codes = new Set()
+  if (rawClass.courseSections) {
+    rawClass.courseSections.forEach(c => codes.add(c))
+  }
+  const studentsMap = rawClass.students ?? {}
+  Object.values(studentsMap).forEach(st => {
+    if (!st.archived && st.courseCode) {
+      codes.add(st.courseCode)
+    }
+  })
+  if (sidebarStudents.value) {
+    sidebarStudents.value.forEach(st => {
+      if (st.courseCode) codes.add(st.courseCode)
+    })
+  }
+  if (codes.size <= 1) return []
+  return ['all', ...Array.from(codes).sort()]
+})
+
 const activeGradeFilter = ref('all')
-
-
 
 const filteredSidebarStudents = computed(() => {
   let list = sidebarStudents.value || []
+  if (activeCourseFilter.value !== 'all' && availableCourseFilters.value.length > 1) {
+    list = list.filter(s => s.courseCode && s.courseCode.toLowerCase() === activeCourseFilter.value.toLowerCase())
+  }
   if (activeGradeFilter.value !== 'all' && availableGradeFilters.value.length > 1) {
     list = list.filter(s => s.gradeLevel && s.gradeLevel.toLowerCase() === activeGradeFilter.value.toLowerCase())
   }

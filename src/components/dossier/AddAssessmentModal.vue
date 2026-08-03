@@ -29,6 +29,23 @@
             </div>
           </div>
 
+          <!-- Target Course Stream (Secondary Split Classes) -->
+          <div v-if="newAssessment.target === 'class' && availableCourseFilters.length > 1" class="form-group">
+            <label class="form-label">Target Course Stream</label>
+            <div class="toggle-group toggle-group--large">
+              <button 
+                v-for="cFilter in availableCourseFilters"
+                :key="cFilter"
+                type="button" 
+                class="toggle-btn" 
+                :class="{ 'toggle-btn--active': (newAssessment.targetCourseCode || 'all') === cFilter }"
+                @click="newAssessment.targetCourseCode = cFilter"
+              >
+                {{ cFilter === 'all' ? 'All Sections' : cFilter }}
+              </button>
+            </div>
+          </div>
+
           <!-- Assessment Purpose (Formative vs Summative - SBAR Mode Only) -->
           <div class="form-group" v-if="activeClassRecord?.gradingFramework === 'sbar'">
             <label class="form-label">Assessment Purpose</label>
@@ -307,6 +324,20 @@ const allAvailableExpectations = computed(() => {
 })
 
 const selectedGradeFilter = ref('all')
+
+const availableCourseFilters = computed(() => {
+  const codes = new Set()
+  if (activeClassRecord.value?.courseSections) {
+    activeClassRecord.value.courseSections.forEach(c => codes.add(c))
+  }
+  if (activeClassRecord.value?.students) {
+    Object.values(activeClassRecord.value.students).forEach(st => {
+      if (st.courseCode && !st.archived) codes.add(st.courseCode)
+    })
+  }
+  if (codes.size <= 1) return []
+  return ['all', ...Array.from(codes).sort()]
+})
 
 const availableGradeFilters = computed(() => {
   const grades = new Set(allAvailableExpectations.value.map(e => e.gradeLevel).filter(Boolean))

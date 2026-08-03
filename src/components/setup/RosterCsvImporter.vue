@@ -270,6 +270,15 @@ function onFileSelected(evt) {
         groups[key].students.push(row)
       }
 
+      for (const k in groups) {
+        const uniqueCourses = [...new Set(groups[k].students.map(r => r.courseCode).filter(Boolean))]
+        if (uniqueCourses.length > 1) {
+          groups[k].isSplitClass = true
+          groups[k].courseSections = uniqueCourses
+          groups[k].name = `Period ${groups[k].periodNumber} (${uniqueCourses.join('/')}) — ${groups[k].year}`
+        }
+      }
+
       const detectedPeriods = [...new Set(validRows.map(r => Number(r.periodNumber)))].filter(p => !isNaN(p))
 
       const missingPeriods = detectedPeriods.filter(p => !periodOptions.value.includes(p))

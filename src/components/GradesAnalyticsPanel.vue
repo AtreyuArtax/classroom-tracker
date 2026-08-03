@@ -7,6 +7,22 @@
         <span class="analytics-subtitle-text">Statistical insights, evidence triangulation & outlier filtering</span>
       </div>
 
+      <!-- Course Section Filter Pills (Secondary Split Classes) -->
+      <div v-if="availableCourseFilters.length > 1" class="grades__outlier-toggle" style="margin-right: 12px;">
+        <span class="grades__toggle-label">Course:</span>
+        <div class="grades__toggle-group">
+          <button 
+            v-for="cFilter in availableCourseFilters"
+            :key="cFilter"
+            class="grades__toggle-btn"
+            :class="{ 'grades__toggle-btn--active': selectedCourseFilter === cFilter }"
+            @click="selectedCourseFilter = cFilter"
+          >
+            {{ cFilter === 'all' ? 'All Courses' : cFilter }}
+          </button>
+        </div>
+      </div>
+
       <!-- Exclusion Filter Control Bar -->
       <div class="grades__outlier-toggle">
         <span class="grades__toggle-label">Exclusion Filter:</span>
@@ -463,6 +479,22 @@ const emit = defineEmits(['select-assessment'])
 
 const isExclusionsOpen = ref(false)
 const isCalculating = ref(false)
+
+const selectedCourseFilter = ref('all')
+
+const availableCourseFilters = computed(() => {
+  const codes = new Set()
+  if (activeClassRecord.value?.courseSections) {
+    activeClassRecord.value.courseSections.forEach(c => codes.add(c))
+  }
+  if (activeClassRecord.value?.students) {
+    Object.values(activeClassRecord.value.students).forEach(st => {
+      if (st.courseCode && !st.archived) codes.add(st.courseCode)
+    })
+  }
+  if (codes.size <= 1) return []
+  return ['all', ...Array.from(codes).sort()]
+})
 
 function getConsistencyInfo(sd) {
   if (sd === null || sd === undefined) return { label: '—', class: 'muted', icon: '' }
