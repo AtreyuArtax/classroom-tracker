@@ -179,6 +179,17 @@ export function calculateSBARExpectationMastery(classRecord, assessments, gradeM
       const evaluations = []
 
       astList.forEach(ast => {
+        if (ast.target === 'individual' && String(ast.targetStudentId) !== String(studentId)) return
+
+        const st = classRecord.students?.[studentId]
+        const isElem = classRecord.classType === 'elementary'
+        const targetTag = isElem ? (ast.gradeLevel || ast.targetCourseCode) : (ast.targetCourseCode || ast.gradeLevel)
+        const studentCohort = isElem ? st?.gradeLevel : st?.courseCode
+
+        if (targetTag && targetTag.toLowerCase() !== 'all' && studentCohort) {
+          if (targetTag.toLowerCase() !== studentCohort.toLowerCase()) return
+        }
+
         const rawGrade = gradeMap[ast.assessmentId]
         const grade = (rawGrade && rawGrade[studentId]) ? rawGrade[studentId] : rawGrade
         if (!grade || grade.excluded || grade.missing) return

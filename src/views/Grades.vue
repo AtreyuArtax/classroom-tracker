@@ -684,6 +684,10 @@ function startEditAssessment(assessment) {
   isEditingAssessment.value = true
   currentAssessmentId.value = assessment.assessmentId
   
+  const cohortTag = (assessment.targetCourseCode && assessment.targetCourseCode !== 'all')
+    ? assessment.targetCourseCode
+    : (assessment.gradeLevel || 'all')
+
   newAssessment.value = {
     name: assessment.name,
     description: assessment.description || '',
@@ -691,9 +695,11 @@ function startEditAssessment(assessment) {
     assessmentType: assessment.assessmentType,
     unitId: assessment.unitId || null,
     expectationId: assessment.expectationId || null,
+    expectationIds: assessment.expectationIds || (assessment.expectationId ? [assessment.expectationId] : []),
     target: assessment.target || 'class',
     targetStudentId: assessment.targetStudentId || null,
-    targetCourseCode: assessment.targetCourseCode || 'all',
+    targetCourseCode: cohortTag,
+    gradeLevel: assessment.gradeLevel || (cohortTag !== 'all' ? cohortTag : null),
     date: assessment.date,
     totalPoints: assessment.totalPoints,
     scaledTotal: assessment.scaledTotal,

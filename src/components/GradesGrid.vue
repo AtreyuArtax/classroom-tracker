@@ -387,7 +387,8 @@ import {
   activeSubCohortFilter,
   availableSubCohorts,
   isStudentInSubCohort,
-  isAssessmentInSubCohort
+  isAssessmentInSubCohort,
+  isAssessmentApplicableToStudent
 } from '../composables/useGradebook.js'
 import { useGradeEditing } from '../composables/useGradeEditing.js'
 import {
@@ -487,10 +488,10 @@ function getAssessmentAvg(assessmentId) {
 }
 
 function isCellApplicable(studentId, assessment) {
-  if (!assessment || !assessment.targetCourseCode || assessment.targetCourseCode === 'all') return true
+  if (!assessment) return true
   const st = activeClassRecord.value?.students?.[studentId]
-  if (!st || !st.courseCode) return true
-  return assessment.targetCourseCode.toLowerCase() === st.courseCode.toLowerCase()
+  if (!st) return true
+  return isAssessmentApplicableToStudent(assessment, st)
 }
 
 function getCellStyle(studentId, assessmentId, totalPoints) {

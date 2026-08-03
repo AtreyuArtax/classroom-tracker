@@ -29,19 +29,21 @@
             </div>
           </div>
 
-          <!-- Target Course Stream (Secondary Split Classes) -->
-          <div v-if="newAssessment.target === 'class' && availableCourseFilters.length > 1" class="form-group">
-            <label class="form-label">Target Course Stream</label>
+          <!-- Target Course Stream / Grade Level (Split Classes) -->
+          <div v-if="newAssessment.target === 'class' && availableSubCohorts.length > 1" class="form-group">
+            <label class="form-label">
+              {{ activeClassRecord?.classType === 'elementary' ? 'Target Grade Level' : 'Target Course Stream' }}
+            </label>
             <div class="toggle-group toggle-group--large">
               <button 
-                v-for="cFilter in availableCourseFilters"
+                v-for="cFilter in availableSubCohorts"
                 :key="cFilter"
                 type="button" 
                 class="toggle-btn" 
                 :class="{ 'toggle-btn--active': (newAssessment.targetCourseCode || 'all') === cFilter }"
-                @click="newAssessment.targetCourseCode = cFilter"
+                @click="onCohortToggle(cFilter)"
               >
-                {{ cFilter === 'all' ? 'All Sections' : cFilter }}
+                {{ cFilter === 'all' ? (activeClassRecord?.classType === 'elementary' ? 'All Grades' : 'All Sections') : cFilter }}
               </button>
             </div>
           </div>
@@ -173,20 +175,6 @@
             <div class="exp-section-header">
               <label class="form-label">Tagged Standards (Expectations)</label>
               <span class="exp-count-badge" v-if="selectedExpCount > 0">{{ selectedExpCount }} selected</span>
-            </div>
-
-            <!-- Split Class Grade Filter Pills -->
-            <div v-if="availableGradeFilters.length > 1" class="exp-grade-filters">
-              <button
-                v-for="gFilter in availableGradeFilters"
-                :key="gFilter"
-                type="button"
-                class="exp-grade-btn"
-                :class="{ 'exp-grade-btn--active': selectedGradeFilter === gFilter }"
-                @click="selectedGradeFilter = gFilter"
-              >
-                {{ gFilter === 'all' ? 'All Grades' : gFilter }}
-              </button>
             </div>
 
             <div class="exp-pill-selector">
@@ -327,26 +315,11 @@ const allAvailableExpectations = computed(() => {
 
 const selectedGradeFilter = ref('all')
 
-const availableCourseFilters = computed(() => {
-  const codes = new Set()
-  if (activeClassRecord.value?.courseSections) {
-    activeClassRecord.value.courseSections.forEach(c => codes.add(c))
-  }
-  if (activeClassRecord.value?.students) {
-    Object.values(activeClassRecord.value.students).forEach(st => {
-      if (st.courseCode && !st.archived) codes.add(st.courseCode)
-    })
-  }
-  if (codes.size <= 1) return []
-  return ['all', ...Array.from(codes).sort()]
-})
-
-const availableGradeFilters = computed(() => {
-  if (activeClassRecord.value?.classType !== 'elementary') return []
-  const grades = new Set(allAvailableExpectations.value.map(e => e.gradeLevel).filter(Boolean))
-  if (grades.size <= 1) return []
-  return ['all', ...Array.from(grades).sort()]
-})
+function onCohortToggle(cFilter) {
+  newAssessment.value.targetCourseCode = cFilter
+  newAssessment.value.gradeLevel = (cFilter === 'all' ? null : cFilter)
+  selectedGradeFilter.value = cFilter
+}
 
 watch(showAddAssessmentModal, (open) => {
   if (open) {
@@ -369,7 +342,7 @@ watch(showAddAssessmentModal, (open) => {
 
 const filteredUnits = computed(() => {
   let units = effectiveUnits.value || []
-  if (selectedGradeFilter.value !== 'all' && availableGradeFilters.value.length > 1) {
+  if (selectedGradeFilter.value !== 'all' && availableSubCohorts.value.length > 1) {
     const targetG = selectedGradeFilter.value.toLowerCase()
     units = units.filter(u => {
       const uGrade = u.gradeLevel || (u.name && u.name.includes('Grade 7') ? 'Grade 7' : (u.name && u.name.includes('Grade 8') ? 'Grade 8' : ''))
@@ -410,7 +383,7 @@ const filteredAvailableExpectations = computed(() => {
   let list = allAvailableExpectations.value
 
   // 1. Filter by Grade Pill (if split class)
-  if (selectedGradeFilter.value !== 'all' && availableGradeFilters.value.length > 1) {
+  if (selectedGradeFilter.value !== 'all' && availableSubCohorts.value.length > 1) {
     const targetG = selectedGradeFilter.value.toLowerCase()
     list = list.filter(e => e.gradeLevel && e.gradeLevel.toLowerCase() === targetG)
   }

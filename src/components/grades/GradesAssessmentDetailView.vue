@@ -489,11 +489,19 @@ function getGradeBadgeStyle(percent) {
 }
 
 const targetCourseRoster = computed(() => {
-  const targetCode = props.currentAssessment?.targetCourseCode
+  const isElem = props.activeClassRecord?.classType === 'elementary'
+  const targetCode = isElem 
+    ? (props.currentAssessment?.gradeLevel || props.currentAssessment?.targetCourseCode)
+    : (props.currentAssessment?.targetCourseCode || props.currentAssessment?.gradeLevel)
+
   if (!targetCode || targetCode === 'all') {
     return props.sortedRoster || []
   }
-  return (props.sortedRoster || []).filter(s => s.courseCode && s.courseCode.toLowerCase() === targetCode.toLowerCase())
+
+  return (props.sortedRoster || []).filter(s => {
+    const sTag = isElem ? (s.gradeLevel || s.courseCode) : (s.courseCode || s.gradeLevel)
+    return sTag && sTag.toLowerCase() === targetCode.toLowerCase()
+  })
 })
 
 const levelBreakdown = computed(() => {

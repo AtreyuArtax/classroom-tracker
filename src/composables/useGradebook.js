@@ -85,6 +85,25 @@ export function isAssessmentInSubCohort(assessment, filterVal = activeSubCohortF
   return tag.toLowerCase() === filterVal.toLowerCase()
 }
 
+/**
+ * Check if an assessment is applicable to a specific student based on split-class target cohort
+ */
+export function isAssessmentApplicableToStudent(assessment, student, classType = activeClassRecord.value?.classType) {
+  if (!assessment) return true
+  const isElem = classType === 'elementary'
+  const aTag = isElem 
+    ? (assessment.gradeLevel || assessment.targetCourseCode)
+    : (assessment.targetCourseCode || assessment.gradeLevel)
+  if (!aTag || aTag.toLowerCase() === 'all') return true
+  if (!student) return true
+  const sTag = isElem 
+    ? (student.gradeLevel || student.courseCode)
+    : (student.courseCode || student.gradeLevel)
+  if (!sTag) return true
+  return aTag.toLowerCase() === sTag.toLowerCase()
+}
+
+
 // Reactive state for analytics (Step 6)
 export const analyticsMode = ref(false) // false = grid, true = analytics panel
 export const exclusionMode = ref('none') // 'none', 'fixed', 'auto'
@@ -347,6 +366,10 @@ export function openAddAssessment(target = 'class', studentId = null) {
   isEditingAssessment.value = false
   currentAssessmentId.value = null
   
+  const initialCohort = (activeSubCohortFilter.value && activeSubCohortFilter.value !== 'all')
+    ? activeSubCohortFilter.value
+    : 'all'
+
   newAssessment.value = {
     name: '',
     description: '',
@@ -359,7 +382,8 @@ export function openAddAssessment(target = 'class', studentId = null) {
     expectationIds: [],
     target,
     targetStudentId: studentId,
-    targetCourseCode: 'all',
+    targetCourseCode: initialCohort,
+    gradeLevel: initialCohort !== 'all' ? initialCohort : null,
     date: new Date().toISOString().slice(0, 10),
     totalPoints: 10,
     scaledTotal: null,
@@ -402,13 +426,23 @@ export async function saveAssessment() {
     ? getEffectiveClassRecord(activeClassRecord.value, activeSubjectId.value)
     : activeClassRecord.value
 
-  if (activeGradeFilter.value && activeGradeFilter.value !== 'all') {
+  const isElem = activeClassRecord.value?.classType === 'elementary'
+  const targetCohort = newAssessment.value.targetCourseCode || 'all'
+
+  if (targetCohort !== 'all') {
+    newAssessment.value.targetCourseCode = targetCohort
+    newAssessment.value.gradeLevel = targetCohort
+  } else if (activeGradeFilter.value && activeGradeFilter.value !== 'all') {
     newAssessment.value.gradeLevel = activeGradeFilter.value
+    newAssessment.value.targetCourseCode = activeGradeFilter.value
   } else if (newAssessment.value.unitId && effClass?.gradebookUnits) {
     const u = effClass.gradebookUnits.find(unit => String(unit.unitId) === String(newAssessment.value.unitId))
     if (u) {
       const g = u.gradeLevel || (u.name && u.name.includes('Grade 7') ? 'Grade 7' : (u.name && u.name.includes('Grade 8') ? 'Grade 8' : ''))
-      if (g) newAssessment.value.gradeLevel = g
+      if (g) {
+        newAssessment.value.gradeLevel = g
+        if (isElem) newAssessment.value.targetCourseCode = g
+      }
     }
   }
 

@@ -12,7 +12,7 @@
           :class="{ 'grade-pill--active': String(activeGradeFilter).toLowerCase() === String(gFilter).toLowerCase() }"
           @click="setGradeFilter(gFilter)"
         >
-          {{ gFilter === 'all' ? 'All Grades' : gFilter }}
+          {{ gFilter === 'all' ? (activeClassRecord?.classType === 'elementary' ? 'All Grades' : 'All Sections') : gFilter }}
         </button>
       </div>
 
@@ -167,7 +167,10 @@ import {
   activeClassRecord, 
   assessments, 
   gradeMap,
-  activeGradeFilter
+  activeGradeFilter,
+  activeSubCohortFilter,
+  availableSubCohorts,
+  isStudentInSubCohort
 } from '../../composables/useGradebook.js'
 import {
   calculateSBARExpectationMastery,
@@ -186,20 +189,7 @@ const emit = defineEmits(['open-dossier', 'select-expectation', 'select-assessme
 
 const activeStrandFilter = ref('all')
 
-const availableGradeFilters = computed(() => {
-  const grades = new Set()
-  if (activeClassRecord.value?.students) {
-    Object.values(activeClassRecord.value.students).forEach(st => {
-      if (st.gradeLevel && !st.archived) grades.add(st.gradeLevel)
-    })
-  }
-  const classExps = activeClassRecord.value?.expectations || activeClassRecord.value?.curriculumExpectations || []
-  classExps.forEach(e => {
-    if (e.gradeLevel) grades.add(e.gradeLevel)
-  })
-  if (grades.size <= 1) return []
-  return ['all', ...Array.from(grades).sort()]
-})
+const availableGradeFilters = computed(() => availableSubCohorts.value)
 
 const effectiveClass = computed(() => {
   if (!activeClassRecord.value) return null
@@ -292,8 +282,8 @@ const sortedRoster = computed(() => {
     .map(id => ({ studentId: id, ...activeClassRecord.value.students[id] }))
     .sort((a, b) => a.lastName.localeCompare(b.lastName))
 
-  if (activeGradeFilter.value !== 'all' && availableGradeFilters.value.length > 1) {
-    list = list.filter(st => (st.gradeLevel || '').toLowerCase() === activeGradeFilter.value.toLowerCase())
+  if (activeSubCohortFilter.value !== 'all' && availableSubCohorts.value.length > 1) {
+    list = list.filter(st => isStudentInSubCohort(st))
   }
   return list
 })
