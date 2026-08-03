@@ -127,7 +127,10 @@ export async function calculateClassAnalytics(classRecord, assessments, grades, 
   const isElem = classRecord.classType === 'elementary'
 
   const allStudentIds = Object.keys(classRecord.students ?? {})
-  let studentIds = allStudentIds.filter(id => !classRecord.students[id].archived)
+  let studentIds = allStudentIds.filter(id => {
+    const st = classRecord.students[id]
+    return st && !st.archived && Boolean(st.firstName?.trim() || st.lastName?.trim())
+  })
 
   if (filterKey && filterKey !== 'all') {
     const fLower = filterKey.toLowerCase()
@@ -234,13 +237,28 @@ export async function calculateClassAnalytics(classRecord, assessments, grades, 
   const conversationAnalytics = {}
   const assessmentBreakdowns = []
 
-  for (const a of assessments.filter(a => a.target !== 'individual' && !a.excluded)) {
+  const combinedExcludedStudentIds = new Set([
+    ...excludedStudentIds,
+    ...(outlierStudentIds || [])
+  ])
+
+  let filteredAssessments = assessments.filter(a => a.target !== 'individual' && !a.excluded)
+
+  if (filterKey && filterKey !== 'all') {
+    const fLower = filterKey.toLowerCase()
+    filteredAssessments = filteredAssessments.filter(a => {
+      const tag = isElem ? (a.gradeLevel || a.targetCourseCode) : (a.targetCourseCode || a.gradeLevel)
+      return !tag || tag === 'all' || tag.toLowerCase() === fLower
+    })
+  }
+
+  for (const a of filteredAssessments) {
     const stats = calculateAssessmentAnalytics(
       a.assessmentId, grades, a,
       { 
         exclusionMode, 
         exclusionThreshold, 
-        excludedStudentIds,
+        excludedStudentIds: combinedExcludedStudentIds,
         gradeBuckets
       }
     )

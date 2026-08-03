@@ -677,7 +677,12 @@ const sortedRoster = computed(() => {
   if (!activeClassRecord.value?.students) return []
   
   let students = Object.keys(activeClassRecord.value.students)
-    .filter(id => !activeClassRecord.value.students[id].archived)
+    .filter(id => {
+      const st = activeClassRecord.value.students[id]
+      if (!st || st.archived) return false
+      if (!st.firstName?.trim() && !st.lastName?.trim()) return false
+      return true
+    })
     .map(id => ({ 
       studentId: id, 
       ...activeClassRecord.value.students[id],

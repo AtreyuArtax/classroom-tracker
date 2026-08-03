@@ -440,6 +440,7 @@ import {
   activeSubCohortFilter,
   availableSubCohorts,
   isStudentInSubCohort,
+  isAssessmentInSubCohort,
   setExclusionMode,
   toggleStudentFromAnalytics,
   analyticsMode
@@ -483,20 +484,6 @@ const emit = defineEmits(['select-assessment'])
 
 const isExclusionsOpen = ref(false)
 const isCalculating = ref(false)
-
-const availableCourseFilters = computed(() => {
-  const codes = new Set()
-  if (activeClassRecord.value?.courseSections) {
-    activeClassRecord.value.courseSections.forEach(c => codes.add(c))
-  }
-  if (activeClassRecord.value?.students) {
-    Object.values(activeClassRecord.value.students).forEach(st => {
-      if (st.courseCode && !st.archived) codes.add(st.courseCode)
-    })
-  }
-  if (codes.size <= 1) return []
-  return ['all', ...Array.from(codes).sort()]
-})
 
 function getConsistencyInfo(sd) {
   if (sd === null || sd === undefined) return { label: '—', class: 'muted', icon: '' }
@@ -571,28 +558,38 @@ function toggleSort(field) {
 }
 
 // Computeds
+const activeStudentGrades = computed(() => {
+  if (!activeClassRecord.value?.students) return []
+  const outliers = new Set(classAnalytics.value?.outlierStudentIds || [])
+  const list = []
+  Object.keys(activeClassRecord.value.students).forEach(id => {
+    const st = activeClassRecord.value.students[id]
+    if (!st || st.archived || outliers.has(id)) return
+    if (!st.firstName?.trim() && !st.lastName?.trim()) return
+    if (!isStudentInSubCohort(st)) return
+    const g = classGrades.value[id]
+    if (g && g.overallGrade !== null && g.overallGrade !== undefined) {
+      list.push(g.overallGrade)
+    }
+  })
+  return list
+})
+
 const overallClassAvg = computed(() => {
-  const values = Object.values(classGrades.value)
-    .map(g => g.overallGrade)
-    .filter(val => val !== null && val !== undefined)
+  const values = activeStudentGrades.value
   if (values.length === 0) return null
   return values.reduce((sum, val) => sum + val, 0) / values.length
 })
 
 const overallClassMedian = computed(() => {
-  const values = Object.values(classGrades.value)
-    .map(g => g.overallGrade)
-    .filter(val => val !== null && val !== undefined)
-    .sort((a, b) => a - b)
+  const values = [...activeStudentGrades.value].sort((a, b) => a - b)
   if (values.length === 0) return null
   const mid = Math.floor(values.length / 2)
   return values.length % 2 !== 0 ? values[mid] : (values[mid - 1] + values[mid]) / 2
 })
 
 const overallClassSD = computed(() => {
-  const values = Object.values(classGrades.value)
-    .map(g => g.overallGrade)
-    .filter(val => val !== null && val !== undefined)
+  const values = activeStudentGrades.value
   if (values.length < 2) return null
   const mean = values.reduce((sum, val) => sum + val, 0) / values.length
   const sqDiffSum = values.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0)
@@ -619,9 +616,7 @@ const classMostConsistent = computed(() => {
   const bucketCounts = {}
   const bucketRanges = {}
   
-  const dataset = Object.values(classGrades.value)
-    .map(g => g.overallGrade)
-    .filter(val => val !== null && val !== undefined)
+  const dataset = activeStudentGrades.value
     
   if (dataset.length === 0) return null
   
@@ -669,6 +664,7 @@ const classEvidenceBlend = computed(() => {
   const isSBAR = activeClassRecord.value?.gradingFramework === 'sbar'
   const activeAssessments = (assessments.value || []).filter(a => {
     if (a.target === 'individual' || a.excluded) return false
+    if (!isAssessmentInSubCohort(a)) return false
     const isSBARTask = a.categoryId === 'sbar_general' || (a.expectationIds && a.expectationIds.length > 0)
     return isSBAR ? isSBARTask : !isSBARTask
   })

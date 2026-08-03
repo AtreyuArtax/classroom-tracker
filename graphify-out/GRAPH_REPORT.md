@@ -1,16 +1,16 @@
 # Graph Report - classroom-tracker  (2026-08-03)
 
 ## Corpus Check
-- 132 files · ~187,484 words
+- 132 files · ~187,473 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1053 nodes · 1709 edges · 108 communities (97 shown, 11 thin omitted)
+- 1053 nodes · 1710 edges · 108 communities (97 shown, 11 thin omitted)
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 3 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `1071a7c2`
+- Built from commit: `b5e9801d`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -106,7 +106,7 @@ Cohesion: 0.06
 Nodes (21): archivedRoster, checkResize(), confirmResize(), dismissedSuggestions, dismissSuggestion(), filteredArchivedClasses, filteredClassList, getStudentEventHistory() (+13 more)
 
 ### Community 1 - "Community 1"
-Cohesion: 0.07
+Cohesion: 0.08
 Nodes (35): getEffectiveClassRecord(), activeGradeFilter, addAssessment(), assessmentSortOrder, assessmentStats, assessmentTypes, availableCourseFilters, availableGradeFilters (+27 more)
 
 ### Community 2 - "Community 2"
@@ -223,7 +223,7 @@ Nodes (17): _applyDateRange(), deleteEvent(), detachEventsForDeletedExpectation(
 
 ### Community 36 - "Community 36"
 Cohesion: 0.05
-Nodes (38): analyticsSortBy, analyticsSortOrder, availableCourseFilters, bucketChartData, bucketChartOptions, categoryWeightTotal, classEvidenceBlend, classMostConsistent (+30 more)
+Nodes (39): activeStudentGrades, analyticsSortBy, analyticsSortOrder, bucketChartData, bucketChartOptions, categoryWeightTotal, classEvidenceBlend, classMostConsistent (+31 more)
 
 ### Community 38 - "Community 38"
 Cohesion: 0.07
@@ -311,6 +311,6 @@ _Questions this graph is uniquely positioned to answer:_
 - **Should `Community 0` be split into smaller, more focused modules?**
   _Cohesion score 0.05512820512820513 - nodes in this community are weakly interconnected._
 - **Should `Community 1` be split into smaller, more focused modules?**
-  _Cohesion score 0.07317073170731707 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.07564102564102564 - nodes in this community are weakly interconnected._
 - **Should `Community 3` be split into smaller, more focused modules?**
   _Cohesion score 0.05121951219512195 - nodes in this community are weakly interconnected._

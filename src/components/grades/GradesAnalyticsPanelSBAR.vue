@@ -10,10 +10,10 @@
               v-for="gFilter in availableGradeFilters" 
               :key="gFilter" 
               class="grade-pill"
-              :class="{ 'grade-pill--active': activeGradeFilter === gFilter }"
-              @click="activeGradeFilter = gFilter"
+              :class="{ 'grade-pill--active': activeSubCohortFilter === gFilter }"
+              @click="activeSubCohortFilter = gFilter"
             >
-              {{ gFilter === 'all' ? 'All Grades' : gFilter }}
+              {{ gFilter === 'all' ? (activeClassRecord?.classType === 'elementary' ? 'All Grades' : 'All Sections') : gFilter }}
             </button>
           </div>
         </div>
@@ -273,7 +273,11 @@ import { AlertTriangle, CheckCircle2, TrendingUp, TrendingDown, Minus, Sparkles 
 import {
   activeClassRecord,
   assessments,
-  gradeMap
+  gradeMap,
+  activeGradeFilter,
+  activeSubCohortFilter,
+  availableSubCohorts,
+  isStudentInSubCohort
 } from '../../composables/useGradebook.js'
 import {
   calculateSBARExpectationMastery,
@@ -283,19 +287,7 @@ import {
 
 const emit = defineEmits(['select-assessment', 'show-dossier'])
 
-const activeGradeFilter = ref('all')
-
-const availableGradeFilters = computed(() => {
-  if (!activeClassRecord.value?.students) return ['all']
-  const grades = new Set()
-  Object.values(activeClassRecord.value.students).forEach(st => {
-    if (!st.archived && st.gradeLevel) {
-      grades.add(st.gradeLevel)
-    }
-  })
-  const sorted = Array.from(grades).sort()
-  return sorted.length > 1 ? ['all', ...sorted] : ['all']
-})
+const availableGradeFilters = computed(() => availableSubCohorts.value)
 
 const algorithmLabel = computed(() => {
   const algo = activeClassRecord.value?.sbarAlgorithm || 'decaying_average'
@@ -315,8 +307,8 @@ const activeStudents = computed(() => {
 
 const filteredStudents = computed(() => {
   let list = activeStudents.value
-  if (activeGradeFilter.value !== 'all' && availableGradeFilters.value.length > 1) {
-    list = list.filter(s => s.gradeLevel && s.gradeLevel.toLowerCase() === activeGradeFilter.value.toLowerCase())
+  if (activeSubCohortFilter.value !== 'all' && availableSubCohorts.value.length > 1) {
+    list = list.filter(s => isStudentInSubCohort(s))
   }
   return list
 })
