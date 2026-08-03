@@ -254,6 +254,8 @@ import {
   activeClassRecord,
   activeGradeFilter,
   selectedCourseFilter,
+  activeSubCohortFilter,
+  availableSubCohorts,
   closeAddAssessment,
   onTargetChange,
   saveAssessment
@@ -348,15 +350,15 @@ const availableGradeFilters = computed(() => {
 
 watch(showAddAssessmentModal, (open) => {
   if (open) {
-    if (activeGradeFilter.value && availableGradeFilters.value.includes(activeGradeFilter.value)) {
-      selectedGradeFilter.value = activeGradeFilter.value
+    const activeVal = activeSubCohortFilter.value
+    if (activeVal && activeVal !== 'all' && availableSubCohorts.value.includes(activeVal)) {
+      selectedGradeFilter.value = activeVal
+      if (!isEditingAssessment.value) {
+        newAssessment.value.gradeLevel = activeVal
+        newAssessment.value.targetCourseCode = activeVal
+      }
     } else {
       selectedGradeFilter.value = 'all'
-    }
-    if (!isEditingAssessment.value && (!newAssessment.value.targetCourseCode || newAssessment.value.targetCourseCode === 'all')) {
-      if (selectedCourseFilter.value && availableCourseFilters.value.includes(selectedCourseFilter.value)) {
-        newAssessment.value.targetCourseCode = selectedCourseFilter.value
-      }
     }
     const cats = effectiveClass.value?.gradebookCategories || []
     if (!newAssessment.value.categoryId && cats.length > 0) {

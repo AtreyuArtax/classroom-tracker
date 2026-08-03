@@ -220,7 +220,8 @@ import {
   classGrades, 
   assessments, 
   gradeMap, 
-  activeClassRecord 
+  activeClassRecord,
+  isAssessmentInSubCohort
 } from '../../composables/useGradebook.js'
 import { getEventsByStudent, toMinutes } from '../../db/eventService.js'
 import { formatLocalDisplay } from '../../utils/dates.js'
@@ -284,9 +285,24 @@ function getGradeColor(score) {
   return '#991b1b' // Darker red for print
 }
 
+const currentStudentObj = computed(() => {
+  return activeClassRecord.value?.students?.[props.studentId]
+})
+
+const studentSubCohort = computed(() => {
+  const isElem = activeClassRecord.value?.classType === 'elementary'
+  return isElem ? currentStudentObj.value?.gradeLevel : currentStudentObj.value?.courseCode
+})
+
 // Assessment Logic
 const studentAssessments = computed(() => {
   return assessments.value
+    .filter(a => {
+      if (a.target === 'individual') {
+        return String(a.targetStudentId) === String(props.studentId)
+      }
+      return isAssessmentInSubCohort(a, studentSubCohort.value)
+    })
     .map(a => {
       const g = gradeMap.value[a.assessmentId]?.[props.studentId]
       return { 
@@ -297,7 +313,7 @@ const studentAssessments = computed(() => {
         excluded: g?.excluded 
       }
     })
-    .filter(a => !a.excluded && (a.target !== 'individual' || (a.target === 'individual' && String(a.targetStudentId) === String(props.studentId))))
+    .filter(a => !a.excluded)
 })
 
 const missingAssessments = computed(() => studentAssessments.value.filter(a => a.missing))

@@ -354,7 +354,8 @@ import {
   updateAttemptComment,
   deleteAssessment,
   filteredMilestones,
-  globalMilestones
+  globalMilestones,
+  isAssessmentInSubCohort
 } from '../../composables/useGradebook.js'
 import { useStudentDossier } from '../../composables/useStudentDossier.js'
 
@@ -500,10 +501,19 @@ const academicCategories = computed(() => {
   }))
 })
 
+const currentStudentObj = computed(() => {
+  return activeClassRecord.value?.students?.[props.studentId]
+})
+
+const studentSubCohort = computed(() => {
+  const isElem = activeClassRecord.value?.classType === 'elementary'
+  return isElem ? currentStudentObj.value?.gradeLevel : currentStudentObj.value?.courseCode
+})
+
 const classAssessments = computed(() => {
   const assList = Array.isArray(assessments.value) ? assessments.value : []
   return assList
-    .filter(a => a && a.target !== 'individual')
+    .filter(a => a && a.target !== 'individual' && isAssessmentInSubCohort(a, studentSubCohort.value))
     .map(a => {
       const g = gradeMap.value?.[a.assessmentId]?.[props.studentId]
       const score = g?.resolvedScore ?? null

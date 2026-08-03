@@ -278,6 +278,8 @@ import {
   classAnalytics,
   refreshClassAnalytics,
   selectedCourseFilter,
+  activeSubCohortFilter,
+  isStudentInSubCohort,
   resetAnalyticsState,
   showAddAssessmentModal,
   displayMode,
@@ -629,11 +631,10 @@ const filteredClassGrades = computed(() => {
 
 const overallClassAvg = computed(() => {
   let studentMap = filteredClassGrades.value
-  if (selectedCourseFilter.value && selectedCourseFilter.value !== 'all') {
-    const targetC = selectedCourseFilter.value.toLowerCase()
+  if (activeSubCohortFilter.value && activeSubCohortFilter.value !== 'all') {
     const validStudentIds = new Set(
       Object.keys(activeClassRecord.value?.students || {})
-        .filter(id => (activeClassRecord.value.students[id].courseCode || '').toLowerCase() === targetC)
+        .filter(id => isStudentInSubCohort(activeClassRecord.value.students[id]))
     )
     const filtered = {}
     Object.keys(studentMap).forEach(id => {

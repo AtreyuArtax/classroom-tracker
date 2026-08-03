@@ -410,7 +410,8 @@ import {
   saveStudentGradebookNote,
   clearGrade,
   initialDossierTab,
-  setActiveSubject
+  setActiveSubject,
+  isAssessmentInSubCohort
 } from '../../composables/useGradebook.js'
 import { activeSubjectId } from '../../composables/useClassroomState.js'
 import { useClassroom } from '../../composables/useClassroom.js'
@@ -453,6 +454,7 @@ function getSubjectStudentMastery(subjectId) {
   }
 
   const subAssessments = (assessments.value || []).filter(a => {
+    if (!isAssessmentInSubCohort(a, studentSubCohort.value)) return false
     if (a.subjectId) return a.subjectId === subjectId
 
     if (a.unitId && subjectUnitIds.has(String(a.unitId))) return true
@@ -566,11 +568,17 @@ const academicCategories = computed(() => {
   }))
 })
 
+const studentSubCohort = computed(() => {
+  const isElem = activeClassRecord.value?.classType === 'elementary'
+  return isElem ? props.student?.gradeLevel : props.student?.courseCode
+})
+
 const classAssessments = computed(() => {
   const isSBAR = activeClassRecord.value?.gradingFramework === 'sbar'
   return assessments.value
     .filter(a => {
       if (a.target === 'individual') return false
+      if (!isAssessmentInSubCohort(a, studentSubCohort.value)) return false
       if (isSBAR) {
         return a.categoryId === 'sbar_general' || (a.expectationIds && a.expectationIds.length > 0)
       } else {

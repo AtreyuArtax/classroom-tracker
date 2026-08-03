@@ -30,8 +30,60 @@ export const selectedMilestone = ref(null) // null = current
 export const globalMilestones = ref([])
 export const gradeBuckets = ref([])
 export const initialDossierTab = ref('summary')
-export const activeGradeFilter = ref('all') // 'all' | 'Grade 7' | 'Grade 8'
-export const selectedCourseFilter = ref('all') // 'all' | 'SNC2D1' | 'SNC2P1'
+export const activeSubCohortFilter = ref('all') // 'all' | 'Grade 7' | 'SNC2D1' etc.
+
+// Alias for backwards compatibility
+export const activeGradeFilter = computed({
+  get: () => activeSubCohortFilter.value,
+  set: (val) => { activeSubCohortFilter.value = val }
+})
+export const selectedCourseFilter = computed({
+  get: () => activeSubCohortFilter.value,
+  set: (val) => { activeSubCohortFilter.value = val }
+})
+
+/**
+ * Available sub-cohort options for current class (e.g. ['all', 'Grade 7', 'Grade 8'] or ['all', 'SNC2D1', 'SNC2P1'])
+ */
+export const availableSubCohorts = computed(() => {
+  if (!activeClassRecord.value) return ['all']
+  const isElem = activeClassRecord.value.classType === 'elementary'
+  const students = Object.values(activeClassRecord.value.students || {})
+  const set = new Set()
+  students.forEach(st => {
+    if (st.archived) return
+    const tag = isElem ? st.gradeLevel : st.courseCode
+    if (tag && tag.trim()) set.add(tag.trim())
+  })
+  if (set.size <= 1) return ['all']
+  return ['all', ...Array.from(set).sort()]
+})
+
+export const availableCourseFilters = computed(() => availableSubCohorts.value)
+export const availableGradeFilters = computed(() => availableSubCohorts.value)
+
+/**
+ * Check if a student belongs to the active sub-cohort filter
+ */
+export function isStudentInSubCohort(student, filterVal = activeSubCohortFilter.value, classType = activeClassRecord.value?.classType) {
+  if (!filterVal || filterVal.toLowerCase() === 'all') return true
+  if (!student) return false
+  const tag = classType === 'elementary' ? student.gradeLevel : student.courseCode
+  return Boolean(tag && tag.toLowerCase() === filterVal.toLowerCase())
+}
+
+/**
+ * Check if an assessment targets the active sub-cohort filter
+ */
+export function isAssessmentInSubCohort(assessment, filterVal = activeSubCohortFilter.value, classType = activeClassRecord.value?.classType) {
+  if (!filterVal || filterVal.toLowerCase() === 'all') return true
+  if (!assessment) return true
+  const tag = classType === 'elementary'
+    ? (assessment.gradeLevel || assessment.targetCourseCode)
+    : (assessment.targetCourseCode || assessment.gradeLevel)
+  if (!tag || tag === 'all') return true
+  return tag.toLowerCase() === filterVal.toLowerCase()
+}
 
 // Reactive state for analytics (Step 6)
 export const analyticsMode = ref(false) // false = grid, true = analytics panel
@@ -161,12 +213,14 @@ export async function refreshGrades() {
 /**
  * Step 6: Compute class analytics.
  */
-export async function refreshClassAnalytics(targetCourseCode = null) {
+export async function refreshClassAnalytics(targetSubCohort = null) {
   if (!activeClassRecord.value) return
   // Use filteredMilestones (same as refreshGrades) so grades and analytics always match
   const asOf = selectedMilestone.value
     ? filteredMilestones.value?.find(m => m.milestoneId === selectedMilestone.value)?.date
     : null
+
+  const subCohortFilterVal = targetSubCohort || activeSubCohortFilter.value || 'all'
 
   classAnalytics.value = await gradebookService.calculateClassAnalytics(
     activeClassRecord.value,
@@ -175,7 +229,8 @@ export async function refreshClassAnalytics(targetCourseCode = null) {
     { 
       exclusionMode: exclusionMode.value, 
       exclusionThreshold: fixedExclusionThreshold.value,
-      targetCourseCode: targetCourseCode || selectedCourseFilter.value || 'all',
+      targetCourseCode: subCohortFilterVal,
+      subCohortFilter: subCohortFilterVal,
       asOf,
       gradeBuckets: gradeBuckets.value
     }

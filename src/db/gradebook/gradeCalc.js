@@ -433,14 +433,19 @@ export async function calculateStudentGrade(studentId, classRecord, { asOf = nul
 
   for (const category of categories) {
     const studentCourseCode = classRecord.students[studentId]?.courseCode
-    let catAssessments = assessments.filter(a =>
-      String(a.categoryId) === String(category.categoryId) &&
-      !a.excluded &&
-      a.categoryId !== 'sbar_general' &&
-      (!a.expectationIds || a.expectationIds.length === 0) &&
-      (a.target !== 'individual' || (a.target === 'individual' && String(a.targetStudentId) === String(studentId))) &&
-      (!a.targetCourseCode || a.targetCourseCode === 'all' || !studentCourseCode || String(a.targetCourseCode).toLowerCase() === String(studentCourseCode).toLowerCase())
-    )
+    const studentGradeLevel = classRecord.students[studentId]?.gradeLevel
+    const isElem = classRecord.classType === 'elementary'
+    const studentCohort = isElem ? studentGradeLevel : studentCourseCode
+
+    let catAssessments = assessments.filter(a => {
+      if (String(a.categoryId) !== String(category.categoryId) || a.excluded || a.categoryId === 'sbar_general') return false
+      if (a.expectationIds && a.expectationIds.length > 0) return false
+      if (a.target === 'individual') return String(a.targetStudentId) === String(studentId)
+      
+      const targetTag = isElem ? (a.gradeLevel || a.targetCourseCode) : (a.targetCourseCode || a.gradeLevel)
+      if (!targetTag || targetTag === 'all' || !studentCohort) return true
+      return String(targetTag).toLowerCase() === String(studentCohort).toLowerCase()
+    })
 
     // Apply asOf date filter if provided
     if (asOf) {

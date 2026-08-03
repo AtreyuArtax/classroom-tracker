@@ -1,37 +1,20 @@
 <template>
   <div class="grades__grid-container-outer">
-    <!-- Unit, Grade & Course Filter Bar (Fixed above table) -->
-    <div v-if="availableCourseFilters.length > 1 || availableGradeFilters.length > 1 || availableUnits.length > 0" class="grades__filter-bar">
-      <!-- Course Filter Pills (Secondary Split Classes) -->
-      <div v-if="availableCourseFilters.length > 1" class="grades__filter-group">
-        <span class="grades__filter-label">Course:</span>
+    <!-- Unit & Sub-Cohort Filter Bar (Fixed above table) -->
+    <div v-if="availableSubCohorts.length > 1 || availableUnits.length > 0" class="grades__filter-bar">
+      <!-- Sub-Cohort Filter Pills (Split-Grade or Split-Section Classes) -->
+      <div v-if="availableSubCohorts.length > 1" class="grades__filter-group">
+        <span class="grades__filter-label">{{ activeClassRecord?.classType === 'elementary' ? 'Grade:' : 'Section:' }}</span>
         <div class="grades__filter-chips">
           <button 
-            v-for="cFilter in availableCourseFilters" 
-            :key="cFilter" 
+            v-for="subCohort in availableSubCohorts" 
+            :key="subCohort" 
             type="button"
             class="grid-chip"
-            :class="{ 'grid-chip--active': String(selectedCourseFilter).toLowerCase() === String(cFilter).toLowerCase() }"
-            @click="selectedCourseFilter = cFilter"
+            :class="{ 'grid-chip--active': String(activeSubCohortFilter).toLowerCase() === String(subCohort).toLowerCase() }"
+            @click="activeSubCohortFilter = subCohort; selectedUnitId = null"
           >
-            {{ cFilter === 'all' ? 'All Courses' : cFilter }}
-          </button>
-        </div>
-      </div>
-
-      <!-- Grade Filter Pills -->
-      <div v-if="availableGradeFilters.length > 1" class="grades__filter-group">
-        <span class="grades__filter-label">Grade:</span>
-        <div class="grades__filter-chips">
-          <button 
-            v-for="gFilter in availableGradeFilters" 
-            :key="gFilter" 
-            type="button"
-            class="grid-chip"
-            :class="{ 'grid-chip--active': String(selectedGradeFilter).toLowerCase() === String(gFilter).toLowerCase() }"
-            @click="selectedGradeFilter = gFilter; selectedUnitId = null"
-          >
-            {{ gFilter === 'all' ? 'All Grades' : gFilter }}
+            {{ subCohort === 'all' ? (activeClassRecord?.classType === 'elementary' ? 'All Grades' : 'All Sections') : subCohort }}
           </button>
         </div>
       </div>
@@ -400,7 +383,11 @@ import {
   assessmentStats,
   gridSortBy,
   gridSortOrder,
-  selectedCourseFilter
+  selectedCourseFilter,
+  activeSubCohortFilter,
+  availableSubCohorts,
+  isStudentInSubCohort,
+  isAssessmentInSubCohort
 } from '../composables/useGradebook.js'
 import { useGradeEditing } from '../composables/useGradeEditing.js'
 import {
@@ -671,16 +658,8 @@ const sortedAssessments = computed(() => {
     if (a.target === 'individual') return false
     if (a.categoryId === 'sbar_general') return false
     if (isSBAR.value && (!a.expectationIds || a.expectationIds.length === 0)) return false
-    return true
+    return isAssessmentInSubCohort(a)
   })
-  if (selectedCourseFilter.value !== 'all' && availableCourseFilters.value.length > 1) {
-    const targetC = selectedCourseFilter.value.toLowerCase()
-    list = list.filter(a => !a.targetCourseCode || a.targetCourseCode === 'all' || a.targetCourseCode.toLowerCase() === targetC)
-  }
-  if (selectedGradeFilter.value !== 'all' && availableGradeFilters.value.length > 1) {
-    const validUnitIds = new Set(availableUnits.value.map(u => u.unitId))
-    list = list.filter(a => !a.unitId || validUnitIds.has(a.unitId))
-  }
   if (selectedUnitId.value) {
     list = list.filter(a => a.unitId === selectedUnitId.value)
   }
@@ -703,16 +682,7 @@ const sortedRoster = computed(() => {
       ...activeClassRecord.value.students[id],
       overallGrade: classGrades.value[id]?.overallGrade ?? -1
     }))
-
-  if (selectedCourseFilter.value !== 'all' && availableCourseFilters.value.length > 1) {
-    const targetC = selectedCourseFilter.value.toLowerCase()
-    students = students.filter(st => (st.courseCode || '').toLowerCase() === targetC)
-  }
-
-  if (selectedGradeFilter.value !== 'all' && availableGradeFilters.value.length > 1) {
-    const targetG = selectedGradeFilter.value.toLowerCase()
-    students = students.filter(st => (st.gradeLevel || '').toLowerCase() === targetG)
-  }
+    .filter(st => isStudentInSubCohort(st))
 
   return students.sort((a, b) => {
     if (gridSortBy.value === 'grade') {

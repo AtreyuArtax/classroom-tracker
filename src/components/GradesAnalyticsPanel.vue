@@ -7,18 +7,18 @@
         <span class="analytics-subtitle-text">Statistical insights, evidence triangulation & outlier filtering</span>
       </div>
 
-      <!-- Course Section Filter Pills (Secondary Split Classes) -->
-      <div v-if="availableCourseFilters.length > 1" class="grades__outlier-toggle" style="margin-right: 12px;">
-        <span class="grades__toggle-label">Course:</span>
+      <!-- Sub-Cohort Filter Pills (Split-Grade or Split-Section Classes) -->
+      <div v-if="availableSubCohorts.length > 1" class="grades__outlier-toggle" style="margin-right: 12px;">
+        <span class="grades__toggle-label">{{ activeClassRecord?.classType === 'elementary' ? 'Grade:' : 'Section:' }}</span>
         <div class="grades__toggle-group">
           <button 
-            v-for="cFilter in availableCourseFilters"
-            :key="cFilter"
+            v-for="subCohort in availableSubCohorts"
+            :key="subCohort"
             class="grades__toggle-btn"
-            :class="{ 'grades__toggle-btn--active': selectedCourseFilter === cFilter }"
-            @click="selectedCourseFilter = cFilter"
+            :class="{ 'grades__toggle-btn--active': activeSubCohortFilter === subCohort }"
+            @click="activeSubCohortFilter = subCohort"
           >
-            {{ cFilter === 'all' ? 'All Courses' : cFilter }}
+            {{ subCohort === 'all' ? (activeClassRecord?.classType === 'elementary' ? 'All Grades' : 'All Sections') : subCohort }}
           </button>
         </div>
       </div>
@@ -437,6 +437,9 @@ import {
   classAnalytics,
   refreshClassAnalytics,
   selectedCourseFilter,
+  activeSubCohortFilter,
+  availableSubCohorts,
+  isStudentInSubCohort,
   setExclusionMode,
   toggleStudentFromAnalytics,
   analyticsMode
@@ -545,7 +548,7 @@ watch(exclusionMode, async () => {
   }
 })
 
-watch(selectedCourseFilter, async (val) => {
+watch(activeSubCohortFilter, async (val) => {
   isCalculating.value = true
   try {
     await refreshClassAnalytics(val)
@@ -700,11 +703,7 @@ const sortedRoster = computed(() => {
   let list = Object.keys(activeClassRecord.value.students)
     .filter(id => !activeClassRecord.value.students[id].archived)
     .map(id => ({ studentId: id, ...activeClassRecord.value.students[id] }))
-  
-  if (selectedCourseFilter.value && selectedCourseFilter.value !== 'all') {
-    const tC = selectedCourseFilter.value.toLowerCase()
-    list = list.filter(s => s.courseCode && s.courseCode.toLowerCase() === tC)
-  }
+    .filter(st => isStudentInSubCohort(st))
 
   return list.sort((a, b) => a.lastName.toLowerCase().localeCompare(b.lastName.toLowerCase()))
 })

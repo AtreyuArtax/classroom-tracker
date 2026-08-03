@@ -118,16 +118,24 @@ export async function calculateClassAnalytics(classRecord, assessments, grades, 
     exclusionMode = 'none', 
     exclusionThreshold = 40,
     targetCourseCode = 'all',
+    subCohortFilter = null,
     asOf = null,
     gradeBuckets = null
   } = options
 
+  const filterKey = subCohortFilter || targetCourseCode || 'all'
+  const isElem = classRecord.classType === 'elementary'
+
   const allStudentIds = Object.keys(classRecord.students ?? {})
   let studentIds = allStudentIds.filter(id => !classRecord.students[id].archived)
 
-  if (targetCourseCode && targetCourseCode !== 'all') {
-    const tC = targetCourseCode.toLowerCase()
-    studentIds = studentIds.filter(id => classRecord.students[id].courseCode && classRecord.students[id].courseCode.toLowerCase() === tC)
+  if (filterKey && filterKey !== 'all') {
+    const fLower = filterKey.toLowerCase()
+    studentIds = studentIds.filter(id => {
+      const student = classRecord.students[id]
+      const tag = isElem ? student.gradeLevel : student.courseCode
+      return tag && tag.toLowerCase() === fLower
+    })
   }
 
   const excludedStudentIds = new Set(
@@ -141,9 +149,12 @@ export async function calculateClassAnalytics(classRecord, assessments, grades, 
     !a.excluded
   )
 
-  if (targetCourseCode && targetCourseCode !== 'all') {
-    const tC = targetCourseCode.toLowerCase()
-    productAssessments = productAssessments.filter(a => !a.targetCourseCode || a.targetCourseCode === 'all' || a.targetCourseCode.toLowerCase() === tC)
+  if (filterKey && filterKey !== 'all') {
+    const fLower = filterKey.toLowerCase()
+    productAssessments = productAssessments.filter(a => {
+      const tag = isElem ? (a.gradeLevel || a.targetCourseCode) : (a.targetCourseCode || a.gradeLevel)
+      return !tag || tag === 'all' || tag.toLowerCase() === fLower
+    })
   }
 
   // Apply asOf date filter if milestone selected

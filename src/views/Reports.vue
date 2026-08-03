@@ -47,29 +47,16 @@
             </button>
           </div>
 
-          <!-- Split Class Course Filter Pills -->
-          <div v-if="availableCourseFilters.length > 1" class="sbar-grade-pills" style="margin-right: 8px;">
+          <!-- Split Class Sub-Cohort Filter Pills -->
+          <div v-if="availableSubCohortFilters.length > 1" class="sbar-grade-pills">
             <button 
-              v-for="cFilter in availableCourseFilters" 
-              :key="cFilter" 
+              v-for="subFilter in availableSubCohortFilters" 
+              :key="subFilter" 
               class="grade-pill"
-              :class="{ 'grade-pill--active': activeCourseFilter === cFilter }"
-              @click="activeCourseFilter = cFilter"
+              :class="{ 'grade-pill--active': activeSubCohortFilter === subFilter }"
+              @click="activeSubCohortFilter = subFilter"
             >
-              {{ cFilter === 'all' ? 'All Courses' : cFilter }}
-            </button>
-          </div>
-
-          <!-- Split Class Grade Filter Pills (Applies to Entire Page) -->
-          <div v-if="availableGradeFilters.length > 1" class="sbar-grade-pills">
-            <button 
-              v-for="gFilter in availableGradeFilters" 
-              :key="gFilter" 
-              class="grade-pill"
-              :class="{ 'grade-pill--active': activeGradeFilter === gFilter }"
-              @click="activeGradeFilter = gFilter"
-            >
-              {{ gFilter === 'all' ? 'All Grades' : gFilter }}
+              {{ subFilter === 'all' ? (activeClassType === 'elementary' ? 'All Grades' : 'All Sections') : subFilter }}
             </button>
           </div>
         </div>
@@ -352,39 +339,44 @@ watch(classList, (list) => {
 
 const sidebarStudents = dossier.sidebarStudents
 
-const activeCourseFilter = ref('all')
+const activeSubCohortFilter = ref('all')
 
-const availableCourseFilters = computed(() => {
+const activeClassType = computed(() => {
+  const rawClass = classList.value?.find(c => c.classId === sidebarClassId.value) ?? activeClass.value
+  return rawClass?.classType || 'secondary'
+})
+
+const availableSubCohortFilters = computed(() => {
   const rawClass = classList.value?.find(c => c.classId === sidebarClassId.value) ?? activeClass.value
   if (!rawClass) return []
-  const codes = new Set()
-  if (rawClass.courseSections) {
-    rawClass.courseSections.forEach(c => codes.add(c))
-  }
+  const isElem = rawClass.classType === 'elementary'
+  const set = new Set()
   const studentsMap = rawClass.students ?? {}
   Object.values(studentsMap).forEach(st => {
-    if (!st.archived && st.courseCode) {
-      codes.add(st.courseCode)
+    if (!st.archived) {
+      const tag = isElem ? st.gradeLevel : st.courseCode
+      if (tag && tag.trim()) set.add(tag.trim())
     }
   })
   if (sidebarStudents.value) {
     sidebarStudents.value.forEach(st => {
-      if (st.courseCode) codes.add(st.courseCode)
+      const tag = isElem ? st.gradeLevel : st.courseCode
+      if (tag && tag.trim()) set.add(tag.trim())
     })
   }
-  if (codes.size <= 1) return []
-  return ['all', ...Array.from(codes).sort()]
+  if (set.size <= 1) return []
+  return ['all', ...Array.from(set).sort()]
 })
-
-const activeGradeFilter = ref('all')
 
 const filteredSidebarStudents = computed(() => {
   let list = sidebarStudents.value || []
-  if (activeCourseFilter.value !== 'all' && availableCourseFilters.value.length > 1) {
-    list = list.filter(s => s.courseCode && s.courseCode.toLowerCase() === activeCourseFilter.value.toLowerCase())
-  }
-  if (activeGradeFilter.value !== 'all' && availableGradeFilters.value.length > 1) {
-    list = list.filter(s => s.gradeLevel && s.gradeLevel.toLowerCase() === activeGradeFilter.value.toLowerCase())
+  if (activeSubCohortFilter.value !== 'all' && availableSubCohortFilters.value.length > 1) {
+    const filterLower = activeSubCohortFilter.value.toLowerCase()
+    const isElem = activeClassType.value === 'elementary'
+    list = list.filter(s => {
+      const tag = isElem ? s.gradeLevel : s.courseCode
+      return tag && tag.toLowerCase() === filterLower
+    })
   }
   return list
 })
