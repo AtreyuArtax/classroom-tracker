@@ -5,7 +5,6 @@
     @close="$emit('close')"
     :max-width="form.showAssessments ? '1000px' : '750px'"
     title="Print Final Grades Grid"
-    style="transition: max-width 0.3s ease;"
   >
     <template #header>
       <div class="grades-print-modal__header">
@@ -896,5 +895,9 @@ function handlePrint() {
   
   .font-size--large { font-size: 12pt; }
   .font-size--large td, .font-size--large th { padding: 7px 8px; }
+}
+
+:deep(.bm-card) {
+  transition: max-width 0.3s ease;
 }
 </style>

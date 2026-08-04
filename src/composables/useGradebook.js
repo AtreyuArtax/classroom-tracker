@@ -270,10 +270,12 @@ export async function setExclusionMode(mode) {
 export async function toggleStudentFromAnalytics(studentId) {
   if (!activeClassRecord.value) return
   try {
-    await classService.toggleStudentAnalyticsExclusion(activeClassRecord.value.classId, studentId)
-    // Reload class record to pick up the change
-    const updated = await classService.getClass(activeClassRecord.value.classId)
-    activeClassRecord.value = updated
+    const classId = activeClassRecord.value.classId
+    const currentSubId = activeClassRecord.value.activeSubjectId || null
+    await classService.toggleStudentAnalyticsExclusion(classId, studentId)
+    // Reload class record to pick up the change while preserving subject context
+    const updatedRaw = await classService.getClass(classId)
+    activeClassRecord.value = getEffectiveClassRecord(updatedRaw, currentSubId)
     await refreshClassAnalytics()
   } catch (err) {
     console.error('[useGradebook] toggleStudentFromAnalytics failed:', err)

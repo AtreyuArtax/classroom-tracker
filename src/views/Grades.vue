@@ -280,6 +280,7 @@ import {
   selectedCourseFilter,
   activeSubCohortFilter,
   isStudentInSubCohort,
+  isAssessmentApplicableToStudent,
   resetAnalyticsState,
   showAddAssessmentModal,
   displayMode,
@@ -568,6 +569,7 @@ const missingStudentsList = computed(() => {
   if (!currentAssessment.value || !activeClassRecord.value?.students) return []
   const list = []
   for (const student of sortedRoster.value) {
+    if (!isAssessmentApplicableToStudent(currentAssessment.value, student)) continue
     const grade = gradeMap.value[currentAssessment.value.assessmentId]?.[student.studentId]
     if (grade?.excluded) continue
     if (!grade || (!grade.missing && (!grade.attempts || grade.attempts.length === 0))) {
@@ -596,8 +598,9 @@ const currentAssessmentSummary = computed(() => {
   if (!selectedAssessmentId.value || !currentAssessment.value) return null
   const stats = assessmentStats.value[selectedAssessmentId.value]
   
-  const totalStudents = sortedRoster.value.length
-  const enteredCount = sortedRoster.value.filter(s => {
+  const applicableStudents = sortedRoster.value.filter(s => isAssessmentApplicableToStudent(currentAssessment.value, s))
+  const totalStudents = applicableStudents.length
+  const enteredCount = applicableStudents.filter(s => {
     const grade = gradeMap.value[selectedAssessmentId.value]?.[s.studentId]
     return grade && (grade.attempts?.length > 0 || grade.missing || grade.excluded)
   }).length

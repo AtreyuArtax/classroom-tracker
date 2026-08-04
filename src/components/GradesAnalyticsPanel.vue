@@ -564,7 +564,7 @@ const activeStudentGrades = computed(() => {
   const list = []
   Object.keys(activeClassRecord.value.students).forEach(id => {
     const st = activeClassRecord.value.students[id]
-    if (!st || st.archived || outliers.has(id)) return
+    if (!st || st.archived || st.excludeFromAnalytics || outliers.has(id)) return
     if (!st.firstName?.trim() && !st.lastName?.trim()) return
     if (!isStudentInSubCohort(st)) return
     const g = classGrades.value[id]

@@ -8,20 +8,20 @@
         <h1 class="dossier-header__name">{{ student.firstName }} {{ student.lastName }}</h1>
         <div class="dossier-header__status-badges">
           <span 
-            v-if="statusLabel" 
-            class="dossier-header__badge" 
-            :class="[`dossier-header__badge--${statusType}`]"
-          >
-            <component :is="statusIcon" :size="14" />
-            {{ statusLabel }}
-          </span>
-          <span 
             v-if="student.gradeLevel" 
             class="dossier-header__badge dossier-header__badge--grade"
             title="Student Grade Level"
           >
             <GraduationCap :size="13" />
             {{ student.gradeLevel }}
+          </span>
+          <span 
+            v-if="statusLabel" 
+            class="dossier-header__badge" 
+            :class="[`dossier-header__badge--${statusType}`]"
+          >
+            <component :is="statusIcon" :size="14" />
+            {{ statusLabel }}
           </span>
           <span 
             v-if="attendanceStats?.testDayAbsences > 0" 
@@ -132,6 +132,7 @@ const gradeColor = computed(() => {
 const statusLabel = computed(() => {
   const s = props.student.activeStates
   if (s?.isAbsent) return 'Absent'
+  if (s?.isLate || (s?.lateMs !== null && s?.lateMs !== undefined)) return 'Late'
   if (s?.isOut) return 'Out'
   return 'Present'
 })
@@ -139,6 +140,7 @@ const statusLabel = computed(() => {
 const statusType = computed(() => {
   const s = props.student.activeStates
   if (s?.isAbsent) return 'danger'
+  if (s?.isLate || (s?.lateMs !== null && s?.lateMs !== undefined)) return 'warning'
   if (s?.isOut) return 'warning'
   return 'success'
 })
@@ -146,6 +148,7 @@ const statusType = computed(() => {
 const statusIcon = computed(() => {
   const s = props.student.activeStates
   if (s?.isAbsent) return UserMinus
+  if (s?.isLate || (s?.lateMs !== null && s?.lateMs !== undefined)) return Clock
   if (s?.isOut) return Toilet
   return UserCheck
 })

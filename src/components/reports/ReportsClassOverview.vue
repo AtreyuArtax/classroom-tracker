@@ -252,6 +252,49 @@
 
     </div>
 
+    <!-- ── Section 3: Recent Classroom Logs ──────────────────── -->
+    <div class="reports__notes-card" style="margin-top: 1.5rem;">
+      <div class="reports__notes-header">
+        <div class="reports__notes-title-group">
+          <h4 class="reports__col-title">RECENT CLASSROOM LOGS</h4>
+        </div>
+        <button 
+          type="button"
+          class="reports__notes-toggle-btn" 
+          @click="$emit('toggle-show-completed')"
+        >
+          {{ showCompletedNotes ? 'HIDE COMPLETED' : 'SHOW COMPLETED' }}
+        </button>
+      </div>
+
+      <div v-if="recentNotes.length === 0" class="reports__notes-empty">
+        No classroom notes logged yet.
+      </div>
+
+      <ul v-else class="reports__notes-list">
+        <li v-for="note in recentNotes" :key="note.eventId" class="reports__note-item">
+          <div class="reports__note-content">
+            <div class="reports__note-top-row">
+              <span class="reports__note-student">{{ note.studentName }}</span>
+              <span class="reports__note-time">{{ formatNoteTime(note.timestamp) }}</span>
+              <button 
+                type="button"
+                class="reports__note-check-btn" 
+                :class="{ 'reports__note-check-btn--checked': note.completed }"
+                :title="note.completed ? 'Mark incomplete' : 'Mark completed'"
+                @click="$emit('toggle-note-complete', note.eventId, note.completed)"
+              >
+                <Check :size="14" />
+              </button>
+            </div>
+            <div class="reports__note-text" :class="{ 'reports__note-text--completed': note.completed }">
+              {{ note.note }}
+            </div>
+          </div>
+        </li>
+      </ul>
+    </div>
+
   </div>
 </template>
 
@@ -308,6 +351,14 @@ const followUpExpandedLocal = ref(false)
 const activeStudentIds = computed(() => new Set((props.sidebarStudents || []).map(s => String(s.studentId))))
 
 const isSBAR = computed(() => props.reportClass?.gradingFramework === 'sbar')
+
+function formatNoteTime(ts) {
+  if (!ts) return ''
+  const d = new Date(ts)
+  const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  const timeStr = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }).toLowerCase()
+  return `${dateStr}, ${timeStr}`
+}
 
 // Academic Calculations
 const classAverage = computed(() => {
@@ -1010,5 +1061,114 @@ const activeActionItemsVisible = computed(() => {
   background: var(--surface);
   color: var(--primary);
   border-color: var(--primary);
+}
+
+.reports__notes-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 1.25rem;
+}
+
+.reports__notes-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.reports__notes-toggle-btn {
+  background: none;
+  border: none;
+  color: var(--primary);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  padding: 2px 6px;
+}
+
+.reports__notes-toggle-btn:hover {
+  text-decoration: underline;
+}
+
+.reports__notes-empty {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  font-style: italic;
+  padding: 0.5rem 0;
+}
+
+.reports__notes-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.reports__note-item {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+}
+
+.reports__note-top-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.reports__note-student {
+  font-weight: 700;
+  font-size: 0.875rem;
+  color: var(--text);
+}
+
+.reports__note-time {
+  margin-left: auto;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.reports__note-check-btn {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.reports__note-check-btn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.reports__note-check-btn--checked {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff !important;
+}
+
+.reports__note-text {
+  font-size: 0.85rem;
+  color: var(--text);
+  line-height: 1.4;
+  white-space: pre-wrap;
+}
+
+.reports__note-text--completed {
+  text-decoration: line-through;
+  opacity: 0.6;
 }
 </style>

@@ -230,10 +230,10 @@
           <div class="setup__roster-info">
             <span class="setup__roster-name">{{ s.lastName }}, {{ s.firstName }}</span>
             <span class="setup__roster-id">{{ s.studentId }}</span>
-            <span v-if="activeClass?.classType === 'elementary' && s.gradeLevel" class="setup__chip" style="margin-left: 8px;">
+            <span v-if="activeClass?.classType === 'elementary' && s.gradeLevel && availableSubCohorts.length > 1" class="setup__chip" style="margin-left: 8px;">
               {{ s.gradeLevel }}
             </span>
-            <span v-if="s.courseCode" class="setup__chip setup__chip--blue" style="margin-left: 8px;">
+            <span v-if="s.courseCode && availableSubCohorts.length > 1" class="setup__chip setup__chip--blue" style="margin-left: 8px;">
               {{ s.courseCode }}
             </span>
           </div>
@@ -462,6 +462,7 @@
 <script setup>
 import { ref, reactive, watch, computed, onMounted } from 'vue'
 import { useClassroom } from '../../composables/useClassroom.js'
+import { availableSubCohorts } from '../../composables/useGradebook.js'
 import { useKeyboardWedge } from '../../composables/useKeyboardWedge.js'
 import { useMessage } from '../../composables/useMessage.js'
 import * as classService from '../../db/classService.js'

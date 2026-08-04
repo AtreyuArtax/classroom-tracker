@@ -308,7 +308,7 @@
         <div v-if="elementaryPreview" class="setup__dialog" role="dialog" aria-modal="true">
           <div class="setup__dialog-box setup__dialog-box--large">
             <h3 class="setup__dialog-title">
-              📋 Import Elementary Homeroom
+              Import Elementary Homeroom
             </h3>
 
             <div class="setup__elm-preview-meta">
@@ -317,6 +317,19 @@
                 <span class="setup__elm-value">{{ elementaryPreview.homeroomName }}</span>
                 <span v-if="elementaryPreview.existingHomeroom" class="setup__badge setup__badge--update">Update Existing</span>
                 <span v-else class="setup__badge setup__badge--new">New Class</span>
+              </div>
+              <div v-if="previewSubCohorts.length > 0" class="setup__elm-preview-row">
+                <span class="setup__elm-label">Grades</span>
+                <span class="setup__elm-value">
+                  <span 
+                    v-for="sub in previewSubCohorts" 
+                    :key="sub" 
+                    class="setup__chip setup__chip--blue"
+                    style="margin-right: 4px; font-size: 0.8rem;"
+                  >
+                    {{ sub }}
+                  </span>
+                </span>
               </div>
               <div class="setup__elm-preview-row">
                 <span class="setup__elm-label">School Year</span>
@@ -340,14 +353,23 @@
                 :key="s.studentId"
                 class="setup__elm-student-row"
               >
-                <span class="setup__elm-student-name">{{ s.lastName }}, {{ s.firstName }}</span>
+                <div style="display: flex; align-items: center; gap: 8px; min-width: 0;">
+                  <span class="setup__elm-student-name">{{ s.lastName }}, {{ s.firstName }}</span>
+                  <span 
+                    v-if="previewSubCohorts.length > 1 && (s.gradeLevel || s.grade || s.courseCode)" 
+                    class="setup__chip setup__chip--blue"
+                    style="font-size: 0.75rem; padding: 2px 6px; flex-shrink: 0;"
+                  >
+                    {{ s.gradeLevel || s.grade || s.courseCode }}
+                  </span>
+                </div>
                 <span class="setup__elm-student-id">{{ s.studentId }}</span>
               </div>
             </div>
 
             <div class="setup__dialog-actions" style="margin-top: 1rem;">
               <button class="setup__btn-primary" @click="confirmElementaryImport">
-                {{ elementaryPreview.existingHomeroom ? '✅ Update Roster' : '🏫 Create Class &amp; Import' }}
+                {{ elementaryPreview.existingHomeroom ? 'Update Roster' : 'Create Class & Import' }}
               </button>
               <button class="setup__btn-ghost" @click="elementaryPreview = null">Cancel</button>
             </div>
@@ -993,6 +1015,50 @@ const currentSchoolYear = computed(() => {
   return `${year - 1}-${year.toString().slice(-2)}`
 })
 
+const previewSubCohorts = computed(() => {
+  if (!elementaryPreview.value?.validRows) return []
+  const set = new Set()
+  const hrmName = elementaryPreview.value?.homeroomName?.toLowerCase()
+  elementaryPreview.value.validRows.forEach(s => {
+    let val = s.gradeLevel || s.grade
+    if (!val && s.courseCode && s.courseCode.toLowerCase() !== hrmName) {
+      val = s.courseCode
+    }
+    if (val) set.add(val)
+  })
+  return Array.from(set).sort()
+})
+
+function extractGradeFromRow(rawRow) {
+  if (!rawRow) return ''
+  const keys = Object.keys(rawRow)
+  for (const target of ['grade level', 'gradelevel', 'grade', 'gr.', 'gr', 'yr', 'year level']) {
+    const matchedKey = keys.find(k => k.trim().toLowerCase() === target)
+    if (matchedKey && rawRow[matchedKey] !== undefined && rawRow[matchedKey] !== null) {
+      const val = String(rawRow[matchedKey]).trim()
+      if (val) return formatGradeVal(val)
+    }
+  }
+  for (const k of keys) {
+    const kLower = k.trim().toLowerCase()
+    if ((kLower.startsWith('grade') || kLower.startsWith('gr')) && !kLower.includes('point') && !kLower.includes('book')) {
+      const val = String(rawRow[k]).trim()
+      if (val) return formatGradeVal(val)
+    }
+  }
+  return ''
+}
+
+function formatGradeVal(rawGrade) {
+  if (!rawGrade) return ''
+  const gNum = parseInt(rawGrade.replace(/\D/g, ''), 10)
+  if (!isNaN(gNum) && gNum >= 1 && gNum <= 12) {
+    return `Grade ${gNum}`
+  }
+  if (rawGrade.toLowerCase().startsWith('grade')) return rawGrade
+  return `Grade ${rawGrade}`
+}
+
 function onFileSelected(evt) {
   const file = evt.dataTransfer?.files?.[0] || evt.target?.files?.[0]
   if (!file) return
@@ -1043,9 +1109,7 @@ function onFileSelected(evt) {
         const courseCode = row['Course Code'] ?? row['CourseCode'] ?? (rawSection ? extractCourseCode(rawSection) : '')
         const semester = normalizeSemester(rawSem || (activeClass.value?.semester || '1'))
 
-        const rawGrade = row['Grade'] ?? row['Grade Level'] ?? row['GradeLevel'] ?? row['grade'] ?? ''
-        const gNum = parseInt(rawGrade, 10)
-        const parsedG = rawGrade ? (!isNaN(gNum) ? `Grade ${gNum}` : (rawGrade.toLowerCase().startsWith('grade') ? rawGrade : `Grade ${rawGrade}`)) : ''
+        const parsedG = extractGradeFromRow(row)
 
         return { 
           studentId: studentId.trim(), 

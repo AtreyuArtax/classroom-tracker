@@ -20,8 +20,9 @@
         </div>
       </div>
       
-      <div v-if="frameworkWarning" class="setup__inline-banner setup__inline-banner--warning">
-        <AlertTriangle :size="16" />
+      <div v-if="frameworkWarning" class="setup__inline-banner" :class="'setup__inline-banner--' + frameworkBannerType">
+        <CheckCircle2 v-if="frameworkBannerType === 'success'" :size="16" />
+        <AlertTriangle v-else :size="16" />
         <span>{{ frameworkWarning }}</span>
         <button type="button" class="setup__inline-banner-close" @click="frameworkWarning = ''">&times;</button>
       </div>
@@ -93,8 +94,9 @@
         </div>
       </div>
 
-      <div v-if="frameworkWarning" class="setup__inline-banner setup__inline-banner--warning" style="margin-top: 10px;">
-        <AlertTriangle :size="16" />
+      <div v-if="frameworkWarning" class="setup__inline-banner" :class="'setup__inline-banner--' + frameworkBannerType" style="margin-top: 10px;">
+        <CheckCircle2 v-if="frameworkBannerType === 'success'" :size="16" />
+        <AlertTriangle v-else :size="16" />
         <span>{{ frameworkWarning }}</span>
         <button type="button" class="setup__inline-banner-close" @click="frameworkWarning = ''">&times;</button>
       </div>
@@ -226,7 +228,7 @@ import * as gradebookService from '../../db/gradebookService.js'
 import * as classService from '../../db/classService.js'
 import * as settingsService from '../../db/settingsService.js'
 import * as eventService from '../../db/eventService.js'
-import { ChevronUp, ChevronDown, Trash2, Plus, AlertTriangle, ChevronRight, BookOpen, Copy } from 'lucide-vue-next'
+import { ChevronUp, ChevronDown, Trash2, Plus, AlertTriangle, CheckCircle2, ChevronRight, BookOpen, Copy } from 'lucide-vue-next'
 import ExpectationImportModal from './ExpectationImportModal.vue'
 
 const { activeClass, triggerActiveClass } = useClassroom()
@@ -361,7 +363,7 @@ async function copyUnitsToAllSections() {
   })
 
   await saveGradebookSettings()
-  showWarning(`Units mirrored from ${sourceName} to ${targetSections.join(', ')}!`)
+  showSuccess(`Units mirrored from ${sourceName} to ${targetSections.join(', ')}!`)
 }
 
 async function addExpectation(unit) {
@@ -541,9 +543,19 @@ async function moveUnit(index, direction) {
 }
 
 const frameworkWarning = ref('')
+const frameworkBannerType = ref('warning')
 
 function showWarning(msg) {
   frameworkWarning.value = msg
+  frameworkBannerType.value = 'warning'
+  setTimeout(() => {
+    if (frameworkWarning.value === msg) frameworkWarning.value = ''
+  }, 6000)
+}
+
+function showSuccess(msg) {
+  frameworkWarning.value = msg
+  frameworkBannerType.value = 'success'
   setTimeout(() => {
     if (frameworkWarning.value === msg) frameworkWarning.value = ''
   }, 6000)

@@ -205,7 +205,7 @@ import ReportsClassOverview from '../components/reports/ReportsClassOverview.vue
 import ReportsBatchPrintModal from '../components/reports/ReportsBatchPrintModal.vue'
 import ReportsPrintHub from '../components/reports/ReportsPrintHub.vue'
 import { calculateClassGrades, getAssessmentsByClass, getAssessmentPercentage } from '../db/gradebookService.js'
-import { loadGradebook, assessments as gbAssessments, gradeMap } from '../composables/useGradebook.js'
+import { loadGradebook, assessments as gbAssessments, gradeMap, activeGradeFilter } from '../composables/useGradebook.js'
 
 import { 
   Chart as ChartJS, 
@@ -504,8 +504,12 @@ const hasAnyNotes = computed(() => {
 })
 
 async function onToggleNoteComplete(eventId, currentStatus) {
+  const target = allClassEvents.value.find(e => e.eventId === eventId)
+  if (target) {
+    target.completed = !currentStatus
+  }
   await eventService.updateEvent(eventId, { completed: !currentStatus })
-  await runReport()
+  await runReport(true)
 }
 
 function handleDownloadCsv(type) {
@@ -517,9 +521,9 @@ function handleDownloadComments(withNames) {
   alert(`Preparing report card comments CSV (${withNames ? 'with names' : 'anonymous'})...`)
 }
 
-async function runReport() {
+async function runReport(silent = false) {
   if (!sidebarClassId.value) return
-  loading.value = true
+  if (!silent) loading.value = true
   try {
     const dr = eventService.getDateRangeForClassPeriod(selectedPeriod.value, reportClass.value, academicTerms.value)
     const rawEvents = await eventService.getEventsByClass(sidebarClassId.value, Object.keys(dr).length ? dr : undefined)
@@ -671,7 +675,7 @@ async function runReport() {
     }
 
   } finally {
-    loading.value = false
+    if (!silent) loading.value = false
   }
 }
 

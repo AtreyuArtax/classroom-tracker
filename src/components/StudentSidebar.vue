@@ -62,7 +62,7 @@
               <span class="student-sidebar__roster-lastname">{{ student.lastName }}</span>
               <div class="student-sidebar__roster-subline">
                 <span class="student-sidebar__roster-firstname">{{ student.firstName }}</span>
-                <span v-if="student.courseCode" class="student-sidebar__course-tag">{{ student.courseCode }}</span>
+                <span v-if="availableSubCohorts.length > 1 && getStudentTag(student)" class="student-sidebar__course-tag">{{ getStudentTag(student) }}</span>
               </div>
               
               <!-- Sparkline (Only if showAcademics and trends exist) -->
@@ -145,12 +145,24 @@ const props = defineProps({
 
 defineEmits(['select-student', 'navigate', 'toggle-privacy', 'toggle-collapse'])
 
-import { activeClassRecord } from '../composables/useGradebook.js'
+import { activeClassRecord, availableSubCohorts } from '../composables/useGradebook.js'
 import { getSBARLevelBadge } from '../db/gradebook/gradeCalcSBAR.js'
 
 const isSBAR = computed(() => activeClassRecord.value?.gradingFramework === 'sbar')
 
-const isMobileOpen = ref(false)
+function getStudentTag(student) {
+  if (!student) return ''
+  const isElem = activeClassRecord.value?.classType === 'elementary'
+  if (isElem) {
+    if (student.gradeLevel) {
+      return student.gradeLevel.replace(/^Grade\s+/i, 'Gr. ')
+    }
+    if (student.grade) {
+      return student.grade.replace(/^Grade\s+/i, 'Gr. ')
+    }
+  }
+  return student.courseCode || student.gradeLevel || ''
+}
 
 // --- Helper Methods (Standardized from Grades.vue) ---
 
