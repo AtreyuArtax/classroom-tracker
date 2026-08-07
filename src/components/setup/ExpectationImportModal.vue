@@ -32,29 +32,140 @@
       <div class="eim-body">
         <!-- TAB 1: PRESET CURRICULUM LIBRARY -->
         <div v-if="activeTab === 'presets'" class="eim-section">
-          <div class="eim-field">
-            <label class="eim-label">Select Course Standard</label>
-            <select v-model="selectedPresetId" class="eim-select">
-              <option :value="null" disabled>Choose a curriculum preset...</option>
-              <optgroup label="Secondary (Grades 9–12)">
-                <option 
-                  v-for="p in panels.secondary" 
-                  :key="p.presetId" 
-                  :value="p.presetId"
+          
+          <!-- Filter Controls Stack -->
+          <div class="eim-filter-stack">
+            <!-- Row 1: Panel Segmented Control & Search -->
+            <div class="eim-filter-toolbar">
+              <div class="eim-segmented-control">
+                <button 
+                  type="button"
+                  :class="['eim-seg-btn', panelFilter === 'elementary' ? 'eim-seg-btn--active' : '']"
+                  @click="setPanelFilter('elementary')"
                 >
-                  {{ p.title }}
-                </option>
-              </optgroup>
-              <optgroup label="Elementary (Grades 1–8)">
-                <option 
-                  v-for="p in panels.elementary" 
-                  :key="p.presetId" 
-                  :value="p.presetId"
+                  Elementary (Grades 1–8)
+                </button>
+                <button 
+                  type="button"
+                  :class="['eim-seg-btn', panelFilter === 'secondary' ? 'eim-seg-btn--active' : '']"
+                  @click="setPanelFilter('secondary')"
                 >
-                  {{ p.title }}
-                </option>
-              </optgroup>
-            </select>
+                  Secondary (Grades 9–12)
+                </button>
+                <button 
+                  type="button"
+                  :class="['eim-seg-btn', panelFilter === 'all' ? 'eim-seg-btn--active' : '']"
+                  @click="setPanelFilter('all')"
+                >
+                  All Presets
+                </button>
+              </div>
+
+              <div class="eim-search-box">
+                <Search :size="14" class="eim-search-icon" />
+                <input 
+                  v-model="searchQuery" 
+                  type="text" 
+                  class="eim-search-input" 
+                  placeholder="Search preset, subject, code..." 
+                />
+                <button v-if="searchQuery" type="button" class="eim-search-clear" @click="searchQuery = ''" title="Clear search">
+                  <X :size="12" />
+                </button>
+              </div>
+            </div>
+
+            <!-- Row 2: Grade Level Pills -->
+            <div v-if="availableGrades.length > 0" class="eim-pills-row">
+              <span class="eim-pills-label">Grade:</span>
+              <div class="eim-pills-list">
+                <button 
+                  type="button"
+                  :class="['eim-pill', gradeFilter === 'all' ? 'eim-pill--active' : '']"
+                  @click="gradeFilter = 'all'"
+                >
+                  All Grades
+                </button>
+                <button 
+                  v-for="g in availableGrades" 
+                  :key="g"
+                  type="button"
+                  :class="['eim-pill', gradeFilter === g ? 'eim-pill--active' : '']"
+                  @click="gradeFilter = g"
+                >
+                  {{ g }}
+                </button>
+              </div>
+            </div>
+
+            <!-- Row 3: Subject Category Pills -->
+            <div class="eim-pills-row">
+              <span class="eim-pills-label">Subject:</span>
+              <div class="eim-pills-list">
+                <button 
+                  v-for="cat in availableSubjectCategories"
+                  :key="cat.id"
+                  type="button"
+                  :class="['eim-pill', subjectFilter === cat.id ? 'eim-pill--active' : '']"
+                  @click="subjectFilter = cat.id"
+                >
+                  {{ cat.label }}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Selector Header & View Toggle -->
+          <div class="eim-selector-header">
+            <div class="eim-selector-count">
+              <strong>{{ filteredPresets.length }}</strong> {{ filteredPresets.length === 1 ? 'preset' : 'presets' }} available
+              <span v-if="gradeFilter !== 'all' || subjectFilter !== 'all' || searchQuery" class="eim-active-filter-badge">
+                (filtered)
+              </span>
+            </div>
+            <button 
+              v-if="gradeFilter !== 'all' || subjectFilter !== 'all' || searchQuery" 
+              type="button" 
+              class="eim-action-link"
+              @click="resetAllFilters"
+            >
+              Reset Filters
+            </button>
+          </div>
+
+          <!-- Preset Cards Grid Selector -->
+          <div v-if="filteredPresets.length > 0" class="eim-preset-grid">
+            <div 
+              v-for="p in filteredPresets" 
+              :key="p.presetId"
+              :class="['eim-preset-card', selectedPresetId === p.presetId ? 'eim-preset-card--selected' : '']"
+              @click="selectedPresetId = p.presetId"
+            >
+              <div class="eim-preset-card__header">
+                <div class="eim-preset-card__badges">
+                  <span class="eim-preset-badge eim-preset-badge--grade">{{ p.grade }}</span>
+                  <span v-if="p.subjectCode" class="eim-preset-badge eim-preset-badge--code">{{ p.subjectCode }}</span>
+                </div>
+                <span v-if="selectedPresetId === p.presetId" class="eim-preset-card__check">
+                  <Check :size="14" /> Selected
+                </span>
+              </div>
+              <h4 class="eim-preset-card__title">{{ p.title }}</h4>
+              <div class="eim-preset-card__footer">
+                <span>{{ p.strands ? p.strands.length : 0 }} Strands</span>
+                <span>•</span>
+                <span>{{ countPresetExpectations(p) }} Expectations</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Empty State -->
+          <div v-else class="eim-presets-empty">
+            <Filter :size="32" class="eim-empty-icon" />
+            <p>No curriculum presets match your current filter criteria.</p>
+            <button type="button" class="eim-btn eim-btn--secondary" @click="resetAllFilters">
+              Clear All Filters
+            </button>
           </div>
 
           <!-- Preset Details & Mode Selection -->
@@ -215,8 +326,8 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue'
-import { BookOpen, X, Zap } from 'lucide-vue-next'
-import { curriculumPresets, getPresetsByPanel } from '../../data/curriculum/index.js'
+import { BookOpen, X, Zap, Search, Check, Filter } from 'lucide-vue-next'
+import { curriculumPresets } from '../../data/curriculum/index.js'
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
@@ -230,11 +341,15 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue', 'import'])
 
 const activeTab = ref('presets') // 'presets' | 'paste'
-const panels = getPresetsByPanel()
+
+// Filter toolbar state
+const panelFilter = ref(props.classType || 'secondary') // 'elementary' | 'secondary' | 'all'
+const gradeFilter = ref('all')
+const subjectFilter = ref('all')
+const searchQuery = ref('')
 
 // Presets state
 const selectedPresetId = ref(null)
-const presetImportMode = ref('auto-units') // 'auto-units' | 'existing-unit'
 const granularity = ref('overall') // 'overall' | 'all'
 const selectedExpectations = ref([])
 
@@ -244,6 +359,115 @@ const newUnitName = ref('')
 
 // Paste state
 const pasteRawText = ref('')
+
+function setPanelFilter(panel) {
+  panelFilter.value = panel
+  gradeFilter.value = 'all'
+}
+
+function resetAllFilters() {
+  gradeFilter.value = 'all'
+  subjectFilter.value = 'all'
+  searchQuery.value = ''
+}
+
+watch(() => props.classType, (newVal) => {
+  if (newVal) {
+    panelFilter.value = newVal
+  }
+}, { immediate: true })
+
+watch(() => props.modelValue, (isOpen) => {
+  if (isOpen) {
+    panelFilter.value = props.classType || 'secondary'
+    if (props.initialPresetId) {
+      selectedPresetId.value = props.initialPresetId
+    }
+  }
+}, { immediate: true })
+
+// Compute dynamic list of available grades based on panel filter
+const availableGrades = computed(() => {
+  let list = curriculumPresets
+  if (panelFilter.value && panelFilter.value !== 'all') {
+    list = list.filter(p => p.panel === panelFilter.value)
+  }
+  const gradesOrder = ['Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5', 'Grade 6', 'Grade 7', 'Grade 8', 'Grade 9', 'Grade 10', 'Grade 11', 'Grade 12']
+  const gradesSet = new Set(list.map(p => p.grade).filter(Boolean))
+
+  return Array.from(gradesSet).sort((a, b) => {
+    const idxA = gradesOrder.indexOf(a)
+    const idxB = gradesOrder.indexOf(b)
+    if (idxA !== -1 && idxB !== -1) return idxA - idxB
+    if (idxA !== -1) return -1
+    if (idxB !== -1) return 1
+    return a.localeCompare(b)
+  })
+})
+
+const availableSubjectCategories = computed(() => [
+  { id: 'all', label: 'All Subjects' },
+  { id: 'math', label: 'Math' },
+  { id: 'sci', label: 'Science' },
+  { id: 'lang', label: 'Language' },
+  { id: 'french', label: 'French' },
+  { id: 'arts', label: 'Arts' },
+  { id: 'hpe', label: 'Health & PE' },
+  { id: 'soc', label: 'History / Geo' }
+])
+
+const filteredPresets = computed(() => {
+  let list = curriculumPresets
+
+  // 1. Panel filter
+  if (panelFilter.value && panelFilter.value !== 'all') {
+    list = list.filter(p => p.panel === panelFilter.value)
+  }
+
+  // 2. Grade filter
+  if (gradeFilter.value && gradeFilter.value !== 'all') {
+    list = list.filter(p => (p.grade || '').toLowerCase() === gradeFilter.value.toLowerCase())
+  }
+
+  // 3. Subject filter
+  if (subjectFilter.value && subjectFilter.value !== 'all') {
+    const s = subjectFilter.value.toLowerCase()
+    list = list.filter(p => {
+      const title = (p.title || '').toLowerCase()
+      const code = (p.subjectCode || '').toLowerCase()
+      const pId = (p.presetId || '').toLowerCase()
+      if (s === 'math') return title.includes('math') || code.includes('mat') || pId.includes('math')
+      if (s === 'sci') return title.includes('science') || code.includes('sci') || pId.includes('sci')
+      if (s === 'lang') return title.includes('language') || code.includes('lang') || pId.includes('lang')
+      if (s === 'french') return title.includes('french') || code.includes('fsl') || code.includes('fi') || pId.includes('french')
+      if (s === 'arts') return title.includes('art') || code.includes('art') || pId.includes('art')
+      if (s === 'hpe') return title.includes('health') || title.includes('physical') || code.includes('hpe') || pId.includes('hpe')
+      if (s === 'soc') return title.includes('history') || title.includes('geography') || code.includes('hist') || code.includes('geo')
+      return true
+    })
+  }
+
+  // 4. Text search query
+  if (searchQuery.value.trim()) {
+    const q = searchQuery.value.toLowerCase().trim()
+    list = list.filter(p => 
+      (p.title || '').toLowerCase().includes(q) ||
+      (p.presetId || '').toLowerCase().includes(q) ||
+      (p.grade || '').toLowerCase().includes(q) ||
+      (p.subjectCode || '').toLowerCase().includes(q)
+    )
+  }
+
+  return list
+})
+
+function countPresetExpectations(preset) {
+  if (!preset || !preset.strands) return 0
+  return preset.strands.reduce((acc, s) => {
+    if (!s.overalls) return acc
+    return acc + s.overalls.reduce((a, ov) => a + 1 + (ov.specifics ? ov.specifics.length : 0), 0)
+  }, 0)
+}
 
 const selectedPreset = computed(() => {
   if (!selectedPresetId.value) return null
@@ -272,12 +496,6 @@ const totalPresetExpectations = computed(() => {
 watch(selectedPreset, () => {
   deselectAllGlobal()
 })
-
-watch(() => props.modelValue, (isOpen) => {
-  if (isOpen && props.initialPresetId) {
-    selectedPresetId.value = props.initialPresetId
-  }
-}, { immediate: true })
 
 watch(granularity, () => {
   deselectAllGlobal()
@@ -308,12 +526,10 @@ function toggleStrandSelection(strand) {
   const strandExps = getStrandExpectations(strand)
   const isSelected = isStrandFullySelected(strand)
   if (isSelected) {
-    // Remove all expectations of this strand
     selectedExpectations.value = selectedExpectations.value.filter(sel => 
       !strandExps.some(e => e.code === sel.code)
     )
   } else {
-    // Add missing expectations of this strand
     const current = [...selectedExpectations.value]
     strandExps.forEach(e => {
       if (!current.some(sel => sel.code === e.code)) {
@@ -334,21 +550,18 @@ const parsedPasteExpectations = computed(() => {
     const trimmed = line.trim()
     if (!trimmed) return
 
-    // Pattern 1: Code | Description or Code : Description or Code \t Description
     const matchDelim = trimmed.match(/^([A-Za-z0-9\.-]+)[\t\|:]\s*(.+)$/)
     if (matchDelim) {
       results.push({ code: matchDelim[1].trim(), description: matchDelim[2].trim() })
       return
     }
 
-    // Pattern 2: Code space Description (e.g. "A1.1 Apply scientific processes...")
     const matchSpace = trimmed.match(/^([A-Za-z0-9\.-]{2,8})\s+(.+)$/)
     if (matchSpace) {
       results.push({ code: matchSpace[1].trim(), description: matchSpace[2].trim() })
       return
     }
 
-    // Fallback: entire line as description with auto code
     results.push({ code: `EXP-${results.length + 1}`, description: trimmed })
   })
 
@@ -358,9 +571,7 @@ const parsedPasteExpectations = computed(() => {
 const canSubmit = computed(() => {
   if (activeTab.value === 'presets') {
     if (!selectedPreset.value) return false
-    // Elementary: auto-units, no extra requirements
     if (props.classType === 'elementary') return true
-    // Secondary: needs unit choice + at least one expectation
     if (selectedExpectations.value.length === 0) return false
     if (targetUnitChoice.value === 'new' && !newUnitName.value.trim()) return false
     return true
@@ -384,7 +595,6 @@ function onSubmit() {
 
   if (activeTab.value === 'presets') {
     if (props.classType === 'elementary') {
-      // Elementary: auto-create units from strands
       emit('import', {
         mode: 'auto-units',
         preset: selectedPreset.value,
@@ -392,7 +602,6 @@ function onSubmit() {
         targetSubjectId: props.targetSubjectId
       })
     } else {
-      // Secondary: attach selected expectations to chosen unit
       emit('import', {
         mode: 'attach-expectations',
         targetUnitChoice: targetUnitChoice.value,
@@ -786,5 +995,298 @@ function onSubmit() {
   margin-bottom: 8px;
   border-bottom: 1px solid var(--border);
   padding-bottom: 4px;
+}
+
+.eim-filter-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 14px;
+  padding: 12px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.eim-filter-toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+@media (min-width: 640px) {
+  .eim-filter-toolbar {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.eim-segmented-control {
+  display: flex;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 3px;
+  gap: 2px;
+}
+
+.eim-seg-btn {
+  padding: 5px 12px;
+  border: none;
+  background: transparent;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.eim-seg-btn:hover {
+  color: var(--text);
+  background: var(--bg-hover);
+}
+
+.eim-seg-btn--active {
+  background: var(--primary);
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.eim-seg-btn--active:hover {
+  background: var(--primary);
+  opacity: 0.95;
+}
+
+.eim-search-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 1;
+  max-width: 320px;
+}
+
+.eim-search-icon {
+  position: absolute;
+  left: 10px;
+  color: var(--text-secondary);
+  pointer-events: none;
+}
+
+.eim-search-input {
+  width: 100%;
+  padding: 6px 30px 6px 30px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.8rem;
+  box-sizing: border-box;
+}
+
+.eim-search-input:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.eim-search-clear {
+  position: absolute;
+  right: 8px;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+.eim-search-clear:hover {
+  background: var(--bg-hover);
+  color: var(--text);
+}
+
+.eim-pills-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.75rem;
+}
+
+.eim-pills-label {
+  font-weight: 700;
+  color: var(--text-secondary);
+  width: 55px;
+  flex-shrink: 0;
+}
+
+.eim-pills-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+}
+
+.eim-pill {
+  padding: 3px 9px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-secondary);
+  font-size: 0.72rem;
+  font-weight: 600;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.eim-pill:hover {
+  background: var(--bg-hover);
+  color: var(--text);
+}
+
+.eim-pill--active {
+  background: rgba(59, 130, 246, 0.12);
+  border-color: var(--primary);
+  color: var(--primary);
+  font-weight: 700;
+}
+
+.eim-selector-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.eim-selector-count {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+
+.eim-active-filter-badge {
+  color: var(--primary);
+  font-size: 0.72rem;
+  font-weight: 600;
+  margin-left: 4px;
+}
+
+.eim-preset-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 10px;
+  max-height: 260px;
+  overflow-y: auto;
+  padding-right: 4px;
+  margin-bottom: 14px;
+}
+
+.eim-preset-card {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.eim-preset-card:hover {
+  border-color: var(--primary);
+  background: var(--bg-hover);
+
+}
+
+.eim-preset-card--selected {
+  border-color: var(--primary);
+  background: rgba(59, 130, 246, 0.05);
+  box-shadow: 0 0 0 1px var(--primary);
+}
+
+.eim-preset-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.eim-preset-card__badges {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.eim-preset-badge {
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  text-transform: uppercase;
+}
+
+.eim-preset-badge--grade {
+  background: rgba(59, 130, 246, 0.1);
+  color: var(--primary);
+}
+
+.eim-preset-badge--code {
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+}
+
+.eim-preset-card__check {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.eim-preset-card__title {
+  margin: 0;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.25;
+}
+
+.eim-preset-card__footer {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  margin-top: auto;
+}
+
+.eim-presets-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 30px;
+  background: var(--bg-secondary);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-md);
+  text-align: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.eim-empty-icon {
+  color: var(--text-secondary);
+  opacity: 0.5;
+}
+
+.eim-presets-empty p {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
 }
 </style>

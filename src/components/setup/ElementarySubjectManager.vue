@@ -209,6 +209,7 @@
       :target-subject-name="activeImportSubject?.name"
       :existing-units="activeImportSubject?.gradebookUnits || []"
       :initial-preset-id="getSubjectPresetMatch(activeImportSubject)?.presetId"
+      :class-type="'elementary'"
       @import="handleExpectationImport"
     />
 

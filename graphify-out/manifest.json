@@ -345,8 +345,8 @@
     "semantic_hash": ""
   },
   "src/views/Reports.vue": {
-    "mtime": 1785810602.7900865,
-    "ast_hash": "3d541f9fe29a1108848015ef8c0f8201",
+    "mtime": 1785810707.0470169,
+    "ast_hash": "8aba6661651d21c40a545b654b91f803",
     "semantic_hash": ""
   },
   "src/views/ScanStation.vue": {
@@ -455,18 +455,13 @@
     "semantic_hash": ""
   },
   "src/components/setup/ExpectationImportModal.vue": {
-    "mtime": 1785722814.1583474,
-    "ast_hash": "0e3cdbacaada486ac5d67f2a7a44753e",
-    "semantic_hash": ""
-  },
-  "src/data/curriculum/elementary/ontario-gr7-science.json": {
-    "mtime": 1784557171.960203,
-    "ast_hash": "d76feed2f9547adb3b4c7011d515921b",
+    "mtime": 1786062583.2370734,
+    "ast_hash": "aa30bb5adc58051ac3fb146a41baa744",
     "semantic_hash": ""
   },
   "src/data/curriculum/index.js": {
-    "mtime": 1785523843.1532433,
-    "ast_hash": "60a99fa4172a30d688a7f0e6d1ddcfcf",
+    "mtime": 1786062149.7777038,
+    "ast_hash": "334dfd14c4551d46dbfd928261653b91",
     "semantic_hash": ""
   },
   "src/data/curriculum/secondary/ontario-mth1w.json": {
@@ -475,8 +470,8 @@
     "semantic_hash": ""
   },
   "src/data/curriculum/secondary/ontario-snc1w.json": {
-    "mtime": 1784561188.615618,
-    "ast_hash": "7bb17cfd6c4d17c9f72c82759f722ba6",
+    "mtime": 1786062139.083984,
+    "ast_hash": "be7d660eba65e826a3b3d8583aa2fa20",
     "semantic_hash": ""
   },
   "src/data/curriculum/secondary/ontario-sph3u.json": {
@@ -635,8 +630,8 @@
     "semantic_hash": ""
   },
   "src/components/setup/ElementarySubjectManager.vue": {
-    "mtime": 1785707757.4696774,
-    "ast_hash": "dc18cb18b7ee3e53ebc77d1012e655ae",
+    "mtime": 1786062343.2765715,
+    "ast_hash": "bf1b9bff4b05d31ac454bc286e1cf2a5",
     "semantic_hash": ""
   },
   "src/utils/elementarySubjects.js": {
@@ -654,9 +649,259 @@
     "ast_hash": "eac80354d86a922a62905a01e1bf66e0",
     "semantic_hash": ""
   },
-  "src/data/curriculum/elementary/ontario-gr8-science.json": {
-    "mtime": 1785523833.9293013,
-    "ast_hash": "90c3a1de1cd3d3985911d8db829dbe68",
+  "new_expectations/elementary/grades/grade-7/ontario-g7-arts.json": {
+    "mtime": 1785886279.0,
+    "ast_hash": "08ac232fd2e6871e2a460e69a4f954fd",
+    "semantic_hash": ""
+  },
+  "new_expectations/elementary/grades/grade-7/ontario-g7-core-french.json": {
+    "mtime": 1785890382.0,
+    "ast_hash": "cc72b87da69963108af0f0bdbd35116a",
+    "semantic_hash": ""
+  },
+  "new_expectations/elementary/grades/grade-7/ontario-g7-extended-french.json": {
+    "mtime": 1785890382.0,
+    "ast_hash": "81e2ebfbee0c943ae838da646e2fb956",
+    "semantic_hash": ""
+  },
+  "new_expectations/elementary/grades/grade-7/ontario-g7-french-immersion.json": {
+    "mtime": 1785890382.0,
+    "ast_hash": "31f2a1866d48f4e47958d6687bc83126",
+    "semantic_hash": ""
+  },
+  "new_expectations/elementary/grades/grade-7/ontario-g7-geography.json": {
+    "mtime": 1785889476.0,
+    "ast_hash": "00da8707a860dc4a152b528aa325c3aa",
+    "semantic_hash": ""
+  },
+  "new_expectations/elementary/grades/grade-7/ontario-g7-history.json": {
+    "mtime": 1785886279.0,
+    "ast_hash": "19f8d60f2a8a8aa66dcfa440234c86ef",
+    "semantic_hash": ""
+  },
+  "new_expectations/elementary/grades/grade-7/ontario-g7-hpe.json": {
+    "mtime": 1785886279.0,
+    "ast_hash": "b5068046afa3b9db74af37042b71cc81",
+    "semantic_hash": ""
+  },
+  "new_expectations/elementary/grades/grade-7/ontario-g7-language.json": {
+    "mtime": 1785886279.0,
+    "ast_hash": "c1ab99c7c8aa6ab2c890d059424a1fc7",
+    "semantic_hash": ""
+  },
+  "new_expectations/elementary/grades/grade-7/ontario-g7-math.json": {
+    "mtime": 1785886279.0,
+    "ast_hash": "bf075382c41bb2feb6fa308b63cdb10f",
+    "semantic_hash": ""
+  },
+  "new_expectations/elementary/grades/grade-7/ontario-g7-science-tech.json": {
+    "mtime": 1785886279.0,
+    "ast_hash": "0b449f13417055f0115253f8c889e495",
+    "semantic_hash": ""
+  },
+  "new_expectations/elementary/grades/grade-8/ontario-g8-arts.json": {
+    "mtime": 1785886279.0,
+    "ast_hash": "7c250a1e1a18df2b693984f4647dfcc1",
+    "semantic_hash": ""
+  },
+  "new_expectations/elementary/grades/grade-8/ontario-g8-core-french.json": {
+    "mtime": 1785890382.0,
+    "ast_hash": "571a56675806726bc00b095787508351",
+    "semantic_hash": ""
+  },
+  "new_expectations/elementary/grades/grade-8/ontario-g8-extended-french.json": {
+    "mtime": 1785890382.0,
+    "ast_hash": "8827120e6e270dbfa400f725ddbfd463",
+    "semantic_hash": ""
+  },
+  "new_expectations/elementary/grades/grade-8/ontario-g8-french-immersion.json": {
+    "mtime": 1785890382.0,
+    "ast_hash": "cd40e5dffdf7726d0ba7a9afe441526d",
+    "semantic_hash": ""
+  },
+  "new_expectations/elementary/grades/grade-8/ontario-g8-geography.json": {
+    "mtime": 1785886279.0,
+    "ast_hash": "8b846ecc5eb1ebdc5e26dcd9a2efa72b",
+    "semantic_hash": ""
+  },
+  "new_expectations/elementary/grades/grade-8/ontario-g8-history.json": {
+    "mtime": 1785886279.0,
+    "ast_hash": "8cf806ce4c105527064b2ae042b60187",
+    "semantic_hash": ""
+  },
+  "new_expectations/elementary/grades/grade-8/ontario-g8-hpe.json": {
+    "mtime": 1785886279.0,
+    "ast_hash": "39e49c14a4b6a8758c77c1652113553f",
+    "semantic_hash": ""
+  },
+  "new_expectations/elementary/grades/grade-8/ontario-g8-language.json": {
+    "mtime": 1785886279.0,
+    "ast_hash": "473de0de0a6db84ac711e2ee492abbbb",
+    "semantic_hash": ""
+  },
+  "new_expectations/elementary/grades/grade-8/ontario-g8-math.json": {
+    "mtime": 1785886279.0,
+    "ast_hash": "03fad35fb722611a69383e365ca3ce66",
+    "semantic_hash": ""
+  },
+  "new_expectations/elementary/grades/grade-8/ontario-g8-science-tech.json": {
+    "mtime": 1785886279.0,
+    "ast_hash": "b70190ffd098492e36388db428855069",
+    "semantic_hash": ""
+  },
+  "new_expectations/secondary/ontario-mfm2p.json": {
+    "mtime": 1786011072.0,
+    "ast_hash": "0b62e85f299359d71f2f47d8bed5af46",
+    "semantic_hash": ""
+  },
+  "new_expectations/secondary/ontario-mpm2d.json": {
+    "mtime": 1786011072.0,
+    "ast_hash": "2e2d50040b7c6f8ce6f56f60a0e59773",
+    "semantic_hash": ""
+  },
+  "new_expectations/secondary/ontario-snc2d.json": {
+    "mtime": 1785891453.0,
+    "ast_hash": "481fd17c93c11a314f3e459ee71d44f2",
+    "semantic_hash": ""
+  },
+  "new_expectations/secondary/ontario-snc2p.json": {
+    "mtime": 1785891453.0,
+    "ast_hash": "fab3bd2a69b007dff15f8d881d6e7e2d",
+    "semantic_hash": ""
+  },
+  "new_expectations/secondary/sch3u.json": {
+    "mtime": 1785884822.0,
+    "ast_hash": "dd05be43638b584c508a1ca6dac1bca5",
+    "semantic_hash": ""
+  },
+  "new_expectations/secondary/snc1w.json": {
+    "mtime": 1785884822.0,
+    "ast_hash": "9bd74fdedf1d949d7e82c90c61fea80c",
+    "semantic_hash": ""
+  },
+  "src/data/curriculum/elementary/ontario-g7-arts.json": {
+    "mtime": 1786062139.0850646,
+    "ast_hash": "657188a9a812db9184e03b75546ae991",
+    "semantic_hash": ""
+  },
+  "src/data/curriculum/elementary/ontario-g7-core-french.json": {
+    "mtime": 1786062139.0858557,
+    "ast_hash": "be112987c1c9849f8dd141faf71df207",
+    "semantic_hash": ""
+  },
+  "src/data/curriculum/elementary/ontario-g7-extended-french.json": {
+    "mtime": 1786062139.0864704,
+    "ast_hash": "60e33dc126148163054daf84fc2c5a48",
+    "semantic_hash": ""
+  },
+  "src/data/curriculum/elementary/ontario-g7-french-immersion.json": {
+    "mtime": 1786062139.0887425,
+    "ast_hash": "d2bb0e84a82dfbe1b901a8dbef1f1326",
+    "semantic_hash": ""
+  },
+  "src/data/curriculum/elementary/ontario-g7-geography.json": {
+    "mtime": 1786062139.0897722,
+    "ast_hash": "76df7431c4503e16dc6914326e00dbfc",
+    "semantic_hash": ""
+  },
+  "src/data/curriculum/elementary/ontario-g7-history.json": {
+    "mtime": 1786062139.0905364,
+    "ast_hash": "affb1ce963bc846ad7acc8ee1e77f1e4",
+    "semantic_hash": ""
+  },
+  "src/data/curriculum/elementary/ontario-g7-hpe.json": {
+    "mtime": 1786062139.091167,
+    "ast_hash": "5b592c61232e8a7a0940b30baabb1f86",
+    "semantic_hash": ""
+  },
+  "src/data/curriculum/elementary/ontario-g7-language.json": {
+    "mtime": 1786062139.091621,
+    "ast_hash": "5fe983d7b0d0483aa18497a8bc66b4ae",
+    "semantic_hash": ""
+  },
+  "src/data/curriculum/elementary/ontario-g7-math.json": {
+    "mtime": 1786062139.0922103,
+    "ast_hash": "2771169f123f09add839d2017ce55c1a",
+    "semantic_hash": ""
+  },
+  "src/data/curriculum/elementary/ontario-g7-science-tech.json": {
+    "mtime": 1786062139.0927281,
+    "ast_hash": "ebb2a51671318f47e58b18945d452edc",
+    "semantic_hash": ""
+  },
+  "src/data/curriculum/elementary/ontario-g8-arts.json": {
+    "mtime": 1786062139.0932896,
+    "ast_hash": "7ecaaa4d9b8635a29e772aafbc30c336",
+    "semantic_hash": ""
+  },
+  "src/data/curriculum/elementary/ontario-g8-core-french.json": {
+    "mtime": 1786062139.0939605,
+    "ast_hash": "450a0d9840ecfe701768f40961049231",
+    "semantic_hash": ""
+  },
+  "src/data/curriculum/elementary/ontario-g8-extended-french.json": {
+    "mtime": 1786062139.0945237,
+    "ast_hash": "fa3439c5d5d15bea7168c7746fafdfc3",
+    "semantic_hash": ""
+  },
+  "src/data/curriculum/elementary/ontario-g8-french-immersion.json": {
+    "mtime": 1786062139.095237,
+    "ast_hash": "cce6e86daaf7dcfbfe2758f234a36f27",
+    "semantic_hash": ""
+  },
+  "src/data/curriculum/elementary/ontario-g8-geography.json": {
+    "mtime": 1786062139.095813,
+    "ast_hash": "5eca8270a5845662bf4ce3ded14483c7",
+    "semantic_hash": ""
+  },
+  "src/data/curriculum/elementary/ontario-g8-history.json": {
+    "mtime": 1786062139.096263,
+    "ast_hash": "a11b84ff280872b19247038be37c0b11",
+    "semantic_hash": ""
+  },
+  "src/data/curriculum/elementary/ontario-g8-hpe.json": {
+    "mtime": 1786062139.0966182,
+    "ast_hash": "1dceb2c41fca004d704c7e4c52ef7536",
+    "semantic_hash": ""
+  },
+  "src/data/curriculum/elementary/ontario-g8-language.json": {
+    "mtime": 1786062139.0978582,
+    "ast_hash": "0f9c09686fbcaf6c068669e991df485c",
+    "semantic_hash": ""
+  },
+  "src/data/curriculum/elementary/ontario-g8-math.json": {
+    "mtime": 1786062139.0983481,
+    "ast_hash": "9839b66f1513ea29ef2695c4b1f94788",
+    "semantic_hash": ""
+  },
+  "src/data/curriculum/elementary/ontario-g8-science-tech.json": {
+    "mtime": 1786062139.0989704,
+    "ast_hash": "5190e269ad7ce668e9766983ff872fa7",
+    "semantic_hash": ""
+  },
+  "src/data/curriculum/secondary/ontario-mfm2p.json": {
+    "mtime": 1786062139.0763993,
+    "ast_hash": "4fe7cedfd7575c98bd6c346e624f4560",
+    "semantic_hash": ""
+  },
+  "src/data/curriculum/secondary/ontario-mpm2d.json": {
+    "mtime": 1786062139.080884,
+    "ast_hash": "a96ab0ac866615baa5d415e45c97cf68",
+    "semantic_hash": ""
+  },
+  "src/data/curriculum/secondary/ontario-sch3u.json": {
+    "mtime": 1786062139.0836275,
+    "ast_hash": "bf2479f023690894dee6d9f3a91ec957",
+    "semantic_hash": ""
+  },
+  "src/data/curriculum/secondary/ontario-snc2d.json": {
+    "mtime": 1786062139.0814784,
+    "ast_hash": "ae39ed1550c62ab0c8ff552796f5db3c",
+    "semantic_hash": ""
+  },
+  "src/data/curriculum/secondary/ontario-snc2p.json": {
+    "mtime": 1786062139.083233,
+    "ast_hash": "9f9e061bce726a5fae70e6f902b15159",
     "semantic_hash": ""
   }
 }

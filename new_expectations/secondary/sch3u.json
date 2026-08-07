@@ -1,0 +1,227 @@
+{
+  "presetId": "ontario-sch3u",
+  "title": "Ontario Grade 11 Chemistry (SCH3U)",
+  "panel": "secondary",
+  "region": "Ontario",
+  "grade": "Grade 11",
+  "strands": [
+    {
+      "name": "Strand A: Scientific Investigation Skills and Career Exploration",
+      "overalls": [
+        {
+          "code": "A1",
+          "description": "Scientific Investigation Skills",
+          "specifics": [
+            { "code": "A1.1", "description": "formulate relevant scientific questions about observed relationships, ideas, problems, or issues, make informed predictions, and/or formulate educated hypotheses to focus inquiries or research" },
+            { "code": "A1.2", "description": "select appropriate instruments and materials, and identify appropriate methods, techniques, and procedures, for each inquiry" },
+            { "code": "A1.3", "description": "identify and locate a variety of print and electronic sources that enable them to address research topics fully and appropriately" },
+            { "code": "A1.4", "description": "apply knowledge and understanding of safe laboratory practices and procedures when planning investigations, including WHMIS symbols, proper handling and storage techniques, and appropriate personal protection" },
+            { "code": "A1.5", "description": "conduct inquiries, controlling relevant variables, adapting or extending procedures as required, and using appropriate materials and equipment safely, accurately, and effectively" },
+            { "code": "A1.6", "description": "compile accurate data from laboratory and other sources, and organize and record the data using appropriate formats, including tables, flow charts, graphs, and/or diagrams" },
+            { "code": "A1.7", "description": "select, organize, and record relevant information on research topics from a variety of appropriate sources using suitable formats and an accepted form of academic documentation" },
+            { "code": "A1.8", "description": "synthesize, analyse, interpret, and evaluate qualitative and quantitative data; solve problems involving quantitative data; determine whether evidence supports or refutes predictions or hypotheses; identify sources of bias and error; and suggest improvements" },
+            { "code": "A1.9", "description": "analyse the information gathered from research sources for logic, accuracy, reliability, adequacy, and bias" },
+            { "code": "A1.10", "description": "draw conclusions based on inquiry results and research findings, and justify their conclusions with reference to scientific knowledge" },
+            { "code": "A1.11", "description": "communicate ideas, plans, procedures, results, and conclusions orally, in writing, and/or in electronic presentations, using appropriate language and a variety of formats" },
+            { "code": "A1.12", "description": "use appropriate numeric, symbolic, and graphic modes of representation, and appropriate units of measurement" },
+            { "code": "A1.13", "description": "express the results of any calculations involving data accurately and precisely, to the appropriate number of decimal places or significant figures" }
+          ]
+        },
+        {
+          "code": "A2",
+          "description": "Career Exploration",
+          "specifics": [
+            { "code": "A2.1", "description": "identify and describe a variety of careers related to the fields of science under study and the education and training necessary for these careers" },
+            { "code": "A2.2", "description": "describe the contributions of scientists, including Canadians, to the fields under study" }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Strand B: Matter, Chemical Trends, and Chemical Bonding",
+      "overalls": [
+        {
+          "code": "B1",
+          "description": "Relating Science to Technology, Society, and the Environment",
+          "specifics": [
+            { "code": "B1.1", "description": "analyse, on the basis of research, the properties of a commonly used but potentially harmful chemical substance and how that substance affects the environment, and propose ways to lessen the harmfulness of the substance or identify alternative substances" },
+            { "code": "B1.2", "description": "evaluate the risks and benefits to human health of some commonly used chemical substances" }
+          ]
+        },
+        {
+          "code": "B2",
+          "description": "Developing Skills of Investigation and Communication",
+          "specifics": [
+            { "code": "B2.1", "description": "use appropriate terminology related to chemical trends and chemical bonding, including atomic radius, effective nuclear charge, electronegativity, ionization energy, and electron affinity" },
+            { "code": "B2.2", "description": "analyse data related to the properties of elements within a period to identify general trends in the periodic table" },
+            { "code": "B2.3", "description": "use an inquiry process to investigate the chemical reactions of elements with other substances, and produce an activity series using the resulting data" },
+            { "code": "B2.4", "description": "draw Lewis structures to represent the bonds in ionic and molecular compounds" },
+            { "code": "B2.5", "description": "predict the nature of a bond, using electronegativity values of atoms" },
+            { "code": "B2.6", "description": "build molecular models and write structural formulae for molecular compounds containing single and multiple bonds, and for ionic crystalline structures" },
+            { "code": "B2.7", "description": "write chemical formulae of binary and polyatomic compounds, including those with multiple valences, and name the compounds using the IUPAC nomenclature system" }
+          ]
+        },
+        {
+          "code": "B3",
+          "description": "Understanding Basic Concepts",
+          "specifics": [
+            { "code": "B3.1", "description": "explain the relationship between the atomic number and the mass number of an element, and the difference between isotopes and radioisotopes of an element" },
+            { "code": "B3.2", "description": "explain the relationship between isotopic abundance of an element's isotopes and the relative atomic mass of the element" },
+            { "code": "B3.3", "description": "state the periodic law, and explain how patterns in the electron arrangement and forces in atoms result in periodic trends in the periodic table" },
+            { "code": "B3.4", "description": "explain the differences between the formation of ionic bonds and the formation of covalent bonds" },
+            { "code": "B3.5", "description": "compare and contrast the physical properties of ionic and molecular compounds" }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Strand C: Chemical Reactions",
+      "overalls": [
+        {
+          "code": "C1",
+          "description": "Relating Science to Technology, Society, and the Environment",
+          "specifics": [
+            { "code": "C1.1", "description": "analyse, on the basis of research, chemical reactions used in various industrial processes that can have an impact on the health and safety of local populations" },
+            { "code": "C1.2", "description": "assess the effectiveness of some applications of chemical reactions that are used to address social and environmental needs and problems" }
+          ]
+        },
+        {
+          "code": "C2",
+          "description": "Developing Skills of Investigation and Communication",
+          "specifics": [
+            { "code": "C2.1", "description": "use appropriate terminology related to chemical reactions, including neutralization, precipitate, acidic, and basic" },
+            { "code": "C2.2", "description": "write balanced chemical equations to represent synthesis, decomposition, single displacement, double displacement, and combustion reactions, using the IUPAC nomenclature system" },
+            { "code": "C2.3", "description": "investigate synthesis, decomposition, single displacement, and double displacement reactions by testing the products of each reaction" },
+            { "code": "C2.4", "description": "predict the products of different types of synthesis and decomposition reactions" },
+            { "code": "C2.5", "description": "predict the products of single displacement reactions, using the metal activity series and the halogen series" },
+            { "code": "C2.6", "description": "predict the products of double displacement reactions" },
+            { "code": "C2.7", "description": "design an inquiry to demonstrate the difference between a complete and an incomplete combustion reaction" },
+            { "code": "C2.8", "description": "plan and conduct an inquiry to compare the properties of non-metal oxide solutions and metal oxide solutions" },
+            { "code": "C2.9", "description": "investigate neutralization reactions" },
+            { "code": "C2.10", "description": "plan and conduct an inquiry to demonstrate a single displacement reaction, using elements from the metal activity series" }
+          ]
+        },
+        {
+          "code": "C3",
+          "description": "Understanding Basic Concepts",
+          "specifics": [
+            { "code": "C3.1", "description": "identify various types of chemical reactions, including synthesis, decomposition, single displacement, double displacement, and combustion" },
+            { "code": "C3.2", "description": "explain the difference between a complete combustion reaction and an incomplete combustion reaction" },
+            { "code": "C3.3", "description": "explain the chemical reactions that result in the formation of acids and bases from metal oxides and non-metal oxides" }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Strand D: Quantities in Chemical Reactions",
+      "overalls": [
+        {
+          "code": "D1",
+          "description": "Relating Science to Technology, Society, and the Environment",
+          "specifics": [
+            { "code": "D1.1", "description": "analyse processes in the home, the workplace, and the environmental sector that involve the use of chemical quantities and calculations" },
+            { "code": "D1.2", "description": "assess, on the basis of research, the importance of quantitative accuracy in industrial chemical processes and the potential impact on the environment if quantitative accuracy is not observed" }
+          ]
+        },
+        {
+          "code": "D2",
+          "description": "Developing Skills of Investigation and Communication",
+          "specifics": [
+            { "code": "D2.1", "description": "use appropriate terminology related to quantities in chemical reactions, including stoichiometry, percentage yield, limiting reagent, mole, and atomic mass" },
+            { "code": "D2.2", "description": "conduct an inquiry to calculate the percentage composition of a compound" },
+            { "code": "D2.3", "description": "solve problems related to quantities in chemical reactions by performing calculations involving quantities in moles, number of particles, and atomic mass" },
+            { "code": "D2.4", "description": "determine the empirical formulae and molecular formulae of various chemical compounds, given molar masses and percentage composition or mass data" },
+            { "code": "D2.5", "description": "calculate the corresponding mass, or quantity in moles or molecules, for any given reactant or product in a balanced chemical equation" },
+            { "code": "D2.6", "description": "solve problems related to quantities in chemical reactions by performing calculations involving percentage yield and limiting reagents" },
+            { "code": "D2.7", "description": "conduct an inquiry to determine the actual yield, theoretical yield, and percentage yield of the products of a chemical reaction, assess the effectiveness of the procedure, and suggest sources of experimental error" }
+          ]
+        },
+        {
+          "code": "D3",
+          "description": "Understanding Basic Concepts",
+          "specifics": [
+            { "code": "D3.1", "description": "explain the law of definite proportions" },
+            { "code": "D3.2", "description": "describe the relationships between Avogadro's number, the mole concept, and the molar mass of any given substance" },
+            { "code": "D3.3", "description": "explain the relationship between the empirical formula and the molecular formula of a chemical compound" },
+            { "code": "D3.4", "description": "explain the quantitative relationships expressed in a balanced chemical equation, using appropriate units of measure" }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Strand E: Solutions and Solubility",
+      "overalls": [
+        {
+          "code": "E1",
+          "description": "Relating Science to Technology, Society, and the Environment",
+          "specifics": [
+            { "code": "E1.1", "description": "analyse the origins and cumulative effects of pollutants that enter our water systems, and explain how these pollutants affect water quality" },
+            { "code": "E1.2", "description": "analyse economic, social, and environmental issues related to the distribution, purification, or use of drinking water" }
+          ]
+        },
+        {
+          "code": "E2",
+          "description": "Developing Skills of Investigation and Communication",
+          "specifics": [
+            { "code": "E2.1", "description": "use appropriate terminology related to aqueous solutions and solubility, including concentration, solubility, precipitate, ionization, dissociation, pH, dilute, solute, and solvent" },
+            { "code": "E2.2", "description": "solve problems related to the concentration of solutions by performing calculations involving moles, and express the results in various units" },
+            { "code": "E2.3", "description": "prepare solutions of a given concentration by dissolving a solid solute in a solvent or by diluting a concentrated solution" },
+            { "code": "E2.4", "description": "conduct an investigation to analyse qualitative and quantitative properties of solutions" },
+            { "code": "E2.5", "description": "write balanced net ionic equations to represent precipitation and neutralization reactions" },
+            { "code": "E2.6", "description": "use stoichiometry to solve problems involving solutions and solubility" },
+            { "code": "E2.7", "description": "determine the concentration of an acid or a base in a solution, using the acid-base titration technique" },
+            { "code": "E2.8", "description": "conduct an investigation to determine the concentrations of pollutants in local treated drinking water, and compare the results to commonly used guidelines and standards" }
+          ]
+        },
+        {
+          "code": "E3",
+          "description": "Understanding Basic Concepts",
+          "specifics": [
+            { "code": "E3.1", "description": "describe the properties of water, and explain why these properties make water such a good solvent" },
+            { "code": "E3.2", "description": "explain the process of formation for solutions that are produced by dissolving ionic and molecular compounds in water, and for solutions produced by dissolving non-polar solutes in non-polar solvents" },
+            { "code": "E3.3", "description": "explain the effects of changes in temperature and pressure on the solubility of solids, liquids, and gases" },
+            { "code": "E3.4", "description": "identify, using a solubility table, the formation of precipitates in aqueous solutions" },
+            { "code": "E3.5", "description": "explain the Arrhenius theory of acids and bases" },
+            { "code": "E3.6", "description": "explain the difference between strong and weak acids, and between strong and weak bases, in terms of degree of ionization" }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Strand F: Gases and Atmospheric Chemistry",
+      "overalls": [
+        {
+          "code": "F1",
+          "description": "Relating Science to Technology, Society, and the Environment",
+          "specifics": [
+            { "code": "F1.1", "description": "analyse the effects on air quality of some technologies and human activities, including their own activities, and propose actions to reduce their personal carbon footprint" },
+            { "code": "F1.2", "description": "assess air quality conditions for a given Canadian location, using Environment Canada's Air Quality Health Index, and report on some Canadian initiatives to improve air quality and reduce greenhouse gases" }
+          ]
+        },
+        {
+          "code": "F2",
+          "description": "Developing Skills of Investigation and Communication",
+          "specifics": [
+            { "code": "F2.1", "description": "use appropriate terminology related to gases and atmospheric chemistry, including standard temperature, standard pressure, molar volume, and ideal gas" },
+            { "code": "F2.2", "description": "determine, through inquiry, the quantitative and graphical relationships between the pressure, volume, and temperature of a gas" },
+            { "code": "F2.3", "description": "solve quantitative problems by performing calculations based on Boyle's law, Charles's law, Gay-Lussac's law, the combined gas law, Dalton's law of partial pressures, and the ideal gas law" },
+            { "code": "F2.4", "description": "use stoichiometry to solve problems related to chemical reactions involving gases" },
+            { "code": "F2.5", "description": "determine, through inquiry, the molar volume or molar mass of a gas produced by a chemical reaction" }
+          ]
+        },
+        {
+          "code": "F3",
+          "description": "Understanding Basic Concepts",
+          "specifics": [
+            { "code": "F3.1", "description": "identify the major and minor chemical components of Earth's atmosphere" },
+            { "code": "F3.2", "description": "describe the different states of matter, and explain their differences in terms of the forces between atoms, molecules, and ions" },
+            { "code": "F3.3", "description": "use the kinetic molecular theory to explain the properties and behaviour of gases in terms of types and degrees of molecular motion" },
+            { "code": "F3.4", "description": "describe, for an ideal gas, the quantitative relationships that exist between the variables of pressure, volume, temperature, and amount of substance" },
+            { "code": "F3.5", "description": "explain Dalton's law of partial pressures, Boyle's law, Charles's law, Gay-Lussac's law, the combined gas law, and the ideal gas law" },
+            { "code": "F3.6", "description": "explain Avogadro's hypothesis and how his contribution to the gas laws has increased our understanding of the chemical reactions of gases" }
+          ]
+        }
+      ]
+    }
+  ]
+}

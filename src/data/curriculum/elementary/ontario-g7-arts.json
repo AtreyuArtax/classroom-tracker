@@ -1,0 +1,254 @@
+{
+  "presetId": "ontario-g7-arts",
+  "title": "Ontario Grade 7 The Arts (2009)",
+  "panel": "elementary",
+  "region": "Ontario",
+  "grade": "Grade 7",
+  "strands": [
+    {
+      "name": "Strand A: Dance",
+      "overalls": [
+        {
+          "code": "A1",
+          "description": "Creating and Presenting",
+          "specifics": [
+            {
+              "code": "A1.1",
+              "description": "create dance pieces to represent or respond to specific rhythms and pieces of music (e.g.,&nbsp;use the body, body parts, and the floor [stamping, stepping, body slapping] to replicate the rhythms in the music; transform a music imaging exercise into a dance interpretation)."
+            },
+            {
+              "code": "A1.2",
+              "description": "use dance as a language to communicate ideas from their own writing or media works (e.g.,&nbsp;create a dance piece inspired by a student authored poem about relationships with the natural world or by a student media work about divorce or loss)."
+            },
+            {
+              "code": "A1.3",
+              "description": "use theme and variations in a variety of ways when creating dance pieces (e.g.,&nbsp;create a simple movement phrase [theme] and then repeat it in modified form [variation] using choreographic manipulations [retrograding the original phrase, facing another dancer, adding more dancers])."
+            },
+            {
+              "code": "A1.4",
+              "description": "use the elements of dance and choreographic forms (e.g.,&nbsp;pattern forms, narrative forms) to communicate a variety of themes or moods (e.g., use entrances or exits to communicate beginnings or endings; use a recurring sequence of movements to signal a particular mood or character; use canon form for emphasis)."
+            }
+          ]
+        },
+        {
+          "code": "A2",
+          "description": "Reflecting, Responding, and Analysing",
+          "specifics": [
+            {
+              "code": "A2.1",
+              "description": "construct personal interpretations of the messages in their own and others’ dance pieces, including messages about issues relevant to their community and/or the world (e.g.,&nbsp;dance pieces on topics such as urban sprawl, land claims, poverty, homophobia, homelessness), and communicate their responses in a variety of ways (e.g., through writing, class discussion, oral reports, song, drama, visual art)."
+            },
+            {
+              "code": "A2.2",
+              "description": "analyse, using dance vocabulary, their own and others’ dance pieces to identify the elements of dance and the choreographic forms used in them and explain how they help communicate meaning (e.g.,&nbsp;use of crouching shapes low to the ground and bound energy communicates the idea of confined space; use of site-specific locations [outdoor playground] to structure a dance communicates the idea of connection to the environment)."
+            },
+            {
+              "code": "A2.3",
+              "description": "identify and give examples of their strengths and areas for growth as dance creators, interpreters, and audience members (e.g.,&nbsp;share with a partner what they did well during a performance, using dance vocabulary; use a concept map to explain their choice of dance movements)."
+            }
+          ]
+        },
+        {
+          "code": "A3",
+          "description": "Exploring Forms and Cultural Contexts",
+          "specifics": [
+            {
+              "code": "A3.1",
+              "description": "describe the evolution of dance and performance as different groups of people have responded to external factors such as migration, a new environment, and/or contact with other groups or cultures (e.g.,&nbsp;the evolution of Maritime Acadian folk dances into Louisiana Cajun dances such as fais do do and the Mardi Gras dance Krewes; the origins and development of French and Scottish jigs; the evolution of the Métis jig out of imitations of wildlife movements [prairie wild birds] and the intricate footwork of Native dancing and European jigs)."
+            },
+            {
+              "code": "A3.2",
+              "description": "identify ways in which dance and its depictions in the media may influence a person’s character development and sense of identity (e.g.,&nbsp;by influencing young people’s sense of themselves and their bodies; by providing dance role models who represent or promote particular lifestyles, values, and attitudes)."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Strand B: Drama",
+      "overalls": [
+        {
+          "code": "B1",
+          "description": "Creating and Presenting",
+          "specifics": [
+            {
+              "code": "B1.1",
+              "description": "engage actively in drama exploration and role play, with a focus on examining multiple perspectives related to current issues, themes, and relationships from a wide variety of sources and diverse communities (e.g.,&nbsp;identify significant perspectives related to an issue such as peer pressure, treaty rights, or cultural identity, and assume roles to express the different perspectives; use prepared improvisation to communicate insights about life events and relationships; use thought tracking and symbolic artefacts to present a persona associated with a past historical event)."
+            },
+            {
+              "code": "B1.2",
+              "description": "demonstrate an understanding of the elements of drama by selecting and combining several elements and conventions to create dramatic effects (e.g.,&nbsp;develop a drama presentation incorporating a series of tableaux, a group soundscape, a movement piece, and a rap/song)."
+            },
+            {
+              "code": "B1.3",
+              "description": "plan and shape the direction of the drama by working with others, both in and out of role, to generate ideas and explore multiple perspectives (e.g.,&nbsp;In role: use thought tracking or writing in role to explore the feelings and motivations of a character; introduce a new perspective during role play to foster a sense of empathy with the character; Out of role: use a place mat activity to select ideas that group members agree upon; use invented notation to explain the movement of the character)."
+            },
+            {
+              "code": "B1.4",
+              "description": "communicate feelings, thoughts, and abstract ideas through drama works, using audio, visual, and/or technological aids to heighten the dramatic experience (e.g.,&nbsp;use music to create mood; use video and drums/noisemakers to signal the climax; use a digital slide presentation to create a backdrop of words or images; use costumes, props, fabric to establish character and/or setting)."
+            }
+          ]
+        },
+        {
+          "code": "B2",
+          "description": "Reflecting, Responding, and Analysing",
+          "specifics": [
+            {
+              "code": "B2.1",
+              "description": "construct personal interpretations of drama works, connecting drama issues and themes to their own and others’ ideas, feelings, and experiences (e.g.,&nbsp;use a series of tableaux or freeze-frame images of key moments in a drama to show which moments had the greatest impact on them; write in role about an environmental issue, first from the point of view of an audience member and then from the point of view of an animal whose habitat is threatened)."
+            },
+            {
+              "code": "B2.2",
+              "description": "analyse and describe, using drama terminology, how drama elements are used to communicate meaning in a variety of drama works and shared drama experiences (e.g.,&nbsp;compare and contrast how the director of a play and the director of a film might use body positioning and sound to communicate a character’s feelings to the audience)."
+            },
+            {
+              "code": "B2.3",
+              "description": "identify and give examples of their strengths, interests, and areas for improvement as drama creators, performers, and audience members (e.g.,&nbsp;create a chart listing strengths and areas for improvement; highlight an area to work on in their next drama production; write a report on their learning in drama for a school newsletter)."
+            }
+          ]
+        },
+        {
+          "code": "B3",
+          "description": "Exploring Forms and Cultural Contexts",
+          "specifics": [
+            {
+              "code": "B3.1",
+              "description": "compare and contrast how social values are communicated in several different drama forms and/or styles of live theatre from different times and places (e.g.,&nbsp;how views of colonist Aboriginal relationships differ in plays from earlier times versus contemporary plays; how themes of loyalty to family and/or country are treated in comic forms versus serious drama forms)."
+            },
+            {
+              "code": "B3.2",
+              "description": "identify and describe several ways in which drama and theatre (e.g.,&nbsp;street festivals, film festivals, theatre festivals, local theatre groups) contribute to contemporary social, economic, and cultural life (e.g.,&nbsp;attract tourists; provide jobs; provide entertainment; promote cultural understanding; raise people’s awareness of social issues)."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Strand C: Music",
+      "overalls": [
+        {
+          "code": "C1",
+          "description": "Creating and Performing",
+          "specifics": [
+            {
+              "code": "C1.1",
+              "description": "sing and/or play, in tune, from musical notation, unison music and music in two or more parts from diverse cultures, styles, and historical periods (e.g.,&nbsp;perform selections from a method book, student compositions, instrumental scores, ensemble repertoire, African drum rhythms, choral repertoire, jazz charts, spirituals, steel band music)."
+            },
+            {
+              "code": "C1.2",
+              "description": "apply the elements of music when singing and/or playing, composing, and arranging music, using them for specific effects and clear purposes (e.g.,&nbsp;create a class chant or song to build community spirit; manipulate the rhythm or dynamics in a familiar piece to create an accompaniment for a media presentation)."
+            },
+            {
+              "code": "C1.3",
+              "description": "create musical compositions in a variety of forms for specific purposes and audiences (e.g.,&nbsp;use available instruments to create a composition in response to an object, a visual image, or a silent film; add rhythmic, melodic, or chordal accompaniment to a familiar song; improvise rhythmic or melodic phrases over a variety of ostinati; create compositions using found sounds or recycled materials)."
+            },
+            {
+              "code": "C1.4",
+              "description": "use the tools and techniques of musicianship in musical performances (e.g.,&nbsp;apply markings for dynamics, tempo, phrasing, and articulation when performing; use proper breath control throughout their singing range)."
+            },
+            {
+              "code": "C1.5",
+              "description": "demonstrate an understanding of standard and other musical notation through performance and composition (e.g.,&nbsp;read and respond to accidentals, repeat signs, various tempo markings; notate and perform a variety of scales, including the blues scale; explain how some contemporary music, children’s songs, or Aboriginal singing, drumming, and dancing are transmitted through oral tradition)."
+            }
+          ]
+        },
+        {
+          "code": "C2",
+          "description": "Reflecting, Responding, and Analysing",
+          "specifics": [
+            {
+              "code": "C2.1",
+              "description": "express analytical, personal responses to musical performances in a variety of ways (e.g.,&nbsp;represent musical scenes in Pictures at an Exhibition through art work or dramatization; record detailed analyses of music they have listened to in a log or reflection journal to explain why they enjoy it and how the elements of music are used)."
+            },
+            {
+              "code": "C2.2",
+              "description": "analyse, using musical terminology, ways in which the elements are used in the music that they perform, listen to, and create (e.g.,&nbsp;compare the use of drums in different social and cultural contexts, such as Asian, Aboriginal, and African communities; listen to a Brazilian folk song or a current popular song, and describe how the use of the various elements affects their response to the music)."
+            },
+            {
+              "code": "C2.3",
+              "description": "identify and give examples of their strengths and areas for improvement as composers, musical performers, interpreters, and audience members (e.g.,&nbsp;set a goal to improve their performance skills, reflect on how successful they were in attaining their goal, keep a practice journal, record and analyse their performances throughout the term)."
+            }
+          ]
+        },
+        {
+          "code": "C3",
+          "description": "Exploring Forms and Cultural Contexts",
+          "specifics": [
+            {
+              "code": "C3.1",
+              "description": "analyse the influences of music and the media on the development of personal and cultural identity (e.g.,&nbsp;describe how their personal musical preferences have been formed from listening to music readily available in the media; explain how cultural identity, including a sense of Aboriginal pride for Aboriginal students, can be reinforced by listening to music of their own culture)."
+            },
+            {
+              "code": "C3.2",
+              "description": "analyse some historical, cultural, and technological influences on style, genre, and innovation in music (e.g.,&nbsp;the impact of the invention of the piano or the electric guitar)."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Strand D: Visual Arts",
+      "overalls": [
+        {
+          "code": "D1",
+          "description": "Creating and Presenting",
+          "specifics": [
+            {
+              "code": "D1.1",
+              "description": "create art works, using a variety of traditional forms and current media technologies, that express feelings, ideas, and issues, including opposing points of view (e.g.,&nbsp;an acrylic painting that uses symbols to represent conflict and resolution; performance art or an installation that portrays both sides of the struggle between humankind and nature; a mixed-media or digital composition of a personal mandala that shows both unity and opposing forces)."
+            },
+            {
+              "code": "D1.2",
+              "description": "demonstrate an understanding of composition, using multiple principles of design and the “rule of thirds” to create narrative art works or art works on a theme or topic (e.g., use colour [analogous, monochromatic] to unify a montage of newspaper and magazine images and text on a social issue; use smooth, horizontal lines to give a feeling of harmony in a drawing; create a landscape that shows unity, using repetition of shapes, values, textures, and/or lines, a particular area of focus, and the rule of thirds)."
+            },
+            {
+              "code": "D1.3",
+              "description": "use elements of design in art works to communicate ideas, messages, and understandings for a specific audience and purpose (e.g.,&nbsp;create balance in positive and negative space in a personal logo design, using drawing or paper cut-outs of black-and-white shapes on a grey background; selectively manipulate the colour, values, and text in a digital composition to change the message of a print advertisement)."
+            },
+            {
+              "code": "D1.4",
+              "description": "use a variety of materials, tools, techniques, and technologies to determine solutions to increasingly complex design challenges (e.g., drawing: make a cubist still life of objects with reflective or textured surfaces, using both wet [e.g., ink, watercolour pencils] and dry [e.g., conté, chalk] materials to simulate highlights and transparency&nbsp; mixed media: make a hand-made or altered book, using various materials and techniques to represent ideas about selected elements in dance, drama, music, and/or the visual arts painting: make a cityscape that will serve as a background in an animated short movie, using experimental watercolour techniques such as wet on wet or salt resist printmaking: make a collograph or chine collé that communicates a personal experience through the use of shape and analogous colour sculpture: make clay or papier mâché gargoyles or “crossed creatures” that have exaggerated features, using open and closed forms technology: make a high-contrast self-portrait or caricature with software, using techniques such as blurring, cloning, cropping, distortion, layering, rotation, and selection)."
+            }
+          ]
+        },
+        {
+          "code": "D2",
+          "description": "Reflecting, Responding, and Analysing",
+          "specifics": [
+            {
+              "code": "D2.1",
+              "description": "interpret a variety of art works and identify the feelings, issues, themes, and social concerns that they convey (e.g.,&nbsp;compare the mood of two different works by two peers, such as Above the Gravel Pit by Emily Carr and Reflections, Bishop’s Pond by David Milne; categorize a variety of art works on the basis of the themes and issues that are explored by the artists)."
+            },
+            {
+              "code": "D2.2",
+              "description": "explain how the elements and principles of design are used in their own and others’ art work to communicate meaning or understanding (e.g.,&nbsp;the use of complementary colours for shadow detail in a still life by Cézanne; the use of contrast to emphasize the features in a portrait; Brian Jungen’s use of positive and negative space and the colours in traditional First Nation art works to convey ideas about consumerism and culture in masks that he created out of brand-name running shoes)."
+            },
+            {
+              "code": "D2.3",
+              "description": "demonstrate an understanding of how to read and interpret signs, symbols, and style in art works (e.g.,&nbsp;visual metaphors, such as a single tree, used to evoke loneliness in paintings by Group of Seven artists; objects used as symbols in Sadako and the Thousand Paper Cranes by Eleanor Coerr; messages conveyed by the use of traditional symbols in contemporary art; an artist’s manipulation of the intended message of an advertisement by modifying symbols and elements of design in the imagery that is appropriated, or “borrowed”, from the original ad)."
+            },
+            {
+              "code": "D2.4",
+              "description": "identify and explain their strengths, their interests, and areas for improvement as creators, interpreters, and viewers of art (e.g.,&nbsp;explain their preferences for selected works of art, using appropriate visual arts vocabulary; provide constructive feedback in a critique of their own work and the work of others; identify the strategies they used in planning, producing, and critiquing their own and others’ works of art)."
+            }
+          ]
+        },
+        {
+          "code": "D3",
+          "description": "Exploring Forms and Cultural Contexts",
+          "specifics": [
+            {
+              "code": "D3.1",
+              "description": "identify and describe some of the ways in which visual art forms and styles reflect the beliefs and traditions of a variety of cultures and civilizations (e.g.,&nbsp;art works created within a tradition for functional and aesthetic purposes; beliefs reflected in art works by artists working within an artistic movement in the past or present; the purposes of architecture, objects, and images in past and present cultures and the contexts in which they were made, viewed, and valued; art works that challenge, sustain, and reflect society’s beliefs and traditions)."
+            },
+            {
+              "code": "D3.2",
+              "description": "demonstrate an understanding of the function of visual and media arts in various contexts today and in the past, and of their influence on the development of personal and cultural identity (e.g.,&nbsp;the function of traditional and contemporary styles of Aboriginal art in the development of cultural identity and revitalization; the contributions of people in various arts careers to community events, festivals, businesses, galleries, and museums; the significance of the art work of individuals and the arts of cultural groups in local and global contexts)."
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "subjectCode": "ART"
+}

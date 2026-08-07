@@ -1,0 +1,144 @@
+{
+  "presetId": "ontario-snc1w",
+  "title": "Ontario Grade 9 Science (SNC1W)",
+  "panel": "secondary",
+  "region": "Ontario",
+  "grade": "Grade 9",
+  "strands": [
+    {
+      "name": "Strand A: STEM Skills, Careers, and Connections",
+      "overalls": [
+        {
+          "code": "A1",
+          "description": "STEM Investigation Skills",
+          "specifics": [
+            { "code": "A1.1", "description": "apply a scientific research process and associated skills to conduct investigations, making connections between their research and the scientific concepts they are learning" },
+            { "code": "A1.2", "description": "apply a scientific experimentation process and associated skills to conduct investigations, making connections between their observations and findings and the scientific concepts they are learning" },
+            { "code": "A1.3", "description": "apply an engineering design process and associated skills to design, build, and test devices, models, structures, and/or systems" },
+            { "code": "A1.4", "description": "apply coding skills to investigate and to model scientific concepts and relationships" },
+            { "code": "A1.5", "description": "apply their knowledge and understanding of safe practices and procedures, including the Workplace Hazardous Materials Information System (WHMIS), while planning and carrying out hands-on investigations" }
+          ]
+        },
+        {
+          "code": "A2",
+          "description": "Applications, Careers, and Connections",
+          "specifics": [
+            { "code": "A2.1", "description": "design an experiment or a prototype to explore a problem relevant to a STEM-related occupation, such as a skilled trade, using findings from research" },
+            { "code": "A2.2", "description": "describe how scientific innovations and emerging technologies, including artificial intelligence systems, impact society and careers" },
+            { "code": "A2.3", "description": "analyse how the development and application of science is economically, culturally, and socially contextualized, by investigating real-world issues" },
+            { "code": "A2.4", "description": "apply scientific literacy skills when investigating social and environmental issues that have personal, local, and/or global impacts" },
+            { "code": "A2.5", "description": "analyse contributions to science by people from various communities, including communities in Canada" }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Strand B: Biology (Sustainable Ecosystems and Climate Change)",
+      "overalls": [
+        {
+          "code": "B1",
+          "description": "Relating Science to Our Changing World",
+          "specifics": [
+            { "code": "B1.1", "description": "assess impacts of climate change on the sustainability of local and global ecosystems, describe local or global initiatives for combatting climate change, and identify solutions to address some of the impacts" },
+            { "code": "B1.2", "description": "assess impacts of climate change on communities in Canada, including First Nations, Métis, and Inuit communities" },
+            { "code": "B1.3", "description": "investigate and explain how sustainable practices used by various communities, including First Nations, Métis, and Inuit communities, reflect an understanding of the importance of the dynamic equilibrium of ecosystems" }
+          ]
+        },
+        {
+          "code": "B2",
+          "description": "Investigating and Understanding Concepts",
+          "specifics": [
+            { "code": "B2.1", "description": "investigate interactions between the biosphere, hydrosphere, lithosphere, and atmosphere, and explain why these interactions are important for ecosystem sustainability" },
+            { "code": "B2.2", "description": "explain how naturally occurring phenomena, including the cycling of matter and the flow of energy, contribute to the dynamic equilibrium within and between ecosystems" },
+            { "code": "B2.3", "description": "compare and contrast the processes of cellular respiration and photosynthesis, and explain how their complementary relationship contributes to the dynamic equilibrium of ecosystems" },
+            { "code": "B2.4", "description": "investigate factors and processes, including biodiversity, air and water quality, soil health, and succession, and explain how they contribute to ecosystem sustainability" },
+            { "code": "B2.5", "description": "explain the effects of various human activities on the dynamic equilibrium of ecosystems" },
+            { "code": "B2.6", "description": "identify and use various indicators of climate change to describe the impacts of climate change on local and global ecosystems, and analyse how human activities contribute to climate change" },
+            { "code": "B2.7", "description": "explain how sustainable practices related to the cycling of matter and the flow of energy can be applied in agricultural innovations" }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Strand C: Chemistry (The Nature of Matter)",
+      "overalls": [
+        {
+          "code": "C1",
+          "description": "Relating Science to Our Changing World",
+          "specifics": [
+            { "code": "C1.1", "description": "assess social, environmental, and economic impacts of processes associated with the life cycle of consumer products, considering the elements and compounds used to make them, and suggest ways to enhance positive impacts and/or minimize negative impacts" },
+            { "code": "C1.2", "description": "analyse impacts of using emerging chemical technologies in various fields, including in the skilled trades, and assess factors that influence the development of these technologies" }
+          ]
+        },
+        {
+          "code": "C2",
+          "description": "Investigating and Understanding Concepts",
+          "specifics": [
+            { "code": "C2.1", "description": "investigate properties, changes, and interactions of matter that are important for the dynamic equilibrium of ecosystems and their sustainability" },
+            { "code": "C2.2", "description": "research the role of experimental evidence in the development of various atomic models, and compare and contrast different models of the atom" },
+            { "code": "C2.3", "description": "identify the location, relative mass, and charge of subatomic particles within an atom, using the Bohr-Rutherford model" },
+            { "code": "C2.4", "description": "explain the relationship between the position of an element in the periodic table and the structure of its atoms, using models" },
+            { "code": "C2.5", "description": "investigate the physical and chemical properties of elements, and use their findings to relate these properties to the organization of the periodic table, classify elements, and identify patterns in the periodic table" },
+            { "code": "C2.6", "description": "investigate and describe physical and chemical properties of elements and compounds, including those that make up common household products" },
+            { "code": "C2.7", "description": "describe the relationship between the structure of simple compounds and their chemical formulas" }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Strand D: Physics (Principles and Applications of Electricity)",
+      "overalls": [
+        {
+          "code": "D1",
+          "description": "Relating Science to Our Changing World",
+          "specifics": [
+            { "code": "D1.1", "description": "assess social, environmental, and economic benefits and challenges resulting from the production of electrical energy from various sources" },
+            { "code": "D1.2", "description": "evaluate how electrical energy production and consumption impact various communities locally or globally, and describe ways to achieve sustainable practices" },
+            { "code": "D1.3", "description": "develop a plan of action to address a local or global electrical energy production or consumption issue, including strategies for energy conservation" },
+            { "code": "D1.4", "description": "analyse social, environmental, and economic impacts of emerging technologies related to electrical energy production, consumption, storage, and conservation" }
+          ]
+        },
+        {
+          "code": "D2",
+          "description": "Investigating and Understanding Concepts",
+          "specifics": [
+            { "code": "D2.1", "description": "conduct investigations to explain the behaviour of electric charges in static and current electricity, and to relate the observed behaviour to the properties of subatomic particles and atomic structure" },
+            { "code": "D2.2", "description": "determine the conductivity of various materials by investigating their ability to hold or transfer electric charges" },
+            { "code": "D2.3", "description": "identify the components of a direct current (DC) circuit and explain their functions, and identify electrical quantities, their symbols, and their corresponding International System of Units (SI) units" },
+            { "code": "D2.4", "description": "investigate the relationships between electric current, potential difference, and resistance in electrical circuits, and develop a mathematical model to represent the relationships" },
+            { "code": "D2.5", "description": "apply a mathematical model to calculate electric current, potential difference, and resistance in real-world situations" },
+            { "code": "D2.6", "description": "construct series and parallel circuits to compare electric current, potential difference, and resistance in both types of circuits" },
+            { "code": "D2.7", "description": "explain the difference between electricity and electrical energy" },
+            { "code": "D2.8", "description": "determine the efficiency of various electrical devices that consume or produce electrical energy, and identify the energy transformations in each device" }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Strand E: Earth and Space Science (Space Exploration)",
+      "overalls": [
+        {
+          "code": "E1",
+          "description": "Relating Science to Our Changing World",
+          "specifics": [
+            { "code": "E1.1", "description": "evaluate social, environmental, and economic impacts of space observation and exploration" },
+            { "code": "E1.2", "description": "evaluate how space observation and exploration technologies contribute to our understanding of climate change, natural disasters, and other phenomena" },
+            { "code": "E1.3", "description": "assess ways in which technological innovations related to space observation and exploration are applied in various fields, including their contributions to sustainable practices on Earth" }
+          ]
+        },
+        {
+          "code": "E2",
+          "description": "Investigating and Understanding Concepts",
+          "specifics": [
+            { "code": "E2.1", "description": "describe the importance of the Sun and its characteristics, including its role in the solar system and in sustaining life on Earth" },
+            { "code": "E2.2", "description": "explain how the Sun's energy causes natural phenomena on Earth, and how these phenomena contribute to renewable energy production" },
+            { "code": "E2.3", "description": "summarize observational evidence used to support theories about the origin and evolution of the universe and the solar system, considering diverse ways of knowing" },
+            { "code": "E2.4", "description": "describe major components of the solar system and the universe and compare their characteristics" },
+            { "code": "E2.5", "description": "quantify distances in the solar system and the universe by applying an understanding of relative distances and sizes and using appropriate units of measure" },
+            { "code": "E2.6", "description": "conduct investigations to explain the causes of various astronomical phenomena that can be observed from Earth" }
+          ]
+        }
+      ]
+    }
+  ]
+}
