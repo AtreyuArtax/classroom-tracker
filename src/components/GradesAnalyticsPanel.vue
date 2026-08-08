@@ -450,7 +450,8 @@ import {
   getHeatColorHex,
   getHeatTextColor,
   getSDColor,
-  formatGrade
+  formatGrade,
+  getSectionColor
 } from '../utils/gradeColors.js'
 import {
   Chart as ChartJS,

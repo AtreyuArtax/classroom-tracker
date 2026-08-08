@@ -847,6 +847,7 @@ function formatDate(ts) {
 function formatOutcome(outcome) {
   if (outcome === 'demonstrates_understanding') return 'Mastered'
   if (outcome === 'gap_confirmed') return 'Needs Support'
+  if (outcome === 'remediation_required') return 'Insufficient (R)'
   return 'Developing'
 }
 
@@ -854,6 +855,7 @@ function formatOutcomeLabel(evt) {
   if (typeof evt === 'string') {
     if (evt === 'demonstrates_understanding') return 'Mastered'
     if (evt === 'gap_confirmed') return 'Needs Support'
+    if (evt === 'remediation_required') return 'Insufficient (R)'
     return 'Developing'
   }
   if (evt?.acType === 'product') {
@@ -861,6 +863,7 @@ function formatOutcomeLabel(evt) {
   }
   if (evt?.acOutcome === 'demonstrates_understanding') return 'Mastered'
   if (evt?.acOutcome === 'gap_confirmed') return 'Needs Support'
+  if (evt?.acOutcome === 'remediation_required') return 'Insufficient (R)'
   return 'Developing'
 }
 

@@ -105,6 +105,13 @@
             ]"
             @click="outcome = 'gap_confirmed'"
           >Needs Support</button>
+          <button
+            :class="[
+              'acm-toggle-btn', 
+              outcome === 'remediation_required' ? 'acm-toggle-btn--danger-dark' : ''
+            ]"
+            @click="outcome = 'remediation_required'"
+          >Insufficient (R)</button>
         </div>
       </div>
 
@@ -435,6 +442,12 @@ function onCancel() {
 
 .acm-toggle-btn--danger {
   background: #ff3b30;
+  color:      #fff;
+  box-shadow: var(--shadow-sm);
+}
+
+.acm-toggle-btn--danger-dark {
+  background: #af1911;
   color:      #fff;
   box-shadow: var(--shadow-sm);
 }

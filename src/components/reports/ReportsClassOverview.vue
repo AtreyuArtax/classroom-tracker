@@ -207,6 +207,7 @@
             :assessments="assessments"
             :class-grades="classGrades"
             :active-grade-filter="activeGradeFilter"
+            :events="allClassEvents"
           />
         </div>
 

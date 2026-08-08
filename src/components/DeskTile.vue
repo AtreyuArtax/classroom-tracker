@@ -21,6 +21,7 @@
       'desk-tile--absent': student.activeStates?.isAbsent,
       'desk-tile--late':   student.activeStates?.lateMs > 0,
       'desk-tile--flash':  flashing,
+      'desk-tile--dimmed': isDimmed,
     }"
     :aria-label="`${student.firstName} ${student.lastName}`"
     draggable="true"
@@ -111,7 +112,7 @@ import { resolveIcon }    from '../utils/icons.js'
 import { toMinutes }      from '../db/eventService.js'
 import { useRadial }    from '../composables/useRadial.js'
 import { useClassroom } from '../composables/useClassroom.js'
-import { classGrades }  from '../composables/useGradebook.js'
+import { classGrades, activeSubCohortFilter, isStudentInSubCohort }  from '../composables/useGradebook.js'
 
 // ─── props ────────────────────────────────────────────────────────────────────
 
@@ -129,6 +130,11 @@ const emit = defineEmits(['seat-drop']) // emitted to SeatingGrid for drag/drop 
 
 const { open: openRadial } = useRadial()
 const { behaviorCodes, assignSeat, studentWeeklyStats, thresholds } = useClassroom()
+
+const isDimmed = computed(() => {
+  if (!props.student || !activeSubCohortFilter.value || activeSubCohortFilter.value.toLowerCase() === 'all') return false
+  return !isStudentInSubCohort(props.student)
+})
 
 const studentOverallGrade = computed(() => {
   if (!props.studentId) return null
@@ -337,6 +343,18 @@ function onDrop(evt) {
 
 .desk-tile:active {
   transform: scale(0.97);
+}
+
+/* ── Dimmed state (when filtered by section/grade) ───────────────────────── */
+.desk-tile--dimmed {
+  opacity: 0.35;
+  filter: grayscale(0.5);
+  transition: opacity 0.2s ease, filter 0.2s ease;
+}
+
+.desk-tile--dimmed:hover {
+  opacity: 0.85;
+  filter: grayscale(0);
 }
 
 /* ── Empty seat ─────────────────────────────────────────────────────────── */

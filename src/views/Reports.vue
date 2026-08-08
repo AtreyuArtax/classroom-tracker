@@ -164,6 +164,7 @@
       :assessments="assessmentsList"
       :class-grades="classGrades"
       :teacher-name="teacherName"
+      :events="allClassEvents"
       @close="showPrintExpectationsModal = false"
     />
 
@@ -206,6 +207,7 @@ import ReportsBatchPrintModal from '../components/reports/ReportsBatchPrintModal
 import ReportsPrintHub from '../components/reports/ReportsPrintHub.vue'
 import { calculateClassGrades, getAssessmentsByClass, getAssessmentPercentage } from '../db/gradebookService.js'
 import { loadGradebook, assessments as gbAssessments, gradeMap, activeGradeFilter } from '../composables/useGradebook.js'
+import { getSectionColor } from '../utils/gradeColors.js'
 
 import { 
   Chart as ChartJS, 
@@ -935,30 +937,6 @@ const washroomChartOptions = {
   background: var(--primary);
   color: #fff;
   border-color: var(--primary);
-}
-
-.sbar-grade-pills .grade-pill:nth-child(2) {
-  background: rgba(99, 102, 241, 0.08);
-  border-color: rgba(99, 102, 241, 0.3);
-  color: #6366f1;
-}
-
-.sbar-grade-pills .grade-pill:nth-child(2).grade-pill--active {
-  background: #6366f1;
-  color: #fff;
-  border-color: #6366f1;
-}
-
-.sbar-grade-pills .grade-pill:nth-child(3) {
-  background: rgba(14, 165, 233, 0.08);
-  border-color: rgba(14, 165, 233, 0.3);
-  color: #0ea5e9;
-}
-
-.sbar-grade-pills .grade-pill:nth-child(3).grade-pill--active {
-  background: #0ea5e9;
-  color: #fff;
-  border-color: #0ea5e9;
 }
 
 .reports__period-row {

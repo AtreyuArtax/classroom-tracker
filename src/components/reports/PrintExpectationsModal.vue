@@ -131,7 +131,8 @@ const props = defineProps({
   reportClass: { type: Object, default: null },
   assessments: { type: Array, default: () => [] },
   classGrades: { type: Object, default: () => ({}) },
-  teacherName: { type: String, default: '' }
+  teacherName: { type: String, default: '' },
+  events: { type: Array, default: () => [] }
 })
 
 defineEmits(['close'])
@@ -168,6 +169,24 @@ const unitsData = computed(() => {
       }
     })
   })
+
+  // Include qualitative radial check-in events
+  if (Array.isArray(props.events) && props.events.length > 0) {
+    props.events.forEach(evt => {
+      if (!evt.expectationId || !evt.acOutcome) return
+      const expId = String(evt.expectationId)
+      let pct = null
+      if (evt.acOutcome === 'demonstrates_understanding') pct = 90
+      else if (evt.acOutcome === 'inconclusive') pct = 65
+      else if (evt.acOutcome === 'gap_confirmed') pct = 55
+      else if (evt.acOutcome === 'remediation_required') pct = 35
+
+      if (pct !== null) {
+        if (!expScores[expId]) expScores[expId] = []
+        expScores[expId].push(pct)
+      }
+    })
+  }
 
   return props.reportClass.gradebookUnits
     .filter(u => u.expectations && u.expectations.length > 0)

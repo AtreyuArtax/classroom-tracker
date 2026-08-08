@@ -178,7 +178,8 @@ const props = defineProps({
   activeClass: { type: Object, default: null },
   assessments: { type: Array, default: () => [] },
   classGrades: { type: Object, default: () => ({}) },
-  activeGradeFilter: { type: String, default: 'all' }
+  activeGradeFilter: { type: String, default: 'all' },
+  events: { type: Array, default: () => [] }
 })
 
 const effectiveClass = computed(() => {
@@ -274,7 +275,7 @@ const unitsWithExpectations = computed(() => {
 
   if (isSBAR.value) {
     const algo = effectiveClass.value?.sbarAlgorithm || 'decaying_average'
-    const sbarMasteryMap = calculateSBARExpectationMastery(effectiveClass.value, props.assessments, gradeMap.value, algo)
+    const sbarMasteryMap = calculateSBARExpectationMastery(effectiveClass.value, props.assessments, gradeMap.value, algo, props.events)
     
     Object.values(sbarMasteryMap).forEach(studentExpMap => {
       if (!studentExpMap) return

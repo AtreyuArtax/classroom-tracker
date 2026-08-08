@@ -38,11 +38,21 @@
 
     <div class="dossier-header__right">
       <div class="dossier-header__metrics">
-        <div class="dossier-header__metric">
+        <div 
+          class="dossier-header__metric"
+          :class="{ 'dossier-header__metric--clickable': isSBAR }"
+          @click="isSBAR && toggleShowPct()"
+          :title="isSBAR ? `Click to toggle calculated percentage mark (${formattedGrade} for Grade 7-12 report cards)` : ''"
+        >
           <span class="dossier-header__metric-label">{{ isSBAR ? 'Overall Mastery' : 'Grade' }}</span>
           <span class="dossier-header__metric-value" :style="{ color: isSBAR ? sbarBadge.color : gradeColor }">
             <template v-if="isSBAR">
-              {{ sbarBadge.level }}
+              <template v-if="showPctInHeader && overallGrade !== null">
+                {{ sbarBadge.level }} <span class="dossier-header__pct-sub">({{ formattedGrade }})</span>
+              </template>
+              <template v-else>
+                {{ sbarBadge.level }}
+              </template>
             </template>
             <template v-else>
               {{ formattedGrade }}
@@ -87,7 +97,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { ref, computed } from 'vue'
 import { UserCheck, UserMinus, Clock, Toilet, X, HelpCircle, CalendarX, GraduationCap } from 'lucide-vue-next'
 import { activeClassRecord } from '../../composables/useGradebook.js'
 import { getSBARLevelBadge } from '../../db/gradebook/gradeCalcSBAR.js'
@@ -103,6 +113,11 @@ const props = defineProps({
 })
 
 const isSBAR = computed(() => activeClassRecord.value?.gradingFramework === 'sbar')
+
+const showPctInHeader = ref(false)
+function toggleShowPct() {
+  showPctInHeader.value = !showPctInHeader.value
+}
 
 const initials = computed(() => {
   return `${props.student.firstName?.[0] || ''}${props.student.lastName?.[0] || ''}`.toUpperCase()
@@ -348,6 +363,22 @@ const statusIcon = computed(() => {
   letter-spacing: 0.02em;
   margin-top:   2px;
   line-height:  1;
+}
+
+.dossier-header__metric--clickable {
+  cursor: pointer;
+  user-select: none;
+  transition: opacity 0.15s ease;
+}
+
+.dossier-header__metric--clickable:hover {
+  opacity: 0.85;
+}
+
+.dossier-header__pct-sub {
+  font-size: 0.85em;
+  font-weight: 500;
+  opacity: 0.9;
 }
 
 .dossier-header__divider {

@@ -88,11 +88,28 @@
                 <input type="checkbox" v-model="group.selected" class="setup__checkbox" />
                 <div class="setup__bulk-info">
                   <strong>{{ group.name }}</strong>
-                  <div style="display: flex; gap: 4px; align-items: center;">
+                  <div style="display: flex; gap: 4px; align-items: center; flex-wrap: wrap;">
                     <span class="setup__chip">{{ group.year }} · Sem {{ group.semester }} · P{{ group.periodNumber }}</span>
                     <span v-if="group.courseCode || group.isSplitClass" class="setup__chip setup__chip--blue">{{ group.isSplitClass && group.courseSections ? group.courseSections.join('/') : group.courseCode }}</span>
                     <span v-if="isExistingClass(group)" class="setup__badge setup__badge--update">Update Existing</span>
                     <span v-else class="setup__badge setup__badge--new">New Class</span>
+                  </div>
+
+                  <!-- Editable Section Display Tags -->
+                  <div v-if="group.sectionMappings && Object.keys(group.sectionMappings).length > 0" class="setup__section-rename-block">
+                    <span class="setup__section-rename-label">Customize Section Badges (Edit tags before importing):</span>
+                    <div class="setup__section-rename-list">
+                      <div v-for="(customTag, rawCode) in group.sectionMappings" :key="rawCode" class="setup__section-rename-item">
+                        <span class="setup__raw-badge">{{ rawCode }}</span>
+                        <span class="setup__rename-arrow">→</span>
+                        <input 
+                          v-model="group.sectionMappings[rawCode]" 
+                          class="setup__section-rename-input"
+                          placeholder="Tag e.g. 2D"
+                          @input="onSectionMappingChanged(group)"
+                        />
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -243,6 +260,8 @@ function onFileSelected(evt) {
         const gNum = parseInt(rawGrade, 10)
         const parsedG = rawGrade ? (!isNaN(gNum) ? `Grade ${gNum}` : (rawGrade.toLowerCase().startsWith('grade') ? rawGrade : `Grade ${rawGrade}`)) : ''
 
+        const initialCourseCode = (courseCode || '').trim()
+
         return { 
           studentId: studentId.trim(), 
           firstName: firstName.trim(), 
@@ -257,7 +276,8 @@ function onFileSelected(evt) {
           semester,
           periodNumber,
           year,
-          courseCode
+          courseCode: initialCourseCode,
+          _rawCourseCode: initialCourseCode
         }
       })
 
@@ -279,14 +299,20 @@ function onFileSelected(evt) {
             periodNumber: isNaN(Number(row.periodNumber)) ? 1 : Number(row.periodNumber),
             courseCode: row.courseCode,
             students: [],
-            selected: true
+            selected: true,
+            sectionMappings: reactive({})
           }
         }
         groups[key].students.push(row)
       }
 
       for (const k in groups) {
-        const uniqueCourses = [...new Set(groups[k].students.map(r => r.courseCode).filter(Boolean))]
+        const uniqueCourses = [...new Set(groups[k].students.map(r => r._rawCourseCode).filter(Boolean))]
+        if (uniqueCourses.length > 0) {
+          uniqueCourses.forEach(c => {
+            groups[k].sectionMappings[c] = c
+          })
+        }
         if (uniqueCourses.length > 1) {
           groups[k].isSplitClass = true
           groups[k].courseSections = uniqueCourses
@@ -313,22 +339,7 @@ function onFileSelected(evt) {
         newPeriodsDetected.value = []
       }
 
-      const groupKeys = Object.keys(groups)
-      if (groupKeys.length > 1) {
-        bulkImportGroups.value = groups
-      } else {
-        if (!activeClass.value) {
-          await alert('This CSV contains only one class group. Please select or create a class first, then re-import. Alternatively, make sure your CSV contains a "Period" or "Semester" column so the bulk importer can detect multiple classes.')
-          return
-        }
-        const result = await importRoster(rows)
-        importResult.value = result
-
-        if (result.crossClassConflicts.length > 0) {
-          _pendingConflicts = result.crossClassConflicts
-          crossClassConflicts.value = result.crossClassConflicts
-        }
-      }
+      bulkImportGroups.value = groups
     },
     error: (err) => {
       importResult.value = { error: err.message, inserted: 0, updated: 0, skipped: [], crossClassConflicts: [] }
@@ -392,6 +403,22 @@ function selectSemesterBulk(sem) {
     if (bulkImportGroups.value[k].semester === sem) {
       bulkImportGroups.value[k].selected = target
     }
+  }
+}
+
+function onSectionMappingChanged(group) {
+  if (!group || !group.sectionMappings) return
+  for (const s of group.students) {
+    const rawKey = s._rawCourseCode
+    if (rawKey && group.sectionMappings[rawKey] !== undefined) {
+      const custom = group.sectionMappings[rawKey].trim()
+      s.courseCode = custom || rawKey
+    }
+  }
+  const customSections = Object.values(group.sectionMappings).map(tag => tag.trim()).filter(Boolean)
+  if (customSections.length > 0) {
+    group.courseSections = [...new Set(customSections)]
+    group.courseCode = group.courseSections.join('/')
   }
 }
 
@@ -775,6 +802,62 @@ function normalizeSemester(raw) {
 .setup__badge--update {
   background: rgba(245, 158, 11, 0.12);
   color: #f59e0b;
+}
+
+.setup__section-rename-block {
+  margin-top: 8px;
+  padding: 6px 10px;
+  background: var(--bg-secondary, rgba(255, 255, 255, 0.03));
+  border: 1px dashed var(--border, rgba(255, 255, 255, 0.1));
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.setup__section-rename-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.setup__section-rename-list {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.setup__section-rename-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+}
+
+.setup__raw-badge {
+  font-family: monospace;
+  font-size: 0.72rem;
+  padding: 1px 5px;
+  background: rgba(148, 163, 184, 0.12);
+  color: var(--text-secondary);
+  border-radius: 4px;
+}
+
+.setup__rename-arrow {
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+}
+
+.setup__section-rename-input {
+  width: 76px;
+  padding: 2px 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: var(--surface);
+  color: var(--primary, #2563eb);
+  border: 1px solid var(--border);
+  border-radius: 4px;
 }
 
 .setup__advisory {

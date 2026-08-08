@@ -142,7 +142,7 @@ export function calculateMode(scores) {
  * @param {string} [algorithm='decaying_average']
  * @returns {Object} { [studentId]: { [expectationCode]: { score, badge, trend, isProvisional, evaluations } } }
  */
-export function calculateSBARExpectationMastery(classRecord, assessments, gradeMap, algorithm = 'decaying_average') {
+export function calculateSBARExpectationMastery(classRecord, assessments, gradeMap, algorithm = 'decaying_average', events = []) {
   if (!classRecord?.students || !assessments || !gradeMap) return {}
 
   const masteryMap = {}
@@ -172,10 +172,42 @@ export function calculateSBARExpectationMastery(classRecord, assessments, gradeM
     })
   })
 
+  // Map qualitative radial events linked to specific expectations
+  const radialEvaluations = {}
+  if (Array.isArray(events) && events.length > 0) {
+    events.forEach(evt => {
+      if (!evt.expectationId || !evt.acOutcome) return
+      const codeStr = String(evt.expectationId).toLowerCase()
+      if (validExpSet && !validExpSet.has(codeStr)) return
+
+      let percentage = null
+      if (evt.acOutcome === 'demonstrates_understanding') percentage = 90
+      else if (evt.acOutcome === 'inconclusive') percentage = 65
+      else if (evt.acOutcome === 'gap_confirmed') percentage = 55
+      else if (evt.acOutcome === 'remediation_required') percentage = 35
+
+      if (percentage !== null) {
+        if (!radialEvaluations[evt.expectationId]) radialEvaluations[evt.expectationId] = []
+        radialEvaluations[evt.expectationId].push({
+          studentId: String(evt.studentId),
+          eventId: evt.eventId,
+          name: `Radial Check-in (${evt.acType === 'observation' ? 'Observation' : 'Conversation'})`,
+          date: evt.timestamp,
+          score: percentage,
+          type: 'formative',
+          isRadial: true,
+          badge: getSBARLevelBadge(percentage)
+        })
+      }
+    })
+  }
+
+  const allExpCodes = new Set([...Object.keys(expectationEvaluations), ...Object.keys(radialEvaluations)])
+
   // Calculate mastery per expectation for each student
   Object.keys(masteryMap).forEach(studentId => {
-    Object.keys(expectationEvaluations).forEach(expCode => {
-      const astList = [...expectationEvaluations[expCode]].sort((a, b) => new Date(a.date) - new Date(b.date))
+    allExpCodes.forEach(expCode => {
+      const astList = expectationEvaluations[expCode] ? [...expectationEvaluations[expCode]] : []
       const evaluations = []
 
       astList.forEach(ast => {
@@ -211,10 +243,36 @@ export function calculateSBARExpectationMastery(classRecord, assessments, gradeM
             date: ast.date,
             score: percentage,
             type,
+            isRadial: false,
             badge: getSBARLevelBadge(percentage)
           })
         }
       })
+
+      // Merge radial evaluations for this student & expectation
+      const studentRadials = radialEvaluations[expCode] 
+        ? radialEvaluations[expCode].filter(r => String(r.studentId) === String(studentId))
+        : []
+
+      studentRadials.forEach(rEvt => {
+        const dateDay = rEvt.date ? rEvt.date.split('T')[0] : null
+        // Same-day tie-breaker: formal assessment on the exact same date takes precedence
+        const hasFormalSameDay = evaluations.some(e => !e.isRadial && e.date && e.date.split('T')[0] === dateDay)
+        if (!hasFormalSameDay) {
+          evaluations.push({
+            assessmentId: `radial-${rEvt.eventId}`,
+            name: rEvt.name,
+            date: rEvt.date,
+            score: rEvt.score,
+            type: 'formative',
+            isRadial: true,
+            badge: rEvt.badge
+          })
+        }
+      })
+
+      // Chronological sort
+      evaluations.sort((a, b) => new Date(a.date) - new Date(b.date))
 
       if (evaluations.length > 0) {
         // Formative vs Summative Rule:
@@ -266,10 +324,12 @@ export function calculateSBARExpectationMastery(classRecord, assessments, gradeM
  * Calculates the overall course SBAR mastery score (percentage 0..100) for a student
  * by taking the average across all evaluated curriculum expectations.
  */
-export function calculateSBARStudentOverallMastery(studentId, classRecord, assessments, gradeMap, algorithm = 'decaying_average') {
+export function calculateSBARStudentOverallMastery(studentId, classRecord, assessments, gradeMap, algorithm = 'decaying_average', events = []) {
   if (!studentId || !classRecord || !assessments || !gradeMap) return null
   const activeAlgorithm = algorithm || classRecord.sbarAlgorithm || 'decaying_average'
-  const masteryMap = calculateSBARExpectationMastery(classRecord, assessments, gradeMap, activeAlgorithm)
+  const shouldIncludeRadial = classRecord.includeRadialInSbar !== false // default true for SBAR
+  const eventsToPass = shouldIncludeRadial ? events : []
+  const masteryMap = calculateSBARExpectationMastery(classRecord, assessments, gradeMap, activeAlgorithm, eventsToPass)
   const studentExpMap = masteryMap[studentId] || {}
   const scores = Object.values(studentExpMap).map(e => e.score).filter(s => s != null && !isNaN(s))
   if (scores.length === 0) return null

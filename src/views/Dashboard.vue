@@ -3,7 +3,22 @@
 
     <!-- ── Header ──────────────────────────────────────────────────── -->
     <header class="dashboard__header">
-      <ClassSwitcher @navigate="emit('navigate', $event)" />
+      <div class="dashboard__header-left">
+        <ClassSwitcher @navigate="emit('navigate', $event)" />
+
+        <!-- Sub-Cohort / Grade Filter Pills -->
+        <div v-if="activeClass && availableSubCohorts.length > 1" class="dashboard__subcohort-pills">
+          <button
+            v-for="opt in availableSubCohorts"
+            :key="opt"
+            class="subcohort-pill"
+            :class="{ 'subcohort-pill--active': activeSubCohortFilter === opt }"
+            @click="activeSubCohortFilter = opt"
+          >
+            {{ opt === 'all' ? (activeClass?.classType === 'elementary' ? 'All Grades' : 'All Sections') : opt }}
+          </button>
+        </div>
+      </div>
 
       <div class="dashboard__header-right">
         <!-- Students-out badge -->
@@ -187,7 +202,8 @@ import StudentProfileModal from '../components/StudentProfileModal.vue'
 import { Toilet, Users, GripVertical, Calendar, CalendarCheck, Scan } from 'lucide-vue-next'
 import { useClassroom }    from '../composables/useClassroom.js'
 import { useRadial }       from '../composables/useRadial.js'
-import { loadGradebook }   from '../composables/useGradebook.js'
+import { loadGradebook, activeSubCohortFilter, availableSubCohorts } from '../composables/useGradebook.js'
+import { getSectionColor } from '../utils/gradeColors.js'
 import GettingStartedGuide from '../components/setup/GettingStartedGuide.vue'
 
 const emit = defineEmits(['navigate'])
@@ -354,6 +370,44 @@ watch(profileStudent, (student) => {
   box-shadow:      var(--shadow-sm);
   gap:             12px;
   flex-shrink:     0;
+}
+
+.dashboard__header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.dashboard__subcohort-pills {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--bg-secondary);
+  padding: 3px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+}
+
+.subcohort-pill {
+  padding: 5px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 0.8rem;
+  font-weight: 600;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.subcohort-pill:hover {
+  color: var(--text);
+}
+
+.subcohort-pill--active {
+  background: var(--surface);
+  color: var(--primary);
+  box-shadow: var(--shadow-sm);
 }
 
 .dashboard__header-right {

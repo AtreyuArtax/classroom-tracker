@@ -100,6 +100,12 @@
                     {{ getCategoryName(a.categoryId) }}
                   </span>
                   <span v-else-if="a.unitId" class="grades__assessment-unit">{{ getUnitName(a.unitId) }}</span>
+                  <span 
+                    v-if="(a.targetCourseCode || a.gradeLevel) && (a.targetCourseCode !== 'ALL' && a.gradeLevel !== 'ALL') && availableSubCohorts.length > 1 && activeSubCohortFilter === 'all'" 
+                    class="grades__assessment-sec-badge"
+                  >
+                    {{ a.targetCourseCode || (a.gradeLevel ? a.gradeLevel.replace('Grade ', 'Gr. ') : '') }}
+                  </span>
                 </div>
               </div>
               <button class="grades__header-menu-btn" @click.stop="onHeaderMenu($event, 'assessment', a)">
@@ -149,25 +155,13 @@
                   :count="studentAbsenceTotals[student.studentId].testDays" 
                 />
               </div>
-              <div class="grades__student-firstname">
-                {{ student.firstName }}
+              <div class="grades__student-firstname-row">
+                <span class="grades__student-firstname">{{ student.firstName }}</span>
                 <span 
-                  v-if="activeClassRecord?.classType === 'elementary' && student.gradeLevel && availableGradeFilters.length > 1" 
+                  v-if="(student.gradeLevel || student.courseCode) && availableSubCohorts.length > 1" 
                   class="sbar-student-grade-tag"
-                  :class="{
-                    'sbar-student-grade-tag--gr7': student.gradeLevel === 'Grade 7',
-                    'sbar-student-grade-tag--gr8': student.gradeLevel === 'Grade 8'
-                  }"
-                  style="margin-left: 6px;"
                 >
-                  {{ student.gradeLevel.replace('Grade ', 'Gr ') }}
-                </span>
-                <span 
-                  v-if="student.courseCode && availableCourseFilters.length > 1" 
-                  class="sbar-student-grade-tag"
-                  style="margin-left: 6px; background: rgba(59, 130, 246, 0.12); color: #3b82f6; border-color: rgba(59, 130, 246, 0.3);"
-                >
-                  {{ student.courseCode }}
+                  {{ student.gradeLevel ? student.gradeLevel.replace('Grade ', 'Gr. ') : student.courseCode }}
                 </span>
               </div>
               <div class="grades__sparkline-mini" v-if="studentTrends[student.studentId]?.length > 1 && !props.isPrivacyMode">
@@ -398,7 +392,9 @@ import {
   getGradeColorMuted as getGradeColor,
   getSDColor,
   getCoverageColor,
-  formatGrade
+  formatGrade,
+  UNIT_COLORS,
+  getSectionColor
 } from '../utils/gradeColors.js'
 import { useMessage } from '../composables/useMessage.js'
 import { getAssessmentPercentage } from '../db/gradebookService.js'
@@ -552,16 +548,6 @@ const overallClassAvg = computed(() => {
 
 const selectedUnitId = ref(null)
 const selectedCategoryId = ref(null)
-
-const UNIT_COLORS = [
-  '#0284c7', // sky blue
-  '#059669', // emerald
-  '#7c3aed', // violet
-  '#d97706', // amber
-  '#db2777', // pink
-  '#0891b2', // cyan
-  '#4f46e5'  // indigo
-]
 
 const CATEGORY_COLORS = [
   '#3b82f6', // blue
@@ -1290,6 +1276,41 @@ function copyAssessmentGrades(assessment) {
 
 .grades__attempt-item--primary {
   background: var(--primary-light, rgba(79, 70, 229, 0.05));
+}
+
+.grades__student-firstname-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  width: 100%;
+}
+
+.grades__student-firstname {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.2;
+  min-width: 0;
+  flex: 1;
+}
+
+.sbar-student-grade-tag,
+.grades__assessment-sec-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: #2563eb;
+  background: rgba(59, 130, 246, 0.08);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  padding: 1px 6px;
+  border-radius: 4px;
+  line-height: 1.2;
+  flex-shrink: 0;
+  margin-left: auto;
 }
 
 .grades__attempt-item:last-child {

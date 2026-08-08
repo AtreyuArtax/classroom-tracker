@@ -43,6 +43,7 @@ import {
   handleRfidAttendanceScan,
   markAllPresentToday
 } from './useAttendanceTracker.js'
+import { activeSubCohortFilter } from './useGradebook.js'
 
 const { push: pushUndo, clear: clearUndo } = useUndo()
 let midnightTimer = null
@@ -1530,6 +1531,9 @@ async function _activateClass(cls) {
     activeClass.value = cls
     // Deep-copy students map so Vue can track nested mutations
     students.value = JSON.parse(JSON.stringify(cls.students ?? {}))
+    
+    // Reset sub-cohort filter on class switch so new class isn't accidentally filtered by previous class's sub-cohort
+    activeSubCohortFilter.value = 'all'
 
     thresholds.value = await settingsService.getThresholds()
     await computeWeeklyStats(cls.classId, Object.keys(cls.students ?? {}))

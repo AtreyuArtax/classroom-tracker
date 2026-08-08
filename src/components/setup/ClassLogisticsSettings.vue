@@ -114,6 +114,31 @@
             />
           </label>
         </div>
+
+        <!-- Sub-Cohort / Section Tag Editor -->
+        <div v-if="availableClassSections.length > 0" class="setup__section-editor-container" style="margin-top: 16px; padding-top: 12px; border-top: 1px dashed var(--border);">
+          <label class="setup__label" style="margin-bottom: 6px;">
+            Section / Sub-Cohort Badges
+            <span class="setup__hint" style="display: block; font-weight: 400; margin-top: 2px;">
+              Rename section tags (e.g. change "SNC2D1" to "2D") to shorten badges across all gradebook views.
+            </span>
+          </label>
+          <div style="display: flex; gap: 16px; flex-wrap: wrap; align-items: center;">
+            <div v-for="sec in availableClassSections" :key="sec" style="display: flex; align-items: center; gap: 6px;">
+              <span class="sbar-student-grade-tag">{{ sec }}</span>
+              <span style="font-size: 0.75rem; color: var(--text-secondary);">→</span>
+              <input 
+                type="text"
+                v-model="sectionTagInputs[sec]"
+                class="setup__input"
+                style="width: 90px; padding: 2px 6px; font-size: 0.78rem; font-weight: 600;"
+                placeholder="New tag"
+                @blur="saveSectionTagRename(sec)"
+                @keydown.enter.prevent="saveSectionTagRename(sec)"
+              />
+            </div>
+          </div>
+        </div>
       </form>
     </div>
 
@@ -164,6 +189,18 @@
             <option value="fine">Granular Levels (L1- to L4+)</option>
             <option value="simple">Simple Levels (L1 to L4)</option>
             <option value="numeric">Exact % / Math Precision Mode</option>
+          </select>
+        </label>
+
+        <label v-if="activeClass.gradingFramework === 'sbar'" class="setup__label">
+          Include Radial Desk Check-ins in Overall SBAR Grades
+          <select
+            :value="activeClass.includeRadialInSbar !== false ? 'true' : 'false'"
+            class="setup__input"
+            @change="e => updateActiveClass({ includeRadialInSbar: e.target.value === 'true' })"
+          >
+            <option value="true">Yes — Include Radial Check-ins in Overall SBAR Level</option>
+            <option value="false">No — Formal Assessment Grades Only</option>
           </select>
         </label>
       </div>
@@ -514,6 +551,65 @@ const { confirm, alert } = useMessage()
 
 const detectedGradeLevel = computed(() => getEffectiveGradeLevel(activeClass.value))
 
+const availableClassSections = computed(() => {
+  if (!activeClass.value) return []
+  if (activeClass.value.courseSections && activeClass.value.courseSections.length > 0) {
+    return activeClass.value.courseSections
+  }
+  if (activeClass.value.students) {
+    const set = new Set()
+    for (const s of Object.values(activeClass.value.students)) {
+      if (s.courseCode) set.add(s.courseCode)
+    }
+    return Array.from(set).filter(Boolean)
+  }
+  return []
+})
+
+const sectionTagInputs = reactive({})
+
+watch(availableClassSections, (secs) => {
+  if (!secs) return
+  secs.forEach(s => {
+    if (sectionTagInputs[s] === undefined) {
+      sectionTagInputs[s] = s
+    }
+  })
+}, { immediate: true })
+
+async function saveSectionTagRename(oldTag) {
+  if (!activeClass.value || !oldTag) return
+  const newTag = sectionTagInputs[oldTag]
+  if (!newTag || !newTag.trim() || newTag.trim() === oldTag) return
+  const cleanNew = newTag.trim()
+
+  const updatedStudents = { ...activeClass.value.students }
+  for (const sId in updatedStudents) {
+    if (updatedStudents[sId].courseCode === oldTag) {
+      updatedStudents[sId] = {
+        ...updatedStudents[sId],
+        courseCode: cleanNew
+      }
+    }
+  }
+
+  const currentSections = activeClass.value.courseSections && activeClass.value.courseSections.length > 0
+    ? activeClass.value.courseSections
+    : availableClassSections.value
+
+  const updatedSections = currentSections.map(sec => sec === oldTag ? cleanNew : sec)
+  const uniqueSections = [...new Set(updatedSections.filter(Boolean))]
+
+  delete sectionTagInputs[oldTag]
+  sectionTagInputs[cleanNew] = cleanNew
+
+  await updateActiveClass({
+    students: updatedStudents,
+    courseSections: uniqueSections,
+    courseCode: uniqueSections.join('/')
+  })
+}
+
 const isElementaryImporterOpen = ref(false)
 
 async function handleElementaryImport({ students: importedStudents, subjects: importedSubjects }) {
@@ -790,6 +886,7 @@ async function addSingleStudent() {
     firstName: newStudent.firstName.trim(),
     lastName: newStudent.lastName.trim(),
     gradeLevel: newStudent.gradeLevel || '',
+    courseCode: newStudent.courseCode ? newStudent.courseCode.trim() : '',
     rfidTag: newStudent.rfidTag.trim(),
     parentContacts: []
   }

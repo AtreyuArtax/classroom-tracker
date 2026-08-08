@@ -250,7 +250,7 @@ export async function importRoster(classId, studentsArray) {
             cls.students[studentId].firstName = firstName
             cls.students[studentId].lastName = lastName
             if (parsedG) cls.students[studentId].gradeLevel = parsedG
-            if (courseCode) cls.students[studentId].courseCode = courseCode
+            if (courseCode !== undefined) cls.students[studentId].courseCode = courseCode
 
             if (parentContacts && parentContacts.length > 0) {
                 // Replace parent contacts if new ones are provided in CSV

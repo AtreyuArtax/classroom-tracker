@@ -98,9 +98,10 @@ export function formatQualitativeEvidenceForReport(events, classRecord) {
       const dateStr = formatLocalDisplay(e.ts || e.timestamp, { month: 'short', day: 'numeric' })
       const type = e.acType === 'observation' ? 'Obs' : 'Conv'
       let outcomeLabel = ''
-      if (e.acOutcome === 'demonstrates_understanding') outcomeLabel = 'Mastered'
-      else if (e.acOutcome === 'gap_confirmed') outcomeLabel = 'Needs Support'
-      else if (e.acOutcome === 'inconclusive') outcomeLabel = 'Developing'
+        if (e.acOutcome === 'demonstrates_understanding') outcomeLabel = 'Mastered'
+        else if (e.acOutcome === 'gap_confirmed') outcomeLabel = 'Needs Support'
+        else if (e.acOutcome === 'inconclusive') outcomeLabel = 'Developing'
+        else if (e.acOutcome === 'remediation_required') outcomeLabel = 'Insufficient (R)'
       const outcome = outcomeLabel ? ` [${outcomeLabel}]` : ''
       const noteText = e.note || e.title || ''
       judgmentLines.push(`  - ${dateStr} (${type})${outcome}: ${noteText}`)

@@ -414,7 +414,9 @@ function getSparklinePath(data, width, height) {
 .student-sidebar__roster-subline {
   display: flex;
   align-items: center;
-  gap: 6px;
+  justify-content: space-between;
+  gap: 4px;
+  width: 100%;
   min-width: 0;
 }
 
@@ -425,6 +427,8 @@ function getSparklinePath(data, width, height) {
   overflow: hidden;
   text-overflow: ellipsis;
   line-height: 1.2;
+  min-width: 0;
+  flex: 1;
 }
 
 .student-sidebar__course-tag {
@@ -434,11 +438,12 @@ function getSparklinePath(data, width, height) {
   border-radius: 4px;
   font-size: 0.68rem;
   font-weight: 600;
-  background: rgba(59, 130, 246, 0.12);
-  color: #3b82f6;
+  background: rgba(59, 130, 246, 0.08);
+  color: #2563eb;
   border: 1px solid rgba(59, 130, 246, 0.3);
   line-height: 1.2;
   flex-shrink: 0;
+  margin-left: auto;
 }
 
 .student-sidebar__roster-grade {

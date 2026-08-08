@@ -62,3 +62,28 @@ export function getHeatTextColor(percent) {
   if (percent >= 60) return '#b45309' // Dark Amber
   return '#b91c1c'               // Dark Red
 }
+
+export const UNIT_COLORS = [
+  '#2563eb', // blue
+  '#10b981', // emerald
+  '#8b5cf6', // purple
+  '#f59e0b', // amber
+  '#ec4899', // pink
+  '#06b6d4', // cyan
+  '#6366f1'  // indigo
+]
+
+export const SECTION_BADGE_STYLE = {
+  bg: 'rgba(59, 130, 246, 0.08)',
+  border: 'rgba(59, 130, 246, 0.25)',
+  text: '#2563eb',
+  badgeBg: 'rgba(59, 130, 246, 0.12)',
+  dot: '#2563eb'
+}
+
+export const SECTION_PALETTES = [SECTION_BADGE_STYLE]
+
+export function getSectionColor() {
+  return SECTION_BADGE_STYLE
+}
+
