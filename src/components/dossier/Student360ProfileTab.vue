@@ -12,7 +12,6 @@
     </div>
 
     <div class="profile-section">
-
       <h3 class="profile-section__title">Demographics</h3>
       <div class="profile-grid">
         <div class="profile-item">
@@ -41,18 +40,105 @@
     </div>
 
     <div class="profile-section">
-      <h3 class="profile-section__title">Parent / Guardian Contacts</h3>
-      <div v-if="!student.parentContacts?.length" class="text-muted">No contacts on file.</div>
+      <div class="profile-section__header-row">
+        <h3 class="profile-section__title">Parent / Guardian Contacts</h3>
+        <button class="btn-edit-contacts" @click="openEditModal">
+          <Edit2 :size="13" /> Edit Contacts
+        </button>
+      </div>
+
+      <div v-if="!normalizedContacts.length" class="text-muted">No contacts on file.</div>
       <div v-else class="contacts-list">
-        <div v-for="(c, i) in student.parentContacts" :key="i" class="contact-card">
-          <div class="contact-card__name">{{ c.name }}</div>
+        <div v-for="(c, i) in normalizedContacts" :key="i" class="contact-card">
+          <div class="contact-card__name">{{ c.name || `Contact ${i + 1}` }}</div>
           <div class="contact-card__meta">
-            <a :href="'mailto:' + c.email" v-if="c.email">{{ c.email }}</a>
-            <span v-if="c.phone">{{ c.phone }}</span>
+            <a :href="'mailto:' + c.email" v-if="c.email" class="contact-email">
+              <Mail :size="12" /> {{ c.email }}
+            </a>
+            <div v-if="c.phones && c.phones.length" class="contact-phones">
+              <div v-for="(p, pi) in c.phones" :key="pi" class="contact-phone-item">
+                <span class="phone-type-badge">{{ p.type || 'Phone' }}</span>
+                <a :href="'tel:' + p.number" class="phone-number">{{ p.number }}</a>
+              </div>
+            </div>
+            <span v-else-if="c.phone" class="contact-phone-item">
+              <span class="phone-type-badge">Phone</span>
+              <a :href="'tel:' + c.phone" class="phone-number">{{ c.phone }}</a>
+            </span>
           </div>
         </div>
       </div>
     </div>
+
+    <!-- Edit Contacts Modal -->
+    <BaseModal
+      :show="showEditModal"
+      title="Edit Parent / Guardian Contacts"
+      maxWidth="620px"
+      :z-index="3000"
+      @close="showEditModal = false"
+    >
+      <div class="edit-contacts-modal">
+        <div v-if="!editingContacts.length" class="empty-edit-state">
+          <p>No contacts configured for this student yet.</p>
+        </div>
+
+        <div v-for="(contact, cIdx) in editingContacts" :key="cIdx" class="edit-contact-block">
+          <div class="edit-contact-header">
+            <span class="edit-contact-title">Contact #{{ cIdx + 1 }}</span>
+            <button class="btn-icon-danger" @click="removeContact(cIdx)" title="Remove contact">
+              <Trash2 :size="15" />
+            </button>
+          </div>
+
+          <div class="edit-form-grid">
+            <div class="form-group">
+              <label>Name</label>
+              <input type="text" v-model="contact.name" placeholder="Full Name (e.g. Jane Doe)" class="input-text" />
+            </div>
+
+            <div class="form-group">
+              <label>Email</label>
+              <input type="email" v-model="contact.email" placeholder="email@example.com" class="input-text" />
+            </div>
+          </div>
+
+          <div class="phones-section">
+            <div class="phones-section__header">
+              <label>Phone Numbers</label>
+              <button class="btn-add-sub" @click="addPhoneToContact(cIdx)">
+                <Plus :size="12" /> Add Phone
+              </button>
+            </div>
+
+            <div v-if="!contact.phones.length" class="text-muted text-small">No phone numbers added.</div>
+            <div v-for="(phone, pIdx) in contact.phones" :key="pIdx" class="phone-edit-row">
+              <select v-model="phone.type" class="select-phone-type">
+                <option value="Mobile">Mobile</option>
+                <option value="Home">Home</option>
+                <option value="Work">Work</option>
+                <option value="Other">Other</option>
+              </select>
+              <input type="tel" v-model="phone.number" placeholder="(555) 000-0000" class="input-text phone-input" />
+              <button class="btn-icon-danger-sub" @click="removePhoneFromContact(cIdx, pIdx)">
+                <X :size="14" />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-actions-row">
+          <button class="btn-secondary" @click="addNewContact">
+            <Plus :size="14" /> Add New Contact Card
+          </button>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn-ghost" @click="showEditModal = false">Cancel</button>
+          <button class="btn-primary" @click="saveContacts">Save Contacts</button>
+        </div>
+      </div>
+    </BaseModal>
 
     <div class="profile-section">
       <h3 class="profile-section__title">Student Support & Accommodations</h3>
@@ -103,7 +189,8 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue'
-import { ShieldCheck, ClipboardList, AlertTriangle } from 'lucide-vue-next'
+import { ShieldCheck, ClipboardList, AlertTriangle, Edit2, Plus, Trash2, X, Mail } from 'lucide-vue-next'
+import BaseModal from '../BaseModal.vue'
 
 import { formatLocalDisplay } from '../../utils/dates.js'
 import { useMessage } from '../../composables/useMessage.js'
@@ -122,7 +209,77 @@ const props = defineProps({
   formattedGrade: { type: String, default: 'N/A' }
 })
 
-const emit = defineEmits(['update-note', 'update-iep'])
+const emit = defineEmits(['update-note', 'update-iep', 'update-contacts'])
+
+const showEditModal = ref(false)
+const editingContacts = ref([])
+
+const normalizedContacts = computed(() => {
+  if (!props.student.parentContacts || !Array.isArray(props.student.parentContacts)) return []
+  return props.student.parentContacts.map(c => {
+    const phones = Array.isArray(c.phones) ? [...c.phones] : []
+    if (!phones.length && c.phone) {
+      phones.push({ type: 'Mobile', number: c.phone })
+    }
+    return {
+      name: c.name || '',
+      email: c.email || '',
+      phone: c.phone || (phones[0]?.number || ''),
+      phones
+    }
+  })
+})
+
+function openEditModal() {
+  editingContacts.value = JSON.parse(JSON.stringify(normalizedContacts.value))
+  showEditModal.value = true
+}
+
+function addNewContact() {
+  editingContacts.value.push({
+    name: '',
+    email: '',
+    phone: '',
+    phones: [{ type: 'Mobile', number: '' }]
+  })
+}
+
+function removeContact(idx) {
+  editingContacts.value.splice(idx, 1)
+}
+
+function addPhoneToContact(contactIdx) {
+  if (editingContacts.value[contactIdx]) {
+    if (!editingContacts.value[contactIdx].phones) {
+      editingContacts.value[contactIdx].phones = []
+    }
+    editingContacts.value[contactIdx].phones.push({ type: 'Mobile', number: '' })
+  }
+}
+
+function removePhoneFromContact(contactIdx, phoneIdx) {
+  if (editingContacts.value[contactIdx]?.phones) {
+    editingContacts.value[contactIdx].phones.splice(phoneIdx, 1)
+  }
+}
+
+function saveContacts() {
+  const cleaned = editingContacts.value.map(c => {
+    const validPhones = (c.phones || [])
+      .map(p => ({ type: p.type || 'Mobile', number: (p.number || '').trim() }))
+      .filter(p => p.number !== '')
+    
+    return {
+      name: (c.name || '').trim(),
+      email: (c.email || '').trim(),
+      phone: validPhones[0]?.number || (c.phone || '').trim(),
+      phones: validPhones
+    }
+  }).filter(c => c.name || c.email || c.phones.length > 0)
+
+  emit('update-contacts', cleaned)
+  showEditModal.value = false
+}
 
 function toggleIEP(val) {
   emit('update-iep', Boolean(val))
@@ -477,12 +634,307 @@ async function copyForReportCard(includeName = false) {
   color: #fca5a5;
 }
 
-.profile-alert-card__body {
-  margin: 0;
-  font-size: 0.88rem;
-  color: #f8fafc;
-  line-height: 1.45;
-  white-space: pre-wrap;
+.profile-section__header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.profile-section__header-row .profile-section__title {
+  margin-bottom: 0;
+}
+
+.btn-edit-contacts {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-edit-contacts:hover {
+  background: var(--surface-hover, rgba(255, 255, 255, 0.08));
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.contact-email {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--primary);
+  text-decoration: none;
+  margin-bottom: 4px;
+}
+
+.contact-email:hover {
+  text-decoration: underline;
+}
+
+.contact-phones {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 2px;
+}
+
+.contact-phone-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+}
+
+.phone-type-badge {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 2px 6px;
+  background: rgba(99, 102, 241, 0.15);
+  color: #818cf8;
+  border-radius: 4px;
+}
+
+.phone-number {
+  color: var(--text);
+  text-decoration: none;
+}
+
+.phone-number:hover {
+  text-decoration: underline;
+}
+
+/* Edit Contacts Modal Styling */
+.edit-contacts-modal {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.empty-edit-state {
+  text-align: center;
+  padding: 20px;
+  color: var(--text-secondary);
+}
+
+.edit-contact-block {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.edit-contact-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 8px;
+}
+
+.edit-contact-title {
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+}
+
+.btn-icon-danger {
+  background: transparent;
+  border: none;
+  color: #ef4444;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease;
+}
+
+.btn-icon-danger:hover {
+  background: rgba(239, 68, 68, 0.15);
+}
+
+.edit-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.form-group label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.input-text {
+  width: 100%;
+  padding: 7px 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-size: 0.85rem;
+}
+
+.input-text:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.phones-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.phones-section__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.phones-section__header label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.btn-add-sub {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--primary);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+.btn-add-sub:hover {
+  text-decoration: underline;
+}
+
+.phone-edit-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.select-phone-type {
+  width: 110px;
+  padding: 7px 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-size: 0.82rem;
+}
+
+.phone-input {
+  flex: 1;
+}
+
+.btn-icon-danger-sub {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-icon-danger-sub:hover {
+  color: #ef4444;
+}
+
+.text-small {
+  font-size: 0.78rem;
+}
+
+.modal-actions-row {
+  display: flex;
+  justify-content: center;
+  margin-top: 4px;
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--text);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-secondary:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 10px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.btn-ghost {
+  padding: 8px 16px;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-ghost:hover {
+  color: var(--text);
+}
+
+.btn-primary {
+  padding: 8px 18px;
+  background: var(--primary);
+  border: none;
+  border-radius: var(--radius-md);
+  color: white;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-primary:hover {
+  filter: brightness(1.1);
 }
 </style>
 

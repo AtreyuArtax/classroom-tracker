@@ -6,206 +6,214 @@
   "grade": "Grade 10",
   "strands": [
     {
-      "name": "Measurement and Trigonometry",
+      "name": "Strand: Measurement and Trigonometry",
       "overalls": [
         {
           "code": "MT1",
+          "title": "Solving Problems Involving Similar Triangles",
           "description": "use their knowledge of ratio and proportion to investigate similar triangles and solve problems related to similarity",
           "specifics": [
             {
               "code": "MT1.1",
-              "description": "verify, through investigation, properties of similar triangles."
+              "description": "verify, through investigation, properties of similar triangles"
             },
             {
               "code": "MT1.2",
-              "description": "determine the lengths of sides of similar triangles, using proportional reasoning."
+              "description": "determine the lengths of sides of similar triangles, using proportional reasoning"
             },
             {
               "code": "MT1.3",
-              "description": "solve problems involving similar triangles in realistic situations."
+              "description": "solve problems involving similar triangles in realistic situations"
             }
           ]
         },
         {
           "code": "MT2",
+          "title": "Solving Problems Involving the Trigonometry of Right Triangles",
           "description": "solve problems involving right triangles, using the primary trigonometric ratios and the Pythagorean theorem",
           "specifics": [
             {
               "code": "MT2.1",
-              "description": "determine, through investigation, the relationship between the ratio of two sides in a right triangle and the ratio of the two corresponding sides in a similar right triangle, and define the sine, cosine, and tangent ratios."
+              "description": "determine, through investigation, the relationship between the ratio of two sides in a right triangle and the ratio of the two corresponding sides in a similar right triangle, and define the sine, cosine, and tangent ratios"
             },
             {
               "code": "MT2.2",
-              "description": "determine the measures of the sides and angles in right triangles, using the primary trigonometric ratios and the Pythagorean theorem."
+              "description": "determine the measures of the sides and angles in right triangles, using the primary trigonometric ratios and the Pythagorean theorem"
             },
             {
               "code": "MT2.3",
-              "description": "solve problems involving the measures of sides and angles in right triangles in real-life applications, using the primary trigonometric ratios and the Pythagorean theorem."
+              "description": "solve problems involving the measures of sides and angles in right triangles in real-life applications, using the primary trigonometric ratios and the Pythagorean theorem"
             },
             {
               "code": "MT2.4",
-              "description": "describe, through participation in an activity, the application of trigonometry in an occupation."
+              "description": "describe, through participation in an activity, the application of trigonometry in an occupation"
             }
           ]
         },
         {
           "code": "MT3",
+          "title": "Solving Problems Involving Surface Area and Volume, Using the Imperial and Metric Systems of Measurement",
           "description": "solve problems involving the surface areas and volumes of three-dimensional figures, and use the imperial and metric systems of measurement",
           "specifics": [
             {
               "code": "MT3.1",
-              "description": "use the imperial system when solving measurement problems."
+              "description": "use the imperial system when solving measurement problems"
             },
             {
               "code": "MT3.2",
-              "description": "perform everyday conversions between the imperial system and the metric system and within these systems, as necessary to solve problems involving measurement."
+              "description": "perform everyday conversions between the imperial system and the metric system and within these systems, as necessary to solve problems involving measurement"
             },
             {
               "code": "MT3.3",
-              "description": "determine, through investigation, the relationship for calculating the surface area of a pyramid."
+              "description": "determine, through investigation, the relationship for calculating the surface area of a pyramid"
             },
             {
               "code": "MT3.4",
-              "description": "solve problems involving the surface areas of prisms, pyramids, and cylinders, and the volumes of prisms, pyramids, cylinders, cones, and spheres, including problems involving combinations of these figures, using the metric system or the imperial system, as appropriate."
+              "description": "solve problems involving the surface areas of prisms, pyramids, and cylinders, and the volumes of prisms, pyramids, cylinders, cones, and spheres, including problems involving combinations of these figures, using the metric system or the imperial system, as appropriate"
             }
           ]
         }
       ]
     },
     {
-      "name": "Modelling Linear Relations",
+      "name": "Strand: Modelling Linear Relations",
       "overalls": [
         {
-          "code": "LR1",
+          "code": "ML1",
+          "title": "Manipulating and Solving Algebraic Equations",
           "description": "manipulate and solve algebraic equations, as needed to solve problems",
           "specifics": [
             {
-              "code": "LR1.1",
-              "description": "solve first-degree equations involving one variable, including equations with fractional coefficients."
+              "code": "ML1.1",
+              "description": "solve first-degree equations involving one variable, including equations with fractional coefficients"
             },
             {
-              "code": "LR1.2",
-              "description": "determine the value of a variable in the first degree, using a formula."
+              "code": "ML1.2",
+              "description": "determine the value of a variable in the first degree, using a formula"
             },
             {
-              "code": "LR1.3",
-              "description": "express the equation of a line in the form y = mx + b, given the form Ax + By + C = 0."
+              "code": "ML1.3",
+              "description": "express the equation of a line in the form y = mx + b, given the form Ax + By + C = 0"
             }
           ]
         },
         {
-          "code": "LR2",
+          "code": "ML2",
+          "title": "Graphing and Writing Equations of Lines",
           "description": "graph a line and write the equation of a line from given information",
           "specifics": [
             {
-              "code": "LR2.1",
-              "description": "connect the rate of change of a linear relation to the slope of the line, and define the slope as the ratio m = rise/run."
+              "code": "ML2.1",
+              "description": "connect the rate of change of a linear relation to the slope of the line, and define the slope as the ratio m = rise/run"
             },
             {
-              "code": "LR2.2",
-              "description": "identify, through investigation, y = mx + b as a common form for the equation of a straight line, and identify the special cases x = a, y = b."
+              "code": "ML2.2",
+              "description": "identify, through investigation, y = mx + b as a common form for the equation of a straight line, and identify the special cases x = a, y = b"
             },
             {
-              "code": "LR2.3",
-              "description": "identify, through investigation with technology, the geometric significance of m and b in the equation y = mx + b."
+              "code": "ML2.3",
+              "description": "identify, through investigation with technology, the geometric significance of m and b in the equation y = mx + b"
             },
             {
-              "code": "LR2.4",
-              "description": "identify, through investigation, properties of the slopes of lines and line segments, using graphing technology to facilitate investigations, where appropriate."
+              "code": "ML2.4",
+              "description": "identify, through investigation, properties of the slopes of lines and line segments"
             },
             {
-              "code": "LR2.5",
-              "description": "graph lines by hand, using a variety of techniques."
+              "code": "ML2.5",
+              "description": "graph lines by hand, using a variety of techniques"
             },
             {
-              "code": "LR2.6",
-              "description": "determine the equation of a line, given its graph, the slope and y-intercept, the slope and a point on the line, or two points on the line."
+              "code": "ML2.6",
+              "description": "determine the equation of a line, given its graph, the slope and y-intercept, the slope and a point on the line, or two points on the line"
             }
           ]
         },
         {
-          "code": "LR3",
+          "code": "ML3",
+          "title": "Solving and Interpreting Systems of Linear Equations",
           "description": "solve systems of two linear equations, and solve related problems that arise from realistic situations",
           "specifics": [
             {
-              "code": "LR3.1",
-              "description": "determine graphically the point of intersection of two linear relations."
+              "code": "ML3.1",
+              "description": "determine graphically the point of intersection of two linear relations"
             },
             {
-              "code": "LR3.2",
-              "description": "solve systems of two linear equations involving two variables with integral coefficients, using the algebraic method of substitution or elimination."
+              "code": "ML3.2",
+              "description": "solve systems of two linear equations involving two variables with integral coefficients, using the algebraic method of substitution or elimination"
             },
             {
-              "code": "LR3.3",
-              "description": "solve problems that arise from realistic situations described in words or represented by given linear systems of two equations involving two variables, by choosing an appropriate algebraic or graphical method."
+              "code": "ML3.3",
+              "description": "solve problems that arise from realistic situations described in words or represented by given linear systems of two equations involving two variables, by choosing an appropriate algebraic or graphical method"
             }
           ]
         }
       ]
     },
     {
-      "name": "Quadratic Relations of the Form y = ax² + bx + c",
+      "name": "Strand: Quadratic Relations of the Form y = ax² + bx + c",
       "overalls": [
         {
           "code": "QR1",
+          "title": "Manipulating Quadratic Expressions",
           "description": "manipulate algebraic expressions, as needed to understand quadratic relations",
           "specifics": [
             {
               "code": "QR1.1",
-              "description": "expand and simplify second-degree polynomial expressions involving one variable that consist of the product of two binomials or the square of a binomial, using a variety of tools and strategies."
+              "description": "expand and simplify second-degree polynomial expressions involving one variable that consist of the product of two binomials or the square of a binomial"
             },
             {
               "code": "QR1.2",
-              "description": "factor binomials and trinomials involving one variable up to degree two, by determining a common factor using a variety of tools and strategies."
+              "description": "factor binomials and trinomials involving one variable up to degree two, by determining a common factor"
             },
             {
               "code": "QR1.3",
-              "description": "factor simple trinomials of the form x² + bx + c, using a variety of tools and strategies."
+              "description": "factor simple trinomials of the form x² + bx + c"
             },
             {
               "code": "QR1.4",
-              "description": "factor the difference of squares of the form x² – a²."
+              "description": "factor the difference of squares of the form x² – a²"
             }
           ]
         },
         {
           "code": "QR2",
+          "title": "Identifying Characteristics of Quadratic Relations",
           "description": "identify characteristics of quadratic relations",
           "specifics": [
             {
               "code": "QR2.1",
-              "description": "collect data that can be represented as a quadratic relation, from experiments using appropriate equipment and technology, or from secondary sources; graph the data and draw a curve of best fit, if appropriate, with or without the use of technology."
+              "description": "collect data that can be represented as a quadratic relation, from experiments using appropriate equipment and technology, or from secondary sources; graph the data and draw a curve of best fit"
             },
             {
               "code": "QR2.2",
-              "description": "determine, through investigation using technology, that a quadratic relation of the form y = ax² + bx + c (a ≠ 0) can be graphically represented as a parabola, and determine that the table of values yields a constant second difference."
+              "description": "determine, through investigation using technology, that a quadratic relation of the form y = ax² + bx + c (a ≠ 0) can be graphically represented as a parabola, and determine that the table of values yields a constant second difference"
             },
             {
               "code": "QR2.3",
-              "description": "identify the key features of a graph of a parabola, using a given graph or a graph generated with technology from its equation, and use the appropriate terminology to describe the features."
+              "description": "identify the key features of a graph of a parabola (i.e., the equation of the axis of symmetry, the coordinates of the vertex, the y-intercept, the zeros, and the maximum or minimum value), using a given graph or a graph generated with technology from its equation"
             },
             {
               "code": "QR2.4",
-              "description": "compare, through investigation using technology, the graphical representations of a quadratic relation in the form y = x² + bx + c and the same relation in the factored form y = (x – r)(x – s), and describe the connections between each algebraic representation and the graph."
+              "description": "compare, through investigation using technology, the graphical representations of a quadratic relation in the form y = x² + bx + c and the same relation in the factored form y = (x – r)(x – s)"
             }
           ]
         },
         {
           "code": "QR3",
+          "title": "Solving Problems by Interpreting Graphs of Quadratic Relations",
           "description": "solve problems by interpreting graphs of quadratic relations",
           "specifics": [
             {
               "code": "QR3.1",
-              "description": "solve problems involving a quadratic relation by interpreting a given graph or a graph generated with technology from its equation."
+              "description": "solve problems involving a quadratic relation by interpreting a given graph or a graph generated with technology from its equation"
             },
             {
               "code": "QR3.2",
-              "description": "solve problems by interpreting the significance of the key features of graphs obtained by collecting experimental data involving quadratic relations."
+              "description": "solve problems by interpreting the significance of the key features of graphs obtained by collecting experimental data involving quadratic relations"
             }
           ]
         }
       ]
     }
-  ],
-  "subjectCode": "MFM2P"
+  ]
 }

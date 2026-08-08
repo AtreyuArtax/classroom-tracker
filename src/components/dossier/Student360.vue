@@ -238,6 +238,7 @@
         :formatted-grade="formattedGrade"
         @update-note="saveGeneralNote"
         @update-iep="saveStudentIEP"
+        @update-contacts="saveParentContacts"
       />
 
       <!-- History Tab -->
@@ -387,6 +388,7 @@ const {
   removeEvent,
   getClass,
   updateStudentNote,
+  updateStudentParentContacts,
   updateStudentIEP,
   teacherName
 } = useClassroom()
@@ -746,6 +748,10 @@ async function saveStudentIEP(hasIEP) {
   if (Boolean(student.value.hasIEP) !== hasIEP) {
     await updateStudentIEP(props.studentId, hasIEP)
   }
+}
+
+async function saveParentContacts(contacts) {
+  await updateStudentParentContacts(props.studentId, contacts)
 }
 
 // Attempt Management Handlers

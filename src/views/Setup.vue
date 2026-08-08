@@ -1089,12 +1089,26 @@ function onFileSelected(evt) {
 
         const parentContacts = []
         for (let i = 1; i <= 4; i++) {
-          const pName = row[`Par${i} Name`] ?? ''
-          const pEmail = row[`Par${i} eMail`] ?? ''
-          const pPhone = row[`Par${i} Mobile`] || row[`Par${i} Home`] || ''
-          
-          if (pName || pEmail || pPhone) {
-            parentContacts.push({ name: pName.trim(), email: pEmail.trim(), phone: pPhone.trim() })
+          const pName = (row[`Par${i} Name`] ?? '').trim()
+          const pEmail = (row[`Par${i} eMail`] ?? '').trim()
+          const pMobile = (row[`Par${i} Mobile`] ?? '').trim()
+          const pHome = (row[`Par${i} Home`] ?? '').trim()
+
+          const phones = []
+          if (pMobile) {
+            phones.push({ type: 'Mobile', number: pMobile })
+          }
+          if (pHome && pHome !== pMobile) {
+            phones.push({ type: 'Home', number: pHome })
+          }
+
+          if (pName || pEmail || phones.length > 0) {
+            parentContacts.push({
+              name: pName,
+              email: pEmail,
+              phone: pMobile || pHome || '',
+              phones
+            })
           }
         }
 

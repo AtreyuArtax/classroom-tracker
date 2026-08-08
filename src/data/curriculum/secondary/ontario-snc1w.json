@@ -10,7 +10,8 @@
       "overalls": [
         {
           "code": "A1",
-          "description": "STEM Investigation Skills",
+          "title": "STEM Investigation Skills",
+          "description": "apply scientific processes and an engineering design process in their investigations to develop a conceptual understanding of the science they are learning, and apply coding skills to model scientific concepts and relationships",
           "specifics": [
             {
               "code": "A1.1",
@@ -36,7 +37,8 @@
         },
         {
           "code": "A2",
-          "description": "Applications, Careers, and Connections",
+          "title": "Applications, Careers, and Connections",
+          "description": "analyse how scientific concepts and processes can be applied in practical ways to address real-world issues and in various careers, and describe contributions to science from people with diverse lived experiences",
           "specifics": [
             {
               "code": "A2.1",
@@ -63,11 +65,12 @@
       ]
     },
     {
-      "name": "Strand B: Biology (Sustainable Ecosystems and Climate Change)",
+      "name": "Strand B: Biology: Sustainable Ecosystems and Climate Change",
       "overalls": [
         {
           "code": "B1",
-          "description": "Relating Science to Our Changing World",
+          "title": "Relating Science to Our Changing World",
+          "description": "assess impacts of climate change on ecosystem sustainability and on various communities, and describe ways to mitigate these impacts",
           "specifics": [
             {
               "code": "B1.1",
@@ -85,7 +88,8 @@
         },
         {
           "code": "B2",
-          "description": "Investigating and Understanding Concepts",
+          "title": "Investigating and Understanding Concepts",
+          "description": "demonstrate an understanding of the dynamic and interconnected nature of ecosystems, including how matter cycles and energy flows through ecosystems",
           "specifics": [
             {
               "code": "B2.1",
@@ -120,11 +124,12 @@
       ]
     },
     {
-      "name": "Strand C: Chemistry (The Nature of Matter)",
+      "name": "Strand C: Chemistry: The Nature of Matter",
       "overalls": [
         {
           "code": "C1",
-          "description": "Relating Science to Our Changing World",
+          "title": "Relating Science to Our Changing World",
+          "description": "assess social, environmental, and economic impacts of the use of elements, compounds, and associated technologies",
           "specifics": [
             {
               "code": "C1.1",
@@ -138,7 +143,8 @@
         },
         {
           "code": "C2",
-          "description": "Investigating and Understanding Concepts",
+          "title": "Investigating and Understanding Concepts",
+          "description": "demonstrate an understanding of the nature of matter, including the structure of the atom, physical and chemical properties of common elements and compounds, and the organization of elements in the periodic table",
           "specifics": [
             {
               "code": "C2.1",
@@ -173,11 +179,12 @@
       ]
     },
     {
-      "name": "Strand D: Physics (Principles and Applications of Electricity)",
+      "name": "Strand D: Physics: Principles and Applications of Electricity",
       "overalls": [
         {
           "code": "D1",
-          "description": "Relating Science to Our Changing World",
+          "title": "Relating Science to Our Changing World",
+          "description": "assess social, environmental, and economic impacts of electrical energy production and consumption, and describe ways to achieve sustainable practices",
           "specifics": [
             {
               "code": "D1.1",
@@ -199,7 +206,8 @@
         },
         {
           "code": "D2",
-          "description": "Investigating and Understanding Concepts",
+          "title": "Investigating and Understanding Concepts",
+          "description": "demonstrate an understanding of the nature of electric charges, including properties of static and current electricity",
           "specifics": [
             {
               "code": "D2.1",
@@ -238,11 +246,12 @@
       ]
     },
     {
-      "name": "Strand E: Earth and Space Science (Space Exploration)",
+      "name": "Strand E: Earth and Space Science: Space Exploration",
       "overalls": [
         {
           "code": "E1",
-          "description": "Relating Science to Our Changing World",
+          "title": "Relating Science to Our Changing World",
+          "description": "evaluate social, environmental, and economic impacts of space exploration and of technological innovations derived from space exploration",
           "specifics": [
             {
               "code": "E1.1",
@@ -260,7 +269,8 @@
         },
         {
           "code": "E2",
-          "description": "Investigating and Understanding Concepts",
+          "title": "Investigating and Understanding Concepts",
+          "description": "demonstrate an understanding of the components, characteristics, and associated phenomena of the solar system and the universe, and the importance of the Sun to processes on Earth",
           "specifics": [
             {
               "code": "E2.1",
@@ -268,7 +278,7 @@
             },
             {
               "code": "E2.2",
-              "description": "explain how the Sun's energy causes natural phenomena on Earth, and how these phenomena contribute to renewable energy production"
+              "description": "explain how the Sun’s energy causes natural phenomena on Earth, and how these phenomena contribute to renewable energy production"
             },
             {
               "code": "E2.3",
@@ -290,6 +300,5 @@
         }
       ]
     }
-  ],
-  "subjectCode": "SNC1W"
+  ]
 }

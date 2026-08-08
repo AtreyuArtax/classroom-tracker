@@ -31,6 +31,7 @@ import {
   unarchiveStudent,
   permanentlyDeleteStudent,
   updateStudentNote,
+  updateStudentParentContacts,
   assignSeat,
   autoAssignSeats
 } from './useRosterOperations.js'
@@ -1604,6 +1605,7 @@ export function useClassroom() {
         removeEvent,
         checkResize,
         updateStudentNote,
+        updateStudentParentContacts,
         updateStudentIEP,
         confirmResize,
         reloadBehaviorCodes,

@@ -214,6 +214,35 @@ export async function updateStudentNote(studentId, note) {
 }
 
 /**
+ * Updates a student's parent/guardian contacts and persists them.
+ *
+ * @param {string} studentId
+ * @param {Array} parentContacts
+ * @returns {Promise<void>}
+ */
+export async function updateStudentParentContacts(studentId, parentContacts) {
+    try {
+        const classId = activeClass.value?.classId
+        if (!classId) return
+        const contactsCopy = JSON.parse(JSON.stringify(parentContacts || []))
+        await classService.updateStudentParentContacts(classId, studentId, contactsCopy)
+        if (students.value[studentId]) {
+            students.value[studentId].parentContacts = contactsCopy
+        }
+        if (activeClass.value?.students?.[studentId]) {
+            activeClass.value.students[studentId].parentContacts = contactsCopy
+        }
+        triggerRef(students)
+        triggerRef(activeClass)
+    } catch (err) {
+        console.error('updateStudentParentContacts failed:', err)
+        const { alert } = useMessage()
+        await alert('Failed to save parent contacts.')
+    }
+}
+
+
+/**
  * Assign a student to a seat (or null to send to roster pool).
  * Pushes an undo entry per CLAUDE.md §9.
  *

@@ -6,232 +6,241 @@
   "grade": "Grade 10",
   "strands": [
     {
-      "name": "Quadratic Relations",
+      "name": "Strand: Quadratic Relations of the Form y = ax² + bx + c",
       "overalls": [
         {
           "code": "QR1",
+          "title": "Investigating the Basic Properties of Quadratic Relations",
           "description": "determine the basic properties of quadratic relations",
           "specifics": [
             {
               "code": "QR1.1",
-              "description": "collect data that can be represented as a quadratic relation, from experiments using appropriate equipment and technology, or from secondary sources; graph the data and draw a curve of best fit, if appropriate, with or without the use of technology."
+              "description": "collect data that can be represented as a quadratic relation, from experiments using appropriate equipment and technology, or from secondary sources; graph the data and draw a curve of best fit, if appropriate, with or without the use of technology"
             },
             {
               "code": "QR1.2",
-              "description": "determine, through investigation with and without the use of technology, that a quadratic relation of the form y = ax² + bx + c (a ≠ 0) can be represented as a parabola, and that the table of values yields a constant second difference."
+              "description": "determine, through investigation with and without the use of technology, that a quadratic relation of the form y = ax² + bx + c (a ≠ 0) can be represented as a parabola, and that the table of values yields a constant second difference"
             },
             {
               "code": "QR1.3",
-              "description": "identify the key features of a graph of a parabola (i.e., the equation of the axis of symmetry, the coordinates of the vertex, the y-intercept, the zeros, and the maximum or minimum value), and use the appropriate terminology to describe them."
+              "description": "identify the key features of a graph of a parabola (i.e., the equation of the axis of symmetry, the coordinates of the vertex, the y-intercept, the zeros, and the maximum or minimum value), and use the appropriate terminology to describe them"
             },
             {
               "code": "QR1.4",
-              "description": "compare, through investigation using technology, the features of the graph of y = x² and the graph of y = 2^x, and determine the meaning of a negative exponent and of zero as an exponent."
+              "description": "compare, through investigation using technology, the features of the graph of y = x² and the graph of y = 2^x, and determine the meaning of a negative exponent and of zero as an exponent"
             }
           ]
         },
         {
           "code": "QR2",
+          "title": "Relating the Graph of y = x² and Its Transformations",
           "description": "relate transformations of the graph of y = x² to the algebraic representation y = a(x – h)² + k",
           "specifics": [
             {
               "code": "QR2.1",
-              "description": "identify, through investigation using technology, the effect on the graph of y = x² of transformations (i.e., translations, reflections in the x-axis, vertical stretches or compressions) by considering separately each parameter a, h, and k."
+              "description": "identify, through investigation using technology, the effect on the graph of y = x² of transformations (i.e., translations, reflections in the x-axis, vertical stretches or compressions) by considering separately each parameter a, h, and k"
             },
             {
               "code": "QR2.2",
-              "description": "explain the roles of a, h, and k in y = a(x – h)² + k, using the appropriate terminology to describe the transformations, and identify the vertex and the equation of the axis of symmetry."
+              "description": "explain the roles of a, h, and k in y = a(x – h)² + k, using the appropriate terminology to describe the transformations, and identify the vertex and the equation of the axis of symmetry"
             },
             {
               "code": "QR2.3",
-              "description": "sketch, by hand, the graph of y = a(x – h)² + k by applying transformations to the graph of y = x²."
+              "description": "sketch, by hand, the graph of y = a(x – h)² + k by applying transformations to the graph of y = x²"
             },
             {
               "code": "QR2.4",
-              "description": "determine the equation, in the form y = a(x – h)² + k, of a given graph of a parabola."
+              "description": "determine the equation, in the form y = a(x – h)² + k, of a given graph of a parabola"
             }
           ]
         },
         {
           "code": "QR3",
+          "title": "Solving Quadratic Equations",
           "description": "solve quadratic equations and interpret the solutions with respect to the corresponding relations",
           "specifics": [
             {
               "code": "QR3.1",
-              "description": "expand and simplify second-degree polynomial expressions, using a variety of tools and strategies."
+              "description": "expand and simplify second-degree polynomial expressions, using a variety of tools and strategies"
             },
             {
               "code": "QR3.2",
-              "description": "factor polynomial expressions involving common factors, trinomials, and differences of squares, using a variety of tools and strategies."
+              "description": "factor polynomial expressions involving common factors, trinomials, and differences of squares, using a variety of tools and strategies"
             },
             {
               "code": "QR3.3",
-              "description": "determine, through investigation, and describe the connection between the factors of a quadratic expression and the x-intercepts (i.e., the zeros) of the graph of the corresponding quadratic relation, expressed in the form y = a(x – r)(x – s)."
+              "description": "determine, through investigation, and describe the connection between the factors of a quadratic expression and the x-intercepts of the graph of the corresponding quadratic relation, expressed in the form y = a(x – r)(x – s)"
             },
             {
               "code": "QR3.4",
-              "description": "interpret real and non-real roots of quadratic equations, through investigation using graphing technology, and relate the roots to the x-intercepts of the corresponding relations."
+              "description": "interpret real and non-real roots of quadratic equations, through investigation using graphing technology, and relate the roots to the x-intercepts of the corresponding relations"
             },
             {
               "code": "QR3.5",
-              "description": "express y = ax² + bx + c in the form y = a(x – h)² + k by completing the square in situations involving no fractions, using a variety of tools."
+              "description": "express y = ax² + bx + c in the form y = a(x – h)² + k by completing the square in situations involving no fractions, using a variety of tools"
             },
             {
               "code": "QR3.6",
-              "description": "sketch or graph a quadratic relation whose equation is given in the form y = ax² + bx + c, using a variety of methods."
+              "description": "sketch or graph a quadratic relation whose equation is given in the form y = ax² + bx + c, using a variety of methods"
             },
             {
               "code": "QR3.7",
-              "description": "explore the algebraic development of the quadratic formula."
+              "description": "explore the algebraic development of the quadratic formula"
             },
             {
               "code": "QR3.8",
-              "description": "solve quadratic equations that have real roots, using a variety of methods (i.e., factoring, using the quadratic formula, graphing)."
+              "description": "solve quadratic equations that have real roots, using a variety of methods"
             }
           ]
         },
         {
           "code": "QR4",
+          "title": "Solving Problems Involving Quadratic Relations",
           "description": "solve problems involving quadratic relations",
           "specifics": [
             {
               "code": "QR4.1",
-              "description": "determine the zeros and the maximum or minimum value of a quadratic relation from its graph or from its defining equation."
+              "description": "determine the zeros and the maximum or minimum value of a quadratic relation from its graph or from its defining equation"
             },
             {
               "code": "QR4.2",
-              "description": "solve problems arising from a realistic situation represented by a graph or an equation of a quadratic relation, with and without the use of technology."
+              "description": "solve problems arising from a realistic situation represented by a graph or an equation of a quadratic relation, with and without the use of technology"
             }
           ]
         }
       ]
     },
     {
-      "name": "Analytic Geometry",
+      "name": "Strand: Analytic Geometry",
       "overalls": [
         {
           "code": "AG1",
+          "title": "Using Linear Systems to Solve Problems",
           "description": "model and solve problems involving the intersection of two straight lines",
           "specifics": [
             {
               "code": "AG1.1",
-              "description": "solve systems of two linear equations involving two variables, using the algebraic method of substitution or elimination."
+              "description": "solve systems of two linear equations involving two variables, using the algebraic method of substitution or elimination"
             },
             {
               "code": "AG1.2",
-              "description": "solve problems that arise from realistic situations described in words or represented by linear systems of two equations involving two variables, by choosing an appropriate algebraic or graphical method."
+              "description": "solve problems that arise from realistic situations described in words or represented by linear systems of two equations involving two variables, by choosing an appropriate algebraic or graphical method"
             }
           ]
         },
         {
           "code": "AG2",
+          "title": "Solving Problems Involving Properties of Line Segments",
           "description": "solve problems using analytic geometry involving properties of lines and line segments",
           "specifics": [
             {
               "code": "AG2.1",
-              "description": "develop the formula for the midpoint of a line segment, and use this formula to solve problems."
+              "description": "develop the formula for the midpoint of a line segment, and use this formula to solve problems"
             },
             {
               "code": "AG2.2",
-              "description": "develop the formula for the length of a line segment, and use this formula to solve problems."
+              "description": "develop the formula for the length of a line segment, and use this formula to solve problems"
             },
             {
               "code": "AG2.3",
-              "description": "develop the equation for a circle with centre (0, 0) and radius r, by applying the formula for the length of a line segment."
+              "description": "develop the equation for a circle with centre (0, 0) and radius r, by applying the formula for the length of a line segment"
             },
             {
               "code": "AG2.4",
-              "description": "determine the radius of a circle with centre (0, 0), given its equation; write the equation of a circle with centre (0, 0), given the radius; and sketch the circle, given the equation in the form x² + y² = r²."
+              "description": "determine the radius of a circle with centre (0, 0), given its equation; write the equation of a circle with centre (0, 0), given the radius; and sketch the circle, given the equation in the form x² + y² = r²"
             },
             {
               "code": "AG2.5",
-              "description": "solve problems involving the slope, length, and midpoint of a line segment."
+              "description": "solve problems involving the slope, length, and midpoint of a line segment"
             }
           ]
         },
         {
           "code": "AG3",
+          "title": "Using Analytic Geometry to Verify Geometric Properties",
           "description": "verify geometric properties of triangles and quadrilaterals, using analytic geometry",
           "specifics": [
             {
               "code": "AG3.1",
-              "description": "determine, through investigation, some characteristics and properties of geometric figures."
+              "description": "determine, through investigation, some characteristics and properties of geometric figures"
             },
             {
               "code": "AG3.2",
-              "description": "verify, using algebraic techniques and analytic geometry, some characteristics of geometric figures."
+              "description": "verify, using algebraic techniques and analytic geometry, some characteristics of geometric figures"
             },
             {
               "code": "AG3.3",
-              "description": "plan and implement a multi-step strategy that uses analytic geometry and algebraic techniques to verify a geometric property."
+              "description": "plan and implement a multi-step strategy that uses analytic geometry and algebraic techniques to verify a geometric property"
             }
           ]
         }
       ]
     },
     {
-      "name": "Trigonometry",
+      "name": "Strand: Trigonometry",
       "overalls": [
         {
-          "code": "T1",
+          "code": "TRI1",
+          "title": "Investigating Similarity and Solving Problems Involving Similar Triangles",
           "description": "use their knowledge of ratio and proportion to investigate similar triangles and solve problems related to similarity",
           "specifics": [
             {
-              "code": "T1.1",
-              "description": "verify, through investigation, the properties of similar triangles."
+              "code": "TRI1.1",
+              "description": "verify, through investigation, the properties of similar triangles"
             },
             {
-              "code": "T1.2",
-              "description": "describe and compare the concepts of similarity and congruence."
+              "code": "TRI1.2",
+              "description": "describe and compare the concepts of similarity and congruence"
             },
             {
-              "code": "T1.3",
-              "description": "solve problems involving similar triangles in realistic situations."
+              "code": "TRI1.3",
+              "description": "solve problems involving similar triangles in realistic situations"
             }
           ]
         },
         {
-          "code": "T2",
+          "code": "TRI2",
+          "title": "Solving Problems Involving the Trigonometry of Right Triangles",
           "description": "solve problems involving right triangles, using the primary trigonometric ratios and the Pythagorean theorem",
           "specifics": [
             {
-              "code": "T2.1",
-              "description": "determine, through investigation, the relationship between the ratio of two sides in a right triangle and the ratio of the two corresponding sides in a similar right triangle, and define the sine, cosine, and tangent ratios."
+              "code": "TRI2.1",
+              "description": "determine, through investigation, the relationship between the ratio of two sides in a right triangle and the ratio of the two corresponding sides in a similar right triangle, and define the sine, cosine, and tangent ratios"
             },
             {
-              "code": "T2.2",
-              "description": "determine the measures of the sides and angles in right triangles, using the primary trigonometric ratios and the Pythagorean theorem."
+              "code": "TRI2.2",
+              "description": "determine the measures of the sides and angles in right triangles, using the primary trigonometric ratios and the Pythagorean theorem"
             },
             {
-              "code": "T2.3",
-              "description": "solve problems involving the measures of sides and angles in right triangles in real-life applications, using the primary trigonometric ratios and the Pythagorean theorem."
+              "code": "TRI2.3",
+              "description": "solve problems involving the measures of sides and angles in right triangles in real-life applications, using the primary trigonometric ratios and the Pythagorean theorem"
             }
           ]
         },
         {
-          "code": "T3",
+          "code": "TRI3",
+          "title": "Solving Problems Involving the Trigonometry of Acute Triangles",
           "description": "solve problems involving acute triangles, using the sine law and the cosine law",
           "specifics": [
             {
-              "code": "T3.1",
-              "description": "explore the development of the sine law within acute triangles."
+              "code": "TRI3.1",
+              "description": "explore the development of the sine law within acute triangles"
             },
             {
-              "code": "T3.2",
-              "description": "explore the development of the cosine law within acute triangles."
+              "code": "TRI3.2",
+              "description": "explore the development of the cosine law within acute triangles"
             },
             {
-              "code": "T3.3",
-              "description": "determine the measures of sides and angles in acute triangles, using the sine law and the cosine law."
+              "code": "TRI3.3",
+              "description": "determine the measures of sides and angles in acute triangles, using the sine law and the cosine law"
             },
             {
-              "code": "T3.4",
-              "description": "solve problems involving the measures of sides and angles in acute triangles."
+              "code": "TRI3.4",
+              "description": "solve problems involving the measures of sides and angles in acute triangles"
             }
           ]
         }
       ]
     }
-  ],
-  "subjectCode": "MPM2D"
+  ]
 }

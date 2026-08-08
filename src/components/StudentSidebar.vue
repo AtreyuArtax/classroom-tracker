@@ -148,6 +148,8 @@ defineEmits(['select-student', 'navigate', 'toggle-privacy', 'toggle-collapse'])
 import { activeClassRecord, availableSubCohorts } from '../composables/useGradebook.js'
 import { getSBARLevelBadge } from '../db/gradebook/gradeCalcSBAR.js'
 
+const isMobileOpen = ref(false)
+
 const isSBAR = computed(() => activeClassRecord.value?.gradingFramework === 'sbar')
 
 function getStudentTag(student) {

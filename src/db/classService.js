@@ -363,6 +363,19 @@ export async function updateStudentIEP(classId, studentId, hasIEP) {
 }
 
 /**
+ * Updates a student's parent/guardian contacts.
+ *
+ * @param {string} classId
+ * @param {string} studentId
+ * @param {Array} parentContacts
+ * @returns {Promise<void>}
+ */
+export async function updateStudentParentContacts(classId, studentId, parentContacts) {
+    await patchStudent(classId, studentId, { parentContacts: parentContacts || [] })
+}
+
+
+/**
  * Soft-deletes a class by setting archived = true.
  * The record is kept in IDB; it is simply hidden from normal views.
  *
