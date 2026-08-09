@@ -12,7 +12,7 @@
       Insufficient data to visualize a trend.
     </div>
     
-    <div v-else class="grade-trend__chart-wrap" ref="chartContainer" :style="{ height: isPrint ? '150px' : '240px' }">
+    <div v-else class="grade-trend__chart-wrap" ref="chartContainer" :style="{ height: isPrint ? '115px' : '240px' }">
       <Line ref="lineChart" :data="chartData" :options="chartOptions" />
     </div>
   </div>
@@ -193,6 +193,14 @@ const chartOptions = computed(() => ({
   responsive: true,
   maintainAspectRatio: false,
   animation: props.isPrint ? false : { duration: 1000 },
+  layout: {
+    padding: {
+      bottom: props.isPrint ? 10 : 4,
+      left: 0,
+      right: 8,
+      top: 4
+    }
+  },
   plugins: {
     legend: { display: false },
     tooltip: {
@@ -208,10 +216,10 @@ const chartOptions = computed(() => ({
       min: 0,
       suggestedMax: 100,
       ticks: {
-        stepSize: 10,
+        stepSize: 20,
         callback: (value) => value + '%',
         color: '#64748b',
-        font: { size: 11 }
+        font: { size: props.isPrint ? 9 : 10 }
       },
       grid: {
         color: 'rgba(0, 0, 0, 0.05)'
@@ -220,7 +228,11 @@ const chartOptions = computed(() => ({
     x: {
       ticks: {
         color: '#64748b',
-        font: { size: 11 }
+        font: { size: props.isPrint ? 8.5 : 9.5 },
+        maxRotation: 0,
+        minRotation: 0,
+        autoSkip: true,
+        maxTicksLimit: props.isPrint ? 6 : 8
       },
       grid: { display: false }
     }
@@ -293,6 +305,13 @@ const chartOptions = computed(() => ({
 .dot--primary   { background: #34c759; }
 .dot--secondary { background: #007aff; }
 
+.grade-trend {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
 .grade-trend__empty {
   padding:    40px;
   text-align: center;
@@ -303,5 +322,9 @@ const chartOptions = computed(() => ({
 
 .grade-trend__chart-wrap {
   width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  position: relative;
+  box-sizing: border-box;
 }
 </style>

@@ -66,141 +66,85 @@
       </div>
     </section>
 
-    <!-- Assignments Section -->
-    <section v-if="recentClassWork.length" class="report-section">
+    <!-- Assessments Section -->
+    <section v-if="allCombinedWork.length" class="report-section">
       <h3 class="section-title">Assessments</h3>
-      <div class="report-table-wrapper">
-        <table class="report-table">
-          <thead>
-            <tr>
-              <th>Date</th>
-              <th>Assessment</th>
-              <th>Category</th>
-              <th class="text-right">Score</th>
-              <th class="text-right">%</th>
-            </tr>
-          </thead>
-          <tbody>
-            <template v-for="a in recentClassWork" :key="a.assessmentId">
-              <tr v-memo="[a.assessmentId, a.score, a.attempts?.length, a.name, a.date]">
-                <td class="td-date">{{ formatDate(a.date) }}</td>
-                <td class="td-name">{{ a.name }}</td>
-                <td class="td-cat">{{ getCategoryName(a.categoryId) }}</td>
-                <td class="td-score text-right">
-                  <div class="score-val">{{ a.score }} / {{ a.totalPoints }}</div>
-                  <div v-if="a.attempts?.length > 1" class="score-history">
-                    <span class="history-label">Attempts:</span>
-                    <span v-for="(att, idx) in a.attempts" :key="att.attemptId" class="attempt-crumb">
-                      {{ att.pointsEarned }}<template v-if="idx < (a.attempts?.length || 0) - 1">, </template>
-                    </span>
-                  </div>
-                </td>
-                <td class="td-pct text-right" :style="{ color: getGradeColor((a.score / a.totalPoints) * 100) }">
-                  {{ Math.round((a.score / a.totalPoints) * 100) }}%
-                </td>
+      <div class="report-table-grid" :class="{ 'report-table-grid--two-col': splitWorkColumns.length > 1 }">
+        <div v-for="(col, colIdx) in splitWorkColumns" :key="'col-' + colIdx" class="report-table-wrapper">
+          <table class="report-table">
+            <thead>
+              <tr>
+                <th style="width: 48px;">Date</th>
+                <th>Assessment</th>
+                <th style="width: 65px;">Cat</th>
+                <th class="text-right" style="width: 65px;">Score</th>
+                <th class="text-right" style="width: 42px;">%</th>
               </tr>
-              <!-- Comment row -->
-              <tr
-                v-if="a.attempts?.find(x => x.comment?.trim())"
-                class="comment-row"
-              >
-                <td colspan="5" class="comment-cell">
-                  {{ a.attempts?.find(x => x.comment?.trim())?.comment }}
-                </td>
-              </tr>
-            </template>
-          </tbody>
-        </table>
-      </div>
-    </section>
-
-    <!-- Individual Assignments Section -->
-    <section v-if="individualTasks.length" class="report-section">
-      <h3 class="section-title">Individual Assessments</h3>
-      <div class="report-table-wrapper">
-        <table class="report-table">
-          <thead>
-            <tr>
-              <th>Date</th>
-              <th>Assessment</th>
-              <th>Category</th>
-              <th class="text-right">Score</th>
-              <th class="text-right">%</th>
-            </tr>
-          </thead>
-          <tbody>
-            <template v-for="a in individualTasks" :key="a.assessmentId">
-              <tr v-memo="[a.assessmentId, a.score, a.attempts?.length, a.name, a.date]">
-                <td class="td-date">{{ formatDate(a.date) }}</td>
-                <td class="td-name">{{ a.name }}</td>
-                <td class="td-cat">{{ getCategoryName(a.categoryId) }}</td>
-                <td class="td-score text-right">
-                  <div class="score-val">{{ a.score }} / {{ a.totalPoints }}</div>
-                  <div v-if="a.attempts?.length > 1" class="score-history">
-                    <span class="history-label">Attempts:</span>
-                    <span v-for="(att, idx) in a.attempts" :key="att.attemptId" class="attempt-crumb">
-                      {{ att.pointsEarned }}<template v-if="idx < (a.attempts?.length || 0) - 1">, </template>
-                    </span>
-                  </div>
-                </td>
-                <td class="td-pct text-right" :style="{ color: getGradeColor((a.score / a.totalPoints) * 100) }">
-                  {{ Math.round((a.score / a.totalPoints) * 100) }}%
-                </td>
-              </tr>
-              <!-- Comment row -->
-              <tr
-                v-if="a.attempts?.find(x => x.comment?.trim())"
-                class="comment-row"
-              >
-                <td colspan="5" class="comment-cell">
-                  {{ a.attempts?.find(x => x.comment?.trim())?.comment }}
-                </td>
-              </tr>
-            </template>
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              <template v-for="a in col" :key="a.assessmentId">
+                <tr :class="{ 'row-individual': a.target === 'individual' }">
+                  <td class="td-date">{{ formatDate(a.date) }}</td>
+                  <td class="td-name">
+                    <span class="name-text" :title="a.name">{{ a.name }}</span>
+                    <span v-if="a.target === 'individual'" class="ind-chip">Ind</span>
+                  </td>
+                  <td class="td-cat"><span class="cat-chip" :title="getCategoryName(a.categoryId)">{{ getCategoryName(a.categoryId) }}</span></td>
+                  <td class="td-score text-right">
+                    <div class="score-val">{{ a.score }}/{{ a.totalPoints }}</div>
+                    <div v-if="a.attempts?.length > 1" class="score-history">
+                      <span v-for="(att, idx) in a.attempts" :key="att.attemptId" class="attempt-crumb">
+                        {{ att.pointsEarned }}<template v-if="idx < (a.attempts?.length || 0) - 1">,</template>
+                      </span>
+                    </div>
+                  </td>
+                  <td class="td-pct text-right" :style="{ color: getGradeColor((a.score / a.totalPoints) * 100) }">
+                    {{ Math.round((a.score / a.totalPoints) * 100) }}%
+                  </td>
+                </tr>
+                <!-- Comment row -->
+                <tr
+                  v-if="a.attempts?.find(x => x.comment?.trim())"
+                  class="comment-row"
+                >
+                  <td colspan="5" class="comment-cell">
+                    {{ a.attempts?.find(x => x.comment?.trim())?.comment }}
+                  </td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+        </div>
       </div>
     </section>
 
     <!-- Attendance & Behavior (Toggleable) -->
     <section v-if="config.includeAttendance || config.includeBehavior" class="report-section report-section--footer">
       <div class="footer-grid">
-        <div v-if="config.includeAttendance" class="footer-card">
-          <h4 class="footer-card-title">Attendance Summary</h4>
-          <div class="footer-stats">
-            <div class="f-stat">
-              <span class="f-val">{{ attendanceStats.absences }}</span>
-              <span class="f-lab">Absences</span>
-            </div>
-            <div class="f-stat">
-              <span class="f-val">{{ attendanceStats.lates }}</span>
-              <span class="f-lab">Late Arrivals</span>
-            </div>
-            <div v-if="attendanceStats.lates > 0" class="f-stat">
-              <span class="f-val">{{ attendanceStats.totalMinutes }}<small>m</small></span>
-              <span class="f-lab">Total Late</span>
-            </div>
-            <div v-if="attendanceStats.lates > 0" class="f-stat">
-              <span class="f-val">{{ attendanceStats.average }}<small>m</small></span>
-              <span class="f-lab">Avg Delay</span>
-            </div>
+        <div v-if="config.includeAttendance" class="footer-card footer-card--compact">
+          <span class="footer-card-label">Attendance Summary:</span>
+          <div class="footer-stats-inline">
+            <span class="f-stat-inline"><strong>{{ attendanceStats.absences }}</strong> Absences</span>
+            <span class="f-stat-divider">•</span>
+            <span class="f-stat-inline"><strong>{{ attendanceStats.lates }}</strong> Late Arrivals</span>
+            <template v-if="attendanceStats.lates > 0">
+              <span class="f-stat-divider">•</span>
+              <span class="f-stat-inline">Total: <strong>{{ attendanceStats.totalMinutes }}m</strong></span>
+              <span class="f-stat-divider">•</span>
+              <span class="f-stat-inline">Avg: <strong>{{ attendanceStats.average }}m</strong></span>
+            </template>
           </div>
         </div>
-        <div v-if="config.includeBehavior" class="footer-card">
-          <h4 class="footer-card-title">Out-of-Class Summary</h4>
-          <div class="footer-stats">
-            <div class="f-stat">
-              <span class="f-val">{{ outOfClassStats.count }}</span>
-              <span class="f-lab">Total Trips</span>
-            </div>
-            <div v-if="outOfClassStats.count > 0" class="f-stat">
-              <span class="f-val">{{ outOfClassStats.totalMinutes }}<small>m</small></span>
-              <span class="f-lab">Total Time</span>
-            </div>
-            <div v-if="outOfClassStats.count > 0" class="f-stat">
-              <span class="f-val">{{ outOfClassStats.average }}<small>m</small></span>
-              <span class="f-lab">Avg Duration</span>
-            </div>
+        <div v-if="config.includeBehavior" class="footer-card footer-card--compact">
+          <span class="footer-card-label">Out-of-Class Summary:</span>
+          <div class="footer-stats-inline">
+            <span class="f-stat-inline"><strong>{{ outOfClassStats.count }}</strong> Total Trips</span>
+            <template v-if="outOfClassStats.count > 0">
+              <span class="f-stat-divider">•</span>
+              <span class="f-stat-inline">Total: <strong>{{ outOfClassStats.totalMinutes }}m</strong></span>
+              <span class="f-stat-divider">•</span>
+              <span class="f-stat-inline">Avg: <strong>{{ outOfClassStats.average }}m</strong></span>
+            </template>
           </div>
         </div>
       </div>
@@ -335,6 +279,26 @@ const allDossierAssessments = computed(() => {
   return studentAssessments.value.sort((a, b) => new Date(a.date) - new Date(b.date))
 })
 
+const allCombinedWork = computed(() => {
+  const list = []
+  if (recentClassWork.value.length) {
+    list.push(...recentClassWork.value)
+  }
+  if (individualTasks.value.length) {
+    list.push(...individualTasks.value)
+  }
+  return list
+})
+
+const splitWorkColumns = computed(() => {
+  const list = allCombinedWork.value
+  if (list.length <= 10) {
+    return [list]
+  }
+  const mid = Math.ceil(list.length / 2)
+  return [list.slice(0, mid), list.slice(mid)]
+})
+
 const evidenceMix = computed(() => {
   const mix = { product: 0, observation: 0, conversation: 0 }
   const valid = studentAssessments.value.filter(a => a.score !== null)
@@ -425,13 +389,13 @@ const categoryPerformance = computed(() => {
   background: white;
   color: var(--print-text);
   font-family: 'Inter', -apple-system, system-ui, sans-serif;
-  padding: 30px;
+  padding: 20px 24px;
   min-height: 297mm;
   width: 210mm;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 12px;
   
   /* Force background colors to print */
   print-color-adjust: exact;
@@ -536,13 +500,25 @@ const categoryPerformance = computed(() => {
 .report-row--visuals {
   display: flex;
   gap: 24px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .report-card {
   flex: 1;
+  min-width: 0;
   border: 1px solid var(--print-border);
   border-radius: 12px;
   padding: 16px;
+  box-sizing: border-box;
+}
+
+.report-card--trend {
+  min-width: 0;
+}
+
+.report-card--mix {
+  min-width: 0;
 }
 
 .card-title {
@@ -554,7 +530,9 @@ const categoryPerformance = computed(() => {
 }
 
 .chart-container {
-  height: 150px;
+  min-width: 0;
+  width: 100%;
+  position: relative;
 }
 
 /* --- Tables & Lists --- */
@@ -622,44 +600,113 @@ const categoryPerformance = computed(() => {
 .m-name { font-weight: 600; flex: 1; }
 .m-cat { color: var(--print-text-muted); }
 
+.report-table-grid {
+  display: block;
+  width: 100%;
+}
+
+.report-table-grid--two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.report-table-wrapper {
+  min-width: 0;
+  width: 100%;
+}
+
 .report-table {
   width: 100%;
   border-collapse: collapse;
+  table-layout: fixed;
 }
 
 .report-table th {
   text-align: left;
-  font-size: 0.75rem;
+  font-size: 0.68rem;
+  font-weight: 700;
   text-transform: uppercase;
   color: var(--print-text-muted);
-  padding: 8px 12px;
+  padding: 4px 6px;
   border-bottom: 2px solid var(--print-border);
 }
 
 .report-table td {
-  padding: 8px 12px;
-  font-size: 0.85rem;
+  padding: 3px 6px;
+  font-size: 0.76rem;
   border-bottom: 1px solid var(--print-border);
+  vertical-align: middle;
 }
 
 .text-right { text-align: right; }
-.td-date { width: 80px; font-weight: 600; color: var(--print-text-muted); }
-.td-name { font-weight: 600; }
-.td-pct { font-weight: 700; }
 
-.score-history {
-  font-size: 0.65rem;
+.td-date {
+  width: 48px;
+  font-size: 0.72rem;
+  font-weight: 600;
   color: var(--print-text-muted);
-  font-weight: 500;
-  margin-top: 2px;
-  line-height: 1;
+  white-space: nowrap;
 }
 
-.history-label {
-  font-weight: 700;
-  text-transform: uppercase;
+.td-name {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.name-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cat-chip {
+  display: inline-block;
+  font-size: 0.65rem;
+  font-weight: 600;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: #f1f5f9;
+  color: #475569;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  max-width: 65px;
+  vertical-align: middle;
+}
+
+.ind-chip {
+  display: inline-block;
   font-size: 0.6rem;
-  margin-right: 2px;
+  font-weight: 700;
+  padding: 0 4px;
+  border-radius: 3px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+  margin-left: 4px;
+  vertical-align: middle;
+}
+
+.score-val {
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.td-pct {
+  font-weight: 800;
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
+.score-history {
+  font-size: 0.62rem;
+  color: var(--print-text-muted);
+  font-weight: 500;
+  line-height: 1;
 }
 
 .comment-row td {
@@ -667,10 +714,10 @@ const categoryPerformance = computed(() => {
 }
 
 .comment-cell {
-  font-size: 0.78rem;
+  font-size: 0.72rem;
   font-style: italic;
   color: var(--print-text-muted);
-  padding: 2px 12px 8px 24px;
+  padding: 1px 6px 4px 16px;
 }
 
 .comment-cell::before {
@@ -687,49 +734,36 @@ const categoryPerformance = computed(() => {
   gap: 24px;
 }
 
-.footer-card {
-  padding: 16px;
+.footer-card--compact {
+  padding: 6px 12px;
   background: #f8fafc;
-  border-radius: 8px;
+  border-radius: 6px;
+  border: 1px solid var(--print-border);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.78rem;
 }
 
-.footer-card-title {
-  font-size: 0.8rem;
+.footer-card-label {
   font-weight: 700;
-  margin: 0 0 12px;
+  color: var(--print-text);
+  white-space: nowrap;
+}
+
+.footer-stats-inline {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   color: var(--print-text-muted);
 }
 
-.footer-stats {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 20px;
+.footer-stats-inline strong {
+  color: var(--print-text);
 }
 
-.f-stat {
-  display: flex;
-  flex-direction: column;
-  min-width: 60px;
-}
-
-.f-val {
-  font-size: 1.25rem;
-  font-weight: 700;
-  display: flex;
-  align-items: baseline;
-  gap: 1px;
-}
-
-.f-val small {
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--print-text-muted);
-}
-
-.f-lab {
-  font-size: 0.7rem;
-  font-weight: 600;
-  color: var(--print-text-muted);
+.f-stat-divider {
+  opacity: 0.4;
 }
 
 .report-page-footer {

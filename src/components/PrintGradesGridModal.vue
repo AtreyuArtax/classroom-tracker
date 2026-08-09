@@ -3,7 +3,7 @@
     :show="true"
     :show-x="false"
     @close="$emit('close')"
-    :max-width="form.showAssessments ? '1000px' : '750px'"
+    :max-width="(form.orientation === 'landscape' || form.showAssessments) ? '1080px' : '780px'"
     title="Print Final Grades Grid"
   >
     <template #header>
@@ -32,6 +32,16 @@
             <label class="setup__label">
               Document Title
               <input v-model="form.title" class="setup__input" required placeholder="e.g. Final Grades Grid" />
+            </label>
+
+            <label v-if="isSplitClass" class="setup__label">
+              Students to Include
+              <select v-model="selectedCohort" class="setup__input">
+                <option value="all">Entire Class Roster ({{ totalStudentsCount }})</option>
+                <option v-for="c in cohortOptionsOnly" :key="c" :value="c">
+                  {{ c }} Only ({{ countForCohort(c) }})
+                </option>
+              </select>
             </label>
             
             <label class="setup__label">
@@ -248,18 +258,23 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, nextTick, onMounted } from 'vue'
+import { ref, computed, watch, nextTick, onMounted, toRef } from 'vue'
 import { Printer, X, Eye, AlertTriangle } from 'lucide-vue-next'
 import BaseModal from './BaseModal.vue'
 import { assessments, gradeMap, selectedMilestone, filteredMilestones } from '../composables/useGradebook.js'
+import { usePrintOptions } from '../composables/usePrintOptions.js'
 
 const props = defineProps({
   classRecord: { type: Object, required: true },
   classGrades: { type: Object, required: true },
-  teacherName: { type: String, default: '' }
+  teacherName: { type: String, default: '' },
+  initialCohort: { type: String, default: 'all' }
 })
 
 const emit = defineEmits(['close'])
+
+const classRecordRef = computed(() => props.classRecord)
+const { selectedCohort, isSplitClass, availableSubCohorts, filterStudents, getSubheader: buildSubheader, isElementary } = usePrintOptions(classRecordRef, props.initialCohort)
 
 const isPrinting = ref(false)
 const mounted = ref(false)
@@ -279,12 +294,29 @@ const form = ref({
   assessmentScoreFormat: 'raw'
 })
 
-const sortedStudents = computed(() => {
+const cohortOptionsOnly = computed(() => {
+  return availableSubCohorts.value.filter(c => c !== 'all')
+})
+
+const allStudentsList = computed(() => {
   if (!props.classRecord.students) return []
   return Object.entries(props.classRecord.students)
     .filter(([id, s]) => !s.archived)
     .map(([id, s]) => ({ studentId: id, ...s }))
-    .sort((a, b) => a.lastName.localeCompare(b.lastName))
+})
+
+const totalStudentsCount = computed(() => allStudentsList.value.length)
+
+function countForCohort(cohortTag) {
+  const isElem = isElementary.value
+  return allStudentsList.value.filter(s => {
+    const tag = isElem ? s.gradeLevel : s.courseCode
+    return tag === cohortTag
+  }).length
+}
+
+const sortedStudents = computed(() => {
+  return filterStudents(allStudentsList.value, selectedCohort.value)
 })
 
 const sortedAssessments = computed(() => {
@@ -302,6 +334,17 @@ const sortedAssessments = computed(() => {
       return a.categoryId !== 'sbar_general'
     }
   })
+
+  // Filter out assessments targeted exclusively at a different sub-cohort
+  if (selectedCohort.value && selectedCohort.value !== 'all') {
+    const isElem = isElementary.value
+    list = list.filter(a => {
+      const targetTag = isElem ? a.gradeLevel : (a.targetCourseCode || a.gradeLevel)
+      if (!targetTag || targetTag === 'ALL' || targetTag === 'all') return true
+      return targetTag === selectedCohort.value
+    })
+  }
+
   if (asOf) {
     list = list.filter(a => a.date <= asOf)
   }
@@ -309,13 +352,7 @@ const sortedAssessments = computed(() => {
 })
 
 const subheader = computed(() => {
-  const c = props.classRecord
-  const parts = []
-  if (c.name) parts.push(c.name)
-  if (c.semester) parts.push(c.semester)
-  if (c.year) parts.push(c.year)
-  if (props.teacherName) parts.push(`Teacher: ${props.teacherName}`)
-  return parts.join(' - ')
+  return buildSubheader(props.teacherName ? `Teacher: ${props.teacherName}` : '')
 })
 
 const formattedDate = computed(() => {

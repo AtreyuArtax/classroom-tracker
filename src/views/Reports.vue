@@ -144,6 +144,7 @@
       :sidebar-students="sidebarStudents"
       :sidebar-class-id="sidebarClassId"
       :report-class="reportClass"
+      :initial-cohort="activeSubCohortFilter"
       @close="showPrintModal = false"
     />
 
@@ -153,6 +154,7 @@
       :class-record="reportClass"
       :class-grades="classGrades"
       :teacher-name="teacherName"
+      :initial-cohort="activeSubCohortFilter"
       @close="showPrintGridModal = false"
     />
 
@@ -165,6 +167,7 @@
       :class-grades="classGrades"
       :teacher-name="teacherName"
       :events="allClassEvents"
+      :initial-cohort="activeSubCohortFilter"
       @close="showPrintExpectationsModal = false"
     />
 
@@ -172,6 +175,8 @@
     <PrintClassListModal
       v-if="showPrintClassListModal"
       :class-record="reportClass"
+      :teacher-name="teacherName"
+      :initial-cohort="activeSubCohortFilter"
       @close="showPrintClassListModal = false"
     />
 

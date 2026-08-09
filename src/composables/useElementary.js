@@ -72,9 +72,7 @@ export function getEffectiveClassRecord(classRecord, targetSubjectId = null, tar
 
   const effectiveCategories = (activeSub.gradebookCategories && activeSub.gradebookCategories.length > 0)
     ? activeSub.gradebookCategories
-    : ((classRecord.gradebookCategories && classRecord.gradebookCategories.length > 0)
-        ? classRecord.gradebookCategories
-        : DEFAULT_TRADITIONAL_CATEGORIES)
+    : DEFAULT_TRADITIONAL_CATEGORIES
 
   return {
     ...classRecord,

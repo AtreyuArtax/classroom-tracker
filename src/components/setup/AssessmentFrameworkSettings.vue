@@ -212,9 +212,11 @@
     <!-- Expectation Importer Modal -->
     <ExpectationImportModal
       v-model="showImportModal"
-      :existing-units="activeClass.gradebookUnits || []"
+      :existing-units="activeUnits || []"
+      :existing-count="totalExpectationsCount"
       :class-type="activeClass.classType || 'secondary'"
       @import="onExpectationImport"
+      @clear="onClearExpectationsFromModal"
     />
   </div>
 </template>
@@ -263,6 +265,10 @@ function onExpectationImport(payload) {
   } else if (!activeClass.value.gradebookUnits) {
     activeClass.value.gradebookUnits = []
     targetUnitsList = activeClass.value.gradebookUnits
+  }
+
+  if (payload.importBehavior === 'replace') {
+    targetUnitsList.length = 0
   }
 
   if (payload.mode === 'auto-units') {
@@ -452,6 +458,26 @@ const activeUnits = computed(() => {
   }
   return activeClass.value?.gradebookUnits || []
 })
+
+const totalExpectationsCount = computed(() => {
+  return (activeUnits.value || []).reduce((acc, u) => acc + (u.expectations?.length || 0), 0)
+})
+
+async function onClearExpectationsFromModal() {
+  const ok = await confirm(
+    `Clear all ${totalExpectationsCount.value} expectations?`,
+    'Clear Expectations',
+    { confirmLabel: 'Clear Expectations', danger: true }
+  )
+  if (!ok) return
+  if (availableCourseSections.value.length > 1 && activeCourseSection.value) {
+    activeClass.value.courseFrameworks[activeCourseSection.value].gradebookUnits = []
+  } else {
+    activeClass.value.gradebookUnits = []
+  }
+  await saveGradebookSettings()
+  showImportModal.value = false
+}
 
 const totalWeight = computed(() => {
   if (!activeCategories.value) return 0

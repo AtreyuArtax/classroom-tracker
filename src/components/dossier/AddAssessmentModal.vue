@@ -107,7 +107,7 @@
               <label class="form-label">Category</label>
               <select v-model="newAssessment.categoryId" class="form-input" required>
                 <option v-for="cat in effectiveClass?.gradebookCategories" :key="cat.categoryId" :value="cat.categoryId">
-                  {{ cat.name }} ({{ cat.weight }}%)
+                  {{ cat.name }}
                 </option>
               </select>
             </div>

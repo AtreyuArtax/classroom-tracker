@@ -82,7 +82,6 @@
             </button>
 
             <button
-              v-if="sub.gradebookUnits && sub.gradebookUnits.length > 0"
               type="button"
               class="elementary-subjects__btn-ghost"
               style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.8rem; padding: 6px 10px;"
@@ -90,7 +89,7 @@
               @click="expandedStrandSubjectId = expandedStrandSubjectId === sub.subjectId ? null : sub.subjectId"
             >
               <ChevronDown :size="14" :style="{ transform: expandedStrandSubjectId === sub.subjectId ? 'rotate(180deg)' : 'none' }" />
-              <span>Strands</span>
+              <span>Strands ({{ sub.gradebookUnits?.length || 0 }})</span>
             </button>
 
             <button
@@ -181,11 +180,14 @@
         </div>
 
         <!-- Expandable Strand / Unit Editor -->
-        <div v-if="expandedStrandSubjectId === sub.subjectId && sub.gradebookUnits && sub.gradebookUnits.length > 0" class="elementary-subjects__strands-editor">
+        <div v-if="expandedStrandSubjectId === sub.subjectId" class="elementary-subjects__strands-editor">
           <div class="elementary-subjects__strands-header">
-            <strong>Edit Strand &amp; Unit Titles (short names display on Gradebook Pills):</strong>
+            <strong>Edit Strand &amp; Unit Titles for {{ sub.name }}:</strong>
           </div>
-          <div v-for="unit in sub.gradebookUnits" :key="unit.unitId" class="elementary-subjects__strand-row">
+          <div v-if="!sub.gradebookUnits || sub.gradebookUnits.length === 0" style="font-size: 0.85rem; color: var(--text-secondary); font-style: italic; padding: 4px 0 8px;">
+            No strands created yet. Click "+ Add Strand / Unit" below to create custom strands for this subject.
+          </div>
+          <div v-for="unit in (sub.gradebookUnits || [])" :key="unit.unitId" class="elementary-subjects__strand-row">
             <span v-if="unit.gradeLevel" class="elementary-subjects__strand-grade">{{ unit.gradeLevel.replace('Grade ', 'Gr ') }}</span>
             <input 
               :value="cleanUnitName(unit.name)" 
@@ -196,6 +198,20 @@
               @blur="saveStrandName(sub.subjectId, unit.unitId, unit.name)"
               @keyup.enter="saveStrandName(sub.subjectId, unit.unitId, unit.name)"
             />
+            <button 
+              type="button" 
+              class="elementary-subjects__btn-delete"
+              title="Remove Strand"
+              @click="removeStrandUnit(sub.subjectId, unit.unitId)"
+            >
+              <Trash2 :size="14" />
+            </button>
+          </div>
+
+          <div style="margin-top: 8px; display: flex; justify-content: flex-start;">
+            <button type="button" class="elementary-subjects__btn-ghost" style="font-size: 0.8rem; padding: 4px 10px;" @click="addStrandUnit(sub.subjectId)">
+              + Add Strand / Unit
+            </button>
           </div>
         </div>
       </div>
@@ -208,9 +224,11 @@
       :target-subject-id="activeImportSubject?.subjectId"
       :target-subject-name="activeImportSubject?.name"
       :existing-units="activeImportSubject?.gradebookUnits || []"
+      :existing-count="activeImportSubject?.expectations?.length || 0"
       :initial-preset-id="getSubjectPresetMatch(activeImportSubject)?.presetId"
       :class-type="'elementary'"
       @import="handleExpectationImport"
+      @clear="handleClearFromModal"
     />
 
     <!-- Modal: Add Custom Subject -->
@@ -260,6 +278,7 @@ import SubjectIcon from '../SubjectIcon.vue'
 import { useClassroom } from '../../composables/useClassroom.js'
 import { activeSubjectId } from '../../composables/useClassroomState.js'
 import { DEFAULT_ELEMENTARY_SUBJECTS, DEFAULT_TRADITIONAL_CATEGORIES } from '../../utils/elementarySubjects.js'
+import { getAssessmentsByClass } from '../../db/gradebookService.js'
 import { 
   parseGradesFromClass,
   detectGradeFromClassName, 
@@ -269,6 +288,9 @@ import {
   findElementaryPresets 
 } from '../../composables/useElementary.js'
 import ExpectationImportModal from './ExpectationImportModal.vue'
+import { useMessage } from '../../composables/useMessage.js'
+
+const { confirm: confirmMessage } = useMessage()
 
 const { activeClass, updateActiveClass } = useClassroom()
 
@@ -292,6 +314,33 @@ function saveStrandName(subjectId, unitId, newName) {
     return { ...s, gradebookUnits: units }
   })
   updateActiveClass({ subjects: updated })
+}
+
+async function addStrandUnit(subjectId) {
+  const existing = currentSubjects.value.map(s => {
+    if (s.subjectId === subjectId) {
+      const units = s.gradebookUnits ? [...s.gradebookUnits] : []
+      units.push({
+        unitId: `unit_${Date.now()}_${Math.floor(Math.random()*1000)}`,
+        name: `Strand ${units.length + 1}`,
+        weight: 0
+      })
+      return { ...s, gradebookUnits: units }
+    }
+    return s
+  })
+  await updateActiveClass({ subjects: existing })
+}
+
+async function removeStrandUnit(subjectId, unitId) {
+  const existing = currentSubjects.value.map(s => {
+    if (s.subjectId === subjectId) {
+      const units = (s.gradebookUnits || []).filter(u => u.unitId !== unitId)
+      return { ...s, gradebookUnits: units }
+    }
+    return s
+  })
+  await updateActiveClass({ subjects: existing })
 }
 
 const newSubject = ref({
@@ -332,6 +381,31 @@ function openExpectationModal(sub) {
   showExpectationModal.value = true
 }
 
+async function clearSubjectExpectations(subjectId) {
+  const sub = currentSubjects.value.find(s => s.subjectId === subjectId)
+  if (!sub) return
+  const ok = await confirmMessage(
+    `Clear all ${sub.expectations?.length || 0} expectations for ${sub.name}?`,
+    `Clear Expectations — ${sub.name}`,
+    { confirmLabel: 'Clear Expectations', danger: true }
+  )
+  if (!ok) return
+
+  const updated = currentSubjects.value.map(s => {
+    if (s.subjectId === subjectId) {
+      return { ...s, expectations: [] }
+    }
+    return s
+  })
+  await updateActiveClass({ subjects: updated })
+}
+
+async function handleClearFromModal() {
+  if (!activeImportSubject.value) return
+  await clearSubjectExpectations(activeImportSubject.value.subjectId)
+  showExpectationModal.value = false
+}
+
 async function handleExpectationImport(payload) {
   const targetSubId = payload.targetSubjectId || activeImportSubject.value?.subjectId
   if (!targetSubId) return
@@ -339,20 +413,23 @@ async function handleExpectationImport(payload) {
   const existing = currentSubjects.value.map(sub => {
     if (sub.subjectId !== targetSubId) return sub
 
+    const isReplace = payload.importBehavior === 'replace'
+    const targetSub = isReplace ? { ...sub, gradebookUnits: [], expectations: [] } : sub
+
     if (payload.mode === 'auto-units') {
-      return populateSubjectFromPreset(sub, payload.preset, payload.granularity)
+      return populateSubjectFromPreset(targetSub, payload.preset, payload.granularity)
     }
 
     if (payload.mode === 'attach-expectations') {
-      let units = [...(sub.gradebookUnits || [])]
+      let units = isReplace ? [] : [...(sub.gradebookUnits || [])]
       let targetUnitId = payload.targetUnitChoice
 
-      if (targetUnitId === 'new') {
+      if (targetUnitId === 'new' || !targetUnitId) {
         targetUnitId = `unit_${Date.now()}`
         units.push({ unitId: targetUnitId, name: payload.newUnitName || 'Unit 1', weight: 0 })
       }
 
-      const existingExps = [...(sub.expectations || [])]
+      const existingExps = isReplace ? [] : [...(sub.expectations || [])]
       const newExps = (payload.expectations || []).map(e => ({
         expectationId: `exp_${Date.now()}_${e.code}`,
         unitId: targetUnitId,
@@ -404,15 +481,14 @@ async function togglePreset(preset) {
   const existing = [...currentSubjects.value]
   const idx = existing.findIndex(s => s.subjectId === preset.subjectId)
   if (idx >= 0) {
-    if (existing.length <= 1) return // Don't allow removing last subject
-    existing.splice(idx, 1)
+    await removeSubject(preset.subjectId)
   } else {
     const toAdd = JSON.parse(JSON.stringify(preset))
     const presets = getSubjectPresetMatches(toAdd)
     const populated = presets.length > 0 ? populateSubjectFromPresets(toAdd, presets, 'all') : toAdd
     existing.push(populated)
+    await updateActiveClass({ subjects: existing })
   }
-  await updateActiveClass({ subjects: existing })
 }
 
 function getSubjectTotalWeight(sub) {
@@ -481,7 +557,46 @@ async function updateSubjectFramework(subjectId, framework) {
 }
 
 async function removeSubject(subjectId) {
-  if (currentSubjects.value.length <= 1) return
+  if (currentSubjects.value.length <= 1) {
+    await confirmMessage(
+      'Homeroom rosters must retain at least one active subject. Please add another subject before removing this one.',
+      'Cannot Remove Subject'
+    )
+    return
+  }
+
+  const sub = currentSubjects.value.find(s => s.subjectId === subjectId)
+  if (!sub) return
+
+  const expCount = sub.expectations?.length || 0
+  const strandCount = sub.gradebookUnits?.length || 0
+
+  let asmtCount = 0
+  if (activeClass.value?.classId) {
+    try {
+      const asmts = await getAssessmentsByClass(activeClass.value.classId)
+      asmtCount = asmts.filter(a => a.subjectId === subjectId || a.subject === sub.name).length
+    } catch (e) {
+      console.warn('Could not check subject assessments:', e)
+    }
+  }
+
+  let confirmMsg = `Are you sure you want to remove ${sub.name}?`
+  if (expCount > 0 || strandCount > 0 || asmtCount > 0) {
+    const details = []
+    if (asmtCount > 0) details.push(`${asmtCount} gradebook assessment(s)`)
+    if (expCount > 0) details.push(`${expCount} expectation(s)`)
+    if (strandCount > 0) details.push(`${strandCount} strand(s)/unit(s)`)
+    confirmMsg = `Remove ${sub.name}? Warning: This subject has ${details.join(', ')} configured. Removing it will delete all units, strands, categories, expectations, and grade data for this subject.`
+  }
+
+  const ok = await confirmMessage(
+    confirmMsg,
+    `Remove Subject — ${sub.name}`,
+    { confirmLabel: 'Remove Subject', danger: true }
+  )
+  if (!ok) return
+
   const existing = currentSubjects.value.filter(s => s.subjectId !== subjectId)
   await updateActiveClass({ subjects: existing })
 }

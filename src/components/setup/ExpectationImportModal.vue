@@ -188,6 +188,20 @@
               </div>
             </div>
 
+            <div class="eim-field">
+              <label class="eim-label">Import Action</label>
+              <div class="eim-radio-group eim-radio-group--row">
+                <label class="eim-radio-label eim-radio-label--compact">
+                  <input type="radio" v-model="importBehavior" value="replace" />
+                  <span><strong>Replace existing expectations</strong> (Resets previous list)</span>
+                </label>
+                <label class="eim-radio-label eim-radio-label--compact">
+                  <input type="radio" v-model="importBehavior" value="append" />
+                  <span><strong>Append to existing expectations</strong></span>
+                </label>
+              </div>
+            </div>
+
             <!-- ELEMENTARY: Auto-organizes into strands -->
             <template v-if="classType === 'elementary'">
               <div class="eim-preset-info-banner">
@@ -310,15 +324,26 @@
       </div>
 
       <!-- Footer Actions -->
-      <div class="eim-footer">
-        <button class="eim-btn eim-btn--secondary" @click="onClose">Cancel</button>
+      <div class="eim-footer" style="display: flex; align-items: center; justify-content: space-between;">
         <button 
-          class="eim-btn eim-btn--primary" 
-          :disabled="!canSubmit" 
-          @click="onSubmit"
+          v-if="existingCount > 0"
+          type="button" 
+          class="eim-btn-clear" 
+          style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.825rem; padding: 6px 12px; border-radius: 6px; border: 1px solid #fca5a5; background: #fef2f2; color: #dc2626; cursor: pointer; font-weight: 600;"
+          @click="emit('clear')"
         >
-          Import Expectations
+          <Trash2 :size="14" /> Clear Current Expectations ({{ existingCount }})
         </button>
+        <div style="display: flex; align-items: center; gap: 8px; margin-left: auto;">
+          <button class="eim-btn eim-btn--secondary" @click="onClose">Cancel</button>
+          <button 
+            class="eim-btn eim-btn--primary" 
+            :disabled="!canSubmit" 
+            @click="onSubmit"
+          >
+            Import Expectations
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -326,19 +351,20 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue'
-import { BookOpen, X, Zap, Search, Check, Filter } from 'lucide-vue-next'
+import { BookOpen, X, Zap, Search, Check, Filter, Trash2 } from 'lucide-vue-next'
 import { curriculumPresets } from '../../data/curriculum/index.js'
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
   existingUnits: { type: Array, default: () => [] },
+  existingCount: { type: Number, default: 0 },
   targetSubjectId: { type: String, default: null },
   targetSubjectName: { type: String, default: '' },
   initialPresetId: { type: String, default: null },
   classType: { type: String, default: 'secondary' } // 'elementary' | 'secondary'
 })
 
-const emit = defineEmits(['update:modelValue', 'import'])
+const emit = defineEmits(['update:modelValue', 'import', 'clear'])
 
 const activeTab = ref('presets') // 'presets' | 'paste'
 
@@ -351,6 +377,7 @@ const searchQuery = ref('')
 // Presets state
 const selectedPresetId = ref(null)
 const granularity = ref('overall') // 'overall' | 'all'
+const importBehavior = ref('replace') // 'replace' | 'append'
 const selectedExpectations = ref([])
 
 // Shared unit state
@@ -599,6 +626,7 @@ function onSubmit() {
         mode: 'auto-units',
         preset: selectedPreset.value,
         granularity: granularity.value,
+        importBehavior: importBehavior.value,
         targetSubjectId: props.targetSubjectId
       })
     } else {
@@ -607,6 +635,7 @@ function onSubmit() {
         targetUnitChoice: targetUnitChoice.value,
         newUnitName: newUnitName.value.trim(),
         expectations: selectedExpectations.value,
+        importBehavior: importBehavior.value,
         targetSubjectId: props.targetSubjectId
       })
     }
@@ -615,7 +644,8 @@ function onSubmit() {
       mode: 'attach-expectations',
       targetUnitChoice: targetUnitChoice.value,
       newUnitName: newUnitName.value.trim(),
-      expectations: parsedPasteExpectations.value
+      expectations: parsedPasteExpectations.value,
+      importBehavior: importBehavior.value
     })
   }
 

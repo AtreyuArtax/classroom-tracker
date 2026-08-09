@@ -364,6 +364,7 @@
 <script setup>
 import { ref, computed, watch, nextTick } from 'vue'
 import { getEffectiveClassRecord } from '../composables/useElementary.js'
+import { activeSubjectId } from '../composables/useClassroomState.js'
 import { 
   activeClassRecord, 
   assessments, 
@@ -567,15 +568,19 @@ function getUnitColor(unitId) {
 }
 
 function getCategoryColor(categoryId) {
-  if (!categoryId || !activeClassRecord.value?.gradebookCategories) return '#64748b'
-  const idx = activeClassRecord.value.gradebookCategories.findIndex(c => c.categoryId === categoryId)
+  const eff = getEffectiveClassRecord(activeClassRecord.value, activeSubjectId.value, selectedCourseFilter.value)
+  const cats = eff?.gradebookCategories || activeClassRecord.value?.gradebookCategories
+  if (!categoryId || !cats) return '#64748b'
+  const idx = cats.findIndex(c => c.categoryId === categoryId)
   if (idx < 0) return '#64748b'
   return CATEGORY_COLORS[idx % CATEGORY_COLORS.length]
 }
 
 function getCategoryName(categoryId) {
-  if (!categoryId || !activeClassRecord.value?.gradebookCategories) return ''
-  return activeClassRecord.value.gradebookCategories.find(c => c.categoryId === categoryId)?.name ?? ''
+  const eff = getEffectiveClassRecord(activeClassRecord.value, activeSubjectId.value, selectedCourseFilter.value)
+  const cats = eff?.gradebookCategories || activeClassRecord.value?.gradebookCategories
+  if (!categoryId || !cats) return ''
+  return cats.find(c => c.categoryId === categoryId)?.name ?? ''
 }
 
 function cleanUnitPillName(name) {
@@ -620,7 +625,7 @@ const availableGradeFilters = computed(() => {
 })
 
 const availableUnits = computed(() => {
-  const eff = getEffectiveClassRecord(activeClassRecord.value, null, selectedCourseFilter.value)
+  const eff = getEffectiveClassRecord(activeClassRecord.value, activeSubjectId.value, selectedCourseFilter.value)
   const units = eff?.gradebookUnits || []
   if (selectedGradeFilter.value === 'all' || availableGradeFilters.value.length <= 1) {
     return units
@@ -635,10 +640,14 @@ const availableUnits = computed(() => {
 })
 
 const availableCategories = computed(() => {
-  return activeClassRecord.value?.gradebookCategories || []
+  const eff = getEffectiveClassRecord(activeClassRecord.value, activeSubjectId.value, selectedCourseFilter.value)
+  return eff?.gradebookCategories || activeClassRecord.value?.gradebookCategories || []
 })
 
-const isSBAR = computed(() => activeClassRecord.value?.gradingFramework === 'sbar')
+const isSBAR = computed(() => {
+  const eff = getEffectiveClassRecord(activeClassRecord.value, activeSubjectId.value)
+  return eff?.gradingFramework === 'sbar'
+})
 
 const sortedAssessments = computed(() => {
   let list = [...assessments.value].filter(a => {

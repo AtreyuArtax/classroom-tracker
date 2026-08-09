@@ -18,6 +18,13 @@
             </div>
           </div>
           <div class="header-actions">
+            <label v-if="isSplitClass" class="setup__label" style="margin: 0; flex-direction: row; align-items: center; gap: 6px; font-size: 0.85rem;">
+              <span>Include:</span>
+              <select v-model="selectedCohort" class="setup__input" style="padding: 4px 8px; font-size: 0.85rem;">
+                <option value="all">Entire Class</option>
+                <option v-for="c in cohortOptionsOnly" :key="c" :value="c">{{ c }} Only</option>
+              </select>
+            </label>
             <button class="reports__btn-primary" @click="doPrint">
               <Printer :size="16" /> Print Audit
             </button>
@@ -34,8 +41,7 @@
           <header class="preview-doc-header">
             <h2>Curriculum Expectation Mastery Audit</h2>
             <div class="doc-meta">
-              <span>Class: <strong>{{ reportClass?.name }}</strong></span> · 
-              <span>Teacher: <strong>{{ teacherName || 'Teacher' }}</strong></span> · 
+              <span>{{ subheader }}</span> · 
               <span>Date: <strong>{{ formattedDate }}</strong></span>
             </div>
           </header>
@@ -125,6 +131,7 @@
 import { ref, computed } from 'vue'
 import { BookOpen, Printer, X } from 'lucide-vue-next'
 import BaseModal from '../BaseModal.vue'
+import { usePrintOptions } from '../../composables/usePrintOptions.js'
 
 const props = defineProps({
   show: { type: Boolean, default: false },
@@ -132,12 +139,24 @@ const props = defineProps({
   assessments: { type: Array, default: () => [] },
   classGrades: { type: Object, default: () => ({}) },
   teacherName: { type: String, default: '' },
-  events: { type: Array, default: () => [] }
+  events: { type: Array, default: () => [] },
+  initialCohort: { type: String, default: 'all' }
 })
 
 defineEmits(['close'])
 
+const classRecordRef = computed(() => props.reportClass)
+const { selectedCohort, isSplitClass, availableSubCohorts, filterStudents, getSubheader: buildSubheader, isElementary } = usePrintOptions(classRecordRef, props.initialCohort)
+
 const isPrinting = ref(false)
+
+const cohortOptionsOnly = computed(() => {
+  return availableSubCohorts.value.filter(c => c !== 'all')
+})
+
+const subheader = computed(() => {
+  return buildSubheader(props.teacherName ? `Teacher: ${props.teacherName}` : '')
+})
 
 const formattedDate = computed(() => {
   return new Date().toLocaleDateString('en-CA', { year: 'numeric', month: 'short', day: 'numeric' })
@@ -155,8 +174,19 @@ const unitsData = computed(() => {
     expAssessmentCounts[expId] = (expAssessmentCounts[expId] || 0) + 1
   })
 
-  Object.values(props.classGrades).forEach(studentGradeObj => {
+  // Filter students based on selectedCohort
+  const studentsMap = props.reportClass?.students || {}
+  const isElem = isElementary.value
+
+  Object.entries(props.classGrades).forEach(([studentId, studentGradeObj]) => {
     if (!studentGradeObj || !studentGradeObj.assessmentGrades) return
+    const st = studentsMap[studentId]
+    if (st && st.archived) return
+    if (selectedCohort.value && selectedCohort.value !== 'all' && st) {
+      const tag = isElem ? st.gradeLevel : st.courseCode
+      if (tag !== selectedCohort.value) return
+    }
+
     Object.entries(studentGradeObj.assessmentGrades).forEach(([assId, markObj]) => {
       if (!markObj || markObj.score === null || markObj.score === undefined) return
       const ass = props.assessments.find(a => String(a.assessmentId) === String(assId))

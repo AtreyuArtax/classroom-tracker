@@ -17,39 +17,34 @@
       <div class="summary-grid">
         <!-- Attendance Stats -->
         <div class="summary-card summary-card--attendance">
-          <h3 class="summary-card-title"><UserX :size="16" /> Attendance</h3>
+          <h3 class="summary-card-title">Attendance</h3>
           <div class="metrics-row">
             <div class="metric">
               <span class="metric-val">{{ stats.absences }}</span>
-              <span class="metric-lab">Absences</span>
-              <span class="metric-sub">{{ stats.absencesPerWeek }} / week</span>
+              <span class="metric-lab">Absences <small>({{ stats.absencesPerWeek }}/wk)</small></span>
             </div>
             <div class="metric">
               <span class="metric-val">{{ stats.lates }}</span>
-              <span class="metric-lab">Lates</span>
-              <span class="metric-sub">{{ stats.latesPerWeek }} / week</span>
+              <span class="metric-lab">Lates <small>({{ stats.latesPerWeek }}/wk)</small></span>
             </div>
             <div class="metric">
               <span class="metric-val">{{ stats.lateMinutes }}<small>m</small></span>
-              <span class="metric-lab">Late Total</span>
-              <span class="metric-sub">Avg {{ stats.avgLateMinutes }}m</span>
+              <span class="metric-lab">Late Total <small>(Avg {{ stats.avgLateMinutes }}m)</small></span>
             </div>
           </div>
         </div>
 
         <!-- Activity Stats -->
         <div class="summary-card summary-card--activity">
-          <h3 class="summary-card-title"><Toilet :size="16" /> Out-of-Class</h3>
+          <h3 class="summary-card-title">Out-of-Class</h3>
           <div class="metrics-row">
             <div class="metric">
               <span class="metric-val">{{ stats.washroomCount }}</span>
-              <span class="metric-lab">Total Trips</span>
-              <span class="metric-sub">{{ stats.washroomPerWeek }} / week</span>
+              <span class="metric-lab">Total Trips <small>({{ stats.washroomPerWeek }}/wk)</small></span>
             </div>
             <div class="metric">
               <span class="metric-val">{{ stats.washroomMinutes }}<small>m</small></span>
-              <span class="metric-lab">Total Time</span>
-              <span class="metric-sub">Avg {{ stats.avgWashroomMinutes }}m</span>
+              <span class="metric-lab">Total Time <small>(Avg {{ stats.avgWashroomMinutes }}m)</small></span>
             </div>
           </div>
         </div>
@@ -102,7 +97,6 @@
 
 <script setup>
 import { computed, ref, onMounted } from 'vue'
-import { UserX, Clock, Toilet } from 'lucide-vue-next'
 import { useClassroom } from '../../composables/useClassroom.js'
 import { getEventsByStudent, toMinutes } from '../../db/eventService.js'
 
@@ -330,30 +324,27 @@ const stats = computed(() => {
 }
 
 .summary-card {
-  padding: 10px 14px; /* Reduced */
-  border: 1.5px solid var(--print-border);
-  border-radius: 10px;
+  padding: 6px 12px;
+  border: 1px solid var(--print-border);
+  border-radius: 6px;
   background: #f8fafc;
 }
 
-.summary-card--attendance { border-left: 5px solid var(--color-late); }
-.summary-card--activity { border-left: 5px solid var(--color-washroom); }
+.summary-card--attendance { border-left: 4px solid var(--color-late); }
+.summary-card--activity { border-left: 4px solid var(--color-washroom); }
 
 .summary-card-title {
-  font-size: 0.75rem; /* Reduced */
+  font-size: 0.68rem;
   font-weight: 800;
   text-transform: uppercase;
   color: var(--print-text-muted);
-  margin: 0 0 8px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
+  margin: 0 0 4px;
 }
 
 .metrics-row {
   display: flex;
   justify-content: space-between;
-  gap: 8px; /* Reduced */
+  gap: 12px;
 }
 
 .metric {
@@ -361,10 +352,10 @@ const stats = computed(() => {
   flex-direction: column;
 }
 
-.metric-val { font-size: 1.1rem; font-weight: 800; line-height: 1; }
-.metric-val small { font-size: 0.65rem; color: var(--print-text-muted); margin-left: 1px; }
-.metric-lab { font-size: 0.6rem; font-weight: 700; color: var(--print-text-muted); text-transform: uppercase; margin-top: 2px; }
-.metric-sub { font-size: 0.55rem; color: var(--print-text-muted); font-style: italic; }
+.metric-val { font-size: 0.95rem; font-weight: 800; line-height: 1; }
+.metric-val small { font-size: 0.6rem; color: var(--print-text-muted); margin-left: 1px; }
+.metric-lab { font-size: 0.58rem; font-weight: 700; color: var(--print-text-muted); text-transform: uppercase; margin-top: 2px; }
+.metric-lab small { font-weight: 500; font-style: italic; text-transform: none; opacity: 0.85; }
 
 /* --- Grids --- */
 .monthly-grids-container {

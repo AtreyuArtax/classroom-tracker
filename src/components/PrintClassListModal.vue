@@ -25,6 +25,17 @@
           Sheet Title
           <input v-model="form.title" class="setup__input" required placeholder="e.g. ATTENDANCE January 2024" />
         </label>
+
+        <label v-if="isSplitClass" class="setup__label" style="margin-top: 12px;">
+          Students to Include
+          <select v-model="selectedCohort" class="setup__input">
+            <option value="all">Entire Class Roster ({{ totalStudentsCount }})</option>
+            <option v-for="c in cohortOptionsOnly" :key="c" :value="c">
+              {{ c }} Only ({{ countForCohort(c) }})
+            </option>
+          </select>
+        </label>
+
         <div class="modal-form-grid">
           <label class="setup__label">
             Blank Columns
@@ -99,16 +110,21 @@
 </template>
 
 <script setup>
-import { ref, computed, nextTick, onMounted } from 'vue'
+import { ref, computed, nextTick, onMounted, toRef } from 'vue'
 import { Printer, X } from 'lucide-vue-next'
 import BaseModal from './BaseModal.vue'
+import { usePrintOptions } from '../composables/usePrintOptions.js'
 
 const props = defineProps({
   classRecord: { type: Object, required: true },
-  teacherName: { type: String, default: '' }
+  teacherName: { type: String, default: '' },
+  initialCohort: { type: String, default: 'all' }
 })
 
 const emit = defineEmits(['close'])
+
+const classRecordRef = computed(() => props.classRecord)
+const { selectedCohort, isSplitClass, availableSubCohorts, filterStudents, getSubheader: buildSubheader, isElementary } = usePrintOptions(classRecordRef, props.initialCohort)
 
 const isPrinting = ref(false)
 const mounted = ref(false)
@@ -130,6 +146,31 @@ const form = ref({
   targetTotalRows: 35 // Target 35 rows to fit Letter paper with adjusted header height
 })
 
+const cohortOptionsOnly = computed(() => {
+  return availableSubCohorts.value.filter(c => c !== 'all')
+})
+
+const allStudentsList = computed(() => {
+  if (!props.classRecord.students) return []
+  return Object.entries(props.classRecord.students)
+    .filter(([id, s]) => !s.archived)
+    .map(([id, s]) => ({ studentId: id, ...s }))
+})
+
+const totalStudentsCount = computed(() => allStudentsList.value.length)
+
+function countForCohort(cohortTag) {
+  const isElem = isElementary.value
+  return allStudentsList.value.filter(s => {
+    const tag = isElem ? s.gradeLevel : s.courseCode
+    return tag === cohortTag
+  }).length
+}
+
+const sortedStudents = computed(() => {
+  return filterStudents(allStudentsList.value, selectedCohort.value)
+})
+
 // Watch for changes in class/header and auto-calculate footer rows
 const effectiveFooterRows = computed(() => {
   if (!form.value.autoFill) return form.value.footerRows
@@ -137,19 +178,8 @@ const effectiveFooterRows = computed(() => {
   return Math.max(0, form.value.targetTotalRows - currentCount)
 })
 
-const sortedStudents = computed(() => {
-  if (!props.classRecord.students) return []
-  return Object.values(props.classRecord.students)
-    .sort((a,b) => a.lastName.localeCompare(b.lastName))
-})
-
 const subheader = computed(() => {
-  const c = props.classRecord
-  const parts = []
-  if (c.name) parts.push(c.name)
-  if (c.periodNumber) parts.push(`Period ${c.periodNumber}`)
-  if (props.teacherName) parts.push(props.teacherName)
-  return parts.join(' - ')
+  return buildSubheader(props.teacherName ? `Teacher: ${props.teacherName}` : '')
 })
 
 function handlePrint() {

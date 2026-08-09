@@ -135,10 +135,10 @@ export async function logAttendanceEvent(studentId, code) {
                 return
             }
 
-            const periodStart = activeClass.value.periodStartTime
+            const periodStart = activeClass.value?.periodStartTime || periodStartTimes.value?.[1] || '08:50'
             if (!periodStart) {
                 const { alert } = useMessage()
-                await alert('Set a period start time in Setup to calculate lateness.')
+                await alert('Set a start time in Setup to calculate lateness.')
                 return
             }
 
@@ -250,9 +250,11 @@ export async function reconcileStaleTrips() {
     const sortedPeriods = Object.keys(startTimes).map(Number).sort((a, b) => a - b)
 
     for (const cls of classList.value) {
+        const isElementary = cls.classType === 'elementary'
         const classPeriod = Number(cls.periodNumber)
         const classStartMins = periodMinutes[classPeriod]
-        if (classStartMins === undefined) continue
+
+        if (!isElementary && classStartMins === undefined) continue
 
         const nextPeriodNum = sortedPeriods.find(p => p > classPeriod)
         const elapsedSinceCheckOutLimit = 90 * 60 * 1000
@@ -265,25 +267,29 @@ export async function reconcileStaleTrips() {
                 const isDifferentDay = !states.outTime.startsWith(todayStr)
                 const elapsedMs = now.getTime() - outDate.getTime()
 
-                let periodEndTime = null
-                if (nextPeriodNum && startTimes[nextPeriodNum]) {
-                    const [h, m] = startTimes[nextPeriodNum].split(':').map(Number)
-                    const d = new Date(states.outTime)
-                    d.setHours(h, m, 0, 0)
-                    periodEndTime = d
-                } else {
-                    const [h, m] = (cls.periodStartTime || '08:00').split(':').map(Number)
-                    const d = new Date(states.outTime)
-                    d.setHours(h, m, 0, 0)
-                    d.setTime(d.getTime() + 75 * 60 * 1000)
-                    periodEndTime = d
+                let isStale = isDifferentDay || elapsedMs > elapsedSinceCheckOutLimit
+
+                if (!isElementary) {
+                    let periodEndTime = null
+                    if (nextPeriodNum && startTimes[nextPeriodNum]) {
+                        const [h, m] = startTimes[nextPeriodNum].split(':').map(Number)
+                        const d = new Date(states.outTime)
+                        d.setHours(h, m, 0, 0)
+                        periodEndTime = d
+                    } else {
+                        const [h, m] = (cls.periodStartTime || periodStartTimes.value?.[1] || '08:00').split(':').map(Number)
+                        const d = new Date(states.outTime)
+                        d.setHours(h, m, 0, 0)
+                        d.setTime(d.getTime() + 75 * 60 * 1000)
+                        periodEndTime = d
+                    }
+
+                    const periodHasEndedSinceCheckout = outDate.getTime() < periodEndTime.getTime() && now.getTime() >= periodEndTime.getTime()
+                    if (periodHasEndedSinceCheckout) isStale = true
                 }
 
-                const periodHasEndedSinceCheckout = outDate.getTime() < periodEndTime.getTime() && now.getTime() >= periodEndTime.getTime()
-                const isStale = isDifferentDay || periodHasEndedSinceCheckout || elapsedMs > elapsedSinceCheckOutLimit
-
                 if (isStale) {
-                    let durationMs = periodEndTime.getTime() - outDate.getTime()
+                    let durationMs = periodEndTime ? (periodEndTime.getTime() - outDate.getTime()) : (15 * 60 * 1000)
                     if (durationMs < 0) durationMs = 5 * 60 * 1000
                     const MAX_DURATION_MS = 75 * 60 * 1000
                     if (durationMs > MAX_DURATION_MS) durationMs = MAX_DURATION_MS

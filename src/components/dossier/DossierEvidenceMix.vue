@@ -1,11 +1,11 @@
 <template>
   <div class="evidence-mix" :class="{ 'evidence-mix--print': isPrint }">
-    <div v-if="!isPrint" class="evidence-mix__header">
-      <h4 class="evidence-mix__title">Triangulation of Evidence</h4>
+    <div class="evidence-mix__header">
+      <h4 v-if="!isPrint" class="evidence-mix__title">Triangulation of Evidence</h4>
       <div class="evidence-mix__legend">
-        <span class="legend-item"><span class="dot dot--product"></span> Product</span>
-        <span class="legend-item"><span class="dot dot--obs"></span> Observation</span>
-        <span class="legend-item"><span class="dot dot--conv"></span> Conversation</span>
+        <span class="legend-item"><span class="dot dot--product"></span> Product ({{ Math.round(mix.product || 0) }}%)</span>
+        <span class="legend-item"><span class="dot dot--obs"></span> Observation ({{ Math.round(mix.observation || 0) }}%)</span>
+        <span class="legend-item"><span class="dot dot--conv"></span> Conversation ({{ Math.round(mix.conversation || 0) }}%)</span>
       </div>
     </div>
     
@@ -13,21 +13,21 @@
       <div 
         class="evidence-segment segment--product" 
         :style="{ width: `${mix.product}%` }"
-        :title="`Product: ${mix.product}%`"
+        :title="`Product: ${Math.round(mix.product || 0)}%`"
       ></div>
       <div 
         class="evidence-segment segment--observation" 
         :style="{ width: `${mix.observation}%` }"
-        :title="`Observation: ${mix.observation}%`"
+        :title="`Observation: ${Math.round(mix.observation || 0)}%`"
       ></div>
       <div 
         class="evidence-segment segment--conversation" 
         :style="{ width: `${mix.conversation}%` }"
-        :title="`Conversation: ${mix.conversation}%`"
+        :title="`Conversation: ${Math.round(mix.conversation || 0)}%`"
       ></div>
     </div>
     
-    <div v-if="balanceAlert" class="evidence-mix__alert">
+    <div v-if="balanceAlert && !isPrint" class="evidence-mix__alert">
       <AlertTriangle :size="14" />
       {{ balanceAlert }}
     </div>

@@ -8,7 +8,7 @@
             <Printer class="header-icon" :size="24" />
             <div>
               <h3 class="header-title">Batch Print Progress Reports</h3>
-              <p class="header-subtitle">Generating professional reports for {{ sidebarStudents.length }} students.</p>
+              <p class="header-subtitle">Generating professional reports for {{ filteredBatchStudents.length }} students.</p>
             </div>
           </div>
           <button class="header-close" @click="$emit('close')">
@@ -25,6 +25,16 @@
               </button>
             </div>
             <div class="print-modal__options">
+              <label v-if="isSplitClass" class="setup__label" style="margin-bottom: 8px;">
+                Students to Include
+                <select v-model="selectedCohort" class="setup__input">
+                  <option value="all">Entire Class Roster ({{ sidebarStudents.length }})</option>
+                  <option v-for="c in cohortOptionsOnly" :key="c" :value="c">
+                    {{ c }} Only ({{ countForCohort(c) }})
+                  </option>
+                </select>
+              </label>
+
               <div class="print-modal__section-title">Report Content</div>
               <label class="print-modal__option">
                 <input type="checkbox" v-model="printConfig.includeOverallGrade" />
@@ -64,13 +74,15 @@
               <Activity :size="14" /> LIVE PREVIEW (First Student)
             </header>
             <div class="preview-content">
-              <ProgressReport 
-                v-if="sidebarStudents.length > 0"
-                :student-id="sidebarStudents[0].studentId" 
-                :class-id="sidebarClassId" 
-                :config="printConfig" 
-                :is-batch="false"
-              />
+              <div class="preview-content-wrapper">
+                <ProgressReport 
+                  v-if="filteredBatchStudents.length > 0"
+                  :student-id="filteredBatchStudents[0].studentId" 
+                  :class-id="sidebarClassId" 
+                  :config="printConfig" 
+                  :is-batch="false"
+                />
+              </div>
             </div>
           </div>
 
@@ -94,7 +106,7 @@
       <div class="print-only-container" :class="{ 'print-only-container--active': isSystemPrinting }">
         <template v-if="isSystemPrinting">
           <ProgressReport 
-            v-for="s in sidebarStudents" 
+            v-for="s in filteredBatchStudents" 
             :key="s.studentId"
             :student-id="s.studentId" 
             :class-id="sidebarClassId" 
@@ -108,19 +120,40 @@
 </template>
 
 <script setup>
-import { ref, reactive, watch, nextTick } from 'vue'
+import { ref, reactive, watch, computed, nextTick } from 'vue'
 import { Printer, X, Activity } from 'lucide-vue-next'
 import ProgressReport from '../dossier/ProgressReport.vue'
 import { loadGradebook } from '../../composables/useGradebook.js'
+import { usePrintOptions } from '../../composables/usePrintOptions.js'
 
 const props = defineProps({
   show: { type: Boolean, default: false },
   sidebarStudents: { type: Array, default: () => [] },
   sidebarClassId: { type: String, default: null },
-  reportClass: { type: Object, default: null }
+  reportClass: { type: Object, default: null },
+  initialCohort: { type: String, default: 'all' }
 })
 
 const emit = defineEmits(['close'])
+
+const classRecordRef = computed(() => props.reportClass)
+const { selectedCohort, isSplitClass, availableSubCohorts, filterStudents, isElementary } = usePrintOptions(classRecordRef, props.initialCohort)
+
+const cohortOptionsOnly = computed(() => {
+  return availableSubCohorts.value.filter(c => c !== 'all')
+})
+
+function countForCohort(cohortTag) {
+  const isElem = isElementary.value
+  return props.sidebarStudents.filter(s => {
+    const tag = isElem ? s.gradeLevel : s.courseCode
+    return tag === cohortTag
+  }).length
+}
+
+const filteredBatchStudents = computed(() => {
+  return filterStudents(props.sidebarStudents, selectedCohort.value)
+})
 
 const showPreview = ref(false)
 const isSystemPrinting = ref(false)
@@ -291,8 +324,9 @@ async function triggerBatchPrint() {
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   overflow: hidden;
-  max-height: 350px;
-  overflow-y: auto;
+  max-height: 420px;
+  display: flex;
+  flex-direction: column;
 }
 
 .preview-banner {
@@ -305,6 +339,26 @@ async function triggerBatchPrint() {
   font-weight: 700;
   color: var(--primary);
   border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.preview-content {
+  padding: 16px;
+  background: #cbd5e1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  justify-content: center;
+  flex: 1;
+}
+
+.preview-content-wrapper {
+  transform: scale(0.76);
+  transform-origin: top center;
+  width: 210mm;
+  margin-bottom: -150px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border-radius: 4px;
 }
 
 .report-preview-mini {

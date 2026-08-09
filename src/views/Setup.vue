@@ -580,8 +580,26 @@
       <!-- Behavior Strategy -->
       <BehaviorSettings />
 
-      <!-- Period Defaults -->
-      <div class="setup__card">
+      <!-- Elementary School Start Time -->
+      <div v-if="teachingMode === 'elementary'" class="setup__card">
+        <h2 class="setup__card-title">School Start Time</h2>
+        <p class="setup__hint">Define the official morning bell start time for your homeroom. This will autopopulate when creating or configuring your class.</p>
+        <div style="max-width: 240px; margin-top: 12px;">
+          <label class="setup__label" style="display: block; font-weight: 600; font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 6px;">Morning Bell Start Time</label>
+          <input 
+            :value="periodStartTimes[1] || '08:50'" 
+            type="time" 
+            class="setup__input" 
+            @change="e => {
+              const updated = { ...periodStartTimes, 1: e.target.value };
+              updatePeriodStartTimes(updated);
+            }" 
+          />
+        </div>
+      </div>
+
+      <!-- Period Defaults (Secondary / Post-Secondary Only) -->
+      <div v-else class="setup__card">
         <h2 class="setup__card-title">Period Start Times</h2>
         <p class="setup__hint">Define the default start time for each period. These will autopopulate when creating or editing a class.</p>
         <div class="setup__period-grid">

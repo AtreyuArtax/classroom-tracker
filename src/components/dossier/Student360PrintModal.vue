@@ -4,7 +4,7 @@
     <BaseModal
       :show="show"
       title="Print Report"
-      max-width="700px"
+      max-width="880px"
       :z-index="3000"
       @close="$emit('close')"
     >
@@ -88,19 +88,21 @@
             <Activity :size="14" /> LIVE PREVIEW ({{ printConfig.reportType === 'progress' ? 'Progress' : 'Attendance' }})
           </header>
           <div class="preview-content">
-            <ProgressReport 
-              v-if="printConfig.reportType === 'progress'"
-              :student-id="studentId" 
-              :class-id="classId" 
-              :config="printConfig" 
-              :is-batch="false"
-            />
-            <AttendanceActivityReport
-              v-else
-              :student-id="studentId"
-              :class-id="classId"
-              :is-batch="false"
-            />
+            <div class="preview-content-wrapper">
+              <ProgressReport 
+                v-if="printConfig.reportType === 'progress'"
+                :student-id="studentId" 
+                :class-id="classId" 
+                :config="printConfig" 
+                :is-batch="false"
+              />
+              <AttendanceActivityReport
+                v-else
+                :student-id="studentId"
+                :class-id="classId"
+                :is-batch="false"
+              />
+            </div>
           </div>
         </div>
 
@@ -290,8 +292,9 @@ async function triggerPrint() {
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   overflow: hidden;
-  max-height: 400px;
-  overflow-y: auto;
+  max-height: 420px;
+  display: flex;
+  flex-direction: column;
 }
 
 .preview-banner {
@@ -304,6 +307,26 @@ async function triggerPrint() {
   font-weight: 700;
   color: var(--primary);
   border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.preview-content {
+  padding: 16px;
+  background: #cbd5e1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  justify-content: center;
+  flex: 1;
+}
+
+.preview-content-wrapper {
+  transform: scale(0.76);
+  transform-origin: top center;
+  width: 210mm;
+  margin-bottom: -150px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border-radius: 4px;
 }
 
 .report-preview-mini {

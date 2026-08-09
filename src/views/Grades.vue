@@ -242,6 +242,7 @@
       :class-record="activeClassRecord"
       :class-grades="classGrades"
       :teacher-name="teacherName"
+      :initial-cohort="activeSubCohortFilter"
       @close="showPrintGridModal = false"
     />
   </div>
