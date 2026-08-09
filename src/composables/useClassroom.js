@@ -31,6 +31,8 @@ import {
   unarchiveStudent,
   permanentlyDeleteStudent,
   updateStudentNote,
+  updateStudentIEP,
+  updateStudentAccommodations,
   updateStudentParentContacts,
   assignSeat,
   autoAssignSeats
@@ -1255,15 +1257,6 @@ async function removeEvent(eventId) {
     activeStudentEvents.value = activeStudentEvents.value.filter(e => String(e.eventId) !== String(eventId))
 }
 
-async function updateStudentIEP(studentId, hasIEP) {
-    const classId = activeClass.value?.classId
-    if (!classId) return
-    await classService.updateStudentIEP(classId, studentId, hasIEP)
-    if (students.value[studentId]) {
-        students.value[studentId].hasIEP = Boolean(hasIEP)
-    }
-}
-
 // ─── grid resize ──────────────────────────────────────────────────────────────
 
 /**
@@ -1611,6 +1604,7 @@ export function useClassroom() {
         updateStudentNote,
         updateStudentParentContacts,
         updateStudentIEP,
+        updateStudentAccommodations,
         confirmResize,
         reloadBehaviorCodes,
         refreshAcademicTerms,

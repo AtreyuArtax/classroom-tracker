@@ -343,11 +343,11 @@ watch(showAddAssessmentModal, (open) => {
 const filteredUnits = computed(() => {
   let units = effectiveUnits.value || []
   if (selectedGradeFilter.value !== 'all' && availableSubCohorts.value.length > 1) {
-    const targetG = selectedGradeFilter.value.toLowerCase()
+    const targetG = selectedGradeFilter.value.replace(/\s*\(IEP\)/i, '').trim().toLowerCase()
     units = units.filter(u => {
       const uGrade = u.gradeLevel || (u.name && u.name.includes('Grade 7') ? 'Grade 7' : (u.name && u.name.includes('Grade 8') ? 'Grade 8' : ''))
-      if (uGrade && uGrade.toLowerCase() === targetG) return true
-      if (u.expectations && u.expectations.some(e => e.gradeLevel && e.gradeLevel.toLowerCase() === targetG)) return true
+      if (uGrade && uGrade.trim().toLowerCase() === targetG) return true
+      if (u.expectations && u.expectations.some(e => e.gradeLevel && e.gradeLevel.trim().toLowerCase() === targetG)) return true
       return !uGrade
     })
   }
@@ -384,8 +384,8 @@ const filteredAvailableExpectations = computed(() => {
 
   // 1. Filter by Grade Pill (if split class)
   if (selectedGradeFilter.value !== 'all' && availableSubCohorts.value.length > 1) {
-    const targetG = selectedGradeFilter.value.toLowerCase()
-    list = list.filter(e => e.gradeLevel && e.gradeLevel.toLowerCase() === targetG)
+    const targetG = selectedGradeFilter.value.replace(/\s*\(IEP\)/i, '').trim().toLowerCase()
+    list = list.filter(e => e.gradeLevel && e.gradeLevel.trim().toLowerCase() === targetG)
   }
 
   // 2. Filter by Selected Unit / Strand Dropdown

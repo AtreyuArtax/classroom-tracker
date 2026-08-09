@@ -363,6 +363,22 @@ export async function updateStudentIEP(classId, studentId, hasIEP) {
 }
 
 /**
+ * Updates a student's full accommodations profile (IEP toggle + modified subject grades).
+ *
+ * @param {string} classId
+ * @param {string} studentId
+ * @param {Object} accommodations
+ * @returns {Promise<void>}
+ */
+export async function updateStudentAccommodations(classId, studentId, accommodations) {
+    const accObj = accommodations || { hasIEP: false, modifiedSubjectGrades: {} }
+    await patchStudent(classId, studentId, { 
+        hasIEP: Boolean(accObj.hasIEP),
+        accommodations: accObj
+    })
+}
+
+/**
  * Updates a student's parent/guardian contacts.
  *
  * @param {string} classId

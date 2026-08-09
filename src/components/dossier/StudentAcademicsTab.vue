@@ -43,7 +43,12 @@
             </div>
           </div>
           <div class="elementary-summary-card__body">
-            <div class="elementary-summary-card__name">{{ sub.name }}</div>
+            <div class="elementary-summary-card__name">
+              {{ sub.name }}
+              <span v-if="getStudentSubjectGradeLevel(sub.subjectId)" class="elementary-summary-card__iep-tag">
+                IEP: {{ getStudentSubjectGradeLevel(sub.subjectId) }}
+              </span>
+            </div>
             <div class="elementary-summary-card__framework">
               {{ sub.gradingFramework === 'sbar' ? 'SBAR (Levels 1–4)' : 'Traditional (%)' }}
             </div>
@@ -428,13 +433,18 @@ import DossierCategoryGrid from './DossierCategoryGrid.vue'
 import DossierEvidenceMix from './DossierEvidenceMix.vue'
 import SBARExpectationMasteryGrid from './SBARExpectationMasteryGrid.vue'
 
-const { activeClass } = useClassroom()
-
 const homeroomSubjects = computed(() => {
   if (!activeClassRecord.value || activeClassRecord.value.classType !== 'elementary') return []
   const cls = activeClass.value || activeClassRecord.value
   return cls.subjects && cls.subjects.length > 0 ? cls.subjects : []
 })
+
+function getStudentSubjectGradeLevel(subjectId) {
+  if (!activeClassRecord.value || !props.studentId) return null
+  const student = activeClassRecord.value.students?.[props.studentId]
+  if (!student?.accommodations?.modifiedSubjectGrades?.[subjectId]) return null
+  return student.accommodations.modifiedSubjectGrades[subjectId]
+}
 
 function getSubjectStudentMastery(subjectId) {
   if (!activeClassRecord.value || !props.studentId) return null
@@ -1568,6 +1578,19 @@ async function updateGradebookNoteLocal() {
   font-size: 0.76rem;
   color: var(--text-secondary);
   font-weight: 500;
+}
+
+.elementary-summary-card__iep-tag {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 6px;
+  background: rgba(59, 130, 246, 0.15);
+  color: var(--primary);
+  border: 1px solid rgba(59, 130, 246, 0.35);
+  border-radius: 10px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  vertical-align: middle;
 }
 </style>
 

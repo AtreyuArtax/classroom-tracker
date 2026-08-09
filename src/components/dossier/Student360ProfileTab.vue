@@ -140,21 +140,112 @@
       </div>
     </BaseModal>
 
+    <!-- Accommodations & Modified Grade Levels Modal -->
+    <BaseModal
+      :show="showAccommodationsModal"
+      title="Adjust Expectations & Grade Levels (IEP)"
+      maxWidth="680px"
+      :z-index="3100"
+      @close="showAccommodationsModal = false"
+    >
+      <div class="accommodations-modal-body">
+        <p class="accommodations-modal-desc">
+          Configure modified grade-level expectations for <strong>{{ student.firstName }} {{ student.lastName }}</strong>.
+          For example, if this student is in Grade 7 but working on Grade 5 Math, set Mathematics to <code>Grade 5</code>.
+        </p>
+
+        <div class="accommodations-subject-list">
+          <div 
+            v-for="sub in availableSubjects" 
+            :key="sub.subjectId" 
+            class="acc-subject-card"
+          >
+            <div class="acc-subject-info">
+              <SubjectIcon :code="sub.code" :icon="sub.icon" :name="sub.name" :size="18" />
+              <div class="acc-subject-name">{{ sub.name }}</div>
+            </div>
+
+            <div class="acc-subject-controls">
+              <select 
+                v-model="localModifiedSubjectGrades[sub.subjectId]" 
+                class="acc-select-grade"
+              >
+                <option value="default">Default ({{ student.gradeLevel || 'Class Grade' }})</option>
+                <option value="Grade 1">Grade 1</option>
+                <option value="Grade 2">Grade 2</option>
+                <option value="Grade 3">Grade 3</option>
+                <option value="Grade 4">Grade 4</option>
+                <option value="Grade 5">Grade 5</option>
+                <option value="Grade 6">Grade 6</option>
+                <option value="Grade 7">Grade 7</option>
+                <option value="Grade 8">Grade 8</option>
+              </select>
+
+              <!-- Auto Import Preset Check / Action -->
+              <template v-if="localModifiedSubjectGrades[sub.subjectId] && localModifiedSubjectGrades[sub.subjectId] !== 'default'">
+                <div v-if="hasLoadedPresetForGrade(sub, localModifiedSubjectGrades[sub.subjectId])" class="acc-status-tag acc-status-tag--ok">
+                  <CheckCircle2 :size="13" /> Presets Loaded
+                </div>
+                <button 
+                  v-else
+                  type="button" 
+                  class="btn-auto-import-preset"
+                  :disabled="importingSubjectId === sub.subjectId"
+                  @click="autoImportPresets(sub, localModifiedSubjectGrades[sub.subjectId])"
+                >
+                  <Zap :size="13" /> {{ importingSubjectId === sub.subjectId ? 'Importing...' : `Import ${localModifiedSubjectGrades[sub.subjectId]} Presets` }}
+                </button>
+              </template>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn-ghost" @click="showAccommodationsModal = false">Cancel</button>
+          <button class="btn-primary" @click="saveAccommodationsConfig">Save Accommodations</button>
+        </div>
+      </div>
+    </BaseModal>
+
     <div class="profile-section">
-      <h3 class="profile-section__title">Student Support & Accommodations</h3>
+      <h3 class="profile-section__title">Student Support &amp; Accommodations</h3>
       <div class="profile-iep-card">
-        <label class="iep-toggle-label">
-          <input 
-            type="checkbox" 
-            class="iep-checkbox" 
-            :checked="student.hasIEP" 
-            @change="toggleIEP($event.target.checked)" 
-          />
-          <span class="iep-toggle-title">Student has IEP / Accommodations Plan</span>
-        </label>
+        <div class="iep-toggle-header">
+          <label class="iep-toggle-label">
+            <input 
+              type="checkbox" 
+              class="iep-checkbox" 
+              :checked="student.hasIEP" 
+              @change="toggleIEP($event.target.checked)" 
+            />
+            <span class="iep-toggle-title">Student has IEP / Accommodations Plan</span>
+          </label>
+
+          <button 
+            v-if="student.hasIEP && activeClassRecord?.classType === 'elementary'"
+            type="button" 
+            class="btn-edit-accommodations" 
+            @click="openAccommodationsModal"
+          >
+            <Sliders :size="13" /> Adjust Expectations / Grades
+          </button>
+        </div>
         <p class="iep-toggle-desc">
           Enabling this adds a subtle discreet indicator on the teacher's seating plan for quick accommodation reference.
         </p>
+
+        <!-- Configured Subject Modifications List -->
+        <div v-if="student.hasIEP && activeClassRecord?.classType === 'elementary'" class="iep-active-modifications">
+          <div class="iep-mods-title">Modified Subject Grade Expectations:</div>
+          <div v-if="!hasActiveModifications" class="text-muted text-small">
+            All subjects currently set to standard grade level ({{ student.gradeLevel || 'Class Grade' }}).
+          </div>
+          <div v-else class="iep-mods-list">
+            <span v-for="(gr, subId) in activeSubjectModifications" :key="subId" class="iep-mod-badge">
+              <strong>{{ getSubjectName(subId) }}:</strong> {{ gr }}
+            </span>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -189,12 +280,32 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue'
-import { ShieldCheck, ClipboardList, AlertTriangle, Edit2, Plus, Trash2, X, Mail } from 'lucide-vue-next'
+import { 
+  ShieldCheck, 
+  ClipboardList, 
+  AlertTriangle, 
+  Edit2, 
+  Plus, 
+  Trash2, 
+  X, 
+  Mail,
+  Sliders,
+  Zap,
+  CheckCircle2
+} from 'lucide-vue-next'
 import BaseModal from '../BaseModal.vue'
+import SubjectIcon from '../SubjectIcon.vue'
 
 import { formatLocalDisplay } from '../../utils/dates.js'
 import { useMessage } from '../../composables/useMessage.js'
 import { formatQualitativeEvidenceForReport } from '../../utils/reportFormatter.js'
+import { 
+  DEFAULT_ELEMENTARY_SUBJECTS, 
+  findElementaryPresets, 
+  populateSubjectFromPresets 
+} from '../../composables/useElementary.js'
+import { loadGradebook } from '../../composables/useGradebook.js'
+import * as classService from '../../db/classService.js'
 
 const props = defineProps({
   student: { type: Object, required: true },
@@ -209,7 +320,101 @@ const props = defineProps({
   formattedGrade: { type: String, default: 'N/A' }
 })
 
-const emit = defineEmits(['update-note', 'update-iep', 'update-contacts'])
+const emit = defineEmits(['update-note', 'update-iep', 'update-accommodations', 'update-contacts'])
+
+const showAccommodationsModal = ref(false)
+const localModifiedSubjectGrades = ref({})
+const importingSubjectId = ref(null)
+
+const availableSubjects = computed(() => {
+  if (props.activeClassRecord?.subjects && props.activeClassRecord.subjects.length > 0) {
+    return props.activeClassRecord.subjects
+  }
+  return DEFAULT_ELEMENTARY_SUBJECTS
+})
+
+function getSubjectName(subId) {
+  const sub = availableSubjects.value.find(s => s.subjectId === subId)
+  return sub ? sub.name : subId
+}
+
+const activeSubjectModifications = computed(() => {
+  const mods = props.student?.accommodations?.modifiedSubjectGrades || {}
+  const res = {}
+  for (const [subId, gr] of Object.entries(mods)) {
+    if (gr && gr !== 'default') {
+      res[subId] = gr
+    }
+  }
+  return res
+})
+
+const hasActiveModifications = computed(() => {
+  return Object.keys(activeSubjectModifications.value).length > 0
+})
+
+function openAccommodationsModal() {
+  const current = props.student?.accommodations?.modifiedSubjectGrades || {}
+  const copy = {}
+  availableSubjects.value.forEach(sub => {
+    copy[sub.subjectId] = current[sub.subjectId] || 'default'
+  })
+  localModifiedSubjectGrades.value = copy
+  showAccommodationsModal.value = true
+}
+
+function hasLoadedPresetForGrade(subject, targetGrade) {
+  if (!subject || !targetGrade || targetGrade === 'default') return true
+  const expectations = subject.expectations || []
+  if (!expectations.length) return false
+  return expectations.some(e => e.gradeLevel === targetGrade)
+}
+
+async function autoImportPresets(subject, targetGrade) {
+  if (!props.activeClassRecord || !subject || !targetGrade) return
+  importingSubjectId.value = subject.subjectId
+  try {
+    const matchingPresets = findElementaryPresets([targetGrade], subject.code, subject.name)
+    if (!matchingPresets || matchingPresets.length === 0) {
+      const { alert } = useMessage()
+      await alert(`No standard curriculum presets found for ${targetGrade} ${subject.name}.`)
+      return
+    }
+    const updatedSub = populateSubjectFromPresets(subject, matchingPresets, 'all')
+    const subs = (props.activeClassRecord.subjects || []).length > 0
+      ? props.activeClassRecord.subjects
+      : DEFAULT_ELEMENTARY_SUBJECTS
+
+    const updatedSubjects = subs.map(s => s.subjectId === updatedSub.subjectId ? updatedSub : s)
+    const updatedClass = {
+      ...props.activeClassRecord,
+      subjects: updatedSubjects
+    }
+    await classService.saveClass(updatedClass)
+    await loadGradebook(updatedClass)
+    const { alert } = useMessage()
+    await alert(`Successfully imported ${targetGrade} curriculum expectations into ${subject.name}!`)
+  } catch (err) {
+    console.error('autoImportPresets failed:', err)
+  } finally {
+    importingSubjectId.value = null
+  }
+}
+
+function saveAccommodationsConfig() {
+  const cleanedGrades = {}
+  for (const [subId, gr] of Object.entries(localModifiedSubjectGrades.value)) {
+    if (gr && gr !== 'default') {
+      cleanedGrades[subId] = gr
+    }
+  }
+  const accObj = {
+    hasIEP: Boolean(props.student.hasIEP),
+    modifiedSubjectGrades: cleanedGrades
+  }
+  emit('update-accommodations', accObj)
+  showAccommodationsModal.value = false
+}
 
 const showEditModal = ref(false)
 const editingContacts = ref([])
@@ -399,6 +604,15 @@ async function copyForReportCard(includeName = false) {
     textLines.push(`Course: ${courseCode}`)
   }
   textLines.push(`Current Grade: ${props.formattedGrade}`)
+  if (s.hasIEP) {
+    const curSubId = props.activeClassRecord?.activeSubjectId
+    const modGrade = s.accommodations?.modifiedSubjectGrades?.[curSubId]
+    if (modGrade) {
+      textLines.push(`Accommodations: IEP Modified Expectations (${modGrade})`)
+    } else {
+      textLines.push(`Accommodations: IEP Plan Active`)
+    }
+  }
   if (midtermDate !== 'N/A') {
     textLines.push(`Midterm Cutoff Date: ${midtermDate}`)
   }
@@ -935,6 +1149,151 @@ async function copyForReportCard(includeName = false) {
 
 .btn-primary:hover {
   filter: brightness(1.1);
+}
+
+.iep-toggle-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.btn-edit-accommodations {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--primary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-edit-accommodations:hover {
+  background: rgba(59, 130, 246, 0.1);
+  border-color: var(--primary);
+}
+
+.iep-active-modifications {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--border);
+}
+
+.iep-mods-title {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+}
+
+.iep-mods-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.iep-mod-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  background: rgba(59, 130, 246, 0.12);
+  color: var(--primary);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  border-radius: 12px;
+  font-size: 0.75rem;
+}
+
+.accommodations-modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.accommodations-modal-desc {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+  margin: 0;
+}
+
+.accommodations-subject-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 400px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.acc-subject-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  gap: 12px;
+}
+
+.acc-subject-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.acc-subject-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.acc-select-grade {
+  padding: 6px 10px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-size: 0.82rem;
+  outline: none;
+}
+
+.acc-status-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.acc-status-tag--ok {
+  color: var(--success, #22c55e);
+}
+
+.btn-auto-import-preset {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 10px;
+  background: rgba(245, 158, 11, 0.12);
+  color: #d97706;
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-auto-import-preset:hover {
+  background: rgba(245, 158, 11, 0.22);
 }
 </style>
 

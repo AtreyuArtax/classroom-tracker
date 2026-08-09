@@ -11,13 +11,11 @@ import * as classService from '../db/classService.js'
 import { getGlobalMilestones, getGradeBuckets } from '../db/settingsService.js'
 import { useUndo } from './useUndo.js'
 import { activeClass, activeSubjectId } from './useClassroomState.js'
-import { getEffectiveClassRecord } from './useElementary.js'
+import { getEffectiveClassRecord, getStudentEffectiveGrade } from './useElementary.js'
 
 const { push: pushUndo } = useUndo()
 
-export { getEffectiveClassRecord }
-
-
+export { getEffectiveClassRecord, getStudentEffectiveGrade }
 
 // ─── Reactive State ──────────────────────────────────────────────────────────
 
@@ -48,12 +46,22 @@ export const selectedCourseFilter = computed({
 export const availableSubCohorts = computed(() => {
   if (!activeClassRecord.value) return ['all']
   const isElem = activeClassRecord.value.classType === 'elementary'
+  const curSubId = activeClassRecord.value.activeSubjectId
   const students = Object.values(activeClassRecord.value.students || {})
   const set = new Set()
   students.forEach(st => {
     if (st.archived) return
-    const tag = isElem ? st.gradeLevel : st.courseCode
-    if (tag && tag.trim()) set.add(tag.trim())
+    let tag = isElem 
+      ? getStudentEffectiveGrade(st, curSubId)
+      : st.courseCode
+    if (tag && tag.trim()) {
+      if (isElem && st.accommodations?.modifiedSubjectGrades?.[curSubId]) {
+        tag = `${tag.trim()} (IEP)`
+      } else {
+        tag = tag.trim()
+      }
+      set.add(tag)
+    }
   })
   if (set.size <= 1) return ['all']
   return ['all', ...Array.from(set).sort()]
@@ -68,8 +76,13 @@ export const availableGradeFilters = computed(() => availableSubCohorts.value)
 export function isStudentInSubCohort(student, filterVal = activeSubCohortFilter.value, classType = activeClassRecord.value?.classType) {
   if (!filterVal || filterVal.toLowerCase() === 'all') return true
   if (!student) return false
-  const tag = classType === 'elementary' ? student.gradeLevel : student.courseCode
-  return Boolean(tag && tag.toLowerCase() === filterVal.toLowerCase())
+  const cleanFilter = filterVal.replace(/\s*\(IEP\)/i, '').trim().toLowerCase()
+  const curSubId = activeClassRecord.value?.activeSubjectId
+  const tag = classType === 'elementary'
+    ? getStudentEffectiveGrade(student, curSubId)
+    : student.courseCode
+  if (!tag) return false
+  return tag.trim().toLowerCase() === cleanFilter
 }
 
 /**
@@ -78,11 +91,12 @@ export function isStudentInSubCohort(student, filterVal = activeSubCohortFilter.
 export function isAssessmentInSubCohort(assessment, filterVal = activeSubCohortFilter.value, classType = activeClassRecord.value?.classType) {
   if (!filterVal || filterVal.toLowerCase() === 'all') return true
   if (!assessment) return true
+  const cleanFilter = filterVal.replace(/\s*\(IEP\)/i, '').trim().toLowerCase()
   const tag = classType === 'elementary'
     ? (assessment.gradeLevel || assessment.targetCourseCode)
     : (assessment.targetCourseCode || assessment.gradeLevel)
-  if (!tag || tag === 'all') return true
-  return tag.toLowerCase() === filterVal.toLowerCase()
+  if (!tag || tag.toLowerCase() === 'all') return true
+  return tag.replace(/\s*\(IEP\)/i, '').trim().toLowerCase() === cleanFilter
 }
 
 /**
@@ -96,11 +110,14 @@ export function isAssessmentApplicableToStudent(assessment, student, classType =
     : (assessment.targetCourseCode || assessment.gradeLevel)
   if (!aTag || aTag.toLowerCase() === 'all') return true
   if (!student) return true
+  const curSubId = activeClassRecord.value?.activeSubjectId
   const sTag = isElem 
-    ? (student.gradeLevel || student.courseCode)
+    ? getStudentEffectiveGrade(student, curSubId)
     : (student.courseCode || student.gradeLevel)
   if (!sTag) return true
-  return aTag.toLowerCase() === sTag.toLowerCase()
+  const cleanATag = aTag.replace(/\s*\(IEP\)/i, '').trim().toLowerCase()
+  const cleanSTag = sTag.replace(/\s*\(IEP\)/i, '').trim().toLowerCase()
+  return cleanATag === cleanSTag
 }
 
 

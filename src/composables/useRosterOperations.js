@@ -214,6 +214,63 @@ export async function updateStudentNote(studentId, note) {
 }
 
 /**
+ * Updates a student's IEP toggle status.
+ *
+ * @param {string} studentId
+ * @param {boolean} hasIEP
+ * @returns {Promise<void>}
+ */
+export async function updateStudentIEP(studentId, hasIEP) {
+    try {
+        const classId = activeClass.value?.classId
+        if (!classId) return
+        await classService.updateStudentIEP(classId, studentId, hasIEP)
+        if (students.value[studentId]) {
+            students.value[studentId].hasIEP = Boolean(hasIEP)
+        }
+        if (activeClass.value?.students?.[studentId]) {
+            activeClass.value.students[studentId].hasIEP = Boolean(hasIEP)
+        }
+        triggerRef(students)
+        triggerRef(activeClass)
+    } catch (err) {
+        console.error('updateStudentIEP failed:', err)
+        const { alert } = useMessage()
+        await alert('Failed to save IEP status.')
+    }
+}
+
+/**
+ * Updates a student's full accommodations profile (IEP + modified subject grades).
+ *
+ * @param {string} studentId
+ * @param {Object} accommodations
+ * @returns {Promise<void>}
+ */
+export async function updateStudentAccommodations(studentId, accommodations) {
+    try {
+        const classId = activeClass.value?.classId
+        if (!classId) return
+        const accCopy = JSON.parse(JSON.stringify(accommodations || {}))
+        await classService.updateStudentAccommodations(classId, studentId, accCopy)
+        if (students.value[studentId]) {
+            students.value[studentId].hasIEP = Boolean(accCopy.hasIEP)
+            students.value[studentId].accommodations = accCopy
+        }
+        if (activeClass.value?.students?.[studentId]) {
+            activeClass.value.students[studentId].hasIEP = Boolean(accCopy.hasIEP)
+            activeClass.value.students[studentId].accommodations = accCopy
+        }
+        triggerRef(students)
+        triggerRef(activeClass)
+    } catch (err) {
+        console.error('updateStudentAccommodations failed:', err)
+        const { alert } = useMessage()
+        await alert('Failed to save accommodations.')
+    }
+}
+
+/**
  * Updates a student's parent/guardian contacts and persists them.
  *
  * @param {string} studentId

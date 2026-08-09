@@ -3,7 +3,7 @@ import { activeSubjectId, teachingMode } from './useClassroomState.js'
 import { DEFAULT_ELEMENTARY_SUBJECTS, DEFAULT_TRADITIONAL_CATEGORIES } from '../utils/elementarySubjects.js'
 import { findElementaryPreset, findElementaryPresets } from '../data/curriculum/index.js'
 
-export { findElementaryPreset, findElementaryPresets }
+export { findElementaryPreset, findElementaryPresets, DEFAULT_ELEMENTARY_SUBJECTS }
 
 
 /**
@@ -115,6 +115,22 @@ export function getEffectiveGradeLevel(classRecord) {
   if (!classRecord) return ''
   if (classRecord.gradeLevel) return classRecord.gradeLevel
   return detectGradeFromClassName(classRecord.name || '')
+}
+
+/**
+ * Resolves a student's effective grade level for a specific subject,
+ * taking into account IEP accommodations / modified grade levels.
+ * 
+ * @param {Object|null} student 
+ * @param {string|null} subjectId 
+ * @returns {string}
+ */
+export function getStudentEffectiveGrade(student, subjectId = null) {
+  if (!student) return ''
+  if (subjectId && student.accommodations?.modifiedSubjectGrades?.[subjectId]) {
+    return student.accommodations.modifiedSubjectGrades[subjectId]
+  }
+  return student.gradeLevel || ''
 }
 
 export function populateSubjectFromPresets(subject, presetsList = [], granularity = 'all') {
@@ -239,6 +255,7 @@ export function useElementary() {
     parseGradesFromClass,
     detectGradeFromClassName,
     getEffectiveGradeLevel,
+    getStudentEffectiveGrade,
     populateSubjectFromPreset,
     populateSubjectFromPresets,
     autoPopulateAllElementarySubjects,

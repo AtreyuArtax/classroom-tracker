@@ -238,6 +238,7 @@
         :formatted-grade="formattedGrade"
         @update-note="saveGeneralNote"
         @update-iep="saveStudentIEP"
+        @update-accommodations="saveStudentAccommodations"
         @update-contacts="saveParentContacts"
       />
 
@@ -390,6 +391,7 @@ const {
   updateStudentNote,
   updateStudentParentContacts,
   updateStudentIEP,
+  updateStudentAccommodations,
   teacherName
 } = useClassroom()
 
@@ -748,6 +750,10 @@ async function saveStudentIEP(hasIEP) {
   if (Boolean(student.value.hasIEP) !== hasIEP) {
     await updateStudentIEP(props.studentId, hasIEP)
   }
+}
+
+async function saveStudentAccommodations(accommodations) {
+  await updateStudentAccommodations(props.studentId, accommodations)
 }
 
 async function saveParentContacts(contacts) {
