@@ -2670,7 +2670,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "components_classswitcher",
-      "community": 3,
+      "community": 78,
       "norm_label": "classswitcher.vue"
     },
     {
@@ -3740,7 +3740,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "components_yearsemesterselector",
-      "community": 3,
+      "community": 78,
       "norm_label": "yearsemesterselector.vue"
     },
     {
@@ -3844,10 +3844,20 @@
       "norm_label": "overallweightedmedian"
     },
     {
-      "label": "formatDate()",
+      "label": "displayMetaLine",
       "file_type": "code",
       "source_file": "src/components/dossier/ProgressReport.vue",
       "source_location": "L216",
+      "_origin": "ast",
+      "id": "dossier_progressreport_displaymetaline",
+      "community": 14,
+      "norm_label": "displaymetaline"
+    },
+    {
+      "label": "formatDate()",
+      "file_type": "code",
+      "source_file": "src/components/dossier/ProgressReport.vue",
+      "source_location": "L229",
       "_origin": "ast",
       "id": "dossier_progressreport_formatdate",
       "community": 14,
@@ -3857,7 +3867,7 @@
       "label": "getCategoryName()",
       "file_type": "code",
       "source_file": "src/components/dossier/ProgressReport.vue",
-      "source_location": "L220",
+      "source_location": "L233",
       "_origin": "ast",
       "id": "dossier_progressreport_getcategoryname",
       "community": 14,
@@ -3867,7 +3877,7 @@
       "label": "getGradeColor()",
       "file_type": "code",
       "source_file": "src/components/dossier/ProgressReport.vue",
-      "source_location": "L224",
+      "source_location": "L237",
       "_origin": "ast",
       "id": "dossier_progressreport_getgradecolor",
       "community": 14,
@@ -3877,7 +3887,7 @@
       "label": "currentStudentObj",
       "file_type": "code",
       "source_file": "src/components/dossier/ProgressReport.vue",
-      "source_location": "L232",
+      "source_location": "L245",
       "_origin": "ast",
       "id": "dossier_progressreport_currentstudentobj",
       "community": 14,
@@ -3887,7 +3897,7 @@
       "label": "studentSubCohort",
       "file_type": "code",
       "source_file": "src/components/dossier/ProgressReport.vue",
-      "source_location": "L236",
+      "source_location": "L249",
       "_origin": "ast",
       "id": "dossier_progressreport_studentsubcohort",
       "community": 14,
@@ -3897,7 +3907,7 @@
       "label": "studentAssessments",
       "file_type": "code",
       "source_file": "src/components/dossier/ProgressReport.vue",
-      "source_location": "L242",
+      "source_location": "L255",
       "_origin": "ast",
       "id": "dossier_progressreport_studentassessments",
       "community": 14,
@@ -3907,7 +3917,7 @@
       "label": "missingAssessments",
       "file_type": "code",
       "source_file": "src/components/dossier/ProgressReport.vue",
-      "source_location": "L263",
+      "source_location": "L276",
       "_origin": "ast",
       "id": "dossier_progressreport_missingassessments",
       "community": 14,
@@ -3917,7 +3927,7 @@
       "label": "recentGradedAssessments",
       "file_type": "code",
       "source_file": "src/components/dossier/ProgressReport.vue",
-      "source_location": "L264",
+      "source_location": "L277",
       "_origin": "ast",
       "id": "dossier_progressreport_recentgradedassessments",
       "community": 14,
@@ -3927,7 +3937,7 @@
       "label": "recentClassWork",
       "file_type": "code",
       "source_file": "src/components/dossier/ProgressReport.vue",
-      "source_location": "L270",
+      "source_location": "L283",
       "_origin": "ast",
       "id": "dossier_progressreport_recentclasswork",
       "community": 14,
@@ -3937,7 +3947,7 @@
       "label": "individualTasks",
       "file_type": "code",
       "source_file": "src/components/dossier/ProgressReport.vue",
-      "source_location": "L274",
+      "source_location": "L287",
       "_origin": "ast",
       "id": "dossier_progressreport_individualtasks",
       "community": 14,
@@ -3947,7 +3957,7 @@
       "label": "allDossierAssessments",
       "file_type": "code",
       "source_file": "src/components/dossier/ProgressReport.vue",
-      "source_location": "L278",
+      "source_location": "L291",
       "_origin": "ast",
       "id": "dossier_progressreport_alldossierassessments",
       "community": 14,
@@ -3957,7 +3967,7 @@
       "label": "allCombinedWork",
       "file_type": "code",
       "source_file": "src/components/dossier/ProgressReport.vue",
-      "source_location": "L282",
+      "source_location": "L295",
       "_origin": "ast",
       "id": "dossier_progressreport_allcombinedwork",
       "community": 14,
@@ -3967,7 +3977,7 @@
       "label": "splitWorkColumns",
       "file_type": "code",
       "source_file": "src/components/dossier/ProgressReport.vue",
-      "source_location": "L293",
+      "source_location": "L306",
       "_origin": "ast",
       "id": "dossier_progressreport_splitworkcolumns",
       "community": 14,
@@ -3977,7 +3987,7 @@
       "label": "evidenceMix",
       "file_type": "code",
       "source_file": "src/components/dossier/ProgressReport.vue",
-      "source_location": "L302",
+      "source_location": "L315",
       "_origin": "ast",
       "id": "dossier_progressreport_evidencemix",
       "community": 14,
@@ -3987,7 +3997,7 @@
       "label": "attendanceStats",
       "file_type": "code",
       "source_file": "src/components/dossier/ProgressReport.vue",
-      "source_location": "L325",
+      "source_location": "L338",
       "_origin": "ast",
       "id": "dossier_progressreport_attendancestats",
       "community": 14,
@@ -3997,7 +4007,7 @@
       "label": "outOfClassStats",
       "file_type": "code",
       "source_file": "src/components/dossier/ProgressReport.vue",
-      "source_location": "L337",
+      "source_location": "L350",
       "_origin": "ast",
       "id": "dossier_progressreport_outofclassstats",
       "community": 14,
@@ -4007,7 +4017,7 @@
       "label": "behaviorCodesMap",
       "file_type": "code",
       "source_file": "src/components/dossier/ProgressReport.vue",
-      "source_location": "L346",
+      "source_location": "L359",
       "_origin": "ast",
       "id": "dossier_progressreport_behaviorcodesmap",
       "community": 14,
@@ -4017,7 +4027,7 @@
       "label": "topBehavior",
       "file_type": "code",
       "source_file": "src/components/dossier/ProgressReport.vue",
-      "source_location": "L350",
+      "source_location": "L363",
       "_origin": "ast",
       "id": "dossier_progressreport_topbehavior",
       "community": 14,
@@ -6630,7 +6640,7 @@
       "source_location": "L218",
       "_origin": "ast",
       "id": "composables_useattendancetracker_synclateactivestate",
-      "community": 99,
+      "community": 61,
       "norm_label": "synclateactivestate()"
     },
     {
@@ -6760,7 +6770,7 @@
       "source_location": "L133",
       "_origin": "ast",
       "id": "composables_useclassroom_computeweeklystats",
-      "community": 99,
+      "community": 41,
       "norm_label": "computeweeklystats()"
     },
     {
@@ -7070,7 +7080,7 @@
       "source_location": "L1206",
       "_origin": "ast",
       "id": "composables_useclassroom_editevent",
-      "community": 99,
+      "community": 41,
       "norm_label": "editevent()"
     },
     {
@@ -7080,7 +7090,7 @@
       "source_location": "L1232",
       "_origin": "ast",
       "id": "composables_useclassroom_removeevent",
-      "community": 99,
+      "community": 41,
       "norm_label": "removeevent()"
     },
     {
@@ -7230,7 +7240,7 @@
       "source_location": "L1543",
       "_origin": "ast",
       "id": "composables_useclassroom_useclassroom",
-      "community": 3,
+      "community": 78,
       "norm_label": "useclassroom()"
     },
     {
@@ -8270,7 +8280,7 @@
       "source_location": "L1008",
       "_origin": "ast",
       "id": "composables_usegradebook_savestudentgradebooknote",
-      "community": 3,
+      "community": 78,
       "norm_label": "savestudentgradebooknote()"
     },
     {
@@ -8710,7 +8720,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "composables_usestudentdossier",
-      "community": 35,
+      "community": 78,
       "norm_label": "usestudentdossier.js"
     },
     {
@@ -8720,7 +8730,7 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "composables_usestudentdossier_usestudentdossier",
-      "community": 35,
+      "community": 78,
       "norm_label": "usestudentdossier()"
     },
     {
@@ -9100,7 +9110,7 @@
       "source_location": "L508",
       "_origin": "ast",
       "id": "db_classservice_clearalldata",
-      "community": 21,
+      "community": 41,
       "norm_label": "clearalldata()"
     },
     {
@@ -9170,7 +9180,7 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "db_eventservice_tominutes",
-      "community": 35,
+      "community": 78,
       "norm_label": "tominutes()"
     },
     {
@@ -9880,7 +9890,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "db_index",
-      "community": 21,
+      "community": 41,
       "norm_label": "index.js"
     },
     {
@@ -10220,7 +10230,7 @@
       "source_location": "L41",
       "_origin": "ast",
       "id": "utils_dates_getcurrentschoolyear",
-      "community": 21,
+      "community": 41,
       "norm_label": "getcurrentschoolyear()"
     },
     {
@@ -10230,7 +10240,7 @@
       "source_location": "L61",
       "_origin": "ast",
       "id": "utils_dates_getcurrentsemester",
-      "community": 21,
+      "community": 41,
       "norm_label": "getcurrentsemester()"
     },
     {
@@ -10840,7 +10850,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tmp_test_dates",
-      "community": 21,
+      "community": 41,
       "norm_label": "test_dates.js"
     },
     {
@@ -10850,7 +10860,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "tmp_test_dates_testyear",
-      "community": 21,
+      "community": 41,
       "norm_label": "testyear()"
     },
     {
@@ -16766,6 +16776,16 @@
       "confidence_score": 1.0,
       "source": "dossier_progressreport",
       "target": "dossier_progressreport_currentstudentobj"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/dossier/ProgressReport.vue",
+      "source_location": "L216",
+      "weight": 1.0,
+      "source": "dossier_progressreport",
+      "target": "dossier_progressreport_displaymetaline",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -29369,5 +29389,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "c7ee55205934846c86bb3d3069212f3c79270882"
+  "built_at_commit": "fba05ce1681284a86ae46c8d0fdc175149db856a"
 }

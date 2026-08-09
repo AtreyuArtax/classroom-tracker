@@ -11,7 +11,7 @@
             {{ formattedGrade }}
           </span>
         </div>
-        <p class="report-meta">{{ activeClass?.name }} • {{ teacherName || 'Teacher' }}</p>
+        <p class="report-meta">{{ displayMetaLine }}</p>
       </div>
       <div class="report-header__right">
         <div class="report-date">{{ new Date().toLocaleDateString([], { month: 'long', day: 'numeric', year: 'numeric' }) }}</div>
@@ -212,6 +212,19 @@ const formattedGrade = computed(() => overallGrade.value !== null ? `${Math.roun
 
 const overallMostConsistent = computed(() => studentGrades.value.mostConsistent?.percentage ?? null)
 const overallWeightedMedian = computed(() => studentGrades.value.median ?? null)
+
+const displayMetaLine = computed(() => {
+  const className = activeClass.value?.name || 'Class'
+  const teacher = teacherName.value || 'Teacher'
+  if (activeClassRecord.value?.classType === 'elementary' && activeClassRecord.value?.activeSubjectName) {
+    const subName = activeClassRecord.value.activeSubjectName
+    if (className.toLowerCase().includes(subName.toLowerCase())) {
+      return `${className} • ${teacher}`
+    }
+    return `${className} — ${subName} • ${teacher}`
+  }
+  return `${className} • ${teacher}`
+})
 
 function formatDate(d) {
   return formatLocalDisplay(d)
