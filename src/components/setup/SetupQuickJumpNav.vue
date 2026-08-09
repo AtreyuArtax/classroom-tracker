@@ -56,10 +56,10 @@ const KNOWN_TAB_SECTIONS = {
   ],
   app: [
     { id: 'sec-general-settings', title: 'General Settings' },
-    { id: 'sec-attendance-cloud', title: 'Attendance & Cloud' },
     { id: 'sec-app-buckets', title: 'Grade Buckets' },
     { id: 'sec-app-behavior', title: 'Behavior Strategy' },
-    { id: 'sec-period-times', title: 'Period Start Times' }
+    { id: 'sec-period-times', title: 'Period Start Times' },
+    { id: 'sec-attendance-cloud', title: 'Attendance & Cloud' }
   ],
   data: [
     { id: 'sec-backup', title: 'Backup & Restore' },

@@ -355,8 +355,8 @@
     "semantic_hash": "8ca2dc5307b5ae89c3f9ade5a9f052c4"
   },
   "src/views/Setup.vue": {
-    "mtime": 1786242139.719305,
-    "ast_hash": "8716d9fe88b4cef961c232312232d4a3",
+    "mtime": 1786242473.016113,
+    "ast_hash": "e8b325daecb700e2eb4ce373b7e8e38c",
     "semantic_hash": ""
   },
   "tmp/test_dates.js": {
@@ -545,8 +545,8 @@
     "semantic_hash": ""
   },
   "src/components/setup/SetupQuickJumpNav.vue": {
-    "mtime": 1784943751.0802193,
-    "ast_hash": "41a36d5e662362d003c60032327c2946",
+    "mtime": 1786242453.6204727,
+    "ast_hash": "cdd5ac185815c236cb066970b41f50e0",
     "semantic_hash": ""
   },
   "src/components/reports/ExpectationMasteryHeatmap.vue": {
