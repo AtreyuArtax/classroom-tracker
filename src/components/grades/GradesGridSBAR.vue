@@ -47,7 +47,7 @@
             :key="'chip-' + ast.assessmentId"
             type="button"
             class="sbar-quick-chip"
-            :title="`Grade ${ast.name} (${getAssessmentStats(ast.assessmentId).evaluatedCount}/${getAssessmentStats(ast.assessmentId).totalCount} scored)`"
+            :title="getAssessmentTooltip(ast)"
             @click="onSelectAssessmentId(ast.assessmentId)"
           >
             <FileEdit :size="12" class="chip-icon" />
@@ -134,6 +134,7 @@
                 v-for="ast in filteredHubAssessments" 
                 :key="'hub-ast-' + ast.assessmentId" 
                 class="hub-ast-card"
+                :title="getAssessmentTooltip(ast)"
                 @click="onSelectAssessmentId(ast.assessmentId)"
               >
                 <div class="hub-card-left">
@@ -452,6 +453,39 @@ function getAssessmentExpectationCodes(ast) {
     if (found && found.code) realCode = found.code
     return realCode
   }).filter(c => c && !c.includes('-'))
+}
+
+function getAssessmentTooltip(ast) {
+  if (!ast) return ''
+  const stats = getAssessmentStats(ast.assessmentId)
+  const targetRoster = getAssessmentTargetRoster(ast)
+  const rosterLen = targetRoster.length
+  const astGrades = gradeMap.value[ast.assessmentId] || gradeMap.value[Number(ast.assessmentId)] || gradeMap.value[String(ast.assessmentId)] || {}
+  const expCodes = getAssessmentExpectationCodes(ast)
+  const targetIds = new Set(targetRoster.map(s => String(s.studentId)))
+
+  if (expCodes.length > 1) {
+    const fullyGraded = Object.entries(astGrades).filter(([sId, g]) => {
+      if (!targetIds.has(String(sId)) || !g) return false
+      if (g.missing || g.excluded) return true
+      return expCodes.every(code => g.expectationScores && g.expectationScores[code] != null)
+    }).length
+
+    const expBreakdown = expCodes.map(code => {
+      const count = Object.entries(astGrades).filter(([sId, g]) => {
+        return targetIds.has(String(sId)) && g && (
+          (g.expectationScores && g.expectationScores[code] != null) ||
+          g.missing ||
+          g.excluded
+        )
+      }).length
+      return `${code}: ${count}/${rosterLen}`
+    }).join(' • ')
+
+    return `${ast.name}\n${stats.evaluatedCount}/${rosterLen} Students Evaluated (${fullyGraded} fully complete)\n${expBreakdown}`
+  }
+
+  return `${ast.name} (${stats.evaluatedCount}/${rosterLen} students evaluated)`
 }
 
 function getExpAssessmentCount(expCode) {

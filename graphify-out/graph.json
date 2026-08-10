@@ -4860,18 +4860,368 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "grades_gradesassessmentdetailsbar",
-      "community": 42,
+      "community": 108,
       "norm_label": "gradesassessmentdetailsbar.vue"
     },
     {
-      "label": "if()",
+      "label": "effectiveClass",
       "file_type": "code",
       "source_file": "src/components/grades/GradesAssessmentDetailSBAR.vue",
-      "source_location": "L498",
+      "source_location": "L320",
       "_origin": "ast",
-      "id": "grades_gradesassessmentdetailsbar_if",
-      "community": 42,
-      "norm_label": "if()"
+      "id": "grades_gradesassessmentdetailsbar_effectiveclass",
+      "community": 108,
+      "norm_label": "effectiveclass"
+    },
+    {
+      "label": "displayedRoster",
+      "file_type": "code",
+      "source_file": "src/components/grades/GradesAssessmentDetailSBAR.vue",
+      "source_location": "L328",
+      "_origin": "ast",
+      "id": "grades_gradesassessmentdetailsbar_displayedroster",
+      "community": 108,
+      "norm_label": "displayedroster"
+    },
+    {
+      "label": "inputMode",
+      "file_type": "code",
+      "source_file": "src/components/grades/GradesAssessmentDetailSBAR.vue",
+      "source_location": "L370",
+      "_origin": "ast",
+      "id": "grades_gradesassessmentdetailsbar_inputmode",
+      "community": 108,
+      "norm_label": "inputmode"
+    },
+    {
+      "label": "simpleLevels",
+      "file_type": "code",
+      "source_file": "src/components/grades/GradesAssessmentDetailSBAR.vue",
+      "source_location": "L372",
+      "_origin": "ast",
+      "id": "grades_gradesassessmentdetailsbar_simplelevels",
+      "community": 108,
+      "norm_label": "simplelevels"
+    },
+    {
+      "label": "fineLevels",
+      "file_type": "code",
+      "source_file": "src/components/grades/GradesAssessmentDetailSBAR.vue",
+      "source_location": "L379",
+      "_origin": "ast",
+      "id": "grades_gradesassessmentdetailsbar_finelevels",
+      "community": 108,
+      "norm_label": "finelevels"
+    },
+    {
+      "label": "activeLevelOptions",
+      "file_type": "code",
+      "source_file": "src/components/grades/GradesAssessmentDetailSBAR.vue",
+      "source_location": "L395",
+      "_origin": "ast",
+      "id": "grades_gradesassessmentdetailsbar_activeleveloptions",
+      "community": 108,
+      "norm_label": "activeleveloptions"
+    },
+    {
+      "label": "taggedExpectations",
+      "file_type": "code",
+      "source_file": "src/components/grades/GradesAssessmentDetailSBAR.vue",
+      "source_location": "L399",
+      "_origin": "ast",
+      "id": "grades_gradesassessmentdetailsbar_taggedexpectations",
+      "community": 108,
+      "norm_label": "taggedexpectations"
+    },
+    {
+      "label": "evaluatedCount",
+      "file_type": "code",
+      "source_file": "src/components/grades/GradesAssessmentDetailSBAR.vue",
+      "source_location": "L407",
+      "_origin": "ast",
+      "id": "grades_gradesassessmentdetailsbar_evaluatedcount",
+      "community": 108,
+      "norm_label": "evaluatedcount"
+    },
+    {
+      "label": "fullyGradedCount",
+      "file_type": "code",
+      "source_file": "src/components/grades/GradesAssessmentDetailSBAR.vue",
+      "source_location": "L424",
+      "_origin": "ast",
+      "id": "grades_gradesassessmentdetailsbar_fullygradedcount",
+      "community": 108,
+      "norm_label": "fullygradedcount"
+    },
+    {
+      "label": "getExpProgress()",
+      "file_type": "code",
+      "source_file": "src/components/grades/GradesAssessmentDetailSBAR.vue",
+      "source_location": "L439",
+      "_origin": "ast",
+      "id": "grades_gradesassessmentdetailsbar_getexpprogress",
+      "community": 108,
+      "norm_label": "getexpprogress()"
+    },
+    {
+      "label": "getStudentPercentage()",
+      "file_type": "code",
+      "source_file": "src/components/grades/GradesAssessmentDetailSBAR.vue",
+      "source_location": "L457",
+      "_origin": "ast",
+      "id": "grades_gradesassessmentdetailsbar_getstudentpercentage",
+      "community": 108,
+      "norm_label": "getstudentpercentage()"
+    },
+    {
+      "label": "getStudentLevelBadge()",
+      "file_type": "code",
+      "source_file": "src/components/grades/GradesAssessmentDetailSBAR.vue",
+      "source_location": "L474",
+      "_origin": "ast",
+      "id": "grades_gradesassessmentdetailsbar_getstudentlevelbadge",
+      "community": 108,
+      "norm_label": "getstudentlevelbadge()"
+    },
+    {
+      "label": "getStudentLevelCode()",
+      "file_type": "code",
+      "source_file": "src/components/grades/GradesAssessmentDetailSBAR.vue",
+      "source_location": "L479",
+      "_origin": "ast",
+      "id": "grades_gradesassessmentdetailsbar_getstudentlevelcode",
+      "community": 108,
+      "norm_label": "getstudentlevelcode()"
+    },
+    {
+      "label": "assignLevel()",
+      "file_type": "code",
+      "source_file": "src/components/grades/GradesAssessmentDetailSBAR.vue",
+      "source_location": "L491",
+      "_origin": "ast",
+      "id": "grades_gradesassessmentdetailsbar_assignlevel",
+      "community": 108,
+      "norm_label": "assignlevel()"
+    },
+    {
+      "label": "assignLevelByCode()",
+      "file_type": "code",
+      "source_file": "src/components/grades/GradesAssessmentDetailSBAR.vue",
+      "source_location": "L495",
+      "_origin": "ast",
+      "id": "grades_gradesassessmentdetailsbar_assignlevelbycode",
+      "community": 108,
+      "norm_label": "assignlevelbycode()"
+    },
+    {
+      "label": "assignNumericPercentage()",
+      "file_type": "code",
+      "source_file": "src/components/grades/GradesAssessmentDetailSBAR.vue",
+      "source_location": "L502",
+      "_origin": "ast",
+      "id": "grades_gradesassessmentdetailsbar_assignnumericpercentage",
+      "community": 108,
+      "norm_label": "assignnumericpercentage()"
+    },
+    {
+      "label": "gridInputDrafts",
+      "file_type": "code",
+      "source_file": "src/components/grades/GradesAssessmentDetailSBAR.vue",
+      "source_location": "L511",
+      "_origin": "ast",
+      "id": "grades_gradesassessmentdetailsbar_gridinputdrafts",
+      "community": 108,
+      "norm_label": "gridinputdrafts"
+    },
+    {
+      "label": "getGridDisplayValue()",
+      "file_type": "code",
+      "source_file": "src/components/grades/GradesAssessmentDetailSBAR.vue",
+      "source_location": "L513",
+      "_origin": "ast",
+      "id": "grades_gradesassessmentdetailsbar_getgriddisplayvalue",
+      "community": 108,
+      "norm_label": "getgriddisplayvalue()"
+    },
+    {
+      "label": "parseLevelInput()",
+      "file_type": "code",
+      "source_file": "src/components/grades/GradesAssessmentDetailSBAR.vue",
+      "source_location": "L525",
+      "_origin": "ast",
+      "id": "grades_gradesassessmentdetailsbar_parselevelinput",
+      "community": 108,
+      "norm_label": "parselevelinput()"
+    },
+    {
+      "label": "handleGridFocus()",
+      "file_type": "code",
+      "source_file": "src/components/grades/GradesAssessmentDetailSBAR.vue",
+      "source_location": "L554",
+      "_origin": "ast",
+      "id": "grades_gradesassessmentdetailsbar_handlegridfocus",
+      "community": 108,
+      "norm_label": "handlegridfocus()"
+    },
+    {
+      "label": "processGridSubmit()",
+      "file_type": "code",
+      "source_file": "src/components/grades/GradesAssessmentDetailSBAR.vue",
+      "source_location": "L558",
+      "_origin": "ast",
+      "id": "grades_gradesassessmentdetailsbar_processgridsubmit",
+      "community": 108,
+      "norm_label": "processgridsubmit()"
+    },
+    {
+      "label": "handleGridBlur()",
+      "file_type": "code",
+      "source_file": "src/components/grades/GradesAssessmentDetailSBAR.vue",
+      "source_location": "L576",
+      "_origin": "ast",
+      "id": "grades_gradesassessmentdetailsbar_handlegridblur",
+      "community": 108,
+      "norm_label": "handlegridblur()"
+    },
+    {
+      "label": "handleGridKeydown()",
+      "file_type": "code",
+      "source_file": "src/components/grades/GradesAssessmentDetailSBAR.vue",
+      "source_location": "L580",
+      "_origin": "ast",
+      "id": "grades_gradesassessmentdetailsbar_handlegridkeydown",
+      "community": 108,
+      "norm_label": "handlegridkeydown()"
+    },
+    {
+      "label": "focusCell()",
+      "file_type": "code",
+      "source_file": "src/components/grades/GradesAssessmentDetailSBAR.vue",
+      "source_location": "L618",
+      "_origin": "ast",
+      "id": "grades_gradesassessmentdetailsbar_focuscell",
+      "community": 108,
+      "norm_label": "focuscell()"
+    },
+    {
+      "label": "focusGridCell()",
+      "file_type": "code",
+      "source_file": "src/components/grades/GradesAssessmentDetailSBAR.vue",
+      "source_location": "L630",
+      "_origin": "ast",
+      "id": "grades_gradesassessmentdetailsbar_focusgridcell",
+      "community": 108,
+      "norm_label": "focusgridcell()"
+    },
+    {
+      "label": "handleNumericBlur()",
+      "file_type": "code",
+      "source_file": "src/components/grades/GradesAssessmentDetailSBAR.vue",
+      "source_location": "L637",
+      "_origin": "ast",
+      "id": "grades_gradesassessmentdetailsbar_handlenumericblur",
+      "community": 108,
+      "norm_label": "handlenumericblur()"
+    },
+    {
+      "label": "handleNumericKeydown()",
+      "file_type": "code",
+      "source_file": "src/components/grades/GradesAssessmentDetailSBAR.vue",
+      "source_location": "L641",
+      "_origin": "ast",
+      "id": "grades_gradesassessmentdetailsbar_handlenumerickeydown",
+      "community": 108,
+      "norm_label": "handlenumerickeydown()"
+    },
+    {
+      "label": "activeBulkExp",
+      "file_type": "code",
+      "source_file": "src/components/grades/GradesAssessmentDetailSBAR.vue",
+      "source_location": "L680",
+      "_origin": "ast",
+      "id": "grades_gradesassessmentdetailsbar_activebulkexp",
+      "community": 108,
+      "norm_label": "activebulkexp"
+    },
+    {
+      "label": "bulkOnlyUnset",
+      "file_type": "code",
+      "source_file": "src/components/grades/GradesAssessmentDetailSBAR.vue",
+      "source_location": "L681",
+      "_origin": "ast",
+      "id": "grades_gradesassessmentdetailsbar_bulkonlyunset",
+      "community": 108,
+      "norm_label": "bulkonlyunset"
+    },
+    {
+      "label": "toggleBulkMenu()",
+      "file_type": "code",
+      "source_file": "src/components/grades/GradesAssessmentDetailSBAR.vue",
+      "source_location": "L683",
+      "_origin": "ast",
+      "id": "grades_gradesassessmentdetailsbar_togglebulkmenu",
+      "community": 108,
+      "norm_label": "togglebulkmenu()"
+    },
+    {
+      "label": "applyBulkFill()",
+      "file_type": "code",
+      "source_file": "src/components/grades/GradesAssessmentDetailSBAR.vue",
+      "source_location": "L687",
+      "_origin": "ast",
+      "id": "grades_gradesassessmentdetailsbar_applybulkfill",
+      "community": 108,
+      "norm_label": "applybulkfill()"
+    },
+    {
+      "label": "handleGlobalClick()",
+      "file_type": "code",
+      "source_file": "src/components/grades/GradesAssessmentDetailSBAR.vue",
+      "source_location": "L698",
+      "_origin": "ast",
+      "id": "grades_gradesassessmentdetailsbar_handleglobalclick",
+      "community": 108,
+      "norm_label": "handleglobalclick()"
+    },
+    {
+      "label": "contextMenu",
+      "file_type": "code",
+      "source_file": "src/components/grades/GradesAssessmentDetailSBAR.vue",
+      "source_location": "L714",
+      "_origin": "ast",
+      "id": "grades_gradesassessmentdetailsbar_contextmenu",
+      "community": 108,
+      "norm_label": "contextmenu"
+    },
+    {
+      "label": "openContextMenu()",
+      "file_type": "code",
+      "source_file": "src/components/grades/GradesAssessmentDetailSBAR.vue",
+      "source_location": "L723",
+      "_origin": "ast",
+      "id": "grades_gradesassessmentdetailsbar_opencontextmenu",
+      "community": 108,
+      "norm_label": "opencontextmenu()"
+    },
+    {
+      "label": "contextMenuClearGrade()",
+      "file_type": "code",
+      "source_file": "src/components/grades/GradesAssessmentDetailSBAR.vue",
+      "source_location": "L736",
+      "_origin": "ast",
+      "id": "grades_gradesassessmentdetailsbar_contextmenucleargrade",
+      "community": 108,
+      "norm_label": "contextmenucleargrade()"
+    },
+    {
+      "label": "contextMenuSelectLevel()",
+      "file_type": "code",
+      "source_file": "src/components/grades/GradesAssessmentDetailSBAR.vue",
+      "source_location": "L744",
+      "_origin": "ast",
+      "id": "grades_gradesassessmentdetailsbar_contextmenuselectlevel",
+      "community": 108,
+      "norm_label": "contextmenuselectlevel()"
     },
     {
       "label": "GradesAssessmentDetailView.vue",
@@ -4917,7 +5267,7 @@
       "label": "for()",
       "file_type": "code",
       "source_file": "src/components/grades/GradesGridSBAR.vue",
-      "source_location": "L495",
+      "source_location": "L529",
       "_origin": "ast",
       "id": "grades_gradesgridsbar_for",
       "community": 42,
@@ -4927,7 +5277,7 @@
       "label": "availableStrands",
       "file_type": "code",
       "source_file": "src/components/grades/GradesGridSBAR.vue",
-      "source_location": "L798",
+      "source_location": "L832",
       "_origin": "ast",
       "id": "grades_gradesgridsbar_availablestrands",
       "community": 42,
@@ -4937,7 +5287,7 @@
       "label": "displayedStrands",
       "file_type": "code",
       "source_file": "src/components/grades/GradesGridSBAR.vue",
-      "source_location": "L825",
+      "source_location": "L859",
       "_origin": "ast",
       "id": "grades_gradesgridsbar_displayedstrands",
       "community": 42,
@@ -4947,7 +5297,7 @@
       "label": "displayedExpectations",
       "file_type": "code",
       "source_file": "src/components/grades/GradesGridSBAR.vue",
-      "source_location": "L830",
+      "source_location": "L864",
       "_origin": "ast",
       "id": "grades_gradesgridsbar_displayedexpectations",
       "community": 42,
@@ -4957,7 +5307,7 @@
       "label": "masteryMap",
       "file_type": "code",
       "source_file": "src/components/grades/GradesGridSBAR.vue",
-      "source_location": "L838",
+      "source_location": "L872",
       "_origin": "ast",
       "id": "grades_gradesgridsbar_masterymap",
       "community": 42,
@@ -4967,7 +5317,7 @@
       "label": "getStudentExpMastery()",
       "file_type": "code",
       "source_file": "src/components/grades/GradesGridSBAR.vue",
-      "source_location": "L843",
+      "source_location": "L877",
       "_origin": "ast",
       "id": "grades_gradesgridsbar_getstudentexpmastery",
       "community": 42,
@@ -4977,7 +5327,7 @@
       "label": "getOverallStudentMastery()",
       "file_type": "code",
       "source_file": "src/components/grades/GradesGridSBAR.vue",
-      "source_location": "L847",
+      "source_location": "L881",
       "_origin": "ast",
       "id": "grades_gradesgridsbar_getoverallstudentmastery",
       "community": 42,
@@ -4987,7 +5337,7 @@
       "label": "openExpectationDetail()",
       "file_type": "code",
       "source_file": "src/components/grades/GradesGridSBAR.vue",
-      "source_location": "L856",
+      "source_location": "L890",
       "_origin": "ast",
       "id": "grades_gradesgridsbar_openexpectationdetail",
       "community": 42,
@@ -5150,7 +5500,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "reports_studentriskscatterplot",
-      "community": 103,
+      "community": 2,
       "norm_label": "studentriskscatterplot.vue"
     },
     {
@@ -8020,7 +8370,7 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "composables_usegradebook_activeclassrecord",
-      "community": 42,
+      "community": 1,
       "norm_label": "activeclassrecord"
     },
     {
@@ -8370,7 +8720,7 @@
       "source_location": "L182",
       "_origin": "ast",
       "id": "composables_usegradebook_setactivesubject",
-      "community": 1,
+      "community": 100,
       "norm_label": "setactivesubject()"
     },
     {
@@ -8380,7 +8730,7 @@
       "source_location": "L198",
       "_origin": "ast",
       "id": "composables_usegradebook_loadgradebook",
-      "community": 1,
+      "community": 100,
       "norm_label": "loadgradebook()"
     },
     {
@@ -8390,7 +8740,7 @@
       "source_location": "L232",
       "_origin": "ast",
       "id": "composables_usegradebook_refreshgrades",
-      "community": 1,
+      "community": 100,
       "norm_label": "refreshgrades()"
     },
     {
@@ -8460,7 +8810,7 @@
       "source_location": "L365",
       "_origin": "ast",
       "id": "composables_usegradebook_deleteassessment",
-      "community": 1,
+      "community": 100,
       "norm_label": "deleteassessment()"
     },
     {
@@ -8550,7 +8900,7 @@
       "source_location": "L589",
       "_origin": "ast",
       "id": "composables_usegradebook_refreshallassessmentstats",
-      "community": 1,
+      "community": 100,
       "norm_label": "refreshallassessmentstats()"
     },
     {
@@ -8577,7 +8927,7 @@
       "label": "removeAttempt()",
       "file_type": "code",
       "source_file": "src/composables/useGradebook.js",
-      "source_location": "L739",
+      "source_location": "L753",
       "_origin": "ast",
       "id": "composables_usegradebook_removeattempt",
       "community": 10,
@@ -8587,7 +8937,7 @@
       "label": "setPrimaryAttempt()",
       "file_type": "code",
       "source_file": "src/composables/useGradebook.js",
-      "source_location": "L797",
+      "source_location": "L811",
       "_origin": "ast",
       "id": "composables_usegradebook_setprimaryattempt",
       "community": 10,
@@ -8597,7 +8947,7 @@
       "label": "updateAttemptComment()",
       "file_type": "code",
       "source_file": "src/composables/useGradebook.js",
-      "source_location": "L817",
+      "source_location": "L831",
       "_origin": "ast",
       "id": "composables_usegradebook_updateattemptcomment",
       "community": 10,
@@ -8607,7 +8957,7 @@
       "label": "clearGrade()",
       "file_type": "code",
       "source_file": "src/composables/useGradebook.js",
-      "source_location": "L836",
+      "source_location": "L850",
       "_origin": "ast",
       "id": "composables_usegradebook_cleargrade",
       "community": 10,
@@ -8617,7 +8967,7 @@
       "label": "markMissing()",
       "file_type": "code",
       "source_file": "src/composables/useGradebook.js",
-      "source_location": "L875",
+      "source_location": "L889",
       "_origin": "ast",
       "id": "composables_usegradebook_markmissing",
       "community": 10,
@@ -8627,7 +8977,7 @@
       "label": "markExcluded()",
       "file_type": "code",
       "source_file": "src/composables/useGradebook.js",
-      "source_location": "L933",
+      "source_location": "L947",
       "_origin": "ast",
       "id": "composables_usegradebook_markexcluded",
       "community": 10,
@@ -8637,17 +8987,17 @@
       "label": "saveStudentOverride()",
       "file_type": "code",
       "source_file": "src/composables/useGradebook.js",
-      "source_location": "L991",
+      "source_location": "L1005",
       "_origin": "ast",
       "id": "composables_usegradebook_savestudentoverride",
-      "community": 1,
+      "community": 100,
       "norm_label": "savestudentoverride()"
     },
     {
       "label": "saveStudentGradebookNote()",
       "file_type": "code",
       "source_file": "src/composables/useGradebook.js",
-      "source_location": "L1025",
+      "source_location": "L1039",
       "_origin": "ast",
       "id": "composables_usegradebook_savestudentgradebooknote",
       "community": 3,
@@ -8657,7 +9007,7 @@
       "label": "saveStudentDemographics()",
       "file_type": "code",
       "source_file": "src/composables/useGradebook.js",
-      "source_location": "L1056",
+      "source_location": "L1070",
       "_origin": "ast",
       "id": "composables_usegradebook_savestudentdemographics",
       "community": 8,
@@ -8667,7 +9017,7 @@
       "label": "gradeMap",
       "file_type": "code",
       "source_file": "src/composables/useGradebook.js",
-      "source_location": "L1087",
+      "source_location": "L1101",
       "_origin": "ast",
       "id": "composables_usegradebook_grademap",
       "community": 42,
@@ -8677,20 +9027,20 @@
       "label": "adjustStudentGrade()",
       "file_type": "code",
       "source_file": "src/composables/useGradebook.js",
-      "source_location": "L1132",
+      "source_location": "L1146",
       "_origin": "ast",
       "id": "composables_usegradebook_adjuststudentgrade",
-      "community": 10,
+      "community": 100,
       "norm_label": "adjuststudentgrade()"
     },
     {
       "label": "undoStudentGradeAdjustment()",
       "file_type": "code",
       "source_file": "src/composables/useGradebook.js",
-      "source_location": "L1162",
+      "source_location": "L1176",
       "_origin": "ast",
       "id": "composables_usegradebook_undostudentgradeadjustment",
-      "community": 10,
+      "community": 100,
       "norm_label": "undostudentgradeadjustment()"
     },
     {
@@ -10300,7 +10650,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "db_gradebookservice",
-      "community": 103,
+      "community": 2,
       "norm_label": "gradebookservice.js"
     },
     {
@@ -10440,7 +10790,7 @@
       "source_location": "L231",
       "_origin": "ast",
       "id": "db_settingsservice_getglobalmilestones",
-      "community": 1,
+      "community": 100,
       "norm_label": "getglobalmilestones()"
     },
     {
@@ -10540,7 +10890,7 @@
       "source_location": "L358",
       "_origin": "ast",
       "id": "db_settingsservice_getgradebuckets",
-      "community": 1,
+      "community": 100,
       "norm_label": "getgradebuckets()"
     },
     {
@@ -10710,7 +11060,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_gradecolors",
-      "community": 36,
+      "community": 110,
       "norm_label": "gradecolors.js"
     },
     {
@@ -10720,7 +11070,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "utils_gradecolors_getheatcolorhex",
-      "community": 36,
+      "community": 110,
       "norm_label": "getheatcolorhex()"
     },
     {
@@ -10730,7 +11080,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "utils_gradecolors_getsdcolor",
-      "community": 36,
+      "community": 110,
       "norm_label": "getsdcolor()"
     },
     {
@@ -10740,7 +11090,7 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "utils_gradecolors_getcoveragecolor",
-      "community": 36,
+      "community": 110,
       "norm_label": "getcoveragecolor()"
     },
     {
@@ -10750,7 +11100,7 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "utils_gradecolors_formatgrade",
-      "community": 36,
+      "community": 110,
       "norm_label": "formatgrade()"
     },
     {
@@ -10760,7 +11110,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "utils_gradecolors_getgradecolor",
-      "community": 36,
+      "community": 110,
       "norm_label": "getgradecolor()"
     },
     {
@@ -10770,7 +11120,7 @@
       "source_location": "L42",
       "_origin": "ast",
       "id": "utils_gradecolors_getgradecolormuted",
-      "community": 36,
+      "community": 110,
       "norm_label": "getgradecolormuted()"
     },
     {
@@ -10780,7 +11130,7 @@
       "source_location": "L50",
       "_origin": "ast",
       "id": "utils_gradecolors_getheatcolor",
-      "community": 36,
+      "community": 110,
       "norm_label": "getheatcolor()"
     },
     {
@@ -10790,7 +11140,7 @@
       "source_location": "L58",
       "_origin": "ast",
       "id": "utils_gradecolors_getheattextcolor",
-      "community": 36,
+      "community": 110,
       "norm_label": "getheattextcolor()"
     },
     {
@@ -10800,7 +11150,7 @@
       "source_location": "L66",
       "_origin": "ast",
       "id": "utils_gradecolors_unit_colors",
-      "community": 36,
+      "community": 110,
       "norm_label": "unit_colors"
     },
     {
@@ -10810,7 +11160,7 @@
       "source_location": "L76",
       "_origin": "ast",
       "id": "utils_gradecolors_section_badge_style",
-      "community": 36,
+      "community": 110,
       "norm_label": "section_badge_style"
     },
     {
@@ -10820,7 +11170,7 @@
       "source_location": "L84",
       "_origin": "ast",
       "id": "utils_gradecolors_section_palettes",
-      "community": 36,
+      "community": 110,
       "norm_label": "section_palettes"
     },
     {
@@ -10830,7 +11180,7 @@
       "source_location": "L86",
       "_origin": "ast",
       "id": "utils_gradecolors_getsectioncolor",
-      "community": 36,
+      "community": 110,
       "norm_label": "getsectioncolor()"
     },
     {
@@ -18580,11 +18930,548 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/components/grades/GradesAssessmentDetailSBAR.vue",
-      "source_location": "L535",
+      "source_location": "L680",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "grades_gradesassessmentdetailsbar",
-      "target": "grades_gradesassessmentdetailsbar_if"
+      "target": "grades_gradesassessmentdetailsbar_activebulkexp"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/grades/GradesAssessmentDetailSBAR.vue",
+      "source_location": "L395",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "grades_gradesassessmentdetailsbar",
+      "target": "grades_gradesassessmentdetailsbar_activeleveloptions"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/grades/GradesAssessmentDetailSBAR.vue",
+      "source_location": "L687",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "grades_gradesassessmentdetailsbar",
+      "target": "grades_gradesassessmentdetailsbar_applybulkfill"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/grades/GradesAssessmentDetailSBAR.vue",
+      "source_location": "L491",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "grades_gradesassessmentdetailsbar",
+      "target": "grades_gradesassessmentdetailsbar_assignlevel"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/grades/GradesAssessmentDetailSBAR.vue",
+      "source_location": "L495",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "grades_gradesassessmentdetailsbar",
+      "target": "grades_gradesassessmentdetailsbar_assignlevelbycode"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/grades/GradesAssessmentDetailSBAR.vue",
+      "source_location": "L502",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "grades_gradesassessmentdetailsbar",
+      "target": "grades_gradesassessmentdetailsbar_assignnumericpercentage"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/grades/GradesAssessmentDetailSBAR.vue",
+      "source_location": "L681",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "grades_gradesassessmentdetailsbar",
+      "target": "grades_gradesassessmentdetailsbar_bulkonlyunset"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/grades/GradesAssessmentDetailSBAR.vue",
+      "source_location": "L714",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "grades_gradesassessmentdetailsbar",
+      "target": "grades_gradesassessmentdetailsbar_contextmenu"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/grades/GradesAssessmentDetailSBAR.vue",
+      "source_location": "L736",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "grades_gradesassessmentdetailsbar",
+      "target": "grades_gradesassessmentdetailsbar_contextmenucleargrade"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/grades/GradesAssessmentDetailSBAR.vue",
+      "source_location": "L744",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "grades_gradesassessmentdetailsbar",
+      "target": "grades_gradesassessmentdetailsbar_contextmenuselectlevel"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/grades/GradesAssessmentDetailSBAR.vue",
+      "source_location": "L328",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "grades_gradesassessmentdetailsbar",
+      "target": "grades_gradesassessmentdetailsbar_displayedroster"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/grades/GradesAssessmentDetailSBAR.vue",
+      "source_location": "L320",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "grades_gradesassessmentdetailsbar",
+      "target": "grades_gradesassessmentdetailsbar_effectiveclass"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/grades/GradesAssessmentDetailSBAR.vue",
+      "source_location": "L407",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "grades_gradesassessmentdetailsbar",
+      "target": "grades_gradesassessmentdetailsbar_evaluatedcount"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/grades/GradesAssessmentDetailSBAR.vue",
+      "source_location": "L379",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "grades_gradesassessmentdetailsbar",
+      "target": "grades_gradesassessmentdetailsbar_finelevels"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/grades/GradesAssessmentDetailSBAR.vue",
+      "source_location": "L618",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "grades_gradesassessmentdetailsbar",
+      "target": "grades_gradesassessmentdetailsbar_focuscell"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/grades/GradesAssessmentDetailSBAR.vue",
+      "source_location": "L630",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "grades_gradesassessmentdetailsbar",
+      "target": "grades_gradesassessmentdetailsbar_focusgridcell"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/grades/GradesAssessmentDetailSBAR.vue",
+      "source_location": "L424",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "grades_gradesassessmentdetailsbar",
+      "target": "grades_gradesassessmentdetailsbar_fullygradedcount"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/grades/GradesAssessmentDetailSBAR.vue",
+      "source_location": "L439",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "grades_gradesassessmentdetailsbar",
+      "target": "grades_gradesassessmentdetailsbar_getexpprogress"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/grades/GradesAssessmentDetailSBAR.vue",
+      "source_location": "L513",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "grades_gradesassessmentdetailsbar",
+      "target": "grades_gradesassessmentdetailsbar_getgriddisplayvalue"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/grades/GradesAssessmentDetailSBAR.vue",
+      "source_location": "L474",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "grades_gradesassessmentdetailsbar",
+      "target": "grades_gradesassessmentdetailsbar_getstudentlevelbadge"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/grades/GradesAssessmentDetailSBAR.vue",
+      "source_location": "L479",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "grades_gradesassessmentdetailsbar",
+      "target": "grades_gradesassessmentdetailsbar_getstudentlevelcode"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/grades/GradesAssessmentDetailSBAR.vue",
+      "source_location": "L457",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "grades_gradesassessmentdetailsbar",
+      "target": "grades_gradesassessmentdetailsbar_getstudentpercentage"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/grades/GradesAssessmentDetailSBAR.vue",
+      "source_location": "L511",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "grades_gradesassessmentdetailsbar",
+      "target": "grades_gradesassessmentdetailsbar_gridinputdrafts"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/grades/GradesAssessmentDetailSBAR.vue",
+      "source_location": "L698",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "grades_gradesassessmentdetailsbar",
+      "target": "grades_gradesassessmentdetailsbar_handleglobalclick"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/grades/GradesAssessmentDetailSBAR.vue",
+      "source_location": "L576",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "grades_gradesassessmentdetailsbar",
+      "target": "grades_gradesassessmentdetailsbar_handlegridblur"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/grades/GradesAssessmentDetailSBAR.vue",
+      "source_location": "L554",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "grades_gradesassessmentdetailsbar",
+      "target": "grades_gradesassessmentdetailsbar_handlegridfocus"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/grades/GradesAssessmentDetailSBAR.vue",
+      "source_location": "L580",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "grades_gradesassessmentdetailsbar",
+      "target": "grades_gradesassessmentdetailsbar_handlegridkeydown"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/grades/GradesAssessmentDetailSBAR.vue",
+      "source_location": "L637",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "grades_gradesassessmentdetailsbar",
+      "target": "grades_gradesassessmentdetailsbar_handlenumericblur"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/grades/GradesAssessmentDetailSBAR.vue",
+      "source_location": "L641",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "grades_gradesassessmentdetailsbar",
+      "target": "grades_gradesassessmentdetailsbar_handlenumerickeydown"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/grades/GradesAssessmentDetailSBAR.vue",
+      "source_location": "L370",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "grades_gradesassessmentdetailsbar",
+      "target": "grades_gradesassessmentdetailsbar_inputmode"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/grades/GradesAssessmentDetailSBAR.vue",
+      "source_location": "L723",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "grades_gradesassessmentdetailsbar",
+      "target": "grades_gradesassessmentdetailsbar_opencontextmenu"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/grades/GradesAssessmentDetailSBAR.vue",
+      "source_location": "L525",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "grades_gradesassessmentdetailsbar",
+      "target": "grades_gradesassessmentdetailsbar_parselevelinput"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/grades/GradesAssessmentDetailSBAR.vue",
+      "source_location": "L558",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "grades_gradesassessmentdetailsbar",
+      "target": "grades_gradesassessmentdetailsbar_processgridsubmit"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/grades/GradesAssessmentDetailSBAR.vue",
+      "source_location": "L372",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "grades_gradesassessmentdetailsbar",
+      "target": "grades_gradesassessmentdetailsbar_simplelevels"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/grades/GradesAssessmentDetailSBAR.vue",
+      "source_location": "L399",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "grades_gradesassessmentdetailsbar",
+      "target": "grades_gradesassessmentdetailsbar_taggedexpectations"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/grades/GradesAssessmentDetailSBAR.vue",
+      "source_location": "L683",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "grades_gradesassessmentdetailsbar",
+      "target": "grades_gradesassessmentdetailsbar_togglebulkmenu"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/grades/GradesAssessmentDetailSBAR.vue",
+      "source_location": "L690",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "grades_gradesassessmentdetailsbar_applybulkfill",
+      "target": "grades_gradesassessmentdetailsbar_getstudentpercentage"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/grades/GradesAssessmentDetailSBAR.vue",
+      "source_location": "L520",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "grades_gradesassessmentdetailsbar_getgriddisplayvalue",
+      "target": "grades_gradesassessmentdetailsbar_getstudentpercentage"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/grades/GradesAssessmentDetailSBAR.vue",
+      "source_location": "L475",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "grades_gradesassessmentdetailsbar_getstudentlevelbadge",
+      "target": "grades_gradesassessmentdetailsbar_getstudentpercentage"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/grades/GradesAssessmentDetailSBAR.vue",
+      "source_location": "L564",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "grades_gradesassessmentdetailsbar_processgridsubmit",
+      "target": "grades_gradesassessmentdetailsbar_getstudentpercentage"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/grades/GradesAssessmentDetailSBAR.vue",
+      "source_location": "L518",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "grades_gradesassessmentdetailsbar_getgriddisplayvalue",
+      "target": "grades_gradesassessmentdetailsbar_getstudentlevelbadge"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/grades/GradesAssessmentDetailSBAR.vue",
+      "source_location": "L480",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "grades_gradesassessmentdetailsbar_getstudentlevelcode",
+      "target": "grades_gradesassessmentdetailsbar_getstudentlevelbadge"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/grades/GradesAssessmentDetailSBAR.vue",
+      "source_location": "L498",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "grades_gradesassessmentdetailsbar_assignlevelbycode",
+      "target": "grades_gradesassessmentdetailsbar_assignlevel"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/grades/GradesAssessmentDetailSBAR.vue",
+      "source_location": "L747",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "grades_gradesassessmentdetailsbar_contextmenuselectlevel",
+      "target": "grades_gradesassessmentdetailsbar_assignlevel"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/grades/GradesAssessmentDetailSBAR.vue",
+      "source_location": "L572",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "grades_gradesassessmentdetailsbar_processgridsubmit",
+      "target": "grades_gradesassessmentdetailsbar_assignlevel"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/grades/GradesAssessmentDetailSBAR.vue",
+      "source_location": "L638",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "grades_gradesassessmentdetailsbar_handlenumericblur",
+      "target": "grades_gradesassessmentdetailsbar_assignnumericpercentage"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/grades/GradesAssessmentDetailSBAR.vue",
+      "source_location": "L647",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "grades_gradesassessmentdetailsbar_handlenumerickeydown",
+      "target": "grades_gradesassessmentdetailsbar_assignnumericpercentage"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/grades/GradesAssessmentDetailSBAR.vue",
+      "source_location": "L570",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "grades_gradesassessmentdetailsbar_processgridsubmit",
+      "target": "grades_gradesassessmentdetailsbar_parselevelinput"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/grades/GradesAssessmentDetailSBAR.vue",
+      "source_location": "L577",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "grades_gradesassessmentdetailsbar_handlegridblur",
+      "target": "grades_gradesassessmentdetailsbar_processgridsubmit"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/grades/GradesAssessmentDetailSBAR.vue",
+      "source_location": "L588",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "grades_gradesassessmentdetailsbar_handlegridkeydown",
+      "target": "grades_gradesassessmentdetailsbar_processgridsubmit"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/grades/GradesAssessmentDetailSBAR.vue",
+      "source_location": "L591",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "grades_gradesassessmentdetailsbar_handlegridkeydown",
+      "target": "grades_gradesassessmentdetailsbar_focusgridcell"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/grades/GradesAssessmentDetailSBAR.vue",
+      "source_location": "L631",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "grades_gradesassessmentdetailsbar_focusgridcell",
+      "target": "grades_gradesassessmentdetailsbar_focuscell"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/grades/GradesAssessmentDetailSBAR.vue",
+      "source_location": "L650",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "grades_gradesassessmentdetailsbar_handlenumerickeydown",
+      "target": "grades_gradesassessmentdetailsbar_focuscell"
     },
     {
       "relation": "imports_from",
@@ -30869,5 +31756,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "bf9c5e632344dfa06f812bdd3017fec39584803f"
+  "built_at_commit": "db2db1fc527f872804de5fef72a319e73d0509b5"
 }

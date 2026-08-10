@@ -298,7 +298,7 @@ export async function getGradesByClass(classId) {
     item.score != null || 
     item.pointsEarned != null || 
     item.masteryLevel != null || 
-    item.expectationScores != null || 
+    (item.expectationScores && Object.keys(item.expectationScores).length > 0) || 
     item.missing || 
     item.excluded
   )

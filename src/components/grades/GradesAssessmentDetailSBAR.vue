@@ -39,6 +39,9 @@
         <div class="sbar-metric-item">
           <span class="sbar-metric-label">EVALUATED:</span>
           <span class="sbar-metric-value">{{ evaluatedCount }} / {{ displayedRoster.length }} Students</span>
+          <span v-if="fullyGradedCount > 0 && taggedExpectations.length > 1" class="sbar-metric-sub">
+            ({{ fullyGradedCount }} complete)
+          </span>
         </div>
         <div class="sbar-metric-item" v-if="focusedStudentId">
           <span class="sbar-metric-label">VIEW MODE:</span>
@@ -99,7 +102,19 @@
             >
               <div class="exp-header-inner">
                 <div class="exp-header-text">
-                  <div class="exp-code">{{ exp.code }}</div>
+                  <div class="exp-code-row">
+                    <span class="exp-code">{{ exp.code }}</span>
+                    <span 
+                      class="exp-progress-badge"
+                      :class="{ 
+                        'exp-progress-badge--complete': getExpProgress(exp.code).count === getExpProgress(exp.code).total && getExpProgress(exp.code).total > 0,
+                        'exp-progress-badge--partial': getExpProgress(exp.code).count > 0 && getExpProgress(exp.code).count < getExpProgress(exp.code).total
+                      }"
+                      :title="`${getExpProgress(exp.code).count} of ${getExpProgress(exp.code).total} students evaluated for ${exp.code}`"
+                    >
+                      {{ getExpProgress(exp.code).count }}/{{ getExpProgress(exp.code).total }}
+                    </span>
+                  </div>
                   <div class="exp-name">{{ exp.name }}</div>
                 </div>
 
@@ -186,14 +201,15 @@
               <!-- Exact Numeric Input Mode -->
               <div v-else-if="inputMode === 'numeric'" class="numeric-input-wrapper">
                 <input 
-                  type="number"
-                  min="0"
-                  max="100"
-                  step="0.5"
+                  :id="`numeric-cell-${sIdx}-${eIdx}`"
+                  type="text"
+                  inputmode="decimal"
                   class="sbar-numeric-input"
                   :value="getStudentPercentage(student.studentId, exp.code)"
                   placeholder="%"
-                  @change="assignNumericPercentage(student.studentId, exp.code, $event.target.value)"
+                  @focus="handleGridFocus($event)"
+                  @keydown="handleNumericKeydown($event, student.studentId, exp.code, sIdx, eIdx)"
+                  @blur="handleNumericBlur($event, student.studentId, exp.code)"
                 />
                 <span v-if="getStudentPercentage(student.studentId, exp.code) != null" class="numeric-level-badge">
                   {{ getStudentLevelBadge(student.studentId, exp.code).level }}
@@ -241,29 +257,38 @@
     <!-- Floating Right-Click Context Menu for Cell Actions -->
     <div 
       v-if="contextMenu.visible" 
-      class="sbar-context-menu" 
-      :style="{ top: `${contextMenu.y}px`, left: `${contextMenu.x}px` }"
-      @click.stop
+      class="grades__context-backdrop" 
+      @click="contextMenu.visible = false"
+      @contextmenu.prevent="contextMenu.visible = false"
     >
-      <div class="context-menu-header">
-        <strong class="context-student-name">{{ contextMenu.studentName }}</strong>
-        <span class="context-exp-code">{{ contextMenu.expCode }}</span>
-      </div>
-      <button class="context-menu-item context-menu-item--danger" @click="contextMenuClearGrade">
-        <Trash2 :size="13" /> ❌ Clear Grade
-      </button>
-      <div class="context-menu-divider"></div>
-      <div class="context-menu-label">Set Level:</div>
-      <div class="context-menu-pill-grid">
-        <button 
-          v-for="lvl in fineLevels" 
-          :key="lvl.code" 
-          class="context-level-pill"
-          :style="{ background: lvl.color, color: 'white' }"
-          @click="contextMenuSelectLevel(lvl.pct)"
-        >
-          {{ lvl.label }}
+      <div 
+        class="grades__context-menu sbar-context-menu" 
+        :style="{ top: `${contextMenu.y}px`, left: `${contextMenu.x}px` }"
+        @click.stop
+      >
+        <div class="sbar-context-header">
+          <strong class="sbar-context-name">{{ contextMenu.studentName }}</strong>
+          <span class="sbar-context-code">{{ contextMenu.expCode }}</span>
+        </div>
+
+        <button class="grades__context-btn grades__context-btn--danger" @click="contextMenuClearGrade">
+          <Trash2 :size="14" /> Clear Grade
         </button>
+
+        <div class="sbar-context-divider"></div>
+
+        <div class="sbar-context-label">Set Level:</div>
+        <div class="sbar-context-level-grid">
+          <button 
+            v-for="lvl in fineLevels" 
+            :key="lvl.code" 
+            class="sbar-context-level-pill"
+            :style="{ background: lvl.color, color: 'white' }"
+            @click="contextMenuSelectLevel(lvl.pct)"
+          >
+            {{ lvl.label }}
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -380,10 +405,54 @@ const taggedExpectations = computed(() => {
 })
 
 const evaluatedCount = computed(() => {
-  if (!props.currentAssessment?.assessmentId || !props.sortedRoster) return 0
-  const astGrades = gradeMap.value[props.currentAssessment.assessmentId] || {}
-  return Object.values(astGrades).filter(g => g && (g.expectationScores || g.masteryLevel != null)).length
+  if (!props.currentAssessment?.assessmentId || !displayedRoster.value) return 0
+  const astId = props.currentAssessment.assessmentId
+  const astGrades = gradeMap.value[astId] || gradeMap.value[Number(astId)] || gradeMap.value[String(astId)] || {}
+  const targetIds = new Set(displayedRoster.value.map(s => String(s.studentId)))
+
+  return Object.entries(astGrades).filter(([sId, g]) => {
+    return targetIds.has(String(sId)) && g && (
+      (g.expectationScores && Object.keys(g.expectationScores).length > 0) || 
+      g.masteryLevel != null || 
+      g.resolvedScore != null ||
+      g.missing ||
+      g.excluded
+    )
+  }).length
 })
+
+const fullyGradedCount = computed(() => {
+  if (!props.currentAssessment?.assessmentId || !displayedRoster.value) return 0
+  const astId = props.currentAssessment.assessmentId
+  const astGrades = gradeMap.value[astId] || gradeMap.value[Number(astId)] || gradeMap.value[String(astId)] || {}
+  const expCodes = taggedExpectations.value.map(e => e.code)
+  if (expCodes.length === 0) return 0
+  const targetIds = new Set(displayedRoster.value.map(s => String(s.studentId)))
+
+  return Object.entries(astGrades).filter(([sId, g]) => {
+    if (!targetIds.has(String(sId)) || !g) return false
+    if (g.missing || g.excluded) return true
+    return expCodes.every(code => g.expectationScores && g.expectationScores[code] != null)
+  }).length
+})
+
+function getExpProgress(expCode) {
+  if (!props.currentAssessment?.assessmentId || !displayedRoster.value) return { count: 0, total: 0 }
+  const astId = props.currentAssessment.assessmentId
+  const astGrades = gradeMap.value[astId] || gradeMap.value[Number(astId)] || gradeMap.value[String(astId)] || {}
+  const targetIds = new Set(displayedRoster.value.map(s => String(s.studentId)))
+  const total = displayedRoster.value.length
+
+  const count = Object.entries(astGrades).filter(([sId, g]) => {
+    return targetIds.has(String(sId)) && g && (
+      (g.expectationScores && g.expectationScores[expCode] != null) ||
+      g.missing ||
+      g.excluded
+    )
+  }).length
+
+  return { count, total }
+}
 
 function getStudentPercentage(studentId, expCode) {
   const astId = props.currentAssessment?.assessmentId
@@ -546,14 +615,63 @@ async function handleGridKeydown(event, studentId, expCode, sIdx, eIdx) {
   }
 }
 
-function focusGridCell(sIdx, eIdx) {
+function focusCell(sIdx, eIdx) {
   setTimeout(() => {
-    const el = document.getElementById(`grid-cell-${sIdx}-${eIdx}`)
+    const prefix = inputMode.value === 'numeric' ? 'numeric-cell' : 'grid-cell'
+    const el = document.getElementById(`${prefix}-${sIdx}-${eIdx}`)
     if (el) {
       el.focus()
       el.select()
     }
   }, 10)
+}
+
+// Keep old name as alias for any internal callers
+function focusGridCell(sIdx, eIdx) {
+  focusCell(sIdx, eIdx)
+}
+
+/* ==========================================================================
+   Exact % Numeric Mode Keyboard Navigation
+   ========================================================================== */
+async function handleNumericBlur(event, studentId, expCode) {
+  await assignNumericPercentage(studentId, expCode, event.target.value)
+}
+
+async function handleNumericKeydown(event, studentId, expCode, sIdx, eIdx) {
+  const totalRows = displayedRoster.value.length
+  const totalCols = taggedExpectations.value.length
+
+  if (event.key === 'Enter' || event.key === 'ArrowDown') {
+    event.preventDefault()
+    await assignNumericPercentage(studentId, expCode, event.target.value)
+    const nextSIdx = event.shiftKey ? sIdx - 1 : sIdx + 1
+    if (nextSIdx >= 0 && nextSIdx < totalRows) {
+      focusCell(nextSIdx, eIdx)
+    }
+  } else if (event.key === 'ArrowUp') {
+    event.preventDefault()
+    await assignNumericPercentage(studentId, expCode, event.target.value)
+    if (sIdx - 1 >= 0) {
+      focusCell(sIdx - 1, eIdx)
+    }
+  } else if (event.key === 'Tab') {
+    event.preventDefault()
+    await assignNumericPercentage(studentId, expCode, event.target.value)
+    if (event.shiftKey) {
+      if (eIdx - 1 >= 0) {
+        focusCell(sIdx, eIdx - 1)
+      } else if (sIdx - 1 >= 0) {
+        focusCell(sIdx - 1, totalCols - 1)
+      }
+    } else {
+      if (eIdx + 1 < totalCols) {
+        focusCell(sIdx, eIdx + 1)
+      } else if (sIdx + 1 < totalRows) {
+        focusCell(sIdx + 1, 0)
+      }
+    }
+  }
 }
 
 /* ==========================================================================
@@ -767,6 +885,13 @@ async function contextMenuSelectLevel(pct) {
   color: var(--primary);
 }
 
+.sbar-metric-sub {
+  font-size: 0.725rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-left: 4px;
+}
+
 .sbar-matrix-container {
   flex: 1;
   overflow: auto;
@@ -802,10 +927,39 @@ async function contextMenuSelectLevel(pct) {
   min-width: 220px;
 }
 
-.exp-header-code {
+.exp-code-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.exp-code {
   font-size: 0.85rem;
   font-weight: 700;
   color: var(--primary);
+}
+
+.exp-progress-badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  line-height: 1.2;
+}
+
+.exp-progress-badge--complete {
+  background: rgba(22, 163, 74, 0.15);
+  color: #16a34a;
+  border-color: rgba(22, 163, 74, 0.35);
+}
+
+.exp-progress-badge--partial {
+  background: rgba(217, 119, 6, 0.15);
+  color: #d97706;
+  border-color: rgba(217, 119, 6, 0.35);
 }
 
 .exp-header-desc {
@@ -1143,37 +1297,45 @@ async function contextMenuSelectLevel(pct) {
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
-/* Right-Click Context Menu */
+/* Right-Click Context Menu (App Design System Standard) */
+.grades__context-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 2500;
+  background: rgba(0, 0, 0, 0.08);
+}
+
 .sbar-context-menu {
   position: fixed;
-  z-index: 100;
+  z-index: 2501;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-  padding: 8px;
+  box-shadow: var(--shadow-lg, 0 10px 30px rgba(0, 0, 0, 0.15));
+  padding: 6px;
   min-width: 210px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
 }
 
-.context-menu-header {
+.sbar-context-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  padding: 6px 8px;
+  padding: 6px 10px 8px;
   border-bottom: 1px solid var(--border);
   margin-bottom: 4px;
 }
 
-.context-student-name {
+.sbar-context-name {
   font-size: 0.8rem;
+  font-weight: 700;
   color: var(--text);
 }
 
-.context-exp-code {
+.sbar-context-code {
   font-size: 0.7rem;
   font-weight: 700;
   color: var(--primary);
@@ -1182,65 +1344,72 @@ async function contextMenuSelectLevel(pct) {
   border-radius: 4px;
 }
 
-.context-menu-item {
+.grades__context-btn {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 6px 10px;
-  font-size: 0.8rem;
-  font-weight: 600;
+  padding: 8px 12px;
   border: none;
-  border-radius: var(--radius-sm);
   background: transparent;
+  border-radius: var(--radius-sm);
+  font-size: 0.825rem;
+  font-weight: 600;
   color: var(--text);
   cursor: pointer;
-  transition: background 0.15s ease;
+  width: 100%;
+  text-align: left;
+  transition: background 0.15s ease, color 0.15s ease;
 }
 
-.context-menu-item:hover {
+.grades__context-btn:hover {
   background: var(--bg-secondary);
+  color: var(--primary);
 }
 
-.context-menu-item--danger {
+.grades__context-btn--danger {
   color: #ef4444;
 }
 
-.context-menu-item--danger:hover {
-  background: rgba(239, 68, 68, 0.1);
+.grades__context-btn--danger:hover {
+  color: #dc2626 !important;
+  background: rgba(239, 68, 68, 0.1) !important;
 }
 
-.context-menu-divider {
+.sbar-context-divider {
   height: 1px;
   background: var(--border);
-  margin: 2px 0;
+  margin: 4px 0;
 }
 
-.context-menu-label {
+.sbar-context-label {
   font-size: 0.7rem;
   font-weight: 700;
   color: var(--text-secondary);
-  padding: 2px 8px;
+  padding: 2px 8px 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
-.context-menu-pill-grid {
+.sbar-context-level-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 3px;
+  gap: 4px;
   padding: 0 4px 4px;
 }
 
-.context-level-pill {
-  padding: 4px;
+.sbar-context-level-pill {
+  padding: 5px;
   border-radius: 4px;
   border: none;
   font-size: 0.725rem;
   font-weight: 700;
   cursor: pointer;
   text-align: center;
-  transition: transform 0.1s ease;
+  transition: transform 0.15s ease, opacity 0.15s ease;
 }
 
-.context-level-pill:hover {
-  transform: scale(1.1);
+.sbar-context-level-pill:hover {
+  transform: scale(1.06);
+  opacity: 0.9;
 }
 </style>
