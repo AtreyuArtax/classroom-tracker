@@ -1,7 +1,7 @@
 # Graph Report - classroom-tracker  (2026-08-10)
 
 ## Corpus Check
-- 200 files · ~359,614 words
+- 200 files · ~359,691 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `99746222`
+- Built from commit: `08405466`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -115,7 +115,7 @@ Nodes (35): getStudentEffectiveGrade(), activeGradeFilter, activeSubCohortFilter
 
 ### Community 2 - "Community 2"
 Cohesion: 0.16
-Nodes (29): getSettings(), getAssessmentsByClass(), auditGradebookData(), calculateAssessmentAnalytics(), calculateClassAnalytics(), deleteGradebookTemplate(), getExclusionResults(), getGradebookTemplates() (+21 more)
+Nodes (28): getAssessmentsByClass(), auditGradebookData(), calculateAssessmentAnalytics(), calculateClassAnalytics(), deleteGradebookTemplate(), getExclusionResults(), getGradebookTemplates(), repairGradebookOrphans() (+20 more)
 
 ### Community 3 - "Community 3"
 Cohesion: 0.05
@@ -195,7 +195,7 @@ Nodes (9): background_color, description, display, icons, name, orientation, sho
 
 ### Community 23 - "Community 23"
 Cohesion: 0.11
-Nodes (25): loadGradebook(), refreshAllAssessmentStats(), setActiveSubject(), auditSettingsIntegrity(), deleteBehaviorCode(), getAcademicTerms(), getAttendanceConfig(), getBehaviorCodes() (+17 more)
+Nodes (26): loadGradebook(), refreshAllAssessmentStats(), setActiveSubject(), auditSettingsIntegrity(), deleteBehaviorCode(), getAcademicTerms(), getAttendanceConfig(), getBehaviorCodes() (+18 more)
 
 ### Community 24 - "Community 24"
 Cohesion: 0.20

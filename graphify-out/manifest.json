@@ -605,8 +605,8 @@
     "semantic_hash": ""
   },
   "src/components/grades/GradesGridSBAR.vue": {
-    "mtime": 1786384326.408876,
-    "ast_hash": "603ade242e0c052160e9684b0f353633",
+    "mtime": 1786384996.0778925,
+    "ast_hash": "731bf58380d52af30962a6660d6db7a0",
     "semantic_hash": ""
   },
   "src/db/gradebook/gradeCalcSBAR.js": {

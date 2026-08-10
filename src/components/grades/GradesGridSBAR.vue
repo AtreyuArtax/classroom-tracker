@@ -486,7 +486,18 @@ function toggleExpectationPopover(exp, event) {
 }
 
 const quickActionTasks = computed(() => {
-  return sortedAssessments.value.slice(0, 2)
+  const all = sortedAssessments.value
+  const incomplete = all.filter(a => !getAssessmentStats(a.assessmentId).isComplete)
+  const complete = all.filter(a => getAssessmentStats(a.assessmentId).isComplete)
+
+  const result = [...incomplete]
+  if (result.length < 2) {
+    for (const cAst of complete) {
+      if (result.length >= 2) break
+      result.push(cAst)
+    }
+  }
+  return result.slice(0, 2)
 })
 
 const needsGradingCount = computed(() => {
@@ -619,7 +630,17 @@ const sortedAssessments = computed(() => {
     })
   }
 
-  return list.sort((a, b) => new Date(b.date) - new Date(a.date))
+  return list.sort((a, b) => {
+    const timeA = new Date(a.date || a.createdAt || 0).getTime()
+    const timeB = new Date(b.date || b.createdAt || 0).getTime()
+    if (timeB !== timeA) return timeB - timeA
+
+    const createdA = new Date(a.createdAt || 0).getTime()
+    const createdB = new Date(b.createdAt || 0).getTime()
+    if (createdB !== createdA) return createdB - createdA
+
+    return String(b.assessmentId).localeCompare(String(a.assessmentId))
+  })
 })
 
 function onSelectTaskToGrade(e) {
