@@ -18,7 +18,7 @@
       </div>
       <div class="report-header__right">
         <div class="report-date">{{ formattedDate }}</div>
-        <div class="report-type-badge">S-BAR Progress Report</div>
+        <div class="report-type-badge">SBAR Progress Report</div>
       </div>
     </header>
 

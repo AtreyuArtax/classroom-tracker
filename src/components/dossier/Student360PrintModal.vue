@@ -37,7 +37,7 @@
           </div>
 
           <div v-if="printConfig.reportType === 'progress'" class="print-modal__options" style="margin-top: 1rem;">
-            <div class="print-modal__section-title">{{ isSBAR ? 'S-Bar Content & Scope' : 'Include in Document' }}</div>
+            <div class="print-modal__section-title">{{ isSBAR ? 'SBAR Content & Scope' : 'Include in Document' }}</div>
             
             <template v-if="isSBAR">
               <label class="setup__label" style="margin-bottom: 8px; font-weight: 600; font-size: 0.85rem;">

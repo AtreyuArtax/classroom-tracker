@@ -38,7 +38,7 @@
                 </select>
               </label>
 
-              <div class="print-modal__section-title">{{ isSBAR ? 'S-Bar Content & Scope' : 'Report Content' }}</div>
+              <div class="print-modal__section-title">{{ isSBAR ? 'SBAR Content & Scope' : 'Report Content' }}</div>
 
               <template v-if="isSBAR">
                 <label class="setup__label" style="margin-bottom: 8px; font-weight: 600; font-size: 0.85rem;">

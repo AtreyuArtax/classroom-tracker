@@ -500,8 +500,8 @@
     "semantic_hash": ""
   },
   "src/components/dossier/Student360PrintModal.vue": {
-    "mtime": 1786381645.814606,
-    "ast_hash": "b4abd867643ee9c64176f6cc194c8485",
+    "mtime": 1786382906.3159873,
+    "ast_hash": "08bb563b5149119cacefaa8f1395eb3d",
     "semantic_hash": ""
   },
   "src/components/dossier/Student360ProfileTab.vue": {
@@ -510,8 +510,8 @@
     "semantic_hash": ""
   },
   "src/components/reports/ReportsBatchPrintModal.vue": {
-    "mtime": 1786381627.3531082,
-    "ast_hash": "db7a9344393e481fb1b13225913ffbc1",
+    "mtime": 1786382901.9889877,
+    "ast_hash": "9f2cd1c647af74b756161085937372d5",
     "semantic_hash": ""
   },
   "src/components/reports/ReportsClassOverview.vue": {
@@ -990,8 +990,8 @@
     "semantic_hash": ""
   },
   "src/components/dossier/SBarProgressReport.vue": {
-    "mtime": 1786375580.5087166,
-    "ast_hash": "ea7782ded25168ebe3bad65b4390382c",
+    "mtime": 1786382897.6656377,
+    "ast_hash": "f35cfe7c5865d4feca9604793ae2a3b4",
     "semantic_hash": ""
   },
   "src/composables/useSBarPrintOptions.js": {
