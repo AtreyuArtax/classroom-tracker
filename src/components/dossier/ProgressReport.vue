@@ -1,23 +1,33 @@
 <template>
-  <div class="progress-report" :class="{ 'progress-report--batch': isBatch }">
-    <!-- Header -->
-    <header class="report-header">
-      <div class="report-header__left">
-        <div class="header-title-row">
-          <h1 class="report-student-name">{{ student?.firstName }} {{ student?.lastName }}</h1>
-          <span v-if="config.includeOverallGrade && overallGrade !== null" 
-                class="header-grade-badge" 
-                :style="{ background: getGradeColor(overallGrade) }">
-            {{ formattedGrade }}
-          </span>
+  <template v-if="isSBAR">
+    <SBarProgressReport 
+      :student-id="studentId" 
+      :class-id="classId" 
+      :config="config" 
+      :is-batch="isBatch" 
+    />
+  </template>
+
+  <template v-else>
+    <div class="progress-report" :class="{ 'progress-report--batch': isBatch }">
+      <!-- Header -->
+      <header class="report-header">
+        <div class="report-header__left">
+          <div class="header-title-row">
+            <h1 class="report-student-name">{{ student?.firstName }} {{ student?.lastName }}</h1>
+            <span v-if="config.includeOverallGrade && overallGrade !== null" 
+                  class="header-grade-badge" 
+                  :style="{ background: getGradeColor(overallGrade) }">
+              {{ formattedGrade }}
+            </span>
+          </div>
+          <p class="report-meta">{{ displayMetaLine }}</p>
         </div>
-        <p class="report-meta">{{ displayMetaLine }}</p>
-      </div>
-      <div class="report-header__right">
-        <div class="report-date">{{ new Date().toLocaleDateString([], { month: 'long', day: 'numeric', year: 'numeric' }) }}</div>
-        <div class="report-type-badge">Progress Report</div>
-      </div>
-    </header>
+        <div class="report-header__right">
+          <div class="report-date">{{ new Date().toLocaleDateString([], { month: 'long', day: 'numeric', year: 'numeric' }) }}</div>
+          <div class="report-type-badge">Progress Report</div>
+        </div>
+      </header>
 
     <!-- Consistency Metrics (Medians) -->
     <section v-if="config.includeMedians" class="report-section report-section--medians">
@@ -155,6 +165,7 @@
       <p>Values reflect data currently on record.</p>
     </footer>
   </div>
+  </template>
 </template>
 
 <script setup>
@@ -171,6 +182,12 @@ import { getEventsByStudent, toMinutes } from '../../db/eventService.js'
 import { formatLocalDisplay } from '../../utils/dates.js'
 import StudentGradeTrend from './StudentGradeTrend.vue'
 import DossierEvidenceMix from './DossierEvidenceMix.vue'
+import SBarProgressReport from './SBarProgressReport.vue'
+
+const isSBAR = computed(() => {
+  const fw = activeClassRecord.value?.gradingFramework
+  return fw === 'sbar' || (typeof fw === 'string' && fw.startsWith('sbar'))
+})
 
 const props = defineProps({
   studentId: { type: String, required: true },

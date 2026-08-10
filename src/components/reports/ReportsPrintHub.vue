@@ -32,7 +32,13 @@
             <span class="print-hub__stat-label">Target Audience:</span>
             <span class="print-hub__stat-value">{{ sidebarStudents.length }} Students enrolled</span>
           </div>
-          <div class="print-hub__features-list">
+          <div v-if="isSBAR" class="print-hub__features-list">
+            <span class="print-hub__chip">SBAR Level Badges</span>
+            <span class="print-hub__chip">Expectation Mastery</span>
+            <span class="print-hub__chip">Progression Timeline</span>
+            <span class="print-hub__chip">Attendance Markers</span>
+          </div>
+          <div v-else class="print-hub__features-list">
             <span class="print-hub__chip">Overall Grade Badge</span>
             <span class="print-hub__chip">Evidence Triangulation</span>
             <span class="print-hub__chip">Attendance &amp; Behavior</span>
@@ -215,6 +221,11 @@ import { FileText, Grid, BookOpen, Download, Printer, GraduationCap, Users, Cale
 const props = defineProps({
   reportClass: { type: Object, default: null },
   sidebarStudents: { type: Array, default: () => [] }
+})
+
+const isSBAR = computed(() => {
+  const fw = props.reportClass?.gradingFramework
+  return fw === 'sbar' || (typeof fw === 'string' && fw.startsWith('sbar'))
 })
 
 const emit = defineEmits([

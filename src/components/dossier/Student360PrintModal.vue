@@ -37,36 +37,74 @@
           </div>
 
           <div v-if="printConfig.reportType === 'progress'" class="print-modal__options" style="margin-top: 1rem;">
-            <div class="print-modal__section-title">Include in Document</div>
-            <label class="print-modal__option">
-              <input type="checkbox" v-model="printConfig.includeOverallGrade" />
-              Overall Grade Badge
-            </label>
-            <label class="print-modal__option">
-              <input type="checkbox" v-model="printConfig.includeMedians" />
-              Weighted Median & Consistent Grade
-            </label>
-            <label class="print-modal__option">
-              <input type="checkbox" v-model="printConfig.includeGradeTrend" />
-              Performance Trend Graph
-            </label>
-            <label class="print-modal__option">
-              <input type="checkbox" v-model="printConfig.includeTriangulation" />
-              Evidence Triangulation (Pie)
-            </label>
-            <label class="print-modal__option">
-              <input type="checkbox" v-model="printConfig.includeCategorySummary" />
-              Category Performance Summary
-            </label>
-            <div class="print-modal__divider"></div>
-            <label class="print-modal__option">
-              <input type="checkbox" v-model="printConfig.includeAttendance" />
-              Attendance Summary
-            </label>
-            <label class="print-modal__option">
-              <input type="checkbox" v-model="printConfig.includeBehavior" />
-              Out-of-Class Summary
-            </label>
+            <div class="print-modal__section-title">{{ isSBAR ? 'S-Bar Content & Scope' : 'Include in Document' }}</div>
+            
+            <template v-if="isSBAR">
+              <label class="setup__label" style="margin-bottom: 8px; font-weight: 600; font-size: 0.85rem;">
+                Expectation Scope
+                <select v-model="printConfig.expectationScope" class="setup__input" style="margin-top: 4px; padding: 6px 10px; font-size: 0.85rem;">
+                  <option value="assessed">Assessed Expectations Only (Recommended)</option>
+                  <option value="overall">Overall Expectations / Success Criteria</option>
+                  <option value="all">All Course Expectations</option>
+                </select>
+              </label>
+              <label class="setup__label" style="margin-bottom: 8px; font-weight: 600; font-size: 0.85rem;">
+                Layout Density
+                <select v-model="printConfig.layoutColumns" class="setup__input" style="margin-top: 4px; padding: 6px 10px; font-size: 0.85rem;">
+                  <option value="2">2-Column Grid (Compact)</option>
+                  <option value="1">Single Column (Full Width)</option>
+                </select>
+              </label>
+              <label class="print-modal__option">
+                <input type="checkbox" v-model="printConfig.includeProgression" />
+                Evaluation Progression Timeline (L2 ➔ L3 ➔ L4)
+              </label>
+              <label class="print-modal__option">
+                <input type="checkbox" v-model="printConfig.includeOverallBadge" />
+                Overall SBAR Level Badge
+              </label>
+              <div class="print-modal__divider"></div>
+              <label class="print-modal__option">
+                <input type="checkbox" v-model="printConfig.includeAttendance" />
+                Attendance Summary
+              </label>
+              <label class="print-modal__option">
+                <input type="checkbox" v-model="printConfig.includeBehavior" />
+                Out-of-Class Summary
+              </label>
+            </template>
+
+            <template v-else>
+              <label class="print-modal__option">
+                <input type="checkbox" v-model="printConfig.includeOverallGrade" />
+                Overall Grade Badge
+              </label>
+              <label class="print-modal__option">
+                <input type="checkbox" v-model="printConfig.includeMedians" />
+                Weighted Median & Consistent Grade
+              </label>
+              <label class="print-modal__option">
+                <input type="checkbox" v-model="printConfig.includeGradeTrend" />
+                Performance Trend Graph
+              </label>
+              <label class="print-modal__option">
+                <input type="checkbox" v-model="printConfig.includeTriangulation" />
+                Evidence Triangulation (Pie)
+              </label>
+              <label class="print-modal__option">
+                <input type="checkbox" v-model="printConfig.includeCategorySummary" />
+                Category Performance Summary
+              </label>
+              <div class="print-modal__divider"></div>
+              <label class="print-modal__option">
+                <input type="checkbox" v-model="printConfig.includeAttendance" />
+                Attendance Summary
+              </label>
+              <label class="print-modal__option">
+                <input type="checkbox" v-model="printConfig.includeBehavior" />
+                Out-of-Class Summary
+              </label>
+            </template>
           </div>
 
           <div v-else class="print-modal__options" style="margin-top: 1rem;">
@@ -141,11 +179,12 @@
 </template>
 
 <script setup>
-import { ref, reactive, watch, nextTick } from 'vue'
+import { ref, reactive, watch, computed, nextTick } from 'vue'
 import { Printer, Activity } from 'lucide-vue-next'
 import BaseModal from '../BaseModal.vue'
 import ProgressReport from './ProgressReport.vue'
 import AttendanceActivityReport from './AttendanceActivityReport.vue'
+import { activeClassRecord } from '../../composables/useGradebook.js'
 
 const props = defineProps({
   show: { type: Boolean, default: false },
@@ -158,6 +197,11 @@ const emit = defineEmits(['close'])
 const showPrintPreview = ref(false)
 const isSystemPrinting = ref(false)
 
+const isSBAR = computed(() => {
+  const fw = activeClassRecord.value?.gradingFramework
+  return fw === 'sbar' || (typeof fw === 'string' && fw.startsWith('sbar'))
+})
+
 watch(isSystemPrinting, (newValue) => {
   if (newValue) {
     document.body.classList.add('is-printing')
@@ -168,6 +212,10 @@ watch(isSystemPrinting, (newValue) => {
 
 const printConfig = reactive({
   reportType: 'progress',
+  expectationScope: 'assessed',
+  layoutColumns: '2',
+  includeProgression: true,
+  includeOverallBadge: true,
   includeAttendance: true,
   includeBehavior: false,
   includeOverallGrade: true,
