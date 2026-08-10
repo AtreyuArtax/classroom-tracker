@@ -697,6 +697,7 @@ export function enterGradeSBAR(assessmentId, studentId, expCode, percentage) {
 
   let grade = grades.value.find(g => Number(g.assessmentId) === Number(assessmentId) && String(g.studentId) === String(studentId))
   if (!grade) {
+    if (percentage == null) return // nothing to clear
     grade = {
       assessmentId: Number(assessmentId),
       studentId: String(studentId),
@@ -713,10 +714,23 @@ export function enterGradeSBAR(assessmentId, studentId, expCode, percentage) {
     grade.expectationScores = {}
   }
 
-  grade.expectationScores[expCode] = percentage
-  grade.masteryLevel = percentage
-  grade.resolvedScore = percentage
-  grade.missing = false
+  if (percentage == null) {
+    delete grade.expectationScores[expCode]
+    const remainingScores = Object.values(grade.expectationScores).filter(v => v != null)
+    if (remainingScores.length === 0) {
+      grade.masteryLevel = null
+      grade.resolvedScore = null
+    } else {
+      const avg = Math.round(remainingScores.reduce((a, b) => a + b, 0) / remainingScores.length)
+      grade.masteryLevel = avg
+      grade.resolvedScore = avg
+    }
+  } else {
+    grade.expectationScores[expCode] = percentage
+    grade.masteryLevel = percentage
+    grade.resolvedScore = percentage
+    grade.missing = false
+  }
 
   grades.value = [...grades.value]
   refreshSingleStudent(studentId)
@@ -726,7 +740,7 @@ export function enterGradeSBAR(assessmentId, studentId, expCode, percentage) {
       assessmentId, 
       studentId, 
       grade.expectationScores, 
-      percentage,
+      grade.masteryLevel,
       activeClassRecord.value?.classId
     )
   })

@@ -60,9 +60,12 @@
           <div class="sbar-mode-toggle">
             <button 
               class="mode-btn" 
-              :class="{ 'mode-btn--active': inputMode === 'simple' }"
-              @click="inputMode = 'simple'"
-            >L1–L4</button>
+              :class="{ 'mode-btn--active': inputMode === 'grid' }"
+              @click="inputMode = 'grid'"
+              title="Fast keyboard spreadsheet mode with auto-advance"
+            >
+              <Keyboard :size="12" style="margin-right: 4px; vertical-align: middle;" /> ⌨ Grid (Fast)
+            </button>
             <button 
               class="mode-btn" 
               :class="{ 'mode-btn--active': inputMode === 'fine' }"
@@ -70,9 +73,14 @@
             >L1- to L4+</button>
             <button 
               class="mode-btn" 
+              :class="{ 'mode-btn--active': inputMode === 'simple' }"
+              @click="inputMode = 'simple'"
+            >L1–L4</button>
+            <button 
+              class="mode-btn" 
               :class="{ 'mode-btn--active': inputMode === 'numeric' }"
               @click="inputMode = 'numeric'"
-            >Exact % / Math</button>
+            >Exact %</button>
           </div>
         </div>
       </div>
@@ -85,12 +93,58 @@
           <tr>
             <th class="sticky-col sticky-col--name">STUDENT</th>
             <th 
-              v-for="exp in taggedExpectations" 
+              v-for="(exp, eIdx) in taggedExpectations" 
               :key="exp.code"
               class="matrix-exp-header"
             >
-              <div class="exp-code">{{ exp.code }}</div>
-              <div class="exp-name">{{ exp.name }}</div>
+              <div class="exp-header-inner">
+                <div class="exp-header-text">
+                  <div class="exp-code">{{ exp.code }}</div>
+                  <div class="exp-name">{{ exp.name }}</div>
+                </div>
+
+                <!-- ⚡ Bulk Fill Popover Trigger -->
+                <div class="bulk-fill-wrapper">
+                  <button 
+                    class="bulk-fill-trigger-btn"
+                    :class="{ 'bulk-fill-trigger-btn--active': activeBulkExp === exp.code }"
+                    title="Bulk set level for all students"
+                    @click.stop="toggleBulkMenu(exp.code)"
+                  >
+                    <Zap :size="11" /> Bulk
+                  </button>
+
+                  <!-- Bulk Action Dropdown Menu -->
+                  <div v-if="activeBulkExp === exp.code" class="bulk-fill-menu" @click.stop>
+                    <div class="bulk-fill-title">
+                      <span>⚡ Bulk Fill: <strong>{{ exp.code }}</strong></span>
+                      <button class="bulk-close-btn" @click="activeBulkExp = null">&times;</button>
+                    </div>
+
+                    <div class="bulk-fill-body">
+                      <label class="bulk-fill-label">Select level to apply to class:</label>
+                      <div class="bulk-pill-grid">
+                        <button 
+                          v-for="lvl in fineLevels" 
+                          :key="lvl.code"
+                          class="bulk-level-pill"
+                          :style="{ background: lvl.color, color: 'white' }"
+                          @click="applyBulkFill(exp.code, lvl.pct)"
+                        >
+                          {{ lvl.label }}
+                        </button>
+                      </div>
+
+                      <div class="bulk-fill-check-row">
+                        <label class="bulk-fill-checkbox-label">
+                          <input type="checkbox" v-model="bulkOnlyUnset" />
+                          Only fill unassigned students
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </th>
           </tr>
         </thead>
@@ -101,9 +155,36 @@
             </td>
 
             <!-- Level Selector Pills or Numeric Input per Expectation -->
-            <td v-for="exp in taggedExpectations" :key="exp.code" class="rubric-pill-cell">
+            <td 
+              v-for="(exp, eIdx) in taggedExpectations" 
+              :key="exp.code" 
+              class="rubric-pill-cell"
+              @contextmenu.prevent="openContextMenu($event, student.studentId, exp.code)"
+            >
+              <!-- Method 1: Spreadsheet Keyboard Grid Input Mode -->
+              <div v-if="inputMode === 'grid'" class="grid-cell-wrapper">
+                <input 
+                  :id="`grid-cell-${sIdx}-${eIdx}`"
+                  type="text"
+                  class="sbar-grid-input"
+                  :class="{ 'sbar-grid-input--has-value': getStudentPercentage(student.studentId, exp.code) != null }"
+                  :value="getGridDisplayValue(student.studentId, exp.code, sIdx, eIdx)"
+                  placeholder="3+, 4, 2-"
+                  @focus="handleGridFocus($event)"
+                  @keydown="handleGridKeydown($event, student.studentId, exp.code, sIdx, eIdx)"
+                  @blur="handleGridBlur($event, student.studentId, exp.code)"
+                />
+                <span 
+                  v-if="getStudentPercentage(student.studentId, exp.code) != null" 
+                  class="grid-cell-badge" 
+                  :style="{ background: getStudentLevelBadge(student.studentId, exp.code).color }"
+                >
+                  {{ getStudentLevelBadge(student.studentId, exp.code).level }}
+                </span>
+              </div>
+
               <!-- Exact Numeric Input Mode -->
-              <div v-if="inputMode === 'numeric'" class="numeric-input-wrapper">
+              <div v-else-if="inputMode === 'numeric'" class="numeric-input-wrapper">
                 <input 
                   type="number"
                   min="0"
@@ -156,12 +237,41 @@
         </tbody>
       </table>
     </div>
+
+    <!-- Floating Right-Click Context Menu for Cell Actions -->
+    <div 
+      v-if="contextMenu.visible" 
+      class="sbar-context-menu" 
+      :style="{ top: `${contextMenu.y}px`, left: `${contextMenu.x}px` }"
+      @click.stop
+    >
+      <div class="context-menu-header">
+        <strong class="context-student-name">{{ contextMenu.studentName }}</strong>
+        <span class="context-exp-code">{{ contextMenu.expCode }}</span>
+      </div>
+      <button class="context-menu-item context-menu-item--danger" @click="contextMenuClearGrade">
+        <Trash2 :size="13" /> ❌ Clear Grade
+      </button>
+      <div class="context-menu-divider"></div>
+      <div class="context-menu-label">Set Level:</div>
+      <div class="context-menu-pill-grid">
+        <button 
+          v-for="lvl in fineLevels" 
+          :key="lvl.code" 
+          class="context-level-pill"
+          :style="{ background: lvl.color, color: 'white' }"
+          @click="contextMenuSelectLevel(lvl.pct)"
+        >
+          {{ lvl.label }}
+        </button>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
-import { ArrowLeft, Edit2, Trash2 } from 'lucide-vue-next'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { ArrowLeft, Edit2, Trash2, Zap, Keyboard } from 'lucide-vue-next'
 import { enterGradeSBAR, gradeMap, activeClassRecord } from '../../composables/useGradebook.js'
 import { getSBARLevelBadge } from '../../db/gradebookService.js'
 import { getEffectiveClassRecord } from '../../composables/useElementary.js'
@@ -232,7 +342,7 @@ const displayedRoster = computed(() => {
   return roster
 })
 
-const inputMode = ref(activeClassRecord.value?.sbarInputMode || 'fine') // 'simple' | 'fine' | 'numeric'
+const inputMode = ref(activeClassRecord.value?.sbarInputMode || 'grid') // 'grid' | 'fine' | 'simple' | 'numeric'
 
 const simpleLevels = [
   { code: 'L1', pct: 55, color: '#ef4444' },
@@ -324,6 +434,201 @@ async function assignNumericPercentage(studentId, expCode, val) {
   const num = parseFloat(val)
   if (isNaN(num)) return
   await enterGradeSBAR(props.currentAssessment.assessmentId, studentId, expCode, Math.max(0, Math.min(100, num)))
+}
+
+/* ==========================================================================
+   Method 1: Spreadsheet Keyboard Grid Entry & Auto-Advance Logic
+   ========================================================================== */
+const gridInputDrafts = ref({}) // key: `${studentId}-${expCode}` -> text draft
+
+function getGridDisplayValue(studentId, expCode, sIdx, eIdx) {
+  const key = `${studentId}-${expCode}`
+  if (gridInputDrafts.value[key] !== undefined) {
+    return gridInputDrafts.value[key]
+  }
+  const badge = getStudentLevelBadge(studentId, expCode)
+  if (badge.level !== '—') return badge.level
+  const pct = getStudentPercentage(studentId, expCode)
+  if (pct != null) return `${pct}%`
+  return ''
+}
+
+function parseLevelInput(str) {
+  if (str == null || str === '') return null
+  const clean = String(str).trim().toUpperCase()
+
+  // Level Code Map only — Grid mode does not accept raw percentages
+  const levelLookup = {
+    'R': 45, '0': 45,
+    '1-': 51, 'L1-': 51, '-1': 51,
+    '1': 55, 'L1': 55,
+    '1+': 58, 'L1+': 58, '+1': 58,
+    '2-': 61, 'L2-': 61, '-2': 61,
+    '2': 65, 'L2': 65,
+    '2+': 68, 'L2+': 68, '+2': 68,
+    '3-': 71, 'L3-': 71, '-3': 71,
+    '3': 75, 'L3': 75,
+    '3+': 78, 'L3+': 78, '+3': 78,
+    '4-': 82, 'L4-': 82, '-4': 82,
+    '4': 88, 'L4': 88,
+    '4+': 96, 'L4+': 96, '+4': 96
+  }
+
+  if (levelLookup[clean] !== undefined) {
+    const pct = levelLookup[clean]
+    return { pct, levelCode: getSBARLevelBadge(pct).level }
+  }
+
+  return null
+}
+
+function handleGridFocus(event) {
+  event.target.select()
+}
+
+async function processGridSubmit(studentId, expCode, val) {
+  const key = `${studentId}-${expCode}`
+  delete gridInputDrafts.value[key]
+
+  // Empty input = clear grade for this expectation
+  if (val == null || String(val).trim() === '') {
+    const existing = getStudentPercentage(studentId, expCode)
+    if (existing != null) {
+      await enterGradeSBAR(props.currentAssessment.assessmentId, studentId, expCode, null)
+    }
+    return
+  }
+  const parsed = parseLevelInput(val)
+  if (parsed) {
+    await assignLevel(studentId, expCode, parsed.pct)
+  }
+}
+
+async function handleGridBlur(event, studentId, expCode) {
+  await processGridSubmit(studentId, expCode, event.target.value)
+}
+
+async function handleGridKeydown(event, studentId, expCode, sIdx, eIdx) {
+  gridInputDrafts.value[`${studentId}-${expCode}`] = event.target.value
+
+  const totalRows = displayedRoster.value.length
+  const totalCols = taggedExpectations.value.length
+
+  if (event.key === 'Enter' || event.key === 'ArrowDown') {
+    event.preventDefault()
+    await processGridSubmit(studentId, expCode, event.target.value)
+    const nextSIdx = event.shiftKey ? sIdx - 1 : sIdx + 1
+    if (nextSIdx >= 0 && nextSIdx < totalRows) {
+      focusGridCell(nextSIdx, eIdx)
+    }
+  } else if (event.key === 'ArrowUp') {
+    event.preventDefault()
+    await processGridSubmit(studentId, expCode, event.target.value)
+    if (sIdx - 1 >= 0) {
+      focusGridCell(sIdx - 1, eIdx)
+    }
+  } else if (event.key === 'Tab') {
+    event.preventDefault()
+    await processGridSubmit(studentId, expCode, event.target.value)
+    if (event.shiftKey) {
+      if (eIdx - 1 >= 0) {
+        focusGridCell(sIdx, eIdx - 1)
+      } else if (sIdx - 1 >= 0) {
+        focusGridCell(sIdx - 1, totalCols - 1)
+      }
+    } else {
+      if (eIdx + 1 < totalCols) {
+        focusGridCell(sIdx, eIdx + 1)
+      } else if (sIdx + 1 < totalRows) {
+        focusGridCell(sIdx + 1, 0)
+      }
+    }
+  }
+}
+
+function focusGridCell(sIdx, eIdx) {
+  setTimeout(() => {
+    const el = document.getElementById(`grid-cell-${sIdx}-${eIdx}`)
+    if (el) {
+      el.focus()
+      el.select()
+    }
+  }, 10)
+}
+
+/* ==========================================================================
+   Method 2: Expectation Column Bulk Fill Logic
+   ========================================================================== */
+const activeBulkExp = ref(null)
+const bulkOnlyUnset = ref(false)
+
+function toggleBulkMenu(expCode) {
+  activeBulkExp.value = activeBulkExp.value === expCode ? null : expCode
+}
+
+async function applyBulkFill(expCode, pct) {
+  for (const student of displayedRoster.value) {
+    if (bulkOnlyUnset.value) {
+      const existing = getStudentPercentage(student.studentId, expCode)
+      if (existing != null) continue
+    }
+    await enterGradeSBAR(props.currentAssessment.assessmentId, student.studentId, expCode, pct)
+  }
+  activeBulkExp.value = null
+}
+
+function handleGlobalClick() {
+  activeBulkExp.value = null
+  contextMenu.value.visible = false
+}
+
+onMounted(() => {
+  window.addEventListener('click', handleGlobalClick)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('click', handleGlobalClick)
+})
+
+/* ==========================================================================
+   Right-Click Context Menu for Clear Grade / Quick Level Set
+   ========================================================================== */
+const contextMenu = ref({
+  visible: false,
+  x: 0,
+  y: 0,
+  studentId: null,
+  expCode: null,
+  studentName: ''
+})
+
+function openContextMenu(event, studentId, expCode) {
+  const student = displayedRoster.value.find(s => String(s.studentId) === String(studentId))
+  const name = student ? `${student.lastName}, ${student.firstName}` : studentId
+  contextMenu.value = {
+    visible: true,
+    x: event.clientX,
+    y: event.clientY,
+    studentId,
+    expCode,
+    studentName: name
+  }
+}
+
+async function contextMenuClearGrade() {
+  const { studentId, expCode } = contextMenu.value
+  if (studentId && expCode) {
+    await enterGradeSBAR(props.currentAssessment.assessmentId, studentId, expCode, null)
+  }
+  contextMenu.value.visible = false
+}
+
+async function contextMenuSelectLevel(pct) {
+  const { studentId, expCode } = contextMenu.value
+  if (studentId && expCode) {
+    await assignLevel(studentId, expCode, pct)
+  }
+  contextMenu.value.visible = false
 }
 </script>
 
@@ -669,5 +974,273 @@ async function assignNumericPercentage(studentId, expCode, val) {
   color: #16a34a;
   border: 1px solid rgba(22, 163, 74, 0.35);
   font-weight: 700;
+}
+
+/* ==========================================================================
+   Header Bulk Fill & Spreadsheet Keyboard Grid Input Styles
+   ========================================================================== */
+.exp-header-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.exp-header-text {
+  flex: 1;
+}
+
+.bulk-fill-wrapper {
+  position: relative;
+}
+
+.bulk-fill-trigger-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 7px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--primary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.bulk-fill-trigger-btn:hover,
+.bulk-fill-trigger-btn--active {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
+.bulk-fill-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 6px;
+  z-index: 50;
+  width: 240px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.bulk-fill-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: var(--text);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 6px;
+}
+
+.bulk-close-btn {
+  background: transparent;
+  border: none;
+  font-size: 1.1rem;
+  line-height: 1;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.bulk-close-btn:hover {
+  color: var(--text);
+}
+
+.bulk-fill-label {
+  font-size: 0.725rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  display: block;
+  margin-bottom: 6px;
+}
+
+.bulk-pill-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+}
+
+.bulk-level-pill {
+  padding: 5px;
+  border-radius: 4px;
+  border: none;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.bulk-level-pill:hover {
+  transform: scale(1.05);
+}
+
+.bulk-fill-check-row {
+  margin-top: 8px;
+  padding-top: 6px;
+  border-top: 1px dashed var(--border);
+}
+
+.bulk-fill-checkbox-label {
+  font-size: 0.725rem;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+/* Method 1: Spreadsheet Keyboard Cell Input */
+.grid-cell-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  position: relative;
+}
+
+.sbar-grid-input {
+  width: 90px;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-secondary);
+  color: var(--text);
+  font-weight: 700;
+  font-size: 0.85rem;
+  text-align: center;
+  transition: all 0.2s ease;
+}
+
+.sbar-grid-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  background: var(--surface);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+.sbar-grid-input--has-value {
+  border-color: var(--primary);
+}
+
+.grid-cell-badge {
+  font-size: 0.725rem;
+  font-weight: 700;
+  color: white;
+  padding: 3px 7px;
+  border-radius: 4px;
+  min-width: 28px;
+  text-align: center;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* Right-Click Context Menu */
+.sbar-context-menu {
+  position: fixed;
+  z-index: 100;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  padding: 8px;
+  min-width: 210px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.context-menu-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 4px;
+}
+
+.context-student-name {
+  font-size: 0.8rem;
+  color: var(--text);
+}
+
+.context-exp-code {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--primary);
+  background: rgba(37, 99, 235, 0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.context-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.context-menu-item:hover {
+  background: var(--bg-secondary);
+}
+
+.context-menu-item--danger {
+  color: #ef4444;
+}
+
+.context-menu-item--danger:hover {
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.context-menu-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 2px 0;
+}
+
+.context-menu-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  padding: 2px 8px;
+}
+
+.context-menu-pill-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 3px;
+  padding: 0 4px 4px;
+}
+
+.context-level-pill {
+  padding: 4px;
+  border-radius: 4px;
+  border: none;
+  font-size: 0.725rem;
+  font-weight: 700;
+  cursor: pointer;
+  text-align: center;
+  transition: transform 0.1s ease;
+}
+
+.context-level-pill:hover {
+  transform: scale(1.1);
 }
 </style>

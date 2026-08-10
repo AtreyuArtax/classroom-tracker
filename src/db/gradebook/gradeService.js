@@ -54,26 +54,30 @@ export async function saveSBARGrade(assessmentId, studentId, expectationScores, 
   const store = tx.objectStore('grades')
   const existing = await store.index('by_assessmentAndStudent').get([normAssessmentId, normStudentId])
 
+  const cleanScores = JSON.parse(JSON.stringify(expectationScores || {}))
+
   if (existing) {
     if (!existing.classId && classId) existing.classId = classId
-    existing.expectationScores = { ...existing.expectationScores, ...expectationScores }
+    existing.expectationScores = cleanScores
     existing.masteryLevel = masteryLevel
     existing.resolvedScore = masteryLevel
     existing.missing = false
-    await store.put(existing)
+    const plain = JSON.parse(JSON.stringify(existing))
+    await store.put(plain)
   } else {
     const newGrade = {
       assessmentId: normAssessmentId,
       studentId: normStudentId,
       classId: classId || null,
-      expectationScores,
+      expectationScores: cleanScores,
       masteryLevel,
       resolvedScore: masteryLevel,
       missing: false,
       excluded: false,
       attempts: []
     }
-    await store.add(newGrade)
+    const plain = JSON.parse(JSON.stringify(newGrade))
+    await store.add(plain)
   }
   await tx.done
   hasUnsyncedChanges.value = true
