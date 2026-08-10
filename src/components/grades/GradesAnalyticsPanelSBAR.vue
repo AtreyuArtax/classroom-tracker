@@ -20,10 +20,6 @@
         <p class="sbar-analytics__subtitle">Cohort proficiency distribution, curriculum hotspots &amp; growth velocity</p>
       </div>
 
-      <div class="sbar-analytics__algo-badge">
-        <span class="algo-label">Engine:</span>
-        <strong class="algo-val">{{ algorithmLabel }}</strong>
-      </div>
     </header>
 
     <!-- 1. Cohort Level Distribution Summary Cards -->

@@ -151,6 +151,21 @@
                     :style="{ color: sbarClassAverageBadge.color }"
                   >{{ sbarClassAverageBadge.level }}</span>
                   <span v-else class="grades__avg-value">—</span>
+                  <div class="sbar-engine-select-wrapper">
+                    <Zap :size="13" class="sbar-engine-icon" />
+                    <select 
+                      class="sbar-engine-select" 
+                      :value="activeClassRecord?.sbarAlgorithm || 'decaying_average'"
+                      title="Change SBAR Calculation Engine"
+                      @change="e => updateActiveClass({ sbarAlgorithm: e.target.value })"
+                    >
+                      <option value="decaying_average">Decaying Avg (65/35)</option>
+                      <option value="power_law">Power Law (Marzano)</option>
+                      <option value="mode">Mode (Most Consistent)</option>
+                      <option value="most_recent">Most Recent (3)</option>
+                      <option value="highest">Highest Score</option>
+                    </select>
+                  </div>
                 </template>
                 <template v-else>
                   Class Avg: <span class="grades__avg-value">{{ formatGrade(overallClassAvg) }}</span>
@@ -293,7 +308,7 @@ import {
 import { formatGrade } from '../utils/gradeColors.js'
 import { getSBARLevelBadge } from '../db/gradebookService.js'
 import { useAttendanceInsights } from '../composables/useAttendanceInsights.js'
-import { Plus, BarChart2, Settings, Printer, LayoutGrid } from 'lucide-vue-next'
+import { Plus, BarChart2, Settings, Printer, LayoutGrid, Zap } from 'lucide-vue-next'
 import Student360 from '../components/dossier/Student360.vue'
 import GradesGrid from '../components/GradesGrid.vue'
 import GradesGridSBAR from '../components/grades/GradesGridSBAR.vue'
@@ -317,10 +332,19 @@ const props = defineProps({
 defineEmits(['navigate'])
 
 const { alert, confirm } = useMessage()
-const { classList, activeClass, getClass, switchClass, teacherName } = useClassroom()
+const { classList, activeClass, getClass, switchClass, teacherName, updateActiveClass } = useClassroom()
 const sidebarClassId = ref(activeClass.value?.classId || '')
 
 const isSBAR = computed(() => activeClassRecord.value?.gradingFramework === 'sbar')
+
+const sbarAlgorithmLabel = computed(() => {
+  const algo = activeClassRecord.value?.sbarAlgorithm || 'decaying_average'
+  if (algo === 'power_law') return 'Power Law (Marzano)'
+  if (algo === 'mode') return 'Mode (Most Consistent)'
+  if (algo === 'most_recent') return 'Most Recent (3)'
+  if (algo === 'highest') return 'Highest Score'
+  return 'Decaying Avg (65/35)'
+})
 
 const sbarClassAverageBadge = computed(() => {
   if (overallClassAvg.value === null || overallClassAvg.value === undefined || isNaN(overallClassAvg.value)) return null
@@ -976,6 +1000,45 @@ onMounted(async () => {
 .grades__avg-value {
   font-weight: 800;
   color: var(--primary);
+}
+
+.sbar-engine-select-wrapper {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 8px;
+  padding: 3px 8px;
+  border-radius: 14px;
+  background: var(--bg-tertiary, rgba(99, 102, 241, 0.08));
+  border: 1px solid var(--border);
+  transition: all 0.15s ease;
+}
+
+.sbar-engine-select-wrapper:hover {
+  background: var(--primary-light, rgba(99, 102, 241, 0.15));
+  border-color: var(--primary);
+}
+
+.sbar-engine-icon {
+  color: var(--primary);
+  flex-shrink: 0;
+}
+
+.sbar-engine-select {
+  background: transparent;
+  border: none;
+  color: var(--primary);
+  font-size: 0.73rem;
+  font-weight: 700;
+  cursor: pointer;
+  outline: none;
+  padding: 0;
+}
+
+.sbar-engine-select option {
+  background: var(--surface);
+  color: var(--text);
+  font-weight: 600;
 }
 
 .grades__student-view {

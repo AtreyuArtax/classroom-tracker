@@ -48,8 +48,8 @@
             </div>
           </div>
 
-          <!-- Assessment Purpose (Formative vs Summative - SBAR Mode Only) -->
-          <div class="form-group" v-if="activeClassRecord?.gradingFramework === 'sbar'">
+          <!-- Assessment Purpose (Formative vs Summative - All Modes) -->
+          <div class="form-group">
             <label class="form-label">Assessment Purpose</label>
             <div class="toggle-group toggle-group--large">
               <button 

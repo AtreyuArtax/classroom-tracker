@@ -176,6 +176,7 @@ export function _calculateCategoryGrade(catAssessments, gradeMap, capAt100 = fal
   let totalPossible = 0
 
   for (const assessment of catAssessments) {
+    if (assessment.isFormative || assessment.purpose === 'formative') continue
     const grade = gradeMap[assessment.assessmentId]
     if (!grade || grade.excluded) continue
 

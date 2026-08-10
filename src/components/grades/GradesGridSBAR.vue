@@ -2,52 +2,168 @@
   <div class="grades-grid-sbar">
     <!-- Strand & Unit Filter Pills + Task Selector -->
     <div class="sbar-toolbar">
-      <!-- Split Class Grade / Section Filter Pills -->
-      <div v-if="availableGradeFilters.length > 1" class="sbar-grade-pills">
-        <button 
-          v-for="gFilter in availableGradeFilters" 
-          :key="gFilter" 
-          type="button"
-          class="grade-pill"
-          :class="{ 'grade-pill--active': String(activeGradeFilter).toLowerCase() === String(gFilter).toLowerCase() }"
-          @click="setGradeFilter(gFilter)"
-        >
-          {{ gFilter === 'all' ? (activeClassRecord?.classType === 'elementary' ? 'All Grades' : 'All Sections') : gFilter }}
-        </button>
-      </div>
+      <div class="sbar-toolbar-left">
+        <!-- Split Class Grade / Section Filter Pills -->
+        <div v-if="availableGradeFilters.length > 1" class="sbar-grade-pills">
+          <button 
+            v-for="gFilter in availableGradeFilters" 
+            :key="gFilter" 
+            type="button"
+            class="grade-pill"
+            :class="{ 'grade-pill--active': String(activeGradeFilter).toLowerCase() === String(gFilter).toLowerCase() }"
+            @click="setGradeFilter(gFilter)"
+          >
+            {{ gFilter === 'all' ? (activeClassRecord?.classType === 'elementary' ? 'All Grades' : 'All Sections') : gFilter }}
+          </button>
+        </div>
 
-      <div v-if="availableStrands.length > 1 && (availableGradeFilters.length <= 1 || activeGradeFilter !== 'all')" class="sbar-strand-pills">
-        <button 
-          class="strand-pill" 
-          :class="{ 'strand-pill--active': activeStrandFilter === 'all' }"
-          @click="activeStrandFilter = 'all'"
-        >
-          All Strands
-        </button>
-        <button 
-          v-for="(strand, idx) in availableStrands" 
-          :key="strand.id || strand.code" 
-          class="strand-pill"
-          :class="{ 'strand-pill--active': activeStrandFilter === (strand.id || strand.code) }"
-          :title="strand.name"
-          @click="activeStrandFilter = (strand.id || strand.code)"
-        >
-          <span class="strand-pill-dot" :style="{ color: getUnitColorByIdx(idx) }">●</span>
-          {{ formatStrandPillLabel(strand.name) }}
-        </button>
+        <div v-if="availableStrands.length > 1 && (availableGradeFilters.length <= 1 || activeGradeFilter !== 'all')" class="sbar-strand-pills">
+          <button 
+            class="strand-pill" 
+            :class="{ 'strand-pill--active': activeStrandFilter === 'all' }"
+            @click="activeStrandFilter = 'all'"
+          >
+            All Strands
+          </button>
+          <button 
+            v-for="(strand, idx) in availableStrands" 
+            :key="strand.id || strand.code" 
+            class="strand-pill"
+            :class="{ 'strand-pill--active': activeStrandFilter === (strand.id || strand.code) }"
+            :title="strand.name"
+            @click="activeStrandFilter = (strand.id || strand.code)"
+          >
+            <span class="strand-pill-dot" :style="{ color: getUnitColorByIdx(idx) }">●</span>
+            {{ formatStrandPillLabel(strand.name) }}
+          </button>
+        </div>
       </div>
 
       <div class="sbar-toolbar-right">
-        <select v-if="sortedAssessments.length" class="sbar-task-select" @change="onSelectTaskToGrade($event)">
-          <option value="" disabled selected>📝 Select Task to Grade...</option>
-          <option v-for="ast in sortedAssessments" :key="ast.assessmentId" :value="ast.assessmentId">
-            {{ ast.name }} ({{ formatLocalDisplay(ast.date) }})
-          </option>
-        </select>
+        <!-- Tier 3: Quick Action Chips (Top 2 Active / Recent Tasks) -->
+        <div v-if="quickActionTasks.length" class="sbar-quick-chips">
+          <button 
+            v-for="ast in quickActionTasks" 
+            :key="'chip-' + ast.assessmentId"
+            type="button"
+            class="sbar-quick-chip"
+            :title="`Grade ${ast.name} (${getAssessmentStats(ast.assessmentId).evaluatedCount}/${getAssessmentStats(ast.assessmentId).totalCount} scored)`"
+            @click="onSelectAssessmentId(ast.assessmentId)"
+          >
+            <FileEdit :size="12" class="chip-icon" />
+            <span class="chip-name">{{ ast.name }}</span>
+            <span 
+              class="chip-badge" 
+              :class="{ 'chip-badge--complete': getAssessmentStats(ast.assessmentId).isComplete }"
+            >
+              {{ getAssessmentStats(ast.assessmentId).evaluatedCount }}/{{ getAssessmentStats(ast.assessmentId).totalCount }}
+            </span>
+          </button>
+        </div>
 
-        <div class="sbar-algorithm-badge">
-          <span>Engine:</span> 
-          <strong>{{ algorithmLabel }}</strong>
+        <!-- Tier 1: Searchable Assessment Hub Popover -->
+        <div class="sbar-hub-wrapper">
+          <button 
+            v-if="sortedAssessments.length" 
+            type="button"
+            class="sbar-hub-btn"
+            :class="{ 'sbar-hub-btn--active': showHubPopover }"
+            @click.stop="toggleHubPopover"
+          >
+            <Layers :size="14" />
+            <span>Assessment Hub</span>
+            <span class="sbar-hub-count">{{ sortedAssessments.length }}</span>
+            <ChevronDown :size="13" class="sbar-hub-chevron" />
+          </button>
+
+          <!-- Assessment Hub Floating Popover Menu -->
+          <div v-if="showHubPopover" class="sbar-hub-popover" @click.stop>
+            <div class="hub-header">
+              <div class="hub-title-row">
+                <h4 class="hub-title"><Layers :size="15" /> Assessment Hub</h4>
+                <button class="hub-close-btn" @click="showHubPopover = false"><X :size="14" /></button>
+              </div>
+              <div class="hub-search-box">
+                <Search :size="14" class="search-icon" />
+                <input 
+                  v-model="hubSearchQuery" 
+                  type="text" 
+                  placeholder="Search tasks, dates, standards..." 
+                  class="hub-search-input"
+                />
+                <button v-if="hubSearchQuery" class="search-clear" @click="hubSearchQuery = ''"><X :size="12" /></button>
+              </div>
+              <div class="hub-tabs">
+                <button 
+                  class="hub-tab" 
+                  :class="{ 'hub-tab--active': hubFilterTab === 'all' }"
+                  @click="hubFilterTab = 'all'"
+                >
+                  All ({{ sortedAssessments.length }})
+                </button>
+                <button 
+                  class="hub-tab" 
+                  :class="{ 'hub-tab--active': hubFilterTab === 'needs_grading' }"
+                  @click="hubFilterTab = 'needs_grading'"
+                >
+                  Needs Grading ({{ needsGradingCount }})
+                </button>
+                <button 
+                  class="hub-tab" 
+                  :class="{ 'hub-tab--active': hubFilterTab === 'formative' }"
+                  @click="hubFilterTab = 'formative'"
+                >
+                  Formative
+                </button>
+                <button 
+                  class="hub-tab" 
+                  :class="{ 'hub-tab--active': hubFilterTab === 'summative' }"
+                  @click="hubFilterTab = 'summative'"
+                >
+                  Summative
+                </button>
+              </div>
+            </div>
+
+            <div class="hub-body">
+              <div v-if="!filteredHubAssessments.length" class="hub-empty">
+                <FileText :size="24" />
+                <p>No assessments match your filter.</p>
+              </div>
+              <div 
+                v-for="ast in filteredHubAssessments" 
+                :key="'hub-ast-' + ast.assessmentId" 
+                class="hub-ast-card"
+                @click="onSelectAssessmentId(ast.assessmentId)"
+              >
+                <div class="hub-card-left">
+                  <div class="hub-card-title-row">
+                    <span class="hub-card-title">{{ ast.name }}</span>
+                    <span 
+                      class="hub-card-tag" 
+                      :class="(ast.isFormative || ast.purpose === 'formative') ? 'hub-card-tag--formative' : 'hub-card-tag--summative'"
+                    >
+                      {{ (ast.isFormative || ast.purpose === 'formative') ? 'FORMATIVE' : 'SUMMATIVE' }}
+                    </span>
+                  </div>
+                  <div class="hub-card-sub">
+                    <span v-if="ast.date" class="hub-card-date"><Calendar :size="11" /> {{ formatLocalDisplay(ast.date) }}</span>
+                    <span v-if="getAssessmentExpectationCodes(ast).length" class="hub-card-exps">
+                      Standards: {{ getAssessmentExpectationCodes(ast).join(', ') }}
+                    </span>
+                  </div>
+                </div>
+                <div class="hub-card-right">
+                  <span 
+                    class="hub-progress-pill"
+                    :class="{ 'hub-progress-pill--done': getAssessmentStats(ast.assessmentId).isComplete }"
+                  >
+                    {{ getAssessmentStats(ast.assessmentId).evaluatedCount }}/{{ getAssessmentStats(ast.assessmentId).totalCount }} graded
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -82,10 +198,21 @@
             <th 
               v-for="exp in displayedExpectations" 
               :key="(exp.gradeLevel || exp.courseCode || 'all') + '-' + exp.code"
-              class="exp-code-header"
-              :title="exp.code + ': ' + exp.description"
+              class="exp-code-header exp-code-header--clickable"
+              :class="{ 'exp-code-header--active': expectationPopover?.code === exp.code }"
+              :title="`Click to view connected assessments for ${exp.code}`"
+              @click.stop="toggleExpectationPopover(exp, $event)"
             >
-              <div>{{ exp.code }}</div>
+              <div class="exp-code-main">
+                <span>{{ exp.code }}</span>
+                <span 
+                  v-if="getExpAssessmentCount(exp.code)" 
+                  class="exp-ast-badge" 
+                  :title="`${getExpAssessmentCount(exp.code)} tasks evaluating ${exp.code}`"
+                >
+                  {{ getExpAssessmentCount(exp.code) }}
+                </span>
+              </div>
               <div 
                 v-if="(exp.gradeLevel || exp.courseCode) && availableGradeFilters.length > 1 && activeGradeFilter === 'all'" 
                 class="exp-grade-sub-tag"
@@ -159,11 +286,61 @@
         </tbody>
       </table>
     </div>
+
+    <!-- Tier 2: Expectation Column Contextual Popover Backdrop & Window -->
+    <div 
+      v-if="expectationPopover" 
+      class="exp-popover-backdrop"
+      @click="expectationPopover = null"
+    >
+      <div class="exp-popover" @click.stop>
+        <div class="exp-popover-header">
+          <div class="exp-popover-title-row">
+            <div>
+              <h4 class="exp-popover-code">{{ expectationPopover.code }}</h4>
+              <p class="exp-popover-desc">{{ expectationPopover.name || expectationPopover.description }}</p>
+            </div>
+            <button class="exp-popover-close" @click="expectationPopover = null"><X :size="14" /></button>
+          </div>
+          <div class="exp-popover-meta">
+            <span class="exp-meta-badge">{{ popoverConnectedAssessments.length }} Connected Tasks</span>
+            <span v-if="expectationPopover.unitName" class="exp-meta-unit">{{ expectationPopover.unitName }}</span>
+          </div>
+        </div>
+
+        <div class="exp-popover-body">
+          <div v-if="!popoverConnectedAssessments.length" class="exp-popover-empty">
+            <FileText :size="24" />
+            <p>No assessments currently evaluate standard <strong>{{ expectationPopover.code }}</strong>.</p>
+          </div>
+          <div 
+            v-for="ast in popoverConnectedAssessments" 
+            :key="'exp-ast-' + ast.assessmentId" 
+            class="exp-ast-item"
+            @click="onSelectAssessmentId(ast.assessmentId)"
+          >
+            <div class="exp-ast-info">
+              <span class="exp-ast-title">{{ ast.name }}</span>
+              <span class="exp-ast-date"><Calendar :size="11" /> {{ formatLocalDisplay(ast.date) }}</span>
+            </div>
+            <div class="exp-ast-status">
+              <span 
+                class="hub-progress-pill"
+                :class="{ 'hub-progress-pill--done': getAssessmentStats(ast.assessmentId).isComplete }"
+              >
+                {{ getAssessmentStats(ast.assessmentId).evaluatedCount }}/{{ getAssessmentStats(ast.assessmentId).totalCount }} graded
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { Search, ChevronDown, X, Layers, Calendar, FileText, FileEdit } from 'lucide-vue-next'
 import { 
   activeClassRecord, 
   assessments, 
@@ -192,6 +369,186 @@ const emit = defineEmits(['open-dossier', 'select-expectation', 'select-assessme
 const activeStrandFilter = ref('all')
 
 const availableGradeFilters = computed(() => availableSubCohorts.value)
+
+// Assessment Hub & Contextual Popover State
+const showHubPopover = ref(false)
+const hubSearchQuery = ref('')
+const hubFilterTab = ref('all') // 'all' | 'needs_grading' | 'formative' | 'summative'
+const expectationPopover = ref(null)
+
+function toggleHubPopover() {
+  showHubPopover.value = !showHubPopover.value
+  if (showHubPopover.value) {
+    expectationPopover.value = null
+  }
+}
+
+function onSelectAssessmentId(astId) {
+  if (astId) {
+    showHubPopover.value = false
+    expectationPopover.value = null
+    emit('select-assessment', astId)
+  }
+}
+
+function getAssessmentTargetRoster(ast) {
+  if (!activeClassRecord.value?.students) return []
+  const allStudents = Object.keys(activeClassRecord.value.students)
+    .filter(id => !activeClassRecord.value.students[id].archived)
+    .map(id => ({ studentId: id, ...activeClassRecord.value.students[id] }))
+
+  if (!ast) return allStudents
+
+  const aGrade = getAssessmentGradeLevel(ast)
+  if (aGrade) {
+    const targetG = aGrade.toLowerCase()
+    const matchingStudents = allStudents.filter(s => {
+      const sG = (s.gradeLevel || s.courseCode || '').toLowerCase()
+      return sG && sG === targetG
+    })
+    if (matchingStudents.length > 0) {
+      return matchingStudents
+    }
+  }
+
+  return allStudents
+}
+
+function getAssessmentStats(astId) {
+  const ast = assessments.value?.find(a => String(a.assessmentId) === String(astId))
+  const targetRoster = getAssessmentTargetRoster(ast)
+  const rosterLen = targetRoster.length
+
+  if (!astId || !rosterLen) return { evaluatedCount: 0, totalCount: 0, isComplete: false }
+
+  const astGrades = gradeMap.value[astId] || gradeMap.value[Number(astId)] || gradeMap.value[String(astId)] || {}
+  const targetStudentIds = new Set(targetRoster.map(s => String(s.studentId)))
+
+  const evalCount = Object.entries(astGrades).filter(([sId, g]) => {
+    return targetStudentIds.has(String(sId)) && g && (
+      (g.expectationScores && Object.keys(g.expectationScores).length > 0) || 
+      g.masteryLevel != null || 
+      g.resolvedScore != null ||
+      g.missing ||
+      g.excluded
+    )
+  }).length
+
+  return {
+    evaluatedCount: evalCount,
+    totalCount: rosterLen,
+    isComplete: rosterLen > 0 && evalCount >= rosterLen
+  }
+}
+
+function getAssessmentExpectationCodes(ast) {
+  if (!ast) return []
+  const ids = ast.expectationIds || (ast.expectationId ? [ast.expectationId] : [])
+  return ids.map(code => {
+    let realCode = code
+    const found = activeClassRecord.value?.gradebookUnits?.flatMap(u => u.expectations || [])
+      .concat(activeClassRecord.value?.expectations || [])
+      .find(e => e.expectationId === code || e.code === code)
+    if (found && found.code) realCode = found.code
+    return realCode
+  }).filter(c => c && !c.includes('-'))
+}
+
+function getExpAssessmentCount(expCode) {
+  if (!expCode || !assessments.value) return 0
+  return assessments.value.filter(a => {
+    const ids = a.expectationIds || (a.expectationId ? [a.expectationId] : [])
+    return ids.some(code => {
+      let realCode = code
+      const found = activeClassRecord.value?.gradebookUnits?.flatMap(u => u.expectations || [])
+        .concat(activeClassRecord.value?.expectations || [])
+        .find(e => e.expectationId === code || e.code === code)
+      if (found && found.code) realCode = found.code
+      return realCode === expCode
+    })
+  }).length
+}
+
+function toggleExpectationPopover(exp, event) {
+  if (expectationPopover.value && expectationPopover.value.code === exp.code) {
+    expectationPopover.value = null
+    return
+  }
+
+  showHubPopover.value = false
+
+  expectationPopover.value = {
+    code: exp.code,
+    name: exp.name,
+    description: exp.description,
+    unitName: exp.unitName
+  }
+}
+
+const quickActionTasks = computed(() => {
+  return sortedAssessments.value.slice(0, 2)
+})
+
+const needsGradingCount = computed(() => {
+  return sortedAssessments.value.filter(a => !getAssessmentStats(a.assessmentId).isComplete).length
+})
+
+const filteredHubAssessments = computed(() => {
+  let list = sortedAssessments.value
+
+  if (hubSearchQuery.value.trim()) {
+    const q = hubSearchQuery.value.toLowerCase().trim()
+    list = list.filter(ast => {
+      const nameMatch = ast.name && ast.name.toLowerCase().includes(q)
+      const dateMatch = ast.date && String(ast.date).toLowerCase().includes(q)
+      const expCodes = getAssessmentExpectationCodes(ast).join(' ').toLowerCase()
+      return nameMatch || dateMatch || expCodes.includes(q)
+    })
+  }
+
+  if (hubFilterTab.value === 'needs_grading') {
+    list = list.filter(ast => !getAssessmentStats(ast.assessmentId).isComplete)
+  } else if (hubFilterTab.value === 'formative') {
+    list = list.filter(ast => ast.isFormative || ast.purpose === 'formative')
+  } else if (hubFilterTab.value === 'summative') {
+    list = list.filter(ast => !ast.isFormative && ast.purpose !== 'formative')
+  }
+
+  return list
+})
+
+const popoverConnectedAssessments = computed(() => {
+  if (!expectationPopover.value) return []
+  const expCode = expectationPopover.value.code
+  return [...assessments.value].filter(a => {
+    const ids = a.expectationIds || (a.expectationId ? [a.expectationId] : [])
+    return ids.some(code => {
+      let realCode = code
+      const found = activeClassRecord.value?.gradebookUnits?.flatMap(u => u.expectations || [])
+        .concat(activeClassRecord.value?.expectations || [])
+        .find(e => e.expectationId === code || e.code === code)
+      if (found && found.code) realCode = found.code
+      return realCode === expCode
+    })
+  }).sort((a, b) => new Date(b.date) - new Date(a.date))
+})
+
+function handleGlobalClick(e) {
+  if (showHubPopover.value) {
+    const hubEl = document.querySelector('.sbar-hub-wrapper')
+    if (hubEl && !hubEl.contains(e.target)) {
+      showHubPopover.value = false
+    }
+  }
+}
+
+onMounted(() => {
+  window.addEventListener('click', handleGlobalClick)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('click', handleGlobalClick)
+})
 
 const effectiveClass = computed(() => {
   if (!activeClassRecord.value) return null
@@ -403,9 +760,16 @@ function formatStrandPillLabel(fullName) {
   if (!fullName) return ''
   let clean = stripGradePrefix(fullName).replace(/\s*\([^)]*\)/g, '').trim()
   if (clean.includes(':')) {
-    const [codePart, descPart] = clean.split(':')
-    const shortDesc = descPart.split('&')[0].trim()
-    return `${codePart.trim()}: ${shortDesc}`
+    clean = clean.split(':')[0].trim()
+  }
+
+  const needsCompact = availableStrands.value.length > 4 || availableGradeFilters.value.length > 1
+  if (needsCompact && /^strand\s+[a-z0-9]/i.test(clean)) {
+    return clean.replace(/^strand\s+/i, 'Str. ')
+  }
+
+  if (clean.length > 14) {
+    return clean.substring(0, 12) + '…'
   }
   return clean
 }
@@ -490,12 +854,52 @@ function openExpectationDetail(studentId, expCode) {
   padding: 8px 14px;
   border-radius: var(--radius-md);
   border: 1px solid var(--border);
+  flex-wrap: nowrap;
+  position: relative;
+  z-index: 50;
+}
+
+.sbar-toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex: 1 1 auto;
+  overflow: hidden;
+}
+
+.sbar-grade-pills {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  border-right: 1px solid var(--border);
+  padding-right: 8px;
+  flex-shrink: 0;
+}
+
+.sbar-strand-pills {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  flex: 1 1 auto;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  white-space: nowrap;
+}
+
+.sbar-strand-pills::-webkit-scrollbar {
+  display: none;
 }
 
 .sbar-toolbar-right {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
+  flex-shrink: 0;
+  z-index: 2;
+  background: var(--surface);
 }
 
 .sbar-task-select {
@@ -589,6 +993,7 @@ function openExpectationDetail(studentId, expCode) {
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
+  flex-shrink: 0;
   transition: all 0.2s ease;
 }
 
@@ -820,5 +1225,536 @@ thead th.sticky-col {
 .sbar-empty-cell {
   color: var(--text-secondary);
   font-size: 0.8rem;
+}
+
+/* Quick Action Chips */
+.sbar-quick-chips {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sbar-quick-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 9px;
+  border-radius: var(--radius-full, 20px);
+  background: var(--bg-tertiary, #f1f5f9);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.sbar-quick-chip:hover {
+  background: var(--primary-light, #e0e7ff);
+  border-color: var(--primary);
+  color: var(--primary);
+  transform: translateY(-1px);
+}
+
+.chip-icon {
+  color: var(--primary);
+  flex-shrink: 0;
+}
+
+.chip-name {
+  max-width: 110px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chip-badge {
+  font-size: 0.7rem;
+  padding: 1px 5px;
+  border-radius: 10px;
+  background: rgba(245, 158, 11, 0.15);
+  color: #d97706;
+  font-weight: 700;
+}
+
+.chip-badge--complete {
+  background: rgba(34, 197, 94, 0.15);
+  color: #16a34a;
+}
+
+/* Assessment Hub Wrapper & Button */
+.sbar-hub-wrapper {
+  position: relative;
+}
+
+.sbar-hub-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: var(--radius-md, 8px);
+  background: var(--primary);
+  color: #ffffff;
+  border: none;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  transition: all 0.15s ease;
+}
+
+.sbar-hub-btn:hover,
+.sbar-hub-btn--active {
+  background: var(--primary-hover, #4338ca);
+  box-shadow: 0 2px 6px rgba(99, 102, 241, 0.3);
+}
+
+.sbar-hub-count {
+  background: rgba(255, 255, 255, 0.25);
+  padding: 1px 6px;
+  border-radius: 10px;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.sbar-hub-chevron {
+  transition: transform 0.2s ease;
+}
+
+.sbar-hub-btn--active .sbar-hub-chevron {
+  transform: rotate(180deg);
+}
+
+/* Floating Hub Popover Window */
+.sbar-hub-popover {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  width: 380px;
+  max-height: 480px;
+  background: var(--surface, #ffffff);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg, 12px);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: sbarHubFadeIn 0.15s ease-out;
+}
+
+@keyframes sbarHubFadeIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.hub-header {
+  padding: 12px;
+  background: var(--bg-secondary, #f8fafc);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.hub-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.hub-title {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.hub-close-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 3px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+}
+
+.hub-close-btn:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--text);
+}
+
+.hub-search-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-icon {
+  position: absolute;
+  left: 9px;
+  color: var(--text-secondary);
+  pointer-events: none;
+}
+
+.hub-search-input {
+  width: 100%;
+  padding: 6px 28px 6px 28px;
+  font-size: 0.8rem;
+  border-radius: var(--radius-md, 6px);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+}
+
+.hub-search-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15);
+}
+
+.search-clear {
+  position: absolute;
+  right: 8px;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 2px;
+  display: flex;
+}
+
+.hub-tabs {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+}
+
+.hub-tab {
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.73rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.hub-tab:hover {
+  background: rgba(0, 0, 0, 0.04);
+  color: var(--text);
+}
+
+.hub-tab--active {
+  background: var(--primary);
+  color: #ffffff !important;
+}
+
+.hub-body {
+  padding: 8px;
+  overflow-y: auto;
+  max-height: 320px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.hub-empty {
+  padding: 24px 12px;
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.hub-ast-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.hub-ast-card:hover {
+  border-color: var(--primary);
+  background: var(--primary-light, rgba(99, 102, 241, 0.04));
+  transform: translateX(2px);
+}
+
+.hub-card-left {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.hub-card-title-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.hub-card-title {
+  font-weight: 700;
+  font-size: 0.83rem;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hub-card-tag {
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 1px 5px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.hub-card-tag--formative {
+  background: rgba(14, 165, 233, 0.12);
+  color: #0284c7;
+}
+
+.hub-card-tag--summative {
+  background: rgba(168, 85, 247, 0.12);
+  color: #9333ea;
+}
+
+.hub-card-sub {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+}
+
+.hub-card-date {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.hub-card-exps {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 140px;
+}
+
+.hub-progress-pill {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 10px;
+  background: rgba(245, 158, 11, 0.12);
+  color: #d97706;
+  white-space: nowrap;
+}
+
+.hub-progress-pill--done {
+  background: rgba(34, 197, 94, 0.12);
+  color: #16a34a;
+}
+
+/* Clickable Expectation Column Header */
+.exp-code-header--clickable {
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.exp-code-header--clickable:hover {
+  background: rgba(99, 102, 241, 0.08) !important;
+}
+
+.exp-code-header--active {
+  background: rgba(99, 102, 241, 0.15) !important;
+}
+
+.exp-code-main {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.exp-ast-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 15px;
+  height: 15px;
+  padding: 0 3px;
+  border-radius: 8px;
+  background: var(--primary);
+  color: #ffffff;
+  font-size: 0.65rem;
+  font-weight: 800;
+}
+
+/* Expectation Contextual Popover Modal */
+.exp-popover-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(15, 23, 42, 0.25);
+  backdrop-filter: blur(2px);
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.exp-popover {
+  width: 420px;
+  max-width: 90vw;
+  background: var(--surface, #ffffff);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg, 12px);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+  animation: expPopoverPop 0.18s ease-out;
+}
+
+@keyframes expPopoverPop {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.exp-popover-header {
+  padding: 14px 16px;
+  background: var(--bg-secondary, #f8fafc);
+  border-bottom: 1px solid var(--border);
+}
+
+.exp-popover-title-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.exp-popover-code {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--primary);
+}
+
+.exp-popover-desc {
+  margin: 2px 0 0 0;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  line-height: 1.3;
+}
+
+.exp-popover-close {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+}
+
+.exp-popover-close:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--text);
+}
+
+.exp-popover-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.exp-meta-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: rgba(99, 102, 241, 0.12);
+  color: var(--primary);
+}
+
+.exp-meta-unit {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+}
+
+.exp-popover-body {
+  padding: 10px 14px;
+  max-height: 320px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.exp-popover-empty {
+  padding: 24px 12px;
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.exp-ast-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.exp-ast-item:hover {
+  border-color: var(--primary);
+  background: var(--primary-light, rgba(99, 102, 241, 0.04));
+  transform: translateX(2px);
+}
+
+.exp-ast-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.exp-ast-title {
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--text);
+}
+
+.exp-ast-date {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
 }
 </style>
