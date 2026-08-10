@@ -126,8 +126,8 @@ const filteredArchivedClasses = computed(() => {
 
 // ─── weekly stats ─────────────────────────────────────────────────────────────
 
-/** @type {import('vue').Ref<{washroomTripsPerWeek: number, deviceIncidentsPerWeek: number, atRiskThreshold: number}>} */
-const thresholds = ref({ washroomTripsPerWeek: 4, deviceIncidentsPerWeek: 3, atRiskThreshold: 50 })
+/** @type {import('vue').Ref<{washroomTripsPerWeek: number, deviceIncidentsPerWeek: number, atRiskThreshold: number, attendanceThreshold: number}>} */
+const thresholds = ref({ washroomTripsPerWeek: 4, deviceIncidentsPerWeek: 3, atRiskThreshold: 70, attendanceThreshold: 85 })
 
 /** @type {import('vue').Ref<Object>} Shape: { [studentId]: { washroomTrips: N, deviceIncidents: N } } */
 const studentWeeklyStats = ref({})

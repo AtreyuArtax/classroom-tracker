@@ -4,6 +4,8 @@
   "panel": "secondary",
   "region": "Ontario",
   "grade": "Grade 10",
+  "subjectCode": "MPM2D",
+  "department": "Math",
   "strands": [
     {
       "name": "Strand: Quadratic Relations of the Form y = ax² + bx + c",

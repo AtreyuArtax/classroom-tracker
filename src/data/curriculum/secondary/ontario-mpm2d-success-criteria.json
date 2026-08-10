@@ -1,0 +1,116 @@
+{
+  "presetId": "ontario-mpm2d-success-criteria",
+  "title": "Ontario Grade 10 Principles of Mathematics (MPM2D) — Success Criteria",
+  "panel": "secondary",
+  "region": "Ontario",
+  "grade": "Grade 10",
+  "subjectCode": "MPM2D",
+  "department": "Math",
+  "isSuccessCriteria": true,
+  "strands": [
+    {
+      "name": "Quadratic Relations",
+      "overalls": [
+        {
+          "code": "QR1",
+          "title": "Properties of Quadratic Relations",
+          "description": "determine the basic properties of quadratic relations",
+          "specifics": [
+            {
+              "code": "SC.QR1.1",
+              "description": "I can identify the key features of a parabola including the vertex, axis of symmetry, zeros, and intercepts."
+            },
+            {
+              "code": "SC.QR1.2",
+              "description": "I can explain the roles of a, h, and k in y = a(x - h)² + k and sketch graphs by applying transformations to y = x²."
+            }
+          ]
+        },
+        {
+          "code": "QR2",
+          "title": "Solving Quadratic Equations",
+          "description": "solve quadratic equations and interpret the solutions with respect to the corresponding relations",
+          "specifics": [
+            {
+              "code": "SC.QR2.1",
+              "description": "I can expand, simplify, and factor polynomial expressions including trinomials and differences of squares."
+            },
+            {
+              "code": "SC.QR2.2",
+              "description": "I can solve quadratic equations using factoring, completing the square, and the quadratic formula."
+            }
+          ]
+        },
+        {
+          "code": "QR3",
+          "title": "Applications of Quadratic Relations",
+          "description": "solve problems involving quadratic relations",
+          "specifics": [
+            {
+              "code": "SC.QR3.1",
+              "description": "I can model real-world situations with quadratic functions and solve optimization and word problems."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Analytic Geometry",
+      "overalls": [
+        {
+          "code": "AG1",
+          "title": "Line Segments and Circles",
+          "description": "model and solve problems involving the intersection of two lines, and verify geometric properties of triangles and quadrilaterals",
+          "specifics": [
+            {
+              "code": "SC.AG1.1",
+              "description": "I can calculate length, midpoint, and slope of line segments and write the equation of a circle."
+            },
+            {
+              "code": "SC.AG1.2",
+              "description": "I can verify properties of geometric figures (such as medians, perpendicular bisectors, and quadrilaterals) using analytic geometry."
+            }
+          ]
+        },
+        {
+          "code": "AG2",
+          "title": "Linear Systems",
+          "description": "solve problems involving the intersection of two lines",
+          "specifics": [
+            {
+              "code": "SC.AG2.1",
+              "description": "I can solve linear systems algebraically using substitution and elimination and apply them to application problems."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Trigonometry",
+      "overalls": [
+        {
+          "code": "TR1",
+          "title": "Right Triangle Trigonometry",
+          "description": "use the primary trigonometric ratios and the Pythagorean theorem to solve problems involving right triangles",
+          "specifics": [
+            {
+              "code": "SC.TR1.1",
+              "description": "I can use primary trigonometric ratios and the Pythagorean theorem to solve 2D and 3D right-triangle problems."
+            }
+          ]
+        },
+        {
+          "code": "TR2",
+          "title": "Acute Triangle Trigonometry",
+          "description": "solve problems involving acute triangles, using the sine law and the cosine law",
+          "specifics": [
+            {
+              "code": "SC.TR2.1",
+              "description": "I can use the Sine Law and Cosine Law to solve for unknown sides and angles in acute triangles."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

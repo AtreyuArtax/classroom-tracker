@@ -1,0 +1,159 @@
+{
+  "presetId": "ontario-snc1w-success-criteria",
+  "title": "Ontario Grade 9 Science (SNC1W) — Success Criteria",
+  "panel": "secondary",
+  "region": "Ontario",
+  "grade": "Grade 9",
+  "subjectCode": "SNC1W",
+  "department": "Science",
+  "isSuccessCriteria": true,
+  "strands": [
+    {
+      "name": "Strand A: STEM Skills, Careers, and Connections",
+      "overalls": [
+        {
+          "code": "A1",
+          "title": "STEM Investigation Skills",
+          "description": "apply a scientific research process and associated skills to conduct investigations, making connections between their research and the scientific concepts they are learning",
+          "specifics": [
+            {
+              "code": "SC.A1.1",
+              "description": "I can use scientific research and experimentation processes to plan and conduct investigations safely."
+            },
+            {
+              "code": "SC.A1.2",
+              "description": "I can apply an engineering design process to design, build, and test devices or models."
+            },
+            {
+              "code": "SC.A1.3",
+              "description": "I can use coding skills to investigate and model scientific concepts and relationships."
+            },
+            {
+              "code": "SC.A1.4",
+              "description": "I can apply WHMIS and safe laboratory practices when carrying out hands-on investigations."
+            }
+          ]
+        },
+        {
+          "code": "A2",
+          "title": "Applications, Careers, and Connections",
+          "description": "design an experiment or a prototype to explore a problem relevant to a STEM-related occupation, using findings from research",
+          "specifics": [
+            {
+              "code": "SC.A2.1",
+              "description": "I can explore STEM careers and evaluate the societal, economic, and environmental impacts of scientific developments."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Strand B: Sustainable Ecosystems and Climate Change",
+      "overalls": [
+        {
+          "code": "B1",
+          "title": "Relating Science to Technology, Society, and the Environment",
+          "description": "assess impacts of climate change on sustainable ecosystems, and evaluate climate change initiatives",
+          "specifics": [
+            {
+              "code": "SC.B1.1",
+              "description": "I can evaluate human impacts and climate change effects on ecosystem sustainability and biodiversity."
+            }
+          ]
+        },
+        {
+          "code": "B2",
+          "title": "Investigating Ecosystem Dynamics",
+          "description": "investigate ecosystem sustainability and factors affecting ecosystem health",
+          "specifics": [
+            {
+              "code": "SC.B2.1",
+              "description": "I can explain nutrient cycles (carbon, nitrogen, water) and energy flow in ecosystems."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Strand C: Nature of Matter",
+      "overalls": [
+        {
+          "code": "C1",
+          "title": "Relating Science to Technology, Society, and the Environment",
+          "description": "assess impacts of chemical applications on society and the environment",
+          "specifics": [
+            {
+              "code": "SC.C1.1",
+              "description": "I can evaluate the environmental and societal impacts of chemical use and waste."
+            }
+          ]
+        },
+        {
+          "code": "C2",
+          "title": "Investigating Physical and Chemical Properties",
+          "description": "investigate physical and chemical properties of elements and compounds",
+          "specifics": [
+            {
+              "code": "SC.C2.1",
+              "description": "I can classify matter, determine physical/chemical properties, and explain atomic structure using the periodic table."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Strand D: Principles and Applications of Electricity",
+      "overalls": [
+        {
+          "code": "D1",
+          "title": "Relating Science to Technology, Society, and the Environment",
+          "description": "evaluate social, economic, and environmental implications of electrical energy production",
+          "specifics": [
+            {
+              "code": "SC.D1.1",
+              "description": "I can compare renewable and non-renewable energy sources and evaluate electrical efficiency."
+            }
+          ]
+        },
+        {
+          "code": "D2",
+          "title": "Investigating Electrical Circuits",
+          "description": "investigate characteristics of static and current electricity and circuit components",
+          "specifics": [
+            {
+              "code": "SC.D2.1",
+              "description": "I can construct and analyze static electric phenomena and series/parallel electric circuits using Ohm's Law."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Strand E: Space Exploration",
+      "overalls": [
+        {
+          "code": "E1",
+          "title": "Relating Science to Technology, Society, and the Environment",
+          "description": "evaluate social, environmental, and economic impacts of space exploration technologies",
+          "specifics": [
+            {
+              "code": "SC.E1.1",
+              "description": "I can assess the contributions of space exploration technologies and Canadian space innovations."
+            }
+          ]
+        },
+        {
+          "code": "E2",
+          "title": "Investigating Celestial Phenomena",
+          "description": "investigate characteristics of the solar system and universe",
+          "specifics": [
+            {
+              "code": "SC.E2.1",
+              "description": "I can describe the components, motion, and origin of celestial objects in our solar system and universe."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

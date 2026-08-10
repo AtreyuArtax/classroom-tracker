@@ -1,0 +1,284 @@
+{
+  "presetId": "ontario-sch3u-success-criteria",
+  "title": "Ontario Grade 11 Chemistry (SCH3U) — Success Criteria",
+  "panel": "secondary",
+  "region": "Ontario",
+  "grade": "Grade 11",
+  "subjectCode": "SCH3U",
+  "isSuccessCriteria": true,
+  "strands": [
+    {
+      "name": "Strand A: Scientific Investigation Skills and Career Exploration",
+      "overalls": [
+        {
+          "code": "A1",
+          "title": "Scientific Investigation Skills",
+          "description": "demonstrate scientific investigation skills (related to both inquiry and research) in the four areas of skills (initiating and planning, performing and recording, analysing and interpreting, and communicating)",
+          "specifics": [
+            {
+              "code": "SC.A1.1",
+              "description": "I can ask scientific questions, make predictions, and plan safe investigations."
+            },
+            {
+              "code": "SC.A1.2",
+              "description": "I can conduct experiments, collect accurate data, and organize it effectively."
+            },
+            {
+              "code": "SC.A1.3",
+              "description": "I can analyse and interpret data, identify sources of error, and draw evidence-based conclusions."
+            },
+            {
+              "code": "SC.A1.4",
+              "description": "I can communicate my findings using scientific language, appropriate formats, and precise measurements."
+            }
+          ]
+        },
+        {
+          "code": "A2",
+          "title": "Career Exploration",
+          "description": "identify and describe careers related to the fields of science under study, and describe the contributions of scientists, including Canadians, to those fields",
+          "specifics": [
+            {
+              "code": "SC.A2.1",
+              "description": "I can identify science-related careers and describe the education and training required."
+            },
+            {
+              "code": "SC.A2.2",
+              "description": "I can describe the contributions of Canadian scientists to the fields under study."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Strand B: Matter, Chemical Trends, and Chemical Bonding",
+      "overalls": [
+        {
+          "code": "B1",
+          "title": "Relating Science to Technology, Society, and the Environment",
+          "description": "analyse the properties of commonly used chemical substances and their effects on human health and the environment, and propose ways to lessen their impact",
+          "specifics": [
+            {
+              "code": "SC.B1.1",
+              "description": "I can analyse the environmental and health impacts of chemical substances and propose ways to reduce harm."
+            }
+          ]
+        },
+        {
+          "code": "B2",
+          "title": "Developing Skills of Investigation and Communication",
+          "description": "investigate physical and chemical properties of elements and compounds, and use various methods to visually represent them",
+          "specifics": [
+            {
+              "code": "SC.B2.1",
+              "description": "I can use periodic trends and Lewis structures to predict and represent chemical bonding."
+            },
+            {
+              "code": "SC.B2.2",
+              "description": "I can name and write chemical formulae for compounds using IUPAC nomenclature."
+            }
+          ]
+        },
+        {
+          "code": "B3",
+          "title": "Understanding Basic Concepts",
+          "description": "demonstrate an understanding of periodic trends in the periodic table and how elements combine to form chemical bonds",
+          "specifics": [
+            {
+              "code": "SC.B3.1",
+              "description": "I can explain the relationship between atomic structure, isotopes, and periodic trends."
+            },
+            {
+              "code": "SC.B3.2",
+              "description": "I can explain how elements form ionic and covalent bonds and compare the properties of the resulting compounds."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Strand C: Chemical Reactions",
+      "overalls": [
+        {
+          "code": "C1",
+          "title": "Relating Science to Technology, Society, and the Environment",
+          "description": "analyse chemical reactions used in a variety of applications, and assess their impact on society and the environment",
+          "specifics": [
+            {
+              "code": "SC.C1.1",
+              "description": "I can analyse the societal and environmental impacts of chemical reactions used in industrial applications."
+            }
+          ]
+        },
+        {
+          "code": "C2",
+          "title": "Developing Skills of Investigation and Communication",
+          "description": "investigate different types of chemical reactions",
+          "specifics": [
+            {
+              "code": "SC.C2.1",
+              "description": "I can write balanced chemical equations and predict products for different types of reactions."
+            },
+            {
+              "code": "SC.C2.2",
+              "description": "I can investigate chemical reactions through inquiry, including synthesis, decomposition, displacement, and neutralization."
+            }
+          ]
+        },
+        {
+          "code": "C3",
+          "title": "Understanding Basic Concepts",
+          "description": "demonstrate an understanding of the different types of chemical reactions",
+          "specifics": [
+            {
+              "code": "SC.C3.1",
+              "description": "I can identify different types of chemical reactions and explain the differences between them."
+            },
+            {
+              "code": "SC.C3.2",
+              "description": "I can explain the formation of acids and bases from metal and non-metal oxides."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Strand D: Quantities in Chemical Reactions",
+      "overalls": [
+        {
+          "code": "D1",
+          "title": "Relating Science to Technology, Society, and the Environment",
+          "description": "analyse processes in the home, the workplace, and the environmental sector that use chemical quantities and calculations, and assess the importance of quantitative accuracy in industrial chemical processes",
+          "specifics": [
+            {
+              "code": "SC.D1.1",
+              "description": "I can analyse the use of chemical quantities and calculations in real-world applications and assess the importance of quantitative accuracy."
+            }
+          ]
+        },
+        {
+          "code": "D2",
+          "title": "Developing Skills of Investigation and Communication",
+          "description": "investigate quantitative relationships in chemical reactions, and solve related problems",
+          "specifics": [
+            {
+              "code": "SC.D2.1",
+              "description": "I can perform stoichiometric calculations involving moles, mass, percentage composition, and empirical formulae."
+            },
+            {
+              "code": "SC.D2.2",
+              "description": "I can solve problems involving percentage yield and limiting reagents, and conduct inquiries to determine reaction yields."
+            }
+          ]
+        },
+        {
+          "code": "D3",
+          "title": "Understanding Basic Concepts",
+          "description": "demonstrate an understanding of the mole concept and its significance to the quantitative analysis of chemical reactions",
+          "specifics": [
+            {
+              "code": "SC.D3.1",
+              "description": "I can explain the mole concept and its relationship to Avogadro's number, molar mass, and quantitative analysis."
+            },
+            {
+              "code": "SC.D3.2",
+              "description": "I can explain the quantitative relationships expressed in balanced chemical equations."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Strand E: Solutions and Solubility",
+      "overalls": [
+        {
+          "code": "E1",
+          "title": "Relating Science to Technology, Society, and the Environment",
+          "description": "analyse the origins and effects of water pollution, and a variety of economic, social, and environmental issues related to drinking water",
+          "specifics": [
+            {
+              "code": "SC.E1.1",
+              "description": "I can analyse the origins and effects of water pollution and assess issues related to drinking water."
+            }
+          ]
+        },
+        {
+          "code": "E2",
+          "title": "Developing Skills of Investigation and Communication",
+          "description": "investigate qualitative and quantitative properties of solutions, and solve related problems",
+          "specifics": [
+            {
+              "code": "SC.E2.1",
+              "description": "I can solve problems involving solution concentration and prepare solutions of given concentrations."
+            },
+            {
+              "code": "SC.E2.2",
+              "description": "I can use stoichiometry, net ionic equations, and titration techniques to analyse solutions."
+            }
+          ]
+        },
+        {
+          "code": "E3",
+          "title": "Understanding Basic Concepts",
+          "description": "demonstrate an understanding of qualitative and quantitative properties of solutions",
+          "specifics": [
+            {
+              "code": "SC.E3.1",
+              "description": "I can explain the properties of water as a solvent and the factors affecting solubility."
+            },
+            {
+              "code": "SC.E3.2",
+              "description": "I can explain the Arrhenius theory of acids and bases and the difference between strong and weak acids and bases."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Strand F: Gases and Atmospheric Chemistry",
+      "overalls": [
+        {
+          "code": "F1",
+          "title": "Relating Science to Technology, Society, and the Environment",
+          "description": "analyse the cumulative effects of human activities and technologies on air quality, and describe some Canadian initiatives to reduce air pollution, including ways to reduce their own carbon footprint",
+          "specifics": [
+            {
+              "code": "SC.F1.1",
+              "description": "I can analyse the effects of human activities on air quality and describe Canadian initiatives to reduce air pollution."
+            }
+          ]
+        },
+        {
+          "code": "F2",
+          "title": "Developing Skills of Investigation and Communication",
+          "description": "investigate gas laws that explain the behaviour of gases, and solve related problems",
+          "specifics": [
+            {
+              "code": "SC.F2.1",
+              "description": "I can investigate the relationships between pressure, volume, and temperature of gases using gas laws."
+            },
+            {
+              "code": "SC.F2.2",
+              "description": "I can solve quantitative problems involving gas laws and stoichiometry for gaseous reactions."
+            }
+          ]
+        },
+        {
+          "code": "F3",
+          "title": "Understanding Basic Concepts",
+          "description": "demonstrate an understanding of the laws that explain the behaviour of gases",
+          "specifics": [
+            {
+              "code": "SC.F3.1",
+              "description": "I can use kinetic molecular theory and gas laws to explain the behaviour of gases."
+            },
+            {
+              "code": "SC.F3.2",
+              "description": "I can describe the components of Earth's atmosphere and explain Avogadro's hypothesis."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

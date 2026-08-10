@@ -1,0 +1,284 @@
+{
+  "presetId": "ontario-sph3u-success-criteria",
+  "title": "Ontario Grade 11 Physics (SPH3U) — Success Criteria",
+  "panel": "secondary",
+  "region": "Ontario",
+  "grade": "Grade 11",
+  "strands": [
+    {
+      "name": "Strand A: Scientific Investigation Skills and Career Exploration",
+      "overalls": [
+        {
+          "code": "A1",
+          "title": "Scientific Investigation Skills",
+          "description": "demonstrate scientific investigation skills (related to both inquiry and research) in the four areas of skills (initiating and planning, performing and recording, analysing and interpreting, and communicating)",
+          "specifics": [
+            {
+              "code": "SC.A1.1",
+              "description": "I can ask scientific questions, make predictions, and plan safe investigations using appropriate procedures and equipment."
+            },
+            {
+              "code": "SC.A1.2",
+              "description": "I can conduct experiments, collect accurate data, and organize it using tables, graphs, and diagrams."
+            },
+            {
+              "code": "SC.A1.3",
+              "description": "I can analyse and interpret data, identify sources of error and bias, and draw conclusions supported by evidence."
+            },
+            {
+              "code": "SC.A1.4",
+              "description": "I can communicate my findings clearly using scientific language, appropriate formats, and precise measurements."
+            }
+          ]
+        },
+        {
+          "code": "A2",
+          "title": "Career Exploration",
+          "description": "identify and describe careers related to the fields of science under study, and describe the contributions of scientists, including Canadians, to those fields",
+          "specifics": [
+            {
+              "code": "SC.A2.1",
+              "description": "I can identify science-related careers in physics and describe the education and training required."
+            },
+            {
+              "code": "SC.A2.2",
+              "description": "I can describe the contributions of Canadian scientists to the fields of physics under study."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Strand B: Kinematics",
+      "overalls": [
+        {
+          "code": "B1",
+          "title": "Relating Science to Technology, Society, and the Environment",
+          "description": "analyse technologies that apply concepts related to kinematics, and assess the technologies' social and environmental impact",
+          "specifics": [
+            {
+              "code": "SC.B1.1",
+              "description": "I can analyse the impact of kinematics-based technologies and evaluate their societal and environmental effects."
+            }
+          ]
+        },
+        {
+          "code": "B2",
+          "title": "Developing Skills of Investigation and Communication",
+          "description": "investigate, in qualitative and quantitative terms, uniform and non-uniform linear motion, and solve related problems",
+          "specifics": [
+            {
+              "code": "SC.B2.1",
+              "description": "I can interpret and create position–time, velocity–time, and acceleration–time graphs for uniform and non-uniform motion."
+            },
+            {
+              "code": "SC.B2.2",
+              "description": "I can derive and apply kinematic equations to solve problems involving linear motion in one and two dimensions."
+            },
+            {
+              "code": "SC.B2.3",
+              "description": "I can describe and analyse the horizontal and vertical components of projectile motion."
+            }
+          ]
+        },
+        {
+          "code": "B3",
+          "title": "Understanding Basic Concepts",
+          "description": "demonstrate an understanding of uniform and non-uniform linear motion, in one and two dimensions",
+          "specifics": [
+            {
+              "code": "SC.B3.1",
+              "description": "I can distinguish between scalar and vector quantities and between constant, instantaneous, and average rates of motion."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Strand C: Forces",
+      "overalls": [
+        {
+          "code": "C1",
+          "title": "Relating Science to Technology, Society, and the Environment",
+          "description": "analyse and propose improvements to technologies that apply concepts related to dynamics and Newton's laws, and assess the technologies' social and environmental impact",
+          "specifics": [
+            {
+              "code": "SC.C1.1",
+              "description": "I can analyse and evaluate technologies that apply force principles and assess their societal and environmental impact."
+            }
+          ]
+        },
+        {
+          "code": "C2",
+          "title": "Developing Skills of Investigation and Communication",
+          "description": "investigate, in qualitative and quantitative terms, net force, acceleration, and mass, and solve related problems",
+          "specifics": [
+            {
+              "code": "SC.C2.1",
+              "description": "I can state Newton's three laws and apply them using free-body diagrams to determine net force and acceleration."
+            },
+            {
+              "code": "SC.C2.2",
+              "description": "I can investigate the relationships between force, mass, and acceleration, including friction and free fall."
+            }
+          ]
+        },
+        {
+          "code": "C3",
+          "title": "Understanding Basic Concepts",
+          "description": "demonstrate an understanding of the relationship between changes in velocity and unbalanced forces in one dimension",
+          "specifics": [
+            {
+              "code": "SC.C3.1",
+              "description": "I can identify and distinguish between different forces (friction, gravity, normal force) and describe their effects on velocity."
+            },
+            {
+              "code": "SC.C3.2",
+              "description": "I can explain how Galileo and Newton advanced our understanding of forces and motion."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Strand D: Energy and Society",
+      "overalls": [
+        {
+          "code": "D1",
+          "title": "Relating Science to Technology, Society, and the Environment",
+          "description": "analyse technologies that apply principles of and concepts related to energy transformations, and assess the technologies' social and environmental impact",
+          "specifics": [
+            {
+              "code": "SC.D1.1",
+              "description": "I can analyse and assess energy technologies and compare the efficiency and environmental impact of different energy generation methods."
+            }
+          ]
+        },
+        {
+          "code": "D2",
+          "title": "Developing Skills of Investigation and Communication",
+          "description": "investigate energy transformations and the law of conservation of energy, and solve related problems",
+          "specifics": [
+            {
+              "code": "SC.D2.1",
+              "description": "I can solve problems involving work, energy, power, and efficiency using the law of conservation of energy."
+            },
+            {
+              "code": "SC.D2.2",
+              "description": "I can investigate and solve problems involving thermal energy, including specific heat capacity, latent heat, and heating/cooling curves."
+            }
+          ]
+        },
+        {
+          "code": "D3",
+          "title": "Understanding Basic Concepts",
+          "description": "demonstrate an understanding of work, efficiency, power, gravitational potential energy, kinetic energy, nuclear energy, and thermal energy and its transfer (heat)",
+          "specifics": [
+            {
+              "code": "SC.D3.1",
+              "description": "I can distinguish between forms of energy and energy transfer (conduction, convection, radiation, heat, work) and describe how they interrelate."
+            },
+            {
+              "code": "SC.D3.2",
+              "description": "I can explain nuclear energy concepts including fission, fusion, isotopes, radiation types, and half-life."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Strand E: Waves and Sound",
+      "overalls": [
+        {
+          "code": "E1",
+          "title": "Relating Science to Technology, Society, and the Environment",
+          "description": "analyse how mechanical waves and sound affect technology, structures, society, and the environment, and assess ways of reducing their negative effects",
+          "specifics": [
+            {
+              "code": "SC.E1.1",
+              "description": "I can analyse how waves and sound influence technology and structures, and assess technologies designed to reduce their negative impacts."
+            }
+          ]
+        },
+        {
+          "code": "E2",
+          "title": "Developing Skills of Investigation and Communication",
+          "description": "investigate, in qualitative and quantitative terms, the properties of mechanical waves and sound, and solve related problems",
+          "specifics": [
+            {
+              "code": "SC.E2.1",
+              "description": "I can investigate wave behaviour including interference, superposition, standing waves, beats, and the Doppler effect."
+            },
+            {
+              "code": "SC.E2.2",
+              "description": "I can explain and apply the relationship between wavelength, frequency, and speed of a wave."
+            }
+          ]
+        },
+        {
+          "code": "E3",
+          "title": "Understanding Basic Concepts",
+          "description": "demonstrate an understanding of the properties of mechanical waves and sound and of the principles underlying their production, transmission, interaction, and reception",
+          "specifics": [
+            {
+              "code": "SC.E3.1",
+              "description": "I can distinguish between longitudinal and transverse waves and identify their properties."
+            },
+            {
+              "code": "SC.E3.2",
+              "description": "I can explain resonance — the conditions required and its applications in real-world situations."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Strand F: Electricity and Magnetism",
+      "overalls": [
+        {
+          "code": "F1",
+          "title": "Relating Science to Technology, Society, and the Environment",
+          "description": "analyse the social, economic, and environmental impact of electrical energy production and technologies related to electromagnetism, and propose ways to improve the sustainability of electrical energy production",
+          "specifics": [
+            {
+              "code": "SC.F1.1",
+              "description": "I can analyse the social, economic, and environmental impacts of electrical energy production and electromagnetic technologies."
+            }
+          ]
+        },
+        {
+          "code": "F2",
+          "title": "Developing Skills of Investigation and Communication",
+          "description": "investigate, in qualitative and quantitative terms, magnetic fields and electric circuits, and solve related problems",
+          "specifics": [
+            {
+              "code": "SC.F2.1",
+              "description": "I can analyse and build electric circuits using Ohm's law and Kirchhoff's laws."
+            },
+            {
+              "code": "SC.F2.2",
+              "description": "I can construct and test a prototype device that uses the principles of electromagnetism."
+            }
+          ]
+        },
+        {
+          "code": "F3",
+          "title": "Understanding Basic Concepts",
+          "description": "demonstrate an understanding of the properties of magnetic fields, the principles of current and electron flow, and the operation of selected technologies that use these properties and principles to produce and transmit electrical energy",
+          "specifics": [
+            {
+              "code": "SC.F3.1",
+              "description": "I can describe the properties of magnetic fields and explain how they are produced by permanent magnets, electromagnets, and current-carrying conductors."
+            },
+            {
+              "code": "SC.F3.2",
+              "description": "I can explain the principles of electromagnetism — electromagnetic induction, the motor principle, Faraday's law, and Lenz's law — and how they apply to motors, generators, and transformers."
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "subjectCode": "SPH3U",
+  "isSuccessCriteria": true
+}

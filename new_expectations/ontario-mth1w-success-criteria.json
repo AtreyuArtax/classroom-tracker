@@ -1,0 +1,233 @@
+{
+  "presetId": "ontario-mth1w-success-criteria",
+  "title": "Ontario Grade 9 Mathematics (MTH1W) — Success Criteria",
+  "panel": "secondary",
+  "region": "Ontario",
+  "grade": "Grade 9",
+  "strands": [
+    {
+      "name": "Strand A: Mathematical Thinking and Making Connections",
+      "overalls": [
+        {
+          "code": "A1",
+          "title": "Mathematical Processes",
+          "description": "apply the mathematical processes to develop a conceptual understanding of, and procedural fluency with, the mathematics they are learning",
+          "specifics": [
+            {
+              "code": "SC.A1.1",
+              "description": "I can apply problem-solving strategies and mathematical processes to develop fluency and deepen my understanding."
+            },
+            {
+              "code": "SC.A1.2",
+              "description": "I can make connections between mathematics and real-life situations, various knowledge systems, and career applications."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Strand B: Number",
+      "overalls": [
+        {
+          "code": "B1",
+          "title": "Number Sets and Development",
+          "description": "demonstrate an understanding of the development and use of numbers, and make connections between sets of numbers",
+          "specifics": [
+            {
+              "code": "SC.B1.1",
+              "description": "I can describe the development of number concepts across cultures and explain relationships between subsets of numbers."
+            }
+          ]
+        },
+        {
+          "code": "B2",
+          "title": "Powers and Exponents",
+          "description": "represent numbers in various ways, evaluate powers, and simplify expressions by using the relationships between powers and their exponents",
+          "specifics": [
+            {
+              "code": "SC.B2.1",
+              "description": "I can evaluate powers, express numbers in scientific notation, and simplify expressions using exponent laws."
+            }
+          ]
+        },
+        {
+          "code": "B3",
+          "title": "Rational Numbers, Ratios, Rates, and Proportions",
+          "description": "apply an understanding of rational numbers, ratios, rates, percentages, and proportions, in various mathematical contexts, and to solve problems",
+          "specifics": [
+            {
+              "code": "SC.B3.1",
+              "description": "I can apply integers to describe direction, amount, and change in various contexts."
+            },
+            {
+              "code": "SC.B3.2",
+              "description": "I can solve problems involving fractions, ratios, rates, percentages, and proportions in real-life contexts."
+            },
+            {
+              "code": "SC.B3.3",
+              "description": "I can use positive and negative fractions and mixed numbers to solve problems involving formulas, measurements, and linear relations."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Strand C: Algebra",
+      "overalls": [
+        {
+          "code": "C1",
+          "title": "Algebraic Concepts and Expressions",
+          "description": "demonstrate an understanding of the development and use of algebraic concepts and of their connection to numbers, using various tools and representations",
+          "specifics": [
+            {
+              "code": "SC.C1.1",
+              "description": "I can create, simplify, and compare algebraic expressions and solve equations for various contexts."
+            }
+          ]
+        },
+        {
+          "code": "C2",
+          "title": "Coding and Algebraic Concepts",
+          "description": "apply coding skills to represent mathematical concepts and relationships dynamically, and to solve problems, in algebra and across the other strands",
+          "specifics": [
+            {
+              "code": "SC.C2.1",
+              "description": "I can use coding to demonstrate understanding of algebraic concepts and to solve problems."
+            }
+          ]
+        },
+        {
+          "code": "C3",
+          "title": "Linear and Non-Linear Relations",
+          "description": "represent and compare linear and non-linear relations that model real-life situations, and use these representations to make predictions",
+          "specifics": [
+            {
+              "code": "SC.C3.1",
+              "description": "I can represent linear relations in multiple ways and connect rates of change and initial values to graphs and equations."
+            },
+            {
+              "code": "SC.C3.2",
+              "description": "I can compare two linear relations and interpret the meaning of their intersection point in a given context."
+            }
+          ]
+        },
+        {
+          "code": "C4",
+          "title": "Characteristics of Relations",
+          "description": "demonstrate an understanding of the characteristics of various representations of linear and non-linear relations, using tools, including coding when appropriate",
+          "specifics": [
+            {
+              "code": "SC.C4.1",
+              "description": "I can compare characteristics of linear and non-linear relations across graphs, tables, and equations, and use coding to model algebraic concepts."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Strand D: Data",
+      "overalls": [
+        {
+          "code": "D1",
+          "title": "Data Collection and Analysis",
+          "description": "describe the collection and use of data, and represent and analyse data involving one and two variables",
+          "specifics": [
+            {
+              "code": "SC.D1.1",
+              "description": "I can represent and analyse data using scatter plots, box plots, quartiles, and regression models to make predictions."
+            },
+            {
+              "code": "SC.D1.2",
+              "description": "I can describe the implications of collecting, storing, and using large amounts of data."
+            }
+          ]
+        },
+        {
+          "code": "D2",
+          "title": "Mathematical Modelling",
+          "description": "apply the process of mathematical modelling, using data and mathematical concepts from other strands, to represent, analyse, make predictions, and provide insight into real-life situations",
+          "specifics": [
+            {
+              "code": "SC.D2.1",
+              "description": "I can describe the value of mathematical modelling and how it informs real-life decisions."
+            },
+            {
+              "code": "SC.D2.2",
+              "description": "I can design a data collection plan, build a mathematical model, and report on how the model answers a question of interest, including its limitations."
+            },
+            {
+              "code": "SC.D2.3",
+              "description": "I can display and analyse data to create a model that addresses an original question, accounting for assumptions and context."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Strand E: Geometry and Measurement",
+      "overalls": [
+        {
+          "code": "E1",
+          "title": "Geometric and Measurement Relationships",
+          "description": "demonstrate an understanding of the development and use of geometric and measurement relationships, and apply these relationships to solve problems, including problems involving real-life situations",
+          "specifics": [
+            {
+              "code": "SC.E1.1",
+              "description": "I can research the development of geometric or measurement concepts across cultures and describe their relevance to careers."
+            },
+            {
+              "code": "SC.E1.2",
+              "description": "I can solve problems involving perimeter, area, surface area, volume, and the Pythagorean theorem in real-life contexts."
+            },
+            {
+              "code": "SC.E1.3",
+              "description": "I can explain how changing dimensions affects perimeter, area, surface area, and volume."
+            },
+            {
+              "code": "SC.E1.4",
+              "description": "I can create and analyse designs using geometric relationships and circle and triangle properties."
+            },
+            {
+              "code": "SC.E1.5",
+              "description": "I can solve problems involving the volume relationships between prisms and pyramids, and cylinders and cones."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Strand F: Financial Literacy",
+      "overalls": [
+        {
+          "code": "F1",
+          "title": "Financial Decisions",
+          "description": "demonstrate the knowledge and skills needed to make informed financial decisions",
+          "specifics": [
+            {
+              "code": "SC.F1.1",
+              "description": "I can analyse financial situations involving appreciation, depreciation, interest rates, and budgets to make informed financial decisions."
+            },
+            {
+              "code": "SC.F1.2",
+              "description": "I can modify budgets to reflect changing circumstances and explain the rationale for my modifications."
+            },
+            {
+              "code": "SC.F1.3",
+              "description": "I can compare the effects of different interest rates, loan terms, and down payments on the overall cost of purchases."
+            },
+            {
+              "code": "SC.F1.4",
+              "description": "I can use graphs to answer questions related to appreciation and depreciation in financial contexts."
+            },
+            {
+              "code": "SC.F1.5",
+              "description": "I can identify past or current financial situations and explain how they inform financial decision-making."
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "subjectCode": "MTH1W",
+  "isSuccessCriteria": true
+}

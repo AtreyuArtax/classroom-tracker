@@ -4,6 +4,8 @@
   "panel": "secondary",
   "region": "Ontario",
   "grade": "Grade 9",
+  "subjectCode": "MTH1W",
+  "department": "Math",
   "strands": [
     {
       "name": "Strand AA: Social-Emotional Learning (SEL) Skills in Mathematics",

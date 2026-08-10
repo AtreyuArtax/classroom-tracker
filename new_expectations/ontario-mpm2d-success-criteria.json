@@ -1,0 +1,149 @@
+{
+  "presetId": "ontario-mpm2d-success-criteria",
+  "title": "Ontario Grade 10 Principles of Mathematics (MPM2D) — Success Criteria",
+  "panel": "secondary",
+  "region": "Ontario",
+  "grade": "Grade 10",
+  "strands": [
+    {
+      "name": "Quadratic Relations",
+      "overalls": [
+        {
+          "code": "QR1",
+          "title": "Properties of Quadratic Relations",
+          "description": "determine the basic properties of quadratic relations",
+          "specifics": [
+            {
+              "code": "SC.QR1.1",
+              "description": "I can identify the key features of a parabola including the vertex, axis of symmetry, zeros, and intercepts."
+            },
+            {
+              "code": "SC.QR1.2",
+              "description": "I can explain the roles of a, h, and k in y = a(x - h)² + k and sketch graphs by applying transformations to y = x²."
+            }
+          ]
+        },
+        {
+          "code": "QR2",
+          "title": "Solving Quadratic Equations",
+          "description": "solve quadratic equations and interpret the solutions with respect to the corresponding relations",
+          "specifics": [
+            {
+              "code": "SC.QR2.1",
+              "description": "I can expand, simplify, and factor polynomial expressions including trinomials and differences of squares."
+            },
+            {
+              "code": "SC.QR2.2",
+              "description": "I can solve quadratic equations using factoring, completing the square, and the quadratic formula."
+            }
+          ]
+        },
+        {
+          "code": "QR3",
+          "title": "Applications of Quadratics",
+          "description": "solve problems involving quadratic relations",
+          "specifics": [
+            {
+              "code": "SC.QR3.1",
+              "description": "I can solve real-world problems involving quadratic relations, including determining maximum or minimum values."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Analytic Geometry",
+      "overalls": [
+        {
+          "code": "AG1",
+          "title": "Linear Systems",
+          "description": "model and solve problems involving the intersection of two straight lines",
+          "specifics": [
+            {
+              "code": "SC.AG1.1",
+              "description": "I can solve systems of linear equations using substitution and elimination, and apply them to real-world problems."
+            }
+          ]
+        },
+        {
+          "code": "AG2",
+          "title": "Properties of Lines and Segments",
+          "description": "solve problems using analytic geometry involving properties of lines and line segments",
+          "specifics": [
+            {
+              "code": "SC.AG2.1",
+              "description": "I can calculate the midpoint, length, and slope of a line segment and use these to solve problems."
+            },
+            {
+              "code": "SC.AG2.2",
+              "description": "I can develop and apply the equation of a circle centred at the origin, and solve problems involving circles."
+            }
+          ]
+        },
+        {
+          "code": "AG3",
+          "title": "Verifying Geometric Properties",
+          "description": "verify geometric properties of triangles and quadrilaterals, using analytic geometry",
+          "specifics": [
+            {
+              "code": "SC.AG3.1",
+              "description": "I can use algebraic techniques and analytic geometry to verify geometric properties of triangles and quadrilaterals."
+            },
+            {
+              "code": "SC.AG3.2",
+              "description": "I can plan and carry out a multi-step analytic geometry strategy to verify a geometric property."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Trigonometry",
+      "overalls": [
+        {
+          "code": "TR1",
+          "title": "Similar Triangles",
+          "description": "use their knowledge of ratio and proportion to investigate similar triangles and solve problems related to similarity",
+          "specifics": [
+            {
+              "code": "SC.TR1.1",
+              "description": "I can identify and apply properties of similar triangles to solve problems in realistic situations."
+            }
+          ]
+        },
+        {
+          "code": "TR2",
+          "title": "Right Triangle Trigonometry",
+          "description": "solve problems involving right triangles, using the primary trigonometric ratios and the Pythagorean theorem",
+          "specifics": [
+            {
+              "code": "SC.TR2.1",
+              "description": "I can use the primary trigonometric ratios and the Pythagorean theorem to solve problems involving right triangles."
+            }
+          ]
+        },
+        {
+          "code": "TR3",
+          "title": "Acute Triangle Trigonometry",
+          "description": "solve problems involving acute triangles, using the sine law and the cosine law",
+          "specifics": [
+            {
+              "code": "SC.TR3.1",
+              "description": "I can apply the sine law and cosine law to determine unknown sides and angles in acute triangles."
+            },
+            {
+              "code": "SC.TR3.2",
+              "description": "I can solve multi-step problems involving the measures of sides and angles in acute triangles."
+            },
+            {
+              "code": "SC.TR3.3",
+              "description": "I can explore and explain the development of the sine law and cosine law."
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "subjectCode": "MPM2D",
+  "isSuccessCriteria": true
+}

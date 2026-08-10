@@ -1,0 +1,203 @@
+{
+  "presetId": "ontario-snc2p-success-criteria",
+  "title": "Ontario Grade 10 Science (SNC2P) — Success Criteria",
+  "panel": "secondary",
+  "region": "Ontario",
+  "grade": "Grade 10",
+  "subjectCode": "SNC2P",
+  "department": "Science",
+  "isSuccessCriteria": true,
+  "strands": [
+    {
+      "name": "Strand A: Scientific Investigation Skills and Career Exploration",
+      "overalls": [
+        {
+          "code": "A1",
+          "title": "Scientific Investigation Skills",
+          "description": "demonstrate scientific investigation skills (related to both inquiry and research) in the four areas of skills (initiating and planning, performing and recording, analysing and interpreting, and communicating)",
+          "specifics": [
+            {
+              "code": "SC.A1.1",
+              "description": "I can ask scientific questions, make predictions, and plan safe investigations."
+            },
+            {
+              "code": "SC.A1.2",
+              "description": "I can conduct experiments, collect accurate data, and organize it effectively."
+            },
+            {
+              "code": "SC.A1.3",
+              "description": "I can analyse and interpret data, identify sources of error, and draw evidence-based conclusions."
+            },
+            {
+              "code": "SC.A1.4",
+              "description": "I can communicate my findings using scientific language, appropriate formats, and precise measurements."
+            }
+          ]
+        },
+        {
+          "code": "A2",
+          "title": "Career Exploration",
+          "description": "identify and describe a variety of careers related to the fields of science under study, and identify scientists, including Canadians, who have made contributions to those fields",
+          "specifics": [
+            {
+              "code": "SC.A2.1",
+              "description": "I can identify practical science-related careers and technical pathways."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Strand B: Biology — Tissues, Organs, and Systems",
+      "overalls": [
+        {
+          "code": "B1",
+          "title": "Relating Science to Technology, Society, and the Environment",
+          "description": "evaluate the importance of medical technologies in diagnosis and treatment",
+          "specifics": [
+            {
+              "code": "SC.B1.1",
+              "description": "I can evaluate practical applications of medical imaging and diagnostic tools."
+            }
+          ]
+        },
+        {
+          "code": "B2",
+          "title": "Developing Skills of Investigation and Communication",
+          "description": "investigate cell structure and plant/animal organ systems",
+          "specifics": [
+            {
+              "code": "SC.B2.1",
+              "description": "I can examine plant/animal cells under microscopes and investigate human organ systems."
+            }
+          ]
+        },
+        {
+          "code": "B3",
+          "title": "Understanding Basic Concepts",
+          "description": "demonstrate an understanding of cells, tissues, organs, and systems",
+          "specifics": [
+            {
+              "code": "SC.B3.1",
+              "description": "I can explain cell division and the function of digestive, circulatory, and respiratory systems."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Strand C: Chemistry — Chemical Reactions and their Applications",
+      "overalls": [
+        {
+          "code": "C1",
+          "title": "Relating Science to Technology, Society, and the Environment",
+          "description": "analyse practical applications of chemical reactions",
+          "specifics": [
+            {
+              "code": "SC.C1.1",
+              "description": "I can analyze common chemical products, household safety, and disposal procedures."
+            }
+          ]
+        },
+        {
+          "code": "C2",
+          "title": "Developing Skills of Investigation and Communication",
+          "description": "investigate chemical reactions and acid-base indicators",
+          "specifics": [
+            {
+              "code": "SC.C2.1",
+              "description": "I can conduct tests to classify chemical reactions and measure acidity/alkalinity using pH indicators."
+            }
+          ]
+        },
+        {
+          "code": "C3",
+          "title": "Understanding Basic Concepts",
+          "description": "demonstrate an understanding of simple chemical compounds and equations",
+          "specifics": [
+            {
+              "code": "SC.C3.1",
+              "description": "I can name simple chemical compounds, write word equations, and state the law of conservation of mass."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Strand D: Earth and Space Science — Earth's Dynamic Climate",
+      "overalls": [
+        {
+          "code": "D1",
+          "title": "Relating Science to Technology, Society, and the Environment",
+          "description": "assess impacts of climate change on local environments",
+          "specifics": [
+            {
+              "code": "SC.D1.1",
+              "description": "I can evaluate local impacts of weather events and climate change."
+            }
+          ]
+        },
+        {
+          "code": "D2",
+          "title": "Developing Skills of Investigation and Communication",
+          "description": "investigate weather patterns and climate indicators",
+          "specifics": [
+            {
+              "code": "SC.D2.1",
+              "description": "I can gather and analyze local weather data and climate trends."
+            }
+          ]
+        },
+        {
+          "code": "D3",
+          "title": "Understanding Basic Concepts",
+          "description": "demonstrate an understanding of heat transfer and climate factors",
+          "specifics": [
+            {
+              "code": "SC.D3.1",
+              "description": "I can explain heat transfer, atmospheric moisture, and human actions affecting climate."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Strand E: Physics — Light and Applications of Optics",
+      "overalls": [
+        {
+          "code": "E1",
+          "title": "Relating Science to Technology, Society, and the Environment",
+          "description": "evaluate everyday applications of optical technologies",
+          "specifics": [
+            {
+              "code": "SC.E1.1",
+              "description": "I can describe practical optical devices used in daily life (eyeglasses, magnifying glasses, flashlights)."
+            }
+          ]
+        },
+        {
+          "code": "E2",
+          "title": "Developing Skills of Investigation and Communication",
+          "description": "investigate properties of light and reflection",
+          "specifics": [
+            {
+              "code": "SC.E2.1",
+              "description": "I can investigate reflection, refraction, and image formation with mirrors and lenses."
+            }
+          ]
+        },
+        {
+          "code": "E3",
+          "title": "Understanding Basic Concepts",
+          "description": "demonstrate an understanding of light behaviour and optics",
+          "specifics": [
+            {
+              "code": "SC.E3.1",
+              "description": "I can describe light sources, color production, reflection laws, and refraction concepts."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

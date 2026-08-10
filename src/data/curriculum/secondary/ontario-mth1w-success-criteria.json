@@ -1,0 +1,146 @@
+{
+  "presetId": "ontario-mth1w-success-criteria",
+  "title": "Ontario Grade 9 Mathematics (MTH1W) — Success Criteria",
+  "panel": "secondary",
+  "region": "Ontario",
+  "grade": "Grade 9",
+  "subjectCode": "MTH1W",
+  "department": "Math",
+  "isSuccessCriteria": true,
+  "strands": [
+    {
+      "name": "Strand A: Mathematical Thinking and Making Connections",
+      "overalls": [
+        {
+          "code": "A1",
+          "title": "Mathematical Processes",
+          "description": "apply the mathematical processes to develop a conceptual understanding of, and procedural fluency with, the mathematics they are learning",
+          "specifics": [
+            {
+              "code": "SC.A1.1",
+              "description": "I can apply problem-solving strategies and mathematical processes to develop fluency and deepen my understanding."
+            },
+            {
+              "code": "SC.A1.2",
+              "description": "I can make connections between mathematics and real-life situations, various knowledge systems, and career applications."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Strand B: Number",
+      "overalls": [
+        {
+          "code": "B1",
+          "title": "Number Sets and Development",
+          "description": "demonstrate an understanding of the development and use of numbers, and make connections between sets of numbers",
+          "specifics": [
+            {
+              "code": "SC.B1.1",
+              "description": "I can describe the development of number concepts across cultures and explain relationships between subsets of numbers."
+            }
+          ]
+        },
+        {
+          "code": "B2",
+          "title": "Operations and Computation",
+          "description": "represent numbers in various ways, evaluate expressions, and solve problems using rational numbers and exponent rules",
+          "specifics": [
+            {
+              "code": "SC.B2.1",
+              "description": "I can apply exponent rules and order of operations to simplify expressions involving powers and rational numbers."
+            },
+            {
+              "code": "SC.B2.2",
+              "description": "I can solve problems involving ratios, proportions, percentages, and financial concepts."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Strand C: Algebra",
+      "overalls": [
+        {
+          "code": "C1",
+          "title": "Algebraic Expressions and Equations",
+          "description": "demonstrate an understanding of algebraic expressions and equations, and use them to model situations and solve problems",
+          "specifics": [
+            {
+              "code": "SC.C1.1",
+              "description": "I can add, subtract, expand, and simplify algebraic expressions including polynomials."
+            },
+            {
+              "code": "SC.C1.2",
+              "description": "I can solve first-degree equations and inequalities algebraically and graphically."
+            }
+          ]
+        },
+        {
+          "code": "C2",
+          "title": "Coding and Mathematical Modelling",
+          "description": "create, execute, and refine computer code to perform mathematical tasks and model relationships",
+          "specifics": [
+            {
+              "code": "SC.C2.1",
+              "description": "I can write and refine code using variables, loops, and conditionals to solve mathematical problems."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Strand D: Data",
+      "overalls": [
+        {
+          "code": "D1",
+          "title": "Data Management and Analysis",
+          "description": "collect, organize, represent, and analyze data to draw conclusions and solve problems",
+          "specifics": [
+            {
+              "code": "SC.D1.1",
+              "description": "I can design data collection plans, analyze one-variable and two-variable data, and evaluate bias."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Strand E: Geometry and Measurement",
+      "overalls": [
+        {
+          "code": "E1",
+          "title": "Geometric Relationships and Measurement",
+          "description": "demonstrate an understanding of geometric relationships and solve problems involving perimeter, area, surface area, and volume",
+          "specifics": [
+            {
+              "code": "SC.E1.1",
+              "description": "I can apply geometric theorems (such as angle relationships and Pythagorean theorem) to solve geometric problems."
+            },
+            {
+              "code": "SC.E1.2",
+              "description": "I can calculate perimeter, area, surface area, and volume of 2D shapes and 3D figures."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Strand F: Financial Literacy",
+      "overalls": [
+        {
+          "code": "F1",
+          "title": "Financial Decisions and Applications",
+          "description": "demonstrate an understanding of financial concepts and apply them to make informed financial decisions",
+          "specifics": [
+            {
+              "code": "SC.F1.1",
+              "description": "I can analyze financial scenarios involving earning income, budgeting, simple/compound interest, and appreciation/depreciation."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

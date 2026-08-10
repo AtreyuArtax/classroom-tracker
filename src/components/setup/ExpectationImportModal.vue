@@ -145,6 +145,7 @@
                 <div class="eim-preset-card__badges">
                   <span class="eim-preset-badge eim-preset-badge--grade">{{ p.grade }}</span>
                   <span v-if="p.subjectCode" class="eim-preset-badge eim-preset-badge--code">{{ p.subjectCode }}</span>
+                  <span v-if="p.isSuccessCriteria" class="eim-preset-badge eim-preset-badge--sc">Success Criteria</span>
                 </div>
                 <span v-if="selectedPresetId === p.presetId" class="eim-preset-card__check">
                   <Check :size="14" /> Selected
@@ -171,7 +172,13 @@
           <!-- Preset Details & Mode Selection -->
           <div v-if="selectedPreset" class="eim-preset-preview">
             <div class="eim-preset-summary">
-              <strong>{{ selectedPreset.title }}</strong> contains {{ totalPresetExpectations }} expectations across {{ selectedPreset.strands.length }} strands.
+              <strong>{{ (effectivePresetToUse || selectedPreset).title }}</strong> contains {{ totalPresetExpectations }} expectations across {{ (effectivePresetToUse || selectedPreset).strands ? (effectivePresetToUse || selectedPreset).strands.length : 0 }} strands.
+            </div>
+
+            <div v-if="granularity === 'success_criteria'" class="eim-preset-info-banner" style="background: rgba(147, 51, 234, 0.08); border-color: rgba(147, 51, 234, 0.25); color: #9333ea;">
+              <Zap :size="16" class="eim-info-icon" />
+              <span v-if="effectivePresetToUse?.isSuccessCriteria">Loaded Success Criteria ("I Can..." statements) for {{ effectivePresetToUse.subjectCode || effectivePresetToUse.title }}.</span>
+              <span v-else>Success Criteria preset file not yet available for this course; using standard expectations.</span>
             </div>
 
             <div class="eim-field">
@@ -183,7 +190,11 @@
                 </label>
                 <label class="eim-radio-label eim-radio-label--compact">
                   <input type="radio" v-model="granularity" value="all" />
-                  <span><strong>Overall & Specific Expectations</strong> (Full Detail ~40-60 per course)</span>
+                  <span><strong>Specific Expectations Only</strong> (Full Detail ~40-60 per course)</span>
+                </label>
+                <label class="eim-radio-label eim-radio-label--compact">
+                  <input type="radio" v-model="granularity" value="success_criteria" />
+                  <span><strong>Success Criteria ("I Can..." Statements)</strong> (Student-friendly outcomes)</span>
                 </label>
               </div>
             </div>
@@ -216,11 +227,17 @@
                 <div class="eim-field">
                   <label class="eim-label">Target Unit</label>
                   <select v-model="targetUnitChoice" class="eim-select">
-                    <option value="new">-- Create New Unit --</option>
+                    <option value="auto">-- Auto-Create Units from Preset Strands --</option>
+                    <option value="new">-- Create Single New Unit --</option>
                     <option v-for="u in existingUnits" :key="u.unitId" :value="u.unitId">
                       Attach to: {{ u.name }}
                     </option>
                   </select>
+                </div>
+
+                <div v-if="targetUnitChoice === 'auto'" class="eim-preset-info-banner" style="margin-top: 10px;">
+                  <Zap :size="16" class="eim-info-icon" />
+                  <span>Importing this preset will automatically create units based on the curriculum strands and populate them with expectations.</span>
                 </div>
 
                 <div v-if="targetUnitChoice === 'new'" class="eim-field">
@@ -229,7 +246,7 @@
                 </div>
 
                 <!-- Checklist of expectations -->
-                <div class="eim-checklist-section">
+                <div v-if="targetUnitChoice !== 'auto'" class="eim-checklist-section">
                   <div style="display: flex; align-items: center; justify-content: space-between;">
                     <label class="eim-label">Select Expectations to Import</label>
                     <div class="eim-checklist-actions">
@@ -240,7 +257,7 @@
                   </div>
                   
                   <div class="eim-checklist">
-                    <div v-for="strand in selectedPreset.strands" :key="strand.name" class="eim-checklist-strand">
+                    <div v-for="strand in (effectivePresetToUse?.strands || selectedPreset.strands)" :key="strand.name" class="eim-checklist-strand">
                       <div class="eim-strand-header">
                         <h5 class="eim-strand-name">{{ strand.name }}</h5>
                         <button 
@@ -381,7 +398,7 @@ const importBehavior = ref('replace') // 'replace' | 'append'
 const selectedExpectations = ref([])
 
 // Shared unit state
-const targetUnitChoice = ref('new')
+const targetUnitChoice = ref('auto')
 const newUnitName = ref('')
 
 // Paste state
@@ -456,20 +473,36 @@ const filteredPresets = computed(() => {
     list = list.filter(p => (p.grade || '').toLowerCase() === gradeFilter.value.toLowerCase())
   }
 
-  // 3. Subject filter
+  // 3. Subject filter (Department level)
   if (subjectFilter.value && subjectFilter.value !== 'all') {
     const s = subjectFilter.value.toLowerCase()
     list = list.filter(p => {
+      const dept = (p.department || '').toLowerCase()
       const title = (p.title || '').toLowerCase()
       const code = (p.subjectCode || '').toLowerCase()
       const pId = (p.presetId || '').toLowerCase()
-      if (s === 'math') return title.includes('math') || code.includes('mat') || pId.includes('math')
-      if (s === 'sci') return title.includes('science') || code.includes('sci') || pId.includes('sci')
-      if (s === 'lang') return title.includes('language') || code.includes('lang') || pId.includes('lang')
-      if (s === 'french') return title.includes('french') || code.includes('fsl') || code.includes('fi') || pId.includes('french')
-      if (s === 'arts') return title.includes('art') || code.includes('art') || pId.includes('art')
-      if (s === 'hpe') return title.includes('health') || title.includes('physical') || code.includes('hpe') || pId.includes('hpe')
-      if (s === 'soc') return title.includes('history') || title.includes('geography') || code.includes('hist') || code.includes('geo')
+
+      if (s === 'math') {
+        return dept === 'math' || title.includes('math') || title.includes('algebra') || title.includes('calculus') || title.includes('functions') || code.includes('mat') || code.startsWith('m') || pId.includes('math') || pId.includes('mth') || pId.includes('mpm') || pId.includes('mfm')
+      }
+      if (s === 'sci') {
+        return dept === 'science' || title.includes('science') || title.includes('chem') || title.includes('physics') || title.includes('bio') || title.includes('earth') || title.includes('environment') || code.includes('sci') || code.startsWith('s') || pId.includes('sci') || pId.includes('sch') || pId.includes('sph') || pId.includes('sbi') || pId.includes('snc') || pId.includes('ses') || pId.includes('svn')
+      }
+      if (s === 'lang') {
+        return dept === 'english' || dept === 'language' || title.includes('language') || title.includes('english') || code.includes('lang') || code.startsWith('eng') || pId.includes('lang')
+      }
+      if (s === 'french') {
+        return dept === 'french' || title.includes('french') || code.includes('fsl') || code.startsWith('f') || code.includes('fi') || pId.includes('french')
+      }
+      if (s === 'arts') {
+        return dept === 'arts' || title.includes('art') || title.includes('music') || title.includes('drama') || title.includes('dance') || code.includes('art') || code.startsWith('a') || pId.includes('art')
+      }
+      if (s === 'hpe') {
+        return dept === 'hpe' || title.includes('health') || title.includes('physical') || title.includes('kinesiology') || code.includes('hpe') || code.startsWith('p') || pId.includes('hpe')
+      }
+      if (s === 'soc') {
+        return dept === 'social' || title.includes('history') || title.includes('geography') || title.includes('civic') || title.includes('social') || code.includes('hist') || code.includes('geo') || code.startsWith('c') || code.startsWith('h')
+      }
       return true
     })
   }
@@ -484,6 +517,9 @@ const filteredPresets = computed(() => {
       (p.subjectCode || '').toLowerCase().includes(q)
     )
   }
+
+  // Exclude standalone success criteria entries from preset cards list
+  list = list.filter(p => !p.isSuccessCriteria)
 
   return list
 })
@@ -501,12 +537,28 @@ const selectedPreset = computed(() => {
   return curriculumPresets.find(p => p.presetId === selectedPresetId.value)
 })
 
+const effectivePresetToUse = computed(() => {
+  if (!selectedPreset.value) return null
+  if (granularity.value === 'success_criteria') {
+    if (selectedPreset.value.isSuccessCriteria) return selectedPreset.value
+    const sCode = (selectedPreset.value.subjectCode || '').toLowerCase()
+    const pId = (selectedPreset.value.presetId || '').toLowerCase()
+    const scMatch = curriculumPresets.find(p => p.isSuccessCriteria && (
+      (sCode && p.subjectCode && p.subjectCode.toLowerCase() === sCode) ||
+      (pId && p.presetId.toLowerCase().startsWith(pId))
+    ))
+    if (scMatch) return scMatch
+  }
+  return selectedPreset.value
+})
+
 function getStrandExpectations(strand, currGranularity = granularity.value) {
   if (!strand || !strand.overalls) return []
   const list = []
   strand.overalls.forEach(ov => {
-    list.push({ code: ov.code, description: ov.description, isOverall: true })
-    if (currGranularity === 'all' && ov.specifics) {
+    if (currGranularity === 'overall') {
+      list.push({ code: ov.code, description: ov.description, isOverall: true })
+    } else if ((currGranularity === 'all' || currGranularity === 'success_criteria') && ov.specifics) {
       ov.specifics.forEach(sp => {
         list.push({ code: sp.code, description: sp.description, isOverall: false })
       })
@@ -516,8 +568,9 @@ function getStrandExpectations(strand, currGranularity = granularity.value) {
 }
 
 const totalPresetExpectations = computed(() => {
-  if (!selectedPreset.value) return 0
-  return selectedPreset.value.strands.reduce((acc, s) => acc + getStrandExpectations(s).length, 0)
+  const p = effectivePresetToUse.value
+  if (!p || !p.strands) return 0
+  return p.strands.reduce((acc, s) => acc + getStrandExpectations(s).length, 0)
 })
 
 watch(selectedPreset, () => {
@@ -529,9 +582,10 @@ watch(granularity, () => {
 })
 
 function selectAllGlobal() {
-  if (!selectedPreset.value) return
+  const p = effectivePresetToUse.value
+  if (!p || !p.strands) return
   const all = []
-  selectedPreset.value.strands.forEach(s => {
+  p.strands.forEach(s => {
     getStrandExpectations(s).forEach(e => all.push(e))
   })
   selectedExpectations.value = all
@@ -598,7 +652,7 @@ const parsedPasteExpectations = computed(() => {
 const canSubmit = computed(() => {
   if (activeTab.value === 'presets') {
     if (!selectedPreset.value) return false
-    if (props.classType === 'elementary') return true
+    if (props.classType === 'elementary' || targetUnitChoice.value === 'auto') return true
     if (selectedExpectations.value.length === 0) return false
     if (targetUnitChoice.value === 'new' && !newUnitName.value.trim()) return false
     return true
@@ -621,10 +675,10 @@ function onSubmit() {
   if (!canSubmit.value) return
 
   if (activeTab.value === 'presets') {
-    if (props.classType === 'elementary') {
+    if (props.classType === 'elementary' || targetUnitChoice.value === 'auto') {
       emit('import', {
         mode: 'auto-units',
-        preset: selectedPreset.value,
+        preset: effectivePresetToUse.value || selectedPreset.value,
         granularity: granularity.value,
         importBehavior: importBehavior.value,
         targetSubjectId: props.targetSubjectId
@@ -1267,6 +1321,12 @@ function onSubmit() {
   background: var(--bg-secondary);
   color: var(--text-secondary);
   border: 1px solid var(--border);
+}
+
+.eim-preset-badge--sc {
+  background: rgba(147, 51, 234, 0.12);
+  color: #9333ea;
+  border: 1px solid rgba(147, 51, 234, 0.3);
 }
 
 .eim-preset-card__check {

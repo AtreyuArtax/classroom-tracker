@@ -240,8 +240,8 @@
     "semantic_hash": "68f077cda9561ec51fbe56d0aa61fb3e"
   },
   "src/composables/useClassroom.js": {
-    "mtime": 1786244081.5955493,
-    "ast_hash": "b3eb7bf8ffa1aecf21e54268411fdad6",
+    "mtime": 1786327399.6360962,
+    "ast_hash": "de2b8ab05ab5809d9a413a55c1c8e41d",
     "semantic_hash": ""
   },
   "src/composables/useGradebook.js": {
@@ -305,8 +305,8 @@
     "semantic_hash": ""
   },
   "src/db/settingsService.js": {
-    "mtime": 1785185565.6085691,
-    "ast_hash": "308b34c89cd8136664b543e80c1c7e6b",
+    "mtime": 1786327396.2127557,
+    "ast_hash": "bc7faf73f6e8af520c7977f235fce046",
     "semantic_hash": ""
   },
   "src/main.js": {
@@ -400,8 +400,8 @@
     "semantic_hash": ""
   },
   "src/components/setup/AssessmentFrameworkSettings.vue": {
-    "mtime": 1786241541.2153237,
-    "ast_hash": "378296b9fa0b77837c03a879d9ece205",
+    "mtime": 1786325988.769624,
+    "ast_hash": "18c1ae3fdab003f4f6a14befa15ffb77",
     "semantic_hash": ""
   },
   "src/composables/useGradeEditing.js": {
@@ -415,8 +415,8 @@
     "semantic_hash": ""
   },
   "src/components/setup/BehaviorSettings.vue": {
-    "mtime": 1785245637.4716172,
-    "ast_hash": "5a3ffba16eafd4001f4339a131047a8f",
+    "mtime": 1786327408.7412467,
+    "ast_hash": "e7c96e33b7081bbba86d0e4e90b55b48",
     "semantic_hash": ""
   },
   "src/components/setup/QrCodeGeneratorModal.vue": {
@@ -445,8 +445,8 @@
     "semantic_hash": ""
   },
   "src/components/setup/ClassLogisticsSettings.vue": {
-    "mtime": 1786157944.5459301,
-    "ast_hash": "b6db4fa85c58327b4178ed0dc5714fd9",
+    "mtime": 1786327313.1604395,
+    "ast_hash": "c590fcb69bfff28d7dbe9b035ea6859a",
     "semantic_hash": ""
   },
   "src/components/setup/DatabaseMaintenanceSettings.vue": {
@@ -455,33 +455,33 @@
     "semantic_hash": ""
   },
   "src/components/setup/ExpectationImportModal.vue": {
-    "mtime": 1786241364.728297,
-    "ast_hash": "e7f0f52d652b1d34732fb20945ef0e58",
+    "mtime": 1786325984.9953911,
+    "ast_hash": "82e2916a8da5c4c4c2cbb7dcf5140f87",
     "semantic_hash": ""
   },
   "src/data/curriculum/index.js": {
-    "mtime": 1786062149.7777038,
-    "ast_hash": "334dfd14c4551d46dbfd928261653b91",
+    "mtime": 1786297867.2283912,
+    "ast_hash": "96230ae416f1e317b024a260008df861",
     "semantic_hash": ""
   },
   "src/data/curriculum/secondary/ontario-mth1w.json": {
-    "mtime": 1786151822.1451495,
-    "ast_hash": "18a54bf1f5e6183de5aa7a320b08a626",
+    "mtime": 1786297850.19502,
+    "ast_hash": "207ed022773922fcea8cb263849d8a35",
     "semantic_hash": ""
   },
   "src/data/curriculum/secondary/ontario-snc1w.json": {
-    "mtime": 1786148331.942365,
-    "ast_hash": "3a6b6f71365c4011aab0dd023cd8d649",
+    "mtime": 1786297819.5204647,
+    "ast_hash": "eeba52b6b870b2756b8afb3879403324",
     "semantic_hash": ""
   },
   "src/data/curriculum/secondary/ontario-sph3u.json": {
-    "mtime": 1786147981.8196926,
-    "ast_hash": "39f640cef88153b25b4401e9c918c177",
+    "mtime": 1786297840.0342915,
+    "ast_hash": "e7e2138c924541bf8fa9739930e6b036",
     "semantic_hash": ""
   },
   "src/data/curriculum/secondary/ontario-sph4u.json": {
-    "mtime": 1786148104.2897253,
-    "ast_hash": "3c2da1652897c1140fae3baae943f5a4",
+    "mtime": 1786297845.0912867,
+    "ast_hash": "3a3ef9c3ed16cd66357fc67b85e7398b",
     "semantic_hash": ""
   },
   "src/components/dossier/Student360AttemptsModal.vue": {
@@ -515,8 +515,8 @@
     "semantic_hash": ""
   },
   "src/components/reports/ReportsClassOverview.vue": {
-    "mtime": 1786154002.0284903,
-    "ast_hash": "ee9ba3c3d454f5c4cd803434da5f21d6",
+    "mtime": 1786326873.2177405,
+    "ast_hash": "f03cc018237c45acbcdf72668e182053",
     "semantic_hash": ""
   },
   "src/components/reports/ReportsExportMenu.vue": {
@@ -560,8 +560,8 @@
     "semantic_hash": ""
   },
   "src/components/reports/StudentRiskScatterPlot.vue": {
-    "mtime": 1785504052.5627167,
-    "ast_hash": "9995604b5fdf9f3c08c87fe194227dc5",
+    "mtime": 1786328407.795735,
+    "ast_hash": "c0d233fe9e62739cf945ec56a01f28d7",
     "semantic_hash": ""
   },
   "src/components/reports/PrintExpectationsModal.vue": {
@@ -605,8 +605,8 @@
     "semantic_hash": ""
   },
   "src/components/grades/GradesGridSBAR.vue": {
-    "mtime": 1786157484.5881078,
-    "ast_hash": "a7ae364704eeb2c0fc85d8233343459e",
+    "mtime": 1786326330.3202932,
+    "ast_hash": "a8bff148ce9080f375aff65f2c7f6bc4",
     "semantic_hash": ""
   },
   "src/db/gradebook/gradeCalcSBAR.js": {
@@ -640,8 +640,8 @@
     "semantic_hash": ""
   },
   "src/composables/useElementary.js": {
-    "mtime": 1786244089.6718953,
-    "ast_hash": "78f55cc3fc68989bd0a3effd95005325",
+    "mtime": 1786278690.6159728,
+    "ast_hash": "90945f700224491f99bd92633bff386c",
     "semantic_hash": ""
   },
   "src/components/SubjectIcon.vue": {
@@ -880,33 +880,113 @@
     "semantic_hash": ""
   },
   "src/data/curriculum/secondary/ontario-mfm2p.json": {
-    "mtime": 1786148512.0080814,
-    "ast_hash": "4847a687af132790eb18971b58ed8def",
+    "mtime": 1786297860.5920205,
+    "ast_hash": "45873913e89c37fcc512d069ad2c1a80",
     "semantic_hash": ""
   },
   "src/data/curriculum/secondary/ontario-mpm2d.json": {
-    "mtime": 1786148499.736862,
-    "ast_hash": "001cbfa3ed65ad2ba908bef5ec5ca8a3",
+    "mtime": 1786297855.1444912,
+    "ast_hash": "08e020ad97dc9fdb3cabeb8ec50c3c40",
     "semantic_hash": ""
   },
   "src/data/curriculum/secondary/ontario-sch3u.json": {
-    "mtime": 1786148199.0715408,
-    "ast_hash": "eb508065a0582ee89d3d0eb76c31afab",
+    "mtime": 1786297835.5481386,
+    "ast_hash": "5a14ee630c14d0fa80dcc26feb757b1a",
     "semantic_hash": ""
   },
   "src/data/curriculum/secondary/ontario-snc2d.json": {
-    "mtime": 1786148256.432958,
-    "ast_hash": "87700d5e7cbc7379160c294f64551a20",
+    "mtime": 1786297824.990804,
+    "ast_hash": "cd6f0aee0c7a31ae925f06821afcd3b6",
     "semantic_hash": ""
   },
   "src/data/curriculum/secondary/ontario-snc2p.json": {
-    "mtime": 1786148268.386635,
-    "ast_hash": "f29bdc50b89041a17827158a14f44f8c",
+    "mtime": 1786297829.916972,
+    "ast_hash": "28e6f61f08639cbdaf4346ef8167f83e",
     "semantic_hash": ""
   },
   "src/composables/usePrintOptions.js": {
     "mtime": 1786238581.660911,
     "ast_hash": "bc68c23d5fa74a4052b3d321cac007b5",
+    "semantic_hash": ""
+  },
+  "new_expectations/ontario-sch3u-success-criteria.json": {
+    "mtime": 1786277924.290557,
+    "ast_hash": "2da7cbe880010e56a7a03614bbacc279",
+    "semantic_hash": ""
+  },
+  "src/data/curriculum/secondary/ontario-sch3u-success-criteria.json": {
+    "mtime": 1786278343.176523,
+    "ast_hash": "f9bb3c179dd63b39a33dd96cb660a0d1",
+    "semantic_hash": ""
+  },
+  "new_expectations/ontario-mfm2p-success-criteria.json": {
+    "mtime": 1786274728.0,
+    "ast_hash": "dc0c2ead49ce30a4a6da64e06b8c0921",
+    "semantic_hash": ""
+  },
+  "new_expectations/ontario-mpm2d-success-criteria.json": {
+    "mtime": 1786274728.0,
+    "ast_hash": "b38686b89fa824d45909ab6685e8c804",
+    "semantic_hash": ""
+  },
+  "new_expectations/ontario-mth1w-success-criteria.json": {
+    "mtime": 1786274727.0,
+    "ast_hash": "2c7008bed4617cc7a377e33c5856bb26",
+    "semantic_hash": ""
+  },
+  "new_expectations/ontario-snc1w-success-criteria.json": {
+    "mtime": 1786274727.0,
+    "ast_hash": "cab25c35eea1e43bcafb6b10ba12cf0c",
+    "semantic_hash": ""
+  },
+  "new_expectations/ontario-snc2d-success-criteria.json": {
+    "mtime": 1786274727.0,
+    "ast_hash": "fcbbdfe573d23e06fd240a73cb5c8b8b",
+    "semantic_hash": ""
+  },
+  "new_expectations/ontario-snc2p-success-criteria.json": {
+    "mtime": 1786274727.0,
+    "ast_hash": "ed229da0b944acfd1db356bc77bb9559",
+    "semantic_hash": ""
+  },
+  "new_expectations/ontario-sph3u-success-criteria.json": {
+    "mtime": 1786274727.0,
+    "ast_hash": "68b005e4f7fc3763c46df804d421157d",
+    "semantic_hash": ""
+  },
+  "src/data/curriculum/secondary/ontario-mfm2p-success-criteria.json": {
+    "mtime": 1786297783.0016043,
+    "ast_hash": "5ea6b69d5d335010dda2361d7ee31b0d",
+    "semantic_hash": ""
+  },
+  "src/data/curriculum/secondary/ontario-mpm2d-success-criteria.json": {
+    "mtime": 1786297787.501008,
+    "ast_hash": "219a41ca53f4b053c492ddf0dc4c8e23",
+    "semantic_hash": ""
+  },
+  "src/data/curriculum/secondary/ontario-mth1w-success-criteria.json": {
+    "mtime": 1786297792.3052256,
+    "ast_hash": "9fcd3e4532924b191275da21f9ba3032",
+    "semantic_hash": ""
+  },
+  "src/data/curriculum/secondary/ontario-snc1w-success-criteria.json": {
+    "mtime": 1786297797.1394224,
+    "ast_hash": "e4b44bf917b3a27b1322525c2590dfe3",
+    "semantic_hash": ""
+  },
+  "src/data/curriculum/secondary/ontario-snc2d-success-criteria.json": {
+    "mtime": 1786297802.4756272,
+    "ast_hash": "f05875a7b1a8af6d6b24f9c0f71bd773",
+    "semantic_hash": ""
+  },
+  "src/data/curriculum/secondary/ontario-snc2p-success-criteria.json": {
+    "mtime": 1786297807.8981295,
+    "ast_hash": "784051df6695b90a5199513d406b9c25",
+    "semantic_hash": ""
+  },
+  "src/data/curriculum/secondary/ontario-sph3u-success-criteria.json": {
+    "mtime": 1786297813.7178333,
+    "ast_hash": "f8cfd75920f1f6926ca14fb54552ff93",
     "semantic_hash": ""
   }
 }

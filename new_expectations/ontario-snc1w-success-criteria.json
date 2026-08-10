@@ -1,0 +1,210 @@
+{
+  "presetId": "ontario-snc1w-success-criteria",
+  "title": "Ontario Grade 9 Science (SNC1W) — Success Criteria",
+  "panel": "secondary",
+  "region": "Ontario",
+  "grade": "Grade 9",
+  "strands": [
+    {
+      "name": "Strand A: STEM Skills, Careers, and Connections",
+      "overalls": [
+        {
+          "code": "A1",
+          "title": "STEM Investigation Skills",
+          "description": "apply a scientific research process and associated skills to conduct investigations, making connections between their research and the scientific concepts they are learning",
+          "specifics": [
+            {
+              "code": "SC.A1.1",
+              "description": "I can use scientific research and experimentation processes to plan and conduct investigations safely."
+            },
+            {
+              "code": "SC.A1.2",
+              "description": "I can apply an engineering design process to design, build, and test devices or models."
+            },
+            {
+              "code": "SC.A1.3",
+              "description": "I can use coding skills to investigate and model scientific concepts and relationships."
+            },
+            {
+              "code": "SC.A1.4",
+              "description": "I can apply WHMIS and safe laboratory practices when carrying out hands-on investigations."
+            }
+          ]
+        },
+        {
+          "code": "A2",
+          "title": "Applications, Careers, and Connections",
+          "description": "design an experiment or a prototype to explore a problem relevant to a STEM-related occupation, using findings from research",
+          "specifics": [
+            {
+              "code": "SC.A2.1",
+              "description": "I can design experiments or prototypes related to STEM careers and skilled trades."
+            },
+            {
+              "code": "SC.A2.2",
+              "description": "I can describe how scientific innovations and AI impact society and careers, and analyse contributions from diverse communities including in Canada."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Strand B: Biology (Sustainable Ecosystems and Climate Change)",
+      "overalls": [
+        {
+          "code": "B1",
+          "title": "Relating Science to Our Changing World",
+          "description": "assess impacts of climate change on the sustainability of local and global ecosystems, describe local or global initiatives for combatting climate change, and identify solutions to address some of the impacts",
+          "specifics": [
+            {
+              "code": "SC.B1.1",
+              "description": "I can assess the impacts of climate change on ecosystems and communities, including First Nations, Métis, and Inuit communities in Canada."
+            },
+            {
+              "code": "SC.B1.2",
+              "description": "I can investigate and explain how sustainable practices — including those used by Indigenous communities — support the dynamic equilibrium of ecosystems."
+            }
+          ]
+        },
+        {
+          "code": "B2",
+          "title": "Investigating and Understanding Concepts",
+          "description": "investigate interactions between the biosphere, hydrosphere, lithosphere, and atmosphere, and explain why these interactions are important for ecosystem sustainability",
+          "specifics": [
+            {
+              "code": "SC.B2.1",
+              "description": "I can explain how the cycling of matter and flow of energy contribute to dynamic equilibrium in ecosystems."
+            },
+            {
+              "code": "SC.B2.2",
+              "description": "I can compare cellular respiration and photosynthesis and explain how they sustain ecosystems."
+            },
+            {
+              "code": "SC.B2.3",
+              "description": "I can explain how biodiversity, air and water quality, soil health, and succession contribute to ecosystem sustainability."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Strand C: Chemistry (The Nature of Matter)",
+      "overalls": [
+        {
+          "code": "C1",
+          "title": "Relating Science to Our Changing World",
+          "description": "assess social, environmental, and economic impacts of processes associated with the life cycle of consumer products, considering the elements and compounds used to make them",
+          "specifics": [
+            {
+              "code": "SC.C1.1",
+              "description": "I can assess the life-cycle impacts of consumer products and analyse the effects of emerging chemical technologies."
+            }
+          ]
+        },
+        {
+          "code": "C2",
+          "title": "Investigating and Understanding Concepts",
+          "description": "investigate properties, changes, and interactions of matter that are important for the dynamic equilibrium of ecosystems and their sustainability",
+          "specifics": [
+            {
+              "code": "SC.C2.1",
+              "description": "I can compare and contrast different atomic models and explain how experimental evidence shaped their development."
+            },
+            {
+              "code": "SC.C2.2",
+              "description": "I can use the Bohr-Rutherford model to identify subatomic particles and relate element position in the periodic table to atomic structure."
+            },
+            {
+              "code": "SC.C2.3",
+              "description": "I can investigate and classify elements based on their physical and chemical properties and patterns in the periodic table."
+            },
+            {
+              "code": "SC.C2.4",
+              "description": "I can describe the properties of elements and compounds in household products and explain how compound structure relates to chemical formulas."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Strand D: Physics (Principles and Applications of Electricity)",
+      "overalls": [
+        {
+          "code": "D1",
+          "title": "Relating Science to Our Changing World",
+          "description": "assess social, environmental, and economic benefits and challenges resulting from the production of electrical energy from various sources",
+          "specifics": [
+            {
+              "code": "SC.D1.1",
+              "description": "I can assess the benefits, challenges, and impacts of electrical energy production from various sources, including emerging technologies."
+            },
+            {
+              "code": "SC.D1.2",
+              "description": "I can develop a plan of action to address an electrical energy issue and propose strategies for energy conservation."
+            }
+          ]
+        },
+        {
+          "code": "D2",
+          "title": "Investigating and Understanding Concepts",
+          "description": "conduct investigations to explain the behaviour of electric charges in static and current electricity",
+          "specifics": [
+            {
+              "code": "SC.D2.1",
+              "description": "I can explain the behaviour of electric charges in static and current electricity and relate it to atomic structure."
+            },
+            {
+              "code": "SC.D2.2",
+              "description": "I can construct series and parallel circuits and investigate the relationships between current, potential difference, and resistance."
+            },
+            {
+              "code": "SC.D2.3",
+              "description": "I can calculate current, voltage, and resistance in real-world circuits and determine the efficiency of electrical devices."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Strand E: Earth and Space Science (Space Exploration)",
+      "overalls": [
+        {
+          "code": "E1",
+          "title": "Relating Science to Our Changing World",
+          "description": "evaluate social, environmental, and economic impacts of space observation and exploration",
+          "specifics": [
+            {
+              "code": "SC.E1.1",
+              "description": "I can evaluate the impacts of space observation and exploration, including how space technologies help us understand climate change and natural disasters."
+            },
+            {
+              "code": "SC.E1.2",
+              "description": "I can assess how space-related technological innovations are applied in various fields, including sustainable practices on Earth."
+            }
+          ]
+        },
+        {
+          "code": "E2",
+          "title": "Investigating and Understanding Concepts",
+          "description": "describe the importance of the Sun and its characteristics, including its role in the solar system and in sustaining life on Earth",
+          "specifics": [
+            {
+              "code": "SC.E2.1",
+              "description": "I can describe the Sun's role in the solar system and how its energy drives natural phenomena and renewable energy production."
+            },
+            {
+              "code": "SC.E2.2",
+              "description": "I can describe the major components of the solar system and universe, quantify astronomical distances, and explain observable astronomical phenomena."
+            },
+            {
+              "code": "SC.E2.3",
+              "description": "I can summarize observational evidence used to support theories about the origin and evolution of the universe and solar system, considering diverse ways of knowing."
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "subjectCode": "SNC1W",
+  "isSuccessCriteria": true
+}

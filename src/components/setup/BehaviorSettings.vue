@@ -41,6 +41,17 @@
             @change="saveThresholds" 
           />
         </label>
+        <label class="setup__label">
+          Attendance At-Risk Alert Threshold (%)
+          <input 
+            v-model.number="editThresholds.attendanceThreshold" 
+            type="number" 
+            min="50"
+            max="98"
+            class="setup__input" 
+            @change="saveThresholds" 
+          />
+        </label>
       </div>
       <div v-if="thresholdsSuccess" class="setup__success-banner">
         {{ thresholdsSuccess }}
@@ -212,7 +223,7 @@ const { thresholds: classroomThresholds, behaviorCodes, reloadBehaviorCodes } = 
 const { alert, confirm } = useMessage()
 
 // Thresholds Form State
-const editThresholds = reactive({ washroomTripsPerWeek: 4, deviceIncidentsPerWeek: 3, atRiskThreshold: 50 })
+const editThresholds = reactive({ washroomTripsPerWeek: 4, deviceIncidentsPerWeek: 3, atRiskThreshold: 70, attendanceThreshold: 85 })
 const thresholdsSuccess = ref('')
 
 // Modal / Edit Form State
@@ -239,7 +250,8 @@ onMounted(async () => {
   if (current) {
     editThresholds.washroomTripsPerWeek = current.washroomTripsPerWeek
     editThresholds.deviceIncidentsPerWeek = current.deviceIncidentsPerWeek
-    editThresholds.atRiskThreshold = current.atRiskThreshold ?? 50
+    editThresholds.atRiskThreshold = current.atRiskThreshold ?? 70
+    editThresholds.attendanceThreshold = current.attendanceThreshold ?? 85
   }
 })
 
@@ -252,13 +264,15 @@ async function saveThresholds() {
   await settingsService.saveThresholds({
     washroomTripsPerWeek: editThresholds.washroomTripsPerWeek,
     deviceIncidentsPerWeek: editThresholds.deviceIncidentsPerWeek,
-    atRiskThreshold: editThresholds.atRiskThreshold
+    atRiskThreshold: editThresholds.atRiskThreshold,
+    attendanceThreshold: editThresholds.attendanceThreshold
   })
   
   // Sync composable states
   classroomThresholds.value.washroomTripsPerWeek = editThresholds.washroomTripsPerWeek
   classroomThresholds.value.deviceIncidentsPerWeek = editThresholds.deviceIncidentsPerWeek
   classroomThresholds.value.atRiskThreshold = editThresholds.atRiskThreshold
+  classroomThresholds.value.attendanceThreshold = editThresholds.attendanceThreshold
   
   thresholdsSuccess.value = 'Saved!'
   setTimeout(() => { thresholdsSuccess.value = '' }, 1500)

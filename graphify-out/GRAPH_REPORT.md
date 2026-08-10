@@ -1,7 +1,7 @@
-# Graph Report - classroom-tracker  (2026-08-08)
+# Graph Report - classroom-tracker  (2026-08-09)
 
 ## Corpus Check
-- 182 files · ~336,958 words
+- 198 files · ~351,474 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `cf63d64f`
+- Built from commit: `e3f35076`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -67,7 +67,7 @@
 - [[_COMMUNITY_Community 87|Community 87]]
 - [[_COMMUNITY_Community 88|Community 88]]
 - [[_COMMUNITY_Community 94|Community 94]]
-- [[_COMMUNITY_Community 99|Community 99]]
+- [[_COMMUNITY_Community 95|Community 95]]
 - [[_COMMUNITY_Community 103|Community 103]]
 - [[_COMMUNITY_Community 107|Community 107]]
 
@@ -260,8 +260,8 @@ Nodes (16): {
 }, { alert, confirm }, bulkAvailableSemesters, bulkImportGroups, bulkImportSemesters, crossClassConflicts, currentSchoolYear, importResult (+8 more)
 
 ### Community 78 - "Community 78"
-Cohesion: 0.40
-Nodes (3): useClassroom(), useStudentDossier(), toMinutes()
+Cohesion: 0.22
+Nodes (9): initializeRfidAttendance(), reconcileStaleTrips(), _activateClass(), archiveClass(), createClass(), logToggleEvent(), switchClass(), updateAttendanceConfig() (+1 more)
 
 ### Community 83 - "Community 83"
 Cohesion: 0.06
@@ -279,9 +279,9 @@ Nodes (8): bulkImportClasses(), computeSuggestedClass(), hasBeenDismissedToday()
 Cohesion: 0.33
 Nodes (4): hasUnsyncedChanges, createAssessment(), deleteAssessment(), updateAssessment()
 
-### Community 99 - "Community 99"
-Cohesion: 0.22
-Nodes (9): initializeRfidAttendance(), reconcileStaleTrips(), _activateClass(), archiveClass(), createClass(), logToggleEvent(), switchClass(), updateAttendanceConfig() (+1 more)
+### Community 95 - "Community 95"
+Cohesion: 0.40
+Nodes (3): useClassroom(), useStudentDossier(), toMinutes()
 
 ### Community 103 - "Community 103"
 Cohesion: 0.29
@@ -295,11 +295,11 @@ Nodes (10): addAttempt(), deleteAttempt(), deleteGrade(), _getGradeInTransaction
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `getDB()` connect `Community 23` to `Community 0`, `Community 2`, `Community 35`, `Community 3`, `Community 5`, `Community 103`, `Community 8`, `Community 41`, `Community 78`, `Community 88`?**
+- **Why does `getDB()` connect `Community 23` to `Community 0`, `Community 2`, `Community 35`, `Community 3`, `Community 5`, `Community 103`, `Community 8`, `Community 41`, `Community 88`, `Community 95`?**
   _High betweenness centrality (0.155) - this node is a cross-community bridge._
 - **Why does `openDB()` connect `Community 5` to `Community 94`, `Community 23`?**
   _High betweenness centrality (0.136) - this node is a cross-community bridge._
-- **Why does `useMessage()` connect `Community 24` to `Community 0`, `Community 1`, `Community 99`, `Community 8`, `Community 9`, `Community 10`, `Community 72`, `Community 14`, `Community 16`, `Community 21`, `Community 85`, `Community 28`, `Community 61`?**
+- **Why does `useMessage()` connect `Community 24` to `Community 0`, `Community 1`, `Community 8`, `Community 9`, `Community 10`, `Community 72`, `Community 78`, `Community 14`, `Community 16`, `Community 21`, `Community 85`, `Community 28`, `Community 61`?**
   _High betweenness centrality (0.019) - this node is a cross-community bridge._
 - **What connects `scanBuffer`, `manifest_version`, `name` to the rest of the system?**
   _323 weakly-connected nodes found - possible documentation gaps or missing edges._

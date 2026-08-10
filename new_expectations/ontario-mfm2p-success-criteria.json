@@ -1,0 +1,149 @@
+{
+  "presetId": "ontario-mfm2p-success-criteria",
+  "title": "Ontario Grade 10 Foundations of Mathematics (MFM2P) — Success Criteria",
+  "panel": "secondary",
+  "region": "Ontario",
+  "grade": "Grade 10",
+  "strands": [
+    {
+      "name": "Measurement and Trigonometry",
+      "overalls": [
+        {
+          "code": "MT1",
+          "title": "Similar Triangles",
+          "description": "use their knowledge of ratio and proportion to investigate similar triangles and solve problems related to similarity",
+          "specifics": [
+            {
+              "code": "SC.MT1.1",
+              "description": "I can identify and apply properties of similar triangles to solve problems in realistic situations."
+            }
+          ]
+        },
+        {
+          "code": "MT2",
+          "title": "Right Triangle Trigonometry",
+          "description": "solve problems involving right triangles, using the primary trigonometric ratios and the Pythagorean theorem",
+          "specifics": [
+            {
+              "code": "SC.MT2.1",
+              "description": "I can use the primary trigonometric ratios and the Pythagorean theorem to solve problems involving right triangles."
+            },
+            {
+              "code": "SC.MT2.2",
+              "description": "I can describe how trigonometry is applied in real-world occupations and everyday contexts."
+            }
+          ]
+        },
+        {
+          "code": "MT3",
+          "title": "Surface Area, Volume, and Measurement",
+          "description": "solve problems involving the surface areas and volumes of three-dimensional figures, and use the imperial and metric systems of measurement",
+          "specifics": [
+            {
+              "code": "SC.MT3.1",
+              "description": "I can solve measurement problems using both the imperial and metric systems, including conversions between them."
+            },
+            {
+              "code": "SC.MT3.2",
+              "description": "I can solve problems involving the surface area and volume of prisms, pyramids, cylinders, cones, and spheres."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Modelling Linear Relations",
+      "overalls": [
+        {
+          "code": "LR1",
+          "title": "Algebraic Equations",
+          "description": "manipulate and solve algebraic equations, as needed to solve problems",
+          "specifics": [
+            {
+              "code": "SC.LR1.1",
+              "description": "I can solve first-degree equations and determine the value of a variable using formulas."
+            }
+          ]
+        },
+        {
+          "code": "LR2",
+          "title": "Graphing and Equations of Lines",
+          "description": "graph a line and write the equation of a line from given information",
+          "specifics": [
+            {
+              "code": "SC.LR2.1",
+              "description": "I can graph lines by hand and determine the equation of a line from its graph, slope, and points."
+            },
+            {
+              "code": "SC.LR2.2",
+              "description": "I can connect the slope of a line to rate of change and explain the meaning of m and b in y = mx + b."
+            }
+          ]
+        },
+        {
+          "code": "LR3",
+          "title": "Systems of Linear Equations",
+          "description": "solve systems of two linear equations, and solve related problems that arise from realistic situations",
+          "specifics": [
+            {
+              "code": "SC.LR3.1",
+              "description": "I can solve systems of linear equations graphically and algebraically using substitution or elimination."
+            },
+            {
+              "code": "SC.LR3.2",
+              "description": "I can solve real-world problems by modelling situations with systems of linear equations."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Quadratic Relations of the Form y = ax² + bx + c",
+      "overalls": [
+        {
+          "code": "QR1",
+          "title": "Quadratic Expressions",
+          "description": "manipulate algebraic expressions, as needed to understand quadratic relations",
+          "specifics": [
+            {
+              "code": "SC.QR1.1",
+              "description": "I can expand, simplify, and factor quadratic expressions including binomials, trinomials, and differences of squares."
+            }
+          ]
+        },
+        {
+          "code": "QR2",
+          "title": "Characteristics of Quadratics",
+          "description": "identify characteristics of quadratic relations",
+          "specifics": [
+            {
+              "code": "SC.QR2.1",
+              "description": "I can identify the key features of a parabola including the vertex, axis of symmetry, and intercepts."
+            },
+            {
+              "code": "SC.QR2.2",
+              "description": "I can collect data that forms a quadratic relation and connect algebraic and graphical representations."
+            }
+          ]
+        },
+        {
+          "code": "QR3",
+          "title": "Interpreting Graphs of Quadratics",
+          "description": "solve problems by interpreting graphs of quadratic relations",
+          "specifics": [
+            {
+              "code": "SC.QR3.1",
+              "description": "I can solve problems by interpreting graphs of quadratic relations, including determining maximum values and interpreting experimental data."
+            },
+            {
+              "code": "SC.QR3.2",
+              "description": "I can connect the key features of a quadratic graph to the real-world situation it represents."
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "subjectCode": "MFM2P",
+  "isSuccessCriteria": true
+}

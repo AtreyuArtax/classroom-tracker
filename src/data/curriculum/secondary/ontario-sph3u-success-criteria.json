@@ -1,0 +1,245 @@
+{
+  "presetId": "ontario-sph3u-success-criteria",
+  "title": "Ontario Grade 11 Physics (SPH3U) — Success Criteria",
+  "panel": "secondary",
+  "region": "Ontario",
+  "grade": "Grade 11",
+  "subjectCode": "SPH3U",
+  "department": "Science",
+  "isSuccessCriteria": true,
+  "strands": [
+    {
+      "name": "Strand A: Scientific Investigation Skills and Career Exploration",
+      "overalls": [
+        {
+          "code": "A1",
+          "title": "Scientific Investigation Skills",
+          "description": "demonstrate scientific investigation skills (related to both inquiry and research) in the four areas of skills (initiating and planning, performing and recording, analysing and interpreting, and communicating)",
+          "specifics": [
+            {
+              "code": "SC.A1.1",
+              "description": "I can ask scientific questions, make predictions, and plan safe investigations using appropriate procedures and equipment."
+            },
+            {
+              "code": "SC.A1.2",
+              "description": "I can conduct experiments, collect accurate data, and organize it using tables, graphs, and diagrams."
+            },
+            {
+              "code": "SC.A1.3",
+              "description": "I can analyse and interpret data, identify sources of error and bias, and draw conclusions supported by evidence."
+            },
+            {
+              "code": "SC.A1.4",
+              "description": "I can communicate my findings clearly using scientific language, appropriate formats, and precise measurements."
+            }
+          ]
+        },
+        {
+          "code": "A2",
+          "title": "Career Exploration",
+          "description": "identify and describe careers related to the fields of science under study, and describe the contributions of scientists, including Canadians, to those fields",
+          "specifics": [
+            {
+              "code": "SC.A2.1",
+              "description": "I can identify physics-related careers and describe Canadian contributions to physics."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Strand B: Kinematics",
+      "overalls": [
+        {
+          "code": "B1",
+          "title": "Relating Science to Technology, Society, and the Environment",
+          "description": "analyse technologies that apply concepts related to kinematics, and assess them considering social and environmental impacts",
+          "specifics": [
+            {
+              "code": "SC.B1.1",
+              "description": "I can evaluate motion technologies (transportation, sports equipment, speed enforcement) and their impacts."
+            }
+          ]
+        },
+        {
+          "code": "B2",
+          "title": "Developing Skills of Investigation and Communication",
+          "description": "investigate, in qualitative and quantitative terms, uniform and non-uniform linear motion, and solve related problems",
+          "specifics": [
+            {
+              "code": "SC.B2.1",
+              "description": "I can construct and interpret position-time, velocity-time, and acceleration-time graphs."
+            },
+            {
+              "code": "SC.B2.2",
+              "description": "I can solve kinematics equations for uniform and accelerated motion in 1D and 2D."
+            }
+          ]
+        },
+        {
+          "code": "B3",
+          "title": "Understanding Basic Concepts",
+          "description": "demonstrate an understanding of uniform and non-uniform linear motion",
+          "specifics": [
+            {
+              "code": "SC.B3.1",
+              "description": "I can distinguish between scalar and vector quantities (distance vs displacement, speed vs velocity)."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Strand C: Forces",
+      "overalls": [
+        {
+          "code": "C1",
+          "title": "Relating Science to Technology, Society, and the Environment",
+          "description": "analyse technological devices that apply concepts related to forces, and assess their social and environmental impacts",
+          "specifics": [
+            {
+              "code": "SC.C1.1",
+              "description": "I can evaluate vehicle safety features and force applications in structural design."
+            }
+          ]
+        },
+        {
+          "code": "C2",
+          "title": "Developing Skills of Investigation and Communication",
+          "description": "investigate, in qualitative and quantitative terms, net force, acceleration, and friction, and solve related problems",
+          "specifics": [
+            {
+              "code": "SC.C2.1",
+              "description": "I can draw free-body diagrams and apply Newton's Laws of Motion to calculate net force, acceleration, and friction."
+            }
+          ]
+        },
+        {
+          "code": "C3",
+          "title": "Understanding Basic Concepts",
+          "description": "demonstrate an understanding of Newton's laws of motion, friction, and gravitational force",
+          "specifics": [
+            {
+              "code": "SC.C3.1",
+              "description": "I can explain Newton's Three Laws of Motion, universal gravitation, and normal/friction forces."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Strand D: Energy and Society",
+      "overalls": [
+        {
+          "code": "D1",
+          "title": "Relating Science to Technology, Society, and the Environment",
+          "description": "analyse technologies that apply concepts related to energy transformation, and assess them considering social and environmental impacts",
+          "specifics": [
+            {
+              "code": "SC.D1.1",
+              "description": "I can evaluate energy production technologies, energy efficiency, and societal impacts of energy consumption."
+            }
+          ]
+        },
+        {
+          "code": "D2",
+          "title": "Developing Skills of Investigation and Communication",
+          "description": "investigate energy transformations and thermal energy, and solve related problems",
+          "specifics": [
+            {
+              "code": "SC.D2.1",
+              "description": "I can perform quantitative calculations involving work, kinetic energy, gravitational potential energy, mechanical energy conservation, and thermal energy (Q = mcΔT)."
+            }
+          ]
+        },
+        {
+          "code": "D3",
+          "title": "Understanding Basic Concepts",
+          "description": "demonstrate an understanding of work, efficiency, energy transformations, and thermal energy transfer",
+          "specifics": [
+            {
+              "code": "SC.D3.1",
+              "description": "I can explain the Law of Conservation of Energy, mechanical work, power, and thermal energy mechanisms."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Strand E: Waves and Sound",
+      "overalls": [
+        {
+          "code": "E1",
+          "title": "Relating Science to Technology, Society, and the Environment",
+          "description": "analyse how mechanical waves and sound affect technology, society, and the environment",
+          "specifics": [
+            {
+              "code": "SC.E1.1",
+              "description": "I can evaluate acoustic technologies, noise pollution impacts, and medical ultrasound applications."
+            }
+          ]
+        },
+        {
+          "code": "E2",
+          "title": "Developing Skills of Investigation and Communication",
+          "description": "investigate properties of mechanical waves and sound, and solve related problems",
+          "specifics": [
+            {
+              "code": "SC.E2.1",
+              "description": "I can calculate wave speed (v = fλ), frequency, period, and analyze standing waves and resonance in air columns and strings."
+            }
+          ]
+        },
+        {
+          "code": "E3",
+          "title": "Understanding Basic Concepts",
+          "description": "demonstrate an understanding of wave properties, interference, sound propagation, and the Doppler effect",
+          "specifics": [
+            {
+              "code": "SC.E3.1",
+              "description": "I can explain transverse and longitudinal wave phenomena, constructive/destructive interference, and the Doppler effect."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Strand F: Electricity and Magnetism",
+      "overalls": [
+        {
+          "code": "F1",
+          "title": "Relating Science to Technology, Society, and the Environment",
+          "description": "analyse social, economic, and environmental implications of electrical power generation and electromagnetism",
+          "specifics": [
+            {
+              "code": "SC.F1.1",
+              "description": "I can evaluate electromagnetic devices (motors, generators, transformers) and electrical power distribution."
+            }
+          ]
+        },
+        {
+          "code": "F2",
+          "title": "Developing Skills of Investigation and Communication",
+          "description": "investigate magnetic fields and electric circuits, and solve related problems",
+          "specifics": [
+            {
+              "code": "SC.F2.1",
+              "description": "I can analyze DC circuits using Kirchhoff's Laws and Ohm's Law, and map magnetic fields using right-hand rules."
+            }
+          ]
+        },
+        {
+          "code": "F3",
+          "title": "Understanding Basic Concepts",
+          "description": "demonstrate an understanding of magnetic fields, electromagnetism, and electric circuits",
+          "specifics": [
+            {
+              "code": "SC.F3.1",
+              "description": "I can explain Oersted's principle, motor principle, Faraday's law of electromagnetic induction, and magnetic domain theory."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

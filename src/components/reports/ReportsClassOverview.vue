@@ -20,7 +20,7 @@
           <div v-if="failingStudentsCount > 0" class="reports__headline-alert">
             <AlertTriangle :size="12" /> {{ failingStudentsCount }} student{{ failingStudentsCount !== 1 ? 's' : '' }} at Level 1 / R
           </div>
-          <div v-else class="reports__headline-detail">All students at Level 2+ target</div>
+          <div v-else class="reports__headline-detail">All students at Level 2+ or higher</div>
         </template>
         <template v-else>
           <div v-if="classAverage !== null" class="reports__headline-rate">{{ classAverage.toFixed(1) }}<span class="reports__headline-unit">%</span></div>

@@ -1,4 +1,4 @@
-// Secondary Presets
+// Secondary Standard Presets
 import snc1w from './secondary/ontario-snc1w.json'
 import mth1w from './secondary/ontario-mth1w.json'
 import mpm2d from './secondary/ontario-mpm2d.json'
@@ -8,6 +8,16 @@ import snc2p from './secondary/ontario-snc2p.json'
 import sch3u from './secondary/ontario-sch3u.json'
 import sph3u from './secondary/ontario-sph3u.json'
 import sph4u from './secondary/ontario-sph4u.json'
+
+// Secondary Success Criteria Presets
+import snc1wSuccessCriteria from './secondary/ontario-snc1w-success-criteria.json'
+import mth1wSuccessCriteria from './secondary/ontario-mth1w-success-criteria.json'
+import mpm2dSuccessCriteria from './secondary/ontario-mpm2d-success-criteria.json'
+import mfm2pSuccessCriteria from './secondary/ontario-mfm2p-success-criteria.json'
+import snc2dSuccessCriteria from './secondary/ontario-snc2d-success-criteria.json'
+import snc2pSuccessCriteria from './secondary/ontario-snc2p-success-criteria.json'
+import sch3uSuccessCriteria from './secondary/ontario-sch3u-success-criteria.json'
+import sph3uSuccessCriteria from './secondary/ontario-sph3u-success-criteria.json'
 
 // Elementary Grade 7 Presets
 import g7arts from './elementary/ontario-g7-arts.json'
@@ -34,7 +44,7 @@ import g8math from './elementary/ontario-g8-math.json'
 import g8sci from './elementary/ontario-g8-science-tech.json'
 
 export const curriculumPresets = [
-  // Secondary
+  // Secondary Standard
   snc1w,
   mth1w,
   mpm2d,
@@ -44,6 +54,15 @@ export const curriculumPresets = [
   sch3u,
   sph3u,
   sph4u,
+  // Secondary Success Criteria
+  snc1wSuccessCriteria,
+  mth1wSuccessCriteria,
+  mpm2dSuccessCriteria,
+  mfm2pSuccessCriteria,
+  snc2dSuccessCriteria,
+  snc2pSuccessCriteria,
+  sch3uSuccessCriteria,
+  sph3uSuccessCriteria,
   // Elementary Grade 7
   g7arts,
   g7coreFrench,

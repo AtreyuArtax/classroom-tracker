@@ -1,0 +1,238 @@
+{
+  "presetId": "ontario-snc2p-success-criteria",
+  "title": "Ontario Grade 10 Science (SNC2P) — Success Criteria",
+  "panel": "secondary",
+  "region": "Ontario",
+  "grade": "Grade 10",
+  "strands": [
+    {
+      "name": "Strand A: Scientific Investigation Skills and Career Exploration",
+      "overalls": [
+        {
+          "code": "A1",
+          "title": "Scientific Investigation Skills",
+          "description": "demonstrate scientific investigation skills (related to both inquiry and research) in the four areas of skills (initiating and planning, performing and recording, analysing and interpreting, and communicating)",
+          "specifics": [
+            {
+              "code": "SC.A1.1",
+              "description": "I can ask scientific questions, make predictions, and plan safe investigations."
+            },
+            {
+              "code": "SC.A1.2",
+              "description": "I can conduct experiments, collect accurate data, and organize it effectively."
+            },
+            {
+              "code": "SC.A1.3",
+              "description": "I can analyse and interpret data, identify sources of error, and draw evidence-based conclusions."
+            },
+            {
+              "code": "SC.A1.4",
+              "description": "I can communicate my findings using scientific language, appropriate formats, and precise measurements."
+            }
+          ]
+        },
+        {
+          "code": "A2",
+          "title": "Career Exploration",
+          "description": "identify and describe a variety of careers related to the fields of science under study, and identify scientists, including Canadians, who have made contributions to those fields",
+          "specifics": [
+            {
+              "code": "SC.A2.1",
+              "description": "I can identify science-related careers and describe the education and training required."
+            },
+            {
+              "code": "SC.A2.2",
+              "description": "I can describe the contributions of Canadian scientists to the fields under study."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Strand B: Biology: Tissues, Organs, and Systems",
+      "overalls": [
+        {
+          "code": "B1",
+          "title": "Relating Science to Technology, Society, and the Environment",
+          "description": "analyse some current technologies or substances that have an impact on human tissues, organs, or systems, and evaluate their effects on human health",
+          "specifics": [
+            {
+              "code": "SC.B1.1",
+              "description": "I can evaluate how medical technologies, substances, and environmental factors affect human health."
+            }
+          ]
+        },
+        {
+          "code": "B2",
+          "title": "Developing Skills of Investigation and Communication",
+          "description": "investigate cell division, cell specialization, and the organization of systems in animals, including humans, using various laboratory techniques",
+          "specifics": [
+            {
+              "code": "SC.B2.1",
+              "description": "I can use scientific terminology to investigate cells, mitosis, and cell specialization in the human body."
+            },
+            {
+              "code": "SC.B2.2",
+              "description": "I can investigate health problems and the organization of organ systems using dissection or research."
+            }
+          ]
+        },
+        {
+          "code": "B3",
+          "title": "Understanding Basic Concepts",
+          "description": "demonstrate an understanding of the hierarchical organization of cells, from tissues, to organs, to systems in animals, including humans",
+          "specifics": [
+            {
+              "code": "SC.B3.1",
+              "description": "I can explain the cell cycle and how specialized cells, tissues, and organs form body systems."
+            },
+            {
+              "code": "SC.B3.2",
+              "description": "I can describe the functions of human body systems and how they interact for survival."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Strand C: Chemistry: Chemical Reactions and Their Practical Applications",
+      "overalls": [
+        {
+          "code": "C1",
+          "title": "Relating Science to Technology, Society, and the Environment",
+          "description": "analyse how chemical reactions are employed in common products and processes, and assess the safety and environmental hazards associated with them",
+          "specifics": [
+            {
+              "code": "SC.C1.1",
+              "description": "I can analyse how chemical reactions are used in everyday products and workplace processes, including associated hazards."
+            }
+          ]
+        },
+        {
+          "code": "C2",
+          "title": "Developing Skills of Investigation and Communication",
+          "description": "investigate, through inquiry, the characteristics of simple chemical reactions",
+          "specifics": [
+            {
+              "code": "SC.C2.1",
+              "description": "I can investigate simple chemical reactions and represent them using word equations, models, and balanced equations."
+            },
+            {
+              "code": "SC.C2.2",
+              "description": "I can investigate acids, bases, neutralization reactions, and classify common substances using indicators."
+            }
+          ]
+        },
+        {
+          "code": "C3",
+          "title": "Understanding Basic Concepts",
+          "description": "demonstrate an understanding of simple chemical reactions and the language and ways to represent them",
+          "specifics": [
+            {
+              "code": "SC.C3.1",
+              "description": "I can write names, formulae, and balanced chemical equations for simple compounds and reactions."
+            },
+            {
+              "code": "SC.C3.2",
+              "description": "I can describe neutralization reactions and use the pH scale to classify acids and bases."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Strand D: Earth and Space Science: Earth's Dynamic Climate",
+      "overalls": [
+        {
+          "code": "D1",
+          "title": "Relating Science to Technology, Society, and the Environment",
+          "description": "analyse effects of human activity on climate change, and effects of climate change on living things and natural systems",
+          "specifics": [
+            {
+              "code": "SC.D1.1",
+              "description": "I can analyse how human activities affect climate change and how climate change impacts living things and natural systems."
+            }
+          ]
+        },
+        {
+          "code": "D2",
+          "title": "Developing Skills of Investigation and Communication",
+          "description": "investigate various natural and human factors that have an impact on climate change and global warming",
+          "specifics": [
+            {
+              "code": "SC.D2.1",
+              "description": "I can investigate factors that affect climate change using models, simulations, and research."
+            },
+            {
+              "code": "SC.D2.2",
+              "description": "I can investigate my personal carbon footprint and compare different perspectives on climate change."
+            }
+          ]
+        },
+        {
+          "code": "D3",
+          "title": "Understanding Basic Concepts",
+          "description": "demonstrate an understanding of various natural and human factors that contribute to climate change and global warming",
+          "specifics": [
+            {
+              "code": "SC.D3.1",
+              "description": "I can explain the natural and anthropogenic greenhouse effect and how heat is transferred in the climate system."
+            },
+            {
+              "code": "SC.D3.2",
+              "description": "I can identify the causes, sources, and indicators of global climate change, including Canada's contributions."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Strand E: Physics: Light and Applications of Optics",
+      "overalls": [
+        {
+          "code": "E1",
+          "title": "Relating Science to Technology, Society, and the Environment",
+          "description": "analyse how properties of light and colour are applied in technology and the impact of these technologies on society",
+          "specifics": [
+            {
+              "code": "SC.E1.1",
+              "description": "I can analyse how colour theory and optical technologies are applied in everyday devices and their impact on society."
+            }
+          ]
+        },
+        {
+          "code": "E2",
+          "title": "Developing Skills of Investigation and Communication",
+          "description": "investigate, through inquiry, properties of light, and predict its behaviour in mirrors and as it passes through different media",
+          "specifics": [
+            {
+              "code": "SC.E2.1",
+              "description": "I can investigate reflection and refraction of light using experiments, ray diagrams, and mirrors."
+            },
+            {
+              "code": "SC.E2.2",
+              "description": "I can investigate how light interacts with different materials and how colour is produced and perceived."
+            }
+          ]
+        },
+        {
+          "code": "E3",
+          "title": "Understanding Basic Concepts",
+          "description": "demonstrate an understanding of characteristics and properties of light, particularly with respect to reflection and refraction and the addition and subtraction of colour",
+          "specifics": [
+            {
+              "code": "SC.E3.1",
+              "description": "I can explain the properties of light, including reflection, refraction, and the electromagnetic spectrum."
+            },
+            {
+              "code": "SC.E3.2",
+              "description": "I can use additive and subtractive colour theory to explain how colour is produced and perceived in various technologies."
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "subjectCode": "SNC2P",
+  "isSuccessCriteria": true
+}

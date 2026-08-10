@@ -277,8 +277,9 @@ function onExpectationImport(payload) {
       const expList = []
       if (strand.overalls) {
         strand.overalls.forEach(ov => {
-          expList.push({ code: ov.code, description: ov.description })
-          if (payload.granularity === 'all' && ov.specifics) {
+          if (payload.granularity === 'overall') {
+            expList.push({ code: ov.code, description: ov.description })
+          } else if ((payload.granularity === 'all' || payload.granularity === 'success_criteria') && ov.specifics) {
             ov.specifics.forEach(sp => {
               expList.push({ code: sp.code, description: sp.description })
             })
@@ -464,16 +465,35 @@ const totalExpectationsCount = computed(() => {
 })
 
 async function onClearExpectationsFromModal() {
+  if (!activeClass.value) return
+  let loggedEventsCount = 0
+  if (activeClass.value.classId) {
+    const classEvents = await eventService.getEventsByClass(activeClass.value.classId)
+    const currentExpIds = new Set(
+      (activeUnits.value || []).flatMap(u => (u.expectations || []).map(e => e.expectationId || e.code).filter(Boolean))
+    )
+    loggedEventsCount = classEvents.filter(e => e.expectationId && currentExpIds.has(e.expectationId)).length
+  }
+
+  let promptMessage = `Clear all ${totalExpectationsCount.value} expectations? (Unit names will be preserved)`
+  if (loggedEventsCount > 0) {
+    promptMessage = `Clear all ${totalExpectationsCount.value} expectations? Warning: There are ${loggedEventsCount} logged student observations/conversations linked to these expectations. (Unit names will be preserved)`
+  }
+
   const ok = await confirm(
-    `Clear all ${totalExpectationsCount.value} expectations?`,
+    promptMessage,
     'Clear Expectations',
     { confirmLabel: 'Clear Expectations', danger: true }
   )
   if (!ok) return
   if (availableCourseSections.value.length > 1 && activeCourseSection.value) {
-    activeClass.value.courseFrameworks[activeCourseSection.value].gradebookUnits = []
+    (activeClass.value.courseFrameworks[activeCourseSection.value].gradebookUnits || []).forEach(u => {
+      u.expectations = []
+    })
   } else {
-    activeClass.value.gradebookUnits = []
+    (activeClass.value.gradebookUnits || []).forEach(u => {
+      u.expectations = []
+    })
   }
   await saveGradebookSettings()
   showImportModal.value = false

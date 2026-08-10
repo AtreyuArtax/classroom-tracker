@@ -169,7 +169,7 @@ export function populateSubjectFromPresets(subject, presetsList = [], granularit
             gradeLevel: pGrade
           })
 
-          if (granularity === 'all' && ov.specifics) {
+          if ((granularity === 'all' || granularity === 'success_criteria') && ov.specifics) {
             ov.specifics.forEach(sp => {
               existingExpectations.push({
                 expectationId: `exp_${Date.now()}_${gTag}_${sp.code}`,

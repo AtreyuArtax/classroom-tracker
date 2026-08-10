@@ -4,6 +4,8 @@
   "panel": "secondary",
   "region": "Ontario",
   "grade": "Grade 12",
+  "subjectCode": "SPH4U",
+  "department": "Science",
   "strands": [
     {
       "name": "Strand A: Scientific Investigation Skills and Career Exploration",

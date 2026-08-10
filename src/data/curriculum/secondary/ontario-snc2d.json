@@ -4,6 +4,8 @@
   "panel": "secondary",
   "region": "Ontario",
   "grade": "Grade 10",
+  "subjectCode": "SNC2D",
+  "department": "Science",
   "strands": [
     {
       "name": "Strand A: Scientific Investigation Skills and Career Exploration",

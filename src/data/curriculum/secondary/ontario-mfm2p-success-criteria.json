@@ -1,0 +1,123 @@
+{
+  "presetId": "ontario-mfm2p-success-criteria",
+  "title": "Ontario Grade 10 Foundations of Mathematics (MFM2P) — Success Criteria",
+  "panel": "secondary",
+  "region": "Ontario",
+  "grade": "Grade 10",
+  "subjectCode": "MFM2P",
+  "department": "Math",
+  "isSuccessCriteria": true,
+  "strands": [
+    {
+      "name": "Measurement and Trigonometry",
+      "overalls": [
+        {
+          "code": "MT1",
+          "title": "Similar Triangles",
+          "description": "use their knowledge of ratio and proportion to investigate similar triangles and solve problems related to similarity",
+          "specifics": [
+            {
+              "code": "SC.MT1.1",
+              "description": "I can identify and apply properties of similar triangles to solve problems in realistic situations."
+            }
+          ]
+        },
+        {
+          "code": "MT2",
+          "title": "Right Triangle Trigonometry",
+          "description": "solve problems involving right triangles, using the primary trigonometric ratios and the Pythagorean theorem",
+          "specifics": [
+            {
+              "code": "SC.MT2.1",
+              "description": "I can use the primary trigonometric ratios and the Pythagorean theorem to solve problems involving right triangles."
+            },
+            {
+              "code": "SC.MT2.2",
+              "description": "I can apply trigonometry to solve real-world problems involving angles of elevation and depression."
+            }
+          ]
+        },
+        {
+          "code": "MT3",
+          "title": "Surface Area and Volume",
+          "description": "solve problems involving the surface area and volume of three-dimensional figures, and use the imperial and metric systems of measurement",
+          "specifics": [
+            {
+              "code": "SC.MT3.1",
+              "description": "I can convert measurements between metric and imperial systems and calculate surface area and volume of 3D figures."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Modelling Linear Relations",
+      "overalls": [
+        {
+          "code": "LR1",
+          "title": "Linear Relations and Equations",
+          "description": "manipulate numerical and algebraic expressions, and solve first-degree equations",
+          "specifics": [
+            {
+              "code": "SC.LR1.1",
+              "description": "I can simplify algebraic expressions and solve first-degree equations using inverse operations."
+            }
+          ]
+        },
+        {
+          "code": "LR2",
+          "title": "Graphing and Writing Equations of Lines",
+          "description": "demonstrate an understanding of characteristics of linear relations and write equations of lines",
+          "specifics": [
+            {
+              "code": "SC.LR2.1",
+              "description": "I can determine slope and y-intercept from tables, graphs, and equations, and graph linear relations."
+            },
+            {
+              "code": "SC.LR2.2",
+              "description": "I can write equations of lines in y = mx + b form given slope, points, or graphical representations."
+            }
+          ]
+        },
+        {
+          "code": "LR3",
+          "title": "Linear Systems",
+          "description": "solve systems of two linear equations, and solve related problems",
+          "specifics": [
+            {
+              "code": "SC.LR3.1",
+              "description": "I can solve systems of two linear equations by graphing and algebraic methods, and interpret the point of intersection."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Quadratic Relations",
+      "overalls": [
+        {
+          "code": "QR1",
+          "title": "Characteristics of Quadratic Relations",
+          "description": "manipulate algebraic expressions, including expanding and simplifying binomials, and solve quadratic equations",
+          "specifics": [
+            {
+              "code": "SC.QR1.1",
+              "description": "I can expand and simplify binomials and identify key features of quadratic relations."
+            }
+          ]
+        },
+        {
+          "code": "QR2",
+          "title": "Graphing Quadratic Relations",
+          "description": "demonstrate an understanding of the characteristics of quadratic relations and graph them",
+          "specifics": [
+            {
+              "code": "SC.QR2.1",
+              "description": "I can graph quadratic relations using key features such as vertex, y-intercept, and zeros."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,203 @@
+{
+  "presetId": "ontario-snc2d-success-criteria",
+  "title": "Ontario Grade 10 Science (SNC2D) — Success Criteria",
+  "panel": "secondary",
+  "region": "Ontario",
+  "grade": "Grade 10",
+  "subjectCode": "SNC2D",
+  "department": "Science",
+  "isSuccessCriteria": true,
+  "strands": [
+    {
+      "name": "Strand A: Scientific Investigation Skills and Career Exploration",
+      "overalls": [
+        {
+          "code": "A1",
+          "title": "Scientific Investigation Skills",
+          "description": "demonstrate scientific investigation skills (related to both inquiry and research) in the four areas of skills (initiating and planning, performing and recording, analysing and interpreting, and communicating)",
+          "specifics": [
+            {
+              "code": "SC.A1.1",
+              "description": "I can ask scientific questions, make predictions, and plan safe investigations."
+            },
+            {
+              "code": "SC.A1.2",
+              "description": "I can conduct experiments, collect accurate data, and organize it effectively."
+            },
+            {
+              "code": "SC.A1.3",
+              "description": "I can analyse and interpret data, identify sources of error, and draw evidence-based conclusions."
+            },
+            {
+              "code": "SC.A1.4",
+              "description": "I can communicate my findings using scientific language, appropriate formats, and precise measurements."
+            }
+          ]
+        },
+        {
+          "code": "A2",
+          "title": "Career Exploration",
+          "description": "identify and describe a variety of careers related to the fields of science under study, and identify scientists, including Canadians, who have made contributions to those fields",
+          "specifics": [
+            {
+              "code": "SC.A2.1",
+              "description": "I can identify science-related careers and describe Canadian scientific contributions."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Strand B: Biology — Tissues, Organs, and Systems of Living Things",
+      "overalls": [
+        {
+          "code": "B1",
+          "title": "Relating Science to Technology, Society, and the Environment",
+          "description": "evaluate the importance of medical technologies in the diagnosis and treatment of disease, and assess social and ethical issues related to technological developments",
+          "specifics": [
+            {
+              "code": "SC.B1.1",
+              "description": "I can evaluate the societal impact and ethical implications of medical technologies."
+            }
+          ]
+        },
+        {
+          "code": "B2",
+          "title": "Developing Skills of Investigation and Communication",
+          "description": "investigate cell division and cell specialization in animals and plants",
+          "specifics": [
+            {
+              "code": "SC.B2.1",
+              "description": "I can examine cell division (mitosis), specialized cells, and animal/plant organ systems through microscope work and labs."
+            }
+          ]
+        },
+        {
+          "code": "B3",
+          "title": "Understanding Basic Concepts",
+          "description": "demonstrate an understanding of the hierarchical organization of cells, tissues, organs, and organ systems",
+          "specifics": [
+            {
+              "code": "SC.B3.1",
+              "description": "I can explain the hierarchy of biological organization from cells to organ systems in plants and animals."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Strand C: Chemistry — Chemical Reactions",
+      "overalls": [
+        {
+          "code": "C1",
+          "title": "Relating Science to Technology, Society, and the Environment",
+          "description": "analyse how chemical reactions are used in various applications, and assess their environmental and societal impacts",
+          "specifics": [
+            {
+              "code": "SC.C1.1",
+              "description": "I can evaluate the impacts of household and industrial chemical reactions on health and the environment."
+            }
+          ]
+        },
+        {
+          "code": "C2",
+          "title": "Developing Skills of Investigation and Communication",
+          "description": "investigate different types of chemical reactions and acid-base solutions",
+          "specifics": [
+            {
+              "code": "SC.C2.1",
+              "description": "I can write word and balanced chemical equations and investigate synthesis, decomposition, displacement, and neutralization reactions."
+            }
+          ]
+        },
+        {
+          "code": "C3",
+          "title": "Understanding Basic Concepts",
+          "description": "demonstrate an understanding of chemical reactions and the law of conservation of mass",
+          "specifics": [
+            {
+              "code": "SC.C3.1",
+              "description": "I can explain ionic and covalent bonding, chemical nomenclature, and pH scales."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Strand D: Earth and Space Science — Earth's Climate System",
+      "overalls": [
+        {
+          "code": "D1",
+          "title": "Relating Science to Technology, Society, and the Environment",
+          "description": "analyse effects of climate change on natural systems and human communities, and evaluate initiatives to counter climate change",
+          "specifics": [
+            {
+              "code": "SC.D1.1",
+              "description": "I can analyze regional and global impacts of climate change and evaluate mitigation strategies."
+            }
+          ]
+        },
+        {
+          "code": "D2",
+          "title": "Developing Skills of Investigation and Communication",
+          "description": "investigate indicators and factors that influence Earth's climate system",
+          "specifics": [
+            {
+              "code": "SC.D2.1",
+              "description": "I can analyze climate indicators, ice core data, and greenhouse gas trends."
+            }
+          ]
+        },
+        {
+          "code": "D3",
+          "title": "Understanding Basic Concepts",
+          "description": "demonstrate an understanding of climate systems, heat transfer, and the greenhouse effect",
+          "specifics": [
+            {
+              "code": "SC.D3.1",
+              "description": "I can explain heat transfer in the atmosphere and oceans, albedo, and natural/anthropogenic greenhouse effects."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Strand E: Physics — Light and Geometric Optics",
+      "overalls": [
+        {
+          "code": "E1",
+          "title": "Relating Science to Technology, Society, and the Environment",
+          "description": "evaluate social and environmental impacts of optical technologies and describe developments in optical applications",
+          "specifics": [
+            {
+              "code": "SC.E1.1",
+              "description": "I can evaluate applications of optical devices (cameras, microscopes, telescopes, fiber optics)."
+            }
+          ]
+        },
+        {
+          "code": "E2",
+          "title": "Developing Skills of Investigation and Communication",
+          "description": "investigate properties of light, reflection, and refraction through mirrors and lenses",
+          "specifics": [
+            {
+              "code": "SC.E2.1",
+              "description": "I can draw ray diagrams and solve optics equations for plane/curved mirrors and converging/diverging lenses."
+            }
+          ]
+        },
+        {
+          "code": "E3",
+          "title": "Understanding Basic Concepts",
+          "description": "demonstrate an understanding of the wave and particle nature of light, reflection, and refraction",
+          "specifics": [
+            {
+              "code": "SC.E3.1",
+              "description": "I can explain Snell's Law, total internal reflection, index of refraction, and image characteristics."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

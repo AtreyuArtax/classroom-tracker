@@ -41,7 +41,7 @@
     <!-- VIEW 1: 4 Quadrants Visual Scatter Canvas -->
     <div v-if="viewMode === 'scatter'" class="risk-plot__canvas">
 
-      <!-- Quadrant Background Labels -->
+      <!-- Quadrant Background Labels (Fixed to 4 outer corners of the canvas card) -->
       <div class="risk-plot__quadrant risk-plot__quadrant--top-left">
         <span class="risk-plot__quad-label">Attendance Risk</span>
         <span class="risk-plot__quad-sub">{{ isSbar ? 'High Level' : 'High Marks' }} · Low Attendance</span>
@@ -60,8 +60,8 @@
       </div>
 
       <!-- Axis Divider Lines -->
-      <div class="risk-plot__axis-x"></div>
-      <div class="risk-plot__axis-y"></div>
+      <div class="risk-plot__axis-x" :style="{ bottom: axisYPercent + '%' }"></div>
+      <div class="risk-plot__axis-y" :style="{ left: axisXPercent + '%' }"></div>
 
       <!-- Student Dots (using crisp 2-letter initials) -->
       <div 
@@ -201,7 +201,10 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { getSBARLevelBadge } from '../../db/gradebookService.js'
+import { useClassroom } from '../../composables/useClassroom.js'
 import { LayoutGrid as ScatterPlotIcon, List } from 'lucide-vue-next'
+
+const { thresholds } = useClassroom()
 
 const props = defineProps({
   sidebarStudents: { type: Array, default: () => [] },
@@ -229,18 +232,34 @@ function getInitials(name, firstName, lastName) {
   return 'ST'
 }
 
+const axisXPercent = computed(() => {
+  const attCutoff = Number(thresholds.value.attendanceThreshold ?? 85)
+  return Math.max(6, Math.min(92, Math.round(attCutoff * 0.86 + 6)))
+})
+
+const axisYPercent = computed(() => {
+  const markCutoff = Number(thresholds.value.atRiskThreshold ?? 70)
+  return Math.max(6, Math.min(92, Math.round(markCutoff * 0.86 + 6)))
+})
+
 const studentPoints = computed(() => {
   if (!props.sidebarStudents || props.sidebarStudents.length === 0) return []
 
-  // Count absences per student from events
+  // Count absences per student from events (checking code === 'a' or eventType === 'absence')
   const studentAbsences = {}
+  const distinctDaysSet = new Set()
+
   props.allClassEvents.forEach(e => {
-    if (e.eventType === 'absence' && e.studentId) {
-      studentAbsences[e.studentId] = (studentAbsences[e.studentId] || 0) + 1
+    if (e.superseded) return
+    if (e.timestamp) distinctDaysSet.add(String(e.timestamp).slice(0, 10))
+    if ((e.code === 'a' || e.eventType === 'absence') && e.studentId) {
+      const sId = String(e.studentId)
+      studentAbsences[sId] = (studentAbsences[sId] || 0) + 1
     }
   })
 
-  const maxAbs = Math.max(...Object.values(studentAbsences), 15)
+  const maxAbsences = Math.max(...Object.values(studentAbsences), 0)
+  const totalDays = Math.max(distinctDaysSet.size, maxAbsences, 1)
 
   // Map raw coordinates
   const rawList = props.sidebarStudents.map(student => {
@@ -251,30 +270,32 @@ const studentPoints = computed(() => {
     const sbarBadge = grade !== null ? getSBARLevelBadge(grade) : null
 
     const abs = studentAbsences[sId] || 0
-    const attendancePct = Math.max(0, Math.min(100, Math.round(100 - (abs / (maxAbs * 1.5)) * 100)))
+    const attendancePct = Math.max(0, Math.min(100, Math.round(((totalDays - abs) / totalDays) * 100)))
 
-    // X-axis: Attendance (bounded 10% to 88%)
-    const baseX = Math.max(10, Math.min(88, attendancePct))
+    const academicCutoff = Number(thresholds.value.atRiskThreshold ?? 70)
+    const attendanceCutoff = Number(thresholds.value.attendanceThreshold ?? 85)
 
-    // Y-axis: Grade (bounded 10% to 88%)
+    // X-axis: Map attendance (0% to 100%) to graph X position (5% to 92%)
+    const baseX = Math.max(6, Math.min(92, Math.round(attendancePct * 0.86 + 6)))
+
+    // Y-axis: Map grade (0% to 100%) to graph Y position (5% to 92%)
     let baseY = 50
     let quadrant = 'unassessed'
 
     if (grade === null) {
       quadrant = 'unassessed'
       baseY = 50 // Place unassessed students on 50% neutral baseline
-    } else if (attendancePct < 85 && grade < 65) {
-      quadrant = 'red' // Critical Intervention
-      baseY = Math.max(10, Math.min(45, grade))
-    } else if (attendancePct >= 85 && grade < 65) {
-      quadrant = 'yellow' // Academic Risk
-      baseY = Math.max(10, Math.min(45, grade))
-    } else if (attendancePct < 85 && grade >= 65) {
-      quadrant = 'orange' // Attendance Risk
-      baseY = Math.max(55, Math.min(88, grade))
     } else {
-      quadrant = 'green' // Thriving
-      baseY = Math.max(55, Math.min(88, grade))
+      baseY = Math.max(6, Math.min(92, Math.round(grade * 0.86 + 6)))
+      if (attendancePct < attendanceCutoff && grade < academicCutoff) {
+        quadrant = 'red' // Critical Intervention
+      } else if (attendancePct >= attendanceCutoff && grade < academicCutoff) {
+        quadrant = 'yellow' // Academic Risk
+      } else if (attendancePct < attendanceCutoff && grade >= academicCutoff) {
+        quadrant = 'orange' // Attendance Risk
+      } else {
+        quadrant = 'green' // Thriving
+      }
     }
 
     const initials = getInitials(student.name, student.firstName, student.lastName)
@@ -420,6 +441,7 @@ const unassessedCount = computed(() => studentPoints.value.filter(p => p.quadran
   gap: 2px;
   pointer-events: none;
   opacity: 0.35;
+  z-index: 0;
 }
 
 .risk-plot__quadrant--top-left     { top: 0; left: 0; text-align: left; }
@@ -443,22 +465,22 @@ const unassessedCount = computed(() => studentPoints.value.filter(p => p.quadran
 
 .risk-plot__axis-x {
   position: absolute;
-  top: 50%;
   left: 0;
   right: 0;
   height: 1px;
   background: var(--border);
   border-top: 1px dashed var(--border);
+  z-index: 1;
 }
 
 .risk-plot__axis-y {
   position: absolute;
-  left: 50%;
   top: 0;
   bottom: 0;
   width: 1px;
   background: var(--border);
   border-left: 1px dashed var(--border);
+  z-index: 1;
 }
 
 .risk-plot__dot {

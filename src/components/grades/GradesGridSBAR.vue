@@ -304,7 +304,8 @@ const allExpectations = computed(() => {
       if (u.expectations && Array.isArray(u.expectations)) {
         u.expectations.forEach(exp => {
           if (exp.code) {
-            const strandCode = exp.strand || exp.code.charAt(0).toUpperCase()
+            const cleanCode = exp.code.replace(/^SC\./i, '')
+            const strandCode = exp.strand || cleanCode.charAt(0).toUpperCase()
             const gLevel = exp.gradeLevel || u.gradeLevel || exp.courseCode || ''
             const key = gLevel ? `${gLevel}_${exp.code}` : exp.code
             map[key] = {
@@ -328,7 +329,8 @@ const allExpectations = computed(() => {
   if (classExps && Array.isArray(classExps)) {
     classExps.forEach(exp => {
       if (exp.code) {
-        const strandCode = exp.strand || exp.code.charAt(0).toUpperCase()
+        const cleanCode = exp.code.replace(/^SC\./i, '')
+        const strandCode = exp.strand || cleanCode.charAt(0).toUpperCase()
         const gLevel = exp.gradeLevel || exp.courseCode || ''
         const key = gLevel ? `${gLevel}_${exp.code}` : exp.code
         if (!map[key]) {
@@ -365,7 +367,8 @@ const allExpectations = computed(() => {
           const key = gLevel ? `${gLevel}_${realCode}` : realCode
 
           if (!map[key]) {
-            const strandCode = realCode.charAt(0).toUpperCase()
+            const cleanCode = realCode.replace(/^SC\./i, '')
+            const strandCode = cleanCode.charAt(0).toUpperCase()
             map[key] = {
               code: realCode,
               name: `Expectation ${realCode}`,
@@ -412,19 +415,23 @@ const availableStrands = computed(() => {
   const units = activeClassRecord.value?.gradebookUnits || activeClassRecord.value?.units || []
 
   allExpectations.value.forEach(exp => {
-    const sCode = exp.strand || exp.code?.charAt(0).toUpperCase() || 'General'
+    const cleanCode = (exp.code || '').replace(/^SC\./i, '')
+    const sCode = exp.strand || cleanCode.charAt(0).toUpperCase() || 'General'
     const matchingUnit = units.find(u => 
       (u.unitId && exp.unitId && String(u.unitId) === String(exp.unitId)) ||
-      (u.name && exp.unitName && String(u.name).toLowerCase() === String(exp.unitName).toLowerCase())
+      (u.name && exp.unitName && String(u.name).trim().toLowerCase() === String(exp.unitName).trim().toLowerCase()) ||
+      (u.expectations && Array.isArray(u.expectations) && u.expectations.some(e => e.code === exp.code || e.expectationId === exp.expectationId))
     )
     
-    const unitName = matchingUnit ? stripGradePrefix(matchingUnit.name) : (exp.unitName ? stripGradePrefix(exp.unitName) : (sCode.length === 1 ? `Strand ${sCode}` : sCode))
-    const key = exp.gradeLevel ? `${exp.gradeLevel}_${unitName}` : unitName
+    const unitName = matchingUnit ? stripGradePrefix(matchingUnit.name).trim() : (exp.unitName ? stripGradePrefix(exp.unitName).trim() : (sCode.length === 1 ? `Strand ${sCode}` : sCode))
+    const normKey = unitName.toLowerCase()
     
-    if (!map[key]) {
-      map[key] = { id: key, code: sCode, gradeLevel: exp.gradeLevel, name: unitName, expectations: [] }
+    if (!map[normKey]) {
+      map[normKey] = { id: normKey, code: sCode, gradeLevel: exp.gradeLevel, name: unitName, expectations: [] }
     }
-    map[key].expectations.push(exp)
+    if (!map[normKey].expectations.some(e => e.code === exp.code)) {
+      map[normKey].expectations.push(exp)
+    }
   })
 
   return Object.values(map)

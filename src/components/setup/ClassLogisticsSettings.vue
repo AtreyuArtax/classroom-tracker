@@ -536,6 +536,7 @@ const {
   yearOptions,
   periodOptions,
   gridSize,
+  thresholds: classroomThresholds,
   updateActiveClass,
   triggerActiveClass,
   archiveStudent,
