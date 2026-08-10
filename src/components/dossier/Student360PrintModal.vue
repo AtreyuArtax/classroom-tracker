@@ -185,6 +185,8 @@ import BaseModal from '../BaseModal.vue'
 import ProgressReport from './ProgressReport.vue'
 import AttendanceActivityReport from './AttendanceActivityReport.vue'
 import { activeClassRecord } from '../../composables/useGradebook.js'
+import { getEffectiveClassRecord } from '../../composables/useElementary.js'
+import { activeSubjectId } from '../../composables/useClassroomState.js'
 
 const props = defineProps({
   show: { type: Boolean, default: false },
@@ -197,8 +199,12 @@ const emit = defineEmits(['close'])
 const showPrintPreview = ref(false)
 const isSystemPrinting = ref(false)
 
+const effectiveClass = computed(() => {
+  return getEffectiveClassRecord(activeClassRecord.value, activeSubjectId.value)
+})
+
 const isSBAR = computed(() => {
-  const fw = activeClassRecord.value?.gradingFramework
+  const fw = effectiveClass.value?.gradingFramework
   return fw === 'sbar' || (typeof fw === 'string' && fw.startsWith('sbar'))
 })
 

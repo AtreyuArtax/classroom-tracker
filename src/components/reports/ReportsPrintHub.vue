@@ -218,13 +218,20 @@
 import { computed } from 'vue'
 import { FileText, Grid, BookOpen, Download, Printer, GraduationCap, Users, Calendar } from 'lucide-vue-next'
 
+import { getEffectiveClassRecord } from '../../composables/useElementary.js'
+import { activeSubjectId } from '../../composables/useClassroomState.js'
+
 const props = defineProps({
   reportClass: { type: Object, default: null },
   sidebarStudents: { type: Array, default: () => [] }
 })
 
+const effectiveClass = computed(() => {
+  return getEffectiveClassRecord(props.reportClass, activeSubjectId.value)
+})
+
 const isSBAR = computed(() => {
-  const fw = props.reportClass?.gradingFramework
+  const fw = effectiveClass.value?.gradingFramework
   return fw === 'sbar' || (typeof fw === 'string' && fw.startsWith('sbar'))
 })
 

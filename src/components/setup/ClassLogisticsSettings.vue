@@ -148,7 +148,19 @@
 
     <!-- Grading Framework & Assessment Model (Secondary only) -->
     <div v-if="activeClass.classType !== 'elementary'" class="setup__card">
-      <h2 class="setup__card-title">Grading System &amp; Framework</h2>
+      <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+        <h2 class="setup__card-title" style="margin: 0; display: flex; align-items: center; gap: 8px;">
+          <span>Grading System &amp; Framework</span>
+          <button 
+            type="button" 
+            class="setup__info-trigger-btn" 
+            @click="isGradingInfoModalOpen = true" 
+            title="Learn how grading systems and SBAR engines work"
+          >
+            <Info :size="15" />
+          </button>
+        </h2>
+      </div>
       <p class="setup__hint">Choose how student performance is evaluated and displayed for this class.</p>
       
       <div class="setup__form-grid" style="grid-template-columns: 1fr 1fr; gap: 16px;">
@@ -474,6 +486,121 @@
       <ElementaryCsvImporter @imported="handleElementaryImport" />
     </BaseModal>
 
+    <!-- ── Grading System & SBAR Mastery Guide Modal ─── -->
+    <BaseModal
+      :show="isGradingInfoModalOpen"
+      @close="isGradingInfoModalOpen = false"
+      max-width="680px"
+      title="Grading System & SBAR Mastery Guide"
+      close-on-backdrop
+    >
+      <div class="grading-info-guide">
+        <!-- Frameworks Comparison -->
+        <div class="grading-info-section">
+          <h4 class="grading-info-subtitle">
+            <GraduationCap :size="18" style="color: var(--primary, #6366f1);" /> Framework Comparison
+          </h4>
+          <div class="grading-info-grid">
+            <div class="grading-info-card">
+              <div class="grading-info-card-header">
+                <strong>Traditional Secondary</strong>
+                <span class="setup__chip setup__chip--blue">% / Points</span>
+              </div>
+              <p>
+                Uses percentage grades and weighted categories (e.g. Assessments 50%, Class Activities 20%, Culminating Tasks 30%). 
+                Evaluations yield point totals that accumulate into a traditional percentage average.
+              </p>
+            </div>
+
+            <div class="grading-info-card grading-info-card--sbar">
+              <div class="grading-info-card-header">
+                <strong>Standards-Based (SBAR)</strong>
+                <span class="setup__chip setup__chip--purple">Levels 1–4 Heatmap</span>
+              </div>
+              <p>
+                Evaluates student growth against specific curriculum expectations using Ontario Levels (L1- to L4+). 
+                Replaces cumulative point averages with ongoing mastery trajectory algorithms.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- SBAR Mastery Engines -->
+        <div class="grading-info-section" style="margin-top: 16px;">
+          <h4 class="grading-info-subtitle">
+            <Zap :size="18" style="color: #f59e0b;" /> SBAR Mastery Calculation Engines
+          </h4>
+          <p class="setup__hint" style="margin-bottom: 6px;">
+            SBAR calculates an overall level for each expectation by weighting student evaluation history:
+          </p>
+          <div class="grading-info-engine-list">
+            <div class="grading-info-engine-item">
+              <div class="grading-info-engine-badge">Decaying Average</div>
+              <div class="grading-info-engine-desc">
+                <strong>65% Newest / 35% Historical</strong> (Default) — Prioritizes the most recent demonstration of learning while retaining evidence from earlier attempts.
+              </div>
+            </div>
+
+            <div class="grading-info-engine-item">
+              <div class="grading-info-engine-badge">Power Law</div>
+              <div class="grading-info-engine-desc">
+                <strong>Marzano Logarithmic Trajectory</strong> — Fits scores to a mathematical learning curve to project true current mastery. Rewards student growth over time without penalizing initial mistakes made while first acquiring a skill.
+              </div>
+            </div>
+
+            <div class="grading-info-engine-item">
+              <div class="grading-info-engine-badge">Mode / Consistency</div>
+              <div class="grading-info-engine-desc">
+                <strong>Most Frequent Level</strong> — Identifies the level most consistently achieved. Rewards steady, repeatable performance across evaluations.
+              </div>
+            </div>
+
+            <div class="grading-info-engine-item">
+              <div class="grading-info-engine-badge">Most Recent</div>
+              <div class="grading-info-engine-desc">
+                <strong>Average of Last 3 Evaluations</strong> — Focuses exclusively on current performance, ignoring early learning struggles.
+              </div>
+            </div>
+
+            <div class="grading-info-engine-item">
+              <div class="grading-info-engine-badge">Highest Level</div>
+              <div class="grading-info-engine-desc">
+                <strong>Peak Performance</strong> — Uses the single highest level achieved for each expectation. Best for summative portfolio or showcase grading.
+              </div>
+            </div>
+          </div>
+
+          <div class="grading-info-tip-banner" style="margin-top: 10px;">
+            <Zap :size="15" style="color: #f59e0b; flex-shrink: 0; margin-top: 2px;" />
+            <span>
+              <strong>Flexible Recalculation:</strong> You can switch calculation engines at any time. Changing your engine instantly recalculates overall levels across heatmaps and reports without altering or deleting raw evaluation data.
+            </span>
+          </div>
+        </div>
+
+        <!-- Input Modes & Desk Check-ins -->
+        <div class="grading-info-section" style="margin-top: 16px;">
+          <h4 class="grading-info-subtitle">
+            <Settings2 :size="18" style="color: #10b981;" /> Input Modes & Desk Check-ins
+          </h4>
+          <div class="grading-info-grid">
+            <div class="grading-info-card">
+              <strong style="color: var(--text);">Default SBAR Input Mode:</strong>
+              <p style="margin-top: 4px;">
+                Choose between <strong>Granular Levels</strong> (12-step scale from L1- to L4+), <strong>Simple Levels</strong> (4-step scale L1 to L4), or <strong>Exact % Mode</strong> for math precision.
+              </p>
+            </div>
+            <div class="grading-info-card">
+              <strong style="color: var(--text);">Radial Desk Check-ins:</strong>
+              <p style="margin-top: 4px;">
+                When enabled, quick formative check-ins recorded via seating plan radial menus are factored directly into overall SBAR expectation grades alongside formal assessments.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </BaseModal>
+
 
     <!-- Cross-Class Conflicts Dialog -->
     <div v-if="crossClassConflicts.length > 0" class="setup__dialog" role="dialog" aria-modal="true">
@@ -522,7 +649,8 @@ import {
   ChevronDown, 
   Rss, 
   AlertTriangle, 
-  GraduationCap 
+  GraduationCap,
+  Info
 } from 'lucide-vue-next'
 import { getEffectiveGradeLevel } from '../../composables/useElementary.js'
 
@@ -612,6 +740,7 @@ async function saveSectionTagRename(oldTag) {
 }
 
 const isElementaryImporterOpen = ref(false)
+const isGradingInfoModalOpen = ref(false)
 
 async function handleElementaryImport({ students: importedStudents, subjects: importedSubjects }) {
   if (!activeClass.value) return
@@ -924,3 +1053,148 @@ async function resolveConflicts(action) {
   isStudentModalOpen.value = false
 }
 </script>
+
+<style scoped>
+.setup__info-trigger-btn {
+  background: rgba(99, 102, 241, 0.1);
+  border: 1px solid rgba(99, 102, 241, 0.25);
+  color: var(--primary, #6366f1);
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  padding: 0;
+}
+
+.setup__info-trigger-btn:hover {
+  background: var(--primary, #6366f1);
+  color: #ffffff;
+  border-color: var(--primary, #6366f1);
+  transform: scale(1.08);
+}
+
+.grading-info-guide {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.grading-info-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.grading-info-subtitle {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text, #ffffff);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+}
+
+.grading-info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+@media (max-width: 600px) {
+  .grading-info-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.grading-info-card {
+  background: var(--bg-secondary, rgba(255, 255, 255, 0.03));
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.08));
+  border-radius: var(--radius-md, 8px);
+  padding: 12px 14px;
+  font-size: 0.83rem;
+  line-height: 1.45;
+  color: var(--text-secondary, #94a3b8);
+}
+
+.grading-info-card--sbar {
+  border-color: rgba(99, 102, 241, 0.2);
+  background: rgba(99, 102, 241, 0.03);
+}
+
+.grading-info-card p {
+  margin: 6px 0 0 0;
+}
+
+.grading-info-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--text, #ffffff);
+  font-weight: 600;
+}
+
+.setup__chip--purple {
+  background: rgba(168, 85, 247, 0.15);
+  color: #c084fc;
+}
+
+.grading-info-engine-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.grading-info-engine-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: var(--bg-secondary, rgba(255, 255, 255, 0.02));
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.06));
+  border-radius: var(--radius-md, 8px);
+  padding: 10px 12px;
+}
+
+.grading-info-engine-badge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: rgba(99, 102, 241, 0.15);
+  color: var(--primary, #818cf8);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.grading-info-engine-desc {
+  font-size: 0.83rem;
+  line-height: 1.4;
+  color: var(--text-secondary, #94a3b8);
+}
+
+.grading-info-engine-desc strong {
+  color: var(--text, #ffffff);
+}
+
+.grading-info-tip-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  border-radius: var(--radius-md, 8px);
+  padding: 10px 12px;
+  font-size: 0.81rem;
+  line-height: 1.45;
+  color: var(--text-secondary, #94a3b8);
+}
+
+.grading-info-tip-banner strong {
+  color: #f59e0b;
+}
+</style>

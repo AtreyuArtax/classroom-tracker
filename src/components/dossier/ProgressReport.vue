@@ -183,9 +183,15 @@ import { formatLocalDisplay } from '../../utils/dates.js'
 import StudentGradeTrend from './StudentGradeTrend.vue'
 import DossierEvidenceMix from './DossierEvidenceMix.vue'
 import SBarProgressReport from './SBarProgressReport.vue'
+import { getEffectiveClassRecord } from '../../composables/useElementary.js'
+import { activeSubjectId } from '../../composables/useClassroomState.js'
+
+const effectiveClass = computed(() => {
+  return getEffectiveClassRecord(activeClassRecord.value, activeSubjectId.value)
+})
 
 const isSBAR = computed(() => {
-  const fw = activeClassRecord.value?.gradingFramework
+  const fw = effectiveClass.value?.gradingFramework
   return fw === 'sbar' || (typeof fw === 'string' && fw.startsWith('sbar'))
 })
 

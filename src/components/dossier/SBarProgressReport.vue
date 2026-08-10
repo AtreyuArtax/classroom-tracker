@@ -206,10 +206,17 @@ const displayMetaLine = computed(() => {
   return `${className} • ${teacher}`
 })
 
+import { getEffectiveClassRecord } from '../../composables/useElementary.js'
+import { activeSubjectId } from '../../composables/useClassroomState.js'
+
+const effectiveClass = computed(() => {
+  return getEffectiveClassRecord(activeClassRecord.value, activeSubjectId.value)
+})
+
 const overallBadge = computed(() => {
   return getStudentOverallSBarBadge(
     props.studentId, 
-    activeClassRecord.value, 
+    effectiveClass.value, 
     assessments.value, 
     gradeMap.value, 
     events.value
@@ -226,7 +233,7 @@ const scopeLabel = computed(() => {
 const unitsData = computed(() => {
   return prepareSBarReportData(
     props.studentId,
-    activeClassRecord.value,
+    effectiveClass.value,
     assessments.value,
     gradeMap.value,
     events.value,

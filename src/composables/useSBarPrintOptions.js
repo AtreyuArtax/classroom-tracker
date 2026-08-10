@@ -5,6 +5,8 @@ import {
   getSBARLevelBadge 
 } from '../db/gradebook/gradeCalcSBAR.js'
 import { formatLocalDisplay } from '../utils/dates.js'
+import { getEffectiveClassRecord } from './useElementary.js'
+import { activeSubjectId } from './useClassroomState.js'
 
 /**
  * Composable for managing S-Bar printable report options, expectation scope filtering,
@@ -30,8 +32,10 @@ export function useSBarPrintOptions() {
    */
   function getStudentOverallSBarBadge(studentId, classRecord, assessments, gradeMap, events = []) {
     if (!studentId || !classRecord) return getSBARLevelBadge(null)
-    const algo = classRecord.sbarAlgorithm || 'decaying_average'
-    const pct = calculateSBARStudentOverallMastery(studentId, classRecord, assessments, gradeMap, algo, events)
+    const effClass = getEffectiveClassRecord(classRecord, activeSubjectId.value)
+    if (!effClass) return getSBARLevelBadge(null)
+    const algo = effClass.sbarAlgorithm || 'decaying_average'
+    const pct = calculateSBARStudentOverallMastery(studentId, effClass, assessments, gradeMap, algo, events)
     return getSBARLevelBadge(pct)
   }
 
@@ -48,14 +52,42 @@ export function useSBarPrintOptions() {
    */
   function prepareSBarReportData(studentId, classRecord, assessments, gradeMap, events = [], scope = 'assessed') {
     if (!classRecord || !studentId) return []
+    const effClass = getEffectiveClassRecord(classRecord, activeSubjectId.value)
+    if (!effClass) return []
 
-    const algo = classRecord.sbarAlgorithm || 'decaying_average'
-    const masteryMap = calculateSBARExpectationMastery(classRecord, assessments, gradeMap, algo, events)
+    const algo = effClass.sbarAlgorithm || 'decaying_average'
+    const masteryMap = calculateSBARExpectationMastery(effClass, assessments, gradeMap, algo, events)
     const studentExpMap = masteryMap[studentId] || {}
 
-    // Gather units/strands from classRecord.gradebookUnits or flat expectations
-    const rawUnits = classRecord.gradebookUnits || []
-    const flatExps = classRecord.expectations || classRecord.curriculumExpectations || []
+    // Gather units/strands from effClass.gradebookUnits or flat expectations
+    const rawUnits = effClass.gradebookUnits || []
+    const flatExps = effClass.expectations || effClass.curriculumExpectations || []
+
+    // Build description lookup dictionary across flatExps, rawUnits, and assessments
+    const expDescMap = {}
+    const storeDesc = (code, desc) => {
+      if (!code || !desc) return
+      const k = String(code).toLowerCase()
+      if (!expDescMap[k]) expDescMap[k] = desc
+    }
+
+    if (Array.isArray(flatExps)) {
+      flatExps.forEach(e => storeDesc(e.code || e.expectationId, e.description || e.title))
+    }
+    if (Array.isArray(rawUnits)) {
+      rawUnits.forEach(u => {
+        if (Array.isArray(u.expectations)) {
+          u.expectations.forEach(e => storeDesc(e.code || e.expectationId, e.description || e.title))
+        }
+      })
+    }
+    if (Array.isArray(assessments)) {
+      assessments.forEach(a => {
+        if (Array.isArray(a.expectations)) {
+          a.expectations.forEach(e => storeDesc(e.code || e.expectationId, e.description || e.title))
+        }
+      })
+    }
 
     const unitMap = {}
 
@@ -70,8 +102,10 @@ export function useSBarPrintOptions() {
         if (Array.isArray(u.expectations)) {
           u.expectations.forEach(exp => {
             if (exp.code || exp.expectationId) {
+              const codeStr = exp.code || exp.expectationId
               unitMap[u.unitId].expectations.push({
                 ...exp,
+                description: exp.description || exp.title || expDescMap[String(codeStr).toLowerCase()] || codeStr,
                 unitId: u.unitId,
                 strandName: u.name
               })
@@ -97,8 +131,37 @@ export function useSBarPrintOptions() {
         if (!unitMap[uId].expectations.some(e => (e.code || e.expectationId) === existingCode)) {
           unitMap[uId].expectations.push({
             ...exp,
+            description: exp.description || exp.title || expDescMap[String(existingCode).toLowerCase()] || existingCode,
             unitId: uId,
             strandName: uName
+          })
+        }
+      })
+    }
+
+    // 3. Fallback: Include any assessed expectations from studentExpMap not explicitly listed in units
+    if (studentExpMap && Object.keys(studentExpMap).length > 0) {
+      Object.keys(studentExpMap).forEach(expCode => {
+        const hasMatch = Object.values(unitMap).some(u => 
+          u.expectations && u.expectations.some(e => String(e.code || e.expectationId || '').toLowerCase() === expCode.toLowerCase())
+        )
+        if (!hasMatch) {
+          const parts = expCode.split('.')
+          let strandName = 'Curriculum Standards'
+          if (parts.length >= 2) {
+            strandName = parts[0] === 'SC' ? `Strand ${parts[1]}` : `Strand ${parts[0]}`
+          }
+          const uId = `dynamic-${strandName.toLowerCase().replace(/\s+/g, '-')}`
+          if (!unitMap[uId]) {
+            unitMap[uId] = { unitId: uId, name: strandName, expectations: [] }
+          }
+          const matchedDesc = expDescMap[expCode.toLowerCase()] || expCode
+          unitMap[uId].expectations.push({
+            code: expCode,
+            expectationId: expCode,
+            description: matchedDesc,
+            unitId: uId,
+            strandName
           })
         }
       })

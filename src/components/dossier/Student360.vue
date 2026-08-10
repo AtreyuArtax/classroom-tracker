@@ -273,6 +273,7 @@
     <!-- Email Progress Report Modal -->
     <Student360EmailModal
       :show="showEmailModal"
+      :student-id="props.studentId"
       :student="student"
       :formatted-grade="formattedGrade"
       :all-dossier-assessments="allDossierAssessments"

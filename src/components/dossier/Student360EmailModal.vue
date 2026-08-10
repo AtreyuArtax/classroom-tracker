@@ -48,7 +48,7 @@
         <div class="options-grid">
           <label class="option-item">
             <input type="checkbox" v-model="emailConfig.content.grade" />
-            <span class="option-label">Current Overall Grade</span>
+            <span class="option-label">{{ isSBAR ? 'Current SBAR Overall Level' : 'Current Overall Grade' }}</span>
           </label>
           <label class="option-item">
             <input type="checkbox" v-model="emailConfig.content.missing" />
@@ -60,7 +60,7 @@
           </label>
           <label class="option-item">
             <input type="checkbox" v-model="emailConfig.content.assessments" />
-            <span class="option-label">Detailed Assessment List & Attempts</span>
+            <span class="option-label">{{ isSBAR ? 'Expectation Mastery & Progression' : 'Detailed Assessment List & Attempts' }}</span>
           </label>
         </div>
       </div>
@@ -85,9 +85,15 @@ import { ref, computed, watch } from 'vue'
 import { Mail, CheckCircle2, ChevronRight } from 'lucide-vue-next'
 import BaseModal from '../BaseModal.vue'
 import { formatLocalDisplay } from '../../utils/dates.js'
+import { activeClassRecord, gradeMap, assessments } from '../../composables/useGradebook.js'
+import { useSBarPrintOptions } from '../../composables/useSBarPrintOptions.js'
+
+import { getEffectiveClassRecord } from '../../composables/useElementary.js'
+import { activeSubjectId } from '../../composables/useClassroomState.js'
 
 const props = defineProps({
   show: { type: Boolean, default: false },
+  studentId: { type: String, default: '' },
   student: { type: Object, required: true },
   formattedGrade: { type: String, default: 'N/A' },
   allDossierAssessments: { type: Array, default: () => [] },
@@ -99,6 +105,24 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['close'])
+
+const targetStudentId = computed(() => props.studentId || props.student?.id || props.student?.studentId || '')
+
+const { getStudentOverallSBarBadge, prepareSBarReportData } = useSBarPrintOptions()
+
+const effectiveClass = computed(() => {
+  return getEffectiveClassRecord(activeClassRecord.value, activeSubjectId.value)
+})
+
+const isSBAR = computed(() => {
+  const fw = effectiveClass.value?.gradingFramework
+  return fw === 'sbar' || (typeof fw === 'string' && fw.startsWith('sbar'))
+})
+
+const sbarOverallBadge = computed(() => {
+  if (!targetStudentId.value) return null
+  return getStudentOverallSBarBadge(targetStudentId.value, effectiveClass.value, assessments.value, gradeMap.value)
+})
 
 const emailConfig = ref({
   recipients: { student: true, parents: true },
@@ -142,36 +166,84 @@ function generateEmailLink() {
   
   let body = `Hello,\n\nI am sharing a progress update for ${props.student.firstName}.\n\n`
   
-  if (emailConfig.value.content.grade) {
-    body += `Current Overall Grade: ${props.formattedGrade}\n`
-  }
-  
-  if (emailConfig.value.content.assessments) {
-    const list = [...props.allDossierAssessments]
-      .filter(a => a.score !== null && !a.excluded)
-      .sort((a, b) => new Date(b.date) - new Date(a.date))
-    
-    if (list.length > 0) {
-      body += `\nAcademic Record & Recent Progress:\n`
-      list.forEach(a => {
-        const date = formatLocalDisplay(a.date, { month: 'short', day: 'numeric' })
-        let line = `${date} - ${a.name}: ${Math.round((a.score / a.totalPoints) * 100)}%`
-        if (a.attempts?.length > 1) {
-          const history = a.attempts
-            .map(att => Math.round((att.pointsEarned / a.totalPoints) * 100) + '%')
-            .join(', ')
-          line += ` (Attempts history: ${history})`
-        }
-        body += `- ${line}\n`
+  if (isSBAR.value) {
+    if (emailConfig.value.content.grade) {
+      const badge = sbarOverallBadge.value
+      body += `Current SBAR Overall Level: ${badge?.label || 'Not Assessed'} (${badge?.level || '—'})\n`
+    }
+
+    if (emailConfig.value.content.assessments) {
+      const sbarUnits = prepareSBarReportData(
+        targetStudentId.value,
+        effectiveClass.value,
+        assessments.value,
+        gradeMap.value,
+        [],
+        'assessed'
+      )
+      
+      const allExps = []
+      sbarUnits.forEach(u => {
+        if (u.expectations) allExps.push(...u.expectations)
       })
+
+      if (allExps.length > 0) {
+        body += `\nCurriculum Expectation Mastery:\n`
+        allExps.forEach(exp => {
+          let labelStr = exp.code
+          if (exp.description && exp.description !== exp.code) {
+            labelStr = `${exp.code} (${exp.description})`
+          }
+          let line = `- ${labelStr}: Level ${exp.badge?.level || '—'} (${exp.badge?.label || 'Unassessed'})`
+          if (exp.evaluations && exp.evaluations.length > 0) {
+            const history = exp.evaluations.slice(-3).map(e => e.badge?.level || '—').join(' ➔ ')
+            line += ` [Progression: ${history}]`
+          }
+          body += `${line}\n`
+        })
+      }
+    }
+  } else {
+    if (emailConfig.value.content.grade) {
+      body += `Current Overall Grade: ${props.formattedGrade}\n`
+    }
+    
+    if (emailConfig.value.content.assessments) {
+      const list = [...props.allDossierAssessments]
+        .filter(a => a.score !== null && !a.excluded)
+        .sort((a, b) => new Date(b.date) - new Date(a.date))
+      
+      if (list.length > 0) {
+        body += `\nAcademic Record & Recent Progress:\n`
+        list.forEach(a => {
+          const date = formatLocalDisplay(a.date, { month: 'short', day: 'numeric' })
+          let line = `${date} - ${a.name}: ${Math.round((a.score / a.totalPoints) * 100)}%`
+          if (a.attempts?.length > 1) {
+            const history = a.attempts
+              .map(att => Math.round((att.pointsEarned / a.totalPoints) * 100) + '%')
+              .join(', ')
+            line += ` (Attempts history: ${history})`
+          }
+          body += `- ${line}\n`
+        })
+      }
     }
   }
 
   if (emailConfig.value.content.missing) {
-    const missing = [
+    let missing = [
       ...props.classAssessments.filter(a => (a.missing || a.score === null) && !a.excluded),
       ...props.individualAssessments.filter(a => (a.missing || a.score === null) && !a.excluded)
     ]
+
+    if (isSBAR.value) {
+      missing = missing.filter(a => {
+        const hasExp = (a.expectationIds && a.expectationIds.length > 0) || a.expectationId
+        const isSbarMode = a.isSbar || a.gradingFramework === 'sbar' || a.assessmentType === 'sbar'
+        return hasExp || isSbarMode
+      })
+    }
+
     if (missing.length > 0) {
       body += `\nMissing Assessments:\n`
       missing.forEach(m => body += `- ${m.name}\n`)

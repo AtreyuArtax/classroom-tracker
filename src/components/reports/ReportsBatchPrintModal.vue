@@ -204,8 +204,16 @@ watch(isSystemPrinting, (newValue) => {
   }
 })
 
+import { activeClassRecord } from '../../composables/useGradebook.js'
+import { getEffectiveClassRecord } from '../../composables/useElementary.js'
+import { activeSubjectId } from '../../composables/useClassroomState.js'
+
+const effectiveClass = computed(() => {
+  return getEffectiveClassRecord(props.reportClass || activeClassRecord.value, activeSubjectId.value)
+})
+
 const isSBAR = computed(() => {
-  const fw = props.reportClass?.gradingFramework
+  const fw = effectiveClass.value?.gradingFramework
   return fw === 'sbar' || (typeof fw === 'string' && fw.startsWith('sbar'))
 })
 
