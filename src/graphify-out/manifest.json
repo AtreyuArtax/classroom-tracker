@@ -55,8 +55,8 @@
     "semantic_hash": ""
   },
   "components/PrintGradesGridModal.vue": {
-    "mtime": 1786238600.6644158,
-    "ast_hash": "0c0a3a955e17a02a6a7eafb374a7a677",
+    "mtime": 1786382244.8365004,
+    "ast_hash": "5554191b4869d5d3ae336473124d7015",
     "semantic_hash": ""
   },
   "components/QRScanner.vue": {
@@ -135,13 +135,13 @@
     "semantic_hash": ""
   },
   "components/dossier/ProgressReport.vue": {
-    "mtime": 1786242746.3680837,
-    "ast_hash": "d5cb02624cb76377985bc98ea7bf7a2a",
+    "mtime": 1786375592.6075447,
+    "ast_hash": "0ce3ca63d8e16b8f907e34ebbb9d826b",
     "semantic_hash": ""
   },
   "components/dossier/Student360.vue": {
-    "mtime": 1786243938.4490469,
-    "ast_hash": "c61df7795edd8c38c9df3f792688147d",
+    "mtime": 1786375694.1317935,
+    "ast_hash": "522a68338145e95ce4d3a79f34f343fc",
     "semantic_hash": ""
   },
   "components/dossier/Student360AttemptsModal.vue": {
@@ -150,8 +150,8 @@
     "semantic_hash": ""
   },
   "components/dossier/Student360EmailModal.vue": {
-    "mtime": 1784812507.0741627,
-    "ast_hash": "e78df81f2188ac7bcf96563f682c6133",
+    "mtime": 1786376019.8131127,
+    "ast_hash": "9fc5028985557073a4deac26ee880e0f",
     "semantic_hash": ""
   },
   "components/dossier/Student360Header.vue": {
@@ -165,8 +165,8 @@
     "semantic_hash": ""
   },
   "components/dossier/Student360PrintModal.vue": {
-    "mtime": 1786239591.550514,
-    "ast_hash": "bd65b7b089c2924769c891b0a5d58528",
+    "mtime": 1786381645.814606,
+    "ast_hash": "b4abd867643ee9c64176f6cc194c8485",
     "semantic_hash": ""
   },
   "components/dossier/Student360ProfileTab.vue": {
@@ -225,8 +225,8 @@
     "semantic_hash": ""
   },
   "components/reports/ReportsBatchPrintModal.vue": {
-    "mtime": 1786239575.6485498,
-    "ast_hash": "9febf32168529f340346db872420d5c7",
+    "mtime": 1786381627.3531082,
+    "ast_hash": "db7a9344393e481fb1b13225913ffbc1",
     "semantic_hash": ""
   },
   "components/reports/ReportsClassOverview.vue": {
@@ -240,13 +240,13 @@
     "semantic_hash": ""
   },
   "components/reports/ReportsPrintHub.vue": {
-    "mtime": 1785003647.6841025,
-    "ast_hash": "8656cade187cd413aa03f9a074a3771c",
+    "mtime": 1786375610.4725914,
+    "ast_hash": "ec3c4463dfb4f53049a27ea1388a576f",
     "semantic_hash": ""
   },
   "components/reports/StudentRiskScatterPlot.vue": {
-    "mtime": 1786327879.8017292,
-    "ast_hash": "c3aad518702b58f838328647287683ba",
+    "mtime": 1786328407.795735,
+    "ast_hash": "c0d233fe9e62739cf945ec56a01f28d7",
     "semantic_hash": ""
   },
   "components/setup/AssessmentFrameworkSettings.vue": {
@@ -265,8 +265,8 @@
     "semantic_hash": ""
   },
   "components/setup/ClassLogisticsSettings.vue": {
-    "mtime": 1786327313.1604395,
-    "ast_hash": "c590fcb69bfff28d7dbe9b035ea6859a",
+    "mtime": 1786377657.9755397,
+    "ast_hash": "42d94b2cdfe9345b4c406b6b78ea9f30",
     "semantic_hash": ""
   },
   "components/setup/CsvHelpGuide.vue": {
@@ -475,8 +475,8 @@
     "semantic_hash": ""
   },
   "views/Dashboard.vue": {
-    "mtime": 1786156979.343654,
-    "ast_hash": "f70544ae1af2ef2fbd137c1ea7804403",
+    "mtime": 1786381195.2188022,
+    "ast_hash": "8572dfb957cf032beb21e8cf386c41e6",
     "semantic_hash": ""
   },
   "views/Grades.vue": {
@@ -742,6 +742,16 @@
   "data/curriculum/secondary/ontario-sph3u-success-criteria.json": {
     "mtime": 1786297813.7178333,
     "ast_hash": "f8cfd75920f1f6926ca14fb54552ff93",
+    "semantic_hash": ""
+  },
+  "components/dossier/SBarProgressReport.vue": {
+    "mtime": 1786375580.5087166,
+    "ast_hash": "ea7782ded25168ebe3bad65b4390382c",
+    "semantic_hash": ""
+  },
+  "composables/useSBarPrintOptions.js": {
+    "mtime": 1786376011.7629158,
+    "ast_hash": "6896827f78f9e96da9699a7167ad910d",
     "semantic_hash": ""
   }
 }

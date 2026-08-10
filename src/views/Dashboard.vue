@@ -245,6 +245,16 @@ const {
 const isPoolDragOver = ref(false)
 const isPoolOpen     = ref(unseatedStudents.value.length > 0)
 
+watch(
+  [() => activeClass.value?.classId, () => unseatedStudents.value.length],
+  ([classId, count]) => {
+    if (classId && count > 0) {
+      isPoolOpen.value = true
+    }
+  },
+  { immediate: true }
+)
+
 function onDragStart(evt, student) {
   evt.dataTransfer.effectAllowed = 'move'
   evt.dataTransfer.setData('text/plain', JSON.stringify({

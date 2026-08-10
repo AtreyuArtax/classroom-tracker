@@ -335,8 +335,8 @@
     "semantic_hash": "322ce1010d35f76a380b2df551af302f"
   },
   "src/views/Dashboard.vue": {
-    "mtime": 1786156979.343654,
-    "ast_hash": "f70544ae1af2ef2fbd137c1ea7804403",
+    "mtime": 1786381195.2188022,
+    "ast_hash": "8572dfb957cf032beb21e8cf386c41e6",
     "semantic_hash": ""
   },
   "src/views/Grades.vue": {
@@ -380,8 +380,8 @@
     "semantic_hash": "e4fe3444aaad844cbc4b9f3975ed773c"
   },
   "src/components/PrintGradesGridModal.vue": {
-    "mtime": 1786238600.6644158,
-    "ast_hash": "0c0a3a955e17a02a6a7eafb374a7a677",
+    "mtime": 1786382690.104386,
+    "ast_hash": "6683cf5b45f4fe13da3235a2f72c32b6",
     "semantic_hash": ""
   },
   "src/components/GradesAnalyticsPanel.vue": {
@@ -500,8 +500,8 @@
     "semantic_hash": ""
   },
   "src/components/dossier/Student360PrintModal.vue": {
-    "mtime": 1786375598.7546728,
-    "ast_hash": "9c95e92ef7b624b29d9180e2313b1c5a",
+    "mtime": 1786381645.814606,
+    "ast_hash": "b4abd867643ee9c64176f6cc194c8485",
     "semantic_hash": ""
   },
   "src/components/dossier/Student360ProfileTab.vue": {
@@ -510,8 +510,8 @@
     "semantic_hash": ""
   },
   "src/components/reports/ReportsBatchPrintModal.vue": {
-    "mtime": 1786375604.7199059,
-    "ast_hash": "a871f077227ca4e9db800a1ea41ffba2",
+    "mtime": 1786381627.3531082,
+    "ast_hash": "db7a9344393e481fb1b13225913ffbc1",
     "semantic_hash": ""
   },
   "src/components/reports/ReportsClassOverview.vue": {

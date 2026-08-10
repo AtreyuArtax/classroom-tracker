@@ -4,7 +4,7 @@
     <BaseModal
       :show="show"
       title="Print Report"
-      max-width="880px"
+      :max-width="showPrintPreview ? '1150px' : '540px'"
       :z-index="3000"
       @close="$emit('close')"
     >
@@ -18,7 +18,7 @@
         </div>
       </template>
 
-      <div class="email-config-modal-body">
+      <div class="email-config-modal-body" :class="{ 'email-config-modal-body--with-preview': showPrintPreview }">
         <div class="config-section">
           <div class="config-section-header">
             <h4 class="config-section-title">Report Type</h4>
@@ -341,23 +341,50 @@ async function triggerPrint() {
   cursor: pointer;
 }
 
+.email-config-modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.email-config-modal-body--with-preview {
+  display: grid;
+  grid-template-columns: 350px 1fr;
+  gap: 20px;
+  height: min(720px, 75vh);
+  overflow: hidden;
+}
+
+@media (max-width: 900px) {
+  .email-config-modal-body--with-preview {
+    grid-template-columns: 1fr;
+    overflow-y: auto;
+  }
+}
+
+.email-config-modal-body--with-preview .config-section {
+  overflow-y: auto;
+  padding-right: 6px;
+}
+
 .reports__print-preview-area {
-  margin-top: 12px;
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   overflow: hidden;
-  max-height: 420px;
   display: flex;
   flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  background: #cbd5e1;
 }
 
 .preview-banner {
   display: flex;
   align-items: center;
   gap: 6px;
-  background: var(--bg-secondary);
-  padding: 6px 12px;
-  font-size: 0.75rem;
+  background: var(--surface);
+  padding: 8px 14px;
+  font-size: 0.78rem;
   font-weight: 700;
   color: var(--primary);
   border-bottom: 1px solid var(--border);
@@ -365,22 +392,25 @@ async function triggerPrint() {
 }
 
 .preview-content {
-  padding: 16px;
+  padding: 20px 10px;
   background: #cbd5e1;
   overflow-y: auto;
   overflow-x: hidden;
   display: flex;
   justify-content: center;
+  align-items: flex-start;
   flex: 1;
+  min-height: 0;
 }
 
 .preview-content-wrapper {
-  transform: scale(0.76);
+  transform: scale(0.68);
   transform-origin: top center;
   width: 210mm;
-  margin-bottom: -150px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  margin-bottom: -130px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
   border-radius: 4px;
+  background: #ffffff;
 }
 
 .report-preview-mini {

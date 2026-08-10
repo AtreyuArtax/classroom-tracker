@@ -330,7 +330,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "components_basemodal",
-      "community": 15,
+      "community": 18,
       "norm_label": "basemodal.vue"
     },
     {
@@ -340,7 +340,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "components_classswitcher",
-      "community": 1,
+      "community": 49,
       "norm_label": "classswitcher.vue"
     },
     {
@@ -460,7 +460,7 @@
       "source_location": "L509",
       "_origin": "ast",
       "id": "components_gradesanalyticspanel_onthresholdchange",
-      "community": 22,
+      "community": 46,
       "norm_label": "onthresholdchange()"
     },
     {
@@ -1020,7 +1020,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "components_messageoverlay",
-      "community": 15,
+      "community": 18,
       "norm_label": "messageoverlay.vue"
     },
     {
@@ -1030,7 +1030,7 @@
       "source_location": "L93",
       "_origin": "ast",
       "id": "components_messageoverlay_state_handleaction_handleselectchoice",
-      "community": 15,
+      "community": 18,
       "norm_label": "{ state, handleaction, handleselectchoice }"
     },
     {
@@ -1040,7 +1040,7 @@
       "source_location": "L94",
       "_origin": "ast",
       "id": "components_messageoverlay_inputref",
-      "community": 15,
+      "community": 18,
       "norm_label": "inputref"
     },
     {
@@ -1050,7 +1050,7 @@
       "source_location": "L95",
       "_origin": "ast",
       "id": "components_messageoverlay_confirmbtnref",
-      "community": 15,
+      "community": 18,
       "norm_label": "confirmbtnref"
     },
     {
@@ -1060,7 +1060,7 @@
       "source_location": "L97",
       "_origin": "ast",
       "id": "components_messageoverlay_isconfirmdisabled",
-      "community": 15,
+      "community": 18,
       "norm_label": "isconfirmdisabled"
     },
     {
@@ -1070,7 +1070,7 @@
       "source_location": "L102",
       "_origin": "ast",
       "id": "components_messageoverlay_onenter",
-      "community": 15,
+      "community": 18,
       "norm_label": "onenter()"
     },
     {
@@ -1094,13 +1094,23 @@
       "norm_label": "printgradesgridmodal.vue"
     },
     {
+      "label": "if()",
+      "file_type": "code",
+      "source_file": "components/PrintGradesGridModal.vue",
+      "source_location": "L554",
+      "_origin": "ast",
+      "id": "components_printgradesgridmodal_if",
+      "community": 41,
+      "norm_label": "if()"
+    },
+    {
       "label": "QRScanner.vue",
       "file_type": "code",
       "source_file": "components/QRScanner.vue",
       "source_location": "L1",
       "_origin": "ast",
       "id": "components_qrscanner",
-      "community": 18,
+      "community": 1,
       "norm_label": "qrscanner.vue"
     },
     {
@@ -1110,7 +1120,7 @@
       "source_location": "L402",
       "_origin": "ast",
       "id": "components_qrscanner_if",
-      "community": 18,
+      "community": 1,
       "norm_label": "if()"
     },
     {
@@ -1120,7 +1130,7 @@
       "source_location": "L790",
       "_origin": "ast",
       "id": "components_qrscanner_targetclassstudentsout",
-      "community": 18,
+      "community": 1,
       "norm_label": "targetclassstudentsout"
     },
     {
@@ -1130,7 +1140,7 @@
       "source_location": "L823",
       "_origin": "ast",
       "id": "components_qrscanner_handlestartbymode",
-      "community": 18,
+      "community": 1,
       "norm_label": "handlestartbymode()"
     },
     {
@@ -1140,7 +1150,7 @@
       "source_location": "L838",
       "_origin": "ast",
       "id": "components_qrscanner_qrboxfn",
-      "community": 18,
+      "community": 1,
       "norm_label": "qrboxfn()"
     },
     {
@@ -1150,7 +1160,7 @@
       "source_location": "L843",
       "_origin": "ast",
       "id": "components_qrscanner_ensurecameras",
-      "community": 18,
+      "community": 1,
       "norm_label": "_ensurecameras()"
     },
     {
@@ -1160,7 +1170,7 @@
       "source_location": "L853",
       "_origin": "ast",
       "id": "components_qrscanner_startinstance",
-      "community": 18,
+      "community": 1,
       "norm_label": "_startinstance()"
     },
     {
@@ -1170,7 +1180,7 @@
       "source_location": "L871",
       "_origin": "ast",
       "id": "components_qrscanner_startscanner",
-      "community": 18,
+      "community": 1,
       "norm_label": "startscanner()"
     },
     {
@@ -1180,7 +1190,7 @@
       "source_location": "L884",
       "_origin": "ast",
       "id": "components_qrscanner_stopscanner",
-      "community": 18,
+      "community": 1,
       "norm_label": "stopscanner()"
     },
     {
@@ -1190,7 +1200,7 @@
       "source_location": "L893",
       "_origin": "ast",
       "id": "components_qrscanner_switchcamera",
-      "community": 18,
+      "community": 1,
       "norm_label": "switchcamera()"
     },
     {
@@ -1200,7 +1210,7 @@
       "source_location": "L901",
       "_origin": "ast",
       "id": "components_qrscanner_togglepip",
-      "community": 18,
+      "community": 1,
       "norm_label": "togglepip()"
     },
     {
@@ -1210,7 +1220,7 @@
       "source_location": "L978",
       "_origin": "ast",
       "id": "components_qrscanner_handleextensionscan",
-      "community": 18,
+      "community": 1,
       "norm_label": "handleextensionscan()"
     },
     {
@@ -1410,7 +1420,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "components_yearsemesterselector",
-      "community": 1,
+      "community": 49,
       "norm_label": "yearsemesterselector.vue"
     },
     {
@@ -1430,7 +1440,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dossier_attendanceactivityreport",
-      "community": 15,
+      "community": 18,
       "norm_label": "attendanceactivityreport.vue"
     },
     {
@@ -1460,7 +1470,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dossier_dossierevidencemix",
-      "community": 49,
+      "community": 15,
       "norm_label": "dossierevidencemix.vue"
     },
     {
@@ -1494,10 +1504,120 @@
       "norm_label": "progressreport.vue"
     },
     {
-      "label": "overallMostConsistent",
+      "label": "effectiveClass",
+      "file_type": "code",
+      "source_file": "components/dossier/ProgressReport.vue",
+      "source_location": "L189",
+      "_origin": "ast",
+      "id": "dossier_progressreport_effectiveclass",
+      "community": 15,
+      "norm_label": "effectiveclass"
+    },
+    {
+      "label": "isSBAR",
+      "file_type": "code",
+      "source_file": "components/dossier/ProgressReport.vue",
+      "source_location": "L193",
+      "_origin": "ast",
+      "id": "dossier_progressreport_issbar",
+      "community": 15,
+      "norm_label": "issbar"
+    },
+    {
+      "label": "props",
+      "file_type": "code",
+      "source_file": "components/dossier/ProgressReport.vue",
+      "source_location": "L198",
+      "_origin": "ast",
+      "id": "dossier_progressreport_props",
+      "community": 15,
+      "norm_label": "props"
+    },
+    {
+      "label": "{ students, activeClass, behaviorCodes, teacherName }",
       "file_type": "code",
       "source_file": "components/dossier/ProgressReport.vue",
       "source_location": "L213",
+      "_origin": "ast",
+      "id": "dossier_progressreport_students_activeclass_behaviorcodes_teachername",
+      "community": 15,
+      "norm_label": "{ students, activeclass, behaviorcodes, teachername }"
+    },
+    {
+      "label": "events",
+      "file_type": "code",
+      "source_file": "components/dossier/ProgressReport.vue",
+      "source_location": "L215",
+      "_origin": "ast",
+      "id": "dossier_progressreport_events",
+      "community": 15,
+      "norm_label": "events"
+    },
+    {
+      "label": "loading",
+      "file_type": "code",
+      "source_file": "components/dossier/ProgressReport.vue",
+      "source_location": "L216",
+      "_origin": "ast",
+      "id": "dossier_progressreport_loading",
+      "community": 15,
+      "norm_label": "loading"
+    },
+    {
+      "label": "fetchEvents()",
+      "file_type": "code",
+      "source_file": "components/dossier/ProgressReport.vue",
+      "source_location": "L218",
+      "_origin": "ast",
+      "id": "dossier_progressreport_fetchevents",
+      "community": 8,
+      "norm_label": "fetchevents()"
+    },
+    {
+      "label": "student",
+      "file_type": "code",
+      "source_file": "components/dossier/ProgressReport.vue",
+      "source_location": "L231",
+      "_origin": "ast",
+      "id": "dossier_progressreport_student",
+      "community": 15,
+      "norm_label": "student"
+    },
+    {
+      "label": "studentGrades",
+      "file_type": "code",
+      "source_file": "components/dossier/ProgressReport.vue",
+      "source_location": "L232",
+      "_origin": "ast",
+      "id": "dossier_progressreport_studentgrades",
+      "community": 15,
+      "norm_label": "studentgrades"
+    },
+    {
+      "label": "overallGrade",
+      "file_type": "code",
+      "source_file": "components/dossier/ProgressReport.vue",
+      "source_location": "L233",
+      "_origin": "ast",
+      "id": "dossier_progressreport_overallgrade",
+      "community": 15,
+      "norm_label": "overallgrade"
+    },
+    {
+      "label": "formattedGrade",
+      "file_type": "code",
+      "source_file": "components/dossier/ProgressReport.vue",
+      "source_location": "L234",
+      "_origin": "ast",
+      "id": "dossier_progressreport_formattedgrade",
+      "community": 15,
+      "norm_label": "formattedgrade"
+    },
+    {
+      "label": "overallMostConsistent",
+      "file_type": "code",
+      "source_file": "components/dossier/ProgressReport.vue",
+      "source_location": "L236",
       "_origin": "ast",
       "id": "dossier_progressreport_overallmostconsistent",
       "community": 15,
@@ -1507,7 +1627,7 @@
       "label": "overallWeightedMedian",
       "file_type": "code",
       "source_file": "components/dossier/ProgressReport.vue",
-      "source_location": "L214",
+      "source_location": "L237",
       "_origin": "ast",
       "id": "dossier_progressreport_overallweightedmedian",
       "community": 15,
@@ -1517,7 +1637,7 @@
       "label": "displayMetaLine",
       "file_type": "code",
       "source_file": "components/dossier/ProgressReport.vue",
-      "source_location": "L216",
+      "source_location": "L239",
       "_origin": "ast",
       "id": "dossier_progressreport_displaymetaline",
       "community": 15,
@@ -1527,17 +1647,17 @@
       "label": "formatDate()",
       "file_type": "code",
       "source_file": "components/dossier/ProgressReport.vue",
-      "source_location": "L229",
+      "source_location": "L252",
       "_origin": "ast",
       "id": "dossier_progressreport_formatdate",
-      "community": 15,
+      "community": 19,
       "norm_label": "formatdate()"
     },
     {
       "label": "getCategoryName()",
       "file_type": "code",
       "source_file": "components/dossier/ProgressReport.vue",
-      "source_location": "L233",
+      "source_location": "L256",
       "_origin": "ast",
       "id": "dossier_progressreport_getcategoryname",
       "community": 15,
@@ -1547,7 +1667,7 @@
       "label": "getGradeColor()",
       "file_type": "code",
       "source_file": "components/dossier/ProgressReport.vue",
-      "source_location": "L237",
+      "source_location": "L260",
       "_origin": "ast",
       "id": "dossier_progressreport_getgradecolor",
       "community": 15,
@@ -1557,7 +1677,7 @@
       "label": "currentStudentObj",
       "file_type": "code",
       "source_file": "components/dossier/ProgressReport.vue",
-      "source_location": "L245",
+      "source_location": "L268",
       "_origin": "ast",
       "id": "dossier_progressreport_currentstudentobj",
       "community": 15,
@@ -1567,7 +1687,7 @@
       "label": "studentSubCohort",
       "file_type": "code",
       "source_file": "components/dossier/ProgressReport.vue",
-      "source_location": "L249",
+      "source_location": "L272",
       "_origin": "ast",
       "id": "dossier_progressreport_studentsubcohort",
       "community": 15,
@@ -1577,7 +1697,7 @@
       "label": "studentAssessments",
       "file_type": "code",
       "source_file": "components/dossier/ProgressReport.vue",
-      "source_location": "L255",
+      "source_location": "L278",
       "_origin": "ast",
       "id": "dossier_progressreport_studentassessments",
       "community": 15,
@@ -1587,7 +1707,7 @@
       "label": "missingAssessments",
       "file_type": "code",
       "source_file": "components/dossier/ProgressReport.vue",
-      "source_location": "L276",
+      "source_location": "L299",
       "_origin": "ast",
       "id": "dossier_progressreport_missingassessments",
       "community": 15,
@@ -1597,7 +1717,7 @@
       "label": "recentGradedAssessments",
       "file_type": "code",
       "source_file": "components/dossier/ProgressReport.vue",
-      "source_location": "L277",
+      "source_location": "L300",
       "_origin": "ast",
       "id": "dossier_progressreport_recentgradedassessments",
       "community": 15,
@@ -1607,7 +1727,7 @@
       "label": "recentClassWork",
       "file_type": "code",
       "source_file": "components/dossier/ProgressReport.vue",
-      "source_location": "L283",
+      "source_location": "L306",
       "_origin": "ast",
       "id": "dossier_progressreport_recentclasswork",
       "community": 15,
@@ -1617,7 +1737,7 @@
       "label": "individualTasks",
       "file_type": "code",
       "source_file": "components/dossier/ProgressReport.vue",
-      "source_location": "L287",
+      "source_location": "L310",
       "_origin": "ast",
       "id": "dossier_progressreport_individualtasks",
       "community": 15,
@@ -1627,7 +1747,7 @@
       "label": "allDossierAssessments",
       "file_type": "code",
       "source_file": "components/dossier/ProgressReport.vue",
-      "source_location": "L291",
+      "source_location": "L314",
       "_origin": "ast",
       "id": "dossier_progressreport_alldossierassessments",
       "community": 15,
@@ -1637,7 +1757,7 @@
       "label": "allCombinedWork",
       "file_type": "code",
       "source_file": "components/dossier/ProgressReport.vue",
-      "source_location": "L295",
+      "source_location": "L318",
       "_origin": "ast",
       "id": "dossier_progressreport_allcombinedwork",
       "community": 15,
@@ -1647,7 +1767,7 @@
       "label": "splitWorkColumns",
       "file_type": "code",
       "source_file": "components/dossier/ProgressReport.vue",
-      "source_location": "L306",
+      "source_location": "L329",
       "_origin": "ast",
       "id": "dossier_progressreport_splitworkcolumns",
       "community": 15,
@@ -1657,7 +1777,7 @@
       "label": "evidenceMix",
       "file_type": "code",
       "source_file": "components/dossier/ProgressReport.vue",
-      "source_location": "L315",
+      "source_location": "L338",
       "_origin": "ast",
       "id": "dossier_progressreport_evidencemix",
       "community": 15,
@@ -1667,7 +1787,7 @@
       "label": "attendanceStats",
       "file_type": "code",
       "source_file": "components/dossier/ProgressReport.vue",
-      "source_location": "L338",
+      "source_location": "L361",
       "_origin": "ast",
       "id": "dossier_progressreport_attendancestats",
       "community": 15,
@@ -1677,7 +1797,7 @@
       "label": "outOfClassStats",
       "file_type": "code",
       "source_file": "components/dossier/ProgressReport.vue",
-      "source_location": "L350",
+      "source_location": "L373",
       "_origin": "ast",
       "id": "dossier_progressreport_outofclassstats",
       "community": 15,
@@ -1687,7 +1807,7 @@
       "label": "behaviorCodesMap",
       "file_type": "code",
       "source_file": "components/dossier/ProgressReport.vue",
-      "source_location": "L359",
+      "source_location": "L382",
       "_origin": "ast",
       "id": "dossier_progressreport_behaviorcodesmap",
       "community": 15,
@@ -1697,7 +1817,7 @@
       "label": "topBehavior",
       "file_type": "code",
       "source_file": "components/dossier/ProgressReport.vue",
-      "source_location": "L363",
+      "source_location": "L386",
       "_origin": "ast",
       "id": "dossier_progressreport_topbehavior",
       "community": 15,
@@ -1714,6 +1834,16 @@
       "norm_label": "sbarexpectationmasterygrid.vue"
     },
     {
+      "label": "SBarProgressReport.vue",
+      "file_type": "code",
+      "source_file": "components/dossier/SBarProgressReport.vue",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "dossier_sbarprogressreport",
+      "community": 15,
+      "norm_label": "sbarprogressreport.vue"
+    },
+    {
       "label": "Student360.vue",
       "file_type": "code",
       "source_file": "components/dossier/Student360.vue",
@@ -1727,7 +1857,7 @@
       "label": "overallMostConsistent",
       "file_type": "code",
       "source_file": "components/dossier/Student360.vue",
-      "source_location": "L488",
+      "source_location": "L489",
       "_origin": "ast",
       "id": "dossier_student360_overallmostconsistent",
       "community": 4,
@@ -1737,7 +1867,7 @@
       "label": "overallWeightedMedian",
       "file_type": "code",
       "source_file": "components/dossier/Student360.vue",
-      "source_location": "L489",
+      "source_location": "L490",
       "_origin": "ast",
       "id": "dossier_student360_overallweightedmedian",
       "community": 4,
@@ -1747,7 +1877,7 @@
       "label": "consistentIsFallback",
       "file_type": "code",
       "source_file": "components/dossier/Student360.vue",
-      "source_location": "L490",
+      "source_location": "L491",
       "_origin": "ast",
       "id": "dossier_student360_consistentisfallback",
       "community": 4,
@@ -1757,7 +1887,7 @@
       "label": "academicCategories",
       "file_type": "code",
       "source_file": "components/dossier/Student360.vue",
-      "source_location": "L492",
+      "source_location": "L493",
       "_origin": "ast",
       "id": "dossier_student360_academiccategories",
       "community": 4,
@@ -1767,7 +1897,7 @@
       "label": "currentStudentObj",
       "file_type": "code",
       "source_file": "components/dossier/Student360.vue",
-      "source_location": "L508",
+      "source_location": "L509",
       "_origin": "ast",
       "id": "dossier_student360_currentstudentobj",
       "community": 4,
@@ -1777,7 +1907,7 @@
       "label": "studentSubCohort",
       "file_type": "code",
       "source_file": "components/dossier/Student360.vue",
-      "source_location": "L512",
+      "source_location": "L513",
       "_origin": "ast",
       "id": "dossier_student360_studentsubcohort",
       "community": 4,
@@ -1787,7 +1917,7 @@
       "label": "classAssessments",
       "file_type": "code",
       "source_file": "components/dossier/Student360.vue",
-      "source_location": "L517",
+      "source_location": "L518",
       "_origin": "ast",
       "id": "dossier_student360_classassessments",
       "community": 4,
@@ -1797,7 +1927,7 @@
       "label": "individualAssessments",
       "file_type": "code",
       "source_file": "components/dossier/Student360.vue",
-      "source_location": "L541",
+      "source_location": "L542",
       "_origin": "ast",
       "id": "dossier_student360_individualassessments",
       "community": 4,
@@ -1807,7 +1937,7 @@
       "label": "allDossierAssessments",
       "file_type": "code",
       "source_file": "components/dossier/Student360.vue",
-      "source_location": "L559",
+      "source_location": "L560",
       "_origin": "ast",
       "id": "dossier_student360_alldossierassessments",
       "community": 4,
@@ -1817,7 +1947,7 @@
       "label": "testDayAlert",
       "file_type": "code",
       "source_file": "components/dossier/Student360.vue",
-      "source_location": "L565",
+      "source_location": "L566",
       "_origin": "ast",
       "id": "dossier_student360_testdayalert",
       "community": 4,
@@ -1827,7 +1957,7 @@
       "label": "washroomCount",
       "file_type": "code",
       "source_file": "components/dossier/Student360.vue",
-      "source_location": "L567",
+      "source_location": "L568",
       "_origin": "ast",
       "id": "dossier_student360_washroomcount",
       "community": 4,
@@ -1837,7 +1967,7 @@
       "label": "redirectCount",
       "file_type": "code",
       "source_file": "components/dossier/Student360.vue",
-      "source_location": "L574",
+      "source_location": "L575",
       "_origin": "ast",
       "id": "dossier_student360_redirectcount",
       "community": 4,
@@ -1847,7 +1977,7 @@
       "label": "coachingInsight",
       "file_type": "code",
       "source_file": "components/dossier/Student360.vue",
-      "source_location": "L578",
+      "source_location": "L579",
       "_origin": "ast",
       "id": "dossier_student360_coachinginsight",
       "community": 4,
@@ -1857,7 +1987,7 @@
       "label": "recentActivityFeed",
       "file_type": "code",
       "source_file": "components/dossier/Student360.vue",
-      "source_location": "L593",
+      "source_location": "L594",
       "_origin": "ast",
       "id": "dossier_student360_recentactivityfeed",
       "community": 4,
@@ -1867,7 +1997,7 @@
       "label": "formatDateShort()",
       "file_type": "code",
       "source_file": "components/dossier/Student360.vue",
-      "source_location": "L671",
+      "source_location": "L672",
       "_origin": "ast",
       "id": "dossier_student360_formatdateshort",
       "community": 4,
@@ -1877,7 +2007,7 @@
       "label": "behaviorWeeklyTrend",
       "file_type": "code",
       "source_file": "components/dossier/Student360.vue",
-      "source_location": "L680",
+      "source_location": "L681",
       "_origin": "ast",
       "id": "dossier_student360_behaviorweeklytrend",
       "community": 4,
@@ -1887,7 +2017,7 @@
       "label": "attendanceAverages",
       "file_type": "code",
       "source_file": "components/dossier/Student360.vue",
-      "source_location": "L704",
+      "source_location": "L705",
       "_origin": "ast",
       "id": "dossier_student360_attendanceaverages",
       "community": 4,
@@ -1897,7 +2027,7 @@
       "label": "handleDeleteHistoryItem()",
       "file_type": "code",
       "source_file": "components/dossier/Student360.vue",
-      "source_location": "L737",
+      "source_location": "L738",
       "_origin": "ast",
       "id": "dossier_student360_handledeletehistoryitem",
       "community": 4,
@@ -1907,7 +2037,7 @@
       "label": "saveGeneralNote()",
       "file_type": "code",
       "source_file": "components/dossier/Student360.vue",
-      "source_location": "L743",
+      "source_location": "L744",
       "_origin": "ast",
       "id": "dossier_student360_savegeneralnote",
       "community": 4,
@@ -1917,7 +2047,7 @@
       "label": "saveStudentIEP()",
       "file_type": "code",
       "source_file": "components/dossier/Student360.vue",
-      "source_location": "L749",
+      "source_location": "L750",
       "_origin": "ast",
       "id": "dossier_student360_savestudentiep",
       "community": 4,
@@ -1927,7 +2057,7 @@
       "label": "saveStudentAccommodations()",
       "file_type": "code",
       "source_file": "components/dossier/Student360.vue",
-      "source_location": "L755",
+      "source_location": "L756",
       "_origin": "ast",
       "id": "dossier_student360_savestudentaccommodations",
       "community": 4,
@@ -1937,7 +2067,7 @@
       "label": "saveParentContacts()",
       "file_type": "code",
       "source_file": "components/dossier/Student360.vue",
-      "source_location": "L759",
+      "source_location": "L760",
       "_origin": "ast",
       "id": "dossier_student360_saveparentcontacts",
       "community": 4,
@@ -1947,7 +2077,7 @@
       "label": "startNewAttempt()",
       "file_type": "code",
       "source_file": "components/dossier/Student360.vue",
-      "source_location": "L764",
+      "source_location": "L765",
       "_origin": "ast",
       "id": "dossier_student360_startnewattempt",
       "community": 4,
@@ -1957,7 +2087,7 @@
       "label": "openAttemptsFromMenu()",
       "file_type": "code",
       "source_file": "components/dossier/Student360.vue",
-      "source_location": "L774",
+      "source_location": "L775",
       "_origin": "ast",
       "id": "dossier_student360_openattemptsfrommenu",
       "community": 4,
@@ -1967,7 +2097,7 @@
       "label": "toggleMissing()",
       "file_type": "code",
       "source_file": "components/dossier/Student360.vue",
-      "source_location": "L783",
+      "source_location": "L784",
       "_origin": "ast",
       "id": "dossier_student360_togglemissing",
       "community": 4,
@@ -1977,7 +2107,7 @@
       "label": "toggleExcluded()",
       "file_type": "code",
       "source_file": "components/dossier/Student360.vue",
-      "source_location": "L789",
+      "source_location": "L790",
       "_origin": "ast",
       "id": "dossier_student360_toggleexcluded",
       "community": 4,
@@ -1987,7 +2117,7 @@
       "label": "doDeleteAssessment()",
       "file_type": "code",
       "source_file": "components/dossier/Student360.vue",
-      "source_location": "L795",
+      "source_location": "L796",
       "_origin": "ast",
       "id": "dossier_student360_dodeleteassessment",
       "community": 4,
@@ -1997,7 +2127,7 @@
       "label": "doSetPrimary()",
       "file_type": "code",
       "source_file": "components/dossier/Student360.vue",
-      "source_location": "L802",
+      "source_location": "L803",
       "_origin": "ast",
       "id": "dossier_student360_dosetprimary",
       "community": 4,
@@ -2007,7 +2137,7 @@
       "label": "doDeleteAttempt()",
       "file_type": "code",
       "source_file": "components/dossier/Student360.vue",
-      "source_location": "L806",
+      "source_location": "L807",
       "_origin": "ast",
       "id": "dossier_student360_dodeleteattempt",
       "community": 4,
@@ -2017,7 +2147,7 @@
       "label": "doUpdateComment()",
       "file_type": "code",
       "source_file": "components/dossier/Student360.vue",
-      "source_location": "L812",
+      "source_location": "L813",
       "_origin": "ast",
       "id": "dossier_student360_doupdatecomment",
       "community": 4,
@@ -2027,7 +2157,7 @@
       "label": "submitNewAttempt()",
       "file_type": "code",
       "source_file": "components/dossier/Student360.vue",
-      "source_location": "L816",
+      "source_location": "L817",
       "_origin": "ast",
       "id": "dossier_student360_submitnewattempt",
       "community": 4,
@@ -2037,7 +2167,7 @@
       "label": "loadData()",
       "file_type": "code",
       "source_file": "components/dossier/Student360.vue",
-      "source_location": "L828",
+      "source_location": "L829",
       "_origin": "ast",
       "id": "dossier_student360_loaddata",
       "community": 4,
@@ -2062,6 +2192,126 @@
       "id": "dossier_student360emailmodal",
       "community": 52,
       "norm_label": "student360emailmodal.vue"
+    },
+    {
+      "label": "props",
+      "file_type": "code",
+      "source_file": "components/dossier/Student360EmailModal.vue",
+      "source_location": "L94",
+      "_origin": "ast",
+      "id": "dossier_student360emailmodal_props",
+      "community": 52,
+      "norm_label": "props"
+    },
+    {
+      "label": "emit",
+      "file_type": "code",
+      "source_file": "components/dossier/Student360EmailModal.vue",
+      "source_location": "L107",
+      "_origin": "ast",
+      "id": "dossier_student360emailmodal_emit",
+      "community": 52,
+      "norm_label": "emit"
+    },
+    {
+      "label": "targetStudentId",
+      "file_type": "code",
+      "source_file": "components/dossier/Student360EmailModal.vue",
+      "source_location": "L109",
+      "_origin": "ast",
+      "id": "dossier_student360emailmodal_targetstudentid",
+      "community": 52,
+      "norm_label": "targetstudentid"
+    },
+    {
+      "label": "{ getStudentOverallSBarBadge, prepareSBarReportData }",
+      "file_type": "code",
+      "source_file": "components/dossier/Student360EmailModal.vue",
+      "source_location": "L111",
+      "_origin": "ast",
+      "id": "dossier_student360emailmodal_getstudentoverallsbarbadge_preparesbarreportdata",
+      "community": 52,
+      "norm_label": "{ getstudentoverallsbarbadge, preparesbarreportdata }"
+    },
+    {
+      "label": "effectiveClass",
+      "file_type": "code",
+      "source_file": "components/dossier/Student360EmailModal.vue",
+      "source_location": "L113",
+      "_origin": "ast",
+      "id": "dossier_student360emailmodal_effectiveclass",
+      "community": 52,
+      "norm_label": "effectiveclass"
+    },
+    {
+      "label": "isSBAR",
+      "file_type": "code",
+      "source_file": "components/dossier/Student360EmailModal.vue",
+      "source_location": "L117",
+      "_origin": "ast",
+      "id": "dossier_student360emailmodal_issbar",
+      "community": 52,
+      "norm_label": "issbar"
+    },
+    {
+      "label": "sbarOverallBadge",
+      "file_type": "code",
+      "source_file": "components/dossier/Student360EmailModal.vue",
+      "source_location": "L122",
+      "_origin": "ast",
+      "id": "dossier_student360emailmodal_sbaroverallbadge",
+      "community": 52,
+      "norm_label": "sbaroverallbadge"
+    },
+    {
+      "label": "emailConfig",
+      "file_type": "code",
+      "source_file": "components/dossier/Student360EmailModal.vue",
+      "source_location": "L127",
+      "_origin": "ast",
+      "id": "dossier_student360emailmodal_emailconfig",
+      "community": 52,
+      "norm_label": "emailconfig"
+    },
+    {
+      "label": "emailRecipients",
+      "file_type": "code",
+      "source_file": "components/dossier/Student360EmailModal.vue",
+      "source_location": "L132",
+      "_origin": "ast",
+      "id": "dossier_student360emailmodal_emailrecipients",
+      "community": 52,
+      "norm_label": "emailrecipients"
+    },
+    {
+      "label": "selectedRecipientEmails",
+      "file_type": "code",
+      "source_file": "components/dossier/Student360EmailModal.vue",
+      "source_location": "L147",
+      "_origin": "ast",
+      "id": "dossier_student360emailmodal_selectedrecipientemails",
+      "community": 52,
+      "norm_label": "selectedrecipientemails"
+    },
+    {
+      "label": "toggleRecipient()",
+      "file_type": "code",
+      "source_file": "components/dossier/Student360EmailModal.vue",
+      "source_location": "L155",
+      "_origin": "ast",
+      "id": "dossier_student360emailmodal_togglerecipient",
+      "community": 52,
+      "norm_label": "togglerecipient()"
+    },
+    {
+      "label": "generateEmailLink()",
+      "file_type": "code",
+      "source_file": "components/dossier/Student360EmailModal.vue",
+      "source_location": "L163",
+      "_origin": "ast",
+      "id": "dossier_student360emailmodal_generateemaillink",
+      "community": 52,
+      "norm_label": "generateemaillink()"
     },
     {
       "label": "Student360Header.vue",
@@ -2090,67 +2340,87 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dossier_student360printmodal",
-      "community": 15,
+      "community": 18,
       "norm_label": "student360printmodal.vue"
     },
     {
       "label": "props",
       "file_type": "code",
       "source_file": "components/dossier/Student360PrintModal.vue",
-      "source_location": "L150",
+      "source_location": "L191",
       "_origin": "ast",
       "id": "dossier_student360printmodal_props",
-      "community": 15,
+      "community": 18,
       "norm_label": "props"
     },
     {
       "label": "emit",
       "file_type": "code",
       "source_file": "components/dossier/Student360PrintModal.vue",
-      "source_location": "L156",
+      "source_location": "L197",
       "_origin": "ast",
       "id": "dossier_student360printmodal_emit",
-      "community": 15,
+      "community": 18,
       "norm_label": "emit"
     },
     {
       "label": "showPrintPreview",
       "file_type": "code",
       "source_file": "components/dossier/Student360PrintModal.vue",
-      "source_location": "L158",
+      "source_location": "L199",
       "_origin": "ast",
       "id": "dossier_student360printmodal_showprintpreview",
-      "community": 15,
+      "community": 18,
       "norm_label": "showprintpreview"
     },
     {
       "label": "isSystemPrinting",
       "file_type": "code",
       "source_file": "components/dossier/Student360PrintModal.vue",
-      "source_location": "L159",
+      "source_location": "L200",
       "_origin": "ast",
       "id": "dossier_student360printmodal_issystemprinting",
-      "community": 15,
+      "community": 18,
       "norm_label": "issystemprinting"
+    },
+    {
+      "label": "effectiveClass",
+      "file_type": "code",
+      "source_file": "components/dossier/Student360PrintModal.vue",
+      "source_location": "L202",
+      "_origin": "ast",
+      "id": "dossier_student360printmodal_effectiveclass",
+      "community": 18,
+      "norm_label": "effectiveclass"
+    },
+    {
+      "label": "isSBAR",
+      "file_type": "code",
+      "source_file": "components/dossier/Student360PrintModal.vue",
+      "source_location": "L206",
+      "_origin": "ast",
+      "id": "dossier_student360printmodal_issbar",
+      "community": 18,
+      "norm_label": "issbar"
     },
     {
       "label": "printConfig",
       "file_type": "code",
       "source_file": "components/dossier/Student360PrintModal.vue",
-      "source_location": "L169",
+      "source_location": "L219",
       "_origin": "ast",
       "id": "dossier_student360printmodal_printconfig",
-      "community": 15,
+      "community": 18,
       "norm_label": "printconfig"
     },
     {
       "label": "triggerPrint()",
       "file_type": "code",
       "source_file": "components/dossier/Student360PrintModal.vue",
-      "source_location": "L180",
+      "source_location": "L234",
       "_origin": "ast",
       "id": "dossier_student360printmodal_triggerprint",
-      "community": 15,
+      "community": 18,
       "norm_label": "triggerprint()"
     },
     {
@@ -2300,7 +2570,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "grades_gradesgridsbar",
-      "community": 19,
+      "community": 38,
       "norm_label": "gradesgridsbar.vue"
     },
     {
@@ -2310,7 +2580,7 @@
       "source_location": "L230",
       "_origin": "ast",
       "id": "grades_gradesgridsbar_for",
-      "community": 19,
+      "community": 38,
       "norm_label": "for()"
     },
     {
@@ -2440,7 +2710,7 @@
       "source_location": "L74",
       "_origin": "ast",
       "id": "reports_reportsexportmenu_downloadreportcardcsv",
-      "community": 8,
+      "community": 19,
       "norm_label": "downloadreportcardcsv()"
     },
     {
@@ -2857,17 +3127,27 @@
       "label": "isElementaryImporterOpen",
       "file_type": "code",
       "source_file": "components/setup/ClassLogisticsSettings.vue",
-      "source_location": "L614",
+      "source_location": "L742",
       "_origin": "ast",
       "id": "setup_classlogisticssettings_iselementaryimporteropen",
       "community": 31,
       "norm_label": "iselementaryimporteropen"
     },
     {
+      "label": "isGradingInfoModalOpen",
+      "file_type": "code",
+      "source_file": "components/setup/ClassLogisticsSettings.vue",
+      "source_location": "L743",
+      "_origin": "ast",
+      "id": "setup_classlogisticssettings_isgradinginfomodalopen",
+      "community": 31,
+      "norm_label": "isgradinginfomodalopen"
+    },
+    {
       "label": "handleElementaryImport()",
       "file_type": "code",
       "source_file": "components/setup/ClassLogisticsSettings.vue",
-      "source_location": "L616",
+      "source_location": "L745",
       "_origin": "ast",
       "id": "setup_classlogisticssettings_handleelementaryimport",
       "community": 31,
@@ -2877,7 +3157,7 @@
       "label": "localClassName",
       "file_type": "code",
       "source_file": "components/setup/ClassLogisticsSettings.vue",
-      "source_location": "L627",
+      "source_location": "L756",
       "_origin": "ast",
       "id": "setup_classlogisticssettings_localclassname",
       "community": 31,
@@ -2887,7 +3167,7 @@
       "label": "saveClassName()",
       "file_type": "code",
       "source_file": "components/setup/ClassLogisticsSettings.vue",
-      "source_location": "L630",
+      "source_location": "L759",
       "_origin": "ast",
       "id": "setup_classlogisticssettings_saveclassname",
       "community": 31,
@@ -2897,7 +3177,7 @@
       "label": "localCourseCode",
       "file_type": "code",
       "source_file": "components/setup/ClassLogisticsSettings.vue",
-      "source_location": "L639",
+      "source_location": "L768",
       "_origin": "ast",
       "id": "setup_classlogisticssettings_localcoursecode",
       "community": 31,
@@ -2907,7 +3187,7 @@
       "label": "saveCourseCode()",
       "file_type": "code",
       "source_file": "components/setup/ClassLogisticsSettings.vue",
-      "source_location": "L641",
+      "source_location": "L770",
       "_origin": "ast",
       "id": "setup_classlogisticssettings_savecoursecode",
       "community": 31,
@@ -2917,7 +3197,7 @@
       "label": "newGrid",
       "file_type": "code",
       "source_file": "components/setup/ClassLogisticsSettings.vue",
-      "source_location": "L650",
+      "source_location": "L779",
       "_origin": "ast",
       "id": "setup_classlogisticssettings_newgrid",
       "community": 31,
@@ -2927,7 +3207,7 @@
       "label": "resizeConflict",
       "file_type": "code",
       "source_file": "components/setup/ClassLogisticsSettings.vue",
-      "source_location": "L659",
+      "source_location": "L788",
       "_origin": "ast",
       "id": "setup_classlogisticssettings_resizeconflict",
       "community": 31,
@@ -2937,7 +3217,7 @@
       "label": "requestResize()",
       "file_type": "code",
       "source_file": "components/setup/ClassLogisticsSettings.vue",
-      "source_location": "L662",
+      "source_location": "L791",
       "_origin": "ast",
       "id": "setup_classlogisticssettings_requestresize",
       "community": 31,
@@ -2947,7 +3227,7 @@
       "label": "applyResize()",
       "file_type": "code",
       "source_file": "components/setup/ClassLogisticsSettings.vue",
-      "source_location": "L672",
+      "source_location": "L801",
       "_origin": "ast",
       "id": "setup_classlogisticssettings_applyresize",
       "community": 31,
@@ -2957,7 +3237,7 @@
       "label": "setGlobalDefaultGrid()",
       "file_type": "code",
       "source_file": "components/setup/ClassLogisticsSettings.vue",
-      "source_location": "L677",
+      "source_location": "L806",
       "_origin": "ast",
       "id": "setup_classlogisticssettings_setglobaldefaultgrid",
       "community": 31,
@@ -2967,7 +3247,7 @@
       "label": "isArchivedPanelVisible",
       "file_type": "code",
       "source_file": "components/setup/ClassLogisticsSettings.vue",
-      "source_location": "L684",
+      "source_location": "L813",
       "_origin": "ast",
       "id": "setup_classlogisticssettings_isarchivedpanelvisible",
       "community": 31,
@@ -2977,7 +3257,7 @@
       "label": "isStudentModalOpen",
       "file_type": "code",
       "source_file": "components/setup/ClassLogisticsSettings.vue",
-      "source_location": "L685",
+      "source_location": "L814",
       "_origin": "ast",
       "id": "setup_classlogisticssettings_isstudentmodalopen",
       "community": 31,
@@ -2987,7 +3267,7 @@
       "label": "isEditingStudent",
       "file_type": "code",
       "source_file": "components/setup/ClassLogisticsSettings.vue",
-      "source_location": "L686",
+      "source_location": "L815",
       "_origin": "ast",
       "id": "setup_classlogisticssettings_iseditingstudent",
       "community": 31,
@@ -2997,7 +3277,7 @@
       "label": "newStudent",
       "file_type": "code",
       "source_file": "components/setup/ClassLogisticsSettings.vue",
-      "source_location": "L687",
+      "source_location": "L816",
       "_origin": "ast",
       "id": "setup_classlogisticssettings_newstudent",
       "community": 31,
@@ -3007,7 +3287,7 @@
       "label": "singleAddError",
       "file_type": "code",
       "source_file": "components/setup/ClassLogisticsSettings.vue",
-      "source_location": "L688",
+      "source_location": "L817",
       "_origin": "ast",
       "id": "setup_classlogisticssettings_singleadderror",
       "community": 31,
@@ -3017,7 +3297,7 @@
       "label": "singleAddSuccess",
       "file_type": "code",
       "source_file": "components/setup/ClassLogisticsSettings.vue",
-      "source_location": "L689",
+      "source_location": "L818",
       "_origin": "ast",
       "id": "setup_classlogisticssettings_singleaddsuccess",
       "community": 31,
@@ -3027,7 +3307,7 @@
       "label": "openAddStudentModal()",
       "file_type": "code",
       "source_file": "components/setup/ClassLogisticsSettings.vue",
-      "source_location": "L691",
+      "source_location": "L820",
       "_origin": "ast",
       "id": "setup_classlogisticssettings_openaddstudentmodal",
       "community": 31,
@@ -3037,7 +3317,7 @@
       "label": "onEditStudent()",
       "file_type": "code",
       "source_file": "components/setup/ClassLogisticsSettings.vue",
-      "source_location": "L704",
+      "source_location": "L833",
       "_origin": "ast",
       "id": "setup_classlogisticssettings_oneditstudent",
       "community": 31,
@@ -3047,7 +3327,7 @@
       "label": "cancelEditStudent()",
       "file_type": "code",
       "source_file": "components/setup/ClassLogisticsSettings.vue",
-      "source_location": "L717",
+      "source_location": "L846",
       "_origin": "ast",
       "id": "setup_classlogisticssettings_canceleditstudent",
       "community": 31,
@@ -3057,7 +3337,7 @@
       "label": "onArchiveStudent()",
       "file_type": "code",
       "source_file": "components/setup/ClassLogisticsSettings.vue",
-      "source_location": "L730",
+      "source_location": "L859",
       "_origin": "ast",
       "id": "setup_classlogisticssettings_onarchivestudent",
       "community": 31,
@@ -3067,7 +3347,7 @@
       "label": "onUnarchiveStudent()",
       "file_type": "code",
       "source_file": "components/setup/ClassLogisticsSettings.vue",
-      "source_location": "L736",
+      "source_location": "L865",
       "_origin": "ast",
       "id": "setup_classlogisticssettings_onunarchivestudent",
       "community": 31,
@@ -3077,7 +3357,7 @@
       "label": "onPermanentDeleteStudent()",
       "file_type": "code",
       "source_file": "components/setup/ClassLogisticsSettings.vue",
-      "source_location": "L740",
+      "source_location": "L869",
       "_origin": "ast",
       "id": "setup_classlogisticssettings_onpermanentdeletestudent",
       "community": 31,
@@ -3087,7 +3367,7 @@
       "label": "isEnrollingRFID",
       "file_type": "code",
       "source_file": "components/setup/ClassLogisticsSettings.vue",
-      "source_location": "L747",
+      "source_location": "L876",
       "_origin": "ast",
       "id": "setup_classlogisticssettings_isenrollingrfid",
       "community": 31,
@@ -3097,7 +3377,7 @@
       "label": "enrollTimer",
       "file_type": "code",
       "source_file": "components/setup/ClassLogisticsSettings.vue",
-      "source_location": "L748",
+      "source_location": "L877",
       "_origin": "ast",
       "id": "setup_classlogisticssettings_enrolltimer",
       "community": 31,
@@ -3107,7 +3387,7 @@
       "label": "onRFIDEnroll()",
       "file_type": "code",
       "source_file": "components/setup/ClassLogisticsSettings.vue",
-      "source_location": "L750",
+      "source_location": "L879",
       "_origin": "ast",
       "id": "setup_classlogisticssettings_onrfidenroll",
       "community": 31,
@@ -3117,7 +3397,7 @@
       "label": "rfidWedge",
       "file_type": "code",
       "source_file": "components/setup/ClassLogisticsSettings.vue",
-      "source_location": "L766",
+      "source_location": "L895",
       "_origin": "ast",
       "id": "setup_classlogisticssettings_rfidwedge",
       "community": 31,
@@ -3127,7 +3407,7 @@
       "label": "startEnrollment()",
       "file_type": "code",
       "source_file": "components/setup/ClassLogisticsSettings.vue",
-      "source_location": "L768",
+      "source_location": "L897",
       "_origin": "ast",
       "id": "setup_classlogisticssettings_startenrollment",
       "community": 31,
@@ -3137,7 +3417,7 @@
       "label": "stopEnrollment()",
       "file_type": "code",
       "source_file": "components/setup/ClassLogisticsSettings.vue",
-      "source_location": "L782",
+      "source_location": "L911",
       "_origin": "ast",
       "id": "setup_classlogisticssettings_stopenrollment",
       "community": 31,
@@ -3147,7 +3427,7 @@
       "label": "clearRFID()",
       "file_type": "code",
       "source_file": "components/setup/ClassLogisticsSettings.vue",
-      "source_location": "L788",
+      "source_location": "L917",
       "_origin": "ast",
       "id": "setup_classlogisticssettings_clearrfid",
       "community": 31,
@@ -3157,7 +3437,7 @@
       "label": "isRapidRFIDOpen",
       "file_type": "code",
       "source_file": "components/setup/ClassLogisticsSettings.vue",
-      "source_location": "L795",
+      "source_location": "L924",
       "_origin": "ast",
       "id": "setup_classlogisticssettings_israpidrfidopen",
       "community": 31,
@@ -3167,7 +3447,7 @@
       "label": "rapidRFIDIndex",
       "file_type": "code",
       "source_file": "components/setup/ClassLogisticsSettings.vue",
-      "source_location": "L796",
+      "source_location": "L925",
       "_origin": "ast",
       "id": "setup_classlogisticssettings_rapidrfidindex",
       "community": 31,
@@ -3177,7 +3457,7 @@
       "label": "rapidRFIError",
       "file_type": "code",
       "source_file": "components/setup/ClassLogisticsSettings.vue",
-      "source_location": "L797",
+      "source_location": "L926",
       "_origin": "ast",
       "id": "setup_classlogisticssettings_rapidrfierror",
       "community": 31,
@@ -3187,7 +3467,7 @@
       "label": "rapidRFIDSuccess",
       "file_type": "code",
       "source_file": "components/setup/ClassLogisticsSettings.vue",
-      "source_location": "L798",
+      "source_location": "L927",
       "_origin": "ast",
       "id": "setup_classlogisticssettings_rapidrfidsuccess",
       "community": 31,
@@ -3197,7 +3477,7 @@
       "label": "rapidRFIDList",
       "file_type": "code",
       "source_file": "components/setup/ClassLogisticsSettings.vue",
-      "source_location": "L800",
+      "source_location": "L929",
       "_origin": "ast",
       "id": "setup_classlogisticssettings_rapidrfidlist",
       "community": 31,
@@ -3207,7 +3487,7 @@
       "label": "currentRapidStudent",
       "file_type": "code",
       "source_file": "components/setup/ClassLogisticsSettings.vue",
-      "source_location": "L801",
+      "source_location": "L930",
       "_origin": "ast",
       "id": "setup_classlogisticssettings_currentrapidstudent",
       "community": 31,
@@ -3217,7 +3497,7 @@
       "label": "onRapidRFIDScan()",
       "file_type": "code",
       "source_file": "components/setup/ClassLogisticsSettings.vue",
-      "source_location": "L803",
+      "source_location": "L932",
       "_origin": "ast",
       "id": "setup_classlogisticssettings_onrapidrfidscan",
       "community": 31,
@@ -3227,7 +3507,7 @@
       "label": "rapidRFIDWedge",
       "file_type": "code",
       "source_file": "components/setup/ClassLogisticsSettings.vue",
-      "source_location": "L839",
+      "source_location": "L968",
       "_origin": "ast",
       "id": "setup_classlogisticssettings_rapidrfidwedge",
       "community": 31,
@@ -3237,7 +3517,7 @@
       "label": "openRapidRFID()",
       "file_type": "code",
       "source_file": "components/setup/ClassLogisticsSettings.vue",
-      "source_location": "L841",
+      "source_location": "L970",
       "_origin": "ast",
       "id": "setup_classlogisticssettings_openrapidrfid",
       "community": 31,
@@ -3247,7 +3527,7 @@
       "label": "stopRapidRFID()",
       "file_type": "code",
       "source_file": "components/setup/ClassLogisticsSettings.vue",
-      "source_location": "L853",
+      "source_location": "L982",
       "_origin": "ast",
       "id": "setup_classlogisticssettings_stoprapidrfid",
       "community": 31,
@@ -3257,7 +3537,7 @@
       "label": "playRapidBeep()",
       "file_type": "code",
       "source_file": "components/setup/ClassLogisticsSettings.vue",
-      "source_location": "L858",
+      "source_location": "L987",
       "_origin": "ast",
       "id": "setup_classlogisticssettings_playrapidbeep",
       "community": 31,
@@ -3267,7 +3547,7 @@
       "label": "crossClassConflicts",
       "file_type": "code",
       "source_file": "components/setup/ClassLogisticsSettings.vue",
-      "source_location": "L873",
+      "source_location": "L1002",
       "_origin": "ast",
       "id": "setup_classlogisticssettings_crossclassconflicts",
       "community": 31,
@@ -3277,7 +3557,7 @@
       "label": "_pendingConflicts",
       "file_type": "code",
       "source_file": "components/setup/ClassLogisticsSettings.vue",
-      "source_location": "L874",
+      "source_location": "L1003",
       "_origin": "ast",
       "id": "setup_classlogisticssettings_pendingconflicts",
       "community": 31,
@@ -3287,7 +3567,7 @@
       "label": "addSingleStudent()",
       "file_type": "code",
       "source_file": "components/setup/ClassLogisticsSettings.vue",
-      "source_location": "L876",
+      "source_location": "L1005",
       "_origin": "ast",
       "id": "setup_classlogisticssettings_addsinglestudent",
       "community": 31,
@@ -3297,7 +3577,7 @@
       "label": "resolveConflicts()",
       "file_type": "code",
       "source_file": "components/setup/ClassLogisticsSettings.vue",
-      "source_location": "L916",
+      "source_location": "L1045",
       "_origin": "ast",
       "id": "setup_classlogisticssettings_resolveconflicts",
       "community": 31,
@@ -4310,7 +4590,7 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "composables_useattendancetracker_logattendanceevent",
-      "community": 13,
+      "community": 14,
       "norm_label": "logattendanceevent()"
     },
     {
@@ -4910,7 +5190,7 @@
       "source_location": "L1536",
       "_origin": "ast",
       "id": "composables_useclassroom_useclassroom",
-      "community": 1,
+      "community": 49,
       "norm_label": "useclassroom()"
     },
     {
@@ -4960,7 +5240,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "composables_useclassroomstate_activeclass",
-      "community": 14,
+      "community": 13,
       "norm_label": "activeclass"
     },
     {
@@ -5300,7 +5580,7 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "composables_usegradeediting_usegradeediting",
-      "community": 13,
+      "community": 38,
       "norm_label": "usegradeediting()"
     },
     {
@@ -5330,7 +5610,7 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "composables_usegradebook_activeclassrecord",
-      "community": 19,
+      "community": 38,
       "norm_label": "activeclassrecord"
     },
     {
@@ -5340,7 +5620,7 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "composables_usegradebook_assessments",
-      "community": 19,
+      "community": 38,
       "norm_label": "assessments"
     },
     {
@@ -5490,7 +5770,7 @@
       "source_location": "L91",
       "_origin": "ast",
       "id": "composables_usegradebook_isassessmentinsubcohort",
-      "community": 22,
+      "community": 15,
       "norm_label": "isassessmentinsubcohort()"
     },
     {
@@ -5700,7 +5980,7 @@
       "source_location": "L232",
       "_origin": "ast",
       "id": "composables_usegradebook_refreshgrades",
-      "community": 0,
+      "community": 46,
       "norm_label": "refreshgrades()"
     },
     {
@@ -5710,7 +5990,7 @@
       "source_location": "L252",
       "_origin": "ast",
       "id": "composables_usegradebook_refreshclassanalytics",
-      "community": 22,
+      "community": 46,
       "norm_label": "refreshclassanalytics()"
     },
     {
@@ -5720,7 +6000,7 @@
       "source_location": "L279",
       "_origin": "ast",
       "id": "composables_usegradebook_setexclusionmode",
-      "community": 22,
+      "community": 46,
       "norm_label": "setexclusionmode()"
     },
     {
@@ -5770,7 +6050,7 @@
       "source_location": "L365",
       "_origin": "ast",
       "id": "composables_usegradebook_deleteassessment",
-      "community": 0,
+      "community": 46,
       "norm_label": "deleteassessment()"
     },
     {
@@ -5950,7 +6230,7 @@
       "source_location": "L991",
       "_origin": "ast",
       "id": "composables_usegradebook_savestudentoverride",
-      "community": 0,
+      "community": 46,
       "norm_label": "savestudentoverride()"
     },
     {
@@ -5960,7 +6240,7 @@
       "source_location": "L1025",
       "_origin": "ast",
       "id": "composables_usegradebook_savestudentgradebooknote",
-      "community": 1,
+      "community": 49,
       "norm_label": "savestudentgradebooknote()"
     },
     {
@@ -5980,7 +6260,7 @@
       "source_location": "L1087",
       "_origin": "ast",
       "id": "composables_usegradebook_grademap",
-      "community": 19,
+      "community": 38,
       "norm_label": "grademap"
     },
     {
@@ -5990,7 +6270,7 @@
       "source_location": "L1132",
       "_origin": "ast",
       "id": "composables_usegradebook_adjuststudentgrade",
-      "community": 38,
+      "community": 46,
       "norm_label": "adjuststudentgrade()"
     },
     {
@@ -6000,7 +6280,7 @@
       "source_location": "L1162",
       "_origin": "ast",
       "id": "composables_usegradebook_undostudentgradeadjustment",
-      "community": 38,
+      "community": 46,
       "norm_label": "undostudentgradeadjustment()"
     },
     {
@@ -6030,7 +6310,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "composables_usemessage",
-      "community": 19,
+      "community": 13,
       "norm_label": "usemessage.js"
     },
     {
@@ -6040,7 +6320,7 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "composables_usemessage_state",
-      "community": 19,
+      "community": 13,
       "norm_label": "state"
     },
     {
@@ -6414,13 +6694,33 @@
       "norm_label": "autoassignseats()"
     },
     {
+      "label": "useSBarPrintOptions.js",
+      "file_type": "code",
+      "source_file": "composables/useSBarPrintOptions.js",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "composables_usesbarprintoptions",
+      "community": 52,
+      "norm_label": "usesbarprintoptions.js"
+    },
+    {
+      "label": "useSBarPrintOptions()",
+      "file_type": "code",
+      "source_file": "composables/useSBarPrintOptions.js",
+      "source_location": "L15",
+      "_origin": "ast",
+      "id": "composables_usesbarprintoptions_usesbarprintoptions",
+      "community": 52,
+      "norm_label": "usesbarprintoptions()"
+    },
+    {
       "label": "useStudentDossier.js",
       "file_type": "code",
       "source_file": "composables/useStudentDossier.js",
       "source_location": "L1",
       "_origin": "ast",
       "id": "composables_usestudentdossier",
-      "community": 8,
+      "community": 49,
       "norm_label": "usestudentdossier.js"
     },
     {
@@ -6430,7 +6730,7 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "composables_usestudentdossier_usestudentdossier",
-      "community": 1,
+      "community": 49,
       "norm_label": "usestudentdossier()"
     },
     {
@@ -6890,7 +7190,7 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "db_eventservice_tominutes",
-      "community": 8,
+      "community": 49,
       "norm_label": "tominutes()"
     },
     {
@@ -7010,7 +7310,7 @@
       "source_location": "L414",
       "_origin": "ast",
       "id": "db_eventservice_getdaterangeforperiod",
-      "community": 8,
+      "community": 19,
       "norm_label": "getdaterangeforperiod()"
     },
     {
@@ -7020,7 +7320,7 @@
       "source_location": "L466",
       "_origin": "ast",
       "id": "db_eventservice_getdaterangeforclassperiod",
-      "community": 8,
+      "community": 19,
       "norm_label": "getdaterangeforclassperiod()"
     },
     {
@@ -7070,7 +7370,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "db_exportservice",
-      "community": 19,
+      "community": 6,
       "norm_label": "exportservice.js"
     },
     {
@@ -7390,7 +7690,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "gradebook_gradecalcsbar",
-      "community": 2,
+      "community": 52,
       "norm_label": "gradecalcsbar.js"
     },
     {
@@ -7400,7 +7700,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "gradebook_gradecalcsbar_calculatedecayingaverage",
-      "community": 2,
+      "community": 52,
       "norm_label": "calculatedecayingaverage()"
     },
     {
@@ -7410,7 +7710,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "gradebook_gradecalcsbar_getsbarlevelbadge",
-      "community": 2,
+      "community": 52,
       "norm_label": "getsbarlevelbadge()"
     },
     {
@@ -7420,7 +7720,7 @@
       "source_location": "L67",
       "_origin": "ast",
       "id": "gradebook_gradecalcsbar_calculatepowerlaw",
-      "community": 2,
+      "community": 52,
       "norm_label": "calculatepowerlaw()"
     },
     {
@@ -7430,7 +7730,7 @@
       "source_location": "L109",
       "_origin": "ast",
       "id": "gradebook_gradecalcsbar_calculatemode",
-      "community": 2,
+      "community": 52,
       "norm_label": "calculatemode()"
     },
     {
@@ -7440,7 +7740,7 @@
       "source_location": "L145",
       "_origin": "ast",
       "id": "gradebook_gradecalcsbar_calculatesbarexpectationmastery",
-      "community": 2,
+      "community": 52,
       "norm_label": "calculatesbarexpectationmastery()"
     },
     {
@@ -7450,7 +7750,7 @@
       "source_location": "L327",
       "_origin": "ast",
       "id": "gradebook_gradecalcsbar_calculatesbarstudentoverallmastery",
-      "community": 2,
+      "community": 52,
       "norm_label": "calculatesbarstudentoverallmastery()"
     },
     {
@@ -7590,7 +7890,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "db_gradebookservice",
-      "community": 85,
+      "community": 2,
       "norm_label": "gradebookservice.js"
     },
     {
@@ -7910,7 +8210,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_dates",
-      "community": 19,
+      "community": 85,
       "norm_label": "dates.js"
     },
     {
@@ -7930,7 +8230,7 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "utils_dates_parselocal",
-      "community": 19,
+      "community": 6,
       "norm_label": "parselocal()"
     },
     {
@@ -9046,12 +9346,23 @@
       "relation": "imports_from",
       "context": "import",
       "confidence": "EXTRACTED",
+      "source_file": "components/dossier/Student360EmailModal.vue",
+      "source_location": "L86",
+      "weight": 1.0,
+      "source": "dossier_student360emailmodal",
+      "target": "components_basemodal",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
       "source_file": "components/dossier/Student360PrintModal.vue",
       "source_location": "L146",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "dossier_student360printmodal",
-      "target": "components_basemodal",
-      "confidence_score": 1.0
+      "target": "components_basemodal"
     },
     {
       "relation": "imports_from",
@@ -9091,9 +9402,9 @@
       "source_file": "components/GradesAnalyticsPanel.vue",
       "source_location": "L562",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "components_gradesanalyticspanel",
-      "target": "components_gradesanalyticspanel_activestudentgrades",
-      "confidence_score": 1.0
+      "target": "components_gradesanalyticspanel_activestudentgrades"
     },
     {
       "relation": "contains",
@@ -9484,9 +9795,9 @@
       "source_file": "components/GradesAnalyticsPanel.vue",
       "source_location": "L429",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "components_gradesanalyticspanel",
-      "target": "composables_usegradebook_isassessmentinsubcohort",
-      "confidence_score": 1.0
+      "target": "composables_usegradebook_isassessmentinsubcohort"
     },
     {
       "relation": "imports",
@@ -9616,9 +9927,9 @@
       "source_file": "components/GradesAnalyticsPanel.vue",
       "source_location": "L448",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "components_gradesanalyticspanel",
-      "target": "utils_gradecolors_getsectioncolor",
-      "confidence_score": 1.0
+      "target": "utils_gradecolors_getsectioncolor"
     },
     {
       "relation": "calls",
@@ -10078,6 +10389,16 @@
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
+      "source_file": "components/PrintGradesGridModal.vue",
+      "source_location": "L554",
+      "weight": 1.0,
+      "source": "components_printgradesgridmodal",
+      "target": "components_printgradesgridmodal_if",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
       "source_file": "components/QRScanner.vue",
       "source_location": "L843",
       "weight": 1.0,
@@ -10370,9 +10691,9 @@
       "source_file": "components/StudentSidebar.vue",
       "source_location": "L159",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "components_studentsidebar",
-      "target": "components_studentsidebar_if",
-      "confidence_score": 1.0
+      "target": "components_studentsidebar_if"
     },
     {
       "relation": "imports_from",
@@ -10577,8 +10898,19 @@
       "source_file": "components/dossier/Student360PrintModal.vue",
       "source_location": "L148",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "dossier_student360printmodal",
-      "target": "dossier_attendanceactivityreport",
+      "target": "dossier_attendanceactivityreport"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "components/dossier/ProgressReport.vue",
+      "source_location": "L184",
+      "weight": 1.0,
+      "source": "dossier_progressreport",
+      "target": "dossier_dossierevidencemix",
       "confidence_score": 1.0
     },
     {
@@ -10592,14 +10924,179 @@
       "target": "dossier_dossierqualitativeevidence_if"
     },
     {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "components/dossier/ProgressReport.vue",
+      "source_location": "L173",
+      "weight": 1.0,
+      "source": "dossier_progressreport",
+      "target": "composables_useclassroom",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "components/dossier/ProgressReport.vue",
+      "source_location": "L173",
+      "weight": 1.0,
+      "source": "dossier_progressreport",
+      "target": "composables_useclassroom_useclassroom",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "components/dossier/ProgressReport.vue",
+      "source_location": "L187",
+      "weight": 1.0,
+      "source": "dossier_progressreport",
+      "target": "composables_useclassroomstate",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "components/dossier/ProgressReport.vue",
+      "source_location": "L187",
+      "weight": 1.0,
+      "source": "dossier_progressreport",
+      "target": "composables_useclassroomstate_activesubjectid",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "components/dossier/ProgressReport.vue",
+      "source_location": "L186",
+      "weight": 1.0,
+      "source": "dossier_progressreport",
+      "target": "composables_useelementary",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "components/dossier/ProgressReport.vue",
+      "source_location": "L186",
+      "weight": 1.0,
+      "source": "dossier_progressreport",
+      "target": "composables_useelementary_geteffectiveclassrecord",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "components/dossier/ProgressReport.vue",
+      "source_location": "L174",
+      "weight": 1.0,
+      "source": "dossier_progressreport",
+      "target": "composables_usegradebook",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "components/dossier/ProgressReport.vue",
+      "source_location": "L174",
+      "weight": 1.0,
+      "source": "dossier_progressreport",
+      "target": "composables_usegradebook_activeclassrecord",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "components/dossier/ProgressReport.vue",
+      "source_location": "L174",
+      "weight": 1.0,
+      "source": "dossier_progressreport",
+      "target": "composables_usegradebook_assessments",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "components/dossier/ProgressReport.vue",
+      "source_location": "L174",
+      "weight": 1.0,
+      "source": "dossier_progressreport",
+      "target": "composables_usegradebook_classgrades",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "components/dossier/ProgressReport.vue",
+      "source_location": "L174",
+      "weight": 1.0,
+      "source": "dossier_progressreport",
+      "target": "composables_usegradebook_grademap",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "components/dossier/ProgressReport.vue",
+      "source_location": "L174",
+      "weight": 1.0,
+      "source": "dossier_progressreport",
+      "target": "composables_usegradebook_isassessmentinsubcohort",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "components/dossier/ProgressReport.vue",
+      "source_location": "L181",
+      "weight": 1.0,
+      "source": "dossier_progressreport",
+      "target": "db_eventservice",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "components/dossier/ProgressReport.vue",
+      "source_location": "L181",
+      "weight": 1.0,
+      "source": "dossier_progressreport",
+      "target": "db_eventservice_geteventsbystudent",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "components/dossier/ProgressReport.vue",
+      "source_location": "L181",
+      "weight": 1.0,
+      "source": "dossier_progressreport",
+      "target": "db_eventservice_tominutes",
+      "confidence_score": 1.0
+    },
+    {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "components/dossier/ProgressReport.vue",
       "source_location": "L295",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "dossier_progressreport",
-      "target": "dossier_progressreport_allcombinedwork",
-      "confidence_score": 1.0
+      "target": "dossier_progressreport_allcombinedwork"
     },
     {
       "relation": "contains",
@@ -10647,8 +11144,28 @@
       "source_file": "components/dossier/ProgressReport.vue",
       "source_location": "L216",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "dossier_progressreport",
-      "target": "dossier_progressreport_displaymetaline",
+      "target": "dossier_progressreport_displaymetaline"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "components/dossier/ProgressReport.vue",
+      "source_location": "L189",
+      "weight": 1.0,
+      "source": "dossier_progressreport",
+      "target": "dossier_progressreport_effectiveclass",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "components/dossier/ProgressReport.vue",
+      "source_location": "L215",
+      "weight": 1.0,
+      "source": "dossier_progressreport",
+      "target": "dossier_progressreport_events",
       "confidence_score": 1.0
     },
     {
@@ -10665,11 +11182,31 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "components/dossier/ProgressReport.vue",
+      "source_location": "L218",
+      "weight": 1.0,
+      "source": "dossier_progressreport",
+      "target": "dossier_progressreport_fetchevents",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "components/dossier/ProgressReport.vue",
       "source_location": "L271",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "dossier_progressreport",
       "target": "dossier_progressreport_formatdate"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "components/dossier/ProgressReport.vue",
+      "source_location": "L234",
+      "weight": 1.0,
+      "source": "dossier_progressreport",
+      "target": "dossier_progressreport_formattedgrade",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -10705,6 +11242,26 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "components/dossier/ProgressReport.vue",
+      "source_location": "L193",
+      "weight": 1.0,
+      "source": "dossier_progressreport",
+      "target": "dossier_progressreport_issbar",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "components/dossier/ProgressReport.vue",
+      "source_location": "L216",
+      "weight": 1.0,
+      "source": "dossier_progressreport",
+      "target": "dossier_progressreport_loading",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "components/dossier/ProgressReport.vue",
       "source_location": "L303",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -10725,6 +11282,16 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "components/dossier/ProgressReport.vue",
+      "source_location": "L233",
+      "weight": 1.0,
+      "source": "dossier_progressreport",
+      "target": "dossier_progressreport_overallgrade",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "components/dossier/ProgressReport.vue",
       "source_location": "L268",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -10740,6 +11307,16 @@
       "confidence_score": 1.0,
       "source": "dossier_progressreport",
       "target": "dossier_progressreport_overallweightedmedian"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "components/dossier/ProgressReport.vue",
+      "source_location": "L198",
+      "weight": 1.0,
+      "source": "dossier_progressreport",
+      "target": "dossier_progressreport_props",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -10767,8 +11344,18 @@
       "source_file": "components/dossier/ProgressReport.vue",
       "source_location": "L306",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "dossier_progressreport",
-      "target": "dossier_progressreport_splitworkcolumns",
+      "target": "dossier_progressreport_splitworkcolumns"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "components/dossier/ProgressReport.vue",
+      "source_location": "L231",
+      "weight": 1.0,
+      "source": "dossier_progressreport",
+      "target": "dossier_progressreport_student",
       "confidence_score": 1.0
     },
     {
@@ -10780,6 +11367,26 @@
       "confidence_score": 1.0,
       "source": "dossier_progressreport",
       "target": "dossier_progressreport_studentassessments"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "components/dossier/ProgressReport.vue",
+      "source_location": "L232",
+      "weight": 1.0,
+      "source": "dossier_progressreport",
+      "target": "dossier_progressreport_studentgrades",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "components/dossier/ProgressReport.vue",
+      "source_location": "L213",
+      "weight": 1.0,
+      "source": "dossier_progressreport",
+      "target": "dossier_progressreport_students_activeclass_behaviorcodes_teachername",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -10805,12 +11412,78 @@
       "relation": "imports_from",
       "context": "import",
       "confidence": "EXTRACTED",
+      "source_file": "components/dossier/ProgressReport.vue",
+      "source_location": "L185",
+      "weight": 1.0,
+      "source": "dossier_progressreport",
+      "target": "dossier_sbarprogressreport",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "components/dossier/ProgressReport.vue",
+      "source_location": "L183",
+      "weight": 1.0,
+      "source": "dossier_progressreport",
+      "target": "dossier_studentgradetrend",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "components/dossier/ProgressReport.vue",
+      "source_location": "L182",
+      "weight": 1.0,
+      "source": "dossier_progressreport",
+      "target": "utils_dates",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "components/dossier/ProgressReport.vue",
+      "source_location": "L182",
+      "weight": 1.0,
+      "source": "dossier_progressreport",
+      "target": "utils_dates_formatlocaldisplay",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
       "source_file": "components/dossier/Student360PrintModal.vue",
       "source_location": "L147",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "dossier_student360printmodal",
-      "target": "dossier_progressreport",
-      "confidence_score": 1.0
+      "target": "dossier_progressreport"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "components/dossier/ProgressReport.vue",
+      "source_location": "L222",
+      "weight": 1.0,
+      "source": "dossier_progressreport_fetchevents",
+      "target": "db_eventservice_geteventsbystudent"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "components/dossier/ProgressReport.vue",
+      "source_location": "L253",
+      "weight": 1.0,
+      "source": "dossier_progressreport_formatdate",
+      "target": "utils_dates_formatlocaldisplay"
     },
     {
       "relation": "contains",
@@ -11038,9 +11711,9 @@
       "source_file": "components/dossier/Student360.vue",
       "source_location": "L759",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "dossier_student360",
-      "target": "dossier_student360_saveparentcontacts",
-      "confidence_score": 1.0
+      "target": "dossier_student360_saveparentcontacts"
     },
     {
       "relation": "contains",
@@ -11048,9 +11721,9 @@
       "source_file": "components/dossier/Student360.vue",
       "source_location": "L755",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "dossier_student360",
-      "target": "dossier_student360_savestudentaccommodations",
-      "confidence_score": 1.0
+      "target": "dossier_student360_savestudentaccommodations"
     },
     {
       "relation": "contains",
@@ -11133,13 +11806,362 @@
       "target": "dossier_student360_washroomcount"
     },
     {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "components/dossier/Student360EmailModal.vue",
+      "source_location": "L92",
+      "weight": 1.0,
+      "source": "dossier_student360emailmodal",
+      "target": "composables_useclassroomstate",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "components/dossier/Student360EmailModal.vue",
+      "source_location": "L92",
+      "weight": 1.0,
+      "source": "dossier_student360emailmodal",
+      "target": "composables_useclassroomstate_activesubjectid",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "components/dossier/Student360EmailModal.vue",
+      "source_location": "L91",
+      "weight": 1.0,
+      "source": "dossier_student360emailmodal",
+      "target": "composables_useelementary",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "components/dossier/Student360EmailModal.vue",
+      "source_location": "L91",
+      "weight": 1.0,
+      "source": "dossier_student360emailmodal",
+      "target": "composables_useelementary_geteffectiveclassrecord",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "components/dossier/Student360EmailModal.vue",
+      "source_location": "L88",
+      "weight": 1.0,
+      "source": "dossier_student360emailmodal",
+      "target": "composables_usegradebook",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "components/dossier/Student360EmailModal.vue",
+      "source_location": "L88",
+      "weight": 1.0,
+      "source": "dossier_student360emailmodal",
+      "target": "composables_usegradebook_activeclassrecord",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "components/dossier/Student360EmailModal.vue",
+      "source_location": "L88",
+      "weight": 1.0,
+      "source": "dossier_student360emailmodal",
+      "target": "composables_usegradebook_assessments",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "components/dossier/Student360EmailModal.vue",
+      "source_location": "L88",
+      "weight": 1.0,
+      "source": "dossier_student360emailmodal",
+      "target": "composables_usegradebook_grademap",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "components/dossier/Student360EmailModal.vue",
+      "source_location": "L89",
+      "weight": 1.0,
+      "source": "dossier_student360emailmodal",
+      "target": "composables_usesbarprintoptions",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "components/dossier/Student360EmailModal.vue",
+      "source_location": "L89",
+      "weight": 1.0,
+      "source": "dossier_student360emailmodal",
+      "target": "composables_usesbarprintoptions_usesbarprintoptions",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "components/dossier/Student360EmailModal.vue",
+      "source_location": "L113",
+      "weight": 1.0,
+      "source": "dossier_student360emailmodal",
+      "target": "dossier_student360emailmodal_effectiveclass",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "components/dossier/Student360EmailModal.vue",
+      "source_location": "L127",
+      "weight": 1.0,
+      "source": "dossier_student360emailmodal",
+      "target": "dossier_student360emailmodal_emailconfig",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "components/dossier/Student360EmailModal.vue",
+      "source_location": "L132",
+      "weight": 1.0,
+      "source": "dossier_student360emailmodal",
+      "target": "dossier_student360emailmodal_emailrecipients",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "components/dossier/Student360EmailModal.vue",
+      "source_location": "L107",
+      "weight": 1.0,
+      "source": "dossier_student360emailmodal",
+      "target": "dossier_student360emailmodal_emit",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "components/dossier/Student360EmailModal.vue",
+      "source_location": "L163",
+      "weight": 1.0,
+      "source": "dossier_student360emailmodal",
+      "target": "dossier_student360emailmodal_generateemaillink",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "components/dossier/Student360EmailModal.vue",
+      "source_location": "L111",
+      "weight": 1.0,
+      "source": "dossier_student360emailmodal",
+      "target": "dossier_student360emailmodal_getstudentoverallsbarbadge_preparesbarreportdata",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "components/dossier/Student360EmailModal.vue",
+      "source_location": "L117",
+      "weight": 1.0,
+      "source": "dossier_student360emailmodal",
+      "target": "dossier_student360emailmodal_issbar",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "components/dossier/Student360EmailModal.vue",
+      "source_location": "L94",
+      "weight": 1.0,
+      "source": "dossier_student360emailmodal",
+      "target": "dossier_student360emailmodal_props",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "components/dossier/Student360EmailModal.vue",
+      "source_location": "L122",
+      "weight": 1.0,
+      "source": "dossier_student360emailmodal",
+      "target": "dossier_student360emailmodal_sbaroverallbadge",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "components/dossier/Student360EmailModal.vue",
+      "source_location": "L147",
+      "weight": 1.0,
+      "source": "dossier_student360emailmodal",
+      "target": "dossier_student360emailmodal_selectedrecipientemails",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "components/dossier/Student360EmailModal.vue",
+      "source_location": "L109",
+      "weight": 1.0,
+      "source": "dossier_student360emailmodal",
+      "target": "dossier_student360emailmodal_targetstudentid",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "components/dossier/Student360EmailModal.vue",
+      "source_location": "L155",
+      "weight": 1.0,
+      "source": "dossier_student360emailmodal",
+      "target": "dossier_student360emailmodal_togglerecipient",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "components/dossier/Student360EmailModal.vue",
+      "source_location": "L87",
+      "weight": 1.0,
+      "source": "dossier_student360emailmodal",
+      "target": "utils_dates",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "components/dossier/Student360EmailModal.vue",
+      "source_location": "L87",
+      "weight": 1.0,
+      "source": "dossier_student360emailmodal",
+      "target": "utils_dates_formatlocaldisplay",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "components/dossier/Student360EmailModal.vue",
+      "source_location": "L270",
+      "weight": 1.0,
+      "source": "dossier_student360emailmodal_generateemaillink",
+      "target": "dossier_student360emailmodal_emit",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "components/dossier/Student360PrintModal.vue",
+      "source_location": "L189",
+      "weight": 1.0,
+      "source": "dossier_student360printmodal",
+      "target": "composables_useclassroomstate",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "components/dossier/Student360PrintModal.vue",
+      "source_location": "L189",
+      "weight": 1.0,
+      "source": "dossier_student360printmodal",
+      "target": "composables_useclassroomstate_activesubjectid",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "components/dossier/Student360PrintModal.vue",
+      "source_location": "L188",
+      "weight": 1.0,
+      "source": "dossier_student360printmodal",
+      "target": "composables_useelementary",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "components/dossier/Student360PrintModal.vue",
+      "source_location": "L188",
+      "weight": 1.0,
+      "source": "dossier_student360printmodal",
+      "target": "composables_useelementary_geteffectiveclassrecord",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "components/dossier/Student360PrintModal.vue",
+      "source_location": "L187",
+      "weight": 1.0,
+      "source": "dossier_student360printmodal",
+      "target": "composables_usegradebook",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "components/dossier/Student360PrintModal.vue",
+      "source_location": "L187",
+      "weight": 1.0,
+      "source": "dossier_student360printmodal",
+      "target": "composables_usegradebook_activeclassrecord",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "components/dossier/Student360PrintModal.vue",
+      "source_location": "L202",
+      "weight": 1.0,
+      "source": "dossier_student360printmodal",
+      "target": "dossier_student360printmodal_effectiveclass",
+      "confidence_score": 1.0
+    },
+    {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "components/dossier/Student360PrintModal.vue",
       "source_location": "L156",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "dossier_student360printmodal",
-      "target": "dossier_student360printmodal_emit",
+      "target": "dossier_student360printmodal_emit"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "components/dossier/Student360PrintModal.vue",
+      "source_location": "L206",
+      "weight": 1.0,
+      "source": "dossier_student360printmodal",
+      "target": "dossier_student360printmodal_issbar",
       "confidence_score": 1.0
     },
     {
@@ -11148,9 +12170,9 @@
       "source_file": "components/dossier/Student360PrintModal.vue",
       "source_location": "L159",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "dossier_student360printmodal",
-      "target": "dossier_student360printmodal_issystemprinting",
-      "confidence_score": 1.0
+      "target": "dossier_student360printmodal_issystemprinting"
     },
     {
       "relation": "contains",
@@ -11158,9 +12180,9 @@
       "source_file": "components/dossier/Student360PrintModal.vue",
       "source_location": "L169",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "dossier_student360printmodal",
-      "target": "dossier_student360printmodal_printconfig",
-      "confidence_score": 1.0
+      "target": "dossier_student360printmodal_printconfig"
     },
     {
       "relation": "contains",
@@ -11168,9 +12190,9 @@
       "source_file": "components/dossier/Student360PrintModal.vue",
       "source_location": "L150",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "dossier_student360printmodal",
-      "target": "dossier_student360printmodal_props",
-      "confidence_score": 1.0
+      "target": "dossier_student360printmodal_props"
     },
     {
       "relation": "contains",
@@ -11178,9 +12200,9 @@
       "source_file": "components/dossier/Student360PrintModal.vue",
       "source_location": "L158",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "dossier_student360printmodal",
-      "target": "dossier_student360printmodal_showprintpreview",
-      "confidence_score": 1.0
+      "target": "dossier_student360printmodal_showprintpreview"
     },
     {
       "relation": "contains",
@@ -11188,9 +12210,9 @@
       "source_file": "components/dossier/Student360PrintModal.vue",
       "source_location": "L180",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "dossier_student360printmodal",
-      "target": "dossier_student360printmodal_triggerprint",
-      "confidence_score": 1.0
+      "target": "dossier_student360printmodal_triggerprint"
     },
     {
       "relation": "calls",
@@ -11199,9 +12221,9 @@
       "source_file": "components/dossier/Student360PrintModal.vue",
       "source_location": "L181",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "dossier_student360printmodal_triggerprint",
-      "target": "dossier_student360printmodal_emit",
-      "confidence_score": 1.0
+      "target": "dossier_student360printmodal_emit"
     },
     {
       "relation": "contains",
@@ -11209,9 +12231,9 @@
       "source_file": "components/dossier/Student360ProfileTab.vue",
       "source_location": "L458",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "dossier_student360profiletab",
-      "target": "dossier_student360profiletab_if",
-      "confidence_score": 1.0
+      "target": "dossier_student360profiletab_if"
     },
     {
       "relation": "contains",
@@ -11304,9 +12326,9 @@
       "source_file": "components/grades/GradesGridSBAR.vue",
       "source_location": "L230",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "grades_gradesgridsbar",
-      "target": "grades_gradesgridsbar_for",
-      "confidence_score": 1.0
+      "target": "grades_gradesgridsbar_for"
     },
     {
       "relation": "imports_from",
@@ -11855,9 +12877,9 @@
       "source_file": "components/setup/AssessmentFrameworkSettings.vue",
       "source_location": "L592",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "setup_assessmentframeworksettings",
-      "target": "setup_assessmentframeworksettings_frameworkbannertype",
-      "confidence_score": 1.0
+      "target": "setup_assessmentframeworksettings_frameworkbannertype"
     },
     {
       "relation": "contains",
@@ -11935,9 +12957,9 @@
       "source_file": "components/setup/AssessmentFrameworkSettings.vue",
       "source_location": "L467",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "setup_assessmentframeworksettings",
-      "target": "setup_assessmentframeworksettings_onclearexpectationsfrommodal",
-      "confidence_score": 1.0
+      "target": "setup_assessmentframeworksettings_onclearexpectationsfrommodal"
     },
     {
       "relation": "contains",
@@ -12015,9 +13037,9 @@
       "source_file": "components/setup/AssessmentFrameworkSettings.vue",
       "source_location": "L602",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "setup_assessmentframeworksettings",
-      "target": "setup_assessmentframeworksettings_showsuccess",
-      "confidence_score": 1.0
+      "target": "setup_assessmentframeworksettings_showsuccess"
     },
     {
       "relation": "contains",
@@ -12045,9 +13067,9 @@
       "source_file": "components/setup/AssessmentFrameworkSettings.vue",
       "source_location": "L463",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "setup_assessmentframeworksettings",
-      "target": "setup_assessmentframeworksettings_totalexpectationscount",
-      "confidence_score": 1.0
+      "target": "setup_assessmentframeworksettings_totalexpectationscount"
     },
     {
       "relation": "contains",
@@ -12110,9 +13132,9 @@
       "source_file": "components/setup/AssessmentFrameworkSettings.vue",
       "source_location": "L373",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "setup_assessmentframeworksettings_copyunitstoallsections",
-      "target": "setup_assessmentframeworksettings_showsuccess",
-      "confidence_score": 1.0
+      "target": "setup_assessmentframeworksettings_showsuccess"
     },
     {
       "relation": "calls",
@@ -12176,9 +13198,9 @@
       "source_file": "components/setup/AssessmentFrameworkSettings.vue",
       "source_location": "L498",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "setup_assessmentframeworksettings_onclearexpectationsfrommodal",
-      "target": "setup_assessmentframeworksettings_savegradebooksettings",
-      "confidence_score": 1.0
+      "target": "setup_assessmentframeworksettings_savegradebooksettings"
     },
     {
       "relation": "calls",
@@ -12318,9 +13340,9 @@
       "source_file": "components/setup/ClassLogisticsSettings.vue",
       "source_location": "L876",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "setup_classlogisticssettings",
-      "target": "setup_classlogisticssettings_addsinglestudent",
-      "confidence_score": 1.0
+      "target": "setup_classlogisticssettings_addsinglestudent"
     },
     {
       "relation": "contains",
@@ -12328,9 +13350,9 @@
       "source_file": "components/setup/ClassLogisticsSettings.vue",
       "source_location": "L672",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "setup_classlogisticssettings",
-      "target": "setup_classlogisticssettings_applyresize",
-      "confidence_score": 1.0
+      "target": "setup_classlogisticssettings_applyresize"
     },
     {
       "relation": "contains",
@@ -12338,9 +13360,9 @@
       "source_file": "components/setup/ClassLogisticsSettings.vue",
       "source_location": "L717",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "setup_classlogisticssettings",
-      "target": "setup_classlogisticssettings_canceleditstudent",
-      "confidence_score": 1.0
+      "target": "setup_classlogisticssettings_canceleditstudent"
     },
     {
       "relation": "contains",
@@ -12348,9 +13370,9 @@
       "source_file": "components/setup/ClassLogisticsSettings.vue",
       "source_location": "L788",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "setup_classlogisticssettings",
-      "target": "setup_classlogisticssettings_clearrfid",
-      "confidence_score": 1.0
+      "target": "setup_classlogisticssettings_clearrfid"
     },
     {
       "relation": "contains",
@@ -12358,9 +13380,9 @@
       "source_file": "components/setup/ClassLogisticsSettings.vue",
       "source_location": "L873",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "setup_classlogisticssettings",
-      "target": "setup_classlogisticssettings_crossclassconflicts",
-      "confidence_score": 1.0
+      "target": "setup_classlogisticssettings_crossclassconflicts"
     },
     {
       "relation": "contains",
@@ -12368,9 +13390,9 @@
       "source_file": "components/setup/ClassLogisticsSettings.vue",
       "source_location": "L801",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "setup_classlogisticssettings",
-      "target": "setup_classlogisticssettings_currentrapidstudent",
-      "confidence_score": 1.0
+      "target": "setup_classlogisticssettings_currentrapidstudent"
     },
     {
       "relation": "contains",
@@ -12378,9 +13400,9 @@
       "source_file": "components/setup/ClassLogisticsSettings.vue",
       "source_location": "L748",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "setup_classlogisticssettings",
-      "target": "setup_classlogisticssettings_enrolltimer",
-      "confidence_score": 1.0
+      "target": "setup_classlogisticssettings_enrolltimer"
     },
     {
       "relation": "contains",
@@ -12388,9 +13410,9 @@
       "source_file": "components/setup/ClassLogisticsSettings.vue",
       "source_location": "L616",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "setup_classlogisticssettings",
-      "target": "setup_classlogisticssettings_handleelementaryimport",
-      "confidence_score": 1.0
+      "target": "setup_classlogisticssettings_handleelementaryimport"
     },
     {
       "relation": "contains",
@@ -12398,9 +13420,9 @@
       "source_file": "components/setup/ClassLogisticsSettings.vue",
       "source_location": "L684",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "setup_classlogisticssettings",
-      "target": "setup_classlogisticssettings_isarchivedpanelvisible",
-      "confidence_score": 1.0
+      "target": "setup_classlogisticssettings_isarchivedpanelvisible"
     },
     {
       "relation": "contains",
@@ -12408,9 +13430,9 @@
       "source_file": "components/setup/ClassLogisticsSettings.vue",
       "source_location": "L686",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "setup_classlogisticssettings",
-      "target": "setup_classlogisticssettings_iseditingstudent",
-      "confidence_score": 1.0
+      "target": "setup_classlogisticssettings_iseditingstudent"
     },
     {
       "relation": "contains",
@@ -12418,9 +13440,9 @@
       "source_file": "components/setup/ClassLogisticsSettings.vue",
       "source_location": "L614",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "setup_classlogisticssettings",
-      "target": "setup_classlogisticssettings_iselementaryimporteropen",
-      "confidence_score": 1.0
+      "target": "setup_classlogisticssettings_iselementaryimporteropen"
     },
     {
       "relation": "contains",
@@ -12428,8 +13450,18 @@
       "source_file": "components/setup/ClassLogisticsSettings.vue",
       "source_location": "L747",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "setup_classlogisticssettings",
-      "target": "setup_classlogisticssettings_isenrollingrfid",
+      "target": "setup_classlogisticssettings_isenrollingrfid"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "components/setup/ClassLogisticsSettings.vue",
+      "source_location": "L743",
+      "weight": 1.0,
+      "source": "setup_classlogisticssettings",
+      "target": "setup_classlogisticssettings_isgradinginfomodalopen",
       "confidence_score": 1.0
     },
     {
@@ -12438,9 +13470,9 @@
       "source_file": "components/setup/ClassLogisticsSettings.vue",
       "source_location": "L795",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "setup_classlogisticssettings",
-      "target": "setup_classlogisticssettings_israpidrfidopen",
-      "confidence_score": 1.0
+      "target": "setup_classlogisticssettings_israpidrfidopen"
     },
     {
       "relation": "contains",
@@ -12448,9 +13480,9 @@
       "source_file": "components/setup/ClassLogisticsSettings.vue",
       "source_location": "L685",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "setup_classlogisticssettings",
-      "target": "setup_classlogisticssettings_isstudentmodalopen",
-      "confidence_score": 1.0
+      "target": "setup_classlogisticssettings_isstudentmodalopen"
     },
     {
       "relation": "contains",
@@ -12458,9 +13490,9 @@
       "source_file": "components/setup/ClassLogisticsSettings.vue",
       "source_location": "L627",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "setup_classlogisticssettings",
-      "target": "setup_classlogisticssettings_localclassname",
-      "confidence_score": 1.0
+      "target": "setup_classlogisticssettings_localclassname"
     },
     {
       "relation": "contains",
@@ -12468,9 +13500,9 @@
       "source_file": "components/setup/ClassLogisticsSettings.vue",
       "source_location": "L639",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "setup_classlogisticssettings",
-      "target": "setup_classlogisticssettings_localcoursecode",
-      "confidence_score": 1.0
+      "target": "setup_classlogisticssettings_localcoursecode"
     },
     {
       "relation": "contains",
@@ -12478,9 +13510,9 @@
       "source_file": "components/setup/ClassLogisticsSettings.vue",
       "source_location": "L650",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "setup_classlogisticssettings",
-      "target": "setup_classlogisticssettings_newgrid",
-      "confidence_score": 1.0
+      "target": "setup_classlogisticssettings_newgrid"
     },
     {
       "relation": "contains",
@@ -12488,9 +13520,9 @@
       "source_file": "components/setup/ClassLogisticsSettings.vue",
       "source_location": "L687",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "setup_classlogisticssettings",
-      "target": "setup_classlogisticssettings_newstudent",
-      "confidence_score": 1.0
+      "target": "setup_classlogisticssettings_newstudent"
     },
     {
       "relation": "contains",
@@ -12498,9 +13530,9 @@
       "source_file": "components/setup/ClassLogisticsSettings.vue",
       "source_location": "L730",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "setup_classlogisticssettings",
-      "target": "setup_classlogisticssettings_onarchivestudent",
-      "confidence_score": 1.0
+      "target": "setup_classlogisticssettings_onarchivestudent"
     },
     {
       "relation": "contains",
@@ -12508,9 +13540,9 @@
       "source_file": "components/setup/ClassLogisticsSettings.vue",
       "source_location": "L704",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "setup_classlogisticssettings",
-      "target": "setup_classlogisticssettings_oneditstudent",
-      "confidence_score": 1.0
+      "target": "setup_classlogisticssettings_oneditstudent"
     },
     {
       "relation": "contains",
@@ -12518,9 +13550,9 @@
       "source_file": "components/setup/ClassLogisticsSettings.vue",
       "source_location": "L740",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "setup_classlogisticssettings",
-      "target": "setup_classlogisticssettings_onpermanentdeletestudent",
-      "confidence_score": 1.0
+      "target": "setup_classlogisticssettings_onpermanentdeletestudent"
     },
     {
       "relation": "contains",
@@ -12528,9 +13560,9 @@
       "source_file": "components/setup/ClassLogisticsSettings.vue",
       "source_location": "L803",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "setup_classlogisticssettings",
-      "target": "setup_classlogisticssettings_onrapidrfidscan",
-      "confidence_score": 1.0
+      "target": "setup_classlogisticssettings_onrapidrfidscan"
     },
     {
       "relation": "contains",
@@ -12538,9 +13570,9 @@
       "source_file": "components/setup/ClassLogisticsSettings.vue",
       "source_location": "L750",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "setup_classlogisticssettings",
-      "target": "setup_classlogisticssettings_onrfidenroll",
-      "confidence_score": 1.0
+      "target": "setup_classlogisticssettings_onrfidenroll"
     },
     {
       "relation": "contains",
@@ -12548,9 +13580,9 @@
       "source_file": "components/setup/ClassLogisticsSettings.vue",
       "source_location": "L736",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "setup_classlogisticssettings",
-      "target": "setup_classlogisticssettings_onunarchivestudent",
-      "confidence_score": 1.0
+      "target": "setup_classlogisticssettings_onunarchivestudent"
     },
     {
       "relation": "contains",
@@ -12558,9 +13590,9 @@
       "source_file": "components/setup/ClassLogisticsSettings.vue",
       "source_location": "L691",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "setup_classlogisticssettings",
-      "target": "setup_classlogisticssettings_openaddstudentmodal",
-      "confidence_score": 1.0
+      "target": "setup_classlogisticssettings_openaddstudentmodal"
     },
     {
       "relation": "contains",
@@ -12568,9 +13600,9 @@
       "source_file": "components/setup/ClassLogisticsSettings.vue",
       "source_location": "L841",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "setup_classlogisticssettings",
-      "target": "setup_classlogisticssettings_openrapidrfid",
-      "confidence_score": 1.0
+      "target": "setup_classlogisticssettings_openrapidrfid"
     },
     {
       "relation": "contains",
@@ -12578,9 +13610,9 @@
       "source_file": "components/setup/ClassLogisticsSettings.vue",
       "source_location": "L874",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "setup_classlogisticssettings",
-      "target": "setup_classlogisticssettings_pendingconflicts",
-      "confidence_score": 1.0
+      "target": "setup_classlogisticssettings_pendingconflicts"
     },
     {
       "relation": "contains",
@@ -12588,9 +13620,9 @@
       "source_file": "components/setup/ClassLogisticsSettings.vue",
       "source_location": "L858",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "setup_classlogisticssettings",
-      "target": "setup_classlogisticssettings_playrapidbeep",
-      "confidence_score": 1.0
+      "target": "setup_classlogisticssettings_playrapidbeep"
     },
     {
       "relation": "contains",
@@ -12598,9 +13630,9 @@
       "source_file": "components/setup/ClassLogisticsSettings.vue",
       "source_location": "L796",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "setup_classlogisticssettings",
-      "target": "setup_classlogisticssettings_rapidrfidindex",
-      "confidence_score": 1.0
+      "target": "setup_classlogisticssettings_rapidrfidindex"
     },
     {
       "relation": "contains",
@@ -12608,9 +13640,9 @@
       "source_file": "components/setup/ClassLogisticsSettings.vue",
       "source_location": "L800",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "setup_classlogisticssettings",
-      "target": "setup_classlogisticssettings_rapidrfidlist",
-      "confidence_score": 1.0
+      "target": "setup_classlogisticssettings_rapidrfidlist"
     },
     {
       "relation": "contains",
@@ -12618,9 +13650,9 @@
       "source_file": "components/setup/ClassLogisticsSettings.vue",
       "source_location": "L798",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "setup_classlogisticssettings",
-      "target": "setup_classlogisticssettings_rapidrfidsuccess",
-      "confidence_score": 1.0
+      "target": "setup_classlogisticssettings_rapidrfidsuccess"
     },
     {
       "relation": "contains",
@@ -12628,9 +13660,9 @@
       "source_file": "components/setup/ClassLogisticsSettings.vue",
       "source_location": "L839",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "setup_classlogisticssettings",
-      "target": "setup_classlogisticssettings_rapidrfidwedge",
-      "confidence_score": 1.0
+      "target": "setup_classlogisticssettings_rapidrfidwedge"
     },
     {
       "relation": "contains",
@@ -12638,9 +13670,9 @@
       "source_file": "components/setup/ClassLogisticsSettings.vue",
       "source_location": "L797",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "setup_classlogisticssettings",
-      "target": "setup_classlogisticssettings_rapidrfierror",
-      "confidence_score": 1.0
+      "target": "setup_classlogisticssettings_rapidrfierror"
     },
     {
       "relation": "contains",
@@ -12648,9 +13680,9 @@
       "source_file": "components/setup/ClassLogisticsSettings.vue",
       "source_location": "L662",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "setup_classlogisticssettings",
-      "target": "setup_classlogisticssettings_requestresize",
-      "confidence_score": 1.0
+      "target": "setup_classlogisticssettings_requestresize"
     },
     {
       "relation": "contains",
@@ -12658,9 +13690,9 @@
       "source_file": "components/setup/ClassLogisticsSettings.vue",
       "source_location": "L659",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "setup_classlogisticssettings",
-      "target": "setup_classlogisticssettings_resizeconflict",
-      "confidence_score": 1.0
+      "target": "setup_classlogisticssettings_resizeconflict"
     },
     {
       "relation": "contains",
@@ -12668,9 +13700,9 @@
       "source_file": "components/setup/ClassLogisticsSettings.vue",
       "source_location": "L916",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "setup_classlogisticssettings",
-      "target": "setup_classlogisticssettings_resolveconflicts",
-      "confidence_score": 1.0
+      "target": "setup_classlogisticssettings_resolveconflicts"
     },
     {
       "relation": "contains",
@@ -12678,9 +13710,9 @@
       "source_file": "components/setup/ClassLogisticsSettings.vue",
       "source_location": "L766",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "setup_classlogisticssettings",
-      "target": "setup_classlogisticssettings_rfidwedge",
-      "confidence_score": 1.0
+      "target": "setup_classlogisticssettings_rfidwedge"
     },
     {
       "relation": "contains",
@@ -12688,9 +13720,9 @@
       "source_file": "components/setup/ClassLogisticsSettings.vue",
       "source_location": "L630",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "setup_classlogisticssettings",
-      "target": "setup_classlogisticssettings_saveclassname",
-      "confidence_score": 1.0
+      "target": "setup_classlogisticssettings_saveclassname"
     },
     {
       "relation": "contains",
@@ -12698,9 +13730,9 @@
       "source_file": "components/setup/ClassLogisticsSettings.vue",
       "source_location": "L641",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "setup_classlogisticssettings",
-      "target": "setup_classlogisticssettings_savecoursecode",
-      "confidence_score": 1.0
+      "target": "setup_classlogisticssettings_savecoursecode"
     },
     {
       "relation": "contains",
@@ -12708,9 +13740,9 @@
       "source_file": "components/setup/ClassLogisticsSettings.vue",
       "source_location": "L677",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "setup_classlogisticssettings",
-      "target": "setup_classlogisticssettings_setglobaldefaultgrid",
-      "confidence_score": 1.0
+      "target": "setup_classlogisticssettings_setglobaldefaultgrid"
     },
     {
       "relation": "contains",
@@ -12718,9 +13750,9 @@
       "source_file": "components/setup/ClassLogisticsSettings.vue",
       "source_location": "L688",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "setup_classlogisticssettings",
-      "target": "setup_classlogisticssettings_singleadderror",
-      "confidence_score": 1.0
+      "target": "setup_classlogisticssettings_singleadderror"
     },
     {
       "relation": "contains",
@@ -12728,9 +13760,9 @@
       "source_file": "components/setup/ClassLogisticsSettings.vue",
       "source_location": "L689",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "setup_classlogisticssettings",
-      "target": "setup_classlogisticssettings_singleaddsuccess",
-      "confidence_score": 1.0
+      "target": "setup_classlogisticssettings_singleaddsuccess"
     },
     {
       "relation": "contains",
@@ -12738,9 +13770,9 @@
       "source_file": "components/setup/ClassLogisticsSettings.vue",
       "source_location": "L768",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "setup_classlogisticssettings",
-      "target": "setup_classlogisticssettings_startenrollment",
-      "confidence_score": 1.0
+      "target": "setup_classlogisticssettings_startenrollment"
     },
     {
       "relation": "contains",
@@ -12748,9 +13780,9 @@
       "source_file": "components/setup/ClassLogisticsSettings.vue",
       "source_location": "L782",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "setup_classlogisticssettings",
-      "target": "setup_classlogisticssettings_stopenrollment",
-      "confidence_score": 1.0
+      "target": "setup_classlogisticssettings_stopenrollment"
     },
     {
       "relation": "contains",
@@ -12758,9 +13790,9 @@
       "source_file": "components/setup/ClassLogisticsSettings.vue",
       "source_location": "L853",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "setup_classlogisticssettings",
-      "target": "setup_classlogisticssettings_stoprapidrfid",
-      "confidence_score": 1.0
+      "target": "setup_classlogisticssettings_stoprapidrfid"
     },
     {
       "relation": "calls",
@@ -12769,9 +13801,9 @@
       "source_file": "components/setup/ClassLogisticsSettings.vue",
       "source_location": "L668",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "setup_classlogisticssettings_requestresize",
-      "target": "setup_classlogisticssettings_applyresize",
-      "confidence_score": 1.0
+      "target": "setup_classlogisticssettings_applyresize"
     },
     {
       "relation": "calls",
@@ -12780,9 +13812,9 @@
       "source_file": "components/setup/ClassLogisticsSettings.vue",
       "source_location": "L756",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "setup_classlogisticssettings_onrfidenroll",
-      "target": "setup_classlogisticssettings_stopenrollment",
-      "confidence_score": 1.0
+      "target": "setup_classlogisticssettings_stopenrollment"
     },
     {
       "relation": "calls",
@@ -12791,9 +13823,9 @@
       "source_file": "components/setup/ClassLogisticsSettings.vue",
       "source_location": "L811",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "setup_classlogisticssettings_onrapidrfidscan",
-      "target": "setup_classlogisticssettings_playrapidbeep",
-      "confidence_score": 1.0
+      "target": "setup_classlogisticssettings_playrapidbeep"
     },
     {
       "relation": "imports_from",
@@ -13532,9 +14564,9 @@
       "source_file": "components/setup/ElementarySubjectManager.vue",
       "source_location": "L600",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "setup_elementarysubjectmanager",
-      "target": "setup_elementarysubjectmanager_existing",
-      "confidence_score": 1.0
+      "target": "setup_elementarysubjectmanager_existing"
     },
     {
       "relation": "contains",
@@ -13542,9 +14574,9 @@
       "source_file": "components/setup/ElementarySubjectManager.vue",
       "source_location": "L604",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "setup_elementarysubjectmanager",
-      "target": "setup_elementarysubjectmanager_savecustomsubject",
-      "confidence_score": 1.0
+      "target": "setup_elementarysubjectmanager_savecustomsubject"
     },
     {
       "relation": "imports_from",
@@ -13618,9 +14650,9 @@
       "source_file": "components/setup/ExpectationImportModal.vue",
       "source_location": "L678",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "setup_expectationimportmodal",
-      "target": "setup_expectationimportmodal_if",
-      "confidence_score": 1.0
+      "target": "setup_expectationimportmodal_if"
     },
     {
       "relation": "imports_from",
@@ -14099,9 +15131,9 @@
       "source_file": "components/setup/RosterCsvImporter.vue",
       "source_location": "L409",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "setup_rostercsvimporter",
-      "target": "setup_rostercsvimporter_onsectionmappingchanged",
-      "confidence_score": 1.0
+      "target": "setup_rostercsvimporter_onsectionmappingchanged"
     },
     {
       "relation": "contains",
@@ -15438,9 +16470,9 @@
       "source_file": "composables/useClassroom.js",
       "source_location": "L48",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "composables_useclassroom",
-      "target": "composables_usegradebook",
-      "confidence_score": 1.0
+      "target": "composables_usegradebook"
     },
     {
       "relation": "imports",
@@ -15449,9 +16481,9 @@
       "source_file": "composables/useClassroom.js",
       "source_location": "L48",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "composables_useclassroom",
-      "target": "composables_usegradebook_activesubcohortfilter",
-      "confidence_score": 1.0
+      "target": "composables_usegradebook_activesubcohortfilter"
     },
     {
       "relation": "imports_from",
@@ -15570,9 +16602,9 @@
       "source_file": "composables/useClassroom.js",
       "source_location": "L27",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "composables_useclassroom",
-      "target": "composables_userosteroperations_updatestudentaccommodations",
-      "confidence_score": 1.0
+      "target": "composables_userosteroperations_updatestudentaccommodations"
     },
     {
       "relation": "imports",
@@ -15581,9 +16613,9 @@
       "source_file": "composables/useClassroom.js",
       "source_location": "L27",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "composables_useclassroom",
-      "target": "composables_userosteroperations_updatestudentiep",
-      "confidence_score": 1.0
+      "target": "composables_userosteroperations_updatestudentiep"
     },
     {
       "relation": "imports",
@@ -15603,9 +16635,9 @@
       "source_file": "composables/useClassroom.js",
       "source_location": "L27",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "composables_useclassroom",
-      "target": "composables_userosteroperations_updatestudentparentcontacts",
-      "confidence_score": 1.0
+      "target": "composables_userosteroperations_updatestudentparentcontacts"
     },
     {
       "relation": "imports_from",
@@ -16342,6 +17374,17 @@
       "target": "composables_useclassroomstate"
     },
     {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "composables/useSBarPrintOptions.js",
+      "source_location": "L9",
+      "weight": 1.0,
+      "source": "composables_usesbarprintoptions",
+      "target": "composables_useclassroomstate",
+      "confidence_score": 1.0
+    },
+    {
       "relation": "imports",
       "context": "import",
       "confidence": "EXTRACTED",
@@ -16422,6 +17465,17 @@
       "relation": "imports",
       "context": "import",
       "confidence": "EXTRACTED",
+      "source_file": "composables/useSBarPrintOptions.js",
+      "source_location": "L9",
+      "weight": 1.0,
+      "source": "composables_usesbarprintoptions",
+      "target": "composables_useclassroomstate_activesubjectid",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
       "source_file": "composables/useElementary.js",
       "source_location": "L2",
       "weight": 1.0,
@@ -16475,9 +17529,9 @@
       "source_file": "composables/useElementary.js",
       "source_location": "L128",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "composables_useelementary",
-      "target": "composables_useelementary_getstudenteffectivegrade",
-      "confidence_score": 1.0
+      "target": "composables_useelementary_getstudenteffectivegrade"
     },
     {
       "relation": "contains",
@@ -16597,6 +17651,17 @@
       "target": "composables_useelementary"
     },
     {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "composables/useSBarPrintOptions.js",
+      "source_location": "L8",
+      "weight": 1.0,
+      "source": "composables_usesbarprintoptions",
+      "target": "composables_useelementary",
+      "confidence_score": 1.0
+    },
+    {
       "relation": "imports",
       "context": "import",
       "confidence": "EXTRACTED",
@@ -16641,6 +17706,17 @@
       "target": "composables_useelementary_geteffectiveclassrecord"
     },
     {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "composables/useSBarPrintOptions.js",
+      "source_location": "L8",
+      "weight": 1.0,
+      "source": "composables_usesbarprintoptions",
+      "target": "composables_useelementary_geteffectiveclassrecord",
+      "confidence_score": 1.0
+    },
+    {
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
@@ -16680,9 +17756,9 @@
       "source_file": "composables/useGradebook.js",
       "source_location": "L14",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "composables_usegradebook",
-      "target": "composables_useelementary_getstudenteffectivegrade",
-      "confidence_score": 1.0
+      "target": "composables_useelementary_getstudenteffectivegrade"
     },
     {
       "relation": "calls",
@@ -17280,9 +18356,9 @@
       "source_file": "composables/useGradebook.js",
       "source_location": "L105",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "composables_usegradebook",
-      "target": "composables_usegradebook_isassessmentapplicabletostudent",
-      "confidence_score": 1.0
+      "target": "composables_usegradebook_isassessmentapplicabletostudent"
     },
     {
       "relation": "contains",
@@ -18432,9 +19508,9 @@
       "source_file": "composables/usePrintOptions.js",
       "source_location": "L10",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "composables_useprintoptions",
-      "target": "composables_useprintoptions_useprintoptions",
-      "confidence_score": 1.0
+      "target": "composables_useprintoptions_useprintoptions"
     },
     {
       "relation": "contains",
@@ -18755,9 +19831,9 @@
       "source_file": "composables/useRosterOperations.js",
       "source_location": "L250",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "composables_userosteroperations",
-      "target": "composables_userosteroperations_updatestudentaccommodations",
-      "confidence_score": 1.0
+      "target": "composables_userosteroperations_updatestudentaccommodations"
     },
     {
       "relation": "contains",
@@ -18765,9 +19841,9 @@
       "source_file": "composables/useRosterOperations.js",
       "source_location": "L223",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "composables_userosteroperations",
-      "target": "composables_userosteroperations_updatestudentiep",
-      "confidence_score": 1.0
+      "target": "composables_userosteroperations_updatestudentiep"
     },
     {
       "relation": "contains",
@@ -18785,9 +19861,9 @@
       "source_file": "composables/useRosterOperations.js",
       "source_location": "L280",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "composables_userosteroperations",
-      "target": "composables_userosteroperations_updatestudentparentcontacts",
-      "confidence_score": 1.0
+      "target": "composables_userosteroperations_updatestudentparentcontacts"
     },
     {
       "relation": "imports_from",
@@ -18821,6 +19897,82 @@
       "confidence_score": 1.0,
       "source": "composables_userosteroperations",
       "target": "db_classservice"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "composables/useSBarPrintOptions.js",
+      "source_location": "L15",
+      "weight": 1.0,
+      "source": "composables_usesbarprintoptions",
+      "target": "composables_usesbarprintoptions_usesbarprintoptions",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "composables/useSBarPrintOptions.js",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "composables_usesbarprintoptions",
+      "target": "gradebook_gradecalcsbar",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "composables/useSBarPrintOptions.js",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "composables_usesbarprintoptions",
+      "target": "gradebook_gradecalcsbar_calculatesbarexpectationmastery",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "composables/useSBarPrintOptions.js",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "composables_usesbarprintoptions",
+      "target": "gradebook_gradecalcsbar_calculatesbarstudentoverallmastery",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "composables/useSBarPrintOptions.js",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "composables_usesbarprintoptions",
+      "target": "gradebook_gradecalcsbar_getsbarlevelbadge",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "composables/useSBarPrintOptions.js",
+      "source_location": "L7",
+      "weight": 1.0,
+      "source": "composables_usesbarprintoptions",
+      "target": "utils_dates",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "composables/useSBarPrintOptions.js",
+      "source_location": "L7",
+      "weight": 1.0,
+      "source": "composables_usesbarprintoptions",
+      "target": "utils_dates_formatlocaldisplay",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -19298,9 +20450,9 @@
       "source_file": "db/classService.js",
       "source_location": "L373",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "db_classservice",
-      "target": "db_classservice_updatestudentaccommodations",
-      "confidence_score": 1.0
+      "target": "db_classservice_updatestudentaccommodations"
     },
     {
       "relation": "contains",
@@ -19328,9 +20480,9 @@
       "source_file": "db/classService.js",
       "source_location": "L389",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "db_classservice",
-      "target": "db_classservice_updatestudentparentcontacts",
-      "confidence_score": 1.0
+      "target": "db_classservice_updatestudentparentcontacts"
     },
     {
       "relation": "contains",
@@ -19591,9 +20743,9 @@
       "source_file": "db/classService.js",
       "source_location": "L375",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "db_classservice_updatestudentaccommodations",
-      "target": "db_classservice_patchstudent",
-      "confidence_score": 1.0
+      "target": "db_classservice_patchstudent"
     },
     {
       "relation": "calls",
@@ -19624,9 +20776,9 @@
       "source_file": "db/classService.js",
       "source_location": "L390",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "db_classservice_updatestudentparentcontacts",
-      "target": "db_classservice_patchstudent",
-      "confidence_score": 1.0
+      "target": "db_classservice_patchstudent"
     },
     {
       "relation": "calls",
@@ -22805,9 +23957,9 @@
       "source_file": "utils/gradeColors.js",
       "source_location": "L86",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "utils_gradecolors",
-      "target": "utils_gradecolors_getsectioncolor",
-      "confidence_score": 1.0
+      "target": "utils_gradecolors_getsectioncolor"
     },
     {
       "relation": "contains",
@@ -22815,9 +23967,9 @@
       "source_file": "utils/gradeColors.js",
       "source_location": "L76",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "utils_gradecolors",
-      "target": "utils_gradecolors_section_badge_style",
-      "confidence_score": 1.0
+      "target": "utils_gradecolors_section_badge_style"
     },
     {
       "relation": "contains",
@@ -22825,9 +23977,9 @@
       "source_file": "utils/gradeColors.js",
       "source_location": "L84",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "utils_gradecolors",
-      "target": "utils_gradecolors_section_palettes",
-      "confidence_score": 1.0
+      "target": "utils_gradecolors_section_palettes"
     },
     {
       "relation": "contains",
@@ -22835,9 +23987,9 @@
       "source_file": "utils/gradeColors.js",
       "source_location": "L66",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "utils_gradecolors",
-      "target": "utils_gradecolors_unit_colors",
-      "confidence_score": 1.0
+      "target": "utils_gradecolors_unit_colors"
     },
     {
       "relation": "contains",
@@ -23197,11 +24349,11 @@
       "source_file": "views/Setup.vue",
       "source_location": "L1304",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "views_setup",
-      "target": "views_setup_if",
-      "confidence_score": 1.0
+      "target": "views_setup_if"
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "e3f35076634a6c15bb175d8f8dd4213dce396fec"
+  "built_at_commit": "9e606e36eb8ec048e6a2f7ed43bd0cf6e59598d8"
 }

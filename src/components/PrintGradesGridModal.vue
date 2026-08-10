@@ -13,6 +13,9 @@
           <h3 class="grades-print-modal__title">Print Final Grades Grid</h3>
         </div>
         <div class="grades-print-modal__header-actions">
+          <button class="setup__btn-ghost" @click="handleExcelExport" style="display: flex; align-items: center; gap: 6px;">
+            <FileSpreadsheet :size="16" /> Export Excel
+          </button>
           <button class="setup__btn-primary grades-print-modal__btn-print" @click="handlePrint" :disabled="isPrinting">
             <Printer :size="16" /> Print Grid
           </button>
@@ -62,25 +65,58 @@
               </select>
             </label>
 
+             <label v-if="isSBAR" class="setup__label">
+              Overall Grade Format
+              <select v-model="form.sbarGradeFormat" class="setup__input">
+                <option value="level_percent">Level + Percentage (e.g. L4 (79%))</option>
+                <option value="level">SBAR Level Only (e.g. L4, L3+)</option>
+                <option value="percent">Percentage Only (e.g. 79%)</option>
+              </select>
+            </label>
+
             <div class="grades-print-modal__checkboxes">
-              <label class="setup__label--checkbox">
-                <input type="checkbox" v-model="form.showAssessments" class="setup__checkbox" />
-                Include All Assessments
-              </label>
+              <template v-if="isSBAR">
+                <label class="setup__label--checkbox">
+                  <input type="checkbox" v-model="form.showExpectationsGrid" class="setup__checkbox" />
+                  Include Curriculum Expectations Grid (Recommended)
+                </label>
+                
+                <label class="setup__label--checkbox">
+                  <input type="checkbox" v-model="form.showAssessments" class="setup__checkbox" />
+                  Include Assessment Events List
+                </label>
 
-              <label v-if="form.showAssessments" class="setup__label" style="margin-left: 26px; margin-top: -4px;">
-                Score Format
-                <select v-model="form.assessmentScoreFormat" class="setup__input">
-                  <option value="raw">Raw Score</option>
-                  <option value="percent">Percentage</option>
-                </select>
-              </label>
+                <label v-if="form.showAssessments" class="setup__label" style="margin-left: 26px; margin-top: -4px;">
+                  Assessment Event Score Format
+                  <select v-model="form.assessmentScoreFormat" class="setup__input">
+                    <option value="expectation_breakdown">Expectation Breakdown (e.g. A1.1: L4 | B2.1: L3)</option>
+                    <option value="level_list">List of Levels (e.g. L4, L3)</option>
+                    <option value="level">Overall Task Level (e.g. L4, L3+)</option>
+                    <option value="percent">Percentage (e.g. 88%)</option>
+                  </select>
+                </label>
+              </template>
 
-              <label class="setup__label--checkbox">
-                <input type="checkbox" v-model="form.showCategories" class="setup__checkbox" />
-                Include Category Breakdowns
-              </label>
-              
+              <template v-else>
+                <label class="setup__label--checkbox">
+                  <input type="checkbox" v-model="form.showAssessments" class="setup__checkbox" />
+                  Include All Assessments
+                </label>
+
+                <label v-if="form.showAssessments" class="setup__label" style="margin-left: 26px; margin-top: -4px;">
+                  Score Format
+                  <select v-model="form.assessmentScoreFormat" class="setup__input">
+                    <option value="raw">Raw Score</option>
+                    <option value="percent">Percentage</option>
+                  </select>
+                </label>
+
+                <label class="setup__label--checkbox">
+                  <input type="checkbox" v-model="form.showCategories" class="setup__checkbox" />
+                  Include Category Breakdowns
+                </label>
+              </template>
+
               <label class="setup__label--checkbox">
                 <input type="checkbox" v-model="form.showClassAverages" class="setup__checkbox" />
                 Include Class Averages Row
@@ -92,41 +128,65 @@
               </label>
             </div>
 
-            <div v-if="form.showAssessments" class="form-hint" style="margin-top: 12px; display: flex; align-items: flex-start; gap: 8px;">
+            <div v-if="activeGridColumns.length > 0" class="form-hint" style="margin-top: 12px; display: flex; align-items: flex-start; gap: 8px;">
               <AlertTriangle :size="16" style="flex-shrink: 0; color: var(--primary);" />
-              <span>Landscape mode and Auto Font Scale are recommended to fit assessment columns. Page break rules are active for up to 2 pages.</span>
+              <span v-if="columnChunks.length > 1">
+                <strong>{{ activeGridColumns.length }} {{ isSBAR && form.showExpectationsGrid ? 'curriculum standards' : 'assessments' }} detected.</strong> Automatically splitting into {{ columnChunks.length }} printed page parts (max 8 columns per page). Each part retains Student Names &amp; Overall Grade.
+              </span>
+              <span v-else>
+                Landscape mode and Auto Font Scale are recommended to fit columns.
+              </span>
             </div>
           </form>
         </div>
 
         <!-- Preview Section -->
         <div class="grades-print-modal__preview">
-          <div class="grades-print-modal__preview-header">
-            <Eye :size="14" />
-            <span>Interactive Live Preview</span>
+          <div class="grades-print-modal__preview-header" style="display: flex; justify-content: space-between; align-items: center;">
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <Eye :size="14" />
+              <span>Interactive Live Preview</span>
+            </div>
+            
+            <!-- Part tabs if > 8 columns -->
+            <div v-if="activeGridColumns.length > 0 && columnChunks.length > 1" class="preview-chunk-tabs">
+              <button 
+                v-for="(chunk, idx) in columnChunks" 
+                :key="'preview-tab-'+idx"
+                type="button"
+                class="preview-chunk-tab"
+                :class="{ 'preview-chunk-tab--active': activePreviewChunkIndex === idx }"
+                @click="activePreviewChunkIndex = idx"
+              >
+                Part {{ idx + 1 }}
+              </button>
+            </div>
           </div>
           
           <div class="grades-print-modal__preview-container">
             <div class="grades-print-modal__preview-paper" :class="[form.orientation, 'preview-font--' + resolvedFontSize]">
               <h2 class="preview-title">{{ form.title }}</h2>
-              <div class="preview-subtitle">{{ subheader }}</div>
+              <div class="preview-subtitle">
+                {{ subheader }}
+                <span v-if="activeGridColumns.length > 0 && columnChunks.length > 1"> — Part {{ activePreviewChunkIndex + 1 }} of {{ columnChunks.length }}</span>
+              </div>
               <div class="preview-meta-date">Date: {{ formattedDate }}</div>
               
               <div class="preview-table-wrapper">
-                <table class="preview-table" :class="{ 'zebra-striping': form.showZebraStriping, 'table--two-columns': !form.showAssessments && !form.showCategories }">
+                <table class="preview-table" :class="{ 'zebra-striping': form.showZebraStriping, 'table--two-columns': activeGridColumns.length === 0 && !form.showCategories }">
                   <thead>
                     <tr>
                       <th>Student Name</th>
                       <th class="text-right font-bold overall-col-header">Overall Grade</th>
-                      <template v-if="form.showAssessments">
-                        <th v-for="a in sortedAssessments" :key="'prev-h-ass-'+a.assessmentId" class="text-right prev-ass-header">
+                      <template v-if="activeGridColumns.length > 0">
+                        <th v-for="col in activePreviewChunk" :key="'prev-h-'+col.id" class="text-right prev-ass-header">
                           <div class="prev-ass-header-content">
-                            <span class="prev-ass-name" :title="a.name">{{ a.name }}</span>
-                            <span class="prev-ass-pts">/{{ a.totalPoints }}</span>
+                            <span class="prev-ass-name" :title="col.name">{{ col.name }}</span>
+                            <span class="prev-ass-pts">{{ col.isExp ? 'Standard' : '/' + col.totalPoints }}</span>
                           </div>
                         </th>
                       </template>
-                      <template v-if="form.showCategories">
+                      <template v-if="!isSBAR && form.showCategories">
                         <th v-for="cat in classRecord.gradebookCategories" :key="'prev-h-'+cat.categoryId" class="text-right">
                           {{ cat.name }} <span class="prev-weight">({{ cat.weight }}%)</span>
                         </th>
@@ -139,12 +199,13 @@
                       <td class="text-right font-bold overall-col-cell">
                         {{ formatGradeValue(classGrades[s.studentId]?.overallGrade) }}
                       </td>
-                      <template v-if="form.showAssessments">
-                        <td v-for="a in sortedAssessments" :key="'prev-c-ass-'+s.studentId+'-'+a.assessmentId" class="text-right num-col prev-ass-cell">
-                          {{ formatAssessmentScore(s.studentId, a.assessmentId, a.totalPoints) }}
+                      <template v-if="activeGridColumns.length > 0">
+                        <td v-for="col in activePreviewChunk" :key="'prev-c-'+s.studentId+'-'+col.id" class="text-right num-col prev-ass-cell" :class="{ 'font-bold': col.isExp }">
+                          <span v-if="col.isExp">{{ formatExpectationMastery(s.studentId, col.id) }}</span>
+                          <span v-else>{{ formatAssessmentScore(s.studentId, col.id, col.totalPoints) }}</span>
                         </td>
                       </template>
-                      <template v-if="form.showCategories">
+                      <template v-if="!isSBAR && form.showCategories">
                         <td v-for="cat in classRecord.gradebookCategories" :key="'prev-c-'+s.studentId+'-'+cat.categoryId" class="text-right num-col">
                           {{ formatGradeValue(classGrades[s.studentId]?.categoryResults?.[cat.categoryId]?.percentage) }}
                         </td>
@@ -154,12 +215,13 @@
                     <tr v-if="form.showClassAverages" class="prev-avg-row">
                       <td>Class Average</td>
                       <td class="text-right font-bold overall-col-cell">{{ formatGradeValue(overallClassAverage !== null ? Math.round(overallClassAverage) : null) }}</td>
-                      <template v-if="form.showAssessments">
-                        <td v-for="a in sortedAssessments" :key="'prev-avg-ass-'+a.assessmentId" class="text-right font-bold num-col prev-ass-cell">
-                          {{ formatAssessmentAvg(getAssessmentClassAverage(a.assessmentId), a.totalPoints) }}
+                      <template v-if="activeGridColumns.length > 0">
+                        <td v-for="col in activePreviewChunk" :key="'prev-avg-'+col.id" class="text-right font-bold num-col prev-ass-cell">
+                          <span v-if="col.isExp">—</span>
+                          <span v-else>{{ formatAssessmentAvg(getAssessmentClassAverage(col.id), col.totalPoints) }}</span>
                         </td>
                       </template>
-                      <template v-if="form.showCategories">
+                      <template v-if="!isSBAR && form.showCategories">
                         <td v-for="cat in classRecord.gradebookCategories" :key="'prev-avg-c-'+cat.categoryId" class="text-right font-bold num-col">
                           {{ formatGradeValue(getCategoryClassAverage(cat.categoryId)) }}
                         </td>
@@ -171,6 +233,7 @@
 
               <div class="preview-footer">
                 <span>Class Size: {{ sortedStudents.length }} students</span>
+                <span v-if="activeGridColumns.length > 0 && columnChunks.length > 1">Showing Part {{ activePreviewChunkIndex + 1 }} of {{ columnChunks.length }}</span>
               </div>
             </div>
           </div>
@@ -188,70 +251,142 @@
           ['orientation--' + form.orientation]: true
         }"
       >
-        <div class="grades-grid-print-page" :class="['font-size--' + resolvedFontSize]">
-          <header class="print-header">
-            <h2 class="print-title">{{ form.title }}</h2>
-            <h3 class="print-subtitle">{{ subheader }}</h3>
-            <div class="print-meta-date">Generated: {{ formattedDate }}</div>
-          </header>
+        <!-- Multi-Part Horizontal Page Chunking (When >8 columns exist) -->
+        <template v-if="activeGridColumns.length > 0 && columnChunks.length > 1">
+          <div 
+            v-for="(chunk, cIdx) in columnChunks" 
+            :key="'print-chunk-'+cIdx" 
+            class="grades-grid-print-page print-page-chunk" 
+            :class="['font-size--' + resolvedFontSize]"
+          >
+            <header class="print-header">
+              <h2 class="print-title">{{ form.title }}</h2>
+              <h3 class="print-subtitle">{{ subheader }} — Part {{ cIdx + 1 }} of {{ columnChunks.length }}</h3>
+              <div class="print-meta-date">Generated: {{ formattedDate }}</div>
+            </header>
 
-          <table class="print-table" :class="{ 'zebra-striping': form.showZebraStriping, 'table--two-columns': !form.showAssessments && !form.showCategories }">
-            <thead>
-              <tr class="print-header-row">
-                <th class="print-name-col">Student Name</th>
-                <th class="print-overall-col">Overall Grade</th>
-                <template v-if="form.showAssessments">
-                  <th v-for="a in sortedAssessments" :key="'print-h-ass-'+a.assessmentId" class="print-ass-col">
-                    <span class="ass-name">{{ a.name }}</span>
-                    <span class="ass-pts">/{{ a.totalPoints }}</span>
+            <table class="print-table" :class="{ 'zebra-striping': form.showZebraStriping }">
+              <thead>
+                <tr class="print-header-row">
+                  <th class="print-name-col">Student Name</th>
+                  <th class="print-overall-col">Overall Grade</th>
+                  <th v-for="col in chunk" :key="'print-h-'+col.id" class="print-ass-col">
+                    <span class="ass-name">{{ col.name }}</span>
+                    <span class="ass-pts">{{ col.isExp ? 'Standard' : '/' + col.totalPoints }}</span>
                   </th>
-                </template>
-                <template v-if="form.showCategories">
-                  <th v-for="cat in classRecord.gradebookCategories" :key="'print-h-'+cat.categoryId" class="print-cat-col">
-                    <span class="cat-name">{{ cat.name }}</span>
-                    <span class="cat-weight">{{ cat.weight }}%</span>
-                  </th>
-                </template>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="s in sortedStudents" :key="'print-row-'+s.studentId" class="print-student-row">
-                <td class="print-name-cell">{{ s.lastName }}, {{ s.firstName }}</td>
-                <td class="print-overall-cell">{{ formatGradeValue(classGrades[s.studentId]?.overallGrade) }}</td>
-                <template v-if="form.showAssessments">
-                  <td v-for="a in sortedAssessments" :key="'print-cell-ass-'+s.studentId+'-'+a.assessmentId" class="print-ass-cell">
-                    {{ formatAssessmentScore(s.studentId, a.assessmentId, a.totalPoints) }}
+                  <template v-if="!isSBAR && form.showCategories && cIdx === columnChunks.length - 1">
+                    <th v-for="cat in classRecord.gradebookCategories" :key="'print-h-'+cat.categoryId" class="print-cat-col">
+                      <span class="cat-name">{{ cat.name }}</span>
+                      <span class="cat-weight">{{ cat.weight }}%</span>
+                    </th>
+                  </template>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="s in sortedStudents" :key="'print-row-'+cIdx+'-'+s.studentId" class="print-student-row">
+                  <td class="print-name-cell">{{ s.lastName }}, {{ s.firstName }}</td>
+                  <td class="print-overall-cell">{{ formatGradeValue(classGrades[s.studentId]?.overallGrade) }}</td>
+                  <td v-for="col in chunk" :key="'print-cell-'+s.studentId+'-'+col.id" class="print-ass-cell" :class="{ 'font-bold': col.isExp }">
+                    <span v-if="col.isExp">{{ formatExpectationMastery(s.studentId, col.id) }}</span>
+                    <span v-else>{{ formatAssessmentScore(s.studentId, col.id, col.totalPoints) }}</span>
                   </td>
-                </template>
-                <template v-if="form.showCategories">
-                  <td v-for="cat in classRecord.gradebookCategories" :key="'print-cell-'+s.studentId+'-'+cat.categoryId" class="print-cat-cell">
-                    {{ formatGradeValue(classGrades[s.studentId]?.categoryResults?.[cat.categoryId]?.percentage) }}
+                  <template v-if="!isSBAR && form.showCategories && cIdx === columnChunks.length - 1">
+                    <td v-for="cat in classRecord.gradebookCategories" :key="'print-cell-'+s.studentId+'-'+cat.categoryId" class="print-cat-cell">
+                      {{ formatGradeValue(classGrades[s.studentId]?.categoryResults?.[cat.categoryId]?.percentage) }}
+                    </td>
+                  </template>
+                </tr>
+                
+                <tr v-if="form.showClassAverages" class="print-avg-row">
+                  <td class="print-name-cell">Class Average</td>
+                  <td class="print-overall-cell font-bold">{{ formatGradeValue(overallClassAverage !== null ? Math.round(overallClassAverage) : null) }}</td>
+                  <td v-for="col in chunk" :key="'print-avg-'+col.id" class="print-ass-cell font-bold">
+                    <span v-if="col.isExp">—</span>
+                    <span v-else>{{ formatAssessmentAvg(getAssessmentClassAverage(col.id), col.totalPoints) }}</span>
                   </td>
-                </template>
-              </tr>
-              
-              <!-- Optional Class Averages Row -->
-              <tr v-if="form.showClassAverages" class="print-avg-row">
-                <td class="print-name-cell">Class Average</td>
-                <td class="print-overall-cell font-bold">{{ formatGradeValue(overallClassAverage !== null ? Math.round(overallClassAverage) : null) }}</td>
-                <template v-if="form.showAssessments">
-                  <td v-for="a in sortedAssessments" :key="'print-avg-cell-ass-'+a.assessmentId" class="print-ass-cell font-bold">
-                    {{ formatAssessmentAvg(getAssessmentClassAverage(a.assessmentId), a.totalPoints) }}
-                  </td>
-                </template>
-                <template v-if="form.showCategories">
-                  <td v-for="cat in classRecord.gradebookCategories" :key="'print-avg-cell-'+cat.categoryId" class="print-cat-cell font-bold">
-                    {{ formatGradeValue(getCategoryClassAverage(cat.categoryId)) }}
-                  </td>
-                </template>
-              </tr>
-            </tbody>
-          </table>
-          
-          <footer class="print-footer">
-            <p>Class Size: {{ sortedStudents.length }} students</p>
-          </footer>
-        </div>
+                  <template v-if="!isSBAR && form.showCategories && cIdx === columnChunks.length - 1">
+                    <td v-for="cat in classRecord.gradebookCategories" :key="'print-avg-cell-'+cat.categoryId" class="print-cat-cell font-bold">
+                      {{ formatGradeValue(getCategoryClassAverage(cat.categoryId)) }}
+                    </td>
+                  </template>
+                </tr>
+              </tbody>
+            </table>
+            
+            <footer class="print-footer">
+              <p>Class Size: {{ sortedStudents.length }} students | Part {{ cIdx + 1 }} of {{ columnChunks.length }}</p>
+            </footer>
+          </div>
+        </template>
+
+        <!-- Standard Single Page Grid -->
+        <template v-else>
+          <div class="grades-grid-print-page" :class="['font-size--' + resolvedFontSize]">
+            <header class="print-header">
+              <h2 class="print-title">{{ form.title }}</h2>
+              <h3 class="print-subtitle">{{ subheader }}</h3>
+              <div class="print-meta-date">Generated: {{ formattedDate }}</div>
+            </header>
+
+            <table class="print-table" :class="{ 'zebra-striping': form.showZebraStriping, 'table--two-columns': activeGridColumns.length === 0 && !form.showCategories }">
+              <thead>
+                <tr class="print-header-row">
+                  <th class="print-name-col">Student Name</th>
+                  <th class="print-overall-col">Overall Grade</th>
+                  <template v-if="activeGridColumns.length > 0">
+                    <th v-for="col in activeGridColumns" :key="'print-h-'+col.id" class="print-ass-col">
+                      <span class="ass-name">{{ col.name }}</span>
+                      <span class="ass-pts">{{ col.isExp ? 'Standard' : '/' + col.totalPoints }}</span>
+                    </th>
+                  </template>
+                  <template v-if="!isSBAR && form.showCategories">
+                    <th v-for="cat in classRecord.gradebookCategories" :key="'print-h-'+cat.categoryId" class="print-cat-col">
+                      <span class="cat-name">{{ cat.name }}</span>
+                      <span class="cat-weight">{{ cat.weight }}%</span>
+                    </th>
+                  </template>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="s in sortedStudents" :key="'print-row-'+s.studentId" class="print-student-row">
+                  <td class="print-name-cell">{{ s.lastName }}, {{ s.firstName }}</td>
+                  <td class="print-overall-cell">{{ formatGradeValue(classGrades[s.studentId]?.overallGrade) }}</td>
+                  <template v-if="activeGridColumns.length > 0">
+                    <td v-for="col in activeGridColumns" :key="'print-cell-'+s.studentId+'-'+col.id" class="print-ass-cell" :class="{ 'font-bold': col.isExp }">
+                      <span v-if="col.isExp">{{ formatExpectationMastery(s.studentId, col.id) }}</span>
+                      <span v-else>{{ formatAssessmentScore(s.studentId, col.id, col.totalPoints) }}</span>
+                    </td>
+                  </template>
+                  <template v-if="!isSBAR && form.showCategories">
+                    <td v-for="cat in classRecord.gradebookCategories" :key="'print-cell-'+s.studentId+'-'+cat.categoryId" class="print-cat-cell">
+                      {{ formatGradeValue(classGrades[s.studentId]?.categoryResults?.[cat.categoryId]?.percentage) }}
+                    </td>
+                  </template>
+                </tr>
+                
+                <tr v-if="form.showClassAverages" class="print-avg-row">
+                  <td class="print-name-cell">Class Average</td>
+                  <td class="print-overall-cell font-bold">{{ formatGradeValue(overallClassAverage !== null ? Math.round(overallClassAverage) : null) }}</td>
+                  <template v-if="activeGridColumns.length > 0">
+                    <td v-for="col in activeGridColumns" :key="'print-avg-'+col.id" class="print-ass-cell font-bold">
+                      <span v-if="col.isExp">—</span>
+                      <span v-else>{{ formatAssessmentAvg(getAssessmentClassAverage(col.id), col.totalPoints) }}</span>
+                    </td>
+                  </template>
+                  <template v-if="!isSBAR && form.showCategories">
+                    <td v-for="cat in classRecord.gradebookCategories" :key="'print-avg-cell-'+cat.categoryId" class="print-cat-cell font-bold">
+                      {{ formatGradeValue(getCategoryClassAverage(cat.categoryId)) }}
+                    </td>
+                  </template>
+                </tr>
+              </tbody>
+            </table>
+            
+            <footer class="print-footer">
+              <p>Class Size: {{ sortedStudents.length }} students</p>
+            </footer>
+          </div>
+        </template>
       </div>
     </Teleport>
   </BaseModal>
@@ -259,10 +394,14 @@
 
 <script setup>
 import { ref, computed, watch, nextTick, onMounted, toRef } from 'vue'
-import { Printer, X, Eye, AlertTriangle } from 'lucide-vue-next'
+import { Printer, X, Eye, AlertTriangle, FileSpreadsheet } from 'lucide-vue-next'
 import BaseModal from './BaseModal.vue'
 import { assessments, gradeMap, selectedMilestone, filteredMilestones } from '../composables/useGradebook.js'
 import { usePrintOptions } from '../composables/usePrintOptions.js'
+import { exportGradebookToExcel } from '../db/exportService.js'
+import { calculateSBARExpectationMastery, getSBARLevelBadge } from '../db/gradebook/gradeCalcSBAR.js'
+import { getEffectiveClassRecord } from '../composables/useElementary.js'
+import { activeSubjectId } from '../composables/useClassroomState.js'
 
 const props = defineProps({
   classRecord: { type: Object, required: true },
@@ -283,15 +422,19 @@ onMounted(() => {
   mounted.value = true
 })
 
+const isSBAR = computed(() => props.classRecord?.gradingFramework === 'sbar')
+
 const form = ref({
-  title: 'Final Grades Summary Grid',
+  title: isSBAR.value ? 'SBAR Final Grades & Standards Grid' : 'Final Grades Summary Grid',
   orientation: 'portrait',
   fontSize: 'auto',
   showCategories: false,
   showClassAverages: false,
   showZebraStriping: true,
   showAssessments: false,
-  assessmentScoreFormat: 'raw'
+  showExpectationsGrid: isSBAR.value,
+  assessmentScoreFormat: isSBAR.value ? 'level' : 'raw',
+  sbarGradeFormat: 'level_percent'
 })
 
 const cohortOptionsOnly = computed(() => {
@@ -363,12 +506,88 @@ const formattedDate = computed(() => {
   })
 })
 
+const sbarMasteryMap = computed(() => {
+  if (!isSBAR.value || !props.classRecord) return {}
+  const effClass = getEffectiveClassRecord(props.classRecord, activeSubjectId.value)
+  if (!effClass) return {}
+  const algo = effClass.sbarAlgorithm || 'decaying_average'
+  return calculateSBARExpectationMastery(
+    effClass, 
+    assessments.value || [], 
+    gradeMap.value || {}, 
+    algo, 
+    []
+  )
+})
+
+const sbarExpectationsList = computed(() => {
+  if (!isSBAR.value) return []
+  const map = sbarMasteryMap.value
+  const codeSet = new Set()
+  Object.values(map).forEach(stdMap => {
+    Object.keys(stdMap).forEach(code => codeSet.add(code))
+  })
+  
+  if (codeSet.size === 0 && props.classRecord?.expectations) {
+    props.classRecord.expectations.forEach(exp => {
+      if (exp.code) codeSet.add(exp.code)
+    })
+  }
+  
+  return Array.from(codeSet).sort().map(code => ({ code, name: code }))
+})
+
+function formatExpectationMastery(studentId, expCode) {
+  const res = sbarMasteryMap.value[studentId]?.[expCode]
+  if (!res || !res.badge || res.badge.level === '—') return '—'
+  if (form.value.assessmentScoreFormat === 'percent') {
+    return `${Math.round(res.score)}%`
+  }
+  return res.badge.level
+}
+
+const activeGridColumns = computed(() => {
+  const cols = []
+  if (isSBAR.value) {
+    if (form.value.showExpectationsGrid) {
+      cols.push(...sbarExpectationsList.value.map(e => ({ id: e.code, name: e.code, isExp: true })))
+    }
+    if (form.value.showAssessments) {
+      cols.push(...sortedAssessments.value.map(a => ({ id: a.assessmentId, name: a.name, totalPoints: a.totalPoints, isAst: true, raw: a })))
+    }
+    return cols
+  }
+  
+  if (form.value.showAssessments) {
+    return sortedAssessments.value.map(a => ({ id: a.assessmentId, name: a.name, totalPoints: a.totalPoints, isAst: true, raw: a }))
+  }
+  return []
+})
+
+const columnChunks = computed(() => {
+  const list = activeGridColumns.value
+  if (list.length === 0) return []
+  const chunks = []
+  for (let i = 0; i < list.length; i += ASSESSMENTS_PER_PAGE) {
+    chunks.push(list.slice(i, i + ASSESSMENTS_PER_PAGE))
+  }
+  return chunks
+})
+
+const activePreviewChunk = computed(() => {
+  if (columnChunks.value.length > 1) {
+    const idx = Math.min(activePreviewChunkIndex.value, columnChunks.value.length - 1)
+    return columnChunks.value[idx] || []
+  }
+  return activeGridColumns.value
+})
+
 const resolvedFontSize = computed(() => {
   if (form.value.fontSize !== 'auto') return form.value.fontSize
   const count = sortedStudents.value.length
   
-  if (form.value.showAssessments) {
-    const aCount = sortedAssessments.value.length
+  if (activeGridColumns.value.length > 0) {
+    const aCount = activeGridColumns.value.length
     if (count > 28 || aCount > 10) return 'compact'
     if (count > 16 || aCount > 5) return 'normal'
     return 'large'
@@ -379,12 +598,19 @@ const resolvedFontSize = computed(() => {
   return 'large'
 })
 
-// Auto-switch orientation to landscape when showAssessments is checked
-watch(() => form.value.showAssessments, (newVal) => {
-  if (newVal) {
-    form.value.orientation = 'landscape'
+// Smart Auto-Orientation:
+// Automatically switches to 'landscape' when wide columns (Assessments, Expectations, or Categories) are enabled.
+// Reverts to 'portrait' when all wide column options are unselected.
+watch(
+  [() => form.value.showAssessments, () => form.value.showCategories, () => form.value.showExpectationsGrid],
+  ([showAssessments, showCategories, showExpectationsGrid]) => {
+    if (showAssessments || showCategories || showExpectationsGrid) {
+      form.value.orientation = 'landscape'
+    } else {
+      form.value.orientation = 'portrait'
+    }
   }
-})
+)
 
 // watch orientation and apply dynamically to print style
 watch(isPrinting, (val) => {
@@ -403,7 +629,21 @@ watch(isPrinting, (val) => {
 
 function formatGradeValue(val) {
   if (val === null || val === undefined) return '—'
-  return `${Math.round(val * 10) / 10}%`
+  const rounded = Math.round(val * 10) / 10
+  
+  if (isSBAR.value) {
+    const badge = getSBARLevelBadge(val)
+    if (form.value.sbarGradeFormat === 'level') {
+      return badge.level
+    }
+    if (form.value.sbarGradeFormat === 'percent') {
+      return `${rounded}%`
+    }
+    // Default level_percent
+    return `${badge.level} (${rounded}%)`
+  }
+  
+  return `${rounded}%`
 }
 
 function formatAssessmentScore(studentId, assessmentId, totalPoints) {
@@ -411,8 +651,28 @@ function formatAssessmentScore(studentId, assessmentId, totalPoints) {
   if (!g) return '—'
   if (g.missing) return 'M'
   if (g.excluded) return 'EX'
-  if (g.resolvedScore === null || g.resolvedScore === undefined) return '—'
   
+  if (isSBAR.value) {
+    if (g.expectationScores && Object.keys(g.expectationScores).length > 0) {
+      const entries = Object.entries(g.expectationScores).filter(([_, score]) => score !== null && score !== undefined)
+      if (entries.length > 0) {
+        if (form.value.assessmentScoreFormat === 'expectation_breakdown') {
+          return entries.map(([code, score]) => `${code}: ${getSBARLevelBadge(score).level}`).join(' | ')
+        }
+        if (form.value.assessmentScoreFormat === 'level_list') {
+          return entries.map(([_, score]) => getSBARLevelBadge(score).level).join(', ')
+        }
+      }
+    }
+    
+    if (g.resolvedScore === null || g.resolvedScore === undefined) return '—'
+    if (form.value.assessmentScoreFormat === 'percent') {
+      return `${Math.round(g.resolvedScore)}%`
+    }
+    return getSBARLevelBadge(g.resolvedScore).level
+  }
+  
+  if (g.resolvedScore === null || g.resolvedScore === undefined) return '—'
   if (form.value.assessmentScoreFormat === 'percent') {
     const pct = (g.resolvedScore / totalPoints) * 100
     return `${Math.round(pct)}%`
@@ -472,6 +732,51 @@ const overallClassAverage = computed(() => {
   
   return count > 0 ? (sum / count) : null
 })
+
+const ASSESSMENTS_PER_PAGE = 8 // Maximum assessment columns per Landscape page part
+
+const activePreviewChunkIndex = ref(0)
+
+const assessmentChunks = computed(() => {
+  const list = sortedAssessments.value
+  if (!form.value.showAssessments || list.length === 0) {
+    return []
+  }
+  const chunks = []
+  for (let i = 0; i < list.length; i += ASSESSMENTS_PER_PAGE) {
+    chunks.push(list.slice(i, i + ASSESSMENTS_PER_PAGE))
+  }
+  return chunks
+})
+
+const activePreviewAssessments = computed(() => {
+  if (form.value.showAssessments && assessmentChunks.value.length > 1) {
+    const idx = Math.min(activePreviewChunkIndex.value, assessmentChunks.value.length - 1)
+    return assessmentChunks.value[idx] || []
+  }
+  return sortedAssessments.value
+})
+
+async function handleExcelExport() {
+  const summaryData = sortedStudents.value.map(s => ({
+    studentId: s.studentId,
+    firstName: s.firstName,
+    lastName: s.lastName,
+    overallGrade: props.classGrades[s.studentId]?.overallGrade,
+    absences: s.attendanceStats?.absences || 0,
+    lates: s.attendanceStats?.lates || 0
+  }))
+
+  await exportGradebookToExcel({
+    className: props.classRecord?.name || 'Class',
+    teacherName: props.teacherName,
+    students: sortedStudents.value,
+    assessments: sortedAssessments.value,
+    gradeMap: gradeMap.value,
+    summaryData,
+    categories: props.classRecord?.gradebookCategories || []
+  })
+}
 
 function handlePrint() {
   isPrinting.value = true
@@ -618,30 +923,30 @@ function handlePrint() {
 
 .preview-title {
   text-align: center;
-  font-size: 1.4em;
+  font-size: 1.3em;
   font-weight: 800;
-  margin: 0 0 4px 0;
+  margin: 0 0 2px 0;
   color: #111;
 }
 
 .preview-subtitle {
   text-align: center;
-  font-size: 0.9em;
+  font-size: 0.88em;
   color: #555;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 }
 
 .preview-meta-date {
   text-align: center;
   font-size: 0.75em;
   color: #777;
-  margin-bottom: 16px;
+  margin-bottom: 6px;
 }
 
 .preview-table {
   width: 100%;
   border-collapse: collapse;
-  margin-top: 10px;
+  margin-top: 0;
 }
 
 .preview-table.table--two-columns {
@@ -806,19 +1111,19 @@ function handlePrint() {
 
   .print-header {
     text-align: center;
-    margin-bottom: 12px;
+    margin-bottom: 6px;
     flex-shrink: 0;
   }
 
   .print-title {
-    font-size: 1.5rem;
+    font-size: 1.35rem;
     font-weight: bold;
     text-transform: uppercase;
-    margin: 0 0 4px 0;
+    margin: 0 0 2px 0;
   }
 
   .print-subtitle {
-    font-size: 0.95rem;
+    font-size: 0.88rem;
     color: #444;
     margin: 0 0 2px 0;
   }
@@ -826,12 +1131,13 @@ function handlePrint() {
   .print-meta-date {
     font-size: 0.75rem;
     color: #666;
+    margin-bottom: 0;
   }
 
   .print-table {
     width: 100%;
     border-collapse: collapse;
-    margin-top: 10px;
+    margin-top: 4px;
   }
 
   .print-table.table--two-columns {
@@ -932,6 +1238,41 @@ function handlePrint() {
   
   .font-size--large { font-size: 12pt; }
   .font-size--large td, .font-size--large th { padding: 7px 8px; }
+
+  .print-page-chunk {
+    page-break-after: always !important;
+    break-after: page !important;
+  }
+
+  .print-page-chunk:last-child {
+    page-break-after: avoid !important;
+    break-after: auto !important;
+  }
+}
+
+.preview-chunk-tabs {
+  display: flex;
+  gap: 4px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 2px;
+}
+
+.preview-chunk-tab {
+  padding: 2px 8px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  border-radius: var(--radius-xs);
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.preview-chunk-tab--active {
+  background: var(--primary);
+  color: white;
 }
 
 :deep(.bm-card) {
