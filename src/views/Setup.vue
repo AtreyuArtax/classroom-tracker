@@ -1204,8 +1204,8 @@ function onFileSelected(evt) {
         // Extract homeroom name and year directly from raw CSV rows
         const firstRaw = results.data.find(r => r['Student Number'] || r['Student Name'])
         const homeroomCode = firstRaw?.['Sec Section'] || firstRaw?.['Home Room'] || 'Homeroom'
-        // Normalize: "HRM.130" → "HRM-130", strip any trailing -N section suffix
-        const homeroomName = homeroomCode.replace(/\./g, '-').replace(/-\d+$/, '').trim()
+        // Normalize: "HRM.130" → "HRM-130"
+        const homeroomName = homeroomCode.replace(/\./g, '-').trim()
 
         // Parse year from Schedule column ("2025-2026" → "2025-26")
         const rawSchedule = firstRaw?.['Schedule'] || ''
