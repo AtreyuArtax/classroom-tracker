@@ -240,8 +240,8 @@
     "semantic_hash": "68f077cda9561ec51fbe56d0aa61fb3e"
   },
   "src/composables/useClassroom.js": {
-    "mtime": 1786457421.2909992,
-    "ast_hash": "0400d89620f2f83aae1c1d7f0a4e2dcb",
+    "mtime": 1786458691.6720958,
+    "ast_hash": "2ee8a4808b7d22eb351ad30f18f2034b",
     "semantic_hash": ""
   },
   "src/composables/useGradebook.js": {
@@ -435,8 +435,8 @@
     "semantic_hash": ""
   },
   "src/composables/useClassroomState.js": {
-    "mtime": 1785505660.4732347,
-    "ast_hash": "ea7400bfd6c8ed2904dbb82305290908",
+    "mtime": 1786458687.7727816,
+    "ast_hash": "bbbf80e681917c30fa65a95d82fc24db",
     "semantic_hash": ""
   },
   "src/composables/useRosterOperations.js": {

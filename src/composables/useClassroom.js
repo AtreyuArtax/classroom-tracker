@@ -515,7 +515,7 @@ async function init() {
     teacherName.value = settings.teacherName || ''
     attendanceMode.value = settings.attendanceMode || 'natural'
     latenessGracePeriod.value = settings.latenessGracePeriod !== undefined ? settings.latenessGracePeriod : 5
-    showScannerButton.value = settings.showScannerButton !== undefined ? settings.showScannerButton : true
+    showScannerButton.value = settings.showScannerButton !== undefined ? settings.showScannerButton : false
     cloudModeEnabled.value = settings.cloudModeEnabled || false
     userCode.value = settings.userCode || ''
 

@@ -19,7 +19,7 @@ export const teacherName = ref('')
 export const attendanceMode = ref('natural')
 export const latenessGracePeriod = ref(5)
 export const periodStartTimes = ref({})
-export const showScannerButton = ref(true)
+export const showScannerButton = ref(false)
 export const academicTerms = ref([])
 export const nonSchoolDays = ref([])
 
