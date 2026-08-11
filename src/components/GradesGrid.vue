@@ -2,45 +2,51 @@
   <div class="grades__grid-container-outer">
     <!-- Unit & Sub-Cohort Filter Bar (Fixed above table) -->
     <div v-if="availableSubCohorts.length > 1 || availableUnits.length > 0" class="grades__filter-bar">
-      <!-- Sub-Cohort Filter Pills (Split-Grade or Split-Section Classes) -->
-      <div v-if="availableSubCohorts.length > 1" class="grades__filter-group">
-        <span class="grades__filter-label">{{ activeClassRecord?.classType === 'elementary' ? 'Grade:' : 'Section:' }}</span>
-        <div class="grades__filter-chips">
-          <button 
-            v-for="subCohort in availableSubCohorts" 
-            :key="subCohort" 
-            type="button"
-            class="grid-chip"
-            :class="{ 'grid-chip--active': String(activeSubCohortFilter).toLowerCase() === String(subCohort).toLowerCase() }"
-            @click="activeSubCohortFilter = subCohort; selectedUnitId = null"
-          >
-            {{ subCohort === 'all' ? (activeClassRecord?.classType === 'elementary' ? 'All Grades' : 'All Sections') : subCohort }}
-          </button>
+      <!-- Row 1: Sub-Cohort Filter Pills (Split-Grade or Split-Section Classes) -->
+      <div v-if="availableSubCohorts.length > 1" class="grades__filter-row grades__filter-row--top">
+        <div class="grades__filter-group">
+          <span class="grades__filter-label">{{ activeClassRecord?.classType === 'elementary' ? 'Grade:' : 'Section:' }}</span>
+          <div class="grades__filter-chips">
+            <button 
+              v-for="subCohort in availableSubCohorts" 
+              :key="subCohort" 
+              type="button"
+              class="grid-chip"
+              :class="{ 'grid-chip--active': String(activeSubCohortFilter).toLowerCase() === String(subCohort).toLowerCase() }"
+              @click="activeSubCohortFilter = subCohort; selectedUnitId = null"
+            >
+              {{ subCohort === 'all' ? (activeClassRecord?.classType === 'elementary' ? 'All Grades' : 'All Sections') : subCohort }}
+            </button>
+          </div>
         </div>
       </div>
 
-      <!-- Unit Filter Pills -->
-      <div v-if="availableUnits.length > 0 && (availableGradeFilters.length <= 1 || selectedGradeFilter !== 'all')" class="grades__filter-group">
-        <span class="grades__filter-label">Unit:</span>
-        <div class="grades__filter-chips">
-          <button 
-            class="grid-chip" 
-            :class="{ 'grid-chip--active': selectedUnitId === null }"
-            @click="selectedUnitId = null"
-          >
-            All Units
-          </button>
-          <button 
-            v-for="u in availableUnits" 
-            :key="u.unitId"
-            class="grid-chip"
-            :class="{ 'grid-chip--active': selectedUnitId === u.unitId }"
-            :style="selectedUnitId === u.unitId ? { background: getUnitColor(u.unitId), borderColor: getUnitColor(u.unitId), color: '#fff' } : {}"
-            @click="selectedUnitId = u.unitId"
-          >
-            <span class="grid-chip__dot" :style="{ background: selectedUnitId === u.unitId ? '#fff' : getUnitColor(u.unitId) }"></span>
-            {{ cleanUnitPillName(u.name) }}
-          </button>
+      <!-- Row 2: Unit / Strand Filter Pills -->
+      <div v-if="availableUnits.length > 0 && (activeClassRecord?.classType !== 'elementary' || availableSubCohorts.length <= 1 || String(activeSubCohortFilter).toLowerCase() !== 'all')" class="grades__filter-row grades__filter-row--bottom">
+        <div class="grades__filter-group">
+          <span class="grades__filter-label">{{ activeClassRecord?.classType === 'elementary' ? 'Strand:' : 'Unit:' }}</span>
+          <div class="grades__filter-chips">
+            <button 
+              class="grid-chip" 
+              :class="{ 'grid-chip--active': selectedUnitId === null }"
+              @click="selectedUnitId = null"
+            >
+              {{ activeClassRecord?.classType === 'elementary' ? 'All Strands' : 'All Units' }}
+              <span class="grid-chip__badge">{{ totalAssessmentCount }}</span>
+            </button>
+            <button 
+              v-for="u in availableUnits" 
+              :key="u.unitId"
+              class="grid-chip"
+              :class="{ 'grid-chip--active': selectedUnitId === u.unitId }"
+              :style="selectedUnitId === u.unitId ? { background: getUnitColor(u.unitId), borderColor: getUnitColor(u.unitId), color: '#fff' } : {}"
+              @click="selectedUnitId = u.unitId"
+            >
+              <span class="grid-chip__dot" :style="{ background: selectedUnitId === u.unitId ? '#fff' : getUnitColor(u.unitId) }"></span>
+              <span>{{ cleanUnitPillName(u.name) }}</span>
+              <span class="grid-chip__badge">{{ getUnitAssessmentCount(u.unitId, u.name) }}</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -398,6 +404,7 @@ import {
   getSectionColor
 } from '../utils/gradeColors.js'
 import { useMessage } from '../composables/useMessage.js'
+import { cleanUnitName } from '../composables/useElementary.js'
 import { getAssessmentPercentage } from '../db/gradebookService.js'
 import { formatLocalDisplay } from '../utils/dates.js'
 import { 
@@ -583,10 +590,8 @@ function getCategoryName(categoryId) {
   return cats.find(c => c.categoryId === categoryId)?.name ?? ''
 }
 
-function cleanUnitPillName(name) {
-  if (!name) return ''
-  return name.replace(/^\[Grade\s*\d+\]\s*/i, '').trim()
-}
+const cleanUnitPillName = cleanUnitName
+
 
 const availableCourseFilters = computed(() => {
   const codes = new Set()
@@ -626,17 +631,25 @@ const availableGradeFilters = computed(() => {
 
 const availableUnits = computed(() => {
   const eff = getEffectiveClassRecord(activeClassRecord.value, activeSubjectId.value, selectedCourseFilter.value)
-  const units = eff?.gradebookUnits || []
-  if (selectedGradeFilter.value === 'all' || availableGradeFilters.value.length <= 1) {
-    return units
+  let units = eff?.gradebookUnits || []
+  if (selectedGradeFilter.value !== 'all' && availableGradeFilters.value.length > 1) {
+    units = units.filter(u => {
+      const uGrade = u.gradeLevel || (u.name && u.name.includes('Grade 7') ? 'Grade 7' : (u.name && u.name.includes('Grade 8') ? 'Grade 8' : ''))
+      return isCohortMatch(uGrade, selectedGradeFilter.value)
+    })
   }
-  const targetG = selectedGradeFilter.value.toLowerCase()
-  return units.filter(u => {
-    const uGrade = u.gradeLevel || (u.name && u.name.includes('Grade 7') ? 'Grade 7' : (u.name && u.name.includes('Grade 8') ? 'Grade 8' : ''))
-    if (uGrade && uGrade.toLowerCase() === targetG) return true
-    if (u.expectations && u.expectations.some(e => e.gradeLevel && e.gradeLevel.toLowerCase() === targetG)) return true
-    return !uGrade
-  })
+
+  const seenNames = new Set()
+  const uniqueUnits = []
+  for (const u of units) {
+    const cleanName = cleanUnitPillName(u.name).toLowerCase()
+    if (!seenNames.has(cleanName)) {
+      seenNames.add(cleanName)
+      uniqueUnits.push(u)
+    }
+  }
+
+  return uniqueUnits
 })
 
 const availableCategories = computed(() => {
@@ -657,7 +670,19 @@ const sortedAssessments = computed(() => {
     return isAssessmentInSubCohort(a)
   })
   if (selectedUnitId.value) {
-    list = list.filter(a => a.unitId === selectedUnitId.value)
+    const eff = getEffectiveClassRecord(activeClassRecord.value, activeSubjectId.value, selectedCourseFilter.value)
+    const targetUnit = (eff?.gradebookUnits || []).find(u => u.unitId === selectedUnitId.value)
+    if (targetUnit) {
+      const targetCleanName = cleanUnitPillName(targetUnit.name).toLowerCase()
+      const matchingUnitIds = new Set(
+        (eff?.gradebookUnits || [])
+          .filter(u => cleanUnitPillName(u.name).toLowerCase() === targetCleanName)
+          .map(u => u.unitId)
+      )
+      list = list.filter(a => a.unitId && matchingUnitIds.has(a.unitId))
+    } else {
+      list = list.filter(a => a.unitId === selectedUnitId.value)
+    }
   }
   if (selectedCategoryId.value) {
     list = list.filter(a => a.categoryId === selectedCategoryId.value)
@@ -667,6 +692,31 @@ const sortedAssessments = computed(() => {
     return assessmentSortOrder.value === 'asc' ? diff : -diff
   })
 })
+const totalAssessmentCount = computed(() => {
+  return assessments.value.filter(a => {
+    if (a.target === 'individual' || a.categoryId === 'sbar_general') return false
+    return isAssessmentInSubCohort(a)
+  }).length
+})
+
+function getUnitAssessmentCount(unitId, unitName) {
+  const eff = getEffectiveClassRecord(activeClassRecord.value, activeSubjectId.value, selectedCourseFilter.value)
+  const allUnits = eff?.gradebookUnits || []
+  const targetCleanName = cleanUnitPillName(unitName).toLowerCase()
+  const matchingUnitIds = new Set(
+    allUnits
+      .filter(u => cleanUnitPillName(u.name).toLowerCase() === targetCleanName)
+      .map(u => u.unitId)
+  )
+  if (unitId) matchingUnitIds.add(unitId)
+
+  const unFilteredList = assessments.value.filter(a => {
+    if (a.target === 'individual' || a.categoryId === 'sbar_general') return false
+    return isAssessmentInSubCohort(a)
+  })
+
+  return unFilteredList.filter(a => a.unitId && matchingUnitIds.has(a.unitId)).length
+}
 
 const sortedRoster = computed(() => {
   if (!activeClassRecord.value?.students) return []
@@ -787,25 +837,66 @@ async function onNavigate(direction) {
   const studentIdx = sortedRoster.value.findIndex(s => String(s.studentId) === String(sId))
   const assessIdx = sortedAssessments.value.findIndex(a => Number(a.assessmentId) === Number(aId))
 
-  if (direction === 'down' && studentIdx < sortedRoster.value.length - 1) {
-    const nextStudent = sortedRoster.value[studentIdx + 1]
-    startEdit(nextStudent.studentId, aId)
-  } else if (direction === 'up' && studentIdx > 0) {
-    const prevStudent = sortedRoster.value[studentIdx - 1]
-    startEdit(prevStudent.studentId, aId)
+  if (direction === 'down') {
+    let nextIdx = studentIdx + 1
+    while (nextIdx < sortedRoster.value.length) {
+      const targetStudent = sortedRoster.value[nextIdx]
+      const targetAssess = aId === 'overall' ? null : sortedAssessments.value.find(a => Number(a.assessmentId) === Number(aId))
+      if (aId === 'overall' || isCellApplicable(targetStudent.studentId, targetAssess)) {
+        startEdit(targetStudent.studentId, aId)
+        break
+      }
+      nextIdx++
+    }
+  } else if (direction === 'up') {
+    let prevIdx = studentIdx - 1
+    while (prevIdx >= 0) {
+      const targetStudent = sortedRoster.value[prevIdx]
+      const targetAssess = aId === 'overall' ? null : sortedAssessments.value.find(a => Number(a.assessmentId) === Number(aId))
+      if (aId === 'overall' || isCellApplicable(targetStudent.studentId, targetAssess)) {
+        startEdit(targetStudent.studentId, aId)
+        break
+      }
+      prevIdx--
+    }
   } else if (direction === 'right') {
-    if (aId === 'overall' && sortedAssessments.value.length > 0) {
-      startEdit(sId, sortedAssessments.value[0].assessmentId)
-    } else if (assessIdx >= 0 && assessIdx < sortedAssessments.value.length - 1) {
-      const nextAssess = sortedAssessments.value[assessIdx + 1]
-      startEdit(sId, nextAssess.assessmentId)
+    if (aId === 'overall') {
+      let idx = 0
+      while (idx < sortedAssessments.value.length) {
+        const targetAssess = sortedAssessments.value[idx]
+        if (isCellApplicable(sId, targetAssess)) {
+          startEdit(sId, targetAssess.assessmentId)
+          break
+        }
+        idx++
+      }
+    } else if (assessIdx >= 0) {
+      let idx = assessIdx + 1
+      while (idx < sortedAssessments.value.length) {
+        const targetAssess = sortedAssessments.value[idx]
+        if (isCellApplicable(sId, targetAssess)) {
+          startEdit(sId, targetAssess.assessmentId)
+          break
+        }
+        idx++
+      }
     }
   } else if (direction === 'left') {
-    if (assessIdx === 0) {
-      startEdit(sId, 'overall')
-    } else if (assessIdx > 0) {
-      const prevAssess = sortedAssessments.value[assessIdx - 1]
-      startEdit(sId, prevAssess.assessmentId)
+    if (assessIdx >= 0) {
+      let idx = assessIdx - 1
+      let found = false
+      while (idx >= 0) {
+        const targetAssess = sortedAssessments.value[idx]
+        if (isCellApplicable(sId, targetAssess)) {
+          startEdit(sId, targetAssess.assessmentId)
+          found = true
+          break
+        }
+        idx--
+      }
+      if (!found) {
+        startEdit(sId, 'overall')
+      }
     }
   }
 }
@@ -864,12 +955,23 @@ function copyAssessmentGrades(assessment) {
 /* Scoped overrides to target grid components and layout */
 .grades__filter-bar {
   display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 6px 16px;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 16px;
   background: var(--surface);
   border-bottom: 1px solid var(--border);
-  flex-wrap: wrap;
+}
+
+.grades__filter-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+}
+
+.grades__filter-row--bottom {
+  border-top: 1px dashed var(--border);
+  padding-top: 5px;
 }
 
 .sbar-student-grade-tag {
@@ -927,6 +1029,10 @@ function copyAssessmentGrades(assessment) {
   color: var(--text-secondary);
   cursor: pointer;
   transition: all 0.15s ease;
+  max-width: 240px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .grid-chip:hover {
@@ -944,6 +1050,26 @@ function copyAssessmentGrades(assessment) {
   width: 6px;
   height: 6px;
   border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.grid-chip__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.08);
+  color: var(--text-secondary);
+  margin-left: 3px;
+  flex-shrink: 0;
+}
+
+.grid-chip--active .grid-chip__badge {
+  background: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
 }
 
 .grades__assessment-cat-tag {

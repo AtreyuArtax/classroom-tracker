@@ -462,7 +462,7 @@ import { ref, computed, onMounted } from 'vue'
 import { Eye, MessageSquare, Trash2, ChevronDown, ChevronUp } from 'lucide-vue-next'
 import { formatLocalDisplay } from '../../utils/dates.js'
 import { getGradeBuckets } from '../../db/settingsService.js'
-import { getEffectiveClassRecord } from '../../composables/useElementary.js'
+import { getEffectiveClassRecord, cleanUnitName } from '../../composables/useElementary.js'
 import { activeSubjectId } from '../../composables/useClassroomState.js'
 import { gradeMap } from '../../composables/useGradebook.js'
 import { getSBARLevelBadge } from '../../db/gradebookService.js'
@@ -477,10 +477,6 @@ onMounted(async () => {
   }
 })
 
-function cleanUnitName(name) {
-  if (!name) return ''
-  return String(name).replace(/^\[Grade\s*\d+\]\s*/i, '').trim()
-}
 
 function getProductColor(pct) {
   if (pct === null || pct === undefined || isNaN(pct)) return 'var(--primary)'

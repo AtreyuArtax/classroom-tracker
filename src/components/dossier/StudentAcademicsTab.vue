@@ -435,7 +435,7 @@ import SBARExpectationMasteryGrid from './SBARExpectationMasteryGrid.vue'
 
 const homeroomSubjects = computed(() => {
   if (!activeClassRecord.value || activeClassRecord.value.classType !== 'elementary') return []
-  const cls = activeClass.value || activeClassRecord.value
+  const cls = activeClassRecord.value
   return cls.subjects && cls.subjects.length > 0 ? cls.subjects : []
 })
 
@@ -512,6 +512,7 @@ const isSBARMode = computed(() => activeClassRecord.value?.gradingFramework === 
 
 
 function isSBARTask(a) {
+  if (!isSBARMode.value) return false
   return a.categoryId === 'sbar_general' || (a.expectationIds && a.expectationIds.length > 0)
 }
 

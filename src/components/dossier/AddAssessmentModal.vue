@@ -3,7 +3,7 @@
     :show="showAddAssessmentModal"
     @close="closeAddAssessment"
     :title="isEditingAssessment ? 'Edit Assessment' : 'New Assessment'"
-    max-width="750px"
+    max-width="920px"
     :z-index="3000"
   >
     <form class="modal-form modal-form--wide" @submit.prevent="saveAssessment">
@@ -436,8 +436,8 @@ function toggleExpSelection(code) {
 
 .modal-body-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1.25rem;
+  grid-template-columns: minmax(320px, 350px) 1fr;
+  gap: 1.5rem;
   align-items: start;
 }
 

@@ -396,8 +396,10 @@ import {
   populateSubjectFromPreset, 
   populateSubjectFromPresets,
   findElementaryPreset, 
-  findElementaryPresets 
+  findElementaryPresets,
+  cleanUnitName
 } from '../../composables/useElementary.js'
+
 import ExpectationImportModal from './ExpectationImportModal.vue'
 import { useMessage } from '../../composables/useMessage.js'
 
@@ -525,10 +527,6 @@ function submitAddExp(subjectId, unitId) {
   newExpForms[descKey] = ''
 }
 
-function cleanUnitName(name) {
-  if (!name) return ''
-  return name.replace(/^\[Grade\s*\d+\]\s*/i, '').trim()
-}
 
 function saveStrandName(subjectId, unitId, newName) {
   const clean = cleanUnitName(newName)

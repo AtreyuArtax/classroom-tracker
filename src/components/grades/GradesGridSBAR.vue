@@ -1,45 +1,27 @@
 <template>
   <div class="grades-grid-sbar">
     <!-- Strand & Unit Filter Pills + Task Selector -->
-    <div class="sbar-toolbar">
-      <div class="sbar-toolbar-left">
-        <!-- Split Class Grade / Section Filter Pills -->
-        <div v-if="availableGradeFilters.length > 1" class="sbar-grade-pills">
-          <button 
-            v-for="gFilter in availableGradeFilters" 
-            :key="gFilter" 
-            type="button"
-            class="grade-pill"
-            :class="{ 'grade-pill--active': String(activeGradeFilter).toLowerCase() === String(gFilter).toLowerCase() }"
-            @click="setGradeFilter(gFilter)"
-          >
-            {{ gFilter === 'all' ? (activeClassRecord?.classType === 'elementary' ? 'All Grades' : 'All Sections') : gFilter }}
-          </button>
+    <!-- Dedicated Filter Bar: Row 1 & Row 2 -->
+    <div class="sbar-toolbar sbar-toolbar--stacked">
+      <!-- Row 1: Roster Filters (Grade/Section) & Assessment Actions -->
+      <div class="sbar-toolbar-row sbar-toolbar-row--top">
+        <div class="sbar-toolbar-left">
+          <div v-if="availableGradeFilters.length > 1" class="sbar-grade-pills">
+            <button 
+              v-for="gFilter in availableGradeFilters" 
+              :key="gFilter" 
+              type="button"
+              class="grade-pill"
+              :class="{ 'grade-pill--active': String(activeGradeFilter).toLowerCase() === String(gFilter).toLowerCase() }"
+              @click="setGradeFilter(gFilter)"
+            >
+              {{ gFilter === 'all' ? (activeClassRecord?.classType === 'elementary' ? 'All Grades' : 'All Sections') : gFilter }}
+            </button>
+          </div>
         </div>
 
-        <div v-if="availableStrands.length > 1 && (availableGradeFilters.length <= 1 || activeGradeFilter !== 'all')" class="sbar-strand-pills">
-          <button 
-            class="strand-pill" 
-            :class="{ 'strand-pill--active': activeStrandFilter === 'all' }"
-            @click="activeStrandFilter = 'all'"
-          >
-            All Strands
-          </button>
-          <button 
-            v-for="(strand, idx) in availableStrands" 
-            :key="strand.id || strand.code" 
-            class="strand-pill"
-            :class="{ 'strand-pill--active': activeStrandFilter === (strand.id || strand.code) }"
-            :title="strand.name"
-            @click="activeStrandFilter = (strand.id || strand.code)"
-          >
-            <span class="strand-pill-dot" :style="{ color: getUnitColorByIdx(idx) }">●</span>
-            {{ formatStrandPillLabel(strand.name) }}
-          </button>
-        </div>
-      </div>
+        <div class="sbar-toolbar-right">
 
-      <div class="sbar-toolbar-right">
         <!-- Tier 3: Quick Action Chips (Top 2 Active / Recent Tasks) -->
         <div v-if="quickActionTasks.length" class="sbar-quick-chips">
           <button 
@@ -168,6 +150,33 @@
         </div>
       </div>
     </div>
+
+    <!-- Row 2: Curriculum Domain Scope (Strand Pills) -->
+    <div v-if="availableStrands.length > 1 && (availableGradeFilters.length <= 1 || String(activeGradeFilter).toLowerCase() !== 'all')" class="sbar-toolbar-row sbar-toolbar-row--bottom">
+      <div class="sbar-strand-pills">
+        <button 
+          class="strand-pill" 
+          :class="{ 'strand-pill--active': activeStrandFilter === 'all' }"
+          @click="activeStrandFilter = 'all'"
+        >
+          All Strands
+          <span class="strand-pill-badge">{{ sortedAssessments.length }}</span>
+        </button>
+        <button 
+          v-for="(strand, idx) in availableStrands" 
+          :key="strand.id || strand.code" 
+          class="strand-pill"
+          :class="{ 'strand-pill--active': activeStrandFilter === (strand.id || strand.code) }"
+          :title="strand.name"
+          @click="activeStrandFilter = (strand.id || strand.code)"
+        >
+          <span class="strand-pill-dot" :style="{ color: getUnitColorByIdx(idx) }">●</span>
+          <span>{{ formatStrandPillLabel(strand.name) }}</span>
+          <span class="strand-pill-badge">{{ getStrandAssessmentCount(strand) }}</span>
+        </button>
+      </div>
+    </div>
+  </div>
 
     <!-- SBAR Expectation Heatmap Grid Table -->
     <div class="sbar-grid-container">
@@ -486,6 +495,19 @@ function getAssessmentTooltip(ast) {
   }
 
   return `${ast.name} (${stats.evaluatedCount}/${rosterLen} students evaluated)`
+}
+
+function getStrandAssessmentCount(strand) {
+  if (!strand) return sortedAssessments.value.length
+  const strandCode = (strand.code || strand.strandCode || strand.id || '').toLowerCase()
+  return sortedAssessments.value.filter(ast => {
+    const ids = ast.expectationIds || (ast.expectationId ? [ast.expectationId] : [])
+    if (ids.length === 0) return false
+    return ids.some(code => {
+      const cLower = String(code).toLowerCase()
+      return cLower.startsWith(strandCode) || cLower.includes(strandCode)
+    })
+  }).length
 }
 
 function getExpAssessmentCount(expCode) {
@@ -902,16 +924,27 @@ function openExpectationDetail(studentId, expCode) {
 
 .sbar-toolbar {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  flex-direction: column;
+  gap: 8px;
   background: var(--surface);
   padding: 8px 14px;
   border-radius: var(--radius-md);
   border: 1px solid var(--border);
-  flex-wrap: nowrap;
   position: relative;
   z-index: 50;
+}
+
+.sbar-toolbar-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 12px;
+}
+
+.sbar-toolbar-row--bottom {
+  border-top: 1px solid var(--border);
+  padding-top: 6px;
 }
 
 .sbar-toolbar-left {
@@ -927,8 +960,6 @@ function openExpectationDetail(studentId, expCode) {
   display: flex;
   align-items: center;
   gap: 4px;
-  border-right: 1px solid var(--border);
-  padding-right: 8px;
   flex-shrink: 0;
 }
 
@@ -1006,8 +1037,26 @@ function openExpectationDetail(studentId, expCode) {
 }
 
 .strand-pill-dot {
-  font-size: 11px;
-  margin-right: 4px;
+  font-size: 0.65rem;
+}
+
+.strand-pill-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.08);
+  color: var(--text-secondary);
+  margin-left: 3px;
+  flex-shrink: 0;
+}
+
+.strand-pill--active .strand-pill-badge {
+  background: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
 }
 
 .strand-group--gr7 {

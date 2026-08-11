@@ -148,6 +148,7 @@ import { ref, computed } from 'vue'
 import { Target, AlertCircle, ChevronDown, TrendingUp, TrendingDown, Minus, Search, Filter } from 'lucide-vue-next'
 import { activeClassRecord, assessments, gradeMap } from '../../composables/useGradebook.js'
 import { calculateSBARExpectationMastery } from '../../db/gradebook/gradeCalcSBAR.js'
+import { cleanUnitName } from '../../composables/useElementary.js'
 
 const props = defineProps({
   studentId: { type: String, required: true }
@@ -165,10 +166,6 @@ function toggleRow(code) {
   expandedRow.value = expandedRow.value === code ? null : code
 }
 
-function cleanUnitName(name) {
-  if (!name) return ''
-  return name.replace(/\[Grade \d+\]\s*/g, '').trim()
-}
 
 const expectationList = computed(() => {
   if (!activeClassRecord.value || !props.studentId) return []

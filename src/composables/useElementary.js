@@ -106,6 +106,26 @@ export function parseGradesFromClass(str = '') {
   return []
 }
 
+export function cleanUnitName(name) {
+  if (!name) return ''
+  let cleaned = String(name).replace(/^\[Grade\s*\d+\]\s*/i, '').trim()
+  
+  // Strip long trailing parenthetical details (e.g. SEL skills in Math)
+  cleaned = cleaned.replace(/\s*\([^)]*\)\s*Skills.*$/i, '')
+  cleaned = cleaned.replace(/\s*\(SEL\)\s*/i, ' ')
+  
+  // Shorten excessively long subtitles after colons
+  if (cleaned.length > 32 && cleaned.includes(':')) {
+    const parts = cleaned.split(':')
+    const prefix = parts[0].trim()
+    const rest = parts.slice(1).join(':').trim()
+    const shortRest = rest.split(/\s+/).slice(0, 3).join(' ')
+    cleaned = `${prefix}: ${shortRest}`
+  }
+  
+  return cleaned
+}
+
 export function detectGradeFromClassName(name = '') {
   const grades = parseGradesFromClass(name)
   return grades.length > 0 ? grades.join('/') : ''

@@ -4,6 +4,7 @@
  * Dedicated Standards-Based Assessment & Reporting (SBAR / SBGR) Math Engine.
  * Implements Decaying Average, Most Recent, Level 1-4 mappings, and Expectation Mastery calculations.
  */
+import { isCohortMatch } from './gradeCalc.js'
 
 /**
  * Calculates a Decaying Average over a chronologically sorted array of score percentages (0..100).
@@ -218,9 +219,7 @@ export function calculateSBARExpectationMastery(classRecord, assessments, gradeM
         const targetTag = isElem ? (ast.gradeLevel || ast.targetCourseCode) : (ast.targetCourseCode || ast.gradeLevel)
         const studentCohort = isElem ? st?.gradeLevel : st?.courseCode
 
-        if (targetTag && targetTag.toLowerCase() !== 'all' && studentCohort) {
-          if (targetTag.toLowerCase() !== studentCohort.toLowerCase()) return
-        }
+        if (!isCohortMatch(targetTag, studentCohort)) return
 
         const rawGrade = gradeMap[ast.assessmentId]
         const grade = (rawGrade && rawGrade[studentId]) ? rawGrade[studentId] : rawGrade

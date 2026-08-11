@@ -11,6 +11,7 @@ import {
   classList,
   gridSize
 } from './useClassroomState.js'
+import { activeClassRecord } from './useGradebook.js'
 import * as classService from '../db/classService.js'
 import { useUndo } from './useUndo.js'
 import { useMessage } from './useMessage.js'
@@ -261,8 +262,13 @@ export async function updateStudentAccommodations(studentId, accommodations) {
             activeClass.value.students[studentId].hasIEP = Boolean(accCopy.hasIEP)
             activeClass.value.students[studentId].accommodations = accCopy
         }
+        if (activeClassRecord.value?.students?.[studentId]) {
+            activeClassRecord.value.students[studentId].hasIEP = Boolean(accCopy.hasIEP)
+            activeClassRecord.value.students[studentId].accommodations = accCopy
+        }
         triggerRef(students)
         triggerRef(activeClass)
+        triggerRef(activeClassRecord)
     } catch (err) {
         console.error('updateStudentAccommodations failed:', err)
         const { alert } = useMessage()

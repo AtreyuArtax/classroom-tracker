@@ -299,8 +299,7 @@ export function calculateMostConsistent(studentId, classRecord, gradeMap, assess
       a.target !== 'individual' && 
       a.categoryId === cat.categoryId && 
       !a.excluded &&
-      a.categoryId !== 'sbar_general' &&
-      (!a.expectationIds || a.expectationIds.length === 0)
+      a.categoryId !== 'sbar_general'
     )
 
     const scores = []
@@ -404,6 +403,13 @@ export function calculateWeightedMedian(studentId, classRecord, gradeMap, assess
   }
 }
 
+export function isCohortMatch(targetTag, studentCohort) {
+  if (!targetTag || String(targetTag).toLowerCase() === 'all' || !studentCohort) return true
+  const cleanTarget = String(targetTag).replace(/\s*\(IEP\)/i, '').replace(/^(grade|gr)\.?\s*/i, 'grade ').trim().toLowerCase()
+  const cleanCohort = String(studentCohort).replace(/\s*\(IEP\)/i, '').replace(/^(grade|gr)\.?\s*/i, 'grade ').trim().toLowerCase()
+  return cleanTarget === cleanCohort
+}
+
 export async function calculateStudentGrade(studentId, classRecord, { asOf = null, assessmentsPreRef = null, gradesPreRef = null } = {}) {
   const assessments = assessmentsPreRef || await getAssessmentsByClass(classRecord.classId)
   const grades = gradesPreRef || await getGradesByStudent(studentId, classRecord.classId)
@@ -440,12 +446,10 @@ export async function calculateStudentGrade(studentId, classRecord, { asOf = nul
 
     let catAssessments = assessments.filter(a => {
       if (String(a.categoryId) !== String(category.categoryId) || a.excluded || a.categoryId === 'sbar_general') return false
-      if (a.expectationIds && a.expectationIds.length > 0) return false
       if (a.target === 'individual') return String(a.targetStudentId) === String(studentId)
       
       const targetTag = isElem ? (a.gradeLevel || a.targetCourseCode) : (a.targetCourseCode || a.gradeLevel)
-      if (!targetTag || targetTag === 'all' || !studentCohort) return true
-      return String(targetTag).toLowerCase() === String(studentCohort).toLowerCase()
+      return isCohortMatch(targetTag, studentCohort)
     })
 
     // Apply asOf date filter if provided

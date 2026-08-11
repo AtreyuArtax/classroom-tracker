@@ -12,6 +12,7 @@ import { getGlobalMilestones, getGradeBuckets } from '../db/settingsService.js'
 import { useUndo } from './useUndo.js'
 import { activeClass, activeSubjectId } from './useClassroomState.js'
 import { getEffectiveClassRecord, getStudentEffectiveGrade } from './useElementary.js'
+import { isCohortMatch } from '../db/gradebook/gradeCalc.js'
 
 const { push: pushUndo } = useUndo()
 
@@ -115,9 +116,7 @@ export function isAssessmentApplicableToStudent(assessment, student, classType =
     ? getStudentEffectiveGrade(student, curSubId)
     : (student.courseCode || student.gradeLevel)
   if (!sTag) return true
-  const cleanATag = aTag.replace(/\s*\(IEP\)/i, '').trim().toLowerCase()
-  const cleanSTag = sTag.replace(/\s*\(IEP\)/i, '').trim().toLowerCase()
-  return cleanATag === cleanSTag
+  return isCohortMatch(aTag, sTag)
 }
 
 
