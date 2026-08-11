@@ -267,12 +267,12 @@ function onExpectationImport(payload) {
     targetUnitsList = activeClass.value.gradebookUnits
   }
 
-  if (payload.importBehavior === 'replace') {
-    targetUnitsList.length = 0
-  }
-
   if (payload.mode === 'auto-units') {
     // Mode A: Auto-Create Units from preset strands
+    if (payload.importBehavior === 'replace') {
+      targetUnitsList.length = 0
+    }
+
     payload.preset.strands.forEach(strand => {
       const expList = []
       if (strand.overalls) {
@@ -314,7 +314,9 @@ function onExpectationImport(payload) {
     }
 
     if (targetUnit) {
-      if (!targetUnit.expectations) targetUnit.expectations = []
+      if (!targetUnit.expectations || payload.importBehavior === 'replace') {
+        targetUnit.expectations = []
+      }
       payload.expectations.forEach(e => {
         targetUnit.expectations.push({
           expectationId: crypto.randomUUID(),

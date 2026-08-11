@@ -16,7 +16,8 @@
               "code": "A1",
               "description": "apply, to the best of their ability, a variety of social-emotional learning skills to support their use of the mathematical processes and their learning in connection with the expectations in the other five strands of the mathematics curriculum."
             }
-          ]
+          ],
+          "title": "Social-Emotional Learning (SEL) Skills and the Mathematical Processes"
         }
       ]
     },
@@ -25,7 +26,7 @@
       "overalls": [
         {
           "code": "B1",
-          "description": "Number Sense",
+          "description": "demonstrate an understanding of numbers and make connections to the way numbers are used in everyday life",
           "specifics": [
             {
               "code": "B1.1",
@@ -43,11 +44,12 @@
               "code": "B1.4",
               "description": "use fractions, decimal numbers, and percents, including percents of more than 100% or less than 1%, interchangeably and flexibly to solve a variety of problems."
             }
-          ]
+          ],
+          "title": "demonstrate an understanding of numbers and make connections to the way numbers are used in everyday life"
         },
         {
           "code": "B2",
-          "description": "Operations",
+          "description": "use knowledge of numbers and operations to solve mathematical problems and make connections to real-life situations",
           "specifics": [
             {
               "code": "B2.1",
@@ -81,7 +83,8 @@
               "code": "B2.8",
               "description": "compare proportional situations and determine unknown values in proportional situations, and apply proportional reasoning to solve problems in various contexts."
             }
-          ]
+          ],
+          "title": "use knowledge of numbers and operations to solve mathematical problems and make connections to real-life situations"
         }
       ]
     },
@@ -90,7 +93,7 @@
       "overalls": [
         {
           "code": "C1",
-          "description": "Patterns and Relationships",
+          "description": "identify, describe, extend, create, and compare a variety of repeating, growing, and shrinking patterns, including patterns found in real-life contexts",
           "specifics": [
             {
               "code": "C1.1",
@@ -108,11 +111,12 @@
               "code": "C1.4",
               "description": "create and describe patterns to illustrate relationships among rational numbers."
             }
-          ]
+          ],
+          "title": "identify, describe, extend, create, and compare a variety of repeating, growing, and shrinking patterns, including patterns found in real-life contexts"
         },
         {
           "code": "C2",
-          "description": "Equations and Inequalities",
+          "description": "demonstrate an understanding of algebraic expressions and equations, and solve problems involving variables",
           "specifics": [
             {
               "code": "C2.1",
@@ -130,11 +134,12 @@
               "code": "C2.4",
               "description": "solve inequalities that involve integers, and verify and graph the solutions."
             }
-          ]
+          ],
+          "title": "demonstrate an understanding of algebraic expressions and equations, and solve problems involving variables"
         },
         {
           "code": "C3",
-          "description": "Coding",
+          "description": "solve problems and create computational representations of mathematical situations by writing and executing code",
           "specifics": [
             {
               "code": "C3.1",
@@ -144,7 +149,8 @@
               "code": "C3.2",
               "description": "read and alter existing code involving the analysis of data in order to inform and communicate decisions, and describe how changes to the code affect the outcomes and the efficiency of the code."
             }
-          ]
+          ],
+          "title": "solve problems and create computational representations of mathematical situations by writing and executing code"
         },
         {
           "code": "C4",
@@ -154,7 +160,8 @@
               "code": "C4",
               "description": "apply the process of mathematical modelling to represent, analyse, make predictions, and provide insight into real-life situations This overall expectation has no specific expectations. Mathematical modelling is an iterative and interconnected process that is applied to various contexts, allowing students to bring in learning from other strands. Students’ demonstration of the process of mathematical modelling, as they apply concepts and skills learned in other strands, is assessed and evaluated. Read more about the mathematical modelling process."
             }
-          ]
+          ],
+          "title": "Mathematical Modelling"
         }
       ]
     },
@@ -163,7 +170,7 @@
       "overalls": [
         {
           "code": "D1",
-          "description": "Data Literacy",
+          "description": "manage, analyse, and use data to make convincing arguments and informed decisions, in various contexts drawn from real life",
           "specifics": [
             {
               "code": "D1.1",
@@ -189,11 +196,12 @@
               "code": "D1.6",
               "description": "analyse different sets of data presented in various ways, including in scatter plots and in misleading graphs, by asking and answering questions about the data, challenging preconceived notions, and drawing conclusions, then make convincing arguments and informed decisions."
             }
-          ]
+          ],
+          "title": "manage, analyse, and use data to make convincing arguments and informed decisions, in various contexts drawn from real life"
         },
         {
           "code": "D2",
-          "description": "Probability",
+          "description": "describe the likelihood that events will happen, and use that information to make predictions",
           "specifics": [
             {
               "code": "D2.1",
@@ -203,7 +211,8 @@
               "code": "D2.2",
               "description": "determine and compare the theoretical and experimental probabilities of multiple independent events happening and of multiple dependent events happening."
             }
-          ]
+          ],
+          "title": "describe the likelihood that events will happen, and use that information to make predictions"
         }
       ]
     },
@@ -212,7 +221,7 @@
       "overalls": [
         {
           "code": "E1",
-          "description": "Geometric and Spatial Reasoning",
+          "description": "describe and represent shape, location, and movement using geometric properties",
           "specifics": [
             {
               "code": "E1.1",
@@ -230,11 +239,12 @@
               "code": "E1.4",
               "description": "describe and perform translations, reflections, rotations, and dilations on a Cartesian plane, and predict the results of these transformations."
             }
-          ]
+          ],
+          "title": "describe and represent shape, location, and movement using geometric properties"
         },
         {
           "code": "E2",
-          "description": "Measurement",
+          "description": "compare and convert units of measurement, and solve problems involving perimeter, area, and volume",
           "specifics": [
             {
               "code": "E2.1",
@@ -252,7 +262,8 @@
               "code": "E2.4",
               "description": "describe the Pythagorean relationship using various geometric models, and apply the theorem to solve problems involving an unknown side length for a given right triangle."
             }
-          ]
+          ],
+          "title": "compare and convert units of measurement, and solve problems involving perimeter, area, and volume"
         }
       ]
     },
@@ -261,7 +272,7 @@
       "overalls": [
         {
           "code": "F1",
-          "description": "Money and Finances",
+          "description": "demonstrate an understanding of practical financial concepts and real-life financial decision making",
           "specifics": [
             {
               "code": "F1.1",
@@ -287,7 +298,8 @@
               "code": "F1.6",
               "description": "compare interest rates, annual fees, and rewards and other incentives offered by various credit card companies and consumer contracts to determine the best value and the best choice for different scenarios."
             }
-          ]
+          ],
+          "title": "demonstrate an understanding of practical financial concepts and real-life financial decision making"
         }
       ]
     }

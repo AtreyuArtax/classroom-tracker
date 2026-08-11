@@ -10,7 +10,7 @@
       "overalls": [
         {
           "code": "A1",
-          "description": "Creating and Presenting",
+          "description": "apply the creative process to process, produce, and present works of art communicating feelings, ideas, and experiences",
           "specifics": [
             {
               "code": "A1.1",
@@ -28,11 +28,12 @@
               "code": "A1.4",
               "description": "use the elements of dance and choreographic forms (e.g.,&nbsp;pattern forms, narrative forms) to communicate a variety of themes or moods (e.g., use entrances or exits to communicate beginnings or endings; use a recurring sequence of movements to signal a particular mood or character; use canon form for emphasis)."
             }
-          ]
+          ],
+          "title": "Creating and Presenting"
         },
         {
           "code": "A2",
-          "description": "Reflecting, Responding, and Analysing",
+          "description": "apply the critical analysis process to communicate feelings, ideas, and understandings in response to works of art",
           "specifics": [
             {
               "code": "A2.1",
@@ -46,11 +47,12 @@
               "code": "A2.3",
               "description": "identify and give examples of their strengths and areas for growth as dance creators, interpreters, and audience members (e.g.,&nbsp;share with a partner what they did well during a performance, using dance vocabulary; use a concept map to explain their choice of dance movements)."
             }
-          ]
+          ],
+          "title": "Reflecting, Responding, and Analysing"
         },
         {
           "code": "A3",
-          "description": "Exploring Forms and Cultural Contexts",
+          "description": "demonstrate an understanding of a variety of art forms, styles, techniques, and cultural contexts",
           "specifics": [
             {
               "code": "A3.1",
@@ -60,7 +62,8 @@
               "code": "A3.2",
               "description": "identify ways in which dance and its depictions in the media may influence a person’s character development and sense of identity (e.g.,&nbsp;by influencing young people’s sense of themselves and their bodies; by providing dance role models who represent or promote particular lifestyles, values, and attitudes)."
             }
-          ]
+          ],
+          "title": "Exploring Forms and Cultural Contexts"
         }
       ]
     },
@@ -69,7 +72,7 @@
       "overalls": [
         {
           "code": "B1",
-          "description": "Creating and Presenting",
+          "description": "apply the creative process to process, produce, and present works of art communicating feelings, ideas, and experiences",
           "specifics": [
             {
               "code": "B1.1",
@@ -87,11 +90,12 @@
               "code": "B1.4",
               "description": "communicate feelings, thoughts, and abstract ideas through drama works, using audio, visual, and/or technological aids to heighten the dramatic experience (e.g.,&nbsp;use music to create mood; use video and drums/noisemakers to signal the climax; use a digital slide presentation to create a backdrop of words or images; use costumes, props, fabric to establish character and/or setting)."
             }
-          ]
+          ],
+          "title": "Creating and Presenting"
         },
         {
           "code": "B2",
-          "description": "Reflecting, Responding, and Analysing",
+          "description": "apply the critical analysis process to communicate feelings, ideas, and understandings in response to works of art",
           "specifics": [
             {
               "code": "B2.1",
@@ -105,11 +109,12 @@
               "code": "B2.3",
               "description": "identify and give examples of their strengths, interests, and areas for improvement as drama creators, performers, and audience members (e.g.,&nbsp;create a chart listing strengths and areas for improvement; highlight an area to work on in their next drama production; write a report on their learning in drama for a school newsletter)."
             }
-          ]
+          ],
+          "title": "Reflecting, Responding, and Analysing"
         },
         {
           "code": "B3",
-          "description": "Exploring Forms and Cultural Contexts",
+          "description": "demonstrate an understanding of a variety of art forms, styles, techniques, and cultural contexts",
           "specifics": [
             {
               "code": "B3.1",
@@ -119,7 +124,8 @@
               "code": "B3.2",
               "description": "identify and describe several ways in which drama and theatre (e.g.,&nbsp;street festivals, film festivals, theatre festivals, local theatre groups) contribute to contemporary social, economic, and cultural life (e.g.,&nbsp;attract tourists; provide jobs; provide entertainment; promote cultural understanding; raise people’s awareness of social issues)."
             }
-          ]
+          ],
+          "title": "Exploring Forms and Cultural Contexts"
         }
       ]
     },
@@ -128,7 +134,7 @@
       "overalls": [
         {
           "code": "C1",
-          "description": "Creating and Performing",
+          "description": "apply the creative process to process, produce, and perform works of art communicating feelings, ideas, and experiences",
           "specifics": [
             {
               "code": "C1.1",
@@ -150,11 +156,12 @@
               "code": "C1.5",
               "description": "demonstrate an understanding of standard and other musical notation through performance and composition (e.g.,&nbsp;read and respond to accidentals, repeat signs, various tempo markings; notate and perform a variety of scales, including the blues scale; explain how some contemporary music, children’s songs, or Aboriginal singing, drumming, and dancing are transmitted through oral tradition)."
             }
-          ]
+          ],
+          "title": "Creating and Performing"
         },
         {
           "code": "C2",
-          "description": "Reflecting, Responding, and Analysing",
+          "description": "apply the critical analysis process to communicate feelings, ideas, and understandings in response to works of art",
           "specifics": [
             {
               "code": "C2.1",
@@ -168,11 +175,12 @@
               "code": "C2.3",
               "description": "identify and give examples of their strengths and areas for improvement as composers, musical performers, interpreters, and audience members (e.g.,&nbsp;set a goal to improve their performance skills, reflect on how successful they were in attaining their goal, keep a practice journal, record and analyse their performances throughout the term)."
             }
-          ]
+          ],
+          "title": "Reflecting, Responding, and Analysing"
         },
         {
           "code": "C3",
-          "description": "Exploring Forms and Cultural Contexts",
+          "description": "demonstrate an understanding of a variety of art forms, styles, techniques, and cultural contexts",
           "specifics": [
             {
               "code": "C3.1",
@@ -182,7 +190,8 @@
               "code": "C3.2",
               "description": "analyse some historical, cultural, and technological influences on style, genre, and innovation in music (e.g.,&nbsp;the impact of the invention of the piano or the electric guitar)."
             }
-          ]
+          ],
+          "title": "Exploring Forms and Cultural Contexts"
         }
       ]
     },
@@ -191,7 +200,7 @@
       "overalls": [
         {
           "code": "D1",
-          "description": "Creating and Presenting",
+          "description": "apply the creative process to process, produce, and present works of art communicating feelings, ideas, and experiences",
           "specifics": [
             {
               "code": "D1.1",
@@ -209,11 +218,12 @@
               "code": "D1.4",
               "description": "use a variety of materials, tools, techniques, and technologies to determine solutions to increasingly complex design challenges (e.g., drawing: make a cubist still life of objects with reflective or textured surfaces, using both wet [e.g., ink, watercolour pencils] and dry [e.g., conté, chalk] materials to simulate highlights and transparency&nbsp; mixed media: make a hand-made or altered book, using various materials and techniques to represent ideas about selected elements in dance, drama, music, and/or the visual arts painting: make a cityscape that will serve as a background in an animated short movie, using experimental watercolour techniques such as wet on wet or salt resist printmaking: make a collograph or chine collé that communicates a personal experience through the use of shape and analogous colour sculpture: make clay or papier mâché gargoyles or “crossed creatures” that have exaggerated features, using open and closed forms technology: make a high-contrast self-portrait or caricature with software, using techniques such as blurring, cloning, cropping, distortion, layering, rotation, and selection)."
             }
-          ]
+          ],
+          "title": "Creating and Presenting"
         },
         {
           "code": "D2",
-          "description": "Reflecting, Responding, and Analysing",
+          "description": "apply the critical analysis process to communicate feelings, ideas, and understandings in response to works of art",
           "specifics": [
             {
               "code": "D2.1",
@@ -231,11 +241,12 @@
               "code": "D2.4",
               "description": "identify and explain their strengths, their interests, and areas for improvement as creators, interpreters, and viewers of art (e.g.,&nbsp;explain their preferences for selected works of art, using appropriate visual arts vocabulary; provide constructive feedback in a critique of their own work and the work of others; identify the strategies they used in planning, producing, and critiquing their own and others’ works of art)."
             }
-          ]
+          ],
+          "title": "Reflecting, Responding, and Analysing"
         },
         {
           "code": "D3",
-          "description": "Exploring Forms and Cultural Contexts",
+          "description": "demonstrate an understanding of a variety of art forms, styles, techniques, and cultural contexts",
           "specifics": [
             {
               "code": "D3.1",
@@ -245,7 +256,8 @@
               "code": "D3.2",
               "description": "demonstrate an understanding of the function of visual and media arts in various contexts today and in the past, and of their influence on the development of personal and cultural identity (e.g.,&nbsp;the function of traditional and contemporary styles of Aboriginal art in the development of cultural identity and revitalization; the contributions of people in various arts careers to community events, festivals, businesses, galleries, and museums; the significance of the art work of individuals and the arts of cultural groups in local and global contexts)."
             }
-          ]
+          ],
+          "title": "Exploring Forms and Cultural Contexts"
         }
       ]
     }

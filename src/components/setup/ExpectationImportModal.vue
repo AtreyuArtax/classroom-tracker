@@ -192,7 +192,7 @@
                   <input type="radio" v-model="granularity" value="all" />
                   <span><strong>Specific Expectations Only</strong> (Full Detail ~40-60 per course)</span>
                 </label>
-                <label class="eim-radio-label eim-radio-label--compact">
+                <label v-if="hasSuccessCriteriaAvailable" class="eim-radio-label eim-radio-label--compact">
                   <input type="radio" v-model="granularity" value="success_criteria" />
                   <span><strong>Success Criteria ("I Can..." Statements)</strong> (Student-friendly outcomes)</span>
                 </label>
@@ -535,6 +535,23 @@ function countPresetExpectations(preset) {
 const selectedPreset = computed(() => {
   if (!selectedPresetId.value) return null
   return curriculumPresets.find(p => p.presetId === selectedPresetId.value)
+})
+
+const hasSuccessCriteriaAvailable = computed(() => {
+  if (!selectedPreset.value) return false
+  if (selectedPreset.value.isSuccessCriteria) return true
+  const sCode = (selectedPreset.value.subjectCode || '').toLowerCase()
+  const pId = (selectedPreset.value.presetId || '').toLowerCase()
+  return curriculumPresets.some(p => p.isSuccessCriteria && (
+    (sCode && p.subjectCode && p.subjectCode.toLowerCase() === sCode) ||
+    (pId && p.presetId.toLowerCase().startsWith(pId))
+  ))
+})
+
+watch(hasSuccessCriteriaAvailable, (available) => {
+  if (!available && granularity.value === 'success_criteria') {
+    granularity.value = 'all'
+  }
 })
 
 const effectivePresetToUse = computed(() => {

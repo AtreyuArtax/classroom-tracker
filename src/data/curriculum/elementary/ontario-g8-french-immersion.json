@@ -10,7 +10,7 @@
       "overalls": [
         {
           "code": "A1",
-          "description": "Listening to Understand",
+          "description": "determine meaning in a variety of authentic French oral texts, using a range of listening strategies",
           "specifics": [
             {
               "code": "A1.1",
@@ -28,11 +28,12 @@
               "code": "A1.4",
               "description": "evaluate the effectiveness of the treatment and presentation of ideas and information in a variety of oral media texts about familiar, academic, and personally relevant topics, with teacher support as appropriate (e.g., respond to an advertisement by a human rights organization; express an opinion about the messages in a television advertisement aimed at young children; parody a media report)."
             }
-          ]
+          ],
+          "title": "Listening to Understand"
         },
         {
           "code": "A2",
-          "description": "Listening to Interact",
+          "description": "express ideas and feelings in French, using a variety of oral communication strategies",
           "specifics": [
             {
               "code": "A2.1",
@@ -46,11 +47,12 @@
               "code": "A2.3",
               "description": "(a) describe factors that prevent them from listening effectively and strategies they found helpful before, during, and after listening; (b) identify their areas of greater and lesser strength as listeners, and plan steps they can take to improve their listening skills (e.g., consider peer feedback when reflecting on areas in need of improvement and setting goals to improve listening skills; record an authentic exchange with peers and use it to determine next steps to improve their listening skills; refer to a checklist based on success criteria to identify listening strategies that might be helpful during a group discussion)."
             }
-          ]
+          ],
+          "title": "Listening to Interact"
         },
         {
           "code": "A3",
-          "description": "Intercultural Understanding",
+          "description": "demonstrate an understanding of French-speaking cultures around the world",
           "specifics": [
             {
               "code": "A3.1",
@@ -60,7 +62,8 @@
               "code": "A3.2",
               "description": "using information from oral French texts, identify and demonstrate an understanding of sociolinguistic conventions used in a variety of situations in diverse French-speaking communities (e.g., expressions specific to the backgrounds of different speakers; pronunciations from different regions in France; appropriate uses of different language registers)."
             }
-          ]
+          ],
+          "title": "Intercultural Understanding"
         }
       ]
     },
@@ -69,7 +72,7 @@
       "overalls": [
         {
           "code": "B1",
-          "description": "Speaking to Communicate",
+          "description": "communicate information and ideas orally in French, using a variety of speaking strategies",
           "specifics": [
             {
               "code": "B1.1",
@@ -87,11 +90,12 @@
               "code": "B1.4",
               "description": "create a variety of increasingly complex oral media texts using forms, conventions, and techniques appropriate to the purpose and audience (e.g., create a multimedia presentation about a social or environmental issue; record a radio advertisement promoting healthy schools; create a video on the importance of healthy living for young adults; create a public service announcement about the benefits of buying locally produced food)."
             }
-          ]
+          ],
+          "title": "Speaking to Communicate"
         },
         {
           "code": "B2",
-          "description": "Speaking to Interact",
+          "description": "interact orally in French for a variety of purposes in formal and informal situations",
           "specifics": [
             {
               "code": "B2.1",
@@ -105,11 +109,12 @@
               "code": "B2.3",
               "description": "(a) describe strategies they found helpful before, during, and after speaking to communicate effectively; (b) identify their areas of greater and lesser strength as speakers, and plan steps they can take to improve their speaking skills (e.g., debrief and discuss with a peer strategies used to capture and maintain an audience’s attention during a dramatic presentation; reflect on the efficacy of word choices made during an improvisation task, setting goals to improve French vocabulary usage when speaking)."
             }
-          ]
+          ],
+          "title": "Speaking to Interact"
         },
         {
           "code": "B3",
-          "description": "Intercultural Understanding",
+          "description": "demonstrate an understanding of French-speaking cultures around the world",
           "specifics": [
             {
               "code": "B3.1",
@@ -119,7 +124,8 @@
               "code": "B3.2",
               "description": "identify sociolinguistic conventions associated with a variety of social situations in diverse French-speaking communities, and use them appropriately in spoken interactions (e.g., formal and informal language to suit the context and audience; introduction etiquette in different French-speaking communities; colloquialisms, idioms, and gestures appropriate to different settings)."
             }
-          ]
+          ],
+          "title": "Intercultural Understanding"
         }
       ]
     },
@@ -128,7 +134,7 @@
       "overalls": [
         {
           "code": "C1",
-          "description": "Reading Comprehension",
+          "description": "determine meaning in a variety of French text forms, using a range of reading comprehension strategies",
           "specifics": [
             {
               "code": "C1.1",
@@ -150,11 +156,12 @@
               "code": "C1.5",
               "description": "evaluate the effectiveness of the treatment and presentation of ideas and information in a variety of media texts about familiar, academic, and personally relevant topics, with teacher support as appropriate (e.g., write a comment agreeing or disagreeing with the opinions in a blog post; evaluate the stereotypes presented in print ads; analyse the messages presented in different company slogans and logos and how they influence the consumer; describe how song lyrics convey their message; read advertisements for back-to-school items and analyse their influence on youth choices, including their own; explain the impact of fashion magazines on how young adults dress; compare the treatment in various print media of an environmental issue such as the exportation of water)."
             }
-          ]
+          ],
+          "title": "Reading Comprehension"
         },
         {
           "code": "C2",
-          "description": "Purpose, Form and Style",
+          "description": "identify purpose, form, and style in a variety of French texts",
           "specifics": [
             {
               "code": "C2.1",
@@ -168,11 +175,12 @@
               "code": "C2.3",
               "description": "(a) identify, in conversation with the teacher and their peers, a few strategies they found helpful before, during, and after reading to understand texts; (b) determine their areas of greater and lesser strength as readers, and plan steps they can take to improve their reading skills (e.g., recognize when understanding has broken down; determine which reading strategies they are using effectively)."
             }
-          ]
+          ],
+          "title": "Purpose, Form and Style"
         },
         {
           "code": "C3",
-          "description": "Intercultural Understanding",
+          "description": "demonstrate an understanding of French-speaking cultures around the world",
           "specifics": [
             {
               "code": "C3.1",
@@ -182,7 +190,8 @@
               "code": "C3.2",
               "description": "using information from French texts, identify and demonstrate an understanding of sociolinguistic conventions used in a variety of situations in diverse French-speaking communities (e.g., words and expressions unique to certain regions; language registers in personal and business letters; the use of slang/colloquial/familiar versus “standard” French in posters, cartoons, graphic novels, or advertisements; expressions of gratitude and formulas for making excuses or extending invitations used in different French-speaking communities)."
             }
-          ]
+          ],
+          "title": "Intercultural Understanding"
         }
       ]
     },
@@ -191,7 +200,7 @@
       "overalls": [
         {
           "code": "D1",
-          "description": "Purpose, Audience, and Form",
+          "description": "create a variety of French text forms for specific purposes and audiences, using the writing process",
           "specifics": [
             {
               "code": "D1.1",
@@ -217,11 +226,12 @@
               "code": "D1.6",
               "description": "communicate their meaning clearly, using parts of speech appropriately and following conventions for correct spelling, word order, and punctuation (e.g., position of object pronouns with the impératif, such as “Expliquez-moi votre raisonnement”, “Donne-lui le message”; indefinite relative pronouns such as “ce qui”, “ce que”; use of indefinite pronouns such as “on”, “rien”, “personne”, “tout”, “plusieurs”, “aucun(es)”, “quelqu’un(e)”, “quelque chose”, “certain(e)s”, “chacun(e)” to avoid repetition and vary sentence structure; transitional words and phrases; the imparfait and passé composé; expression of possibility or future wishes using the conditionnel présent of regular and irregular verbs; the expression “il faut” followed by the subjonctif présent of frequently used verbs, such as “Il faut que tu arrives avant 13h00”; conjunctive phrases such as “ainsi que” and “tandis que”)."
             }
-          ]
+          ],
+          "title": "Purpose, Audience, and Form"
         },
         {
           "code": "D2",
-          "description": "The Writing Process",
+          "description": "apply the writing process to draft, revise, and edit French texts",
           "specifics": [
             {
               "code": "D2.1",
@@ -239,11 +249,12 @@
               "code": "D2.4",
               "description": "(a) identify, in conversation with the teacher and their peers, several strategies they found helpful before, during, and after writing; (b) determine their areas of greater and lesser strength as writers, and plan steps they can take to improve their writing skills (e.g., plan how to incorporate feedback from the teacher and peers in their future writing projects; describe the usefulness of the success criteria posted in the classroom and make suggestions to improve them; recommend a helpful strategy to a classmate during peer conferencing; revise a personal editing checklist)."
             }
-          ]
+          ],
+          "title": "The Writing Process"
         },
         {
           "code": "D3",
-          "description": "Intercultural Understanding",
+          "description": "demonstrate an understanding of French-speaking cultures around the world",
           "specifics": [
             {
               "code": "D3.1",
@@ -253,7 +264,8 @@
               "code": "D3.2",
               "description": "identify sociolinguistic conventions associated with a variety of social situations in diverse French-speaking communities and use them appropriately in their written work (e.g., conventions of fiction; idiomatic expressions in a poem or dialogue; conventions for a formal letter)."
             }
-          ]
+          ],
+          "title": "Intercultural Understanding"
         }
       ]
     }

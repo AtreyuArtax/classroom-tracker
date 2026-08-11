@@ -10,7 +10,7 @@
       "overalls": [
         {
           "code": "A1",
-          "description": "Transferable Skills",
+          "description": "demonstrate an understanding of transferable skills and habits of mind, and apply them across reading, writing, and communication contexts",
           "specifics": [
             {
               "code": "A1.1",
@@ -20,11 +20,12 @@
               "code": "A1.2",
               "description": "evaluate and explain how transferable skills help them to express their voice, be engaged in their learning, and implement a plan to develop their capabilities and potential."
             }
-          ]
+          ],
+          "title": "Transferable Skills"
         },
         {
           "code": "A2",
-          "description": "Digital Media Literacy",
+          "description": "demonstrate an understanding of digital media literacy, including online safety, digital citizenship, and media creation",
           "specifics": [
             {
               "code": "A2.1",
@@ -54,11 +55,12 @@
               "code": "A2.7",
               "description": "communicate and collaborate with various communities in a safe, respectful, responsible, and inclusive manner when using online platforms and environments, including digital and media tools, and demonstrate and model cultural awareness with members of the community."
             }
-          ]
+          ],
+          "title": "Digital Media Literacy"
         },
         {
           "code": "A3",
-          "description": "Applications, Connections, and Contributions",
+          "description": "demonstrate an understanding of practical applications of science and technology concepts, and contributions to STEM fields by people from diverse communities",
           "specifics": [
             {
               "code": "A3.1",
@@ -72,7 +74,8 @@
               "code": "A3.3",
               "description": "analyze themes explored in First Nations, Métis, and Inuit cultures to demonstrate an understanding of the varied identities, perspectives, relationships, legacies, truths, and ways of knowing, being, and doing."
             }
-          ]
+          ],
+          "title": "Applications, Connections, and Contributions"
         }
       ]
     },
@@ -81,7 +84,7 @@
       "overalls": [
         {
           "code": "B1",
-          "description": "Oral and Non-Verbal Communication",
+          "description": "use oral and non-verbal communication skills to understand, express, and respond to ideas in a variety of contexts",
           "specifics": [
             {
               "code": "B1.1",
@@ -103,11 +106,12 @@
               "code": "B1.5",
               "description": "use precise and descriptive word choice, including varied adjectives and adverbs to elaborate, a variety of sentence types, cohesive and coherent sentences, and the active or passive voice as appropriate during formal and informal communication, to support audience comprehension."
             }
-          ]
+          ],
+          "title": "Oral and Non-Verbal Communication"
         },
         {
           "code": "B2",
-          "description": "Language Foundations for Reading and Writing",
+          "description": "demonstrate an understanding of foundational language skills, including phonemic awareness, word study, and vocabulary",
           "specifics": [
             {
               "code": "B2.1",
@@ -121,11 +125,12 @@
               "code": "B2.3",
               "description": "read a variety of complex texts fluently, with accuracy and appropriate pacing, to support comprehension, and when reading aloud, adjust expression and intonation according to the purpose of reading."
             }
-          ]
+          ],
+          "title": "Language Foundations for Reading and Writing"
         },
         {
           "code": "B3",
-          "description": "Language Conventions for Reading and Writing",
+          "description": "apply language conventions, sentence structures, and punctuation to support reading comprehension and written expression",
           "specifics": [
             {
               "code": "B3.1",
@@ -139,7 +144,8 @@
               "code": "B3.3",
               "description": "use their understanding of the meaning and function of capitalization and punctuation to communicate meaning clearly and coherently, including the use of colons to introduce a quotation after a complete sentence, semicolons to separate two independent clauses, commas to set off conjunctive adverbs, and ellipses or dashes to indicate an omission, a pause, or a break."
             }
-          ]
+          ],
+          "title": "Language Conventions for Reading and Writing"
         }
       ]
     },
@@ -148,7 +154,7 @@
       "overalls": [
         {
           "code": "C1",
-          "description": "Knowledge about Texts",
+          "description": "demonstrate knowledge of text forms, text structures, and stylistic elements across genres",
           "specifics": [
             {
               "code": "C1.1",
@@ -178,11 +184,12 @@
               "code": "C1.7",
               "description": "read, listen to, and view various forms of texts by diverse First Nations, Métis, and Inuit creators to make meaning through Indigenous Storywork about First Nations, Métis, and Inuit histories, cultures, relationships, communities, groups, nations, and lived experiences."
             }
-          ]
+          ],
+          "title": "Knowledge about Texts"
         },
         {
           "code": "C2",
-          "description": "Comprehension Strategies",
+          "description": "apply comprehension strategies before, during, and after reading to construct meaning from complex texts",
           "specifics": [
             {
               "code": "C2.1",
@@ -212,11 +219,12 @@
               "code": "C2.7",
               "description": "explain and compare how various strategies, such as visualizing, making predictions, summarizing, and connecting to their experiences, have helped them comprehend various texts, and set goals to improve their comprehension."
             }
-          ]
+          ],
+          "title": "Comprehension Strategies"
         },
         {
           "code": "C3",
-          "description": "Critical Thinking in Literacy",
+          "description": "apply critical thinking skills to analyse, evaluate, and respond to a variety of literary and informational texts",
           "specifics": [
             {
               "code": "C3.1",
@@ -250,7 +258,8 @@
               "code": "C3.8",
               "description": "compare the critical thinking skills they used when analyzing and evaluating various texts, identify the skills that best supported their understanding, and explain why they were effective."
             }
-          ]
+          ],
+          "title": "Critical Thinking in Literacy"
         }
       ]
     },
@@ -259,7 +268,7 @@
       "overalls": [
         {
           "code": "D1",
-          "description": "Developing Ideas and Organizing Content",
+          "description": "generate, gather, and organize ideas and information to plan text creation for specific purposes and audiences",
           "specifics": [
             {
               "code": "D1.1",
@@ -281,11 +290,12 @@
               "code": "D1.5",
               "description": "explain and compare how the strategies and tools used helped them develop ideas and organize content for texts of the chosen forms, genres, and media, and how they helped them improve as a text creator."
             }
-          ]
+          ],
+          "title": "Developing Ideas and Organizing Content"
         },
         {
           "code": "D2",
-          "description": "Creating Texts",
+          "description": "draft, revise, edit, and proofread texts using appropriate voice, vocabulary, and sentence structures",
           "specifics": [
             {
               "code": "D2.1",
@@ -311,11 +321,12 @@
               "code": "D2.6",
               "description": "edit draft texts to improve accuracy and style, checking for errors in spelling, punctuation, grammar, and format; edit digital texts using word-processing software, including spell- and grammar-checkers."
             }
-          ]
+          ],
+          "title": "Creating Texts"
         },
         {
           "code": "D3",
-          "description": "Publishing, Presenting, and Reflecting",
+          "description": "select effective presentation formats and digital tools to publish, present, and reflect on created texts",
           "specifics": [
             {
               "code": "D3.1",
@@ -329,7 +340,8 @@
               "code": "D3.3",
               "description": "compare how various strategies and tools helped them communicate their intended message when publishing and presenting texts, analyze how their texts address various topics, and suggest steps for future improvement as a text creator."
             }
-          ]
+          ],
+          "title": "Publishing, Presenting, and Reflecting"
         }
       ]
     }

@@ -28,7 +28,8 @@
               "code": "A1.4",
               "description": "assess ways in which different peoples living in similar physical environments have responded to challenges and opportunities presented by these environments, and assess the sustainability of these responses (e.g., land reclamation and flood control in low-lying areas such as the Netherlands, the Mississippi delta, the Mekong River; nomadic lifestyles of peoples in the Gobi or Sahara Desert versus extensive irrigation to create cities such as Las Vegas in the Mojave Desert; the development of ecotourism in the Costa Rican rainforest versus the clear-cutting of rainforests in the Amazon or Madagascar)."
             }
-          ]
+          ],
+          "title": "Application: Interrelationships between People and the Physical Environment"
         },
         {
           "code": "A2",
@@ -58,7 +59,8 @@
               "code": "A2.6",
               "description": "communicate the results of their inquiries, using appropriate vocabulary (e.g., climate, land use, landforms, vegetation, drought, flood, climate change, agriculture, ecotourism, land reclamation) and formats appropriate for specific audiences (e.g., an editorial outlining the impact of increasing settlement on a floodplain and arguing for or against increased settlement; an oral presentation or photo essay for a specific audience about how the construction of a dam affected a river system; a newspaper article for the local or school paper on the impact of pollution on their local community)."
             }
-          ]
+          ],
+          "title": "Inquiry: Investigating Physical Features and Processes"
         },
         {
           "code": "A3",
@@ -108,7 +110,8 @@
               "code": "A3.11",
               "description": "describe how different aspects of the physical environment interact with each other in two or more regions of the world (e.g., the interrelationship between vegetation, landforms, and climate in desert regions; between landforms and vegetation in a volcanic region)."
             }
-          ]
+          ],
+          "title": "Understanding Geographic Context: Patterns in the Physical Environment"
         }
       ]
     },
@@ -135,7 +138,8 @@
               "code": "B1.4",
               "description": "create a personal plan of action outlining how they can contribute to more sustainable natural resource extraction/harvesting and/or use (e.g., a plan to use FSC-certified wood or reclaimed lumber in a construction project, to reduce energy use in their home or school, to publicize more sustainable approaches to extraction/harvesting, or to reduce personal consumption of consumer goods)."
             }
-          ]
+          ],
+          "title": "Application: Natural Resources and Sustainability"
         },
         {
           "code": "B2",
@@ -165,7 +169,8 @@
               "code": "B2.6",
               "description": "communicate the results of their inquiries using appropriate vocabulary (e.g., non-renewable, renewable, flow resources; extraction; sustainability; deforestation; fossil fuels; aquifer) and formats appropriate for specific audiences (e.g., an essay on the impact of water use, concluding with a plan of action to preserve the world’s fresh water; a thematic or annotated map showing the extent of damage to a water system from mine tailings; a fictionalized narrative about a person or animal affected by a natural resource extraction processes; a web page that includes links to sites providing varying opinions on the development of alternative energy; a public service announcement educating people about the economic and environmental impact of invasive species)."
             }
-          ]
+          ],
+          "title": "Inquiry: Investigating Issues Related to Natural Resources"
         },
         {
           "code": "B3",
@@ -195,7 +200,8 @@
               "code": "B3.6",
               "description": "demonstrate the ability to extract information from, analyse, and construct GIS maps relating to natural resources around the world (e.g., to determine the location of oil refineries and their proximity to population centres and agricultural land; to show areas of deforestation and current land use on previously forested land)."
             }
-          ]
+          ],
+          "title": "Understanding Geographic Context: Using Natural Resources"
         }
       ]
     }

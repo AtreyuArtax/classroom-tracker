@@ -10,7 +10,7 @@
       "overalls": [
         {
           "code": "A1",
-          "description": "Social-Emotional Learning Skills",
+          "description": "apply social-emotional learning skills to support active living, movement, and healthy decision-making",
           "specifics": [
             {
               "code": "A1.1",
@@ -36,7 +36,8 @@
               "code": "A1.6",
               "description": "apply skills that help them think critically and creatively as they participate in learning experiences in health and physical education, in order to support making connections, analysing, evaluating, problem solving, and decision making (e.g., Active Living: track and analyse changes in their health-related components of fitness over a designated period of time, and make any necessary adjustments in their fitness plans; plan ways to promote the involvement of all the students in the school in “healthy schools” activities such as waste-free lunch programs and active recess activities; Movement Competence: explain the relationship between developing movement competence and building confidence and the extent to which people participate in physical activity; Healthy Living: analyse potentially dangerous situations and devise solutions for making them safer)."
             }
-          ]
+          ],
+          "title": "Social-Emotional Learning Skills"
         }
       ]
     },
@@ -45,7 +46,7 @@
       "overalls": [
         {
           "code": "B1",
-          "description": "Active Participation",
+          "description": "participate actively and regularly in a wide variety of physical activities",
           "specifics": [
             {
               "code": "B1.1",
@@ -59,11 +60,12 @@
               "code": "B1.3",
               "description": "demonstrate an understanding of factors that motivate personal participation in physical activities every day (e.g., gaining health benefits, including release from stress; having interpersonal interactions; becoming more independent in daily living activities; experiencing personal enjoyment), and explain how these factors can be used to influence others (e.g., friends, family, members of the community) to be physically active [A1.1 Emotions, 1.3 Motivation, 1.4 Relationships, 1.6 Thinking]."
             }
-          ]
+          ],
+          "title": "Active Participation"
         },
         {
           "code": "B2",
-          "description": "Physical Fitness",
+          "description": "demonstrate an understanding of health-related and skill-related fitness components",
           "specifics": [
             {
               "code": "B2.1",
@@ -81,11 +83,12 @@
               "code": "B2.4",
               "description": "develop, implement, and revise a personal plan to meet short- and long-term health-related fitness and physical activity goals [A1.3 Motivation, 1.5 Self, 1.6 Thinking]."
             }
-          ]
+          ],
+          "title": "Physical Fitness"
         },
         {
           "code": "B3",
-          "description": "Safety",
+          "description": "demonstrate behaviors that maximize safety for self and others during physical activity",
           "specifics": [
             {
               "code": "B3.1",
@@ -95,7 +98,8 @@
               "code": "B3.2",
               "description": "demonstrate a basic understanding of how to deal with emergency situations that may occur while participating in physical activity, including situations involving suspected concussions (e.g., remain calm; know when more help is needed or when to call 9-1-1; know where to get more help; follow the school board’s concussion protocol if a concussion is suspected; know how to recognize symptoms of asthma or anaphylaxis; move objects that may be a safety hazard away from the injured person; know what an automated external defibrillator [AED] is and be aware of where they are located in community facilities) [A1.1 Emotions, 1.2 Coping, 1.6 Thinking]."
             }
-          ]
+          ],
+          "title": "Safety"
         }
       ]
     },
@@ -104,7 +108,7 @@
       "overalls": [
         {
           "code": "C1",
-          "description": "Movement Skills and Concepts",
+          "description": "perform movement skills, demonstrating an understanding of movement principles",
           "specifics": [
             {
               "code": "C1.1",
@@ -122,11 +126,12 @@
               "code": "C1.4",
               "description": "demonstrate an understanding of the phases of movement (i.e., preparation, execution, follow-through) and apply this understanding to the refinement of movement skills in a variety of physical activities (e.g., assume a ready position, swing, and follow through in a badminton stroke; reach, pull, and recover when doing the back crawl)&nbsp; [A1.5 Self, 1.6 Thinking]."
             }
-          ]
+          ],
+          "title": "Movement Skills and Concepts"
         },
         {
           "code": "C2",
-          "description": "Movement Strategies",
+          "description": "apply movement strategies and tactics in a variety of physical activities",
           "specifics": [
             {
               "code": "C2.1",
@@ -140,7 +145,8 @@
               "code": "C2.3",
               "description": "apply a variety of tactical solutions to increase chances of success as they &nbsp;participate in physical activities (e.g., individual activities: use conscious breathing to enhance movement during a fitness activity; toss balls or beanbags in an even pattern and keep eyes focused at the peak of the toss when learning to juggle with three objects; target activities: position balls or rocks in a place that makes it difficult for the opposing team to score in games such as bocce or curling; net/wall activities: choose the type of shot and consider the placement of the shot to gain an offensive advantage; striking/fielding activities: send the object away from the defenders to allow for more time to score before the fielders retrieve the object; territory activities: send a pass that places the object closer to the&nbsp; goal; keep their body between the object and the defender while moving; practise using a fast transition from offence to defence) [A1.1 Emotions, 1.3 Motivation, 1.6&nbsp;Thinking]&nbsp;&nbsp;."
             }
-          ]
+          ],
+          "title": "Movement Strategies"
         }
       ]
     },
@@ -149,7 +155,7 @@
       "overalls": [
         {
           "code": "D1",
-          "description": "Understanding Health Concepts",
+          "description": "demonstrate an understanding of factors that contribute to healthy growth and development",
           "specifics": [
             {
               "code": "D1.1",
@@ -171,11 +177,12 @@
               "code": "D1.5",
               "description": "demonstrate an understanding of gender identity (e.g., male, female, Two-Spirit, transgender), gender expression, and sexual orientation (e.g., heterosexual, gay, lesbian, bisexual, pansexual, asexual), and identify factors that can help individuals of all identities and orientations develop a positive self-concept [A1.2&nbsp;Coping, 1.5 Self]&nbsp;."
             }
-          ]
+          ],
+          "title": "Understanding Health Concepts"
         },
         {
           "code": "D2",
-          "description": "Making Healthy Choices",
+          "description": "demonstrate the ability to make healthy choices in personal health, nutrition, and safety",
           "specifics": [
             {
               "code": "D2.1",
@@ -193,11 +200,12 @@
               "code": "D2.4",
               "description": "demonstrate an understanding of how incorporating healthy habits and coping strategies into daily routines (e.g., starting the day with physical activity, limiting screen time before going to bed, using tools such as online apps to support mindful practices, using deep breathing and grounding strategies, engaging in activities that involve positive social interaction and supporting others) can help maintain mental health and resilience in times of stress [A1.1 Emotions, 1.2 Coping, 1.3 Motivation, 1.6 Thinking]."
             }
-          ]
+          ],
+          "title": "Making Healthy Choices"
         },
         {
           "code": "D3",
-          "description": "Making Connections for Healthy Living",
+          "description": "demonstrate the ability to make connections between personal health choices, mental well-being, and community support",
           "specifics": [
             {
               "code": "D3.1",
@@ -215,7 +223,8 @@
               "code": "D3.4",
               "description": "explain how word choices and societal views about mental health and mental illness can affect people and perpetuate stigma, and identify actions that can counteract that stigma [A1.4 Relationships, 1.6 Thinking]."
             }
-          ]
+          ],
+          "title": "Making Connections for Healthy Living"
         }
       ]
     }

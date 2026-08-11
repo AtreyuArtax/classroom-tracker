@@ -176,16 +176,16 @@ export function populateSubjectFromPresets(subject, presetsList = [], granularit
 
       if (strand.overalls) {
         strand.overalls.forEach(ov => {
-          existingExpectations.push({
-            expectationId: `exp_${Date.now()}_${gTag}_${ov.code}`,
-            unitId,
-            code: ov.code,
-            description: ov.description,
-            isOverall: true,
-            gradeLevel: pGrade
-          })
-
-          if ((granularity === 'all' || granularity === 'success_criteria') && ov.specifics) {
+          if (granularity === 'overall') {
+            existingExpectations.push({
+              expectationId: `exp_${Date.now()}_${gTag}_${ov.code}`,
+              unitId,
+              code: ov.code,
+              description: ov.description,
+              isOverall: true,
+              gradeLevel: pGrade
+            })
+          } else if ((granularity === 'all' || granularity === 'success_criteria') && ov.specifics) {
             ov.specifics.forEach(sp => {
               existingExpectations.push({
                 expectationId: `exp_${Date.now()}_${gTag}_${sp.code}`,

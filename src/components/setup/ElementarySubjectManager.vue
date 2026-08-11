@@ -179,36 +179,147 @@
           </div>
         </div>
 
-        <!-- Expandable Strand / Unit Editor -->
+        <!-- Expandable Strand & Expectations Editor -->
         <div v-if="expandedStrandSubjectId === sub.subjectId" class="elementary-subjects__strands-editor">
-          <div class="elementary-subjects__strands-header">
-            <strong>Edit Strand &amp; Unit Titles for {{ sub.name }}:</strong>
-          </div>
-          <div v-if="!sub.gradebookUnits || sub.gradebookUnits.length === 0" style="font-size: 0.85rem; color: var(--text-secondary); font-style: italic; padding: 4px 0 8px;">
-            No strands created yet. Click "+ Add Strand / Unit" below to create custom strands for this subject.
-          </div>
-          <div v-for="unit in (sub.gradebookUnits || [])" :key="unit.unitId" class="elementary-subjects__strand-row">
-            <span v-if="unit.gradeLevel" class="elementary-subjects__strand-grade">{{ unit.gradeLevel.replace('Grade ', 'Gr ') }}</span>
-            <input 
-              :value="cleanUnitName(unit.name)" 
-              type="text" 
-              class="elementary-subjects__strand-input"
-              placeholder="Strand / Unit Name"
-              @input="unit.name = cleanUnitName($event.target.value)"
-              @blur="saveStrandName(sub.subjectId, unit.unitId, unit.name)"
-              @keyup.enter="saveStrandName(sub.subjectId, unit.unitId, unit.name)"
-            />
-            <button 
-              type="button" 
-              class="elementary-subjects__btn-delete"
-              title="Remove Strand"
-              @click="removeStrandUnit(sub.subjectId, unit.unitId)"
-            >
-              <Trash2 :size="14" />
-            </button>
+          <div class="elementary-subjects__strands-header-row" style="display: flex; justify-content: space-between; align-items: center; wrap: wrap; gap: 8px;">
+            <strong style="font-size: 0.85rem;">Strands &amp; Expectations for {{ sub.name }}:</strong>
+            <div style="display: flex; gap: 6px;">
+              <button 
+                type="button" 
+                class="elementary-subjects__btn-auto" 
+                style="font-size: 0.75rem; padding: 3px 8px;"
+                @click="openExpectationModal(sub)"
+              >
+                <Zap :size="12" /> Preset / Importer
+              </button>
+              <button 
+                v-if="sub.expectations && sub.expectations.length > 0" 
+                type="button" 
+                class="elementary-subjects__btn-delete" 
+                style="font-size: 0.75rem; padding: 3px 8px;"
+                @click="clearSubjectExpectations(sub.subjectId)"
+              >
+                <Trash2 :size="12" /> Clear All ({{ sub.expectations.length }})
+              </button>
+            </div>
           </div>
 
-          <div style="margin-top: 8px; display: flex; justify-content: flex-start;">
+          <div v-if="(!sub.gradebookUnits || sub.gradebookUnits.length === 0) && (!sub.expectations || sub.expectations.length === 0)" style="font-size: 0.85rem; color: var(--text-secondary); font-style: italic; padding: 6px 0;">
+            No strands or expectations configured yet. Click <strong>Preset / Importer</strong> or <strong>+ Add Strand / Unit</strong> below to begin.
+          </div>
+
+          <!-- Strands List -->
+          <div v-for="unit in (sub.gradebookUnits || [])" :key="unit.unitId" class="elementary-subjects__strand-block">
+            <div class="elementary-subjects__strand-row">
+              <span v-if="unit.gradeLevel" class="elementary-subjects__strand-grade">{{ unit.gradeLevel.replace('Grade ', 'Gr ') }}</span>
+              <input 
+                :value="cleanUnitName(unit.name)" 
+                type="text" 
+                class="elementary-subjects__strand-input"
+                placeholder="Strand / Unit Name"
+                @input="unit.name = cleanUnitName($event.target.value)"
+                @blur="saveStrandName(sub.subjectId, unit.unitId, unit.name)"
+                @keyup.enter="saveStrandName(sub.subjectId, unit.unitId, unit.name)"
+              />
+              <button 
+                type="button" 
+                class="elementary-subjects__btn-delete"
+                title="Remove Strand"
+                @click="removeStrandUnit(sub.subjectId, unit.unitId)"
+              >
+                <Trash2 :size="14" />
+              </button>
+            </div>
+
+            <!-- Expectations under this strand -->
+            <div class="elementary-subjects__exp-list">
+              <div v-for="exp in getUnitExpectations(sub, unit)" :key="exp.expectationId" class="elementary-subjects__exp-item">
+                <span class="elementary-subjects__exp-code">{{ exp.code }}</span>
+                <span class="elementary-subjects__exp-desc">{{ exp.description }}</span>
+                <button 
+                  type="button" 
+                  class="elementary-subjects__btn-delete" 
+                  title="Delete Expectation" 
+                  @click="removeExpectation(sub.subjectId, exp.expectationId)"
+                >
+                  <Trash2 :size="12" />
+                </button>
+              </div>
+
+              <!-- Inline Add Expectation Form -->
+              <div class="elementary-subjects__add-exp-form">
+                <input 
+                  v-model="newExpForms[`${sub.subjectId}_${unit.unitId}_code`]"
+                  type="text" 
+                  class="elementary-subjects__exp-input-code" 
+                  placeholder="Code (A1.1)" 
+                />
+                <input 
+                  v-model="newExpForms[`${sub.subjectId}_${unit.unitId}_desc`]"
+                  type="text" 
+                  class="elementary-subjects__exp-input-desc" 
+                  placeholder="Expectation description..." 
+                  @keydown.enter="submitAddExp(sub.subjectId, unit.unitId)"
+                />
+                <button 
+                  type="button" 
+                  class="elementary-subjects__btn-ghost" 
+                  style="font-size: 0.75rem; padding: 2px 8px;"
+                  @click="submitAddExp(sub.subjectId, unit.unitId)"
+                >
+                  + Add
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Unassigned / General Expectations Block -->
+          <div v-if="getUnassignedExpectations(sub).length > 0" class="elementary-subjects__strand-block">
+            <div class="elementary-subjects__strand-header" style="font-size: 0.78rem; font-weight: 700; color: var(--text-secondary);">
+              Additional Subject Expectations:
+            </div>
+            <div class="elementary-subjects__exp-list">
+              <div v-for="exp in getUnassignedExpectations(sub)" :key="exp.expectationId" class="elementary-subjects__exp-item">
+                <span class="elementary-subjects__exp-code">{{ exp.code }}</span>
+                <span class="elementary-subjects__exp-desc">{{ exp.description }}</span>
+                <button 
+                  type="button" 
+                  class="elementary-subjects__btn-delete" 
+                  title="Delete Expectation" 
+                  @click="removeExpectation(sub.subjectId, exp.expectationId)"
+                >
+                  <Trash2 :size="12" />
+                </button>
+              </div>
+
+              <!-- Inline Add Unassigned Expectation Form -->
+              <div class="elementary-subjects__add-exp-form">
+                <input 
+                  v-model="newExpForms[`${sub.subjectId}_general_code`]"
+                  type="text" 
+                  class="elementary-subjects__exp-input-code" 
+                  placeholder="Code (B1)" 
+                />
+                <input 
+                  v-model="newExpForms[`${sub.subjectId}_general_desc`]"
+                  type="text" 
+                  class="elementary-subjects__exp-input-desc" 
+                  placeholder="Expectation description..." 
+                  @keydown.enter="submitAddExp(sub.subjectId, 'general')"
+                />
+                <button 
+                  type="button" 
+                  class="elementary-subjects__btn-ghost" 
+                  style="font-size: 0.75rem; padding: 2px 8px;"
+                  @click="submitAddExp(sub.subjectId, 'general')"
+                >
+                  + Add
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-top: 8px; display: flex; gap: 8px; justify-content: flex-start;">
             <button type="button" class="elementary-subjects__btn-ghost" style="font-size: 0.8rem; padding: 4px 10px;" @click="addStrandUnit(sub.subjectId)">
               + Add Strand / Unit
             </button>
@@ -272,7 +383,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, reactive } from 'vue'
 import { Plus, Check, Trash2, Zap, BookOpen, ChevronDown } from 'lucide-vue-next'
 import SubjectIcon from '../SubjectIcon.vue'
 import { useClassroom } from '../../composables/useClassroom.js'
@@ -299,6 +410,120 @@ const showExpectationModal = ref(false)
 const activeImportSubject = ref(null)
 const expandedStrandSubjectId = ref(null)
 const expandedCategorySubjectId = ref(null)
+const newExpForms = reactive({})
+
+function getUnitExpectations(sub, unit) {
+  if (!sub || !sub.expectations) return []
+  const uId = unit.unitId
+  const uNameLower = (cleanUnitName(unit.name) || '').toLowerCase()
+  return sub.expectations.filter(e => {
+    if (e.unitId && e.unitId === uId) return true
+    if (e.strandName && cleanUnitName(e.strandName).toLowerCase() === uNameLower) return true
+    if (e.code && uNameLower && uNameLower.length > 0) {
+      const strandLetter = uNameLower.charAt(0).toUpperCase()
+      if (/^[A-Z]/.test(strandLetter) && e.code.toUpperCase().startsWith(strandLetter)) {
+        return true
+      }
+    }
+    return false
+  })
+}
+
+function getUnassignedExpectations(sub) {
+  if (!sub || !sub.expectations || sub.expectations.length === 0) return []
+  const assignedIds = new Set()
+  if (sub.gradebookUnits) {
+    sub.gradebookUnits.forEach(u => {
+      getUnitExpectations(sub, u).forEach(e => assignedIds.add(e.expectationId))
+    })
+  }
+  return sub.expectations.filter(e => !assignedIds.has(e.expectationId))
+}
+
+async function removeExpectation(subjectId, expectationId) {
+  const sub = currentSubjects.value.find(s => s.subjectId === subjectId)
+  if (!sub) return
+  
+  const targetExp = (sub.expectations || []).find(e => e.expectationId === expectationId)
+  if (!targetExp) return
+
+  // Check if any recorded grade or assessment refers to this expectation
+  const classId = activeClass.value?.classId
+  let hasRecordedGrades = false
+
+  if (classId) {
+    try {
+      const [assessments, grades] = await Promise.all([
+        getAssessmentsByClass(classId),
+        getGradesByClass(classId)
+      ])
+
+      const expCodeUpper = (targetExp.code || '').toUpperCase()
+
+      // Check recorded student grades
+      const usedInGrades = grades.some(g => {
+        if (g.expectationScores) {
+          return Object.keys(g.expectationScores).some(k => k.toUpperCase() === expCodeUpper || k === expectationId)
+        }
+        return false
+      })
+
+      // Check assessment configs
+      const usedInAssessments = assessments.some(a => {
+        if (a.expectationIds && a.expectationIds.includes(expectationId)) return true
+        if (a.expectationCodes && a.expectationCodes.map(c => c.toUpperCase()).includes(expCodeUpper)) return true
+        return false
+      })
+
+      hasRecordedGrades = usedInGrades || usedInAssessments
+    } catch (e) {
+      console.warn('Failed checking grades before expectation deletion', e)
+    }
+  }
+
+  if (hasRecordedGrades) {
+    const ok = await confirmMessage(
+      `Expectation "${targetExp.code}" has recorded student grades. Deleting it will remove it from future grading grids and curriculum reports, but existing logs will remain in database history. Do you want to proceed?`,
+      `Delete Expectation — ${targetExp.code}`,
+      { confirmLabel: 'Delete Expectation', danger: true }
+    )
+    if (!ok) return
+  }
+
+  const updated = currentSubjects.value.map(s => {
+    if (s.subjectId !== subjectId) return s
+    const exps = (s.expectations || []).filter(e => e.expectationId !== expectationId)
+    return { ...s, expectations: exps }
+  })
+  await updateActiveClass({ subjects: updated })
+}
+
+function addExpectationToUnit(subjectId, unitId, code, description) {
+  if (!code.trim() && !description.trim()) return
+  const newExp = {
+    expectationId: crypto.randomUUID(),
+    code: code.trim().toUpperCase(),
+    description: description.trim(),
+    unitId: unitId === 'general' ? undefined : unitId
+  }
+  const updated = currentSubjects.value.map(s => {
+    if (s.subjectId !== subjectId) return s
+    const exps = [...(s.expectations || []), newExp]
+    return { ...s, expectations: exps }
+  })
+  updateActiveClass({ subjects: updated })
+}
+
+function submitAddExp(subjectId, unitId) {
+  const codeKey = `${subjectId}_${unitId}_code`
+  const descKey = `${subjectId}_${unitId}_desc`
+  const code = newExpForms[codeKey] || ''
+  const desc = newExpForms[descKey] || ''
+  if (!code.trim() && !desc.trim()) return
+  addExpectationToUnit(subjectId, unitId, code, desc)
+  newExpForms[codeKey] = ''
+  newExpForms[descKey] = ''
+}
 
 function cleanUnitName(name) {
   if (!name) return ''
@@ -333,10 +558,64 @@ async function addStrandUnit(subjectId) {
 }
 
 async function removeStrandUnit(subjectId, unitId) {
+  const classId = activeClass.value?.classId
+  if (classId) {
+    try {
+      const assessments = await getAssessmentsByClass(classId)
+      const hasAssessments = assessments.some(a => (a.subjectId === subjectId || !a.subjectId) && a.unitId === unitId)
+      if (hasAssessments) {
+        const sub = currentSubjects.value.find(s => s.subjectId === subjectId)
+        const unit = sub?.gradebookUnits?.find(u => u.unitId === unitId)
+        await confirmMessage(
+          `Cannot delete strand "${unit?.name || 'this strand'}" because it has assessments assigned to it. Remove or reassign all assessments in this strand before deleting.`,
+          `Strand in Use`,
+          { confirmLabel: 'OK' }
+        )
+        return
+      }
+    } catch (e) {
+      console.warn('Failed checking assessments for strand deletion', e)
+    }
+  }
+
   const existing = currentSubjects.value.map(s => {
     if (s.subjectId === subjectId) {
       const units = (s.gradebookUnits || []).filter(u => u.unitId !== unitId)
       return { ...s, gradebookUnits: units }
+    }
+    return s
+  })
+  await updateActiveClass({ subjects: existing })
+}
+
+async function removeSubjectCategory(subjectId, categoryId) {
+  const classId = activeClass.value?.classId
+  if (classId) {
+    try {
+      const assessments = await getAssessmentsByClass(classId)
+      const hasAssessments = assessments.some(a => (a.subjectId === subjectId || !a.subjectId) && a.categoryId === categoryId)
+      if (hasAssessments) {
+        const sub = currentSubjects.value.find(s => s.subjectId === subjectId)
+        const cat = (sub?.gradebookCategories || DEFAULT_TRADITIONAL_CATEGORIES).find(c => c.categoryId === categoryId)
+        await confirmMessage(
+          `Cannot delete category "${cat?.name || 'this category'}" because it has assessments assigned to it. Remove or reassign all assessments in this category before deleting.`,
+          `Category in Use`,
+          { confirmLabel: 'OK' }
+        )
+        return
+      }
+    } catch (e) {
+      console.warn('Failed checking assessments for category deletion', e)
+    }
+  }
+
+  const existing = currentSubjects.value.map(s => {
+    if (s.subjectId === subjectId) {
+      const baseCats = (s.gradebookCategories && s.gradebookCategories.length > 0)
+        ? s.gradebookCategories
+        : DEFAULT_TRADITIONAL_CATEGORIES
+      const cats = baseCats.filter(c => c.categoryId !== categoryId)
+      return { ...s, gradebookCategories: cats }
     }
     return s
   })
@@ -369,11 +648,7 @@ function getSubjectPresetMatch(sub) {
 }
 
 function autoPopulateSubject(sub) {
-  const presets = getSubjectPresetMatches(sub)
-  if (!presets || presets.length === 0) return
-  const populated = populateSubjectFromPresets(sub, presets, 'all')
-  const updated = currentSubjects.value.map(s => s.subjectId === sub.subjectId ? populated : s)
-  updateActiveClass({ subjects: updated })
+  openExpectationModal(sub)
 }
 
 function openExpectationModal(sub) {
@@ -516,19 +791,7 @@ async function addSubjectCategory(subjectId) {
   await updateActiveClass({ subjects: existing })
 }
 
-async function removeSubjectCategory(subjectId, categoryId) {
-  const existing = currentSubjects.value.map(s => {
-    if (s.subjectId === subjectId) {
-      const baseCats = (s.gradebookCategories && s.gradebookCategories.length > 0)
-        ? s.gradebookCategories
-        : DEFAULT_TRADITIONAL_CATEGORIES
-      const cats = baseCats.filter(c => c.categoryId !== categoryId)
-      return { ...s, gradebookCategories: cats }
-    }
-    return s
-  })
-  await updateActiveClass({ subjects: existing })
-}
+
 
 async function saveSubjectCategories(subjectId) {
   const existing = currentSubjects.value.map(s => {
@@ -984,5 +1247,78 @@ async function saveCustomSubject() {
 .elementary-subjects__btn-primary:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.elementary-subjects__strand-block {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  margin-top: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.elementary-subjects__exp-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-left: 4px;
+}
+
+.elementary-subjects__exp-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 0.8rem;
+}
+
+.elementary-subjects__exp-code {
+  font-weight: 700;
+  font-size: 0.72rem;
+  color: var(--primary);
+  background: rgba(37, 99, 235, 0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.elementary-subjects__exp-desc {
+  flex: 1;
+  color: var(--text);
+  line-height: 1.3;
+}
+
+.elementary-subjects__add-exp-form {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.elementary-subjects__exp-input-code {
+  width: 90px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 3px 6px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.elementary-subjects__exp-input-desc {
+  flex: 1;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 3px 6px;
+  font-size: 0.78rem;
+  color: var(--text);
 }
 </style>

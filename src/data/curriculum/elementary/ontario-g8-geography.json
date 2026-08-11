@@ -10,7 +10,7 @@
       "overalls": [
         {
           "code": "A1",
-          "description": "Application: Interrelationships between Settlement and the Environment",
+          "description": "analyse physical and human geographic patterns and relationships using geographic concepts",
           "specifics": [
             {
               "code": "A1.1",
@@ -24,11 +24,12 @@
               "code": "A1.3",
               "description": "describe possible features of a sustainable community in the future (e.g., energy-efficient buildings, use of renewable sources of energy, a comprehensive public transportation system, community gardens, roof gardens, green canopy, naturalized parks with native species, programs for waste and water recycling), and analyse some challenges associated with creating&nbsp;such a community (e.g., cost, population growth, increasing urbanization, continued dependence on fossil fuels)."
             }
-          ]
+          ],
+          "title": "Application: Interrelationships between Settlement and the Environment"
         },
         {
           "code": "A2",
-          "description": "Inquiry: Human Settlements and Sustainability",
+          "description": "use the geographic inquiry process to investigate physical environment and human settlement issues",
           "specifics": [
             {
               "code": "A2.1",
@@ -54,7 +55,8 @@
               "code": "A2.6",
               "description": "communicate the results of their inquiries using appropriate vocabulary (e.g., settlement patterns, population distribution, population density, land use, sustainable development, land reclamation, migration) and formats appropriate for specific audiences (e.g., a play about the impact of urbanization on rural communities; a website that focuses on issues associated with creating more sustainable communities; a photo essay on a land-use conflict in a specific region;&nbsp;a report, song, or poem that addresses the impact of different kinds of human settlement on the environment; a story about sustainable communities of the future)."
             }
-          ]
+          ],
+          "title": "Inquiry: Human Settlements and Sustainability"
         },
         {
           "code": "A3",
@@ -88,7 +90,8 @@
               "code": "A3.7",
               "description": "demonstrate the ability to analyse and construct choropleth maps on topics related to human settlement (e.g., population density, availability or use of agricultural land, spending on transportation)."
             }
-          ]
+          ],
+          "title": "Understanding Geographic Context: Settlement Patterns and Trends"
         }
       ]
     },
@@ -97,7 +100,7 @@
       "overalls": [
         {
           "code": "B1",
-          "description": "Application: Global Inequalities in Quality of Life",
+          "description": "analyse global patterns of development, economic activity, and quality of life",
           "specifics": [
             {
               "code": "B1.1",
@@ -115,11 +118,12 @@
               "code": "B1.4",
               "description": "assess the effectiveness of media in improving the quality of life in some countries/regions around the world (e.g., with reference to the success of various print or television advertisements for aid organizations; the use of celebrity spokespeople; journalists raising awareness of natural disasters, refugees, famine in different parts of the world; the broadcast of fundraisers such as Live Aid; the production of songs or music videos by Northern Lights or Band Aid)."
             }
-          ]
+          ],
+          "title": "Application: Global Inequalities in Quality of Life"
         },
         {
           "code": "B2",
-          "description": "Inquiry: Development and Quality of Life Issues",
+          "description": "use the geographic inquiry process to investigate global development and environmental sustainability issues",
           "specifics": [
             {
               "code": "B2.1",
@@ -145,7 +149,8 @@
               "code": "B2.6",
               "description": "communicate the results of their inquiries using appropriate vocabulary (e.g., demography, per capita, quality of life, developed/developing countries, gross national product [GNP], gross domestic product [GDP], literacy rate, correlation, exploitation, competition, fair trade) and formats appropriate for specific audiences (e.g., create an interactive presentation on foreign debt in Africa, using an electronic white board; use GIS in a presentation on the impact of desertification; create a photo essay with accompanying text or oral comments on conditions in a city in the developing world; write an article for the school newspaper on the impact of water privatization)."
             }
-          ]
+          ],
+          "title": "Inquiry: Development and Quality of Life Issues"
         },
         {
           "code": "B3",
@@ -187,7 +192,8 @@
               "code": "B3.9",
               "description": "describe the spatial distribution of wealth, both globally and within selected countries/regions (e.g., the concentration of global wealth in North America, Europe, and parts of the Middle East; changing patterns of global wealth as a result of emerging economies such as Russia, China, and India; the concentration of the world’s poorest nations in Africa; patterns of rural poverty and urban wealth)."
             }
-          ]
+          ],
+          "title": "Understanding Geographic Context: Global Economic Development and Quality of Life"
         }
       ]
     }

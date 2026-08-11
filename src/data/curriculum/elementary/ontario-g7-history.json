@@ -24,7 +24,8 @@
               "code": "A1.3",
               "description": "analyze the displacement experienced by various groups and communities, including First Nations, Métis, and Inuit communities, who were living in or who came to Canada between 1713 and 1800 (e.g., the expulsion of the Acadians; the forced relocation experienced by many First Nations and/or Métis to reserves or different territories; the migration of Loyalists to various regions of Canada; the forced migration of enslaved African people to New France and British North America; the immigration of people to Canada seeking land, religious freedom, and/or work), and compare it with present-day examples of displacement (e.g., the relocation of a First Nation reserve community in Canada as a result of changing environmental or economic conditions; the experience of and services available to immigrants or refugees to Canada)&nbsp;."
             }
-          ]
+          ],
+          "title": "Application: Colonial and Present-day Canada"
         },
         {
           "code": "A2",
@@ -58,11 +59,12 @@
               "code": "A2.7",
               "description": "communicate the results of their inquiries using appropriate vocabulary (e.g., perspective, colony, treaty, expulsion, displacement, values, roles, power, conflict, Acadian, medicines, oral histories, ethnogenesis) and formats appropriate for specific audiences (e.g., a historical narrative in storybook or graphic form about the responses of different people to the expulsion of the Acadians; a debate presenting differing perspectives on the battle of the Plains of Abraham; an information poster on the Constitutional Act, 1791, including the response of different groups to the act; an audiovisual presentation about the ways different groups viewed the Peace and Friendship Treaties)&nbsp;."
             }
-          ]
+          ],
+          "title": "Inquiry: From New France to British North America"
         },
         {
           "code": "A3",
-          "description": "Understanding Historical Context: Events and Their Consequences",
+          "description": "demonstrate an understanding of key historical events, trends, and developments",
           "specifics": [
             {
               "code": "A3.1",
@@ -100,7 +102,8 @@
               "code": "A3.9",
               "description": "identify some significant individuals and groups in Canada during this period (e.g., Marie-Josèphe Angélique, Michel Bégon, Esther Brandeau, Joseph Brant, Molly Brant, Cadotte, Alexander Mackenzie, Pontiac, Elizabeth Simcoe, John Graves Simcoe, Thanadelthur; trappers and fur traders, Métis “country wives”, missionaries, explorers, Loyalists, habitants),&nbsp;and&nbsp;explain their contribution to Canadian heritage and/or identities."
             }
-          ]
+          ],
+          "title": "Understanding Historical Context: Events and Their Consequences"
         }
       ]
     },
@@ -123,7 +126,8 @@
               "code": "B1.3",
               "description": "analyse the displacement experienced by various groups and communities, including Indigenous communities, who were living in or who came to Canada between 1800 and 1850 (e.g., displacements resulting from damage to property during the War of 1812 or the Rebellions of 1837–38; from the loss of First Nations and Métis territory due to increasing encroachment and settlement by colonists; from immigration of Europeans seeking land, religious freedom, and/or work) and how some of these groups dealt with their displacement."
             }
-          ]
+          ],
+          "title": "Application: Changes and Challenges"
         },
         {
           "code": "B2",
@@ -157,11 +161,12 @@
               "code": "B2.7",
               "description": "communicate the results of their inquiries using appropriate vocabulary (e.g., immigrant, rebels, famine, Loyalist, Reformer, Patriote, British North America, Upper Canada, Lower Canada, Family Compact, Château Clique, responsible government) and formats appropriate for specific audiences (e.g., a dual perspective poem or story on western settlement written from the points of view of settlers and First Nations and/or Métis people; a dramatic presentation on the lives of immigrants from different regions or classes; an annotated map explaining the impact of the Rebellions of 1837 on various groups; a work of art depicting the various groups involved in an event along with a write-up explaining their viewpoints)."
             }
-          ]
+          ],
+          "title": "Inquiry: Perspectives in British North America"
         },
         {
           "code": "B3",
-          "description": "Understanding Historical Context: Events and Their Consequences",
+          "description": "demonstrate an understanding of key historical events, trends, and developments",
           "specifics": [
             {
               "code": "B3.1",
@@ -191,7 +196,8 @@
               "code": "B3.7",
               "description": "identify some significant individuals and groups in Canada during this period (e.g., Robert Baldwin, General Isaac Brock, Cuthbert Grant, Charles Ermatinger, Peter Jones, William Lyon Mackenzie, Grace Marks, John Norton, Louis-Joseph Papineau, Richard Pierpoint, Peggy Pompadour, Louis Riel Sr., Laura Secord, Shawnadithit, Tecumseh, Catharine Parr Traill; groups advocating responsible government or public education; immigrant aid and other charitable organizations; the Family Compact and Château Clique; groups such as Mennonites in Waterloo County or the Six Nations in the Grand River region of Upper Canada), and explain their contribution to Canadian heritage and/or identities."
             }
-          ]
+          ],
+          "title": "Understanding Historical Context: Events and Their Consequences"
         }
       ]
     }

@@ -116,8 +116,8 @@
           </label>
         </div>
 
-        <!-- Sub-Cohort / Section Tag Editor -->
-        <div v-if="availableClassSections.length > 0" class="setup__section-editor-container" style="margin-top: 16px; padding-top: 12px; border-top: 1px dashed var(--border);">
+        <!-- Sub-Cohort / Section Tag Editor (Secondary Mode Only) -->
+        <div v-if="activeClass.classType !== 'elementary' && availableClassSections.length > 0" class="setup__section-editor-container" style="margin-top: 16px; padding-top: 12px; border-top: 1px dashed var(--border);">
           <label class="setup__label" style="margin-bottom: 6px;">
             Section / Sub-Cohort Badges
             <span class="setup__hint" style="display: block; font-weight: 400; margin-top: 2px;">

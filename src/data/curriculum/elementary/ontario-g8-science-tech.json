@@ -10,7 +10,7 @@
       "overalls": [
         {
           "code": "A1",
-          "description": "STEM Investigation and Communication Skills",
+          "description": "use a scientific research process, a scientific experimentation process, and an engineering design process to conduct investigations and solve problems",
           "specifics": [
             {
               "code": "A1.1",
@@ -32,11 +32,12 @@
               "code": "A1.5",
               "description": "communicate their findings, using science and technology vocabulary and formats that are appropriate for specific audiences and purposes&nbsp;&nbsp;&nbsp;&nbsp;."
             }
-          ]
+          ],
+          "title": "STEM Investigation and Communication Skills"
         },
         {
           "code": "A2",
-          "description": "Coding and Emerging Technologies",
+          "description": "write and execute code in investigations and when modelling concepts, and describe impacts of coding and emerging technologies on everyday life",
           "specifics": [
             {
               "code": "A2.1",
@@ -46,11 +47,12 @@
               "code": "A2.2",
               "description": "identify and describe impacts of coding and of emerging technologies, such as artificial intelligence systems, on everyday life, including skilled trades."
             }
-          ]
+          ],
+          "title": "Coding and Emerging Technologies"
         },
         {
           "code": "A3",
-          "description": "Applications, Connections, and Contributions",
+          "description": "demonstrate an understanding of practical applications of science and technology concepts, and contributions to STEM fields by people from diverse communities",
           "specifics": [
             {
               "code": "A3.1",
@@ -64,7 +66,8 @@
               "code": "A3.3",
               "description": "analyse contributions to science and technology from various communities."
             }
-          ]
+          ],
+          "title": "Applications, Connections, and Contributions"
         }
       ]
     },
@@ -73,7 +76,7 @@
       "overalls": [
         {
           "code": "B1",
-          "description": "Relating Science and Technology to Our Changing World",
+          "description": "assess the social, environmental, and economic impacts of human activities and technologies on systems, structures, and the environment",
           "specifics": [
             {
               "code": "B1.1",
@@ -83,11 +86,12 @@
               "code": "B1.2",
               "description": "analyse beneficial and harmful effects of developments in cell biology and associated emerging technologies on human health and the environment, while taking different perspectives into consideration."
             }
-          ]
+          ],
+          "title": "Relating Science and Technology to Our Changing World"
         },
         {
           "code": "B2",
-          "description": "Exploring and Understanding Concepts",
+          "description": "demonstrate an understanding of basic scientific concepts, processes, and principles using scientific investigation skills",
           "specifics": [
             {
               "code": "B2.1",
@@ -113,7 +117,8 @@
               "code": "B2.6",
               "description": "describe the organization of cells into tissues, organs, and systems."
             }
-          ]
+          ],
+          "title": "Exploring and Understanding Concepts"
         }
       ]
     },
@@ -122,7 +127,7 @@
       "overalls": [
         {
           "code": "C1",
-          "description": "Relating Science and Technology to Our Changing World",
+          "description": "assess the social, environmental, and economic impacts of human activities and technologies on systems, structures, and the environment",
           "specifics": [
             {
               "code": "C1.1",
@@ -132,11 +137,12 @@
               "code": "C1.2",
               "description": "assess the environmental and social impacts of fluid spills, including impacts on First Nations, Métis, and Inuit communities, and including the cost and technical challenges related to cleanup and remediation efforts."
             }
-          ]
+          ],
+          "title": "Relating Science and Technology to Our Changing World"
         },
         {
           "code": "C2",
-          "description": "Exploring and Understanding Concepts",
+          "description": "demonstrate an understanding of basic scientific concepts, processes, and principles using scientific investigation skills",
           "specifics": [
             {
               "code": "C2.1",
@@ -178,7 +184,8 @@
               "code": "C2.10",
               "description": "compare how fluids are used and how their flow is regulated in living organisms and in mechanical devices or systems."
             }
-          ]
+          ],
+          "title": "Exploring and Understanding Concepts"
         }
       ]
     },
@@ -187,7 +194,7 @@
       "overalls": [
         {
           "code": "D1",
-          "description": "Relating Science and Technology to Our Changing World",
+          "description": "assess the social, environmental, and economic impacts of human activities and technologies on systems, structures, and the environment",
           "specifics": [
             {
               "code": "D1.1",
@@ -197,11 +204,12 @@
               "code": "D1.2",
               "description": "assess the impact on individuals, society, and the environment of alternative ways of meeting needs that are currently met by existing systems, taking different points of view into consideration."
             }
-          ]
+          ],
+          "title": "Relating Science and Technology to Our Changing World"
         },
         {
           "code": "D2",
-          "description": "Exploring and Understanding Concepts",
+          "description": "demonstrate an understanding of basic scientific concepts, processes, and principles using scientific investigation skills",
           "specifics": [
             {
               "code": "D2.1",
@@ -243,7 +251,8 @@
               "code": "D2.10",
               "description": "identify social factors that influence the evolution of a system."
             }
-          ]
+          ],
+          "title": "Exploring and Understanding Concepts"
         }
       ]
     },
@@ -252,7 +261,7 @@
       "overalls": [
         {
           "code": "E1",
-          "description": "Relating Science and Technology to Our Changing World",
+          "description": "assess the social, environmental, and economic impacts of human activities and technologies on systems, structures, and the environment",
           "specifics": [
             {
               "code": "E1.1",
@@ -266,11 +275,12 @@
               "code": "E1.3",
               "description": "assess the impact of scientific discoveries and technological innovations on local and global water systems."
             }
-          ]
+          ],
+          "title": "Relating Science and Technology to Our Changing World"
         },
         {
           "code": "E2",
-          "description": "Exploring and Understanding Concepts",
+          "description": "demonstrate an understanding of basic scientific concepts, processes, and principles using scientific investigation skills",
           "specifics": [
             {
               "code": "E2.1",
@@ -300,7 +310,8 @@
               "code": "E2.7",
               "description": "explain how municipalities process water and manage water usage&nbsp;."
             }
-          ]
+          ],
+          "title": "Exploring and Understanding Concepts"
         }
       ]
     }
