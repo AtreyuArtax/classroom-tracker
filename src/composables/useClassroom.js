@@ -1527,6 +1527,9 @@ async function _activateClass(cls) {
     }
 
     activeClass.value = cls
+    if (cls.year) {
+        selectedYear.value = cls.year
+    }
     // Deep-copy students map so Vue can track nested mutations
     students.value = JSON.parse(JSON.stringify(cls.students ?? {}))
     

@@ -1,7 +1,7 @@
 # Graph Report - classroom-tracker  (2026-08-11)
 
 ## Corpus Check
-- 200 files · ~361,916 words
+- 200 files · ~361,923 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `9984257b`
+- Built from commit: `32049670`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -312,7 +312,7 @@ Cohesion: 0.14
 Nodes (15): onThresholdChange(), getEffectiveClassRecord(), adjustStudentGrade(), deleteAssessment(), loadGradebook(), refreshAllAssessmentStats(), refreshClassAnalytics(), refreshGrades() (+7 more)
 
 ### Community 103 - "Community 103"
-Cohesion: 0.18
+Cohesion: 0.17
 Nodes (14): hasUnsyncedChanges, createAssessment(), deleteAssessment(), updateAssessment(), addAttempt(), deleteAttempt(), deleteGrade(), _getGradeInTransaction() (+6 more)
 
 ### Community 108 - "Community 108"

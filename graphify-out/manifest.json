@@ -240,8 +240,8 @@
     "semantic_hash": "68f077cda9561ec51fbe56d0aa61fb3e"
   },
   "src/composables/useClassroom.js": {
-    "mtime": 1786456612.0206606,
-    "ast_hash": "8f84fa1f925a7db36f71c42b844a7e11",
+    "mtime": 1786457421.2909992,
+    "ast_hash": "0400d89620f2f83aae1c1d7f0a4e2dcb",
     "semantic_hash": ""
   },
   "src/composables/useGradebook.js": {

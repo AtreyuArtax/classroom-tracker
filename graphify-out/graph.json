@@ -5500,7 +5500,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "reports_studentriskscatterplot",
-      "community": 2,
+      "community": 103,
       "norm_label": "studentriskscatterplot.vue"
     },
     {
@@ -7947,7 +7947,7 @@
       "label": "useClassroom()",
       "file_type": "code",
       "source_file": "src/composables/useClassroom.js",
-      "source_location": "L1541",
+      "source_location": "L1544",
       "_origin": "ast",
       "id": "composables_useclassroom_useclassroom",
       "community": 3,
@@ -7957,7 +7957,7 @@
       "label": "_scheduleMidnightReset()",
       "file_type": "code",
       "source_file": "src/composables/useClassroom.js",
-      "source_location": "L1644",
+      "source_location": "L1647",
       "_origin": "ast",
       "id": "composables_useclassroom_schedulemidnightreset",
       "community": 0,
@@ -10650,7 +10650,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "db_gradebookservice",
-      "community": 2,
+      "community": 103,
       "norm_label": "gradebookservice.js"
     },
     {
@@ -22078,9 +22078,9 @@
       "source_file": "src/components/setup/RosterCsvImporter.vue",
       "source_location": "L162",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "setup_rostercsvimporter",
-      "target": "setup_rostercsvimporter_activeclass_classlist_periodoptions_periodstarttimes_updateperiodstarttimes_selectedyear_selectedsemester_teachingmode_importroster_bulkimportclasses_movestudentfromclass",
-      "confidence_score": 1.0
+      "target": "setup_rostercsvimporter_activeclass_classlist_periodoptions_periodstarttimes_updateperiodstarttimes_selectedyear_selectedsemester_teachingmode_importroster_bulkimportclasses_movestudentfromclass"
     },
     {
       "relation": "contains",
@@ -24122,9 +24122,9 @@
       "source_file": "src/composables/useClassroom.js",
       "source_location": "L901",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "composables_useclassroom_reloadclasses",
-      "target": "composables_useclassroom_activateclass",
-      "confidence_score": 1.0
+      "target": "composables_useclassroom_activateclass"
     },
     {
       "relation": "calls",
@@ -31767,5 +31767,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "9984257b94aca4c3b6d19a6a73ad4a8bda734fd8"
+  "built_at_commit": "320496705d3c5e6216c9b0d76d69ad46d389515e"
 }
