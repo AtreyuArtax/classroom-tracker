@@ -1,6 +1,6 @@
 <template>
   <BaseModal :show="show" title="User Guide & Getting Started" maxWidth="800px" @close="emit('close')">
-    <GettingStartedGuide />
+    <GettingStartedGuide :show-mode-selector="false" />
   </BaseModal>
 </template>
 

@@ -8,6 +8,59 @@
       </div>
     </div>
 
+    <!-- Mode Selector Card Banner (Only shown on fresh install / setup screen) -->
+    <div v-if="showModeSelector" class="guide-mode-section">
+      <div class="guide-mode-header">
+        <h3 class="guide-mode-title">Choose Your Primary Teaching Mode</h3>
+        <p class="guide-mode-subtitle">Select your workspace setup to tailor schedules, term structures, and CSV roster importers:</p>
+      </div>
+
+      <div class="guide-mode-cards">
+        <!-- Secondary Card -->
+        <div 
+          class="guide-mode-card" 
+          :class="{ 'guide-mode-card--active': teachingMode === 'secondary' }"
+          @click="selectTeachingMode('secondary')"
+        >
+          <div class="guide-mode-card-badge" v-if="teachingMode === 'secondary'">
+            <Check :size="12" /> Active Workspace
+          </div>
+          <div class="guide-mode-card-icon">🎓</div>
+          <h4 class="guide-mode-card-name">Secondary Mode (9–12)</h4>
+          <ul class="guide-mode-list">
+            <li>• Period-Based Schedules & Start Times</li>
+            <li>• Semester Terms (Sem 1 & 2)</li>
+            <li>• Percentage / Point Gradebooks</li>
+          </ul>
+        </div>
+
+        <!-- Elementary Card -->
+        <div 
+          class="guide-mode-card" 
+          :class="{ 'guide-mode-card--active': teachingMode === 'elementary' }"
+          @click="selectTeachingMode('elementary')"
+        >
+          <div class="guide-mode-card-badge" v-if="teachingMode === 'elementary'">
+            <Check :size="12" /> Active Workspace
+          </div>
+          <div class="guide-mode-card-icon">🎒</div>
+          <h4 class="guide-mode-card-name">Elementary Mode (K–8)</h4>
+          <ul class="guide-mode-list">
+            <li>• Full-Year Homerooms</li>
+            <li>• Subject Switcher (Math, Science...)</li>
+            <li>• SBAR & Level-Based Grading</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="guide-mode-note">
+        <Info :size="14" style="flex-shrink: 0; margin-top: 2px;" />
+        <span>
+          <strong>Dual-Mode Note:</strong> You are not limited to just one mode! You can run both Secondary and Elementary classes in the exact same workspace and switch between them anytime under <strong>Setup → App Settings</strong>.
+        </span>
+      </div>
+    </div>
+
     <div class="guide-grid">
       <!-- Section 1: Roster Setup & PowerSchool CSV -->
       <div class="guide-card">
@@ -17,9 +70,10 @@
         <h3 class="guide-card-title">1. Roster Setup & CSV Import</h3>
         <p class="guide-card-text">
           Instead of manually typing student names, you can drop your board-provided student export CSV directly. 
-          Class Tracker natively supports the raw export formats from student databases like <strong>PowerSchool</strong>.
+          Class Tracker natively supports raw export formats from databases like <strong>PowerSchool</strong>.
         </p>
         <ul class="guide-list">
+          <li><strong>Teaching Mode Match:</strong> Make sure your active mode matches your CSV export (Secondary expects Period/Semester fields, while Elementary expects Homeroom/Full-Year fields).</li>
           <li><strong>Automatic Mapping:</strong> We automatically detect and map headers like <code>Student ID</code>, <code>First Name</code>, <code>Last Name</code>, parent contact info, and schedule fields.</li>
           <li><strong>Formatting Help:</strong> Click the <em>"Roster Format & PowerSchool CSV Help"</em> dropdown under the bulk setup card in the manager tab to view exact columns supported.</li>
         </ul>
@@ -109,13 +163,131 @@
 </template>
 
 <script setup>
-import { GraduationCap, FolderOpen, Clock, Archive, Settings2, Cloud } from 'lucide-vue-next'
+import { GraduationCap, FolderOpen, Clock, Archive, Settings2, Cloud, Check, Info } from 'lucide-vue-next'
+import { teachingMode } from '../../composables/useClassroomState.js'
+
+defineProps({
+  showModeSelector: { type: Boolean, default: true }
+})
+
+function selectTeachingMode(mode) {
+  teachingMode.value = mode
+}
 </script>
 
 <style scoped>
 .guide-content {
   color: var(--text);
   line-height: 1.6;
+}
+
+/* Mode Selector Card Banner */
+.guide-mode-section {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  margin-bottom: 24px;
+  box-shadow: var(--shadow-sm);
+}
+
+.guide-mode-header {
+  margin-bottom: 16px;
+}
+
+.guide-mode-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0 0 4px 0;
+}
+
+.guide-mode-subtitle {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.guide-mode-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.guide-mode-card {
+  position: relative;
+  background: var(--bg-secondary);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.guide-mode-card:hover {
+  border-color: var(--primary);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.guide-mode-card--active {
+  border-color: var(--primary) !important;
+  background: rgba(37, 99, 235, 0.05);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+.guide-mode-card-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: var(--primary);
+  color: white;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.guide-mode-card-icon {
+  font-size: 1.8rem;
+  line-height: 1;
+}
+
+.guide-mode-card-name {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0;
+}
+
+.guide-mode-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.guide-mode-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 14px;
+  background: rgba(37, 99, 235, 0.08);
+  border: 1px solid rgba(37, 99, 235, 0.2);
+  border-radius: var(--radius-md);
+  font-size: 0.825rem;
+  color: var(--text);
 }
 
 .guide-header {

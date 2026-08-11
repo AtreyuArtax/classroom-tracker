@@ -215,9 +215,9 @@
     "semantic_hash": "0794c0177a8a0b5d3b9f3d8bad8c1024"
   },
   "src/components/setup/GettingStartedGuide.vue": {
-    "mtime": 1781619901.9248884,
-    "ast_hash": "a6d997c87c39dd617f64298c0b2e7d76",
-    "semantic_hash": "a6d997c87c39dd617f64298c0b2e7d76"
+    "mtime": 1786458174.7168663,
+    "ast_hash": "73ade40baebb78287bf861fb4900f83a",
+    "semantic_hash": ""
   },
   "src/components/setup/GradeBucketsSettings.vue": {
     "mtime": 1785245527.6019673,
@@ -225,9 +225,9 @@
     "semantic_hash": ""
   },
   "src/components/setup/HelpModal.vue": {
-    "mtime": 1781619917.8151672,
-    "ast_hash": "6c3aaa4c7aef55b077102c0fe1d1d96c",
-    "semantic_hash": "6c3aaa4c7aef55b077102c0fe1d1d96c"
+    "mtime": 1786458180.7539067,
+    "ast_hash": "c2ad881d657cfd5c363bece256bfc726",
+    "semantic_hash": ""
   },
   "src/components/setup/SemesterCalendar.vue": {
     "mtime": 1777043677.8446665,
