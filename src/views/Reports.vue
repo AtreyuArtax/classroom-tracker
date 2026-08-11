@@ -266,14 +266,18 @@ watch(sidebarClassId, () => {
 
 watch([activeClass, activeSubjectId], async ([newClass, newSub], [oldClass, oldSub]) => {
   if (newClass) {
-    if (!oldClass || newClass.classId !== oldClass.classId) {
+    const classChanged = !oldClass || newClass.classId !== oldClass.classId
+    const subjectChanged = newSub !== oldSub
+    if (classChanged) {
       sidebarClassId.value = newClass.classId
       dossier.clearStudent()
       dossier.loadSidebarClass(newClass.classId)
     }
-    await loadGradebook(newClass)
-    rightMode.value = 'overview'
-    runReport()
+    if (classChanged || subjectChanged) {
+      await loadGradebook(newClass)
+      rightMode.value = 'overview'
+      runReport()
+    }
   }
 })
 
