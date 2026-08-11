@@ -48,6 +48,7 @@
                 <option value="Grade 5/6">Grade 5/6 Split</option>
                 <option value="Grade 6/7">Grade 6/7 Split</option>
                 <option value="Grade 7/8">Grade 7/8 Split</option>
+                <option v-if="detectedGradeLevel && !['Kindergarten','Grade 1','Grade 2','Grade 3','Grade 4','Grade 5','Grade 6','Grade 7','Grade 8','Grade 1/2','Grade 2/3','Grade 3/4','Grade 4/5','Grade 5/6','Grade 6/7','Grade 7/8'].includes(detectedGradeLevel)" :value="detectedGradeLevel">{{ detectedGradeLevel }} (Roster Detected)</option>
               </optgroup>
             </select>
           </label>

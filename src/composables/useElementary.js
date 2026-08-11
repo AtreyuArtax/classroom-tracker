@@ -114,6 +114,22 @@ export function detectGradeFromClassName(name = '') {
 export function getEffectiveGradeLevel(classRecord) {
   if (!classRecord) return ''
   if (classRecord.gradeLevel) return classRecord.gradeLevel
+  
+  if (classRecord.students && Object.keys(classRecord.students).length > 0) {
+    const rawSet = new Set()
+    Object.values(classRecord.students).forEach(s => {
+      if (s.gradeLevel) {
+        rawSet.add(s.gradeLevel.trim())
+      }
+    })
+    const uniqueGrades = Array.from(rawSet).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }))
+    if (uniqueGrades.length === 1) return uniqueGrades[0]
+    if (uniqueGrades.length > 1) {
+      const cleanNums = uniqueGrades.map(g => g.replace(/^Grade\s+/i, ''))
+      return `Grade ${cleanNums.join('/')}`
+    }
+  }
+
   return detectGradeFromClassName(classRecord.name || '')
 }
 

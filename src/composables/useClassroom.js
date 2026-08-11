@@ -104,7 +104,7 @@ const filteredClassList = computed(() => {
     return classList.value.filter(c => {
         const matchesYear = !selectedYear.value || c.year === selectedYear.value
         const matchesSem  = !selectedSemester.value || teachingMode.value === 'elementary' || c.semester === selectedSemester.value
-        const cType = c.classType || teachingMode.value || 'secondary'
+        const cType = c.classType || (c.subjects && c.subjects.length > 0 ? 'elementary' : 'secondary')
         const matchesType = cType === teachingMode.value
         return matchesYear && matchesSem && matchesType
     })
@@ -115,7 +115,7 @@ const filteredArchivedClasses = computed(() => {
     return archivedClasses.value.filter(c => {
         const matchesYear = !selectedYear.value || c.year === selectedYear.value
         const matchesSem  = !selectedSemester.value || teachingMode.value === 'elementary' || c.semester === selectedSemester.value
-        const cType = c.classType || teachingMode.value || 'secondary'
+        const cType = c.classType || (c.subjects && c.subjects.length > 0 ? 'elementary' : 'secondary')
         const matchesType = cType === teachingMode.value
         return matchesYear && matchesSem && matchesType
     })
@@ -883,7 +883,7 @@ async function _reloadClasses() {
     const classes = await classService.getAllClasses()
     classes.forEach(c => {
         if (!c.classType) {
-            c.classType = teachingMode.value || 'secondary'
+            c.classType = (c.subjects && c.subjects.length > 0) ? 'elementary' : 'secondary'
         }
     })
     const [active, archived] = _sortAndSplitClasses(classes)
