@@ -240,8 +240,8 @@
     "semantic_hash": "68f077cda9561ec51fbe56d0aa61fb3e"
   },
   "src/composables/useClassroom.js": {
-    "mtime": 1786327399.6360962,
-    "ast_hash": "de2b8ab05ab5809d9a413a55c1c8e41d",
+    "mtime": 1786456612.0206606,
+    "ast_hash": "8f84fa1f925a7db36f71c42b844a7e11",
     "semantic_hash": ""
   },
   "src/composables/useGradebook.js": {
@@ -275,8 +275,8 @@
     "semantic_hash": ""
   },
   "src/db/classService.js": {
-    "mtime": 1786243894.753462,
-    "ast_hash": "34ceb121504499a7001128ebb57014d9",
+    "mtime": 1786456595.9604414,
+    "ast_hash": "214ca271a5916239121f55deec6f765b",
     "semantic_hash": ""
   },
   "src/db/eventService.js": {
@@ -425,8 +425,8 @@
     "semantic_hash": ""
   },
   "src/components/setup/RosterCsvImporter.vue": {
-    "mtime": 1786157826.0204756,
-    "ast_hash": "d89f4752f25490c783b56bdc2a2f6f3c",
+    "mtime": 1786456602.2177858,
+    "ast_hash": "d353b06339b889526de849f619973e3b",
     "semantic_hash": ""
   },
   "src/composables/useAttendanceTracker.js": {

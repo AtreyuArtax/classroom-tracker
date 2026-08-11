@@ -167,6 +167,7 @@ const {
   updatePeriodStartTimes, 
   selectedYear, 
   selectedSemester,
+  teachingMode,
   importRoster, 
   bulkImportClasses, 
   moveStudentFromClass 
@@ -292,16 +293,17 @@ function onFileSelected(evt) {
             ? `${row.courseCode || 'Homeroom'} — ${row.year}` 
             : `Period ${row.periodNumber} — ${row.year}`
 
-          groups[key] = {
-            name: displayName,
-            year: row.year,
-            semester: row.semester,
-            periodNumber: isNaN(Number(row.periodNumber)) ? 1 : Number(row.periodNumber),
-            courseCode: row.courseCode,
-            students: [],
-            selected: true,
-            sectionMappings: reactive({})
-          }
+            groups[key] = {
+              name: displayName,
+              year: row.year,
+              semester: row.semester,
+              periodNumber: isNaN(Number(row.periodNumber)) ? 1 : Number(row.periodNumber),
+              courseCode: row.courseCode,
+              classType: teachingMode.value || 'secondary',
+              students: [],
+              selected: true,
+              sectionMappings: reactive({})
+            }
         }
         groups[key].students.push(row)
       }
@@ -434,6 +436,10 @@ async function confirmBulkImport() {
   const selectedGroups = Object.values(bulkImportGroups.value).filter(g => g.selected)
   if (selectedGroups.length === 0) return
   
+  selectedGroups.forEach(g => {
+    if (!g.classType) g.classType = teachingMode.value || 'secondary'
+  })
+
   await bulkImportClasses(selectedGroups)
   bulkImportGroups.value = null
   importResult.value = { inserted: 'Multiple', updated: 'Classes', skipped: [] }

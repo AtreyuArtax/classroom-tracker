@@ -709,6 +709,7 @@ export async function bulkImportClasses(groups) {
                 semester: group.semester,
                 periodNumber: group.periodNumber,
                 periodStartTime: group.periodStartTime || '08:00',
+                classType: group.classType || 'secondary',
                 isSplitClass: isSplit,
                 courseSections: group.courseSections || [],
                 gridSize: { rows: 6, cols: 6 },
@@ -723,6 +724,7 @@ export async function bulkImportClasses(groups) {
             }
             created++
         } else {
+            if (group.classType) cls.classType = group.classType
             if (coursePill) cls.courseCode = coursePill
             if (isSplit) {
                 cls.isSplitClass = true

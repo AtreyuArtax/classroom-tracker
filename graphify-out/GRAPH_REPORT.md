@@ -1,16 +1,16 @@
-# Graph Report - classroom-tracker  (2026-08-10)
+# Graph Report - classroom-tracker  (2026-08-11)
 
 ## Corpus Check
-- 200 files · ~361,889 words
+- 200 files · ~361,916 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1174 nodes · 1914 edges · 111 communities (100 shown, 11 thin omitted)
+- 1174 nodes · 1915 edges · 110 communities (99 shown, 11 thin omitted)
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 3 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `db2db1fc`
+- Built from commit: `9984257b`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -68,7 +68,6 @@
 - [[_COMMUNITY_Community 83|Community 83]]
 - [[_COMMUNITY_Community 85|Community 85]]
 - [[_COMMUNITY_Community 87|Community 87]]
-- [[_COMMUNITY_Community 88|Community 88]]
 - [[_COMMUNITY_Community 94|Community 94]]
 - [[_COMMUNITY_Community 95|Community 95]]
 - [[_COMMUNITY_Community 96|Community 96]]
@@ -106,7 +105,7 @@
 ## Import Cycles
 - None detected.
 
-## Communities (111 total, 11 thin omitted)
+## Communities (110 total, 11 thin omitted)
 
 ### Community 0 - "Community 0"
 Cohesion: 0.06
@@ -274,14 +273,15 @@ Nodes (16): {
   updatePeriodStartTimes, 
   selectedYear, 
   selectedSemester,
+  teachingMode,
   importRoster, 
   bulkImportClasses, 
   moveStudentFromClass 
 }, { alert, confirm }, bulkAvailableSemesters, bulkImportGroups, bulkImportSemesters, crossClassConflicts, currentSchoolYear, importResult (+8 more)
 
 ### Community 78 - "Community 78"
-Cohesion: 0.22
-Nodes (9): initializeRfidAttendance(), reconcileStaleTrips(), _activateClass(), archiveClass(), createClass(), logToggleEvent(), switchClass(), updateAttendanceConfig() (+1 more)
+Cohesion: 0.12
+Nodes (17): initializeRfidAttendance(), reconcileStaleTrips(), _activateClass(), archiveClass(), bulkImportClasses(), computeSuggestedClass(), createClass(), hasBeenDismissedToday() (+9 more)
 
 ### Community 83 - "Community 83"
 Cohesion: 0.06
@@ -294,10 +294,6 @@ Nodes (31): activeCategories, activeClassClassCategoriesUpdate(), activeCourseSe
 ### Community 87 - "Community 87"
 Cohesion: 0.29
 Nodes (8): cacheDonePromiseForTransaction(), deleteDB(), getCursorAdvanceMethods(), getIdbProxyableTypes(), promisifyRequest(), transformCachableValue(), wrap(), wrapFunction()
-
-### Community 88 - "Community 88"
-Cohesion: 0.25
-Nodes (8): bulkImportClasses(), computeSuggestedClass(), hasBeenDismissedToday(), init(), loadDismissedSuggestions(), _reloadClasses(), _sortAndSplitClasses(), confirmBulkImport()
 
 ### Community 95 - "Community 95"
 Cohesion: 0.29

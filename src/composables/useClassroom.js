@@ -104,7 +104,7 @@ const filteredClassList = computed(() => {
     return classList.value.filter(c => {
         const matchesYear = !selectedYear.value || c.year === selectedYear.value
         const matchesSem  = !selectedSemester.value || teachingMode.value === 'elementary' || c.semester === selectedSemester.value
-        const cType = c.classType || 'secondary'
+        const cType = c.classType || teachingMode.value || 'secondary'
         const matchesType = cType === teachingMode.value
         return matchesYear && matchesSem && matchesType
     })
@@ -115,7 +115,7 @@ const filteredArchivedClasses = computed(() => {
     return archivedClasses.value.filter(c => {
         const matchesYear = !selectedYear.value || c.year === selectedYear.value
         const matchesSem  = !selectedSemester.value || teachingMode.value === 'elementary' || c.semester === selectedSemester.value
-        const cType = c.classType || 'secondary'
+        const cType = c.classType || teachingMode.value || 'secondary'
         const matchesType = cType === teachingMode.value
         return matchesYear && matchesSem && matchesType
     })
@@ -881,22 +881,27 @@ function _sortAndSplitClasses(classes) {
  */
 async function _reloadClasses() {
     const classes = await classService.getAllClasses()
+    classes.forEach(c => {
+        if (!c.classType) {
+            c.classType = teachingMode.value || 'secondary'
+        }
+    })
     const [active, archived] = _sortAndSplitClasses(classes)
     classList.value = active
     archivedClasses.value = archived
     
-    // If the active class was updated in the background, refresh its reference
+    // If activeClass is missing or not in filteredClassList, auto-activate first filtered class
+    const validFiltered = filteredClassList.value
     if (activeClass.value) {
         const fresh = active.find(c => c.classId === activeClass.value.classId)
         if (fresh) {
-            // We use Object.assign to keep the same reactive proxy reference
-            // but update its contents to match the new DB state.
             Object.assign(activeClass.value, fresh)
             students.value = JSON.parse(JSON.stringify(fresh.students || {}))
+        } else if (validFiltered.length > 0) {
+            await _activateClass(validFiltered[0])
         }
-    } else if (active.length > 0) {
-        activeClass.value = active[0]
-        students.value = JSON.parse(JSON.stringify(active[0].students || {}))
+    } else if (validFiltered.length > 0) {
+        await _activateClass(validFiltered[0])
     }
 }
 
