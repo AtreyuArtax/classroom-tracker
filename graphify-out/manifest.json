@@ -245,8 +245,8 @@
     "semantic_hash": ""
   },
   "src/composables/useGradebook.js": {
-    "mtime": 1786463828.4241588,
-    "ast_hash": "1733be28bd5c973fe8271db694e3ed7c",
+    "mtime": 1786467110.1887586,
+    "ast_hash": "51ff952901058fdea7509bb024cc49e0",
     "semantic_hash": ""
   },
   "src/composables/useKeyboardWedge.js": {
@@ -335,8 +335,8 @@
     "semantic_hash": "322ce1010d35f76a380b2df551af302f"
   },
   "src/views/Dashboard.vue": {
-    "mtime": 1786381195.2188022,
-    "ast_hash": "8572dfb957cf032beb21e8cf386c41e6",
+    "mtime": 1786467119.7354548,
+    "ast_hash": "980efef618fd7b716d75aa1b692158a6",
     "semantic_hash": ""
   },
   "src/views/Grades.vue": {

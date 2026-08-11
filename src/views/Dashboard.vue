@@ -7,9 +7,9 @@
         <ClassSwitcher @navigate="emit('navigate', $event)" />
 
         <!-- Sub-Cohort / Grade Filter Pills -->
-        <div v-if="activeClass && availableSubCohorts.length > 1" class="dashboard__subcohort-pills">
+        <div v-if="activeClass && availableNaturalSubCohorts.length > 1" class="dashboard__subcohort-pills">
           <button
-            v-for="opt in availableSubCohorts"
+            v-for="opt in availableNaturalSubCohorts"
             :key="opt"
             class="subcohort-pill"
             :class="{ 'subcohort-pill--active': activeSubCohortFilter === opt }"
@@ -202,7 +202,7 @@ import StudentProfileModal from '../components/StudentProfileModal.vue'
 import { Toilet, Users, GripVertical, Calendar, CalendarCheck, Scan } from 'lucide-vue-next'
 import { useClassroom }    from '../composables/useClassroom.js'
 import { useRadial }       from '../composables/useRadial.js'
-import { loadGradebook, activeSubCohortFilter, availableSubCohorts } from '../composables/useGradebook.js'
+import { loadGradebook, activeSubCohortFilter, availableSubCohorts, availableNaturalSubCohorts } from '../composables/useGradebook.js'
 import { getSectionColor } from '../utils/gradeColors.js'
 import GettingStartedGuide from '../components/setup/GettingStartedGuide.vue'
 

@@ -68,6 +68,26 @@ export const availableSubCohorts = computed(() => {
   return ['all', ...Array.from(set).sort()]
 })
 
+/**
+ * Natural grade level options for current class (ignoring subject-specific IEP modifications).
+ * Used on Dashboard to filter by student home grade levels.
+ */
+export const availableNaturalSubCohorts = computed(() => {
+  if (!activeClassRecord.value) return ['all']
+  const isElem = activeClassRecord.value.classType === 'elementary'
+  const students = Object.values(activeClassRecord.value.students || {})
+  const set = new Set()
+  students.forEach(st => {
+    if (st.archived) return
+    let tag = isElem ? st.gradeLevel : st.courseCode
+    if (tag && tag.trim()) {
+      set.add(tag.trim())
+    }
+  })
+  if (set.size <= 1) return ['all']
+  return ['all', ...Array.from(set).sort()]
+})
+
 export const availableCourseFilters = computed(() => availableSubCohorts.value)
 export const availableGradeFilters = computed(() => availableSubCohorts.value)
 
