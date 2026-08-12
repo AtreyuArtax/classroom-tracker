@@ -240,8 +240,8 @@
     "semantic_hash": "68f077cda9561ec51fbe56d0aa61fb3e"
   },
   "src/composables/useClassroom.js": {
-    "mtime": 1786542980.6618838,
-    "ast_hash": "746edbdb194f8269bccd393be7f68afc",
+    "mtime": 1786550373.4914846,
+    "ast_hash": "62145b1d4d7441f8d12a44198135f060",
     "semantic_hash": ""
   },
   "src/composables/useGradebook.js": {
@@ -450,8 +450,8 @@
     "semantic_hash": ""
   },
   "src/components/setup/DatabaseMaintenanceSettings.vue": {
-    "mtime": 1785245575.0214186,
-    "ast_hash": "43f1dfb8610ad62169e1c792114e3fb5",
+    "mtime": 1786550368.9270742,
+    "ast_hash": "4cbcacb26767a177ba557b6ac7e5f874",
     "semantic_hash": ""
   },
   "src/components/setup/ExpectationImportModal.vue": {

@@ -191,7 +191,7 @@ import {
   Search 
 } from 'lucide-vue-next'
 
-const { activeClass, teacherName } = useClassroom()
+const { activeClass, teacherName, init } = useClassroom()
 const { confirm, alert } = useMessage()
 
 // --- Excel Export ---
@@ -348,10 +348,10 @@ async function doImport() {
   try {
     const result = await eventService.importAllData(JSON.parse(JSON.stringify(importPreview.value)))
     await settingsService.auditSettingsIntegrity()
+    await init()
     
     importPreview.value = null
-    restoreMsg.value = `✅ Restore complete — ${result.classCount} classes, ${result.eventCount} events. Data healed. Refreshing…`
-    setTimeout(() => window.location.reload(), 1500)
+    restoreMsg.value = `✅ Restore complete — ${result.classCount} classes, ${result.eventCount} events. Data restored and loaded!`
   } catch (err) {
     importPreview.value = null
     restoreMsg.value = `❌ Restore failed: ${err.message}`

@@ -567,6 +567,14 @@ async function init() {
         }
     }
 
+    // If current selected filters produce 0 active classes, but active classes exist in DB, auto-adjust filter to latest class year/semester
+    if (active.length > 0 && filteredClassList.value.length === 0) {
+        const firstClass = active[0]
+        if (firstClass.year) selectedYear.value = firstClass.year
+        if (firstClass.semester && teachingMode.value !== 'elementary') selectedSemester.value = firstClass.semester
+        if (firstClass.classType) teachingMode.value = firstClass.classType
+    }
+
     if (autoStartRFID.value) {
         localStorage.setItem('scanner-mode', 'rfid')
         isScannerOpen.value = true
