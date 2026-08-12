@@ -245,8 +245,8 @@
     "semantic_hash": ""
   },
   "src/composables/useGradebook.js": {
-    "mtime": 1786498190.4722495,
-    "ast_hash": "2aac73c8e0fbbca886a688b765e9c688",
+    "mtime": 1786551283.6124516,
+    "ast_hash": "1bdd96f0c03ff67f8e3ea100dfeb9ac2",
     "semantic_hash": ""
   },
   "src/composables/useKeyboardWedge.js": {

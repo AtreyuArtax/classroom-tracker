@@ -4,7 +4,7 @@
  * Reactive bridge for the Gradebook V4 feature.
  */
 
-import { ref, shallowRef, computed, triggerRef } from 'vue'
+import { ref, shallowRef, computed, watch, triggerRef } from 'vue'
 import { useMessage } from './useMessage.js'
 import * as gradebookService from '../db/gradebookService.js'
 import * as classService from '../db/classService.js'
@@ -30,6 +30,8 @@ export const globalMilestones = ref([])
 export const gradeBuckets = ref([])
 export const initialDossierTab = ref('summary')
 export const activeSubCohortFilter = ref('all') // 'all' | 'Grade 7' | 'SNC2D1' etc.
+
+watch([selectedMilestone, activeSubCohortFilter], () => refreshGrades())
 
 // Alias for backwards compatibility
 export const activeGradeFilter = computed({
