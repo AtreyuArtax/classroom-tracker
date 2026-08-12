@@ -58,6 +58,43 @@
   --state-neutral: #8e8e93;
   /* iOS grey */
 
+  /* ── Semantic status palette ──────────────────────────────────────────────
+   * Each status has three variants: base (icon/border), -text (readable on
+   * a light bg), and -bg (tinted surface). Dark mode only needs to swap
+   * these twelve values in one @media block — no component edits required.
+   */
+  --color-success:          #10b981; /* Green — thriving / positive */
+  --color-success-text:     #047857; /* Dark green for text on tinted bg */
+  --color-success-bg:       #e6f4ea; /* Light green surface */
+
+  --color-warn:             #f59e0b; /* Amber — academic risk / caution */
+  --color-warn-text:        #b45309; /* Dark amber for text on tinted bg */
+  --color-warn-bg:          #fef3c7; /* Light amber surface */
+
+  --color-attention:        #f97316; /* Orange — attendance risk */
+  --color-attention-text:   #c2410c; /* Dark orange for text on tinted bg */
+  --color-attention-bg:     #ffedd5; /* Light orange surface */
+
+  --color-danger:           #ef4444; /* Red — critical intervention */
+  --color-danger-text:      #b91c1c; /* Dark red for text on tinted bg */
+  --color-danger-bg:        #fee2e2; /* Light red surface */
+
+  --color-neutral:          #64748b; /* Slate — unassessed / neutral */
+  --color-neutral-text:     #334155; /* Dark slate for text on tinted bg */
+  --color-neutral-bg:       #f1f5f9; /* Light slate surface */
+
+  --color-info:             #3b82f6; /* Blue — informational accent */
+  --color-info-text:        #1d4ed8; /* Dark blue for text */
+
+  /* ── Tooltip palette ──────────────────────────────────────────────────────
+   * Dark floating tooltips that appear on both light and dark backgrounds.
+   * In dark mode these invert to a light surface automatically.
+   */
+  --tooltip-bg:             #0f172a;
+  --tooltip-text:           #f8fafc;
+  --tooltip-text-muted:     #94a3b8;
+  --tooltip-accent:         #38bdf8;
+
   /* Grade Heat Map - soft professional tones */
   --grade-high: #d4edda;
   --grade-mid-high: #d0e8f5;

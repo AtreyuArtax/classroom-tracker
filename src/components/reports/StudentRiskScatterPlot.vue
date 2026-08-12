@@ -418,11 +418,11 @@ const unassessedCount = computed(() => studentPoints.value.filter(p => p.quadran
   white-space: nowrap;
 }
 
-.legend-pill--green  { color: #10b981; }
-.legend-pill--yellow { color: #f59e0b; }
-.legend-pill--orange { color: #f97316; }
-.legend-pill--red    { color: #ef4444; }
-.legend-pill--slate  { color: #64748b; }
+.legend-pill--green  { color: var(--color-success); }
+.legend-pill--yellow { color: var(--color-warn); }
+.legend-pill--orange { color: var(--color-attention); }
+.legend-pill--red    { color: var(--color-danger); }
+.legend-pill--slate  { color: var(--color-neutral); }
 
 .risk-plot__canvas {
   position: relative;
@@ -440,7 +440,7 @@ const unassessedCount = computed(() => studentPoints.value.filter(p => p.quadran
   flex-direction: column;
   gap: 2px;
   pointer-events: none;
-  opacity: 0.35;
+  opacity: 0.5;
   z-index: 0;
 }
 
@@ -463,13 +463,16 @@ const unassessedCount = computed(() => studentPoints.value.filter(p => p.quadran
   opacity: 0.8;
 }
 
+/* Axis lines: neutral slate so Dark Reader can invert them to a visible
+   color. var(--border) is rgba(0,0,0,0.1) which inverts to a near-invisible
+   rgba(255,255,255,0.1) on dark backgrounds. */
 .risk-plot__axis-x {
   position: absolute;
   left: 0;
   right: 0;
   height: 1px;
-  background: var(--border);
-  border-top: 1px dashed var(--border);
+  background: rgba(100, 116, 139, 0.35);
+  border-top: 1px dashed rgba(100, 116, 139, 0.45);
   z-index: 1;
 }
 
@@ -478,8 +481,8 @@ const unassessedCount = computed(() => studentPoints.value.filter(p => p.quadran
   top: 0;
   bottom: 0;
   width: 1px;
-  background: var(--border);
-  border-left: 1px dashed var(--border);
+  background: rgba(100, 116, 139, 0.35);
+  border-left: 1px dashed rgba(100, 116, 139, 0.45);
   z-index: 1;
 }
 
@@ -507,11 +510,11 @@ const unassessedCount = computed(() => studentPoints.value.filter(p => p.quadran
 }
 
 /* Solid opaque backgrounds so overlapping nodes are crisp and distinct */
-.risk-plot__dot--green  { background: #e6f4ea; border: 2px solid #10b981; color: #047857; }
-.risk-plot__dot--yellow { background: #fef3c7; border: 2px solid #f59e0b; color: #b45309; }
-.risk-plot__dot--orange { background: #ffedd5; border: 2px solid #f97316; color: #c2410c; }
-.risk-plot__dot--red    { background: #fee2e2; border: 2px solid #ef4444; color: #b91c1c; }
-.risk-plot__dot--unassessed { background: #f1f5f9; border: 2px dashed #64748b; color: #334155; }
+.risk-plot__dot--green      { background: var(--color-success-bg);   border: 2px solid var(--color-success);   color: var(--color-success-text); }
+.risk-plot__dot--yellow     { background: var(--color-warn-bg);       border: 2px solid var(--color-warn);      color: var(--color-warn-text); }
+.risk-plot__dot--orange     { background: var(--color-attention-bg);  border: 2px solid var(--color-attention); color: var(--color-attention-text); }
+.risk-plot__dot--red        { background: var(--color-danger-bg);     border: 2px solid var(--color-danger);    color: var(--color-danger-text); }
+.risk-plot__dot--unassessed { background: var(--color-neutral-bg);    border: 2px dashed var(--color-neutral);  color: var(--color-neutral-text); }
 
 .risk-plot__dot-label {
   white-space: nowrap;
@@ -525,8 +528,8 @@ const unassessedCount = computed(() => studentPoints.value.filter(p => p.quadran
   bottom: 125%;
   left: 50%;
   transform: translateX(-50%);
-  background: #0f172a;
-  color: #f8fafc;
+  background: var(--tooltip-bg);
+  color: var(--tooltip-text);
   padding: 10px 14px;
   border-radius: var(--radius-md);
   font-size: 0.775rem;
@@ -557,7 +560,7 @@ const unassessedCount = computed(() => studentPoints.value.filter(p => p.quadran
 .risk-plot__cluster-header {
   font-weight: 800;
   font-size: 0.775rem;
-  color: #38bdf8;
+  color: var(--tooltip-accent);
   border-bottom: 1px solid rgba(255, 255, 255, 0.15);
   padding-bottom: 4px;
   margin-bottom: 4px;
@@ -588,12 +591,12 @@ const unassessedCount = computed(() => studentPoints.value.filter(p => p.quadran
 
 .cluster-item-name {
   font-weight: 700;
-  color: #ffffff;
+  color: var(--tooltip-text);
 }
 
 .cluster-item-meta {
   font-size: 0.725rem;
-  color: #94a3b8;
+  color: var(--tooltip-text-muted);
 }
 
 /* Smart Tooltip Orientations */
@@ -611,20 +614,20 @@ const unassessedCount = computed(() => studentPoints.value.filter(p => p.quadran
 .risk-plot__tooltip-name {
   font-weight: 700;
   font-size: 0.85rem;
-  color: #ffffff;
+  color: var(--tooltip-text);
   margin-bottom: 2px;
 }
 
 .risk-plot__tooltip-row {
   font-size: 0.775rem;
-  color: #cbd5e1;
+  color: var(--tooltip-text-muted);
 }
 
 .risk-plot__tooltip-hint {
   margin-top: 4px;
   font-size: 0.725rem;
   font-weight: 600;
-  color: #38bdf8;
+  color: var(--tooltip-accent);
 }
 
 .risk-plot__header-actions {
@@ -705,11 +708,11 @@ const unassessedCount = computed(() => studentPoints.value.filter(p => p.quadran
 .list-card__dot {
   font-size: 0.75rem;
 }
-.dot--green { color: #10b981; }
-.dot--yellow { color: #f59e0b; }
-.dot--orange { color: #f97316; }
-.dot--red { color: #ef4444; }
-.dot--unassessed { color: #64748b; }
+.dot--green      { color: var(--color-success); }
+.dot--yellow     { color: var(--color-warn); }
+.dot--orange     { color: var(--color-attention); }
+.dot--red        { color: var(--color-danger); }
+.dot--unassessed { color: var(--color-neutral); }
 
 .list-card__badge {
   font-size: 0.725rem;
@@ -766,11 +769,11 @@ const unassessedCount = computed(() => studentPoints.value.filter(p => p.quadran
   flex-shrink: 0;
 }
 
-.avatar--green  { background: #e6f4ea; border: 1px solid #10b981; color: #047857; }
-.avatar--yellow { background: #fef3c7; border: 1px solid #f59e0b; color: #b45309; }
-.avatar--orange { background: #ffedd5; border: 1px solid #f97316; color: #c2410c; }
-.avatar--red    { background: #fee2e2; border: 1px solid #ef4444; color: #b91c1c; }
-.avatar--unassessed { background: #f1f5f9; border: 1px dashed #64748b; color: #334155; }
+.avatar--green      { background: var(--color-success-bg);   border: 1px solid var(--color-success);   color: var(--color-success-text); }
+.avatar--yellow     { background: var(--color-warn-bg);       border: 1px solid var(--color-warn);      color: var(--color-warn-text); }
+.avatar--orange     { background: var(--color-attention-bg);  border: 1px solid var(--color-attention); color: var(--color-attention-text); }
+.avatar--red        { background: var(--color-danger-bg);     border: 1px solid var(--color-danger);    color: var(--color-danger-text); }
+.avatar--unassessed { background: var(--color-neutral-bg);    border: 1px dashed var(--color-neutral);  color: var(--color-neutral-text); }
 
 .list-card__name {
   font-size: 0.8rem;
@@ -849,9 +852,9 @@ const unassessedCount = computed(() => studentPoints.value.filter(p => p.quadran
   text-overflow: ellipsis;
 }
 
-.risk-plot__summary-card--red .count { color: #ef4444; }
-.risk-plot__summary-card--yellow .count { color: #f59e0b; }
-.risk-plot__summary-card--orange .count { color: #f97316; }
-.risk-plot__summary-card--green .count { color: #10b981; }
-.risk-plot__summary-card--slate .count { color: #64748b; }
+.risk-plot__summary-card--red    .count { color: var(--color-danger); }
+.risk-plot__summary-card--yellow .count { color: var(--color-warn); }
+.risk-plot__summary-card--orange .count { color: var(--color-attention); }
+.risk-plot__summary-card--green  .count { color: var(--color-success); }
+.risk-plot__summary-card--slate  .count { color: var(--color-neutral); }
 </style>
