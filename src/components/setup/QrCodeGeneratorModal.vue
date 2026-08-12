@@ -41,7 +41,7 @@
         <div class="setup__qr-print-grid">
           <div v-for="qr in qrCodes" :key="qr.studentId" class="setup__qr-print-card">
             <div class="setup__qr-print-header">
-              <span class="setup__qr-print-class">{{ activeClass?.name }}</span>
+              <span class="setup__qr-print-class">{{ (activeClass || classRecord)?.name }}</span>
             </div>
             <img :src="qr.qrUrl" :alt="qr.name" class="setup__qr-print-img" />
             <div class="setup__qr-print-info">
@@ -61,7 +61,8 @@ import { Printer, X, QrCode as QrCodeIcon } from 'lucide-vue-next'
 
 const props = defineProps({
   show: { type: Boolean, required: true },
-  activeClass: { type: Object, required: true }
+  activeClass: { type: Object, default: null },
+  classRecord: { type: Object, default: null }
 })
 
 const emit = defineEmits(['close'])
@@ -79,11 +80,11 @@ watch(isSystemPrinting, (newValue) => {
   }
 })
 
-// Generate QR codes on mount or when activeClass changes
+// Generate QR codes on mount or when activeClass/classRecord changes
 watch(
-  () => [props.show, props.activeClass],
-  async ([newShow, newClass]) => {
-    if (newShow && newClass) {
+  () => [props.show, props.activeClass, props.classRecord],
+  async ([newShow, newClass, newRecord]) => {
+    if (newShow && (newClass || newRecord)) {
       await generateQRs()
     }
   },
@@ -91,18 +92,30 @@ watch(
 )
 
 async function generateQRs() {
-  if (!props.activeClass) {
+  const targetClass = props.activeClass || props.classRecord
+  if (!targetClass) {
     qrCodes.value = []
     return
   }
 
-  // Extract and sort roster from target class
-  const roster = props.activeClass.students 
-    ? Object.entries(props.activeClass.students)
-        .map(([studentId, s]) => ({ studentId, ...s }))
-        .filter(s => !s.archived)
-        .sort((a, b) => a.lastName.localeCompare(b.lastName))
-    : []
+  // Handle students whether array or object map
+  let rawStudents = targetClass.students || targetClass.roster || []
+  if (typeof rawStudents === 'object' && !Array.isArray(rawStudents)) {
+    rawStudents = Object.entries(rawStudents).map(([id, s]) => ({
+      studentId: s.studentId || id,
+      ...s
+    }))
+  }
+
+  const roster = (Array.isArray(rawStudents) ? rawStudents : [])
+    .filter(s => s && !s.archived && !s.unenrolled)
+    .map(s => ({
+      studentId: String(s.studentId || s.id || ''),
+      firstName: s.firstName || '',
+      lastName: s.lastName || ''
+    }))
+    .filter(s => Boolean(s.studentId))
+    .sort((a, b) => a.lastName.localeCompare(b.lastName))
 
   if (roster.length === 0) {
     qrCodes.value = []
@@ -124,7 +137,7 @@ async function generateQRs() {
       })
       codes.push({
         studentId: student.studentId,
-        name: `${student.firstName} ${student.lastName}`,
+        name: `${student.firstName} ${student.lastName}`.trim(),
         qrUrl: url
       })
     } catch (err) {

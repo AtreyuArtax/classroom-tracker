@@ -259,13 +259,16 @@
     <!-- Roster -->
     <div class="setup__card">
       <div class="setup__card-header-row" style="display: flex; justify-content: space-between; align-items: center; wrap: wrap; gap: 12px;">
-        <h2 class="setup__card-title">Roster — {{ sortedRoster.length }} Students</h2>
+        <div style="display: flex; align-items: center; gap: 8px; cursor: pointer;" @click="toggleRoster">
+          <component :is="isRosterExpanded ? ChevronUp : ChevronDown" :size="18" style="color: var(--text-muted);" />
+          <h2 class="setup__card-title" style="margin: 0;">Roster — {{ sortedRoster.length }} Students</h2>
+        </div>
         <div class="setup__card-actions" style="display: flex; gap: 8px;">
-          <button class="setup__btn-ghost" @click="isElementaryImporterOpen = true">
-            <Upload :size="16" /> Import CSV
-          </button>
-          <button class="setup__btn-ghost" @click="openRapidRFID">
+          <button v-if="showScannerButton" class="setup__btn-ghost" @click="openRapidRFID" title="Rapidly scan RFID tags to assign to students">
             <Zap :size="16" /> Rapid RFID
+          </button>
+          <button v-if="showScannerButton" class="setup__btn-ghost" @click="isQrModalOpen = true" title="Generate and print unique student QR codes for kiosk scanning & attendance">
+            <QrCode :size="16" /> Print QR Codes
           </button>
           <button class="setup__btn-primary setup__btn-add-student" @click="openAddStudentModal">
             <PlusCircle :size="16" /> Add Student
@@ -273,9 +276,14 @@
         </div>
       </div>
 
+      <!-- Collapsed Roster Summary -->
+      <div v-if="!isRosterExpanded" style="margin-top: 0.75rem; color: var(--text-secondary); font-size: 0.875rem; display: flex; align-items: center; justify-content: space-between; background: var(--bg-surface-elevated, rgba(0,0,0,0.02)); padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-color);">
+        <span>{{ sortedRoster.length }} active students enrolled</span>
+        <button class="setup__btn-ghost" style="padding: 2px 8px; font-size: 0.8rem;" @click="toggleRoster">Expand Roster List</button>
+      </div>
 
-      <!-- Roster List -->
-      <ul class="setup__roster-list" style="margin-top: 1rem;">
+      <!-- Roster List (Expanded) -->
+      <ul v-else class="setup__roster-list" style="margin-top: 1rem;">
         <li v-for="s in sortedRoster" :key="s.studentId" class="setup__roster-item">
           <div class="setup__roster-info">
             <span class="setup__roster-name">{{ s.lastName }}, {{ s.firstName }}</span>
@@ -620,6 +628,13 @@
       </div>
       <div class="setup__dialog-backdrop" @click="resolveConflicts('skip')" />
     </div>
+
+    <!-- Student QR Codes Generator Modal -->
+    <QrCodeGeneratorModal
+      :show="isQrModalOpen"
+      :class-record="activeClass"
+      @close="isQrModalOpen = false"
+    />
     </div>
   </div>
 </template>
@@ -636,6 +651,7 @@ import AssessmentFrameworkSettings from './AssessmentFrameworkSettings.vue'
 import ElementarySubjectManager from './ElementarySubjectManager.vue'
 import ElementaryCsvImporter from './ElementaryCsvImporter.vue'
 import SetupQuickJumpNav from './SetupQuickJumpNav.vue'
+import QrCodeGeneratorModal from './QrCodeGeneratorModal.vue'
 
 import { 
   Settings2, 
@@ -651,7 +667,8 @@ import {
   Rss, 
   AlertTriangle, 
   GraduationCap,
-  Info
+  Info,
+  QrCode
 } from 'lucide-vue-next'
 import { getEffectiveGradeLevel } from '../../composables/useElementary.js'
 
@@ -661,6 +678,7 @@ const {
   classList,
   sortedRoster,
   archivedRoster,
+  showScannerButton,
   termOptions,
   yearOptions,
   periodOptions,
@@ -742,6 +760,14 @@ async function saveSectionTagRename(oldTag) {
 
 const isElementaryImporterOpen = ref(false)
 const isGradingInfoModalOpen = ref(false)
+const isQrModalOpen = ref(false)
+
+const isRosterExpanded = ref(localStorage.getItem('classroom_tracker_roster_expanded') === 'true')
+
+function toggleRoster() {
+  isRosterExpanded.value = !isRosterExpanded.value
+  localStorage.setItem('classroom_tracker_roster_expanded', isRosterExpanded.value ? 'true' : 'false')
+}
 
 async function handleElementaryImport({ students: importedStudents, subjects: importedSubjects }) {
   if (!activeClass.value) return
