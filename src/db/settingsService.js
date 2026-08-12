@@ -32,7 +32,7 @@ async function _readSettings() {
 
     // Fallback: seed defaults (should have been written during upgrade, but guard anyway)
     const defaults = {
-        schemaVersion: 27,
+        schemaVersion: 28,
         gridSize: { rows: 6, cols: 6 },
         behaviorCodes: {
             note: {
@@ -426,9 +426,9 @@ export async function auditSettingsIntegrity() {
     }
 
     // 2. Check schemaVersion
-    if (settings.schemaVersion < 27) {
-        settings.schemaVersion = 27
-        issues.push(`Updated schemaVersion to 27`)
+    if (settings.schemaVersion < 28) {
+        settings.schemaVersion = 28
+        issues.push(`Updated schemaVersion to 28`)
         fixedCount++
         changed = true
     }

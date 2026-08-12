@@ -370,6 +370,11 @@ export function migrateData(data) {
     version = 27
   }
 
+  // ── Version 28 ───────────────────────────────────────────────────
+  if (version < 28) {
+    version = 28
+  }
+
   migrated.schemaVersion = currentVersion
   if (migrated.settings) migrated.settings.schemaVersion = currentVersion
 

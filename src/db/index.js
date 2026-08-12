@@ -90,7 +90,7 @@ export function getDB() {
       if (oldVersion === 0) {
         transaction.objectStore('settings').put(
           {
-            schemaVersion: 27,
+            schemaVersion: 28,
             gridSize: { rows: 6, cols: 6 },
             currentYear: getCurrentSchoolYear(),
             currentSemester: getCurrentSemester(),
@@ -682,6 +682,11 @@ export function getDB() {
           }))
           await settingsStore.put(settings, 'singleton')
         }
+      }
+
+      // --- VERSION 28 MIGRATION ---
+      if (oldVersion < 28) {
+        console.log('[IDB] Migrating to v28...')
       }
     },
   })

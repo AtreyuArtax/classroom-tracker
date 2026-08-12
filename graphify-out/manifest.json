@@ -295,18 +295,18 @@
     "semantic_hash": ""
   },
   "src/db/index.js": {
-    "mtime": 1784242085.8169918,
-    "ast_hash": "0c630161e28603452ea101bb0dda78f8",
+    "mtime": 1786549933.1976304,
+    "ast_hash": "dd97351587bc46422b4a5d2276ab364a",
     "semantic_hash": ""
   },
   "src/db/migrations.js": {
-    "mtime": 1784242089.9791577,
-    "ast_hash": "ea05e8e48b2985a44eccb6118768b02c",
+    "mtime": 1786549919.881497,
+    "ast_hash": "ae64c75e71e742b7b454a7e3ca0aaae9",
     "semantic_hash": ""
   },
   "src/db/settingsService.js": {
-    "mtime": 1786327396.2127557,
-    "ast_hash": "bc7faf73f6e8af520c7977f235fce046",
+    "mtime": 1786549925.778599,
+    "ast_hash": "1ff24938ac4653fb1eac4b1070ba115d",
     "semantic_hash": ""
   },
   "src/main.js": {
