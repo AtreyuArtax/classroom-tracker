@@ -180,8 +180,8 @@
     "semantic_hash": ""
   },
   "src/components/dossier/Student360.vue": {
-    "mtime": 1786375694.1317935,
-    "ast_hash": "522a68338145e95ce4d3a79f34f343fc",
+    "mtime": 1786501619.5252984,
+    "ast_hash": "b17dfd7f515e93f5ce076e51ee4967cc",
     "semantic_hash": ""
   },
   "src/components/dossier/Student360Header.vue": {
@@ -340,8 +340,8 @@
     "semantic_hash": ""
   },
   "src/views/Grades.vue": {
-    "mtime": 1786384027.4372325,
-    "ast_hash": "c67dce9edde97cb4129d8396fba70d1e",
+    "mtime": 1786501746.693483,
+    "ast_hash": "f43da3ac79e9e2b34b05f2d15e207201",
     "semantic_hash": ""
   },
   "src/views/Reports.vue": {
@@ -355,8 +355,8 @@
     "semantic_hash": "8ca2dc5307b5ae89c3f9ade5a9f052c4"
   },
   "src/views/Setup.vue": {
-    "mtime": 1786458462.4165912,
-    "ast_hash": "741dff0380a6df2754a73b485744e2cb",
+    "mtime": 1786502082.8702161,
+    "ast_hash": "2a24edd76973e3adaed6851cd6d79077",
     "semantic_hash": ""
   },
   "tmp/test_dates.js": {
@@ -395,8 +395,8 @@
     "semantic_hash": ""
   },
   "src/components/dossier/StudentAcademicsTab.vue": {
-    "mtime": 1786466311.776709,
-    "ast_hash": "38718c76624f6838e267ad3eba509747",
+    "mtime": 1786501479.9601216,
+    "ast_hash": "f335fb4c19ce167639495cfc24ab2960",
     "semantic_hash": ""
   },
   "src/components/setup/AssessmentFrameworkSettings.vue": {
@@ -420,8 +420,8 @@
     "semantic_hash": ""
   },
   "src/components/setup/QrCodeGeneratorModal.vue": {
-    "mtime": 1786500697.3575327,
-    "ast_hash": "392b5f1510d56a3aa414aadc743acddb",
+    "mtime": 1786501464.3991587,
+    "ast_hash": "6a5b9065d0df08bbde2ef0e081464084",
     "semantic_hash": ""
   },
   "src/components/setup/RosterCsvImporter.vue": {

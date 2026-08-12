@@ -134,7 +134,7 @@
                 <button class="setup__pill-btn" @click="switchToClass(cls.classId)">
                   {{ cls.classId === activeClass?.classId ? 'Active' : 'Configure' }}
                 </button>
-                <button class="setup__pill-btn" @click.stop="openQRGenerator(cls)">
+                <button v-if="showScannerButton" class="setup__pill-btn" @click.stop="openQRGenerator(cls)">
                   <QrCode :size="14" /> QR
                 </button>
                 <button class="setup__pill-btn" @click.stop="openPrintList(cls)">
