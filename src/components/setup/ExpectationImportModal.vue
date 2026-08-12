@@ -721,6 +721,7 @@ function onSubmit() {
   }
 
   onClose()
+  selectedExpectations.value = []
 }
 </script>
 
