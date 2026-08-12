@@ -208,7 +208,7 @@
                         :class="{ 'comment-dot--active': a.attempts?.some(x => x.comment?.trim()) }"
                         @click.stop="openAttempts($event, a.assessmentId)"
                         :title="a.attempts?.some(x => x.comment?.trim()) ? 'Has note — click to edit' : 'Add a note'"
-                      >📝</span>
+                      ><NotebookPen :size="12" /></span>
                     </div>
                   </template>
                 </div>
@@ -254,7 +254,7 @@
           class="context-menu__item" 
           @click="openAttemptsFromMenu($event, contextMenu.assessmentId)"
         >
-          <Calendar :size="14" /> View Notes
+          <NotebookPen :size="14" /> View Notes
         </button>
         <div class="context-menu__divider"></div>
         <button class="context-menu__item" @click="toggleMissing(contextMenu.assessmentId)">
@@ -427,7 +427,7 @@ import { useMessage } from '../../composables/useMessage.js'
 import { getSBARLevelBadge } from '../../db/gradebook/gradeCalcSBAR.js'
 import { getEffectiveClassRecord } from '../../composables/useElementary.js'
 import { calculateSBARExpectationMastery } from '../../db/gradebookService.js'
-import { Plus, Trash2, X, ChevronRight, Calendar, AlertCircle, XCircle } from 'lucide-vue-next'
+import { Plus, Trash2, X, ChevronRight, Calendar, AlertCircle, XCircle, NotebookPen } from 'lucide-vue-next'
 import SubjectIcon from '../SubjectIcon.vue'
 import DossierCategoryGrid from './DossierCategoryGrid.vue'
 import DossierEvidenceMix from './DossierEvidenceMix.vue'

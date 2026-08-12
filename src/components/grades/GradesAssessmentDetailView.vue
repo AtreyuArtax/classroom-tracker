@@ -263,7 +263,9 @@
                         @click.stop="openAttemptsPopover($event, s.studentId)"
                         :title="getSmartBadge(s.studentId).title"
                       >
-                        {{ getSmartBadge(s.studentId).label }}
+                        <RefreshCw v-if="getSmartBadge(s.studentId).hasIcon" :size="11" class="smart-badge__icon" />
+                        <span class="smart-badge__text">{{ getSmartBadge(s.studentId).countText }}</span>
+                        <NotebookPen v-if="getSmartBadge(s.studentId).hasNoteIcon" :size="11" class="smart-badge__icon" />
                       </button>
                     </template>
                   </div>
@@ -315,7 +317,7 @@
 import { ref, computed } from 'vue'
 import { 
   ArrowLeft, FileText, Target, Hash, Calendar, Edit2, UserMinus, Trash2, X, 
-  AlertCircle, Check, MoreVertical, BarChart3, CheckCircle2, TrendingUp, Search 
+  AlertCircle, Check, MoreVertical, BarChart3, CheckCircle2, TrendingUp, Search, NotebookPen, RefreshCw
 } from 'lucide-vue-next'
 import { getHeatTextColor } from '../../utils/gradeColors.js'
 import { formatLocalDisplay } from '../../utils/dates.js'
@@ -421,27 +423,35 @@ function getSmartBadge(studentId) {
   if (count > 1 && hasNote) {
     return {
       type: 'attempts-note',
-      label: `🔵 ${count}x · 📝`,
+      hasIcon: true,
+      hasNoteIcon: true,
+      countText: `${count}x`,
       title: `${count} attempts & teacher note — click to view history`
     }
   }
   if (count > 1) {
     return {
       type: 'attempts',
-      label: `🔵 ${count}x`,
+      hasIcon: true,
+      hasNoteIcon: false,
+      countText: `${count}x`,
       title: `${count} attempts — click to view history`
     }
   }
   if (hasNote) {
     return {
       type: 'note',
-      label: '📝 Note',
+      hasIcon: false,
+      hasNoteIcon: true,
+      countText: 'Note',
       title: 'Teacher note — click to edit'
     }
   }
   return {
     type: 'ghost',
-    label: '+ Note',
+    hasIcon: false,
+    hasNoteIcon: true,
+    countText: 'Note',
     title: 'Add teacher note or re-test attempt'
   }
 }

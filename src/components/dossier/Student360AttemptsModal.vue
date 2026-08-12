@@ -15,7 +15,7 @@
           class="context-menu__item" 
           @click="$emit('open-attempts', $event, contextMenu.assessmentId)"
         >
-          <Calendar :size="14" /> View Notes
+          <NotebookPen :size="14" /> View Notes
         </button>
         <div class="context-menu__divider"></div>
         <button class="context-menu__item" @click="$emit('toggle-missing', contextMenu.assessmentId)">
@@ -112,7 +112,7 @@
 </template>
 
 <script setup>
-import { Plus, Calendar, AlertCircle, XCircle, Trash2, Check } from 'lucide-vue-next'
+import { Plus, Calendar, AlertCircle, XCircle, Trash2, Check, NotebookPen } from 'lucide-vue-next'
 import BaseModal from '../BaseModal.vue'
 import { formatLocalDisplay } from '../../utils/dates.js'
 

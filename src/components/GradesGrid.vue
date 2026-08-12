@@ -300,7 +300,7 @@
             class="grades__context-btn" 
             @click="openAttemptsFromMenu($event, contextMenu.sId, contextMenu.aId)"
           >
-            <Calendar :size="14" /> View Notes
+            <NotebookPen :size="14" /> View Notes
           </button>
           <button class="grades__context-btn" @click="toggleMissing">
             <AlertCircle :size="14" /> {{ isMissing(contextMenu.sId, contextMenu.aId) ? 'Unmark Missing' : 'Mark Missing' }}
@@ -410,7 +410,7 @@ import { getAssessmentPercentage } from '../db/gradebookService.js'
 import { formatLocalDisplay } from '../utils/dates.js'
 import { 
   Plus, Pencil, XCircle, AlertCircle, Trash2, X, MoreVertical, 
-  ChevronUp, ChevronDown, Copy, Calendar, RotateCcw, BarChart2 
+  ChevronUp, ChevronDown, Copy, Calendar, RotateCcw, BarChart2, NotebookPen 
 } from 'lucide-vue-next'
 import TestDayWarning from './TestDayWarning.vue'
 import GradesAttemptHistoryModal from './grades/GradesAttemptHistoryModal.vue'
