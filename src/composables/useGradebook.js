@@ -284,11 +284,7 @@ export async function refreshGrades() {
     
     
   classGrades.value = await gradebookService.calculateClassGrades(activeClassRecord.value, { asOf })
-
-  // Refresh analytics if in analytics mode
-  if (analyticsMode.value) {
-    await refreshClassAnalytics()
-  }
+  await refreshClassAnalytics()
 }
 
 /**
