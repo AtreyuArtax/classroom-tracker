@@ -275,7 +275,9 @@ watch([activeClass, activeSubjectId], async ([newClass, newSub], [oldClass, oldS
     }
     if (classChanged || subjectChanged) {
       await loadGradebook(newClass)
-      rightMode.value = 'overview'
+      if (classChanged) {
+        rightMode.value = 'overview'
+      }
       runReport()
     }
   }

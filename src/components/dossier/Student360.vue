@@ -157,7 +157,7 @@
           :student="student"
           :events="events"
           @delete-event="handleDeleteHistoryItem"
-          @select-assessment="emit('select-assessment', $event)"
+          @select-assessment="handleSelectAssessment"
         />
       </section>
 
@@ -292,6 +292,23 @@
       :class-id="props.classId"
       @close="showPrintModal = false"
     />
+
+    <!-- SBAR Matrix Modal Overlay -->
+    <BaseModal
+      :show="Boolean(selectedSbarAssessmentId && currentSbarAssessment)"
+      title="SBAR Evaluation Matrix"
+      max-width="1150px"
+      @close="selectedSbarAssessmentId = null"
+    >
+      <GradesAssessmentDetailSBAR
+        v-if="selectedSbarAssessmentId && currentSbarAssessment"
+        :current-assessment="currentSbarAssessment"
+        :sorted-roster="sortedRoster"
+        :focused-student-id="props.studentId"
+        return-tab-mode="dossier"
+        @close="selectedSbarAssessmentId = null"
+      />
+    </BaseModal>
   </div>
 </template>
 
@@ -340,6 +357,7 @@ import Student360EmailModal from './Student360EmailModal.vue'
 import Student360PrintModal from './Student360PrintModal.vue'
 import Student360AttemptsModal from './Student360AttemptsModal.vue'
 import BaseModal from '../BaseModal.vue'
+import GradesAssessmentDetailSBAR from '../grades/GradesAssessmentDetailSBAR.vue'
 import { getSBARLevelBadge } from '../../db/gradebook/gradeCalcSBAR.js'
 
 import { useClassroom } from '../../composables/useClassroom.js'
@@ -372,6 +390,17 @@ const emit = defineEmits(['close', 'select-assessment'])
 const contextMenu = ref(null)
 const attemptsPopover = ref(null)
 const newAttemptForm = ref(null)
+const selectedSbarAssessmentId = ref(null)
+
+const currentSbarAssessment = computed(() => {
+  if (!selectedSbarAssessmentId.value || !assessments.value) return null
+  return assessments.value.find(a => String(a.assessmentId) === String(selectedSbarAssessmentId.value)) || null
+})
+
+function handleSelectAssessment(astId) {
+  emit('select-assessment', astId)
+  selectedSbarAssessmentId.value = astId
+}
 
 function handleClose() {
   selectedPeriod.value = 'semester'

@@ -123,7 +123,7 @@
               :class="{ 'chip-btn--active': activeAssessmentFilter === 'failing' }"
               @click="activeAssessmentFilter = 'failing'"
             >
-              🔴 &lt;50% ({{ failingCount }})
+              {{ isSBARMode ? '🔴 Level 1- / R' : '🔴 <50%' }} ({{ failingCount }})
             </button>
           </div>
 
@@ -141,8 +141,8 @@
               <th class="th-date">Date</th>
               <th class="th-name">Assessment</th>
               <th class="th-type">Type</th>
-              <th class="th-score">Points</th>
-              <th class="th-percent">%</th>
+              <th class="th-score">{{ isSBARMode ? 'Level' : 'Points' }}</th>
+              <th v-if="!isSBARMode" class="th-percent">%</th>
             </tr>
           </thead>
           <tbody>
@@ -213,7 +213,7 @@
                   </template>
                 </div>
               </td>
-              <td class="td-percent" :style="{ color: getGradeColor(a.score !== null ? (isSBARTask(a) ? a.score : (a.score / (a.totalPoints || 1)) * 100) : null) }">
+              <td v-if="!isSBARMode" class="td-percent" :style="{ color: getGradeColor(a.score !== null ? (isSBARTask(a) ? a.score : (a.score / (a.totalPoints || 1)) * 100) : null) }">
                 {{ a.score !== null ? (isSBARTask(a) ? Math.round(a.score) + '%' : Math.round((a.score / (a.totalPoints || 1)) * 100) + '%') : 'N/A' }}
               </td>
             </tr>
@@ -512,8 +512,7 @@ const isSBARMode = computed(() => activeClassRecord.value?.gradingFramework === 
 
 
 function isSBARTask(a) {
-  if (!isSBARMode.value) return false
-  return a.categoryId === 'sbar_general' || (a.expectationIds && a.expectationIds.length > 0)
+  return isSBARMode.value
 }
 
 function onSelectAssessment(astId) {

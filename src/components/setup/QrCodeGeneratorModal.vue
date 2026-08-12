@@ -61,8 +61,8 @@ import { Printer, X, QrCode as QrCodeIcon } from 'lucide-vue-next'
 
 const props = defineProps({
   show: { type: Boolean, required: true },
-  activeClass: { type: Object, default: null },
-  classRecord: { type: Object, default: null }
+  activeClass: { type: Object, required: false, default: null },
+  classRecord: { type: Object, required: false, default: null }
 })
 
 const emit = defineEmits(['close'])

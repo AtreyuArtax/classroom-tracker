@@ -345,8 +345,8 @@
     "semantic_hash": ""
   },
   "src/views/Reports.vue": {
-    "mtime": 1786467700.2020137,
-    "ast_hash": "a119d030fa773c488cc71ae6c580b38b",
+    "mtime": 1786501223.5538929,
+    "ast_hash": "1dc51b9296fe3dbd7a4da457f4c38a03",
     "semantic_hash": ""
   },
   "src/views/ScanStation.vue": {
@@ -445,8 +445,8 @@
     "semantic_hash": ""
   },
   "src/components/setup/ClassLogisticsSettings.vue": {
-    "mtime": 1786500594.044187,
-    "ast_hash": "2eebf85003ca39f6eddb9db3abfcdff5",
+    "mtime": 1786500743.9291654,
+    "ast_hash": "0c918abad453b04bf4903fbceb71b494",
     "semantic_hash": ""
   },
   "src/components/setup/DatabaseMaintenanceSettings.vue": {

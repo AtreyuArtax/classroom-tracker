@@ -1,7 +1,7 @@
 # Graph Report - src  (2026-08-11)
 
 ## Corpus Check
-- 151 files · ~264,529 words
+- 151 files · ~264,678 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `99f23597`
+- Built from commit: `2be581c2`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -83,7 +83,7 @@
 
 ### Community 0 - "Community 0"
 Cohesion: 0.07
-Nodes (35): getStudentEffectiveGrade(), getUnitGradeLevel(), activeGradeFilter, addAssessment(), assessmentSortOrder, assessmentStats, assessmentTypes, availableCourseFilters (+27 more)
+Nodes (34): getStudentEffectiveGrade(), getUnitGradeLevel(), activeGradeFilter, addAssessment(), assessmentSortOrder, assessmentStats, assessmentTypes, availableCourseFilters (+26 more)
 
 ### Community 1 - "Community 1"
 Cohesion: 0.06
@@ -190,8 +190,8 @@ Cohesion: 0.33
 Nodes (13): classGrades, clearGrade(), enqueueDBSave(), enterGrade(), enterGradeSBAR(), markExcluded(), markMissing(), refreshSingleAssessmentStats() (+5 more)
 
 ### Community 46 - "Community 46"
-Cohesion: 0.20
-Nodes (10): onThresholdChange(), getEffectiveClassRecord(), adjustStudentGrade(), deleteAssessment(), refreshClassAnalytics(), refreshGrades(), saveStudentOverride(), setExclusionMode() (+2 more)
+Cohesion: 0.18
+Nodes (11): onThresholdChange(), getEffectiveClassRecord(), adjustStudentGrade(), deleteAssessment(), editAssessment(), refreshClassAnalytics(), refreshGrades(), saveStudentOverride() (+3 more)
 
 ### Community 49 - "Community 49"
 Cohesion: 0.29
@@ -234,7 +234,7 @@ _Questions this graph is uniquely positioned to answer:_
 - **What connects `Reports`, `Grades`, `ScanStation` to the rest of the system?**
   _262 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Community 0` be split into smaller, more focused modules?**
-  _Cohesion score 0.07017543859649122 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.07112375533428165 - nodes in this community are weakly interconnected._
 - **Should `Community 1` be split into smaller, more focused modules?**
   _Cohesion score 0.06417112299465241 - nodes in this community are weakly interconnected._
 - **Should `Community 3` be split into smaller, more focused modules?**
