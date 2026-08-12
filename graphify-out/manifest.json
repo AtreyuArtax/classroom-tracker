@@ -560,8 +560,8 @@
     "semantic_hash": ""
   },
   "src/db/gradebook/gradeAnalytics.js": {
-    "mtime": 1785776200.2023067,
-    "ast_hash": "35eda37bdddf23930402a43a8a16aea7",
+    "mtime": 1786551876.3024836,
+    "ast_hash": "0c1e6aebc6c526c4e2582505ce532979",
     "semantic_hash": ""
   },
   "src/db/gradebook/gradeCalc.js": {

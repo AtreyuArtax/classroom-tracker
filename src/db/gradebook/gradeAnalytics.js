@@ -237,7 +237,9 @@ export async function calculateClassAnalytics(classRecord, assessments, grades, 
   const conversationAnalytics = {}
   const assessmentBreakdowns = []
 
+  const cohortStudentIdSet = new Set(studentIds)
   const combinedExcludedStudentIds = new Set([
+    ...allStudentIds.filter(id => !cohortStudentIdSet.has(id)),
     ...excludedStudentIds,
     ...(outlierStudentIds || [])
   ])
