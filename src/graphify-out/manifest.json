@@ -140,8 +140,8 @@
     "semantic_hash": ""
   },
   "components/dossier/Student360.vue": {
-    "mtime": 1786501503.3713734,
-    "ast_hash": "fe1c6cb0a92a2603b3de5af1caa9548b",
+    "mtime": 1786501619.5252984,
+    "ast_hash": "b17dfd7f515e93f5ce076e51ee4967cc",
     "semantic_hash": ""
   },
   "components/dossier/Student360AttemptsModal.vue": {
@@ -460,8 +460,8 @@
     "semantic_hash": ""
   },
   "views/Grades.vue": {
-    "mtime": 1786384027.4372325,
-    "ast_hash": "c67dce9edde97cb4129d8396fba70d1e",
+    "mtime": 1786501746.693483,
+    "ast_hash": "f43da3ac79e9e2b34b05f2d15e207201",
     "semantic_hash": ""
   },
   "views/Reports.vue": {

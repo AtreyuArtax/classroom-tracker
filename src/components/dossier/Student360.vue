@@ -411,6 +411,7 @@ const { alert, confirm } = useMessage()
 const { 
   classList,
   students,
+  sortedRoster,
   behaviorCodes,
   activeClass,
   activeStudentEvents,
