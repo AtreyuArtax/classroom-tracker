@@ -11,12 +11,12 @@ import * as classService from '../db/classService.js'
 import { getGlobalMilestones, getGradeBuckets } from '../db/settingsService.js'
 import { useUndo } from './useUndo.js'
 import { activeClass, activeSubjectId } from './useClassroomState.js'
-import { getEffectiveClassRecord, getStudentEffectiveGrade } from './useElementary.js'
+import { getEffectiveClassRecord, getStudentEffectiveGrade, getUnitGradeLevel, ensureIEPPresetsForClass, autoPopulateAllElementarySubjects } from './useElementary.js'
 import { isCohortMatch } from '../db/gradebook/gradeCalc.js'
 
 const { push: pushUndo } = useUndo()
 
-export { getEffectiveClassRecord, getStudentEffectiveGrade }
+export { getEffectiveClassRecord, getStudentEffectiveGrade, getUnitGradeLevel, ensureIEPPresetsForClass }
 
 // ─── Reactive State ──────────────────────────────────────────────────────────
 
@@ -97,14 +97,28 @@ export const availableGradeFilters = computed(() => availableSubCohorts.value)
 export function isStudentInSubCohort(student, filterVal = activeSubCohortFilter.value, classType = activeClassRecord.value?.classType) {
   if (!filterVal || filterVal.toLowerCase() === 'all') return true
   if (!student) return false
-  const cleanFilter = filterVal.replace(/\s*\(IEP\)/i, '').trim().toLowerCase()
+  const isElem = classType === 'elementary'
   const curSubId = activeClassRecord.value?.activeSubjectId
-  const tag = classType === 'elementary'
+
+  let baseGrade = isElem 
     ? getStudentEffectiveGrade(student, curSubId)
-    : student.courseCode
-  if (!tag) return false
-  return tag.trim().toLowerCase() === cleanFilter
+    : (student.courseCode || student.gradeLevel || '')
+  if (!baseGrade) return false
+  baseGrade = baseGrade.trim()
+
+  const hasIEPForSubject = isElem && Boolean(student.accommodations?.modifiedSubjectGrades?.[curSubId])
+  const fullStudentTag = hasIEPForSubject ? `${baseGrade} (IEP)` : baseGrade
+
+  const cleanFilter = filterVal.replace(/\s*\(IEP\)/i, '').trim().toLowerCase()
+  const filterIsIEPSpecific = filterVal.toLowerCase().includes('(iep)')
+
+  if (filterIsIEPSpecific) {
+    return fullStudentTag.toLowerCase() === filterVal.trim().toLowerCase()
+  }
+
+  return baseGrade.toLowerCase() === cleanFilter || fullStudentTag.toLowerCase() === filterVal.trim().toLowerCase()
 }
+
 
 /**
  * Check if an assessment targets the active sub-cohort filter
@@ -215,7 +229,17 @@ export async function setActiveSubject(subjectId) {
  * @param {string|null} targetSubjectId
  */
 export async function loadGradebook(classRecord, targetSubjectId = null) {
-  const effectiveRecord = getEffectiveClassRecord(classRecord, targetSubjectId)
+  let finalClassRecord = classRecord
+  if (classRecord && classRecord.classType === 'elementary') {
+    finalClassRecord = autoPopulateAllElementarySubjects(classRecord)
+    const afterIEP = ensureIEPPresetsForClass(finalClassRecord)
+    if (afterIEP !== finalClassRecord) {
+      finalClassRecord = afterIEP
+      classService.saveClass(finalClassRecord).catch(err => console.error('Error saving class with IEP presets:', err))
+    }
+  }
+
+  const effectiveRecord = getEffectiveClassRecord(finalClassRecord, targetSubjectId)
   activeClassRecord.value = effectiveRecord
   // Reset selection
   selectedStudentId.value = null
@@ -476,7 +500,7 @@ export async function saveAssessment() {
   } else if (newAssessment.value.unitId && effClass?.gradebookUnits) {
     const u = effClass.gradebookUnits.find(unit => String(unit.unitId) === String(newAssessment.value.unitId))
     if (u) {
-      const g = u.gradeLevel || (u.name && u.name.includes('Grade 7') ? 'Grade 7' : (u.name && u.name.includes('Grade 8') ? 'Grade 8' : ''))
+      const g = getUnitGradeLevel(u)
       if (g) {
         newAssessment.value.gradeLevel = g
         if (isElem) newAssessment.value.targetCourseCode = g
@@ -488,7 +512,7 @@ export async function saveAssessment() {
     const expCodes = newAssessment.value.expectationIds || (newAssessment.value.expectationId ? [newAssessment.value.expectationId] : [])
     const foundGrades = new Set()
     effClass.gradebookUnits.forEach(u => {
-      const uGrade = u.gradeLevel || (u.name && u.name.includes('Grade 7') ? 'Grade 7' : (u.name && u.name.includes('Grade 8') ? 'Grade 8' : ''))
+      const uGrade = getUnitGradeLevel(u)
       ;(u.expectations || []).forEach(e => {
         if (expCodes.includes(e.code) || expCodes.includes(e.expectationId)) {
           const g = e.gradeLevel || uGrade

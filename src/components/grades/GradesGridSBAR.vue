@@ -366,7 +366,7 @@ import {
 } from '../../db/gradebookService.js'
 
 import { formatLocalDisplay } from '../../utils/dates.js'
-import { getEffectiveClassRecord } from '../../composables/useElementary.js'
+import { getEffectiveClassRecord, getUnitGradeLevel } from '../../composables/useElementary.js'
 import { activeSubjectId } from '../../composables/useClassroomState.js'
 import { UNIT_COLORS, getSectionColor } from '../../utils/gradeColors.js'
 
@@ -644,7 +644,7 @@ function getAssessmentGradeLevel(a) {
   if (a.unitId && cls.gradebookUnits) {
     const u = cls.gradebookUnits.find(unit => String(unit.unitId) === String(a.unitId))
     if (u) {
-      const g = u.gradeLevel || (u.name && u.name.toLowerCase().includes('grade 7') ? 'grade 7' : (u.name && u.name.toLowerCase().includes('grade 8') ? 'grade 8' : ''))
+      const g = getUnitGradeLevel(u)
       if (g) return g.toLowerCase()
     }
   }
@@ -652,7 +652,7 @@ function getAssessmentGradeLevel(a) {
   const expIds = a.expectationIds || (a.expectationId ? [a.expectationId] : [])
   if (expIds.length > 0 && cls.gradebookUnits) {
     for (const u of cls.gradebookUnits) {
-      const uGrade = u.gradeLevel || (u.name && u.name.toLowerCase().includes('grade 7') ? 'grade 7' : (u.name && u.name.toLowerCase().includes('grade 8') ? 'grade 8' : ''))
+      const uGrade = getUnitGradeLevel(u)
       for (const e of (u.expectations || [])) {
         if (expIds.includes(e.code) || expIds.includes(e.expectationId)) {
           const g = e.gradeLevel || uGrade

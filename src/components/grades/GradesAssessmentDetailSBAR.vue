@@ -299,7 +299,7 @@ import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { ArrowLeft, Edit2, Trash2, Zap, Keyboard } from 'lucide-vue-next'
 import { enterGradeSBAR, gradeMap, activeClassRecord } from '../../composables/useGradebook.js'
 import { getSBARLevelBadge } from '../../db/gradebookService.js'
-import { getEffectiveClassRecord } from '../../composables/useElementary.js'
+import { getEffectiveClassRecord, getUnitGradeLevel } from '../../composables/useElementary.js'
 import { activeSubjectId } from '../../composables/useClassroomState.js'
 
 const props = defineProps({
@@ -339,7 +339,7 @@ const displayedRoster = computed(() => {
   if (props.currentAssessment.unitId && cls?.gradebookUnits) {
     const u = cls.gradebookUnits.find(unit => String(unit.unitId) === String(props.currentAssessment.unitId))
     if (u) {
-      const g = u.gradeLevel || (u.name && u.name.includes('Grade 7') ? 'Grade 7' : (u.name && u.name.includes('Grade 8') ? 'Grade 8' : ''))
+      const g = getUnitGradeLevel(u)
       if (g) taggedGrades.add(g.toLowerCase())
     }
   }
@@ -347,7 +347,7 @@ const displayedRoster = computed(() => {
   const expCodes = props.currentAssessment.expectationIds || (props.currentAssessment.expectationId ? [props.currentAssessment.expectationId] : [])
   if (cls?.gradebookUnits) {
     cls.gradebookUnits.forEach(u => {
-      const uGrade = u.gradeLevel || (u.name && u.name.includes('Grade 7') ? 'Grade 7' : (u.name && u.name.includes('Grade 8') ? 'Grade 8' : ''))
+      const uGrade = getUnitGradeLevel(u)
       ;(u.expectations || []).forEach(e => {
         if (expCodes.includes(e.code) || expCodes.includes(e.expectationId)) {
           const g = e.gradeLevel || uGrade

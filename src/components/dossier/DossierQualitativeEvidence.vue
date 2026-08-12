@@ -462,7 +462,7 @@ import { ref, computed, onMounted } from 'vue'
 import { Eye, MessageSquare, Trash2, ChevronDown, ChevronUp } from 'lucide-vue-next'
 import { formatLocalDisplay } from '../../utils/dates.js'
 import { getGradeBuckets } from '../../db/settingsService.js'
-import { getEffectiveClassRecord, cleanUnitName } from '../../composables/useElementary.js'
+import { getEffectiveClassRecord, cleanUnitName, getUnitGradeLevel } from '../../composables/useElementary.js'
 import { activeSubjectId } from '../../composables/useClassroomState.js'
 import { gradeMap } from '../../composables/useGradebook.js'
 import { getSBARLevelBadge } from '../../db/gradebookService.js'
@@ -606,7 +606,7 @@ const filteredUnits = computed(() => {
     const sGrade = props.studentGradeLevel.toLowerCase()
     const clsExps = cls.expectations || []
     units = units.filter(u => {
-      const uGrade = u.gradeLevel || (u.name && u.name.toLowerCase().includes('grade 7') ? 'grade 7' : (u.name && u.name.toLowerCase().includes('grade 8') ? 'grade 8' : ''))
+      const uGrade = getUnitGradeLevel(u)
       if (uGrade && uGrade.toLowerCase() === sGrade) return true
       const unitExps = u.expectations || clsExps.filter(e => e.unitId === u.unitId)
       if (unitExps.some(e => e.gradeLevel && e.gradeLevel.toLowerCase() === sGrade)) return true

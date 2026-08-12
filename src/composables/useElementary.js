@@ -169,19 +169,26 @@ export function getStudentEffectiveGrade(student, subjectId = null) {
   return student.gradeLevel || ''
 }
 
-export function populateSubjectFromPresets(subject, presetsList = [], granularity = 'all') {
+export function populateSubjectFromPresets(subject, presetsList = [], granularity = 'all', options = {}) {
   if (!subject || !presetsList || presetsList.length === 0) return subject
 
-  const existingUnits = [...(subject.gradebookUnits || [])]
-  const existingExpectations = [...(subject.expectations || [])]
+  const forceRefresh = Boolean(options.forceRefresh)
+  let existingUnits = [...(subject.gradebookUnits || [])]
+  let existingExpectations = [...(subject.expectations || [])]
 
   presetsList.forEach(preset => {
     if (!preset || !preset.strands) return
     const pGrade = preset.grade || ''
 
-    // Prevent duplicating if this grade's preset is already imported
-    const alreadyImported = existingExpectations.some(e => e.gradeLevel === pGrade)
-    if (alreadyImported) return
+    if (forceRefresh && pGrade) {
+      // Clean out existing units and expectations ONLY for this specific grade level
+      existingUnits = existingUnits.filter(u => getUnitGradeLevel(u).toLowerCase() !== pGrade.toLowerCase())
+      existingExpectations = existingExpectations.filter(e => (e.gradeLevel || '').toLowerCase() !== pGrade.toLowerCase())
+    } else {
+      // Prevent duplicating if this grade's preset is already imported
+      const alreadyImported = existingExpectations.some(e => (e.gradeLevel || '').toLowerCase() === pGrade.toLowerCase())
+      if (alreadyImported) return
+    }
 
     preset.strands.forEach((strand, idx) => {
       const gTag = pGrade.replace(/[^a-z0-9]/gi, '')
@@ -252,6 +259,69 @@ export function autoPopulateAllElementarySubjects(classRecord) {
     return sub
   })
 
+  const baseRecord = {
+    ...classRecord,
+    subjects: updatedSubs
+  }
+
+  return ensureIEPPresetsForClass(baseRecord)
+}
+
+/**
+ * Extract grade level from a unit object (e.g. 'Grade 5')
+ */
+export function getUnitGradeLevel(u) {
+  if (!u) return ''
+  if (u.gradeLevel) return u.gradeLevel
+  if (u.name) {
+    const match = u.name.match(/(?:Grade|Gr)\.?\s*([1-8])/i)
+    if (match) {
+      return `Grade ${match[1]}`
+    }
+  }
+  return ''
+}
+
+/**
+ * Ensures curriculum presets exist for any IEP modified subject grade levels in an elementary class.
+ */
+export function ensureIEPPresetsForClass(classRecord) {
+  if (!classRecord || classRecord.classType !== 'elementary') return classRecord
+  const students = Object.values(classRecord.students || {})
+  if (!students.length) return classRecord
+
+  const subs = (classRecord.subjects && classRecord.subjects.length > 0)
+    ? classRecord.subjects
+    : DEFAULT_ELEMENTARY_SUBJECTS
+
+  let modified = false
+  const updatedSubs = subs.map(sub => {
+    let currentSub = { ...sub }
+    const iepGrades = new Set()
+
+    students.forEach(st => {
+      const modGrade = st.accommodations?.modifiedSubjectGrades?.[currentSub.subjectId]
+      if (modGrade && modGrade !== 'default' && /^Grade\s*\d+$/i.test(modGrade)) {
+        iepGrades.add(modGrade)
+      }
+    })
+
+    iepGrades.forEach(gradeStr => {
+      const existingExps = currentSub.expectations || []
+      const hasGrade = existingExps.some(e => e.gradeLevel && e.gradeLevel.trim().toLowerCase() === gradeStr.trim().toLowerCase())
+      if (!hasGrade) {
+        const matchingPresets = findElementaryPresets([gradeStr], currentSub.code, currentSub.name)
+        if (matchingPresets && matchingPresets.length > 0) {
+          currentSub = populateSubjectFromPresets(currentSub, matchingPresets, 'all')
+          modified = true
+        }
+      }
+    })
+
+    return currentSub
+  })
+
+  if (!modified) return classRecord
   return {
     ...classRecord,
     subjects: updatedSubs
@@ -292,6 +362,8 @@ export function useElementary() {
     detectGradeFromClassName,
     getEffectiveGradeLevel,
     getStudentEffectiveGrade,
+    getUnitGradeLevel,
+    ensureIEPPresetsForClass,
     populateSubjectFromPreset,
     populateSubjectFromPresets,
     autoPopulateAllElementarySubjects,
@@ -302,4 +374,5 @@ export function useElementary() {
     DEFAULT_ELEMENTARY_SUBJECTS
   }
 }
+
 

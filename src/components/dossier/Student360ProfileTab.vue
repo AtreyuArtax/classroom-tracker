@@ -181,10 +181,35 @@
                 <option value="Grade 8">Grade 8</option>
               </select>
 
-              <!-- Auto Import Preset Check / Action -->
+              <!-- Granularity Picker & Auto Import Preset Action -->
               <template v-if="localModifiedSubjectGrades[sub.subjectId] && localModifiedSubjectGrades[sub.subjectId] !== 'default'">
-                <div v-if="hasLoadedPresetForGrade(sub, localModifiedSubjectGrades[sub.subjectId])" class="acc-status-tag acc-status-tag--ok">
-                  <CheckCircle2 :size="13" /> Presets Loaded
+                <select 
+                  v-model="localGranularity[sub.subjectId]" 
+                  class="acc-select-granularity" 
+                  title="Select Expectation Level to Import"
+                  style="font-size: 0.8rem; padding: 4px 8px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-surface); color: var(--text-primary);"
+                >
+                  <option value="all">Specific Expectations</option>
+                  <option value="overall">Overall Expectations</option>
+                  <option value="success_criteria" :disabled="!hasSuccessCriteriaAvailable(sub, localModifiedSubjectGrades[sub.subjectId])">
+                    {{ hasSuccessCriteriaAvailable(sub, localModifiedSubjectGrades[sub.subjectId]) ? 'Success Criteria' : 'Success Criteria (N/A)' }}
+                  </option>
+                </select>
+
+                <div v-if="hasLoadedPresetForGrade(sub, localModifiedSubjectGrades[sub.subjectId])" style="display: flex; align-items: center; gap: 6px;">
+                  <div class="acc-status-tag acc-status-tag--ok" :title="`${localModifiedSubjectGrades[sub.subjectId]} Ontario Curriculum Expectations loaded`">
+                    <CheckCircle2 :size="13" /> Presets Loaded
+                  </div>
+                  <button 
+                    type="button" 
+                    class="btn-auto-import-preset"
+                    style="background: transparent; border: 1px solid var(--border-color); color: var(--text-secondary); padding: 2px 8px; font-size: 0.75rem;"
+                    :disabled="importingSubjectId === sub.subjectId"
+                    @click="autoImportPresets(sub, localModifiedSubjectGrades[sub.subjectId])"
+                    title="Re-import presets with selected granularity"
+                  >
+                    Re-import
+                  </button>
                 </div>
                 <button 
                   v-else
@@ -324,6 +349,7 @@ const emit = defineEmits(['update-note', 'update-iep', 'update-accommodations', 
 
 const showAccommodationsModal = ref(false)
 const localModifiedSubjectGrades = ref({})
+const localGranularity = ref({})
 const importingSubjectId = ref(null)
 
 const availableSubjects = computed(() => {
@@ -356,10 +382,13 @@ const hasActiveModifications = computed(() => {
 function openAccommodationsModal() {
   const current = props.student?.accommodations?.modifiedSubjectGrades || {}
   const copy = {}
+  const granCopy = {}
   availableSubjects.value.forEach(sub => {
     copy[sub.subjectId] = current[sub.subjectId] || 'default'
+    granCopy[sub.subjectId] = 'all'
   })
   localModifiedSubjectGrades.value = copy
+  localGranularity.value = granCopy
   showAccommodationsModal.value = true
 }
 
@@ -368,6 +397,13 @@ function hasLoadedPresetForGrade(subject, targetGrade) {
   const expectations = subject.expectations || []
   if (!expectations.length) return false
   return expectations.some(e => e.gradeLevel === targetGrade)
+}
+
+function hasSuccessCriteriaAvailable(subject, targetGrade) {
+  if (!subject || !targetGrade || targetGrade === 'default') return false
+  const matchingPresets = findElementaryPresets([targetGrade], subject.code, subject.name)
+  if (!matchingPresets || matchingPresets.length === 0) return false
+  return matchingPresets.some(p => p.isSuccessCriteria)
 }
 
 async function autoImportPresets(subject, targetGrade) {
@@ -380,7 +416,8 @@ async function autoImportPresets(subject, targetGrade) {
       await alert(`No standard curriculum presets found for ${targetGrade} ${subject.name}.`)
       return
     }
-    const updatedSub = populateSubjectFromPresets(subject, matchingPresets, 'all')
+    const selectedGranularity = localGranularity.value[subject.subjectId] || 'all'
+    const updatedSub = populateSubjectFromPresets(subject, matchingPresets, selectedGranularity, { forceRefresh: true })
     const subs = (props.activeClassRecord.subjects || []).length > 0
       ? props.activeClassRecord.subjects
       : DEFAULT_ELEMENTARY_SUBJECTS

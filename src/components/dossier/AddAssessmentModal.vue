@@ -251,7 +251,7 @@ import {
 import { useClassroom } from '../../composables/useClassroom.js'
 import BaseModal from '../BaseModal.vue'
 
-import { getEffectiveClassRecord } from '../../composables/useElementary.js'
+import { getEffectiveClassRecord, getUnitGradeLevel } from '../../composables/useElementary.js'
 import { activeSubjectId } from '../../composables/useClassroomState.js'
 
 const { sortedRoster } = useClassroom()
@@ -285,7 +285,7 @@ const allAvailableExpectations = computed(() => {
   // 1. From gradebookUnits
   if (cls.gradebookUnits && Array.isArray(cls.gradebookUnits)) {
     cls.gradebookUnits.forEach(u => {
-      const uGrade = u.gradeLevel || (u.name && u.name.includes('Grade 7') ? 'Grade 7' : (u.name && u.name.includes('Grade 8') ? 'Grade 8' : ''))
+      const uGrade = getUnitGradeLevel(u)
       ;(u.expectations || []).forEach(e => {
         if (!e.code) return
         const key = `${u.unitId}::${e.code}`
@@ -345,7 +345,7 @@ const filteredUnits = computed(() => {
   if (selectedGradeFilter.value !== 'all' && availableSubCohorts.value.length > 1) {
     const targetG = selectedGradeFilter.value.replace(/\s*\(IEP\)/i, '').trim().toLowerCase()
     units = units.filter(u => {
-      const uGrade = u.gradeLevel || (u.name && u.name.includes('Grade 7') ? 'Grade 7' : (u.name && u.name.includes('Grade 8') ? 'Grade 8' : ''))
+      const uGrade = getUnitGradeLevel(u)
       if (uGrade && uGrade.trim().toLowerCase() === targetG) return true
       if (u.expectations && u.expectations.some(e => e.gradeLevel && e.gradeLevel.trim().toLowerCase() === targetG)) return true
       return !uGrade

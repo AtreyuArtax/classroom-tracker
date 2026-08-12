@@ -60,8 +60,8 @@
     "semantic_hash": ""
   },
   "src/components/AssessmentConversationModal.vue": {
-    "mtime": 1786153963.3900676,
-    "ast_hash": "3519899c0ceedd8b9a6716d42a55f509",
+    "mtime": 1786498292.3731978,
+    "ast_hash": "8a3c33dcd34d120c907249732eb248ad",
     "semantic_hash": ""
   },
   "src/components/BaseModal.vue": {
@@ -145,8 +145,8 @@
     "semantic_hash": ""
   },
   "src/components/dossier/AddAssessmentModal.vue": {
-    "mtime": 1786463181.4376466,
-    "ast_hash": "bdcfaa47d182182897ec11e8cd43d6ba",
+    "mtime": 1786498270.6408713,
+    "ast_hash": "65fe79e7f44cb1f3807683648de1144a",
     "semantic_hash": ""
   },
   "src/components/dossier/AttendanceActivityReport.vue": {
@@ -170,8 +170,8 @@
     "semantic_hash": ""
   },
   "src/components/dossier/DossierQualitativeEvidence.vue": {
-    "mtime": 1786464386.0813982,
-    "ast_hash": "ce09f5cf4b506c819d4f4d433e9abe01",
+    "mtime": 1786498258.1226742,
+    "ast_hash": "fee419ac03e8fc1d438177b0235f4bbb",
     "semantic_hash": ""
   },
   "src/components/dossier/ProgressReport.vue": {
@@ -245,8 +245,8 @@
     "semantic_hash": ""
   },
   "src/composables/useGradebook.js": {
-    "mtime": 1786467110.1887586,
-    "ast_hash": "51ff952901058fdea7509bb024cc49e0",
+    "mtime": 1786498190.4722495,
+    "ast_hash": "2aac73c8e0fbbca886a688b765e9c688",
     "semantic_hash": ""
   },
   "src/composables/useKeyboardWedge.js": {
@@ -390,8 +390,8 @@
     "semantic_hash": ""
   },
   "src/components/GradesGrid.vue": {
-    "mtime": 1786465566.0502737,
-    "ast_hash": "475279e395739f3f97e5d711426e8b5d",
+    "mtime": 1786498218.3532045,
+    "ast_hash": "9c890d5cd707f23dad43ec6a9829b053",
     "semantic_hash": ""
   },
   "src/components/dossier/StudentAcademicsTab.vue": {
@@ -440,8 +440,8 @@
     "semantic_hash": ""
   },
   "src/composables/useRosterOperations.js": {
-    "mtime": 1786466569.0403678,
-    "ast_hash": "5a2359122a902538a6b36a8b8b747f1c",
+    "mtime": 1786498208.5409508,
+    "ast_hash": "9dac64d32ad711f7825abf307f24903b",
     "semantic_hash": ""
   },
   "src/components/setup/ClassLogisticsSettings.vue": {
@@ -505,8 +505,8 @@
     "semantic_hash": ""
   },
   "src/components/dossier/Student360ProfileTab.vue": {
-    "mtime": 1786244473.2932827,
-    "ast_hash": "1c30e76daf19f0c37d939786e82d2b64",
+    "mtime": 1786499037.066305,
+    "ast_hash": "b45dc041d13c34f5c35c0d7773cdd091",
     "semantic_hash": ""
   },
   "src/components/reports/ReportsBatchPrintModal.vue": {
@@ -550,8 +550,8 @@
     "semantic_hash": ""
   },
   "src/components/reports/ExpectationMasteryHeatmap.vue": {
-    "mtime": 1786153995.553109,
-    "ast_hash": "8944608a1bfa9e40abdd9dd96bfd97e8",
+    "mtime": 1786498281.4238725,
+    "ast_hash": "786c5b1ecb159e03025588ae95286c1c",
     "semantic_hash": ""
   },
   "src/components/reports/ReportsPrintHub.vue": {
@@ -600,13 +600,13 @@
     "semantic_hash": ""
   },
   "src/components/grades/GradesAssessmentDetailSBAR.vue": {
-    "mtime": 1786396318.4508133,
-    "ast_hash": "13487400eb3e1adc43537bf28674953f",
+    "mtime": 1786498247.9742324,
+    "ast_hash": "419bbc368624fcf35b3a71c99a923ae1",
     "semantic_hash": ""
   },
   "src/components/grades/GradesGridSBAR.vue": {
-    "mtime": 1786465587.1935518,
-    "ast_hash": "ffb0751b30c2ea8fdfd53ac075eb6e16",
+    "mtime": 1786498227.6186883,
+    "ast_hash": "de65d7ca56b75581e8dcf85e3e47d108",
     "semantic_hash": ""
   },
   "src/db/gradebook/gradeCalcSBAR.js": {
@@ -620,8 +620,8 @@
     "semantic_hash": ""
   },
   "src/components/grades/GradesAnalyticsPanelSBAR.vue": {
-    "mtime": 1786384844.0292892,
-    "ast_hash": "115481087da10b4f63a3b50f18ea89ec",
+    "mtime": 1786498237.391905,
+    "ast_hash": "f2460cf8e2f4cb55158ba67e9c2b573c",
     "semantic_hash": ""
   },
   "src/components/setup/ElementaryCsvImporter.vue": {
@@ -640,8 +640,8 @@
     "semantic_hash": ""
   },
   "src/composables/useElementary.js": {
-    "mtime": 1786464344.7401488,
-    "ast_hash": "06311795bf2ca4f1ac7eecc1bdbd4f1b",
+    "mtime": 1786498955.523684,
+    "ast_hash": "d9d59716e7944021f0863ba3d7c0d666",
     "semantic_hash": ""
   },
   "src/components/SubjectIcon.vue": {

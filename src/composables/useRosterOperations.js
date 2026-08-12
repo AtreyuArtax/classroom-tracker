@@ -11,7 +11,8 @@ import {
   classList,
   gridSize
 } from './useClassroomState.js'
-import { activeClassRecord } from './useGradebook.js'
+import { activeClassRecord, loadGradebook } from './useGradebook.js'
+import { ensureIEPPresetsForClass } from './useElementary.js'
 import * as classService from '../db/classService.js'
 import { useUndo } from './useUndo.js'
 import { useMessage } from './useMessage.js'
@@ -265,6 +266,13 @@ export async function updateStudentAccommodations(studentId, accommodations) {
         if (activeClassRecord.value?.students?.[studentId]) {
             activeClassRecord.value.students[studentId].hasIEP = Boolean(accCopy.hasIEP)
             activeClassRecord.value.students[studentId].accommodations = accCopy
+        }
+        if (activeClassRecord.value && activeClassRecord.value.classType === 'elementary') {
+            const afterIEP = ensureIEPPresetsForClass(activeClassRecord.value)
+            if (afterIEP !== activeClassRecord.value) {
+                await classService.saveClass(afterIEP)
+                await loadGradebook(afterIEP)
+            }
         }
         triggerRef(students)
         triggerRef(activeClass)

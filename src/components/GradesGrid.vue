@@ -389,7 +389,8 @@ import {
   availableSubCohorts,
   isStudentInSubCohort,
   isAssessmentInSubCohort,
-  isAssessmentApplicableToStudent
+  isAssessmentApplicableToStudent,
+  getUnitGradeLevel
 } from '../composables/useGradebook.js'
 import { useGradeEditing } from '../composables/useGradeEditing.js'
 import {
@@ -619,7 +620,7 @@ const availableGradeFilters = computed(() => {
   }
   const units = activeClassRecord.value?.gradebookUnits || []
   units.forEach(u => {
-    const uGrade = u.gradeLevel || (u.name && u.name.includes('Grade 7') ? 'Grade 7' : (u.name && u.name.includes('Grade 8') ? 'Grade 8' : ''))
+    const uGrade = getUnitGradeLevel(u)
     if (uGrade) grades.add(uGrade)
     if (u.expectations) {
       u.expectations.forEach(e => { if (e.gradeLevel) grades.add(e.gradeLevel) })
@@ -634,7 +635,7 @@ const availableUnits = computed(() => {
   let units = eff?.gradebookUnits || []
   if (selectedGradeFilter.value !== 'all' && availableGradeFilters.value.length > 1) {
     units = units.filter(u => {
-      const uGrade = u.gradeLevel || (u.name && u.name.includes('Grade 7') ? 'Grade 7' : (u.name && u.name.includes('Grade 8') ? 'Grade 8' : ''))
+      const uGrade = getUnitGradeLevel(u)
       return isCohortMatch(uGrade, selectedGradeFilter.value)
     })
   }

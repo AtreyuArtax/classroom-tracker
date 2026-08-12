@@ -164,7 +164,8 @@
 import { ref, watch, nextTick, computed } from 'vue'
 import { GraduationCap } from 'lucide-vue-next'
 import BaseModal from './BaseModal.vue'
-import { getEffectiveClassRecord } from '../composables/useElementary.js'
+import { getEffectiveClassRecord, getUnitGradeLevel } from '../composables/useElementary.js'
+import { isCohortMatch } from '../db/gradebook/gradeCalc.js'
 import { activeSubjectId } from '../composables/useClassroomState.js'
 
 const props = defineProps({
@@ -215,16 +216,16 @@ const availableUnits = computed(() => {
   // 1. Gather from gradebookUnits (Strands)
   if (cls.gradebookUnits && Array.isArray(cls.gradebookUnits)) {
     cls.gradebookUnits.forEach(u => {
-      const uGrade = u.gradeLevel || (u.name && u.name.includes('Grade 7') ? 'Grade 7' : (u.name && u.name.includes('Grade 8') ? 'Grade 8' : ''))
+      const uGrade = getUnitGradeLevel(u)
       
-      if (targetGrade && uGrade && uGrade.toLowerCase() !== targetGrade) {
+      if (studentGradeLevel.value && uGrade && !isCohortMatch(uGrade, studentGradeLevel.value)) {
         return
       }
 
       const validExps = (u.expectations || []).filter(e => {
         if (!e.code) return false
         const eGrade = e.gradeLevel || uGrade
-        if (targetGrade && eGrade && eGrade.toLowerCase() !== targetGrade) return false
+        if (studentGradeLevel.value && eGrade && !isCohortMatch(eGrade, studentGradeLevel.value)) return false
         return true
       })
 

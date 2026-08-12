@@ -273,8 +273,10 @@ import {
   activeGradeFilter,
   activeSubCohortFilter,
   availableSubCohorts,
-  isStudentInSubCohort
+  isStudentInSubCohort,
+  getUnitGradeLevel
 } from '../../composables/useGradebook.js'
+import { isCohortMatch } from '../../db/gradebook/gradeCalc.js'
 import {
   calculateSBARExpectationMastery,
   calculateSBARStudentOverallMastery,
@@ -438,12 +440,12 @@ const expectationStatsList = computed(() => {
   // Gather expectations metadata filtered by activeGradeFilter
   const units = activeClassRecord.value?.gradebookUnits || []
   units.forEach(u => {
-    const uGrade = u.gradeLevel || (u.name && u.name.toLowerCase().includes('grade 7') ? 'grade 7' : (u.name && u.name.toLowerCase().includes('grade 8') ? 'grade 8' : ''))
-    if (activeGradeFilter.value !== 'all' && uGrade && uGrade.toLowerCase() !== gLower) return
+    const uGrade = getUnitGradeLevel(u)
+    if (activeGradeFilter.value !== 'all' && uGrade && !isCohortMatch(uGrade, activeGradeFilter.value)) return
 
     const uExps = u.expectations || []
     uExps.forEach(exp => {
-      if (exp.code && (!exp.gradeLevel || activeGradeFilter.value === 'all' || exp.gradeLevel.toLowerCase() === gLower)) {
+      if (exp.code && (!exp.gradeLevel || activeGradeFilter.value === 'all' || isCohortMatch(exp.gradeLevel, activeGradeFilter.value))) {
         expCodeMap[exp.code] = exp.name || exp.description || `Expectation ${exp.code}`
       }
     })
