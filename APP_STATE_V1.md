@@ -1,4 +1,4 @@
-# Application State Summary (v1)
+# Application State Summary (v1).
 
 ## 1. App Overview
 **What the app does:**
