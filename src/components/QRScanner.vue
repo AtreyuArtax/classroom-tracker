@@ -212,14 +212,14 @@ import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
 import { Html5Qrcode } from 'html5-qrcode'
 import { QrCode, X, ExternalLink, Minimize2, CameraOff, Check, Camera, AlertTriangle, ChevronDown, ChevronUp, Rss } from 'lucide-vue-next'
 import { useClassroom } from '../composables/useClassroom.js'
-import { useKeyboardWedge } from '../composables/useKeyboardWedge.js'
+import { useKeyboardWedge, isAnyEnrollmentActive } from '../composables/useKeyboardWedge.js'
 import { useMessage } from '../composables/useMessage.js'
 import { supabase } from '../utils/supabase.js'
 import { isSyncActive } from '../db/eventService.js'
 
 const emit = defineEmits(['close'])
 
-const { students, logToggleEvent, studentsOut, globalStudentsOut, maxStudentsOut, filteredClassList, activeClass, periodStartTimes, reconcileStaleTrips, attendanceMode, handleRfidAttendanceScan, initializeRfidAttendance, cloudModeEnabled, userCode } = useClassroom()
+const { students, logToggleEvent, studentsOut, globalStudentsOut, maxStudentsOut, filteredClassList, activeClass, periodStartTimes, reconcileStaleTrips, attendanceMode, handleRfidAttendanceScan, initializeRfidAttendance, cloudModeEnabled, userCode, teachingMode } = useClassroom()
 const { alert } = useMessage()
 
 // ── UI State ──────────────────────────────────────────────────────────────────
@@ -424,19 +424,14 @@ const resolveScan = (scannedText, isRFID) => {
   const classPeriod = Number(targetClass.periodNumber)
   const timeStr = startTimes[classPeriod]
 
-  if (targetClass.periodStartTime && timeStr) {
+  const isElementary = teachingMode.value === 'elementary' || targetClass.classType === 'elementary'
+
+  if (targetClass.periodStartTime && (timeStr || isElementary)) {
     const now = new Date()
     const currentMinutes = now.getHours() * 60 + now.getMinutes()
     
     const [startH, startM] = targetClass.periodStartTime.split(':').map(Number)
     const classStartMins = startH * 60 + startM
-
-    let classEndMins = classStartMins + 75 // Default 75 minutes fallback
-    const nextPeriodNum = sortedPeriods.find(p => p > classPeriod)
-    if (nextPeriodNum && startTimes[nextPeriodNum]) {
-      const [endH, endM] = startTimes[nextPeriodNum].split(':').map(Number)
-      classEndMins = endH * 60 + endM
-    }
 
     if (currentMinutes < classStartMins) {
       if (attendanceMode.value === 'rfid' && student?.activeStates?.isAbsent === true) {
@@ -447,8 +442,19 @@ const resolveScan = (scannedText, isRFID) => {
       }
       return { studentId: foundStudentId, classId: targetClass.classId, type: 'signout_blocked_not_started', class: targetClass }
     }
-    if (currentMinutes >= classEndMins) {
-      return { studentId: foundStudentId, classId: targetClass.classId, type: 'signout_blocked_over', class: targetClass }
+
+    // Elementary classes run all day and are not constrained by high-school period cutoffs / end times
+    if (!isElementary) {
+      let classEndMins = classStartMins + 75 // Default 75 minutes fallback
+      const nextPeriodNum = sortedPeriods.find(p => p > classPeriod)
+      if (nextPeriodNum && startTimes[nextPeriodNum]) {
+        const [endH, endM] = startTimes[nextPeriodNum].split(':').map(Number)
+        classEndMins = endH * 60 + endM
+      }
+
+      if (currentMinutes >= classEndMins) {
+        return { studentId: foundStudentId, classId: targetClass.classId, type: 'signout_blocked_over', class: targetClass }
+      }
     }
   }
 
@@ -460,6 +466,7 @@ const resolveScan = (scannedText, isRFID) => {
 }
 
 const onRFIDScan = (hex) => {
+  if (isAnyEnrollmentActive()) return
   handleScan(hex, true)
 }
 

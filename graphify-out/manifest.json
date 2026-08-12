@@ -100,9 +100,9 @@
     "semantic_hash": ""
   },
   "src/components/QRScanner.vue": {
-    "mtime": 1782066914.7111928,
-    "ast_hash": "c824aa7784682476d6650f2a6763da8e",
-    "semantic_hash": "c824aa7784682476d6650f2a6763da8e"
+    "mtime": 1786543117.4848013,
+    "ast_hash": "afab7629ff855ea486f4c8c57141f076",
+    "semantic_hash": ""
   },
   "src/components/RadialMenu.vue": {
     "mtime": 1785115872.8926194,
@@ -240,8 +240,8 @@
     "semantic_hash": "68f077cda9561ec51fbe56d0aa61fb3e"
   },
   "src/composables/useClassroom.js": {
-    "mtime": 1786459447.5225792,
-    "ast_hash": "1a484e27728069a2af6a100916f603eb",
+    "mtime": 1786542980.6618838,
+    "ast_hash": "746edbdb194f8269bccd393be7f68afc",
     "semantic_hash": ""
   },
   "src/composables/useGradebook.js": {
@@ -250,9 +250,9 @@
     "semantic_hash": ""
   },
   "src/composables/useKeyboardWedge.js": {
-    "mtime": 1781185125.2494822,
-    "ast_hash": "d0c95474460aae28e134c653bb4873ad",
-    "semantic_hash": "d0c95474460aae28e134c653bb4873ad"
+    "mtime": 1786543105.3987505,
+    "ast_hash": "679936ca91f2b938d15601fed59b185f",
+    "semantic_hash": ""
   },
   "src/composables/useMessage.js": {
     "mtime": 1784942412.41529,
@@ -445,8 +445,8 @@
     "semantic_hash": ""
   },
   "src/components/setup/ClassLogisticsSettings.vue": {
-    "mtime": 1786500743.9291654,
-    "ast_hash": "0c918abad453b04bf4903fbceb71b494",
+    "mtime": 1786543461.1728601,
+    "ast_hash": "9c96e21aecf669031dbea109fc773829",
     "semantic_hash": ""
   },
   "src/components/setup/DatabaseMaintenanceSettings.vue": {

@@ -461,7 +461,18 @@
         </div>
 
         <div class="rapid-rfid-list-container">
-          <div class="rapid-rfid-list-header" style="font-weight: 700; margin-bottom: 8px;">Class Roster ({{ rapidRFIDList.length }})</div>
+          <div class="rapid-rfid-list-header" style="display: flex; justify-content: space-between; align-items: center; font-weight: 700; margin-bottom: 8px;">
+            <span>Class Roster ({{ rapidRFIDList.length }})</span>
+            <button 
+              type="button" 
+              class="setup__btn-ghost" 
+              style="color: var(--state-out, #ef4444); padding: 2px 8px; font-size: 0.78rem; display: flex; align-items: center; gap: 4px;"
+              @click="clearAllRfidTagsForClass"
+              title="Clear all linked RFID cards for this class"
+            >
+              <Trash2 :size="13" /> Clear All Cards
+            </button>
+          </div>
           <div class="rapid-rfid-list" style="max-height: 250px; overflow-y: auto; border: 1px solid var(--border); border-radius: 6px;">
             <div 
               v-for="(s, idx) in rapidRFIDList" 
@@ -674,6 +685,7 @@ import { getEffectiveGradeLevel } from '../../composables/useElementary.js'
 
 
 const {
+  students,
   activeClass,
   classList,
   sortedRoster,
@@ -692,7 +704,8 @@ const {
   moveStudentFromClass,
   importRoster,
   checkResize,
-  confirmResize
+  confirmResize,
+  teachingMode
 } = useClassroom()
 
 const { confirm, alert } = useMessage()
@@ -899,14 +912,52 @@ async function onPermanentDeleteStudent(student) {
   }
 }
 
+// --- RFID Duplicate Helper ---
+function findRfidDuplicate(hex, targetStudentId) {
+  if (!hex || !hex.trim()) return null
+  const hexLower = hex.trim().toLowerCase()
+  const targetClass = activeClass.value
+  const targetIsElem = targetClass?.classType === 'elementary' || teachingMode.value === 'elementary'
+
+  return classList.value
+    .flatMap(c => Object.entries(c.students || {}).map(([sid, s]) => ({
+      ...s,
+      studentId: sid,
+      className: c.name,
+      periodNumber: c.periodNumber,
+      classType: c.classType,
+      classId: c.classId,
+      year: c.year,
+      semester: c.semester,
+      archived: c.archived
+    })))
+    .find(s => {
+      if (!s.rfidTag || s.rfidTag.toLowerCase() !== hexLower) return false
+      if (s.studentId === targetStudentId) return false
+      if (s.archived) return false
+
+      const candIsElem = s.classType === 'elementary'
+
+      // Elementary classes run all day and only conflict with other elementary classes
+      if (targetIsElem || candIsElem) {
+        return targetIsElem && candIsElem
+      }
+
+      // Secondary classes: conflict if they belong to the same period number in the same term
+      const sameYear = !targetClass?.year || !s.year || String(s.year) === String(targetClass.year)
+      const sameSem = !targetClass?.semester || !s.semester || String(s.semester) === String(targetClass.semester)
+      const samePeriod = String(s.periodNumber) === String(targetClass?.periodNumber)
+
+      return sameYear && sameSem && samePeriod
+    })
+}
+
 // --- RFID Scanning wedge ---
 const isEnrollingRFID = ref(false)
 const enrollTimer = ref(null)
 
 const onRFIDEnroll = (hex) => {
-  const duplicate = classList.value
-    .flatMap(c => Object.entries(c.students || {}).map(([sid, s]) => ({ ...s, studentId: sid, className: c.name })))
-    .find(s => s.rfidTag?.toLowerCase() === hex.toLowerCase() && s.studentId !== newStudent.studentId)
+  const duplicate = findRfidDuplicate(hex, newStudent.studentId)
   if (duplicate) {
     singleAddError.value = `This card is already linked to ${duplicate.firstName} ${duplicate.lastName}${duplicate.className !== activeClass.value?.name ? ` in ${duplicate.className}` : ''}.`
     stopEnrollment()
@@ -919,7 +970,7 @@ const onRFIDEnroll = (hex) => {
   setTimeout(() => { if (singleAddSuccess.value === 'Card detected!') singleAddSuccess.value = '' }, 3000)
 }
 
-const rfidWedge = useKeyboardWedge(onRFIDEnroll)
+const rfidWedge = useKeyboardWedge(onRFIDEnroll, { isEnrollment: true })
 
 function startEnrollment() {
   isEnrollingRFID.value = true
@@ -942,6 +993,15 @@ function stopEnrollment() {
 }
 
 function clearRFID() {
+  const studentId = newStudent.studentId
+  if (studentId) {
+    if (activeClass.value?.students?.[studentId]) {
+      activeClass.value.students[studentId].rfidTag = ''
+    }
+    if (students.value?.[studentId]) {
+      students.value[studentId].rfidTag = ''
+    }
+  }
   newStudent.rfidTag = ''
   singleAddSuccess.value = 'Card unlinked.'
   setTimeout(() => { if (singleAddSuccess.value === 'Card unlinked.') singleAddSuccess.value = '' }, 3000)
@@ -959,9 +1019,7 @@ const currentRapidStudent = computed(() => rapidRFIDList.value[rapidRFIDIndex.va
 const onRapidRFIDScan = async (hex) => {
   if (!isRapidRFIDOpen.value || !currentRapidStudent.value) return
 
-  const duplicate = classList.value
-    .flatMap(c => Object.entries(c.students || {}).map(([sid, s]) => ({ ...s, studentId: sid, className: c.name })))
-    .find(s => s.rfidTag?.toLowerCase() === hex.toLowerCase() && s.studentId !== currentRapidStudent.value.studentId)
+  const duplicate = findRfidDuplicate(hex, currentRapidStudent.value.studentId)
   if (duplicate) {
     rapidRFIError.value = `Already linked to ${duplicate.firstName} ${duplicate.lastName}${duplicate.className !== activeClass.value?.name ? ` (${duplicate.className})` : ''}`
     playRapidBeep(true)
@@ -969,7 +1027,20 @@ const onRapidRFIDScan = async (hex) => {
   }
 
   try {
-    await classService.patchStudent(activeClass.value.classId, currentRapidStudent.value.studentId, { rfidTag: hex.toUpperCase() })
+    const studentId = currentRapidStudent.value.studentId
+    const tagHex = hex.toUpperCase()
+
+    // 1. Immediately update activeClass in-memory
+    if (activeClass.value?.students?.[studentId]) {
+      activeClass.value.students[studentId].rfidTag = tagHex
+    }
+
+    // 2. Immediately update reactive students ref in-memory
+    if (students.value?.[studentId]) {
+      students.value[studentId].rfidTag = tagHex
+    }
+
+    await classService.patchStudent(activeClass.value.classId, studentId, { rfidTag: tagHex })
     triggerActiveClass()
     
     rapidRFIDSuccess.value = `Linked to ${currentRapidStudent.value.firstName}!`
@@ -992,7 +1063,7 @@ const onRapidRFIDScan = async (hex) => {
   }
 }
 
-const rapidRFIDWedge = useKeyboardWedge(onRapidRFIDScan)
+const rapidRFIDWedge = useKeyboardWedge(onRapidRFIDScan, { isEnrollment: true })
 
 function openRapidRFID() {
   if (!activeClass.value) return
@@ -1009,6 +1080,45 @@ function openRapidRFID() {
 function stopRapidRFID() {
   isRapidRFIDOpen.value = false
   rapidRFIDWedge.stop()
+}
+
+async function clearAllRfidTagsForClass() {
+  if (!activeClass.value || !activeClass.value.students) return
+
+  const studentCountWithTags = Object.values(activeClass.value.students).filter(s => s.rfidTag).length
+  if (studentCountWithTags === 0) {
+    await alert('No students in this class currently have an RFID card linked.')
+    return
+  }
+
+  const confirmed = await confirm(
+    `Are you sure you want to clear all ${studentCountWithTags} RFID card tags for ${activeClass.value.name}? This will unbind all cards in this class so you can start fresh.`,
+    'Unlink All RFID Cards',
+    { danger: true }
+  )
+
+  if (!confirmed) return
+
+  for (const student of Object.values(activeClass.value.students)) {
+    student.rfidTag = ''
+  }
+
+  if (students.value) {
+    for (const student of Object.values(students.value)) {
+      student.rfidTag = ''
+    }
+  }
+
+  await classService.saveClass(activeClass.value)
+  triggerActiveClass()
+
+  rapidRFIError.value = ''
+  rapidRFIDSuccess.value = 'All RFID cards unlinked for this class.'
+  setTimeout(() => {
+    if (rapidRFIDSuccess.value === 'All RFID cards unlinked for this class.') {
+      rapidRFIDSuccess.value = ''
+    }
+  }, 3000)
 }
 
 function playRapidBeep(isErr = false) {
@@ -1036,6 +1146,14 @@ async function addSingleStudent() {
   if (!newStudent.studentId.trim() || !newStudent.firstName.trim() || !newStudent.lastName.trim()) {
     singleAddError.value = 'All fields are required.'
     return
+  }
+
+  if (newStudent.rfidTag.trim()) {
+    const duplicate = findRfidDuplicate(newStudent.rfidTag.trim(), newStudent.studentId.trim())
+    if (duplicate) {
+      singleAddError.value = `This card is already linked to ${duplicate.firstName} ${duplicate.lastName}${duplicate.className !== activeClass.value?.name ? ` in ${duplicate.className}` : ''}.`
+      return
+    }
   }
 
   const row = {

@@ -1,5 +1,11 @@
 import { ref, onUnmounted } from 'vue'
 
+const activeEnrollmentCount = ref(0)
+
+export function isAnyEnrollmentActive() {
+  return activeEnrollmentCount.value > 0
+}
+
 /**
  * useKeyboardWedge
  * 
@@ -11,12 +17,14 @@ import { ref, onUnmounted } from 'vue'
  * @param {string} options.terminator The key that signals end-of-scan (default: 'Enter')
  * @param {number} options.maxGapMs Maximum time between keystrokes in ms (default: 80)
  * @param {number} options.minLength Minimum characters required for a valid scan (default: 6)
+ * @param {boolean} options.isEnrollment Whether this wedge is for card enrollment/linking
  */
 export function useKeyboardWedge(onComplete, options = {}) {
   const {
     terminator = 'Enter',
     maxGapMs = 80,
-    minLength = 6
+    minLength = 6,
+    isEnrollment = false
   } = options
 
   const isListening = ref(false)
@@ -106,11 +114,18 @@ export function useKeyboardWedge(onComplete, options = {}) {
   const start = () => {
     if (isListening.value) return
     isListening.value = true
+    if (isEnrollment) {
+      activeEnrollmentCount.value++
+    }
     window.addEventListener('keydown', handleKeyDown)
   }
 
   const stop = () => {
+    if (!isListening.value) return
     isListening.value = false
+    if (isEnrollment && activeEnrollmentCount.value > 0) {
+      activeEnrollmentCount.value--
+    }
     window.removeEventListener('keydown', handleKeyDown)
     if (timer) clearTimeout(timer)
     buffer = ''

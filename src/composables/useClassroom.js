@@ -320,10 +320,10 @@ const studentsOut = computed(() =>
 
 /** Students who are currently out of the room across all classes */
 const globalStudentsOut = computed(() => {
-    // Bug 3 fix: explicitly reference students.value so Vue tracks deep mutations on
-    // the active class's student states. classList uses a shallow ref so deep property
-    // changes don't trigger recomputes on their own — this forces re-evaluation.
+    // Explicitly reference active state refs so Vue tracks property updates
     void students.value
+    void activeClass.value
+    void classList.value
     const list = []
     classList.value.forEach(cls => {
         if (cls.students) {
@@ -1120,6 +1120,9 @@ async function logToggleEvent(studentId, code, targetClassId = null) {
                 students.value[studentId].activeStates = newState
                 students.value[studentId].lastEvent = { code, ts: Date.now() }
             }
+            triggerRef(students)
+            triggerRef(activeClass)
+            triggerRef(classList)
 
             // Undo: clear the active state (no event was written for OUT, only state)
             pushUndo(async () => {
@@ -1129,6 +1132,9 @@ async function logToggleEvent(studentId, code, targetClassId = null) {
                     if (isActive) {
                         students.value[studentId].activeStates = { isOut: false, outTime: null }
                     }
+                    triggerRef(students)
+                    triggerRef(activeClass)
+                    triggerRef(classList)
                 } catch (err) {
                     console.error('Undo toggle OUT failed:', err)
                     const { alert } = useMessage()
@@ -1159,6 +1165,9 @@ async function logToggleEvent(studentId, code, targetClassId = null) {
                 students.value[studentId].activeStates = newState
                 students.value[studentId].lastEvent = { code, ts: Date.now() }
             }
+            triggerRef(students)
+            triggerRef(activeClass)
+            triggerRef(classList)
 
             // Optimistic update for stats dot
             if (code === 'w') {
