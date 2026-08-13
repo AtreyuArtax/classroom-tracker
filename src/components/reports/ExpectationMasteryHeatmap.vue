@@ -42,7 +42,7 @@
           :class="{ 'filter-pill--active': selectedUnitFilter === 'needs_reteaching' }"
           @click="selectedUnitFilter = 'needs_reteaching'"
         >
-          ⚠️ Needs Re-Teaching ({{ strugglingCount }})
+          <AlertTriangle :size="13" style="display: inline-block; vertical-align: -1px; margin-right: 4px;" /> Needs Re-Teaching ({{ strugglingCount }})
         </button>
       </div>
 
@@ -168,7 +168,7 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import { BookOpen, AlertCircle, ChevronDown, ChevronUp } from 'lucide-vue-next'
+import { BookOpen, AlertCircle, AlertTriangle, ChevronDown, ChevronUp } from 'lucide-vue-next'
 import { calculateSBARExpectationMastery, getSBARLevelBadge } from '../../db/gradebookService.js'
 import { gradeMap } from '../../composables/useGradebook.js'
 import { getEffectiveClassRecord, getUnitGradeLevel } from '../../composables/useElementary.js'

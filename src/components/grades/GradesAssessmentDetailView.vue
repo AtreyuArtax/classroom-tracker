@@ -3,10 +3,9 @@
     <!-- Compact Top Header Row -->
     <div class="compact-header-card" :style="{ borderLeft: '4px solid ' + unitColor }">
       <div class="compact-header-left">
-        <button class="grades__breadcrumb-link" @click="$emit('close')" title="Return to Previous View">
-          <ArrowLeft :size="14" /> {{ returnTab === 'analytics' ? 'Analytics View' : 'Class Grid' }}
+        <button class="app-back-btn" @click="$emit('close')" title="Return to Previous View">
+          <ArrowLeft :size="15" /> {{ returnTab === 'analytics' ? 'Back to Analytics' : 'Back to Grid' }}
         </button>
-        <span class="grades__breadcrumb-sep">/</span>
         <h1 class="compact-title">{{ currentAssessment.name }}</h1>
         <div class="compact-meta-chips">
           <span class="meta-chip meta-chip--type">{{ currentAssessment.assessmentType }}</span>
@@ -15,7 +14,7 @@
             <Hash :size="11" /> {{ getUnitName(currentAssessment.unitId) }}
           </span>
           <span class="meta-chip meta-chip--date"><Calendar :size="11" /> {{ formatLocalDisplay(currentAssessment.date) }}</span>
-          <span v-if="currentAssessment.weight" class="meta-chip meta-chip--weight">🔥 {{ currentAssessment.weight }}%</span>
+          <span v-if="currentAssessment.weight" class="meta-chip meta-chip--weight"><Flame :size="11" style="display: inline-block; vertical-align: -1px; margin-right: 2px;" /> {{ currentAssessment.weight }}%</span>
         </div>
       </div>
 
@@ -109,10 +108,10 @@
 
       <div class="compact-alerts-group">
         <span v-if="levelBreakdown.missing > 0" class="alert-chip alert-chip--missing" @click="activeFilter = 'missing'">
-          ⚠️ {{ levelBreakdown.missing }} Missing
+          <AlertTriangle :size="13" style="display: inline-block; vertical-align: -1px; margin-right: 3px;" /> {{ levelBreakdown.missing }} Missing
         </span>
         <span v-if="levelBreakdown.level1 > 0" class="alert-chip alert-chip--risk" @click="activeFilter = 'at-risk'">
-          🔴 {{ levelBreakdown.level1 }} At-Risk (&lt;50%)
+          <span class="status-dot status-dot--danger" /> {{ levelBreakdown.level1 }} At-Risk (&lt;50%)
         </span>
       </div>
     </div>
@@ -146,10 +145,10 @@
               Ungraded ({{ levelBreakdown.ungraded }})
             </button>
             <button v-if="levelBreakdown.missing > 0" class="chip-btn chip-btn--danger" :class="{ 'chip-btn--active': activeFilter === 'missing' }" @click="activeFilter = 'missing'">
-              ⚠️ Missing ({{ levelBreakdown.missing }})
+              <AlertTriangle :size="13" style="display: inline-block; vertical-align: -1px; margin-right: 3px;" /> Missing ({{ levelBreakdown.missing }})
             </button>
             <button v-if="levelBreakdown.level1 > 0" class="chip-btn chip-btn--warning" :class="{ 'chip-btn--active': activeFilter === 'at-risk' }" @click="activeFilter = 'at-risk'">
-              🔴 &lt;50% ({{ levelBreakdown.level1 }})
+              <span class="status-dot status-dot--danger" /> &lt;50% ({{ levelBreakdown.level1 }})
             </button>
           </div>
         </div>
@@ -317,7 +316,7 @@
 import { ref, computed } from 'vue'
 import { 
   ArrowLeft, FileText, Target, Hash, Calendar, Edit2, UserMinus, Trash2, X, 
-  AlertCircle, Check, MoreVertical, BarChart3, CheckCircle2, TrendingUp, Search, NotebookPen, RefreshCw
+  AlertCircle, AlertTriangle, Check, MoreVertical, BarChart3, CheckCircle2, TrendingUp, Search, NotebookPen, RefreshCw, Flame
 } from 'lucide-vue-next'
 import { getHeatTextColor } from '../../utils/gradeColors.js'
 import { formatLocalDisplay } from '../../utils/dates.js'

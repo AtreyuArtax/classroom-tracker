@@ -635,7 +635,7 @@ const evaluatedActionItems = computed(() => {
     if (reTriggered) {
       active.push({
         ...item,
-        reason: `${item.reason} · ⚠️ ${reTriggerReason}`,
+        reason: `${item.reason} · Alert: ${reTriggerReason}`,
         reTriggered: true
       })
     } else {

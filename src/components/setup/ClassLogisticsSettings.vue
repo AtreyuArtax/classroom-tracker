@@ -242,7 +242,7 @@
       <!-- Resize conflict dialog -->
       <div v-if="resizeConflict.length > 0" class="setup__dialog" role="dialog" aria-modal="true">
         <div class="setup__dialog-box">
-          <h3 class="setup__dialog-title">⚠️ Students will be moved</h3>
+          <h3 class="setup__dialog-title"><AlertTriangle :size="20" style="color: #f59e0b; display: inline-block; vertical-align: -3px; margin-right: 6px;" /> Students will be moved</h3>
           <p class="setup__dialog-body">The following students fall outside the new grid and will be moved to the pool:</p>
           <ul class="setup__dialog-list">
             <li v-for="s in resizeConflict" :key="s.studentId">{{ s.firstName }} {{ s.lastName }} ({{ s.seat.row }},{{ s.seat.col }})</li>
@@ -625,7 +625,7 @@
     <!-- Cross-Class Conflicts Dialog -->
     <div v-if="crossClassConflicts.length > 0" class="setup__dialog" role="dialog" aria-modal="true">
       <div class="setup__dialog-box setup__dialog-box--large">
-        <h3 class="setup__dialog-title">⚠️ Student Conflict Detected</h3>
+        <h3 class="setup__dialog-title"><AlertTriangle :size="20" style="color: #f59e0b; display: inline-block; vertical-align: -3px; margin-right: 6px;" /> Student Conflict Detected</h3>
         <p class="setup__dialog-body">The following students are currently registered in another class this semester. Moving them will unenroll them from their current class.</p>
         <ul class="setup__dialog-list">
           <li v-for="c in crossClassConflicts" :key="c.student.studentId">

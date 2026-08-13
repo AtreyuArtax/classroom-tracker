@@ -260,7 +260,7 @@
       "source_location": "L1304",
       "_origin": "ast",
       "id": "dev_dist_workbox_ca84f546_getidbproxyabletypes",
-      "community": 15,
+      "community": 5,
       "norm_label": "getidbproxyabletypes()"
     },
     {
@@ -270,7 +270,7 @@
       "source_location": "L1308",
       "_origin": "ast",
       "id": "dev_dist_workbox_ca84f546_getcursoradvancemethods",
-      "community": 15,
+      "community": 5,
       "norm_label": "getcursoradvancemethods()"
     },
     {
@@ -280,7 +280,7 @@
       "source_location": "L1316",
       "_origin": "ast",
       "id": "dev_dist_workbox_ca84f546_promisifyrequest",
-      "community": 15,
+      "community": 5,
       "norm_label": "promisifyrequest()"
     },
     {
@@ -290,7 +290,7 @@
       "source_location": "L1346",
       "_origin": "ast",
       "id": "dev_dist_workbox_ca84f546_cachedonepromisefortransaction",
-      "community": 15,
+      "community": 5,
       "norm_label": "cachedonepromisefortransaction()"
     },
     {
@@ -340,7 +340,7 @@
       "source_location": "L1401",
       "_origin": "ast",
       "id": "dev_dist_workbox_ca84f546_wrapfunction",
-      "community": 15,
+      "community": 5,
       "norm_label": "wrapfunction()"
     },
     {
@@ -350,7 +350,7 @@
       "source_location": "L1431",
       "_origin": "ast",
       "id": "dev_dist_workbox_ca84f546_transformcachablevalue",
-      "community": 15,
+      "community": 5,
       "norm_label": "transformcachablevalue()"
     },
     {
@@ -360,7 +360,7 @@
       "source_location": "L1440",
       "_origin": "ast",
       "id": "dev_dist_workbox_ca84f546_wrap",
-      "community": 15,
+      "community": 5,
       "norm_label": "wrap()"
     },
     {
@@ -370,7 +370,7 @@
       "source_location": "L1465",
       "_origin": "ast",
       "id": "dev_dist_workbox_ca84f546_opendb",
-      "community": 15,
+      "community": 5,
       "norm_label": "opendb()"
     },
     {
@@ -1400,7 +1400,7 @@
       "source_location": "L4431",
       "_origin": "ast",
       "id": "dev_dist_workbox_ca84f546_navigationroute",
-      "community": 96,
+      "community": 41,
       "norm_label": "navigationroute"
     },
     {
@@ -1410,7 +1410,7 @@
       "source_location": "L4456",
       "_origin": "ast",
       "id": "dev_dist_workbox_ca84f546_navigationroute_constructor",
-      "community": 96,
+      "community": 41,
       "norm_label": ".constructor()"
     },
     {
@@ -1420,7 +1420,7 @@
       "source_location": "L4488",
       "_origin": "ast",
       "id": "dev_dist_workbox_ca84f546_navigationroute_match",
-      "community": 96,
+      "community": 41,
       "norm_label": "._match()"
     },
     {
@@ -2737,7 +2737,7 @@
       "label": "emit",
       "file_type": "code",
       "source_file": "src/components/GradesAnalyticsPanel.vue",
-      "source_location": "L484",
+      "source_location": "L485",
       "_origin": "ast",
       "id": "components_gradesanalyticspanel_emit",
       "community": 36,
@@ -2747,7 +2747,7 @@
       "label": "isExclusionsOpen",
       "file_type": "code",
       "source_file": "src/components/GradesAnalyticsPanel.vue",
-      "source_location": "L486",
+      "source_location": "L487",
       "_origin": "ast",
       "id": "components_gradesanalyticspanel_isexclusionsopen",
       "community": 36,
@@ -2757,7 +2757,7 @@
       "label": "isCalculating",
       "file_type": "code",
       "source_file": "src/components/GradesAnalyticsPanel.vue",
-      "source_location": "L487",
+      "source_location": "L488",
       "_origin": "ast",
       "id": "components_gradesanalyticspanel_iscalculating",
       "community": 36,
@@ -2767,7 +2767,7 @@
       "label": "getConsistencyInfo()",
       "file_type": "code",
       "source_file": "src/components/GradesAnalyticsPanel.vue",
-      "source_location": "L489",
+      "source_location": "L490",
       "_origin": "ast",
       "id": "components_gradesanalyticspanel_getconsistencyinfo",
       "community": 36,
@@ -2777,7 +2777,7 @@
       "label": "excludedNames",
       "file_type": "code",
       "source_file": "src/components/GradesAnalyticsPanel.vue",
-      "source_location": "L497",
+      "source_location": "L498",
       "_origin": "ast",
       "id": "components_gradesanalyticspanel_excludednames",
       "community": 36,
@@ -2787,17 +2787,17 @@
       "label": "onThresholdChange()",
       "file_type": "code",
       "source_file": "src/components/GradesAnalyticsPanel.vue",
-      "source_location": "L509",
+      "source_location": "L510",
       "_origin": "ast",
       "id": "components_gradesanalyticspanel_onthresholdchange",
-      "community": 81,
+      "community": 21,
       "norm_label": "onthresholdchange()"
     },
     {
       "label": "analyticsSortBy",
       "file_type": "code",
       "source_file": "src/components/GradesAnalyticsPanel.vue",
-      "source_location": "L549",
+      "source_location": "L550",
       "_origin": "ast",
       "id": "components_gradesanalyticspanel_analyticssortby",
       "community": 36,
@@ -2807,7 +2807,7 @@
       "label": "analyticsSortOrder",
       "file_type": "code",
       "source_file": "src/components/GradesAnalyticsPanel.vue",
-      "source_location": "L550",
+      "source_location": "L551",
       "_origin": "ast",
       "id": "components_gradesanalyticspanel_analyticssortorder",
       "community": 36,
@@ -2817,7 +2817,7 @@
       "label": "toggleSort()",
       "file_type": "code",
       "source_file": "src/components/GradesAnalyticsPanel.vue",
-      "source_location": "L552",
+      "source_location": "L553",
       "_origin": "ast",
       "id": "components_gradesanalyticspanel_togglesort",
       "community": 36,
@@ -2827,7 +2827,7 @@
       "label": "activeStudentGrades",
       "file_type": "code",
       "source_file": "src/components/GradesAnalyticsPanel.vue",
-      "source_location": "L562",
+      "source_location": "L563",
       "_origin": "ast",
       "id": "components_gradesanalyticspanel_activestudentgrades",
       "community": 36,
@@ -2837,7 +2837,7 @@
       "label": "overallClassAvg",
       "file_type": "code",
       "source_file": "src/components/GradesAnalyticsPanel.vue",
-      "source_location": "L579",
+      "source_location": "L580",
       "_origin": "ast",
       "id": "components_gradesanalyticspanel_overallclassavg",
       "community": 36,
@@ -2847,7 +2847,7 @@
       "label": "overallClassMedian",
       "file_type": "code",
       "source_file": "src/components/GradesAnalyticsPanel.vue",
-      "source_location": "L585",
+      "source_location": "L586",
       "_origin": "ast",
       "id": "components_gradesanalyticspanel_overallclassmedian",
       "community": 36,
@@ -2857,7 +2857,7 @@
       "label": "overallClassSD",
       "file_type": "code",
       "source_file": "src/components/GradesAnalyticsPanel.vue",
-      "source_location": "L592",
+      "source_location": "L593",
       "_origin": "ast",
       "id": "components_gradesanalyticspanel_overallclasssd",
       "community": 36,
@@ -2867,7 +2867,7 @@
       "label": "getCategoryName()",
       "file_type": "code",
       "source_file": "src/components/GradesAnalyticsPanel.vue",
-      "source_location": "L600",
+      "source_location": "L601",
       "_origin": "ast",
       "id": "components_gradesanalyticspanel_getcategoryname",
       "community": 36,
@@ -2877,7 +2877,7 @@
       "label": "isWeightWarningVisible",
       "file_type": "code",
       "source_file": "src/components/GradesAnalyticsPanel.vue",
-      "source_location": "L605",
+      "source_location": "L606",
       "_origin": "ast",
       "id": "components_gradesanalyticspanel_isweightwarningvisible",
       "community": 36,
@@ -2887,7 +2887,7 @@
       "label": "categoryWeightTotal",
       "file_type": "code",
       "source_file": "src/components/GradesAnalyticsPanel.vue",
-      "source_location": "L609",
+      "source_location": "L610",
       "_origin": "ast",
       "id": "components_gradesanalyticspanel_categoryweighttotal",
       "community": 36,
@@ -2897,7 +2897,7 @@
       "label": "classMostConsistent",
       "file_type": "code",
       "source_file": "src/components/GradesAnalyticsPanel.vue",
-      "source_location": "L614",
+      "source_location": "L615",
       "_origin": "ast",
       "id": "components_gradesanalyticspanel_classmostconsistent",
       "community": 36,
@@ -2907,7 +2907,7 @@
       "label": "classEvidenceBlend",
       "file_type": "code",
       "source_file": "src/components/GradesAnalyticsPanel.vue",
-      "source_location": "L664",
+      "source_location": "L665",
       "_origin": "ast",
       "id": "components_gradesanalyticspanel_classevidenceblend",
       "community": 36,
@@ -2917,7 +2917,7 @@
       "label": "sortedRoster",
       "file_type": "code",
       "source_file": "src/components/GradesAnalyticsPanel.vue",
-      "source_location": "L698",
+      "source_location": "L699",
       "_origin": "ast",
       "id": "components_gradesanalyticspanel_sortedroster",
       "community": 36,
@@ -2927,7 +2927,7 @@
       "label": "bucketChartData",
       "file_type": "code",
       "source_file": "src/components/GradesAnalyticsPanel.vue",
-      "source_location": "L709",
+      "source_location": "L710",
       "_origin": "ast",
       "id": "components_gradesanalyticspanel_bucketchartdata",
       "community": 36,
@@ -2937,7 +2937,7 @@
       "label": "bucketChartOptions",
       "file_type": "code",
       "source_file": "src/components/GradesAnalyticsPanel.vue",
-      "source_location": "L732",
+      "source_location": "L733",
       "_origin": "ast",
       "id": "components_gradesanalyticspanel_bucketchartoptions",
       "community": 36,
@@ -2947,7 +2947,7 @@
       "label": "sortedProductAssessments",
       "file_type": "code",
       "source_file": "src/components/GradesAnalyticsPanel.vue",
-      "source_location": "L762",
+      "source_location": "L763",
       "_origin": "ast",
       "id": "components_gradesanalyticspanel_sortedproductassessments",
       "community": 36,
@@ -2957,7 +2957,7 @@
       "label": "sortedObservationAssessments",
       "file_type": "code",
       "source_file": "src/components/GradesAnalyticsPanel.vue",
-      "source_location": "L767",
+      "source_location": "L768",
       "_origin": "ast",
       "id": "components_gradesanalyticspanel_sortedobservationassessments",
       "community": 36,
@@ -2967,7 +2967,7 @@
       "label": "sortedConversationAssessments",
       "file_type": "code",
       "source_file": "src/components/GradesAnalyticsPanel.vue",
-      "source_location": "L772",
+      "source_location": "L773",
       "_origin": "ast",
       "id": "components_gradesanalyticspanel_sortedconversationassessments",
       "community": 36,
@@ -2977,7 +2977,7 @@
       "label": "processTypedAssessments()",
       "file_type": "code",
       "source_file": "src/components/GradesAnalyticsPanel.vue",
-      "source_location": "L777",
+      "source_location": "L778",
       "_origin": "ast",
       "id": "components_gradesanalyticspanel_processtypedassessments",
       "community": 36,
@@ -7510,7 +7510,7 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "composables_useelementary_geteffectiveclassrecord",
-      "community": 81,
+      "community": 21,
       "norm_label": "geteffectiveclassrecord()"
     },
     {
@@ -8060,7 +8060,7 @@
       "source_location": "L293",
       "_origin": "ast",
       "id": "composables_usegradebook_refreshclassanalytics",
-      "community": 81,
+      "community": 21,
       "norm_label": "refreshclassanalytics()"
     },
     {
@@ -8070,7 +8070,7 @@
       "source_location": "L320",
       "_origin": "ast",
       "id": "composables_usegradebook_setexclusionmode",
-      "community": 81,
+      "community": 21,
       "norm_label": "setexclusionmode()"
     },
     {
@@ -8080,7 +8080,7 @@
       "source_location": "L328",
       "_origin": "ast",
       "id": "composables_usegradebook_togglestudentfromanalytics",
-      "community": 81,
+      "community": 21,
       "norm_label": "togglestudentfromanalytics()"
     },
     {
@@ -10927,7 +10927,7 @@
       "label": "if()",
       "file_type": "code",
       "source_file": "src/views/Setup.vue",
-      "source_location": "L1304",
+      "source_location": "L1303",
       "_origin": "ast",
       "id": "views_setup_if",
       "community": 34,
@@ -10937,7 +10937,7 @@
       "label": "for()",
       "file_type": "code",
       "source_file": "src/views/Setup.vue",
-      "source_location": "L1390",
+      "source_location": "L1389",
       "_origin": "ast",
       "id": "views_setup_for",
       "community": 34,
@@ -15427,21 +15427,21 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/components/GradesAnalyticsPanel.vue",
-      "source_location": "L462",
+      "source_location": "L485",
       "weight": 1.0,
-      "confidence_score": 1.0,
       "source": "components_gradesanalyticspanel",
-      "target": "components_gradesanalyticspanel_emit"
+      "target": "components_gradesanalyticspanel_emit",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/components/GradesAnalyticsPanel.vue",
-      "source_location": "L475",
+      "source_location": "L498",
       "weight": 1.0,
-      "confidence_score": 1.0,
       "source": "components_gradesanalyticspanel",
-      "target": "components_gradesanalyticspanel_excludednames"
+      "target": "components_gradesanalyticspanel_excludednames",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -15467,31 +15467,31 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/components/GradesAnalyticsPanel.vue",
-      "source_location": "L467",
+      "source_location": "L490",
       "weight": 1.0,
-      "confidence_score": 1.0,
       "source": "components_gradesanalyticspanel",
-      "target": "components_gradesanalyticspanel_getconsistencyinfo"
+      "target": "components_gradesanalyticspanel_getconsistencyinfo",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/components/GradesAnalyticsPanel.vue",
-      "source_location": "L465",
+      "source_location": "L488",
       "weight": 1.0,
-      "confidence_score": 1.0,
       "source": "components_gradesanalyticspanel",
-      "target": "components_gradesanalyticspanel_iscalculating"
+      "target": "components_gradesanalyticspanel_iscalculating",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/components/GradesAnalyticsPanel.vue",
-      "source_location": "L464",
+      "source_location": "L487",
       "weight": 1.0,
-      "confidence_score": 1.0,
       "source": "components_gradesanalyticspanel",
-      "target": "components_gradesanalyticspanel_isexclusionsopen"
+      "target": "components_gradesanalyticspanel_isexclusionsopen",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -15507,11 +15507,11 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/components/GradesAnalyticsPanel.vue",
-      "source_location": "L487",
+      "source_location": "L510",
       "weight": 1.0,
-      "confidence_score": 1.0,
       "source": "components_gradesanalyticspanel",
-      "target": "components_gradesanalyticspanel_onthresholdchange"
+      "target": "components_gradesanalyticspanel_onthresholdchange",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -15884,7 +15884,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/GradesAnalyticsPanel.vue",
-      "source_location": "L490",
+      "source_location": "L513",
       "weight": 1.0,
       "source": "components_gradesanalyticspanel_onthresholdchange",
       "target": "composables_usegradebook_refreshclassanalytics"
@@ -30581,5 +30581,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "a645d2fae3c2bf075dec04f599b61538eb38c0d3"
+  "built_at_commit": "3abb9b3b26c536b1d1afbde5e033c535684d3aea"
 }

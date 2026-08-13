@@ -275,7 +275,8 @@
                           class="consistency-badge"
                           :class="'consistency-badge--' + getConsistencyInfo(a.stats.sd).class"
                         >
-                          {{ getConsistencyInfo(a.stats.sd).icon }} {{ getConsistencyInfo(a.stats.sd).label }}
+                          <AlertTriangle v-if="getConsistencyInfo(a.stats.sd).icon === 'AlertTriangle'" :size="12" style="display: inline-block; vertical-align: -1px; margin-right: 2px;" />
+                          <span v-else-if="getConsistencyInfo(a.stats.sd).icon" class="status-dot" :class="'status-dot--' + getConsistencyInfo(a.stats.sd).icon" /> {{ getConsistencyInfo(a.stats.sd).label }}
                         </span>
                       </td>
                       <td>
@@ -488,9 +489,9 @@ const isCalculating = ref(false)
 
 function getConsistencyInfo(sd) {
   if (sd === null || sd === undefined) return { label: '—', class: 'muted', icon: '' }
-  if (sd < 10) return { label: 'Consistent', class: 'consistent', icon: '🟢' }
-  if (sd <= 18) return { label: 'Normal', class: 'normal', icon: '🔵' }
-  return { label: 'High Spread', class: 'spread', icon: '⚠️' }
+  if (sd < 10) return { label: 'Consistent', class: 'consistent', icon: 'success' }
+  if (sd <= 18) return { label: 'Normal', class: 'normal', icon: 'info' }
+  return { label: 'High Spread', class: 'spread', icon: 'AlertTriangle' }
 }
 
 // Outliers lists and display helpers

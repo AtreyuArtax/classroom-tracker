@@ -4,8 +4,8 @@
     <header class="sbar-detail-header">
       <div class="sbar-header-top-row">
         <div class="sbar-header-left">
-          <button class="sbar-back-btn" @click="$emit('close')">
-            <ArrowLeft :size="16" /> {{ returnTabMode === 'dossier' ? 'Back to Student Dossier' : 'Back to Grid' }}
+          <button class="app-back-btn" @click="$emit('close')">
+            <ArrowLeft :size="15" /> {{ returnTabMode === 'dossier' ? 'Back to Student Dossier' : 'Back to Grid' }}
           </button>
           <h2 class="sbar-detail-title">{{ currentAssessment.name }}</h2>
           <div class="sbar-header-tags">
@@ -132,7 +132,7 @@
                   <!-- Bulk Action Dropdown Menu -->
                   <div v-if="activeBulkExp === exp.code" class="bulk-fill-menu" @click.stop>
                     <div class="bulk-fill-title">
-                      <span>⚡ Bulk Fill: <strong>{{ exp.code }}</strong></span>
+                      <span><Zap :size="12" style="display: inline-block; vertical-align: -1px; margin-right: 2px;" /> Bulk Fill: <strong>{{ exp.code }}</strong></span>
                       <button class="bulk-close-btn" @click="activeBulkExp = null">&times;</button>
                     </div>
 

@@ -41,8 +41,8 @@
 
       <!-- Quick Success Banner for Single Roster Import -->
       <div v-if="importResult" class="setup__import-result-summary">
-        <div v-if="importResult.error" class="setup__import-error">
-          ⚠️ {{ importResult.error }}
+        <div v-if="importResult.error" class="setup__import-error" style="display: flex; align-items: center; gap: 6px;">
+          <AlertTriangle :size="16" /> {{ importResult.error }}
         </div>
         <div v-else class="setup__import-success">
           ✅ Import Complete: Added {{ importResult.inserted }} students, updated {{ importResult.updated }} students.

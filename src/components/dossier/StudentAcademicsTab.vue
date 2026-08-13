@@ -114,7 +114,7 @@
               :class="{ 'chip-btn--active': activeAssessmentFilter === 'missing' }"
               @click="activeAssessmentFilter = 'missing'"
             >
-              ⚠️ Missing ({{ missingCount }})
+              <AlertTriangle :size="13" style="display: inline-block; vertical-align: -1px; margin-right: 3px;" /> Missing ({{ missingCount }})
             </button>
 
             <button 
@@ -123,7 +123,7 @@
               :class="{ 'chip-btn--active': activeAssessmentFilter === 'failing' }"
               @click="activeAssessmentFilter = 'failing'"
             >
-              {{ isSBARMode ? '🔴 Level 1- / R' : '🔴 <50%' }} ({{ failingCount }})
+              <span class="status-dot status-dot--danger" /> {{ isSBARMode ? 'Level 1- / R' : '<50%' }} ({{ failingCount }})
             </button>
           </div>
 
@@ -154,8 +154,8 @@
                   @click="isSBARTask(a) && onSelectAssessment(a.assessmentId)"
                   :title="isSBARTask(a) ? 'Click to open SBAR evaluation matrix' : ''"
                 >{{ a.name }}</span>
-                <span v-if="a.target === 'individual' || a.isIndividual" class="badge-student-task" title="Individual student task">👤 Student Task</span>
-                <span v-else-if="getImpactLevel(a.weight).id === 'high'" class="badge-high-weight" title="High grade weight item">🔥 High Weight</span>
+                <span v-if="a.target === 'individual' || a.isIndividual" class="badge-student-task" title="Individual student task"><User :size="12" style="display: inline-block; vertical-align: -1px; margin-right: 2px;" /> Student Task</span>
+                <span v-else-if="getImpactLevel(a.weight).id === 'high'" class="badge-high-weight" title="High grade weight item"><Flame :size="12" style="display: inline-block; vertical-align: -1px; margin-right: 2px;" /> High Weight</span>
               </td>
               <td class="td-type"><span class="badge" :class="'badge--' + a.assessmentType">{{ a.assessmentType }}</span></td>
               <td class="td-score">
@@ -338,7 +338,7 @@
                   class="btn-icon-xs text-danger" 
                   title="Delete this attempt"
                   @click="doDeleteAttempt(attemptsPopover.assessmentId, att.attemptId)"
-                >🗑️</button>
+                ><Trash2 :size="13" /></button>
               </div>
             </div>
             
@@ -427,7 +427,7 @@ import { useMessage } from '../../composables/useMessage.js'
 import { getSBARLevelBadge } from '../../db/gradebook/gradeCalcSBAR.js'
 import { getEffectiveClassRecord } from '../../composables/useElementary.js'
 import { calculateSBARExpectationMastery } from '../../db/gradebookService.js'
-import { Plus, Trash2, X, ChevronRight, Calendar, AlertCircle, XCircle, NotebookPen } from 'lucide-vue-next'
+import { Plus, Trash2, X, ChevronRight, Calendar, AlertCircle, AlertTriangle, XCircle, NotebookPen, Flame, User } from 'lucide-vue-next'
 import SubjectIcon from '../SubjectIcon.vue'
 import DossierCategoryGrid from './DossierCategoryGrid.vue'
 import DossierEvidenceMix from './DossierEvidenceMix.vue'

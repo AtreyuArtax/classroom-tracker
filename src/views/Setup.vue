@@ -3,8 +3,8 @@
     <!-- ── Page Header & Class Selector ───────────────────────────── -->
     <div class="setup__header">
       <div class="setup__header-left">
-        <button v-if="props.from === 'Grades'" class="setup__back-btn" @click="$emit('navigate', 'Grades')">
-          <ArrowLeft :size="18" /> Back to Gradebook
+        <button v-if="props.from === 'Grades'" class="app-back-btn" @click="$emit('navigate', 'Grades')">
+          <ArrowLeft :size="15" /> Back to Gradebook
         </button>
         <div class="setup__header-class">
           <label for="setup-class-selector" class="setup__header-label">Configuring:</label>
@@ -341,9 +341,8 @@
               </div>
             </div>
 
-            <p class="setup__dialog-body" style="margin-top: 0.5rem;">
-              The following students will be added to your homeroom roster.
-              After importing, go to <strong>Class Settings</strong> to configure subjects.
+            <p class="setup__dialog-body" style="margin-top: 0.5rem; color: #64748b; font-size: 0.875rem; line-height: 1.45;">
+              The following students will be added to your homeroom roster. All standard curriculum expectations for your grade will be auto-imported into each subject. You can customize, swap (to Overall Expectations / Success Criteria), or clear them anytime in <strong>Class Settings</strong>.
             </p>
 
             <!-- Student preview list -->
@@ -602,7 +601,7 @@
         <div class="setup__dialog-backdrop" @click="cancelAttendanceModeChange" />
         <div class="setup__dialog-box" style="max-width: 420px;">
           <h3 id="att-modal-title" class="setup__dialog-title" style="display: flex; align-items: center; gap: 8px;">
-            <span style="font-size: 1.2rem;">⚠️</span>
+            <AlertTriangle :size="20" style="color: #f59e0b;" />
             Change Attendance Mode?
           </h3>
 
