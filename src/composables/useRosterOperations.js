@@ -328,11 +328,21 @@ export async function assignSeat(studentId, newSeat) {
 
         await classService.updateStudentSeat(classId, studentId, newSeat)
         students.value[studentId].seat = newSeat
+        if (activeClass.value?.students?.[studentId]) {
+            activeClass.value.students[studentId].seat = newSeat
+        }
+        triggerRef(students)
+        triggerRef(activeClass)
 
         pushUndo(async () => {
             try {
                 await classService.updateStudentSeat(classId, studentId, previousSeat)
                 students.value[studentId].seat = previousSeat
+                if (activeClass.value?.students?.[studentId]) {
+                    activeClass.value.students[studentId].seat = previousSeat
+                }
+                triggerRef(students)
+                triggerRef(activeClass)
             } catch (err) {
                 console.error('Undo assignSeat failed:', err)
                 const { alert } = useMessage()
@@ -382,10 +392,16 @@ export async function autoAssignSeats() {
     }
 
     // Determine the assignments from bottom-up (rows from max down to 1), left-to-right
+    // Skipping aisle cells
+    const layoutConfig = activeClass.value?.layoutConfig || {}
+    const cellTypes = layoutConfig.cellTypes || {}
+
     const availableSeats = []
     for (let r = gridSize.value.rows; r >= 1; r--) {
         for (let c = 1; c <= gridSize.value.cols; c++) {
-            availableSeats.push({ row: r, col: c })
+            if (cellTypes[`${r}-${c}`] !== 'aisle') {
+                availableSeats.push({ row: r, col: c })
+            }
         }
     }
 
@@ -424,6 +440,7 @@ export async function autoAssignSeats() {
                 activeClass.value.students[assign.studentId].seat = assign.seat
             }
         }
+        triggerRef(students)
         triggerRef(activeClass)
 
         // Push a single batch undo operation
@@ -438,6 +455,7 @@ export async function autoAssignSeats() {
                         activeClass.value.students[studentId].seat = seat
                     }
                 }
+                triggerRef(students)
                 triggerRef(activeClass)
             } catch (err) {
                 console.error('Undo autoAssignSeats failed:', err)

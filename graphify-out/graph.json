@@ -2660,7 +2660,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "components_basemodal",
-      "community": 95,
+      "community": 64,
       "norm_label": "basemodal.vue"
     },
     {
@@ -2790,7 +2790,7 @@
       "source_location": "L510",
       "_origin": "ast",
       "id": "components_gradesanalyticspanel_onthresholdchange",
-      "community": 21,
+      "community": 100,
       "norm_label": "onthresholdchange()"
     },
     {
@@ -3010,7 +3010,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "components_messageoverlay",
-      "community": 95,
+      "community": 64,
       "norm_label": "messageoverlay.vue"
     },
     {
@@ -3020,7 +3020,7 @@
       "source_location": "L93",
       "_origin": "ast",
       "id": "components_messageoverlay_state_handleaction_handleselectchoice",
-      "community": 95,
+      "community": 64,
       "norm_label": "{ state, handleaction, handleselectchoice }"
     },
     {
@@ -3030,7 +3030,7 @@
       "source_location": "L94",
       "_origin": "ast",
       "id": "components_messageoverlay_inputref",
-      "community": 95,
+      "community": 64,
       "norm_label": "inputref"
     },
     {
@@ -3040,7 +3040,7 @@
       "source_location": "L95",
       "_origin": "ast",
       "id": "components_messageoverlay_confirmbtnref",
-      "community": 95,
+      "community": 64,
       "norm_label": "confirmbtnref"
     },
     {
@@ -3050,7 +3050,7 @@
       "source_location": "L97",
       "_origin": "ast",
       "id": "components_messageoverlay_isconfirmdisabled",
-      "community": 95,
+      "community": 64,
       "norm_label": "isconfirmdisabled"
     },
     {
@@ -3060,7 +3060,7 @@
       "source_location": "L102",
       "_origin": "ast",
       "id": "components_messageoverlay_onenter",
-      "community": 95,
+      "community": 64,
       "norm_label": "onenter()"
     },
     {
@@ -3277,7 +3277,7 @@
       "label": "if()",
       "file_type": "code",
       "source_file": "src/components/SeatingGrid.vue",
-      "source_location": "L59",
+      "source_location": "L73",
       "_origin": "ast",
       "id": "components_seatinggrid_if",
       "community": 40,
@@ -3640,7 +3640,7 @@
       "source_location": "L252",
       "_origin": "ast",
       "id": "dossier_progressreport_formatdate",
-      "community": 88,
+      "community": 61,
       "norm_label": "formatdate()"
     },
     {
@@ -4460,7 +4460,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dossier_studentgradetrend",
-      "community": 106,
+      "community": 14,
       "norm_label": "studentgradetrend.vue"
     },
     {
@@ -4470,7 +4470,7 @@
       "source_location": "L115",
       "_origin": "ast",
       "id": "dossier_studentgradetrend_if",
-      "community": 106,
+      "community": 14,
       "norm_label": "if()"
     },
     {
@@ -5070,7 +5070,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "reports_reportsexportmenu",
-      "community": 35,
+      "community": 61,
       "norm_label": "reportsexportmenu.vue"
     },
     {
@@ -5080,7 +5080,7 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "reports_reportsexportmenu_props",
-      "community": 35,
+      "community": 61,
       "norm_label": "props"
     },
     {
@@ -5090,7 +5090,7 @@
       "source_location": "L49",
       "_origin": "ast",
       "id": "reports_reportsexportmenu_alert_confirm_select",
-      "community": 35,
+      "community": 61,
       "norm_label": "{ alert, confirm, select }"
     },
     {
@@ -5100,7 +5100,7 @@
       "source_location": "L51",
       "_origin": "ast",
       "id": "reports_reportsexportmenu_showexportmenu",
-      "community": 35,
+      "community": 61,
       "norm_label": "showexportmenu"
     },
     {
@@ -5110,7 +5110,7 @@
       "source_location": "L52",
       "_origin": "ast",
       "id": "reports_reportsexportmenu_exportcontainer",
-      "community": 35,
+      "community": 61,
       "norm_label": "exportcontainer"
     },
     {
@@ -5120,7 +5120,7 @@
       "source_location": "L54",
       "_origin": "ast",
       "id": "reports_reportsexportmenu_handleclickoutside",
-      "community": 35,
+      "community": 61,
       "norm_label": "handleclickoutside()"
     },
     {
@@ -5140,7 +5140,7 @@
       "source_location": "L278",
       "_origin": "ast",
       "id": "reports_reportsexportmenu_downloadaggregatecsv",
-      "community": 35,
+      "community": 61,
       "norm_label": "downloadaggregatecsv()"
     },
     {
@@ -5547,7 +5547,7 @@
       "label": "if()",
       "file_type": "code",
       "source_file": "src/components/setup/ClassLogisticsSettings.vue",
-      "source_location": "L749",
+      "source_location": "L761",
       "_origin": "ast",
       "id": "setup_classlogisticssettings_if",
       "community": 19,
@@ -5557,7 +5557,7 @@
       "label": "playRapidBeep()",
       "file_type": "code",
       "source_file": "src/components/setup/ClassLogisticsSettings.vue",
-      "source_location": "L1124",
+      "source_location": "L1136",
       "_origin": "ast",
       "id": "setup_classlogisticssettings_playrapidbeep",
       "community": 19,
@@ -5567,7 +5567,7 @@
       "label": "crossClassConflicts",
       "file_type": "code",
       "source_file": "src/components/setup/ClassLogisticsSettings.vue",
-      "source_location": "L1139",
+      "source_location": "L1151",
       "_origin": "ast",
       "id": "setup_classlogisticssettings_crossclassconflicts",
       "community": 19,
@@ -5577,7 +5577,7 @@
       "label": "_pendingConflicts",
       "file_type": "code",
       "source_file": "src/components/setup/ClassLogisticsSettings.vue",
-      "source_location": "L1140",
+      "source_location": "L1152",
       "_origin": "ast",
       "id": "setup_classlogisticssettings_pendingconflicts",
       "community": 19,
@@ -5587,7 +5587,7 @@
       "label": "addSingleStudent()",
       "file_type": "code",
       "source_file": "src/components/setup/ClassLogisticsSettings.vue",
-      "source_location": "L1142",
+      "source_location": "L1154",
       "_origin": "ast",
       "id": "setup_classlogisticssettings_addsinglestudent",
       "community": 19,
@@ -5597,7 +5597,7 @@
       "label": "resolveConflicts()",
       "file_type": "code",
       "source_file": "src/components/setup/ClassLogisticsSettings.vue",
-      "source_location": "L1190",
+      "source_location": "L1202",
       "_origin": "ast",
       "id": "setup_classlogisticssettings_resolveconflicts",
       "community": 19,
@@ -6544,6 +6544,36 @@
       "norm_label": "normalizesemester()"
     },
     {
+      "label": "SeatingLayoutDesigner.vue",
+      "file_type": "code",
+      "source_file": "src/components/setup/SeatingLayoutDesigner.vue",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "setup_seatinglayoutdesigner",
+      "community": 110,
+      "norm_label": "seatinglayoutdesigner.vue"
+    },
+    {
+      "label": "if()",
+      "file_type": "code",
+      "source_file": "src/components/setup/SeatingLayoutDesigner.vue",
+      "source_location": "L272",
+      "_origin": "ast",
+      "id": "setup_seatinglayoutdesigner_if",
+      "community": 110,
+      "norm_label": "if()"
+    },
+    {
+      "label": "for()",
+      "file_type": "code",
+      "source_file": "src/components/setup/SeatingLayoutDesigner.vue",
+      "source_location": "L423",
+      "_origin": "ast",
+      "id": "setup_seatinglayoutdesigner_for",
+      "community": 110,
+      "norm_label": "for()"
+    },
+    {
       "label": "SemesterCalendar.vue",
       "file_type": "code",
       "source_file": "src/components/setup/SemesterCalendar.vue",
@@ -6760,7 +6790,7 @@
       "source_location": "L135",
       "_origin": "ast",
       "id": "composables_useclassroom_computeweeklystats",
-      "community": 87,
+      "community": 8,
       "norm_label": "computeweeklystats()"
     },
     {
@@ -7070,7 +7100,7 @@
       "source_location": "L1230",
       "_origin": "ast",
       "id": "composables_useclassroom_editevent",
-      "community": 87,
+      "community": 8,
       "norm_label": "editevent()"
     },
     {
@@ -7080,7 +7110,7 @@
       "source_location": "L1256",
       "_origin": "ast",
       "id": "composables_useclassroom_removeevent",
-      "community": 87,
+      "community": 8,
       "norm_label": "removeevent()"
     },
     {
@@ -7480,7 +7510,7 @@
       "source_location": "L44",
       "_origin": "ast",
       "id": "composables_useclassroomstate_activesubjectid",
-      "community": 64,
+      "community": 88,
       "norm_label": "activesubjectid"
     },
     {
@@ -7510,7 +7540,7 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "composables_useelementary_geteffectiveclassrecord",
-      "community": 21,
+      "community": 100,
       "norm_label": "geteffectiveclassrecord()"
     },
     {
@@ -7700,7 +7730,7 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "composables_usegradebook_classgrades",
-      "community": 10,
+      "community": 14,
       "norm_label": "classgrades"
     },
     {
@@ -7730,7 +7760,7 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "composables_usegradebook_globalmilestones",
-      "community": 35,
+      "community": 61,
       "norm_label": "globalmilestones"
     },
     {
@@ -7760,7 +7790,7 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "composables_usegradebook_activesubcohortfilter",
-      "community": 36,
+      "community": 1,
       "norm_label": "activesubcohortfilter"
     },
     {
@@ -8020,7 +8050,7 @@
       "source_location": "L209",
       "_origin": "ast",
       "id": "composables_usegradebook_filteredmilestones",
-      "community": 35,
+      "community": 61,
       "norm_label": "filteredmilestones"
     },
     {
@@ -8050,7 +8080,7 @@
       "source_location": "L277",
       "_origin": "ast",
       "id": "composables_usegradebook_refreshgrades",
-      "community": 1,
+      "community": 100,
       "norm_label": "refreshgrades()"
     },
     {
@@ -8060,7 +8090,7 @@
       "source_location": "L293",
       "_origin": "ast",
       "id": "composables_usegradebook_refreshclassanalytics",
-      "community": 21,
+      "community": 100,
       "norm_label": "refreshclassanalytics()"
     },
     {
@@ -8070,7 +8100,7 @@
       "source_location": "L320",
       "_origin": "ast",
       "id": "composables_usegradebook_setexclusionmode",
-      "community": 21,
+      "community": 100,
       "norm_label": "setexclusionmode()"
     },
     {
@@ -8080,7 +8110,7 @@
       "source_location": "L328",
       "_origin": "ast",
       "id": "composables_usegradebook_togglestudentfromanalytics",
-      "community": 21,
+      "community": 100,
       "norm_label": "togglestudentfromanalytics()"
     },
     {
@@ -8110,7 +8140,7 @@
       "source_location": "L385",
       "_origin": "ast",
       "id": "composables_usegradebook_editassessment",
-      "community": 1,
+      "community": 100,
       "norm_label": "editassessment()"
     },
     {
@@ -8120,7 +8150,7 @@
       "source_location": "L406",
       "_origin": "ast",
       "id": "composables_usegradebook_deleteassessment",
-      "community": 1,
+      "community": 100,
       "norm_label": "deleteassessment()"
     },
     {
@@ -8300,7 +8330,7 @@
       "source_location": "L1046",
       "_origin": "ast",
       "id": "composables_usegradebook_savestudentoverride",
-      "community": 1,
+      "community": 100,
       "norm_label": "savestudentoverride()"
     },
     {
@@ -8340,7 +8370,7 @@
       "source_location": "L1187",
       "_origin": "ast",
       "id": "composables_usegradebook_adjuststudentgrade",
-      "community": 10,
+      "community": 100,
       "norm_label": "adjuststudentgrade()"
     },
     {
@@ -8350,7 +8380,7 @@
       "source_location": "L1217",
       "_origin": "ast",
       "id": "composables_usegradebook_undostudentgradeadjustment",
-      "community": 10,
+      "community": 100,
       "norm_label": "undostudentgradeadjustment()"
     },
     {
@@ -8777,7 +8807,7 @@
       "label": "autoAssignSeats()",
       "file_type": "code",
       "source_file": "src/composables/useRosterOperations.js",
-      "source_location": "L355",
+      "source_location": "L365",
       "_origin": "ast",
       "id": "composables_userosteroperations_autoassignseats",
       "community": 24,
@@ -8800,7 +8830,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "composables_usesbarprintoptions_usesbarprintoptions",
-      "community": 18,
+      "community": 88,
       "norm_label": "usesbarprintoptions()"
     },
     {
@@ -9210,7 +9240,7 @@
       "source_location": "L524",
       "_origin": "ast",
       "id": "db_classservice_clearalldata",
-      "community": 87,
+      "community": 8,
       "norm_label": "clearalldata()"
     },
     {
@@ -9280,7 +9310,7 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "db_eventservice_tominutes",
-      "community": 35,
+      "community": 61,
       "norm_label": "tominutes()"
     },
     {
@@ -9460,7 +9490,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "db_exportservice",
-      "community": 9,
+      "community": 61,
       "norm_label": "exportservice.js"
     },
     {
@@ -10000,7 +10030,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "db_index",
-      "community": 87,
+      "community": 8,
       "norm_label": "index.js"
     },
     {
@@ -10060,7 +10090,7 @@
       "source_location": "L140",
       "_origin": "ast",
       "id": "db_settingsservice_getsettings",
-      "community": 23,
+      "community": 2,
       "norm_label": "getsettings()"
     },
     {
@@ -10144,10 +10174,40 @@
       "norm_label": "saveglobalmilestones()"
     },
     {
+      "label": "getSavedLayoutPresets()",
+      "file_type": "code",
+      "source_file": "src/db/settingsService.js",
+      "source_location": "L254",
+      "_origin": "ast",
+      "id": "db_settingsservice_getsavedlayoutpresets",
+      "community": 23,
+      "norm_label": "getsavedlayoutpresets()"
+    },
+    {
+      "label": "saveLayoutPreset()",
+      "file_type": "code",
+      "source_file": "src/db/settingsService.js",
+      "source_location": "L264",
+      "_origin": "ast",
+      "id": "db_settingsservice_savelayoutpreset",
+      "community": 23,
+      "norm_label": "savelayoutpreset()"
+    },
+    {
+      "label": "deleteLayoutPreset()",
+      "file_type": "code",
+      "source_file": "src/db/settingsService.js",
+      "source_location": "L283",
+      "_origin": "ast",
+      "id": "db_settingsservice_deletelayoutpreset",
+      "community": 23,
+      "norm_label": "deletelayoutpreset()"
+    },
+    {
       "label": "getTeacherName()",
       "file_type": "code",
       "source_file": "src/db/settingsService.js",
-      "source_location": "L255",
+      "source_location": "L298",
       "_origin": "ast",
       "id": "db_settingsservice_getteachername",
       "community": 23,
@@ -10157,7 +10217,7 @@
       "label": "saveTeacherName()",
       "file_type": "code",
       "source_file": "src/db/settingsService.js",
-      "source_location": "L266",
+      "source_location": "L309",
       "_origin": "ast",
       "id": "db_settingsservice_saveteachername",
       "community": 23,
@@ -10167,7 +10227,7 @@
       "label": "getAttendanceConfig()",
       "file_type": "code",
       "source_file": "src/db/settingsService.js",
-      "source_location": "L279",
+      "source_location": "L322",
       "_origin": "ast",
       "id": "db_settingsservice_getattendanceconfig",
       "community": 23,
@@ -10177,7 +10237,7 @@
       "label": "saveAttendanceConfig()",
       "file_type": "code",
       "source_file": "src/db/settingsService.js",
-      "source_location": "L293",
+      "source_location": "L336",
       "_origin": "ast",
       "id": "db_settingsservice_saveattendanceconfig",
       "community": 23,
@@ -10187,7 +10247,7 @@
       "label": "getAcademicTerms()",
       "file_type": "code",
       "source_file": "src/db/settingsService.js",
-      "source_location": "L307",
+      "source_location": "L350",
       "_origin": "ast",
       "id": "db_settingsservice_getacademicterms",
       "community": 23,
@@ -10197,7 +10257,7 @@
       "label": "saveAcademicTerms()",
       "file_type": "code",
       "source_file": "src/db/settingsService.js",
-      "source_location": "L318",
+      "source_location": "L361",
       "_origin": "ast",
       "id": "db_settingsservice_saveacademicterms",
       "community": 23,
@@ -10207,7 +10267,7 @@
       "label": "getPeriodStartTimes()",
       "file_type": "code",
       "source_file": "src/db/settingsService.js",
-      "source_location": "L331",
+      "source_location": "L374",
       "_origin": "ast",
       "id": "db_settingsservice_getperiodstarttimes",
       "community": 23,
@@ -10217,7 +10277,7 @@
       "label": "savePeriodStartTimes()",
       "file_type": "code",
       "source_file": "src/db/settingsService.js",
-      "source_location": "L347",
+      "source_location": "L390",
       "_origin": "ast",
       "id": "db_settingsservice_saveperiodstarttimes",
       "community": 23,
@@ -10227,7 +10287,7 @@
       "label": "getGradeBuckets()",
       "file_type": "code",
       "source_file": "src/db/settingsService.js",
-      "source_location": "L358",
+      "source_location": "L401",
       "_origin": "ast",
       "id": "db_settingsservice_getgradebuckets",
       "community": 23,
@@ -10237,7 +10297,7 @@
       "label": "saveGradeBuckets()",
       "file_type": "code",
       "source_file": "src/db/settingsService.js",
-      "source_location": "L372",
+      "source_location": "L415",
       "_origin": "ast",
       "id": "db_settingsservice_savegradebuckets",
       "community": 23,
@@ -10247,7 +10307,7 @@
       "label": "getNonSchoolDays()",
       "file_type": "code",
       "source_file": "src/db/settingsService.js",
-      "source_location": "L385",
+      "source_location": "L428",
       "_origin": "ast",
       "id": "db_settingsservice_getnonschooldays",
       "community": 23,
@@ -10257,7 +10317,7 @@
       "label": "saveNonSchoolDays()",
       "file_type": "code",
       "source_file": "src/db/settingsService.js",
-      "source_location": "L396",
+      "source_location": "L439",
       "_origin": "ast",
       "id": "db_settingsservice_savenonschooldays",
       "community": 23,
@@ -10267,7 +10327,7 @@
       "label": "auditSettingsIntegrity()",
       "file_type": "code",
       "source_file": "src/db/settingsService.js",
-      "source_location": "L407",
+      "source_location": "L450",
       "_origin": "ast",
       "id": "db_settingsservice_auditsettingsintegrity",
       "community": 23,
@@ -10310,7 +10370,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_dates",
-      "community": 87,
+      "community": 61,
       "norm_label": "dates.js"
     },
     {
@@ -10320,7 +10380,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "utils_dates_formatlocaldisplay",
-      "community": 88,
+      "community": 61,
       "norm_label": "formatlocaldisplay()"
     },
     {
@@ -10330,7 +10390,7 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "utils_dates_parselocal",
-      "community": 9,
+      "community": 61,
       "norm_label": "parselocal()"
     },
     {
@@ -10340,7 +10400,7 @@
       "source_location": "L41",
       "_origin": "ast",
       "id": "utils_dates_getcurrentschoolyear",
-      "community": 87,
+      "community": 8,
       "norm_label": "getcurrentschoolyear()"
     },
     {
@@ -10350,7 +10410,7 @@
       "source_location": "L61",
       "_origin": "ast",
       "id": "utils_dates_getcurrentsemester",
-      "community": 87,
+      "community": 8,
       "norm_label": "getcurrentsemester()"
     },
     {
@@ -10400,7 +10460,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_gradecolors",
-      "community": 36,
+      "community": 78,
       "norm_label": "gradecolors.js"
     },
     {
@@ -10410,7 +10470,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "utils_gradecolors_getheatcolorhex",
-      "community": 36,
+      "community": 78,
       "norm_label": "getheatcolorhex()"
     },
     {
@@ -10420,7 +10480,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "utils_gradecolors_getsdcolor",
-      "community": 36,
+      "community": 78,
       "norm_label": "getsdcolor()"
     },
     {
@@ -10430,7 +10490,7 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "utils_gradecolors_getcoveragecolor",
-      "community": 36,
+      "community": 78,
       "norm_label": "getcoveragecolor()"
     },
     {
@@ -10440,7 +10500,7 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "utils_gradecolors_formatgrade",
-      "community": 36,
+      "community": 78,
       "norm_label": "formatgrade()"
     },
     {
@@ -10450,7 +10510,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "utils_gradecolors_getgradecolor",
-      "community": 36,
+      "community": 78,
       "norm_label": "getgradecolor()"
     },
     {
@@ -10460,7 +10520,7 @@
       "source_location": "L42",
       "_origin": "ast",
       "id": "utils_gradecolors_getgradecolormuted",
-      "community": 36,
+      "community": 78,
       "norm_label": "getgradecolormuted()"
     },
     {
@@ -10470,7 +10530,7 @@
       "source_location": "L50",
       "_origin": "ast",
       "id": "utils_gradecolors_getheatcolor",
-      "community": 36,
+      "community": 78,
       "norm_label": "getheatcolor()"
     },
     {
@@ -10480,7 +10540,7 @@
       "source_location": "L58",
       "_origin": "ast",
       "id": "utils_gradecolors_getheattextcolor",
-      "community": 36,
+      "community": 78,
       "norm_label": "getheattextcolor()"
     },
     {
@@ -10490,7 +10550,7 @@
       "source_location": "L66",
       "_origin": "ast",
       "id": "utils_gradecolors_unit_colors",
-      "community": 36,
+      "community": 78,
       "norm_label": "unit_colors"
     },
     {
@@ -10500,7 +10560,7 @@
       "source_location": "L76",
       "_origin": "ast",
       "id": "utils_gradecolors_section_badge_style",
-      "community": 36,
+      "community": 78,
       "norm_label": "section_badge_style"
     },
     {
@@ -10510,7 +10570,7 @@
       "source_location": "L84",
       "_origin": "ast",
       "id": "utils_gradecolors_section_palettes",
-      "community": 36,
+      "community": 78,
       "norm_label": "section_palettes"
     },
     {
@@ -10520,7 +10580,7 @@
       "source_location": "L86",
       "_origin": "ast",
       "id": "utils_gradecolors_getsectioncolor",
-      "community": 36,
+      "community": 78,
       "norm_label": "getsectioncolor()"
     },
     {
@@ -10580,7 +10640,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_reportformatter",
-      "community": 35,
+      "community": 61,
       "norm_label": "reportformatter.js"
     },
     {
@@ -10590,7 +10650,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "utils_reportformatter_formatqualitativeevidenceforreport",
-      "community": 35,
+      "community": 61,
       "norm_label": "formatqualitativeevidenceforreport()"
     },
     {
@@ -10950,7 +11010,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tmp_test_dates",
-      "community": 87,
+      "community": 8,
       "norm_label": "test_dates.js"
     },
     {
@@ -10960,7 +11020,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "tmp_test_dates_testyear",
-      "community": 87,
+      "community": 8,
       "norm_label": "testyear()"
     },
     {
@@ -15429,9 +15489,9 @@
       "source_file": "src/components/GradesAnalyticsPanel.vue",
       "source_location": "L485",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "components_gradesanalyticspanel",
-      "target": "components_gradesanalyticspanel_emit",
-      "confidence_score": 1.0
+      "target": "components_gradesanalyticspanel_emit"
     },
     {
       "relation": "contains",
@@ -15439,9 +15499,9 @@
       "source_file": "src/components/GradesAnalyticsPanel.vue",
       "source_location": "L498",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "components_gradesanalyticspanel",
-      "target": "components_gradesanalyticspanel_excludednames",
-      "confidence_score": 1.0
+      "target": "components_gradesanalyticspanel_excludednames"
     },
     {
       "relation": "contains",
@@ -15469,9 +15529,9 @@
       "source_file": "src/components/GradesAnalyticsPanel.vue",
       "source_location": "L490",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "components_gradesanalyticspanel",
-      "target": "components_gradesanalyticspanel_getconsistencyinfo",
-      "confidence_score": 1.0
+      "target": "components_gradesanalyticspanel_getconsistencyinfo"
     },
     {
       "relation": "contains",
@@ -15479,9 +15539,9 @@
       "source_file": "src/components/GradesAnalyticsPanel.vue",
       "source_location": "L488",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "components_gradesanalyticspanel",
-      "target": "components_gradesanalyticspanel_iscalculating",
-      "confidence_score": 1.0
+      "target": "components_gradesanalyticspanel_iscalculating"
     },
     {
       "relation": "contains",
@@ -15489,9 +15549,9 @@
       "source_file": "src/components/GradesAnalyticsPanel.vue",
       "source_location": "L487",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "components_gradesanalyticspanel",
-      "target": "components_gradesanalyticspanel_isexclusionsopen",
-      "confidence_score": 1.0
+      "target": "components_gradesanalyticspanel_isexclusionsopen"
     },
     {
       "relation": "contains",
@@ -15509,9 +15569,9 @@
       "source_file": "src/components/GradesAnalyticsPanel.vue",
       "source_location": "L510",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "components_gradesanalyticspanel",
-      "target": "components_gradesanalyticspanel_onthresholdchange",
-      "confidence_score": 1.0
+      "target": "components_gradesanalyticspanel_onthresholdchange"
     },
     {
       "relation": "contains",
@@ -20919,6 +20979,26 @@
       "weight": 1.0,
       "source": "setup_rostercsvimporter_confirmbulkimport",
       "target": "composables_useclassroom_bulkimportclasses"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/setup/SeatingLayoutDesigner.vue",
+      "source_location": "L414",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "setup_seatinglayoutdesigner",
+      "target": "setup_seatinglayoutdesigner_for"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/setup/SeatingLayoutDesigner.vue",
+      "source_location": "L326",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "setup_seatinglayoutdesigner",
+      "target": "setup_seatinglayoutdesigner_if"
     },
     {
       "relation": "contains",
@@ -29405,6 +29485,17 @@
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/db/settingsService.js",
+      "source_location": "L284",
+      "weight": 1.0,
+      "source": "db_settingsservice_deletelayoutpreset",
+      "target": "db_index_getdb"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
       "source_file": "src/db/settingsService.js",
       "source_location": "L29",
       "weight": 1.0,
@@ -29465,6 +29556,17 @@
       "source_location": "L373",
       "weight": 1.0,
       "source": "db_settingsservice_savegradebuckets",
+      "target": "db_index_getdb"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/db/settingsService.js",
+      "source_location": "L265",
+      "weight": 1.0,
+      "source": "db_settingsservice_savelayoutpreset",
       "target": "db_index_getdb"
     },
     {
@@ -29556,6 +29658,16 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/db/settingsService.js",
+      "source_location": "L283",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "db_settingsservice",
+      "target": "db_settingsservice_deletelayoutpreset"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/db/settingsService.js",
       "source_location": "L307",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -29621,6 +29733,16 @@
       "confidence_score": 1.0,
       "source": "db_settingsservice",
       "target": "db_settingsservice_getperiodstarttimes"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/db/settingsService.js",
+      "source_location": "L254",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "db_settingsservice",
+      "target": "db_settingsservice_getsavedlayoutpresets"
     },
     {
       "relation": "contains",
@@ -29716,6 +29838,16 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/db/settingsService.js",
+      "source_location": "L264",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "db_settingsservice",
+      "target": "db_settingsservice_savelayoutpreset"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/db/settingsService.js",
       "source_location": "L396",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -29761,6 +29893,17 @@
       "confidence_score": 1.0,
       "source": "db_settingsservice",
       "target": "db_settingsservice_savethresholds"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/db/settingsService.js",
+      "source_location": "L285",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "db_settingsservice_deletelayoutpreset",
+      "target": "db_settingsservice_readsettings"
     },
     {
       "relation": "calls",
@@ -29844,6 +29987,17 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/db/settingsService.js",
+      "source_location": "L255",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "db_settingsservice_getsavedlayoutpresets",
+      "target": "db_settingsservice_readsettings"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/db/settingsService.js",
       "source_location": "L141",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -29870,6 +30024,17 @@
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "db_settingsservice_getthresholds",
+      "target": "db_settingsservice_readsettings"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/db/settingsService.js",
+      "source_location": "L266",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "db_settingsservice_savelayoutpreset",
       "target": "db_settingsservice_readsettings"
     },
     {
@@ -30581,5 +30746,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "3abb9b3b26c536b1d1afbde5e033c535684d3aea"
+  "built_at_commit": "3806372c6af0bfd5527d9d4f258185e23ac5bb70"
 }

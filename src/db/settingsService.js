@@ -248,6 +248,49 @@ export async function saveGlobalMilestones(milestones) {
 }
 
 /**
+ * Returns saved seating layout presets.
+ * @returns {Promise<Array<Object>>}
+ */
+export async function getSavedLayoutPresets() {
+    const settings = await _readSettings()
+    return settings.savedLayoutPresets || []
+}
+
+/**
+ * Saves a layout preset template to global settings.
+ * @param {Object} presetObj { id, name, rows, cols, layoutConfig }
+ * @returns {Promise<void>}
+ */
+export async function saveLayoutPreset(presetObj) {
+    const db = await getDB()
+    const settings = await _readSettings()
+    if (!settings.savedLayoutPresets) settings.savedLayoutPresets = []
+    const existingIdx = settings.savedLayoutPresets.findIndex(p => p.id === presetObj.id)
+    if (existingIdx >= 0) {
+        settings.savedLayoutPresets[existingIdx] = presetObj
+    } else {
+        settings.savedLayoutPresets.push(presetObj)
+    }
+    await db.put('settings', settings, 'singleton')
+    hasUnsyncedChanges.value = true
+}
+
+/**
+ * Deletes a layout preset template by ID.
+ * @param {string} presetId
+ * @returns {Promise<void>}
+ */
+export async function deleteLayoutPreset(presetId) {
+    const db = await getDB()
+    const settings = await _readSettings()
+    if (settings.savedLayoutPresets) {
+        settings.savedLayoutPresets = settings.savedLayoutPresets.filter(p => p.id !== presetId)
+        await db.put('settings', settings, 'singleton')
+        hasUnsyncedChanges.value = true
+    }
+}
+
+/**
  * Returns the global teacher name.
  *
  * @returns {Promise<string>}

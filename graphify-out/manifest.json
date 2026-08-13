@@ -110,8 +110,8 @@
     "semantic_hash": ""
   },
   "src/components/SeatingGrid.vue": {
-    "mtime": 1785186400.9816215,
-    "ast_hash": "63320eb4dbfa3d0647497fb2845da6ed",
+    "mtime": 1786592385.1483989,
+    "ast_hash": "663da1ceba8065edbfb884281912b9ca",
     "semantic_hash": ""
   },
   "src/components/StudentProfileModal.vue": {
@@ -305,8 +305,8 @@
     "semantic_hash": ""
   },
   "src/db/settingsService.js": {
-    "mtime": 1786549925.778599,
-    "ast_hash": "1ff24938ac4653fb1eac4b1070ba115d",
+    "mtime": 1786591224.610131,
+    "ast_hash": "6fcbec70a7fcf8d88c93dcd7281baa7c",
     "semantic_hash": ""
   },
   "src/main.js": {
@@ -440,13 +440,13 @@
     "semantic_hash": ""
   },
   "src/composables/useRosterOperations.js": {
-    "mtime": 1786498208.5409508,
-    "ast_hash": "9dac64d32ad711f7825abf307f24903b",
+    "mtime": 1786592481.3828168,
+    "ast_hash": "8fecf5408f2da48b06dcfb46d082349a",
     "semantic_hash": ""
   },
   "src/components/setup/ClassLogisticsSettings.vue": {
-    "mtime": 1786590138.9478772,
-    "ast_hash": "5f36b6075a9160a171183b8e8089deed",
+    "mtime": 1786591537.533224,
+    "ast_hash": "aa57ad425b6df81a25a24d4b93d7216b",
     "semantic_hash": ""
   },
   "src/components/setup/DatabaseMaintenanceSettings.vue": {
@@ -997,6 +997,11 @@
   "src/data/curriculum/ontario/secondary/science/ontario-sph4u.json": {
     "mtime": 1786297845.0912867,
     "ast_hash": "3a3ef9c3ed16cd66357fc67b85e7398b",
+    "semantic_hash": ""
+  },
+  "src/components/setup/SeatingLayoutDesigner.vue": {
+    "mtime": 1786592101.356099,
+    "ast_hash": "ac4526f8ebf1a9c5b20b2bfa45081379",
     "semantic_hash": ""
   }
 }

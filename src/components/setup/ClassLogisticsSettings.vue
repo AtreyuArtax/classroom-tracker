@@ -221,17 +221,30 @@
 
     <!-- Seating Plan -->
     <div class="setup__card">
-      <h2 class="setup__card-title">Seating Plan</h2>
-      <p class="setup__hint">Adjust rows and columns for this specific classroom layout.</p>
-      <form class="setup__form" @submit.prevent="requestResize">
+      <div style="display: flex; justify-content: space-between; align-items: center; wrap: wrap; gap: 12px;">
+        <div>
+          <h2 class="setup__card-title" style="margin: 0;">Seating Plan & Layout</h2>
+          <p class="setup__hint" style="margin-top: 2px;">Quickly set grid rows/columns or launch the advanced visual layout designer.</p>
+        </div>
+        <button 
+          type="button" 
+          class="setup__btn-primary" 
+          style="display: flex; align-items: center; gap: 6px; padding: 6px 14px; font-size: 0.85rem;"
+          @click="isDesignerModalOpen = true"
+        >
+          <LayoutGrid :size="16" /> Advanced Layout Designer
+        </button>
+      </div>
+
+      <form class="setup__form" style="margin-top: 1rem;" @submit.prevent="requestResize">
         <div class="setup__form-grid">
           <label class="setup__label">
             Rows
-            <input v-model.number="newGrid.rows" type="number" min="1" max="10" class="setup__input" required />
+            <input v-model.number="newGrid.rows" type="number" min="1" max="12" class="setup__input" required />
           </label>
           <label class="setup__label">
             Columns
-            <input v-model.number="newGrid.cols" type="number" min="1" max="10" class="setup__input" required />
+            <input v-model.number="newGrid.cols" type="number" min="1" max="12" class="setup__input" required />
           </label>
         </div>
         <div class="setup__grid-actions" style="margin-top: 1rem; display: flex; gap: 8px;">
@@ -239,21 +252,16 @@
           <button type="button" class="setup__btn-ghost" @click="setGlobalDefaultGrid">Save as Global Default</button>
         </div>
       </form>
-      <!-- Resize conflict dialog -->
-      <div v-if="resizeConflict.length > 0" class="setup__dialog" role="dialog" aria-modal="true">
-        <div class="setup__dialog-box">
-          <h3 class="setup__dialog-title"><AlertTriangle :size="20" style="color: #f59e0b; display: inline-block; vertical-align: -3px; margin-right: 6px;" /> Students will be moved</h3>
-          <p class="setup__dialog-body">The following students fall outside the new grid and will be moved to the pool:</p>
-          <ul class="setup__dialog-list">
-            <li v-for="s in resizeConflict" :key="s.studentId">{{ s.firstName }} {{ s.lastName }} ({{ s.seat.row }},{{ s.seat.col }})</li>
-          </ul>
-          <div class="setup__dialog-actions">
-            <button class="setup__btn-danger" @click="applyResize">Move to pool & resize</button>
-            <button class="setup__btn-ghost" @click="resizeConflict = []">Cancel</button>
-          </div>
-        </div>
-        <div class="setup__dialog-backdrop" @click="resizeConflict = []" />
-      </div>
+
+      <!-- Advanced Layout Designer Modal -->
+      <BaseModal
+        :show="isDesignerModalOpen"
+        title="Custom Seating Layout Designer"
+        max-width="950px"
+        @close="isDesignerModalOpen = false"
+      >
+        <SeatingLayoutDesigner />
+      </BaseModal>
     </div>
 
     <!-- Roster -->
@@ -663,6 +671,7 @@ import ElementarySubjectManager from './ElementarySubjectManager.vue'
 import ElementaryCsvImporter from './ElementaryCsvImporter.vue'
 import SetupQuickJumpNav from './SetupQuickJumpNav.vue'
 import QrCodeGeneratorModal from './QrCodeGeneratorModal.vue'
+import SeatingLayoutDesigner from './SeatingLayoutDesigner.vue'
 
 import { 
   Settings2, 
@@ -679,7 +688,8 @@ import {
   AlertTriangle, 
   GraduationCap,
   Info,
-  QrCode
+  QrCode,
+  LayoutGrid
 } from 'lucide-vue-next'
 import { getEffectiveGradeLevel } from '../../composables/useElementary.js'
 
@@ -709,6 +719,8 @@ const {
 } = useClassroom()
 
 const { confirm, alert } = useMessage()
+
+const isDesignerModalOpen = ref(false)
 
 const detectedGradeLevel = computed(() => getEffectiveGradeLevel(activeClass.value))
 
