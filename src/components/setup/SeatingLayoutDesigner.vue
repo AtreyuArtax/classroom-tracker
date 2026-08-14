@@ -1,23 +1,13 @@
 <template>
   <div class="seating-designer">
-    <div class="seating-designer__header">
-      <div class="seating-designer__title-group">
-        <h3 class="seating-designer__title">
-          <LayoutGrid :size="18" />
-          Seating Plan Layout Designer
-        </h3>
-        <p class="seating-designer__subtitle">
-          Design custom room layouts with tables/pods, aisles, and student seat groupings.
-        </p>
-      </div>
-
-      <!-- Presets & Saved Templates Bar -->
-      <div class="seating-designer__templates">
-        <div class="seating-designer__preset-btns">
-          <span class="seating-designer__preset-label">Quick Presets:</span>
+    <!-- Presets & Saved Templates Bar (Single Top Control Row) -->
+    <div class="seating-designer__top-bar">
+      <div class="seating-designer__preset-group">
+        <span class="seating-designer__preset-label">Layout Presets:</span>
+        <div class="setup__segmented-toggle">
           <button 
             type="button" 
-            class="seating-designer__preset-btn"
+            class="setup__segmented-btn"
             @click="applyPreset('rows')"
             title="Standard uniform rows & columns"
           >
@@ -25,7 +15,7 @@
           </button>
           <button 
             type="button" 
-            class="seating-designer__preset-btn"
+            class="setup__segmented-btn"
             @click="applyPreset('pods4')"
             title="Groups of 4 desks with center aisles"
           >
@@ -33,7 +23,7 @@
           </button>
           <button 
             type="button" 
-            class="seating-designer__preset-btn"
+            class="setup__segmented-btn"
             @click="applyPreset('horseshoe')"
             title="Perimeter U-shape layout with center aisle"
           >
@@ -41,35 +31,35 @@
           </button>
           <button 
             type="button" 
-            class="seating-designer__preset-btn"
+            class="setup__segmented-btn"
             @click="applyPreset('pairs')"
             title="Paired desks with aisles"
           >
             Pairs
           </button>
         </div>
+      </div>
 
-        <div class="seating-designer__saved-select-group">
-          <select 
-            v-model="selectedSavedPresetId" 
-            class="setup__input seating-designer__saved-select"
-            @change="onLoadSavedPreset"
-          >
-            <option value="">-- Load Saved Custom Template --</option>
-            <option v-for="tmpl in savedTemplates" :key="tmpl.id" :value="tmpl.id">
-              {{ tmpl.name }} ({{ tmpl.rows }}x{{ tmpl.cols }})
-            </option>
-          </select>
-          <button 
-            type="button"
-            class="setup__btn setup__btn--secondary"
-            style="padding: 4px 10px; font-size: 0.8rem;"
-            @click="saveCurrentAsTemplate"
-            title="Save active layout as a reusable template"
-          >
-            <Save :size="14" /> Save as Template
-          </button>
-        </div>
+      <div class="seating-designer__saved-select-group">
+        <select 
+          v-model="selectedSavedPresetId" 
+          class="setup__input seating-designer__saved-select"
+          @change="onLoadSavedPreset"
+        >
+          <option value="">-- Load Saved Custom Template --</option>
+          <option v-for="tmpl in savedTemplates" :key="tmpl.id" :value="tmpl.id">
+            {{ tmpl.name }} ({{ tmpl.rows }}x{{ tmpl.cols }})
+          </option>
+        </select>
+        <button 
+          type="button"
+          class="setup__btn-ghost"
+          style="display: flex; align-items: center; gap: 6px; padding: 6px 12px; font-size: 0.8rem; font-weight: 600;"
+          @click="saveCurrentAsTemplate"
+          title="Save active layout as a reusable template"
+        >
+          <Save :size="14" /> Save Template
+        </button>
       </div>
     </div>
 
@@ -77,56 +67,56 @@
     <div class="seating-designer__toolbar">
       <!-- Grid Dimensions -->
       <div class="seating-designer__dimensions">
-        <label class="seating-designer__dim-label">
-          Rows:
-          <input 
-            type="number" 
-            min="2" 
-            max="20" 
-            v-model.number="localRows" 
-            class="setup__input seating-designer__dim-input" 
-            @change="updateGridDimensions"
-          />
-        </label>
+        <span class="seating-designer__dim-text">Grid:</span>
+        <input 
+          type="number" 
+          min="2" 
+          max="20" 
+          v-model.number="localRows" 
+          class="setup__input seating-designer__dim-input" 
+          @change="updateGridDimensions"
+          title="Number of rows"
+        />
         <span class="seating-designer__dim-sep">×</span>
-        <label class="seating-designer__dim-label">
-          Cols:
-          <input 
-            type="number" 
-            min="2" 
-            max="20" 
-            v-model.number="localCols" 
-            class="setup__input seating-designer__dim-input" 
-            @change="updateGridDimensions"
-          />
-        </label>
+        <input 
+          type="number" 
+          min="2" 
+          max="20" 
+          v-model.number="localCols" 
+          class="setup__input seating-designer__dim-input" 
+          @change="updateGridDimensions"
+          title="Number of columns"
+        />
       </div>
 
-      <!-- Mode Selector -->
-      <div class="seating-designer__mode-group">
+      <!-- Mode Selector Segmented Group -->
+      <div class="setup__segmented-toggle" style="margin: 0;">
         <button 
           type="button" 
-          class="seating-designer__mode-btn"
-          :class="{ 'seating-designer__mode-btn--active': activeTool === 'seat' }"
+          class="setup__segmented-btn"
+          :class="{ 'setup__segmented-btn--active': activeTool === 'seat' }"
           @click="activeTool = 'seat'"
         >
-          <Armchair :size="15" /> Student Seat
+          <Armchair :size="14" />
+          <span>Student Seat</span>
         </button>
         <button 
           type="button" 
-          class="seating-designer__mode-btn"
-          :class="{ 'seating-designer__mode-btn--active': activeTool === 'aisle' }"
+          class="setup__segmented-btn"
+          :class="{ 'setup__segmented-btn--active': activeTool === 'aisle' }"
           @click="activeTool = 'aisle'"
         >
-          <Footprints :size="15" /> Aisle / Walkway
+          <Footprints :size="14" />
+          <span>Aisle / Walkway</span>
         </button>
         <button 
           type="button" 
-          class="seating-designer__mode-btn"
-          :class="{ 'seating-designer__mode-btn--active': activeTool === 'group' }"
+          class="setup__segmented-btn"
+          :class="{ 'setup__segmented-btn--active': activeTool === 'group' }"
           @click="activeTool = 'group'"
         >
-          <Users :size="15" /> Assign to Table/Pod
+          <Users :size="14" />
+          <span>Table / Pod</span>
         </button>
       </div>
 
@@ -137,19 +127,19 @@
             {{ pod.name }}
           </option>
         </select>
-        <button type="button" class="setup__btn setup__btn--secondary" style="padding: 2px 8px; font-size: 0.75rem;" @click="createNewPod">
+        <button type="button" class="setup__btn-ghost" style="padding: 4px 8px; font-size: 0.75rem;" @click="createNewPod">
           + New Pod
         </button>
-        <button v-if="pods.length > 1" type="button" class="setup__btn setup__btn--danger" style="padding: 2px 8px; font-size: 0.75rem;" @click="deleteActivePod">
-          Delete Pod
+        <button v-if="pods.length > 1" type="button" class="setup__icon-btn setup__icon-btn--danger" style="padding: 4px;" @click="deleteActivePod" title="Delete Pod">
+          <Trash2 :size="14" />
         </button>
       </div>
 
       <!-- Clear All Seats Action -->
       <button 
         type="button" 
-        class="setup__btn setup__btn--ghost" 
-        style="padding: 4px 10px; font-size: 0.78rem; color: #ef4444; border-color: rgba(239, 68, 68, 0.3);"
+        class="setup__btn-ghost" 
+        style="padding: 6px 12px; font-size: 0.8rem; color: #dc2626; display: flex; align-items: center; gap: 6px; margin-left: auto;"
         @click="clearAllSeats"
         title="Unassign all students from the seating chart and move them to unassigned pool"
       >
@@ -504,99 +494,59 @@ function onLoadSavedPreset() {
 
 <style scoped>
 .seating-designer {
-  background: var(--bg-surface-elevation, rgba(255, 255, 255, 0.03));
+  background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   padding: 16px;
-  margin-top: 16px;
   display: flex;
   flex-direction: column;
   gap: 14px;
 }
 
-.seating-designer__header {
+.seating-designer__top-bar {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
   flex-wrap: wrap;
   gap: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
 }
 
-.seating-designer__title {
-  margin: 0;
-  font-size: 1rem;
-  font-weight: 700;
+.seating-designer__preset-group {
   display: flex;
   align-items: center;
-  gap: 8px;
-  color: var(--text-primary);
-}
-
-.seating-designer__subtitle {
-  margin: 2px 0 0 0;
-  font-size: 0.8rem;
-  color: var(--text-secondary);
-}
-
-.seating-designer__templates {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 8px;
-}
-
-.seating-designer__preset-btns {
-  display: flex;
-  align-items: center;
-  gap: 6px;
+  gap: 10px;
   flex-wrap: wrap;
 }
 
 .seating-designer__preset-label {
-  font-size: 0.75rem;
-  font-weight: 600;
+  font-size: 0.8rem;
+  font-weight: 700;
   color: var(--text-secondary);
-}
-
-.seating-designer__preset-btn {
-  background: var(--bg-surface-hover, rgba(255, 255, 255, 0.08));
-  border: 1px solid var(--border);
-  color: var(--text-primary);
-  font-size: 0.75rem;
-  font-weight: 600;
-  padding: 3px 8px;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.seating-designer__preset-btn:hover {
-  background: var(--accent-blue, #3b82f6);
-  color: #fff;
-  border-color: transparent;
 }
 
 .seating-designer__saved-select-group {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
 }
 
 .seating-designer__saved-select {
-  padding: 3px 8px;
-  font-size: 0.78rem;
-  width: 210px;
+  padding: 6px 12px;
+  font-size: 0.82rem;
+  width: 270px;
+  max-width: 320px;
 }
 
 .seating-designer__toolbar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   flex-wrap: wrap;
   gap: 12px;
-  background: var(--bg-surface, rgba(0, 0, 0, 0.2));
+  background: var(--bg-secondary);
   padding: 8px 12px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   border: 1px solid var(--border);
 }
 
@@ -604,41 +554,32 @@ function onLoadSavedPreset() {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 0.8rem;
-  font-weight: 600;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text);
+  background: var(--surface);
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}
+
+.seating-designer__dim-text {
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+}
+
+.seating-designer__dim-sep {
+  color: var(--text-secondary);
+  font-weight: 800;
 }
 
 .seating-designer__dim-input {
-  width: 50px;
-  padding: 2px 6px;
+  width: 44px;
+  min-height: 28px !important;
+  padding: 2px 4px !important;
   text-align: center;
   font-weight: 700;
-}
-
-.seating-designer__mode-group {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.seating-designer__mode-btn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
-  font-size: 0.78rem;
-  font-weight: 600;
-  border-radius: 6px;
-  border: 1px solid var(--border);
-  background: var(--bg-surface, rgba(255,255,255,0.05));
-  color: var(--text-secondary);
-  cursor: pointer;
-}
-
-.seating-designer__mode-btn--active {
-  background: var(--accent-blue, #3b82f6);
-  color: #ffffff;
-  border-color: var(--accent-blue, #3b82f6);
+  font-size: 0.85rem !important;
 }
 
 .seating-designer__pod-config {
@@ -648,9 +589,10 @@ function onLoadSavedPreset() {
 }
 
 .seating-designer__pod-select {
-  padding: 2px 6px;
+  padding: 4px 8px;
   font-size: 0.78rem;
-  width: 110px;
+  width: 120px;
+  min-height: 30px !important;
 }
 
 .seating-designer__canvas-container {
@@ -666,16 +608,16 @@ function onLoadSavedPreset() {
 }
 
 .seating-designer__cell {
-  background: var(--bg-surface-hover, rgba(255, 255, 255, 0.05));
+  background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   padding: 4px 2px;
   min-height: 48px;
   min-width: 0;
   position: relative;
   cursor: pointer;
   user-select: none;
-  transition: transform 0.1s ease, border-color 0.15s ease;
+  transition: transform 0.1s ease, border-color 0.15s ease, box-shadow 0.15s ease;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -684,17 +626,18 @@ function onLoadSavedPreset() {
 
 .seating-designer__cell:hover {
   transform: translateY(-2px);
-  border-color: var(--accent-blue, #3b82f6);
+  border-color: var(--primary);
+  box-shadow: var(--shadow-sm);
 }
 
 .seating-designer__cell--aisle {
-  background: transparent;
+  background: var(--bg-secondary);
   border: 1px dashed var(--border);
-  opacity: 0.5;
+  opacity: 0.6;
 }
 
 .seating-designer__cell--seat {
-  background: var(--bg-surface, rgba(255,255,255,0.04));
+  background: var(--surface);
 }
 
 .seating-designer__pod-badge {
@@ -719,24 +662,25 @@ function onLoadSavedPreset() {
 .seating-designer__aisle-tag {
   font-size: 0.68rem;
   font-weight: 600;
-  color: var(--text-tertiary, #888);
+  color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
 .seating-designer__seat-icon {
-  opacity: 0.6;
+  color: var(--text-secondary);
+  opacity: 0.7;
 }
 
 .seating-designer__cell-coord {
   font-size: 0.65rem;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
 }
 
 .seating-designer__occupant-name {
   font-size: 0.72rem;
-  font-weight: 600;
-  color: var(--accent-blue, #3b82f6);
+  font-weight: 700;
+  color: var(--primary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;

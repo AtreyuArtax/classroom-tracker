@@ -7,9 +7,10 @@
         Define weekly limits for student washroom trips and mobile devices. 
         Exceeding these limits will trigger warning flags in room grids and student dossier logs.
       </p>
-      <div class="setup__form-grid">
+      <div class="setup__form-grid behavior-thresholds__grid">
         <label class="setup__label">
-          Washroom Limit (Trips/Week)
+          <span class="setup__label-text">Washroom Limit</span>
+          <span class="setup__label-subtext">Trips / Week</span>
           <input 
             v-model.number="editThresholds.washroomTripsPerWeek" 
             type="number" 
@@ -20,7 +21,8 @@
           />
         </label>
         <label class="setup__label">
-          Device Limit (Incidents/Week)
+          <span class="setup__label-text">Device Limit</span>
+          <span class="setup__label-subtext">Incidents / Week</span>
           <input 
             v-model.number="editThresholds.deviceIncidentsPerWeek" 
             type="number" 
@@ -31,7 +33,8 @@
           />
         </label>
         <label class="setup__label">
-          Academic At-Risk Alert Threshold (%)
+          <span class="setup__label-text">Academic Warning</span>
+          <span class="setup__label-subtext">At-Risk Mark (%)</span>
           <input 
             v-model.number="editThresholds.atRiskThreshold" 
             type="number" 
@@ -42,7 +45,8 @@
           />
         </label>
         <label class="setup__label">
-          Attendance At-Risk Alert Threshold (%)
+          <span class="setup__label-text">Attendance Warning</span>
+          <span class="setup__label-subtext">At-Risk Rate (%)</span>
           <input 
             v-model.number="editThresholds.attendanceThreshold" 
             type="number" 
@@ -419,13 +423,49 @@ export default {
   gap: 16px;
 }
 
+.behavior-thresholds__grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+
+@media (max-width: 1024px) {
+  .behavior-thresholds__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .behavior-thresholds__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.setup__label-text {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text, #ffffff);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.setup__label-subtext {
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--text-secondary, #94a3b8);
+  margin-top: -3px;
+  margin-bottom: 2px;
+  white-space: nowrap;
+}
+
 .setup__label {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
   font-size: 0.85rem;
   font-weight: 600;
   color: var(--text, #ffffff);
+  min-width: 0;
 }
 
 .setup__input {

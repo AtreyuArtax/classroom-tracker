@@ -420,13 +420,29 @@
               Teacher Name (for Reports)
               <input v-model="localTeacherName" class="setup__input" placeholder="" @blur="saveTeacherName" />
             </label>
-            <label class="setup__label">
+            <div class="setup__label">
               Teaching Mode
-              <select v-model="teachingMode" class="setup__input">
-                <option value="secondary">Secondary / High School Mode (Single-Subject Periods)</option>
-                <option value="elementary">Elementary / K–8 Mode (Homeroom Multi-Subject)</option>
-              </select>
-            </label>
+              <div class="setup__segmented-toggle">
+                <button
+                  type="button"
+                  class="setup__segmented-btn"
+                  :class="{ 'setup__segmented-btn--active': teachingMode === 'secondary' }"
+                  @click="teachingMode = 'secondary'"
+                >
+                  <GraduationCap :size="15" class="setup__segmented-icon" />
+                  <span>Secondary (9–12)</span>
+                </button>
+                <button
+                  type="button"
+                  class="setup__segmented-btn"
+                  :class="{ 'setup__segmented-btn--active': teachingMode === 'elementary' }"
+                  @click="teachingMode = 'elementary'"
+                >
+                  <School :size="15" class="setup__segmented-icon" />
+                  <span>Elementary (K–8)</span>
+                </button>
+              </div>
+            </div>
 
           </div>
         </div>
@@ -689,6 +705,7 @@ import {
   QrCode,
   Printer,
   GraduationCap,
+  School,
   RefreshCcw,
   Pencil
 } from 'lucide-vue-next'

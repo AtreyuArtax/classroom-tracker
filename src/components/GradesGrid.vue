@@ -109,6 +109,7 @@
                   <span 
                     v-if="(a.targetCourseCode || a.gradeLevel) && (a.targetCourseCode !== 'ALL' && a.gradeLevel !== 'ALL') && availableSubCohorts.length > 1 && activeSubCohortFilter === 'all'" 
                     class="grades__assessment-sec-badge"
+                    :title="'Section: ' + (a.targetCourseCode || a.gradeLevel)"
                   >
                     {{ a.targetCourseCode || (a.gradeLevel ? a.gradeLevel.replace('Grade ', 'Gr. ') : '') }}
                   </span>
@@ -1218,9 +1219,9 @@ function copyAssessmentGrades(assessment) {
 }
 
 .grades__th-assessment {
-  width: 90px;
-  min-width: 65px;
-  max-width: 110px;
+  width: 105px;
+  min-width: 90px;
+  max-width: 130px;
 }
 
 .grades__assessment-header {
@@ -1442,10 +1443,14 @@ function copyAssessmentGrades(assessment) {
   color: #2563eb;
   background: rgba(59, 130, 246, 0.08);
   border: 1px solid rgba(59, 130, 246, 0.3);
-  padding: 1px 6px;
+  padding: 1px 5px;
   border-radius: 4px;
   line-height: 1.2;
   flex-shrink: 0;
+  max-width: 80px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   margin-left: auto;
 }
 

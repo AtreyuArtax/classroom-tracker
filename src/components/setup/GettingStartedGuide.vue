@@ -25,7 +25,9 @@
           <div class="guide-mode-card-badge" v-if="teachingMode === 'secondary'">
             <Check :size="12" /> Active Workspace
           </div>
-          <div class="guide-mode-card-icon">🎓</div>
+          <div class="guide-mode-card-icon">
+            <GraduationCap :size="28" style="color: var(--primary);" />
+          </div>
           <h4 class="guide-mode-card-name">Secondary Mode (9–12)</h4>
           <ul class="guide-mode-list">
             <li>• Period-Based Schedules & Start Times</li>
@@ -43,7 +45,9 @@
           <div class="guide-mode-card-badge" v-if="teachingMode === 'elementary'">
             <Check :size="12" /> Active Workspace
           </div>
-          <div class="guide-mode-card-icon">🎒</div>
+          <div class="guide-mode-card-icon">
+            <School :size="28" style="color: #059669;" />
+          </div>
           <h4 class="guide-mode-card-name">Elementary Mode (K–8)</h4>
           <ul class="guide-mode-list">
             <li>• Full-Year Homerooms</li>
@@ -163,7 +167,7 @@
 </template>
 
 <script setup>
-import { GraduationCap, FolderOpen, Clock, Archive, Settings2, Cloud, Check, Info } from 'lucide-vue-next'
+import { GraduationCap, School, FolderOpen, Clock, Archive, Settings2, Cloud, Check, Info } from 'lucide-vue-next'
 import { teachingMode } from '../../composables/useClassroomState.js'
 
 defineProps({

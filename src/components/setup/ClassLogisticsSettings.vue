@@ -164,94 +164,143 @@
       </div>
       <p class="setup__hint">Choose how student performance is evaluated and displayed for this class.</p>
       
-      <div class="setup__form-grid" style="grid-template-columns: 1fr 1fr; gap: 16px;">
-        <label class="setup__label">
+      <!-- Framework Primary Mode Toggle -->
+      <div style="margin-bottom: 16px;">
+        <div class="setup__label" style="margin-bottom: 6px;">
           Grading Framework
-          <select
-            :value="activeClass.gradingFramework || 'traditional'"
-            class="setup__input"
-            @change="e => updateActiveClass({ gradingFramework: e.target.value })"
+        </div>
+        <div class="setup__segmented-toggle" style="max-width: 580px;">
+          <button
+            type="button"
+            class="setup__segmented-btn"
+            :class="{ 'setup__segmented-btn--active': (activeClass.gradingFramework || 'traditional') === 'traditional' }"
+            @click="updateActiveClass({ gradingFramework: 'traditional' })"
           >
-            <option value="traditional">Traditional Secondary (% / Points / Weighted Categories)</option>
-            <option value="sbar">Standards-Based (SBAR / Levels 1–4 Heatmap)</option>
-          </select>
-        </label>
+            <Percent :size="15" class="setup__segmented-icon" />
+            <span>Traditional Secondary (% / Points)</span>
+          </button>
+          <button
+            type="button"
+            class="setup__segmented-btn"
+            :class="{ 'setup__segmented-btn--active': activeClass.gradingFramework === 'sbar' }"
+            @click="updateActiveClass({ gradingFramework: 'sbar' })"
+          >
+            <Layers :size="15" class="setup__segmented-icon" />
+            <span>Standards-Based (SBAR / Levels 1–4)</span>
+          </button>
+        </div>
+      </div>
 
-        <label v-if="activeClass.gradingFramework === 'sbar'" class="setup__label">
-          SBAR Mastery Engine
-          <select
-            :value="activeClass.sbarAlgorithm || 'decaying_average'"
-            class="setup__input"
-            @change="e => updateActiveClass({ sbarAlgorithm: e.target.value })"
-          >
-            <option value="decaying_average">Decaying Average (65% Newest / 35% Historical)</option>
-            <option value="power_law">Power Law (Marzano Logarithmic Trajectory)</option>
-            <option value="mode">Mode / Most Consistent (Most Frequent Level)</option>
-            <option value="most_recent">Most Recent (Last 3 Evaluations Average)</option>
-            <option value="highest">Highest Level Score</option>
-          </select>
-        </label>
+      <!-- SBAR Additional Configuration (revealed when SBAR is selected) -->
+      <div 
+        v-if="activeClass.gradingFramework === 'sbar'" 
+        class="setup__sbar-config-panel"
+        style="padding-top: 16px; border-top: 1px dashed var(--border);"
+      >
+        <div class="setup__form-grid" style="grid-template-columns: 1fr 1fr; gap: 16px;">
+          <!-- Top Row: Mastery Engine Dropdown (Rich descriptions) -->
+          <label class="setup__label" style="grid-column: span 2;">
+            SBAR Mastery Calculation Engine
+            <select
+              :value="activeClass.sbarAlgorithm || 'decaying_average'"
+              class="setup__input"
+              @change="e => updateActiveClass({ sbarAlgorithm: e.target.value })"
+            >
+              <option value="decaying_average">Decaying Average (65% Newest / 35% Historical)</option>
+              <option value="power_law">Power Law (Marzano Logarithmic Trajectory)</option>
+              <option value="mode">Mode / Most Consistent (Most Frequent Level)</option>
+              <option value="most_recent">Most Recent (Last 3 Evaluations Average)</option>
+              <option value="highest">Highest Level Score</option>
+            </select>
+          </label>
 
-        <label v-if="activeClass.gradingFramework === 'sbar'" class="setup__label">
-          Default SBAR Input Mode
-          <select
-            :value="activeClass.sbarInputMode || 'fine'"
-            class="setup__input"
-            @change="e => updateActiveClass({ sbarInputMode: e.target.value })"
-          >
-            <option value="fine">Granular Levels (L1- to L4+)</option>
-            <option value="simple">Simple Levels (L1 to L4)</option>
-            <option value="numeric">Exact % / Math Precision Mode</option>
-          </select>
-        </label>
+          <!-- Bottom Left: Input Mode Segmented Toggle -->
+          <div class="setup__label">
+            Default SBAR Input Mode
+            <div class="setup__segmented-toggle">
+              <button
+                type="button"
+                class="setup__segmented-btn"
+                :class="{ 'setup__segmented-btn--active': (activeClass.sbarInputMode || 'fine') === 'fine' }"
+                @click="updateActiveClass({ sbarInputMode: 'fine' })"
+              >
+                <span>Granular (L1± to L4±)</span>
+              </button>
+              <button
+                type="button"
+                class="setup__segmented-btn"
+                :class="{ 'setup__segmented-btn--active': activeClass.sbarInputMode === 'simple' }"
+                @click="updateActiveClass({ sbarInputMode: 'simple' })"
+              >
+                <span>Simple (L1–4)</span>
+              </button>
+              <button
+                type="button"
+                class="setup__segmented-btn"
+                :class="{ 'setup__segmented-btn--active': activeClass.sbarInputMode === 'numeric' }"
+                @click="updateActiveClass({ sbarInputMode: 'numeric' })"
+              >
+                <span>Exact %</span>
+              </button>
+            </div>
+          </div>
 
-        <label v-if="activeClass.gradingFramework === 'sbar'" class="setup__label">
-          Include Radial Desk Check-ins in Overall SBAR Grades
-          <select
-            :value="activeClass.includeRadialInSbar !== false ? 'true' : 'false'"
-            class="setup__input"
-            @change="e => updateActiveClass({ includeRadialInSbar: e.target.value === 'true' })"
-          >
-            <option value="true">Yes — Include Radial Check-ins in Overall SBAR Level</option>
-            <option value="false">No — Formal Assessment Grades Only</option>
-          </select>
-        </label>
+          <!-- Bottom Right: Radial Check-ins Toggle -->
+          <div class="setup__label">
+            Include Radial Desk Check-ins in SBAR
+            <div class="setup__segmented-toggle">
+              <button
+                type="button"
+                class="setup__segmented-btn"
+                :class="{ 'setup__segmented-btn--active': activeClass.includeRadialInSbar !== false }"
+                @click="updateActiveClass({ includeRadialInSbar: true })"
+              >
+                <Check :size="14" class="setup__segmented-icon" style="color: #16a34a;" />
+                <span>Include (All Evidence)</span>
+              </button>
+              <button
+                type="button"
+                class="setup__segmented-btn"
+                :class="{ 'setup__segmented-btn--active': activeClass.includeRadialInSbar === false }"
+                @click="updateActiveClass({ includeRadialInSbar: false })"
+              >
+                <X :size="14" class="setup__segmented-icon" style="color: #dc2626;" />
+                <span>Formal Only</span>
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- Seating Plan -->
+    <!-- Seating Plan & Layout Hero Card (Option A) -->
     <div class="setup__card">
-      <div style="display: flex; justify-content: space-between; align-items: center; wrap: wrap; gap: 12px;">
-        <div>
-          <h2 class="setup__card-title" style="margin: 0;">Seating Plan & Layout</h2>
-          <p class="setup__hint" style="margin-top: 2px;">Quickly set grid rows/columns or launch the advanced visual layout designer.</p>
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+        <div style="flex: 1; min-width: 260px;">
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+            <h2 class="setup__card-title" style="margin: 0;">Seating Plan &amp; Layout</h2>
+            <span 
+              class="setup__chip setup__chip--blue" 
+              style="display: inline-flex; align-items: center; gap: 4px; font-weight: 700;"
+            >
+              {{ activeClass.gridSize?.rows || gridSize.rows }} × {{ activeClass.gridSize?.cols || gridSize.cols }} Grid ({{ (activeClass.gridSize?.rows || gridSize.rows) * (activeClass.gridSize?.cols || gridSize.cols) }} Desks)
+            </span>
+          </div>
+          <p class="setup__hint" style="margin: 0;">
+            Customize desk groupings, pods, walkways, and seat assignments in the interactive layout studio.
+          </p>
         </div>
+
         <button 
           type="button" 
           class="setup__btn-primary" 
-          style="display: flex; align-items: center; gap: 6px; padding: 6px 14px; font-size: 0.85rem;"
+          style="display: flex; align-items: center; gap: 8px; padding: 8px 18px; font-size: 0.88rem; font-weight: 700;"
           @click="isDesignerModalOpen = true"
         >
-          <LayoutGrid :size="16" /> Advanced Layout Designer
+          <LayoutGrid :size="17" />
+          <span>Open Layout Designer</span>
         </button>
       </div>
-
-      <form class="setup__form" style="margin-top: 1rem;" @submit.prevent="requestResize">
-        <div class="setup__form-grid">
-          <label class="setup__label">
-            Rows
-            <input v-model.number="newGrid.rows" type="number" min="1" max="12" class="setup__input" required />
-          </label>
-          <label class="setup__label">
-            Columns
-            <input v-model.number="newGrid.cols" type="number" min="1" max="12" class="setup__input" required />
-          </label>
-        </div>
-        <div class="setup__grid-actions" style="margin-top: 1rem; display: flex; gap: 8px;">
-          <button type="submit" class="setup__btn-primary">Apply Grid Size</button>
-          <button type="button" class="setup__btn-ghost" @click="setGlobalDefaultGrid">Save as Global Default</button>
-        </div>
-      </form>
 
       <!-- Advanced Layout Designer Modal -->
       <BaseModal
@@ -665,6 +714,7 @@ import { availableSubCohorts } from '../../composables/useGradebook.js'
 import { useKeyboardWedge } from '../../composables/useKeyboardWedge.js'
 import { useMessage } from '../../composables/useMessage.js'
 import * as classService from '../../db/classService.js'
+import * as gradebookService from '../../db/gradebookService.js'
 import BaseModal from '../BaseModal.vue'
 import AssessmentFrameworkSettings from './AssessmentFrameworkSettings.vue'
 import ElementarySubjectManager from './ElementarySubjectManager.vue'
@@ -689,7 +739,12 @@ import {
   GraduationCap,
   Info,
   QrCode,
-  LayoutGrid
+  LayoutGrid,
+  Percent,
+  Layers,
+  Check,
+  X,
+  Binary
 } from 'lucide-vue-next'
 import { getEffectiveGradeLevel } from '../../composables/useElementary.js'
 
@@ -776,11 +831,35 @@ async function saveSectionTagRename(oldTag) {
   delete sectionTagInputs[oldTag]
   sectionTagInputs[cleanNew] = cleanNew
 
-  await updateActiveClass({
+  const classUpdates = {
     students: updatedStudents,
     courseSections: uniqueSections,
     courseCode: uniqueSections.join('/')
-  })
+  }
+
+  // Update courseFrameworks key if present
+  if (activeClass.value.courseFrameworks && activeClass.value.courseFrameworks[oldTag]) {
+    const updatedFrameworks = { ...activeClass.value.courseFrameworks }
+    updatedFrameworks[cleanNew] = updatedFrameworks[oldTag]
+    delete updatedFrameworks[oldTag]
+    classUpdates.courseFrameworks = updatedFrameworks
+  }
+
+  await updateActiveClass(classUpdates)
+
+  // Update any existing assessments targeted to oldTag
+  try {
+    const classAssessments = await gradebookService.getAssessmentsByClass(activeClass.value.classId)
+    if (classAssessments && classAssessments.length > 0) {
+      for (const a of classAssessments) {
+        if (a.targetCourseCode === oldTag) {
+          await gradebookService.updateAssessment(a.assessmentId, { targetCourseCode: cleanNew })
+        }
+      }
+    }
+  } catch (err) {
+    console.error('Failed to update assessment target tags during section rename:', err)
+  }
 }
 
 const isElementaryImporterOpen = ref(false)

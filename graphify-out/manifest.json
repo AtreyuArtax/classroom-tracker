@@ -215,8 +215,8 @@
     "semantic_hash": "0794c0177a8a0b5d3b9f3d8bad8c1024"
   },
   "src/components/setup/GettingStartedGuide.vue": {
-    "mtime": 1786458174.7168663,
-    "ast_hash": "73ade40baebb78287bf861fb4900f83a",
+    "mtime": 1786723976.5956373,
+    "ast_hash": "814c1b586328d8b0a9410652f519dfb6",
     "semantic_hash": ""
   },
   "src/components/setup/GradeBucketsSettings.vue": {
@@ -355,8 +355,8 @@
     "semantic_hash": "8ca2dc5307b5ae89c3f9ade5a9f052c4"
   },
   "src/views/Setup.vue": {
-    "mtime": 1786590737.3386314,
-    "ast_hash": "8ae6c1c3bb2e4919d9a932da5814aa74",
+    "mtime": 1786723964.7362583,
+    "ast_hash": "5d48fca87c75db52a227aab1d00b3093",
     "semantic_hash": ""
   },
   "tmp/test_dates.js": {
@@ -390,8 +390,8 @@
     "semantic_hash": ""
   },
   "src/components/GradesGrid.vue": {
-    "mtime": 1786554939.5413184,
-    "ast_hash": "c3e9d1ce03d6273a0e156763972798b6",
+    "mtime": 1786723686.2443078,
+    "ast_hash": "f548e19d436273b6fb7bd36271f6b2fe",
     "semantic_hash": ""
   },
   "src/components/dossier/StudentAcademicsTab.vue": {
@@ -415,8 +415,8 @@
     "semantic_hash": ""
   },
   "src/components/setup/BehaviorSettings.vue": {
-    "mtime": 1786554779.7410312,
-    "ast_hash": "7f38dda64e8575e1a49687d3d8aec28e",
+    "mtime": 1786724086.4520986,
+    "ast_hash": "1c010acc961c7a44f5067f7f4d155e70",
     "semantic_hash": ""
   },
   "src/components/setup/QrCodeGeneratorModal.vue": {
@@ -445,8 +445,8 @@
     "semantic_hash": ""
   },
   "src/components/setup/ClassLogisticsSettings.vue": {
-    "mtime": 1786722457.8050432,
-    "ast_hash": "2b0b6992d6f1a25147383eedd65782d5",
+    "mtime": 1786724470.54509,
+    "ast_hash": "749a19b05c39ff44a364bcc8f5c10797",
     "semantic_hash": ""
   },
   "src/components/setup/DatabaseMaintenanceSettings.vue": {
@@ -1000,8 +1000,8 @@
     "semantic_hash": ""
   },
   "src/components/setup/SeatingLayoutDesigner.vue": {
-    "mtime": 1786722462.639824,
-    "ast_hash": "a4e2e7e40dfde064ea3a6da5decaa07e",
+    "mtime": 1786724845.6559877,
+    "ast_hash": "124f52c7f7fe832d8f62cc4cc1d3dcff",
     "semantic_hash": ""
   }
 }
