@@ -31,15 +31,6 @@
           <DeskTile
             :row="row"
             :col="col"
-            v-memo="[
-              seatMap[`${row}-${col}`] ?? null,
-              students[seatMap[`${row}-${col}`]]?.activeStates?.isOut,
-              students[seatMap[`${row}-${col}`]]?.activeStates?.isAbsent,
-              students[seatMap[`${row}-${col}`]]?.activeStates?.lateMs,
-              students[seatMap[`${row}-${col}`]]?.lastEvent?.ts,
-              studentWeeklyStats[seatMap[`${row}-${col}`]]?.washroomTrips,
-              studentWeeklyStats[seatMap[`${row}-${col}`]]?.deviceIncidents,
-            ]"
             :student-id="seatMap[`${row}-${col}`] ?? null"
             :student="seatMap[`${row}-${col}`] ? students[seatMap[`${row}-${col}`]] : null"
             :class-id="activeClass?.classId ?? ''"

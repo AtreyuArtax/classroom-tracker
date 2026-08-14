@@ -660,17 +660,18 @@ function onLoadSavedPreset() {
 
 .seating-designer__grid-canvas {
   display: grid;
-  gap: 8px;
+  gap: 4px;
   min-height: 240px;
-  max-width: 100%;
+  width: 100%;
 }
 
 .seating-designer__cell {
   background: var(--bg-surface-hover, rgba(255, 255, 255, 0.05));
   border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 8px;
-  min-height: 52px;
+  border-radius: 6px;
+  padding: 4px 2px;
+  min-height: 48px;
+  min-width: 0;
   position: relative;
   cursor: pointer;
   user-select: none;

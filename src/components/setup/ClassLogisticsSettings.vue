@@ -257,7 +257,7 @@
       <BaseModal
         :show="isDesignerModalOpen"
         title="Custom Seating Layout Designer"
-        max-width="950px"
+        max-width="min(1250px, 92vw)"
         @close="isDesignerModalOpen = false"
       >
         <SeatingLayoutDesigner />

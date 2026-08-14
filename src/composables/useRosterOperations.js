@@ -331,6 +331,7 @@ export async function assignSeat(studentId, newSeat) {
         if (activeClass.value?.students?.[studentId]) {
             activeClass.value.students[studentId].seat = newSeat
         }
+        students.value = { ...students.value }
         triggerRef(students)
         triggerRef(activeClass)
 
@@ -341,6 +342,7 @@ export async function assignSeat(studentId, newSeat) {
                 if (activeClass.value?.students?.[studentId]) {
                     activeClass.value.students[studentId].seat = previousSeat
                 }
+                students.value = { ...students.value }
                 triggerRef(students)
                 triggerRef(activeClass)
             } catch (err) {
@@ -440,6 +442,7 @@ export async function autoAssignSeats() {
                 activeClass.value.students[assign.studentId].seat = assign.seat
             }
         }
+        students.value = { ...students.value }
         triggerRef(students)
         triggerRef(activeClass)
 

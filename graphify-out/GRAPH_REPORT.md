@@ -1,16 +1,16 @@
-# Graph Report - classroom-tracker  (2026-08-12)
+# Graph Report - classroom-tracker  (2026-08-14)
 
 ## Corpus Check
-- 201 files · ~370,948 words
+- 201 files · ~370,952 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1113 nodes · 1872 edges · 104 communities (91 shown, 13 thin omitted)
+- 1113 nodes · 1872 edges · 105 communities (92 shown, 13 thin omitted)
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 3 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `3806372c`
+- Built from commit: `f8e5d2bb`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -35,6 +35,7 @@
 - [[_COMMUNITY_Community 18|Community 18]]
 - [[_COMMUNITY_Community 19|Community 19]]
 - [[_COMMUNITY_Community 20|Community 20]]
+- [[_COMMUNITY_Community 21|Community 21]]
 - [[_COMMUNITY_Community 22|Community 22]]
 - [[_COMMUNITY_Community 23|Community 23]]
 - [[_COMMUNITY_Community 24|Community 24]]
@@ -99,7 +100,7 @@
 ## Import Cycles
 - None detected.
 
-## Communities (104 total, 13 thin omitted)
+## Communities (105 total, 13 thin omitted)
 
 ### Community 0 - "Community 0"
 Cohesion: 0.06
@@ -134,8 +135,8 @@ Cohesion: 0.07
 Nodes (27): dependencies, exceljs, file-saver, html5-qrcode, idb, lucide-vue-next, papaparse, qrcode (+19 more)
 
 ### Community 8 - "Community 8"
-Cohesion: 0.11
-Nodes (34): computeWeeklyStats(), editEvent(), removeEvent(), saveStudentDemographics(), archiveClass(), archiveStudent(), bulkImportClasses(), clearAllData() (+26 more)
+Cohesion: 0.12
+Nodes (31): saveStudentDemographics(), archiveClass(), archiveStudent(), bulkImportClasses(), clearAllData(), clearStudentAbsent(), clearStudentActiveState(), clearStudentLate() (+23 more)
 
 ### Community 9 - "Community 9"
 Cohesion: 0.09
@@ -176,6 +177,10 @@ Nodes (11): effectiveClass, emailConfig, emailRecipients, emit, generateEmailLin
 ### Community 20 - "Community 20"
 Cohesion: 0.09
 Nodes (25): handleRfidAttendanceScan(), markAllPresentToday(), { push: pushUndo }, syncLateActiveState(), academicTerms, activeClass, activeStudentEvents, archivedClasses (+17 more)
+
+### Community 21 - "Community 21"
+Cohesion: 0.25
+Nodes (7): computeWeeklyStats(), editEvent(), removeEvent(), hasUnsyncedChanges, createAssessment(), deleteAssessment(), updateAssessment()
 
 ### Community 22 - "Community 22"
 Cohesion: 0.20
@@ -278,8 +283,8 @@ Cohesion: 0.18
 Nodes (11): onThresholdChange(), getEffectiveClassRecord(), adjustStudentGrade(), deleteAssessment(), editAssessment(), refreshClassAnalytics(), refreshGrades(), saveStudentOverride() (+3 more)
 
 ### Community 103 - "Community 103"
-Cohesion: 0.18
-Nodes (14): hasUnsyncedChanges, createAssessment(), deleteAssessment(), updateAssessment(), addAttempt(), deleteAttempt(), deleteGrade(), _getGradeInTransaction() (+6 more)
+Cohesion: 0.29
+Nodes (10): addAttempt(), deleteAttempt(), deleteGrade(), _getGradeInTransaction(), getOrCreateGrade(), saveFullGradeRecord(), saveSBARGrade(), setPrimaryAttempt() (+2 more)
 
 ### Community 108 - "Community 108"
 Cohesion: 0.08
@@ -293,7 +298,7 @@ Nodes (30): activeBulkExp, activeLevelOptions, applyBulkFill(), assignLevel(), a
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `getDB()` connect `Community 8` to `Community 0`, `Community 2`, `Community 3`, `Community 35`, `Community 5`, `Community 103`, `Community 23`?**
+- **Why does `getDB()` connect `Community 8` to `Community 0`, `Community 2`, `Community 3`, `Community 35`, `Community 5`, `Community 103`, `Community 21`, `Community 23`?**
   _High betweenness centrality (0.175) - this node is a cross-community bridge._
 - **Why does `openDB()` connect `Community 5` to `Community 8`, `Community 94`?**
   _High betweenness centrality (0.151) - this node is a cross-community bridge._

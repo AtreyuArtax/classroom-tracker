@@ -3277,7 +3277,7 @@
       "label": "if()",
       "file_type": "code",
       "source_file": "src/components/SeatingGrid.vue",
-      "source_location": "L73",
+      "source_location": "L64",
       "_origin": "ast",
       "id": "components_seatinggrid_if",
       "community": 40,
@@ -6790,7 +6790,7 @@
       "source_location": "L135",
       "_origin": "ast",
       "id": "composables_useclassroom_computeweeklystats",
-      "community": 8,
+      "community": 21,
       "norm_label": "computeweeklystats()"
     },
     {
@@ -7100,7 +7100,7 @@
       "source_location": "L1230",
       "_origin": "ast",
       "id": "composables_useclassroom_editevent",
-      "community": 8,
+      "community": 21,
       "norm_label": "editevent()"
     },
     {
@@ -7110,7 +7110,7 @@
       "source_location": "L1256",
       "_origin": "ast",
       "id": "composables_useclassroom_removeevent",
-      "community": 8,
+      "community": 21,
       "norm_label": "removeevent()"
     },
     {
@@ -8807,7 +8807,7 @@
       "label": "autoAssignSeats()",
       "file_type": "code",
       "source_file": "src/composables/useRosterOperations.js",
-      "source_location": "L365",
+      "source_location": "L367",
       "_origin": "ast",
       "id": "composables_userosteroperations_autoassignseats",
       "community": 24,
@@ -9300,7 +9300,7 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "db_eventservice_hasunsyncedchanges",
-      "community": 103,
+      "community": 21,
       "norm_label": "hasunsyncedchanges"
     },
     {
@@ -9510,7 +9510,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "gradebook_assessmentservice",
-      "community": 103,
+      "community": 21,
       "norm_label": "assessmentservice.js"
     },
     {
@@ -9520,7 +9520,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "gradebook_assessmentservice_createassessment",
-      "community": 103,
+      "community": 21,
       "norm_label": "createassessment()"
     },
     {
@@ -9540,7 +9540,7 @@
       "source_location": "L67",
       "_origin": "ast",
       "id": "gradebook_assessmentservice_updateassessment",
-      "community": 103,
+      "community": 21,
       "norm_label": "updateassessment()"
     },
     {
@@ -9550,7 +9550,7 @@
       "source_location": "L85",
       "_origin": "ast",
       "id": "gradebook_assessmentservice_deleteassessment",
-      "community": 103,
+      "community": 21,
       "norm_label": "deleteassessment()"
     },
     {
@@ -10030,7 +10030,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "db_index",
-      "community": 8,
+      "community": 21,
       "norm_label": "index.js"
     },
     {
@@ -30746,5 +30746,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "3806372c6af0bfd5527d9d4f258185e23ac5bb70"
+  "built_at_commit": "f8e5d2bb8ba8975d4c6a8fbce0427635b4502d3d"
 }

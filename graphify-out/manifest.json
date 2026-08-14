@@ -110,8 +110,8 @@
     "semantic_hash": ""
   },
   "src/components/SeatingGrid.vue": {
-    "mtime": 1786592385.1483989,
-    "ast_hash": "663da1ceba8065edbfb884281912b9ca",
+    "mtime": 1786722384.1949308,
+    "ast_hash": "075bc5cbe1658fef99214b67e17ddc02",
     "semantic_hash": ""
   },
   "src/components/StudentProfileModal.vue": {
@@ -440,13 +440,13 @@
     "semantic_hash": ""
   },
   "src/composables/useRosterOperations.js": {
-    "mtime": 1786592481.3828168,
-    "ast_hash": "8fecf5408f2da48b06dcfb46d082349a",
+    "mtime": 1786722238.9919786,
+    "ast_hash": "5e1c0dd4f53e196ffc2062815f7a2da8",
     "semantic_hash": ""
   },
   "src/components/setup/ClassLogisticsSettings.vue": {
-    "mtime": 1786591537.533224,
-    "ast_hash": "aa57ad425b6df81a25a24d4b93d7216b",
+    "mtime": 1786722457.8050432,
+    "ast_hash": "2b0b6992d6f1a25147383eedd65782d5",
     "semantic_hash": ""
   },
   "src/components/setup/DatabaseMaintenanceSettings.vue": {
@@ -1000,8 +1000,8 @@
     "semantic_hash": ""
   },
   "src/components/setup/SeatingLayoutDesigner.vue": {
-    "mtime": 1786592101.356099,
-    "ast_hash": "ac4526f8ebf1a9c5b20b2bfa45081379",
+    "mtime": 1786722462.639824,
+    "ast_hash": "a4e2e7e40dfde064ea3a6da5decaa07e",
     "semantic_hash": ""
   }
 }
