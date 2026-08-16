@@ -205,8 +205,8 @@
     "semantic_hash": ""
   },
   "src/components/setup/CalendarSettings.vue": {
-    "mtime": 1785245564.4156275,
-    "ast_hash": "5648def56597b87755b38f7679b9d391",
+    "mtime": 1786909681.1265428,
+    "ast_hash": "cc6cb27d35c5b786ffe923cd3680bad4",
     "semantic_hash": ""
   },
   "src/components/setup/CsvHelpGuide.vue": {
@@ -345,8 +345,8 @@
     "semantic_hash": ""
   },
   "src/views/Reports.vue": {
-    "mtime": 1786501223.5538929,
-    "ast_hash": "1dc51b9296fe3dbd7a4da457f4c38a03",
+    "mtime": 1786792571.4283051,
+    "ast_hash": "3ea5e586d472fab636268eba65380d6e",
     "semantic_hash": ""
   },
   "src/views/ScanStation.vue": {
@@ -535,8 +535,8 @@
     "semantic_hash": ""
   },
   "src/components/reports/ReportsPrintHub.vue": {
-    "mtime": 1786375610.4725914,
-    "ast_hash": "ec3c4463dfb4f53049a27ea1388a576f",
+    "mtime": 1786792329.7651691,
+    "ast_hash": "0a9bee530edbb68ab57f4655668766fb",
     "semantic_hash": ""
   },
   "src/components/reports/StudentRiskScatterPlot.vue": {
@@ -1002,6 +1002,11 @@
   "src/components/setup/SeatingLayoutDesigner.vue": {
     "mtime": 1786724845.6559877,
     "ast_hash": "124f52c7f7fe832d8f62cc4cc1d3dcff",
+    "semantic_hash": ""
+  },
+  "src/components/reports/PrintSeatingChartModal.vue": {
+    "mtime": 1786793593.7237117,
+    "ast_hash": "f7ebf1ab8a975ef6c78053abac7c6267",
     "semantic_hash": ""
   }
 }

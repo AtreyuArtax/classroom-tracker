@@ -83,10 +83,12 @@
             @open-print-expectations="showPrintExpectationsModal = true"
             @open-print-classlist="showPrintClassListModal = true"
             @open-print-calendar="showPrintCalendarModal = true"
+            @open-print-seating="showPrintSeatingModal = true"
             @download-csv="handleDownloadCsv"
             @download-comments="handleDownloadComments"
           />
         </template>
+
 
         <!-- ── PILLAR 1: CLASS ANALYTICS ────────────────────────────── -->
         <template v-else>
@@ -187,6 +189,16 @@
       :report-class="reportClass"
       @close="showPrintCalendarModal = false"
     />
+
+    <!-- Print Classroom Seating Chart Modal -->
+    <PrintSeatingChartModal
+      v-if="showPrintSeatingModal"
+      :show="showPrintSeatingModal"
+      :report-class="reportClass"
+      :class-list="filteredClassList"
+      :teacher-name="teacherName"
+      @close="showPrintSeatingModal = false"
+    />
   </div>
 </template>
 
@@ -207,6 +219,7 @@ import PrintGradesGridModal from '../components/PrintGradesGridModal.vue'
 import PrintExpectationsModal from '../components/reports/PrintExpectationsModal.vue'
 import PrintClassListModal from '../components/PrintClassListModal.vue'
 import PrintCalendarModal from '../components/reports/PrintCalendarModal.vue'
+import PrintSeatingChartModal from '../components/reports/PrintSeatingChartModal.vue'
 import ReportsClassOverview from '../components/reports/ReportsClassOverview.vue'
 import ReportsBatchPrintModal from '../components/reports/ReportsBatchPrintModal.vue'
 import ReportsPrintHub from '../components/reports/ReportsPrintHub.vue'
@@ -416,6 +429,7 @@ const showPrintGridModal = ref(false)
 const showPrintExpectationsModal = ref(false)
 const showPrintClassListModal = ref(false)
 const showPrintCalendarModal = ref(false)
+const showPrintSeatingModal = ref(false)
 
 const reportClass = computed(() =>
   classList.value.find(c => c.classId === sidebarClassId.value)

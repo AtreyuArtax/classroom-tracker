@@ -177,6 +177,38 @@
         </div>
       </div>
 
+      <!-- Card 7: Classroom Seating Plan & Dashboard Layout -->
+      <div class="print-hub__card">
+        <div class="print-hub__card-header">
+          <div class="print-hub__icon-wrapper print-hub__icon-wrapper--primary">
+            <Armchair :size="22" />
+          </div>
+          <div>
+            <h3 class="print-hub__card-title">Classroom Seating Plan</h3>
+            <p class="print-hub__card-desc">Printable physical seating plan with room layout, table pods, student names, and accommodations indicators for sub plans.</p>
+          </div>
+        </div>
+
+        <div class="print-hub__card-body">
+          <div class="print-hub__stat-row">
+            <span class="print-hub__stat-label">Grid Layout:</span>
+            <span class="print-hub__stat-value">{{ reportClass?.gridSize?.rows || 6 }} × {{ reportClass?.gridSize?.cols || 6 }} Layout</span>
+          </div>
+          <div class="print-hub__features-list">
+            <span class="print-hub__chip">Landscape Default</span>
+            <span class="print-hub__chip">Table Pod Badges</span>
+            <span class="print-hub__chip">IEP Indicator Dots</span>
+            <span class="print-hub__chip">Sub Plan Ready</span>
+          </div>
+        </div>
+
+        <div class="print-hub__card-footer">
+          <button class="print-hub__btn-action" @click="emit('open-print-seating')">
+            <Printer :size="16" /> Configure &amp; Print Seating Plan
+          </button>
+        </div>
+      </div>
+
       <!-- Card 4: Export CSV & Data Center -->
       <div class="print-hub__card">
         <div class="print-hub__card-header">
@@ -216,7 +248,7 @@
 
 <script setup>
 import { computed } from 'vue'
-import { FileText, Grid, BookOpen, Download, Printer, GraduationCap, Users, Calendar } from 'lucide-vue-next'
+import { FileText, Grid, BookOpen, Download, Printer, GraduationCap, Users, Calendar, Armchair } from 'lucide-vue-next'
 
 import { getEffectiveClassRecord } from '../../composables/useElementary.js'
 import { activeSubjectId } from '../../composables/useClassroomState.js'
@@ -241,6 +273,7 @@ const emit = defineEmits([
   'open-print-expectations',
   'open-print-classlist',
   'open-print-calendar',
+  'open-print-seating',
   'download-csv',
   'download-comments'
 ])

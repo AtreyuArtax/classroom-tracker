@@ -212,6 +212,7 @@ textarea {
    */
   .qr-print-only.print-only-container--active,
   .sheet-print-only.print-only-container--active,
+  .seating-print-only.print-only-container--active,
   .print-only-container.print-only-container--active {
     display: block !important;
     position: static !important;
@@ -223,6 +224,7 @@ textarea {
 /* Screen visibility for the active print container */
 .qr-print-only:not(.print-only-container--active),
 .sheet-print-only:not(.print-only-container--active),
+.seating-print-only:not(.print-only-container--active),
 .print-only-container:not(.print-only-container--active) {
   display: none;
 }

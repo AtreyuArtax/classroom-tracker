@@ -148,7 +148,7 @@
         Add non-school days to exclude them from attendance reports and analytics.
       </p>
 
-      <!-- CSV Bulk Import for Holidays -->
+      <!-- CSV Bulk Import & Export for Holidays -->
       <div class="calendar-import-box" style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
         <label class="setup__btn-primary setup__btn-sm" for="holiday-csv" style="cursor: pointer; position: relative; overflow: hidden;">
           <FileUp :size="14" /> Import CSV
@@ -163,6 +163,15 @@
 
         <button class="setup__btn-ghost setup__btn-sm" @click="showPasteModal = true">
           <FileCode :size="14" /> Paste CSV
+        </button>
+
+        <button 
+          class="setup__btn-ghost setup__btn-sm" 
+          @click="exportHolidaysCsv"
+          :disabled="filteredNonSchoolDays.length === 0"
+          title="Export current year schedule to CSV"
+        >
+          <Download :size="14" /> Export CSV
         </button>
 
         <span class="setup__hint" style="margin-left: auto;">Format: <code>Date, [EndDate], Label</code></span>
@@ -280,7 +289,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { CalendarDays, Palmtree, Trash2, Plus, FileUp, Flag, FileCode } from 'lucide-vue-next'
+import { CalendarDays, Palmtree, Trash2, Plus, FileUp, Flag, FileCode, Download } from 'lucide-vue-next'
 import { useClassroom } from '../../composables/useClassroom.js'
 import { globalMilestones } from '../../composables/useGradebook.js'
 import * as settingsService from '../../db/settingsService.js'
@@ -492,15 +501,63 @@ async function importHolidays(rawData) {
     .filter(d => d.date && /^\d{4}-\d{2}-\d{2}$/.test(d.date))
 
   if (newDays.length > 0) {
-    const existingDates = new Set(nonSchoolDays.value.map(d => d.date))
-    const uniqueNew = newDays.filter(d => !existingDates.has(d.date))
-    
-    nonSchoolDays.value = [...nonSchoolDays.value, ...uniqueNew]
+    // Map existing non-school days by date
+    const daysMap = new Map(nonSchoolDays.value.map(d => [d.date, { ...d }]))
+    let updatedCount = 0
+    let addedCount = 0
+
+    // Overwrite existing entries on matching date or add new ones
+    for (const item of newDays) {
+      if (daysMap.has(item.date)) {
+        daysMap.set(item.date, item)
+        updatedCount++
+      } else {
+        daysMap.set(item.date, item)
+        addedCount++
+      }
+    }
+
+    nonSchoolDays.value = Array.from(daysMap.values())
     await saveNonSchoolDays()
-    setCalendarStatus(`Imported ${uniqueNew.length} new holidays/PD days.`, 'success')
+
+    const summaryParts = []
+    if (addedCount > 0) summaryParts.push(`${addedCount} added`)
+    if (updatedCount > 0) summaryParts.push(`${updatedCount} updated/overwritten`)
+    const message = `Import complete: ${summaryParts.join(', ')}.`
+    setCalendarStatus(message, 'success')
   } else {
-    setCalendarStatus('No valid dates found in data. Ensure format is YYYY-MM-DD.', 'warning')
+    const errorMsg = 'No valid dates found in data. Ensure format is YYYY-MM-DD.'
+    setCalendarStatus(errorMsg, 'warning')
   }
+}
+
+function exportHolidaysCsv() {
+  const dataToExport = filteredNonSchoolDays.value
+    .filter(d => d.date)
+    .map(d => ({
+      Date: d.date,
+      EndDate: d.endDate || '',
+      Label: d.label || ''
+    }))
+
+  if (dataToExport.length === 0) {
+    alert('No holidays or PD days to export for this school year.', 'Export Notice')
+    return
+  }
+
+  const csv = Papa.unparse(dataToExport)
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  const yearTag = selectedYear.value ? `_${selectedYear.value}` : ''
+  link.setAttribute('href', url)
+  link.setAttribute('download', `school_calendar_holidays${yearTag}.csv`)
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  URL.revokeObjectURL(url)
+
+  setCalendarStatus(`Exported ${dataToExport.length} holidays/PD days.`, 'success')
 }
 </script>
 
@@ -667,6 +724,28 @@ async function importHolidays(rawData) {
   color: var(--text-secondary);
   font-style: italic;
   font-size: 0.9rem;
+}
+
+.setup__inline-banner {
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.setup__inline-banner--success {
+  background: rgba(52, 199, 89, 0.12);
+  border: 1px solid rgba(52, 199, 89, 0.35);
+  color: #15803d;
+}
+
+.setup__inline-banner--warning {
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  color: #b45309;
 }
 
 .setup__btn--full {
