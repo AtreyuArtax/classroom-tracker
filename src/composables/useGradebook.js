@@ -97,7 +97,7 @@ export const availableGradeFilters = computed(() => availableSubCohorts.value)
  * Check if a student belongs to the active sub-cohort filter
  */
 export function isStudentInSubCohort(student, filterVal = activeSubCohortFilter.value, classType = activeClassRecord.value?.classType) {
-  if (!filterVal || filterVal.toLowerCase() === 'all') return true
+  if (!filterVal || String(filterVal).toLowerCase() === 'all') return true
   if (!student) return false
   const isElem = classType === 'elementary'
   const curSubId = activeClassRecord.value?.activeSubjectId
@@ -111,14 +111,13 @@ export function isStudentInSubCohort(student, filterVal = activeSubCohortFilter.
   const hasIEPForSubject = isElem && Boolean(student.accommodations?.modifiedSubjectGrades?.[curSubId])
   const fullStudentTag = hasIEPForSubject ? `${baseGrade} (IEP)` : baseGrade
 
-  const cleanFilter = filterVal.replace(/\s*\(IEP\)/i, '').trim().toLowerCase()
-  const filterIsIEPSpecific = filterVal.toLowerCase().includes('(iep)')
+  const filterIsIEPSpecific = String(filterVal).toLowerCase().includes('(iep)')
 
   if (filterIsIEPSpecific) {
-    return fullStudentTag.toLowerCase() === filterVal.trim().toLowerCase()
+    return fullStudentTag.toLowerCase() === String(filterVal).trim().toLowerCase()
   }
 
-  return baseGrade.toLowerCase() === cleanFilter || fullStudentTag.toLowerCase() === filterVal.trim().toLowerCase()
+  return isCohortMatch(baseGrade, filterVal) || isCohortMatch(fullStudentTag, filterVal)
 }
 
 
@@ -126,14 +125,13 @@ export function isStudentInSubCohort(student, filterVal = activeSubCohortFilter.
  * Check if an assessment targets the active sub-cohort filter
  */
 export function isAssessmentInSubCohort(assessment, filterVal = activeSubCohortFilter.value, classType = activeClassRecord.value?.classType) {
-  if (!filterVal || filterVal.toLowerCase() === 'all') return true
+  if (!filterVal || String(filterVal).toLowerCase() === 'all') return true
   if (!assessment) return true
-  const cleanFilter = filterVal.replace(/\s*\(IEP\)/i, '').trim().toLowerCase()
   const tag = classType === 'elementary'
     ? (assessment.gradeLevel || assessment.targetCourseCode)
     : (assessment.targetCourseCode || assessment.gradeLevel)
-  if (!tag || tag.toLowerCase() === 'all') return true
-  return tag.replace(/\s*\(IEP\)/i, '').trim().toLowerCase() === cleanFilter
+  if (!tag || String(tag).toLowerCase() === 'all') return true
+  return isCohortMatch(tag, filterVal)
 }
 
 /**
