@@ -253,6 +253,7 @@ import BaseModal from '../BaseModal.vue'
 
 import { getEffectiveClassRecord, getUnitGradeLevel } from '../../composables/useElementary.js'
 import { activeSubjectId } from '../../composables/useClassroomState.js'
+import { isCohortMatch } from '../../db/gradebook/gradeCalc.js'
 
 const { sortedRoster } = useClassroom()
 
@@ -343,11 +344,10 @@ watch(showAddAssessmentModal, (open) => {
 const filteredUnits = computed(() => {
   let units = effectiveUnits.value || []
   if (selectedGradeFilter.value !== 'all' && availableSubCohorts.value.length > 1) {
-    const targetG = selectedGradeFilter.value.replace(/\s*\(IEP\)/i, '').trim().toLowerCase()
     units = units.filter(u => {
       const uGrade = getUnitGradeLevel(u)
-      if (uGrade && uGrade.trim().toLowerCase() === targetG) return true
-      if (u.expectations && u.expectations.some(e => e.gradeLevel && e.gradeLevel.trim().toLowerCase() === targetG)) return true
+      if (uGrade && isCohortMatch(uGrade, selectedGradeFilter.value)) return true
+      if (u.expectations && u.expectations.some(e => e.gradeLevel && isCohortMatch(e.gradeLevel, selectedGradeFilter.value))) return true
       return !uGrade
     })
   }
@@ -384,8 +384,7 @@ const filteredAvailableExpectations = computed(() => {
 
   // 1. Filter by Grade Pill (if split class)
   if (selectedGradeFilter.value !== 'all' && availableSubCohorts.value.length > 1) {
-    const targetG = selectedGradeFilter.value.replace(/\s*\(IEP\)/i, '').trim().toLowerCase()
-    list = list.filter(e => e.gradeLevel && e.gradeLevel.trim().toLowerCase() === targetG)
+    list = list.filter(e => e.gradeLevel && isCohortMatch(e.gradeLevel, selectedGradeFilter.value))
   }
 
   // 2. Filter by Selected Unit / Strand Dropdown

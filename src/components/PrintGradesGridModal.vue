@@ -400,7 +400,8 @@ import { assessments, gradeMap, selectedMilestone, filteredMilestones } from '..
 import { usePrintOptions } from '../composables/usePrintOptions.js'
 import { exportGradebookToExcel } from '../db/exportService.js'
 import { calculateSBARExpectationMastery, getSBARLevelBadge } from '../db/gradebook/gradeCalcSBAR.js'
-import { getEffectiveClassRecord } from '../composables/useElementary.js'
+import { isCohortMatch } from '../db/gradebook/gradeCalc.js'
+import { getEffectiveClassRecord, getStudentEffectiveGrade } from '../composables/useElementary.js'
 import { activeSubjectId } from '../composables/useClassroomState.js'
 
 const props = defineProps({
@@ -453,8 +454,10 @@ const totalStudentsCount = computed(() => allStudentsList.value.length)
 function countForCohort(cohortTag) {
   const isElem = isElementary.value
   return allStudentsList.value.filter(s => {
-    const tag = isElem ? s.gradeLevel : s.courseCode
-    return tag === cohortTag
+    const tag = isElem 
+      ? (getStudentEffectiveGrade(s, activeSubjectId.value) || s.gradeLevel)
+      : s.courseCode
+    return isCohortMatch(tag, cohortTag)
   }).length
 }
 
@@ -483,8 +486,7 @@ const sortedAssessments = computed(() => {
     const isElem = isElementary.value
     list = list.filter(a => {
       const targetTag = isElem ? a.gradeLevel : (a.targetCourseCode || a.gradeLevel)
-      if (!targetTag || targetTag === 'ALL' || targetTag === 'all') return true
-      return targetTag === selectedCohort.value
+      return isCohortMatch(targetTag, selectedCohort.value)
     })
   }
 

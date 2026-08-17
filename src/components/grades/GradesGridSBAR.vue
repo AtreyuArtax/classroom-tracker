@@ -369,6 +369,7 @@ import { formatLocalDisplay } from '../../utils/dates.js'
 import { getEffectiveClassRecord, getUnitGradeLevel } from '../../composables/useElementary.js'
 import { activeSubjectId } from '../../composables/useClassroomState.js'
 import { UNIT_COLORS, getSectionColor } from '../../utils/gradeColors.js'
+import { isCohortMatch } from '../../db/gradebook/gradeCalc.js'
 
 const props = defineProps({
   isPrivacyMode: Boolean
@@ -680,7 +681,7 @@ const sortedAssessments = computed(() => {
     list = list.filter(a => {
       const aGrade = getAssessmentGradeLevel(a)
       if (aGrade) {
-        return aGrade === targetG
+        return isCohortMatch(aGrade, targetG)
       }
       return true
     })
@@ -822,7 +823,7 @@ const allExpectations = computed(() => {
     list = list.filter(e => {
       const targetG = activeGradeFilter.value.toLowerCase()
       const eG = (e.gradeLevel || e.courseCode || '').toLowerCase()
-      return !eG || eG === targetG
+      return !eG || isCohortMatch(eG, targetG)
     })
   }
   return list.sort((a, b) => a.code.localeCompare(b.code))

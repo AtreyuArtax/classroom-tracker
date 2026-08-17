@@ -609,35 +609,14 @@ const availableCourseFilters = computed(() => {
   return ['all', ...Array.from(codes).sort()]
 })
 
-const selectedGradeFilter = ref('all')
-
-const availableGradeFilters = computed(() => {
-  if (activeClassRecord.value?.classType !== 'elementary') return []
-  const grades = new Set()
-  if (activeClassRecord.value?.students) {
-    Object.values(activeClassRecord.value.students).forEach(st => {
-      if (st.gradeLevel && !st.archived) grades.add(st.gradeLevel)
-    })
-  }
-  const units = activeClassRecord.value?.gradebookUnits || []
-  units.forEach(u => {
-    const uGrade = getUnitGradeLevel(u)
-    if (uGrade) grades.add(uGrade)
-    if (u.expectations) {
-      u.expectations.forEach(e => { if (e.gradeLevel) grades.add(e.gradeLevel) })
-    }
-  })
-  if (grades.size <= 1) return []
-  return ['all', ...Array.from(grades).sort()]
-})
 
 const availableUnits = computed(() => {
   const eff = getEffectiveClassRecord(activeClassRecord.value, activeSubjectId.value, selectedCourseFilter.value)
   let units = eff?.gradebookUnits || []
-  if (selectedGradeFilter.value !== 'all' && availableGradeFilters.value.length > 1) {
+  if (activeSubCohortFilter.value !== 'all' && availableSubCohorts.value.length > 1) {
     units = units.filter(u => {
       const uGrade = getUnitGradeLevel(u)
-      return isCohortMatch(uGrade, selectedGradeFilter.value)
+      return !uGrade || isCohortMatch(uGrade, activeSubCohortFilter.value)
     })
   }
 

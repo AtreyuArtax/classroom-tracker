@@ -145,13 +145,12 @@ export async function exportGradebookToExcel({
       if (!entry) return;
 
       const attempts = entry.attempts && entry.attempts.length ? entry.attempts : [{
-        score: entry.score,
+        pointsEarned: entry.resolvedScore ?? entry.score ?? entry.pointsEarned,
         date: a.date
       }];
 
       attempts.forEach((att, idx) => {
-        // attempts store pointsEarned, not score
-        const score = typeof att.pointsEarned === 'number' ? att.pointsEarned : 0;
+        const score = typeof att.pointsEarned === 'number' ? att.pointsEarned : (typeof att.score === 'number' ? att.score : (typeof att.points === 'number' ? att.points : 0));
         const total = a.totalPoints || 1;
         const pct = (score / total);
 

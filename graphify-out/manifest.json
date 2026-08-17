@@ -145,8 +145,8 @@
     "semantic_hash": ""
   },
   "src/components/dossier/AddAssessmentModal.vue": {
-    "mtime": 1786498270.6408713,
-    "ast_hash": "65fe79e7f44cb1f3807683648de1144a",
+    "mtime": 1786965829.902353,
+    "ast_hash": "adef18ba82cd48db541db659e9cf4a7e",
     "semantic_hash": ""
   },
   "src/components/dossier/AttendanceActivityReport.vue": {
@@ -285,9 +285,9 @@
     "semantic_hash": ""
   },
   "src/db/exportService.js": {
-    "mtime": 1780947484.0252047,
-    "ast_hash": "b2b2d8a2b2999173ec25994086a59239",
-    "semantic_hash": "b2b2d8a2b2999173ec25994086a59239"
+    "mtime": 1786965887.3628366,
+    "ast_hash": "7db29c8a2c9ea036b28592ee8e07a636",
+    "semantic_hash": ""
   },
   "src/db/gradebookService.js": {
     "mtime": 1785344707.0658178,
@@ -380,8 +380,8 @@
     "semantic_hash": "e4fe3444aaad844cbc4b9f3975ed773c"
   },
   "src/components/PrintGradesGridModal.vue": {
-    "mtime": 1786382690.104386,
-    "ast_hash": "6683cf5b45f4fe13da3235a2f72c32b6",
+    "mtime": 1786965877.412728,
+    "ast_hash": "50f3f9c696b2a21a137ecde42d192dd9",
     "semantic_hash": ""
   },
   "src/components/GradesAnalyticsPanel.vue": {
@@ -390,8 +390,8 @@
     "semantic_hash": ""
   },
   "src/components/GradesGrid.vue": {
-    "mtime": 1786723686.2443078,
-    "ast_hash": "f548e19d436273b6fb7bd36271f6b2fe",
+    "mtime": 1786965251.11484,
+    "ast_hash": "39203732aaea391534e9fbbcd7fd202c",
     "semantic_hash": ""
   },
   "src/components/dossier/StudentAcademicsTab.vue": {
@@ -560,8 +560,8 @@
     "semantic_hash": ""
   },
   "src/db/gradebook/gradeAnalytics.js": {
-    "mtime": 1786551876.3024836,
-    "ast_hash": "0c1e6aebc6c526c4e2582505ce532979",
+    "mtime": 1786965335.1976552,
+    "ast_hash": "3209ae9eac3a2ef6e729ac9aa3315071",
     "semantic_hash": ""
   },
   "src/db/gradebook/gradeCalc.js": {
@@ -585,8 +585,8 @@
     "semantic_hash": ""
   },
   "src/components/grades/GradesGridSBAR.vue": {
-    "mtime": 1786498227.6186883,
-    "ast_hash": "de65d7ca56b75581e8dcf85e3e47d108",
+    "mtime": 1786965280.8957295,
+    "ast_hash": "4da4b1162ede04b2ff6fbe686629addd",
     "semantic_hash": ""
   },
   "src/db/gradebook/gradeCalcSBAR.js": {
@@ -760,8 +760,8 @@
     "semantic_hash": ""
   },
   "src/composables/usePrintOptions.js": {
-    "mtime": 1786238581.660911,
-    "ast_hash": "bc68c23d5fa74a4052b3d321cac007b5",
+    "mtime": 1786965868.4007905,
+    "ast_hash": "1babde2873508309235dfc4ace6985a0",
     "semantic_hash": ""
   },
   "new_expectations/ontario-sch3u-success-criteria.json": {

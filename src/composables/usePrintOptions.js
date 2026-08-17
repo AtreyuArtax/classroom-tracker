@@ -1,4 +1,6 @@
 import { ref, computed } from 'vue'
+import { isCohortMatch } from '../db/gradebook/gradeCalc.js'
+import { getStudentEffectiveGrade } from './useElementary.js'
 
 /**
  * Composable for standardized print options, sub-cohort (split class/section) extraction,
@@ -43,7 +45,9 @@ export function usePrintOptions(classRecordRef, initialCohortRef = 'all') {
 
     Object.values(cls.students).forEach(st => {
       if (st.archived) return
-      const tag = isElem ? st.gradeLevel : st.courseCode
+      const tag = isElem 
+        ? (getStudentEffectiveGrade(st, cls.activeSubjectId) || st.gradeLevel)
+        : st.courseCode
       if (tag) cohorts.add(tag)
     })
 
@@ -66,13 +70,16 @@ export function usePrintOptions(classRecordRef, initialCohortRef = 'all') {
   const filterStudents = (studentsList, cohortFilter = selectedCohort.value) => {
     if (!Array.isArray(studentsList)) return []
     const isElem = isElementary.value
+    const cls = getClassRecord()
 
     return studentsList
       .filter(s => !s.archived)
       .filter(s => {
         if (!cohortFilter || cohortFilter === 'all') return true
-        const tag = isElem ? s.gradeLevel : s.courseCode
-        return tag === cohortFilter
+        const tag = isElem 
+          ? (getStudentEffectiveGrade(s, cls?.activeSubjectId) || s.gradeLevel)
+          : s.courseCode
+        return isCohortMatch(tag, cohortFilter)
       })
       .sort((a, b) => (a.lastName || '').localeCompare(b.lastName || ''))
   }

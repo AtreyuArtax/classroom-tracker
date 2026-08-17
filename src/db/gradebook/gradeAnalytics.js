@@ -14,8 +14,10 @@ import {
   buildDistributionBuckets,
   buildLevelDistributionBuckets,
   resolveAttemptScore,
+  getAssessmentPercentage,
   _calculateCategoryGrade,
-  calculateMedian
+  calculateMedian,
+  isCohortMatch
 } from './gradeCalc.js'
 
 /**
@@ -42,19 +44,16 @@ export function calculateAssessmentAnalytics(assessmentId, grades, assessment, o
   // Collect all valid scores
   const allScores = grades
     .filter(g =>
-      g.assessmentId === assessmentId &&
+      Number(g.assessmentId) === Number(assessmentId) &&
       !g.excluded &&
-      !g.missing &&
-      g.attempts &&
-      g.attempts.length > 0 &&
       !excludedStudentIds.has(g.studentId)
     )
     .map(g => {
-      const earned = resolveAttemptScore(g.attempts, assessment.retestPolicy)
-      if (earned === null) return null
+      const percentage = getAssessmentPercentage(assessment, g)
+      if (percentage === null) return null
       return {
         studentId: g.studentId,
-        percentage: (earned / (assessment.totalPoints || 1)) * 100
+        percentage
       }
     })
     .filter(s => s !== null)
@@ -133,11 +132,12 @@ export async function calculateClassAnalytics(classRecord, assessments, grades, 
   })
 
   if (filterKey && filterKey !== 'all') {
-    const fLower = filterKey.toLowerCase()
     studentIds = studentIds.filter(id => {
       const student = classRecord.students[id]
-      const tag = isElem ? student.gradeLevel : student.courseCode
-      return tag && tag.toLowerCase() === fLower
+      const tag = isElem 
+        ? (student?.accommodations?.modifiedSubjectGrades?.[classRecord.activeSubjectId] || student.gradeLevel)
+        : student.courseCode
+      return isCohortMatch(tag, filterKey)
     })
   }
 
@@ -153,10 +153,9 @@ export async function calculateClassAnalytics(classRecord, assessments, grades, 
   )
 
   if (filterKey && filterKey !== 'all') {
-    const fLower = filterKey.toLowerCase()
     productAssessments = productAssessments.filter(a => {
       const tag = isElem ? (a.gradeLevel || a.targetCourseCode) : (a.targetCourseCode || a.gradeLevel)
-      return !tag || tag === 'all' || tag.toLowerCase() === fLower
+      return isCohortMatch(tag, filterKey)
     })
   }
 
