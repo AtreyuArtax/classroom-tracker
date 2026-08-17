@@ -291,15 +291,29 @@
           </p>
         </div>
 
-        <button 
-          type="button" 
-          class="setup__btn-primary" 
-          style="display: flex; align-items: center; gap: 8px; padding: 8px 18px; font-size: 0.88rem; font-weight: 700;"
-          @click="isDesignerModalOpen = true"
-        >
-          <LayoutGrid :size="17" />
-          <span>Open Layout Designer</span>
-        </button>
+        <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+          <button 
+            type="button" 
+            class="setup__btn-ghost" 
+            style="display: flex; align-items: center; gap: 8px; padding: 8px 14px; font-size: 0.85rem; font-weight: 600;"
+            :class="{ 'setup__btn-ghost--active': showDeskPhotos }"
+            @click="showDeskPhotos = !showDeskPhotos"
+            title="Toggle whether student photos appear on dashboard desk tiles"
+          >
+            <Camera :size="16" />
+            <span>Dashboard Photos: <strong>{{ showDeskPhotos ? 'ON' : 'OFF' }}</strong></span>
+          </button>
+
+          <button 
+            type="button" 
+            class="setup__btn-primary" 
+            style="display: flex; align-items: center; gap: 8px; padding: 8px 18px; font-size: 0.88rem; font-weight: 700;"
+            @click="isDesignerModalOpen = true"
+          >
+            <LayoutGrid :size="17" />
+            <span>Open Layout Designer</span>
+          </button>
+        </div>
       </div>
 
       <!-- Advanced Layout Designer Modal -->
@@ -315,12 +329,18 @@
 
     <!-- Roster -->
     <div class="setup__card">
-      <div class="setup__card-header-row" style="display: flex; justify-content: space-between; align-items: center; wrap: wrap; gap: 12px;">
-        <div style="display: flex; align-items: center; gap: 8px; cursor: pointer;" @click="toggleRoster">
+      <div class="setup__card-header-row" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+        <div style="display: flex; align-items: center; gap: 8px; cursor: pointer; flex-shrink: 0;" @click="toggleRoster">
           <component :is="isRosterExpanded ? ChevronUp : ChevronDown" :size="18" style="color: var(--text-muted);" />
-          <h2 class="setup__card-title" style="margin: 0;">Roster — {{ sortedRoster.length }} Students</h2>
+          <h2 class="setup__card-title" style="margin: 0; white-space: nowrap;">Roster — {{ sortedRoster.length }} Students</h2>
         </div>
-        <div class="setup__card-actions" style="display: flex; gap: 8px;">
+        <div class="setup__card-actions" style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+          <button class="setup__btn-ghost" @click="isRapidPhotosOpen = true" title="Open webcam booth to rapidly photograph students">
+            <Camera :size="16" /> Rapid Photos
+          </button>
+          <button class="setup__btn-ghost" @click="isBatchPhotosOpen = true" title="Batch import student photos from folder">
+            <FolderOpen :size="16" /> Import Photos Folder
+          </button>
           <button v-if="showScannerButton" class="setup__btn-ghost" @click="openRapidRFID" title="Rapidly scan RFID tags to assign to students">
             <Zap :size="16" /> Rapid RFID
           </button>
@@ -341,8 +361,18 @@
 
       <!-- Roster List (Expanded) -->
       <ul v-else class="setup__roster-list" style="margin-top: 1rem;">
-        <li v-for="s in sortedRoster" :key="s.studentId" class="setup__roster-item">
-          <div class="setup__roster-info">
+        <li v-for="s in sortedRoster" :key="s.studentId" class="setup__roster-item" style="display: flex; align-items: center; gap: 10px;">
+          <StudentAvatar 
+            :student-id="s.studentId" 
+            :first-name="s.firstName" 
+            :last-name="s.lastName" 
+            size="sm" 
+            shape="circle" 
+            :allow-upload="true"
+            @edit-photo="openSinglePhotoModal(s)"
+            title="Click to change photo"
+          />
+          <div class="setup__roster-info" style="flex: 1;">
             <span class="setup__roster-name">{{ s.lastName }}, {{ s.firstName }}</span>
             <span class="setup__roster-id">{{ s.studentId }}</span>
             <span v-if="activeClass?.classType === 'elementary' && s.gradeLevel && availableSubCohorts.length > 1" class="setup__chip" style="margin-left: 8px;">
@@ -353,6 +383,7 @@
             </span>
           </div>
           <div class="setup__roster-actions">
+            <button class="setup__icon-btn" @click="openSinglePhotoModal(s)" title="Update Student Photo"><Camera :size="14" /></button>
             <button class="setup__icon-btn" @click="onEditStudent(s)" title="Edit"><Pencil :size="14" /></button>
             <button class="setup__icon-btn setup__icon-btn--warn" @click="onArchiveStudent(s)" title="Archive (Unenroll)"><UserMinus :size="14" /></button>
           </div>
@@ -703,6 +734,30 @@
       :class-record="activeClass"
       @close="isQrModalOpen = false"
     />
+
+    <!-- Rapid Photos Booth Modal (Class Walkthrough) -->
+    <PhotoCaptureModal
+      v-if="isRapidPhotosOpen"
+      :show="isRapidPhotosOpen"
+      :student-list="sortedRoster"
+      @close="isRapidPhotosOpen = false"
+    />
+
+    <!-- Single Student Photo Capture Modal -->
+    <PhotoCaptureModal
+      v-if="isSinglePhotoModalOpen"
+      :show="isSinglePhotoModalOpen"
+      :student="targetPhotoStudent"
+      @close="isSinglePhotoModalOpen = false; targetPhotoStudent = null;"
+    />
+
+    <!-- Batch Folder Photo Importer Modal -->
+    <PhotoBatchImportModal
+      v-if="isBatchPhotosOpen"
+      :show="isBatchPhotosOpen"
+      :student-list="sortedRoster"
+      @close="isBatchPhotosOpen = false"
+    />
     </div>
   </div>
 </template>
@@ -713,6 +768,7 @@ import { useClassroom } from '../../composables/useClassroom.js'
 import { availableSubCohorts } from '../../composables/useGradebook.js'
 import { useKeyboardWedge } from '../../composables/useKeyboardWedge.js'
 import { useMessage } from '../../composables/useMessage.js'
+import { useStudentPhotos } from '../../composables/useStudentPhotos.js'
 import * as classService from '../../db/classService.js'
 import * as gradebookService from '../../db/gradebookService.js'
 import BaseModal from '../BaseModal.vue'
@@ -722,6 +778,9 @@ import ElementaryCsvImporter from './ElementaryCsvImporter.vue'
 import SetupQuickJumpNav from './SetupQuickJumpNav.vue'
 import QrCodeGeneratorModal from './QrCodeGeneratorModal.vue'
 import SeatingLayoutDesigner from './SeatingLayoutDesigner.vue'
+import StudentAvatar from '../photos/StudentAvatar.vue'
+import PhotoCaptureModal from '../photos/PhotoCaptureModal.vue'
+import PhotoBatchImportModal from '../photos/PhotoBatchImportModal.vue'
 
 import { 
   Settings2, 
@@ -744,9 +803,23 @@ import {
   Layers,
   Check,
   X,
-  Binary
+  Binary,
+  Camera,
+  FolderOpen
 } from 'lucide-vue-next'
 import { getEffectiveGradeLevel } from '../../composables/useElementary.js'
+
+const { showDeskPhotos } = useStudentPhotos()
+
+const isRapidPhotosOpen = ref(false)
+const isBatchPhotosOpen = ref(false)
+const isSinglePhotoModalOpen = ref(false)
+const targetPhotoStudent = ref(null)
+
+function openSinglePhotoModal(student) {
+  targetPhotoStudent.value = student
+  isSinglePhotoModalOpen.value = true
+}
 
 
 const {

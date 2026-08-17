@@ -496,7 +496,14 @@ const behaviorCodesMap = computed(() =>
   Object.fromEntries(behaviorCodes.value.map(c => [c.codeKey, c]))
 )
 
-const student = computed(() => students.value[props.studentId] || {})
+const student = computed(() => {
+  const s = students.value[props.studentId] || activeClassRecord.value?.students?.[props.studentId] || {}
+  // Ensure studentId is explicitly present on the object
+  return {
+    studentId: props.studentId,
+    ...s
+  }
+})
 
 const qualitativeEvents = computed(() =>
   [...events.value]

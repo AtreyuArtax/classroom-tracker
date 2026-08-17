@@ -17,7 +17,7 @@ import { openDB } from 'idb'
 import { getCurrentSchoolYear, getCurrentSemester } from '../utils/dates.js'
 
 const DB_NAME = 'classroomTrackerDB'
-const DB_VERSION = 28
+const DB_VERSION = 29
 
 /**
  * Cached promise — set synchronously before the first await so every
@@ -84,6 +84,11 @@ export function getDB() {
         gradeStore.createIndex('by_studentId', 'studentId')
         // gradeStore.createIndex('by_classId', 'classId') -> handled in v16 below
         gradeStore.createIndex('by_assessmentAndStudent', ['assessmentId', 'studentId'], { unique: true })
+      }
+
+      // ── student_photos store (v29) ───────────────────────────────────────
+      if (!db.objectStoreNames.contains('student_photos')) {
+        db.createObjectStore('student_photos', { keyPath: 'studentId' })
       }
 
       // ── seed defaults on fresh install (oldVersion === 0) ────────────────
@@ -687,6 +692,14 @@ export function getDB() {
       // --- VERSION 28 MIGRATION ---
       if (oldVersion < 28) {
         console.log('[IDB] Migrating to v28...')
+      }
+
+      // --- VERSION 29 MIGRATION (Student Photos) ---
+      if (oldVersion < 29) {
+        console.log('[IDB] Migrating to v29: Student photos store...')
+        if (!db.objectStoreNames.contains('student_photos')) {
+          db.createObjectStore('student_photos', { keyPath: 'studentId' })
+        }
       }
     },
   })

@@ -61,10 +61,41 @@
       :title="atRiskDotTooltip"
     />
 
-    <!-- Student name -->
-    <div class="desk-tile__name">
-      <span class="desk-tile__first">{{ student.firstName }}</span>
-      <span class="desk-tile__last">{{ student.lastName }}</span>
+    <!-- Student content -->
+    <div 
+      class="desk-tile__content" 
+      :class="{ 'desk-tile__content--with-photo': showDeskPhotos && currentPhotoUrl }"
+      :title="`${student.firstName} ${student.lastName}${student.studentId ? ' (#' + student.studentId + ')' : ''}`"
+    >
+      <div v-if="showDeskPhotos && currentPhotoUrl" class="desk-tile__avatar-wrap">
+        <img 
+          :src="currentPhotoUrl" 
+          :alt="`${student.firstName} ${student.lastName}`"
+          class="desk-tile__photo-img"
+        />
+
+        <!-- Floating High-Res Hover Preview -->
+        <div class="desk-tile__hover-preview" aria-hidden="true">
+          <img 
+            :src="currentPhotoUrl" 
+            :alt="`${student.firstName} ${student.lastName}`"
+            class="desk-tile__hover-preview-img"
+          />
+          <div class="desk-tile__hover-preview-name">{{ student.firstName }} {{ student.lastName }}</div>
+        </div>
+      </div>
+
+      <div class="desk-tile__name">
+        <template v-if="showDeskPhotos && currentPhotoUrl">
+          <span class="desk-tile__compact-name">
+            {{ student.firstName }} {{ (student.lastName || '')[0] ? (student.lastName)[0] + '.' : '' }}
+          </span>
+        </template>
+        <template v-else>
+          <span class="desk-tile__first">{{ student.firstName }}</span>
+          <span class="desk-tile__last">{{ student.lastName }}</span>
+        </template>
+      </div>
     </div>
 
     <!-- Active Out timer pill -->
@@ -113,6 +144,8 @@ import { toMinutes }      from '../db/eventService.js'
 import { useRadial }    from '../composables/useRadial.js'
 import { useClassroom } from '../composables/useClassroom.js'
 import { classGrades, activeSubCohortFilter, isStudentInSubCohort }  from '../composables/useGradebook.js'
+import { useStudentPhotos } from '../composables/useStudentPhotos.js'
+import StudentAvatar from './photos/StudentAvatar.vue'
 
 // ─── props ────────────────────────────────────────────────────────────────────
 
@@ -130,6 +163,12 @@ const emit = defineEmits(['seat-drop']) // emitted to SeatingGrid for drag/drop 
 
 const { open: openRadial } = useRadial()
 const { behaviorCodes, assignSeat, studentWeeklyStats, thresholds } = useClassroom()
+const { showDeskPhotos, getPhotoUrl, hasPhoto } = useStudentPhotos()
+
+const currentPhotoUrl = computed(() => {
+  const sId = props.studentId || props.student?.studentId
+  return sId ? getPhotoUrl(sId) : null
+})
 
 const isDimmed = computed(() => {
   if (!props.student || !activeSubCohortFilter.value || activeSubCohortFilter.value.toLowerCase() === 'all') return false
@@ -319,7 +358,7 @@ function onDrop(evt) {
   height:     100%;
   min-width:  0;
   min-height: 0;
-  overflow:   hidden;
+  overflow:   visible;
 
   background:    var(--surface);
   border-radius: var(--radius-md);
@@ -412,13 +451,130 @@ function onDrop(evt) {
   color: #d97706;
 }
 
+/* ── Student content & photo layout ──────────────────────────────────────── */
+.desk-tile__content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 100%;
+  gap: 3px;
+}
+
+.desk-tile__content--with-photo {
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 1px 2px;
+}
+
+.desk-tile__avatar-wrap {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.14);
+  border: 2px solid var(--surface);
+  outline: 1px solid rgba(0, 0, 0, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.desk-tile__photo-img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+}
+
+/* ── Floating Hover Zoom Card ─────────────────────────────────────────────── */
+.desk-tile__hover-preview {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%) translateY(6px) scale(0.92);
+  width: 160px;
+  background: var(--surface, #ffffff);
+  border-radius: 12px;
+  padding: 6px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.22), 0 2px 6px rgba(0, 0, 0, 0.08);
+  border: 1px solid var(--border);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  z-index: 100;
+  /* Instant fade-out when mouse leaves */
+  transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Triangle caret at bottom of hover preview */
+.desk-tile__hover-preview::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 6px 6px 0 6px;
+  border-style: solid;
+  border-color: var(--surface, #ffffff) transparent transparent transparent;
+}
+
+.desk-tile__hover-preview-img {
+  width: 100%;
+  height: 148px;
+  border-radius: 8px;
+  object-fit: cover;
+  display: block;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.06);
+}
+
+.desk-tile__hover-preview-name {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text);
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  padding: 0 2px;
+}
+
+/* Trigger hover card with intentional 350ms dwell delay */
+.desk-tile__avatar-wrap:hover .desk-tile__hover-preview {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0) scale(1);
+  transition-delay: 350ms;
+}
+
+.desk-tile__compact-name {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.1;
+  text-align: center;
+  word-break: break-word;
+}
+
 /* ── Student name ────────────────────────────────────────────────────────── */
 .desk-tile__name {
   display:     flex;
   flex-direction: column;
   align-items: center;
-  line-height: 1.2;
+  line-height: 1.15;
   text-align:  center;
+  min-width: 0;
 }
 
 .desk-tile__first {

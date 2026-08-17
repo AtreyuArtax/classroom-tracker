@@ -50,6 +50,29 @@
       </div>
     </div>
 
+    <!-- Student Photos Bulk Folder Import Card -->
+    <div class="setup__card" style="margin-top: 16px;">
+      <div class="setup__card-header-row" style="display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <h2 class="setup__card-title" style="margin: 0; display: flex; align-items: center; gap: 8px;">
+            <Camera :size="20" /> Student Photos
+          </h2>
+          <p class="setup__hint" style="margin-top: 4px; margin-bottom: 0;">
+            Import yearbook or SIS photos for all classes from a local computer folder.
+          </p>
+        </div>
+        <button type="button" class="setup__btn-primary" @click="isPhotoBatchModalOpen = true">
+          <FolderOpen :size="16" /> Select Photos Folder...
+        </button>
+      </div>
+    </div>
+
+    <PhotoBatchImportModal
+      v-if="isPhotoBatchModalOpen"
+      :show="isPhotoBatchModalOpen"
+      @close="isPhotoBatchModalOpen = false"
+    />
+
     <!-- ── Multi-Class Import Selector Dialog ─── -->
     <div v-if="bulkImportGroups" class="setup__dialog" role="dialog" aria-modal="true">
       <div class="setup__dialog-box setup__dialog-box--large">
@@ -156,8 +179,11 @@ import { useMessage } from '../../composables/useMessage.js'
 import CsvHelpGuide from './CsvHelpGuide.vue'
 import { 
   FolderOpen, Info, ChevronUp, ChevronDown, 
-  AlertTriangle, UserCheck 
+  AlertTriangle, UserCheck, Camera 
 } from 'lucide-vue-next'
+import PhotoBatchImportModal from '../photos/PhotoBatchImportModal.vue'
+
+const isPhotoBatchModalOpen = ref(false)
 
 const { 
   activeClass, 

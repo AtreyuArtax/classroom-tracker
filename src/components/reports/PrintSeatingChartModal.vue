@@ -115,6 +115,10 @@
 
           <div class="seating-modal__checkboxes">
             <label class="setup__label--checkbox">
+              <input type="checkbox" v-model="form.showPhotos" class="setup__checkbox" />
+              Include Student Photos
+            </label>
+            <label class="setup__label--checkbox">
               <input type="checkbox" v-model="form.showPods" class="setup__checkbox" />
               Show Table / Pod Color Groups
             </label>
@@ -240,10 +244,23 @@
                     />
 
                     <!-- Desk Content / Name -->
-                    <div class="sheet-desk__content">
+                    <div class="sheet-desk__content" :class="{ 'sheet-desk__content--with-photo': form.showPhotos && hasPhoto(getStudent(currentPreviewClass, r, c)?.studentId) }">
                       <template v-if="getStudent(currentPreviewClass, r, c)">
+                        <StudentAvatar 
+                          v-if="form.showPhotos && hasPhoto(getStudent(currentPreviewClass, r, c).studentId)"
+                          :student-id="getStudent(currentPreviewClass, r, c).studentId"
+                          :first-name="getStudent(currentPreviewClass, r, c).firstName"
+                          :last-name="getStudent(currentPreviewClass, r, c).lastName"
+                          size="desk"
+                          shape="rounded"
+                          class="sheet-desk__avatar"
+                        />
                         <div class="sheet-desk__name-box">
-                          <template v-if="form.nameFormat === 'initial'">
+                          <template v-if="form.showPhotos && hasPhoto(getStudent(currentPreviewClass, r, c).studentId)">
+                            <span class="sheet-desk__first">{{ getStudent(currentPreviewClass, r, c).firstName }}</span>
+                            <span class="sheet-desk__last">{{ (getStudent(currentPreviewClass, r, c).lastName || '')[0] ? (getStudent(currentPreviewClass, r, c).lastName)[0] + '.' : '' }}</span>
+                          </template>
+                          <template v-else-if="form.nameFormat === 'initial'">
                             <span class="sheet-desk__last">
                               {{ getStudent(currentPreviewClass, r, c).firstName }} {{ (getStudent(currentPreviewClass, r, c).lastName || '')[0] ? (getStudent(currentPreviewClass, r, c).lastName)[0] + '.' : '' }}
                             </span>
@@ -364,10 +381,23 @@
                   />
 
                   <!-- Desk Content / Name -->
-                  <div class="sheet-desk__content">
+                  <div class="sheet-desk__content" :class="{ 'sheet-desk__content--with-photo': form.showPhotos && hasPhoto(getStudent(cls, r, c)?.studentId) }">
                     <template v-if="getStudent(cls, r, c)">
+                      <StudentAvatar 
+                        v-if="form.showPhotos && hasPhoto(getStudent(cls, r, c).studentId)"
+                        :student-id="getStudent(cls, r, c).studentId"
+                        :first-name="getStudent(cls, r, c).firstName"
+                        :last-name="getStudent(cls, r, c).lastName"
+                        size="desk"
+                        shape="rounded"
+                        class="sheet-desk__avatar"
+                      />
                       <div class="sheet-desk__name-box">
-                        <template v-if="form.nameFormat === 'initial'">
+                        <template v-if="form.showPhotos && hasPhoto(getStudent(cls, r, c).studentId)">
+                          <span class="sheet-desk__first">{{ getStudent(cls, r, c).firstName }}</span>
+                          <span class="sheet-desk__last">{{ (getStudent(cls, r, c).lastName || '')[0] ? (getStudent(cls, r, c).lastName)[0] + '.' : '' }}</span>
+                        </template>
+                        <template v-else-if="form.nameFormat === 'initial'">
                           <span class="sheet-desk__last">
                             {{ getStudent(cls, r, c).firstName }} {{ (getStudent(cls, r, c).lastName || '')[0] ? (getStudent(cls, r, c).lastName)[0] + '.' : '' }}
                           </span>
@@ -423,6 +453,10 @@ import {
   students as stateStudents, 
   classList as stateClassList 
 } from '../../composables/useClassroomState.js'
+import { useStudentPhotos } from '../../composables/useStudentPhotos.js'
+import StudentAvatar from '../photos/StudentAvatar.vue'
+
+const { hasPhoto } = useStudentPhotos()
 
 const props = defineProps({
   show: { type: Boolean, default: false },
@@ -445,6 +479,7 @@ const form = reactive({
   orientation: 'landscape', // Defaults to landscape
   fontSize: 'auto', // Smart auto-scaling based on grid dimensions
   nameFormat: 'full', // 'full' | 'initial' | 'firstOnly' | 'lastFirst'
+  showPhotos: false,
   showPods: true,
   showFrontIndicator: true,
   showIepDot: true,
@@ -1218,15 +1253,38 @@ function handlePrint() {
   overflow: hidden;
 }
 
+.sheet-desk__content--with-photo {
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 6px;
+  padding: 0 3px;
+}
+
+.sheet-desk__avatar {
+  width: 32px !important;
+  height: 32px !important;
+  border-radius: 4px !important;
+  flex-shrink: 0;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+  border: 1px solid rgba(0,0,0,0.1);
+}
+
 .sheet-desk__name-box {
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   width: 100%;
   min-width: 0;
   overflow: hidden;
   word-break: break-word;
   overflow-wrap: anywhere;
+}
+
+.sheet-desk__content--with-photo .sheet-desk__name-box {
+  align-items: flex-start;
+  text-align: left;
 }
 
 .sheet-desk__first {
@@ -1239,15 +1297,24 @@ function handlePrint() {
   overflow-wrap: anywhere;
 }
 
+.sheet-desk__content--with-photo .sheet-desk__first {
+  text-align: left;
+}
+
 .sheet-desk__last {
   font-size: var(--desk-last-size, 0.78rem);
   font-weight: 700;
   color: #0f172a;
   text-align: center;
   max-width: 100%;
-  line-height: 1.1;
+  line-height: 1.15;
   word-break: break-word;
   overflow-wrap: anywhere;
+}
+
+.sheet-desk__content--with-photo .sheet-desk__last {
+  text-align: left;
+  font-size: 0.74rem;
 }
 
 .sheet-desk__empty-text {

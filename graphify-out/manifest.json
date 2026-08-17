@@ -75,8 +75,8 @@
     "semantic_hash": ""
   },
   "src/components/DeskTile.vue": {
-    "mtime": 1786154422.4474528,
-    "ast_hash": "a35a8abc9c8e063b857a9abed7aa1b34",
+    "mtime": 1786962814.1058435,
+    "ast_hash": "400848a7ea537e7b96bcd9fed2936f68",
     "semantic_hash": ""
   },
   "src/components/EventNoteModal.vue": {
@@ -120,7 +120,7 @@
     "semantic_hash": "8e50e6b9c81d179509f72782b70b61fa"
   },
   "src/components/StudentSidebar.vue": {
-    "mtime": 1786157490.903556,
+    "mtime": 1786961678.0135167,
     "ast_hash": "74ad2acf95e333444fba8ff8a424f7c6",
     "semantic_hash": ""
   },
@@ -180,13 +180,13 @@
     "semantic_hash": ""
   },
   "src/components/dossier/Student360.vue": {
-    "mtime": 1786501619.5252984,
-    "ast_hash": "b17dfd7f515e93f5ce076e51ee4967cc",
+    "mtime": 1786961846.2546604,
+    "ast_hash": "9d47e67d37baebe6e4208ca334cc071b",
     "semantic_hash": ""
   },
   "src/components/dossier/Student360Header.vue": {
-    "mtime": 1786155276.367715,
-    "ast_hash": "ec5a6d5658217af815c2c0c7eb0493c2",
+    "mtime": 1786962198.4855802,
+    "ast_hash": "4f61ff589b66eed45530212862b1aa7b",
     "semantic_hash": ""
   },
   "src/components/dossier/StudentGradeTrend.vue": {
@@ -295,8 +295,8 @@
     "semantic_hash": ""
   },
   "src/db/index.js": {
-    "mtime": 1786549933.1976304,
-    "ast_hash": "dd97351587bc46422b4a5d2276ab364a",
+    "mtime": 1786960267.749263,
+    "ast_hash": "d03faed4727c20130e420041624be536",
     "semantic_hash": ""
   },
   "src/db/migrations.js": {
@@ -335,7 +335,7 @@
     "semantic_hash": "322ce1010d35f76a380b2df551af302f"
   },
   "src/views/Dashboard.vue": {
-    "mtime": 1786467119.7354548,
+    "mtime": 1786962921.5233428,
     "ast_hash": "980efef618fd7b716d75aa1b692158a6",
     "semantic_hash": ""
   },
@@ -425,8 +425,8 @@
     "semantic_hash": ""
   },
   "src/components/setup/RosterCsvImporter.vue": {
-    "mtime": 1786590057.824896,
-    "ast_hash": "dda3dc4d6cfb905e7fd90c974fca6afa",
+    "mtime": 1786960471.2159474,
+    "ast_hash": "e71354bef510224282fa87cd09d75024",
     "semantic_hash": ""
   },
   "src/composables/useAttendanceTracker.js": {
@@ -445,8 +445,8 @@
     "semantic_hash": ""
   },
   "src/components/setup/ClassLogisticsSettings.vue": {
-    "mtime": 1786724470.54509,
-    "ast_hash": "749a19b05c39ff44a364bcc8f5c10797",
+    "mtime": 1786963203.9397125,
+    "ast_hash": "687e235167c100174614e3f16c204e07",
     "semantic_hash": ""
   },
   "src/components/setup/DatabaseMaintenanceSettings.vue": {
@@ -1005,8 +1005,33 @@
     "semantic_hash": ""
   },
   "src/components/reports/PrintSeatingChartModal.vue": {
-    "mtime": 1786958308.0930626,
-    "ast_hash": "c9cd4170199a9800940c85834c33b3ae",
+    "mtime": 1786963128.0883842,
+    "ast_hash": "cd10e0b5f5cf08224af76e47aef67144",
+    "semantic_hash": ""
+  },
+  "src/components/photos/PhotoBatchImportModal.vue": {
+    "mtime": 1786960321.4715073,
+    "ast_hash": "a0d56616f4f5c1301ba888fbb9049e4b",
+    "semantic_hash": ""
+  },
+  "src/components/photos/PhotoCaptureModal.vue": {
+    "mtime": 1786961560.1268103,
+    "ast_hash": "3ee3b51321af05f659771941ded85b63",
+    "semantic_hash": ""
+  },
+  "src/components/photos/StudentAvatar.vue": {
+    "mtime": 1786961931.8885748,
+    "ast_hash": "b647f0465f456ff1c57d6744b5621fe0",
+    "semantic_hash": ""
+  },
+  "src/composables/useStudentPhotos.js": {
+    "mtime": 1786962230.5589325,
+    "ast_hash": "372d045e085ab75a39cfafab02bf08e9",
+    "semantic_hash": ""
+  },
+  "src/db/photoService.js": {
+    "mtime": 1786960275.8024,
+    "ast_hash": "9cc5a5d0d69db0b3ca59df34329951bb",
     "semantic_hash": ""
   }
 }
