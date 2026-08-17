@@ -173,14 +173,14 @@ function onProfileTap() {
   display:         flex;
   flex-direction:  column;
   align-items:     center;
-  gap:             3px;
+  gap:             4px;
   background:      transparent;
   box-shadow:      none;
   border:          none;
   width:           76px;
   cursor:          pointer;
   padding:         0;
-  transition:      transform 0.15s ease, opacity 0.15s ease;
+  transition:      transform 0.18s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.15s ease;
 }
 
 .radial-btn:hover {
@@ -198,36 +198,43 @@ function onProfileTap() {
   display:         flex;
   align-items:     center;
   justify-content: center;
-  background:      #ffffff;
-  color:           #374151;
-  box-shadow:      0 6px 16px rgba(0,0,0,0.12), 0 2px 4px rgba(0,0,0,0.06);
-  border:          1px solid rgba(0,0,0,0.08);
-  transition:      all 0.15s ease;
+  background:      var(--surface, #ffffff);
+  color:           var(--text, #1c1c1e);
+  box-shadow:      0 4px 14px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.06);
+  border:          1px solid var(--border, rgba(0, 0, 0, 0.08));
+  transition:      all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Hover: Matching the app's primary interactive state */
+.radial-btn:hover .radial-btn__icon-circle {
+  background:      var(--primary-light, #eef2ff);
+  color:           var(--primary, #4663ac);
+  border-color:    var(--primary, #4663ac);
+  box-shadow:      0 6px 18px rgba(70, 99, 172, 0.25);
+}
+
+.radial-btn:hover .radial-btn__label {
+  color:           var(--primary, #4663ac);
+  font-weight:     700;
+}
+
+/* Active/Pressed state */
+.radial-btn:active .radial-btn__icon-circle {
+  background:      var(--primary, #4663ac);
+  color:           #ffffff;
 }
 
 /* Active toggle: student is currently out */
 .radial-btn--active .radial-btn__icon-circle {
-  background: #ef4444 !important;
-  border-color: #dc2626 !important;
-  box-shadow: 0 6px 18px rgba(239, 68, 68, 0.45) !important;
-  color: #ffffff !important;
+  background:      var(--state-out, #ef4444) !important;
+  border-color:    #dc2626 !important;
+  box-shadow:      0 6px 18px rgba(239, 68, 68, 0.45) !important;
+  color:           #ffffff !important;
 }
 
 .radial-btn--active .radial-btn__label {
-  color: #ef4444 !important;
-  font-weight: 700;
-}
-
-/* Profile slot: clean unified styling */
-.radial-btn--profile .radial-btn__icon-circle {
-  background: #ffffff;
-  color: #4f46e5;
-  border-color: rgba(79, 70, 229, 0.3);
-}
-
-.radial-btn--profile .radial-btn__label {
-  color: #4338ca;
-  font-weight: 600;
+  color:           var(--state-out, #ef4444) !important;
+  font-weight:     700;
 }
 
 .radial-btn__icon {
@@ -239,8 +246,9 @@ function onProfileTap() {
   font-size:   11px;
   font-weight: 600;
   white-space: nowrap;
-  color:       #374151;
+  color:       var(--text, #1c1c1e);
   text-align:  center;
+  transition:  color 0.18s ease;
 }
 
 /* ── Centre button ───────────────────────────────────────────────── */
@@ -255,7 +263,7 @@ function onProfileTap() {
   border-radius:   50%;
   border:          1px solid var(--border);
   background:      var(--surface);
-  box-shadow:      0 4px 12px rgba(0,0,0,0.15);
+  box-shadow:      0 4px 12px rgba(0, 0, 0, 0.12);
   cursor:          pointer;
 
   display:         flex;
@@ -263,13 +271,15 @@ function onProfileTap() {
   justify-content: center;
 
   color:           var(--text-secondary);
-  transition:      all 0.15s ease;
+  transition:      all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .radial-centre:hover {
-  background:      var(--bg-secondary);
-  color:           var(--text);
-  transform:       translate(-50%, -50%) scale(1.06);
+  background:      var(--primary-light, #eef2ff);
+  color:           var(--primary, #4663ac);
+  border-color:    var(--primary, #4663ac);
+  box-shadow:      0 6px 16px rgba(70, 99, 172, 0.2);
+  transform:       translate(-50%, -50%) scale(1.08);
 }
 
 .radial-centre:active {
