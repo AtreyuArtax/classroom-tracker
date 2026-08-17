@@ -286,12 +286,17 @@ export async function saveFullGradeRecord(gradeRecord) {
  */
 export async function getGradesByClass(classId) {
   const db = await getDB()
-  const assessments = await getAssessmentsByClass(classId)
-  const classAssessmentIds = new Set(assessments.map(a => Number(a.assessmentId)))
+  
+  // Fast path: query the by_classId index
+  let classGrades = []
+  try {
+    classGrades = await db.getAllFromIndex('grades', 'by_classId', classId)
+  } catch {
+    classGrades = []
+  }
 
-  const allGrades = await db.getAll('grades')
+  // If indexed grades exist, deduplicate and return
   const resultMap = new Map()
-
   const hasContent = item => Boolean(
     (item.attempts && item.attempts.length > 0) || 
     item.resolvedScore != null || 
@@ -303,32 +308,43 @@ export async function getGradesByClass(classId) {
     item.excluded
   )
 
-  for (const g of allGrades) {
-    const isForClass = (g.classId === classId) || classAssessmentIds.has(Number(g.assessmentId))
-    if (isForClass) {
-      const key = `${Number(g.assessmentId)}_${String(g.studentId)}`
-      const existing = resultMap.get(key)
+  for (const g of classGrades) {
+    const key = `${Number(g.assessmentId)}_${String(g.studentId)}`
+    const existing = resultMap.get(key)
+    if (!existing || (!hasContent(existing) && hasContent(g))) {
+      resultMap.set(key, g)
+    }
+  }
 
-      if (!existing || (!hasContent(existing) && hasContent(g))) {
-        resultMap.set(key, g)
+  // Fallback healing: if no grades found by index, check if unlinked legacy grades match class assessments
+  if (resultMap.size === 0) {
+    const assessments = await getAssessmentsByClass(classId)
+    if (assessments.length > 0) {
+      const classAssessmentIds = new Set(assessments.map(a => Number(a.assessmentId)))
+      const allGrades = await db.getAll('grades')
+      const tx = db.transaction('grades', 'readwrite')
+      const store = tx.objectStore('grades')
+      let healedCount = 0
+
+      for (const g of allGrades) {
+        if (classAssessmentIds.has(Number(g.assessmentId))) {
+          const key = `${Number(g.assessmentId)}_${String(g.studentId)}`
+          const existing = resultMap.get(key)
+          if (!existing || (!hasContent(existing) && hasContent(g))) {
+            resultMap.set(key, g)
+          }
+          if (g.classId !== classId) {
+            g.classId = classId
+            await store.put(g)
+            healedCount++
+          }
+        }
       }
+      if (healedCount > 0) await tx.done
     }
   }
 
-  const result = Array.from(resultMap.values())
-  const tx = db.transaction('grades', 'readwrite')
-  const store = tx.objectStore('grades')
-  let changed = false
-  for (const g of result) {
-    if (g.classId !== classId) {
-      g.classId = classId
-      await store.put(g)
-      changed = true
-    }
-  }
-  if (changed) await tx.done
-
-  return result
+  return Array.from(resultMap.values())
 }
 
 /**

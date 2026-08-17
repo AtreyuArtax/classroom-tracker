@@ -4,8 +4,9 @@ import {
   calculateSBARStudentOverallMastery, 
   getSBARLevelBadge 
 } from '../db/gradebook/gradeCalcSBAR.js'
+import { isCohortMatch } from '../db/gradebook/gradeCalc.js'
 import { formatLocalDisplay } from '../utils/dates.js'
-import { getEffectiveClassRecord } from './useElementary.js'
+import { getEffectiveClassRecord, getStudentEffectiveGrade } from './useElementary.js'
 import { activeSubjectId } from './useClassroomState.js'
 
 /**
@@ -55,6 +56,12 @@ export function useSBarPrintOptions() {
     const effClass = getEffectiveClassRecord(classRecord, activeSubjectId.value)
     if (!effClass) return []
 
+    const st = effClass.students?.[studentId]
+    const isElem = effClass.classType === 'elementary'
+    const studentCohort = isElem 
+      ? (getStudentEffectiveGrade(st, effClass.activeSubjectId) || st?.gradeLevel)
+      : st?.courseCode
+
     const algo = effClass.sbarAlgorithm || 'decaying_average'
     const masteryMap = calculateSBARExpectationMastery(effClass, assessments, gradeMap, algo, events)
     const studentExpMap = masteryMap[studentId] || {}
@@ -94,6 +101,9 @@ export function useSBarPrintOptions() {
     // 1. Build unit structure from gradebookUnits if available
     if (rawUnits.length > 0) {
       rawUnits.forEach(u => {
+        const uGrade = u.gradeLevel
+        if (uGrade && studentCohort && !isCohortMatch(uGrade, studentCohort)) return
+
         unitMap[u.unitId] = {
           unitId: u.unitId,
           name: (u.name || 'Strand').replace(/\[Grade \d+\]\s*/g, ''),
@@ -102,6 +112,9 @@ export function useSBarPrintOptions() {
         if (Array.isArray(u.expectations)) {
           u.expectations.forEach(exp => {
             if (exp.code || exp.expectationId) {
+              const expGrade = exp.gradeLevel || uGrade
+              if (expGrade && studentCohort && !isCohortMatch(expGrade, studentCohort)) return
+
               const codeStr = exp.code || exp.expectationId
               unitMap[u.unitId].expectations.push({
                 ...exp,
@@ -119,6 +132,9 @@ export function useSBarPrintOptions() {
     if (flatExps.length > 0) {
       flatExps.forEach(exp => {
         if (!exp.code && !exp.expectationId) return
+        const expGrade = exp.gradeLevel
+        if (expGrade && studentCohort && !isCohortMatch(expGrade, studentCohort)) return
+
         const strandCode = exp.strand || (exp.code ? exp.code.charAt(0).toUpperCase() : 'G')
         const uId = exp.unitId || `strand-${strandCode}`
         const uName = exp.strandName || `Strand ${strandCode}`

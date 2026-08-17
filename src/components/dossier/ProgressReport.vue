@@ -183,7 +183,7 @@ import { formatLocalDisplay } from '../../utils/dates.js'
 import StudentGradeTrend from './StudentGradeTrend.vue'
 import DossierEvidenceMix from './DossierEvidenceMix.vue'
 import SBarProgressReport from './SBarProgressReport.vue'
-import { getEffectiveClassRecord } from '../../composables/useElementary.js'
+import { getEffectiveClassRecord, getStudentEffectiveGrade } from '../../composables/useElementary.js'
 import { activeSubjectId } from '../../composables/useClassroomState.js'
 
 const effectiveClass = computed(() => {
@@ -271,7 +271,9 @@ const currentStudentObj = computed(() => {
 
 const studentSubCohort = computed(() => {
   const isElem = activeClassRecord.value?.classType === 'elementary'
-  return isElem ? currentStudentObj.value?.gradeLevel : currentStudentObj.value?.courseCode
+  return isElem 
+    ? (getStudentEffectiveGrade(currentStudentObj.value, activeSubjectId.value) || currentStudentObj.value?.gradeLevel)
+    : currentStudentObj.value?.courseCode
 })
 
 // Assessment Logic

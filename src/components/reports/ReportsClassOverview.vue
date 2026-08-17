@@ -406,13 +406,13 @@ function formatGradeDisplay(overallPct) {
 const subjectAssessments = computed(() => {
   if (!props.assessments || props.assessments.length === 0) return []
   const cls = props.reportClass
-  if (!cls) return props.assessments
+  if (!cls || cls.classType !== 'elementary') return props.assessments
 
   const subId = cls.activeSubjectId
   const unitIds = new Set((cls.gradebookUnits || []).map(u => String(u.unitId)))
   const expCodes = new Set((cls.expectations || []).map(e => String(e.code || e.expectationId).toLowerCase()))
 
-  if (unitIds.size === 0 && expCodes.size === 0) return []
+  if (unitIds.size === 0 && expCodes.size === 0 && !subId) return props.assessments
 
   return props.assessments.filter(a => {
     if (a.subjectId && subId && a.subjectId === subId) return true

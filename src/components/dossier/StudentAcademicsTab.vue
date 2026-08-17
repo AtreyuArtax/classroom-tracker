@@ -425,7 +425,7 @@ import { getGradeColor } from '../../utils/gradeColors.js'
 import { formatLocalDisplay } from '../../utils/dates.js'
 import { useMessage } from '../../composables/useMessage.js'
 import { getSBARLevelBadge } from '../../db/gradebook/gradeCalcSBAR.js'
-import { getEffectiveClassRecord } from '../../composables/useElementary.js'
+import { getEffectiveClassRecord, getStudentEffectiveGrade } from '../../composables/useElementary.js'
 import { calculateSBARExpectationMastery } from '../../db/gradebookService.js'
 import { Plus, Trash2, X, ChevronRight, Calendar, AlertCircle, AlertTriangle, XCircle, NotebookPen, Flame, User } from 'lucide-vue-next'
 import SubjectIcon from '../SubjectIcon.vue'
@@ -580,7 +580,9 @@ const academicCategories = computed(() => {
 
 const studentSubCohort = computed(() => {
   const isElem = activeClassRecord.value?.classType === 'elementary'
-  return isElem ? props.student?.gradeLevel : props.student?.courseCode
+  return isElem 
+    ? (getStudentEffectiveGrade(props.student, activeSubjectId.value) || props.student?.gradeLevel)
+    : props.student?.courseCode
 })
 
 const classAssessments = computed(() => {

@@ -154,8 +154,12 @@ export function calculateSBARExpectationMastery(classRecord, assessments, gradeM
   })
 
   // Map expectation codes to assessments that evaluate them
-  const validExpSet = (classRecord.expectations && classRecord.expectations.length > 0)
-    ? new Set(classRecord.expectations.map(e => String(e.code || e.expectationId).toLowerCase()))
+  const allClassExps = [
+    ...(classRecord.expectations || []),
+    ...((classRecord.gradebookUnits || []).flatMap(u => u.expectations || []))
+  ]
+  const validExpSet = (allClassExps.length > 0)
+    ? new Set(allClassExps.map(e => String(e.code || e.expectationId).toLowerCase()))
     : null
 
   const expectationEvaluations = {}
@@ -217,7 +221,9 @@ export function calculateSBARExpectationMastery(classRecord, assessments, gradeM
         const st = classRecord.students?.[studentId]
         const isElem = classRecord.classType === 'elementary'
         const targetTag = isElem ? (ast.gradeLevel || ast.targetCourseCode) : (ast.targetCourseCode || ast.gradeLevel)
-        const studentCohort = isElem ? st?.gradeLevel : st?.courseCode
+        const studentCohort = isElem 
+          ? (st?.accommodations?.modifiedSubjectGrades?.[classRecord.activeSubjectId] || st?.gradeLevel)
+          : st?.courseCode
 
         if (!isCohortMatch(targetTag, studentCohort)) return
 

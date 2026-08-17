@@ -290,17 +290,24 @@ export function calculateMostConsistent(studentId, classRecord, gradeMap, assess
   const categories = classRecord.gradebookCategories
   if (!categories || categories.length === 0) return null
 
+  const studentCourseCode = classRecord.students?.[studentId]?.courseCode
+  const studentGradeLevel = classRecord.students?.[studentId]?.gradeLevel
+  const isElem = classRecord.classType === 'elementary'
+  const studentCohort = isElem 
+    ? (classRecord.students?.[studentId]?.accommodations?.modifiedSubjectGrades?.[classRecord.activeSubjectId] || studentGradeLevel)
+    : studentCourseCode
+
   const breakdown = {}
   let weightedSum = 0
   let totalWeight = 0
 
   for (const cat of categories) {
-    const catAssessments = assessments.filter(a => 
-      a.target !== 'individual' && 
-      a.categoryId === cat.categoryId && 
-      !a.excluded &&
-      a.categoryId !== 'sbar_general'
-    )
+    const catAssessments = assessments.filter(a => {
+      if (String(a.categoryId) !== String(cat.categoryId) || a.excluded || a.categoryId === 'sbar_general') return false
+      if (a.target === 'individual') return String(a.targetStudentId) === String(studentId)
+      const targetTag = isElem ? (a.gradeLevel || a.targetCourseCode) : (a.targetCourseCode || a.gradeLevel)
+      return isCohortMatch(targetTag, studentCohort)
+    })
 
     const scores = []
     for (const a of catAssessments) {
@@ -360,16 +367,24 @@ export function calculateWeightedMedian(studentId, classRecord, gradeMap, assess
   const categories = classRecord.gradebookCategories
   if (!categories || categories.length === 0) return null
 
+  const studentCourseCode = classRecord.students?.[studentId]?.courseCode
+  const studentGradeLevel = classRecord.students?.[studentId]?.gradeLevel
+  const isElem = classRecord.classType === 'elementary'
+  const studentCohort = isElem 
+    ? (classRecord.students?.[studentId]?.accommodations?.modifiedSubjectGrades?.[classRecord.activeSubjectId] || studentGradeLevel)
+    : studentCourseCode
+
   const breakdown = {}
   let weightedSum = 0
   let totalWeight = 0
 
   for (const cat of categories) {
-    const catAssessments = assessments.filter(a => 
-      a.target !== 'individual' && 
-      a.categoryId === cat.categoryId && 
-      !a.excluded
-    )
+    const catAssessments = assessments.filter(a => {
+      if (String(a.categoryId) !== String(cat.categoryId) || a.excluded || a.categoryId === 'sbar_general') return false
+      if (a.target === 'individual') return String(a.targetStudentId) === String(studentId)
+      const targetTag = isElem ? (a.gradeLevel || a.targetCourseCode) : (a.targetCourseCode || a.gradeLevel)
+      return isCohortMatch(targetTag, studentCohort)
+    })
 
     const scores = []
     for (const a of catAssessments) {
@@ -405,8 +420,18 @@ export function calculateWeightedMedian(studentId, classRecord, gradeMap, assess
 
 export function isCohortMatch(targetTag, studentCohort) {
   if (!targetTag || String(targetTag).toLowerCase() === 'all' || !studentCohort) return true
-  const cleanTarget = String(targetTag).replace(/\s*\(IEP\)/i, '').replace(/^(grade|gr)\.?\s*/i, 'grade ').trim().toLowerCase()
-  const cleanCohort = String(studentCohort).replace(/\s*\(IEP\)/i, '').replace(/^(grade|gr)\.?\s*/i, 'grade ').trim().toLowerCase()
+  const normalize = (val) => {
+    let s = String(val).replace(/\s*\(IEP\)/i, '').trim().toLowerCase()
+    // Convert pure numbers like "7" or "07" into "grade 7"
+    if (/^\d+$/.test(s)) {
+      return `grade ${parseInt(s, 10)}`
+    }
+    // Normalize "gr 7", "gr. 7", "grade 7" into "grade 7"
+    s = s.replace(/^(grade|gr)\.?\s*/i, 'grade ')
+    return s.trim()
+  }
+  const cleanTarget = normalize(targetTag)
+  const cleanCohort = normalize(studentCohort)
   return cleanTarget === cleanCohort
 }
 
@@ -417,13 +442,24 @@ export async function calculateStudentGrade(studentId, classRecord, { asOf = nul
   const gradeMap = {}
   for (const g of grades) gradeMap[g.assessmentId] = g
 
+  const studentRecord = classRecord.students?.[studentId]
+  const adjustedGrade = studentRecord?.adjustedGrade
+  const isAdjusted = adjustedGrade !== undefined && adjustedGrade !== null
+
   if (classRecord.gradingFramework === 'sbar') {
     const sbarMasteryPct = calculateSBARStudentOverallMastery(studentId, classRecord, assessments, gradeMap)
+    const displayOverallGrade = isAdjusted
+      ? preciseRound(Number(adjustedGrade), 0)
+      : sbarMasteryPct
+
     return {
-      overallGrade: sbarMasteryPct,
-      displayOverallGrade: sbarMasteryPct,
+      overallGrade: displayOverallGrade,
+      displayOverallGrade,
+      calculatedOverallGrade: sbarMasteryPct,
       categoryResults: {},
-      isAdjusted: false,
+      isGradeAdjusted: isAdjusted,
+      isAdjusted,
+      adjustedGrade: isAdjusted ? preciseRound(Number(adjustedGrade), 0) : null,
       mostConsistent: null,
       median: null,
       sbarMasteryPct
@@ -442,7 +478,9 @@ export async function calculateStudentGrade(studentId, classRecord, { asOf = nul
     const studentCourseCode = classRecord.students[studentId]?.courseCode
     const studentGradeLevel = classRecord.students[studentId]?.gradeLevel
     const isElem = classRecord.classType === 'elementary'
-    const studentCohort = isElem ? studentGradeLevel : studentCourseCode
+    const studentCohort = isElem 
+      ? (classRecord.students[studentId]?.accommodations?.modifiedSubjectGrades?.[classRecord.activeSubjectId] || studentGradeLevel)
+      : studentCourseCode
 
     let catAssessments = assessments.filter(a => {
       if (String(a.categoryId) !== String(category.categoryId) || a.excluded || a.categoryId === 'sbar_general') return false
@@ -494,11 +532,6 @@ export async function calculateStudentGrade(studentId, classRecord, { asOf = nul
   }
 
   const overallGrade = weightUsed === 0 ? null : preciseRound((weightedSum / weightUsed) * 100, 0)
-
-  // Check for manual overall grade override (adjusted grade)
-  const studentRecord = classRecord.students?.[studentId]
-  const adjustedGrade = studentRecord?.adjustedGrade
-  const isAdjusted = adjustedGrade !== undefined && adjustedGrade !== null
 
   const displayOverallGrade = isAdjusted
     ? preciseRound(Number(adjustedGrade), 0)

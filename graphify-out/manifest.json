@@ -175,8 +175,8 @@
     "semantic_hash": ""
   },
   "src/components/dossier/ProgressReport.vue": {
-    "mtime": 1786375592.6075447,
-    "ast_hash": "0ce3ca63d8e16b8f907e34ebbb9d826b",
+    "mtime": 1786963803.5412254,
+    "ast_hash": "8b0b410b26af70f0f26312e1e605a5cc",
     "semantic_hash": ""
   },
   "src/components/dossier/Student360.vue": {
@@ -395,8 +395,8 @@
     "semantic_hash": ""
   },
   "src/components/dossier/StudentAcademicsTab.vue": {
-    "mtime": 1786590340.4289687,
-    "ast_hash": "9b434576a1fdca30652169a364396683",
+    "mtime": 1786963817.0938714,
+    "ast_hash": "c0a3e25834de5ae3c00a7281c205b3c5",
     "semantic_hash": ""
   },
   "src/components/setup/AssessmentFrameworkSettings.vue": {
@@ -495,8 +495,8 @@
     "semantic_hash": ""
   },
   "src/components/reports/ReportsClassOverview.vue": {
-    "mtime": 1786590079.4428618,
-    "ast_hash": "95e075a9c42ddfcb5753b8c7b050c211",
+    "mtime": 1786963792.8839512,
+    "ast_hash": "1c870a3e974fb3f37dfde3436fd559ed",
     "semantic_hash": ""
   },
   "src/components/reports/ReportsExportMenu.vue": {
@@ -565,13 +565,13 @@
     "semantic_hash": ""
   },
   "src/db/gradebook/gradeCalc.js": {
-    "mtime": 1786466326.0446465,
-    "ast_hash": "ab94ba618dbb77e91892876d129a9b56",
+    "mtime": 1786963777.16106,
+    "ast_hash": "f53acab5dfdf9e300dec95d24cf501a8",
     "semantic_hash": ""
   },
   "src/db/gradebook/gradeService.js": {
-    "mtime": 1786396090.5296474,
-    "ast_hash": "aaaacb807c98a0a644e8520e62600427",
+    "mtime": 1786963840.7973864,
+    "ast_hash": "3e2101cf29aa3aa164d47dde1ab3bad9",
     "semantic_hash": ""
   },
   "src/components/grades/GradesAttemptHistoryModal.vue": {
@@ -590,8 +590,8 @@
     "semantic_hash": ""
   },
   "src/db/gradebook/gradeCalcSBAR.js": {
-    "mtime": 1786463819.9330707,
-    "ast_hash": "48c73184be23dffb0fac51a7559363b1",
+    "mtime": 1786963785.5027564,
+    "ast_hash": "ddae402fdcd0bf842f9f788ae44a726b",
     "semantic_hash": ""
   },
   "src/components/dossier/SBARExpectationMasteryGrid.vue": {
@@ -810,8 +810,8 @@
     "semantic_hash": ""
   },
   "src/composables/useSBarPrintOptions.js": {
-    "mtime": 1786376011.7629158,
-    "ast_hash": "6896827f78f9e96da9699a7167ad910d",
+    "mtime": 1786963831.8711357,
+    "ast_hash": "7f83579038dda3670d5832818f5f6fda",
     "semantic_hash": ""
   },
   "src/data/curriculum/ontario/elementary/grade-7/ontario-g7-arts.json": {

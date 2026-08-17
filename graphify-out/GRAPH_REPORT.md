@@ -1,16 +1,16 @@
 # Graph Report - classroom-tracker  (2026-08-17)
 
 ## Corpus Check
-- 207 files · ~381,292 words
+- 207 files · ~381,631 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1141 nodes · 1907 edges · 113 communities (100 shown, 13 thin omitted)
+- 1141 nodes · 1911 edges · 112 communities (99 shown, 13 thin omitted)
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 3 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `6a489b74`
+- Built from commit: `61b4c57f`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -69,7 +69,6 @@
 - [[_COMMUNITY_Community 88|Community 88]]
 - [[_COMMUNITY_Community 94|Community 94]]
 - [[_COMMUNITY_Community 95|Community 95]]
-- [[_COMMUNITY_Community 96|Community 96]]
 - [[_COMMUNITY_Community 100|Community 100]]
 - [[_COMMUNITY_Community 103|Community 103]]
 - [[_COMMUNITY_Community 106|Community 106]]
@@ -104,7 +103,7 @@
 ## Import Cycles
 - None detected.
 
-## Communities (113 total, 13 thin omitted)
+## Communities (112 total, 13 thin omitted)
 
 ### Community 0 - "Community 0"
 Cohesion: 0.06
@@ -127,12 +126,12 @@ Cohesion: 0.09
 Nodes (27): BaseHTTPRequestHandler, Path, consume_scan(), _create_tray_icon_image(), get_app_dir(), keyboard_reader(), load_config(), log() (+19 more)
 
 ### Community 5 - "Community 5"
-Cohesion: 0.08
-Nodes (16): addRoute(), cacheMatchIgnoreParams(), cacheWillUpdate(), canConstructResponseFromBodyStream(), copyResponse(), Deferred, NavigationRoute, _nestedGroup() (+8 more)
+Cohesion: 0.07
+Nodes (19): addRoute(), CacheFirst, cacheMatchIgnoreParams(), cacheWillUpdate(), canConstructResponseFromBodyStream(), copyResponse(), Deferred, executeQuotaErrorCallbacks() (+11 more)
 
 ### Community 6 - "Community 6"
-Cohesion: 0.15
-Nodes (7): CacheFirst, executeQuotaErrorCallbacks(), PrecacheStrategy, Strategy, StrategyHandler, timeout(), toRequest()
+Cohesion: 0.17
+Nodes (4): PrecacheStrategy, Strategy, StrategyHandler, toRequest()
 
 ### Community 7 - "Community 7"
 Cohesion: 0.07
@@ -155,7 +154,7 @@ Cohesion: 0.11
 Nodes (16): activeCategory, allCodes, ATTENDANCE_CATEGORIES, centreGoesBack, close(), handleCentre(), handleItemTap(), handleProfileTap() (+8 more)
 
 ### Community 12 - "Community 12"
-Cohesion: 0.14
+Cohesion: 0.13
 Nodes (4): createCacheKey(), PrecacheCacheKeyPlugin, PrecacheController, waitUntil()
 
 ### Community 13 - "Community 13"
@@ -167,8 +166,8 @@ Cohesion: 0.06
 Nodes (30): classGrades, isAssessmentInSubCohort(), allCombinedWork, allDossierAssessments, attendanceStats, behaviorCodesMap, currentStudentObj, displayMetaLine (+22 more)
 
 ### Community 15 - "Community 15"
-Cohesion: 0.19
-Nodes (4): get(), getMethod(), has(), Router
+Cohesion: 0.13
+Nodes (12): cacheDonePromiseForTransaction(), get(), getCursorAdvanceMethods(), getIdbProxyableTypes(), getMethod(), has(), openDB(), promisifyRequest() (+4 more)
 
 ### Community 16 - "Community 16"
 Cohesion: 0.17
@@ -290,10 +289,6 @@ Nodes (4): calculateMode(), calculateSBARExpectationMastery(), calculateSBARStud
 Cohesion: 0.29
 Nodes (4): confirmBtnRef, inputRef, isConfirmDisabled, { state, handleAction, handleSelectChoice }
 
-### Community 95 - "Community 95"
-Cohesion: 0.29
-Nodes (8): cacheDonePromiseForTransaction(), getCursorAdvanceMethods(), getIdbProxyableTypes(), openDB(), promisifyRequest(), transformCachableValue(), wrap(), wrapFunction()
-
 ### Community 100 - "Community 100"
 Cohesion: 0.25
 Nodes (8): onThresholdChange(), adjustStudentGrade(), deleteAssessment(), editAssessment(), refreshClassAnalytics(), refreshGrades(), setExclusionMode(), undoStudentGradeAdjustment()
@@ -318,9 +313,9 @@ Nodes (30): activeBulkExp, activeLevelOptions, applyBulkFill(), assignLevel(), a
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `getDB()` connect `Community 8` to `Community 0`, `Community 2`, `Community 35`, `Community 3`, `Community 103`, `Community 111`, `Community 81`, `Community 23`, `Community 95`?**
+- **Why does `getDB()` connect `Community 8` to `Community 0`, `Community 2`, `Community 35`, `Community 3`, `Community 103`, `Community 111`, `Community 15`, `Community 81`, `Community 23`?**
   _High betweenness centrality (0.186) - this node is a cross-community bridge._
-- **Why does `openDB()` connect `Community 95` to `Community 8`, `Community 5`, `Community 94`?**
+- **Why does `openDB()` connect `Community 15` to `Community 8`, `Community 5`, `Community 94`?**
   _High betweenness centrality (0.147) - this node is a cross-community bridge._
 - **Why does `useMessage()` connect `Community 24` to `Community 0`, `Community 1`, `Community 35`, `Community 100`, `Community 8`, `Community 9`, `Community 10`, `Community 72`, `Community 16`, `Community 20`, `Community 21`, `Community 85`, `Community 88`, `Community 28`, `Community 61`?**
   _High betweenness centrality (0.013) - this node is a cross-community bridge._
