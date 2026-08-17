@@ -5057,7 +5057,7 @@
       "label": "getGridRows()",
       "file_type": "code",
       "source_file": "src/components/reports/PrintSeatingChartModal.vue",
-      "source_location": "L152",
+      "source_location": "L146",
       "_origin": "ast",
       "id": "reports_printseatingchartmodal_getgridrows",
       "community": 99,
@@ -5067,7 +5067,7 @@
       "label": "if()",
       "file_type": "code",
       "source_file": "src/components/reports/PrintSeatingChartModal.vue",
-      "source_location": "L721",
+      "source_location": "L720",
       "_origin": "ast",
       "id": "reports_printseatingchartmodal_if",
       "community": 99,
@@ -30716,5 +30716,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "f225e28994fb40d9e32dbae91abe8d4634905501"
+  "built_at_commit": "46437b4d4d63e24e8ef3ed07d803bdbb0b0a5902"
 }

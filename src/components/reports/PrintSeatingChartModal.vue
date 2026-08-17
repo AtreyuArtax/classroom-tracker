@@ -36,23 +36,16 @@
         <aside class="seating-modal__controls">
           <h4 class="seating-modal__section-title">Class Scope &amp; Options</h4>
 
-          <!-- Scope: Single Class vs Active Semester vs Custom Selection -->
+          <!-- Scope: Active Class vs All Term/Year Classes vs Custom Selection -->
           <label class="setup__label">
             Classes to Print
             <select v-model="scopeMode" class="setup__input">
-              <option value="single">Active Class Only ({{ reportClass?.name || 'Current' }})</option>
-              <option value="semester">Active Term / Semester ({{ semesterClasses.length }} Classes)</option>
-              <option value="custom">Select Custom Classes ({{ selectedClassIds.length }} Selected)</option>
-              <option value="all">All Timetable Classes ({{ availableClasses.length }} Classes)</option>
-            </select>
-          </label>
-
-          <!-- If Single Class: dropdown to switch class quickly -->
-          <label v-if="scopeMode === 'single' && availableClasses.length > 1" class="setup__label">
-            Select Class
-            <select v-model="selectedSingleClassId" class="setup__input">
-              <option v-for="c in availableClasses" :key="c.classId" :value="c.classId">
-                {{ c.name }} (P{{ c.periodNumber || '?' }} · Sem {{ c.semester || '?' }})
+              <option value="active">Active Class ({{ activeReportClass?.name || 'Current Class' }})</option>
+              <option value="semester" v-if="availableClasses.length > 1">
+                {{ termLabel }} ({{ availableClasses.length }} Classes)
+              </option>
+              <option value="custom" v-if="availableClasses.length > 1">
+                Custom Selection... ({{ selectedClassIds.length }} Selected)
               </option>
             </select>
           </label>
@@ -63,7 +56,6 @@
               <span class="custom-classes-title">Select Classes:</span>
               <div class="custom-classes-actions">
                 <button type="button" class="setup__btn-ghost setup__btn--micro" @click="selectAllClasses">All</button>
-                <button type="button" class="setup__btn-ghost setup__btn--micro" @click="selectSemesterClasses">This Term</button>
                 <button type="button" class="setup__btn-ghost setup__btn--micro" @click="selectedClassIds = []">None</button>
               </div>
             </div>
@@ -80,14 +72,16 @@
                   class="setup__checkbox" 
                 />
                 <span class="custom-class-name">{{ c.name }}</span>
-                <span class="custom-class-tag">P{{ c.periodNumber || '?' }} · S{{ c.semester || '?' }}</span>
+                <span class="custom-class-tag" v-if="c.periodNumber || c.semester">
+                  {{ c.periodNumber ? 'P' + c.periodNumber : '' }}{{ c.periodNumber && c.semester ? ' · ' : '' }}{{ c.semester ? 'S' + c.semester : '' }}
+                </span>
               </label>
             </div>
           </div>
 
           <label class="setup__label">
-            Document Title
-            <input v-model="form.title" class="setup__input" required placeholder="e.g. Classroom Seating Plan" />
+            Document Title (Optional Override)
+            <input v-model="form.title" class="setup__input" placeholder="Defaults to Class Name (e.g. Period 1 - Physics)" />
           </label>
 
           <label class="setup__label">
@@ -193,16 +187,7 @@
             <!-- Document Header -->
             <header class="sheet-doc-header">
               <div class="sheet-title-group">
-                <h1 class="sheet-main-title">{{ form.title }}</h1>
-                <div class="sheet-meta-line">
-                  <span class="sheet-class-name">{{ currentPreviewClass.name }}</span>
-                  <span class="sheet-meta-sep" v-if="teacherName">·</span>
-                  <span class="sheet-teacher-name" v-if="teacherName">Teacher: {{ teacherName }}</span>
-                  <span class="sheet-meta-sep">·</span>
-                  <span class="sheet-meta-period">{{ getClassSubheader(currentPreviewClass) }}</span>
-                  <span class="sheet-meta-sep">·</span>
-                  <span class="sheet-date">{{ formattedDate }}</span>
-                </div>
+                <h1 class="sheet-main-title">{{ getDisplayTitle(currentPreviewClass) }}</h1>
               </div>
               <div v-if="form.showPods && getActivePods(currentPreviewClass).length > 0" class="sheet-pods-legend">
                 <span 
@@ -287,11 +272,16 @@
               ▼ FRONT OF CLASSROOM / WHITEBOARD ▼
             </div>
 
-            <!-- Footer / Legend -->
-            <footer v-if="form.showLegend" class="sheet-doc-footer">
-              <div v-if="form.showIepDot" class="sheet-legend-item">
+            <!-- Footer -->
+            <footer class="sheet-doc-footer">
+              <div v-if="form.showLegend && form.showIepDot" class="sheet-legend-item">
                 <span class="sheet-desk__iep-dot sheet-legend-dot" />
                 <span class="sheet-legend-text"><strong>Accommodations</strong></span>
+              </div>
+              <div class="sheet-footer-info">
+                <span v-if="getClassSubheader(currentPreviewClass)">{{ getClassSubheader(currentPreviewClass) }}</span>
+                <span class="sheet-meta-sep" v-if="getClassSubheader(currentPreviewClass)">·</span>
+                <span>Print Date: {{ formattedDate }}</span>
               </div>
             </footer>
           </div>
@@ -322,16 +312,7 @@
           <!-- Document Header -->
           <header class="sheet-doc-header">
             <div class="sheet-title-group">
-              <h1 class="sheet-main-title">{{ form.title }}</h1>
-              <div class="sheet-meta-line">
-                <span class="sheet-class-name">{{ cls.name }}</span>
-                <span class="sheet-meta-sep" v-if="teacherName">·</span>
-                <span class="sheet-teacher-name" v-if="teacherName">Teacher: {{ teacherName }}</span>
-                <span class="sheet-meta-sep">·</span>
-                <span class="sheet-meta-period">{{ getClassSubheader(cls) }}</span>
-                <span class="sheet-meta-sep">·</span>
-                <span class="sheet-date">{{ formattedDate }}</span>
-              </div>
+              <h1 class="sheet-main-title">{{ getDisplayTitle(cls) }}</h1>
             </div>
             <div v-if="form.showPods && getActivePods(cls).length > 0" class="sheet-pods-legend">
               <span 
@@ -415,11 +396,16 @@
             ▼ FRONT OF CLASSROOM / WHITEBOARD ▼
           </div>
 
-          <!-- Footer / Legend -->
-          <footer v-if="form.showLegend" class="sheet-doc-footer">
-            <div v-if="form.showIepDot" class="sheet-legend-item">
+          <!-- Footer -->
+          <footer class="sheet-doc-footer">
+            <div v-if="form.showLegend && form.showIepDot" class="sheet-legend-item">
               <span class="sheet-desk__iep-dot sheet-legend-dot" />
               <span class="sheet-legend-text"><strong>Accommodations</strong></span>
+            </div>
+            <div class="sheet-footer-info">
+              <span v-if="getClassSubheader(cls)">{{ getClassSubheader(cls) }}</span>
+              <span class="sheet-meta-sep" v-if="getClassSubheader(cls)">·</span>
+              <span>Print Date: {{ formattedDate }}</span>
             </div>
           </footer>
         </div>
@@ -449,58 +435,46 @@ defineEmits(['close'])
 
 const mounted = ref(false)
 const isPrinting = ref(false)
-const scopeMode = ref('single') // 'single' | 'semester' | 'custom' | 'all'
+const scopeMode = ref('active') // 'active' | 'single' | 'semester' | 'custom' | 'all'
 const selectedSingleClassId = ref('')
 const selectedClassIds = ref([])
 const previewIndex = ref(0)
 
-onMounted(() => {
-  mounted.value = true
-  if (props.reportClass?.classId) {
-    selectedSingleClassId.value = props.reportClass.classId
-  } else if (effectiveClassList.value.length > 0) {
-    selectedSingleClassId.value = effectiveClassList.value[0].classId
-  }
-  // Initialize custom selection with active semester classes
-  selectSemesterClasses()
-})
-
-watch(() => props.reportClass, (newVal) => {
-  if (newVal?.classId) {
-    selectedSingleClassId.value = newVal.classId
-  }
-})
-
 const form = reactive({
-  title: 'Classroom Seating Plan',
+  title: '', // Empty by default -> uses class name dynamically per page
   orientation: 'landscape', // Defaults to landscape
   fontSize: 'auto', // Smart auto-scaling based on grid dimensions
   nameFormat: 'full', // 'full' | 'initial' | 'firstOnly' | 'lastFirst'
   showPods: true,
   showFrontIndicator: true,
   showIepDot: true,
-  showLegend: true,
-  showEmptyLabel: true
+  showLegend: false
 })
 
-// Always fall back to live singleton classList if available
-const effectiveClassList = computed(() => {
-  if (stateClassList.value && stateClassList.value.length > 0) return stateClassList.value
-  if (props.classList && props.classList.length > 0) return props.classList
-  if (props.reportClass) return [props.reportClass]
-  return []
-})
-
-// All classes passed from system
-const availableClasses = computed(() => {
-  return effectiveClassList.value
-})
-
-// Active semester determination
+// Active class determination
 const activeReportClass = computed(() => {
   return stateActiveClass.value?.classId === props.reportClass?.classId
     ? stateActiveClass.value
     : (props.reportClass || stateActiveClass.value)
+})
+
+// Use the passed classList (which reflects user year/semester/mode filters)
+const availableClasses = computed(() => {
+  if (props.classList && props.classList.length > 0) return props.classList
+  if (stateClassList.value && stateClassList.value.length > 0) {
+    const activeYear = stateActiveClass.value?.year || props.reportClass?.year
+    const activeSem = stateActiveClass.value?.semester || props.reportClass?.semester
+    if (activeYear) {
+      return stateClassList.value.filter(c => {
+        const yearMatch = c.year === activeYear
+        const semMatch = !activeSem || c.semester === activeSem
+        return yearMatch && semMatch
+      })
+    }
+    return stateClassList.value
+  }
+  if (props.reportClass) return [props.reportClass]
+  return []
 })
 
 // Classes in the active semester / term of the active class
@@ -515,27 +489,52 @@ const semesterClasses = computed(() => {
   })
 })
 
+// Label for term batch print (Elementary friendly)
+const termLabel = computed(() => {
+  if (activeReportClass.value?.semester) {
+    return `All Classes this Semester`
+  }
+  return `All Classes`
+})
+
 function selectAllClasses() {
   selectedClassIds.value = availableClasses.value.map(c => c.classId)
 }
 
-function selectSemesterClasses() {
-  selectedClassIds.value = semesterClasses.value.map(c => c.classId)
-}
+onMounted(() => {
+  mounted.value = true
+  if (props.reportClass?.classId && availableClasses.value.some(c => c.classId === props.reportClass.classId)) {
+    selectedSingleClassId.value = props.reportClass.classId
+  } else if (availableClasses.value.length > 0) {
+    selectedSingleClassId.value = availableClasses.value[0].classId
+  }
+  // Initialize custom selection with available classes
+  selectAllClasses()
+})
+
+watch(() => props.reportClass, (newVal) => {
+  if (newVal?.classId && availableClasses.value.some(c => c.classId === newVal.classId)) {
+    selectedSingleClassId.value = newVal.classId
+  } else if (availableClasses.value.length > 0 && !availableClasses.value.some(c => c.classId === selectedSingleClassId.value)) {
+    selectedSingleClassId.value = availableClasses.value[0].classId
+  }
+})
+
+watch(availableClasses, (newList) => {
+  if (newList.length > 0 && !newList.some(c => c.classId === selectedSingleClassId.value)) {
+    selectedSingleClassId.value = newList[0].classId
+  }
+})
 
 const targetClasses = computed(() => {
-  if (scopeMode.value === 'all') {
-    return availableClasses.value
-  }
   if (scopeMode.value === 'semester') {
-    return semesterClasses.value.length > 0 ? semesterClasses.value : availableClasses.value
+    return availableClasses.value
   }
   if (scopeMode.value === 'custom') {
     return availableClasses.value.filter(c => selectedClassIds.value.includes(c.classId))
   }
-  // 'single'
-  const found = availableClasses.value.find(c => c.classId === selectedSingleClassId.value)
-  return found ? [found] : (activeReportClass.value ? [activeReportClass.value] : [])
+  // 'active' default
+  return activeReportClass.value ? [activeReportClass.value] : (availableClasses.value[0] ? [availableClasses.value[0]] : [])
 })
 
 watch(targetClasses, () => {
@@ -732,6 +731,13 @@ function getGridContainerStyle(cls) {
   }
 }
 
+function getDisplayTitle(cls) {
+  if (form.title && form.title.trim()) {
+    return form.title.trim()
+  }
+  return cls?.name || 'Classroom Seating Plan'
+}
+
 const formattedDate = computed(() => {
   return new Date().toLocaleDateString('en-US', {
     month: 'short',
@@ -745,6 +751,7 @@ function getClassSubheader(cls) {
   if (cls?.year) parts.push(cls.year)
   if (cls?.semester) parts.push(`Sem ${cls.semester}`)
   if (cls?.periodNumber) parts.push(`Period ${cls.periodNumber}`)
+  if (cls?.gradeLevel) parts.push(`Grade ${cls.gradeLevel}`)
   return parts.join(' · ')
 }
 
@@ -1273,8 +1280,11 @@ function handlePrint() {
   display: inline-block;
 }
 
-.sheet-footer-page-info {
+.sheet-footer-info {
   margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 </style>
 
