@@ -300,8 +300,8 @@
     "semantic_hash": ""
   },
   "src/db/migrations.js": {
-    "mtime": 1786549919.881497,
-    "ast_hash": "ae64c75e71e742b7b454a7e3ca0aaae9",
+    "mtime": 1786963337.2761846,
+    "ast_hash": "302319d1399bd9a38010546dcb6f3bf8",
     "semantic_hash": ""
   },
   "src/db/settingsService.js": {
