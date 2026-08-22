@@ -55,7 +55,7 @@
         <div class="setup__card" id="sec-classes">
           <div class="setup__card-header-row" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 12px;">
             <div>
-              <h2 class="setup__card-title" style="margin-bottom: 2px;">All Classes</h2>
+              <h2 class="setup__card-title" style="margin-bottom: 2px;">Manage Classes</h2>
               <p class="setup__hint" style="margin: 0;">Click any class to configure its roster, gradebook framework, and seating.</p>
             </div>
             <div style="display: flex; align-items: center; gap: 16px;">
@@ -63,17 +63,24 @@
                 <input type="checkbox" v-model="showAllSessions" />
                 Show All Sessions
               </label>
-              <button class="setup__btn-primary" @click="isAddClassModalOpen = true">
+              <button 
+                v-if="(showAllSessions ? modeAllClasses : filteredClassList).length > 0"
+                class="setup__btn-primary" 
+                @click="isAddClassModalOpen = true"
+              >
                 <Plus :size="16" /> Add / Import Class
               </button>
             </div>
           </div>
 
-          <div v-if="(showAllSessions ? modeAllClasses : filteredClassList).length === 0" class="setup__empty" style="padding: 2.5rem 1rem;">
-            <FolderOpen :size="36" style="opacity: 0.3; margin-bottom: 0.75rem;" />
-            <p>No active classes for this session.</p>
-            <button class="setup__btn-primary" style="margin-top: 1rem;" @click="isAddClassModalOpen = true">
-              <Plus :size="16" /> Add Your First Class
+          <div v-if="(showAllSessions ? modeAllClasses : filteredClassList).length === 0" class="setup__empty" style="padding: 3.5rem 1.5rem; text-align: center;">
+            <FolderOpen :size="48" style="opacity: 0.35; margin-bottom: 1rem; color: var(--primary);" />
+            <h3 style="margin-bottom: 6px; font-size: 1.15rem; color: var(--text);">No Classes for This Session</h3>
+            <p style="color: var(--text-secondary); font-size: 0.9rem; max-width: 440px; margin: 0 auto 1.5rem; line-height: 1.5;">
+              Get started by importing your board-provided roster CSV or creating your first class for this school year.
+            </p>
+            <button class="setup__btn-primary" style="padding: 0 20px; min-height: 40px;" @click="isAddClassModalOpen = true">
+              <Plus :size="16" /> Add / Import Class
             </button>
           </div>
 
@@ -936,11 +943,11 @@ const props = defineProps({
 const emit = defineEmits(['navigate'])
 
 const setupTabs = [
-  { id: 'active',   label: 'Active Class',   icon: Zap },
-  { id: 'manage',   label: 'All Classes',    icon: LayoutDashboard },
-  { id: 'app',      label: 'App Settings',   icon: Settings },
-  { id: 'calendar', label: 'Calendar',       icon: CalendarDays },
-  { id: 'data',     label: 'Backup & Data',  icon: Database },
+  { id: 'active',   label: 'Active Class',    icon: Zap },
+  { id: 'app',      label: 'App Settings',    icon: Settings },
+  { id: 'calendar', label: 'Calendar',        icon: CalendarDays },
+  { id: 'manage',   label: 'Manage Classes',  icon: FolderOpen },
+  { id: 'data',     label: 'Backup & Data',   icon: Database },
 ]
 
 const tabMap = { 

@@ -1,5 +1,5 @@
 <template>
-  <aside class="setup-toc">
+  <aside v-if="sections.length > 1" class="setup-toc">
     <div class="setup-toc__header">
       <ListFilter :size="14" class="setup-toc__header-icon" />
       <span class="setup-toc__header-title">ON THIS PAGE</span>
