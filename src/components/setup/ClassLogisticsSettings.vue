@@ -1,7 +1,19 @@
 <template>
-  <div v-if="!activeClass" class="setup__panel-content setup__empty">
-    <Zap :size="48" style="opacity: 0.2; margin-bottom: 1rem;" />
-    <p>Select a class in the header or manager to configure it.</p>
+  <div v-if="!activeClass" class="setup__panel-content setup__empty" style="padding: 3rem 1.5rem; text-align: center; max-width: 520px; margin: 2rem auto; background: var(--surface); border: 1px dashed var(--border); border-radius: var(--radius-lg);">
+    <FolderOpen :size="44" style="opacity: 0.35; margin-bottom: 0.75rem; color: var(--primary);" />
+    <h3 style="margin-bottom: 6px; font-size: 1.15rem; color: var(--text);">No Class Selected</h3>
+    <p v-if="classList.length === 0" style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.5; margin-bottom: 1.25rem;">
+      You don't have any classes set up yet. Import your student roster CSV or create a class to get started.
+    </p>
+    <p v-else style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.5; margin-bottom: 1.25rem;">
+      Choose a class from the header dropdown above or from All Classes to configure its roster, gradebook framework, and seating plan.
+    </p>
+    <button 
+      class="setup__btn-primary" 
+      @click="emit('open-add-class')"
+    >
+      <Plus :size="16" /> {{ classList.length === 0 ? 'Add or Import Class' : 'Create New Class' }}
+    </button>
   </div>
   <div v-else class="setup__layout">
     <SetupQuickJumpNav activeTab="active" />
@@ -823,13 +835,15 @@ import {
   Camera,
   FolderOpen,
   Calendar,
-  Users
+  Users,
+  Plus
 } from 'lucide-vue-next'
 import { getEffectiveGradeLevel } from '../../composables/useElementary.js'
 
 const props = defineProps({
   initialSubtab: { type: String, default: 'logistics' }
 })
+const emit = defineEmits(['open-add-class'])
 
 const activeSubTab = ref(props.initialSubtab || 'logistics')
 

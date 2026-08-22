@@ -45,9 +45,7 @@ const KNOWN_TAB_SECTIONS = {
     { id: 'sec-framework', title: 'Assessment Framework' }
   ],
   manage: [
-    { id: 'sec-bulk', title: 'Bulk Setup' },
-    { id: 'sec-create', title: 'Create Single Class' },
-    { id: 'sec-classes', title: 'All Classes' },
+    { id: 'sec-classes', title: 'Active Classes' },
     { id: 'sec-archived', title: 'Archived Classes' }
   ],
   calendar: [

@@ -384,12 +384,30 @@
   padding:         12px;
   border-radius:   var(--radius-md);
   background:      var(--bg-secondary);
+  border:          1px solid transparent;
   gap:             12px;
   min-height:      52px;
+  transition:      all 0.15s ease;
+}
+
+.setup__class-item--clickable {
+  cursor: pointer;
+}
+
+.setup__class-item--clickable:hover {
+  background: var(--bg-card, var(--surface));
+  border-color: var(--border);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
 }
 
 .setup__class-item--active {
   background: var(--primary-light);
+  border-color: rgba(var(--primary-rgb, 59, 130, 246), 0.3);
+}
+
+.setup__class-item--active.setup__class-item--clickable:hover {
+  background: var(--primary-light);
+  border-color: var(--primary);
 }
 
 .setup__class-name {
@@ -1058,6 +1076,33 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
+}
+
+.setup__dialog-box--add-class {
+  max-width: 840px !important;
+  width: 94vw;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 0 !important;
+}
+
+.setup__dialog-header-sticky {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  flex-shrink: 0;
+}
+
+.setup__dialog-content-scroll {
+  padding: 20px 24px 24px;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
 }
 
 .setup__bulk-list {

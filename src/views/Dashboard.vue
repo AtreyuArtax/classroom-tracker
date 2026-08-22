@@ -93,7 +93,7 @@
           <div class="dashboard__getting-started-card">
             <GettingStartedGuide />
             <div class="dashboard__getting-started-actions">
-              <button class="dashboard__go-setup" @click="emit('navigate', 'Setup')">
+              <button class="dashboard__go-setup" @click="emit('navigate', 'Setup', { tab: 'manage', openAdd: true })">
                 Go to Setup & Import CSV →
               </button>
             </div>
@@ -102,7 +102,7 @@
         <div v-else class="dashboard__empty">
           <p class="dashboard__empty-title">No class selected</p>
           <p class="dashboard__empty-sub">Go to <strong>Setup</strong> to select or create a class.</p>
-          <button class="dashboard__go-setup" @click="emit('navigate', 'Setup')">Go to Setup →</button>
+          <button class="dashboard__go-setup" @click="emit('navigate', 'Setup', { tab: 'manage' })">Go to Setup →</button>
         </div>
       </section>
 

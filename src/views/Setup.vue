@@ -51,156 +51,64 @@
       <div class="setup__layout">
         <SetupQuickJumpNav :activeTab="activeTab" />
         <div class="setup__main-content">
-        <!-- 1. Bulk Setup Wizard (Smart CSV Interceptor) -->
-        <div class="setup__card setup__card--accent" id="sec-bulk">
-          <h2 class="setup__card-title">Bulk Setup / New Semester</h2>
-          <p class="setup__hint">
-            Drop your board-provided CSV here to automatically detect, create, and update classes for the new term.
-          </p>
-          <label 
-            class="setup__file-label" 
-            for="roster-file"
-            :class="{ 'setup__file-label--drag': isDraggingRoster }"
-            @dragover.prevent="isDraggingRoster = true"
-            @dragleave.prevent="isDraggingRoster = false"
-            @drop.prevent="isDraggingRoster = false; onFileSelected($event)"
-          >
-            <FolderOpen :size="16" /> {{ isDraggingRoster ? 'Drop CSV here...' : 'Choose CSV file or drag & drop here' }}
-            <input
-              id="roster-file"
-              type="file"
-              accept=".csv,text/csv"
-              class="setup__file-input"
-              @change="onFileSelected"
-            />
-          </label>
-          
-          <div class="setup__csv-help-container">
-            <button 
-              type="button" 
-              class="setup__csv-help-toggle" 
-              @click="isCsvHelpOpen = !isCsvHelpOpen"
-            >
-              <Info :size="14" />
-              <span>{{ isCsvHelpOpen ? 'Hide CSV Format Guide' : 'Show Roster Format & PowerSchool CSV Help' }}</span>
-              <component :is="isCsvHelpOpen ? ChevronUp : ChevronDown" :size="14" />
-            </button>
-            <Transition name="csv-fade">
-              <CsvHelpGuide v-if="isCsvHelpOpen" />
-            </Transition>
-          </div>
-        </div>
-
-        <!-- 2. Create Single Class -->
-        <div class="setup__card" id="sec-create">
-          <h2 class="setup__card-title">Create Single Class</h2>
-          <form class="setup__form" @submit.prevent="createNewClass">
-            <label class="setup__label">
-              Class name
-              <input v-model="newClass.name" class="setup__input" :placeholder="teachingMode === 'elementary' ? 'e.g. Grade 4 Homeroom' : 'e.g. Period 1 — Science'" required />
-            </label>
-            <label v-if="teachingMode !== 'elementary'" class="setup__label">
-              Course Code (Optional)
-              <input v-model="newClass.courseCode" class="setup__input" placeholder="e.g. SNC2D1" />
-            </label>
-            <div class="setup__form-grid">
-              <label class="setup__label">
-                {{ teachingMode === 'elementary' ? 'School Year' : 'School Year and Semester' }}
-                <select v-if="teachingMode === 'elementary'" v-model="newClassYear" class="setup__input" required>
-                  <option v-for="y in yearOptions" :key="y" :value="y">
-                    {{ y }}
-                  </option>
-                </select>
-                <select v-else v-model="newClassTermKey" class="setup__input" required>
-                  <option v-for="t in termOptions" :key="t.year + t.semester" :value="t.year + '|' + t.semester">
-                    {{ t.year }} Sem {{ t.semester }}
-                  </option>
-                </select>
-              </label>
-
-              <label v-if="teachingMode === 'elementary'" class="setup__label">
-                Grade Level
-                <select v-model="newClassGradeLevel" class="setup__input" required>
-                  <optgroup label="Single Grade">
-                    <option value="Kindergarten">Kindergarten</option>
-                    <option value="Grade 1">Grade 1</option>
-                    <option value="Grade 2">Grade 2</option>
-                    <option value="Grade 3">Grade 3</option>
-                    <option value="Grade 4">Grade 4</option>
-                    <option value="Grade 5">Grade 5</option>
-                    <option value="Grade 6">Grade 6</option>
-                    <option value="Grade 7">Grade 7</option>
-                    <option value="Grade 8">Grade 8</option>
-                  </optgroup>
-                  <optgroup label="Split / Multi-Grade">
-                    <option value="Grade 1/2">Grade 1/2 Split</option>
-                    <option value="Grade 2/3">Grade 2/3 Split</option>
-                    <option value="Grade 3/4">Grade 3/4 Split</option>
-                    <option value="Grade 4/5">Grade 4/5 Split</option>
-                    <option value="Grade 5/6">Grade 5/6 Split</option>
-                    <option value="Grade 6/7">Grade 6/7 Split</option>
-                    <option value="Grade 7/8">Grade 7/8 Split</option>
-                  </optgroup>
-                </select>
-              </label>
-
-              <label v-if="teachingMode !== 'elementary'" class="setup__label">
-                Period
-                <select v-model="newClass.periodNumber" class="setup__input" required>
-                  <option v-for="opt in periodOptions" :key="opt" :value="opt">{{ opt }}</option>
-                </select>
-              </label>
-              <label v-if="teachingMode !== 'elementary'" class="setup__label">
-                Start time
-                <input v-model="newClass.periodStartTime" type="time" class="setup__input" required />
-              </label>
-            </div>
-            <button type="submit" class="setup__btn-primary">Create Class</button>
-          </form>
-          <p v-if="classError" class="setup__error">{{ classError }}</p>
-        </div>
-
-        <!-- 3. Current Classes List -->
+        <!-- 1. All Classes Directory -->
         <div class="setup__card" id="sec-classes">
-          <div class="setup__card-header-row">
-            <h2 class="setup__card-title">All Classes</h2>
-            <label class="setup__label setup__label--checkbox setup__show-all">
-              <input type="checkbox" v-model="showAllSessions" />
-              Show All Sessions
-            </label>
+          <div class="setup__card-header-row" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 12px;">
+            <div>
+              <h2 class="setup__card-title" style="margin-bottom: 2px;">All Classes</h2>
+              <p class="setup__hint" style="margin: 0;">Click any class to configure its roster, gradebook framework, and seating.</p>
+            </div>
+            <div style="display: flex; align-items: center; gap: 16px;">
+              <label class="setup__label setup__label--checkbox setup__show-all" style="margin: 0;">
+                <input type="checkbox" v-model="showAllSessions" />
+                Show All Sessions
+              </label>
+              <button class="setup__btn-primary" @click="isAddClassModalOpen = true">
+                <Plus :size="16" /> Add / Import Class
+              </button>
+            </div>
           </div>
-          <div v-if="(showAllSessions ? modeAllClasses : filteredClassList).length === 0" class="setup__empty">
-            No active classes for this session.
+
+          <div v-if="(showAllSessions ? modeAllClasses : filteredClassList).length === 0" class="setup__empty" style="padding: 2.5rem 1rem;">
+            <FolderOpen :size="36" style="opacity: 0.3; margin-bottom: 0.75rem;" />
+            <p>No active classes for this session.</p>
+            <button class="setup__btn-primary" style="margin-top: 1rem;" @click="isAddClassModalOpen = true">
+              <Plus :size="16" /> Add Your First Class
+            </button>
           </div>
-          <ul class="setup__class-list">
+
+          <ul v-else class="setup__class-list">
             <li
-                v-for="cls in (showAllSessions ? modeAllClasses : filteredClassList)"
-                :key="cls.classId"
-                class="setup__class-item"
-                :class="{ 'setup__class-item--active': cls.classId === activeClass?.classId }"
+              v-for="cls in (showAllSessions ? modeAllClasses : filteredClassList)"
+              :key="cls.classId"
+              class="setup__class-item setup__class-item--clickable"
+              :class="{ 'setup__class-item--active': cls.classId === activeClass?.classId }"
+              @click="selectAndOpenClass(cls.classId)"
+              style="cursor: pointer;"
             >
-              <div>
-                <div class="setup__class-name">{{ cls.name }}</div>
-                <div class="setup__class-meta">
+              <div style="min-width: 0;">
+                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                  <span class="setup__class-name">{{ cls.name }}</span>
+                  <span v-if="cls.classId === activeClass?.classId" class="setup__badge setup__badge--new" style="font-size: 0.7rem; padding: 2px 6px;">Active</span>
+                  <span v-if="cls.courseCode" class="setup__chip setup__chip--blue" style="font-size: 0.72rem; padding: 2px 6px;">{{ cls.courseCode }}</span>
+                </div>
+                <div class="setup__class-meta" style="margin-top: 2px;">
                   <template v-if="cls.classType === 'elementary'">Full Year {{ cls.year }} · {{ studentCount(cls) }} students</template>
                   <template v-else>Period {{ cls.periodNumber }} · {{ cls.year }} Sem {{ cls.semester }} · {{ studentCount(cls) }} students</template>
                 </div>
               </div>
-              <div class="setup__class-actions">
-                <button class="setup__pill-btn" @click="switchToClass(cls.classId)">
-                  {{ cls.classId === activeClass?.classId ? 'Active' : 'Configure' }}
-                </button>
+              <div class="setup__class-actions" @click.stop>
                 <button class="setup__pill-btn" @click="onArchiveClass(cls.classId)">Archive</button>
               </div>
             </li>
           </ul>
         </div>
 
-        <!-- 4. Archived Classes -->
+        <!-- 2. Archived Classes -->
         <div v-if="(showAllSessions ? modeAllArchivedClasses : filteredArchivedClasses).length > 0" class="setup__card setup__card--archived" id="sec-archived">
           <button class="setup__archived-toggle" @click="isArchivedPanelVisible = !isArchivedPanelVisible">
             <span class="setup__archived-label">
-              <Archive :size="16" /> Archived ({{ (showAllSessions ? modeAllArchivedClasses : filteredArchivedClasses).length }})
+              <Archive :size="16" /> Archived Classes ({{ (showAllSessions ? modeAllArchivedClasses : filteredArchivedClasses).length }})
             </span>
             <span class="setup__archived-chevron"><component :is="isArchivedPanelVisible ? ChevronUp : ChevronDown" :size="16" /></span>
           </button>
@@ -219,6 +127,170 @@
               </div>
             </li>
           </ul>
+        </div>
+
+        <!-- ── Add / Import Class Modal ──────────────────────────── -->
+        <div v-if="isAddClassModalOpen" class="setup__dialog" role="dialog" aria-modal="true" aria-labelledby="add-class-modal-title">
+          <div class="setup__dialog-backdrop" @click="isAddClassModalOpen = false" />
+          <div class="setup__dialog-box setup__dialog-box--add-class">
+            <!-- Pinned Header -->
+            <div class="setup__dialog-header-sticky">
+              <div>
+                <h3 id="add-class-modal-title" class="setup__dialog-title" style="margin-bottom: 4px;">
+                  Add New Class
+                </h3>
+                <p class="setup__dialog-body" style="margin: 0; color: var(--text-secondary); font-size: 0.85rem;">
+                  Import full rosters from your student information system or create an empty class manually.
+                </p>
+              </div>
+              <button 
+                type="button" 
+                class="setup__icon-btn" 
+                @click="isAddClassModalOpen = false"
+                style="margin-left: 8px; flex-shrink: 0;"
+                title="Close"
+              >
+                <X :size="18" />
+              </button>
+            </div>
+
+            <!-- Scrollable Content -->
+            <div class="setup__dialog-content-scroll">
+              <!-- Segmented Mode Toggle -->
+              <div class="setup__segmented-toggle" style="margin-bottom: 1.25rem;">
+                <button
+                  type="button"
+                  class="setup__segmented-btn"
+                  :class="{ 'setup__segmented-btn--active': addClassMode === 'csv' }"
+                  @click="addClassMode = 'csv'"
+                >
+                  <FolderOpen :size="15" class="setup__segmented-icon" />
+                  <span>Bulk / Term CSV Import</span>
+                </button>
+                <button
+                  type="button"
+                  class="setup__segmented-btn"
+                  :class="{ 'setup__segmented-btn--active': addClassMode === 'manual' }"
+                  @click="addClassMode = 'manual'"
+                >
+                  <Plus :size="15" class="setup__segmented-icon" />
+                  <span>Create Single Class</span>
+                </button>
+              </div>
+
+              <!-- CSV Option -->
+              <div v-if="addClassMode === 'csv'">
+                <div class="setup__card setup__card--accent" style="margin-bottom: 0;">
+                  <p class="setup__hint" style="margin-top: 0; margin-bottom: 12px;">
+                    Drop your board-provided or PowerSchool CSV here to automatically detect, create, and populate classes for the new term.
+                  </p>
+                  <label 
+                    class="setup__file-label" 
+                    for="roster-file-modal"
+                    :class="{ 'setup__file-label--drag': isDraggingRoster }"
+                    @dragover.prevent="isDraggingRoster = true"
+                    @dragleave.prevent="isDraggingRoster = false"
+                    @drop.prevent="isDraggingRoster = false; onFileSelected($event)"
+                  >
+                    <FolderOpen :size="18" /> {{ isDraggingRoster ? 'Drop CSV here...' : 'Choose CSV file or drag & drop here' }}
+                    <input
+                      id="roster-file-modal"
+                      type="file"
+                      accept=".csv,text/csv"
+                      class="setup__file-input"
+                      @change="onFileSelected"
+                    />
+                  </label>
+                  
+                  <div class="setup__csv-help-container" style="margin-top: 12px;">
+                    <button 
+                      type="button" 
+                      class="setup__csv-help-toggle" 
+                      @click="isCsvHelpOpen = !isCsvHelpOpen"
+                    >
+                      <Info :size="14" />
+                      <span>{{ isCsvHelpOpen ? 'Hide CSV Format Guide' : 'Show Roster Format & PowerSchool CSV Help' }}</span>
+                      <component :is="isCsvHelpOpen ? ChevronUp : ChevronDown" :size="14" />
+                    </button>
+                    <Transition name="csv-fade">
+                      <CsvHelpGuide v-if="isCsvHelpOpen" />
+                    </Transition>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Manual Option -->
+              <div v-else-if="addClassMode === 'manual'">
+                <form class="setup__form" @submit.prevent="createNewClass">
+                  <label class="setup__label">
+                    Class name
+                    <input v-model="newClass.name" class="setup__input" :placeholder="teachingMode === 'elementary' ? 'e.g. Grade 4 Homeroom' : 'e.g. Period 1 — Science'" required autofocus />
+                  </label>
+                  <label v-if="teachingMode !== 'elementary'" class="setup__label">
+                    Course Code (Optional)
+                    <input v-model="newClass.courseCode" class="setup__input" placeholder="e.g. SNC2D1" />
+                  </label>
+                  <div class="setup__form-grid">
+                    <label class="setup__label">
+                      {{ teachingMode === 'elementary' ? 'School Year' : 'School Year and Semester' }}
+                      <select v-if="teachingMode === 'elementary'" v-model="newClassYear" class="setup__input" required>
+                        <option v-for="y in yearOptions" :key="y" :value="y">
+                          {{ y }}
+                        </option>
+                      </select>
+                      <select v-else v-model="newClassTermKey" class="setup__input" required>
+                        <option v-for="t in termOptions" :key="t.year + t.semester" :value="t.year + '|' + t.semester">
+                          {{ t.year }} Sem {{ t.semester }}
+                        </option>
+                      </select>
+                    </label>
+
+                    <label v-if="teachingMode === 'elementary'" class="setup__label">
+                      Grade Level
+                      <select v-model="newClassGradeLevel" class="setup__input" required>
+                        <optgroup label="Single Grade">
+                          <option value="Kindergarten">Kindergarten</option>
+                          <option value="Grade 1">Grade 1</option>
+                          <option value="Grade 2">Grade 2</option>
+                          <option value="Grade 3">Grade 3</option>
+                          <option value="Grade 4">Grade 4</option>
+                          <option value="Grade 5">Grade 5</option>
+                          <option value="Grade 6">Grade 6</option>
+                          <option value="Grade 7">Grade 7</option>
+                          <option value="Grade 8">Grade 8</option>
+                        </optgroup>
+                        <optgroup label="Split / Multi-Grade">
+                          <option value="Grade 1/2">Grade 1/2 Split</option>
+                          <option value="Grade 2/3">Grade 2/3 Split</option>
+                          <option value="Grade 3/4">Grade 3/4 Split</option>
+                          <option value="Grade 4/5">Grade 4/5 Split</option>
+                          <option value="Grade 5/6">Grade 5/6 Split</option>
+                          <option value="Grade 6/7">Grade 6/7 Split</option>
+                          <option value="Grade 7/8">Grade 7/8 Split</option>
+                        </optgroup>
+                      </select>
+                    </label>
+
+                    <label v-if="teachingMode !== 'elementary'" class="setup__label">
+                      Period
+                      <select v-model="newClass.periodNumber" class="setup__input" required>
+                        <option v-for="opt in periodOptions" :key="opt" :value="opt">{{ opt }}</option>
+                      </select>
+                    </label>
+                    <label v-if="teachingMode !== 'elementary'" class="setup__label">
+                      Start time
+                      <input v-model="newClass.periodStartTime" type="time" class="setup__input" required />
+                    </label>
+                  </div>
+                  <p v-if="classError" class="setup__error" style="margin-top: 8px;">{{ classError }}</p>
+                  <div class="setup__dialog-actions" style="margin-top: 1.25rem;">
+                    <button type="submit" class="setup__btn-primary">Create Class</button>
+                    <button type="button" class="setup__btn-ghost" @click="isAddClassModalOpen = false">Cancel</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
         </div>
 
 
@@ -381,7 +453,10 @@
     <!-- PILLAR 2: Active Class Configuration                     -->
     <!-- ══════════════════════════════════════════════════════════ -->
     <section v-else-if="activeTab === 'active'" class="setup__panel">
-      <ClassLogisticsSettings :initial-subtab="activeClassSubtab" />
+      <ClassLogisticsSettings 
+        :initial-subtab="activeClassSubtab" 
+        @open-add-class="isAddClassModalOpen = true"
+      />
     </section>
 
     <!-- ══════════════════════════════════════════════════════════ -->
@@ -698,7 +773,8 @@ import {
   GraduationCap,
   School,
   RefreshCcw,
-  Pencil
+  Pencil,
+  X
 } from 'lucide-vue-next'
 import { useClassroom } from '../composables/useClassroom.js'
 import { useMessage } from '../composables/useMessage.js'
@@ -762,6 +838,8 @@ const isHelpModalOpen = ref(false)
 const isCsvHelpOpen = ref(false)
 const showAllSessions = ref(false)
 const isArchivedPanelVisible = ref(false)
+const isAddClassModalOpen = ref(false)
+const addClassMode = ref('csv')
 
 // --- Cloud Mode config ---
 const localCloudMode = ref(cloudModeEnabled.value)
@@ -851,27 +929,40 @@ async function onMarkAllPresent() {
 
 // --- Class switcher & Creation ---
 const props = defineProps({
-  tab: { type: String, default: 'classes' },
-  from: { type: String, default: '' }
+  tab: { type: String, default: '' },
+  from: { type: String, default: '' },
+  openAdd: { type: Boolean, default: false }
 })
 const emit = defineEmits(['navigate'])
 
 const setupTabs = [
-  { id: 'manage',   label: 'Class Setup',    icon: LayoutDashboard },
   { id: 'active',   label: 'Active Class',   icon: Zap },
+  { id: 'manage',   label: 'All Classes',    icon: LayoutDashboard },
   { id: 'app',      label: 'App Settings',   icon: Settings },
   { id: 'calendar', label: 'Calendar',       icon: CalendarDays },
   { id: 'data',     label: 'Backup & Data',  icon: Database },
 ]
 
 const tabMap = { 
+  'active': 'active',
   'classes': 'manage', 
+  'manage': 'manage',
   'roster': 'active', 
   'gradebook': 'active', 
   'codes': 'app', 
-  'backup': 'data' 
+  'app': 'app',
+  'calendar': 'calendar',
+  'backup': 'data',
+  'data': 'data'
 }
-const activeTab = ref(tabMap[props.tab] || 'manage')
+
+function resolveDefaultTab() {
+  if (props.tab && tabMap[props.tab]) return tabMap[props.tab]
+  if (classList.value.length === 0) return 'manage'
+  return 'active'
+}
+
+const activeTab = ref(resolveDefaultTab())
 
 const activeClassSubtab = computed(() => {
   if (props.tab === 'gradebook') return 'grading'
@@ -882,6 +973,12 @@ const activeClassSubtab = computed(() => {
 watch(() => props.tab, (newTab) => {
   if (newTab) activeTab.value = tabMap[newTab] || newTab
 })
+
+watch(() => props.openAdd, (shouldOpen) => {
+  if (shouldOpen) {
+    isAddClassModalOpen.value = true
+  }
+}, { immediate: true })
 
 const newClass = reactive({ 
   classType: 'secondary',
@@ -938,6 +1035,11 @@ async function switchToClass(classId) {
   await switchClass(classId)
 }
 
+async function selectAndOpenClass(classId) {
+  await switchClass(classId)
+  activeTab.value = 'active'
+}
+
 async function createNewClass() {
   classError.value = ''
   if (!newClass.name.trim()) { classError.value = 'Name is required.'; return }
@@ -961,11 +1063,13 @@ async function createNewClass() {
     semester: semToUse
   })
 
-  
   newClass.name = ''
   newClass.courseCode = ''
   newClass.periodNumber = 1
   newClass.periodStartTime = periodStartTimes.value[1] || '08:00'
+  isAddClassModalOpen.value = false
+  await switchClass(classId)
+  activeTab.value = 'active'
 }
 
 async function onArchiveClass(classId) {
@@ -1095,6 +1199,8 @@ function formatGradeVal(rawGrade) {
 function onFileSelected(evt) {
   const file = evt.dataTransfer?.files?.[0] || evt.target?.files?.[0]
   if (!file) return
+
+  isAddClassModalOpen.value = false
 
   Papa.parse(file, {
     header: true,

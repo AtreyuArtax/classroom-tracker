@@ -5727,7 +5727,7 @@
       "label": "for()",
       "file_type": "code",
       "source_file": "src/components/setup/ClassLogisticsSettings.vue",
-      "source_location": "L887",
+      "source_location": "L901",
       "_origin": "ast",
       "id": "setup_classlogisticssettings_for",
       "community": 19,
@@ -5737,7 +5737,7 @@
       "label": "if()",
       "file_type": "code",
       "source_file": "src/components/setup/ClassLogisticsSettings.vue",
-      "source_location": "L919",
+      "source_location": "L933",
       "_origin": "ast",
       "id": "setup_classlogisticssettings_if",
       "community": 19,
@@ -11557,7 +11557,7 @@
       "label": "if()",
       "file_type": "code",
       "source_file": "src/views/Setup.vue",
-      "source_location": "L1319",
+      "source_location": "L1425",
       "_origin": "ast",
       "id": "views_setup_if",
       "community": 34,
@@ -11567,7 +11567,7 @@
       "label": "for()",
       "file_type": "code",
       "source_file": "src/views/Setup.vue",
-      "source_location": "L1405",
+      "source_location": "L1511",
       "_origin": "ast",
       "id": "views_setup_for",
       "community": 34,
@@ -28156,9 +28156,9 @@
       "source_file": "src/db/classService.js",
       "source_location": "L34",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "db_classservice",
-      "target": "db_classservice_syncclasssections",
-      "confidence_score": 1.0
+      "target": "db_classservice_syncclasssections"
     },
     {
       "relation": "contains",
@@ -28356,9 +28356,9 @@
       "source_file": "src/db/classService.js",
       "source_location": "L699",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "db_classservice_archivestudent",
-      "target": "db_classservice_syncclasssections",
-      "confidence_score": 1.0
+      "target": "db_classservice_syncclasssections"
     },
     {
       "relation": "calls",
@@ -28367,9 +28367,9 @@
       "source_file": "src/db/classService.js",
       "source_location": "L891",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "db_classservice_bulkimportclasses",
-      "target": "db_classservice_syncclasssections",
-      "confidence_score": 1.0
+      "target": "db_classservice_syncclasssections"
     },
     {
       "relation": "calls",
@@ -28378,9 +28378,9 @@
       "source_file": "src/db/classService.js",
       "source_location": "L77",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "db_classservice_getallclasses",
-      "target": "db_classservice_syncclasssections",
-      "confidence_score": 1.0
+      "target": "db_classservice_syncclasssections"
     },
     {
       "relation": "calls",
@@ -28389,9 +28389,9 @@
       "source_file": "src/db/classService.js",
       "source_location": "L99",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "db_classservice_getclass",
-      "target": "db_classservice_syncclasssections",
-      "confidence_score": 1.0
+      "target": "db_classservice_syncclasssections"
     },
     {
       "relation": "calls",
@@ -28400,9 +28400,9 @@
       "source_file": "src/db/classService.js",
       "source_location": "L378",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "db_classservice_importroster",
-      "target": "db_classservice_syncclasssections",
-      "confidence_score": 1.0
+      "target": "db_classservice_syncclasssections"
     },
     {
       "relation": "calls",
@@ -28411,9 +28411,9 @@
       "source_file": "src/db/classService.js",
       "source_location": "L415",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "db_classservice_patchstudent",
-      "target": "db_classservice_syncclasssections",
-      "confidence_score": 1.0
+      "target": "db_classservice_syncclasssections"
     },
     {
       "relation": "calls",
@@ -28422,9 +28422,9 @@
       "source_file": "src/db/classService.js",
       "source_location": "L776",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "db_classservice_permanentlydeletestudent",
-      "target": "db_classservice_syncclasssections",
-      "confidence_score": 1.0
+      "target": "db_classservice_syncclasssections"
     },
     {
       "relation": "calls",
@@ -28433,9 +28433,9 @@
       "source_file": "src/db/classService.js",
       "source_location": "L116",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "db_classservice_saveclass",
-      "target": "db_classservice_syncclasssections",
-      "confidence_score": 1.0
+      "target": "db_classservice_syncclasssections"
     },
     {
       "relation": "calls",
@@ -28444,9 +28444,9 @@
       "source_file": "src/db/classService.js",
       "source_location": "L722",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "db_classservice_unarchivestudent",
-      "target": "db_classservice_syncclasssections",
-      "confidence_score": 1.0
+      "target": "db_classservice_syncclasssections"
     },
     {
       "relation": "calls",
@@ -32858,5 +32858,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "948d1166af101fc7e4c16406633c426df004c17b"
+  "built_at_commit": "a41b5227e1e1a5b8b83829c2ce5d4a34c136aac3"
 }
