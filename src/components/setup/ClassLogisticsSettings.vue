@@ -10,7 +10,7 @@
     </p>
     <button 
       class="setup__btn-primary" 
-      @click="emit('open-add-class')"
+      @click="$emit('open-add-class')"
     >
       <Plus :size="16" /> {{ classList.length === 0 ? 'Add or Import Class' : 'Create New Class' }}
     </button>

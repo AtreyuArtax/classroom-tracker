@@ -93,7 +93,7 @@
           <div class="dashboard__getting-started-card">
             <GettingStartedGuide />
             <div class="dashboard__getting-started-actions">
-              <button class="dashboard__go-setup" @click="emit('navigate', 'Setup', { tab: 'manage', openAdd: true })">
+              <button class="dashboard__go-setup" @click="emit('navigate', 'Setup', { tab: 'manage' })">
                 Go to Setup & Import CSV →
               </button>
             </div>

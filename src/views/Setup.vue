@@ -135,323 +135,6 @@
             </li>
           </ul>
         </div>
-
-        <!-- ── Add / Import Class Modal ──────────────────────────── -->
-        <div v-if="isAddClassModalOpen" class="setup__dialog" role="dialog" aria-modal="true" aria-labelledby="add-class-modal-title">
-          <div class="setup__dialog-backdrop" @click="isAddClassModalOpen = false" />
-          <div class="setup__dialog-box setup__dialog-box--add-class">
-            <!-- Pinned Header -->
-            <div class="setup__dialog-header-sticky">
-              <div>
-                <h3 id="add-class-modal-title" class="setup__dialog-title" style="margin-bottom: 4px;">
-                  Add New Class
-                </h3>
-                <p class="setup__dialog-body" style="margin: 0; color: var(--text-secondary); font-size: 0.85rem;">
-                  Import full rosters from your student information system or create an empty class manually.
-                </p>
-              </div>
-              <button 
-                type="button" 
-                class="setup__icon-btn" 
-                @click="isAddClassModalOpen = false"
-                style="margin-left: 8px; flex-shrink: 0;"
-                title="Close"
-              >
-                <X :size="18" />
-              </button>
-            </div>
-
-            <!-- Scrollable Content -->
-            <div class="setup__dialog-content-scroll">
-              <!-- Segmented Mode Toggle -->
-              <div class="setup__segmented-toggle" style="margin-bottom: 1.25rem;">
-                <button
-                  type="button"
-                  class="setup__segmented-btn"
-                  :class="{ 'setup__segmented-btn--active': addClassMode === 'csv' }"
-                  @click="addClassMode = 'csv'"
-                >
-                  <FolderOpen :size="15" class="setup__segmented-icon" />
-                  <span>Bulk / Term CSV Import</span>
-                </button>
-                <button
-                  type="button"
-                  class="setup__segmented-btn"
-                  :class="{ 'setup__segmented-btn--active': addClassMode === 'manual' }"
-                  @click="addClassMode = 'manual'"
-                >
-                  <Plus :size="15" class="setup__segmented-icon" />
-                  <span>Create Single Class</span>
-                </button>
-              </div>
-
-              <!-- CSV Option -->
-              <div v-if="addClassMode === 'csv'">
-                <div class="setup__card setup__card--accent" style="margin-bottom: 0;">
-                  <p class="setup__hint" style="margin-top: 0; margin-bottom: 12px;">
-                    Drop your board-provided or PowerSchool CSV here to automatically detect, create, and populate classes for the new term.
-                  </p>
-                  <label 
-                    class="setup__file-label" 
-                    for="roster-file-modal"
-                    :class="{ 'setup__file-label--drag': isDraggingRoster }"
-                    @dragover.prevent="isDraggingRoster = true"
-                    @dragleave.prevent="isDraggingRoster = false"
-                    @drop.prevent="isDraggingRoster = false; onFileSelected($event)"
-                  >
-                    <FolderOpen :size="18" /> {{ isDraggingRoster ? 'Drop CSV here...' : 'Choose CSV file or drag & drop here' }}
-                    <input
-                      id="roster-file-modal"
-                      type="file"
-                      accept=".csv,text/csv"
-                      class="setup__file-input"
-                      @change="onFileSelected"
-                    />
-                  </label>
-                  
-                  <div class="setup__csv-help-container" style="margin-top: 12px;">
-                    <button 
-                      type="button" 
-                      class="setup__csv-help-toggle" 
-                      @click="isCsvHelpOpen = !isCsvHelpOpen"
-                    >
-                      <Info :size="14" />
-                      <span>{{ isCsvHelpOpen ? 'Hide CSV Format Guide' : 'Show Roster Format & PowerSchool CSV Help' }}</span>
-                      <component :is="isCsvHelpOpen ? ChevronUp : ChevronDown" :size="14" />
-                    </button>
-                    <Transition name="csv-fade">
-                      <CsvHelpGuide v-if="isCsvHelpOpen" />
-                    </Transition>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Manual Option -->
-              <div v-else-if="addClassMode === 'manual'">
-                <form class="setup__form" @submit.prevent="createNewClass">
-                  <label class="setup__label">
-                    Class name
-                    <input v-model="newClass.name" class="setup__input" :placeholder="teachingMode === 'elementary' ? 'e.g. Grade 4 Homeroom' : 'e.g. Period 1 — Science'" required autofocus />
-                  </label>
-                  <label v-if="teachingMode !== 'elementary'" class="setup__label">
-                    Course Code (Optional)
-                    <input v-model="newClass.courseCode" class="setup__input" placeholder="e.g. SNC2D1" />
-                  </label>
-                  <div class="setup__form-grid">
-                    <label class="setup__label">
-                      {{ teachingMode === 'elementary' ? 'School Year' : 'School Year and Semester' }}
-                      <select v-if="teachingMode === 'elementary'" v-model="newClassYear" class="setup__input" required>
-                        <option v-for="y in yearOptions" :key="y" :value="y">
-                          {{ y }}
-                        </option>
-                      </select>
-                      <select v-else v-model="newClassTermKey" class="setup__input" required>
-                        <option v-for="t in termOptions" :key="t.year + t.semester" :value="t.year + '|' + t.semester">
-                          {{ t.year }} Sem {{ t.semester }}
-                        </option>
-                      </select>
-                    </label>
-
-                    <label v-if="teachingMode === 'elementary'" class="setup__label">
-                      Grade Level
-                      <select v-model="newClassGradeLevel" class="setup__input" required>
-                        <optgroup label="Single Grade">
-                          <option value="Kindergarten">Kindergarten</option>
-                          <option value="Grade 1">Grade 1</option>
-                          <option value="Grade 2">Grade 2</option>
-                          <option value="Grade 3">Grade 3</option>
-                          <option value="Grade 4">Grade 4</option>
-                          <option value="Grade 5">Grade 5</option>
-                          <option value="Grade 6">Grade 6</option>
-                          <option value="Grade 7">Grade 7</option>
-                          <option value="Grade 8">Grade 8</option>
-                        </optgroup>
-                        <optgroup label="Split / Multi-Grade">
-                          <option value="Grade 1/2">Grade 1/2 Split</option>
-                          <option value="Grade 2/3">Grade 2/3 Split</option>
-                          <option value="Grade 3/4">Grade 3/4 Split</option>
-                          <option value="Grade 4/5">Grade 4/5 Split</option>
-                          <option value="Grade 5/6">Grade 5/6 Split</option>
-                          <option value="Grade 6/7">Grade 6/7 Split</option>
-                          <option value="Grade 7/8">Grade 7/8 Split</option>
-                        </optgroup>
-                      </select>
-                    </label>
-
-                    <label v-if="teachingMode !== 'elementary'" class="setup__label">
-                      Period
-                      <select v-model="newClass.periodNumber" class="setup__input" required>
-                        <option v-for="opt in periodOptions" :key="opt" :value="opt">{{ opt }}</option>
-                      </select>
-                    </label>
-                    <label v-if="teachingMode !== 'elementary'" class="setup__label">
-                      Start time
-                      <input v-model="newClass.periodStartTime" type="time" class="setup__input" required />
-                    </label>
-                  </div>
-                  <p v-if="classError" class="setup__error" style="margin-top: 8px;">{{ classError }}</p>
-                  <div class="setup__dialog-actions" style="margin-top: 1.25rem;">
-                    <button type="submit" class="setup__btn-primary">Create Class</button>
-                    <button type="button" class="setup__btn-ghost" @click="isAddClassModalOpen = false">Cancel</button>
-                  </div>
-                </form>
-              </div>
-            </div>
-          </div>
-        </div>
-
-
-
-        <!-- Bulk dialogs (maintained for cross-context safety) -->
-        <div v-if="bulkImportGroups" class="setup__dialog" role="dialog" aria-modal="true">
-          <div class="setup__dialog-box setup__dialog-box--large">
-            <h3 class="setup__dialog-title">Multi-Class Import Detected</h3>
-            <p class="setup__dialog-body">This CSV contains students for multiple classes. Select the ones you want to create or update.</p>
-            <div class="setup__bulk-header">
-              <div class="setup__bulk-header-left">
-                <label class="setup__label setup__label--checkbox setup__bulk-select-all">
-                  <input type="checkbox" :checked="isAllSelected" @change="toggleAllBulk" />
-                  Select All
-                </label>
-                <button
-                  v-for="sem in bulkAvailableSemesters"
-                  :key="sem"
-                  class="setup__bulk-sem-btn"
-                  :class="{ 'setup__bulk-sem-btn--active': isSemesterAllSelected(sem) }"
-                  @click="selectSemesterBulk(sem)"
-                >Sem {{ sem }}</button>
-              </div>
-              <span class="setup__bulk-summary">{{ selectedBulkCount }} of {{ Object.keys(bulkImportGroups).length }} selected</span>
-            </div>
-
-            <!-- New Periods Advisory -->
-            <div v-if="newPeriodsDetected.length > 0" class="setup__advisory">
-              <AlertTriangle :size="16" />
-              <div>
-                <strong>New Periods Detected ({{ newPeriodsDetected.join(', ') }})</strong>
-                <p>These periods were added to your settings. Please review their start times after importing.</p>
-              </div>
-            </div>
-            <div class="setup__bulk-list">
-              <template v-for="section in bulkImportSemesters" :key="section.label">
-                <div class="setup__bulk-section-heading">{{ section.label }}</div>
-                <div v-for="{ key, group } in section.groups" :key="key" class="setup__bulk-item">
-                  <div class="setup__bulk-item-main">
-                    <input type="checkbox" v-model="group.selected" class="setup__checkbox" />
-                    <div class="setup__bulk-info">
-                      <strong>{{ group.name }}</strong>
-                      <div style="display: flex; gap: 4px; align-items: center;">
-                        <span class="setup__chip">{{ group.year }} · Sem {{ group.semester }} · P{{ group.periodNumber }}</span>
-                        <span v-if="group.courseCode" class="setup__chip setup__chip--blue">{{ group.courseCode }}</span>
-                        <span v-if="isExistingClass(group)" class="setup__badge setup__badge--update">Update Existing</span>
-                        <span v-else class="setup__badge setup__badge--new">New Class</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="setup__bulk-count">{{ group.students.length }} students</div>
-                </div>
-              </template>
-            </div>
-            <div class="setup__dialog-actions">
-              <button class="setup__btn-primary" @click="confirmBulkImport" :disabled="selectedBulkCount === 0">
-                Import {{ selectedBulkCount }} Classes
-              </button>
-              <button class="setup__btn-ghost" @click="bulkImportGroups = null">Cancel</button>
-            </div>
-          </div>
-          <div class="setup__dialog-backdrop" @click="bulkImportGroups = null" />
-        </div>
-
-        <!-- ── Elementary Import Preview Dialog ─────────────────── -->
-        <div v-if="elementaryPreview" class="setup__dialog" role="dialog" aria-modal="true">
-          <div class="setup__dialog-box setup__dialog-box--large">
-            <h3 class="setup__dialog-title">
-              Import Elementary Homeroom
-            </h3>
-
-            <div class="setup__elm-preview-meta">
-              <div class="setup__elm-preview-row">
-                <span class="setup__elm-label">Homeroom</span>
-                <span class="setup__elm-value">{{ elementaryPreview.homeroomName }}</span>
-                <span v-if="elementaryPreview.existingHomeroom" class="setup__badge setup__badge--update">Update Existing</span>
-                <span v-else class="setup__badge setup__badge--new">New Class</span>
-              </div>
-              <div v-if="previewSubCohorts.length > 0" class="setup__elm-preview-row">
-                <span class="setup__elm-label">Grades</span>
-                <span class="setup__elm-value">
-                  <span 
-                    v-for="sub in previewSubCohorts" 
-                    :key="sub" 
-                    class="setup__chip setup__chip--blue"
-                    style="margin-right: 4px; font-size: 0.8rem;"
-                  >
-                    {{ sub }}
-                  </span>
-                </span>
-              </div>
-              <div class="setup__elm-preview-row">
-                <span class="setup__elm-label">School Year</span>
-                <span class="setup__elm-value">{{ elementaryPreview.csvYear }}</span>
-              </div>
-              <div class="setup__elm-preview-row">
-                <span class="setup__elm-label">Students</span>
-                <span class="setup__elm-value"><strong>{{ elementaryPreview.validRows.length }}</strong> students detected</span>
-              </div>
-            </div>
-
-            <p class="setup__dialog-body" style="margin-top: 0.5rem; color: #64748b; font-size: 0.875rem; line-height: 1.45;">
-              The following students will be added to your homeroom roster. All standard curriculum expectations for your grade will be auto-imported into each subject. You can customize, swap (to Overall Expectations / Success Criteria), or clear them anytime in <strong>Class Settings</strong>.
-            </p>
-
-            <!-- Student preview list -->
-            <div class="setup__bulk-list" style="max-height: 220px;">
-              <div
-                v-for="s in elementaryPreview.validRows"
-                :key="s.studentId"
-                class="setup__elm-student-row"
-              >
-                <div style="display: flex; align-items: center; gap: 8px; min-width: 0;">
-                  <span class="setup__elm-student-name">{{ s.lastName }}, {{ s.firstName }}</span>
-                  <span 
-                    v-if="previewSubCohorts.length > 1 && (s.gradeLevel || s.grade || s.courseCode)" 
-                    class="setup__chip setup__chip--blue"
-                    style="font-size: 0.75rem; padding: 2px 6px; flex-shrink: 0;"
-                  >
-                    {{ s.gradeLevel || s.grade || s.courseCode }}
-                  </span>
-                </div>
-                <span class="setup__elm-student-id">{{ s.studentId }}</span>
-              </div>
-            </div>
-
-            <div class="setup__dialog-actions" style="margin-top: 1rem;">
-              <button class="setup__btn-primary" @click="confirmElementaryImport">
-                {{ elementaryPreview.existingHomeroom ? 'Update Roster' : 'Create Class & Import' }}
-              </button>
-              <button class="setup__btn-ghost" @click="elementaryPreview = null">Cancel</button>
-            </div>
-          </div>
-          <div class="setup__dialog-backdrop" @click="elementaryPreview = null" />
-        </div>
-
-        <!-- Conflict dialog (maintained) -->
-        <div v-if="crossClassConflicts.length > 0" class="setup__dialog" role="dialog" aria-modal="true">
-          <div class="setup__dialog-box">
-            <h3 class="setup__dialog-title">Student ID Conflict</h3>
-            <p class="setup__dialog-body">The following Student IDs already exist in another class. What would you like to do?</p>
-            <ul class="setup__dialog-list">
-              <li v-for="c in crossClassConflicts" :key="c.studentId">
-                <strong>{{ c.student.firstName }} {{ c.student.lastName }}</strong>
-                ({{ c.studentId }}) — currently in <em>{{ classNameById(c.existingClassId) }}</em>
-              </li>
-            </ul>
-            <div class="setup__dialog-actions">
-              <button class="setup__btn-primary" @click="resolveConflicts('move')">Move to this class</button>
-              <button class="setup__btn-ghost"   @click="resolveConflicts('skip')">Skip these students</button>
-            </div>
-          </div>
-          <div class="setup__dialog-backdrop" />
-        </div>
         </div>
       </div>
     </section>
@@ -746,6 +429,321 @@
       :teacherName="teacherName"
       @close="isPrintListModalOpen = false"
     />
+
+    <!-- ── Global Add / Import Class Modal (accessible from any tab) ──────── -->
+    <div v-if="isAddClassModalOpen" class="setup__dialog" role="dialog" aria-modal="true" aria-labelledby="add-class-modal-title">
+      <div class="setup__dialog-backdrop" @click="isAddClassModalOpen = false" />
+      <div class="setup__dialog-box setup__dialog-box--add-class">
+        <!-- Pinned Header -->
+        <div class="setup__dialog-header-sticky">
+          <div>
+            <h3 id="add-class-modal-title" class="setup__dialog-title" style="margin-bottom: 4px;">
+              Add New Class
+            </h3>
+            <p class="setup__dialog-body" style="margin: 0; color: var(--text-secondary); font-size: 0.85rem;">
+              Import full rosters from your student information system or create an empty class manually.
+            </p>
+          </div>
+          <button 
+            type="button" 
+            class="setup__icon-btn" 
+            @click="isAddClassModalOpen = false"
+            style="margin-left: 8px; flex-shrink: 0;"
+            title="Close"
+          >
+            <X :size="18" />
+          </button>
+        </div>
+
+        <!-- Scrollable Content -->
+        <div class="setup__dialog-content-scroll">
+          <!-- Segmented Mode Toggle -->
+          <div class="setup__segmented-toggle" style="margin-bottom: 1.25rem;">
+            <button
+              type="button"
+              class="setup__segmented-btn"
+              :class="{ 'setup__segmented-btn--active': addClassMode === 'csv' }"
+              @click="addClassMode = 'csv'"
+            >
+              <FolderOpen :size="15" class="setup__segmented-icon" />
+              <span>Bulk / Term CSV Import</span>
+            </button>
+            <button
+              type="button"
+              class="setup__segmented-btn"
+              :class="{ 'setup__segmented-btn--active': addClassMode === 'manual' }"
+              @click="addClassMode = 'manual'"
+            >
+              <Plus :size="15" class="setup__segmented-icon" />
+              <span>Create Single Class</span>
+            </button>
+          </div>
+
+          <!-- CSV Option -->
+          <div v-if="addClassMode === 'csv'">
+            <div class="setup__card setup__card--accent" style="margin-bottom: 0;">
+              <p class="setup__hint" style="margin-top: 0; margin-bottom: 12px;">
+                Drop your board-provided or PowerSchool CSV here to automatically detect, create, and populate classes for the new term.
+              </p>
+              <label 
+                class="setup__file-label" 
+                for="roster-file-modal"
+                :class="{ 'setup__file-label--drag': isDraggingRoster }"
+                @dragover.prevent="isDraggingRoster = true"
+                @dragleave.prevent="isDraggingRoster = false"
+                @drop.prevent="isDraggingRoster = false; onFileSelected($event)"
+              >
+                <FolderOpen :size="18" /> {{ isDraggingRoster ? 'Drop CSV here...' : 'Choose CSV file or drag & drop here' }}
+                <input
+                  id="roster-file-modal"
+                  type="file"
+                  accept=".csv,text/csv"
+                  class="setup__file-input"
+                  @change="onFileSelected"
+                />
+              </label>
+              
+              <div class="setup__csv-help-container" style="margin-top: 12px;">
+                <button 
+                  type="button" 
+                  class="setup__csv-help-toggle" 
+                  @click="isCsvHelpOpen = !isCsvHelpOpen"
+                >
+                  <Info :size="14" />
+                  <span>{{ isCsvHelpOpen ? 'Hide CSV Format Guide' : 'Show Roster Format & PowerSchool CSV Help' }}</span>
+                  <component :is="isCsvHelpOpen ? ChevronUp : ChevronDown" :size="14" />
+                </button>
+                <Transition name="csv-fade">
+                  <CsvHelpGuide v-if="isCsvHelpOpen" />
+                </Transition>
+              </div>
+            </div>
+          </div>
+
+          <!-- Manual Option -->
+          <div v-else-if="addClassMode === 'manual'">
+            <form class="setup__form" @submit.prevent="createNewClass">
+              <label class="setup__label">
+                Class name
+                <input v-model="newClass.name" class="setup__input" :placeholder="teachingMode === 'elementary' ? 'e.g. Grade 4 Homeroom' : 'e.g. Period 1 — Science'" required autofocus />
+              </label>
+              <label v-if="teachingMode !== 'elementary'" class="setup__label">
+                Course Code (Optional)
+                <input v-model="newClass.courseCode" class="setup__input" placeholder="e.g. SNC2D1" />
+              </label>
+              <div class="setup__form-grid">
+                <label class="setup__label">
+                  {{ teachingMode === 'elementary' ? 'School Year' : 'School Year and Semester' }}
+                  <select v-if="teachingMode === 'elementary'" v-model="newClassYear" class="setup__input" required>
+                    <option v-for="y in yearOptions" :key="y" :value="y">
+                      {{ y }}
+                    </option>
+                  </select>
+                  <select v-else v-model="newClassTermKey" class="setup__input" required>
+                    <option v-for="t in termOptions" :key="t.year + t.semester" :value="t.year + '|' + t.semester">
+                      {{ t.year }} Sem {{ t.semester }}
+                    </option>
+                  </select>
+                </label>
+
+                <label v-if="teachingMode === 'elementary'" class="setup__label">
+                  Grade Level
+                  <select v-model="newClassGradeLevel" class="setup__input" required>
+                    <optgroup label="Single Grade">
+                      <option value="Kindergarten">Kindergarten</option>
+                      <option value="Grade 1">Grade 1</option>
+                      <option value="Grade 2">Grade 2</option>
+                      <option value="Grade 3">Grade 3</option>
+                      <option value="Grade 4">Grade 4</option>
+                      <option value="Grade 5">Grade 5</option>
+                      <option value="Grade 6">Grade 6</option>
+                      <option value="Grade 7">Grade 7</option>
+                      <option value="Grade 8">Grade 8</option>
+                    </optgroup>
+                    <optgroup label="Split / Multi-Grade">
+                      <option value="Grade 1/2">Grade 1/2 Split</option>
+                      <option value="Grade 2/3">Grade 2/3 Split</option>
+                      <option value="Grade 3/4">Grade 3/4 Split</option>
+                      <option value="Grade 4/5">Grade 4/5 Split</option>
+                      <option value="Grade 5/6">Grade 5/6 Split</option>
+                      <option value="Grade 6/7">Grade 6/7 Split</option>
+                      <option value="Grade 7/8">Grade 7/8 Split</option>
+                    </optgroup>
+                  </select>
+                </label>
+
+                <label v-if="teachingMode !== 'elementary'" class="setup__label">
+                  Period
+                  <select v-model="newClass.periodNumber" class="setup__input" required>
+                    <option v-for="opt in periodOptions" :key="opt" :value="opt">{{ opt }}</option>
+                  </select>
+                </label>
+                <label v-if="teachingMode !== 'elementary'" class="setup__label">
+                  Start time
+                  <input v-model="newClass.periodStartTime" type="time" class="setup__input" required />
+                </label>
+              </div>
+              <p v-if="classError" class="setup__error" style="margin-top: 8px;">{{ classError }}</p>
+              <div class="setup__dialog-actions" style="margin-top: 1.25rem;">
+                <button type="submit" class="setup__btn-primary">Create Class</button>
+                <button type="button" class="setup__btn-ghost" @click="isAddClassModalOpen = false">Cancel</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bulk dialogs (maintained for cross-context safety) -->
+    <div v-if="bulkImportGroups" class="setup__dialog" role="dialog" aria-modal="true">
+      <div class="setup__dialog-box setup__dialog-box--large">
+        <h3 class="setup__dialog-title">Multi-Class Import Detected</h3>
+        <p class="setup__dialog-body">This CSV contains students for multiple classes. Select the ones you want to create or update.</p>
+        <div class="setup__bulk-header">
+          <div class="setup__bulk-header-left">
+            <label class="setup__label setup__label--checkbox setup__bulk-select-all">
+              <input type="checkbox" :checked="isAllSelected" @change="toggleAllBulk" />
+              Select All
+            </label>
+            <button
+              v-for="sem in bulkAvailableSemesters"
+              :key="sem"
+              class="setup__bulk-sem-btn"
+              :class="{ 'setup__bulk-sem-btn--active': isSemesterAllSelected(sem) }"
+              @click="selectSemesterBulk(sem)"
+            >Sem {{ sem }}</button>
+          </div>
+          <span class="setup__bulk-summary">{{ selectedBulkCount }} of {{ Object.keys(bulkImportGroups).length }} selected</span>
+        </div>
+
+        <!-- New Periods Advisory -->
+        <div v-if="newPeriodsDetected.length > 0" class="setup__advisory">
+          <AlertTriangle :size="16" />
+          <div>
+            <strong>New Periods Detected ({{ newPeriodsDetected.join(', ') }})</strong>
+            <p>These periods were added to your settings. Please review their start times after importing.</p>
+          </div>
+        </div>
+        <div class="setup__bulk-list">
+          <template v-for="section in bulkImportSemesters" :key="section.label">
+            <div class="setup__bulk-section-heading">{{ section.label }}</div>
+            <div v-for="{ key, group } in section.groups" :key="key" class="setup__bulk-item">
+              <div class="setup__bulk-item-main">
+                <input type="checkbox" v-model="group.selected" class="setup__checkbox" />
+                <div class="setup__bulk-info">
+                  <strong>{{ group.name }}</strong>
+                  <div style="display: flex; gap: 4px; align-items: center;">
+                    <span class="setup__chip">{{ group.year }} · Sem {{ group.semester }} · P{{ group.periodNumber }}</span>
+                    <span v-if="group.courseCode" class="setup__chip setup__chip--blue">{{ group.courseCode }}</span>
+                    <span v-if="isExistingClass(group)" class="setup__badge setup__badge--update">Update Existing</span>
+                    <span v-else class="setup__badge setup__badge--new">New Class</span>
+                  </div>
+                </div>
+              </div>
+              <div class="setup__bulk-count">{{ group.students.length }} students</div>
+            </div>
+          </template>
+        </div>
+        <div class="setup__dialog-actions">
+          <button class="setup__btn-primary" @click="confirmBulkImport" :disabled="selectedBulkCount === 0">
+            Import {{ selectedBulkCount }} Classes
+          </button>
+          <button class="setup__btn-ghost" @click="bulkImportGroups = null">Cancel</button>
+        </div>
+      </div>
+      <div class="setup__dialog-backdrop" @click="bulkImportGroups = null" />
+    </div>
+
+    <!-- ── Elementary Import Preview Dialog ─────────────────── -->
+    <div v-if="elementaryPreview" class="setup__dialog" role="dialog" aria-modal="true">
+      <div class="setup__dialog-box setup__dialog-box--large">
+        <h3 class="setup__dialog-title">
+          Import Elementary Homeroom
+        </h3>
+
+        <div class="setup__elm-preview-meta">
+          <div class="setup__elm-preview-row">
+            <span class="setup__elm-label">Homeroom</span>
+            <span class="setup__elm-value">{{ elementaryPreview.homeroomName }}</span>
+            <span v-if="elementaryPreview.existingHomeroom" class="setup__badge setup__badge--update">Update Existing</span>
+            <span v-else class="setup__badge setup__badge--new">New Class</span>
+          </div>
+          <div v-if="previewSubCohorts.length > 0" class="setup__elm-preview-row">
+            <span class="setup__elm-label">Grades</span>
+            <span class="setup__elm-value">
+              <span 
+                v-for="sub in previewSubCohorts" 
+                :key="sub" 
+                class="setup__chip setup__chip--blue"
+                style="margin-right: 4px; font-size: 0.8rem;"
+              >
+                {{ sub }}
+              </span>
+            </span>
+          </div>
+          <div class="setup__elm-preview-row">
+            <span class="setup__elm-label">School Year</span>
+            <span class="setup__elm-value">{{ elementaryPreview.csvYear }}</span>
+          </div>
+          <div class="setup__elm-preview-row">
+            <span class="setup__elm-label">Students</span>
+            <span class="setup__elm-value"><strong>{{ elementaryPreview.validRows.length }}</strong> students detected</span>
+          </div>
+        </div>
+
+        <p class="setup__dialog-body" style="margin-top: 0.5rem; color: #64748b; font-size: 0.875rem; line-height: 1.45;">
+          The following students will be added to your homeroom roster. All standard curriculum expectations for your grade will be auto-imported into each subject. You can customize, swap (to Overall Expectations / Success Criteria), or clear them anytime in <strong>Class Settings</strong>.
+        </p>
+
+        <!-- Student preview list -->
+        <div class="setup__bulk-list" style="max-height: 220px;">
+          <div
+            v-for="s in elementaryPreview.validRows"
+            :key="s.studentId"
+            class="setup__elm-student-row"
+          >
+            <div style="display: flex; align-items: center; gap: 8px; min-width: 0;">
+              <span class="setup__elm-student-name">{{ s.lastName }}, {{ s.firstName }}</span>
+              <span 
+                v-if="previewSubCohorts.length > 1 && (s.gradeLevel || s.grade || s.courseCode)" 
+                class="setup__chip setup__chip--blue"
+                style="font-size: 0.75rem; padding: 2px 6px; flex-shrink: 0;"
+              >
+                {{ s.gradeLevel || s.grade || s.courseCode }}
+              </span>
+            </div>
+            <span class="setup__elm-student-id">{{ s.studentId }}</span>
+          </div>
+        </div>
+
+        <div class="setup__dialog-actions" style="margin-top: 1rem;">
+          <button class="setup__btn-primary" @click="confirmElementaryImport">
+            {{ elementaryPreview.existingHomeroom ? 'Update Roster' : 'Create Class & Import' }}
+          </button>
+          <button class="setup__btn-ghost" @click="elementaryPreview = null">Cancel</button>
+        </div>
+      </div>
+      <div class="setup__dialog-backdrop" @click="elementaryPreview = null" />
+    </div>
+
+    <!-- Conflict dialog (maintained) -->
+    <div v-if="crossClassConflicts.length > 0" class="setup__dialog" role="dialog" aria-modal="true">
+      <div class="setup__dialog-box">
+        <h3 class="setup__dialog-title">Student ID Conflict</h3>
+        <p class="setup__dialog-body">The following Student IDs already exist in another class. What would you like to do?</p>
+        <ul class="setup__dialog-list">
+          <li v-for="c in crossClassConflicts" :key="c.studentId">
+            <strong>{{ c.student.firstName }} {{ c.student.lastName }}</strong>
+            ({{ c.studentId }}) — currently in <em>{{ classNameById(c.existingClassId) }}</em>
+          </li>
+        </ul>
+        <div class="setup__dialog-actions">
+          <button class="setup__btn-primary" @click="resolveConflicts('move')">Move to this class</button>
+          <button class="setup__btn-ghost"   @click="resolveConflicts('skip')">Skip these students</button>
+        </div>
+      </div>
+      <div class="setup__dialog-backdrop" />
+    </div>
   </div>
 </template>
 
