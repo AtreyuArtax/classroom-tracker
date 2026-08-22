@@ -6,423 +6,439 @@
   <div v-else class="setup__layout">
     <SetupQuickJumpNav activeTab="active" />
     <div class="setup__main-content">
-      <!-- Class Metadata -->
-    <div class="setup__card">
-      <h2 class="setup__card-title">General Info</h2>
-      <form class="setup__form">
-        <div class="setup__form-grid">
-          <label class="setup__label">
-            Class Name
-            <input
-              type="text"
-              v-model="localClassName"
-              class="setup__input"
-              @blur="saveClassName"
-              @keydown.enter="saveClassName"
-            />
-          </label>
-
-          <label v-if="activeClass.classType === 'elementary'" class="setup__label">
-            Grade Level
-            <select
-              :value="activeClass.gradeLevel || detectedGradeLevel"
-              class="setup__input"
-              @change="e => updateActiveClass({ gradeLevel: e.target.value })"
-            >
-              <optgroup label="Single Grade">
-                <option value="Kindergarten">Kindergarten</option>
-                <option value="Grade 1">Grade 1</option>
-                <option value="Grade 2">Grade 2</option>
-                <option value="Grade 3">Grade 3</option>
-                <option value="Grade 4">Grade 4</option>
-                <option value="Grade 5">Grade 5</option>
-                <option value="Grade 6">Grade 6</option>
-                <option value="Grade 7">Grade 7</option>
-                <option value="Grade 8">Grade 8</option>
-              </optgroup>
-              <optgroup label="Split / Multi-Grade">
-                <option value="Grade 1/2">Grade 1/2 Split</option>
-                <option value="Grade 2/3">Grade 2/3 Split</option>
-                <option value="Grade 3/4">Grade 3/4 Split</option>
-                <option value="Grade 4/5">Grade 4/5 Split</option>
-                <option value="Grade 5/6">Grade 5/6 Split</option>
-                <option value="Grade 6/7">Grade 6/7 Split</option>
-                <option value="Grade 7/8">Grade 7/8 Split</option>
-                <option v-if="detectedGradeLevel && !['Kindergarten','Grade 1','Grade 2','Grade 3','Grade 4','Grade 5','Grade 6','Grade 7','Grade 8','Grade 1/2','Grade 2/3','Grade 3/4','Grade 4/5','Grade 5/6','Grade 6/7','Grade 7/8'].includes(detectedGradeLevel)" :value="detectedGradeLevel">{{ detectedGradeLevel }} (Roster Detected)</option>
-              </optgroup>
-            </select>
-          </label>
-
-          <label v-if="activeClass.classType !== 'elementary'" class="setup__label">
-            Course Code
-            <input
-              type="text"
-              v-model="localCourseCode"
-              class="setup__input"
-              placeholder="Optional"
-              @blur="saveCourseCode"
-              @keydown.enter="saveCourseCode"
-            />
-          </label>
-          <label class="setup__label">
-            {{ activeClass.classType === 'elementary' ? 'School Year' : 'School Year and Semester' }}
-            <select
-              v-if="activeClass.classType === 'elementary'"
-              :value="activeClass.year"
-              class="setup__input"
-              @change="e => updateActiveClass({ year: e.target.value })"
-            >
-              <option v-for="y in yearOptions" :key="y" :value="y">
-                {{ y }}
-              </option>
-            </select>
-            <select
-              v-else
-              :value="activeClass.year + '|' + activeClass.semester"
-              class="setup__input"
-              @change="e => {
-                const [y, s] = e.target.value.split('|');
-                updateActiveClass({ year: y, semester: s });
-              }"
-            >
-              <option v-for="t in termOptions" :key="t.year + t.semester" :value="t.year + '|' + t.semester">
-                {{ t.year }} Sem {{ t.semester }}
-              </option>
-            </select>
-          </label>
-
-          <label v-if="activeClass.classType !== 'elementary'" class="setup__label">
-            Period
-            <select
-              :value="activeClass.periodNumber"
-              class="setup__input"
-              @change="e => {
-                const p = parseInt(e.target.value);
-                const time = periodStartTimes[p] || activeClass.periodStartTime;
-                updateActiveClass({ periodNumber: p, periodStartTime: time });
-              }"
-            >
-              <option v-for="opt in periodOptions" :key="opt" :value="opt">{{ opt }}</option>
-            </select>
-          </label>
-          <label v-if="activeClass.classType !== 'elementary'" class="setup__label">
-            Start Time
-            <input
-              type="time"
-              :value="activeClass.periodStartTime || '08:00'"
-              class="setup__input"
-              @change="e => updateActiveClass({ periodStartTime: e.target.value })"
-            />
-          </label>
-        </div>
-
-        <!-- Sub-Cohort / Section Tag Editor (Secondary Mode Only) -->
-        <div v-if="activeClass.classType !== 'elementary' && availableClassSections.length > 0" class="setup__section-editor-container" style="margin-top: 16px; padding-top: 12px; border-top: 1px dashed var(--border);">
-          <label class="setup__label" style="margin-bottom: 6px;">
-            Section / Sub-Cohort Badges
-            <span class="setup__hint" style="display: block; font-weight: 400; margin-top: 2px;">
-              Rename section tags (e.g. change "SNC2D1" to "2D") to shorten badges across all gradebook views.
-            </span>
-          </label>
-          <div style="display: flex; gap: 16px; flex-wrap: wrap; align-items: center;">
-            <div v-for="sec in availableClassSections" :key="sec" style="display: flex; align-items: center; gap: 6px;">
-              <span class="sbar-student-grade-tag">{{ sec }}</span>
-              <span style="font-size: 0.75rem; color: var(--text-secondary);">→</span>
-              <input 
+      <!-- 1. General Info -->
+      <div class="setup__card" id="sec-gen-info">
+        <h2 class="setup__card-title">General Info</h2>
+        <form class="setup__form">
+          <div class="setup__form-grid">
+            <label class="setup__label">
+              Class Name
+              <input
                 type="text"
-                v-model="sectionTagInputs[sec]"
+                v-model="localClassName"
                 class="setup__input"
-                style="width: 90px; padding: 2px 6px; font-size: 0.78rem; font-weight: 600;"
-                placeholder="New tag"
-                @blur="saveSectionTagRename(sec)"
-                @keydown.enter.prevent="saveSectionTagRename(sec)"
+                @blur="saveClassName"
+                @keydown.enter="saveClassName"
               />
+            </label>
+
+            <label v-if="activeClass.classType === 'elementary'" class="setup__label">
+              Grade Level
+              <select
+                :value="activeClass.gradeLevel || detectedGradeLevel"
+                class="setup__input"
+                @change="e => updateActiveClass({ gradeLevel: e.target.value })"
+              >
+                <optgroup label="Single Grade">
+                  <option value="Kindergarten">Kindergarten</option>
+                  <option value="Grade 1">Grade 1</option>
+                  <option value="Grade 2">Grade 2</option>
+                  <option value="Grade 3">Grade 3</option>
+                  <option value="Grade 4">Grade 4</option>
+                  <option value="Grade 5">Grade 5</option>
+                  <option value="Grade 6">Grade 6</option>
+                  <option value="Grade 7">Grade 7</option>
+                  <option value="Grade 8">Grade 8</option>
+                </optgroup>
+                <optgroup label="Split / Multi-Grade">
+                  <option value="Grade 1/2">Grade 1/2 Split</option>
+                  <option value="Grade 2/3">Grade 2/3 Split</option>
+                  <option value="Grade 3/4">Grade 3/4 Split</option>
+                  <option value="Grade 4/5">Grade 4/5 Split</option>
+                  <option value="Grade 5/6">Grade 5/6 Split</option>
+                  <option value="Grade 6/7">Grade 6/7 Split</option>
+                  <option value="Grade 7/8">Grade 7/8 Split</option>
+                  <option v-if="detectedGradeLevel && !['Kindergarten','Grade 1','Grade 2','Grade 3','Grade 4','Grade 5','Grade 6','Grade 7','Grade 8','Grade 1/2','Grade 2/3','Grade 3/4','Grade 4/5','Grade 5/6','Grade 6/7','Grade 7/8'].includes(detectedGradeLevel)" :value="detectedGradeLevel">{{ detectedGradeLevel }} (Roster Detected)</option>
+                </optgroup>
+              </select>
+            </label>
+
+            <label v-if="activeClass.classType !== 'elementary'" class="setup__label">
+              Course Code
+              <input
+                type="text"
+                v-model="localCourseCode"
+                class="setup__input"
+                placeholder="Optional"
+                @blur="saveCourseCode"
+                @keydown.enter="saveCourseCode"
+              />
+            </label>
+            <label class="setup__label">
+              {{ activeClass.classType === 'elementary' ? 'School Year' : 'School Year and Semester' }}
+              <select
+                v-if="activeClass.classType === 'elementary'"
+                :value="activeClass.year"
+                class="setup__input"
+                @change="e => updateActiveClass({ year: e.target.value })"
+              >
+                <option v-for="y in yearOptions" :key="y" :value="y">
+                  {{ y }}
+                </option>
+              </select>
+              <select
+                v-else
+                :value="activeClass.year + '|' + activeClass.semester"
+                class="setup__input"
+                @change="e => {
+                  const [y, s] = e.target.value.split('|');
+                  updateActiveClass({ year: y, semester: s });
+                }"
+              >
+                <option v-for="t in termOptions" :key="t.year + t.semester" :value="t.year + '|' + t.semester">
+                  {{ t.year }} Sem {{ t.semester }}
+                </option>
+              </select>
+            </label>
+
+            <label v-if="activeClass.classType !== 'elementary'" class="setup__label">
+              Period
+              <select
+                :value="activeClass.periodNumber"
+                class="setup__input"
+                @change="e => {
+                  const p = parseInt(e.target.value);
+                  const time = periodStartTimes[p] || activeClass.periodStartTime;
+                  updateActiveClass({ periodNumber: p, periodStartTime: time });
+                }"
+              >
+                <option v-for="opt in periodOptions" :key="opt" :value="opt">{{ opt }}</option>
+              </select>
+            </label>
+            <label v-if="activeClass.classType !== 'elementary'" class="setup__label">
+              Start Time
+              <input
+                type="time"
+                :value="activeClass.periodStartTime || '08:00'"
+                class="setup__input"
+                @change="e => updateActiveClass({ periodStartTime: e.target.value })"
+              />
+            </label>
+
+            <!-- Class Notes (Optional) -->
+            <label class="setup__label" style="grid-column: 1 / -1; margin-top: 4px;">
+              Class Notes (Optional)
+              <textarea
+                v-model="localClassNotes"
+                class="setup__textarea"
+                rows="2"
+                placeholder="Class-specific notes, room reminders, or grading context..."
+                @blur="saveClassNotes"
+              ></textarea>
+            </label>
+          </div>
+
+          <!-- Sub-Cohort / Section Tag Editor (Secondary Mode Only) -->
+          <div v-if="activeClass.classType !== 'elementary' && availableClassSections.length > 0" class="setup__section-editor-container" style="margin-top: 16px; padding-top: 12px; border-top: 1px dashed var(--border);">
+            <label class="setup__label" style="margin-bottom: 6px;">
+              Section / Sub-Cohort Badges
+              <span class="setup__hint" style="display: block; font-weight: 400; margin-top: 2px;">
+                Rename section tags (e.g. change "SNC2D1" to "2D") to shorten badges across all gradebook views.
+              </span>
+            </label>
+            <div style="display: flex; gap: 16px; flex-wrap: wrap; align-items: center;">
+              <div v-for="sec in availableClassSections" :key="sec" style="display: flex; align-items: center; gap: 6px;">
+                <span class="sbar-student-grade-tag">{{ sec }}</span>
+                <span style="font-size: 0.75rem; color: var(--text-secondary);">→</span>
+                <input 
+                  type="text"
+                  v-model="sectionTagInputs[sec]"
+                  class="setup__input"
+                  style="width: 90px; padding: 2px 6px; font-size: 0.78rem; font-weight: 600;"
+                  placeholder="New tag"
+                  @blur="saveSectionTagRename(sec)"
+                  @keydown.enter.prevent="saveSectionTagRename(sec)"
+                />
+              </div>
             </div>
           </div>
-        </div>
-      </form>
-    </div>
-
-    <!-- Elementary Subjects Manager (Only shown when Elementary Mode is active) -->
-    <ElementarySubjectManager v-if="activeClass.classType === 'elementary'" style="margin-top: 1rem;" />
-
-
-    <!-- Grading Framework & Assessment Model (Secondary only) -->
-    <div v-if="activeClass.classType !== 'elementary'" class="setup__card">
-      <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
-        <h2 class="setup__card-title" style="margin: 0; display: flex; align-items: center; gap: 8px;">
-          <span>Grading System &amp; Framework</span>
-          <button 
-            type="button" 
-            class="setup__info-trigger-btn" 
-            @click="isGradingInfoModalOpen = true" 
-            title="Learn how grading systems and SBAR engines work"
-          >
-            <Info :size="15" />
-          </button>
-        </h2>
-      </div>
-      <p class="setup__hint">Choose how student performance is evaluated and displayed for this class.</p>
-      
-      <!-- Framework Primary Mode Toggle -->
-      <div style="margin-bottom: 16px;">
-        <div class="setup__label" style="margin-bottom: 6px;">
-          Grading Framework
-        </div>
-        <div class="setup__segmented-toggle" style="max-width: 580px;">
-          <button
-            type="button"
-            class="setup__segmented-btn"
-            :class="{ 'setup__segmented-btn--active': (activeClass.gradingFramework || 'traditional') === 'traditional' }"
-            @click="updateActiveClass({ gradingFramework: 'traditional' })"
-          >
-            <Percent :size="15" class="setup__segmented-icon" />
-            <span>Traditional Secondary (% / Points)</span>
-          </button>
-          <button
-            type="button"
-            class="setup__segmented-btn"
-            :class="{ 'setup__segmented-btn--active': activeClass.gradingFramework === 'sbar' }"
-            @click="updateActiveClass({ gradingFramework: 'sbar' })"
-          >
-            <Layers :size="15" class="setup__segmented-icon" />
-            <span>Standards-Based (SBAR / Levels 1–4)</span>
-          </button>
-        </div>
+        </form>
       </div>
 
-      <!-- SBAR Additional Configuration (revealed when SBAR is selected) -->
-      <div 
-        v-if="activeClass.gradingFramework === 'sbar'" 
-        class="setup__sbar-config-panel"
-        style="padding-top: 16px; border-top: 1px dashed var(--border);"
-      >
-        <div class="setup__form-grid" style="grid-template-columns: 1fr 1fr; gap: 16px;">
-          <!-- Top Row: Mastery Engine Dropdown (Rich descriptions) -->
-          <label class="setup__label" style="grid-column: span 2;">
-            SBAR Mastery Calculation Engine
-            <select
-              :value="activeClass.sbarAlgorithm || 'decaying_average'"
-              class="setup__input"
-              @change="e => updateActiveClass({ sbarAlgorithm: e.target.value })"
+      <!-- 2. Elementary Subjects Manager (Only shown when Elementary Mode is active) -->
+      <ElementarySubjectManager v-if="activeClass.classType === 'elementary'" style="margin-top: 1rem;" id="sec-elem-subjects" />
+
+      <!-- 3. Seating Plan & Layout Hero Card -->
+      <div class="setup__card" id="sec-seating">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+          <div style="flex: 1; min-width: 260px;">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+              <h2 class="setup__card-title" style="margin: 0;">Seating Plan &amp; Layout</h2>
+              <span 
+                class="setup__chip setup__chip--blue" 
+                style="display: inline-flex; align-items: center; gap: 4px; font-weight: 700;"
+              >
+                {{ activeClass.gridSize?.rows || gridSize.rows }} × {{ activeClass.gridSize?.cols || gridSize.cols }} Grid ({{ (activeClass.gridSize?.rows || gridSize.rows) * (activeClass.gridSize?.cols || gridSize.cols) }} Desks)
+              </span>
+            </div>
+            <p class="setup__hint" style="margin: 0;">
+              Customize desk groupings, pods, walkways, and seat assignments in the interactive layout studio.
+            </p>
+          </div>
+
+          <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+            <button 
+              type="button" 
+              class="setup__btn-ghost" 
+              style="display: flex; align-items: center; gap: 8px; padding: 8px 14px; font-size: 0.85rem; font-weight: 600;"
+              :class="{ 'setup__btn-ghost--active': showDeskPhotos }"
+              @click="showDeskPhotos = !showDeskPhotos"
+              title="Toggle whether student photos appear on dashboard desk tiles"
             >
-              <option value="decaying_average">Decaying Average (65% Newest / 35% Historical)</option>
-              <option value="power_law">Power Law (Marzano Logarithmic Trajectory)</option>
-              <option value="mode">Mode / Most Consistent (Most Frequent Level)</option>
-              <option value="most_recent">Most Recent (Last 3 Evaluations Average)</option>
-              <option value="highest">Highest Level Score</option>
-            </select>
-          </label>
+              <Camera :size="16" />
+              <span>Dashboard Photos: <strong>{{ showDeskPhotos ? 'ON' : 'OFF' }}</strong></span>
+            </button>
 
-          <!-- Bottom Left: Input Mode Segmented Toggle -->
-          <div class="setup__label">
-            Default SBAR Input Mode
-            <div class="setup__segmented-toggle">
-              <button
-                type="button"
-                class="setup__segmented-btn"
-                :class="{ 'setup__segmented-btn--active': (activeClass.sbarInputMode || 'fine') === 'fine' }"
-                @click="updateActiveClass({ sbarInputMode: 'fine' })"
-              >
-                <span>Granular (L1± to L4±)</span>
-              </button>
-              <button
-                type="button"
-                class="setup__segmented-btn"
-                :class="{ 'setup__segmented-btn--active': activeClass.sbarInputMode === 'simple' }"
-                @click="updateActiveClass({ sbarInputMode: 'simple' })"
-              >
-                <span>Simple (L1–4)</span>
-              </button>
-              <button
-                type="button"
-                class="setup__segmented-btn"
-                :class="{ 'setup__segmented-btn--active': activeClass.sbarInputMode === 'numeric' }"
-                @click="updateActiveClass({ sbarInputMode: 'numeric' })"
-              >
-                <span>Exact %</span>
-              </button>
-            </div>
-          </div>
-
-          <!-- Bottom Right: Radial Check-ins Toggle -->
-          <div class="setup__label">
-            Include Radial Desk Check-ins in SBAR
-            <div class="setup__segmented-toggle">
-              <button
-                type="button"
-                class="setup__segmented-btn"
-                :class="{ 'setup__segmented-btn--active': activeClass.includeRadialInSbar !== false }"
-                @click="updateActiveClass({ includeRadialInSbar: true })"
-              >
-                <Check :size="14" class="setup__segmented-icon" style="color: #16a34a;" />
-                <span>Include (All Evidence)</span>
-              </button>
-              <button
-                type="button"
-                class="setup__segmented-btn"
-                :class="{ 'setup__segmented-btn--active': activeClass.includeRadialInSbar === false }"
-                @click="updateActiveClass({ includeRadialInSbar: false })"
-              >
-                <X :size="14" class="setup__segmented-icon" style="color: #dc2626;" />
-                <span>Formal Only</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Seating Plan & Layout Hero Card (Option A) -->
-    <div class="setup__card">
-      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
-        <div style="flex: 1; min-width: 260px;">
-          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
-            <h2 class="setup__card-title" style="margin: 0;">Seating Plan &amp; Layout</h2>
-            <span 
-              class="setup__chip setup__chip--blue" 
-              style="display: inline-flex; align-items: center; gap: 4px; font-weight: 700;"
+            <button 
+              type="button" 
+              class="setup__btn-primary" 
+              style="display: flex; align-items: center; gap: 8px; padding: 8px 18px; font-size: 0.88rem; font-weight: 700;"
+              @click="isDesignerModalOpen = true"
             >
-              {{ activeClass.gridSize?.rows || gridSize.rows }} × {{ activeClass.gridSize?.cols || gridSize.cols }} Grid ({{ (activeClass.gridSize?.rows || gridSize.rows) * (activeClass.gridSize?.cols || gridSize.cols) }} Desks)
-            </span>
+              <LayoutGrid :size="17" />
+              <span>Open Layout Designer</span>
+            </button>
           </div>
-          <p class="setup__hint" style="margin: 0;">
-            Customize desk groupings, pods, walkways, and seat assignments in the interactive layout studio.
-          </p>
         </div>
 
-        <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
-          <button 
-            type="button" 
-            class="setup__btn-ghost" 
-            style="display: flex; align-items: center; gap: 8px; padding: 8px 14px; font-size: 0.85rem; font-weight: 600;"
-            :class="{ 'setup__btn-ghost--active': showDeskPhotos }"
-            @click="showDeskPhotos = !showDeskPhotos"
-            title="Toggle whether student photos appear on dashboard desk tiles"
-          >
-            <Camera :size="16" />
-            <span>Dashboard Photos: <strong>{{ showDeskPhotos ? 'ON' : 'OFF' }}</strong></span>
-          </button>
-
-          <button 
-            type="button" 
-            class="setup__btn-primary" 
-            style="display: flex; align-items: center; gap: 8px; padding: 8px 18px; font-size: 0.88rem; font-weight: 700;"
-            @click="isDesignerModalOpen = true"
-          >
-            <LayoutGrid :size="17" />
-            <span>Open Layout Designer</span>
-          </button>
-        </div>
+        <!-- Advanced Layout Designer Modal -->
+        <BaseModal
+          :show="isDesignerModalOpen"
+          title="Custom Seating Layout Designer"
+          max-width="min(1250px, 92vw)"
+          @close="isDesignerModalOpen = false"
+        >
+          <SeatingLayoutDesigner />
+        </BaseModal>
       </div>
 
-      <!-- Advanced Layout Designer Modal -->
-      <BaseModal
-        :show="isDesignerModalOpen"
-        title="Custom Seating Layout Designer"
-        max-width="min(1250px, 92vw)"
-        @close="isDesignerModalOpen = false"
-      >
-        <SeatingLayoutDesigner />
-      </BaseModal>
-    </div>
-
-    <!-- Roster -->
-    <div class="setup__card">
-      <div class="setup__card-header-row" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
-        <div style="display: flex; align-items: center; gap: 8px; cursor: pointer; flex-shrink: 0;" @click="toggleRoster">
-          <component :is="isRosterExpanded ? ChevronUp : ChevronDown" :size="18" style="color: var(--text-muted);" />
-          <h2 class="setup__card-title" style="margin: 0; white-space: nowrap;">Roster — {{ sortedRoster.length }} Students</h2>
-        </div>
-        <div class="setup__card-actions" style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
-          <button class="setup__btn-ghost" @click="isRapidPhotosOpen = true" title="Open webcam booth to rapidly photograph students">
-            <Camera :size="16" /> Rapid Photos
-          </button>
-          <button class="setup__btn-ghost" @click="isBatchPhotosOpen = true" title="Batch import student photos from folder">
-            <FolderOpen :size="16" /> Import Photos Folder
-          </button>
-          <button v-if="showScannerButton" class="setup__btn-ghost" @click="openRapidRFID" title="Rapidly scan RFID tags to assign to students">
-            <Zap :size="16" /> Rapid RFID
-          </button>
-          <button v-if="showScannerButton" class="setup__btn-ghost" @click="isQrModalOpen = true" title="Generate and print unique student QR codes for kiosk scanning & attendance">
-            <QrCode :size="16" /> Print QR Codes
-          </button>
-          <button class="setup__btn-primary setup__btn-add-student" @click="openAddStudentModal">
-            <PlusCircle :size="16" /> Add Student
-          </button>
-        </div>
-      </div>
-
-      <!-- Collapsed Roster Summary -->
-      <div v-if="!isRosterExpanded" style="margin-top: 0.75rem; color: var(--text-secondary); font-size: 0.875rem; display: flex; align-items: center; justify-content: space-between; background: var(--bg-surface-elevated, rgba(0,0,0,0.02)); padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-color);">
-        <span>{{ sortedRoster.length }} active students enrolled</span>
-        <button class="setup__btn-ghost" style="padding: 2px 8px; font-size: 0.8rem;" @click="toggleRoster">Expand Roster List</button>
-      </div>
-
-      <!-- Roster List (Expanded) -->
-      <ul v-else class="setup__roster-list" style="margin-top: 1rem;">
-        <li v-for="s in sortedRoster" :key="s.studentId" class="setup__roster-item" style="display: flex; align-items: center; gap: 10px;">
-          <StudentAvatar 
-            :student-id="s.studentId" 
-            :first-name="s.firstName" 
-            :last-name="s.lastName" 
-            size="sm" 
-            shape="circle" 
-            :allow-upload="true"
-            @edit-photo="openSinglePhotoModal(s)"
-            title="Click to change photo"
-          />
-          <div class="setup__roster-info" style="flex: 1;">
-            <span class="setup__roster-name">{{ s.lastName }}, {{ s.firstName }}</span>
-            <span class="setup__roster-id">{{ s.studentId }}</span>
-            <span v-if="activeClass?.classType === 'elementary' && s.gradeLevel && availableSubCohorts.length > 1" class="setup__chip" style="margin-left: 8px;">
-              {{ s.gradeLevel }}
-            </span>
-            <span v-if="s.courseCode && availableSubCohorts.length > 1" class="setup__chip setup__chip--blue" style="margin-left: 8px;">
-              {{ s.courseCode }}
-            </span>
+      <!-- 4. Roster Card -->
+      <div class="setup__card" id="sec-roster">
+        <div class="setup__card-header-row" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+          <div style="display: flex; align-items: center; gap: 8px; cursor: pointer; flex-shrink: 0;" @click="toggleRoster">
+            <component :is="isRosterExpanded ? ChevronUp : ChevronDown" :size="18" style="color: var(--text-muted);" />
+            <h2 class="setup__card-title" style="margin: 0; white-space: nowrap;">Roster — {{ sortedRoster.length }} Students</h2>
           </div>
-          <div class="setup__roster-actions">
-            <button class="setup__icon-btn" @click="openSinglePhotoModal(s)" title="Update Student Photo"><Camera :size="14" /></button>
-            <button class="setup__icon-btn" @click="onEditStudent(s)" title="Edit"><Pencil :size="14" /></button>
-            <button class="setup__icon-btn setup__icon-btn--warn" @click="onArchiveStudent(s)" title="Archive (Unenroll)"><UserMinus :size="14" /></button>
+          <div class="setup__card-actions" style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+            <button class="setup__btn-ghost" @click="isRapidPhotosOpen = true" title="Open webcam booth to rapidly photograph students">
+              <Camera :size="16" /> Rapid Photos
+            </button>
+            <button class="setup__btn-ghost" @click="isBatchPhotosOpen = true" title="Batch import student photos from folder">
+              <FolderOpen :size="16" /> Import Photos Folder
+            </button>
+            <button v-if="showScannerButton" class="setup__btn-ghost" @click="openRapidRFID" title="Rapidly scan RFID tags to assign to students">
+              <Zap :size="16" /> Rapid RFID
+            </button>
+            <button v-if="showScannerButton" class="setup__btn-ghost" @click="isQrModalOpen = true" title="Generate and print unique student QR codes for kiosk scanning & attendance">
+              <QrCode :size="16" /> Print QR Codes
+            </button>
+            <button class="setup__btn-primary setup__btn-add-student" @click="openAddStudentModal">
+              <PlusCircle :size="16" /> Add Student
+            </button>
           </div>
-        </li>
-      </ul>
+        </div>
 
-      <!-- Unenrolled Panel -->
-      <div v-if="archivedRoster.length > 0" class="setup__archived-roster" style="margin-top: 1rem; border-top: 1px solid var(--border); padding-top: 1rem;">
-        <button class="setup__archived-toggle" @click="isArchivedPanelVisible = !isArchivedPanelVisible">
-          <span class="setup__archived-label">
-            <UserMinus :size="16" style="opacity: 0.6" /> Unenrolled ({{ archivedRoster.length }})
-          </span>
-          <span class="setup__archived-chevron"><component :is="isArchivedPanelVisible ? ChevronUp : ChevronDown" :size="16" /></span>
-        </button>
-        <ul v-if="isArchivedPanelVisible" class="setup__roster-list" style="margin-top: 0.5rem; opacity: 0.7;">
-          <li v-for="s in archivedRoster" :key="s.studentId" class="setup__roster-item">
-            <div class="setup__roster-info">
+        <!-- Collapsed Roster Summary -->
+        <div v-if="!isRosterExpanded" style="margin-top: 0.75rem; color: var(--text-secondary); font-size: 0.875rem; display: flex; align-items: center; justify-content: space-between; background: var(--bg-surface-elevated, rgba(0,0,0,0.02)); padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-color);">
+          <span>{{ sortedRoster.length }} active students enrolled</span>
+          <button class="setup__btn-ghost" style="padding: 2px 8px; font-size: 0.8rem;" @click="toggleRoster">Expand Roster List</button>
+        </div>
+
+        <!-- Roster List (Expanded) -->
+        <ul v-else class="setup__roster-list" style="margin-top: 1rem;">
+          <li v-for="s in sortedRoster" :key="s.studentId" class="setup__roster-item" style="display: flex; align-items: center; gap: 10px;">
+            <StudentAvatar 
+              :student-id="s.studentId" 
+              :first-name="s.firstName" 
+              :last-name="s.lastName" 
+              size="sm" 
+              shape="circle" 
+              :allow-upload="true"
+              @edit-photo="openSinglePhotoModal(s)"
+              title="Click to change photo"
+            />
+            <div class="setup__roster-info" style="flex: 1;">
               <span class="setup__roster-name">{{ s.lastName }}, {{ s.firstName }}</span>
               <span class="setup__roster-id">{{ s.studentId }}</span>
+              <span v-if="activeClass?.classType === 'elementary' && s.gradeLevel && availableSubCohorts.length > 1" class="setup__chip" style="margin-left: 8px;">
+                {{ s.gradeLevel }}
+              </span>
+              <span v-if="s.courseCode && availableSubCohorts.length > 1" class="setup__chip setup__chip--blue" style="margin-left: 8px;">
+                {{ s.courseCode }}
+              </span>
             </div>
             <div class="setup__roster-actions">
-              <button class="setup__icon-btn" @click="onUnarchiveStudent(s)" title="Re-enrol"><UserCheck :size="14" /></button>
-              <button class="setup__icon-btn setup__icon-btn--danger" @click="onPermanentDeleteStudent(s)" title="Permanently delete all records in this class"><Trash2 :size="14" /></button>
+              <button class="setup__icon-btn" @click="openSinglePhotoModal(s)" title="Update Student Photo"><Camera :size="14" /></button>
+              <button class="setup__icon-btn" @click="onEditStudent(s)" title="Edit"><Pencil :size="14" /></button>
+              <button class="setup__icon-btn setup__icon-btn--warn" @click="onArchiveStudent(s)" title="Archive (Unenroll)"><UserMinus :size="14" /></button>
             </div>
           </li>
         </ul>
-      </div>
-    </div>
 
-    <!-- Section: Grading & Assessments (Secondary only) -->
-    <template v-if="activeClass.classType !== 'elementary'">
-      <div class="setup__section-header" style="margin-top: 1rem;">
-        <GraduationCap :size="18" />
-        <span>Grading &amp; Assessments</span>
+        <!-- Unenrolled Panel -->
+        <div v-if="archivedRoster.length > 0" class="setup__archived-roster" style="margin-top: 1rem; border-top: 1px solid var(--border); padding-top: 1rem;">
+          <button class="setup__archived-toggle" @click="isArchivedPanelVisible = !isArchivedPanelVisible">
+            <span class="setup__archived-label">
+              <UserMinus :size="16" style="opacity: 0.6" /> Unenrolled ({{ archivedRoster.length }})
+            </span>
+            <span class="setup__archived-chevron"><component :is="isArchivedPanelVisible ? ChevronUp : ChevronDown" :size="16" /></span>
+          </button>
+          <ul v-if="isArchivedPanelVisible" class="setup__roster-list" style="margin-top: 0.5rem; opacity: 0.7;">
+            <li v-for="s in archivedRoster" :key="s.studentId" class="setup__roster-item">
+              <div class="setup__roster-info">
+                <span class="setup__roster-name">{{ s.lastName }}, {{ s.firstName }}</span>
+                <span class="setup__roster-id">{{ s.studentId }}</span>
+              </div>
+              <div class="setup__roster-actions">
+                <button class="setup__icon-btn" @click="onUnarchiveStudent(s)" title="Re-enrol"><UserCheck :size="14" /></button>
+                <button class="setup__icon-btn setup__icon-btn--danger" @click="onPermanentDeleteStudent(s)" title="Permanently delete all records in this class"><Trash2 :size="14" /></button>
+              </div>
+            </li>
+          </ul>
+        </div>
       </div>
 
-      <!-- Assessment Framework -->
-      <AssessmentFrameworkSettings />
-    </template>
+      <!-- 5. Secondary: Grading Framework & Assessment Model -->
+      <div v-if="activeClass.classType !== 'elementary'" class="setup__card" id="sec-grading-model">
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+          <h2 class="setup__card-title" style="margin: 0; display: flex; align-items: center; gap: 8px;">
+            <span>Grading System &amp; Framework</span>
+            <button 
+              type="button" 
+              class="setup__info-trigger-btn" 
+              @click="isGradingInfoModalOpen = true" 
+              title="Learn how grading systems and SBAR engines work"
+            >
+              <Info :size="15" />
+            </button>
+          </h2>
+        </div>
+        <p class="setup__hint">Choose how student performance is evaluated and displayed for this class.</p>
+        
+        <!-- Framework Primary Mode Toggle -->
+        <div style="margin-bottom: 16px;">
+          <div class="setup__label" style="margin-bottom: 6px;">
+            Grading Framework
+          </div>
+          <div class="setup__segmented-toggle" style="max-width: 580px;">
+            <button
+              type="button"
+              class="setup__segmented-btn"
+              :class="{ 'setup__segmented-btn--active': (activeClass.gradingFramework || 'traditional') === 'traditional' }"
+              @click="updateActiveClass({ gradingFramework: 'traditional' })"
+            >
+              <Percent :size="15" class="setup__segmented-icon" />
+              <span>Traditional Secondary (% / Points)</span>
+            </button>
+            <button
+              type="button"
+              class="setup__segmented-btn"
+              :class="{ 'setup__segmented-btn--active': activeClass.gradingFramework === 'sbar' }"
+              @click="updateActiveClass({ gradingFramework: 'sbar' })"
+            >
+              <Layers :size="15" class="setup__segmented-icon" />
+              <span>Standards-Based (SBAR / Levels 1–4)</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- SBAR Additional Configuration (revealed when SBAR is selected) -->
+        <div 
+          v-if="activeClass.gradingFramework === 'sbar'" 
+          class="setup__sbar-config-panel"
+          style="padding-top: 16px; border-top: 1px dashed var(--border);"
+        >
+          <div class="setup__form-grid" style="grid-template-columns: 1fr 1fr; gap: 16px;">
+            <!-- Top Row: Mastery Engine Dropdown (Rich descriptions) -->
+            <label class="setup__label" style="grid-column: span 2;">
+              SBAR Mastery Calculation Engine
+              <select
+                :value="activeClass.sbarAlgorithm || 'decaying_average'"
+                class="setup__input"
+                @change="e => updateActiveClass({ sbarAlgorithm: e.target.value })"
+              >
+                <option value="decaying_average">Decaying Average (65% Newest / 35% Historical)</option>
+                <option value="power_law">Power Law (Marzano Logarithmic Trajectory)</option>
+                <option value="mode">Mode / Most Consistent (Most Frequent Level)</option>
+                <option value="most_recent">Most Recent (Last 3 Evaluations Average)</option>
+                <option value="highest">Highest Level Score</option>
+              </select>
+            </label>
+
+            <!-- Bottom Left: Input Mode Segmented Toggle -->
+            <div class="setup__label">
+              Default SBAR Input Mode
+              <div class="setup__segmented-toggle">
+                <button
+                  type="button"
+                  class="setup__segmented-btn"
+                  :class="{ 'setup__segmented-btn--active': (activeClass.sbarInputMode || 'fine') === 'fine' }"
+                  @click="updateActiveClass({ sbarInputMode: 'fine' })"
+                >
+                  <span>Granular (L1± to L4±)</span>
+                </button>
+                <button
+                  type="button"
+                  class="setup__segmented-btn"
+                  :class="{ 'setup__segmented-btn--active': activeClass.sbarInputMode === 'simple' }"
+                  @click="updateActiveClass({ sbarInputMode: 'simple' })"
+                >
+                  <span>Simple (L1–4)</span>
+                </button>
+                <button
+                  type="button"
+                  class="setup__segmented-btn"
+                  :class="{ 'setup__segmented-btn--active': activeClass.sbarInputMode === 'numeric' }"
+                  @click="updateActiveClass({ sbarInputMode: 'numeric' })"
+                >
+                  <span>Exact %</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Bottom Right: Radial Check-ins Toggle -->
+            <div class="setup__label">
+              Include Radial Desk Check-ins in SBAR
+              <div class="setup__segmented-toggle">
+                <button
+                  type="button"
+                  class="setup__segmented-btn"
+                  :class="{ 'setup__segmented-btn--active': activeClass.includeRadialInSbar !== false }"
+                  @click="updateActiveClass({ includeRadialInSbar: true })"
+                >
+                  <Check :size="14" class="setup__segmented-icon" style="color: #16a34a;" />
+                  <span>Include (All Evidence)</span>
+                </button>
+                <button
+                  type="button"
+                  class="setup__segmented-btn"
+                  :class="{ 'setup__segmented-btn--active': activeClass.includeRadialInSbar === false }"
+                  @click="updateActiveClass({ includeRadialInSbar: false })"
+                >
+                  <X :size="14" class="setup__segmented-icon" style="color: #dc2626;" />
+                  <span>Formal Only</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 6. Secondary: Assessment Framework (Categories, Weights, Units & Expectations, Templates) -->
+      <template v-if="activeClass.classType !== 'elementary'">
+        <AssessmentFrameworkSettings id="sec-framework" />
+      </template>
+
+      <!-- 7. Elementary: Information note -->
+      <div v-else class="setup__card setup__card--accent" id="sec-elem-assessment">
+        <h2 class="setup__card-title" style="display: flex; align-items: center; gap: 8px;">
+          <Layers :size="18" /> Standards-Based Curriculum Active
+        </h2>
+        <p class="setup__hint" style="margin: 0;">
+          Elementary homerooms automatically track student progress against official Ontario Curriculum strands and expectations. 
+          Manage your active subjects and custom learning goals in the <strong>Elementary Subjects</strong> section above.
+        </p>
+      </div>
 
     <!-- ── Student Entry Modal ─── -->
     <BaseModal
@@ -805,9 +821,21 @@ import {
   X,
   Binary,
   Camera,
-  FolderOpen
+  FolderOpen,
+  Calendar,
+  Users
 } from 'lucide-vue-next'
 import { getEffectiveGradeLevel } from '../../composables/useElementary.js'
+
+const props = defineProps({
+  initialSubtab: { type: String, default: 'logistics' }
+})
+
+const activeSubTab = ref(props.initialSubtab || 'logistics')
+
+watch(() => props.initialSubtab, (val) => {
+  if (val) activeSubTab.value = val
+})
 
 const { showDeskPhotos } = useStudentPhotos()
 
@@ -976,6 +1004,17 @@ async function saveCourseCode() {
   const val = localCourseCode.value.trim()
   if (val !== (activeClass.value.courseCode || '')) {
     await updateActiveClass({ courseCode: val })
+  }
+}
+
+// Local copy of class notes
+const localClassNotes = ref('')
+watch(() => activeClass.value?.notes || activeClass.value?.gradebookNotes, (v) => { localClassNotes.value = v || '' }, { immediate: true })
+async function saveClassNotes() {
+  if (!activeClass.value) return
+  const val = localClassNotes.value
+  if (val !== (activeClass.value.notes || '')) {
+    await updateActiveClass({ notes: val, gradebookNotes: val })
   }
 }
 

@@ -167,41 +167,50 @@
             </div>
           </div>
         </div>
-      </div>
-      <button class="setup__btn-ghost setup__btn--full" @click="addUnit"><Plus :size="14" /> Add Unit</button>
-    </div>
-
-    <!-- Gradebook Notes -->
-    <div class="setup__card">
-      <h2 class="setup__card-title">Gradebook Notes</h2>
-      <textarea 
-        v-model="activeClass.gradebookNotes" 
-        class="setup__textarea" 
-        placeholder="Notes about grading decisions for this specific class..."
-        @blur="saveGradebookSettings"
-      ></textarea>
-    </div>
-
-    <!-- Template Management -->
-    <div class="setup__card">
-      <h2 class="setup__card-title">Template Management</h2>
-      <p class="setup__hint">Save your categories and milestones as a template to reuse in other classes.</p>
-      <div class="setup__template-save">
-        <input v-model="newTemplateName" class="setup__input" placeholder="Template Name" />
-        <button class="setup__btn-primary" :disabled="!newTemplateName.trim()" @click="saveTemplate">
-          Save as Template
-        </button>
+        <button class="setup__btn-ghost setup__btn--full" @click="addUnit"><Plus :size="14" /> Add Unit</button>
       </div>
 
-      <div v-if="templates.length > 0" class="setup__template-apply" style="margin-top: 1rem;">
-        <h3 class="setup__card-subtitle">Saved Templates</h3>
-        <div class="setup__gb-list">
-          <div v-for="tmpl in templates" :key="tmpl.templateId" class="setup__gb-item">
-            <span class="setup__tmpl-name">{{ tmpl.name }}</span>
+      <!-- Reusable Assessment Templates Bar -->
+      <div class="setup__template-bar" style="margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px dashed var(--border);">
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+          <div>
+            <h3 class="setup__card-subtitle" style="margin: 0; display: flex; align-items: center; gap: 6px;">
+              <LayoutTemplate :size="15" /> Assessment Templates
+            </h3>
+            <p class="setup__hint" style="margin: 2px 0 0 0;">
+              Save or load category weights and unit structures across classes.
+            </p>
+          </div>
+          <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+            <!-- Save input & button -->
+            <div style="display: flex; gap: 6px; align-items: center;">
+              <input 
+                v-model="newTemplateName" 
+                class="setup__input setup__input--small" 
+                style="width: 170px;" 
+                placeholder="New Template Name" 
+                @keydown.enter.prevent="saveTemplate"
+              />
+              <button 
+                type="button" 
+                class="setup__btn-ghost setup__btn--small" 
+                :disabled="!newTemplateName.trim()" 
+                @click="saveTemplate"
+              >
+                <Save :size="13" /> Save Preset
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Saved Templates List -->
+        <div v-if="templates.length > 0" class="setup__gb-list" style="margin-top: 12px;">
+          <div v-for="tmpl in templates" :key="tmpl.templateId" class="setup__gb-item" style="padding: 6px 12px;">
+            <span class="setup__tmpl-name" style="font-size: 0.85rem; font-weight: 600;">{{ tmpl.name }}</span>
             <div class="setup__gb-actions">
-              <button class="setup__pill-btn" @click="onApplyTemplate(tmpl)">Apply</button>
-              <button class="setup__icon-btn setup__icon-btn--danger" @click="onDeleteTemplate(tmpl.templateId)">
-                <Trash2 :size="16" />
+              <button type="button" class="setup__pill-btn" @click="onApplyTemplate(tmpl)" title="Apply this template's categories and units to this class">Apply</button>
+              <button type="button" class="setup__icon-btn setup__icon-btn--danger" @click="onDeleteTemplate(tmpl.templateId)" title="Delete template">
+                <Trash2 :size="14" />
               </button>
             </div>
           </div>
@@ -230,7 +239,7 @@ import * as gradebookService from '../../db/gradebookService.js'
 import * as classService from '../../db/classService.js'
 import * as settingsService from '../../db/settingsService.js'
 import * as eventService from '../../db/eventService.js'
-import { ChevronUp, ChevronDown, Trash2, Plus, AlertTriangle, CheckCircle2, ChevronRight, BookOpen, Copy } from 'lucide-vue-next'
+import { ChevronUp, ChevronDown, Trash2, Plus, AlertTriangle, CheckCircle2, ChevronRight, BookOpen, Copy, LayoutTemplate, Save } from 'lucide-vue-next'
 import ExpectationImportModal from './ExpectationImportModal.vue'
 
 const { activeClass, triggerActiveClass } = useClassroom()

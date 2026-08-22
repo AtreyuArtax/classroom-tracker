@@ -250,7 +250,8 @@
         <Flag :size="20" /> Academic Milestones
       </h2>
       <p class="setup__hint">
-        Define key dates (e.g., Progress Reports) for <strong>{{ selectedYear }}</strong>.
+        Define key reporting cutoff dates (e.g. Progress Reports, Midterms, Term 1) for <strong>{{ selectedYear }}</strong>. 
+        These generate the date filter presets in your Gradebook and reporting snapshots.
       </p>
 
       <div class="setup__gb-list">

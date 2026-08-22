@@ -205,8 +205,8 @@
     "semantic_hash": ""
   },
   "src/components/setup/CalendarSettings.vue": {
-    "mtime": 1787359992.3437524,
-    "ast_hash": "af1aa014c1cff88f099e937615ed20f4",
+    "mtime": 1787370790.3894162,
+    "ast_hash": "55a86e7c1c170d2bdc55dd0b4cacf2a5",
     "semantic_hash": ""
   },
   "src/components/setup/CsvHelpGuide.vue": {
@@ -220,8 +220,8 @@
     "semantic_hash": ""
   },
   "src/components/setup/GradeBucketsSettings.vue": {
-    "mtime": 1785245527.6019673,
-    "ast_hash": "1e496ca416b0d358f8508611757bebe8",
+    "mtime": 1787369622.0752993,
+    "ast_hash": "838ad2ce0c4f0498c6bb2138d05f8724",
     "semantic_hash": ""
   },
   "src/components/setup/HelpModal.vue": {
@@ -240,8 +240,8 @@
     "semantic_hash": "68f077cda9561ec51fbe56d0aa61fb3e"
   },
   "src/composables/useClassroom.js": {
-    "mtime": 1787367451.4638627,
-    "ast_hash": "46cde609c2979df63613bf289ed94480",
+    "mtime": 1787370408.9487255,
+    "ast_hash": "aa29a6fe8a1e530e01d7c567b319a976",
     "semantic_hash": ""
   },
   "src/composables/useGradebook.js": {
@@ -355,8 +355,8 @@
     "semantic_hash": ""
   },
   "src/views/Setup.vue": {
-    "mtime": 1786723964.7362583,
-    "ast_hash": "5d48fca87c75db52a227aab1d00b3093",
+    "mtime": 1787370734.3860965,
+    "ast_hash": "7a79f736e6ec049211766377edf5d030",
     "semantic_hash": ""
   },
   "tmp/test_dates.js": {
@@ -400,8 +400,8 @@
     "semantic_hash": ""
   },
   "src/components/setup/AssessmentFrameworkSettings.vue": {
-    "mtime": 1786460321.632197,
-    "ast_hash": "262a65ed8500b350cec7b94a2893d733",
+    "mtime": 1787369072.4535463,
+    "ast_hash": "7a5480902a80b9df8fc00a5dbbf68b1e",
     "semantic_hash": ""
   },
   "src/composables/useGradeEditing.js": {
@@ -415,8 +415,8 @@
     "semantic_hash": ""
   },
   "src/components/setup/BehaviorSettings.vue": {
-    "mtime": 1786724086.4520986,
-    "ast_hash": "1c010acc961c7a44f5067f7f4d155e70",
+    "mtime": 1787369629.2163496,
+    "ast_hash": "e1e883deabb6b855c02198340462925c",
     "semantic_hash": ""
   },
   "src/components/setup/QrCodeGeneratorModal.vue": {
@@ -445,13 +445,13 @@
     "semantic_hash": ""
   },
   "src/components/setup/ClassLogisticsSettings.vue": {
-    "mtime": 1786963203.9397125,
-    "ast_hash": "687e235167c100174614e3f16c204e07",
+    "mtime": 1787369023.835002,
+    "ast_hash": "a5c1b543456559ea6a734e2c572221d4",
     "semantic_hash": ""
   },
   "src/components/setup/DatabaseMaintenanceSettings.vue": {
-    "mtime": 1787364486.0870023,
-    "ast_hash": "7a10d1841f446a0a17493b8a180b5a22",
+    "mtime": 1787369250.8833773,
+    "ast_hash": "0654b836065b29e786f2618977f51ccf",
     "semantic_hash": ""
   },
   "src/components/setup/ExpectationImportModal.vue": {
@@ -525,8 +525,8 @@
     "semantic_hash": ""
   },
   "src/components/setup/SetupQuickJumpNav.vue": {
-    "mtime": 1786242453.6204727,
-    "ast_hash": "cdd5ac185815c236cb066970b41f50e0",
+    "mtime": 1787370443.2938282,
+    "ast_hash": "231d579f61b79609bdd2ac293d1ec0a5",
     "semantic_hash": ""
   },
   "src/components/reports/ExpectationMasteryHeatmap.vue": {

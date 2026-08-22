@@ -122,6 +122,22 @@ const filteredArchivedClasses = computed(() => {
     })
 })
 
+/** All unarchived classes matching current teaching mode (ignores year/semester filter) */
+const modeAllClasses = computed(() => {
+    return classList.value.filter(c => {
+        const cType = c.classType || (c.subjects && c.subjects.length > 0 ? 'elementary' : 'secondary')
+        return cType === teachingMode.value
+    })
+})
+
+/** All archived classes matching current teaching mode (ignores year/semester filter) */
+const modeAllArchivedClasses = computed(() => {
+    return archivedClasses.value.filter(c => {
+        const cType = c.classType || (c.subjects && c.subjects.length > 0 ? 'elementary' : 'secondary')
+        return cType === teachingMode.value
+    })
+})
+
 
 
 
@@ -1611,6 +1627,8 @@ export function useClassroom() {
         maxStudentsOut,
         filteredClassList,
         filteredArchivedClasses,
+        modeAllClasses,
+        modeAllArchivedClasses,
         teachingMode,
         // computed
 

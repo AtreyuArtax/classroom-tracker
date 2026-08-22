@@ -1,6 +1,6 @@
 <template>
   <div class="grade-buckets">
-    <div class="setup__card">
+    <div class="setup__card" id="sec-app-buckets">
       <div class="setup__card-header-row">
         <h2 class="setup__card-title">Grading Standards (Levels)</h2>
         <button class="setup__pill-btn" @click="resetToOntario">Reset Defaults</button>

@@ -45,26 +45,14 @@
     </div>
 
     <!-- ══════════════════════════════════════════════════════════ -->
-    <!-- PILLAR 0: Calendar Manager (Modular)                      -->
-    <!-- ══════════════════════════════════════════════════════════ -->
-    <section v-if="activeTab === 'calendar'" class="setup__panel">
-      <div class="setup__layout">
-        <SetupQuickJumpNav :activeTab="activeTab" />
-        <div class="setup__main-content">
-          <CalendarSettings />
-        </div>
-      </div>
-    </section>
-
-    <!-- ══════════════════════════════════════════════════════════ -->
-    <!-- PILLAR 1: Class Manager                                  -->
+    <!-- PILLAR 1: All Classes (Class Manager)                     -->
     <!-- ══════════════════════════════════════════════════════════ -->
     <section v-if="activeTab === 'manage'" class="setup__panel">
       <div class="setup__layout">
         <SetupQuickJumpNav :activeTab="activeTab" />
         <div class="setup__main-content">
-        <!-- Bulk Setup Wizard (Smart CSV Interceptor) -->
-        <div class="setup__card setup__card--accent">
+        <!-- 1. Bulk Setup Wizard (Smart CSV Interceptor) -->
+        <div class="setup__card setup__card--accent" id="sec-bulk">
           <h2 class="setup__card-title">Bulk Setup / New Semester</h2>
           <p class="setup__hint">
             Drop your board-provided CSV here to automatically detect, create, and update classes for the new term.
@@ -103,77 +91,8 @@
           </div>
         </div>
 
-        <!-- Current Classes List -->
-        <div class="setup__card">
-          <div class="setup__card-header-row">
-            <h2 class="setup__card-title">All Classes</h2>
-            <label class="setup__label setup__label--checkbox setup__show-all">
-              <input type="checkbox" v-model="showAllSessions" />
-              Show All Sessions
-            </label>
-          </div>
-          <div v-if="(showAllSessions ? classList : filteredClassList).length === 0" class="setup__empty">
-            No active classes for this session.
-          </div>
-          <ul class="setup__class-list">
-            <li
-                v-for="cls in (showAllSessions ? classList : filteredClassList)"
-                :key="cls.classId"
-                class="setup__class-item"
-                :class="{ 'setup__class-item--active': cls.classId === activeClass?.classId }"
-            >
-              <div>
-                <div class="setup__class-name">{{ cls.name }}</div>
-                <div class="setup__class-meta">
-                  <template v-if="cls.classType === 'elementary'">Full Year {{ cls.year }} · {{ studentCount(cls) }} students</template>
-                  <template v-else>Period {{ cls.periodNumber }} · {{ cls.year }} Sem {{ cls.semester }} · {{ studentCount(cls) }} students</template>
-                </div>
-
-              </div>
-              <div class="setup__class-actions">
-                <button class="setup__pill-btn" @click="switchToClass(cls.classId)">
-                  {{ cls.classId === activeClass?.classId ? 'Active' : 'Configure' }}
-                </button>
-                <button v-if="showScannerButton" class="setup__pill-btn" @click.stop="openQRGenerator(cls)">
-                  <QrCode :size="14" /> QR
-                </button>
-                <button class="setup__pill-btn" @click.stop="openPrintList(cls)">
-                  <Printer :size="14" /> List
-                </button>
-                <button class="setup__pill-btn" @click="onArchiveClass(cls.classId)">Archive</button>
-              </div>
-            </li>
-          </ul>
-        </div>
-
-        <!-- Archived Classes -->
-        <div v-if="(showAllSessions ? archivedClasses : filteredArchivedClasses).length > 0" class="setup__card setup__card--archived">
-          <button class="setup__archived-toggle" @click="isArchivedPanelVisible = !isArchivedPanelVisible">
-            <span class="setup__archived-label">
-              <Archive :size="16" /> Archived ({{ (showAllSessions ? archivedClasses : filteredArchivedClasses).length }})
-            </span>
-            <span class="setup__archived-chevron"><component :is="isArchivedPanelVisible ? ChevronUp : ChevronDown" :size="16" /></span>
-          </button>
-          <ul v-if="isArchivedPanelVisible" class="setup__class-list setup__archived-list">
-            <li v-for="cls in (showAllSessions ? archivedClasses : filteredArchivedClasses)" :key="cls.classId" class="setup__class-item setup__class-item--archived">
-              <div>
-                <div class="setup__class-name">{{ cls.name }}</div>
-                <div class="setup__class-meta">
-                  <template v-if="cls.classType === 'elementary'">Full Year {{ cls.year }} · {{ studentCount(cls) }} students</template>
-                  <template v-else>Period {{ cls.periodNumber }} · {{ cls.year }} Sem {{ cls.semester }} · {{ studentCount(cls) }} students</template>
-                </div>
-
-              </div>
-              <div class="setup__class-actions">
-                <button class="setup__pill-btn" @click="onRestoreClass(cls.classId)">Restore</button>
-                <button class="setup__pill-btn setup__pill-btn--danger" @click="onDeleteClass(cls.classId)">Delete</button>
-              </div>
-            </li>
-          </ul>
-        </div>
-
-        <!-- Create individual class -->
-        <div class="setup__card">
+        <!-- 2. Create Single Class -->
+        <div class="setup__card" id="sec-create">
           <h2 class="setup__card-title">Create Single Class</h2>
           <form class="setup__form" @submit.prevent="createNewClass">
             <label class="setup__label">
@@ -225,7 +144,6 @@
                 </select>
               </label>
 
-
               <label v-if="teachingMode !== 'elementary'" class="setup__label">
                 Period
                 <select v-model="newClass.periodNumber" class="setup__input" required>
@@ -240,6 +158,67 @@
             <button type="submit" class="setup__btn-primary">Create Class</button>
           </form>
           <p v-if="classError" class="setup__error">{{ classError }}</p>
+        </div>
+
+        <!-- 3. Current Classes List -->
+        <div class="setup__card" id="sec-classes">
+          <div class="setup__card-header-row">
+            <h2 class="setup__card-title">All Classes</h2>
+            <label class="setup__label setup__label--checkbox setup__show-all">
+              <input type="checkbox" v-model="showAllSessions" />
+              Show All Sessions
+            </label>
+          </div>
+          <div v-if="(showAllSessions ? modeAllClasses : filteredClassList).length === 0" class="setup__empty">
+            No active classes for this session.
+          </div>
+          <ul class="setup__class-list">
+            <li
+                v-for="cls in (showAllSessions ? modeAllClasses : filteredClassList)"
+                :key="cls.classId"
+                class="setup__class-item"
+                :class="{ 'setup__class-item--active': cls.classId === activeClass?.classId }"
+            >
+              <div>
+                <div class="setup__class-name">{{ cls.name }}</div>
+                <div class="setup__class-meta">
+                  <template v-if="cls.classType === 'elementary'">Full Year {{ cls.year }} · {{ studentCount(cls) }} students</template>
+                  <template v-else>Period {{ cls.periodNumber }} · {{ cls.year }} Sem {{ cls.semester }} · {{ studentCount(cls) }} students</template>
+                </div>
+              </div>
+              <div class="setup__class-actions">
+                <button class="setup__pill-btn" @click="switchToClass(cls.classId)">
+                  {{ cls.classId === activeClass?.classId ? 'Active' : 'Configure' }}
+                </button>
+                <button class="setup__pill-btn" @click="onArchiveClass(cls.classId)">Archive</button>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <!-- 4. Archived Classes -->
+        <div v-if="(showAllSessions ? modeAllArchivedClasses : filteredArchivedClasses).length > 0" class="setup__card setup__card--archived" id="sec-archived">
+          <button class="setup__archived-toggle" @click="isArchivedPanelVisible = !isArchivedPanelVisible">
+            <span class="setup__archived-label">
+              <Archive :size="16" /> Archived ({{ (showAllSessions ? modeAllArchivedClasses : filteredArchivedClasses).length }})
+            </span>
+            <span class="setup__archived-chevron"><component :is="isArchivedPanelVisible ? ChevronUp : ChevronDown" :size="16" /></span>
+          </button>
+          <ul v-if="isArchivedPanelVisible" class="setup__class-list setup__archived-list">
+            <li v-for="cls in (showAllSessions ? modeAllArchivedClasses : filteredArchivedClasses)" :key="cls.classId" class="setup__class-item setup__class-item--archived">
+              <div>
+                <div class="setup__class-name">{{ cls.name }}</div>
+                <div class="setup__class-meta">
+                  <template v-if="cls.classType === 'elementary'">Full Year {{ cls.year }} · {{ studentCount(cls) }} students</template>
+                  <template v-else>Period {{ cls.periodNumber }} · {{ cls.year }} Sem {{ cls.semester }} · {{ studentCount(cls) }} students</template>
+                </div>
+              </div>
+              <div class="setup__class-actions">
+                <button class="setup__pill-btn" @click="onRestoreClass(cls.classId)">Restore</button>
+                <button class="setup__pill-btn setup__pill-btn--danger" @click="onDeleteClass(cls.classId)">Delete</button>
+              </div>
+            </li>
+          </ul>
         </div>
 
 
@@ -402,7 +381,7 @@
     <!-- PILLAR 2: Active Class Configuration                     -->
     <!-- ══════════════════════════════════════════════════════════ -->
     <section v-else-if="activeTab === 'active'" class="setup__panel">
-      <ClassLogisticsSettings />
+      <ClassLogisticsSettings :initial-subtab="activeClassSubtab" />
     </section>
 
     <!-- ══════════════════════════════════════════════════════════ -->
@@ -413,7 +392,7 @@
         <SetupQuickJumpNav :activeTab="activeTab" />
         <div class="setup__main-content">
         <!-- Profile -->
-        <div class="setup__card">
+        <div class="setup__card" id="sec-general-settings">
           <h2 class="setup__card-title">General Settings</h2>
           <div class="setup__form-grid" style="grid-template-columns: 1fr 1fr; gap: 16px;">
             <label class="setup__label">
@@ -447,170 +426,170 @@
           </div>
         </div>
 
-
-
         <!-- Grade Buckets (Grading Levels) -->
         <GradeBucketsSettings />
 
+        <!-- Behavior Strategy -->
+        <BehaviorSettings />
 
-      <!-- Behavior Strategy -->
-      <BehaviorSettings />
-
-      <!-- Elementary School Start Time -->
-      <div v-if="teachingMode === 'elementary'" class="setup__card">
-        <h2 class="setup__card-title">School Start Time</h2>
-        <p class="setup__hint">Define the official morning bell start time for your homeroom. This will autopopulate when creating or configuring your class.</p>
-        <div style="max-width: 240px; margin-top: 12px;">
-          <label class="setup__label" style="display: block; font-weight: 600; font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 6px;">Morning Bell Start Time</label>
-          <input 
-            :value="periodStartTimes[1] || '08:50'" 
-            type="time" 
-            class="setup__input" 
-            @change="e => {
-              const updated = { ...periodStartTimes, 1: e.target.value };
-              updatePeriodStartTimes(updated);
-            }" 
-          />
-        </div>
-      </div>
-
-      <!-- Period Defaults (Secondary / Post-Secondary Only) -->
-      <div v-else class="setup__card">
-        <h2 class="setup__card-title">Period Start Times</h2>
-        <p class="setup__hint">Define the default start time for each period. These will autopopulate when creating or editing a class.</p>
-        <div class="setup__period-grid">
-          <div v-for="p in periodOptions" :key="p" class="setup__period-row">
-            <div class="setup__period-header">
-              <span class="setup__period-label">Period {{ p }}</span>
-              <button v-if="p !== 1" class="setup__icon-btn setup__icon-btn--danger" @click="onRemovePeriod(p)">
-                <Trash2 :size="14" />
-              </button>
-            </div>
+        <!-- Elementary School Start Time -->
+        <div v-if="teachingMode === 'elementary'" class="setup__card" id="sec-period-times">
+          <h2 class="setup__card-title">School Start Time</h2>
+          <p class="setup__hint">Define the official morning bell start time for your homeroom. This will autopopulate when creating or configuring your class.</p>
+          <div style="max-width: 240px; margin-top: 12px;">
+            <label class="setup__label" style="display: block; font-weight: 600; font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 6px;">Morning Bell Start Time</label>
             <input 
-              :value="periodStartTimes[p]" 
+              :value="periodStartTimes[1] || '08:50'" 
               type="time" 
               class="setup__input" 
               @change="e => {
-                const updated = { ...periodStartTimes, [p]: e.target.value };
+                const updated = { ...periodStartTimes, 1: e.target.value };
                 updatePeriodStartTimes(updated);
               }" 
             />
           </div>
         </div>
-        <button class="setup__btn-ghost setup__btn--full" style="margin-top: 1rem" @click="onAddPeriod">
-          <Plus :size="14" /> Add Period
-        </button>
-      </div>
 
-      <!-- Attendance & Cloud Mode Settings -->
-      <div class="setup__card">
-        <h2 class="setup__card-title">
-          <GraduationCap :size="18" /> Attendance & Cloud Settings
-        </h2>
-        <p class="setup__hint">Configure how daily student attendance is registered and set up two-device scanning sync.</p>
-        
-        <div class="setup__settings-grid">
-          
-          <!-- Left Column: Attendance Mode -->
-          <div class="setup__settings-col setup__settings-col--left">
-            <h3 class="setup__card-subtitle" style="margin-top: 0; margin-bottom: 4px;">Attendance Mode</h3>
-            <div :key="radioGroupKey" class="setup__attendance-modes" style="display: flex; flex-direction: column; gap: 12px; margin-top: 4px;">
-              <label class="setup__label setup__label--radio" style="display: flex; flex-direction: row; align-items: center; gap: 8px; cursor: pointer; font-weight: 600; margin: 0;">
-                <input type="radio" name="attendanceMode" :checked="localAttendanceMode === 'natural'" value="natural" @change="onAttendanceModeChange('natural')" style="margin: 0; cursor: pointer;" />
-                <span>Natural Mode (Present by default)</span>
-              </label>
-              <label class="setup__label setup__label--radio" style="display: flex; flex-direction: row; align-items: center; gap: 8px; cursor: pointer; font-weight: 600; margin: 0;">
-                <input type="radio" name="attendanceMode" :checked="localAttendanceMode === 'rfid'" value="rfid" @change="onAttendanceModeChange('rfid')" style="margin: 0; cursor: pointer;" />
-                <span>RFID/QR Sign-In Mode (All start absent)</span>
-              </label>
-            </div>
-            
-            <div v-if="localAttendanceMode === 'rfid'" class="setup__grace-period" style="margin-top: 8px;">
-              <label class="setup__label" style="display: flex; flex-direction: column; gap: 6px; margin: 0;">
-                Lateness Grace Period: <strong>{{ localGracePeriod }} minutes</strong>
-                <input type="range" v-model.number="localGracePeriod" min="0" max="15" step="1" @change="saveAttendanceConfig" style="width: 100%; cursor: pointer; margin: 0;" />
-              </label>
-            </div>
-
-            <!-- Show/Hide Kiosk Scanner Toggle -->
-            <div class="setup__switch-container" style="margin-top: 14px; padding-top: 10px; border-top: 1px solid var(--border); display: flex; align-items: center; gap: 10px;">
-              <label class="setup__switch" style="margin: 0;">
-                <input type="checkbox" v-model="localShowScannerButton" @change="saveScannerConfig" />
-                <span class="setup__switch-slider"></span>
-              </label>
-              <span class="setup__switch-label" style="font-size: 0.85rem; font-weight: 600;">Show Kiosk Scanner Button on Dashboard</span>
-            </div>
-
-            <!-- Manual Override Reset -->
-            <div v-if="activeClass" class="setup__attendance-actions" style="margin-top: auto; padding-top: 12px; border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 8px;">
-              <button class="setup__btn-ghost" style="height: 36px; padding: 0 16px; font-size: 0.85rem; min-height: unset; width: 100%; margin: 0;" @click="onMarkAllPresent">
-                Mark All Present in {{ activeClass.name }}
-              </button>
-            </div>
-          </div>
-          
-          <!-- Right Column: Cloud Settings -->
-          <div class="setup__settings-col">
-            <h3 class="setup__card-subtitle" style="margin-top: 0; margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">
-              Supabase Two-Device Sync
-              <span class="setup__tooltip-container" aria-label="Database Inactivity Warning">
-                <Info :size="14" class="setup__info-icon" />
-                <span class="setup__tooltip-text">
-                  <strong>Inactivity Note:</strong> Supabase pauses free databases after 7 days of idle time (like Summer/Winter breaks). If it stops working, simply log into your Supabase Dashboard and click "Restore Project" to wake it up!
-                </span>
-              </span>
-            </h3>
-            <p class="setup__hint" style="margin: 0; font-size: 0.8rem; line-height: 1.4;">Enable Cloud Mode to scan cards on a door device and receive updates here.</p>
-            
-            <div class="setup__switch-container" style="margin: 8px 0 0 0;">
-              <label class="setup__switch">
-                <input type="checkbox" v-model="localCloudMode" @change="saveCloudConfig" />
-                <span class="setup__switch-slider"></span>
-              </label>
-              <span class="setup__switch-label">Enable Cloud Mode</span>
-            </div>
-            
-            <label class="setup__label" v-if="localCloudMode" style="display: flex; flex-direction: column; gap: 6px; margin: 4px 0 0 0;">
-              User Code (Room PIN / Teacher ID)
-              <div style="display: flex; gap: 8px; align-items: center; width: 100%;">
-                <input type="text" v-model="localUserCode" readonly class="setup__input" style="margin: 0; flex-grow: 1; cursor: default;" />
-                <button type="button" class="setup__btn-ghost" @click="regenerateUserCode" style="min-height: 44px; padding: 0 16px; margin: 0; white-space: nowrap; display: flex; align-items: center; gap: 6px;" title="Generate random unique code">
-                  <RefreshCcw :size="14" /> Generate
+        <!-- Period Defaults (Secondary / Post-Secondary Only) -->
+        <div v-else class="setup__card" id="sec-period-times">
+          <h2 class="setup__card-title">Period Start Times</h2>
+          <p class="setup__hint">Define the default start time for each period. These will autopopulate when creating or editing a class.</p>
+          <div class="setup__period-grid">
+            <div v-for="p in periodOptions" :key="p" class="setup__period-row">
+              <div class="setup__period-header">
+                <span class="setup__period-label">Period {{ p }}</span>
+                <button v-if="p !== 1" class="setup__icon-btn setup__icon-btn--danger" @click="onRemovePeriod(p)">
+                  <Trash2 :size="14" />
                 </button>
               </div>
-              <span style="font-size: 0.75rem; color: var(--text-secondary); font-weight: normal; margin-top: 2px; line-height: 1.3;">
-                We recommend using a unique auto-generated code (e.g. <strong>B7F-K9X</strong>) to prevent conflicts with other classrooms.
-              </span>
-            </label>
-
-            <div v-if="localCloudMode" class="setup__link-box">
-              <span class="setup__link-title">
-                <ExternalLink :size="14" /> Door Scanner URL
-              </span>
-              <span class="setup__link-text">
-                Open this link on your dedicated scanning machine and enter your User Code:
-              </span>
-              <div class="setup__link-input-group">
-                <input type="text" :value="scanStationUrl" readonly class="setup__input" style="margin: 0; flex-grow: 1; cursor: text; font-family: monospace; font-size: 0.8rem;" @click="$event.target.select()" />
-                <button type="button" class="setup__btn-ghost" @click="copyScanStationUrl" style="min-height: 44px; padding: 0 16px; margin: 0; white-space: nowrap; display: flex; align-items: center; gap: 6px; font-size: 0.85rem;" :title="urlCopied ? 'Copied' : 'Copy URL'">
-                  <Check v-if="urlCopied" :size="14" style="color: var(--state-success);" />
-                  <Copy v-else :size="14" />
-                  {{ urlCopied ? 'Copied!' : 'Copy' }}
-                </button>
-              </div>
-            </div>
-
-            <div class="setup__switch-container" style="margin: 16px 0 0 0;">
-              <label class="setup__switch">
-                <input type="checkbox" v-model="autoStartRFID" />
-                <span class="setup__switch-slider"></span>
-              </label>
-              <span class="setup__switch-label">Auto-Start RFID on Load</span>
+              <input 
+                :value="periodStartTimes[p]" 
+                type="time" 
+                class="setup__input" 
+                @change="e => {
+                  const updated = { ...periodStartTimes, [p]: e.target.value };
+                  updatePeriodStartTimes(updated);
+                }" 
+              />
             </div>
           </div>
-          
+          <button class="setup__btn-ghost setup__btn--full" style="margin-top: 1rem" @click="onAddPeriod">
+            <Plus :size="14" /> Add Period
+          </button>
         </div>
-      </div>
+
+        <!-- Attendance & Door Station Settings -->
+        <div class="setup__card" id="sec-attendance-cloud">
+          <h2 class="setup__card-title">
+            <GraduationCap :size="18" /> Attendance & Door Station Settings
+          </h2>
+          <p class="setup__hint">Configure how daily student attendance is registered and set up a secondary scanning station at your door.</p>
+          
+          <div class="setup__settings-grid">
+            
+            <!-- Left Column: Attendance Mode -->
+            <div class="setup__settings-col setup__settings-col--left">
+              <h3 class="setup__card-subtitle" style="margin-top: 0; margin-bottom: 4px;">Attendance Tracking Mode</h3>
+              <div :key="radioGroupKey" class="setup__attendance-modes" style="display: flex; flex-direction: column; gap: 12px; margin-top: 4px;">
+                <label class="setup__label setup__label--radio" style="display: flex; flex-direction: row; align-items: center; gap: 8px; cursor: pointer; font-weight: 600; margin: 0;">
+                  <input type="radio" name="attendanceMode" :checked="localAttendanceMode === 'natural'" value="natural" @change="onAttendanceModeChange('natural')" style="margin: 0; cursor: pointer;" />
+                  <span>Natural Mode (Present by default)</span>
+                </label>
+                <label class="setup__label setup__label--radio" style="display: flex; flex-direction: row; align-items: center; gap: 8px; cursor: pointer; font-weight: 600; margin: 0;">
+                  <input type="radio" name="attendanceMode" :checked="localAttendanceMode === 'rfid'" value="rfid" @change="onAttendanceModeChange('rfid')" style="margin: 0; cursor: pointer;" />
+                  <span>RFID/QR Sign-In Mode (All start absent)</span>
+                </label>
+              </div>
+              
+              <div v-if="localAttendanceMode === 'rfid'" class="setup__grace-period" style="margin-top: 8px;">
+                <label class="setup__label" style="display: flex; flex-direction: column; gap: 6px; margin: 0;">
+                  Lateness Grace Period: <strong>{{ localGracePeriod }} minutes</strong>
+                  <input type="range" v-model.number="localGracePeriod" min="0" max="15" step="1" @change="saveAttendanceConfig" style="width: 100%; cursor: pointer; margin: 0;" />
+                </label>
+              </div>
+
+              <!-- Show/Hide Kiosk Scanner Toggle -->
+              <div class="setup__switch-container" style="margin-top: 14px; padding-top: 10px; border-top: 1px solid var(--border);">
+                <label class="setup__switch">
+                  <input type="checkbox" v-model="localShowScannerButton" @change="saveScannerConfig" />
+                  <span class="setup__switch-slider"></span>
+                </label>
+                <span class="setup__switch-label">Show Kiosk Scanner on Dashboard</span>
+              </div>
+
+              <!-- Manual Override Reset -->
+              <div v-if="activeClass" class="setup__attendance-actions" style="margin-top: auto; padding-top: 12px; border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 4px;">
+                <span style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 600;">Emergency Override</span>
+                <button class="setup__btn-ghost" style="height: 36px; padding: 0 16px; font-size: 0.85rem; min-height: unset; width: 100%; margin: 0;" @click="onMarkAllPresent">
+                  Mark All Present in {{ activeClass.name }}
+                </button>
+              </div>
+            </div>
+            
+            <!-- Right Column: Dedicated Door Station -->
+            <div class="setup__settings-col">
+              <h3 class="setup__card-subtitle" style="margin-top: 0; margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">
+                Dedicated Door Station (Two-Device Sync)
+                <span class="setup__tooltip-container" aria-label="Database Inactivity Warning">
+                  <Info :size="14" class="setup__info-icon" />
+                  <span class="setup__tooltip-text">
+                    <strong>Inactivity Note:</strong> Supabase pauses free databases after 7 days of idle time (like Summer/Winter breaks). If it stops working, simply log into your Supabase Dashboard and click "Restore Project" to wake it up!
+                  </span>
+                </span>
+              </h3>
+              <p class="setup__hint" style="margin: 0; font-size: 0.8rem; line-height: 1.4;">
+                Enable Cloud Mode to run a dedicated scanner at your classroom door (on a Chromebook, tablet, or second computer) for automated check-ins and hall/washroom passes.
+              </p>
+              
+              <div class="setup__switch-container" style="margin: 8px 0 0 0;">
+                <label class="setup__switch">
+                  <input type="checkbox" v-model="localCloudMode" @change="saveCloudConfig" />
+                  <span class="setup__switch-slider"></span>
+                </label>
+                <span class="setup__switch-label">Enable Cloud Door Station</span>
+              </div>
+              
+              <label class="setup__label" v-if="localCloudMode" style="display: flex; flex-direction: column; gap: 6px; margin: 4px 0 0 0;">
+                User Code (Room PIN / Teacher ID)
+                <div style="display: flex; gap: 8px; align-items: center; width: 100%;">
+                  <input type="text" v-model="localUserCode" readonly class="setup__input" style="margin: 0; flex-grow: 1; cursor: default;" />
+                  <button type="button" class="setup__btn-ghost" @click="regenerateUserCode" style="min-height: 44px; padding: 0 16px; margin: 0; white-space: nowrap; display: flex; align-items: center; gap: 6px;" title="Generate random unique code">
+                    <RefreshCcw :size="14" /> Generate
+                  </button>
+                </div>
+                <span style="font-size: 0.75rem; color: var(--text-secondary); font-weight: normal; margin-top: 2px; line-height: 1.3;">
+                  We recommend using a unique auto-generated code (e.g. <strong>B7F-K9X</strong>) to prevent conflicts with other classrooms.
+                </span>
+              </label>
+
+              <div v-if="localCloudMode" class="setup__link-box">
+                <span class="setup__link-title">
+                  <ExternalLink :size="14" /> Door Scanner URL
+                </span>
+                <span class="setup__link-text">
+                  Open this link on your dedicated door machine and enter your User Code:
+                </span>
+                <div class="setup__link-input-group">
+                  <input type="text" :value="scanStationUrl" readonly class="setup__input" style="margin: 0; flex-grow: 1; cursor: text; font-family: monospace; font-size: 0.8rem;" @click="$event.target.select()" />
+                  <button type="button" class="setup__btn-ghost" @click="copyScanStationUrl" style="min-height: 44px; padding: 0 16px; margin: 0; white-space: nowrap; display: flex; align-items: center; gap: 6px; font-size: 0.85rem;" :title="urlCopied ? 'Copied' : 'Copy URL'">
+                    <Check v-if="urlCopied" :size="14" style="color: var(--state-success);" />
+                    <Copy v-else :size="14" />
+                    {{ urlCopied ? 'Copied!' : 'Copy' }}
+                  </button>
+                </div>
+              </div>
+
+              <div class="setup__switch-container" style="margin: 16px 0 0 0;">
+                <label class="setup__switch">
+                  <input type="checkbox" v-model="autoStartRFID" />
+                  <span class="setup__switch-slider"></span>
+                </label>
+                <span class="setup__switch-label">Auto-Start RFID on Load</span>
+              </div>
+            </div>
+            
+          </div>
+        </div>
 
       <!-- Attendance Mode Change Confirmation Modal -->
       <div v-if="isAttendanceModeModalOpen" class="setup__dialog" role="dialog" aria-modal="true" aria-labelledby="att-modal-title">
@@ -645,7 +624,19 @@
     </section>
 
     <!-- ══════════════════════════════════════════════════════════ -->
-    <!-- PILLAR 4: Data Management                                 -->
+    <!-- PILLAR 4: Calendar Manager                                -->
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <section v-else-if="activeTab === 'calendar'" class="setup__panel">
+      <div class="setup__layout">
+        <SetupQuickJumpNav :activeTab="activeTab" />
+        <div class="setup__main-content">
+          <CalendarSettings />
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <!-- PILLAR 5: Backup & Data Management                        -->
     <!-- ══════════════════════════════════════════════════════════ -->
     <section v-else-if="activeTab === 'data'" class="setup__panel">
       <div class="setup__layout">
@@ -756,6 +747,8 @@ const {
   selectedSemester,
   filteredClassList,
   filteredArchivedClasses,
+  modeAllClasses,
+  modeAllArchivedClasses,
   bulkImportClasses,
   importRoster,
   moveStudentFromClass,
@@ -864,11 +857,11 @@ const props = defineProps({
 const emit = defineEmits(['navigate'])
 
 const setupTabs = [
-  { id: 'manage',   label: 'Class Manager',  icon: LayoutDashboard },
-  { id: 'active',   label: 'Class Settings', icon: Zap },
-  { id: 'calendar', label: 'Calendar',       icon: CalendarDays },
+  { id: 'manage',   label: 'Class Setup',    icon: LayoutDashboard },
+  { id: 'active',   label: 'Active Class',   icon: Zap },
   { id: 'app',      label: 'App Settings',   icon: Settings },
-  { id: 'data',     label: 'Data',           icon: Database },
+  { id: 'calendar', label: 'Calendar',       icon: CalendarDays },
+  { id: 'data',     label: 'Backup & Data',  icon: Database },
 ]
 
 const tabMap = { 
@@ -876,12 +869,18 @@ const tabMap = {
   'roster': 'active', 
   'gradebook': 'active', 
   'codes': 'app', 
-  'backup': 'app' 
+  'backup': 'data' 
 }
 const activeTab = ref(tabMap[props.tab] || 'manage')
 
+const activeClassSubtab = computed(() => {
+  if (props.tab === 'gradebook') return 'grading'
+  if (props.tab === 'roster') return 'students'
+  return 'logistics'
+})
+
 watch(() => props.tab, (newTab) => {
-  if (newTab) activeTab.value = newTab
+  if (newTab) activeTab.value = tabMap[newTab] || newTab
 })
 
 const newClass = reactive({ 

@@ -1,7 +1,7 @@
 <template>
   <div class="behavior-settings">
     <!-- Behavior Thresholds Strategy Card -->
-    <div class="setup__card">
+    <div class="setup__card" id="sec-app-behavior">
       <h2 class="setup__card-title">Behavior Strategy Warnings</h2>
       <p class="setup__hint">
         Define weekly limits for student washroom trips and mobile devices. 

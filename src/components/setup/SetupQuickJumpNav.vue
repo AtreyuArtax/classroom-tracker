@@ -38,17 +38,17 @@ const props = defineProps({
 const KNOWN_TAB_SECTIONS = {
   active: [
     { id: 'sec-gen-info', title: 'General Info' },
+    { id: 'sec-elem-subjects', title: 'Elementary Subjects' },
     { id: 'sec-seating', title: 'Seating Plan' },
     { id: 'sec-roster', title: 'Roster' },
-    { id: 'sec-framework', title: 'Assessment Framework' },
-    { id: 'sec-buckets', title: 'Grade Buckets' },
-    { id: 'sec-behavior', title: 'Behavior Strategy' }
+    { id: 'sec-grading-model', title: 'Grading System' },
+    { id: 'sec-framework', title: 'Assessment Framework' }
   ],
   manage: [
     { id: 'sec-bulk', title: 'Bulk Setup' },
+    { id: 'sec-create', title: 'Create Single Class' },
     { id: 'sec-classes', title: 'All Classes' },
-    { id: 'sec-archived', title: 'Archived Classes' },
-    { id: 'sec-create', title: 'Create Single Class' }
+    { id: 'sec-archived', title: 'Archived Classes' }
   ],
   calendar: [
     { id: 'sec-calendar-boundaries', title: 'School Year & Semester' },
@@ -59,12 +59,14 @@ const KNOWN_TAB_SECTIONS = {
     { id: 'sec-app-buckets', title: 'Grade Buckets' },
     { id: 'sec-app-behavior', title: 'Behavior Strategy' },
     { id: 'sec-period-times', title: 'Period Start Times' },
-    { id: 'sec-attendance-cloud', title: 'Attendance & Cloud' }
+    { id: 'sec-attendance-cloud', title: 'Attendance & Door Station' }
   ],
   data: [
+    { id: 'sec-sync', title: 'Local Folder Sync' },
+    { id: 'sec-snapshots', title: 'Safety Snapshots' },
     { id: 'sec-backup', title: 'Backup & Restore' },
-    { id: 'sec-export', title: 'Export Options' },
-    { id: 'sec-maintenance', title: 'Reset & Maintenance' }
+    { id: 'sec-health', title: 'Data Health Scanner' },
+    { id: 'sec-danger', title: 'Danger Zone' }
   ]
 }
 

@@ -1,27 +1,8 @@
 <template>
   <div class="database-maintenance" style="display: flex; flex-direction: column; gap: 24px;">
     
-    <!-- Excel Export -->
-    <div class="setup__card">
-      <h2 class="setup__card-title"><FileSpreadsheet :size="20" /> Excel Export</h2>
-      <p class="setup__hint">
-        Generate a professional Gradebook export for <strong>{{ activeClass?.name || 'the selected class' }}</strong>.
-      </p>
-      <button 
-        class="setup__btn-primary" 
-        :disabled="!activeClass"
-        @click="handleExportExcel"
-        style="display: flex; align-items: center; justify-content: center; gap: 8px;"
-      >
-        <Download :size="18" /> Export {{ activeClass?.name }} to Excel (.xlsx)
-      </button>
-      <div v-if="exportMsg" class="setup__inline-banner setup__inline-banner--warning" style="margin-top: 10px;">
-        <span>{{ exportMsg }}</span>
-      </div>
-    </div>
-
-    <!-- Quick Sync (Local Folder) -->
-    <div class="setup__card">
+    <!-- 1. Quick Sync (Local Folder) -->
+    <div class="setup__card" id="sec-sync">
       <h2 class="setup__card-title"><RefreshCcw :size="20" /> Local Folder Sync</h2>
       <p class="setup__hint">
         Automate backups by linking a local folder (e.g., your OneDrive or Google Drive folder). 
@@ -52,25 +33,8 @@
       <p v-if="syncMsg" class="setup__result-ok" style="margin-top: 8px;">{{ syncMsg }}</p>
     </div>
 
-    <!-- Manual Backup & Restore -->
-    <div class="setup__card">
-      <h2 class="setup__card-title"><DatabaseIcon :size="20" /> Manual Backup & Restore</h2>
-      <p class="setup__hint">
-        Download a full snapshot of your database (all classes, students, and events) as a JSON file.
-      </p>
-      <div class="setup__grid-actions" style="margin-top: 0; display: flex; gap: 8px;">
-        <button class="setup__btn-primary" @click="doExport">Download JSON Backup</button>
-        <button class="setup__btn-ghost" @click="$refs.backupFileInput.click()">Restore from File</button>
-      </div>
-      <input ref="backupFileInput" type="file" accept=".json" class="setup__file-input" style="display: none;" @change="onBackupFileSelected" />
-      
-      <div v-if="restoreMsg" class="setup__msg" :class="{ 'setup__error': restoreMsg.startsWith('❌') }" style="margin-top: 1rem; text-align: center; font-weight: 600;">
-        {{ restoreMsg }}
-      </div>
-    </div>
-
-    <!-- Emergency Safety Snapshots -->
-    <div class="setup__card">
+    <!-- 2. Emergency Safety Snapshots -->
+    <div class="setup__card" id="sec-snapshots">
       <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; flex-wrap: wrap; gap: 8px;">
         <h2 class="setup__card-title" style="margin-bottom: 0;"><History :size="20" /> Emergency Safety Snapshots</h2>
         <button class="setup__pill-btn" @click="onTakeSafetySnapshot" style="display: flex; align-items: center; gap: 4px;">
@@ -115,8 +79,25 @@
       </div>
     </div>
 
-    <!-- Data Health Audit -->
-    <div class="setup__card">
+    <!-- 3. Manual Backup & Restore -->
+    <div class="setup__card" id="sec-backup">
+      <h2 class="setup__card-title"><DatabaseIcon :size="20" /> Manual Backup & Restore</h2>
+      <p class="setup__hint">
+        Download a full snapshot of your database (all classes, students, and events) as a JSON file.
+      </p>
+      <div class="setup__grid-actions" style="margin-top: 0; display: flex; gap: 8px;">
+        <button class="setup__btn-primary" @click="doExport">Download JSON Backup</button>
+        <button class="setup__btn-ghost" @click="$refs.backupFileInput.click()">Restore from File</button>
+      </div>
+      <input ref="backupFileInput" type="file" accept=".json" class="setup__file-input" style="display: none;" @change="onBackupFileSelected" />
+      
+      <div v-if="restoreMsg" class="setup__msg" :class="{ 'setup__error': restoreMsg.startsWith('❌') }" style="margin-top: 1rem; text-align: center; font-weight: 600;">
+        {{ restoreMsg }}
+      </div>
+    </div>
+
+    <!-- 4. Data Health Audit -->
+    <div class="setup__card" id="sec-health">
       <h2 class="setup__card-title"><ShieldCheck :size="20" /> Data Health Scanner</h2>
       <p class="setup__hint">
         Scan your internal database for "orphaned" records (e.g. marks from a deleted quiz) or legacy data issues.
@@ -182,8 +163,8 @@
       <p v-if="auditMsg" class="setup__result-ok" style="margin-top: 8px;">{{ auditMsg }}</p>
     </div>
 
-    <!-- Maintenance / Danger Zone -->
-    <div class="setup__card setup__card--danger">
+    <!-- 5. Maintenance / Danger Zone -->
+    <div class="setup__card setup__card--danger" id="sec-danger">
       <h2 class="setup__card-title"><AlertTriangle :size="20" /> Danger Zone</h2>
       <p class="setup__hint">Actions that can permanently delete data.</p>
       <button class="setup__btn-danger" @click="onClearAllData">
@@ -223,12 +204,9 @@ import * as classService from '../../db/classService.js'
 import * as eventService from '../../db/eventService.js'
 import * as settingsService from '../../db/settingsService.js'
 import * as gradebookService from '../../db/gradebookService.js'
-import { exportGradebookToExcel } from '../../db/exportService.js'
 import { formatLocalDate } from '../../utils/dates.js'
 
 import { 
-  FileSpreadsheet, 
-  Download, 
   RefreshCcw, 
   Cloud, 
   X, 
@@ -244,68 +222,6 @@ import {
 const { activeClass, teacherName, init } = useClassroom()
 const { confirm, alert } = useMessage()
 
-// --- Excel Export ---
-async function handleExportExcel() {
-  if (!activeClass.value) return
-  
-  try {
-    const record = await classService.getClass(activeClass.value.classId)
-    if (!record) throw new Error('No class data found for this class.')
-    
-    const events = await eventService.getEventsByClass(activeClass.value.classId)
-    const classGrades = await gradebookService.calculateClassGrades(activeClass.value)
-    
-    const roster = Object.entries(record.students || {})
-      .filter(([_, s]) => !s.archived)
-      .map(([studentId, s]) => ({ studentId, ...s }))
-      .sort((a, b) => a.lastName.localeCompare(b.lastName) || a.firstName.localeCompare(b.firstName))
-
-    const assessments = await gradebookService.getAssessmentsByClass(activeClass.value.classId)
-    const rawGrades = await gradebookService.getGradesByClass(activeClass.value.classId)
-    
-    const gradeMap = {}
-    rawGrades.forEach(g => {
-      if (!gradeMap[g.assessmentId]) gradeMap[g.assessmentId] = {}
-      const earned = gradebookService.resolveAttemptScore(g.attempts, 'highest') 
-      gradeMap[g.assessmentId][g.studentId] = {
-        ...g,
-        score: earned
-      }
-    })
-
-    const summaryArray = roster.map(student => {
-      const studentId = student.studentId
-      const summary = classGrades[studentId] || {}
-      const studentEvents = events.filter(e => e.studentId === studentId && !e.superseded)
-      const absences = studentEvents.filter(e => e.code === 'a').length
-      const lates = studentEvents.filter(e => e.code === 'l').length
-
-      return {
-        ...summary,
-        studentId,
-        firstName: student.firstName || '',
-        lastName: student.lastName || '',
-        absences,
-        lates
-      }
-    })
-
-    await exportGradebookToExcel({
-      className: activeClass.value.name,
-      teacherName: teacherName.value,
-      students: roster,
-      assessments,
-      gradeMap,
-      summaryData: summaryArray,
-      categories: record.gradebookCategories || []
-    })
-  } catch (err) {
-    console.error('Excel Export Error:', err)
-    exportMsg.value = 'Failed to export Excel: ' + err.message
-  }
-}
-
-const exportMsg = ref('')
 const backupMsg = ref('')
 const restoreMsg = ref('')
 const syncMsg = ref('')
