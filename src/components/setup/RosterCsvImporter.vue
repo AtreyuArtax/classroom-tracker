@@ -443,10 +443,17 @@ function onSectionMappingChanged(group) {
       s.courseCode = custom || rawKey
     }
   }
-  const customSections = Object.values(group.sectionMappings).map(tag => tag.trim()).filter(Boolean)
-  if (customSections.length > 0) {
-    group.courseSections = [...new Set(customSections)]
+  const customSections = [...new Set(Object.values(group.sectionMappings).map(tag => tag.trim()).filter(Boolean))]
+  if (customSections.length > 1) {
+    group.isSplitClass = true
+    group.courseSections = customSections
     group.courseCode = group.courseSections.join('/')
+  } else {
+    group.isSplitClass = false
+    group.courseSections = customSections
+    if (customSections.length === 1) {
+      group.courseCode = customSections[0]
+    }
   }
 }
 

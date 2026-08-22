@@ -422,15 +422,16 @@ async function deleteExpectation(unit, expectationId) {
 const activeCourseSection = ref('')
 
 const availableCourseSections = computed(() => {
-  if (!activeClass.value) return []
-  if (activeClass.value.courseSections && activeClass.value.courseSections.length > 1) {
-    return activeClass.value.courseSections
-  }
+  if (!activeClass.value || activeClass.value.classType === 'elementary') return []
   const codes = new Set()
   if (activeClass.value.students) {
     Object.values(activeClass.value.students).forEach(st => {
-      if (st.courseCode && !st.archived) codes.add(st.courseCode)
+      if (st.courseCode && !st.archived && st.courseCode.trim()) codes.add(st.courseCode.trim())
     })
+  }
+  if (activeClass.value.courseSections && activeClass.value.courseSections.length > 1) {
+    const valid = activeClass.value.courseSections.filter(s => codes.has(s))
+    if (valid.length > 1) return valid
   }
   if (codes.size <= 1) return []
   return Array.from(codes).sort()

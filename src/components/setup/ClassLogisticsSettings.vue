@@ -129,7 +129,7 @@
           </div>
 
           <!-- Sub-Cohort / Section Tag Editor (Secondary Mode Only) -->
-          <div v-if="activeClass.classType !== 'elementary' && availableClassSections.length > 0" class="setup__section-editor-container" style="margin-top: 16px; padding-top: 12px; border-top: 1px dashed var(--border);">
+          <div v-if="activeClass.classType !== 'elementary' && availableClassSections.length > 1" class="setup__section-editor-container" style="margin-top: 16px; padding-top: 12px; border-top: 1px dashed var(--border);">
             <label class="setup__label" style="margin-bottom: 6px;">
               Section / Sub-Cohort Badges
               <span class="setup__hint" style="display: block; font-weight: 400; margin-top: 2px;">
@@ -881,18 +881,20 @@ const isDesignerModalOpen = ref(false)
 const detectedGradeLevel = computed(() => getEffectiveGradeLevel(activeClass.value))
 
 const availableClassSections = computed(() => {
-  if (!activeClass.value) return []
-  if (activeClass.value.courseSections && activeClass.value.courseSections.length > 0) {
-    return activeClass.value.courseSections
-  }
+  if (!activeClass.value || activeClass.value.classType === 'elementary') return []
+  const studentSections = new Set()
   if (activeClass.value.students) {
-    const set = new Set()
     for (const s of Object.values(activeClass.value.students)) {
-      if (s.courseCode) set.add(s.courseCode)
+      if (!s.archived && s.courseCode && s.courseCode.trim()) {
+        studentSections.add(s.courseCode.trim())
+      }
     }
-    return Array.from(set).filter(Boolean)
   }
-  return []
+  if (activeClass.value.courseSections && activeClass.value.courseSections.length > 1) {
+    const valid = activeClass.value.courseSections.filter(sec => studentSections.has(sec))
+    if (valid.length > 1) return valid
+  }
+  return Array.from(studentSections).sort()
 })
 
 const sectionTagInputs = reactive({})

@@ -84,6 +84,10 @@ export async function removeStudent(studentId) {
         const clsInList = classList.value.find(c => c.classId === classId)
         if (clsInList?.students?.[studentId]) {
             delete clsInList.students[studentId]
+            classService.syncClassSections(clsInList)
+        }
+        if (activeClass.value) {
+            classService.syncClassSections(activeClass.value)
         }
         triggerRef(activeClass)
     } catch (err) {
@@ -119,6 +123,10 @@ export async function archiveStudent(studentId) {
         if (clsInList?.students?.[studentId]) {
             clsInList.students[studentId].archived = true
             clsInList.students[studentId].seat = null
+            classService.syncClassSections(clsInList)
+        }
+        if (activeClass.value) {
+            classService.syncClassSections(activeClass.value)
         }
 
         triggerRef(activeClass)
@@ -152,6 +160,10 @@ export async function unarchiveStudent(studentId) {
         const clsInList = classList.value.find(c => c.classId === classId)
         if (clsInList?.students?.[studentId]) {
             clsInList.students[studentId].archived = false
+            classService.syncClassSections(clsInList)
+        }
+        if (activeClass.value) {
+            classService.syncClassSections(activeClass.value)
         }
 
         triggerRef(activeClass)
@@ -183,6 +195,10 @@ export async function permanentlyDeleteStudent(studentId) {
         const clsInList = classList.value.find(c => c.classId === classId)
         if (clsInList?.students?.[studentId]) {
             delete clsInList.students[studentId]
+            classService.syncClassSections(clsInList)
+        }
+        if (activeClass.value) {
+            classService.syncClassSections(activeClass.value)
         }
         
         triggerRef(activeClass)

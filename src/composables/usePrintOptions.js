@@ -37,18 +37,12 @@ export function usePrintOptions(classRecordRef, initialCohortRef = 'all') {
     const cohorts = new Set()
     const isElem = isElementary.value
 
-    if (!isElem && cls.courseSections && Array.isArray(cls.courseSections) && cls.courseSections.length > 0) {
-      cls.courseSections.forEach(sec => {
-        if (sec) cohorts.add(sec)
-      })
-    }
-
     Object.values(cls.students).forEach(st => {
       if (st.archived) return
       const tag = isElem 
         ? (getStudentEffectiveGrade(st, cls.activeSubjectId) || st.gradeLevel)
         : st.courseCode
-      if (tag) cohorts.add(tag)
+      if (tag && tag.trim()) cohorts.add(tag.trim())
     })
 
     if (cohorts.size <= 1) return ['all']

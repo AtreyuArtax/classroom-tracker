@@ -240,8 +240,8 @@
     "semantic_hash": "68f077cda9561ec51fbe56d0aa61fb3e"
   },
   "src/composables/useClassroom.js": {
-    "mtime": 1787370408.9487255,
-    "ast_hash": "aa29a6fe8a1e530e01d7c567b319a976",
+    "mtime": 1787398244.7308035,
+    "ast_hash": "2bd265edd9e5174604d2f6c522a02e58",
     "semantic_hash": ""
   },
   "src/composables/useGradebook.js": {
@@ -275,8 +275,8 @@
     "semantic_hash": ""
   },
   "src/db/classService.js": {
-    "mtime": 1787367434.1827698,
-    "ast_hash": "f4f066c65cc74c23a1e1010005a457f6",
+    "mtime": 1787398227.8552256,
+    "ast_hash": "9f7b9f805d8c93cb1c66689072a5456f",
     "semantic_hash": ""
   },
   "src/db/eventService.js": {
@@ -390,8 +390,8 @@
     "semantic_hash": ""
   },
   "src/components/GradesGrid.vue": {
-    "mtime": 1786965251.11484,
-    "ast_hash": "39203732aaea391534e9fbbcd7fd202c",
+    "mtime": 1787398272.835891,
+    "ast_hash": "2b9eca9a142e3e9038c76c01f28de3a5",
     "semantic_hash": ""
   },
   "src/components/dossier/StudentAcademicsTab.vue": {
@@ -400,8 +400,8 @@
     "semantic_hash": ""
   },
   "src/components/setup/AssessmentFrameworkSettings.vue": {
-    "mtime": 1787369072.4535463,
-    "ast_hash": "7a5480902a80b9df8fc00a5dbbf68b1e",
+    "mtime": 1787398267.0580795,
+    "ast_hash": "61afd994b24292ff5f40637563b3f6ac",
     "semantic_hash": ""
   },
   "src/composables/useGradeEditing.js": {
@@ -425,8 +425,8 @@
     "semantic_hash": ""
   },
   "src/components/setup/RosterCsvImporter.vue": {
-    "mtime": 1786960471.2159474,
-    "ast_hash": "e71354bef510224282fa87cd09d75024",
+    "mtime": 1787398286.3472548,
+    "ast_hash": "73fa30d0a1196f7ade466c4ba82aa9f0",
     "semantic_hash": ""
   },
   "src/composables/useAttendanceTracker.js": {
@@ -440,13 +440,13 @@
     "semantic_hash": ""
   },
   "src/composables/useRosterOperations.js": {
-    "mtime": 1787359328.4767067,
-    "ast_hash": "d732cbdf867f5d25dc5a4b0aaf09e22f",
+    "mtime": 1787398252.7712376,
+    "ast_hash": "262b2d0add90e75c30897454062483e2",
     "semantic_hash": ""
   },
   "src/components/setup/ClassLogisticsSettings.vue": {
-    "mtime": 1787369023.835002,
-    "ast_hash": "a5c1b543456559ea6a734e2c572221d4",
+    "mtime": 1787398261.12122,
+    "ast_hash": "b791521a018852513e37e6d721b03373",
     "semantic_hash": ""
   },
   "src/components/setup/DatabaseMaintenanceSettings.vue": {
@@ -760,8 +760,8 @@
     "semantic_hash": ""
   },
   "src/composables/usePrintOptions.js": {
-    "mtime": 1787362015.993124,
-    "ast_hash": "334a6954b3c011984f85f5a46516dd17",
+    "mtime": 1787398279.4026618,
+    "ast_hash": "74f5410b3e955098e2fd99f25e1c5742",
     "semantic_hash": ""
   },
   "new_expectations/ontario-sch3u-success-criteria.json": {

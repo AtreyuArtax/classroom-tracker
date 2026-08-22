@@ -597,12 +597,9 @@ const cleanUnitPillName = cleanUnitName
 
 const availableCourseFilters = computed(() => {
   const codes = new Set()
-  if (activeClassRecord.value?.courseSections) {
-    activeClassRecord.value.courseSections.forEach(c => codes.add(c))
-  }
   if (activeClassRecord.value?.students) {
     Object.values(activeClassRecord.value.students).forEach(st => {
-      if (st.courseCode && !st.archived) codes.add(st.courseCode)
+      if (st.courseCode && !st.archived && st.courseCode.trim()) codes.add(st.courseCode.trim())
     })
   }
   if (codes.size <= 1) return []

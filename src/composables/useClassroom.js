@@ -794,6 +794,20 @@ async function updateActiveClass(updates) {
         if (key === 'gridSize') {
             gridSize.value = val
         }
+        // Special case: if students is updated, sync the global students ref and class sections
+        if (key === 'students') {
+            students.value = JSON.parse(JSON.stringify(val))
+            classService.syncClassSections(updated)
+            activeClass.value.isSplitClass = updated.isSplitClass
+            activeClass.value.courseSections = updated.courseSections
+            activeClass.value.courseCode = updated.courseCode
+            if (cls) {
+                cls.isSplitClass = updated.isSplitClass
+                cls.courseSections = updated.courseSections
+                cls.courseCode = updated.courseCode
+            }
+            triggerRef(students)
+        }
     }
     if (fresh.classType === 'elementary' && hasSubjectKeys) {
         activeClass.value.subjects = fresh.subjects
@@ -868,6 +882,7 @@ async function importRoster(parsedRows, targetClassId = null) {
                 firstName,
                 lastName,
                 gradeLevel: parsedG,
+                courseCode: row.courseCode || '',
                 parentContacts: row.parentContacts || [],
                 studentEmail: row.studentEmail || '',
                 custody: row.custody || '',
@@ -875,6 +890,7 @@ async function importRoster(parsedRows, targetClassId = null) {
                 birthDate: row.birthDate || '',
                 seat: null,
                 generalNote: '',
+                rfidTag: row.rfidTag || '',
                 activeStates: { isOut: false, outTime: null },
                 excludeFromAnalytics: false,
             }
@@ -885,7 +901,11 @@ async function importRoster(parsedRows, targetClassId = null) {
         }
     }
 
-    if (classId === activeClass.value?.classId) {
+    classService.syncClassSections(cls)
+    if (isActive) {
+        activeClass.value.isSplitClass = cls.isSplitClass
+        activeClass.value.courseSections = cls.courseSections
+        activeClass.value.courseCode = cls.courseCode
         triggerRef(students)
         triggerRef(activeClass)
     }
@@ -1567,6 +1587,15 @@ async function _activateClass(cls) {
                 needsSave = true
             }
         }
+    }
+
+    // Auto-heal / sync sections if stale
+    const prevSplit = cls.isSplitClass
+    const prevSecs = JSON.stringify(cls.courseSections || [])
+    const prevCode = cls.courseCode
+    classService.syncClassSections(cls)
+    if (cls.isSplitClass !== prevSplit || JSON.stringify(cls.courseSections || []) !== prevSecs || cls.courseCode !== prevCode) {
+        needsSave = true
     }
 
     if (needsSave) {

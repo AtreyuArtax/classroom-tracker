@@ -25,13 +25,62 @@ import { CURRENT_SCHEMA } from './migrations.js'
 // ─── public API ───────────────────────────────────────────────────────────────
 
 /**
+ * Synchronizes a class's isSplitClass, courseSections, and courseCode based on
+ * the active (non-archived) students in the class.
+ *
+ * @param {Object} cls The class object to sync in-place
+ * @returns {Object} The updated class object
+ */
+export function syncClassSections(cls) {
+    if (!cls || !cls.students) return cls
+    if (cls.classType === 'elementary') {
+        cls.isSplitClass = false
+        cls.courseSections = []
+        return cls
+    }
+
+    const uniqueCourses = new Set(
+        Object.values(cls.students)
+            .filter(s => !s.archived && s.courseCode && s.courseCode.trim())
+            .map(s => s.courseCode.trim())
+    )
+
+    if (uniqueCourses.size > 1) {
+        cls.isSplitClass = true
+        cls.courseSections = Array.from(uniqueCourses).sort()
+    } else if (uniqueCourses.size === 1) {
+        cls.isSplitClass = false
+        cls.courseSections = Array.from(uniqueCourses)
+        if (cls.courseCode && cls.courseCode.includes('/')) {
+            cls.courseCode = Array.from(uniqueCourses)[0]
+        }
+    } else {
+        cls.isSplitClass = false
+        cls.courseSections = []
+    }
+    return cls
+}
+
+/**
  * Returns an array of all class records.
  *
  * @returns {Promise<Array<Object>>}
  */
 export async function getAllClasses() {
     const db = await getDB()
-    return db.getAll('classes')
+    const classes = await db.getAll('classes')
+    for (const cls of classes) {
+        if (cls && cls.students && cls.classType !== 'elementary') {
+            const prevSplit = cls.isSplitClass
+            const prevSecs = JSON.stringify(cls.courseSections || [])
+            const prevCode = cls.courseCode
+            syncClassSections(cls)
+            if (cls.isSplitClass !== prevSplit || JSON.stringify(cls.courseSections || []) !== prevSecs || cls.courseCode !== prevCode) {
+                await db.put('classes', JSON.parse(JSON.stringify(cls)))
+            }
+        }
+    }
+    return classes
 }
 
 /**
@@ -42,7 +91,17 @@ export async function getAllClasses() {
  */
 export async function getClass(classId) {
     const db = await getDB()
-    return db.get('classes', classId)
+    const cls = await db.get('classes', classId)
+    if (cls && cls.students && cls.classType !== 'elementary') {
+        const prevSplit = cls.isSplitClass
+        const prevSecs = JSON.stringify(cls.courseSections || [])
+        const prevCode = cls.courseCode
+        syncClassSections(cls)
+        if (cls.isSplitClass !== prevSplit || JSON.stringify(cls.courseSections || []) !== prevSecs || cls.courseCode !== prevCode) {
+            await db.put('classes', JSON.parse(JSON.stringify(cls)))
+        }
+    }
+    return cls
 }
 
 /**
@@ -54,6 +113,7 @@ export async function getClass(classId) {
  */
 export async function saveClass(classObj) {
     const db = await getDB()
+    syncClassSections(classObj)
     const plain = JSON.parse(JSON.stringify(classObj))
     await db.put('classes', plain)
     hasUnsyncedChanges.value = true
@@ -315,11 +375,7 @@ export async function importRoster(classId, studentsArray) {
         }
     }
 
-    const uniqueCourses = new Set(Object.values(cls.students).map(s => s.courseCode).filter(Boolean))
-    if (uniqueCourses.size > 1) {
-        cls.isSplitClass = true
-        cls.courseSections = Array.from(uniqueCourses).sort()
-    }
+    syncClassSections(cls)
 
     const plain = JSON.parse(JSON.stringify(cls))
     await db.put('classes', plain)
@@ -356,6 +412,7 @@ export async function patchStudent(classId, studentId, updates) {
 
     // Shallow merge updates into the student record
     Object.assign(cls.students[studentId], updates)
+    syncClassSections(cls)
     
     const plain = JSON.parse(JSON.stringify(cls))
     await store.put(plain)
@@ -639,6 +696,7 @@ export async function archiveStudent(classId, studentId) {
 
     cls.students[studentId].archived = true
     cls.students[studentId].seat = null // remove from seating grid
+    syncClassSections(cls)
     const plain = JSON.parse(JSON.stringify(cls))
     await store.put(plain)
     await tx.done
@@ -661,6 +719,7 @@ export async function unarchiveStudent(classId, studentId) {
     if (!cls.students[studentId]) throw new Error(`Student not found: ${studentId}`)
 
     cls.students[studentId].archived = false
+    syncClassSections(cls)
     const plain = JSON.parse(JSON.stringify(cls))
     await store.put(plain)
     await tx.done
@@ -714,6 +773,7 @@ export async function permanentlyDeleteStudent(classId, studentId) {
     const cls = await classStore.get(classId)
     if (cls?.students?.[studentId]) {
         delete cls.students[studentId]
+        syncClassSections(cls)
         const plain = JSON.parse(JSON.stringify(cls))
         await classStore.put(plain)
     }
@@ -828,12 +888,7 @@ export async function bulkImportClasses(groups) {
             }
         }
 
-        const uniqueCourses = new Set(Object.values(cls.students).map(s => s.courseCode).filter(Boolean))
-        if (uniqueCourses.size > 1) {
-            cls.isSplitClass = true
-            cls.courseSections = Array.from(uniqueCourses).sort()
-            cls.courseCode = cls.courseSections.join('/')
-        }
+        syncClassSections(cls)
 
         const plain = JSON.parse(JSON.stringify(cls))
         await store.put(plain)
