@@ -5727,7 +5727,7 @@
       "label": "for()",
       "file_type": "code",
       "source_file": "src/components/setup/ClassLogisticsSettings.vue",
-      "source_location": "L901",
+      "source_location": "L931",
       "_origin": "ast",
       "id": "setup_classlogisticssettings_for",
       "community": 19,
@@ -5737,7 +5737,7 @@
       "label": "if()",
       "file_type": "code",
       "source_file": "src/components/setup/ClassLogisticsSettings.vue",
-      "source_location": "L933",
+      "source_location": "L963",
       "_origin": "ast",
       "id": "setup_classlogisticssettings_if",
       "community": 19,
@@ -32858,5 +32858,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "f9bfc497f09961eac491b1a6c40bce83ef6c239a"
+  "built_at_commit": "932380ff2eb9590b240a71780eafd192f073b1de"
 }

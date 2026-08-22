@@ -445,8 +445,8 @@
     "semantic_hash": ""
   },
   "src/components/setup/ClassLogisticsSettings.vue": {
-    "mtime": 1787399636.9875262,
-    "ast_hash": "c932f877b56ce480c4924c5beb000e95",
+    "mtime": 1787400278.2495296,
+    "ast_hash": "1a2496e597776aef89373dccfe80852d",
     "semantic_hash": ""
   },
   "src/components/setup/DatabaseMaintenanceSettings.vue": {

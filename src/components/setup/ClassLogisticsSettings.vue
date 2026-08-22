@@ -21,8 +21,9 @@
       <!-- 1. General Info -->
       <div class="setup__card" id="sec-gen-info">
         <h2 class="setup__card-title">General Info</h2>
-        <form class="setup__form">
-          <div class="setup__form-grid">
+        <form class="setup__form" style="margin-top: 8px;">
+          <!-- Secondary Mode Layout: Row 1 = Name, Code, Year/Sem | Row 2 = Period, Time, Notes -->
+          <div v-if="activeClass.classType !== 'elementary'" class="setup__gen-info-grid">
             <label class="setup__label">
               Class Name
               <input
@@ -34,7 +35,86 @@
               />
             </label>
 
-            <label v-if="activeClass.classType === 'elementary'" class="setup__label">
+            <label class="setup__label">
+              Course Code
+              <input
+                type="text"
+                v-model="localCourseCode"
+                class="setup__input"
+                placeholder="Optional"
+                @blur="saveCourseCode"
+                @keydown.enter="saveCourseCode"
+              />
+            </label>
+
+            <label class="setup__label">
+              School Year and Semester
+              <select
+                :value="activeClass.year + '|' + activeClass.semester"
+                class="setup__input"
+                @change="e => {
+                  const [y, s] = e.target.value.split('|');
+                  updateActiveClass({ year: y, semester: s });
+                }"
+              >
+                <option v-for="t in termOptions" :key="t.year + t.semester" :value="t.year + '|' + t.semester">
+                  {{ t.year }} Sem {{ t.semester }}
+                </option>
+              </select>
+            </label>
+
+            <label class="setup__label">
+              Period
+              <select
+                :value="activeClass.periodNumber"
+                class="setup__input"
+                @change="e => {
+                  const p = parseInt(e.target.value);
+                  const time = periodStartTimes[p] || activeClass.periodStartTime;
+                  updateActiveClass({ periodNumber: p, periodStartTime: time });
+                }"
+              >
+                <option v-for="opt in periodOptions" :key="opt" :value="opt">Period {{ opt }}</option>
+              </select>
+            </label>
+
+            <label class="setup__label">
+              Start Time
+              <input
+                type="time"
+                :value="activeClass.periodStartTime || '08:00'"
+                class="setup__input"
+                style="min-width: 140px;"
+                @change="e => updateActiveClass({ periodStartTime: e.target.value })"
+              />
+            </label>
+
+            <label class="setup__label">
+              Class Notes (Optional)
+              <textarea
+                v-model="localClassNotes"
+                class="setup__input setup__textarea--auto-grow"
+                rows="1"
+                placeholder="Room, reminders, or context..."
+                @blur="saveClassNotes"
+              ></textarea>
+            </label>
+          </div>
+
+          <!-- Elementary Mode Layout -->
+          <div v-else class="setup__gen-info-grid">
+            <label class="setup__label">
+              Class Name
+              <input
+                type="text"
+                v-model="localClassName"
+                class="setup__input"
+                @blur="saveClassName"
+                @keydown.enter="saveClassName"
+              />
+            </label>
+
+            <label class="setup__label">
               Grade Level
               <select
                 :value="activeClass.gradeLevel || detectedGradeLevel"
@@ -65,21 +145,9 @@
               </select>
             </label>
 
-            <label v-if="activeClass.classType !== 'elementary'" class="setup__label">
-              Course Code
-              <input
-                type="text"
-                v-model="localCourseCode"
-                class="setup__input"
-                placeholder="Optional"
-                @blur="saveCourseCode"
-                @keydown.enter="saveCourseCode"
-              />
-            </label>
             <label class="setup__label">
-              {{ activeClass.classType === 'elementary' ? 'School Year' : 'School Year and Semester' }}
+              School Year
               <select
-                v-if="activeClass.classType === 'elementary'"
                 :value="activeClass.year"
                 class="setup__input"
                 @change="e => updateActiveClass({ year: e.target.value })"
@@ -88,60 +156,22 @@
                   {{ y }}
                 </option>
               </select>
-              <select
-                v-else
-                :value="activeClass.year + '|' + activeClass.semester"
-                class="setup__input"
-                @change="e => {
-                  const [y, s] = e.target.value.split('|');
-                  updateActiveClass({ year: y, semester: s });
-                }"
-              >
-                <option v-for="t in termOptions" :key="t.year + t.semester" :value="t.year + '|' + t.semester">
-                  {{ t.year }} Sem {{ t.semester }}
-                </option>
-              </select>
             </label>
 
-            <label v-if="activeClass.classType !== 'elementary'" class="setup__label">
-              Period
-              <select
-                :value="activeClass.periodNumber"
-                class="setup__input"
-                @change="e => {
-                  const p = parseInt(e.target.value);
-                  const time = periodStartTimes[p] || activeClass.periodStartTime;
-                  updateActiveClass({ periodNumber: p, periodStartTime: time });
-                }"
-              >
-                <option v-for="opt in periodOptions" :key="opt" :value="opt">{{ opt }}</option>
-              </select>
-            </label>
-            <label v-if="activeClass.classType !== 'elementary'" class="setup__label">
-              Start Time
-              <input
-                type="time"
-                :value="activeClass.periodStartTime || '08:00'"
-                class="setup__input"
-                @change="e => updateActiveClass({ periodStartTime: e.target.value })"
-              />
-            </label>
-
-            <!-- Class Notes (Optional) -->
-            <label class="setup__label" style="grid-column: 1 / -1; margin-top: 4px;">
+            <label class="setup__label" style="grid-column: 1 / -1;">
               Class Notes (Optional)
               <textarea
                 v-model="localClassNotes"
-                class="setup__textarea"
-                rows="2"
-                placeholder="Class-specific notes, room reminders, or grading context..."
+                class="setup__input setup__textarea--auto-grow"
+                rows="1"
+                placeholder="Room number, reminders, or context..."
                 @blur="saveClassNotes"
               ></textarea>
             </label>
           </div>
 
           <!-- Sub-Cohort / Section Tag Editor (Secondary Mode Only) -->
-          <div v-if="activeClass.classType !== 'elementary' && availableClassSections.length > 1" class="setup__section-editor-container" style="margin-top: 16px; padding-top: 12px; border-top: 1px dashed var(--border);">
+          <div v-if="activeClass.classType !== 'elementary' && availableClassSections.length > 1" class="setup__section-editor-container" style="margin-top: 14px; padding-top: 10px; border-top: 1px dashed var(--border);">
             <label class="setup__label" style="margin-bottom: 6px;">
               Section / Sub-Cohort Badges
               <span class="setup__hint" style="display: block; font-weight: 400; margin-top: 2px;">
