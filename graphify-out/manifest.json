@@ -445,8 +445,8 @@
     "semantic_hash": ""
   },
   "src/components/setup/ClassLogisticsSettings.vue": {
-    "mtime": 1787400278.2495296,
-    "ast_hash": "1a2496e597776aef89373dccfe80852d",
+    "mtime": 1787439739.0344336,
+    "ast_hash": "714e78966f100b858f36920a349cd15f",
     "semantic_hash": ""
   },
   "src/components/setup/DatabaseMaintenanceSettings.vue": {
@@ -525,8 +525,8 @@
     "semantic_hash": ""
   },
   "src/components/setup/SetupQuickJumpNav.vue": {
-    "mtime": 1787399517.930645,
-    "ast_hash": "0edb988adfe16264450efcd00dd3cf5d",
+    "mtime": 1787439744.2438524,
+    "ast_hash": "c5d858d8c751737262722967bf573958",
     "semantic_hash": ""
   },
   "src/components/reports/ExpectationMasteryHeatmap.vue": {

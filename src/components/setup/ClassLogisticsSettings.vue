@@ -197,10 +197,7 @@
         </form>
       </div>
 
-      <!-- 2. Elementary Subjects Manager (Only shown when Elementary Mode is active) -->
-      <ElementarySubjectManager v-if="activeClass.classType === 'elementary'" style="margin-top: 1rem;" id="sec-elem-subjects" />
-
-      <!-- 3. Seating Plan & Layout Hero Card -->
+      <!-- 2. Seating Plan & Layout Hero Card -->
       <div class="setup__card" id="sec-seating">
         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
           <div style="flex: 1; min-width: 260px;">
@@ -466,21 +463,13 @@
         </div>
       </div>
 
-      <!-- 6. Secondary: Assessment Framework (Categories, Weights, Units & Expectations, Templates) -->
+      <!-- 5. Secondary: Assessment Framework (Categories, Weights, Units & Expectations, Templates) -->
       <template v-if="activeClass.classType !== 'elementary'">
         <AssessmentFrameworkSettings id="sec-framework" />
       </template>
 
-      <!-- 7. Elementary: Information note -->
-      <div v-else class="setup__card setup__card--accent" id="sec-elem-assessment">
-        <h2 class="setup__card-title" style="display: flex; align-items: center; gap: 8px;">
-          <Layers :size="18" /> Standards-Based Curriculum Active
-        </h2>
-        <p class="setup__hint" style="margin: 0;">
-          Elementary homerooms automatically track student progress against official Ontario Curriculum strands and expectations. 
-          Manage your active subjects and custom learning goals in the <strong>Elementary Subjects</strong> section above.
-        </p>
-      </div>
+      <!-- 5. Elementary: Subjects & Strands Manager -->
+      <ElementarySubjectManager v-else style="margin-top: 1rem;" id="sec-elem-subjects" />
 
     <!-- ── Student Entry Modal ─── -->
     <BaseModal

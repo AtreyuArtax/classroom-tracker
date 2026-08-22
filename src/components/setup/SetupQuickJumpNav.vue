@@ -38,11 +38,11 @@ const props = defineProps({
 const KNOWN_TAB_SECTIONS = {
   active: [
     { id: 'sec-gen-info', title: 'General Info' },
-    { id: 'sec-elem-subjects', title: 'Elementary Subjects' },
     { id: 'sec-seating', title: 'Seating Plan' },
     { id: 'sec-roster', title: 'Roster' },
     { id: 'sec-grading-model', title: 'Grading System' },
-    { id: 'sec-framework', title: 'Assessment Framework' }
+    { id: 'sec-framework', title: 'Assessment Framework' },
+    { id: 'sec-elem-subjects', title: 'Elementary Subjects' }
   ],
   manage: [
     { id: 'sec-classes', title: 'Active Classes' },
