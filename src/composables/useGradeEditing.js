@@ -15,6 +15,7 @@ import {
   activeClassRecord
 } from './useGradebook.js'
 import { useMessage } from './useMessage.js'
+import { formatLocalDate } from '../utils/dates.js'
 
 export function useGradeEditing(defaultStudentIdRef = null) {
   const { alert, confirm } = useMessage()
@@ -241,7 +242,7 @@ export function useGradeEditing(defaultStudentIdRef = null) {
     newAttemptForm.value = {
       assessmentId,
       points: null,
-      date: new Date().toISOString().slice(0, 10),
+      date: formatLocalDate(new Date()),
       comment: ''
     }
     contextMenu.value = null

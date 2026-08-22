@@ -254,9 +254,16 @@ export async function updateGradeFlags(assessmentId, studentId, flags) {
  * @param {string} studentId
  */
 export async function deleteGrade(assessmentId, studentId) {
+  if (assessmentId == null || !studentId) {
+    console.warn('deleteGrade aborted: missing assessmentId or studentId', { assessmentId, studentId })
+    return
+  }
+  const normAssessmentId = Number(assessmentId)
+  if (isNaN(normAssessmentId)) return
+
   const db = await getDB()
-  const existing = await db.getFromIndex('grades', 'by_assessmentAndStudent', [assessmentId, studentId])
-  if (existing) {
+  const existing = await db.getFromIndex('grades', 'by_assessmentAndStudent', [normAssessmentId, String(studentId)])
+  if (existing && existing.gradeId != null) {
     await db.delete('grades', existing.gradeId)
     hasUnsyncedChanges.value = true
   }

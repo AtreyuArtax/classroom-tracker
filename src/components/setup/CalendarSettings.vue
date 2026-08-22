@@ -297,6 +297,7 @@ import { useMessage } from '../../composables/useMessage.js'
 import BaseModal from '../BaseModal.vue'
 import SemesterCalendar from './SemesterCalendar.vue'
 import Papa from 'papaparse'
+import { formatLocalDate } from '../../utils/dates.js'
 
 const { 
   academicTerms: terms, 
@@ -327,8 +328,8 @@ const activeTermForCalendar = computed(() => {
   return {
     year: selectedYear.value,
     semester: selectedSemester.value,
-    startDate: details.start.toISOString().split('T')[0],
-    endDate: details.end.toISOString().split('T')[0]
+    startDate: formatLocalDate(details.start),
+    endDate: formatLocalDate(details.end)
   }
 })
 
@@ -428,7 +429,7 @@ function addMilestone() {
     milestoneId: `ms_${Date.now()}`,
     year: selectedYear.value || '',
     name: '',
-    date: new Date().toISOString().split('T')[0]
+    date: formatLocalDate(new Date())
   })
   saveMilestones()
 }

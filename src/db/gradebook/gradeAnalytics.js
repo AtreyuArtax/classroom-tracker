@@ -85,7 +85,7 @@ export function calculateAssessmentAnalytics(assessmentId, grades, assessment, o
     count: activePercentages.length,
     totalCount: allPercentages.length,
     mean: preciseRound(mean),
-    average: (mean / 100) * (assessment.totalPoints || 1),
+    average: preciseRound((mean / 100) * (assessment.totalPoints || 1)),
     median: preciseRound(median),
     sd: preciseRound(sd),
     highest: preciseRound(highest),

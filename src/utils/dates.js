@@ -55,6 +55,23 @@ export function getCurrentSchoolYear() {
 }
 
 /**
+ * Returns a YYYY-MM-DD date string using local timezone components
+ * to prevent the 1-day backward shift caused by .toISOString().
+ * 
+ * @param {Date|string} date
+ * @returns {string} - "YYYY-MM-DD"
+ */
+export function formatLocalDate(date) {
+  if (!date) return ''
+  const d = typeof date === 'string' ? parseLocal(date) : new Date(date)
+  if (isNaN(d.getTime())) return ''
+  const year = d.getFullYear()
+  const month = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+/**
  * Returns the current semester ("1" or "2") based on a best-guess threshold.
  * Semester 2 is assumed to start around February 1st.
  */

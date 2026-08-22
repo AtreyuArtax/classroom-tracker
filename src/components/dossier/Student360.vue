@@ -363,6 +363,7 @@ import { getSBARLevelBadge } from '../../db/gradebook/gradeCalcSBAR.js'
 import { useClassroom } from '../../composables/useClassroom.js'
 import { toMinutes } from '../../db/eventService.js'
 import { resolveIcon } from '../../utils/icons.js'
+import { formatLocalDate } from '../../utils/dates.js'
 import { 
   classGrades, 
   assessments, 
@@ -436,13 +437,13 @@ const showPrintModal = ref(false)
 
 // Past Absence Form State
 const showAbsenceForm = ref(false)
-const absenceDate = ref(new Date().toISOString().split('T')[0])
+const absenceDate = ref(formatLocalDate(new Date()))
 const absenceIsTestDay = ref(false)
 
 async function logAbsence() {
   if (!absenceDate.value) return
   const isDuplicate = events.value.some(ev => 
-    ev.code === 'a' && !ev.superseded && ev.timestamp.startsWith(absenceDate.value)
+    ev.code === 'a' && !ev.superseded && formatLocalDate(ev.timestamp) === absenceDate.value
   )
 
   if (isDuplicate) {
@@ -456,7 +457,7 @@ async function logAbsence() {
       testDay: absenceIsTestDay.value
     })
     showAbsenceForm.value = false
-    absenceDate.value = new Date().toISOString().split('T')[0]
+    absenceDate.value = formatLocalDate(new Date())
     absenceIsTestDay.value = false
   } catch (err) {
     console.error('Failed to log absence:', err)
@@ -724,7 +725,7 @@ const behaviorWeeklyTrend = computed(() => {
     const day = d.getDay()
     const diff = d.getDate() - day + (day === 0 ? -6 : 1)
     const mondayDate = new Date(d.setDate(diff))
-    const monday = mondayDate.toISOString().split('T')[0]
+    const monday = formatLocalDate(mondayDate)
     
     if (!weeks[monday]) {
       weeks[monday] = { week: monday, washroom: 0, absence: 0, late: 0 }
@@ -804,7 +805,7 @@ function startNewAttempt(assessmentId) {
   newAttemptForm.value = {
     assessmentId,
     points: null,
-    date: new Date().toISOString().split('T')[0],
+    date: formatLocalDate(new Date()),
     comment: ''
   }
 }

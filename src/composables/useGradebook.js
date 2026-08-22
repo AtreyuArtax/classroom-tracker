@@ -13,6 +13,7 @@ import { useUndo } from './useUndo.js'
 import { activeClass, activeSubjectId } from './useClassroomState.js'
 import { getEffectiveClassRecord, getStudentEffectiveGrade, getUnitGradeLevel, ensureIEPPresetsForClass, autoPopulateAllElementarySubjects } from './useElementary.js'
 import { isCohortMatch } from '../db/gradebook/gradeCalc.js'
+import { formatLocalDate } from '../utils/dates.js'
 
 const { push: pushUndo } = useUndo()
 
@@ -181,7 +182,7 @@ export const newAssessment = ref({
   expectationId: null,
   target: 'class',
   targetStudentId: null,
-  date: new Date().toISOString().slice(0, 10),
+  date: formatLocalDate(new Date()),
   totalPoints: 10,
   scaledTotal: null,
   retestPolicy: 'highest'
@@ -442,7 +443,7 @@ export function openAddAssessment(target = 'class', studentId = null) {
     targetStudentId: studentId,
     targetCourseCode: initialCohort,
     gradeLevel: initialCohort !== 'all' ? initialCohort : null,
-    date: new Date().toISOString().slice(0, 10),
+    date: formatLocalDate(new Date()),
     totalPoints: 10,
     scaledTotal: null,
     retestPolicy: 'highest'

@@ -228,7 +228,9 @@ export function calculateSBARExpectationMastery(classRecord, assessments, gradeM
         if (!isCohortMatch(targetTag, studentCohort)) return
 
         const rawGrade = gradeMap[ast.assessmentId]
-        const grade = (rawGrade && rawGrade[studentId]) ? rawGrade[studentId] : rawGrade
+        const grade = (rawGrade && (rawGrade.gradeId !== undefined || rawGrade.assessmentId !== undefined))
+          ? rawGrade
+          : (rawGrade ? rawGrade[studentId] : null)
         if (!grade || grade.excluded || grade.missing) return
 
         let percentage = null

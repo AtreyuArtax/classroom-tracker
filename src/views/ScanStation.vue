@@ -277,6 +277,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.removeEventListener('focus', focusInput)
+  clearTimeout(feedbackTimer)
   stopSubscriptions()
 })
 </script>

@@ -187,6 +187,7 @@ import AttendanceActivityReport from './AttendanceActivityReport.vue'
 import { activeClassRecord } from '../../composables/useGradebook.js'
 import { getEffectiveClassRecord } from '../../composables/useElementary.js'
 import { activeSubjectId } from '../../composables/useClassroomState.js'
+import { executePrint } from '../../composables/usePrintOptions.js'
 
 const props = defineProps({
   show: { type: Boolean, default: false },
@@ -237,8 +238,13 @@ async function triggerPrint() {
   
   nextTick(async () => {
     await new Promise(resolve => setTimeout(resolve, 1500))
-    window.print()
-    isSystemPrinting.value = false
+    executePrint({
+      orientation: 'portrait',
+      margin: '10mm',
+      onDone: () => {
+        isSystemPrinting.value = false
+      }
+    })
   })
 }
 </script>

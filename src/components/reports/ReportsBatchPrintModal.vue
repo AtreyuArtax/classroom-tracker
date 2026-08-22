@@ -165,7 +165,7 @@ import { ref, reactive, watch, computed, nextTick } from 'vue'
 import { Printer, X, Activity } from 'lucide-vue-next'
 import ProgressReport from '../dossier/ProgressReport.vue'
 import { loadGradebook } from '../../composables/useGradebook.js'
-import { usePrintOptions } from '../../composables/usePrintOptions.js'
+import { usePrintOptions, executePrint } from '../../composables/usePrintOptions.js'
 
 const props = defineProps({
   show: { type: Boolean, default: false },
@@ -245,8 +245,13 @@ async function triggerBatchPrint() {
   
   nextTick(async () => {
     await new Promise(resolve => setTimeout(resolve, 1500))
-    window.print()
-    isSystemPrinting.value = false
+    executePrint({
+      orientation: 'portrait',
+      margin: '10mm',
+      onDone: () => {
+        isSystemPrinting.value = false
+      }
+    })
   })
 }
 </script>
@@ -437,22 +442,20 @@ async function triggerBatchPrint() {
 }
 
 .preview-content {
-  padding: 20px 10px;
+  padding: 24px 16px 48px;
   background: #cbd5e1;
-  overflow-y: auto;
-  overflow-x: hidden;
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
+  overflow-y: auto !important;
+  overflow-x: auto;
+  display: block;
   flex: 1;
   min-height: 0;
+  box-sizing: border-box;
 }
 
 .preview-content-wrapper {
-  transform: scale(0.68);
-  transform-origin: top center;
+  zoom: 0.72;
   width: 210mm;
-  margin-bottom: -130px;
+  margin: 0 auto 32px auto;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
   border-radius: 4px;
   background: #ffffff;

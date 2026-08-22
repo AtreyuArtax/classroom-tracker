@@ -17,7 +17,7 @@
 import { ref, watch, onUnmounted } from 'vue'
 import { Download } from 'lucide-vue-next'
 import { useMessage } from '../../composables/useMessage.js'
-import { formatLocalDisplay } from '../../utils/dates.js'
+import { formatLocalDisplay, formatLocalDate } from '../../utils/dates.js'
 import { formatQualitativeEvidenceForReport } from '../../utils/reportFormatter.js'
 import { 
   loadGradebook, 
@@ -84,7 +84,7 @@ async function downloadReportCardCsv(includeName) {
   if (!reportType) return
   
   const className = classObj.name ?? 'Class'
-  const date = new Date().toISOString().slice(0, 10)
+  const date = formatLocalDate(new Date())
   const filename = `${className}-report-card-comments-${reportType.toLowerCase()}-${includeName ? 'with-names' : 'anonymous'}-${date}.csv`
   
   try {
@@ -279,7 +279,7 @@ function downloadAggregateCsv(section) {
   showExportMenu.value = false
   const classObj = props.reportClass
   const className = classObj?.name ?? 'Class'
-  const date = new Date().toISOString().slice(0, 10)
+  const date = formatLocalDate(new Date())
   
   let filename = `${className}-${section}-${date}.csv`
   let csvContent = ''

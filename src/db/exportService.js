@@ -1,6 +1,6 @@
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
-import { parseLocal } from '../utils/dates.js';
+import { parseLocal, formatLocalDate } from '../utils/dates.js';
 
 /**
  * Generates and downloads a multi-sheet Excel report for the gradebook.
@@ -85,7 +85,7 @@ export async function exportGradebookToExcel({
 
   // Data Rows
   students.forEach(student => {
-    const fullName = `${student.firstName} ${student.lastName || ''}`.trim();
+    const fullName = `${student.firstName || ''} ${student.lastName || ''}`.trim() || student.studentId;
     const rowData = [fullName];
     
     classAssessments.forEach(a => {
@@ -138,7 +138,7 @@ export async function exportGradebookToExcel({
   rawSheet.getRow(1).font = { bold: true };
 
   students.forEach(student => {
-    const fullName = `${student.firstName} ${student.lastName || ''}`.trim();
+    const fullName = `${student.firstName || ''} ${student.lastName || ''}`.trim() || student.studentId;
     
     assessments.forEach(a => {
       const entry = gradeMap[a.assessmentId]?.[student.studentId];
@@ -172,6 +172,6 @@ export async function exportGradebookToExcel({
   });
 
   const buffer = await workbook.xlsx.writeBuffer();
-  const dateStr = new Date().toISOString().split('T')[0];
+  const dateStr = formatLocalDate(new Date());
   saveAs(new Blob([buffer]), `${className}_Gradebook_${dateStr}.xlsx`);
 }

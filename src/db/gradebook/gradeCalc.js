@@ -167,7 +167,7 @@ export function getAssessmentPercentage(assessment, grade) {
   }
   if (earned === null || isNaN(earned)) return null
   
-  const divisor = assessment?.totalPoints || 1
+  const divisor = (assessment?.totalPoints > 0) ? Number(assessment.totalPoints) : 1
   return (earned / divisor) * 100
 }
 
@@ -180,7 +180,9 @@ export function _calculateCategoryGrade(catAssessments, gradeMap, capAt100 = fal
     const grade = gradeMap[assessment.assessmentId]
     if (!grade || grade.excluded) continue
 
-    const possible = assessment.scaledTotal ?? assessment.totalPoints
+    const rawPossible = assessment.scaledTotal ?? assessment.totalPoints
+    const possible = Number(rawPossible)
+    if (isNaN(possible) || possible <= 0) continue
 
     if (grade.missing) {
       // Missing counts as 0 against the scaled total
@@ -202,9 +204,9 @@ export function _calculateCategoryGrade(catAssessments, gradeMap, capAt100 = fal
     if (earned === null || isNaN(earned)) continue
 
     // Guard against division by zero
-    const divisor = assessment.totalPoints || 1
+    const divisor = (assessment.totalPoints > 0) ? Number(assessment.totalPoints) : 1
     const scaledEarned = assessment.scaledTotal
-      ? (earned / divisor) * assessment.scaledTotal
+      ? (earned / divisor) * Number(assessment.scaledTotal)
       : earned
 
     totalEarned += scaledEarned
@@ -222,19 +224,18 @@ export function _calculateCategoryGrade(catAssessments, gradeMap, capAt100 = fal
 export function getBucketMode(scores) {
   if (!scores || scores.length === 0) return { result: null, isFallback: false }
   
-  const buckets = Array.from({ length: 11 }, () => []) // 0-10, 10-20, ..., 90-100, and a catch-all 100
+  const buckets = Array.from({ length: 10 }, () => []) // 0-9: 0-9%, 10-19%, ..., 90%+
   
   scores.forEach(s => {
     let index = Math.floor(s.percentage / 10)
-    if (index > 10) index = 10
-    if (index < 0) index = 0
-    buckets[index].push(s)
+    const safeIdx = Math.max(0, Math.min(9, index))
+    buckets[safeIdx].push(s)
   })
 
   let maxCount = 0
   let bestBucketIndex = -1
 
-  for (let i = 0; i <= 10; i++) {
+  for (let i = 0; i < 10; i++) {
     if (buckets[i].length > maxCount) {
       maxCount = buckets[i].length
       bestBucketIndex = i
@@ -253,7 +254,7 @@ export function getBucketMode(scores) {
     }
   }
 
-  if (maxCount <= 1) return { result: null, isFallback: false }
+  if (maxCount <= 1 || bestBucketIndex === -1) return { result: null, isFallback: false }
 
   const bucketScores = buckets[bestBucketIndex].map(s => s.percentage)
   const mean = bucketScores.reduce((a, b) => a + b, 0) / bucketScores.length

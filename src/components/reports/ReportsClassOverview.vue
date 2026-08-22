@@ -309,7 +309,8 @@ import {
 import { Bar } from 'vue-chartjs'
 import ExpectationMasteryHeatmap from './ExpectationMasteryHeatmap.vue'
 import StudentRiskScatterPlot from './StudentRiskScatterPlot.vue'
-import { getSBARLevelBadge } from '../../db/gradebookService.js'
+import { getSBARLevelBadge, calculateSBARExpectationMastery } from '../../db/gradebookService.js'
+import { gradeMap } from '../../composables/useGradebook.js'
 
 const props = defineProps({
   loading: { type: Boolean, default: false },
@@ -474,7 +475,83 @@ const assessedExpectationsCount = computed(() => {
   return set.size
 })
 
-const strugglingExpectationsCount = computed(() => 0) // Calculated dynamically in heatmap
+const strugglingExpectationsCount = computed(() => {
+  const cls = props.reportClass
+  if (!cls || !props.assessments || !props.assessments.length || !gradeMap.value) return 0
+
+  const allClassExps = [
+    ...(cls.expectations || []),
+    ...((cls.gradebookUnits || []).flatMap(u => u.expectations || []))
+  ]
+  if (allClassExps.length === 0) return 0
+
+  const expScores = {}
+
+  if (isSBAR.value) {
+    const algo = cls.sbarAlgorithm || 'decaying_average'
+    const sbarMasteryMap = calculateSBARExpectationMastery(cls, props.assessments, gradeMap.value, algo, props.allClassEvents || [])
+    Object.values(sbarMasteryMap).forEach(studentExpMap => {
+      if (!studentExpMap) return
+      Object.entries(studentExpMap).forEach(([expCode, mObj]) => {
+        if (mObj && mObj.score !== null && mObj.score !== undefined) {
+          const key = String(expCode).toLowerCase()
+          if (!expScores[key]) expScores[key] = []
+          expScores[key].push(mObj.score)
+        }
+      })
+    })
+  } else {
+    Object.entries(gradeMap.value).forEach(([assId, studentMap]) => {
+      if (!studentMap) return
+      const ass = props.assessments.find(a => String(a.assessmentId) === String(assId))
+      if (!ass || ass.excluded) return
+      const ids = ass.expectationIds && Array.isArray(ass.expectationIds) ? ass.expectationIds : (ass.expectationId ? [ass.expectationId] : [])
+      const total = ass.scaledTotal || ass.totalPoints || 100
+
+      Object.values(studentMap).forEach(gRecord => {
+        if (!gRecord || gRecord.excluded || gRecord.missing) return
+        if (gRecord.expectationScores) {
+          Object.entries(gRecord.expectationScores).forEach(([expCode, val]) => {
+            if (val != null && !isNaN(val)) {
+              const key = String(expCode).toLowerCase()
+              if (!expScores[key]) expScores[key] = []
+              expScores[key].push(Number(val))
+            }
+          })
+        }
+        if (ids.length > 0 && gRecord.resolvedScore != null && !isNaN(gRecord.resolvedScore)) {
+          const pct = (Number(gRecord.resolvedScore) / total) * 100
+          ids.forEach(id => {
+            const key = String(id).toLowerCase()
+            if (!expScores[key]) expScores[key] = []
+            expScores[key].push(pct)
+          })
+        }
+      })
+    })
+  }
+
+  let count = 0
+  const evaluatedExps = new Set()
+  allClassExps.forEach(exp => {
+    const expId = exp.expectationId ? String(exp.expectationId).toLowerCase() : null
+    const expCode = exp.code ? String(exp.code).toLowerCase() : null
+    const key = expCode || expId
+    if (!key || evaluatedExps.has(key)) return
+    evaluatedExps.add(key)
+
+    const scores = [
+      ...(expId && expScores[expId] ? expScores[expId] : []),
+      ...(expCode && expCode !== expId && expScores[expCode] ? expScores[expCode] : [])
+    ]
+    if (scores.length > 0) {
+      const avg = scores.reduce((a, b) => a + b, 0) / scores.length
+      if (avg < 65) count++
+    }
+  })
+
+  return count
+})
 
 // Multi-reason Action Required Items
 const multiActionItems = computed(() => {

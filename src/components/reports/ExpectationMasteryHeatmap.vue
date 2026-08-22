@@ -327,9 +327,17 @@ const unitsWithExpectations = computed(() => {
     .filter(u => u.expectations && u.expectations.length > 0)
     .map(unit => {
       const expectations = unit.expectations.map(exp => {
-        const expId = String(exp.expectationId || exp.code)
-        const count = expAssessmentCounts[expId] || expAssessmentCounts[exp.code] || 0
-        const scores = expScores[expId] || expScores[exp.code] || []
+        const expId = exp.expectationId ? String(exp.expectationId) : null
+        const expCode = exp.code ? String(exp.code) : null
+
+        const countId = expId ? (expAssessmentCounts[expId] || 0) : 0
+        const countCode = (expCode && expCode !== expId) ? (expAssessmentCounts[expCode] || 0) : 0
+        const count = countId + countCode
+
+        const scoresId = expId ? (expScores[expId] || []) : []
+        const scoresCode = (expCode && expCode !== expId) ? (expScores[expCode] || []) : []
+        const scores = [...scoresId, ...scoresCode]
+
         const avg = scores.length > 0 ? (scores.reduce((a, b) => a + b, 0) / scores.length) : null
         const sbarBadge = avg !== null ? getSBARLevelBadge(avg) : null
 

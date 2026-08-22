@@ -128,8 +128,17 @@ const profilePositionStyle = computed(() =>
 function isActiveToggle(item) {
   if (!item.codeKey) return false
   const code = behaviorCodes.value.find(c => c.codeKey === item.codeKey)
-  if (!code || code.type !== 'toggle') return false
-  return targetStudent.value?.activeStates?.isOut === true
+  if (!code) return false
+  if (code.type === 'toggle') {
+    return targetStudent.value?.activeStates?.isOut === true
+  }
+  if (code.codeKey === 'a') {
+    return targetStudent.value?.activeStates?.isAbsent === true
+  }
+  if (code.codeKey === 'l') {
+    return targetStudent.value?.activeStates?.lateMs != null && targetStudent.value?.activeStates?.lateMs > 0
+  }
+  return false
 }
 
 // ─── item tap handler ─────────────────────────────────────────────────────────

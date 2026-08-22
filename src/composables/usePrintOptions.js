@@ -123,3 +123,39 @@ export function usePrintOptions(classRecordRef, initialCohortRef = 'all') {
     getSubheader
   }
 }
+
+/**
+ * Safely trigger browser printing with targeted @page orientation and automatic cleanup.
+ * Prevents global CSS cross-contamination across modal dialogs.
+ *
+ * @param {Object} options
+ * @param {'portrait' | 'landscape' | 'auto'} [options.orientation='portrait'] - Print orientation
+ * @param {string} [options.margin='10mm'] - Page margins
+ * @param {Function} [options.onDone] - Callback after print dialog finishes/closes
+ */
+export function executePrint({ orientation = 'portrait', margin = '10mm', onDone } = {}) {
+  const existing = document.getElementById('dynamic-print-orientation-style')
+  if (existing) existing.remove()
+
+  const styleEl = document.createElement('style')
+  styleEl.id = 'dynamic-print-orientation-style'
+  styleEl.innerHTML = `@page { size: ${orientation}; margin: ${margin}; }`
+  document.head.appendChild(styleEl)
+
+  let cleanedUp = false
+  const cleanup = () => {
+    if (cleanedUp) return
+    cleanedUp = true
+    const el = document.getElementById('dynamic-print-orientation-style')
+    if (el) el.remove()
+    window.removeEventListener('afterprint', cleanup)
+    if (typeof onDone === 'function') onDone()
+  }
+
+  window.addEventListener('afterprint', cleanup, { once: true })
+
+  window.print()
+
+  // Safety fallback cleanup in case afterprint does not fire in certain webviews
+  setTimeout(cleanup, 1000)
+}

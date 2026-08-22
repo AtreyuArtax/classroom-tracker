@@ -1,90 +1,115 @@
 <template>
-  <div v-if="show">
-    <!-- BaseModal Wrapper for Screen Preview -->
-    <BaseModal
-      :show="show"
-      :show-x="false"
-      max-width="900px"
-      title="Print Expectation Mastery Audit"
-      @close="$emit('close')"
+  <div v-if="show" class="reports__modal-overlay">
+    <div 
+      class="reports__print-modal"
+      :class="{ 'reports__print-modal--preview-open': showPreview, 'reports__print-modal--compact': !showPreview }"
     >
-      <template #header>
-        <div class="audit-modal-header">
-          <div class="header-title-group">
-            <BookOpen class="header-icon" :size="22" />
-            <div>
-              <h3 class="header-title">Print Expectation Mastery Audit</h3>
-              <p class="header-subtitle">{{ reportClass?.name || 'Class' }} · {{ formattedDate }}</p>
-            </div>
+      <!-- Header -->
+      <header class="reports__modal-header">
+        <div class="header-content">
+          <BookOpen class="header-icon" :size="24" />
+          <div>
+            <h3 class="header-title">Print Expectation Mastery Audit</h3>
+            <p class="header-subtitle">{{ reportClass?.name || 'Class' }} · {{ formattedDate }}</p>
           </div>
-          <div class="header-actions">
-            <label v-if="isSplitClass" class="setup__label" style="margin: 0; flex-direction: row; align-items: center; gap: 6px; font-size: 0.85rem;">
-              <span>Include:</span>
-              <select v-model="selectedCohort" class="setup__input" style="padding: 4px 8px; font-size: 0.85rem;">
-                <option value="all">Entire Class</option>
+        </div>
+        <button class="header-close" @click="$emit('close')">
+          <X :size="20" />
+        </button>
+      </header>
+
+      <!-- Body -->
+      <div class="reports__modal-body" :class="{ 'reports__modal-body--with-preview': showPreview }">
+        <!-- Configuration Section -->
+        <div class="config-section">
+          <div class="config-section-header">
+            <h4 class="config-section-title">Audit Options</h4>
+            <button class="reports__btn-preview" @click="showPreview = !showPreview">
+              {{ showPreview ? 'Hide Preview' : 'Show Preview' }}
+            </button>
+          </div>
+
+          <form class="setup__form" @submit.prevent="doPrint" style="margin-top: 14px;">
+            <label v-if="isSplitClass" class="setup__label">
+              Students to Include
+              <select v-model="selectedCohort" class="setup__input">
+                <option value="all">Entire Class Roster</option>
                 <option v-for="c in cohortOptionsOnly" :key="c" :value="c">{{ c }} Only</option>
               </select>
             </label>
-            <button class="reports__btn-primary" @click="doPrint">
-              <Printer :size="16" /> Print Audit
-            </button>
-            <button class="header-close" @click="$emit('close')">
-              <X :size="20" />
-            </button>
-          </div>
-        </div>
-      </template>
 
-      <!-- Modal Body with Vertical Scrolling -->
-      <div class="audit-modal-body">
-        <div class="expectations-print-preview">
-          <header class="preview-doc-header">
-            <h2>Curriculum Expectation Mastery Audit</h2>
-            <div class="doc-meta">
-              <span>{{ subheader }}</span> · 
-              <span>Date: <strong>{{ formattedDate }}</strong></span>
+            <div class="form-hint" style="margin-top: 14px;">
+              Audits all curriculum expectations across <strong>{{ unitsData.length }} units</strong> with student mastery averages and assessment coverage counts.
             </div>
+          </form>
+        </div>
+
+        <!-- Live Preview Section -->
+        <div v-if="showPreview" class="reports__print-preview-area">
+          <header class="preview-banner">
+            <Activity :size="14" /> LIVE PREVIEW (Curriculum Audit)
           </header>
 
-          <div v-if="!unitsData.length" class="empty-audit">
-            <p>No curriculum expectations found for this class.</p>
-          </div>
+          <div class="preview-content">
+            <div class="preview-content-wrapper">
+              <div class="expectations-print-preview">
+                <header class="preview-doc-header">
+                  <h2>Curriculum Expectation Mastery Audit</h2>
+                  <div class="doc-meta">
+                    <span>{{ subheader }}</span> · 
+                    <span>Date: <strong>{{ formattedDate }}</strong></span>
+                  </div>
+                </header>
 
-          <div v-else class="audit-units-list">
-            <div v-for="unit in unitsData" :key="unit.unitId" class="audit-unit-section">
-              <h3 class="unit-title">{{ unit.name }}</h3>
-              <table class="audit-table">
-                <thead>
-                  <tr>
-                    <th style="width: 80px;">Code</th>
-                    <th>Expectation Description</th>
-                    <th style="width: 110px; text-align: center;">Assessments</th>
-                    <th style="width: 100px; text-align: right;">Class Avg</th>
-                    <th style="width: 120px; text-align: center;">Mastery Level</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="exp in unit.expectations" :key="exp.expectationId || exp.code">
-                    <td class="code-cell"><strong>{{ exp.code }}</strong></td>
-                    <td>{{ exp.description }}</td>
-                    <td style="text-align: center;">{{ exp.assessmentCount }}</td>
-                    <td style="text-align: right;" class="score-cell">
-                      <strong>{{ exp.average !== null ? exp.average.toFixed(1) + '%' : '—' }}</strong>
-                    </td>
-                    <td style="text-align: center;">
-                      <span class="mastery-badge" :style="{ backgroundColor: getBadgeBg(exp.average), color: getBadgeColor(exp.average) }">
-                        {{ getMasteryText(exp.average) }}
-                      </span>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+                <div v-if="!unitsData.length" class="empty-audit">
+                  <p>No curriculum expectations found for this class.</p>
+                </div>
+
+                <div v-else class="audit-units-list">
+                  <div v-for="unit in unitsData" :key="unit.unitId" class="audit-unit-section">
+                    <h3 class="unit-title">{{ unit.name }}</h3>
+                    <table class="audit-table">
+                      <thead>
+                        <tr>
+                          <th style="width: 80px;">Code</th>
+                          <th>Expectation Description</th>
+                          <th style="width: 100px; text-align: center;">Assessments</th>
+                          <th style="width: 90px; text-align: right;">Class Avg</th>
+                          <th style="width: 110px; text-align: center;">Mastery Level</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr v-for="exp in unit.expectations" :key="exp.expectationId || exp.code">
+                          <td class="code-cell"><strong>{{ exp.code }}</strong></td>
+                          <td>{{ exp.description }}</td>
+                          <td style="text-align: center;">{{ exp.assessmentCount }}</td>
+                          <td style="text-align: right;" class="score-cell">
+                            <strong>{{ exp.average !== null ? exp.average.toFixed(1) + '%' : '—' }}</strong>
+                          </td>
+                          <td style="text-align: center;">
+                            <span class="mastery-badge" :style="{ backgroundColor: getBadgeBg(exp.average), color: getBadgeColor(exp.average) }">
+                              {{ getMasteryText(exp.average) }}
+                            </span>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
-
         </div>
       </div>
-    </BaseModal>
+
+      <!-- Footer -->
+      <footer class="reports__modal-footer">
+        <button class="reports__btn-ghost" @click="$emit('close')">Cancel</button>
+        <button class="reports__btn-primary" @click="doPrint" :disabled="isPrinting">
+          <Printer :size="16" /> Open Print Dialog
+        </button>
+      </footer>
+    </div>
 
     <!-- Teleported Standalone Container for Real Browser Printing -->
     <Teleport to="body">
@@ -128,10 +153,9 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
-import { BookOpen, Printer, X } from 'lucide-vue-next'
-import BaseModal from '../BaseModal.vue'
-import { usePrintOptions } from '../../composables/usePrintOptions.js'
+import { ref, computed, nextTick } from 'vue'
+import { BookOpen, Printer, X, Activity } from 'lucide-vue-next'
+import { usePrintOptions, executePrint } from '../../composables/usePrintOptions.js'
 
 const props = defineProps({
   show: { type: Boolean, default: false },
@@ -149,6 +173,7 @@ const classRecordRef = computed(() => props.reportClass)
 const { selectedCohort, isSplitClass, availableSubCohorts, filterStudents, getSubheader: buildSubheader, isElementary } = usePrintOptions(classRecordRef, props.initialCohort)
 
 const isPrinting = ref(false)
+const showPreview = ref(false)
 
 const cohortOptionsOnly = computed(() => {
   return availableSubCohorts.value.filter(c => c !== 'all')
@@ -174,7 +199,6 @@ const unitsData = computed(() => {
     expAssessmentCounts[expId] = (expAssessmentCounts[expId] || 0) + 1
   })
 
-  // Filter students based on selectedCohort
   const studentsMap = props.reportClass?.students || {}
   const isElem = isElementary.value
 
@@ -200,94 +224,120 @@ const unitsData = computed(() => {
     })
   })
 
-  // Include qualitative radial check-in events
-  if (Array.isArray(props.events) && props.events.length > 0) {
-    props.events.forEach(evt => {
-      if (!evt.expectationId || !evt.acOutcome) return
-      const expId = String(evt.expectationId)
-      let pct = null
-      if (evt.acOutcome === 'demonstrates_understanding') pct = 90
-      else if (evt.acOutcome === 'inconclusive') pct = 65
-      else if (evt.acOutcome === 'gap_confirmed') pct = 55
-      else if (evt.acOutcome === 'remediation_required') pct = 35
-
-      if (pct !== null) {
-        if (!expScores[expId]) expScores[expId] = []
-        expScores[expId].push(pct)
-      }
-    })
-  }
-
   return props.reportClass.gradebookUnits
-    .filter(u => u.expectations && u.expectations.length > 0)
-    .map(unit => {
-      const expectations = unit.expectations.map(exp => {
-        const expId = String(exp.expectationId || exp.code)
-        const count = expAssessmentCounts[expId] || 0
-        const scores = expScores[expId] || []
-        const avg = scores.length > 0 ? (scores.reduce((a, b) => a + b, 0) / scores.length) : null
-
-        return {
-          ...exp,
-          assessmentCount: count,
-          average: avg
-        }
-      })
+    .filter(u => !u.archived)
+    .map(u => {
+      const expectations = (u.expectations || [])
+        .filter(e => !e.archived)
+        .map(e => {
+          const expId = String(e.expectationId || e.code)
+          const scores = expScores[expId] || []
+          const count = expAssessmentCounts[expId] || 0
+          const avg = scores.length > 0 ? (scores.reduce((a, b) => a + b, 0) / scores.length) : null
+          return {
+            ...e,
+            assessmentCount: count,
+            average: avg
+          }
+        })
 
       return {
-        ...unit,
+        ...u,
         expectations
       }
     })
+    .filter(u => u.expectations.length > 0)
 })
 
 function getMasteryText(avg) {
-  if (avg === null || avg === undefined) return 'Unassessed'
-  if (avg >= 80) return 'Level 4 (80%+)'
-  if (avg >= 70) return 'Level 3 (70-79%)'
-  if (avg >= 60) return 'Level 2 (60-69%)'
-  return 'Level 1 (<60%)'
+  if (avg === null || avg === undefined) return 'Not Assessed'
+  if (avg >= 80) return 'Mastery (Level 4)'
+  if (avg >= 70) return 'Proficient (Level 3)'
+  if (avg >= 60) return 'Approaching (Level 2)'
+  if (avg >= 50) return 'Developing (Level 1)'
+  return 'Remediation (Below L1)'
 }
 
 function getBadgeBg(avg) {
   if (avg === null || avg === undefined) return 'var(--surface-hover)'
-  if (avg >= 80) return 'rgba(16, 185, 129, 0.15)'
-  if (avg >= 70) return 'rgba(59, 130, 246, 0.15)'
-  if (avg >= 60) return 'rgba(245, 158, 11, 0.15)'
-  return 'rgba(239, 68, 68, 0.15)'
+  if (avg >= 80) return '#dcfce7'
+  if (avg >= 70) return '#e0f2fe'
+  if (avg >= 60) return '#fef9c3'
+  if (avg >= 50) return '#ffedd5'
+  return '#fee2e2'
 }
 
 function getBadgeColor(avg) {
   if (avg === null || avg === undefined) return 'var(--text-secondary)'
-  if (avg >= 80) return '#065f46'
-  if (avg >= 70) return '#1e40af'
-  if (avg >= 60) return '#92400e'
+  if (avg >= 80) return '#166534'
+  if (avg >= 70) return '#075985'
+  if (avg >= 60) return '#854d0e'
+  if (avg >= 50) return '#9a3412'
   return '#991b1b'
 }
 
 function doPrint() {
   isPrinting.value = true
-  setTimeout(() => {
-    window.print()
-    setTimeout(() => {
-      isPrinting.value = false
-    }, 500)
-  }, 150)
+  nextTick(() => {
+    executePrint({
+      orientation: 'portrait',
+      margin: '12mm',
+      onDone: () => {
+        isPrinting.value = false
+      }
+    })
+  })
 }
 </script>
 
 <style scoped>
-.audit-modal-header {
+.reports__modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(6px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.reports__print-modal {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xl);
+  display: flex;
+  flex-direction: column;
+  max-height: 90vh;
+  width: 100%;
+  transition: max-width 0.3s ease;
+  overflow: hidden;
+}
+
+.reports__print-modal--compact {
+  max-width: 520px;
+}
+
+.reports__print-modal--preview-open {
+  max-width: 1100px;
+  height: 88vh;
+}
+
+.reports__modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  width: 100%;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  flex-shrink: 0;
 }
 
-.header-title-group {
+.header-content {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
 
 .header-icon {
@@ -304,13 +354,7 @@ function doPrint() {
 .header-subtitle {
   font-size: 0.8rem;
   color: var(--text-secondary);
-  margin: 2px 0 0 0;
-}
-
-.header-actions {
-  display: flex;
-  align-items: center;
-  gap: 12px;
+  margin: 0;
 }
 
 .header-close {
@@ -327,94 +371,228 @@ function doPrint() {
   color: var(--text);
 }
 
-.reports__btn-primary {
+.reports__modal-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.reports__modal-body--with-preview .config-section {
+  width: 360px;
+  flex-shrink: 0;
+  border-right: 1px solid var(--border);
+}
+
+.config-section {
+  padding: 20px;
+  overflow-y: auto;
+  width: 100%;
+}
+
+.config-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.config-section-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0;
+}
+
+.reports__btn-preview {
+  padding: 4px 10px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--text);
+  transition: all 0.15s ease;
+}
+
+.reports__btn-preview:hover {
+  background: var(--surface-hover);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.form-hint {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  background: var(--bg-secondary);
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  border-left: 3px solid var(--primary);
+}
+
+/* ── Live Preview Area ── */
+.reports__print-preview-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  background: #cbd5e1;
+}
+
+.preview-banner {
   display: flex;
   align-items: center;
   gap: 6px;
-  background: var(--primary);
-  color: white;
-  border: none;
+  background: var(--surface);
   padding: 8px 14px;
-  border-radius: var(--radius-md);
-  font-weight: 600;
-  font-size: 0.85rem;
-  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--primary);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
 }
 
-.audit-modal-body {
-  max-height: 68vh;
-  overflow-y: auto;
-  padding-right: 4px;
+.preview-content {
+  padding: 24px 16px 48px;
+  background: #cbd5e1;
+  overflow-y: auto !important;
+  overflow-x: auto;
+  display: block;
+  flex: 1;
+  min-height: 0;
+  box-sizing: border-box;
+}
+
+.preview-content-wrapper {
+  zoom: 0.72;
+  width: 100%;
+  max-width: 850px;
+  margin: 0 auto 32px auto;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+  background: #ffffff;
 }
 
 .expectations-print-preview {
   background: white;
-  color: #1e293b;
-  padding: 20px;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border);
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
+  color: #111;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  padding: 24px;
+  min-height: 297mm;
+  box-sizing: border-box;
+}
+
+.preview-doc-header {
+  border-bottom: 2px solid #222;
+  padding-bottom: 8px;
+  margin-bottom: 16px;
+  text-align: center;
 }
 
 .preview-doc-header h2 {
-  font-size: 1.2rem;
-  font-weight: 800;
   margin: 0 0 4px 0;
-  color: #0f172a;
+  font-size: 1.3rem;
+  font-weight: 800;
+  text-transform: uppercase;
 }
 
 .doc-meta {
-  font-size: 0.825rem;
-  color: #64748b;
+  font-size: 0.85rem;
+  color: #555;
 }
 
 .audit-units-list {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 16px;
 }
 
 .unit-title {
   font-size: 0.95rem;
   font-weight: 700;
-  color: #1e293b;
-  border-bottom: 2px solid #e2e8f0;
-  padding-bottom: 6px;
-  margin: 0 0 10px 0;
+  color: #222;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 4px;
+  margin: 0 0 8px 0;
 }
 
 .audit-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.825rem;
+  font-size: 0.8rem;
 }
 
 .audit-table th {
-  background: #f8fafc;
-  border-bottom: 1px solid #cbd5e1;
-  padding: 8px;
+  border-bottom: 2px solid #333;
+  padding: 6px 8px;
   text-align: left;
   font-weight: 700;
-  color: #475569;
+  background: #f8fafc;
 }
 
 .audit-table td {
-  border-bottom: 1px solid #e2e8f0;
-  padding: 8px;
-  color: #334155;
+  border-bottom: 1px solid #eee;
+  padding: 6px 8px;
+  vertical-align: middle;
+}
+
+.code-cell {
+  font-weight: 700;
+  color: var(--primary);
 }
 
 .mastery-badge {
   display: inline-block;
   padding: 2px 8px;
-  border-radius: 4px;
-  font-weight: 700;
+  border-radius: 12px;
   font-size: 0.75rem;
+  font-weight: 700;
 }
 
-/* ── SMART PRINT FLOW STYLES ── */
+.empty-audit {
+  text-align: center;
+  padding: 40px;
+  color: #666;
+}
+
+.reports__modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 14px 20px;
+  border-top: 1px solid var(--border);
+  background: var(--bg-secondary);
+}
+
+.reports__btn-ghost {
+  padding: 8px 16px;
+  border: 1px solid var(--border);
+  background: transparent;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--text);
+}
+
+.reports__btn-primary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  cursor: pointer;
+}
+</style>
+
+<style>
+/* ── Native Print Engine ── */
 .expectations-audit-print-only {
   display: none;
   background: white;
@@ -429,13 +607,8 @@ function doPrint() {
 }
 
 @media print {
-  #app, .bm-overlay, .reports__modal-overlay {
+  #app, .reports__modal-overlay {
     display: none !important;
-  }
-
-  @page {
-    margin: 12mm 12mm 12mm 12mm;
-    size: portrait;
   }
 
   .expectations-audit-print-only.print-active {
@@ -471,7 +644,7 @@ function doPrint() {
 
   .print-unit-block {
     margin-bottom: 10pt;
-    page-break-inside: auto; /* Allow block to start on page 1 right after header! */
+    page-break-inside: auto;
   }
 
   .print-unit-title {
@@ -480,7 +653,7 @@ function doPrint() {
     border-bottom: 1px solid black;
     padding-bottom: 2pt;
     margin: 6pt 0 4pt 0;
-    page-break-after: avoid; /* Prevent title from being stranded at bottom of page */
+    page-break-after: avoid;
   }
 
   .print-audit-table {
@@ -491,11 +664,11 @@ function doPrint() {
   }
 
   .print-audit-table thead {
-    display: table-header-group; /* Repeat table header if unit spans pages */
+    display: table-header-group;
   }
 
   .print-audit-table tr {
-    page-break-inside: avoid; /* Keep individual rows intact */
+    page-break-inside: avoid;
   }
 
   .print-audit-table th {

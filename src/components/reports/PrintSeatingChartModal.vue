@@ -4,7 +4,7 @@
     <BaseModal
       :show="show"
       :show-x="false"
-      max-width="1150px"
+      :max-width="showPreview ? '1150px' : '520px'"
       title="Print Seating Plan & Dashboard"
       @close="$emit('close')"
     >
@@ -20,21 +20,21 @@
               </p>
             </div>
           </div>
-          <div class="seating-modal__header-actions">
-            <button class="setup__btn-primary seating-modal__btn-print" @click="handlePrint" :disabled="isPrinting || targetClasses.length === 0">
-              <Printer :size="16" /> {{ scopeMode === 'all' ? `Print All (${targetClasses.length} Classes)` : 'Print Seating Plan' }}
-            </button>
-            <button class="setup__btn-ghost" @click="$emit('close')">
-              <X :size="16" /> Close
-            </button>
-          </div>
+          <button class="header-close" @click="$emit('close')">
+            <X :size="20" />
+          </button>
         </div>
       </template>
 
-      <div class="seating-modal__body">
+      <div class="seating-modal__body" :class="{ 'seating-modal__body--single-col': !showPreview }">
         <!-- Configuration Controls Sidebar -->
         <aside class="seating-modal__controls">
-          <h4 class="seating-modal__section-title">Class Scope &amp; Options</h4>
+          <div class="config-section-header">
+            <h4 class="seating-modal__section-title">Class Scope &amp; Options</h4>
+            <button class="reports__btn-preview" @click="showPreview = !showPreview">
+              {{ showPreview ? 'Hide Preview' : 'Show Preview' }}
+            </button>
+          </div>
 
           <!-- Scope: Active Class vs All Term/Year Classes vs Custom Selection -->
           <label class="setup__label">
@@ -99,17 +99,17 @@
               <option value="tiny">Tiny (Dense 9-12 Col Grids)</option>
               <option value="compact">Compact (Smaller)</option>
               <option value="normal">Normal (Standard)</option>
-              <option value="large">Large (Bold)</option>
+              <option value="large">Large (High Legibility)</option>
             </select>
           </label>
 
           <label class="setup__label">
-            Name Format
+            Student Name Format
             <select v-model="form.nameFormat" class="setup__input">
-              <option value="full">First & Full Last Name</option>
-              <option value="initial">First & Last Initial (e.g. Temi A.)</option>
-              <option value="firstOnly">First Name Only</option>
-              <option value="lastFirst">Last, First</option>
+              <option value="full">First Name, Last Initial (e.g. Sarah M.)</option>
+              <option value="lastFirst">First Name Bold, Last Name (e.g. Sarah Mitchell)</option>
+              <option value="firstOnly">First Name Only (e.g. Sarah)</option>
+              <option value="initial">First Name + Last Initial</option>
             </select>
           </label>
 
@@ -120,33 +120,30 @@
             </label>
             <label class="setup__label--checkbox">
               <input type="checkbox" v-model="form.showPods" class="setup__checkbox" />
-              Show Table / Pod Color Groups
+              Color-Code Group Pods
             </label>
             <label class="setup__label--checkbox">
               <input type="checkbox" v-model="form.showFrontIndicator" class="setup__checkbox" />
-              Show "Front of Room / Board" (Bottom)
+              Show Front of Room / Teacher Bar
             </label>
             <label class="setup__label--checkbox">
               <input type="checkbox" v-model="form.showIepDot" class="setup__checkbox" />
-              Show Accommodations (IEP) Indicator
+              Show Accommodations / IEP Dot
             </label>
-            <label class="setup__label--checkbox">
+            <label class="setup__label--checkbox" v-if="form.showIepDot">
               <input type="checkbox" v-model="form.showLegend" class="setup__checkbox" />
-              Show Footer Legend
+              Include Accommodations Legend in Footer
             </label>
           </div>
 
-          <div class="seating-modal__stat-box">
+          <!-- Stat summary snippet -->
+          <div class="seating-modal__stats-card">
             <div class="stat-item">
-              <span class="stat-label">Classes to Print:</span>
-              <span class="stat-val">{{ targetClasses.length }} {{ targetClasses.length === 1 ? 'Class' : 'Classes' }}</span>
+              <span class="stat-label">Students Placed:</span>
+              <span class="stat-val">{{ getAssignedStudentCount(currentPreviewClass) }} / {{ getTotalStudentCount(currentPreviewClass) }}</span>
             </div>
-            <div class="stat-item" v-if="currentPreviewClass">
-              <span class="stat-label">Previewing:</span>
-              <span class="stat-val">{{ currentPreviewClass?.name }}</span>
-            </div>
-            <div class="stat-item" v-if="currentPreviewClass">
-              <span class="stat-label">Layout:</span>
+            <div class="stat-item">
+              <span class="stat-label">Room Dimensions:</span>
               <span class="stat-val">{{ getGridRows(currentPreviewClass) }} × {{ getGridCols(currentPreviewClass) }} Grid</span>
             </div>
             <div v-if="currentPreviewClass && getIepCount(currentPreviewClass) > 0" class="stat-item">
@@ -157,7 +154,7 @@
         </aside>
 
         <!-- Live Preview Area -->
-        <main class="seating-modal__preview-area">
+        <main v-if="showPreview" class="seating-modal__preview-area">
           <div class="preview-header-bar">
             <span class="preview-card-title">LIVE PRINT PREVIEW ({{ form.orientation.toUpperCase() }})</span>
 
@@ -307,6 +304,15 @@
           </div>
         </main>
       </div>
+
+      <template #footer>
+        <div class="reports__modal-footer-inner" style="display: flex; justify-content: flex-end; width: 100%; gap: 12px;">
+          <button class="reports__btn-ghost" @click="$emit('close')">Cancel</button>
+          <button class="reports__btn-primary" @click="handlePrint" :disabled="isPrinting || targetClasses.length === 0">
+            <Printer :size="16" /> {{ scopeMode === 'all' ? `Print All (${targetClasses.length} Classes)` : 'Open Print Dialog' }}
+          </button>
+        </div>
+      </template>
     </BaseModal>
 
     <!-- Teleported Standalone Print-Only Container (Native Browser Print, Iterates All Target Classes) -->
@@ -454,6 +460,7 @@ import {
   classList as stateClassList 
 } from '../../composables/useClassroomState.js'
 import { useStudentPhotos } from '../../composables/useStudentPhotos.js'
+import { executePrint } from '../../composables/usePrintOptions.js'
 import StudentAvatar from '../photos/StudentAvatar.vue'
 
 const { hasPhoto } = useStudentPhotos()
@@ -469,6 +476,7 @@ defineEmits(['close'])
 
 const mounted = ref(false)
 const isPrinting = ref(false)
+const showPreview = ref(true)
 const scopeMode = ref('active') // 'active' | 'single' | 'semester' | 'custom' | 'all'
 const selectedSingleClassId = ref('')
 const selectedClassIds = ref([])
@@ -670,6 +678,22 @@ function getIepCount(cls) {
   return Object.values(map).filter(s => s.hasIEP).length
 }
 
+function getAssignedStudentCount(cls) {
+  const map = getStudentsMap(cls)
+  return Object.keys(map).length
+}
+
+function getTotalStudentCount(cls) {
+  if (!cls) return 0
+  if (cls.classId === stateActiveClass.value?.classId && stateStudents.value) {
+    return Object.values(stateStudents.value).filter(s => !s.archived).length
+  }
+  if (cls.students) {
+    return Object.values(cls.students).filter(s => !s.archived).length
+  }
+  return 0
+}
+
 /**
  * Smart Dynamic Font Scaling based on column count and grid density
  */
@@ -793,10 +817,13 @@ function getClassSubheader(cls) {
 function handlePrint() {
   isPrinting.value = true
   nextTick(() => {
-    window.print()
-    setTimeout(() => {
-      isPrinting.value = false
-    }, 600)
+    executePrint({
+      orientation: form.orientation,
+      margin: '8mm',
+      onDone: () => {
+        isPrinting.value = false
+      }
+    })
   })
 }
 </script>
@@ -856,6 +883,10 @@ function handlePrint() {
   min-height: 500px;
   overflow: hidden;
   box-sizing: border-box;
+}
+
+.seating-modal__body--single-col {
+  grid-template-columns: 1fr;
 }
 
 .seating-modal__controls {
@@ -1288,11 +1319,12 @@ function handlePrint() {
 }
 
 .sheet-desk__first {
-  font-size: var(--desk-first-size, 0.65rem);
-  color: #475569;
+  font-size: var(--desk-first-size, 0.78rem);
+  font-weight: 700;
+  color: #0f172a;
   text-align: center;
   max-width: 100%;
-  line-height: 1.1;
+  line-height: 1.15;
   word-break: break-word;
   overflow-wrap: anywhere;
 }
@@ -1302,12 +1334,12 @@ function handlePrint() {
 }
 
 .sheet-desk__last {
-  font-size: var(--desk-last-size, 0.78rem);
-  font-weight: 700;
-  color: #0f172a;
+  font-size: var(--desk-last-size, 0.65rem);
+  font-weight: 400;
+  color: #475569;
   text-align: center;
   max-width: 100%;
-  line-height: 1.15;
+  line-height: 1.1;
   word-break: break-word;
   overflow-wrap: anywhere;
 }
@@ -1370,18 +1402,6 @@ function handlePrint() {
 }
 
 @media print {
-  @page {
-    margin: 8mm;
-  }
-
-  .seating-print-only--landscape {
-    page-orientation: landscape;
-  }
-
-  @page {
-    size: landscape;
-  }
-
   #app, .bm-overlay, .setup__dialog, .reports__modal-overlay {
     display: none !important;
   }
@@ -1485,14 +1505,15 @@ function handlePrint() {
   }
 
   .seating-print-only .sheet-desk__first {
-    font-size: var(--desk-first-size, 7pt) !important;
-    color: #444444 !important;
+    font-size: var(--desk-first-size, 8.5pt) !important;
+    font-weight: bold !important;
+    color: #000000 !important;
   }
 
   .seating-print-only .sheet-desk__last {
-    font-size: var(--desk-last-size, 8.5pt) !important;
-    font-weight: bold !important;
-    color: #000000 !important;
+    font-size: var(--desk-last-size, 7pt) !important;
+    font-weight: normal !important;
+    color: #444444 !important;
   }
 
   .seating-print-only .sheet-doc-footer {

@@ -17,6 +17,7 @@ import * as classService from '../db/classService.js'
 import * as eventService from '../db/eventService.js'
 import { useUndo } from './useUndo.js'
 import { useMessage } from './useMessage.js'
+import { formatLocalDate } from '../utils/dates.js'
 
 const { push: pushUndo } = useUndo()
 
@@ -33,7 +34,7 @@ export async function logAttendanceEvent(studentId, code) {
         if (code === 'a') {
             if (student.activeStates?.isAbsent) {
                 // Toggle off: clear absent and delete today's 'a' event
-                const todayStr = new Date().toISOString().slice(0, 10)
+                const todayStr = formatLocalDate(new Date())
                 const eventsToday = await eventService.getEventsByStudent(studentId, { from: todayStr, to: todayStr })
                 const absentEvent = eventsToday.find(e => e.code === 'a' && !e.superseded)
                 let wasDeleted = false
@@ -94,7 +95,7 @@ export async function logAttendanceEvent(studentId, code) {
         } else if (code === 'l') {
             if (student.activeStates?.lateMs != null && student.activeStates?.lateMs > 0) {
                 // Toggle off: clear lateMs state and delete today's 'l' event
-                const todayStr = new Date().toISOString().slice(0, 10)
+                const todayStr = formatLocalDate(new Date())
                 const eventsToday = await eventService.getEventsByStudent(studentId, { from: todayStr, to: todayStr })
                 const lateEvent = eventsToday.find(e => e.code === 'l')
                 let wasDeleted = false
@@ -153,7 +154,7 @@ export async function logAttendanceEvent(studentId, code) {
 
             const wasAbsent = student.activeStates?.isAbsent === true
 
-            const todayStr = new Date().toISOString().slice(0, 10)
+            const todayStr = formatLocalDate(new Date())
             const eventsToday = await eventService.getEventsByStudent(studentId, { from: todayStr, to: todayStr })
             const existingLateEvent = eventsToday.find(e => e.code === 'l')
 
@@ -189,17 +190,16 @@ export async function logAttendanceEvent(studentId, code) {
 
             pushUndo(async () => {
                 try {
-                    await eventService.deleteEvent(eventId)
                     await classService.clearStudentLate(classId, studentId)
-                    student.activeStates.lateMs = null
-
+                    await eventService.deleteEvent(eventId)
                     if (wasAbsent) {
                         await classService.setStudentAbsent(classId, studentId)
-                        student.activeStates.isAbsent = true
                         if (supersededAbsentId) {
                             await eventService.updateEvent(supersededAbsentId, { superseded: false })
                         }
                     }
+                    student.activeStates.isAbsent = wasAbsent
+                    student.activeStates.lateMs = null
                     student.lastEvent = null
                 } catch (err) {
                     console.error('Undo attendance event failed:', err)
@@ -219,7 +219,7 @@ export async function syncLateActiveState(classId, studentId, oldDuration, newDu
     const cls = await classService.getClass(classId)
     const st = cls?.students[studentId]
 
-    const isToday = eventTimestamp ? eventTimestamp.startsWith(new Date().toISOString().slice(0, 10)) : false
+    const isToday = eventTimestamp ? eventTimestamp.startsWith(formatLocalDate(new Date())) : false
 
     if (st && st.activeStates && st.activeStates.lateMs != null) {
         if (st.activeStates.lateMs === oldDuration || isToday) {
@@ -238,7 +238,7 @@ export async function syncLateActiveState(classId, studentId, oldDuration, newDu
 export async function reconcileStaleTrips() {
     const reconciled = new Set()
     const now = new Date()
-    const todayStr = now.toISOString().slice(0, 10)
+    const todayStr = formatLocalDate(now)
     const startTimes = periodStartTimes.value || {}
 
     const periodMinutes = {}
@@ -259,64 +259,65 @@ export async function reconcileStaleTrips() {
         const nextPeriodNum = sortedPeriods.find(p => p > classPeriod)
         const elapsedSinceCheckOutLimit = 90 * 60 * 1000
 
-        let classNeedsSave = false
+        let classUpdated = false
+        const nowMs = now.getTime()
+
         for (const [studentId, student] of Object.entries(cls.students || {})) {
-            const states = student.activeStates
-            if (states?.isOut && states.outTime) {
-                const outDate = new Date(states.outTime)
-                const isDifferentDay = !states.outTime.startsWith(todayStr)
-                const elapsedMs = now.getTime() - outDate.getTime()
+            if (student.archived) continue
 
-                let isStale = isDifferentDay || elapsedMs > elapsedSinceCheckOutLimit
+            const isOut = student.activeStates?.isOut === true
+            const outTime = student.activeStates?.outTime
 
-                if (!isElementary) {
-                    let periodEndTime = null
-                    if (nextPeriodNum && startTimes[nextPeriodNum]) {
-                        const [h, m] = startTimes[nextPeriodNum].split(':').map(Number)
-                        const d = new Date(states.outTime)
-                        d.setHours(h, m, 0, 0)
-                        periodEndTime = d
-                    } else {
-                        const [h, m] = (cls.periodStartTime || periodStartTimes.value?.[1] || '08:00').split(':').map(Number)
-                        const d = new Date(states.outTime)
-                        d.setHours(h, m, 0, 0)
-                        d.setTime(d.getTime() + 75 * 60 * 1000)
-                        periodEndTime = d
+            if (isOut && outTime) {
+                const outDate = new Date(outTime)
+                const outDateStr = formatLocalDate(outDate)
+                const elapsedMs = nowMs - outDate.getTime()
+
+                let shouldClose = false
+                let closeDurationMs = 5 * 60 * 1000
+
+                if (outDateStr < todayStr) {
+                    shouldClose = true
+                    closeDurationMs = 5 * 60 * 1000
+                } else if (!isElementary && nextPeriodNum !== undefined && periodMinutes[nextPeriodNum] !== undefined) {
+                    const nextStartMins = periodMinutes[nextPeriodNum]
+                    const currentMins = now.getHours() * 60 + now.getMinutes()
+                    if (currentMins >= nextStartMins) {
+                        shouldClose = true
+                        const nextStartDate = new Date(now)
+                        const [nextH, nextM] = startTimes[nextPeriodNum].split(':').map(Number)
+                        nextStartDate.setHours(nextH, nextM, 0, 0)
+                        const rawElapsed = nextStartDate.getTime() - outDate.getTime()
+                        closeDurationMs = Math.max(60000, Math.min(rawElapsed, 45 * 60 * 1000))
                     }
-
-                    const periodHasEndedSinceCheckout = outDate.getTime() < periodEndTime.getTime() && now.getTime() >= periodEndTime.getTime()
-                    if (periodHasEndedSinceCheckout) isStale = true
+                } else if (elapsedMs > elapsedSinceCheckOutLimit) {
+                    shouldClose = true
+                    closeDurationMs = 5 * 60 * 1000
                 }
 
-                if (isStale) {
-                    let durationMs = periodEndTime ? (periodEndTime.getTime() - outDate.getTime()) : (15 * 60 * 1000)
-                    if (durationMs < 0) durationMs = 5 * 60 * 1000
-                    const MAX_DURATION_MS = 75 * 60 * 1000
-                    if (durationMs > MAX_DURATION_MS) durationMs = MAX_DURATION_MS
-
+                if (shouldClose) {
                     await eventService.logEvent({
                         studentId,
                         classId: cls.classId,
-                        code: states.code || 'w',
-                        duration: durationMs,
-                        testDay: false,
-                        _overrideTimestamp: states.outTime
+                        code: 'w',
+                        duration: closeDurationMs,
+                        testDay: false
                     })
 
-                    states.isOut = false
-                    states.outTime = null
-                    states.code = null
-                    classNeedsSave = true
-                    reconciled.add(`${cls.classId}-${studentId}`)
+                    student.activeStates.isOut = false
+                    student.activeStates.outTime = null
+                    classUpdated = true
+                    reconciled.add(`${cls.name}: ${student.firstName} ${student.lastName}`)
 
                     if (activeClass.value?.classId === cls.classId && students.value[studentId]) {
-                        students.value[studentId].activeStates = { isOut: false, outTime: null }
+                        students.value[studentId].activeStates.isOut = false
+                        students.value[studentId].activeStates.outTime = null
                     }
                 }
             }
         }
 
-        if (classNeedsSave) {
+        if (classUpdated) {
             await classService.saveClass(cls)
         }
     }
@@ -327,8 +328,7 @@ export async function reconcileStaleTrips() {
  * Initializes RFID-based attendance for a class on class activation if needed.
  */
 export async function initializeRfidAttendance(classId) {
-    // If the configuration attendance mode isn't set, we can check useClassroom values
-    const todayStr = new Date().toISOString().slice(0, 10)
+    const todayStr = formatLocalDate(new Date())
     const existingEvents = await eventService.getEventsByClass(classId, { from: todayStr, to: todayStr })
     const hasAttendanceLogs = existingEvents.some(e => e.code === 'a' || e.code === 'l')
     if (hasAttendanceLogs) return
@@ -378,7 +378,7 @@ export async function handleRfidAttendanceScan(studentId, classId) {
     const student = clsObj.students[studentId]
     if (!student) return { type: 'error', statusText: 'Student not found' }
 
-    const todayStr = new Date().toISOString().slice(0, 10)
+    const todayStr = formatLocalDate(new Date())
 
     const eventsToday = await eventService.getEventsByStudent(studentId, { from: todayStr, to: todayStr })
     const absentEvent = eventsToday.find(e => e.code === 'a' && !e.superseded)
@@ -462,7 +462,7 @@ export async function markAllPresentToday(classId) {
     const clsObj = isActive ? activeClass.value : classList.value.find(c => c.classId === classId)
     if (!clsObj) return
 
-    const todayStr = new Date().toISOString().slice(0, 10)
+    const todayStr = formatLocalDate(new Date())
     let classNeedsSave = false
 
     for (const [studentId, student] of Object.entries(clsObj.students || {})) {

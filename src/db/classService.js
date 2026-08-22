@@ -18,8 +18,9 @@
  */
 
 import { getDB } from './index.js'
-import { hasUnsyncedChanges } from './eventService.js'
+import { hasUnsyncedChanges, createSafetySnapshot } from './eventService.js'
 import { getCurrentSchoolYear, getCurrentSemester } from '../utils/dates.js'
+import { CURRENT_SCHEMA } from './migrations.js'
 
 // ─── public API ───────────────────────────────────────────────────────────────
 
@@ -433,7 +434,15 @@ export async function restoreClass(classId) {
 }
 
 export async function deleteClass(classId) {
+    if (!classId || typeof classId !== 'string' || !classId.trim()) {
+        throw new Error('Cannot delete class: invalid or missing classId')
+    }
     const db = await getDB()
+    const cls = await db.get('classes', classId)
+    if (!cls) return
+
+    // Create safety snapshot before destructive class deletion
+    await createSafetySnapshot(`Before deleting class "${cls.name || classId}"`)
     
     // 1. Identify all child records that belong to this class
     const [assessments, grades, events] = await Promise.all([
@@ -448,19 +457,25 @@ export async function deleteClass(classId) {
     // Delete Grades
     const gradeStore = tx.objectStore('grades')
     for (const g of grades) {
-        await gradeStore.delete(g.gradeId)
+        if (g?.gradeId != null) {
+            await gradeStore.delete(g.gradeId)
+        }
     }
     
     // Delete Assessments
     const assessmentStore = tx.objectStore('assessments')
     for (const a of assessments) {
-        await assessmentStore.delete(a.assessmentId)
+        if (a?.assessmentId != null) {
+            await assessmentStore.delete(a.assessmentId)
+        }
     }
     
     // Delete Events
     const eventStore = tx.objectStore('events')
     for (const e of events) {
-        await eventStore.delete(e.eventId)
+        if (e?.eventId != null) {
+            await eventStore.delete(e.eventId)
+        }
     }
     
     // Finally, delete the class record itself
@@ -476,25 +491,27 @@ export async function deleteClass(classId) {
  * @param {Object} updates Map of fields to update.
  * @returns {Promise<Object>} The updated class record.
  */
-/**
- * Partially updates a class record.
- */
-export async function updateClass(classId, updates) {
+export async function patchClass(classId, updates) {
+    if (!classId) return
     const db = await getDB()
     const tx = db.transaction('classes', 'readwrite')
     const store = tx.objectStore('classes')
     const cls = await store.get(classId)
+    if (!cls) throw new Error('Class not found')
     
-    if (!cls) throw new Error(`Class not found: ${classId}`)
-
-    Object.assign(cls, updates)
+    // Clean nulls/undefined for safety
+    const cleanUpdates = { ...updates }
+    Object.keys(cleanUpdates).forEach(k => cleanUpdates[k] === undefined && delete cleanUpdates[k])
+    
+    Object.assign(cls, cleanUpdates)
     const plain = JSON.parse(JSON.stringify(cls))
     await store.put(plain)
     await tx.done
-
     hasUnsyncedChanges.value = true
     return plain
 }
+
+export const updateClass = patchClass
 
 /**
  * Toggles a student's analytics exclusion status.
@@ -522,8 +539,14 @@ export async function toggleStudentAnalyticsExclusion(classId, studentId) {
  * @returns {Promise<void>}
  */
 export async function clearAllData() {
+    // Create safety snapshot before complete database reset
+    await createSafetySnapshot('Before complete database wipe')
+
     const db = await getDB()
     const stores = ['settings', 'classes', 'events', 'assessments', 'grades']
+    if (db.objectStoreNames.contains('student_photos')) {
+        stores.push('student_photos')
+    }
     const tx = db.transaction(stores, 'readwrite')
     
     for (const storeName of stores) {
@@ -532,7 +555,7 @@ export async function clearAllData() {
     
     // Seed default settings so the app isn't in a broken state after reload
     const settings = {
-        schemaVersion: 27,
+        schemaVersion: CURRENT_SCHEMA,
         gridSize: { rows: 6, cols: 6 },
         currentYear: getCurrentSchoolYear(),
         currentSemester: getCurrentSemester(),
@@ -630,6 +653,9 @@ export async function unarchiveStudent(classId, studentId) {
  * @returns {Promise<void>}
  */
 export async function permanentlyDeleteStudent(classId, studentId) {
+    if (!classId || !studentId) {
+        throw new Error('Cannot delete student: missing classId or studentId')
+    }
     const db = await getDB()
 
     // 1. Find all events and grades scoped to this specific class + student
@@ -644,13 +670,17 @@ export async function permanentlyDeleteStudent(classId, studentId) {
     // Delete events for this student in this class only
     const eventStore = tx.objectStore('events')
     for (const e of events) {
-        await eventStore.delete(e.eventId)
+        if (e?.eventId != null) {
+            await eventStore.delete(e.eventId)
+        }
     }
 
     // Delete grades for this student in this class only
     const gradeStore = tx.objectStore('grades')
     for (const g of grades) {
-        await gradeStore.delete(g.gradeId)
+        if (g?.gradeId != null) {
+            await gradeStore.delete(g.gradeId)
+        }
     }
 
     // Remove the student from the class roster

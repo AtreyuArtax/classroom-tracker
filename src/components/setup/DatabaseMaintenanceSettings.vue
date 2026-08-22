@@ -69,6 +69,52 @@
       </div>
     </div>
 
+    <!-- Emergency Safety Snapshots -->
+    <div class="setup__card">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; flex-wrap: wrap; gap: 8px;">
+        <h2 class="setup__card-title" style="margin-bottom: 0;"><History :size="20" /> Emergency Safety Snapshots</h2>
+        <button class="setup__pill-btn" @click="onTakeSafetySnapshot" style="display: flex; align-items: center; gap: 4px;">
+          <Save :size="14" /> Create Snapshot Now
+        </button>
+      </div>
+      <p class="setup__hint">
+        Classroom Tracker automatically saves recovery snapshots to your local browser storage before any class deletion, database reset, or file restore.
+      </p>
+
+      <div v-if="snapshotMsg" class="setup__msg" :class="{ 'setup__error': snapshotMsg.startsWith('❌') }" style="margin-bottom: 12px; font-weight: 600;">
+        {{ snapshotMsg }}
+      </div>
+
+      <div v-if="safetySnapshots.length === 0" style="padding: 16px; background: rgba(255,255,255,0.03); border: 1px dashed var(--border-subtle, rgba(255,255,255,0.1)); border-radius: 8px; text-align: center; color: var(--text-secondary); font-size: 0.88rem;">
+        No emergency snapshots yet. Snapshots are created automatically before major deletions or resets.
+      </div>
+
+      <div v-else style="display: flex; flex-direction: column; gap: 10px;">
+        <div 
+          v-for="snap in safetySnapshots" 
+          :key="snap.id" 
+          style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: rgba(255,255,255,0.04); border: 1px solid var(--border-subtle, rgba(255,255,255,0.08)); border-radius: 8px; flex-wrap: wrap; gap: 8px;"
+        >
+          <div>
+            <div style="font-weight: 600; font-size: 0.95rem; color: var(--text-primary);">
+              {{ snap.triggerReason }}
+            </div>
+            <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 2px;">
+              {{ new Date(snap.timestamp).toLocaleString() }} • {{ snap.classCount }} {{ snap.classCount === 1 ? 'class' : 'classes' }}, {{ snap.eventCount }} events, {{ snap.gradeCount || 0 }} marks
+            </div>
+          </div>
+          <div style="display: flex; gap: 8px; align-items: center;">
+            <button class="setup__pill-btn" @click="onRestoreSafetySnapshot(snap.id)" style="background: var(--accent, #3b82f6); color: #fff;">
+              Restore
+            </button>
+            <button class="setup__btn-text" @click="onDeleteSafetySnapshot(snap.id)" title="Delete Snapshot" style="color: var(--text-secondary); padding: 4px;">
+              <Trash2 :size="16" />
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Data Health Audit -->
     <div class="setup__card">
       <h2 class="setup__card-title"><ShieldCheck :size="20" /> Data Health Scanner</h2>
@@ -178,6 +224,7 @@ import * as eventService from '../../db/eventService.js'
 import * as settingsService from '../../db/settingsService.js'
 import * as gradebookService from '../../db/gradebookService.js'
 import { exportGradebookToExcel } from '../../db/exportService.js'
+import { formatLocalDate } from '../../utils/dates.js'
 
 import { 
   FileSpreadsheet, 
@@ -188,7 +235,10 @@ import {
   DatabaseIcon, 
   ShieldCheck, 
   AlertTriangle, 
-  Search 
+  Search,
+  History,
+  Save,
+  Trash2
 } from 'lucide-vue-next'
 
 const { activeClass, teacherName, init } = useClassroom()
@@ -259,13 +309,62 @@ const exportMsg = ref('')
 const backupMsg = ref('')
 const restoreMsg = ref('')
 const syncMsg = ref('')
+const snapshotMsg = ref('')
 const importPreview = ref(null)
 const isSyncLinked = ref(false)
+const safetySnapshots = ref([])
+
+function loadSafetySnapshots() {
+  safetySnapshots.value = eventService.getSafetySnapshots()
+}
 
 onMounted(async () => {
   const settings = await settingsService.getSettings()
   isSyncLinked.value = !!settings.backupFileHandle
+  loadSafetySnapshots()
 })
+
+async function onTakeSafetySnapshot() {
+  snapshotMsg.value = ''
+  try {
+    const snap = await eventService.createSafetySnapshot('Manual Snapshot by Teacher')
+    if (snap) {
+      loadSafetySnapshots()
+      snapshotMsg.value = '✅ Safety snapshot created successfully!'
+      setTimeout(() => { if (snapshotMsg.value.startsWith('✅')) snapshotMsg.value = '' }, 3000)
+    }
+  } catch (err) {
+    snapshotMsg.value = `❌ Failed to create snapshot: ${err.message}`
+  }
+}
+
+async function onRestoreSafetySnapshot(snapshotId) {
+  snapshotMsg.value = ''
+  const snap = safetySnapshots.value.find(s => s.id === snapshotId)
+  if (!snap) return
+
+  if (!await confirm(
+    `Restore data to this snapshot from ${new Date(snap.timestamp).toLocaleString()} (${snap.triggerReason})? Current unsynced data will be replaced.`,
+    'Restore Safety Snapshot',
+    { danger: true }
+  )) return
+
+  try {
+    const result = await eventService.restoreSafetySnapshot(snapshotId)
+    await settingsService.auditSettingsIntegrity()
+    await init()
+    loadSafetySnapshots()
+    snapshotMsg.value = `✅ Successfully restored snapshot — ${result.classCount} classes, ${result.eventCount} events!`
+    setTimeout(() => { if (snapshotMsg.value.startsWith('✅')) snapshotMsg.value = '' }, 4000)
+  } catch (err) {
+    snapshotMsg.value = `❌ Failed to restore snapshot: ${err.message}`
+  }
+}
+
+function onDeleteSafetySnapshot(snapshotId) {
+  eventService.deleteSafetySnapshot(snapshotId)
+  loadSafetySnapshots()
+}
 
 async function linkBackupFile() {
   if (!window.showSaveFilePicker) {
@@ -307,7 +406,7 @@ async function doExport() {
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `class-tracker-backup-${new Date().toISOString().slice(0, 10)}.json`
+    a.download = `class-tracker-backup-${formatLocalDate(new Date())}.json`
     document.body.appendChild(a)
     a.click()
     document.body.removeChild(a)

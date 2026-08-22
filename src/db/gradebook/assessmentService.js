@@ -83,8 +83,12 @@ export async function updateAssessment(assessmentId, updates) {
  * @returns {Promise<void>}
  */
 export async function deleteAssessment(assessmentId) {
-  if (!assessmentId) return
+  if (assessmentId == null) return
   const normId = Number(assessmentId)
+  if (isNaN(normId) || normId <= 0) {
+    console.warn('deleteAssessment aborted: invalid assessmentId', assessmentId)
+    return
+  }
   const db = await getDB()
   
   const grades = await db.getAllFromIndex('grades', 'by_assessmentId', normId)

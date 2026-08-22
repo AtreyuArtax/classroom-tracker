@@ -322,6 +322,7 @@ import GradesContextMenu from '../components/grades/GradesContextMenu.vue'
 import ClassSwitcher from '../components/ClassSwitcher.vue'
 import { useMessage } from '../composables/useMessage.js'
 import { getAssessmentPercentage } from '../db/gradebookService.js'
+import { formatLocalDate } from '../utils/dates.js'
 
 const props = defineProps({
   classId: String,
@@ -779,7 +780,7 @@ function startNewAttempt(studentId) {
   newAttemptForm.value = {
     studentId,
     points: null,
-    date: new Date().toISOString().split('T')[0],
+    date: formatLocalDate(new Date()),
     comment: ''
   }
 }

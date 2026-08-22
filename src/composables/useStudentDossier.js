@@ -23,6 +23,7 @@ import { getDB } from '../db/index.js'
 import { getDateRangeForClassPeriod, toMinutes } from '../db/eventService.js'
 import { getAssessmentsByClass } from '../db/gradebookService.js'
 import { useClassroom } from './useClassroom.js'
+import { formatLocalDate } from '../utils/dates.js'
 
 export function useStudentDossier(periodRef = null, classIdRef = null) {
     const { activeStudentEvents, getStudentEventHistory, behaviorCodes, academicTerms } = useClassroom()
@@ -300,7 +301,7 @@ export function useStudentDossier(periodRef = null, classIdRef = null) {
             const monday = new Date(date)
             monday.setDate(date.getDate() + diff)
             monday.setHours(0, 0, 0, 0)
-            const weekKey = monday.toISOString().split('T')[0]
+            const weekKey = formatLocalDate(monday)
 
             if (!weeks[weekKey]) weeks[weekKey] = { week: weekKey }
             weeks[weekKey][evt.category] = (weeks[weekKey][evt.category] || 0) + 1

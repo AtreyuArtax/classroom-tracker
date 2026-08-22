@@ -324,10 +324,13 @@ export async function updateStudentParentContacts(studentId, parentContacts) {
 export async function assignSeat(studentId, newSeat) {
     try {
         const classId = activeClass.value?.classId
+        if (!classId || !studentId) return
         const previousSeat = students.value[studentId]?.seat ?? null
 
         await classService.updateStudentSeat(classId, studentId, newSeat)
-        students.value[studentId].seat = newSeat
+        if (students.value[studentId]) {
+            students.value[studentId].seat = newSeat
+        }
         if (activeClass.value?.students?.[studentId]) {
             activeClass.value.students[studentId].seat = newSeat
         }
@@ -338,7 +341,9 @@ export async function assignSeat(studentId, newSeat) {
         pushUndo(async () => {
             try {
                 await classService.updateStudentSeat(classId, studentId, previousSeat)
-                students.value[studentId].seat = previousSeat
+                if (students.value[studentId]) {
+                    students.value[studentId].seat = previousSeat
+                }
                 if (activeClass.value?.students?.[studentId]) {
                     activeClass.value.students[studentId].seat = previousSeat
                 }

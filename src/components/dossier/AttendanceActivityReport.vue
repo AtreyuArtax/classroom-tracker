@@ -99,6 +99,7 @@
 import { computed, ref, onMounted } from 'vue'
 import { useClassroom } from '../../composables/useClassroom.js'
 import { getEventsByStudent, toMinutes } from '../../db/eventService.js'
+import { formatLocalDate } from '../../utils/dates.js'
 
 const props = defineProps({
   studentId: { type: String, required: true },
@@ -156,7 +157,7 @@ const calendar = computed(() => {
       let curH = new Date(s + 'T12:00:00')
       let endH = new Date(e + 'T12:00:00')
       while (curH <= endH) {
-        holidayCache[curH.toISOString().split('T')[0]] = h.label
+        holidayCache[formatLocalDate(curH)] = h.label
         curH.setDate(curH.getDate() + 1)
       }
     }
@@ -190,7 +191,7 @@ const calendar = computed(() => {
       // Skip weekends for high density M-F grid
       if (dayOfWeek === 0 || dayOfWeek === 6) continue 
       
-      const dateStr = date.toISOString().split('T')[0]
+      const dateStr = formatLocalDate(date)
       const dayEvents = events.value.filter(e => e.timestamp?.split('T')[0] === dateStr && !e.superseded)
       
       const isOutsideRange = date < start || date > end

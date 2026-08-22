@@ -2,6 +2,7 @@ import { ref, computed } from 'vue'
 import { activeSubjectId, teachingMode } from './useClassroomState.js'
 import { DEFAULT_ELEMENTARY_SUBJECTS, DEFAULT_TRADITIONAL_CATEGORIES } from '../utils/elementarySubjects.js'
 import { findElementaryPreset, findElementaryPresets } from '../data/curriculum/index.js'
+import { isCohortMatch } from '../db/gradebook/gradeCalc.js'
 
 export { findElementaryPreset, findElementaryPresets, DEFAULT_ELEMENTARY_SUBJECTS }
 
@@ -301,14 +302,19 @@ export function ensureIEPPresetsForClass(classRecord) {
 
     students.forEach(st => {
       const modGrade = st.accommodations?.modifiedSubjectGrades?.[currentSub.subjectId]
-      if (modGrade && modGrade !== 'default' && /^Grade\s*\d+$/i.test(modGrade)) {
-        iepGrades.add(modGrade)
+      if (modGrade && modGrade !== 'default') {
+        const cleaned = modGrade.match(/^\d+$/) 
+          ? `Grade ${modGrade}` 
+          : (modGrade.replace(/^Gr\.?\s*/i, 'Grade '))
+        if (/^Grade\s*\d+$/i.test(cleaned)) {
+          iepGrades.add(cleaned)
+        }
       }
     })
 
     iepGrades.forEach(gradeStr => {
       const existingExps = currentSub.expectations || []
-      const hasGrade = existingExps.some(e => e.gradeLevel && e.gradeLevel.trim().toLowerCase() === gradeStr.trim().toLowerCase())
+      const hasGrade = existingExps.some(e => e.gradeLevel && isCohortMatch(e.gradeLevel, gradeStr))
       if (!hasGrade) {
         const matchingPresets = findElementaryPresets([gradeStr], currentSub.code, currentSub.name)
         if (matchingPresets && matchingPresets.length > 0) {

@@ -170,6 +170,7 @@ import { resolveIcon } from '../../utils/icons.js'
 import { useMessage } from '../../composables/useMessage.js'
 import BaseModal from '../BaseModal.vue'
 import AssessmentConversationModal from '../AssessmentConversationModal.vue'
+import { formatLocalDate } from '../../utils/dates.js'
 
 const props = defineProps({
   studentId: { type: String, required: true },
@@ -363,7 +364,7 @@ const groupedItems = computed(() => {
   const groups = []
   
   all.forEach(item => {
-    const dateStr = item.date.toISOString().split('T')[0]
+    const dateStr = formatLocalDate(item.date)
     let group = groups.find(g => g.dateStr === dateStr)
     if (!group) {
       group = { 

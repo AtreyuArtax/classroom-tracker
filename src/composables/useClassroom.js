@@ -24,6 +24,7 @@ import { useMessage } from './useMessage.js'
 import { getDB } from '../db/index.js'
 import { supabase } from '../utils/supabase.js'
 import { autoPopulateAllElementarySubjects } from './useElementary.js'
+import { formatLocalDate } from '../utils/dates.js'
 import {
   moveStudentFromClass,
   removeStudent,
@@ -379,7 +380,7 @@ function saveDismissedSuggestions() {
 }
 
 function hasBeenDismissedToday(classId) {
-    const todayStr = new Date().toISOString().slice(0, 10)
+    const todayStr = formatLocalDate(new Date())
     const list = dismissedSuggestions.value[todayStr] || []
     return list.includes(classId)
 }
@@ -391,7 +392,7 @@ function dismissSuggestion() {
     if (!suggestedClass.value) return
 
     const classId = suggestedClass.value.classId
-    const todayStr = new Date().toISOString().slice(0, 10)
+    const todayStr = formatLocalDate(new Date())
 
     if (!dismissedSuggestions.value[todayStr]) {
         dismissedSuggestions.value[todayStr] = []
@@ -546,7 +547,7 @@ async function init() {
 
     // ── Determine default term ──
     const nowCheck = new Date()
-    const nowISO = nowCheck.toISOString().split('T')[0]
+    const nowISO = formatLocalDate(nowCheck)
     const currentTerm = terms.find(t => nowISO >= t.startDate && nowISO <= t.endDate)
     
     // Only auto-default if we don't already have a valid stored session
@@ -650,7 +651,7 @@ async function createClass(opts) {
     // 1. Determine current academic term
     const terms = await settingsService.getAcademicTerms()
     const nowCheck = new Date()
-    const nowISO = nowCheck.toISOString().split('T')[0]
+    const nowISO = formatLocalDate(nowCheck)
     const currentTerm = terms.find(t => nowISO >= t.startDate && nowISO <= t.endDate)
     
     let year = opts.year || currentTerm?.year
@@ -928,7 +929,9 @@ async function _reloadClasses() {
  * @returns {Promise<{ isAbsent: boolean, isLate: boolean, lateMs: number|null }>}
  */
 async function getAttendanceOnDate(studentId, date) {
-    const dayStr = (typeof date === 'string') ? date.slice(0, 10) : date.toISOString().slice(0, 10)
+    const dayStr = (typeof date === 'string') 
+        ? (date.includes('T') ? formatLocalDate(date) : date.slice(0, 10)) 
+        : formatLocalDate(date)
     const events = await eventService.getEventsByStudent(studentId, { from: dayStr, to: dayStr })
     
     const absent = events.find(e => e.code === 'a' && !e.superseded)
@@ -1484,7 +1487,7 @@ async function _activateClass(cls) {
     }
 
     // Reconcile stale activeStates from previous days before activating
-    const todayStr = new Date().toISOString().slice(0, 10)
+    const todayStr = formatLocalDate(new Date())
     const eventsToday = await eventService.getEventsByClass(cls.classId, { from: todayStr, to: todayStr })
 
     let needsSave = false
@@ -1504,9 +1507,10 @@ async function _activateClass(cls) {
 
         // Check for stale out-of-room state (left the room yesterday and never returned)
         if (states.isOut && states.outTime) {
-            if (!states.outTime.startsWith(todayStr)) {
+            const outDateStr = formatLocalDate(states.outTime)
+            if (outDateStr < todayStr) {
                 const originalOutTime = states.outTime
-                const dateOnly = originalOutTime.slice(0, 10)
+                const dateOnly = formatLocalDate(originalOutTime)
                 const existing = await eventService.getEventsByStudent(studentId, { from: dateOnly, to: dateOnly })
                 const isAlreadyLogged = existing.some(e => e.timestamp === originalOutTime)
 

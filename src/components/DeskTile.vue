@@ -331,16 +331,23 @@ function onDragStart(evt) {
 
 function onDrop(evt) {
   isDragOver.value = false
-  const data = JSON.parse(evt.dataTransfer.getData('text/plain'))
-  // Emit upward — SeatingGrid orchestrates the seat swap via useClassroom
-  emit('seat-drop', {
-    studentId:  data.studentId,
-    fromRow:    data.fromRow,
-    fromCol:    data.fromCol,
-    toRow:      props.row,
-    toCol:      props.col,
-    toStudentId: props.studentId ?? null,
-  })
+  const raw = evt.dataTransfer?.getData('text/plain')
+  if (!raw) return
+  try {
+    const data = JSON.parse(raw)
+    if (!data || !data.studentId) return
+    // Emit upward — SeatingGrid orchestrates the seat swap via useClassroom
+    emit('seat-drop', {
+      studentId:  data.studentId,
+      fromRow:    data.fromRow,
+      fromCol:    data.fromCol,
+      toRow:      props.row,
+      toCol:      props.col,
+      toStudentId: props.studentId ?? null,
+    })
+  } catch (err) {
+    // Ignore non-JSON drag drops
+  }
 }
 </script>
 
@@ -578,14 +585,15 @@ function onDrop(evt) {
 }
 
 .desk-tile__first {
-  font-size:   0.7rem;
-  color:       var(--text-secondary);
+  font-size:   0.82rem;
+  font-weight: 700;
+  color:       var(--text);
 }
 
 .desk-tile__last {
-  font-size:   0.8rem;
-  font-weight: 600;
-  color:       var(--text);
+  font-size:   0.72rem;
+  font-weight: 400;
+  color:       var(--text-secondary);
 }
 
 .desk-tile__timer {

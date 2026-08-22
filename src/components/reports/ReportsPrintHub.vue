@@ -279,8 +279,9 @@ const emit = defineEmits([
 ])
 
 const totalExpectationsCount = computed(() => {
-  if (!props.reportClass?.gradebookUnits) return 0
-  return props.reportClass.gradebookUnits.reduce((acc, u) => acc + (u.expectations?.length || 0), 0)
+  const units = effectiveClass.value?.gradebookUnits || props.reportClass?.gradebookUnits
+  if (!units || !Array.isArray(units)) return 0
+  return units.reduce((acc, u) => acc + (u.expectations?.length || 0), 0)
 })
 
 function handlePrintExpectations() {

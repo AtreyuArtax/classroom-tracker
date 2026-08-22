@@ -1,37 +1,39 @@
 <template>
-  <BaseModal
-    :show="true"
-    :show-x="false"
-    @close="$emit('close')"
-    :max-width="(form.orientation === 'landscape' || form.showAssessments) ? '1080px' : '780px'"
-    title="Print Final Grades Grid"
-  >
-    <template #header>
-      <div class="grades-print-modal__header">
-        <div class="grades-print-modal__header-title-group">
-          <Printer :size="20" class="grades-print-modal__header-icon" />
-          <h3 class="grades-print-modal__title">Print Final Grades Grid</h3>
+  <div class="reports__modal-overlay">
+    <div 
+      class="reports__print-modal"
+      :class="{ 
+        'reports__print-modal--preview-open': showPreview, 
+        'reports__print-modal--compact': !showPreview,
+        'reports__print-modal--landscape': showPreview && form.orientation === 'landscape'
+      }"
+    >
+      <!-- Header -->
+      <header class="reports__modal-header">
+        <div class="header-content">
+          <Printer class="header-icon" :size="24" />
+          <div>
+            <h3 class="header-title">Print Final Grades Grid</h3>
+            <p class="header-subtitle">{{ classRecord?.name || 'Class' }} · {{ totalStudentsCount }} Students</p>
+          </div>
         </div>
-        <div class="grades-print-modal__header-actions">
-          <button class="setup__btn-ghost" @click="handleExcelExport" style="display: flex; align-items: center; gap: 6px;">
-            <FileSpreadsheet :size="16" /> Export Excel
-          </button>
-          <button class="setup__btn-primary grades-print-modal__btn-print" @click="handlePrint" :disabled="isPrinting">
-            <Printer :size="16" /> Print Grid
-          </button>
-          <button class="setup__btn-ghost" @click="$emit('close')">
-            <X :size="16" /> Close
-          </button>
-        </div>
-      </div>
-    </template>
+        <button class="header-close" @click="$emit('close')">
+          <X :size="20" />
+        </button>
+      </header>
 
-    <div class="grades-print-modal__body">
-      <div class="grades-print-modal__grid-layout" :class="{ 'with-assessments': form.showAssessments }">
+      <!-- Body -->
+      <div class="reports__modal-body" :class="{ 'reports__modal-body--with-preview': showPreview }">
         <!-- Configuration Section -->
-        <div class="grades-print-modal__config">
-          <h4 class="grades-print-modal__section-title">Print Options</h4>
-          <form class="setup__form" @submit.prevent="handlePrint">
+        <div class="config-section">
+          <div class="config-section-header">
+            <h4 class="config-section-title">Print Options</h4>
+            <button class="reports__btn-preview" @click="showPreview = !showPreview">
+              {{ showPreview ? 'Hide Preview' : 'Show Preview' }}
+            </button>
+          </div>
+
+          <form class="setup__form" @submit.prevent="handlePrint" style="margin-top: 14px;">
             <label class="setup__label">
               Document Title
               <input v-model="form.title" class="setup__input" required placeholder="e.g. Final Grades Grid" />
@@ -141,11 +143,10 @@
         </div>
 
         <!-- Preview Section -->
-        <div class="grades-print-modal__preview">
-          <div class="grades-print-modal__preview-header" style="display: flex; justify-content: space-between; align-items: center;">
-            <div style="display: flex; align-items: center; gap: 6px;">
-              <Eye :size="14" />
-              <span>Interactive Live Preview</span>
+        <div v-if="showPreview" class="reports__print-preview-area">
+          <header class="preview-banner">
+            <div class="preview-banner-left">
+              <Activity :size="14" /> LIVE PREVIEW ({{ activeGridColumns.length > 0 && columnChunks.length > 1 ? `Part ${activePreviewChunkIndex + 1} of ${columnChunks.length}` : 'Page 1 of 1' }})
             </div>
             
             <!-- Part tabs if > 8 columns -->
@@ -161,84 +162,98 @@
                 Part {{ idx + 1 }}
               </button>
             </div>
-          </div>
+          </header>
           
-          <div class="grades-print-modal__preview-container">
-            <div class="grades-print-modal__preview-paper" :class="[form.orientation, 'preview-font--' + resolvedFontSize]">
-              <h2 class="preview-title">{{ form.title }}</h2>
-              <div class="preview-subtitle">
-                {{ subheader }}
-                <span v-if="activeGridColumns.length > 0 && columnChunks.length > 1"> — Part {{ activePreviewChunkIndex + 1 }} of {{ columnChunks.length }}</span>
-              </div>
-              <div class="preview-meta-date">Date: {{ formattedDate }}</div>
-              
-              <div class="preview-table-wrapper">
-                <table class="preview-table" :class="{ 'zebra-striping': form.showZebraStriping, 'table--two-columns': activeGridColumns.length === 0 && !form.showCategories }">
-                  <thead>
-                    <tr>
-                      <th>Student Name</th>
-                      <th class="text-right font-bold overall-col-header">Overall Grade</th>
-                      <template v-if="activeGridColumns.length > 0">
-                        <th v-for="col in activePreviewChunk" :key="'prev-h-'+col.id" class="text-right prev-ass-header">
-                          <div class="prev-ass-header-content">
-                            <span class="prev-ass-name" :title="col.name">{{ col.name }}</span>
-                            <span class="prev-ass-pts">{{ col.isExp ? 'Standard' : '/' + col.totalPoints }}</span>
-                          </div>
-                        </th>
-                      </template>
-                      <template v-if="!isSBAR && form.showCategories">
-                        <th v-for="cat in classRecord.gradebookCategories" :key="'prev-h-'+cat.categoryId" class="text-right">
-                          {{ cat.name }} <span class="prev-weight">({{ cat.weight }}%)</span>
-                        </th>
-                      </template>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr v-for="s in sortedStudents" :key="'prev-s-'+s.studentId">
-                      <td>{{ s.lastName }}, {{ s.firstName }}</td>
-                      <td class="text-right font-bold overall-col-cell">
-                        {{ formatGradeValue(classGrades[s.studentId]?.overallGrade) }}
-                      </td>
-                      <template v-if="activeGridColumns.length > 0">
-                        <td v-for="col in activePreviewChunk" :key="'prev-c-'+s.studentId+'-'+col.id" class="text-right num-col prev-ass-cell" :class="{ 'font-bold': col.isExp }">
-                          <span v-if="col.isExp">{{ formatExpectationMastery(s.studentId, col.id) }}</span>
-                          <span v-else>{{ formatAssessmentScore(s.studentId, col.id, col.totalPoints) }}</span>
+          <div class="preview-content">
+            <div class="preview-content-wrapper">
+              <div class="grades-print-modal__preview-paper" :class="[form.orientation, 'preview-font--' + resolvedFontSize]">
+                <h2 class="preview-title">{{ form.title }}</h2>
+                <div class="preview-subtitle">
+                  {{ subheader }}
+                  <span v-if="activeGridColumns.length > 0 && columnChunks.length > 1"> — Part {{ activePreviewChunkIndex + 1 }} of {{ columnChunks.length }}</span>
+                </div>
+                
+                <div class="preview-table-wrapper">
+                  <table class="preview-table" :class="{ 'zebra-striping': form.showZebraStriping, 'table--two-columns': activeGridColumns.length === 0 && !form.showCategories }">
+                    <thead>
+                      <tr>
+                        <th>Student Name</th>
+                        <th class="text-right font-bold overall-col-header">Overall Grade</th>
+                        <template v-if="activeGridColumns.length > 0">
+                          <th v-for="col in activePreviewChunk" :key="'prev-h-'+col.id" class="text-right prev-ass-header">
+                            <div class="prev-ass-header-content">
+                              <span class="prev-ass-name" :title="col.name">{{ col.name }}</span>
+                              <span class="prev-ass-pts">{{ col.isExp ? 'Standard' : '/' + col.totalPoints }}</span>
+                            </div>
+                          </th>
+                        </template>
+                        <template v-if="!isSBAR && form.showCategories">
+                          <th v-for="cat in classRecord.gradebookCategories" :key="'prev-h-'+cat.categoryId" class="text-right">
+                            {{ cat.name }} <span class="prev-weight">({{ cat.weight }}%)</span>
+                          </th>
+                        </template>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr v-for="s in sortedStudents" :key="'prev-s-'+s.studentId">
+                        <td>{{ s.lastName }}, {{ s.firstName }}</td>
+                        <td class="text-right font-bold overall-col-cell">
+                          {{ formatGradeValue(classGrades[s.studentId]?.overallGrade) }}
                         </td>
-                      </template>
-                      <template v-if="!isSBAR && form.showCategories">
-                        <td v-for="cat in classRecord.gradebookCategories" :key="'prev-c-'+s.studentId+'-'+cat.categoryId" class="text-right num-col">
-                          {{ formatGradeValue(classGrades[s.studentId]?.categoryResults?.[cat.categoryId]?.percentage) }}
-                        </td>
-                      </template>
-                    </tr>
-                    
-                    <tr v-if="form.showClassAverages" class="prev-avg-row">
-                      <td>Class Average</td>
-                      <td class="text-right font-bold overall-col-cell">{{ formatGradeValue(overallClassAverage !== null ? Math.round(overallClassAverage) : null) }}</td>
-                      <template v-if="activeGridColumns.length > 0">
-                        <td v-for="col in activePreviewChunk" :key="'prev-avg-'+col.id" class="text-right font-bold num-col prev-ass-cell">
-                          <span v-if="col.isExp">—</span>
-                          <span v-else>{{ formatAssessmentAvg(getAssessmentClassAverage(col.id), col.totalPoints) }}</span>
-                        </td>
-                      </template>
-                      <template v-if="!isSBAR && form.showCategories">
-                        <td v-for="cat in classRecord.gradebookCategories" :key="'prev-avg-c-'+cat.categoryId" class="text-right font-bold num-col">
-                          {{ formatGradeValue(getCategoryClassAverage(cat.categoryId)) }}
-                        </td>
-                      </template>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
+                        <template v-if="activeGridColumns.length > 0">
+                          <td v-for="col in activePreviewChunk" :key="'prev-c-'+s.studentId+'-'+col.id" class="text-right num-col prev-ass-cell" :class="{ 'font-bold': col.isExp }">
+                            <span v-if="col.isExp">{{ formatExpectationMastery(s.studentId, col.id) }}</span>
+                            <span v-else>{{ formatAssessmentScore(s.studentId, col.id, col.totalPoints) }}</span>
+                          </td>
+                        </template>
+                        <template v-if="!isSBAR && form.showCategories">
+                          <td v-for="cat in classRecord.gradebookCategories" :key="'prev-c-'+s.studentId+'-'+cat.categoryId" class="text-right num-col">
+                            {{ formatGradeValue(classGrades[s.studentId]?.categoryResults?.[cat.categoryId]?.percentage) }}
+                          </td>
+                        </template>
+                      </tr>
+                      
+                      <tr v-if="form.showClassAverages" class="prev-avg-row">
+                        <td>Class Average</td>
+                        <td class="text-right font-bold overall-col-cell">{{ formatGradeValue(overallClassAverage !== null ? Math.round(overallClassAverage) : null) }}</td>
+                        <template v-if="activeGridColumns.length > 0">
+                          <td v-for="col in activePreviewChunk" :key="'prev-avg-'+col.id" class="text-right font-bold num-col prev-ass-cell">
+                            <span v-if="col.isExp">—</span>
+                            <span v-else>{{ formatAssessmentAvg(getAssessmentClassAverage(col.id), col.totalPoints) }}</span>
+                          </td>
+                        </template>
+                        <template v-if="!isSBAR && form.showCategories">
+                          <td v-for="cat in classRecord.gradebookCategories" :key="'prev-avg-c-'+cat.categoryId" class="text-right font-bold num-col">
+                            {{ formatGradeValue(getCategoryClassAverage(cat.categoryId)) }}
+                          </td>
+                        </template>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
 
-              <div class="preview-footer">
-                <span>Class Size: {{ sortedStudents.length }} students</span>
-                <span v-if="activeGridColumns.length > 0 && columnChunks.length > 1">Showing Part {{ activePreviewChunkIndex + 1 }} of {{ columnChunks.length }}</span>
+                <div class="preview-footer">
+                  <span>Class Size: {{ sortedStudents.length }} students · Date: {{ formattedDate }}</span>
+                  <span v-if="activeGridColumns.length > 0 && columnChunks.length > 1">Showing Part {{ activePreviewChunkIndex + 1 }} of {{ columnChunks.length }}</span>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
+
+      <!-- Footer -->
+      <footer class="reports__modal-footer">
+        <div style="display: flex; gap: 8px;">
+          <button class="reports__btn-ghost" @click="$emit('close')">Cancel</button>
+          <button class="reports__btn-ghost" @click="handleExcelExport" style="display: flex; align-items: center; gap: 6px;">
+            <FileSpreadsheet :size="14" /> Export Excel
+          </button>
+        </div>
+        <button class="reports__btn-primary" @click="handlePrint" :disabled="isPrinting">
+          <Printer :size="16" /> Open Print Dialog
+        </button>
+      </footer>
     </div>
 
     <!-- Hidden Teleport Container for Real Browser Printing -->
@@ -262,7 +277,6 @@
             <header class="print-header">
               <h2 class="print-title">{{ form.title }}</h2>
               <h3 class="print-subtitle">{{ subheader }} — Part {{ cIdx + 1 }} of {{ columnChunks.length }}</h3>
-              <div class="print-meta-date">Generated: {{ formattedDate }}</div>
             </header>
 
             <table class="print-table" :class="{ 'zebra-striping': form.showZebraStriping }">
@@ -314,7 +328,7 @@
             </table>
             
             <footer class="print-footer">
-              <p>Class Size: {{ sortedStudents.length }} students | Part {{ cIdx + 1 }} of {{ columnChunks.length }}</p>
+              <p>Class Size: {{ sortedStudents.length }} students · Date: {{ formattedDate }} | Part {{ cIdx + 1 }} of {{ columnChunks.length }}</p>
             </footer>
           </div>
         </template>
@@ -325,7 +339,6 @@
             <header class="print-header">
               <h2 class="print-title">{{ form.title }}</h2>
               <h3 class="print-subtitle">{{ subheader }}</h3>
-              <div class="print-meta-date">Generated: {{ formattedDate }}</div>
             </header>
 
             <table class="print-table" :class="{ 'zebra-striping': form.showZebraStriping, 'table--two-columns': activeGridColumns.length === 0 && !form.showCategories }">
@@ -383,21 +396,20 @@
             </table>
             
             <footer class="print-footer">
-              <p>Class Size: {{ sortedStudents.length }} students</p>
+              <p>Class Size: {{ sortedStudents.length }} students · Date: {{ formattedDate }}</p>
             </footer>
           </div>
         </template>
       </div>
     </Teleport>
-  </BaseModal>
+  </div>
 </template>
 
 <script setup>
 import { ref, computed, watch, nextTick, onMounted, toRef } from 'vue'
-import { Printer, X, Eye, AlertTriangle, FileSpreadsheet } from 'lucide-vue-next'
-import BaseModal from './BaseModal.vue'
+import { Printer, X, Eye, AlertTriangle, FileSpreadsheet, Activity } from 'lucide-vue-next'
 import { assessments, gradeMap, selectedMilestone, filteredMilestones } from '../composables/useGradebook.js'
-import { usePrintOptions } from '../composables/usePrintOptions.js'
+import { usePrintOptions, executePrint } from '../composables/usePrintOptions.js'
 import { exportGradebookToExcel } from '../db/exportService.js'
 import { calculateSBARExpectationMastery, getSBARLevelBadge } from '../db/gradebook/gradeCalcSBAR.js'
 import { isCohortMatch } from '../db/gradebook/gradeCalc.js'
@@ -418,6 +430,7 @@ const { selectedCohort, isSplitClass, availableSubCohorts, filterStudents, getSu
 
 const isPrinting = ref(false)
 const mounted = ref(false)
+const showPreview = ref(false)
 
 onMounted(() => {
   mounted.value = true
@@ -587,16 +600,30 @@ const activePreviewChunk = computed(() => {
 const resolvedFontSize = computed(() => {
   if (form.value.fontSize !== 'auto') return form.value.fontSize
   const count = sortedStudents.value.length
+  const isLandscape = form.value.orientation === 'landscape'
   
+  if (isLandscape) {
+    if (activeGridColumns.value.length > 0) {
+      const aCount = activeGridColumns.value.length
+      if (count > 20 || aCount > 8) return 'compact'
+      if (count > 12 || aCount > 4) return 'normal'
+      return 'large'
+    }
+    if (count > 20) return 'compact'
+    if (count > 12) return 'normal'
+    return 'large'
+  }
+  
+  // Portrait mode
   if (activeGridColumns.value.length > 0) {
     const aCount = activeGridColumns.value.length
-    if (count > 28 || aCount > 10) return 'compact'
-    if (count > 16 || aCount > 5) return 'normal'
+    if (count > 28 || aCount > 8) return 'compact'
+    if (count > 18 || aCount > 4) return 'normal'
     return 'large'
   }
   
   if (count > 32) return 'compact'
-  if (count > 18) return 'normal'
+  if (count > 20) return 'normal'
   return 'large'
 })
 
@@ -614,18 +641,11 @@ watch(
   }
 )
 
-// watch orientation and apply dynamically to print style
 watch(isPrinting, (val) => {
   if (val) {
     document.body.classList.add('is-printing')
-    const styleEl = document.createElement('style')
-    styleEl.id = 'print-orientation-style'
-    styleEl.innerHTML = `@page { size: ${form.value.orientation}; margin: 10mm; }`
-    document.head.appendChild(styleEl)
   } else {
     document.body.classList.remove('is-printing')
-    const styleEl = document.getElementById('print-orientation-style')
-    if (styleEl) styleEl.remove()
   }
 })
 
@@ -783,128 +803,264 @@ async function handleExcelExport() {
 function handlePrint() {
   isPrinting.value = true
   nextTick(() => {
-    window.print()
-    setTimeout(() => {
-      isPrinting.value = false
-    }, 800)
+    executePrint({
+      orientation: form.value.orientation,
+      margin: '10mm',
+      onDone: () => {
+        isPrinting.value = false
+      }
+    })
   })
 }
 </script>
 
 <style>
 /* Global print/modal overrides */
-.grades-print-modal__header {
+.reports__modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(6px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.reports__print-modal {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xl);
+  display: flex;
+  flex-direction: column;
+  max-height: 90vh;
+  width: 100%;
+  transition: max-width 0.3s ease;
+  overflow: hidden;
+}
+
+.reports__print-modal--compact {
+  max-width: 520px;
+}
+
+.reports__print-modal--preview-open {
+  max-width: 1100px;
+  height: 88vh;
+}
+
+.reports__print-modal--landscape {
+  max-width: 1240px;
+  height: 88vh;
+}
+
+.reports__modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  width: 100%;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  flex-shrink: 0;
 }
 
-.grades-print-modal__header-title-group {
+.header-content {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
 
-.grades-print-modal__header-icon {
+.header-icon {
   color: var(--primary);
 }
 
-.grades-print-modal__title {
-  margin: 0;
-  font-size: 1.15rem;
+.header-title {
+  font-size: 1.1rem;
   font-weight: 700;
+  color: var(--text);
+  margin: 0;
+}
+
+.header-subtitle {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.header-close {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: var(--radius-sm);
+}
+
+.header-close:hover {
+  background: var(--surface-hover);
   color: var(--text);
 }
 
-.grades-print-modal__header-actions {
+.reports__modal-body {
   display: flex;
-  gap: 8px;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
 }
 
-.grades-print-modal__body {
-  display: flex;
-  flex-direction: column;
-}
-
-.grades-print-modal__grid-layout {
-  display: grid;
-  grid-template-columns: 240px 1fr;
-  gap: 20px;
-  transition: grid-template-columns 0.3s ease;
-}
-
-.grades-print-modal__grid-layout.with-assessments {
-  grid-template-columns: 260px 1fr;
-}
-
-.grades-print-modal__config {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+.reports__modal-body--with-preview .config-section {
+  width: 360px;
+  flex-shrink: 0;
   border-right: 1px solid var(--border);
-  padding-right: 20px;
 }
 
-.grades-print-modal__section-title {
+.config-section {
+  padding: 20px;
+  overflow-y: auto;
+  width: 100%;
+}
+
+.config-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.config-section-title {
   font-size: 0.85rem;
   font-weight: 700;
-  text-transform: uppercase;
   color: var(--text-secondary);
-  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
   margin: 0;
+}
+
+.reports__btn-preview {
+  padding: 4px 10px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--text);
+  transition: all 0.15s ease;
+}
+
+.reports__btn-preview:hover {
+  background: var(--surface-hover);
+  border-color: var(--primary);
+  color: var(--primary);
 }
 
 .grades-print-modal__checkboxes {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  margin-top: 8px;
+  gap: 10px;
+  margin-top: 12px;
 }
 
-/* Interactive Preview Styles */
-.grades-print-modal__preview {
+/* ── Live Preview Area ── */
+.reports__print-preview-area {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  overflow: hidden;
+  height: 100%;
+  min-height: 0;
+  background: #cbd5e1;
 }
 
-.grades-print-modal__preview-header {
+.preview-banner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--surface);
+  padding: 8px 14px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--primary);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.preview-banner-left {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--text-secondary);
 }
 
-.grades-print-modal__preview-container {
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  background: var(--bg-secondary);
-  padding: 16px;
-  max-height: 480px;
-  overflow: auto;
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+.preview-content {
+  padding: 24px 16px 48px;
+  background: #cbd5e1;
+  overflow-y: auto !important;
+  overflow-x: auto;
+  display: block;
+  flex: 1;
+  min-height: 0;
+  box-sizing: border-box;
+}
+
+.preview-content-wrapper {
+  zoom: 0.72;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 auto 32px auto;
 }
 
 .grades-print-modal__preview-paper {
   background: white;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  padding: 24px;
+  padding: 10mm 10mm;
   box-sizing: border-box;
-  width: 100%;
-  height: max-content;
-  flex-shrink: 0;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
   display: flex;
   flex-direction: column;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   color: #111;
-  transition: width 0.3s;
+  transition: width 0.25s ease, min-height 0.25s ease;
+}
+
+.grades-print-modal__preview-paper.portrait {
+  width: 210mm;
+  min-height: 297mm;
+}
+
+.grades-print-modal__preview-paper.landscape {
+  width: 297mm;
+  min-height: 210mm;
+}
+
+.reports__modal-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 20px;
+  border-top: 1px solid var(--border);
+  background: var(--bg-secondary);
+}
+
+.reports__btn-ghost {
+  padding: 8px 16px;
+  border: 1px solid var(--border);
+  background: transparent;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--text);
+}
+
+.reports__btn-primary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  cursor: pointer;
 }
 
 .preview-table-wrapper {
@@ -913,20 +1069,11 @@ function handlePrint() {
   margin-top: 10px;
 }
 
-.grades-print-modal__preview-paper.portrait {
-  max-width: 500px;
-  min-height: 707px; /* Virtual A4 Portrait aspect-ratio */
-}
-
-.grades-print-modal__preview-paper.landscape {
-  max-width: 707px;
-  min-height: 500px; /* Virtual A4 Landscape aspect-ratio */
-}
-
 .preview-title {
   text-align: center;
   font-size: 1.3em;
   font-weight: 800;
+  text-transform: uppercase;
   margin: 0 0 2px 0;
   color: #111;
 }
@@ -949,10 +1096,6 @@ function handlePrint() {
   width: 100%;
   border-collapse: collapse;
   margin-top: 0;
-}
-
-.preview-table.table--two-columns {
-  max-width: 450px;
 }
 
 .preview-table th {
@@ -1050,12 +1193,12 @@ function handlePrint() {
   justify-content: space-between;
 }
 
-/* Font Scales for Preview */
-.preview-font--compact { font-size: 8px; }
+/* Font Scales for Preview — matched to print point sizes */
+.preview-font--compact { font-size: 8pt; }
 .preview-font--compact td, .preview-font--compact th { padding: 3px 4px; }
-.preview-font--normal { font-size: 10px; }
+.preview-font--normal { font-size: 10pt; }
 .preview-font--normal td, .preview-font--normal th { padding: 5px 6px; }
-.preview-font--large { font-size: 12px; }
+.preview-font--large { font-size: 12pt; }
 .preview-font--large td, .preview-font--large th { padding: 7px 8px; }
 
 /* ─── REAL BROWSER PRINT ONLY LAYOUT ─── */

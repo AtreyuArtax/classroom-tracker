@@ -28,6 +28,7 @@ import { getClass } from './classService.js'
 import { getSettings } from './settingsService.js'
 import { migrateData, CURRENT_SCHEMA } from './migrations.js'
 import { ref } from 'vue'
+import { formatLocalDate } from '../utils/dates.js'
 
 export const hasUnsyncedChanges = ref(false)
 
@@ -60,11 +61,15 @@ export function toMinutes(d) {
 function _applyDateRange(events, dateRange = {}) {
     const { from, to } = dateRange
     return events.filter(evt => {
-        if (from && evt.timestamp < from) return false
-        // Ensure "to" covers the entire day up to 11:59:59.999Z
+        if (!evt.timestamp) return true
+        const localDate = formatLocalDate(evt.timestamp)
+        if (from) {
+            const fromDate = from.includes('T') ? formatLocalDate(from) : from
+            if (localDate < fromDate) return false
+        }
         if (to) {
-            const toBoundary = to.includes('T') ? to : `${to}T23:59:59.999Z`
-            if (evt.timestamp > toBoundary) return false
+            const toDate = to.includes('T') ? formatLocalDate(to) : to
+            if (localDate > toDate) return false
         }
         return true
     })
@@ -136,6 +141,10 @@ export async function logEvent(eventObj) {
  * @returns {Promise<void>}
  */
 export async function deleteEvent(eventId) {
+    if (eventId == null || (typeof eventId !== 'number' && typeof eventId !== 'string')) {
+        console.warn('deleteEvent aborted: missing or invalid eventId', eventId)
+        return
+    }
     const db = await getDB()
     await db.delete('events', eventId)
     hasUnsyncedChanges.value = true
@@ -145,6 +154,7 @@ export async function deleteEvent(eventId) {
  * Updates an existing event with partial data.
  */
 export async function updateEvent(eventId, updates = {}) {
+    if (eventId == null) return
     const db = await getDB()
     const tx = db.transaction('events', 'readwrite')
     const store = tx.objectStore('events')
@@ -153,12 +163,12 @@ export async function updateEvent(eventId, updates = {}) {
     if (!event) throw new Error(`Event not found: ${eventId}`)
 
     Object.assign(event, updates)
-    await store.put(event)
+    const plain = JSON.parse(JSON.stringify(event))
+    await store.put(plain)
     await tx.done
 
     hasUnsyncedChanges.value = true
 }
-
 
 /**
  * Returns all events for a student, optionally filtered by date.
@@ -215,8 +225,7 @@ export async function getEventsByPeriod(periodNumber, dateRange = {}) {
 
 /**
  * Returns all events across all classes and students.
- * Uses a full cursor on the `by_timestamp` index (sorted) — acceptable for
- * full-dataset reporting. Still index-driven, not a random scan.
+ * Uses a full cursor on the `by_timestamp` index (sorted).
  *
  * @param {{ from?: string, to?: string }} [dateRange]
  * @returns {Promise<Array<Object>>}
@@ -228,9 +237,8 @@ export async function getAllEvents(dateRange = {}) {
 }
 
 /**
- * Serialises all three stores into a single backup object.
- * CLAUDE.md §13:
- *   { schemaVersion: 1, exportedAt: <ISO>, settings: {...}, classes: [...], events: [...] }
+ * Returns all records across all object stores as a single JSON-serializable object.
+ * Schema adheres to CLAUDE.md §13 (Backup schema).
  *
  * @returns {Promise<Object>}
  */
@@ -245,6 +253,32 @@ export async function exportAllData() {
         db.getAll('grades'),
     ])
 
+    let photos = []
+    try {
+        const photoRecords = await db.getAll('student_photos')
+        if (photoRecords && photoRecords.length > 0) {
+            photos = await Promise.all(photoRecords.map(async r => {
+                let dataUrl = null
+                if (r.blob instanceof Blob) {
+                    dataUrl = await new Promise(resolve => {
+                        const reader = new FileReader()
+                        reader.onloadend = () => resolve(reader.result)
+                        reader.onerror = () => resolve(null)
+                        reader.readAsDataURL(r.blob)
+                    })
+                }
+                return {
+                    studentId: r.studentId,
+                    dataUrl,
+                    updatedAt: r.updatedAt
+                }
+            }))
+            photos = photos.filter(p => p.dataUrl)
+        }
+    } catch (e) {
+        console.warn('Could not export photos:', e)
+    }
+
     return {
         schemaVersion: settings?.schemaVersion || 1,
         exportedAt: new Date().toISOString(),
@@ -253,6 +287,74 @@ export async function exportAllData() {
         events,
         assessments,
         grades,
+        photos
+    }
+}
+
+/**
+ * Creates an emergency recovery snapshot in localStorage before destructive actions.
+ * Keeps the most recent 5 snapshots.
+ */
+export async function createSafetySnapshot(triggerReason = 'Manual snapshot') {
+    try {
+        const data = await exportAllData()
+        const safeData = { ...data }
+        delete safeData.photos // Exclude heavy photos from localStorage quota
+        const snapshot = {
+            id: `snap_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+            timestamp: new Date().toISOString(),
+            triggerReason,
+            classCount: data.classes?.length || 0,
+            eventCount: data.events?.length || 0,
+            assessmentCount: data.assessments?.length || 0,
+            gradeCount: data.grades?.length || 0,
+            data: safeData
+        }
+
+        const raw = localStorage.getItem('ct_safety_snapshots')
+        const list = raw ? JSON.parse(raw) : []
+        const updatedList = [snapshot, ...list].slice(0, 5)
+        localStorage.setItem('ct_safety_snapshots', JSON.stringify(updatedList))
+        return snapshot
+    } catch (err) {
+        console.warn('Could not write emergency safety snapshot to localStorage:', err)
+        return null
+    }
+}
+
+/**
+ * Returns all emergency recovery snapshots currently stored in localStorage.
+ */
+export function getSafetySnapshots() {
+    try {
+        const raw = localStorage.getItem('ct_safety_snapshots')
+        return raw ? JSON.parse(raw) : []
+    } catch {
+        return []
+    }
+}
+
+/**
+ * Restores all data from a chosen safety snapshot.
+ */
+export async function restoreSafetySnapshot(snapshotId) {
+    const list = getSafetySnapshots()
+    const found = list.find(s => s.id === snapshotId)
+    if (!found || !found.data) throw new Error('Safety snapshot not found.')
+    return await importAllData(found.data)
+}
+
+/**
+ * Removes a safety snapshot from localStorage.
+ */
+export function deleteSafetySnapshot(snapshotId) {
+    try {
+        const list = getSafetySnapshots()
+        const updated = list.filter(s => s.id !== snapshotId)
+        localStorage.setItem('ct_safety_snapshots', JSON.stringify(updated))
+        return true
+    } catch {
+        return false
     }
 }
 
@@ -339,6 +441,9 @@ export async function importAllData(backupObj) {
         )
     }
 
+    // Auto-create safety snapshot of current data before overwriting
+    await createSafetySnapshot('Before restoring backup file')
+
     // Apply migrations if legacy
     let data = backupObj
     if (data.schemaVersion < CURRENT_SCHEMA) {
@@ -346,7 +451,7 @@ export async function importAllData(backupObj) {
         data = migrateData(data)
     }
 
-    const { settings, classes = [], events = [], assessments = [], grades = [] } = data
+    const { settings, classes = [], events = [], assessments = [], grades = [], photos = [] } = data
 
     const db = await getDB()
 
@@ -392,6 +497,29 @@ export async function importAllData(backupObj) {
 
     await tx.done
 
+    // Restore photos if present
+    if (Array.isArray(photos) && photos.length > 0) {
+        try {
+            const photoTx = db.transaction('student_photos', 'readwrite')
+            const photoStore = photoTx.objectStore('student_photos')
+            await photoStore.clear()
+            for (const p of photos) {
+                if (p.studentId && p.dataUrl) {
+                    const res = await fetch(p.dataUrl)
+                    const blob = await res.blob()
+                    await photoStore.put({
+                        studentId: String(p.studentId),
+                        blob,
+                        updatedAt: p.updatedAt || new Date().toISOString()
+                    })
+                }
+            }
+            await photoTx.done
+        } catch (e) {
+            console.warn('Could not restore photos:', e)
+        }
+    }
+
     hasUnsyncedChanges.value = false // We just loaded exact synced data
 
     // Clear the persisted timestamp so it doesn't show stale info after a restore
@@ -415,13 +543,6 @@ export function getDateRangeForPeriod(period) {
     const now = new Date()
     if (period === 'all') return {}
 
-    // Helper to get local YYYY-MM-DD
-    const formatYMD = (d) => {
-        const offset = d.getTimezoneOffset()
-        const local = new Date(d.getTime() - (offset * 60 * 1000))
-        return local.toISOString().split('T')[0]
-    }
-
     const getMonday = (d) => {
         const date = new Date(d);
         const day = date.getDay();
@@ -431,7 +552,7 @@ export function getDateRangeForPeriod(period) {
     }
 
     if (period === 'week') {
-        return { from: formatYMD(getMonday(now)) }
+        return { from: formatLocalDate(getMonday(now)) }
     }
     if (period === 'last_week') {
         const thisMonday = getMonday(now);
@@ -439,17 +560,17 @@ export function getDateRangeForPeriod(period) {
         lastMonday.setDate(lastMonday.getDate() - 7);
         const lastSunday = new Date(thisMonday);
         lastSunday.setDate(lastSunday.getDate() - 1);
-        return { from: formatYMD(lastMonday), to: formatYMD(lastSunday) }
+        return { from: formatLocalDate(lastMonday), to: formatLocalDate(lastSunday) }
     }
     if (period === 'month') {
         const d = new Date(now)
         d.setMonth(d.getMonth() - 1)
-        return { from: formatYMD(d) }
+        return { from: formatLocalDate(d) }
     }
     if (period === 'semester') {
         const d = new Date(now)
         d.setMonth(d.getMonth() - 5)
-        return { from: formatYMD(d) }
+        return { from: formatLocalDate(d) }
     }
     return {}
 }
@@ -468,7 +589,7 @@ export function getDateRangeForClassPeriod(period, classObj, academicTerms = [])
         if (classObj) {
             const term = academicTerms.find(t => t.year === classObj.year && String(t.semester) === String(classObj.semester))
             if (term && term.startDate && term.endDate) {
-                const todayStr = new Date().toISOString().slice(0, 10)
+                const todayStr = formatLocalDate(new Date())
                 // Cap at today's date if the semester is still running
                 const toDate = term.endDate < todayStr ? term.endDate : todayStr
                 return { from: term.startDate, to: toDate }
@@ -479,12 +600,7 @@ export function getDateRangeForClassPeriod(period, classObj, academicTerms = [])
         const now = new Date()
         const d = new Date(now)
         d.setMonth(d.getMonth() - 5)
-        const formatYMD = (date) => {
-            const offset = date.getTimezoneOffset()
-            const local = new Date(date.getTime() - (offset * 60 * 1000))
-            return local.toISOString().split('T')[0]
-        }
-        return { from: formatYMD(d) }
+        return { from: formatLocalDate(d) }
     }
 
     return getDateRangeForPeriod(period)
