@@ -40,6 +40,28 @@
         </div>
       </div>
 
+      <!-- Undo / Redo Controls -->
+      <div class="seating-designer__history-group">
+        <button 
+          type="button" 
+          class="setup__btn-ghost seating-designer__history-btn"
+          :disabled="!canUndo"
+          @click="undoLayout"
+          title="Undo layout change (Cmd+Z / Ctrl+Z)"
+        >
+          <Undo2 :size="14" /> Undo
+        </button>
+        <button 
+          type="button" 
+          class="setup__btn-ghost seating-designer__history-btn"
+          :disabled="!canRedo"
+          @click="redoLayout"
+          title="Redo layout change (Cmd+Shift+Z / Ctrl+Y)"
+        >
+          <Redo2 :size="14" /> Redo
+        </button>
+      </div>
+
       <div class="seating-designer__saved-select-group">
         <select 
           v-model="selectedSavedPresetId" 
@@ -74,7 +96,7 @@
           max="20" 
           v-model.number="localRows" 
           class="setup__input seating-designer__dim-input" 
-          @change="updateGridDimensions"
+          @change="onDimensionChange"
           title="Number of rows"
         />
         <span class="seating-designer__dim-sep">×</span>
@@ -84,7 +106,7 @@
           max="20" 
           v-model.number="localCols" 
           class="setup__input seating-designer__dim-input" 
-          @change="updateGridDimensions"
+          @change="onDimensionChange"
           title="Number of columns"
         />
       </div>
@@ -147,6 +169,24 @@
       </button>
     </div>
 
+    <!-- Displaced Students Notification Banner -->
+    <Transition name="fade">
+      <div v-if="displacedNotice" class="seating-designer__displaced-banner">
+        <div class="displaced-content">
+          <AlertCircle :size="16" class="displaced-icon" />
+          <span>{{ displacedNotice }}</span>
+        </div>
+        <div class="displaced-actions">
+          <button type="button" class="displaced-undo-btn" @click="undoLayout">
+            <Undo2 :size="13" /> Undo Layout Change
+          </button>
+          <button type="button" class="displaced-dismiss-btn" @click="displacedNotice = null" title="Dismiss">
+            &times;
+          </button>
+        </div>
+      </div>
+    </Transition>
+
     <!-- Visual Interactive Grid Editor -->
     <div class="seating-designer__canvas-container">
       <div 
@@ -191,13 +231,14 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue'
-import { LayoutGrid, Footprints, Armchair, Users, Save, Trash2 } from 'lucide-vue-next'
+import { ref, computed, watch, onMounted, onUnmounted, triggerRef } from 'vue'
+import { LayoutGrid, Footprints, Armchair, Users, Save, Trash2, Undo2, Redo2, AlertCircle } from 'lucide-vue-next'
 import { useClassroom } from '../../composables/useClassroom.js'
 import { useMessage } from '../../composables/useMessage.js'
 import * as settingsService from '../../db/settingsService.js'
+import { updateMultipleStudentSeats } from '../../db/classService.js'
 
-const { activeClass, gridSize, checkResize, updateActiveClass, students, assignSeat } = useClassroom()
+const { activeClass, gridSize, updateActiveClass, students, assignSeat } = useClassroom()
 const { prompt, confirm, alert } = useMessage()
 
 const localRows = ref(gridSize.value.rows || 6)
@@ -214,17 +255,46 @@ const pods = ref([
 const selectedPodId = ref('pod-1')
 const savedTemplates = ref([])
 const selectedSavedPresetId = ref('')
+const displacedNotice = ref(null)
+
+// ─── Undo & Redo History Stack (Local to Layout Designer) ───
+const undoStack = ref([])
+const redoStack = ref([])
+const canUndo = computed(() => undoStack.value.length > 0)
+const canRedo = computed(() => redoStack.value.length > 0)
 
 const podColors = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#f97316']
 
 onMounted(async () => {
   await loadSavedTemplates()
   initFromActiveClass()
+  window.addEventListener('keydown', handleGlobalKeydown)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleGlobalKeydown)
 })
 
 watch(() => activeClass.value, () => {
   initFromActiveClass()
 })
+
+function handleGlobalKeydown(e) {
+  // Ctrl+Z or Cmd+Z (without shift) -> Undo
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && !e.shiftKey) {
+    if (canUndo.value) {
+      e.preventDefault()
+      undoLayout()
+    }
+  } 
+  // Ctrl+Y or Cmd+Shift+Z or Ctrl+Shift+Z -> Redo
+  else if ((e.ctrlKey || e.metaKey) && (e.key.toLowerCase() === 'y' || (e.key.toLowerCase() === 'z' && e.shiftKey))) {
+    if (canRedo.value) {
+      e.preventDefault()
+      redoLayout()
+    }
+  }
+}
 
 function initFromActiveClass() {
   if (!activeClass.value) return
@@ -249,6 +319,138 @@ async function loadSavedTemplates() {
 
 function getCellKey(r, c) {
   return `${r}-${c}`
+}
+
+function captureSnapshot() {
+  const currentSeats = {}
+  if (students.value) {
+    Object.entries(students.value).forEach(([sId, s]) => {
+      currentSeats[sId] = s.seat ? { ...s.seat } : null
+    })
+  }
+
+  return {
+    rows: localRows.value,
+    cols: localCols.value,
+    cellTypes: { ...cellTypes.value },
+    pods: JSON.parse(JSON.stringify(pods.value)),
+    seats: currentSeats
+  }
+}
+
+function pushLayoutUndo(snapshot) {
+  if (undoStack.value.length >= 20) {
+    undoStack.value.shift()
+  }
+  undoStack.value.push(snapshot)
+  redoStack.value = [] // New mutation invalidates redo stack
+}
+
+async function restoreSnapshot(snapshot) {
+  if (!snapshot || !activeClass.value) return
+  const classId = activeClass.value.classId
+
+  localRows.value = snapshot.rows
+  localCols.value = snapshot.cols
+  cellTypes.value = { ...(snapshot.cellTypes || {}) }
+  pods.value = JSON.parse(JSON.stringify(snapshot.pods || []))
+
+  const layoutConfig = {
+    cellTypes: { ...cellTypes.value },
+    pods: JSON.parse(JSON.stringify(pods.value))
+  }
+  await updateActiveClass({
+    gridSize: { rows: localRows.value, cols: localCols.value },
+    layoutConfig
+  })
+
+  if (snapshot.seats && classId) {
+    await updateMultipleStudentSeats(classId, snapshot.seats)
+    Object.entries(snapshot.seats).forEach(([sId, seat]) => {
+      if (students.value[sId]) students.value[sId].seat = seat ? { ...seat } : null
+      if (activeClass.value.students?.[sId]) activeClass.value.students[sId].seat = seat ? { ...seat } : null
+    })
+    students.value = { ...students.value }
+    triggerRef(students)
+    triggerRef(activeClass)
+  }
+}
+
+async function undoLayout() {
+  if (!canUndo.value) return
+  const currentSnapshot = captureSnapshot()
+  const prevSnapshot = undoStack.value.pop()
+  redoStack.value.push(currentSnapshot)
+
+  await restoreSnapshot(prevSnapshot)
+  displacedNotice.value = null
+}
+
+async function redoLayout() {
+  if (!canRedo.value) return
+  const currentSnapshot = captureSnapshot()
+  const nextSnapshot = redoStack.value.pop()
+  undoStack.value.push(currentSnapshot)
+
+  await restoreSnapshot(nextSnapshot)
+}
+
+/**
+ * Commits layout updates while checking for and safely unseating any displaced students.
+ */
+async function commitLayoutWithDisplacementCheck(newCellTypes, newPods, newRows = localRows.value, newCols = localCols.value) {
+  const snapshot = captureSnapshot()
+  const classId = activeClass.value?.classId
+  if (!classId) return
+
+  // Identify any students whose current seat becomes an aisle or falls out of grid bounds
+  const displacedStudents = []
+  const seatUpdates = {}
+
+  if (students.value) {
+    Object.entries(students.value).forEach(([sId, s]) => {
+      if (s.seat) {
+        const isOutOfBounds = s.seat.row > newRows || s.seat.col > newCols
+        const isAisle = newCellTypes[`${s.seat.row}-${s.seat.col}`] === 'aisle'
+        if (isOutOfBounds || isAisle) {
+          displacedStudents.push(s)
+          seatUpdates[sId] = null
+        }
+      }
+    })
+  }
+
+  pushLayoutUndo(snapshot)
+
+  localRows.value = newRows
+  localCols.value = newCols
+  cellTypes.value = { ...newCellTypes }
+  pods.value = JSON.parse(JSON.stringify(newPods))
+
+  const layoutConfig = {
+    cellTypes: { ...cellTypes.value },
+    pods: JSON.parse(JSON.stringify(pods.value))
+  }
+  await updateActiveClass({
+    gridSize: { rows: newRows, cols: newCols },
+    layoutConfig
+  })
+
+  // Safely move displaced students to the unassigned pool
+  if (displacedStudents.length > 0) {
+    await updateMultipleStudentSeats(classId, seatUpdates)
+    Object.keys(seatUpdates).forEach(sId => {
+      if (students.value[sId]) students.value[sId].seat = null
+      if (activeClass.value.students?.[sId]) activeClass.value.students[sId].seat = null
+    })
+    students.value = { ...students.value }
+    triggerRef(students)
+    triggerRef(activeClass)
+
+    displacedNotice.value = `Layout applied: ${displacedStudents.length} student${displacedStudents.length !== 1 ? 's' : ''} moved to the Unassigned Seating list on Dashboard.`
+  } else {
+    displacedNotice.value = null
+  }
 }
 
 const canvasGridStyle = computed(() => {
@@ -292,59 +494,73 @@ function getCellPodStyle(r, c) {
 }
 
 function isCellOccupied(r, c) {
-  return Object.values(students.value).some(s => s.seat?.row === r && s.seat?.col === c)
+  return Object.values(students.value || {}).some(s => s.seat?.row === r && s.seat?.col === c)
 }
 
 function getOccupantName(r, c) {
-  const s = Object.values(students.value).find(s => s.seat?.row === r && s.seat?.col === c)
+  const s = Object.values(students.value || {}).find(s => s.seat?.row === r && s.seat?.col === c)
   return s ? `${s.firstName} ${s.lastName.charAt(0)}.` : ''
 }
 
 async function onCellClick(r, c) {
   const key = getCellKey(r, c)
+  const newCellTypes = { ...cellTypes.value }
+  const newPods = JSON.parse(JSON.stringify(pods.value))
   
-  if (activeTool.value === 'aisle') {
-    // If a student is currently seated in this cell, move them to the unassigned pool
-    const s = Object.entries(students.value).find(([_, st]) => st.seat?.row === r && st.seat?.col === c)
-    if (s) {
-      await assignSeat(s[0], null)
-    }
+  const removeKeyFromPods = (k) => {
+    newPods.forEach(p => {
+      p.cells = p.cells.filter(cell => cell !== k)
+    })
+  }
 
-    cellTypes.value[key] = 'aisle'
-    removeFromAllPods(key)
-    saveLayoutToClass()
+  if (activeTool.value === 'aisle') {
+    newCellTypes[key] = 'aisle'
+    removeKeyFromPods(key)
   } else if (activeTool.value === 'seat') {
-    delete cellTypes.value[key]
-    removeFromAllPods(key)
-    saveLayoutToClass()
+    delete newCellTypes[key]
+    removeKeyFromPods(key)
   } else if (activeTool.value === 'group') {
-    delete cellTypes.value[key]
-    removeFromAllPods(key)
-    const pod = pods.value.find(p => p.id === selectedPodId.value)
+    delete newCellTypes[key]
+    removeKeyFromPods(key)
+    const pod = newPods.find(p => p.id === selectedPodId.value)
     if (pod && !pod.cells.includes(key)) {
       pod.cells.push(key)
     }
-    saveLayoutToClass()
   }
+
+  await commitLayoutWithDisplacementCheck(newCellTypes, newPods)
 }
 
 async function clearAllSeats() {
   const ok = await confirm('Unassign all students from the seating chart and move them to the unassigned roster pool?')
   if (!ok) return
-  for (const [studentId, s] of Object.entries(students.value)) {
-    if (s.seat) {
-      await assignSeat(studentId, null)
-    }
-  }
-}
 
-function removeFromAllPods(key) {
-  pods.value.forEach(p => {
-    p.cells = p.cells.filter(c => c !== key)
+  const snapshot = captureSnapshot()
+  pushLayoutUndo(snapshot)
+
+  const classId = activeClass.value?.classId
+  const seatUpdates = {}
+  Object.keys(students.value || {}).forEach(sId => {
+    seatUpdates[sId] = null
   })
+
+  if (classId) {
+    await updateMultipleStudentSeats(classId, seatUpdates)
+    Object.keys(seatUpdates).forEach(sId => {
+      if (students.value[sId]) students.value[sId].seat = null
+      if (activeClass.value.students?.[sId]) activeClass.value.students[sId].seat = null
+    })
+    students.value = { ...students.value }
+    triggerRef(students)
+    triggerRef(activeClass)
+  }
+  displacedNotice.value = 'All students moved to Unassigned Seating list.'
 }
 
 function createNewPod() {
+  const snapshot = captureSnapshot()
+  pushLayoutUndo(snapshot)
+
   const num = pods.value.length + 1
   const newPod = {
     id: `pod-${Date.now()}`,
@@ -354,7 +570,12 @@ function createNewPod() {
   }
   pods.value.push(newPod)
   selectedPodId.value = newPod.id
-  saveLayoutToClass()
+  
+  const layoutConfig = {
+    cellTypes: { ...cellTypes.value },
+    pods: JSON.parse(JSON.stringify(pods.value))
+  }
+  updateActiveClass({ layoutConfig })
 }
 
 async function deleteActivePod() {
@@ -362,50 +583,41 @@ async function deleteActivePod() {
   const pod = pods.value.find(p => p.id === selectedPodId.value)
   if (!pod) return
   
-  const ok = await confirm(`Delete ${pod.name}? Desks in this group will revert to unassigned seats.`)
+  const ok = await confirm(`Delete ${pod.name}? Desks in this group will revert to standard seats.`)
   if (!ok) return
   
+  const snapshot = captureSnapshot()
+  pushLayoutUndo(snapshot)
+
   pods.value = pods.value.filter(p => p.id !== selectedPodId.value)
   selectedPodId.value = pods.value[0]?.id || ''
-  saveLayoutToClass()
-}
-
-async function updateGridDimensions() {
-  const ok = await checkResize(localRows.value, localCols.value)
-  if (ok) {
-    saveLayoutToClass()
-  } else {
-    localRows.value = gridSize.value.rows
-    localCols.value = gridSize.value.cols
-  }
-}
-
-function saveLayoutToClass() {
+  
   const layoutConfig = {
     cellTypes: { ...cellTypes.value },
     pods: JSON.parse(JSON.stringify(pods.value))
   }
-  updateActiveClass({
-    gridSize: { rows: localRows.value, cols: localCols.value },
-    layoutConfig
-  })
+  updateActiveClass({ layoutConfig })
 }
 
-function applyPreset(presetType) {
-  cellTypes.value = {}
+async function onDimensionChange() {
+  const newRows = Math.max(2, Math.min(20, Number(localRows.value) || 6))
+  const newCols = Math.max(2, Math.min(20, Number(localCols.value) || 6))
+  await commitLayoutWithDisplacementCheck(cellTypes.value, pods.value, newRows, newCols)
+}
+
+async function applyPreset(presetType) {
   const rows = localRows.value
   const cols = localCols.value
+  const newCellTypes = {}
+  let newPods = []
 
   if (presetType === 'rows') {
-    pods.value = []
+    newPods = []
   } else if (presetType === 'pods4') {
-    const newPods = []
     let podCount = 1
-    cellTypes.value = {}
-
     if (cols >= 5) {
       const midCol = Math.ceil(cols / 2)
-      for (let r = 1; r <= rows; r++) cellTypes.value[`${r}-${midCol}`] = 'aisle'
+      for (let r = 1; r <= rows; r++) newCellTypes[`${r}-${midCol}`] = 'aisle'
     }
 
     const colors = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6']
@@ -426,35 +638,32 @@ function applyPreset(presetType) {
         for (let r = startR; r <= endR; r++) {
           for (let c = startC; c <= endC; c++) {
             const key = `${r}-${c}`
-            if (!isCellAisle(r, c)) pod.cells.push(key)
+            if (newCellTypes[key] !== 'aisle') pod.cells.push(key)
           }
         }
         newPods.push(pod)
         podCount++
       }
     }
-    pods.value = newPods
   } else if (presetType === 'horseshoe') {
-    cellTypes.value = {}
     for (let r = 2; r <= rows; r++) {
       for (let c = 2; c < cols; c++) {
-        cellTypes.value[`${r}-${c}`] = 'aisle'
+        newCellTypes[`${r}-${c}`] = 'aisle'
       }
     }
-    pods.value = [
+    newPods = [
       { id: 'pod-1', name: 'Horseshoe U', color: '#3b82f6', cells: [] }
     ]
   } else if (presetType === 'pairs') {
-    cellTypes.value = {}
     for (let r = 1; r <= rows; r++) {
       for (let c = 3; c <= cols; c += 3) {
-        cellTypes.value[`${r}-${c}`] = 'aisle'
+        newCellTypes[`${r}-${c}`] = 'aisle'
       }
     }
-    pods.value = []
+    newPods = []
   }
 
-  saveLayoutToClass()
+  await commitLayoutWithDisplacementCheck(newCellTypes, newPods, rows, cols)
 }
 
 async function saveCurrentAsTemplate() {
@@ -477,17 +686,17 @@ async function saveCurrentAsTemplate() {
   await alert(`Layout template "${name.trim()}" saved successfully!`)
 }
 
-function onLoadSavedPreset() {
+async function onLoadSavedPreset() {
   if (!selectedSavedPresetId.value) return
   const tmpl = savedTemplates.value.find(t => t.id === selectedSavedPresetId.value)
   if (!tmpl) return
 
-  localRows.value = tmpl.rows
-  localCols.value = tmpl.cols
-  cellTypes.value = { ...(tmpl.layoutConfig?.cellTypes || {}) }
-  pods.value = JSON.parse(JSON.stringify(tmpl.layoutConfig?.pods || []))
-  
-  saveLayoutToClass()
+  const newRows = tmpl.rows
+  const newCols = tmpl.cols
+  const newCellTypes = { ...(tmpl.layoutConfig?.cellTypes || {}) }
+  const newPods = JSON.parse(JSON.stringify(tmpl.layoutConfig?.pods || []))
+
+  await commitLayoutWithDisplacementCheck(newCellTypes, newPods, newRows, newCols)
   selectedSavedPresetId.value = ''
 }
 </script>
@@ -526,6 +735,38 @@ function onLoadSavedPreset() {
   color: var(--text-secondary);
 }
 
+.seating-designer__history-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.seating-designer__history-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.seating-designer__history-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  border-color: transparent;
+}
+
+.seating-designer__history-btn:not(:disabled):hover {
+  background: var(--surface-hover);
+  border-color: var(--primary);
+}
+
 .seating-designer__saved-select-group {
   display: flex;
   align-items: center;
@@ -535,8 +776,8 @@ function onLoadSavedPreset() {
 .seating-designer__saved-select {
   padding: 6px 12px;
   font-size: 0.82rem;
-  width: 270px;
-  max-width: 320px;
+  width: 250px;
+  max-width: 300px;
 }
 
 .seating-designer__toolbar {
@@ -595,6 +836,71 @@ function onLoadSavedPreset() {
   min-height: 30px !important;
 }
 
+/* Displaced Notification Banner */
+.seating-designer__displaced-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #1e40af;
+  border-radius: var(--radius-md);
+  padding: 8px 14px;
+  font-size: 0.84rem;
+  font-weight: 500;
+}
+
+.displaced-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.displaced-icon {
+  color: #3b82f6;
+  flex-shrink: 0;
+}
+
+.displaced-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.displaced-undo-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: #2563eb;
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 4px 10px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.displaced-undo-btn:hover {
+  background: #1d4ed8;
+}
+
+.displaced-dismiss-btn {
+  background: transparent;
+  border: none;
+  font-size: 1.2rem;
+  color: #60a5fa;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0 4px;
+}
+
+.displaced-dismiss-btn:hover {
+  color: #1e40af;
+}
+
 .seating-designer__canvas-container {
   overflow-x: auto;
   padding: 4px;
@@ -638,6 +944,10 @@ function onLoadSavedPreset() {
 
 .seating-designer__cell--seat {
   background: var(--surface);
+}
+
+.seating-designer__cell--occupied {
+  border-color: rgba(59, 130, 246, 0.4);
 }
 
 .seating-designer__pod-badge {
@@ -685,5 +995,16 @@ function onLoadSavedPreset() {
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 70px;
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+  transform: translateY(-6px);
 }
 </style>

@@ -190,8 +190,8 @@
     "semantic_hash": ""
   },
   "src/components/dossier/StudentGradeTrend.vue": {
-    "mtime": 1786240108.3115547,
-    "ast_hash": "02519b39308086a980b35cee23932732",
+    "mtime": 1787366674.8906991,
+    "ast_hash": "5902e603932db24e1d16d7877cc24b80",
     "semantic_hash": ""
   },
   "src/components/dossier/StudentStatCard.vue": {
@@ -240,13 +240,13 @@
     "semantic_hash": "68f077cda9561ec51fbe56d0aa61fb3e"
   },
   "src/composables/useClassroom.js": {
-    "mtime": 1787359898.166158,
-    "ast_hash": "aebd67534610ca7046e94711da46752b",
+    "mtime": 1787367451.4638627,
+    "ast_hash": "46cde609c2979df63613bf289ed94480",
     "semantic_hash": ""
   },
   "src/composables/useGradebook.js": {
-    "mtime": 1787359954.8581967,
-    "ast_hash": "6b7e1832be681d96fe54dbca012841a4",
+    "mtime": 1787366217.7442577,
+    "ast_hash": "b451e5ed1ec6b205ab8705820fe4be82",
     "semantic_hash": ""
   },
   "src/composables/useKeyboardWedge.js": {
@@ -275,8 +275,8 @@
     "semantic_hash": ""
   },
   "src/db/classService.js": {
-    "mtime": 1787364499.6940467,
-    "ast_hash": "e672f286a1da53b0843d5719077bd171",
+    "mtime": 1787367434.1827698,
+    "ast_hash": "f4f066c65cc74c23a1e1010005a457f6",
     "semantic_hash": ""
   },
   "src/db/eventService.js": {
@@ -345,8 +345,8 @@
     "semantic_hash": ""
   },
   "src/views/Reports.vue": {
-    "mtime": 1786792571.4283051,
-    "ast_hash": "3ea5e586d472fab636268eba65380d6e",
+    "mtime": 1787366258.6266906,
+    "ast_hash": "ac0014dcfb1b4cd95003d28789d9abc4",
     "semantic_hash": ""
   },
   "src/views/ScanStation.vue": {
@@ -385,8 +385,8 @@
     "semantic_hash": ""
   },
   "src/components/GradesAnalyticsPanel.vue": {
-    "mtime": 1786590352.6540554,
-    "ast_hash": "6e28bb42baec15f461e8063bcf406ff2",
+    "mtime": 1787366658.3183322,
+    "ast_hash": "a7ce8154a8e408b0826ac035b251b53e",
     "semantic_hash": ""
   },
   "src/components/GradesGrid.vue": {
@@ -395,8 +395,8 @@
     "semantic_hash": ""
   },
   "src/components/dossier/StudentAcademicsTab.vue": {
-    "mtime": 1786963817.0938714,
-    "ast_hash": "c0a3e25834de5ae3c00a7281c205b3c5",
+    "mtime": 1787366665.916123,
+    "ast_hash": "77312aef524f474c96fdd77144acf0c5",
     "semantic_hash": ""
   },
   "src/components/setup/AssessmentFrameworkSettings.vue": {
@@ -545,8 +545,8 @@
     "semantic_hash": ""
   },
   "src/components/reports/PrintExpectationsModal.vue": {
-    "mtime": 1787362099.474565,
-    "ast_hash": "596ec9226d55b1126893728f4aef2100",
+    "mtime": 1787366681.7987673,
+    "ast_hash": "652267826b01e5c88f8e264c22ab65b8",
     "semantic_hash": ""
   },
   "src/components/reports/PrintCalendarModal.vue": {
@@ -580,8 +580,8 @@
     "semantic_hash": ""
   },
   "src/components/grades/GradesAssessmentDetailSBAR.vue": {
-    "mtime": 1786590731.5848749,
-    "ast_hash": "8516dd7b94c1e3d0c65f7bf2304e7cb8",
+    "mtime": 1787366231.353017,
+    "ast_hash": "b282cd6b290922038deaf96ffa6523f8",
     "semantic_hash": ""
   },
   "src/components/grades/GradesGridSBAR.vue": {
@@ -595,8 +595,8 @@
     "semantic_hash": ""
   },
   "src/components/dossier/SBARExpectationMasteryGrid.vue": {
-    "mtime": 1786464377.227242,
-    "ast_hash": "f282688b279dd1fd203aff95f5219969",
+    "mtime": 1787366266.3929029,
+    "ast_hash": "c7f88d63f8b68ea4f6223e060bf5743a",
     "semantic_hash": ""
   },
   "src/components/grades/GradesAnalyticsPanelSBAR.vue": {
@@ -1000,8 +1000,8 @@
     "semantic_hash": ""
   },
   "src/components/setup/SeatingLayoutDesigner.vue": {
-    "mtime": 1786724845.6559877,
-    "ast_hash": "124f52c7f7fe832d8f62cc4cc1d3dcff",
+    "mtime": 1787367483.8339112,
+    "ast_hash": "1e9e6dbbc54383d188582c4de1e7e433",
     "semantic_hash": ""
   },
   "src/components/reports/PrintSeatingChartModal.vue": {

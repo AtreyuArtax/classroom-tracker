@@ -667,7 +667,7 @@ const classEvidenceBlend = computed(() => {
   const activeAssessments = (assessments.value || []).filter(a => {
     if (a.target === 'individual' || a.excluded) return false
     if (!isAssessmentInSubCohort(a)) return false
-    const isSBARTask = a.categoryId === 'sbar_general' || (a.expectationIds && a.expectationIds.length > 0)
+    const isSBARTask = a.categoryId === 'sbar_general' || (a.expectationIds && a.expectationIds.length > 0) || a.expectationId != null || a.isSbar || a.gradingFramework === 'sbar'
     return isSBAR ? isSBARTask : !isSBARTask
   })
   const total = classAnalytics.value?.totalAssessmentsCount ?? activeAssessments.length

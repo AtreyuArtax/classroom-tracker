@@ -73,6 +73,32 @@ export async function updateStudentSeat(classId, studentId, seat) {
 }
 
 /**
+ * Updates multiple student seats in a single atomic IndexedDB transaction.
+ *
+ * @param {string} classId
+ * @param {Object.<string, {row: number, col: number}|null>} seatMap { studentId: seatObj }
+ * @returns {Promise<void>}
+ */
+export async function updateMultipleStudentSeats(classId, seatMap) {
+    if (!classId || !seatMap || Object.keys(seatMap).length === 0) return
+    const db = await getDB()
+    const tx = db.transaction('classes', 'readwrite')
+    const store = tx.objectStore('classes')
+    const cls = await store.get(classId)
+    if (!cls || !cls.students) return
+
+    for (const [studentId, newSeat] of Object.entries(seatMap)) {
+        if (cls.students[studentId]) {
+            cls.students[studentId].seat = newSeat
+        }
+    }
+    const plain = JSON.parse(JSON.stringify(cls))
+    await store.put(plain)
+    await tx.done
+    hasUnsyncedChanges.value = true
+}
+
+/**
  * Sets the activeStates sub-object for a student.
  * Used when toggling a student OUT (washroom, etc.).
  *

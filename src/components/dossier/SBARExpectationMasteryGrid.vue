@@ -195,25 +195,39 @@ const expectationList = computed(() => {
     }
   })
 
+  const idToCodeMap = {}
   flatExps.forEach(exp => {
     if (!exp) return
-    const code = exp.code || exp.expectationId || exp.id
-    if (!code) return
+    const code = exp.code
+    const id = exp.expectationId || exp.id
+    if (id && code) {
+      idToCodeMap[String(id)] = code
+      idToCodeMap[String(id).toLowerCase()] = code
+    }
     const desc = exp.description || exp.text || exp.name || exp.title || exp.summary
     if (desc) {
-      const codeStr = String(code).trim()
-      curriculumMap[codeStr] = desc
-      curriculumMap[codeStr.toUpperCase()] = desc
-      curriculumMap[codeStr.toLowerCase()] = desc
+      if (code) {
+        const codeStr = String(code).trim()
+        curriculumMap[codeStr] = desc
+        curriculumMap[codeStr.toUpperCase()] = desc
+        curriculumMap[codeStr.toLowerCase()] = desc
+      }
+      if (id) {
+        const idStr = String(id).trim()
+        curriculumMap[idStr] = desc
+        curriculumMap[idStr.toLowerCase()] = desc
+      }
     }
   })
 
-  return Object.keys(studentMastery).map(code => {
-    const data = studentMastery[code]
-    const codeStr = String(code).trim()
-    const description = curriculumMap[codeStr] || curriculumMap[codeStr.toUpperCase()] || curriculumMap[codeStr.toLowerCase()] || ''
+  return Object.keys(studentMastery).map(rawKey => {
+    const data = studentMastery[rawKey]
+    const rawStr = String(rawKey).trim()
+    const friendlyCode = idToCodeMap[rawStr] || idToCodeMap[rawStr.toLowerCase()] || rawKey
+    const description = curriculumMap[friendlyCode] || curriculumMap[rawStr] || curriculumMap[rawStr.toLowerCase()] || ''
     return {
-      code,
+      code: friendlyCode,
+      rawKey,
       description,
       score: data.score,
       badge: data.badge,

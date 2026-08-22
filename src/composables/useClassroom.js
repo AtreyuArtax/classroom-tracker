@@ -309,9 +309,28 @@ watch(activeClass, () => {
     isTestDay.value = false
 })
 
-/** Students who currently have no assigned seat */
+/**
+ * Checks whether a student seat coordinate is currently valid (inside grid bounds & not on an aisle).
+ *
+ * @param {{ row: number, col: number }|null} seat
+ * @param {{ rows: number, cols: number }} [size]
+ * @param {Object} [layout]
+ * @returns {boolean}
+ */
+export function isSeatValid(seat, size = gridSize.value, layout = activeClass.value?.layoutConfig) {
+    if (!seat || typeof seat.row !== 'number' || typeof seat.col !== 'number') return false
+    const maxRows = size?.rows || 6
+    const maxCols = size?.cols || 6
+    if (seat.row < 1 || seat.row > maxRows) return false
+    if (seat.col < 1 || seat.col > maxCols) return false
+    const key = `${seat.row}-${seat.col}`
+    if (layout?.cellTypes?.[key] === 'aisle') return false
+    return true
+}
+
+/** Students who currently have no assigned seat or whose seat is invalid (aisle/out-of-bounds) */
 const unseatedStudents = computed(() =>
-    sortedRoster.value.filter(s => s.seat === null)
+    sortedRoster.value.filter(s => !isSeatValid(s.seat, gridSize.value, activeClass.value?.layoutConfig))
 )
 
 /** Students who are currently out of the room */
@@ -1659,6 +1678,7 @@ export function useClassroom() {
         triggerActiveClass: () => triggerRef(activeClass),
         cloudModeEnabled,
         userCode,
+        isSeatValid,
         updateCloudConfig,
         generateUniqueUserCode
     }

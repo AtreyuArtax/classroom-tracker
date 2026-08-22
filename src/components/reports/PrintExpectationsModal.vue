@@ -156,12 +156,14 @@
 import { ref, computed, nextTick } from 'vue'
 import { BookOpen, Printer, X, Activity } from 'lucide-vue-next'
 import { usePrintOptions, executePrint } from '../../composables/usePrintOptions.js'
+import { calculateSBARExpectationMastery } from '../../db/gradebookService.js'
 
 const props = defineProps({
   show: { type: Boolean, default: false },
   reportClass: { type: Object, default: null },
   assessments: { type: Array, default: () => [] },
   classGrades: { type: Object, default: () => ({}) },
+  gradeMap: { type: Object, default: () => ({}) },
   teacherName: { type: String, default: '' },
   events: { type: Array, default: () => [] },
   initialCohort: { type: String, default: 'all' }
@@ -174,6 +176,8 @@ const { selectedCohort, isSplitClass, availableSubCohorts, filterStudents, getSu
 
 const isPrinting = ref(false)
 const showPreview = ref(false)
+
+const isSBAR = computed(() => props.reportClass?.gradingFramework === 'sbar' || props.reportClass?.gradingScale === 'sbar')
 
 const cohortOptionsOnly = computed(() => {
   return availableSubCohorts.value.filter(c => c !== 'all')
@@ -193,46 +197,92 @@ const unitsData = computed(() => {
   const expScores = {}
   const expAssessmentCounts = {}
 
+  // 1. Count assessments linking expectations (supports both expectationIds array and single expectationId)
   props.assessments.forEach(ass => {
-    if (!ass.expectationId || ass.excluded) return
-    const expId = String(ass.expectationId)
-    expAssessmentCounts[expId] = (expAssessmentCounts[expId] || 0) + 1
+    if (ass.excluded) return
+    const ids = ass.expectationIds && Array.isArray(ass.expectationIds)
+      ? ass.expectationIds
+      : (ass.expectationId ? [ass.expectationId] : [])
+    ids.forEach(id => {
+      const sId = String(id)
+      expAssessmentCounts[sId] = (expAssessmentCounts[sId] || 0) + 1
+    })
   })
 
   const studentsMap = props.reportClass?.students || {}
   const isElem = isElementary.value
 
-  Object.entries(props.classGrades).forEach(([studentId, studentGradeObj]) => {
-    if (!studentGradeObj || !studentGradeObj.assessmentGrades) return
-    const st = studentsMap[studentId]
-    if (st && st.archived) return
-    if (selectedCohort.value && selectedCohort.value !== 'all' && st) {
-      const tag = isElem ? st.gradeLevel : st.courseCode
-      if (tag !== selectedCohort.value) return
-    }
+  if (isSBAR.value) {
+    const algo = props.reportClass?.sbarAlgorithm || 'decaying_average'
+    const sbarMasteryMap = calculateSBARExpectationMastery(
+      props.reportClass,
+      props.assessments,
+      props.gradeMap || {},
+      algo,
+      props.events
+    )
 
-    Object.entries(studentGradeObj.assessmentGrades).forEach(([assId, markObj]) => {
-      if (!markObj || markObj.score === null || markObj.score === undefined) return
-      const ass = props.assessments.find(a => String(a.assessmentId) === String(assId))
-      if (ass && ass.expectationId) {
-        const expId = String(ass.expectationId)
-        if (!expScores[expId]) expScores[expId] = []
-        const total = ass.scaledTotal || ass.totalPoints || 100
-        const pct = (markObj.score / total) * 100
-        expScores[expId].push(pct)
+    Object.entries(sbarMasteryMap).forEach(([studentId, studentExpMap]) => {
+      if (!studentExpMap) return
+      const st = studentsMap[studentId]
+      if (st && st.archived) return
+      if (selectedCohort.value && selectedCohort.value !== 'all' && st) {
+        const tag = isElem ? st.gradeLevel : st.courseCode
+        if (tag !== selectedCohort.value) return
       }
+
+      Object.entries(studentExpMap).forEach(([expCode, mObj]) => {
+        if (mObj && mObj.score !== null && mObj.score !== undefined) {
+          if (!expScores[expCode]) expScores[expCode] = []
+          expScores[expCode].push(mObj.score)
+        }
+      })
     })
-  })
+  } else {
+    // Traditional Mode: Read from classGrades & gradeMap
+    Object.entries(props.classGrades).forEach(([studentId, studentGradeObj]) => {
+      if (!studentGradeObj || !studentGradeObj.assessmentGrades) return
+      const st = studentsMap[studentId]
+      if (st && st.archived) return
+      if (selectedCohort.value && selectedCohort.value !== 'all' && st) {
+        const tag = isElem ? st.gradeLevel : st.courseCode
+        if (tag !== selectedCohort.value) return
+      }
+
+      Object.entries(studentGradeObj.assessmentGrades).forEach(([assId, markObj]) => {
+        if (!markObj || markObj.score === null || markObj.score === undefined) return
+        const ass = props.assessments.find(a => String(a.assessmentId) === String(assId))
+        const ids = ass ? (ass.expectationIds && Array.isArray(ass.expectationIds) ? ass.expectationIds : (ass.expectationId ? [ass.expectationId] : [])) : []
+        if (ids.length > 0) {
+          const total = ass.scaledTotal || ass.totalPoints || 100
+          const pct = (markObj.score / total) * 100
+          ids.forEach(id => {
+            const expId = String(id)
+            if (!expScores[expId]) expScores[expId] = []
+            expScores[expId].push(pct)
+          })
+        }
+      })
+    })
+  }
 
   return props.reportClass.gradebookUnits
-    .filter(u => !u.archived)
+    .filter(u => !u.archived && u.expectations && u.expectations.length > 0)
     .map(u => {
       const expectations = (u.expectations || [])
         .filter(e => !e.archived)
         .map(e => {
-          const expId = String(e.expectationId || e.code)
-          const scores = expScores[expId] || []
-          const count = expAssessmentCounts[expId] || 0
+          const expId = e.expectationId ? String(e.expectationId) : null
+          const expCode = e.code ? String(e.code) : null
+
+          const countId = expId ? (expAssessmentCounts[expId] || 0) : 0
+          const countCode = (expCode && expCode !== expId) ? (expAssessmentCounts[expCode] || 0) : 0
+          const count = countId + countCode
+
+          const scoresId = expId ? (expScores[expId] || []) : []
+          const scoresCode = (expCode && expCode !== expId) ? (expScores[expCode] || []) : []
+          const scores = [...scoresId, ...scoresCode]
+
           const avg = scores.length > 0 ? (scores.reduce((a, b) => a + b, 0) / scores.length) : null
           return {
             ...e,

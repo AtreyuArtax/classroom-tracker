@@ -167,6 +167,7 @@
       :report-class="reportClass"
       :assessments="assessmentsList"
       :class-grades="classGrades"
+      :grade-map="gradeMap"
       :teacher-name="teacherName"
       :events="allClassEvents"
       :initial-cohort="activeSubCohortFilter"

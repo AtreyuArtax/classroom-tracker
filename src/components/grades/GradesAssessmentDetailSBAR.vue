@@ -399,9 +399,36 @@ const activeLevelOptions = computed(() => {
 const taggedExpectations = computed(() => {
   const ids = props.currentAssessment.expectationIds || (props.currentAssessment.expectationId ? [props.currentAssessment.expectationId] : [])
   if (ids.length === 0) {
-    return [{ code: 'A1.1', name: 'General Inquiry & Assessment' }]
+    return [{ 
+      id: 'general',
+      code: props.currentAssessment.name || 'General', 
+      name: props.currentAssessment.description || 'General Inquiry & Assessment' 
+    }]
   }
-  return ids.map(code => ({ code, name: `Expectation ${code}` }))
+
+  const allClassExps = (effectiveClass.value?.gradebookUnits || [])
+    .flatMap(u => (u.expectations || []).map(e => ({ ...e, unitName: u.name })))
+    .concat(effectiveClass.value?.expectations || [])
+
+  return ids.map(idOrCode => {
+    const s = String(idOrCode)
+    const found = allClassExps.find(e => 
+      (e.expectationId && String(e.expectationId) === s) || 
+      (e.code && String(e.code).toLowerCase() === s.toLowerCase())
+    )
+    if (found) {
+      return {
+        id: found.expectationId || s,
+        code: found.code || s,
+        name: found.description || found.code || `Expectation ${s}`
+      }
+    }
+    return {
+      id: s,
+      code: s,
+      name: `Expectation ${s}`
+    }
+  })
 })
 
 const evaluatedCount = computed(() => {
@@ -432,7 +459,12 @@ const fullyGradedCount = computed(() => {
   return Object.entries(astGrades).filter(([sId, g]) => {
     if (!targetIds.has(String(sId)) || !g) return false
     if (g.missing || g.excluded) return true
-    return expCodes.every(code => g.expectationScores && g.expectationScores[code] != null)
+    return expCodes.every(code => {
+      if (!g.expectationScores) return false
+      if (g.expectationScores[code] != null) return true
+      const expObj = taggedExpectations.value.find(e => e.code === code)
+      return expObj && expObj.id && g.expectationScores[expObj.id] != null
+    })
   }).length
 })
 
@@ -445,7 +477,7 @@ function getExpProgress(expCode) {
 
   const count = Object.entries(astGrades).filter(([sId, g]) => {
     return targetIds.has(String(sId)) && g && (
-      (g.expectationScores && g.expectationScores[expCode] != null) ||
+      (g.expectationScores && (g.expectationScores[expCode] != null || (taggedExpectations.value.find(e => e.code === expCode)?.id && g.expectationScores[taggedExpectations.value.find(e => e.code === expCode).id] != null))) ||
       g.missing ||
       g.excluded
     )
@@ -463,6 +495,15 @@ function getStudentPercentage(studentId, expCode) {
   if (g.expectationScores && typeof g.expectationScores === 'object') {
     if (g.expectationScores[expCode] != null) {
       return Number(g.expectationScores[expCode])
+    }
+    const expObj = taggedExpectations.value.find(e => e.code === expCode || e.id === expCode)
+    if (expObj) {
+      if (expObj.id && g.expectationScores[expObj.id] != null) {
+        return Number(g.expectationScores[expObj.id])
+      }
+      if (expObj.code && g.expectationScores[expObj.code] != null) {
+        return Number(g.expectationScores[expObj.code])
+      }
     }
     return null
   }

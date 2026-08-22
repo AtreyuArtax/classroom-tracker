@@ -76,7 +76,7 @@ const history = computed(() => {
   const sorted = [...props.assessments]
     .filter(a => {
       if (a.excluded) return false
-      const isSBARTask = a.categoryId === 'sbar_general' || (a.expectationIds && a.expectationIds.length > 0)
+      const isSBARTask = a.categoryId === 'sbar_general' || (a.expectationIds && a.expectationIds.length > 0) || a.expectationId != null || a.isSbar || a.gradingFramework === 'sbar'
       if (isSBAR ? !isSBARTask : isSBARTask) return false
       return props.gradeMap[a.assessmentId]?.[props.studentId]?.resolvedScore !== null || props.gradeMap[a.assessmentId]?.[props.studentId]?.missing
     })
@@ -107,7 +107,7 @@ const history = computed(() => {
         const grade = props.gradeMap[a.assessmentId]?.[props.studentId]
         if (!grade || grade.excluded) continue
 
-        const isSBART = a.categoryId === 'sbar_general' || (a.expectationIds && a.expectationIds.length > 0)
+        const isSBART = a.categoryId === 'sbar_general' || (a.expectationIds && a.expectationIds.length > 0) || a.expectationId != null || a.isSbar || a.gradingFramework === 'sbar'
         const possible = isSBART ? 100 : (a.scaledTotal ?? a.totalPoints)
         if (grade.missing) {
           catPossible += possible

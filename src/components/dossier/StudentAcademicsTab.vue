@@ -591,10 +591,11 @@ const classAssessments = computed(() => {
     .filter(a => {
       if (a.target === 'individual') return false
       if (!isAssessmentInSubCohort(a, studentSubCohort.value)) return false
+      const isSBARTask = a.categoryId === 'sbar_general' || (a.expectationIds && a.expectationIds.length > 0) || a.expectationId != null || a.isSbar || a.gradingFramework === 'sbar'
       if (isSBAR) {
-        return a.categoryId === 'sbar_general' || (a.expectationIds && a.expectationIds.length > 0)
+        return isSBARTask
       } else {
-        return a.categoryId !== 'sbar_general'
+        return !isSBARTask
       }
     })
     .map(a => {
@@ -664,7 +665,7 @@ const individualAssessments = computed(() => {
   return assessments.value
     .filter(a => {
       if (a.target !== 'individual' || String(a.targetStudentId) !== String(props.studentId)) return false
-      const isSBARTask = a.categoryId === 'sbar_general' || (a.expectationIds && a.expectationIds.length > 0)
+      const isSBARTask = a.categoryId === 'sbar_general' || (a.expectationIds && a.expectationIds.length > 0) || a.expectationId != null || a.isSbar || a.gradingFramework === 'sbar'
       return isSBAR ? isSBARTask : !isSBARTask
     })
     .map(a => {

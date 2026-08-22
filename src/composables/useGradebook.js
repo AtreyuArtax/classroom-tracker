@@ -756,7 +756,7 @@ export function enterGradeSBAR(assessmentId, studentId, expCode, percentage) {
 
   if (percentage == null) {
     delete grade.expectationScores[expCode]
-    const remainingScores = Object.values(grade.expectationScores).filter(v => v != null)
+    const remainingScores = Object.values(grade.expectationScores).filter(v => typeof v === 'number' && !isNaN(v))
     if (remainingScores.length === 0) {
       grade.masteryLevel = null
       grade.resolvedScore = null
@@ -767,8 +767,10 @@ export function enterGradeSBAR(assessmentId, studentId, expCode, percentage) {
     }
   } else {
     grade.expectationScores[expCode] = percentage
-    grade.masteryLevel = percentage
-    grade.resolvedScore = percentage
+    const allScores = Object.values(grade.expectationScores).filter(v => typeof v === 'number' && !isNaN(v))
+    const avg = allScores.length > 0 ? Math.round(allScores.reduce((a, b) => a + b, 0) / allScores.length) : percentage
+    grade.masteryLevel = avg
+    grade.resolvedScore = avg
     grade.missing = false
   }
 
