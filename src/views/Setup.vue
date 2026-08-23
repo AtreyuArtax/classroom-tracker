@@ -367,13 +367,16 @@
 
           <div class="setup__dialog-body" style="display: flex; flex-direction: column; gap: 10px;">
             <p v-if="pendingAttendanceMode === 'rfid'">
-              <strong>Switching to RFID/QR Sign-In Mode</strong> will immediately mark <strong>every student absent</strong> in all classes for today. Students must scan their card or QR code to be marked present.
+              <strong>Switching to RFID/QR Sign-In Mode</strong> requires students to scan their card or QR code when class begins to be marked present. During active class periods, students start absent until they scan in at the door.
             </p>
             <p v-else>
-              <strong>Switching to Natural Mode</strong> will stop requiring scan-based check-in. Any students still marked absent from today's RFID session will remain absent until they scan in or you manually clear them.
+              <strong>Switching to Natural Mode</strong> restores standard presence-by-default tracking without requiring door scans.
             </p>
-            <div style="background: var(--bg-secondary); border-radius: var(--radius-sm); padding: 10px 12px; font-size: 0.83rem; color: var(--text-secondary); border-left: 3px solid var(--primary);">
-              <strong style="color: var(--text);">Self-healing:</strong> Any attendance state set today will automatically reset tonight at midnight. Changing this setting again tomorrow starts fresh — no permanent damage.
+            <div v-if="pendingAttendanceMode === 'rfid'" style="background: var(--bg-secondary); border-radius: var(--radius-sm); padding: 10px 12px; font-size: 0.83rem; color: var(--text-secondary); border-left: 3px solid var(--primary);">
+              <strong style="color: var(--text);">Schedule-Safe:</strong> Past classes and morning prep are protected. Only active class periods within their scheduled time window will initialize check-in.
+            </div>
+            <div v-else style="background: var(--bg-secondary); border-radius: var(--radius-sm); padding: 10px 12px; font-size: 0.83rem; color: var(--text-secondary); border-left: 3px solid var(--primary);">
+              <strong style="color: var(--text);">Preserve Records:</strong> Any attendance records already logged earlier today will remain intact.
             </div>
             <p style="font-size: 0.82rem; color: var(--text-secondary);">Are you sure you want to switch?</p>
           </div>
