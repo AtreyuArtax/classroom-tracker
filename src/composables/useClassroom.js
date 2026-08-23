@@ -1411,10 +1411,8 @@ async function updateAttendanceConfig(mode, gracePeriod) {
     await settingsService.saveAttendanceConfig({ mode, gracePeriod })
     attendanceMode.value = mode
     latenessGracePeriod.value = gracePeriod
-    if (mode === 'rfid') {
-        for (const cls of classList.value) {
-            await initializeRfidAttendance(cls.classId)
-        }
+    if (mode === 'rfid' && activeClass.value) {
+        await initializeRfidAttendance(activeClass.value.classId)
     }
 }
 

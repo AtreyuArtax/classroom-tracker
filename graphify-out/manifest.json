@@ -240,8 +240,8 @@
     "semantic_hash": "68f077cda9561ec51fbe56d0aa61fb3e"
   },
   "src/composables/useClassroom.js": {
-    "mtime": 1787398244.7308035,
-    "ast_hash": "2bd265edd9e5174604d2f6c522a02e58",
+    "mtime": 1787444147.1050847,
+    "ast_hash": "cb65cf33e0569f30576ee24a3ab1f56e",
     "semantic_hash": ""
   },
   "src/composables/useGradebook.js": {
@@ -430,8 +430,8 @@
     "semantic_hash": ""
   },
   "src/composables/useAttendanceTracker.js": {
-    "mtime": 1787359378.3810833,
-    "ast_hash": "d95328b7ef718be78f1d91f779a8d834",
+    "mtime": 1787444498.3076878,
+    "ast_hash": "b52fbd0b6b59099b12f31738d6a704e3",
     "semantic_hash": ""
   },
   "src/composables/useClassroomState.js": {

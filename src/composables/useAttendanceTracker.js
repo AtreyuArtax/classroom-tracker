@@ -326,15 +326,42 @@ export async function reconcileStaleTrips() {
 
 /**
  * Initializes RFID-based attendance for a class on class activation if needed.
+ * Only initializes if:
+ * 1. No events (attendance, trips, notes) have occurred yet today in this class.
+ * 2. The current time is within the class window (15 mins before start time through period end).
  */
-export async function initializeRfidAttendance(classId) {
+export async function initializeRfidAttendance(classId, options = {}) {
     const todayStr = formatLocalDate(new Date())
     const existingEvents = await eventService.getEventsByClass(classId, { from: todayStr, to: todayStr })
-    const hasAttendanceLogs = existingEvents.some(e => e.code === 'a' || e.code === 'l')
-    if (hasAttendanceLogs) return
+    
+    // Safety 1: If attendance has ALREADY been initialized for this class today, do not overwrite
+    // (We only check for 'a' or 'l' events, ignoring early morning notes, IEP reminders, or behavior logs)
+    const hasAlreadyInitialized = existingEvents.some(e => e.code === 'a' || e.code === 'l')
+    if (hasAlreadyInitialized) return
 
-    const clsObj = classList.value.find(c => c.classId === classId)
+    const clsObj = classList.value.find(c => c.classId === classId) || (activeClass.value?.classId === classId ? activeClass.value : null)
     if (!clsObj) return
+
+    // Safety 2: Check if current time is within the valid class window (15m before start -> period end)
+    if (!options.force) {
+        const now = new Date()
+        const currentMinutes = now.getHours() * 60 + now.getMinutes()
+        
+        const startTimeStr = clsObj.periodStartTime || periodStartTimes.value?.[clsObj.periodNumber || 1] || '08:50'
+        const [startH, startM] = startTimeStr.split(':').map(Number)
+        const startMinutes = (isNaN(startH) ? 8 : startH) * 60 + (isNaN(startM) ? 50 : startM)
+        
+        // Window opens 15 minutes before period start for early arrivals
+        const windowOpenMinutes = startMinutes - 15
+        
+        // Window closes at period end (elementary runs all day ~7.5h; secondary ~90 mins)
+        const durationMinutes = clsObj.classType === 'elementary' ? 450 : 90
+        const windowCloseMinutes = startMinutes + durationMinutes
+        
+        if (currentMinutes < windowOpenMinutes || currentMinutes > windowCloseMinutes) {
+            return // Outside class time window — do not auto-create absence records
+        }
+    }
 
     let classNeedsSave = false
     for (const [studentId, student] of Object.entries(clsObj.students || {})) {

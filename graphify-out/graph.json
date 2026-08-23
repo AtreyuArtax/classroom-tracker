@@ -7047,7 +7047,7 @@
       "label": "initializeRfidAttendance()",
       "file_type": "code",
       "source_file": "src/composables/useAttendanceTracker.js",
-      "source_location": "L330",
+      "source_location": "L333",
       "_origin": "ast",
       "id": "composables_useattendancetracker_initializerfidattendance",
       "community": 20,
@@ -7057,7 +7057,7 @@
       "label": "handleRfidAttendanceScan()",
       "file_type": "code",
       "source_file": "src/composables/useAttendanceTracker.js",
-      "source_location": "L373",
+      "source_location": "L400",
       "_origin": "ast",
       "id": "composables_useattendancetracker_handlerfidattendancescan",
       "community": 20,
@@ -7067,7 +7067,7 @@
       "label": "markAllPresentToday()",
       "file_type": "code",
       "source_file": "src/composables/useAttendanceTracker.js",
-      "source_location": "L460",
+      "source_location": "L487",
       "_origin": "ast",
       "id": "composables_useattendancetracker_markallpresenttoday",
       "community": 20,
@@ -7577,7 +7577,7 @@
       "label": "updateShowScannerButton()",
       "file_type": "code",
       "source_file": "src/composables/useClassroom.js",
-      "source_location": "L1424",
+      "source_location": "L1422",
       "_origin": "ast",
       "id": "composables_useclassroom_updateshowscannerbutton",
       "community": 0,
@@ -7587,7 +7587,7 @@
       "label": "updateCloudConfig()",
       "file_type": "code",
       "source_file": "src/composables/useClassroom.js",
-      "source_location": "L1434",
+      "source_location": "L1432",
       "_origin": "ast",
       "id": "composables_useclassroom_updatecloudconfig",
       "community": 0,
@@ -7597,7 +7597,7 @@
       "label": "generateUniqueUserCode()",
       "file_type": "code",
       "source_file": "src/composables/useClassroom.js",
-      "source_location": "L1447",
+      "source_location": "L1445",
       "_origin": "ast",
       "id": "composables_useclassroom_generateuniqueusercode",
       "community": 0,
@@ -7607,7 +7607,7 @@
       "label": "archiveClass()",
       "file_type": "code",
       "source_file": "src/composables/useClassroom.js",
-      "source_location": "L1493",
+      "source_location": "L1491",
       "_origin": "ast",
       "id": "composables_useclassroom_archiveclass",
       "community": 20,
@@ -7617,7 +7617,7 @@
       "label": "restoreClass()",
       "file_type": "code",
       "source_file": "src/composables/useClassroom.js",
-      "source_location": "L1514",
+      "source_location": "L1512",
       "_origin": "ast",
       "id": "composables_useclassroom_restoreclass",
       "community": 0,
@@ -7627,7 +7627,7 @@
       "label": "deleteClass()",
       "file_type": "code",
       "source_file": "src/composables/useClassroom.js",
-      "source_location": "L1528",
+      "source_location": "L1526",
       "_origin": "ast",
       "id": "composables_useclassroom_deleteclass",
       "community": 0,
@@ -7637,7 +7637,7 @@
       "label": "_activateClass()",
       "file_type": "code",
       "source_file": "src/composables/useClassroom.js",
-      "source_location": "L1535",
+      "source_location": "L1533",
       "_origin": "ast",
       "id": "composables_useclassroom_activateclass",
       "community": 20,
@@ -7647,7 +7647,7 @@
       "label": "useClassroom()",
       "file_type": "code",
       "source_file": "src/composables/useClassroom.js",
-      "source_location": "L1629",
+      "source_location": "L1627",
       "_origin": "ast",
       "id": "composables_useclassroom_useclassroom",
       "community": 81,
@@ -7657,7 +7657,7 @@
       "label": "_scheduleMidnightReset()",
       "file_type": "code",
       "source_file": "src/composables/useClassroom.js",
-      "source_location": "L1735",
+      "source_location": "L1733",
       "_origin": "ast",
       "id": "composables_useclassroom_schedulemidnightreset",
       "community": 0,
@@ -20548,9 +20548,9 @@
       "source_file": "src/components/setup/ClassLogisticsSettings.vue",
       "source_location": "L1380",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "setup_classlogisticssettings",
-      "target": "setup_classlogisticssettings_addsinglestudent",
-      "confidence_score": 1.0
+      "target": "setup_classlogisticssettings_addsinglestudent"
     },
     {
       "relation": "contains",
@@ -20558,9 +20558,9 @@
       "source_file": "src/components/setup/ClassLogisticsSettings.vue",
       "source_location": "L1377",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "setup_classlogisticssettings",
-      "target": "setup_classlogisticssettings_crossclassconflicts",
-      "confidence_score": 1.0
+      "target": "setup_classlogisticssettings_crossclassconflicts"
     },
     {
       "relation": "contains",
@@ -20588,9 +20588,9 @@
       "source_file": "src/components/setup/ClassLogisticsSettings.vue",
       "source_location": "L1378",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "setup_classlogisticssettings",
-      "target": "setup_classlogisticssettings_pendingconflicts",
-      "confidence_score": 1.0
+      "target": "setup_classlogisticssettings_pendingconflicts"
     },
     {
       "relation": "contains",
@@ -20598,9 +20598,9 @@
       "source_file": "src/components/setup/ClassLogisticsSettings.vue",
       "source_location": "L1362",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "setup_classlogisticssettings",
-      "target": "setup_classlogisticssettings_playrapidbeep",
-      "confidence_score": 1.0
+      "target": "setup_classlogisticssettings_playrapidbeep"
     },
     {
       "relation": "contains",
@@ -20608,9 +20608,9 @@
       "source_file": "src/components/setup/ClassLogisticsSettings.vue",
       "source_location": "L1428",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "setup_classlogisticssettings",
-      "target": "setup_classlogisticssettings_resolveconflicts",
-      "confidence_score": 1.0
+      "target": "setup_classlogisticssettings_resolveconflicts"
     },
     {
       "relation": "imports_from",
@@ -32958,5 +32958,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "b9007c5c610e0a32f7062e250449e5dc551a5435"
+  "built_at_commit": "5da12289ce5ab108a428a97f1ed2db5b9b82a632"
 }
