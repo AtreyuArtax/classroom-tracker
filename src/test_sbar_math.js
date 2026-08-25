@@ -22,6 +22,14 @@ import {
   calculateSBARStudentOverallMastery
 } from './db/gradebook/gradeCalcSBAR.js'
 
+import {
+  _calculateCategoryGrade,
+  resolveAttemptScore,
+  detectOutliers,
+  calculateStandardDeviation,
+  isCohortMatch
+} from './db/gradebook/gradeCalc.js'
+
 let totalTests = 0
 let passedTests = 0
 let failedTests = 0
@@ -351,11 +359,77 @@ console.log('Test Group 9: Full Pipeline with Non-Default SBAR Algorithms')
 }
 console.log()
 
+// ── TEST GROUP 10: Traditional Category Grade Calculations & Formative Exclusions
+console.log('Test Group 10: Traditional Grade Calculation & Formative Exclusion')
+{
+  const mockCatAssessments = [
+    { assessmentId: 601, totalPoints: 50, scaledTotal: 50, isFormative: false },
+    { assessmentId: 602, totalPoints: 100, scaledTotal: 100, isFormative: false },
+    { assessmentId: 603, totalPoints: 20, scaledTotal: 20, isFormative: true } // Formative should be excluded
+  ]
+
+  const mockGradeMap = {
+    601: { assessmentId: 601, score: 40, resolvedScore: 40 }, // 40/50
+    602: { assessmentId: 602, score: 80, resolvedScore: 80 }, // 80/100
+    603: { assessmentId: 603, score: 20, resolvedScore: 20 }  // 20/20 formative practice
+  }
+
+  // Total earned: 40 + 80 = 120. Total possible: 50 + 100 = 150. Pct = (120/150)*100 = 80.0%
+  const catGrade = _calculateCategoryGrade(mockCatAssessments, mockGradeMap, true)
+  assertApprox(catGrade, 80.0, 0.1, 'Traditional category grade calculates accurately with formative exclusion (80%)')
+
+  // Missing assignment counts as 0 against scaledTotal
+  const mockGradeMapWithMissing = {
+    601: { assessmentId: 601, score: 40, resolvedScore: 40 },
+    602: { assessmentId: 602, missing: true } // 0/100
+  }
+  // Total earned: 40 + 0 = 40. Total possible: 50 + 100 = 150. Pct = (40/150)*100 = 26.67%
+  const missingCatGrade = _calculateCategoryGrade(mockCatAssessments, mockGradeMapWithMissing, true)
+  assertApprox(missingCatGrade, 26.67, 0.1, 'Missing assessment correctly penalizes as 0/100 (26.67%)')
+}
+console.log()
+
+// ── TEST GROUP 11: Retest Policy Resolutions
+console.log('Test Group 11: Multi-Attempt Retest Policy Resolutions')
+{
+  const attempts = [
+    { attemptId: 1, pointsEarned: 60, isPrimary: false },
+    { attemptId: 2, pointsEarned: 85, isPrimary: true },
+    { attemptId: 3, pointsEarned: 70, isPrimary: false }
+  ]
+
+  assert(resolveAttemptScore(attempts, 'highest') === 85, 'Retest policy "highest" selects 85')
+  assert(resolveAttemptScore(attempts, 'latest') === 70, 'Retest policy "latest" selects 70')
+  assertApprox(resolveAttemptScore(attempts, 'average'), 71.67, 0.1, 'Retest policy "average" averages attempts (71.67)')
+  assert(resolveAttemptScore(attempts, 'manual') === 85, 'Retest policy "manual" selects primary attempt (85)')
+}
+console.log()
+
+// ── TEST GROUP 12: Statistical Outliers & Cohort Matching
+console.log('Test Group 12: Statistical Outlier Detection & Cohort Matching')
+{
+  // Sample: [70, 75, 80, 85, 90, 10] -> 10 is an extreme statistical outlier
+  const values = [70, 75, 80, 85, 90, 10]
+  const sd = calculateStandardDeviation(values)
+  assert(sd > 0, `Standard deviation computed (${Math.round(sd * 10) / 10})`)
+  
+  const outlierResult = detectOutliers(values, 1.5)
+  assert(outlierResult.outliers.includes(10), '10% is identified as a statistical outlier')
+  assert(!outlierResult.clean.includes(10), '10% is excluded from clean cohort distribution')
+
+  // Cohort string normalization & matching
+  assert(isCohortMatch('Grade 7', 'grade 7') === true, 'Case-insensitive match for Grade 7')
+  assert(isCohortMatch('Gr. 8', 'Grade 8') === true, 'Normalized match for Gr. 8 and Grade 8')
+  assert(isCohortMatch('MTH1W', 'MTH1W') === true, 'Secondary course code match for MTH1W')
+  assert(isCohortMatch('MTH1W', 'SNC1D') === false, 'Cohort mismatch between MTH1W and SNC1D')
+}
+console.log()
+
 // ── SUMMARY ───────────────────────────────────────────────────────
 console.log('====================================================')
 console.log(`Results: ${passedTests} / ${totalTests} assertions passed (${Math.round((passedTests / totalTests) * 100)}%)`)
 if (failedTests === 0) {
-  console.log('🎉 ALL SBAR MATH & PIPELINE TESTS PASSED!')
+  console.log('🎉 ALL ARCHITECTURAL, MATH & PIPELINE TESTS PASSED!')
 } else {
   console.error(`⚠️ ${failedTests} TESTS FAILED!`)
   process.exit(1)

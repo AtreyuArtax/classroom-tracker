@@ -528,14 +528,19 @@ export async function deleteClass(classId) {
     await createSafetySnapshot(`Before deleting class "${cls.name || classId}"`)
     
     // 1. Identify all child records that belong to this class
-    const [assessments, grades, events] = await Promise.all([
+    const [assessments, grades, events, learningSkills] = await Promise.all([
         db.getAllFromIndex('assessments', 'by_classId', classId),
         db.getAllFromIndex('grades', 'by_classId', classId),
-        db.getAllFromIndex('events', 'by_classId', classId)
+        db.getAllFromIndex('events', 'by_classId', classId),
+        db.getAllFromIndex('learning_skills', 'by_classId', classId).catch(() => [])
     ])
 
     // 2. Perform deep delete in a single atomic transaction
-    const tx = db.transaction(['classes', 'assessments', 'grades', 'events'], 'readwrite')
+    const storesToLock = ['classes', 'assessments', 'grades', 'events']
+    if (db.objectStoreNames.contains('learning_skills')) {
+        storesToLock.push('learning_skills')
+    }
+    const tx = db.transaction(storesToLock, 'readwrite')
     
     // Delete Grades
     const gradeStore = tx.objectStore('grades')
@@ -558,6 +563,16 @@ export async function deleteClass(classId) {
     for (const e of events) {
         if (e?.eventId != null) {
             await eventStore.delete(e.eventId)
+        }
+    }
+
+    // Delete Learning Skills (if store exists)
+    if (storesToLock.includes('learning_skills') && Array.isArray(learningSkills)) {
+        const lsStore = tx.objectStore('learning_skills')
+        for (const ls of learningSkills) {
+            if (ls?.id != null) {
+                await lsStore.delete(ls.id)
+            }
         }
     }
     
@@ -743,14 +758,19 @@ export async function permanentlyDeleteStudent(classId, studentId) {
     }
     const db = await getDB()
 
-    // 1. Find all events and grades scoped to this specific class + student
-    const [events, grades] = await Promise.all([
+    // 1. Find all events, grades, and learning skills scoped to this specific class + student
+    const [events, grades, learningSkills] = await Promise.all([
         db.getAllFromIndex('events', 'by_classId_studentId', [classId, studentId]),
         db.getAllFromIndex('grades', 'by_classId_studentId', [classId, studentId]),
+        db.getAllFromIndex('learning_skills', 'by_student_class', [studentId, classId]).catch(() => [])
     ])
 
     // 2. Atomic transaction across all affected stores
-    const tx = db.transaction(['classes', 'events', 'grades'], 'readwrite')
+    const storesToLock = ['classes', 'events', 'grades']
+    if (db.objectStoreNames.contains('learning_skills')) {
+        storesToLock.push('learning_skills')
+    }
+    const tx = db.transaction(storesToLock, 'readwrite')
 
     // Delete events for this student in this class only
     const eventStore = tx.objectStore('events')
@@ -765,6 +785,16 @@ export async function permanentlyDeleteStudent(classId, studentId) {
     for (const g of grades) {
         if (g?.gradeId != null) {
             await gradeStore.delete(g.gradeId)
+        }
+    }
+
+    // Delete learning skills for this student in this class only (if store exists)
+    if (storesToLock.includes('learning_skills') && Array.isArray(learningSkills)) {
+        const lsStore = tx.objectStore('learning_skills')
+        for (const ls of learningSkills) {
+            if (ls?.id != null) {
+                await lsStore.delete(ls.id)
+            }
         }
     }
 

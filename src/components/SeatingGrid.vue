@@ -53,57 +53,69 @@ import { computed } from 'vue'
 import DeskTile       from './DeskTile.vue'
 import { useClassroom } from '../composables/useClassroom.js'
 
-const { gridSize, students, activeClass, assignSeat, studentWeeklyStats } = useClassroom()
+const { gridSize, students, activeClass, assignSeat, swapSeats, studentWeeklyStats } = useClassroom()
 
 // ─── computed ─────────────────────────────────────────────────────────────────
 
 /** Map of "row-col" → studentId for quick seat lookup */
 const seatMap = computed(() => {
   const map = {}
-  for (const [studentId, s] of Object.entries(students.value)) {
+  for (const [id, s] of Object.entries(students.value ?? {})) {
     if (s.seat && !s.archived) {
-      map[`${s.seat.row}-${s.seat.col}`] = studentId
+      map[`${s.seat.row}-${s.seat.col}`] = id
     }
   }
   return map
 })
 
-const layoutConfig = computed(() => activeClass.value?.layoutConfig || {})
-
-function isAisle(row, col) {
-  return layoutConfig.value.cellTypes?.[`${row}-${col}`] === 'aisle'
-}
+/** Table Pods lookup: "row-col" -> pod object */
+const podMap = computed(() => {
+  const map = {}
+  const pods = activeClass.value?.layoutConfig?.pods || []
+  pods.forEach(pod => {
+    (pod.desks || []).forEach(d => {
+      map[`${d.row}-${d.col}`] = pod
+    })
+  })
+  return map
+})
 
 function getPod(row, col) {
-  const key = `${row}-${col}`
-  return layoutConfig.value.pods?.find(p => p.cells?.includes(key)) || null
+  return podMap.value[`${row}-${col}`] || null
 }
 
 function getPodWrapperStyle(row, col) {
   const pod = getPod(row, col)
   if (!pod) return {}
   return {
-    borderColor: pod.color,
-    boxShadow: `0 0 0 1px ${pod.color}`
+    outline: `2px solid ${pod.color}`,
+    outlineOffset: '-2px',
+    backgroundColor: `${pod.color}15`
   }
 }
 
+/** Check if a cell is an aisle */
+function isAisle(row, col) {
+  const aisles = activeClass.value?.layoutConfig?.aisles
+  if (!aisles) return false
+  if (aisles.columns && aisles.columns.includes(col)) return true
+  if (aisles.rows && aisles.rows.includes(row)) return true
+  return false
+}
+
+/** Grid style mapping custom column widths for aisles */
 const gridContainerStyle = computed(() => {
   const cols = gridSize.value.cols
   const rows = gridSize.value.rows
-  const cellTypes = layoutConfig.value.cellTypes || {}
-
-  // Check if an entire column consists of aisles
+  const aisles = activeClass.value?.layoutConfig?.aisles?.columns || []
+  
   const colTracks = []
   for (let c = 1; c <= cols; c++) {
-    let isFullAisleCol = true
-    for (let r = 1; r <= rows; r++) {
-      if (cellTypes[`${r}-${c}`] !== 'aisle') {
-        isFullAisleCol = false
-        break
-      }
+    if (aisles.includes(c)) {
+      colTracks.push('24px') // Narrow aisle spacer
+    } else {
+      colTracks.push('1fr')
     }
-    colTracks.push(isFullAisleCol ? '0.35fr' : '1fr')
   }
 
   return {
@@ -122,11 +134,7 @@ async function onSeatDrop({ studentId, fromRow, fromCol, toRow, toCol, toStudent
     ? { row: fromRow, col: fromCol } 
     : null
 
-  await assignSeat(studentId, toSeat)
-
-  if (toStudentId) {
-    await assignSeat(toStudentId, fromSeat)
-  }
+  await swapSeats(studentId, toSeat, toStudentId || null, toStudentId ? fromSeat : null)
 }
 </script>
 

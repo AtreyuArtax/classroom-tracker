@@ -338,42 +338,66 @@ export async function updateStudentParentContacts(studentId, parentContacts) {
  * @returns {Promise<void>}
  */
 export async function assignSeat(studentId, newSeat) {
+    return swapSeats(studentId, newSeat, null, null)
+}
+
+/**
+ * Swaps two students' seats (or assigns a student to a seat) in a single atomic transaction
+ * with a single undo operation.
+ */
+export async function swapSeats(studentIdA, toSeatA, studentIdB = null, toSeatB = null) {
     try {
         const classId = activeClass.value?.classId
-        if (!classId || !studentId) return
-        const previousSeat = students.value[studentId]?.seat ?? null
+        if (!classId || !studentIdA) return
 
-        await classService.updateStudentSeat(classId, studentId, newSeat)
-        if (students.value[studentId]) {
-            students.value[studentId].seat = newSeat
+        const previousSeatA = students.value[studentIdA]?.seat ?? null
+        const previousSeatB = studentIdB ? (students.value[studentIdB]?.seat ?? null) : null
+
+        const seatMap = { [studentIdA]: toSeatA }
+        if (studentIdB) {
+            seatMap[studentIdB] = toSeatB
         }
-        if (activeClass.value?.students?.[studentId]) {
-            activeClass.value.students[studentId].seat = newSeat
+
+        await classService.updateMultipleStudentSeats(classId, seatMap)
+
+        if (students.value[studentIdA]) students.value[studentIdA].seat = toSeatA
+        if (activeClass.value?.students?.[studentIdA]) activeClass.value.students[studentIdA].seat = toSeatA
+
+        if (studentIdB) {
+            if (students.value[studentIdB]) students.value[studentIdB].seat = toSeatB
+            if (activeClass.value?.students?.[studentIdB]) activeClass.value.students[studentIdB].seat = toSeatB
         }
+
         students.value = { ...students.value }
         triggerRef(students)
         triggerRef(activeClass)
 
         pushUndo(async () => {
             try {
-                await classService.updateStudentSeat(classId, studentId, previousSeat)
-                if (students.value[studentId]) {
-                    students.value[studentId].seat = previousSeat
+                const undoMap = { [studentIdA]: previousSeatA }
+                if (studentIdB) undoMap[studentIdB] = previousSeatB
+
+                await classService.updateMultipleStudentSeats(classId, undoMap)
+
+                if (students.value[studentIdA]) students.value[studentIdA].seat = previousSeatA
+                if (activeClass.value?.students?.[studentIdA]) activeClass.value.students[studentIdA].seat = previousSeatA
+
+                if (studentIdB) {
+                    if (students.value[studentIdB]) students.value[studentIdB].seat = previousSeatB
+                    if (activeClass.value?.students?.[studentIdB]) activeClass.value.students[studentIdB].seat = previousSeatB
                 }
-                if (activeClass.value?.students?.[studentId]) {
-                    activeClass.value.students[studentId].seat = previousSeat
-                }
+
                 students.value = { ...students.value }
                 triggerRef(students)
                 triggerRef(activeClass)
             } catch (err) {
-                console.error('Undo assignSeat failed:', err)
+                console.error('Undo swapSeats failed:', err)
                 const { alert } = useMessage()
-                await alert('Failed to undo seat assignment.')
+                await alert('Failed to undo seat swap.')
             }
         })
     } catch (err) {
-        console.error('assignSeat failed:', err)
+        console.error('swapSeats failed:', err)
         const { alert } = useMessage()
         await alert('Failed to save seat assignment. Please check your connection or storage.')
     }

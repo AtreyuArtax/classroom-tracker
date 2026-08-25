@@ -36,6 +36,7 @@ import {
   updateStudentAccommodations,
   updateStudentParentContacts,
   assignSeat,
+  swapSeats,
   autoAssignSeats
 } from './useRosterOperations.js'
 import {
@@ -1682,6 +1683,7 @@ export function useClassroom() {
         unarchiveStudent,
         permanentlyDeleteStudent,
         assignSeat,
+        swapSeats,
         autoAssignSeats,
         computeSuggestedClass,
         logAttendanceEvent,

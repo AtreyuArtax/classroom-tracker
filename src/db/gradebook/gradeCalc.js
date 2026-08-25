@@ -437,6 +437,7 @@ export function isCohortMatch(targetTag, studentCohort) {
 }
 
 export async function calculateStudentGrade(studentId, classRecord, { asOf = null, assessmentsPreRef = null, gradesPreRef = null } = {}) {
+  if (!studentId || !classRecord || !classRecord.classId) return null
   const assessments = assessmentsPreRef || await getAssessmentsByClass(classRecord.classId)
   const grades = gradesPreRef || await getGradesByStudent(studentId, classRecord.classId)
   
@@ -476,11 +477,11 @@ export async function calculateStudentGrade(studentId, classRecord, { asOf = nul
   const categoryResults = {}
 
   for (const category of categories) {
-    const studentCourseCode = classRecord.students[studentId]?.courseCode
-    const studentGradeLevel = classRecord.students[studentId]?.gradeLevel
+    const studentCourseCode = studentRecord?.courseCode
+    const studentGradeLevel = studentRecord?.gradeLevel
     const isElem = classRecord.classType === 'elementary'
     const studentCohort = isElem 
-      ? (classRecord.students[studentId]?.accommodations?.modifiedSubjectGrades?.[classRecord.activeSubjectId] || studentGradeLevel)
+      ? (studentRecord?.accommodations?.modifiedSubjectGrades?.[classRecord.activeSubjectId] || studentGradeLevel)
       : studentCourseCode
 
     let catAssessments = assessments.filter(a => {
@@ -504,7 +505,7 @@ export async function calculateStudentGrade(studentId, classRecord, { asOf = nul
     }
 
     // Check for manual category override
-    const override = classRecord.students[studentId]?.categoryOverrides?.[category.categoryId]
+    const override = studentRecord?.categoryOverrides?.[category.categoryId]
     const overrideValue = Number(override?.overridePercentage ?? override)
     
     if (override !== undefined && override !== null && !isNaN(overrideValue)) {
@@ -561,6 +562,7 @@ export async function calculateStudentGrade(studentId, classRecord, { asOf = nul
  * NOW BATCHED: Loads data once for the whole class instead of per student.
  */
 export async function calculateClassGrades(classRecord, { asOf = null } = {}) {
+  if (!classRecord || !classRecord.classId) return {}
   // 1. Batch fetch all data once
   const assessments = await getAssessmentsByClass(classRecord.classId)
   const allGrades = await getGradesByClass(classRecord.classId)
@@ -573,7 +575,7 @@ export async function calculateClassGrades(classRecord, { asOf = null } = {}) {
   }
 
   const results = {}
-  for (const studentId of Object.keys(classRecord.students)) {
+  for (const studentId of Object.keys(classRecord.students || {})) {
     const studentGrades = studentGradeMap.get(studentId) || []
     
     results[studentId] = await calculateStudentGrade(studentId, classRecord, { 
