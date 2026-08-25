@@ -813,6 +813,7 @@ async function updateActiveClass(updates) {
         activeClass.value.subjects = fresh.subjects
     }
     triggerRef(activeClass)
+    triggerRef(classList)
 }
 
 // ─── roster import ────────────────────────────────────────────────────────────

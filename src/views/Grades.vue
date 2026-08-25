@@ -222,6 +222,7 @@
           <Student360 
             :student-id="selectedStudentId" 
             :class-id="activeClass?.classId"
+            @select-assessment="openAssessmentView($event, 'dossier')"
             @close="closeStudentDossier"
           />
         </div>
@@ -401,6 +402,12 @@ function openAssessmentView(assessmentId, source = 'grid') {
 
 function closeAssessmentView() {
   selectedAssessmentId.value = null
+  focusedStudentId.value = null
+
+  if (returnTabMode.value === 'dossier') {
+    return
+  }
+
   analyticsMode.value = (returnTabMode.value === 'analytics')
 
   nextTick(() => {
@@ -868,180 +875,26 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.grades {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  background: var(--bg-secondary);
-}
-
-.grades__layout {
-  display: flex;
-  flex: 1;
-  overflow: hidden;
-}
-
-.grades__main {
-  flex: 1;
-  min-width: 0;
-  overflow-y: auto;
-  overflow-x: hidden;
-  padding: 24px;
-  display: flex;
-  flex-direction: column;
-}
-
-.grades__loading, .grades__placeholder {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 60px 20px;
-  color: var(--text-secondary);
-  font-weight: 600;
-}
-
-.grades__spinner {
-  width: 32px;
-  height: 32px;
-  border: 3px solid var(--border);
-  border-top-color: var(--primary);
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-  margin-bottom: 12px;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-.grades__grid-container {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  height: 100%;
-}
-
-.grades__toolbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: var(--surface);
-  padding: 12px 16px;
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--border);
-}
-
-.grades__toolbar-left, .grades__toolbar-center, .grades__toolbar-right {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.grades__btn-settings {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border);
-  background: var(--surface);
-  color: var(--text-secondary);
-  cursor: pointer;
-}
-
-.grades__btn-add {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 14px;
-  background: var(--primary);
-  color: white;
-  border: none;
-  border-radius: var(--radius-md);
-  font-size: 0.85rem;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.grades__toggle-group, .grades__milestone-toggle {
-  display: flex;
-  gap: 2px;
-  background: var(--bg-secondary);
-  padding: 3px;
-  border-radius: var(--radius-md);
-}
-
-.grades__toggle-btn {
-  padding: 6px 12px;
-  border: none;
-  background: none;
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-}
-
-.grades__toggle-btn--active {
-  background: var(--surface);
-  color: var(--primary);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-.grades__class-avg-display {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-}
-
-.grades__avg-value {
-  font-weight: 800;
-  color: var(--primary);
-}
-
-.sbar-engine-select-wrapper {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  margin-left: 8px;
-  padding: 3px 8px;
-  border-radius: 14px;
-  background: var(--bg-tertiary, rgba(99, 102, 241, 0.08));
-  border: 1px solid var(--border);
-  transition: all 0.15s ease;
-}
-
-.sbar-engine-select-wrapper:hover {
-  background: var(--primary-light, rgba(99, 102, 241, 0.15));
-  border-color: var(--primary);
-}
-
-.sbar-engine-icon {
-  color: var(--primary);
-  flex-shrink: 0;
-}
-
-.sbar-engine-select {
-  background: transparent;
-  border: none;
-  color: var(--primary);
-  font-size: 0.73rem;
-  font-weight: 700;
-  cursor: pointer;
-  outline: none;
-  padding: 0;
-}
-
-.sbar-engine-select option {
-  background: var(--surface);
-  color: var(--text);
-  font-weight: 600;
-}
-
-.grades__student-view {
-  height: 100%;
-}
+.grades { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: var(--bg-secondary); }
+.grades__layout { display: flex; flex: 1; overflow: hidden; }
+.grades__main { flex: 1; min-width: 0; overflow-y: auto; overflow-x: hidden; padding: 24px; display: flex; flex-direction: column; }
+.grades__loading, .grades__placeholder { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 20px; color: var(--text-secondary); font-weight: 600; }
+.grades__spinner { width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 12px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.grades__grid-container { display: flex; flex-direction: column; gap: 16px; height: 100%; }
+.grades__toolbar { display: flex; justify-content: space-between; align-items: center; background: var(--surface); padding: 12px 16px; border-radius: var(--radius-lg); border: 1px solid var(--border); }
+.grades__toolbar-left, .grades__toolbar-center, .grades__toolbar-right { display: flex; align-items: center; gap: 10px; }
+.grades__btn-settings { display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: var(--radius-md); border: 1px solid var(--border); background: var(--surface); color: var(--text-secondary); cursor: pointer; }
+.grades__btn-add { display: flex; align-items: center; gap: 6px; padding: 8px 14px; background: var(--primary); color: white; border: none; border-radius: var(--radius-md); font-size: 0.85rem; font-weight: 600; cursor: pointer; }
+.grades__toggle-group, .grades__milestone-toggle { display: flex; gap: 2px; background: var(--bg-secondary); padding: 3px; border-radius: var(--radius-md); }
+.grades__toggle-btn { padding: 6px 12px; border: none; background: none; font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); border-radius: var(--radius-sm); cursor: pointer; }
+.grades__toggle-btn--active { background: var(--surface); color: var(--primary); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); }
+.grades__class-avg-display { font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); }
+.grades__avg-value { font-weight: 800; color: var(--primary); }
+.sbar-engine-select-wrapper { display: inline-flex; align-items: center; gap: 4px; margin-left: 8px; padding: 3px 8px; border-radius: 14px; background: var(--bg-tertiary, rgba(99, 102, 241, 0.08)); border: 1px solid var(--border); transition: all 0.15s ease; }
+.sbar-engine-select-wrapper:hover { background: var(--primary-light, rgba(99, 102, 241, 0.15)); border-color: var(--primary); }
+.sbar-engine-icon { color: var(--primary); flex-shrink: 0; }
+.sbar-engine-select { background: transparent; border: none; color: var(--primary); font-size: 0.73rem; font-weight: 700; cursor: pointer; outline: none; padding: 0; }
+.sbar-engine-select option { background: var(--surface); color: var(--text); font-weight: 600; }
+.grades__student-view { height: 100%; }
 </style>

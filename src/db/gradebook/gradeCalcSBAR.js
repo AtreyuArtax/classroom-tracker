@@ -227,22 +227,47 @@ export function calculateSBARExpectationMastery(classRecord, assessments, gradeM
 
         if (!isCohortMatch(targetTag, studentCohort)) return
 
-        const rawGrade = gradeMap[ast.assessmentId]
-        const grade = (rawGrade && (rawGrade.gradeId !== undefined || rawGrade.assessmentId !== undefined))
-          ? rawGrade
-          : (rawGrade ? rawGrade[studentId] : null)
+        const rawGrade = gradeMap[ast.assessmentId] || gradeMap[String(ast.assessmentId)] || gradeMap[Number(ast.assessmentId)]
+        const grade = (rawGrade && (rawGrade.gradeId !== undefined || (rawGrade.assessmentId !== undefined && rawGrade.studentId !== undefined)))
+          ? (String(rawGrade.studentId) === String(studentId) ? rawGrade : null)
+          : (rawGrade ? (rawGrade[studentId] || rawGrade[String(studentId)] || rawGrade[Number(studentId)]) : null)
         if (!grade || grade.excluded || grade.missing) return
 
         let percentage = null
-        if (grade.expectationScores && grade.expectationScores[expCode] != null) {
-          percentage = Number(grade.expectationScores[expCode])
-        } else if (grade.masteryLevel != null) {
+        if (grade.expectationScores && typeof grade.expectationScores === 'object' && Object.keys(grade.expectationScores).length > 0) {
+          const directVal = grade.expectationScores[expCode]
+          if (directVal != null && directVal !== '' && !isNaN(Number(directVal))) {
+            percentage = Number(directVal)
+          } else {
+            // Case-insensitive & code / UUID alias resolution
+            const expCodeLower = String(expCode).toLowerCase()
+            const matchingKey = Object.keys(grade.expectationScores).find(k => {
+              if (String(k).toLowerCase() === expCodeLower) return true
+              const matchedExp = allClassExps.find(e => 
+                String(e.code || '').toLowerCase() === expCodeLower || 
+                String(e.expectationId || '').toLowerCase() === expCodeLower
+              )
+              if (matchedExp) {
+                const kLower = String(k).toLowerCase()
+                return String(matchedExp.code || '').toLowerCase() === kLower || 
+                       String(matchedExp.expectationId || '').toLowerCase() === kLower
+              }
+              return false
+            })
+            if (matchingKey != null) {
+              const aliasVal = grade.expectationScores[matchingKey]
+              if (aliasVal != null && aliasVal !== '' && !isNaN(Number(aliasVal))) {
+                percentage = Number(aliasVal)
+              }
+            }
+          }
+        } else if ((!ast.expectationIds || ast.expectationIds.length <= 1) && grade.masteryLevel != null && grade.masteryLevel !== '' && !isNaN(Number(grade.masteryLevel))) {
           percentage = Number(grade.masteryLevel)
-        } else if (grade.resolvedScore != null && ast.totalPoints > 0) {
-          percentage = (grade.resolvedScore / ast.totalPoints) * 100
+        } else if ((!ast.expectationIds || ast.expectationIds.length <= 1) && grade.resolvedScore != null && grade.resolvedScore !== '' && !isNaN(Number(grade.resolvedScore)) && ast.totalPoints > 0) {
+          percentage = (Number(grade.resolvedScore) / ast.totalPoints) * 100
         }
 
-        if (percentage != null) {
+        if (percentage != null && !isNaN(percentage)) {
           const type = (ast.assessmentType === 'formative' || ast.type === 'formative' || ast.isFormative) ? 'formative' : 'summative'
           evaluations.push({
             assessmentId: ast.assessmentId,
@@ -278,8 +303,16 @@ export function calculateSBARExpectationMastery(classRecord, assessments, gradeM
         }
       })
 
-      // Chronological sort
-      evaluations.sort((a, b) => new Date(a.date) - new Date(b.date))
+      // Deterministic chronological sort with timestamp/ID tie-breakers
+      evaluations.sort((a, b) => {
+        const tA = new Date(a.date || a.createdAt || 0).getTime()
+        const tB = new Date(b.date || b.createdAt || 0).getTime()
+        if (tA !== tB) return tA - tB
+        const cA = new Date(a.createdAt || 0).getTime()
+        const cB = new Date(b.createdAt || 0).getTime()
+        if (cA !== cB) return cA - cB
+        return String(a.assessmentId || '').localeCompare(String(b.assessmentId || ''))
+      })
 
       if (evaluations.length > 0) {
         // Formative vs Summative Rule:

@@ -735,9 +735,11 @@ export function enterGrade(assessmentId, studentId, pointsEarned, date = null, c
 export function enterGradeSBAR(assessmentId, studentId, expCode, percentage) {
   if (!activeClassRecord.value) return
 
+  const isBlank = percentage === null || percentage === undefined || percentage === '' || (typeof percentage === 'number' && isNaN(percentage))
+
   let grade = grades.value.find(g => Number(g.assessmentId) === Number(assessmentId) && String(g.studentId) === String(studentId))
   if (!grade) {
-    if (percentage == null) return // nothing to clear
+    if (isBlank) return // nothing to clear
     grade = {
       assessmentId: Number(assessmentId),
       studentId: String(studentId),
@@ -754,9 +756,11 @@ export function enterGradeSBAR(assessmentId, studentId, expCode, percentage) {
     grade.expectationScores = {}
   }
 
-  if (percentage == null) {
+  if (isBlank) {
     delete grade.expectationScores[expCode]
-    const remainingScores = Object.values(grade.expectationScores).filter(v => typeof v === 'number' && !isNaN(v))
+    const remainingScores = Object.values(grade.expectationScores)
+      .filter(v => v !== null && v !== undefined && v !== '' && !isNaN(Number(v)))
+      .map(Number)
     if (remainingScores.length === 0) {
       grade.masteryLevel = null
       grade.resolvedScore = null
@@ -766,9 +770,12 @@ export function enterGradeSBAR(assessmentId, studentId, expCode, percentage) {
       grade.resolvedScore = avg
     }
   } else {
-    grade.expectationScores[expCode] = percentage
-    const allScores = Object.values(grade.expectationScores).filter(v => typeof v === 'number' && !isNaN(v))
-    const avg = allScores.length > 0 ? Math.round(allScores.reduce((a, b) => a + b, 0) / allScores.length) : percentage
+    const num = Number(percentage)
+    grade.expectationScores[expCode] = num
+    const allScores = Object.values(grade.expectationScores)
+      .filter(v => v !== null && v !== undefined && v !== '' && !isNaN(Number(v)))
+      .map(Number)
+    const avg = allScores.length > 0 ? Math.round(allScores.reduce((a, b) => a + b, 0) / allScores.length) : num
     grade.masteryLevel = avg
     grade.resolvedScore = avg
     grade.missing = false

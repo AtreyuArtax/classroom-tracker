@@ -541,6 +541,10 @@ async function assignLevelByCode(studentId, expCode, code) {
 }
 
 async function assignNumericPercentage(studentId, expCode, val) {
+  if (val == null || String(val).trim() === '') {
+    await enterGradeSBAR(props.currentAssessment.assessmentId, studentId, expCode, null)
+    return
+  }
   const num = parseFloat(val)
   if (isNaN(num)) return
   await enterGradeSBAR(props.currentAssessment.assessmentId, studentId, expCode, Math.max(0, Math.min(100, num)))

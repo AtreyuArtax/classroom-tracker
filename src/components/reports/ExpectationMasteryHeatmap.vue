@@ -180,7 +180,8 @@ const props = defineProps({
   assessments: { type: Array, default: () => [] },
   classGrades: { type: Object, default: () => ({}) },
   activeGradeFilter: { type: String, default: 'all' },
-  events: { type: Array, default: () => [] }
+  events: { type: Array, default: () => [] },
+  sidebarStudents: { type: Array, default: () => [] }
 })
 
 const effectiveClass = computed(() => {
@@ -202,9 +203,28 @@ const rawUnits = computed(() => {
   const targetGrade = props.activeGradeFilter && props.activeGradeFilter !== 'all' ? props.activeGradeFilter.toLowerCase() : null
   const unitMap = {}
 
-  // 1. Gather from gradebookUnits (Strands)
+  // 1. Gather from gradebookUnits and courseFrameworks (Strands/Units)
+  const candidateUnits = []
   if (cls.gradebookUnits && Array.isArray(cls.gradebookUnits)) {
-    cls.gradebookUnits.forEach(u => {
+    candidateUnits.push(...cls.gradebookUnits)
+  }
+  if (cls.courseFrameworks && typeof cls.courseFrameworks === 'object') {
+    Object.entries(cls.courseFrameworks).forEach(([sectionKey, fw]) => {
+      if (props.activeGradeFilter && props.activeGradeFilter !== 'all' && sectionKey.toLowerCase() !== targetGrade) {
+        return
+      }
+      if (fw.gradebookUnits && Array.isArray(fw.gradebookUnits)) {
+        fw.gradebookUnits.forEach(u => {
+          if (!candidateUnits.some(existing => existing.unitId === u.unitId)) {
+            candidateUnits.push(u)
+          }
+        })
+      }
+    })
+  }
+
+  if (candidateUnits.length > 0) {
+    candidateUnits.forEach(u => {
       const uGrade = getUnitGradeLevel(u)
 
       if (props.activeGradeFilter && props.activeGradeFilter !== 'all' && uGrade && !isCohortMatch(uGrade, props.activeGradeFilter)) {
@@ -274,12 +294,17 @@ const unitsWithExpectations = computed(() => {
     })
   })
 
+  const validStudentIds = props.sidebarStudents && props.sidebarStudents.length > 0
+    ? new Set(props.sidebarStudents.map(s => String(s.studentId)))
+    : null
+
   if (isSBAR.value) {
     const algo = effectiveClass.value?.sbarAlgorithm || 'decaying_average'
     const sbarMasteryMap = calculateSBARExpectationMastery(effectiveClass.value, props.assessments, gradeMap.value, algo, props.events)
     
-    Object.values(sbarMasteryMap).forEach(studentExpMap => {
+    Object.entries(sbarMasteryMap).forEach(([studentId, studentExpMap]) => {
       if (!studentExpMap) return
+      if (validStudentIds && !validStudentIds.has(String(studentId))) return
       Object.entries(studentExpMap).forEach(([expCode, mObj]) => {
         if (mObj && mObj.score !== null && mObj.score !== undefined) {
           if (!expScores[expCode]) expScores[expCode] = []
@@ -296,13 +321,14 @@ const unitsWithExpectations = computed(() => {
         const ids = ass ? (ass.expectationIds && Array.isArray(ass.expectationIds) ? ass.expectationIds : (ass.expectationId ? [ass.expectationId] : [])) : []
         const total = ass ? (ass.scaledTotal || ass.totalPoints || 100) : 100
 
-        Object.values(studentMap).forEach(gRecord => {
+        Object.entries(studentMap).forEach(([studentId, gRecord]) => {
           if (!gRecord || gRecord.excluded || gRecord.missing) return
+          if (validStudentIds && !validStudentIds.has(String(gRecord.studentId || studentId))) return
 
           // 1. Qualitative expectationScores inside grade record
           if (gRecord.expectationScores) {
             Object.entries(gRecord.expectationScores).forEach(([expCode, val]) => {
-              if (val != null && !isNaN(val)) {
+              if (val != null && val !== '' && !isNaN(Number(val))) {
                 if (!expScores[expCode]) expScores[expCode] = []
                 expScores[expCode].push(Number(val))
               }
@@ -310,7 +336,7 @@ const unitsWithExpectations = computed(() => {
           }
 
           // 2. Assessment score mapped to expectationIds
-          if (ids.length > 0 && gRecord.resolvedScore != null && !isNaN(gRecord.resolvedScore)) {
+          if (ids.length > 0 && gRecord.resolvedScore != null && gRecord.resolvedScore !== '' && !isNaN(Number(gRecord.resolvedScore))) {
             const pct = (Number(gRecord.resolvedScore) / total) * 100
             ids.forEach(id => {
               const sId = String(id)
@@ -334,9 +360,7 @@ const unitsWithExpectations = computed(() => {
         const countCode = (expCode && expCode !== expId) ? (expAssessmentCounts[expCode] || 0) : 0
         const count = countId + countCode
 
-        const scoresId = expId ? (expScores[expId] || []) : []
-        const scoresCode = (expCode && expCode !== expId) ? (expScores[expCode] || []) : []
-        const scores = [...scoresId, ...scoresCode]
+        const scores = (expCode && expScores[expCode]) ? expScores[expCode] : ((expId && expScores[expId]) ? expScores[expId] : [])
 
         const avg = scores.length > 0 ? (scores.reduce((a, b) => a + b, 0) / scores.length) : null
         const sbarBadge = avg !== null ? getSBARLevelBadge(avg) : null

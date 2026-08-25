@@ -170,7 +170,7 @@ function toggleRow(code) {
 const expectationList = computed(() => {
   if (!activeClassRecord.value || !props.studentId) return []
 
-  const algorithm = activeClassRecord.value.sbarCalculationAlgorithm || 'decaying_average'
+  const algorithm = activeClassRecord.value.sbarAlgorithm || activeClassRecord.value.sbarCalculationAlgorithm || 'decaying_average'
   const fullMasteryMap = calculateSBARExpectationMastery(
     activeClassRecord.value,
     assessments.value || [],

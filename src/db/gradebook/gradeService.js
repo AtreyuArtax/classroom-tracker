@@ -54,7 +54,14 @@ export async function saveSBARGrade(assessmentId, studentId, expectationScores, 
   const store = tx.objectStore('grades')
   const existing = await store.index('by_assessmentAndStudent').get([normAssessmentId, normStudentId])
 
-  const cleanScores = JSON.parse(JSON.stringify(expectationScores || {}))
+  const cleanScores = {}
+  if (expectationScores && typeof expectationScores === 'object') {
+    Object.entries(expectationScores).forEach(([k, v]) => {
+      if (v !== null && v !== undefined && v !== '' && !isNaN(Number(v))) {
+        cleanScores[k] = Number(v)
+      }
+    })
+  }
 
   if (existing) {
     if (!existing.classId && classId) existing.classId = classId
