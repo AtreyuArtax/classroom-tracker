@@ -1,16 +1,16 @@
 # Graph Report - classroom-tracker  (2026-08-25)
 
 ## Corpus Check
-- 214 files · ~403,906 words
+- 214 files · ~404,657 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1239 nodes · 2124 edges · 118 communities (105 shown, 13 thin omitted)
+- 1239 nodes · 2128 edges · 117 communities (104 shown, 13 thin omitted)
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 4 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `2c67a747`
+- Built from commit: `7a5eca9b`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -81,7 +81,6 @@
 - [[_COMMUNITY_Community 111|Community 111]]
 - [[_COMMUNITY_Community 112|Community 112]]
 - [[_COMMUNITY_Community 113|Community 113]]
-- [[_COMMUNITY_Community 115|Community 115]]
 - [[_COMMUNITY_Community 116|Community 116]]
 - [[_COMMUNITY_Community 117|Community 117]]
 
@@ -112,7 +111,7 @@
 ## Import Cycles
 - None detected.
 
-## Communities (118 total, 13 thin omitted)
+## Communities (117 total, 13 thin omitted)
 
 ### Community 0 - "Community 0"
 Cohesion: 0.05
@@ -123,8 +122,8 @@ Cohesion: 0.08
 Nodes (34): getUnitGradeLevel(), activeClassRecord, activeGradeFilter, addAssessment(), analyticsMode, assessmentSortOrder, assessmentStats, assessmentTypes (+26 more)
 
 ### Community 2 - "Community 2"
-Cohesion: 0.09
-Nodes (45): getStudentEffectiveGrade(), isAssessmentApplicableToStudent(), isAssessmentInSubCohort(), isStudentInSubCohort(), executePrint(), hasUnsyncedChanges, getSettings(), createAssessment() (+37 more)
+Cohesion: 0.10
+Nodes (42): getStudentEffectiveGrade(), isAssessmentApplicableToStudent(), isAssessmentInSubCohort(), isStudentInSubCohort(), executePrint(), hasUnsyncedChanges, getSettings(), deleteAssessment() (+34 more)
 
 ### Community 3 - "Community 3"
 Cohesion: 0.06
@@ -147,8 +146,8 @@ Cohesion: 0.07
 Nodes (28): dependencies, exceljs, file-saver, html5-qrcode, idb, jszip, lucide-vue-next, papaparse (+20 more)
 
 ### Community 8 - "Community 8"
-Cohesion: 0.10
-Nodes (30): saveStudentDemographics(), archiveClass(), archiveStudent(), bulkImportClasses(), clearStudentAbsent(), clearStudentActiveState(), clearStudentLate(), deleteClass() (+22 more)
+Cohesion: 0.11
+Nodes (28): saveStudentDemographics(), archiveClass(), archiveStudent(), bulkImportClasses(), clearStudentActiveState(), clearStudentLate(), getAllClasses(), getClass() (+20 more)
 
 ### Community 9 - "Community 9"
 Cohesion: 0.09
@@ -200,7 +199,7 @@ Nodes (9): background_color, description, display, icons, name, orientation, sho
 
 ### Community 23 - "Community 23"
 Cohesion: 0.14
-Nodes (28): loadGradebook(), setActiveSubject(), getDB(), auditSettingsIntegrity(), deleteBehaviorCode(), deleteLayoutPreset(), getAcademicTerms(), getAttendanceConfig() (+20 more)
+Nodes (22): loadGradebook(), setActiveSubject(), deleteLayoutPreset(), getAcademicTerms(), getAttendanceConfig(), getBehaviorCodes(), getGlobalMilestones(), getGradeBuckets() (+14 more)
 
 ### Community 24 - "Community 24"
 Cohesion: 0.16
@@ -231,8 +230,8 @@ Cohesion: 0.05
 Nodes (22): close(), emit, props, academicCategories, activeDossierLsTerm, allDossierAssessments, attendanceAverages, behaviorWeeklyTrend (+14 more)
 
 ### Community 35 - "Community 35"
-Cohesion: 0.15
-Nodes (18): _applyDateRange(), createSafetySnapshot(), deleteEvent(), deleteSafetySnapshot(), detachEventsForDeletedExpectation(), detachEventsForDeletedUnit(), exportAllData(), getAllEvents() (+10 more)
+Cohesion: 0.14
+Nodes (19): deleteClass(), _applyDateRange(), createSafetySnapshot(), deleteEvent(), deleteSafetySnapshot(), detachEventsForDeletedExpectation(), detachEventsForDeletedUnit(), exportAllData() (+11 more)
 
 ### Community 36 - "Community 36"
 Cohesion: 0.06
@@ -315,8 +314,8 @@ Cohesion: 0.33
 Nodes (4): useClassroom(), saveStudentGradebookNote(), useStudentDossier(), toMinutes()
 
 ### Community 103 - "Community 103"
-Cohesion: 0.29
-Nodes (10): addAttempt(), deleteAttempt(), deleteGrade(), _getGradeInTransaction(), getOrCreateGrade(), saveFullGradeRecord(), saveSBARGrade(), setPrimaryAttempt() (+2 more)
+Cohesion: 0.13
+Nodes (26): clearStudentAbsent(), getDB(), batchSavePhotos(), deletePhoto(), getAllPhotoIds(), getPhoto(), purgeAllPhotos(), savePhoto() (+18 more)
 
 ### Community 108 - "Community 108"
 Cohesion: 0.08
@@ -338,10 +337,6 @@ Nodes (4): photoCache, photoIdsSet, showDeskPhotos, useStudentPhotos()
 Cohesion: 0.33
 Nodes (6): formatLearningSkillKey(), saveBatchLearningSkills(), saveLearningSkillsRecord(), clearStudentRating(), prefillAllTeacherRatings(), setTeacherSkill()
 
-### Community 115 - "Community 115"
-Cohesion: 0.29
-Nodes (6): batchSavePhotos(), deletePhoto(), getAllPhotoIds(), getPhoto(), purgeAllPhotos(), savePhoto()
-
 ### Community 116 - "Community 116"
 Cohesion: 0.26
 Nodes (10): getAttendanceOnDate(), openAddAssessment(), getDateRangeForClassPeriod(), getDateRangeForPeriod(), exportGradebookToExcel(), downloadAggregateCsv(), downloadReportCardCsv(), doExport() (+2 more)
@@ -358,9 +353,9 @@ Nodes (5): onThresholdChange(), getEffectiveClassRecord(), refreshClassAnalytics
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `getDB()` connect `Community 23` to `Community 0`, `Community 2`, `Community 35`, `Community 100`, `Community 3`, `Community 5`, `Community 103`, `Community 8`, `Community 42`, `Community 109`, `Community 113`, `Community 115`, `Community 61`?**
+- **Why does `getDB()` connect `Community 103` to `Community 0`, `Community 2`, `Community 35`, `Community 100`, `Community 3`, `Community 5`, `Community 8`, `Community 42`, `Community 109`, `Community 113`, `Community 23`, `Community 61`?**
   _High betweenness centrality (0.228) - this node is a cross-community bridge._
-- **Why does `openDB()` connect `Community 5` to `Community 94`, `Community 23`?**
+- **Why does `openDB()` connect `Community 5` to `Community 94`, `Community 103`?**
   _High betweenness centrality (0.113) - this node is a cross-community bridge._
 - **Why does `handleDownloadCsv()` connect `Community 109` to `Community 38`?**
   _High betweenness centrality (0.061) - this node is a cross-community bridge._
@@ -371,4 +366,4 @@ _Questions this graph is uniquely positioned to answer:_
 - **Should `Community 1` be split into smaller, more focused modules?**
   _Cohesion score 0.07657657657657657 - nodes in this community are weakly interconnected._
 - **Should `Community 2` be split into smaller, more focused modules?**
-  _Cohesion score 0.08711433756805807 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.09764309764309764 - nodes in this community are weakly interconnected._

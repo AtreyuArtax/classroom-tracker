@@ -471,8 +471,13 @@ export async function calculateStudentGrade(studentId, classRecord, { asOf = nul
   const categories = classRecord.gradebookCategories
   if (!categories || categories.length === 0) return null
 
-  const settings = await getSettings()
-  const capAt100 = settings.capGradesAt100 ?? true
+  let capAt100 = true
+  try {
+    const settings = settingsPreRef || await getSettings()
+    capAt100 = settings?.capGradesAt100 ?? true
+  } catch {
+    capAt100 = true
+  }
 
   const categoryResults = {}
 
@@ -563,9 +568,12 @@ export async function calculateStudentGrade(studentId, classRecord, { asOf = nul
  */
 export async function calculateClassGrades(classRecord, { asOf = null } = {}) {
   if (!classRecord || !classRecord.classId) return {}
-  // 1. Batch fetch all data once
-  const assessments = await getAssessmentsByClass(classRecord.classId)
-  const allGrades = await getGradesByClass(classRecord.classId)
+  // 1. Batch fetch all data and settings once
+  const [assessments, allGrades, settings] = await Promise.all([
+    getAssessmentsByClass(classRecord.classId),
+    getGradesByClass(classRecord.classId),
+    getSettings().catch(() => null)
+  ])
 
   // 2. Index grades by studentId for O(1) retrieval
   const studentGradeMap = new Map()
@@ -581,7 +589,8 @@ export async function calculateClassGrades(classRecord, { asOf = null } = {}) {
     results[studentId] = await calculateStudentGrade(studentId, classRecord, { 
       asOf, 
       assessmentsPreRef: assessments, 
-      gradesPreRef: studentGrades 
+      gradesPreRef: studentGrades,
+      settingsPreRef: settings
     })
   }
   return results

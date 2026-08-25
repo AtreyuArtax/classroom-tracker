@@ -27,7 +27,10 @@ import {
   resolveAttemptScore,
   detectOutliers,
   calculateStandardDeviation,
-  isCohortMatch
+  isCohortMatch,
+  calculateStudentGrade,
+  calculateMostConsistent,
+  calculateWeightedMedian
 } from './db/gradebook/gradeCalc.js'
 
 let totalTests = 0
@@ -422,6 +425,121 @@ console.log('Test Group 12: Statistical Outlier Detection & Cohort Matching')
   assert(isCohortMatch('Gr. 8', 'Grade 8') === true, 'Normalized match for Gr. 8 and Grade 8')
   assert(isCohortMatch('MTH1W', 'MTH1W') === true, 'Secondary course code match for MTH1W')
   assert(isCohortMatch('MTH1W', 'SNC1D') === false, 'Cohort mismatch between MTH1W and SNC1D')
+}
+console.log()
+
+// ── TEST GROUP 13: Category Weight Normalization (Partial & Zero Weights)
+console.log('Test Group 13: Category Weight Normalization & Overall Grade Math')
+{
+  const mockClass = {
+    classId: 'cls_trad_1',
+    gradingFramework: 'traditional',
+    gradebookCategories: [
+      { categoryId: 'cat_know', name: 'Knowledge', weight: 40 },
+      { categoryId: 'cat_think', name: 'Thinking', weight: 30 },
+      { categoryId: 'cat_exam', name: 'Final Exam', weight: 30 }, // Unassessed in term
+      { categoryId: 'cat_diag', name: 'Diagnostic', weight: 0 }    // 0% weight diagnostic
+    ],
+    students: {
+      'std_trad_1': { firstName: 'Fox', lastName: 'Mulder', archived: false }
+    }
+  }
+
+  const mockAssessments = [
+    { assessmentId: 701, categoryId: 'cat_know', totalPoints: 50, date: '2026-08-01', isFormative: false },
+    { assessmentId: 702, categoryId: 'cat_think', totalPoints: 100, date: '2026-08-05', isFormative: false },
+    { assessmentId: 703, categoryId: 'cat_diag', totalPoints: 20, date: '2026-08-01', isFormative: false }
+  ]
+
+  const mockGrades = [
+    { assessmentId: 701, studentId: 'std_trad_1', score: 40, resolvedScore: 40 }, // 40/50 = 80%
+    { assessmentId: 702, studentId: 'std_trad_1', score: 90, resolvedScore: 90 }, // 90/100 = 90%
+    { assessmentId: 703, studentId: 'std_trad_1', score: 10, resolvedScore: 10 }  // 10/20 = 50% (weight 0)
+  ]
+
+  const gradeResult = await calculateStudentGrade('std_trad_1', mockClass, {
+    assessmentsPreRef: mockAssessments,
+    gradesPreRef: mockGrades
+  })
+
+  // Knowledge: 80% (weight 40), Thinking: 90% (weight 30), Weight used = 70.
+  // Weighted sum: 80 * 0.40 + 90 * 0.30 = 32 + 27 = 59.
+  // Normalized overall = (59 / 70) * 100 = 84.2857% -> 84% rounded.
+  assert(gradeResult.categoryResults['cat_know'].percentage === 80, 'Knowledge category is 80%')
+  assert(gradeResult.categoryResults['cat_think'].percentage === 90, 'Thinking category is 90%')
+  assert(gradeResult.weightUsed === 70, 'Weight used correctly totals 70% during term')
+  assert(gradeResult.overallGrade === 84, 'Normalized overall term grade is 84% (59/70)')
+  assert(gradeResult.calculatedOverallGrade === 84, 'Calculated overall matches display overall')
+}
+console.log()
+
+// ── TEST GROUP 14: Scaled Totals vs Raw Points Math
+console.log('Test Group 14: Scaled Totals & Weighting Multipliers')
+{
+  // Test assessment where score is out of 30, but scaled to count as 60 possible points
+  const assessments = [
+    { assessmentId: 801, totalPoints: 30, scaledTotal: 60, isFormative: false },
+    { assessmentId: 802, totalPoints: 40, scaledTotal: 40, isFormative: false }
+  ]
+
+  // Student scored 15/30 on #801 (scaled to 30/60) and 40/40 on #802 (40/40)
+  const gradeMap = {
+    801: { assessmentId: 801, score: 15, resolvedScore: 15 },
+    802: { assessmentId: 802, score: 40, resolvedScore: 40 }
+  }
+
+  // Total earned: 30 + 40 = 70. Total possible: 60 + 40 = 100. Pct = (70/100)*100 = 70%
+  const catPct = _calculateCategoryGrade(assessments, gradeMap, true)
+  assert(catPct === 70, 'Scaled total weighting produces exact 70% result')
+}
+console.log()
+
+// ── TEST GROUP 15: Grade Adjustments, Category Overrides & Historical AsOf Cutoff
+console.log('Test Group 15: Student Overrides, Adjusted Grades & Milestone AsOf Cutoffs')
+{
+  const mockClass = {
+    classId: 'cls_trad_2',
+    gradingFramework: 'traditional',
+    gradebookCategories: [
+      { categoryId: 'cat_k', name: 'Knowledge', weight: 50 },
+      { categoryId: 'cat_a', name: 'Application', weight: 50 }
+    ],
+    students: {
+      'std_adj_1': {
+        firstName: 'Dana',
+        lastName: 'Scully',
+        adjustedGrade: 88, // Teacher manual override to 88%
+        categoryOverrides: {
+          'cat_k': 95 // Override Knowledge to 95%
+        }
+      }
+    }
+  }
+
+  const mockAssessments = [
+    { assessmentId: 901, categoryId: 'cat_k', totalPoints: 100, date: '2026-08-01', isFormative: false },
+    { assessmentId: 902, categoryId: 'cat_a', totalPoints: 100, date: '2026-08-10', isFormative: false },
+    { assessmentId: 903, categoryId: 'cat_a', totalPoints: 100, date: '2026-08-25', isFormative: false } // After asOf date
+  ]
+
+  const mockGrades = [
+    { assessmentId: 901, studentId: 'std_adj_1', score: 60, resolvedScore: 60 },
+    { assessmentId: 902, studentId: 'std_adj_1', score: 80, resolvedScore: 80 },
+    { assessmentId: 903, studentId: 'std_adj_1', score: 100, resolvedScore: 100 }
+  ]
+
+  // Historical asOf cutoff: '2026-08-15' (ignores #903)
+  const result = await calculateStudentGrade('std_adj_1', mockClass, {
+    asOf: '2026-08-15',
+    assessmentsPreRef: mockAssessments,
+    gradesPreRef: mockGrades
+  })
+
+  assert(result.isGradeAdjusted === true, 'isGradeAdjusted is true')
+  assert(result.overallGrade === 88, 'Display overall grade reflects manual adjustedGrade (88%)')
+  assert(result.categoryResults['cat_k'].isOverridden === true, 'Knowledge category is marked as overridden')
+  assert(result.categoryResults['cat_k'].percentage === 95, 'Knowledge category reflects overridden 95%')
+  assert(result.categoryResults['cat_a'].percentage === 80, 'Application category calculated as 80% (ignoring post-asOf 100%)')
 }
 console.log()
 

@@ -26,9 +26,15 @@ const SETTINGS_KEY = 'singleton'
  * @returns {Promise<Object>}
  */
 async function _readSettings() {
-    const db = await getDB()
-    const rec = await db.get('settings', SETTINGS_KEY)
-    if (rec) return rec
+    try {
+        if (typeof indexedDB !== 'undefined') {
+            const db = await getDB()
+            const rec = await db.get('settings', SETTINGS_KEY)
+            if (rec) return rec
+        }
+    } catch (err) {
+        console.warn('Unable to read settings from IndexedDB, using defaults:', err?.message)
+    }
 
     // Fallback: seed defaults (should have been written during upgrade, but guard anyway)
     const defaults = {

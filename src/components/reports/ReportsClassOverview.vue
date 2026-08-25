@@ -510,18 +510,22 @@ const strugglingExpectationsCount = computed(() => {
       const ids = ass.expectationIds && Array.isArray(ass.expectationIds) ? ass.expectationIds : (ass.expectationId ? [ass.expectationId] : [])
       const total = ass.scaledTotal || ass.totalPoints || 100
 
-      Object.values(studentMap).forEach(gRecord => {
+      Object.entries(studentMap).forEach(([studentId, gRecord]) => {
         if (!gRecord || gRecord.excluded || gRecord.missing) return
-        if (gRecord.expectationScores) {
+        if (activeStudentIds.value.size > 0 && !activeStudentIds.value.has(String(gRecord.studentId || studentId))) return
+
+        let hasPerExpScores = false
+        if (gRecord.expectationScores && typeof gRecord.expectationScores === 'object' && Object.keys(gRecord.expectationScores).length > 0) {
           Object.entries(gRecord.expectationScores).forEach(([expCode, val]) => {
-            if (val != null && !isNaN(val)) {
+            if (val != null && val !== '' && !isNaN(Number(val))) {
               const key = String(expCode).toLowerCase()
               if (!expScores[key]) expScores[key] = []
               expScores[key].push(Number(val))
+              hasPerExpScores = true
             }
           })
         }
-        if (ids.length > 0 && gRecord.resolvedScore != null && !isNaN(gRecord.resolvedScore)) {
+        if (!hasPerExpScores && ids.length > 0 && gRecord.resolvedScore != null && gRecord.resolvedScore !== '' && !isNaN(Number(gRecord.resolvedScore))) {
           const pct = (Number(gRecord.resolvedScore) / total) * 100
           ids.forEach(id => {
             const key = String(id).toLowerCase()

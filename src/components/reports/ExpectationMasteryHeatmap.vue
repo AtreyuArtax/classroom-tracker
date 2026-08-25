@@ -325,18 +325,20 @@ const unitsWithExpectations = computed(() => {
           if (!gRecord || gRecord.excluded || gRecord.missing) return
           if (validStudentIds && !validStudentIds.has(String(gRecord.studentId || studentId))) return
 
-          // 1. Qualitative expectationScores inside grade record
-          if (gRecord.expectationScores) {
+          // 1. Qualitative expectationScores inside grade record (takes precedence)
+          let hasPerExpScores = false
+          if (gRecord.expectationScores && typeof gRecord.expectationScores === 'object' && Object.keys(gRecord.expectationScores).length > 0) {
             Object.entries(gRecord.expectationScores).forEach(([expCode, val]) => {
               if (val != null && val !== '' && !isNaN(Number(val))) {
                 if (!expScores[expCode]) expScores[expCode] = []
                 expScores[expCode].push(Number(val))
+                hasPerExpScores = true
               }
             })
           }
 
-          // 2. Assessment score mapped to expectationIds
-          if (ids.length > 0 && gRecord.resolvedScore != null && gRecord.resolvedScore !== '' && !isNaN(Number(gRecord.resolvedScore))) {
+          // 2. Assessment score mapped to expectationIds (fallback when individual expectationScores not provided)
+          if (!hasPerExpScores && ids.length > 0 && gRecord.resolvedScore != null && gRecord.resolvedScore !== '' && !isNaN(Number(gRecord.resolvedScore))) {
             const pct = (Number(gRecord.resolvedScore) / total) * 100
             ids.forEach(id => {
               const sId = String(id)
