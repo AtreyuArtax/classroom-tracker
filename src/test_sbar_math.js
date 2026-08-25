@@ -543,6 +543,70 @@ console.log('Test Group 15: Student Overrides, Adjusted Grades & Milestone AsOf 
 }
 console.log()
 
+// ── TEST GROUP 17: Bonus Marks >100% & Final Mark 100% Lockdown
+console.log('Test Group 17: Bonus Marks >100% & Final Mark 100% Lockdown')
+{
+  const mockClass = {
+    classId: 'cls_trad_bonus',
+    gradingFramework: 'traditional',
+    gradebookCategories: [
+      { categoryId: 'cat_k', name: 'Knowledge', weight: 50 },
+      { categoryId: 'cat_t', name: 'Thinking', weight: 50 }
+    ],
+    students: {
+      'std_bonus_1': { firstName: 'Dana', lastName: 'Scully', archived: false },
+      'std_bonus_2': { firstName: 'Fox', lastName: 'Mulder', archived: false }
+    }
+  }
+
+  // Student 1: 55/50 (110%) on Knowledge, 40/50 (80%) on Thinking.
+  // Weighted: 110*0.5 + 80*0.5 = 55 + 40 = 95%. Bonus in Knowledge offsets Thinking deficit!
+  // Student 2: 55/50 (110%) on Knowledge, 52/50 (104%) on Thinking.
+  // Weighted: 110*0.5 + 104*0.5 = 55 + 52 = 107% raw. Capped to 100% when capGradesAt100 is true!
+  const mockAssessments = [
+    { assessmentId: 1001, categoryId: 'cat_k', totalPoints: 50, date: '2026-08-01', isFormative: false },
+    { assessmentId: 1002, categoryId: 'cat_t', totalPoints: 50, date: '2026-08-05', isFormative: false }
+  ]
+
+  const mockGradesStudent1 = [
+    { assessmentId: 1001, studentId: 'std_bonus_1', score: 55, resolvedScore: 55 },
+    { assessmentId: 1002, studentId: 'std_bonus_1', score: 40, resolvedScore: 40 }
+  ]
+
+  const mockGradesStudent2 = [
+    { assessmentId: 1001, studentId: 'std_bonus_2', score: 55, resolvedScore: 55 },
+    { assessmentId: 1002, studentId: 'std_bonus_2', score: 52, resolvedScore: 52 }
+  ]
+
+  // Case A: Student 1 (110% in K + 80% in T = 95% overall)
+  const res1 = await calculateStudentGrade('std_bonus_1', mockClass, {
+    assessmentsPreRef: mockAssessments,
+    gradesPreRef: mockGradesStudent1,
+    settingsPreRef: { capGradesAt100: true }
+  })
+  assert(res1.categoryResults['cat_k'].percentage === 110, 'Knowledge category reflects 110% with bonus points')
+  assert(res1.categoryResults['cat_t'].percentage === 80, 'Thinking category is 80%')
+  assert(res1.overallGrade === 95, 'Bonus in Knowledge correctly offsets Thinking deficit to produce 95% overall')
+
+  // Case B: Student 2 with capGradesAt100 = true (110% in K + 104% in T = 107% raw -> capped to 100%)
+  const res2Capped = await calculateStudentGrade('std_bonus_2', mockClass, {
+    assessmentsPreRef: mockAssessments,
+    gradesPreRef: mockGradesStudent2,
+    settingsPreRef: { capGradesAt100: true }
+  })
+  assert(res2Capped.rawOverallGrade === 107, 'Raw overall grade preserves 107% before cap')
+  assert(res2Capped.overallGrade === 100, 'Final overall grade is locked down to 100% when capGradesAt100 is true')
+
+  // Case C: Student 2 with capGradesAt100 = false (leaves uncapped 107%)
+  const res2Uncapped = await calculateStudentGrade('std_bonus_2', mockClass, {
+    assessmentsPreRef: mockAssessments,
+    gradesPreRef: mockGradesStudent2,
+    settingsPreRef: { capGradesAt100: false }
+  })
+  assert(res2Uncapped.overallGrade === 107, `Final overall grade preserves 107% when capGradesAt100 is toggled off (got ${res2Uncapped?.overallGrade})`)
+}
+console.log()
+
 // ── SUMMARY ───────────────────────────────────────────────────────
 console.log('====================================================')
 console.log(`Results: ${passedTests} / ${totalTests} assertions passed (${Math.round((passedTests / totalTests) * 100)}%)`)

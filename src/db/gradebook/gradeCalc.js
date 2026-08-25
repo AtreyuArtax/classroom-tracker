@@ -436,7 +436,7 @@ export function isCohortMatch(targetTag, studentCohort) {
   return cleanTarget === cleanCohort
 }
 
-export async function calculateStudentGrade(studentId, classRecord, { asOf = null, assessmentsPreRef = null, gradesPreRef = null } = {}) {
+export async function calculateStudentGrade(studentId, classRecord, { asOf = null, assessmentsPreRef = null, gradesPreRef = null, settingsPreRef = null } = {}) {
   if (!studentId || !classRecord || !classRecord.classId) return null
   const assessments = assessmentsPreRef || await getAssessmentsByClass(classRecord.classId)
   const grades = gradesPreRef || await getGradesByStudent(studentId, classRecord.classId)
@@ -502,7 +502,8 @@ export async function calculateStudentGrade(studentId, classRecord, { asOf = nul
       catAssessments = catAssessments.filter(a => a.date <= asOf)
     }
 
-    const calculatedPercentage = _calculateCategoryGrade(catAssessments, gradeMap, capAt100)
+    // Individual category grades allow bonus marks >100% so they roll up accurately
+    const calculatedPercentage = _calculateCategoryGrade(catAssessments, gradeMap, false)
 
     if (calculatedPercentage === null) {
       categoryResults[category.categoryId] = null
@@ -538,11 +539,12 @@ export async function calculateStudentGrade(studentId, classRecord, { asOf = nul
     weightUsed += category.weight
   }
 
-  const overallGrade = weightUsed === 0 ? null : preciseRound((weightedSum / weightUsed) * 100, 0)
+  const rawOverall = weightUsed === 0 ? null : (weightedSum / weightUsed) * 100
+  const finalCalculatedGrade = rawOverall === null ? null : preciseRound(capAt100 ? Math.min(100, rawOverall) : rawOverall, 0)
 
   const displayOverallGrade = isAdjusted
-    ? preciseRound(Number(adjustedGrade), 0)
-    : (overallGrade !== null ? preciseRound(overallGrade, 0) : null)
+    ? preciseRound(capAt100 ? Math.min(100, Number(adjustedGrade)) : Number(adjustedGrade), 0)
+    : finalCalculatedGrade
 
   // New Metrics
   const mostConsistent = calculateMostConsistent(studentId, classRecord, gradeMap, assessments, capAt100)
@@ -550,7 +552,8 @@ export async function calculateStudentGrade(studentId, classRecord, { asOf = nul
 
   return {
     overallGrade: displayOverallGrade,
-    calculatedOverallGrade: overallGrade !== null ? preciseRound(overallGrade, 0) : null,
+    calculatedOverallGrade: finalCalculatedGrade,
+    rawOverallGrade: rawOverall !== null ? preciseRound(rawOverall, 2) : null,
     isGradeAdjusted: isAdjusted,
     adjustedGrade: isAdjusted ? preciseRound(Number(adjustedGrade), 0) : null,
     mostConsistent,

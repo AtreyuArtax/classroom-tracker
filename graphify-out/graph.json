@@ -10547,7 +10547,7 @@
       "label": "calculateClassGrades()",
       "file_type": "code",
       "source_file": "src/db/gradebook/gradeCalc.js",
-      "source_location": "L569",
+      "source_location": "L572",
       "_origin": "ast",
       "id": "gradebook_gradecalc_calculateclassgrades",
       "community": 2,
@@ -31866,9 +31866,9 @@
       "source_file": "src/test_sbar_math.js",
       "source_location": "L25",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_test_sbar_math",
-      "target": "gradebook_gradecalc_calculatemostconsistent",
-      "confidence_score": 1.0
+      "target": "gradebook_gradecalc_calculatemostconsistent"
     },
     {
       "relation": "calls",
@@ -31899,9 +31899,9 @@
       "source_file": "src/test_sbar_math.js",
       "source_location": "L25",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_test_sbar_math",
-      "target": "gradebook_gradecalc_calculateweightedmedian",
-      "confidence_score": 1.0
+      "target": "gradebook_gradecalc_calculateweightedmedian"
     },
     {
       "relation": "imports",
@@ -31987,9 +31987,9 @@
       "source_file": "src/test_sbar_math.js",
       "source_location": "L25",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_test_sbar_math",
-      "target": "gradebook_gradecalc_calculatestudentgrade",
-      "confidence_score": 1.0
+      "target": "gradebook_gradecalc_calculatestudentgrade"
     },
     {
       "relation": "calls",
@@ -34709,5 +34709,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "7a5eca9b33fb5d05270c1fd7d4f1b24c7a7c1042"
+  "built_at_commit": "e335c394f195ba55e3471dd1f7ea2b6dcd9cbf09"
 }

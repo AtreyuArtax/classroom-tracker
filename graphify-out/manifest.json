@@ -565,8 +565,8 @@
     "semantic_hash": ""
   },
   "src/db/gradebook/gradeCalc.js": {
-    "mtime": 1787686645.372025,
-    "ast_hash": "da8e6a69c4efdf3e1dd93fed9b0d9333",
+    "mtime": 1787686883.3736305,
+    "ast_hash": "f1b054af318bb71ef34fab54ca3a87d4",
     "semantic_hash": ""
   },
   "src/db/gradebook/gradeService.js": {
@@ -1065,8 +1065,8 @@
     "semantic_hash": ""
   },
   "src/test_sbar_math.js": {
-    "mtime": 1787686624.7531526,
-    "ast_hash": "e0d6976dbdf35effa60727c17ef7f0c4",
+    "mtime": 1787686869.248428,
+    "ast_hash": "f9fd36bedcad9c1e08f05756186ac6fc",
     "semantic_hash": ""
   }
 }
