@@ -32,6 +32,13 @@
             </button>
             <button 
               class="reports__pillar-btn"
+              :class="{ 'reports__pillar-btn--active': rightMode === 'learningskills' }"
+              @click="switchPillar('learningskills')"
+            >
+              <Award :size="16" /> Learning Skills
+            </button>
+            <button 
+              class="reports__pillar-btn"
               :class="{ 'reports__pillar-btn--active': rightMode === 'printhub' }"
               @click="switchPillar('printhub')"
             >
@@ -70,6 +77,14 @@
             :student-id="dossier.selectedStudentId.value" 
             :class-id="sidebarClassId"
             @close="switchPillar('overview')"
+          />
+        </template>
+
+        <!-- ── PILLAR 4: LEARNING SKILLS MATRIX ─────────────────────── -->
+        <template v-else-if="rightMode === 'learningskills'">
+          <ReportsLearningSkills
+            :report-class="reportClass"
+            :sidebar-students="filteredSidebarStudents"
           />
         </template>
 
@@ -205,7 +220,7 @@
 
 <script setup>
 import { ref, reactive, computed, watch, onMounted } from 'vue'
-import { BarChart2, Printer, User } from 'lucide-vue-next'
+import { BarChart2, Printer, User, Award } from 'lucide-vue-next'
 
 import { useClassroom } from '../composables/useClassroom.js'
 import { getEffectiveClassRecord } from '../composables/useElementary.js'
@@ -224,6 +239,7 @@ import PrintSeatingChartModal from '../components/reports/PrintSeatingChartModal
 import ReportsClassOverview from '../components/reports/ReportsClassOverview.vue'
 import ReportsBatchPrintModal from '../components/reports/ReportsBatchPrintModal.vue'
 import ReportsPrintHub from '../components/reports/ReportsPrintHub.vue'
+import ReportsLearningSkills from '../components/reports/ReportsLearningSkills.vue'
 import { calculateClassGrades, getAssessmentsByClass, getAssessmentPercentage } from '../db/gradebookService.js'
 import { loadGradebook, assessments as gbAssessments, gradeMap, activeGradeFilter } from '../composables/useGradebook.js'
 import { getSectionColor } from '../utils/gradeColors.js'
@@ -540,8 +556,21 @@ async function onToggleNoteComplete(eventId, currentStatus) {
   await runReport(true)
 }
 
-function handleDownloadCsv(type) {
-  // Triggers CSV downloads
+async function handleDownloadCsv(type) {
+  if (type === 'learning_skills') {
+    if (!sidebarClassId.value || !filteredSidebarStudents.value.length) return
+    try {
+      const { getLearningSkillsByClass, exportAllLearningSkillsCsv } = await import('../db/learningSkillsService.js')
+      const { saveAs } = await import('file-saver')
+      const list = await getLearningSkillsByClass(sidebarClassId.value)
+      const blob = exportAllLearningSkillsCsv(reportClass.value, filteredSidebarStudents.value, list)
+      const name = reportClass.value?.name || 'Class'
+      saveAs(blob, `${name.replace(/[^a-zA-Z0-9_-]/g, '_')}_Learning_Skills_All_Terms.csv`)
+    } catch (err) {
+      console.error('Failed to export learning skills CSV:', err)
+    }
+    return
+  }
   alert(`Preparing CSV export for ${type}...`)
 }
 

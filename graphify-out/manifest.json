@@ -30,9 +30,9 @@
     "semantic_hash": "88c406405897844f80881d296bf93ee4"
   },
   "package.json": {
-    "mtime": 1781515522.6627522,
-    "ast_hash": "c89db087ad485ddb8bd12e43986aa2d9",
-    "semantic_hash": "c89db087ad485ddb8bd12e43986aa2d9"
+    "mtime": 1787681365.8678536,
+    "ast_hash": "2c214685a3f3d13b529c47e0435a810d",
+    "semantic_hash": ""
   },
   "public/manifest.json": {
     "mtime": 1776472682.8652163,
@@ -175,13 +175,13 @@
     "semantic_hash": ""
   },
   "src/components/dossier/ProgressReport.vue": {
-    "mtime": 1786963803.5412254,
-    "ast_hash": "8b0b410b26af70f0f26312e1e605a5cc",
+    "mtime": 1787680058.4205592,
+    "ast_hash": "b19167a2b8fe39a3ebfacabac45f2845",
     "semantic_hash": ""
   },
   "src/components/dossier/Student360.vue": {
-    "mtime": 1787359923.622703,
-    "ast_hash": "c0b0a48d7c31d3d138cb478e34dd1506",
+    "mtime": 1787680741.5142767,
+    "ast_hash": "d07f85bfdac51800fb12f4559c60a486",
     "semantic_hash": ""
   },
   "src/components/dossier/Student360Header.vue": {
@@ -265,8 +265,8 @@
     "semantic_hash": "f02c0935b184584977d302f316778840"
   },
   "src/composables/useStudentDossier.js": {
-    "mtime": 1787359910.6187823,
-    "ast_hash": "11783a4d4b003904cac51eb584e77d71",
+    "mtime": 1787682334.1362042,
+    "ast_hash": "0bc49a932d71555ce7bb0427bb249ed2",
     "semantic_hash": ""
   },
   "src/composables/useUndo.js": {
@@ -280,8 +280,8 @@
     "semantic_hash": ""
   },
   "src/db/eventService.js": {
-    "mtime": 1787364387.0363708,
-    "ast_hash": "7e5460a891962bb14e9adbad7a922947",
+    "mtime": 1787679865.0154426,
+    "ast_hash": "15fd4cf88e19daa4a9a6ec167d114161",
     "semantic_hash": ""
   },
   "src/db/exportService.js": {
@@ -295,13 +295,13 @@
     "semantic_hash": ""
   },
   "src/db/index.js": {
-    "mtime": 1786960267.749263,
-    "ast_hash": "d03faed4727c20130e420041624be536",
+    "mtime": 1787679843.279597,
+    "ast_hash": "f6d435dacceb9d81985b9c28bef1d9b7",
     "semantic_hash": ""
   },
   "src/db/migrations.js": {
-    "mtime": 1786963337.2761846,
-    "ast_hash": "302319d1399bd9a38010546dcb6f3bf8",
+    "mtime": 1787679852.294804,
+    "ast_hash": "d2d2c70eaa18528063d5f104d1351da0",
     "semantic_hash": ""
   },
   "src/db/settingsService.js": {
@@ -345,8 +345,8 @@
     "semantic_hash": ""
   },
   "src/views/Reports.vue": {
-    "mtime": 1787366258.6266906,
-    "ast_hash": "ac0014dcfb1b4cd95003d28789d9abc4",
+    "mtime": 1787683737.6237335,
+    "ast_hash": "3435e28798f0e47b26e73c676b03a699",
     "semantic_hash": ""
   },
   "src/views/ScanStation.vue": {
@@ -535,8 +535,8 @@
     "semantic_hash": ""
   },
   "src/components/reports/ReportsPrintHub.vue": {
-    "mtime": 1787359429.4623477,
-    "ast_hash": "f661641e13b6a23a299bfff1115711bb",
+    "mtime": 1787683505.2863219,
+    "ast_hash": "7f934ac4dbf4ba58df31441eee7ce45b",
     "semantic_hash": ""
   },
   "src/components/reports/StudentRiskScatterPlot.vue": {
@@ -1032,6 +1032,36 @@
   "src/db/photoService.js": {
     "mtime": 1786960275.8024,
     "ast_hash": "9cc5a5d0d69db0b3ca59df34329951bb",
+    "semantic_hash": ""
+  },
+  "src/components/reports/LearningSkillsCsvImportModal.vue": {
+    "mtime": 1787682575.2877994,
+    "ast_hash": "e54c726bca69ffc5c19960d6cd0b3c3d",
+    "semantic_hash": ""
+  },
+  "src/components/reports/ReportsLearningSkills.vue": {
+    "mtime": 1787683914.31198,
+    "ast_hash": "8676269715b37f66854540fb621570dd",
+    "semantic_hash": ""
+  },
+  "src/db/learningSkillsService.js": {
+    "mtime": 1787683721.15439,
+    "ast_hash": "897560ba9453c1be0d04f3ee9ddc2af4",
+    "semantic_hash": ""
+  },
+  "src/utils/learningSkillsCsvParser.js": {
+    "mtime": 1787682414.9176924,
+    "ast_hash": "14497a15a27e236bcd34f29282f11232",
+    "semantic_hash": ""
+  },
+  "src/utils/docxExport.js": {
+    "mtime": 1787681386.2290936,
+    "ast_hash": "c0e0b4c42f8aa3fb772953fd9b0e7b5c",
+    "semantic_hash": ""
+  },
+  "src/components/reports/LearningSkillsGuideModal.vue": {
+    "mtime": 1787683448.8123972,
+    "ast_hash": "ebc606c6afcfb1e1a47cc49a191c57d6",
     "semantic_hash": ""
   }
 }

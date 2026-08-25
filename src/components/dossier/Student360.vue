@@ -106,6 +106,66 @@
           </div>
         </div>
 
+        <!-- Learning Skills & Work Habits Card (Ontario Growing Success) -->
+        <div v-if="learningSkillsRecords.length > 0" class="student-360__learning-skills-card">
+          <div class="learning-skills-card__header">
+            <div class="learning-skills-card__title-group">
+              <Award :size="16" class="learning-skills-card__icon" />
+              <h4 class="learning-skills-card__title">Learning Skills &amp; Work Habits</h4>
+            </div>
+            
+            <div v-if="learningSkillsRecords.length > 1" class="learning-skills-card__term-pills">
+              <button 
+                v-for="rec in learningSkillsRecords"
+                :key="rec.term"
+                type="button"
+                class="ls-dossier-pill"
+                :class="{ 'ls-dossier-pill--active': activeDossierLsTerm === rec.term }"
+                @click="activeDossierLsTerm = rec.term"
+              >
+                {{ rec.term }}
+              </button>
+            </div>
+            <span v-else-if="currentDossierLsRecord" class="learning-skills-card__term-badge">
+              {{ currentDossierLsRecord.term }}
+            </span>
+          </div>
+
+          <div v-if="currentDossierLsRecord" class="learning-skills-card__grid">
+            <div 
+              v-for="cat in LEARNING_SKILL_CATEGORIES" 
+              :key="cat.key" 
+              class="ls-grid-col"
+            >
+              <div class="ls-col-label" :title="cat.description">{{ cat.label }}</div>
+              <div class="ls-col-ratings">
+                <div class="ls-rating-row">
+                  <span class="ls-type">Self:</span>
+                  <span 
+                    v-if="currentDossierLsRecord.studentEval?.[cat.key]"
+                    class="ls-badge"
+                    :class="'ls-badge--' + currentDossierLsRecord.studentEval[cat.key]"
+                  >
+                    {{ currentDossierLsRecord.studentEval[cat.key] }}
+                  </span>
+                  <span v-else class="ls-badge-none">—</span>
+                </div>
+                <div class="ls-rating-row">
+                  <span class="ls-type">Teacher:</span>
+                  <span 
+                    v-if="currentDossierLsRecord.teacherEval?.[cat.key]"
+                    class="ls-badge"
+                    :class="'ls-badge--' + currentDossierLsRecord.teacherEval[cat.key]"
+                  >
+                    {{ currentDossierLsRecord.teacherEval[cat.key] }}
+                  </span>
+                  <span v-else class="ls-badge-none">—</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- Coaching Insight Alert -->
         <div v-if="coachingInsight" class="student-360__insight-card">
           <div class="insight-icon" :class="'insight-icon--' + coachingInsight.type">
@@ -340,8 +400,10 @@ import {
   Mail,
   Printer,
   Activity, 
-  MessageSquare
+  MessageSquare,
+  Award
 } from 'lucide-vue-next'
+import { LEARNING_SKILL_CATEGORIES, getLearningSkillsByStudent } from '../../db/learningSkillsService.js'
 import { useMessage } from '../../composables/useMessage.js'
 import Student360Header from './Student360Header.vue'
 import StudentStatCard from './StudentStatCard.vue'
@@ -527,6 +589,39 @@ const formattedGrade = computed(() => overallGrade.value !== null ? `${Math.roun
 const overallMostConsistent = computed(() => studentGrades.value.mostConsistent?.percentage ?? null)
 const overallWeightedMedian = computed(() => studentGrades.value.median ?? null)
 const consistentIsFallback = computed(() => studentGrades.value.mostConsistent?.isFallback ?? false)
+
+// ── Learning Skills (Ontario Growing Success) ──
+const learningSkillsRecords = ref([])
+const activeDossierLsTerm = ref(null)
+
+async function loadStudentLearningSkills() {
+  if (!props.classId || !props.studentId) {
+    learningSkillsRecords.value = []
+    activeDossierLsTerm.value = null
+    return
+  }
+  try {
+    const list = await getLearningSkillsByStudent(props.classId, props.studentId)
+    learningSkillsRecords.value = list || []
+    if (list.length > 0 && (!activeDossierLsTerm.value || !list.some(r => r.term === activeDossierLsTerm.value))) {
+      activeDossierLsTerm.value = list[0].term
+    }
+  } catch (err) {
+    console.error('Failed to load student learning skills:', err)
+  }
+}
+
+watch([() => props.classId, () => props.studentId], () => {
+  loadStudentLearningSkills()
+}, { immediate: true })
+
+const currentDossierLsRecord = computed(() => {
+  if (!learningSkillsRecords.value.length) return null
+  if (activeDossierLsTerm.value) {
+    return learningSkillsRecords.value.find(r => r.term === activeDossierLsTerm.value) || learningSkillsRecords.value[0]
+  }
+  return learningSkillsRecords.value[0]
+})
 
 const academicCategories = computed(() => {
   if (!activeClassRecord.value?.gradebookCategories) return []
@@ -1277,5 +1372,150 @@ onUnmounted(() => {
   font-size: 0.725rem;
   color: var(--text-secondary);
   font-weight: normal;
+}
+
+/* Learning Skills Card Styles */
+.student-360__learning-skills-card {
+  padding: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: var(--shadow-sm);
+}
+
+.learning-skills-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.learning-skills-card__title-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.learning-skills-card__icon {
+  color: var(--primary);
+}
+
+.learning-skills-card__title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.learning-skills-card__term-pills {
+  display: inline-flex;
+  gap: 4px;
+  background: var(--bg-secondary);
+  padding: 3px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+}
+
+.ls-dossier-pill {
+  padding: 3px 10px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.ls-dossier-pill:hover {
+  background: var(--surface);
+  color: var(--text);
+}
+
+.ls-dossier-pill--active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.learning-skills-card__term-badge {
+  font-size: 0.75rem;
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+  background: var(--primary-light);
+  color: var(--primary);
+  font-weight: 700;
+}
+
+.learning-skills-card__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 8px;
+}
+
+.ls-grid-col {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.ls-col-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ls-col-ratings {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ls-rating-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.ls-type {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.ls-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.ls-badge--E { background: #dbeafe; color: #1d4ed8; border: 1px solid #bfdbfe; }
+.ls-badge--G { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+.ls-badge--S { background: #fef9c3; color: #a16207; border: 1px solid #fef08a; }
+.ls-badge--N { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
+
+.ls-badge-none {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  opacity: 0.4;
 }
 </style>

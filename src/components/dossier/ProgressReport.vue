@@ -76,6 +76,28 @@
       </div>
     </section>
 
+    <!-- Learning Skills Section -->
+    <section v-if="config.includeLearningSkills !== false && latestLearningSkillRecord" class="report-section report-section--skills">
+      <h3 class="section-title">Learning Skills &amp; Work Habits ({{ latestLearningSkillRecord.term }})</h3>
+      <div class="report-skills-grid">
+        <div 
+          v-for="cat in LEARNING_SKILL_CATEGORIES" 
+          :key="cat.key" 
+          class="report-skill-pill"
+        >
+          <span class="rsp-name">{{ cat.label }}</span>
+          <div class="rsp-ratings">
+            <span v-if="latestLearningSkillRecord.studentEval?.[cat.key]" class="rsp-val rsp-val--self" title="Student Self-Rating">
+              Self: {{ latestLearningSkillRecord.studentEval[cat.key] }}
+            </span>
+            <span v-if="latestLearningSkillRecord.teacherEval?.[cat.key]" class="rsp-val rsp-val--teacher" title="Teacher Rating">
+              <strong>{{ latestLearningSkillRecord.teacherEval[cat.key] }}</strong>
+            </span>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- Assessments Section -->
     <section v-if="allCombinedWork.length" class="report-section">
       <h3 class="section-title">Assessments</h3>
@@ -185,6 +207,7 @@ import DossierEvidenceMix from './DossierEvidenceMix.vue'
 import SBarProgressReport from './SBarProgressReport.vue'
 import { getEffectiveClassRecord, getStudentEffectiveGrade } from '../../composables/useElementary.js'
 import { activeSubjectId } from '../../composables/useClassroomState.js'
+import { LEARNING_SKILL_CATEGORIES, getLearningSkillsByStudent } from '../../db/learningSkillsService.js'
 
 const effectiveClass = computed(() => {
   return getEffectiveClassRecord(activeClassRecord.value, activeSubjectId.value)
@@ -205,7 +228,8 @@ const props = defineProps({
     includeMedians: false,
     includeGradeTrend: true,
     includeTriangulation: false,
-    includeCategorySummary: true
+    includeCategorySummary: true,
+    includeLearningSkills: true
   }) },
   isBatch:   { type: Boolean, default: false }
 })
@@ -213,13 +237,19 @@ const props = defineProps({
 const { students, activeClass, behaviorCodes, teacherName } = useClassroom()
 
 const events = ref([])
+const learningSkills = ref([])
 const loading = ref(true)
 
 async function fetchEvents() {
   if (!props.studentId) return
   loading.value = true
   try {
-    events.value = await getEventsByStudent(props.studentId)
+    const [evts, lsList] = await Promise.all([
+      getEventsByStudent(props.studentId),
+      getLearningSkillsByStudent(props.classId, props.studentId).catch(() => [])
+    ])
+    events.value = evts || []
+    learningSkills.value = lsList || []
   } finally {
     loading.value = false
   }
@@ -227,6 +257,11 @@ async function fetchEvents() {
 
 onMounted(fetchEvents)
 watch(() => props.studentId, fetchEvents)
+
+const latestLearningSkillRecord = computed(() => {
+  if (!learningSkills.value.length) return null
+  return learningSkills.value[0]
+})
 
 const student = computed(() => students.value[props.studentId] || {})
 const studentGrades = computed(() => classGrades.value?.[props.studentId] || {})
@@ -596,6 +631,50 @@ const categoryPerformance = computed(() => {
 .cp-name { color: var(--print-text); }
 .cp-weight { color: var(--print-text-muted); font-size: 0.7rem; border-right: 1px solid var(--print-border); padding-right: 8px; }
 .cp-pct { font-weight: 800; }
+
+/* Learning Skills Print Grid */
+.report-skills-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.report-skill-pill {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px 10px;
+  background: #f8fafc;
+  border: 1px solid var(--print-border, #e2e8f0);
+  border-radius: 6px;
+}
+
+.rsp-name {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--print-text, #1e293b);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rsp-ratings {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.75rem;
+}
+
+.rsp-val--self {
+  color: var(--print-text-muted, #64748b);
+  font-size: 0.7rem;
+}
+
+.rsp-val--teacher {
+  color: var(--print-primary, #0f172a);
+  font-weight: 700;
+}
 
 .section-title {
   font-size: 1rem;

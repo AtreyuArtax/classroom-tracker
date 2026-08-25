@@ -93,6 +93,8 @@ export function useStudentDossier(periodRef = null, classIdRef = null) {
                 studentId,
                 firstName: s.firstName,
                 lastName: s.lastName,
+                studentEmail: s.studentEmail || s.email || '',
+                studentNumber: s.studentNumber || s.id || '',
                 gradeLevel: s.gradeLevel || '',
                 courseCode: s.courseCode || '',
             }))

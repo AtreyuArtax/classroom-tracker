@@ -6,7 +6,7 @@
  * representing the full database state.
  */
 
-export const CURRENT_SCHEMA = 29
+export const CURRENT_SCHEMA = 30
 
 /**
  * Migrates a backup data object to the current schema version (25).
@@ -378,6 +378,14 @@ export function migrateData(data) {
   // ── Version 29 (Student Photos Store) ─────────────────────────────
   if (version < 29) {
     version = 29
+  }
+
+  // ── Version 30 (Learning Skills Store) ────────────────────────────
+  if (version < 30) {
+    if (!migrated.learning_skills) {
+      migrated.learning_skills = []
+    }
+    version = 30
   }
 
   migrated.schemaVersion = currentVersion

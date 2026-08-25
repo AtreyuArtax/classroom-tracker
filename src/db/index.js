@@ -17,7 +17,7 @@ import { openDB } from 'idb'
 import { getCurrentSchoolYear, getCurrentSemester } from '../utils/dates.js'
 
 const DB_NAME = 'classroomTrackerDB'
-const DB_VERSION = 29
+const DB_VERSION = 30
 
 /**
  * Cached promise — set synchronously before the first await so every
@@ -89,6 +89,15 @@ export function getDB() {
       // ── student_photos store (v29) ───────────────────────────────────────
       if (!db.objectStoreNames.contains('student_photos')) {
         db.createObjectStore('student_photos', { keyPath: 'studentId' })
+      }
+
+      // ── learning_skills store (v30) ──────────────────────────────────────
+      if (!db.objectStoreNames.contains('learning_skills')) {
+        const lsStore = db.createObjectStore('learning_skills', { keyPath: 'id' })
+        lsStore.createIndex('by_classId', 'classId')
+        lsStore.createIndex('by_classId_term', ['classId', 'term'])
+        lsStore.createIndex('by_studentId', 'studentId')
+        lsStore.createIndex('by_student_class', ['studentId', 'classId'])
       }
 
       // ── seed defaults on fresh install (oldVersion === 0) ────────────────
@@ -699,6 +708,18 @@ export function getDB() {
         console.log('[IDB] Migrating to v29: Student photos store...')
         if (!db.objectStoreNames.contains('student_photos')) {
           db.createObjectStore('student_photos', { keyPath: 'studentId' })
+        }
+      }
+
+      // --- VERSION 30 MIGRATION (Learning Skills) ---
+      if (oldVersion < 30) {
+        console.log('[IDB] Migrating to v30: Learning skills store...')
+        if (!db.objectStoreNames.contains('learning_skills')) {
+          const lsStore = db.createObjectStore('learning_skills', { keyPath: 'id' })
+          lsStore.createIndex('by_classId', 'classId')
+          lsStore.createIndex('by_classId_term', ['classId', 'term'])
+          lsStore.createIndex('by_studentId', 'studentId')
+          lsStore.createIndex('by_student_class', ['studentId', 'classId'])
         }
       }
     },

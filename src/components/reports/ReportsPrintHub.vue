@@ -232,6 +232,9 @@
             <button class="print-hub__export-item" @click="$emit('download-csv', 'behavior')">
               <Download :size="14" /> Behavior Logs CSV
             </button>
+            <button class="print-hub__export-item" @click="$emit('download-csv', 'learning_skills')">
+              <Download :size="14" /> Learning Skills &amp; Work Habits CSV
+            </button>
             <button class="print-hub__export-item" @click="$emit('download-comments', true)">
               <Download :size="14" /> Report Card Comments (With Names)
             </button>

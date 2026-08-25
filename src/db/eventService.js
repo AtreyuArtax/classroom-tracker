@@ -245,12 +245,13 @@ export async function getAllEvents(dateRange = {}) {
 export async function exportAllData() {
     const db = await getDB()
 
-    const [settings, classes, events, assessments, grades] = await Promise.all([
+    const [settings, classes, events, assessments, grades, learningSkills] = await Promise.all([
         db.get('settings', 'singleton'),
         db.getAll('classes'),
         db.getAllFromIndex('events', 'by_timestamp'),
         db.getAll('assessments'),
         db.getAll('grades'),
+        db.getAll('learning_skills').catch(() => [])
     ])
 
     let photos = []
@@ -287,6 +288,7 @@ export async function exportAllData() {
         events,
         assessments,
         grades,
+        learning_skills: learningSkills || [],
         photos
     }
 }
@@ -451,7 +453,7 @@ export async function importAllData(backupObj) {
         data = migrateData(data)
     }
 
-    const { settings, classes = [], events = [], assessments = [], grades = [], photos = [] } = data
+    const { settings, classes = [], events = [], assessments = [], grades = [], learning_skills = [], photos = [] } = data
 
     const db = await getDB()
 
@@ -460,8 +462,8 @@ export async function importAllData(backupObj) {
     const currentSettings = await db.get('settings', 'singleton')
     const existingHandle = currentSettings?.backupFileHandle ?? null
 
-    // Single transaction across all stores
-    const tx = db.transaction(['settings', 'classes', 'events', 'assessments', 'grades'], 'readwrite')
+    // Single transaction across all primary stores
+    const tx = db.transaction(['settings', 'classes', 'events', 'assessments', 'grades', 'learning_skills'], 'readwrite')
 
     // Clear and rewrite settings
     await tx.objectStore('settings').clear()
@@ -493,6 +495,12 @@ export async function importAllData(backupObj) {
     await tx.objectStore('grades').clear()
     for (const g of grades) {
         await tx.objectStore('grades').put(g)
+    }
+
+    // Clear and rewrite learning_skills
+    await tx.objectStore('learning_skills').clear()
+    for (const ls of learning_skills) {
+        await tx.objectStore('learning_skills').put(ls)
     }
 
     await tx.done
