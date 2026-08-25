@@ -607,6 +607,138 @@ console.log('Test Group 17: Bonus Marks >100% & Final Mark 100% Lockdown')
 }
 console.log()
 
+// ── TEST GROUP 18: User-Defined Category Names (Labs, Tests, Projects, Activities, Exam)
+console.log('Test Group 18: Custom Category Structures (Labs, Tests, Projects, Activities, Exam)')
+{
+  const mockClass = {
+    classId: 'cls_custom_cats',
+    gradingFramework: 'traditional',
+    gradebookCategories: [
+      { categoryId: 'cat_labs', name: 'Labs & Practical', weight: 20 },
+      { categoryId: 'cat_tests', name: 'Unit Tests', weight: 40 },
+      { categoryId: 'cat_proj', name: 'Projects & Activities', weight: 20 },
+      { categoryId: 'cat_exam', name: 'Final Exam', weight: 20 }
+    ],
+    students: {
+      'std_sci_1': { firstName: 'Marie', lastName: 'Curie', archived: false }
+    }
+  }
+
+  const mockAssessments = [
+    { assessmentId: 1101, categoryId: 'cat_labs', totalPoints: 40, date: '2026-08-01', isFormative: false },
+    { assessmentId: 1102, categoryId: 'cat_tests', totalPoints: 100, date: '2026-08-10', isFormative: false },
+    { assessmentId: 1103, categoryId: 'cat_proj', totalPoints: 50, date: '2026-08-15', isFormative: false }
+  ]
+
+  const mockGrades = [
+    { assessmentId: 1101, studentId: 'std_sci_1', score: 44, resolvedScore: 44 }, // 44/40 = 110% (bonus)
+    { assessmentId: 1102, studentId: 'std_sci_1', score: 80, resolvedScore: 80 }, // 80/100 = 80%
+    { assessmentId: 1103, studentId: 'std_sci_1', score: 45, resolvedScore: 45 }  // 45/50 = 90%
+  ]
+
+  const res = await calculateStudentGrade('std_sci_1', mockClass, {
+    assessmentsPreRef: mockAssessments,
+    gradesPreRef: mockGrades,
+    settingsPreRef: { capGradesAt100: true }
+  })
+
+  // (110 * 0.20) + (80 * 0.40) + (90 * 0.20) = 22 + 32 + 18 = 72.
+  // Weight used = 80. (72 / 80) * 100 = 90%.
+  assert(res.categoryResults['cat_labs'].percentage === 110, 'Custom "Labs & Practical" category is 110%')
+  assert(res.categoryResults['cat_tests'].percentage === 80, 'Custom "Unit Tests" category is 80%')
+  assert(res.categoryResults['cat_proj'].percentage === 90, 'Custom "Projects & Activities" category is 90%')
+  assert(res.weightUsed === 80, 'Weight used totals 80% with unassessed Exam')
+  assert(res.overallGrade === 90, 'Term grade calculates precisely to 90%')
+}
+console.log()
+
+// ── TEST GROUP 19: Most Consistent & Weighted Median Across Traditional Categories
+console.log('Test Group 19: Most Consistent & Weighted Median Analytics')
+{
+  const mockClass = {
+    classId: 'cls_analytics_test',
+    gradebookCategories: [
+      { categoryId: 'c1', name: 'Tests', weight: 60 },
+      { categoryId: 'c2', name: 'Quizzes', weight: 40 }
+    ],
+    students: {
+      'std_an_1': { firstName: 'Alan', lastName: 'Turing', archived: false }
+    }
+  }
+
+  const mockAssessments = [
+    { assessmentId: 1201, categoryId: 'c1', totalPoints: 100, date: '2026-08-01' },
+    { assessmentId: 1202, categoryId: 'c1', totalPoints: 100, date: '2026-08-05' },
+    { assessmentId: 1203, categoryId: 'c1', totalPoints: 100, date: '2026-08-10' },
+    { assessmentId: 1204, categoryId: 'c2', totalPoints: 100, date: '2026-08-02' },
+    { assessmentId: 1205, categoryId: 'c2', totalPoints: 100, date: '2026-08-06' }
+  ]
+
+  // c1 scores: [72, 75, 78] (all Level 3, 70-79% bucket) -> mean of bucket = 75
+  // c2 scores: [90, 94] (all Level 4, 90%+ bucket) -> mean of bucket = 92
+  const mockGradeMap = {
+    1201: { resolvedScore: 72 },
+    1202: { resolvedScore: 75 },
+    1203: { resolvedScore: 78 },
+    1204: { resolvedScore: 90 },
+    1205: { resolvedScore: 94 }
+  }
+
+  const mc = calculateMostConsistent('std_an_1', mockClass, mockGradeMap, mockAssessments, true)
+  // Weighted: (75 * 0.60) + (92 * 0.40) = 45 + 36.8 = 81.8 -> 82% rounded
+  assertApprox(mc.percentage, 81.8, 0.2, 'Most Consistent mode calculation produces 81.8% weighted grade')
+  assert(mc.categoryBreakdown['c1'].bucketLabel === '70-79%', 'c1 bucket label is 70-79%')
+
+  const med = calculateWeightedMedian('std_an_1', mockClass, mockGradeMap, mockAssessments, true)
+  // c1 median: 75, c2 median: 92. Weighted median: (75*0.6) + (92*0.4) = 81.8
+  assertApprox(med.percentage, 81.8, 0.2, 'Weighted Median calculation produces 81.8%')
+}
+console.log()
+
+// ── TEST GROUP 20: Elementary Split-Class & Modified Subject Accommodations
+console.log('Test Group 20: Elementary Split-Class Cohort & Subject Accommodations')
+{
+  const mockClass = {
+    classId: 'cls_elem_split',
+    classType: 'elementary',
+    activeSubjectId: 'sub_math',
+    gradebookCategories: [
+      { categoryId: 'c_math', name: 'Math Work', weight: 100 }
+    ],
+    students: {
+      'std_split_1': {
+        firstName: 'Ada',
+        lastName: 'Lovelace',
+        gradeLevel: 'Grade 7',
+        accommodations: {
+          modifiedSubjectGrades: {
+            'sub_math': 'Grade 8' // Working on Grade 8 Math curriculum
+          }
+        }
+      }
+    }
+  }
+
+  const mockAssessments = [
+    { assessmentId: 1301, categoryId: 'c_math', totalPoints: 50, gradeLevel: 'Grade 7', isFormative: false },
+    { assessmentId: 1302, categoryId: 'c_math', totalPoints: 50, gradeLevel: 'Grade 8', isFormative: false }
+  ]
+
+  const mockGrades = [
+    { assessmentId: 1301, studentId: 'std_split_1', score: 30, resolvedScore: 30 }, // Gr 7 (should be filtered out)
+    { assessmentId: 1302, studentId: 'std_split_1', score: 45, resolvedScore: 45 }  // Gr 8 (45/50 = 90%)
+  ]
+
+  const res = await calculateStudentGrade('std_split_1', mockClass, {
+    assessmentsPreRef: mockAssessments,
+    gradesPreRef: mockGrades,
+    settingsPreRef: { capGradesAt100: true }
+  })
+
+  assert(res.overallGrade === 90, 'Student accurately assessed against Grade 8 accommodation (90%), ignoring Grade 7 tasks')
+}
+console.log()
+
 // ── SUMMARY ───────────────────────────────────────────────────────
 console.log('====================================================')
 console.log(`Results: ${passedTests} / ${totalTests} assertions passed (${Math.round((passedTests / totalTests) * 100)}%)`)
