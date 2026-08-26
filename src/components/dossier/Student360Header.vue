@@ -73,7 +73,7 @@
           <span class="dossier-header__pill-label">Consistent</span>
           <span class="dossier-header__pill-val dossier-header__pill-val--sm">
             {{ Math.round(mostConsistent) }}%
-            <span v-if="consistentIsFallback" class="dossier-header__metric-tip" title="Standard median used due to low data density">
+            <span v-if="consistentIsFallback" class="dossier-header__metric-tip" title="Not enough assessments in a single score range yet to establish a consistent pattern (defaulted to category median)">
               <HelpCircle :size="12" />
             </span>
           </span>
