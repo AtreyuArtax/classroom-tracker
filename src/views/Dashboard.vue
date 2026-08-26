@@ -248,9 +248,16 @@ const isPoolOpen     = ref(unseatedStudents.value.length > 0)
 
 watch(
   [() => activeClass.value?.classId, () => unseatedStudents.value.length],
-  ([classId, count]) => {
-    if (classId && count > 0) {
+  ([classId, count], [prevClassId, prevCount]) => {
+    if (classId !== prevClassId) {
+      // When switching classes, open the unassigned pool ONLY if this class has unseated students
+      isPoolOpen.value = Boolean(classId && count > 0)
+    } else if (count > 0 && (prevCount === 0 || prevCount === undefined)) {
+      // If students became unseated within the same class, open the pool
       isPoolOpen.value = true
+    } else if (count === 0 && prevCount > 0) {
+      // If all students got seated within the same class, close the pool
+      isPoolOpen.value = false
     }
   },
   { immediate: true }

@@ -335,8 +335,8 @@
     "semantic_hash": "322ce1010d35f76a380b2df551af302f"
   },
   "src/views/Dashboard.vue": {
-    "mtime": 1787765059.2726278,
-    "ast_hash": "3921d94e5637c52618d83782d978bbb6",
+    "mtime": 1787772245.0366375,
+    "ast_hash": "9584c104e4617c303fe8252e99dc79a1",
     "semantic_hash": ""
   },
   "src/views/Grades.vue": {
