@@ -88,7 +88,7 @@
             v-for="a in sortedAssessments" 
             :key="a.assessmentId"
             class="grades__th-assessment"
-            :style="{ borderTop: '3px solid ' + (getUnitColor(a.unitId) !== '#64748b' ? getUnitColor(a.unitId) : getCategoryColor(a.categoryId)) }"
+            :style="{ borderTop: '3px solid ' + (a.unitId ? getUnitColor(a.unitId) : 'var(--border)') }"
           >
             <div class="grades__assessment-header">
               <div class="grades__assessment-info" @click="$emit('select-assessment', a.assessmentId)">
@@ -102,7 +102,7 @@
                 <div class="grades__assessment-meta">
                   <span class="grades__assessment-pts">{{ a.totalPoints }} pts</span>
                   <span class="grades__assessment-sep">·</span>
-                  <span v-if="a.categoryId" class="grades__assessment-cat-tag" :style="{ color: getCategoryColor(a.categoryId) }">
+                  <span v-if="a.categoryId" class="grades__assessment-cat-tag">
                     {{ getCategoryName(a.categoryId) }}
                   </span>
                   <span v-else-if="a.unitId" class="grades__assessment-unit">{{ cleanUnitPillName(getUnitName(a.unitId)) }}</span>
@@ -122,7 +122,10 @@
           </th>
         </tr>
 
-        <!-- Class Avg Row (Sticky below headers) -->
+      </thead>
+      
+      <tbody>
+        <!-- Class Avg Row (First row of grid body) -->
         <tr class="grades__tr-avg">
           <td class="grades__td-student">Class Average</td>
           <td 
@@ -145,9 +148,7 @@
             <div v-else class="text-muted">—</div>
           </td>
         </tr>
-      </thead>
-      
-      <tbody>
+
         <tr v-for="student in sortedRoster" :key="student.studentId">
           <td 
             class="grades__td-student" 
@@ -1039,7 +1040,8 @@ function copyAssessmentGrades(assessment) {
   font-size: 0.65rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary, #64748b);
 }
 
 .grades__grid-container-outer {
@@ -1094,9 +1096,10 @@ function copyAssessmentGrades(assessment) {
   left: 0;
   z-index: 11;
   background: var(--surface);
-  width: 160px;
-  min-width: 160px;
-  max-width: 220px;
+  width: 190px;
+  min-width: 190px;
+  max-width: 190px;
+  box-sizing: border-box;
   border-right: 1px solid var(--border);
   box-shadow: 2px 0 5px -2px rgba(0,0,0,0.1);
 }
@@ -1118,12 +1121,13 @@ function copyAssessmentGrades(assessment) {
 .grades__th-overall,
 .grades__td-overall {
   position: sticky;
-  left: 160px;
+  left: 190px;
   z-index: 11;
   background: var(--surface);
-  width: 100px;
-  min-width: 100px;
-  max-width: 100px;
+  width: 90px;
+  min-width: 90px;
+  max-width: 90px;
+  box-sizing: border-box;
   border-right: 2px solid var(--border);
   text-align: center;
   font-weight: 700;
@@ -1162,9 +1166,6 @@ function copyAssessmentGrades(assessment) {
 }
 
 .grades__tr-avg td {
-  position: sticky;
-  top: 58px;
-  z-index: 5;
   background: var(--bg-secondary);
   font-weight: 700;
   color: var(--text);
@@ -1172,10 +1173,12 @@ function copyAssessmentGrades(assessment) {
 }
 
 .grades__tr-avg .grades__td-student {
+  background: var(--bg-secondary);
   z-index: 12;
 }
 
 .grades__tr-avg .grades__td-overall {
+  background: var(--bg-secondary);
   z-index: 12;
 }
 
