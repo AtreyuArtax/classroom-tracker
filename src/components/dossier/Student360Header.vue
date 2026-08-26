@@ -5,7 +5,7 @@
         :student-id="student.studentId" 
         :first-name="student.firstName" 
         :last-name="student.lastName" 
-        size="lg" 
+        size="desk" 
         shape="circle"
         :allow-upload="true"
         @edit-photo="onAvatarClick"
@@ -20,7 +20,7 @@
             class="dossier-header__badge dossier-header__badge--grade"
             title="Student Grade Level"
           >
-            <GraduationCap :size="13" />
+            <GraduationCap :size="11" />
             {{ student.gradeLevel }}
           </span>
           <span 
@@ -28,7 +28,7 @@
             class="dossier-header__badge" 
             :class="[`dossier-header__badge--${statusType}`]"
           >
-            <component :is="statusIcon" :size="14" />
+            <component :is="statusIcon" :size="11" />
             {{ statusLabel }}
           </span>
           <span 
@@ -36,7 +36,7 @@
             class="dossier-header__badge dossier-header__badge--warning"
             :title="`Student missed ${attendanceStats.testDayAbsences} test/evaluation day${attendanceStats.testDayAbsences > 1 ? 's' : ''}`"
           >
-            <CalendarX :size="12" />
+            <CalendarX :size="11" />
             {{ attendanceStats.testDayAbsences }} Missed Test{{ attendanceStats.testDayAbsences > 1 ? 's' : '' }}
           </span>
         </div>
@@ -45,14 +45,15 @@
 
     <div class="dossier-header__right">
       <div class="dossier-header__metrics">
+        <!-- Main Grade / Mastery Pill -->
         <div 
-          class="dossier-header__metric"
-          :class="{ 'dossier-header__metric--clickable': isSBAR }"
+          class="dossier-header__pill dossier-header__pill--main"
+          :class="{ 'dossier-header__pill--clickable': isSBAR }"
           @click="isSBAR && toggleShowPct()"
           :title="isSBAR ? `Click to toggle calculated percentage mark (${formattedGrade} for Grade 7-12 report cards)` : ''"
         >
-          <span class="dossier-header__metric-label">{{ isSBAR ? 'Overall Mastery' : 'Grade' }}</span>
-          <span class="dossier-header__metric-value" :style="{ color: isSBAR ? sbarBadge.color : gradeColor }">
+          <span class="dossier-header__pill-label">{{ isSBAR ? 'Overall Mastery' : 'Grade' }}</span>
+          <span class="dossier-header__pill-val" :style="{ color: isSBAR ? sbarBadge.color : gradeColor }">
             <template v-if="isSBAR">
               <template v-if="showPctInHeader && overallGrade !== null">
                 {{ sbarBadge.level }} <span class="dossier-header__pct-sub">({{ formattedGrade }})</span>
@@ -66,31 +67,36 @@
             </template>
           </span>
         </div>
-        <div v-if="!isSBAR && mostConsistent !== null" class="dossier-header__metric dossier-header__metric--secondary">
-          <span class="dossier-header__metric-label">Consistent</span>
-          <span class="dossier-header__metric-value dossier-header__metric-value--smaller">
+
+        <!-- Consistent Pill (Secondary) -->
+        <div v-if="!isSBAR && mostConsistent !== null" class="dossier-header__pill dossier-header__pill--secondary">
+          <span class="dossier-header__pill-label">Consistent</span>
+          <span class="dossier-header__pill-val dossier-header__pill-val--sm">
             {{ Math.round(mostConsistent) }}%
             <span v-if="consistentIsFallback" class="dossier-header__metric-tip" title="Standard median used due to low data density">
-              <HelpCircle :size="14" />
+              <HelpCircle :size="12" />
             </span>
           </span>
         </div>
-        <div v-if="!isSBAR && weightedMedian !== null" class="dossier-header__metric dossier-header__metric--secondary">
-          <span class="dossier-header__metric-label">Median</span>
-          <span class="dossier-header__metric-value dossier-header__metric-value--smaller">
+
+        <!-- Median Pill (Secondary) -->
+        <div v-if="!isSBAR && weightedMedian !== null" class="dossier-header__pill dossier-header__pill--secondary">
+          <span class="dossier-header__pill-label">Median</span>
+          <span class="dossier-header__pill-val dossier-header__pill-val--sm">
             {{ Math.round(weightedMedian) }}%
           </span>
         </div>
-        <div class="dossier-header__divider"></div>
-        <div class="dossier-header__metric">
-          <span class="dossier-header__metric-label">Attendance</span>
+
+        <!-- Attendance Pill -->
+        <div class="dossier-header__pill dossier-header__pill--attendance">
+          <span class="dossier-header__pill-label">Attendance</span>
           <span 
-            class="dossier-header__metric-value"
+            class="dossier-header__pill-val"
             :style="{ color: attendanceRate === 100 ? '#34c759' : attendanceRate !== null && attendanceRate < 80 ? '#ff9500' : 'var(--text)' }"
           >
-            {{ attendanceRate === null ? '--' : attendanceRate === 100 ? 'Perfect' : attendanceRate + '%' }}
+            {{ attendanceRate === null ? '--' : attendanceRate === 100 ? '100%' : attendanceRate + '%' }}
           </span>
-          <span class="dossier-header__metric-subvalue">
+          <span class="dossier-header__pill-sub">
             {{ attendanceStats.absences }}A &middot; {{ attendanceStats.lates }}L
           </span>
         </div>
@@ -282,22 +288,23 @@ const statusIcon = computed(() => {
   display:         flex;
   align-items:     center;
   justify-content: space-between;
-  padding:         16px 20px;
+  padding:         6px 16px;
   background:      var(--surface);
   border-bottom:   1px solid var(--border);
-  gap:             14px;
+  gap:             12px;
+  min-height:      48px;
 }
 
 @media (max-width: 1280px) {
   .dossier-header {
-    padding: 12px 16px;
+    padding: 6px 12px;
     gap: 10px;
   }
 }
 
 @media (max-width: 900px) {
   .dossier-header {
-    padding: 12px 14px;
+    padding: 6px 10px;
     gap: 8px;
   }
 }
@@ -305,65 +312,66 @@ const statusIcon = computed(() => {
 .dossier-header__identity {
   display:     flex;
   align-items: center;
-  gap:         14px;
-  min-width:   0; /* Allow identity to shrink for ellipsis */
-  flex:        1; /* Identity takes available space after right-side items */
-}
-
-@media (max-width: 1280px) {
-  .dossier-header__identity {
-    gap: 10px;
-  }
+  gap:         10px;
+  min-width:   0;
+  flex:        0 1 auto;
 }
 
 .dossier-header__avatar {
   flex-shrink: 0;
+  width: 34px !important;
+  height: 34px !important;
+  font-size: 0.82rem !important;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.dossier-header__avatar:hover {
+  transform: scale(1.05);
 }
 
 .dossier-header__info {
   display:        flex;
   flex-direction: column;
-  gap:            3px;
-  min-width:      0; /* Allow info to shrink for ellipsis */
+  justify-content: center;
+  gap:            2px;
+  min-width:      0;
 }
 
 .dossier-header__name {
   margin:         0;
-  font-size:      1.6rem;
+  font-size:      1.15rem;
   font-weight:    800;
   color:          var(--text);
-  line-height:    1.1;
+  line-height:    1.15;
   white-space:    nowrap;
   overflow:       hidden;
   text-overflow:  ellipsis;
+  letter-spacing: -0.01em;
 }
 
 @media (max-width: 1280px) {
-  .dossier-header__name { font-size: 1.35rem; }
+  .dossier-header__name { font-size: 1.05rem; }
 }
 
 @media (max-width: 1024px) {
-  .dossier-header__name { font-size: 1.25rem; }
-}
-
-@media (max-width: 900px) {
-  .dossier-header__name { font-size: 1.15rem; }
+  .dossier-header__name { font-size: 1rem; }
 }
 
 .dossier-header__status-badges {
   display:     flex;
   align-items: center;
-  gap:         6px;
+  gap:         4px;
   flex-wrap:   wrap;
 }
 
 .dossier-header__badge {
   display:        inline-flex;
   align-items:    center;
-  gap:            4px;
-  padding:        2px 8px;
+  gap:            3px;
+  padding:        1px 6px;
   border-radius:  var(--radius-sm);
-  font-size:      0.72rem;
+  font-size:      0.65rem;
   font-weight:    700;
   text-transform: uppercase;
   white-space:    nowrap;
@@ -376,135 +384,120 @@ const statusIcon = computed(() => {
 .dossier-header__badge--danger  { background: rgba(255, 59, 48, 0.1); color: #ff3b30; }
 .dossier-header__badge--grade   { background: rgba(99, 102, 241, 0.12); color: #6366f1; border: 1px solid rgba(99, 102, 241, 0.25); }
 
-.dossier-header__metrics {
-  display:     flex;
-  align-items: center;
-  gap:         18px;
-}
-
-@media (max-width: 1280px) {
-  .dossier-header__metrics { gap: 14px; }
-}
-
-@media (max-width: 1100px) {
-  .dossier-header__metric--secondary { display: none; }
-}
-
-@media (max-width: 900px) {
-  .dossier-header__metrics { gap: 10px; }
-}
-
 .dossier-header__right {
   display:      flex;
   align-items:  center;
-  gap:          18px;
-  flex-shrink:  0; /* Ensure right side stays visible */
+  gap:          12px;
+  flex-shrink:  0;
 }
 
 @media (max-width: 1280px) {
-  .dossier-header__right { gap: 12px; }
+  .dossier-header__right { gap: 8px; }
 }
 
-.dossier-header__actions {
-  display:        flex;
-  align-items:    center;
-  gap:            8px;
-  border-left:    1px solid var(--border);
-  padding-left:   16px;
-  margin-left:    8px;
-  height:         40px;
+.dossier-header__metrics {
+  display:     flex;
+  align-items: center;
+  gap:         6px;
 }
 
-.dossier-header__metric {
-  display:        flex;
-  flex-direction: column;
-  align-items:    flex-end;
+/* Metric Pills */
+.dossier-header__pill {
+  display:         inline-flex;
+  align-items:     center;
+  gap:             6px;
+  padding:         4px 10px;
+  background:      var(--bg-secondary);
+  border:          1px solid var(--border);
+  border-radius:   var(--radius-md);
+  height:          32px;
+  box-sizing:      border-box;
 }
 
-.dossier-header__metric-label {
-  font-size:      0.75rem;
-  font-weight:    600;
+.dossier-header__pill--main {
+  background:   rgba(99, 102, 241, 0.08);
+  border-color: rgba(99, 102, 241, 0.22);
+}
+
+.dossier-header__pill--attendance {
+  background: var(--surface);
+}
+
+.dossier-header__pill-label {
+  font-size:      0.68rem;
+  font-weight:    700;
   color:          var(--text-secondary);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.04em;
 }
 
-.dossier-header__metric-value {
-  font-size:   1.5rem;
+.dossier-header__pill-val {
+  font-size:   1rem;
   font-weight: 800;
   color:       var(--text);
   line-height: 1;
 }
 
-@media (max-width: 1024px) {
-  .dossier-header__metric-value { font-size: 1.25rem; }
+.dossier-header__pill-val--sm {
+  font-size: 0.88rem;
 }
 
-@media (max-width: 900px) {
-  .dossier-header__metric-value { font-size: 1.1rem; }
+.dossier-header__pill-sub {
+  font-size:      0.72rem;
+  font-weight:    700;
+  color:          var(--text-secondary);
+  letter-spacing: 0.02em;
+  margin-left:    2px;
+  border-left:    1px solid var(--border);
+  padding-left:   6px;
 }
 
-.dossier-header__metric-value--smaller {
-  font-size: 1.1rem;
+.dossier-header__pill--clickable {
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.15s ease;
 }
 
-.dossier-header__metric--secondary {
-  border-left: 1px solid var(--border);
-  padding-left: 24px;
+.dossier-header__pill--clickable:hover {
+  filter: brightness(0.95);
+  border-color: var(--primary);
+}
+
+.dossier-header__pct-sub {
+  font-size: 0.8em;
+  font-weight: 500;
+  opacity: 0.85;
 }
 
 .dossier-header__metric-tip {
   display: inline-flex;
-  margin-left: 6px;
-  opacity: 0.5;
+  margin-left: 2px;
+  opacity: 0.6;
   color: var(--text-secondary);
   cursor: help;
   vertical-align: middle;
-  transition: opacity 0.2s ease;
 }
 
-.dossier-header__metric-tip:hover {
-  opacity: 1;
-  color: var(--primary);
+.dossier-header__actions {
+  display:        flex;
+  align-items:    center;
+  gap:            6px;
+  border-left:    1px solid var(--border);
+  padding-left:   10px;
+  margin-left:    4px;
+  height:         32px;
 }
 
-.dossier-header__metric-subvalue {
-  font-size:    0.72rem;
-  font-weight:  600;
-  color:        var(--text-secondary);
-  letter-spacing: 0.02em;
-  margin-top:   2px;
-  line-height:  1;
-}
-
-.dossier-header__metric--clickable {
-  cursor: pointer;
-  user-select: none;
-  transition: opacity 0.15s ease;
-}
-
-.dossier-header__metric--clickable:hover {
-  opacity: 0.85;
-}
-
-.dossier-header__pct-sub {
-  font-size: 0.85em;
-  font-weight: 500;
-  opacity: 0.9;
-}
-
-.dossier-header__divider {
-  width:      1px;
-  height:     40px;
-  background: var(--border);
+@media (max-width: 1100px) {
+  .dossier-header__pill--secondary { display: none; }
 }
 
 @media (max-width: 600px) {
   .dossier-header {
     flex-direction: column;
     align-items:    flex-start;
-    padding: 16px;
-    gap: 16px;
+    padding: 10px;
+    gap: 10px;
   }
 }
 

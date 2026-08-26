@@ -317,6 +317,18 @@ export async function loadGradebook(classRecord, targetSubjectId = null) {
   refreshAllAssessmentStats()
 }
 
+/**
+ * Resets all gradebook reactive state when no class is selected.
+ */
+export function clearGradebook() {
+  activeClassRecord.value = null
+  assessments.value = []
+  grades.value = []
+  classGrades.value = {}
+  selectedStudentId.value = null
+  selectedMilestone.value = null
+  resetAnalyticsState()
+}
 
 /**
  * Recalculates all student grades based on active class and current data.

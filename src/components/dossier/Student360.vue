@@ -12,13 +12,13 @@
       <template #actions>
         <UndoButton />
         <button class="student-360__action-btn" title="Email Progress Report" @click="showEmailModal = true">
-          <Mail :size="18" />
+          <Mail :size="15" />
         </button>
         <button class="student-360__action-btn" title="Print Progress Report" @click="showPrintModal = true">
-          <Printer :size="18" />
+          <Printer :size="15" />
         </button>
         <button class="student-360__close-btn" @click="handleClose">
-          <X :size="18" />
+          <X :size="15" />
         </button>
       </template>
     </Student360Header>
@@ -32,7 +32,7 @@
         :class="{ 'student-360__tab-btn--active': activeTab === tab.id }"
         @click="activeTab = tab.id"
       >
-        <component :is="tab.icon" :size="18" />
+        <component :is="tab.icon" :size="15" />
         {{ tab.label }}
       </button>
     </nav>
@@ -1005,8 +1005,8 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
   border: none;
   background: var(--bg-secondary);
@@ -1025,8 +1025,8 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
   border: 1px solid var(--border);
   background: var(--surface);
@@ -1042,12 +1042,13 @@ onUnmounted(() => {
 
 .student-360__tabs {
   display: flex;
-  gap: 8px;
-  padding: 0 24px;
+  gap: 4px;
+  padding: 0 18px;
   background: var(--surface);
   border-bottom: 1px solid var(--border);
   overflow-x: auto;
   scrollbar-width: none;
+  min-height: 36px;
 }
 .student-360__tabs::-webkit-scrollbar {
   display: none;
@@ -1056,16 +1057,17 @@ onUnmounted(() => {
 .student-360__tab-btn {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 12px 16px;
+  gap: 6px;
+  padding: 7px 12px;
   background: none;
   border: none;
   border-bottom: 2px solid transparent;
-  font-size: 0.9rem;
+  font-size: 0.82rem;
   font-weight: 600;
   color: var(--text-secondary);
   cursor: pointer;
   transition: all 0.2s ease;
+  white-space: nowrap;
 }
 
 .student-360__tab-btn:hover {
@@ -1079,9 +1081,9 @@ onUnmounted(() => {
 
 @media (max-width: 1100px) {
   .student-360__tab-btn {
-    padding: 12px 10px;
+    padding: 7px 8px;
     gap: 4px;
-    font-size: 0.85rem;
+    font-size: 0.8rem;
   }
 }
 
@@ -1091,19 +1093,19 @@ onUnmounted(() => {
   width: 100%;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 24px;
+  padding: 14px 18px;
 }
 
 @media (max-width: 1024px) {
   .student-360__content {
-    padding: 16px;
+    padding: 12px 14px;
   }
 }
 
 .student-360__pane {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 14px;
   min-width: 0;
   width: 100%;
 }

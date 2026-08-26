@@ -71,6 +71,12 @@
         <!-- Loading -->
         <div v-if="dossier.loading.value" class="reports__loading" aria-live="polite">Loading…</div>
 
+        <!-- Placeholder states -->
+        <div v-else-if="!sidebarClassId" class="reports__placeholder">
+          <BarChart2 :size="48" class="reports__placeholder-icon" />
+          <p>Select a class to view reports and analytics</p>
+        </div>
+
         <!-- ── PILLAR 3: STUDENT 360 DOSSIER ────────────────────────── -->
         <template v-else-if="rightMode === 'dossier' && dossier.selectedStudentId.value">
           <Student360 
@@ -310,6 +316,11 @@ watch([activeClass, activeSubjectId], async ([newClass, newSub], [oldClass, oldS
       }
       runReport()
     }
+  } else {
+    sidebarClassId.value = null
+    dossier.clearStudent()
+    clearGradebook()
+    runReport()
   }
 })
 
@@ -920,4 +931,6 @@ const washroomChartOptions = {
 .reports__period-btn--active { background: var(--surface); color: var(--primary); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); }
 .reports__btn-export { display: flex; align-items: center; gap: 6px; padding: 6px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 0.8rem; font-weight: 600; cursor: pointer; color: var(--text); transition: all 0.2s ease; }
 .reports__btn-export:hover { background: var(--bg-secondary); border-color: var(--primary); }
+.reports__placeholder { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 20px; color: var(--text-secondary); font-weight: 600; }
+.reports__placeholder-icon { margin-bottom: 12px; opacity: 0.5; }
 </style>

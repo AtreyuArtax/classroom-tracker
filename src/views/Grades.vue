@@ -309,6 +309,7 @@ import {
   isStudentInSubCohort,
   isAssessmentApplicableToStudent,
   resetAnalyticsState,
+  clearGradebook,
   showAddAssessmentModal,
   displayMode,
   assessmentSortOrder,
@@ -369,7 +370,13 @@ watch(activeClass, async (newVal, oldVal) => {
   if (newVal && newVal.classId !== oldVal?.classId) {
     sidebarClassId.value = newVal.classId
     selectedStudentId.value = null
+    selectedAssessmentId.value = null
     await onClassChange()
+  } else if (!newVal) {
+    sidebarClassId.value = ''
+    selectedStudentId.value = null
+    selectedAssessmentId.value = null
+    clearGradebook()
   }
 })
 

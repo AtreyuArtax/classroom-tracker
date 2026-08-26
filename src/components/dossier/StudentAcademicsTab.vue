@@ -57,142 +57,112 @@
       </div>
     </div>
 
+    <!-- SBAR Mode Layout -->
     <template v-if="isSBARMode">
-
       <SBARExpectationMasteryGrid 
         :student-id="props.studentId" 
         @select-assessment="onSelectAssessment" 
       />
-    </template>
-    <template v-else>
+
+      <!-- Master Unified Assessment Table (Full Width for SBAR) -->
       <div class="academics-section">
-        <h3 class="academics-section__title">Category Performance</h3>
-        <DossierCategoryGrid :categories="academicCategories" :student-id="props.studentId" />
-      </div>
+        <div class="academics-section__header">
+          <h3 class="academics-section__title" style="margin:0;">Assessments &amp; Tasks</h3>
+          
+          <div class="academics-header-actions">
+            <!-- Filter Chips -->
+            <div class="assessment-filter-chips">
+              <button 
+                class="chip-btn" 
+                :class="{ 'chip-btn--active': activeAssessmentFilter === 'all' }"
+                @click="activeAssessmentFilter = 'all'"
+              >
+                All ({{ combinedAssessments.length }})
+              </button>
 
-      <div class="academics-section">
-        <DossierEvidenceMix :mix="evidenceMix" />
-      </div>
-    </template>
+              <button 
+                class="chip-btn" 
+                :class="{ 'chip-btn--active': activeAssessmentFilter === 'class' }"
+                @click="activeAssessmentFilter = 'class'"
+              >
+                Classwide ({{ classCount }})
+              </button>
 
-    <!-- Master Unified Assessment Table (Full Width) -->
-    <div class="academics-section">
-      <div class="academics-section__header">
-        <h3 class="academics-section__title" style="margin:0;">Assessments &amp; Tasks</h3>
-        
-        <div class="academics-header-actions">
-          <!-- Filter Chips -->
-          <div class="assessment-filter-chips">
-            <button 
-              class="chip-btn" 
-              :class="{ 'chip-btn--active': activeAssessmentFilter === 'all' }"
-              @click="activeAssessmentFilter = 'all'"
-            >
-              All ({{ combinedAssessments.length }})
-            </button>
+              <button 
+                v-if="individualCount > 0"
+                class="chip-btn chip-btn--purple" 
+                :class="{ 'chip-btn--active': activeAssessmentFilter === 'individual' }"
+                @click="activeAssessmentFilter = 'individual'"
+              >
+                👤 Student Tasks ({{ individualCount }})
+              </button>
 
-            <button 
-              class="chip-btn" 
-              :class="{ 'chip-btn--active': activeAssessmentFilter === 'class' }"
-              @click="activeAssessmentFilter = 'class'"
-            >
-              Classwide ({{ classCount }})
-            </button>
+              <button 
+                v-if="missingCount > 0"
+                class="chip-btn chip-btn--danger" 
+                :class="{ 'chip-btn--active': activeAssessmentFilter === 'missing' }"
+                @click="activeAssessmentFilter = 'missing'"
+              >
+                <AlertTriangle :size="12" style="display: inline-block; vertical-align: -1px; margin-right: 2px;" /> Missing ({{ missingCount }})
+              </button>
 
-            <button 
-              v-if="individualCount > 0"
-              class="chip-btn chip-btn--purple" 
-              :class="{ 'chip-btn--active': activeAssessmentFilter === 'individual' }"
-              @click="activeAssessmentFilter = 'individual'"
-            >
-              👤 Student Tasks ({{ individualCount }})
-            </button>
+              <button 
+                v-if="failingCount > 0"
+                class="chip-btn chip-btn--warning" 
+                :class="{ 'chip-btn--active': activeAssessmentFilter === 'failing' }"
+                @click="activeAssessmentFilter = 'failing'"
+              >
+                <span class="status-dot status-dot--danger" /> Level 1- / R ({{ failingCount }})
+              </button>
+            </div>
 
-            <button 
-              v-if="missingCount > 0"
-              class="chip-btn chip-btn--danger" 
-              :class="{ 'chip-btn--active': activeAssessmentFilter === 'missing' }"
-              @click="activeAssessmentFilter = 'missing'"
-            >
-              <AlertTriangle :size="13" style="display: inline-block; vertical-align: -1px; margin-right: 3px;" /> Missing ({{ missingCount }})
-            </button>
-
-            <button 
-              v-if="failingCount > 0"
-              class="chip-btn chip-btn--warning" 
-              :class="{ 'chip-btn--active': activeAssessmentFilter === 'failing' }"
-              @click="activeAssessmentFilter = 'failing'"
-            >
-              <span class="status-dot status-dot--danger" /> {{ isSBARMode ? 'Level 1- / R' : '<50%' }} ({{ failingCount }})
+            <!-- + Add Task Button -->
+            <button class="btn-add-individual" @click="openAddAssessment('individual', props.studentId)">
+              <Plus :size="13" /> Add Task
             </button>
           </div>
-
-          <!-- + Add Task Button -->
-          <button class="btn-add-individual" @click="openAddAssessment('individual', props.studentId)">
-            <Plus :size="13" /> Add Task
-          </button>
         </div>
-      </div>
 
-      <div class="academics-table-wrapper">
-        <table class="academics-table">
-          <thead>
-            <tr>
-              <th class="th-date">Date</th>
-              <th class="th-name">Assessment</th>
-              <th class="th-type">Type</th>
-              <th class="th-score">{{ isSBARMode ? 'Level' : 'Points' }}</th>
-              <th v-if="!isSBARMode" class="th-percent">%</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="a in filteredMasterAssessments" :key="a.assessmentId" @contextmenu.prevent="onContextMenu($event, a.assessmentId)">
-              <td class="td-date">{{ formatLocalDisplay(a.date) }}</td>
-              <td class="td-name">
-                <span 
-                  :class="{ 'clickable-sbar-name': isSBARTask(a) }" 
-                  @click="isSBARTask(a) && onSelectAssessment(a.assessmentId)"
-                  :title="isSBARTask(a) ? 'Click to open SBAR evaluation matrix' : ''"
-                >{{ a.name }}</span>
-                <span v-if="a.target === 'individual' || a.isIndividual" class="badge-student-task" title="Individual student task"><User :size="12" style="display: inline-block; vertical-align: -1px; margin-right: 2px;" /> Student Task</span>
-                <span v-else-if="getImpactLevel(a.weight).id === 'high'" class="badge-high-weight" title="High grade weight item"><Flame :size="12" style="display: inline-block; vertical-align: -1px; margin-right: 2px;" /> High Weight</span>
-              </td>
-              <td class="td-type"><span class="badge" :class="'badge--' + a.assessmentType">{{ a.assessmentType }}</span></td>
-              <td class="td-score">
-                <div class="score-cell-wrapper">
-                  <!-- Inline Edit Mode -->
-                  <template v-if="editingCell?.assessmentId === a.assessmentId">
-                    <input 
-                      type="number" 
-                      v-model="editInput" 
-                      class="cell-edit-input"
-                      @blur="saveEdit"
-                      @keydown="handleCellKey"
-                    />
-                  </template>
-                  
-                  <!-- Visual Display Mode -->
-                  <template v-else>
-                    <div v-if="a.missing" class="score-missing" @click="isSBARTask(a) ? onSelectAssessment(a.assessmentId) : startEdit(a.assessmentId)">
+        <div class="academics-table-wrapper">
+          <table class="academics-table">
+            <thead>
+              <tr>
+                <th class="th-date">Date</th>
+                <th class="th-name">Assessment</th>
+                <th class="th-type">Type</th>
+                <th class="th-score">Level</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="a in filteredMasterAssessments" :key="a.assessmentId" @contextmenu.prevent="onContextMenu($event, a.assessmentId)">
+                <td class="td-date">{{ formatLocalDisplay(a.date) }}</td>
+                <td class="td-name">
+                  <span 
+                    class="clickable-sbar-name" 
+                    @click="onSelectAssessment(a.assessmentId)"
+                    title="Click to open SBAR evaluation matrix"
+                  >{{ a.name }}</span>
+                  <span v-if="a.target === 'individual' || a.isIndividual" class="badge-student-task" title="Individual student task"><User :size="11" style="display: inline-block; vertical-align: -1px; margin-right: 2px;" /> Student Task</span>
+                  <span v-else-if="getImpactLevel(a.weight).id === 'high'" class="badge-high-weight" title="High grade weight item"><Flame :size="11" style="display: inline-block; vertical-align: -1px; margin-right: 2px;" /> High Weight</span>
+                </td>
+                <td class="td-type"><span class="badge" :class="'badge--' + a.assessmentType">{{ a.assessmentType }}</span></td>
+                <td class="td-score">
+                  <div class="score-cell-wrapper">
+                    <div v-if="a.missing" class="score-missing" @click="onSelectAssessment(a.assessmentId)">
                       <span class="text-danger">Missing</span>
                       <span v-if="a.wasAbsent" class="badge-red-a" title="Absent on this date">A</span>
                     </div>
-                    <span v-else-if="a.excluded" class="text-muted" @click="isSBARTask(a) ? onSelectAssessment(a.assessmentId) : startEdit(a.assessmentId)">EX</span>
-                    <span v-else class="score-value" @click="isSBARTask(a) ? onSelectAssessment(a.assessmentId) : startEdit(a.assessmentId)">
-                      <template v-if="isSBARTask(a)">
-                        <span 
-                          v-if="a.score !== null" 
-                          class="sbar-level-badge sbar-level-badge--clickable" 
-                          :style="{ background: getSBARLevelBadge(a.score).color, color: 'white', padding: '2px 8px', borderRadius: '12px', fontWeight: 'bold', cursor: 'pointer' }"
-                          title="Click to open SBAR evaluation matrix"
-                        >
-                          {{ getSBARLevelBadge(a.score).level }}
-                        </span>
-                        <span v-else class="text-muted" style="cursor: pointer;" title="Click to open SBAR evaluation matrix">—</span>
-                      </template>
-                      <template v-else>
-                        {{ a.score !== null ? a.score : '—' }} / {{ a.totalPoints }}
-                      </template>
+                    <span v-else-if="a.excluded" class="text-muted" @click="onSelectAssessment(a.assessmentId)">EX</span>
+                    <span v-else class="score-value" @click="onSelectAssessment(a.assessmentId)">
+                      <span 
+                        v-if="a.score !== null" 
+                        class="sbar-level-badge sbar-level-badge--clickable" 
+                        :style="{ background: getSBARLevelBadge(a.score).color, color: 'white', padding: '2px 8px', borderRadius: '12px', fontWeight: 'bold', cursor: 'pointer' }"
+                        title="Click to open SBAR evaluation matrix"
+                      >
+                        {{ getSBARLevelBadge(a.score).level }}
+                      </span>
+                      <span v-else class="text-muted" style="cursor: pointer;" title="Click to open SBAR evaluation matrix">—</span>
                     </span>
                     
                     <!-- Attempts / Comment Indicators -->
@@ -210,17 +180,161 @@
                         :title="a.attempts?.some(x => x.comment?.trim()) ? 'Has note — click to edit' : 'Add a note'"
                       ><NotebookPen :size="12" /></span>
                     </div>
-                  </template>
-                </div>
-              </td>
-              <td v-if="!isSBARMode" class="td-percent" :style="{ color: getGradeColor(a.score !== null ? (isSBARTask(a) ? a.score : (a.score / (a.totalPoints || 1)) * 100) : null) }">
-                {{ a.score !== null ? (isSBARTask(a) ? Math.round(a.score) + '%' : Math.round((a.score / (a.totalPoints || 1)) * 100) + '%') : 'N/A' }}
-              </td>
-            </tr>
-          </tbody>
-        </table>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
-    </div>
+    </template>
+
+    <!-- Traditional / Percentage Mode (Split-View Layout: Table on Left, Analytics Rail on Right) -->
+    <template v-else>
+      <div class="academics-split-layout">
+        <!-- Main Column: Assessment Table -->
+        <div class="academics-split-main">
+          <div class="academics-section academics-section--table">
+            <div class="academics-section__header">
+              <h3 class="academics-section__title" style="margin:0;">Assessments &amp; Tasks</h3>
+              
+              <div class="academics-header-actions">
+                <!-- Filter Chips -->
+                <div class="assessment-filter-chips">
+                  <button 
+                    class="chip-btn" 
+                    :class="{ 'chip-btn--active': activeAssessmentFilter === 'all' }"
+                    @click="activeAssessmentFilter = 'all'"
+                  >
+                    All ({{ combinedAssessments.length }})
+                  </button>
+
+                  <button 
+                    class="chip-btn" 
+                    :class="{ 'chip-btn--active': activeAssessmentFilter === 'class' }"
+                    @click="activeAssessmentFilter = 'class'"
+                  >
+                    Classwide ({{ classCount }})
+                  </button>
+
+                  <button 
+                    v-if="individualCount > 0"
+                    class="chip-btn chip-btn--purple" 
+                    :class="{ 'chip-btn--active': activeAssessmentFilter === 'individual' }"
+                    @click="activeAssessmentFilter = 'individual'"
+                  >
+                    👤 Student Tasks ({{ individualCount }})
+                  </button>
+
+                  <button 
+                    v-if="missingCount > 0"
+                    class="chip-btn chip-btn--danger" 
+                    :class="{ 'chip-btn--active': activeAssessmentFilter === 'missing' }"
+                    @click="activeAssessmentFilter = 'missing'"
+                  >
+                    <AlertTriangle :size="12" style="display: inline-block; vertical-align: -1px; margin-right: 2px;" /> Missing ({{ missingCount }})
+                  </button>
+
+                  <button 
+                    v-if="failingCount > 0"
+                    class="chip-btn chip-btn--warning" 
+                    :class="{ 'chip-btn--active': activeAssessmentFilter === 'failing' }"
+                    @click="activeAssessmentFilter = 'failing'"
+                  >
+                    <span class="status-dot status-dot--danger" /> &lt;50% ({{ failingCount }})
+                  </button>
+                </div>
+
+                <!-- + Add Task Button -->
+                <button class="btn-add-individual" @click="openAddAssessment('individual', props.studentId)">
+                  <Plus :size="13" /> Add Task
+                </button>
+              </div>
+            </div>
+
+            <div class="academics-table-wrapper">
+              <table class="academics-table">
+                <thead>
+                  <tr>
+                    <th class="th-date">Date</th>
+                    <th class="th-name">Assessment</th>
+                    <th class="th-type">Type</th>
+                    <th class="th-score">Points</th>
+                    <th class="th-percent">%</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="a in filteredMasterAssessments" :key="a.assessmentId" @contextmenu.prevent="onContextMenu($event, a.assessmentId)">
+                    <td class="td-date">{{ formatLocalDisplay(a.date) }}</td>
+                    <td class="td-name">
+                      <span 
+                        :class="{ 'clickable-sbar-name': isSBARTask(a) }" 
+                        @click="isSBARTask(a) && onSelectAssessment(a.assessmentId)"
+                        :title="isSBARTask(a) ? 'Click to open SBAR evaluation matrix' : ''"
+                      >{{ a.name }}</span>
+                      <span v-if="a.target === 'individual' || a.isIndividual" class="badge-student-task" title="Individual student task"><User :size="11" style="display: inline-block; vertical-align: -1px; margin-right: 2px;" /> Student Task</span>
+                      <span v-else-if="getImpactLevel(a.weight).id === 'high'" class="badge-high-weight" title="High grade weight item"><Flame :size="11" style="display: inline-block; vertical-align: -1px; margin-right: 2px;" /> High Weight</span>
+                    </td>
+                    <td class="td-type"><span class="badge" :class="'badge--' + a.assessmentType">{{ a.assessmentType }}</span></td>
+                    <td class="td-score">
+                      <div class="score-cell-wrapper">
+                        <!-- Inline Edit Mode -->
+                        <template v-if="editingCell?.assessmentId === a.assessmentId">
+                          <input 
+                            type="number" 
+                            v-model="editInput" 
+                            class="cell-edit-input"
+                            @blur="saveEdit"
+                            @keydown="handleCellKey"
+                          />
+                        </template>
+                        
+                        <!-- Visual Display Mode -->
+                        <template v-else>
+                          <div v-if="a.missing" class="score-missing" @click="isSBARTask(a) ? onSelectAssessment(a.assessmentId) : startEdit(a.assessmentId)">
+                            <span class="text-danger">Missing</span>
+                            <span v-if="a.wasAbsent" class="badge-red-a" title="Absent on this date">A</span>
+                          </div>
+                          <span v-else-if="a.excluded" class="text-muted" @click="isSBARTask(a) ? onSelectAssessment(a.assessmentId) : startEdit(a.assessmentId)">EX</span>
+                          <span v-else class="score-value" @click="isSBARTask(a) ? onSelectAssessment(a.assessmentId) : startEdit(a.assessmentId)">
+                            {{ a.score !== null ? a.score : '—' }} / {{ a.totalPoints }}
+                          </span>
+                          
+                          <!-- Attempts / Comment Indicators -->
+                          <div class="cell-indicators" v-if="a.attempts?.length >= 1">
+                            <div 
+                              v-if="a.attempts?.length > 1"
+                              class="attempts-dot"
+                              @click.stop="openAttempts($event, a.assessmentId)"
+                              title="Multiple attempts - click to view history"
+                            ></div>
+                            <span
+                              class="comment-dot"
+                              :class="{ 'comment-dot--active': a.attempts?.some(x => x.comment?.trim()) }"
+                              @click.stop="openAttempts($event, a.assessmentId)"
+                              :title="a.attempts?.some(x => x.comment?.trim()) ? 'Has note — click to edit' : 'Add a note'"
+                            ><NotebookPen :size="12" /></span>
+                          </div>
+                        </template>
+                      </div>
+                    </td>
+                    <td class="td-percent" :style="{ color: getGradeColor(a.score !== null ? (isSBARTask(a) ? a.score : (a.score / (a.totalPoints || 1)) * 100) : null) }">
+                      {{ a.score !== null ? (isSBARTask(a) ? Math.round(a.score) + '%' : Math.round((a.score / (a.totalPoints || 1)) * 100) + '%') : 'N/A' }}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Rail Column: Category Performance & Triangulation -->
+        <aside class="academics-split-rail">
+          <DossierCategoryGrid :categories="academicCategories" :student-id="props.studentId" />
+          <DossierEvidenceMix :mix="evidenceMix" />
+        </aside>
+      </div>
+    </template>
 
     <!-- Compact Internal Gradebook Notes Card (Full Width) -->
     <div class="student-360__gradebook-note-card">
@@ -824,33 +938,35 @@ async function updateGradebookNoteLocal() {
 
 <style scoped>
 .academics-section {
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 .academics-section__header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .academics-section__title {
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: 700;
   color: var(--text);
-  margin: 0 0 16px 0;
+  margin: 0;
 }
 
 .btn-add-individual {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
+  gap: 5px;
+  padding: 4px 10px;
   background: var(--primary);
   color: white;
   border: none;
   border-radius: var(--radius-sm);
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -862,19 +978,19 @@ async function updateGradebookNoteLocal() {
 }
 
 .academics-empty-state {
-  padding: 24px;
+  padding: 20px;
   background: var(--bg-secondary);
   border: 1px dashed var(--border);
   border-radius: var(--radius-md);
   text-align: center;
   color: var(--text-secondary);
-  font-size: 0.9rem;
+  font-size: 0.85rem;
 }
 
 .academics-table-wrapper {
   background:    var(--surface);
   border:        1px solid var(--border);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-md);
   overflow:      hidden;
 }
 
@@ -885,18 +1001,19 @@ async function updateGradebookNoteLocal() {
 
 .academics-table th {
   text-align:     left;
-  padding:        12px 16px;
+  padding:        8px 12px;
   background:     var(--bg-secondary);
-  font-size:      0.75rem;
+  font-size:      0.7rem;
   font-weight:    700;
   color:          var(--text-secondary);
   text-transform: uppercase;
+  letter-spacing: 0.03em;
 }
 
 .academics-table td {
-  padding:       12px 16px;
+  padding:       8px 12px;
   border-bottom: 1px solid var(--border);
-  font-size:     0.9rem;
+  font-size:     0.85rem;
 }
 
 .th-date, .td-date     { width: 80px; color: var(--text-secondary); font-variant-numeric: tabular-nums; }
@@ -1337,58 +1454,38 @@ async function updateGradebookNoteLocal() {
   cursor: not-allowed;
 }
 
-/* ── 2-Column Side-by-Side Academics Layout ── */
-.academics-bottom-grid {
+/* ── Split Layout: Table on Left, Sticky Analytics Rail on Right ── */
+.academics-split-layout {
   display: grid;
-  grid-template-columns: 1fr 340px;
-  gap: 20px;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  gap: 14px;
   align-items: start;
+  width: 100%;
 }
 
-@media (max-width: 1024px) {
-  .academics-bottom-grid {
+.academics-split-main {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.academics-split-rail {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+  position: sticky;
+  top: 0;
+}
+
+@media (max-width: 1080px) {
+  .academics-split-layout {
     grid-template-columns: 1fr;
   }
-}
-
-.academics-main-col {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.academics-card-block {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.academics-title-group {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.academics-subtitle {
-  font-size: 0.75rem;
-  color: var(--text-secondary);
-  font-weight: 500;
-}
-
-.academics-side-col {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.academics-side-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+  .academics-split-rail {
+    position: static;
+  }
 }
 
 .badge-high-weight {
@@ -1422,22 +1519,22 @@ async function updateGradebookNoteLocal() {
 .academics-header-actions {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
 }
 
 .assessment-filter-chips {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   flex-wrap: wrap;
 }
 
 .chip-btn {
-  padding: 4px 10px;
-  font-size: 0.75rem;
+  padding: 3px 8px;
+  font-size: 0.72rem;
   font-weight: 600;
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: 10px;
   background: var(--surface);
   color: var(--text-secondary);
   cursor: pointer;
