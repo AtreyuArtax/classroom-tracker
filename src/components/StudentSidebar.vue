@@ -56,20 +56,36 @@
           :class="{ 'student-sidebar__roster-item--active': selectedStudentId === student.studentId }"
           @click="$emit('select-student', student.studentId)"
         >
-          <div class="student-sidebar__roster-info">
-            <div class="student-sidebar__roster-name-group">
-              <span class="student-sidebar__roster-lastname">{{ student.lastName }}</span>
-              <div class="student-sidebar__roster-subline">
-                <span class="student-sidebar__roster-firstname">{{ student.firstName }}</span>
-                <span v-if="availableSubCohorts.length > 1 && studentDisplayMap[student.studentId]?.tag" class="student-sidebar__course-tag">{{ studentDisplayMap[student.studentId].tag }}</span>
-              </div>
-              
-              <!-- Sparkline (Only if showAcademics and trends exist) -->
-              <div 
-                v-if="showAcademics && !isPrivacyMode && studentDisplayMap[student.studentId]?.sparklinePath" 
-                class="student-sidebar__sparkline-mini"
+          <!-- Line 1: Full Width Student Name -->
+          <div class="student-sidebar__name-row" :title="`${student.lastName}, ${student.firstName}`">
+            <span class="student-sidebar__roster-lastname">{{ student.lastName }},</span>
+            <span class="student-sidebar__roster-firstname">{{ student.firstName }}</span>
+          </div>
+
+          <!-- Line 2: Metrics & Badges Row (Grade + Sparkline + Tag) -->
+          <div v-if="showAcademics || (availableSubCohorts.length > 1 && studentDisplayMap[student.studentId]?.tag)" class="student-sidebar__metrics-row">
+            <template v-if="showAcademics">
+              <!-- Grade / Mastery Badge -->
+              <span 
+                v-if="studentDisplayMap[student.studentId]?.hasGrade" 
+                class="student-sidebar__grade-pill"
+                :class="{ 'student-sidebar__grade-pill--privacy': isPrivacyMode }"
+                :style="isPrivacyMode ? {} : { 
+                  color: studentDisplayMap[student.studentId].gradeColor, 
+                  borderColor: studentDisplayMap[student.studentId].gradeColor + '40', 
+                  backgroundColor: studentDisplayMap[student.studentId].gradeColor + '15' 
+                }"
               >
-                <svg width="60" height="12" viewBox="0 0 60 12">
+                {{ isPrivacyMode ? '···' : studentDisplayMap[student.studentId].gradeText }}
+              </span>
+              <span v-else class="student-sidebar__grade-pill student-sidebar__grade-pill--empty">—</span>
+
+              <!-- Sparkline Curve -->
+              <div 
+                v-if="!isPrivacyMode && studentDisplayMap[student.studentId]?.sparklinePath" 
+                class="student-sidebar__sparkline-container"
+              >
+                <svg width="50" height="12" viewBox="0 0 50 12">
                   <path
                     fill="none"
                     :stroke="studentDisplayMap[student.studentId].sparklineColor"
@@ -80,22 +96,15 @@
                   />
                 </svg>
               </div>
-            </div>
-
-            <!-- Grade Display (Only if showAcademics is true) -->
-            <template v-if="showAcademics">
-              <span 
-                v-if="studentDisplayMap[student.studentId]?.hasGrade" 
-                class="student-sidebar__roster-grade"
-                :class="{ 'student-sidebar__roster-grade--privacy': isPrivacyMode }"
-                :style="{ color: isPrivacyMode ? 'var(--text-secondary)' : studentDisplayMap[student.studentId].gradeColor }"
-              >
-                {{ studentDisplayMap[student.studentId].gradeText }}
-              </span>
-              <span v-else class="student-sidebar__roster-grade student-sidebar__roster-grade--empty">
-                —
-              </span>
             </template>
+
+            <!-- Subcohort / Grade Tag -->
+            <span 
+              v-if="availableSubCohorts.length > 1 && studentDisplayMap[student.studentId]?.tag" 
+              class="student-sidebar__course-tag"
+            >
+              {{ studentDisplayMap[student.studentId].tag }}
+            </span>
           </div>
         </li>
         <li v-if="students.length === 0" class="student-sidebar__roster-empty">No students</li>
@@ -181,7 +190,7 @@ const studentDisplayMap = computed(() => {
     let sparklinePath = ''
     let sparklineColor = ''
     if (trendData && trendData.length > 1) {
-      sparklinePath = getSparklinePath(trendData, 60, 12)
+      sparklinePath = getSparklinePath(trendData, 50, 12)
       sparklineColor = getGradeColor(trendData[trendData.length - 1])
     }
 
@@ -421,11 +430,11 @@ function getSparklinePath(data, width, height) {
 }
 
 .student-sidebar__roster-item {
-  padding: 9px 12px;
+  padding: 8px 12px;
   border-bottom: 1px solid var(--bg-secondary);
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
+  gap: 3px;
   cursor: pointer;
   transition: all 0.15s ease;
   border-left: 3px solid transparent;
@@ -441,58 +450,81 @@ function getSparklinePath(data, width, height) {
   font-weight: 600;
 }
 
-.student-sidebar__roster-info {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+.student-sidebar__name-row {
+  display: block;
   width: 100%;
-  gap: 8px;
-}
-
-.student-sidebar__roster-name-group {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
   min-width: 0;
-  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.25;
 }
 
 .student-sidebar__roster-lastname {
-  font-size: 0.88rem;
+  font-size: 0.86rem;
   font-weight: 700;
   color: var(--text);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  line-height: 1.2;
+  margin-right: 4px;
 }
 
-.student-sidebar__roster-subline {
+.student-sidebar__roster-firstname {
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.student-sidebar__metrics-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 4px;
+  gap: 6px;
   width: 100%;
   min-width: 0;
 }
 
-.student-sidebar__roster-firstname {
-  font-size: 0.8rem;
-  color: var(--text-secondary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.student-sidebar__grade-pill {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 4px;
+  border: 1px solid transparent;
+  flex-shrink: 0;
   line-height: 1.2;
-  min-width: 0;
-  flex: 1;
+  transition: filter 0.2s ease, opacity 0.2s ease;
+}
+
+.student-sidebar__grade-pill--privacy {
+  filter: blur(4px);
+  user-select: none;
+  background: var(--bg-secondary);
+  border-color: var(--border);
+  color: var(--text-secondary);
+}
+
+.student-sidebar__grade-pill--empty {
+  color: var(--text-secondary);
+  background: transparent;
+  border: none;
+  padding: 0 2px;
+  font-weight: 400;
+}
+
+.student-sidebar__sparkline-container {
+  display: flex;
+  align-items: center;
+  opacity: 0.85;
+  flex-shrink: 0;
+}
+
+.student-sidebar__sparkline-container svg {
+  display: block;
 }
 
 .student-sidebar__course-tag {
   display: inline-flex;
   align-items: center;
-  padding: 1px 6px;
+  padding: 1px 5px;
   border-radius: 4px;
-  font-size: 0.68rem;
+  font-size: 0.65rem;
   font-weight: 600;
   background: rgba(59, 130, 246, 0.08);
   color: #2563eb;
@@ -500,31 +532,10 @@ function getSparklinePath(data, width, height) {
   line-height: 1.2;
   flex-shrink: 0;
   margin-left: auto;
-}
-
-.student-sidebar__roster-grade {
-  font-size: 0.85rem;
-  font-weight: 700;
-  flex-shrink: 0;
-  transition: filter 0.2s ease, opacity 0.2s ease;
-}
-
-.student-sidebar__roster-grade--privacy {
-  filter: blur(5px);
-  user-select: none;
-  opacity: 0.75;
-}
-
-.student-sidebar__roster-grade--empty {
-  color: var(--text-secondary);
-  font-weight: 400;
-}
-
-.student-sidebar__sparkline-mini {
-  display: flex;
-  align-items: center;
-  opacity: 0.7;
-  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 60px;
 }
 
 .student-sidebar__roster-empty {

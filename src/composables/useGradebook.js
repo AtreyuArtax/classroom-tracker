@@ -800,9 +800,9 @@ export function enterGradeSBAR(assessmentId, studentId, expCode, percentage) {
     grades.value.push(grade)
   }
 
-  if (!grade.expectationScores) {
-    grade.expectationScores = {}
-  }
+  const prevExpScores = grade.expectationScores ? { ...grade.expectationScores } : {}
+  const prevMasteryLevel = grade.masteryLevel
+  const prevMissing = grade.missing
 
   if (isBlank) {
     delete grade.expectationScores[expCode]
@@ -841,6 +841,31 @@ export function enterGradeSBAR(assessmentId, studentId, expCode, percentage) {
       activeClassRecord.value?.classId
     )
   })
+
+  // Register in global undo stack
+  pushUndo(
+    async () => {
+      const g = grades.value.find(item => Number(item.assessmentId) === Number(assessmentId) && String(item.studentId) === String(studentId))
+      if (g) {
+        g.expectationScores = { ...prevExpScores }
+        g.masteryLevel = prevMasteryLevel
+        g.resolvedScore = prevMasteryLevel
+        g.missing = prevMissing
+        grades.value = [...grades.value]
+        refreshSingleStudent(studentId)
+        await gradebookService.saveSBARGrade(
+          assessmentId,
+          studentId,
+          g.expectationScores,
+          g.masteryLevel,
+          activeClassRecord.value?.classId
+        )
+      }
+    },
+    async () => {
+      enterGradeSBAR(assessmentId, studentId, expCode, percentage)
+    }
+  )
 }
 
 
@@ -1247,9 +1272,13 @@ export async function adjustStudentGrade(studentId, adjustedGrade) {
     const student = activeClassRecord.value.students[studentId]
     if (!student) return
     
+    const prevVal = student.adjustedGrade !== undefined ? student.adjustedGrade : null
+
     const newVal = adjustedGrade === '' || adjustedGrade === null || isNaN(Number(adjustedGrade))
       ? null
       : Number(adjustedGrade)
+
+    if (newVal === prevVal) return
 
     student.adjustedGrade = newVal
 
@@ -1260,6 +1289,28 @@ export async function adjustStudentGrade(studentId, adjustedGrade) {
       adjustedGrade: newVal 
     })
     await refreshGrades()
+
+    // Register inverse and redo operations in the global Undo/Redo stack
+    pushUndo(
+      async () => {
+        if (!activeClassRecord.value?.students?.[studentId]) return
+        activeClassRecord.value.students[studentId].adjustedGrade = prevVal
+        triggerRef(activeClassRecord)
+        await classService.patchStudent(activeClassRecord.value.classId, studentId, {
+          adjustedGrade: prevVal
+        })
+        await refreshGrades()
+      },
+      async () => {
+        if (!activeClassRecord.value?.students?.[studentId]) return
+        activeClassRecord.value.students[studentId].adjustedGrade = newVal
+        triggerRef(activeClassRecord)
+        await classService.patchStudent(activeClassRecord.value.classId, studentId, {
+          adjustedGrade: newVal
+        })
+        await refreshGrades()
+      }
+    )
   } catch (err) {
     console.error('[useGradebook] adjustStudentGrade failed:', err)
     const { alert } = useMessage()

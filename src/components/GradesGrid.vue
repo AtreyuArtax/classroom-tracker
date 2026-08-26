@@ -155,34 +155,63 @@
             :class="{ 'grades__td--highlighted': highlightedColumnId === 'name' }"
             @click="$emit('open-dossier', student.studentId)"
           >
-            <div class="grades__student-name-group" :title="`${student.lastName}, ${student.firstName}`">
-              <div class="grades__student-name-container">
-                <div class="grades__student-lastname">{{ student.lastName }}</div>
-                <TestDayWarning 
-                  v-if="studentAbsenceTotals[student.studentId]?.testDays >= 2" 
-                  :count="studentAbsenceTotals[student.studentId].testDays" 
-                />
-              </div>
-              <div class="grades__student-firstname-row">
+            <div class="grades__student-cell" :title="`${student.lastName}, ${student.firstName}`">
+              <div class="grades__student-name-text">
+                <span class="grades__student-lastname">{{ student.lastName }},</span>
                 <span class="grades__student-firstname">{{ student.firstName }}</span>
+              </div>
+              <div class="grades__student-badges">
                 <span 
                   v-if="(student.gradeLevel || student.courseCode) && availableSubCohorts.length > 1" 
                   class="sbar-student-grade-tag"
                 >
                   {{ student.gradeLevel ? student.gradeLevel.replace('Grade ', 'Gr. ') : student.courseCode }}
                 </span>
+                <TestDayWarning 
+                  v-if="studentAbsenceTotals[student.studentId]?.testDays >= 2" 
+                  :count="studentAbsenceTotals[student.studentId].testDays" 
+                />
               </div>
-              <div class="grades__sparkline-mini" v-if="studentTrends[student.studentId]?.length > 1 && !props.isPrivacyMode">
-                <svg width="80" height="14" viewBox="0 0 80 14">
-                  <path
-                    fill="none"
-                    :stroke="getGradeColor(classGrades[student.studentId]?.overallGrade)"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    :d="getSparklinePath(studentTrends[student.studentId], 80, 14)"
-                  />
-                </svg>
+
+              <!-- Sparkline Trend & Absence Hover Preview Tooltip -->
+              <div 
+                v-if="!props.isPrivacyMode && (studentTrends[student.studentId]?.length > 1 || studentAbsenceTotals[student.studentId]?.testDays >= 2)" 
+                class="grades__student-hover-card"
+              >
+                <div class="grades__hover-card-header">
+                  <span class="grades__hover-card-name">{{ student.lastName }}, {{ student.firstName }}</span>
+                  <span 
+                    class="grades__hover-card-grade"
+                    :style="{ color: getGradeColor(classGrades[student.studentId]?.overallGrade) }"
+                  >
+                    {{ formatGrade(classGrades[student.studentId]?.overallGrade) }}
+                  </span>
+                </div>
+                <div class="grades__hover-card-body">
+                  <div v-if="studentTrends[student.studentId]?.length > 1" class="grades__hover-card-trend-section">
+                    <div class="grades__hover-card-meta">
+                      <span class="grades__hover-card-trend-label">Recent Trend</span>
+                      <span class="grades__hover-card-count">{{ studentTrends[student.studentId].length }} items</span>
+                    </div>
+                    <svg class="grades__hover-card-svg" width="186" height="24" viewBox="0 0 186 24">
+                      <path
+                        fill="none"
+                        :stroke="getGradeColor(classGrades[student.studentId]?.overallGrade)"
+                        stroke-width="2.5"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        :d="getSparklinePath(studentTrends[student.studentId], 186, 24)"
+                      />
+                    </svg>
+                  </div>
+                  <div 
+                    v-if="studentAbsenceTotals[student.studentId]?.testDays >= 2"
+                    class="grades__hover-card-absence-note"
+                  >
+                    <span class="grades__hover-card-amber-dot"></span>
+                    <span>Missed {{ studentAbsenceTotals[student.studentId].testDays }} test days</span>
+                  </div>
+                </div>
               </div>
             </div>
           </td>
@@ -211,13 +240,14 @@
               />
             </div>
             <div v-else class="grades__overall-cell-content">
-              <span>{{ formatGrade(classGrades[student.studentId]?.overallGrade) }}</span>
+              <span v-if="classGrades[student.studentId]?.isGradeAdjusted" class="grades__overall-spacer" aria-hidden="true"></span>
+              <span class="grades__overall-value">{{ formatGrade(classGrades[student.studentId]?.overallGrade) }}</span>
               <span 
                 v-if="classGrades[student.studentId]?.isGradeAdjusted" 
                 class="grades__adjusted-asterisk"
                 :title="'Adjusted (Calculated: ' + formatGrade(classGrades[student.studentId]?.calculatedOverallGrade) + ')'"
               >
-                *
+                <Asterisk :size="10" :stroke-width="2.5" />
               </span>
             </div>
           </td>
@@ -414,7 +444,8 @@ import { getAssessmentPercentage } from '../db/gradebookService.js'
 import { formatLocalDisplay } from '../utils/dates.js'
 import { 
   Plus, Pencil, XCircle, AlertCircle, Trash2, X, MoreVertical, 
-  ChevronUp, ChevronDown, Copy, Calendar, RotateCcw, BarChart2, NotebookPen 
+  ChevronUp, ChevronDown, Copy, Calendar, RotateCcw, BarChart2, NotebookPen,
+  Asterisk
 } from 'lucide-vue-next'
 import TestDayWarning from './TestDayWarning.vue'
 import GradesAttemptHistoryModal from './grades/GradesAttemptHistoryModal.vue'
@@ -1106,9 +1137,9 @@ function copyAssessmentGrades(assessment) {
   left: 0;
   z-index: 11;
   background: var(--surface);
-  width: 190px;
-  min-width: 190px;
-  max-width: 190px;
+  width: 235px;
+  min-width: 235px;
+  max-width: 235px;
   box-sizing: border-box;
   border-right: 1px solid var(--border);
   box-shadow: 2px 0 5px -2px rgba(0,0,0,0.1);
@@ -1131,7 +1162,7 @@ function copyAssessmentGrades(assessment) {
 .grades__th-overall,
 .grades__td-overall {
   position: sticky;
-  left: 190px;
+  left: 235px;
   z-index: 11;
   background: var(--surface);
   width: 90px;
@@ -1277,10 +1308,10 @@ function copyAssessmentGrades(assessment) {
 }
 
 .grades__grid td {
-  padding: 10px 8px;
+  padding: 6px 8px;
   border-bottom: 1px solid var(--border);
   font-size: 0.85rem;
-  height: 48px;
+  height: 38px;
 }
 
 .grades__td-assessment {
@@ -1291,8 +1322,13 @@ function copyAssessmentGrades(assessment) {
 
 .grades__td-student {
   font-weight: 600;
-  padding-left: 16px;
+  padding-left: 14px;
+  padding-right: 8px;
   cursor: pointer;
+}
+
+.grades__td-student:hover {
+  z-index: 25;
 }
 
 .grades__td-overall {
@@ -1307,17 +1343,34 @@ function copyAssessmentGrades(assessment) {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 2px;
-  position: relative;
+  width: 100%;
+}
+
+.grades__overall-value {
+  font-weight: 700;
+  text-align: center;
+}
+
+.grades__overall-spacer,
+.grades__adjusted-asterisk {
+  width: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
 .grades__adjusted-asterisk {
-  color: var(--primary);
-  font-weight: 900;
-  font-size: 1.15rem;
-  line-height: 0;
+  color: var(--primary, #2563eb);
+  cursor: help;
+  opacity: 0.85;
   margin-top: -6px;
-  margin-left: 1px;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+.grades__adjusted-asterisk:hover {
+  opacity: 1;
+  transform: scale(1.25);
 }
 
 .grades__cell-placeholder {
@@ -1637,43 +1690,158 @@ function copyAssessmentGrades(assessment) {
   border-radius: 4px;
 }
 
-.grades__student-name-group {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  width: 100%;
-}
-
-.grades__student-name-container {
+.grades__student-cell {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 6px;
   width: 100%;
+  position: relative;
+}
+
+.grades__student-name-text {
+  display: block;
+  min-width: 0;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.25;
 }
 
 .grades__student-lastname {
   font-weight: 700;
-  color: var(--text-primary);
+  color: var(--text);
   font-size: 0.86rem;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  flex: 1;
-  min-width: 0;
+  margin-right: 4px;
 }
 
 .grades__student-firstname {
   font-weight: 500;
   color: var(--text-secondary);
-  font-size: 0.78rem;
+  font-size: 0.82rem;
+}
+
+.grades__student-badges {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.grades__student-hover-card {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 50;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 210px;
+  box-sizing: border-box;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-4px);
+  /* Dismiss quickly with no delay on mouseleave */
+  transition: opacity 0.12s ease 0s, transform 0.12s ease 0s, visibility 0.12s 0s;
+  pointer-events: none;
+}
+
+.grades__td-student:hover .grades__student-hover-card {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  /* 350ms delay before appearing so scrolling past rows never triggers it */
+  transition: opacity 0.18s cubic-bezier(0.4, 0, 0.2, 1) 350ms, transform 0.18s cubic-bezier(0.4, 0, 0.2, 1) 350ms, visibility 0.18s 350ms;
+}
+
+.grades__hover-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 6px;
+}
+
+.grades__hover-card-name {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.grades__sparkline-mini svg {
+.grades__hover-card-grade {
+  font-size: 0.86rem;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.grades__hover-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.grades__hover-card-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.grades__hover-card-trend-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.grades__hover-card-count {
+  font-size: 0.70rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.grades__hover-card-svg {
   display: block;
+  width: 100%;
+}
+
+.grades__hover-card-trend-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.grades__hover-card-absence-note {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px;
+  border-radius: 4px;
+  background: rgba(245, 158, 11, 0.1);
+  color: #b45309;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.grades__hover-card-amber-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #f59e0b;
+  box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.3);
+  flex-shrink: 0;
 }
 
 .grades__icon-btn {

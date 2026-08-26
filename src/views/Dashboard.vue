@@ -51,8 +51,6 @@
           <span class="dashboard__qr-label">Scanner</span>
         </button>
 
-        <UndoButton />
-
         <!-- Toggle Unassigned Roster Button -->
         <button 
           v-if="activeClass"
@@ -64,6 +62,8 @@
           <Users :size="20" />
           <span class="dashboard__pool-toggle-label">Unassigned</span>
         </button>
+
+        <UndoButton v-if="activeClass" variant="dashboard" />
       </div>
     </header>
 

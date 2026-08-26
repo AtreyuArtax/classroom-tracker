@@ -1,26 +1,36 @@
 <template>
-  <Transition name="fade-undo">
-    <button
-      v-if="canUndo"
-      class="undo-btn"
-      aria-label="Undo last action"
-      @click="onUndo"
-    >
-      <span class="undo-btn__icon" aria-hidden="true">↩</span>
-      <span class="undo-btn__label">Undo</span>
-    </button>
-  </Transition>
+  <button
+    class="undo-btn"
+    :class="{ 
+      'undo-btn--dashboard': variant === 'dashboard',
+      'undo-btn--disabled': !canUndo
+    }"
+    :disabled="!canUndo"
+    :title="canUndo ? 'Undo last action (⌘Z / Ctrl+Z)' : 'Nothing to undo (⌘Z / Ctrl+Z)'"
+    aria-label="Undo last action"
+    @click="onUndo"
+  >
+    <Undo2 :size="variant === 'dashboard' ? 18 : 16" class="undo-btn__icon" />
+  </button>
 </template>
 
 <script setup>
 /**
  * UndoButton.vue
  *
- * Rendered in the Dashboard header.
- * Conditionally visible only when the undo stack contains reversible actions.
+ * Permanent, compact icon button.
+ * Always present in fixed slot; disabled/muted when stack is empty to prevent layout shifts.
  */
 
+import { Undo2 } from 'lucide-vue-next'
 import { useUndo } from '../composables/useUndo.js'
+
+defineProps({
+  variant: {
+    type: String,
+    default: 'toolbar' // 'toolbar' | 'dashboard'
+  }
+})
 
 const { undo, canUndo } = useUndo()
 
@@ -32,46 +42,59 @@ async function onUndo() {
 
 <style scoped>
 .undo-btn {
-  display:         flex;
-  align-items:     center;
-  gap:             5px;
-  padding:         8px 14px;
-  border:          none;
-  border-radius:   var(--radius-md);
-  background:      var(--surface);
-  box-shadow:      var(--shadow-sm);
-  cursor:          pointer;
-  min-height:      44px;
-  min-width:       44px;
-
-  color:           var(--primary);
-  font-size:       0.9rem;
-  font-weight:     600;
-
-  transition: opacity 0.2s ease, box-shadow 0.15s ease, transform 0.1s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  color: var(--primary);
+  cursor: pointer;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  transition: all 0.15s ease;
 }
 
-.undo-btn:hover {
+.undo-btn:hover:not(:disabled) {
   background: var(--surface-hover, rgba(0, 0, 0, 0.04));
+  border-color: var(--primary-light, rgba(37, 99, 235, 0.35));
+  color: var(--primary-dark, var(--primary));
+  transform: scale(1.04);
 }
 
-.undo-btn:active {
-  transform:  scale(0.95);
-  box-shadow: none;
+.undo-btn:active:not(:disabled) {
+  transform: scale(0.96);
 }
 
-.undo-btn__icon {
-  font-size: 1.1rem;
+.undo-btn--disabled,
+.undo-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+  color: var(--text-secondary);
+  border-color: var(--border);
+  background: var(--surface);
 }
 
-.fade-undo-enter-active,
-.fade-undo-leave-active {
-  transition: opacity 0.2s ease, transform 0.2s ease;
+.undo-btn--dashboard {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--bg-secondary);
+  color: var(--text);
 }
 
-.fade-undo-enter-from,
-.fade-undo-leave-to {
-  opacity: 0;
-  transform: scale(0.9);
+.undo-btn--dashboard:hover:not(:disabled) {
+  background: var(--surface-hover, var(--surface));
+  color: var(--primary);
+  border-color: var(--primary-light, rgba(37, 99, 235, 0.35));
+}
+
+.undo-btn--dashboard.undo-btn--disabled {
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  opacity: 0.35;
 }
 </style>

@@ -20,6 +20,7 @@
 
       <!-- Action Buttons Top Right -->
       <div class="assessment-header__actions">
+        <UndoButton />
         <button class="btn-secondary-sm" title="Edit Assessment Setup" @click="$emit('start-edit', currentAssessment)">
           <Edit2 :size="13" /> Edit Setup
         </button>
@@ -323,6 +324,7 @@ import { formatLocalDisplay } from '../../utils/dates.js'
 import { removeAttempt, updateAttemptComment } from '../../composables/useGradebook.js'
 import { useMessage } from '../../composables/useMessage.js'
 import GradesAttemptHistoryModal from './GradesAttemptHistoryModal.vue'
+import UndoButton from '../UndoButton.vue'
 
 const { confirm } = useMessage()
 

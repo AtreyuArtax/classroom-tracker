@@ -10,6 +10,7 @@
       :attendance-rate="overallStats.attendanceRate"
     >
       <template #actions>
+        <UndoButton />
         <button class="student-360__action-btn" title="Email Progress Report" @click="showEmailModal = true">
           <Mail :size="18" />
         </button>
@@ -420,6 +421,7 @@ const Student360EmailModal        = defineAsyncComponent(() => import('./Student
 const Student360PrintModal        = defineAsyncComponent(() => import('./Student360PrintModal.vue'))
 const Student360AttemptsModal     = defineAsyncComponent(() => import('./Student360AttemptsModal.vue'))
 import BaseModal from '../BaseModal.vue'
+import UndoButton from '../UndoButton.vue'
 const GradesAssessmentDetailSBAR  = defineAsyncComponent(() => import('../grades/GradesAssessmentDetailSBAR.vue'))
 import { getSBARLevelBadge } from '../../db/gradebook/gradeCalcSBAR.js'
 

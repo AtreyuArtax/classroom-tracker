@@ -21,6 +21,7 @@
         </div>
 
         <div class="sbar-header-actions">
+          <UndoButton />
           <button class="sbar-btn sbar-btn--secondary" @click="$emit('start-edit', currentAssessment)">
             <Edit2 :size="14" /> Edit Setup
           </button>
@@ -301,6 +302,7 @@ import { enterGradeSBAR, gradeMap, activeClassRecord } from '../../composables/u
 import { getSBARLevelBadge } from '../../db/gradebookService.js'
 import { getEffectiveClassRecord, getUnitGradeLevel } from '../../composables/useElementary.js'
 import { activeSubjectId } from '../../composables/useClassroomState.js'
+import UndoButton from '../UndoButton.vue'
 
 const props = defineProps({
   currentAssessment: { type: Object, required: true },

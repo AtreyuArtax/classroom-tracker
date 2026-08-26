@@ -241,17 +241,17 @@
           <tr v-for="student in sortedRoster" :key="student.studentId" class="sbar-row">
             <!-- Student Name Column -->
             <td class="sticky-col sticky-col--name sbar-student-cell" @click="$emit('open-dossier', student.studentId)">
-              <div class="sbar-student-name-group" :title="`${student.lastName}, ${student.firstName}`">
-                <div class="sbar-student-lastname">{{ student.lastName }}</div>
-                <div class="sbar-student-firstname-row">
+              <div class="sbar-student-cell-inner" :title="`${student.lastName}, ${student.firstName}`">
+                <div class="sbar-student-name-text">
+                  <span class="sbar-student-lastname">{{ student.lastName }},</span>
                   <span class="sbar-student-firstname">{{ student.firstName }}</span>
-                  <span 
-                    v-if="(student.gradeLevel || student.courseCode) && availableGradeFilters.length > 1" 
-                    class="sbar-student-grade-tag"
-                  >
-                    {{ student.gradeLevel ? student.gradeLevel.replace('Grade ', 'Gr. ') : student.courseCode }}
-                  </span>
                 </div>
+                <span 
+                  v-if="(student.gradeLevel || student.courseCode) && availableGradeFilters.length > 1" 
+                  class="sbar-student-grade-tag"
+                >
+                  {{ student.gradeLevel ? student.gradeLevel.replace('Grade ', 'Gr. ') : student.courseCode }}
+                </span>
               </div>
             </td>
 
@@ -1220,9 +1220,9 @@ thead th.sticky-col {
 
 .sticky-col--name {
   left: 0;
-  width: 180px;
-  min-width: 180px;
-  max-width: 180px;
+  width: 235px;
+  min-width: 235px;
+  max-width: 235px;
   box-sizing: border-box;
   text-align: left !important;
   border-right: 1px solid var(--border) !important;
@@ -1230,7 +1230,7 @@ thead th.sticky-col {
 }
 
 .sticky-col--mastery {
-  left: 180px;
+  left: 235px;
   width: 120px;
   min-width: 120px;
   max-width: 120px;
@@ -1255,7 +1255,9 @@ thead th.sticky-col {
 }
 
 .sbar-row td {
-  padding: 10px 12px;
+  padding: 6px 8px;
+  height: 38px;
+  box-sizing: border-box;
   border-bottom: 1px solid var(--border);
   border-right: 1px solid var(--border);
   text-align: center;
@@ -1264,40 +1266,39 @@ thead th.sticky-col {
 
 .sbar-student-cell {
   cursor: pointer;
+  padding-left: 14px !important;
+  padding-right: 8px !important;
 }
 
-.sbar-student-name-group {
+.sbar-student-cell-inner {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
-  line-height: 1.2;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  width: 100%;
+}
+
+.sbar-student-name-text {
+  display: block;
+  min-width: 0;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.25;
 }
 
 .sbar-student-lastname {
   font-weight: 700;
-  font-size: 0.88rem;
+  font-size: 0.86rem;
   color: var(--text);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.sbar-student-firstname-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 4px;
-  width: 100%;
+  margin-right: 4px;
 }
 
 .sbar-student-firstname {
-  font-size: 0.78rem;
+  font-size: 0.82rem;
+  font-weight: 500;
   color: var(--text-secondary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  min-width: 0;
-  flex: 1;
 }
 
 .sbar-student-grade-tag {

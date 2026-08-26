@@ -1,13 +1,11 @@
 <template>
-  <div class="test-day-warning" :title="`Missed ${count} assessment/test days`">
-    <CalendarX :size="11" />
-    <span class="test-day-warning__count">{{ count }}</span>
+  <div class="test-day-dot" aria-label="Missed assessment days">
+    <span class="test-day-dot__circle"></span>
+    <span class="test-day-dot__count">{{ count }}</span>
   </div>
 </template>
 
 <script setup>
-import { CalendarX } from 'lucide-vue-next'
-
 defineProps({
   count: {
     type: Number,
@@ -17,30 +15,33 @@ defineProps({
 </script>
 
 <style scoped>
-.test-day-warning {
+.test-day-dot {
   display: inline-flex;
   align-items: center;
   gap: 3px;
-  padding: 1px 5px;
-  border-radius: 10px;
-  background-color: rgba(245, 158, 11, 0.14);
-  border: 1px solid rgba(245, 158, 11, 0.32);
-  color: #d97706;
-  font-size: 0.65rem;
-  font-weight: 700;
-  cursor: help;
+  color: #b45309;
   white-space: nowrap;
   line-height: 1;
   flex-shrink: 0;
-  transition: all 0.2s ease;
+  padding: 1px 4px;
+  border-radius: 4px;
+  pointer-events: none; /* Allows the entire student cell to handle hover & click cleanly */
 }
 
-.test-day-warning:hover {
-  background-color: rgba(245, 158, 11, 0.24);
-  border-color: rgba(245, 158, 11, 0.5);
+.test-day-dot__circle {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #f59e0b;
+  box-shadow: 0 0 0 1.5px rgba(245, 158, 11, 0.25);
+  flex-shrink: 0;
+  display: inline-block;
 }
 
-.test-day-warning__count {
+.test-day-dot__count {
+  font-size: 0.72rem;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
+  color: #b45309;
 }
 </style>

@@ -180,6 +180,8 @@
                 </template>
               </div>
 
+              <UndoButton />
+
               <button class="grades__btn-settings" title="Print Final Grades Grid" @click="showPrintGridModal = true">
                 <Printer :size="18" />
               </button>
@@ -329,6 +331,7 @@ const GradesAssessmentDetailSBAR   = defineAsyncComponent(() => import('../compo
 const GradesMissingModal           = defineAsyncComponent(() => import('../components/grades/GradesMissingModal.vue'))
 import GradesContextMenu from '../components/grades/GradesContextMenu.vue'
 import ClassSwitcher from '../components/ClassSwitcher.vue'
+import UndoButton from '../components/UndoButton.vue'
 import { useMessage } from '../composables/useMessage.js'
 import { getAssessmentPercentage } from '../db/gradebookService.js'
 import { formatLocalDate } from '../utils/dates.js'
