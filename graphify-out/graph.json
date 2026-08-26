@@ -3347,7 +3347,7 @@
       "label": "if()",
       "file_type": "code",
       "source_file": "src/components/StudentSidebar.vue",
-      "source_location": "L159",
+      "source_location": "L157",
       "_origin": "ast",
       "id": "components_studentsidebar_if",
       "community": 55,
@@ -25604,9 +25604,9 @@
       "source_file": "src/composables/useGradebook.js",
       "source_location": "L13",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "composables_usegradebook",
-      "target": "composables_useclassroomstate_academicterms",
-      "confidence_score": 1.0
+      "target": "composables_useclassroomstate_academicterms"
     },
     {
       "relation": "imports",
@@ -25615,9 +25615,9 @@
       "source_file": "src/composables/useGradebook.js",
       "source_location": "L13",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "composables_usegradebook",
-      "target": "composables_useclassroomstate_selectedyear",
-      "confidence_score": 1.0
+      "target": "composables_useclassroomstate_selectedyear"
     },
     {
       "relation": "imports",
@@ -25626,9 +25626,9 @@
       "source_file": "src/composables/useGradebook.js",
       "source_location": "L13",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "composables_usegradebook",
-      "target": "composables_useclassroomstate_selectedsemester",
-      "confidence_score": 1.0
+      "target": "composables_useclassroomstate_selectedsemester"
     },
     {
       "relation": "imports",
@@ -27258,9 +27258,9 @@
       "source_file": "src/composables/useGradebook.js",
       "source_location": "L16",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "composables_usegradebook",
-      "target": "utils_dates_getschoolyearfromdate",
-      "confidence_score": 1.0
+      "target": "utils_dates_getschoolyearfromdate"
     },
     {
       "relation": "imports_from",
@@ -33788,9 +33788,9 @@
       "source_file": "src/test_sbar_math.js",
       "source_location": "L36",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_test_sbar_math",
-      "target": "utils_dates",
-      "confidence_score": 1.0
+      "target": "utils_dates"
     },
     {
       "relation": "imports",
@@ -33799,9 +33799,9 @@
       "source_file": "src/test_sbar_math.js",
       "source_location": "L36",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_test_sbar_math",
-      "target": "utils_dates_getschoolyearfromdate",
-      "confidence_score": 1.0
+      "target": "utils_dates_getschoolyearfromdate"
     },
     {
       "relation": "imports",
@@ -33810,9 +33810,9 @@
       "source_file": "src/test_sbar_math.js",
       "source_location": "L36",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_test_sbar_math",
-      "target": "utils_dates_getsemesterfromdate",
-      "confidence_score": 1.0
+      "target": "utils_dates_getsemesterfromdate"
     },
     {
       "relation": "contains",
@@ -33860,9 +33860,9 @@
       "source_file": "src/utils/dates.js",
       "source_location": "L96",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "utils_dates",
-      "target": "utils_dates_getschoolyearfromdate",
-      "confidence_score": 1.0
+      "target": "utils_dates_getschoolyearfromdate"
     },
     {
       "relation": "contains",
@@ -33870,9 +33870,9 @@
       "source_file": "src/utils/dates.js",
       "source_location": "L120",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "utils_dates",
-      "target": "utils_dates_getsemesterfromdate",
-      "confidence_score": 1.0
+      "target": "utils_dates_getsemesterfromdate"
     },
     {
       "relation": "contains",
@@ -33924,9 +33924,9 @@
       "source_file": "src/utils/dates.js",
       "source_location": "L98",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "utils_dates_getschoolyearfromdate",
-      "target": "utils_dates_parselocal",
-      "confidence_score": 1.0
+      "target": "utils_dates_parselocal"
     },
     {
       "relation": "calls",
@@ -33935,9 +33935,9 @@
       "source_file": "src/utils/dates.js",
       "source_location": "L122",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "utils_dates_getsemesterfromdate",
-      "target": "utils_dates_parselocal",
-      "confidence_score": 1.0
+      "target": "utils_dates_parselocal"
     },
     {
       "relation": "imports",
@@ -33957,9 +33957,9 @@
       "source_file": "src/utils/dates.js",
       "source_location": "L97",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "utils_dates_getschoolyearfromdate",
-      "target": "utils_dates_getcurrentschoolyear",
-      "confidence_score": 1.0
+      "target": "utils_dates_getcurrentschoolyear"
     },
     {
       "relation": "imports",
@@ -34883,5 +34883,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "fcb3f59297902ca3ffe72822e034f6c0dd6b7f4c"
+  "built_at_commit": "5a8503533c0d23032adec988773c337bef58109b"
 }

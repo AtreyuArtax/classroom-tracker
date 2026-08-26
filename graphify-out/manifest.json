@@ -120,8 +120,8 @@
     "semantic_hash": "8e50e6b9c81d179509f72782b70b61fa"
   },
   "src/components/StudentSidebar.vue": {
-    "mtime": 1787707849.1895905,
-    "ast_hash": "d2c48c29bf8ed503548c033dedb908e6",
+    "mtime": 1787712036.088942,
+    "ast_hash": "f7ff2fee053a92c0c315a2ee4b9c88a0",
     "semantic_hash": ""
   },
   "src/components/StudentTrendGraph.vue": {

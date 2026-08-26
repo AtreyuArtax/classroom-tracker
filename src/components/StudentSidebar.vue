@@ -1,16 +1,15 @@
 <template>
-  <div>
+  <aside class="student-sidebar" :class="{ 'student-sidebar--collapsed': isCollapsed }">
     <!-- Show Sidebar Handle (Visible only when collapsed) -->
     <button 
       v-if="isCollapsed"
+      type="button"
       class="student-sidebar__show-btn"
       title="Show Sidebar"
       @click="$emit('toggle-collapse')"
     >
       <ChevronRight :size="18" />
     </button>
-
-    <aside class="student-sidebar" :class="{ 'student-sidebar--collapsed': isCollapsed }">
     <!-- Sidebar Header -->
     <div class="student-sidebar__header">
       <div class="student-sidebar__header-toolbar">
@@ -103,7 +102,6 @@
       </ul>
     </div>
     </aside>
-  </div>
 </template>
 
 <script setup>
@@ -213,17 +211,24 @@ function getSparklinePath(data, width, height) {
   flex-direction: column;
   flex-shrink: 0;
   width: 200px; /* Streamlined compact width */
+  min-width: 0;
   height: 100%;
+  position: relative;
   z-index: 10;
-  background: var(--surface);
-  transition: transform 0.3s ease, width 0.3s ease;
+  transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1), min-width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .student-sidebar--collapsed {
-  width: 0;
-  overflow: hidden;
-  border-right: none;
+  width: 0 !important;
+  min-width: 0 !important;
+  max-width: 0 !important;
+  border-right: none !important;
+  overflow: visible;
   pointer-events: none;
+}
+
+.student-sidebar--collapsed > *:not(.student-sidebar__show-btn) {
+  display: none !important;
 }
 
 @media (max-width: 1280px) {
@@ -236,9 +241,9 @@ function getSparklinePath(data, width, height) {
 .student-sidebar__show-btn {
   position: fixed;
   left: 0;
-  top: 80px; /* Position below header */
-  width: 32px;
-  height: 48px;
+  top: 90px; /* Position below header */
+  width: 28px;
+  height: 44px;
   background: var(--surface);
   border: 1px solid var(--border);
   border-left: none;
@@ -249,13 +254,14 @@ function getSparklinePath(data, width, height) {
   color: var(--primary);
   cursor: pointer;
   z-index: 100;
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--shadow-md, 0 4px 6px -1px rgba(0, 0, 0, 0.1));
+  pointer-events: auto;
   transition: all 0.2s;
 }
 
 .student-sidebar__show-btn:hover {
-  width: 36px;
-  background: var(--primary-light);
+  width: 34px;
+  background: var(--primary-light, rgba(37, 99, 235, 0.1));
 }
 
 .student-sidebar__header {
