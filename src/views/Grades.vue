@@ -272,7 +272,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted, nextTick } from 'vue'
+import { ref, computed, watch, onMounted, nextTick, defineAsyncComponent } from 'vue'
 import { useClassroom } from '../composables/useClassroom.js'
 import { 
   activeClassRecord, 
@@ -317,16 +317,16 @@ import { formatGrade } from '../utils/gradeColors.js'
 import { getSBARLevelBadge } from '../db/gradebookService.js'
 import { useAttendanceInsights } from '../composables/useAttendanceInsights.js'
 import { Plus, BarChart2, Settings, Printer, LayoutGrid, Zap, ArrowDownUp, Percent, Hash } from 'lucide-vue-next'
-import Student360 from '../components/dossier/Student360.vue'
+const Student360                   = defineAsyncComponent(() => import('../components/dossier/Student360.vue'))
 import GradesGrid from '../components/GradesGrid.vue'
 import GradesGridSBAR from '../components/grades/GradesGridSBAR.vue'
-import GradesAnalyticsPanel from '../components/GradesAnalyticsPanel.vue'
-import GradesAnalyticsPanelSBAR from '../components/grades/GradesAnalyticsPanelSBAR.vue'
-import PrintGradesGridModal from '../components/PrintGradesGridModal.vue'
+const GradesAnalyticsPanel         = defineAsyncComponent(() => import('../components/GradesAnalyticsPanel.vue'))
+const GradesAnalyticsPanelSBAR     = defineAsyncComponent(() => import('../components/grades/GradesAnalyticsPanelSBAR.vue'))
+const PrintGradesGridModal         = defineAsyncComponent(() => import('../components/PrintGradesGridModal.vue'))
 import StudentSidebar from '../components/StudentSidebar.vue'
-import GradesAssessmentDetailView from '../components/grades/GradesAssessmentDetailView.vue'
-import GradesAssessmentDetailSBAR from '../components/grades/GradesAssessmentDetailSBAR.vue'
-import GradesMissingModal from '../components/grades/GradesMissingModal.vue'
+const GradesAssessmentDetailView   = defineAsyncComponent(() => import('../components/grades/GradesAssessmentDetailView.vue'))
+const GradesAssessmentDetailSBAR   = defineAsyncComponent(() => import('../components/grades/GradesAssessmentDetailSBAR.vue'))
+const GradesMissingModal           = defineAsyncComponent(() => import('../components/grades/GradesMissingModal.vue'))
 import GradesContextMenu from '../components/grades/GradesContextMenu.vue'
 import ClassSwitcher from '../components/ClassSwitcher.vue'
 import { useMessage } from '../composables/useMessage.js'

@@ -120,8 +120,8 @@
     "semantic_hash": "8e50e6b9c81d179509f72782b70b61fa"
   },
   "src/components/StudentSidebar.vue": {
-    "mtime": 1787712036.088942,
-    "ast_hash": "f7ff2fee053a92c0c315a2ee4b9c88a0",
+    "mtime": 1787714480.1795855,
+    "ast_hash": "9d3b0e56ca8a0afbb05ef5f04a3f7727",
     "semantic_hash": ""
   },
   "src/components/StudentTrendGraph.vue": {
@@ -180,8 +180,8 @@
     "semantic_hash": ""
   },
   "src/components/dossier/Student360.vue": {
-    "mtime": 1787708000.1207645,
-    "ast_hash": "fcfc0a61844ecbd99efc14fbe91f65a8",
+    "mtime": 1787714464.046566,
+    "ast_hash": "8993a88dcad553c438a292dbb3f69eeb",
     "semantic_hash": ""
   },
   "src/components/dossier/Student360Header.vue": {
@@ -240,8 +240,8 @@
     "semantic_hash": "68f077cda9561ec51fbe56d0aa61fb3e"
   },
   "src/composables/useClassroom.js": {
-    "mtime": 1787713277.04327,
-    "ast_hash": "0417e37cb54e478f64a244808eadebab",
+    "mtime": 1787714492.5680509,
+    "ast_hash": "feac2feb2f88863f703cf8bb12482128",
     "semantic_hash": ""
   },
   "src/composables/useGradebook.js": {
@@ -335,18 +335,18 @@
     "semantic_hash": "322ce1010d35f76a380b2df551af302f"
   },
   "src/views/Dashboard.vue": {
-    "mtime": 1787708594.5248125,
-    "ast_hash": "936c2fa75cea35232308dae05a273aa9",
+    "mtime": 1787714417.1846294,
+    "ast_hash": "2db98573b1e9a072e2c472910ee187b9",
     "semantic_hash": ""
   },
   "src/views/Grades.vue": {
-    "mtime": 1787710832.3474295,
-    "ast_hash": "02ce64367eb7011e69c687e8b1d7bf6f",
+    "mtime": 1787714683.5818279,
+    "ast_hash": "3e2a1cd779a85bec1b7e062996a88735",
     "semantic_hash": ""
   },
   "src/views/Reports.vue": {
-    "mtime": 1787714198.9197068,
-    "ast_hash": "ef758a0ab56ad8b7ad8e37b7556eb7d9",
+    "mtime": 1787714443.2998743,
+    "ast_hash": "9d175a45518bb1dcb2beb261b252174c",
     "semantic_hash": ""
   },
   "src/views/ScanStation.vue": {
@@ -355,8 +355,8 @@
     "semantic_hash": ""
   },
   "src/views/Setup.vue": {
-    "mtime": 1787446144.0159214,
-    "ast_hash": "b1663ca6366e78f4d00044aeabf93a84",
+    "mtime": 1787714453.9741428,
+    "ast_hash": "a2b8d6cafe8534798c4cbb1bc828ceff",
     "semantic_hash": ""
   },
   "tmp/test_dates.js": {

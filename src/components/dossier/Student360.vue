@@ -374,7 +374,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted, onUnmounted, toRef } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted, toRef, defineAsyncComponent } from 'vue'
 
 defineOptions({ inheritAttrs: false })
 
@@ -416,11 +416,11 @@ import StudentGradeTrend from './StudentGradeTrend.vue'
 import StudentAcademicsTab from './StudentAcademicsTab.vue'
 import Student360ProfileTab from './Student360ProfileTab.vue'
 import Student360HistoryTab from './Student360HistoryTab.vue'
-import Student360EmailModal from './Student360EmailModal.vue'
-import Student360PrintModal from './Student360PrintModal.vue'
-import Student360AttemptsModal from './Student360AttemptsModal.vue'
+const Student360EmailModal        = defineAsyncComponent(() => import('./Student360EmailModal.vue'))
+const Student360PrintModal        = defineAsyncComponent(() => import('./Student360PrintModal.vue'))
+const Student360AttemptsModal     = defineAsyncComponent(() => import('./Student360AttemptsModal.vue'))
 import BaseModal from '../BaseModal.vue'
-import GradesAssessmentDetailSBAR from '../grades/GradesAssessmentDetailSBAR.vue'
+const GradesAssessmentDetailSBAR  = defineAsyncComponent(() => import('../grades/GradesAssessmentDetailSBAR.vue'))
 import { getSBARLevelBadge } from '../../db/gradebook/gradeCalcSBAR.js'
 
 import { useClassroom } from '../../composables/useClassroom.js'

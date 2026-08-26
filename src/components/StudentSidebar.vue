@@ -61,22 +61,22 @@
               <span class="student-sidebar__roster-lastname">{{ student.lastName }}</span>
               <div class="student-sidebar__roster-subline">
                 <span class="student-sidebar__roster-firstname">{{ student.firstName }}</span>
-                <span v-if="availableSubCohorts.length > 1 && getStudentTag(student)" class="student-sidebar__course-tag">{{ getStudentTag(student) }}</span>
+                <span v-if="availableSubCohorts.length > 1 && studentDisplayMap[student.studentId]?.tag" class="student-sidebar__course-tag">{{ studentDisplayMap[student.studentId].tag }}</span>
               </div>
               
               <!-- Sparkline (Only if showAcademics and trends exist) -->
               <div 
-                v-if="showAcademics && !isPrivacyMode && studentTrends && studentTrends[student.studentId]?.length > 1" 
+                v-if="showAcademics && !isPrivacyMode && studentDisplayMap[student.studentId]?.sparklinePath" 
                 class="student-sidebar__sparkline-mini"
               >
                 <svg width="60" height="12" viewBox="0 0 60 12">
                   <path
                     fill="none"
-                    :stroke="getGradeColor(studentTrends[student.studentId][studentTrends[student.studentId].length - 1])"
+                    :stroke="studentDisplayMap[student.studentId].sparklineColor"
                     stroke-width="1.5"
                     stroke-linecap="round"
                     stroke-linejoin="round"
-                    :d="getSparklinePath(studentTrends[student.studentId], 60, 12)"
+                    :d="studentDisplayMap[student.studentId].sparklinePath"
                   />
                 </svg>
               </div>
@@ -85,12 +85,12 @@
             <!-- Grade Display (Only if showAcademics is true) -->
             <template v-if="showAcademics">
               <span 
-                v-if="classGrades && classGrades[student.studentId] && classGrades[student.studentId].overallGrade !== null && classGrades[student.studentId].overallGrade !== undefined" 
+                v-if="studentDisplayMap[student.studentId]?.hasGrade" 
                 class="student-sidebar__roster-grade"
                 :class="{ 'student-sidebar__roster-grade--privacy': isPrivacyMode }"
-                :style="{ color: isPrivacyMode ? 'var(--text-secondary)' : (isSBAR ? getSBARLevelBadge(classGrades[student.studentId].overallGrade).color : getGradeColor(classGrades[student.studentId].overallGrade)) }"
+                :style="{ color: isPrivacyMode ? 'var(--text-secondary)' : studentDisplayMap[student.studentId].gradeColor }"
               >
-                {{ isSBAR ? getSBARLevelBadge(classGrades[student.studentId].overallGrade).level : formatGrade(classGrades[student.studentId].overallGrade) }}
+                {{ studentDisplayMap[student.studentId].gradeText }}
               </span>
               <span v-else class="student-sidebar__roster-grade student-sidebar__roster-grade--empty">
                 —
@@ -163,6 +163,47 @@ function getStudentTag(student) {
   }
   return student.courseCode || student.gradeLevel || ''
 }
+
+/** Precomputed dictionary for fast template rendering */
+const studentDisplayMap = computed(() => {
+  const map = {}
+  const list = props.students || []
+  const grades = props.classGrades || {}
+  const trends = props.studentTrends || {}
+  const sbar = isSBAR.value
+
+  for (let i = 0; i < list.length; i++) {
+    const s = list[i]
+    const sId = s.studentId
+    const tag = getStudentTag(s)
+
+    const trendData = trends[sId]
+    let sparklinePath = ''
+    let sparklineColor = ''
+    if (trendData && trendData.length > 1) {
+      sparklinePath = getSparklinePath(trendData, 60, 12)
+      sparklineColor = getGradeColor(trendData[trendData.length - 1])
+    }
+
+    const sg = grades[sId]
+    let gradeText = '—'
+    let gradeColor = 'var(--text-secondary)'
+    const hasGrade = sg && sg.overallGrade !== null && sg.overallGrade !== undefined
+    if (hasGrade) {
+      if (sbar) {
+        const badge = getSBARLevelBadge(sg.overallGrade)
+        gradeText = badge.level
+        gradeColor = badge.color
+      } else {
+        gradeText = formatGrade(sg.overallGrade)
+        gradeColor = getGradeColor(sg.overallGrade)
+      }
+    }
+
+    map[sId] = { tag, sparklinePath, sparklineColor, gradeText, gradeColor, hasGrade }
+  }
+  return map
+})
 
 // --- Helper Methods (Standardized from Grades.vue) ---
 

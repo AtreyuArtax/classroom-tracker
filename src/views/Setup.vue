@@ -751,9 +751,8 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, watch, onMounted, nextTick } from 'vue'
+import { ref, reactive, computed, watch, onMounted, nextTick, defineAsyncComponent } from 'vue'
 import Papa from 'papaparse'
-import QRCode from 'qrcode'
 import { 
   LayoutDashboard, 
   Zap, 
@@ -788,15 +787,15 @@ import { useClassroom } from '../composables/useClassroom.js'
 import { useMessage } from '../composables/useMessage.js'
 import { detectGradeFromClassName } from '../composables/useElementary.js'
 
-import CalendarSettings from '../components/setup/CalendarSettings.vue'
-import GradeBucketsSettings from '../components/setup/GradeBucketsSettings.vue'
-import HelpModal from '../components/setup/HelpModal.vue'
-import ClassLogisticsSettings from '../components/setup/ClassLogisticsSettings.vue'
-import DatabaseMaintenanceSettings from '../components/setup/DatabaseMaintenanceSettings.vue'
-import CsvHelpGuide from '../components/setup/CsvHelpGuide.vue'
-import BehaviorSettings from '../components/setup/BehaviorSettings.vue'
-import PrintClassListModal from '../components/PrintClassListModal.vue'
-import QrCodeGeneratorModal from '../components/setup/QrCodeGeneratorModal.vue'
+const CalendarSettings            = defineAsyncComponent(() => import('../components/setup/CalendarSettings.vue'))
+const GradeBucketsSettings        = defineAsyncComponent(() => import('../components/setup/GradeBucketsSettings.vue'))
+const HelpModal                   = defineAsyncComponent(() => import('../components/setup/HelpModal.vue'))
+const ClassLogisticsSettings      = defineAsyncComponent(() => import('../components/setup/ClassLogisticsSettings.vue'))
+const DatabaseMaintenanceSettings = defineAsyncComponent(() => import('../components/setup/DatabaseMaintenanceSettings.vue'))
+const CsvHelpGuide                = defineAsyncComponent(() => import('../components/setup/CsvHelpGuide.vue'))
+const BehaviorSettings            = defineAsyncComponent(() => import('../components/setup/BehaviorSettings.vue'))
+const PrintClassListModal         = defineAsyncComponent(() => import('../components/PrintClassListModal.vue'))
+const QrCodeGeneratorModal        = defineAsyncComponent(() => import('../components/setup/QrCodeGeneratorModal.vue'))
 import SetupQuickJumpNav from '../components/setup/SetupQuickJumpNav.vue'
 
 const { alert, confirm } = useMessage()

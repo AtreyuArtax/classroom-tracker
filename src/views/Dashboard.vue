@@ -191,20 +191,20 @@
  *  - Mounts StudentProfileModal: shown when useRadial.profileStudent is set
  */
 
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, defineAsyncComponent } from 'vue'
 import ClassSwitcher       from '../components/ClassSwitcher.vue'
 import SeatingGrid         from '../components/SeatingGrid.vue'
 import RadialMenu          from '../components/RadialMenu.vue'
 import UndoButton          from '../components/UndoButton.vue'
-import EventNoteModal      from '../components/EventNoteModal.vue'
-import AssessmentConversationModal from '../components/AssessmentConversationModal.vue'
-import StudentProfileModal from '../components/StudentProfileModal.vue'
+const EventNoteModal                  = defineAsyncComponent(() => import('../components/EventNoteModal.vue'))
+const AssessmentConversationModal     = defineAsyncComponent(() => import('../components/AssessmentConversationModal.vue'))
+const StudentProfileModal             = defineAsyncComponent(() => import('../components/StudentProfileModal.vue'))
+const GettingStartedGuide             = defineAsyncComponent(() => import('../components/setup/GettingStartedGuide.vue'))
 import { Toilet, Users, GripVertical, Calendar, CalendarCheck, Scan } from 'lucide-vue-next'
 import { useClassroom }    from '../composables/useClassroom.js'
 import { useRadial }       from '../composables/useRadial.js'
 import { loadGradebook, activeSubCohortFilter, setActiveSubCohortFilter, availableSubCohorts, availableNaturalSubCohorts } from '../composables/useGradebook.js'
 import { getSectionColor } from '../utils/gradeColors.js'
-import GettingStartedGuide from '../components/setup/GettingStartedGuide.vue'
 
 const emit = defineEmits(['navigate'])
 

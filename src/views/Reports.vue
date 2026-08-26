@@ -219,7 +219,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, watch, onMounted } from 'vue'
+import { ref, reactive, computed, watch, onMounted, defineAsyncComponent } from 'vue'
 import { BarChart2, Printer, User, Award } from 'lucide-vue-next'
 
 import { useClassroom } from '../composables/useClassroom.js'
@@ -229,17 +229,17 @@ import { useStudentDossier } from '../composables/useStudentDossier.js'
 import * as classService from '../db/classService.js'
 import * as eventService from '../db/eventService.js'
 import { toMinutes } from '../db/eventService.js'
-import Student360 from '../components/dossier/Student360.vue'
+const Student360                   = defineAsyncComponent(() => import('../components/dossier/Student360.vue'))
 import StudentSidebar from '../components/StudentSidebar.vue'
-import PrintGradesGridModal from '../components/PrintGradesGridModal.vue'
-import PrintExpectationsModal from '../components/reports/PrintExpectationsModal.vue'
-import PrintClassListModal from '../components/PrintClassListModal.vue'
-import PrintCalendarModal from '../components/reports/PrintCalendarModal.vue'
-import PrintSeatingChartModal from '../components/reports/PrintSeatingChartModal.vue'
+const PrintGradesGridModal         = defineAsyncComponent(() => import('../components/PrintGradesGridModal.vue'))
+const PrintExpectationsModal       = defineAsyncComponent(() => import('../components/reports/PrintExpectationsModal.vue'))
+const PrintClassListModal          = defineAsyncComponent(() => import('../components/PrintClassListModal.vue'))
+const PrintCalendarModal           = defineAsyncComponent(() => import('../components/reports/PrintCalendarModal.vue'))
+const PrintSeatingChartModal       = defineAsyncComponent(() => import('../components/reports/PrintSeatingChartModal.vue'))
 import ReportsClassOverview from '../components/reports/ReportsClassOverview.vue'
-import ReportsBatchPrintModal from '../components/reports/ReportsBatchPrintModal.vue'
+const ReportsBatchPrintModal       = defineAsyncComponent(() => import('../components/reports/ReportsBatchPrintModal.vue'))
 import ReportsPrintHub from '../components/reports/ReportsPrintHub.vue'
-import ReportsLearningSkills from '../components/reports/ReportsLearningSkills.vue'
+const ReportsLearningSkills        = defineAsyncComponent(() => import('../components/reports/ReportsLearningSkills.vue'))
 import { calculateClassGrades, getAssessmentsByClass, getAssessmentPercentage } from '../db/gradebookService.js'
 import { loadGradebook, assessments as gbAssessments, gradeMap, activeGradeFilter } from '../composables/useGradebook.js'
 import { getSectionColor } from '../utils/gradeColors.js'

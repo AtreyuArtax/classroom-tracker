@@ -148,7 +148,7 @@ const modeAllArchivedClasses = computed(() => {
 const thresholds = ref({ washroomTripsPerWeek: 4, deviceIncidentsPerWeek: 3, atRiskThreshold: 70, attendanceThreshold: 85 })
 
 /** @type {import('vue').Ref<Object>} Shape: { [studentId]: { washroomTrips: N, deviceIncidents: N } } */
-const studentWeeklyStats = ref({})
+const studentWeeklyStats = shallowRef({})
 
 async function computeWeeklyStats(classId, studentIds) {
     // Get Monday of current week
