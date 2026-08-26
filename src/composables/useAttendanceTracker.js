@@ -563,3 +563,46 @@ export function useMasterAttendanceTicker() {
     }
 }
 
+/**
+ * Toggles Test Day mode on/off with retroactive session sync and confirmation warning.
+ */
+export async function toggleTestDay() {
+    const classId = activeClass.value?.classId
+    const todayStr = formatLocalDate(new Date())
+    const { confirm } = useMessage()
+
+    if (!isTestDay.value) {
+        // Turning ON: sync any attendance events already logged today in this class
+        isTestDay.value = true
+        if (classId) {
+            const eventsToday = await eventService.getEventsByClass(classId, { from: todayStr, to: todayStr })
+            const attendanceEvents = eventsToday.filter(e => !e.superseded && (e.code === 'a' || e.code === 'l'))
+            for (const ev of attendanceEvents) {
+                if (!ev.testDay) {
+                    await eventService.updateEvent(ev.eventId, { testDay: true })
+                }
+            }
+        }
+    } else {
+        // Turning OFF: check if any test-day attendance events exist for today
+        if (classId) {
+            const eventsToday = await eventService.getEventsByClass(classId, { from: todayStr, to: todayStr })
+            const testDayEvents = eventsToday.filter(e => !e.superseded && e.testDay)
+            if (testDayEvents.length > 0) {
+                const confirmed = await confirm(
+                    `Turning off Test Day will remove the "Missed Test" flag from ${testDayEvents.length} attendance record${testDayEvents.length > 1 ? 's' : ''} logged today in this class. Are you sure you want to proceed?`,
+                    'Turn Off Test Day?',
+                    { danger: true }
+                )
+                if (!confirmed) return
+
+                for (const ev of testDayEvents) {
+                    await eventService.updateEvent(ev.eventId, { testDay: false })
+                }
+            }
+        }
+        isTestDay.value = false
+    }
+}
+
+

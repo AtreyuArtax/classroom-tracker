@@ -45,11 +45,7 @@ export function useAttendanceInsights(classIdRef, assessmentsRef, gradesRef) {
       
       totals[sId].total += 1
 
-      // Check if this date matches any assessment date
-      const eDate = event.timestamp.split('T')[0]
-      const isTestDay = assessmentsRef.value.some(a => a.date && a.date.split('T')[0] === eDate)
-      
-      if (isTestDay) {
+      if (Boolean(event.testDay)) {
         totals[sId].testDays += 1
       }
     }

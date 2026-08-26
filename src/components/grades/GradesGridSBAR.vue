@@ -241,17 +241,23 @@
           <tr v-for="student in sortedRoster" :key="student.studentId" class="sbar-row">
             <!-- Student Name Column -->
             <td class="sticky-col sticky-col--name sbar-student-cell" @click="$emit('open-dossier', student.studentId)">
-              <div class="sbar-student-cell-inner" :title="`${student.lastName}, ${student.firstName}`">
+              <div class="sbar-student-cell-inner">
                 <div class="sbar-student-name-text">
                   <span class="sbar-student-lastname">{{ student.lastName }},</span>
                   <span class="sbar-student-firstname">{{ student.firstName }}</span>
                 </div>
-                <span 
-                  v-if="(student.gradeLevel || student.courseCode) && availableGradeFilters.length > 1" 
-                  class="sbar-student-grade-tag"
-                >
-                  {{ student.gradeLevel ? student.gradeLevel.replace('Grade ', 'Gr. ') : student.courseCode }}
-                </span>
+                <div class="grades__student-badges">
+                  <TestDayWarning 
+                    v-if="studentAbsenceTotals && studentAbsenceTotals[student.studentId]?.testDays >= 2" 
+                    :count="studentAbsenceTotals[student.studentId].testDays" 
+                  />
+                  <span 
+                    v-if="(student.gradeLevel || student.courseCode) && availableGradeFilters.length > 1 && (!activeSubCohortFilter || activeSubCohortFilter === 'all')" 
+                    class="sbar-student-grade-tag"
+                  >
+                    {{ student.gradeLevel ? student.gradeLevel.replace('Grade ', 'Gr. ') : student.courseCode }}
+                  </span>
+                </div>
               </div>
             </td>
 
@@ -374,9 +380,11 @@ import { getEffectiveClassRecord, getUnitGradeLevel, cleanUnitName } from '../..
 import { activeSubjectId } from '../../composables/useClassroomState.js'
 import { UNIT_COLORS, getSectionColor } from '../../utils/gradeColors.js'
 import { isCohortMatch } from '../../db/gradebook/gradeCalc.js'
+import TestDayWarning from '../TestDayWarning.vue'
 
 const props = defineProps({
-  isPrivacyMode: Boolean
+  isPrivacyMode: Boolean,
+  studentAbsenceTotals: { type: Object, default: () => ({}) }
 })
 
 const emit = defineEmits(['open-dossier', 'select-expectation', 'select-assessment'])
@@ -1299,6 +1307,13 @@ thead th.sticky-col {
   font-size: 0.82rem;
   font-weight: 500;
   color: var(--text-secondary);
+}
+
+.grades__student-badges {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
 }
 
 .sbar-student-grade-tag {

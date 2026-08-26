@@ -155,22 +155,22 @@
             :class="{ 'grades__td--highlighted': highlightedColumnId === 'name' }"
             @click="$emit('open-dossier', student.studentId)"
           >
-            <div class="grades__student-cell" :title="`${student.lastName}, ${student.firstName}`">
+            <div class="grades__student-cell">
               <div class="grades__student-name-text">
                 <span class="grades__student-lastname">{{ student.lastName }},</span>
                 <span class="grades__student-firstname">{{ student.firstName }}</span>
               </div>
               <div class="grades__student-badges">
-                <span 
-                  v-if="(student.gradeLevel || student.courseCode) && availableSubCohorts.length > 1" 
-                  class="sbar-student-grade-tag"
-                >
-                  {{ student.gradeLevel ? student.gradeLevel.replace('Grade ', 'Gr. ') : student.courseCode }}
-                </span>
                 <TestDayWarning 
                   v-if="studentAbsenceTotals[student.studentId]?.testDays >= 2" 
                   :count="studentAbsenceTotals[student.studentId].testDays" 
                 />
+                <span 
+                  v-if="(student.gradeLevel || student.courseCode) && availableSubCohorts.length > 1 && (!activeSubCohortFilter || activeSubCohortFilter === 'all')" 
+                  class="sbar-student-grade-tag"
+                >
+                  {{ student.gradeLevel ? student.gradeLevel.replace('Grade ', 'Gr. ') : student.courseCode }}
+                </span>
               </div>
 
               <!-- Sparkline Trend & Absence Hover Preview Tooltip -->

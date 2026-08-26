@@ -212,6 +212,7 @@
           <GradesGridSBAR
             v-else-if="activeClassRecord?.gradingFramework === 'sbar'"
             :is-privacy-mode="isPrivacyMode"
+            :student-absence-totals="studentAbsenceTotals"
             @select-assessment="openAssessmentView($event, 'grid')"
             @open-dossier="showStudentDossier"
           />

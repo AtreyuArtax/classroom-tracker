@@ -32,7 +32,7 @@
           v-if="activeClass"
           class="dashboard__test-day-btn"
           :class="{ 'dashboard__test-day-btn--active': isTestDay }"
-          @click="isTestDay = !isTestDay"
+          @click="toggleTestDay"
           :title="isTestDay ? 'Deactivate Test Day' : 'Activate Test Day'"
         >
           <component :is="isTestDay ? CalendarCheck : Calendar" :size="20" />
@@ -83,7 +83,7 @@
               <strong>Test Day Active</strong> — Attendance, lates, hall departures & incidents are tagged for evaluation analytics.
             </span>
           </div>
-          <button class="dashboard__test-day-banner-dismiss" @click="isTestDay = false" title="Turn off Test Day">
+          <button class="dashboard__test-day-banner-dismiss" @click="toggleTestDay" title="Turn off Test Day">
             Turn Off
           </button>
         </div>
@@ -220,6 +220,7 @@ const {
   logStandardEvent,
   logAssessmentEvent,
   isTestDay,
+  toggleTestDay,
   isScannerOpen,
   showScannerButton,
   getClass,

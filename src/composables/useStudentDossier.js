@@ -218,11 +218,7 @@ export function useStudentDossier(periodRef = null, classIdRef = null) {
         const noteEvents    = e.filter(ev => ev.note && ev.code !== 'ac' && ev.code !== 'pc' && ev.category !== 'communication')
 
         const absences         = absenceEvents.length
-        const testDayAbsences  = absenceEvents.filter(ev => {
-            if (ev.testDay) return true
-            const eDate = ev.timestamp ? ev.timestamp.slice(0, 10) : null
-            return eDate && classAssessments.value.some(a => a.date && a.date.slice(0, 10) === eDate)
-        }).length
+        const testDayAbsences  = absenceEvents.filter(ev => Boolean(ev.testDay)).length
         const totalWashroomMins = washroomEvents.reduce((sum, ev) => sum + toMinutes(ev.duration), 0)
         const totalLateMins     = lateEvents.reduce((sum, ev) => sum + toMinutes(ev.duration), 0)
 

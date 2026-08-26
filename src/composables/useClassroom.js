@@ -45,7 +45,8 @@ import {
   reconcileStaleTrips,
   initializeRfidAttendance,
   handleRfidAttendanceScan,
-  markAllPresentToday
+  markAllPresentToday,
+  toggleTestDay
 } from './useAttendanceTracker.js'
 import { activeSubCohortFilter } from './useGradebook.js'
 
@@ -1713,6 +1714,7 @@ export function useClassroom() {
         updateTeacherName,
         updatePeriodStartTimes,
         updateAttendanceConfig,
+        toggleTestDay,
         updateShowScannerButton,
         markAllPresentToday,
         handleRfidAttendanceScan,
