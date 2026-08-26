@@ -5,8 +5,6 @@
  * specifically formatted for Microsoft Forms Quick Import (.docx / .pdf).
  */
 
-import JSZip from 'jszip'
-
 function escapeXml(unsafe) {
   return String(unsafe || '').replace(/[<>&'"]/g, (c) => {
     switch (c) {
@@ -25,6 +23,7 @@ function escapeXml(unsafe) {
  * @returns {Promise<Blob>}
  */
 export async function createDocxBlobFromLines(lines) {
+  const JSZip = (await import('jszip')).default || (await import('jszip'))
   const zip = new JSZip()
 
   // 1. [Content_Types].xml

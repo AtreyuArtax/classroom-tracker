@@ -11,8 +11,6 @@
  *  - Multi-submission deduplication (keeps newest completion timestamp)
  */
 
-import ExcelJS from 'exceljs'
-
 /**
  * Normalizes a raw rating string or number to 'E', 'G', 'S', 'N', or null.
  * @param {string|number|null|undefined} raw
@@ -99,6 +97,7 @@ export function parseCsvRows(text) {
  * @returns {Promise<Array<Array<string>>>}
  */
 export async function parseXlsxToRows(arrayBuffer) {
+  const ExcelJS = (await import('exceljs')).default || (await import('exceljs'))
   const workbook = new ExcelJS.Workbook()
   await workbook.xlsx.load(arrayBuffer)
   const worksheet = workbook.worksheets[0]

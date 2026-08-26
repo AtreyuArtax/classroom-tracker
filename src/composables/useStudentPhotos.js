@@ -13,10 +13,24 @@ import * as photoService from '../db/photoService.js'
 export const showDeskPhotos = ref(localStorage.getItem('showDeskPhotos') === 'true')
 watch(showDeskPhotos, (val) => localStorage.setItem('showDeskPhotos', String(val)))
 
-// In-memory reactive cache: studentId -> { url: string, blob: Blob, updatedAt: string }
-const photoCache = ref(new Map())
-const photoIdsSet = ref(new Set())
+// In-memory lightweight reactive cache: studentId -> { url: string, updatedAt: string }
+const photoCache = shallowRef(new Map())
+const photoIdsSet = shallowRef(new Set())
 let isInitialized = false
+
+/**
+ * Revokes all currently allocated ObjectURLs in the cache to free browser texture memory.
+ */
+export function clearPhotoCache() {
+  for (const item of photoCache.value.values()) {
+    if (item?.url) {
+      try { URL.revokeObjectURL(item.url) } catch (e) { /* ignore */ }
+    }
+  }
+  photoCache.value = new Map()
+  photoIdsSet.value = new Set()
+  isInitialized = false
+}
 
 /**
  * Compress, downscale, and center-crop any image (File, Blob, or Data URL)
@@ -139,11 +153,13 @@ export function useStudentPhotos() {
       const record = await photoService.getPhoto(sId)
       if (record && record.blob) {
         const url = URL.createObjectURL(record.blob)
-        photoCache.value.set(sId, { url, blob: record.blob, updatedAt: record.updatedAt })
-        photoIdsSet.value.add(sId)
-        // Force reactivity trigger
-        photoCache.value = new Map(photoCache.value)
-        photoIdsSet.value = new Set(photoIdsSet.value)
+        const nextMap = new Map(photoCache.value)
+        nextMap.set(sId, { url, updatedAt: record.updatedAt })
+        photoCache.value = nextMap
+
+        const nextSet = new Set(photoIdsSet.value)
+        nextSet.add(sId)
+        photoIdsSet.value = nextSet
       }
     } catch (err) {
       console.warn(`[useStudentPhotos] Failed to load photo for ${sId}:`, err)
@@ -166,10 +182,13 @@ export function useStudentPhotos() {
     if (existing?.url) URL.revokeObjectURL(existing.url)
 
     const url = URL.createObjectURL(compressedBlob)
-    photoCache.value.set(sId, { url, blob: compressedBlob, updatedAt: new Date().toISOString() })
-    photoIdsSet.value.add(sId)
-    photoCache.value = new Map(photoCache.value)
-    photoIdsSet.value = new Set(photoIdsSet.value)
+    const nextMap = new Map(photoCache.value)
+    nextMap.set(sId, { url, updatedAt: new Date().toISOString() })
+    photoCache.value = nextMap
+
+    const nextSet = new Set(photoIdsSet.value)
+    nextSet.add(sId)
+    photoIdsSet.value = nextSet
   }
 
   /**
@@ -184,10 +203,13 @@ export function useStudentPhotos() {
     const existing = photoCache.value.get(sId)
     if (existing?.url) URL.revokeObjectURL(existing.url)
 
-    photoCache.value.delete(sId)
-    photoIdsSet.value.delete(sId)
-    photoCache.value = new Map(photoCache.value)
-    photoIdsSet.value = new Set(photoIdsSet.value)
+    const nextMap = new Map(photoCache.value)
+    nextMap.delete(sId)
+    photoCache.value = nextMap
+
+    const nextSet = new Set(photoIdsSet.value)
+    nextSet.delete(sId)
+    photoIdsSet.value = nextSet
   }
 
   /**
@@ -197,23 +219,27 @@ export function useStudentPhotos() {
   async function batchImport(items) {
     if (!items || items.length === 0) return 0
     const count = await photoService.batchSavePhotos(items)
+    const nextMap = new Map(photoCache.value)
+    const nextSet = new Set(photoIdsSet.value)
+
     for (const item of items) {
       const sId = String(item.studentId)
-      const existing = photoCache.value.get(sId)
+      const existing = nextMap.get(sId)
       if (existing?.url) URL.revokeObjectURL(existing.url)
 
       const url = URL.createObjectURL(item.blob)
-      photoCache.value.set(sId, { url, blob: item.blob, updatedAt: new Date().toISOString() })
-      photoIdsSet.value.add(sId)
+      nextMap.set(sId, { url, updatedAt: new Date().toISOString() })
+      nextSet.add(sId)
     }
-    photoCache.value = new Map(photoCache.value)
-    photoIdsSet.value = new Set(photoIdsSet.value)
+    photoCache.value = nextMap
+    photoIdsSet.value = nextSet
     return count
   }
 
   return {
     showDeskPhotos,
     initPhotoIds,
+    clearPhotoCache,
     hasPhoto,
     getPhotoUrl,
     saveStudentPhoto,

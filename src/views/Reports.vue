@@ -594,7 +594,6 @@ async function runReport(silent = false) {
   if (!silent) loading.value = true
   try {
     const dr = eventService.getDateRangeForClassPeriod(selectedPeriod.value, reportClass.value, academicTerms.value)
-    const rawEvents = await eventService.getEventsByClass(sidebarClassId.value, Object.keys(dr).length ? dr : undefined)
     
     const currentClass = await classService.getClass(sidebarClassId.value)
     const activeStudents = {}
@@ -605,11 +604,20 @@ async function runReport(silent = false) {
     const studentsMap = activeStudents
     const studentCount = activeStudentIds.size
 
-    const events = rawEvents.filter(e => activeStudentIds.has(e.studentId))
-    reportData.value = events
-
+    // Single IDB fetch for all class events, filtering active students and date range in-memory
     const allEventsRaw = await eventService.getEventsByClass(sidebarClassId.value)
-    allClassEvents.value = allEventsRaw.filter(e => activeStudentIds.has(e.studentId))
+    const activeAllEvents = allEventsRaw.filter(e => activeStudentIds.has(e.studentId))
+    allClassEvents.value = activeAllEvents
+
+    const events = (dr && (dr.from || dr.to))
+      ? activeAllEvents.filter(e => {
+          const date = e.timestamp?.slice(0, 10)
+          if (dr.from && date < dr.from) return false
+          if (dr.to && date > dr.to) return false
+          return true
+        })
+      : activeAllEvents
+    reportData.value = events
 
     // Load gradebook & assessments for academics and expectations
     if (reportClass.value) {

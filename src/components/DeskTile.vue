@@ -143,6 +143,7 @@ import { resolveIcon }    from '../utils/icons.js'
 import { toMinutes }      from '../db/eventService.js'
 import { useRadial }    from '../composables/useRadial.js'
 import { useClassroom } from '../composables/useClassroom.js'
+import { useMasterAttendanceTicker } from '../composables/useAttendanceTracker.js'
 import { classGrades, activeSubCohortFilter, isStudentInSubCohort }  from '../composables/useGradebook.js'
 import { useStudentPhotos } from '../composables/useStudentPhotos.js'
 import StudentAvatar from './photos/StudentAvatar.vue'
@@ -245,51 +246,35 @@ const activeOutIcon = computed(() => {
   return Toilet
 })
 
-// ─── elapsed timer ────────────────────────────────────────────────────────────
+// ─── elapsed timer (shared master clock) ─────────────────────────────────────
 
-/** Seconds elapsed since outTime */
-const elapsedSeconds = ref(0)
-let _intervalId = null
+const { masterTimestamp, startTicker, stopTicker } = useMasterAttendanceTicker()
 
-function _startTimer() {
-  if (_intervalId) return
-  _intervalId = setInterval(() => {
-    if (!props.student?.activeStates?.outTime) return
-    const ms = Date.now() - new Date(props.student.activeStates.outTime).getTime()
-    elapsedSeconds.value = Math.floor(ms / 1000)
-  }, 1000)
-}
-
-function _stopTimer() {
-  if (_intervalId) {
-    clearInterval(_intervalId)
-    _intervalId = null
-  }
-  elapsedSeconds.value = 0
-}
-
-// Watch isOut to start/stop the interval (§10)
 watch(
   () => props.student?.activeStates?.isOut,
-  (isOut) => {
-    if (isOut) {
-      // Seed the counter immediately on mount
-      const ms = Date.now() - new Date(props.student.activeStates.outTime).getTime()
-      elapsedSeconds.value = Math.floor(ms / 1000)
-      _startTimer()
-    } else {
-      _stopTimer()
+  (isOut, wasOut) => {
+    if (isOut && !wasOut) {
+      startTicker()
+    } else if (!isOut && wasOut) {
+      stopTicker()
     }
   },
   { immediate: true }
 )
 
-onUnmounted(_stopTimer)
+onUnmounted(() => {
+  if (props.student?.activeStates?.isOut) {
+    stopTicker()
+  }
+})
 
 /** MM:SS formatted elapsed time */
 const elapsedFormatted = computed(() => {
-  const m = Math.floor(elapsedSeconds.value / 60).toString().padStart(2, '0')
-  const s = (elapsedSeconds.value % 60).toString().padStart(2, '0')
+  if (!props.student?.activeStates?.isOut || !props.student?.activeStates?.outTime) return '00:00'
+  const ms = masterTimestamp.value - new Date(props.student.activeStates.outTime).getTime()
+  const elapsedSeconds = Math.max(0, Math.floor(ms / 1000))
+  const m = Math.floor(elapsedSeconds / 60).toString().padStart(2, '0')
+  const s = (elapsedSeconds % 60).toString().padStart(2, '0')
   return `${m}:${s}`
 })
 

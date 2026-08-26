@@ -1,4 +1,3 @@
-import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import { parseLocal, formatLocalDate } from '../utils/dates.js';
 
@@ -14,6 +13,7 @@ export async function exportGradebookToExcel({
   summaryData,
   categories = []
 }) {
+  const ExcelJS = (await import('exceljs')).default || (await import('exceljs'));
   // Build a quick lookup from categoryId -> category name
   const categoryNameMap = {}
   categories.forEach(c => { categoryNameMap[c.categoryId] = c.name })

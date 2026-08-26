@@ -90,8 +90,8 @@ const Grades    = defineAsyncComponent(() => import('./views/Grades.vue'))
 const ScanStation = defineAsyncComponent(() => import('./views/ScanStation.vue'))
 
 import { useClassroom } from './composables/useClassroom.js'
-import AddAssessmentModal from './components/dossier/AddAssessmentModal.vue'
-import QRScanner          from './components/QRScanner.vue'
+const AddAssessmentModal = defineAsyncComponent(() => import('./components/dossier/AddAssessmentModal.vue'))
+const QRScanner          = defineAsyncComponent(() => import('./components/QRScanner.vue'))
 import YearSemesterSelector from './components/YearSemesterSelector.vue'
 import MessageOverlay      from './components/MessageOverlay.vue'
 import * as settingsService from './db/settingsService.js'

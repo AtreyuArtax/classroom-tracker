@@ -55,8 +55,8 @@
     "semantic_hash": "292ba809cdc87ea16d7beff21d110324"
   },
   "src/App.vue": {
-    "mtime": 1785234472.4796212,
-    "ast_hash": "29d6558bd6e0918c1ebbf81096743925",
+    "mtime": 1787714073.2341135,
+    "ast_hash": "38c93154b101c02ddf0feffafd92429b",
     "semantic_hash": ""
   },
   "src/components/AssessmentConversationModal.vue": {
@@ -75,8 +75,8 @@
     "semantic_hash": ""
   },
   "src/components/DeskTile.vue": {
-    "mtime": 1787360238.9566386,
-    "ast_hash": "7637ff28ea796fe18832a2edee572781",
+    "mtime": 1787714139.3484445,
+    "ast_hash": "b09d44515b9dc7fe25398bd0118e63da",
     "semantic_hash": ""
   },
   "src/components/EventNoteModal.vue": {
@@ -245,8 +245,8 @@
     "semantic_hash": ""
   },
   "src/composables/useGradebook.js": {
-    "mtime": 1787711453.3941436,
-    "ast_hash": "bbe3e535f6de231f219692acdd95ad02",
+    "mtime": 1787714185.777503,
+    "ast_hash": "300f098431df7e08887a2889de9e156e",
     "semantic_hash": ""
   },
   "src/composables/useKeyboardWedge.js": {
@@ -285,8 +285,8 @@
     "semantic_hash": ""
   },
   "src/db/exportService.js": {
-    "mtime": 1787363740.9735062,
-    "ast_hash": "2d611df3c975534219f8d57715f769d7",
+    "mtime": 1787714043.7493398,
+    "ast_hash": "15bb9cfe98b459911a20bb49d6d6a0da",
     "semantic_hash": ""
   },
   "src/db/gradebookService.js": {
@@ -345,8 +345,8 @@
     "semantic_hash": ""
   },
   "src/views/Reports.vue": {
-    "mtime": 1787707643.3286645,
-    "ast_hash": "b4a6d3b464017816ea966e04a27e7f22",
+    "mtime": 1787714198.9197068,
+    "ast_hash": "ef758a0ab56ad8b7ad8e37b7556eb7d9",
     "semantic_hash": ""
   },
   "src/views/ScanStation.vue": {
@@ -375,9 +375,9 @@
     "semantic_hash": "61bd31a2b0ac08f10f13c932b32d6ca1"
   },
   "vite.config.js": {
-    "mtime": 1781516097.6639473,
-    "ast_hash": "e4fe3444aaad844cbc4b9f3975ed773c",
-    "semantic_hash": "e4fe3444aaad844cbc4b9f3975ed773c"
+    "mtime": 1787714079.9544127,
+    "ast_hash": "0c5ccd637bbfc782297e266f194b3d40",
+    "semantic_hash": ""
   },
   "src/components/PrintGradesGridModal.vue": {
     "mtime": 1787362850.5902364,
@@ -390,8 +390,8 @@
     "semantic_hash": ""
   },
   "src/components/GradesGrid.vue": {
-    "mtime": 1787712848.3550718,
-    "ast_hash": "e9bc478d7ce0307fa3e84cc19d8b663b",
+    "mtime": 1787714169.0984802,
+    "ast_hash": "ff58559f905f5d5b5319acb98eafba53",
     "semantic_hash": ""
   },
   "src/components/dossier/StudentAcademicsTab.vue": {
@@ -430,13 +430,13 @@
     "semantic_hash": ""
   },
   "src/composables/useAttendanceTracker.js": {
-    "mtime": 1787444498.3076878,
-    "ast_hash": "b52fbd0b6b59099b12f31738d6a704e3",
+    "mtime": 1787714122.9165602,
+    "ast_hash": "c8a99a3f28875182895a111b78c1cf52",
     "semantic_hash": ""
   },
   "src/composables/useClassroomState.js": {
-    "mtime": 1786458687.7727816,
-    "ast_hash": "bbbf80e681917c30fa65a95d82fc24db",
+    "mtime": 1787714191.7154093,
+    "ast_hash": "b27707e93e84a5f09cbe41397bbbbd6d",
     "semantic_hash": ""
   },
   "src/composables/useRosterOperations.js": {
@@ -585,8 +585,8 @@
     "semantic_hash": ""
   },
   "src/components/grades/GradesGridSBAR.vue": {
-    "mtime": 1787710326.492763,
-    "ast_hash": "a7b3761162d30087f5e8ba4a82249b03",
+    "mtime": 1787714156.6701803,
+    "ast_hash": "f939d2e7555b17d05e8a564706b2e569",
     "semantic_hash": ""
   },
   "src/db/gradebook/gradeCalcSBAR.js": {
@@ -1025,8 +1025,8 @@
     "semantic_hash": ""
   },
   "src/composables/useStudentPhotos.js": {
-    "mtime": 1786962230.5589325,
-    "ast_hash": "372d045e085ab75a39cfafab02bf08e9",
+    "mtime": 1787714100.649331,
+    "ast_hash": "ea6541d57c84425c6f5535012071c54e",
     "semantic_hash": ""
   },
   "src/db/photoService.js": {
@@ -1050,13 +1050,13 @@
     "semantic_hash": ""
   },
   "src/utils/learningSkillsCsvParser.js": {
-    "mtime": 1787682414.9176924,
-    "ast_hash": "14497a15a27e236bcd34f29282f11232",
+    "mtime": 1787714057.7652717,
+    "ast_hash": "58aed3be979706fcdbf93f9309dbaff5",
     "semantic_hash": ""
   },
   "src/utils/docxExport.js": {
-    "mtime": 1787681386.2290936,
-    "ast_hash": "c0e0b4c42f8aa3fb772953fd9b0e7b5c",
+    "mtime": 1787714067.3929267,
+    "ast_hash": "61db14dbcc5e7f2c83cf86b4413bafd1",
     "semantic_hash": ""
   },
   "src/components/reports/LearningSkillsGuideModal.vue": {

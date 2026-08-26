@@ -4,7 +4,7 @@
  * Attendance event logging, RFID scan tracking, and stale checkouts.
  */
 
-import { triggerRef } from 'vue'
+import { ref, triggerRef } from 'vue'
 import { 
   activeClass, 
   students, 
@@ -527,3 +527,39 @@ export async function markAllPresentToday(classId) {
         }
     }
 }
+
+// ─── Shared Master Attendance Clock ───────────────────────────────────────────
+const masterTimestamp = ref(Date.now())
+let masterTickerInterval = null
+let activeSubscriberCount = 0
+
+/**
+ * Provides a single shared clock ticker for all active student out-timers.
+ * Automatically runs a single 1s interval only when 1+ subscribers are active.
+ */
+export function useMasterAttendanceTicker() {
+    function startTicker() {
+        activeSubscriberCount++
+        if (!masterTickerInterval) {
+            masterTimestamp.value = Date.now()
+            masterTickerInterval = setInterval(() => {
+                masterTimestamp.value = Date.now()
+            }, 1000)
+        }
+    }
+
+    function stopTicker() {
+        activeSubscriberCount = Math.max(0, activeSubscriberCount - 1)
+        if (activeSubscriberCount === 0 && masterTickerInterval) {
+            clearInterval(masterTickerInterval)
+            masterTickerInterval = null
+        }
+    }
+
+    return {
+        masterTimestamp,
+        startTicker,
+        stopTicker
+    }
+}
+

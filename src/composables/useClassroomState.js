@@ -8,25 +8,25 @@
 
 import { ref, shallowRef, watch } from 'vue'
 
-export const classList = ref([])
-export const archivedClasses = ref([])
+export const classList = shallowRef([])
+export const archivedClasses = shallowRef([])
 export const activeClass = shallowRef(null)
 export const suggestedClass = ref(null)
 export const students = ref({})
-export const behaviorCodes = ref([])
+export const behaviorCodes = shallowRef([])
 export const gridSize = ref({ rows: 6, cols: 6 })
 export const teacherName = ref('')
 export const attendanceMode = ref('natural')
 export const latenessGracePeriod = ref(5)
 export const periodStartTimes = ref({})
 export const showScannerButton = ref(false)
-export const academicTerms = ref([])
-export const nonSchoolDays = ref([])
+export const academicTerms = shallowRef([])
+export const nonSchoolDays = shallowRef([])
 
 export const isTestDay = ref(sessionStorage.getItem('isTestDay') === 'true')
 watch(isTestDay, (val) => sessionStorage.setItem('isTestDay', String(val)))
 
-export const activeStudentEvents = ref([])
+export const activeStudentEvents = shallowRef([])
 export const selectedYear = ref(localStorage.getItem('selectedYear') || '')
 export const selectedSemester = ref(localStorage.getItem('selectedSemester') || '')
 export const isScannerOpen = ref(false)

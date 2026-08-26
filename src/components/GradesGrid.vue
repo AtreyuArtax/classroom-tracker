@@ -496,6 +496,16 @@ function getAssessmentAvg(assessmentId) {
   return sum / count
 }
 
+const assessmentByIdMap = computed(() => {
+  const map = {}
+  const list = assessments.value || []
+  for (let i = 0; i < list.length; i++) {
+    const a = list[i]
+    map[a.assessmentId] = a
+  }
+  return map
+})
+
 function isCellApplicable(studentId, assessment) {
   if (!assessment) return true
   const st = activeClassRecord.value?.students?.[studentId]
@@ -504,7 +514,7 @@ function isCellApplicable(studentId, assessment) {
 }
 
 function getCellStyle(studentId, assessmentId, totalPoints) {
-  const assessment = assessments.value.find(a => String(a.assessmentId) === String(assessmentId))
+  const assessment = assessmentByIdMap.value[assessmentId]
   if (assessment && !isCellApplicable(studentId, assessment)) {
     return { background: 'rgba(0,0,0,0.03)', color: '#9ca3af', cursor: 'not-allowed' }
   }

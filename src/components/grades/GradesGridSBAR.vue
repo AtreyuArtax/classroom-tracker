@@ -258,11 +258,11 @@
             <!-- Overall Mastery Badge Column -->
             <td class="sticky-col sticky-col--mastery sbar-mastery-cell">
               <span 
-                v-if="getOverallStudentMastery(student.studentId)" 
+                v-if="overallMasteryMap[student.studentId]" 
                 class="sbar-mastery-badge"
-                :style="{ background: getOverallStudentMastery(student.studentId).badge.color + '22', color: getOverallStudentMastery(student.studentId).badge.color, borderColor: getOverallStudentMastery(student.studentId).badge.color + '55' }"
+                :style="{ background: overallMasteryMap[student.studentId].badge.color + '22', color: overallMasteryMap[student.studentId].badge.color, borderColor: overallMasteryMap[student.studentId].badge.color + '55' }"
               >
-                {{ getOverallStudentMastery(student.studentId).badge.level }}
+                {{ overallMasteryMap[student.studentId].badge.level }}
               </span>
               <span v-else class="text-muted">—</span>
             </td>
@@ -274,22 +274,22 @@
               class="sbar-exp-cell"
               @click="openExpectationDetail(student.studentId, exp.code)"
             >
-              <div v-if="getStudentExpMastery(student.studentId, exp.code)" class="sbar-cell-content">
+              <div v-if="studentExpCellMap[student.studentId]?.[exp.code]" class="sbar-cell-content">
                 <span 
                   class="sbar-level-pill"
-                  :style="{ background: getStudentExpMastery(student.studentId, exp.code).badge.color + '22', color: getStudentExpMastery(student.studentId, exp.code).badge.color, borderColor: getStudentExpMastery(student.studentId, exp.code).badge.color + '44' }"
+                  :style="{ background: studentExpCellMap[student.studentId][exp.code].badge.color + '22', color: studentExpCellMap[student.studentId][exp.code].badge.color, borderColor: studentExpCellMap[student.studentId][exp.code].badge.color + '44' }"
                 >
-                  {{ getStudentExpMastery(student.studentId, exp.code).badge.level }}
+                  {{ studentExpCellMap[student.studentId][exp.code].badge.level }}
                 </span>
 
                 <!-- Trend Arrow -->
                 <span 
-                  v-if="getStudentExpMastery(student.studentId, exp.code).trend === 'improving'" 
+                  v-if="studentExpCellMap[student.studentId][exp.code].trend === 'improving'" 
                   class="sbar-trend sbar-trend--up" 
                   title="Improving trend"
                 >↗</span>
                 <span 
-                  v-else-if="getStudentExpMastery(student.studentId, exp.code).trend === 'declining'" 
+                  v-else-if="studentExpCellMap[student.studentId][exp.code].trend === 'declining'" 
                   class="sbar-trend sbar-trend--down" 
                   title="Declining trend"
                 >↘</span>
@@ -891,17 +891,33 @@ const masteryMap = computed(() => {
   return calculateSBARExpectationMastery(effectiveClass.value || activeClassRecord.value, assessments.value, gradeMap.value, algo)
 })
 
+/** Precomputed dictionary: studentId -> { score, badge } */
+const overallMasteryMap = computed(() => {
+  const map = {}
+  const m = masteryMap.value || {}
+  for (const sId in m) {
+    const expData = m[sId]
+    if (!expData) continue
+    const scores = Object.values(expData).map(e => e.score).filter(s => s != null)
+    if (scores.length > 0) {
+      const avg = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length)
+      map[sId] = { score: avg, badge: getSBARLevelBadge(avg) }
+    }
+  }
+  return map
+})
+
+/** Precomputed dictionary: studentId -> { [expCode]: { badge, trend, score } } */
+const studentExpCellMap = computed(() => {
+  return masteryMap.value || {}
+})
+
 function getStudentExpMastery(studentId, expCode) {
   return masteryMap.value[studentId]?.[expCode] || null
 }
 
 function getOverallStudentMastery(studentId) {
-  const expData = masteryMap.value[studentId]
-  if (!expData) return null
-  const scores = Object.values(expData).map(e => e.score).filter(s => s != null)
-  if (scores.length === 0) return null
-  const avg = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length)
-  return { score: avg, badge: getSBARLevelBadge(avg) }
+  return overallMasteryMap.value[studentId] || null
 }
 
 function openExpectationDetail(studentId, expCode) {

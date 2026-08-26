@@ -22,13 +22,13 @@ export { getEffectiveClassRecord, getStudentEffectiveGrade, getUnitGradeLevel, e
 // ─── Reactive State ──────────────────────────────────────────────────────────
 
 export const activeClassRecord = shallowRef(null)
-export const assessments = ref([])
-export const grades = ref([])
-export const classGrades = ref({})
+export const assessments = shallowRef([])
+export const grades = shallowRef([])
+export const classGrades = shallowRef({})
 export const selectedStudentId = ref(null)
 export const selectedMilestone = ref(null) // null = current
-export const globalMilestones = ref([])
-export const gradeBuckets = ref([])
+export const globalMilestones = shallowRef([])
+export const gradeBuckets = shallowRef([])
 export const initialDossierTab = ref('summary')
 export const activeSubCohortFilter = ref('all') // 'all' | 'Grade 7' | 'SNC2D1' etc.
 
@@ -417,7 +417,7 @@ export async function addAssessment(assessmentData) {
       ...assessmentData
     })
     
-    assessments.value.push(assessment)
+    assessments.value = [...assessments.value, assessment]
     return assessment
   } catch (err) {
     console.error('[useGradebook] addAssessment failed:', err)
@@ -436,7 +436,7 @@ export async function editAssessment(assessmentId, updates) {
     // Update local ref
     const index = assessments.value.findIndex(a => a.assessmentId === assessmentId)
     if (index !== -1) {
-      assessments.value[index] = updated
+      assessments.value = assessments.value.map((a, i) => i === index ? updated : a)
     }
     
     await refreshGrades()

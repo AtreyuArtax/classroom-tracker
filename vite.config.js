@@ -95,15 +95,18 @@ export default defineConfig({
             output: {
                 // Manual chunking to divide vendor libraries into separate files
                 manualChunks(id) {
-                    // Separate ExcelJS (heavy dependency) into its own chunk
-                    if (id.includes('exceljs')) {
-                        return 'vendor-excel'
-                    }
-                    // Separate Chart.js and related into their own chunk
                     if (id.includes('chart.js') || id.includes('vue-chartjs')) {
                         return 'vendor-charts'
                     }
-                    // Separate all other node_modules into a general vendor chunk
+                    if (id.includes('lucide-vue-next')) {
+                        return 'vendor-icons'
+                    }
+                    if (id.includes('@supabase')) {
+                        return 'vendor-supabase'
+                    }
+                    if (id.includes('html5-qrcode') || id.includes('qrcode')) {
+                        return 'vendor-qr'
+                    }
                     if (id.includes('node_modules')) {
                         return 'vendor'
                     }
