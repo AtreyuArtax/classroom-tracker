@@ -904,10 +904,13 @@ async function importRoster(parsedRows, targetClassId = null) {
     }
 
     classService.syncClassSections(cls)
+    await classService.saveClass(cls)
     if (isActive) {
-        activeClass.value.isSplitClass = cls.isSplitClass
-        activeClass.value.courseSections = cls.courseSections
-        activeClass.value.courseCode = cls.courseCode
+        activeClass.value = {
+            ...cls,
+            students: { ...cls.students }
+        }
+        students.value = { ...cls.students }
         triggerRef(students)
         triggerRef(activeClass)
     }

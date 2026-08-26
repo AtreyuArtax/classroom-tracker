@@ -1,7 +1,7 @@
 # Graph Report - classroom-tracker  (2026-08-25)
 
 ## Corpus Check
-- 214 files · ~407,683 words
+- 214 files · ~407,700 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `42d7883f`
+- Built from commit: `1517ad97`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 

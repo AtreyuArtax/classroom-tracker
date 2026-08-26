@@ -916,11 +916,13 @@ const detectedGradeLevel = computed(() => getEffectiveGradeLevel(activeClass.val
 const availableClassSections = computed(() => {
   if (!activeClass.value || activeClass.value.classType === 'elementary') return []
   const studentSections = new Set()
-  if (activeClass.value.students) {
-    for (const s of Object.values(activeClass.value.students)) {
-      if (!s.archived && s.courseCode && s.courseCode.trim()) {
-        studentSections.add(s.courseCode.trim())
-      }
+  const allStudents = students.value && Object.keys(students.value).length > 0
+    ? students.value
+    : (activeClass.value.students || {})
+
+  for (const s of Object.values(allStudents)) {
+    if (!s.archived && s.courseCode && s.courseCode.trim()) {
+      studentSections.add(s.courseCode.trim())
     }
   }
   if (activeClass.value.courseSections && activeClass.value.courseSections.length > 1) {
