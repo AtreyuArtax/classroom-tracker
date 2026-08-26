@@ -450,7 +450,8 @@ export async function auditGradebookData() {
   const report = {
     orphanedGrades: [], // Grade records where assessmentId is missing
     missingClassIds: [], // Records (Grade or Assessment) where classId is null
-    invalidCategories: [] // Assessments where categoryId isn't in its class
+    invalidCategories: [], // Assessments where categoryId isn't in its class
+    unlinkedSBARAssessments: [] // SBAR assessments with 0 curriculum expectations attached
   }
 
   // 1. Audit Grades
@@ -488,18 +489,65 @@ export async function auditGradebookData() {
       report.missingClassIds.push({
         type: 'assessment',
         id: ass.assessmentId,
+        name: ass.name,
         context: `Assessment "${ass.name}" missing class link`
       })
     } else if (cls) {
-      // Check category validity
-      const catIds = new Set(cls.gradebookCategories?.map(c => c.categoryId) || [])
-      if (!catIds.has(ass.categoryId)) {
-        report.invalidCategories.push({
-          id: ass.assessmentId,
-          name: ass.name,
-          class: cls.name,
-          context: `Assessment "${ass.name}" in ${cls.name} has invalid category`
-        })
+      let isSbar = false
+      if (cls.classType === 'elementary') {
+        if (ass.subjectId && cls.subjects) {
+          const sub = cls.subjects.find(s => s.subjectId === ass.subjectId)
+          isSbar = sub ? (sub.gradingFramework !== 'traditional') : (cls.gradingFramework !== 'traditional')
+        } else {
+          isSbar = (cls.gradingFramework !== 'traditional')
+        }
+      } else {
+        isSbar = (cls.gradingFramework === 'sbar') || (ass.gradingFramework === 'sbar') || (ass.categoryId === 'sbar_general')
+      }
+      
+      if (isSbar) {
+        // In SBAR mode: Verify curriculum expectations are attached
+        const expCodes = ass.expectationIds || (ass.expectationId ? [ass.expectationId] : [])
+        if (!expCodes || expCodes.length === 0) {
+          report.unlinkedSBARAssessments.push({
+            id: ass.assessmentId,
+            name: ass.name,
+            class: cls.name,
+            context: `SBAR assessment "${ass.name}" in ${cls.name} has no curriculum expectations attached`
+          })
+        }
+      } else {
+        // In Traditional mode: Check category validity
+        const validCatIds = new Set(cls.gradebookCategories?.map(c => c.categoryId) || [])
+        if (cls.subjects) {
+          cls.subjects.forEach(s => {
+            ;(s.gradebookCategories || []).forEach(c => validCatIds.add(c.categoryId))
+          })
+        }
+        if (cls.courseFrameworks) {
+          Object.values(cls.courseFrameworks).forEach(fw => {
+            ;(fw.gradebookCategories || []).forEach(c => validCatIds.add(c.categoryId))
+          })
+        }
+
+        // Standard categories
+        validCatIds.add('cat_knowledge')
+        validCatIds.add('cat_thinking')
+        validCatIds.add('cat_communication')
+        validCatIds.add('cat_application')
+        validCatIds.add('cat_elem_knowledge')
+        validCatIds.add('cat_elem_thinking')
+        validCatIds.add('cat_elem_communication')
+        validCatIds.add('cat_elem_application')
+
+        if (ass.categoryId && !validCatIds.has(ass.categoryId) && !ass.categoryId.startsWith('sbar_')) {
+          report.invalidCategories.push({
+            id: ass.assessmentId,
+            name: ass.name,
+            class: cls.name,
+            context: `Assessment "${ass.name}" in ${cls.name} has invalid category`
+          })
+        }
       }
     }
   }
@@ -567,11 +615,40 @@ export async function repairInvalidCategories(assessmentIds) {
     if (!ass) continue
 
     const cls = allClasses.find(c => c.classId === ass.classId)
-    if (!cls || !cls.gradebookCategories || cls.gradebookCategories.length === 0) continue
+    if (!cls) continue
 
-    // Re-assign to the first category in the class
-    ass.categoryId = cls.gradebookCategories[0].categoryId
+    let defaultCatId = cls.gradebookCategories?.[0]?.categoryId
+    if (!defaultCatId && cls.subjects?.[0]?.gradebookCategories?.[0]?.categoryId) {
+      defaultCatId = cls.subjects[0].gradebookCategories[0].categoryId
+    }
+    if (!defaultCatId) {
+      defaultCatId = 'cat_knowledge'
+    }
+
+    ass.categoryId = defaultCatId
     await store.put(ass)
+  }
+
+  await tx.done
+  hasUnsyncedChanges.value = true
+}
+
+/**
+ * Permanently deletes specified assessment IDs and their grade records.
+ */
+export async function deleteAssessments(assessmentIds) {
+  const db = await getDB()
+  const tx = db.transaction(['assessments', 'grades'], 'readwrite')
+  const aStore = tx.objectStore('assessments')
+  const gStore = tx.objectStore('grades')
+  const allGrades = await gStore.getAll()
+
+  for (const assId of assessmentIds) {
+    await aStore.delete(Number(assId))
+    const matchingGrades = allGrades.filter(g => Number(g.assessmentId) === Number(assId))
+    for (const g of matchingGrades) {
+      await gStore.delete(g.gradeId)
+    }
   }
 
   await tx.done

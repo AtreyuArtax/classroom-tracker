@@ -140,6 +140,19 @@
           <li v-for="item in auditReport.invalidCategories" :key="item.id">{{ item.context }}</li>
         </ul>
 
+        <!-- Unlinked SBAR Tasks -->
+        <div class="setup__audit-item" :class="{ 'setup__audit-item--warn': auditReport.unlinkedSBARAssessments?.length > 0 }">
+          <div class="setup__audit-label">Unlinked SBAR Tasks:</div>
+          <div class="setup__audit-value">{{ auditReport.unlinkedSBARAssessments?.length || 0 }}</div>
+          <button v-if="auditReport.unlinkedSBARAssessments?.length > 0" class="setup__pill-btn" @click="fixUnlinkedSBARAssessments">Delete Unlinked</button>
+          <button v-if="auditReport.unlinkedSBARAssessments?.length > 0" class="setup__btn-text" @click="toggleAuditDetails('unlinked')">
+            {{ showAuditDetails.unlinked ? 'Hide' : 'Details' }}
+          </button>
+        </div>
+        <ul v-if="showAuditDetails.unlinked && auditReport.unlinkedSBARAssessments?.length > 0" class="setup__audit-detail-list">
+          <li v-for="item in auditReport.unlinkedSBARAssessments" :key="item.id">{{ item.context }}</li>
+        </ul>
+
         <!-- Settings Integrity -->
         <div v-if="auditReport.settingsIssues && auditReport.settingsIssues.length > 0" class="setup__audit-item setup__audit-item--ok">
           <div class="setup__audit-label">System Settings Healed:</div>
@@ -152,7 +165,7 @@
           <li v-for="issue in auditReport.settingsIssues" :key="issue">✅ {{ issue }}</li>
         </ul>
 
-        <div v-if="auditReport.orphanedGrades.length === 0 && auditReport.missingClassIds.length === 0 && auditReport.invalidCategories.length === 0" class="setup__result-ok">
+        <div v-if="auditReport.orphanedGrades.length === 0 && auditReport.missingClassIds.length === 0 && auditReport.invalidCategories.length === 0 && (!auditReport.unlinkedSBARAssessments || auditReport.unlinkedSBARAssessments.length === 0)" class="setup__result-ok">
           ✨ Database is clean and perfectly consistent.
         </div>
       </div>
@@ -381,7 +394,8 @@ const showAuditDetails = reactive({
   orphans: false,
   incomplete: false,
   categories: false,
-  settings: false
+  settings: false,
+  unlinked: false
 })
 
 function toggleAuditDetails(key) {
@@ -431,6 +445,17 @@ async function fixInvalidCategories() {
   const ids = auditReport.value.invalidCategories.map(a => a.id)
   await gradebookService.repairInvalidCategories(ids)
   auditMsg.value = 'Categories repaired!'
+  await runDataAudit()
+  setTimeout(() => auditMsg.value = '', 3000)
+}
+
+async function fixUnlinkedSBARAssessments() {
+  if (!auditReport.value?.unlinkedSBARAssessments?.length) return
+  if (!await confirm(`Permanently delete ${auditReport.value.unlinkedSBARAssessments.length} unlinked SBAR assessments with no curriculum expectations?`)) return
+  
+  const ids = auditReport.value.unlinkedSBARAssessments.map(a => a.id)
+  await gradebookService.deleteAssessments(ids)
+  auditMsg.value = 'Unlinked assessments deleted!'
   await runDataAudit()
   setTimeout(() => auditMsg.value = '', 3000)
 }

@@ -58,12 +58,14 @@ const trendClass = computed(() => {
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  padding: 6px 12px;
+  padding: 6px 10px;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
-  min-height: 44px;
+  min-height: 42px;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .stat-card:hover {
@@ -74,13 +76,14 @@ const trendClass = computed(() => {
 .stat-card__main {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+  min-width: 0;
 }
 
 .stat-card__header {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
 }
 
 .stat-card__icon-wrapper {

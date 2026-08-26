@@ -56,7 +56,8 @@
           <StudentStatCard 
             label="Absences" 
             :value="stats.absences" 
-            :sub-value="`${attendanceAverages.absencesAvg}/wk avg • ${stats.testDayAbsences} Test Day${stats.testDayAbsences !== 1 ? 's' : ''}`"
+            :sub-value="attendanceAverages.absencesAvg + '/wk avg'"
+            :sub-value2="stats.testDayAbsences > 0 ? `${stats.testDayAbsences} Test Day${stats.testDayAbsences !== 1 ? 's' : ''}` : null"
             :icon="UserMinus"
             :alert-icon="testDayAlert ? AlertTriangle : null"
             :color="testDayAlert ? 'danger' : (stats.absences > 0 ? 'warning' : 'success')"
@@ -1145,10 +1146,16 @@ onUnmounted(() => {
 
 .student-360__trends-row {
   display: flex;
-  gap: 20px;
-  margin-bottom: 24px;
+  gap: 16px;
+  margin-bottom: 20px;
   min-width: 0;
   width: 100%;
+}
+
+@media (max-width: 1000px) {
+  .student-360__trends-row {
+    flex-direction: column;
+  }
 }
 
 .trend-item {

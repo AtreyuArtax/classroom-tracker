@@ -173,8 +173,16 @@
           <!-- Expectation Tagging -->
           <div v-if="allAvailableExpectations.length" class="form-group exp-section">
             <div class="exp-section-header">
-              <label class="form-label">Tagged Standards (Expectations)</label>
+              <label class="form-label">
+                Tagged Standards (Expectations)
+                <span v-if="isSBAR" class="req-star" title="Required for SBAR assessments">*</span>
+              </label>
               <span class="exp-count-badge" v-if="selectedExpCount > 0">{{ selectedExpCount }} selected</span>
+            </div>
+
+            <div v-if="isSBAR && selectedExpCount === 0" class="exp-required-hint">
+              <Info :size="13" class="exp-hint-icon" />
+              <span>Select at least 1 expectation to link this assessment to the gradebook grid.</span>
             </div>
 
             <div class="exp-pill-selector">
@@ -224,7 +232,15 @@
       <!-- Footer Modal Actions -->
       <div class="modal-actions">
         <button type="button" class="btn-ghost" @click="closeAddAssessment">Cancel</button>
-        <button type="submit" class="btn-primary">{{ isEditingAssessment ? 'Update Assessment' : 'Create Assessment' }}</button>
+        <button 
+          type="submit" 
+          class="btn-primary"
+          :disabled="isSBAR && selectedExpCount === 0"
+          :class="{ 'btn-primary--disabled': isSBAR && selectedExpCount === 0 }"
+          :title="isSBAR && selectedExpCount === 0 ? 'Please select at least 1 expectation' : ''"
+        >
+          {{ isEditingAssessment ? 'Update Assessment' : 'Create Assessment' }}
+        </button>
       </div>
     </form>
   </BaseModal>
@@ -232,7 +248,7 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue'
-import { BookOpen } from 'lucide-vue-next'
+import { BookOpen, Info } from 'lucide-vue-next'
 import {
   showAddAssessmentModal,
   isEditingAssessment,
@@ -397,6 +413,8 @@ const filteredAvailableExpectations = computed(() => {
   const specifics = list.filter(e => e.code && e.code.includes('.'))
   return specifics.length > 0 ? specifics : list
 })
+
+const isSBAR = computed(() => activeClassRecord.value?.gradingFramework === 'sbar')
 
 const selectedExpCount = computed(() => {
   if (Array.isArray(newAssessment.value.expectationIds)) {
@@ -678,9 +696,43 @@ function toggleExpSelection(code) {
   padding: 0.65rem;
   border: none;
   background: var(--primary);
-  color: #fff;
   border-radius: var(--radius-md);
-  font-weight: 700;
+  color: white;
+  font-weight: 600;
   cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.btn-primary--disabled,
+.btn-primary:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  filter: grayscale(0.5);
+}
+
+.req-star {
+  color: var(--danger, #ef4444);
+  margin-left: 2px;
+  font-weight: 800;
+}
+
+.exp-required-hint {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  background: var(--bg-secondary, #f8fafc);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm, 6px);
+  color: var(--text-secondary);
+  font-size: 0.76rem;
+  font-weight: 500;
+  margin-bottom: 8px;
+  line-height: 1.3;
+}
+
+.exp-hint-icon {
+  color: var(--primary);
+  flex-shrink: 0;
 }
 </style>

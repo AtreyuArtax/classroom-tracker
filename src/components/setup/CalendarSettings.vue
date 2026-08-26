@@ -257,20 +257,32 @@
       <div class="setup__gb-list">
         <div v-for="ms in filteredMilestones" :key="ms.milestoneId" class="setup__gb-item">
           <div class="setup__term-row">
-            <input 
-              v-model="ms.name" 
-              class="setup__input setup__input--white" 
-              placeholder="Milestone Name" 
-              style="flex: 1;"
-              @change="saveMilestones" 
-            />
-            <input 
-              v-model="ms.date" 
-              type="date" 
-              class="setup__input setup__input--white" 
-              style="width: 160px;"
-              @change="saveMilestones" 
-            />
+            <div class="setup__term-unit" style="flex: 2;">
+              <span class="setup__mini-label">Milestone Name</span>
+              <input 
+                v-model="ms.name" 
+                class="setup__input setup__input--white" 
+                placeholder="e.g. Midterm, Progress Report" 
+                @change="saveMilestones" 
+              />
+            </div>
+            <div class="setup__term-unit" style="width: 110px;">
+              <span class="setup__mini-label">Semester</span>
+              <select v-model="ms.semester" class="setup__input setup__input--white" @change="saveMilestones">
+                <option value="1">Sem 1</option>
+                <option value="2">Sem 2</option>
+                <option value="Full">Full Year</option>
+              </select>
+            </div>
+            <div class="setup__term-unit" style="width: 150px;">
+              <span class="setup__mini-label">Cutoff Date</span>
+              <input 
+                v-model="ms.date" 
+                type="date" 
+                class="setup__input setup__input--white" 
+                @change="onMilestoneDateChange(ms)" 
+              />
+            </div>
           </div>
           <button class="setup__icon-btn setup__icon-btn--danger" @click="deleteMilestone(ms.milestoneId)">
             <Trash2 :size="16" />
@@ -298,7 +310,7 @@ import { useMessage } from '../../composables/useMessage.js'
 import BaseModal from '../BaseModal.vue'
 import SemesterCalendar from './SemesterCalendar.vue'
 import Papa from 'papaparse'
-import { formatLocalDate } from '../../utils/dates.js'
+import { formatLocalDate, getSchoolYearFromDate, getSemesterFromDate } from '../../utils/dates.js'
 
 const { 
   academicTerms: terms, 
@@ -418,19 +430,38 @@ async function saveNonSchoolDays() {
 }
 
 const filteredMilestones = computed(() => {
-  return globalMilestones.value.filter(ms => !ms.year || ms.year === selectedYear.value)
+  if (!selectedYear.value) return globalMilestones.value
+  return globalMilestones.value.filter(ms => {
+    const msYear = ms.year || (ms.date ? getSchoolYearFromDate(ms.date) : '')
+    return msYear === selectedYear.value
+  })
 })
 
 async function saveMilestones() {
   await settingsService.saveGlobalMilestones(JSON.parse(JSON.stringify(globalMilestones.value)))
 }
 
+function onMilestoneDateChange(ms) {
+  if (ms.date) {
+    ms.year = getSchoolYearFromDate(ms.date)
+    if (!ms.semester) {
+      ms.semester = getSemesterFromDate(ms.date)
+    }
+  }
+  saveMilestones()
+}
+
 function addMilestone() {
+  const defaultSem = selectedSemester.value || '1'
+  const startYear = selectedYear.value ? parseInt(selectedYear.value.split('-')[0]) : new Date().getFullYear()
+  const defaultDate = defaultSem === '2' ? `${startYear + 1}-04-15` : `${startYear}-11-15`
+
   globalMilestones.value.push({
     milestoneId: `ms_${Date.now()}`,
-    year: selectedYear.value || '',
+    year: selectedYear.value || getSchoolYearFromDate(defaultDate),
+    semester: defaultSem,
     name: '',
-    date: formatLocalDate(new Date())
+    date: defaultDate
   })
   saveMilestones()
 }

@@ -1,52 +1,51 @@
 <template>
   <div class="grades__grid-container-outer">
-    <!-- Unit & Sub-Cohort Filter Bar (Fixed above table) -->
+    <!-- Unified Single-Row Filter Bar -->
     <div v-if="availableSubCohorts.length > 1 || availableUnits.length > 0" class="grades__filter-bar">
-      <!-- Row 1: Sub-Cohort Filter Pills (Split-Grade or Split-Section Classes) -->
-      <div v-if="availableSubCohorts.length > 1" class="grades__filter-row grades__filter-row--top">
-        <div class="grades__filter-group">
-          <span class="grades__filter-label">{{ activeClassRecord?.classType === 'elementary' ? 'Grade:' : 'Section:' }}</span>
-          <div class="grades__filter-chips">
-            <button 
-              v-for="subCohort in availableSubCohorts" 
-              :key="subCohort" 
-              type="button"
-              class="grid-chip"
-              :class="{ 'grid-chip--active': String(activeSubCohortFilter).toLowerCase() === String(subCohort).toLowerCase() }"
-              @click="activeSubCohortFilter = subCohort; selectedUnitId = null"
-            >
-              {{ subCohort === 'all' ? (activeClassRecord?.classType === 'elementary' ? 'All Grades' : 'All Sections') : subCohort }}
-            </button>
-          </div>
+      <!-- Cohort Chips -->
+      <div v-if="availableSubCohorts.length > 1" class="grades__filter-group grades__filter-group--cohort">
+        <span class="grades__filter-label">{{ activeClassRecord?.classType === 'elementary' ? 'Grade:' : 'Section:' }}</span>
+        <div class="grades__filter-chips">
+          <button 
+            v-for="subCohort in availableSubCohorts" 
+            :key="subCohort" 
+            type="button"
+            class="grid-chip"
+            :class="{ 'grid-chip--active': String(activeSubCohortFilter).toLowerCase() === String(subCohort).toLowerCase() }"
+            @click="setSubCohort(subCohort)"
+          >
+            {{ subCohort === 'all' ? (activeClassRecord?.classType === 'elementary' ? 'All' : 'All Sections') : (activeClassRecord?.classType === 'elementary' ? subCohort.replace('Grade ', 'Gr. ') : subCohort) }}
+          </button>
         </div>
       </div>
 
-      <!-- Row 2: Unit / Strand Filter Pills -->
-      <div v-if="availableUnits.length > 0 && (activeClassRecord?.classType !== 'elementary' || availableSubCohorts.length <= 1 || String(activeSubCohortFilter).toLowerCase() !== 'all')" class="grades__filter-row grades__filter-row--bottom">
-        <div class="grades__filter-group">
-          <span class="grades__filter-label">{{ activeClassRecord?.classType === 'elementary' ? 'Strand:' : 'Unit:' }}</span>
-          <div class="grades__filter-chips">
-            <button 
-              class="grid-chip" 
-              :class="{ 'grid-chip--active': selectedUnitId === null }"
-              @click="selectedUnitId = null"
-            >
-              {{ activeClassRecord?.classType === 'elementary' ? 'All Strands' : 'All Units' }}
-              <span class="grid-chip__badge">{{ totalAssessmentCount }}</span>
-            </button>
-            <button 
-              v-for="u in availableUnits" 
-              :key="u.unitId"
-              class="grid-chip"
-              :class="{ 'grid-chip--active': selectedUnitId === u.unitId }"
-              :style="selectedUnitId === u.unitId ? { background: getUnitColor(u.unitId), borderColor: getUnitColor(u.unitId), color: '#fff' } : {}"
-              @click="selectedUnitId = u.unitId"
-            >
-              <span class="grid-chip__dot" :style="{ background: selectedUnitId === u.unitId ? '#fff' : getUnitColor(u.unitId) }"></span>
-              <span>{{ cleanUnitPillName(u.name) }}</span>
-              <span class="grid-chip__badge">{{ getUnitAssessmentCount(u.unitId, u.name) }}</span>
-            </button>
-          </div>
+      <div v-if="availableSubCohorts.length > 1 && availableUnits.length > 0 && (activeClassRecord?.classType !== 'elementary' || availableSubCohorts.length <= 1 || String(activeSubCohortFilter).toLowerCase() !== 'all')" class="grades__filter-divider" />
+
+      <!-- Unit / Strand Chips -->
+      <div v-if="availableUnits.length > 0 && (activeClassRecord?.classType !== 'elementary' || availableSubCohorts.length <= 1 || String(activeSubCohortFilter).toLowerCase() !== 'all')" class="grades__filter-group grades__filter-group--units">
+        <span class="grades__filter-label">{{ activeClassRecord?.classType === 'elementary' ? 'Strand:' : 'Unit:' }}</span>
+        <div class="grades__filter-chips">
+          <button 
+            class="grid-chip" 
+            :class="{ 'grid-chip--active': selectedUnitId === null }"
+            @click="selectedUnitId = null"
+          >
+            {{ activeClassRecord?.classType === 'elementary' ? 'All Strands' : 'All Units' }}
+            <span class="grid-chip__badge">{{ totalAssessmentCount }}</span>
+          </button>
+          <button 
+            v-for="u in availableUnits" 
+            :key="u.unitId"
+            class="grid-chip"
+            :class="{ 'grid-chip--active': selectedUnitId === u.unitId }"
+            :style="selectedUnitId === u.unitId ? { background: getUnitColor(u.unitId), borderColor: getUnitColor(u.unitId), color: '#fff' } : {}"
+            :title="u.name"
+            @click="selectedUnitId = u.unitId"
+          >
+            <span class="grid-chip__dot" :style="{ background: selectedUnitId === u.unitId ? '#fff' : getUnitColor(u.unitId) }"></span>
+            <span>{{ cleanUnitPillName(u.name) }}</span>
+            <span class="grid-chip__badge">{{ getUnitAssessmentCount(u.unitId, u.name) }}</span>
+          </button>
         </div>
       </div>
     </div>
@@ -101,11 +100,12 @@
                   </span>
                 </span>
                 <div class="grades__assessment-meta">
-                  <span class="grades__assessment-points">/{{ a.totalPoints }}</span>
+                  <span class="grades__assessment-pts">{{ a.totalPoints }} pts</span>
+                  <span class="grades__assessment-sep">·</span>
                   <span v-if="a.categoryId" class="grades__assessment-cat-tag" :style="{ color: getCategoryColor(a.categoryId) }">
                     {{ getCategoryName(a.categoryId) }}
                   </span>
-                  <span v-else-if="a.unitId" class="grades__assessment-unit">{{ getUnitName(a.unitId) }}</span>
+                  <span v-else-if="a.unitId" class="grades__assessment-unit">{{ cleanUnitPillName(getUnitName(a.unitId)) }}</span>
                   <span 
                     v-if="(a.targetCourseCode || a.gradeLevel) && (a.targetCourseCode !== 'ALL' && a.gradeLevel !== 'ALL') && availableSubCohorts.length > 1 && activeSubCohortFilter === 'all'" 
                     class="grades__assessment-sec-badge"
@@ -387,11 +387,13 @@ import {
   gridSortOrder,
   selectedCourseFilter,
   activeSubCohortFilter,
+  setActiveSubCohortFilter,
   availableSubCohorts,
   isStudentInSubCohort,
   isAssessmentInSubCohort,
   isAssessmentApplicableToStudent,
-  getUnitGradeLevel
+  getUnitGradeLevel,
+  isCohortMatch
 } from '../composables/useGradebook.js'
 import { useGradeEditing } from '../composables/useGradeEditing.js'
 import {
@@ -605,6 +607,11 @@ const availableCourseFilters = computed(() => {
   if (codes.size <= 1) return []
   return ['all', ...Array.from(codes).sort()]
 })
+
+function setSubCohort(subCohort) {
+  setActiveSubCohortFilter(subCohort)
+  selectedUnitId.value = null
+}
 
 
 const availableUnits = computed(() => {
@@ -933,73 +940,51 @@ function copyAssessmentGrades(assessment) {
 /* Scoped overrides to target grid components and layout */
 .grades__filter-bar {
   display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 8px 16px;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 14px;
   background: var(--surface);
   border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+  min-height: 38px;
 }
 
-.grades__filter-row {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  width: 100%;
-}
-
-.grades__filter-row--bottom {
-  border-top: 1px dashed var(--border);
-  padding-top: 5px;
-}
-
-.sbar-student-grade-tag {
-  display: inline-block;
-  padding: 1px 5px;
-  border-radius: 4px;
-  font-size: 0.68rem;
-  font-weight: 700;
+.grades__filter-divider {
+  width: 1px;
+  height: 18px;
+  background: var(--border);
+  margin: 0 2px;
   flex-shrink: 0;
-}
-
-.sbar-student-grade-tag--gr7 {
-  background: rgba(99, 102, 241, 0.12);
-  color: #6366f1;
-  border: 1px solid rgba(99, 102, 241, 0.3);
-}
-
-.sbar-student-grade-tag--gr8 {
-  background: rgba(14, 165, 233, 0.12);
-  color: #0ea5e9;
-  border: 1px solid rgba(14, 165, 233, 0.3);
 }
 
 .grades__filter-group {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .grades__filter-label {
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   font-weight: 700;
   color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  white-space: nowrap;
 }
 
 .grades__filter-chips {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   flex-wrap: wrap;
 }
 
 .grid-chip {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 3px 10px;
-  font-size: 0.75rem;
+  gap: 4px;
+  padding: 3px 8px;
+  font-size: 0.735rem;
   font-weight: 600;
   border: 1px solid var(--border);
   border-radius: 12px;
@@ -1007,7 +992,7 @@ function copyAssessmentGrades(assessment) {
   color: var(--text-secondary);
   cursor: pointer;
   transition: all 0.15s ease;
-  max-width: 240px;
+  max-width: 200px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1195,9 +1180,9 @@ function copyAssessmentGrades(assessment) {
 }
 
 .grades__th-assessment {
-  width: 105px;
-  min-width: 90px;
-  max-width: 130px;
+  width: 120px;
+  min-width: 110px;
+  max-width: 145px;
 }
 
 .grades__assessment-header {
@@ -1210,7 +1195,7 @@ function copyAssessmentGrades(assessment) {
 .grades__assessment-info {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
   flex: 1;
   cursor: pointer;
   min-width: 0;
@@ -1236,20 +1221,38 @@ function copyAssessmentGrades(assessment) {
 }
 
 .grades__assessment-name {
-  font-size: 0.8rem;
+  font-size: 0.81rem;
   font-weight: 700;
   color: var(--text);
-  white-space: nowrap;
+  line-height: 1.25;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
   text-overflow: ellipsis;
+  word-break: break-word;
+  max-height: 2.5em;
 }
 
 .grades__assessment-meta {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 0.65rem;
+  gap: 4px;
+  font-size: 0.68rem;
   color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.grades__assessment-pts {
+  font-weight: 700;
+  color: var(--text);
+}
+
+.grades__assessment-sep {
+  color: var(--text-secondary);
+  opacity: 0.4;
 }
 
 .grades__assessment-unit {

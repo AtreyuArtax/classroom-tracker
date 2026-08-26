@@ -212,7 +212,7 @@ function getSparklinePath(data, width, height) {
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
-  width: 240px; /* Standardized width */
+  width: 200px; /* Streamlined compact width */
   height: 100%;
   z-index: 10;
   background: var(--surface);
@@ -226,9 +226,9 @@ function getSparklinePath(data, width, height) {
   pointer-events: none;
 }
 
-@media (max-width: 1100px) {
+@media (max-width: 1280px) {
   .student-sidebar {
-    width: 200px;
+    width: 180px;
   }
 }
 
@@ -259,12 +259,12 @@ function getSparklinePath(data, width, height) {
 }
 
 .student-sidebar__header {
-  padding: 12px 16px;
+  padding: 10px 12px;
   border-bottom: 1px solid var(--border);
   background: var(--bg-primary, var(--surface));
   display: flex;
   flex-direction: column; /* Stacked layout */
-  gap: 12px;
+  gap: 10px;
 }
 
 .student-sidebar__header-toolbar {
@@ -285,10 +285,19 @@ function getSparklinePath(data, width, height) {
 
 .student-sidebar__class-select {
   width: 100%;
+  min-width: 0;
+}
+
+.student-sidebar__class-select :deep(.class-switcher) {
+  width: 100%;
+  min-width: 0;
 }
 
 .student-sidebar__class-select :deep(.class-switcher__trigger) {
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
   justify-content: space-between;
 }
 
@@ -319,7 +328,7 @@ function getSparklinePath(data, width, height) {
   display: none;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 16px;
+  padding: 10px 12px;
   background: var(--surface);
   border: none;
   border-bottom: 1px solid var(--border);
@@ -365,7 +374,7 @@ function getSparklinePath(data, width, height) {
 }
 
 .student-sidebar__roster-item {
-  padding: 12px 16px;
+  padding: 9px 12px;
   border-bottom: 1px solid var(--bg-secondary);
   display: flex;
   justify-content: space-between;
@@ -390,7 +399,7 @@ function getSparklinePath(data, width, height) {
   justify-content: space-between;
   align-items: center;
   width: 100%;
-  gap: 12px;
+  gap: 8px;
 }
 
 .student-sidebar__roster-name-group {

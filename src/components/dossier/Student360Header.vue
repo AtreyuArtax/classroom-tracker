@@ -34,12 +34,11 @@
           <span 
             v-if="attendanceStats?.testDayAbsences > 0" 
             class="dossier-header__badge dossier-header__badge--warning"
-            :title="`Student missed ${attendanceStats.testDayAbsences} test/evaluation days`"
+            :title="`Student missed ${attendanceStats.testDayAbsences} test/evaluation day${attendanceStats.testDayAbsences > 1 ? 's' : ''}`"
           >
-            <CalendarX :size="13" />
-            {{ attendanceStats.testDayAbsences }} Missed Test Day{{ attendanceStats.testDayAbsences > 1 ? 's' : '' }}
+            <CalendarX :size="12" />
+            {{ attendanceStats.testDayAbsences }} Missed Test{{ attendanceStats.testDayAbsences > 1 ? 's' : '' }}
           </span>
-          <span v-if="student.studentId" class="dossier-header__id">#{{ student.studentId }}</span>
         </div>
       </div>
     </div>
@@ -283,25 +282,38 @@ const statusIcon = computed(() => {
   display:         flex;
   align-items:     center;
   justify-content: space-between;
-  padding:         20px 24px;
+  padding:         16px 20px;
   background:      var(--surface);
   border-bottom:   1px solid var(--border);
-  gap:             16px;
+  gap:             14px;
+}
+
+@media (max-width: 1280px) {
+  .dossier-header {
+    padding: 12px 16px;
+    gap: 10px;
+  }
 }
 
 @media (max-width: 900px) {
   .dossier-header {
-    padding: 16px 20px;
-    gap: 12px;
+    padding: 12px 14px;
+    gap: 8px;
   }
 }
 
 .dossier-header__identity {
   display:     flex;
   align-items: center;
-  gap:         16px;
+  gap:         14px;
   min-width:   0; /* Allow identity to shrink for ellipsis */
   flex:        1; /* Identity takes available space after right-side items */
+}
+
+@media (max-width: 1280px) {
+  .dossier-header__identity {
+    gap: 10px;
+  }
 }
 
 .dossier-header__avatar {
@@ -311,13 +323,13 @@ const statusIcon = computed(() => {
 .dossier-header__info {
   display:        flex;
   flex-direction: column;
-  gap:            4px;
+  gap:            3px;
   min-width:      0; /* Allow info to shrink for ellipsis */
 }
 
 .dossier-header__name {
   margin:         0;
-  font-size:      1.75rem;
+  font-size:      1.6rem;
   font-weight:    800;
   color:          var(--text);
   line-height:    1.1;
@@ -326,29 +338,37 @@ const statusIcon = computed(() => {
   text-overflow:  ellipsis;
 }
 
+@media (max-width: 1280px) {
+  .dossier-header__name { font-size: 1.35rem; }
+}
+
 @media (max-width: 1024px) {
-  .dossier-header__name { font-size: 1.5rem; }
+  .dossier-header__name { font-size: 1.25rem; }
 }
 
 @media (max-width: 900px) {
-  .dossier-header__name { font-size: 1.25rem; }
+  .dossier-header__name { font-size: 1.15rem; }
 }
 
 .dossier-header__status-badges {
   display:     flex;
   align-items: center;
-  gap:         8px;
+  gap:         6px;
+  flex-wrap:   wrap;
 }
 
 .dossier-header__badge {
-  display:       inline-flex;
-  align-items:   center;
-  gap:           4px;
-  padding:       2px 8px;
-  border-radius: var(--radius-sm);
-  font-size:     0.75rem;
-  font-weight:   700;
+  display:        inline-flex;
+  align-items:    center;
+  gap:            4px;
+  padding:        2px 8px;
+  border-radius:  var(--radius-sm);
+  font-size:      0.72rem;
+  font-weight:    700;
   text-transform: uppercase;
+  white-space:    nowrap;
+  flex-shrink:    0;
+  line-height:    1.2;
 }
 
 .dossier-header__badge--success { background: rgba(52, 199, 89, 0.1); color: #34c759; }
@@ -356,40 +376,33 @@ const statusIcon = computed(() => {
 .dossier-header__badge--danger  { background: rgba(255, 59, 48, 0.1); color: #ff3b30; }
 .dossier-header__badge--grade   { background: rgba(99, 102, 241, 0.12); color: #6366f1; border: 1px solid rgba(99, 102, 241, 0.25); }
 
-.dossier-header__id {
-  font-size:   0.8rem;
-  color:       var(--text-secondary);
-  font-family: monospace;
-}
-
 .dossier-header__metrics {
   display:     flex;
   align-items: center;
-  gap:         24px; /* Reduced default gap from 32px */
+  gap:         18px;
 }
 
-@media (max-width: 1200px) {
-  .dossier-header__metrics { gap: 16px; }
+@media (max-width: 1280px) {
+  .dossier-header__metrics { gap: 14px; }
+}
+
+@media (max-width: 1100px) {
   .dossier-header__metric--secondary { display: none; }
 }
 
 @media (max-width: 900px) {
-  .dossier-header__metrics { gap: 12px; }
-}
-
-@media (max-width: 900px) {
-  .dossier-header__metrics { gap: 12px; }
+  .dossier-header__metrics { gap: 10px; }
 }
 
 .dossier-header__right {
   display:      flex;
   align-items:  center;
-  gap:          24px;
+  gap:          18px;
   flex-shrink:  0; /* Ensure right side stays visible */
 }
 
-@media (max-width: 1024px) {
-  .dossier-header__right { gap: 16px; }
+@media (max-width: 1280px) {
+  .dossier-header__right { gap: 12px; }
 }
 
 .dossier-header__actions {

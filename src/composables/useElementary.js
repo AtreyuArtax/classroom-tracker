@@ -111,17 +111,42 @@ export function cleanUnitName(name) {
   if (!name) return ''
   let cleaned = String(name).replace(/^\[Grade\s*\d+\]\s*/i, '').trim()
   
-  // Strip long trailing parenthetical details (e.g. SEL skills in Math)
+  // Specific known curriculum strand transformations to crisp, intuitive labels
+  if (/social-emotional|SEL/i.test(cleaned)) return 'SEL Skills'
+  if (/foundations of language/i.test(cleaned)) return 'Foundations'
+  if (/comprehension/i.test(cleaned)) return 'Comprehension'
+  if (/composition/i.test(cleaned)) return 'Composition'
+  if (/literacy connections/i.test(cleaned)) return 'Literacy'
+  if (/financial literacy/i.test(cleaned)) return 'Financial'
+  if (/spatial sense/i.test(cleaned)) return 'Spatial Sense'
+  if (/stem skills/i.test(cleaned)) return 'STEM Skills'
+  if (/life systems/i.test(cleaned)) return 'Life Systems'
+  if (/matter and energy/i.test(cleaned)) return 'Matter & Energy'
+  if (/structures and mechanisms/i.test(cleaned)) return 'Structures & Mech'
+  if (/earth and space/i.test(cleaned)) return 'Earth & Space'
+
+  // Strip generic "Strand [A-Z]:\s*" prefix if present
+  cleaned = cleaned.replace(/^strand\s+[a-z0-9]\s*:\s*/i, '')
+  
+  // Strip long trailing parenthetical details
   cleaned = cleaned.replace(/\s*\([^)]*\)\s*Skills.*$/i, '')
   cleaned = cleaned.replace(/\s*\(SEL\)\s*/i, ' ')
   
   // Shorten excessively long subtitles after colons
-  if (cleaned.length > 32 && cleaned.includes(':')) {
+  if (cleaned.length > 24 && cleaned.includes(':')) {
     const parts = cleaned.split(':')
-    const prefix = parts[0].trim()
-    const rest = parts.slice(1).join(':').trim()
-    const shortRest = rest.split(/\s+/).slice(0, 3).join(' ')
-    cleaned = `${prefix}: ${shortRest}`
+    const topic = parts[0].trim()
+    const detail = parts.slice(1).join(':').trim()
+    if (topic.length < 15) {
+      const shortDetail = detail.split(/\s+/).slice(0, 2).join(' ')
+      cleaned = `${topic}: ${shortDetail}`
+    } else {
+      cleaned = topic
+    }
+  }
+  
+  if (cleaned.length > 28) {
+    cleaned = cleaned.substring(0, 25).trim() + '…'
   }
   
   return cleaned

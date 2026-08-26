@@ -10,14 +10,14 @@ import * as gradebookService from '../db/gradebookService.js'
 import * as classService from '../db/classService.js'
 import { getGlobalMilestones, getGradeBuckets } from '../db/settingsService.js'
 import { useUndo } from './useUndo.js'
-import { activeClass, activeSubjectId } from './useClassroomState.js'
+import { activeClass, activeSubjectId, selectedYear, selectedSemester, academicTerms } from './useClassroomState.js'
 import { getEffectiveClassRecord, getStudentEffectiveGrade, getUnitGradeLevel, ensureIEPPresetsForClass, autoPopulateAllElementarySubjects } from './useElementary.js'
 import { isCohortMatch } from '../db/gradebook/gradeCalc.js'
-import { formatLocalDate } from '../utils/dates.js'
+import { formatLocalDate, getSchoolYearFromDate } from '../utils/dates.js'
 
 const { push: pushUndo } = useUndo()
 
-export { getEffectiveClassRecord, getStudentEffectiveGrade, getUnitGradeLevel, ensureIEPPresetsForClass }
+export { getEffectiveClassRecord, getStudentEffectiveGrade, getUnitGradeLevel, ensureIEPPresetsForClass, isCohortMatch }
 
 // ─── Reactive State ──────────────────────────────────────────────────────────
 
@@ -33,6 +33,10 @@ export const initialDossierTab = ref('summary')
 export const activeSubCohortFilter = ref('all') // 'all' | 'Grade 7' | 'SNC2D1' etc.
 
 watch([selectedMilestone, activeSubCohortFilter], () => refreshGrades())
+
+export function setActiveSubCohortFilter(val) {
+  activeSubCohortFilter.value = val
+}
 
 // Alias for backwards compatibility
 export const activeGradeFilter = computed({
@@ -207,8 +211,52 @@ export const sortedUnits = computed(() => {
 
 export const filteredMilestones = computed(() => {
   if (!activeClassRecord.value) return []
-  const year = activeClassRecord.value.year
-  return globalMilestones.value.filter(m => !m.year || m.year === year)
+  const cls = activeClassRecord.value
+  const clsYear = cls.year || selectedYear.value
+  const clsSem = cls.semester || (cls.classType === 'elementary' ? 'Full' : (selectedSemester.value || '1'))
+  
+  // Resolve term date range if available
+  const term = academicTerms.value?.find(t => t.year === clsYear && t.semester === clsSem)
+  let startStr = ''
+  let endStr = ''
+
+  if (term?.startDate && term?.endDate) {
+    startStr = term.startDate
+    endStr = term.endDate
+  } else if (clsYear) {
+    const startYear = parseInt(clsYear.split('-')[0])
+    if (clsSem === '1') {
+      startStr = `${startYear}-09-01`
+      endStr = `${startYear + 1}-01-31`
+    } else if (clsSem === '2') {
+      startStr = `${startYear + 1}-02-01`
+      endStr = `${startYear + 1}-06-30`
+    } else {
+      startStr = `${startYear}-09-01`
+      endStr = `${startYear + 1}-06-30`
+    }
+  }
+
+  return globalMilestones.value.filter(m => {
+    if (!m.date) return false
+    
+    // 1. Check School Year
+    const mYear = m.year || getSchoolYearFromDate(m.date)
+    if (clsYear && mYear !== clsYear) return false
+
+    // 2. Check Semester for Secondary Semestered classes
+    if (cls.classType !== 'elementary' && clsSem !== 'Full') {
+      // If milestone explicitly specifies a semester (e.g. '1' or '2'), match it
+      if (m.semester && m.semester !== 'Full') {
+        if (m.semester !== clsSem) return false
+      } else if (startStr && endStr) {
+        // Otherwise, verify the milestone's date falls within the semester's date range
+        if (m.date < startStr || m.date > endStr) return false
+      }
+    }
+
+    return true
+  }).sort((a, b) => (a.date || '').localeCompare(b.date || ''))
 })
 
 // ─── Public API ──────────────────────────────────────────────────────────────

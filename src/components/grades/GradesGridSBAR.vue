@@ -1,29 +1,12 @@
 <template>
   <div class="grades-grid-sbar">
     <!-- Strand & Unit Filter Pills + Task Selector -->
-    <!-- Dedicated Filter Bar: Row 1 & Row 2 -->
-    <div class="sbar-toolbar sbar-toolbar--stacked">
-      <!-- Row 1: Roster Filters (Grade/Section) & Assessment Actions -->
-      <div class="sbar-toolbar-row sbar-toolbar-row--top">
-        <div class="sbar-toolbar-left">
-          <div v-if="availableGradeFilters.length > 1" class="sbar-grade-pills">
-            <button 
-              v-for="gFilter in availableGradeFilters" 
-              :key="gFilter" 
-              type="button"
-              class="grade-pill"
-              :class="{ 'grade-pill--active': String(activeGradeFilter).toLowerCase() === String(gFilter).toLowerCase() }"
-              @click="setGradeFilter(gFilter)"
-            >
-              {{ gFilter === 'all' ? (activeClassRecord?.classType === 'elementary' ? 'All Grades' : 'All Sections') : gFilter }}
-            </button>
-          </div>
-        </div>
-
-        <div class="sbar-toolbar-right">
-
-        <!-- Tier 3: Quick Action Chips (Top 2 Active / Recent Tasks) -->
+    <!-- Tier 1: SBAR Task & Assessment Hub Bar (Dedicated Row) -->
+    <div v-if="sortedAssessments.length" class="sbar-task-bar">
+      <div class="sbar-task-bar-left">
+        <!-- Quick Action Chips (Top 2 Active / Recent Tasks) -->
         <div v-if="quickActionTasks.length" class="sbar-quick-chips">
+          <span class="sbar-bar-label">Recent Tasks:</span>
           <button 
             v-for="ast in quickActionTasks" 
             :key="'chip-' + ast.assessmentId"
@@ -42,11 +25,12 @@
             </span>
           </button>
         </div>
+      </div>
 
-        <!-- Tier 1: Searchable Assessment Hub Popover -->
+      <div class="sbar-task-bar-right">
+        <!-- Searchable Assessment Hub Popover -->
         <div class="sbar-hub-wrapper">
           <button 
-            v-if="sortedAssessments.length" 
             type="button"
             class="sbar-hub-btn"
             :class="{ 'sbar-hub-btn--active': showHubPopover }"
@@ -124,16 +108,17 @@
                     <span class="hub-card-title">{{ ast.name }}</span>
                     <span 
                       class="hub-card-tag" 
-                      :class="(ast.isFormative || ast.purpose === 'formative') ? 'hub-card-tag--formative' : 'hub-card-tag--summative'"
+                      :class="{ 'hub-card-tag--formative': ast.purpose === 'formative' || ast.isFormative }"
                     >
-                      {{ (ast.isFormative || ast.purpose === 'formative') ? 'FORMATIVE' : 'SUMMATIVE' }}
+                      {{ (ast.purpose === 'formative' || ast.isFormative) ? 'Formative' : 'Summative' }}
                     </span>
                   </div>
-                  <div class="hub-card-sub">
-                    <span v-if="ast.date" class="hub-card-date"><Calendar :size="11" /> {{ formatLocalDisplay(ast.date) }}</span>
-                    <span v-if="getAssessmentExpectationCodes(ast).length" class="hub-card-exps">
-                      Standards: {{ getAssessmentExpectationCodes(ast).join(', ') }}
-                    </span>
+                  <div class="hub-card-meta">
+                    <span>{{ formatDate(ast.date) }}</span>
+                    <span class="hub-card-dot">•</span>
+                    <span>{{ getAssessmentTypeLabel(ast.assessmentType) }}</span>
+                    <span v-if="getAssessmentGrade(ast)" class="hub-card-dot">•</span>
+                    <span v-if="getAssessmentGrade(ast)" class="hub-card-grade">{{ getAssessmentGrade(ast) }}</span>
                   </div>
                 </div>
                 <div class="hub-card-right">
@@ -151,9 +136,28 @@
       </div>
     </div>
 
-    <!-- Row 2: Curriculum Domain Scope (Strand Pills) -->
-    <div v-if="availableStrands.length > 1 && (availableGradeFilters.length <= 1 || String(activeGradeFilter).toLowerCase() !== 'all')" class="sbar-toolbar-row sbar-toolbar-row--bottom">
-      <div class="sbar-strand-pills">
+    <!-- Tier 2: Curriculum Strands & Grade Filter Bar (Dedicated Row) -->
+    <div v-if="availableGradeFilters.length > 1 || availableStrands.length > 1" class="sbar-filter-bar">
+      <!-- Grade / Sub-cohort Filter Pills -->
+      <div v-if="availableGradeFilters.length > 1" class="sbar-grade-pills">
+        <span class="sbar-bar-label">{{ activeClassRecord?.classType === 'elementary' ? 'Grade:' : 'Section:' }}</span>
+        <button 
+          v-for="gFilter in availableGradeFilters" 
+          :key="gFilter" 
+          type="button"
+          class="grade-pill"
+          :class="{ 'grade-pill--active': String(activeGradeFilter).toLowerCase() === String(gFilter).toLowerCase() }"
+          @click="setGradeFilter(gFilter)"
+        >
+          {{ gFilter === 'all' ? (activeClassRecord?.classType === 'elementary' ? 'All' : 'All Sections') : (activeClassRecord?.classType === 'elementary' ? gFilter.replace('Grade ', 'Gr. ') : gFilter) }}
+        </button>
+      </div>
+
+      <div v-if="availableGradeFilters.length > 1 && availableStrands.length > 1" class="sbar-toolbar-divider" />
+
+      <!-- Strand Filter Pills -->
+      <div v-if="availableStrands.length > 1" class="sbar-strand-pills">
+        <span class="sbar-bar-label">Strand:</span>
         <button 
           class="strand-pill" 
           :class="{ 'strand-pill--active': activeStrandFilter === 'all' }"
@@ -176,7 +180,6 @@
         </button>
       </div>
     </div>
-  </div>
 
     <!-- SBAR Expectation Heatmap Grid Table -->
     <div class="sbar-grid-container">
@@ -191,13 +194,14 @@
               :key="'grp-' + (strand.id || strand.code)" 
               :colspan="strand.expectations.length"
               class="strand-group-header"
+              :title="strand.name"
               :style="{
                 borderTop: '3px solid ' + getUnitColorByIdx(idx),
                 backgroundColor: getUnitColorByIdx(idx) + '12',
                 color: '#1e293b'
               }"
             >
-              {{ strand.name }}
+              <div class="strand-group-title">{{ formatStrandHeaderName(strand.name) }}</div>
             </th>
           </tr>
 
@@ -366,7 +370,7 @@ import {
 } from '../../db/gradebookService.js'
 
 import { formatLocalDisplay } from '../../utils/dates.js'
-import { getEffectiveClassRecord, getUnitGradeLevel } from '../../composables/useElementary.js'
+import { getEffectiveClassRecord, getUnitGradeLevel, cleanUnitName } from '../../composables/useElementary.js'
 import { activeSubjectId } from '../../composables/useClassroomState.js'
 import { UNIT_COLORS, getSectionColor } from '../../utils/gradeColors.js'
 import { isCohortMatch } from '../../db/gradebook/gradeCalc.js'
@@ -835,21 +839,11 @@ function stripGradePrefix(name) {
 }
 
 function formatStrandPillLabel(fullName) {
-  if (!fullName) return ''
-  let clean = stripGradePrefix(fullName).replace(/\s*\([^)]*\)/g, '').trim()
-  if (clean.includes(':')) {
-    clean = clean.split(':')[0].trim()
-  }
+  return cleanUnitName(fullName)
+}
 
-  const needsCompact = availableStrands.value.length > 4 || availableGradeFilters.value.length > 1
-  if (needsCompact && /^strand\s+[a-z0-9]/i.test(clean)) {
-    return clean.replace(/^strand\s+/i, 'Str. ')
-  }
-
-  if (clean.length > 14) {
-    return clean.substring(0, 12) + '…'
-  }
-  return clean
+function formatStrandHeaderName(fullName) {
+  return cleanUnitName(fullName)
 }
 
 const availableStrands = computed(() => {
@@ -894,7 +888,7 @@ const displayedExpectations = computed(() => {
 
 const masteryMap = computed(() => {
   const algo = activeClassRecord.value?.sbarAlgorithm || 'decaying_average'
-  return calculateSBARExpectationMastery(activeClassRecord.value, assessments.value, gradeMap.value, algo)
+  return calculateSBARExpectationMastery(effectiveClass.value || activeClassRecord.value, assessments.value, gradeMap.value, algo)
 })
 
 function getStudentExpMastery(studentId, expCode) {
@@ -920,41 +914,72 @@ function openExpectationDetail(studentId, expCode) {
   display: flex;
   flex-direction: column;
   height: 100%;
-  gap: 12px;
+  gap: 8px;
 }
 
-.sbar-toolbar {
+/* Tier 1: Task Bar & Assessment Hub */
+.sbar-task-bar {
   display: flex;
-  flex-direction: column;
-  gap: 8px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   background: var(--surface);
-  padding: 8px 14px;
+  padding: 6px 14px;
   border-radius: var(--radius-md);
   border: 1px solid var(--border);
   position: relative;
   z-index: 50;
+  min-height: 38px;
 }
 
-.sbar-toolbar-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  gap: 12px;
-}
-
-.sbar-toolbar-row--bottom {
-  border-top: 1px solid var(--border);
-  padding-top: 6px;
-}
-
-.sbar-toolbar-left {
+.sbar-task-bar-left {
   display: flex;
   align-items: center;
   gap: 8px;
   min-width: 0;
   flex: 1 1 auto;
-  overflow: hidden;
+}
+
+.sbar-task-bar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  margin-left: auto;
+  z-index: 2;
+}
+
+/* Tier 2: Curriculum Strands & Grade Filters */
+.sbar-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface);
+  padding: 6px 14px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  position: relative;
+  z-index: 40;
+  min-height: 38px;
+  flex-wrap: wrap;
+}
+
+.sbar-bar-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-tertiary, #94a3b8);
+  margin-right: 2px;
+  flex-shrink: 0;
+}
+
+.sbar-toolbar-divider {
+  width: 1px;
+  height: 18px;
+  background: var(--border);
+  margin: 0 4px;
+  flex-shrink: 0;
 }
 
 .sbar-grade-pills {
@@ -970,23 +995,7 @@ function openExpectationDetail(studentId, expCode) {
   gap: 4px;
   min-width: 0;
   flex: 1 1 auto;
-  overflow-x: auto;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-  white-space: nowrap;
-}
-
-.sbar-strand-pills::-webkit-scrollbar {
-  display: none;
-}
-
-.sbar-toolbar-right {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-shrink: 0;
-  z-index: 2;
-  background: var(--surface);
+  flex-wrap: wrap;
 }
 
 .sbar-task-select {
@@ -1147,6 +1156,21 @@ function openExpectationDetail(studentId, expCode) {
   border-bottom: 1px solid var(--border);
   border-right: 1px solid var(--border);
   text-align: center;
+}
+
+.strand-group-header {
+  padding: 6px 8px !important;
+  max-width: 0;
+  overflow: hidden;
+}
+
+.strand-group-title {
+  font-size: 0.775rem;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 .sbar-header-sub th {

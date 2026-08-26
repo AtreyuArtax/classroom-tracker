@@ -33,6 +33,8 @@ import {
   calculateWeightedMedian
 } from './db/gradebook/gradeCalc.js'
 
+import { getSchoolYearFromDate, getSemesterFromDate } from './utils/dates.js'
+
 let totalTests = 0
 let passedTests = 0
 let failedTests = 0
@@ -736,6 +738,52 @@ console.log('Test Group 20: Elementary Split-Class Cohort & Subject Accommodatio
   })
 
   assert(res.overallGrade === 90, 'Student accurately assessed against Grade 8 accommodation (90%), ignoring Grade 7 tasks')
+}
+console.log()
+
+// ── TEST GROUP 21: Academic Milestones School Year & Semester Scoping
+console.log('Test Group 21: Academic Milestones School Year & Semester Scoping')
+{
+  // 1. Date to School Year calculation
+  assert(getSchoolYearFromDate('2025-11-20') === '2025-26', 'Nov 2025 date maps to 2025-26 school year')
+  assert(getSchoolYearFromDate('2026-04-15') === '2025-26', 'Apr 2026 date maps to 2025-26 school year')
+  assert(getSchoolYearFromDate('2026-09-10') === '2026-27', 'Sept 2026 date maps to 2026-27 school year')
+  assert(getSemesterFromDate('2025-11-20') === '1', 'Nov 2025 date maps to Semester 1')
+  assert(getSemesterFromDate('2026-04-15') === '2', 'Apr 2026 date maps to Semester 2')
+
+  // 2. Milestone list filtering simulation
+  const allMilestones = [
+    { milestoneId: 'm1', name: 'Midterm 1', date: '2025-11-20', year: '2025-26', semester: '1' },
+    { milestoneId: 'm2', name: 'Final 1', date: '2026-01-25', year: '2025-26', semester: '1' },
+    { milestoneId: 'm3', name: 'Midterm 2', date: '2026-04-15', year: '2025-26', semester: '2' },
+    { milestoneId: 'm4', name: 'Future Midterm', date: '2026-11-15', year: '2026-27', semester: '1' }
+  ]
+
+  // Filter for Secondary 2025-26 Sem 1
+  const sem1Milestones = allMilestones.filter(m => {
+    const mYear = m.year || getSchoolYearFromDate(m.date)
+    if (mYear !== '2025-26') return false
+    return m.semester === '1' || (m.date >= '2025-09-01' && m.date <= '2026-01-31')
+  })
+  assert(sem1Milestones.length === 2, 'Semester 1 class gets only Sem 1 milestones (2)')
+  assert(sem1Milestones.map(m => m.name).includes('Midterm 1'), 'Sem 1 includes Midterm 1')
+  assert(!sem1Milestones.map(m => m.name).includes('Midterm 2'), 'Sem 1 excludes Midterm 2')
+
+  // Filter for Secondary 2025-26 Sem 2
+  const sem2Milestones = allMilestones.filter(m => {
+    const mYear = m.year || getSchoolYearFromDate(m.date)
+    if (mYear !== '2025-26') return false
+    return m.semester === '2' || (m.date >= '2026-02-01' && m.date <= '2026-06-30')
+  })
+  assert(sem2Milestones.length === 1, 'Semester 2 class gets only Sem 2 milestones (1)')
+  assert(sem2Milestones[0].name === 'Midterm 2', 'Sem 2 includes Midterm 2')
+
+  // Filter for fresh year 2027-28
+  const freshYearMilestones = allMilestones.filter(m => {
+    const mYear = m.year || getSchoolYearFromDate(m.date)
+    return mYear === '2027-28'
+  })
+  assert(freshYearMilestones.length === 0, 'Fresh school year 2027-28 has 0 milestones')
 }
 console.log()
 

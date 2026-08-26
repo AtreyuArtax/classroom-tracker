@@ -683,9 +683,9 @@ function getHeatColor(avg) {
 
 .expectation-heatmap__row {
   display: grid;
-  grid-template-columns: minmax(320px, 1fr) 110px 140px 70px;
+  grid-template-columns: minmax(180px, 1fr) 95px 120px 65px;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   padding: 6px 0;
   font-size: 0.825rem;
 }

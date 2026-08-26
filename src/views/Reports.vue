@@ -893,12 +893,13 @@ const washroomChartOptions = {
 <style scoped>
 .reports { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: var(--bg-secondary); }
 .reports__layout { display: flex; flex: 1; overflow: hidden; }
-.reports__main { flex: 1; overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 16px; }
-.reports__pillar-nav { display: flex; gap: 8px; background: var(--surface); border: 1px solid var(--border); padding: 6px; border-radius: var(--radius-lg); }
-.reports__pillar-btn { display: flex; align-items: center; gap: 8px; background: none; border: none; padding: 8px 16px; border-radius: var(--radius-md); font-size: 0.875rem; font-weight: 600; color: var(--text-secondary); cursor: pointer; transition: all 0.2s ease; }
+.reports__main { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 14px; }
+.reports__pillar-nav { display: flex; gap: 6px; background: var(--surface); border: 1px solid var(--border); padding: 4px; border-radius: var(--radius-lg); }
+.reports__pillar-btn { display: flex; align-items: center; gap: 6px; background: none; border: none; padding: 6px 12px; border-radius: var(--radius-md); font-size: 0.825rem; font-weight: 600; color: var(--text-secondary); cursor: pointer; transition: all 0.2s ease; }
 .reports__pillar-btn:hover { color: var(--text); background: var(--surface-hover); }
 .reports__pillar-btn--active { background: var(--primary); color: white; }
-@media (max-width: 1024px) { .reports__main { padding: 16px; } }
+@media (max-width: 1300px) { .reports__main { padding: 14px 16px; } }
+@media (max-width: 1024px) { .reports__main { padding: 12px; } }
 .reports__loading { padding: 40px; text-align: center; font-weight: 600; color: var(--text-secondary); }
 .reports__filter { display: flex; align-items: center; gap: 12px; background: var(--surface); padding: 12px 16px; border-radius: var(--radius-lg); border: 1px solid var(--border); flex-wrap: wrap; }
 .sbar-grade-pills { display: inline-flex; gap: 4px; background: var(--bg-secondary); padding: 3px; border-radius: var(--radius-md, 8px); border: 1px solid var(--border); }

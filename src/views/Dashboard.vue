@@ -13,7 +13,7 @@
             :key="opt"
             class="subcohort-pill"
             :class="{ 'subcohort-pill--active': activeSubCohortFilter === opt }"
-            @click="activeSubCohortFilter = opt"
+            @click="setActiveSubCohortFilter(opt)"
           >
             {{ opt === 'all' ? (activeClass?.classType === 'elementary' ? 'All Grades' : 'All Sections') : opt }}
           </button>
@@ -202,7 +202,7 @@ import StudentProfileModal from '../components/StudentProfileModal.vue'
 import { Toilet, Users, GripVertical, Calendar, CalendarCheck, Scan } from 'lucide-vue-next'
 import { useClassroom }    from '../composables/useClassroom.js'
 import { useRadial }       from '../composables/useRadial.js'
-import { loadGradebook, activeSubCohortFilter, availableSubCohorts, availableNaturalSubCohorts } from '../composables/useGradebook.js'
+import { loadGradebook, activeSubCohortFilter, setActiveSubCohortFilter, availableSubCohorts, availableNaturalSubCohorts } from '../composables/useGradebook.js'
 import { getSectionColor } from '../utils/gradeColors.js'
 import GettingStartedGuide from '../components/setup/GettingStartedGuide.vue'
 

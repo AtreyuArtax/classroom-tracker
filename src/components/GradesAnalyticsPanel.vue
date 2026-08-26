@@ -16,7 +16,7 @@
             :key="subCohort"
             class="grades__toggle-btn"
             :class="{ 'grades__toggle-btn--active': activeSubCohortFilter === subCohort }"
-            @click="activeSubCohortFilter = subCohort"
+            @click="setActiveSubCohortFilter(subCohort)"
           >
             {{ subCohort === 'all' ? (activeClassRecord?.classType === 'elementary' ? 'All Grades' : 'All Sections') : subCohort }}
           </button>
@@ -439,6 +439,7 @@ import {
   refreshClassAnalytics,
   selectedCourseFilter,
   activeSubCohortFilter,
+  setActiveSubCohortFilter,
   availableSubCohorts,
   isStudentInSubCohort,
   isAssessmentInSubCohort,

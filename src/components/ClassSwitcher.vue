@@ -1,17 +1,17 @@
 <template>
   <div class="class-switcher-wrapper">
-    <div class="class-switcher">
-      <!-- Current class label + dropdown trigger -->
+    <!-- Current class label + dropdown trigger (only show interactive dropdown if more than 1 class exists) -->
+    <div v-if="filteredClassList.length > 1" class="class-switcher">
       <button
         class="class-switcher__trigger"
         :aria-expanded="isOpen"
         aria-haspopup="listbox"
         @click="isOpen = !isOpen"
       >
-        <span class="class-switcher__label">
+        <span class="class-switcher__label" :title="activeClass?.name">
           {{ activeClass?.name ?? 'No class selected' }}
         </span>
-        <ChevronDown :size="16" class="class-switcher__chevron" :class="{ 'class-switcher__chevron--open': isOpen }" aria-hidden="true" />
+        <ChevronDown :size="14" class="class-switcher__chevron" :class="{ 'class-switcher__chevron--open': isOpen }" aria-hidden="true" />
       </button>
 
       <!-- Dropdown list -->
@@ -57,6 +57,17 @@
         <span class="class-suggestion__text">{{ suggestionText }}</span>
         <button class="class-suggestion__accept" @click="acceptSuggestion">Switch</button>
         <button class="class-suggestion__dismiss" @click="dismissSuggestion">✕</button>
+      </div>
+    </div>
+
+    <!-- If only 1 class exists in elementary, show a subtle compact badge instead of a redundant dropdown -->
+    <div v-else-if="activeClass && activeClass?.classType === 'elementary'" class="class-switcher__single-badge" :title="activeClass.name">
+      <span class="class-switcher__badge-text">{{ activeClass.name }}</span>
+    </div>
+    
+    <div v-else-if="activeClass" class="class-switcher">
+      <div class="class-switcher__trigger class-switcher__trigger--static" :title="activeClass.name">
+        <span class="class-switcher__label">{{ activeClass.name }}</span>
       </div>
     </div>
 
@@ -186,21 +197,54 @@ async function acceptSuggestion() {
 <style scoped>
 .class-switcher {
   position: relative;
+  width: auto;
+  min-width: 0;
+  max-width: 160px;
+  flex-shrink: 0;
+}
+
+.class-switcher__single-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 8px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  height: 32px;
+  box-sizing: border-box;
+  white-space: nowrap;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-shrink: 0;
 }
 
 /* ── Trigger button ──────────────────────────────────────────────────────── */
 .class-switcher__trigger {
   display:         flex;
   align-items:     center;
-  gap:             6px;
-  padding:         6px 12px;
+  justify-content: space-between;
+  gap:             5px;
+  padding:         4px 8px;
   border:          1px solid var(--border);
   border-radius:   var(--radius-md);
   background:      var(--bg-secondary);
   box-shadow:      none;
   cursor:          pointer;
-  min-height:      36px;
+  min-height:      32px;
+  height:          32px;
+  width:           auto;
+  max-width:       160px;
+  min-width:       0;
+  box-sizing:      border-box;
   transition:      border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.class-switcher__trigger--static {
+  cursor: default;
 }
 
 .class-switcher__trigger:hover {
@@ -218,13 +262,15 @@ async function acceptSuggestion() {
 }
 
 .class-switcher__label {
-  font-size:   0.9rem;
-  font-weight: 500;
-  color:       var(--text);
-  max-width:   150px;
-  overflow:    hidden;
+  font-size:     0.84rem;
+  font-weight:   600;
+  color:         var(--text);
+  flex:          1;
+  min-width:     0;
+  overflow:      hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space:   nowrap;
+  text-align:    left;
 }
 
 .class-switcher__chevron {
@@ -232,6 +278,7 @@ async function acceptSuggestion() {
   transition:  transform 0.2s ease;
   line-height: 1;
   display:     flex;
+  flex-shrink: 0;
 }
 
 .class-switcher__chevron--open {
@@ -419,18 +466,21 @@ async function acceptSuggestion() {
 
 /* ── Elementary Subject Switcher Dropdown ─────────────────────────────────── */
 .class-switcher-wrapper {
-  display: flex;
+  display: inline-flex;
   flex-direction: row;
   align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
+  gap: 6px;
+  flex-wrap: nowrap;
+  flex-shrink: 0;
 }
 
 .subject-switcher {
   display: inline-flex;
   align-items: center;
-  min-width: 180px;
-  max-width: 320px;
+  width: auto;
+  min-width: 130px;
+  max-width: 190px;
+  flex-shrink: 0;
 }
 
 .subject-switcher__select-wrap {
@@ -440,8 +490,8 @@ async function acceptSuggestion() {
   background: var(--bg-secondary);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  padding: 0 10px 0 12px;
-  height: 36px;
+  padding: 0 8px 0 8px;
+  height: 32px;
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
@@ -454,7 +504,7 @@ async function acceptSuggestion() {
 
 .subject-switcher__icon {
   color: var(--primary);
-  margin-right: 8px;
+  margin-right: 6px;
   pointer-events: none;
   flex-shrink: 0;
 }
@@ -465,9 +515,9 @@ async function acceptSuggestion() {
   background: transparent;
   border: none;
   color: var(--text);
-  font-size: 0.88rem;
+  font-size: 0.81rem;
   font-weight: 600;
-  padding-right: 20px;
+  padding-right: 18px;
   cursor: pointer;
   outline: none;
   width: 100%;

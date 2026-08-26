@@ -751,7 +751,8 @@ const activeActionItemsVisible = computed(() => {
 .reports__headline-sub { font-size: 0.8rem; color: var(--text-secondary); }
 .reports__headline-detail { font-size: 0.75rem; color: var(--primary); font-weight: 600; }
 .reports__headline-alert { display: flex; align-items: center; gap: 4px; font-size: 0.75rem; color: #ef4444; font-weight: 600; }
-.reports__two-col { display: grid; grid-template-columns: 320px 1fr; gap: 20px; }
+.reports__two-col { display: grid; grid-template-columns: minmax(260px, 300px) 1fr; gap: 16px; }
+@media (max-width: 1000px) { .reports__two-col { grid-template-columns: 1fr; } }
 .reports__followup-col { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 16px; display: flex; flex-direction: column; gap: 12px; }
 .reports__col-header { display: flex; justify-content: space-between; align-items: center; }
 .reports__col-title { font-size: 0.85rem; font-weight: 700; color: var(--text-secondary); letter-spacing: 0.05em; margin: 0; }

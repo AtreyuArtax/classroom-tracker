@@ -85,3 +85,43 @@ export function getCurrentSemester() {
   }
   return '1'
 }
+
+/**
+ * Computes the school year string (e.g. "2025-26") for any given date.
+ * Academic year cutoff is August 1st.
+ * 
+ * @param {string|Date} date
+ * @returns {string} e.g. "2025-26"
+ */
+export function getSchoolYearFromDate(date) {
+  if (!date) return getCurrentSchoolYear()
+  const d = typeof date === 'string' ? parseLocal(date) : new Date(date)
+  if (isNaN(d.getTime())) return getCurrentSchoolYear()
+  
+  const year = d.getFullYear()
+  const month = d.getMonth() // 0-indexed: 0 = Jan, 7 = Aug
+  if (month < 7) { // Jan - July
+    const start = year - 1
+    const end = String(year).slice(-2)
+    return `${start}-${end}`
+  } else { // Aug - Dec
+    const start = year
+    const end = String(year + 1).slice(-2)
+    return `${start}-${end}`
+  }
+}
+
+/**
+ * Returns the semester ("1" or "2") for a given date based on Feb 1 boundary.
+ * 
+ * @param {string|Date} date
+ * @returns {string} "1" or "2"
+ */
+export function getSemesterFromDate(date) {
+  if (!date) return '1'
+  const d = typeof date === 'string' ? parseLocal(date) : new Date(date)
+  if (isNaN(d.getTime())) return '1'
+  const month = d.getMonth()
+  return (month >= 1 && month <= 6) ? '2' : '1'
+}
+

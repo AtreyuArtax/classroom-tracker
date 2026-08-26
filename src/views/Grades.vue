@@ -81,6 +81,7 @@
             </div>
 
             <div class="grades__toolbar-center">
+              <!-- Group 1: Mode Switcher (Grid vs Analytics) -->
               <div class="grades__toggle-group">
                 <button 
                   class="grades__toggle-btn"
@@ -100,6 +101,10 @@
                 </button>
               </div>
 
+              <!-- Group Divider -->
+              <div v-if="filteredMilestones?.length || (!analyticsMode && !isSBAR)" class="grades__center-divider" />
+
+              <!-- Group 2: Timeframe / Milestones (Current vs Midterm) -->
               <div v-if="filteredMilestones?.length" class="grades__milestone-toggle">
                 <button 
                   class="grades__toggle-btn"
@@ -115,30 +120,33 @@
                 >{{ m.name }}</button>
               </div>
 
-              <div v-if="!analyticsMode && !isSBAR" class="grades__toggle-group" title="Column Order">
-                <button 
-                  class="grades__toggle-btn"
-                  :class="{ 'grades__toggle-btn--active': assessmentSortOrder === 'desc' }"
-                  @click="assessmentSortOrder = 'desc'"
-                >Newest</button>
-                <button 
-                  class="grades__toggle-btn"
-                  :class="{ 'grades__toggle-btn--active': assessmentSortOrder === 'asc' }"
-                  @click="assessmentSortOrder = 'asc'"
-                >Oldest</button>
-              </div>
+              <!-- Group Divider -->
+              <div v-if="filteredMilestones?.length && !analyticsMode && !isSBAR" class="grades__center-divider" />
 
-              <div v-if="!analyticsMode && !isSBAR" class="grades__toggle-group">
+              <!-- Group 3: Grid Display Modifiers (Sort & Score Format) -->
+              <div v-if="!analyticsMode && !isSBAR" class="grades__modifiers-group">
+                <!-- 1-Click Flip Button for Assessment Column Sort Order (Newest <-> Oldest) -->
                 <button 
-                  class="grades__toggle-btn"
-                  :class="{ 'grades__toggle-btn--active': displayMode === 'raw' }"
-                  @click="displayMode = 'raw'"
-                >Raw</button>
+                  type="button"
+                  class="grades__flip-btn"
+                  :title="assessmentSortOrder === 'desc' ? 'Sorted: Newest first. Click for Oldest first.' : 'Sorted: Oldest first. Click for Newest first.'"
+                  @click="assessmentSortOrder = (assessmentSortOrder === 'desc' ? 'asc' : 'desc')"
+                >
+                  <ArrowDownUp :size="12" class="flip-btn-icon" />
+                  <span>{{ assessmentSortOrder === 'desc' ? 'Newest' : 'Oldest' }}</span>
+                </button>
+
+                <!-- 1-Click Flip Button for Score Format (Raw <-> %) -->
                 <button 
-                  class="grades__toggle-btn"
-                  :class="{ 'grades__toggle-btn--active': displayMode === 'percent' }"
-                  @click="displayMode = 'percent'"
-                >%</button>
+                  type="button"
+                  class="grades__flip-btn"
+                  :title="displayMode === 'percent' ? 'Format: Percentage (%). Click for Raw Points.' : 'Format: Raw Points. Click for Percentage (%)'"
+                  @click="displayMode = (displayMode === 'percent' ? 'raw' : 'percent')"
+                >
+                  <Percent v-if="displayMode === 'percent'" :size="12" class="flip-btn-icon" />
+                  <Hash v-else :size="12" class="flip-btn-icon" />
+                  <span>{{ displayMode === 'percent' ? 'Pct' : 'Raw' }}</span>
+                </button>
               </div>
             </div>
 
@@ -308,7 +316,7 @@ import {
 import { formatGrade } from '../utils/gradeColors.js'
 import { getSBARLevelBadge } from '../db/gradebookService.js'
 import { useAttendanceInsights } from '../composables/useAttendanceInsights.js'
-import { Plus, BarChart2, Settings, Printer, LayoutGrid, Zap } from 'lucide-vue-next'
+import { Plus, BarChart2, Settings, Printer, LayoutGrid, Zap, ArrowDownUp, Percent, Hash } from 'lucide-vue-next'
 import Student360 from '../components/dossier/Student360.vue'
 import GradesGrid from '../components/GradesGrid.vue'
 import GradesGridSBAR from '../components/grades/GradesGridSBAR.vue'
@@ -877,24 +885,38 @@ onMounted(async () => {
 <style scoped>
 .grades { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: var(--bg-secondary); }
 .grades__layout { display: flex; flex: 1; overflow: hidden; }
-.grades__main { flex: 1; min-width: 0; overflow-y: auto; overflow-x: hidden; padding: 24px; display: flex; flex-direction: column; }
+.grades__main { flex: 1; min-width: 0; overflow-y: auto; overflow-x: hidden; padding: 16px 20px; display: flex; flex-direction: column; }
 .grades__loading, .grades__placeholder { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 20px; color: var(--text-secondary); font-weight: 600; }
 .grades__spinner { width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 12px; }
 @keyframes spin { to { transform: rotate(360deg); } }
-.grades__grid-container { display: flex; flex-direction: column; gap: 16px; height: 100%; }
-.grades__toolbar { display: flex; justify-content: space-between; align-items: center; background: var(--surface); padding: 12px 16px; border-radius: var(--radius-lg); border: 1px solid var(--border); }
-.grades__toolbar-left, .grades__toolbar-center, .grades__toolbar-right { display: flex; align-items: center; gap: 10px; }
-.grades__btn-settings { display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: var(--radius-md); border: 1px solid var(--border); background: var(--surface); color: var(--text-secondary); cursor: pointer; }
-.grades__btn-add { display: flex; align-items: center; gap: 6px; padding: 8px 14px; background: var(--primary); color: white; border: none; border-radius: var(--radius-md); font-size: 0.85rem; font-weight: 600; cursor: pointer; }
-.grades__toggle-group, .grades__milestone-toggle { display: flex; gap: 2px; background: var(--bg-secondary); padding: 3px; border-radius: var(--radius-md); }
-.grades__toggle-btn { padding: 6px 12px; border: none; background: none; font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); border-radius: var(--radius-sm); cursor: pointer; }
+.grades__grid-container { display: flex; flex-direction: column; gap: 10px; height: 100%; }
+.grades__toolbar { display: flex; justify-content: space-between; align-items: center; background: var(--surface); padding: 6px 12px; border-radius: var(--radius-lg); border: 1px solid var(--border); flex-wrap: nowrap; gap: 8px; min-height: 44px; }
+.grades__toolbar-left { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.grades__toolbar-center { display: flex; align-items: center; gap: 8px; flex-shrink: 1; min-width: 0; }
+.grades__center-divider { width: 1px; height: 18px; background: var(--border); margin: 0 3px; flex-shrink: 0; }
+.grades__modifiers-group { display: flex; align-items: center; gap: 4px; }
+.grades__toolbar-right { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.grades__btn-settings { display: flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: var(--radius-md); border: 1px solid var(--border); background: var(--surface); color: var(--text-secondary); cursor: pointer; }
+.grades__btn-settings:hover { background: var(--surface-hover); color: var(--text); }
+.grades__btn-add { display: flex; align-items: center; gap: 5px; padding: 6px 12px; background: var(--primary); color: white; border: none; border-radius: var(--radius-md); font-size: 0.81rem; font-weight: 600; cursor: pointer; }
+.grades__toggle-group, .grades__milestone-toggle { display: flex; gap: 2px; background: var(--bg-secondary); padding: 2px; border-radius: var(--radius-md); }
+.grades__toggle-btn { padding: 4px 9px; border: none; background: none; font-size: 0.76rem; font-weight: 600; color: var(--text-secondary); border-radius: var(--radius-sm); cursor: pointer; }
 .grades__toggle-btn--active { background: var(--surface); color: var(--primary); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); }
-.grades__class-avg-display { font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); }
+.grades__flip-btn { display: inline-flex; align-items: center; gap: 4px; padding: 4px 8px; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius-sm, 6px); color: var(--text-secondary); font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: all 0.15s ease; }
+.grades__flip-btn:hover { background: var(--surface-hover); color: var(--text); border-color: var(--primary); }
+.flip-btn-icon { color: var(--primary); flex-shrink: 0; }
+.grades__class-avg-display { font-size: 0.82rem; font-weight: 600; color: var(--text-secondary); white-space: nowrap; }
 .grades__avg-value { font-weight: 800; color: var(--primary); }
-.sbar-engine-select-wrapper { display: inline-flex; align-items: center; gap: 4px; margin-left: 8px; padding: 3px 8px; border-radius: 14px; background: var(--bg-tertiary, rgba(99, 102, 241, 0.08)); border: 1px solid var(--border); transition: all 0.15s ease; }
+.sbar-engine-select-wrapper { display: inline-flex; align-items: center; gap: 4px; margin-left: 6px; padding: 2px 7px; border-radius: 14px; background: var(--bg-tertiary, rgba(99, 102, 241, 0.08)); border: 1px solid var(--border); transition: all 0.15s ease; }
 .sbar-engine-select-wrapper:hover { background: var(--primary-light, rgba(99, 102, 241, 0.15)); border-color: var(--primary); }
 .sbar-engine-icon { color: var(--primary); flex-shrink: 0; }
-.sbar-engine-select { background: transparent; border: none; color: var(--primary); font-size: 0.73rem; font-weight: 700; cursor: pointer; outline: none; padding: 0; }
+.sbar-engine-select { background: transparent; border: none; color: var(--primary); font-size: 0.72rem; font-weight: 700; cursor: pointer; outline: none; padding: 0; }
 .sbar-engine-select option { background: var(--surface); color: var(--text); font-weight: 600; }
 .grades__student-view { height: 100%; }
+
+@media (max-width: 1280px) {
+  .grades__main { padding: 10px 12px; }
+  .grades__toolbar { padding: 6px 10px; gap: 6px; }
+  .grades__toolbar-left, .grades__toolbar-center, .grades__toolbar-right { gap: 6px; }
+}
 </style>
