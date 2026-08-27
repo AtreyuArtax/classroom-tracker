@@ -138,7 +138,7 @@
  */
 
 import { ref, computed, watch, onUnmounted } from 'vue'
-import { HelpCircle, UserX, Clock, Footprints, Smartphone, Toilet } from 'lucide-vue-next'
+import { HelpCircle, UserX, Clock, Footprints, Smartphone, DoorOpen } from 'lucide-vue-next'
 import { resolveIcon }    from '../utils/icons.js'
 import { toMinutes }      from '../db/eventService.js'
 import { useRadial }    from '../composables/useRadial.js'
@@ -208,7 +208,7 @@ const showDeviceDot = computed(() => {
 const washroomDotTooltip = computed(() => {
   const stats = studentWeeklyStats.value[props.studentId]
   if (!stats) return ''
-  return `${stats.washroomTrips} washroom trips this week`
+  return `${stats.washroomTrips} out-of-class trips this week`
 })
 
 const deviceDotTooltip = computed(() => {
@@ -243,7 +243,7 @@ const activeOutIcon = computed(() => {
   }
   
   // Backward compatibility fallback for old sessions missing the 'code' in activeStates
-  return Toilet
+  return DoorOpen
 })
 
 // ─── elapsed timer (shared master clock) ─────────────────────────────────────

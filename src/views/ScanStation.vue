@@ -126,7 +126,7 @@ const feedbackActionLabel = computed(() => {
   const action = activeFeedback.value.scan_action
   if (action === 'checkin') return 'SIGNED IN - WELCOME!'
   if (action === 'washroom_in') return 'RETURNED TO CLASS'
-  if (action === 'washroom_out') return 'WASHROOM OUT'
+  if (action === 'washroom_out') return 'OUT OF CLASS'
   return 'SCAN DECLINED'
 })
 

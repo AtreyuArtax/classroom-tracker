@@ -7,53 +7,58 @@
         <p class="report-meta">{{ activeClass?.name }} • {{ teacherName || 'Teacher' }}</p>
       </div>
       <div class="report-header__right">
+        <div class="report-type-badge">Attendance &amp; Activity Report</div>
         <div class="report-date">{{ new Date().toLocaleDateString([], { month: 'long', day: 'numeric', year: 'numeric' }) }}</div>
-        <div class="report-type-badge">Attendance & Activity Report</div>
       </div>
     </header>
 
-    <!-- Summary Box -->
-    <section class="report-section report-section--summary">
-      <div class="summary-grid">
-        <!-- Attendance Stats -->
-        <div class="summary-card summary-card--attendance">
-          <h3 class="summary-card-title">Attendance</h3>
-          <div class="metrics-row">
-            <div class="metric">
-              <span class="metric-val">{{ stats.absences }}</span>
-              <span class="metric-lab">Absences <small>({{ stats.absencesPerWeek }}/wk)</small></span>
-            </div>
-            <div class="metric">
-              <span class="metric-val">{{ stats.lates }}</span>
-              <span class="metric-lab">Lates <small>({{ stats.latesPerWeek }}/wk)</small></span>
-            </div>
-            <div class="metric">
-              <span class="metric-val">{{ stats.lateMinutes }}<small>m</small></span>
-              <span class="metric-lab">Late Total <small>(Avg {{ stats.avgLateMinutes }}m)</small></span>
-            </div>
-          </div>
+    <!-- Sleek High-Density Metrics Ribbon (Mirrors Student Dossier summary style) -->
+    <div class="report-metrics-ribbon">
+      <div class="report-chip report-chip--absent">
+        <div class="report-chip__icon-wrap">
+          <UserMinus :size="13" />
         </div>
-
-        <!-- Activity Stats -->
-        <div class="summary-card summary-card--activity">
-          <h3 class="summary-card-title">Out-of-Class</h3>
-          <div class="metrics-row">
-            <div class="metric">
-              <span class="metric-val">{{ stats.washroomCount }}</span>
-              <span class="metric-lab">Total Trips <small>({{ stats.washroomPerWeek }}/wk)</small></span>
-            </div>
-            <div class="metric">
-              <span class="metric-val">{{ stats.washroomMinutes }}<small>m</small></span>
-              <span class="metric-lab">Total Time <small>(Avg {{ stats.avgWashroomMinutes }}m)</small></span>
-            </div>
-          </div>
+        <div class="report-chip__content">
+          <span class="report-chip__primary"><strong>{{ stats.absences }}</strong> Absences</span>
+          <span class="report-chip__secondary">{{ stats.absencesPerWeek }}/wk avg</span>
         </div>
       </div>
-    </section>
 
-    <!-- Monthly Grids -->
+      <div class="report-chip report-chip--late">
+        <div class="report-chip__icon-wrap">
+          <Clock :size="13" />
+        </div>
+        <div class="report-chip__content">
+          <span class="report-chip__primary"><strong>{{ stats.lates }}</strong> Late<span v-if="stats.lateMinutes > 0" class="report-chip__hl"> · {{ stats.lateMinutes }}m lost</span></span>
+          <span class="report-chip__secondary">Avg {{ stats.avgLateMinutes }}m · {{ stats.latesPerWeek }}/wk</span>
+        </div>
+      </div>
+
+      <div class="report-chip report-chip--out">
+        <div class="report-chip__icon-wrap">
+          <DoorOpen :size="13" />
+        </div>
+        <div class="report-chip__content">
+          <span class="report-chip__primary"><strong>{{ stats.washroomCount }}</strong> Out of Class<span v-if="stats.washroomMinutes > 0" class="report-chip__hl"> · {{ stats.washroomMinutes }}m</span></span>
+          <span class="report-chip__secondary">Avg {{ stats.avgWashroomMinutes }}m · {{ stats.washroomPerWeek }}/wk</span>
+        </div>
+      </div>
+
+      <div class="report-chip report-chip--rate">
+        <div class="report-chip__icon-wrap">
+          <CheckCircle2 :size="13" />
+        </div>
+        <div class="report-chip__content">
+          <span class="report-chip__primary"><strong>{{ stats.attendanceRate }}%</strong> Present</span>
+          <span class="report-chip__secondary">{{ stats.instructionalDays }} School Days</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Monthly Grids (2 Columns x 3 Rows = 6 Slots, filling the full page perfectly) -->
     <section class="report-section report-section--grids">
       <div class="monthly-grids-container">
+        <!-- 5 Months of Calendar Grids -->
         <div v-for="month in calendar" :key="month.key" class="month-box">
           <h4 class="month-title">{{ month.name }} {{ month.year }}</h4>
           <div class="month-grid">
@@ -73,23 +78,70 @@
               }"
             >
               <template v-if="day.date">
-                <span class="day-num">{{ day.dayNum }}</span>
-                <div v-if="day.isHoliday" class="day-holiday-label">{{ day.holidayLabel }}</div>
-                <div class="day-events">
-                  <template v-if="!day.isHoliday">
-                    <div v-if="day.events.absent" class="event-tag event-tag--absent">A</div>
-                    <div v-if="day.events.late" class="event-tag event-tag--late">
-                      L <small>{{ day.events.lateMinutes }}m</small>
-                    </div>
-                    <div v-if="day.events.washroom" class="event-tag event-tag--washroom">
-                      W <small>{{ day.events.washroomMinutes }}m</small>
-                    </div>
-                  </template>
+                <div class="grid-day__top">
+                  <div class="day-events">
+                    <template v-if="!day.isHoliday">
+                      <div v-if="day.events.absent" class="event-tag event-tag--absent">A</div>
+                      <div v-if="day.events.late" class="event-tag event-tag--late">
+                        L <small>{{ day.events.lateMinutes }}m</small>
+                      </div>
+                      <div v-if="day.events.washroom" class="event-tag event-tag--washroom">
+                        O <small>{{ day.events.washroomMinutes }}m</small>
+                      </div>
+                    </template>
+                  </div>
+                  <span class="day-num">{{ day.dayNum }}</span>
+                </div>
+                <div v-if="day.isHoliday" class="day-holiday-label" :title="day.holidayLabel">
+                  {{ day.holidayLabel }}
                 </div>
               </template>
             </div>
           </div>
         </div>
+
+        <!-- Slot 6: Semester Insights & Report Legend -->
+        <div class="month-box summary-panel-box">
+          <h4 class="month-title summary-panel-title">Semester Insights &amp; Guide</h4>
+          <div class="summary-panel-content">
+            <div class="summary-panel-stat-row">
+              <div class="stat-mini">
+                <span class="stat-mini__label">Attendance Rate</span>
+                <span class="stat-mini__val" :class="stats.attendanceRate < 85 ? 'text-danger' : 'text-success'">{{ stats.attendanceRate }}%</span>
+              </div>
+              <div class="stat-mini">
+                <span class="stat-mini__label">Total Time Lost</span>
+                <span class="stat-mini__val">{{ Number(stats.lateMinutes || 0) + Number(stats.washroomMinutes || 0) }}m</span>
+              </div>
+              <div class="stat-mini">
+                <span class="stat-mini__label">School Days</span>
+                <span class="stat-mini__val">{{ stats.instructionalDays }}</span>
+              </div>
+            </div>
+
+            <div class="legend-divider"></div>
+
+            <div class="summary-panel-legend">
+              <div class="legend-entry">
+                <span class="event-tag event-tag--absent">A</span>
+                <span class="legend-text"><strong>Absent:</strong> Full day absence</span>
+              </div>
+              <div class="legend-entry">
+                <span class="event-tag event-tag--late">L 15m</span>
+                <span class="legend-text"><strong>Late:</strong> Arrived late with duration</span>
+              </div>
+              <div class="legend-entry">
+                <span class="event-tag event-tag--washroom">O 10m</span>
+                <span class="legend-text"><strong>Out of Class:</strong> Hall departure</span>
+              </div>
+              <div class="legend-entry">
+                <span class="legend-sample-holiday">NON-INST</span>
+                <span class="legend-text"><strong>Holiday / PA Day:</strong> No classes</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
       </div>
     </section>
   </div>
@@ -97,6 +149,7 @@
 
 <script setup>
 import { computed, ref, onMounted } from 'vue'
+import { UserMinus, Clock, DoorOpen, CheckCircle2 } from 'lucide-vue-next'
 import { useClassroom } from '../../composables/useClassroom.js'
 import { getEventsByStudent, toMinutes } from '../../db/eventService.js'
 import { formatLocalDate } from '../../utils/dates.js'
@@ -206,9 +259,9 @@ const calendar = computed(() => {
         events: {
           absent: dayEvents.some(e => e.code === 'a'),
           late: dayEvents.some(e => e.code === 'l'),
-          lateMinutes: dayEvents.filter(e => e.code === 'l').reduce((acc, e) => acc + toMinutes(e.duration), 0),
+          lateMinutes: Math.round(dayEvents.filter(e => e.code === 'l').reduce((acc, e) => acc + toMinutes(e.duration), 0)),
           washroom: dayEvents.some(e => e.code === 'w'),
-          washroomMinutes: dayEvents.filter(e => e.code === 'w').reduce((acc, e) => acc + toMinutes(e.duration), 0)
+          washroomMinutes: Math.round(dayEvents.filter(e => e.code === 'w').reduce((acc, e) => acc + toMinutes(e.duration), 0))
         }
       })
     }
@@ -237,7 +290,19 @@ const stats = computed(() => {
   const totalDays = (termRange.value.end - termRange.value.start) / (1000 * 60 * 60 * 24)
   const schoolWeeks = Math.max(1, totalDays / 7)
   
-  const fmt = (v) => Math.round(v * 10) / 10
+  // Calculate total instructional days from calendar
+  let instructionalDays = 0
+  calendar.value.forEach(m => {
+    m.days.forEach(d => {
+      if (d.date && !d.isOutsideRange && !d.isHoliday) {
+        instructionalDays++
+      }
+    })
+  })
+  instructionalDays = Math.max(1, instructionalDays)
+  const attendanceRate = Math.max(0, Math.min(100, Math.round(((instructionalDays - absences) / instructionalDays) * 100)))
+
+  const fmt = (v) => (Math.round(v * 10) / 10).toFixed(1)
   const avgFmt = (total, count) => count > 0 ? Math.round(total / count) : 0
 
   return {
@@ -246,6 +311,8 @@ const stats = computed(() => {
     lateMinutes,
     washroomCount,
     washroomMinutes,
+    instructionalDays,
+    attendanceRate,
     absencesPerWeek: fmt(absences / schoolWeeks),
     latesPerWeek: fmt(lates / schoolWeeks),
     washroomPerWeek: fmt(washroomCount / schoolWeeks),
@@ -270,13 +337,14 @@ const stats = computed(() => {
   background: white;
   color: var(--print-text);
   font-family: 'Inter', -apple-system, system-ui, sans-serif;
-  padding: 30px; /* Reduced */
-  min-height: 297mm;
-  width: 210mm;
+  padding: 16px 20px;
+  width: 100%;
+  max-width: 210mm;
+  box-sizing: border-box;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 16px; /* Reduced */
+  gap: 8px;
   print-color-adjust: exact;
   -webkit-print-color-adjust: exact;
 }
@@ -289,92 +357,115 @@ const stats = computed(() => {
   justify-content: space-between;
   align-items: flex-end;
   border-bottom: 2px solid var(--print-primary);
-  padding-bottom: 8px; /* Reduced */
+  padding-bottom: 4px;
 }
 
 .report-student-name {
-  font-size: 1.4rem; /* Reduced */
+  font-size: 1.35rem;
   font-weight: 800;
   margin: 0;
+  letter-spacing: -0.01em;
 }
 
 .report-meta {
-  font-size: 0.9rem; /* Reduced */
+  font-size: 0.82rem;
   color: var(--print-text-muted);
-  margin: 2px 0 0;
+  margin: 1px 0 0;
+  font-weight: 500;
 }
 
 .report-header__right { text-align: right; }
-.report-date { font-size: 0.8rem; font-weight: 600; color: var(--print-text-muted); }
+.report-date { font-size: 0.72rem; font-weight: 600; color: var(--print-text-muted); }
 .report-type-badge {
   display: inline-block;
   background: var(--print-primary);
   color: white;
-  padding: 3px 10px;
+  padding: 2px 8px;
   border-radius: 4px;
   font-weight: 700;
-  font-size: 0.6rem;
-  margin-top: 2px;
+  font-size: 0.58rem;
+  margin-bottom: 2px;
+  text-transform: uppercase;
 }
 
-/* --- Summary --- */
-.summary-grid {
+/* --- High-Density Metrics Ribbon --- */
+.report-metrics-ribbon {
   display: grid;
-  grid-template-columns: 1.2fr 1fr;
-  gap: 12px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
 }
 
-.summary-card {
-  padding: 6px 12px;
+.report-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 8px;
+  border-radius: 5px;
   border: 1px solid var(--print-border);
-  border-radius: 6px;
   background: #f8fafc;
 }
 
-.summary-card--attendance { border-left: 4px solid var(--color-late); }
-.summary-card--activity { border-left: 4px solid var(--color-washroom); }
-
-.summary-card-title {
-  font-size: 0.68rem;
-  font-weight: 800;
-  text-transform: uppercase;
-  color: var(--print-text-muted);
-  margin: 0 0 4px;
-}
-
-.metrics-row {
+.report-chip__icon-wrap {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
   display: flex;
-  justify-content: space-between;
-  gap: 12px;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
-.metric {
+.report-chip--absent .report-chip__icon-wrap { background: rgba(239, 68, 68, 0.12); color: #ef4444; }
+.report-chip--late .report-chip__icon-wrap { background: rgba(245, 158, 11, 0.12); color: #f59e0b; }
+.report-chip--out .report-chip__icon-wrap { background: rgba(59, 130, 246, 0.12); color: #3b82f6; }
+.report-chip--rate .report-chip__icon-wrap { background: rgba(16, 185, 129, 0.12); color: #10b981; }
+
+.report-chip__content {
   display: flex;
   flex-direction: column;
+  gap: 1px;
+  min-width: 0;
 }
 
-.metric-val { font-size: 0.95rem; font-weight: 800; line-height: 1; }
-.metric-val small { font-size: 0.6rem; color: var(--print-text-muted); margin-left: 1px; }
-.metric-lab { font-size: 0.58rem; font-weight: 700; color: var(--print-text-muted); text-transform: uppercase; margin-top: 2px; }
-.metric-lab small { font-weight: 500; font-style: italic; text-transform: none; opacity: 0.85; }
+.report-chip__primary {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--print-text);
+  white-space: nowrap;
+}
 
-/* --- Grids --- */
+.report-chip__hl {
+  color: #0284c7;
+  font-weight: 700;
+}
+
+.report-chip__secondary {
+  font-size: 0.6rem;
+  font-weight: 600;
+  color: var(--print-text-muted);
+  white-space: nowrap;
+}
+
+/* --- Grids (2 columns x 3 rows = 6 slots) --- */
 .monthly-grids-container {
   display: grid;
-  grid-template-columns: repeat(3, 1fr); /* Changed to 3 columns to save vertical space */
-  gap: 12px;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
 }
 
 .month-box {
   border: 1px solid var(--print-border);
-  border-radius: 6px;
-  padding: 8px;
+  border-radius: 5px;
+  padding: 6px 8px;
+  background: white;
+  display: flex;
+  flex-direction: column;
 }
 
 .month-title {
   font-size: 0.75rem;
   font-weight: 800;
-  margin: 0 0 6px;
+  margin: 0 0 4px;
   text-align: center;
   color: var(--print-primary);
 }
@@ -394,68 +485,178 @@ const stats = computed(() => {
 }
 
 .grid-day {
-  aspect-ratio: 1 / 1.1;
   border: 1px solid #e2e8f0;
   border-radius: 3px;
-  padding: 2px;
-  position: relative;
+  padding: 2px 3px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
   min-height: 38px;
+  overflow: hidden;
+  position: relative;
+  background: white;
 }
 
-.grid-day--empty { border: none; }
-.grid-day--outside { opacity: 0.3; background: #f8fafc; }
-.grid-day--holiday { background: var(--color-holiday); border-style: dashed; }
+.grid-day--empty {
+  border: none;
+  background: transparent;
+}
+.grid-day--outside {
+  opacity: 0.3;
+  background: #f8fafc;
+}
+.grid-day--holiday {
+  background: var(--color-holiday, #f1f5f9);
+  border-style: dashed;
+  border-color: #cbd5e1;
+}
+
+.grid-day__top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 2px;
+  width: 100%;
+}
 
 .day-num {
-  position: absolute;
-  top: 1px;
-  right: 1px;
-  font-size: 0.5rem;
+  font-size: 0.58rem;
   font-weight: 700;
   color: var(--print-text-muted);
+  line-height: 1;
+  margin-left: auto;
 }
 
 .day-events {
-  position: absolute;
-  top: 1px;
-  left: 1px;
   display: flex;
-  flex-direction: row;
   flex-wrap: wrap;
   gap: 1px;
-  max-width: 80%;
+  align-items: center;
+  min-width: 0;
 }
 
 .event-tag {
-  font-size: 0.5rem; /* Even smaller */
+  font-size: 0.52rem;
   font-weight: 800;
-  padding: 0px 2px;
+  padding: 1px 3px;
   border-radius: 2px;
   color: white;
   line-height: 1.1;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 1px;
+  white-space: nowrap;
 }
 
 .event-tag--absent { background: var(--color-absent); }
 .event-tag--late { background: var(--color-late); }
 .event-tag--washroom { background: var(--color-washroom); }
 
-.event-tag small { font-size: 0.45rem; opacity: 0.9; font-weight: 600; }
+.event-tag small {
+  font-size: 0.46rem;
+  opacity: 0.95;
+  font-weight: 600;
+}
 
 .day-holiday-label {
-  position: absolute;
-  bottom: 2px;
-  left: 2px;
-  right: 2px;
-  font-size: 0.4rem;
+  font-size: 0.36rem;
   font-weight: 700;
-  color: var(--print-text-muted);
+  color: #475569;
   text-align: center;
-  line-height: 1;
+  line-height: 1.1;
   text-transform: uppercase;
   letter-spacing: -0.01em;
+  word-break: break-word;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  width: 100%;
+  margin-top: auto;
+}
+
+/* --- Slot 6: Summary Panel & Legend --- */
+.summary-panel-box {
+  background: #f8fafc;
+  border: 1px solid var(--print-border);
+  border-left: 4px solid var(--print-primary);
+}
+
+.summary-panel-title {
+  color: var(--print-primary);
+  margin-bottom: 6px;
+}
+
+.summary-panel-content {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  height: 100%;
+}
+
+.summary-panel-stat-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  background: white;
+  border: 1px solid var(--print-border);
+  border-radius: 4px;
+  padding: 6px 4px;
+  text-align: center;
+}
+
+.stat-mini {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.stat-mini__label {
+  font-size: 0.52rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--print-text-muted);
+}
+
+.stat-mini__val {
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: var(--print-text);
+}
+
+.legend-divider {
+  height: 1px;
+  background: #e2e8f0;
+  margin: 1px 0;
+}
+
+.summary-panel-legend {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px 8px;
+  padding: 2px;
+}
+
+.legend-entry {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.legend-text {
+  font-size: 0.52rem;
+  color: var(--print-text);
+  line-height: 1.1;
+}
+
+.legend-sample-holiday {
+  font-size: 0.44rem;
+  font-weight: 800;
+  padding: 1px 3px;
+  border-radius: 2px;
+  background: #cbd5e1;
+  color: #334155;
+  white-space: nowrap;
 }
 
 @media print {
@@ -463,8 +664,12 @@ const stats = computed(() => {
     padding: 0;
     margin: 0;
     width: 100%;
+    max-width: 100%;
     min-height: auto;
-    page-break-after: always;
+    page-break-after: avoid;
+    break-after: avoid;
+    page-break-inside: avoid;
+    break-inside: avoid;
   }
 }
 </style>

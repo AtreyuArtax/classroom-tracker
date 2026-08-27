@@ -533,7 +533,12 @@ async function init() {
         codesUpdated = true
     }
     if (!codesMap.l) {
-        settings.behaviorCodes.l = { icon: '⏰', label: 'Late', category: 'late', type: 'attendance', requiresNote: false }
+        settings.behaviorCodes.l = { icon: 'Clock', label: 'Late', category: 'late', type: 'attendance', requiresNote: false }
+        codesUpdated = true
+    }
+    if (codesMap.w && (codesMap.w.label === 'Washroom' || codesMap.w.icon === 'Toilet')) {
+        settings.behaviorCodes.w.label = 'Out of Class'
+        settings.behaviorCodes.w.icon = 'DoorOpen'
         codesUpdated = true
     }
 

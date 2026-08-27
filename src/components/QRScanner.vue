@@ -813,7 +813,7 @@ const handleScan = async (scannedText, isRFID = false) => {
     await logToggleEvent(studentId, 'w', classId)
     success = true
     action = isCurrentlyOut ? 'washroom_in' : 'washroom_out'
-    message = isCurrentlyOut ? 'Returned' : 'Washroom Out'
+    message = isCurrentlyOut ? 'Returned' : 'Out of Class'
   }
 
   studentCooldowns.set(studentId, now)

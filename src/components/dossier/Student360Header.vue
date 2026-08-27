@@ -162,7 +162,7 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import { UserCheck, UserMinus, Clock, Toilet, X, HelpCircle, CalendarX, GraduationCap, Camera, Trash2 } from 'lucide-vue-next'
+import { UserCheck, UserMinus, Clock, DoorOpen, X, HelpCircle, CalendarX, GraduationCap, Camera, Trash2 } from 'lucide-vue-next'
 import { activeClassRecord } from '../../composables/useGradebook.js'
 import { getSBARLevelBadge } from '../../db/gradebook/gradeCalcSBAR.js'
 import { useStudentPhotos } from '../../composables/useStudentPhotos.js'
@@ -278,7 +278,7 @@ const statusIcon = computed(() => {
   const s = props.student.activeStates
   if (s?.isAbsent) return UserMinus
   if (s?.isLate || (s?.lateMs !== null && s?.lateMs !== undefined)) return Clock
-  if (s?.isOut) return Toilet
+  if (s?.isOut) return DoorOpen
   return UserCheck
 })
 </script>

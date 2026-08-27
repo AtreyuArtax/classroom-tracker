@@ -61,8 +61,8 @@ async function _readSettings() {
             },
             w: {
                 key: 'w',
-                icon: 'Toilet',
-                label: 'Washroom',
+                icon: 'DoorOpen',
+                label: 'Out of Class',
                 category: 'washroom',
                 type: 'toggle',
                 requiresNote: false,

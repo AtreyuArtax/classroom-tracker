@@ -303,7 +303,7 @@
                 </span>
               </h3>
               <p class="setup__hint" style="margin: 0; font-size: 0.8rem; line-height: 1.4;">
-                Enable Cloud Mode to run a dedicated scanner at your classroom door (on a Chromebook, tablet, or second computer) for automated check-ins and hall/washroom passes.
+                Enable Cloud Mode to run a dedicated scanner at your classroom door (on a Chromebook, tablet, or second computer) for automated check-ins and out-of-class passes.
               </p>
               
               <div class="setup__switch-container" style="margin: 8px 0 0 0;">

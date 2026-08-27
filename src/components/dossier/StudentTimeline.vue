@@ -162,7 +162,7 @@ import {
   X,
   UserCheck,
   Activity,
-  Toilet
+  DoorOpen
 } from 'lucide-vue-next'
 import { useClassroom } from '../../composables/useClassroom.js'
 import { toMinutes } from '../../db/eventService.js'
@@ -220,7 +220,7 @@ const sortedItems = computed(() => {
       if (e.code === 'l') { type = 'attendance'; category = 'late' }
       const mins = toMinutes(e.duration)
       title = `${config.label || (e.code === 'l' ? 'Late' : 'Out')} (${mins} min)`
-      icon = config.icon ? resolveIcon(config.icon) : (e.code === 'l' ? Clock : Toilet)
+      icon = config.icon ? resolveIcon(config.icon) : (e.code === 'l' ? Clock : DoorOpen)
     } else if (e.code === 'ac') {
       type = 'assessment'
       category = 'academics'

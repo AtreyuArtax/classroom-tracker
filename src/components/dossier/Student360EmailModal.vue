@@ -56,7 +56,7 @@
           </label>
           <label class="option-item">
             <input type="checkbox" v-model="emailConfig.content.washroom" />
-            <span class="option-label">Washroom & Out-of-Class Logs</span>
+            <span class="option-label">Out-of-Class Activity Logs</span>
           </label>
           <label class="option-item">
             <input type="checkbox" v-model="emailConfig.content.assessments" />
@@ -260,7 +260,7 @@ function generateEmailLink() {
   
   if (emailConfig.value.content.washroom) {
     body += `\nOut of Class Logs:\n`
-    body += `- Washroom/Water trips in period: ${props.washroomCount}\n`
+    body += `- Out-of-class trips in period: ${props.washroomCount}\n`
   }
   
   body += `\nPlease let me know if you have any questions.\n\nBest regards,\n${props.teacherName || 'Teacher'}`

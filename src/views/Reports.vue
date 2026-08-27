@@ -20,29 +20,29 @@
       <!-- ══ RIGHT PANEL ════════════════════════════════════════════════ -->
       <main class="reports__main">
 
-        <!-- Pillar Navigation Bar + Grade Filter Pills -->
-        <div class="reports__header-bar" style="display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
+        <!-- Pillar Navigation Bar + Grade Filter Pills + Inline Time Filter -->
+        <div class="reports__header-bar">
           <div class="reports__pillar-nav" role="tablist" aria-label="Reports Mode">
             <button 
               class="reports__pillar-btn"
               :class="{ 'reports__pillar-btn--active': rightMode === 'overview' }"
               @click="switchPillar('overview')"
             >
-              <BarChart2 :size="16" /> Class Analytics
+              <BarChart2 :size="15" /> Class Analytics
             </button>
             <button 
               class="reports__pillar-btn"
               :class="{ 'reports__pillar-btn--active': rightMode === 'learningskills' }"
               @click="switchPillar('learningskills')"
             >
-              <Award :size="16" /> Learning Skills
+              <Award :size="15" /> Learning Skills
             </button>
             <button 
               class="reports__pillar-btn"
               :class="{ 'reports__pillar-btn--active': rightMode === 'printhub' }"
               @click="switchPillar('printhub')"
             >
-              <Printer :size="16" /> Document &amp; Print Hub
+              <Printer :size="15" /> Document &amp; Print Hub
             </button>
             <button 
               v-if="dossier.selectedStudentId.value"
@@ -50,21 +50,34 @@
               :class="{ 'reports__pillar-btn--active': rightMode === 'dossier' }"
               @click="switchPillar('dossier')"
             >
-              <User :size="16" /> Student 360
+              <User :size="15" /> Student 360
             </button>
           </div>
 
-          <!-- Split Class Sub-Cohort Filter Pills -->
-          <div v-if="availableSubCohortFilters.length > 1" class="sbar-grade-pills">
-            <button 
-              v-for="subFilter in availableSubCohortFilters" 
-              :key="subFilter" 
-              class="grade-pill"
-              :class="{ 'grade-pill--active': activeSubCohortFilter === subFilter }"
-              @click="activeSubCohortFilter = subFilter"
-            >
-              {{ subFilter === 'all' ? (activeClassType === 'elementary' ? 'All Grades' : 'All Sections') : subFilter }}
-            </button>
+          <div class="reports__header-controls">
+            <!-- Split Class Sub-Cohort Filter Pills -->
+            <div v-if="availableSubCohortFilters.length > 1" class="sbar-grade-pills">
+              <button 
+                v-for="subFilter in availableSubCohortFilters" 
+                :key="subFilter" 
+                class="grade-pill"
+                :class="{ 'grade-pill--active': activeSubCohortFilter === subFilter }"
+                @click="activeSubCohortFilter = subFilter"
+              >
+                {{ subFilter === 'all' ? (activeClassType === 'elementary' ? 'All Grades' : 'All Sections') : subFilter }}
+              </button>
+            </div>
+
+            <!-- Inline Time Period Filter (Visible in overview / analytics mode) -->
+            <div v-if="rightMode === 'overview'" class="reports__period-row" role="group" aria-label="Time period">
+              <button
+                v-for="p in PERIOD_OPTIONS"
+                :key="p.value"
+                class="reports__period-btn"
+                :class="{ 'reports__period-btn--active': selectedPeriod === p.value }"
+                @click="selectedPeriod = p.value"
+              >{{ p.label }}</button>
+            </div>
           </div>
         </div>
 
@@ -113,18 +126,7 @@
 
         <!-- ── PILLAR 1: CLASS ANALYTICS ────────────────────────────── -->
         <template v-else>
-          <!-- Filter Bar -->
-          <div class="reports__filter">
-            <div class="reports__period-row" role="group" aria-label="Time period">
-              <button
-                v-for="p in PERIOD_OPTIONS"
-                :key="p.value"
-                class="reports__period-btn"
-                :class="{ 'reports__period-btn--active': selectedPeriod === p.value }"
-                @click="selectedPeriod = p.value"
-              >{{ p.label }}</button>
-            </div>
-          </div>
+          <!-- Class Overview & Analytics Panel -->
 
           <!-- Class Overview & Analytics Panel -->
           <ReportsClassOverview
@@ -783,7 +785,7 @@ const washroomChartData = computed(() => {
   return {
     labels: data.map(d => d.name),
     datasets: [{
-      label: 'Washroom Trips',
+      label: 'Out-of-Class Trips',
       data: data.map(d => d.count),
       backgroundColor: '#4663ac',
       borderRadius: 4
@@ -874,7 +876,7 @@ const followUpItems = computed(() => {
     if (!students[id]) return
     const longest = Math.max(...durations)
     if (longest > 15) {
-      items.push({ studentId: id, name: nameFor(id), reason: `${longest.toFixed(0)}min washroom trip`, severity: 'medium', sortVal: longest })
+      items.push({ studentId: id, name: nameFor(id), reason: `${longest.toFixed(0)}min out of class`, severity: 'medium', sortVal: longest })
     }
   })
 
@@ -912,24 +914,25 @@ const washroomChartOptions = {
 <style scoped>
 .reports { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: var(--bg-secondary); }
 .reports__layout { display: flex; flex: 1; overflow: hidden; }
-.reports__main { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 14px; }
-.reports__pillar-nav { display: flex; gap: 6px; background: var(--surface); border: 1px solid var(--border); padding: 4px; border-radius: var(--radius-lg); }
-.reports__pillar-btn { display: flex; align-items: center; gap: 6px; background: none; border: none; padding: 6px 12px; border-radius: var(--radius-md); font-size: 0.825rem; font-weight: 600; color: var(--text-secondary); cursor: pointer; transition: all 0.2s ease; }
+.reports__main { flex: 1; overflow-y: auto; padding: 12px 16px; display: flex; flex-direction: column; gap: 10px; }
+.reports__header-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.reports__header-controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.reports__pillar-nav { display: flex; gap: 4px; background: var(--surface); border: 1px solid var(--border); padding: 3px; border-radius: var(--radius-md); }
+.reports__pillar-btn { display: flex; align-items: center; gap: 5px; background: none; border: none; padding: 5px 10px; border-radius: var(--radius-sm); font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); cursor: pointer; transition: all 0.15s ease; }
 .reports__pillar-btn:hover { color: var(--text); background: var(--surface-hover); }
 .reports__pillar-btn--active { background: var(--primary); color: white; }
-@media (max-width: 1300px) { .reports__main { padding: 14px 16px; } }
-@media (max-width: 1024px) { .reports__main { padding: 12px; } }
+@media (max-width: 1300px) { .reports__main { padding: 10px 14px; } }
+@media (max-width: 1024px) { .reports__main { padding: 8px 10px; } }
 .reports__loading { padding: 40px; text-align: center; font-weight: 600; color: var(--text-secondary); }
-.reports__filter { display: flex; align-items: center; gap: 12px; background: var(--surface); padding: 12px 16px; border-radius: var(--radius-lg); border: 1px solid var(--border); flex-wrap: wrap; }
-.sbar-grade-pills { display: inline-flex; gap: 4px; background: var(--bg-secondary); padding: 3px; border-radius: var(--radius-md, 8px); border: 1px solid var(--border); }
-.sbar-grade-pills .grade-pill { background: transparent; border: 1px solid transparent; color: var(--text-secondary); font-size: 0.78rem; font-weight: 600; padding: 4px 10px; border-radius: var(--radius-sm, 6px); cursor: pointer; transition: all 0.15s ease; }
+.sbar-grade-pills { display: inline-flex; gap: 3px; background: var(--surface); padding: 3px; border-radius: var(--radius-md); border: 1px solid var(--border); }
+.sbar-grade-pills .grade-pill { background: transparent; border: 1px solid transparent; color: var(--text-secondary); font-size: 0.76rem; font-weight: 600; padding: 4px 8px; border-radius: var(--radius-sm); cursor: pointer; transition: all 0.15s ease; }
 .sbar-grade-pills .grade-pill:hover { background: var(--bg-hover); color: var(--text); }
 .sbar-grade-pills .grade-pill--active { background: var(--primary); color: #fff; border-color: var(--primary); }
-.reports__period-row { display: flex; gap: 4px; background: var(--bg-secondary); padding: 4px; border-radius: var(--radius-md); }
-.reports__period-btn { padding: 6px 12px; border: none; background: none; font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); border-radius: var(--radius-sm); cursor: pointer; transition: all 0.2s ease; }
+.reports__period-row { display: flex; gap: 2px; background: var(--surface); border: 1px solid var(--border); padding: 3px; border-radius: var(--radius-md); }
+.reports__period-btn { padding: 4px 9px; border: none; background: none; font-size: 0.76rem; font-weight: 600; color: var(--text-secondary); border-radius: var(--radius-sm); cursor: pointer; transition: all 0.15s ease; }
 .reports__period-btn:hover { color: var(--text); }
-.reports__period-btn--active { background: var(--surface); color: var(--primary); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); }
-.reports__btn-export { display: flex; align-items: center; gap: 6px; padding: 6px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 0.8rem; font-weight: 600; cursor: pointer; color: var(--text); transition: all 0.2s ease; }
+.reports__period-btn--active { background: var(--primary-light, rgba(59, 130, 246, 0.1)); color: var(--primary); font-weight: 700; }
+.reports__btn-export { display: flex; align-items: center; gap: 6px; padding: 5px 10px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 0.78rem; font-weight: 600; cursor: pointer; color: var(--text); transition: all 0.15s ease; }
 .reports__btn-export:hover { background: var(--bg-secondary); border-color: var(--primary); }
 .reports__placeholder { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 20px; color: var(--text-secondary); font-weight: 600; }
 .reports__placeholder-icon { margin-bottom: 12px; opacity: 0.5; }

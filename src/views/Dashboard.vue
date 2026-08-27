@@ -23,7 +23,7 @@
       <div class="dashboard__header-right">
         <!-- Students-out badge -->
         <div v-if="studentsOut.length > 0" class="dashboard__out-badge" aria-live="polite">
-          <Toilet :size="16" />
+          <DoorOpen :size="16" />
           {{ studentsOut.length }} out
         </div>
         
@@ -200,7 +200,7 @@ const EventNoteModal                  = defineAsyncComponent(() => import('../co
 const AssessmentConversationModal     = defineAsyncComponent(() => import('../components/AssessmentConversationModal.vue'))
 const StudentProfileModal             = defineAsyncComponent(() => import('../components/StudentProfileModal.vue'))
 const GettingStartedGuide             = defineAsyncComponent(() => import('../components/setup/GettingStartedGuide.vue'))
-import { Toilet, Users, GripVertical, Calendar, CalendarCheck, Scan } from 'lucide-vue-next'
+import { DoorOpen, Users, GripVertical, Calendar, CalendarCheck, Scan } from 'lucide-vue-next'
 import { useClassroom }    from '../composables/useClassroom.js'
 import { useRadial }       from '../composables/useRadial.js'
 import { loadGradebook, activeSubCohortFilter, setActiveSubCohortFilter, availableSubCohorts, availableNaturalSubCohorts } from '../composables/useGradebook.js'

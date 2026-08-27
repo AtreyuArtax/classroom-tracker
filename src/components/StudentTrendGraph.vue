@@ -14,7 +14,7 @@
       Not enough data to show a trend. Log more events over multiple weeks.
     </div>
     
-    <div v-else class="trend__chart-wrap" ref="chartContainer" style="height: 240px">
+    <div v-else class="trend__chart-wrap" ref="chartContainer" style="height: 155px">
       <Bar 
         v-if="period === 'week'"
         ref="barChart"
@@ -85,7 +85,7 @@ const CATEGORY_COLOURS = {
 }
 
 function formatCategoryLabel(cat) {
-  if (cat === 'washroom') return 'Washroom'
+  if (cat === 'washroom') return 'Out of Class'
   if (cat === 'absence') return 'Absence'
   if (cat === 'late') return 'Late'
   if (cat === 'redirect') return 'Redirect'
@@ -149,56 +149,58 @@ const chartOptions = computed(() => ({
 
 <style scoped>
 .trend {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: 20px;
+  width: 100%;
+  min-width: 0;
 }
 
 .trend__header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
+  margin-bottom: 8px;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .trend__title {
   margin: 0;
-  font-size: 1rem;
+  font-size: 0.88rem;
   font-weight: 700;
   color: var(--text);
 }
 
 .trend__legend {
   display: flex;
-  gap: 16px;
+  gap: 10px;
   align-items: center;
 }
 
 .legend-item {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 0.75rem;
+  gap: 5px;
+  font-size: 0.72rem;
   font-weight: 600;
   color: var(--text-secondary);
+  white-space: nowrap;
 }
 
 .dot {
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
 }
 
 .trend__empty {
   color: var(--text-secondary);
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   text-align: center;
-  padding: 40px 0;
+  padding: 30px 0;
   font-style: italic;
 }
 
 .trend__chart-wrap {
   width: 100%;
+  position: relative;
 }
 </style>

@@ -12,7 +12,7 @@
       Insufficient data to visualize a trend.
     </div>
     
-    <div v-else class="grade-trend__chart-wrap" ref="chartContainer" :style="{ height: isPrint ? '115px' : '240px' }">
+    <div v-else class="grade-trend__chart-wrap" ref="chartContainer" :style="{ height: isPrint ? '115px' : '155px' }">
       <Line ref="lineChart" :data="chartData" :options="chartOptions" />
     </div>
   </div>
@@ -256,17 +256,19 @@ const chartOptions = computed(() => ({
 }
 
 .grade-trend__header {
-  display:         flex;
+  display: flex;
   justify-content: space-between;
-  align-items:     center;
-  margin-bottom:   16px;
+  align-items: center;
+  margin-bottom: 8px;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .grade-trend__title {
-  margin:      0;
-  font-size:   1rem;
+  margin: 0;
+  font-size: 0.88rem;
   font-weight: 700;
-  color:       var(--text);
+  color: var(--text);
 }
 
 .grade-trend__title--print {
@@ -279,7 +281,7 @@ const chartOptions = computed(() => ({
 
 .grade-trend__legend {
   display: flex;
-  gap: 16px;
+  gap: 10px;
   align-items: center;
 }
 
@@ -288,17 +290,18 @@ const chartOptions = computed(() => ({
 }
 
 .legend-item {
-  display:     flex;
+  display: flex;
   align-items: center;
-  gap:         6px;
-  font-size:   0.75rem;
+  gap: 5px;
+  font-size: 0.72rem;
   font-weight: 600;
-  color:       var(--text-secondary);
+  color: var(--text-secondary);
+  white-space: nowrap;
 }
 
 .dot {
-  width:         8px;
-  height:        8px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
 }
 

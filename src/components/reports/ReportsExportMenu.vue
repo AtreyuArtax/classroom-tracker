@@ -5,7 +5,7 @@
     </button>
     <div v-if="showExportMenu" class="reports__export-menu">
       <button @click="downloadAggregateCsv('attendance')">Attendance</button>
-      <button @click="downloadAggregateCsv('washroom')">Washroom</button>
+      <button @click="downloadAggregateCsv('washroom')">Out of Class</button>
       <button @click="downloadAggregateCsv('behavior')">Behavior</button>
       <button @click="downloadReportCardCsv(true)">Comments (names)</button>
       <button @click="downloadReportCardCsv(false)">Comments (no names)</button>
@@ -281,7 +281,8 @@ function downloadAggregateCsv(section) {
   const className = classObj?.name ?? 'Class'
   const date = formatLocalDate(new Date())
   
-  let filename = `${className}-${section}-${date}.csv`
+  const fileSection = section === 'washroom' ? 'Out_of_Class' : section
+  let filename = `${className.replace(/[^a-zA-Z0-9_-]/g, '_')}-${fileSection}-${date}.csv`
   let csvContent = ''
 
   if (section === 'attendance') {

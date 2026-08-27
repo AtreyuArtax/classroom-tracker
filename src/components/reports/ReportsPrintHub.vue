@@ -227,7 +227,7 @@
               <Download :size="14" /> Attendance Summary CSV
             </button>
             <button class="print-hub__export-item" @click="$emit('download-csv', 'washroom')">
-              <Download :size="14" /> Washroom Usage CSV
+              <Download :size="14" /> Out-of-Class Usage CSV
             </button>
             <button class="print-hub__export-item" @click="$emit('download-csv', 'behavior')">
               <Download :size="14" /> Behavior Logs CSV

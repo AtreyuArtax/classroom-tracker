@@ -659,7 +659,7 @@ export async function clearAllData() {
         currentSemester: getCurrentSemester(),
         behaviorCodes: {
             m: { icon: 'Smartphone', label: 'On Device', category: 'redirect', type: 'standard', requiresNote: false, isTopLevel: true },
-            w: { icon: 'Toilet', label: 'Washroom', category: 'neutral', type: 'toggle', requiresNote: false, isTopLevel: true },
+            w: { icon: 'DoorOpen', label: 'Out of Class', category: 'neutral', type: 'toggle', requiresNote: false, isTopLevel: true },
             a: { icon: 'UserX', label: 'Absent', category: 'attendance', type: 'attendance', requiresNote: false, isTopLevel: false },
             l: { icon: 'Clock', label: 'Late', category: 'attendance', type: 'attendance', requiresNote: false, isTopLevel: false },
             note: { icon: 'NotebookPen', label: 'Note', category: 'note', type: 'standard', requiresNote: true, isTopLevel: true },

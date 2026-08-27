@@ -40,53 +40,125 @@
     <main class="student-360__content">
       <!-- Summary Tab -->
       <section v-if="activeTab === 'summary'" class="student-360__pane student-360__pane--summary">
-        <!-- Period Toggle -->
-        <div class="student-360__period-toggle">
-          <button 
-            v-for="p in ['week', 'last_week', 'month', 'semester']" 
-            :key="p"
-            class="period-btn"
-            :class="{ 'period-btn--active': selectedPeriod === p }"
-            @click="selectedPeriod = p"
-          >
-            {{ p === 'last_week' ? 'Last Week' : p === 'semester' ? 'This Semester' : p.charAt(0).toUpperCase() + p.slice(1) }}
-          </button>
+        
+        <!-- Overview & Habits Section Header -->
+        <div class="student-360__section-header">
+          <h4 class="student-360__section-title">
+            <Activity :size="13" /> OVERVIEW &amp; HABITS
+          </h4>
+          <div class="student-360__period-toggle">
+            <button 
+              v-for="p in ['week', 'last_week', 'month', 'semester']" 
+              :key="p"
+              class="period-btn"
+              :class="{ 'period-btn--active': selectedPeriod === p }"
+              @click="selectedPeriod = p"
+            >
+              {{ p === 'last_week' ? 'Last Week' : p === 'semester' ? 'This Semester' : p.charAt(0).toUpperCase() + p.slice(1) }}
+            </button>
+          </div>
         </div>
+        
+        <!-- High-Density Metrics Ribbon -->
+        <div class="student-360__stats-ribbon">
+          <!-- Absences -->
+          <div 
+            class="summary-chip" 
+            :class="{ 
+              'summary-chip--danger': testDayAlert || stats.absences >= 4, 
+              'summary-chip--warning': stats.absences > 0 && stats.absences < 4,
+              'summary-chip--ok': stats.absences === 0 
+            }"
+            :title="`${stats.absences} total absence${stats.absences !== 1 ? 's' : ''} (${attendanceAverages.absencesAvg}/wk avg)${stats.testDayAbsences > 0 ? ` · ⚠️ ${stats.testDayAbsences} on Test Day` : ''}`"
+          >
+            <div class="summary-chip__icon-wrap">
+              <UserMinus :size="13" />
+            </div>
+            <div class="summary-chip__content">
+              <span class="summary-chip__primary">
+                <strong>{{ stats.absences }}</strong> Absence{{ stats.absences !== 1 ? 's' : '' }}
+              </span>
+              <span class="summary-chip__secondary">
+                {{ attendanceAverages.absencesAvg }}/wk avg
+                <span v-if="stats.testDayAbsences > 0" class="summary-chip__alert-tag">
+                  <AlertTriangle :size="10" /> {{ stats.testDayAbsences }} Test Day
+                </span>
+              </span>
+            </div>
+          </div>
 
-        <div class="student-360__stats-grid">
-          <StudentStatCard 
-            label="Absences" 
-            :value="stats.absences" 
-            :sub-value="attendanceAverages.absencesAvg + '/wk avg'"
-            :sub-value2="stats.testDayAbsences > 0 ? `${stats.testDayAbsences} Test Day${stats.testDayAbsences !== 1 ? 's' : ''}` : null"
-            :icon="UserMinus"
-            :alert-icon="testDayAlert ? AlertTriangle : null"
-            :color="testDayAlert ? 'danger' : (stats.absences > 0 ? 'warning' : 'success')"
-          />
-          <StudentStatCard 
-            :label="behaviorCodesMap['l']?.label || 'Lates'" 
-            :value="stats.lates" 
-            :sub-value="attendanceAverages.latesAvg + '/wk'"
-            :value2="attendanceAverages.latesTotal + 'm'"
-            :sub-value2="attendanceAverages.latesAvgDuration + 'm avg'"
-            :icon="resolveIcon(behaviorCodesMap['l']?.icon) || Clock"
-            :color="stats.lates > 4 ? 'warning' : 'neutral'"
-          />
-          <StudentStatCard 
-            :label="behaviorCodesMap['w']?.label || 'Washroom'" 
-            :value="washroomCount" 
-            :sub-value="attendanceAverages.washroomAvg + '/wk'"
-            :value2="attendanceAverages.washroomTotal + 'm'"
-            :sub-value2="attendanceAverages.washroomAvgPerVisit + 'm avg'"
-            :icon="resolveIcon(behaviorCodesMap['w']?.icon) || Toilet"
-            :color="washroomCount > 3 ? 'warning' : 'neutral'"
-          />
-          <StudentStatCard 
-            label="Redirect" 
-            :value="redirectCount"
-            :icon="AlertTriangle"
-            :color="redirectCount >= 3 ? 'danger' : redirectCount >= 1 ? 'warning' : 'neutral'"
-          />
+          <!-- Lates & Lost Time -->
+          <div 
+            class="summary-chip" 
+            :class="{ 
+              'summary-chip--warning': stats.lates > 0 && stats.lates <= 3, 
+              'summary-chip--danger': stats.lates > 3,
+              'summary-chip--ok': stats.lates === 0 
+            }"
+            :title="`${stats.lates} late arrival${stats.lates !== 1 ? 's' : ''} totaling ${attendanceAverages.latesTotal} min missed (${attendanceAverages.latesAvgDuration}m avg per late, ${attendanceAverages.latesAvg}/wk)`"
+          >
+            <div class="summary-chip__icon-wrap">
+              <Clock :size="13" />
+            </div>
+            <div class="summary-chip__content">
+              <span class="summary-chip__primary">
+                <strong>{{ stats.lates }}</strong> Late{{ stats.lates !== 1 ? 's' : '' }}
+                <span v-if="attendanceAverages.latesTotal > 0" class="summary-chip__highlight">· {{ attendanceAverages.latesTotal }}m lost</span>
+              </span>
+              <span class="summary-chip__secondary">
+                <template v-if="stats.lates > 0">{{ attendanceAverages.latesAvgDuration }}m avg · {{ attendanceAverages.latesAvg }}/wk</template>
+                <template v-else>0m missed</template>
+              </span>
+            </div>
+          </div>
+
+          <!-- Out of Class & Lost Time -->
+          <div 
+            class="summary-chip" 
+            :class="{ 
+              'summary-chip--warning': washroomCount > 3 && washroomCount <= 6, 
+              'summary-chip--danger': washroomCount > 6,
+              'summary-chip--ok': washroomCount <= 3 
+            }"
+            :title="`${washroomCount} departure${washroomCount !== 1 ? 's' : ''} totaling ${attendanceAverages.washroomTotal} min (${attendanceAverages.washroomAvgPerVisit}m avg per trip, ${attendanceAverages.washroomAvg}/wk)`"
+          >
+            <div class="summary-chip__icon-wrap">
+              <DoorOpen :size="13" />
+            </div>
+            <div class="summary-chip__content">
+              <span class="summary-chip__primary">
+                <strong>{{ washroomCount }}</strong> Out of Class
+                <span v-if="attendanceAverages.washroomTotal > 0" class="summary-chip__highlight">· {{ attendanceAverages.washroomTotal }}m</span>
+              </span>
+              <span class="summary-chip__secondary">
+                <template v-if="washroomCount > 0">{{ attendanceAverages.washroomAvgPerVisit }}m avg · {{ attendanceAverages.washroomAvg }}/wk</template>
+                <template v-else>No departures</template>
+              </span>
+            </div>
+          </div>
+
+          <!-- Redirects -->
+          <div 
+            class="summary-chip" 
+            :class="{ 
+              'summary-chip--danger': redirectCount >= 3, 
+              'summary-chip--warning': redirectCount >= 1 && redirectCount < 3,
+              'summary-chip--ok': redirectCount === 0 
+            }"
+            :title="`${redirectCount} behavioral redirect${redirectCount !== 1 ? 's' : ''} recorded in this period`"
+          >
+            <div class="summary-chip__icon-wrap">
+              <AlertTriangle :size="13" />
+            </div>
+            <div class="summary-chip__content">
+              <span class="summary-chip__primary">
+                <strong>{{ redirectCount }}</strong> Redirect{{ redirectCount !== 1 ? 's' : '' }}
+              </span>
+              <span class="summary-chip__secondary">
+                {{ redirectCount === 0 ? 'On Track' : 'Needs Follow-up' }}
+              </span>
+            </div>
+          </div>
         </div>
 
         <!-- Trends Section -->
@@ -185,7 +257,7 @@
         <div v-if="recentActivityFeed && recentActivityFeed.length > 0" class="student-360__recent-activity">
           <div class="recent-activity__header">
             <h4 class="recent-activity__title">
-              <Clock :size="16" /> RECENT ACTIVITY &amp; MARKS
+              <Clock :size="13" /> RECENT MARKS &amp; KEY NOTES
             </h4>
           </div>
           <div class="recent-activity__grid">
@@ -193,15 +265,20 @@
               v-for="item in recentActivityFeed" 
               :key="item.id" 
               class="recent-activity__card"
-              :class="{ 'recent-activity__card--failing': item.isFailing }"
+              :class="{ 
+                'recent-activity__card--failing': item.isFailing,
+                'recent-activity__card--event': item.type === 'event'
+              }"
             >
-              <div class="activity-date">{{ formatDateShort(item.date) }}</div>
-              <div class="activity-main">
+              <div class="activity-top">
                 <span class="activity-badge" :class="'activity-badge--' + item.type">{{ item.category }}</span>
+                <span class="activity-date">{{ formatDateShort(item.date) }}</span>
+              </div>
+              <div class="activity-main">
                 <span class="activity-name" :title="item.title">{{ item.title }}</span>
               </div>
               <div v-if="item.value" class="activity-score" :class="{ 'activity-score--failing': item.isFailing }">
-                <span v-if="item.levelColor" class="sbar-level-badge" :style="{ background: item.levelColor, color: 'white', padding: '2px 8px', borderRadius: '12px', fontWeight: 'bold' }">
+                <span v-if="item.levelColor" class="sbar-level-badge" :style="{ background: item.levelColor, color: 'white', padding: '2px 7px', borderRadius: '4px', fontWeight: 'bold' }">
                   {{ item.value }}
                 </span>
                 <strong v-else>{{ item.value }}</strong>
@@ -396,7 +473,7 @@ import {
   UserCircle,
   UserMinus,
   Clock,
-  Toilet,
+  DoorOpen,
   X,
   PlusCircle,
   Mail,
@@ -751,7 +828,7 @@ const recentActivityFeed = computed(() => {
         date: ass.date || '',
         title: ass.name,
         type: 'grade',
-        category: 'SBAR EVALUATION',
+        category: 'SBAR EVAL',
         value: badge.level,
         levelColor: badge.color,
         subText: `${expCount} Standard${expCount !== 1 ? 's' : ''}`,
@@ -773,29 +850,35 @@ const recentActivityFeed = computed(() => {
     }
   })
 
-  // 2. Logged student events (Notes, parent contact, lates, absences, redirects, washroom)
+  // 2. Logged significant student events (Teacher notes, Parent contacts, Test-Day Absences)
   const evtList = Array.isArray(events.value) ? events.value : []
   evtList.forEach(evt => {
     if (!evt || evt.superseded) return
     const evtType = evt.code || evt.type || ''
-    if (['a', 'l', 'w', 'pc', 'ac', 'redirect', 'note'].includes(evtType) || evt.category === 'communication') {
-      let cat = 'EVENT'
-      if (evtType === 'a') cat = 'ABSENCE'
-      else if (evtType === 'l') cat = 'LATE'
-      else if (evtType === 'w') cat = `WASHROOM (${evt.durationMinutes || toMinutes(evt.duration) || 0}m)`
-      else if (evtType === 'pc') cat = 'PARENT CONTACT'
-      else if (evtType === 'ac') cat = 'NOTE'
-      else if (evtType === 'redirect' || evt.category === 'redirect') cat = 'REDIRECT'
+    
+    const isParentContact = evtType === 'pc' || evt.category === 'communication'
+    const isTeacherNote = evtType === 'note' || evtType === 'ac' || (evt.note && String(evt.note).trim().length > 0 && evtType !== 'w' && evtType !== 'l' && evtType !== 'a')
+    const isTestDayAbsence = evtType === 'a' && evt.isTestDay
+    const isRedirectWithNote = (evtType === 'redirect' || evt.category === 'redirect') && evt.note
+
+    // Only include significant events that have actual text or high impact (ignore bare daily absences/lates)
+    if (isParentContact || isTeacherNote || isTestDayAbsence || isRedirectWithNote) {
+      let cat = 'NOTE'
+      if (isParentContact) cat = 'PARENT'
+      else if (isTestDayAbsence) cat = 'TEST DAY'
+      else if (isRedirectWithNote) cat = 'REDIRECT'
+
+      const noteText = evt.note || evt.details || (isTestDayAbsence ? 'Absent on scheduled test day' : 'Teacher note')
 
       items.push({
         id: 'evt-' + (evt.eventId || evt.id || Math.random()),
         date: evt.timestamp || evt.date || '',
-        title: evt.note || evt.details || evt.label || cat,
+        title: noteText,
         type: 'event',
         category: cat,
-        value: null,
+        value: isParentContact ? 'Contacted' : isTestDayAbsence ? 'Missed Test' : 'Logged',
         subText: null,
-        isFailing: false
+        isFailing: isTestDayAbsence
       })
     }
   })
@@ -1043,12 +1126,12 @@ onUnmounted(() => {
 .student-360__tabs {
   display: flex;
   gap: 4px;
-  padding: 0 18px;
+  padding: 0 16px;
   background: var(--surface);
   border-bottom: 1px solid var(--border);
+  min-height: 38px;
   overflow-x: auto;
   scrollbar-width: none;
-  min-height: 36px;
 }
 .student-360__tabs::-webkit-scrollbar {
   display: none;
@@ -1058,7 +1141,7 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 7px 12px;
+  padding: 8px 12px;
   background: none;
   border: none;
   border-bottom: 2px solid transparent;
@@ -1081,7 +1164,7 @@ onUnmounted(() => {
 
 @media (max-width: 1100px) {
   .student-360__tab-btn {
-    padding: 7px 8px;
+    padding: 8px 8px;
     gap: 4px;
     font-size: 0.8rem;
   }
@@ -1093,49 +1176,153 @@ onUnmounted(() => {
   width: 100%;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 14px 18px;
+  padding: 12px 16px;
 }
 
 @media (max-width: 1024px) {
   .student-360__content {
-    padding: 12px 14px;
+    padding: 10px 12px;
   }
 }
 
 .student-360__pane {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 12px;
   min-width: 0;
   width: 100%;
 }
 
-.student-360__stats-grid {
+.student-360__stats-ribbon {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 8px;
+}
+
+.summary-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  min-height: 42px;
+  transition: all 0.15s ease;
+}
+
+.summary-chip:hover {
+  border-color: var(--border-hover, var(--primary));
+  box-shadow: var(--shadow-sm);
+}
+
+.summary-chip__icon-wrap {
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: var(--surface-hover);
+  color: var(--text-secondary);
+}
+
+.summary-chip--ok .summary-chip__icon-wrap {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+}
+
+.summary-chip--warning .summary-chip__icon-wrap {
+  background: rgba(245, 158, 11, 0.12);
+  color: #f59e0b;
+}
+
+.summary-chip--danger .summary-chip__icon-wrap {
+  background: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+}
+
+.summary-chip__content {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.summary-chip__primary {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.summary-chip__highlight {
+  font-weight: 700;
+  color: #0ea5e9;
+  margin-left: 2px;
+}
+
+.summary-chip__secondary {
+  font-size: 0.675rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.summary-chip__alert-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  color: #ef4444;
+  margin-left: 4px;
+  font-weight: 700;
+}
+
+.student-360__section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2px;
+}
+
+.student-360__section-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-secondary);
 }
 
 .student-360__period-toggle {
   display: flex;
-  gap: 4px;
+  gap: 2px;
   background: var(--bg-secondary);
-  padding: 4px;
+  padding: 2px;
   border-radius: var(--radius-md);
   width: fit-content;
-  margin-bottom: 8px;
+  flex-shrink: 0;
 }
 
 .period-btn {
-  padding: 6px 12px;
+  padding: 4px 8px;
   border: none;
   background: none;
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   font-weight: 700;
   color: var(--text-secondary);
   border-radius: var(--radius-sm);
   cursor: pointer;
   transition: all 0.2s ease;
+  white-space: nowrap;
 }
 
 .period-btn:hover {
@@ -1150,8 +1337,8 @@ onUnmounted(() => {
 
 .student-360__trends-row {
   display: flex;
-  gap: 16px;
-  margin-bottom: 20px;
+  gap: 12px;
+  margin-bottom: 8px;
   min-width: 0;
   width: 100%;
 }
@@ -1170,7 +1357,7 @@ onUnmounted(() => {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  padding: 16px;
+  padding: 12px 14px;
   display: flex;
   flex-direction: column;
 }
@@ -1284,10 +1471,10 @@ onUnmounted(() => {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  padding: 16px 20px;
+  padding: 10px 14px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
 }
 
 .recent-activity__header {
@@ -1300,27 +1487,34 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 0.8rem;
+  font-size: 0.72rem;
   font-weight: 700;
   color: var(--text-secondary);
   letter-spacing: 0.05em;
   margin: 0;
+  text-transform: uppercase;
 }
 
 .recent-activity__grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 8px;
 }
 
 .recent-activity__card {
   background: var(--surface-hover);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  padding: 10px 12px;
+  padding: 8px 10px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
+  min-width: 0;
+  transition: border-color 0.15s ease;
+}
+
+.recent-activity__card:hover {
+  border-color: var(--border-hover, var(--primary));
 }
 
 .recent-activity__card--failing {
@@ -1328,38 +1522,53 @@ onUnmounted(() => {
   background: rgba(239, 68, 68, 0.04);
 }
 
+.recent-activity__card--event {
+  border-left: 3px solid #8b5cf6;
+}
+
+.activity-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+}
+
 .activity-date {
-  font-size: 0.725rem;
+  font-size: 0.68rem;
   color: var(--text-secondary);
-  font-weight: 500;
+  font-weight: 600;
+  white-space: nowrap;
 }
 
 .activity-main {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  min-width: 0;
 }
 
 .activity-badge {
   display: inline-block;
-  width: fit-content;
-  font-size: 0.65rem;
+  font-size: 0.625rem;
   font-weight: 700;
-  padding: 1px 5px;
+  padding: 1px 4px;
   border-radius: 3px;
   background: rgba(59, 130, 246, 0.1);
   color: #3b82f6;
   text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100px;
 }
 
 .activity-badge--event {
-  background: rgba(107, 114, 128, 0.1);
-  color: var(--text-secondary);
+  background: rgba(139, 92, 246, 0.12);
+  color: #8b5cf6;
 }
 
 .activity-name {
-  font-size: 0.825rem;
-  font-weight: 600;
+  font-size: 0.8rem;
+  font-weight: 700;
   color: var(--text);
   white-space: nowrap;
   overflow: hidden;
@@ -1369,10 +1578,10 @@ onUnmounted(() => {
 .activity-score {
   display: flex;
   align-items: baseline;
-  gap: 6px;
-  margin-top: 2px;
-  font-size: 0.9rem;
-  color: var(--primary);
+  gap: 4px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #10b981;
 }
 
 .activity-score--failing {
@@ -1380,9 +1589,9 @@ onUnmounted(() => {
 }
 
 .activity-sub {
-  font-size: 0.725rem;
+  font-size: 0.68rem;
   color: var(--text-secondary);
-  font-weight: normal;
+  font-weight: 500;
 }
 
 /* Learning Skills Card Styles */
