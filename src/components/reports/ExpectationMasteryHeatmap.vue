@@ -167,7 +167,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { BookOpen, AlertCircle, AlertTriangle, ChevronDown, ChevronUp } from 'lucide-vue-next'
 import { calculateSBARExpectationMastery, getSBARLevelBadge } from '../../db/gradebookService.js'
 import { gradeMap } from '../../composables/useGradebook.js'
@@ -195,6 +195,41 @@ const effectiveClass = computed(() => {
 const isSBAR = computed(() => effectiveClass.value?.gradingFramework === 'sbar')
 const selectedUnitFilter = ref('all') // 'all' | 'needs_reteaching' | unitId
 const collapsedUnits = ref(new Set()) // set of unitIds that are collapsed
+
+function getStorageKey() {
+  const cId = effectiveClass.value?.classId || props.activeClass?.classId || 'default'
+  const sId = activeSubjectId.value || 'default'
+  return `ct_mastery_collapsed_${cId}_${sId}`
+}
+
+function loadCollapsedState() {
+  try {
+    const raw = localStorage.getItem(getStorageKey())
+    if (raw) {
+      const arr = JSON.parse(raw)
+      if (Array.isArray(arr)) {
+        collapsedUnits.value = new Set(arr)
+        return
+      }
+    }
+  } catch (e) {
+    console.error('Error reading collapsed units state:', e)
+  }
+  collapsedUnits.value = new Set()
+}
+
+function saveCollapsedState() {
+  try {
+    const arr = Array.from(collapsedUnits.value)
+    localStorage.setItem(getStorageKey(), JSON.stringify(arr))
+  } catch (e) {
+    console.error('Error saving collapsed units state:', e)
+  }
+}
+
+watch([() => effectiveClass.value?.classId, activeSubjectId], () => {
+  loadCollapsedState()
+}, { immediate: true })
 
 const rawUnits = computed(() => {
   const cls = effectiveClass.value
@@ -433,16 +468,19 @@ function toggleUnitCollapse(unitId) {
   if (s.has(unitId)) s.delete(unitId)
   else s.add(unitId)
   collapsedUnits.value = s
+  saveCollapsedState()
 }
 
 function expandAllUnits() {
   collapsedUnits.value = new Set()
+  saveCollapsedState()
 }
 
 function collapseAllUnits() {
   const s = new Set()
   unitsWithExpectations.value.forEach(u => s.add(u.unitId))
   collapsedUnits.value = s
+  saveCollapsedState()
 }
 
 function getHeatColor(avg) {
