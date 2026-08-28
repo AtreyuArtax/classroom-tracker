@@ -654,6 +654,27 @@ export async function detachEventsForDeletedExpectation(classId, expectationId) 
     return count
 }
 
+export async function renameEventsForExpectation(classId, oldExpIdOrCode, newCode) {
+    if (!classId || !oldExpIdOrCode || !newCode) return 0
+    const db = await getDB()
+    const tx = db.transaction('events', 'readwrite')
+    const store = tx.objectStore('events')
+    const events = await store.index('by_classId').getAll(classId)
+    
+    let count = 0
+    const oldNorm = String(oldExpIdOrCode).toLowerCase()
+    for (const e of events) {
+        if (e.expectationId && String(e.expectationId).toLowerCase() === oldNorm) {
+            e.expectationId = newCode
+            await store.put(e)
+            count++
+        }
+    }
+    await tx.done
+    hasUnsyncedChanges.value = true
+    return count
+}
+
 export async function detachEventsForDeletedUnit(classId, unitId) {
     const db = await getDB()
     const tx = db.transaction('events', 'readwrite')

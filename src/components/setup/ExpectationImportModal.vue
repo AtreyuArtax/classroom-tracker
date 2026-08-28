@@ -291,51 +291,190 @@
           </div>
         </div>
 
-        <!-- TAB 2: BULK PASTE / CSV -->
+        <!-- TAB 2: BULK PASTE / CSV IMPORTER -->
         <div v-if="activeTab === 'paste'" class="eim-section">
-          <div class="eim-field">
-            <label class="eim-label">Target Unit</label>
-            <select v-model="targetUnitChoice" class="eim-select">
-              <option value="new">-- Create New Unit --</option>
-              <option v-for="u in existingUnits" :key="u.unitId" :value="u.unitId">
-                Attach to: {{ u.name }}
-              </option>
-            </select>
+          <!-- Format Helper & Sample Inserters -->
+          <div class="eim-format-guide-card">
+            <div class="eim-guide-header">
+              <div class="eim-guide-title">
+                <FileSpreadsheet :size="16" class="eim-guide-icon" />
+                <span>Bulk Import Format Guide &amp; Sample Templates</span>
+              </div>
+              <button 
+                type="button" 
+                class="eim-action-link eim-action-link--small"
+                @click="downloadSampleCsv"
+                title="Download ready-to-use CSV template"
+              >
+                <Download :size="13" /> Download Sample CSV
+              </button>
+            </div>
+            
+            <p class="eim-hint" style="margin-top: 4px;">
+              Paste rows copied from Excel, Google Sheets, Word, or PDF, or upload a CSV file. Classroom Tracker automatically detects your format!
+            </p>
+
+            <div class="eim-sample-buttons-row">
+              <span class="eim-sample-buttons-label">Insert Sample:</span>
+              <div class="eim-sample-buttons-list">
+                <button type="button" class="eim-sample-btn" @click="loadSampleFormat('pipe')">
+                  Pipe (<code>A1.1 | Desc</code>)
+                </button>
+                <button type="button" class="eim-sample-btn" @click="loadSampleFormat('colon')">
+                  Colon (<code>B2.1: Desc</code>)
+                </button>
+                <button type="button" class="eim-sample-btn" @click="loadSampleFormat('tab')">
+                  Excel / Tab (<code>Code	Desc</code>)
+                </button>
+                <button type="button" class="eim-sample-btn" @click="loadSampleFormat('three_column')">
+                  3-Col (<code>Strand | Code | Desc</code>)
+                </button>
+                <button type="button" class="eim-sample-btn" @click="loadSampleFormat('csv')">
+                  CSV (<code>"Code","Desc"</code>)
+                </button>
+              </div>
+            </div>
           </div>
 
-          <div v-if="targetUnitChoice === 'new'" class="eim-field">
-            <label class="eim-label">New Unit Name</label>
-            <input v-model="newUnitName" type="text" class="eim-input" placeholder="e.g. Unit 1: Chemistry" />
+          <!-- File Upload Dropzone -->
+          <div 
+            class="eim-dropzone" 
+            :class="{ 'eim-dropzone--active': pasteDragOver }"
+            @dragover.prevent="pasteDragOver = true"
+            @dragleave.prevent="pasteDragOver = false"
+            @drop.prevent="handleFileDrop"
+            @click="triggerFileInput"
+          >
+            <input 
+              ref="fileInputRef" 
+              type="file" 
+              accept=".csv,.tsv,.txt" 
+              style="display: none;" 
+              @change="handleFileSelect" 
+            />
+            <UploadCloud :size="22" class="eim-dropzone-icon" />
+            <div class="eim-dropzone-text">
+              <strong>Click to upload</strong> or drag and drop a <code>.csv</code>, <code>.tsv</code>, or <code>.txt</code> file
+            </div>
           </div>
 
+          <!-- Target Unit & Import Behavior Stack -->
+          <div class="eim-paste-controls-row">
+            <div class="eim-field" style="flex: 1;">
+              <label class="eim-label">Target Unit / Strand</label>
+              <select v-model="targetUnitChoice" class="eim-select">
+                <option v-if="hasParsedStrands" value="auto-strands">-- Auto-Create Units from Parsed Strands --</option>
+                <option value="new">-- Create New Unit --</option>
+                <option v-for="u in existingUnits" :key="u.unitId" :value="u.unitId">
+                  Attach to: {{ u.name }}
+                </option>
+              </select>
+            </div>
+
+            <div v-if="targetUnitChoice === 'new'" class="eim-field" style="flex: 1;">
+              <label class="eim-label">New Unit Name</label>
+              <input v-model="newUnitName" type="text" class="eim-input" placeholder="e.g. Unit 1: Chemistry" />
+            </div>
+
+            <div class="eim-field" style="width: 220px;">
+              <label class="eim-label">Import Behavior</label>
+              <select v-model="importBehavior" class="eim-select">
+                <option value="replace">Replace Existing</option>
+                <option value="append">Append to Existing</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Raw Textarea Input -->
           <div class="eim-field">
-            <label class="eim-label">Paste Expectations (Code | Description)</label>
-            <p class="eim-hint">Paste rows copied from Word, PDF, or Excel. Supported formats: <code>A1.1 | Description</code> or <code>A1.1: Description</code> or tab-separated.</p>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <label class="eim-label">Paste Raw Expectations Text</label>
+              <button v-if="pasteRawText" type="button" class="eim-action-link eim-action-link--small" @click="pasteRawText = ''">
+                Clear Text
+              </button>
+            </div>
             <textarea 
               v-model="pasteRawText" 
               class="eim-textarea" 
-              rows="6" 
-              placeholder="A1.1 | Apply scientific processes and skills&#10;A1.2 | Apply engineering design processes&#10;B1.1 | Assess impacts of human activities"
+              rows="5" 
+              placeholder="Paste rows here, e.g.:&#10;A1.1 | Apply scientific processes and research skills&#10;A1.2 | Apply engineering design processes&#10;B1.1 | Assess impacts of human activities on matter"
             ></textarea>
           </div>
 
-          <!-- Live Preview Table -->
-          <div v-if="parsedPasteExpectations.length > 0" class="eim-preview-table-container">
-            <label class="eim-label">Parsed Expectations Preview ({{ parsedPasteExpectations.length }} found)</label>
-            <table class="eim-preview-table">
-              <thead>
-                <tr>
-                  <th style="width: 80px;">Code</th>
-                  <th>Description</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="(item, idx) in parsedPasteExpectations" :key="idx">
-                  <td><span class="eim-code-badge">{{ item.code }}</span></td>
-                  <td>{{ item.description }}</td>
-                </tr>
-              </tbody>
-            </table>
+          <!-- Live Interactive & Editable Preview Table -->
+          <div v-if="parsedPasteList.length > 0" class="eim-preview-table-container">
+            <div class="eim-preview-header">
+              <div class="eim-preview-summary">
+                <CheckCircle2 :size="16" class="eim-preview-success-icon" />
+                <span>
+                  <strong>{{ parsedPasteList.length }}</strong> expectation{{ parsedPasteList.length !== 1 ? 's' : '' }} ready to import
+                </span>
+                <span v-if="duplicateCodes.size > 0" class="eim-preview-duplicate-warning">
+                  <AlertTriangle :size="13" /> {{ duplicateCodes.size }} duplicate code{{ duplicateCodes.size !== 1 ? 's' : '' }} detected
+                </span>
+                <span v-if="hasParsedStrands" class="eim-preview-strand-badge">
+                  {{ uniqueParsedStrands.length }} Strands Detected
+                </span>
+              </div>
+              <span class="eim-preview-edit-hint">💡 Click any cell below to edit before importing</span>
+            </div>
+
+            <div class="eim-table-scroll-wrapper">
+              <table class="eim-preview-table">
+                <thead>
+                  <tr>
+                    <th style="width: 38px; text-align: center;">#</th>
+                    <th v-if="hasParsedStrands" style="width: 140px;">Strand / Unit</th>
+                    <th style="width: 110px;">Code</th>
+                    <th>Description</th>
+                    <th style="width: 44px; text-align: center;">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr 
+                    v-for="(item, idx) in parsedPasteList" 
+                    :key="item.id || idx"
+                    :class="{ 'eim-tr--duplicate': isDuplicateCode(item.code) }"
+                  >
+                    <td class="eim-td-num">{{ idx + 1 }}</td>
+                    <td v-if="hasParsedStrands">
+                      <input 
+                        v-model="item.strand" 
+                        type="text" 
+                        class="eim-table-input" 
+                        placeholder="Strand" 
+                      />
+                    </td>
+                    <td>
+                      <input 
+                        v-model="item.code" 
+                        type="text" 
+                        class="eim-table-input eim-table-input--code" 
+                        placeholder="Code" 
+                      />
+                    </td>
+                    <td>
+                      <input 
+                        v-model="item.description" 
+                        type="text" 
+                        class="eim-table-input eim-table-input--desc" 
+                        placeholder="Expectation description" 
+                      />
+                    </td>
+                    <td style="text-align: center;">
+                      <button 
+                        type="button" 
+                        class="eim-table-btn-delete" 
+                        title="Remove row"
+                        @click="deleteParsedRow(idx)"
+                      >
+                        <Trash2 :size="13" />
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>
@@ -368,7 +507,10 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue'
-import { BookOpen, X, Zap, Search, Check, Filter, Trash2 } from 'lucide-vue-next'
+import { 
+  BookOpen, X, Zap, Search, Check, Filter, Trash2, 
+  FileSpreadsheet, UploadCloud, Download, AlertTriangle, CheckCircle2 
+} from 'lucide-vue-next'
 import { curriculumPresets } from '../../data/curriculum/index.js'
 
 const props = defineProps({
@@ -400,9 +542,6 @@ const selectedExpectations = ref([])
 // Shared unit state
 const targetUnitChoice = ref('auto')
 const newUnitName = ref('')
-
-// Paste state
-const pasteRawText = ref('')
 
 function setPanelFilter(panel) {
   panelFilter.value = panel
@@ -638,33 +777,280 @@ function toggleStrandSelection(strand) {
   }
 }
 
-// Parsed text logic
-const parsedPasteExpectations = computed(() => {
-  if (!pasteRawText.value.trim()) return []
-  const lines = pasteRawText.value.split('\n')
+// Paste state & file upload
+const pasteRawText = ref('')
+const pasteDragOver = ref(false)
+const fileInputRef = ref(null)
+const parsedPasteList = ref([])
+
+function parseCsvLine(text) {
+  const result = []
+  let cur = ''
+  let inQuotes = false
+  for (let i = 0; i < text.length; i++) {
+    const char = text[i]
+    if (char === '"' || char === "'") {
+      inQuotes = !inQuotes
+    } else if (char === ',' && !inQuotes) {
+      result.push(cur.trim().replace(/^["']|["']$/g, ''))
+      cur = ''
+    } else {
+      cur += char
+    }
+  }
+  if (cur) result.push(cur.trim().replace(/^["']|["']$/g, ''))
+  return result
+}
+
+function parseRawExpectationsText(raw) {
+  if (!raw || !raw.trim()) return []
+  const lines = raw.split(/\r?\n/)
   const results = []
 
-  lines.forEach(line => {
-    const trimmed = line.trim()
-    if (!trimmed) return
+  let startIndex = 0
+  if (lines.length > 0) {
+    const first = lines[0].toLowerCase().trim()
+    const tokens = first.split(/[\t\|,]/).map(t => t.trim().replace(/^["']|["']$/g, ''))
+    const isHeader = tokens.some(t => 
+      t === 'code' || 
+      t === 'expectation' || 
+      t === 'expectations' || 
+      t === 'learning goal' || 
+      t === 'description' || 
+      t === 'expectation code' || 
+      (t === 'strand' && tokens.length > 1 && tokens.some(tok => tok === 'code' || tok === 'description' || tok === 'expectation'))
+    )
+    if (isHeader) {
+      startIndex = 1
+    }
+  }
 
-    const matchDelim = trimmed.match(/^([A-Za-z0-9\.-]+)[\t\|:]\s*(.+)$/)
-    if (matchDelim) {
-      results.push({ code: matchDelim[1].trim(), description: matchDelim[2].trim() })
-      return
+  for (let i = startIndex; i < lines.length; i++) {
+    const line = lines[i].trim()
+    if (!line) continue
+
+    // 1. Pipe-separated: Strand | Code | Desc OR Code | Desc
+    if (line.includes('|')) {
+      const parts = line.split('|').map(s => s.trim())
+      if (parts.length >= 3) {
+        results.push({
+          id: `paste_${i}_${Date.now()}`,
+          strand: parts[0],
+          code: parts[1].toUpperCase(),
+          description: parts.slice(2).join(' | '),
+          isOverall: /^[A-Z]\d+$/i.test(parts[1])
+        })
+        continue
+      } else if (parts.length === 2) {
+        results.push({
+          id: `paste_${i}_${Date.now()}`,
+          strand: '',
+          code: parts[0].toUpperCase(),
+          description: parts[1],
+          isOverall: /^[A-Z]\d+$/i.test(parts[0])
+        })
+        continue
+      }
     }
 
-    const matchSpace = trimmed.match(/^([A-Za-z0-9\.-]{2,8})\s+(.+)$/)
+    // 2. Tab-separated (Excel / Google Sheets paste)
+    if (line.includes('\t')) {
+      const parts = line.split('\t').map(s => s.trim())
+      if (parts.length >= 3) {
+        results.push({
+          id: `paste_${i}_${Date.now()}`,
+          strand: parts[0],
+          code: parts[1].toUpperCase(),
+          description: parts.slice(2).join(' '),
+          isOverall: /^[A-Z]\d+$/i.test(parts[1])
+        })
+        continue
+      } else if (parts.length === 2) {
+        results.push({
+          id: `paste_${i}_${Date.now()}`,
+          strand: '',
+          code: parts[0].toUpperCase(),
+          description: parts[1],
+          isOverall: /^[A-Z]\d+$/i.test(parts[0])
+        })
+        continue
+      }
+    }
+
+    // 3. Colon-separated: Code: Description
+    const matchColon = line.match(/^([A-Za-z0-9\.-]{1,12})\s*:\s*(.+)$/)
+    if (matchColon) {
+      results.push({
+        id: `paste_${i}_${Date.now()}`,
+        strand: '',
+        code: matchColon[1].toUpperCase().trim(),
+        description: matchColon[2].trim(),
+        isOverall: /^[A-Z]\d+$/i.test(matchColon[1].trim())
+      })
+      continue
+    }
+
+    // 4. CSV parsing with quotes
+    const csvParts = parseCsvLine(line)
+    if (csvParts.length >= 3) {
+      results.push({
+        id: `paste_${i}_${Date.now()}`,
+        strand: csvParts[0].trim(),
+        code: csvParts[1].toUpperCase().trim(),
+        description: csvParts.slice(2).join(', ').trim(),
+        isOverall: /^[A-Z]\d+$/i.test(csvParts[1].trim())
+      })
+      continue
+    } else if (csvParts.length === 2) {
+      results.push({
+        id: `paste_${i}_${Date.now()}`,
+        strand: '',
+        code: csvParts[0].toUpperCase().trim(),
+        description: csvParts[1].trim(),
+        isOverall: /^[A-Z]\d+$/i.test(csvParts[0].trim())
+      })
+      continue
+    }
+
+    // 5. Code [space] Description match
+    const matchSpace = line.match(/^([A-Za-z0-9\.-]{2,8})\s+(.+)$/)
     if (matchSpace) {
-      results.push({ code: matchSpace[1].trim(), description: matchSpace[2].trim() })
-      return
+      results.push({
+        id: `paste_${i}_${Date.now()}`,
+        strand: '',
+        code: matchSpace[1].toUpperCase().trim(),
+        description: matchSpace[2].trim(),
+        isOverall: /^[A-Z]\d+$/i.test(matchSpace[1].trim())
+      })
+      continue
     }
 
-    results.push({ code: `EXP-${results.length + 1}`, description: trimmed })
-  })
+    // Fallback: entire line as description
+    results.push({
+      id: `paste_${i}_${Date.now()}`,
+      strand: '',
+      code: `EXP-${results.length + 1}`,
+      description: line,
+      isOverall: false
+    })
+  }
 
   return results
+}
+
+watch(pasteRawText, (newText) => {
+  parsedPasteList.value = parseRawExpectationsText(newText)
+  if (parsedPasteList.value.some(e => e.strand && e.strand.trim())) {
+    targetUnitChoice.value = 'auto-strands'
+  }
+}, { immediate: true })
+
+const duplicateCodes = computed(() => {
+  const counts = {}
+  parsedPasteList.value.forEach(item => {
+    const c = (item.code || '').toUpperCase().trim()
+    if (c) counts[c] = (counts[c] || 0) + 1
+  })
+  const dupes = new Set()
+  Object.entries(counts).forEach(([code, cnt]) => {
+    if (cnt > 1) dupes.add(code)
+  })
+  return dupes
 })
+
+function isDuplicateCode(code) {
+  if (!code) return false
+  return duplicateCodes.value.has(code.toUpperCase().trim())
+}
+
+const hasParsedStrands = computed(() => {
+  return parsedPasteList.value.some(e => e.strand && e.strand.trim())
+})
+
+const uniqueParsedStrands = computed(() => {
+  return Array.from(new Set(parsedPasteList.value.map(e => e.strand?.trim()).filter(Boolean)))
+})
+
+function deleteParsedRow(index) {
+  parsedPasteList.value.splice(index, 1)
+}
+
+function loadSampleFormat(type) {
+  if (type === 'pipe') {
+    pasteRawText.value = `A1.1 | Apply scientific processes and research skills to investigate questions
+A1.2 | Apply engineering design processes to construct working prototypes
+B1.1 | Assess social and environmental impacts of emerging technologies
+B1.2 | Investigate properties of matter and chemical changes in common substances`
+  } else if (type === 'colon') {
+    pasteRawText.value = `B1.1: Demonstrate understanding of integer operations and rational numbers
+B1.2: Model linear equations and solve multi-step problems in context
+C1.1: Collect, organize, and represent primary and secondary data distributions
+C1.2: Apply statistical measures of central tendency to draw conclusions`
+  } else if (type === 'tab') {
+    pasteRawText.value = `A1.1\tListen in order to understand and respond appropriately in a variety of situations
+A1.2\tUse speaking skills and strategies to communicate information clearly
+B1.1\tRead a wide variety of increasingly complex texts for multiple purposes
+B1.2\tDemonstrate understanding of literary elements and point of view`
+  } else if (type === 'three_column') {
+    pasteRawText.value = `Strand A: STEM Skills | A1.1 | Apply scientific processes and research skills
+Strand A: STEM Skills | A1.2 | Use coding and computational thinking to model systems
+Strand B: Matter & Energy | B1.1 | Investigate physical and chemical properties of matter
+Strand B: Matter & Energy | B1.2 | Evaluate environmental impacts of material synthesis`
+  } else if (type === 'csv') {
+    pasteRawText.value = `"Code","Description"
+"A1.1","Demonstrate understanding of explicit and implicit meanings in texts"
+"A1.2","Analyze how texts reflect diverse perspectives and cultural contexts"
+"B1.1","Draft coherent paragraphs with strong supporting evidence and transitions"`
+  }
+}
+
+function downloadSampleCsv() {
+  const csvContent = `"Strand","Code","Description"
+"Number Sense","B1.1","Demonstrate understanding of integers, fractions, and decimals"
+"Number Sense","B1.2","Apply order of operations and proportional reasoning"
+"Algebra & Relations","C1.1","Model linear relationships using tables, graphs, and equations"
+"Algebra & Relations","C1.2","Solve first-degree equations with rational coefficients"
+"Data & Probability","D1.1","Collect, organize, and represent two-variable data sets"
+"Spatial Sense","E1.1","Determine surface area and volume of composite geometric solids"`
+
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.setAttribute('href', url)
+  link.setAttribute('download', 'expectations_sample.csv')
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  URL.revokeObjectURL(url)
+}
+
+function triggerFileInput() {
+  if (fileInputRef.value) {
+    fileInputRef.value.click()
+  }
+}
+
+function handleFileSelect(e) {
+  const file = e.target.files?.[0]
+  if (!file) return
+  readFileContent(file)
+  e.target.value = ''
+}
+
+function handleFileDrop(e) {
+  pasteDragOver.value = false
+  const file = e.dataTransfer.files?.[0]
+  if (!file) return
+  readFileContent(file)
+}
+
+function readFileContent(file) {
+  const reader = new FileReader()
+  reader.onload = (event) => {
+    pasteRawText.value = event.target?.result || ''
+  }
+  reader.readAsText(file)
+}
 
 const canSubmit = computed(() => {
   if (activeTab.value === 'presets') {
@@ -676,7 +1062,7 @@ const canSubmit = computed(() => {
   }
 
   if (activeTab.value === 'paste') {
-    if (parsedPasteExpectations.value.length === 0) return false
+    if (parsedPasteList.value.length === 0) return false
     if (targetUnitChoice.value === 'new' && !newUnitName.value.trim()) return false
     return true
   }
@@ -711,13 +1097,36 @@ function onSubmit() {
       })
     }
   } else if (activeTab.value === 'paste') {
-    emit('import', {
-      mode: 'attach-expectations',
-      targetUnitChoice: targetUnitChoice.value,
-      newUnitName: newUnitName.value.trim(),
-      expectations: parsedPasteExpectations.value,
-      importBehavior: importBehavior.value
-    })
+    if (targetUnitChoice.value === 'auto-strands' && hasParsedStrands.value) {
+      // Group expectations by parsed strand
+      const strandMap = {}
+      parsedPasteList.value.forEach(item => {
+        const sName = item.strand?.trim() || 'General'
+        if (!strandMap[sName]) strandMap[sName] = []
+        strandMap[sName].push({
+          code: item.code,
+          description: item.description,
+          isOverall: item.isOverall
+        })
+      })
+
+      emit('import', {
+        mode: 'auto-paste-strands',
+        strands: Object.entries(strandMap).map(([name, exps]) => ({ name, expectations: exps })),
+        expectations: parsedPasteList.value,
+        importBehavior: importBehavior.value,
+        targetSubjectId: props.targetSubjectId
+      })
+    } else {
+      emit('import', {
+        mode: 'attach-expectations',
+        targetUnitChoice: targetUnitChoice.value,
+        newUnitName: newUnitName.value.trim(),
+        expectations: parsedPasteList.value,
+        importBehavior: importBehavior.value,
+        targetSubjectId: props.targetSubjectId
+      })
+    }
   }
 
   onClose()
@@ -1396,5 +1805,262 @@ function onSubmit() {
   margin: 0;
   font-size: 0.82rem;
   color: var(--text-secondary);
+}
+
+/* Bulk Paste / CSV Importer Enhancements */
+.eim-format-guide-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.eim-guide-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.eim-guide-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.eim-guide-icon {
+  color: var(--primary);
+}
+
+.eim-sample-buttons-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.eim-sample-buttons-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+}
+
+.eim-sample-buttons-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.eim-sample-btn {
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.eim-sample-btn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: var(--bg-hover);
+}
+
+.eim-sample-btn code {
+  font-size: 0.7rem;
+  opacity: 0.85;
+}
+
+.eim-dropzone {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 14px 20px;
+  border: 1.5px dashed var(--border);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.02);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.eim-dropzone:hover, .eim-dropzone--active {
+  border-color: var(--primary);
+  background: rgba(59, 130, 246, 0.04);
+}
+
+.eim-dropzone-icon {
+  color: var(--primary);
+}
+
+.eim-dropzone-text {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.eim-dropzone-text strong {
+  color: var(--primary);
+}
+
+.eim-paste-controls-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.eim-preview-table-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.eim-preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.eim-preview-summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.82rem;
+  color: var(--text);
+}
+
+.eim-preview-success-icon {
+  color: #10b981;
+}
+
+.eim-preview-duplicate-warning {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  border-radius: var(--radius-sm);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.eim-preview-strand-badge {
+  padding: 2px 8px;
+  background: rgba(59, 130, 246, 0.1);
+  color: var(--primary);
+  border-radius: var(--radius-sm);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.eim-preview-edit-hint {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+}
+
+.eim-table-scroll-wrapper {
+  max-height: 280px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.eim-preview-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+}
+
+.eim-preview-table th {
+  position: sticky;
+  top: 0;
+  background: var(--bg-secondary);
+  padding: 8px 10px;
+  text-align: left;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--border);
+  z-index: 1;
+}
+
+.eim-preview-table td {
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.eim-preview-table tr:last-child td {
+  border-bottom: none;
+}
+
+.eim-tr--duplicate {
+  background: rgba(239, 68, 68, 0.05);
+}
+
+.eim-td-num {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+  text-align: center;
+}
+
+.eim-table-input {
+  width: 100%;
+  padding: 4px 8px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text);
+  font-size: 0.8rem;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+.eim-table-input:hover {
+  border-color: var(--border);
+  background: var(--bg-secondary);
+}
+
+.eim-table-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  background: var(--surface);
+}
+
+.eim-table-input--code {
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.eim-table-btn-delete {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: var(--radius-sm);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.eim-table-btn-delete:hover {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
 }
 </style>

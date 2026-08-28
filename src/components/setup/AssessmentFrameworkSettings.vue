@@ -58,7 +58,7 @@
 
       <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-top: 1.5rem;">
         <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
-          <h3 class="setup__card-subtitle" style="margin: 0;">Units & Expectations</h3>
+          <h3 class="setup__card-subtitle" style="margin: 0;">Units &amp; Expectations</h3>
           <!-- Course Section Tabs for Split Classes (Units & Expectations) -->
           <div v-if="availableCourseSections.length > 1" class="setup__toggle-group" style="display: flex; gap: 6px;">
             <button 
@@ -75,6 +75,20 @@
         </div>
 
         <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+          <!-- Expectation Search Box -->
+          <div class="setup__search-box" v-if="totalExpectationsCount > 5">
+            <Search :size="13" class="setup__search-icon" />
+            <input 
+              v-model="expectationSearchQuery" 
+              type="text" 
+              class="setup__search-input" 
+              placeholder="Search code or desc..." 
+            />
+            <button v-if="expectationSearchQuery" type="button" class="setup__search-clear" @click="expectationSearchQuery = ''">
+              <X :size="12" />
+            </button>
+          </div>
+
           <button 
             v-if="availableCourseSections.length > 1"
             type="button" 
@@ -82,7 +96,7 @@
             @click="copyUnitsToAllSections"
             title="Mirror unit names from active course tab to all other courses"
           >
-            <Copy :size="14" /> Mirror Units to All Courses
+            <Copy :size="14" /> Mirror Units
           </button>
           <button 
             type="button" 
@@ -113,6 +127,9 @@
                 <component :is="expandedUnitId === unit.unitId ? ChevronDown : ChevronRight" :size="16" />
               </button>
               <input v-model="unit.name" class="setup__input setup__input--naked" @change="saveGradebookSettings" />
+              <span class="setup__unit-exp-count-badge" v-if="unit.expectations?.length">
+                {{ unit.expectations.length }} exp{{ unit.expectations.length === 1 ? '' : 's' }}
+              </span>
             </div>
             <div class="setup__gb-actions">
               <button type="button" class="setup__icon-btn" :disabled="idx === 0" @click="moveUnit(idx, -1)"><ChevronUp :size="16" /></button>
@@ -123,20 +140,85 @@
 
           <!-- Expectations Panel (Expandable) -->
           <div v-if="expandedUnitId === unit.unitId" class="setup__expectations-panel">
-            <h4 class="setup__expectations-title">Curriculum Expectations</h4>
+            <div style="display: flex; align-items: center; justify-content: space-between;">
+              <h4 class="setup__expectations-title">Curriculum Expectations</h4>
+              <span v-if="expectationSearchQuery" class="setup__search-filtered-note">
+                Filtered by "{{ expectationSearchQuery }}"
+              </span>
+            </div>
             
-            <div class="setup__expectations-list" v-if="unit.expectations?.length">
-              <div v-for="exp in unit.expectations" :key="exp.expectationId" class="setup__expectation-item">
-                <span class="setup__expectation-code">{{ exp.code }}</span>
-                <span class="setup__expectation-desc">{{ exp.description }}</span>
-                <button 
-                  type="button" 
-                  class="setup__icon-btn setup__icon-btn--danger" 
-                  @click="deleteExpectation(unit, exp.expectationId)"
-                >
-                  <Trash2 :size="12" />
-                </button>
+            <div class="setup__expectations-list" v-if="getFilteredUnitExpectations(unit).length">
+              <div 
+                v-for="exp in getFilteredUnitExpectations(unit)" 
+                :key="exp.expectationId" 
+                class="setup__expectation-item"
+                :class="{ 'setup__expectation-item--editing': editingExpectationId === exp.expectationId }"
+              >
+                <!-- Edit Mode Form -->
+                <template v-if="editingExpectationId === exp.expectationId">
+                  <div class="setup__exp-edit-form">
+                    <input 
+                      v-model="editingExpectationCode" 
+                      class="setup__input setup__input--exp-code" 
+                      placeholder="Code (e.g. B1.2)"
+                      @keydown.enter="saveEditExpectation(unit, exp)"
+                      @keydown.esc="cancelEditExpectation"
+                    />
+                    <input 
+                      v-model="editingExpectationDesc" 
+                      class="setup__input setup__input--exp-desc" 
+                      placeholder="Expectation Description"
+                      @keydown.enter="saveEditExpectation(unit, exp)"
+                      @keydown.esc="cancelEditExpectation"
+                    />
+                    <div class="setup__exp-edit-actions">
+                      <button 
+                        type="button" 
+                        class="setup__icon-btn setup__icon-btn--save" 
+                        title="Save Changes" 
+                        @click="saveEditExpectation(unit, exp)"
+                      >
+                        <Check :size="14" />
+                      </button>
+                      <button 
+                        type="button" 
+                        class="setup__icon-btn" 
+                        title="Cancel" 
+                        @click="cancelEditExpectation"
+                      >
+                        <X :size="14" />
+                      </button>
+                    </div>
+                  </div>
+                </template>
+
+                <!-- Normal View Mode -->
+                <template v-else>
+                  <span class="setup__expectation-code">{{ exp.code }}</span>
+                  <span class="setup__expectation-desc" :title="exp.description">{{ exp.description }}</span>
+                  <div class="setup__expectation-actions">
+                    <button 
+                      type="button" 
+                      class="setup__icon-btn" 
+                      title="Edit Expectation Code & Description" 
+                      @click="startEditExpectation(exp)"
+                    >
+                      <Edit2 :size="13" />
+                    </button>
+                    <button 
+                      type="button" 
+                      class="setup__icon-btn setup__icon-btn--danger" 
+                      title="Delete Expectation"
+                      @click="deleteExpectation(unit, exp.expectationId)"
+                    >
+                      <Trash2 :size="13" />
+                    </button>
+                  </div>
+                </template>
               </div>
+            </div>
+            <div v-else-if="unit.expectations?.length" class="setup__expectations-empty">
+              No expectations in this unit match "{{ expectationSearchQuery }}".
             </div>
             <div v-else class="setup__expectations-empty">
               No expectations defined for this unit.
@@ -153,7 +235,7 @@
               <input 
                 v-model="newExpectationDesc" 
                 class="setup__input setup__input--exp-desc" 
-                placeholder="Description" 
+                placeholder="Expectation description" 
                 @keydown.enter.prevent="addExpectation(unit)"
               />
               <button 
@@ -162,7 +244,7 @@
                 @click="addExpectation(unit)"
                 :disabled="!newExpectationCode.trim()"
               >
-                Add
+                <Plus :size="13" /> Add
               </button>
             </div>
           </div>
@@ -239,7 +321,10 @@ import * as gradebookService from '../../db/gradebookService.js'
 import * as classService from '../../db/classService.js'
 import * as settingsService from '../../db/settingsService.js'
 import * as eventService from '../../db/eventService.js'
-import { ChevronUp, ChevronDown, Trash2, Plus, AlertTriangle, CheckCircle2, ChevronRight, BookOpen, Copy, LayoutTemplate, Save } from 'lucide-vue-next'
+import { 
+  ChevronUp, ChevronDown, Trash2, Plus, AlertTriangle, CheckCircle2, 
+  ChevronRight, BookOpen, Copy, LayoutTemplate, Save, Edit2, Check, X, Search 
+} from 'lucide-vue-next'
 import ExpectationImportModal from './ExpectationImportModal.vue'
 
 const { activeClass, updateActiveClass, triggerActiveClass } = useClassroom()
@@ -254,11 +339,71 @@ const showImportModal = ref(false)
 const expandedUnitId = ref(null)
 const newExpectationCode = ref('')
 const newExpectationDesc = ref('')
+const expectationSearchQuery = ref('')
+
+const editingExpectationId = ref(null)
+const editingExpectationCode = ref('')
+const editingExpectationDesc = ref('')
 
 function toggleUnitExpand(unitId) {
   expandedUnitId.value = expandedUnitId.value === unitId ? null : unitId
   newExpectationCode.value = ''
   newExpectationDesc.value = ''
+  cancelEditExpectation()
+}
+
+function getFilteredUnitExpectations(unit) {
+  if (!unit || !unit.expectations) return []
+  if (!expectationSearchQuery.value.trim()) return unit.expectations
+  const q = expectationSearchQuery.value.toLowerCase().trim()
+  return unit.expectations.filter(e => 
+    (e.code || '').toLowerCase().includes(q) || 
+    (e.description || '').toLowerCase().includes(q)
+  )
+}
+
+function startEditExpectation(exp) {
+  editingExpectationId.value = exp.expectationId
+  editingExpectationCode.value = exp.code || ''
+  editingExpectationDesc.value = exp.description || ''
+}
+
+function cancelEditExpectation() {
+  editingExpectationId.value = null
+  editingExpectationCode.value = ''
+  editingExpectationDesc.value = ''
+}
+
+async function saveEditExpectation(unit, exp) {
+  const newCode = (editingExpectationCode.value || '').trim().toUpperCase()
+  const newDesc = (editingExpectationDesc.value || '').trim()
+  if (!newCode) {
+    showWarning('Expectation code cannot be empty.')
+    return
+  }
+
+  const oldCode = (exp.code || '').trim().toUpperCase()
+  const codeChanged = oldCode && oldCode !== newCode
+
+  if (codeChanged && activeClass.value?.classId) {
+    const usage = await gradebookService.getExpectationUsageCounts(activeClass.value.classId, oldCode, exp.expectationId)
+    if (usage.totalCount > 0) {
+      const ok = await confirm(
+        `Expectation code changed from "${oldCode}" to "${newCode}". Update ${usage.assessmentCount} assessment(s), ${usage.gradeCount} student score(s), and ${usage.eventCount} observation(s) across the class?`,
+        `Rename Expectation — ${oldCode}`,
+        { confirmLabel: 'Update & Cascade Rename' }
+      )
+      if (!ok) return
+
+      const res = await gradebookService.cascadeRenameExpectation(activeClass.value.classId, oldCode, newCode, exp.expectationId)
+      showSuccess(`Renamed to ${newCode} (Updated ${res.affectedAssessments} assessment(s) and student grades)`)
+    }
+  }
+
+  exp.code = newCode
+  exp.description = newDesc
+  cancelEditExpectation()
+  await saveGradebookSettings()
 }
 
 function onExpectationImport(payload) {
@@ -308,8 +453,25 @@ function onExpectationImport(payload) {
         }))
       })
     })
+  } else if (payload.mode === 'auto-paste-strands') {
+    // Mode B: Auto-Create Units from parsed strands in paste/CSV
+    if (payload.importBehavior === 'replace') {
+      targetUnitsList.length = 0
+    }
+
+    payload.strands.forEach(strand => {
+      targetUnitsList.push({
+        unitId: crypto.randomUUID(),
+        name: strand.name,
+        expectations: (strand.expectations || []).map(e => ({
+          expectationId: crypto.randomUUID(),
+          code: e.code,
+          description: e.description
+        }))
+      })
+    })
   } else if (payload.mode === 'attach-expectations') {
-    // Mode B: Attach expectations to a target unit (or new unit)
+    // Mode C: Attach expectations to a target unit (or new unit)
     let targetUnit = null
     if (payload.targetUnitChoice === 'new') {
       targetUnit = {
@@ -401,18 +563,23 @@ async function addExpectation(unit) {
 
 async function deleteExpectation(unit, expectationId) {
   if (!activeClass.value) return
-  const classEvents = await eventService.getEventsByClass(activeClass.value.classId)
-  const count = classEvents.filter(e => e.expectationId === expectationId).length
+  const targetExp = unit.expectations?.find(e => e.expectationId === expectationId)
+  const expCode = targetExp?.code || ''
 
-  let confirmMsg = 'Delete this expectation?'
-  if (count > 0) {
-    confirmMsg = `Delete this expectation? Warning: There are ${count} logged student observations/conversations associated with it. Deleting it will convert these comments into general observations.`
-  }
+  const usage = await gradebookService.getExpectationUsageCounts(activeClass.value.classId, expCode, expectationId)
 
-  if (!await confirm(confirmMsg)) return
+  if (usage.totalCount > 0) {
+    const ok = await confirm(
+      `Delete expectation "${expCode}"? Warning: It is referenced in ${usage.assessmentCount} assessment(s), ${usage.gradeCount} recorded student grade(s), and ${usage.eventCount} observation(s). Deleting it will detach it from future grading calculations.`,
+      `Delete Assessed Expectation — ${expCode}`,
+      { confirmLabel: 'Delete Expectation', danger: true }
+    )
+    if (!ok) return
 
-  if (count > 0) {
+    await gradebookService.detachExpectationFromAssessmentsAndGrades(activeClass.value.classId, expCode, expectationId)
     await eventService.detachEventsForDeletedExpectation(activeClass.value.classId, expectationId)
+  } else {
+    if (!await confirm(`Delete expectation "${expCode || 'this expectation'}"?`)) return
   }
 
   unit.expectations = unit.expectations.filter(e => e.expectationId !== expectationId)
@@ -815,5 +982,85 @@ onMounted(async () => {
 .setup__inline-banner--success { background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.3); color: #10b981; }
 .setup__inline-banner-close { margin-left: auto; background: none; border: none; color: currentColor; font-size: 1.1rem; cursor: pointer; opacity: 0.7; padding: 0 4px; }
 .setup__inline-banner-close:hover { opacity: 1; }
+
+/* Expectation Search & Unit Badges */
+.setup__search-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 170px;
+}
+.setup__search-icon {
+  position: absolute;
+  left: 8px;
+  color: var(--text-secondary);
+  pointer-events: none;
+}
+.setup__search-input {
+  width: 100%;
+  min-height: 32px !important;
+  padding: 4px 26px 4px 28px !important;
+  font-size: 0.78rem !important;
+  border-radius: var(--radius-md) !important;
+  background: var(--bg-secondary) !important;
+  border: 1px solid var(--border) !important;
+}
+.setup__search-clear {
+  position: absolute;
+  right: 6px;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.setup__unit-exp-count-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: var(--radius-sm);
+  background: rgba(59, 130, 246, 0.1);
+  color: var(--primary);
+  margin-left: 6px;
+}
+.setup__search-filtered-note {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+/* Expectation Item & Inline Edit Form */
+.setup__expectation-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+}
+.setup__expectation-item--editing {
+  background: var(--bg-hover) !important;
+  border-color: var(--primary) !important;
+  padding: 4px 8px !important;
+}
+.setup__exp-edit-form {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+.setup__exp-edit-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.setup__icon-btn--save {
+  color: #10b981 !important;
+}
+.setup__icon-btn--save:hover {
+  background: rgba(16, 185, 129, 0.15) !important;
+}
 </style>
+
 

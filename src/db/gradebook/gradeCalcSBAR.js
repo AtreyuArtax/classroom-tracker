@@ -158,6 +158,26 @@ export function calculateSBARExpectationMastery(classRecord, assessments, gradeM
     ...(classRecord.expectations || []),
     ...((classRecord.gradebookUnits || []).flatMap(u => u.expectations || []))
   ]
+  if (classRecord.courseFrameworks) {
+    Object.values(classRecord.courseFrameworks).forEach(fw => {
+      if (fw?.gradebookUnits) {
+        fw.gradebookUnits.forEach(u => {
+          if (u.expectations) allClassExps.push(...u.expectations)
+        })
+      }
+    })
+  }
+  if (Array.isArray(classRecord.subjects)) {
+    classRecord.subjects.forEach(sub => {
+      if (sub.expectations) allClassExps.push(...sub.expectations)
+      if (sub.gradebookUnits) {
+        sub.gradebookUnits.forEach(u => {
+          if (u.expectations) allClassExps.push(...u.expectations)
+        })
+      }
+    })
+  }
+
   const validExpSet = (allClassExps.length > 0)
     ? new Set(allClassExps.map(e => String(e.code || e.expectationId).toLowerCase()))
     : null

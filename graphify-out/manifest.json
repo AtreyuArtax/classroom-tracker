@@ -280,8 +280,8 @@
     "semantic_hash": ""
   },
   "src/db/eventService.js": {
-    "mtime": 1787679865.0154426,
-    "ast_hash": "15fd4cf88e19daa4a9a6ec167d114161",
+    "mtime": 1787908716.4718406,
+    "ast_hash": "dfed9deef667f640f067c8bdd7cf8f6d",
     "semantic_hash": ""
   },
   "src/db/exportService.js": {
@@ -340,8 +340,8 @@
     "semantic_hash": ""
   },
   "src/views/Grades.vue": {
-    "mtime": 1787884656.4764545,
-    "ast_hash": "d7676fbc2f52a091d5120dcdf82599b3",
+    "mtime": 1787909527.666036,
+    "ast_hash": "0a26e2cc09695aff6f8b93a9911e2256",
     "semantic_hash": ""
   },
   "src/views/Reports.vue": {
@@ -400,8 +400,8 @@
     "semantic_hash": ""
   },
   "src/components/setup/AssessmentFrameworkSettings.vue": {
-    "mtime": 1787684841.4682562,
-    "ast_hash": "a8c20c1ca11795edea1c5565e6ea3bc5",
+    "mtime": 1787908819.6259952,
+    "ast_hash": "076ada609199bc3da3f8cfe62798a83c",
     "semantic_hash": ""
   },
   "src/composables/useGradeEditing.js": {
@@ -455,8 +455,8 @@
     "semantic_hash": ""
   },
   "src/components/setup/ExpectationImportModal.vue": {
-    "mtime": 1786499325.685671,
-    "ast_hash": "17ff9edfd0cce6626f8c7949ccc1e940",
+    "mtime": 1787908943.395493,
+    "ast_hash": "062c5df63020ac47fb2f0006dd879e5e",
     "semantic_hash": ""
   },
   "src/data/curriculum/index.js": {
@@ -555,8 +555,8 @@
     "semantic_hash": ""
   },
   "src/db/gradebook/assessmentService.js": {
-    "mtime": 1787364444.077133,
-    "ast_hash": "40ccaf47814919d217da988eb8136290",
+    "mtime": 1787908725.191132,
+    "ast_hash": "017ec649a740486b7fc20ba70c8497fb",
     "semantic_hash": ""
   },
   "src/db/gradebook/gradeAnalytics.js": {
@@ -590,8 +590,8 @@
     "semantic_hash": ""
   },
   "src/db/gradebook/gradeCalcSBAR.js": {
-    "mtime": 1787685283.3278127,
-    "ast_hash": "a2774775926f01f3f288f14b83f73b21",
+    "mtime": 1787908876.9810946,
+    "ast_hash": "704ff8e7e84f8a4347951884afdb437a",
     "semantic_hash": ""
   },
   "src/components/dossier/SBARExpectationMasteryGrid.vue": {
@@ -610,8 +610,8 @@
     "semantic_hash": ""
   },
   "src/components/setup/ElementarySubjectManager.vue": {
-    "mtime": 1786464395.7794223,
-    "ast_hash": "d12bb1689ef862b66c9988dfeef4b277",
+    "mtime": 1787908868.7432978,
+    "ast_hash": "119d2c3983a44eb5fb20f3ae34833cea",
     "semantic_hash": ""
   },
   "src/utils/elementarySubjects.js": {
@@ -1077,6 +1077,16 @@
   "src/composables/useTheme.js": {
     "mtime": 1787879946.8013427,
     "ast_hash": "4c4744c9fc72493f9d90906eb77c1c0f",
+    "semantic_hash": ""
+  },
+  "src/test_expectation_lifecycle.js": {
+    "mtime": 1787908931.5339873,
+    "ast_hash": "445d6607a42ed9e9836ca4e6a21726cc",
+    "semantic_hash": ""
+  },
+  "src/test_sbar_full_lifecycle.js": {
+    "mtime": 1787909517.129229,
+    "ast_hash": "d8f1eab1c28cff691f93c5e3e172dacb",
     "semantic_hash": ""
   }
 }

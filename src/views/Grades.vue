@@ -215,6 +215,7 @@
             :student-absence-totals="studentAbsenceTotals"
             @select-assessment="openAssessmentView($event, 'grid')"
             @open-dossier="showStudentDossier"
+            @select-expectation="showStudentDossier($event.studentId)"
           />
 
           <!-- The Scrollable Traditional Grid -->
