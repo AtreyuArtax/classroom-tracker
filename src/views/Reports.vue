@@ -21,8 +21,8 @@
       <!-- ══ RIGHT PANEL ════════════════════════════════════════════════ -->
       <main class="reports__main">
 
-        <!-- Pillar Navigation Bar + Grade Filter Pills + Inline Time Filter -->
-        <div class="reports__header-bar">
+        <!-- Pillar Navigation Bar + Grade Filter Pills + Inline Time Filter (Hidden in Student 360 mode) -->
+        <div v-if="rightMode !== 'dossier'" class="reports__header-bar">
           <div class="reports__pillar-nav" role="tablist" aria-label="Reports Mode">
             <button 
               class="reports__pillar-btn"
@@ -44,14 +44,6 @@
               @click="switchPillar('printhub')"
             >
               <Printer :size="15" /> Document &amp; Print Hub
-            </button>
-            <button 
-              v-if="dossier.selectedStudentId.value"
-              class="reports__pillar-btn"
-              :class="{ 'reports__pillar-btn--active': rightMode === 'dossier' }"
-              @click="switchPillar('dossier')"
-            >
-              <User :size="15" /> Student 360
             </button>
           </div>
 

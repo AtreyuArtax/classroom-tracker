@@ -1,7 +1,7 @@
 # Graph Report - classroom-tracker  (2026-08-28)
 
 ## Corpus Check
-- 220 files · ~425,904 words
+- 220 files · ~425,943 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `f07b7199`
+- Built from commit: `2cb39b5b`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -134,7 +134,7 @@ Nodes (27): BaseHTTPRequestHandler, Path, consume_scan(), _create_tray_icon_imag
 
 ### Community 5 - "Community 5"
 Cohesion: 0.07
-Nodes (19): addRoute(), CacheFirst, cacheMatchIgnoreParams(), cacheWillUpdate(), canConstructResponseFromBodyStream(), copyResponse(), Deferred, executeQuotaErrorCallbacks() (+11 more)
+Nodes (27): addRoute(), cacheDonePromiseForTransaction(), CacheFirst, cacheMatchIgnoreParams(), cacheWillUpdate(), canConstructResponseFromBodyStream(), copyResponse(), Deferred (+19 more)
 
 ### Community 6 - "Community 6"
 Cohesion: 0.17
@@ -173,8 +173,8 @@ Cohesion: 0.05
 Nodes (34): filteredMilestones, exportGradebookToExcel(), props, allCombinedWork, allDossierAssessments, attendanceStats, behaviorCodesMap, currentStudentObj (+26 more)
 
 ### Community 15 - "Community 15"
-Cohesion: 0.13
-Nodes (12): cacheDonePromiseForTransaction(), get(), getCursorAdvanceMethods(), getIdbProxyableTypes(), getMethod(), has(), openDB(), promisifyRequest() (+4 more)
+Cohesion: 0.21
+Nodes (4): get(), getMethod(), has(), Router
 
 ### Community 16 - "Community 16"
 Cohesion: 0.17
@@ -356,9 +356,9 @@ Nodes (4): saveLearningSkillsRecord(), clearStudentRating(), createEmptySkills()
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `getDB()` connect `Community 23` to `Community 0`, `Community 2`, `Community 3`, `Community 35`, `Community 103`, `Community 8`, `Community 109`, `Community 15`, `Community 112`, `Community 18`, `Community 21`?**
+- **Why does `getDB()` connect `Community 23` to `Community 0`, `Community 2`, `Community 3`, `Community 35`, `Community 5`, `Community 103`, `Community 8`, `Community 109`, `Community 112`, `Community 18`, `Community 21`?**
   _High betweenness centrality (0.190) - this node is a cross-community bridge._
-- **Why does `openDB()` connect `Community 15` to `Community 5`, `Community 94`, `Community 23`?**
+- **Why does `openDB()` connect `Community 5` to `Community 94`, `Community 23`?**
   _High betweenness centrality (0.116) - this node is a cross-community bridge._
 - **Why does `importAllData()` connect `Community 35` to `Community 6`, `Community 23`?**
   _High betweenness centrality (0.028) - this node is a cross-community bridge._
