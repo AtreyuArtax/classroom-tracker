@@ -1,5 +1,5 @@
 <template>
-  <div class="class-switcher-wrapper">
+  <div class="class-switcher-wrapper" :class="{ 'class-switcher-wrapper--elementary': activeClass?.classType === 'elementary' }">
     <!-- Current class label + dropdown trigger (only show interactive dropdown if more than 1 class exists) -->
     <div v-if="filteredClassList.length > 1" class="class-switcher">
       <button
@@ -60,12 +60,8 @@
       </div>
     </div>
 
-    <!-- If only 1 class exists in elementary, show a subtle compact badge instead of a redundant dropdown -->
-    <div v-else-if="activeClass && activeClass?.classType === 'elementary'" class="class-switcher__single-badge" :title="activeClass.name">
-      <span class="class-switcher__badge-text">{{ activeClass.name }}</span>
-    </div>
-    
-    <div v-else-if="activeClass" class="class-switcher">
+    <!-- If secondary with 1 class, show static class label (elementary with 1 class skips class badge to maximize room for subject dropdown) -->
+    <div v-else-if="activeClass && activeClass?.classType !== 'elementary'" class="class-switcher">
       <div class="class-switcher__trigger class-switcher__trigger--static" :title="activeClass.name">
         <span class="class-switcher__label">{{ activeClass.name }}</span>
       </div>
@@ -92,7 +88,7 @@
             :key="sub.subjectId"
             :value="sub.subjectId"
           >
-            {{ sub.name }} ({{ sub.code || 'SUBJ' }})
+            {{ sub.name }}
           </option>
         </select>
         <ChevronDown :size="14" class="subject-switcher__arrow" />
@@ -197,10 +193,17 @@ async function acceptSuggestion() {
 <style scoped>
 .class-switcher {
   position: relative;
-  width: 100%;
-  min-width: 0;
-  max-width: 100%;
-  flex: 1;
+  width: 180px;
+  min-width: 140px;
+  max-width: 220px;
+  flex-shrink: 0;
+}
+
+.class-switcher-wrapper--elementary .class-switcher {
+  width: 95px;
+  min-width: 75px;
+  max-width: 120px;
+  flex-shrink: 0;
 }
 
 .class-switcher__single-badge {
@@ -216,11 +219,11 @@ async function acceptSuggestion() {
   height: 32px;
   box-sizing: border-box;
   white-space: nowrap;
-  width: 100%;
-  max-width: 100%;
+  width: auto;
+  max-width: 150px;
   overflow: hidden;
   text-overflow: ellipsis;
-  flex: 1;
+  flex-shrink: 0;
 }
 
 /* ── Trigger button ──────────────────────────────────────────────────────── */
@@ -481,9 +484,9 @@ async function acceptSuggestion() {
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   flex-wrap: nowrap;
-  width: 220px;
+  width: auto;
   max-width: 100%;
   min-width: 0;
   box-sizing: border-box;
@@ -492,9 +495,9 @@ async function acceptSuggestion() {
 .subject-switcher {
   display: inline-flex;
   align-items: center;
-  width: auto;
-  min-width: 130px;
-  max-width: 190px;
+  width: 135px;
+  min-width: 110px;
+  max-width: 160px;
   flex-shrink: 0;
 }
 

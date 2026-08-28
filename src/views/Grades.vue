@@ -153,45 +153,45 @@
             <div class="grades__toolbar-right">
               <div class="grades__class-avg-display">
                 <template v-if="isSBAR">
-                  Class Avg: <span 
+                  Avg: <span 
                     v-if="sbarClassAverageBadge" 
                     class="grades__avg-value"
                     :style="{ color: sbarClassAverageBadge.color }"
                   >{{ sbarClassAverageBadge.level }}</span>
                   <span v-else class="grades__avg-value">—</span>
-                  <div class="sbar-engine-select-wrapper">
-                    <Zap :size="13" class="sbar-engine-icon" />
+                  <div class="sbar-engine-select-wrapper" title="SBAR Calculation Model (Click to change)">
+                    <Zap :size="12" class="sbar-engine-icon" />
                     <select 
                       class="sbar-engine-select" 
                       :value="activeClassRecord?.sbarAlgorithm || 'decaying_average'"
-                      title="Change SBAR Calculation Engine"
+                      aria-label="Change SBAR Calculation Engine"
                       @change="e => updateActiveClass({ sbarAlgorithm: e.target.value })"
                     >
-                      <option value="decaying_average">Decaying Avg (65/35)</option>
-                      <option value="power_law">Power Law (Marzano)</option>
-                      <option value="mode">Mode (Most Consistent)</option>
-                      <option value="most_recent">Most Recent (3)</option>
-                      <option value="highest">Highest Score</option>
+                      <option value="decaying_average">Decaying</option>
+                      <option value="power_law">Power Law</option>
+                      <option value="mode">Mode</option>
+                      <option value="most_recent">Recent (3)</option>
+                      <option value="highest">Highest</option>
                     </select>
                   </div>
                 </template>
                 <template v-else>
-                  Class Avg: <span class="grades__avg-value">{{ formatGrade(overallClassAvg) }}</span>
+                  Avg: <span class="grades__avg-value">{{ formatGrade(overallClassAvg) }}</span>
                 </template>
               </div>
 
               <UndoButton />
 
               <button class="grades__btn-settings" title="Print Final Grades Grid" @click="showPrintGridModal = true">
-                <Printer :size="18" />
+                <Printer :size="16" />
               </button>
 
               <button class="grades__btn-settings" title="Manage Gradebook Setup" @click="$emit('navigate', 'Setup', { from: 'Grades', tab: 'gradebook' })">
-                <Settings :size="18" />
+                <Settings :size="16" />
               </button>
 
               <button v-if="!analyticsMode" class="grades__btn-add" @click="openAddAssessment('class')">
-                <Plus :size="16" /> Add Assessment
+                <Plus :size="15" /> Add Assessment
               </button>
             </div>
           </div>
@@ -901,25 +901,24 @@ onMounted(async () => {
 .grades__spinner { width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 12px; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .grades__grid-container { display: flex; flex-direction: column; gap: 10px; height: 100%; }
-.grades__toolbar { display: flex; justify-content: space-between; align-items: center; background: var(--surface); padding: 6px 12px; border-radius: var(--radius-lg); border: 1px solid var(--border); flex-wrap: nowrap; gap: 8px; min-height: 44px; }
+.grades__toolbar { display: flex; justify-content: space-between; align-items: center; background: var(--surface); padding: 5px 10px; border-radius: var(--radius-lg); border: 1px solid var(--border); flex-wrap: nowrap; gap: 6px; min-height: 42px; min-width: 0; box-sizing: border-box; }
 .grades__toolbar-left { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
-.grades__toolbar-left :deep(.class-switcher-wrapper) { width: 220px; }
-.grades__toolbar-center { display: flex; align-items: center; gap: 8px; flex-shrink: 1; min-width: 0; }
-.grades__center-divider { width: 1px; height: 18px; background: var(--border); margin: 0 3px; flex-shrink: 0; }
-.grades__modifiers-group { display: flex; align-items: center; gap: 4px; }
-.grades__toolbar-right { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
-.grades__btn-settings { display: flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: var(--radius-md); border: 1px solid var(--border); background: var(--surface); color: var(--text-secondary); cursor: pointer; }
+.grades__toolbar-center { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.grades__center-divider { width: 1px; height: 16px; background: var(--border); margin: 0 2px; flex-shrink: 0; }
+.grades__modifiers-group { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+.grades__toolbar-right { display: flex; align-items: center; gap: 5px; flex-shrink: 0; }
+.grades__btn-settings { display: flex; align-items: center; justify-content: center; width: 30px; height: 30px; border-radius: var(--radius-md); border: 1px solid var(--border); background: var(--surface); color: var(--text-secondary); cursor: pointer; flex-shrink: 0; }
 .grades__btn-settings:hover { background: var(--surface-hover); color: var(--text); }
-.grades__btn-add { display: flex; align-items: center; gap: 5px; padding: 6px 12px; background: var(--primary); color: white; border: none; border-radius: var(--radius-md); font-size: 0.81rem; font-weight: 600; cursor: pointer; }
-.grades__toggle-group, .grades__milestone-toggle { display: flex; gap: 2px; background: var(--bg-secondary); padding: 2px; border-radius: var(--radius-md); }
-.grades__toggle-btn { padding: 4px 9px; border: none; background: none; font-size: 0.76rem; font-weight: 600; color: var(--text-secondary); border-radius: var(--radius-sm); cursor: pointer; }
+.grades__btn-add { display: flex; align-items: center; gap: 4px; padding: 5px 10px; background: var(--primary); color: white; border: none; border-radius: var(--radius-md); font-size: 0.78rem; font-weight: 600; cursor: pointer; white-space: nowrap; flex-shrink: 0; }
+.grades__toggle-group, .grades__milestone-toggle { display: flex; gap: 2px; background: var(--bg-secondary); padding: 2px; border-radius: var(--radius-md); flex-shrink: 0; }
+.grades__toggle-btn { padding: 3px 8px; border: none; background: none; font-size: 0.74rem; font-weight: 600; color: var(--text-secondary); border-radius: var(--radius-sm); cursor: pointer; white-space: nowrap; }
 .grades__toggle-btn--active { background: var(--surface); color: var(--primary); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); }
-.grades__flip-btn { display: inline-flex; align-items: center; gap: 4px; padding: 4px 8px; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius-sm, 6px); color: var(--text-secondary); font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: all 0.15s ease; }
+.grades__flip-btn { display: inline-flex; align-items: center; gap: 4px; padding: 3px 7px; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius-sm, 6px); color: var(--text-secondary); font-size: 0.74rem; font-weight: 600; cursor: pointer; transition: all 0.15s ease; white-space: nowrap; flex-shrink: 0; }
 .grades__flip-btn:hover { background: var(--surface-hover); color: var(--text); border-color: var(--primary); }
 .flip-btn-icon { color: var(--primary); flex-shrink: 0; }
-.grades__class-avg-display { font-size: 0.82rem; font-weight: 600; color: var(--text-secondary); white-space: nowrap; }
+.grades__class-avg-display { font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); white-space: nowrap; flex-shrink: 0; display: inline-flex; align-items: center; gap: 3px; }
 .grades__avg-value { font-weight: 800; color: var(--primary); }
-.sbar-engine-select-wrapper { display: inline-flex; align-items: center; gap: 4px; margin-left: 6px; padding: 2px 7px; border-radius: 14px; background: var(--bg-tertiary, rgba(99, 102, 241, 0.08)); border: 1px solid var(--border); transition: all 0.15s ease; }
+.sbar-engine-select-wrapper { display: inline-flex; align-items: center; gap: 3px; margin-left: 4px; padding: 2px 6px; border-radius: 14px; background: var(--bg-tertiary, rgba(99, 102, 241, 0.08)); border: 1px solid var(--border); transition: all 0.15s ease; }
 .sbar-engine-select-wrapper:hover { background: var(--primary-light, rgba(99, 102, 241, 0.15)); border-color: var(--primary); }
 .sbar-engine-icon { color: var(--primary); flex-shrink: 0; }
 .sbar-engine-select { background: transparent; border: none; color: var(--primary); font-size: 0.72rem; font-weight: 700; cursor: pointer; outline: none; padding: 0; }
@@ -927,8 +926,8 @@ onMounted(async () => {
 .grades__student-view { height: 100%; }
 
 @media (max-width: 1280px) {
-  .grades__main { padding: 10px 12px; }
-  .grades__toolbar { padding: 6px 10px; gap: 6px; }
-  .grades__toolbar-left, .grades__toolbar-center, .grades__toolbar-right { gap: 6px; }
+  .grades__main { padding: 8px 10px; }
+  .grades__toolbar { padding: 4px 8px; gap: 4px; }
+  .grades__toolbar-left, .grades__toolbar-center, .grades__toolbar-right { gap: 4px; }
 }
 </style>

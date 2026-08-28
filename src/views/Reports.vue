@@ -250,7 +250,7 @@ const ReportsBatchPrintModal       = defineAsyncComponent(() => import('../compo
 import ReportsPrintHub from '../components/reports/ReportsPrintHub.vue'
 const ReportsLearningSkills        = defineAsyncComponent(() => import('../components/reports/ReportsLearningSkills.vue'))
 import { calculateClassGrades, getAssessmentsByClass, getAssessmentPercentage } from '../db/gradebookService.js'
-import { loadGradebook, assessments as gbAssessments, gradeMap, activeGradeFilter } from '../composables/useGradebook.js'
+import { loadGradebook, clearGradebook, assessments as gbAssessments, gradeMap, activeGradeFilter } from '../composables/useGradebook.js'
 import { getSectionColor } from '../utils/gradeColors.js'
 
 import { 
@@ -284,6 +284,10 @@ const {
 const dossier = useStudentDossier()
 
 const sidebarClassId = ref(activeClass.value?.classId || filteredClassList.value[0]?.classId || null)
+const reportData = ref([])
+const allClassEvents = ref([])
+const assessmentsList = ref([])
+const loading = ref(false)
 
 watch(filteredClassList, (newList) => {
   if (newList.length > 0) {
@@ -467,13 +471,11 @@ const showPrintCalendarModal = ref(false)
 const showPrintSeatingModal = ref(false)
 
 const reportClass = computed(() => {
+  if (!sidebarClassId.value) return null
   if (activeClass.value && activeClass.value.classId === sidebarClassId.value) {
     return activeClass.value
   }
-  return classList.value.find(c => c.classId === sidebarClassId.value)
-    ?? activeClass.value
-    ?? classList.value[0]
-    ?? null
+  return classList.value.find(c => c.classId === sidebarClassId.value) ?? null
 })
 
 const effectiveReportClass = computed(() => {
@@ -508,11 +510,6 @@ const reportStudents = computed(() => {
   }
   return active
 })
-
-const reportData = ref([])
-const allClassEvents = ref([])
-const assessmentsList = ref([])
-const loading = ref(false)
 
 const aggregates = reactive({
   attendance: {

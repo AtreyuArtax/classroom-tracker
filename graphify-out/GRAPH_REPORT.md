@@ -1,16 +1,16 @@
 # Graph Report - classroom-tracker  (2026-08-27)
 
 ## Corpus Check
-- 216 files · ~414,626 words
+- 216 files · ~414,655 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1235 nodes · 2192 edges · 111 communities (98 shown, 13 thin omitted)
+- 1235 nodes · 2193 edges · 111 communities (98 shown, 13 thin omitted)
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 4 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `a678beef`
+- Built from commit: `103c456b`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 

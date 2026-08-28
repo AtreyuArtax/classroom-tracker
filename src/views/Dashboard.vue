@@ -397,10 +397,6 @@ watch(profileStudent, (student) => {
   gap: 12px;
 }
 
-.dashboard__header-left :deep(.class-switcher-wrapper) {
-  width: 240px;
-}
-
 .dashboard__subcohort-pills {
   display: flex;
   align-items: center;

@@ -1508,8 +1508,8 @@ async function archiveClass(classId) {
         archivedClasses.value = [...archivedClasses.value, cls]
     }
     if (activeClass.value?.classId === classId) {
-        if (classList.value.length > 0) {
-            await _activateClass(classList.value[0])
+        if (filteredClassList.value.length > 0) {
+            await _activateClass(filteredClassList.value[0])
         } else {
             activeClass.value = null
             students.value = {}

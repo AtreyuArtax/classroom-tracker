@@ -347,12 +347,21 @@ function getSparklinePath(data, width, height) {
 }
 
 .student-sidebar__class-select :deep(.class-switcher-wrapper) {
+  display: flex !important;
+  flex-direction: column !important;
   width: 100% !important;
   max-width: 100% !important;
   min-width: 0 !important;
+  gap: 6px !important;
 }
 
 .student-sidebar__class-select :deep(.class-switcher) {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+
+.student-sidebar__class-select :deep(.subject-switcher) {
   width: 100% !important;
   min-width: 0 !important;
   max-width: 100% !important;
