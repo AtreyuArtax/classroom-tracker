@@ -293,7 +293,9 @@ import {
   LEARNING_SKILL_TERMS,
   getLearningSkillsByClassAndTerm, 
   saveLearningSkillsRecord, 
-  saveBatchLearningSkills 
+  saveBatchLearningSkills,
+  deleteLearningSkillsRecord,
+  hasLearningSkillsData
 } from '../../db/learningSkillsService.js'
 import { saveAs } from 'file-saver'
 import { 
@@ -351,7 +353,9 @@ async function fetchLearningSkills() {
     const list = await getLearningSkillsByClassAndTerm(props.reportClass.classId, selectedTerm.value)
     const map = new Map()
     for (const item of list) {
-      if (item.studentId) map.set(item.studentId, item)
+      if (item.studentId && hasLearningSkillsData(item)) {
+        map.set(item.studentId, item)
+      }
     }
     learningSkillsMap.value = map
   } catch (err) {
@@ -364,11 +368,15 @@ watch([() => props.reportClass?.classId, selectedTerm], () => {
 }, { immediate: true })
 
 function getStudentRecord(studentId) {
-  return learningSkillsMap.value.get(studentId) || null
+  const rec = learningSkillsMap.value.get(studentId)
+  return (rec && hasLearningSkillsData(rec)) ? rec : null
 }
 
 const matchedCount = computed(() => {
-  return props.sidebarStudents.filter(s => learningSkillsMap.value.has(s.studentId)).length
+  return props.sidebarStudents.filter(s => {
+    const rec = learningSkillsMap.value.get(s.studentId)
+    return rec && hasLearningSkillsData(rec)
+  }).length
 })
 
 async function setTeacherSkill(studentId, skillKey, level) {
@@ -399,13 +407,20 @@ async function setTeacherSkill(studentId, skillKey, level) {
     teacherEval: updatedTeacherEval
   }
 
-  learningSkillsMap.value.set(studentId, updatedRecord)
-  learningSkillsMap.value = new Map(learningSkillsMap.value)
+  if (!hasLearningSkillsData(updatedRecord)) {
+    learningSkillsMap.value.delete(studentId)
+    learningSkillsMap.value = new Map(learningSkillsMap.value)
+    const key = updatedRecord.id || `${updatedRecord.classId}_${updatedRecord.studentId}_${updatedRecord.term}`
+    await deleteLearningSkillsRecord(key)
+  } else {
+    learningSkillsMap.value.set(studentId, updatedRecord)
+    learningSkillsMap.value = new Map(learningSkillsMap.value)
 
-  try {
-    await saveLearningSkillsRecord(updatedRecord)
-  } catch (err) {
-    console.error('Failed to save teacher evaluation:', err)
+    try {
+      await saveLearningSkillsRecord(updatedRecord)
+    } catch (err) {
+      console.error('Failed to save teacher evaluation:', err)
+    }
   }
 }
 
@@ -418,9 +433,16 @@ async function clearStudentRating(studentId) {
     teacherEval: createEmptySkills()
   }
 
-  learningSkillsMap.value.set(studentId, updated)
-  learningSkillsMap.value = new Map(learningSkillsMap.value)
-  await saveLearningSkillsRecord(updated)
+  if (!hasLearningSkillsData(updated)) {
+    learningSkillsMap.value.delete(studentId)
+    learningSkillsMap.value = new Map(learningSkillsMap.value)
+    const key = updated.id || `${updated.classId}_${updated.studentId}_${updated.term}`
+    await deleteLearningSkillsRecord(key)
+  } else {
+    learningSkillsMap.value.set(studentId, updated)
+    learningSkillsMap.value = new Map(learningSkillsMap.value)
+    await saveLearningSkillsRecord(updated)
+  }
 }
 
 function hasDiscrepancy(studentId, skillKey) {

@@ -207,7 +207,7 @@ import DossierEvidenceMix from './DossierEvidenceMix.vue'
 import SBarProgressReport from './SBarProgressReport.vue'
 import { getEffectiveClassRecord, getStudentEffectiveGrade } from '../../composables/useElementary.js'
 import { activeSubjectId } from '../../composables/useClassroomState.js'
-import { LEARNING_SKILL_CATEGORIES, getLearningSkillsByStudent } from '../../db/learningSkillsService.js'
+import { LEARNING_SKILL_CATEGORIES, getLearningSkillsByStudent, hasLearningSkillsData } from '../../db/learningSkillsService.js'
 
 const effectiveClass = computed(() => {
   return getEffectiveClassRecord(activeClassRecord.value, activeSubjectId.value)
@@ -259,8 +259,9 @@ onMounted(fetchEvents)
 watch(() => props.studentId, fetchEvents)
 
 const latestLearningSkillRecord = computed(() => {
-  if (!learningSkills.value.length) return null
-  return learningSkills.value[0]
+  const valid = learningSkills.value.filter(hasLearningSkillsData)
+  if (!valid.length) return null
+  return valid[0]
 })
 
 const student = computed(() => students.value[props.studentId] || {})

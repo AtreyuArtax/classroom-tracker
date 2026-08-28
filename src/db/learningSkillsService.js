@@ -15,6 +15,7 @@
  */
 
 import { getDB } from './index.js'
+import { hasUnsyncedChanges } from './eventService.js'
 
 export const LEARNING_SKILL_CATEGORIES = [
   { key: 'responsibility', label: 'Responsibility', short: 'R', description: 'Fulfills commitments, submits work on time, takes responsibility for actions.' },
@@ -37,6 +38,20 @@ export const LEARNING_SKILL_TERMS = ['Progress Report', 'Midterm', 'Final']
 export const LEVEL_MAP = Object.fromEntries(LEARNING_SKILL_LEVELS.map(l => [l.key, l]))
 
 /**
+ * Returns true if the record contains at least one non-null rating in either teacherEval or studentEval.
+ * @param {Object} record
+ * @returns {boolean}
+ */
+export function hasLearningSkillsData(record) {
+  if (!record) return false
+  const se = record.studentEval || {}
+  const te = record.teacherEval || {}
+  const hasStudentRating = Object.values(se).some(v => v !== null && v !== undefined && v !== '')
+  const hasTeacherRating = Object.values(te).some(v => v !== null && v !== undefined && v !== '')
+  return hasStudentRating || hasTeacherRating
+}
+
+/**
  * Returns a standardized deterministic ID for a learning skill record.
  * @param {string} classId
  * @param {string} studentId
@@ -57,7 +72,8 @@ export async function getLearningSkillsByClassAndTerm(classId, term) {
   if (!classId || !term) return []
   const db = await getDB()
   try {
-    return await db.getAllFromIndex('learning_skills', 'by_classId_term', [classId, term])
+    const records = await db.getAllFromIndex('learning_skills', 'by_classId_term', [classId, term])
+    return (records || []).filter(hasLearningSkillsData)
   } catch (err) {
     console.error(`[LearningSkills] Failed to get skills for class ${classId} term ${term}:`, err)
     return []
@@ -73,7 +89,8 @@ export async function getLearningSkillsByClass(classId) {
   if (!classId) return []
   const db = await getDB()
   try {
-    return await db.getAllFromIndex('learning_skills', 'by_classId', classId)
+    const records = await db.getAllFromIndex('learning_skills', 'by_classId', classId)
+    return (records || []).filter(hasLearningSkillsData)
   } catch (err) {
     console.error(`[LearningSkills] Failed to get skills for class ${classId}:`, err)
     return []
@@ -90,7 +107,8 @@ export async function getLearningSkillsByStudent(classId, studentId) {
   if (!classId || !studentId) return []
   const db = await getDB()
   try {
-    return await db.getAllFromIndex('learning_skills', 'by_student_class', [studentId, classId])
+    const records = await db.getAllFromIndex('learning_skills', 'by_student_class', [studentId, classId])
+    return (records || []).filter(hasLearningSkillsData)
   } catch (err) {
     console.error(`[LearningSkills] Failed to get student ${studentId} in class ${classId}:`, err)
     return []
@@ -99,8 +117,9 @@ export async function getLearningSkillsByStudent(classId, studentId) {
 
 /**
  * Saves or updates a single learning skill record.
+ * Automatically deletes the record from IndexedDB if all ratings are cleared/empty.
  * @param {Object} record
- * @returns {Promise<Object>}
+ * @returns {Promise<Object|null>}
  */
 export async function saveLearningSkillsRecord(record) {
   if (!record.classId || !record.studentId || !record.term) {
@@ -108,13 +127,34 @@ export async function saveLearningSkillsRecord(record) {
   }
   const db = await getDB()
   const plain = JSON.parse(JSON.stringify(record))
+  const key = plain.id || formatLearningSkillKey(plain.classId, plain.studentId, plain.term)
+
+  if (!hasLearningSkillsData(plain)) {
+    await db.delete('learning_skills', key)
+    hasUnsyncedChanges.value = true
+    return null
+  }
+
   const payload = {
     ...plain,
-    id: plain.id || formatLearningSkillKey(plain.classId, plain.studentId, plain.term),
+    id: key,
     updatedAt: new Date().toISOString()
   }
   await db.put('learning_skills', payload)
+  hasUnsyncedChanges.value = true
   return payload
+}
+
+/**
+ * Deletes a single learning skill record by its ID.
+ * @param {string} id
+ * @returns {Promise<void>}
+ */
+export async function deleteLearningSkillsRecord(id) {
+  if (!id) return
+  const db = await getDB()
+  await db.delete('learning_skills', id)
+  hasUnsyncedChanges.value = true
 }
 
 /**
@@ -129,19 +169,27 @@ export async function saveBatchLearningSkills(records) {
   const store = tx.objectStore('learning_skills')
   const now = new Date().toISOString()
   const plainRecords = JSON.parse(JSON.stringify(records))
+  let count = 0
 
   for (const r of plainRecords) {
     if (!r.classId || !r.studentId || !r.term) continue
-    const payload = {
-      ...r,
-      id: r.id || formatLearningSkillKey(r.classId, r.studentId, r.term),
-      updatedAt: now
+    const key = r.id || formatLearningSkillKey(r.classId, r.studentId, r.term)
+    if (!hasLearningSkillsData(r)) {
+      await store.delete(key)
+    } else {
+      const payload = {
+        ...r,
+        id: key,
+        updatedAt: now
+      }
+      await store.put(payload)
+      count++
     }
-    await store.put(payload)
   }
 
   await tx.done
-  return plainRecords.length
+  hasUnsyncedChanges.value = true
+  return count
 }
 
 /**
@@ -162,6 +210,7 @@ export async function deleteLearningSkillsByTerm(classId, term) {
     await store.delete(r.id)
   }
   await tx.done
+  hasUnsyncedChanges.value = true
 }
 
 /**

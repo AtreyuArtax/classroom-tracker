@@ -181,16 +181,16 @@
         </div>
 
         <!-- Learning Skills & Work Habits Card (Ontario Growing Success) -->
-        <div v-if="learningSkillsRecords.length > 0" class="student-360__learning-skills-card">
+        <div v-if="validLearningSkillsRecords.length > 0" class="student-360__learning-skills-card">
           <div class="learning-skills-card__header">
             <div class="learning-skills-card__title-group">
               <Award :size="16" class="learning-skills-card__icon" />
               <h4 class="learning-skills-card__title">Learning Skills &amp; Work Habits</h4>
             </div>
             
-            <div v-if="learningSkillsRecords.length > 1" class="learning-skills-card__term-pills">
+            <div v-if="validLearningSkillsRecords.length > 1" class="learning-skills-card__term-pills">
               <button 
-                v-for="rec in learningSkillsRecords"
+                v-for="rec in validLearningSkillsRecords"
                 :key="rec.term"
                 type="button"
                 class="ls-dossier-pill"
@@ -485,7 +485,7 @@ import {
   MessageSquare,
   Award
 } from 'lucide-vue-next'
-import { LEARNING_SKILL_CATEGORIES, getLearningSkillsByStudent } from '../../db/learningSkillsService.js'
+import { LEARNING_SKILL_CATEGORIES, getLearningSkillsByStudent, hasLearningSkillsData } from '../../db/learningSkillsService.js'
 import { useMessage } from '../../composables/useMessage.js'
 import Student360Header from './Student360Header.vue'
 import StudentStatCard from './StudentStatCard.vue'
@@ -677,6 +677,10 @@ const consistentIsFallback = computed(() => studentGrades.value.mostConsistent?.
 const learningSkillsRecords = ref([])
 const activeDossierLsTerm = ref(null)
 
+const validLearningSkillsRecords = computed(() => {
+  return learningSkillsRecords.value.filter(hasLearningSkillsData)
+})
+
 async function loadStudentLearningSkills() {
   if (!props.classId || !props.studentId) {
     learningSkillsRecords.value = []
@@ -686,8 +690,9 @@ async function loadStudentLearningSkills() {
   try {
     const list = await getLearningSkillsByStudent(props.classId, props.studentId)
     learningSkillsRecords.value = list || []
-    if (list.length > 0 && (!activeDossierLsTerm.value || !list.some(r => r.term === activeDossierLsTerm.value))) {
-      activeDossierLsTerm.value = list[0].term
+    const valid = (list || []).filter(hasLearningSkillsData)
+    if (valid.length > 0 && (!activeDossierLsTerm.value || !valid.some(r => r.term === activeDossierLsTerm.value))) {
+      activeDossierLsTerm.value = valid[0].term
     }
   } catch (err) {
     console.error('Failed to load student learning skills:', err)
@@ -699,11 +704,11 @@ watch([() => props.classId, () => props.studentId], () => {
 }, { immediate: true })
 
 const currentDossierLsRecord = computed(() => {
-  if (!learningSkillsRecords.value.length) return null
+  if (!validLearningSkillsRecords.value.length) return null
   if (activeDossierLsTerm.value) {
-    return learningSkillsRecords.value.find(r => r.term === activeDossierLsTerm.value) || learningSkillsRecords.value[0]
+    return validLearningSkillsRecords.value.find(r => r.term === activeDossierLsTerm.value) || validLearningSkillsRecords.value[0]
   }
-  return learningSkillsRecords.value[0]
+  return validLearningSkillsRecords.value[0]
 })
 
 const academicCategories = computed(() => {

@@ -175,13 +175,13 @@
     "semantic_hash": ""
   },
   "src/components/dossier/ProgressReport.vue": {
-    "mtime": 1787680058.4205592,
-    "ast_hash": "b19167a2b8fe39a3ebfacabac45f2845",
+    "mtime": 1787961068.4250069,
+    "ast_hash": "4eb415c3ac70cc4a0e06241c43e86af3",
     "semantic_hash": ""
   },
   "src/components/dossier/Student360.vue": {
-    "mtime": 1787910030.1727598,
-    "ast_hash": "bf1007dc4d649cdb6eb3a7fd6ab278a9",
+    "mtime": 1787961044.3079314,
+    "ast_hash": "86f4e7d45f17a61862bd574e3c0a9eae",
     "semantic_hash": ""
   },
   "src/components/dossier/Student360Header.vue": {
@@ -1040,13 +1040,13 @@
     "semantic_hash": ""
   },
   "src/components/reports/ReportsLearningSkills.vue": {
-    "mtime": 1787711800.5050733,
-    "ast_hash": "14ddea3dfd08c96eedbdf42a1c9b5329",
+    "mtime": 1787961056.057338,
+    "ast_hash": "a622d6535574cc6b3ee3bc02168110a1",
     "semantic_hash": ""
   },
   "src/db/learningSkillsService.js": {
-    "mtime": 1787683721.15439,
-    "ast_hash": "897560ba9453c1be0d04f3ee9ddc2af4",
+    "mtime": 1787961024.912007,
+    "ast_hash": "ec434f3be8e4d936a8d6229fc320d60a",
     "semantic_hash": ""
   },
   "src/utils/learningSkillsCsvParser.js": {
