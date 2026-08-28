@@ -129,6 +129,7 @@ export function getDB() {
               { label: 'L4', min: 80, max: 100, color: '#34c759' }
             ],
             capGradesAt100: true,
+            backupDirHandle: null,
             backupFileHandle: null,
             gradebookTemplates: [],
             gradebookMilestones: [],

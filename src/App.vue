@@ -174,7 +174,7 @@ onUnmounted(() => {
   clearTimeout(autoSyncTimer)
 })
 
-// ─── auto-sync watcher (3-second debounce) ────────────────────────────────
+// ─── auto-sync watcher (6-second debounce) ────────────────────────────────
 watch(hasUnsyncedChanges, (dirty) => {
   if (!dirty || !isSyncLinked.value) return
   clearTimeout(autoSyncTimer)
@@ -187,7 +187,7 @@ watch(hasUnsyncedChanges, (dirty) => {
     } else {
       syncBroken.value = true  // show CloudOff — user can click to retry or re-link
     }
-  }, 3000)
+  }, 6000)
 })
 
 function formatSyncTime(iso) {

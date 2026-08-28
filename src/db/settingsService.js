@@ -109,6 +109,7 @@ async function _readSettings() {
             washroomTripsPerWeek: 4,
             deviceIncidentsPerWeek: 3
         },
+        backupDirHandle: null,
         backupFileHandle: null,
         gradebookMilestones: [],
         gradebookTemplates: [],

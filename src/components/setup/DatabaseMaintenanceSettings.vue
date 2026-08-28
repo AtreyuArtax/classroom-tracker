@@ -6,21 +6,24 @@
       <h2 class="setup__card-title"><RefreshCcw :size="20" /> Local Folder Sync</h2>
       <p class="setup__hint">
         Automate backups by linking a local folder (e.g., your OneDrive or Google Drive folder). 
-        The app will attempt to save a <code>quick-sync-backup.json</code> file after every major change.
+        The app saves rolling timestamped snapshots (<code>auto_*.json</code>) after changes and daily archive files (<code>daily_*.json</code>).
       </p>
       
-      <div class="setup__sync-status" style="margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
-        <span v-if="isSyncLinked" class="setup__badge setup__badge--new" style="display: flex; align-items: center; gap: 4px;">
-          <Cloud :size="14" /> Folder Linked
+      <div class="setup__sync-status" style="margin-bottom: 12px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+        <span v-if="isSyncLinked && !isLegacyFileSync" class="setup__badge setup__badge--new" style="display: flex; align-items: center; gap: 4px;">
+          <FolderCheck :size="14" /> Folder Linked
+        </span>
+        <span v-else-if="isSyncLinked && isLegacyFileSync" class="setup__badge" style="background: rgba(251, 191, 36, 0.15); color: #f59e0b; display: flex; align-items: center; gap: 4px;">
+          <AlertTriangle :size="14" /> Legacy File Sync — Upgrade to Folder
         </span>
         <span v-else class="setup__badge" style="background: rgba(255,255,255,0.06); color: var(--text-secondary); display: flex; align-items: center; gap: 4px;">
           <X :size="14" /> No Folder Linked
         </span>
       </div>
 
-      <div class="setup__grid-actions" style="margin-top: 0; display: flex; gap: 8px;">
-        <button class="setup__btn-primary" @click="linkBackupFile">
-          {{ isSyncLinked ? 'Change Sync Folder' : 'Setup Sync Folder' }}
+      <div class="setup__grid-actions" style="margin-top: 0; display: flex; gap: 8px; flex-wrap: wrap;">
+        <button class="setup__btn-primary" @click="linkBackupDirectory">
+          {{ isSyncLinked && !isLegacyFileSync ? 'Change Sync Folder' : 'Setup Sync Folder' }}
         </button>
         <button 
           class="setup__btn-ghost" 
@@ -29,8 +32,70 @@
         >
           Sync Now
         </button>
+        <button 
+          v-if="isSyncLinked && !isLegacyFileSync"
+          class="setup__btn-ghost" 
+          :disabled="isLoadingBackups" 
+          @click="loadDirectoryBackups"
+          title="Scan folder for latest revisions"
+        >
+          <RotateCcw :size="14" /> {{ isLoadingBackups ? 'Scanning...' : 'Refresh List' }}
+        </button>
       </div>
       <p v-if="syncMsg" class="setup__result-ok" style="margin-top: 8px;">{{ syncMsg }}</p>
+
+      <!-- Linked Directory Snapshots List -->
+      <div v-if="isSyncLinked && !isLegacyFileSync" style="margin-top: 16px; border-top: 1px solid var(--border-subtle, rgba(255,255,255,0.08)); padding-top: 16px;">
+        <h3 style="font-size: 0.95rem; font-weight: 600; margin-bottom: 8px; color: var(--text-primary); display: flex; align-items: center; gap: 6px;">
+          <Folder :size="16" /> Directory Snapshots (Revision History)
+        </h3>
+        
+        <div v-if="isLoadingBackups" style="padding: 12px; font-size: 0.88rem; color: var(--text-secondary);">
+          Scanning folder for snapshots...
+        </div>
+        
+        <div v-else-if="directoryBackups.length === 0" style="padding: 14px; background: rgba(255,255,255,0.02); border: 1px dashed var(--border-subtle, rgba(255,255,255,0.1)); border-radius: 8px; text-align: center; color: var(--text-secondary); font-size: 0.85rem;">
+          No snapshots found in this folder yet. Click <strong>Sync Now</strong> or edit classroom data to create your first snapshot.
+        </div>
+        
+        <div v-else style="display: flex; flex-direction: column; gap: 8px; max-height: 320px; overflow-y: auto; padding-right: 4px;">
+          <div 
+            v-for="backup in directoryBackups" 
+            :key="backup.name"
+            style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: rgba(255,255,255,0.03); border: 1px solid var(--border-subtle, rgba(255,255,255,0.06)); border-radius: 6px; flex-wrap: wrap; gap: 8px;"
+          >
+            <div>
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <span 
+                  class="setup__badge" 
+                  :style="backup.type === 'daily' 
+                    ? 'background: rgba(16, 185, 129, 0.15); color: #10b981; font-size: 0.72rem; padding: 2px 6px;' 
+                    : (backup.type === 'auto' 
+                      ? 'background: rgba(59, 130, 246, 0.15); color: #60a5fa; font-size: 0.72rem; padding: 2px 6px;'
+                      : 'background: rgba(255, 255, 255, 0.1); color: var(--text-secondary); font-size: 0.72rem; padding: 2px 6px;')"
+                >
+                  {{ backup.type === 'daily' ? 'Daily Archive' : (backup.type === 'auto' ? 'Auto Snapshot' : 'Legacy Live') }}
+                </span>
+                <span style="font-size: 0.88rem; font-weight: 600; color: var(--text-primary);">
+                  {{ new Date(backup.lastModified).toLocaleString() }}
+                </span>
+              </div>
+              <div style="font-size: 0.76rem; color: var(--text-secondary); margin-top: 2px; font-family: monospace;">
+                {{ backup.name }} • {{ formatFileSize(backup.size) }}
+              </div>
+            </div>
+            <div>
+              <button 
+                class="setup__pill-btn" 
+                @click="onRestoreDirectoryBackup(backup.name)"
+                style="background: var(--surface-secondary, rgba(255,255,255,0.08)); color: var(--text-primary); border: 1px solid var(--border);"
+              >
+                Restore
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- 2. Emergency Safety Snapshots -->
@@ -229,7 +294,10 @@ import {
   Search,
   History,
   Save,
-  Trash2
+  Trash2,
+  Folder,
+  FolderCheck,
+  RotateCcw
 } from 'lucide-vue-next'
 
 const { activeClass, teacherName, init } = useClassroom()
@@ -241,16 +309,42 @@ const syncMsg = ref('')
 const snapshotMsg = ref('')
 const importPreview = ref(null)
 const isSyncLinked = ref(false)
+const isLegacyFileSync = ref(false)
+const directoryBackups = ref([])
+const isLoadingBackups = ref(false)
 const safetySnapshots = ref([])
+
+function formatFileSize(bytes) {
+  if (!bytes || bytes === 0) return '0 B'
+  if (bytes < 1024) return bytes + ' B'
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB'
+  return (bytes / (1024 * 1024)).toFixed(1) + ' MB'
+}
 
 function loadSafetySnapshots() {
   safetySnapshots.value = eventService.getSafetySnapshots()
 }
 
+async function loadDirectoryBackups() {
+  if (!isSyncLinked.value || isLegacyFileSync.value) return
+  isLoadingBackups.value = true
+  try {
+    directoryBackups.value = await eventService.listDirectoryBackups()
+  } catch (e) {
+    console.warn('Could not load directory backups:', e)
+  } finally {
+    isLoadingBackups.value = false
+  }
+}
+
 onMounted(async () => {
   const settings = await settingsService.getSettings()
-  isSyncLinked.value = !!settings.backupFileHandle
+  isSyncLinked.value = !!(settings.backupDirHandle || settings.backupFileHandle)
+  isLegacyFileSync.value = !settings.backupDirHandle && !!settings.backupFileHandle
   loadSafetySnapshots()
+  if (settings.backupDirHandle) {
+    await loadDirectoryBackups()
+  }
 })
 
 async function onTakeSafetySnapshot() {
@@ -283,6 +377,7 @@ async function onRestoreSafetySnapshot(snapshotId) {
     await settingsService.auditSettingsIntegrity()
     await init()
     loadSafetySnapshots()
+    await loadDirectoryBackups()
     snapshotMsg.value = `✅ Successfully restored snapshot — ${result.classCount} classes, ${result.eventCount} events!`
     setTimeout(() => { if (snapshotMsg.value.startsWith('✅')) snapshotMsg.value = '' }, 4000)
   } catch (err) {
@@ -295,23 +390,22 @@ function onDeleteSafetySnapshot(snapshotId) {
   loadSafetySnapshots()
 }
 
-async function linkBackupFile() {
-  if (!window.showSaveFilePicker) {
-    syncMsg.value = '❌ Quick Sync is not supported on this device/browser.'
+async function linkBackupDirectory() {
+  if (!window.showDirectoryPicker) {
+    syncMsg.value = '❌ Local Folder Sync is not supported on this device/browser.'
     return
   }
   try {
-    const handle = await window.showSaveFilePicker({
-      suggestedName: 'classroom-tracker-live-backup.json',
-      types: [{ description: 'JSON Backup', accept: { 'application/json': ['.json'] } }],
-    })
+    const handle = await window.showDirectoryPicker({ mode: 'readwrite' })
     const settings = await settingsService.getSettings()
-    await settingsService.saveSettings({ ...settings, backupFileHandle: handle })
+    await settingsService.saveSettings({ ...settings, backupDirHandle: handle, backupFileHandle: null })
     isSyncLinked.value = true
-    syncMsg.value = '✅ Sync file linked successfully! You can now use Quick Sync.'
+    isLegacyFileSync.value = false
+    syncMsg.value = '✅ Folder linked successfully! You are now using rolling folder backups.'
     window.dispatchEvent(new Event('backup-linked'))
+    await loadDirectoryBackups()
   } catch (err) {
-    if (err.name !== 'AbortError') syncMsg.value = `❌ Failed to link: ${err.message}`
+    if (err.name !== 'AbortError') syncMsg.value = `❌ Failed to link folder: ${err.message}`
   }
 }
 
@@ -319,10 +413,24 @@ async function onQuickSyncNow() {
   syncMsg.value = 'Syncing...'
   const success = await eventService.quickSyncBackup()
   if (success) {
-    syncMsg.value = `✅ Synced to linked file at ${new Date().toLocaleTimeString()}`
+    syncMsg.value = `✅ Synced to linked folder at ${new Date().toLocaleTimeString()}`
+    await loadDirectoryBackups()
     setTimeout(() => { if (syncMsg.value.startsWith('✅')) syncMsg.value = '' }, 3000)
   } else {
-    syncMsg.value = '❌ Sync failed. Permissions may have been denied or file moved.'
+    syncMsg.value = '❌ Sync failed. Permissions may have been denied or folder moved.'
+  }
+}
+
+async function onRestoreDirectoryBackup(fileName) {
+  restoreMsg.value = ''
+  try {
+    const preview = await eventService.previewDirectoryBackup(fileName)
+    if (!preview || typeof preview.schemaVersion !== 'number' || !preview.classes || !preview.events) {
+      throw new Error('Invalid backup file format.')
+    }
+    importPreview.value = preview
+  } catch (err) {
+    restoreMsg.value = `❌ Failed to read backup: ${err.message}`
   }
 }
 
@@ -377,6 +485,8 @@ async function doImport() {
     const result = await eventService.importAllData(JSON.parse(JSON.stringify(importPreview.value)))
     await settingsService.auditSettingsIntegrity()
     await init()
+    loadSafetySnapshots()
+    await loadDirectoryBackups()
     
     importPreview.value = null
     restoreMsg.value = `✅ Restore complete — ${result.classCount} classes, ${result.eventCount} events. Data restored and loaded!`

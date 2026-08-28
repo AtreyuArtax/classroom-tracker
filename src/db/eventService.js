@@ -361,21 +361,101 @@ export function deleteSafetySnapshot(snapshotId) {
 }
 
 /**
- * Uses the File System Access API to silently overwrite a previously linked backup JSON file.
- * Returns true if successful, false if user denied permission or no handle exists.
+ * Helper to write a JSON payload to a file handle with exponential backoff retry.
+ * Handles transient file locks from external cloud sync daemons (e.g. OneDrive).
+ */
+async function writeWithRetry(fileHandle, json, maxAttempts = 3) {
+    let lastErr = null
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        try {
+            const writable = await fileHandle.createWritable()
+            await writable.write(json)
+            await writable.close()
+            return true
+        } catch (err) {
+            lastErr = err
+            console.warn(`Write attempt ${attempt} failed:`, err?.message)
+            if (attempt < maxAttempts) {
+                await new Promise(resolve => setTimeout(resolve, attempt * 500))
+            }
+        }
+    }
+    throw lastErr
+}
+
+/**
+ * Retains the 10 most recent auto_ snapshots and daily_ snapshots within 14 days.
+ */
+async function pruneDirectorySnapshots(dirHandle) {
+    try {
+        const autoFiles = []
+        const dailyFiles = []
+
+        for await (const entry of dirHandle.values()) {
+            if (entry.kind === 'file') {
+                if (entry.name.startsWith('auto_') && entry.name.endsWith('.json')) {
+                    autoFiles.push(entry.name)
+                } else if (entry.name.startsWith('daily_') && entry.name.endsWith('.json')) {
+                    dailyFiles.push(entry.name)
+                }
+            }
+        }
+
+        // 1. Retain 10 most recent auto_ snapshots (ISO timestamp filename sort descending)
+        autoFiles.sort().reverse()
+        if (autoFiles.length > 10) {
+            const toRemove = autoFiles.slice(10)
+            for (const name of toRemove) {
+                try {
+                    await dirHandle.removeEntry(name)
+                } catch (e) {
+                    console.warn(`Could not prune ${name}:`, e?.message)
+                }
+            }
+        }
+
+        // 2. Retain daily snapshots from the last 14 days
+        const fourteenDaysAgo = new Date()
+        fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14)
+        const cutoffDateStr = formatLocalDate(fourteenDaysAgo)
+
+        for (const name of dailyFiles) {
+            const datePart = name.replace(/^daily_/, '').replace(/\.json$/, '')
+            if (datePart < cutoffDateStr) {
+                try {
+                    await dirHandle.removeEntry(name)
+                } catch (e) {
+                    console.warn(`Could not prune daily file ${name}:`, e?.message)
+                }
+            }
+        }
+    } catch (err) {
+        console.warn('Pruning routine encountered an error:', err)
+    }
+}
+
+/**
+ * Uses the File System Access API to write rolling backup JSON snapshots into a linked directory.
+ * Falls back to single file handle if only legacy file link exists.
+ * Returns the ISO timestamp string if successful, false if user denied permission or no handle exists.
  *
- * @returns {Promise<boolean>}
+ * @returns {Promise<string|boolean>}
  */
 export async function quickSyncBackup() {
-    if (!window.showSaveFilePicker) return false // fallback or unsupported
+    if (!window.showDirectoryPicker && !window.showSaveFilePicker) return false
 
     const db = await getDB()
     const settings = await db.get('settings', 'singleton')
-    if (!settings || !settings.backupFileHandle) return false
+    if (!settings) return false
 
-    const handle = settings.backupFileHandle
+    const dirHandle = settings.backupDirHandle || null
+    const fileHandle = settings.backupFileHandle || null
+
+    if (!dirHandle && !fileHandle) return false
 
     try {
+        const handle = dirHandle || fileHandle
+
         // Request write permission if we don't already have it
         if (handle.queryPermission && (await handle.queryPermission({ mode: 'readwrite' })) !== 'granted') {
             const permission = await handle.requestPermission({ mode: 'readwrite' })
@@ -384,43 +464,164 @@ export async function quickSyncBackup() {
 
         const data = await exportAllData()
         const json = JSON.stringify(data, null, 2)
+        const now = new Date()
+        const nowISO = now.toISOString()
+        const todayStr = formatLocalDate(now)
 
-        if (typeof handle.createWritable !== 'function') {
-            console.warn('Backup handle is invalid or stale (not a FileSystemHandle). Clearing from settings.')
-            // Clear the stale handle so the UI can reflect the disconnected state
-            const freshSettings = await db.get('settings', 'singleton')
-            if (freshSettings) {
-                delete freshSettings.backupFileHandle
-                await db.put('settings', freshSettings, 'singleton')
+        if (dirHandle) {
+            if (typeof dirHandle.getFileHandle !== 'function') {
+                console.warn('Backup directory handle is invalid or stale. Clearing from settings.')
+                const freshSettings = await db.get('settings', 'singleton')
+                if (freshSettings) {
+                    delete freshSettings.backupDirHandle
+                    await db.put('settings', freshSettings, 'singleton')
+                }
+                return false
             }
-            return false
+
+            // 1. Write rolling auto snapshot (colon and period free for full OS filesystem compatibility)
+            const autoFilename = `auto_${nowISO.replace(/[:.]/g, '-')}.json`
+            const targetFileHandle = await dirHandle.getFileHandle(autoFilename, { create: true })
+            await writeWithRetry(targetFileHandle, json)
+
+            // 2. Check and create daily backup if not already present for today
+            const dailyFilename = `daily_${todayStr}.json`
+            let dailyExists = false
+            try {
+                await dirHandle.getFileHandle(dailyFilename, { create: false })
+                dailyExists = true
+            } catch {
+                dailyExists = false
+            }
+
+            if (!dailyExists) {
+                const dailyFileHandle = await dirHandle.getFileHandle(dailyFilename, { create: true })
+                await writeWithRetry(dailyFileHandle, json)
+            }
+
+            // 3. Automated retention pruning (10 auto saves + 14 daily saves)
+            await pruneDirectorySnapshots(dirHandle)
+
+        } else if (fileHandle) {
+            if (typeof fileHandle.createWritable !== 'function') {
+                console.warn('Backup file handle is invalid or stale. Clearing from settings.')
+                const freshSettings = await db.get('settings', 'singleton')
+                if (freshSettings) {
+                    delete freshSettings.backupFileHandle
+                    await db.put('settings', freshSettings, 'singleton')
+                }
+                return false
+            }
+            await writeWithRetry(fileHandle, json)
         }
 
-        const writable = await handle.createWritable()
-        await writable.write(json)
-        await writable.close()
-
         // Persist the sync timestamp so page reloads know we're up to date
-        const now = new Date().toISOString()
         const freshSettings = await db.get('settings', 'singleton')
         if (freshSettings) {
-            freshSettings.lastSyncedAt = now
+            freshSettings.lastSyncedAt = nowISO
             await db.put('settings', freshSettings, 'singleton')
         }
 
         hasUnsyncedChanges.value = false
-        return now  // return timestamp so caller can display it
+        return nowISO
     } catch (err) {
         console.error('Quick sync failed:', err)
-        return false // e.g. file was moved/deleted/permission denied
+        return false // e.g. folder/file moved, permission denied, or lock error
     }
+}
+
+/**
+ * Inspects the linked backup directory and returns a sorted list of all detected backups.
+ *
+ * @returns {Promise<Array<{ name: string, type: 'auto'|'daily'|'legacy', size: number, lastModified: number, lastModifiedISO: string }>>}
+ */
+export async function listDirectoryBackups() {
+    const db = await getDB()
+    const settings = await db.get('settings', 'singleton')
+    const dirHandle = settings?.backupDirHandle
+    if (!dirHandle || typeof dirHandle.getFileHandle !== 'function') return []
+
+    try {
+        if (dirHandle.queryPermission && (await dirHandle.queryPermission({ mode: 'read' })) !== 'granted') {
+            return []
+        }
+
+        const backups = []
+        for await (const entry of dirHandle.values()) {
+            if (entry.kind === 'file' && entry.name.endsWith('.json')) {
+                const isAuto = entry.name.startsWith('auto_')
+                const isDaily = entry.name.startsWith('daily_')
+                const isLegacy = entry.name === 'classroom-tracker-live-backup.json'
+
+                if (isAuto || isDaily || isLegacy) {
+                    try {
+                        const file = await entry.getFile()
+                        backups.push({
+                            name: entry.name,
+                            type: isAuto ? 'auto' : (isDaily ? 'daily' : 'legacy'),
+                            size: file.size,
+                            lastModified: file.lastModified,
+                            lastModifiedISO: new Date(file.lastModified).toISOString()
+                        })
+                    } catch (e) {
+                        console.warn(`Could not inspect backup file ${entry.name}:`, e)
+                    }
+                }
+            }
+        }
+
+        // Sort newest first
+        backups.sort((a, b) => b.lastModified - a.lastModified)
+        return backups
+    } catch (err) {
+        console.warn('Could not list directory backups:', err)
+        return []
+    }
+}
+
+/**
+ * Loads and restores a backup JSON file directly from the linked directory.
+ *
+ * @param {string} fileName
+ * @returns {Promise<{ classCount: number, eventCount: number }>}
+ */
+export async function restoreDirectoryBackup(fileName) {
+    const db = await getDB()
+    const settings = await db.get('settings', 'singleton')
+    const dirHandle = settings?.backupDirHandle
+    if (!dirHandle) throw new Error('No backup directory is linked.')
+
+    const fileHandle = await dirHandle.getFileHandle(fileName, { create: false })
+    const file = await fileHandle.getFile()
+    const text = await file.text()
+    const data = JSON.parse(text)
+    return await importAllData(data)
+}
+
+/**
+ * Reads and previews a backup JSON file directly from the linked directory without importing.
+ *
+ * @param {string} fileName
+ * @returns {Promise<Object>}
+ */
+export async function previewDirectoryBackup(fileName) {
+    const db = await getDB()
+    const settings = await db.get('settings', 'singleton')
+    const dirHandle = settings?.backupDirHandle
+    if (!dirHandle) throw new Error('No backup directory is linked.')
+
+    const fileHandle = await dirHandle.getFileHandle(fileName, { create: false })
+    const file = await fileHandle.getFile()
+    const text = await file.text()
+    const data = JSON.parse(text)
+    return data
 }
 
 /**
  * Restores all data from a backup object.
  * CLAUDE.md §13:
  *  - Validates schemaVersion before writing anything
- *  - Writes all three stores in a single IDB transaction
+ *  - Writes all stores in a single IDB transaction
  *  - On mismatch: throws, does not touch existing data
  *
  * @param {Object} backupObj
@@ -457,10 +658,11 @@ export async function importAllData(backupObj) {
 
     const db = await getDB()
 
-    // Preserve current machine's backup file handle — the one in the backup
+    // Preserve current machine's backup handles — the ones in the backup
     // may be from a different machine and would be invalid here.
     const currentSettings = await db.get('settings', 'singleton')
-    const existingHandle = currentSettings?.backupFileHandle ?? null
+    const existingDirHandle = currentSettings?.backupDirHandle ?? null
+    const existingFileHandle = currentSettings?.backupFileHandle ?? null
 
     // Single transaction across all primary stores
     const tx = db.transaction(['settings', 'classes', 'events', 'assessments', 'grades', 'learning_skills'], 'readwrite')
@@ -468,8 +670,12 @@ export async function importAllData(backupObj) {
     // Clear and rewrite settings
     await tx.objectStore('settings').clear()
     if (settings) {
-        // Restore our machine's file handle, not the one from the backup
-        const restoredSettings = { ...settings, backupFileHandle: existingHandle }
+        // Restore our machine's handles, not the ones from the backup
+        const restoredSettings = { 
+            ...settings, 
+            backupDirHandle: existingDirHandle,
+            backupFileHandle: existingFileHandle 
+        }
         await tx.objectStore('settings').put(restoredSettings, 'singleton')
     }
 
@@ -624,14 +830,18 @@ export async function getLastSyncedAt() {
 }
 
 /**
- * Returns true if the backup handle in settings is a live, valid FileSystemHandle.
- * Used by Setup.vue to determine if the "Folder Linked" status is truly active.
+ * Returns true if the backup directory handle in settings is a live, valid FileSystemHandle.
+ * Used by UI components to determine if the "Folder Linked" status is truly active.
  */
 export async function isSyncActive() {
     const db = await getDB()
     const settings = await db.get('settings', 'singleton')
-    const handle = settings?.backupFileHandle
-    return !!(handle && typeof handle.createWritable === 'function')
+    const dirHandle = settings?.backupDirHandle
+    const fileHandle = settings?.backupFileHandle
+    return !!(
+        (dirHandle && typeof dirHandle.getFileHandle === 'function') ||
+        (fileHandle && typeof fileHandle.createWritable === 'function')
+    )
 }
 
 export async function detachEventsForDeletedExpectation(classId, expectationId) {

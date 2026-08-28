@@ -55,8 +55,8 @@
     "semantic_hash": "292ba809cdc87ea16d7beff21d110324"
   },
   "src/App.vue": {
-    "mtime": 1787714073.2341135,
-    "ast_hash": "38c93154b101c02ddf0feffafd92429b",
+    "mtime": 1787952590.301528,
+    "ast_hash": "a6348566e85babe3092f848a55e4c12e",
     "semantic_hash": ""
   },
   "src/components/AssessmentConversationModal.vue": {
@@ -275,13 +275,13 @@
     "semantic_hash": ""
   },
   "src/db/classService.js": {
-    "mtime": 1787862051.147549,
-    "ast_hash": "e255c57cde08e9251bf0d2e744ccf57f",
+    "mtime": 1787952558.114002,
+    "ast_hash": "df6a907d9493cac0532699fd123f601f",
     "semantic_hash": ""
   },
   "src/db/eventService.js": {
-    "mtime": 1787908716.4718406,
-    "ast_hash": "dfed9deef667f640f067c8bdd7cf8f6d",
+    "mtime": 1787952583.4566596,
+    "ast_hash": "e9a19ad2b405ab89c4c5595aa2be9028",
     "semantic_hash": ""
   },
   "src/db/exportService.js": {
@@ -295,8 +295,8 @@
     "semantic_hash": ""
   },
   "src/db/index.js": {
-    "mtime": 1787862055.6525726,
-    "ast_hash": "0a9a7678760d8a50e612c5f2b767932f",
+    "mtime": 1787952554.7762835,
+    "ast_hash": "f73bcfcb437239cbd736fa818ed4cbf2",
     "semantic_hash": ""
   },
   "src/db/migrations.js": {
@@ -305,8 +305,8 @@
     "semantic_hash": ""
   },
   "src/db/settingsService.js": {
-    "mtime": 1787879941.0185208,
-    "ast_hash": "d316d0db37a6aa6a9858b457feb8c21c",
+    "mtime": 1787952549.1005127,
+    "ast_hash": "4770af9b991f2dbb35ee3917615461e3",
     "semantic_hash": ""
   },
   "src/main.js": {
@@ -450,8 +450,8 @@
     "semantic_hash": ""
   },
   "src/components/setup/DatabaseMaintenanceSettings.vue": {
-    "mtime": 1787709949.9651883,
-    "ast_hash": "6ab9c4ef207944447b1196bdcd8ee38f",
+    "mtime": 1787952650.308702,
+    "ast_hash": "de03064e9dffefbfb7ff399d81fcefcf",
     "semantic_hash": ""
   },
   "src/components/setup/ExpectationImportModal.vue": {
