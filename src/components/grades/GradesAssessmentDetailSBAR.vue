@@ -133,29 +133,89 @@
                   <!-- Bulk Action Dropdown Menu -->
                   <div v-if="activeBulkExp === exp.code" class="bulk-fill-menu" @click.stop>
                     <div class="bulk-fill-title">
-                      <span><Zap :size="12" style="display: inline-block; vertical-align: -1px; margin-right: 2px;" /> Bulk Fill: <strong>{{ exp.code }}</strong></span>
-                      <button class="bulk-close-btn" @click="activeBulkExp = null">&times;</button>
+                      <span><Zap :size="13" class="bulk-title-icon" /> Bulk Fill: <strong>{{ exp.code }}</strong></span>
+                      <button class="bulk-close-btn" @click="activeBulkExp = null" title="Close">&times;</button>
                     </div>
 
                     <div class="bulk-fill-body">
-                      <label class="bulk-fill-label">Select level to apply to class:</label>
-                      <div class="bulk-pill-grid">
-                        <button 
-                          v-for="lvl in fineLevels" 
-                          :key="lvl.code"
-                          class="bulk-level-pill"
-                          :style="{ background: lvl.color, color: 'white' }"
-                          @click="applyBulkFill(exp.code, lvl.pct)"
-                        >
-                          {{ lvl.label }}
-                        </button>
+                      <!-- Step 1: Target Scope Options (Stacked Cards) -->
+                      <div class="bulk-scope-section">
+                        <div class="bulk-section-header">
+                          <label class="bulk-fill-label">Target Scope</label>
+                        </div>
+                        
+                        <div class="bulk-scope-list">
+                          <!-- Option 1: Unassigned Students Only -->
+                          <button
+                            type="button"
+                            class="bulk-scope-card"
+                            :class="{ 
+                              'bulk-scope-card--selected': bulkScope === 'unassigned',
+                              'bulk-scope-card--disabled': getUnsetStudentCount(exp.code) === 0
+                            }"
+                            :disabled="getUnsetStudentCount(exp.code) === 0"
+                            @click="bulkScope = 'unassigned'"
+                          >
+                            <div class="bulk-radio-circle">
+                              <div v-if="bulkScope === 'unassigned'" class="bulk-radio-dot" />
+                            </div>
+                            <div class="bulk-scope-info">
+                              <div class="bulk-scope-row">
+                                <span class="bulk-scope-name">Only Unassigned</span>
+                                <span class="bulk-scope-badge">{{ getUnsetStudentCount(exp.code) }} students</span>
+                              </div>
+                              <div class="bulk-scope-desc">
+                                <span v-if="getUnsetStudentCount(exp.code) > 0">Safely fills empty student slots only</span>
+                                <span v-else>All students already evaluated</span>
+                              </div>
+                            </div>
+                          </button>
+
+                          <!-- Option 2: Entire Class (Overwrite) -->
+                          <button
+                            type="button"
+                            class="bulk-scope-card"
+                            :class="{ 
+                              'bulk-scope-card--selected': bulkScope === 'all',
+                              'bulk-scope-card--warn': getAssignedStudentCount(exp.code) > 0 && bulkScope === 'all'
+                            }"
+                            @click="bulkScope = 'all'"
+                          >
+                            <div class="bulk-radio-circle" :class="{ 'bulk-radio-circle--warn': getAssignedStudentCount(exp.code) > 0 && bulkScope === 'all' }">
+                              <div v-if="bulkScope === 'all'" class="bulk-radio-dot" :class="{ 'bulk-radio-dot--warn': getAssignedStudentCount(exp.code) > 0 }" />
+                            </div>
+                            <div class="bulk-scope-info">
+                              <div class="bulk-scope-row">
+                                <span class="bulk-scope-name">Entire Class</span>
+                                <span class="bulk-scope-badge">{{ displayedRoster.length }} students</span>
+                              </div>
+                              <div class="bulk-scope-desc">
+                                <span v-if="getAssignedStudentCount(exp.code) > 0" class="bulk-scope-warning-text">
+                                  <AlertTriangle :size="11" /> Overwrites {{ getAssignedStudentCount(exp.code) }} existing score{{ getAssignedStudentCount(exp.code) === 1 ? '' : 's' }}
+                                </span>
+                                <span v-else>Applies level to all students</span>
+                              </div>
+                            </div>
+                          </button>
+                        </div>
                       </div>
 
-                      <div class="bulk-fill-check-row">
-                        <label class="bulk-fill-checkbox-label">
-                          <input type="checkbox" v-model="bulkOnlyUnset" />
-                          Only fill unassigned students
-                        </label>
+                      <!-- Step 2: Level Selection Grid -->
+                      <div class="bulk-level-section">
+                        <div class="bulk-section-header">
+                          <label class="bulk-fill-label">Select Level</label>
+                        </div>
+                        <div class="bulk-pill-grid">
+                          <button 
+                            v-for="lvl in fineLevels" 
+                            :key="lvl.code"
+                            class="bulk-level-pill"
+                            :style="{ background: lvl.color, color: 'white' }"
+                            @click="applyBulkFill(exp.code, lvl.pct)"
+                          >
+                            {{ lvl.label }}
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -297,8 +357,8 @@
 
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
-import { ArrowLeft, Edit2, Trash2, Zap, Keyboard } from 'lucide-vue-next'
-import { enterGradeSBAR, gradeMap, activeClassRecord } from '../../composables/useGradebook.js'
+import { ArrowLeft, Edit2, Trash2, Zap, Keyboard, Users, UserMinus, AlertTriangle, Info } from 'lucide-vue-next'
+import { enterGradeSBAR, enterGradeSBARBulk, gradeMap, activeClassRecord } from '../../composables/useGradebook.js'
 import { getSBARLevelBadge } from '../../db/gradebookService.js'
 import { getEffectiveClassRecord, getUnitGradeLevel } from '../../composables/useElementary.js'
 import { activeSubjectId } from '../../composables/useClassroomState.js'
@@ -725,20 +785,37 @@ async function handleNumericKeydown(event, studentId, expCode, sIdx, eIdx) {
    Method 2: Expectation Column Bulk Fill Logic
    ========================================================================== */
 const activeBulkExp = ref(null)
-const bulkOnlyUnset = ref(false)
+const bulkScope = ref('unassigned') // 'unassigned' | 'all'
+
+function getUnsetStudentCount(expCode) {
+  if (!expCode) return 0
+  return displayedRoster.value.filter(s => getStudentPercentage(s.studentId, expCode) == null).length
+}
+
+function getAssignedStudentCount(expCode) {
+  return displayedRoster.value.length - getUnsetStudentCount(expCode)
+}
 
 function toggleBulkMenu(expCode) {
-  activeBulkExp.value = activeBulkExp.value === expCode ? null : expCode
+  if (activeBulkExp.value === expCode) {
+    activeBulkExp.value = null
+  } else {
+    activeBulkExp.value = expCode
+    const unset = getUnsetStudentCount(expCode)
+    // If unassigned students exist, default to unassigned only. If 0 are unassigned, default to all.
+    bulkScope.value = unset > 0 ? 'unassigned' : 'all'
+  }
 }
 
 async function applyBulkFill(expCode, pct) {
-  for (const student of displayedRoster.value) {
-    if (bulkOnlyUnset.value) {
-      const existing = getStudentPercentage(student.studentId, expCode)
-      if (existing != null) continue
-    }
-    await enterGradeSBAR(props.currentAssessment.assessmentId, student.studentId, expCode, pct)
-  }
+  const studentIds = displayedRoster.value.map(s => s.studentId)
+  enterGradeSBARBulk(
+    props.currentAssessment.assessmentId,
+    studentIds,
+    expCode,
+    pct,
+    bulkScope.value === 'unassigned'
+  )
   activeBulkExp.value = null
 }
 
@@ -1223,25 +1300,34 @@ async function contextMenuSelectLevel(pct) {
   right: 0;
   margin-top: 6px;
   z-index: 50;
-  width: 240px;
+  width: 340px;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-  padding: 12px;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
+  padding: 14px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
+  text-align: left;
 }
 
 .bulk-fill-title {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 0.8rem;
+  font-size: 0.85rem;
+  font-weight: 700;
   color: var(--text);
   border-bottom: 1px solid var(--border);
-  padding-bottom: 6px;
+  padding-bottom: 8px;
+}
+
+.bulk-title-icon {
+  display: inline-block;
+  vertical-align: -2px;
+  color: var(--primary);
+  margin-right: 4px;
 }
 
 .bulk-close-btn {
@@ -1251,53 +1337,191 @@ async function contextMenuSelectLevel(pct) {
   line-height: 1;
   color: var(--text-secondary);
   cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: all 0.15s ease;
 }
 
 .bulk-close-btn:hover {
+  background: var(--bg-secondary);
   color: var(--text);
 }
 
+.bulk-fill-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.bulk-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 5px;
+}
+
 .bulk-fill-label {
-  font-size: 0.725rem;
-  font-weight: 600;
+  font-size: 0.72rem;
+  font-weight: 700;
   color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
   display: block;
-  margin-bottom: 6px;
+}
+
+.bulk-scope-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-bottom: 12px;
+  border-bottom: 1px dashed var(--border);
+}
+
+.bulk-scope-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.bulk-scope-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm, 8px);
+  background: var(--bg-secondary);
+  border: 1.5px solid var(--border);
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s ease;
+  width: 100%;
+}
+
+.bulk-scope-card:hover:not(:disabled) {
+  border-color: var(--primary);
+  background: var(--surface);
+}
+
+.bulk-scope-card--selected {
+  border-color: var(--primary);
+  background: var(--surface);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+.bulk-scope-card--warn.bulk-scope-card--selected {
+  border-color: var(--color-warn, #f59e0b);
+  background: var(--color-warn-bg, rgba(245, 158, 11, 0.1));
+}
+
+.bulk-scope-card--disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: var(--bg-secondary);
+}
+
+.bulk-radio-circle {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+.bulk-scope-card--selected .bulk-radio-circle {
+  border-color: var(--primary);
+}
+
+.bulk-radio-circle--warn {
+  border-color: var(--color-warn, #f59e0b) !important;
+}
+
+.bulk-radio-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--primary);
+}
+
+.bulk-radio-dot--warn {
+  background: var(--color-warn, #f59e0b);
+}
+
+.bulk-scope-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.bulk-scope-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.bulk-scope-name {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.bulk-scope-badge {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  background: rgba(0, 0, 0, 0.06);
+  padding: 1px 6px;
+  border-radius: 10px;
+}
+
+:root[data-theme="dark"] .bulk-scope-badge {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text);
+}
+
+.bulk-scope-desc {
+  font-size: 0.69rem;
+  color: var(--text-secondary);
+  line-height: 1.25;
+}
+
+.bulk-scope-warning-text {
+  color: var(--color-warn-text, #d97706);
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.bulk-level-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .bulk-pill-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 4px;
+  gap: 5px;
 }
 
 .bulk-level-pill {
-  padding: 5px;
-  border-radius: 4px;
+  padding: 7px 4px;
+  border-radius: 5px;
   border: none;
-  font-size: 0.75rem;
+  font-size: 0.78rem;
   font-weight: 700;
   cursor: pointer;
-  transition: transform 0.15s ease;
+  transition: transform 0.15s ease, opacity 0.15s ease;
 }
 
 .bulk-level-pill:hover {
-  transform: scale(1.05);
-}
-
-.bulk-fill-check-row {
-  margin-top: 8px;
-  padding-top: 6px;
-  border-top: 1px dashed var(--border);
-}
-
-.bulk-fill-checkbox-label {
-  font-size: 0.725rem;
-  color: var(--text-secondary);
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  cursor: pointer;
+  transform: scale(1.04);
+  opacity: 0.92;
 }
 
 /* Method 1: Spreadsheet Keyboard Cell Input */

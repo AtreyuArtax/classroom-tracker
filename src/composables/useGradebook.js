@@ -798,8 +798,20 @@ export function enterGradeSBAR(assessmentId, studentId, expCode, percentage) {
   const isBlank = percentage === null || percentage === undefined || percentage === '' || (typeof percentage === 'number' && isNaN(percentage))
 
   let grade = grades.value.find(g => Number(g.assessmentId) === Number(assessmentId) && String(g.studentId) === String(studentId))
+
+  // Guard against redundant/no-op writes (prevents duplicate undo entries on keydown + blur)
+  if (grade) {
+    const existingScore = grade.expectationScores ? grade.expectationScores[expCode] : undefined
+    if (isBlank) {
+      if (existingScore === undefined || existingScore === null) return
+    } else {
+      if (existingScore !== undefined && Number(existingScore) === Number(percentage)) return
+    }
+  } else if (isBlank) {
+    return
+  }
+
   if (!grade) {
-    if (isBlank) return // nothing to clear
     grade = {
       assessmentId: Number(assessmentId),
       studentId: String(studentId),
@@ -876,6 +888,121 @@ export function enterGradeSBAR(assessmentId, studentId, expCode, percentage) {
     },
     async () => {
       enterGradeSBAR(assessmentId, studentId, expCode, percentage)
+    }
+  )
+}
+
+/**
+ * Bulk sets an SBAR expectation level grade across multiple students in a single atomic, undoable operation.
+ */
+export function enterGradeSBARBulk(assessmentId, studentIds, expCode, percentage, onlyUnset = false) {
+  if (!activeClassRecord.value || !studentIds || studentIds.length === 0) return
+
+  const num = Number(percentage)
+  const isBlank = percentage === null || percentage === undefined || percentage === '' || isNaN(num)
+
+  // Snapshot previous state of all affected students
+  const snapshots = []
+
+  for (const studentId of studentIds) {
+    let grade = grades.value.find(g => Number(g.assessmentId) === Number(assessmentId) && String(g.studentId) === String(studentId))
+    const existingScore = grade?.expectationScores ? grade.expectationScores[expCode] : undefined
+    const isUnset = existingScore === undefined || existingScore === null || existingScore === ''
+
+    if (onlyUnset && !isUnset) {
+      continue
+    }
+
+    if (!grade) {
+      if (isBlank) continue
+      grade = {
+        assessmentId: Number(assessmentId),
+        studentId: String(studentId),
+        classId: activeClassRecord.value.classId,
+        missing: false,
+        excluded: false,
+        attempts: [],
+        expectationScores: {}
+      }
+      grades.value.push(grade)
+    }
+
+    const prevExpScores = grade.expectationScores ? { ...grade.expectationScores } : {}
+    const prevMasteryLevel = grade.masteryLevel
+    const prevMissing = grade.missing
+
+    snapshots.push({
+      studentId: String(studentId),
+      prevExpScores,
+      prevMasteryLevel,
+      prevMissing
+    })
+
+    if (isBlank) {
+      delete grade.expectationScores[expCode]
+      const remainingScores = Object.values(grade.expectationScores)
+        .filter(v => v !== null && v !== undefined && v !== '' && !isNaN(Number(v)))
+        .map(Number)
+      if (remainingScores.length === 0) {
+        grade.masteryLevel = null
+        grade.resolvedScore = null
+      } else {
+        const avg = Math.round(remainingScores.reduce((a, b) => a + b, 0) / remainingScores.length)
+        grade.masteryLevel = avg
+        grade.resolvedScore = avg
+      }
+    } else {
+      grade.expectationScores[expCode] = num
+      const allScores = Object.values(grade.expectationScores)
+        .filter(v => v !== null && v !== undefined && v !== '' && !isNaN(Number(v)))
+        .map(Number)
+      const avg = allScores.length > 0 ? Math.round(allScores.reduce((a, b) => a + b, 0) / allScores.length) : num
+      grade.masteryLevel = avg
+      grade.resolvedScore = avg
+      grade.missing = false
+    }
+
+    refreshSingleStudent(studentId)
+
+    enqueueDBSave(`${assessmentId}_${studentId}`, async () => {
+      await gradebookService.saveSBARGrade(
+        assessmentId, 
+        studentId, 
+        grade.expectationScores, 
+        grade.masteryLevel,
+        activeClassRecord.value?.classId
+      )
+    })
+  }
+
+  grades.value = [...grades.value]
+
+  if (snapshots.length === 0) return
+
+  // Register single atomic undo operation for the whole class batch
+  pushUndo(
+    async () => {
+      for (const snap of snapshots) {
+        const g = grades.value.find(item => Number(item.assessmentId) === Number(assessmentId) && String(item.studentId) === String(snap.studentId))
+        if (g) {
+          g.expectationScores = { ...snap.prevExpScores }
+          g.masteryLevel = snap.prevMasteryLevel
+          g.resolvedScore = snap.prevMasteryLevel
+          g.missing = snap.prevMissing
+          refreshSingleStudent(snap.studentId)
+          await gradebookService.saveSBARGrade(
+            assessmentId,
+            snap.studentId,
+            g.expectationScores,
+            g.masteryLevel,
+            activeClassRecord.value?.classId
+          )
+        }
+      }
+      grades.value = [...grades.value]
+    },
+    async () => {
+      enterGradeSBARBulk(assessmentId, studentIds, expCode, percentage, onlyUnset)
     }
   )
 }

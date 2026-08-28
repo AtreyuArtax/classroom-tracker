@@ -403,49 +403,55 @@ async function acceptSuggestion() {
 /* ── Suggestion Banner ───────────────────────────────────────────────────── */
 .class-suggestion {
   position: absolute;
-  top: calc(100% + 4px);
+  top: calc(100% + 6px);
   left: 0;
-  background: var(--primary-light);
-  border-left: 3px solid var(--primary);
-  border-radius: var(--radius-sm);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3.5px solid var(--primary);
+  border-radius: var(--radius-md, 10px);
   padding: 8px 12px;
   display: flex;
   align-items: center;
-  gap: 8px;
-  box-shadow: var(--shadow-sm);
-  z-index: 498; 
-  animation: slide-down 0.2s ease-out forwards;
-  max-width: 320px;
-  transform-origin: top center;
+  gap: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+  z-index: 600; 
+  animation: slide-down 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  width: max-content;
+  min-width: 280px;
+  max-width: min(420px, calc(100vw - 32px));
+  transform-origin: top left;
 }
 
 @keyframes slide-down {
-  from { opacity: 0; transform: translateY(-4px) scaleY(0.95); }
-  to   { opacity: 1; transform: translateY(0) scaleY(1); }
+  from { opacity: 0; transform: translateY(-6px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 .class-suggestion__text {
-  font-size: 13px;
+  font-size: 0.8rem;
+  font-weight: 500;
   color: var(--text);
-  line-height: 1.3;
+  line-height: 1.35;
   flex: 1;
 }
 
 .class-suggestion__accept {
   background: var(--primary);
-  color: white;
+  color: #ffffff;
   border: none;
-  padding: 4px 10px;
-  border-radius: var(--radius-sm);
-  font-size: 12px;
-  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: var(--radius-sm, 6px);
+  font-size: 0.78rem;
+  font-weight: 700;
   cursor: pointer;
   white-space: nowrap;
-  transition: opacity 0.15s ease;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
 }
 
 .class-suggestion__accept:hover {
-  opacity: 0.9;
+  background: var(--primary-dark, #3b5088);
+  transform: translateY(-1px);
 }
 
 .class-suggestion__dismiss {
@@ -456,12 +462,16 @@ async function acceptSuggestion() {
   font-size: 14px;
   line-height: 1;
   cursor: pointer;
-  opacity: 0.6;
-  transition: opacity 0.15s ease;
+  opacity: 0.65;
+  border-radius: 4px;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
 }
 
 .class-suggestion__dismiss:hover {
   opacity: 1;
+  color: var(--text);
+  background: var(--bg-secondary);
 }
 
 /* ── Elementary Subject Switcher Dropdown ─────────────────────────────────── */

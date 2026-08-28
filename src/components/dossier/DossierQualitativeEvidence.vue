@@ -1315,8 +1315,8 @@ function getGroupedUnitExpectations(unit) {
   top: 12px;
   left: 24px;
   right: 24px;
-  height: 2px;
-  background: var(--border);
+  height: 0;
+  border-top: 2px solid var(--border);
   z-index: 1;
 }
 

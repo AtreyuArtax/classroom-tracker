@@ -198,7 +198,7 @@
               :style="{
                 borderTop: '3px solid ' + getUnitColorByIdx(idx),
                 backgroundColor: getUnitColorByIdx(idx) + '12',
-                color: '#1e293b'
+                color: 'var(--text)'
               }"
             >
               <div class="strand-group-title">{{ formatStrandHeaderName(strand.name) }}</div>
@@ -392,6 +392,32 @@ const emit = defineEmits(['open-dossier', 'select-expectation', 'select-assessme
 const activeStrandFilter = ref('all')
 
 const availableGradeFilters = computed(() => availableSubCohorts.value)
+
+function formatDate(dStr) {
+  if (!dStr) return '—'
+  return formatLocalDisplay(dStr)
+}
+
+function getAssessmentTypeLabel(type) {
+  if (!type) return 'Assignment'
+  const labels = {
+    assignment: 'Assignment',
+    quiz: 'Quiz',
+    test: 'Test',
+    exam: 'Exam',
+    project: 'Project',
+    observation: 'Observation',
+    conversation: 'Conversation',
+    product: 'Product'
+  }
+  return labels[type.toLowerCase()] || (type.charAt(0).toUpperCase() + type.slice(1))
+}
+
+function getAssessmentGrade(ast) {
+  const g = getAssessmentGradeLevel(ast)
+  if (!g) return ''
+  return g.toUpperCase()
+}
 
 // Assessment Hub & Contextual Popover State
 const showHubPopover = ref(false)
@@ -1401,7 +1427,7 @@ thead th.sticky-col {
   gap: 5px;
   padding: 4px 9px;
   border-radius: var(--radius-full, 20px);
-  background: var(--bg-tertiary, #f1f5f9);
+  background: var(--bg-tertiary, var(--surface));
   border: 1px solid var(--border);
   color: var(--text);
   font-size: 0.78rem;
@@ -1411,7 +1437,7 @@ thead th.sticky-col {
 }
 
 .sbar-quick-chip:hover {
-  background: var(--primary-light, #e0e7ff);
+  background: var(--primary-light);
   border-color: var(--primary);
   color: var(--primary);
   transform: translateY(-1px);

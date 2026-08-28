@@ -157,6 +157,7 @@
         <SetupQuickJumpNav :activeTab="activeTab" />
         <div class="setup__main-content">
         <!-- Profile -->
+        <!-- Profile & Appearance -->
         <div class="setup__card" id="sec-general-settings">
           <h2 class="setup__card-title">General Settings</h2>
           <div class="setup__form-grid" style="grid-template-columns: 1fr 1fr; gap: 16px;">
@@ -186,6 +187,42 @@
                   <span>Elementary (K–8)</span>
                 </button>
               </div>
+            </div>
+
+            <div class="setup__label" style="grid-column: 1 / -1;">
+              App Appearance / Theme
+              <div class="setup__segmented-toggle">
+                <button
+                  type="button"
+                  class="setup__segmented-btn"
+                  :class="{ 'setup__segmented-btn--active': themePreference === 'system' }"
+                  @click="setTheme('system')"
+                >
+                  <Monitor :size="15" class="setup__segmented-icon" />
+                  <span>System (Auto)</span>
+                </button>
+                <button
+                  type="button"
+                  class="setup__segmented-btn"
+                  :class="{ 'setup__segmented-btn--active': themePreference === 'light' }"
+                  @click="setTheme('light')"
+                >
+                  <Sun :size="15" class="setup__segmented-icon" />
+                  <span>Light</span>
+                </button>
+                <button
+                  type="button"
+                  class="setup__segmented-btn"
+                  :class="{ 'setup__segmented-btn--active': themePreference === 'dark' }"
+                  @click="setTheme('dark')"
+                >
+                  <Moon :size="15" class="setup__segmented-icon" />
+                  <span>Dark</span>
+                </button>
+              </div>
+              <p class="setup__hint" style="margin-top: 4px; font-size: 0.76rem;">
+                {{ themePreference === 'system' ? 'Automatically adapts to your device or browser light/dark setting.' : (themePreference === 'dark' ? 'Dark surfaces optimized for low-light environments.' : 'Classic bright surfaces with iOS styling.') }}
+              </p>
             </div>
 
           </div>
@@ -781,11 +818,17 @@ import {
   School,
   RefreshCcw,
   Pencil,
+  Sun,
+  Moon,
+  Monitor,
   X
 } from 'lucide-vue-next'
 import { useClassroom } from '../composables/useClassroom.js'
 import { useMessage } from '../composables/useMessage.js'
 import { detectGradeFromClassName } from '../composables/useElementary.js'
+import { useTheme } from '../composables/useTheme.js'
+
+const { themePreference, setTheme } = useTheme()
 
 const CalendarSettings            = defineAsyncComponent(() => import('../components/setup/CalendarSettings.vue'))
 const GradeBucketsSettings        = defineAsyncComponent(() => import('../components/setup/GradeBucketsSettings.vue'))

@@ -10,6 +10,9 @@
 import { createApp } from 'vue'
 import App from './App.vue'
 import './styles/main.css'
+import { initTheme } from './composables/useTheme.js'
+
+initTheme()
 
 async function requestPersistentStorage() {
     if (navigator.storage && navigator.storage.persist) {

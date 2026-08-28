@@ -390,18 +390,18 @@ function onDrop(evt) {
 
 /* ── Empty seat ─────────────────────────────────────────────────────────── */
 .desk-tile--empty {
-  background: rgba(248, 250, 252, 0.7);
+  background: transparent;
   border:     1.5px dashed var(--border);
   box-shadow: none;
   cursor:     default;
-  opacity:    0.7;
+  opacity:    0.45;
   transition: all 0.15s ease;
 }
 
 .desk-tile--empty:hover {
   background: var(--surface);
   border-color: var(--primary);
-  opacity: 1;
+  opacity: 0.9;
 }
 
 .desk-tile--drop-target {
@@ -611,43 +611,43 @@ function onDrop(evt) {
 
 /* ── Out-of-room state ───────────────────────────────────────────────────── */
 .desk-tile--out {
-  background: rgba(254, 242, 242, 0.95) !important;
-  border:     1.5px solid #ef4444 !important;
+  background: var(--color-danger-bg, rgba(254, 242, 242, 0.95)) !important;
+  border:     1.5px solid var(--color-danger, #ef4444) !important;
   box-shadow: 0 4px 14px rgba(239, 68, 68, 0.18) !important;
 }
 
 .desk-tile__status-info--out {
-  background: #ef4444;
+  background: var(--color-danger, #ef4444);
   color:      #ffffff;
   box-shadow: 0 2px 6px rgba(239, 68, 68, 0.35);
 }
 
 /* ── Absent state ────────────────────────────────────────────────────────── */
 .desk-tile--absent {
-  background: rgba(255, 241, 242, 0.85) !important;
-  border:     1.5px solid #fda4af !important;
+  background: var(--color-danger-bg, rgba(255, 241, 242, 0.85)) !important;
+  border:     1.5px solid var(--color-danger, #fda4af) !important;
 }
 
 .desk-tile__status-info--absent {
-  background: rgba(225, 29, 72, 0.12);
-  color:      #e11d48;
+  background: var(--color-danger-bg, rgba(225, 29, 72, 0.12));
+  color:      var(--color-danger, #e11d48);
 }
 
 /* ── Late state ──────────────────────────────────────────────────────────── */
 .desk-tile--late {
-  background: rgba(254, 243, 199, 0.85) !important;
-  border:     1.5px solid #fcd34d !important;
+  background: var(--color-warn-bg, rgba(254, 243, 199, 0.85)) !important;
+  border:     1.5px solid var(--color-warn, #fcd34d) !important;
 }
 
 .desk-tile__status-info--late {
-  background: rgba(217, 119, 6, 0.12);
-  color:      #d97706;
+  background: var(--color-warn-bg, rgba(217, 119, 6, 0.12));
+  color:      var(--color-warn, #d97706);
 }
 
 /* ── Event flash — green for ~700ms ─────────────────────────────────────── */
 .desk-tile--flash {
-  background: rgba(220, 252, 231, 0.95) !important;
-  border-color: #22c55e !important;
+  background: var(--color-success-bg, rgba(220, 252, 231, 0.95)) !important;
+  border-color: var(--color-success, #22c55e) !important;
   box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.25) !important;
 }
 

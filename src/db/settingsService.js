@@ -129,7 +129,8 @@ async function _readSettings() {
             { label: 'L4', min: 80, max: 100, color: '#34c759' }
         ],
         capGradesAt100: true,
-        nonSchoolDays: []
+        nonSchoolDays: [],
+        appTheme: 'system'
     }
     await db.put('settings', defaults, SETTINGS_KEY)
     hasUnsyncedChanges.value = true
@@ -318,6 +319,32 @@ export async function saveTeacherName(name) {
     settings.teacherName = name
     await db.put('settings', settings, 'singleton')
     hasUnsyncedChanges.value = true
+}
+
+/**
+ * Returns the configured app theme ('system' | 'light' | 'dark').
+ *
+ * @returns {Promise<string>}
+ */
+export async function getAppTheme() {
+    const settings = await _readSettings()
+    return settings.appTheme || 'system'
+}
+
+/**
+ * Saves the global app theme preference.
+ *
+ * @param {string} theme ('system' | 'light' | 'dark')
+ * @returns {Promise<void>}
+ */
+export async function saveAppTheme(theme) {
+    const db = await getDB()
+    const settings = await db.get('settings', 'singleton')
+    if (settings) {
+        settings.appTheme = theme
+        await db.put('settings', settings, 'singleton')
+        hasUnsyncedChanges.value = true
+    }
 }
 
 /**
