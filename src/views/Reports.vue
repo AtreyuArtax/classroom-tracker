@@ -4,6 +4,7 @@
 
       <!-- ══ LEFT SIDEBAR ══════════════════════════════════════════════ -->
       <StudentSidebar 
+        v-if="sidebarClassId && filteredClassList.length > 0"
         :students="filteredSidebarStudents"
         :selected-student-id="dossier.selectedStudentId.value"
         :show-academics="rightMode === 'dossier'"
@@ -85,7 +86,7 @@
         <div v-if="dossier.loading.value" class="reports__loading" aria-live="polite">Loading…</div>
 
         <!-- Placeholder states -->
-        <div v-else-if="!sidebarClassId" class="reports__placeholder">
+        <div v-else-if="!sidebarClassId || filteredClassList.length === 0" class="reports__placeholder">
           <BarChart2 :size="48" class="reports__placeholder-icon" />
           <p>Select a class to view reports and analytics</p>
         </div>
@@ -289,10 +290,15 @@ watch(filteredClassList, (newList) => {
     const stillExists = newList.find(c => c.classId === sidebarClassId.value)
     if (!stillExists) {
       sidebarClassId.value = newList[0].classId
+      dossier.clearStudent()
+      dossier.loadSidebarClass(newList[0].classId)
       runReport()
     }
   } else {
     sidebarClassId.value = null
+    dossier.clearStudent()
+    dossier.loadSidebarClass(null)
+    clearGradebook()
   }
 }, { immediate: true })
 
@@ -391,14 +397,6 @@ onMounted(async () => {
     await loadGradebook(targetClass, activeSubjectId.value)
   }
 })
-
-watch(classList, (list) => {
-  if (!sidebarClassId.value && list.length && activeClass.value) {
-    sidebarClassId.value = activeClass.value.classId
-    dossier.loadSidebarClass(sidebarClassId.value)
-    runReport()
-  }
-}, { immediate: true })
 
 const sidebarStudents = dossier.sidebarStudents
 

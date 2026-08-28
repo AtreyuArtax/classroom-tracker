@@ -342,17 +342,26 @@ function getSparklinePath(data, width, height) {
 .student-sidebar__class-select {
   width: 100%;
   min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.student-sidebar__class-select :deep(.class-switcher-wrapper) {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
 }
 
 .student-sidebar__class-select :deep(.class-switcher) {
-  width: 100%;
-  min-width: 0;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
 }
 
 .student-sidebar__class-select :deep(.class-switcher__trigger) {
-  width: 100%;
-  max-width: 100%;
-  min-width: 0;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
   box-sizing: border-box;
   justify-content: space-between;
 }

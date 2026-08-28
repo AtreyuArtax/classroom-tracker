@@ -197,16 +197,16 @@ async function acceptSuggestion() {
 <style scoped>
 .class-switcher {
   position: relative;
-  width: auto;
+  width: 100%;
   min-width: 0;
-  max-width: 160px;
-  flex-shrink: 0;
+  max-width: 100%;
+  flex: 1;
 }
 
 .class-switcher__single-badge {
   display: inline-flex;
   align-items: center;
-  padding: 4px 8px;
+  padding: 4px 10px;
   background: var(--bg-secondary);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
@@ -216,10 +216,11 @@ async function acceptSuggestion() {
   height: 32px;
   box-sizing: border-box;
   white-space: nowrap;
-  max-width: 120px;
+  width: 100%;
+  max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
-  flex-shrink: 0;
+  flex: 1;
 }
 
 /* ── Trigger button ──────────────────────────────────────────────────────── */
@@ -227,8 +228,8 @@ async function acceptSuggestion() {
   display:         flex;
   align-items:     center;
   justify-content: space-between;
-  gap:             5px;
-  padding:         4px 8px;
+  gap:             6px;
+  padding:         4px 10px;
   border:          1px solid var(--border);
   border-radius:   var(--radius-md);
   background:      var(--bg-secondary);
@@ -236,10 +237,11 @@ async function acceptSuggestion() {
   cursor:          pointer;
   min-height:      32px;
   height:          32px;
-  width:           auto;
-  max-width:       160px;
+  width:           100%;
+  max-width:       100%;
   min-width:       0;
   box-sizing:      border-box;
+  overflow:        hidden;
   transition:      border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
@@ -476,12 +478,15 @@ async function acceptSuggestion() {
 
 /* ── Elementary Subject Switcher Dropdown ─────────────────────────────────── */
 .class-switcher-wrapper {
-  display: inline-flex;
+  display: flex;
   flex-direction: row;
   align-items: center;
   gap: 6px;
   flex-wrap: nowrap;
-  flex-shrink: 0;
+  width: 220px;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .subject-switcher {

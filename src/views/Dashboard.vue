@@ -51,16 +51,17 @@
           <span class="dashboard__qr-label">Scanner</span>
         </button>
 
-        <!-- Toggle Unassigned Roster Button -->
+        <!-- Toggle Unassigned Roster Button (Only visible when unseated students exist) -->
         <button 
-          v-if="activeClass"
+          v-if="activeClass && unseatedStudents.length > 0"
           class="dashboard__pool-toggle" 
-          @click="isPoolOpen = !isPoolOpen"
           :class="{ 'dashboard__pool-toggle--active': isPoolOpen }"
           title="Toggle Unassigned Students Roster"
+          @click="isPoolOpen = !isPoolOpen"
         >
-          <Users :size="20" />
-          <span class="dashboard__pool-toggle-label">Unassigned</span>
+          <Users :size="18" />
+          <span class="dashboard__pool-toggle-label">Needs Seats</span>
+          <span class="dashboard__pool-badge">{{ unseatedStudents.length }}</span>
         </button>
 
         <UndoButton v-if="activeClass" variant="dashboard" />
@@ -396,6 +397,10 @@ watch(profileStudent, (student) => {
   gap: 12px;
 }
 
+.dashboard__header-left :deep(.class-switcher-wrapper) {
+  width: 240px;
+}
+
 .dashboard__subcohort-pills {
   display: flex;
   align-items: center;
@@ -473,6 +478,21 @@ watch(profileStudent, (student) => {
   background:   var(--primary-light);
   border-color: var(--primary);
   color:        var(--primary);
+}
+
+.dashboard__pool-badge {
+  background: var(--primary);
+  color: #ffffff;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 1px 7px;
+  border-radius: 10px;
+  line-height: 1.2;
+}
+
+.dashboard__pool-toggle--active .dashboard__pool-badge {
+  background: var(--primary);
+  color: #ffffff;
 }
 
 @media (max-width: 1000px) {

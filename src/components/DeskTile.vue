@@ -28,6 +28,7 @@
     @dragstart="onDragStart"
     @dragend="isDragging = false"
     @click="openRadialForStudent"
+    @contextmenu.prevent="openTileContextMenu($event)"
   >
     <!-- Washroom badge — top left corner -->
     <span
@@ -116,6 +117,30 @@
       <span class="desk-tile__status-label">Late {{ toMinutes(student.activeStates.lateMs) }}m</span>
     </div>
   </div>
+
+  <!-- Right-Click Seat Context Menu -->
+  <Teleport to="body">
+    <div 
+      v-if="showContextMenu" 
+      class="desk-context-backdrop" 
+      @click="closeContextMenu" 
+      @contextmenu.prevent="closeContextMenu"
+    >
+      <div 
+        class="desk-context-menu" 
+        :style="{ top: contextMenuPos.y + 'px', left: contextMenuPos.x + 'px' }" 
+        @click.stop
+      >
+        <div class="desk-context-header">
+          {{ student?.firstName }} {{ student?.lastName }}
+        </div>
+        <button class="desk-context-btn desk-context-btn--danger" @click="handleUnseatStudent">
+          <UserMinus :size="14" />
+          <span>Remove from Seat</span>
+        </button>
+      </div>
+    </div>
+  </Teleport>
 </template>
 
 <script setup>
@@ -138,7 +163,7 @@
  */
 
 import { ref, computed, watch, onUnmounted } from 'vue'
-import { HelpCircle, UserX, Clock, Footprints, Smartphone, DoorOpen } from 'lucide-vue-next'
+import { HelpCircle, UserX, Clock, Footprints, Smartphone, DoorOpen, UserMinus } from 'lucide-vue-next'
 import { resolveIcon }    from '../utils/icons.js'
 import { toMinutes }      from '../db/eventService.js'
 import { useRadial }    from '../composables/useRadial.js'
@@ -147,6 +172,30 @@ import { useMasterAttendanceTicker } from '../composables/useAttendanceTracker.j
 import { classGrades, activeSubCohortFilter, isStudentInSubCohort }  from '../composables/useGradebook.js'
 import { useStudentPhotos } from '../composables/useStudentPhotos.js'
 import StudentAvatar from './photos/StudentAvatar.vue'
+
+// ─── context menu state ───────────────────────────────────────────────────────
+const showContextMenu = ref(false)
+const contextMenuPos = ref({ x: 0, y: 0 })
+
+function openTileContextMenu(event) {
+  if (!props.student) return
+  contextMenuPos.value = {
+    x: Math.min(window.innerWidth - 190, Math.max(10, event.clientX)),
+    y: Math.min(window.innerHeight - 110, Math.max(10, event.clientY))
+  }
+  showContextMenu.value = true
+}
+
+function closeContextMenu() {
+  showContextMenu.value = false
+}
+
+async function handleUnseatStudent() {
+  closeContextMenu()
+  if (props.studentId) {
+    await assignSeat(props.studentId, null)
+  }
+}
 
 // ─── props ────────────────────────────────────────────────────────────────────
 
@@ -675,5 +724,75 @@ function onDrop(evt) {
   background: #f59e0b;
   opacity: 0.85;
   box-shadow: 0 0 5px rgba(245, 158, 11, 0.45);
+}
+
+/* ── Right-Click Desk Context Menu ──────────────────────────────────────────── */
+.desk-context-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 2500;
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.desk-context-menu {
+  position: fixed;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+  padding: 5px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  z-index: 2501;
+  min-width: 180px;
+  animation: context-pop 0.12s ease-out forwards;
+}
+
+@keyframes context-pop {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.desk-context-header {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  padding: 4px 8px 6px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.desk-context-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-sm);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  transition: all 0.12s ease;
+}
+
+.desk-context-btn:hover {
+  background: var(--bg-secondary);
+}
+
+.desk-context-btn--danger {
+  color: var(--color-danger-text, #ef4444);
+}
+
+.desk-context-btn--danger:hover {
+  background: var(--color-danger-bg, rgba(239, 68, 68, 0.1));
+  color: var(--color-danger, #ef4444);
 }
 </style>

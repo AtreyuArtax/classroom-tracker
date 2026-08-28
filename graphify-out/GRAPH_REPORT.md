@@ -1,7 +1,7 @@
 # Graph Report - classroom-tracker  (2026-08-27)
 
 ## Corpus Check
-- 216 files · ~414,231 words
+- 216 files · ~414,626 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `bd5012cf`
+- Built from commit: `a678beef`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -167,7 +167,7 @@ Nodes (5): CacheExpiration, dontWaitFor(), ExpirationPlugin, registerQuotaErrorC
 
 ### Community 14 - "Community 14"
 Cohesion: 0.07
-Nodes (20): props, allCombinedWork, allDossierAssessments, attendanceStats, behaviorCodesMap, currentStudentObj, displayMetaLine, evidenceMix (+12 more)
+Nodes (21): classGrades, props, allCombinedWork, allDossierAssessments, attendanceStats, behaviorCodesMap, currentStudentObj, displayMetaLine (+13 more)
 
 ### Community 15 - "Community 15"
 Cohesion: 0.21
@@ -215,15 +215,15 @@ Nodes (7): list_raw_input_devices(), list_serial_ports(), find_rfid.py — RFID 
 
 ### Community 28 - "Community 28"
 Cohesion: 0.12
-Nodes (14): useClassroom(), classGrades, filteredMilestones, globalMilestones, saveStudentGradebookNote(), useStudentDossier(), toMinutes(), { alert, confirm, select } (+6 more)
+Nodes (17): activeSubjectId, activeClassRecord, assessments, filteredMilestones, globalMilestones, gradeMap, useSBarPrintOptions(), toMinutes() (+9 more)
 
 ### Community 29 - "Community 29"
 Cohesion: 0.33
 Nodes (6): calculateStandardDeviation(), classStats, detectOutliers(), result, result2, spreadClass
 
 ### Community 32 - "Community 32"
-Cohesion: 0.17
-Nodes (9): assessmentTypes, closeAddAssessment(), isEditingAssessment, newAssessment, onTargetChange(), showAddAssessmentModal, sortedUnits, isSBAR (+1 more)
+Cohesion: 0.12
+Nodes (12): useClassroom(), assessmentTypes, closeAddAssessment(), isEditingAssessment, newAssessment, onTargetChange(), saveStudentGradebookNote(), showAddAssessmentModal (+4 more)
 
 ### Community 35 - "Community 35"
 Cohesion: 0.12
@@ -310,8 +310,8 @@ Cohesion: 0.57
 Nodes (6): normalizeLearningSkillLevel(), parseCsvRows(), parseLearningSkillsCsv(), parseLearningSkillsRows(), parseLearningSkillsWorkbook(), parseXlsxToRows()
 
 ### Community 88 - "Community 88"
-Cohesion: 0.18
-Nodes (11): activeSubjectId, activeClassRecord, assessments, gradeMap, useSBarPrintOptions(), exportGradebookToExcel(), formatDate(), formatLocalDisplay() (+3 more)
+Cohesion: 0.53
+Nodes (4): exportGradebookToExcel(), getSchoolYearFromDate(), getSemesterFromDate(), parseLocal()
 
 ### Community 91 - "Community 91"
 Cohesion: 0.50

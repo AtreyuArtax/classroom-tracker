@@ -903,6 +903,7 @@ onMounted(async () => {
 .grades__grid-container { display: flex; flex-direction: column; gap: 10px; height: 100%; }
 .grades__toolbar { display: flex; justify-content: space-between; align-items: center; background: var(--surface); padding: 6px 12px; border-radius: var(--radius-lg); border: 1px solid var(--border); flex-wrap: nowrap; gap: 8px; min-height: 44px; }
 .grades__toolbar-left { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.grades__toolbar-left :deep(.class-switcher-wrapper) { width: 220px; }
 .grades__toolbar-center { display: flex; align-items: center; gap: 8px; flex-shrink: 1; min-width: 0; }
 .grades__center-divider { width: 1px; height: 18px; background: var(--border); margin: 0 3px; flex-shrink: 0; }
 .grades__modifiers-group { display: flex; align-items: center; gap: 4px; }
