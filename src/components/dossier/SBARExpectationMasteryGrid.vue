@@ -322,9 +322,9 @@ const visibleExpectations = computed(() => {
 .sbar-expectation-mastery {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--radius-md, 12px);
-  padding: 16px 20px;
-  margin-bottom: 24px;
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  margin-bottom: 0;
 }
 
 .sbar-mastery-header {
@@ -474,6 +474,29 @@ const visibleExpectations = computed(() => {
   font-weight: 700;
   color: var(--text-secondary);
   border-bottom: 2px solid var(--border);
+  white-space: nowrap;
+}
+
+.th-code, .td-code {
+  text-align: left;
+}
+
+.th-level, .td-level {
+  width: 90px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.th-trend, .td-trend {
+  width: 100px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.th-evals, .td-evals {
+  width: 130px;
+  text-align: right;
+  white-space: nowrap;
 }
 
 .sbar-mastery-row {
@@ -493,12 +516,13 @@ const visibleExpectations = computed(() => {
 .code-title {
   font-weight: 700;
   color: var(--text);
+  white-space: nowrap;
 }
 
 .code-desc {
   font-size: 11px;
   color: var(--text-secondary);
-  max-width: 340px;
+  max-width: 260px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -512,6 +536,7 @@ const visibleExpectations = computed(() => {
   font-weight: 600;
   padding: 2px 8px;
   border-radius: 6px;
+  white-space: nowrap;
 }
 
 .trend-badge--up {
@@ -533,16 +558,19 @@ const visibleExpectations = computed(() => {
 }
 
 .evals-count-tag {
-  display: flex;
+  display: inline-flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 6px;
   color: var(--primary);
   font-weight: 600;
   font-size: 12px;
+  white-space: nowrap;
 }
 
 .chevron-icon {
   transition: transform 0.2s ease;
+  flex-shrink: 0;
 }
 
 .chevron-icon--open {

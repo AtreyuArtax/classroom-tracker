@@ -1,16 +1,16 @@
 # Graph Report - classroom-tracker  (2026-08-28)
 
 ## Corpus Check
-- 219 files · ~424,785 words
+- 220 files · ~425,904 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1255 nodes · 2205 edges · 115 communities (102 shown, 13 thin omitted)
+- 1256 nodes · 2205 edges · 116 communities (103 shown, 13 thin omitted)
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 4 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `cdb67ce6`
+- Built from commit: `f07b7199`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -110,7 +110,7 @@
 ## Import Cycles
 - None detected.
 
-## Communities (115 total, 13 thin omitted)
+## Communities (116 total, 13 thin omitted)
 
 ### Community 0 - "Community 0"
 Cohesion: 0.05
@@ -118,7 +118,7 @@ Nodes (23): archivedRoster, checkResize(), confirmResize(), dismissedSuggestions
 
 ### Community 1 - "Community 1"
 Cohesion: 0.07
-Nodes (35): getUnitGradeLevel(), addAssessment(), assessmentSortOrder, assessmentStats, assessmentTypes, availableCourseFilters, availableGradeFilters, availableNaturalSubCohorts (+27 more)
+Nodes (37): getUnitGradeLevel(), addAssessment(), adjustStudentGrade(), assessmentSortOrder, assessmentStats, assessmentTypes, availableCourseFilters, availableGradeFilters (+29 more)
 
 ### Community 2 - "Community 2"
 Cohesion: 0.07
@@ -134,7 +134,7 @@ Nodes (27): BaseHTTPRequestHandler, Path, consume_scan(), _create_tray_icon_imag
 
 ### Community 5 - "Community 5"
 Cohesion: 0.07
-Nodes (27): addRoute(), cacheDonePromiseForTransaction(), CacheFirst, cacheMatchIgnoreParams(), cacheWillUpdate(), canConstructResponseFromBodyStream(), copyResponse(), Deferred (+19 more)
+Nodes (19): addRoute(), CacheFirst, cacheMatchIgnoreParams(), cacheWillUpdate(), canConstructResponseFromBodyStream(), copyResponse(), Deferred, executeQuotaErrorCallbacks() (+11 more)
 
 ### Community 6 - "Community 6"
 Cohesion: 0.17
@@ -153,8 +153,8 @@ Cohesion: 0.09
 Nodes (22): { activeClass, teacherName, init }, auditMsg, auditReport, backupMsg, { confirm, alert }, fixInvalidCategories(), fixMissingIds(), fixOrphans() (+14 more)
 
 ### Community 10 - "Community 10"
-Cohesion: 0.26
-Nodes (16): adjustStudentGrade(), classGrades, clearGrade(), enqueueDBSave(), enterGrade(), enterGradeSBAR(), enterGradeSBARBulk(), markExcluded() (+8 more)
+Cohesion: 0.34
+Nodes (13): clearGrade(), enqueueDBSave(), enterGrade(), enterGradeSBAR(), enterGradeSBARBulk(), markExcluded(), markMissing(), refreshSingleAssessmentStats() (+5 more)
 
 ### Community 11 - "Community 11"
 Cohesion: 0.11
@@ -173,8 +173,8 @@ Cohesion: 0.05
 Nodes (34): filteredMilestones, exportGradebookToExcel(), props, allCombinedWork, allDossierAssessments, attendanceStats, behaviorCodesMap, currentStudentObj (+26 more)
 
 ### Community 15 - "Community 15"
-Cohesion: 0.21
-Nodes (4): get(), getMethod(), has(), Router
+Cohesion: 0.13
+Nodes (12): cacheDonePromiseForTransaction(), get(), getCursorAdvanceMethods(), getIdbProxyableTypes(), getMethod(), has(), openDB(), promisifyRequest() (+4 more)
 
 ### Community 16 - "Community 16"
 Cohesion: 0.17
@@ -217,8 +217,8 @@ Cohesion: 0.25
 Nodes (7): list_raw_input_devices(), list_serial_ports(), find_rfid.py — RFID Scanner Diagnostic Utility =================================, On Windows, use ctypes to enumerate Raw Input devices and print keyboard paths., Print all available serial ports on this machine., Listen for rapid keyboard bursts using pynput.     When a burst of ≥6 characters, sniff_keyboard_device()
 
 ### Community 28 - "Community 28"
-Cohesion: 0.16
-Nodes (9): close(), emit, props, useClassroom(), globalMilestones, isAssessmentInSubCohort(), saveStudentGradebookNote(), useStudentDossier() (+1 more)
+Cohesion: 0.15
+Nodes (10): close(), emit, props, useClassroom(), classGrades, globalMilestones, isAssessmentInSubCohort(), saveStudentGradebookNote() (+2 more)
 
 ### Community 29 - "Community 29"
 Cohesion: 0.33
@@ -356,10 +356,10 @@ Nodes (4): saveLearningSkillsRecord(), clearStudentRating(), createEmptySkills()
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `getDB()` connect `Community 23` to `Community 0`, `Community 2`, `Community 3`, `Community 35`, `Community 5`, `Community 103`, `Community 8`, `Community 109`, `Community 112`, `Community 18`, `Community 21`?**
-  _High betweenness centrality (0.187) - this node is a cross-community bridge._
-- **Why does `openDB()` connect `Community 5` to `Community 94`, `Community 23`?**
-  _High betweenness centrality (0.114) - this node is a cross-community bridge._
+- **Why does `getDB()` connect `Community 23` to `Community 0`, `Community 2`, `Community 3`, `Community 35`, `Community 103`, `Community 8`, `Community 109`, `Community 15`, `Community 112`, `Community 18`, `Community 21`?**
+  _High betweenness centrality (0.190) - this node is a cross-community bridge._
+- **Why does `openDB()` connect `Community 15` to `Community 5`, `Community 94`, `Community 23`?**
+  _High betweenness centrality (0.116) - this node is a cross-community bridge._
 - **Why does `importAllData()` connect `Community 35` to `Community 6`, `Community 23`?**
   _High betweenness centrality (0.028) - this node is a cross-community bridge._
 - **Are the 2 inferred relationships involving `loadGradebook()` (e.g. with `getGlobalMilestones()` and `getGradeBuckets()`) actually correct?**
@@ -369,4 +369,4 @@ _Questions this graph is uniquely positioned to answer:_
 - **Should `Community 0` be split into smaller, more focused modules?**
   _Cohesion score 0.05365853658536585 - nodes in this community are weakly interconnected._
 - **Should `Community 1` be split into smaller, more focused modules?**
-  _Cohesion score 0.07152496626180836 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.06951219512195123 - nodes in this community are weakly interconnected._

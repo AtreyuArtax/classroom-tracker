@@ -57,135 +57,146 @@
       </div>
     </div>
 
-    <!-- SBAR Mode Layout -->
+    <!-- SBAR Mode Layout (Split-View Layout: Evidence & Tasks on Left, SBAR Analytics Rail on Right) -->
     <template v-if="isSBARMode">
-      <SBARExpectationMasteryGrid 
-        :student-id="props.studentId" 
-        @select-assessment="onSelectAssessment" 
-      />
+      <div class="academics-split-layout">
+        <!-- Main Column: Expectation Mastery + Assessment Tasks -->
+        <div class="academics-split-main">
+          <SBARExpectationMasteryGrid 
+            :student-id="props.studentId" 
+            @select-assessment="onSelectAssessment" 
+          />
 
-      <!-- Master Unified Assessment Table (Full Width for SBAR) -->
-      <div class="academics-section">
-        <div class="academics-section__header">
-          <h3 class="academics-section__title" style="margin:0;">Assessments &amp; Tasks</h3>
-          
-          <div class="academics-header-actions">
-            <!-- Filter Chips -->
-            <div class="assessment-filter-chips">
-              <button 
-                class="chip-btn" 
-                :class="{ 'chip-btn--active': activeAssessmentFilter === 'all' }"
-                @click="activeAssessmentFilter = 'all'"
-              >
-                All ({{ combinedAssessments.length }})
-              </button>
+          <!-- Master Unified Assessment Table (SBAR) -->
+          <div class="academics-section academics-section--table">
+            <div class="academics-section__header">
+              <h3 class="academics-section__title" style="margin:0;">Assessments &amp; Tasks</h3>
+              
+              <div class="academics-header-actions">
+                <!-- Filter Chips -->
+                <div class="assessment-filter-chips">
+                  <button 
+                    class="chip-btn" 
+                    :class="{ 'chip-btn--active': activeAssessmentFilter === 'all' }"
+                    @click="activeAssessmentFilter = 'all'"
+                  >
+                    All ({{ combinedAssessments.length }})
+                  </button>
 
-              <button 
-                class="chip-btn" 
-                :class="{ 'chip-btn--active': activeAssessmentFilter === 'class' }"
-                @click="activeAssessmentFilter = 'class'"
-              >
-                Classwide ({{ classCount }})
-              </button>
+                  <button 
+                    class="chip-btn" 
+                    :class="{ 'chip-btn--active': activeAssessmentFilter === 'class' }"
+                    @click="activeAssessmentFilter = 'class'"
+                  >
+                    Classwide ({{ classCount }})
+                  </button>
 
-              <button 
-                v-if="individualCount > 0"
-                class="chip-btn chip-btn--purple" 
-                :class="{ 'chip-btn--active': activeAssessmentFilter === 'individual' }"
-                @click="activeAssessmentFilter = 'individual'"
-              >
-                👤 Student Tasks ({{ individualCount }})
-              </button>
+                  <button 
+                    v-if="individualCount > 0"
+                    class="chip-btn chip-btn--purple" 
+                    :class="{ 'chip-btn--active': activeAssessmentFilter === 'individual' }"
+                    @click="activeAssessmentFilter = 'individual'"
+                  >
+                    👤 Student Tasks ({{ individualCount }})
+                  </button>
 
-              <button 
-                v-if="missingCount > 0"
-                class="chip-btn chip-btn--danger" 
-                :class="{ 'chip-btn--active': activeAssessmentFilter === 'missing' }"
-                @click="activeAssessmentFilter = 'missing'"
-              >
-                <AlertTriangle :size="12" style="display: inline-block; vertical-align: -1px; margin-right: 2px;" /> Missing ({{ missingCount }})
-              </button>
+                  <button 
+                    v-if="missingCount > 0"
+                    class="chip-btn chip-btn--danger" 
+                    :class="{ 'chip-btn--active': activeAssessmentFilter === 'missing' }"
+                    @click="activeAssessmentFilter = 'missing'"
+                  >
+                    <AlertTriangle :size="12" style="display: inline-block; vertical-align: -1px; margin-right: 2px;" /> Missing ({{ missingCount }})
+                  </button>
 
-              <button 
-                v-if="failingCount > 0"
-                class="chip-btn chip-btn--warning" 
-                :class="{ 'chip-btn--active': activeAssessmentFilter === 'failing' }"
-                @click="activeAssessmentFilter = 'failing'"
-              >
-                <span class="status-dot status-dot--danger" /> Level 1- / R ({{ failingCount }})
-              </button>
+                  <button 
+                    v-if="failingCount > 0"
+                    class="chip-btn chip-btn--warning" 
+                    :class="{ 'chip-btn--active': activeAssessmentFilter === 'failing' }"
+                    @click="activeAssessmentFilter = 'failing'"
+                  >
+                    <span class="status-dot status-dot--danger" /> Level 1- / R ({{ failingCount }})
+                  </button>
+                </div>
+
+                <!-- + Add Task Button -->
+                <button class="btn-add-individual" @click="openAddAssessment('individual', props.studentId)">
+                  <Plus :size="13" /> Add Task
+                </button>
+              </div>
             </div>
 
-            <!-- + Add Task Button -->
-            <button class="btn-add-individual" @click="openAddAssessment('individual', props.studentId)">
-              <Plus :size="13" /> Add Task
-            </button>
+            <div class="academics-table-wrapper">
+              <table class="academics-table">
+                <thead>
+                  <tr>
+                    <th class="th-date">Date</th>
+                    <th class="th-name">Assessment</th>
+                    <th class="th-type">Type</th>
+                    <th class="th-score">Level</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="a in filteredMasterAssessments" :key="a.assessmentId" @contextmenu.prevent="onContextMenu($event, a.assessmentId)">
+                    <td class="td-date">{{ formatLocalDisplay(a.date) }}</td>
+                    <td class="td-name">
+                      <span 
+                        class="clickable-sbar-name" 
+                        @click="onSelectAssessment(a.assessmentId)"
+                        title="Click to open SBAR evaluation matrix"
+                      >{{ a.name }}</span>
+                      <span v-if="a.target === 'individual' || a.isIndividual" class="badge-student-task" title="Individual student task"><User :size="11" style="display: inline-block; vertical-align: -1px; margin-right: 2px;" /> Student Task</span>
+                      <span v-else-if="getImpactLevel(a.weight).id === 'high'" class="badge-high-weight" title="High grade weight item"><Flame :size="11" style="display: inline-block; vertical-align: -1px; margin-right: 2px;" /> High Weight</span>
+                    </td>
+                    <td class="td-type"><span class="badge" :class="'badge--' + a.assessmentType">{{ a.assessmentType }}</span></td>
+                    <td class="td-score">
+                      <div class="score-cell-wrapper">
+                        <div v-if="a.missing" class="score-missing" @click="onSelectAssessment(a.assessmentId)">
+                          <span class="text-danger">Missing</span>
+                          <span v-if="a.wasAbsent" class="badge-red-a" title="Absent on this date">A</span>
+                        </div>
+                        <span v-else-if="a.excluded" class="text-muted" @click="onSelectAssessment(a.assessmentId)">EX</span>
+                        <span v-else class="score-value" @click="onSelectAssessment(a.assessmentId)">
+                          <span 
+                            v-if="a.score !== null" 
+                            class="sbar-level-badge sbar-level-badge--clickable" 
+                            :style="{ background: getSBARLevelBadge(a.score).color, color: 'white', padding: '2px 8px', borderRadius: '12px', fontWeight: 'bold', cursor: 'pointer' }"
+                            title="Click to open SBAR evaluation matrix"
+                          >
+                            {{ getSBARLevelBadge(a.score).level }}
+                          </span>
+                          <span v-else class="text-muted" style="cursor: pointer;" title="Click to open SBAR evaluation matrix">—</span>
+                        </span>
+                        
+                        <!-- Attempts / Comment Indicators -->
+                        <div class="cell-indicators" v-if="a.attempts?.length >= 1">
+                          <div 
+                            v-if="a.attempts?.length > 1"
+                            class="attempts-dot"
+                            @click.stop="openAttempts($event, a.assessmentId)"
+                            title="Multiple attempts - click to view history"
+                          ></div>
+                          <span
+                            class="comment-dot"
+                            :class="{ 'comment-dot--active': a.attempts?.some(x => x.comment?.trim()) }"
+                            @click.stop="openAttempts($event, a.assessmentId)"
+                            :title="a.attempts?.some(x => x.comment?.trim()) ? 'Has note — click to edit' : 'Add a note'"
+                          ><NotebookPen :size="12" /></span>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
 
-        <div class="academics-table-wrapper">
-          <table class="academics-table">
-            <thead>
-              <tr>
-                <th class="th-date">Date</th>
-                <th class="th-name">Assessment</th>
-                <th class="th-type">Type</th>
-                <th class="th-score">Level</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="a in filteredMasterAssessments" :key="a.assessmentId" @contextmenu.prevent="onContextMenu($event, a.assessmentId)">
-                <td class="td-date">{{ formatLocalDisplay(a.date) }}</td>
-                <td class="td-name">
-                  <span 
-                    class="clickable-sbar-name" 
-                    @click="onSelectAssessment(a.assessmentId)"
-                    title="Click to open SBAR evaluation matrix"
-                  >{{ a.name }}</span>
-                  <span v-if="a.target === 'individual' || a.isIndividual" class="badge-student-task" title="Individual student task"><User :size="11" style="display: inline-block; vertical-align: -1px; margin-right: 2px;" /> Student Task</span>
-                  <span v-else-if="getImpactLevel(a.weight).id === 'high'" class="badge-high-weight" title="High grade weight item"><Flame :size="11" style="display: inline-block; vertical-align: -1px; margin-right: 2px;" /> High Weight</span>
-                </td>
-                <td class="td-type"><span class="badge" :class="'badge--' + a.assessmentType">{{ a.assessmentType }}</span></td>
-                <td class="td-score">
-                  <div class="score-cell-wrapper">
-                    <div v-if="a.missing" class="score-missing" @click="onSelectAssessment(a.assessmentId)">
-                      <span class="text-danger">Missing</span>
-                      <span v-if="a.wasAbsent" class="badge-red-a" title="Absent on this date">A</span>
-                    </div>
-                    <span v-else-if="a.excluded" class="text-muted" @click="onSelectAssessment(a.assessmentId)">EX</span>
-                    <span v-else class="score-value" @click="onSelectAssessment(a.assessmentId)">
-                      <span 
-                        v-if="a.score !== null" 
-                        class="sbar-level-badge sbar-level-badge--clickable" 
-                        :style="{ background: getSBARLevelBadge(a.score).color, color: 'white', padding: '2px 8px', borderRadius: '12px', fontWeight: 'bold', cursor: 'pointer' }"
-                        title="Click to open SBAR evaluation matrix"
-                      >
-                        {{ getSBARLevelBadge(a.score).level }}
-                      </span>
-                      <span v-else class="text-muted" style="cursor: pointer;" title="Click to open SBAR evaluation matrix">—</span>
-                    </span>
-                    
-                    <!-- Attempts / Comment Indicators -->
-                    <div class="cell-indicators" v-if="a.attempts?.length >= 1">
-                      <div 
-                        v-if="a.attempts?.length > 1"
-                        class="attempts-dot"
-                        @click.stop="openAttempts($event, a.assessmentId)"
-                        title="Multiple attempts - click to view history"
-                      ></div>
-                      <span
-                        class="comment-dot"
-                        :class="{ 'comment-dot--active': a.attempts?.some(x => x.comment?.trim()) }"
-                        @click.stop="openAttempts($event, a.assessmentId)"
-                        :title="a.attempts?.some(x => x.comment?.trim()) ? 'Has note — click to edit' : 'Add a note'"
-                      ><NotebookPen :size="12" /></span>
-                    </div>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        <!-- Rail Column: SBAR Mastery Breakdown & Triangulation -->
+        <aside class="academics-split-rail">
+          <DossierSBARMasteryBreakdown :student-id="props.studentId" />
+          <DossierEvidenceMix :mix="evidenceMix" />
+        </aside>
       </div>
     </template>
 
@@ -546,6 +557,7 @@ import SubjectIcon from '../SubjectIcon.vue'
 import DossierCategoryGrid from './DossierCategoryGrid.vue'
 import DossierEvidenceMix from './DossierEvidenceMix.vue'
 import SBARExpectationMasteryGrid from './SBARExpectationMasteryGrid.vue'
+import DossierSBARMasteryBreakdown from './DossierSBARMasteryBreakdown.vue'
 
 const homeroomSubjects = computed(() => {
   if (!activeClassRecord.value || activeClassRecord.value.classType !== 'elementary') return []

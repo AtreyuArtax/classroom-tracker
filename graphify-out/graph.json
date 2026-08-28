@@ -260,7 +260,7 @@
       "source_location": "L1304",
       "_origin": "ast",
       "id": "dev_dist_workbox_ca84f546_getidbproxyabletypes",
-      "community": 5,
+      "community": 15,
       "norm_label": "getidbproxyabletypes()"
     },
     {
@@ -270,7 +270,7 @@
       "source_location": "L1308",
       "_origin": "ast",
       "id": "dev_dist_workbox_ca84f546_getcursoradvancemethods",
-      "community": 5,
+      "community": 15,
       "norm_label": "getcursoradvancemethods()"
     },
     {
@@ -280,7 +280,7 @@
       "source_location": "L1316",
       "_origin": "ast",
       "id": "dev_dist_workbox_ca84f546_promisifyrequest",
-      "community": 5,
+      "community": 15,
       "norm_label": "promisifyrequest()"
     },
     {
@@ -290,7 +290,7 @@
       "source_location": "L1346",
       "_origin": "ast",
       "id": "dev_dist_workbox_ca84f546_cachedonepromisefortransaction",
-      "community": 5,
+      "community": 15,
       "norm_label": "cachedonepromisefortransaction()"
     },
     {
@@ -340,7 +340,7 @@
       "source_location": "L1401",
       "_origin": "ast",
       "id": "dev_dist_workbox_ca84f546_wrapfunction",
-      "community": 5,
+      "community": 15,
       "norm_label": "wrapfunction()"
     },
     {
@@ -350,7 +350,7 @@
       "source_location": "L1431",
       "_origin": "ast",
       "id": "dev_dist_workbox_ca84f546_transformcachablevalue",
-      "community": 5,
+      "community": 15,
       "norm_label": "transformcachablevalue()"
     },
     {
@@ -360,7 +360,7 @@
       "source_location": "L1440",
       "_origin": "ast",
       "id": "dev_dist_workbox_ca84f546_wrap",
-      "community": 5,
+      "community": 15,
       "norm_label": "wrap()"
     },
     {
@@ -370,7 +370,7 @@
       "source_location": "L1465",
       "_origin": "ast",
       "id": "dev_dist_workbox_ca84f546_opendb",
-      "community": 5,
+      "community": 15,
       "norm_label": "opendb()"
     },
     {
@@ -3594,6 +3594,16 @@
       "norm_label": "if()"
     },
     {
+      "label": "DossierSBARMasteryBreakdown.vue",
+      "file_type": "code",
+      "source_file": "src/components/dossier/DossierSBARMasteryBreakdown.vue",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "dossier_dossiersbarmasterybreakdown",
+      "community": 100,
+      "norm_label": "dossiersbarmasterybreakdown.vue"
+    },
+    {
       "label": "ProgressReport.vue",
       "file_type": "code",
       "source_file": "src/components/dossier/ProgressReport.vue",
@@ -4027,7 +4037,7 @@
       "label": "return()",
       "file_type": "code",
       "source_file": "src/components/dossier/StudentAcademicsTab.vue",
-      "source_location": "L588",
+      "source_location": "L600",
       "_origin": "ast",
       "id": "dossier_studentacademicstab_return",
       "community": 84,
@@ -7740,7 +7750,7 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "composables_usegradebook_classgrades",
-      "community": 10,
+      "community": 28,
       "norm_label": "classgrades"
     },
     {
@@ -8410,7 +8420,7 @@
       "source_location": "L1407",
       "_origin": "ast",
       "id": "composables_usegradebook_adjuststudentgrade",
-      "community": 10,
+      "community": 1,
       "norm_label": "adjuststudentgrade()"
     },
     {
@@ -8420,7 +8430,7 @@
       "source_location": "L1463",
       "_origin": "ast",
       "id": "composables_usegradebook_undostudentgradeadjustment",
-      "community": 10,
+      "community": 1,
       "norm_label": "undostudentgradeadjustment()"
     },
     {
@@ -35705,5 +35715,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "cdb67ce6785d38faafffffbd7f5a4e2862cb50e1"
+  "built_at_commit": "f07b71999afd7a916d5425c5452be82c3f7706d1"
 }

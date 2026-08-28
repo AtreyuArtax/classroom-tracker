@@ -395,8 +395,8 @@
     "semantic_hash": ""
   },
   "src/components/dossier/StudentAcademicsTab.vue": {
-    "mtime": 1787771139.6775491,
-    "ast_hash": "d69fc573abd8d1226a997a415f5a4b0b",
+    "mtime": 1787911983.274278,
+    "ast_hash": "acc69566289ef6b54e747d59dabaede0",
     "semantic_hash": ""
   },
   "src/components/setup/AssessmentFrameworkSettings.vue": {
@@ -595,8 +595,8 @@
     "semantic_hash": ""
   },
   "src/components/dossier/SBARExpectationMasteryGrid.vue": {
-    "mtime": 1787911692.1192787,
-    "ast_hash": "fa0205ed5eb1f488db4cbbb9ace0c605",
+    "mtime": 1787912104.8743765,
+    "ast_hash": "fb7f44d8772663933f3d7e2abe8b1636",
     "semantic_hash": ""
   },
   "src/components/grades/GradesAnalyticsPanelSBAR.vue": {
@@ -1092,6 +1092,11 @@
   "src/test_communication_log.js": {
     "mtime": 1787910930.0882435,
     "ast_hash": "1846632697f81661146e4e9f0b7d8a98",
+    "semantic_hash": ""
+  },
+  "src/components/dossier/DossierSBARMasteryBreakdown.vue": {
+    "mtime": 1787911953.446366,
+    "ast_hash": "ef47977307bc2a46747ebc1d24fcd9b1",
     "semantic_hash": ""
   }
 }
