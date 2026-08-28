@@ -187,7 +187,7 @@
                   v-model="localGranularity[sub.subjectId]" 
                   class="acc-select-granularity" 
                   title="Select Expectation Level to Import"
-                  style="font-size: 0.8rem; padding: 4px 8px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-surface); color: var(--text-primary);"
+                  style="font-size: 0.8rem; padding: 4px 8px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface); color: var(--text);"
                 >
                   <option value="all">Specific Expectations</option>
                   <option value="overall">Overall Expectations</option>
@@ -203,7 +203,7 @@
                   <button 
                     type="button" 
                     class="btn-auto-import-preset"
-                    style="background: transparent; border: 1px solid var(--border-color); color: var(--text-secondary); padding: 2px 8px; font-size: 0.75rem;"
+                    style="background: transparent; border: 1px solid var(--border); color: var(--text-secondary); padding: 2px 8px; font-size: 0.75rem;"
                     :disabled="importingSubjectId === sub.subjectId"
                     @click="autoImportPresets(sub, localModifiedSubjectGrades[sub.subjectId])"
                     title="Re-import presets with selected granularity"

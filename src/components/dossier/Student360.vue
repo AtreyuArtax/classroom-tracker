@@ -316,7 +316,10 @@
       <section v-if="activeTab === 'communication'" class="student-360__pane">
         <DossierCommunicationLog 
           :events="communicationEvents" 
+          :student-id="props.studentId"
+          :student-name="student?.firstName ? `${student.firstName} ${student.lastName}` : ''"
           @delete="handleDeleteHistoryItem"
+          @log-contact="handleLogCommunicationEvent"
         />
       </section>
 
@@ -958,6 +961,12 @@ async function handleDeleteHistoryItem(eventId) {
   if (await confirm('Are you sure you want to delete this entry? This will also update student statistics.', 'Delete Entry', { danger: true })) {
     await removeEvent(eventId)
   }
+}
+
+async function handleLogCommunicationEvent({ note, timestamp }) {
+  if (!props.studentId || !note) return
+  await logStandardEvent(props.studentId, 'pc', note, { timestamp })
+  await fetchAllTimeHistory()
 }
 
 async function saveGeneralNote(note) {

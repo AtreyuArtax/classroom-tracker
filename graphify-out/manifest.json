@@ -80,9 +80,9 @@
     "semantic_hash": ""
   },
   "src/components/EventNoteModal.vue": {
-    "mtime": 1776472682.865695,
-    "ast_hash": "569a8f20feb1fb562b240f3b08fd2fb7",
-    "semantic_hash": "569a8f20feb1fb562b240f3b08fd2fb7"
+    "mtime": 1787910911.7756817,
+    "ast_hash": "d60f9a959850867f0eb95dfd0e7157f0",
+    "semantic_hash": ""
   },
   "src/components/GradeTrendChart.vue": {
     "mtime": 1780947518.422175,
@@ -160,9 +160,9 @@
     "semantic_hash": ""
   },
   "src/components/dossier/DossierCommunicationLog.vue": {
-    "mtime": 1776472682.866882,
-    "ast_hash": "3142ae7013bd1757d768bb6cb348873a",
-    "semantic_hash": "3142ae7013bd1757d768bb6cb348873a"
+    "mtime": 1787911634.4791784,
+    "ast_hash": "c48f6b83d7671295f123915a72a82c1c",
+    "semantic_hash": ""
   },
   "src/components/dossier/DossierEvidenceMix.vue": {
     "mtime": 1787771353.4259136,
@@ -180,8 +180,8 @@
     "semantic_hash": ""
   },
   "src/components/dossier/Student360.vue": {
-    "mtime": 1787863752.4963071,
-    "ast_hash": "b051400614d0971d62e17f30381d09bf",
+    "mtime": 1787910030.1727598,
+    "ast_hash": "bf1007dc4d649cdb6eb3a7fd6ab278a9",
     "semantic_hash": ""
   },
   "src/components/dossier/Student360Header.vue": {
@@ -485,8 +485,8 @@
     "semantic_hash": ""
   },
   "src/components/dossier/Student360ProfileTab.vue": {
-    "mtime": 1786499037.066305,
-    "ast_hash": "b45dc041d13c34f5c35c0d7773cdd091",
+    "mtime": 1787911709.7428083,
+    "ast_hash": "7df8be1584cf1b54861ea18c43c166f7",
     "semantic_hash": ""
   },
   "src/components/reports/ReportsBatchPrintModal.vue": {
@@ -595,8 +595,8 @@
     "semantic_hash": ""
   },
   "src/components/dossier/SBARExpectationMasteryGrid.vue": {
-    "mtime": 1787684343.0677457,
-    "ast_hash": "5e9e226352afd34d893942000c77d5e3",
+    "mtime": 1787911692.1192787,
+    "ast_hash": "fa0205ed5eb1f488db4cbbb9ace0c605",
     "semantic_hash": ""
   },
   "src/components/grades/GradesAnalyticsPanelSBAR.vue": {
@@ -1087,6 +1087,11 @@
   "src/test_sbar_full_lifecycle.js": {
     "mtime": 1787909517.129229,
     "ast_hash": "d8f1eab1c28cff691f93c5e3e172dacb",
+    "semantic_hash": ""
+  },
+  "src/test_communication_log.js": {
+    "mtime": 1787910930.0882435,
+    "ast_hash": "1846632697f81661146e4e9f0b7d8a98",
     "semantic_hash": ""
   }
 }

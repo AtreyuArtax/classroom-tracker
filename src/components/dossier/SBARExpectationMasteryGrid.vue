@@ -320,9 +320,9 @@ const visibleExpectations = computed(() => {
 
 <style scoped>
 .sbar-expectation-mastery {
-  background: var(--surface-color, #ffffff);
-  border: 1px solid var(--border-color, #e2e8f0);
-  border-radius: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md, 12px);
   padding: 16px 20px;
   margin-bottom: 24px;
 }
@@ -345,24 +345,25 @@ const visibleExpectations = computed(() => {
   gap: 8px;
   font-size: 14px;
   font-weight: 700;
-  color: var(--text-color, #1e293b);
+  color: var(--text);
   letter-spacing: 0.5px;
   margin: 0;
 }
 
 .sbar-mastery-subtitle {
   font-size: 12px;
-  color: var(--text-secondary, #64748b);
+  color: var(--text-secondary);
   margin: 2px 0 0 0;
 }
 
 .sbar-mastery-badge-count {
   font-size: 11px;
-  font-weight: 600;
-  background: #e0f2fe;
-  color: #0369a1;
+  font-weight: 700;
+  background: rgba(59, 130, 246, 0.12);
+  color: var(--primary);
+  border: 1px solid rgba(59, 130, 246, 0.25);
   padding: 4px 10px;
-  border-radius: 12px;
+  border-radius: var(--radius-full, 12px);
 }
 
 .sbar-mastery-empty {
@@ -370,9 +371,10 @@ const visibleExpectations = computed(() => {
   align-items: center;
   gap: 10px;
   padding: 20px;
-  background: #f8fafc;
-  border-radius: 8px;
-  color: var(--text-secondary, #64748b);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md, 8px);
+  color: var(--text-secondary);
   font-size: 13px;
 }
 
@@ -387,7 +389,6 @@ const visibleExpectations = computed(() => {
   position: relative;
   flex: 1;
   max-width: 320px;
-
   display: flex;
   align-items: center;
 }
@@ -395,7 +396,7 @@ const visibleExpectations = computed(() => {
 .search-icon {
   position: absolute;
   left: 10px;
-  color: var(--text-secondary, #94a3b8);
+  color: var(--text-secondary);
   pointer-events: none;
 }
 
@@ -403,16 +404,16 @@ const visibleExpectations = computed(() => {
   width: 100%;
   padding: 6px 12px 6px 30px;
   font-size: 12px;
-  border: 1px solid var(--border-color, #cbd5e1);
-  border-radius: 6px;
-  background: var(--input-bg, #ffffff);
-  color: var(--text-color, #0f172a);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm, 6px);
+  background: var(--bg-secondary);
+  color: var(--text);
   outline: none;
   transition: border-color 0.15s ease;
 }
 
 .sbar-search-input:focus {
-  border-color: var(--primary-color, #2563eb);
+  border-color: var(--primary);
 }
 
 .sbar-strand-filter {
@@ -420,20 +421,20 @@ const visibleExpectations = computed(() => {
   align-items: center;
   gap: 6px;
   font-size: 12px;
-  color: var(--text-secondary, #64748b);
+  color: var(--text-secondary);
 }
 
 .filter-icon {
-  color: var(--text-secondary, #64748b);
+  color: var(--text-secondary);
 }
 
 .sbar-strand-select {
   padding: 5px 8px;
   font-size: 12px;
-  border: 1px solid var(--border-color, #cbd5e1);
-  border-radius: 6px;
-  background: var(--input-bg, #ffffff);
-  color: var(--text-color, #0f172a);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm, 6px);
+  background: var(--bg-secondary);
+  color: var(--text);
   outline: none;
   cursor: pointer;
 }
@@ -442,17 +443,18 @@ const visibleExpectations = computed(() => {
   padding: 16px;
   text-align: center;
   font-size: 12px;
-  color: var(--text-secondary, #64748b);
-  background: #f8fafc;
-  border-radius: 8px;
+  color: var(--text-secondary);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md, 8px);
 }
 
 .sbar-mastery-table-wrapper {
   overflow-x: auto;
   max-height: 480px;
   overflow-y: auto;
-  border: 1px solid var(--border-color, #f1f5f9);
-  border-radius: 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md, 8px);
 }
 
 .sbar-mastery-table {
@@ -464,14 +466,14 @@ const visibleExpectations = computed(() => {
 .sbar-mastery-table th {
   position: sticky;
   top: 0;
-  background: #f8fafc;
+  background: var(--bg-secondary);
   z-index: 2;
   text-align: left;
   padding: 8px 12px;
   font-size: 11px;
   font-weight: 700;
-  color: var(--text-secondary, #64748b);
-  border-bottom: 2px solid var(--border-color, #e2e8f0);
+  color: var(--text-secondary);
+  border-bottom: 2px solid var(--border);
 }
 
 .sbar-mastery-row {
@@ -480,22 +482,22 @@ const visibleExpectations = computed(() => {
 }
 
 .sbar-mastery-row:hover {
-  background: #f8fafc;
+  background: var(--bg-hover);
 }
 
 .sbar-mastery-row td {
   padding: 10px 12px;
-  border-bottom: 1px solid var(--border-color, #f1f5f9);
+  border-bottom: 1px solid var(--border);
 }
 
 .code-title {
   font-weight: 700;
-  color: var(--text-color, #0f172a);
+  color: var(--text);
 }
 
 .code-desc {
   font-size: 11px;
-  color: var(--text-secondary, #64748b);
+  color: var(--text-secondary);
   max-width: 340px;
   white-space: nowrap;
   overflow: hidden;
@@ -513,25 +515,28 @@ const visibleExpectations = computed(() => {
 }
 
 .trend-badge--up {
-  background: #dcfce7;
-  color: #15803d;
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.3);
 }
 
 .trend-badge--down {
-  background: #fee2e2;
-  color: #b91c1c;
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.3);
 }
 
 .trend-badge--steady {
-  background: #f1f5f9;
-  color: #475569;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
 }
 
 .evals-count-tag {
   display: flex;
   align-items: center;
   gap: 6px;
-  color: var(--primary-color, #2563eb);
+  color: var(--primary);
   font-weight: 600;
   font-size: 12px;
 }
@@ -545,9 +550,9 @@ const visibleExpectations = computed(() => {
 }
 
 .sbar-mastery-detail-row td {
-  background: #f8fafc;
+  background: var(--bg-secondary);
   padding: 12px 16px;
-  border-bottom: 1px solid var(--border-color, #e2e8f0);
+  border-bottom: 1px solid var(--border);
 }
 
 .evals-detail-container {
@@ -559,7 +564,7 @@ const visibleExpectations = computed(() => {
 .evals-detail-title {
   font-size: 11px;
   font-weight: 700;
-  color: var(--text-secondary, #64748b);
+  color: var(--text-secondary);
   text-transform: uppercase;
 }
 
@@ -573,28 +578,29 @@ const visibleExpectations = computed(() => {
   display: flex;
   align-items: center;
   gap: 6px;
-  background: #ffffff;
-  border: 1px solid var(--border-color, #cbd5e1);
+  background: var(--surface);
+  border: 1px solid var(--border);
   padding: 4px 10px;
-  border-radius: 8px;
+  border-radius: var(--radius-sm, 8px);
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
 .eval-item-card:hover {
-  border-color: var(--primary-color, #2563eb);
-  box-shadow: 0 2px 4px rgba(37, 99, 235, 0.1);
+  border-color: var(--primary);
+  background: var(--bg-hover);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .eval-name {
   font-weight: 600;
   font-size: 12px;
-  color: var(--text-color, #1e293b);
+  color: var(--text);
 }
 
 .eval-date {
   font-size: 11px;
-  color: var(--text-secondary, #64748b);
+  color: var(--text-secondary);
 }
 
 .sbar-mastery-footer {
@@ -610,16 +616,17 @@ const visibleExpectations = computed(() => {
   padding: 6px 14px;
   font-size: 12px;
   font-weight: 600;
-  color: var(--primary-color, #2563eb);
-  background: #eff6ff;
-  border: 1px solid #bfdbfe;
-  border-radius: 8px;
+  color: var(--primary);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm, 8px);
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
 .sbar-show-more-btn:hover {
-  background: #dbeafe;
+  background: var(--bg-hover);
+  border-color: var(--primary);
 }
 </style>
 
