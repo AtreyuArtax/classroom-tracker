@@ -239,7 +239,7 @@
             <div class="analytics-card__header">
               <div class="card-title-group">
                 <BarChart2 :size="15" class="card-header-icon" />
-                <h3 class="analytics-card__title">Cohort Grade Distribution</h3>
+                <h3 class="analytics-card__title">Cohort Performance</h3>
               </div>
               <div class="toggle-pill-group toggle-pill-group--sm">
                 <button 

@@ -385,8 +385,8 @@
     "semantic_hash": ""
   },
   "src/components/GradesAnalyticsPanel.vue": {
-    "mtime": 1787963289.9075449,
-    "ast_hash": "7018d878e20a07d49fa0374c6ae5b76f",
+    "mtime": 1787966863.2494645,
+    "ast_hash": "f3acb822ca159dedb5b714d64e403680",
     "semantic_hash": ""
   },
   "src/components/GradesGrid.vue": {
@@ -600,8 +600,8 @@
     "semantic_hash": ""
   },
   "src/components/grades/GradesAnalyticsPanelSBAR.vue": {
-    "mtime": 1787684659.3949065,
-    "ast_hash": "1999c835775d745b2067862ec6aec7b3",
+    "mtime": 1787966859.039014,
+    "ast_hash": "cc9c1214fc866c4cc4722f2db872f32b",
     "semantic_hash": ""
   },
   "src/components/setup/ElementaryCsvImporter.vue": {
