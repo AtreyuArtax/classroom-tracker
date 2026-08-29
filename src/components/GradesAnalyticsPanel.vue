@@ -1,69 +1,73 @@
 <template>
   <div class="grades__analytics-panel">
     <!-- Analytics Header Controls -->
-    <div class="grades__analytics-header">
+    <header class="grades__analytics-header">
       <div class="header-title-group">
-        <h2 class="analytics-main-title">Class Analytics & Performance</h2>
-        <span class="analytics-subtitle-text">Statistical insights, evidence triangulation & outlier filtering</span>
+        <h2 class="analytics-main-title">Class Analytics &amp; Performance</h2>
+        <span class="analytics-subtitle-text">Statistical insights, category weighting &amp; evidence triangulation</span>
       </div>
 
-      <!-- Sub-Cohort Filter Pills (Split-Grade or Split-Section Classes) -->
-      <div v-if="availableSubCohorts.length > 1" class="grades__outlier-toggle" style="margin-right: 12px;">
-        <span class="grades__toggle-label">{{ activeClassRecord?.classType === 'elementary' ? 'Grade:' : 'Section:' }}</span>
-        <div class="grades__toggle-group">
-          <button 
-            v-for="subCohort in availableSubCohorts"
-            :key="subCohort"
-            class="grades__toggle-btn"
-            :class="{ 'grades__toggle-btn--active': activeSubCohortFilter === subCohort }"
-            @click="setActiveSubCohortFilter(subCohort)"
-          >
-            {{ subCohort === 'all' ? (activeClassRecord?.classType === 'elementary' ? 'All Grades' : 'All Sections') : subCohort }}
-          </button>
+      <div class="header-controls-group">
+        <!-- Sub-Cohort Filter Pills (Split-Grade or Split-Section Classes) -->
+        <div v-if="availableSubCohorts.length > 1" class="subcohort-toggle">
+          <span class="toggle-label">{{ activeClassRecord?.classType === 'elementary' ? 'Grade:' : 'Section:' }}</span>
+          <div class="toggle-pill-group">
+            <button 
+              v-for="subCohort in availableSubCohorts"
+              :key="subCohort"
+              class="toggle-pill"
+              :class="{ 'toggle-pill--active': activeSubCohortFilter === subCohort }"
+              @click="setActiveSubCohortFilter(subCohort)"
+            >
+              {{ subCohort === 'all' ? (activeClassRecord?.classType === 'elementary' ? 'All Grades' : 'All Sections') : subCohort }}
+            </button>
+          </div>
         </div>
-      </div>
 
-      <!-- Exclusion Filter Control Bar -->
-      <div class="grades__outlier-toggle">
-        <span class="grades__toggle-label">Exclusion Filter:</span>
-        <div class="grades__toggle-group">
-          <button 
-            class="grades__toggle-btn" 
-            :class="{ 'grades__toggle-btn--active': exclusionMode === 'none' }"
-            @click="setExclusionMode('none')"
-          >
-            Include All ({{ sortedRoster.length }})
-          </button>
-          <button 
-            class="grades__toggle-btn" 
-            :class="{ 'grades__toggle-btn--active': exclusionMode === 'fixed' }"
-            @click="setExclusionMode('fixed')"
-          >
-            <span v-if="exclusionMode !== 'fixed'">Below {{ fixedExclusionThreshold }}%</span>
-            <div v-else class="grades__threshold-editor">
-              Below <input 
-                type="number" 
-                v-model.number="fixedExclusionThreshold" 
-                @blur="onThresholdChange"
-                @keyup.enter="onThresholdChange"
-                class="grades__threshold-input"
-              />%
-            </div>
-          </button>
-          <button 
-            class="grades__toggle-btn" 
-            :class="{ 'grades__toggle-btn--active': exclusionMode === 'auto' }"
-            @click="setExclusionMode('auto')"
-          >
-            Auto Outliers
-          </button>
+        <!-- Exclusion Filter Control Bar -->
+        <div class="exclusion-toggle">
+          <span class="toggle-label">Exclusions:</span>
+          <div class="toggle-pill-group">
+            <button 
+              class="toggle-pill" 
+              :class="{ 'toggle-pill--active': exclusionMode === 'none' }"
+              @click="setExclusionMode('none')"
+            >
+              Include All ({{ sortedRoster.length }})
+            </button>
+            <button 
+              class="toggle-pill" 
+              :class="{ 'toggle-pill--active': exclusionMode === 'fixed' }"
+              @click="setExclusionMode('fixed')"
+            >
+              <span v-if="exclusionMode !== 'fixed'">Below {{ fixedExclusionThreshold }}%</span>
+              <div v-else class="threshold-editor" @click.stop>
+                Below <input 
+                  type="number" 
+                  v-model.number="fixedExclusionThreshold" 
+                  @blur="onThresholdChange"
+                  @keyup.enter="onThresholdChange"
+                  class="threshold-input"
+                  min="0"
+                  max="100"
+                />%
+              </div>
+            </button>
+            <button 
+              class="toggle-pill" 
+              :class="{ 'toggle-pill--active': exclusionMode === 'auto' }"
+              @click="setExclusionMode('auto')"
+            >
+              Auto Outliers
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+    </header>
 
     <!-- Active Exclusion Notice Banner -->
     <div v-if="exclusionMode !== 'none'" class="grades__outlier-notice" :title="excludedNames">
-      <AlertCircle :size="16" />
+      <AlertCircle :size="15" />
       <span><strong>Exclusion Active:</strong> {{ classAnalytics?.outlierCount || 0 }} {{ classAnalytics?.outlierCount === 1 ? 'student is' : 'students are' }} excluded from class calculations. ({{ excludedNames }})</span>
     </div>
 
@@ -71,7 +75,7 @@
     <div v-if="isWeightWarningVisible" 
       class="grades__weight-warning"
       :class="categoryWeightTotal > 100 ? 'grades__weight-warning--over' : 'grades__weight-warning--under'">
-      <AlertTriangle :size="16" />
+      <AlertTriangle :size="15" />
       <span>Audit Note: Category weights sum to {{ categoryWeightTotal }}%. Averages will be scaled, but 100% is recommended for audit clarity.</span>
     </div>
 
@@ -84,7 +88,7 @@
     <!-- Empty state -->
     <div v-if="!classAnalytics && !isCalculating" class="grades__empty-analytics">
       <div class="grades__empty-content">
-        <BarChart2 :size="64" class="grades__empty-icon" />
+        <BarChart2 :size="56" class="grades__empty-icon" />
         <h3>No analytics available yet.</h3>
         <p>Enter grades in the Grid view to see class performance data.</p>
         <button class="grades__btn-primary" @click="analyticsMode = false">
@@ -97,317 +101,464 @@
     <div v-if="classAnalytics" class="grades__analytics-scrollable">
       <div class="grades__analytics-sections">
         
-        <!-- Top 4 KPI Overview Cards -->
-        <div class="grades__analytics-row">
-          <div class="kpi-card">
-            <div class="kpi-card__header">
-              <span class="kpi-card__label">Class Average</span>
-              <div class="kpi-card__icon kpi-card__icon--blue"><BarChart3 :size="16" /></div>
+        <!-- 1. Executive Stat Ribbon (High-Density Metric Strip with Informative Tooltips) -->
+        <div class="stat-ribbon">
+          <!-- Stat 1: Class Average -->
+          <div 
+            class="stat-ribbon__item"
+            title="Class Average: The arithmetic mean of all included student grades across weighted categories."
+          >
+            <div class="stat-ribbon__label">
+              <BarChart3 :size="13" class="stat-icon stat-icon--blue" />
+              <span>Class Average</span>
             </div>
-            <div class="kpi-card__body">
-              <span class="kpi-card__value" :style="{ color: getHeatTextColor(overallClassAvg) }">
+            <div class="stat-ribbon__value-row">
+              <span class="stat-ribbon__num" :style="{ color: getHeatTextColor(overallClassAvg) }">
                 {{ formatGrade(overallClassAvg) }}
               </span>
-              <span class="kpi-card__subtext">{{ formatGrade(classAnalytics.mean) }} products only</span>
             </div>
           </div>
 
-          <div class="kpi-card">
-            <div class="kpi-card__header">
-              <span class="kpi-card__label">Weighted Median</span>
-              <div class="kpi-card__icon kpi-card__icon--green"><CheckCircle2 :size="16" /></div>
+          <!-- Stat 2: Class Median -->
+          <div 
+            class="stat-ribbon__item"
+            title="Class Median (50th Percentile): The exact midpoint mark—half the class scored above this, half scored below. Unlike the average, it is immune to extreme high or low grades."
+          >
+            <div class="stat-ribbon__label">
+              <CheckCircle2 :size="13" class="stat-icon stat-icon--green" />
+              <span>Class Median</span>
             </div>
-            <div class="kpi-card__body">
-              <span class="kpi-card__value" :style="{ color: getHeatTextColor(overallClassMedian) }">
+            <div class="stat-ribbon__value-row">
+              <span class="stat-ribbon__num" :style="{ color: getHeatTextColor(overallClassMedian) }">
                 {{ formatGrade(overallClassMedian) }}
               </span>
-              <span class="kpi-card__subtext">{{ formatGrade(classAnalytics.median) }} products only</span>
             </div>
           </div>
 
-          <div class="kpi-card">
-            <div class="kpi-card__header">
-              <span class="kpi-card__label">Most Consistent Tier</span>
-              <div class="kpi-card__icon kpi-card__icon--purple"><Target :size="16" /></div>
+          <!-- Stat 3: Spread (Standard Deviation & Range) -->
+          <div 
+            class="stat-ribbon__item"
+            :title="`Spread (Standard Deviation): ±${overallClassSD ? overallClassSD.toFixed(1) + '%' : '0%'} measures score clustering around the average. Full Score Range: ${formatGrade(scoreRange.lowest)} to ${formatGrade(scoreRange.highest)}.`"
+          >
+            <div class="stat-ribbon__label">
+              <TrendingUp :size="13" class="stat-icon stat-icon--amber" />
+              <span>Spread (±SD)</span>
             </div>
-            <div class="kpi-card__body">
-              <span v-if="classMostConsistent" class="kpi-card__value">{{ classMostConsistent.label }}</span>
-              <span v-else class="kpi-card__value">—</span>
-              <span v-if="classMostConsistent" class="kpi-card__subtext">
-                {{ classMostConsistent.count }} of {{ classMostConsistent.total }} students
+            <div class="stat-ribbon__value-row">
+              <span class="stat-ribbon__num">
+                ±{{ overallClassSD !== null ? overallClassSD.toFixed(1) + '%' : '—' }}
               </span>
             </div>
           </div>
 
-          <div class="kpi-card">
-            <div class="kpi-card__header">
-              <span class="kpi-card__label">Std Deviation</span>
-              <div class="kpi-card__icon kpi-card__icon--amber"><TrendingUp :size="16" /></div>
+          <!-- Stat 4: At-Risk / Intervention (Clickable to List & Open Profiles) -->
+          <div 
+            class="stat-ribbon__item stat-ribbon__item--at-risk"
+            :class="{ 'stat-ribbon__item--clickable': atRiskStudents.length > 0, 'stat-ribbon__item--open': isAtRiskPopoverOpen }"
+            :title="atRiskStudents.length > 0 ? 'Click to view at-risk students and open profiles' : 'All active students are currently above 50%'"
+            @click="toggleAtRiskPopover"
+          >
+            <div class="stat-ribbon__label">
+              <AlertCircle :size="13" :class="['stat-icon', atRiskStudents.length > 0 ? 'stat-icon--red' : 'stat-icon--green']" />
+              <span>At-Risk (&lt;50%)</span>
+              <ChevronDown v-if="atRiskStudents.length > 0" :size="12" class="at-risk-chevron" :style="{ transform: isAtRiskPopoverOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }" />
             </div>
-            <div class="kpi-card__body">
-              <span class="kpi-card__value">
-                {{ overallClassSD !== null ? overallClassSD.toFixed(1) + '%' : '—' }}
-              </span>
-              <span class="kpi-card__subtext">
-                {{ classAnalytics.sd !== null ? classAnalytics.sd.toFixed(1) + '%' : '—' }} products only
+            <div class="stat-ribbon__value-row">
+              <span class="stat-ribbon__num" :class="{ 'stat-ribbon__num--danger': atRiskStudents.length > 0 }">
+                {{ atRiskStudents.length }}
+                <span class="stat-unit">{{ atRiskStudents.length === 1 ? 'student' : 'students' }}</span>
               </span>
             </div>
-          </div>
-        </div>
 
-        <!-- Triple Evidence Blend / Triangulation -->
-        <div class="grades__analytics-section">
-          <div class="section-title-row">
-            <h3 class="grades__analytics-subtitle">TRIPLE EVIDENCE BLEND</h3>
-            <span class="coverage-hint-text">Coverage indicates % of roster with at least 1 entry</span>
+            <!-- Interactive Floating Popover to Click into Student Profile -->
+            <div v-if="isAtRiskPopoverOpen && atRiskStudents.length > 0" class="at-risk-popover" @click.stop>
+              <div class="at-risk-popover__header">
+                <span>At-Risk (&lt;50%)</span>
+                <span class="at-risk-popover__hint">Click to open Profile</span>
+              </div>
+              <div class="at-risk-popover__list">
+                <button 
+                  v-for="s in atRiskStudents" 
+                  :key="s.studentId"
+                  class="at-risk-popover__item"
+                  @click="openStudentDossier(s.studentId)"
+                >
+                  <span class="at-risk-popover__name">{{ s.name }}</span>
+                  <span class="at-risk-popover__grade">{{ formatGrade(s.grade) }}</span>
+                </button>
+              </div>
+            </div>
           </div>
-          
-          <div v-if="classEvidenceBlend" class="grades__blend-container">
-            <div class="grades__blend-bar">
+
+          <!-- Stat 5: Triangulation Ratio -->
+          <div 
+            class="stat-ribbon__item stat-ribbon__item--evidence"
+            title="Evidence Triangulation: Growing Success distribution across Product (tests/projects), Observation, and Conversation evidence."
+          >
+            <div class="stat-ribbon__label">
+              <Layers :size="13" class="stat-icon stat-icon--purple" />
+              <span>Triangulation</span>
+            </div>
+            <!-- Mini Triangulation Segment Bar -->
+            <div class="mini-evidence-bar">
               <div 
-                class="grades__blend-segment grades__blend-segment--product" 
+                class="mini-segment mini-segment--product"
                 :style="{ width: classEvidenceBlend.product.percentage + '%' }"
-                :title="`Product: ${classEvidenceBlend.product.count} assessments (${classEvidenceBlend.product.percentage}%)`"
+                :title="`Product: ${classEvidenceBlend.product.count} (${classEvidenceBlend.product.percentage}%)`"
               ></div>
               <div 
-                class="grades__blend-segment grades__blend-segment--observation" 
+                class="mini-segment mini-segment--observation"
                 :style="{ width: classEvidenceBlend.observation.percentage + '%' }"
-                :title="`Observation: ${classEvidenceBlend.observation.count} assessments (${classEvidenceBlend.observation.percentage}%)`"
+                :title="`Observation: ${classEvidenceBlend.observation.count} (${classEvidenceBlend.observation.percentage}%)`"
               ></div>
               <div 
-                class="grades__blend-segment grades__blend-segment--conversation" 
+                class="mini-segment mini-segment--conversation"
                 :style="{ width: classEvidenceBlend.conversation.percentage + '%' }"
-                :title="`Conversation: ${classEvidenceBlend.conversation.count} assessments (${classEvidenceBlend.conversation.percentage}%)`"
+                :title="`Conversation: ${classEvidenceBlend.conversation.count} (${classEvidenceBlend.conversation.percentage}%)`"
               ></div>
             </div>
-            
-            <div class="grades__blend-legend">
-              <div class="legend-chip legend-chip--product">
-                <FileText :size="14" />
-                <span>Product: <strong>{{ classEvidenceBlend.product.count }}</strong> ({{ classEvidenceBlend.product.percentage }}%)</span>
+            <div class="stat-ribbon__sub evidence-sub-chips">
+              <span class="chip-p" :title="`${classEvidenceBlend.product.count} Product assessments`">
+                {{ classEvidenceBlend.product.count }} Prod ({{ classEvidenceBlend.product.percentage }}%)
+              </span>
+              <span v-if="classEvidenceBlend.observation.count > 0" class="chip-o" :title="`${classEvidenceBlend.observation.count} Observation assessments`">
+                · {{ classEvidenceBlend.observation.count }} Obs
+              </span>
+              <span v-if="classEvidenceBlend.conversation.count > 0" class="chip-c" :title="`${classEvidenceBlend.conversation.count} Conversation assessments`">
+                · {{ classEvidenceBlend.conversation.count }} Conv
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. Two-Column Row: Cohort Distribution + Pedagogical Hotspots -->
+        <div class="analytics-grid-2col">
+          
+          <!-- Column 1: Grade Distribution Histogram -->
+          <div class="analytics-card">
+            <div class="analytics-card__header">
+              <div class="card-title-group">
+                <BarChart2 :size="15" class="card-header-icon" />
+                <h3 class="analytics-card__title">Cohort Grade Distribution</h3>
               </div>
-              <div class="legend-chip legend-chip--observation">
-                <Eye :size="14" />
-                <span>Observation: <strong>{{ classEvidenceBlend.observation.count }}</strong> ({{ classEvidenceBlend.observation.percentage }}%) · <strong>{{ classAnalytics.observationCoverage.percentage }}%</strong> coverage</span>
+              <div class="toggle-pill-group toggle-pill-group--sm">
+                <button 
+                  class="toggle-pill toggle-pill--sm"
+                  :class="{ 'toggle-pill--active': distributionMode === 'levels' }"
+                  @click="distributionMode = 'levels'"
+                >Levels</button>
+                <button 
+                  class="toggle-pill toggle-pill--sm"
+                  :class="{ 'toggle-pill--active': distributionMode === 'buckets' }"
+                  @click="distributionMode = 'buckets'"
+                >10% Buckets</button>
               </div>
-              <div class="legend-chip legend-chip--conversation">
-                <MessageSquare :size="14" />
-                <span>Conversation: <strong>{{ classEvidenceBlend.conversation.count }}</strong> ({{ classEvidenceBlend.conversation.percentage }}%) · <strong>{{ classAnalytics.conversationCoverage.percentage }}%</strong> coverage</span>
+            </div>
+
+            <!-- Chart Display -->
+            <div class="chart-wrapper">
+              <Bar :data="bucketChartData" :options="bucketChartOptions" />
+            </div>
+
+            <!-- Clean Single Distribution Summary Footer -->
+            <div class="distribution-footer-stat">
+              <span v-if="distributionMode === 'levels'">
+                <strong>Level 3 &amp; 4 Mastery:</strong> {{ levelMasteryCount }} of {{ activeStudentGrades.length }} students ({{ levelMasteryPct }}%)
+              </span>
+              <span v-else>
+                <strong>Dominant Range:</strong> {{ classMostConsistent ? classMostConsistent.label : '—' }} ({{ classMostConsistent?.count || 0 }} students)
+              </span>
+            </div>
+          </div>
+
+          <!-- Column 2: Instructional Highlights & Hotspots -->
+          <div class="analytics-card">
+            <div class="analytics-card__header">
+              <div class="card-title-group">
+                <Sparkles :size="15" class="card-header-icon card-header-icon--gold" />
+                <h3 class="analytics-card__title">Instructional Highlights &amp; Hotspots</h3>
+              </div>
+              <span class="card-header-tag">Pedagogical Signals</span>
+            </div>
+
+            <div class="hotspots-container">
+              <!-- Toughest Assessment -->
+              <div 
+                v-if="instructionalHotspots.toughest" 
+                class="hotspot-item hotspot-item--warning"
+                @click="$emit('select-assessment', instructionalHotspots.toughest.assessmentId)"
+                title="Click to view assessment details"
+              >
+                <div class="hotspot-item__icon hotspot-item__icon--warning">
+                  <AlertTriangle :size="15" />
+                </div>
+                <div class="hotspot-item__content">
+                  <div class="hotspot-item__top">
+                    <span class="hotspot-badge hotspot-badge--warning">Toughest Assessment</span>
+                    <span class="hotspot-cat">{{ getCategoryName(instructionalHotspots.toughest.categoryId) }}</span>
+                  </div>
+                  <div class="hotspot-item__name">{{ instructionalHotspots.toughest.name }}</div>
+                  <div class="hotspot-item__stats">
+                    <span>Avg: <strong :style="{ color: getHeatTextColor(instructionalHotspots.toughest.stats.mean) }">{{ formatGrade(instructionalHotspots.toughest.stats.mean) }}</strong></span>
+                    <span>Median: {{ formatGrade(instructionalHotspots.toughest.stats.median) }}</span>
+                    <span v-if="instructionalHotspots.toughest.stats.sd">±{{ instructionalHotspots.toughest.stats.sd.toFixed(1) }}% SD</span>
+                  </div>
+                </div>
+                <ChevronRight :size="15" class="hotspot-chevron" />
+              </div>
+
+              <!-- Highest Consistency -->
+              <div 
+                v-if="instructionalHotspots.consistent" 
+                class="hotspot-item hotspot-item--success"
+                @click="$emit('select-assessment', instructionalHotspots.consistent.assessmentId)"
+                title="Click to view assessment details"
+              >
+                <div class="hotspot-item__icon hotspot-item__icon--success">
+                  <Target :size="15" />
+                </div>
+                <div class="hotspot-item__content">
+                  <div class="hotspot-item__top">
+                    <span class="hotspot-badge hotspot-badge--success">Highest Mastery &amp; Consistency</span>
+                    <span class="hotspot-cat">{{ getCategoryName(instructionalHotspots.consistent.categoryId) }}</span>
+                  </div>
+                  <div class="hotspot-item__name">{{ instructionalHotspots.consistent.name }}</div>
+                  <div class="hotspot-item__stats">
+                    <span>Avg: <strong :style="{ color: getHeatTextColor(instructionalHotspots.consistent.stats.mean) }">{{ formatGrade(instructionalHotspots.consistent.stats.mean) }}</strong></span>
+                    <span>Tightly Clustered: <strong>±{{ instructionalHotspots.consistent.stats.sd.toFixed(1) }}% SD</strong></span>
+                  </div>
+                </div>
+                <ChevronRight :size="15" class="hotspot-chevron" />
+              </div>
+
+              <!-- Widest Polarization (Highest SD) -->
+              <div 
+                v-if="instructionalHotspots.polarized && instructionalHotspots.polarized.assessmentId !== instructionalHotspots.toughest?.assessmentId" 
+                class="hotspot-item hotspot-item--info"
+                @click="$emit('select-assessment', instructionalHotspots.polarized.assessmentId)"
+                title="Click to view assessment details"
+              >
+                <div class="hotspot-item__icon hotspot-item__icon--info">
+                  <Activity :size="15" />
+                </div>
+                <div class="hotspot-item__content">
+                  <div class="hotspot-item__top">
+                    <span class="hotspot-badge hotspot-badge--info">Widest Score Gap (Polarizing)</span>
+                    <span class="hotspot-cat">{{ getCategoryName(instructionalHotspots.polarized.categoryId) }}</span>
+                  </div>
+                  <div class="hotspot-item__name">{{ instructionalHotspots.polarized.name }}</div>
+                  <div class="hotspot-item__stats">
+                    <span>Avg: {{ formatGrade(instructionalHotspots.polarized.stats.mean) }}</span>
+                    <span>Spread: <strong>±{{ instructionalHotspots.polarized.stats.sd.toFixed(1) }}% SD</strong></span>
+                    <span v-if="instructionalHotspots.polarized.stats.lowest != null">Range: {{ formatGrade(instructionalHotspots.polarized.stats.lowest) }}–{{ formatGrade(instructionalHotspots.polarized.stats.highest) }}</span>
+                  </div>
+                </div>
+                <ChevronRight :size="15" class="hotspot-chevron" />
+              </div>
+
+              <div v-if="!instructionalHotspots.toughest && !instructionalHotspots.consistent" class="hotspot-empty">
+                Enter more graded assessments to generate instructional insight callouts.
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- 3. Category Weight & Performance Breakdown Grid -->
+        <div v-if="categoryBreakdowns.length > 0" class="analytics-card analytics-card--compact">
+          <div class="analytics-card__header">
+            <div class="card-title-group">
+              <Layers :size="15" class="card-header-icon" />
+              <h3 class="analytics-card__title">Curriculum Category Weighting &amp; Performance</h3>
+            </div>
+            <span class="card-header-tag">{{ categoryWeightTotal }}% Total Weight</span>
+          </div>
+
+          <div class="category-grid">
+            <div 
+              v-for="cat in categoryBreakdowns" 
+              :key="cat.categoryId"
+              class="category-card"
+              :class="{ 'category-card--empty': cat.weight === 0 && cat.assessmentCount === 0 }"
+            >
+              <div class="category-card__header">
+                <span class="category-card__name" :title="cat.name">{{ cat.name }}</span>
+                <span class="category-card__weight-badge">{{ cat.weight }}% weight</span>
+              </div>
+              <div class="category-card__body">
+                <div class="category-card__score-row">
+                  <span class="category-card__score" :style="{ color: getHeatTextColor(cat.average) }">
+                    {{ formatGrade(cat.average) }}
+                  </span>
+                  <span class="category-card__meta">
+                    {{ cat.assessmentCount }} {{ cat.assessmentCount === 1 ? 'task' : 'tasks' }} · {{ cat.studentCount }} eval
+                  </span>
+                </div>
+                <!-- Subtle Progress Meter -->
+                <div class="category-card__meter">
+                  <div 
+                    class="category-card__meter-bar" 
+                    :style="{ 
+                      width: Math.min(100, cat.average || 0) + '%',
+                      backgroundColor: getHeatColorHex(cat.average)
+                    }"
+                  ></div>
+                </div>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- Grade Distribution Histogram -->
-        <div class="grades__analytics-section">
-          <div class="grades__section-header-row">
-            <h3 class="grades__analytics-subtitle">PRODUCT GRADE DISTRIBUTION</h3>
-            <div class="grades__toggle-group">
+        <!-- 4. Unified Assessment Performance Matrix (Compact Scrollable Window) -->
+        <div class="analytics-card analytics-card--matrix">
+          <div class="analytics-card__header">
+            <div class="card-title-group">
+              <FileText :size="15" class="card-header-icon" />
+              <h3 class="analytics-card__title">Assessment Performance Matrix</h3>
+            </div>
+
+            <!-- Tab Filter Pills -->
+            <div class="assessment-filter-tabs">
               <button 
-                class="grades__toggle-btn"
-                :class="{ 'grades__toggle-btn--active': distributionMode === 'buckets' }"
-                @click="distributionMode = 'buckets'"
-              >10% Buckets</button>
+                class="tab-btn" 
+                :class="{ 'tab-btn--active': activeAssessmentTab === 'all' }"
+                @click="activeAssessmentTab = 'all'"
+              >
+                All ({{ classAnalytics.assessmentBreakdowns?.length || 0 }})
+              </button>
               <button 
-                class="grades__toggle-btn"
-                :class="{ 'grades__toggle-btn--active': distributionMode === 'levels' }"
-                @click="distributionMode = 'levels'"
-              >Levels</button>
+                class="tab-btn" 
+                :class="{ 'tab-btn--active': activeAssessmentTab === 'product' }"
+                @click="activeAssessmentTab = 'product'"
+              >
+                Products ({{ productCount }})
+              </button>
+              <button 
+                class="tab-btn" 
+                :class="{ 'tab-btn--active': activeAssessmentTab === 'observation' }"
+                @click="activeAssessmentTab = 'observation'"
+              >
+                Observations ({{ observationCount }})
+              </button>
+              <button 
+                class="tab-btn" 
+                :class="{ 'tab-btn--active': activeAssessmentTab === 'conversation' }"
+                @click="activeAssessmentTab = 'conversation'"
+              >
+                Conversations ({{ conversationCount }})
+              </button>
             </div>
           </div>
-          <div class="grades__chart-container" style="height: 200px;">
-            <Bar :data="bucketChartData" :options="bucketChartOptions" />
+
+          <!-- Unified Table Area -->
+          <div class="table-wrapper">
+            <table class="analytics-table">
+              <thead>
+                <tr>
+                  <th @click="toggleSort('name')" class="th-sortable">
+                    ASSESSMENT {{ analyticsSortBy === 'name' ? (analyticsSortOrder === 'asc' ? '↑' : '↓') : '' }}
+                  </th>
+                  <th>TYPE / CATEGORY</th>
+                  <th @click="toggleSort('date')" class="th-sortable">
+                    DATE {{ analyticsSortBy === 'date' ? (analyticsSortOrder === 'asc' ? '↑' : '↓') : '' }}
+                  </th>
+                  <th @click="toggleSort('mean')" class="th-sortable text-right">
+                    AVERAGE {{ analyticsSortBy === 'mean' ? (analyticsSortOrder === 'asc' ? '↑' : '↓') : '' }}
+                  </th>
+                  <th @click="toggleSort('median')" class="th-sortable text-right">
+                    MEDIAN {{ analyticsSortBy === 'median' ? (analyticsSortOrder === 'asc' ? '↑' : '↓') : '' }}
+                  </th>
+                  <th @click="toggleSort('sd')" class="th-sortable text-right">
+                    STD DEV {{ analyticsSortBy === 'sd' ? (analyticsSortOrder === 'asc' ? '↑' : '↓') : '' }}
+                  </th>
+                  <th>RANGE (LOW–HIGH)</th>
+                  <th>CONSISTENCY</th>
+                  <th style="min-width: 100px;">DISTRIBUTION</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr 
+                  v-for="a in unifiedFilteredAssessments" 
+                  :key="a.assessmentId"
+                  class="analytics-table-row"
+                  @click="$emit('select-assessment', a.assessmentId)"
+                  title="Click to view assessment details"
+                >
+                  <td class="td-name">
+                    {{ a.name }}
+                  </td>
+                  <td>
+                    <div class="type-category-group">
+                      <span class="type-pill" :class="'type-pill--' + (a.assessmentType || 'product')">
+                        {{ (a.assessmentType || 'product').slice(0, 4) }}
+                      </span>
+                      <span class="category-chip">{{ getCategoryName(a.categoryId) }}</span>
+                    </div>
+                  </td>
+                  <td class="td-date">
+                    {{ a.date || '—' }}
+                  </td>
+                  <td class="text-right" :style="{ color: getHeatTextColor(a.stats.mean), fontWeight: 'bold' }">
+                    {{ formatGrade(a.stats.mean) }}
+                  </td>
+                  <td class="text-right">
+                    {{ formatGrade(a.stats.median) }}
+                  </td>
+                  <td class="text-right">
+                    {{ a.stats.sd !== null ? a.stats.sd.toFixed(1) + '%' : '—' }}
+                  </td>
+                  <td>
+                    <span class="range-text-pill" v-if="a.stats.lowest != null && a.stats.highest != null">
+                      {{ formatGrade(a.stats.lowest) }} – {{ formatGrade(a.stats.highest) }}
+                    </span>
+                    <span v-else class="text-muted">—</span>
+                  </td>
+                  <td>
+                    <span 
+                      class="consistency-badge"
+                      :class="'consistency-badge--' + getConsistencyInfo(a.stats.sd).class"
+                    >
+                      <AlertTriangle v-if="getConsistencyInfo(a.stats.sd).icon === 'AlertTriangle'" :size="11" style="display: inline-block; vertical-align: -1px; margin-right: 2px;" />
+                      <span v-else-if="getConsistencyInfo(a.stats.sd).icon" class="status-dot" :class="'status-dot--' + getConsistencyInfo(a.stats.sd).icon" /> {{ getConsistencyInfo(a.stats.sd).label }}
+                    </span>
+                  </td>
+                  <td>
+                    <div class="grades__sparkline" v-if="a.stats.distributionBuckets">
+                      <div 
+                        v-for="bucket in (distributionMode === 'buckets' ? a.stats.distributionBuckets : a.stats.levelBuckets)" 
+                        :key="bucket.label"
+                        class="grades__sparkline-bar"
+                        :style="{ 
+                          height: Math.max(15, (bucket.count / a.stats.totalCount * 100)) + '%',
+                          background: bucket.count > 0 ? getHeatColorHex(bucket.range[0]) : 'var(--border)'
+                        }"
+                        :title="`${bucket.label}: ${bucket.count} students`"
+                      ></div>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
+          <p v-if="!unifiedFilteredAssessments.length" class="empty-table-hint">No assessments found for this filter.</p>
         </div>
 
-        <!-- Per-Assessment Breakdowns -->
-        <div class="grades__analytics-section">
-          <div class="grades__analytics-groups">
-            
-            <!-- Product Assessments Table -->
-            <div class="grades__analytics-group-box">
-              <h3 class="grades__analytics-subtitle">PRODUCT ASSESSMENTS BREAKDOWN</h3>
-              <div class="grades__analytics-table-wrapper">
-                <table class="grades__analytics-table">
-                  <thead>
-                    <tr>
-                      <th @click="toggleSort('name')">
-                        ASSESSMENT {{ analyticsSortBy === 'name' ? (analyticsSortOrder === 'asc' ? '↑' : '↓') : '' }}
-                      </th>
-                      <th>CATEGORY</th>
-                      <th @click="toggleSort('mean')">
-                        AVERAGE {{ analyticsSortBy === 'mean' ? (analyticsSortOrder === 'asc' ? '↑' : '↓') : '' }}
-                      </th>
-                      <th @click="toggleSort('median')">
-                        MEDIAN {{ analyticsSortBy === 'median' ? (analyticsSortOrder === 'asc' ? '↑' : '↓') : '' }}
-                      </th>
-                      <th @click="toggleSort('sd')">
-                        STD DEV {{ analyticsSortBy === 'sd' ? (analyticsSortOrder === 'asc' ? '↑' : '↓') : '' }}
-                      </th>
-                      <th>RANGE (LOW–HIGH)</th>
-                      <th>CONSISTENCY</th>
-                      <th>DISTRIBUTION</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr 
-                      v-for="a in sortedProductAssessments" 
-                      :key="a.assessmentId"
-                      class="analytics-table-row"
-                      @click="$emit('select-assessment', a.assessmentId)"
-                      title="Click to view assessment details"
-                    >
-                      <td class="grades__td-assessment-name">
-                        {{ a.name }}
-                      </td>
-                      <td><span class="category-chip">{{ getCategoryName(a.categoryId) }}</span></td>
-                      <td :style="{ color: getHeatTextColor(a.stats.mean), fontWeight: 'bold' }">{{ formatGrade(a.stats.mean) }}</td>
-                      <td>{{ formatGrade(a.stats.median) }}</td>
-                      <td>{{ a.stats.sd !== null ? a.stats.sd.toFixed(1) + '%' : '—' }}</td>
-                      <td>
-                        <span class="range-text-pill" v-if="a.stats.lowest != null && a.stats.highest != null">
-                          {{ formatGrade(a.stats.lowest) }} – {{ formatGrade(a.stats.highest) }}
-                        </span>
-                        <span v-else class="text-muted">—</span>
-                      </td>
-                      <td>
-                        <span 
-                          class="consistency-badge"
-                          :class="'consistency-badge--' + getConsistencyInfo(a.stats.sd).class"
-                        >
-                          <AlertTriangle v-if="getConsistencyInfo(a.stats.sd).icon === 'AlertTriangle'" :size="12" style="display: inline-block; vertical-align: -1px; margin-right: 2px;" />
-                          <span v-else-if="getConsistencyInfo(a.stats.sd).icon" class="status-dot" :class="'status-dot--' + getConsistencyInfo(a.stats.sd).icon" /> {{ getConsistencyInfo(a.stats.sd).label }}
-                        </span>
-                      </td>
-                      <td>
-                        <div class="grades__sparkline" v-if="a.stats.distributionBuckets">
-                          <div 
-                            v-for="bucket in (distributionMode === 'buckets' ? a.stats.distributionBuckets : a.stats.levelBuckets)" 
-                            :key="bucket.label"
-                            class="grades__sparkline-bar"
-                            :style="{ 
-                              height: (bucket.count / a.stats.totalCount * 100) + '%',
-                              background: getHeatColorHex(bucket.range[0])
-                            }"
-                            :title="`${bucket.label}: ${bucket.count} students`"
-                          ></div>
-                        </div>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-              <p v-if="!sortedProductAssessments.length" class="grades__analytics-hint">No product assessments found.</p>
-            </div>
-
-            <!-- Observation Assessments Table -->
-            <div v-if="sortedObservationAssessments.length" class="grades__analytics-group-box">
-              <h3 class="grades__analytics-subtitle">OBSERVATION LABS BREAKDOWN</h3>
-              <div class="grades__analytics-table-wrapper">
-                <table class="grades__analytics-table">
-                  <thead>
-                    <tr>
-                      <th @click="toggleSort('name')">OBSERVATION ASSESSMENT</th>
-                      <th>AVERAGE</th>
-                      <th>MEDIAN</th>
-                      <th>STD DEV</th>
-                      <th>DISTRIBUTION</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr 
-                      v-for="a in sortedObservationAssessments" 
-                      :key="a.assessmentId"
-                      class="analytics-table-row"
-                      @click="$emit('select-assessment', a.assessmentId)"
-                    >
-                      <td class="grades__td-assessment-name">{{ a.name }}</td>
-                      <td :style="{ color: getHeatTextColor(a.stats.mean), fontWeight: 'bold' }">{{ formatGrade(a.stats.mean) }}</td>
-                      <td>{{ formatGrade(a.stats.median) }}</td>
-                      <td>{{ a.stats.sd !== null ? a.stats.sd.toFixed(1) + '%' : '—' }}</td>
-                      <td>
-                        <div class="grades__sparkline" v-if="a.stats.distributionBuckets">
-                          <div 
-                            v-for="bucket in (distributionMode === 'buckets' ? a.stats.distributionBuckets : a.stats.levelBuckets)" 
-                            :key="bucket.label"
-                            class="grades__sparkline-bar"
-                            :style="{ 
-                              height: (bucket.count / a.stats.totalCount * 100) + '%',
-                              background: getHeatColorHex(bucket.range[0])
-                            }"
-                            :title="`${bucket.label}: ${bucket.count} students`"
-                          ></div>
-                        </div>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            <!-- Conversation Assessments Table -->
-            <div v-if="sortedConversationAssessments.length" class="grades__analytics-group-box">
-              <h3 class="grades__analytics-subtitle">CONVERSATION ASSESSMENTS BREAKDOWN</h3>
-              <div class="grades__analytics-table-wrapper">
-                <table class="grades__analytics-table">
-                  <thead>
-                    <tr>
-                      <th @click="toggleSort('name')">CONVERSATION ASSESSMENT</th>
-                      <th>AVERAGE</th>
-                      <th>MEDIAN</th>
-                      <th>COVERAGE</th>
-                      <th>DISTRIBUTION</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr 
-                      v-for="a in sortedConversationAssessments" 
-                      :key="a.assessmentId"
-                      class="analytics-table-row"
-                      @click="$emit('select-assessment', a.assessmentId)"
-                    >
-                      <td class="grades__td-assessment-name">{{ a.name }}</td>
-                      <td :style="{ color: getHeatTextColor(a.stats.mean), fontWeight: 'bold' }">{{ formatGrade(a.stats.mean) }}</td>
-                      <td>{{ formatGrade(a.stats.median) }}</td>
-                      <td>{{ a.stats.totalCount }} Students</td>
-                      <td>
-                        <div class="grades__sparkline" v-if="a.stats.distributionBuckets">
-                          <div 
-                            v-for="bucket in (distributionMode === 'buckets' ? a.stats.distributionBuckets : a.stats.levelBuckets)" 
-                            :key="bucket.label"
-                            class="grades__sparkline-bar"
-                            :style="{ 
-                              height: (bucket.count / a.stats.totalCount * 100) + '%',
-                              background: getHeatColorHex(bucket.range[0])
-                            }"
-                            :title="`${bucket.label}: ${bucket.count} students`"
-                          ></div>
-                        </div>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-          </div>
-        </div>
-
-        <!-- Student Exclusion Drawer Card -->
-        <div class="grades__analytics-section">
-          <header class="grades__analytics-collapsible-header" @click="isExclusionsOpen = !isExclusionsOpen">
+        <!-- 5. Individual Student Exclusions (Collapsible Drawer) -->
+        <div class="analytics-card analytics-card--collapsible">
+          <header class="collapsible-header" @click="isExclusionsOpen = !isExclusionsOpen">
             <div class="collapsible-title-group">
-              <Users :size="18" />
-              <h3 class="grades__analytics-subtitle">INDIVIDUAL STUDENT EXCLUSIONS</h3>
+              <Users :size="15" />
+              <h3 class="analytics-card__title">Individual Student Exclusions</h3>
+              <span class="exclusion-count-tag">{{ classAnalytics?.outlierCount || 0 }} Excluded</span>
             </div>
-            <ChevronRight :size="20" :style="{ transform: isExclusionsOpen ? 'rotate(90deg)' : 'none', transition: 'transform 0.2s' }" />
+            <ChevronRight :size="16" :style="{ transform: isExclusionsOpen ? 'rotate(90deg)' : 'none', transition: 'transform 0.2s' }" />
           </header>
           
-          <div v-if="isExclusionsOpen" class="grades__exclusion-list">
-            <p class="grades__analytics-hint">Students checked below are excluded from all class analytics calculations. Their actual grades remain intact.</p>
-            <div class="grades__exclusion-grid">
-              <div v-for="s in sortedRoster" :key="s.studentId" class="grades__exclusion-item">
-                <label class="grades__checkbox-label">
+          <div v-if="isExclusionsOpen" class="exclusion-drawer-body">
+            <p class="exclusion-hint">Students checked below are excluded from all class analytics calculations. Their actual student grades remain intact.</p>
+            <div class="exclusion-checkbox-grid">
+              <div v-for="s in sortedRoster" :key="s.studentId" class="exclusion-checkbox-item">
+                <label class="checkbox-label">
                   <input 
                     type="checkbox" 
                     :checked="s.excludeFromAnalytics" 
@@ -426,7 +577,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import {
   activeClassRecord,
   classGrades,
@@ -475,18 +626,49 @@ import {
   TrendingUp, 
   ArrowLeft, 
   ChevronRight, 
+  ChevronDown,
   FileText, 
   Eye, 
   MessageSquare, 
-  Users 
+  Users,
+  Layers,
+  Sparkles,
+  Activity
 } from 'lucide-vue-next'
 
 ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale)
 
-const emit = defineEmits(['select-assessment'])
+const emit = defineEmits(['select-assessment', 'show-dossier'])
 
 const isExclusionsOpen = ref(false)
 const isCalculating = ref(false)
+const activeAssessmentTab = ref('all')
+const isAtRiskPopoverOpen = ref(false)
+
+function toggleAtRiskPopover() {
+  if (atRiskStudents.value.length > 0) {
+    isAtRiskPopoverOpen.value = !isAtRiskPopoverOpen.value
+  }
+}
+
+function openStudentDossier(studentId) {
+  isAtRiskPopoverOpen.value = false
+  emit('show-dossier', studentId)
+}
+
+function handleGlobalClick(e) {
+  if (isAtRiskPopoverOpen.value && !e.target.closest('.stat-ribbon__item--at-risk')) {
+    isAtRiskPopoverOpen.value = false
+  }
+}
+
+onMounted(() => {
+  window.addEventListener('click', handleGlobalClick)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('click', handleGlobalClick)
+})
 
 function getConsistencyInfo(sd) {
   if (sd === null || sd === undefined) return { label: '—', class: 'muted', icon: '' }
@@ -549,7 +731,7 @@ watch(activeSubCohortFilter, async (val) => {
 
 // Local breakdown sort states
 const analyticsSortBy = ref('date')
-const analyticsSortOrder = ref('asc')
+const analyticsSortOrder = ref('desc')
 
 function toggleSort(field) {
   if (analyticsSortBy.value === field) {
@@ -599,6 +781,32 @@ const overallClassSD = computed(() => {
   return Math.sqrt(sqDiffSum / (values.length - 1))
 })
 
+const scoreRange = computed(() => {
+  const values = activeStudentGrades.value
+  if (values.length === 0) return { lowest: null, highest: null }
+  return {
+    lowest: Math.min(...values),
+    highest: Math.max(...values)
+  }
+})
+
+const atRiskStudents = computed(() => {
+  if (!activeClassRecord.value?.students) return []
+  const outliers = new Set(classAnalytics.value?.outlierStudentIds || [])
+  const list = []
+  Object.keys(activeClassRecord.value.students).forEach(id => {
+    const st = activeClassRecord.value.students[id]
+    if (!st || st.archived || st.excludeFromAnalytics || outliers.has(id)) return
+    if (!st.firstName?.trim() && !st.lastName?.trim()) return
+    if (!isStudentInSubCohort(st)) return
+    const g = classGrades.value[id]
+    if (g && g.overallGrade !== null && g.overallGrade !== undefined && g.overallGrade < 50) {
+      list.push({ studentId: id, name: `${st.firstName} ${st.lastName}`, grade: g.overallGrade })
+    }
+  })
+  return list
+})
+
 const getCategoryName = (categoryId) => {
   return activeClassRecord.value?.gradebookCategories
     ?.find(c => c.categoryId === categoryId)?.name ?? '—'
@@ -623,7 +831,6 @@ const classMostConsistent = computed(() => {
     
   if (dataset.length === 0) return null
   
-  // Set up buckets
   const buckets = [
     { label: '80-100%', range: [80, 100] },
     { label: '70-79%', range: [70, 79] },
@@ -663,6 +870,16 @@ const classMostConsistent = computed(() => {
   }
 })
 
+const levelMasteryCount = computed(() => {
+  return activeStudentGrades.value.filter(score => score >= 70).length
+})
+
+const levelMasteryPct = computed(() => {
+  const total = activeStudentGrades.value.length
+  if (!total) return 0
+  return Math.round((levelMasteryCount.value / total) * 100)
+})
+
 const classEvidenceBlend = computed(() => {
   const isSBAR = activeClassRecord.value?.gradingFramework === 'sbar'
   const activeAssessments = (assessments.value || []).filter(a => {
@@ -696,6 +913,104 @@ const classEvidenceBlend = computed(() => {
   }
 })
 
+// Instructional Hotspots & Pedagogical Signals
+const instructionalHotspots = computed(() => {
+  const list = classAnalytics.value?.assessmentBreakdowns || []
+  const valid = list.filter(a => a.stats && a.stats.mean !== null && a.stats.totalCount > 0)
+  if (!valid.length) return { toughest: null, consistent: null, polarized: null }
+
+  // 1. Toughest assessment (lowest mean)
+  const sortedByMean = [...valid].sort((a, b) => a.stats.mean - b.stats.mean)
+  const toughest = sortedByMean[0]
+
+  // 2. Highest consistency (lowest SD)
+  const sortedBySD = [...valid].filter(a => a.stats.sd !== null).sort((a, b) => a.stats.sd - b.stats.sd)
+  const consistent = sortedBySD.length ? sortedBySD[0] : null
+
+  // 3. Widest polarization / highest SD
+  const sortedByHighSD = [...valid].filter(a => a.stats.sd !== null).sort((a, b) => b.stats.sd - a.stats.sd)
+  const polarized = sortedByHighSD.length ? sortedByHighSD[0] : null
+
+  return { toughest, consistent, polarized }
+})
+
+// Category Breakdown Grid
+const categoryBreakdowns = computed(() => {
+  const cats = activeClassRecord.value?.gradebookCategories || []
+  if (!cats.length) return []
+  
+  const outliers = new Set(classAnalytics.value?.outlierStudentIds || [])
+  const activeStudentIds = Object.keys(activeClassRecord.value?.students || {}).filter(id => {
+    const st = activeClassRecord.value.students[id]
+    return st && !st.archived && !st.excludeFromAnalytics && !outliers.has(id) && isStudentInSubCohort(st)
+  })
+  
+  const activeAssessmentsList = (assessments.value || []).filter(a => {
+    if (a.target === 'individual' || a.excluded) return false
+    return isAssessmentInSubCohort(a)
+  })
+
+  return cats.map(cat => {
+    let sum = 0
+    let count = 0
+    for (const sId of activeStudentIds) {
+      const g = classGrades.value?.[sId]
+      const catRes = g?.categoryResults?.[cat.categoryId]
+      if (catRes && catRes.percentage !== null && catRes.percentage !== undefined) {
+        sum += catRes.percentage
+        count++
+      }
+    }
+    const catAssessments = activeAssessmentsList.filter(a => a.categoryId === cat.categoryId)
+    return {
+      categoryId: cat.categoryId,
+      name: cat.name,
+      weight: cat.weight || 0,
+      average: count > 0 ? sum / count : null,
+      studentCount: count,
+      assessmentCount: catAssessments.length
+    }
+  })
+})
+
+// Assessment type counts
+const productCount = computed(() => {
+  return (classAnalytics.value?.assessmentBreakdowns || []).filter(a => (a.assessmentType || 'product').toLowerCase() === 'product').length
+})
+const observationCount = computed(() => {
+  return (classAnalytics.value?.assessmentBreakdowns || []).filter(a => (a.assessmentType || 'product').toLowerCase() === 'observation').length
+})
+const conversationCount = computed(() => {
+  return (classAnalytics.value?.assessmentBreakdowns || []).filter(a => (a.assessmentType || 'product').toLowerCase() === 'conversation').length
+})
+
+// Unified Filtered Assessments
+const unifiedFilteredAssessments = computed(() => {
+  if (!classAnalytics.value?.assessmentBreakdowns) return []
+  let items = classAnalytics.value.assessmentBreakdowns
+  if (activeAssessmentTab.value !== 'all') {
+    items = items.filter(a => (a.assessmentType || 'product').toLowerCase() === activeAssessmentTab.value)
+  }
+
+  return [...items].sort((a, b) => {
+    if (analyticsSortBy.value === 'name') {
+      return analyticsSortOrder.value === 'asc' 
+        ? a.name.localeCompare(b.name) 
+        : b.name.localeCompare(a.name)
+    }
+    if (analyticsSortBy.value === 'date') {
+      const dateA = a.date || ''
+      const dateB = b.date || ''
+      return analyticsSortOrder.value === 'asc' ? dateA.localeCompare(dateB) : dateB.localeCompare(dateA)
+    }
+    
+    let valA = a.stats?.[analyticsSortBy.value] ?? -1
+    let valB = b.stats?.[analyticsSortBy.value] ?? -1
+    
+    return analyticsSortOrder.value === 'asc' ? valA - valB : valB - valA
+  })
+})
+
 // Roster for checklist
 const sortedRoster = computed(() => {
   if (!activeClassRecord.value?.students) return []
@@ -724,9 +1039,9 @@ const bucketChartData = computed(() => {
       label: 'Students',
       data,
       backgroundColor: activeSet.map(b => getHeatColorHex(b.range[0])),
-      borderRadius: 6,
+      borderRadius: 4,
       borderWidth: 0,
-      maxBarThickness: 40
+      maxBarThickness: 34
     }]
   }
 })
@@ -738,65 +1053,42 @@ const bucketChartOptions = computed(() => {
     plugins: {
       legend: { display: false },
       tooltip: {
-        backgroundColor: '#1e293b',
+        backgroundColor: '#0f172a',
+        titleColor: '#ffffff',
+        bodyColor: '#e2e8f0',
         titleFont: { size: 12, weight: 'bold' },
-        bodyFont: { size: 12 },
-        padding: 10,
+        bodyFont: { size: 12, weight: '600' },
+        padding: 8,
         cornerRadius: 6,
-        displayColors: false
+        displayColors: false,
+        callbacks: {
+          label: (context) => `${context.parsed.y} ${context.parsed.y === 1 ? 'student' : 'students'} (${activeStudentGrades.value.length > 0 ? Math.round((context.parsed.y / activeStudentGrades.value.length) * 100) : 0}%)`
+        }
       }
     },
     scales: {
       y: {
         beginAtZero: true,
-        ticks: { stepSize: 1, color: '#94a3b8' },
-        grid: { color: 'rgba(148, 163, 184, 0.1)' }
+        ticks: { 
+          stepSize: 1, 
+          color: '#64748b', 
+          font: { size: 10, weight: '600' } 
+        },
+        grid: { color: 'rgba(148, 163, 184, 0.12)' }
       },
       x: {
-        ticks: { color: '#94a3b8' },
+        ticks: { 
+          color: '#475569', 
+          font: { size: 10, weight: '600' } 
+        },
         grid: { display: false }
       }
     }
   }
 })
-
-// Assessment breakdowns
-const sortedProductAssessments = computed(() => {
-  if (!classAnalytics.value?.assessmentBreakdowns) return []
-  return processTypedAssessments('product')
-})
-
-const sortedObservationAssessments = computed(() => {
-  if (!classAnalytics.value?.assessmentBreakdowns) return []
-  return processTypedAssessments('observation')
-})
-
-const sortedConversationAssessments = computed(() => {
-  if (!classAnalytics.value?.assessmentBreakdowns) return []
-  return processTypedAssessments('conversation')
-})
-
-function processTypedAssessments(type) {
-  const items = classAnalytics.value.assessmentBreakdowns
-    .filter(a => (a.assessmentType || 'product').toLowerCase() === type)
-    
-  return items.sort((a, b) => {
-    if (analyticsSortBy.value === 'name') {
-      return analyticsSortOrder.value === 'asc' 
-        ? a.name.localeCompare(b.name) 
-        : b.name.localeCompare(a.name)
-    }
-    
-    let valA = a.stats?.[analyticsSortBy.value] ?? -1
-    let valB = b.stats?.[analyticsSortBy.value] ?? -1
-    
-    return analyticsSortOrder.value === 'asc' ? valA - valB : valB - valA
-  })
-}
 </script>
 
 <style scoped>
-/* Scoped overrides to target analytics components and layout */
 .grades__analytics-panel {
   flex: 1;
   display: flex;
@@ -806,524 +1098,722 @@ function processTypedAssessments(type) {
   position: relative;
 }
 
+/* Header */
 .grades__analytics-header {
-  padding: 0.75rem 1.5rem;
+  padding: 0.65rem 1.25rem;
   background: var(--bg-secondary);
   border-bottom: 1px solid var(--border);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
+  gap: 0.75rem;
+  flex-wrap: wrap;
 }
 
+.header-title-group {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.analytics-main-title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.01em;
+}
+
+.analytics-subtitle-text {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+}
+
+.header-controls-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.subcohort-toggle, .exclusion-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.toggle-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+}
+
+.toggle-pill-group {
+  display: flex;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 2px;
+  border-radius: var(--radius-md);
+  align-items: center;
+}
+
+.toggle-pill {
+  background: transparent;
+  border: none;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.15s ease;
+}
+
+.toggle-pill:hover:not(.toggle-pill--active) {
+  color: var(--text);
+  background: var(--bg-secondary);
+}
+
+.toggle-pill--active {
+  background: var(--primary) !important;
+  color: #ffffff !important;
+  box-shadow: var(--shadow-sm);
+}
+
+.toggle-pill-group--sm .toggle-pill--sm {
+  font-size: 0.7rem;
+  padding: 2px 7px;
+}
+
+.threshold-editor {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.threshold-input {
+  width: 32px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 4px;
+  padding: 0 2px;
+  text-align: center;
+  font-size: 0.75rem;
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  font-weight: bold;
+  outline: none;
+}
+
+/* Notice Banners */
 .grades__outlier-notice {
   display: flex;
   align-items: center;
   gap: 0.5rem;
   color: #856403;
   background: #fff3cd;
-  padding: 0.5rem 0.75rem;
-  border-radius: var(--radius-sm);
-  font-size: 0.8125rem;
-  border: 1px solid rgba(0,0,0,0.05);
-  white-space: nowrap;
-}
-
-.grades__outlier-toggle {
-  margin-left: auto;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.grades__toggle-label {
-  font-size: 0.75rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--text-secondary);
-}
-
-.grades__calculating-overlay {
-  position: absolute;
-  inset: 0;
-  background: rgba(255, 255, 255, 0.8);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  z-index: 100;
-  gap: 1rem;
-  backdrop-filter: blur(2px);
-}
-
-.grades__spinner {
-  width: 40px;
-  height: 40px;
-  border: 4px solid var(--border);
-  border-top-color: var(--primary);
-  border-radius: 50%;
-  animation: grades-spin 1s linear infinite;
-}
-
-@keyframes grades-spin {
-  to { transform: rotate(360deg); }
-}
-
-.grades__analytics-scrollable {
-  flex: 1;
-  overflow-y: auto;
-  overflow-x: hidden;
-  padding: 1.5rem;
-}
-
-.grades__analytics-sections {
-  max-width: 1200px;
-  margin: 0 auto;
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
-}
-
-.grades__analytics-section {
-  background: var(--surface);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-sm);
-  padding: 1.5rem;
-  border: 1px solid var(--border);
-}
-
-.grades__analytics-subtitle {
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: var(--text-secondary);
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-}
-
-.grades__section-header-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1.25rem;
-  gap: 1rem;
-  flex-wrap: wrap;
-}
-
-.grades__analytics-hint {
-  font-size: 0.75rem;
-  color: var(--text-secondary);
-  margin-top: 1rem;
-}
-
-.grades__analytics-row {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1.25rem;
-}
-
-.grades__analytics-card {
-  background: var(--surface);
-  padding: 1.25rem;
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-sm);
-  border: 1px solid var(--border);
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.grades__analytics-card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
-}
-
-.grades__card-value {
-  font-size: 1.75rem;
-  font-weight: 700;
-  color: var(--text);
-}
-
-.grades__card-hint {
-  font-size: 0.7rem;
-  color: var(--text-secondary);
-}
-
-.grades__card-label {
-  font-size: 0.65rem;
-  font-weight: 700;
-  color: var(--text-secondary);
-  letter-spacing: 0.5px;
-}
-
-.grades__analytics-table-wrapper {
-  overflow-x: auto;
-  margin: 0 -0.5rem;
-}
-
-.grades__analytics-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.875rem;
-}
-
-.grades__analytics-table th {
-  text-align: left;
-  padding: 0.75rem 1rem;
-  border-bottom: 2px solid var(--border);
-  color: var(--text-secondary);
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.grades__analytics-table th:hover {
-  background: var(--bg-secondary);
-}
-
-.grades__analytics-table td {
-  padding: 1rem;
-  border-bottom: 1px solid var(--border);
-}
-
-.grades__td-assessment-name {
-  font-weight: 600;
-  cursor: pointer;
-  color: var(--primary);
-}
-
-.grades__flag-group {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.grades__flag {
-  font-size: 1.1rem;
-  line-height: 1;
-}
-
-.grades__analytics-collapsible-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  cursor: pointer;
-  user-select: none;
-}
-
-.grades__exclusion-list {
-  margin-top: 1rem;
-  padding-top: 1rem;
-  border-top: 1px solid var(--border);
-  animation: slide-down 0.2s ease-out;
-}
-
-@keyframes slide-down {
-  from { opacity: 0; transform: translateY(-10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.grades__exclusion-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 0.75rem;
-  margin-top: 1rem;
-}
-
-.grades__exclusion-item {
-  font-size: 0.875rem;
-}
-
-.grades__empty-analytics {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding: 3rem;
-}
-
-.grades__empty-content {
-  max-width: 400px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1.25rem;
-}
-
-.grades__empty-icon {
-  color: var(--border);
-  margin-bottom: 0.5rem;
-}
-
-.grades__empty-content h3 {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: var(--text);
-}
-
-.grades__empty-content p {
-  color: var(--text-secondary);
-}
-
-.grades__toggle-group {
-  display: flex;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border);
-  padding: 2px;
-  border-radius: var(--radius-md);
-  align-items: center;
-}
-
-.grades__toggle-btn {
-  background: transparent;
-  border: none;
-  font-size: 0.8rem;
-  font-weight: 600;
-  padding: 6px 12px;
-  border-radius: var(--radius-sm);
-  color: var(--text-secondary);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.grades__toggle-btn--active {
-  background: var(--primary) !important;
-  color: #ffffff !important;
-  box-shadow: var(--shadow-sm);
-}
-
-.grades__toggle-btn--active .grades__threshold-input {
-  background: rgba(255, 255, 255, 0.15) !important;
-  border-color: rgba(255, 255, 255, 0.3) !important;
-  color: #ffffff !important;
-}
-
-.grades__threshold-editor {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.grades__threshold-input {
-  width: 40px;
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  padding: 2px;
-  text-align: center;
-  font-size: 0.8rem;
-  background: var(--surface);
-  color: var(--text);
-  font-weight: bold;
+  padding: 0.4rem 1.25rem;
+  font-size: 0.78rem;
+  border-bottom: 1px solid rgba(0,0,0,0.06);
 }
 
 .grades__weight-warning {
-  padding: 0.75rem 1.5rem;
-  font-size: 0.8125rem;
+  padding: 0.4rem 1.25rem;
+  font-size: 0.78rem;
   font-weight: 500;
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  border-bottom: 1px solid rgba(0,0,0,0.05);
+  border-bottom: 1px solid rgba(0,0,0,0.06);
 }
 
-.grades__weight-warning--over {
-  background: #fdf2f2;
-  color: #9b1c1c;
-}
+.grades__weight-warning--over { background: #fdf2f2; color: #9b1c1c; }
+.grades__weight-warning--under { background: #fefaf0; color: #b45309; }
 
-.grades__weight-warning--under {
-  background: #fefaf0;
-  color: #b45309;
-}
-
-.grades__blend-container {
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
-  margin-top: 1.25rem;
-}
-
-.grades__blend-bar {
-  display: flex;
-  height: 24px;
-  border-radius: 12px;
-  overflow: hidden;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border);
-}
-
-.grades__blend-segment {
-  height: 100%;
-  transition: width 0.3s ease;
-}
-
-.grades__blend-segment--product {
-  background: var(--primary);
-}
-
-.grades__blend-segment--observation {
-  background: #06b6d4;
-}
-
-.grades__blend-segment--conversation {
-  background: #ec4899;
-}
-
-.grades__blend-legend {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1rem;
-}
-
-.grades__legend-item {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.grades__legend-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  display: inline-block;
-}
-
-.grades__legend-dot--product { background: var(--primary); }
-.grades__legend-dot--observation { background: #06b6d4; }
-.grades__legend-dot--conversation { background: #ec4899; }
-
-.grades__legend-text {
-  font-size: 0.75rem;
-  color: var(--text-secondary);
-}
-
-.grades__sparkline {
-  display: flex;
-  align-items: flex-end;
-  height: 20px;
-  gap: 2px;
-  width: 100%;
-}
-
-.grades__sparkline-bar {
+/* Main Scrollable Area */
+.grades__analytics-scrollable {
   flex: 1;
-  min-width: 4px;
-  border-radius: 1px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0.875rem 1.25rem 1.5rem;
 }
 
-.header-title-group {
+.grades__analytics-sections {
+  max-width: 1320px;
+  margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 0.875rem;
 }
 
-.analytics-main-title {
-  margin: 0;
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: var(--text);
-}
-
-.analytics-subtitle-text {
-  font-size: 0.75rem;
-  color: var(--text-secondary);
-}
-
-/* Glassmorphic KPI Cards */
-.kpi-card {
+/* 1. Executive Stat Ribbon */
+.stat-ribbon {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  padding: 16px;
+  box-shadow: var(--shadow-sm);
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+}
+
+.stat-ribbon__item {
+  padding: 0.65rem 0.95rem;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.03);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  justify-content: flex-start;
+  gap: 3px;
+  border-right: 1px solid var(--border);
+  cursor: help;
+  transition: background-color 0.15s ease;
 }
 
-.kpi-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+.stat-ribbon__item:hover {
+  background-color: var(--bg-secondary);
 }
 
-.kpi-card__header {
+.stat-ribbon__item:last-child {
+  border-right: none;
+}
+
+.stat-ribbon__label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+}
+
+.stat-icon {
+  flex-shrink: 0;
+}
+.stat-icon--blue { color: #3b82f6; }
+.stat-icon--green { color: #22c55e; }
+.stat-icon--amber { color: #f59e0b; }
+.stat-icon--purple { color: #a855f7; }
+.stat-icon--red { color: #ef4444; }
+
+.stat-ribbon__value-row {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.stat-ribbon__num {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--text);
+  line-height: 1.15;
+}
+
+.stat-ribbon__num--danger {
+  color: #ef4444 !important;
+}
+
+.stat-unit {
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.stat-ribbon__sub {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* At-Risk Popover & Interaction */
+.stat-ribbon__item--at-risk {
+  position: relative;
+}
+
+.stat-ribbon__item--clickable {
+  cursor: pointer !important;
+}
+
+.stat-ribbon__item--clickable:hover {
+  background-color: rgba(239, 68, 68, 0.08) !important;
+}
+
+.stat-ribbon__item--open {
+  background-color: var(--bg-secondary) !important;
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+
+.at-risk-chevron {
+  color: #ef4444;
+  margin-left: auto;
+}
+
+.at-risk-popover {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  min-width: 220px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  overflow: hidden;
+  animation: popover-fade 0.15s ease-out;
+}
+
+@keyframes popover-fade {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.at-risk-popover__header {
+  padding: 6px 10px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.at-risk-popover__hint {
+  font-weight: 600;
+  font-size: 0.65rem;
+  color: var(--primary);
+}
+
+.at-risk-popover__list {
+  display: flex;
+  flex-direction: column;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.at-risk-popover__item {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  padding: 7px 10px;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  transition: background-color 0.15s;
 }
 
-.kpi-card__label {
-  font-size: 0.72rem;
+.at-risk-popover__item:last-child {
+  border-bottom: none;
+}
+
+.at-risk-popover__item:hover {
+  background-color: var(--bg-secondary);
+}
+
+.at-risk-popover__name {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.at-risk-popover__grade {
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: #ef4444;
+}
+
+/* Mini Evidence Segment Bar */
+.mini-evidence-bar {
+  display: flex;
+  height: 8px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  margin: 3px 0 1px 0;
+}
+
+.mini-segment {
+  height: 100%;
+  transition: width 0.3s ease;
+}
+.mini-segment--product { background: var(--primary); }
+.mini-segment--observation { background: #06b6d4; }
+.mini-segment--conversation { background: #ec4899; }
+
+.evidence-sub-chips {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.chip-p { color: var(--primary); font-weight: 700; }
+.chip-o { color: #0891b2; font-weight: 700; }
+.chip-c { color: #db2777; font-weight: 700; }
+
+/* 2. Grid 2-Col */
+.analytics-grid-2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.875rem;
+}
+
+@media (max-width: 1024px) {
+  .stat-ribbon {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .stat-ribbon__item {
+    border-bottom: 1px solid var(--border);
+  }
+  .analytics-grid-2col {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Card Container */
+.analytics-card {
+  background: var(--surface);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  padding: 0.85rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.analytics-card--compact {
+  padding: 0.75rem 1rem;
+}
+
+.analytics-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.card-title-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.card-header-icon {
+  color: var(--primary);
+  flex-shrink: 0;
+}
+
+.card-header-icon--gold {
+  color: #f59e0b;
+}
+
+.analytics-card__title {
+  margin: 0;
+  font-size: 0.82rem;
   font-weight: 700;
-  color: var(--text-secondary);
+  color: var(--text);
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
 
-.kpi-card__icon {
+.card-header-tag {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: var(--bg-secondary);
+  padding: 1px 6px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+
+/* Distribution Chart */
+.chart-wrapper {
+  height: 140px;
+  position: relative;
+}
+
+.distribution-footer-stat {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  padding-top: 3px;
+  border-top: 1px solid var(--border);
+}
+
+.distribution-footer-stat strong {
+  color: var(--text);
+}
+
+/* Hotspots Section */
+.hotspots-container {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+
+.hotspot-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--bg);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.hotspot-item:hover {
+  transform: translateX(2px);
+  border-color: var(--primary);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.hotspot-item__icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 5px;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 6px;
+  flex-shrink: 0;
+}
+.hotspot-item__icon--warning { background: rgba(245, 158, 11, 0.12); color: #d97706; }
+.hotspot-item__icon--success { background: rgba(34, 197, 94, 0.12); color: #16a34a; }
+.hotspot-item__icon--info { background: rgba(59, 130, 246, 0.12); color: #2563eb; }
+
+.hotspot-item__content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
 }
 
-.kpi-card__icon--blue { background: rgba(59, 130, 246, 0.1); color: #3b82f6; }
-.kpi-card__icon--green { background: rgba(34, 197, 94, 0.1); color: #22c55e; }
-.kpi-card__icon--purple { background: rgba(147, 51, 234, 0.1); color: #9333ea; }
-.kpi-card__icon--amber { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
+.hotspot-item__top {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
 
-.kpi-card__body {
+.hotspot-badge {
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.hotspot-badge--warning { color: #d97706; }
+.hotspot-badge--success { color: #16a34a; }
+.hotspot-badge--info { color: #2563eb; }
+
+.hotspot-cat {
+  font-size: 0.65rem;
+  color: var(--text-secondary);
+}
+
+.hotspot-item__name {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hotspot-item__stats {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+}
+
+.hotspot-chevron {
+  color: var(--text-secondary);
+  flex-shrink: 0;
+  opacity: 0.6;
+}
+
+.hotspot-empty {
+  padding: 1.5rem;
+  text-align: center;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+
+/* 3. Category Grid */
+.category-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 6px;
+}
+
+.category-card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 6px 9px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.category-card--empty {
+  opacity: 0.6;
+  border-style: dashed;
+}
+
+.category-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+}
+
+.category-card__name {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.category-card__weight-badge {
+  font-size: 0.62rem;
+  font-weight: 700;
+  background: rgba(99, 102, 241, 0.1);
+  color: #6366f1;
+  padding: 1px 5px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+
+.category-card__body {
   display: flex;
   flex-direction: column;
   gap: 2px;
 }
 
-.kpi-card__value {
-  font-size: 1.5rem;
+.category-card__score-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.category-card__score {
+  font-size: 1.05rem;
   font-weight: 800;
+}
+
+.category-card__meta {
+  font-size: 0.65rem;
+  color: var(--text-secondary);
+}
+
+.category-card__meter {
+  height: 3px;
+  border-radius: 2px;
+  background: var(--border);
+  overflow: hidden;
+}
+
+.category-card__meter-bar {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+/* 4. Assessment Performance Matrix */
+.table-wrapper {
+  overflow-x: auto;
+  margin: 0 -0.25rem;
+}
+
+.assessment-filter-tabs {
+  display: flex;
+  gap: 3px;
+  background: var(--bg-secondary);
+  padding: 2px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+}
+
+.tab-btn {
+  background: transparent;
+  border: none;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.tab-btn:hover:not(.tab-btn--active) {
   color: var(--text);
 }
 
-.kpi-card__subtext {
-  font-size: 0.75rem;
+.tab-btn--active {
+  background: var(--surface);
+  color: var(--primary);
+  box-shadow: var(--shadow-sm);
+}
+
+.analytics-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.78rem;
+}
+
+.analytics-table thead {
+  position: sticky;
+  top: 0;
+  background: var(--bg-secondary);
+  z-index: 2;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.analytics-table th {
+  text-align: left;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 2px solid var(--border);
   color: var(--text-secondary);
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
 }
 
-/* Evidence Blend Legend Chips */
-.section-title-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
+.th-sortable {
+  cursor: pointer;
+  user-select: none;
 }
 
-.coverage-hint-text {
-  font-size: 0.75rem;
-  color: var(--text-secondary);
-}
-
-.legend-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  border-radius: 20px;
-  font-size: 0.75rem;
-  border: 1px solid var(--border);
+.th-sortable:hover {
+  color: var(--primary);
   background: var(--surface);
 }
 
-.legend-chip--product { border-color: rgba(59, 130, 246, 0.3); color: #2563eb; background: rgba(59, 130, 246, 0.05); }
-.legend-chip--observation { border-color: rgba(6, 182, 212, 0.3); color: #0891b2; background: rgba(6, 182, 212, 0.05); }
-.legend-chip--conversation { border-color: rgba(236, 72, 153, 0.3); color: #db2777; background: rgba(236, 72, 153, 0.05); }
+.analytics-table td {
+  padding: 0.55rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
 
-/* Table Enhancements */
 .analytics-table-row {
   cursor: pointer;
   transition: background-color 0.15s ease;
@@ -1333,35 +1823,69 @@ function processTypedAssessments(type) {
   background-color: var(--bg-secondary) !important;
 }
 
-.category-chip {
-  font-size: 0.72rem;
+.td-name {
   font-weight: 600;
-  padding: 2px 8px;
-  border-radius: 10px;
+  color: var(--primary);
+}
+
+.type-category-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.type-pill {
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 1px 4px;
+  border-radius: 4px;
+  border: 1px solid transparent;
+}
+.type-pill--product { background: rgba(59, 130, 246, 0.1); color: #2563eb; }
+.type-pill--observation { background: rgba(6, 182, 212, 0.1); color: #0891b2; }
+.type-pill--conversation { background: rgba(236, 72, 153, 0.1); color: #db2777; }
+
+.category-chip {
+  font-size: 0.68rem;
+  font-weight: 500;
+  padding: 1px 5px;
+  border-radius: 6px;
   background: var(--bg-secondary);
   color: var(--text-secondary);
   border: 1px solid var(--border);
 }
 
+.td-date {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+}
+
+.text-right {
+  text-align: right;
+}
+
 .range-text-pill {
-  font-size: 0.8rem;
+  font-size: 0.72rem;
   font-weight: 600;
   color: var(--text);
   background: var(--bg);
-  padding: 2px 8px;
-  border-radius: 6px;
+  padding: 1px 5px;
+  border-radius: 4px;
   border: 1px solid var(--border);
+  white-space: nowrap;
 }
 
 .consistency-badge {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  font-size: 0.75rem;
+  gap: 3px;
+  font-size: 0.68rem;
   font-weight: 700;
-  padding: 3px 10px;
-  border-radius: 12px;
+  padding: 1px 6px;
+  border-radius: 8px;
   border: 1px solid transparent;
+  white-space: nowrap;
 }
 
 .consistency-badge--consistent {
@@ -1382,11 +1906,152 @@ function processTypedAssessments(type) {
   border-color: rgba(245, 158, 11, 0.25);
 }
 
+.grades__sparkline {
+  display: flex;
+  align-items: flex-end;
+  height: 16px;
+  gap: 2px;
+  width: 90px;
+}
+
+.grades__sparkline-bar {
+  flex: 1;
+  min-width: 3px;
+  border-radius: 1px;
+}
+
+.empty-table-hint {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  padding: 1.25rem;
+  text-align: center;
+}
+
+/* 5. Collapsible Exclusions Drawer */
+.analytics-card--collapsible {
+  padding: 0;
+  overflow: hidden;
+}
+
+.collapsible-header {
+  padding: 0.75rem 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+  background: var(--surface);
+  transition: background-color 0.15s ease;
+}
+
+.collapsible-header:hover {
+  background: var(--bg-secondary);
+}
+
 .collapsible-title-group {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
+}
+
+.exclusion-count-tag {
+  font-size: 0.68rem;
+  font-weight: 700;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  padding: 1px 6px;
+  border-radius: 8px;
+  color: var(--text-secondary);
+}
+
+.exclusion-drawer-body {
+  padding: 0.875rem 1rem 1rem;
+  border-top: 1px solid var(--border);
+  background: var(--bg);
+}
+
+.exclusion-hint {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.5rem;
+}
+
+.exclusion-checkbox-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 0.4rem;
+}
+
+.exclusion-checkbox-item {
+  font-size: 0.78rem;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+}
+
+/* Spinner & Empty State */
+.grades__calculating-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.8);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  gap: 1rem;
+  backdrop-filter: blur(2px);
+}
+
+.grades__spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--border);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: grades-spin 0.8s linear infinite;
+}
+
+@keyframes grades-spin {
+  to { transform: rotate(360deg); }
+}
+
+.grades__empty-analytics {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 2rem;
+}
+
+.grades__empty-content {
+  max-width: 360px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.875rem;
+}
+
+.grades__empty-icon {
+  color: var(--border);
+}
+
+.grades__empty-content h3 {
+  font-size: 1.05rem;
+  font-weight: 700;
   color: var(--text);
+  margin: 0;
+}
+
+.grades__empty-content p {
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  margin: 0;
 }
 
 .grades__btn-primary {
@@ -1396,10 +2061,10 @@ function processTypedAssessments(type) {
   background: var(--primary);
   color: #fff;
   border: none;
-  padding: 0.75rem 1.25rem;
+  padding: 0.5rem 1rem;
   border-radius: var(--radius-md);
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: 0.8rem;
   cursor: pointer;
   box-shadow: var(--shadow-sm);
   transition: background-color 0.2s;

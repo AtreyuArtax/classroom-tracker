@@ -206,6 +206,7 @@
           <GradesAnalyticsPanel
             v-else-if="analyticsMode"
             @select-assessment="openAssessmentView($event, 'analytics')"
+            @show-dossier="showStudentDossier"
           />
 
           <!-- SBAR Grid vs Traditional Grid Dispatcher -->

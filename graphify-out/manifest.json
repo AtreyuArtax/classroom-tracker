@@ -340,8 +340,8 @@
     "semantic_hash": ""
   },
   "src/views/Grades.vue": {
-    "mtime": 1787909527.666036,
-    "ast_hash": "0a26e2cc09695aff6f8b93a9911e2256",
+    "mtime": 1787963078.558262,
+    "ast_hash": "1c5b65736fadbf24f70c2f73a258a017",
     "semantic_hash": ""
   },
   "src/views/Reports.vue": {
@@ -385,8 +385,8 @@
     "semantic_hash": ""
   },
   "src/components/GradesAnalyticsPanel.vue": {
-    "mtime": 1787708601.5631788,
-    "ast_hash": "cf162466b37fbabaa71f7f68e24dfadd",
+    "mtime": 1787963289.9075449,
+    "ast_hash": "7018d878e20a07d49fa0374c6ae5b76f",
     "semantic_hash": ""
   },
   "src/components/GradesGrid.vue": {
