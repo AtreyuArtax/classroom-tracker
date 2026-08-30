@@ -1,7 +1,7 @@
 # Graph Report - classroom-tracker  (2026-08-30)
 
 ## Corpus Check
-- 226 files · ~442,246 words
+- 226 files · ~443,199 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `11a67b65`
+- Built from commit: `8fb60247`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -81,6 +81,7 @@
 - [[_COMMUNITY_Community 108|Community 108]]
 - [[_COMMUNITY_Community 109|Community 109]]
 - [[_COMMUNITY_Community 111|Community 111]]
+- [[_COMMUNITY_Community 112|Community 112]]
 - [[_COMMUNITY_Community 113|Community 113]]
 - [[_COMMUNITY_Community 115|Community 115]]
 - [[_COMMUNITY_Community 117|Community 117]]
@@ -89,7 +90,6 @@
 - [[_COMMUNITY_Community 121|Community 121]]
 - [[_COMMUNITY_Community 122|Community 122]]
 - [[_COMMUNITY_Community 123|Community 123]]
-- [[_COMMUNITY_Community 124|Community 124]]
 
 ## God Nodes (most connected - your core abstractions)
 1. `getDB()` - 111 edges
@@ -326,7 +326,7 @@ Nodes (12): teachingMode, detectGradeFromClassName(), getEffectiveGradeLevel(), 
 
 ### Community 91 - "Community 91"
 Cohesion: 0.20
-Nodes (10): description, type, description, type, description, type, properties, department (+2 more)
+Nodes (10): description, type, description, type, properties, grade, isSuccessCriteria, title (+2 more)
 
 ### Community 96 - "Community 96"
 Cohesion: 0.04
@@ -356,6 +356,10 @@ Nodes (3): close(), emit, props
 Cohesion: 0.19
 Nodes (9): state, canRedo, canUndo, push(), redo(), _redoStack, undo(), _undoStack (+1 more)
 
+### Community 112 - "Community 112"
+Cohesion: 0.67
+Nodes (3): description, type, department
+
 ### Community 115 - "Community 115"
 Cohesion: 0.25
 Nodes (8): properties, description, type, description, minItems, type, name, overalls
@@ -383,10 +387,6 @@ Nodes (4): region, default, description, type
 ### Community 123 - "Community 123"
 Cohesion: 0.67
 Nodes (3): subjectCode, description, type
-
-### Community 124 - "Community 124"
-Cohesion: 0.67
-Nodes (3): title, description, type
 
 ## Knowledge Gaps
 - **485 isolated node(s):** `scanBuffer`, `manifest_version`, `name`, `version`, `description` (+480 more)

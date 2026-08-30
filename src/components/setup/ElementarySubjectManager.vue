@@ -52,9 +52,8 @@
                 <span class="elementary-subjects__card-code">({{ sub.code || 'SUBJ' }})</span>
               </div>
               <div class="elementary-subjects__card-meta">
-                <span>Framework: <strong>{{ formatFrameworkLabel(sub.gradingFramework) }}</strong></span>
                 <span class="elementary-subjects__tag">
-                  {{ (sub.expectations?.length || 0) }} Expectations ({{ (sub.gradebookUnits?.length || 0) }} Strands)
+                  {{ (sub.expectations?.length || 0) }} Expectations ({{ (sub.gradebookUnits?.length || 0) }} Strands{{ getSubjectGrades(sub).length > 1 ? ' • ' + getSubjectGrades(sub).map(g => formatGradeLabel(g)).join('/') : '' }})
                 </span>
               </div>
             </div>
@@ -72,36 +71,38 @@
             </button>
 
             <button 
+              v-else-if="!sub.expectations || sub.expectations.length === 0"
               type="button" 
               class="elementary-subjects__btn-ghost"
-              style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.8rem; padding: 6px 12px;"
-              title="Manage Curriculum Expectations"
+              style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.8rem; padding: 6px 12px; white-space: nowrap; flex-shrink: 0;"
+              title="Import Curriculum Expectations"
               @click="openExpectationModal(sub)"
             >
-              <BookOpen :size="14" /> Expectations
+              <Zap :size="14" /> Import Expectations
             </button>
 
             <button
+              v-if="sub.expectations && sub.expectations.length > 0"
               type="button"
               class="elementary-subjects__btn-ghost"
-              style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.8rem; padding: 6px 10px;"
-              title="Edit Strand & Unit Names"
+              style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.78rem; padding: 5px 8px; white-space: nowrap; flex-shrink: 0;"
+              title="View & Edit Curriculum Expectations"
               @click="expandedStrandSubjectId = expandedStrandSubjectId === sub.subjectId ? null : sub.subjectId"
             >
-              <ChevronDown :size="14" :style="{ transform: expandedStrandSubjectId === sub.subjectId ? 'rotate(180deg)' : 'none' }" />
-              <span>Strands ({{ sub.gradebookUnits?.length || 0 }})</span>
+              <ChevronDown :size="13" :style="{ transform: expandedStrandSubjectId === sub.subjectId ? 'rotate(180deg)' : 'none' }" />
+              <span style="white-space: nowrap;">Expectations ({{ sub.expectations?.length || 0 }})</span>
             </button>
 
             <button
               v-if="sub.gradingFramework === 'traditional'"
               type="button"
               class="elementary-subjects__btn-ghost"
-              style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.8rem; padding: 6px 10px;"
+              style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.78rem; padding: 5px 8px; white-space: nowrap; flex-shrink: 0;"
               title="Edit Category Weights"
               @click="expandedCategorySubjectId = expandedCategorySubjectId === sub.subjectId ? null : sub.subjectId"
             >
-              <ChevronDown :size="14" :style="{ transform: expandedCategorySubjectId === sub.subjectId ? 'rotate(180deg)' : 'none' }" />
-              <span>Categories ({{ (sub.gradebookCategories && sub.gradebookCategories.length > 0 ? sub.gradebookCategories : DEFAULT_TRADITIONAL_CATEGORIES).length }})</span>
+              <ChevronDown :size="13" :style="{ transform: expandedCategorySubjectId === sub.subjectId ? 'rotate(180deg)' : 'none' }" />
+              <span style="white-space: nowrap;">Categories ({{ (sub.gradebookCategories && sub.gradebookCategories.length > 0 ? sub.gradebookCategories : DEFAULT_TRADITIONAL_CATEGORIES).length }})</span>
             </button>
 
             <select 
@@ -110,11 +111,11 @@
               @change="e => updateSubjectFramework(sub.subjectId, e.target.value)"
             >
               <optgroup label="Standards-Based (SBAR)">
-                <option value="sbar">SBAR — Decaying Average</option>
-                <option value="sbar_power_law">SBAR — Power Law (Marzano)</option>
-                <option value="sbar_mode">SBAR — Mode / Most Consistent</option>
-                <option value="sbar_most_recent">SBAR — Most Recent</option>
-                <option value="sbar_highest">SBAR — Highest Level</option>
+                <option value="sbar">SBAR (Decaying Avg)</option>
+                <option value="sbar_power_law">SBAR (Power Law)</option>
+                <option value="sbar_mode">SBAR (Mode)</option>
+                <option value="sbar_most_recent">SBAR (Most Recent)</option>
+                <option value="sbar_highest">SBAR (Highest Level)</option>
               </optgroup>
               <optgroup label="Traditional">
                 <option value="traditional">Traditional (%)</option>
@@ -199,7 +200,7 @@
                 style="font-size: 0.75rem; padding: 3px 8px;"
                 @click="clearSubjectExpectations(sub.subjectId)"
               >
-                <Trash2 :size="12" /> Clear All ({{ sub.expectations.length }})
+                <Trash2 :size="12" /> Clear {{ (selectedGradeFilters[sub.subjectId] && selectedGradeFilters[sub.subjectId] !== 'all') ? formatGradeLabel(selectedGradeFilters[sub.subjectId]) : 'All' }} ({{ (selectedGradeFilters[sub.subjectId] && selectedGradeFilters[sub.subjectId] !== 'all') ? getSubjectExpectationCountForGrade(sub, selectedGradeFilters[sub.subjectId]) : (sub.expectations?.length || 0) }})
               </button>
             </div>
           </div>
@@ -208,8 +209,29 @@
             No strands or expectations configured yet. Click <strong>Preset / Importer</strong> or <strong>+ Add Strand / Unit</strong> below to begin.
           </div>
 
+          <!-- Toolbar Row: Grade Filter Pills & Search Bar -->
+          <div v-if="getSubjectGrades(sub).length > 1 || (sub.expectations?.length || 0) > 5" class="elementary-subjects__toolbar-row">
+            <!-- Grade Filter Pills (shown when subject has 2+ distinct grades) -->
+            <div v-if="getSubjectGrades(sub).length > 1" class="elementary-subjects__grade-pills">
+              <button 
+                type="button" 
+                :class="['elementary-subjects__grade-pill', (selectedGradeFilters[sub.subjectId] || 'all') === 'all' ? 'elementary-subjects__grade-pill--active' : '']"
+                @click="selectedGradeFilters[sub.subjectId] = 'all'"
+              >
+                All ({{ sub.expectations?.length || 0 }})
+              </button>
+              <button 
+                v-for="grade in getSubjectGrades(sub)" 
+                :key="grade"
+                :class="['elementary-subjects__grade-pill', selectedGradeFilters[sub.subjectId] === grade ? 'elementary-subjects__grade-pill--active' : '']"
+                @click="selectedGradeFilters[sub.subjectId] = grade"
+              >
+                {{ formatGradeLabel(grade) }} ({{ getSubjectExpectationCountForGrade(sub, grade) }})
+              </button>
+            </div>
+
             <!-- Search Bar for Strands/Expectations (if subject has > 5 expectations) -->
-            <div v-if="(sub.expectations?.length || 0) > 5" style="margin-bottom: 8px;">
+            <div v-if="(sub.expectations?.length || 0) > 5" class="elementary-subjects__search-container">
               <div class="elementary-subjects__search-box">
                 <Search :size="13" class="elementary-subjects__search-icon" />
                 <input 
@@ -223,9 +245,15 @@
                 </button>
               </div>
             </div>
+          </div>
 
-            <!-- Strands List -->
-          <div v-for="unit in (sub.gradebookUnits || [])" :key="unit.unitId" class="elementary-subjects__strand-block">
+          <!-- Empty state when grade filter has no strands -->
+          <div v-if="getFilteredUnits(sub).length === 0 && (sub.gradebookUnits?.length || 0) > 0" style="font-size: 0.85rem; color: var(--text-secondary); font-style: italic; padding: 16px 0; text-align: center;">
+            No strands found for {{ formatGradeLabel(selectedGradeFilters[sub.subjectId]) }}.
+          </div>
+
+          <!-- Strands List -->
+          <div v-for="unit in getFilteredUnits(sub)" :key="unit.unitId" class="elementary-subjects__strand-block">
             <div class="elementary-subjects__strand-row">
               <span v-if="unit.gradeLevel" class="elementary-subjects__strand-grade">{{ unit.gradeLevel.replace('Grade ', 'Gr ') }}</span>
               <input 
@@ -487,10 +515,6 @@
           <input type="text" v-model="newSubject.code" class="elementary-subjects__input" placeholder="e.g., MED" maxLength="5" />
         </div>
         <div class="elementary-subjects__form-group">
-          <label>Icon Emoji</label>
-          <input type="text" v-model="newSubject.icon" class="elementary-subjects__input" placeholder="e.g., 🎬" />
-        </div>
-        <div class="elementary-subjects__form-group">
           <label>Grading Framework</label>
           <select v-model="newSubject.gradingFramework" class="elementary-subjects__input">
             <optgroup label="Standards-Based (SBAR)">
@@ -611,11 +635,104 @@ async function saveEditExp(subjectId, exp) {
   await updateActiveClass({ subjects: updated })
 }
 
+const selectedGradeFilters = reactive({})
+
+function getSubjectGrades(sub) {
+  if (!sub) return []
+  const grades = new Set()
+  if (sub.gradebookUnits) {
+    sub.gradebookUnits.forEach(u => {
+      if (u.gradeLevel && typeof u.gradeLevel === 'string') {
+        const clean = u.gradeLevel.trim()
+        if (clean) grades.add(clean)
+      }
+    })
+  }
+  if (sub.expectations) {
+    sub.expectations.forEach(e => {
+      if (e.gradeLevel && typeof e.gradeLevel === 'string') {
+        const clean = e.gradeLevel.trim()
+        if (clean) grades.add(clean)
+      }
+    })
+  }
+  return Array.from(grades).sort((a, b) => {
+    const numA = parseInt(a.replace(/[^0-9]/g, '') || '0', 10)
+    const numB = parseInt(b.replace(/[^0-9]/g, '') || '0', 10)
+    if (numA !== numB) return numA - numB
+    return a.localeCompare(b)
+  })
+}
+
+function formatGradeLabel(grade) {
+  if (!grade) return 'Grade'
+  const trimmed = grade.trim()
+  if (/^grade\s*\d+/i.test(trimmed)) {
+    return trimmed.replace(/^grade\s*/i, 'Gr ')
+  }
+  if (/^\d+$/.test(trimmed)) {
+    return `Gr ${trimmed}`
+  }
+  return trimmed
+}
+
+function getSubjectExpectationCountForGrade(sub, grade) {
+  if (!sub || !sub.expectations) return 0
+  if (grade === 'all') return sub.expectations.length
+
+  const gNorm = (grade || '').toLowerCase().trim()
+  const gNum = grade.replace(/[^0-9]/g, '')
+  const matchingUnits = new Set(
+    (sub.gradebookUnits || [])
+      .filter(u => {
+        const uG = (u.gradeLevel || '').toLowerCase().trim()
+        return uG === gNorm || (gNum && uG.replace(/[^0-9]/g, '') === gNum)
+      })
+      .map(u => u.unitId)
+  )
+
+  return sub.expectations.filter(e => {
+    const eG = (e.gradeLevel || '').toLowerCase().trim()
+    if (eG === gNorm || (gNum && eG.replace(/[^0-9]/g, '') === gNum)) return true
+    if (e.unitId && matchingUnits.has(e.unitId)) return true
+    return false
+  }).length
+}
+
+function getFilteredUnits(sub) {
+  if (!sub || !sub.gradebookUnits) return []
+  const filter = selectedGradeFilters[sub.subjectId] || 'all'
+  if (filter === 'all') return sub.gradebookUnits
+
+  const gNorm = filter.toLowerCase().trim()
+  const gNum = filter.replace(/[^0-9]/g, '')
+
+  return sub.gradebookUnits.filter(u => {
+    const uG = (u.gradeLevel || '').toLowerCase().trim()
+    if (uG === gNorm) return true
+    if (gNum && uG.replace(/[^0-9]/g, '') === gNum) return true
+
+    // Check if unit has expectations for this grade
+    const unitExps = (sub.expectations || []).filter(e => e.unitId === u.unitId)
+    if (unitExps.some(e => {
+      const eG = (e.gradeLevel || '').toLowerCase().trim()
+      return eG === gNorm || (gNum && eG.replace(/[^0-9]/g, '') === gNum)
+    })) {
+      return true
+    }
+
+    return false
+  })
+}
+
 function getUnitExpectations(sub, unit) {
   if (!sub || !sub.expectations) return []
   const uId = unit.unitId
   const uNameLower = (cleanUnitName(unit.name) || '').toLowerCase()
   const q = strandSearchQuery.value.toLowerCase().trim()
+  const filter = selectedGradeFilters[sub.subjectId] || 'all'
+  const gNorm = filter.toLowerCase().trim()
+  const gNum = filter.replace(/[^0-9]/g, '')
 
   return sub.expectations.filter(e => {
     let matchesUnit = false
@@ -629,6 +746,14 @@ function getUnitExpectations(sub, unit) {
     }
 
     if (!matchesUnit) return false
+
+    if (filter !== 'all') {
+      const eG = (e.gradeLevel || '').toLowerCase().trim()
+      const uG = (unit.gradeLevel || '').toLowerCase().trim()
+      if (eG && eG !== gNorm && (!gNum || eG.replace(/[^0-9]/g, '') !== gNum)) return false
+      if (!eG && uG && uG !== gNorm && (!gNum || uG.replace(/[^0-9]/g, '') !== gNum)) return false
+    }
+
     if (!q) return true
     return (e.code || '').toLowerCase().includes(q) || (e.description || '').toLowerCase().includes(q) || uNameLower.includes(q)
   })
@@ -655,9 +780,19 @@ function getUnassignedExpectations(sub) {
   }
 
   const unassigned = sub.expectations.filter(e => !assignedIds.has(e.expectationId))
-  const q = strandSearchQuery.value.toLowerCase().trim()
-  if (!q) return unassigned
-  return unassigned.filter(e => (e.code || '').toLowerCase().includes(q) || (e.description || '').toLowerCase().includes(q))
+  const filter = selectedGradeFilters[sub.subjectId] || 'all'
+  const gNorm = filter.toLowerCase().trim()
+  const gNum = filter.replace(/[^0-9]/g, '')
+
+  return unassigned.filter(e => {
+    if (filter !== 'all') {
+      const eG = (e.gradeLevel || '').toLowerCase().trim()
+      if (eG && eG !== gNorm && (!gNum || eG.replace(/[^0-9]/g, '') !== gNum)) return false
+    }
+    const q = strandSearchQuery.value.toLowerCase().trim()
+    if (!q) return true
+    return (e.code || '').toLowerCase().includes(q) || (e.description || '').toLowerCase().includes(q)
+  })
 }
 
 async function removeExpectation(subjectId, expectationId) {
@@ -695,10 +830,16 @@ async function removeExpectation(subjectId, expectationId) {
 
 function addExpectationToUnit(subjectId, unitId, code, description) {
   if (!code.trim() && !description.trim()) return
+  const currentGrade = selectedGradeFilters[subjectId]
+  const sub = currentSubjects.value.find(s => s.subjectId === subjectId)
+  const unit = sub?.gradebookUnits?.find(u => u.unitId === unitId)
+  const gradeLevel = unit?.gradeLevel || ((currentGrade && currentGrade !== 'all') ? currentGrade : undefined)
+
   const newExp = {
     expectationId: crypto.randomUUID(),
     code: code.trim().toUpperCase(),
     description: description.trim(),
+    gradeLevel,
     unitId: unitId === 'general' ? undefined : unitId
   }
   const updated = currentSubjects.value.map(s => {
@@ -720,7 +861,6 @@ function submitAddExp(subjectId, unitId) {
   newExpForms[descKey] = ''
 }
 
-
 function saveStrandName(subjectId, unitId, newName) {
   const clean = cleanUnitName(newName)
   if (!clean) return
@@ -733,12 +873,16 @@ function saveStrandName(subjectId, unitId, newName) {
 }
 
 async function addStrandUnit(subjectId) {
+  const currentGrade = selectedGradeFilters[subjectId]
+  const gradeLevel = (currentGrade && currentGrade !== 'all') ? currentGrade : undefined
+
   const existing = currentSubjects.value.map(s => {
     if (s.subjectId === subjectId) {
       const units = s.gradebookUnits ? [...s.gradebookUnits] : []
       units.push({
         unitId: `unit_${Date.now()}_${Math.floor(Math.random()*1000)}`,
         name: `Strand ${units.length + 1}`,
+        gradeLevel,
         weight: 0
       })
       return { ...s, gradebookUnits: units }
@@ -816,7 +960,6 @@ async function removeSubjectCategory(subjectId, categoryId) {
 const newSubject = ref({
   name: '',
   code: '',
-  icon: '📚',
   gradingFramework: 'sbar'
 })
 
@@ -850,16 +993,43 @@ function openExpectationModal(sub) {
 async function clearSubjectExpectations(subjectId) {
   const sub = currentSubjects.value.find(s => s.subjectId === subjectId)
   if (!sub) return
+  const activeGrade = selectedGradeFilters[subjectId]
+  const isFiltered = activeGrade && activeGrade !== 'all'
+  const gradeLabel = isFiltered ? formatGradeLabel(activeGrade) : ''
+  const count = isFiltered ? getSubjectExpectationCountForGrade(sub, activeGrade) : (sub.expectations?.length || 0)
+
   const ok = await confirmMessage(
-    `Clear all ${sub.expectations?.length || 0} expectations for ${sub.name}?`,
+    isFiltered
+      ? `Clear all ${count} ${gradeLabel} expectations for ${sub.name}? (Expectations for other grades will be preserved)`
+      : `Clear all ${count} expectations for ${sub.name}?`,
     `Clear Expectations — ${sub.name}`,
-    { confirmLabel: 'Clear Expectations', danger: true }
+    { confirmLabel: isFiltered ? `Clear ${gradeLabel} Expectations` : 'Clear All Expectations', danger: true }
   )
   if (!ok) return
 
   const updated = currentSubjects.value.map(s => {
     if (s.subjectId === subjectId) {
-      return { ...s, expectations: [] }
+      if (isFiltered) {
+        const gNorm = activeGrade.toLowerCase().trim()
+        const gNum = activeGrade.replace(/[^0-9]/g, '')
+        const matchingUnits = new Set(
+          (s.gradebookUnits || [])
+            .filter(u => {
+              const uG = (u.gradeLevel || '').toLowerCase().trim()
+              return uG === gNorm || (gNum && uG.replace(/[^0-9]/g, '') === gNum)
+            })
+            .map(u => u.unitId)
+        )
+        const keptExps = (s.expectations || []).filter(e => {
+          const eG = (e.gradeLevel || '').toLowerCase().trim()
+          if (eG === gNorm || (gNum && eG.replace(/[^0-9]/g, '') === gNum)) return false
+          if (e.unitId && matchingUnits.has(e.unitId)) return false
+          return true
+        })
+        return { ...s, expectations: keptExps }
+      } else {
+        return { ...s, expectations: [] }
+      }
     }
     return s
   })
@@ -1095,7 +1265,6 @@ async function saveCustomSubject() {
     subjectId: `subj_${Date.now()}`,
     name: newSubject.value.name.trim(),
     code: (newSubject.value.code || newSubject.value.name.slice(0, 4)).toUpperCase(),
-    icon: newSubject.value.icon || '📚',
     gradingFramework: newSubject.value.gradingFramework || 'sbar',
     sbarAlgorithm: 'decaying_average',
     sbarInputMode: 'fine',
@@ -1105,7 +1274,7 @@ async function saveCustomSubject() {
   const existing = [...currentSubjects.value, created]
   await updateActiveClass({ subjects: existing })
   showAddModal.value = false
-  newSubject.value = { name: '', code: '', icon: '📚', gradingFramework: 'sbar' }
+  newSubject.value = { name: '', code: '', gradingFramework: 'sbar' }
 }
 </script>
 
@@ -1233,6 +1402,8 @@ async function saveCustomSubject() {
   justify-content: space-between;
   align-items: center;
   width: 100%;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
 .elementary-subjects__card--active {
@@ -1243,6 +1414,7 @@ async function saveCustomSubject() {
   display: flex;
   align-items: center;
   gap: 12px;
+  min-width: 200px;
 }
 
 .elementary-subjects__card-icon {
@@ -1304,7 +1476,9 @@ async function saveCustomSubject() {
 .elementary-subjects__card-actions {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 6px;
+  flex-wrap: wrap;
+  flex-shrink: 0;
 }
 
 .elementary-subjects__select {
@@ -1312,18 +1486,24 @@ async function saveCustomSubject() {
   border: 1px solid var(--border);
   border-radius: var(--radius-sm, 6px);
   color: var(--text);
-  padding: 6px 10px;
-  font-size: 0.8rem;
+  padding: 5px 8px;
+  font-size: 0.78rem;
+  font-weight: 500;
+  max-width: 175px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  cursor: pointer;
 }
 
 .elementary-subjects__btn-delete {
   background: transparent;
   border: none;
   color: var(--text-secondary);
-  padding: 6px;
+  padding: 5px;
   cursor: pointer;
   border-radius: var(--radius-sm, 6px);
   transition: all 0.15s;
+  flex-shrink: 0;
 }
 
 .elementary-subjects__btn-delete:hover:not(:disabled) {
@@ -1334,6 +1514,22 @@ async function saveCustomSubject() {
 .elementary-subjects__btn-delete:disabled {
   opacity: 0.3;
   cursor: not-allowed;
+}
+
+.elementary-subjects__btn-ghost {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  padding: 5px 8px;
+  border-radius: var(--radius-sm, 6px);
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.78rem;
 }
 
 /* Modal */
@@ -1570,17 +1766,77 @@ async function saveCustomSubject() {
   color: var(--text);
   box-sizing: border-box;
 }
+.elementary-subjects__search-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  background: var(--surface);
+}
+
 .elementary-subjects__search-clear {
-  position: absolute;
-  right: 6px;
   background: transparent;
   border: none;
   color: var(--text-secondary);
   cursor: pointer;
-  padding: 2px;
-  display: flex;
+  padding: 2px 4px;
+  border-radius: var(--radius-sm);
+  display: inline-flex;
   align-items: center;
   justify-content: center;
+}
+
+.elementary-subjects__search-clear:hover {
+  color: var(--text);
+  background: var(--bg-hover);
+}
+
+/* Toolbar & Grade Pills */
+.elementary-subjects__toolbar-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.elementary-subjects__grade-pills {
+  display: inline-flex;
+  align-items: center;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md, 8px);
+  padding: 3px;
+  gap: 3px;
+}
+
+.elementary-subjects__grade-pill {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm, 6px);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.elementary-subjects__grade-pill:hover {
+  color: var(--text);
+  background: var(--bg-hover);
+}
+
+.elementary-subjects__grade-pill--active {
+  background: var(--primary);
+  color: #ffffff !important;
+  font-weight: 700;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+.elementary-subjects__search-container {
+  flex: 1;
+  min-width: 200px;
 }
 
 /* Expectation Actions & Inline Edit */

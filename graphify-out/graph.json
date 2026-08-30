@@ -5857,7 +5857,7 @@
       "label": "catch()",
       "file_type": "code",
       "source_file": "src/components/setup/ElementarySubjectManager.vue",
-      "source_location": "L1067",
+      "source_location": "L1237",
       "_origin": "ast",
       "id": "setup_elementarysubjectmanager_catch",
       "community": 107,
@@ -9350,7 +9350,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "curriculum_schema_properties_title",
-      "community": 124,
+      "community": 91,
       "norm_label": "title"
     },
     {
@@ -9360,7 +9360,7 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "curriculum_schema_title_type",
-      "community": 124,
+      "community": 91,
       "norm_label": "type"
     },
     {
@@ -9370,7 +9370,7 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "curriculum_schema_title_description",
-      "community": 124,
+      "community": 91,
       "norm_label": "description"
     },
     {
@@ -9520,7 +9520,7 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "curriculum_schema_properties_department",
-      "community": 91,
+      "community": 112,
       "norm_label": "department"
     },
     {
@@ -9530,7 +9530,7 @@
       "source_location": "L44",
       "_origin": "ast",
       "id": "curriculum_schema_department_type",
-      "community": 91,
+      "community": 112,
       "norm_label": "type"
     },
     {
@@ -9540,7 +9540,7 @@
       "source_location": "L45",
       "_origin": "ast",
       "id": "curriculum_schema_department_description",
-      "community": 91,
+      "community": 112,
       "norm_label": "description"
     },
     {
@@ -39232,5 +39232,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "11a67b650455d54584c23868d9fa456bf004a045"
+  "built_at_commit": "8fb6024704608e633ea8a925b6a2b8d1a717f689"
 }

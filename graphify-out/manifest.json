@@ -610,8 +610,8 @@
     "semantic_hash": ""
   },
   "src/components/setup/ElementarySubjectManager.vue": {
-    "mtime": 1788124606.2793338,
-    "ast_hash": "473cf303e64ed79c5f6e2b7b4d22be91",
+    "mtime": 1788133583.6314988,
+    "ast_hash": "5d1bd325fd9b572fe47b01f125a64896",
     "semantic_hash": ""
   },
   "src/utils/elementarySubjects.js": {
@@ -620,8 +620,8 @@
     "semantic_hash": ""
   },
   "src/composables/useElementary.js": {
-    "mtime": 1788124580.412452,
-    "ast_hash": "5583592a5d03f2865965857d32d0e6fe",
+    "mtime": 1788133668.122315,
+    "ast_hash": "49a7e7bf18eb9f84de64fe2c7a14f4b0",
     "semantic_hash": ""
   },
   "src/components/SubjectIcon.vue": {

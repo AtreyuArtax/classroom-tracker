@@ -232,7 +232,7 @@ export function populateSubjectFromPresets(subject, presetsList = [], granularit
         strand.overalls.forEach(ov => {
           if (granularity === 'overall') {
             existingExpectations.push({
-              expectationId: `exp_${Date.now()}_${gTag}_${ov.code}`,
+              expectationId: (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : `exp_${Date.now()}_${gTag}_${ov.code}_${Math.floor(Math.random()*10000)}`,
               unitId,
               code: cleanExpectationText(ov.code),
               description: cleanExpectationText(ov.description),
@@ -242,7 +242,7 @@ export function populateSubjectFromPresets(subject, presetsList = [], granularit
           } else if ((granularity === 'all' || granularity === 'success_criteria') && ov.specifics) {
             ov.specifics.forEach(sp => {
               existingExpectations.push({
-                expectationId: `exp_${Date.now()}_${gTag}_${sp.code}`,
+                expectationId: (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : `exp_${Date.now()}_${gTag}_${sp.code}_${Math.floor(Math.random()*10000)}`,
                 unitId,
                 code: cleanExpectationText(sp.code),
                 description: cleanExpectationText(sp.description),
