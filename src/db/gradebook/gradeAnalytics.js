@@ -8,6 +8,7 @@ import { getDB } from '../index.js'
 import { hasUnsyncedChanges } from '../eventService.js'
 import { preciseRound } from '../../utils/math.js'
 import { getSettings } from '../settingsService.js'
+import { cleanExpectationText } from '../../utils/textUtils.js'
 import {
   calculateStandardDeviation,
   detectOutliers,
@@ -753,4 +754,126 @@ export async function deleteAssessments(assessmentIds) {
 
   await tx.done
   hasUnsyncedChanges.value = true
+}
+
+/**
+ * Sweeps all classes, subjects, units, and assessments in IndexedDB
+ * to sanitize any residual HTML entities or non-breaking spaces in expectation codes/descriptions.
+ */
+export async function repairExpectationHtmlEntities() {
+  const db = await getDB()
+  const tx = db.transaction(['classes', 'assessments'], 'readwrite')
+  const cStore = tx.objectStore('classes')
+  const aStore = tx.objectStore('assessments')
+
+  const [allClasses, allAssessments] = await Promise.all([
+    cStore.getAll(),
+    aStore.getAll()
+  ])
+
+  let repairedCount = 0
+
+  for (const cls of allClasses) {
+    let modified = false
+    if (cls.gradebookUnits) {
+      for (const u of cls.gradebookUnits) {
+        if (u.name && (u.name.includes('&') || u.name.includes('\u00a0'))) {
+          u.name = cleanExpectationText(u.name)
+          modified = true
+        }
+        if (u.expectations) {
+          for (const e of u.expectations) {
+            if (e.code && (e.code.includes('&') || e.code.includes('\u00a0'))) {
+              e.code = cleanExpectationText(e.code)
+              modified = true
+            }
+            if (e.description && (e.description.includes('&') || e.description.includes('\u00a0'))) {
+              e.description = cleanExpectationText(e.description)
+              modified = true
+            }
+          }
+        }
+      }
+    }
+    if (cls.expectations) {
+      for (const e of cls.expectations) {
+        if (e.code && (e.code.includes('&') || e.code.includes('\u00a0'))) {
+          e.code = cleanExpectationText(e.code)
+          modified = true
+        }
+        if (e.description && (e.description.includes('&') || e.description.includes('\u00a0'))) {
+          e.description = cleanExpectationText(e.description)
+          modified = true
+        }
+      }
+    }
+    if (cls.subjects) {
+      for (const sub of cls.subjects) {
+        if (sub.gradebookUnits) {
+          for (const u of sub.gradebookUnits) {
+            if (u.name && (u.name.includes('&') || u.name.includes('\u00a0'))) {
+              u.name = cleanExpectationText(u.name)
+              modified = true
+            }
+            if (u.expectations) {
+              for (const e of u.expectations) {
+                if (e.code && (e.code.includes('&') || e.code.includes('\u00a0'))) {
+                  e.code = cleanExpectationText(e.code)
+                  modified = true
+                }
+                if (e.description && (e.description.includes('&') || e.description.includes('\u00a0'))) {
+                  e.description = cleanExpectationText(e.description)
+                  modified = true
+                }
+              }
+            }
+          }
+        }
+        if (sub.expectations) {
+          for (const e of sub.expectations) {
+            if (e.code && (e.code.includes('&') || e.code.includes('\u00a0'))) {
+              e.code = cleanExpectationText(e.code)
+              modified = true
+            }
+            if (e.description && (e.description.includes('&') || e.description.includes('\u00a0'))) {
+              e.description = cleanExpectationText(e.description)
+              modified = true
+            }
+          }
+        }
+      }
+    }
+    if (modified) {
+      await cStore.put(cls)
+      repairedCount++
+    }
+  }
+
+  for (const ast of allAssessments) {
+    let modified = false
+    if (ast.expectations) {
+      for (const e of ast.expectations) {
+        if (typeof e === 'object' && e !== null) {
+          if (e.code && (e.code.includes('&') || e.code.includes('\u00a0'))) {
+            e.code = cleanExpectationText(e.code)
+            modified = true
+          }
+          if (e.description && (e.description.includes('&') || e.description.includes('\u00a0'))) {
+            e.description = cleanExpectationText(e.description)
+            modified = true
+          }
+        }
+      }
+    }
+    if (modified) {
+      await aStore.put(ast)
+      repairedCount++
+    }
+  }
+
+  await tx.done
+  if (repairedCount > 0) {
+    hasUnsyncedChanges.value = true
+  }
+  return repairedCount
 }

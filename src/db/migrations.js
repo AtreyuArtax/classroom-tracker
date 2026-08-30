@@ -6,7 +6,9 @@
  * representing the full database state.
  */
 
-export const CURRENT_SCHEMA = 30
+import { cleanExpectationText } from '../utils/textUtils.js'
+
+export const CURRENT_SCHEMA = 31
 
 /**
  * Migrates a backup data object to the current schema version (25).
@@ -386,6 +388,61 @@ export function migrateData(data) {
       migrated.learning_skills = []
     }
     version = 30
+  }
+
+  // ── Version 31 (Curriculum Expectation HTML Entity Sanitization) ───
+  if (version < 31) {
+    for (const cls of migrated.classes) {
+      if (cls.gradebookUnits) {
+        for (const u of cls.gradebookUnits) {
+          if (u.name) u.name = cleanExpectationText(u.name)
+          if (u.expectations) {
+            for (const e of u.expectations) {
+              if (e.code) e.code = cleanExpectationText(e.code)
+              if (e.description) e.description = cleanExpectationText(e.description)
+            }
+          }
+        }
+      }
+      if (cls.expectations) {
+        for (const e of cls.expectations) {
+          if (e.code) e.code = cleanExpectationText(e.code)
+          if (e.description) e.description = cleanExpectationText(e.description)
+        }
+      }
+      if (cls.subjects) {
+        for (const sub of cls.subjects) {
+          if (sub.gradebookUnits) {
+            for (const u of sub.gradebookUnits) {
+              if (u.name) u.name = cleanExpectationText(u.name)
+              if (u.expectations) {
+                for (const e of u.expectations) {
+                  if (e.code) e.code = cleanExpectationText(e.code)
+                  if (e.description) e.description = cleanExpectationText(e.description)
+                }
+              }
+            }
+          }
+          if (sub.expectations) {
+            for (const e of sub.expectations) {
+              if (e.code) e.code = cleanExpectationText(e.code)
+              if (e.description) e.description = cleanExpectationText(e.description)
+            }
+          }
+        }
+      }
+    }
+    for (const ast of migrated.assessments) {
+      if (ast.expectations) {
+        for (const e of ast.expectations) {
+          if (typeof e === 'object' && e !== null) {
+            if (e.code) e.code = cleanExpectationText(e.code)
+            if (e.description) e.description = cleanExpectationText(e.description)
+          }
+        }
+      }
+    }
+    version = 31
   }
 
   migrated.schemaVersion = currentVersion

@@ -308,9 +308,9 @@ assert.strictEqual(migratedV1.classes[0].students['s1'].archived, false, 'Studen
 assert.ok(Array.isArray(migratedV1.learning_skills), 'learning_skills store initialized')
 
 // Check final schema version
-assert.strictEqual(migratedV1.schemaVersion, CURRENT_SCHEMA, 'Migrated schema version matches CURRENT_SCHEMA (30)')
-assert.strictEqual(migratedV1.settings.schemaVersion, CURRENT_SCHEMA, 'Settings schema version matches CURRENT_SCHEMA (30)')
-console.log('  ✓ Schema v1 through v30 automatic migration engine verified')
+assert.strictEqual(migratedV1.schemaVersion, CURRENT_SCHEMA, 'Migrated schema version matches CURRENT_SCHEMA (31)')
+assert.strictEqual(migratedV1.settings.schemaVersion, CURRENT_SCHEMA, 'Settings schema version matches CURRENT_SCHEMA (31)')
+console.log('  ✓ Schema v1 through v31 automatic migration engine verified')
 
 // =============================================================================
 // TEST GROUP 6: Corrupt, Malformed & Future Schema Payload Resilience

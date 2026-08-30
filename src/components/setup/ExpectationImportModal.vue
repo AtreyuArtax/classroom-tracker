@@ -512,6 +512,7 @@ import {
   FileSpreadsheet, UploadCloud, Download, AlertTriangle, CheckCircle2 
 } from 'lucide-vue-next'
 import { curriculumPresets } from '../../data/curriculum/index.js'
+import { cleanExpectationText } from '../../utils/textUtils.js'
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
@@ -835,9 +836,9 @@ function parseRawExpectationsText(raw) {
       if (parts.length >= 3) {
         results.push({
           id: `paste_${i}_${Date.now()}`,
-          strand: parts[0],
-          code: parts[1].toUpperCase(),
-          description: parts.slice(2).join(' | '),
+          strand: cleanExpectationText(parts[0]),
+          code: cleanExpectationText(parts[1]).toUpperCase(),
+          description: cleanExpectationText(parts.slice(2).join(' | ')),
           isOverall: /^[A-Z]\d+$/i.test(parts[1])
         })
         continue
@@ -845,8 +846,8 @@ function parseRawExpectationsText(raw) {
         results.push({
           id: `paste_${i}_${Date.now()}`,
           strand: '',
-          code: parts[0].toUpperCase(),
-          description: parts[1],
+          code: cleanExpectationText(parts[0]).toUpperCase(),
+          description: cleanExpectationText(parts[1]),
           isOverall: /^[A-Z]\d+$/i.test(parts[0])
         })
         continue
@@ -859,9 +860,9 @@ function parseRawExpectationsText(raw) {
       if (parts.length >= 3) {
         results.push({
           id: `paste_${i}_${Date.now()}`,
-          strand: parts[0],
-          code: parts[1].toUpperCase(),
-          description: parts.slice(2).join(' '),
+          strand: cleanExpectationText(parts[0]),
+          code: cleanExpectationText(parts[1]).toUpperCase(),
+          description: cleanExpectationText(parts.slice(2).join(' ')),
           isOverall: /^[A-Z]\d+$/i.test(parts[1])
         })
         continue
@@ -869,8 +870,8 @@ function parseRawExpectationsText(raw) {
         results.push({
           id: `paste_${i}_${Date.now()}`,
           strand: '',
-          code: parts[0].toUpperCase(),
-          description: parts[1],
+          code: cleanExpectationText(parts[0]).toUpperCase(),
+          description: cleanExpectationText(parts[1]),
           isOverall: /^[A-Z]\d+$/i.test(parts[0])
         })
         continue
@@ -883,8 +884,8 @@ function parseRawExpectationsText(raw) {
       results.push({
         id: `paste_${i}_${Date.now()}`,
         strand: '',
-        code: matchColon[1].toUpperCase().trim(),
-        description: matchColon[2].trim(),
+        code: cleanExpectationText(matchColon[1]).toUpperCase(),
+        description: cleanExpectationText(matchColon[2]),
         isOverall: /^[A-Z]\d+$/i.test(matchColon[1].trim())
       })
       continue
@@ -895,9 +896,9 @@ function parseRawExpectationsText(raw) {
     if (csvParts.length >= 3) {
       results.push({
         id: `paste_${i}_${Date.now()}`,
-        strand: csvParts[0].trim(),
-        code: csvParts[1].toUpperCase().trim(),
-        description: csvParts.slice(2).join(', ').trim(),
+        strand: cleanExpectationText(csvParts[0]),
+        code: cleanExpectationText(csvParts[1]).toUpperCase(),
+        description: cleanExpectationText(csvParts.slice(2).join(', ')),
         isOverall: /^[A-Z]\d+$/i.test(csvParts[1].trim())
       })
       continue
@@ -905,8 +906,8 @@ function parseRawExpectationsText(raw) {
       results.push({
         id: `paste_${i}_${Date.now()}`,
         strand: '',
-        code: csvParts[0].toUpperCase().trim(),
-        description: csvParts[1].trim(),
+        code: cleanExpectationText(csvParts[0]).toUpperCase(),
+        description: cleanExpectationText(csvParts[1]),
         isOverall: /^[A-Z]\d+$/i.test(csvParts[0].trim())
       })
       continue
@@ -918,8 +919,8 @@ function parseRawExpectationsText(raw) {
       results.push({
         id: `paste_${i}_${Date.now()}`,
         strand: '',
-        code: matchSpace[1].toUpperCase().trim(),
-        description: matchSpace[2].trim(),
+        code: cleanExpectationText(matchSpace[1]).toUpperCase(),
+        description: cleanExpectationText(matchSpace[2]),
         isOverall: /^[A-Z]\d+$/i.test(matchSpace[1].trim())
       })
       continue
@@ -930,7 +931,7 @@ function parseRawExpectationsText(raw) {
       id: `paste_${i}_${Date.now()}`,
       strand: '',
       code: `EXP-${results.length + 1}`,
-      description: line,
+      description: cleanExpectationText(line),
       isOverall: false
     })
   }

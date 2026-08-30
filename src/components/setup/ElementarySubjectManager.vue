@@ -541,6 +541,7 @@ import {
 
 import ExpectationImportModal from './ExpectationImportModal.vue'
 import { useMessage } from '../../composables/useMessage.js'
+import { cleanExpectationText } from '../../utils/textUtils.js'
 
 const { confirm: confirmMessage } = useMessage()
 
@@ -592,11 +593,14 @@ async function saveEditExp(subjectId, exp) {
     }
   }
 
+  const cleanCode = cleanExpectationText(newCode).toUpperCase()
+  const cleanDesc = cleanExpectationText(newDesc)
+
   const updated = currentSubjects.value.map(s => {
     if (s.subjectId !== subjectId) return s
     const exps = (s.expectations || []).map(e => {
       if (e.expectationId === exp.expectationId) {
-        return { ...e, code: newCode, description: newDesc }
+        return { ...e, code: cleanCode, description: cleanDesc }
       }
       return e
     })
@@ -892,7 +896,7 @@ async function handleExpectationImport(payload) {
         if (!targetUnit) {
           targetUnit = {
             unitId: `unit_${Date.now()}_${sIdx}`,
-            name: s.name,
+            name: cleanExpectationText(s.name),
             weight: 0
           }
           units.push(targetUnit)
@@ -902,8 +906,8 @@ async function handleExpectationImport(payload) {
           newExps.push({
             expectationId: `exp_${Date.now()}_${e.code}`,
             unitId: targetUnit.unitId,
-            code: e.code,
-            description: e.description,
+            code: cleanExpectationText(e.code),
+            description: cleanExpectationText(e.description),
             isOverall: e.isOverall ?? false
           })
         })
@@ -922,15 +926,15 @@ async function handleExpectationImport(payload) {
 
       if (targetUnitId === 'new' || !targetUnitId) {
         targetUnitId = `unit_${Date.now()}`
-        units.push({ unitId: targetUnitId, name: payload.newUnitName || 'Unit 1', weight: 0 })
+        units.push({ unitId: targetUnitId, name: cleanExpectationText(payload.newUnitName || 'Unit 1'), weight: 0 })
       }
 
       const existingExps = isReplace ? [] : [...(sub.expectations || [])]
       const newExps = (payload.expectations || []).map(e => ({
         expectationId: `exp_${Date.now()}_${e.code}`,
         unitId: targetUnitId,
-        code: e.code,
-        description: e.description,
+        code: cleanExpectationText(e.code),
+        description: cleanExpectationText(e.description),
         isOverall: e.isOverall ?? false
       }))
 

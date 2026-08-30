@@ -326,6 +326,7 @@ import {
   ChevronRight, BookOpen, Copy, LayoutTemplate, Save, Edit2, Check, X, Search 
 } from 'lucide-vue-next'
 import ExpectationImportModal from './ExpectationImportModal.vue'
+import { cleanExpectationText } from '../../utils/textUtils.js'
 
 const { activeClass, updateActiveClass, triggerActiveClass } = useClassroom()
 const { alert, confirm } = useMessage()
@@ -400,8 +401,8 @@ async function saveEditExpectation(unit, exp) {
     }
   }
 
-  exp.code = newCode
-  exp.description = newDesc
+  exp.code = cleanExpectationText(newCode).toUpperCase()
+  exp.description = cleanExpectationText(newDesc)
   cancelEditExpectation()
   await saveGradebookSettings()
 }
@@ -432,20 +433,23 @@ function onExpectationImport(payload) {
       if (strand.overalls) {
         strand.overalls.forEach(ov => {
           if (payload.granularity === 'overall') {
-            expList.push({ code: ov.code, description: ov.description })
+            expList.push({ code: cleanExpectationText(ov.code), description: cleanExpectationText(ov.description) })
           } else if ((payload.granularity === 'all' || payload.granularity === 'success_criteria') && ov.specifics) {
             ov.specifics.forEach(sp => {
-              expList.push({ code: sp.code, description: sp.description })
+              expList.push({ code: cleanExpectationText(sp.code), description: cleanExpectationText(sp.description) })
             })
           }
         })
       } else if (strand.expectations) {
-        strand.expectations.forEach(e => expList.push(e))
+        strand.expectations.forEach(e => expList.push({
+          code: cleanExpectationText(e.code),
+          description: cleanExpectationText(e.description)
+        }))
       }
 
       targetUnitsList.push({
         unitId: crypto.randomUUID(),
-        name: strand.name,
+        name: cleanExpectationText(strand.name),
         expectations: expList.map(e => ({
           expectationId: crypto.randomUUID(),
           code: e.code,
@@ -462,11 +466,11 @@ function onExpectationImport(payload) {
     payload.strands.forEach(strand => {
       targetUnitsList.push({
         unitId: crypto.randomUUID(),
-        name: strand.name,
+        name: cleanExpectationText(strand.name),
         expectations: (strand.expectations || []).map(e => ({
           expectationId: crypto.randomUUID(),
-          code: e.code,
-          description: e.description
+          code: cleanExpectationText(e.code),
+          description: cleanExpectationText(e.description)
         }))
       })
     })
@@ -476,7 +480,7 @@ function onExpectationImport(payload) {
     if (payload.targetUnitChoice === 'new') {
       targetUnit = {
         unitId: crypto.randomUUID(),
-        name: payload.newUnitName || 'Imported Unit',
+        name: cleanExpectationText(payload.newUnitName || 'Imported Unit'),
         expectations: []
       }
       targetUnitsList.push(targetUnit)
@@ -491,8 +495,8 @@ function onExpectationImport(payload) {
       payload.expectations.forEach(e => {
         targetUnit.expectations.push({
           expectationId: crypto.randomUUID(),
-          code: e.code,
-          description: e.description
+          code: cleanExpectationText(e.code),
+          description: cleanExpectationText(e.description)
         })
       })
     }

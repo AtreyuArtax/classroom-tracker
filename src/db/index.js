@@ -15,9 +15,10 @@
 
 import { openDB } from 'idb'
 import { getCurrentSchoolYear, getCurrentSemester } from '../utils/dates.js'
+import { cleanExpectationText } from '../utils/textUtils.js'
 
 const DB_NAME = 'classroomTrackerDB'
-const DB_VERSION = 30
+const DB_VERSION = 31
 
 /**
  * Cached promise — set synchronously before the first await so every
@@ -721,6 +722,87 @@ export function getDB() {
           lsStore.createIndex('by_classId_term', ['classId', 'term'])
           lsStore.createIndex('by_studentId', 'studentId')
           lsStore.createIndex('by_student_class', ['studentId', 'classId'])
+        }
+      }
+
+      // --- VERSION 31 MIGRATION (Expectation HTML Entities Sanitization) ---
+      if (oldVersion < 31) {
+        console.log('[IDB] Migrating to v31: Sanitizing expectation codes and descriptions...')
+        const classesStore = transaction.objectStore('classes')
+        const allClasses = await classesStore.getAll()
+        for (const cls of allClasses) {
+          let modified = false
+          if (cls.gradebookUnits) {
+            for (const u of cls.gradebookUnits) {
+              if (u.name && (u.name.includes('&') || u.name.includes('\u00a0'))) {
+                u.name = cleanExpectationText(u.name)
+                modified = true
+              }
+              if (u.expectations) {
+                for (const e of u.expectations) {
+                  if (e.code && (e.code.includes('&') || e.code.includes('\u00a0'))) {
+                    e.code = cleanExpectationText(e.code)
+                    modified = true
+                  }
+                  if (e.description && (e.description.includes('&') || e.description.includes('\u00a0'))) {
+                    e.description = cleanExpectationText(e.description)
+                    modified = true
+                  }
+                }
+              }
+            }
+          }
+          if (cls.expectations) {
+            for (const e of cls.expectations) {
+              if (e.code && (e.code.includes('&') || e.code.includes('\u00a0'))) {
+                e.code = cleanExpectationText(e.code)
+                modified = true
+              }
+              if (e.description && (e.description.includes('&') || e.description.includes('\u00a0'))) {
+                e.description = cleanExpectationText(e.description)
+                modified = true
+              }
+            }
+          }
+          if (cls.subjects) {
+            for (const sub of cls.subjects) {
+              if (sub.gradebookUnits) {
+                for (const u of sub.gradebookUnits) {
+                  if (u.name && (u.name.includes('&') || u.name.includes('\u00a0'))) {
+                    u.name = cleanExpectationText(u.name)
+                    modified = true
+                  }
+                  if (u.expectations) {
+                    for (const e of u.expectations) {
+                      if (e.code && (e.code.includes('&') || e.code.includes('\u00a0'))) {
+                        e.code = cleanExpectationText(e.code)
+                        modified = true
+                      }
+                      if (e.description && (e.description.includes('&') || e.description.includes('\u00a0'))) {
+                        e.description = cleanExpectationText(e.description)
+                        modified = true
+                      }
+                    }
+                  }
+                }
+              }
+              if (sub.expectations) {
+                for (const e of sub.expectations) {
+                  if (e.code && (e.code.includes('&') || e.code.includes('\u00a0'))) {
+                    e.code = cleanExpectationText(e.code)
+                    modified = true
+                  }
+                  if (e.description && (e.description.includes('&') || e.description.includes('\u00a0'))) {
+                    e.description = cleanExpectationText(e.description)
+                    modified = true
+                  }
+                }
+              }
+            }
+          }
+          if (modified) {
+            await classesStore.put(cls)
+          }
         }
       }
     },

@@ -3,6 +3,7 @@ import { activeSubjectId, teachingMode } from './useClassroomState.js'
 import { DEFAULT_ELEMENTARY_SUBJECTS, DEFAULT_TRADITIONAL_CATEGORIES } from '../utils/elementarySubjects.js'
 import { findElementaryPreset, findElementaryPresets } from '../data/curriculum/index.js'
 import { isCohortMatch } from '../db/gradebook/gradeCalc.js'
+import { cleanExpectationText } from '../utils/textUtils.js'
 
 export { findElementaryPreset, findElementaryPresets, DEFAULT_ELEMENTARY_SUBJECTS }
 
@@ -222,7 +223,7 @@ export function populateSubjectFromPresets(subject, presetsList = [], granularit
       const unitName = (strand.name || '').replace(/^\[Grade\s*\d+\]\s*/i, '').trim()
       existingUnits.push({
         unitId,
-        name: unitName,
+        name: cleanExpectationText(unitName),
         gradeLevel: pGrade,
         weight: 0
       })
@@ -233,8 +234,8 @@ export function populateSubjectFromPresets(subject, presetsList = [], granularit
             existingExpectations.push({
               expectationId: `exp_${Date.now()}_${gTag}_${ov.code}`,
               unitId,
-              code: ov.code,
-              description: ov.description,
+              code: cleanExpectationText(ov.code),
+              description: cleanExpectationText(ov.description),
               isOverall: true,
               gradeLevel: pGrade
             })
@@ -243,8 +244,8 @@ export function populateSubjectFromPresets(subject, presetsList = [], granularit
               existingExpectations.push({
                 expectationId: `exp_${Date.now()}_${gTag}_${sp.code}`,
                 unitId,
-                code: sp.code,
-                description: sp.description,
+                code: cleanExpectationText(sp.code),
+                description: cleanExpectationText(sp.description),
                 isOverall: false,
                 gradeLevel: pGrade
               })

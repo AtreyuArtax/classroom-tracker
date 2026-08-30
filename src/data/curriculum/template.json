@@ -1,0 +1,58 @@
+{
+  "presetId": "ontario-g7-subjectname",
+  "title": "Grade 7 Subject Name (2026)",
+  "panel": "elementary",
+  "region": "Ontario",
+  "grade": "7",
+  "subjectCode": "SUB",
+  "department": "Department Name",
+  "strands": [
+    {
+      "name": "Strand A: Title of Strand A",
+      "overalls": [
+        {
+          "code": "A1",
+          "title": "Overall Topic Name",
+          "description": "Demonstrate an understanding of key concepts, principles, and fundamental ideas related to this strand.",
+          "specifics": [
+            {
+              "code": "A1.1",
+              "description": "identify and describe fundamental components, processes, and relationships using appropriate terminology."
+            },
+            {
+              "code": "A1.2",
+              "description": "analyze practical applications, societal impacts, and environmental considerations related to the topic."
+            }
+          ]
+        },
+        {
+          "code": "A2",
+          "title": "Application and Skills",
+          "description": "Apply skills and processes to investigate problems, conduct research, and communicate findings effectively.",
+          "specifics": [
+            {
+              "code": "A2.1",
+              "description": "use an inquiry or design process to plan, execute, and evaluate investigations."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Strand B: Title of Strand B",
+      "overalls": [
+        {
+          "code": "B1",
+          "title": "Second Topic",
+          "description": "Evaluate the impact of scientific or mathematical processes on human health and the environment.",
+          "specifics": [
+            {
+              "code": "B1.1",
+              "description": "assess the social and environmental impacts of human activities related to this strand."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

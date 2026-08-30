@@ -1,5 +1,9 @@
 import assert from 'assert'
+import fs from 'fs'
+import path from 'path'
 import { calculateSBARExpectationMastery } from './db/gradebook/gradeCalcSBAR.js'
+import { cleanExpectationText, cleanCurriculumObject } from './utils/textUtils.js'
+import { migrateData } from './db/migrations.js'
 
 console.log('--- RUNNING EXPECTATION LIFECYCLE & CASCADE TESTS ---')
 
@@ -294,4 +298,108 @@ assert(masteryResult['st1'] && masteryResult['st1']['B1.1_NEW'], 'Mastery result
 assert(masteryResult['st1']['B1.1_NEW'].score > 85, 'Decaying average should weight recent 90 score higher than 80')
 console.log('✓ SBAR expectation mastery calculation accurately matches subject expectations: Score =', masteryResult['st1']['B1.1_NEW'].score)
 
-console.log('--- ALL EXPECTATION LIFECYCLE TESTS PASSED ---')
+// TEST 4: HTML Entities & &nbsp; Sanitization
+console.log('\n--- TEST 4: HTML Entities & &nbsp; Sanitization ---')
+const rawSample1 = 'graphic novel&nbsp;– to tell a story through illustrations supported by text; magazine article&nbsp;– to provide information'
+const cleanSample1 = cleanExpectationText(rawSample1)
+assert.strictEqual(cleanSample1, 'graphic novel – to tell a story through illustrations supported by text; magazine article – to provide information')
+assert.ok(!cleanSample1.includes('&nbsp;'), 'No &nbsp; in cleanSample1')
+console.log('✓ cleanExpectationText successfully strips &nbsp; with en-dashes')
+
+const rawSample2 = 'use an engineering design process and associated skills to design, build, and test devices, models, structures, and/or systems&nbsp;.'
+const cleanSample2 = cleanExpectationText(rawSample2)
+assert.strictEqual(cleanSample2, 'use an engineering design process and associated skills to design, build, and test devices, models, structures, and/or systems.')
+assert.ok(!cleanSample2.includes(' .'), 'Punctuation spacing normalized')
+console.log('✓ cleanExpectationText normalizes punctuation spacing ("systems&nbsp;." -> "systems.")')
+
+const rawSample3 = 'mariachi)&nbsp;.'
+const cleanSample3 = cleanExpectationText(rawSample3)
+assert.strictEqual(cleanSample3, 'mariachi).')
+console.log('✓ cleanExpectationText normalizes closing parenthesis punctuation')
+
+const rawSample4 = 'apply a variety of tactical solutions to increase chances of success as they \u00a0participate in physical activities &amp; sports'
+const cleanSample4 = cleanExpectationText(rawSample4)
+assert.strictEqual(cleanSample4, 'apply a variety of tactical solutions to increase chances of success as they participate in physical activities & sports')
+console.log('✓ cleanExpectationText decodes &amp; and converts unicode \\u00a0 non-breaking spaces')
+
+// TEST 5: Curriculum Preset Library Hygiene (0 remaining HTML entities)
+console.log('\n--- TEST 5: Curriculum Preset Library Hygiene ---')
+let entityMatches = 0
+function checkPresetDir(dir) {
+  const items = fs.readdirSync(dir)
+  for (const item of items) {
+    const fullPath = path.join(dir, item)
+    if (fs.statSync(fullPath).isDirectory()) {
+      checkPresetDir(fullPath)
+    } else if (item.endsWith('.json')) {
+      const content = fs.readFileSync(fullPath, 'utf8')
+      const matches = content.match(/&[a-zA-Z0-9#]+;?/g)
+      if (matches) {
+        entityMatches += matches.length
+      }
+    }
+  }
+}
+checkPresetDir('./src/data/curriculum')
+assert.strictEqual(entityMatches, 0, 'Curriculum JSON presets must have 0 HTML entities')
+console.log('✓ All curriculum preset files in src/data/curriculum/ contain 0 HTML entities')
+
+// TEST 6: Schema Migration Self-Healing for Existing Databases
+console.log('\n--- TEST 6: Schema Migration Self-Healing ---')
+const legacyData = {
+  schemaVersion: 25,
+  classes: [
+    {
+      classId: 'cls_legacy',
+      name: 'Grade 7 French &amp; Arts',
+      gradebookUnits: [
+        {
+          unitId: 'u1',
+          name: 'Unit 1&nbsp;– Dance',
+          expectations: [
+            {
+              expectationId: 'e1',
+              code: 'A1.1',
+              description: 'create dance pieces to represent rhythms&nbsp;.'
+            }
+          ]
+        }
+      ],
+      subjects: [
+        {
+          subjectId: 'sub1',
+          name: 'French',
+          expectations: [
+            {
+              expectationId: 'e2',
+              code: 'B1.1',
+              description: 'identify purpose(s) (e.g., graphic novel&nbsp;– to tell a story)'
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  assessments: [
+    {
+      assessmentId: 101,
+      name: 'Dance Quiz 1',
+      expectations: [
+        {
+          code: 'A1.1',
+          description: 'create dance pieces to represent rhythms&nbsp;.'
+        }
+      ]
+    }
+  ]
+}
+
+const migrated = migrateData(legacyData)
+assert.strictEqual(migrated.schemaVersion, 31, 'Migrated to current schema 31')
+assert.strictEqual(migrated.classes[0].gradebookUnits[0].name, 'Unit 1 – Dance')
+assert.strictEqual(migrated.classes[0].gradebookUnits[0].expectations[0].description, 'create dance pieces to represent rhythms.')
+assert.strictEqual(migrated.classes[0].subjects[0].expectations[0].description, 'identify purpose(s) (e.g., graphic novel – to tell a story)')
+assert.strictEqual(migrated.assessments[0].expectations[0].description, 'create dance pieces to represent rhythms.')
+console.log('✓ Legacy database payload automatically cleaned during migration v31')
+
+console.log('\n--- ALL EXPECTATION LIFECYCLE & HYGIENE TESTS PASSED ---')
