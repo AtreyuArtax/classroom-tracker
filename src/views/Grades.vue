@@ -670,7 +670,7 @@ const filteredClassGrades = computed(() => {
   if (!classGrades.value) return {}
   const manualExcludes = new Set(
     Object.keys(activeClassRecord.value?.students ?? {})
-      .filter(id => activeClassRecord.value.students[id].excludeFromAnalytics)
+      .filter(id => activeClassRecord.value.students[id].excludeFromAnalytics || activeClassRecord.value.students[id].archived)
   )
 
   const isToggleActive = exclusionMode.value !== 'none' && classAnalytics.value?.outlierStudentIds
@@ -678,6 +678,9 @@ const filteredClassGrades = computed(() => {
 
   const filtered = {}
   Object.keys(classGrades.value).forEach(studentId => {
+    const st = activeClassRecord.value?.students?.[studentId]
+    if (!st || st.archived) return
+    if (!st.firstName?.trim() && !st.lastName?.trim()) return
     if (!manualExcludes.has(studentId) && !outlierIds.has(studentId)) {
       filtered[studentId] = classGrades.value[studentId]
     }

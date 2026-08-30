@@ -32,6 +32,7 @@ import {
   calculateMostConsistent,
   calculateWeightedMedian
 } from './db/gradebook/gradeCalc.js'
+import { calculateClassAnalytics } from './db/gradebook/gradeAnalytics.js'
 
 import { getSchoolYearFromDate, getSemesterFromDate } from './utils/dates.js'
 
@@ -784,6 +785,130 @@ console.log('Test Group 21: Academic Milestones School Year & Semester Scoping')
     return mYear === '2027-28'
   })
   assert(freshYearMilestones.length === 0, 'Fresh school year 2027-28 has 0 milestones')
+}
+console.log()
+
+// ── TEST GROUP 22: Class Analytics Evidence Scope & SBAR Parity ───
+console.log('Test Group 22: Class Analytics Evidence Scope & SBAR Parity')
+{
+  // 1. Traditional Framework Parity Test
+  const mockClassTrad = {
+    classId: 'cls_trad_analytics',
+    gradingFramework: 'traditional',
+    gradebookCategories: [
+      { categoryId: 'cat_test', name: 'Tests', weight: 50 },
+      { categoryId: 'cat_proj', name: 'Projects', weight: 50 }
+    ],
+    students: {
+      'std_1': { firstName: 'Alice', lastName: 'Walker', archived: false },
+      'std_2': { firstName: 'Bob', lastName: 'Dylan', archived: false }
+    }
+  }
+
+  const mockAssessmentsTrad = [
+    { assessmentId: 'a1', categoryId: 'cat_test', assessmentType: 'product', totalPoints: 100, isFormative: false },
+    { assessmentId: 'a2', categoryId: 'cat_proj', assessmentType: 'observation', totalPoints: 100, isFormative: false }
+  ]
+
+  const mockGradesTrad = [
+    // Alice: 60% on Product (Tests), 80% on Observation (Projects) -> All: 70%, Prod: 60%
+    { assessmentId: 'a1', studentId: 'std_1', score: 60, resolvedScore: 60 },
+    { assessmentId: 'a2', studentId: 'std_1', score: 80, resolvedScore: 80 },
+    // Bob: 70% on Product (Tests), 90% on Observation (Projects) -> All: 80%, Prod: 70%
+    { assessmentId: 'a1', studentId: 'std_2', score: 70, resolvedScore: 70 },
+    { assessmentId: 'a2', studentId: 'std_2', score: 90, resolvedScore: 90 }
+  ]
+
+  // A. All Evidence Scope (Gradebook Grid Parity)
+  const analyticsAll = await calculateClassAnalytics(mockClassTrad, mockAssessmentsTrad, mockGradesTrad, {
+    evidenceScope: 'all',
+    settings: { capGradesAt100: true }
+  })
+  assert(analyticsAll !== null, 'Traditional Analytics (All Evidence) generated')
+  assert(analyticsAll.mean === 75, 'Class Average (All Evidence) is 75% — exact match with Gradebook Grid (70% & 80%)')
+  assert(analyticsAll.median === 75, 'Class Median (All Evidence) is 75%')
+  assert(analyticsAll.studentCount === 2, 'Student count is 2')
+  assert(analyticsAll.evidenceScope === 'all', 'Evidence scope recorded as "all"')
+
+  // B. Products Only Scope (Uniform Psychometrics)
+  const analyticsProduct = await calculateClassAnalytics(mockClassTrad, mockAssessmentsTrad, mockGradesTrad, {
+    evidenceScope: 'product',
+    settings: { capGradesAt100: true }
+  })
+  assert(analyticsProduct !== null, 'Traditional Analytics (Products Only) generated')
+  assert(analyticsProduct.mean === 65, 'Class Average (Products Only) is 65% — strictly product assessments (60% & 70%)')
+  assert(analyticsProduct.median === 65, 'Class Median (Products Only) is 65%')
+  assert(analyticsProduct.evidenceScope === 'product', 'Evidence scope recorded as "product"')
+
+  // 2. SBAR Framework Analytics Parity Test
+  const mockClassSBAR = {
+    classId: 'cls_sbar_analytics',
+    gradingFramework: 'sbar',
+    sbarAlgorithm: 'decaying_average',
+    students: {
+      'std_s1': { firstName: 'Carol', lastName: 'Danvers', archived: false },
+      'std_s2': { firstName: 'Dave', lastName: 'Bowman', archived: false }
+    }
+  }
+
+  const mockAssessmentsSBAR = [
+    { assessmentId: 'sa1', categoryId: 'sbar_general', expectationIds: ['exp_1'], assessmentType: 'product', totalPoints: 4, isFormative: false },
+    { assessmentId: 'sa2', categoryId: 'sbar_general', expectationIds: ['exp_1'], assessmentType: 'conversation', totalPoints: 4, isFormative: false }
+  ]
+
+  const mockGradesSBAR = [
+    // Carol: sa1 (Product) = 70%, sa2 (Conversation) = 90% -> Decaying Avg (35/65) = 70*0.35 + 90*0.65 = 83%
+    { assessmentId: 'sa1', studentId: 'std_s1', score: 2.8, resolvedScore: 2.8, percentage: 70 },
+    { assessmentId: 'sa2', studentId: 'std_s1', score: 3.6, resolvedScore: 3.6, percentage: 90 },
+    // Dave: sa1 (Product) = 80%, sa2 (Conversation) = 100% -> Decaying Avg (35/65) = 80*0.35 + 100*0.65 = 93%
+    { assessmentId: 'sa1', studentId: 'std_s2', score: 3.2, resolvedScore: 3.2, percentage: 80 },
+    { assessmentId: 'sa2', studentId: 'std_s2', score: 4.0, resolvedScore: 4.0, percentage: 100 }
+  ]
+
+  const sbarAnalyticsAll = await calculateClassAnalytics(mockClassSBAR, mockAssessmentsSBAR, mockGradesSBAR, {
+    evidenceScope: 'all',
+    settings: { capGradesAt100: true }
+  })
+  assert(sbarAnalyticsAll !== null, 'SBAR Analytics (All Evidence) generated')
+  assert(sbarAnalyticsAll.mean === 88, 'SBAR Cohort Average (All Evidence) is 88% — average of Carol (83%) and Dave (93%)')
+
+  const sbarAnalyticsProduct = await calculateClassAnalytics(mockClassSBAR, mockAssessmentsSBAR, mockGradesSBAR, {
+    evidenceScope: 'product',
+    settings: { capGradesAt100: true }
+  })
+  assert(sbarAnalyticsProduct !== null, 'SBAR Analytics (Products Only) generated')
+  assert(sbarAnalyticsProduct.mean === 75, 'SBAR Cohort Average (Products Only) is 75% — strictly product assessments (70% and 80%)')
+
+  // 3. Exclusion Filters with Evidence Scope Test
+  const mockClassExclusion = {
+    classId: 'cls_excl_test',
+    gradingFramework: 'traditional',
+    gradebookCategories: [
+      { categoryId: 'c1', name: 'Tests', weight: 100 }
+    ],
+    students: {
+      'std_norm': { firstName: 'Normal', lastName: 'Student', archived: false },
+      'std_low': { firstName: 'Low', lastName: 'Student', archived: false }
+    }
+  }
+
+  const mockAssessmentsExcl = [
+    { assessmentId: 'ea1', categoryId: 'c1', assessmentType: 'product', totalPoints: 100, isFormative: false }
+  ]
+
+  const mockGradesExcl = [
+    { assessmentId: 'ea1', studentId: 'std_norm', score: 80, resolvedScore: 80 },
+    { assessmentId: 'ea1', studentId: 'std_low', score: 30, resolvedScore: 30 }
+  ]
+
+  const exclFixedResult = await calculateClassAnalytics(mockClassExclusion, mockAssessmentsExcl, mockGradesExcl, {
+    evidenceScope: 'all',
+    exclusionMode: 'fixed',
+    exclusionThreshold: 40,
+    settings: { capGradesAt100: true }
+  })
+  assert(exclFixedResult.outlierCount === 1, 'Fixed exclusion correctly excluded 1 student below 40%')
+  assert(exclFixedResult.mean === 80, 'Class Average after exclusion is 80%')
 }
 console.log()
 

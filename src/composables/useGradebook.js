@@ -164,6 +164,7 @@ export const analyticsMode = ref(false) // false = grid, true = analytics panel
 export const exclusionMode = ref('none') // 'none', 'fixed', 'auto'
 export const fixedExclusionThreshold = ref(40) // Default cutoff %
 export const distributionMode = ref('buckets') // 'buckets' (10%) or 'levels' (Ontario GS)
+export const analyticsEvidenceScope = ref('all') // 'all' | 'product'
 export const classAnalytics = ref(null) // result of calculateClassAnalytics
 export const assessmentStats = ref({}) // Manual cache for assessment stats
 export const showAddAssessmentModal = ref(false)
@@ -365,12 +366,21 @@ export async function refreshClassAnalytics(targetSubCohort = null) {
     { 
       exclusionMode: exclusionMode.value, 
       exclusionThreshold: fixedExclusionThreshold.value,
+      evidenceScope: analyticsEvidenceScope.value,
       targetCourseCode: subCohortFilterVal,
       subCohortFilter: subCohortFilterVal,
       asOf,
       gradeBuckets: gradeBuckets.value
     }
   )
+}
+
+/**
+ * Set evidence scope ('all' | 'product') and refresh analytics.
+ */
+export async function setAnalyticsEvidenceScope(scope) {
+  analyticsEvidenceScope.value = scope
+  await refreshClassAnalytics()
 }
 
 /**
@@ -407,6 +417,7 @@ export async function toggleStudentFromAnalytics(studentId) {
 export function resetAnalyticsState() {
   exclusionMode.value = 'none'
   distributionMode.value = 'buckets'
+  analyticsEvidenceScope.value = 'all'
   classAnalytics.value = null
   analyticsMode.value = false
 }

@@ -384,12 +384,12 @@ export function calculateSBARExpectationMastery(classRecord, assessments, gradeM
  * Calculates the overall course SBAR mastery score (percentage 0..100) for a student
  * by taking the average across all evaluated curriculum expectations.
  */
-export function calculateSBARStudentOverallMastery(studentId, classRecord, assessments, gradeMap, algorithm = 'decaying_average', events = []) {
+export function calculateSBARStudentOverallMastery(studentId, classRecord, assessments, gradeMap, algorithm = 'decaying_average', events = [], masteryMapPreRef = null) {
   if (!studentId || !classRecord || !assessments || !gradeMap) return null
   const activeAlgorithm = algorithm || classRecord.sbarAlgorithm || 'decaying_average'
   const shouldIncludeRadial = classRecord.includeRadialInSbar !== false // default true for SBAR
   const eventsToPass = shouldIncludeRadial ? events : []
-  const masteryMap = calculateSBARExpectationMastery(classRecord, assessments, gradeMap, activeAlgorithm, eventsToPass)
+  const masteryMap = masteryMapPreRef || calculateSBARExpectationMastery(classRecord, assessments, gradeMap, activeAlgorithm, eventsToPass)
   const studentExpMap = masteryMap[studentId] || {}
   const scores = Object.values(studentExpMap).map(e => e.score).filter(s => s != null && !isNaN(s))
   if (scores.length === 0) return null

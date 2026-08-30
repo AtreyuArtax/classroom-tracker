@@ -24,6 +24,29 @@
           </div>
         </div>
 
+        <!-- Evidence Scope Filter Control Bar -->
+        <div class="evidence-toggle">
+          <span class="toggle-label">Evidence:</span>
+          <div class="toggle-pill-group">
+            <button 
+              class="toggle-pill" 
+              :class="{ 'toggle-pill--active': analyticsEvidenceScope === 'all' }"
+              @click="setAnalyticsEvidenceScope('all')"
+              title="Include all graded evidence (Products, Observations, Conversations) — matches Gradebook Grid average"
+            >
+              All Evidence
+            </button>
+            <button 
+              class="toggle-pill" 
+              :class="{ 'toggle-pill--active': analyticsEvidenceScope === 'product' }"
+              @click="setAnalyticsEvidenceScope('product')"
+              title="Isolate uniform Product assessments (tests, quizzes, assignments) — excludes observational/conversational marks"
+            >
+              Products Only
+            </button>
+          </div>
+        </div>
+
         <!-- Exclusion Filter Control Bar -->
         <div class="exclusion-toggle">
           <span class="toggle-label">Exclusions:</span>
@@ -106,7 +129,9 @@
           <!-- Stat 1: Class Average -->
           <div 
             class="stat-ribbon__item"
-            title="Class Average: The arithmetic mean of all included student grades across weighted categories."
+            :title="analyticsEvidenceScope === 'product'
+              ? 'Class Average (Products Only): The arithmetic mean calculated strictly from uniform Product assessments (tests, quizzes, assignments).'
+              : 'Class Average: The arithmetic mean of all included student grades across all graded evidence (matches Gradebook Grid).'"
           >
             <div class="stat-ribbon__label">
               <BarChart3 :size="13" class="stat-icon stat-icon--blue" />
@@ -116,13 +141,14 @@
               <span class="stat-ribbon__num" :style="{ color: getHeatTextColor(overallClassAvg) }">
                 {{ formatGrade(overallClassAvg) }}
               </span>
+              <span v-if="analyticsEvidenceScope === 'product'" class="stat-scope-inline-badge">Product Only</span>
             </div>
           </div>
 
           <!-- Stat 2: Class Median -->
           <div 
             class="stat-ribbon__item"
-            title="Class Median (50th Percentile): The exact midpoint mark—half the class scored above this, half scored below. Unlike the average, it is immune to extreme high or low grades."
+            :title="`Class Median (50th Percentile): The exact midpoint mark (${analyticsEvidenceScope === 'product' ? 'Products Only' : 'All Evidence'}). Unlike the average, it is immune to extreme high or low grades.`"
           >
             <div class="stat-ribbon__label">
               <CheckCircle2 :size="13" class="stat-icon stat-icon--green" />
@@ -132,13 +158,14 @@
               <span class="stat-ribbon__num" :style="{ color: getHeatTextColor(overallClassMedian) }">
                 {{ formatGrade(overallClassMedian) }}
               </span>
+              <span v-if="analyticsEvidenceScope === 'product'" class="stat-scope-inline-badge">Product Only</span>
             </div>
           </div>
 
           <!-- Stat 3: Spread (Standard Deviation & Range) -->
           <div 
             class="stat-ribbon__item"
-            :title="`Spread (Standard Deviation): ±${overallClassSD ? overallClassSD.toFixed(1) + '%' : '0%'} measures score clustering around the average. Full Score Range: ${formatGrade(scoreRange.lowest)} to ${formatGrade(scoreRange.highest)}.`"
+            :title="`Spread (Standard Deviation): ±${overallClassSD ? overallClassSD.toFixed(1) + '%' : '0%'} measures score clustering around the average (${analyticsEvidenceScope === 'product' ? 'Products Only' : 'All Evidence'}). Full Score Range: ${formatGrade(scoreRange.lowest)} to ${formatGrade(scoreRange.highest)}.`"
           >
             <div class="stat-ribbon__label">
               <TrendingUp :size="13" class="stat-icon stat-icon--amber" />
@@ -240,6 +267,9 @@
               <div class="card-title-group">
                 <BarChart2 :size="15" class="card-header-icon" />
                 <h3 class="analytics-card__title">Cohort Performance</h3>
+                <span class="card-scope-badge" :class="{ 'card-scope-badge--product': analyticsEvidenceScope === 'product' }">
+                  {{ analyticsEvidenceScope === 'product' ? 'Products Only' : 'All Evidence' }}
+                </span>
               </div>
               <div class="toggle-pill-group toggle-pill-group--sm">
                 <button 
@@ -586,6 +616,8 @@ import {
   exclusionMode,
   fixedExclusionThreshold,
   distributionMode,
+  analyticsEvidenceScope,
+  setAnalyticsEvidenceScope,
   classAnalytics,
   refreshClassAnalytics,
   selectedCourseFilter,
@@ -746,6 +778,13 @@ function toggleSort(field) {
 const activeStudentGrades = computed(() => {
   if (!activeClassRecord.value?.students) return []
   const outliers = new Set(classAnalytics.value?.outlierStudentIds || [])
+  
+  if (classAnalytics.value?.studentGrades && classAnalytics.value.studentGrades.length > 0) {
+    return classAnalytics.value.studentGrades
+      .filter(s => !outliers.has(s.studentId))
+      .map(s => s.percentage)
+  }
+
   const list = []
   Object.keys(activeClassRecord.value.students).forEach(id => {
     const st = activeClassRecord.value.students[id]
@@ -761,12 +800,18 @@ const activeStudentGrades = computed(() => {
 })
 
 const overallClassAvg = computed(() => {
+  if (classAnalytics.value?.mean !== undefined && classAnalytics.value?.mean !== null) {
+    return classAnalytics.value.mean
+  }
   const values = activeStudentGrades.value
   if (values.length === 0) return null
   return values.reduce((sum, val) => sum + val, 0) / values.length
 })
 
 const overallClassMedian = computed(() => {
+  if (classAnalytics.value?.median !== undefined && classAnalytics.value?.median !== null) {
+    return classAnalytics.value.median
+  }
   const values = [...activeStudentGrades.value].sort((a, b) => a - b)
   if (values.length === 0) return null
   const mid = Math.floor(values.length / 2)
@@ -774,6 +819,9 @@ const overallClassMedian = computed(() => {
 })
 
 const overallClassSD = computed(() => {
+  if (classAnalytics.value?.sd !== undefined && classAnalytics.value?.sd !== null) {
+    return classAnalytics.value.sd
+  }
   const values = activeStudentGrades.value
   if (values.length < 2) return null
   const mean = values.reduce((sum, val) => sum + val, 0) / values.length
@@ -794,6 +842,19 @@ const atRiskStudents = computed(() => {
   if (!activeClassRecord.value?.students) return []
   const outliers = new Set(classAnalytics.value?.outlierStudentIds || [])
   const list = []
+  
+  if (classAnalytics.value?.studentGrades && classAnalytics.value.studentGrades.length > 0) {
+    classAnalytics.value.studentGrades.forEach(sg => {
+      if (outliers.has(sg.studentId)) return
+      const st = activeClassRecord.value.students[sg.studentId]
+      if (!st || st.archived || st.excludeFromAnalytics || !isStudentInSubCohort(st)) return
+      if (sg.percentage < 50) {
+        list.push({ studentId: sg.studentId, name: `${st.firstName} ${st.lastName}`, grade: sg.percentage })
+      }
+    })
+    return list
+  }
+
   Object.keys(activeClassRecord.value.students).forEach(id => {
     const st = activeClassRecord.value.students[id]
     if (!st || st.archived || st.excludeFromAnalytics || outliers.has(id)) return
@@ -913,9 +974,12 @@ const classEvidenceBlend = computed(() => {
   }
 })
 
-// Instructional Hotspots & Pedagogical Signals
+// Instructional Highlights & Pedagogical Signals
 const instructionalHotspots = computed(() => {
-  const list = classAnalytics.value?.assessmentBreakdowns || []
+  let list = classAnalytics.value?.assessmentBreakdowns || []
+  if (analyticsEvidenceScope.value === 'product') {
+    list = list.filter(a => (a.assessmentType || 'product').toLowerCase() === 'product')
+  }
   const valid = list.filter(a => a.stats && a.stats.mean !== null && a.stats.totalCount > 0)
   if (!valid.length) return { toughest: null, consistent: null, polarized: null }
 
@@ -936,6 +1000,9 @@ const instructionalHotspots = computed(() => {
 
 // Category Breakdown Grid
 const categoryBreakdowns = computed(() => {
+  if (classAnalytics.value?.categoryBreakdowns && classAnalytics.value.categoryBreakdowns.length > 0) {
+    return classAnalytics.value.categoryBreakdowns
+  }
   const cats = activeClassRecord.value?.gradebookCategories || []
   if (!cats.length) return []
   
@@ -947,6 +1014,7 @@ const categoryBreakdowns = computed(() => {
   
   const activeAssessmentsList = (assessments.value || []).filter(a => {
     if (a.target === 'individual' || a.excluded) return false
+    if (analyticsEvidenceScope.value === 'product' && (a.assessmentType || 'product') !== 'product') return false
     return isAssessmentInSubCohort(a)
   })
 
@@ -1136,10 +1204,45 @@ const bucketChartOptions = computed(() => {
   flex-wrap: wrap;
 }
 
-.subcohort-toggle, .exclusion-toggle {
+.subcohort-toggle, .exclusion-toggle, .evidence-toggle {
   display: flex;
   align-items: center;
   gap: 6px;
+}
+
+.stat-ribbon__badge-tag, .stat-scope-inline-badge {
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  background: rgba(59, 130, 246, 0.1);
+  color: var(--primary, #3b82f6);
+  border: 1px solid rgba(59, 130, 246, 0.22);
+  padding: 1px 5px;
+  border-radius: 4px;
+  margin-left: 4px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  line-height: 1.2;
+  align-self: center;
+}
+
+.card-scope-badge {
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 12px;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  display: inline-flex;
+  align-items: center;
+}
+
+.card-scope-badge--product {
+  background: rgba(59, 130, 246, 0.1);
+  color: var(--primary, #3b82f6);
+  border-color: rgba(59, 130, 246, 0.3);
 }
 
 .toggle-label {
@@ -1288,6 +1391,7 @@ const bucketChartOptions = computed(() => {
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--text-secondary);
+  white-space: nowrap;
 }
 
 .stat-icon {

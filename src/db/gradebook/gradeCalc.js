@@ -442,7 +442,11 @@ export async function calculateStudentGrade(studentId, classRecord, { asOf = nul
   const grades = gradesPreRef || await getGradesByStudent(studentId, classRecord.classId)
   
   const gradeMap = {}
-  for (const g of grades) gradeMap[g.assessmentId] = g
+  for (const g of grades) {
+    if (!g.studentId || String(g.studentId) === String(studentId)) {
+      gradeMap[g.assessmentId] = g
+    }
+  }
 
   const studentRecord = classRecord.students?.[studentId]
   const adjustedGrade = studentRecord?.adjustedGrade
@@ -587,6 +591,9 @@ export async function calculateClassGrades(classRecord, { asOf = null } = {}) {
 
   const results = {}
   for (const studentId of Object.keys(classRecord.students || {})) {
+    const st = classRecord.students[studentId]
+    if (st && st.archived) continue
+    if (!st?.firstName?.trim() && !st?.lastName?.trim()) continue
     const studentGrades = studentGradeMap.get(studentId) || []
     
     results[studentId] = await calculateStudentGrade(studentId, classRecord, { 

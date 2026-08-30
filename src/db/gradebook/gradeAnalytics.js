@@ -17,8 +17,10 @@ import {
   getAssessmentPercentage,
   _calculateCategoryGrade,
   calculateMedian,
-  isCohortMatch
+  isCohortMatch,
+  calculateStudentGrade
 } from './gradeCalc.js'
+import { calculateSBARStudentOverallMastery } from './gradeCalcSBAR.js'
 
 /**
  * Step 3: Rich analytics for a single assessment.
@@ -107,15 +109,16 @@ export function calculateAssessmentAnalytics(assessmentId, grades, assessment, o
  * @param {Object} classRecord
  * @param {Array<Object>} assessments
  * @param {Array<Object>} grades
- * @param {Object} options { exclusionMode: string, exclusionThreshold: number, asOf: string | null }
+ * @param {Object} options { exclusionMode: string, exclusionThreshold: number, evidenceScope: string, asOf: string | null }
  */
 export async function calculateClassAnalytics(classRecord, assessments, grades, options = {}) {
-  const settings = await getSettings()
-  const capAt100 = settings.capGradesAt100 ?? true
+  const settings = options.settings || await getSettings()
+  const capAt100 = settings?.capGradesAt100 ?? true
 
   const { 
     exclusionMode = 'none', 
     exclusionThreshold = 40,
+    evidenceScope = 'all',
     targetCourseCode = 'all',
     subCohortFilter = null,
     asOf = null,
@@ -124,6 +127,7 @@ export async function calculateClassAnalytics(classRecord, assessments, grades, 
 
   const filterKey = subCohortFilter || targetCourseCode || 'all'
   const isElem = classRecord.classType === 'elementary'
+  const isSbar = classRecord.gradingFramework === 'sbar'
 
   const allStudentIds = Object.keys(classRecord.students ?? {})
   let studentIds = allStudentIds.filter(id => {
@@ -145,73 +149,127 @@ export async function calculateClassAnalytics(classRecord, assessments, grades, 
     allStudentIds.filter(id => classRecord.students[id].excludeFromAnalytics || classRecord.students[id].archived)
   )
 
-  // Filter to Product, class-target assessments only
-  let productAssessments = assessments.filter(a =>
-    a.assessmentType === 'product' &&
-    a.target !== 'individual' &&
-    !a.excluded
-  )
+  // Filter class-target assessments matching sub-cohort & asOf
+  let filteredAssessments = assessments.filter(a => a.target !== 'individual' && !a.excluded)
 
   if (filterKey && filterKey !== 'all') {
-    productAssessments = productAssessments.filter(a => {
+    const fLower = filterKey.toLowerCase()
+    filteredAssessments = filteredAssessments.filter(a => {
       const tag = isElem ? (a.gradeLevel || a.targetCourseCode) : (a.targetCourseCode || a.gradeLevel)
-      return isCohortMatch(tag, filterKey)
+      return !tag || tag === 'all' || tag.toLowerCase() === fLower
     })
   }
 
-  // Apply asOf date filter if milestone selected
   if (asOf) {
-    productAssessments = productAssessments.filter(a => a.date <= asOf)
+    filteredAssessments = filteredAssessments.filter(a => a.date <= asOf)
   }
 
   // Build grade map for quick lookup
   const gradeMap = {}
+  const studentGradesMap = new Map()
+  const assessmentGradesMap = new Map()
   for (const g of grades) {
     if (!gradeMap[g.assessmentId]) gradeMap[g.assessmentId] = {}
     gradeMap[g.assessmentId][g.studentId] = g
+
+    if (!studentGradesMap.has(g.studentId)) studentGradesMap.set(g.studentId, [])
+    studentGradesMap.get(g.studentId).push(g)
+
+    if (!assessmentGradesMap.has(g.assessmentId)) assessmentGradesMap.set(g.assessmentId, [])
+    assessmentGradesMap.get(g.assessmentId).push(g)
   }
 
-  // Calculate each student's overall grade using Product assessments only
+  // Calculate each student's overall grade according to evidenceScope & grading framework
   const studentGrades = []
-  for (const studentId of studentIds) {
-    if (excludedStudentIds.has(studentId)) continue
+  const studentCategoryGradesMap = new Map()
 
-    // Temporarily filter classRecord categories to only Product assessments
-    let totalEarned = 0
-    let totalPossible = 0
-    const categoryResults = {}
+  if (isSbar) {
+    const sbarAssessments = evidenceScope === 'product'
+      ? filteredAssessments.filter(a => (a.assessmentType || 'product') === 'product')
+      : filteredAssessments
 
-    for (const cat of classRecord.gradebookCategories) {
-      const catAssessments = productAssessments.filter(a => a.categoryId === cat.categoryId)
-      
-      const studentGradeMap = {}
-      for (const a of catAssessments) {
-        if (gradeMap[a.assessmentId]?.[studentId]) {
-          studentGradeMap[a.assessmentId] = gradeMap[a.assessmentId][studentId]
+    for (const studentId of studentIds) {
+      if (excludedStudentIds.has(studentId)) continue
+      const studentRecord = classRecord.students?.[studentId]
+      const adjustedGrade = studentRecord?.adjustedGrade
+      if (adjustedGrade !== undefined && adjustedGrade !== null) {
+        studentGrades.push({
+          studentId,
+          percentage: preciseRound(Number(adjustedGrade), 0)
+        })
+      } else {
+        const score = calculateSBARStudentOverallMastery(
+          studentId,
+          classRecord,
+          sbarAssessments,
+          gradeMap,
+          classRecord.sbarAlgorithm
+        )
+        if (score !== null && score !== undefined) {
+          studentGrades.push({
+            studentId,
+            percentage: preciseRound(score, 0)
+          })
         }
       }
-      
-      const catPercentage = _calculateCategoryGrade(catAssessments, studentGradeMap, capAt100)
-      if (catPercentage !== null) {
-        categoryResults[cat.categoryId] = catPercentage
+    }
+  } else if (evidenceScope === 'all') {
+    // Traditional Categories: Complete evidence calculation with full Gradebook Grid parity
+    for (const studentId of studentIds) {
+      if (excludedStudentIds.has(studentId)) continue
+      const res = await calculateStudentGrade(studentId, classRecord, {
+        asOf,
+        assessmentsPreRef: assessments,
+        gradesPreRef: studentGradesMap.get(studentId) || [],
+        settingsPreRef: settings
+      })
+      if (res && res.overallGrade !== null && res.overallGrade !== undefined) {
+        studentGrades.push({
+          studentId,
+          percentage: res.overallGrade
+        })
+        if (res.categoryResults) {
+          studentCategoryGradesMap.set(studentId, res.categoryResults)
+        }
       }
     }
+  } else {
+    // Traditional Categories: Product assessments only
+    const productAssessments = filteredAssessments.filter(a => (a.assessmentType || 'product') === 'product')
 
-    // Weighted rollup
-    let weightedSum = 0
-    let weightUsed = 0
-    for (const cat of classRecord.gradebookCategories) {
-      const catGrade = categoryResults[cat.categoryId]
-      if (catGrade === undefined) continue
-      weightedSum += catGrade * (cat.weight / 100)
-      weightUsed += cat.weight
-    }
+    for (const studentId of studentIds) {
+      if (excludedStudentIds.has(studentId)) continue
 
-    if (weightUsed > 0) {
-      studentGrades.push({
-        studentId,
-        percentage: (weightedSum / weightUsed) * 100
-      })
+      const categoryResults = {}
+      for (const cat of classRecord.gradebookCategories || []) {
+        const catAssessments = productAssessments.filter(a => a.categoryId === cat.categoryId)
+        const studentGradeMap = {}
+        for (const a of catAssessments) {
+          if (gradeMap[a.assessmentId]?.[studentId]) {
+            studentGradeMap[a.assessmentId] = gradeMap[a.assessmentId][studentId]
+          }
+        }
+        const catPercentage = _calculateCategoryGrade(catAssessments, studentGradeMap, capAt100)
+        if (catPercentage !== null) {
+          categoryResults[cat.categoryId] = catPercentage
+        }
+      }
+
+      let weightedSum = 0
+      let weightUsed = 0
+      for (const cat of classRecord.gradebookCategories || []) {
+        const catGrade = categoryResults[cat.categoryId]
+        if (catGrade === undefined) continue
+        weightedSum += catGrade * (cat.weight / 100)
+        weightUsed += cat.weight
+      }
+
+      if (weightUsed > 0) {
+        studentGrades.push({
+          studentId,
+          percentage: (weightedSum / weightUsed) * 100
+        })
+      }
     }
   }
 
@@ -243,19 +301,10 @@ export async function calculateClassAnalytics(classRecord, assessments, grades, 
     ...(outlierStudentIds || [])
   ])
 
-  let filteredAssessments = assessments.filter(a => a.target !== 'individual' && !a.excluded)
-
-  if (filterKey && filterKey !== 'all') {
-    const fLower = filterKey.toLowerCase()
-    filteredAssessments = filteredAssessments.filter(a => {
-      const tag = isElem ? (a.gradeLevel || a.targetCourseCode) : (a.targetCourseCode || a.gradeLevel)
-      return !tag || tag === 'all' || tag.toLowerCase() === fLower
-    })
-  }
-
   for (const a of filteredAssessments) {
+    const aGrades = assessmentGradesMap.get(a.assessmentId) || []
     const stats = calculateAssessmentAnalytics(
-      a.assessmentId, grades, a,
+      a.assessmentId, aGrades, a,
       { 
         exclusionMode, 
         exclusionThreshold, 
@@ -277,21 +326,69 @@ export async function calculateClassAnalytics(classRecord, assessments, grades, 
     }
   }
 
+  // Category Breakdowns
+  const activeStudentIdSet = new Set(
+    studentIds.filter(id => !excludedStudentIds.has(id) && !(outlierStudentIds || []).includes(id))
+  )
+
+  const categoryBreakdowns = (classRecord.gradebookCategories || []).map(cat => {
+    let sum = 0
+    let count = 0
+    const catAssessments = filteredAssessments.filter(a => {
+      if (a.categoryId !== cat.categoryId) return false
+      if (evidenceScope === 'product') {
+        return (a.assessmentType || 'product') === 'product'
+      }
+      return true
+    })
+
+    if (evidenceScope === 'all' && studentCategoryGradesMap.size > 0) {
+      for (const sId of activeStudentIdSet) {
+        const studentCats = studentCategoryGradesMap.get(sId)
+        const catRes = studentCats?.[cat.categoryId]
+        if (catRes && catRes.percentage !== null && !isNaN(catRes.percentage)) {
+          sum += catRes.percentage
+          count++
+        }
+      }
+    } else {
+      for (const sId of activeStudentIdSet) {
+        const studentGradeMap = {}
+        for (const a of catAssessments) {
+          if (gradeMap[a.assessmentId]?.[sId]) {
+            studentGradeMap[a.assessmentId] = gradeMap[a.assessmentId][sId]
+          }
+        }
+        const catPercentage = _calculateCategoryGrade(catAssessments, studentGradeMap, capAt100)
+        if (catPercentage !== null) {
+          sum += catPercentage
+          count++
+        }
+      }
+    }
+
+    return {
+      categoryId: cat.categoryId,
+      name: cat.name,
+      weight: cat.weight || 0,
+      average: count > 0 ? preciseRound(sum / count, 1) : null,
+      studentCount: count,
+      assessmentCount: catAssessments.length
+    }
+  })
+
   // Triangulation coverage
   // Count how many active students have at least one entered Conversation/Observation
-  const activeStudentIdSet = new Set(studentIds)
+  const activeTriangulationStudentSet = new Set(studentIds)
   const conversationStudents = new Set()
   const observationStudents = new Set()
   for (const a of assessments.filter(a => a.target !== 'individual' && !a.excluded)) {
-    const aGrades = grades.filter(g =>
-      g.assessmentId === a.assessmentId &&
-      activeStudentIdSet.has(g.studentId) &&
-      g.attempts &&
-      g.attempts.length > 0
-    )
+    const aGrades = assessmentGradesMap.get(a.assessmentId) || []
     for (const g of aGrades) {
-      if (a.assessmentType === 'conversation') conversationStudents.add(g.studentId)
-      if (a.assessmentType === 'observation') observationStudents.add(g.studentId)
+      if (activeTriangulationStudentSet.has(g.studentId) && g.attempts && g.attempts.length > 0) {
+        if (a.assessmentType === 'conversation') conversationStudents.add(g.studentId)
+        if (a.assessmentType === 'observation') observationStudents.add(g.studentId)
+      }
     }
   }
 
@@ -312,7 +409,8 @@ export async function calculateClassAnalytics(classRecord, assessments, grades, 
   }
 
   return {
-    // Class-level stats (Product assessments only)
+    evidenceScope,
+    // Class-level stats
     mean: Math.round(mean * 10) / 10,
     median: Math.round(median * 10) / 10,
     sd: sd !== null ? Math.round(sd * 10) / 10 : null,
@@ -323,12 +421,14 @@ export async function calculateClassAnalytics(classRecord, assessments, grades, 
     outlierCount: outlierStudentIds.length,
     outlierStudentIds,
     excludeOutliersActive: exclusionMode !== 'none',
+    studentGrades,
 
     // Grouped assessment breakdowns
     productAnalytics,
     observationAnalytics,
     conversationAnalytics,
     assessmentBreakdowns,
+    categoryBreakdowns,
     productCount: Object.keys(productAnalytics).length,
     observationCount: Object.keys(observationAnalytics).length,
     conversationCount: Object.keys(conversationAnalytics).length,

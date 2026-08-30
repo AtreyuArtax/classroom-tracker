@@ -22,6 +22,29 @@
           </button>
         </div>
 
+        <!-- Evidence Scope Filter Control Bar -->
+        <div class="evidence-toggle">
+          <span class="toggle-label">Evidence:</span>
+          <div class="toggle-pill-group">
+            <button 
+              class="toggle-pill" 
+              :class="{ 'toggle-pill--active': analyticsEvidenceScope === 'all' }"
+              @click="setAnalyticsEvidenceScope('all')"
+              title="Include all graded evidence (Products, Observations, Conversations)"
+            >
+              All Evidence
+            </button>
+            <button 
+              class="toggle-pill" 
+              :class="{ 'toggle-pill--active': analyticsEvidenceScope === 'product' }"
+              @click="setAnalyticsEvidenceScope('product')"
+              title="Isolate uniform Product assessments"
+            >
+              Products Only
+            </button>
+          </div>
+        </div>
+
         <!-- Algorithm Engine Badge -->
         <div class="sbar-analytics__algo-badge" :title="`SBAR Calculation Engine: ${algorithmFullLabel}`">
           <Zap :size="12" class="algo-icon" />
@@ -36,7 +59,7 @@
       <!-- Stat 1: Cohort Average -->
       <div 
         class="stat-ribbon__item"
-        :title="`Cohort Average: ${cohortAverageBadge ? cohortAverageBadge.level + ' (' + cohortAveragePct + '%)' : '—'}. Calculated using the ${algorithmFullLabel} algorithm across evaluated standards.`"
+        :title="`Cohort Average: ${cohortAverageBadge ? cohortAverageBadge.level + ' (' + cohortAveragePct + '%)' : '—'}. Calculated using the ${algorithmFullLabel} algorithm across evaluated standards (${analyticsEvidenceScope === 'product' ? 'Products Only' : 'All Evidence'}).`"
       >
         <div class="stat-ribbon__label">
           <BarChart3 :size="13" class="stat-icon stat-icon--blue" />
@@ -52,13 +75,14 @@
           </span>
           <span v-else class="stat-ribbon__num">—</span>
           <span v-if="cohortAveragePct != null" class="stat-unit">({{ cohortAveragePct }}%)</span>
+          <span v-if="analyticsEvidenceScope === 'product'" class="stat-scope-inline-badge">Product Only</span>
         </div>
       </div>
 
       <!-- Stat 2: Cohort Median -->
       <div 
         class="stat-ribbon__item"
-        :title="`Cohort Median (50th Percentile): ${cohortMedianBadge ? cohortMedianBadge.level + ' (' + cohortMedianPct + '%)' : '—'}. Midpoint achievement level of the cohort.`"
+        :title="`Cohort Median (50th Percentile): ${cohortMedianBadge ? cohortMedianBadge.level + ' (' + cohortMedianPct + '%)' : '—'}. Midpoint achievement level of the cohort (${analyticsEvidenceScope === 'product' ? 'Products Only' : 'All Evidence'}).`"
       >
         <div class="stat-ribbon__label">
           <CheckCircle2 :size="13" class="stat-icon stat-icon--green" />
@@ -74,6 +98,7 @@
           </span>
           <span v-else class="stat-ribbon__num">—</span>
           <span v-if="cohortMedianPct != null" class="stat-unit">({{ cohortMedianPct }}%)</span>
+          <span v-if="analyticsEvidenceScope === 'product'" class="stat-scope-inline-badge">Product Only</span>
         </div>
       </div>
 
@@ -415,7 +440,9 @@ import {
   activeSubCohortFilter,
   availableSubCohorts,
   isStudentInSubCohort,
-  getUnitGradeLevel
+  getUnitGradeLevel,
+  analyticsEvidenceScope,
+  setAnalyticsEvidenceScope
 } from '../../composables/useGradebook.js'
 import { isCohortMatch } from '../../db/gradebook/gradeCalc.js'
 import {
@@ -438,6 +465,14 @@ function setSubCohortFilter(filter) {
   activeSubCohortFilter.value = filter
   activeGradeFilter.value = filter
 }
+
+const scopedAssessments = computed(() => {
+  if (!assessments.value) return []
+  if (analyticsEvidenceScope.value === 'product') {
+    return assessments.value.filter(a => (a.assessmentType || 'product') === 'product')
+  }
+  return assessments.value
+})
 
 const algorithmFullLabel = computed(() => {
   const algo = activeClassRecord.value?.sbarAlgorithm || 'decaying_average'
@@ -476,9 +511,9 @@ const totalActiveStudents = computed(() => filteredStudents.value.length)
 const filteredStudentIdSet = computed(() => new Set(filteredStudents.value.map(s => String(s.studentId))))
 
 const sbarMasteryMap = computed(() => {
-  if (!activeClassRecord.value || !assessments.value || !gradeMap.value) return {}
+  if (!activeClassRecord.value || !scopedAssessments.value || !gradeMap.value) return {}
   const algo = activeClassRecord.value?.sbarAlgorithm || 'decaying_average'
-  return calculateSBARExpectationMastery(activeClassRecord.value, assessments.value, gradeMap.value, algo)
+  return calculateSBARExpectationMastery(activeClassRecord.value, scopedAssessments.value, gradeMap.value, algo)
 })
 
 // Student Overall Masteries
@@ -488,7 +523,7 @@ const studentOverallMasteryList = computed(() => {
     const overallPct = calculateSBARStudentOverallMastery(
       st.studentId,
       activeClassRecord.value,
-      assessments.value,
+      scopedAssessments.value,
       gradeMap.value,
       activeClassRecord.value?.sbarAlgorithm || 'decaying_average'
     )
@@ -716,7 +751,7 @@ const chartOptions = computed(() => ({
 
 // Expectation Hotspots & Mastered
 const filteredAssessments = computed(() => {
-  let list = assessments.value || []
+  let list = scopedAssessments.value || []
   if (activeGradeFilter.value !== 'all' && availableGradeFilters.value.length > 1) {
     const gLower = activeGradeFilter.value.toLowerCase()
     const validStudentIds = filteredStudentIdSet.value
@@ -985,13 +1020,70 @@ const filteredSbarMatrixRows = computed(() => {
   gap: 10px;
 }
 
-.sbar-grade-pills {
+.sbar-grade-pills, .evidence-toggle {
   display: inline-flex;
-  gap: 3px;
+  align-items: center;
+  gap: 6px;
+}
+
+.toggle-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+}
+
+.toggle-pill-group {
+  display: inline-flex;
   background: var(--bg-secondary);
-  padding: 3px;
-  border-radius: var(--radius-md);
   border: 1px solid var(--border);
+  padding: 2px;
+  border-radius: var(--radius-md);
+  align-items: center;
+}
+
+.toggle-pill {
+  background: transparent;
+  border: none;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.15s ease;
+}
+
+.toggle-pill:hover:not(.toggle-pill--active) {
+  color: var(--text);
+  background: var(--bg-hover);
+}
+
+.toggle-pill--active {
+  background: var(--primary) !important;
+  color: #ffffff !important;
+  box-shadow: var(--shadow-sm);
+}
+
+.stat-ribbon__badge-tag, .stat-scope-inline-badge {
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  background: rgba(59, 130, 246, 0.1);
+  color: var(--primary, #3b82f6);
+  border: 1px solid rgba(59, 130, 246, 0.22);
+  padding: 1px 5px;
+  border-radius: 4px;
+  margin-left: 4px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  line-height: 1.2;
+  align-self: center;
 }
 
 .grade-pill {

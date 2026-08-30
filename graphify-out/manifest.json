@@ -245,8 +245,8 @@
     "semantic_hash": ""
   },
   "src/composables/useGradebook.js": {
-    "mtime": 1787881452.5312483,
-    "ast_hash": "a7969291bf346cfa2a25bf3ce7f59407",
+    "mtime": 1788094641.2179723,
+    "ast_hash": "9226fa134a7d7a1045e80a924350c8fb",
     "semantic_hash": ""
   },
   "src/composables/useKeyboardWedge.js": {
@@ -340,8 +340,8 @@
     "semantic_hash": ""
   },
   "src/views/Grades.vue": {
-    "mtime": 1787963078.558262,
-    "ast_hash": "1c5b65736fadbf24f70c2f73a258a017",
+    "mtime": 1788109769.5248172,
+    "ast_hash": "849d4347b9193642384ee367324f51e2",
     "semantic_hash": ""
   },
   "src/views/Reports.vue": {
@@ -385,8 +385,8 @@
     "semantic_hash": ""
   },
   "src/components/GradesAnalyticsPanel.vue": {
-    "mtime": 1787966863.2494645,
-    "ast_hash": "f3acb822ca159dedb5b714d64e403680",
+    "mtime": 1788110253.7327344,
+    "ast_hash": "cbc1d0ce5e456a2ca0a4b95795334560",
     "semantic_hash": ""
   },
   "src/components/GradesGrid.vue": {
@@ -560,13 +560,13 @@
     "semantic_hash": ""
   },
   "src/db/gradebook/gradeAnalytics.js": {
-    "mtime": 1787710060.5450268,
-    "ast_hash": "38f75f6b2769e34716cec8bb17fd91e3",
+    "mtime": 1788114339.0663176,
+    "ast_hash": "031240abd201df0500e0f091e1d714c3",
     "semantic_hash": ""
   },
   "src/db/gradebook/gradeCalc.js": {
-    "mtime": 1787686883.3736305,
-    "ast_hash": "f1b054af318bb71ef34fab54ca3a87d4",
+    "mtime": 1788109775.7172358,
+    "ast_hash": "ebe5b7f34518a1fb11ca241112852d15",
     "semantic_hash": ""
   },
   "src/db/gradebook/gradeService.js": {
@@ -590,8 +590,8 @@
     "semantic_hash": ""
   },
   "src/db/gradebook/gradeCalcSBAR.js": {
-    "mtime": 1787908876.9810946,
-    "ast_hash": "704ff8e7e84f8a4347951884afdb437a",
+    "mtime": 1788114294.4682832,
+    "ast_hash": "6151eace39dfe2061503312f938d9c5f",
     "semantic_hash": ""
   },
   "src/components/dossier/SBARExpectationMasteryGrid.vue": {
@@ -600,8 +600,8 @@
     "semantic_hash": ""
   },
   "src/components/grades/GradesAnalyticsPanelSBAR.vue": {
-    "mtime": 1787966859.039014,
-    "ast_hash": "cc9c1214fc866c4cc4722f2db872f32b",
+    "mtime": 1788110272.826353,
+    "ast_hash": "9ecde72487f48bf42d12b55e6dd5aac9",
     "semantic_hash": ""
   },
   "src/components/setup/ElementaryCsvImporter.vue": {
@@ -1065,8 +1065,8 @@
     "semantic_hash": ""
   },
   "src/test_sbar_math.js": {
-    "mtime": 1787711488.452788,
-    "ast_hash": "9a9b06e34788d7da52313d9121c461a5",
+    "mtime": 1788094843.1154654,
+    "ast_hash": "3525a02f1609f8c44dedc53ac7681afb",
     "semantic_hash": ""
   },
   "src/components/reports/ReportsMissingTasksModal.vue": {
@@ -1097,6 +1097,16 @@
   "src/components/dossier/DossierSBARMasteryBreakdown.vue": {
     "mtime": 1787911953.446366,
     "ast_hash": "ef47977307bc2a46747ebc1d24fcd9b1",
+    "semantic_hash": ""
+  },
+  "src/test_db_integrity.js": {
+    "mtime": 1788110791.7618887,
+    "ast_hash": "44fbb3c01238195a27a7d367bf8d8e79",
+    "semantic_hash": ""
+  },
+  "src/test_perf_stress.js": {
+    "mtime": 1788114347.0503047,
+    "ast_hash": "f45e48dc07be2e61f1c2f28df94dfb93",
     "semantic_hash": ""
   }
 }
