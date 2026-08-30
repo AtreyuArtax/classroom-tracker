@@ -24,7 +24,13 @@
           :class="['eim-tab', activeTab === 'paste' ? 'eim-tab--active' : '']" 
           @click="activeTab = 'paste'"
         >
-          Bulk Paste / CSV Importer
+          Bulk Paste / CSV / JSON
+        </button>
+        <button 
+          :class="['eim-tab', activeTab === 'ai' ? 'eim-tab--active' : '']" 
+          @click="activeTab = 'ai'"
+        >
+          <Sparkles :size="14" style="margin-right: 4px; display: inline-block; vertical-align: -2px; color: #a855f7;" /> AI Prompts &amp; Templates
         </button>
       </div>
 
@@ -334,6 +340,15 @@
                 </button>
               </div>
             </div>
+            <div class="eim-ai-shortcut-banner">
+              <Sparkles :size="14" class="eim-ai-shortcut-icon" />
+              <span>
+                Want to create expectations for a new course with AI? 
+                <button type="button" class="eim-inline-link" @click="activeTab = 'ai'">
+                  View AI Prompts &amp; JSON Templates &rarr;
+                </button>
+              </span>
+            </div>
           </div>
 
           <!-- File Upload Dropzone -->
@@ -348,13 +363,13 @@
             <input 
               ref="fileInputRef" 
               type="file" 
-              accept=".csv,.tsv,.txt" 
+              accept=".csv,.tsv,.txt,.json" 
               style="display: none;" 
               @change="handleFileSelect" 
             />
             <UploadCloud :size="22" class="eim-dropzone-icon" />
             <div class="eim-dropzone-text">
-              <strong>Click to upload</strong> or drag and drop a <code>.csv</code>, <code>.tsv</code>, or <code>.txt</code> file
+              <strong>Click to upload</strong> or drag and drop a <code>.json</code>, <code>.csv</code>, <code>.tsv</code>, or <code>.txt</code> file
             </div>
           </div>
 
@@ -477,6 +492,166 @@
             </div>
           </div>
         </div>
+
+        <!-- TAB 3: AI PROMPTS & JSON TEMPLATES -->
+        <div v-if="activeTab === 'ai'" class="eim-section eim-ai-tab">
+          <!-- Hero Banner -->
+          <div class="eim-ai-hero-card">
+            <div class="eim-ai-hero-header">
+              <div class="eim-ai-hero-title">
+                <Sparkles :size="20" class="eim-ai-sparkle-icon" />
+                <h4>Generate Custom Curriculums &amp; Success Criteria with AI</h4>
+              </div>
+            </div>
+            <p class="eim-ai-hero-desc">
+              Have a course syllabus, PDF, or custom curriculum not in the presets? Use these optimized prompts with <strong>ChatGPT, Claude, or Gemini</strong> to convert raw course text into clean Classroom Tracker formats in seconds.
+            </p>
+
+            <!-- 3-Step Quick Visual Guide -->
+            <div class="eim-ai-steps-row">
+              <div class="eim-ai-step-item">
+                <div class="eim-ai-step-badge">1</div>
+                <div class="eim-ai-step-text">
+                  <strong>Copy Prompt</strong>
+                  <span>Choose your format below</span>
+                </div>
+              </div>
+              <div class="eim-ai-step-arrow">&rarr;</div>
+              <div class="eim-ai-step-item">
+                <div class="eim-ai-step-badge">2</div>
+                <div class="eim-ai-step-text">
+                  <strong>Feed to AI</strong>
+                  <span>Paste prompt + syllabus/PDF</span>
+                </div>
+              </div>
+              <div class="eim-ai-step-arrow">&rarr;</div>
+              <div class="eim-ai-step-item">
+                <div class="eim-ai-step-badge">3</div>
+                <div class="eim-ai-step-text">
+                  <strong>Import File</strong>
+                  <span>Upload .json or paste text</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section: 1-Click Starter Template Downloads -->
+          <div class="eim-templates-download-card">
+            <div class="eim-templates-header">
+              <div class="eim-templates-title">
+                <FileCode :size="16" class="eim-templates-icon" />
+                <span>Starter Boilerplate Templates</span>
+              </div>
+              <span class="eim-templates-subtitle">Download clean JSON schemas or CSV templates to inspect or edit directly</span>
+            </div>
+            <div class="eim-templates-buttons">
+              <button 
+                type="button" 
+                class="eim-template-btn" 
+                @click="downloadPresetJsonTemplate"
+                title="Download starter Course Preset JSON template"
+              >
+                <Download :size="14" /> Download Course Preset (.json)
+              </button>
+              <button 
+                type="button" 
+                class="eim-template-btn" 
+                @click="downloadSuccessCriteriaJsonTemplate"
+                title="Download starter Success Criteria JSON template"
+              >
+                <Download :size="14" /> Download Success Criteria (.json)
+              </button>
+              <button 
+                type="button" 
+                class="eim-template-btn" 
+                @click="downloadSampleCsv"
+                title="Download sample Spreadsheet CSV template"
+              >
+                <Download :size="14" /> Download Sample CSV (.csv)
+              </button>
+            </div>
+          </div>
+
+          <!-- Section: Ready-to-Use AI Prompts -->
+          <div class="eim-ai-prompts-section">
+            <h5 class="eim-section-title">Ready-to-Use AI Prompts (Click to Copy)</h5>
+
+            <!-- PROMPT 1: Course Preset JSON -->
+            <div class="eim-prompt-card">
+              <div class="eim-prompt-card__header">
+                <div class="eim-prompt-card__meta">
+                  <span class="eim-prompt-tag eim-prompt-tag--json">Full Course JSON</span>
+                  <h6>1. Complete Course Preset Generator</h6>
+                </div>
+                <button 
+                  type="button" 
+                  class="eim-copy-prompt-btn" 
+                  :class="{ 'eim-copy-prompt-btn--copied': copiedPromptKey === 'preset_json' }"
+                  @click="copyPrompt('preset_json', aiPresetJsonPrompt)"
+                >
+                  <component :is="copiedPromptKey === 'preset_json' ? Check : Copy" :size="13" />
+                  {{ copiedPromptKey === 'preset_json' ? 'Copied Prompt!' : 'Copy AI Prompt' }}
+                </button>
+              </div>
+              <p class="eim-prompt-desc">
+                Converts an entire curriculum document or course syllabus into structured strands, overall expectations, and specific expectations.
+              </p>
+              <div class="eim-prompt-code-preview">
+                <pre><code>{{ aiPresetJsonPromptSample }}</code></pre>
+              </div>
+            </div>
+
+            <!-- PROMPT 2: Success Criteria JSON -->
+            <div class="eim-prompt-card">
+              <div class="eim-prompt-card__header">
+                <div class="eim-prompt-card__meta">
+                  <span class="eim-prompt-tag eim-prompt-tag--purple">Success Criteria</span>
+                  <h6>2. "I Can..." Success Criteria Generator</h6>
+                </div>
+                <button 
+                  type="button" 
+                  class="eim-copy-prompt-btn" 
+                  :class="{ 'eim-copy-prompt-btn--copied': copiedPromptKey === 'success_criteria' }"
+                  @click="copyPrompt('success_criteria', aiSuccessCriteriaPrompt)"
+                >
+                  <component :is="copiedPromptKey === 'success_criteria' ? Check : Copy" :size="13" />
+                  {{ copiedPromptKey === 'success_criteria' ? 'Copied Prompt!' : 'Copy AI Prompt' }}
+                </button>
+              </div>
+              <p class="eim-prompt-desc">
+                Transforms formal curriculum expectations into student-friendly, actionable "I can..." achievement targets.
+              </p>
+              <div class="eim-prompt-code-preview">
+                <pre><code>{{ aiSuccessCriteriaPromptSample }}</code></pre>
+              </div>
+            </div>
+
+            <!-- PROMPT 3: Tabular Quick Paste -->
+            <div class="eim-prompt-card">
+              <div class="eim-prompt-card__header">
+                <div class="eim-prompt-card__meta">
+                  <span class="eim-prompt-tag eim-prompt-tag--blue">Quick Paste Table</span>
+                  <h6>3. Quick 3-Column Pipe Table Generator</h6>
+                </div>
+                <button 
+                  type="button" 
+                  class="eim-copy-prompt-btn" 
+                  :class="{ 'eim-copy-prompt-btn--copied': copiedPromptKey === 'table' }"
+                  @click="copyPrompt('table', aiTablePrompt)"
+                >
+                  <component :is="copiedPromptKey === 'table' ? Check : Copy" :size="13" />
+                  {{ copiedPromptKey === 'table' ? 'Copied Prompt!' : 'Copy AI Prompt' }}
+                </button>
+              </div>
+              <p class="eim-prompt-desc">
+                Generates a clean <code>Strand | Code | Description</code> table you can paste directly into the <strong>Bulk Paste</strong> tab.
+              </p>
+              <div class="eim-prompt-code-preview">
+                <pre><code>{{ aiTablePromptSample }}</code></pre>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Footer Actions -->
@@ -509,7 +684,8 @@
 import { ref, computed, watch } from 'vue'
 import { 
   BookOpen, X, Zap, Search, Check, Filter, Trash2, 
-  FileSpreadsheet, UploadCloud, Download, AlertTriangle, CheckCircle2 
+  FileSpreadsheet, UploadCloud, Download, AlertTriangle, CheckCircle2,
+  Sparkles, Copy, FileCode
 } from 'lucide-vue-next'
 import { curriculumPresets } from '../../data/curriculum/index.js'
 import { cleanExpectationText } from '../../utils/textUtils.js'
@@ -1045,10 +1221,256 @@ function handleFileDrop(e) {
   readFileContent(file)
 }
 
+function downloadPresetJsonTemplate() {
+  const templateObj = {
+    presetId: 'ontario-g7-subjectname',
+    title: 'Grade 7 Subject Name (2026)',
+    panel: 'elementary',
+    region: 'Ontario',
+    grade: '7',
+    subjectCode: 'SUB',
+    department: 'Department Name',
+    strands: [
+      {
+        name: 'Strand A: Title of Strand A',
+        overalls: [
+          {
+            code: 'A1',
+            title: 'Overall Topic Name',
+            description: 'Demonstrate an understanding of key concepts, principles, and fundamental ideas related to this strand.',
+            specifics: [
+              {
+                code: 'A1.1',
+                description: 'identify and describe fundamental components, processes, and relationships using appropriate terminology.'
+              },
+              {
+                code: 'A1.2',
+                description: 'analyze practical applications, societal impacts, and environmental considerations related to the topic.'
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+
+  const blob = new Blob([JSON.stringify(templateObj, null, 2)], { type: 'application/json;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.setAttribute('href', url)
+  link.setAttribute('download', 'curriculum_preset_template.json')
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  URL.revokeObjectURL(url)
+}
+
+function downloadSuccessCriteriaJsonTemplate() {
+  const templateObj = {
+    presetId: 'ontario-snc1w-success-criteria',
+    title: 'Grade 9 Science (SNC1W) - Success Criteria',
+    panel: 'secondary',
+    region: 'Ontario',
+    grade: '9',
+    subjectCode: 'SNC1W',
+    department: 'Science',
+    isSuccessCriteria: true,
+    strands: [
+      {
+        name: 'Strand A: STEM Skills',
+        overalls: [
+          {
+            code: 'A1',
+            title: 'STEM Investigation',
+            description: 'I can apply scientific investigation and engineering design processes.',
+            specifics: [
+              {
+                code: 'A1.1',
+                description: 'I can formulate testable questions and hypotheses for scientific experiments.'
+              },
+              {
+                code: 'A1.2',
+                description: 'I can safely conduct lab investigations and gather accurate quantitative data.'
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+
+  const blob = new Blob([JSON.stringify(templateObj, null, 2)], { type: 'application/json;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.setAttribute('href', url)
+  link.setAttribute('download', 'success_criteria_template.json')
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  URL.revokeObjectURL(url)
+}
+
+const copiedPromptKey = ref(null)
+
+function copyPrompt(key, promptText) {
+  navigator.clipboard.writeText(promptText).then(() => {
+    copiedPromptKey.value = key
+    setTimeout(() => {
+      if (copiedPromptKey.value === key) {
+        copiedPromptKey.value = null
+      }
+    }, 2500)
+  })
+}
+
+const aiPresetJsonPrompt = `You are a curriculum data specialist. Convert the attached Ontario Ministry of Education curriculum text into a single, strictly valid JSON preset following this exact format:
+
+Requirements:
+1. Output ONLY valid JSON matching the schema below.
+2. Ensure clean plain text descriptions with NO HTML entities (do NOT include &nbsp;, &amp;, &quot;, etc.). Use standard UTF-8 characters (e.g. standard space, en-dash –, curly apostrophe ’).
+3. Ensure no trailing space before punctuation (write "systems." NOT "systems .").
+4. Expectation codes must follow standard Ontario numbering (Overall: "A1", Specific: "A1.1").
+
+Schema Template:
+{
+  "presetId": "ontario-[grade]-[subjectcode]",
+  "title": "[Full Course Title (Year)]",
+  "panel": "[elementary or secondary]",
+  "region": "Ontario",
+  "grade": "[Grade number, e.g. 7 or 10]",
+  "subjectCode": "[Subject Code, e.g. SNC1W or SCI]",
+  "department": "[Department name, e.g. Science]",
+  "strands": [
+    {
+      "name": "Strand Name (e.g. Strand A: STEM Investigation)",
+      "overalls": [
+        {
+          "code": "A1",
+          "title": "Overall Topic Title",
+          "description": "Full text of overall expectation.",
+          "specifics": [
+            {
+              "code": "A1.1",
+              "description": "Full text of specific expectation."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+
+Here is the source curriculum text:
+[PASTE YOUR SYLLABUS OR CURRICULUM TEXT HERE]`
+
+const aiPresetJsonPromptSample = `{
+  "presetId": "ontario-snc1w",
+  "title": "Grade 9 Science (2022)",
+  "panel": "secondary",
+  "strands": [ ... ]
+}`
+
+const aiSuccessCriteriaPrompt = `You are an educational assessment expert. Convert the following curriculum expectations into student-friendly Success Criteria ("I Can..." statements) structured in this exact JSON format:
+
+Requirements:
+1. Output ONLY valid JSON matching the schema below.
+2. Start specific criteria with "I can..." in active, student-accessible language.
+3. Clean plain text only (no &nbsp; or HTML entities).
+
+Schema Template:
+{
+  "presetId": "ontario-[grade]-[subjectcode]-success-criteria",
+  "title": "[Full Course Title] (Success Criteria)",
+  "panel": "[elementary or secondary]",
+  "region": "Ontario",
+  "grade": "[Grade number]",
+  "subjectCode": "[Course Code]",
+  "isSuccessCriteria": true,
+  "strands": [
+    {
+      "name": "Strand Name",
+      "overalls": [
+        {
+          "code": "A1",
+          "title": "Topic Name",
+          "description": "I can demonstrate understanding of key concepts in this strand.",
+          "specifics": [
+            {
+              "code": "A1.1",
+              "description": "I can explain and apply [specific concept] using appropriate terminology."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+
+Here are the expectations to convert:
+[PASTE YOUR CURRICULUM EXPECTATIONS HERE]`
+
+const aiSuccessCriteriaPromptSample = `{
+  "presetId": "ontario-snc1w-success-criteria",
+  "title": "Grade 9 Science - Success Criteria",
+  "isSuccessCriteria": true,
+  "strands": [ ... "I can..." statements ]
+}`
+
+const aiTablePrompt = `Convert the following curriculum text into a clean 3-column table format for Classroom Tracker:
+
+Format:
+Strand Name | Expectation Code | Expectation Description
+
+Example:
+Strand A: Life Systems | A1.1 | Assess impacts of human activities on biodiversity
+Strand A: Life Systems | A1.2 | Investigate interactions within ecosystems
+Strand B: Structures & Mechanisms | B1.1 | Evaluate economic and environmental impacts of materials
+
+Formatting rules:
+- One expectation per line.
+- Separate columns with a vertical pipe " | ".
+- Plain text only (no HTML entities or symbols).
+
+Here is the curriculum text:
+[PASTE YOUR CURRICULUM TEXT HERE]`
+
+const aiTablePromptSample = `Strand A: Life Systems | A1.1 | Assess impacts of human activities...
+Strand A: Life Systems | A1.2 | Investigate interactions...
+Strand B: Structures & Mechanisms | B1.1 | Evaluate economic...`
+
 function readFileContent(file) {
   const reader = new FileReader()
   reader.onload = (event) => {
-    pasteRawText.value = event.target?.result || ''
+    const content = event.target?.result || ''
+    if (file.name.endsWith('.json') || content.trim().startsWith('{')) {
+      try {
+        const parsed = JSON.parse(content)
+        if (parsed.strands && Array.isArray(parsed.strands)) {
+          const rows = []
+          parsed.strands.forEach(strand => {
+            const sName = strand.name || ''
+            if (strand.overalls) {
+              strand.overalls.forEach(ov => {
+                rows.push(`${sName} | ${ov.code} | ${ov.description}`)
+                if (ov.specifics) {
+                  ov.specifics.forEach(sp => {
+                    rows.push(`${sName} | ${sp.code} | ${sp.description}`)
+                  })
+                }
+              })
+            }
+          })
+          if (rows.length > 0) {
+            pasteRawText.value = rows.join('\n')
+            activeTab.value = 'paste'
+            return
+          }
+        }
+      } catch (err) {
+        console.warn('Failed parsing JSON file, falling back to raw text', err)
+      }
+    }
+    pasteRawText.value = content
   }
   reader.readAsText(file)
 }
@@ -2064,4 +2486,317 @@ function onSubmit() {
   background: rgba(239, 68, 68, 0.1);
   color: #ef4444;
 }
+
+/* AI Prompts & JSON Templates Tab Styles */
+.eim-ai-tab {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.eim-ai-hero-card {
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.08), rgba(59, 130, 246, 0.08));
+  border: 1px solid rgba(168, 85, 247, 0.25);
+  border-radius: var(--radius-md);
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.eim-ai-hero-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.eim-ai-hero-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.eim-ai-sparkle-icon {
+  color: #a855f7;
+}
+
+.eim-ai-hero-title h4 {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.eim-ai-hero-desc {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  line-height: 1.45;
+}
+
+.eim-ai-steps-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 4px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(168, 85, 247, 0.15);
+  flex-wrap: wrap;
+}
+
+.eim-ai-step-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.eim-ai-step-badge {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #a855f7;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.eim-ai-step-text {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.75rem;
+}
+
+.eim-ai-step-text strong {
+  color: var(--text);
+}
+
+.eim-ai-step-text span {
+  color: var(--text-secondary);
+  font-size: 0.7rem;
+}
+
+.eim-ai-step-arrow {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  opacity: 0.6;
+}
+
+.eim-templates-download-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.eim-templates-header {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.eim-templates-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.eim-templates-icon {
+  color: var(--primary);
+}
+
+.eim-templates-subtitle {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.eim-templates-buttons {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.eim-template-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.eim-template-btn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: var(--bg-hover);
+}
+
+.eim-ai-prompts-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.eim-section-title {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.eim-prompt-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: border-color 0.15s ease;
+}
+
+.eim-prompt-card:hover {
+  border-color: rgba(168, 85, 247, 0.4);
+}
+
+.eim-prompt-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.eim-prompt-card__meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.eim-prompt-card__meta h6 {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.eim-prompt-tag {
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.eim-prompt-tag--json {
+  background: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
+}
+
+.eim-prompt-tag--purple {
+  background: rgba(168, 85, 247, 0.1);
+  color: #a855f7;
+}
+
+.eim-prompt-tag--blue {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+}
+
+.eim-copy-prompt-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(168, 85, 247, 0.4);
+  background: rgba(168, 85, 247, 0.08);
+  color: #a855f7;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.eim-copy-prompt-btn:hover {
+  background: #a855f7;
+  color: #ffffff;
+  border-color: #a855f7;
+}
+
+.eim-copy-prompt-btn--copied {
+  background: #10b981 !important;
+  color: #ffffff !important;
+  border-color: #10b981 !important;
+}
+
+.eim-prompt-desc {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.eim-prompt-code-preview {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  overflow-x: auto;
+}
+
+.eim-prompt-code-preview pre {
+  margin: 0;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  line-height: 1.35;
+}
+
+.eim-ai-shortcut-banner {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  padding: 8px 12px;
+  background: rgba(168, 85, 247, 0.06);
+  border: 1px dashed rgba(168, 85, 247, 0.3);
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.eim-ai-shortcut-icon {
+  color: #a855f7;
+  flex-shrink: 0;
+}
+
+.eim-inline-link {
+  background: transparent;
+  border: none;
+  color: #a855f7;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0;
+  font-size: inherit;
+  text-decoration: underline;
+}
+
+.eim-inline-link:hover {
+  color: #9333ea;
+}
 </style>
+
