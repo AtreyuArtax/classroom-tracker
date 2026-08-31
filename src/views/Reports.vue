@@ -29,21 +29,21 @@
               :class="{ 'reports__pillar-btn--active': rightMode === 'overview' }"
               @click="switchPillar('overview')"
             >
-              <BarChart2 :size="15" /> Class Analytics
+              <BarChart2 :size="14" /> Analytics
             </button>
             <button 
               class="reports__pillar-btn"
               :class="{ 'reports__pillar-btn--active': rightMode === 'learningskills' }"
               @click="switchPillar('learningskills')"
             >
-              <Award :size="15" /> Learning Skills
+              <Award :size="14" /> Learning Skills
             </button>
             <button 
               class="reports__pillar-btn"
               :class="{ 'reports__pillar-btn--active': rightMode === 'printhub' }"
               @click="switchPillar('printhub')"
             >
-              <Send :size="15" /> Communications &amp; Documents
+              <Send :size="14" /> Communications &amp; Documents
             </button>
           </div>
 
@@ -57,7 +57,7 @@
                 :class="{ 'grade-pill--active': activeSubCohortFilter === subFilter }"
                 @click="activeSubCohortFilter = subFilter"
               >
-                {{ subFilter === 'all' ? (activeClassType === 'elementary' ? 'All Grades' : 'All Sections') : subFilter }}
+                {{ subFilter === 'all' ? 'All' : subFilter }}
               </button>
             </div>
 
@@ -458,14 +458,14 @@ const filteredSidebarStudents = computed(() => {
 
 const selectedPeriod = ref('week')
 const PERIOD_OPTIONS = [
-  { label: 'This Week', value: 'week' },
+  { label: 'Week', value: 'week' },
   { label: 'Last Week', value: 'last_week' },
-  { label: 'This Month', value: 'month' },
-  { label: 'This Semester', value: 'semester' },
+  { label: 'Month', value: 'month' },
+  { label: 'Semester', value: 'semester' },
 ]
 
 watch(selectedPeriod, () => {
-  if (rightMode.value === 'overview') runReport()
+  if (rightMode.value === 'overview') runReport(true)
 })
 
 async function onSelectStudent(studentId) {
@@ -937,21 +937,24 @@ const washroomChartOptions = {
 .reports { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: var(--bg-secondary); }
 .reports__layout { display: flex; flex: 1; overflow: hidden; }
 .reports__main { flex: 1; overflow-y: auto; padding: 12px 16px; display: flex; flex-direction: column; gap: 10px; }
-.reports__header-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-.reports__header-controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.reports__pillar-nav { display: flex; gap: 4px; background: var(--surface); border: 1px solid var(--border); padding: 3px; border-radius: var(--radius-md); }
-.reports__pillar-btn { display: flex; align-items: center; gap: 5px; background: none; border: none; padding: 5px 10px; border-radius: var(--radius-sm); font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); cursor: pointer; transition: all 0.15s ease; }
+.reports__header-bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: nowrap; min-width: 0; }
+.reports__header-controls { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.reports__pillar-nav { display: flex; gap: 3px; background: var(--surface); border: 1px solid var(--border); padding: 3px; border-radius: var(--radius-md); flex-shrink: 0; }
+.reports__pillar-btn { display: flex; align-items: center; gap: 6px; background: none; border: none; padding: 5px 11px; border-radius: var(--radius-sm); font-size: 0.78rem; font-weight: 600; color: var(--text-secondary); cursor: pointer; transition: all 0.15s ease; white-space: nowrap; line-height: 1.2; }
 .reports__pillar-btn:hover { color: var(--text); background: var(--surface-hover); }
 .reports__pillar-btn--active { background: var(--primary); color: white; }
 @media (max-width: 1300px) { .reports__main { padding: 10px 14px; } }
-@media (max-width: 1024px) { .reports__main { padding: 8px 10px; } }
+@media (max-width: 1024px) { 
+  .reports__main { padding: 8px 10px; }
+  .reports__header-bar { flex-wrap: wrap; }
+}
 .reports__loading { padding: 40px; text-align: center; font-weight: 600; color: var(--text-secondary); }
 .sbar-grade-pills { display: inline-flex; gap: 3px; background: var(--surface); padding: 3px; border-radius: var(--radius-md); border: 1px solid var(--border); }
-.sbar-grade-pills .grade-pill { background: transparent; border: 1px solid transparent; color: var(--text-secondary); font-size: 0.76rem; font-weight: 600; padding: 4px 8px; border-radius: var(--radius-sm); cursor: pointer; transition: all 0.15s ease; }
+.sbar-grade-pills .grade-pill { background: transparent; border: 1px solid transparent; color: var(--text-secondary); font-size: 0.78rem; font-weight: 600; padding: 5px 10px; border-radius: var(--radius-sm); cursor: pointer; transition: all 0.15s ease; white-space: nowrap; line-height: 1.2; }
 .sbar-grade-pills .grade-pill:hover { background: var(--bg-hover); color: var(--text); }
 .sbar-grade-pills .grade-pill--active { background: var(--primary); color: #fff; border-color: var(--primary); }
-.reports__period-row { display: flex; gap: 2px; background: var(--surface); border: 1px solid var(--border); padding: 3px; border-radius: var(--radius-md); }
-.reports__period-btn { padding: 4px 9px; border: none; background: none; font-size: 0.76rem; font-weight: 600; color: var(--text-secondary); border-radius: var(--radius-sm); cursor: pointer; transition: all 0.15s ease; }
+.reports__period-row { display: flex; gap: 3px; background: var(--surface); border: 1px solid var(--border); padding: 3px; border-radius: var(--radius-md); }
+.reports__period-btn { padding: 5px 10px; border: none; background: none; font-size: 0.78rem; font-weight: 600; color: var(--text-secondary); border-radius: var(--radius-sm); cursor: pointer; transition: all 0.15s ease; white-space: nowrap; line-height: 1.2; }
 .reports__period-btn:hover { color: var(--text); }
 .reports__period-btn--active { background: var(--primary-light, rgba(59, 130, 246, 0.1)); color: var(--primary); font-weight: 700; }
 .reports__btn-export { display: flex; align-items: center; gap: 6px; padding: 5px 10px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 0.78rem; font-weight: 600; cursor: pointer; color: var(--text); transition: all 0.15s ease; }

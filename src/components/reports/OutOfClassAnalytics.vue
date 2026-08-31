@@ -8,14 +8,6 @@
           <button
             type="button"
             class="ooc-view-btn"
-            :class="{ 'ooc-view-btn--active': viewMode === 'rank' }"
-            @click="viewMode = 'rank'"
-          >
-            <List :size="13" /> Stack-Rank
-          </button>
-          <button
-            type="button"
-            class="ooc-view-btn"
             :class="{ 'ooc-view-btn--active': viewMode === 'matrix' }"
             @click="viewMode = 'matrix'"
           >
@@ -28,6 +20,14 @@
             @click="viewMode = 'patterns'"
           >
             <Users :size="13" /> Overlaps &amp; Patterns
+          </button>
+          <button
+            type="button"
+            class="ooc-view-btn"
+            :class="{ 'ooc-view-btn--active': viewMode === 'rank' }"
+            @click="viewMode = 'rank'"
+          >
+            <List :size="13" /> Stack-Rank
           </button>
         </div>
 
@@ -671,7 +671,7 @@ defineEmits(['select-student'])
 const { behaviorCodes, thresholds } = useClassroom()
 const extendedLimit = computed(() => Number(thresholds.value?.washroomDurationLimit ?? 11))
 
-const viewMode = ref('rank') // 'rank' | 'matrix' | 'patterns'
+const viewMode = ref('matrix') // 'matrix' | 'patterns' | 'rank'
 const activeMetric = ref('trips')
 const searchQuery = ref('')
 const isExtendedExpanded = ref(false)

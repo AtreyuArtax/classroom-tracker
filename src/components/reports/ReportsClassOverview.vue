@@ -1031,8 +1031,8 @@ const activeActionItemsVisible = computed(() => {
 /* ── Section 2: Two-Column Split ────────────────────────────── */
 .reports__two-col {
   display: grid;
-  grid-template-columns: minmax(240px, 280px) minmax(0, 1fr);
-  gap: 10px;
+  grid-template-columns: minmax(310px, 360px) minmax(0, 1fr);
+  gap: 12px;
   min-width: 0;
 }
 @media (max-width: 1000px) {
