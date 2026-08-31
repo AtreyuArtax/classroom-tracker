@@ -180,8 +180,8 @@
     "semantic_hash": ""
   },
   "src/components/dossier/Student360.vue": {
-    "mtime": 1787961044.3079314,
-    "ast_hash": "86f4e7d45f17a61862bd574e3c0a9eae",
+    "mtime": 1788135219.5136623,
+    "ast_hash": "f3402212545ed6a8975a8cead98cf4da",
     "semantic_hash": ""
   },
   "src/components/dossier/Student360Header.vue": {
@@ -200,8 +200,8 @@
     "semantic_hash": ""
   },
   "src/components/dossier/StudentTimeline.vue": {
-    "mtime": 1787862102.2996182,
-    "ast_hash": "c3625191c4efef1d9426fdf1651011b4",
+    "mtime": 1788136045.686517,
+    "ast_hash": "a8feb85fec5a85a82b0fc100de7cf508",
     "semantic_hash": ""
   },
   "src/components/setup/CalendarSettings.vue": {
@@ -240,8 +240,8 @@
     "semantic_hash": ""
   },
   "src/composables/useClassroom.js": {
-    "mtime": 1787884050.266647,
-    "ast_hash": "dba8960258e45455b4ca9582ac625f49",
+    "mtime": 1788134931.008472,
+    "ast_hash": "7d8a8d8e81f7731921896fe086e44ed1",
     "semantic_hash": ""
   },
   "src/composables/useGradebook.js": {
@@ -610,8 +610,8 @@
     "semantic_hash": ""
   },
   "src/components/setup/ElementarySubjectManager.vue": {
-    "mtime": 1788133583.6314988,
-    "ast_hash": "5d1bd325fd9b572fe47b01f125a64896",
+    "mtime": 1788133806.8587613,
+    "ast_hash": "e3525ec863b9f1d75c48ab2b47f48ff8",
     "semantic_hash": ""
   },
   "src/utils/elementarySubjects.js": {

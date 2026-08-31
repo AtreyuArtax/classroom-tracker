@@ -1040,7 +1040,8 @@ async function logStandardEvent(studentId, code, note = null, options = {}) {
             classId, 
             code, 
             note,
-            testDay: isTestDay.value,
+            duration: options.duration !== undefined ? options.duration : null,
+            testDay: options.testDay !== undefined ? options.testDay : isTestDay.value,
             _overrideTimestamp: options.timestamp 
         })
 
@@ -1301,10 +1302,15 @@ async function editEvent(eventId, updates) {
     const original = await db.get('events', eventId)
     if (!original) return
 
+    if (updates.timestamp) {
+        const d = new Date(updates.timestamp)
+        updates.dayOfWeek = d.getDay()
+    }
+
     await eventService.updateEvent(eventId, updates)
 
-    // Sync reactive stats if duration or code changed
-    if (updates.duration !== undefined || updates.code !== undefined) {
+    // Sync reactive stats if duration, code, or timestamp changed
+    if (updates.duration !== undefined || updates.code !== undefined || updates.timestamp !== undefined) {
         await computeWeeklyStats(activeClass.value.classId, Object.keys(students.value))
     }
 
@@ -1315,7 +1321,7 @@ async function editEvent(eventId, updates) {
 
     // Special case: if it was a late event from today, sync active state
     if (original.code === 'l' && updates.duration !== undefined) {
-        await syncLateActiveState(original.classId, original.studentId, original.duration, updates.duration, original.timestamp)
+        await syncLateActiveState(original.classId, original.studentId, original.duration, updates.duration, updates.timestamp || original.timestamp)
     }
 }
 

@@ -325,42 +325,9 @@
 
       <!-- Timeline Tab -->
       <section v-if="activeTab === 'timeline'" class="student-360__pane">
-        <div class="timeline-header">
-           <button class="btn-log-absence" @click="showAbsenceForm = true">
-             <PlusCircle :size="16" /> Log Past Absence
-           </button>
-        </div>
-
-         <BaseModal
-           :show="showAbsenceForm"
-           title="Log Past Absence"
-           @close="showAbsenceForm = false"
-           maxWidth="400px"
-           :z-index="3000"
-         >
-           <div class="absence-modal-content">
-             <div class="form-group">
-               <label>Absence Date</label>
-               <input type="date" v-model="absenceDate" class="absence-input" />
-             </div>
-             
-             <label class="absence-checkbox-container">
-               <input type="checkbox" v-model="absenceIsTestDay" />
-               <div class="checkbox-custom"></div>
-               <span class="checkbox-label">Mark as Assessment Day</span>
-             </label>
-
-             <div class="modal-footer">
-               <button class="btn-ghost" @click="showAbsenceForm = false">Cancel</button>
-               <button class="btn-primary" @click="logAbsence">Save Record</button>
-             </div>
-           </div>
-         </BaseModal>
-
         <StudentTimeline 
           :student-id="studentId" 
           :events="events"
-          :assessments="assessments"
           :behavior-codes-map="behaviorCodesMap"
         />
       </section>
@@ -580,35 +547,7 @@ const { stats: overallStats } = useStudentDossier(semesterPeriod, toRef(props, '
 const showEmailModal = ref(false)
 const showPrintModal = ref(false)
 
-// Past Absence Form State
-const showAbsenceForm = ref(false)
-const absenceDate = ref(formatLocalDate(new Date()))
-const absenceIsTestDay = ref(false)
 
-async function logAbsence() {
-  if (!absenceDate.value) return
-  const isDuplicate = events.value.some(ev => 
-    ev.code === 'a' && !ev.superseded && formatLocalDate(ev.timestamp) === absenceDate.value
-  )
-
-  if (isDuplicate) {
-    await alert(`An absence is already recorded for ${absenceDate.value}.`)
-    return
-  }
-
-  try {
-    await logStandardEvent(props.studentId, 'a', 'Past Absence Logged', { 
-      timestamp: new Date(absenceDate.value + 'T12:00:00Z').toISOString(),
-      testDay: absenceIsTestDay.value
-    })
-    showAbsenceForm.value = false
-    absenceDate.value = formatLocalDate(new Date())
-    absenceIsTestDay.value = false
-  } catch (err) {
-    console.error('Failed to log absence:', err)
-    await alert('Failed to log absence. Please try again.')
-  }
-}
 
 const hasHistory = computed(() => {
   return allTimeHistory.value.length > 1 || allTimeHistory.value.some(h => h.classId !== props.classId)
@@ -1416,52 +1355,7 @@ onUnmounted(() => {
   font-size: 0.85rem;
 }
 
-.timeline-header {
-  display: flex;
-  justify-content: flex-end;
-  margin-bottom: 8px;
-}
 
-.btn-log-absence {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  font-size: 0.8rem;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.absence-modal-content {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.absence-input {
-  width: 100%;
-  padding: 8px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-}
-
-.absence-checkbox-container {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  font-size: 0.85rem;
-}
-
-.modal-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  margin-top: 12px;
-}
 
 .btn-ghost {
   padding: 8px 16px;

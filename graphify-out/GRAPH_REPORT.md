@@ -1,7 +1,7 @@
 # Graph Report - classroom-tracker  (2026-08-30)
 
 ## Corpus Check
-- 226 files · ~443,199 words
+- 226 files · ~445,910 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `8fb60247`
+- Built from commit: `d807de77`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -326,7 +326,7 @@ Nodes (12): teachingMode, detectGradeFromClassName(), getEffectiveGradeLevel(), 
 
 ### Community 91 - "Community 91"
 Cohesion: 0.20
-Nodes (10): description, type, description, type, properties, grade, isSuccessCriteria, title (+2 more)
+Nodes (10): description, type, description, type, description, type, properties, department (+2 more)
 
 ### Community 96 - "Community 96"
 Cohesion: 0.04
@@ -358,7 +358,7 @@ Nodes (9): state, canRedo, canUndo, push(), redo(), _redoStack, undo(), _undoSta
 
 ### Community 112 - "Community 112"
 Cohesion: 0.67
-Nodes (3): description, type, department
+Nodes (3): title, description, type
 
 ### Community 115 - "Community 115"
 Cohesion: 0.25

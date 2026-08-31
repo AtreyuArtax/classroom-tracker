@@ -187,11 +187,12 @@
             <div style="display: flex; gap: 6px;">
               <button 
                 type="button" 
-                class="elementary-subjects__btn-auto" 
-                style="font-size: 0.75rem; padding: 3px 8px;"
+                class="elementary-subjects__btn-ghost" 
+                style="font-size: 0.75rem; padding: 4px 10px; display: inline-flex; align-items: center; gap: 5px;"
+                title="Import from Ontario curriculum presets, CSV, JSON, or text"
                 @click="openExpectationModal(sub)"
               >
-                <Zap :size="12" /> Preset / Importer
+                <BookOpen :size="13" /> Import Expectations
               </button>
               <button 
                 v-if="sub.expectations && sub.expectations.length > 0" 
@@ -206,7 +207,7 @@
           </div>
 
           <div v-if="(!sub.gradebookUnits || sub.gradebookUnits.length === 0) && (!sub.expectations || sub.expectations.length === 0)" style="font-size: 0.85rem; color: var(--text-secondary); font-style: italic; padding: 6px 0;">
-            No strands or expectations configured yet. Click <strong>Preset / Importer</strong> or <strong>+ Add Strand / Unit</strong> below to begin.
+            No strands or expectations configured yet. Click <strong>Import Expectations</strong> or <strong>+ Add Strand / Unit</strong> below to begin.
           </div>
 
           <!-- Toolbar Row: Grade Filter Pills & Search Bar -->
