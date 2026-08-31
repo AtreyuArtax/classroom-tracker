@@ -79,7 +79,8 @@
           class="risk-plot__tooltip"
           :class="{
             'risk-plot__tooltip--left': s.xPercent > 65,
-            'risk-plot__tooltip--bottom': s.yPercent > 75,
+            'risk-plot__tooltip--right': s.xPercent < 35,
+            'risk-plot__tooltip--bottom': s.yPercent > 55,
             'risk-plot__tooltip--cluster': s.clusterMembers && s.clusterMembers.length > 1
           }"
         >
@@ -315,41 +316,61 @@ const studentPoints = computed(() => {
     }
   })
 
-  // Group by grid cell to fan out clustered dots using a golden spiral
-  const coordCounts = {}
-  const processedList = rawList.map((item) => {
-    const key = `${Math.round(item.baseX / 6)}_${Math.round(item.baseY / 6)}`
-    const count = coordCounts[key] || 0
-    coordCounts[key] = count + 1
+  // Beeswarm / Circle Relaxation Packing to eliminate all dot overlaps
+  const points = rawList.map(item => ({
+    ...item,
+    xPercent: item.baseX,
+    yPercent: item.baseY
+  }))
 
-    let offsetX = 0
-    let offsetY = 0
-    if (count > 0) {
-      const angle = count * 2.39996 // Golden angle in radians
-      const radius = 5.5 + Math.sqrt(count) * 4.5 // Radial expansion %
-      offsetX = Math.cos(angle) * radius
-      offsetY = Math.sin(angle) * radius
+  const minDistance = 4.8 // Min % distance to prevent dot overlap
+  const iterations = 20
+
+  for (let iter = 0; iter < iterations; iter++) {
+    for (let i = 0; i < points.length; i++) {
+      for (let j = i + 1; j < points.length; j++) {
+        const p1 = points[i]
+        const p2 = points[j]
+        let dx = p2.xPercent - p1.xPercent
+        let dy = p2.yPercent - p1.yPercent
+        let dist = Math.hypot(dx, dy)
+
+        if (dist === 0) {
+          dx = (i % 2 === 0 ? 1 : -1) * 0.2
+          dy = (j % 2 === 0 ? 1 : -1) * 0.2
+          dist = Math.hypot(dx, dy)
+        }
+
+        if (dist < minDistance) {
+          const overlap = (minDistance - dist) / 2
+          const nx = dx / dist
+          const ny = dy / dist
+          
+          p1.xPercent -= nx * overlap
+          p1.yPercent -= ny * overlap
+          p2.xPercent += nx * overlap
+          p2.yPercent += ny * overlap
+        }
+      }
     }
 
-    const finalX = Math.max(5, Math.min(93, item.baseX + offsetX))
-    const finalY = Math.max(5, Math.min(92, item.baseY + offsetY))
-
-    return {
-      ...item,
-      xPercent: Number(finalX.toFixed(1)),
-      yPercent: Number(finalY.toFixed(1))
-    }
-  })
+    // Keep within bounds [6%, 92%]
+    points.forEach(p => {
+      p.xPercent = Math.max(6, Math.min(92, p.xPercent))
+      p.yPercent = Math.max(6, Math.min(92, p.yPercent))
+    })
+  }
 
   // Attach cluster members for multi-student popovers
-  return processedList.map(item => {
-    const clusterMembers = processedList.filter(other => {
-      const dx = Math.abs(other.xPercent - item.xPercent)
-      const dy = Math.abs(other.yPercent - item.yPercent)
-      return Math.sqrt(dx * dx + dy * dy) <= 7.0 // Nearby distance threshold
+  return points.map(item => {
+    const clusterMembers = points.filter(other => {
+      const dist = Math.hypot(other.xPercent - item.xPercent, other.yPercent - item.yPercent)
+      return dist <= 6.0
     })
     return {
       ...item,
+      xPercent: Number(item.xPercent.toFixed(1)),
+      yPercent: Number(item.yPercent.toFixed(1)),
       clusterMembers
     }
   })
@@ -528,8 +549,8 @@ const unassessedCount = computed(() => studentPoints.value.filter(p => p.quadran
   bottom: 125%;
   left: 50%;
   transform: translateX(-50%);
-  background: var(--tooltip-bg);
-  color: var(--tooltip-text);
+  background: var(--surface);
+  color: var(--text);
   padding: 10px 14px;
   border-radius: var(--radius-md);
   font-size: 0.775rem;
@@ -538,8 +559,8 @@ const unassessedCount = computed(() => studentPoints.value.filter(p => p.quadran
   opacity: 0;
   visibility: hidden;
   transition: opacity 0.15s ease, visibility 0.15s ease;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.45);
-  border: 1px solid rgba(255,255,255,0.18);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12), 0 2px 6px rgba(0, 0, 0, 0.06);
+  border: 1px solid var(--border);
   z-index: 20000;
   display: flex;
   flex-direction: column;
@@ -553,15 +574,15 @@ const unassessedCount = computed(() => studentPoints.value.filter(p => p.quadran
 
 /* Cluster Popover Tooltip */
 .risk-plot__tooltip--cluster {
-  min-width: 180px;
+  min-width: 190px;
   padding: 10px 12px;
 }
 
 .risk-plot__cluster-header {
   font-weight: 800;
   font-size: 0.775rem;
-  color: var(--tooltip-accent);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  color: var(--primary);
+  border-bottom: 1px solid var(--border);
   padding-bottom: 4px;
   margin-bottom: 4px;
 }
@@ -569,7 +590,7 @@ const unassessedCount = computed(() => studentPoints.value.filter(p => p.quadran
 .risk-plot__cluster-list {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
   max-height: 160px;
   overflow-y: auto;
 }
@@ -580,29 +601,36 @@ const unassessedCount = computed(() => studentPoints.value.filter(p => p.quadran
   align-items: center;
   gap: 12px;
   padding: 4px 6px;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-secondary);
   cursor: pointer;
   transition: background 0.15s ease;
 }
 
 .risk-plot__cluster-item:hover {
-  background: rgba(255, 255, 255, 0.12);
+  background: var(--surface-hover);
 }
 
 .cluster-item-name {
   font-weight: 700;
-  color: var(--tooltip-text);
+  color: var(--text);
 }
 
 .cluster-item-meta {
   font-size: 0.725rem;
-  color: var(--tooltip-text-muted);
+  color: var(--text-secondary);
 }
 
 /* Smart Tooltip Orientations */
 .risk-plot__tooltip--left {
   left: auto;
   right: 0;
+  transform: none;
+}
+
+.risk-plot__tooltip--right {
+  left: 0;
+  right: auto;
   transform: none;
 }
 
@@ -614,20 +642,26 @@ const unassessedCount = computed(() => studentPoints.value.filter(p => p.quadran
 .risk-plot__tooltip-name {
   font-weight: 700;
   font-size: 0.85rem;
-  color: var(--tooltip-text);
+  color: var(--text);
   margin-bottom: 2px;
 }
 
 .risk-plot__tooltip-row {
   font-size: 0.775rem;
-  color: var(--tooltip-text-muted);
+  color: var(--text-secondary);
+}
+
+.risk-plot__tooltip-row strong {
+  color: var(--text);
 }
 
 .risk-plot__tooltip-hint {
   margin-top: 4px;
   font-size: 0.725rem;
   font-weight: 600;
-  color: var(--tooltip-accent);
+  color: var(--primary);
+  border-top: 1px solid var(--border);
+  padding-top: 3px;
 }
 
 .risk-plot__header-actions {

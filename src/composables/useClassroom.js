@@ -145,10 +145,10 @@ const modeAllArchivedClasses = computed(() => {
 
 // ─── weekly stats ─────────────────────────────────────────────────────────────
 
-/** @type {import('vue').Ref<{washroomTripsPerWeek: number, deviceIncidentsPerWeek: number, atRiskThreshold: number, attendanceThreshold: number}>} */
-const thresholds = ref({ washroomTripsPerWeek: 4, deviceIncidentsPerWeek: 3, atRiskThreshold: 70, attendanceThreshold: 85 })
+/** @type {import('vue').Ref<{washroomTripsPerWeek: number, washroomWeeklyMinutesLimit: number, washroomDurationLimit: number, deviceIncidentsPerWeek: number, atRiskThreshold: number, attendanceThreshold: number}>} */
+const thresholds = ref({ washroomTripsPerWeek: 4, washroomWeeklyMinutesLimit: 20, washroomDurationLimit: 11, deviceIncidentsPerWeek: 3, atRiskThreshold: 70, attendanceThreshold: 85 })
 
-/** @type {import('vue').Ref<Object>} Shape: { [studentId]: { washroomTrips: N, deviceIncidents: N } } */
+/** @type {import('vue').Ref<Object>} Shape: { [studentId]: { washroomTrips: N, washroomMinutes: N, deviceIncidents: N } } */
 const studentWeeklyStats = shallowRef({})
 
 async function computeWeeklyStats(classId, studentIds) {
@@ -174,8 +174,11 @@ async function computeWeeklyStats(classId, studentIds) {
     const stats = {}
     for (const studentId of studentIds) {
         const events = eventsByStudent[studentId] || []
+        const washEvents = events.filter(e => e.code === 'w' || e.type === 'washroom')
+        const totalWashMins = washEvents.reduce((sum, e) => sum + (toMinutes(e.duration) || 0), 0)
         stats[studentId] = {
-            washroomTrips: events.filter(e => e.code === 'w').length,
+            washroomTrips: washEvents.length,
+            washroomMinutes: Math.round(totalWashMins),
             deviceIncidents: events.filter(e => e.category === 'redirect').length
         }
     }

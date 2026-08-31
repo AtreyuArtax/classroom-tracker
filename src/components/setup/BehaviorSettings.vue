@@ -21,6 +21,31 @@
           />
         </label>
         <label class="setup__label">
+          <span class="setup__label-text">Weekly Time Limit</span>
+          <span class="setup__label-subtext">Total Mins / Week</span>
+          <input 
+            v-model.number="editThresholds.washroomWeeklyMinutesLimit" 
+            type="number" 
+            min="5"
+            max="180"
+            step="5"
+            class="setup__input" 
+            @change="saveThresholds" 
+          />
+        </label>
+        <label class="setup__label">
+          <span class="setup__label-text">Extended Trip Alert</span>
+          <span class="setup__label-subtext">Single Trip (Min)</span>
+          <input 
+            v-model.number="editThresholds.washroomDurationLimit" 
+            type="number" 
+            min="3"
+            max="60"
+            class="setup__input" 
+            @change="saveThresholds" 
+          />
+        </label>
+        <label class="setup__label">
           <span class="setup__label-text">Device Limit</span>
           <span class="setup__label-subtext">Incidents / Week</span>
           <input 
@@ -227,7 +252,14 @@ const { thresholds: classroomThresholds, behaviorCodes, reloadBehaviorCodes } = 
 const { alert, confirm } = useMessage()
 
 // Thresholds Form State
-const editThresholds = reactive({ washroomTripsPerWeek: 4, deviceIncidentsPerWeek: 3, atRiskThreshold: 70, attendanceThreshold: 85 })
+const editThresholds = reactive({ 
+  washroomTripsPerWeek: 4, 
+  washroomWeeklyMinutesLimit: 20,
+  washroomDurationLimit: 11,
+  deviceIncidentsPerWeek: 3, 
+  atRiskThreshold: 70, 
+  attendanceThreshold: 85 
+})
 const thresholdsSuccess = ref('')
 
 // Modal / Edit Form State
@@ -253,6 +285,8 @@ onMounted(async () => {
   const current = await settingsService.getThresholds()
   if (current) {
     editThresholds.washroomTripsPerWeek = current.washroomTripsPerWeek
+    editThresholds.washroomWeeklyMinutesLimit = current.washroomWeeklyMinutesLimit ?? 20
+    editThresholds.washroomDurationLimit = current.washroomDurationLimit ?? 11
     editThresholds.deviceIncidentsPerWeek = current.deviceIncidentsPerWeek
     editThresholds.atRiskThreshold = current.atRiskThreshold ?? 70
     editThresholds.attendanceThreshold = current.attendanceThreshold ?? 85
@@ -267,6 +301,8 @@ function isSystemCode(codeKey) {
 async function saveThresholds() {
   await settingsService.saveThresholds({
     washroomTripsPerWeek: editThresholds.washroomTripsPerWeek,
+    washroomWeeklyMinutesLimit: editThresholds.washroomWeeklyMinutesLimit,
+    washroomDurationLimit: editThresholds.washroomDurationLimit,
     deviceIncidentsPerWeek: editThresholds.deviceIncidentsPerWeek,
     atRiskThreshold: editThresholds.atRiskThreshold,
     attendanceThreshold: editThresholds.attendanceThreshold
@@ -274,6 +310,8 @@ async function saveThresholds() {
   
   // Sync composable states
   classroomThresholds.value.washroomTripsPerWeek = editThresholds.washroomTripsPerWeek
+  classroomThresholds.value.washroomWeeklyMinutesLimit = editThresholds.washroomWeeklyMinutesLimit
+  classroomThresholds.value.washroomDurationLimit = editThresholds.washroomDurationLimit
   classroomThresholds.value.deviceIncidentsPerWeek = editThresholds.deviceIncidentsPerWeek
   classroomThresholds.value.atRiskThreshold = editThresholds.atRiskThreshold
   classroomThresholds.value.attendanceThreshold = editThresholds.attendanceThreshold
@@ -424,7 +462,7 @@ export default {
 }
 
 .behavior-thresholds__grid {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
   gap: 16px;
 }
 

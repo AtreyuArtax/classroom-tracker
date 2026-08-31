@@ -107,6 +107,8 @@ async function _readSettings() {
         },
         thresholds: {
             washroomTripsPerWeek: 4,
+            washroomWeeklyMinutesLimit: 20,
+            washroomDurationLimit: 11,
             deviceIncidentsPerWeek: 3
         },
         backupDirHandle: null,
@@ -214,7 +216,7 @@ export async function deleteBehaviorCode(codeKey) {
  */
 export async function getThresholds() {
     const settings = await _readSettings()
-    return settings.thresholds || { washroomTripsPerWeek: 4, deviceIncidentsPerWeek: 3, atRiskThreshold: 70, attendanceThreshold: 85 }
+    return settings.thresholds || { washroomTripsPerWeek: 4, washroomWeeklyMinutesLimit: 20, deviceIncidentsPerWeek: 3, washroomDurationLimit: 11, atRiskThreshold: 70, attendanceThreshold: 85 }
 }
 
 /**

@@ -245,7 +245,12 @@ const atRiskDotTooltip = computed(() => {
 const showWashroomDot = computed(() => {
   const stats = studentWeeklyStats.value[props.studentId]
   if (!stats || !thresholds.value) return false
-  return stats.washroomTrips >= (thresholds.value.washroomTripsPerWeek ?? 4)
+  const tripsLimit = Number(thresholds.value.washroomTripsPerWeek ?? 4)
+  const weeklyMinsLimit = Number(thresholds.value.washroomWeeklyMinutesLimit ?? 0)
+
+  const tripSurpassed = tripsLimit > 0 && stats.washroomTrips >= tripsLimit
+  const minsSurpassed = weeklyMinsLimit > 0 && (stats.washroomMinutes || 0) >= weeklyMinsLimit
+  return tripSurpassed || minsSurpassed
 })
 
 const showDeviceDot = computed(() => {
@@ -257,7 +262,22 @@ const showDeviceDot = computed(() => {
 const washroomDotTooltip = computed(() => {
   const stats = studentWeeklyStats.value[props.studentId]
   if (!stats) return ''
-  return `${stats.washroomTrips} out-of-class trips this week`
+  const trips = stats.washroomTrips || 0
+  const mins = stats.washroomMinutes || 0
+  const tripsLimit = Number(thresholds.value?.washroomTripsPerWeek ?? 4)
+  const weeklyMinsLimit = Number(thresholds.value?.washroomWeeklyMinutesLimit ?? 0)
+
+  const reasons = []
+  if (tripsLimit > 0 && trips >= tripsLimit) {
+    reasons.push(`${trips} trips (limit: ${tripsLimit})`)
+  }
+  if (weeklyMinsLimit > 0 && mins >= weeklyMinsLimit) {
+    reasons.push(`${mins}m out (limit: ${weeklyMinsLimit}m)`)
+  }
+  if (reasons.length === 0) {
+    return `${trips} trip${trips === 1 ? '' : 's'} (${mins}m total) this week`
+  }
+  return `Washroom Alert: ${reasons.join(' · ')} this week`
 })
 
 const deviceDotTooltip = computed(() => {

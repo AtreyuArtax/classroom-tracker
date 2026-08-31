@@ -72,9 +72,9 @@
   --color-warn-text:        #b45309; /* Dark amber for text on tinted bg */
   --color-warn-bg:          #fef3c7; /* Light amber surface */
 
-  --color-attention:        #f97316; /* Orange — attendance risk */
-  --color-attention-text:   #c2410c; /* Dark orange for text on tinted bg */
-  --color-attention-bg:     #ffedd5; /* Light orange surface */
+  --color-attention:        #3b82f6; /* Blue — attendance risk */
+  --color-attention-text:   #1d4ed8; /* Dark blue for text on tinted bg */
+  --color-attention-bg:     #eff6ff; /* Light blue surface */
 
   --color-danger:           #ef4444; /* Red — critical intervention */
   --color-danger-text:      #b91c1c; /* Dark red for text on tinted bg */
@@ -140,9 +140,9 @@
   --color-warn-text:        #fbbf24;
   --color-warn-bg:          rgba(255, 159, 10, 0.15);
 
-  --color-attention:        #ff9f0a;
-  --color-attention-text:   #fb923c;
-  --color-attention-bg:     rgba(255, 159, 10, 0.15);
+  --color-attention:        #60a5fa;
+  --color-attention-text:   #93c5fd;
+  --color-attention-bg:     rgba(59, 130, 246, 0.15);
 
   --color-danger:           #ff453a;
   --color-danger-text:      #f87171;
@@ -203,9 +203,9 @@
     --color-warn-text:        #fbbf24;
     --color-warn-bg:          rgba(255, 159, 10, 0.15);
 
-    --color-attention:        #ff9f0a;
-    --color-attention-text:   #fb923c;
-    --color-attention-bg:     rgba(255, 159, 10, 0.15);
+    --color-attention:        #60a5fa;
+    --color-attention-text:   #93c5fd;
+    --color-attention-bg:     rgba(59, 130, 246, 0.15);
 
     --color-danger:           #ff453a;
     --color-danger-text:      #f87171;

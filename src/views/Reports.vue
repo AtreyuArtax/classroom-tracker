@@ -145,7 +145,11 @@
             :assessments="assessmentsList"
             :sidebar-students="filteredSidebarStudents"
             :all-class-events="allClassEvents"
+            :period-events="reportData"
+            :selected-period="selectedPeriod"
+            :active-visual-tab="activeVisualTab"
             :active-grade-filter="activeGradeFilter"
+            @update:active-visual-tab="activeVisualTab = $event"
             @select-student="onSelectStudent"
             @toggle-followup-expand="followUpExpanded = !followUpExpanded"
             @toggle-longtrips-expand="longTripsExpanded = !longTripsExpanded"
@@ -282,7 +286,8 @@ const {
   filteredClassList,
   switchClass,
   academicTerms,
-  teacherName
+  teacherName,
+  thresholds
 } = useClassroom()
 
 const dossier = useStudentDossier()
@@ -375,6 +380,7 @@ watch(isSidebarCollapsed, () => {
 })
 
 const rightMode = ref('overview') // 'overview' | 'printhub' | 'dossier'
+const activeVisualTab = ref(null)
 
 function switchPillar(mode) {
   rightMode.value = mode
@@ -872,11 +878,27 @@ const followUpItems = computed(() => {
     }
   })
 
+  const longLimit = Number(thresholds.value?.washroomDurationLimit ?? 11)
   Object.entries(washMap).forEach(([id, durations]) => {
     if (!students[id]) return
+    const extendedTrips = durations.filter(d => d > longLimit)
     const longest = Math.max(...durations)
-    if (longest > 15) {
-      items.push({ studentId: id, name: nameFor(id), reason: `${longest.toFixed(0)}min out of class`, severity: 'medium', sortVal: longest })
+    if (extendedTrips.length >= 2) {
+      items.push({ 
+        studentId: id, 
+        name: nameFor(id), 
+        reason: `${extendedTrips.length} extended absences (max ${Math.round(longest)}m)`, 
+        severity: 'high', 
+        sortVal: longest + 100 
+      })
+    } else if (extendedTrips.length === 1) {
+      items.push({ 
+        studentId: id, 
+        name: nameFor(id), 
+        reason: `${Math.round(longest)}min out of class`, 
+        severity: 'medium', 
+        sortVal: longest 
+      })
     }
   })
 

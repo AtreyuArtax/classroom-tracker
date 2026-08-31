@@ -248,28 +248,15 @@
 
         <!-- Tab 3: Out of Class Detail -->
         <div v-else-if="activeVisualTab === 'washroom'" class="reports__visual-pane">
-          <h4 class="reports__col-title">OUT-OF-CLASS TIME SUMMARY</h4>
-          <div v-if="aggregates.washroom.studentTrips.length" class="reports__chart-container">
-            <Bar :data="washroomChartData" :options="washroomChartOptions" />
-          </div>
-          <p v-else class="reports__no-data">No out-of-class trips recorded.</p>
-          
-          <div v-if="aggregates.washroom.longTrips.length" class="reports__long-trips">
-            <h4 class="reports__section-title reports__section-title--alert">Extended Trips (&gt; 15 min)</h4>
-            <ul class="reports__list reports__list--alert">
-              <li v-for="t in longTripsVisible" :key="t.date + t.name">
-                <span>{{ t.name }} — {{ t.date }}</span>
-                <span class="reports__list-count">{{ t.duration.toFixed(1) }} min</span>
-              </li>
-            </ul>
-            <button
-              v-if="aggregates.washroom.longTrips.length > 5"
-              class="reports__followup-more"
-              @click="$emit('toggle-longtrips-expand')"
-            >
-              {{ longTripsExpanded ? 'show less ↑' : `and ${aggregates.washroom.longTrips.length - 5} more →` }}
-            </button>
-          </div>
+          <OutOfClassAnalytics
+            :sidebar-students="sidebarStudents"
+            :all-class-events="allClassEvents"
+            :period-events="periodEvents"
+            :selected-period="selectedPeriod"
+            :aggregates="aggregates"
+            :report-class="reportClass"
+            @select-student="$emit('select-student', $event)"
+          />
         </div>
 
       </div>
@@ -340,9 +327,11 @@ import {
 import { Bar } from 'vue-chartjs'
 import ExpectationMasteryHeatmap from './ExpectationMasteryHeatmap.vue'
 import StudentRiskScatterPlot from './StudentRiskScatterPlot.vue'
+import OutOfClassAnalytics from './OutOfClassAnalytics.vue'
 import ReportsMissingTasksModal from './ReportsMissingTasksModal.vue'
 import { getSBARLevelBadge, calculateSBARExpectationMastery } from '../../db/gradebookService.js'
 import { gradeMap } from '../../composables/useGradebook.js'
+import { useClassroom } from '../../composables/useClassroom.js'
 
 const props = defineProps({
   loading: { type: Boolean, default: false },
@@ -367,11 +356,15 @@ const props = defineProps({
   assessments: { type: Array, default: () => [] },
   sidebarStudents: { type: Array, default: () => [] },
   allClassEvents: { type: Array, default: () => [] },
+  periodEvents: { type: Array, default: () => [] },
+  selectedPeriod: { type: String, default: 'week' },
+  activeVisualTab: { type: String, default: null },
   activeGradeFilter: { type: String, default: 'all' }
 })
 
-defineEmits([
+const emit = defineEmits([
   'select-student',
+  'update:activeVisualTab',
   'toggle-followup-expand',
   'toggle-longtrips-expand',
   'toggle-show-completed',
@@ -488,12 +481,24 @@ const totalExpectationsCount = computed(() => {
   return total
 })
 
-const activeVisualTab = ref(totalExpectationsCount.value > 0 ? 'expectations' : 'risk')
+const internalVisualTab = ref(
+  props.activeVisualTab || (totalExpectationsCount.value > 0 ? 'expectations' : 'risk')
+)
+
+const activeVisualTab = computed({
+  get() {
+    return props.activeVisualTab || internalVisualTab.value
+  },
+  set(val) {
+    internalVisualTab.value = val
+    emit('update:activeVisualTab', val)
+  }
+})
 
 watch(totalExpectationsCount, (newCount) => {
   if (newCount === 0 && activeVisualTab.value === 'expectations') {
     activeVisualTab.value = 'risk'
-  } else if (newCount > 0 && activeVisualTab.value === 'risk' && props.reportClass?.gradingFramework === 'sbar') {
+  } else if (newCount > 0 && !props.activeVisualTab && activeVisualTab.value === 'risk' && props.reportClass?.gradingFramework === 'sbar') {
     activeVisualTab.value = 'expectations'
   }
 }, { immediate: true })
@@ -767,6 +772,9 @@ const multiActionItems = computed(() => {
   return items
 })
 
+const { thresholds } = useClassroom()
+const longWashroomThreshold = computed(() => Number(thresholds.value?.washroomDurationLimit ?? 11))
+
 // ── Option A: Smart Dismissal & Re-trigger Logic ──────────────────────
 /**
  * ── Action Required Re-Trigger Thresholds ──────────────────────────────
@@ -774,14 +782,11 @@ const multiActionItems = computed(() => {
  * 
  * 1. GRADE_DROP_PCT: Re-trigger if overall grade drops by 2%+ below grade at handling time.
  * 2. NEW_ABSENCES_COUNT: Re-trigger if 2+ new absences/lates accumulate after handling time.
- * 3. LONG_WASHROOM_MIN: Re-trigger if a washroom trip > 15 mins is logged after handling time.
- * 
- * You can modify these threshold constants anytime to tune alert sensitivity.
+ * 3. LONG_WASHROOM_MIN: Re-trigger if a washroom trip > washroomDurationLimit (default 11m) is logged after handling time.
  */
 const RE_TRIGGER_THRESHOLDS = {
   GRADE_DROP_PCT: 2,
-  NEW_ABSENCES_COUNT: 2,
-  LONG_WASHROOM_MIN: 15
+  NEW_ABSENCES_COUNT: 2
 }
 
 const acknowledgedAlerts = ref(loadAcknowledgedAlerts())
@@ -821,7 +826,7 @@ function acknowledgeItem(item) {
   const absences = studentEvents.filter(e => e.type === 'absence' || e.type === 'absent').length
   const lates = studentEvents.filter(e => e.type === 'late').length
   const redirects = studentEvents.filter(e => e.type === 'redirect' || e.type === 'behavior').length
-  const longTrips = studentEvents.filter(e => e.type === 'washroom' && (e.durationMinutes || 0) > RE_TRIGGER_THRESHOLDS.LONG_WASHROOM_MIN).length
+  const longTrips = studentEvents.filter(e => e.type === 'washroom' && (e.durationMinutes || 0) > longWashroomThreshold.value).length
 
   acknowledgedAlerts.value = {
     ...acknowledgedAlerts.value,
@@ -857,12 +862,12 @@ const evaluatedActionItems = computed(() => {
       return
     }
 
-    // Evaluate Smart Re-trigger conditions using RE_TRIGGER_THRESHOLDS
+    // Evaluate Smart Re-trigger conditions
     const studentEvents = (props.allClassEvents || []).filter(e => String(e.studentId) === String(sId))
     const currentAbsences = studentEvents.filter(e => e.type === 'absence' || e.type === 'absent').length
     const currentLates = studentEvents.filter(e => e.type === 'late').length
     const currentRedirects = studentEvents.filter(e => e.type === 'redirect' || e.type === 'behavior').length
-    const currentLongTrips = studentEvents.filter(e => e.type === 'washroom' && (e.durationMinutes || 0) > RE_TRIGGER_THRESHOLDS.LONG_WASHROOM_MIN).length
+    const currentLongTrips = studentEvents.filter(e => e.type === 'washroom' && (e.durationMinutes || 0) > longWashroomThreshold.value).length
     const currentGrade = item.grade
 
     let reTriggered = false
@@ -1026,8 +1031,9 @@ const activeActionItemsVisible = computed(() => {
 /* ── Section 2: Two-Column Split ────────────────────────────── */
 .reports__two-col {
   display: grid;
-  grid-template-columns: minmax(260px, 300px) 1fr;
+  grid-template-columns: minmax(240px, 280px) minmax(0, 1fr);
   gap: 10px;
+  min-width: 0;
 }
 @media (max-width: 1000px) {
   .reports__two-col { grid-template-columns: 1fr; }
@@ -1229,7 +1235,7 @@ const activeActionItemsVisible = computed(() => {
 .reports__btn-reopen:hover { background: var(--surface); color: var(--primary); border-color: var(--primary); }
 
 /* Right Visual Column */
-.reports__visual-col { display: flex; flex-direction: column; gap: 8px; }
+.reports__visual-col { display: flex; flex-direction: column; gap: 8px; min-width: 0; width: 100%; }
 .reports__visual-tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); padding-bottom: 4px; }
 .reports__visual-tab-btn { display: flex; align-items: center; gap: 5px; background: none; border: 1px solid transparent; padding: 5px 10px; border-radius: var(--radius-sm); font-size: 0.78rem; font-weight: 600; color: var(--text-secondary); cursor: pointer; transition: all 0.15s ease; }
 .reports__visual-tab-btn:hover { background: var(--surface-hover); color: var(--text); }
