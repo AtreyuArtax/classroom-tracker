@@ -3,8 +3,8 @@
     <!-- Header banner -->
     <div class="print-hub__header">
       <div class="print-hub__title-group">
-        <h2 class="print-hub__title">Document &amp; Print Hub</h2>
-        <p class="print-hub__subtitle">Generate, customize, and print official class reports, progress sheets, and exportable data packages.</p>
+        <h2 class="print-hub__title">Communications &amp; Document Hub</h2>
+        <p class="print-hub__subtitle">Generate, customize, and print official class reports, progress sheets, broadcast email communications, and exportable data packages.</p>
       </div>
       <div v-if="reportClass" class="print-hub__class-badge">
         <GraduationCap :size="16" />
@@ -15,7 +15,70 @@
     <!-- Main Grid of Document Templates -->
     <div class="print-hub__grid">
 
-      <!-- Card 1: Batch Progress Reports -->
+      <!-- Card 1: Class Roster & Sign-In Sheet -->
+      <div class="print-hub__card">
+        <div class="print-hub__card-header">
+          <div class="print-hub__icon-wrapper print-hub__icon-wrapper--primary">
+            <Users :size="22" />
+          </div>
+          <div>
+            <h3 class="print-hub__card-title">Class Roster &amp; Sign-In Sheets</h3>
+            <p class="print-hub__card-desc">Printable roster sheets with customizable blank tracking columns for sub plans or field trips.</p>
+          </div>
+        </div>
+
+        <div class="print-hub__card-body">
+          <div class="print-hub__stat-row">
+            <span class="print-hub__stat-label">Roster Size:</span>
+            <span class="print-hub__stat-value">{{ sidebarStudents.length }} Students</span>
+          </div>
+          <div class="print-hub__features-list">
+            <span class="print-hub__chip">Custom Blank Columns</span>
+            <span class="print-hub__chip">Auto-fill Rows</span>
+            <span class="print-hub__chip">Sub Plan Ready</span>
+          </div>
+        </div>
+
+        <div class="print-hub__card-footer">
+          <button class="print-hub__btn-action" @click="emit('open-print-classlist')">
+            <Printer :size="16" /> Print Class Roster
+          </button>
+        </div>
+      </div>
+
+      <!-- Card 2: Classroom Seating Plan & Dashboard Layout -->
+      <div class="print-hub__card">
+        <div class="print-hub__card-header">
+          <div class="print-hub__icon-wrapper print-hub__icon-wrapper--primary">
+            <Armchair :size="22" />
+          </div>
+          <div>
+            <h3 class="print-hub__card-title">Classroom Seating Plan</h3>
+            <p class="print-hub__card-desc">Printable physical seating plan with room layout, table pods, student names, and accommodations indicators for sub plans.</p>
+          </div>
+        </div>
+
+        <div class="print-hub__card-body">
+          <div class="print-hub__stat-row">
+            <span class="print-hub__stat-label">Grid Layout:</span>
+            <span class="print-hub__stat-value">{{ reportClass?.gridSize?.rows || 6 }} × {{ reportClass?.gridSize?.cols || 6 }} Layout</span>
+          </div>
+          <div class="print-hub__features-list">
+            <span class="print-hub__chip">Landscape Default</span>
+            <span class="print-hub__chip">Table Pod Badges</span>
+            <span class="print-hub__chip">IEP Indicator Dots</span>
+            <span class="print-hub__chip">Sub Plan Ready</span>
+          </div>
+        </div>
+
+        <div class="print-hub__card-footer">
+          <button class="print-hub__btn-action" @click="emit('open-print-seating')">
+            <Printer :size="16" /> Configure &amp; Print Seating Plan
+          </button>
+        </div>
+      </div>
+
+      <!-- Card 3: Batch Progress Reports -->
       <div class="print-hub__card">
         <div class="print-hub__card-header">
           <div class="print-hub__icon-wrapper print-hub__icon-wrapper--primary">
@@ -53,7 +116,7 @@
         </div>
       </div>
 
-      <!-- Card 2: Final Markbook & Grades Grid -->
+      <!-- Card 4: Final Markbook & Grades Grid -->
       <div class="print-hub__card">
         <div class="print-hub__card-header">
           <div class="print-hub__icon-wrapper print-hub__icon-wrapper--success">
@@ -84,7 +147,7 @@
         </div>
       </div>
 
-      <!-- Card 3: Expectations & Curriculum Mastery Audit -->
+      <!-- Card 5: Expectation Mastery Audit -->
       <div class="print-hub__card">
         <div class="print-hub__card-header">
           <div class="print-hub__icon-wrapper print-hub__icon-wrapper--warning">
@@ -111,37 +174,6 @@
         <div class="print-hub__card-footer">
           <button class="print-hub__btn-action" @click="handlePrintExpectations">
             <Printer :size="16" /> Print Expectation Audit
-          </button>
-        </div>
-      </div>
-
-      <!-- Card 5: Class Roster & Sign-In Sheet -->
-      <div class="print-hub__card">
-        <div class="print-hub__card-header">
-          <div class="print-hub__icon-wrapper print-hub__icon-wrapper--primary">
-            <Users :size="22" />
-          </div>
-          <div>
-            <h3 class="print-hub__card-title">Class Roster &amp; Sign-In Sheets</h3>
-            <p class="print-hub__card-desc">Printable roster sheets with customizable blank tracking columns for sub plans or field trips.</p>
-          </div>
-        </div>
-
-        <div class="print-hub__card-body">
-          <div class="print-hub__stat-row">
-            <span class="print-hub__stat-label">Roster Size:</span>
-            <span class="print-hub__stat-value">{{ sidebarStudents.length }} Students</span>
-          </div>
-          <div class="print-hub__features-list">
-            <span class="print-hub__chip">Custom Blank Columns</span>
-            <span class="print-hub__chip">Auto-fill Rows</span>
-            <span class="print-hub__chip">Sub Plan Ready</span>
-          </div>
-        </div>
-
-        <div class="print-hub__card-footer">
-          <button class="print-hub__btn-action" @click="emit('open-print-classlist')">
-            <Printer :size="16" /> Print Class Roster
           </button>
         </div>
       </div>
@@ -177,39 +209,39 @@
         </div>
       </div>
 
-      <!-- Card 7: Classroom Seating Plan & Dashboard Layout -->
+      <!-- Card 7: Class Broadcast & BCC Email Hub -->
       <div class="print-hub__card">
         <div class="print-hub__card-header">
-          <div class="print-hub__icon-wrapper print-hub__icon-wrapper--primary">
-            <Armchair :size="22" />
+          <div class="print-hub__icon-wrapper print-hub__icon-wrapper--email">
+            <Mail :size="22" />
           </div>
           <div>
-            <h3 class="print-hub__card-title">Classroom Seating Plan</h3>
-            <p class="print-hub__card-desc">Printable physical seating plan with room layout, table pods, student names, and accommodations indicators for sub plans.</p>
+            <h3 class="print-hub__card-title">Class Broadcast &amp; BCC Email</h3>
+            <p class="print-hub__card-desc">Generate privacy-safe BCC email distribution lists or launch pre-formatted drafts for all students and parents.</p>
           </div>
         </div>
 
         <div class="print-hub__card-body">
           <div class="print-hub__stat-row">
-            <span class="print-hub__stat-label">Grid Layout:</span>
-            <span class="print-hub__stat-value">{{ reportClass?.gridSize?.rows || 6 }} × {{ reportClass?.gridSize?.cols || 6 }} Layout</span>
+            <span class="print-hub__stat-label">Contacts on File:</span>
+            <span class="print-hub__stat-value">{{ totalParentEmailsCount }} Parents · {{ totalStudentEmailsCount }} Students</span>
           </div>
           <div class="print-hub__features-list">
-            <span class="print-hub__chip">Landscape Default</span>
-            <span class="print-hub__chip">Table Pod Badges</span>
-            <span class="print-hub__chip">IEP Indicator Dots</span>
-            <span class="print-hub__chip">Sub Plan Ready</span>
+            <span class="print-hub__chip">Privacy BCC Mode</span>
+            <span class="print-hub__chip">Parent &amp; Student Groups</span>
+            <span class="print-hub__chip">One-Click Clipboard</span>
+            <span class="print-hub__chip">Split-Class Filter</span>
           </div>
         </div>
 
         <div class="print-hub__card-footer">
-          <button class="print-hub__btn-action" @click="emit('open-print-seating')">
-            <Printer :size="16" /> Configure &amp; Print Seating Plan
+          <button class="print-hub__btn-action" @click="$emit('open-email-broadcast')">
+            <Mail :size="16" /> Configure &amp; Email Class
           </button>
         </div>
       </div>
 
-      <!-- Card 4: Export CSV & Data Center -->
+      <!-- Card 8: Export CSV & Data Center -->
       <div class="print-hub__card">
         <div class="print-hub__card-header">
           <div class="print-hub__icon-wrapper print-hub__icon-wrapper--info">
@@ -251,7 +283,7 @@
 
 <script setup>
 import { computed } from 'vue'
-import { FileText, Grid, BookOpen, Download, Printer, GraduationCap, Users, Calendar, Armchair } from 'lucide-vue-next'
+import { FileText, Grid, BookOpen, Download, Printer, GraduationCap, Users, Calendar, Armchair, Mail } from 'lucide-vue-next'
 
 import { getEffectiveClassRecord } from '../../composables/useElementary.js'
 import { activeSubjectId } from '../../composables/useClassroomState.js'
@@ -277,6 +309,7 @@ const emit = defineEmits([
   'open-print-classlist',
   'open-print-calendar',
   'open-print-seating',
+  'open-email-broadcast',
   'download-csv',
   'download-comments'
 ])
@@ -285,6 +318,24 @@ const totalExpectationsCount = computed(() => {
   const units = effectiveClass.value?.gradebookUnits || props.reportClass?.gradebookUnits
   if (!units || !Array.isArray(units)) return 0
   return units.reduce((acc, u) => acc + (u.expectations?.length || 0), 0)
+})
+
+const totalParentEmailsCount = computed(() => {
+  let count = 0
+  const students = props.reportClass?.students ? Object.values(props.reportClass.students) : props.sidebarStudents
+  students.forEach(s => {
+    if (!s.archived && Array.isArray(s.parentContacts)) {
+      s.parentContacts.forEach(pc => {
+        if (pc?.email?.trim()) count++
+      })
+    }
+  })
+  return count
+})
+
+const totalStudentEmailsCount = computed(() => {
+  const students = props.reportClass?.students ? Object.values(props.reportClass.students) : props.sidebarStudents
+  return students.filter(s => !s.archived && !!(s.studentEmail || s.email)?.trim()).length
 })
 
 function handlePrintExpectations() {
@@ -303,6 +354,7 @@ function handlePrintExpectations() {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
+  gap: 16px;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
@@ -313,6 +365,7 @@ function handlePrintExpectations() {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  min-width: 0;
 }
 
 .print-hub__title {
@@ -339,6 +392,8 @@ function handlePrintExpectations() {
   font-size: 0.85rem;
   font-weight: 600;
   color: var(--primary);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .print-hub__grid {
@@ -380,6 +435,7 @@ function handlePrintExpectations() {
 }
 
 .print-hub__icon-wrapper--primary { background: rgba(59, 130, 246, 0.1); color: #3b82f6; }
+.print-hub__icon-wrapper--email   { background: rgba(59, 130, 246, 0.12); color: #2563eb; }
 .print-hub__icon-wrapper--success { background: rgba(16, 185, 129, 0.1); color: #10b981; }
 .print-hub__icon-wrapper--warning { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
 .print-hub__icon-wrapper--info    { background: rgba(139, 92, 246, 0.1); color: #8b5cf6; }

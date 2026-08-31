@@ -43,7 +43,7 @@
               :class="{ 'reports__pillar-btn--active': rightMode === 'printhub' }"
               @click="switchPillar('printhub')"
             >
-              <Printer :size="15" /> Document &amp; Print Hub
+              <Send :size="15" /> Communications &amp; Documents
             </button>
           </div>
 
@@ -100,7 +100,7 @@
           />
         </template>
 
-        <!-- ── PILLAR 2: DOCUMENT & PRINT HUB ───────────────────────── -->
+        <!-- ── PILLAR 2: COMMUNICATIONS & DOCUMENT HUB ──────────────── -->
         <template v-else-if="rightMode === 'printhub'">
           <ReportsPrintHub
             :report-class="reportClass"
@@ -111,6 +111,7 @@
             @open-print-classlist="showPrintClassListModal = true"
             @open-print-calendar="showPrintCalendarModal = true"
             @open-print-seating="showPrintSeatingModal = true"
+            @open-email-broadcast="showEmailBroadcastModal = true"
             @download-csv="handleDownloadCsv"
             @download-comments="handleDownloadComments"
           />
@@ -216,12 +217,22 @@
       :teacher-name="teacherName"
       @close="showPrintSeatingModal = false"
     />
+
+    <!-- Class Broadcast & BCC Email Modal -->
+    <ClassEmailBroadcastModal
+      v-if="showEmailBroadcastModal"
+      :show="showEmailBroadcastModal"
+      :class-record="reportClass"
+      :teacher-name="teacherName"
+      :initial-cohort="activeSubCohortFilter"
+      @close="showEmailBroadcastModal = false"
+    />
   </div>
 </template>
 
 <script setup>
 import { ref, reactive, computed, watch, onMounted, defineAsyncComponent } from 'vue'
-import { BarChart2, Printer, User, Award } from 'lucide-vue-next'
+import { BarChart2, Printer, User, Award, Send } from 'lucide-vue-next'
 
 import { useClassroom } from '../composables/useClassroom.js'
 import { getEffectiveClassRecord } from '../composables/useElementary.js'
@@ -237,6 +248,7 @@ const PrintExpectationsModal       = defineAsyncComponent(() => import('../compo
 const PrintClassListModal          = defineAsyncComponent(() => import('../components/PrintClassListModal.vue'))
 const PrintCalendarModal           = defineAsyncComponent(() => import('../components/reports/PrintCalendarModal.vue'))
 const PrintSeatingChartModal       = defineAsyncComponent(() => import('../components/reports/PrintSeatingChartModal.vue'))
+const ClassEmailBroadcastModal     = defineAsyncComponent(() => import('../components/ClassEmailBroadcastModal.vue'))
 import ReportsClassOverview from '../components/reports/ReportsClassOverview.vue'
 const ReportsBatchPrintModal       = defineAsyncComponent(() => import('../components/reports/ReportsBatchPrintModal.vue'))
 import ReportsPrintHub from '../components/reports/ReportsPrintHub.vue'
@@ -461,6 +473,7 @@ const showPrintExpectationsModal = ref(false)
 const showPrintClassListModal = ref(false)
 const showPrintCalendarModal = ref(false)
 const showPrintSeatingModal = ref(false)
+const showEmailBroadcastModal = ref(false)
 
 const reportClass = computed(() => {
   if (!sidebarClassId.value) return null
