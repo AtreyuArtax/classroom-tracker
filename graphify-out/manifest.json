@@ -240,8 +240,8 @@
     "semantic_hash": ""
   },
   "src/composables/useClassroom.js": {
-    "mtime": 1788145745.5914803,
-    "ast_hash": "df4b9163d857ea29446bde7659367b6d",
+    "mtime": 1788229889.4248848,
+    "ast_hash": "d1ec3402204fdcf2ac05b84fc2f706e7",
     "semantic_hash": ""
   },
   "src/composables/useGradebook.js": {
@@ -415,8 +415,8 @@
     "semantic_hash": ""
   },
   "src/components/setup/BehaviorSettings.vue": {
-    "mtime": 1788145769.6272328,
-    "ast_hash": "4f30a3071f4c3c9a38ac3b019e48619e",
+    "mtime": 1788229878.2082036,
+    "ast_hash": "58713efc12655168a1f1df675d780c2c",
     "semantic_hash": ""
   },
   "src/components/setup/QrCodeGeneratorModal.vue": {

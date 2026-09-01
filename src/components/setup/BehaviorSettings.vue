@@ -95,6 +95,11 @@
         Pins let you specify up to 6 quick-actions that appear directly on the main overlay.
       </p>
 
+      <div v-if="behaviorWarning" class="setup__inline-banner setup__inline-banner--warning" style="margin-bottom: 12px;">
+        <AlertTriangle :size="16" />
+        <span>{{ behaviorWarning }}</span>
+      </div>
+
       <ul class="setup__code-list">
         <li v-for="code in behaviorCodes" :key="code.codeKey" class="setup__code-item">
           <div class="setup__code-info">
@@ -265,6 +270,8 @@ const thresholdsSuccess = ref('')
 // Modal / Edit Form State
 const isModalOpen = ref(false)
 const isEditing = ref(false)
+const modalError = ref('')
+const behaviorWarning = ref('')
 const formCode = reactive({ 
   codeKey: '', 
   icon: 'Activity', 

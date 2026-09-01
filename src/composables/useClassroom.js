@@ -1049,7 +1049,10 @@ async function logStandardEvent(studentId, code, note = null, options = {}) {
         })
 
         // Reactive update: store last event for desk tile flash
-        students.value[studentId].lastEvent = { code, ts: Date.now() }
+        if (students.value[studentId]) {
+            students.value[studentId].lastEvent = { code, ts: Date.now() }
+            triggerRef(students)
+        }
 
         // Update event history immediately to reflect in UI (e.g. Student 360 Timeline)
         await getStudentEventHistory(studentId)
@@ -1067,7 +1070,10 @@ async function logStandardEvent(studentId, code, note = null, options = {}) {
         pushUndo(async () => {
             try {
                 await eventService.deleteEvent(eventId)
-                students.value[studentId].lastEvent = null
+                if (students.value[studentId]) {
+                    students.value[studentId].lastEvent = null
+                    triggerRef(students)
+                }
 
                 if (code === 'w' || category === 'redirect') {
                     const current = studentWeeklyStats.value[studentId] || { washroomTrips: 0, deviceIncidents: 0 }
