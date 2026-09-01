@@ -400,8 +400,8 @@
     "semantic_hash": ""
   },
   "src/components/setup/AssessmentFrameworkSettings.vue": {
-    "mtime": 1788124591.8349507,
-    "ast_hash": "f334fa1e635df79e203ad53c0a19cc4c",
+    "mtime": 1788288638.365748,
+    "ast_hash": "ca991fe3abb345e5f2724345dd87d194",
     "semantic_hash": ""
   },
   "src/composables/useGradeEditing.js": {
@@ -560,8 +560,8 @@
     "semantic_hash": ""
   },
   "src/db/gradebook/gradeAnalytics.js": {
-    "mtime": 1788124635.4591448,
-    "ast_hash": "32f9fa4fac733cb88727a1b2406c88a0",
+    "mtime": 1788288459.3571033,
+    "ast_hash": "5c54ede05415b85666744d2c8bf5e8cb",
     "semantic_hash": ""
   },
   "src/db/gradebook/gradeCalc.js": {

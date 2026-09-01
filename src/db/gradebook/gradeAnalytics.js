@@ -486,17 +486,16 @@ export async function getGradebookTemplates() {
 }
 
 /**
- * Saves a new template based on the categories/milestones of an existing class.
+ * Saves a new template based on the categories and units/expectations of an existing class.
  */
-export async function saveGradebookTemplate(name, classRecord, milestones) {
+export async function saveGradebookTemplate(name, classRecord) {
   const db = await getDB()
   const settings = await db.get('settings', 'singleton')
   
   const template = {
     templateId: crypto.randomUUID(),
     name,
-    categories: classRecord.gradebookCategories.map(c => ({ ...c, categoryId: crypto.randomUUID() })),
-    milestones: milestones.map(m => ({ ...m, milestoneId: crypto.randomUUID() })),
+    categories: (classRecord.gradebookCategories || []).map(c => ({ ...c, categoryId: crypto.randomUUID() })),
     gradebookUnits: (classRecord.gradebookUnits || []).map(u => ({
       ...u,
       unitId: crypto.randomUUID(),

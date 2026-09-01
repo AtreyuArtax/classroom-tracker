@@ -288,10 +288,35 @@
         <!-- Saved Templates List -->
         <div v-if="templates.length > 0" class="setup__gb-list" style="margin-top: 12px;">
           <div v-for="tmpl in templates" :key="tmpl.templateId" class="setup__gb-item" style="padding: 6px 12px;">
-            <span class="setup__tmpl-name" style="font-size: 0.85rem; font-weight: 600;">{{ tmpl.name }}</span>
+            <div style="display: flex; align-items: baseline; gap: 8px;">
+              <span class="setup__tmpl-name" style="font-size: 0.85rem; font-weight: 600;">{{ tmpl.name }}</span>
+              <span class="setup__tmpl-badge" style="font-size: 0.72rem; color: var(--text-secondary); opacity: 0.8;">
+                {{ tmpl.categories?.length || 0 }} Categories · {{ tmpl.gradebookUnits?.length || 0 }} Units
+              </span>
+            </div>
             <div class="setup__gb-actions">
-              <button type="button" class="setup__pill-btn" @click="onApplyTemplate(tmpl)" title="Apply this template's categories and units to this class">Apply</button>
-              <button type="button" class="setup__icon-btn setup__icon-btn--danger" @click="onDeleteTemplate(tmpl.templateId)" title="Delete template">
+              <button 
+                type="button" 
+                class="setup__icon-btn" 
+                @click="openPreviewTemplate(tmpl)" 
+                title="Preview template categories and units"
+              >
+                <Eye :size="14" />
+              </button>
+              <button 
+                type="button" 
+                class="setup__pill-btn" 
+                @click="onApplyTemplate(tmpl)" 
+                title="Apply this template's categories and units to this class"
+              >
+                Apply
+              </button>
+              <button 
+                type="button" 
+                class="setup__icon-btn setup__icon-btn--danger" 
+                @click="onDeleteTemplate(tmpl.templateId)" 
+                title="Delete template"
+              >
                 <Trash2 :size="14" />
               </button>
             </div>
@@ -299,6 +324,92 @@
         </div>
       </div>
     </div>
+
+    <!-- ── Template Preview Modal ── -->
+    <BaseModal
+      v-if="showPreviewModal && previewTemplate"
+      :show="showPreviewModal"
+      :title="`Template Preview: ${previewTemplate.name}`"
+      maxWidth="650px"
+      @close="closePreviewModal"
+    >
+      <div class="template-preview">
+        <!-- Categories Section -->
+        <div class="template-preview__section">
+          <h4 class="template-preview__title">
+            <LayoutTemplate :size="15" /> Categories & Weights ({{ getTemplateTotalWeight(previewTemplate) }}% Total)
+          </h4>
+          <div v-if="!previewTemplate.categories || previewTemplate.categories.length === 0" class="setup__hint">
+            No weighted categories saved in this template.
+          </div>
+          <div v-else class="template-preview__cat-grid">
+            <div 
+              v-for="cat in previewTemplate.categories" 
+              :key="cat.categoryId || cat.name" 
+              class="template-preview__cat-chip"
+            >
+              <span class="template-preview__cat-name">{{ cat.name }}</span>
+              <span class="template-preview__cat-weight">{{ cat.weight }}%</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Units & Curriculum Expectations Section -->
+        <div class="template-preview__section" style="margin-top: 16px;">
+          <h4 class="template-preview__title">
+            <BookOpen :size="15" /> Curriculum Units & Expectations ({{ getTemplateTotalExpectations(previewTemplate) }} Expectations)
+          </h4>
+          <div v-if="!previewTemplate.gradebookUnits || previewTemplate.gradebookUnits.length === 0" class="setup__hint">
+            No curriculum units saved in this template.
+          </div>
+          <div v-else class="template-preview__units-list">
+            <div 
+              v-for="(unit, uIdx) in previewTemplate.gradebookUnits" 
+              :key="unit.unitId || uIdx"
+              class="template-preview__unit-item"
+            >
+              <div class="template-preview__unit-header">
+                <strong>Unit {{ uIdx + 1 }}: {{ unit.name }}</strong>
+                <span class="setup__tag-badge setup__tag-badge--cat">{{ unit.expectations?.length || 0 }} Expectations</span>
+              </div>
+              <div v-if="unit.expectations && unit.expectations.length > 0" class="template-preview__exp-chips">
+                <span 
+                  v-for="exp in unit.expectations" 
+                  :key="exp.expectationId || exp.code" 
+                  class="template-preview__exp-chip"
+                  :title="exp.description || exp.code"
+                >
+                  {{ exp.code }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Milestones Section (if any) -->
+        <div v-if="previewTemplate.milestones && previewTemplate.milestones.length > 0" class="template-preview__section" style="margin-top: 16px;">
+          <h4 class="template-preview__title">
+            <Flag :size="15" /> Milestones ({{ previewTemplate.milestones.length }})
+          </h4>
+          <div class="template-preview__milestones-list">
+            <span v-for="ms in previewTemplate.milestones" :key="ms.milestoneId || ms.name" class="template-preview__ms-chip">
+              {{ ms.name }} ({{ ms.date || 'No Date' }})
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <template #footer>
+        <button type="button" class="setup__btn-ghost" @click="closePreviewModal">Close</button>
+        <button 
+          type="button" 
+          class="setup__btn-primary" 
+          @click="applyFromPreview(previewTemplate)"
+        >
+          Apply to {{ activeClass?.name || 'Class' }}
+        </button>
+      </template>
+    </BaseModal>
 
     <!-- Expectation Importer Modal -->
     <ExpectationImportModal
@@ -323,8 +434,10 @@ import * as settingsService from '../../db/settingsService.js'
 import * as eventService from '../../db/eventService.js'
 import { 
   ChevronUp, ChevronDown, Trash2, Plus, AlertTriangle, CheckCircle2, 
-  ChevronRight, BookOpen, Copy, LayoutTemplate, Save, Edit2, Check, X, Search 
+  ChevronRight, BookOpen, Copy, LayoutTemplate, Save, Edit2, Check, X, Search, 
+  Eye, Flag 
 } from 'lucide-vue-next'
+import BaseModal from '../BaseModal.vue'
 import ExpectationImportModal from './ExpectationImportModal.vue'
 import { cleanExpectationText } from '../../utils/textUtils.js'
 
@@ -873,6 +986,34 @@ async function onDeleteUnit(unitId) {
   await saveGradebookSettings()
 }
 
+const previewTemplate = ref(null)
+const showPreviewModal = ref(false)
+
+function openPreviewTemplate(tmpl) {
+  previewTemplate.value = tmpl
+  showPreviewModal.value = true
+}
+
+function closePreviewModal() {
+  showPreviewModal.value = false
+  previewTemplate.value = null
+}
+
+function getTemplateTotalWeight(tmpl) {
+  if (!tmpl || !tmpl.categories) return 0
+  return tmpl.categories.reduce((acc, c) => acc + (Number(c.weight) || 0), 0)
+}
+
+function getTemplateTotalExpectations(tmpl) {
+  if (!tmpl || !tmpl.gradebookUnits) return 0
+  return tmpl.gradebookUnits.reduce((acc, u) => acc + (u.expectations?.length || 0), 0)
+}
+
+async function applyFromPreview(tmpl) {
+  closePreviewModal()
+  await onApplyTemplate(tmpl)
+}
+
 async function saveTemplate() {
   if (!activeClass.value || !newTemplateName.value.trim()) return
   
@@ -882,9 +1023,15 @@ async function saveTemplate() {
     return
   }
 
-  const template = await gradebookService.saveGradebookTemplate(newTemplateName.value.trim(), activeClass.value, globalMilestones.value)
+  const classData = {
+    gradebookCategories: JSON.parse(JSON.stringify(activeCategories.value || [])),
+    gradebookUnits: JSON.parse(JSON.stringify(activeUnits.value || []))
+  }
+
+  const template = await gradebookService.saveGradebookTemplate(newTemplateName.value.trim(), classData)
   templates.value.push(template)
   newTemplateName.value = ''
+  showSuccess(`Template "${template.name}" saved!`)
 }
 
 async function onApplyTemplate(template) {
@@ -893,14 +1040,18 @@ async function onApplyTemplate(template) {
   // Check if assessments exist for this class to avoid orphaning grades
   const classAssessments = await gradebookService.getAssessmentsByClass(activeClass.value.classId)
   if (classAssessments && classAssessments.length > 0) {
-    showWarning('Cannot apply template: This class already has assessments. Templates can only be applied to empty classes to prevent breaking existing student grades.')
+    showWarning(`Cannot apply template: "${activeClass.value.name}" already has ${classAssessments.length} assessment(s) logged. Templates can only be applied to empty courses to prevent breaking existing student grades.`)
     return
   }
   
-  if (!await confirm('This will replace the current categories and milestones. Continue?')) return
+  const targetLabel = (availableCourseSections.value.length > 1 && activeCourseSection.value)
+    ? `section [${activeCourseSection.value}] in ${activeClass.value.name}`
+    : `${activeClass.value.name}`
+
+  const confirmMsg = `Apply template "${template.name}" to ${targetLabel}?\n\n⚠️ WARNING: This will overwrite and replace all currently configured categories, weights, and unit expectations for ${targetLabel}. Any unsaved custom category setup will be reset.\n\nAre you sure you want to proceed?`
+  if (!await confirm(confirmMsg, 'Apply Assessment Template', { danger: true })) return
   
-  const categories = template.categories.map(c => ({ ...c, categoryId: crypto.randomUUID() }))
-  const milestones = template.milestones.map(m => ({ ...m, milestoneId: crypto.randomUUID() }))
+  const categories = (template.categories || []).map(c => ({ ...c, categoryId: crypto.randomUUID() }))
   const gradebookUnits = (template.gradebookUnits || []).map(u => ({
     ...u,
     unitId: crypto.randomUUID(),
@@ -910,13 +1061,21 @@ async function onApplyTemplate(template) {
     }))
   }))
 
-  activeClassClassCategoriesUpdate(categories, milestones, gradebookUnits)
+  await activeClassClassCategoriesUpdate(categories, gradebookUnits)
+  showSuccess(`Template "${template.name}" applied successfully to ${targetLabel}!`)
 }
 
-async function activeClassClassCategoriesUpdate(categories, milestones, gradebookUnits = []) {
-  activeClass.value.gradebookCategories = categories
-  globalMilestones.value = milestones
-  activeClass.value.gradebookUnits = gradebookUnits
+async function activeClassClassCategoriesUpdate(categories, gradebookUnits = []) {
+  if (availableCourseSections.value.length > 1 && activeCourseSection.value) {
+    if (!activeClass.value.courseFrameworks) activeClass.value.courseFrameworks = {}
+    activeClass.value.courseFrameworks[activeCourseSection.value] = {
+      gradebookCategories: categories,
+      gradebookUnits: gradebookUnits
+    }
+  } else {
+    activeClass.value.gradebookCategories = categories
+    activeClass.value.gradebookUnits = gradebookUnits
+  }
   await saveGradebookSettings()
 }
 
@@ -932,6 +1091,110 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+.template-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.template-preview__section {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+}
+
+.template-preview__title {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0 0 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.template-preview__cat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 8px;
+}
+
+.template-preview__cat-chip {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 0.82rem;
+}
+
+.template-preview__cat-name {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.template-preview__cat-weight {
+  font-weight: 800;
+  color: var(--primary);
+}
+
+.template-preview__units-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.template-preview__unit-item {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+}
+
+.template-preview__unit-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.85rem;
+}
+
+.template-preview__exp-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.template-preview__exp-chip {
+  font-size: 0.72rem;
+  font-family: monospace;
+  font-weight: 700;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  padding: 1px 6px;
+  border-radius: 4px;
+  color: var(--text);
+}
+
+.template-preview__milestones-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.template-preview__ms-chip {
+  font-size: 0.78rem;
+  font-weight: 600;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 4px 8px;
+  border-radius: 6px;
+  color: var(--text);
+}
+
 .setup__gb-list { display: flex; flex-direction: column; gap: 8px; }
 .setup__gb-item { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: var(--bg-secondary); border-radius: var(--radius-md); gap: 12px; }
 .setup__gb-actions { display: flex; align-items: center; gap: 12px; }
