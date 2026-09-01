@@ -179,7 +179,11 @@
         <div class="setup__form-grid" style="margin-top: 12px;">
           <label class="setup__label">
             Category
-            <select v-model="formCode.category" class="setup__input" required>
+            <select v-model="formCode.category" class="setup__input" :disabled="isSystemCode(formCode.codeKey)" required>
+              <option v-if="formCode.category === 'absence' || formCode.category === 'attendance'" :value="formCode.category">Attendance / Absence</option>
+              <option v-if="formCode.category === 'late'" value="late">Attendance / Late</option>
+              <option v-if="formCode.category === 'washroom'" value="washroom">Out of Class</option>
+              <option v-if="formCode.category === 'note'" value="note">Classroom Note</option>
               <option value="positive">Positive</option>
               <option value="neutral">Neutral</option>
               <option value="redirect">Redirect / Warning</option>
@@ -190,9 +194,10 @@
 
           <label class="setup__label">
             Event Type
-            <select v-model="formCode.type" class="setup__input" required>
+            <select v-model="formCode.type" class="setup__input" :disabled="isSystemCode(formCode.codeKey)" required>
               <option value="standard">Standard Record</option>
-              <option value="attendance" :disabled="isEditing && formCode.type === 'standard'">Attendance Flag</option>
+              <option value="attendance">Attendance Flag</option>
+              <option value="toggle">Out-of-Class Timer</option>
             </select>
           </label>
         </div>
@@ -363,12 +368,12 @@ function closeModal() {
 
 async function saveCode() {
   modalError.value = ''
-  const codeKeyFormatted = formCode.codeKey.trim().toUpperCase()
-  if (!codeKeyFormatted) return
+  const keyToUse = isEditing.value ? formCode.codeKey : formCode.codeKey.trim().toUpperCase()
+  if (!keyToUse) return
 
   if (formCode.isTopLevel) {
     const pinnedCount = behaviorCodes.value.filter(
-      c => c.codeKey.toUpperCase() !== codeKeyFormatted && c.isTopLevel
+      c => c.codeKey.toLowerCase() !== keyToUse.toLowerCase() && c.isTopLevel
     ).length
     if (pinnedCount >= 6) {
       modalError.value = 'The radial menu is full (Max 6 pinned items). Please unpin an existing action first.'
@@ -378,7 +383,7 @@ async function saveCode() {
 
   const payload = {
     ...formCode,
-    codeKey: codeKeyFormatted,
+    codeKey: keyToUse,
     label: formCode.label.trim()
   }
 

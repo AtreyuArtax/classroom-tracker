@@ -3290,7 +3290,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "components_studentprofilemodal",
-      "community": 28,
+      "community": 129,
       "norm_label": "studentprofilemodal.vue"
     },
     {
@@ -3300,7 +3300,7 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "components_studentprofilemodal_props",
-      "community": 28,
+      "community": 129,
       "norm_label": "props"
     },
     {
@@ -3310,7 +3310,7 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "components_studentprofilemodal_emit",
-      "community": 28,
+      "community": 129,
       "norm_label": "emit"
     },
     {
@@ -3320,7 +3320,7 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "components_studentprofilemodal_close",
-      "community": 28,
+      "community": 129,
       "norm_label": "close()"
     },
     {
@@ -7780,7 +7780,7 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "composables_usegradebook_classgrades",
-      "community": 10,
+      "community": 28,
       "norm_label": "classgrades"
     },
     {
@@ -8130,7 +8130,7 @@
       "source_location": "L265",
       "_origin": "ast",
       "id": "composables_usegradebook_setactivesubject",
-      "community": 1,
+      "community": 21,
       "norm_label": "setactivesubject()"
     },
     {
@@ -8140,7 +8140,7 @@
       "source_location": "L281",
       "_origin": "ast",
       "id": "composables_usegradebook_loadgradebook",
-      "community": 1,
+      "community": 21,
       "norm_label": "loadgradebook()"
     },
     {
@@ -8470,7 +8470,7 @@
       "source_location": "L1418",
       "_origin": "ast",
       "id": "composables_usegradebook_adjuststudentgrade",
-      "community": 10,
+      "community": 1,
       "norm_label": "adjuststudentgrade()"
     },
     {
@@ -8480,7 +8480,7 @@
       "source_location": "L1474",
       "_origin": "ast",
       "id": "composables_usegradebook_undostudentgradeadjustment",
-      "community": 10,
+      "community": 1,
       "norm_label": "undostudentgradeadjustment()"
     },
     {
@@ -9550,7 +9550,7 @@
       "source_location": "L39",
       "_origin": "ast",
       "id": "curriculum_schema_properties_subjectcode",
-      "community": 91,
+      "community": 130,
       "norm_label": "subjectcode"
     },
     {
@@ -9560,7 +9560,7 @@
       "source_location": "L40",
       "_origin": "ast",
       "id": "curriculum_schema_subjectcode_type",
-      "community": 91,
+      "community": 130,
       "norm_label": "type"
     },
     {
@@ -9570,7 +9570,7 @@
       "source_location": "L41",
       "_origin": "ast",
       "id": "curriculum_schema_subjectcode_description",
-      "community": 91,
+      "community": 130,
       "norm_label": "description"
     },
     {
@@ -9580,7 +9580,7 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "curriculum_schema_properties_department",
-      "community": 127,
+      "community": 91,
       "norm_label": "department"
     },
     {
@@ -9590,7 +9590,7 @@
       "source_location": "L44",
       "_origin": "ast",
       "id": "curriculum_schema_department_type",
-      "community": 127,
+      "community": 91,
       "norm_label": "type"
     },
     {
@@ -9600,7 +9600,7 @@
       "source_location": "L45",
       "_origin": "ast",
       "id": "curriculum_schema_department_description",
-      "community": 127,
+      "community": 91,
       "norm_label": "description"
     },
     {
@@ -10850,7 +10850,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "gradebook_gradeservice",
-      "community": 20,
+      "community": 127,
       "norm_label": "gradeservice.js"
     },
     {
@@ -10860,7 +10860,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "gradebook_gradeservice_getgradeintransaction",
-      "community": 20,
+      "community": 127,
       "norm_label": "_getgradeintransaction()"
     },
     {
@@ -10870,7 +10870,7 @@
       "source_location": "L49",
       "_origin": "ast",
       "id": "gradebook_gradeservice_savesbargrade",
-      "community": 20,
+      "community": 127,
       "norm_label": "savesbargrade()"
     },
     {
@@ -10880,7 +10880,7 @@
       "source_location": "L97",
       "_origin": "ast",
       "id": "gradebook_gradeservice_getorcreategrade",
-      "community": 20,
+      "community": 127,
       "norm_label": "getorcreategrade()"
     },
     {
@@ -10890,7 +10890,7 @@
       "source_location": "L110",
       "_origin": "ast",
       "id": "gradebook_gradeservice_addattempt",
-      "community": 20,
+      "community": 127,
       "norm_label": "addattempt()"
     },
     {
@@ -10900,7 +10900,7 @@
       "source_location": "L150",
       "_origin": "ast",
       "id": "gradebook_gradeservice_deleteattempt",
-      "community": 20,
+      "community": 127,
       "norm_label": "deleteattempt()"
     },
     {
@@ -10910,7 +10910,7 @@
       "source_location": "L178",
       "_origin": "ast",
       "id": "gradebook_gradeservice_setprimaryattempt",
-      "community": 20,
+      "community": 127,
       "norm_label": "setprimaryattempt()"
     },
     {
@@ -10920,7 +10920,7 @@
       "source_location": "L209",
       "_origin": "ast",
       "id": "gradebook_gradeservice_updateattemptcomment",
-      "community": 20,
+      "community": 127,
       "norm_label": "updateattemptcomment()"
     },
     {
@@ -10930,7 +10930,7 @@
       "source_location": "L238",
       "_origin": "ast",
       "id": "gradebook_gradeservice_updategradeflags",
-      "community": 20,
+      "community": 127,
       "norm_label": "updategradeflags()"
     },
     {
@@ -10940,7 +10940,7 @@
       "source_location": "L263",
       "_origin": "ast",
       "id": "gradebook_gradeservice_deletegrade",
-      "community": 20,
+      "community": 127,
       "norm_label": "deletegrade()"
     },
     {
@@ -10950,7 +10950,7 @@
       "source_location": "L284",
       "_origin": "ast",
       "id": "gradebook_gradeservice_savefullgraderecord",
-      "community": 20,
+      "community": 127,
       "norm_label": "savefullgraderecord()"
     },
     {
@@ -11307,7 +11307,7 @@
       "label": "saveBehaviorCode()",
       "file_type": "code",
       "source_file": "src/db/settingsService.js",
-      "source_location": "L188",
+      "source_location": "L198",
       "_origin": "ast",
       "id": "db_settingsservice_savebehaviorcode",
       "community": 21,
@@ -11317,7 +11317,7 @@
       "label": "deleteBehaviorCode()",
       "file_type": "code",
       "source_file": "src/db/settingsService.js",
-      "source_location": "L204",
+      "source_location": "L226",
       "_origin": "ast",
       "id": "db_settingsservice_deletebehaviorcode",
       "community": 21,
@@ -11327,7 +11327,7 @@
       "label": "getThresholds()",
       "file_type": "code",
       "source_file": "src/db/settingsService.js",
-      "source_location": "L217",
+      "source_location": "L239",
       "_origin": "ast",
       "id": "db_settingsservice_getthresholds",
       "community": 21,
@@ -11337,7 +11337,7 @@
       "label": "saveThresholds()",
       "file_type": "code",
       "source_file": "src/db/settingsService.js",
-      "source_location": "L228",
+      "source_location": "L250",
       "_origin": "ast",
       "id": "db_settingsservice_savethresholds",
       "community": 21,
@@ -11347,17 +11347,17 @@
       "label": "getGlobalMilestones()",
       "file_type": "code",
       "source_file": "src/db/settingsService.js",
-      "source_location": "L241",
+      "source_location": "L263",
       "_origin": "ast",
       "id": "db_settingsservice_getglobalmilestones",
-      "community": 1,
+      "community": 21,
       "norm_label": "getglobalmilestones()"
     },
     {
       "label": "saveGlobalMilestones()",
       "file_type": "code",
       "source_file": "src/db/settingsService.js",
-      "source_location": "L252",
+      "source_location": "L274",
       "_origin": "ast",
       "id": "db_settingsservice_saveglobalmilestones",
       "community": 21,
@@ -11367,7 +11367,7 @@
       "label": "getSavedLayoutPresets()",
       "file_type": "code",
       "source_file": "src/db/settingsService.js",
-      "source_location": "L264",
+      "source_location": "L286",
       "_origin": "ast",
       "id": "db_settingsservice_getsavedlayoutpresets",
       "community": 21,
@@ -11377,7 +11377,7 @@
       "label": "saveLayoutPreset()",
       "file_type": "code",
       "source_file": "src/db/settingsService.js",
-      "source_location": "L274",
+      "source_location": "L296",
       "_origin": "ast",
       "id": "db_settingsservice_savelayoutpreset",
       "community": 21,
@@ -11387,7 +11387,7 @@
       "label": "deleteLayoutPreset()",
       "file_type": "code",
       "source_file": "src/db/settingsService.js",
-      "source_location": "L293",
+      "source_location": "L315",
       "_origin": "ast",
       "id": "db_settingsservice_deletelayoutpreset",
       "community": 21,
@@ -11397,7 +11397,7 @@
       "label": "getTeacherName()",
       "file_type": "code",
       "source_file": "src/db/settingsService.js",
-      "source_location": "L308",
+      "source_location": "L330",
       "_origin": "ast",
       "id": "db_settingsservice_getteachername",
       "community": 21,
@@ -11407,7 +11407,7 @@
       "label": "saveTeacherName()",
       "file_type": "code",
       "source_file": "src/db/settingsService.js",
-      "source_location": "L319",
+      "source_location": "L341",
       "_origin": "ast",
       "id": "db_settingsservice_saveteachername",
       "community": 21,
@@ -11417,7 +11417,7 @@
       "label": "getAppTheme()",
       "file_type": "code",
       "source_file": "src/db/settingsService.js",
-      "source_location": "L332",
+      "source_location": "L354",
       "_origin": "ast",
       "id": "db_settingsservice_getapptheme",
       "community": 21,
@@ -11427,17 +11427,17 @@
       "label": "saveAppTheme()",
       "file_type": "code",
       "source_file": "src/db/settingsService.js",
-      "source_location": "L343",
+      "source_location": "L365",
       "_origin": "ast",
       "id": "db_settingsservice_saveapptheme",
-      "community": 21,
+      "community": 20,
       "norm_label": "saveapptheme()"
     },
     {
       "label": "getAttendanceConfig()",
       "file_type": "code",
       "source_file": "src/db/settingsService.js",
-      "source_location": "L358",
+      "source_location": "L380",
       "_origin": "ast",
       "id": "db_settingsservice_getattendanceconfig",
       "community": 21,
@@ -11447,7 +11447,7 @@
       "label": "saveAttendanceConfig()",
       "file_type": "code",
       "source_file": "src/db/settingsService.js",
-      "source_location": "L372",
+      "source_location": "L394",
       "_origin": "ast",
       "id": "db_settingsservice_saveattendanceconfig",
       "community": 21,
@@ -11457,7 +11457,7 @@
       "label": "getAcademicTerms()",
       "file_type": "code",
       "source_file": "src/db/settingsService.js",
-      "source_location": "L386",
+      "source_location": "L408",
       "_origin": "ast",
       "id": "db_settingsservice_getacademicterms",
       "community": 21,
@@ -11467,7 +11467,7 @@
       "label": "saveAcademicTerms()",
       "file_type": "code",
       "source_file": "src/db/settingsService.js",
-      "source_location": "L397",
+      "source_location": "L419",
       "_origin": "ast",
       "id": "db_settingsservice_saveacademicterms",
       "community": 21,
@@ -11477,7 +11477,7 @@
       "label": "getPeriodStartTimes()",
       "file_type": "code",
       "source_file": "src/db/settingsService.js",
-      "source_location": "L410",
+      "source_location": "L432",
       "_origin": "ast",
       "id": "db_settingsservice_getperiodstarttimes",
       "community": 21,
@@ -11487,7 +11487,7 @@
       "label": "savePeriodStartTimes()",
       "file_type": "code",
       "source_file": "src/db/settingsService.js",
-      "source_location": "L426",
+      "source_location": "L448",
       "_origin": "ast",
       "id": "db_settingsservice_saveperiodstarttimes",
       "community": 21,
@@ -11497,17 +11497,17 @@
       "label": "getGradeBuckets()",
       "file_type": "code",
       "source_file": "src/db/settingsService.js",
-      "source_location": "L437",
+      "source_location": "L459",
       "_origin": "ast",
       "id": "db_settingsservice_getgradebuckets",
-      "community": 1,
+      "community": 21,
       "norm_label": "getgradebuckets()"
     },
     {
       "label": "saveGradeBuckets()",
       "file_type": "code",
       "source_file": "src/db/settingsService.js",
-      "source_location": "L451",
+      "source_location": "L473",
       "_origin": "ast",
       "id": "db_settingsservice_savegradebuckets",
       "community": 21,
@@ -11517,7 +11517,7 @@
       "label": "getNonSchoolDays()",
       "file_type": "code",
       "source_file": "src/db/settingsService.js",
-      "source_location": "L464",
+      "source_location": "L486",
       "_origin": "ast",
       "id": "db_settingsservice_getnonschooldays",
       "community": 21,
@@ -11527,17 +11527,17 @@
       "label": "saveNonSchoolDays()",
       "file_type": "code",
       "source_file": "src/db/settingsService.js",
-      "source_location": "L475",
+      "source_location": "L497",
       "_origin": "ast",
       "id": "db_settingsservice_savenonschooldays",
-      "community": 21,
+      "community": 20,
       "norm_label": "savenonschooldays()"
     },
     {
       "label": "auditSettingsIntegrity()",
       "file_type": "code",
       "source_file": "src/db/settingsService.js",
-      "source_location": "L486",
+      "source_location": "L508",
       "_origin": "ast",
       "id": "db_settingsservice_auditsettingsintegrity",
       "community": 21,
@@ -36848,6 +36848,17 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/db/settingsService.js",
+      "source_location": "L200",
+      "weight": 1.0,
+      "source": "db_settingsservice_savebehaviorcode",
+      "target": "db_settingsservice_readsettings",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/db/settingsService.js",
       "source_location": "L266",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -39393,5 +39404,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "5b3cf4c982f8466e988cc10e502bc0e85134667c"
+  "built_at_commit": "521b27126668957db27d86f7e3fb4cc75859694d"
 }

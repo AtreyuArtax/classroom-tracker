@@ -305,8 +305,8 @@
     "semantic_hash": ""
   },
   "src/db/settingsService.js": {
-    "mtime": 1788145755.7262852,
-    "ast_hash": "997399e7039bb8044946c23628476a81",
+    "mtime": 1788285666.2653525,
+    "ast_hash": "b3d05820a7b679aa3880ddc4cfb1b4a2",
     "semantic_hash": ""
   },
   "src/main.js": {
@@ -415,8 +415,8 @@
     "semantic_hash": ""
   },
   "src/components/setup/BehaviorSettings.vue": {
-    "mtime": 1788282775.5761344,
-    "ast_hash": "64be0ef04929df912fff15e590dca2a5",
+    "mtime": 1788286033.8229961,
+    "ast_hash": "efaf2ff1568a859f64e3dfc83493f075",
     "semantic_hash": ""
   },
   "src/components/setup/QrCodeGeneratorModal.vue": {

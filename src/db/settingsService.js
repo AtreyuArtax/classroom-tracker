@@ -172,10 +172,20 @@ export async function saveSettings(settingsObj) {
  */
 export async function getBehaviorCodes() {
     const settings = await _readSettings()
-    return Object.entries(settings.behaviorCodes).map(([codeKey, code]) => ({
-        codeKey,
-        ...code,
-    }))
+    const codesMap = settings.behaviorCodes || {}
+    const result = []
+    const seenLower = new Set()
+
+    for (const [codeKey, code] of Object.entries(codesMap)) {
+        const lower = codeKey.toLowerCase()
+        if (seenLower.has(lower)) continue
+        seenLower.add(lower)
+        result.push({
+            codeKey,
+            ...code,
+        })
+    }
+    return result
 }
 
 /**
@@ -187,11 +197,23 @@ export async function getBehaviorCodes() {
  */
 export async function saveBehaviorCode(codeObj) {
     const db = await getDB()
-    const settings = await db.get('settings', 'singleton')
-    // Guard: heal missing behaviorCodes map (data corruption safety)
+    const settings = await db.get('settings', SETTINGS_KEY) || await _readSettings()
     if (!settings.behaviorCodes) settings.behaviorCodes = {}
-    settings.behaviorCodes[codeObj.codeKey] = codeObj
-    await db.put('settings', settings, 'singleton')
+
+    const targetKey = codeObj.codeKey
+    // Remove any case-insensitive collisions/duplicates
+    for (const k of Object.keys(settings.behaviorCodes)) {
+        if (k.toLowerCase() === targetKey.toLowerCase()) {
+            delete settings.behaviorCodes[k]
+        }
+    }
+
+    settings.behaviorCodes[targetKey] = {
+        ...codeObj,
+        codeKey: targetKey
+    }
+
+    await db.put('settings', settings, SETTINGS_KEY)
     hasUnsyncedChanges.value = true
 }
 
