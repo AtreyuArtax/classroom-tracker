@@ -285,6 +285,19 @@
           </div>
         </div>
 
+        <!-- Inline Status / Warning Banner for Assessment Templates -->
+        <div 
+          v-if="templateNotice.text" 
+          class="setup__inline-banner" 
+          :class="'setup__inline-banner--' + templateNotice.type" 
+          style="margin-top: 10px;"
+        >
+          <CheckCircle2 v-if="templateNotice.type === 'success'" :size="15" />
+          <AlertTriangle v-else :size="15" />
+          <span style="font-size: 0.84rem; font-weight: 600;">{{ templateNotice.text }}</span>
+          <button type="button" class="setup__inline-banner-close" @click="templateNotice.text = ''">&times;</button>
+        </div>
+
         <!-- Saved Templates List -->
         <div v-if="templates.length > 0" class="setup__gb-list" style="margin-top: 12px;">
           <div v-for="tmpl in templates" :key="tmpl.templateId" class="setup__gb-item" style="padding: 6px 12px;">
@@ -385,18 +398,6 @@
             </div>
           </div>
         </div>
-
-        <!-- Milestones Section (if any) -->
-        <div v-if="previewTemplate.milestones && previewTemplate.milestones.length > 0" class="template-preview__section" style="margin-top: 16px;">
-          <h4 class="template-preview__title">
-            <Flag :size="15" /> Milestones ({{ previewTemplate.milestones.length }})
-          </h4>
-          <div class="template-preview__milestones-list">
-            <span v-for="ms in previewTemplate.milestones" :key="ms.milestoneId || ms.name" class="template-preview__ms-chip">
-              {{ ms.name }} ({{ ms.date || 'No Date' }})
-            </span>
-          </div>
-        </div>
       </div>
 
       <template #footer>
@@ -449,6 +450,19 @@ const isSBAR = computed(() => activeClass.value?.gradingFramework === 'sbar')
 const templates = ref([])
 const newTemplateName = ref('')
 const showImportModal = ref(false)
+const previewTemplate = ref(null)
+const showPreviewModal = ref(false)
+
+const templateNotice = ref({ text: '', type: 'warning' })
+let templateNoticeTimer = null
+
+function showTemplateNotice(text, type = 'warning') {
+  if (templateNoticeTimer) clearTimeout(templateNoticeTimer)
+  templateNotice.value = { text, type }
+  templateNoticeTimer = setTimeout(() => {
+    templateNotice.value = { text: '', type: 'warning' }
+  }, 6000)
+}
 
 const expandedUnitId = ref(null)
 const newExpectationCode = ref('')
@@ -909,14 +923,14 @@ async function onDeleteCategory(cat) {
   const inUse = assessments.some(a => a.categoryId === cat.categoryId)
   
   if (inUse) {
-    showWarning(`Cannot delete category "${cat.name}" because it has assessments assigned to it. Remove all assessments in this category first.`)
+    await alert(`Cannot delete category "${cat.name}" because it has assessments assigned to it in the Gradebook. Remove or reassign all assessments in this category first.`, 'Category In Use')
     return
   }
 
   if (!await confirm(`Delete category "${cat.name}"?`)) return
 
   if (activeCategories.value.length <= 1) {
-    showWarning('At least one category is required.')
+    await alert('At least one category is required.', 'Cannot Delete')
     return
   }
 
@@ -953,13 +967,13 @@ async function addUnit() {
 
 async function onDeleteUnit(unitId) {
   if (!activeClass.value) return
+  const unit = activeUnits.value.find(u => u.unitId === unitId)
   
   const assessments = await gradebookService.getAssessmentsByClass(activeClass.value.classId)
-  const unit = activeUnits.value.find(u => u.unitId === unitId)
-  const inUse = assessments.some(a => a.unitId === unitId || (unit && a.unitId === unit.name))
+  const inUse = assessments.some(a => a.unitId === unitId)
   
   if (inUse) {
-    showWarning(`Cannot delete unit "${unit?.name || 'this unit'}" because it has assessments assigned to it. Remove or reassign all assessments in this unit before deleting.`)
+    await alert(`Cannot delete unit "${unit?.name || 'this unit'}" because it has assessments assigned to it. Remove or reassign all assessments in this unit before deleting.`, 'Unit In Use')
     return
   }
 
@@ -985,9 +999,6 @@ async function onDeleteUnit(unitId) {
   }
   await saveGradebookSettings()
 }
-
-const previewTemplate = ref(null)
-const showPreviewModal = ref(false)
 
 function openPreviewTemplate(tmpl) {
   previewTemplate.value = tmpl
@@ -1019,7 +1030,7 @@ async function saveTemplate() {
   
   const existing = templates.value.some(t => t.name.toLowerCase() === newTemplateName.value.trim().toLowerCase())
   if (existing) {
-    showWarning('A template with this name already exists.')
+    showTemplateNotice('A template with this name already exists.', 'warning')
     return
   }
 
@@ -1031,7 +1042,7 @@ async function saveTemplate() {
   const template = await gradebookService.saveGradebookTemplate(newTemplateName.value.trim(), classData)
   templates.value.push(template)
   newTemplateName.value = ''
-  showSuccess(`Template "${template.name}" saved!`)
+  showTemplateNotice(`Template "${template.name}" saved successfully!`, 'success')
 }
 
 async function onApplyTemplate(template) {
@@ -1040,7 +1051,10 @@ async function onApplyTemplate(template) {
   // Check if assessments exist for this class to avoid orphaning grades
   const classAssessments = await gradebookService.getAssessmentsByClass(activeClass.value.classId)
   if (classAssessments && classAssessments.length > 0) {
-    showWarning(`Cannot apply template: "${activeClass.value.name}" already has ${classAssessments.length} assessment(s) logged. Templates can only be applied to empty courses to prevent breaking existing student grades.`)
+    showTemplateNotice(
+      `Cannot apply template: "${activeClass.value.name}" already has ${classAssessments.length} assessment(s) logged in the Gradebook. Templates can only be applied to newly created or empty courses.`,
+      'warning'
+    )
     return
   }
   
@@ -1062,7 +1076,7 @@ async function onApplyTemplate(template) {
   }))
 
   await activeClassClassCategoriesUpdate(categories, gradebookUnits)
-  showSuccess(`Template "${template.name}" applied successfully to ${targetLabel}!`)
+  showTemplateNotice(`Template "${template.name}" applied successfully to ${targetLabel}!`, 'success')
 }
 
 async function activeClassClassCategoriesUpdate(categories, gradebookUnits = []) {

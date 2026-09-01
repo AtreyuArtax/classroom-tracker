@@ -260,7 +260,7 @@
       "source_location": "L1304",
       "_origin": "ast",
       "id": "dev_dist_workbox_ca84f546_getidbproxyabletypes",
-      "community": 15,
+      "community": 5,
       "norm_label": "getidbproxyabletypes()"
     },
     {
@@ -270,7 +270,7 @@
       "source_location": "L1308",
       "_origin": "ast",
       "id": "dev_dist_workbox_ca84f546_getcursoradvancemethods",
-      "community": 15,
+      "community": 5,
       "norm_label": "getcursoradvancemethods()"
     },
     {
@@ -280,7 +280,7 @@
       "source_location": "L1316",
       "_origin": "ast",
       "id": "dev_dist_workbox_ca84f546_promisifyrequest",
-      "community": 15,
+      "community": 5,
       "norm_label": "promisifyrequest()"
     },
     {
@@ -290,7 +290,7 @@
       "source_location": "L1346",
       "_origin": "ast",
       "id": "dev_dist_workbox_ca84f546_cachedonepromisefortransaction",
-      "community": 15,
+      "community": 5,
       "norm_label": "cachedonepromisefortransaction()"
     },
     {
@@ -340,7 +340,7 @@
       "source_location": "L1401",
       "_origin": "ast",
       "id": "dev_dist_workbox_ca84f546_wrapfunction",
-      "community": 15,
+      "community": 5,
       "norm_label": "wrapfunction()"
     },
     {
@@ -350,7 +350,7 @@
       "source_location": "L1431",
       "_origin": "ast",
       "id": "dev_dist_workbox_ca84f546_transformcachablevalue",
-      "community": 15,
+      "community": 5,
       "norm_label": "transformcachablevalue()"
     },
     {
@@ -360,7 +360,7 @@
       "source_location": "L1440",
       "_origin": "ast",
       "id": "dev_dist_workbox_ca84f546_wrap",
-      "community": 15,
+      "community": 5,
       "norm_label": "wrap()"
     },
     {
@@ -370,7 +370,7 @@
       "source_location": "L1465",
       "_origin": "ast",
       "id": "dev_dist_workbox_ca84f546_opendb",
-      "community": 15,
+      "community": 5,
       "norm_label": "opendb()"
     },
     {
@@ -2790,7 +2790,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "components_basemodal",
-      "community": 14,
+      "community": 28,
       "norm_label": "basemodal.vue"
     },
     {
@@ -3290,7 +3290,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "components_studentprofilemodal",
-      "community": 28,
+      "community": 16,
       "norm_label": "studentprofilemodal.vue"
     },
     {
@@ -3300,7 +3300,7 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "components_studentprofilemodal_props",
-      "community": 28,
+      "community": 16,
       "norm_label": "props"
     },
     {
@@ -3310,7 +3310,7 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "components_studentprofilemodal_emit",
-      "community": 28,
+      "community": 16,
       "norm_label": "emit"
     },
     {
@@ -3320,7 +3320,7 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "components_studentprofilemodal_close",
-      "community": 28,
+      "community": 16,
       "norm_label": "close()"
     },
     {
@@ -3400,7 +3400,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dossier_addassessmentmodal",
-      "community": 16,
+      "community": 1,
       "norm_label": "addassessmentmodal.vue"
     },
     {
@@ -3410,7 +3410,7 @@
       "source_location": "L417",
       "_origin": "ast",
       "id": "dossier_addassessmentmodal_issbar",
-      "community": 16,
+      "community": 1,
       "norm_label": "issbar"
     },
     {
@@ -3420,7 +3420,7 @@
       "source_location": "L419",
       "_origin": "ast",
       "id": "dossier_addassessmentmodal_selectedexpcount",
-      "community": 16,
+      "community": 1,
       "norm_label": "selectedexpcount"
     },
     {
@@ -3430,7 +3430,7 @@
       "source_location": "L426",
       "_origin": "ast",
       "id": "dossier_addassessmentmodal_isexpselected",
-      "community": 16,
+      "community": 1,
       "norm_label": "isexpselected()"
     },
     {
@@ -3440,7 +3440,7 @@
       "source_location": "L433",
       "_origin": "ast",
       "id": "dossier_addassessmentmodal_toggleexpselection",
-      "community": 16,
+      "community": 1,
       "norm_label": "toggleexpselection()"
     },
     {
@@ -3850,7 +3850,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dossier_student360emailmodal",
-      "community": 14,
+      "community": 28,
       "norm_label": "student360emailmodal.vue"
     },
     {
@@ -3860,7 +3860,7 @@
       "source_location": "L170",
       "_origin": "ast",
       "id": "dossier_student360emailmodal_if",
-      "community": 14,
+      "community": 28,
       "norm_label": "if()"
     },
     {
@@ -4620,7 +4620,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "grades_gradesgridsbar",
-      "community": 14,
+      "community": 28,
       "norm_label": "gradesgridsbar.vue"
     },
     {
@@ -4630,7 +4630,7 @@
       "source_location": "L590",
       "_origin": "ast",
       "id": "grades_gradesgridsbar_for",
-      "community": 14,
+      "community": 28,
       "norm_label": "for()"
     },
     {
@@ -5267,7 +5267,7 @@
       "label": "templates",
       "file_type": "code",
       "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
-      "source_location": "L449",
+      "source_location": "L450",
       "_origin": "ast",
       "id": "setup_assessmentframeworksettings_templates",
       "community": 61,
@@ -5277,7 +5277,7 @@
       "label": "newTemplateName",
       "file_type": "code",
       "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
-      "source_location": "L450",
+      "source_location": "L451",
       "_origin": "ast",
       "id": "setup_assessmentframeworksettings_newtemplatename",
       "community": 61,
@@ -5287,377 +5287,17 @@
       "label": "showImportModal",
       "file_type": "code",
       "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
-      "source_location": "L451",
+      "source_location": "L452",
       "_origin": "ast",
       "id": "setup_assessmentframeworksettings_showimportmodal",
       "community": 61,
       "norm_label": "showimportmodal"
     },
     {
-      "label": "expandedUnitId",
-      "file_type": "code",
-      "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
-      "source_location": "L453",
-      "_origin": "ast",
-      "id": "setup_assessmentframeworksettings_expandedunitid",
-      "community": 61,
-      "norm_label": "expandedunitid"
-    },
-    {
-      "label": "newExpectationCode",
-      "file_type": "code",
-      "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
-      "source_location": "L454",
-      "_origin": "ast",
-      "id": "setup_assessmentframeworksettings_newexpectationcode",
-      "community": 61,
-      "norm_label": "newexpectationcode"
-    },
-    {
-      "label": "newExpectationDesc",
-      "file_type": "code",
-      "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
-      "source_location": "L455",
-      "_origin": "ast",
-      "id": "setup_assessmentframeworksettings_newexpectationdesc",
-      "community": 61,
-      "norm_label": "newexpectationdesc"
-    },
-    {
-      "label": "expectationSearchQuery",
-      "file_type": "code",
-      "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
-      "source_location": "L456",
-      "_origin": "ast",
-      "id": "setup_assessmentframeworksettings_expectationsearchquery",
-      "community": 61,
-      "norm_label": "expectationsearchquery"
-    },
-    {
-      "label": "editingExpectationId",
-      "file_type": "code",
-      "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
-      "source_location": "L458",
-      "_origin": "ast",
-      "id": "setup_assessmentframeworksettings_editingexpectationid",
-      "community": 61,
-      "norm_label": "editingexpectationid"
-    },
-    {
-      "label": "editingExpectationCode",
-      "file_type": "code",
-      "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
-      "source_location": "L459",
-      "_origin": "ast",
-      "id": "setup_assessmentframeworksettings_editingexpectationcode",
-      "community": 61,
-      "norm_label": "editingexpectationcode"
-    },
-    {
-      "label": "editingExpectationDesc",
-      "file_type": "code",
-      "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
-      "source_location": "L460",
-      "_origin": "ast",
-      "id": "setup_assessmentframeworksettings_editingexpectationdesc",
-      "community": 61,
-      "norm_label": "editingexpectationdesc"
-    },
-    {
-      "label": "toggleUnitExpand()",
-      "file_type": "code",
-      "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
-      "source_location": "L462",
-      "_origin": "ast",
-      "id": "setup_assessmentframeworksettings_toggleunitexpand",
-      "community": 61,
-      "norm_label": "toggleunitexpand()"
-    },
-    {
-      "label": "getFilteredUnitExpectations()",
-      "file_type": "code",
-      "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
-      "source_location": "L469",
-      "_origin": "ast",
-      "id": "setup_assessmentframeworksettings_getfilteredunitexpectations",
-      "community": 61,
-      "norm_label": "getfilteredunitexpectations()"
-    },
-    {
-      "label": "startEditExpectation()",
-      "file_type": "code",
-      "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
-      "source_location": "L479",
-      "_origin": "ast",
-      "id": "setup_assessmentframeworksettings_starteditexpectation",
-      "community": 61,
-      "norm_label": "starteditexpectation()"
-    },
-    {
-      "label": "cancelEditExpectation()",
-      "file_type": "code",
-      "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
-      "source_location": "L485",
-      "_origin": "ast",
-      "id": "setup_assessmentframeworksettings_canceleditexpectation",
-      "community": 61,
-      "norm_label": "canceleditexpectation()"
-    },
-    {
-      "label": "saveEditExpectation()",
-      "file_type": "code",
-      "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
-      "source_location": "L491",
-      "_origin": "ast",
-      "id": "setup_assessmentframeworksettings_saveeditexpectation",
-      "community": 61,
-      "norm_label": "saveeditexpectation()"
-    },
-    {
-      "label": "onExpectationImport()",
-      "file_type": "code",
-      "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
-      "source_location": "L523",
-      "_origin": "ast",
-      "id": "setup_assessmentframeworksettings_onexpectationimport",
-      "community": 61,
-      "norm_label": "onexpectationimport()"
-    },
-    {
-      "label": "copyUnitsToAllSections()",
-      "file_type": "code",
-      "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
-      "source_location": "L621",
-      "_origin": "ast",
-      "id": "setup_assessmentframeworksettings_copyunitstoallsections",
-      "community": 61,
-      "norm_label": "copyunitstoallsections()"
-    },
-    {
-      "label": "addExpectation()",
-      "file_type": "code",
-      "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
-      "source_location": "L666",
-      "_origin": "ast",
-      "id": "setup_assessmentframeworksettings_addexpectation",
-      "community": 61,
-      "norm_label": "addexpectation()"
-    },
-    {
-      "label": "deleteExpectation()",
-      "file_type": "code",
-      "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
-      "source_location": "L681",
-      "_origin": "ast",
-      "id": "setup_assessmentframeworksettings_deleteexpectation",
-      "community": 61,
-      "norm_label": "deleteexpectation()"
-    },
-    {
-      "label": "activeCourseSection",
-      "file_type": "code",
-      "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
-      "source_location": "L706",
-      "_origin": "ast",
-      "id": "setup_assessmentframeworksettings_activecoursesection",
-      "community": 61,
-      "norm_label": "activecoursesection"
-    },
-    {
-      "label": "availableCourseSections",
-      "file_type": "code",
-      "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
-      "source_location": "L708",
-      "_origin": "ast",
-      "id": "setup_assessmentframeworksettings_availablecoursesections",
-      "community": 61,
-      "norm_label": "availablecoursesections"
-    },
-    {
-      "label": "_ensureSectionFramework()",
-      "file_type": "code",
-      "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
-      "source_location": "L730",
-      "_origin": "ast",
-      "id": "setup_assessmentframeworksettings_ensuresectionframework",
-      "community": 61,
-      "norm_label": "_ensuresectionframework()"
-    },
-    {
-      "label": "activeCategories",
-      "file_type": "code",
-      "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
-      "source_location": "L743",
-      "_origin": "ast",
-      "id": "setup_assessmentframeworksettings_activecategories",
-      "community": 61,
-      "norm_label": "activecategories"
-    },
-    {
-      "label": "activeUnits",
-      "file_type": "code",
-      "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
-      "source_location": "L751",
-      "_origin": "ast",
-      "id": "setup_assessmentframeworksettings_activeunits",
-      "community": 61,
-      "norm_label": "activeunits"
-    },
-    {
-      "label": "totalExpectationsCount",
-      "file_type": "code",
-      "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
-      "source_location": "L759",
-      "_origin": "ast",
-      "id": "setup_assessmentframeworksettings_totalexpectationscount",
-      "community": 61,
-      "norm_label": "totalexpectationscount"
-    },
-    {
-      "label": "onClearExpectationsFromModal()",
-      "file_type": "code",
-      "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
-      "source_location": "L763",
-      "_origin": "ast",
-      "id": "setup_assessmentframeworksettings_onclearexpectationsfrommodal",
-      "community": 61,
-      "norm_label": "onclearexpectationsfrommodal()"
-    },
-    {
-      "label": "totalWeight",
-      "file_type": "code",
-      "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
-      "source_location": "L798",
-      "_origin": "ast",
-      "id": "setup_assessmentframeworksettings_totalweight",
-      "community": 61,
-      "norm_label": "totalweight"
-    },
-    {
-      "label": "debouncedSave()",
-      "file_type": "code",
-      "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
-      "source_location": "L804",
-      "_origin": "ast",
-      "id": "setup_assessmentframeworksettings_debouncedsave",
-      "community": 61,
-      "norm_label": "debouncedsave()"
-    },
-    {
-      "label": "saveGradebookSettings()",
-      "file_type": "code",
-      "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
-      "source_location": "L827",
-      "_origin": "ast",
-      "id": "setup_assessmentframeworksettings_savegradebooksettings",
-      "community": 61,
-      "norm_label": "savegradebooksettings()"
-    },
-    {
-      "label": "addCategory()",
-      "file_type": "code",
-      "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
-      "source_location": "L838",
-      "_origin": "ast",
-      "id": "setup_assessmentframeworksettings_addcategory",
-      "community": 61,
-      "norm_label": "addcategory()"
-    },
-    {
-      "label": "moveCategory()",
-      "file_type": "code",
-      "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
-      "source_location": "L860",
-      "_origin": "ast",
-      "id": "setup_assessmentframeworksettings_movecategory",
-      "community": 61,
-      "norm_label": "movecategory()"
-    },
-    {
-      "label": "moveUnit()",
-      "file_type": "code",
-      "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
-      "source_location": "L873",
-      "_origin": "ast",
-      "id": "setup_assessmentframeworksettings_moveunit",
-      "community": 61,
-      "norm_label": "moveunit()"
-    },
-    {
-      "label": "frameworkWarning",
-      "file_type": "code",
-      "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
-      "source_location": "L886",
-      "_origin": "ast",
-      "id": "setup_assessmentframeworksettings_frameworkwarning",
-      "community": 61,
-      "norm_label": "frameworkwarning"
-    },
-    {
-      "label": "frameworkBannerType",
-      "file_type": "code",
-      "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
-      "source_location": "L887",
-      "_origin": "ast",
-      "id": "setup_assessmentframeworksettings_frameworkbannertype",
-      "community": 61,
-      "norm_label": "frameworkbannertype"
-    },
-    {
-      "label": "showWarning()",
-      "file_type": "code",
-      "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
-      "source_location": "L889",
-      "_origin": "ast",
-      "id": "setup_assessmentframeworksettings_showwarning",
-      "community": 61,
-      "norm_label": "showwarning()"
-    },
-    {
-      "label": "showSuccess()",
-      "file_type": "code",
-      "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
-      "source_location": "L897",
-      "_origin": "ast",
-      "id": "setup_assessmentframeworksettings_showsuccess",
-      "community": 61,
-      "norm_label": "showsuccess()"
-    },
-    {
-      "label": "onDeleteCategory()",
-      "file_type": "code",
-      "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
-      "source_location": "L905",
-      "_origin": "ast",
-      "id": "setup_assessmentframeworksettings_ondeletecategory",
-      "community": 61,
-      "norm_label": "ondeletecategory()"
-    },
-    {
-      "label": "addUnit()",
-      "file_type": "code",
-      "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
-      "source_location": "L932",
-      "_origin": "ast",
-      "id": "setup_assessmentframeworksettings_addunit",
-      "community": 61,
-      "norm_label": "addunit()"
-    },
-    {
-      "label": "onDeleteUnit()",
-      "file_type": "code",
-      "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
-      "source_location": "L954",
-      "_origin": "ast",
-      "id": "setup_assessmentframeworksettings_ondeleteunit",
-      "community": 61,
-      "norm_label": "ondeleteunit()"
-    },
-    {
       "label": "previewTemplate",
       "file_type": "code",
       "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
-      "source_location": "L989",
+      "source_location": "L453",
       "_origin": "ast",
       "id": "setup_assessmentframeworksettings_previewtemplate",
       "community": 61,
@@ -5667,17 +5307,397 @@
       "label": "showPreviewModal",
       "file_type": "code",
       "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
-      "source_location": "L990",
+      "source_location": "L454",
       "_origin": "ast",
       "id": "setup_assessmentframeworksettings_showpreviewmodal",
       "community": 61,
       "norm_label": "showpreviewmodal"
     },
     {
+      "label": "templateNotice",
+      "file_type": "code",
+      "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
+      "source_location": "L456",
+      "_origin": "ast",
+      "id": "setup_assessmentframeworksettings_templatenotice",
+      "community": 61,
+      "norm_label": "templatenotice"
+    },
+    {
+      "label": "showTemplateNotice()",
+      "file_type": "code",
+      "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
+      "source_location": "L459",
+      "_origin": "ast",
+      "id": "setup_assessmentframeworksettings_showtemplatenotice",
+      "community": 61,
+      "norm_label": "showtemplatenotice()"
+    },
+    {
+      "label": "expandedUnitId",
+      "file_type": "code",
+      "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
+      "source_location": "L467",
+      "_origin": "ast",
+      "id": "setup_assessmentframeworksettings_expandedunitid",
+      "community": 61,
+      "norm_label": "expandedunitid"
+    },
+    {
+      "label": "newExpectationCode",
+      "file_type": "code",
+      "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
+      "source_location": "L468",
+      "_origin": "ast",
+      "id": "setup_assessmentframeworksettings_newexpectationcode",
+      "community": 61,
+      "norm_label": "newexpectationcode"
+    },
+    {
+      "label": "newExpectationDesc",
+      "file_type": "code",
+      "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
+      "source_location": "L469",
+      "_origin": "ast",
+      "id": "setup_assessmentframeworksettings_newexpectationdesc",
+      "community": 61,
+      "norm_label": "newexpectationdesc"
+    },
+    {
+      "label": "expectationSearchQuery",
+      "file_type": "code",
+      "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
+      "source_location": "L470",
+      "_origin": "ast",
+      "id": "setup_assessmentframeworksettings_expectationsearchquery",
+      "community": 61,
+      "norm_label": "expectationsearchquery"
+    },
+    {
+      "label": "editingExpectationId",
+      "file_type": "code",
+      "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
+      "source_location": "L472",
+      "_origin": "ast",
+      "id": "setup_assessmentframeworksettings_editingexpectationid",
+      "community": 61,
+      "norm_label": "editingexpectationid"
+    },
+    {
+      "label": "editingExpectationCode",
+      "file_type": "code",
+      "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
+      "source_location": "L473",
+      "_origin": "ast",
+      "id": "setup_assessmentframeworksettings_editingexpectationcode",
+      "community": 61,
+      "norm_label": "editingexpectationcode"
+    },
+    {
+      "label": "editingExpectationDesc",
+      "file_type": "code",
+      "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
+      "source_location": "L474",
+      "_origin": "ast",
+      "id": "setup_assessmentframeworksettings_editingexpectationdesc",
+      "community": 61,
+      "norm_label": "editingexpectationdesc"
+    },
+    {
+      "label": "toggleUnitExpand()",
+      "file_type": "code",
+      "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
+      "source_location": "L476",
+      "_origin": "ast",
+      "id": "setup_assessmentframeworksettings_toggleunitexpand",
+      "community": 61,
+      "norm_label": "toggleunitexpand()"
+    },
+    {
+      "label": "getFilteredUnitExpectations()",
+      "file_type": "code",
+      "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
+      "source_location": "L483",
+      "_origin": "ast",
+      "id": "setup_assessmentframeworksettings_getfilteredunitexpectations",
+      "community": 61,
+      "norm_label": "getfilteredunitexpectations()"
+    },
+    {
+      "label": "startEditExpectation()",
+      "file_type": "code",
+      "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
+      "source_location": "L493",
+      "_origin": "ast",
+      "id": "setup_assessmentframeworksettings_starteditexpectation",
+      "community": 61,
+      "norm_label": "starteditexpectation()"
+    },
+    {
+      "label": "cancelEditExpectation()",
+      "file_type": "code",
+      "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
+      "source_location": "L499",
+      "_origin": "ast",
+      "id": "setup_assessmentframeworksettings_canceleditexpectation",
+      "community": 61,
+      "norm_label": "canceleditexpectation()"
+    },
+    {
+      "label": "saveEditExpectation()",
+      "file_type": "code",
+      "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
+      "source_location": "L505",
+      "_origin": "ast",
+      "id": "setup_assessmentframeworksettings_saveeditexpectation",
+      "community": 61,
+      "norm_label": "saveeditexpectation()"
+    },
+    {
+      "label": "onExpectationImport()",
+      "file_type": "code",
+      "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
+      "source_location": "L537",
+      "_origin": "ast",
+      "id": "setup_assessmentframeworksettings_onexpectationimport",
+      "community": 61,
+      "norm_label": "onexpectationimport()"
+    },
+    {
+      "label": "copyUnitsToAllSections()",
+      "file_type": "code",
+      "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
+      "source_location": "L635",
+      "_origin": "ast",
+      "id": "setup_assessmentframeworksettings_copyunitstoallsections",
+      "community": 61,
+      "norm_label": "copyunitstoallsections()"
+    },
+    {
+      "label": "addExpectation()",
+      "file_type": "code",
+      "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
+      "source_location": "L680",
+      "_origin": "ast",
+      "id": "setup_assessmentframeworksettings_addexpectation",
+      "community": 61,
+      "norm_label": "addexpectation()"
+    },
+    {
+      "label": "deleteExpectation()",
+      "file_type": "code",
+      "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
+      "source_location": "L695",
+      "_origin": "ast",
+      "id": "setup_assessmentframeworksettings_deleteexpectation",
+      "community": 61,
+      "norm_label": "deleteexpectation()"
+    },
+    {
+      "label": "activeCourseSection",
+      "file_type": "code",
+      "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
+      "source_location": "L720",
+      "_origin": "ast",
+      "id": "setup_assessmentframeworksettings_activecoursesection",
+      "community": 61,
+      "norm_label": "activecoursesection"
+    },
+    {
+      "label": "availableCourseSections",
+      "file_type": "code",
+      "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
+      "source_location": "L722",
+      "_origin": "ast",
+      "id": "setup_assessmentframeworksettings_availablecoursesections",
+      "community": 61,
+      "norm_label": "availablecoursesections"
+    },
+    {
+      "label": "_ensureSectionFramework()",
+      "file_type": "code",
+      "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
+      "source_location": "L744",
+      "_origin": "ast",
+      "id": "setup_assessmentframeworksettings_ensuresectionframework",
+      "community": 61,
+      "norm_label": "_ensuresectionframework()"
+    },
+    {
+      "label": "activeCategories",
+      "file_type": "code",
+      "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
+      "source_location": "L757",
+      "_origin": "ast",
+      "id": "setup_assessmentframeworksettings_activecategories",
+      "community": 61,
+      "norm_label": "activecategories"
+    },
+    {
+      "label": "activeUnits",
+      "file_type": "code",
+      "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
+      "source_location": "L765",
+      "_origin": "ast",
+      "id": "setup_assessmentframeworksettings_activeunits",
+      "community": 61,
+      "norm_label": "activeunits"
+    },
+    {
+      "label": "totalExpectationsCount",
+      "file_type": "code",
+      "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
+      "source_location": "L773",
+      "_origin": "ast",
+      "id": "setup_assessmentframeworksettings_totalexpectationscount",
+      "community": 61,
+      "norm_label": "totalexpectationscount"
+    },
+    {
+      "label": "onClearExpectationsFromModal()",
+      "file_type": "code",
+      "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
+      "source_location": "L777",
+      "_origin": "ast",
+      "id": "setup_assessmentframeworksettings_onclearexpectationsfrommodal",
+      "community": 61,
+      "norm_label": "onclearexpectationsfrommodal()"
+    },
+    {
+      "label": "totalWeight",
+      "file_type": "code",
+      "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
+      "source_location": "L812",
+      "_origin": "ast",
+      "id": "setup_assessmentframeworksettings_totalweight",
+      "community": 61,
+      "norm_label": "totalweight"
+    },
+    {
+      "label": "debouncedSave()",
+      "file_type": "code",
+      "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
+      "source_location": "L818",
+      "_origin": "ast",
+      "id": "setup_assessmentframeworksettings_debouncedsave",
+      "community": 61,
+      "norm_label": "debouncedsave()"
+    },
+    {
+      "label": "saveGradebookSettings()",
+      "file_type": "code",
+      "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
+      "source_location": "L841",
+      "_origin": "ast",
+      "id": "setup_assessmentframeworksettings_savegradebooksettings",
+      "community": 61,
+      "norm_label": "savegradebooksettings()"
+    },
+    {
+      "label": "addCategory()",
+      "file_type": "code",
+      "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
+      "source_location": "L852",
+      "_origin": "ast",
+      "id": "setup_assessmentframeworksettings_addcategory",
+      "community": 61,
+      "norm_label": "addcategory()"
+    },
+    {
+      "label": "moveCategory()",
+      "file_type": "code",
+      "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
+      "source_location": "L874",
+      "_origin": "ast",
+      "id": "setup_assessmentframeworksettings_movecategory",
+      "community": 61,
+      "norm_label": "movecategory()"
+    },
+    {
+      "label": "moveUnit()",
+      "file_type": "code",
+      "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
+      "source_location": "L887",
+      "_origin": "ast",
+      "id": "setup_assessmentframeworksettings_moveunit",
+      "community": 61,
+      "norm_label": "moveunit()"
+    },
+    {
+      "label": "frameworkWarning",
+      "file_type": "code",
+      "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
+      "source_location": "L900",
+      "_origin": "ast",
+      "id": "setup_assessmentframeworksettings_frameworkwarning",
+      "community": 61,
+      "norm_label": "frameworkwarning"
+    },
+    {
+      "label": "frameworkBannerType",
+      "file_type": "code",
+      "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
+      "source_location": "L901",
+      "_origin": "ast",
+      "id": "setup_assessmentframeworksettings_frameworkbannertype",
+      "community": 61,
+      "norm_label": "frameworkbannertype"
+    },
+    {
+      "label": "showWarning()",
+      "file_type": "code",
+      "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
+      "source_location": "L903",
+      "_origin": "ast",
+      "id": "setup_assessmentframeworksettings_showwarning",
+      "community": 61,
+      "norm_label": "showwarning()"
+    },
+    {
+      "label": "showSuccess()",
+      "file_type": "code",
+      "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
+      "source_location": "L911",
+      "_origin": "ast",
+      "id": "setup_assessmentframeworksettings_showsuccess",
+      "community": 61,
+      "norm_label": "showsuccess()"
+    },
+    {
+      "label": "onDeleteCategory()",
+      "file_type": "code",
+      "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
+      "source_location": "L919",
+      "_origin": "ast",
+      "id": "setup_assessmentframeworksettings_ondeletecategory",
+      "community": 61,
+      "norm_label": "ondeletecategory()"
+    },
+    {
+      "label": "addUnit()",
+      "file_type": "code",
+      "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
+      "source_location": "L946",
+      "_origin": "ast",
+      "id": "setup_assessmentframeworksettings_addunit",
+      "community": 61,
+      "norm_label": "addunit()"
+    },
+    {
+      "label": "onDeleteUnit()",
+      "file_type": "code",
+      "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
+      "source_location": "L968",
+      "_origin": "ast",
+      "id": "setup_assessmentframeworksettings_ondeleteunit",
+      "community": 61,
+      "norm_label": "ondeleteunit()"
+    },
+    {
       "label": "openPreviewTemplate()",
       "file_type": "code",
       "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
-      "source_location": "L992",
+      "source_location": "L1003",
       "_origin": "ast",
       "id": "setup_assessmentframeworksettings_openpreviewtemplate",
       "community": 61,
@@ -5687,7 +5707,7 @@
       "label": "closePreviewModal()",
       "file_type": "code",
       "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
-      "source_location": "L997",
+      "source_location": "L1008",
       "_origin": "ast",
       "id": "setup_assessmentframeworksettings_closepreviewmodal",
       "community": 61,
@@ -5697,7 +5717,7 @@
       "label": "getTemplateTotalWeight()",
       "file_type": "code",
       "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
-      "source_location": "L1002",
+      "source_location": "L1013",
       "_origin": "ast",
       "id": "setup_assessmentframeworksettings_gettemplatetotalweight",
       "community": 61,
@@ -5707,7 +5727,7 @@
       "label": "getTemplateTotalExpectations()",
       "file_type": "code",
       "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
-      "source_location": "L1007",
+      "source_location": "L1018",
       "_origin": "ast",
       "id": "setup_assessmentframeworksettings_gettemplatetotalexpectations",
       "community": 61,
@@ -5717,7 +5737,7 @@
       "label": "applyFromPreview()",
       "file_type": "code",
       "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
-      "source_location": "L1012",
+      "source_location": "L1023",
       "_origin": "ast",
       "id": "setup_assessmentframeworksettings_applyfrompreview",
       "community": 61,
@@ -5727,7 +5747,7 @@
       "label": "saveTemplate()",
       "file_type": "code",
       "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
-      "source_location": "L1017",
+      "source_location": "L1028",
       "_origin": "ast",
       "id": "setup_assessmentframeworksettings_savetemplate",
       "community": 61,
@@ -5737,7 +5757,7 @@
       "label": "onApplyTemplate()",
       "file_type": "code",
       "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
-      "source_location": "L1037",
+      "source_location": "L1048",
       "_origin": "ast",
       "id": "setup_assessmentframeworksettings_onapplytemplate",
       "community": 61,
@@ -5747,7 +5767,7 @@
       "label": "activeClassClassCategoriesUpdate()",
       "file_type": "code",
       "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
-      "source_location": "L1068",
+      "source_location": "L1082",
       "_origin": "ast",
       "id": "setup_assessmentframeworksettings_activeclassclasscategoriesupdate",
       "community": 61,
@@ -5757,7 +5777,7 @@
       "label": "onDeleteTemplate()",
       "file_type": "code",
       "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
-      "source_location": "L1082",
+      "source_location": "L1096",
       "_origin": "ast",
       "id": "setup_assessmentframeworksettings_ondeletetemplate",
       "community": 61,
@@ -6110,7 +6130,7 @@
       "source_location": "L437",
       "_origin": "ast",
       "id": "setup_databasemaintenancesettings_doexport",
-      "community": 9,
+      "community": 26,
       "norm_label": "doexport()"
     },
     {
@@ -6430,7 +6450,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "setup_expectationimportmodal",
-      "community": 112,
+      "community": 88,
       "norm_label": "expectationimportmodal.vue"
     },
     {
@@ -7020,7 +7040,7 @@
       "source_location": "L238",
       "_origin": "ast",
       "id": "composables_useattendancetracker_reconcilestaletrips",
-      "community": 42,
+      "community": 26,
       "norm_label": "reconcilestaletrips()"
     },
     {
@@ -7500,7 +7520,7 @@
       "source_location": "L1177",
       "_origin": "ast",
       "id": "composables_useclassroom_logtoggleevent",
-      "community": 42,
+      "community": 26,
       "norm_label": "logtoggleevent()"
     },
     {
@@ -7690,7 +7710,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "composables_useclassroomstate_classlist",
-      "community": 26,
+      "community": 24,
       "norm_label": "classlist"
     },
     {
@@ -7710,7 +7730,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "composables_useclassroomstate_activeclass",
-      "community": 24,
+      "community": 26,
       "norm_label": "activeclass"
     },
     {
@@ -7920,7 +7940,7 @@
       "source_location": "L44",
       "_origin": "ast",
       "id": "composables_useclassroomstate_activesubjectid",
-      "community": 14,
+      "community": 28,
       "norm_label": "activesubjectid"
     },
     {
@@ -7930,7 +7950,7 @@
       "source_location": "L47",
       "_origin": "ast",
       "id": "composables_useclassroomstate_teachingmode",
-      "community": 58,
+      "community": 88,
       "norm_label": "teachingmode"
     },
     {
@@ -7940,7 +7960,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "composables_useelementary",
-      "community": 58,
+      "community": 88,
       "norm_label": "useelementary.js"
     },
     {
@@ -7960,7 +7980,7 @@
       "source_location": "L94",
       "_origin": "ast",
       "id": "composables_useelementary_parsegradesfromclass",
-      "community": 58,
+      "community": 88,
       "norm_label": "parsegradesfromclass()"
     },
     {
@@ -7970,7 +7990,7 @@
       "source_location": "L111",
       "_origin": "ast",
       "id": "composables_useelementary_cleanunitname",
-      "community": 58,
+      "community": 88,
       "norm_label": "cleanunitname()"
     },
     {
@@ -7980,7 +8000,7 @@
       "source_location": "L156",
       "_origin": "ast",
       "id": "composables_useelementary_detectgradefromclassname",
-      "community": 58,
+      "community": 88,
       "norm_label": "detectgradefromclassname()"
     },
     {
@@ -7990,7 +8010,7 @@
       "source_location": "L161",
       "_origin": "ast",
       "id": "composables_useelementary_geteffectivegradelevel",
-      "community": 58,
+      "community": 88,
       "norm_label": "geteffectivegradelevel()"
     },
     {
@@ -8000,7 +8020,7 @@
       "source_location": "L191",
       "_origin": "ast",
       "id": "composables_useelementary_getstudenteffectivegrade",
-      "community": 1,
+      "community": 78,
       "norm_label": "getstudenteffectivegrade()"
     },
     {
@@ -8010,7 +8030,7 @@
       "source_location": "L199",
       "_origin": "ast",
       "id": "composables_useelementary_populatesubjectfrompresets",
-      "community": 58,
+      "community": 88,
       "norm_label": "populatesubjectfrompresets()"
     },
     {
@@ -8020,7 +8040,7 @@
       "source_location": "L266",
       "_origin": "ast",
       "id": "composables_useelementary_populatesubjectfrompreset",
-      "community": 58,
+      "community": 88,
       "norm_label": "populatesubjectfrompreset()"
     },
     {
@@ -8060,7 +8080,7 @@
       "source_location": "L364",
       "_origin": "ast",
       "id": "composables_useelementary_useelementary",
-      "community": 58,
+      "community": 88,
       "norm_label": "useelementary()"
     },
     {
@@ -8110,7 +8130,7 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "composables_usegradebook_activeclassrecord",
-      "community": 14,
+      "community": 28,
       "norm_label": "activeclassrecord"
     },
     {
@@ -8120,7 +8140,7 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "composables_usegradebook_assessments",
-      "community": 14,
+      "community": 28,
       "norm_label": "assessments"
     },
     {
@@ -8280,7 +8300,7 @@
       "source_location": "L104",
       "_origin": "ast",
       "id": "composables_usegradebook_isstudentinsubcohort",
-      "community": 1,
+      "community": 78,
       "norm_label": "isstudentinsubcohort()"
     },
     {
@@ -8300,7 +8320,7 @@
       "source_location": "L145",
       "_origin": "ast",
       "id": "composables_usegradebook_isassessmentapplicabletostudent",
-      "community": 1,
+      "community": 78,
       "norm_label": "isassessmentapplicabletostudent()"
     },
     {
@@ -8380,7 +8400,7 @@
       "source_location": "L170",
       "_origin": "ast",
       "id": "composables_usegradebook_showaddassessmentmodal",
-      "community": 16,
+      "community": 1,
       "norm_label": "showaddassessmentmodal"
     },
     {
@@ -8390,7 +8410,7 @@
       "source_location": "L171",
       "_origin": "ast",
       "id": "composables_usegradebook_iseditingassessment",
-      "community": 16,
+      "community": 1,
       "norm_label": "iseditingassessment"
     },
     {
@@ -8450,7 +8470,7 @@
       "source_location": "L179",
       "_origin": "ast",
       "id": "composables_usegradebook_newassessment",
-      "community": 16,
+      "community": 1,
       "norm_label": "newassessment"
     },
     {
@@ -8460,7 +8480,7 @@
       "source_location": "L196",
       "_origin": "ast",
       "id": "composables_usegradebook_assessmenttypes",
-      "community": 16,
+      "community": 1,
       "norm_label": "assessmenttypes"
     },
     {
@@ -8470,7 +8490,7 @@
       "source_location": "L202",
       "_origin": "ast",
       "id": "composables_usegradebook_sortedunits",
-      "community": 16,
+      "community": 1,
       "norm_label": "sortedunits"
     },
     {
@@ -8620,7 +8640,7 @@
       "source_location": "L529",
       "_origin": "ast",
       "id": "composables_usegradebook_closeaddassessment",
-      "community": 16,
+      "community": 1,
       "norm_label": "closeaddassessment()"
     },
     {
@@ -8630,7 +8650,7 @@
       "source_location": "L533",
       "_origin": "ast",
       "id": "composables_usegradebook_ontargetchange",
-      "community": 16,
+      "community": 1,
       "norm_label": "ontargetchange()"
     },
     {
@@ -8820,7 +8840,7 @@
       "source_location": "L1373",
       "_origin": "ast",
       "id": "composables_usegradebook_grademap",
-      "community": 14,
+      "community": 28,
       "norm_label": "grademap"
     },
     {
@@ -9630,7 +9650,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "curriculum_index",
-      "community": 112,
+      "community": 88,
       "norm_label": "index.js"
     },
     {
@@ -9640,7 +9660,7 @@
       "source_location": "L46",
       "_origin": "ast",
       "id": "curriculum_index_curriculumpresets",
-      "community": 112,
+      "community": 88,
       "norm_label": "curriculumpresets"
     },
     {
@@ -9650,7 +9670,7 @@
       "source_location": "L90",
       "_origin": "ast",
       "id": "curriculum_index_getpresetsbypanel",
-      "community": 112,
+      "community": 88,
       "norm_label": "getpresetsbypanel()"
     },
     {
@@ -9660,7 +9680,7 @@
       "source_location": "L97",
       "_origin": "ast",
       "id": "curriculum_index_findelementarypreset",
-      "community": 112,
+      "community": 88,
       "norm_label": "findelementarypreset()"
     },
     {
@@ -9670,7 +9690,7 @@
       "source_location": "L145",
       "_origin": "ast",
       "id": "curriculum_index_findelementarypresets",
-      "community": 112,
+      "community": 88,
       "norm_label": "findelementarypresets()"
     },
     {
@@ -9930,7 +9950,7 @@
       "source_location": "L39",
       "_origin": "ast",
       "id": "curriculum_schema_properties_subjectcode",
-      "community": 130,
+      "community": 112,
       "norm_label": "subjectcode"
     },
     {
@@ -9940,7 +9960,7 @@
       "source_location": "L40",
       "_origin": "ast",
       "id": "curriculum_schema_subjectcode_type",
-      "community": 130,
+      "community": 112,
       "norm_label": "type"
     },
     {
@@ -9950,7 +9970,7 @@
       "source_location": "L41",
       "_origin": "ast",
       "id": "curriculum_schema_subjectcode_description",
-      "community": 130,
+      "community": 112,
       "norm_label": "description"
     },
     {
@@ -9960,7 +9980,7 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "curriculum_schema_properties_department",
-      "community": 123,
+      "community": 58,
       "norm_label": "department"
     },
     {
@@ -9970,7 +9990,7 @@
       "source_location": "L44",
       "_origin": "ast",
       "id": "curriculum_schema_department_type",
-      "community": 123,
+      "community": 58,
       "norm_label": "type"
     },
     {
@@ -9980,7 +10000,7 @@
       "source_location": "L45",
       "_origin": "ast",
       "id": "curriculum_schema_department_description",
-      "community": 123,
+      "community": 58,
       "norm_label": "description"
     },
     {
@@ -10780,7 +10800,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "db_exportservice",
-      "community": 26,
+      "community": 9,
       "norm_label": "exportservice.js"
     },
     {
@@ -10790,7 +10810,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "db_exportservice_exportgradebooktoexcel",
-      "community": 26,
+      "community": 9,
       "norm_label": "exportgradebooktoexcel()"
     },
     {
@@ -13160,7 +13180,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_dates",
-      "community": 26,
+      "community": 9,
       "norm_label": "dates.js"
     },
     {
@@ -13180,7 +13200,7 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "utils_dates_parselocal",
-      "community": 26,
+      "community": 9,
       "norm_label": "parselocal()"
     },
     {
@@ -13220,7 +13240,7 @@
       "source_location": "L96",
       "_origin": "ast",
       "id": "utils_dates_getschoolyearfromdate",
-      "community": 26,
+      "community": 9,
       "norm_label": "getschoolyearfromdate()"
     },
     {
@@ -13230,7 +13250,7 @@
       "source_location": "L120",
       "_origin": "ast",
       "id": "utils_dates_getsemesterfromdate",
-      "community": 26,
+      "community": 9,
       "norm_label": "getsemesterfromdate()"
     },
     {
@@ -13270,7 +13290,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_elementarysubjects",
-      "community": 58,
+      "community": 88,
       "norm_label": "elementarysubjects.js"
     },
     {
@@ -13280,7 +13300,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "utils_elementarysubjects_default_traditional_categories",
-      "community": 58,
+      "community": 88,
       "norm_label": "default_traditional_categories"
     },
     {
@@ -13290,7 +13310,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "utils_elementarysubjects_default_elementary_subjects",
-      "community": 58,
+      "community": 88,
       "norm_label": "default_elementary_subjects"
     },
     {
@@ -13300,7 +13320,7 @@
       "source_location": "L93",
       "_origin": "ast",
       "id": "utils_elementarysubjects_createdefaultelementarysubjects",
-      "community": 58,
+      "community": 129,
       "norm_label": "createdefaultelementarysubjects()"
     },
     {
@@ -23564,6 +23584,16 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
+      "source_location": "L471",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "setup_assessmentframeworksettings",
+      "target": "setup_assessmentframeworksettings_showtemplatenotice"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
       "source_location": "L889",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -23579,6 +23609,16 @@
       "confidence_score": 1.0,
       "source": "setup_assessmentframeworksettings",
       "target": "setup_assessmentframeworksettings_starteditexpectation"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
+      "source_location": "L468",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "setup_assessmentframeworksettings",
+      "target": "setup_assessmentframeworksettings_templatenotice"
     },
     {
       "relation": "contains",
@@ -23630,6 +23670,28 @@
       "confidence_score": 1.0,
       "source": "setup_assessmentframeworksettings",
       "target": "setup_expectationimportmodal"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
+      "source_location": "L1066",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "setup_assessmentframeworksettings_onapplytemplate",
+      "target": "setup_assessmentframeworksettings_showtemplatenotice"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
+      "source_location": "L1045",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "setup_assessmentframeworksettings_savetemplate",
+      "target": "setup_assessmentframeworksettings_showtemplatenotice"
     },
     {
       "relation": "calls",
@@ -40503,5 +40565,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "cdf4edc5135e63ee3e0548118eff323690c6efd4"
+  "built_at_commit": "412919a78fa7c612a75be1ccdb4d1c31695f1d9b"
 }
