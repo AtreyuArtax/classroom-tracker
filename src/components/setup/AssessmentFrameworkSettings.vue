@@ -264,24 +264,13 @@
             </p>
           </div>
           <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-            <!-- Save input & button -->
-            <div style="display: flex; gap: 6px; align-items: center;">
-              <input 
-                v-model="newTemplateName" 
-                class="setup__input setup__input--small" 
-                style="width: 170px;" 
-                placeholder="New Template Name" 
-                @keydown.enter.prevent="saveTemplate"
-              />
-              <button 
-                type="button" 
-                class="setup__btn-ghost setup__btn--small" 
-                :disabled="!newTemplateName.trim()" 
-                @click="saveTemplate"
-              >
-                <Save :size="13" /> Save Preset
-              </button>
-            </div>
+            <button 
+              type="button" 
+              class="setup__btn-primary setup__btn--small" 
+              @click="openSaveTemplateModal"
+            >
+              <Save :size="13" /> Save Current Setup as Template
+            </button>
           </div>
         </div>
 
@@ -337,6 +326,109 @@
         </div>
       </div>
     </div>
+
+    <!-- ── Save Template Modal ── -->
+    <BaseModal
+      v-if="showSaveModal"
+      :show="showSaveModal"
+      title="Save Current Setup as Template"
+      maxWidth="650px"
+      @close="closeSaveTemplateModal"
+    >
+      <div class="template-preview">
+        <p class="setup__hint" style="margin: 0 0 14px 0;">
+          Save the framework from 
+          <strong>{{ (availableCourseSections.length > 1 && activeCourseSection) ? `Section [${activeCourseSection}]` : activeClass?.name }}</strong> 
+          as a reusable assessment template:
+        </p>
+
+        <!-- Template Name Input -->
+        <div style="margin-bottom: 16px;">
+          <label class="setup__mini-label" style="display: block; margin-bottom: 6px;">Template Name</label>
+          <input 
+            v-model="newTemplateName" 
+            class="setup__input" 
+            :style="saveModalError ? 'border-color: #f59e0b;' : ''"
+            placeholder="e.g. SNC2D Grade 10 Science, 70/30 Standard..." 
+            @input="saveModalError = ''"
+            @keydown.enter.prevent="saveTemplate"
+            autofocus
+          />
+          <div 
+            v-if="saveModalError" 
+            class="setup__inline-banner setup__inline-banner--warning" 
+            style="margin-top: 8px; padding: 6px 10px; font-size: 0.8rem;"
+          >
+            <AlertTriangle :size="14" style="flex-shrink: 0;" />
+            <span style="font-weight: 600;">{{ saveModalError }}</span>
+          </div>
+        </div>
+
+        <!-- Categories Section -->
+        <div class="template-preview__section">
+          <h4 class="template-preview__title">
+            <LayoutTemplate :size="15" /> Categories & Weights ({{ totalWeight }}% Total)
+          </h4>
+          <div v-if="!activeCategories || activeCategories.length === 0" class="setup__hint">
+            No weighted categories configured.
+          </div>
+          <div v-else class="template-preview__cat-grid">
+            <div 
+              v-for="cat in activeCategories" 
+              :key="cat.categoryId || cat.name" 
+              class="template-preview__cat-chip"
+            >
+              <span class="template-preview__cat-name">{{ cat.name }}</span>
+              <span class="template-preview__cat-weight">{{ cat.weight }}%</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Units & Curriculum Expectations Section -->
+        <div class="template-preview__section" style="margin-top: 16px;">
+          <h4 class="template-preview__title">
+            <BookOpen :size="15" /> Curriculum Units & Expectations ({{ totalExpectationsCount }} Expectations)
+          </h4>
+          <div v-if="!activeUnits || activeUnits.length === 0" class="setup__hint">
+            No curriculum units configured for this class.
+          </div>
+          <div v-else class="template-preview__units-list">
+            <div 
+              v-for="(unit, uIdx) in activeUnits" 
+              :key="unit.unitId || uIdx"
+              class="template-preview__unit-item"
+            >
+              <div class="template-preview__unit-header">
+                <strong>Unit {{ uIdx + 1 }}: {{ unit.name }}</strong>
+                <span class="setup__tag-badge setup__tag-badge--cat">{{ unit.expectations?.length || 0 }} Expectations</span>
+              </div>
+              <div v-if="unit.expectations && unit.expectations.length > 0" class="template-preview__exp-chips">
+                <span 
+                  v-for="exp in unit.expectations" 
+                  :key="exp.expectationId || exp.code" 
+                  class="template-preview__exp-chip"
+                  :title="exp.description || exp.code"
+                >
+                  {{ exp.code }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <template #footer>
+        <button type="button" class="setup__btn-ghost" @click="closeSaveTemplateModal">Cancel</button>
+        <button 
+          type="button" 
+          class="setup__btn-primary" 
+          :disabled="!newTemplateName.trim()" 
+          @click="saveTemplate"
+        >
+          Save Template
+        </button>
+      </template>
+    </BaseModal>
 
     <!-- ── Template Preview Modal ── -->
     <BaseModal
@@ -450,6 +542,8 @@ const isSBAR = computed(() => activeClass.value?.gradingFramework === 'sbar')
 const templates = ref([])
 const newTemplateName = ref('')
 const showImportModal = ref(false)
+const showSaveModal = ref(false)
+const saveModalError = ref('')
 const previewTemplate = ref(null)
 const showPreviewModal = ref(false)
 
@@ -462,6 +556,21 @@ function showTemplateNotice(text, type = 'warning') {
   templateNoticeTimer = setTimeout(() => {
     templateNotice.value = { text: '', type: 'warning' }
   }, 6000)
+}
+
+function openSaveTemplateModal() {
+  const baseName = (availableCourseSections.value.length > 1 && activeCourseSection.value) 
+    ? activeCourseSection.value 
+    : (activeClass.value?.courseCode || activeClass.value?.name || '')
+  newTemplateName.value = baseName
+  saveModalError.value = ''
+  showSaveModal.value = true
+}
+
+function closeSaveTemplateModal() {
+  showSaveModal.value = false
+  saveModalError.value = ''
+  newTemplateName.value = ''
 }
 
 const expandedUnitId = ref(null)
@@ -1026,11 +1135,16 @@ async function applyFromPreview(tmpl) {
 }
 
 async function saveTemplate() {
-  if (!activeClass.value || !newTemplateName.value.trim()) return
+  if (!activeClass.value) return
+  const name = newTemplateName.value.trim()
+  if (!name) {
+    saveModalError.value = 'Please enter a template name.'
+    return
+  }
   
-  const existing = templates.value.some(t => t.name.toLowerCase() === newTemplateName.value.trim().toLowerCase())
+  const existing = templates.value.some(t => t.name.toLowerCase() === name.toLowerCase())
   if (existing) {
-    showTemplateNotice('A template with this name already exists.', 'warning')
+    saveModalError.value = `A template named "${name}" already exists. Please choose a unique name.`
     return
   }
 
@@ -1039,9 +1153,9 @@ async function saveTemplate() {
     gradebookUnits: JSON.parse(JSON.stringify(activeUnits.value || []))
   }
 
-  const template = await gradebookService.saveGradebookTemplate(newTemplateName.value.trim(), classData)
+  const template = await gradebookService.saveGradebookTemplate(name, classData)
   templates.value.push(template)
-  newTemplateName.value = ''
+  closeSaveTemplateModal()
   showTemplateNotice(`Template "${template.name}" saved successfully!`, 'success')
 }
 
@@ -1217,9 +1331,6 @@ onMounted(async () => {
 .setup__hint { font-size: 0.82rem; color: var(--text-secondary); line-height: 1.5; }
 .setup__input { width: 100%; min-height: 44px; padding: 10px 14px; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--bg-input, rgba(255,255,255,0.04)); color: var(--text); font-size: 0.9rem; font-weight: 600; transition: border-color 0.15s ease, box-shadow 0.15s ease; box-sizing: border-box; }
 .setup__input:focus { outline: none; border-color: var(--primary); }
-.setup__btn-primary { min-height: 44px; padding: 0 20px; border: none; border-radius: var(--radius-md); background: var(--primary); color: #ffffff; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: background 0.15s ease, transform 0.1s ease; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
-.setup__btn-primary:hover:not(:disabled) { background: var(--primary-hover); }
-.setup__btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
 .setup__btn-ghost { min-height: 44px; padding: 0 20px; border: 1px solid var(--border); border-radius: var(--radius-md); background: transparent; color: var(--text); font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: background 0.15s ease; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
 .setup__btn-ghost:hover:not(:disabled) { background: var(--bg-hover); }
 .setup__pill-btn { padding: 6px 12px; border-radius: 100px; border: 1px solid var(--border); background: transparent; color: var(--text-secondary); font-size: 0.78rem; font-weight: 600; cursor: pointer; transition: all 0.15s ease; }
@@ -1341,6 +1452,37 @@ onMounted(async () => {
 }
 .setup__icon-btn--save:hover {
   background: rgba(16, 185, 129, 0.15) !important;
+}
+
+/* Save Template Modal Styles */
+.template-save-modal {
+  display: flex;
+  flex-direction: column;
+}
+.template-save-modal__summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 12px 8px;
+  text-align: center;
+}
+.template-save-modal__summary-val {
+  display: block;
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: var(--primary);
+}
+.template-save-modal__summary-lbl {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-top: 2px;
 }
 </style>
 

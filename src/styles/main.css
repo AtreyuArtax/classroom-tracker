@@ -21,6 +21,7 @@
 /* ── 2. Design Tokens (CLAUDE.md §2 — exact spec) ─────────────────────── */
 :root {
   --primary: #4663ac;
+  --primary-hover: #3b5598;
   --primary-light: color-mix(in srgb, #4663ac 15%, white);
   --primary-dark: color-mix(in srgb, #4663ac 80%, black);
 
@@ -108,6 +109,7 @@
   color-scheme: dark;
 
   --primary: #6385e6;
+  --primary-hover: #4e70d4;
   --primary-light: rgba(99, 133, 230, 0.18);
   --primary-dark: color-mix(in srgb, #6385e6 85%, white);
 
@@ -171,6 +173,7 @@
     color-scheme: dark;
 
     --primary: #6385e6;
+    --primary-hover: #4e70d4;
     --primary-light: rgba(99, 133, 230, 0.18);
     --primary-dark: color-mix(in srgb, #6385e6 85%, white);
 
@@ -462,7 +465,7 @@ textarea {
 }
 
 .setup__btn-primary {
-  padding:       12px 20px;
+  padding:       10px 20px;
   border:        none;
   border-radius: var(--radius-md);
   background:    var(--primary);
@@ -471,14 +474,25 @@ textarea {
   font-weight:   600;
   cursor:        pointer;
   min-height:    44px;
-  transition:    opacity 0.15s ease;
-  display:       flex;
+  transition:    background 0.15s ease, opacity 0.15s ease, transform 0.1s ease;
+  display:       inline-flex;
   align-items:   center;
   justify-content: center;
   gap:           8px;
 }
-.setup__btn-primary:active { opacity: 0.8; }
+.setup__btn-primary:hover:not(:disabled) {
+  background: var(--primary-hover);
+  color: #fff;
+}
+.setup__btn-primary:active { opacity: 0.85; }
 .setup__btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.setup__btn-sm,
+.setup__btn--small {
+  min-height: 34px !important;
+  padding: 0 14px !important;
+  font-size: 0.82rem !important;
+}
 
 .setup__btn-danger {
   padding:       12px 20px;

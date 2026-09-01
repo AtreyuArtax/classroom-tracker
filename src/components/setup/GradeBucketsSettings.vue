@@ -528,28 +528,6 @@ async function saveBuckets() {
   color: var(--primary);
 }
 
-.setup__btn-primary {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: var(--primary);
-  color: #fff;
-  border: none;
-  border-radius: var(--radius-md);
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.setup__btn-primary:hover:not(:disabled) {
-  opacity: 0.9;
-}
-
-.setup__btn-primary:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
 .setup__icon-btn {
   background: transparent;
   border: none;
