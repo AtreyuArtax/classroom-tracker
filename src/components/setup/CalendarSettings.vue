@@ -139,6 +139,60 @@
       </BaseModal>
     </div>
 
+    <!-- Milestones -->
+    <div class="setup__card">
+      <h2 class="setup__card-title">
+        <Flag :size="20" /> Academic Milestones
+      </h2>
+      <p class="setup__hint">
+        Define key reporting cutoff dates (e.g. Progress Reports, Midterms, Term 1) for <strong>{{ selectedYear }}</strong>. 
+        These generate the date filter presets in your Gradebook and reporting snapshots.
+      </p>
+
+      <div class="setup__gb-list">
+        <div v-for="ms in filteredMilestones" :key="ms.milestoneId" class="setup__gb-item">
+          <div class="setup__term-row">
+            <div class="setup__term-unit" style="flex: 2;">
+              <span class="setup__mini-label">Milestone Name</span>
+              <input 
+                v-model="ms.name" 
+                class="setup__input setup__input--white" 
+                placeholder="e.g. Midterm, Progress Report" 
+                @change="saveMilestones" 
+              />
+            </div>
+            <div class="setup__term-unit" style="width: 110px;">
+              <span class="setup__mini-label">Semester</span>
+              <select v-model="ms.semester" class="setup__input setup__input--white" @change="saveMilestones">
+                <option value="1">Sem 1</option>
+                <option value="2">Sem 2</option>
+                <option value="Full">Full Year</option>
+              </select>
+            </div>
+            <div class="setup__term-unit" style="width: 150px;">
+              <span class="setup__mini-label">Cutoff Date</span>
+              <input 
+                v-model="ms.date" 
+                type="date" 
+                class="setup__input setup__input--white" 
+                @change="onMilestoneDateChange(ms)" 
+              />
+            </div>
+          </div>
+          <button class="setup__icon-btn setup__icon-btn--danger" @click="deleteMilestone(ms.milestoneId)">
+            <Trash2 :size="16" />
+          </button>
+        </div>
+        <div v-if="filteredMilestones.length === 0" class="setup__empty-state">
+          No milestones added for this year.
+        </div>
+      </div>
+      
+      <button class="setup__btn-ghost setup__btn--full" @click="addMilestone">
+        <Plus :size="14" /> Add Milestone
+      </button>
+    </div>
+
     <!-- Non-School Days (Holidays/PD Days) -->
     <div class="setup__card">
       <h2 class="setup__card-title">
@@ -241,60 +295,6 @@
 
       <button class="setup__btn-ghost setup__btn--full" @click="addNonSchoolDay">
         <Plus :size="14" /> Add Holiday/PD Day
-      </button>
-    </div>
-
-    <!-- Milestones -->
-    <div class="setup__card">
-      <h2 class="setup__card-title">
-        <Flag :size="20" /> Academic Milestones
-      </h2>
-      <p class="setup__hint">
-        Define key reporting cutoff dates (e.g. Progress Reports, Midterms, Term 1) for <strong>{{ selectedYear }}</strong>. 
-        These generate the date filter presets in your Gradebook and reporting snapshots.
-      </p>
-
-      <div class="setup__gb-list">
-        <div v-for="ms in filteredMilestones" :key="ms.milestoneId" class="setup__gb-item">
-          <div class="setup__term-row">
-            <div class="setup__term-unit" style="flex: 2;">
-              <span class="setup__mini-label">Milestone Name</span>
-              <input 
-                v-model="ms.name" 
-                class="setup__input setup__input--white" 
-                placeholder="e.g. Midterm, Progress Report" 
-                @change="saveMilestones" 
-              />
-            </div>
-            <div class="setup__term-unit" style="width: 110px;">
-              <span class="setup__mini-label">Semester</span>
-              <select v-model="ms.semester" class="setup__input setup__input--white" @change="saveMilestones">
-                <option value="1">Sem 1</option>
-                <option value="2">Sem 2</option>
-                <option value="Full">Full Year</option>
-              </select>
-            </div>
-            <div class="setup__term-unit" style="width: 150px;">
-              <span class="setup__mini-label">Cutoff Date</span>
-              <input 
-                v-model="ms.date" 
-                type="date" 
-                class="setup__input setup__input--white" 
-                @change="onMilestoneDateChange(ms)" 
-              />
-            </div>
-          </div>
-          <button class="setup__icon-btn setup__icon-btn--danger" @click="deleteMilestone(ms.milestoneId)">
-            <Trash2 :size="16" />
-          </button>
-        </div>
-        <div v-if="filteredMilestones.length === 0" class="setup__empty-state">
-          No milestones added for this year.
-        </div>
-      </div>
-      
-      <button class="setup__btn-ghost setup__btn--full" @click="addMilestone">
-        <Plus :size="14" /> Add Milestone
       </button>
     </div>
   </div>

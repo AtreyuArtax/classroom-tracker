@@ -205,8 +205,8 @@
     "semantic_hash": ""
   },
   "src/components/setup/CalendarSettings.vue": {
-    "mtime": 1787711473.0841303,
-    "ast_hash": "3e0994452202a688b2e61b3a8095f825",
+    "mtime": 1788288035.7968266,
+    "ast_hash": "bcf15668bd628aab262f8829fe34df92",
     "semantic_hash": ""
   },
   "src/components/setup/CsvHelpGuide.vue": {
@@ -220,8 +220,8 @@
     "semantic_hash": ""
   },
   "src/components/setup/GradeBucketsSettings.vue": {
-    "mtime": 1787369622.0752993,
-    "ast_hash": "838ad2ce0c4f0498c6bb2138d05f8724",
+    "mtime": 1788287922.9478967,
+    "ast_hash": "3b3970aebb34dd44d76375f1d12392b3",
     "semantic_hash": ""
   },
   "src/components/setup/HelpModal.vue": {
@@ -260,9 +260,9 @@
     "semantic_hash": ""
   },
   "src/composables/useRadial.js": {
-    "mtime": 1776472682.8683898,
-    "ast_hash": "f02c0935b184584977d302f316778840",
-    "semantic_hash": "f02c0935b184584977d302f316778840"
+    "mtime": 1788287598.2709548,
+    "ast_hash": "aa0df75af63b95d031d27fa977b2bda1",
+    "semantic_hash": ""
   },
   "src/composables/useStudentDossier.js": {
     "mtime": 1787764676.367424,
@@ -305,8 +305,8 @@
     "semantic_hash": ""
   },
   "src/db/settingsService.js": {
-    "mtime": 1788285666.2653525,
-    "ast_hash": "b3d05820a7b679aa3880ddc4cfb1b4a2",
+    "mtime": 1788286793.825189,
+    "ast_hash": "128dc2ad9b23a2f579257e1f61fb0e4d",
     "semantic_hash": ""
   },
   "src/main.js": {
@@ -415,8 +415,8 @@
     "semantic_hash": ""
   },
   "src/components/setup/BehaviorSettings.vue": {
-    "mtime": 1788286033.8229961,
-    "ast_hash": "efaf2ff1568a859f64e3dfc83493f075",
+    "mtime": 1788287642.69091,
+    "ast_hash": "39df62de7a642f470d93230e7e9d0f23",
     "semantic_hash": ""
   },
   "src/components/setup/QrCodeGeneratorModal.vue": {

@@ -176,6 +176,7 @@ export async function getBehaviorCodes() {
     const result = []
     const seenLower = new Set()
 
+    let idx = 0
     for (const [codeKey, code] of Object.entries(codesMap)) {
         const lower = codeKey.toLowerCase()
         if (seenLower.has(lower)) continue
@@ -183,9 +184,12 @@ export async function getBehaviorCodes() {
         result.push({
             codeKey,
             ...code,
+            enabled: code.enabled !== false,
+            order: code.order ?? idx++
         })
     }
-    return result
+
+    return result.sort((a, b) => (a.order ?? 999) - (b.order ?? 999))
 }
 
 /**
@@ -210,8 +214,35 @@ export async function saveBehaviorCode(codeObj) {
 
     settings.behaviorCodes[targetKey] = {
         ...codeObj,
-        codeKey: targetKey
+        codeKey: targetKey,
+        enabled: codeObj.enabled !== false
     }
+
+    await db.put('settings', settings, SETTINGS_KEY)
+    hasUnsyncedChanges.value = true
+}
+
+/**
+ * Persists updated ordering / properties for a batch of behavior codes.
+ *
+ * @param {Array<Object>} codesList
+ * @returns {Promise<void>}
+ */
+export async function saveBehaviorCodesBatch(codesList) {
+    const db = await getDB()
+    const settings = await db.get('settings', SETTINGS_KEY) || await _readSettings()
+    if (!settings.behaviorCodes) settings.behaviorCodes = {}
+
+    codesList.forEach((c, index) => {
+        const targetKey = c.codeKey
+        if (settings.behaviorCodes[targetKey]) {
+            settings.behaviorCodes[targetKey] = {
+                ...settings.behaviorCodes[targetKey],
+                ...c,
+                order: index
+            }
+        }
+    })
 
     await db.put('settings', settings, SETTINGS_KEY)
     hasUnsyncedChanges.value = true

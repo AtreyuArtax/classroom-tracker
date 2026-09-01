@@ -1,66 +1,128 @@
 <template>
   <div class="grade-buckets">
     <div class="setup__card" id="sec-app-buckets">
+      <!-- Header Row -->
       <div class="setup__card-header-row">
-        <h2 class="setup__card-title">Grading Standards (Levels)</h2>
-        <button class="setup__pill-btn" @click="resetToOntario">Reset Defaults</button>
+        <div>
+          <h2 class="setup__card-title">Grading Standards (Levels)</h2>
+          <p class="setup__hint">
+            Define percentage ranges mapping to descriptive levels across all classes.
+          </p>
+        </div>
+        <div class="setup__header-actions">
+          <button class="setup__btn-ghost setup__btn-xs" @click="addBucket">
+            <Plus :size="13" /> Add Level
+          </button>
+          <button class="setup__pill-btn setup__btn-xs" @click="resetToOntario">
+            <RotateCcw :size="12" /> Reset Defaults
+          </button>
+        </div>
       </div>
-      <p class="setup__hint">
-        Define how percentage ranges map to descriptive levels. These apply globally 
-        across all classes.
-      </p>
 
-      <div class="setup__gb-list">
+      <!-- ── Visual Range Spectrum Progress Bar ── -->
+      <div class="gb-spectrum" v-if="localBuckets.length > 0">
+        <div 
+          v-for="(bucket, idx) in sortedBuckets" 
+          :key="idx" 
+          class="gb-spectrum__segment"
+          :style="{ 
+            backgroundColor: bucket.color, 
+            flex: Math.max(1, (bucket.max - bucket.min) + 1)
+          }"
+          :title="`${bucket.label}: ${bucket.min}% – ${bucket.max}%`"
+        >
+          <span class="gb-spectrum__label">{{ bucket.label }}</span>
+        </div>
+      </div>
+
+      <!-- ── Horizontal Responsive Level Tiles Grid ── -->
+      <div class="grade-buckets__grid">
         <div 
           v-for="(bucket, idx) in localBuckets" 
           :key="idx" 
-          class="setup__gb-item"
+          class="gb-tile"
+          :style="{ borderTopColor: bucket.color }"
         >
-          <div class="grade-buckets__swatch" :style="{ backgroundColor: bucket.color }">
-            <input type="color" v-model="bucket.color" class="grade-buckets__color-picker" />
-          </div>
-          
-          <input 
-            v-model="bucket.label" 
-            class="setup__input setup__input--naked" 
-            style="flex: 1;"
-            placeholder="Level Label" 
-          />
-          
-          <div class="setup__gb-actions">
-            <div class="grade-buckets__range-inputs">
-              <input v-model.number="bucket.min" type="number" class="setup__input setup__input--weight" />
-              <span class="grade-buckets__to">to</span>
-              <input v-model.number="bucket.max" type="number" class="setup__input setup__input--weight" />
-              <span class="grade-buckets__percent">%</span>
+          <!-- Top Row: Swatch + Label Input + Delete -->
+          <div class="gb-tile__top">
+            <div class="grade-buckets__swatch" :style="{ backgroundColor: bucket.color }" title="Change Color">
+              <input type="color" v-model="bucket.color" class="grade-buckets__color-picker" />
             </div>
-            
-            <button class="setup__icon-btn" :disabled="idx === 0" @click="moveBucket(idx, -1)"><ChevronUp :size="16" /></button>
-            <button class="setup__icon-btn" :disabled="idx === localBuckets.length - 1" @click="moveBucket(idx, 1)"><ChevronDown :size="16" /></button>
-            <button class="setup__icon-btn setup__icon-btn--danger" @click="removeBucket(idx)" title="Remove Level">
-              <Trash2 :size="16" />
+            <input 
+              v-model="bucket.label" 
+              class="setup__input gb-tile__label-input" 
+              placeholder="Label" 
+              title="Level Label"
+            />
+            <button 
+              class="setup__icon-btn setup__icon-btn--danger gb-tile__del-btn" 
+              @click="removeBucket(idx)" 
+              title="Remove Level"
+            >
+              <Trash2 :size="12" />
+            </button>
+          </div>
+
+          <!-- Middle: Range Inputs -->
+          <div class="gb-tile__range">
+            <input 
+              v-model.number="bucket.min" 
+              type="number" 
+              min="0"
+              max="150"
+              class="setup__input gb-tile__num-input" 
+              placeholder="0"
+            />
+            <span class="gb-tile__sep">% &ndash;</span>
+            <input 
+              v-model.number="bucket.max" 
+              type="number" 
+              min="0"
+              max="150"
+              class="setup__input gb-tile__num-input" 
+              placeholder="100"
+            />
+            <span class="gb-tile__percent">%</span>
+          </div>
+
+          <!-- Bottom: Order Controls -->
+          <div class="gb-tile__footer">
+            <button 
+              class="gb-tile__order-btn" 
+              :disabled="idx === 0" 
+              @click="moveBucket(idx, -1)" 
+              title="Move Left"
+            >
+              <ChevronLeft :size="12" />
+            </button>
+            <span class="gb-tile__order-badge">#{{ idx + 1 }}</span>
+            <button 
+              class="gb-tile__order-btn" 
+              :disabled="idx === localBuckets.length - 1" 
+              @click="moveBucket(idx, 1)" 
+              title="Move Right"
+            >
+              <ChevronRight :size="12" />
             </button>
           </div>
         </div>
       </div>
 
-      <button class="setup__btn-ghost setup__btn--full" style="margin-top: 1rem;" @click="addBucket">
-        <Plus :size="14" /> Add Level
-      </button>
-
+      <!-- Error Message -->
       <div v-if="globalError" class="grade-buckets__error-msg">
-        <AlertCircle :size="16" /> {{ globalError }}
+        <AlertCircle :size="14" /> <span>{{ globalError }}</span>
       </div>
 
+      <!-- Compact Footer -->
       <div class="grade-buckets__footer">
         <label class="grade-buckets__cap-toggle">
           <input type="checkbox" v-model="capGradesAt100" />
           <span>Cap overall student grades at 100% (Safety)</span>
         </label>
-        <div style="margin-left: auto; display: flex; align-items: center; gap: 12px;">
+        <div class="grade-buckets__footer-right">
           <span v-if="saveSuccess" class="grade-buckets__save-success">Saved ✓</span>
           <button 
-            class="setup__btn-primary" 
+            class="setup__btn-primary setup__btn-sm" 
             :disabled="!!globalError || hasFieldErrors" 
             @click="saveBuckets"
           >
@@ -74,7 +136,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { Trash2, Plus, AlertCircle, ChevronUp, ChevronDown } from 'lucide-vue-next'
+import { Trash2, Plus, AlertCircle, ChevronLeft, ChevronRight, RotateCcw } from 'lucide-vue-next'
 import * as settingsService from '../../db/settingsService.js'
 import { useMessage } from '../../composables/useMessage.js'
 
@@ -99,6 +161,10 @@ onMounted(async () => {
     validate()
 })
 
+const sortedBuckets = computed(() => {
+    return [...localBuckets.value].sort((a, b) => a.min - b.min)
+})
+
 const hasFieldErrors = computed(() => Object.values(validationErrors.value).some(v => v))
 
 function addBucket() {
@@ -109,7 +175,7 @@ function addBucket() {
         label: 'New',
         min: lastMax + 1,
         max: Math.min(100, lastMax + 10),
-        color: '#666666'
+        color: '#6366f1'
     })
     validate()
 }
@@ -187,185 +253,301 @@ async function saveBuckets() {
 
 <style scoped>
 .grade-buckets {
-  margin-top: 1rem;
+  margin-top: 0;
 }
 
-.grade-buckets__footer {
-  display: flex;
-  align-items: center;
-  gap: 1.5rem;
-  margin-top: 2rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid var(--border);
-}
-
-.grade-buckets__cap-toggle {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 0.9rem;
-  color: var(--text-secondary);
-  cursor: pointer;
-  user-select: none;
-}
-
-.grade-buckets__cap-toggle input {
-  width: 16px;
-  height: 16px;
-  cursor: pointer;
-}
-
-/* ── Standardized Card Styles (Matched to Setup view) ── */
+/* ── Standardized Card ── */
 .setup__card {
-  background:    var(--surface);
-  padding:       24px;
-  border-radius: var(--radius-lg);
-  box-shadow:    var(--shadow-sm);
-  border:        1px solid var(--border);
+  background:    var(--surface, #1e2030);
+  padding:       18px 22px;
+  border-radius: var(--radius-lg, 12px);
+  box-shadow:    var(--shadow-sm, 0 2px 8px rgba(0, 0, 0, 0.15));
+  border:        1px solid var(--border, rgba(255, 255, 255, 0.08));
   display:       flex;
   flex-direction: column;
-  gap:           16px;
+  gap:           10px;
 }
 
 .setup__card-header-row {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 0.5rem;
+  align-items: flex-start;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
 .setup__card-title {
-  font-size:     1.1rem;
+  font-size:     1.05rem;
   font-weight:   700;
-  color:         var(--text);
-  margin-bottom: 4px;
+  color:         var(--text, #ffffff);
+  margin: 0 0 2px;
 }
 
 .setup__hint {
-  font-size: 0.82rem;
-  color:     var(--text-secondary);
-  line-height: 1.5;
+  font-size: 0.8rem;
+  color:     var(--text-secondary, #94a3b8);
+  margin: 0;
+  line-height: 1.4;
 }
 
-.setup__gb-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-top: 1rem;
-}
-
-.setup__gb-item {
+.setup__header-actions {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 8px 16px;
-  background: var(--bg-secondary);
-  border-radius: var(--radius-md);
-  min-height: 52px;
-  border: 1px solid transparent;
-  transition: all 0.2s;
+  gap: 8px;
 }
 
-.setup__gb-item:hover {
-  border-color: var(--border);
-  background: color-mix(in srgb, var(--bg-secondary) 95%, black);
+/* ── Range Spectrum Progress Strip ── */
+.gb-spectrum {
+  display: flex;
+  height: 6px;
+  border-radius: 3px;
+  overflow: hidden;
+  margin: 2px 0;
+  background: var(--border);
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.2);
+}
+
+.gb-spectrum__segment {
+  height: 100%;
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.gb-spectrum__segment:hover {
+  filter: brightness(1.2);
+}
+
+.gb-spectrum__label {
+  display: none;
+}
+
+/* ── Horizontal Grid of Level Tiles ── */
+.grade-buckets__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 8px;
+}
+
+.gb-tile {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--primary);
+  border-radius: var(--radius-md, 8px);
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+
+.gb-tile:hover {
+  border-color: var(--primary-light, #818cf8);
+  box-shadow: var(--shadow-sm);
+}
+
+.gb-tile__top {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .grade-buckets__swatch {
-  width: 24px;
-  height: 24px;
+  width: 18px;
+  height: 18px;
   border-radius: 4px;
   position: relative;
   overflow: hidden;
-  box-shadow: inset 0 0 0 1px rgba(0,0,0,0.1);
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,0.15);
   flex-shrink: 0;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.grade-buckets__swatch:hover {
+  transform: scale(1.1);
 }
 
 .grade-buckets__color-picker {
   position: absolute;
-  top: -5px;
-  left: -5px;
-  width: 40px;
-  height: 40px;
+  top: -6px;
+  left: -6px;
+  width: 32px;
+  height: 32px;
   cursor: pointer;
   opacity: 0;
 }
 
-.setup__gb-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-left: auto;
-}
-
-.grade-buckets__range-inputs {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-right: 12px;
-}
-
-.grade-buckets__to {
-  font-size: 0.7rem;
-  color: var(--text-secondary);
+.gb-tile__label-input {
+  flex: 1;
+  min-width: 40px;
+  padding: 2px 6px !important;
   font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  font-size: 0.82rem;
+  background: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 4px !important;
+  color: var(--text) !important;
+  text-align: left;
 }
 
-.grade-buckets__percent {
-  font-size: 0.9rem;
-  color: var(--text-secondary);
-  font-weight: 500;
+.gb-tile__del-btn {
+  padding: 3px !important;
+  opacity: 0.6;
 }
 
-.grade-buckets__error-msg {
-  margin-top: 1rem;
-  color: var(--state-out);
+.gb-tile__del-btn:hover {
+  opacity: 1;
+}
+
+/* Range Inputs */
+.gb-tile__range {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  font-size: 0.9rem;
-  font-weight: 600;
-  padding: 12px;
-  background: color-mix(in srgb, var(--state-out) 10%, white);
-  border-radius: var(--radius-md);
+  justify-content: center;
+  gap: 4px;
+  background: var(--bg-secondary);
+  padding: 3px 6px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
 }
 
-.grade-buckets__footer {
-  margin-top: 2rem;
-  padding-top: 1rem;
-  border-top: 1px solid var(--border);
-  display: flex;
-}
-
-.setup__input--weight {
-  width: 72px;
-  padding-left: 8px !important;
-  padding-right: 8px !important;
+.gb-tile__num-input {
+  width: 38px;
+  padding: 2px 2px !important;
   text-align: center;
+  font-weight: 700;
+  font-size: 0.78rem;
   background: var(--surface) !important;
-  font-weight: 600;
-  border-color: var(--border) !important;
-}
-
-/* Hide spin buttons to maximize typing area */
-.setup__input--weight::-webkit-outer-spin-button,
-.setup__input--weight::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-.setup__input--weight {
+  border: 1px solid var(--border) !important;
+  border-radius: 3px !important;
+  color: var(--text) !important;
   -moz-appearance: textfield;
 }
 
-.setup__input--naked {
-  border: none !important;
-  background: transparent !important;
+.gb-tile__num-input::-webkit-outer-spin-button,
+.gb-tile__num-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.gb-tile__sep {
+  font-size: 0.68rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.gb-tile__percent {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+/* Order Footer in Tile */
+.gb-tile__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 1px;
+}
+
+.gb-tile__order-badge {
+  font-size: 0.65rem;
   font-weight: 700;
-  padding-left: 0 !important;
-  font-size: 0.95rem;
+  color: var(--text-secondary);
+  opacity: 0.7;
+}
+
+.gb-tile__order-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.gb-tile__order-btn:hover:not(:disabled) {
+  background: var(--surface);
   color: var(--text);
+}
+
+.gb-tile__order-btn:disabled {
+  opacity: 0.2;
+  cursor: not-allowed;
+}
+
+/* Button Variants */
+.setup__btn-xs {
+  font-size: 0.75rem;
+  padding: 4px 10px;
+}
+
+.setup__btn-sm {
+  font-size: 0.8rem;
+  padding: 6px 14px;
+}
+
+.setup__pill-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full, 9999px);
+  color: var(--text-secondary);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.setup__pill-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text);
+  border-color: var(--primary-light);
+}
+
+.setup__btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: var(--radius-full, 9999px);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.setup__btn-ghost:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.setup__btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.setup__btn-primary:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.setup__btn-primary:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 .setup__icon-btn {
@@ -378,54 +560,66 @@ async function saveBuckets() {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s;
+  transition: all 0.15s ease;
 }
 
-.setup__icon-btn:not(:disabled):hover {
-  background: var(--surface);
-  color: var(--primary);
-  box-shadow: var(--shadow-sm);
+.setup__icon-btn--danger:hover:not(:disabled) {
+  background: #fee2e2 !important;
+  color: #dc2626 !important;
 }
 
-.setup__icon-btn:disabled {
-  opacity: 0.3;
-  cursor: not-allowed;
-}
-
-.setup__icon-btn--danger:hover {
-  background: #fff5f5 !important;
-  color: var(--state-out) !important;
-}
-
-.setup__pill-btn {
-  font-size: 0.72rem;
-  padding: 4px 12px;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border);
-  border-radius: 20px;
-  color: var(--text-secondary);
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.setup__pill-btn:hover {
-  background: var(--primary-light);
-  color: var(--primary);
-  border-color: var(--primary-light);
-}
-
-.setup__btn--full {
-  width: 100%;
+/* ── Footer ── */
+.grade-buckets__footer {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 4px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.grade-buckets__cap-toggle {
+  display: flex;
+  align-items: center;
   gap: 8px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  user-select: none;
+}
+
+.grade-buckets__cap-toggle input {
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+  accent-color: var(--primary);
+}
+
+.grade-buckets__footer-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .grade-buckets__save-success {
-  font-size: 0.85rem;
-  font-weight: 600;
+  font-size: 0.8rem;
+  font-weight: 700;
   color: #10b981;
+}
+
+.grade-buckets__error-msg {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  padding: 6px 10px;
+  border-radius: var(--radius-md);
 }
 </style>

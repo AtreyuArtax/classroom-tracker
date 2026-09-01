@@ -94,43 +94,95 @@ const profileStudent = ref(null)
  */
 const ATTENDANCE_CATEGORIES = ['attendance', 'absence', 'late']
 
+const activeCodes = computed(() => {
+    return (allCodes.value || [])
+        .filter(c => c.enabled !== false)
+        .sort((a, b) => (a.order ?? 999) - (b.order ?? 999))
+})
+
+const overflowItems = ref([])
+
 const visibleItems = computed(() => {
     if (viewMode.value === 'sub') {
         const active = activeCategory.value
-        if (ATTENDANCE_CATEGORIES.includes(active)) {
-            return allCodes.value.filter(c => ATTENDANCE_CATEGORIES.includes(c.category))
+        if (active === 'overflow') {
+            return overflowItems.value
         }
-        return allCodes.value.filter(c => c.category === active)
+        if (ATTENDANCE_CATEGORIES.includes(active)) {
+            return activeCodes.value.filter(c => ATTENDANCE_CATEGORIES.includes(c.category))
+        }
+        return activeCodes.value.filter(c => c.category === active)
     }
 
     // 'first' mode: build the hybrid list
-    const firstLevel = []
-    const categoryButtonsSeen = new Set()
+    const candidateList = []
 
-    for (const code of allCodes.value) {
-        if (code.isTopLevel === true) {
-            // Direct code — show on first level as-is
-            firstLevel.push({ ...code, isCategory: false })
-        } else {
-            // Category drill-down — show one button per category
+    // Step 1: Count unpinned active items per category
+    const unpinnedByCategory = {}
+    for (const code of activeCodes.value) {
+        if (code.isTopLevel !== true) {
             let groupCategory = code.category
             if (ATTENDANCE_CATEGORIES.includes(groupCategory)) {
                 groupCategory = 'attendance'
             }
+            if (!unpinnedByCategory[groupCategory]) {
+                unpinnedByCategory[groupCategory] = []
+            }
+            unpinnedByCategory[groupCategory].push(code)
+        }
+    }
 
-            if (!categoryButtonsSeen.has(groupCategory)) {
-                categoryButtonsSeen.add(groupCategory)
-                firstLevel.push({
-                    isCategory: true,
-                    categoryKey: groupCategory,
-                    label: _categoryLabel(groupCategory),
-                    icon: _categoryIcon(groupCategory, code.icon),
-                })
+    // Step 2: Add direct items & create folders only when category has >= 2 items
+    const categoryFoldersCreated = new Set()
+
+    for (const code of activeCodes.value) {
+        if (code.isTopLevel === true) {
+            // Explicitly pinned code
+            candidateList.push({ ...code, isCategory: false })
+        } else {
+            let groupCategory = code.category
+            if (ATTENDANCE_CATEGORIES.includes(groupCategory)) {
+                groupCategory = 'attendance'
+            }
+            const groupList = unpinnedByCategory[groupCategory] || []
+
+            if (groupList.length === 1) {
+                // Singleton in this category — auto-promote directly to 1-tap ring
+                candidateList.push({ ...code, isCategory: false })
+            } else {
+                // 2 or more items — generate a category drill-down folder
+                if (!categoryFoldersCreated.has(groupCategory)) {
+                    categoryFoldersCreated.add(groupCategory)
+                    candidateList.push({
+                        isCategory: true,
+                        categoryKey: groupCategory,
+                        label: _categoryLabel(groupCategory),
+                        icon: _categoryIcon(groupCategory, code.icon),
+                    })
+                }
             }
         }
     }
 
-    return firstLevel
+    // Step 3: Hard limit of 7 action slots on first level (since Profile is slot 8)
+    const MAX_ACTION_SLOTS = 7
+    if (candidateList.length <= MAX_ACTION_SLOTS) {
+        overflowItems.value = []
+        return candidateList
+    }
+
+    // If more than 7 candidate buttons, take first 6 and package rest into '••• More'
+    const top6 = candidateList.slice(0, 6)
+    overflowItems.value = candidateList.slice(6)
+
+    top6.push({
+        isCategory: true,
+        categoryKey: 'overflow',
+        label: 'More',
+        icon: 'MoreHorizontal'
+    })
+
+    return top6
 })
 
 /** True if the centre button should go-back (sub mode) vs close (first level) */
