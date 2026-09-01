@@ -35,6 +35,8 @@ import {
   updateStudentIEP,
   updateStudentAccommodations,
   updateStudentParentContacts,
+  updateStudentIntakeSurvey,
+  importStudentSurveys,
   assignSeat,
   swapSeats,
   autoAssignSeats
@@ -1723,6 +1725,8 @@ export function useClassroom() {
         checkResize,
         updateStudentNote,
         updateStudentParentContacts,
+        updateStudentIntakeSurvey,
+        importStudentSurveys,
         updateStudentIEP,
         updateStudentAccommodations,
         confirmResize,

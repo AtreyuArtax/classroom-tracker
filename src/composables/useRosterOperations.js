@@ -518,3 +518,74 @@ export async function autoAssignSeats() {
     }
 }
 
+/**
+ * Updates an individual student's intake survey and preferredName / pronouns.
+ *
+ * @param {string} studentId
+ * @param {Object} intakeSurvey
+ * @returns {Promise<void>}
+ */
+export async function updateStudentIntakeSurvey(studentId, intakeSurvey) {
+    try {
+        const classId = activeClass.value?.classId
+        if (!classId) return
+        await classService.updateStudentIntakeSurvey(classId, studentId, intakeSurvey)
+
+        if (students.value[studentId]) {
+            students.value[studentId].intakeSurvey = intakeSurvey
+            if (intakeSurvey?.preferredName) students.value[studentId].preferredName = intakeSurvey.preferredName
+            if (intakeSurvey?.pronouns) students.value[studentId].pronouns = intakeSurvey.pronouns
+        }
+        if (activeClass.value?.students?.[studentId]) {
+            activeClass.value.students[studentId].intakeSurvey = intakeSurvey
+            if (intakeSurvey?.preferredName) activeClass.value.students[studentId].preferredName = intakeSurvey.preferredName
+            if (intakeSurvey?.pronouns) activeClass.value.students[studentId].pronouns = intakeSurvey.pronouns
+        }
+        if (activeClassRecord.value?.students?.[studentId]) {
+            activeClassRecord.value.students[studentId].intakeSurvey = intakeSurvey
+            if (intakeSurvey?.preferredName) activeClassRecord.value.students[studentId].preferredName = intakeSurvey.preferredName
+            if (intakeSurvey?.pronouns) activeClassRecord.value.students[studentId].pronouns = intakeSurvey.pronouns
+        }
+        triggerRef(students)
+        triggerRef(activeClass)
+        triggerRef(activeClassRecord)
+    } catch (err) {
+        console.error('updateStudentIntakeSurvey failed:', err)
+        const { alert } = useMessage()
+        await alert('Failed to save student survey responses.')
+    }
+}
+
+/**
+ * Batch imports survey responses for a class.
+ *
+ * @param {string} classId
+ * @param {Array<{ studentId: string, surveyData: Object }>} surveyRecords
+ * @returns {Promise<void>}
+ */
+export async function importStudentSurveys(classId, surveyRecords) {
+    try {
+        const targetClassId = classId || activeClass.value?.classId
+        if (!targetClassId) return
+
+        const updatedClass = await classService.importStudentSurveys(targetClassId, surveyRecords)
+
+        if (activeClass.value?.classId === targetClassId) {
+            activeClass.value = updatedClass
+            students.value = updatedClass.students || {}
+            triggerRef(students)
+            triggerRef(activeClass)
+        }
+        if (activeClassRecord.value?.classId === targetClassId) {
+            activeClassRecord.value = updatedClass
+            triggerRef(activeClassRecord)
+        }
+        classList.value = classList.value.map(c => c.classId === targetClassId ? updatedClass : c)
+    } catch (err) {
+        console.error('importStudentSurveys failed:', err)
+        const { alert } = useMessage()
+        await alert('Failed to import student survey responses.')
+        throw err
+    }
+}
+

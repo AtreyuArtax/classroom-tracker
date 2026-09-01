@@ -90,15 +90,19 @@ export function useStudentDossier(periodRef = null, classIdRef = null) {
         return Object.entries(cls.students)
             .filter(([, s]) => !s.archived)
             .map(([studentId, s]) => ({
+                ...s,
                 studentId,
                 firstName: s.firstName,
                 lastName: s.lastName,
+                preferredName: s.preferredName || s.intakeSurvey?.preferredName || '',
+                pronouns: s.pronouns || s.intakeSurvey?.pronouns || '',
+                intakeSurvey: s.intakeSurvey || null,
                 studentEmail: s.studentEmail || s.email || '',
                 studentNumber: s.studentNumber || s.id || '',
                 gradeLevel: s.gradeLevel || '',
                 courseCode: s.courseCode || '',
             }))
-            .sort((a, b) => a.lastName.localeCompare(b.lastName))
+            .sort((a, b) => (a.lastName || '').localeCompare(b.lastName || ''))
     })
 
     /**

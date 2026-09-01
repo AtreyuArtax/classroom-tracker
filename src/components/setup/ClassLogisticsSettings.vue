@@ -259,6 +259,9 @@
             <h2 class="setup__card-title" style="margin: 0; white-space: nowrap;">Roster — {{ sortedRoster.length }} Students</h2>
           </div>
           <div class="setup__card-actions" style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+            <button class="setup__btn-ghost" @click="isStudentSurveyOpen = true" title="Download MS Forms template or import Day 1 student information survey">
+              <FileText :size="16" /> Student Survey
+            </button>
             <button class="setup__btn-ghost" @click="isRapidPhotosOpen = true" title="Open webcam booth to rapidly photograph students">
               <Camera :size="16" /> Rapid Photos
             </button>
@@ -805,6 +808,12 @@
       :student-list="sortedRoster"
       @close="isBatchPhotosOpen = false"
     />
+
+    <!-- Student Information Survey & MS Forms Template Modal -->
+    <StudentInfoSurveyModal
+      :show="isStudentSurveyOpen"
+      @close="isStudentSurveyOpen = false"
+    />
     </div>
   </div>
 </template>
@@ -828,6 +837,7 @@ import SeatingLayoutDesigner from './SeatingLayoutDesigner.vue'
 import StudentAvatar from '../photos/StudentAvatar.vue'
 import PhotoCaptureModal from '../photos/PhotoCaptureModal.vue'
 import PhotoBatchImportModal from '../photos/PhotoBatchImportModal.vue'
+import StudentInfoSurveyModal from './StudentInfoSurveyModal.vue'
 
 import { 
   Settings2, 
@@ -855,7 +865,8 @@ import {
   FolderOpen,
   Calendar,
   Users,
-  Plus
+  Plus,
+  FileText
 } from 'lucide-vue-next'
 import { getEffectiveGradeLevel } from '../../composables/useElementary.js'
 
@@ -875,6 +886,7 @@ const { showDeskPhotos } = useStudentPhotos()
 const isRapidPhotosOpen = ref(false)
 const isBatchPhotosOpen = ref(false)
 const isSinglePhotoModalOpen = ref(false)
+const isStudentSurveyOpen = ref(false)
 const targetPhotoStudent = ref(null)
 
 function openSinglePhotoModal(student) {

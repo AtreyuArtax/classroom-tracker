@@ -13,8 +13,31 @@
         class="dossier-header__avatar"
       />
       <div class="dossier-header__info">
-        <h1 class="dossier-header__name">{{ student.firstName }} {{ student.lastName }}</h1>
+        <h1 class="dossier-header__name">
+          {{ student.firstName }} {{ student.lastName }}
+        </h1>
         <div class="dossier-header__status-badges">
+          <span 
+            v-if="preferredNameDisplay" 
+            class="dossier-header__badge dossier-header__badge--name-diff"
+            :title="`Survey Note: Student prefers to be called '${preferredNameDisplay}' (Current roster: ${student.firstName})`"
+          >
+            Prefers "{{ preferredNameDisplay }}"
+          </span>
+          <span 
+            v-if="isPrivatePronouns" 
+            class="dossier-header__badge dossier-header__badge--private"
+            title="Student requested to discuss preferred name/pronoun usage privately"
+          >
+            <MessageSquare :size="10" /> Check-in Req.
+          </span>
+          <span 
+            v-else-if="pronounsDisplay" 
+            class="dossier-header__badge dossier-header__badge--pronoun"
+            :title="`Pronouns: ${pronounsDisplay}`"
+          >
+            {{ pronounsDisplay }}
+          </span>
           <span 
             v-if="student.gradeLevel" 
             class="dossier-header__badge dossier-header__badge--grade"
@@ -162,7 +185,7 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import { UserCheck, UserMinus, Clock, DoorOpen, X, HelpCircle, CalendarX, GraduationCap, Camera, Trash2 } from 'lucide-vue-next'
+import { UserCheck, UserMinus, Clock, DoorOpen, X, HelpCircle, CalendarX, GraduationCap, Camera, Trash2, MessageSquare } from 'lucide-vue-next'
 import { activeClassRecord } from '../../composables/useGradebook.js'
 import { getSBARLevelBadge } from '../../db/gradebook/gradeCalcSBAR.js'
 import { useStudentPhotos } from '../../composables/useStudentPhotos.js'
@@ -190,6 +213,26 @@ const props = defineProps({
 const currentPhotoUrl = computed(() => {
   const sId = props.student?.studentId
   return sId ? getPhotoUrl(sId) : null
+})
+
+const preferredNameDisplay = computed(() => {
+  const pref = props.student?.intakeSurvey?.preferredName || props.student?.preferredName
+  if (!pref) return ''
+  if (pref.trim().toLowerCase() === props.student?.firstName?.trim().toLowerCase()) return ''
+  return pref.trim()
+})
+
+const rawPronouns = computed(() => {
+  return props.student?.intakeSurvey?.pronouns || props.student?.pronouns || ''
+})
+
+const isPrivatePronouns = computed(() => {
+  return /privat|check/i.test(rawPronouns.value)
+})
+
+const pronounsDisplay = computed(() => {
+  if (isPrivatePronouns.value) return ''
+  return rawPronouns.value
 })
 
 const hasCurrentPhoto = computed(() => {
@@ -379,10 +422,19 @@ const statusIcon = computed(() => {
   line-height:    1.2;
 }
 
-.dossier-header__badge--success { background: rgba(52, 199, 89, 0.1); color: #34c759; }
-.dossier-header__badge--warning { background: rgba(255, 149, 0, 0.1); color: #ff9500; }
-.dossier-header__badge--danger  { background: rgba(255, 59, 48, 0.1); color: #ff3b30; }
-.dossier-header__badge--grade   { background: rgba(99, 102, 241, 0.12); color: #6366f1; border: 1px solid rgba(99, 102, 241, 0.25); }
+.dossier-header__preferred {
+  font-weight:    600;
+  color:          var(--primary);
+  opacity:        0.9;
+}
+
+.dossier-header__badge--success   { background: rgba(52, 199, 89, 0.1); color: #34c759; }
+.dossier-header__badge--warning   { background: rgba(255, 149, 0, 0.1); color: #ff9500; }
+.dossier-header__badge--danger    { background: rgba(255, 59, 48, 0.1); color: #ff3b30; }
+.dossier-header__badge--grade     { background: rgba(99, 102, 241, 0.12); color: #6366f1; border: 1px solid rgba(99, 102, 241, 0.25); }
+.dossier-header__badge--pronoun   { background: var(--bg-secondary); color: var(--text-secondary); border: 1px solid var(--border); }
+.dossier-header__badge--private   { background: rgba(0, 122, 255, 0.1); color: #007aff; border: 1px solid rgba(0, 122, 255, 0.25); }
+.dossier-header__badge--name-diff { background: rgba(255, 149, 0, 0.12); color: #ff9500; border: 1px dashed rgba(255, 149, 0, 0.4); }
 
 .dossier-header__right {
   display:      flex;

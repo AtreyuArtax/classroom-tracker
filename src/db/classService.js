@@ -474,6 +474,60 @@ export async function updateStudentParentContacts(classId, studentId, parentCont
     await patchStudent(classId, studentId, { parentContacts: parentContacts || [] })
 }
 
+/**
+ * Updates a student's intake survey / getting to know you info.
+ *
+ * @param {string} classId
+ * @param {string} studentId
+ * @param {Object} intakeSurvey
+ * @returns {Promise<void>}
+ */
+export async function updateStudentIntakeSurvey(classId, studentId, intakeSurvey) {
+    const updates = { intakeSurvey: intakeSurvey || {} }
+    if (intakeSurvey?.preferredName) {
+        updates.preferredName = intakeSurvey.preferredName.trim()
+    }
+    if (intakeSurvey?.pronouns) {
+        updates.pronouns = intakeSurvey.pronouns.trim()
+    }
+    await patchStudent(classId, studentId, updates)
+}
+
+/**
+ * Batch updates multiple students with their intake survey responses.
+ *
+ * @param {string} classId
+ * @param {Array<{ studentId: string, surveyData: Object }>} surveyRecords
+ * @returns {Promise<Object>} The updated class object
+ */
+export async function importStudentSurveys(classId, surveyRecords) {
+    const db = await getDB()
+    const tx = db.transaction('classes', 'readwrite')
+    const store = tx.objectStore('classes')
+    const cls = await store.get(classId)
+    if (!cls) throw new Error(`Class not found: ${classId}`)
+
+    for (const rec of surveyRecords) {
+        const { studentId, surveyData } = rec
+        if (cls.students && cls.students[studentId]) {
+            const st = cls.students[studentId]
+            st.intakeSurvey = { ...(st.intakeSurvey || {}), ...(surveyData || {}) }
+            if (surveyData?.preferredName && surveyData.preferredName.trim()) {
+                st.preferredName = surveyData.preferredName.trim()
+            }
+            if (surveyData?.pronouns && surveyData.pronouns.trim()) {
+                st.pronouns = surveyData.pronouns.trim()
+            }
+        }
+    }
+
+    const plain = JSON.parse(JSON.stringify(cls))
+    await store.put(plain)
+    await tx.done
+    hasUnsyncedChanges.value = true
+    return plain
+}
+
 
 /**
  * Soft-deletes a class by setting archived = true.

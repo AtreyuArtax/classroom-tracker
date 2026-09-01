@@ -247,6 +247,14 @@
           >
             <DoorOpen :size="14" /> Out of Class
           </button>
+          <button 
+            v-if="hasAnySurveyResponses"
+            class="reports__visual-tab-btn"
+            :class="{ 'reports__visual-tab-btn--active': activeVisualTab === 'mindset' }"
+            @click="activeVisualTab = 'mindset'"
+          >
+            <Sparkles :size="14" /> Mindset &amp; Goals
+          </button>
         </div>
 
         <!-- Tab 1: Expectation Mastery Heatmap -->
@@ -282,6 +290,16 @@
             :selected-period="selectedPeriod"
             :aggregates="aggregates"
             :report-class="reportClass"
+            @select-student="$emit('select-student', $event)"
+          />
+        </div>
+
+        <!-- Tab 4: Student Mindset & Goals Matrix -->
+        <div v-else-if="activeVisualTab === 'mindset' && hasAnySurveyResponses" class="reports__visual-pane">
+          <StudentMindsetAnalytics
+            :sidebar-students="sidebarStudents"
+            :class-grades="classGrades"
+            :is-sbar="isSBAR"
             @select-student="$emit('select-student', $event)"
           />
         </div>
@@ -363,6 +381,7 @@ import { Bar } from 'vue-chartjs'
 import ExpectationMasteryHeatmap from './ExpectationMasteryHeatmap.vue'
 import StudentRiskScatterPlot from './StudentRiskScatterPlot.vue'
 import OutOfClassAnalytics from './OutOfClassAnalytics.vue'
+import StudentMindsetAnalytics from './StudentMindsetAnalytics.vue'
 import ReportsMissingTasksModal from './ReportsMissingTasksModal.vue'
 import ReportsPositiveModal from './ReportsPositiveModal.vue'
 import { getSBARLevelBadge, calculateSBARExpectationMastery } from '../../db/gradebookService.js'
@@ -612,6 +631,32 @@ const activeVisualTab = computed({
   set(val) {
     internalVisualTab.value = val
     emit('update:activeVisualTab', val)
+  }
+})
+
+const hasAnySurveyResponses = computed(() => {
+  const students = (props.sidebarStudents && props.sidebarStudents.length > 0)
+    ? props.sidebarStudents
+    : Object.values(props.reportClass?.students || {})
+
+  return students.some(s => {
+    const survey = s.intakeSurvey || {}
+    return Boolean(
+      survey.courseConfidence ||
+      survey.targetGrade ||
+      survey.seatingPreference ||
+      survey.extracurricularsHobbies ||
+      survey.confidentialNote ||
+      survey.completedAt ||
+      s.preferredName ||
+      s.pronouns
+    )
+  })
+})
+
+watch(hasAnySurveyResponses, (hasSurvey) => {
+  if (!hasSurvey && activeVisualTab.value === 'mindset') {
+    activeVisualTab.value = 'risk'
   }
 })
 

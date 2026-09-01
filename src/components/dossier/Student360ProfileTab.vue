@@ -70,6 +70,9 @@
       </div>
     </div>
 
+    <!-- Getting to Know You (Day 1 Intake Survey) -->
+    <Student360IntakeCard :student="student" />
+
     <!-- Edit Contacts Modal -->
     <BaseModal
       :show="showEditModal"
@@ -320,6 +323,7 @@ import {
 } from 'lucide-vue-next'
 import BaseModal from '../BaseModal.vue'
 import SubjectIcon from '../SubjectIcon.vue'
+import Student360IntakeCard from './Student360IntakeCard.vue'
 
 import { formatLocalDisplay } from '../../utils/dates.js'
 import { useMessage } from '../../composables/useMessage.js'
