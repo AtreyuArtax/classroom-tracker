@@ -1,16 +1,16 @@
-# Graph Report - classroom-tracker  (2026-08-31)
+# Graph Report - classroom-tracker  (2026-09-01)
 
 ## Corpus Check
-- 228 files · ~457,125 words
+- 229 files · ~458,727 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1404 nodes · 2417 edges · 128 communities (115 shown, 13 thin omitted)
+- 1405 nodes · 2417 edges · 129 communities (116 shown, 13 thin omitted)
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 4 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `036fcb01`
+- Built from commit: `5b3cf4c9`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -121,7 +121,7 @@
 ## Import Cycles
 - None detected.
 
-## Communities (128 total, 13 thin omitted)
+## Communities (129 total, 13 thin omitted)
 
 ### Community 0 - "Community 0"
 Cohesion: 0.05
@@ -330,7 +330,7 @@ Nodes (14): confirmImport(), detectedSubjects, emit, errorMsg, fileInputRef, han
 
 ### Community 91 - "Community 91"
 Cohesion: 0.20
-Nodes (10): description, type, description, type, description, type, properties, department (+2 more)
+Nodes (10): description, type, description, type, properties, grade, isSuccessCriteria, subjectCode (+2 more)
 
 ### Community 96 - "Community 96"
 Cohesion: 0.04
@@ -402,7 +402,7 @@ Nodes (5): calendar, events, loading, student, termRange
 
 ### Community 127 - "Community 127"
 Cohesion: 0.67
-Nodes (3): subjectCode, description, type
+Nodes (3): description, type, department
 
 ## Knowledge Gaps
 - **488 isolated node(s):** `scanBuffer`, `manifest_version`, `name`, `version`, `description` (+483 more)
@@ -413,11 +413,11 @@ Nodes (3): subjectCode, description, type
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `getDB()` connect `Community 20` to `Community 0`, `Community 2`, `Community 3`, `Community 35`, `Community 5`, `Community 81`, `Community 116`, `Community 21`, `Community 85`, `Community 23`?**
-  _High betweenness centrality (0.154) - this node is a cross-community bridge._
+  _High betweenness centrality (0.160) - this node is a cross-community bridge._
 - **Why does `openDB()` connect `Community 5` to `Community 20`, `Community 94`?**
-  _High betweenness centrality (0.102) - this node is a cross-community bridge._
+  _High betweenness centrality (0.105) - this node is a cross-community bridge._
 - **Why does `importAllData()` connect `Community 35` to `Community 20`, `Community 85`, `Community 6`?**
-  _High betweenness centrality (0.033) - this node is a cross-community bridge._
+  _High betweenness centrality (0.031) - this node is a cross-community bridge._
 - **Are the 2 inferred relationships involving `loadGradebook()` (e.g. with `getGlobalMilestones()` and `getGradeBuckets()`) actually correct?**
   _`loadGradebook()` has 2 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `scanBuffer`, `manifest_version`, `name` to the rest of the system?**

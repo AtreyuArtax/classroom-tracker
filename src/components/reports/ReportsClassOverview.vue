@@ -94,6 +94,33 @@
         </div>
       </div>
 
+      <!-- Tile 3: Positive Recognition KPI (Shows when positive events exist) -->
+      <div 
+        v-if="positiveStats.totalCount > 0"
+        class="kpi-tile kpi-tile--positive kpi-tile--clickable"
+        title="Click to view positive recognition audit"
+        @click="showPositiveModal = true"
+      >
+        <div class="kpi-tile__header">
+          <span class="kpi-tile__label"><Star :size="13" /> RECOGNITION</span>
+          <span class="kpi-tile__badge kpi-tile__badge--ok">
+            <Sparkles :size="10" /> {{ positiveStats.uniqueStudentsCount }} student{{ positiveStats.uniqueStudentsCount !== 1 ? 's' : '' }}
+          </span>
+        </div>
+        <div class="kpi-tile__body">
+          <div class="kpi-tile__primary">
+            <span class="kpi-tile__value">{{ positiveStats.totalCount }}</span>
+            <span class="kpi-tile__unit">Logged</span>
+          </div>
+          <div class="kpi-tile__meta">
+            <span class="kpi-tile__sub">
+              Top: <strong>{{ positiveStats.topBehaviorLabel }}</strong> ({{ positiveStats.topBehaviorCount }})
+              <span class="kpi-tile__click-hint">· View details ↗</span>
+            </span>
+          </div>
+        </div>
+      </div>
+
     </div>
 
     <!-- ── Section 2: Action Required + Primary Visual Area ─── -->
@@ -313,6 +340,14 @@
       @select-student="$emit('select-student', $event)"
     />
 
+    <!-- Positive Recognition Drill-Down Modal -->
+    <ReportsPositiveModal
+      :show="showPositiveModal"
+      :positive-summary="positiveStats"
+      @close="showPositiveModal = false"
+      @select-student="$emit('select-student', $event)"
+    />
+
   </div>
 </template>
 
@@ -322,13 +357,14 @@ import {
   UserCheck, Toilet, Activity, AlertTriangle, Check, 
   GraduationCap, Target, BookOpen, BarChart2,
   CheckCircle2, RotateCcw, ChevronDown, ChevronUp,
-  ClipboardCheck, DoorOpen
+  ClipboardCheck, DoorOpen, Star, Sparkles
 } from 'lucide-vue-next'
 import { Bar } from 'vue-chartjs'
 import ExpectationMasteryHeatmap from './ExpectationMasteryHeatmap.vue'
 import StudentRiskScatterPlot from './StudentRiskScatterPlot.vue'
 import OutOfClassAnalytics from './OutOfClassAnalytics.vue'
 import ReportsMissingTasksModal from './ReportsMissingTasksModal.vue'
+import ReportsPositiveModal from './ReportsPositiveModal.vue'
 import { getSBARLevelBadge, calculateSBARExpectationMastery } from '../../db/gradebookService.js'
 import { gradeMap } from '../../composables/useGradebook.js'
 import { useClassroom } from '../../composables/useClassroom.js'
@@ -373,9 +409,93 @@ const emit = defineEmits([
 
 const followUpExpandedLocal = ref(false)
 const showMissingModal = ref(false)
+const showPositiveModal = ref(false)
+const { behaviorCodes } = useClassroom()
+
+const behaviorCodesMap = computed(() => {
+  const list = Array.isArray(behaviorCodes.value) ? behaviorCodes.value : []
+  return Object.fromEntries(list.map(c => [c.codeKey, c]))
+})
 
 // Active enrolled student ID set
 const activeStudentIds = computed(() => new Set((props.sidebarStudents || []).map(s => String(s.studentId))))
+
+// Filtered positive recognition events for the active period/cohort
+const positiveEvents = computed(() => {
+  const events = Array.isArray(props.periodEvents) ? props.periodEvents : []
+  return events.filter(e => {
+    if (e.superseded) return false
+    if (!activeStudentIds.value.has(String(e.studentId))) return false
+    const config = behaviorCodesMap.value[e.code] || {}
+    return e.category === 'positive' || config.category === 'positive'
+  })
+})
+
+const positiveStats = computed(() => {
+  const evts = positiveEvents.value
+  const totalCount = evts.length
+  if (totalCount === 0) {
+    return {
+      totalCount: 0,
+      uniqueStudentsCount: 0,
+      topBehaviorLabel: '',
+      topBehaviorCount: 0,
+      studentsList: []
+    }
+  }
+
+  const studentMap = {}
+  const behaviorCountMap = {}
+
+  evts.forEach(e => {
+    const sId = String(e.studentId)
+    const st = props.sidebarStudents.find(s => String(s.studentId) === sId)
+    const sName = st ? `${st.firstName} ${st.lastName}` : 'Student'
+    const config = behaviorCodesMap.value[e.code] || {}
+    const label = config.label || e.code
+
+    behaviorCountMap[label] = (behaviorCountMap[label] || 0) + 1
+
+    if (!studentMap[sId]) {
+      studentMap[sId] = {
+        studentId: sId,
+        name: sName,
+        photoUrl: st?.photoUrl,
+        count: 0,
+        events: []
+      }
+    }
+
+    studentMap[sId].count++
+    studentMap[sId].events.push({
+      eventId: e.eventId,
+      code: e.code,
+      label,
+      icon: config.icon || 'Star',
+      timestamp: e.timestamp,
+      note: e.note
+    })
+  })
+
+  let topBehaviorLabel = ''
+  let topBehaviorCount = 0
+  Object.entries(behaviorCountMap).forEach(([lbl, cnt]) => {
+    if (cnt > topBehaviorCount) {
+      topBehaviorCount = cnt
+      topBehaviorLabel = lbl
+    }
+  })
+
+  const studentsList = Object.values(studentMap).sort((a, b) => b.count - a.count)
+
+  return {
+    totalCount,
+    uniqueStudentsCount: Object.keys(studentMap).length,
+    topBehaviorLabel,
+    topBehaviorCount,
+    studentsList
+  }
+})
 
 const isSBAR = computed(() => props.reportClass?.gradingFramework === 'sbar')
 
@@ -932,6 +1052,7 @@ const activeActionItemsVisible = computed(() => {
 .kpi-tile--academics { border-left: 3px solid var(--primary); }
 .kpi-tile--expectations { border-left: 3px solid #8b5cf6; }
 .kpi-tile--completion { border-left: 3px solid #0ea5e9; }
+.kpi-tile--positive { border-left: 3px solid #10b981; }
 .kpi-tile--clickable {
   cursor: pointer;
   transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
@@ -940,6 +1061,9 @@ const activeActionItemsVisible = computed(() => {
   border-color: #0ea5e9;
   box-shadow: var(--shadow-sm);
   background: var(--surface-hover);
+}
+.kpi-tile--positive.kpi-tile--clickable:hover {
+  border-color: #10b981;
 }
 .kpi-tile__click-hint {
   font-size: 0.68rem;

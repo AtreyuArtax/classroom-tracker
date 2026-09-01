@@ -797,25 +797,30 @@ const recentActivityFeed = computed(() => {
     }
   })
 
-  // 2. Logged significant student events (Teacher notes, Parent contacts, Test-Day Absences)
+  // 2. Logged significant student events (Teacher notes, Parent contacts, Positive recognition, Redirects, Test-Day Absences)
   const evtList = Array.isArray(events.value) ? events.value : []
   evtList.forEach(evt => {
     if (!evt || evt.superseded) return
     const evtType = evt.code || evt.type || ''
+    const config = behaviorCodesMap.value?.[evt.code] || {}
+    const category = evt.category || config.category
     
-    const isParentContact = evtType === 'pc' || evt.category === 'communication'
+    const isParentContact = evtType === 'pc' || category === 'communication'
+    const isPositive = category === 'positive'
+    const isRedirect = category === 'redirect'
     const isTeacherNote = evtType === 'note' || evtType === 'ac' || (evt.note && String(evt.note).trim().length > 0 && evtType !== 'w' && evtType !== 'l' && evtType !== 'a')
     const isTestDayAbsence = evtType === 'a' && evt.isTestDay
-    const isRedirectWithNote = (evtType === 'redirect' || evt.category === 'redirect') && evt.note
 
-    // Only include significant events that have actual text or high impact (ignore bare daily absences/lates)
-    if (isParentContact || isTeacherNote || isTestDayAbsence || isRedirectWithNote) {
+    // Include significant events, positive praise, redirects, teacher notes, or test day absences
+    if (isParentContact || isPositive || isRedirect || isTeacherNote || isTestDayAbsence) {
       let cat = 'NOTE'
       if (isParentContact) cat = 'PARENT'
+      else if (isPositive) cat = 'POSITIVE'
+      else if (isRedirect) cat = 'REDIRECT'
       else if (isTestDayAbsence) cat = 'TEST DAY'
-      else if (isRedirectWithNote) cat = 'REDIRECT'
 
-      const noteText = evt.note || evt.details || (isTestDayAbsence ? 'Absent on scheduled test day' : 'Teacher note')
+      const label = config.label || evtType
+      const noteText = evt.note ? `${label}: ${evt.note}` : (isTestDayAbsence ? 'Absent on scheduled test day' : label)
 
       items.push({
         id: 'evt-' + (evt.eventId || evt.id || Math.random()),
@@ -823,7 +828,7 @@ const recentActivityFeed = computed(() => {
         title: noteText,
         type: 'event',
         category: cat,
-        value: isParentContact ? 'Contacted' : isTestDayAbsence ? 'Missed Test' : 'Logged',
+        value: isParentContact ? 'Contacted' : isTestDayAbsence ? 'Missed Test' : isPositive ? 'Praise' : isRedirect ? 'Redirect' : 'Logged',
         subText: null,
         isFailing: isTestDayAbsence
       })

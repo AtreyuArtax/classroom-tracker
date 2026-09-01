@@ -103,6 +103,16 @@
             <span class="summary-metric__val">{{ summaryStats.washroom }}</span>
             <span class="summary-metric__label">Out/Pass</span>
           </div>
+          <div v-if="summaryStats.positive > 0" class="summary-metric summary-metric--positive">
+            <span class="summary-metric__dot"></span>
+            <span class="summary-metric__val">{{ summaryStats.positive }}</span>
+            <span class="summary-metric__label">Positive</span>
+          </div>
+          <div v-if="summaryStats.redirects > 0" class="summary-metric summary-metric--redirect">
+            <span class="summary-metric__dot"></span>
+            <span class="summary-metric__val">{{ summaryStats.redirects }}</span>
+            <span class="summary-metric__label">Redirects</span>
+          </div>
           <div class="summary-metric summary-metric--comm">
             <span class="summary-metric__dot"></span>
             <span class="summary-metric__val">{{ summaryStats.communications }}</span>
@@ -686,7 +696,8 @@ import {
   FileText,
   Activity,
   Sparkles,
-  GraduationCap
+  GraduationCap,
+  Star
 } from 'lucide-vue-next'
 import { useClassroom } from '../../composables/useClassroom.js'
 import { toMinutes } from '../../db/eventService.js'
@@ -780,13 +791,13 @@ const sortedItems = computed(() => {
 
     const config = props.behaviorCodesMap[e.code] || {}
     let type = 'behavior'
-    let category = config.category || 'behavior'
+    let category = config.category || e.category || 'behavior'
     let nodeClass = 'behavior'
     let categoryLabel = config.label || 'Note'
     let icon = config.icon ? resolveIcon(config.icon) : AlertCircle
     let title = config.label || e.code
 
-    // Specialized Logic for Attendance/Out-of-Class
+    // Specialized Logic for Attendance/Out-of-Class/Categories
     if (e.code === 'a') {
       type = 'attendance'
       category = 'attendance'
@@ -812,7 +823,7 @@ const sortedItems = computed(() => {
         title = `${config.label || 'Out'} (${mins} min)`
         icon = config.icon ? resolveIcon(config.icon) : DoorOpen
       }
-    } else if (e.code === 'ac') {
+    } else if (e.code === 'ac' || category === 'academic_conversation') {
       type = 'academic_conversation'
       category = 'academic_conversation'
       nodeClass = 'academic_conversation'
@@ -824,8 +835,29 @@ const sortedItems = computed(() => {
       category = 'communication'
       nodeClass = 'communication'
       categoryLabel = 'Guardian Contact'
-      title = 'Parent Contact'
+      title = config.label || 'Parent Contact'
       icon = config.icon ? resolveIcon(config.icon) : Phone
+    } else if (category === 'positive') {
+      type = 'positive'
+      category = 'positive'
+      nodeClass = 'positive'
+      categoryLabel = config.label || 'Positive'
+      title = config.label || 'Positive Recognition'
+      icon = config.icon ? resolveIcon(config.icon) : Star
+    } else if (category === 'redirect') {
+      type = 'redirect'
+      category = 'redirect'
+      nodeClass = 'redirect'
+      categoryLabel = config.label || 'Redirect / Warning'
+      title = config.label || 'Redirect'
+      icon = config.icon ? resolveIcon(config.icon) : AlertCircle
+    } else if (category === 'academic') {
+      type = 'academic'
+      category = 'academic'
+      nodeClass = 'academic'
+      categoryLabel = config.label || 'Academic Note'
+      title = config.label || 'Academic Note'
+      icon = config.icon ? resolveIcon(config.icon) : GraduationCap
     }
 
     const eventDate = new Date(e.ts || e.timestamp)
@@ -875,6 +907,8 @@ const summaryStats = computed(() => {
   let absences = 0
   let lates = 0
   let washroom = 0
+  let positive = 0
+  let redirects = 0
   let communications = 0
   let academics = 0
   let notes = 0
@@ -883,12 +917,14 @@ const summaryStats = computed(() => {
     if (item.rawCode === 'a') absences++
     else if (item.rawCode === 'l') lates++
     else if (item.rawCode === 'w' || item.nodeClass === 'washroom') washroom++
+    else if (item.category === 'positive') positive++
+    else if (item.category === 'redirect') redirects++
     else if (item.category === 'communication') communications++
     else if (item.category === 'academic_conversation') academics++
     else notes++
   })
 
-  return { absences, lates, washroom, communications, academics, notes }
+  return { absences, lates, washroom, positive, redirects, communications, academics, notes }
 })
 
 // ── Category Filters ─────────────────────────────────────────────────────────
@@ -896,8 +932,11 @@ const categoryFilters = computed(() => {
   const counts = {
     all: sortedItems.value.length,
     attendance: 0,
+    positive: 0,
+    redirect: 0,
     communication: 0,
     academic_conversation: 0,
+    academic: 0,
     behavior: 0
   }
 
@@ -911,16 +950,31 @@ const categoryFilters = computed(() => {
 
   const filters = [
     { id: 'all', label: 'All', icon: Activity, count: counts.all },
-    { id: 'attendance', label: 'Attendance', icon: UserMinus, count: counts.attendance },
-    { id: 'communication', label: 'Communication', icon: Phone, count: counts.communication }
+    { id: 'attendance', label: 'Attendance', icon: UserMinus, count: counts.attendance }
   ]
+
+  if (counts.positive > 0) {
+    filters.push({ id: 'positive', label: 'Positive', icon: Star, count: counts.positive })
+  }
+
+  if (counts.redirect > 0) {
+    filters.push({ id: 'redirect', label: 'Redirects', icon: AlertCircle, count: counts.redirect })
+  }
+
+  if (counts.communication > 0) {
+    filters.push({ id: 'communication', label: 'Communication', icon: Phone, count: counts.communication })
+  }
 
   if (counts.academic_conversation > 0) {
     filters.push({ id: 'academic_conversation', label: 'Conversations', icon: GraduationCap, count: counts.academic_conversation })
   }
 
+  if (counts.academic > 0) {
+    filters.push({ id: 'academic', label: 'Academic Notes', icon: GraduationCap, count: counts.academic })
+  }
+
   if (counts.behavior > 0) {
-    filters.push({ id: 'behavior', label: 'Notes & Actions', icon: FileText, count: counts.behavior })
+    filters.push({ id: 'behavior', label: 'Notes', icon: FileText, count: counts.behavior })
   }
 
   return filters
@@ -1536,7 +1590,9 @@ function formatTag(tag) {
 .summary-metric--absent .summary-metric__dot { background: #ff3b30; }
 .summary-metric--late .summary-metric__dot { background: #ff9500; }
 .summary-metric--washroom .summary-metric__dot { background: var(--text-secondary); }
-.summary-metric--comm .summary-metric__dot { background: #10b981; }
+.summary-metric--positive .summary-metric__dot { background: #10b981; }
+.summary-metric--redirect .summary-metric__dot { background: #f59e0b; }
+.summary-metric--comm .summary-metric__dot { background: #8b5cf6; }
 .summary-metric--academic .summary-metric__dot { background: #6366f1; }
 .summary-metric--notes .summary-metric__dot { background: var(--text-secondary); }
 
@@ -1715,9 +1771,27 @@ function formatTag(tag) {
 }
 
 .timeline-node--communication {
+  border-color: #8b5cf6;
+  color: #8b5cf6;
+  background: #f5f3ff;
+}
+
+.timeline-node--positive {
   border-color: #10b981;
   color: #10b981;
-  background: #e6f4ea;
+  background: #ecfdf5;
+}
+
+.timeline-node--redirect {
+  border-color: #f59e0b;
+  color: #f59e0b;
+  background: #fffbeb;
+}
+
+.timeline-node--academic {
+  border-color: #6366f1;
+  color: #6366f1;
+  background: #eef2ff;
 }
 
 .timeline-node--behavior {
@@ -1790,7 +1864,10 @@ function formatTag(tag) {
 .timeline-category-tag--late { background: #fef3c7; color: #b45309; }
 .timeline-category-tag--washroom { background: #f3f4f6; color: var(--text); }
 .timeline-category-tag--academic_conversation { background: #eef2ff; color: #4338ca; }
-.timeline-category-tag--communication { background: #d1fae5; color: #047857; }
+.timeline-category-tag--communication { background: #ede9fe; color: #6d28d9; }
+.timeline-category-tag--positive { background: #d1fae5; color: #047857; }
+.timeline-category-tag--redirect { background: #fef3c7; color: #b45309; }
+.timeline-category-tag--academic { background: #e0e7ff; color: #3730a3; }
 
 .timeline-badge--test-day {
   display: inline-flex;

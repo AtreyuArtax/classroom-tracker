@@ -113,7 +113,7 @@
               </div>
               <div class="setup__code-tags">
                 <span class="setup__tag-badge setup__tag-badge--cat">{{ code.category }}</span>
-                <span v-if="code.isTopLevel" class="setup__tag-badge setup__tag-badge--pin">📌 Pinned</span>
+                <span v-if="code.isTopLevel" class="setup__tag-badge setup__tag-badge--pin"><Pin :size="11" /> Pinned</span>
                 <span v-if="code.requiresNote" class="setup__tag-badge setup__tag-badge--note"><NotebookPen :size="11" /> Notes Req.</span>
               </div>
             </div>
@@ -251,7 +251,7 @@ import { useMessage } from '../../composables/useMessage.js'
 import { resolveIcon } from '../../utils/icons.js'
 import * as settingsService from '../../db/settingsService.js'
 import BaseModal from '../BaseModal.vue'
-import { Pencil, Trash2, Plus, AlertTriangle, NotebookPen } from 'lucide-vue-next'
+import { Pencil, Trash2, Plus, AlertTriangle, NotebookPen, Pin } from 'lucide-vue-next'
 
 const { thresholds: classroomThresholds, behaviorCodes, reloadBehaviorCodes } = useClassroom()
 const { alert, confirm } = useMessage()
@@ -682,6 +682,9 @@ export default {
 }
 
 .setup__tag-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   font-size: 0.68rem;
   font-weight: 700;
   padding: 2px 6px;
