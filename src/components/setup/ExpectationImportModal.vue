@@ -891,10 +891,13 @@ function getStrandExpectations(strand, currGranularity = granularity.value) {
   strand.overalls.forEach(ov => {
     if (currGranularity === 'overall') {
       list.push({ code: ov.code, description: ov.description, isOverall: true })
-    } else if ((currGranularity === 'all' || currGranularity === 'success_criteria') && ov.specifics) {
+    } else if ((currGranularity === 'all' || currGranularity === 'success_criteria') && ov.specifics && ov.specifics.length > 0) {
       ov.specifics.forEach(sp => {
         list.push({ code: sp.code, description: sp.description, isOverall: false })
       })
+    } else {
+      // Preserve overall expectation if no specifics exist (e.g. foundational AA1/A1 in MTH1W)
+      list.push({ code: ov.code, description: ov.description || ov.name, isOverall: true })
     }
   })
   return list

@@ -615,6 +615,31 @@ export async function saveAssessment() {
 const dbSaveQueue = new Map()
 let dbSaveTimer = null
 
+export async function flushPendingDBSaves() {
+  if (dbSaveTimer) {
+    clearTimeout(dbSaveTimer)
+    dbSaveTimer = null
+  }
+  if (dbSaveQueue.size === 0) return
+  const tasks = Array.from(dbSaveQueue.values())
+  dbSaveQueue.clear()
+  for (const task of tasks) {
+    try {
+      await task()
+    } catch (err) {
+      console.error('[useGradebook] Flush DB save failed:', err)
+    }
+  }
+}
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('beforeunload', () => {
+    if (dbSaveQueue.size > 0) {
+      flushPendingDBSaves()
+    }
+  })
+}
+
 function enqueueDBSave(key, saveFn) {
   const currentClassId = activeClassRecord.value?.classId // Capture current class context
   dbSaveQueue.set(key, saveFn)

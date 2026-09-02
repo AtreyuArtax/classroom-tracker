@@ -804,6 +804,39 @@ export function getDB() {
             await classesStore.put(cls)
           }
         }
+
+        const assessmentsStore = transaction.objectStore('assessments')
+        const allAssessments = await assessmentsStore.getAll()
+        for (const ass of allAssessments) {
+          let modified = false
+          if (ass.name && (ass.name.includes('&') || ass.name.includes('\u00a0'))) {
+            ass.name = cleanExpectationText(ass.name)
+            modified = true
+          }
+          if (ass.description && (ass.description.includes('&') || ass.description.includes('\u00a0'))) {
+            ass.description = cleanExpectationText(ass.description)
+            modified = true
+          }
+          if (Array.isArray(ass.expectations)) {
+            for (const e of ass.expectations) {
+              if (e.code && (e.code.includes('&') || e.code.includes('\u00a0'))) {
+                e.code = cleanExpectationText(e.code)
+                modified = true
+              }
+              if (e.description && (e.description.includes('&') || e.description.includes('\u00a0'))) {
+                e.description = cleanExpectationText(e.description)
+                modified = true
+              }
+            }
+          }
+          if (Array.isArray(ass.expectationIds)) {
+            ass.expectationIds = ass.expectationIds.map(id => (typeof id === 'string' ? cleanExpectationText(id) : id))
+            modified = true
+          }
+          if (modified) {
+            await assessmentsStore.put(ass)
+          }
+        }
       }
     },
   })

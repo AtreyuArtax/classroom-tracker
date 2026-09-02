@@ -860,6 +860,24 @@ function handlePrint() {
   margin: 2px 0 0 0;
 }
 
+.header-close {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.header-close:hover {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+
 .seating-modal__header-actions {
   display: flex;
   align-items: center;
@@ -916,6 +934,86 @@ function handlePrint() {
 
 .seating-modal__controls > * {
   flex-shrink: 0;
+}
+
+.config-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.reports__btn-preview {
+  padding: 4px 10px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--text);
+  transition: all 0.15s ease;
+}
+
+.reports__btn-preview:hover {
+  background: var(--surface-hover);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.reports__btn-ghost {
+  padding: 8px 16px;
+  border: 1px solid var(--border);
+  background: transparent;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--text);
+  transition: all 0.15s ease;
+}
+
+.reports__btn-ghost:hover {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+
+.reports__btn-primary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.reports__btn-primary:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.reports__btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.setup__btn-ghost {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.15s ease;
+}
+
+.setup__btn-ghost:hover {
+  background: var(--surface-hover);
+  color: var(--primary);
+  border-color: var(--primary);
 }
 
 .seating-modal__section-title {

@@ -439,8 +439,9 @@ const topBehavior = computed(() => {
 })
 
 const categoryPerformance = computed(() => {
-  if (!activeClass.value?.gradebookCategories) return []
-  return activeClass.value.gradebookCategories.map(cat => {
+  const cats = effectiveClass.value?.gradebookCategories || activeClassRecord.value?.gradebookCategories || activeClass.value?.gradebookCategories
+  if (!cats) return []
+  return cats.map(cat => {
     const res = studentGrades.value?.categoryResults?.[cat.categoryId]
     return {
       categoryId: cat.categoryId,

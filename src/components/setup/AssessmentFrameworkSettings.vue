@@ -670,10 +670,13 @@ function onExpectationImport(payload) {
         strand.overalls.forEach(ov => {
           if (payload.granularity === 'overall') {
             expList.push({ code: cleanExpectationText(ov.code), description: cleanExpectationText(ov.description) })
-          } else if ((payload.granularity === 'all' || payload.granularity === 'success_criteria') && ov.specifics) {
+          } else if ((payload.granularity === 'all' || payload.granularity === 'success_criteria') && ov.specifics && ov.specifics.length > 0) {
             ov.specifics.forEach(sp => {
               expList.push({ code: cleanExpectationText(sp.code), description: cleanExpectationText(sp.description) })
             })
+          } else {
+            // Preserve overall expectation if no specifics exist (e.g. foundational AA1/A1 in MTH1W)
+            expList.push({ code: cleanExpectationText(ov.code), description: cleanExpectationText(ov.description || ov.name) })
           }
         })
       } else if (strand.expectations) {

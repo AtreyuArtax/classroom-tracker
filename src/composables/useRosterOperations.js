@@ -80,6 +80,10 @@ export async function removeStudent(studentId) {
         if (activeClass.value?.students?.[studentId]) {
             delete activeClass.value.students[studentId]
         }
+        if (activeClassRecord.value?.students?.[studentId]) {
+            delete activeClassRecord.value.students[studentId]
+            triggerRef(activeClassRecord)
+        }
 
         const clsInList = classList.value.find(c => c.classId === classId)
         if (clsInList?.students?.[studentId]) {
@@ -117,6 +121,11 @@ export async function archiveStudent(studentId) {
         if (activeClass.value?.students?.[studentId]) {
             activeClass.value.students[studentId].archived = true
             activeClass.value.students[studentId].seat = null
+        }
+        if (activeClassRecord.value?.students?.[studentId]) {
+            activeClassRecord.value.students[studentId].archived = true
+            activeClassRecord.value.students[studentId].seat = null
+            triggerRef(activeClassRecord)
         }
         
         const clsInList = classList.value.find(c => c.classId === classId)
@@ -156,6 +165,10 @@ export async function unarchiveStudent(studentId) {
         if (activeClass.value?.students?.[studentId]) {
             activeClass.value.students[studentId].archived = false
         }
+        if (activeClassRecord.value?.students?.[studentId]) {
+            activeClassRecord.value.students[studentId].archived = false
+            triggerRef(activeClassRecord)
+        }
         
         const clsInList = classList.value.find(c => c.classId === classId)
         if (clsInList?.students?.[studentId]) {
@@ -190,6 +203,10 @@ export async function permanentlyDeleteStudent(studentId) {
 
         if (activeClass.value?.students?.[studentId]) {
             delete activeClass.value.students[studentId]
+        }
+        if (activeClassRecord.value?.students?.[studentId]) {
+            delete activeClassRecord.value.students[studentId]
+            triggerRef(activeClassRecord)
         }
 
         const clsInList = classList.value.find(c => c.classId === classId)

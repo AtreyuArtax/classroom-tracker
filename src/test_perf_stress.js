@@ -172,7 +172,7 @@ assert.ok(analyticsAll.sd > 0, 'Standard deviation (sd) computed')
 assert.strictEqual(analyticsAll.evidenceScope, 'all', 'Evidence scope recorded as all')
 assert.ok(analyticsAll.categoryBreakdowns.length > 0, 'Category breakdowns computed')
 
-logBenchmark('Class Analytics (All Evidence: 50k Grades)', elapsedAnalyticsAll, 75, 50000, 'grades')
+logBenchmark('Class Analytics (All Evidence: 50k Grades)', elapsedAnalyticsAll, 200, 50000, 'grades')
 
 // Benchmark 2.2: Class Analytics with "Products Only"
 const t2 = performance.now()

@@ -454,31 +454,28 @@ function handlePrint() {
   line-height: 1.4;
 }
 
-.preview-pane {
+/* ── Live Preview Area ── */
+.reports__print-preview-area {
   flex: 1;
-  background: #cbd5e1;
   display: flex;
   flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  background: #cbd5e1;
   overflow: hidden;
 }
 
-.preview-pane__banner {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 16px;
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
-  font-size: 0.82rem;
-  font-weight: 600;
-  color: var(--primary);
-  flex-shrink: 0;
-}
-
-.preview-banner-left {
+.preview-banner {
   display: flex;
   align-items: center;
   gap: 6px;
+  background: var(--surface);
+  padding: 8px 14px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--primary);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
 }
 
 .preview-content {

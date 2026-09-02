@@ -241,6 +241,8 @@ export function useStudentDossier(periodRef = null, classIdRef = null) {
             ? Math.round(Math.min(100, Math.max(0, ((classDays - absences) / classDays) * 100)))
             : (absences === 0 && anchor ? 100 : (absences === 0 ? null : 0))
 
+        const qualitativePeriodEvents = e.filter(ev => ev.code === 'ac')
+
         return {
             washroomTrips: washroomEvents.length,
             washroomMinutes: totalWashroomMins,
@@ -256,9 +258,9 @@ export function useStudentDossier(periodRef = null, classIdRef = null) {
             redirects,
             parentContactCount: parentContacts.length,
             noteCount: noteEvents.length,
-            assessmentConversations: qualitativeEvents.value.length,
-            demonstratesUnderstanding: qualitativeEvents.value.filter(e => e.acOutcome === 'demonstrates_understanding').length,
-            gapConfirmed: qualitativeEvents.value.filter(e => e.acOutcome === 'gap_confirmed').length,
+            assessmentConversations: qualitativePeriodEvents.length,
+            demonstratesUnderstanding: qualitativePeriodEvents.filter(ev => ev.acOutcome === 'demonstrates_understanding').length,
+            gapConfirmed: qualitativePeriodEvents.filter(ev => ev.acOutcome === 'gap_confirmed').length,
             attendanceRate,
             classDays,
         }

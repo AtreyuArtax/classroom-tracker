@@ -453,7 +453,8 @@ export async function calculateStudentGrade(studentId, classRecord, { asOf = nul
   const isAdjusted = adjustedGrade !== undefined && adjustedGrade !== null
 
   if (classRecord.gradingFramework === 'sbar') {
-    const sbarMasteryPct = calculateSBARStudentOverallMastery(studentId, classRecord, assessments, gradeMap)
+    const sbarAssessments = asOf ? assessments.filter(a => a.date <= asOf) : assessments
+    const sbarMasteryPct = calculateSBARStudentOverallMastery(studentId, classRecord, sbarAssessments, gradeMap)
     const displayOverallGrade = isAdjusted
       ? preciseRound(Number(adjustedGrade), 0)
       : sbarMasteryPct
@@ -468,7 +469,8 @@ export async function calculateStudentGrade(studentId, classRecord, { asOf = nul
       adjustedGrade: isAdjusted ? preciseRound(Number(adjustedGrade), 0) : null,
       mostConsistent: null,
       median: null,
-      sbarMasteryPct
+      sbarMasteryPct,
+      asOf
     }
   }
 

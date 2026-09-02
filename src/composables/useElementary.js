@@ -239,7 +239,7 @@ export function populateSubjectFromPresets(subject, presetsList = [], granularit
               isOverall: true,
               gradeLevel: pGrade
             })
-          } else if ((granularity === 'all' || granularity === 'success_criteria') && ov.specifics) {
+          } else if ((granularity === 'all' || granularity === 'success_criteria') && ov.specifics && ov.specifics.length > 0) {
             ov.specifics.forEach(sp => {
               existingExpectations.push({
                 expectationId: (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : `exp_${Date.now()}_${gTag}_${sp.code}_${Math.floor(Math.random()*10000)}`,
@@ -249,6 +249,16 @@ export function populateSubjectFromPresets(subject, presetsList = [], granularit
                 isOverall: false,
                 gradeLevel: pGrade
               })
+            })
+          } else {
+            // Preserve overall expectation if no specifics exist
+            existingExpectations.push({
+              expectationId: (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : `exp_${Date.now()}_${gTag}_${ov.code}_${Math.floor(Math.random()*10000)}`,
+              unitId,
+              code: cleanExpectationText(ov.code),
+              description: cleanExpectationText(ov.description || ov.name),
+              isOverall: true,
+              gradeLevel: pGrade
             })
           }
         })
