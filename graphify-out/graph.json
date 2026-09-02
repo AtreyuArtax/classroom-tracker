@@ -4927,7 +4927,7 @@
       "label": "if()",
       "file_type": "code",
       "source_file": "src/components/reports/PrintSeatingChartModal.vue",
-      "source_location": "L779",
+      "source_location": "L785",
       "_origin": "ast",
       "id": "reports_printseatingchartmodal_if",
       "community": 99,
@@ -6917,7 +6917,7 @@
       "label": "for()",
       "file_type": "code",
       "source_file": "src/components/setup/SeatingLayoutDesigner.vue",
-      "source_location": "L625",
+      "source_location": "L657",
       "_origin": "ast",
       "id": "setup_seatinglayoutdesigner_for",
       "community": 110,
@@ -42264,5 +42264,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "f7c1ed381e54c47dbcc8b809ff5602566d8e2218"
+  "built_at_commit": "9905e190f44f4868429860806fbeeb9db9810690"
 }

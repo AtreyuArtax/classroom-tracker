@@ -96,31 +96,81 @@ function getPodWrapperStyle(row, col) {
 
 /** Check if a cell is an aisle */
 function isAisle(row, col) {
-  const aisles = activeClass.value?.layoutConfig?.aisles
-  if (!aisles) return false
-  if (aisles.columns && aisles.columns.includes(col)) return true
-  if (aisles.rows && aisles.rows.includes(row)) return true
+  const layout = activeClass.value?.layoutConfig
+  if (!layout) return false
+  if (layout.cellTypes?.[`${row}-${col}`] === 'aisle') return true
+  const aisles = layout.aisles
+  if (aisles?.columns && aisles.columns.includes(col)) return true
+  if (aisles?.rows && aisles.rows.includes(row)) return true
   return false
 }
 
-/** Grid style mapping custom column widths for aisles */
+/** Grid style mapping custom column widths for aisles (at least half as wide to save space) */
 const gridContainerStyle = computed(() => {
   const cols = gridSize.value.cols
   const rows = gridSize.value.rows
-  const aisles = activeClass.value?.layoutConfig?.aisles?.columns || []
-  
+  const layout = activeClass.value?.layoutConfig || {}
+  const cellTypes = layout.cellTypes || {}
+  const legacyColAisles = layout.aisles?.columns || []
+
   const colTracks = []
   for (let c = 1; c <= cols; c++) {
-    if (aisles.includes(c)) {
-      colTracks.push('24px') // Narrow aisle spacer
-    } else {
-      colTracks.push('1fr')
+    let isAisleCol = legacyColAisles.includes(c)
+    if (!isAisleCol) {
+      let allAisles = true
+      let hasAisle = false
+      let hasStudent = false
+
+      for (let r = 1; r <= rows; r++) {
+        if (isAisle(r, c)) {
+          hasAisle = true
+        } else {
+          allAisles = false
+        }
+        if (seatMap.value[`${r}-${c}`]) {
+          hasStudent = true
+        }
+      }
+
+      if (allAisles) {
+        isAisleCol = true
+      } else if (hasAisle && !hasStudent) {
+        let onlyAislesAndEmpty = true
+        for (let r = 1; r <= rows; r++) {
+          if (!isAisle(r, c) && cellTypes[`${r}-${c}`] === 'seat') {
+            onlyAislesAndEmpty = false
+            break
+          }
+        }
+        if (onlyAislesAndEmpty) isAisleCol = true
+      }
     }
+
+    // Aisle column: ultra-compact (0.2fr = 20% of regular desk width)
+    colTracks.push(isAisleCol ? 'minmax(14px, 0.2fr)' : '1fr')
+  }
+
+  // Row tracks: narrow aisle rows to 0.2fr as well
+  const rowTracks = []
+  const legacyRowAisles = layout.aisles?.rows || []
+  for (let r = 1; r <= rows; r++) {
+    let isAisleRow = legacyRowAisles.includes(r)
+    if (!isAisleRow) {
+      let allAisles = true
+      for (let c = 1; c <= cols; c++) {
+        if (!isAisle(r, c)) {
+          allAisles = false
+          break
+        }
+      }
+      if (allAisles) isAisleRow = true
+    }
+    rowTracks.push(isAisleRow ? 'minmax(12px, 0.2fr)' : '1fr')
   }
 
   return {
     gridTemplateColumns: colTracks.join(' '),
-    gridTemplateRows: `repeat(${rows}, 1fr)`,
+    gridTemplateRows: rowTracks.join(' '),
   }
 })
 

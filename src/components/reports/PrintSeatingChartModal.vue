@@ -771,22 +771,65 @@ function getGridContainerStyle(cls) {
   const rows = getGridRows(cls)
   const layout = getLayoutConfig(cls)
   const cellTypes = layout.cellTypes || {}
+  const legacyColAisles = layout.aisles?.columns || []
 
   const colTracks = []
   for (let c = 1; c <= cols; c++) {
-    let isFullAisleCol = true
-    for (let r = 1; r <= rows; r++) {
-      if (cellTypes[`${r}-${c}`] !== 'aisle') {
-        isFullAisleCol = false
-        break
+    let isAisleCol = legacyColAisles.includes(c)
+    if (!isAisleCol) {
+      let allAisles = true
+      let hasAisle = false
+      let hasStudent = false
+
+      for (let r = 1; r <= rows; r++) {
+        if (isAisle(cls, r, c)) {
+          hasAisle = true
+        } else {
+          allAisles = false
+        }
+        if (getStudent(cls, r, c)) {
+          hasStudent = true
+        }
+      }
+
+      if (allAisles) {
+        isAisleCol = true
+      } else if (hasAisle && !hasStudent) {
+        let onlyAislesAndEmpty = true
+        for (let r = 1; r <= rows; r++) {
+          if (!isAisle(cls, r, c) && cellTypes[`${r}-${c}`] === 'seat') {
+            onlyAislesAndEmpty = false
+            break
+          }
+        }
+        if (onlyAislesAndEmpty) isAisleCol = true
       }
     }
-    colTracks.push(isFullAisleCol ? '0.35fr' : '1fr')
+    // Narrow aisle column to ultra-compact (0.2fr = 20% of regular desk width)
+    colTracks.push(isAisleCol ? '0.2fr' : '1fr')
+  }
+
+  // Row tracks: narrow aisle rows to 0.2fr as well
+  const rowTracks = []
+  const legacyRowAisles = layout.aisles?.rows || []
+  for (let r = 1; r <= rows; r++) {
+    let isAisleRow = legacyRowAisles.includes(r)
+    if (!isAisleRow) {
+      let allAisles = true
+      for (let c = 1; c <= cols; c++) {
+        if (!isAisle(cls, r, c)) {
+          allAisles = false
+          break
+        }
+      }
+      if (allAisles) isAisleRow = true
+    }
+    rowTracks.push(isAisleRow ? '0.2fr' : '1fr')
   }
 
   return {
     gridTemplateColumns: colTracks.join(' '),
-    gridTemplateRows: `repeat(${rows}, 1fr)`
+    gridTemplateRows: rowTracks.join(' ')
   }
 }
 

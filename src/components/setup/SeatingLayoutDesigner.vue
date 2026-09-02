@@ -459,19 +459,51 @@ const canvasGridStyle = computed(() => {
 
   const colTracks = []
   for (let c = 1; c <= cols; c++) {
-    let isFullAisleCol = true
+    let allAisles = true
+    let hasAisle = false
+    let hasOccupant = false
+
     for (let r = 1; r <= rows; r++) {
+      if (isCellAisle(r, c)) {
+        hasAisle = true
+      } else {
+        allAisles = false
+      }
+      if (isCellOccupied(r, c)) {
+        hasOccupant = true
+      }
+    }
+
+    let isAisleCol = allAisles
+    if (!isAisleCol && hasAisle && !hasOccupant) {
+      let onlyAislesAndEmpty = true
+      for (let r = 1; r <= rows; r++) {
+        if (!isCellAisle(r, c) && cellTypes.value[getCellKey(r, c)] === 'seat') {
+          onlyAislesAndEmpty = false
+          break
+        }
+      }
+      if (onlyAislesAndEmpty) isAisleCol = true
+    }
+
+    colTracks.push(isAisleCol ? '0.2fr' : '1fr')
+  }
+
+  const rowTracks = []
+  for (let r = 1; r <= rows; r++) {
+    let isFullAisleRow = true
+    for (let c = 1; c <= cols; c++) {
       if (!isCellAisle(r, c)) {
-        isFullAisleCol = false
+        isFullAisleRow = false
         break
       }
     }
-    colTracks.push(isFullAisleCol ? '0.35fr' : '1fr')
+    rowTracks.push(isFullAisleRow ? '0.2fr' : '1fr')
   }
 
   return {
     gridTemplateColumns: colTracks.join(' '),
-    gridTemplateRows: `repeat(${rows}, 1fr)`
+    gridTemplateRows: rowTracks.join(' ')
   }
 })
 

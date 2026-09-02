@@ -110,8 +110,8 @@
     "semantic_hash": ""
   },
   "src/components/SeatingGrid.vue": {
-    "mtime": 1788313689.8579955,
-    "ast_hash": "90d4451a15670da5ddafcfa8f9ccf945",
+    "mtime": 1788367682.203059,
+    "ast_hash": "794ebead6c06589ee39dee1bd78b2659",
     "semantic_hash": ""
   },
   "src/components/StudentProfileModal.vue": {
@@ -1000,13 +1000,13 @@
     "semantic_hash": ""
   },
   "src/components/setup/SeatingLayoutDesigner.vue": {
-    "mtime": 1788313659.7102077,
-    "ast_hash": "1e9e6dbbc54383d188582c4de1e7e433",
+    "mtime": 1788367707.6919181,
+    "ast_hash": "b953e8ecbcc9dc847f0fb562c4b64c41",
     "semantic_hash": ""
   },
   "src/components/reports/PrintSeatingChartModal.vue": {
-    "mtime": 1788362213.1972635,
-    "ast_hash": "2e503eb70b463c6115fd08a6362b28dd",
+    "mtime": 1788367695.3301954,
+    "ast_hash": "803eb9bf5ed3740ec0b2ff732f8b841b",
     "semantic_hash": ""
   },
   "src/components/photos/PhotoBatchImportModal.vue": {
