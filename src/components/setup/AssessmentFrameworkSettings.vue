@@ -32,9 +32,9 @@
         <h3 class="setup__card-subtitle">Categories (Weights)</h3>
         <div class="setup__gb-list">
           <div v-for="(cat, idx) in activeCategories" :key="cat.categoryId" class="setup__gb-item">
-            <input v-model="cat.name" class="setup__input setup__input--naked" @change="saveGradebookSettings" />
+            <input v-model="cat.name" class="setup__input setup__input--naked" @input="debouncedSave" @change="saveGradebookSettings" />
             <div class="setup__gb-actions">
-              <input v-model.number="cat.weight" type="number" class="setup__input setup__input--weight" @change="saveGradebookSettings" /><span>%</span>
+              <input v-model.number="cat.weight" type="number" class="setup__input setup__input--weight" @input="onCategoryWeightInput" @change="saveGradebookSettings" /><span>%</span>
               <button class="setup__icon-btn" :disabled="idx === 0" @click="moveCategory(idx, -1)"><ChevronUp :size="16" /></button>
               <button class="setup__icon-btn" :disabled="idx === activeCategories.length - 1" @click="moveCategory(idx, 1)"><ChevronDown :size="16" /></button>
               <button class="setup__icon-btn setup__icon-btn--danger" @click="onDeleteCategory(cat)"><Trash2 :size="14" /></button>
@@ -867,6 +867,7 @@ function _ensureSectionFramework(section) {
 }
 
 const activeCategories = computed(() => {
+  categoriesRevision.value
   if (availableCourseSections.value.length > 1 && activeCourseSection.value) {
     _ensureSectionFramework(activeCourseSection.value)
     return activeClass.value.courseFrameworks[activeCourseSection.value].gradebookCategories
@@ -921,9 +922,17 @@ async function onClearExpectationsFromModal() {
   showImportModal.value = false
 }
 
+const categoriesRevision = ref(0)
+
+function onCategoryWeightInput() {
+  categoriesRevision.value++
+  debouncedSave()
+}
+
 const totalWeight = computed(() => {
+  categoriesRevision.value
   if (!activeCategories.value) return 0
-  return activeCategories.value.reduce((sum, c) => sum + (c.weight || 0), 0)
+  return activeCategories.value.reduce((sum, c) => sum + (Number(c.weight) || 0), 0)
 })
 
 let saveTimer = null
@@ -970,22 +979,20 @@ async function addCategory() {
   }
   if (availableCourseSections.value.length > 1 && activeCourseSection.value) {
     _ensureSectionFramework(activeCourseSection.value)
-    if (!activeClass.value.courseFrameworks[activeCourseSection.value].gradebookCategories) {
-      activeClass.value.courseFrameworks[activeCourseSection.value].gradebookCategories = []
-    }
-    activeClass.value.courseFrameworks[activeCourseSection.value].gradebookCategories.push(newCat)
+    const current = activeClass.value.courseFrameworks[activeCourseSection.value].gradebookCategories || []
+    activeClass.value.courseFrameworks[activeCourseSection.value].gradebookCategories = [...current, newCat]
   } else {
-    if (!activeClass.value.gradebookCategories) {
-      activeClass.value.gradebookCategories = []
-    }
-    activeClass.value.gradebookCategories.push(newCat)
+    const current = activeClass.value.gradebookCategories || []
+    activeClass.value.gradebookCategories = [...current, newCat]
   }
+  categoriesRevision.value++
+  triggerActiveClass()
   await saveGradebookSettings()
 }
 
 async function moveCategory(index, direction) {
   if (!activeClass.value) return
-  const cats = activeCategories.value
+  const cats = [...activeCategories.value]
   const newIndex = index + direction
   if (newIndex < 0 || newIndex >= cats.length) return
 
@@ -993,12 +1000,19 @@ async function moveCategory(index, direction) {
   cats[index] = cats[newIndex]
   cats[newIndex] = temp
 
+  if (availableCourseSections.value.length > 1 && activeCourseSection.value) {
+    activeClass.value.courseFrameworks[activeCourseSection.value].gradebookCategories = cats
+  } else {
+    activeClass.value.gradebookCategories = cats
+  }
+  categoriesRevision.value++
+  triggerActiveClass()
   await saveGradebookSettings()
 }
 
 async function moveUnit(index, direction) {
   if (!activeClass.value) return
-  const units = activeUnits.value
+  const units = [...activeUnits.value]
   const newIndex = index + direction
   if (newIndex < 0 || newIndex >= units.length) return
 
@@ -1006,6 +1020,12 @@ async function moveUnit(index, direction) {
   units[index] = units[newIndex]
   units[newIndex] = temp
 
+  if (availableCourseSections.value.length > 1 && activeCourseSection.value) {
+    activeClass.value.courseFrameworks[activeCourseSection.value].gradebookUnits = units
+  } else {
+    activeClass.value.gradebookUnits = units
+  }
+  triggerActiveClass()
   await saveGradebookSettings()
 }
 
@@ -1052,6 +1072,8 @@ async function onDeleteCategory(cat) {
   } else {
     activeClass.value.gradebookCategories = updated
   }
+  categoriesRevision.value++
+  triggerActiveClass()
   await saveGradebookSettings()
 }
 
@@ -1064,16 +1086,13 @@ async function addUnit() {
   }
   if (availableCourseSections.value.length > 1 && activeCourseSection.value) {
     _ensureSectionFramework(activeCourseSection.value)
-    if (!activeClass.value.courseFrameworks[activeCourseSection.value].gradebookUnits) {
-      activeClass.value.courseFrameworks[activeCourseSection.value].gradebookUnits = []
-    }
-    activeClass.value.courseFrameworks[activeCourseSection.value].gradebookUnits.push(newUnit)
+    const current = activeClass.value.courseFrameworks[activeCourseSection.value].gradebookUnits || []
+    activeClass.value.courseFrameworks[activeCourseSection.value].gradebookUnits = [...current, newUnit]
   } else {
-    if (!activeClass.value.gradebookUnits) {
-      activeClass.value.gradebookUnits = []
-    }
-    activeClass.value.gradebookUnits.push(newUnit)
+    const current = activeClass.value.gradebookUnits || []
+    activeClass.value.gradebookUnits = [...current, newUnit]
   }
+  triggerActiveClass()
   await saveGradebookSettings()
 }
 
@@ -1109,6 +1128,7 @@ async function onDeleteUnit(unitId) {
   } else {
     activeClass.value.gradebookUnits = updated
   }
+  triggerActiveClass()
   await saveGradebookSettings()
 }
 
@@ -1207,6 +1227,8 @@ async function activeClassClassCategoriesUpdate(categories, gradebookUnits = [])
     activeClass.value.gradebookCategories = categories
     activeClass.value.gradebookUnits = gradebookUnits
   }
+  categoriesRevision.value++
+  triggerActiveClass()
   await saveGradebookSettings()
 }
 

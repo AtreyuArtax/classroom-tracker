@@ -2790,7 +2790,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "components_basemodal",
-      "community": 78,
+      "community": 102,
       "norm_label": "basemodal.vue"
     },
     {
@@ -3010,7 +3010,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "components_messageoverlay",
-      "community": 78,
+      "community": 102,
       "norm_label": "messageoverlay.vue"
     },
     {
@@ -3020,7 +3020,7 @@
       "source_location": "L93",
       "_origin": "ast",
       "id": "components_messageoverlay_state_handleaction_handleselectchoice",
-      "community": 78,
+      "community": 102,
       "norm_label": "{ state, handleaction, handleselectchoice }"
     },
     {
@@ -3030,7 +3030,7 @@
       "source_location": "L94",
       "_origin": "ast",
       "id": "components_messageoverlay_inputref",
-      "community": 78,
+      "community": 102,
       "norm_label": "inputref"
     },
     {
@@ -3040,7 +3040,7 @@
       "source_location": "L95",
       "_origin": "ast",
       "id": "components_messageoverlay_confirmbtnref",
-      "community": 78,
+      "community": 102,
       "norm_label": "confirmbtnref"
     },
     {
@@ -3050,7 +3050,7 @@
       "source_location": "L97",
       "_origin": "ast",
       "id": "components_messageoverlay_isconfirmdisabled",
-      "community": 78,
+      "community": 102,
       "norm_label": "isconfirmdisabled"
     },
     {
@@ -3060,7 +3060,7 @@
       "source_location": "L102",
       "_origin": "ast",
       "id": "components_messageoverlay_onenter",
-      "community": 78,
+      "community": 102,
       "norm_label": "onenter()"
     },
     {
@@ -3290,7 +3290,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "components_studentprofilemodal",
-      "community": 135,
+      "community": 18,
       "norm_label": "studentprofilemodal.vue"
     },
     {
@@ -3300,7 +3300,7 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "components_studentprofilemodal_props",
-      "community": 135,
+      "community": 18,
       "norm_label": "props"
     },
     {
@@ -3310,7 +3310,7 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "components_studentprofilemodal_emit",
-      "community": 135,
+      "community": 18,
       "norm_label": "emit"
     },
     {
@@ -3320,7 +3320,7 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "components_studentprofilemodal_close",
-      "community": 135,
+      "community": 18,
       "norm_label": "close()"
     },
     {
@@ -3630,7 +3630,7 @@
       "source_location": "L288",
       "_origin": "ast",
       "id": "dossier_progressreport_formatdate",
-      "community": 88,
+      "community": 20,
       "norm_label": "formatdate()"
     },
     {
@@ -3850,7 +3850,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dossier_student360emailmodal",
-      "community": 88,
+      "community": 20,
       "norm_label": "student360emailmodal.vue"
     },
     {
@@ -3860,7 +3860,7 @@
       "source_location": "L170",
       "_origin": "ast",
       "id": "dossier_student360emailmodal_if",
-      "community": 88,
+      "community": 20,
       "norm_label": "if()"
     },
     {
@@ -4640,7 +4640,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "grades_gradesgridsbar",
-      "community": 18,
+      "community": 20,
       "norm_label": "gradesgridsbar.vue"
     },
     {
@@ -4650,7 +4650,7 @@
       "source_location": "L620",
       "_origin": "ast",
       "id": "grades_gradesgridsbar_for",
-      "community": 18,
+      "community": 20,
       "norm_label": "for()"
     },
     {
@@ -5647,7 +5647,7 @@
       "label": "activeUnits",
       "file_type": "code",
       "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
-      "source_location": "L877",
+      "source_location": "L878",
       "_origin": "ast",
       "id": "setup_assessmentframeworksettings_activeunits",
       "community": 61,
@@ -5657,7 +5657,7 @@
       "label": "totalExpectationsCount",
       "file_type": "code",
       "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
-      "source_location": "L885",
+      "source_location": "L886",
       "_origin": "ast",
       "id": "setup_assessmentframeworksettings_totalexpectationscount",
       "community": 61,
@@ -5667,17 +5667,37 @@
       "label": "onClearExpectationsFromModal()",
       "file_type": "code",
       "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
-      "source_location": "L889",
+      "source_location": "L890",
       "_origin": "ast",
       "id": "setup_assessmentframeworksettings_onclearexpectationsfrommodal",
       "community": 61,
       "norm_label": "onclearexpectationsfrommodal()"
     },
     {
+      "label": "categoriesRevision",
+      "file_type": "code",
+      "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
+      "source_location": "L925",
+      "_origin": "ast",
+      "id": "setup_assessmentframeworksettings_categoriesrevision",
+      "community": 61,
+      "norm_label": "categoriesrevision"
+    },
+    {
+      "label": "onCategoryWeightInput()",
+      "file_type": "code",
+      "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
+      "source_location": "L927",
+      "_origin": "ast",
+      "id": "setup_assessmentframeworksettings_oncategoryweightinput",
+      "community": 61,
+      "norm_label": "oncategoryweightinput()"
+    },
+    {
       "label": "totalWeight",
       "file_type": "code",
       "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
-      "source_location": "L924",
+      "source_location": "L932",
       "_origin": "ast",
       "id": "setup_assessmentframeworksettings_totalweight",
       "community": 61,
@@ -5687,7 +5707,7 @@
       "label": "debouncedSave()",
       "file_type": "code",
       "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
-      "source_location": "L930",
+      "source_location": "L939",
       "_origin": "ast",
       "id": "setup_assessmentframeworksettings_debouncedsave",
       "community": 61,
@@ -5697,7 +5717,7 @@
       "label": "saveGradebookSettings()",
       "file_type": "code",
       "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
-      "source_location": "L953",
+      "source_location": "L962",
       "_origin": "ast",
       "id": "setup_assessmentframeworksettings_savegradebooksettings",
       "community": 61,
@@ -5707,7 +5727,7 @@
       "label": "addCategory()",
       "file_type": "code",
       "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
-      "source_location": "L964",
+      "source_location": "L973",
       "_origin": "ast",
       "id": "setup_assessmentframeworksettings_addcategory",
       "community": 61,
@@ -5717,7 +5737,7 @@
       "label": "moveCategory()",
       "file_type": "code",
       "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
-      "source_location": "L986",
+      "source_location": "L993",
       "_origin": "ast",
       "id": "setup_assessmentframeworksettings_movecategory",
       "community": 61,
@@ -5727,7 +5747,7 @@
       "label": "moveUnit()",
       "file_type": "code",
       "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
-      "source_location": "L999",
+      "source_location": "L1013",
       "_origin": "ast",
       "id": "setup_assessmentframeworksettings_moveunit",
       "community": 61,
@@ -5737,7 +5757,7 @@
       "label": "frameworkWarning",
       "file_type": "code",
       "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
-      "source_location": "L1012",
+      "source_location": "L1032",
       "_origin": "ast",
       "id": "setup_assessmentframeworksettings_frameworkwarning",
       "community": 61,
@@ -5747,7 +5767,7 @@
       "label": "frameworkBannerType",
       "file_type": "code",
       "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
-      "source_location": "L1013",
+      "source_location": "L1033",
       "_origin": "ast",
       "id": "setup_assessmentframeworksettings_frameworkbannertype",
       "community": 61,
@@ -5757,7 +5777,7 @@
       "label": "showWarning()",
       "file_type": "code",
       "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
-      "source_location": "L1015",
+      "source_location": "L1035",
       "_origin": "ast",
       "id": "setup_assessmentframeworksettings_showwarning",
       "community": 61,
@@ -5767,7 +5787,7 @@
       "label": "showSuccess()",
       "file_type": "code",
       "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
-      "source_location": "L1023",
+      "source_location": "L1043",
       "_origin": "ast",
       "id": "setup_assessmentframeworksettings_showsuccess",
       "community": 61,
@@ -5777,7 +5797,7 @@
       "label": "onDeleteCategory()",
       "file_type": "code",
       "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
-      "source_location": "L1031",
+      "source_location": "L1051",
       "_origin": "ast",
       "id": "setup_assessmentframeworksettings_ondeletecategory",
       "community": 61,
@@ -5787,7 +5807,7 @@
       "label": "addUnit()",
       "file_type": "code",
       "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
-      "source_location": "L1058",
+      "source_location": "L1080",
       "_origin": "ast",
       "id": "setup_assessmentframeworksettings_addunit",
       "community": 61,
@@ -5797,7 +5817,7 @@
       "label": "onDeleteUnit()",
       "file_type": "code",
       "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
-      "source_location": "L1080",
+      "source_location": "L1099",
       "_origin": "ast",
       "id": "setup_assessmentframeworksettings_ondeleteunit",
       "community": 61,
@@ -5807,7 +5827,7 @@
       "label": "openPreviewTemplate()",
       "file_type": "code",
       "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
-      "source_location": "L1115",
+      "source_location": "L1135",
       "_origin": "ast",
       "id": "setup_assessmentframeworksettings_openpreviewtemplate",
       "community": 61,
@@ -5817,7 +5837,7 @@
       "label": "closePreviewModal()",
       "file_type": "code",
       "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
-      "source_location": "L1120",
+      "source_location": "L1140",
       "_origin": "ast",
       "id": "setup_assessmentframeworksettings_closepreviewmodal",
       "community": 61,
@@ -5827,7 +5847,7 @@
       "label": "getTemplateTotalWeight()",
       "file_type": "code",
       "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
-      "source_location": "L1125",
+      "source_location": "L1145",
       "_origin": "ast",
       "id": "setup_assessmentframeworksettings_gettemplatetotalweight",
       "community": 61,
@@ -5837,7 +5857,7 @@
       "label": "getTemplateTotalExpectations()",
       "file_type": "code",
       "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
-      "source_location": "L1130",
+      "source_location": "L1150",
       "_origin": "ast",
       "id": "setup_assessmentframeworksettings_gettemplatetotalexpectations",
       "community": 61,
@@ -5847,7 +5867,7 @@
       "label": "applyFromPreview()",
       "file_type": "code",
       "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
-      "source_location": "L1135",
+      "source_location": "L1155",
       "_origin": "ast",
       "id": "setup_assessmentframeworksettings_applyfrompreview",
       "community": 61,
@@ -5857,7 +5877,7 @@
       "label": "saveTemplate()",
       "file_type": "code",
       "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
-      "source_location": "L1140",
+      "source_location": "L1160",
       "_origin": "ast",
       "id": "setup_assessmentframeworksettings_savetemplate",
       "community": 61,
@@ -5867,7 +5887,7 @@
       "label": "onApplyTemplate()",
       "file_type": "code",
       "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
-      "source_location": "L1165",
+      "source_location": "L1185",
       "_origin": "ast",
       "id": "setup_assessmentframeworksettings_onapplytemplate",
       "community": 61,
@@ -5877,7 +5897,7 @@
       "label": "activeClassClassCategoriesUpdate()",
       "file_type": "code",
       "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
-      "source_location": "L1199",
+      "source_location": "L1219",
       "_origin": "ast",
       "id": "setup_assessmentframeworksettings_activeclassclasscategoriesupdate",
       "community": 61,
@@ -5887,7 +5907,7 @@
       "label": "onDeleteTemplate()",
       "file_type": "code",
       "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
-      "source_location": "L1213",
+      "source_location": "L1235",
       "_origin": "ast",
       "id": "setup_assessmentframeworksettings_ondeletetemplate",
       "community": 61,
@@ -7160,7 +7180,7 @@
       "source_location": "L238",
       "_origin": "ast",
       "id": "composables_useattendancetracker_reconcilestaletrips",
-      "community": 26,
+      "community": 42,
       "norm_label": "reconcilestaletrips()"
     },
     {
@@ -7530,7 +7550,7 @@
       "source_location": "L683",
       "_origin": "ast",
       "id": "composables_useclassroom_switchclass",
-      "community": 26,
+      "community": 42,
       "norm_label": "switchclass()"
     },
     {
@@ -7540,7 +7560,7 @@
       "source_location": "L697",
       "_origin": "ast",
       "id": "composables_useclassroom_createclass",
-      "community": 129,
+      "community": 88,
       "norm_label": "createclass()"
     },
     {
@@ -7550,7 +7570,7 @@
       "source_location": "L766",
       "_origin": "ast",
       "id": "composables_useclassroom_updateactiveclass",
-      "community": 129,
+      "community": 0,
       "norm_label": "updateactiveclass()"
     },
     {
@@ -7610,7 +7630,7 @@
       "source_location": "L1031",
       "_origin": "ast",
       "id": "composables_useclassroom_getstudenteventhistory",
-      "community": 102,
+      "community": 0,
       "norm_label": "getstudenteventhistory()"
     },
     {
@@ -7620,7 +7640,7 @@
       "source_location": "L1049",
       "_origin": "ast",
       "id": "composables_useclassroom_logstandardevent",
-      "community": 102,
+      "community": 0,
       "norm_label": "logstandardevent()"
     },
     {
@@ -7640,7 +7660,7 @@
       "source_location": "L1188",
       "_origin": "ast",
       "id": "composables_useclassroom_logtoggleevent",
-      "community": 26,
+      "community": 42,
       "norm_label": "logtoggleevent()"
     },
     {
@@ -7670,7 +7690,7 @@
       "source_location": "L1388",
       "_origin": "ast",
       "id": "composables_useclassroom_checkresize",
-      "community": 129,
+      "community": 0,
       "norm_label": "checkresize()"
     },
     {
@@ -7680,7 +7700,7 @@
       "source_location": "L1405",
       "_origin": "ast",
       "id": "composables_useclassroom_confirmresize",
-      "community": 129,
+      "community": 0,
       "norm_label": "confirmresize()"
     },
     {
@@ -7760,7 +7780,7 @@
       "source_location": "L1528",
       "_origin": "ast",
       "id": "composables_useclassroom_archiveclass",
-      "community": 26,
+      "community": 42,
       "norm_label": "archiveclass()"
     },
     {
@@ -7790,7 +7810,7 @@
       "source_location": "L1570",
       "_origin": "ast",
       "id": "composables_useclassroom_activateclass",
-      "community": 26,
+      "community": 42,
       "norm_label": "_activateclass()"
     },
     {
@@ -7830,7 +7850,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "composables_useclassroomstate_classlist",
-      "community": 0,
+      "community": 26,
       "norm_label": "classlist"
     },
     {
@@ -7850,7 +7870,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "composables_useclassroomstate_activeclass",
-      "community": 0,
+      "community": 26,
       "norm_label": "activeclass"
     },
     {
@@ -7870,7 +7890,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "composables_useclassroomstate_students",
-      "community": 0,
+      "community": 26,
       "norm_label": "students"
     },
     {
@@ -7890,7 +7910,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "composables_useclassroomstate_gridsize",
-      "community": 0,
+      "community": 24,
       "norm_label": "gridsize"
     },
     {
@@ -7920,7 +7940,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "composables_useclassroomstate_latenessgraceperiod",
-      "community": 0,
+      "community": 26,
       "norm_label": "latenessgraceperiod"
     },
     {
@@ -7970,7 +7990,7 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "composables_useclassroomstate_istestday",
-      "community": 0,
+      "community": 26,
       "norm_label": "istestday"
     },
     {
@@ -8060,7 +8080,7 @@
       "source_location": "L44",
       "_origin": "ast",
       "id": "composables_useclassroomstate_activesubjectid",
-      "community": 88,
+      "community": 20,
       "norm_label": "activesubjectid"
     },
     {
@@ -8090,7 +8110,7 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "composables_useelementary_geteffectiveclassrecord",
-      "community": 88,
+      "community": 20,
       "norm_label": "geteffectiveclassrecord()"
     },
     {
@@ -8170,7 +8190,7 @@
       "source_location": "L281",
       "_origin": "ast",
       "id": "composables_useelementary_autopopulateallelementarysubjects",
-      "community": 129,
+      "community": 88,
       "norm_label": "autopopulateallelementarysubjects()"
     },
     {
@@ -8250,7 +8270,7 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "composables_usegradebook_activeclassrecord",
-      "community": 10,
+      "community": 78,
       "norm_label": "activeclassrecord"
     },
     {
@@ -8260,7 +8280,7 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "composables_usegradebook_assessments",
-      "community": 18,
+      "community": 20,
       "norm_label": "assessments"
     },
     {
@@ -8280,7 +8300,7 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "composables_usegradebook_classgrades",
-      "community": 10,
+      "community": 18,
       "norm_label": "classgrades"
     },
     {
@@ -8940,7 +8960,7 @@
       "source_location": "L1302",
       "_origin": "ast",
       "id": "composables_usegradebook_savestudentoverride",
-      "community": 1,
+      "community": 23,
       "norm_label": "savestudentoverride()"
     },
     {
@@ -8970,7 +8990,7 @@
       "source_location": "L1398",
       "_origin": "ast",
       "id": "composables_usegradebook_grademap",
-      "community": 18,
+      "community": 20,
       "norm_label": "grademap"
     },
     {
@@ -9490,7 +9510,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "composables_usesbarprintoptions",
-      "community": 88,
+      "community": 20,
       "norm_label": "usesbarprintoptions.js"
     },
     {
@@ -9500,7 +9520,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "composables_usesbarprintoptions_usesbarprintoptions",
-      "community": 88,
+      "community": 20,
       "norm_label": "usesbarprintoptions()"
     },
     {
@@ -10100,7 +10120,7 @@
       "source_location": "L39",
       "_origin": "ast",
       "id": "curriculum_schema_properties_subjectcode",
-      "community": 85,
+      "community": 91,
       "norm_label": "subjectcode"
     },
     {
@@ -10110,7 +10130,7 @@
       "source_location": "L40",
       "_origin": "ast",
       "id": "curriculum_schema_subjectcode_type",
-      "community": 85,
+      "community": 91,
       "norm_label": "type"
     },
     {
@@ -10120,7 +10140,7 @@
       "source_location": "L41",
       "_origin": "ast",
       "id": "curriculum_schema_subjectcode_description",
-      "community": 85,
+      "community": 91,
       "norm_label": "description"
     },
     {
@@ -10130,7 +10150,7 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "curriculum_schema_properties_department",
-      "community": 91,
+      "community": 129,
       "norm_label": "department"
     },
     {
@@ -10140,7 +10160,7 @@
       "source_location": "L44",
       "_origin": "ast",
       "id": "curriculum_schema_department_type",
-      "community": 91,
+      "community": 129,
       "norm_label": "type"
     },
     {
@@ -10150,7 +10170,7 @@
       "source_location": "L45",
       "_origin": "ast",
       "id": "curriculum_schema_department_description",
-      "community": 91,
+      "community": 129,
       "norm_label": "description"
     },
     {
@@ -10970,7 +10990,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "db_exportservice",
-      "community": 18,
+      "community": 20,
       "norm_label": "exportservice.js"
     },
     {
@@ -10980,7 +11000,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "db_exportservice_exportgradebooktoexcel",
-      "community": 18,
+      "community": 20,
       "norm_label": "exportgradebooktoexcel()"
     },
     {
@@ -11070,7 +11090,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "gradebook_gradeanalytics",
-      "community": 2,
+      "community": 85,
       "norm_label": "gradeanalytics.js"
     },
     {
@@ -11080,7 +11100,7 @@
       "source_location": "L36",
       "_origin": "ast",
       "id": "gradebook_gradeanalytics_calculateassessmentanalytics",
-      "community": 2,
+      "community": 85,
       "norm_label": "calculateassessmentanalytics()"
     },
     {
@@ -11090,7 +11110,7 @@
       "source_location": "L115",
       "_origin": "ast",
       "id": "gradebook_gradeanalytics_calculateclassanalytics",
-      "community": 2,
+      "community": 85,
       "norm_label": "calculateclassanalytics()"
     },
     {
@@ -11100,7 +11120,7 @@
       "source_location": "L451",
       "_origin": "ast",
       "id": "gradebook_gradeanalytics_getexclusionresults",
-      "community": 2,
+      "community": 85,
       "norm_label": "getexclusionresults()"
     },
     {
@@ -11110,7 +11130,7 @@
       "source_location": "L482",
       "_origin": "ast",
       "id": "gradebook_gradeanalytics_getgradebooktemplates",
-      "community": 109,
+      "community": 85,
       "norm_label": "getgradebooktemplates()"
     },
     {
@@ -11130,7 +11150,7 @@
       "source_location": "L521",
       "_origin": "ast",
       "id": "gradebook_gradeanalytics_deletegradebooktemplate",
-      "community": 109,
+      "community": 85,
       "norm_label": "deletegradebooktemplate()"
     },
     {
@@ -11140,7 +11160,7 @@
       "source_location": "L538",
       "_origin": "ast",
       "id": "gradebook_gradeanalytics_auditgradebookdata",
-      "community": 109,
+      "community": 85,
       "norm_label": "auditgradebookdata()"
     },
     {
@@ -11150,7 +11170,7 @@
       "source_location": "L661",
       "_origin": "ast",
       "id": "gradebook_gradeanalytics_repairgradebookorphans",
-      "community": 109,
+      "community": 85,
       "norm_label": "repairgradebookorphans()"
     },
     {
@@ -11160,7 +11180,7 @@
       "source_location": "L675",
       "_origin": "ast",
       "id": "gradebook_gradeanalytics_repairmissingclassids",
-      "community": 109,
+      "community": 85,
       "norm_label": "repairmissingclassids()"
     },
     {
@@ -11170,7 +11190,7 @@
       "source_location": "L703",
       "_origin": "ast",
       "id": "gradebook_gradeanalytics_repairinvalidcategories",
-      "community": 109,
+      "community": 85,
       "norm_label": "repairinvalidcategories()"
     },
     {
@@ -11180,7 +11200,7 @@
       "source_location": "L739",
       "_origin": "ast",
       "id": "gradebook_gradeanalytics_deleteassessments",
-      "community": 109,
+      "community": 85,
       "norm_label": "deleteassessments()"
     },
     {
@@ -11210,7 +11230,7 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "gradebook_gradecalc_calculatestandarddeviation",
-      "community": 2,
+      "community": 85,
       "norm_label": "calculatestandarddeviation()"
     },
     {
@@ -11220,7 +11240,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "gradebook_gradecalc_detectoutliers",
-      "community": 2,
+      "community": 85,
       "norm_label": "detectoutliers()"
     },
     {
@@ -11230,7 +11250,7 @@
       "source_location": "L62",
       "_origin": "ast",
       "id": "gradebook_gradecalc_builddistributionbuckets",
-      "community": 2,
+      "community": 85,
       "norm_label": "builddistributionbuckets()"
     },
     {
@@ -11240,7 +11260,7 @@
       "source_location": "L86",
       "_origin": "ast",
       "id": "gradebook_gradecalc_buildleveldistributionbuckets",
-      "community": 2,
+      "community": 85,
       "norm_label": "buildleveldistributionbuckets()"
     },
     {
@@ -11290,7 +11310,7 @@
       "source_location": "L277",
       "_origin": "ast",
       "id": "gradebook_gradecalc_calculatemedian",
-      "community": 2,
+      "community": 85,
       "norm_label": "calculatemedian()"
     },
     {
@@ -11420,7 +11440,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "gradebook_gradeservice",
-      "community": 20,
+      "community": 109,
       "norm_label": "gradeservice.js"
     },
     {
@@ -11430,7 +11450,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "gradebook_gradeservice_getgradeintransaction",
-      "community": 20,
+      "community": 109,
       "norm_label": "_getgradeintransaction()"
     },
     {
@@ -11440,7 +11460,7 @@
       "source_location": "L49",
       "_origin": "ast",
       "id": "gradebook_gradeservice_savesbargrade",
-      "community": 20,
+      "community": 109,
       "norm_label": "savesbargrade()"
     },
     {
@@ -11450,7 +11470,7 @@
       "source_location": "L97",
       "_origin": "ast",
       "id": "gradebook_gradeservice_getorcreategrade",
-      "community": 20,
+      "community": 109,
       "norm_label": "getorcreategrade()"
     },
     {
@@ -11460,7 +11480,7 @@
       "source_location": "L110",
       "_origin": "ast",
       "id": "gradebook_gradeservice_addattempt",
-      "community": 20,
+      "community": 109,
       "norm_label": "addattempt()"
     },
     {
@@ -11470,7 +11490,7 @@
       "source_location": "L150",
       "_origin": "ast",
       "id": "gradebook_gradeservice_deleteattempt",
-      "community": 20,
+      "community": 109,
       "norm_label": "deleteattempt()"
     },
     {
@@ -11480,7 +11500,7 @@
       "source_location": "L178",
       "_origin": "ast",
       "id": "gradebook_gradeservice_setprimaryattempt",
-      "community": 20,
+      "community": 109,
       "norm_label": "setprimaryattempt()"
     },
     {
@@ -11490,7 +11510,7 @@
       "source_location": "L209",
       "_origin": "ast",
       "id": "gradebook_gradeservice_updateattemptcomment",
-      "community": 20,
+      "community": 109,
       "norm_label": "updateattemptcomment()"
     },
     {
@@ -11500,7 +11520,7 @@
       "source_location": "L238",
       "_origin": "ast",
       "id": "gradebook_gradeservice_updategradeflags",
-      "community": 20,
+      "community": 109,
       "norm_label": "updategradeflags()"
     },
     {
@@ -11510,7 +11530,7 @@
       "source_location": "L263",
       "_origin": "ast",
       "id": "gradebook_gradeservice_deletegrade",
-      "community": 20,
+      "community": 109,
       "norm_label": "deletegrade()"
     },
     {
@@ -11520,7 +11540,7 @@
       "source_location": "L284",
       "_origin": "ast",
       "id": "gradebook_gradeservice_savefullgraderecord",
-      "community": 20,
+      "community": 109,
       "norm_label": "savefullgraderecord()"
     },
     {
@@ -12060,7 +12080,7 @@
       "source_location": "L480",
       "_origin": "ast",
       "id": "db_settingsservice_saveacademicterms",
-      "community": 21,
+      "community": 109,
       "norm_label": "saveacademicterms()"
     },
     {
@@ -13830,7 +13850,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_dates",
-      "community": 18,
+      "community": 20,
       "norm_label": "dates.js"
     },
     {
@@ -13840,7 +13860,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "utils_dates_formatlocaldisplay",
-      "community": 88,
+      "community": 20,
       "norm_label": "formatlocaldisplay()"
     },
     {
@@ -13850,7 +13870,7 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "utils_dates_parselocal",
-      "community": 18,
+      "community": 20,
       "norm_label": "parselocal()"
     },
     {
@@ -13890,7 +13910,7 @@
       "source_location": "L96",
       "_origin": "ast",
       "id": "utils_dates_getschoolyearfromdate",
-      "community": 18,
+      "community": 20,
       "norm_label": "getschoolyearfromdate()"
     },
     {
@@ -13900,7 +13920,7 @@
       "source_location": "L120",
       "_origin": "ast",
       "id": "utils_dates_getsemesterfromdate",
-      "community": 18,
+      "community": 20,
       "norm_label": "getsemesterfromdate()"
     },
     {
@@ -13970,7 +13990,7 @@
       "source_location": "L93",
       "_origin": "ast",
       "id": "utils_elementarysubjects_createdefaultelementarysubjects",
-      "community": 129,
+      "community": 88,
       "norm_label": "createdefaultelementarysubjects()"
     },
     {
@@ -24004,6 +24024,16 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
+      "source_location": "L925",
+      "weight": 1.0,
+      "source": "setup_assessmentframeworksettings",
+      "target": "setup_assessmentframeworksettings_categoriesrevision",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
       "source_location": "L997",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -24219,6 +24249,16 @@
       "confidence_score": 1.0,
       "source": "setup_assessmentframeworksettings",
       "target": "setup_assessmentframeworksettings_onapplytemplate"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
+      "source_location": "L927",
+      "weight": 1.0,
+      "source": "setup_assessmentframeworksettings",
+      "target": "setup_assessmentframeworksettings_oncategoryweightinput",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -24668,6 +24708,17 @@
       "confidence_score": 1.0,
       "source": "setup_assessmentframeworksettings_onclearexpectationsfrommodal",
       "target": "setup_assessmentframeworksettings_savegradebooksettings"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/setup/AssessmentFrameworkSettings.vue",
+      "source_location": "L929",
+      "weight": 1.0,
+      "source": "setup_assessmentframeworksettings_oncategoryweightinput",
+      "target": "setup_assessmentframeworksettings_debouncedsave",
+      "confidence_score": 1.0
     },
     {
       "relation": "calls",
@@ -40838,9 +40889,9 @@
       "source_file": "src/test_split_csv_import_comma_fix.js",
       "source_location": "L31",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_test_split_csv_import_comma_fix",
-      "target": "src_test_split_csv_import_comma_fix_results",
-      "confidence_score": 1.0
+      "target": "src_test_split_csv_import_comma_fix_results"
     },
     {
       "relation": "contains",
@@ -40848,9 +40899,9 @@
       "source_file": "src/test_split_csv_import_comma_fix.js",
       "source_location": "L37",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_test_split_csv_import_comma_fix",
-      "target": "src_test_split_csv_import_comma_fix_rows",
-      "confidence_score": 1.0
+      "target": "src_test_split_csv_import_comma_fix_rows"
     },
     {
       "relation": "contains",
@@ -40858,9 +40909,9 @@
       "source_file": "src/test_split_csv_import_comma_fix.js",
       "source_location": "L67",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_test_split_csv_import_comma_fix",
-      "target": "src_test_split_csv_import_comma_fix_validrows",
-      "confidence_score": 1.0
+      "target": "src_test_split_csv_import_comma_fix_validrows"
     },
     {
       "relation": "contains",
@@ -42334,5 +42385,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "4b0b5d0043e08974787eeac77d2b0433a2023b9b"
+  "built_at_commit": "f86de519c561947baf13fe0faafab00d92d814bc"
 }

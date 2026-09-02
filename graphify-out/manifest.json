@@ -400,8 +400,8 @@
     "semantic_hash": ""
   },
   "src/components/setup/AssessmentFrameworkSettings.vue": {
-    "mtime": 1788361689.0119107,
-    "ast_hash": "09c7226c8354f4c8e075381a10809495",
+    "mtime": 1788372572.1752958,
+    "ast_hash": "805ef24752eaf8bea6deb2b748ce66ff",
     "semantic_hash": ""
   },
   "src/composables/useGradeEditing.js": {
