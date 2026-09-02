@@ -17,16 +17,20 @@
     v-else
     class="desk-tile"
     :class="{
-      'desk-tile--out':    student.activeStates?.isOut,
-      'desk-tile--absent': student.activeStates?.isAbsent,
-      'desk-tile--late':   student.activeStates?.lateMs > 0,
-      'desk-tile--flash':  flashing,
-      'desk-tile--dimmed': isDimmed,
+      'desk-tile--out':         student.activeStates?.isOut,
+      'desk-tile--absent':      student.activeStates?.isAbsent,
+      'desk-tile--late':        student.activeStates?.lateMs > 0,
+      'desk-tile--flash':       flashing,
+      'desk-tile--dimmed':      isDimmed,
+      'desk-tile--drop-target': isDragOver,
     }"
     :aria-label="`${student.firstName} ${student.lastName}`"
     draggable="true"
     @dragstart="onDragStart"
     @dragend="isDragging = false"
+    @dragover.prevent="isDragOver = true"
+    @dragleave="isDragOver = false"
+    @drop.prevent="onDrop"
     @click="openRadialForStudent"
     @contextmenu.prevent="openTileContextMenu($event)"
   >

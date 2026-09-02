@@ -2790,7 +2790,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "components_basemodal",
-      "community": 78,
+      "community": 127,
       "norm_label": "basemodal.vue"
     },
     {
@@ -2807,7 +2807,7 @@
       "label": "openDefaultMailClient()",
       "file_type": "code",
       "source_file": "src/components/ClassEmailBroadcastModal.vue",
-      "source_location": "L496",
+      "source_location": "L497",
       "_origin": "ast",
       "id": "components_classemailbroadcastmodal_opendefaultmailclient",
       "community": 124,
@@ -2820,7 +2820,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "components_classswitcher",
-      "community": 85,
+      "community": 58,
       "norm_label": "classswitcher.vue"
     },
     {
@@ -3010,7 +3010,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "components_messageoverlay",
-      "community": 102,
+      "community": 127,
       "norm_label": "messageoverlay.vue"
     },
     {
@@ -3020,7 +3020,7 @@
       "source_location": "L93",
       "_origin": "ast",
       "id": "components_messageoverlay_state_handleaction_handleselectchoice",
-      "community": 102,
+      "community": 127,
       "norm_label": "{ state, handleaction, handleselectchoice }"
     },
     {
@@ -3030,7 +3030,7 @@
       "source_location": "L94",
       "_origin": "ast",
       "id": "components_messageoverlay_inputref",
-      "community": 102,
+      "community": 127,
       "norm_label": "inputref"
     },
     {
@@ -3040,7 +3040,7 @@
       "source_location": "L95",
       "_origin": "ast",
       "id": "components_messageoverlay_confirmbtnref",
-      "community": 102,
+      "community": 127,
       "norm_label": "confirmbtnref"
     },
     {
@@ -3050,7 +3050,7 @@
       "source_location": "L97",
       "_origin": "ast",
       "id": "components_messageoverlay_isconfirmdisabled",
-      "community": 102,
+      "community": 127,
       "norm_label": "isconfirmdisabled"
     },
     {
@@ -3060,7 +3060,7 @@
       "source_location": "L102",
       "_origin": "ast",
       "id": "components_messageoverlay_onenter",
-      "community": 102,
+      "community": 127,
       "norm_label": "onenter()"
     },
     {
@@ -3290,7 +3290,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "components_studentprofilemodal",
-      "community": 58,
+      "community": 135,
       "norm_label": "studentprofilemodal.vue"
     },
     {
@@ -3300,7 +3300,7 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "components_studentprofilemodal_props",
-      "community": 58,
+      "community": 135,
       "norm_label": "props"
     },
     {
@@ -3310,7 +3310,7 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "components_studentprofilemodal_emit",
-      "community": 58,
+      "community": 135,
       "norm_label": "emit"
     },
     {
@@ -3320,7 +3320,7 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "components_studentprofilemodal_close",
-      "community": 58,
+      "community": 135,
       "norm_label": "close()"
     },
     {
@@ -3390,7 +3390,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "components_yearsemesterselector",
-      "community": 85,
+      "community": 58,
       "norm_label": "yearsemesterselector.vue"
     },
     {
@@ -3630,7 +3630,7 @@
       "source_location": "L288",
       "_origin": "ast",
       "id": "dossier_progressreport_formatdate",
-      "community": 14,
+      "community": 18,
       "norm_label": "formatdate()"
     },
     {
@@ -5320,7 +5320,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "reports_studentriskscatterplot",
-      "community": 2,
+      "community": 116,
       "norm_label": "studentriskscatterplot.vue"
     },
     {
@@ -6240,7 +6240,7 @@
       "source_location": "L437",
       "_origin": "ast",
       "id": "setup_databasemaintenancesettings_doexport",
-      "community": 9,
+      "community": 26,
       "norm_label": "doexport()"
     },
     {
@@ -6560,7 +6560,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "setup_expectationimportmodal",
-      "community": 61,
+      "community": 130,
       "norm_label": "expectationimportmodal.vue"
     },
     {
@@ -7330,7 +7330,7 @@
       "source_location": "L156",
       "_origin": "ast",
       "id": "composables_useclassroom_computeweeklystats",
-      "community": 85,
+      "community": 116,
       "norm_label": "computeweeklystats()"
     },
     {
@@ -7440,7 +7440,7 @@
       "source_location": "L416",
       "_origin": "ast",
       "id": "composables_useclassroom_savedismissedsuggestions",
-      "community": 26,
+      "community": 0,
       "norm_label": "savedismissedsuggestions()"
     },
     {
@@ -7460,7 +7460,7 @@
       "source_location": "L433",
       "_origin": "ast",
       "id": "composables_useclassroom_dismisssuggestion",
-      "community": 26,
+      "community": 0,
       "norm_label": "dismisssuggestion()"
     },
     {
@@ -7650,7 +7650,7 @@
       "source_location": "L1311",
       "_origin": "ast",
       "id": "composables_useclassroom_editevent",
-      "community": 26,
+      "community": 116,
       "norm_label": "editevent()"
     },
     {
@@ -7660,7 +7660,7 @@
       "source_location": "L1342",
       "_origin": "ast",
       "id": "composables_useclassroom_removeevent",
-      "community": 85,
+      "community": 116,
       "norm_label": "removeevent()"
     },
     {
@@ -7800,7 +7800,7 @@
       "source_location": "L1655",
       "_origin": "ast",
       "id": "composables_useclassroom_useclassroom",
-      "community": 85,
+      "community": 58,
       "norm_label": "useclassroom()"
     },
     {
@@ -7820,7 +7820,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "composables_useclassroomstate",
-      "community": 0,
+      "community": 102,
       "norm_label": "useclassroomstate.js"
     },
     {
@@ -7830,7 +7830,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "composables_useclassroomstate_classlist",
-      "community": 26,
+      "community": 24,
       "norm_label": "classlist"
     },
     {
@@ -7840,7 +7840,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "composables_useclassroomstate_archivedclasses",
-      "community": 0,
+      "community": 102,
       "norm_label": "archivedclasses"
     },
     {
@@ -7860,7 +7860,7 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "composables_useclassroomstate_suggestedclass",
-      "community": 0,
+      "community": 102,
       "norm_label": "suggestedclass"
     },
     {
@@ -7880,7 +7880,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "composables_useclassroomstate_behaviorcodes",
-      "community": 0,
+      "community": 102,
       "norm_label": "behaviorcodes"
     },
     {
@@ -7900,7 +7900,7 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "composables_useclassroomstate_teachername",
-      "community": 0,
+      "community": 102,
       "norm_label": "teachername"
     },
     {
@@ -7910,7 +7910,7 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "composables_useclassroomstate_attendancemode",
-      "community": 0,
+      "community": 102,
       "norm_label": "attendancemode"
     },
     {
@@ -7940,7 +7940,7 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "composables_useclassroomstate_showscannerbutton",
-      "community": 0,
+      "community": 102,
       "norm_label": "showscannerbutton"
     },
     {
@@ -7950,7 +7950,7 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "composables_useclassroomstate_academicterms",
-      "community": 0,
+      "community": 102,
       "norm_label": "academicterms"
     },
     {
@@ -7960,7 +7960,7 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "composables_useclassroomstate_nonschooldays",
-      "community": 0,
+      "community": 102,
       "norm_label": "nonschooldays"
     },
     {
@@ -7980,7 +7980,7 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "composables_useclassroomstate_activestudentevents",
-      "community": 0,
+      "community": 102,
       "norm_label": "activestudentevents"
     },
     {
@@ -7990,7 +7990,7 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "composables_useclassroomstate_selectedyear",
-      "community": 0,
+      "community": 102,
       "norm_label": "selectedyear"
     },
     {
@@ -8000,7 +8000,7 @@
       "source_location": "L31",
       "_origin": "ast",
       "id": "composables_useclassroomstate_selectedsemester",
-      "community": 0,
+      "community": 102,
       "norm_label": "selectedsemester"
     },
     {
@@ -8010,7 +8010,7 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "composables_useclassroomstate_isscanneropen",
-      "community": 0,
+      "community": 102,
       "norm_label": "isscanneropen"
     },
     {
@@ -8020,7 +8020,7 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "composables_useclassroomstate_autostartrfid",
-      "community": 0,
+      "community": 102,
       "norm_label": "autostartrfid"
     },
     {
@@ -8030,7 +8030,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "composables_useclassroomstate_maxstudentsout",
-      "community": 0,
+      "community": 102,
       "norm_label": "maxstudentsout"
     },
     {
@@ -8040,7 +8040,7 @@
       "source_location": "L41",
       "_origin": "ast",
       "id": "composables_useclassroomstate_cloudmodeenabled",
-      "community": 0,
+      "community": 102,
       "norm_label": "cloudmodeenabled"
     },
     {
@@ -8050,7 +8050,7 @@
       "source_location": "L42",
       "_origin": "ast",
       "id": "composables_useclassroomstate_usercode",
-      "community": 0,
+      "community": 102,
       "norm_label": "usercode"
     },
     {
@@ -8090,7 +8090,7 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "composables_useelementary_geteffectiveclassrecord",
-      "community": 18,
+      "community": 1,
       "norm_label": "geteffectiveclassrecord()"
     },
     {
@@ -8140,7 +8140,7 @@
       "source_location": "L191",
       "_origin": "ast",
       "id": "composables_useelementary_getstudenteffectivegrade",
-      "community": 16,
+      "community": 1,
       "norm_label": "getstudenteffectivegrade()"
     },
     {
@@ -8220,7 +8220,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "composables_usegradeediting_usegradeediting",
-      "community": 24,
+      "community": 10,
       "norm_label": "usegradeediting()"
     },
     {
@@ -8420,7 +8420,7 @@
       "source_location": "L104",
       "_origin": "ast",
       "id": "composables_usegradebook_isstudentinsubcohort",
-      "community": 16,
+      "community": 1,
       "norm_label": "isstudentinsubcohort()"
     },
     {
@@ -8430,7 +8430,7 @@
       "source_location": "L132",
       "_origin": "ast",
       "id": "composables_usegradebook_isassessmentinsubcohort",
-      "community": 16,
+      "community": 10,
       "norm_label": "isassessmentinsubcohort()"
     },
     {
@@ -8440,7 +8440,7 @@
       "source_location": "L145",
       "_origin": "ast",
       "id": "composables_usegradebook_isassessmentapplicabletostudent",
-      "community": 16,
+      "community": 1,
       "norm_label": "isassessmentapplicabletostudent()"
     },
     {
@@ -8620,7 +8620,7 @@
       "source_location": "L213",
       "_origin": "ast",
       "id": "composables_usegradebook_filteredmilestones",
-      "community": 10,
+      "community": 18,
       "norm_label": "filteredmilestones"
     },
     {
@@ -8630,7 +8630,7 @@
       "source_location": "L265",
       "_origin": "ast",
       "id": "composables_usegradebook_setactivesubject",
-      "community": 21,
+      "community": 1,
       "norm_label": "setactivesubject()"
     },
     {
@@ -8840,7 +8840,7 @@
       "source_location": "L725",
       "_origin": "ast",
       "id": "composables_usegradebook_refreshallassessmentstats",
-      "community": 21,
+      "community": 1,
       "norm_label": "refreshallassessmentstats()"
     },
     {
@@ -9070,7 +9070,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "composables_useprintoptions",
-      "community": 16,
+      "community": 78,
       "norm_label": "useprintoptions.js"
     },
     {
@@ -9080,7 +9080,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "composables_useprintoptions_useprintoptions",
-      "community": 16,
+      "community": 78,
       "norm_label": "useprintoptions()"
     },
     {
@@ -9090,7 +9090,7 @@
       "source_location": "L130",
       "_origin": "ast",
       "id": "composables_useprintoptions_executeprint",
-      "community": 16,
+      "community": 78,
       "norm_label": "executeprint()"
     },
     {
@@ -9457,7 +9457,7 @@
       "label": "autoAssignSeats()",
       "file_type": "code",
       "source_file": "src/composables/useRosterOperations.js",
-      "source_location": "L429",
+      "source_location": "L435",
       "_origin": "ast",
       "id": "composables_userosteroperations_autoassignseats",
       "community": 24,
@@ -9467,7 +9467,7 @@
       "label": "updateStudentIntakeSurvey()",
       "file_type": "code",
       "source_file": "src/composables/useRosterOperations.js",
-      "source_location": "L545",
+      "source_location": "L551",
       "_origin": "ast",
       "id": "composables_userosteroperations_updatestudentintakesurvey",
       "community": 24,
@@ -9477,7 +9477,7 @@
       "label": "importStudentSurveys()",
       "file_type": "code",
       "source_file": "src/composables/useRosterOperations.js",
-      "source_location": "L583",
+      "source_location": "L589",
       "_origin": "ast",
       "id": "composables_userosteroperations_importstudentsurveys",
       "community": 24,
@@ -9490,7 +9490,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "composables_usesbarprintoptions",
-      "community": 18,
+      "community": 85,
       "norm_label": "usesbarprintoptions.js"
     },
     {
@@ -9510,7 +9510,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "composables_usestudentdossier",
-      "community": 85,
+      "community": 116,
       "norm_label": "usestudentdossier.js"
     },
     {
@@ -9520,7 +9520,7 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "composables_usestudentdossier_usestudentdossier",
-      "community": 85,
+      "community": 58,
       "norm_label": "usestudentdossier()"
     },
     {
@@ -9800,7 +9800,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "curriculum_index",
-      "community": 61,
+      "community": 130,
       "norm_label": "index.js"
     },
     {
@@ -9810,7 +9810,7 @@
       "source_location": "L46",
       "_origin": "ast",
       "id": "curriculum_index_curriculumpresets",
-      "community": 61,
+      "community": 130,
       "norm_label": "curriculumpresets"
     },
     {
@@ -9820,7 +9820,7 @@
       "source_location": "L90",
       "_origin": "ast",
       "id": "curriculum_index_getpresetsbypanel",
-      "community": 61,
+      "community": 130,
       "norm_label": "getpresetsbypanel()"
     },
     {
@@ -9830,7 +9830,7 @@
       "source_location": "L97",
       "_origin": "ast",
       "id": "curriculum_index_findelementarypreset",
-      "community": 61,
+      "community": 130,
       "norm_label": "findelementarypreset()"
     },
     {
@@ -9840,7 +9840,7 @@
       "source_location": "L145",
       "_origin": "ast",
       "id": "curriculum_index_findelementarypresets",
-      "community": 61,
+      "community": 130,
       "norm_label": "findelementarypresets()"
     },
     {
@@ -10100,7 +10100,7 @@
       "source_location": "L39",
       "_origin": "ast",
       "id": "curriculum_schema_properties_subjectcode",
-      "community": 109,
+      "community": 136,
       "norm_label": "subjectcode"
     },
     {
@@ -10110,7 +10110,7 @@
       "source_location": "L40",
       "_origin": "ast",
       "id": "curriculum_schema_subjectcode_type",
-      "community": 109,
+      "community": 136,
       "norm_label": "type"
     },
     {
@@ -10120,7 +10120,7 @@
       "source_location": "L41",
       "_origin": "ast",
       "id": "curriculum_schema_subjectcode_description",
-      "community": 109,
+      "community": 136,
       "norm_label": "description"
     },
     {
@@ -10470,7 +10470,7 @@
       "source_location": "L267",
       "_origin": "ast",
       "id": "db_classservice_setstudentlate",
-      "community": 23,
+      "community": 87,
       "norm_label": "setstudentlate()"
     },
     {
@@ -10680,7 +10680,7 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "db_eventservice_hasunsyncedchanges",
-      "community": 2,
+      "community": 116,
       "norm_label": "hasunsyncedchanges"
     },
     {
@@ -10690,7 +10690,7 @@
       "source_location": "L44",
       "_origin": "ast",
       "id": "db_eventservice_tominutes",
-      "community": 85,
+      "community": 116,
       "norm_label": "tominutes()"
     },
     {
@@ -10920,7 +10920,7 @@
       "source_location": "L826",
       "_origin": "ast",
       "id": "db_eventservice_getlastsyncedat",
-      "community": 3,
+      "community": 35,
       "norm_label": "getlastsyncedat()"
     },
     {
@@ -10970,7 +10970,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "db_exportservice",
-      "community": 9,
+      "community": 18,
       "norm_label": "exportservice.js"
     },
     {
@@ -10980,7 +10980,7 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "db_exportservice_exportgradebooktoexcel",
-      "community": 9,
+      "community": 18,
       "norm_label": "exportgradebooktoexcel()"
     },
     {
@@ -10990,7 +10990,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "gradebook_assessmentservice",
-      "community": 20,
+      "community": 87,
       "norm_label": "assessmentservice.js"
     },
     {
@@ -11000,7 +11000,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "gradebook_assessmentservice_createassessment",
-      "community": 20,
+      "community": 87,
       "norm_label": "createassessment()"
     },
     {
@@ -11020,7 +11020,7 @@
       "source_location": "L67",
       "_origin": "ast",
       "id": "gradebook_assessmentservice_updateassessment",
-      "community": 20,
+      "community": 87,
       "norm_label": "updateassessment()"
     },
     {
@@ -11030,7 +11030,7 @@
       "source_location": "L85",
       "_origin": "ast",
       "id": "gradebook_assessmentservice_deleteassessment",
-      "community": 20,
+      "community": 87,
       "norm_label": "deleteassessment()"
     },
     {
@@ -11040,7 +11040,7 @@
       "source_location": "L116",
       "_origin": "ast",
       "id": "gradebook_assessmentservice_getexpectationusagecounts",
-      "community": 20,
+      "community": 87,
       "norm_label": "getexpectationusagecounts()"
     },
     {
@@ -11050,7 +11050,7 @@
       "source_location": "L186",
       "_origin": "ast",
       "id": "gradebook_assessmentservice_cascaderenameexpectation",
-      "community": 20,
+      "community": 87,
       "norm_label": "cascaderenameexpectation()"
     },
     {
@@ -11060,7 +11060,7 @@
       "source_location": "L301",
       "_origin": "ast",
       "id": "gradebook_assessmentservice_detachexpectationfromassessmentsandgrades",
-      "community": 20,
+      "community": 87,
       "norm_label": "detachexpectationfromassessmentsandgrades()"
     },
     {
@@ -11070,7 +11070,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "gradebook_gradeanalytics",
-      "community": 2,
+      "community": 109,
       "norm_label": "gradeanalytics.js"
     },
     {
@@ -11080,7 +11080,7 @@
       "source_location": "L36",
       "_origin": "ast",
       "id": "gradebook_gradeanalytics_calculateassessmentanalytics",
-      "community": 2,
+      "community": 109,
       "norm_label": "calculateassessmentanalytics()"
     },
     {
@@ -11090,7 +11090,7 @@
       "source_location": "L115",
       "_origin": "ast",
       "id": "gradebook_gradeanalytics_calculateclassanalytics",
-      "community": 2,
+      "community": 109,
       "norm_label": "calculateclassanalytics()"
     },
     {
@@ -11100,7 +11100,7 @@
       "source_location": "L451",
       "_origin": "ast",
       "id": "gradebook_gradeanalytics_getexclusionresults",
-      "community": 2,
+      "community": 109,
       "norm_label": "getexclusionresults()"
     },
     {
@@ -11110,7 +11110,7 @@
       "source_location": "L482",
       "_origin": "ast",
       "id": "gradebook_gradeanalytics_getgradebooktemplates",
-      "community": 20,
+      "community": 109,
       "norm_label": "getgradebooktemplates()"
     },
     {
@@ -11120,7 +11120,7 @@
       "source_location": "L491",
       "_origin": "ast",
       "id": "gradebook_gradeanalytics_savegradebooktemplate",
-      "community": 20,
+      "community": 109,
       "norm_label": "savegradebooktemplate()"
     },
     {
@@ -11130,7 +11130,7 @@
       "source_location": "L521",
       "_origin": "ast",
       "id": "gradebook_gradeanalytics_deletegradebooktemplate",
-      "community": 20,
+      "community": 109,
       "norm_label": "deletegradebooktemplate()"
     },
     {
@@ -11140,7 +11140,7 @@
       "source_location": "L538",
       "_origin": "ast",
       "id": "gradebook_gradeanalytics_auditgradebookdata",
-      "community": 20,
+      "community": 109,
       "norm_label": "auditgradebookdata()"
     },
     {
@@ -11150,7 +11150,7 @@
       "source_location": "L661",
       "_origin": "ast",
       "id": "gradebook_gradeanalytics_repairgradebookorphans",
-      "community": 20,
+      "community": 109,
       "norm_label": "repairgradebookorphans()"
     },
     {
@@ -11160,7 +11160,7 @@
       "source_location": "L675",
       "_origin": "ast",
       "id": "gradebook_gradeanalytics_repairmissingclassids",
-      "community": 20,
+      "community": 109,
       "norm_label": "repairmissingclassids()"
     },
     {
@@ -11170,7 +11170,7 @@
       "source_location": "L703",
       "_origin": "ast",
       "id": "gradebook_gradeanalytics_repairinvalidcategories",
-      "community": 20,
+      "community": 109,
       "norm_label": "repairinvalidcategories()"
     },
     {
@@ -11180,7 +11180,7 @@
       "source_location": "L739",
       "_origin": "ast",
       "id": "gradebook_gradeanalytics_deleteassessments",
-      "community": 20,
+      "community": 109,
       "norm_label": "deleteassessments()"
     },
     {
@@ -11210,7 +11210,7 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "gradebook_gradecalc_calculatestandarddeviation",
-      "community": 2,
+      "community": 109,
       "norm_label": "calculatestandarddeviation()"
     },
     {
@@ -11220,7 +11220,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "gradebook_gradecalc_detectoutliers",
-      "community": 2,
+      "community": 109,
       "norm_label": "detectoutliers()"
     },
     {
@@ -11230,7 +11230,7 @@
       "source_location": "L62",
       "_origin": "ast",
       "id": "gradebook_gradecalc_builddistributionbuckets",
-      "community": 2,
+      "community": 109,
       "norm_label": "builddistributionbuckets()"
     },
     {
@@ -11240,7 +11240,7 @@
       "source_location": "L86",
       "_origin": "ast",
       "id": "gradebook_gradecalc_buildleveldistributionbuckets",
-      "community": 2,
+      "community": 109,
       "norm_label": "buildleveldistributionbuckets()"
     },
     {
@@ -11320,7 +11320,7 @@
       "source_location": "L422",
       "_origin": "ast",
       "id": "gradebook_gradecalc_iscohortmatch",
-      "community": 16,
+      "community": 85,
       "norm_label": "iscohortmatch()"
     },
     {
@@ -11350,7 +11350,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "gradebook_gradecalcsbar",
-      "community": 103,
+      "community": 85,
       "norm_label": "gradecalcsbar.js"
     },
     {
@@ -11360,7 +11360,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "gradebook_gradecalcsbar_calculatedecayingaverage",
-      "community": 103,
+      "community": 85,
       "norm_label": "calculatedecayingaverage()"
     },
     {
@@ -11370,7 +11370,7 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "gradebook_gradecalcsbar_getsbarlevelbadge",
-      "community": 103,
+      "community": 85,
       "norm_label": "getsbarlevelbadge()"
     },
     {
@@ -11380,7 +11380,7 @@
       "source_location": "L68",
       "_origin": "ast",
       "id": "gradebook_gradecalcsbar_calculatepowerlaw",
-      "community": 103,
+      "community": 85,
       "norm_label": "calculatepowerlaw()"
     },
     {
@@ -11390,7 +11390,7 @@
       "source_location": "L110",
       "_origin": "ast",
       "id": "gradebook_gradecalcsbar_calculatemode",
-      "community": 103,
+      "community": 85,
       "norm_label": "calculatemode()"
     },
     {
@@ -11400,7 +11400,7 @@
       "source_location": "L146",
       "_origin": "ast",
       "id": "gradebook_gradecalcsbar_calculatesbarexpectationmastery",
-      "community": 103,
+      "community": 85,
       "norm_label": "calculatesbarexpectationmastery()"
     },
     {
@@ -11410,7 +11410,7 @@
       "source_location": "L387",
       "_origin": "ast",
       "id": "gradebook_gradecalcsbar_calculatesbarstudentoverallmastery",
-      "community": 103,
+      "community": 85,
       "norm_label": "calculatesbarstudentoverallmastery()"
     },
     {
@@ -11550,7 +11550,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "db_gradebookservice",
-      "community": 2,
+      "community": 116,
       "norm_label": "gradebookservice.js"
     },
     {
@@ -11570,7 +11570,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "db_index_getdb",
-      "community": 20,
+      "community": 87,
       "norm_label": "getdb()"
     },
     {
@@ -11714,10 +11714,20 @@
       "norm_label": "deletelearningskillsbyterm()"
     },
     {
+      "label": "escapeCsvCell()",
+      "file_type": "code",
+      "source_file": "src/db/learningSkillsService.js",
+      "source_location": "L216",
+      "_origin": "ast",
+      "id": "db_learningskillsservice_escapecsvcell",
+      "community": 81,
+      "norm_label": "escapecsvcell()"
+    },
+    {
       "label": "exportLearningSkillsCsv()",
       "file_type": "code",
       "source_file": "src/db/learningSkillsService.js",
-      "source_location": "L223",
+      "source_location": "L229",
       "_origin": "ast",
       "id": "db_learningskillsservice_exportlearningskillscsv",
       "community": 81,
@@ -11727,7 +11737,7 @@
       "label": "exportAllLearningSkillsCsv()",
       "file_type": "code",
       "source_file": "src/db/learningSkillsService.js",
-      "source_location": "L269",
+      "source_location": "L275",
       "_origin": "ast",
       "id": "db_learningskillsservice_exportalllearningskillscsv",
       "community": 81,
@@ -11760,7 +11770,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "db_photoservice",
-      "community": 20,
+      "community": 87,
       "norm_label": "photoservice.js"
     },
     {
@@ -11770,7 +11780,7 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "db_photoservice_getphoto",
-      "community": 20,
+      "community": 87,
       "norm_label": "getphoto()"
     },
     {
@@ -11780,7 +11790,7 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "db_photoservice_savephoto",
-      "community": 20,
+      "community": 87,
       "norm_label": "savephoto()"
     },
     {
@@ -11790,7 +11800,7 @@
       "source_location": "L51",
       "_origin": "ast",
       "id": "db_photoservice_deletephoto",
-      "community": 20,
+      "community": 87,
       "norm_label": "deletephoto()"
     },
     {
@@ -11800,7 +11810,7 @@
       "source_location": "L62",
       "_origin": "ast",
       "id": "db_photoservice_batchsavephotos",
-      "community": 20,
+      "community": 87,
       "norm_label": "batchsavephotos()"
     },
     {
@@ -11810,7 +11820,7 @@
       "source_location": "L90",
       "_origin": "ast",
       "id": "db_photoservice_getallphotoids",
-      "community": 20,
+      "community": 87,
       "norm_label": "getallphotoids()"
     },
     {
@@ -11820,7 +11830,7 @@
       "source_location": "L100",
       "_origin": "ast",
       "id": "db_photoservice_purgeallphotos",
-      "community": 20,
+      "community": 87,
       "norm_label": "purgeallphotos()"
     },
     {
@@ -11860,7 +11870,7 @@
       "source_location": "L161",
       "_origin": "ast",
       "id": "db_settingsservice_savesettings",
-      "community": 21,
+      "community": 87,
       "norm_label": "savesettings()"
     },
     {
@@ -11900,7 +11910,7 @@
       "source_location": "L257",
       "_origin": "ast",
       "id": "db_settingsservice_deletebehaviorcode",
-      "community": 21,
+      "community": 87,
       "norm_label": "deletebehaviorcode()"
     },
     {
@@ -11920,7 +11930,7 @@
       "source_location": "L281",
       "_origin": "ast",
       "id": "db_settingsservice_savethresholds",
-      "community": 21,
+      "community": 87,
       "norm_label": "savethresholds()"
     },
     {
@@ -11990,7 +12000,7 @@
       "source_location": "L372",
       "_origin": "ast",
       "id": "db_settingsservice_saveteachername",
-      "community": 21,
+      "community": 87,
       "norm_label": "saveteachername()"
     },
     {
@@ -12030,7 +12040,7 @@
       "source_location": "L425",
       "_origin": "ast",
       "id": "db_settingsservice_saveattendanceconfig",
-      "community": 20,
+      "community": 21,
       "norm_label": "saveattendanceconfig()"
     },
     {
@@ -12050,7 +12060,7 @@
       "source_location": "L450",
       "_origin": "ast",
       "id": "db_settingsservice_saveacademicterms",
-      "community": 21,
+      "community": 87,
       "norm_label": "saveacademicterms()"
     },
     {
@@ -12070,7 +12080,7 @@
       "source_location": "L479",
       "_origin": "ast",
       "id": "db_settingsservice_saveperiodstarttimes",
-      "community": 21,
+      "community": 87,
       "norm_label": "saveperiodstarttimes()"
     },
     {
@@ -12090,7 +12100,7 @@
       "source_location": "L504",
       "_origin": "ast",
       "id": "db_settingsservice_savegradebuckets",
-      "community": 20,
+      "community": 21,
       "norm_label": "savegradebuckets()"
     },
     {
@@ -12452,6 +12462,126 @@
       "id": "src_test_db_integrity_snapshots",
       "community": 32,
       "norm_label": "snapshots"
+    },
+    {
+      "label": "test_deep_audit_subsystems.js",
+      "file_type": "code",
+      "source_file": "src/test_deep_audit_subsystems.js",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "src_test_deep_audit_subsystems",
+      "community": 81,
+      "norm_label": "test_deep_audit_subsystems.js"
+    },
+    {
+      "label": "mockClass",
+      "file_type": "code",
+      "source_file": "src/test_deep_audit_subsystems.js",
+      "source_location": "L23",
+      "_origin": "ast",
+      "id": "src_test_deep_audit_subsystems_mockclass",
+      "community": 81,
+      "norm_label": "mockclass"
+    },
+    {
+      "label": "mockStudentsWithQuotes",
+      "file_type": "code",
+      "source_file": "src/test_deep_audit_subsystems.js",
+      "source_location": "L24",
+      "_origin": "ast",
+      "id": "src_test_deep_audit_subsystems_mockstudentswithquotes",
+      "community": 81,
+      "norm_label": "mockstudentswithquotes"
+    },
+    {
+      "label": "mockRecordsMap",
+      "file_type": "code",
+      "source_file": "src/test_deep_audit_subsystems.js",
+      "source_location": "L29",
+      "_origin": "ast",
+      "id": "src_test_deep_audit_subsystems_mockrecordsmap",
+      "community": 81,
+      "norm_label": "mockrecordsmap"
+    },
+    {
+      "label": "csvBlob",
+      "file_type": "code",
+      "source_file": "src/test_deep_audit_subsystems.js",
+      "source_location": "L34",
+      "_origin": "ast",
+      "id": "src_test_deep_audit_subsystems_csvblob",
+      "community": 81,
+      "norm_label": "csvblob"
+    },
+    {
+      "label": "parsedRows",
+      "file_type": "code",
+      "source_file": "src/test_deep_audit_subsystems.js",
+      "source_location": "L39",
+      "_origin": "ast",
+      "id": "src_test_deep_audit_subsystems_parsedrows",
+      "community": 81,
+      "norm_label": "parsedrows"
+    },
+    {
+      "label": "rawCsvRows",
+      "file_type": "code",
+      "source_file": "src/test_deep_audit_subsystems.js",
+      "source_location": "L57",
+      "_origin": "ast",
+      "id": "src_test_deep_audit_subsystems_rawcsvrows",
+      "community": 81,
+      "norm_label": "rawcsvrows"
+    },
+    {
+      "label": "parseResult",
+      "file_type": "code",
+      "source_file": "src/test_deep_audit_subsystems.js",
+      "source_location": "L58",
+      "_origin": "ast",
+      "id": "src_test_deep_audit_subsystems_parseresult",
+      "community": 81,
+      "norm_label": "parseresult"
+    },
+    {
+      "label": "markRecord",
+      "file_type": "code",
+      "source_file": "src/test_deep_audit_subsystems.js",
+      "source_location": "L63",
+      "_origin": "ast",
+      "id": "src_test_deep_audit_subsystems_markrecord",
+      "community": 81,
+      "norm_label": "markrecord"
+    },
+    {
+      "label": "conf1",
+      "file_type": "code",
+      "source_file": "src/test_deep_audit_subsystems.js",
+      "source_location": "L72",
+      "_origin": "ast",
+      "id": "src_test_deep_audit_subsystems_conf1",
+      "community": 81,
+      "norm_label": "conf1"
+    },
+    {
+      "label": "conf2",
+      "file_type": "code",
+      "source_file": "src/test_deep_audit_subsystems.js",
+      "source_location": "L76",
+      "_origin": "ast",
+      "id": "src_test_deep_audit_subsystems_conf2",
+      "community": 81,
+      "norm_label": "conf2"
+    },
+    {
+      "label": "cleanOpt",
+      "file_type": "code",
+      "source_file": "src/test_deep_audit_subsystems.js",
+      "source_location": "L79",
+      "_origin": "ast",
+      "id": "src_test_deep_audit_subsystems_cleanopt",
+      "community": 81,
+      "norm_label": "cleanopt"
     },
     {
       "label": "test_expectation_lifecycle.js",
@@ -13450,7 +13580,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_test_sbar_math",
-      "community": 103,
+      "community": 85,
       "norm_label": "test_sbar_math.js"
     },
     {
@@ -13460,7 +13590,7 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "src_test_sbar_math_assert",
-      "community": 103,
+      "community": 85,
       "norm_label": "assert()"
     },
     {
@@ -13470,7 +13600,7 @@
       "source_location": "L54",
       "_origin": "ast",
       "id": "src_test_sbar_math_assertapprox",
-      "community": 103,
+      "community": 85,
       "norm_label": "assertapprox()"
     },
     {
@@ -13500,7 +13630,7 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "utils_dates_parselocal",
-      "community": 9,
+      "community": 18,
       "norm_label": "parselocal()"
     },
     {
@@ -13510,7 +13640,7 @@
       "source_location": "L41",
       "_origin": "ast",
       "id": "utils_dates_getcurrentschoolyear",
-      "community": 116,
+      "community": 18,
       "norm_label": "getcurrentschoolyear()"
     },
     {
@@ -13550,7 +13680,7 @@
       "source_location": "L120",
       "_origin": "ast",
       "id": "utils_dates_getsemesterfromdate",
-      "community": 9,
+      "community": 18,
       "norm_label": "getsemesterfromdate()"
     },
     {
@@ -13780,7 +13910,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_learningskillscsvparser",
-      "community": 87,
+      "community": 81,
       "norm_label": "learningskillscsvparser.js"
     },
     {
@@ -13790,7 +13920,7 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "utils_learningskillscsvparser_normalizelearningskilllevel",
-      "community": 87,
+      "community": 81,
       "norm_label": "normalizelearningskilllevel()"
     },
     {
@@ -13800,7 +13930,7 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "utils_learningskillscsvparser_parsecsvrows",
-      "community": 87,
+      "community": 81,
       "norm_label": "parsecsvrows()"
     },
     {
@@ -13810,7 +13940,7 @@
       "source_location": "L99",
       "_origin": "ast",
       "id": "utils_learningskillscsvparser_parsexlsxtorows",
-      "community": 87,
+      "community": 81,
       "norm_label": "parsexlsxtorows()"
     },
     {
@@ -13820,7 +13950,7 @@
       "source_location": "L136",
       "_origin": "ast",
       "id": "utils_learningskillscsvparser_parselearningskillsrows",
-      "community": 87,
+      "community": 81,
       "norm_label": "parselearningskillsrows()"
     },
     {
@@ -13830,7 +13960,7 @@
       "source_location": "L404",
       "_origin": "ast",
       "id": "utils_learningskillscsvparser_parselearningskillscsv",
-      "community": 87,
+      "community": 81,
       "norm_label": "parselearningskillscsv()"
     },
     {
@@ -13840,7 +13970,7 @@
       "source_location": "L412",
       "_origin": "ast",
       "id": "utils_learningskillscsvparser_parselearningskillsworkbook",
-      "community": 87,
+      "community": 81,
       "norm_label": "parselearningskillsworkbook()"
     },
     {
@@ -13900,7 +14030,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_studentinfocsvparser",
-      "community": 87,
+      "community": 81,
       "norm_label": "studentinfocsvparser.js"
     },
     {
@@ -13910,27 +14040,37 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "utils_studentinfocsvparser_normalizeconfidence",
-      "community": 87,
+      "community": 81,
       "norm_label": "normalizeconfidence()"
+    },
+    {
+      "label": "sanitizeTextField()",
+      "file_type": "code",
+      "source_file": "src/utils/studentInfoCsvParser.js",
+      "source_location": "L43",
+      "_origin": "ast",
+      "id": "utils_studentinfocsvparser_sanitizetextfield",
+      "community": 81,
+      "norm_label": "sanitizetextfield()"
     },
     {
       "label": "cleanOptionText()",
       "file_type": "code",
       "source_file": "src/utils/studentInfoCsvParser.js",
-      "source_location": "L39",
+      "source_location": "L55",
       "_origin": "ast",
       "id": "utils_studentinfocsvparser_cleanoptiontext",
-      "community": 87,
+      "community": 81,
       "norm_label": "cleanoptiontext()"
     },
     {
       "label": "parseStudentInfoRows()",
       "file_type": "code",
       "source_file": "src/utils/studentInfoCsvParser.js",
-      "source_location": "L51",
+      "source_location": "L68",
       "_origin": "ast",
       "id": "utils_studentinfocsvparser_parsestudentinforows",
-      "community": 87,
+      "community": 81,
       "norm_label": "parsestudentinforows()"
     },
     {
@@ -14690,7 +14830,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tmp_test_dates",
-      "community": 116,
+      "community": 18,
       "norm_label": "test_dates.js"
     },
     {
@@ -14700,7 +14840,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "tmp_test_dates_testyear",
-      "community": 116,
+      "community": 18,
       "norm_label": "testyear()"
     },
     {
@@ -29781,9 +29921,9 @@
       "source_file": "src/composables/useGradebook.js",
       "source_location": "L618",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "composables_usegradebook",
-      "target": "composables_usegradebook_flushpendingdbsaves",
-      "confidence_score": 1.0
+      "target": "composables_usegradebook_flushpendingdbsaves"
     },
     {
       "relation": "contains",
@@ -36162,9 +36302,9 @@
       "source_file": "src/test_mission_critical_audit.js",
       "source_location": "L8",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_test_mission_critical_audit",
-      "target": "gradebook_gradecalc",
-      "confidence_score": 1.0
+      "target": "gradebook_gradecalc"
     },
     {
       "relation": "imports_from",
@@ -36492,9 +36632,9 @@
       "source_file": "src/test_mission_critical_audit.js",
       "source_location": "L8",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_test_mission_critical_audit",
-      "target": "gradebook_gradecalc_calculatestudentgrade",
-      "confidence_score": 1.0
+      "target": "gradebook_gradecalc_calculatestudentgrade"
     },
     {
       "relation": "imports",
@@ -36629,9 +36769,9 @@
       "source_file": "src/test_mission_critical_audit.js",
       "source_location": "L9",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_test_mission_critical_audit",
-      "target": "gradebook_gradecalcsbar",
-      "confidence_score": 1.0
+      "target": "gradebook_gradecalcsbar"
     },
     {
       "relation": "imports_from",
@@ -36717,9 +36857,9 @@
       "source_file": "src/test_mission_critical_audit.js",
       "source_location": "L9",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_test_mission_critical_audit",
-      "target": "gradebook_gradecalcsbar_getsbarlevelbadge",
-      "confidence_score": 1.0
+      "target": "gradebook_gradecalcsbar_getsbarlevelbadge"
     },
     {
       "relation": "imports",
@@ -36838,9 +36978,9 @@
       "source_file": "src/test_mission_critical_audit.js",
       "source_location": "L9",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_test_mission_critical_audit",
-      "target": "gradebook_gradecalcsbar_calculatesbarexpectationmastery",
-      "confidence_score": 1.0
+      "target": "gradebook_gradecalcsbar_calculatesbarexpectationmastery"
     },
     {
       "relation": "imports",
@@ -36882,9 +37022,9 @@
       "source_file": "src/test_mission_critical_audit.js",
       "source_location": "L9",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_test_mission_critical_audit",
-      "target": "gradebook_gradecalcsbar_calculatesbarstudentoverallmastery",
-      "confidence_score": 1.0
+      "target": "gradebook_gradecalcsbar_calculatesbarstudentoverallmastery"
     },
     {
       "relation": "imports",
@@ -37832,6 +37972,16 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/db/learningSkillsService.js",
+      "source_location": "L216",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "db_learningskillsservice",
+      "target": "db_learningskillsservice_escapecsvcell"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/db/learningSkillsService.js",
       "source_location": "L220",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -37962,6 +38112,17 @@
       "relation": "imports_from",
       "context": "import",
       "confidence": "EXTRACTED",
+      "source_file": "src/test_deep_audit_subsystems.js",
+      "source_location": "L12",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "src_test_deep_audit_subsystems",
+      "target": "db_learningskillsservice"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
       "source_file": "src/views/Reports.vue",
       "source_location": "L563",
       "weight": 1.0,
@@ -38023,6 +38184,50 @@
       "confidence_score": 1.0,
       "source": "db_learningskillsservice_deletelearningskillsbyterm",
       "target": "db_learningskillsservice_getlearningskillsbyclassandterm"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/db/learningSkillsService.js",
+      "source_location": "L317",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "db_learningskillsservice_exportalllearningskillscsv",
+      "target": "db_learningskillsservice_escapecsvcell"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/db/learningSkillsService.js",
+      "source_location": "L249",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "db_learningskillsservice_exportlearningskillscsv",
+      "target": "db_learningskillsservice_escapecsvcell"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/test_deep_audit_subsystems.js",
+      "source_location": "L12",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "src_test_deep_audit_subsystems",
+      "target": "db_learningskillsservice_exportlearningskillscsv"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/test_deep_audit_subsystems.js",
+      "source_location": "L12",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "src_test_deep_audit_subsystems",
+      "target": "db_learningskillsservice_exportalllearningskillscsv"
     },
     {
       "relation": "contains",
@@ -38962,6 +39167,193 @@
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
+      "source_file": "src/test_deep_audit_subsystems.js",
+      "source_location": "L79",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "src_test_deep_audit_subsystems",
+      "target": "src_test_deep_audit_subsystems_cleanopt"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/test_deep_audit_subsystems.js",
+      "source_location": "L72",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "src_test_deep_audit_subsystems",
+      "target": "src_test_deep_audit_subsystems_conf1"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/test_deep_audit_subsystems.js",
+      "source_location": "L76",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "src_test_deep_audit_subsystems",
+      "target": "src_test_deep_audit_subsystems_conf2"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/test_deep_audit_subsystems.js",
+      "source_location": "L34",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "src_test_deep_audit_subsystems",
+      "target": "src_test_deep_audit_subsystems_csvblob"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/test_deep_audit_subsystems.js",
+      "source_location": "L63",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "src_test_deep_audit_subsystems",
+      "target": "src_test_deep_audit_subsystems_markrecord"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/test_deep_audit_subsystems.js",
+      "source_location": "L23",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "src_test_deep_audit_subsystems",
+      "target": "src_test_deep_audit_subsystems_mockclass"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/test_deep_audit_subsystems.js",
+      "source_location": "L29",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "src_test_deep_audit_subsystems",
+      "target": "src_test_deep_audit_subsystems_mockrecordsmap"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/test_deep_audit_subsystems.js",
+      "source_location": "L24",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "src_test_deep_audit_subsystems",
+      "target": "src_test_deep_audit_subsystems_mockstudentswithquotes"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/test_deep_audit_subsystems.js",
+      "source_location": "L39",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "src_test_deep_audit_subsystems",
+      "target": "src_test_deep_audit_subsystems_parsedrows"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/test_deep_audit_subsystems.js",
+      "source_location": "L58",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "src_test_deep_audit_subsystems",
+      "target": "src_test_deep_audit_subsystems_parseresult"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/test_deep_audit_subsystems.js",
+      "source_location": "L57",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "src_test_deep_audit_subsystems",
+      "target": "src_test_deep_audit_subsystems_rawcsvrows"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/test_deep_audit_subsystems.js",
+      "source_location": "L13",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "src_test_deep_audit_subsystems",
+      "target": "utils_learningskillscsvparser"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/test_deep_audit_subsystems.js",
+      "source_location": "L13",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "src_test_deep_audit_subsystems",
+      "target": "utils_learningskillscsvparser_normalizelearningskilllevel"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/test_deep_audit_subsystems.js",
+      "source_location": "L13",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "src_test_deep_audit_subsystems",
+      "target": "utils_learningskillscsvparser_parsecsvrows"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/test_deep_audit_subsystems.js",
+      "source_location": "L13",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "src_test_deep_audit_subsystems",
+      "target": "utils_learningskillscsvparser_parselearningskillsrows"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/test_deep_audit_subsystems.js",
+      "source_location": "L14",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "src_test_deep_audit_subsystems",
+      "target": "utils_studentinfocsvparser"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/test_deep_audit_subsystems.js",
+      "source_location": "L14",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "src_test_deep_audit_subsystems",
+      "target": "utils_studentinfocsvparser_cleanoptiontext"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/test_deep_audit_subsystems.js",
+      "source_location": "L14",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "src_test_deep_audit_subsystems",
+      "target": "utils_studentinfocsvparser_normalizeconfidence"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
       "source_file": "src/test_expectation_lifecycle.js",
       "source_location": "L274",
       "weight": 1.0,
@@ -39209,9 +39601,9 @@
       "source_file": "src/test_mission_critical_audit.js",
       "source_location": "L116",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_test_mission_critical_audit",
-      "target": "src_test_mission_critical_audit_assessmentslist",
-      "confidence_score": 1.0
+      "target": "src_test_mission_critical_audit_assessmentslist"
     },
     {
       "relation": "contains",
@@ -39219,9 +39611,9 @@
       "source_file": "src/test_mission_critical_audit.js",
       "source_location": "L159",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_test_mission_critical_audit",
-      "target": "src_test_mission_critical_audit_cleancode",
-      "confidence_score": 1.0
+      "target": "src_test_mission_critical_audit_cleancode"
     },
     {
       "relation": "contains",
@@ -39229,9 +39621,9 @@
       "source_file": "src/test_mission_critical_audit.js",
       "source_location": "L155",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_test_mission_critical_audit",
-      "target": "src_test_mission_critical_audit_cleantext1",
-      "confidence_score": 1.0
+      "target": "src_test_mission_critical_audit_cleantext1"
     },
     {
       "relation": "contains",
@@ -39239,9 +39631,9 @@
       "source_file": "src/test_mission_critical_audit.js",
       "source_location": "L179",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_test_mission_critical_audit",
-      "target": "src_test_mission_critical_audit_masterymapmode",
-      "confidence_score": 1.0
+      "target": "src_test_mission_critical_audit_masterymapmode"
     },
     {
       "relation": "contains",
@@ -39249,9 +39641,9 @@
       "source_file": "src/test_mission_critical_audit.js",
       "source_location": "L167",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_test_mission_critical_audit",
-      "target": "src_test_mission_critical_audit_masterymappowerlaw",
-      "confidence_score": 1.0
+      "target": "src_test_mission_critical_audit_masterymappowerlaw"
     },
     {
       "relation": "contains",
@@ -39259,9 +39651,9 @@
       "source_file": "src/test_mission_critical_audit.js",
       "source_location": "L19",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_test_mission_critical_audit",
-      "target": "src_test_mission_critical_audit_mockmth1wpreset",
-      "confidence_score": 1.0
+      "target": "src_test_mission_critical_audit_mockmth1wpreset"
     },
     {
       "relation": "contains",
@@ -39269,9 +39661,9 @@
       "source_file": "src/test_mission_critical_audit.js",
       "source_location": "L103",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_test_mission_critical_audit",
-      "target": "src_test_mission_critical_audit_mocksbarclass",
-      "confidence_score": 1.0
+      "target": "src_test_mission_critical_audit_mocksbarclass"
     },
     {
       "relation": "contains",
@@ -39279,9 +39671,9 @@
       "source_file": "src/test_mission_critical_audit.js",
       "source_location": "L83",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_test_mission_critical_audit",
-      "target": "src_test_mission_critical_audit_strandaaexps",
-      "confidence_score": 1.0
+      "target": "src_test_mission_critical_audit_strandaaexps"
     },
     {
       "relation": "contains",
@@ -39289,9 +39681,9 @@
       "source_file": "src/test_mission_critical_audit.js",
       "source_location": "L87",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_test_mission_critical_audit",
-      "target": "src_test_mission_critical_audit_strandaexps",
-      "confidence_score": 1.0
+      "target": "src_test_mission_critical_audit_strandaexps"
     },
     {
       "relation": "contains",
@@ -39299,9 +39691,9 @@
       "source_file": "src/test_mission_critical_audit.js",
       "source_location": "L92",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_test_mission_critical_audit",
-      "target": "src_test_mission_critical_audit_strandbexps",
-      "confidence_score": 1.0
+      "target": "src_test_mission_critical_audit_strandbexps"
     },
     {
       "relation": "contains",
@@ -39309,9 +39701,9 @@
       "source_file": "src/test_mission_critical_audit.js",
       "source_location": "L122",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_test_mission_critical_audit",
-      "target": "src_test_mission_critical_audit_studentgradeslist",
-      "confidence_score": 1.0
+      "target": "src_test_mission_critical_audit_studentgradeslist"
     },
     {
       "relation": "contains",
@@ -39319,9 +39711,9 @@
       "source_file": "src/test_mission_critical_audit.js",
       "source_location": "L65",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_test_mission_critical_audit",
-      "target": "src_test_mission_critical_audit_testgetstrandexpectations",
-      "confidence_score": 1.0
+      "target": "src_test_mission_critical_audit_testgetstrandexpectations"
     },
     {
       "relation": "imports_from",
@@ -39330,9 +39722,9 @@
       "source_file": "src/test_mission_critical_audit.js",
       "source_location": "L10",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_test_mission_critical_audit",
-      "target": "utils_textutils",
-      "confidence_score": 1.0
+      "target": "utils_textutils"
     },
     {
       "relation": "imports",
@@ -39341,9 +39733,9 @@
       "source_file": "src/test_mission_critical_audit.js",
       "source_location": "L10",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_test_mission_critical_audit",
-      "target": "utils_textutils_cleanexpectationtext",
-      "confidence_score": 1.0
+      "target": "utils_textutils_cleanexpectationtext"
     },
     {
       "relation": "contains",
@@ -40652,6 +41044,16 @@
       "target": "utils_studentinfocsvparser_parsestudentinforows"
     },
     {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/utils/studentInfoCsvParser.js",
+      "source_location": "L43",
+      "weight": 1.0,
+      "source": "utils_studentinfocsvparser",
+      "target": "utils_studentinfocsvparser_sanitizetextfield",
+      "confidence_score": 1.0
+    },
+    {
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
@@ -40661,6 +41063,28 @@
       "confidence_score": 1.0,
       "source": "utils_studentinfocsvparser_parsestudentinforows",
       "target": "utils_studentinfocsvparser_normalizeconfidence"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/utils/studentInfoCsvParser.js",
+      "source_location": "L57",
+      "weight": 1.0,
+      "source": "utils_studentinfocsvparser_cleanoptiontext",
+      "target": "utils_studentinfocsvparser_sanitizetextfield",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/utils/studentInfoCsvParser.js",
+      "source_location": "L199",
+      "weight": 1.0,
+      "source": "utils_studentinfocsvparser_parsestudentinforows",
+      "target": "utils_studentinfocsvparser_sanitizetextfield",
+      "confidence_score": 1.0
     },
     {
       "relation": "calls",
@@ -41468,5 +41892,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "70649140b8e9f511931e25b692e15e6b29cd9b9e"
+  "built_at_commit": "e5383487c59c96e8371e973d73f83c82cfd8b582"
 }

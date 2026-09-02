@@ -213,6 +213,12 @@ export async function deleteLearningSkillsByTerm(classId, term) {
   hasUnsyncedChanges.value = true
 }
 
+function escapeCsvCell(val) {
+  if (val === null || val === undefined) return '""'
+  const str = String(val).replace(/"/g, '""')
+  return `"${str}"`
+}
+
 /**
  * Generates and downloads a standardized CSV formatted for school SIS imports.
  * @param {Object} reportClass
@@ -224,7 +230,7 @@ export function exportLearningSkillsCsv(reportClass, students = [], term = 'Prog
   if (!students || students.length === 0) return
 
   const rows = [
-    ['Student ID', 'Last Name', 'First Name', 'Student Email', 'Term', 'Responsibility', 'Organization', 'Independent Work', 'Collaboration', 'Initiative', 'Self-Regulation']
+    ['Student ID', 'Last Name', 'First Name', 'Student Email', 'Term', 'Responsibility', 'Organization', 'Independent Work', 'Collaboration', 'Initiative', 'Self-Regulation'].map(escapeCsvCell)
   ]
 
   for (const s of students) {
@@ -240,17 +246,17 @@ export function exportLearningSkillsCsv(reportClass, students = [], term = 'Prog
     const sr = te.selfRegulation || se.selfRegulation || ''
 
     rows.push([
-      `"${s.studentNumber || s.studentId || ''}"`,
-      `"${s.lastName || ''}"`,
-      `"${s.firstName || ''}"`,
-      `"${s.studentEmail || s.email || ''}"`,
-      `"${term}"`,
-      `"${r}"`,
-      `"${o}"`,
-      `"${i}"`,
-      `"${c}"`,
-      `"${init}"`,
-      `"${sr}"`
+      escapeCsvCell(s.studentNumber || s.studentId || ''),
+      escapeCsvCell(s.lastName || ''),
+      escapeCsvCell(s.firstName || ''),
+      escapeCsvCell(s.studentEmail || s.email || ''),
+      escapeCsvCell(term),
+      escapeCsvCell(r),
+      escapeCsvCell(o),
+      escapeCsvCell(i),
+      escapeCsvCell(c),
+      escapeCsvCell(init),
+      escapeCsvCell(sr)
     ])
   }
 
@@ -290,7 +296,7 @@ export function exportAllLearningSkillsCsv(reportClass, students = [], allRecord
   if (orderedTerms.length === 0) orderedTerms.push('Progress Report')
 
   const rows = [
-    ['Student ID', 'Last Name', 'First Name', 'Student Email', 'Term', 'Responsibility', 'Organization', 'Independent Work', 'Collaboration', 'Initiative', 'Self-Regulation']
+    ['Student ID', 'Last Name', 'First Name', 'Student Email', 'Term', 'Responsibility', 'Organization', 'Independent Work', 'Collaboration', 'Initiative', 'Self-Regulation'].map(escapeCsvCell)
   ]
 
   for (const s of students) {
@@ -308,17 +314,17 @@ export function exportAllLearningSkillsCsv(reportClass, students = [], allRecord
       const sr = te.selfRegulation || se.selfRegulation || ''
 
       rows.push([
-        `"${s.studentNumber || s.studentId || ''}"`,
-        `"${s.lastName || ''}"`,
-        `"${s.firstName || ''}"`,
-        `"${s.studentEmail || s.email || ''}"`,
-        `"${term}"`,
-        `"${r}"`,
-        `"${o}"`,
-        `"${i}"`,
-        `"${c}"`,
-        `"${init}"`,
-        `"${sr}"`
+        escapeCsvCell(s.studentNumber || s.studentId || ''),
+        escapeCsvCell(s.lastName || ''),
+        escapeCsvCell(s.firstName || ''),
+        escapeCsvCell(s.studentEmail || s.email || ''),
+        escapeCsvCell(term),
+        escapeCsvCell(r),
+        escapeCsvCell(o),
+        escapeCsvCell(i),
+        escapeCsvCell(c),
+        escapeCsvCell(init),
+        escapeCsvCell(sr)
       ])
     }
   }

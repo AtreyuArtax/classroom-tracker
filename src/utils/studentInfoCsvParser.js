@@ -32,13 +32,30 @@ export function normalizeConfidence(raw) {
 }
 
 /**
- * Strips option prefixes like "a. ", "b. ", "c. " from multiple choice answers.
- * @param {string|null|undefined} raw
+ * Sanitizes open text survey input:
+ * - Strips unprintable ASCII control characters (preserving newlines and tabs)
+ * - Trims whitespace
+ * - Clamps to a safe maximum length to prevent storage exhaustion or visual spoofing
+ * @param {any} raw
+ * @param {number} maxLength
  * @returns {string}
  */
-export function cleanOptionText(raw) {
+export function sanitizeTextField(raw, maxLength = 2000) {
   if (raw === null || raw === undefined) return ''
-  return String(raw).trim().replace(/^[a-z]\.\s*/i, '').trim()
+  const cleaned = String(raw).replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '').trim()
+  return cleaned.length > maxLength ? cleaned.slice(0, maxLength) : cleaned
+}
+
+/**
+ * Strips option prefixes like "a. ", "b. ", "c. " from multiple choice answers.
+ * @param {string|null|undefined} raw
+ * @param {number} maxLength
+ * @returns {string}
+ */
+export function cleanOptionText(raw, maxLength = 250) {
+  if (raw === null || raw === undefined) return ''
+  const cleaned = sanitizeTextField(raw, maxLength).replace(/^[a-z]\.\s*/i, '').trim()
+  return cleaned
 }
 
 /**
@@ -179,15 +196,15 @@ export function parseStudentInfoRows(rows, rosterStudents = []) {
     const confObj = fieldCols.courseConfidence !== -1 ? normalizeConfidence(row[fieldCols.courseConfidence]) : { rating: null, label: '' }
 
     const surveyData = {
-      preferredName: fieldCols.preferredName !== -1 ? String(row[fieldCols.preferredName] || '').trim() : '',
-      pronouns: fieldCols.pronouns !== -1 ? cleanOptionText(row[fieldCols.pronouns]) : '',
-      parentCommunication: fieldCols.parentCommunication !== -1 ? cleanOptionText(row[fieldCols.parentCommunication]) : '',
-      seatingPreference: fieldCols.seatingPreference !== -1 ? cleanOptionText(row[fieldCols.seatingPreference]) : '',
-      targetGrade: fieldCols.targetGrade !== -1 ? cleanOptionText(row[fieldCols.targetGrade]) : '',
+      preferredName: fieldCols.preferredName !== -1 ? sanitizeTextField(row[fieldCols.preferredName], 100) : '',
+      pronouns: fieldCols.pronouns !== -1 ? cleanOptionText(row[fieldCols.pronouns], 50) : '',
+      parentCommunication: fieldCols.parentCommunication !== -1 ? cleanOptionText(row[fieldCols.parentCommunication], 250) : '',
+      seatingPreference: fieldCols.seatingPreference !== -1 ? cleanOptionText(row[fieldCols.seatingPreference], 250) : '',
+      targetGrade: fieldCols.targetGrade !== -1 ? cleanOptionText(row[fieldCols.targetGrade], 250) : '',
       courseConfidence: confObj.rating,
       courseConfidenceLabel: confObj.label,
-      extracurricularsHobbies: fieldCols.extracurricularsHobbies !== -1 ? String(row[fieldCols.extracurricularsHobbies] || '').trim() : '',
-      confidentialNote: fieldCols.confidentialNote !== -1 ? String(row[fieldCols.confidentialNote] || '').trim() : '',
+      extracurricularsHobbies: fieldCols.extracurricularsHobbies !== -1 ? sanitizeTextField(row[fieldCols.extracurricularsHobbies], 2000) : '',
+      confidentialNote: fieldCols.confidentialNote !== -1 ? sanitizeTextField(row[fieldCols.confidentialNote], 4000) : '',
       completedAt: rawDate || new Date().toISOString()
     }
 

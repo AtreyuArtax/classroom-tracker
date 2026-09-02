@@ -379,15 +379,18 @@ export async function swapSeats(studentIdA, toSeatA, studentIdB = null, toSeatB 
 
         if (students.value[studentIdA]) students.value[studentIdA].seat = toSeatA
         if (activeClass.value?.students?.[studentIdA]) activeClass.value.students[studentIdA].seat = toSeatA
+        if (activeClassRecord.value?.students?.[studentIdA]) activeClassRecord.value.students[studentIdA].seat = toSeatA
 
         if (studentIdB) {
             if (students.value[studentIdB]) students.value[studentIdB].seat = toSeatB
             if (activeClass.value?.students?.[studentIdB]) activeClass.value.students[studentIdB].seat = toSeatB
+            if (activeClassRecord.value?.students?.[studentIdB]) activeClassRecord.value.students[studentIdB].seat = toSeatB
         }
 
         students.value = { ...students.value }
         triggerRef(students)
         triggerRef(activeClass)
+        if (activeClassRecord.value) triggerRef(activeClassRecord)
 
         pushUndo(async () => {
             try {
@@ -398,15 +401,18 @@ export async function swapSeats(studentIdA, toSeatA, studentIdB = null, toSeatB 
 
                 if (students.value[studentIdA]) students.value[studentIdA].seat = previousSeatA
                 if (activeClass.value?.students?.[studentIdA]) activeClass.value.students[studentIdA].seat = previousSeatA
+                if (activeClassRecord.value?.students?.[studentIdA]) activeClassRecord.value.students[studentIdA].seat = previousSeatA
 
                 if (studentIdB) {
                     if (students.value[studentIdB]) students.value[studentIdB].seat = previousSeatB
                     if (activeClass.value?.students?.[studentIdB]) activeClass.value.students[studentIdB].seat = previousSeatB
+                    if (activeClassRecord.value?.students?.[studentIdB]) activeClassRecord.value.students[studentIdB].seat = previousSeatB
                 }
 
                 students.value = { ...students.value }
                 triggerRef(students)
                 triggerRef(activeClass)
+                if (activeClassRecord.value) triggerRef(activeClassRecord)
             } catch (err) {
                 console.error('Undo swapSeats failed:', err)
                 const { alert } = useMessage()

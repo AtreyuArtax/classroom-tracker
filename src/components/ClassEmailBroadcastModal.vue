@@ -278,6 +278,7 @@ import {
 } from 'lucide-vue-next'
 import BaseModal from './BaseModal.vue'
 import { usePrintOptions } from '../composables/usePrintOptions.js'
+import { useMessage } from '../composables/useMessage.js'
 
 const props = defineProps({
   show: { type: Boolean, default: false },
@@ -493,7 +494,7 @@ async function copyAllBccEmails() {
 }
 
 // Open default mail client with BCC
-function openDefaultMailClient() {
+async function openDefaultMailClient() {
   if (selectedRecipientsList.value.length === 0) return
 
   const bccEmails = selectedRecipientsList.value.join(',')
@@ -501,7 +502,18 @@ function openDefaultMailClient() {
   const body = emailBody.value || ''
 
   const mailtoUrl = `mailto:?bcc=${encodeURIComponent(bccEmails)}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
-  window.location.href = mailtoUrl
+  
+  if (mailtoUrl.length > 1900) {
+    // Large list exceeds OS mailto URL safety limits (~2000 chars)
+    // Copy the full BCC address list directly to the teacher's clipboard so no addresses are lost
+    await copyAllBccEmails()
+    const safeMailto = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
+    window.location.href = safeMailto
+    const { alert } = useMessage()
+    await alert(`Because your class has a large recipient list (${selectedRecipientsList.value.length} recipients), all BCC email addresses have been copied to your clipboard to prevent email client URL truncation. Simply paste (Ctrl+V / Cmd+V) into the BCC field in your email app.`)
+  } else {
+    window.location.href = mailtoUrl
+  }
   emit('close')
 }
 </script>

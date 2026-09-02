@@ -75,8 +75,8 @@
     "semantic_hash": ""
   },
   "src/components/DeskTile.vue": {
-    "mtime": 1788313689.8568778,
-    "ast_hash": "e8a46065e9ee3a886051f850190f9ea5",
+    "mtime": 1788362853.0818207,
+    "ast_hash": "4c3dcf25f9aaa9f356848499f6080eed",
     "semantic_hash": ""
   },
   "src/components/EventNoteModal.vue": {
@@ -440,8 +440,8 @@
     "semantic_hash": ""
   },
   "src/composables/useRosterOperations.js": {
-    "mtime": 1788361738.0059152,
-    "ast_hash": "7bf081b3d740ffdcd33eeabb08e3ebaf",
+    "mtime": 1788362861.7388644,
+    "ast_hash": "59ddf1b81304e9b7bb274adcecd83e6a",
     "semantic_hash": ""
   },
   "src/components/setup/ClassLogisticsSettings.vue": {
@@ -1045,8 +1045,8 @@
     "semantic_hash": ""
   },
   "src/db/learningSkillsService.js": {
-    "mtime": 1788313659.7505429,
-    "ast_hash": "ec434f3be8e4d936a8d6229fc320d60a",
+    "mtime": 1788362878.322831,
+    "ast_hash": "e27f154cc293311287d1617d41e374b4",
     "semantic_hash": ""
   },
   "src/utils/learningSkillsCsvParser.js": {
@@ -1130,8 +1130,8 @@
     "semantic_hash": ""
   },
   "src/components/ClassEmailBroadcastModal.vue": {
-    "mtime": 1788313659.6637688,
-    "ast_hash": "8bc2cfedf71cbddeec588213feb2caef",
+    "mtime": 1788362968.9351778,
+    "ast_hash": "8d7466480996a5813933a2a337278eab",
     "semantic_hash": ""
   },
   "src/components/reports/OutOfClassAnalytics.vue": {
@@ -1160,8 +1160,8 @@
     "semantic_hash": ""
   },
   "src/utils/studentInfoCsvParser.js": {
-    "mtime": 1788313659.7652946,
-    "ast_hash": "2668a1a9ba7d5fa6c37db16c585a3012",
+    "mtime": 1788363542.9594772,
+    "ast_hash": "0c2c441010292bef3c70efd9adae96e1",
     "semantic_hash": ""
   },
   "src/utils/studentInfoDocxExport.js": {
@@ -1177,6 +1177,11 @@
   "src/test_mission_critical_audit.js": {
     "mtime": 1788361821.2196903,
     "ast_hash": "0945ae0cd9d93c5683f410903457667b",
+    "semantic_hash": ""
+  },
+  "src/test_deep_audit_subsystems.js": {
+    "mtime": 1788363196.6885138,
+    "ast_hash": "6b0adfa21281ff2831aeec0137a0106d",
     "semantic_hash": ""
   }
 }
