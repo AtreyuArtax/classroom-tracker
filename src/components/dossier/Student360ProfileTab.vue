@@ -949,13 +949,14 @@ async function copyForReportCard(includeName = false) {
 }
 
 .phone-type-badge {
-  font-size: 0.68rem;
-  font-weight: 700;
+  font-size: 0.65rem;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   padding: 2px 6px;
-  background: rgba(99, 102, 241, 0.15);
-  color: #818cf8;
+  background: var(--surface);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
   border-radius: 4px;
 }
 
