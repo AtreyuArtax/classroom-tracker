@@ -33,17 +33,17 @@
             </button>
             <button 
               class="reports__pillar-btn"
+              :class="{ 'reports__pillar-btn--active': rightMode === 'printhub' }"
+              @click="switchPillar('printhub')"
+            >
+              <Send :size="14" /> Documents &amp; Communication
+            </button>
+            <button 
+              class="reports__pillar-btn"
               :class="{ 'reports__pillar-btn--active': rightMode === 'learningskills' }"
               @click="switchPillar('learningskills')"
             >
               <Award :size="14" /> Learning Skills
-            </button>
-            <button 
-              class="reports__pillar-btn"
-              :class="{ 'reports__pillar-btn--active': rightMode === 'printhub' }"
-              @click="switchPillar('printhub')"
-            >
-              <Send :size="14" /> Communications &amp; Documents
             </button>
           </div>
 
@@ -92,15 +92,7 @@
           />
         </template>
 
-        <!-- ── PILLAR 4: LEARNING SKILLS MATRIX ─────────────────────── -->
-        <template v-else-if="rightMode === 'learningskills'">
-          <ReportsLearningSkills
-            :report-class="reportClass"
-            :sidebar-students="filteredSidebarStudents"
-          />
-        </template>
-
-        <!-- ── PILLAR 2: COMMUNICATIONS & DOCUMENT HUB ──────────────── -->
+        <!-- ── PILLAR 2: DOCUMENTS & COMMUNICATION HUB ──────────────── -->
         <template v-else-if="rightMode === 'printhub'">
           <ReportsPrintHub
             :report-class="reportClass"
@@ -114,6 +106,14 @@
             @open-email-broadcast="showEmailBroadcastModal = true"
             @download-csv="handleDownloadCsv"
             @download-comments="handleDownloadComments"
+          />
+        </template>
+
+        <!-- ── PILLAR 3: LEARNING SKILLS MATRIX ─────────────────────── -->
+        <template v-else-if="rightMode === 'learningskills'">
+          <ReportsLearningSkills
+            :report-class="reportClass"
+            :sidebar-students="filteredSidebarStudents"
           />
         </template>
 

@@ -3,7 +3,7 @@
     <!-- Header banner -->
     <div class="print-hub__header">
       <div class="print-hub__title-group">
-        <h2 class="print-hub__title">Communications &amp; Document Hub</h2>
+        <h2 class="print-hub__title">Documents &amp; Communication Hub</h2>
         <p class="print-hub__subtitle">Generate, customize, and print official class reports, progress sheets, broadcast email communications, and exportable data packages.</p>
       </div>
       <div v-if="reportClass" class="print-hub__class-badge">

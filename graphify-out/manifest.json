@@ -205,8 +205,8 @@
     "semantic_hash": ""
   },
   "src/components/setup/CalendarSettings.vue": {
-    "mtime": 1788313689.8600237,
-    "ast_hash": "bcf15668bd628aab262f8829fe34df92",
+    "mtime": 1788371296.8276353,
+    "ast_hash": "11b561e942360be9047e337bf5c0de8e",
     "semantic_hash": ""
   },
   "src/components/setup/CsvHelpGuide.vue": {
@@ -245,8 +245,8 @@
     "semantic_hash": ""
   },
   "src/composables/useGradebook.js": {
-    "mtime": 1788361746.3069284,
-    "ast_hash": "c62dc80814a6e8eb94133aab5189a765",
+    "mtime": 1788371282.5348706,
+    "ast_hash": "79b5d06083021c3e82e48112cfca747c",
     "semantic_hash": ""
   },
   "src/composables/useKeyboardWedge.js": {
@@ -345,8 +345,8 @@
     "semantic_hash": ""
   },
   "src/views/Reports.vue": {
-    "mtime": 1788313689.8652027,
-    "ast_hash": "df459d2d61eb100a474a2e6018e5bbf7",
+    "mtime": 1788371509.0592108,
+    "ast_hash": "22d93e14beb583cb3c8942247d54bdcd",
     "semantic_hash": ""
   },
   "src/views/ScanStation.vue": {
@@ -535,8 +535,8 @@
     "semantic_hash": ""
   },
   "src/components/reports/ReportsPrintHub.vue": {
-    "mtime": 1788313659.6987977,
-    "ast_hash": "537fab84c21c7d71ffa94c63769672fa",
+    "mtime": 1788371515.3131006,
+    "ast_hash": "b29167adf6e7e2b07ca38b9a1d64b2b5",
     "semantic_hash": ""
   },
   "src/components/reports/StudentRiskScatterPlot.vue": {

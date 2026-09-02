@@ -367,8 +367,9 @@ const termsByYear = computed(() => {
 })
 
 onMounted(async () => {
-  if (globalMilestones.value.length === 0) {
-    globalMilestones.value = await settingsService.getGlobalMilestones()
+  const loaded = await settingsService.getGlobalMilestones()
+  if (loaded) {
+    globalMilestones.value = loaded
   }
 })
 
@@ -456,13 +457,14 @@ function addMilestone() {
   const startYear = selectedYear.value ? parseInt(selectedYear.value.split('-')[0]) : new Date().getFullYear()
   const defaultDate = defaultSem === '2' ? `${startYear + 1}-04-15` : `${startYear}-11-15`
 
-  globalMilestones.value.push({
+  const newMilestone = {
     milestoneId: `ms_${Date.now()}`,
     year: selectedYear.value || getSchoolYearFromDate(defaultDate),
     semester: defaultSem,
     name: '',
     date: defaultDate
-  })
+  }
+  globalMilestones.value = [...globalMilestones.value, newMilestone]
   saveMilestones()
 }
 

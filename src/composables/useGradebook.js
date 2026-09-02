@@ -27,7 +27,7 @@ export const grades = shallowRef([])
 export const classGrades = shallowRef({})
 export const selectedStudentId = ref(null)
 export const selectedMilestone = ref(null) // null = current
-export const globalMilestones = shallowRef([])
+export const globalMilestones = ref([])
 export const gradeBuckets = shallowRef([])
 export const initialDossierTab = ref('summary')
 export const activeSubCohortFilter = ref('all') // 'all' | 'Grade 7' | 'SNC2D1' etc.
