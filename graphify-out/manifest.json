@@ -240,8 +240,8 @@
     "semantic_hash": ""
   },
   "src/composables/useClassroom.js": {
-    "mtime": 1788313689.8609507,
-    "ast_hash": "081bcb53aeba73d5c8ccf70a47eef5bc",
+    "mtime": 1788368568.0342495,
+    "ast_hash": "bb559403cbabafac756fe3b6be58edcc",
     "semantic_hash": ""
   },
   "src/composables/useGradebook.js": {
@@ -275,8 +275,8 @@
     "semantic_hash": ""
   },
   "src/db/classService.js": {
-    "mtime": 1788365506.410091,
-    "ast_hash": "3d850aeaf54d26cf275a940736e6ccab",
+    "mtime": 1788368557.8140373,
+    "ast_hash": "6bd83783c167592f9813d68df58d3174",
     "semantic_hash": ""
   },
   "src/db/eventService.js": {
@@ -355,8 +355,8 @@
     "semantic_hash": ""
   },
   "src/views/Setup.vue": {
-    "mtime": 1788313689.865671,
-    "ast_hash": "914c8069bf5daebbedffb4f736047841",
+    "mtime": 1788368531.5532153,
+    "ast_hash": "f8270665d2bfc1ec079cda69259521ed",
     "semantic_hash": ""
   },
   "tmp/test_dates.js": {
@@ -425,8 +425,8 @@
     "semantic_hash": ""
   },
   "src/components/setup/RosterCsvImporter.vue": {
-    "mtime": 1788313659.7094922,
-    "ast_hash": "73fa30d0a1196f7ade466c4ba82aa9f0",
+    "mtime": 1788368515.1818962,
+    "ast_hash": "a2cbd48408d69d301423337f9a5d6c6a",
     "semantic_hash": ""
   },
   "src/composables/useAttendanceTracker.js": {
@@ -1187,6 +1187,11 @@
   "src/test_elementary_audit.js": {
     "mtime": 1788364792.4482367,
     "ast_hash": "0bbf6e7087a386dd962fd15207dfb904",
+    "semantic_hash": ""
+  },
+  "src/test_split_csv_import_comma_fix.js": {
+    "mtime": 1788368578.0483222,
+    "ast_hash": "737a1fad6a9ab438ae74395754f94758",
     "semantic_hash": ""
   }
 }

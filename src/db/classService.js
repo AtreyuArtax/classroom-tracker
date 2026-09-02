@@ -329,10 +329,24 @@ export async function importRoster(classId, studentsArray) {
 
     for (const row of studentsArray) {
         const { studentId, firstName, lastName, parentContacts, studentEmail, custody, livingWith, birthDate, rfidTag, gradeLevel, grade, courseCode } = row
+        const cleanFirst = (firstName || '').replace(/[, \t\r\n"']/g, '').trim()
+        const cleanLast  = (lastName || '').replace(/[, \t\r\n"']/g, '').trim()
+        const cleanId    = (studentId || '').toString().trim()
+
+        // Guard against phantom / nameless / separator rows
+        if (!cleanFirst && !cleanLast) {
+            console.warn('[classService:importRoster] Skipping row with no student name:', row)
+            continue
+        }
+        if (!cleanId) {
+            console.warn('[classService:importRoster] Skipping row with missing studentId:', row)
+            continue
+        }
+
         const rawG = (gradeLevel || grade || '').toString().trim()
         const parsedG = rawG ? (rawG.toLowerCase().startsWith('grade') ? rawG : `Grade ${parseInt(rawG, 10) || rawG}`) : ''
 
-        if (cls.students[studentId]) {
+        if (cls.students[cleanId]) {
             // Upsert — preserve seat and activeStates, but update names and gradeLevel
             cls.students[studentId].firstName = firstName
             cls.students[studentId].lastName = lastName
@@ -937,10 +951,24 @@ export async function bulkImportClasses(groups) {
         // Process students for this class
         for (const row of group.students) {
             const { studentId, firstName, lastName, parentContacts, studentEmail, custody, livingWith, birthDate, rfidTag, gradeLevel, grade, courseCode } = row
+            const cleanFirst = (firstName || '').replace(/[, \t\r\n"']/g, '').trim()
+            const cleanLast  = (lastName || '').replace(/[, \t\r\n"']/g, '').trim()
+            const cleanId    = (studentId || '').toString().trim()
+
+            // Guard against phantom / nameless / separator rows
+            if (!cleanFirst && !cleanLast) {
+                console.warn('[classService:bulkImportClasses] Skipping row with no student name:', row)
+                continue
+            }
+            if (!cleanId) {
+                console.warn('[classService:bulkImportClasses] Skipping row with missing studentId:', row)
+                continue
+            }
+
             const rawG = (gradeLevel || grade || '').toString().trim()
             const parsedG = rawG ? (rawG.toLowerCase().startsWith('grade') ? rawG : `Grade ${parseInt(rawG, 10) || rawG}`) : ''
 
-            if (cls.students[studentId]) {
+            if (cls.students[cleanId]) {
                 cls.students[studentId].firstName = firstName
                 cls.students[studentId].lastName = lastName
                 if (parsedG) cls.students[studentId].gradeLevel = parsedG

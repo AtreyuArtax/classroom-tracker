@@ -1261,16 +1261,21 @@ function onFileSelected(evt) {
         let firstName = row['First Name'] ?? row['FirstName'] ?? row['first_name'] ?? ''
         let lastName  = row['Last Name']  ?? row['LastName']  ?? row['last_name']  ?? ''
         
-        const studentName = row['Student Name'] ?? row['StudentName'] ?? row['student_name'] ?? ''
-        if (!firstName && !lastName && studentName) {
-          const parts = studentName.split(',')
+        const rawStudentName = (row['Student Name'] ?? row['StudentName'] ?? row['student_name'] ?? '').toString().trim()
+        const hasActualLettersInName = rawStudentName.replace(/[, \t\r\n"']/g, '').length > 0
+        if (!firstName && !lastName && hasActualLettersInName) {
+          const parts = rawStudentName.split(',')
           if (parts.length >= 2) {
-            lastName  = parts[0]
-            firstName = parts.slice(1).join(',')
+            lastName  = parts[0].trim()
+            firstName = parts.slice(1).join(',').trim()
           } else {
-            lastName = studentName
+            lastName = rawStudentName.trim()
           }
         }
+
+        // Clean any residual punctuation
+        firstName = (firstName || '').replace(/^[, \t]+|[, \t]+$/g, '').trim()
+        lastName  = (lastName || '').replace(/^[, \t]+|[, \t]+$/g, '').trim()
         const studentEmail = row['Student eMail'] ?? row['Student Email'] ?? ''
         const custody = row['Custody'] ?? ''
         const livingWith = row['Living With'] ?? ''
@@ -1332,8 +1337,17 @@ function onFileSelected(evt) {
         }
       })
 
+      // Strict filter: Row MUST have a student name and a student ID.
+      const validRows = rows.filter(r => {
+        const cleanFirst = (r.firstName || '').replace(/[, \t\r\n"']/g, '').trim()
+        const cleanLast  = (r.lastName || '').replace(/[, \t\r\n"']/g, '').trim()
+        const cleanId    = (r.studentId || '').toString().trim()
+        const hasName    = cleanFirst.length > 0 || cleanLast.length > 0
+        return hasName && cleanId.length > 0
+      })
+
       const groups = {}
-      for (const row of rows) {
+      for (const row of validRows) {
           const key = `${row.year}-${row.semester}-P${row.periodNumber}`
           if (!groups[key]) {
               groups[key] = {
@@ -1350,7 +1364,7 @@ function onFileSelected(evt) {
           groups[key].students.push(row)
       }
 
-      const detectedPeriods = [...new Set(rows.map(r => Number(r.periodNumber)))].filter(p => !isNaN(p))
+      const detectedPeriods = [...new Set(validRows.map(r => Number(r.periodNumber)))].filter(p => !isNaN(p))
       const missingPeriods = detectedPeriods.filter(p => !periodOptions.value.includes(p))
       
       if (missingPeriods.length > 0) {
@@ -1369,7 +1383,6 @@ function onFileSelected(evt) {
 
       // In Elementary mode: show preview dialog before committing anything
       if (teachingMode.value === 'elementary') {
-        const validRows = rows.filter(r => r.firstName.trim() || r.lastName.trim() || r.studentId.trim())
         if (validRows.length === 0) return
 
         // Extract homeroom name and year directly from raw CSV rows
@@ -1395,17 +1408,9 @@ function onFileSelected(evt) {
         return
       }
 
-
-      const validRows = rows.filter(r => r.firstName.trim() || r.lastName.trim() || r.studentId.trim())
-      const validGroups = {}
-      for (const row of validRows) {
-        const key = `${row.year}-${row.semester}-P${row.periodNumber}`
-        if (groups[key]) validGroups[key] = groups[key]
-      }
-
-      const groupKeys = Object.keys(validGroups)
+      const groupKeys = Object.keys(groups)
       if (groupKeys.length > 1) {
-          bulkImportGroups.value = validGroups
+          bulkImportGroups.value = groups
       } else {
           if (!activeClass.value) {
             await alert('This CSV contains only one class group. Please select or create a class first, then re-import.')

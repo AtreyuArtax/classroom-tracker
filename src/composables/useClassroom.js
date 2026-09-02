@@ -848,10 +848,19 @@ async function importRoster(parsedRows, targetClassId = null) {
     const crossClassConflicts = []
     const validRows = []
 
-    // Detect rows missing studentId (CLAUDE.md §6)
+    // Detect rows missing studentId or student name
     for (const row of parsedRows) {
-        if (!row.studentId) {
+        const cleanFirst = (row.firstName || '').replace(/[, \t\r\n"']/g, '').trim()
+        const cleanLast  = (row.lastName || '').replace(/[, \t\r\n"']/g, '').trim()
+        const cleanId    = (row.studentId || '').toString().trim()
+
+        if (!cleanId) {
             skipped.push({ studentId: null, reason: 'Missing Student ID' })
+            continue
+        }
+
+        if (!cleanFirst && !cleanLast) {
+            skipped.push({ studentId: cleanId, reason: 'Missing Student Name' })
             continue
         }
 
