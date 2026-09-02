@@ -466,6 +466,7 @@ import { getEffectiveClassRecord, cleanUnitName, getUnitGradeLevel } from '../..
 import { activeSubjectId } from '../../composables/useClassroomState.js'
 import { gradeMap } from '../../composables/useGradebook.js'
 import { getSBARLevelBadge } from '../../db/gradebookService.js'
+import { isCohortMatch } from '../../db/gradebook/gradeCalc.js'
 
 const gradeBucketsList = ref([])
 
@@ -603,13 +604,13 @@ const filteredUnits = computed(() => {
   let units = cls.gradebookUnits
 
   if (props.studentGradeLevel) {
-    const sGrade = props.studentGradeLevel.toLowerCase()
+    const sGrade = props.studentGradeLevel
     const clsExps = cls.expectations || []
     units = units.filter(u => {
       const uGrade = getUnitGradeLevel(u)
-      if (uGrade && uGrade.toLowerCase() === sGrade) return true
+      if (uGrade && isCohortMatch(uGrade, sGrade)) return true
       const unitExps = u.expectations || clsExps.filter(e => e.unitId === u.unitId)
-      if (unitExps.some(e => e.gradeLevel && e.gradeLevel.toLowerCase() === sGrade)) return true
+      if (unitExps.some(e => e.gradeLevel && isCohortMatch(e.gradeLevel, sGrade))) return true
       return !uGrade
     })
   }
@@ -884,8 +885,8 @@ function getGroupedUnitExpectations(unit) {
   }
 
   if (props.studentGradeLevel) {
-    const sGrade = props.studentGradeLevel.toLowerCase()
-    rawExps = rawExps.filter(e => !e.gradeLevel || e.gradeLevel.toLowerCase() === sGrade)
+    const sGrade = props.studentGradeLevel
+    rawExps = rawExps.filter(e => !e.gradeLevel || isCohortMatch(e.gradeLevel, sGrade))
   }
 
   if (rawExps.length === 0) return []

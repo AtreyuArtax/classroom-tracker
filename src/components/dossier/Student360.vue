@@ -307,7 +307,7 @@
           :active-class="activeClassRecord"
           :assessments="allDossierAssessments"
           :student-id="props.studentId"
-          :student-grade-level="student?.gradeLevel"
+          :student-grade-level="studentSubCohort"
           @delete="handleDeleteHistoryItem"
         />
       </section>
@@ -492,6 +492,8 @@ import {
   isAssessmentInSubCohort
 } from '../../composables/useGradebook.js'
 import { useStudentDossier } from '../../composables/useStudentDossier.js'
+import { getStudentEffectiveGrade } from '../../composables/useElementary.js'
+import { activeSubjectId } from '../../composables/useClassroomState.js'
 
 const props = defineProps({
   studentId: { type: String, required: true },
@@ -672,7 +674,9 @@ const currentStudentObj = computed(() => {
 
 const studentSubCohort = computed(() => {
   const isElem = activeClassRecord.value?.classType === 'elementary'
-  return isElem ? currentStudentObj.value?.gradeLevel : currentStudentObj.value?.courseCode
+  return isElem 
+    ? (getStudentEffectiveGrade(currentStudentObj.value, activeSubjectId.value) || currentStudentObj.value?.gradeLevel)
+    : currentStudentObj.value?.courseCode
 })
 
 const classAssessments = computed(() => {

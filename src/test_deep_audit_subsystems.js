@@ -79,7 +79,42 @@ assert.strictEqual(conf2.rating, 5, 'Confidence rating 5 parsed from prefixed op
 const cleanOpt = cleanOptionText('b. Front of room (near teacher/board)')
 assert.strictEqual(cleanOpt, 'Front of room (near teacher/board)', 'Option prefix stripped')
 
-console.log('✓ Student intake survey normalizer handles ratings and options cleanly\n')
+// ─── TEST 4: Radial Menu Blueprint 8-Button Organization ────────────────────
+console.log('TEST 4: Radial Menu Blueprint 8-Button Organization')
+
+const { getBehaviorCodes } = await import('./db/settingsService.js')
+const codesList = await getBehaviorCodes()
+const activePinned = codesList.filter(c => c.enabled !== false && c.isTopLevel === true)
+
+assert.strictEqual(activePinned.length, 7, 'Exactly 7 pinned 1-tap actions on main wheel')
+
+assert.strictEqual(activePinned[0].codeKey, 'w', 'Slot 1 is Out of Class')
+assert.strictEqual(activePinned[0].label, 'Out of Class')
+
+assert.strictEqual(activePinned[1].codeKey, 'a', 'Slot 2 is Absent')
+assert.strictEqual(activePinned[1].label, 'Absent')
+
+assert.strictEqual(activePinned[2].codeKey, 'l', 'Slot 3 is Late')
+assert.strictEqual(activePinned[2].label, 'Late')
+
+assert.strictEqual(activePinned[3].codeKey, 'note', 'Slot 4 is Note')
+assert.strictEqual(activePinned[3].label, 'Note')
+
+assert.strictEqual(activePinned[4].codeKey, 'pc', 'Slot 5 is Parent')
+assert.strictEqual(activePinned[4].label, 'Parent')
+
+assert.strictEqual(activePinned[5].codeKey, 'ac', 'Slot 6 is Assessment')
+assert.strictEqual(activePinned[5].label, 'Assessment')
+
+assert.strictEqual(activePinned[6].codeKey, 'm', 'Slot 7 is On Device')
+assert.strictEqual(activePinned[6].label, 'On Device')
+assert.strictEqual(activePinned[6].icon, 'Smartphone')
+assert.strictEqual(activePinned[6].category, 'redirect')
+
+const totalSlots = activePinned.length + 1 // + 1 for Profile button
+assert.strictEqual(totalSlots, 8, '8 / 8 Buttons on Wheel (Optimal Spacing)')
+
+console.log('✓ Radial menu blueprint matches 8 / 8 optimal button layout (Out of Class, Absent, Late, Note, Parent, Assessment, On Device, Profile)\n')
 
 console.log('=================================================================')
 console.log('🎉 ALL DEEP-DIVE SUBSYSTEM AUDIT TESTS PASSED!')

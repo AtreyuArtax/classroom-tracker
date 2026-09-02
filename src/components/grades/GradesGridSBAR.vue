@@ -255,7 +255,7 @@
                     v-if="(student.gradeLevel || student.courseCode) && availableGradeFilters.length > 1 && (!activeSubCohortFilter || activeSubCohortFilter === 'all')" 
                     class="sbar-student-grade-tag"
                   >
-                    {{ student.gradeLevel ? student.gradeLevel.replace('Grade ', 'Gr. ') : student.courseCode }}
+                    {{ getStudentDisplayCohort(student) }}
                   </span>
                 </div>
               </div>
@@ -276,11 +276,12 @@
             <!-- Expectation Cells -->
             <td 
               v-for="exp in displayedExpectations" 
-              :key="student.studentId + '-' + (exp.gradeLevel || 'all') + '-' + exp.code"
+              :key="student.studentId + '-' + (exp.gradeLevel || exp.courseCode || 'all') + '-' + exp.code"
               class="sbar-exp-cell"
-              @click="openExpectationDetail(student.studentId, exp.code)"
+              :class="{ 'sbar-exp-cell--na': !isExpectationApplicableToStudent(exp, student) }"
+              @click="isExpectationApplicableToStudent(exp, student) && openExpectationDetail(student.studentId, exp.code)"
             >
-              <div v-if="studentExpCellMap[student.studentId]?.[exp.code]" class="sbar-cell-content">
+              <div v-if="isExpectationApplicableToStudent(exp, student) && studentExpCellMap[student.studentId]?.[exp.code]" class="sbar-cell-content">
                 <span 
                   class="sbar-level-pill"
                   :style="{ background: studentExpCellMap[student.studentId][exp.code].badge.color + '22', color: studentExpCellMap[student.studentId][exp.code].badge.color, borderColor: studentExpCellMap[student.studentId][exp.code].badge.color + '44' }"
@@ -300,6 +301,7 @@
                   title="Declining trend"
                 >↘</span>
               </div>
+              <div v-else-if="!isExpectationApplicableToStudent(exp, student)" class="sbar-cell-na" title="Not applicable to student cohort">—</div>
               <div v-else class="sbar-cell-empty">—</div>
             </td>
           </tr>
@@ -376,7 +378,7 @@ import {
 } from '../../db/gradebookService.js'
 
 import { formatLocalDisplay } from '../../utils/dates.js'
-import { getEffectiveClassRecord, getUnitGradeLevel, cleanUnitName } from '../../composables/useElementary.js'
+import { getEffectiveClassRecord, getUnitGradeLevel, cleanUnitName, getStudentEffectiveGrade } from '../../composables/useElementary.js'
 import { activeSubjectId } from '../../composables/useClassroomState.js'
 import { UNIT_COLORS, getSectionColor } from '../../utils/gradeColors.js'
 import { isCohortMatch } from '../../db/gradebook/gradeCalc.js'
@@ -440,6 +442,32 @@ function onSelectAssessmentId(astId) {
   }
 }
 
+function getStudentDisplayCohort(student) {
+  if (!student) return ''
+  const isElem = activeClassRecord.value?.classType === 'elementary'
+  if (isElem) {
+    const curSubId = activeSubjectId.value
+    const eff = getStudentEffectiveGrade(student, curSubId)
+    if (student.accommodations?.modifiedSubjectGrades?.[curSubId]) {
+      return `${(eff || '').replace(/^Grade\s+/i, 'Gr. ')} (IEP)`
+    }
+    return (eff || student.gradeLevel || '').replace(/^Grade\s+/i, 'Gr. ')
+  }
+  return student.courseCode || (student.gradeLevel || '').replace(/^Grade\s+/i, 'Gr. ')
+}
+
+function isExpectationApplicableToStudent(exp, student) {
+  if (!exp || !student) return true
+  const expCohort = exp.gradeLevel || exp.courseCode
+  if (!expCohort || String(expCohort).toLowerCase() === 'all') return true
+  const isElem = activeClassRecord.value?.classType === 'elementary'
+  const studentCohort = isElem 
+    ? (getStudentEffectiveGrade(student, activeSubjectId.value) || student.gradeLevel)
+    : (student.courseCode || student.gradeLevel)
+  if (!studentCohort) return true
+  return isCohortMatch(expCohort, studentCohort)
+}
+
 function getAssessmentTargetRoster(ast) {
   if (!activeClassRecord.value?.students) return []
   const allStudents = Object.keys(activeClassRecord.value.students)
@@ -450,10 +478,12 @@ function getAssessmentTargetRoster(ast) {
 
   const aGrade = getAssessmentGradeLevel(ast)
   if (aGrade) {
-    const targetG = aGrade.toLowerCase()
+    const isElem = activeClassRecord.value?.classType === 'elementary'
     const matchingStudents = allStudents.filter(s => {
-      const sG = (s.gradeLevel || s.courseCode || '').toLowerCase()
-      return sG && sG === targetG
+      const sCohort = isElem 
+        ? (getStudentEffectiveGrade(s, activeSubjectId.value) || s.gradeLevel)
+        : (s.courseCode || s.gradeLevel)
+      return !sCohort || isCohortMatch(aGrade, sCohort)
     })
     if (matchingStudents.length > 0) {
       return matchingStudents
@@ -899,7 +929,7 @@ const availableStrands = computed(() => {
     if (!map[normKey]) {
       map[normKey] = { id: normKey, code: sCode, gradeLevel: exp.gradeLevel, name: unitName, expectations: [] }
     }
-    if (!map[normKey].expectations.some(e => e.code === exp.code)) {
+    if (!map[normKey].expectations.some(e => e.code === exp.code && (e.gradeLevel || '') === (exp.gradeLevel || '') && (e.courseCode || '') === (exp.courseCode || ''))) {
       map[normKey].expectations.push(exp)
     }
   })
@@ -1409,9 +1439,21 @@ thead th.sticky-col {
   color: #dc2626;
 }
 
-.sbar-empty-cell {
+.sbar-empty-cell,
+.sbar-cell-empty {
   color: var(--text-secondary);
   font-size: 0.8rem;
+}
+
+.sbar-exp-cell--na {
+  cursor: default;
+  background: var(--bg-tertiary, rgba(0, 0, 0, 0.02));
+}
+
+.sbar-cell-na {
+  color: var(--text-muted, #94a3b8);
+  font-size: 0.8rem;
+  opacity: 0.45;
 }
 
 /* Quick Action Chips */

@@ -289,7 +289,7 @@ const rawUnits = computed(() => {
     flatExps.forEach(exp => {
       if (!exp.code) return
       const eGrade = exp.gradeLevel || ''
-      if (targetGrade && eGrade && eGrade.toLowerCase() !== targetGrade) return
+      if (targetGrade && eGrade && !isCohortMatch(eGrade, targetGrade)) return
 
       const strandCode = exp.strand || exp.code.charAt(0).toUpperCase()
       const uId = exp.unitId || `strand-${strandCode}`
@@ -303,7 +303,7 @@ const rawUnits = computed(() => {
         }
       }
 
-      if (!unitMap[uId].expectations.some(e => e.code === exp.code)) {
+      if (!unitMap[uId].expectations.some(e => e.code === exp.code && (e.gradeLevel || '') === (exp.gradeLevel || ''))) {
         unitMap[uId].expectations.push(exp)
       }
     })

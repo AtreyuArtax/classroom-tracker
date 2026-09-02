@@ -3,7 +3,7 @@ import fs from 'fs'
 import path from 'path'
 import { calculateSBARExpectationMastery } from './db/gradebook/gradeCalcSBAR.js'
 import { cleanExpectationText, cleanCurriculumObject } from './utils/textUtils.js'
-import { migrateData } from './db/migrations.js'
+import { migrateData, CURRENT_SCHEMA } from './db/migrations.js'
 
 console.log('--- RUNNING EXPECTATION LIFECYCLE & CASCADE TESTS ---')
 
@@ -395,7 +395,7 @@ const legacyData = {
 }
 
 const migrated = migrateData(legacyData)
-assert.strictEqual(migrated.schemaVersion, 31, 'Migrated to current schema 31')
+assert.strictEqual(migrated.schemaVersion, CURRENT_SCHEMA, 'Migrated to current schema')
 assert.strictEqual(migrated.classes[0].gradebookUnits[0].name, 'Unit 1 – Dance')
 assert.strictEqual(migrated.classes[0].gradebookUnits[0].expectations[0].description, 'create dance pieces to represent rhythms.')
 assert.strictEqual(migrated.classes[0].subjects[0].expectations[0].description, 'identify purpose(s) (e.g., graphic novel – to tell a story)')

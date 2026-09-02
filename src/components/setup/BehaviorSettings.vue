@@ -705,7 +705,7 @@ const formCode = reactive({
 
 const availableIcons = [
   'DoorOpen', 'Smartphone', 'Toilet', 'Hand', 'Eye', 'MessageSquare', 'Phone', 
-  'NotebookPen', 'GraduationCap', 'Smile', 'AlertTriangle', 'XCircle', 
+  'NotebookPen', 'GraduationCap', 'Heart', 'Smile', 'AlertTriangle', 'XCircle', 
   'BookOpen', 'Shield', 'Zap', 'Award', 'Activity', 'Flame', 'HelpCircle',
   'Star', 'CheckCircle2', 'Clock', 'UserX', 'CalendarClock'
 ]

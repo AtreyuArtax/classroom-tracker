@@ -438,9 +438,28 @@ export function isCohortMatch(targetTag, studentCohort) {
 
 export async function calculateStudentGrade(studentId, classRecord, { asOf = null, assessmentsPreRef = null, gradesPreRef = null, settingsPreRef = null } = {}) {
   if (!studentId || !classRecord || !classRecord.classId) return null
-  const assessments = assessmentsPreRef || await getAssessmentsByClass(classRecord.classId)
+  let assessments = assessmentsPreRef || await getAssessmentsByClass(classRecord.classId)
   const grades = gradesPreRef || await getGradesByStudent(studentId, classRecord.classId)
   
+  // Scope assessments to active subject for elementary classes
+  if (classRecord.classType === 'elementary' && classRecord.activeSubjectId) {
+    const subId = classRecord.activeSubjectId
+    const subUnits = new Set((classRecord.gradebookUnits || []).map(u => String(u.unitId)))
+    const subExps = new Set((classRecord.expectations || []).map(e => String(e.code || e.expectationId).toLowerCase()))
+
+    assessments = assessments.filter(a => {
+      if (a.subjectId) return String(a.subjectId) === String(subId)
+      if (a.unitId && subUnits.has(String(a.unitId))) return true
+      const expIds = a.expectationIds || (a.expectationId ? [a.expectationId] : [])
+      if (expIds.length > 0 && expIds.some(code => subExps.has(String(code).toLowerCase()))) return true
+      if (!a.subjectId && !a.unitId && expIds.length === 0) {
+        const firstSubId = classRecord.subjects?.[0]?.subjectId || classRecord.activeSubjectId || 'elem_sub_math'
+        return String(subId) === String(firstSubId)
+      }
+      return false
+    })
+  }
+
   const gradeMap = {}
   for (const g of grades) {
     if (!g.studentId || String(g.studentId) === String(studentId)) {

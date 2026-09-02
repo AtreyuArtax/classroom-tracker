@@ -1,47 +1,47 @@
 // Secondary Standard Presets
-import snc1w from './ontario/secondary/science/ontario-snc1w.json'
-import mth1w from './ontario/secondary/math/ontario-mth1w.json'
-import mpm2d from './ontario/secondary/math/ontario-mpm2d.json'
-import mfm2p from './ontario/secondary/math/ontario-mfm2p.json'
-import snc2d from './ontario/secondary/science/ontario-snc2d.json'
-import snc2p from './ontario/secondary/science/ontario-snc2p.json'
-import sch3u from './ontario/secondary/science/ontario-sch3u.json'
-import sph3u from './ontario/secondary/science/ontario-sph3u.json'
-import sph4u from './ontario/secondary/science/ontario-sph4u.json'
+import snc1w from './ontario/secondary/science/ontario-snc1w.json' with { type: 'json' }
+import mth1w from './ontario/secondary/math/ontario-mth1w.json' with { type: 'json' }
+import mpm2d from './ontario/secondary/math/ontario-mpm2d.json' with { type: 'json' }
+import mfm2p from './ontario/secondary/math/ontario-mfm2p.json' with { type: 'json' }
+import snc2d from './ontario/secondary/science/ontario-snc2d.json' with { type: 'json' }
+import snc2p from './ontario/secondary/science/ontario-snc2p.json' with { type: 'json' }
+import sch3u from './ontario/secondary/science/ontario-sch3u.json' with { type: 'json' }
+import sph3u from './ontario/secondary/science/ontario-sph3u.json' with { type: 'json' }
+import sph4u from './ontario/secondary/science/ontario-sph4u.json' with { type: 'json' }
 
 // Secondary Success Criteria Presets
-import snc1wSuccessCriteria from './ontario/secondary/science/ontario-snc1w-success-criteria.json'
-import mth1wSuccessCriteria from './ontario/secondary/math/ontario-mth1w-success-criteria.json'
-import mpm2dSuccessCriteria from './ontario/secondary/math/ontario-mpm2d-success-criteria.json'
-import mfm2pSuccessCriteria from './ontario/secondary/math/ontario-mfm2p-success-criteria.json'
-import snc2dSuccessCriteria from './ontario/secondary/science/ontario-snc2d-success-criteria.json'
-import snc2pSuccessCriteria from './ontario/secondary/science/ontario-snc2p-success-criteria.json'
-import sch3uSuccessCriteria from './ontario/secondary/science/ontario-sch3u-success-criteria.json'
-import sph3uSuccessCriteria from './ontario/secondary/science/ontario-sph3u-success-criteria.json'
+import snc1wSuccessCriteria from './ontario/secondary/science/ontario-snc1w-success-criteria.json' with { type: 'json' }
+import mth1wSuccessCriteria from './ontario/secondary/math/ontario-mth1w-success-criteria.json' with { type: 'json' }
+import mpm2dSuccessCriteria from './ontario/secondary/math/ontario-mpm2d-success-criteria.json' with { type: 'json' }
+import mfm2pSuccessCriteria from './ontario/secondary/math/ontario-mfm2p-success-criteria.json' with { type: 'json' }
+import snc2dSuccessCriteria from './ontario/secondary/science/ontario-snc2d-success-criteria.json' with { type: 'json' }
+import snc2pSuccessCriteria from './ontario/secondary/science/ontario-snc2p-success-criteria.json' with { type: 'json' }
+import sch3uSuccessCriteria from './ontario/secondary/science/ontario-sch3u-success-criteria.json' with { type: 'json' }
+import sph3uSuccessCriteria from './ontario/secondary/science/ontario-sph3u-success-criteria.json' with { type: 'json' }
 
 // Elementary Grade 7 Presets
-import g7arts from './ontario/elementary/grade-7/ontario-g7-arts.json'
-import g7coreFrench from './ontario/elementary/grade-7/ontario-g7-core-french.json'
-import g7extFrench from './ontario/elementary/grade-7/ontario-g7-extended-french.json'
-import g7fi from './ontario/elementary/grade-7/ontario-g7-french-immersion.json'
-import g7geo from './ontario/elementary/grade-7/ontario-g7-geography.json'
-import g7hist from './ontario/elementary/grade-7/ontario-g7-history.json'
-import g7hpe from './ontario/elementary/grade-7/ontario-g7-hpe.json'
-import g7lang from './ontario/elementary/grade-7/ontario-g7-language.json'
-import g7math from './ontario/elementary/grade-7/ontario-g7-math.json'
-import g7sci from './ontario/elementary/grade-7/ontario-g7-science-tech.json'
+import g7arts from './ontario/elementary/grade-7/ontario-g7-arts.json' with { type: 'json' }
+import g7coreFrench from './ontario/elementary/grade-7/ontario-g7-core-french.json' with { type: 'json' }
+import g7extFrench from './ontario/elementary/grade-7/ontario-g7-extended-french.json' with { type: 'json' }
+import g7fi from './ontario/elementary/grade-7/ontario-g7-french-immersion.json' with { type: 'json' }
+import g7geo from './ontario/elementary/grade-7/ontario-g7-geography.json' with { type: 'json' }
+import g7hist from './ontario/elementary/grade-7/ontario-g7-history.json' with { type: 'json' }
+import g7hpe from './ontario/elementary/grade-7/ontario-g7-hpe.json' with { type: 'json' }
+import g7lang from './ontario/elementary/grade-7/ontario-g7-language.json' with { type: 'json' }
+import g7math from './ontario/elementary/grade-7/ontario-g7-math.json' with { type: 'json' }
+import g7sci from './ontario/elementary/grade-7/ontario-g7-science-tech.json' with { type: 'json' }
 
 // Elementary Grade 8 Presets
-import g8arts from './ontario/elementary/grade-8/ontario-g8-arts.json'
-import g8coreFrench from './ontario/elementary/grade-8/ontario-g8-core-french.json'
-import g8extFrench from './ontario/elementary/grade-8/ontario-g8-extended-french.json'
-import g8fi from './ontario/elementary/grade-8/ontario-g8-french-immersion.json'
-import g8geo from './ontario/elementary/grade-8/ontario-g8-geography.json'
-import g8hist from './ontario/elementary/grade-8/ontario-g8-history.json'
-import g8hpe from './ontario/elementary/grade-8/ontario-g8-hpe.json'
-import g8lang from './ontario/elementary/grade-8/ontario-g8-language.json'
-import g8math from './ontario/elementary/grade-8/ontario-g8-math.json'
-import g8sci from './ontario/elementary/grade-8/ontario-g8-science-tech.json'
+import g8arts from './ontario/elementary/grade-8/ontario-g8-arts.json' with { type: 'json' }
+import g8coreFrench from './ontario/elementary/grade-8/ontario-g8-core-french.json' with { type: 'json' }
+import g8extFrench from './ontario/elementary/grade-8/ontario-g8-extended-french.json' with { type: 'json' }
+import g8fi from './ontario/elementary/grade-8/ontario-g8-french-immersion.json' with { type: 'json' }
+import g8geo from './ontario/elementary/grade-8/ontario-g8-geography.json' with { type: 'json' }
+import g8hist from './ontario/elementary/grade-8/ontario-g8-history.json' with { type: 'json' }
+import g8hpe from './ontario/elementary/grade-8/ontario-g8-hpe.json' with { type: 'json' }
+import g8lang from './ontario/elementary/grade-8/ontario-g8-language.json' with { type: 'json' }
+import g8math from './ontario/elementary/grade-8/ontario-g8-math.json' with { type: 'json' }
+import g8sci from './ontario/elementary/grade-8/ontario-g8-science-tech.json' with { type: 'json' }
 
 export const curriculumPresets = [
   // Secondary Standard

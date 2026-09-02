@@ -30,7 +30,9 @@ async function _readSettings() {
         if (typeof indexedDB !== 'undefined') {
             const db = await getDB()
             const rec = await db.get('settings', SETTINGS_KEY)
-            if (rec) return rec
+            if (rec) {
+                return rec
+            }
         }
     } catch (err) {
         console.warn('Unable to read settings from IndexedDB, using defaults:', err?.message)
@@ -38,71 +40,92 @@ async function _readSettings() {
 
     // Fallback: seed defaults (should have been written during upgrade, but guard anyway)
     const defaults = {
-        schemaVersion: 28,
+        schemaVersion: 32,
         gridSize: { rows: 6, cols: 6 },
         behaviorCodes: {
+            w: {
+                key: 'w',
+                codeKey: 'w',
+                icon: 'DoorOpen',
+                label: 'Out of Class',
+                category: 'neutral',
+                type: 'toggle',
+                requiresNote: false,
+                isTopLevel: true,
+                order: 0,
+                enabled: true
+            },
+            a: {
+                key: 'a',
+                codeKey: 'a',
+                icon: 'UserX',
+                label: 'Absent',
+                category: 'attendance',
+                type: 'attendance',
+                requiresNote: false,
+                isTopLevel: true,
+                order: 1,
+                enabled: true
+            },
+            l: {
+                key: 'l',
+                codeKey: 'l',
+                icon: 'Clock',
+                label: 'Late',
+                category: 'attendance',
+                type: 'attendance',
+                requiresNote: false,
+                isTopLevel: true,
+                order: 2,
+                enabled: true
+            },
             note: {
                 key: 'note',
+                codeKey: 'note',
                 icon: 'NotebookPen',
                 label: 'Note',
                 category: 'note',
                 type: 'standard',
                 requiresNote: true,
-                isTopLevel: true
-            },
-            m: {
-                key: 'm',
-                icon: 'Smartphone',
-                label: 'On Device',
-                category: 'redirect',
-                type: 'standard',
-                requiresNote: false,
-                isTopLevel: true
-            },
-            w: {
-                key: 'w',
-                icon: 'DoorOpen',
-                label: 'Out of Class',
-                category: 'washroom',
-                type: 'toggle',
-                requiresNote: false,
-                isTopLevel: true
-            },
-            a: {
-                key: 'a',
-                icon: 'UserX',
-                label: 'Absent',
-                category: 'absence',
-                type: 'attendance',
-                requiresNote: false,
-                isTopLevel: false
-            },
-            l: {
-                key: 'l',
-                icon: 'Clock',
-                label: 'Late',
-                category: 'late',
-                type: 'attendance',
-                requiresNote: false,
-                isTopLevel: false
+                isTopLevel: true,
+                order: 3,
+                enabled: true
             },
             pc: {
                 key: 'pc',
+                codeKey: 'pc',
                 icon: 'Phone',
                 label: 'Parent',
                 category: 'communication',
                 type: 'standard',
                 requiresNote: true,
-                isTopLevel: true
+                isTopLevel: true,
+                order: 4,
+                enabled: true
             },
             ac: {
                 key: 'ac',
+                codeKey: 'ac',
                 icon: 'GraduationCap',
                 label: 'Assessment',
                 category: 'assessment',
                 type: 'standard',
                 requiresNote: true,
-                isTopLevel: true
+                isTopLevel: true,
+                order: 5,
+                enabled: true
+            },
+            m: {
+                key: 'm',
+                codeKey: 'm',
+                icon: 'Smartphone',
+                label: 'On Device',
+                category: 'redirect',
+                type: 'standard',
+                requiresNote: false,
+                isTopLevel: true,
+                order: 6,
+                enabled: true
             }
         },
         thresholds: {
@@ -135,8 +158,15 @@ async function _readSettings() {
         nonSchoolDays: [],
         appTheme: 'system'
     }
-    await db.put('settings', defaults, SETTINGS_KEY)
-    hasUnsyncedChanges.value = true
+    if (typeof indexedDB !== 'undefined') {
+        try {
+            const db = await getDB()
+            await db.put('settings', defaults, SETTINGS_KEY)
+            hasUnsyncedChanges.value = true
+        } catch (e) {
+            // ignore fallback write failure in non-browser context
+        }
+    }
     return defaults
 }
 

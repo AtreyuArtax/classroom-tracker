@@ -339,18 +339,17 @@ export function ensureIEPPresetsForClass(classRecord) {
     students.forEach(st => {
       const modGrade = st.accommodations?.modifiedSubjectGrades?.[currentSub.subjectId]
       if (modGrade && modGrade !== 'default') {
-        const cleaned = modGrade.match(/^\d+$/) 
-          ? `Grade ${modGrade}` 
-          : (modGrade.replace(/^Gr\.?\s*/i, 'Grade '))
-        if (/^Grade\s*\d+$/i.test(cleaned)) {
-          iepGrades.add(cleaned)
+        const match = String(modGrade).replace(/\s*\(IEP\)/i, '').match(/(?:Grade|Gr\.?)?\s*([1-8])\b/i)
+        if (match) {
+          iepGrades.add(`Grade ${match[1]}`)
         }
       }
     })
 
+    const norm = (g) => String(g || '').toLowerCase().replace(/[^a-z0-9]/g, '')
     iepGrades.forEach(gradeStr => {
       const existingExps = currentSub.expectations || []
-      const hasGrade = existingExps.some(e => e.gradeLevel && isCohortMatch(e.gradeLevel, gradeStr))
+      const hasGrade = existingExps.some(e => norm(e.gradeLevel) === norm(gradeStr))
       if (!hasGrade) {
         const matchingPresets = findElementaryPresets([gradeStr], currentSub.code, currentSub.name)
         if (matchingPresets && matchingPresets.length > 0) {

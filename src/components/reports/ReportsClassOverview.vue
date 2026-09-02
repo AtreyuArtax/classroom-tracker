@@ -387,6 +387,7 @@ import ReportsPositiveModal from './ReportsPositiveModal.vue'
 import { getSBARLevelBadge, calculateSBARExpectationMastery } from '../../db/gradebookService.js'
 import { gradeMap } from '../../composables/useGradebook.js'
 import { useClassroom } from '../../composables/useClassroom.js'
+import { isCohortMatch } from '../../db/gradebook/gradeCalc.js'
 
 const props = defineProps({
   loading: { type: Boolean, default: false },
@@ -603,8 +604,7 @@ const totalExpectationsCount = computed(() => {
 
   if (cls.expectations && Array.isArray(cls.expectations) && cls.expectations.length > 0) {
     if (props.activeGradeFilter && props.activeGradeFilter !== 'all') {
-      const gLower = props.activeGradeFilter.toLowerCase()
-      const filtered = cls.expectations.filter(e => !e.gradeLevel || e.gradeLevel.toLowerCase() === gLower)
+      const filtered = cls.expectations.filter(e => !e.gradeLevel || isCohortMatch(e.gradeLevel, props.activeGradeFilter))
       return filtered.length
     }
     return cls.expectations.length

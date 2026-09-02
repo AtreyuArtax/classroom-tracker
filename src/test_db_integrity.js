@@ -290,7 +290,7 @@ const legacyV1Data = {
 
 const migratedV1 = migrateData(legacyV1Data)
 
-// Check v6 & v9 migrations (emojis converted to Lucide icons, codes modernized)
+// Check v6, v9 & v32 migrations (emojis converted to Lucide icons, codes modernized)
 assert.strictEqual(migratedV1.settings.behaviorCodes.hw.icon, 'Hand', 'Emoji ✋ converted to Lucide icon Hand')
 assert.strictEqual(migratedV1.settings.behaviorCodes.note.icon, 'NotebookPen', 'Observation code migrated to note with NotebookPen')
 assert.strictEqual(migratedV1.settings.behaviorCodes.pc.icon, 'Phone', 'Parent contact code preserved with Phone icon')
@@ -308,9 +308,9 @@ assert.strictEqual(migratedV1.classes[0].students['s1'].archived, false, 'Studen
 assert.ok(Array.isArray(migratedV1.learning_skills), 'learning_skills store initialized')
 
 // Check final schema version
-assert.strictEqual(migratedV1.schemaVersion, CURRENT_SCHEMA, 'Migrated schema version matches CURRENT_SCHEMA (31)')
-assert.strictEqual(migratedV1.settings.schemaVersion, CURRENT_SCHEMA, 'Settings schema version matches CURRENT_SCHEMA (31)')
-console.log('  ✓ Schema v1 through v31 automatic migration engine verified')
+assert.strictEqual(migratedV1.schemaVersion, CURRENT_SCHEMA, 'Migrated schema version matches CURRENT_SCHEMA (32)')
+assert.strictEqual(migratedV1.settings.schemaVersion, CURRENT_SCHEMA, 'Settings schema version matches CURRENT_SCHEMA (32)')
+console.log('  ✓ Schema v1 through v32 automatic migration engine verified')
 
 // =============================================================================
 // TEST GROUP 6: Corrupt, Malformed & Future Schema Payload Resilience

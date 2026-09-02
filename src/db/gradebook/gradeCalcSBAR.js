@@ -167,7 +167,8 @@ export function calculateSBARExpectationMastery(classRecord, assessments, gradeM
       }
     })
   }
-  if (Array.isArray(classRecord.subjects)) {
+  // For un-scoped multi-subject elementary class records without activeSubjectId, include all subjects
+  if (Array.isArray(classRecord.subjects) && !classRecord.activeSubjectId) {
     classRecord.subjects.forEach(sub => {
       if (sub.expectations) allClassExps.push(...sub.expectations)
       if (sub.gradebookUnits) {
@@ -184,7 +185,27 @@ export function calculateSBARExpectationMastery(classRecord, assessments, gradeM
 
   const expectationEvaluations = {}
 
-  assessments.forEach(ast => {
+  // Filter assessments to active subject for elementary classes
+  let scopedAssessments = assessments
+  if (classRecord.classType === 'elementary' && classRecord.activeSubjectId) {
+    const subId = classRecord.activeSubjectId
+    const subUnits = new Set((classRecord.gradebookUnits || []).map(u => String(u.unitId)))
+    const subExps = new Set((classRecord.expectations || []).map(e => String(e.code || e.expectationId).toLowerCase()))
+
+    scopedAssessments = assessments.filter(a => {
+      if (a.subjectId) return String(a.subjectId) === String(subId)
+      if (a.unitId && subUnits.has(String(a.unitId))) return true
+      const expIds = a.expectationIds || (a.expectationId ? [a.expectationId] : [])
+      if (expIds.length > 0 && expIds.some(code => subExps.has(String(code).toLowerCase()))) return true
+      if (!a.subjectId && !a.unitId && expIds.length === 0) {
+        const firstSubId = classRecord.subjects?.[0]?.subjectId || classRecord.activeSubjectId || 'elem_sub_math'
+        return String(subId) === String(firstSubId)
+      }
+      return false
+    })
+  }
+
+  scopedAssessments.forEach(ast => {
     const expCodes = ast.expectationIds || (ast.expectationId ? [ast.expectationId] : [])
     if (!expCodes.length) return
 

@@ -18,7 +18,7 @@ import { getCurrentSchoolYear, getCurrentSemester } from '../utils/dates.js'
 import { cleanExpectationText } from '../utils/textUtils.js'
 
 const DB_NAME = 'classroomTrackerDB'
-const DB_VERSION = 31
+const DB_VERSION = 32
 
 /**
  * Cached promise — set synchronously before the first await so every
@@ -105,18 +105,18 @@ export function getDB() {
       if (oldVersion === 0) {
         transaction.objectStore('settings').put(
           {
-            schemaVersion: 28,
+            schemaVersion: 32,
             gridSize: { rows: 6, cols: 6 },
             currentYear: getCurrentSchoolYear(),
             currentSemester: getCurrentSemester(),
             behaviorCodes: {
-              m: { icon: 'Smartphone', label: 'On Device', category: 'redirect', type: 'standard', requiresNote: false, isTopLevel: true },
-              w: { icon: 'DoorOpen', label: 'Out of Class', category: 'neutral', type: 'toggle', requiresNote: false, isTopLevel: true },
-              a: { icon: 'UserX', label: 'Absent', category: 'attendance', type: 'attendance', requiresNote: false, isTopLevel: false },
-              l: { icon: 'Clock', label: 'Late', category: 'attendance', type: 'attendance', requiresNote: false, isTopLevel: false },
-              note: { icon: 'NotebookPen', label: 'Note', category: 'note', type: 'standard', requiresNote: true, isTopLevel: true },
-              ac: { icon: 'GraduationCap', label: 'Assessment', category: 'assessment', type: 'standard', requiresNote: true, isTopLevel: true },
-              pc: { icon: 'Phone', label: 'Parent', category: 'communication', type: 'standard', requiresNote: true, isTopLevel: true },
+              w: { icon: 'DoorOpen', label: 'Out of Class', category: 'neutral', type: 'toggle', requiresNote: false, isTopLevel: true, order: 0, enabled: true },
+              a: { icon: 'UserX', label: 'Absent', category: 'attendance', type: 'attendance', requiresNote: false, isTopLevel: true, order: 1, enabled: true },
+              l: { icon: 'Clock', label: 'Late', category: 'attendance', type: 'attendance', requiresNote: false, isTopLevel: true, order: 2, enabled: true },
+              note: { icon: 'NotebookPen', label: 'Note', category: 'note', type: 'standard', requiresNote: true, isTopLevel: true, order: 3, enabled: true },
+              pc: { icon: 'Phone', label: 'Parent', category: 'communication', type: 'standard', requiresNote: true, isTopLevel: true, order: 4, enabled: true },
+              ac: { icon: 'GraduationCap', label: 'Assessment', category: 'assessment', type: 'standard', requiresNote: true, isTopLevel: true, order: 5, enabled: true },
+              m: { icon: 'Smartphone', label: 'On Device', category: 'redirect', type: 'standard', requiresNote: false, isTopLevel: true, order: 6, enabled: true },
             },
             thresholds: {
               washroomTripsPerWeek: 4,
@@ -836,6 +836,46 @@ export function getDB() {
           if (modified) {
             await assessmentsStore.put(ass)
           }
+        }
+      }
+
+      // --- VERSION 32 MIGRATION (Radial Blueprint Core 7-Action Wheel Organization) ---
+      if (oldVersion < 32) {
+        console.log('[IDB] Migrating to v32: Updating radial menu behavior codes...')
+        const settingsStore = transaction.objectStore('settings')
+        const settings = await settingsStore.get('singleton')
+        if (settings) {
+          if (!settings.behaviorCodes) settings.behaviorCodes = {}
+          const codes = settings.behaviorCodes
+          if (codes.k && codes.k.label === 'Kindness') {
+            delete codes.k
+          }
+          // Check if user has custom action keys or explicit ordering
+          const builtInKeys = new Set(['w', 'a', 'l', 'note', 'pc', 'ac', 'm', 'hw', 'ob', 'cv', 'p'])
+          const allKeys = Object.keys(codes)
+          const hasCustomKeys = allKeys.some(k => !builtInKeys.has(k.toLowerCase()))
+          const hasExplicitOrder = allKeys.some(k => codes[k].order !== undefined)
+
+          // If user never modified / reordered their radial codes, upgrade them to the new 8-button blueprint
+          if (!hasCustomKeys && !hasExplicitOrder) {
+            if (codes.w) { codes.w.order = 0; codes.w.isTopLevel = true; }
+            if (codes.a) { codes.a.order = 1; codes.a.isTopLevel = true; }
+            if (codes.l) { codes.l.order = 2; codes.l.isTopLevel = true; }
+            if (codes.note) { codes.note.order = 3; codes.note.isTopLevel = true; }
+            if (codes.pc) { codes.pc.order = 4; codes.pc.isTopLevel = true; }
+            if (codes.ac) { codes.ac.order = 5; codes.ac.isTopLevel = true; }
+            if (codes.m) { codes.m.order = 6; codes.m.isTopLevel = true; }
+          } else {
+            // User has customizations: only backfill missing order indices if undefined
+            const defaultOrder = { w: 0, a: 1, l: 2, note: 3, pc: 4, ac: 5, m: 6 }
+            for (const [key, ord] of Object.entries(defaultOrder)) {
+              if (codes[key] && codes[key].order === undefined) {
+                codes[key].order = ord
+              }
+            }
+          }
+          settings.schemaVersion = 32
+          await settingsStore.put(settings, 'singleton')
         }
       }
     },

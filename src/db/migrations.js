@@ -8,7 +8,7 @@
 
 import { cleanExpectationText } from '../utils/textUtils.js'
 
-export const CURRENT_SCHEMA = 31
+export const CURRENT_SCHEMA = 32
 
 /**
  * Migrates a backup data object to the current schema version (25).
@@ -443,6 +443,42 @@ export function migrateData(data) {
       }
     }
     version = 31
+  }
+
+  // ── Version 32 (Radial Blueprint Default Core 7-Action Wheel Organization) ──
+  if (version < 32) {
+    if (migrated.settings) {
+      if (!migrated.settings.behaviorCodes) migrated.settings.behaviorCodes = {}
+      const codes = migrated.settings.behaviorCodes
+      if (codes.k && codes.k.label === 'Kindness') {
+        delete codes.k
+      }
+      // Check if user has custom action keys or explicit ordering
+      const builtInKeys = new Set(['w', 'a', 'l', 'note', 'pc', 'ac', 'm', 'hw', 'ob', 'cv', 'p'])
+      const allKeys = Object.keys(codes)
+      const hasCustomKeys = allKeys.some(k => !builtInKeys.has(k.toLowerCase()))
+      const hasExplicitOrder = allKeys.some(k => codes[k].order !== undefined)
+
+      // If user never modified / reordered their radial codes, upgrade them to the new 8-button blueprint
+      if (!hasCustomKeys && !hasExplicitOrder) {
+        if (codes.w) { codes.w.order = 0; codes.w.isTopLevel = true; }
+        if (codes.a) { codes.a.order = 1; codes.a.isTopLevel = true; }
+        if (codes.l) { codes.l.order = 2; codes.l.isTopLevel = true; }
+        if (codes.note) { codes.note.order = 3; codes.note.isTopLevel = true; }
+        if (codes.pc) { codes.pc.order = 4; codes.pc.isTopLevel = true; }
+        if (codes.ac) { codes.ac.order = 5; codes.ac.isTopLevel = true; }
+        if (codes.m) { codes.m.order = 6; codes.m.isTopLevel = true; }
+      } else {
+        // User has customizations: only backfill missing order indices if undefined
+        const defaultOrder = { w: 0, a: 1, l: 2, note: 3, pc: 4, ac: 5, m: 6 }
+        for (const [key, ord] of Object.entries(defaultOrder)) {
+          if (codes[key] && codes[key].order === undefined) {
+            codes[key].order = ord
+          }
+        }
+      }
+    }
+    version = 32
   }
 
   migrated.schemaVersion = currentVersion
