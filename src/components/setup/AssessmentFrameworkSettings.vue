@@ -1081,26 +1081,39 @@ async function saveGradebookSettings() {
 }
 
 // ── SBAR Evaluation Weighting Helpers ──
-const sbarWeighting = computed(() => activeClass.value?.sbarWeighting || null)
-const sbarWeightingEnabled = computed(() => !!activeClass.value?.sbarWeighting?.enabled)
+const sbarRevision = ref(0)
+const sbarWeighting = computed(() => {
+  sbarRevision.value
+  return activeClass.value?.sbarWeighting || null
+})
+const sbarWeightingEnabled = computed(() => {
+  sbarRevision.value
+  return !!activeClass.value?.sbarWeighting?.enabled
+})
 
 const sbarTermWeight = computed({
-  get: () => activeClass.value?.sbarWeighting?.termWeight ?? 65,
+  get: () => {
+    sbarRevision.value
+    return activeClass.value?.sbarWeighting?.termWeight ?? 65
+  },
   set: (val) => {
     if (!activeClass.value) return
     if (!activeClass.value.sbarWeighting) {
       activeClass.value.sbarWeighting = { enabled: true, termWeight: 65, components: [] }
     }
     activeClass.value.sbarWeighting.termWeight = Number(val)
+    sbarRevision.value++
   }
 })
 
 const sbarComponents = computed(() => {
+  sbarRevision.value
   if (!activeClass.value?.sbarWeighting?.components) return []
   return activeClass.value.sbarWeighting.components
 })
 
 const sbarTotalWeight = computed(() => {
+  sbarRevision.value
   if (!sbarWeightingEnabled.value) return 100
   const term = Number(sbarTermWeight.value || 0)
   const comps = (sbarComponents.value || []).reduce((sum, c) => sum + Number(c.weight || 0), 0)
@@ -1109,6 +1122,7 @@ const sbarTotalWeight = computed(() => {
 
 let sbarDebounceTimer = null
 function onSbarWeightInput() {
+  sbarRevision.value++
   if (sbarDebounceTimer) clearTimeout(sbarDebounceTimer)
   sbarDebounceTimer = setTimeout(() => {
     saveSbarWeighting()
@@ -1136,6 +1150,7 @@ async function toggleSbarWeighting() {
   } else {
     activeClass.value.sbarWeighting.enabled = false
   }
+  sbarRevision.value++
   await saveSbarWeighting()
 }
 
@@ -1168,6 +1183,7 @@ async function applySbarPreset(preset) {
       ]
     }
   }
+  sbarRevision.value++
   await saveSbarWeighting()
 }
 
@@ -1182,12 +1198,14 @@ async function addSbarComponent() {
     name: 'New Component',
     weight: 0
   })
+  sbarRevision.value++
   await saveSbarWeighting()
 }
 
 async function removeSbarComponent(idx) {
   if (!activeClass.value?.sbarWeighting?.components) return
   activeClass.value.sbarWeighting.components.splice(idx, 1)
+  sbarRevision.value++
   await saveSbarWeighting()
 }
 
