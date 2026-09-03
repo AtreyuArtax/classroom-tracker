@@ -34,7 +34,7 @@
 
         <!-- Detailed Assessment View Component Dispatcher -->
         <GradesAssessmentDetailSBAR
-          v-else-if="selectedAssessmentId && currentAssessment && activeClassRecord?.gradingFramework === 'sbar'"
+          v-else-if="selectedAssessmentId && currentAssessment && activeClassRecord?.gradingFramework === 'sbar' && !currentAssessment.isNumericComponent"
           :current-assessment="currentAssessment"
           :sorted-roster="sortedRoster"
           :focused-student-id="focusedStudentId"

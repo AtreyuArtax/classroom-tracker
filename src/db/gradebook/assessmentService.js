@@ -379,3 +379,58 @@ export async function detachExpectationFromAssessmentsAndGrades(classId, expecta
   hasUnsyncedChanges.value = true
   return { affectedAssessments, affectedGrades }
 }
+
+/**
+ * Ensures that component assessments exist and are linked for an SBAR class with weighting enabled.
+ * 
+ * @param {Object} classRecord
+ * @returns {Promise<Object>} Updated sbarWeighting config with linked assessmentIds
+ */
+export async function ensureSbarComponentAssessments(classRecord) {
+  if (!classRecord?.classId || !classRecord.sbarWeighting?.enabled) return classRecord?.sbarWeighting || null
+
+  const components = classRecord.sbarWeighting.components || []
+  if (components.length === 0) return classRecord.sbarWeighting
+
+  const existingAssessments = await getAssessmentsByClass(classRecord.classId)
+
+  for (const comp of components) {
+    let matched = existingAssessments.find(a => 
+      (comp.assessmentId && String(a.assessmentId) === String(comp.assessmentId)) ||
+      (comp.componentId && String(a.componentId) === String(comp.componentId))
+    )
+
+    if (!matched) {
+      matched = await createAssessment({
+        classId: classRecord.classId,
+        name: comp.name || 'Final Evaluation',
+        description: `Final evaluation component (${comp.weight || 0}% of course grade)`,
+        categoryId: 'sbar_final_component',
+        assessmentType: 'product',
+        purpose: 'summative',
+        isNumericComponent: true,
+        componentId: comp.componentId,
+        totalPoints: 100,
+        scaledTotal: null,
+        date: new Date().toISOString().slice(0, 10),
+        retestPolicy: 'highest',
+        target: 'class',
+        targetCourseCode: 'all',
+        targetStudentId: null
+      })
+      comp.assessmentId = matched.assessmentId
+    } else {
+      if (comp.assessmentId !== matched.assessmentId) {
+        comp.assessmentId = matched.assessmentId
+      }
+      if (matched.name !== comp.name) {
+        await updateAssessment(matched.assessmentId, {
+          name: comp.name,
+          description: `Final evaluation component (${comp.weight || 0}% of course grade)`
+        })
+      }
+    }
+  }
+
+  return classRecord.sbarWeighting
+}

@@ -145,8 +145,8 @@
         <Flag :size="20" /> Academic Milestones
       </h2>
       <p class="setup__hint">
-        Define key reporting cutoff dates (e.g. Progress Reports, Midterms, Term 1) for <strong>{{ selectedYear }}</strong>. 
-        These generate the date filter presets in your Gradebook and reporting snapshots.
+        Define key reporting dates (e.g. Progress Reports, Midterms, Term 1 / Term 2) for <strong>{{ selectedYear }}</strong>. 
+        Leave <strong>Start Date</strong> empty for cumulative progress (Secondary), or set a Start Date to define a discrete reporting window (Elementary Term 1 &amp; Term 2).
       </p>
 
       <div class="setup__gb-list">
@@ -161,15 +161,25 @@
                 @change="saveMilestones" 
               />
             </div>
-            <div class="setup__term-unit" style="width: 110px;">
-              <span class="setup__mini-label">Semester</span>
+            <div class="setup__term-unit" style="width: 130px;">
+              <span class="setup__mini-label">Semester / Term</span>
               <select v-model="ms.semester" class="setup__input setup__input--white" @change="saveMilestones">
                 <option value="1">Sem 1</option>
                 <option value="2">Sem 2</option>
-                <option value="Full">Full Year</option>
+                <option value="Full">Full Year (Elem)</option>
               </select>
             </div>
-            <div class="setup__term-unit" style="width: 150px;">
+            <div class="setup__term-unit" style="width: 140px;">
+              <span class="setup__mini-label">Start Date (Opt)</span>
+              <input 
+                v-model="ms.startDate" 
+                type="date" 
+                class="setup__input setup__input--white" 
+                title="Leave blank for cumulative progress, or set start date for discrete terms"
+                @change="saveMilestones" 
+              />
+            </div>
+            <div class="setup__term-unit" style="width: 140px;">
               <span class="setup__mini-label">Cutoff Date</span>
               <input 
                 v-model="ms.date" 
@@ -462,6 +472,7 @@ function addMilestone() {
     year: selectedYear.value || getSchoolYearFromDate(defaultDate),
     semester: defaultSem,
     name: '',
+    startDate: '',
     date: defaultDate
   }
   globalMilestones.value = [...globalMilestones.value, newMilestone]
@@ -605,7 +616,7 @@ function exportHolidaysCsv() {
 
 /* Card Styling to match Setup.vue */
 .setup__card {
-  background: white;
+  background: var(--surface);
   border-radius: var(--radius-lg);
   border: 1.5px solid var(--border);
   box-shadow: var(--shadow-sm);
@@ -728,9 +739,10 @@ function exportHolidaysCsv() {
   margin-left: 2px;
 }
 
-/* Match Setup.vue inputs (White background on Gray container) */
+/* Match Setup.vue inputs */
 .setup__input--white {
-  background: white !important;
+  background: var(--surface) !important;
+  color: var(--text) !important;
   border: 1px solid var(--border) !important;
 }
 

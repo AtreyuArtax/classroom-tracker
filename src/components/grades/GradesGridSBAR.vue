@@ -88,6 +88,14 @@
                 >
                   Summative
                 </button>
+                <button 
+                  v-if="isWeightedSBAR"
+                  class="hub-tab" 
+                  :class="{ 'hub-tab--active': hubFilterTab === 'final' }"
+                  @click="hubFilterTab = 'final'"
+                >
+                  Final Evaluations
+                </button>
               </div>
             </div>
 
@@ -188,7 +196,7 @@
           <!-- Strand Grouping Row -->
           <tr class="sbar-header-group">
             <th class="sticky-col sticky-col--name" colspan="1">STUDENT</th>
-            <th class="sticky-col sticky-col--mastery" colspan="1">OVERALL MASTERY</th>
+            <th class="sticky-col sticky-col--mastery" colspan="1">{{ isWeightedSBAR ? 'COURSE GRADE' : 'OVERALL MASTERY' }}</th>
             <th 
               v-for="(strand, idx) in displayedStrands" 
               :key="'grp-' + (strand.id || strand.code)" 
@@ -208,7 +216,7 @@
           <!-- Expectation Codes Row -->
           <tr class="sbar-header-sub">
             <th class="sticky-col sticky-col--name">Student Name</th>
-            <th class="sticky-col sticky-col--mastery">Mastery</th>
+            <th class="sticky-col sticky-col--mastery">{{ isWeightedSBAR ? 'Final Mark' : 'Mastery' }}</th>
             <th 
               v-for="exp in displayedExpectations" 
               :key="(exp.gradeLevel || exp.courseCode || 'all') + '-' + exp.code"
@@ -263,8 +271,31 @@
 
             <!-- Overall Mastery Badge Column -->
             <td class="sticky-col sticky-col--mastery sbar-mastery-cell">
+              <div v-if="isWeightedSBAR && classGrades[student.studentId]?.overallGrade !== null && classGrades[student.studentId]?.overallGrade !== undefined" class="sbar-composite-cell" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;">
+                <span 
+                  class="sbar-mastery-badge"
+                  :style="{ 
+                    background: getStudentCompositeBadge(student.studentId).color + '22', 
+                    color: getStudentCompositeBadge(student.studentId).color, 
+                    borderColor: getStudentCompositeBadge(student.studentId).color + '55',
+                    fontWeight: '700'
+                  }"
+                  :title="`Final Course Grade: ${classGrades[student.studentId].overallGrade}% (${getStudentCompositeBadge(student.studentId).level})`"
+                >
+                  {{ Math.round(classGrades[student.studentId].overallGrade) }}%
+                  <span style="font-size: 0.72rem; opacity: 0.9; margin-left: 2px;">{{ getStudentCompositeBadge(student.studentId).level }}</span>
+                </span>
+                <span 
+                  v-if="overallMasteryMap[student.studentId]"
+                  class="sbar-sub-term-badge"
+                  :title="`Term SBAR Mastery: ${overallMasteryMap[student.studentId].score}% (${overallMasteryMap[student.studentId].badge.level})`"
+                  style="font-size: 0.68rem; color: var(--text-secondary); line-height: 1;"
+                >
+                  Term: {{ overallMasteryMap[student.studentId].badge.level }}
+                </span>
+              </div>
               <span 
-                v-if="overallMasteryMap[student.studentId]" 
+                v-else-if="overallMasteryMap[student.studentId]" 
                 class="sbar-mastery-badge"
                 :style="{ background: overallMasteryMap[student.studentId].badge.color + '22', color: overallMasteryMap[student.studentId].badge.color, borderColor: overallMasteryMap[student.studentId].badge.color + '55' }"
               >
@@ -367,6 +398,7 @@ import {
   activeClassRecord, 
   assessments, 
   gradeMap,
+  classGrades,
   activeGradeFilter,
   activeSubCohortFilter,
   availableSubCohorts,
@@ -394,6 +426,14 @@ const emit = defineEmits(['open-dossier', 'select-expectation', 'select-assessme
 const activeStrandFilter = ref('all')
 
 const availableGradeFilters = computed(() => availableSubCohorts.value)
+
+const isWeightedSBAR = computed(() => !!activeClassRecord.value?.sbarWeighting?.enabled)
+
+function getStudentCompositeBadge(studentId) {
+  const g = classGrades.value?.[studentId]?.overallGrade
+  if (g === null || g === undefined) return { level: '—', color: 'var(--text-secondary)' }
+  return getSBARLevelBadge(g)
+}
 
 function formatDate(dStr) {
   if (!dStr) return '—'
@@ -647,7 +687,9 @@ const filteredHubAssessments = computed(() => {
   } else if (hubFilterTab.value === 'formative') {
     list = list.filter(ast => ast.isFormative || ast.purpose === 'formative')
   } else if (hubFilterTab.value === 'summative') {
-    list = list.filter(ast => !ast.isFormative && ast.purpose !== 'formative')
+    list = list.filter(ast => !ast.isFormative && ast.purpose !== 'formative' && !ast.isNumericComponent && ast.categoryId !== 'sbar_final_component')
+  } else if (hubFilterTab.value === 'final') {
+    list = list.filter(ast => ast.isNumericComponent || ast.categoryId === 'sbar_final_component')
   }
 
   return list
@@ -741,7 +783,7 @@ function getAssessmentGradeLevel(a) {
 const sortedAssessments = computed(() => {
   if (!assessments.value) return []
   let list = [...assessments.value]
-    .filter(a => a.categoryId === 'sbar_general' || (a.expectationIds && a.expectationIds.length > 0) || a.expectationId)
+    .filter(a => a.categoryId === 'sbar_general' || (a.expectationIds && a.expectationIds.length > 0) || a.expectationId || a.isNumericComponent || a.categoryId === 'sbar_final_component')
 
   if (activeGradeFilter.value !== 'all' && availableGradeFilters.value.length > 1) {
     const targetG = activeGradeFilter.value.toLowerCase()

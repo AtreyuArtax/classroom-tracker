@@ -480,9 +480,11 @@ const sortedStudents = computed(() => {
 
 const sortedAssessments = computed(() => {
   if (!assessments.value) return []
-  const asOf = selectedMilestone.value
-    ? filteredMilestones.value?.find(m => m.milestoneId === selectedMilestone.value)?.date
+  const currentMs = selectedMilestone.value
+    ? filteredMilestones.value?.find(m => m.milestoneId === selectedMilestone.value)
     : null
+  const asOf = currentMs?.date || null
+  const dateFrom = currentMs?.startDate || null
     
   const isSBAR = props.classRecord?.gradingFramework === 'sbar'
   let list = [...assessments.value].filter(a => {
@@ -505,6 +507,9 @@ const sortedAssessments = computed(() => {
 
   if (asOf) {
     list = list.filter(a => a.date <= asOf)
+  }
+  if (dateFrom) {
+    list = list.filter(a => a.date >= dateFrom)
   }
   return list.sort((a, b) => new Date(a.date) - new Date(b.date))
 })

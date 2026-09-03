@@ -123,6 +123,7 @@ export async function calculateClassAnalytics(classRecord, assessments, grades, 
     targetCourseCode = 'all',
     subCohortFilter = null,
     asOf = null,
+    dateFrom = null,
     gradeBuckets = null
   } = options
 
@@ -163,6 +164,10 @@ export async function calculateClassAnalytics(classRecord, assessments, grades, 
 
   if (asOf) {
     filteredAssessments = filteredAssessments.filter(a => a.date <= asOf)
+  }
+
+  if (dateFrom) {
+    filteredAssessments = filteredAssessments.filter(a => a.date >= dateFrom)
   }
 
   // Build grade map for quick lookup
@@ -220,6 +225,7 @@ export async function calculateClassAnalytics(classRecord, assessments, grades, 
       if (excludedStudentIds.has(studentId)) continue
       const res = await calculateStudentGrade(studentId, classRecord, {
         asOf,
+        dateFrom,
         assessmentsPreRef: assessments,
         gradesPreRef: studentGradesMap.get(studentId) || [],
         settingsPreRef: settings
@@ -440,7 +446,8 @@ export async function calculateClassAnalytics(classRecord, assessments, grades, 
     observationCoverage,
 
     // Milestone context
-    asOf
+    asOf,
+    dateFrom
   }
 }
 

@@ -439,6 +439,28 @@ const topBehavior = computed(() => {
 })
 
 const categoryPerformance = computed(() => {
+  if (isSBAR.value) {
+    const breakdown = studentGrades.value?.sbarBreakdown
+    if (!breakdown?.enabled) return []
+    const list = [
+      {
+        categoryId: 'sbar_term',
+        name: 'Coursework (Expectations)',
+        weight: breakdown.termWeight,
+        percentage: breakdown.sbarMasteryPct
+      }
+    ]
+    Object.entries(breakdown.components || {}).forEach(([cId, c]) => {
+      list.push({
+        categoryId: cId,
+        name: c.name,
+        weight: c.weight,
+        percentage: c.percentage
+      })
+    })
+    return list
+  }
+
   const cats = effectiveClass.value?.gradebookCategories || activeClassRecord.value?.gradebookCategories || activeClass.value?.gradebookCategories
   if (!cats) return []
   return cats.map(cat => {

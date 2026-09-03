@@ -436,7 +436,7 @@ export function isCohortMatch(targetTag, studentCohort) {
   return cleanTarget === cleanCohort
 }
 
-export async function calculateStudentGrade(studentId, classRecord, { asOf = null, assessmentsPreRef = null, gradesPreRef = null, settingsPreRef = null } = {}) {
+export async function calculateStudentGrade(studentId, classRecord, { asOf = null, dateFrom = null, assessmentsPreRef = null, gradesPreRef = null, settingsPreRef = null } = {}) {
   if (!studentId || !classRecord || !classRecord.classId) return null
   let assessments = assessmentsPreRef || await getAssessmentsByClass(classRecord.classId)
   const grades = gradesPreRef || await getGradesByStudent(studentId, classRecord.classId)
@@ -472,8 +472,117 @@ export async function calculateStudentGrade(studentId, classRecord, { asOf = nul
   const isAdjusted = adjustedGrade !== undefined && adjustedGrade !== null
 
   if (classRecord.gradingFramework === 'sbar') {
-    const sbarAssessments = asOf ? assessments.filter(a => a.date <= asOf) : assessments
+    const sbarAssessments = (asOf || dateFrom)
+      ? assessments.filter(a => (!asOf || a.date <= asOf) && (!dateFrom || a.date >= dateFrom))
+      : assessments
     const sbarMasteryPct = calculateSBARStudentOverallMastery(studentId, classRecord, sbarAssessments, gradeMap)
+
+    // Check if Weighted Evaluation Components (e.g. 65% Coursework / 25% Exam / 10% Attendance) are enabled
+    if (classRecord.sbarWeighting?.enabled) {
+      const termWeight = Number(classRecord.sbarWeighting.termWeight ?? 65)
+      const components = classRecord.sbarWeighting.components || []
+      let weightedSum = 0
+      let weightUsed = 0
+      const componentResults = {}
+
+      if (sbarMasteryPct !== null && !isNaN(sbarMasteryPct)) {
+        weightedSum += sbarMasteryPct * (termWeight / 100)
+        weightUsed += termWeight
+      }
+
+      for (const comp of components) {
+        const compWeight = Number(comp.weight || 0)
+        if (compWeight <= 0) continue
+
+        // Locate component assessment
+        const compAssessment = assessments.find(a => {
+          if (asOf && a.date > asOf) return false
+          if (dateFrom && a.date < dateFrom) return false
+          if (comp.assessmentId && String(a.assessmentId) === String(comp.assessmentId)) return true
+          if (comp.componentId && String(a.componentId) === String(comp.componentId)) return true
+          return false
+        })
+
+        if (!compAssessment) {
+          componentResults[comp.componentId] = {
+            name: comp.name,
+            weight: compWeight,
+            percentage: null,
+            assessmentId: comp.assessmentId || null
+          }
+          continue
+        }
+
+        const grade = gradeMap[compAssessment.assessmentId]
+        const pct = getAssessmentPercentage(compAssessment, grade)
+
+        if (pct !== null && !isNaN(pct)) {
+          const roundedPct = preciseRound(pct)
+          weightedSum += roundedPct * (compWeight / 100)
+          weightUsed += compWeight
+          componentResults[comp.componentId] = {
+            name: comp.name,
+            weight: compWeight,
+            percentage: roundedPct,
+            assessmentId: compAssessment.assessmentId
+          }
+        } else {
+          componentResults[comp.componentId] = {
+            name: comp.name,
+            weight: compWeight,
+            percentage: null,
+            assessmentId: compAssessment.assessmentId
+          }
+        }
+      }
+
+      let capAt100 = true
+      try {
+        const settings = settingsPreRef || await getSettings()
+        capAt100 = settings?.capGradesAt100 ?? true
+      } catch {
+        capAt100 = true
+      }
+
+      const rawOverall = weightUsed === 0 ? null : (weightedSum / weightUsed) * 100
+      const calculatedOverallGrade = rawOverall === null ? null : preciseRound(capAt100 ? Math.min(100, rawOverall) : rawOverall, 0)
+      const displayOverallGrade = isAdjusted
+        ? preciseRound(capAt100 ? Math.min(100, Number(adjustedGrade)) : Number(adjustedGrade), 0)
+        : calculatedOverallGrade
+
+      return {
+        overallGrade: displayOverallGrade,
+        displayOverallGrade,
+        calculatedOverallGrade,
+        rawOverallGrade: rawOverall !== null ? preciseRound(rawOverall, 2) : null,
+        categoryResults: {
+          sbar_term: {
+            name: 'Coursework (Expectations)',
+            weight: termWeight,
+            percentage: sbarMasteryPct
+          },
+          ...componentResults
+        },
+        isGradeAdjusted: isAdjusted,
+        isAdjusted,
+        adjustedGrade: isAdjusted ? preciseRound(Number(adjustedGrade), 0) : null,
+        mostConsistent: null,
+        median: null,
+        sbarMasteryPct,
+        sbarBreakdown: {
+          enabled: true,
+          termWeight,
+          sbarMasteryPct,
+          components: componentResults,
+          weightUsed
+        },
+        weightUsed,
+        asOf,
+        dateFrom
+      }
+    }
+
+    // Default legacy unweighted SBAR mode (100% expectation mastery)
     const displayOverallGrade = isAdjusted
       ? preciseRound(Number(adjustedGrade), 0)
       : sbarMasteryPct
@@ -489,7 +598,8 @@ export async function calculateStudentGrade(studentId, classRecord, { asOf = nul
       mostConsistent: null,
       median: null,
       sbarMasteryPct,
-      asOf
+      asOf,
+      dateFrom
     }
   }
 
@@ -522,9 +632,9 @@ export async function calculateStudentGrade(studentId, classRecord, { asOf = nul
       return isCohortMatch(targetTag, studentCohort)
     })
 
-    // Apply asOf date filter if provided
-    if (asOf) {
-      catAssessments = catAssessments.filter(a => a.date <= asOf)
+    // Apply asOf and dateFrom date filters if provided
+    if (asOf || dateFrom) {
+      catAssessments = catAssessments.filter(a => (!asOf || a.date <= asOf) && (!dateFrom || a.date >= dateFrom))
     }
 
     // Individual category grades allow bonus marks >100% so they roll up accurately
@@ -571,9 +681,13 @@ export async function calculateStudentGrade(studentId, classRecord, { asOf = nul
     ? preciseRound(capAt100 ? Math.min(100, Number(adjustedGrade)) : Number(adjustedGrade), 0)
     : finalCalculatedGrade
 
+  const effectiveAssessments = (asOf || dateFrom)
+    ? assessments.filter(a => (!asOf || a.date <= asOf) && (!dateFrom || a.date >= dateFrom))
+    : assessments
+
   // New Metrics
-  const mostConsistent = calculateMostConsistent(studentId, classRecord, gradeMap, assessments, capAt100)
-  const median = calculateWeightedMedian(studentId, classRecord, gradeMap, assessments, capAt100)
+  const mostConsistent = calculateMostConsistent(studentId, classRecord, gradeMap, effectiveAssessments, capAt100)
+  const median = calculateWeightedMedian(studentId, classRecord, gradeMap, effectiveAssessments, capAt100)
 
   return {
     overallGrade: displayOverallGrade,
@@ -586,7 +700,8 @@ export async function calculateStudentGrade(studentId, classRecord, { asOf = nul
     medianData: median,
     categoryResults,
     weightUsed,
-    asOf
+    asOf,
+    dateFrom
   }
 }
 
@@ -594,7 +709,7 @@ export async function calculateStudentGrade(studentId, classRecord, { asOf = nul
  * Convenience function to calculate grades for all students in a class.
  * NOW BATCHED: Loads data once for the whole class instead of per student.
  */
-export async function calculateClassGrades(classRecord, { asOf = null } = {}) {
+export async function calculateClassGrades(classRecord, { asOf = null, dateFrom = null } = {}) {
   if (!classRecord || !classRecord.classId) return {}
   // 1. Batch fetch all data and settings once
   const [assessments, allGrades, settings] = await Promise.all([
@@ -619,6 +734,7 @@ export async function calculateClassGrades(classRecord, { asOf = null } = {}) {
     
     results[studentId] = await calculateStudentGrade(studentId, classRecord, { 
       asOf, 
+      dateFrom,
       assessmentsPreRef: assessments, 
       gradesPreRef: studentGrades,
       settingsPreRef: settings

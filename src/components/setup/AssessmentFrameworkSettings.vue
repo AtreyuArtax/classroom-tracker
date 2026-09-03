@@ -56,6 +56,115 @@
         </div>
       </template>
 
+      <!-- SBAR Mode: Final Evaluation & Category Weighting (Optional) -->
+      <template v-else>
+        <div class="setup__sbar-weighting-section" style="margin-bottom: 1.25rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 8px;">
+            <div>
+              <h3 class="setup__card-subtitle" style="margin: 0; display: flex; align-items: center; gap: 6px;">
+                <Sliders :size="15" /> Course Evaluation Weights (Optional)
+              </h3>
+              <p class="setup__hint" style="margin: 2px 0 0 0;">
+                Incorporate fixed-percentage final evaluations (e.g. Ontario 65/25/10, 70/30) alongside SBAR expectation mastery.
+              </p>
+            </div>
+            <div class="setup__segmented-toggle">
+              <button
+                type="button"
+                class="setup__segmented-btn"
+                :class="{ 'setup__segmented-btn--active': !sbarWeightingEnabled }"
+                @click="setSbarWeightingMode(false)"
+              >
+                <span>Pure SBAR (100%)</span>
+              </button>
+              <button
+                type="button"
+                class="setup__segmented-btn"
+                :class="{ 'setup__segmented-btn--active': sbarWeightingEnabled }"
+                @click="setSbarWeightingMode(true)"
+              >
+                <Sliders :size="14" class="setup__segmented-icon" />
+                <span>Weighting Enabled</span>
+              </button>
+            </div>
+          </div>
+
+          <div v-if="sbarWeightingEnabled" class="setup__sbar-weighting-body" style="margin-top: 12px;">
+            <!-- Presets bar -->
+            <div class="setup__presets-bar" style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px;">
+              <span class="setup__bar-label" style="font-size: 0.78rem; font-weight: 600; align-self: center; color: var(--text-secondary);">Presets:</span>
+              <button type="button" class="setup__btn-ghost setup__btn--small" @click="applySbarPreset('gr9_10')">
+                Ontario Gr. 9 and 10 (65 / 20 / 15)
+              </button>
+              <button type="button" class="setup__btn-ghost setup__btn--small" @click="applySbarPreset('gr11_12')">
+                Ontario Gr. 11 and 12 (65 / 25 / 10)
+              </button>
+            </div>
+
+            <!-- Term Mastery Weight Row -->
+            <div class="setup__gb-list">
+              <div class="setup__gb-item" style="background: var(--surface-hover);">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <Layers :size="14" style="color: var(--primary);" />
+                  <span style="font-weight: 600; font-size: 0.88rem;">Coursework (SBAR Expectations Mastery)</span>
+                </div>
+                <div class="setup__gb-actions">
+                  <input 
+                    v-model.number="sbarTermWeight" 
+                    type="number" 
+                    class="setup__input setup__input--weight" 
+                    min="1" 
+                    max="100"
+                    @input="onSbarWeightInput" 
+                    @change="saveSbarWeighting" 
+                  />
+                  <span>%</span>
+                </div>
+              </div>
+
+              <!-- Fixed Component Rows (Written Exam, Attendance & Participation, etc.) -->
+              <div v-for="(comp, idx) in sbarComponents" :key="comp.componentId" class="setup__gb-item">
+                <input 
+                  v-model="comp.name" 
+                  class="setup__input setup__input--naked" 
+                  placeholder="Component Name (e.g. Final Exam)"
+                  @change="saveSbarWeighting" 
+                />
+                <div class="setup__gb-actions">
+                  <input 
+                    v-model.number="comp.weight" 
+                    type="number" 
+                    class="setup__input setup__input--weight" 
+                    min="1" 
+                    max="100"
+                    @input="onSbarWeightInput" 
+                    @change="saveSbarWeighting" 
+                  />
+                  <span>%</span>
+                  <button class="setup__icon-btn setup__icon-btn--danger" @click="removeSbarComponent(idx)">
+                    <Trash2 :size="14" />
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Footer: Add component + Total validation -->
+            <div class="setup__category-footer" style="margin-top: 10px;">
+              <button class="setup__btn-ghost setup__btn--full" @click="addSbarComponent">
+                <Plus :size="14" /> Add Final Evaluation Component
+              </button>
+              <div class="setup__weight-total" :class="{ 
+                'setup__weight-total--under': sbarTotalWeight < 100 && sbarTotalWeight > 0,
+                'setup__weight-total--over': sbarTotalWeight > 100 
+              }">
+                Total: <strong>{{ sbarTotalWeight }}%</strong>
+                <AlertTriangle v-if="sbarTotalWeight !== 100" :size="14" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </template>
+
       <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-top: 1.5rem;">
         <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
           <h3 class="setup__card-subtitle" style="margin: 0;">Units &amp; Expectations</h3>
@@ -528,7 +637,7 @@ import * as eventService from '../../db/eventService.js'
 import { 
   ChevronUp, ChevronDown, Trash2, Plus, AlertTriangle, CheckCircle2, 
   ChevronRight, BookOpen, Copy, LayoutTemplate, Save, Edit2, Check, X, Search, 
-  Eye, Flag 
+  Eye, Flag, Sliders, Layers 
 } from 'lucide-vue-next'
 import BaseModal from '../BaseModal.vue'
 import ExpectationImportModal from './ExpectationImportModal.vue'
@@ -965,9 +1074,132 @@ async function saveGradebookSettings() {
     gradebookCategories: activeClass.value.gradebookCategories,
     gradebookUnits: activeClass.value.gradebookUnits,
     gradebookNotes: activeClass.value.gradebookNotes,
-    courseFrameworks: activeClass.value.courseFrameworks
+    courseFrameworks: activeClass.value.courseFrameworks,
+    sbarWeighting: activeClass.value.sbarWeighting
   })
   await settingsService.saveGlobalMilestones(JSON.parse(JSON.stringify(globalMilestones.value)))
+}
+
+// ── SBAR Evaluation Weighting Helpers ──
+const sbarWeighting = computed(() => activeClass.value?.sbarWeighting || null)
+const sbarWeightingEnabled = computed(() => !!activeClass.value?.sbarWeighting?.enabled)
+
+const sbarTermWeight = computed({
+  get: () => activeClass.value?.sbarWeighting?.termWeight ?? 65,
+  set: (val) => {
+    if (!activeClass.value) return
+    if (!activeClass.value.sbarWeighting) {
+      activeClass.value.sbarWeighting = { enabled: true, termWeight: 65, components: [] }
+    }
+    activeClass.value.sbarWeighting.termWeight = Number(val)
+  }
+})
+
+const sbarComponents = computed(() => {
+  if (!activeClass.value?.sbarWeighting?.components) return []
+  return activeClass.value.sbarWeighting.components
+})
+
+const sbarTotalWeight = computed(() => {
+  if (!sbarWeightingEnabled.value) return 100
+  const term = Number(sbarTermWeight.value || 0)
+  const comps = (sbarComponents.value || []).reduce((sum, c) => sum + Number(c.weight || 0), 0)
+  return term + comps
+})
+
+let sbarDebounceTimer = null
+function onSbarWeightInput() {
+  if (sbarDebounceTimer) clearTimeout(sbarDebounceTimer)
+  sbarDebounceTimer = setTimeout(() => {
+    saveSbarWeighting()
+  }, 400)
+}
+
+async function setSbarWeightingMode(enabled) {
+  if (!activeClass.value) return
+  if (enabled === sbarWeightingEnabled.value) return
+  await toggleSbarWeighting()
+}
+
+async function toggleSbarWeighting() {
+  if (!activeClass.value) return
+  const current = activeClass.value.sbarWeighting
+  if (!current || !current.enabled) {
+    activeClass.value.sbarWeighting = {
+      enabled: true,
+      termWeight: 65,
+      components: [
+        { componentId: 'comp_exam', name: 'Written Final Exam', weight: 25, type: 'exam' },
+        { componentId: 'comp_att', name: 'Attendance & Participation', weight: 10, type: 'attendance' }
+      ]
+    }
+  } else {
+    activeClass.value.sbarWeighting.enabled = false
+  }
+  await saveSbarWeighting()
+}
+
+async function applySbarPreset(preset) {
+  if (!activeClass.value) return
+  if (preset === 'gr9_10') {
+    activeClass.value.sbarWeighting = {
+      enabled: true,
+      termWeight: 65,
+      components: [
+        { componentId: 'comp_exam', name: 'Written Final Exam', weight: 20, type: 'exam' },
+        { componentId: 'comp_att', name: 'Attendance & Participation', weight: 15, type: 'attendance' }
+      ]
+    }
+  } else if (preset === 'gr11_12' || preset === 'gr11') {
+    activeClass.value.sbarWeighting = {
+      enabled: true,
+      termWeight: 65,
+      components: [
+        { componentId: 'comp_exam', name: 'Written Final Exam', weight: 25, type: 'exam' },
+        { componentId: 'comp_att', name: 'Attendance & Participation', weight: 10, type: 'attendance' }
+      ]
+    }
+  } else if (preset === '70_30') {
+    activeClass.value.sbarWeighting = {
+      enabled: true,
+      termWeight: 70,
+      components: [
+        { componentId: 'comp_exam', name: 'Written Final Exam', weight: 30, type: 'exam' }
+      ]
+    }
+  }
+  await saveSbarWeighting()
+}
+
+async function addSbarComponent() {
+  if (!activeClass.value) return
+  if (!activeClass.value.sbarWeighting) {
+    activeClass.value.sbarWeighting = { enabled: true, termWeight: 65, components: [] }
+  }
+  const compId = 'comp_' + crypto.randomUUID().slice(0, 8)
+  activeClass.value.sbarWeighting.components.push({
+    componentId: compId,
+    name: 'New Component',
+    weight: 0
+  })
+  await saveSbarWeighting()
+}
+
+async function removeSbarComponent(idx) {
+  if (!activeClass.value?.sbarWeighting?.components) return
+  activeClass.value.sbarWeighting.components.splice(idx, 1)
+  await saveSbarWeighting()
+}
+
+async function saveSbarWeighting() {
+  if (!activeClass.value) return
+  if (activeClass.value.sbarWeighting?.enabled) {
+    await gradebookService.ensureSbarComponentAssessments(activeClass.value)
+  }
+  await updateActiveClass({
+    sbarWeighting: activeClass.value.sbarWeighting
+  })
+  triggerActiveClass()
 }
 
 async function addCategory() {

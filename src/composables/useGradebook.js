@@ -338,12 +338,13 @@ export async function refreshGrades() {
   if (!activeClassRecord.value) return
   
   // Find date boundary if a milestone is selected
-  const asOf = selectedMilestone.value
-    ? filteredMilestones.value?.find(m => m.milestoneId === selectedMilestone.value)?.date
+  const currentMs = selectedMilestone.value
+    ? filteredMilestones.value?.find(m => m.milestoneId === selectedMilestone.value)
     : null
+  const asOf = currentMs?.date || null
+  const dateFrom = currentMs?.startDate || null
     
-    
-  classGrades.value = await gradebookService.calculateClassGrades(activeClassRecord.value, { asOf })
+  classGrades.value = await gradebookService.calculateClassGrades(activeClassRecord.value, { asOf, dateFrom })
   await refreshClassAnalytics()
 }
 
@@ -353,9 +354,11 @@ export async function refreshGrades() {
 export async function refreshClassAnalytics(targetSubCohort = null) {
   if (!activeClassRecord.value) return
   // Use filteredMilestones (same as refreshGrades) so grades and analytics always match
-  const asOf = selectedMilestone.value
-    ? filteredMilestones.value?.find(m => m.milestoneId === selectedMilestone.value)?.date
+  const currentMs = selectedMilestone.value
+    ? filteredMilestones.value?.find(m => m.milestoneId === selectedMilestone.value)
     : null
+  const asOf = currentMs?.date || null
+  const dateFrom = currentMs?.startDate || null
 
   const subCohortFilterVal = targetSubCohort || activeSubCohortFilter.value || 'all'
 
@@ -370,6 +373,7 @@ export async function refreshClassAnalytics(targetSubCohort = null) {
       targetCourseCode: subCohortFilterVal,
       subCohortFilter: subCohortFilterVal,
       asOf,
+      dateFrom,
       gradeBuckets: gradeBuckets.value
     }
   )
@@ -670,14 +674,18 @@ function enqueueDBSave(key, saveFn) {
 async function refreshSingleStudent(studentId) {
   if (!activeClassRecord.value) return
   
-  const asOf = selectedMilestone.value
-    ? globalMilestones.value?.find(m => m.milestoneId === selectedMilestone.value)?.date
+  const currentMs = selectedMilestone.value
+    ? (filteredMilestones.value?.find(m => m.milestoneId === selectedMilestone.value) ||
+       globalMilestones.value?.find(m => m.milestoneId === selectedMilestone.value))
     : null
+  const asOf = currentMs?.date || null
+  const dateFrom = currentMs?.startDate || null
     
   // Pass grades and assessments by reference so gradebookService doesn't query DB
   const studentGrades = grades.value.filter(g => g.studentId === studentId)
   const result = await gradebookService.calculateStudentGrade(studentId, activeClassRecord.value, {
     asOf,
+    dateFrom,
     assessmentsPreRef: assessments.value,
     gradesPreRef: studentGrades
   })

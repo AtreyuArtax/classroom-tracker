@@ -689,6 +689,29 @@ watch(() => props.student?.gradebookNote, (v) => {
 const studentGrades = computed(() => classGrades.value?.[props.studentId] || {})
 
 const academicCategories = computed(() => {
+  if (activeClassRecord.value?.gradingFramework === 'sbar') {
+    if (!activeClassRecord.value?.sbarWeighting?.enabled) return []
+    const breakdown = studentGrades.value?.sbarBreakdown
+    if (!breakdown) return []
+    const list = [
+      {
+        categoryId: 'sbar_term',
+        name: 'Coursework (Expectations)',
+        weight: breakdown.termWeight,
+        score: breakdown.sbarMasteryPct
+      }
+    ]
+    Object.entries(breakdown.components || {}).forEach(([cId, c]) => {
+      list.push({
+        categoryId: cId,
+        name: c.name,
+        weight: c.weight,
+        score: c.percentage
+      })
+    })
+    return list
+  }
+
   if (!activeClassRecord.value?.gradebookCategories) return []
   const results = studentGrades.value.categoryResults || {}
   const consistent = studentGrades.value.mostConsistent?.categoryBreakdown || {}
@@ -719,7 +742,7 @@ const classAssessments = computed(() => {
       if (!isAssessmentInSubCohort(a, studentSubCohort.value)) return false
       const isSBARTask = a.categoryId === 'sbar_general' || (a.expectationIds && a.expectationIds.length > 0) || a.expectationId != null || a.isSbar || a.gradingFramework === 'sbar'
       if (isSBAR) {
-        return isSBARTask
+        return isSBARTask || a.isNumericComponent || a.categoryId === 'sbar_final_component'
       } else {
         return !isSBARTask
       }
