@@ -142,10 +142,13 @@
 
         <ul v-else class="reports__followup-list">
           <li
-            v-for="item in activeActionItemsVisible"
+            v-for="(item, idx) in activeActionItemsVisible"
             :key="item.studentId + '-' + item.reason"
             class="reports__followup-item"
-            :class="`reports__followup-item--${item.severity}`"
+            :class="[
+              `reports__followup-item--${item.severity}`,
+              { 'reports__followup-item--flip-up': idx >= Math.max(0, activeActionItemsVisible.length - 3) }
+            ]"
             role="button"
             tabindex="0"
             @click="$emit('select-student', item.studentId)"
@@ -160,7 +163,7 @@
                 <span v-if="item.grade !== null" class="reports__grade-badge" :class="{ 'reports__grade-badge--failing': item.grade < 50 }">
                   {{ formatGradeDisplay(item.grade) }}
                 </span>
-                <span class="reports__followup-reason">{{ item.reason }}</span>
+                <span class="reports__followup-reason" :title="item.reason">{{ item.reason }}</span>
               </div>
             </div>
 
@@ -173,6 +176,23 @@
                 <Check :size="11" /> Handled
               </button>
               <span class="reports__followup-arrow">→</span>
+            </div>
+
+            <!-- Sleek Rich Hover Tooltip showing all cut-off items -->
+            <div class="reports__followup-tooltip" role="tooltip">
+              <div class="reports__tooltip-header">
+                <span class="reports__tooltip-name">{{ item.name }}</span>
+                <span v-if="item.grade !== null" class="reports__tooltip-grade" :class="{ 'reports__tooltip-grade--failing': item.grade < 50 }">
+                  {{ formatGradeDisplay(item.grade) }}
+                </span>
+              </div>
+              <ul class="reports__tooltip-list">
+                <li v-for="(reasonPart, rIdx) in getReasonParts(item.reason)" :key="rIdx" class="reports__tooltip-item">
+                  <span class="reports__tooltip-bullet" />
+                  <span class="reports__tooltip-text">{{ formatReasonPart(reasonPart) }}</span>
+                </li>
+              </ul>
+              <div class="reports__tooltip-hint">Click card to open Dossier →</div>
             </div>
           </li>
         </ul>
@@ -207,7 +227,7 @@
             >
               <div class="handled-info">
                 <span class="handled-name">{{ item.name }}</span>
-                <span class="handled-meta">Handled {{ item.ackDate }} · {{ item.reason }}</span>
+                <span class="handled-meta" :title="item.reason">Handled {{ item.ackDate }} · {{ item.reason }}</span>
               </div>
               <button 
                 class="reports__btn-reopen" 
@@ -900,13 +920,17 @@ const multiActionItems = computed(() => {
 
     if (existing) {
       existing.reason += ` · ${item.reason}`
+      if ((item.severity === 'danger' || item.severity === 'high') && existing.severity !== 'danger') {
+        existing.severity = 'danger'
+      }
     } else {
+      const isDanger = item.severity === 'danger' || item.severity === 'high'
       items.push({
         studentId: sId,
         name: item.name,
         grade: roundedGrade,
         reason: item.reason,
-        severity: item.severity || 'warning'
+        severity: isDanger ? 'danger' : (item.severity || 'warning')
       })
     }
   })
@@ -1070,6 +1094,19 @@ const activeActionItemsVisible = computed(() => {
   if (followUpExpandedLocal.value) return evaluatedActionItems.value.active
   return evaluatedActionItems.value.active.slice(0, 8)
 })
+
+function getReasonParts(reason) {
+  if (!reason) return []
+  return String(reason).split(' · ').map(s => s.trim()).filter(Boolean)
+}
+
+function formatReasonPart(part) {
+  if (!part) return ''
+  if (/^\d+\s+total$/.test(part)) {
+    return `${part} absences`
+  }
+  return part
+}
 </script>
 
 <style scoped>
@@ -1262,6 +1299,7 @@ const activeActionItemsVisible = computed(() => {
   gap: 6px;
 }
 .reports__followup-item {
+  position: relative;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -1275,6 +1313,136 @@ const activeActionItemsVisible = computed(() => {
 .reports__followup-item:hover {
   border-color: var(--primary);
   background: var(--surface);
+  z-index: 40;
+}
+.reports__followup-item--danger,
+.reports__followup-item--high {
+  border-left: 3px solid #ef4444;
+}
+.reports__followup-item--warning,
+.reports__followup-item--medium {
+  border-left: 3px solid #f59e0b;
+}
+
+/* ── Rich Action Required Hover Tooltip ── */
+.reports__followup-tooltip {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  width: 100%;
+  box-sizing: border-box;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm, 6px);
+  box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.28), 0 4px 6px -2px rgba(0, 0, 0, 0.15);
+  padding: 8px 10px;
+  z-index: 50;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-3px);
+  transition: opacity 0.16s ease, transform 0.16s ease, visibility 0.16s ease;
+  transition-delay: 0.08s;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.reports__followup-item--flip-up .reports__followup-tooltip {
+  top: auto;
+  bottom: calc(100% + 4px);
+  transform: translateY(3px);
+}
+
+.reports__followup-item:hover .reports__followup-tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.reports__tooltip-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--border);
+}
+
+.reports__tooltip-name {
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.reports__tooltip-grade {
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 1px 4px;
+  border-radius: 3px;
+  background: rgba(59, 130, 246, 0.12);
+  color: #3b82f6;
+  flex-shrink: 0;
+}
+
+.reports__tooltip-grade--failing {
+  background: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+}
+
+.reports__tooltip-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.reports__tooltip-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: 0.72rem;
+  line-height: 1.3;
+}
+
+.reports__tooltip-bullet {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--primary);
+  margin-top: 4px;
+  flex-shrink: 0;
+}
+
+.reports__followup-item--danger .reports__tooltip-bullet,
+.reports__followup-item--high .reports__tooltip-bullet {
+  background: #ef4444;
+}
+
+.reports__followup-item--warning .reports__tooltip-bullet,
+.reports__followup-item--medium .reports__tooltip-bullet {
+  background: #f59e0b;
+}
+
+.reports__tooltip-text {
+  flex: 1;
+  color: var(--text);
+  font-weight: 500;
+}
+
+.reports__tooltip-hint {
+  font-size: 0.64rem;
+  color: var(--primary);
+  font-weight: 600;
+  margin-top: 2px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 .reports__followup-info {
   display: flex;

@@ -150,8 +150,8 @@
     "semantic_hash": ""
   },
   "src/components/dossier/AttendanceActivityReport.vue": {
-    "mtime": 1788313689.85856,
-    "ast_hash": "2dd2c92adb4ecbf64b2bfa7e5fc99547",
+    "mtime": 1788442683.3954835,
+    "ast_hash": "9e790ab6567775c034ef7c06cd7aae15",
     "semantic_hash": ""
   },
   "src/components/dossier/DossierCategoryGrid.vue": {
@@ -345,8 +345,8 @@
     "semantic_hash": ""
   },
   "src/views/Reports.vue": {
-    "mtime": 1788371509.0592108,
-    "ast_hash": "22d93e14beb583cb3c8942247d54bdcd",
+    "mtime": 1788442622.509744,
+    "ast_hash": "30ce28b7c812522c93e8af9b2fb025c6",
     "semantic_hash": ""
   },
   "src/views/ScanStation.vue": {
@@ -375,7 +375,7 @@
     "semantic_hash": "61bd31a2b0ac08f10f13c932b32d6ca1"
   },
   "vite.config.js": {
-    "mtime": 1788313659.7689352,
+    "mtime": 1788443911.154371,
     "ast_hash": "0c5ccd637bbfc782297e266f194b3d40",
     "semantic_hash": ""
   },
@@ -495,8 +495,8 @@
     "semantic_hash": ""
   },
   "src/components/reports/ReportsClassOverview.vue": {
-    "mtime": 1788364751.466567,
-    "ast_hash": "1b87721f7238cf2945c1157aa2589f90",
+    "mtime": 1788446701.1417866,
+    "ast_hash": "f142b6e5b6de3cf91dcc5193e9d8057d",
     "semantic_hash": ""
   },
   "src/components/reports/ReportsExportMenu.vue": {
@@ -1202,6 +1202,16 @@
   "src/test_milestone_date_windows.js": {
     "mtime": 1788395580.1711445,
     "ast_hash": "7443c4e0d5f85d3218713fb54f70e95a",
+    "semantic_hash": ""
+  },
+  "src/test_attendance_patterns.js": {
+    "mtime": 1788442567.1484957,
+    "ast_hash": "31a67d568d283cdce224b97383460b1f",
+    "semantic_hash": ""
+  },
+  "src/utils/attendancePatterns.js": {
+    "mtime": 1788442554.4092577,
+    "ast_hash": "5a8ae926ac011430a3975616d1170257",
     "semantic_hash": ""
   }
 }

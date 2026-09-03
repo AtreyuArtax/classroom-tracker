@@ -80,7 +80,7 @@
               <template v-if="day.date">
                 <div class="grid-day__top">
                   <div class="day-events">
-                    <template v-if="!day.isHoliday">
+                    <template v-if="!day.isHoliday || day.hasEvents">
                       <div v-if="day.events.absent" class="event-tag event-tag--absent">A</div>
                       <div v-if="day.events.late" class="event-tag event-tag--late">
                         L <small>{{ day.events.lateMinutes }}m</small>
@@ -249,12 +249,15 @@ const calendar = computed(() => {
       
       const isOutsideRange = date < start || date > end
       
+      const hasEvents = dayEvents.some(e => e.code === 'a' || e.code === 'l' || e.code === 'w')
+      
       days.push({
         date,
         dateStr,
         dayNum: d,
         isHoliday: !!holidayCache[dateStr],
         holidayLabel: holidayCache[dateStr],
+        hasEvents,
         isOutsideRange,
         events: {
           absent: dayEvents.some(e => e.code === 'a'),
@@ -294,7 +297,7 @@ const stats = computed(() => {
   let instructionalDays = 0
   calendar.value.forEach(m => {
     m.days.forEach(d => {
-      if (d.date && !d.isOutsideRange && !d.isHoliday) {
+      if (d.date && !d.isOutsideRange && (!d.isHoliday || d.hasEvents)) {
         instructionalDays++
       }
     })

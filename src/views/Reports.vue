@@ -260,6 +260,7 @@ const ReportsLearningSkills        = defineAsyncComponent(() => import('../compo
 import { calculateClassGrades, getAssessmentsByClass, getAssessmentPercentage } from '../db/gradebookService.js'
 import { loadGradebook, clearGradebook, assessments as gbAssessments, gradeMap, activeGradeFilter } from '../composables/useGradebook.js'
 import { getSectionColor } from '../utils/gradeColors.js'
+import { detectClassAttendancePatterns } from '../utils/attendancePatterns.js'
 
 import { 
   Chart as ChartJS, 
@@ -855,12 +856,104 @@ const followUpItems = computed(() => {
 
   const nameFor = id => students[id] ? `${students[id].lastName}, ${students[id].firstName}` : id
 
+  // Run attendance & punctuality pattern detection
+  const assessmentDates = (assessmentsList.value || [])
+    .filter(a => a && a.date)
+    .map(a => (a.date || '').split('T')[0])
+    .filter(Boolean)
+
+  const detectedPatterns = detectClassAttendancePatterns(reportData.value, students, {
+    assessmentDates
+  })
+  const patternMap = {}
+  detectedPatterns.forEach(p => {
+    patternMap[p.studentId] = p
+  })
+
+  // 1. Process Absences & Absence Patterns
   Object.entries(absMap).forEach(([id, count]) => {
-    if (count >= 5 && students[id]) {
-      items.push({ studentId: id, name: nameFor(id), reason: `${count} absences`, severity: 'high', sortVal: count })
+    if (!students[id]) return
+    const pData = patternMap[id]
+    const consec = pData?.patterns?.find(p => p.type === 'consecutive_absences')
+    const dow = pData?.patterns?.find(p => p.type === 'day_of_week_cluster')
+    const testAbs = pData?.patterns?.find(p => p.type === 'test_day_absence')
+
+    if (consec) {
+      const reason = count > consec.streak
+        ? `${consec.reason} · ${count} total`
+        : consec.reason
+      items.push({
+        studentId: id,
+        name: nameFor(id),
+        reason,
+        severity: 'high',
+        sortVal: 200 + count
+      })
+    } else if (testAbs) {
+      items.push({
+        studentId: id,
+        name: nameFor(id),
+        reason: `${testAbs.reason} · ${count} total`,
+        severity: 'high',
+        sortVal: 180 + count
+      })
+    } else if (dow) {
+      const reason = count > dow.count
+        ? `${dow.reason} · ${count} total`
+        : dow.reason
+      items.push({
+        studentId: id,
+        name: nameFor(id),
+        reason,
+        severity: count >= 5 ? 'high' : 'medium',
+        sortVal: (count >= 5 ? 150 : 80) + count
+      })
+    } else if (count >= 5) {
+      items.push({
+        studentId: id,
+        name: nameFor(id),
+        reason: `${count} absences`,
+        severity: 'high',
+        sortVal: 100 + count
+      })
+    } else if (count >= 3) {
+      items.push({
+        studentId: id,
+        name: nameFor(id),
+        reason: `${count} absences`,
+        severity: 'medium',
+        sortVal: count
+      })
     }
   })
 
+  // 2. Add Chronic Tardiness & Consecutive Lates
+  Object.entries(patternMap).forEach(([id, pData]) => {
+    if (!students[id]) return
+    const latePatterns = pData.patterns.filter(p => p.type === 'chronic_late' || p.type === 'consecutive_lates')
+    if (latePatterns.length === 0) return
+
+    const lateReason = latePatterns.map(p => p.reason).join(' · ')
+    const lateSeverity = latePatterns.some(p => p.severity === 'danger') ? 'high' : 'medium'
+    const existing = items.find(i => i.studentId === id)
+
+    if (existing) {
+      existing.reason += ` · ${lateReason}`
+      if (lateSeverity === 'high' && existing.severity !== 'high') {
+        existing.severity = 'high'
+      }
+    } else {
+      items.push({
+        studentId: id,
+        name: nameFor(id),
+        reason: lateReason,
+        severity: lateSeverity,
+        sortVal: (lateSeverity === 'high' ? 70 : 40) + (pData.metrics?.totalLates || 0)
+      })
+    }
+  })
+
+  // 3. Academic follow-up for grades < 60%
   if (classGrades.value && Object.keys(classGrades.value).length > 0) {
     Object.entries(classGrades.value).forEach(([id, data]) => {
       if (data.overallGrade != null && data.overallGrade < 60 && students[id]) {
@@ -872,12 +965,7 @@ const followUpItems = computed(() => {
     })
   }
 
-  Object.entries(absMap).forEach(([id, count]) => {
-    if (count >= 3 && count < 5 && students[id]) {
-      items.push({ studentId: id, name: nameFor(id), reason: `${count} absences`, severity: 'medium', sortVal: count })
-    }
-  })
-
+  // 4. Extended washroom excursions
   const longLimit = Number(thresholds.value?.washroomDurationLimit ?? 11)
   Object.entries(washMap).forEach(([id, durations]) => {
     if (!students[id]) return
@@ -902,9 +990,11 @@ const followUpItems = computed(() => {
     }
   })
 
-  const order = { high: 0, medium: 1, low: 2 }
+  const order = { high: 0, danger: 0, medium: 1, warning: 1, low: 2 }
   items.sort((a, b) => {
-    if (order[a.severity] !== order[b.severity]) return order[a.severity] - order[b.severity]
+    const rankA = order[a.severity] ?? 2
+    const rankB = order[b.severity] ?? 2
+    if (rankA !== rankB) return rankA - rankB
     return b.sortVal - a.sortVal
   })
   return items
