@@ -131,7 +131,9 @@ export function resolveSubjectPreset(grade, subjectCode, subjectName = '') {
     if (normName.includes('language') || normCode.includes('lan')) return titleLower.includes('language') || pIdLower.includes('language')
     if (normName.includes('art') || normCode.includes('art')) return titleLower.includes('arts') || pIdLower.includes('arts')
     if (normName.includes('phys') || normName.includes('health') || normCode.includes('hpe')) return titleLower.includes('health') || pIdLower.includes('hpe')
-    if (normName.includes('french') || normCode.includes('fsl')) return titleLower.includes('french') || pIdLower.includes('french')
+    if (normName.includes('immersion') || normCode === 'fi') return titleLower.includes('immersion') || pIdLower.includes('french-immersion')
+    if (normName.includes('extended') || normCode.includes('ext')) return titleLower.includes('extended') || pIdLower.includes('extended-french')
+    if (normName.includes('french') || normCode.includes('fsl')) return titleLower.includes('core french') || pIdLower.includes('core-french') || (titleLower.includes('french') && !titleLower.includes('immersion') && !titleLower.includes('extended'))
     if (normName.includes('social') || normCode.includes('soc')) return titleLower.includes('history') || titleLower.includes('geography')
     return false
   })
@@ -202,6 +204,148 @@ export function normalizeExpectationWeight(val) {
 }
 
 /**
+ * Safely synchronizes a Master Preset's expectation weights, active states,
+ * and wording into an existing class record without breaking existing assessments.
+ *
+ * @param {Object} cls - The class record from IndexedDB
+ * @param {Object} preset - The master curriculum preset
+ * @returns {{ updatedClass: Object, changesCount: number, subjectName: string }|null}
+ */
+export function syncPresetToClass(cls, preset) {
+  if (!cls || !preset) return null
+  const updatedCls = JSON.parse(JSON.stringify(cls))
+  let changesCount = 0
+  let subjectName = ''
+
+  if (cls.classType === 'elementary') {
+    if (!updatedCls.subjects || !Array.isArray(updatedCls.subjects)) return null
+    
+    // Find matching subject in this class
+    const pCode = (preset.subjectCode || '').toLowerCase().trim()
+    const pTitle = (preset.title || '').toLowerCase()
+    
+    const targetSub = updatedCls.subjects.find(sub => {
+      const resolved = resolveSubjectPreset(cls.gradeLevel || preset.grade, sub.code, sub.name)
+      if (resolved && resolved.presetId === preset.presetId) return true
+      const sCode = (sub.code || '').toLowerCase().trim()
+      if (pCode && sCode === pCode) return true
+      const sName = (sub.name || '').toLowerCase().trim()
+      if (sName && (pTitle.includes(sName) || sName.includes(pCode))) return true
+      return false
+    })
+
+    if (!targetSub) return null
+    subjectName = targetSub.name || 'Subject'
+
+    if (!targetSub.expectations) targetSub.expectations = []
+    if (!targetSub.gradebookUnits) targetSub.gradebookUnits = []
+
+    // Collect all master expectations across strands
+    const masterExps = []
+    ;(preset.strands || []).forEach(strand => {
+      const exps = strand.expectations || strand.overalls || []
+      exps.forEach(e => {
+        masterExps.push({
+          code: cleanExpectationText(e.code).toUpperCase(),
+          description: cleanExpectationText(e.description || e.name || ''),
+          weight: e.weight != null ? Number(e.weight) : 1.0,
+          active: e.active !== false,
+          strandName: cleanExpectationText(strand.name)
+        })
+      })
+    })
+
+    // Update existing expectations in class
+    const matchedMasterCodes = new Set()
+
+    targetSub.expectations.forEach(clsExp => {
+      const normClsCode = cleanExpectationText(clsExp.code).toUpperCase()
+      const matched = masterExps.find(me => me.code === normClsCode)
+      if (matched) {
+        matchedMasterCodes.add(matched.code)
+        if (clsExp.weight !== matched.weight || clsExp.description !== matched.description) {
+          clsExp.weight = matched.weight
+          clsExp.description = matched.description
+          changesCount++
+        }
+      }
+    })
+
+    // Add any new expectations from master that aren't in class yet
+    masterExps.forEach(me => {
+      if (!matchedMasterCodes.has(me.code)) {
+        let targetUnit = targetSub.gradebookUnits.find(u => 
+          cleanExpectationText(u.name).toLowerCase() === me.strandName.toLowerCase()
+        )
+        if (!targetUnit) {
+          targetUnit = {
+            unitId: `unit_${Date.now()}_${Math.floor(Math.random()*1000)}`,
+            name: me.strandName,
+            gradeLevel: preset.grade || '',
+            weight: 0
+          }
+          targetSub.gradebookUnits.push(targetUnit)
+        }
+
+        targetSub.expectations.push({
+          expectationId: `exp_${Date.now()}_${me.code}_${Math.floor(Math.random()*1000)}`,
+          unitId: targetUnit.unitId,
+          code: me.code,
+          description: me.description,
+          weight: me.weight,
+          active: me.active,
+          gradeLevel: preset.grade || '',
+          isOverall: false
+        })
+        changesCount++
+      }
+    })
+
+    return { updatedClass: updatedCls, changesCount, subjectName }
+  } else {
+    // Secondary class
+    const pCode = (preset.subjectCode || '').toLowerCase().trim()
+    const pTitle = (preset.title || '').toLowerCase()
+    const courseCode = (cls.courseCode || '').toLowerCase().trim()
+    if (!pCode || (!courseCode.includes(pCode) && !pTitle.includes(courseCode))) return null
+    subjectName = cls.name || cls.courseCode
+
+    if (!updatedCls.gradebookUnits) updatedCls.gradebookUnits = []
+    
+    const masterExps = []
+    ;(preset.strands || []).forEach(strand => {
+      const exps = strand.expectations || strand.overalls || []
+      exps.forEach(e => {
+        masterExps.push({
+          code: cleanExpectationText(e.code).toUpperCase(),
+          text: cleanExpectationText(e.description || e.name || ''),
+          weight: e.weight != null ? Number(e.weight) : 1.0,
+          strandName: cleanExpectationText(strand.name)
+        })
+      })
+    })
+
+    updatedCls.gradebookUnits.forEach(unit => {
+      if (unit.expectations) {
+        unit.expectations.forEach(exp => {
+          const normCode = cleanExpectationText(exp.code).toUpperCase()
+          const matched = masterExps.find(me => me.code === normCode)
+          if (matched) {
+            if (exp.weight !== matched.weight || exp.text !== matched.text) {
+              exp.weight = matched.weight
+              exp.text = matched.text
+              changesCount++
+            }
+          }
+        })
+      }
+    })
+
+    return { updatedClass: updatedCls, changesCount, subjectName }
+  }
+}
+
+/**
  * Main Composable hook for components.
  */
 export function useCurriculumLibrary() {
@@ -217,6 +361,7 @@ export function useCurriculumLibrary() {
     resetMasterPreset,
     resolveSubjectPreset,
     getMergedCurriculumPresets,
-    normalizeExpectationWeight
+    normalizeExpectationWeight,
+    syncPresetToClass
   }
 }

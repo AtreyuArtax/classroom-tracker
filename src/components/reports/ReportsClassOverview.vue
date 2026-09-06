@@ -407,7 +407,7 @@ import ReportsPositiveModal from './ReportsPositiveModal.vue'
 import { getSBARLevelBadge, calculateSBARExpectationMastery } from '../../db/gradebookService.js'
 import { gradeMap } from '../../composables/useGradebook.js'
 import { useClassroom } from '../../composables/useClassroom.js'
-import { isCohortMatch } from '../../db/gradebook/gradeCalc.js'
+import { isCohortMatch, filterAssessmentsForSubject } from '../../db/gradebook/gradeCalc.js'
 
 const props = defineProps({
   loading: { type: Boolean, default: false },
@@ -553,7 +553,8 @@ const classAverage = computed(() => {
   const gradesArr = Object.entries(props.classGrades)
     .filter(([sId]) => activeStudentIds.value.has(String(sId)))
     .map(([, g]) => g?.overallGrade)
-    .filter(g => g !== undefined && g !== null)
+    .filter(g => g !== undefined && g !== null && !isNaN(Number(g)) && isFinite(Number(g)))
+    .map(Number)
   if (gradesArr.length === 0) return null
   return gradesArr.reduce((a, b) => a + b, 0) / gradesArr.length
 })
@@ -568,7 +569,8 @@ const classMedian = computed(() => {
   const gradesArr = Object.entries(props.classGrades)
     .filter(([sId]) => activeStudentIds.value.has(String(sId)))
     .map(([, g]) => g?.overallGrade)
-    .filter(g => g !== undefined && g !== null)
+    .filter(g => g !== undefined && g !== null && !isNaN(Number(g)) && isFinite(Number(g)))
+    .map(Number)
     .sort((a, b) => a - b)
   if (gradesArr.length === 0) return null
   const mid = Math.floor(gradesArr.length / 2)
@@ -590,23 +592,7 @@ function formatGradeDisplay(overallPct) {
 }
 
 const subjectAssessments = computed(() => {
-  if (!props.assessments || props.assessments.length === 0) return []
-  const cls = props.reportClass
-  if (!cls || cls.classType !== 'elementary') return props.assessments
-
-  const subId = cls.activeSubjectId
-  const unitIds = new Set((cls.gradebookUnits || []).map(u => String(u.unitId)))
-  const expCodes = new Set((cls.expectations || []).map(e => String(e.code || e.expectationId).toLowerCase()))
-
-  if (unitIds.size === 0 && expCodes.size === 0 && !subId) return props.assessments
-
-  return props.assessments.filter(a => {
-    if (a.subjectId && subId && a.subjectId === subId) return true
-    if (a.unitId && unitIds.has(String(a.unitId))) return true
-    const aExpIds = a.expectationIds || (a.expectationId ? [a.expectationId] : [])
-    if (aExpIds.some(id => expCodes.has(String(id).toLowerCase()))) return true
-    return false
-  })
+  return filterAssessmentsForSubject(props.assessments, props.reportClass)
 })
 
 const totalAssessmentsCount = computed(() => subjectAssessments.value.length)
@@ -781,8 +767,11 @@ const strugglingExpectationsCount = computed(() => {
       ...(expId && expScores[expId] ? expScores[expId] : []),
       ...(expCode && expCode !== expId && expScores[expCode] ? expScores[expCode] : [])
     ]
-    if (scores.length > 0) {
-      const avg = scores.reduce((a, b) => a + b, 0) / scores.length
+    const validScores = scores
+      .map(Number)
+      .filter(v => !isNaN(v) && isFinite(v))
+    if (validScores.length > 0) {
+      const avg = validScores.reduce((a, b) => a + b, 0) / validScores.length
       if (avg < 65) count++
     }
   })

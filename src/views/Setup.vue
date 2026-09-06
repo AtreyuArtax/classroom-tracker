@@ -27,6 +27,8 @@
         </div>
       </div>
       <div class="setup__header-right">
+        <UndoButton />
+
         <button class="setup__btn-ghost" style="min-height: 38px; padding: 0 16px;" @click="isHelpModalOpen = true">
           <HelpCircle :size="16" /> User Guide
         </button>
@@ -836,10 +838,12 @@ import {
   BookOpen,
   X
 } from 'lucide-vue-next'
+import UndoButton from '../components/UndoButton.vue'
 import { useClassroom } from '../composables/useClassroom.js'
 import { useMessage } from '../composables/useMessage.js'
 import { detectGradeFromClassName } from '../composables/useElementary.js'
 import { useTheme } from '../composables/useTheme.js'
+import { getDB } from '../db/index.js'
 
 const { themePreference, setTheme } = useTheme()
 
@@ -1152,8 +1156,27 @@ async function onDeleteClass(classId) {
   const cls = archivedClasses.value.find(c => c.classId === classId)
   const name = cls?.name ?? 'this class'
   
+  let details = []
+  try {
+    const db = await getDB()
+    const [assessments, grades, events] = await Promise.all([
+      db.getAllFromIndex('assessments', 'by_classId', classId).catch(() => []),
+      db.getAllFromIndex('grades', 'by_classId', classId).catch(() => []),
+      db.getAllFromIndex('events', 'by_classId', classId).catch(() => [])
+    ])
+    if (assessments.length > 0) details.push(`${assessments.length} assessment(s)`)
+    if (grades.length > 0) details.push(`${grades.length} recorded student grade(s)`)
+    if (events.length > 0) details.push(`${events.length} attendance/behavior event(s)`)
+  } catch (err) {
+    console.warn('Failed to pre-fetch class delete stats:', err)
+  }
+
+  const warningDetail = details.length > 0
+    ? `\n\nThis will permanently delete: ${details.join(', ')}.`
+    : ''
+
   if (!await confirm(
-    `You are about to PERMANENTLY wipe "${name}" and all its historical data. This action is irreversible. Please type the name of the class below to confirm.`, 
+    `You are about to PERMANENTLY wipe "${name}" and all its historical data.${warningDetail}\n\nThis action is irreversible. Please type the name of the class below to confirm.`, 
     'Final Security Check', 
     { danger: true, requireText: name }
   )) return

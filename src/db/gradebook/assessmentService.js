@@ -106,6 +106,54 @@ export async function deleteAssessment(assessmentId) {
 }
 
 /**
+ * Returns usage and student mark counts for an assessment.
+ * Used to display explicit count warnings before deletion.
+ *
+ * @param {number|string} assessmentId
+ * @returns {Promise<{ studentCount: number, attemptCount: number, markCount: number, totalGradeRecords: number }>}
+ */
+export async function getAssessmentUsage(assessmentId) {
+  if (assessmentId == null) return { studentCount: 0, attemptCount: 0, markCount: 0, totalGradeRecords: 0 }
+  const normId = Number(assessmentId)
+  if (isNaN(normId) || normId <= 0) return { studentCount: 0, attemptCount: 0, markCount: 0, totalGradeRecords: 0 }
+  
+  const db = await getDB()
+  let grades = []
+  try {
+    grades = await db.getAllFromIndex('grades', 'by_assessmentId', normId)
+  } catch {
+    grades = []
+  }
+
+  let studentCount = 0
+  let attemptCount = 0
+  let markCount = 0
+
+  for (const g of grades) {
+    let hasMark = false
+    if (Array.isArray(g.attempts) && g.attempts.length > 0) {
+      attemptCount += g.attempts.length
+      hasMark = true
+    }
+    if (g.expectationScores && Object.keys(g.expectationScores).length > 0) {
+      markCount += Object.keys(g.expectationScores).length
+      hasMark = true
+    }
+    if (g.masteryLevel !== null && g.masteryLevel !== undefined) {
+      hasMark = true
+    }
+    if (g.resolvedScore !== null && g.resolvedScore !== undefined) {
+      hasMark = true
+    }
+    if (hasMark) {
+      studentCount++
+    }
+  }
+
+  return { studentCount, attemptCount, markCount, totalGradeRecords: grades.length }
+}
+
+/**
  * Returns audit usage counts for an expectation in a class (assessments, student scores, qualitative events).
  *
  * @param {string} classId

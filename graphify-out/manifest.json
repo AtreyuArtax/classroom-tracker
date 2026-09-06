@@ -85,9 +85,9 @@
     "semantic_hash": ""
   },
   "src/components/GradeTrendChart.vue": {
-    "mtime": 1780947518.422175,
-    "ast_hash": "3e96540436c457ec19874a165448d794",
-    "semantic_hash": "3e96540436c457ec19874a165448d794"
+    "mtime": 1788706504.2515225,
+    "ast_hash": "cdafef6a27774dadaafb64b1e592345f",
+    "semantic_hash": ""
   },
   "src/components/MessageOverlay.vue": {
     "mtime": 1788313689.8572292,
@@ -180,8 +180,8 @@
     "semantic_hash": ""
   },
   "src/components/dossier/Student360.vue": {
-    "mtime": 1788364687.0663643,
-    "ast_hash": "8cfe95ed2f0f64de22cdee76a283ec88",
+    "mtime": 1788697351.3978333,
+    "ast_hash": "2e31ca08d7ea52bd6ca7c2b0382dc97c",
     "semantic_hash": ""
   },
   "src/components/dossier/Student360Header.vue": {
@@ -190,8 +190,8 @@
     "semantic_hash": ""
   },
   "src/components/dossier/StudentGradeTrend.vue": {
-    "mtime": 1788313689.8595152,
-    "ast_hash": "503de0d6c089008f34394de2364f43a5",
+    "mtime": 1788702017.7372303,
+    "ast_hash": "0d90512304b7ec2fdc9f6042e0ffdec0",
     "semantic_hash": ""
   },
   "src/components/dossier/StudentStatCard.vue": {
@@ -240,13 +240,13 @@
     "semantic_hash": ""
   },
   "src/composables/useClassroom.js": {
-    "mtime": 1788368568.0342495,
-    "ast_hash": "bb559403cbabafac756fe3b6be58edcc",
+    "mtime": 1788703009.5918536,
+    "ast_hash": "bb2b7428ee09aeab8c25cd90cb924477",
     "semantic_hash": ""
   },
   "src/composables/useGradebook.js": {
-    "mtime": 1788684918.584407,
-    "ast_hash": "d51e9cb8b1f3a956ad59cf927e7c0d8a",
+    "mtime": 1788703032.383879,
+    "ast_hash": "55f3f9eecad3724ffc9e2adcfd90b85b",
     "semantic_hash": ""
   },
   "src/composables/useKeyboardWedge.js": {
@@ -255,8 +255,8 @@
     "semantic_hash": ""
   },
   "src/composables/useMessage.js": {
-    "mtime": 1788313689.8613684,
-    "ast_hash": "cdc01cf884e1f0e06ac05a2e7ef1f119",
+    "mtime": 1788697249.2032804,
+    "ast_hash": "6144e1f3e90a1efe63f311e59e6eb2d3",
     "semantic_hash": ""
   },
   "src/composables/useRadial.js": {
@@ -275,13 +275,13 @@
     "semantic_hash": ""
   },
   "src/db/classService.js": {
-    "mtime": 1788368557.8140373,
-    "ast_hash": "6bd83783c167592f9813d68df58d3174",
+    "mtime": 1788704005.377819,
+    "ast_hash": "5be4ec5412ca2db25c5302099dc8969c",
     "semantic_hash": ""
   },
   "src/db/eventService.js": {
-    "mtime": 1788313689.8619761,
-    "ast_hash": "e9a19ad2b405ab89c4c5595aa2be9028",
+    "mtime": 1788706580.1778533,
+    "ast_hash": "4e093db7262705efdf24f93954ad756d",
     "semantic_hash": ""
   },
   "src/db/exportService.js": {
@@ -300,8 +300,8 @@
     "semantic_hash": ""
   },
   "src/db/migrations.js": {
-    "mtime": 1788684925.6256833,
-    "ast_hash": "9aedb53477784d6ba2b4edea084ee2e3",
+    "mtime": 1788704059.4339607,
+    "ast_hash": "16c7223db5aec06f7be8b792ac9717ba",
     "semantic_hash": ""
   },
   "src/db/settingsService.js": {
@@ -325,14 +325,14 @@
     "semantic_hash": "bc048b92eaace0b0bc43f8e98aa3ae09"
   },
   "src/utils/math.js": {
-    "mtime": 1776472682.8695717,
-    "ast_hash": "e74a10d0281513cb80ae17eeae84c1fe",
-    "semantic_hash": "e74a10d0281513cb80ae17eeae84c1fe"
+    "mtime": 1788705932.3584554,
+    "ast_hash": "db848edbf6b660148ddd05f7cc940728",
+    "semantic_hash": ""
   },
   "src/utils/supabase.js": {
-    "mtime": 1781515555.7519019,
-    "ast_hash": "322ce1010d35f76a380b2df551af302f",
-    "semantic_hash": "322ce1010d35f76a380b2df551af302f"
+    "mtime": 1788703364.8369765,
+    "ast_hash": "6536800229867b165b4452ccc704845e",
+    "semantic_hash": ""
   },
   "src/views/Dashboard.vue": {
     "mtime": 1788313689.8648996,
@@ -340,13 +340,13 @@
     "semantic_hash": ""
   },
   "src/views/Grades.vue": {
-    "mtime": 1788392914.1104763,
-    "ast_hash": "752c8f8c6537b0a50db246c9be6e6107",
+    "mtime": 1788704868.8451107,
+    "ast_hash": "183e9ab2f24adcfe513879fe711b88fe",
     "semantic_hash": ""
   },
   "src/views/Reports.vue": {
-    "mtime": 1788442622.509744,
-    "ast_hash": "30ce28b7c812522c93e8af9b2fb025c6",
+    "mtime": 1788704900.8853474,
+    "ast_hash": "6a0be1b6aea8acc20ca77b0b6139fb9b",
     "semantic_hash": ""
   },
   "src/views/ScanStation.vue": {
@@ -355,8 +355,8 @@
     "semantic_hash": ""
   },
   "src/views/Setup.vue": {
-    "mtime": 1788688596.436074,
-    "ast_hash": "8c137e06d058e2f7ee0f5deae2f445c5",
+    "mtime": 1788697408.5677278,
+    "ast_hash": "fb25e6c275c143442d0262ad474d3360",
     "semantic_hash": ""
   },
   "tmp/test_dates.js": {
@@ -390,18 +390,18 @@
     "semantic_hash": ""
   },
   "src/components/GradesGrid.vue": {
-    "mtime": 1788313659.6652174,
-    "ast_hash": "8e98f8122c399392ccf6bb0b589fc5e1",
+    "mtime": 1788704876.6700532,
+    "ast_hash": "fe6e9453d8a4ddfb597a6f79e0e251cb",
     "semantic_hash": ""
   },
   "src/components/dossier/StudentAcademicsTab.vue": {
-    "mtime": 1788392965.908655,
-    "ast_hash": "5401fc0d63052b3d919d0b63fa914caa",
+    "mtime": 1788704883.8639667,
+    "ast_hash": "690fc9fe705b18ec1151e9cb897c881e",
     "semantic_hash": ""
   },
   "src/components/setup/AssessmentFrameworkSettings.vue": {
-    "mtime": 1788688900.803038,
-    "ast_hash": "15533883c32b37ac005771d1d382b803",
+    "mtime": 1788697480.1460361,
+    "ast_hash": "4b4dbe4974b6042862fa1e75aa1c2ef0",
     "semantic_hash": ""
   },
   "src/composables/useGradeEditing.js": {
@@ -415,8 +415,8 @@
     "semantic_hash": ""
   },
   "src/components/setup/BehaviorSettings.vue": {
-    "mtime": 1788365512.2955294,
-    "ast_hash": "3567b3a74919a469e38c0903cbde62b2",
+    "mtime": 1788697542.702384,
+    "ast_hash": "954283350c702d360959b810a21fafae",
     "semantic_hash": ""
   },
   "src/components/setup/QrCodeGeneratorModal.vue": {
@@ -425,8 +425,8 @@
     "semantic_hash": ""
   },
   "src/components/setup/RosterCsvImporter.vue": {
-    "mtime": 1788368515.1818962,
-    "ast_hash": "a2cbd48408d69d301423337f9a5d6c6a",
+    "mtime": 1788704022.4416437,
+    "ast_hash": "204c5df4d2d74f4f23c61f8ba5b0c793",
     "semantic_hash": ""
   },
   "src/composables/useAttendanceTracker.js": {
@@ -435,8 +435,8 @@
     "semantic_hash": ""
   },
   "src/composables/useClassroomState.js": {
-    "mtime": 1788313659.7224674,
-    "ast_hash": "b27707e93e84a5f09cbe41397bbbbd6d",
+    "mtime": 1788703709.5045426,
+    "ast_hash": "23d9b3bf3af76ad3b06a51462c68d115",
     "semantic_hash": ""
   },
   "src/composables/useRosterOperations.js": {
@@ -445,23 +445,23 @@
     "semantic_hash": ""
   },
   "src/components/setup/ClassLogisticsSettings.vue": {
-    "mtime": 1788313659.701827,
-    "ast_hash": "0b31209daa40b6fd1c7bcba0e9fe5057",
+    "mtime": 1788697387.2020159,
+    "ast_hash": "f01f6e650eb2862fbaac58aae119776a",
     "semantic_hash": ""
   },
   "src/components/setup/DatabaseMaintenanceSettings.vue": {
-    "mtime": 1788313659.702347,
-    "ast_hash": "de03064e9dffefbfb7ff399d81fcefcf",
+    "mtime": 1788697512.2898066,
+    "ast_hash": "be970fbcb642e7abc7476373b1fe615b",
     "semantic_hash": ""
   },
   "src/components/setup/ExpectationImportModal.vue": {
-    "mtime": 1788688956.9839883,
-    "ast_hash": "c4817fd8b5338f346bb67a0064b08165",
+    "mtime": 1788704044.3999481,
+    "ast_hash": "6c79eac91d0e0d0e9400505b2ec35f80",
     "semantic_hash": ""
   },
   "src/data/curriculum/index.js": {
-    "mtime": 1788364007.819804,
-    "ast_hash": "6bf5df406f420925b840e5c69504ac8d",
+    "mtime": 1788695644.8768716,
+    "ast_hash": "c183019c0bd3c27cca65f9d16d6271ee",
     "semantic_hash": ""
   },
   "src/components/dossier/Student360AttemptsModal.vue": {
@@ -485,8 +485,8 @@
     "semantic_hash": ""
   },
   "src/components/dossier/Student360ProfileTab.vue": {
-    "mtime": 1788356892.4330866,
-    "ast_hash": "a1b46c5b0929912e50936fa0e9c8b7a7",
+    "mtime": 1788697443.3530471,
+    "ast_hash": "8bdc4538380dd63ae9f3bc4efd82b7f9",
     "semantic_hash": ""
   },
   "src/components/reports/ReportsBatchPrintModal.vue": {
@@ -495,8 +495,8 @@
     "semantic_hash": ""
   },
   "src/components/reports/ReportsClassOverview.vue": {
-    "mtime": 1788446701.1417866,
-    "ast_hash": "f142b6e5b6de3cf91dcc5193e9d8057d",
+    "mtime": 1788706552.6385322,
+    "ast_hash": "997aceaf99136719fbf9cf221e6211fc",
     "semantic_hash": ""
   },
   "src/components/reports/ReportsExportMenu.vue": {
@@ -530,8 +530,8 @@
     "semantic_hash": ""
   },
   "src/components/reports/ExpectationMasteryHeatmap.vue": {
-    "mtime": 1788364765.2271185,
-    "ast_hash": "beb631e6f0196e9908176716b103c354",
+    "mtime": 1788706545.6749246,
+    "ast_hash": "5cbe4bb595f860992a546e3d62f452f5",
     "semantic_hash": ""
   },
   "src/components/reports/ReportsPrintHub.vue": {
@@ -545,8 +545,8 @@
     "semantic_hash": ""
   },
   "src/components/reports/PrintExpectationsModal.vue": {
-    "mtime": 1788313659.696326,
-    "ast_hash": "652267826b01e5c88f8e264c22ab65b8",
+    "mtime": 1788706535.4277356,
+    "ast_hash": "2eb0ee9ce4d12c68242f4a87e7498278",
     "semantic_hash": ""
   },
   "src/components/reports/PrintCalendarModal.vue": {
@@ -555,18 +555,18 @@
     "semantic_hash": ""
   },
   "src/db/gradebook/assessmentService.js": {
-    "mtime": 1788392864.7873797,
-    "ast_hash": "4d52f3aa585a691d1a65bad9bc4be890",
+    "mtime": 1788697257.151794,
+    "ast_hash": "abb6bcf1d6444d613b9ce3b9b8a4c2e6",
     "semantic_hash": ""
   },
   "src/db/gradebook/gradeAnalytics.js": {
-    "mtime": 1788394806.5301642,
-    "ast_hash": "01532405dab859625235bae653d31d40",
+    "mtime": 1788706494.8547046,
+    "ast_hash": "842a73781d9d81ab0250e150556a2cee",
     "semantic_hash": ""
   },
   "src/db/gradebook/gradeCalc.js": {
-    "mtime": 1788394795.1483195,
-    "ast_hash": "e6935b9939f7f391c8dd87b0ee0281e6",
+    "mtime": 1788715056.1232972,
+    "ast_hash": "97ee21c8a011188f2f0721b8e85a20fe",
     "semantic_hash": ""
   },
   "src/db/gradebook/gradeService.js": {
@@ -585,13 +585,13 @@
     "semantic_hash": ""
   },
   "src/components/grades/GradesGridSBAR.vue": {
-    "mtime": 1788689046.6386755,
-    "ast_hash": "9c797e680fa738d2bc78949d361bea25",
+    "mtime": 1788706521.043533,
+    "ast_hash": "aeb5d2f8f5183c5293a4cc82140dce5e",
     "semantic_hash": ""
   },
   "src/db/gradebook/gradeCalcSBAR.js": {
-    "mtime": 1788689927.7060673,
-    "ast_hash": "064cc2c3598b2f3c0ed132d8ea547e7d",
+    "mtime": 1788703075.9639783,
+    "ast_hash": "302b098a2c25f6b53f8fae0b2e7ebd4e",
     "semantic_hash": ""
   },
   "src/components/dossier/SBARExpectationMasteryGrid.vue": {
@@ -600,18 +600,18 @@
     "semantic_hash": ""
   },
   "src/components/grades/GradesAnalyticsPanelSBAR.vue": {
-    "mtime": 1788313659.6885905,
-    "ast_hash": "9ecde72487f48bf42d12b55e6dd5aac9",
+    "mtime": 1788706511.7795608,
+    "ast_hash": "65cdaa203bc34e409f7a2f8dd10813ba",
     "semantic_hash": ""
   },
   "src/components/setup/ElementaryCsvImporter.vue": {
-    "mtime": 1788313659.7027583,
-    "ast_hash": "ca49e73309546eb88360500981dde48e",
+    "mtime": 1788704034.356334,
+    "ast_hash": "80ce6794b6f95875e46ce049067a6291",
     "semantic_hash": ""
   },
   "src/components/setup/ElementarySubjectManager.vue": {
-    "mtime": 1788688832.0164702,
-    "ast_hash": "e7fefe03c3341a017db048e5c1583a2b",
+    "mtime": 1788706528.7376845,
+    "ast_hash": "c3048f0c483cbfb61b3eade222f4ba11",
     "semantic_hash": ""
   },
   "src/utils/elementarySubjects.js": {
@@ -620,8 +620,8 @@
     "semantic_hash": ""
   },
   "src/composables/useElementary.js": {
-    "mtime": 1788689980.3575087,
-    "ast_hash": "9d0ddca7f55337254bda9a81a96f40d0",
+    "mtime": 1788703098.0946548,
+    "ast_hash": "c8fcf08245c320a23fff5d8e98b3ae65",
     "semantic_hash": ""
   },
   "src/components/SubjectIcon.vue": {
@@ -1040,8 +1040,8 @@
     "semantic_hash": ""
   },
   "src/components/reports/ReportsLearningSkills.vue": {
-    "mtime": 1788313659.6978688,
-    "ast_hash": "a622d6535574cc6b3ee3bc02168110a1",
+    "mtime": 1788697435.6436214,
+    "ast_hash": "237a165915ea3af752e4b977064737a9",
     "semantic_hash": ""
   },
   "src/db/learningSkillsService.js": {
@@ -1095,8 +1095,8 @@
     "semantic_hash": ""
   },
   "src/components/dossier/DossierSBARMasteryBreakdown.vue": {
-    "mtime": 1788313659.6781657,
-    "ast_hash": "ef47977307bc2a46747ebc1d24fcd9b1",
+    "mtime": 1788706571.268963,
+    "ast_hash": "728c4fb375ca2631b004b94a7d33b5a7",
     "semantic_hash": ""
   },
   "src/test_db_integrity.js": {
@@ -1160,8 +1160,8 @@
     "semantic_hash": ""
   },
   "src/utils/studentInfoCsvParser.js": {
-    "mtime": 1788363542.9594772,
-    "ast_hash": "0c2c441010292bef3c70efd9adae96e1",
+    "mtime": 1788704207.405013,
+    "ast_hash": "fbdfead91d041c67442a88b1de4d3396",
     "semantic_hash": ""
   },
   "src/utils/studentInfoDocxExport.js": {
@@ -1225,8 +1225,8 @@
     "semantic_hash": ""
   },
   "src/components/setup/CurriculumLibraryManager.vue": {
-    "mtime": 1788691010.4748013,
-    "ast_hash": "1d14f94dcec830598a5652f5b4d3f6af",
+    "mtime": 1788695880.8892992,
+    "ast_hash": "e89e00762b20416c2a40f411ad137a13",
     "semantic_hash": ""
   },
   "src/components/setup/ExpectationWeightBadge.vue": {
@@ -1235,13 +1235,48 @@
     "semantic_hash": ""
   },
   "src/composables/useCurriculumLibrary.js": {
-    "mtime": 1788690173.3876746,
-    "ast_hash": "743463ab6dfc297756c24b9814fccbe6",
+    "mtime": 1788696156.699338,
+    "ast_hash": "9e73e0a3477ee9fd5875f4273074efdb",
     "semantic_hash": ""
   },
   "src/test_curriculum_library_and_weights.js": {
     "mtime": 1788690001.6807337,
     "ast_hash": "233f6a3d740b58623875f74aca8a6c1b",
+    "semantic_hash": ""
+  },
+  "src/test_curriculum_audit_investigation.js": {
+    "mtime": 1788696604.5681686,
+    "ast_hash": "5549adb49eff32e01ff3457ed5acc518",
+    "semantic_hash": ""
+  },
+  "src/test_destructive_actions_audit.js": {
+    "mtime": 1788697596.871178,
+    "ast_hash": "0b29011396fb1bd23c917ca427e43081",
+    "semantic_hash": ""
+  },
+  "src/test_grading_engines_stress.js": {
+    "mtime": 1788702354.4244275,
+    "ast_hash": "3dae9fa192ea8f958dc8d2305dcd8ee1",
+    "semantic_hash": ""
+  },
+  "src/test_mode_separation_audit.js": {
+    "mtime": 1788703734.2680888,
+    "ast_hash": "4d059e7c74a5821825a508400c8358a5",
+    "semantic_hash": ""
+  },
+  "src/test_data_pipelines_audit.js": {
+    "mtime": 1788704219.1884773,
+    "ast_hash": "47c36f7b6af6269c01f5432547dd2ca9",
+    "semantic_hash": ""
+  },
+  "src/test_math_and_statistics_audit.js": {
+    "mtime": 1788706607.109816,
+    "ast_hash": "ff3e10e07bbeddadc95681fdbc3cf544",
+    "semantic_hash": ""
+  },
+  "src/test_grading_policy_ground_truth.js": {
+    "mtime": 1788714823.419541,
+    "ast_hash": "d3a88587b0799022811985addc757dc8",
     "semantic_hash": ""
   }
 }

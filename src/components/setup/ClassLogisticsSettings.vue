@@ -1159,7 +1159,21 @@ async function onUnarchiveStudent(student) {
 }
 
 async function onPermanentDeleteStudent(student) {
-  if (await confirm(`PERMANENTLY delete ${student.firstName} ${student.lastName} and all their event history in this class? This cannot be undone.`, 'Danger Zone', { danger: true })) {
+  const counts = await classService.getStudentClassDataCounts(activeClass.value?.classId, student.studentId)
+  const details = []
+  if (counts.gradeCount > 0) details.push(`${counts.gradeCount} student mark(s)`)
+  if (counts.eventCount > 0) details.push(`${counts.eventCount} attendance/behavior event(s)`)
+  if (counts.learningSkillCount > 0) details.push(`${counts.learningSkillCount} learning skill record(s)`)
+
+  const warnText = details.length > 0 
+    ? `Warning: This will permanently delete ${details.join(', ')} associated with this student in this class.`
+    : 'No grades or events are recorded for this student in this class.'
+
+  if (await confirm(
+    `PERMANENTLY delete ${student.firstName} ${student.lastName}?\n\n${warnText}\n\nThis cannot be undone.`,
+    'Permanently Delete Student',
+    { danger: true }
+  )) {
     await permanentlyDeleteStudent(student.studentId)
   }
 }
@@ -1244,7 +1258,12 @@ function stopEnrollment() {
   if (enrollTimer.value) clearTimeout(enrollTimer.value)
 }
 
-function clearRFID() {
+async function clearRFID() {
+  if (newStudent.rfidTag) {
+    if (!await confirm(`Unlink RFID card (${newStudent.rfidTag}) from ${newStudent.firstName || 'this student'}?`, 'Unlink Card', { danger: true })) {
+      return
+    }
+  }
   const studentId = newStudent.studentId
   if (studentId) {
     if (activeClass.value?.students?.[studentId]) {

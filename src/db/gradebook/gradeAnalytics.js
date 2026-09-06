@@ -73,7 +73,7 @@ export function calculateAssessmentAnalytics(assessmentId, grades, assessment, o
   if (activePercentages.length === 0) return null
 
   // Core stats on active (possibly filtered) set
-  const mean = activePercentages.reduce((a, b) => a + b, 0) / activePercentages.length
+  const mean = activePercentages.reduce((a, b) => a + Number(b), 0) / activePercentages.length
   const sd = calculateStandardDeviation(activePercentages)
   const median = calculateMedian(activePercentages)
   const sorted = [...activePercentages].sort((a, b) => a - b)
@@ -266,9 +266,11 @@ export async function calculateClassAnalytics(classRecord, assessments, grades, 
       let weightUsed = 0
       for (const cat of classRecord.gradebookCategories || []) {
         const catGrade = categoryResults[cat.categoryId]
-        if (catGrade === undefined) continue
-        weightedSum += catGrade * (cat.weight / 100)
-        weightUsed += cat.weight
+        if (catGrade === undefined || catGrade === null || isNaN(Number(catGrade))) continue
+        const catWeight = Number(cat.weight || 0)
+        if (catWeight <= 0 || isNaN(catWeight)) continue
+        weightedSum += Number(catGrade) * (catWeight / 100)
+        weightUsed += catWeight
       }
 
       if (weightUsed > 0) {
@@ -289,7 +291,7 @@ export async function calculateClassAnalytics(classRecord, assessments, grades, 
   const activePercentages = exclusionResults.activePercentages
   const outlierStudentIds = exclusionResults.excludedIds
 
-  const mean = activePercentages.reduce((a, b) => a + b, 0) / activePercentages.length
+  const mean = activePercentages.reduce((a, b) => a + Number(b), 0) / activePercentages.length
   const sd = calculateStandardDeviation(activePercentages)
   const median = calculateMedian(activePercentages)
   const distributionBuckets = buildDistributionBuckets(activePercentages)

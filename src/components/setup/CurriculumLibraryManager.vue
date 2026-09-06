@@ -150,12 +150,22 @@
           <div class="curriculum-editor__actions">
             <button 
               type="button" 
+              class="setup__btn-ghost" 
+              title="Discard any unsaved edits and reload preset from baseline"
+              @click="handleDiscardEdits"
+            >
+              <RotateCcw :size="13" /> Discard & Reload
+            </button>
+
+            <button 
+              type="button" 
               class="setup__btn-primary" 
               :disabled="isSaving"
               @click="handleSaveMasterPreset"
             >
               <Save :size="14" /> {{ isSaving ? 'Saving...' : 'Save as My Master Preset' }}
             </button>
+
             <button 
               v-if="isMasterCustomized(currentEditorPreset.presetId)"
               type="button" 
@@ -171,6 +181,14 @@
         <p class="curriculum-editor__instructions">
           Adjust expectation wording and assign <strong>Weight Multipliers</strong> (e.g. <code>2x</code> double weight, <code>0.5x</code> half weight, or <code>0x</code> for diagnostic/formative-only). These standards and weights will automatically load whenever you teach this subject.
         </p>
+
+        <!-- Information Notice Banner -->
+        <div v-if="hasGlobalUndo && lastUndoNotice" class="curriculum-editor__undo-banner">
+          <div class="undo-banner__text">
+            <AlertCircle :size="14" />
+            <span>{{ lastUndoNotice }}</span>
+          </div>
+        </div>
 
         <!-- Save Banner / Notice -->
         <div v-if="editorNotice.text" class="curriculum-editor__banner" :class="`curriculum-editor__banner--${editorNotice.type}`">
@@ -215,6 +233,22 @@
 
           <!-- Expectations in this Strand -->
           <div class="curriculum-strand-exps">
+            <!-- Empty Strand State with Restore Button -->
+            <div v-if="strand.expectations.length === 0" class="curriculum-strand-empty">
+              <div class="strand-empty-msg">
+                <AlertCircle :size="14" />
+                <span>No expectations in this strand.</span>
+              </div>
+              <button 
+                type="button" 
+                class="restore-strand-btn"
+                @click="restoreStrandFromBaseline(sIdx)"
+                title="Restore all expectations for this strand from the official Ministry baseline"
+              >
+                <RotateCcw :size="12" /> Restore Expectations from Baseline
+              </button>
+            </div>
+
             <div 
               v-for="(exp, eIdx) in strand.expectations" 
               :key="exp.id || eIdx"
@@ -346,11 +380,19 @@ import {
   AlertCircle,
   Layers,
   Plus,
-  Trash2
+  Trash2,
+  Undo2
 } from 'lucide-vue-next'
-import { useCurriculumLibrary } from '../../composables/useCurriculumLibrary.js'
+import { useCurriculumLibrary, syncPresetToClass } from '../../composables/useCurriculumLibrary.js'
+import { curriculumPresets } from '../../data/curriculum/index.js'
+import { useMessage } from '../../composables/useMessage.js'
+import { useUndo } from '../../composables/useUndo.js'
+import { getAllClasses, saveClass } from '../../db/classService.js'
 import ExpectationWeightBadge from './ExpectationWeightBadge.vue'
 import { cleanExpectationText } from '../../utils/textUtils.js'
+
+const { confirm: confirmMessage } = useMessage()
+const { push: pushGlobalUndo, undo: triggerGlobalUndo, canUndo: hasGlobalUndo, clear: clearGlobalUndo } = useUndo()
 
 const {
   initCurriculumLibrary,
@@ -364,12 +406,12 @@ const activePanel = ref('elementary')
 const activeGrade = ref('8')
 const searchQuery = ref('')
 const selectedPreset = ref(null)
-const isSaving = ref(false)
-const editorNotice = reactive({ text: '', type: 'success' })
-
-// Editable Working Copy of Selected Preset
 const currentEditorPreset = ref(null)
 const editorStrands = ref([])
+const isSaving = ref(false)
+const editorNotice = reactive({ text: '', type: 'info' })
+const undoStack = ref([])
+const lastUndoNotice = ref('')
 
 onMounted(async () => {
   await initCurriculumLibrary()
@@ -461,6 +503,9 @@ function countPresetWeighted(preset) {
 function loadPresetToEditor(preset) {
   selectedPreset.value = preset
   currentEditorPreset.value = JSON.parse(JSON.stringify(preset))
+  clearGlobalUndo()
+  undoStack.value = []
+  lastUndoNotice.value = ''
   
   // Transform strands into uniform editable format with expectations array
   const strandsList = []
@@ -519,7 +564,33 @@ function addEditorStrand() {
   })
 }
 
-function removeEditorStrand(idx) {
+async function removeEditorStrand(idx) {
+  const strand = editorStrands.value[idx]
+  if (!strand) return
+  const expCount = strand.expectations?.length || 0
+  const ok = await confirmMessage(
+    `Are you sure you want to delete strand "${strand.name}"${expCount > 0 ? ` and its ${expCount} expectation(s)` : ''}?`,
+    'Delete Strand',
+    { confirmLabel: 'Delete Strand', cancelLabel: 'Cancel', danger: true }
+  )
+  if (!ok) return
+
+  const strandItem = JSON.parse(JSON.stringify(strand))
+  const strandName = strand.name || 'Strand'
+  const strandIdx = idx
+
+  pushGlobalUndo(async () => {
+    editorStrands.value.splice(strandIdx, 0, strandItem)
+    lastUndoNotice.value = `Restored strand "${strandName}".`
+  })
+
+  undoStack.value.push({
+    type: 'strand',
+    strandIdx: idx,
+    item: strandItem,
+    label: strandName
+  })
+  lastUndoNotice.value = `Removed strand "${strand.name}". Click the ↶ icon in the top toolbar or press ⌘Z to restore.`
   editorStrands.value.splice(idx, 1)
 }
 
@@ -535,10 +606,114 @@ function addEditorExpectation(strandIdx) {
   })
 }
 
-function removeEditorExpectation(strandIdx, expIdx) {
+async function removeEditorExpectation(strandIdx, expIdx) {
   const targetStrand = editorStrands.value[strandIdx]
-  if (targetStrand) {
-    targetStrand.expectations.splice(expIdx, 1)
+  if (!targetStrand) return
+  const exp = targetStrand.expectations[expIdx]
+  const expLabel = exp?.code ? `expectation "${exp.code}"` : 'this expectation'
+  const ok = await confirmMessage(
+    `Are you sure you want to remove ${expLabel} from ${targetStrand.name || 'this strand'}?`,
+    'Delete Expectation',
+    { confirmLabel: 'Delete', cancelLabel: 'Cancel', danger: true }
+  )
+  if (!ok) return
+
+  const expItem = JSON.parse(JSON.stringify(exp))
+  const targetStrandIdx = strandIdx
+  const targetExpIdx = expIdx
+  const itemLabel = exp?.code ? `expectation "${exp.code}"` : 'expectation'
+
+  pushGlobalUndo(async () => {
+    const s = editorStrands.value[targetStrandIdx]
+    if (s) {
+      if (!s.expectations) s.expectations = []
+      s.expectations.splice(targetExpIdx, 0, expItem)
+      lastUndoNotice.value = `Restored ${itemLabel}.`
+    }
+  })
+
+  undoStack.value.push({
+    type: 'expectation',
+    strandIdx,
+    expIdx,
+    item: expItem,
+    label: itemLabel
+  })
+  lastUndoNotice.value = `Removed ${exp?.code ? `"${exp.code}"` : 'expectation'}. Click the ↶ icon in the top toolbar or press ⌘Z to restore.`
+  targetStrand.expectations.splice(expIdx, 1)
+}
+
+async function handleUndo() {
+  await triggerGlobalUndo()
+}
+
+async function handleDiscardEdits() {
+  if (!selectedPreset.value) return
+  const ok = await confirmMessage(
+    'Discard any unsaved edits and reload this subject from its baseline preset?',
+    'Discard Unsaved Edits',
+    { confirmLabel: 'Discard & Reload', cancelLabel: 'Keep Editing', danger: true }
+  )
+  if (!ok) return
+  loadPresetToEditor(selectedPreset.value)
+  clearGlobalUndo()
+  undoStack.value = []
+  lastUndoNotice.value = ''
+  editorNotice.text = 'Unsaved changes discarded. Subject reloaded from baseline.'
+  editorNotice.type = 'info'
+}
+
+function restoreStrandFromBaseline(strandIdx) {
+  if (!currentEditorPreset.value) return
+  const rawPresets = curriculumPresets || []
+  const rawPreset = rawPresets.find(p => p.presetId === currentEditorPreset.value.presetId)
+  if (!rawPreset || !rawPreset.strands) return
+
+  const currentStrand = editorStrands.value[strandIdx]
+  const rawStrand = rawPreset.strands[strandIdx] || rawPreset.strands.find(s => 
+    cleanExpectationText(s.name || '').toLowerCase() === cleanExpectationText(currentStrand?.name || '').toLowerCase()
+  )
+  if (!rawStrand) return
+
+  const restoredExps = []
+  if (rawStrand.expectations && Array.isArray(rawStrand.expectations)) {
+    rawStrand.expectations.forEach(e => {
+      restoredExps.push({
+        id: e.expectationId || e.id || `exp-${strandIdx}-${crypto.randomUUID().slice(0, 6)}`,
+        code: e.code || '',
+        description: e.description || '',
+        weight: e.weight != null ? Number(e.weight) : 1.0,
+        active: e.active !== false
+      })
+    })
+  } else if (rawStrand.overalls) {
+    rawStrand.overalls.forEach((ov, ovIdx) => {
+      if (ov.specifics && ov.specifics.length > 0) {
+        ov.specifics.forEach((sp, spIdx) => {
+          restoredExps.push({
+            id: `exp-${strandIdx}-${ovIdx}-${spIdx}`,
+            code: sp.code || '',
+            description: sp.description || '',
+            weight: sp.weight != null ? Number(sp.weight) : 1.0,
+            active: true
+          })
+        })
+      } else {
+        restoredExps.push({
+          id: `exp-${strandIdx}-${ovIdx}`,
+          code: ov.code || '',
+          description: ov.description || ov.name || '',
+          weight: ov.weight != null ? Number(ov.weight) : 1.0,
+          active: true
+        })
+      }
+    })
+  }
+
+  if (editorStrands.value[strandIdx]) {
+    editorStrands.value[strandIdx].expectations = restoredExps
+    editorNotice.text = `Restored ${restoredExps.length} expectation(s) for ${editorStrands.value[strandIdx].name} from official Ministry baseline.`
+    editorNotice.type = 'info'
   }
 }
 
@@ -548,27 +723,74 @@ async function handleSaveMasterPreset() {
   editorNotice.text = ''
 
   try {
-    // Construct standardized master preset object
+    // Construct standardized master preset object with both expectations and overalls
     const updatedPreset = {
       ...currentEditorPreset.value,
       isCustomMaster: true,
       updatedAt: new Date().toISOString(),
-      strands: editorStrands.value.map(s => ({
-        name: cleanExpectationText(s.name),
-        expectations: s.expectations.map(e => ({
+      strands: editorStrands.value.map(s => {
+        const exps = s.expectations.map(e => ({
           expectationId: e.id || crypto.randomUUID(),
           code: cleanExpectationText(e.code).toUpperCase(),
           description: cleanExpectationText(e.description),
           weight: e.weight != null && !isNaN(Number(e.weight)) ? Math.max(0, Number(e.weight)) : 1.0,
           active: e.active !== false
         }))
-      }))
+        return {
+          id: s.id,
+          name: cleanExpectationText(s.name),
+          expectations: exps,
+          overalls: exps.map(e => ({
+            code: e.code,
+            name: e.code,
+            description: e.description,
+            weight: e.weight,
+            specifics: []
+          }))
+        }
+      })
     }
 
     await saveMasterPreset(updatedPreset)
     selectedPreset.value = updatedPreset
+    clearGlobalUndo()
+    undoStack.value = []
+    lastUndoNotice.value = ''
     editorNotice.text = `Master Blueprint for "${updatedPreset.title}" saved successfully! It will now auto-load in all classes.`
     editorNotice.type = 'success'
+
+    // Optional Class Propagation: Check if any active classes teach this subject
+    try {
+      const allClasses = await getAllClasses()
+      const matchingClasses = []
+
+      for (const cls of allClasses) {
+        if (!cls) continue
+        const syncCheck = syncPresetToClass(cls, updatedPreset)
+        if (syncCheck && syncCheck.changesCount > 0) {
+          matchingClasses.push({ cls, changesCount: syncCheck.changesCount, updatedClass: syncCheck.updatedClass })
+        }
+      }
+
+      if (matchingClasses.length > 0) {
+        const classNames = matchingClasses.map(m => m.cls.name).join(', ')
+        const totalChanges = matchingClasses.reduce((sum, m) => sum + m.changesCount, 0)
+        const ok = await confirmMessage(
+          `Master Blueprint saved!\n\nFound ${matchingClasses.length} active class(es) (${classNames}) currently teaching this subject with ${totalChanges} potential expectation/weight update(s).\n\nWould you like to sync these updated expectations and weights to existing classes now?`,
+          'Sync to Existing Classes?',
+          { confirmLabel: `Sync to ${matchingClasses.length} Class(es)`, cancelLabel: 'Keep Classes As-Is' }
+        )
+
+        if (ok) {
+          for (const m of matchingClasses) {
+            await saveClass(m.updatedClass)
+          }
+          editorNotice.text = `Master Blueprint saved and synchronized to ${matchingClasses.length} active class(es) (${classNames})!`
+        }
+      }
+    } catch (syncErr) {
+      console.warn('[CurriculumLibraryManager] Error checking class sync:', syncErr)
+    }
   } catch (err) {
     console.error('[CurriculumLibraryManager] Error saving master preset:', err)
     editorNotice.text = 'Failed to save master preset. Please check console logs.'
@@ -581,7 +803,12 @@ async function handleSaveMasterPreset() {
 async function handleResetToMinistry() {
   if (!currentEditorPreset.value) return
   const title = currentEditorPreset.value.title
-  if (!confirm(`Reset "${title}" to official Ministry baseline? This will remove your custom expectation weights and wording.`)) return
+  const ok = await confirmMessage(
+    `Reset "${title}" to official Ministry baseline? This will remove your custom expectation weights and custom text.`,
+    'Reset to Official Ministry Baseline',
+    { confirmLabel: 'Reset to Baseline', cancelLabel: 'Cancel', danger: true }
+  )
+  if (!ok) return
 
   try {
     await resetMasterPreset(currentEditorPreset.value.presetId)
@@ -590,6 +817,9 @@ async function handleResetToMinistry() {
     if (builtIn) {
       loadPresetToEditor(builtIn)
     }
+    clearGlobalUndo()
+    undoStack.value = []
+    lastUndoNotice.value = ''
     editorNotice.text = `"${title}" has been reset to official Ministry baseline.`
     editorNotice.type = 'success'
   } catch (err) {
@@ -938,6 +1168,107 @@ async function handleResetToMinistry() {
   font-weight: 600;
 }
 
+.curriculum-editor__btn-undo {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(59, 130, 246, 0.12);
+  border: 1px solid rgba(59, 130, 246, 0.35);
+  color: var(--primary, #3b82f6);
+  border-radius: var(--radius-sm, 6px);
+  padding: 6px 12px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.curriculum-editor__btn-undo:hover {
+  background: rgba(59, 130, 246, 0.2);
+}
+
+.curriculum-editor__undo-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: rgba(59, 130, 246, 0.08);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  border-radius: var(--radius-md, 8px);
+  padding: 10px 16px;
+  font-size: 0.85rem;
+  color: var(--text);
+  margin-top: 4px;
+}
+
+.undo-banner__text {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--primary, #3b82f6);
+  font-weight: 600;
+}
+
+.undo-banner__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--primary, #3b82f6);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 5px 12px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.undo-banner__btn:hover {
+  opacity: 0.9;
+}
+
+.curriculum-strand-empty {
+  padding: 14px 18px;
+  background: var(--bg-secondary);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-sm, 8px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.84rem;
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+}
+
+.strand-empty-msg {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+}
+
+.restore-strand-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 14px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--primary, #3b82f6);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.restore-strand-btn:hover {
+  border-color: var(--primary, #3b82f6);
+  background: rgba(59, 130, 246, 0.08);
+}
+
 .curriculum-editor__banner {
   display: flex;
   align-items: center;
@@ -947,6 +1278,12 @@ async function handleResetToMinistry() {
   font-size: 0.85rem;
   font-weight: 600;
   margin-top: 4px;
+}
+
+.curriculum-editor__banner--info {
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  color: var(--primary, #3b82f6);
 }
 
 .curriculum-editor__banner--success {

@@ -42,10 +42,10 @@ export const cloudModeEnabled = ref(false)
 export const userCode = ref('')
 
 export const activeSubjectId = ref(localStorage.getItem('activeSubjectId') || '')
-watch(activeSubjectId, (val) => localStorage.setItem('activeSubjectId', val || ''))
+watch(activeSubjectId, (val) => localStorage.setItem('activeSubjectId', val || ''), { flush: 'sync' })
 
 export const teachingMode = ref(localStorage.getItem('teachingMode') || 'secondary')
-watch(teachingMode, (val) => localStorage.setItem('teachingMode', val || 'secondary'))
+watch(teachingMode, (val) => localStorage.setItem('teachingMode', val || 'secondary'), { flush: 'sync' })
 
 
 

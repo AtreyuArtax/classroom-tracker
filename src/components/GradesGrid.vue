@@ -413,6 +413,7 @@ import {
   adjustStudentGrade,
   undoStudentGradeAdjustment,
   deleteAssessment,
+  getAssessmentUsage,
   assessmentStats,
   gridSortBy,
   gridSortOrder,
@@ -595,7 +596,8 @@ const overallClassAvg = computed(() => {
   const values = Object.entries(classGrades.value || {})
     .filter(([id]) => visibleStudentIds.has(id))
     .map(([, g]) => g?.overallGrade)
-    .filter(val => val !== null && val !== undefined)
+    .filter(val => val !== null && val !== undefined && !isNaN(Number(val)) && isFinite(Number(val)))
+    .map(Number)
   if (values.length === 0) return null
   return values.reduce((sum, val) => sum + val, 0) / values.length
 })
@@ -942,7 +944,12 @@ function onHeaderMenu(e, type, assessment = null) {
 }
 
 async function confirmDeleteAssessment(assessment) {
-  if (!await confirm(`Delete ${assessment.name}? This will permanently remove all grades for this assessment and cannot be undone.`, 'Delete Assessment', { danger: true })) return
+  const usage = await getAssessmentUsage(assessment.assessmentId)
+  const countWarning = usage.studentCount > 0
+    ? `Warning: This assessment has marks recorded for ${usage.studentCount} student(s) (${usage.attemptCount || usage.markCount || usage.studentCount} score entries). Deleting it will permanently erase all these records.`
+    : 'No student marks are recorded for this assessment.'
+
+  if (!await confirm(`Delete "${assessment.name}"?\n\n${countWarning}\n\nThis cannot be undone.`, 'Delete Assessment', { danger: true })) return
   await deleteAssessment(assessment.assessmentId)
 }
 

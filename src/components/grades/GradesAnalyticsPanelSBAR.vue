@@ -542,8 +542,10 @@ const studentOverallMasteryList = computed(() => {
 // Stat 1: Cohort Average
 const cohortAveragePct = computed(() => {
   const list = studentOverallMasteryList.value
+    .map(s => Number(s.score))
+    .filter(s => !isNaN(s) && isFinite(s))
   if (!list.length) return null
-  return Math.round(list.reduce((sum, s) => sum + s.score, 0) / list.length)
+  return Math.round(list.reduce((sum, s) => sum + s, 0) / list.length)
 })
 
 const cohortAverageBadge = computed(() => {
@@ -553,7 +555,10 @@ const cohortAverageBadge = computed(() => {
 
 // Stat 2: Cohort Median
 const cohortMedianPct = computed(() => {
-  const list = studentOverallMasteryList.value.map(s => s.score).sort((a, b) => a - b)
+  const list = studentOverallMasteryList.value
+    .map(s => Number(s.score))
+    .filter(s => !isNaN(s) && isFinite(s))
+    .sort((a, b) => a - b)
   if (!list.length) return null
   const mid = Math.floor(list.length / 2)
   return list.length % 2 !== 0 ? Math.round(list[mid]) : Math.round((list[mid - 1] + list[mid]) / 2)

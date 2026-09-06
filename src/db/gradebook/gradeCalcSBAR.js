@@ -4,7 +4,7 @@
  * Dedicated Standards-Based Assessment & Reporting (SBAR / SBGR) Math Engine.
  * Implements Decaying Average, Most Recent, Level 1-4 mappings, and Expectation Mastery calculations.
  */
-import { isCohortMatch } from './gradeCalc.js'
+import { isCohortMatch, filterAssessmentsForSubject } from './gradeCalc.js'
 
 /**
  * Calculates a Decaying Average over a chronologically sorted array of score percentages (0..100).
@@ -15,12 +15,21 @@ import { isCohortMatch } from './gradeCalc.js'
  * @returns {number|null} Calculated mastery percentage (0..100) or null if empty.
  */
 export function calculateDecayingAverage(scores, weightNewest = 0.65) {
-  if (!scores || scores.length === 0) return null
-  if (scores.length === 1) return scores[0]
+  if (!scores || !Array.isArray(scores) || scores.length === 0) return null
+  const validScores = scores
+    .filter(s => s !== null && s !== undefined && s !== '' && !isNaN(Number(s)))
+    .map(Number)
+    .filter(s => isFinite(s))
+  if (validScores.length === 0) return null
+  if (validScores.length === 1) return validScores[0]
 
-  let currentMastery = scores[0]
-  for (let i = 1; i < scores.length; i++) {
-    currentMastery = (weightNewest * scores[i]) + ((1 - weightNewest) * currentMastery)
+  let currentMastery = validScores[0]
+  const w = (weightNewest != null && !isNaN(weightNewest) && isFinite(weightNewest))
+    ? Math.max(0, Math.min(1, Number(weightNewest)))
+    : 0.65
+
+  for (let i = 1; i < validScores.length; i++) {
+    currentMastery = (w * validScores[i]) + ((1 - w) * currentMastery)
   }
 
   return Math.round(currentMastery * 10) / 10
@@ -194,10 +203,15 @@ function normalizeOverride(raw) {
  * @returns {number|null}
  */
 export function calculatePowerLaw(scores) {
-  if (!scores || scores.length === 0) return null
-  if (scores.length === 1) return scores[0]
+  if (!scores || !Array.isArray(scores) || scores.length === 0) return null
+  const validScores = scores
+    .filter(s => s !== null && s !== undefined && s !== '' && !isNaN(Number(s)))
+    .map(Number)
+    .filter(s => isFinite(s))
+  if (validScores.length === 0) return null
+  if (validScores.length === 1) return validScores[0]
 
-  const safeScores = scores.map(s => Math.max(1, Math.min(100, s)))
+  const safeScores = validScores.map(s => Math.max(1, Math.min(100, s)))
   const n = safeScores.length
 
   const logX = []
@@ -217,13 +231,17 @@ export function calculatePowerLaw(scores) {
     den += Math.pow(logX[i] - meanLogX, 2)
   }
 
-  if (den === 0) return safeScores[safeScores.length - 1]
+  if (den === 0 || !isFinite(den)) return safeScores[safeScores.length - 1]
 
   const B = num / den
   const logA = meanLogY - B * meanLogX
 
   const projectedLogY = logA + B * Math.log(n)
   const projectedY = Math.exp(projectedLogY)
+
+  if (isNaN(projectedY) || !isFinite(projectedY)) {
+    return safeScores[safeScores.length - 1]
+  }
 
   return Math.round(Math.max(0, Math.min(100, projectedY)) * 10) / 10
 }
@@ -236,11 +254,16 @@ export function calculatePowerLaw(scores) {
  * @returns {number|null}
  */
 export function calculateMode(scores) {
-  if (!scores || scores.length === 0) return null
-  if (scores.length === 1) return scores[0]
+  if (!scores || !Array.isArray(scores) || scores.length === 0) return null
+  const validScores = scores
+    .filter(s => s !== null && s !== undefined && s !== '' && !isNaN(Number(s)))
+    .map(Number)
+    .filter(s => isFinite(s))
+  if (validScores.length === 0) return null
+  if (validScores.length === 1) return validScores[0]
 
   const counts = new Map()
-  scores.forEach(s => {
+  validScores.forEach(s => {
     const key = getSBARLevelBadge(s).level
     counts.set(key, (counts.get(key) || 0) + 1)
   })
@@ -248,8 +271,8 @@ export function calculateMode(scores) {
   let maxCount = 0
   let modeLevelKey = null
 
-  for (let i = scores.length - 1; i >= 0; i--) {
-    const key = getSBARLevelBadge(scores[i]).level
+  for (let i = validScores.length - 1; i >= 0; i--) {
+    const key = getSBARLevelBadge(validScores[i]).level
     const cnt = counts.get(key)
     if (cnt > maxCount) {
       maxCount = cnt
@@ -257,8 +280,10 @@ export function calculateMode(scores) {
     }
   }
 
-  const modeScores = scores.filter(s => getSBARLevelBadge(s).level === modeLevelKey)
-  const avgModeScore = modeScores.reduce((a, b) => a + b, 0) / modeScores.length
+  const modeScores = validScores.filter(s => getSBARLevelBadge(s).level === modeLevelKey)
+  if (modeScores.length === 0) return validScores[validScores.length - 1]
+
+  const avgModeScore = modeScores.reduce((a, b) => a + Number(b), 0) / modeScores.length
   return Math.round(avgModeScore * 10) / 10
 }
 
@@ -317,21 +342,7 @@ export function calculateSBARExpectationMastery(classRecord, assessments, gradeM
   // Filter assessments to active subject for elementary classes
   let scopedAssessments = assessments
   if (classRecord.classType === 'elementary' && classRecord.activeSubjectId) {
-    const subId = classRecord.activeSubjectId
-    const subUnits = new Set((classRecord.gradebookUnits || []).map(u => String(u.unitId)))
-    const subExps = new Set((classRecord.expectations || []).map(e => String(e.code || e.expectationId).toLowerCase()))
-
-    scopedAssessments = assessments.filter(a => {
-      if (a.subjectId) return String(a.subjectId) === String(subId)
-      if (a.unitId && subUnits.has(String(a.unitId))) return true
-      const expIds = a.expectationIds || (a.expectationId ? [a.expectationId] : [])
-      if (expIds.length > 0 && expIds.some(code => subExps.has(String(code).toLowerCase()))) return true
-      if (!a.subjectId && !a.unitId && expIds.length === 0) {
-        const firstSubId = classRecord.subjects?.[0]?.subjectId || classRecord.activeSubjectId || 'elem_sub_math'
-        return String(subId) === String(firstSubId)
-      }
-      return false
-    })
+    scopedAssessments = filterAssessmentsForSubject(assessments, classRecord)
   }
 
   scopedAssessments.forEach(ast => {
@@ -529,10 +540,16 @@ export function calculateSBARExpectationMastery(classRecord, assessments, gradeM
         } else if (algorithm === 'mode') {
           finalScore = calculateMode(scoresToCalculate)
         } else if (algorithm === 'most_recent') {
-          const recent = scoresToCalculate.slice(-3)
-          finalScore = Math.round(recent.reduce((a, b) => a + b, 0) / recent.length)
+          const validList = scoresToCalculate.map(Number).filter(n => !isNaN(n) && isFinite(n))
+          if (validList.length === 0) {
+            finalScore = null
+          } else {
+            const recent = validList.slice(-3)
+            finalScore = Math.round(recent.reduce((a, b) => a + Number(b), 0) / recent.length)
+          }
         } else if (algorithm === 'highest') {
-          finalScore = Math.max(...scoresToCalculate)
+          const validList = scoresToCalculate.map(Number).filter(n => !isNaN(n) && isFinite(n))
+          finalScore = validList.length > 0 ? Math.max(...validList) : null
         } else {
           finalScore = calculateDecayingAverage(scoresToCalculate, 0.65)
         }

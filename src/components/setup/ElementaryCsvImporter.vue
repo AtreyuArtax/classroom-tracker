@@ -100,6 +100,7 @@ import { ref } from 'vue'
 import { Upload, FileText, AlertTriangle, CheckCircle } from 'lucide-vue-next'
 import SubjectIcon from '../SubjectIcon.vue'
 import { DEFAULT_ELEMENTARY_SUBJECTS } from '../../utils/elementarySubjects.js'
+import { parseCsvRows } from '../../utils/learningSkillsCsvParser.js'
 
 const emit = defineEmits(['imported'])
 
@@ -149,14 +150,14 @@ function processFile(file) {
 }
 
 function parseCSV(csvText) {
-  const lines = csvText.split(/\r?\n/).filter(line => line.trim().length > 0)
-  if (lines.length < 2) {
+  const rows = parseCsvRows(csvText)
+  if (!rows || rows.length < 2) {
     errorMsg.value = 'CSV file must contain a header row and at least one student row.'
     return
   }
 
   // Parse header
-  const headers = parseCSVLine(lines[0]).map(h => h.trim().toLowerCase().replace(/[^a-z0-9_]/g, ''))
+  const headers = rows[0].map(h => (h || '').trim().toLowerCase().replace(/[^a-z0-9_]/g, ''))
   
   // Find column indices specifically matching student fields (excluding parent name columns)
   const lastNameIdx = headers.findIndex(h => h === 'lastname' || h === 'surname' || h === 'last_name')
@@ -174,8 +175,8 @@ function parseCSV(csvText) {
 
   const studentsList = []
 
-  for (let i = 1; i < lines.length; i++) {
-    const row = parseCSVLine(lines[i])
+  for (let i = 1; i < rows.length; i++) {
+    const row = rows[i]
     if (!row || row.length === 0) continue
 
     let firstName = ''
@@ -187,10 +188,10 @@ function parseCSV(csvText) {
     let noteText = ''
 
     if (lastNameIdx >= 0 && firstNameIdx >= 0 && row[lastNameIdx]) {
-      lastName = row[lastNameIdx] || ''
-      firstName = row[firstNameIdx] || ''
+      lastName = (row[lastNameIdx] || '').trim()
+      firstName = (row[firstNameIdx] || '').trim()
     } else if (studentNameIdx >= 0 && row[studentNameIdx]) {
-      const nameVal = row[studentNameIdx].trim()
+      const nameVal = (row[studentNameIdx] || '').trim()
       const parts = nameVal.split(',')
       if (parts.length === 2) {
         lastName = parts[0].trim()
@@ -203,25 +204,25 @@ function parseCSV(csvText) {
     }
 
     if (idIdx >= 0 && row[idIdx]) {
-      studentId = row[idIdx].trim()
+      studentId = String(row[idIdx] || '').trim()
     }
     if (!studentId) {
       studentId = `${Date.now()}_${i}`
     }
 
     if (gradeIdx >= 0 && row[gradeIdx]) {
-      const rawG = row[gradeIdx].trim()
+      const rawG = String(row[gradeIdx] || '').trim()
       const gNum = parseInt(rawG, 10)
       grade = !isNaN(gNum) ? `Grade ${gNum}` : (rawG.toLowerCase().startsWith('grade') ? rawG : `Grade ${rawG}`)
     }
     if (emailIdx >= 0 && row[emailIdx]) {
-      email = row[emailIdx].trim()
+      email = String(row[emailIdx] || '').trim()
     }
     if (alertIdx >= 0 && row[alertIdx]) {
-      alertText = row[alertIdx].trim()
+      alertText = String(row[alertIdx] || '').trim()
     }
     if (noteIdx >= 0 && row[noteIdx]) {
-      noteText = row[noteIdx].trim()
+      noteText = String(row[noteIdx] || '').trim()
     }
 
     const combinedNotes = [alertText, noteText].filter(Boolean).join(' | ')
@@ -247,26 +248,6 @@ function parseCSV(csvText) {
   parsedStudents.value = studentsList
 
   detectedSubjects.value = JSON.parse(JSON.stringify(DEFAULT_ELEMENTARY_SUBJECTS))
-}
-
-function parseCSVLine(line) {
-  const result = []
-  let insideQuote = false
-  let current = ''
-
-  for (let i = 0; i < line.length; i++) {
-    const char = line[i]
-    if (char === '"') {
-      insideQuote = !insideQuote
-    } else if (char === ',' && !insideQuote) {
-      result.push(current.trim())
-      current = ''
-    } else {
-      current += char
-    }
-  }
-  result.push(current.trim())
-  return result
 }
 
 function resetImporter() {

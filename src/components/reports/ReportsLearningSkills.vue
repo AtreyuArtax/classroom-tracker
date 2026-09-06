@@ -298,6 +298,7 @@ import {
   hasLearningSkillsData
 } from '../../db/learningSkillsService.js'
 import { saveAs } from 'file-saver'
+import { useMessage } from '../../composables/useMessage.js'
 import { 
   GraduationCap, 
   UploadCloud, 
@@ -321,6 +322,7 @@ const showImportModal = ref(false)
 const showGuideModal = ref(false)
 const showClassInsights = ref(false)
 const copyFeedback = ref('')
+const { confirm } = useMessage()
 
 const createEmptySkills = () => ({
   responsibility: null,
@@ -427,6 +429,10 @@ async function setTeacherSkill(studentId, skillKey, level) {
 async function clearStudentRating(studentId) {
   const rec = learningSkillsMap.value.get(studentId)
   if (!rec) return
+
+  const s = resolvedRosterStudents.value.find(st => st.studentId === studentId)
+  const name = s ? `${s.firstName} ${s.lastName}` : 'this student'
+  if (!await confirm(`Clear all teacher learning skill ratings for ${name} (${selectedTerm.value})?`, 'Clear Ratings', { danger: true })) return
 
   const updated = {
     ...rec,

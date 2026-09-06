@@ -323,6 +323,17 @@ function onFileSelected(evt) {
         return hasName && cleanId.length > 0
       })
 
+      if (validRows.length === 0) {
+        importResult.value = {
+          error: 'No valid students found in CSV. Please ensure the file has column headers (e.g. Student ID, First Name, Last Name) and at least one student row.',
+          inserted: 0,
+          updated: 0,
+          skipped: []
+        }
+        bulkImportGroups.value = null
+        return
+      }
+
       const groups = {}
       for (const row of validRows) {
         const key = `${row.year}-${row.semester}-P${row.periodNumber}`
@@ -474,7 +485,8 @@ function isExistingClass(group) {
   return classList.value.some(c => 
     c.year === group.year && 
     c.semester === group.semester && 
-    Number(c.periodNumber) === Number(group.periodNumber)
+    (String(c.periodNumber).trim() === String(group.periodNumber).trim() ||
+     (!isNaN(Number(c.periodNumber)) && !isNaN(Number(group.periodNumber)) && Number(c.periodNumber) === Number(group.periodNumber)))
   )
 }
 

@@ -827,6 +827,18 @@
   gap: 20px;
 }
 
+.setup__header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.setup__header-right .undo-btn {
+  width: 38px;
+  height: 38px;
+  background: var(--bg-secondary);
+}
+
 .setup__back-btn {
   display: flex;
   align-items: center;

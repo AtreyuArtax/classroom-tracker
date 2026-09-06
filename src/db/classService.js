@@ -348,26 +348,26 @@ export async function importRoster(classId, studentsArray) {
 
         if (cls.students[cleanId]) {
             // Upsert — preserve seat and activeStates, but update names and gradeLevel
-            cls.students[studentId].firstName = firstName
-            cls.students[studentId].lastName = lastName
-            if (parsedG) cls.students[studentId].gradeLevel = parsedG
-            if (courseCode !== undefined) cls.students[studentId].courseCode = courseCode
+            cls.students[cleanId].firstName = firstName
+            cls.students[cleanId].lastName = lastName
+            if (parsedG) cls.students[cleanId].gradeLevel = parsedG
+            if (courseCode !== undefined) cls.students[cleanId].courseCode = courseCode
 
             if (parentContacts && parentContacts.length > 0) {
                 // Replace parent contacts if new ones are provided in CSV
-                cls.students[studentId].parentContacts = parentContacts
-            } else if (!cls.students[studentId].parentContacts) {
-                cls.students[studentId].parentContacts = []
+                cls.students[cleanId].parentContacts = parentContacts
+            } else if (!cls.students[cleanId].parentContacts) {
+                cls.students[cleanId].parentContacts = []
             }
-            if (studentEmail) cls.students[studentId].studentEmail = studentEmail
-            if (custody) cls.students[studentId].custody = custody
-            if (livingWith) cls.students[studentId].livingWith = livingWith
-            if (birthDate) cls.students[studentId].birthDate = birthDate
-            if (rfidTag !== undefined) cls.students[studentId].rfidTag = rfidTag
+            if (studentEmail) cls.students[cleanId].studentEmail = studentEmail
+            if (custody) cls.students[cleanId].custody = custody
+            if (livingWith) cls.students[cleanId].livingWith = livingWith
+            if (birthDate) cls.students[cleanId].birthDate = birthDate
+            if (rfidTag !== undefined) cls.students[cleanId].rfidTag = rfidTag
             updated++
         } else {
             // Insert with defaults
-            cls.students[studentId] = {
+            cls.students[cleanId] = {
                 firstName,
                 lastName,
                 gradeLevel: parsedG,
@@ -811,11 +811,33 @@ export async function unarchiveStudent(classId, studentId) {
 }
 
 /**
- * Permanently deletes a student and ALL of their data scoped to this class only.
- * Removes: events (by_classId_studentId), grades (by_classId_studentId), 
- * and the student entry from the class record.
+ * Queries the count of dependent records (grades, events, learning skills)
+ * for a student within a specific class before permanent deletion.
  *
- * NOTE: If this student exists in other classes, those records are NOT affected.
+ * @param {string} classId
+ * @param {string} studentId
+ * @returns {Promise<{ eventCount: number, gradeCount: number, learningSkillCount: number }>}
+ */
+export async function getStudentClassDataCounts(classId, studentId) {
+    if (!classId || !studentId) {
+        return { eventCount: 0, gradeCount: 0, learningSkillCount: 0 }
+    }
+    const db = await getDB()
+    const [events, grades, learningSkills] = await Promise.all([
+        db.getAllFromIndex('events', 'by_classId_studentId', [classId, studentId]).catch(() => []),
+        db.getAllFromIndex('grades', 'by_classId_studentId', [classId, studentId]).catch(() => []),
+        db.getAllFromIndex('learning_skills', 'by_student_class', [studentId, classId]).catch(() => [])
+    ])
+    return {
+        eventCount: events.length,
+        gradeCount: grades.length,
+        learningSkillCount: Array.isArray(learningSkills) ? learningSkills.length : 0
+    }
+}
+
+/**
+ * Permanently deletes a student and ALL of their historical data (events, grades,
+ * learning skills) strictly scoped to a specific class.
  *
  * @param {string} classId
  * @param {string} studentId
@@ -908,7 +930,8 @@ export async function bulkImportClasses(groups) {
         let cls = all.find(c => 
             c.year === group.year && 
             c.semester === group.semester && 
-            Number(c.periodNumber) === Number(group.periodNumber)
+            (String(c.periodNumber).trim() === String(group.periodNumber).trim() || 
+             (!isNaN(Number(c.periodNumber)) && !isNaN(Number(group.periodNumber)) && Number(c.periodNumber) === Number(group.periodNumber)))
         )
 
         const isSplit = group.isSplitClass || (group.courseSections && group.courseSections.length > 1)
@@ -969,19 +992,19 @@ export async function bulkImportClasses(groups) {
             const parsedG = rawG ? (rawG.toLowerCase().startsWith('grade') ? rawG : `Grade ${parseInt(rawG, 10) || rawG}`) : ''
 
             if (cls.students[cleanId]) {
-                cls.students[studentId].firstName = firstName
-                cls.students[studentId].lastName = lastName
-                if (parsedG) cls.students[studentId].gradeLevel = parsedG
-                if (courseCode) cls.students[studentId].courseCode = courseCode
-                if (parentContacts && parentContacts.length > 0) cls.students[studentId].parentContacts = parentContacts
-                if (studentEmail) cls.students[studentId].studentEmail = studentEmail
-                if (custody) cls.students[studentId].custody = custody
-                if (livingWith) cls.students[studentId].livingWith = livingWith
-                if (birthDate) cls.students[studentId].birthDate = birthDate
-                if (rfidTag !== undefined) cls.students[studentId].rfidTag = rfidTag
+                cls.students[cleanId].firstName = firstName
+                cls.students[cleanId].lastName = lastName
+                if (parsedG) cls.students[cleanId].gradeLevel = parsedG
+                if (courseCode) cls.students[cleanId].courseCode = courseCode
+                if (parentContacts && parentContacts.length > 0) cls.students[cleanId].parentContacts = parentContacts
+                if (studentEmail) cls.students[cleanId].studentEmail = studentEmail
+                if (custody) cls.students[cleanId].custody = custody
+                if (livingWith) cls.students[cleanId].livingWith = livingWith
+                if (birthDate) cls.students[cleanId].birthDate = birthDate
+                if (rfidTag !== undefined) cls.students[cleanId].rfidTag = rfidTag
                 studentsUpdated++
             } else {
-                cls.students[studentId] = {
+                cls.students[cleanId] = {
                     firstName,
                     lastName,
                     gradeLevel: parsedG,
@@ -995,6 +1018,8 @@ export async function bulkImportClasses(groups) {
                     seat: null,
                     generalNote: '',
                     activeStates: { isOut: false, outTime: null, isAbsent: false, lateMs: null },
+                    flags: { IEPAcommodations: false, ELL: false, medicalAlert: false, behaviorPlan: false },
+                    flagNotes: { IEP: '', ELL: '', medical: '', behavior: '' },
                     excludeFromAnalytics: false,
                 }
                 studentsInserted++

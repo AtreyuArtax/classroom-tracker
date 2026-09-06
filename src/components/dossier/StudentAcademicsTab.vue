@@ -537,6 +537,7 @@ import {
   classGrades,
   openAddAssessment,
   deleteAssessment,
+  getAssessmentUsage,
   saveStudentGradebookNote,
   clearGrade,
   initialDossierTab,
@@ -613,7 +614,8 @@ function getSubjectStudentMastery(subjectId) {
     
     const validScores = Object.values(studentMap)
       .map(m => m?.score)
-      .filter(s => s !== null && s !== undefined && !isNaN(s))
+      .filter(s => s !== null && s !== undefined && !isNaN(Number(s)) && isFinite(Number(s)))
+      .map(Number)
     
     if (validScores.length === 0) return null
     const avg = validScores.reduce((a, b) => a + b, 0) / validScores.length
@@ -883,11 +885,16 @@ async function doDeleteAssessment(assessmentId) {
   }
   
   const typeLabel = assessment.target === 'individual' ? 'individual assessment' : 'class-wide assessment'
+  const usage = await getAssessmentUsage(assessmentId)
+  const countWarning = usage.studentCount > 0
+    ? `\n\nWarning: This assessment has marks recorded for ${usage.studentCount} student(s) (${usage.attemptCount || usage.markCount || usage.studentCount} score entries). Deleting it will permanently erase all these records.`
+    : '\n\nNo student marks are recorded for this assessment.'
+
   const warning = assessment.target === 'class' 
     ? '\n\nWARNING: This is a class-wide assessment. Deleting it will remove it for ALL students in this class.'
     : ''
     
-  if (!await confirm(`Are you sure you want to delete this ${typeLabel}?${warning}`, 'Delete Assessment', { danger: true })) {
+  if (!await confirm(`Are you sure you want to delete this ${typeLabel} "${assessment.name}"?${countWarning}${warning}\n\nThis cannot be undone.`, 'Delete Assessment', { danger: true })) {
     contextMenu.value = null
     return
   }

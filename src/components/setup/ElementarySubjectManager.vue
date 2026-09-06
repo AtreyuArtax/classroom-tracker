@@ -207,6 +207,16 @@
               <button 
                 v-if="sub.expectations && sub.expectations.length > 0" 
                 type="button" 
+                class="elementary-subjects__btn-ghost" 
+                style="font-size: 0.75rem; padding: 4px 10px; display: inline-flex; align-items: center; gap: 5px;"
+                title="Sync expectation weights and wording from your Master Curriculum Library"
+                @click="syncSubjectFromMasterLibrary(sub)"
+              >
+                <RefreshCw :size="13" /> Sync from Master
+              </button>
+              <button 
+                v-if="sub.expectations && sub.expectations.length > 0" 
+                type="button" 
                 class="elementary-subjects__btn-delete" 
                 style="font-size: 0.75rem; padding: 3px 8px;"
                 @click="clearSubjectExpectations(sub.subjectId)"
@@ -605,7 +615,7 @@
 
 <script setup>
 import { ref, computed, reactive, onMounted } from 'vue'
-import { Plus, Check, Trash2, Zap, BookOpen, ChevronDown, Edit2, X, Search, BookmarkCheck } from 'lucide-vue-next'
+import { Plus, Check, Trash2, Zap, BookOpen, ChevronDown, Edit2, X, Search, BookmarkCheck, RefreshCw } from 'lucide-vue-next'
 import SubjectIcon from '../SubjectIcon.vue'
 import ExpectationWeightBadge from './ExpectationWeightBadge.vue'
 import { useClassroom } from '../../composables/useClassroom.js'
@@ -631,7 +641,8 @@ import {
 import { 
   useCurriculumLibrary, 
   resolveSubjectPreset, 
-  saveMasterPreset 
+  saveMasterPreset,
+  syncPresetToClass
 } from '../../composables/useCurriculumLibrary.js'
 
 import ExpectationImportModal from './ExpectationImportModal.vue'
@@ -720,38 +731,85 @@ async function saveEditExp(subjectId, exp) {
 async function saveSubjectToMasterLibrary(sub) {
   if (!sub || !sub.expectations || sub.expectations.length === 0) return
   
+  const gradeStr = parsedGrades.value[0] || activeClass.value?.gradeLevel || ''
+  const cleanGrade = gradeStr.toLowerCase().replace(/[^a-z0-9]/g, '')
+  const cleanCode = (sub.code || sub.name || 'sub').toLowerCase().replace(/[^a-z0-9]/g, '')
+  
+  // Resolve matching preset in Master Library so we update the actual preset!
+  const matched = resolveSubjectPreset(gradeStr, sub.code, sub.name) || findElementaryPreset(gradeStr, sub.code, sub.name)
+  const presetId = matched?.presetId || `elem_${cleanCode}_${cleanGrade || 'master'}`
+  const title = matched?.title || `${sub.name}${gradeStr ? ' (' + gradeStr + ')' : ''} Master`
+
+  const ok = await confirmMessage(
+    `Save "${sub.name}" as your Master Curriculum Library blueprint for "${title}"?\n\nThis will update the default expectations and weight multipliers in your Master Library for this subject. Future classes importing this subject will use this configuration.`,
+    'Save to Master Library',
+    { confirmLabel: 'Save to Master', cancelLabel: 'Cancel' }
+  )
+  if (!ok) return
+
   const strands = (sub.gradebookUnits || []).map(u => {
     const exps = (sub.expectations || []).filter(e => e.unitId === u.unitId)
+    const formattedExps = exps.map(e => ({
+      expectationId: e.expectationId || crypto.randomUUID(),
+      code: cleanExpectationText(e.code).toUpperCase(),
+      description: cleanExpectationText(e.description),
+      weight: (e.weight !== undefined && e.weight !== null && !isNaN(e.weight)) ? Number(e.weight) : 1.0,
+      active: e.active !== false
+    }))
     return {
-      name: u.name,
-      overalls: exps.map(e => ({
+      id: u.unitId,
+      name: cleanExpectationText(u.name),
+      expectations: formattedExps,
+      overalls: formattedExps.map(e => ({
         code: e.code,
         name: e.code,
         description: e.description,
-        weight: (e.weight !== undefined && e.weight !== null && !isNaN(e.weight)) ? Number(e.weight) : 1.0,
+        weight: e.weight,
         specifics: []
       }))
     }
   })
 
-  const gradeStr = parsedGrades.value[0] || activeClass.value?.gradeLevel || ''
-  const cleanGrade = gradeStr.toLowerCase().replace(/[^a-z0-9]/g, '')
-  const cleanCode = (sub.code || sub.name || 'sub').toLowerCase().replace(/[^a-z0-9]/g, '')
-  const presetId = `elem_${cleanCode}_${cleanGrade || 'master'}`
-
   const preset = {
     presetId,
-    title: `${sub.name}${gradeStr ? ' (' + gradeStr + ')' : ''} Master`,
+    title,
     panel: 'elementary',
     grade: gradeStr,
     subjectCode: sub.code,
     gradingFramework: sub.gradingFramework || 'sbar',
     strands,
+    isCustomMaster: true,
     updatedAt: new Date().toISOString()
   }
 
   await saveMasterPreset(preset)
   await alertMessage(`Saved "${preset.title}" with custom expectation weights to your Master Curriculum Library!`, 'Saved to Library')
+}
+
+async function syncSubjectFromMasterLibrary(sub) {
+  if (!sub) return
+  const gradeStr = parsedGrades.value[0] || activeClass.value?.gradeLevel || ''
+  const masterPreset = resolveSubjectPreset(gradeStr, sub.code, sub.name)
+  if (!masterPreset) {
+    await alertMessage(`No matching master preset found in Curriculum Library for ${sub.name} (Grade ${gradeStr}).`, 'Master Not Found')
+    return
+  }
+
+  const ok = await confirmMessage(
+    `Sync "${sub.name}" with the Master Curriculum Library blueprint "${masterPreset.title}"?\n\nThis will update expectation weight multipliers and wording. Existing assessments and student grades will be preserved.`,
+    'Sync from Master Library',
+    { confirmLabel: 'Sync from Master', cancelLabel: 'Cancel' }
+  )
+  if (!ok) return
+
+  const syncResult = syncPresetToClass(activeClass.value, masterPreset)
+  if (syncResult && syncResult.updatedClass) {
+    await updateActiveClass(syncResult.updatedClass)
+    await alertMessage(
+      `Successfully synced "${sub.name}" from Master Library!\n${syncResult.changesCount} expectation/weight update(s) applied.`,
+      'Sync Complete'
+    )
+  }
 }
 
 const selectedGradeFilters = reactive({})
@@ -1036,6 +1094,19 @@ async function removeStrandUnit(subjectId, unitId) {
     }
   }
 
+  const sub = currentSubjects.value.find(s => s.subjectId === subjectId)
+  const unit = sub?.gradebookUnits?.find(u => u.unitId === unitId)
+  const expsInStrand = (sub?.expectations || []).filter(e => e.unitId === unitId)
+
+  const ok = await confirmMessage(
+    expsInStrand.length > 0
+      ? `Delete strand "${unit?.name || 'this strand'}"? Its ${expsInStrand.length} expectation(s) will become unassigned.`
+      : `Delete strand "${unit?.name || 'this strand'}"?`,
+    'Delete Strand',
+    { confirmLabel: 'Delete Strand', cancelLabel: 'Cancel', danger: true }
+  )
+  if (!ok) return
+
   const existing = currentSubjects.value.map(s => {
     if (s.subjectId === subjectId) {
       const units = (s.gradebookUnits || []).filter(u => u.unitId !== unitId)
@@ -1047,14 +1118,15 @@ async function removeStrandUnit(subjectId, unitId) {
 }
 
 async function removeSubjectCategory(subjectId, categoryId) {
+  const sub = currentSubjects.value.find(s => s.subjectId === subjectId)
+  const cat = (sub?.gradebookCategories || DEFAULT_TRADITIONAL_CATEGORIES).find(c => c.categoryId === categoryId)
+
   const classId = activeClass.value?.classId
   if (classId) {
     try {
       const assessments = await getAssessmentsByClass(classId)
       const hasAssessments = assessments.some(a => (a.subjectId === subjectId || !a.subjectId) && a.categoryId === categoryId)
       if (hasAssessments) {
-        const sub = currentSubjects.value.find(s => s.subjectId === subjectId)
-        const cat = (sub?.gradebookCategories || DEFAULT_TRADITIONAL_CATEGORIES).find(c => c.categoryId === categoryId)
         await confirmMessage(
           `Cannot delete category "${cat?.name || 'this category'}" because it has assessments assigned to it. Remove or reassign all assessments in this category before deleting.`,
           `Category in Use`,
@@ -1066,6 +1138,13 @@ async function removeSubjectCategory(subjectId, categoryId) {
       console.warn('Failed checking assessments for category deletion', e)
     }
   }
+
+  const ok = await confirmMessage(
+    `Delete category "${cat?.name || 'this category'}"?`,
+    'Delete Category',
+    { confirmLabel: 'Delete Category', cancelLabel: 'Cancel', danger: true }
+  )
+  if (!ok) return
 
   const existing = currentSubjects.value.map(s => {
     if (s.subjectId === subjectId) {
@@ -1123,14 +1202,66 @@ async function clearSubjectExpectations(subjectId) {
   const gradeLabel = isFiltered ? formatGradeLabel(activeGrade) : ''
   const count = isFiltered ? getSubjectExpectationCountForGrade(sub, activeGrade) : (sub.expectations?.length || 0)
 
+  // Identify which expectations are being targeted
+  let expsToClear = []
+  if (isFiltered) {
+    const gNorm = activeGrade.toLowerCase().trim()
+    const gNum = activeGrade.replace(/[^0-9]/g, '')
+    const matchingUnits = new Set(
+      (sub.gradebookUnits || [])
+        .filter(u => {
+          const uG = (u.gradeLevel || '').toLowerCase().trim()
+          return uG === gNorm || (gNum && uG.replace(/[^0-9]/g, '') === gNum)
+        })
+        .map(u => u.unitId)
+    )
+    expsToClear = (sub.expectations || []).filter(e => {
+      const eG = (e.gradeLevel || '').toLowerCase().trim()
+      return (eG === gNorm || (gNum && eG.replace(/[^0-9]/g, '') === gNum)) || (e.unitId && matchingUnits.has(e.unitId))
+    })
+  } else {
+    expsToClear = [...(sub.expectations || [])]
+  }
+
+  // Check assessment usage for expectations to be cleared
+  const classId = activeClass.value?.classId
+  const assessedExps = []
+  if (classId && expsToClear.length > 0) {
+    for (const exp of expsToClear) {
+      try {
+        const usage = await getExpectationUsageCounts(classId, exp.code, exp.expectationId)
+        if (usage.totalCount > 0) {
+          assessedExps.push({ exp, usage })
+        }
+      } catch (err) {
+        console.warn('Error checking usage for exp', exp.code, err)
+      }
+    }
+  }
+
+  let warningSuffix = ''
+  if (assessedExps.length > 0) {
+    const totalAsts = assessedExps.reduce((acc, x) => acc + x.usage.assessmentCount, 0)
+    const totalGrades = assessedExps.reduce((acc, x) => acc + x.usage.gradeCount, 0)
+    warningSuffix = `\n\n⚠️ Caution: ${assessedExps.length} of these expectation(s) are currently referenced in ${totalAsts} assessment(s) and ${totalGrades} student score(s). Clearing them will detach them from future calculations.`
+  }
+
   const ok = await confirmMessage(
     isFiltered
-      ? `Clear all ${count} ${gradeLabel} expectations for ${sub.name}? (Expectations for other grades will be preserved)`
-      : `Clear all ${count} expectations for ${sub.name}?`,
+      ? `Clear all ${count} ${gradeLabel} expectations for ${sub.name}?${warningSuffix}`
+      : `Clear all ${count} expectations for ${sub.name}?${warningSuffix}`,
     `Clear Expectations — ${sub.name}`,
     { confirmLabel: isFiltered ? `Clear ${gradeLabel} Expectations` : 'Clear All Expectations', danger: true }
   )
   if (!ok) return
+
+  // If confirmed and assessed expectations exist, detach them cleanly
+  if (classId && assessedExps.length > 0) {
+    for (const item of assessedExps) {
+      await detachExpectationFromAssessmentsAndGrades(classId, item.exp.code, item.exp.expectationId)
+      await detachEventsForDeletedExpectation(classId, item.exp.expectationId)
+    }
+  }
 
   const updated = currentSubjects.value.map(s => {
     if (s.subjectId === subjectId) {
@@ -1178,13 +1309,21 @@ async function handleExpectationImport(payload) {
     const targetSub = isReplace ? { ...sub, gradebookUnits: [], expectations: [] } : sub
 
     if (payload.mode === 'auto-units') {
-      return populateSubjectFromPreset(targetSub, payload.preset, payload.granularity)
+      return populateSubjectFromPreset(targetSub, payload.preset, payload.granularity, { forceRefresh: isReplace })
     }
 
     if (payload.mode === 'auto-paste-strands') {
       const units = isReplace ? [] : [...(sub.gradebookUnits || [])]
       const existingExps = isReplace ? [] : [...(sub.expectations || [])]
       const newExps = []
+
+      // Create lookup map for existing expectation IDs by code to prevent orphaning assessments
+      const existingExpMap = new Map()
+      ;(sub.expectations || []).forEach(e => {
+        if (e.code && e.expectationId) {
+          existingExpMap.set(cleanExpectationText(e.code).toUpperCase(), e)
+        }
+      })
 
       payload.strands.forEach((s, sIdx) => {
         let targetUnit = units.find(u => cleanUnitName(u.name).toLowerCase() === cleanUnitName(s.name).toLowerCase())
@@ -1198,12 +1337,21 @@ async function handleExpectationImport(payload) {
         }
 
         (s.expectations || []).forEach(e => {
+          const cleanCode = cleanExpectationText(e.code).toUpperCase()
+          const matchedOld = existingExpMap.get(cleanCode)
+          const stableId = matchedOld?.expectationId || `exp_${Date.now()}_${cleanCode}_${Math.floor(Math.random()*1000)}`
+          const expWeight = (e.weight !== undefined && e.weight !== null && !isNaN(e.weight)) 
+            ? Number(e.weight) 
+            : (matchedOld?.weight != null ? matchedOld.weight : 1.0)
+
           newExps.push({
-            expectationId: `exp_${Date.now()}_${e.code}`,
+            expectationId: stableId,
             unitId: targetUnit.unitId,
-            code: cleanExpectationText(e.code),
+            code: cleanCode,
             description: cleanExpectationText(e.description),
-            isOverall: e.isOverall ?? false
+            weight: expWeight,
+            isOverall: e.isOverall ?? false,
+            gradeLevel: e.gradeLevel || payload.preset?.grade || ''
           })
         })
       })
@@ -1225,13 +1373,31 @@ async function handleExpectationImport(payload) {
       }
 
       const existingExps = isReplace ? [] : [...(sub.expectations || [])]
-      const newExps = (payload.expectations || []).map(e => ({
-        expectationId: `exp_${Date.now()}_${e.code}`,
-        unitId: targetUnitId,
-        code: cleanExpectationText(e.code),
-        description: cleanExpectationText(e.description),
-        isOverall: e.isOverall ?? false
-      }))
+      const existingExpMap = new Map()
+      ;(sub.expectations || []).forEach(e => {
+        if (e.code && e.expectationId) {
+          existingExpMap.set(cleanExpectationText(e.code).toUpperCase(), e)
+        }
+      })
+
+      const newExps = (payload.expectations || []).map(e => {
+        const cleanCode = cleanExpectationText(e.code).toUpperCase()
+        const matchedOld = existingExpMap.get(cleanCode)
+        const stableId = matchedOld?.expectationId || `exp_${Date.now()}_${cleanCode}_${Math.floor(Math.random()*1000)}`
+        const expWeight = (e.weight !== undefined && e.weight !== null && !isNaN(e.weight))
+          ? Number(e.weight)
+          : (matchedOld?.weight != null ? matchedOld.weight : 1.0)
+
+        return {
+          expectationId: stableId,
+          unitId: targetUnitId,
+          code: cleanCode,
+          description: cleanExpectationText(e.description),
+          weight: expWeight,
+          isOverall: e.isOverall ?? false,
+          gradeLevel: e.gradeLevel || ''
+        }
+      })
 
       return {
         ...sub,
@@ -1290,7 +1456,7 @@ function getSubjectTotalWeight(sub) {
   const cats = (sub.gradebookCategories && sub.gradebookCategories.length > 0)
     ? sub.gradebookCategories
     : DEFAULT_TRADITIONAL_CATEGORIES
-  return cats.reduce((sum, c) => sum + (c.weight || 0), 0)
+  return cats.reduce((sum, c) => sum + (Number(c.weight) || 0), 0)
 }
 
 async function addSubjectCategory(subjectId) {
@@ -1381,6 +1547,9 @@ async function removeSubject(subjectId) {
   if (!ok) return
 
   const existing = currentSubjects.value.filter(s => s.subjectId !== subjectId)
+  if (activeSubjectId.value === subjectId) {
+    activeSubjectId.value = existing[0]?.subjectId || ''
+  }
   await updateActiveClass({ subjects: existing })
 }
 

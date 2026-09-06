@@ -282,8 +282,11 @@ const unitsData = computed(() => {
           const scoresId = expId ? (expScores[expId] || []) : []
           const scoresCode = (expCode && expCode !== expId) ? (expScores[expCode] || []) : []
           const scores = [...scoresId, ...scoresCode]
+          const validScores = scores
+            .map(Number)
+            .filter(v => !isNaN(v) && isFinite(v))
 
-          const avg = scores.length > 0 ? (scores.reduce((a, b) => a + b, 0) / scores.length) : null
+          const avg = validScores.length > 0 ? (validScores.reduce((a, b) => a + b, 0) / validScores.length) : null
           return {
             ...e,
             assessmentCount: count,

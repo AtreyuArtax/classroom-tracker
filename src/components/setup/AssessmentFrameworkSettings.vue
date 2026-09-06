@@ -214,6 +214,25 @@
           >
             <BookOpen :size="14" /> Import Expectations
           </button>
+          <button 
+            v-if="totalExpectationsCount > 0"
+            type="button" 
+            class="setup__btn-ghost setup__btn--small" 
+            style="color: var(--primary);"
+            title="Save this course configuration and expectation weights as your master preset in Curriculum Library"
+            @click="saveCourseToMasterLibrary"
+          >
+            <BookmarkCheck :size="14" /> Save to Master Library
+          </button>
+          <button 
+            v-if="totalExpectationsCount > 0"
+            type="button" 
+            class="setup__btn-ghost setup__btn--small" 
+            title="Sync expectation weights and wording from your Master Curriculum Library"
+            @click="syncCourseFromMasterLibrary"
+          >
+            <RefreshCw :size="14" /> Sync from Master
+          </button>
         </div>
       </div>
 
@@ -665,12 +684,17 @@ import * as eventService from '../../db/eventService.js'
 import { 
   ChevronUp, ChevronDown, Trash2, Plus, AlertTriangle, CheckCircle2, 
   ChevronRight, BookOpen, Copy, LayoutTemplate, Save, Edit2, Check, X, Search, 
-  Eye, Flag, Sliders, Layers 
+  Eye, Flag, Sliders, Layers, BookmarkCheck, RefreshCw 
 } from 'lucide-vue-next'
 import BaseModal from '../BaseModal.vue'
 import ExpectationImportModal from './ExpectationImportModal.vue'
 import ExpectationWeightBadge from './ExpectationWeightBadge.vue'
 import { cleanExpectationText } from '../../utils/textUtils.js'
+import { 
+  getMergedCurriculumPresets, 
+  saveMasterPreset, 
+  syncPresetToClass 
+} from '../../composables/useCurriculumLibrary.js'
 
 const { activeClass, updateActiveClass, triggerActiveClass } = useClassroom()
 const { alert, confirm } = useMessage()
@@ -804,6 +828,22 @@ function onExpectationImport(payload) {
     targetUnitsList = activeClass.value.gradebookUnits
   }
 
+  // Index existing units and expectations to maintain stable IDs across refreshes/imports
+  const existingExpMap = new Map()
+  const existingUnitMap = new Map()
+  targetUnitsList.forEach(u => {
+    if (u.name && u.unitId) {
+      existingUnitMap.set(cleanExpectationText(u.name).toLowerCase(), u.unitId)
+    }
+    if (u.expectations) {
+      u.expectations.forEach(e => {
+        if (e.code && e.expectationId) {
+          existingExpMap.set(cleanExpectationText(e.code).toUpperCase(), e)
+        }
+      })
+    }
+  })
+
   if (payload.mode === 'auto-units') {
     // Mode A: Auto-Create Units from preset strands
     if (payload.importBehavior === 'replace') {
@@ -847,15 +887,25 @@ function onExpectationImport(payload) {
         }))
       }
 
+      const cleanStrandName = cleanExpectationText(strand.name)
+      const matchedUnitId = existingUnitMap.get(cleanStrandName.toLowerCase())
+      const unitId = matchedUnitId || crypto.randomUUID()
+
       targetUnitsList.push({
-        unitId: crypto.randomUUID(),
-        name: cleanExpectationText(strand.name),
-        expectations: expList.map(e => ({
-          expectationId: crypto.randomUUID(),
-          code: e.code,
-          description: e.description,
-          weight: e.weight != null ? e.weight : 1.0
-        }))
+        unitId,
+        name: cleanStrandName,
+        expectations: expList.map(e => {
+          const cleanCode = cleanExpectationText(e.code).toUpperCase()
+          const matchedOld = existingExpMap.get(cleanCode)
+          const stableId = matchedOld?.expectationId || crypto.randomUUID()
+          const expWeight = (e.weight != null && !isNaN(e.weight)) ? Number(e.weight) : (matchedOld?.weight != null ? matchedOld.weight : 1.0)
+          return {
+            expectationId: stableId,
+            code: cleanCode,
+            description: e.description,
+            weight: expWeight
+          }
+        })
       })
     })
   } else if (payload.mode === 'auto-paste-strands') {
@@ -865,15 +915,27 @@ function onExpectationImport(payload) {
     }
 
     payload.strands.forEach(strand => {
+      const cleanStrandName = cleanExpectationText(strand.name)
+      const matchedUnitId = existingUnitMap.get(cleanStrandName.toLowerCase())
+      const unitId = matchedUnitId || crypto.randomUUID()
+
       targetUnitsList.push({
-        unitId: crypto.randomUUID(),
-        name: cleanExpectationText(strand.name),
-        expectations: (strand.expectations || []).map(e => ({
-          expectationId: crypto.randomUUID(),
-          code: cleanExpectationText(e.code),
-          description: cleanExpectationText(e.description),
-          weight: (e.weight !== undefined && e.weight !== null && !isNaN(e.weight)) ? Number(e.weight) : 1.0
-        }))
+        unitId,
+        name: cleanStrandName,
+        expectations: (strand.expectations || []).map(e => {
+          const cleanCode = cleanExpectationText(e.code).toUpperCase()
+          const matchedOld = existingExpMap.get(cleanCode)
+          const stableId = matchedOld?.expectationId || crypto.randomUUID()
+          const expWeight = (e.weight !== undefined && e.weight !== null && !isNaN(e.weight)) 
+            ? Number(e.weight) 
+            : (matchedOld?.weight != null ? matchedOld.weight : 1.0)
+          return {
+            expectationId: stableId,
+            code: cleanCode,
+            description: cleanExpectationText(e.description),
+            weight: expWeight
+          }
+        })
       })
     })
   } else if (payload.mode === 'attach-expectations') {
@@ -895,11 +957,17 @@ function onExpectationImport(payload) {
         targetUnit.expectations = []
       }
       payload.expectations.forEach(e => {
+        const cleanCode = cleanExpectationText(e.code).toUpperCase()
+        const matchedOld = existingExpMap.get(cleanCode)
+        const stableId = matchedOld?.expectationId || crypto.randomUUID()
+        const expWeight = (e.weight !== undefined && e.weight !== null && !isNaN(e.weight))
+          ? Number(e.weight)
+          : (matchedOld?.weight != null ? matchedOld.weight : 1.0)
         targetUnit.expectations.push({
-          expectationId: crypto.randomUUID(),
-          code: cleanExpectationText(e.code),
+          expectationId: stableId,
+          code: cleanCode,
           description: cleanExpectationText(e.description),
-          weight: (e.weight !== undefined && e.weight !== null && !isNaN(e.weight)) ? Number(e.weight) : 1.0
+          weight: expWeight
         })
       })
     }
@@ -1058,18 +1126,28 @@ const totalExpectationsCount = computed(() => {
 
 async function onClearExpectationsFromModal() {
   if (!activeClass.value) return
-  let loggedEventsCount = 0
-  if (activeClass.value.classId) {
-    const classEvents = await eventService.getEventsByClass(activeClass.value.classId)
-    const currentExpIds = new Set(
-      (activeUnits.value || []).flatMap(u => (u.expectations || []).map(e => e.expectationId || e.code).filter(Boolean))
-    )
-    loggedEventsCount = classEvents.filter(e => e.expectationId && currentExpIds.has(e.expectationId)).length
+  const allExps = (activeUnits.value || []).flatMap(u => u.expectations || [])
+  const classId = activeClass.value.classId
+  const assessedExps = []
+
+  if (classId && allExps.length > 0) {
+    for (const exp of allExps) {
+      try {
+        const usage = await gradebookService.getExpectationUsageCounts(classId, exp.code, exp.expectationId)
+        if (usage.totalCount > 0) {
+          assessedExps.push({ exp, usage })
+        }
+      } catch (err) {
+        console.warn('Error checking usage for exp', exp.code, err)
+      }
+    }
   }
 
   let promptMessage = `Clear all ${totalExpectationsCount.value} expectations? (Unit names will be preserved)`
-  if (loggedEventsCount > 0) {
-    promptMessage = `Clear all ${totalExpectationsCount.value} expectations? Warning: There are ${loggedEventsCount} logged student observations/conversations linked to these expectations. (Unit names will be preserved)`
+  if (assessedExps.length > 0) {
+    const totalAsts = assessedExps.reduce((acc, x) => acc + x.usage.assessmentCount, 0)
+    const totalGrades = assessedExps.reduce((acc, x) => acc + x.usage.gradeCount, 0)
+    promptMessage = `Clear all ${totalExpectationsCount.value} expectations? Warning: ${assessedExps.length} expectation(s) are referenced in ${totalAsts} assessment(s) and ${totalGrades} student score(s). Clearing them will detach them from future calculations.`
   }
 
   const ok = await confirm(
@@ -1078,6 +1156,15 @@ async function onClearExpectationsFromModal() {
     { confirmLabel: 'Clear Expectations', danger: true }
   )
   if (!ok) return
+
+  // Detach assessed expectations cleanly
+  if (classId && assessedExps.length > 0) {
+    for (const item of assessedExps) {
+      await gradebookService.detachExpectationFromAssessmentsAndGrades(classId, item.exp.code, item.exp.expectationId)
+      await eventService.detachEventsForDeletedExpectation(classId, item.exp.expectationId)
+    }
+  }
+
   if (availableCourseSections.value.length > 1 && activeCourseSection.value) {
     (activeClass.value.courseFrameworks[activeCourseSection.value].gradebookUnits || []).forEach(u => {
       u.expectations = []
@@ -1089,6 +1176,95 @@ async function onClearExpectationsFromModal() {
   }
   await saveGradebookSettings()
   showImportModal.value = false
+}
+
+async function saveCourseToMasterLibrary() {
+  if (!activeClass.value || totalExpectationsCount.value === 0) return
+  const courseCode = (activeCourseSection.value || activeClass.value.courseCode || activeClass.value.name || '').trim().toUpperCase()
+  const secPresets = getMergedCurriculumPresets('secondary')
+  const matched = secPresets.find(p => {
+    const pCode = (p.subjectCode || '').toUpperCase().trim()
+    return pCode === courseCode || (courseCode && p.presetId.includes(courseCode.toLowerCase()))
+  })
+
+  const presetId = matched?.presetId || `sec_${courseCode.toLowerCase().replace(/[^a-z0-9]/g, '') || 'course'}`
+  const title = matched?.title || `${activeClass.value.name || courseCode} Master`
+
+  const ok = await confirm(
+    `Save "${courseCode}" as your Master Curriculum Library blueprint for "${title}"?\n\nThis will update the default expectations and weight multipliers in your Master Library for this course. Future classes importing this course will use this configuration.`,
+    'Save to Master Library',
+    { confirmLabel: 'Save to Master', cancelLabel: 'Cancel' }
+  )
+  if (!ok) return
+
+  const strands = (activeUnits.value || []).map(u => {
+    const formattedExps = (u.expectations || []).map(e => ({
+      expectationId: e.expectationId || crypto.randomUUID(),
+      code: cleanExpectationText(e.code).toUpperCase(),
+      description: cleanExpectationText(e.description),
+      weight: (e.weight !== undefined && e.weight !== null && !isNaN(e.weight)) ? Number(e.weight) : 1.0,
+      active: e.active !== false
+    }))
+    return {
+      id: u.unitId,
+      name: cleanExpectationText(u.name),
+      expectations: formattedExps,
+      overalls: formattedExps.map(e => ({
+        code: e.code,
+        name: e.code,
+        description: e.description,
+        weight: e.weight,
+        specifics: []
+      }))
+    }
+  })
+
+  const preset = {
+    presetId,
+    title,
+    panel: 'secondary',
+    grade: activeClass.value.gradeLevel || '9',
+    subjectCode: courseCode,
+    gradingFramework: activeClass.value.gradingFramework || 'sbar',
+    strands,
+    isCustomMaster: true,
+    updatedAt: new Date().toISOString()
+  }
+
+  await saveMasterPreset(preset)
+  await alert(`Saved "${preset.title}" with custom expectation weights to your Master Curriculum Library!`, 'Saved to Library')
+}
+
+async function syncCourseFromMasterLibrary() {
+  if (!activeClass.value) return
+  const courseCode = (activeCourseSection.value || activeClass.value.courseCode || activeClass.value.name || '').trim().toUpperCase()
+  const secPresets = getMergedCurriculumPresets('secondary')
+  const masterPreset = secPresets.find(p => {
+    const pCode = (p.subjectCode || '').toUpperCase().trim()
+    return pCode === courseCode || (courseCode && p.presetId.includes(courseCode.toLowerCase()))
+  })
+
+  if (!masterPreset) {
+    await alert(`No matching master preset found in Curriculum Library for course ${courseCode}.`, 'Master Not Found')
+    return
+  }
+
+  const ok = await confirm(
+    `Sync "${courseCode}" with the Master Curriculum Library blueprint "${masterPreset.title}"?\n\nThis will update expectation weight multipliers and wording. Existing assessments and student grades will be preserved.`,
+    'Sync from Master Library',
+    { confirmLabel: 'Sync from Master', cancelLabel: 'Cancel' }
+  )
+  if (!ok) return
+
+  const syncResult = syncPresetToClass(activeClass.value, masterPreset)
+  if (syncResult && syncResult.updatedClass) {
+    await updateActiveClass(syncResult.updatedClass)
+    await saveGradebookSettings()
+    await alert(
+      `Successfully synced "${courseCode}" from Master Library!\n${syncResult.changesCount} expectation/weight update(s) applied.`,
+      'Sync Complete'
+    )
+  }
 }
 
 const categoriesRevision = ref(0)
@@ -1216,6 +1392,11 @@ async function toggleSbarWeighting() {
 
 async function applySbarPreset(preset) {
   if (!activeClass.value) return
+  if (activeClass.value.sbarWeighting?.components?.length > 0) {
+    if (!await confirm('Apply preset weighting? This will overwrite your existing non-term weighting components.', 'Overwrite Weighting', { danger: true })) {
+      return
+    }
+  }
   if (preset === 'gr9_10') {
     activeClass.value.sbarWeighting = {
       enabled: true,
@@ -1264,6 +1445,9 @@ async function addSbarComponent() {
 
 async function removeSbarComponent(idx) {
   if (!activeClass.value?.sbarWeighting?.components) return
+  const comp = activeClass.value.sbarWeighting.components[idx]
+  const name = comp?.name || 'this weighting component'
+  if (!await confirm(`Are you sure you want to remove "${name}"?`, 'Remove Component', { danger: true })) return
   activeClass.value.sbarWeighting.components.splice(idx, 1)
   sbarRevision.value++
   await saveSbarWeighting()
@@ -1543,7 +1727,9 @@ async function activeClassClassCategoriesUpdate(categories, gradebookUnits = [])
 }
 
 async function onDeleteTemplate(templateId) {
-  if (!await confirm('Delete this template?')) return
+  const tmpl = templates.value.find(t => t.templateId === templateId)
+  const name = tmpl?.name || 'this template'
+  if (!await confirm(`Delete saved framework template "${name}"?`, 'Delete Template', { danger: true })) return
   await gradebookService.deleteGradebookTemplate(templateId)
   templates.value = templates.value.filter(t => t.templateId !== templateId)
 }

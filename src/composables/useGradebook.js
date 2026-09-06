@@ -11,13 +11,13 @@ import * as classService from '../db/classService.js'
 import { getGlobalMilestones, getGradeBuckets } from '../db/settingsService.js'
 import { useUndo } from './useUndo.js'
 import { activeClass, activeSubjectId, selectedYear, selectedSemester, academicTerms } from './useClassroomState.js'
-import { getEffectiveClassRecord, getStudentEffectiveGrade, getUnitGradeLevel, ensureIEPPresetsForClass, autoPopulateAllElementarySubjects } from './useElementary.js'
+import { getEffectiveClassRecord, getStudentEffectiveGrade, getUnitGradeLevel, ensureIEPPresetsForClass, autoPopulateAllElementarySubjects, filterAssessmentsForSubject } from './useElementary.js'
 import { isCohortMatch } from '../db/gradebook/gradeCalc.js'
 import { formatLocalDate, getSchoolYearFromDate } from '../utils/dates.js'
 
 const { push: pushUndo } = useUndo()
 
-export { getEffectiveClassRecord, getStudentEffectiveGrade, getUnitGradeLevel, ensureIEPPresetsForClass, isCohortMatch }
+export { getEffectiveClassRecord, getStudentEffectiveGrade, getUnitGradeLevel, ensureIEPPresetsForClass, isCohortMatch, filterAssessmentsForSubject }
 
 // ─── Reactive State ──────────────────────────────────────────────────────────
 
@@ -263,10 +263,11 @@ export const filteredMilestones = computed(() => {
 // ─── Public API ──────────────────────────────────────────────────────────────
 
 export async function setActiveSubject(subjectId) {
+  if (activeClassRecord.value && activeClassRecord.value.classType !== 'elementary') return
   activeSubjectId.value = subjectId
   if (activeClassRecord.value) {
     const origClass = activeClass.value || await classService.getClass(activeClassRecord.value.classId)
-    if (origClass) {
+    if (origClass && origClass.classType === 'elementary') {
       await loadGradebook(origClass, subjectId)
     }
   }
@@ -279,6 +280,22 @@ export async function setActiveSubject(subjectId) {
  * @param {string|null} targetSubjectId
  */
 export async function loadGradebook(classRecord, targetSubjectId = null) {
+  if (!classRecord) {
+    clearGradebook()
+    return
+  }
+
+  // Pre-clear all reactive state when switching to a different class to prevent transient memory/UI bleed
+  if (!activeClassRecord.value || activeClassRecord.value.classId !== classRecord.classId) {
+    assessments.value = []
+    grades.value = []
+    classGrades.value = {}
+    selectedStudentId.value = null
+    selectedMilestone.value = null
+    activeSubCohortFilter.value = 'all'
+    resetAnalyticsState()
+  }
+
   let finalClassRecord = classRecord
   if (classRecord && classRecord.classType === 'elementary') {
     finalClassRecord = autoPopulateAllElementarySubjects(classRecord)
@@ -298,8 +315,7 @@ export async function loadGradebook(classRecord, targetSubjectId = null) {
   // Load data from DB
   const rawAssessments = await gradebookService.getAssessmentsByClass(classRecord.classId)
   if (classRecord.classType === 'elementary' && effectiveRecord?.activeSubjectId) {
-    const curSubId = effectiveRecord.activeSubjectId
-    assessments.value = rawAssessments.filter(a => a.subjectId === curSubId || !a.subjectId)
+    assessments.value = filterAssessmentsForSubject(rawAssessments, effectiveRecord)
   } else {
     assessments.value = rawAssessments
   }
@@ -328,6 +344,7 @@ export function clearGradebook() {
   classGrades.value = {}
   selectedStudentId.value = null
   selectedMilestone.value = null
+  activeSubCohortFilter.value = 'all'
   resetAnalyticsState()
 }
 
@@ -492,6 +509,8 @@ export async function deleteAssessment(assessmentId) {
     await alert('Failed to delete assessment.')
   }
 }
+
+export const getAssessmentUsage = gradebookService.getAssessmentUsage
 
 /**
  * Opens the Add Assessment modal with optional pre-filled data.

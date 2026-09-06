@@ -179,6 +179,17 @@ export function parseStudentInfoRows(rows, rosterStudents = []) {
       fullNameIndex.set(`${ln} ${fn}`, s)
       fullNameIndex.set(`${fn}${ln}`, s)
       fullNameIndex.set(`${ln}${fn}`, s)
+
+      // Index without hyphens/special chars for fuzzy resilience
+      const cleanFn = fn.replace(/[^a-z0-9\s]/g, '').trim()
+      const cleanLn = ln.replace(/[^a-z0-9\s]/g, '').trim()
+      if (cleanFn && cleanLn && (cleanFn !== fn || cleanLn !== ln)) {
+        fullNameIndex.set(`${cleanFn} ${cleanLn}`, s)
+        fullNameIndex.set(`${cleanLn}, ${cleanFn}`, s)
+        fullNameIndex.set(`${cleanLn} ${cleanFn}`, s)
+        fullNameIndex.set(`${cleanFn}${cleanLn}`, s)
+        fullNameIndex.set(`${cleanLn}${cleanFn}`, s)
+      }
     }
   }
 
@@ -208,6 +219,12 @@ export function parseStudentInfoRows(rows, rosterStudents = []) {
       completedAt: rawDate || new Date().toISOString()
     }
 
+    // Skip ghost / blank rows with no identifiers and no response content
+    const hasAnyContent = emails.length > 0 || names.length > 0 || Object.entries(surveyData).some(([k, v]) => k !== 'completedAt' && v !== null && v !== '')
+    if (!hasAnyContent) {
+      continue
+    }
+
     // Attempt matching to roster
     let matchedStudent = null
     let matchMethod = null
@@ -231,22 +248,30 @@ export function parseStudentInfoRows(rows, rosterStudents = []) {
     // 2. Match by Full Name
     if (!matchedStudent) {
       for (const n of names) {
-        const cleanN = n.toLowerCase().replace(/[^a-z0-9\s,]/g, '').trim()
-        if (fullNameIndex.has(cleanN)) {
-          matchedStudent = fullNameIndex.get(cleanN)
-          matchMethod = 'fullname'
-          break
-        }
-        // Try reversing "First Last" -> "Last, First"
-        const parts = cleanN.split(/\s+/)
-        if (parts.length === 2) {
-          const rev = `${parts[1]} ${parts[0]}`
-          if (fullNameIndex.has(rev)) {
-            matchedStudent = fullNameIndex.get(rev)
-            matchMethod = 'reversed_name'
+        const rawN = n.toLowerCase().trim()
+        const cleanNm = rawN.replace(/[,.]/g, ' ').replace(/\s+/g, ' ').trim()
+        const strippedN = rawN.replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim()
+        const noSpaceNm = cleanNm.replace(/\s+/g, '')
+
+        const candidates = [rawN, cleanNm, strippedN, noSpaceNm]
+        for (const cand of candidates) {
+          if (fullNameIndex.has(cand)) {
+            matchedStudent = fullNameIndex.get(cand)
+            matchMethod = 'fullname'
             break
           }
+          // Try reversing "First Last" -> "Last, First"
+          const parts = cand.split(/\s+/)
+          if (parts.length === 2) {
+            const rev = `${parts[1]} ${parts[0]}`
+            if (fullNameIndex.has(rev)) {
+              matchedStudent = fullNameIndex.get(rev)
+              matchMethod = 'reversed_name'
+              break
+            }
+          }
         }
+        if (matchedStudent) break
       }
     }
 

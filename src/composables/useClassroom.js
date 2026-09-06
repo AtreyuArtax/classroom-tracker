@@ -668,6 +668,7 @@ watch([selectedYear, selectedSemester, teachingMode], async () => {
     } else {
         activeClass.value = null
         students.value = {}
+        activeSubjectId.value = ''
     }
 })
 
@@ -1655,6 +1656,15 @@ async function _activateClass(cls) {
     
     // Reset sub-cohort filter on class switch so new class isn't accidentally filtered by previous class's sub-cohort
     activeSubCohortFilter.value = 'all'
+
+    // Cleanly isolate elementary activeSubjectId (zero residual state in secondary)
+    if (cls.classType === 'elementary') {
+        const subs = cls.subjects && cls.subjects.length > 0 ? cls.subjects : []
+        const currentValid = subs.find(s => s.subjectId === activeSubjectId.value)
+        activeSubjectId.value = currentValid ? currentValid.subjectId : (subs[0]?.subjectId || '')
+    } else {
+        activeSubjectId.value = ''
+    }
 
     thresholds.value = await settingsService.getThresholds()
     await computeWeeklyStats(cls.classId, Object.keys(cls.students ?? {}))

@@ -353,7 +353,11 @@ const studentTrends = computed(() => {
   if (!reportClass.value?.students || !gbAssessments.value || !gradeMap.value) return {}
   
   const productAssessments = [...gbAssessments.value]
-    .filter(a => a.assessmentType === 'product' && !a.excluded && a.target !== 'individual')
+    .filter(a => {
+      if (a.excluded || a.target === 'individual' || a.isFormative || a.purpose === 'formative') return false
+      if (a.assessmentType === 'observation' || a.assessmentType === 'conversation') return false
+      return true
+    })
     .sort((a, b) => new Date(a.date) - new Date(b.date))
     
   if (productAssessments.length === 0) return {}
@@ -365,8 +369,8 @@ const studentTrends = computed(() => {
     productAssessments.forEach(a => {
       const grade = gradeMap.value[a.assessmentId]?.[studentId]
       const percentage = getAssessmentPercentage ? getAssessmentPercentage(a, grade) : null
-      if (percentage !== null) {
-        data.push(percentage)
+      if (percentage !== null && !isNaN(percentage) && isFinite(percentage)) {
+        data.push(Math.round(percentage * 10) / 10)
       }
     })
     trends[studentId] = data
@@ -807,10 +811,11 @@ const attendanceRate = computed(() => {
     reportData.value.filter(e => !e.superseded).map(e => e.timestamp.slice(0, 10))
   )
   const distinctDays = dates.size
-  if (distinctDays === 0) return null
   const possible = studentCount * distinctDays
+  if (possible === 0) return null
   const absences = aggregates.attendance.totalAbsences
-  return ((possible - absences) / possible * 100).toFixed(1)
+  const rate = Math.max(0, Math.min(100, ((possible - absences) / possible) * 100))
+  return rate.toFixed(1)
 })
 
 const chronicallyAbsentCount = computed(() => {

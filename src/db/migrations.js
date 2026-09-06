@@ -445,6 +445,21 @@ export function migrateData(data) {
         }
       }
     }
+    if (migrated.settings && migrated.settings.customCurriculumPresets) {
+      for (const preset of Object.values(migrated.settings.customCurriculumPresets)) {
+        if (preset && Array.isArray(preset.strands)) {
+          for (const strand of preset.strands) {
+            if (strand.name) strand.name = cleanExpectationText(strand.name)
+            if (Array.isArray(strand.expectations)) {
+              for (const e of strand.expectations) {
+                if (e.code) e.code = cleanExpectationText(e.code)
+                if (e.description) e.description = cleanExpectationText(e.description)
+              }
+            }
+          }
+        }
+      }
+    }
     version = 31
   }
 

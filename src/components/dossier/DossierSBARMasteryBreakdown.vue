@@ -216,7 +216,7 @@ const unitBreakdown = computed(() => {
 
       // Look up in rawMastery
       const entry = rawMastery[code] || rawMastery[String(code).toLowerCase()] || rawMastery[String(code).toUpperCase()]
-      if (entry && entry.score != null) {
+      if (entry && entry.score != null && entry.score !== '' && !isNaN(Number(entry.score)) && isFinite(Number(entry.score))) {
         scores.push(Number(entry.score))
       }
     })

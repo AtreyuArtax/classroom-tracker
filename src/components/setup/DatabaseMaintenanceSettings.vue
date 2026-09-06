@@ -282,6 +282,7 @@ import * as classService from '../../db/classService.js'
 import * as eventService from '../../db/eventService.js'
 import * as settingsService from '../../db/settingsService.js'
 import * as gradebookService from '../../db/gradebookService.js'
+import { getDB } from '../../db/index.js'
 import { formatLocalDate } from '../../utils/dates.js'
 
 import { 
@@ -385,7 +386,8 @@ async function onRestoreSafetySnapshot(snapshotId) {
   }
 }
 
-function onDeleteSafetySnapshot(snapshotId) {
+async function onDeleteSafetySnapshot(snapshotId) {
+  if (!await confirm('Delete this safety recovery snapshot? Once removed, you will not be able to restore from this point in time.', 'Delete Snapshot', { danger: true })) return
   eventService.deleteSafetySnapshot(snapshotId)
   loadSafetySnapshots()
 }
@@ -571,8 +573,23 @@ async function fixUnlinkedSBARAssessments() {
 }
 
 async function onClearAllData() {
+  let countSummary = ''
+  try {
+    const db = await getDB()
+    const [classes, assessments, grades, events] = await Promise.all([
+      db.getAll('classes').catch(() => []),
+      db.getAll('assessments').catch(() => []),
+      db.getAll('grades').catch(() => []),
+      db.getAll('events').catch(() => [])
+    ])
+    const studentCount = classes.reduce((sum, c) => sum + Object.keys(c.students || {}).length, 0)
+    countSummary = `\n\nCurrent Database Counts:\n• Classes: ${classes.length}\n• Students: ${studentCount}\n• Assessments: ${assessments.length}\n• Recorded Student Marks: ${grades.length}\n• Attendance & Behavior Events: ${events.length}\n`
+  } catch (err) {
+    console.warn('Failed to prefetch db counts:', err)
+  }
+
   if (!await confirm(
-    'This will permanently delete ALL classes, students, and events from this device. THIS ACTION IS IRREVERSIBLE.',
+    `This will permanently delete ALL classes, students, assessments, marks, and historical events from this device. THIS ACTION IS IRREVERSIBLE.${countSummary}\nPlease type ERASE below to confirm.`,
     'Clear All Application Data',
     { danger: true, requireText: 'ERASE' }
   )) return

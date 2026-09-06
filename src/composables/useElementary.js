@@ -2,10 +2,10 @@ import { ref, computed } from 'vue'
 import { activeSubjectId, teachingMode } from './useClassroomState.js'
 import { DEFAULT_ELEMENTARY_SUBJECTS, DEFAULT_TRADITIONAL_CATEGORIES } from '../utils/elementarySubjects.js'
 import { findElementaryPreset, findElementaryPresets } from '../data/curriculum/index.js'
-import { isCohortMatch } from '../db/gradebook/gradeCalc.js'
+import { isCohortMatch, filterAssessmentsForSubject } from '../db/gradebook/gradeCalc.js'
 import { cleanExpectationText } from '../utils/textUtils.js'
 
-export { findElementaryPreset, findElementaryPresets, DEFAULT_ELEMENTARY_SUBJECTS }
+export { findElementaryPreset, findElementaryPresets, DEFAULT_ELEMENTARY_SUBJECTS, filterAssessmentsForSubject }
 
 
 /**
@@ -59,6 +59,10 @@ export function getEffectiveClassRecord(classRecord, targetSubjectId = null, tar
 
     return {
       ...classRecord,
+      activeSubjectId: null,
+      activeSubjectName: null,
+      activeSubjectCode: null,
+      activeSubjectIcon: null,
       gradebookCategories: cats,
       gradebookUnits: units
     }
@@ -211,6 +215,21 @@ export function populateSubjectFromPresets(subject, presetsList = [], granularit
   let existingUnits = [...(subject.gradebookUnits || [])]
   let existingExpectations = [...(subject.expectations || [])]
 
+  // Index existing units and expectations to maintain stable IDs across refreshes/imports
+  const existingExpMap = new Map()
+  ;(subject.expectations || []).forEach(e => {
+    if (e.code && e.expectationId) {
+      existingExpMap.set(cleanExpectationText(e.code).toUpperCase(), e.expectationId)
+    }
+  })
+
+  const existingUnitMap = new Map()
+  ;(subject.gradebookUnits || []).forEach(u => {
+    if (u.name && u.unitId) {
+      existingUnitMap.set(cleanExpectationText(u.name).toLowerCase(), u.unitId)
+    }
+  })
+
   list.forEach(preset => {
     if (!preset || !preset.strands) return
     const pGrade = preset.grade || ''
@@ -222,30 +241,53 @@ export function populateSubjectFromPresets(subject, presetsList = [], granularit
     } else {
       // Prevent duplicating if this grade's preset is already imported
       const alreadyImported = existingExpectations.some(e => (e.gradeLevel || '').toLowerCase() === pGrade.toLowerCase())
-      if (alreadyImported) return
+      if (alreadyImported && !forceRefresh) return
     }
 
     preset.strands.forEach((strand, idx) => {
       const gTag = pGrade.replace(/[^a-z0-9]/gi, '')
-      const unitId = `unit_${Date.now()}_${gTag}_${idx}_${Math.floor(Math.random()*1000)}`
       const unitName = (strand.name || '').replace(/^\[Grade\s*\d+\]\s*/i, '').trim()
+      const cleanName = cleanExpectationText(unitName)
+      const matchedUnitId = existingUnitMap.get(cleanName.toLowerCase())
+      const unitId = matchedUnitId || `unit_${Date.now()}_${gTag}_${idx}_${Math.floor(Math.random()*1000)}`
+
       existingUnits.push({
         unitId,
-        name: cleanExpectationText(unitName),
+        name: cleanName,
         gradeLevel: pGrade,
         weight: 0
       })
 
+      const directExpectations = strand.expectations
       const overalls = strand.overalls || strand.overallExpectations
-      if (overalls && overalls.length > 0) {
+
+      if (directExpectations && Array.isArray(directExpectations) && directExpectations.length > 0) {
+        directExpectations.forEach(exp => {
+          if (exp.active === false) return
+          const expWeight = (exp.weight !== undefined && exp.weight !== null && !isNaN(exp.weight)) ? Number(exp.weight) : 1.0
+          const cleanCode = cleanExpectationText(exp.code).toUpperCase()
+          const stableId = existingExpMap.get(cleanCode) || exp.id || exp.expectationId || ((typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : `exp_${Date.now()}_${gTag}_${cleanCode}_${Math.floor(Math.random()*10000)}`)
+          existingExpectations.push({
+            expectationId: stableId,
+            unitId,
+            code: cleanCode,
+            description: cleanExpectationText(exp.description),
+            isOverall: exp.isOverall ?? false,
+            weight: expWeight,
+            gradeLevel: pGrade
+          })
+        })
+      } else if (overalls && overalls.length > 0) {
         overalls.forEach(ov => {
           const ovWeight = (ov.weight !== undefined && ov.weight !== null && !isNaN(ov.weight)) ? Number(ov.weight) : 1.0
+          const cleanOvCode = cleanExpectationText(ov.code).toUpperCase()
+          const stableOvId = existingExpMap.get(cleanOvCode) || ((typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : `exp_${Date.now()}_${gTag}_${cleanOvCode}_${Math.floor(Math.random()*10000)}`)
           const specifics = ov.specifics || ov.specificExpectations || []
           if (resolvedGranularity === 'overall') {
             existingExpectations.push({
-              expectationId: (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : `exp_${Date.now()}_${gTag}_${ov.code}_${Math.floor(Math.random()*10000)}`,
+              expectationId: stableOvId,
               unitId,
-              code: cleanExpectationText(ov.code),
+              code: cleanOvCode,
               description: cleanExpectationText(ov.description),
               isOverall: true,
               weight: ovWeight,
@@ -254,10 +296,12 @@ export function populateSubjectFromPresets(subject, presetsList = [], granularit
           } else if ((resolvedGranularity === 'all' || resolvedGranularity === 'success_criteria') && specifics.length > 0) {
             specifics.forEach(sp => {
               const spWeight = (sp.weight !== undefined && sp.weight !== null && !isNaN(sp.weight)) ? Number(sp.weight) : ovWeight
+              const cleanSpCode = cleanExpectationText(sp.code).toUpperCase()
+              const stableSpId = existingExpMap.get(cleanSpCode) || ((typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : `exp_${Date.now()}_${gTag}_${cleanSpCode}_${Math.floor(Math.random()*10000)}`)
               existingExpectations.push({
-                expectationId: (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : `exp_${Date.now()}_${gTag}_${sp.code}_${Math.floor(Math.random()*10000)}`,
+                expectationId: stableSpId,
                 unitId,
-                code: cleanExpectationText(sp.code),
+                code: cleanSpCode,
                 description: cleanExpectationText(sp.description),
                 isOverall: false,
                 weight: spWeight,
@@ -267,9 +311,9 @@ export function populateSubjectFromPresets(subject, presetsList = [], granularit
           } else {
             // Preserve overall expectation if no specifics exist
             existingExpectations.push({
-              expectationId: (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : `exp_${Date.now()}_${gTag}_${ov.code}_${Math.floor(Math.random()*10000)}`,
+              expectationId: stableOvId,
               unitId,
-              code: cleanExpectationText(ov.code),
+              code: cleanOvCode,
               description: cleanExpectationText(ov.description || ov.name),
               isOverall: true,
               weight: ovWeight,
@@ -414,6 +458,7 @@ export function useElementary() {
     activeSubjectId,
     isElementaryMode,
     getEffectiveClassRecord,
+    filterAssessmentsForSubject,
     parseGradesFromClass,
     detectGradeFromClassName,
     getEffectiveGradeLevel,

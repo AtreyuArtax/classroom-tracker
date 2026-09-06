@@ -1042,7 +1042,9 @@ const overallMasteryMap = computed(() => {
   for (const sId in m) {
     const expData = m[sId]
     if (!expData) continue
-    const scores = Object.values(expData).map(e => e.score).filter(s => s != null)
+    const scores = Object.values(expData)
+      .map(e => Number(e.score))
+      .filter(s => !isNaN(s) && isFinite(s))
     if (scores.length > 0) {
       const avg = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length)
       map[sId] = { score: avg, badge: getSBARLevelBadge(avg) }

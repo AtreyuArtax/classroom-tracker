@@ -108,25 +108,32 @@ const history = computed(() => {
         if (!grade || grade.excluded) continue
 
         const isSBART = a.categoryId === 'sbar_general' || (a.expectationIds && a.expectationIds.length > 0) || a.expectationId != null || a.isSbar || a.gradingFramework === 'sbar'
-        const possible = isSBART ? 100 : (a.scaledTotal ?? a.totalPoints)
+        const rawPossible = isSBART ? 100 : (a.scaledTotal ?? a.totalPoints)
+        const possible = Number(rawPossible) || 0
         if (grade.missing) {
           catPossible += possible
-        } else if (grade.resolvedScore !== null) {
+        } else if (grade.resolvedScore != null && !isNaN(Number(grade.resolvedScore))) {
+          const scoreNum = Number(grade.resolvedScore)
           if (isSBART) {
-            catEarned += grade.resolvedScore
+            catEarned += scoreNum
             catPossible += 100
           } else {
-            const divisor = a.totalPoints || 1
-            catEarned += a.scaledTotal ? (grade.resolvedScore / divisor) * a.scaledTotal : grade.resolvedScore
+            const rawDiv = Number(a.totalPoints)
+            const divisor = (!isNaN(rawDiv) && rawDiv > 0) ? rawDiv : 1
+            const scaled = a.scaledTotal ? (scoreNum / divisor) * Number(a.scaledTotal) : scoreNum
+            catEarned += scaled
             catPossible += possible
           }
         }
       }
 
-      if (catPossible > 0) {
+      const catWeight = Number(cat.weight || 0)
+      if (catPossible > 0 && catWeight > 0 && !isNaN(catWeight)) {
         const catPerc = (catEarned / catPossible) * 100
-        weightedSum += catPerc * (cat.weight / 100)
-        weightUsed += cat.weight
+        if (!isNaN(catPerc) && isFinite(catPerc)) {
+          weightedSum += catPerc * (catWeight / 100)
+          weightUsed += catWeight
+        }
       }
     }
 
@@ -139,11 +146,16 @@ const history = computed(() => {
       if (!g || g.excluded) return null
       if (g.missing) return 0
       const isSBART = a.categoryId === 'sbar_general' || (a.expectationIds && a.expectationIds.length > 0)
+      if (g.resolvedScore == null || isNaN(Number(g.resolvedScore))) return null
+      const scoreNum = Number(g.resolvedScore)
       if (isSBART) {
-        return g.resolvedScore
+        return scoreNum
       }
-      return (g.resolvedScore / (a.totalPoints || 1)) * 100
-    }).filter(s => s !== null)
+      const rawDiv = Number(a.totalPoints)
+      const divisor = (!isNaN(rawDiv) && rawDiv > 0) ? rawDiv : 1
+      const pct = (scoreNum / divisor) * 100
+      return (!isNaN(pct) && isFinite(pct)) ? pct : null
+    }).filter(s => s !== null && !isNaN(s) && isFinite(s))
     
     const trending = recentScores.length > 0 
       ? recentScores.reduce((a, b) => a + b, 0) / recentScores.length 
@@ -151,8 +163,8 @@ const history = computed(() => {
 
     points.push({
       date: formatLocalDisplay(currentAsOf, { month: 'short', day: 'numeric' }),
-      overall: overall !== null ? Math.round(overall * 10) / 10 : null,
-      trending: trending !== null ? Math.round(trending * 10) / 10 : null
+      overall: (overall !== null && !isNaN(overall) && isFinite(overall)) ? Math.round(overall * 10) / 10 : null,
+      trending: (trending !== null && !isNaN(trending) && isFinite(trending)) ? Math.round(trending * 10) / 10 : null
     })
   }
 

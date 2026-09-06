@@ -17,10 +17,14 @@ import { calculateSBARStudentOverallMastery } from './gradeCalcSBAR.js'
  */
 export function calculateStandardDeviation(values) {
   if (!values || values.length < 2) return null
-  const mean = values.reduce((a, b) => a + b, 0) / values.length
-  const squaredDiffs = values.map(v => Math.pow(v - mean, 2))
+  const valid = values
+    .filter(v => v !== null && v !== undefined && v !== '' && !isNaN(Number(v)) && isFinite(Number(v)))
+    .map(Number)
+  if (valid.length < 2) return null
+  const mean = valid.reduce((a, b) => a + b, 0) / valid.length
+  const squaredDiffs = valid.map(v => Math.pow(v - mean, 2))
   // Use Sample SD (n-1) for cohort samples
-  const avgSquaredDiff = squaredDiffs.reduce((a, b) => a + b, 0) / (values.length - 1)
+  const avgSquaredDiff = squaredDiffs.reduce((a, b) => a + b, 0) / (valid.length - 1)
   return Math.sqrt(avgSquaredDiff)
 }
 
@@ -32,25 +36,29 @@ export function calculateStandardDeviation(values) {
  * @returns {Object} { clean, outliers, cutoff, mean, sd }
  */
 export function detectOutliers(values, threshold = 1.5) {
-  if (!values || values.length < 3) return { clean: values, outliers: [] }
-  const mean = values.reduce((a, b) => a + b, 0) / values.length
-  const sd = calculateStandardDeviation(values)
-  if (sd === null || sd === 0) return { clean: values, outliers: [] }
+  if (!values || values.length < 3) return { clean: values || [], outliers: [] }
+  const valid = values
+    .filter(v => v !== null && v !== undefined && v !== '' && !isNaN(Number(v)) && isFinite(Number(v)))
+    .map(Number)
+  if (valid.length < 3) return { clean: valid, outliers: [] }
+  const mean = valid.reduce((a, b) => a + b, 0) / valid.length
+  const sd = calculateStandardDeviation(valid)
+  if (sd === null || sd === 0) return { clean: valid, outliers: [] }
 
   let cutoff = mean - (threshold * sd)
 
   // Hard Zero / Extreme Deviation Rule:
   // If the class mean is healthy (>50%), any student at 0% is statistically
   // likely to be a non-participator (outlier) unless >25% of the class also has 0%.
-  const zeroCount = values.filter(v => v === 0).length
-  const zeroRatio = zeroCount / values.length
+  const zeroCount = valid.filter(v => v === 0).length
+  const zeroRatio = zeroCount / valid.length
   if (mean > 50 && zeroRatio < 0.25) {
     // Ensure cutoff is at least 1% to catch hard zeros/Missing entries
     if (cutoff < 1) cutoff = 1
   }
 
-  const clean = values.filter(v => v >= cutoff)
-  const outliers = values.filter(v => v < cutoff)
+  const clean = valid.filter(v => v >= cutoff)
+  const outliers = valid.filter(v => v < cutoff)
   return { clean, outliers, cutoff, mean, sd }
 }
 
@@ -122,7 +130,11 @@ export function buildLevelDistributionBuckets(percentages, customBuckets = null)
  */
 export function resolveAttemptScore(attempts, retestPolicy) {
   if (!attempts || attempts.length === 0) return null
-  const getVal = a => (a.pointsEarned != null ? Number(a.pointsEarned) : (a.score != null ? Number(a.score) : (a.points != null ? Number(a.points) : null)))
+  const getVal = a => {
+    const raw = (a.pointsEarned != null ? a.pointsEarned : (a.score != null ? a.score : (a.points != null ? a.points : null)))
+    if (raw === null || raw === undefined || raw === '' || isNaN(Number(raw))) return null
+    return Number(raw)
+  }
   const validObjects = attempts.filter(a => getVal(a) !== null)
   if (validObjects.length === 0) return null
   const valid = validObjects.map(getVal)
@@ -159,16 +171,18 @@ export function getAssessmentPercentage(assessment, grade) {
   if (grade.attempts && grade.attempts.length > 0) {
     earned = resolveAttemptScore(grade.attempts, assessment?.retestPolicy)
   }
-  if (earned === null && grade.resolvedScore !== null && grade.resolvedScore !== undefined) {
+  if (earned === null && grade.resolvedScore !== null && grade.resolvedScore !== undefined && grade.resolvedScore !== '') {
     earned = Number(grade.resolvedScore)
   }
-  if (earned === null && grade.score !== null && grade.score !== undefined) {
+  if (earned === null && grade.score !== null && grade.score !== undefined && grade.score !== '') {
     earned = Number(grade.score)
   }
-  if (earned === null || isNaN(earned)) return null
+  if (earned === null || isNaN(earned) || !isFinite(earned)) return null
   
-  const divisor = (assessment?.totalPoints > 0) ? Number(assessment.totalPoints) : 1
-  return (earned / divisor) * 100
+  const rawDivisor = Number(assessment?.totalPoints)
+  const divisor = (!isNaN(rawDivisor) && rawDivisor > 0) ? rawDivisor : 1
+  const pct = (earned / divisor) * 100
+  return (isNaN(pct) || !isFinite(pct)) ? null : pct
 }
 
 export function _calculateCategoryGrade(catAssessments, gradeMap, capAt100 = false) {
@@ -194,14 +208,14 @@ export function _calculateCategoryGrade(catAssessments, gradeMap, capAt100 = fal
     if (grade.attempts && grade.attempts.length > 0) {
       earned = resolveAttemptScore(grade.attempts, assessment.retestPolicy)
     }
-    if (earned === null && grade.resolvedScore !== null && grade.resolvedScore !== undefined) {
+    if (earned === null && grade.resolvedScore !== null && grade.resolvedScore !== undefined && grade.resolvedScore !== '') {
       earned = Number(grade.resolvedScore)
     }
-    if (earned === null && grade.score !== null && grade.score !== undefined) {
+    if (earned === null && grade.score !== null && grade.score !== undefined && grade.score !== '') {
       earned = Number(grade.score)
     }
 
-    if (earned === null || isNaN(earned)) continue
+    if (earned === null || isNaN(earned) || !isFinite(earned)) continue
 
     // Guard against division by zero
     const divisor = (assessment.totalPoints > 0) ? Number(assessment.totalPoints) : 1
@@ -224,12 +238,16 @@ export function _calculateCategoryGrade(catAssessments, gradeMap, capAt100 = fal
 export function getBucketMode(scores) {
   if (!scores || scores.length === 0) return { result: null, isFallback: false }
   
+  const validScores = scores.filter(s => s && s.percentage != null && !isNaN(Number(s.percentage)) && isFinite(Number(s.percentage)))
+  if (validScores.length === 0) return { result: null, isFallback: false }
+
   const buckets = Array.from({ length: 10 }, () => []) // 0-9: 0-9%, 10-19%, ..., 90%+
   
-  scores.forEach(s => {
-    let index = Math.floor(s.percentage / 10)
-    const safeIdx = Math.max(0, Math.min(9, index))
-    buckets[safeIdx].push(s)
+  validScores.forEach(s => {
+    const p = Number(s.percentage)
+    let index = Math.floor(p / 10)
+    const safeIdx = Math.max(0, Math.min(9, isNaN(index) ? 0 : index))
+    buckets[safeIdx].push({ ...s, percentage: p })
   })
 
   let maxCount = 0
@@ -276,12 +294,16 @@ export function getBucketMode(scores) {
  */
 export function calculateMedian(scores) {
   if (!scores || scores.length === 0) return null
-  const sorted = [...scores].sort((a, b) => a - b)
-  const mid = Math.floor(sorted.length / 2)
-  if (sorted.length % 2 === 0) {
-    return (sorted[mid - 1] + sorted[mid]) / 2
+  const valid = scores
+    .filter(s => s !== null && s !== undefined && s !== '' && !isNaN(Number(s)) && isFinite(Number(s)))
+    .map(Number)
+  if (valid.length === 0) return null
+  valid.sort((a, b) => a - b)
+  const mid = Math.floor(valid.length / 2)
+  if (valid.length % 2 === 0) {
+    return (valid[mid - 1] + valid[mid]) / 2
   }
-  return sorted[mid]
+  return valid[mid]
 }
 
 /**
@@ -345,8 +367,11 @@ export function calculateMostConsistent(studentId, classRecord, gradeMap, assess
         totalCount: scores.length,
         isFallback 
       }
-      weightedSum += rounded * (cat.weight / 100)
-      totalWeight += cat.weight
+      const catWeight = Number(cat.weight || 0)
+      if (catWeight > 0 && !isNaN(catWeight)) {
+        weightedSum += rounded * (catWeight / 100)
+        totalWeight += catWeight
+      }
     } else {
       breakdown[cat.categoryId] = null
     }
@@ -403,8 +428,11 @@ export function calculateWeightedMedian(studentId, classRecord, gradeMap, assess
         percentage: rounded, 
         count: scores.length 
       }
-      weightedSum += rounded * (cat.weight / 100)
-      totalWeight += cat.weight
+      const catWeight = Number(cat.weight || 0)
+      if (catWeight > 0 && !isNaN(catWeight)) {
+        weightedSum += rounded * (catWeight / 100)
+        totalWeight += catWeight
+      }
     }
   }
 
@@ -436,6 +464,43 @@ export function isCohortMatch(targetTag, studentCohort) {
   return cleanTarget === cleanCohort
 }
 
+/**
+ * Scopes an assessments list to an active elementary subject.
+ * Returns the full assessments list untouched for non-elementary classes or when no subject is scoped.
+ * Uses exact parity across calculation engines:
+ * 1. Checks a.subjectId === subId
+ * 2. Checks a.unitId in subUnits
+ * 3. Checks a.expectationIds / expectationId in subExps
+ * 4. For unassigned assessments (no subjectId, no unitId, no expectations), scopes to first subject.
+ *
+ * @param {Array<Object>} assessmentsList
+ * @param {Object} classRecord - effective or raw class record
+ * @param {string|null} [targetSubjectId=null]
+ * @returns {Array<Object>}
+ */
+export function filterAssessmentsForSubject(assessmentsList, classRecord, targetSubjectId = null) {
+  if (!Array.isArray(assessmentsList) || assessmentsList.length === 0) return []
+  if (!classRecord || classRecord.classType !== 'elementary') return assessmentsList
+
+  const subId = String(targetSubjectId || classRecord.activeSubjectId || '')
+  if (!subId) return assessmentsList
+
+  const subUnits = new Set((classRecord.gradebookUnits || []).map(u => String(u.unitId)))
+  const subExps = new Set((classRecord.expectations || []).map(e => String(e.code || e.expectationId).toLowerCase()))
+  const firstSubId = String(classRecord.subjects?.[0]?.subjectId || classRecord.activeSubjectId || 'elem_sub_math')
+
+  return assessmentsList.filter(a => {
+    if (a.subjectId) return String(a.subjectId) === subId
+    if (a.unitId && subUnits.has(String(a.unitId))) return true
+    const expIds = a.expectationIds || (a.expectationId ? [a.expectationId] : [])
+    if (expIds.length > 0 && expIds.some(code => subExps.has(String(code).toLowerCase()))) return true
+    if (!a.subjectId && !a.unitId && expIds.length === 0) {
+      return subId === firstSubId
+    }
+    return false
+  })
+}
+
 export async function calculateStudentGrade(studentId, classRecord, { asOf = null, dateFrom = null, assessmentsPreRef = null, gradesPreRef = null, settingsPreRef = null } = {}) {
   if (!studentId || !classRecord || !classRecord.classId) return null
   let assessments = assessmentsPreRef || await getAssessmentsByClass(classRecord.classId)
@@ -443,21 +508,7 @@ export async function calculateStudentGrade(studentId, classRecord, { asOf = nul
   
   // Scope assessments to active subject for elementary classes
   if (classRecord.classType === 'elementary' && classRecord.activeSubjectId) {
-    const subId = classRecord.activeSubjectId
-    const subUnits = new Set((classRecord.gradebookUnits || []).map(u => String(u.unitId)))
-    const subExps = new Set((classRecord.expectations || []).map(e => String(e.code || e.expectationId).toLowerCase()))
-
-    assessments = assessments.filter(a => {
-      if (a.subjectId) return String(a.subjectId) === String(subId)
-      if (a.unitId && subUnits.has(String(a.unitId))) return true
-      const expIds = a.expectationIds || (a.expectationId ? [a.expectationId] : [])
-      if (expIds.length > 0 && expIds.some(code => subExps.has(String(code).toLowerCase()))) return true
-      if (!a.subjectId && !a.unitId && expIds.length === 0) {
-        const firstSubId = classRecord.subjects?.[0]?.subjectId || classRecord.activeSubjectId || 'elem_sub_math'
-        return String(subId) === String(firstSubId)
-      }
-      return false
-    })
+    assessments = filterAssessmentsForSubject(assessments, classRecord)
   }
 
   const gradeMap = {}
@@ -468,8 +519,11 @@ export async function calculateStudentGrade(studentId, classRecord, { asOf = nul
   }
 
   const studentRecord = classRecord.students?.[studentId]
-  const adjustedGrade = studentRecord?.adjustedGrade
-  const isAdjusted = adjustedGrade !== undefined && adjustedGrade !== null
+  const rawAdjusted = studentRecord?.adjustedGrade
+  const adjustedGrade = (rawAdjusted !== null && rawAdjusted !== undefined && rawAdjusted !== '' && !isNaN(Number(rawAdjusted)))
+    ? Number(rawAdjusted)
+    : null
+  const isAdjusted = adjustedGrade !== null
 
   if (classRecord.gradingFramework === 'sbar') {
     const sbarAssessments = (asOf || dateFrom)
@@ -479,7 +533,8 @@ export async function calculateStudentGrade(studentId, classRecord, { asOf = nul
 
     // Check if Weighted Evaluation Components (e.g. 65% Coursework / 25% Exam / 10% Attendance) are enabled
     if (classRecord.sbarWeighting?.enabled) {
-      const termWeight = Number(classRecord.sbarWeighting.termWeight ?? 65)
+      const rawTermWeight = classRecord.sbarWeighting.termWeight
+      const termWeight = (rawTermWeight != null && !isNaN(Number(rawTermWeight))) ? Math.max(0, Number(rawTermWeight)) : 65
       const components = classRecord.sbarWeighting.components || []
       let weightedSum = 0
       let weightUsed = 0
@@ -640,25 +695,24 @@ export async function calculateStudentGrade(studentId, classRecord, { asOf = nul
     // Individual category grades allow bonus marks >100% so they roll up accurately
     const calculatedPercentage = _calculateCategoryGrade(catAssessments, gradeMap, false)
 
-    if (calculatedPercentage === null) {
-      categoryResults[category.categoryId] = null
-      continue
-    }
-
-    // Check for manual category override
+    // Check for manual category override (honored even if calculatedPercentage is null)
     const override = studentRecord?.categoryOverrides?.[category.categoryId]
-    const overrideValue = Number(override?.overridePercentage ?? override)
+    const rawOverride = override?.overridePercentage ?? override
+    const overrideValue = (rawOverride !== null && rawOverride !== undefined && rawOverride !== '') ? Number(rawOverride) : null
+    const hasOverride = overrideValue !== null && !isNaN(overrideValue)
     
-    if (override !== undefined && override !== null && !isNaN(overrideValue)) {
+    if (hasOverride) {
       categoryResults[category.categoryId] = {
         percentage: preciseRound(overrideValue),
         isOverridden: true
       }
-    } else {
+    } else if (calculatedPercentage !== null && !isNaN(calculatedPercentage) && isFinite(calculatedPercentage)) {
       categoryResults[category.categoryId] = {
         percentage: preciseRound(calculatedPercentage),
         isOverridden: false
       }
+    } else {
+      categoryResults[category.categoryId] = null
     }
   }
 
@@ -670,8 +724,11 @@ export async function calculateStudentGrade(studentId, classRecord, { asOf = nul
     const result = categoryResults[category.categoryId]
     if (!result) continue
     
-    weightedSum += result.percentage * (category.weight / 100)
-    weightUsed += category.weight
+    const catWeight = Number(category.weight || 0)
+    if (catWeight <= 0 || isNaN(catWeight)) continue
+
+    weightedSum += result.percentage * (catWeight / 100)
+    weightUsed += catWeight
   }
 
   const rawOverall = weightUsed === 0 ? null : (weightedSum / weightUsed) * 100
@@ -691,9 +748,11 @@ export async function calculateStudentGrade(studentId, classRecord, { asOf = nul
 
   return {
     overallGrade: displayOverallGrade,
+    displayOverallGrade,
     calculatedOverallGrade: finalCalculatedGrade,
     rawOverallGrade: rawOverall !== null ? preciseRound(rawOverall, 2) : null,
     isGradeAdjusted: isAdjusted,
+    isAdjusted,
     adjustedGrade: isAdjusted ? preciseRound(Number(adjustedGrade), 0) : null,
     mostConsistent,
     median: median && median.percentage !== null ? Math.round(median.percentage * 10) / 10 : null,

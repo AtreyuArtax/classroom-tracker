@@ -487,10 +487,12 @@ import {
   setPrimaryAttempt,
   updateAttemptComment,
   deleteAssessment,
+  getAssessmentUsage,
   filteredMilestones,
   globalMilestones,
   isAssessmentInSubCohort
 } from '../../composables/useGradebook.js'
+import { getDB } from '../../db/index.js'
 import { useStudentDossier } from '../../composables/useStudentDossier.js'
 import { getStudentEffectiveGrade } from '../../composables/useElementary.js'
 import { activeSubjectId } from '../../composables/useClassroomState.js'
@@ -901,7 +903,7 @@ const attendanceAverages = computed(() => {
   return {
     absencesAvg: (totalAbs / weekCount).toFixed(1),
     latesAvg: (totalLates / weekCount).toFixed(1),
-    washroomAvg: (totalWash / weekCount).toFixed(1),
+washroomAvg: (totalWash / weekCount).toFixed(1),
     latesTotal: totalLateMins,
     washroomTotal: totalWashMins,
     washroomMinsAvg: Math.round((totalWashMins / weekCount) * 2) / 2,
@@ -911,14 +913,26 @@ const attendanceAverages = computed(() => {
 })
 
 async function handleDeleteHistoryItem(eventId) {
-  if (await confirm('Are you sure you want to delete this entry? This will also update student statistics.', 'Delete Entry', { danger: true })) {
+  let detail = ''
+  try {
+    const db = await getDB()
+    const original = await db.get('events', eventId)
+    if (original) {
+      const type = original.acType ? (original.acType === 'observation' ? 'Observation' : 'Conversation') : (original.code || 'Record')
+      const dateStr = original.timestamp ? new Date(original.timestamp).toLocaleDateString() : ''
+      const snippet = original.note ? ` ("${original.note.slice(0, 45)}${original.note.length > 45 ? '...' : ''}")` : ''
+      detail = `\n\nEntry: ${type}${dateStr ? ' on ' + dateStr : ''}${snippet}`
+    }
+  } catch {}
+
+  if (await confirm(`Are you sure you want to delete this history/anecdotal entry?${detail}\n\nThis action cannot be undone and will update student statistics.`, 'Delete Entry', { danger: true })) {
     await removeEvent(eventId)
   }
 }
 
 async function handleLogCommunicationEvent({ note, timestamp }) {
   if (!props.studentId || !note) return
-  await logStandardEvent(props.studentId, 'pc', note, { timestamp })
+  await logStandardEvent(props.studentId, 'c', { note, timestamp })
   await fetchAllTimeHistory()
 }
 
@@ -976,7 +990,14 @@ async function toggleExcluded(assessmentId) {
 
 async function doDeleteAssessment(assessmentId) {
   contextMenu.value = null
-  if (await confirm('Delete this assessment? This will remove all student scores for it.', 'Delete Assessment', { danger: true })) {
+  const assessment = assessments.value.find(a => a.assessmentId === assessmentId)
+  const name = assessment?.name || 'this assessment'
+  const usage = await getAssessmentUsage(assessmentId)
+  const countWarning = usage.studentCount > 0
+    ? `Warning: This assessment has marks recorded for ${usage.studentCount} student(s) (${usage.attemptCount || usage.markCount || usage.studentCount} score entries). Deleting it will permanently erase all these records.`
+    : 'No student marks are recorded for this assessment.'
+
+  if (await confirm(`Delete "${name}"?\n\n${countWarning}\n\nThis cannot be undone.`, 'Delete Assessment', { danger: true })) {
     await deleteAssessment(assessmentId)
   }
 }

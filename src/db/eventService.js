@@ -42,8 +42,10 @@ export const hasUnsyncedChanges = ref(false)
  * @returns {number} Minutes rounded to 0.5
  */
 export function toMinutes(d) {
-    if (d === null || d === undefined) return 0
-    const mins = d / 60000
+    if (d === null || d === undefined || d === '') return 0
+    const num = Number(d)
+    if (isNaN(num) || !isFinite(num) || num < 0) return 0
+    const mins = num / 60000
     return Math.round(mins * 2) / 2
 }
 

@@ -666,6 +666,7 @@ import { useClassroom } from '../../composables/useClassroom.js'
 import { useMessage } from '../../composables/useMessage.js'
 import { resolveIcon } from '../../utils/icons.js'
 import * as settingsService from '../../db/settingsService.js'
+import { getDB } from '../../db/index.js'
 import BaseModal from '../BaseModal.vue'
 import { 
   Pencil, Trash2, Plus, AlertTriangle, NotebookPen, 
@@ -1037,8 +1038,21 @@ async function deleteCode(codeKey) {
     return
   }
 
-  const msg = `Delete behavior action "${name}"? This will not affect past logged events, but will remove it from the radial overlays.`
-  if (!await confirm(msg)) return
+  let usageCount = 0
+  try {
+    const db = await getDB()
+    const allEvents = await db.getAll('events').catch(() => [])
+    usageCount = allEvents.filter(e => e.code === codeKey).length
+  } catch (err) {
+    console.warn('Failed to query event counts for code:', err)
+  }
+
+  const usageNotice = usageCount > 0
+    ? `\n\nNote: ${usageCount} past event(s) have been logged with this code. Past logged events will retain their data, but this action will remove "${name}" from the active radial menus.`
+    : `\n\nNo past events are currently logged with this code.`
+
+  const msg = `Delete behavior action "${name}"?${usageNotice}`
+  if (!await confirm(msg, 'Delete Behavior Action', { danger: true })) return
 
   await settingsService.deleteBehaviorCode(codeKey)
   await reloadBehaviorCodes()

@@ -75,10 +75,11 @@ const chartData = computed(() => {
 
     props.categories.forEach(cat => {
       const state = categoryStates[cat.categoryId]
-      if (state && state.possible > 0) {
+      const catWeight = Number(cat.weight || 0)
+      if (state && state.possible > 0 && catWeight > 0) {
         const catPercent = (state.earned / state.possible) * 100
-        weightedSum += catPercent * (cat.weight / 100)
-        weightUsed += cat.weight
+        weightedSum += catPercent * (catWeight / 100)
+        weightUsed += catWeight
       }
     })
 
@@ -97,13 +98,22 @@ const chartData = computed(() => {
     sumX2 += i * i
   }
 
-  const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX)
-  const intercept = (sumY - slope * sumX) / n
-
-  const regressionLine = runningGrades.map((_, i) => {
-    const val = slope * i + intercept
-    return Math.round(Math.max(0, Math.min(100, val)) * 10) / 10
-  })
+  let regressionLine = []
+  if (n >= 2) {
+    const denom = (n * sumX2 - sumX * sumX)
+    if (denom !== 0) {
+      const slope = (n * sumXY - sumX * sumY) / denom
+      const intercept = (sumY - slope * sumX) / n
+      regressionLine = runningGrades.map((_, i) => {
+        const val = slope * i + intercept
+        return Math.round(Math.max(0, Math.min(100, val)) * 10) / 10
+      })
+    } else {
+      regressionLine = runningGrades.map(() => runningGrades[0])
+    }
+  } else if (n === 1) {
+    regressionLine = [runningGrades[0]]
+  }
 
   return {
     labels: sorted.map(a => formatLocalDisplay(a.date, { month: 'short', day: 'numeric' })),

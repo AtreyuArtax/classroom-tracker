@@ -398,12 +398,15 @@ const unitsWithExpectations = computed(() => {
         const count = countId + countCode
 
         const scores = (expCode && expScores[expCode]) ? expScores[expCode] : ((expId && expScores[expId]) ? expScores[expId] : [])
+        const validScores = scores
+          .map(Number)
+          .filter(v => !isNaN(v) && isFinite(v))
 
-        const avg = scores.length > 0 ? (scores.reduce((a, b) => a + b, 0) / scores.length) : null
+        const avg = validScores.length > 0 ? (validScores.reduce((a, b) => a + b, 0) / validScores.length) : null
         const sbarBadge = avg !== null ? getSBARLevelBadge(avg) : null
 
-        const distribution = { L4: 0, L3: 0, L2: 0, L1: 0, total: scores.length }
-        scores.forEach(s => {
+        const distribution = { L4: 0, L3: 0, L2: 0, L1: 0, total: validScores.length }
+        validScores.forEach(s => {
           if (s >= 80) distribution.L4++
           else if (s >= 70) distribution.L3++
           else if (s >= 60) distribution.L2++
@@ -419,7 +422,10 @@ const unitsWithExpectations = computed(() => {
         }
       })
 
-      const unitAvgs = expectations.map(e => e.average).filter(a => a !== null)
+      const unitAvgs = expectations
+        .map(e => e.average)
+        .filter(a => a !== null && a !== undefined && !isNaN(Number(a)) && isFinite(Number(a)))
+        .map(Number)
       const unitAvg = unitAvgs.length ? (unitAvgs.reduce((a, b) => a + b, 0) / unitAvgs.length) : null
       const unitSbarBadge = unitAvg !== null ? getSBARLevelBadge(unitAvg) : null
 

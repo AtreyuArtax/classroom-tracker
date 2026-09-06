@@ -974,16 +974,32 @@ function parseCsvLine(text) {
   let inQuotes = false
   for (let i = 0; i < text.length; i++) {
     const char = text[i]
-    if (char === '"' || char === "'") {
-      inQuotes = !inQuotes
-    } else if (char === ',' && !inQuotes) {
-      result.push(cur.trim().replace(/^["']|["']$/g, ''))
-      cur = ''
+    const nextChar = text[i + 1]
+    if (inQuotes) {
+      if (char === '"') {
+        if (nextChar === '"') {
+          cur += '"'
+          i++ // skip escaped quote
+        } else {
+          inQuotes = false
+        }
+      } else {
+        cur += char
+      }
     } else {
-      cur += char
+      if (char === '"') {
+        inQuotes = true
+      } else if (char === ',') {
+        result.push(cur.trim().replace(/^["']|["']$/g, ''))
+        cur = ''
+      } else {
+        cur += char
+      }
     }
   }
-  if (cur) result.push(cur.trim().replace(/^["']|["']$/g, ''))
+  if (cur.length > 0 || result.length > 0) {
+    result.push(cur.trim().replace(/^["']|["']$/g, ''))
+  }
   return result
 }
 

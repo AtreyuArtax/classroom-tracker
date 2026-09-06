@@ -31,16 +31,29 @@ export function useMessage() {
     })
   }
 
-  const confirm = (message, title = 'Confirm', options = {}) => {
+  const confirm = (messageOrOptions, title = 'Confirm', options = {}) => {
     if (state.show) return Promise.resolve(false)
+    let msg = messageOrOptions
+    let t = title
+    let opts = options
+    if (messageOrOptions && typeof messageOrOptions === 'object' && !Array.isArray(messageOrOptions)) {
+      msg = messageOrOptions.message || ''
+      t = messageOrOptions.title || 'Confirm'
+      opts = {
+        ...messageOrOptions,
+        confirmLabel: messageOrOptions.confirmText || messageOrOptions.confirmLabel,
+        cancelLabel: messageOrOptions.cancelText || messageOrOptions.cancelLabel,
+        ...options
+      }
+    }
     return new Promise((resolve) => {
       state.type = 'confirm'
-      state.title = title
-      state.message = message
-      state.confirmLabel = options.confirmLabel || 'Confirm'
-      state.cancelLabel = options.cancelLabel || 'Cancel'
-      state.danger = options.danger || false
-      state.requireText = options.requireText || ''
+      state.title = t
+      state.message = msg
+      state.confirmLabel = opts.confirmLabel || 'Confirm'
+      state.cancelLabel = opts.cancelLabel || 'Cancel'
+      state.danger = opts.danger || false
+      state.requireText = opts.requireText || ''
       state.userInput = ''
       state.choices = []
       state.show = true

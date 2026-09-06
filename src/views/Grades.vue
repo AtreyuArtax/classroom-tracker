@@ -298,6 +298,7 @@ import {
   openAddAssessment,
   enterGrade,
   deleteAssessment,
+  getAssessmentUsage,
   removeAttempt,
   setPrimaryAttempt,
   updateAttemptComment,
@@ -588,7 +589,9 @@ const studentTrends = computed(() => {
   const isSBAR = activeClassRecord.value?.gradingFramework === 'sbar'
   const productAssessments = [...assessments.value]
     .filter(a => {
-      if (a.assessmentType !== 'product' || a.excluded || a.target === 'individual') return false
+      if (a.excluded || a.target === 'individual' || a.isFormative || a.purpose === 'formative') return false
+      // If assessmentType is explicitly observation or conversation (qualitative check-in), exclude from product trend
+      if (a.assessmentType === 'observation' || a.assessmentType === 'conversation') return false
       const isSBARTask = a.categoryId === 'sbar_general' || (a.expectationIds && a.expectationIds.length > 0)
       return isSBAR ? isSBARTask : !isSBARTask
     })
@@ -603,8 +606,8 @@ const studentTrends = computed(() => {
     productAssessments.forEach(a => {
       const grade = gradeMap.value[a.assessmentId]?.[studentId]
       const percentage = getAssessmentPercentage(a, grade)
-      if (percentage !== null) {
-        data.push(percentage)
+      if (percentage !== null && !isNaN(percentage) && isFinite(percentage)) {
+        data.push(Math.round(percentage * 10) / 10)
       }
     })
     trends[studentId] = data
@@ -703,8 +706,9 @@ const overallClassAvg = computed(() => {
   }
 
   const gradeList = Object.values(studentMap)
-    .filter(g => g && g.overallGrade !== null)
-    .map(g => g.overallGrade)
+    .map(g => g?.overallGrade)
+    .filter(g => g !== null && g !== undefined && !isNaN(Number(g)) && isFinite(Number(g)))
+    .map(Number)
   
   if (gradeList.length === 0) return null
   const sum = gradeList.reduce((acc, g) => acc + g, 0)
@@ -769,7 +773,12 @@ function startEditAssessment(assessment) {
 }
 
 async function confirmDeleteAssessment(assessment) {
-  if (!await confirm(`Delete ${assessment.name}? This will permanently remove all grades for this assessment and cannot be undone.`, 'Delete Assessment', { danger: true })) return
+  const usage = await getAssessmentUsage(assessment.assessmentId)
+  const countWarning = usage.studentCount > 0
+    ? `Warning: This assessment has marks recorded for ${usage.studentCount} student(s) (${usage.attemptCount || usage.markCount || usage.studentCount} score entries). Deleting it will permanently erase all these records.`
+    : 'No student marks are recorded for this assessment.'
+
+  if (!await confirm(`Delete "${assessment.name}"?\n\n${countWarning}\n\nThis cannot be undone.`, 'Delete Assessment', { danger: true })) return
   await deleteAssessment(assessment.assessmentId)
   selectedAssessmentId.value = null
 }

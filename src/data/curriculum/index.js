@@ -131,8 +131,14 @@ export function findElementaryPreset(grade, subjectCode, subjectName = '') {
     if (normName.includes('phys') || normName.includes('health') || normCode.includes('hpe')) {
       return titleLower.includes('health') || pIdLower.includes('hpe')
     }
+    if (normName.includes('immersion') || normCode === 'fi') {
+      return titleLower.includes('immersion') || pIdLower.includes('french-immersion')
+    }
+    if (normName.includes('extended') || normCode.includes('ext')) {
+      return titleLower.includes('extended') || pIdLower.includes('extended-french')
+    }
     if (normName.includes('french') || normCode.includes('fsl')) {
-      return titleLower.includes('french') || pIdLower.includes('french')
+      return titleLower.includes('core french') || pIdLower.includes('core-french') || (titleLower.includes('french') && !titleLower.includes('immersion') && !titleLower.includes('extended'))
     }
     if (normName.includes('social') || normCode.includes('soc')) {
       return titleLower.includes('history') || titleLower.includes('geography')
