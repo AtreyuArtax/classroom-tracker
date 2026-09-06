@@ -52,104 +52,9 @@
     </div>
 
     <!-- ══════════════════════════════════════════════════════════ -->
-    <!-- PILLAR 1: All Classes (Class Manager)                     -->
+    <!-- PILLAR 1: Active Class Configuration                     -->
     <!-- ══════════════════════════════════════════════════════════ -->
-    <section v-if="activeTab === 'manage'" class="setup__panel">
-      <div class="setup__layout">
-        <SetupQuickJumpNav :activeTab="activeTab" />
-        <div class="setup__main-content">
-        <!-- 1. All Classes Directory -->
-        <div class="setup__card" id="sec-classes">
-          <div class="setup__card-header-row" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 12px;">
-            <div>
-              <h2 class="setup__card-title" style="margin-bottom: 2px;">Manage Classes</h2>
-              <p class="setup__hint" style="margin: 0;">Click any class to configure its roster, gradebook framework, and seating.</p>
-            </div>
-            <div style="display: flex; align-items: center; gap: 16px;">
-              <label class="setup__label setup__label--checkbox setup__show-all" style="margin: 0;">
-                <input type="checkbox" v-model="showAllSessions" />
-                Show All Sessions
-              </label>
-              <button 
-                v-if="(showAllSessions ? modeAllClasses : filteredClassList).length > 0"
-                class="setup__btn-primary" 
-                @click="isAddClassModalOpen = true"
-              >
-                <Plus :size="16" /> Add / Import Class
-              </button>
-            </div>
-          </div>
-
-          <div v-if="(showAllSessions ? modeAllClasses : filteredClassList).length === 0" class="setup__empty" style="padding: 3.5rem 1.5rem; text-align: center;">
-            <FolderOpen :size="48" style="opacity: 0.35; margin-bottom: 1rem; color: var(--primary);" />
-            <h3 style="margin-bottom: 6px; font-size: 1.15rem; color: var(--text);">No Classes for This Session</h3>
-            <p style="color: var(--text-secondary); font-size: 0.9rem; max-width: 440px; margin: 0 auto 1.5rem; line-height: 1.5;">
-              Get started by importing your board-provided roster CSV or creating your first class for this school year.
-            </p>
-            <button class="setup__btn-primary" style="padding: 0 20px; min-height: 40px;" @click="isAddClassModalOpen = true">
-              <Plus :size="16" /> Add / Import Class
-            </button>
-          </div>
-
-          <ul v-else class="setup__class-list">
-            <li
-              v-for="cls in (showAllSessions ? modeAllClasses : filteredClassList)"
-              :key="cls.classId"
-              class="setup__class-item setup__class-item--clickable"
-              :class="{ 'setup__class-item--active': cls.classId === activeClass?.classId }"
-              @click="selectAndOpenClass(cls.classId)"
-              style="cursor: pointer;"
-            >
-              <div style="min-width: 0;">
-                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                  <span class="setup__class-name">{{ cls.name }}</span>
-                  <span v-if="cls.classId === activeClass?.classId" class="setup__badge setup__badge--new" style="font-size: 0.7rem; padding: 2px 6px;">Active</span>
-                  <span v-if="cls.courseCode" class="setup__chip setup__chip--blue" style="font-size: 0.72rem; padding: 2px 6px;">{{ cls.courseCode }}</span>
-                </div>
-                <div class="setup__class-meta" style="margin-top: 2px;">
-                  <template v-if="cls.classType === 'elementary'">Full Year {{ cls.year }} · {{ studentCount(cls) }} students</template>
-                  <template v-else>Period {{ cls.periodNumber }} · {{ cls.year }} Sem {{ cls.semester }} · {{ studentCount(cls) }} students</template>
-                </div>
-              </div>
-              <div class="setup__class-actions" @click.stop>
-                <button class="setup__pill-btn" @click="onArchiveClass(cls.classId)">Archive</button>
-              </div>
-            </li>
-          </ul>
-        </div>
-
-        <!-- 2. Archived Classes -->
-        <div v-if="(showAllSessions ? modeAllArchivedClasses : filteredArchivedClasses).length > 0" class="setup__card setup__card--archived" id="sec-archived">
-          <button class="setup__archived-toggle" @click="isArchivedPanelVisible = !isArchivedPanelVisible">
-            <span class="setup__archived-label">
-              <Archive :size="16" /> Archived Classes ({{ (showAllSessions ? modeAllArchivedClasses : filteredArchivedClasses).length }})
-            </span>
-            <span class="setup__archived-chevron"><component :is="isArchivedPanelVisible ? ChevronUp : ChevronDown" :size="16" /></span>
-          </button>
-          <ul v-if="isArchivedPanelVisible" class="setup__class-list setup__archived-list">
-            <li v-for="cls in (showAllSessions ? modeAllArchivedClasses : filteredArchivedClasses)" :key="cls.classId" class="setup__class-item setup__class-item--archived">
-              <div>
-                <div class="setup__class-name">{{ cls.name }}</div>
-                <div class="setup__class-meta">
-                  <template v-if="cls.classType === 'elementary'">Full Year {{ cls.year }} · {{ studentCount(cls) }} students</template>
-                  <template v-else>Period {{ cls.periodNumber }} · {{ cls.year }} Sem {{ cls.semester }} · {{ studentCount(cls) }} students</template>
-                </div>
-              </div>
-              <div class="setup__class-actions">
-                <button class="setup__pill-btn" @click="onRestoreClass(cls.classId)">Restore</button>
-                <button class="setup__pill-btn setup__pill-btn--danger" @click="onDeleteClass(cls.classId)">Delete</button>
-              </div>
-            </li>
-          </ul>
-        </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ══════════════════════════════════════════════════════════ -->
-    <!-- PILLAR 2: Active Class Configuration                     -->
-    <!-- ══════════════════════════════════════════════════════════ -->
-    <section v-else-if="activeTab === 'active'" class="setup__panel">
+    <section v-if="activeTab === 'active'" class="setup__panel">
       <ClassLogisticsSettings 
         :initial-subtab="activeClassSubtab" 
         @open-add-class="isAddClassModalOpen = true"
@@ -157,14 +62,7 @@
     </section>
 
     <!-- ══════════════════════════════════════════════════════════ -->
-    <!-- PILLAR 2B: Curriculum Library (Master Standards & Multipliers) -->
-    <!-- ══════════════════════════════════════════════════════════ -->
-    <section v-else-if="activeTab === 'curriculum'" class="setup__panel">
-      <CurriculumLibraryManager />
-    </section>
-
-    <!-- ══════════════════════════════════════════════════════════ -->
-    <!-- PILLAR 3: Global App Settings                            -->
+    <!-- PILLAR 2: Global App Settings                            -->
     <!-- ══════════════════════════════════════════════════════════ -->
     <section v-else-if="activeTab === 'app'" class="setup__panel">
       <div class="setup__layout">
@@ -443,7 +341,7 @@
     </section>
 
     <!-- ══════════════════════════════════════════════════════════ -->
-    <!-- PILLAR 4: Calendar Manager                                -->
+    <!-- PILLAR 3: Calendar Manager                                -->
     <!-- ══════════════════════════════════════════════════════════ -->
     <section v-else-if="activeTab === 'calendar'" class="setup__panel">
       <div class="setup__layout">
@@ -455,7 +353,109 @@
     </section>
 
     <!-- ══════════════════════════════════════════════════════════ -->
-    <!-- PILLAR 5: Backup & Data Management                        -->
+    <!-- PILLAR 4: Curriculum Library (Master Standards & Multipliers) -->
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <section v-else-if="activeTab === 'curriculum'" class="setup__panel">
+      <CurriculumLibraryManager />
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <!-- PILLAR 5: All Classes (Class Manager)                     -->
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <section v-else-if="activeTab === 'manage'" class="setup__panel">
+      <div class="setup__layout">
+        <SetupQuickJumpNav :activeTab="activeTab" />
+        <div class="setup__main-content">
+        <!-- 1. All Classes Directory -->
+        <div class="setup__card" id="sec-classes">
+          <div class="setup__card-header-row" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 12px;">
+            <div>
+              <h2 class="setup__card-title" style="margin-bottom: 2px;">Manage Classes</h2>
+              <p class="setup__hint" style="margin: 0;">Click any class to configure its roster, gradebook framework, and seating.</p>
+            </div>
+            <div style="display: flex; align-items: center; gap: 16px;">
+              <label class="setup__label setup__label--checkbox setup__show-all" style="margin: 0;">
+                <input type="checkbox" v-model="showAllSessions" />
+                Show All Sessions
+              </label>
+              <button 
+                v-if="(showAllSessions ? modeAllClasses : filteredClassList).length > 0"
+                class="setup__btn-primary" 
+                @click="isAddClassModalOpen = true"
+              >
+                <Plus :size="16" /> Add / Import Class
+              </button>
+            </div>
+          </div>
+
+          <div v-if="(showAllSessions ? modeAllClasses : filteredClassList).length === 0" class="setup__empty" style="padding: 3.5rem 1.5rem; text-align: center;">
+            <FolderOpen :size="48" style="opacity: 0.35; margin-bottom: 1rem; color: var(--primary);" />
+            <h3 style="margin-bottom: 6px; font-size: 1.15rem; color: var(--text);">No Classes for This Session</h3>
+            <p style="color: var(--text-secondary); font-size: 0.9rem; max-width: 440px; margin: 0 auto 1.5rem; line-height: 1.5;">
+              Get started by importing your board-provided roster CSV or creating your first class for this school year.
+            </p>
+            <button class="setup__btn-primary" style="padding: 0 20px; min-height: 40px;" @click="isAddClassModalOpen = true">
+              <Plus :size="16" /> Add / Import Class
+            </button>
+          </div>
+
+          <ul v-else class="setup__class-list">
+            <li
+              v-for="cls in (showAllSessions ? modeAllClasses : filteredClassList)"
+              :key="cls.classId"
+              class="setup__class-item setup__class-item--clickable"
+              :class="{ 'setup__class-item--active': cls.classId === activeClass?.classId }"
+              @click="selectAndOpenClass(cls.classId)"
+              style="cursor: pointer;"
+            >
+              <div style="min-width: 0;">
+                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                  <span class="setup__class-name">{{ cls.name }}</span>
+                  <span v-if="cls.classId === activeClass?.classId" class="setup__badge setup__badge--new" style="font-size: 0.7rem; padding: 2px 6px;">Active</span>
+                  <span v-if="cls.courseCode" class="setup__chip setup__chip--blue" style="font-size: 0.72rem; padding: 2px 6px;">{{ cls.courseCode }}</span>
+                </div>
+                <div class="setup__class-meta" style="margin-top: 2px;">
+                  <template v-if="cls.classType === 'elementary'">Full Year {{ cls.year }} · {{ studentCount(cls) }} students</template>
+                  <template v-else>Period {{ cls.periodNumber }} · {{ cls.year }} Sem {{ cls.semester }} · {{ studentCount(cls) }} students</template>
+                </div>
+              </div>
+              <div class="setup__class-actions" @click.stop>
+                <button class="setup__pill-btn" @click="onArchiveClass(cls.classId)">Archive</button>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <!-- 2. Archived Classes -->
+        <div v-if="(showAllSessions ? modeAllArchivedClasses : filteredArchivedClasses).length > 0" class="setup__card setup__card--archived" id="sec-archived">
+          <button class="setup__archived-toggle" @click="isArchivedPanelVisible = !isArchivedPanelVisible">
+            <span class="setup__archived-label">
+              <Archive :size="16" /> Archived Classes ({{ (showAllSessions ? modeAllArchivedClasses : filteredArchivedClasses).length }})
+            </span>
+            <span class="setup__archived-chevron"><component :is="isArchivedPanelVisible ? ChevronUp : ChevronDown" :size="16" /></span>
+          </button>
+          <ul v-if="isArchivedPanelVisible" class="setup__class-list setup__archived-list">
+            <li v-for="cls in (showAllSessions ? modeAllArchivedClasses : filteredArchivedClasses)" :key="cls.classId" class="setup__class-item setup__class-item--archived">
+              <div>
+                <div class="setup__class-name">{{ cls.name }}</div>
+                <div class="setup__class-meta">
+                  <template v-if="cls.classType === 'elementary'">Full Year {{ cls.year }} · {{ studentCount(cls) }} students</template>
+                  <template v-else>Period {{ cls.periodNumber }} · {{ cls.year }} Sem {{ cls.semester }} · {{ studentCount(cls) }} students</template>
+                </div>
+              </div>
+              <div class="setup__class-actions">
+                <button class="setup__pill-btn" @click="onRestoreClass(cls.classId)">Restore</button>
+                <button class="setup__pill-btn setup__pill-btn--danger" @click="onDeleteClass(cls.classId)">Delete</button>
+              </div>
+            </li>
+          </ul>
+        </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <!-- PILLAR 6: Backup & Data Management                        -->
     <!-- ══════════════════════════════════════════════════════════ -->
     <section v-else-if="activeTab === 'data'" class="setup__panel">
       <div class="setup__layout">
@@ -1005,9 +1005,9 @@ const emit = defineEmits(['navigate'])
 
 const setupTabs = [
   { id: 'active',     label: 'Active Class',        icon: Zap },
-  { id: 'curriculum', label: 'Curriculum Library',  icon: BookOpen },
   { id: 'app',        label: 'App Settings',        icon: Settings },
   { id: 'calendar',   label: 'Calendar',            icon: CalendarDays },
+  { id: 'curriculum', label: 'Curriculum Library',  icon: BookOpen },
   { id: 'manage',     label: 'Manage Classes',      icon: FolderOpen },
   { id: 'data',       label: 'Backup & Data',       icon: Database },
 ]
