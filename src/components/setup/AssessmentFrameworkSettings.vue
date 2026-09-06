@@ -273,6 +273,20 @@
                       @keydown.enter="saveEditExpectation(unit, exp)"
                       @keydown.esc="cancelEditExpectation"
                     />
+                    <div class="setup__weight-input-group" title="Expectation Weight Multiplier (e.g. 1.0, 2.0, 0.5, 0)">
+                      <input 
+                        v-model.number="editingExpectationWeight" 
+                        type="number" 
+                        step="0.1" 
+                        min="0" 
+                        max="10" 
+                        class="setup__input setup__input--exp-weight" 
+                        placeholder="1.0" 
+                        @keydown.enter="saveEditExpectation(unit, exp)"
+                        @keydown.esc="cancelEditExpectation"
+                      />
+                      <span class="setup__weight-unit">×</span>
+                    </div>
                     <input 
                       v-model="editingExpectationDesc" 
                       class="setup__input setup__input--exp-desc" 
@@ -304,6 +318,7 @@
                 <!-- Normal View Mode -->
                 <template v-else>
                   <span class="setup__expectation-code">{{ exp.code }}</span>
+                  <ExpectationWeightBadge :weight="exp.weight" />
                   <span class="setup__expectation-desc" :title="exp.description">{{ exp.description }}</span>
                   <div class="setup__expectation-actions">
                     <button 
@@ -341,6 +356,19 @@
                 placeholder="Code (e.g. B1.2)" 
                 @keydown.enter.prevent="addExpectation(unit)"
               />
+              <div class="setup__weight-input-group" title="Expectation Weight Multiplier (e.g. 1.0, 2.0, 0.5, 0)">
+                <input 
+                  v-model.number="newExpectationWeight" 
+                  type="number" 
+                  step="0.1" 
+                  min="0" 
+                  max="10" 
+                  class="setup__input setup__input--exp-weight" 
+                  placeholder="1.0" 
+                  @keydown.enter.prevent="addExpectation(unit)"
+                />
+                <span class="setup__weight-unit">×</span>
+              </div>
               <input 
                 v-model="newExpectationDesc" 
                 class="setup__input setup__input--exp-desc" 
@@ -641,6 +669,7 @@ import {
 } from 'lucide-vue-next'
 import BaseModal from '../BaseModal.vue'
 import ExpectationImportModal from './ExpectationImportModal.vue'
+import ExpectationWeightBadge from './ExpectationWeightBadge.vue'
 import { cleanExpectationText } from '../../utils/textUtils.js'
 
 const { activeClass, updateActiveClass, triggerActiveClass } = useClassroom()
@@ -685,16 +714,19 @@ function closeSaveTemplateModal() {
 const expandedUnitId = ref(null)
 const newExpectationCode = ref('')
 const newExpectationDesc = ref('')
+const newExpectationWeight = ref(1.0)
 const expectationSearchQuery = ref('')
 
 const editingExpectationId = ref(null)
 const editingExpectationCode = ref('')
 const editingExpectationDesc = ref('')
+const editingExpectationWeight = ref(1.0)
 
 function toggleUnitExpand(unitId) {
   expandedUnitId.value = expandedUnitId.value === unitId ? null : unitId
   newExpectationCode.value = ''
   newExpectationDesc.value = ''
+  newExpectationWeight.value = 1.0
   cancelEditExpectation()
 }
 
@@ -712,12 +744,14 @@ function startEditExpectation(exp) {
   editingExpectationId.value = exp.expectationId
   editingExpectationCode.value = exp.code || ''
   editingExpectationDesc.value = exp.description || ''
+  editingExpectationWeight.value = (exp.weight !== undefined && exp.weight !== null && !isNaN(exp.weight)) ? Number(exp.weight) : 1.0
 }
 
 function cancelEditExpectation() {
   editingExpectationId.value = null
   editingExpectationCode.value = ''
   editingExpectationDesc.value = ''
+  editingExpectationWeight.value = 1.0
 }
 
 async function saveEditExpectation(unit, exp) {
@@ -748,6 +782,9 @@ async function saveEditExpectation(unit, exp) {
 
   exp.code = cleanExpectationText(newCode).toUpperCase()
   exp.description = cleanExpectationText(newDesc)
+  exp.weight = (editingExpectationWeight.value !== undefined && editingExpectationWeight.value !== null && !isNaN(editingExpectationWeight.value)) 
+    ? Number(editingExpectationWeight.value) 
+    : 1.0
   cancelEditExpectation()
   await saveGradebookSettings()
 }
@@ -777,21 +814,36 @@ function onExpectationImport(payload) {
       const expList = []
       if (strand.overalls) {
         strand.overalls.forEach(ov => {
+          const ovWeight = (ov.weight !== undefined && ov.weight !== null && !isNaN(ov.weight)) ? Number(ov.weight) : 1.0
           if (payload.granularity === 'overall') {
-            expList.push({ code: cleanExpectationText(ov.code), description: cleanExpectationText(ov.description) })
+            expList.push({ 
+              code: cleanExpectationText(ov.code), 
+              description: cleanExpectationText(ov.description),
+              weight: ovWeight
+            })
           } else if ((payload.granularity === 'all' || payload.granularity === 'success_criteria') && ov.specifics && ov.specifics.length > 0) {
             ov.specifics.forEach(sp => {
-              expList.push({ code: cleanExpectationText(sp.code), description: cleanExpectationText(sp.description) })
+              const spWeight = (sp.weight !== undefined && sp.weight !== null && !isNaN(sp.weight)) ? Number(sp.weight) : ovWeight
+              expList.push({ 
+                code: cleanExpectationText(sp.code), 
+                description: cleanExpectationText(sp.description),
+                weight: spWeight
+              })
             })
           } else {
             // Preserve overall expectation if no specifics exist (e.g. foundational AA1/A1 in MTH1W)
-            expList.push({ code: cleanExpectationText(ov.code), description: cleanExpectationText(ov.description || ov.name) })
+            expList.push({ 
+              code: cleanExpectationText(ov.code), 
+              description: cleanExpectationText(ov.description || ov.name),
+              weight: ovWeight
+            })
           }
         })
       } else if (strand.expectations) {
         strand.expectations.forEach(e => expList.push({
           code: cleanExpectationText(e.code),
-          description: cleanExpectationText(e.description)
+          description: cleanExpectationText(e.description),
+          weight: (e.weight !== undefined && e.weight !== null && !isNaN(e.weight)) ? Number(e.weight) : 1.0
         }))
       }
 
@@ -801,7 +853,8 @@ function onExpectationImport(payload) {
         expectations: expList.map(e => ({
           expectationId: crypto.randomUUID(),
           code: e.code,
-          description: e.description
+          description: e.description,
+          weight: e.weight != null ? e.weight : 1.0
         }))
       })
     })
@@ -818,7 +871,8 @@ function onExpectationImport(payload) {
         expectations: (strand.expectations || []).map(e => ({
           expectationId: crypto.randomUUID(),
           code: cleanExpectationText(e.code),
-          description: cleanExpectationText(e.description)
+          description: cleanExpectationText(e.description),
+          weight: (e.weight !== undefined && e.weight !== null && !isNaN(e.weight)) ? Number(e.weight) : 1.0
         }))
       })
     })
@@ -844,7 +898,8 @@ function onExpectationImport(payload) {
         targetUnit.expectations.push({
           expectationId: crypto.randomUUID(),
           code: cleanExpectationText(e.code),
-          description: cleanExpectationText(e.description)
+          description: cleanExpectationText(e.description),
+          weight: (e.weight !== undefined && e.weight !== null && !isNaN(e.weight)) ? Number(e.weight) : 1.0
         })
       })
     }
@@ -903,13 +958,18 @@ async function addExpectation(unit) {
   if (!unit.expectations) {
     unit.expectations = []
   }
+  const cleanWeight = (newExpectationWeight.value !== undefined && newExpectationWeight.value !== null && !isNaN(newExpectationWeight.value))
+    ? Number(newExpectationWeight.value)
+    : 1.0
   unit.expectations.push({
     expectationId: crypto.randomUUID(),
     code: newExpectationCode.value.trim().toUpperCase(),
-    description: newExpectationDesc.value.trim()
+    description: newExpectationDesc.value.trim(),
+    weight: cleanWeight
   })
   newExpectationCode.value = ''
   newExpectationDesc.value = ''
+  newExpectationWeight.value = 1.0
   await saveGradebookSettings()
 }
 
@@ -1758,6 +1818,38 @@ onMounted(async () => {
   text-transform: uppercase;
   letter-spacing: 0.04em;
   margin-top: 2px;
+}
+
+.setup__weight-input-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  background: var(--bg-surface, var(--bg-primary));
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm, 6px);
+  padding: 0 4px;
+  min-height: 36px;
+}
+
+.setup__input--exp-weight {
+  width: 44px !important;
+  min-height: 32px !important;
+  padding: 4px 2px !important;
+  font-size: 0.8rem !important;
+  font-weight: 600 !important;
+  border: none !important;
+  background: transparent !important;
+  color: var(--text) !important;
+  text-align: right;
+  outline: none;
+}
+
+.setup__weight-unit {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  user-select: none;
+  padding-right: 2px;
 }
 </style>
 

@@ -7,7 +7,9 @@
           <ArrowLeft :size="15" /> Back to Gradebook
         </button>
         <div class="setup__header-class">
-          <label for="setup-class-selector" class="setup__header-label">Configuring:</label>
+          <label for="setup-class-selector" class="setup__header-label">
+            {{ activeTab === 'curriculum' ? 'Class Context:' : 'Configuring:' }}
+          </label>
           <select 
             id="setup-class-selector" 
             class="setup__class-selector"
@@ -19,6 +21,9 @@
               {{ cls.classType === 'elementary' ? cls.name : `${cls.name} (P${cls.periodNumber})` }}
             </option>
           </select>
+          <span v-if="activeTab === 'curriculum'" class="setup__badge setup__badge--new" style="margin-left: 8px; font-size: 0.72rem; display: inline-flex; align-items: center; gap: 4px;">
+            📚 Master Library
+          </span>
         </div>
       </div>
       <div class="setup__header-right">
@@ -147,6 +152,13 @@
         :initial-subtab="activeClassSubtab" 
         @open-add-class="isAddClassModalOpen = true"
       />
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <!-- PILLAR 2B: Curriculum Library (Master Standards & Multipliers) -->
+    <!-- ══════════════════════════════════════════════════════════ -->
+    <section v-else-if="activeTab === 'curriculum'" class="setup__panel">
+      <CurriculumLibraryManager />
     </section>
 
     <!-- ══════════════════════════════════════════════════════════ -->
@@ -821,6 +833,7 @@ import {
   Sun,
   Moon,
   Monitor,
+  BookOpen,
   X
 } from 'lucide-vue-next'
 import { useClassroom } from '../composables/useClassroom.js'
@@ -834,6 +847,7 @@ const CalendarSettings            = defineAsyncComponent(() => import('../compon
 const GradeBucketsSettings        = defineAsyncComponent(() => import('../components/setup/GradeBucketsSettings.vue'))
 const HelpModal                   = defineAsyncComponent(() => import('../components/setup/HelpModal.vue'))
 const ClassLogisticsSettings      = defineAsyncComponent(() => import('../components/setup/ClassLogisticsSettings.vue'))
+const CurriculumLibraryManager    = defineAsyncComponent(() => import('../components/setup/CurriculumLibraryManager.vue'))
 const DatabaseMaintenanceSettings = defineAsyncComponent(() => import('../components/setup/DatabaseMaintenanceSettings.vue'))
 const CsvHelpGuide                = defineAsyncComponent(() => import('../components/setup/CsvHelpGuide.vue'))
 const BehaviorSettings            = defineAsyncComponent(() => import('../components/setup/BehaviorSettings.vue'))
@@ -986,15 +1000,19 @@ const props = defineProps({
 const emit = defineEmits(['navigate'])
 
 const setupTabs = [
-  { id: 'active',   label: 'Active Class',    icon: Zap },
-  { id: 'app',      label: 'App Settings',    icon: Settings },
-  { id: 'calendar', label: 'Calendar',        icon: CalendarDays },
-  { id: 'manage',   label: 'Manage Classes',  icon: FolderOpen },
-  { id: 'data',     label: 'Backup & Data',   icon: Database },
+  { id: 'active',     label: 'Active Class',        icon: Zap },
+  { id: 'curriculum', label: 'Curriculum Library',  icon: BookOpen },
+  { id: 'app',        label: 'App Settings',        icon: Settings },
+  { id: 'calendar',   label: 'Calendar',            icon: CalendarDays },
+  { id: 'manage',     label: 'Manage Classes',      icon: FolderOpen },
+  { id: 'data',       label: 'Backup & Data',       icon: Database },
 ]
 
 const tabMap = { 
   'active': 'active',
+  'curriculum': 'curriculum',
+  'standards': 'curriculum',
+  'library': 'curriculum',
   'classes': 'manage', 
   'manage': 'manage',
   'roster': 'active', 

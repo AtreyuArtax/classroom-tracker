@@ -16,6 +16,7 @@ import { getDB } from './index.js'
 import { hasUnsyncedChanges } from './eventService.js'
 
 const SETTINGS_KEY = 'singleton'
+let _memorySettings = null
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
@@ -26,6 +27,9 @@ const SETTINGS_KEY = 'singleton'
  * @returns {Promise<Object>}
  */
 async function _readSettings() {
+    if (_memorySettings && typeof indexedDB === 'undefined') {
+        return _memorySettings
+    }
     try {
         if (typeof indexedDB !== 'undefined') {
             const db = await getDB()
@@ -42,6 +46,7 @@ async function _readSettings() {
     const defaults = {
         schemaVersion: 32,
         gridSize: { rows: 6, cols: 6 },
+        customCurriculumPresets: {},
         behaviorCodes: {
             w: {
                 key: 'w',
@@ -167,6 +172,7 @@ async function _readSettings() {
             // ignore fallback write failure in non-browser context
         }
     }
+    _memorySettings = defaults
     return defaults
 }
 
@@ -601,4 +607,61 @@ export async function auditSettingsIntegrity() {
     }
 
     return { issues, fixedCount }
+}
+
+/**
+ * Retrieves all user-customized master curriculum presets.
+ * @returns {Promise<Object>} { [presetId]: presetObject }
+ */
+export async function getCustomCurriculumPresets() {
+    const settings = await _readSettings()
+    return settings?.customCurriculumPresets || {}
+}
+
+/**
+ * Saves or updates a master curriculum preset in settings.
+ * @param {Object} preset - The curriculum preset object with presetId, title, strands, etc.
+ * @returns {Promise<Object>} Saved preset
+ */
+export async function saveCustomCurriculumPreset(preset) {
+    if (!preset || !preset.presetId) throw new Error('Preset must have a valid presetId')
+    const clone = JSON.parse(JSON.stringify(preset))
+    clone.updatedAt = new Date().toISOString()
+    clone.isCustomMaster = true
+
+    if (typeof indexedDB !== 'undefined') {
+        const db = await getDB()
+        const settings = await db.get('settings', SETTINGS_KEY) || {}
+        if (!settings.customCurriculumPresets) settings.customCurriculumPresets = {}
+        settings.customCurriculumPresets[preset.presetId] = clone
+        await db.put('settings', settings, SETTINGS_KEY)
+        hasUnsyncedChanges.value = true
+    } else {
+        if (!_memorySettings) await _readSettings()
+        if (!_memorySettings.customCurriculumPresets) _memorySettings.customCurriculumPresets = {}
+        _memorySettings.customCurriculumPresets[preset.presetId] = clone
+    }
+    return clone
+}
+
+/**
+ * Deletes a custom curriculum preset, restoring built-in defaults.
+ * @param {string} presetId - The preset ID to delete
+ * @returns {Promise<void>}
+ */
+export async function deleteCustomCurriculumPreset(presetId) {
+    if (!presetId) return
+    if (typeof indexedDB !== 'undefined') {
+        const db = await getDB()
+        const settings = await db.get('settings', SETTINGS_KEY) || {}
+        if (settings.customCurriculumPresets && settings.customCurriculumPresets[presetId]) {
+            delete settings.customCurriculumPresets[presetId]
+            await db.put('settings', settings, SETTINGS_KEY)
+            hasUnsyncedChanges.value = true
+        }
+    } else {
+        if (_memorySettings?.customCurriculumPresets?.[presetId]) {
+            delete _memorySettings.customCurriculumPresets[presetId]
+        }
+    }
 }

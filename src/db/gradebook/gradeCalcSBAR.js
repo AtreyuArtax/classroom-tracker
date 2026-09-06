@@ -284,6 +284,7 @@ export function calculateSBARExpectationMastery(classRecord, assessments, gradeM
   // Map expectation codes to assessments that evaluate them
   const allClassExps = [
     ...(classRecord.expectations || []),
+    ...(classRecord.curriculumExpectations || []),
     ...((classRecord.gradebookUnits || []).flatMap(u => u.expectations || []))
   ]
   if (classRecord.courseFrameworks) {
@@ -507,6 +508,12 @@ export function calculateSBARExpectationMastery(classRecord, assessments, gradeM
 
       const override = resolveStudentExpectationOverride(student, expCode, activeSubId, allClassExps)
 
+      const expDef = allClassExps.find(e => 
+        String(e.code || '').toLowerCase() === String(expCode).toLowerCase() ||
+        String(e.expectationId || '').toLowerCase() === String(expCode).toLowerCase()
+      )
+      const expWeight = (expDef?.weight != null && !isNaN(Number(expDef.weight))) ? Math.max(0, Number(expDef.weight)) : 1.0
+
       if (evaluations.length > 0) {
         // Formative vs Summative Rule:
         // If summative evidence exists, calculate ONLY from summative evidence.
@@ -543,6 +550,7 @@ export function calculateSBARExpectationMastery(classRecord, assessments, gradeM
           masteryMap[studentId][expCode] = {
             score: override.score,
             badge: getSBARLevelBadge(override.score),
+            weight: expWeight,
             trend,
             isProvisional: false,
             isOverridden: true,
@@ -557,6 +565,7 @@ export function calculateSBARExpectationMastery(classRecord, assessments, gradeM
           masteryMap[studentId][expCode] = {
             score: finalScore,
             badge: getSBARLevelBadge(finalScore),
+            weight: expWeight,
             trend,
             isProvisional: !hasSummative,
             isOverridden: false,
@@ -572,6 +581,7 @@ export function calculateSBARExpectationMastery(classRecord, assessments, gradeM
         masteryMap[studentId][expCode] = {
           score: override.score,
           badge: getSBARLevelBadge(override.score),
+          weight: expWeight,
           trend: 'steady',
           isProvisional: false,
           isOverridden: true,
@@ -591,7 +601,7 @@ export function calculateSBARExpectationMastery(classRecord, assessments, gradeM
 
 /**
  * Calculates the overall course SBAR mastery score (percentage 0..100) for a student
- * by taking the average across all evaluated curriculum expectations.
+ * taking into account relative expectation weight multipliers (e.g. 2.0x, 1.0x, 0.5x, 0x).
  */
 export function calculateSBARStudentOverallMastery(studentId, classRecord, assessments, gradeMap, algorithm = 'decaying_average', events = [], masteryMapPreRef = null) {
   if (!studentId || !classRecord || !assessments || !gradeMap) return null
@@ -600,8 +610,23 @@ export function calculateSBARStudentOverallMastery(studentId, classRecord, asses
   const eventsToPass = shouldIncludeRadial ? events : []
   const masteryMap = masteryMapPreRef || calculateSBARExpectationMastery(classRecord, assessments, gradeMap, activeAlgorithm, eventsToPass)
   const studentExpMap = masteryMap[studentId] || {}
-  const scores = Object.values(studentExpMap).map(e => e.score).filter(s => s != null && !isNaN(s))
-  if (scores.length === 0) return null
-  const avg = scores.reduce((a, b) => a + b, 0) / scores.length
-  return Math.round(avg)
+
+  let weightedSum = 0
+  let totalWeight = 0
+  let evaluatedCount = 0
+
+  for (const expData of Object.values(studentExpMap)) {
+    if (expData?.score != null && !isNaN(expData.score)) {
+      const w = (expData.weight != null && !isNaN(expData.weight)) ? Math.max(0, Number(expData.weight)) : 1.0
+      // Expectations with weight 0 are treated as diagnostic/formative-only and excluded from course mastery
+      if (w > 0) {
+        weightedSum += expData.score * w
+        totalWeight += w
+        evaluatedCount++
+      }
+    }
+  }
+
+  if (evaluatedCount === 0 || totalWeight <= 0) return null
+  return Math.round(weightedSum / totalWeight)
 }

@@ -197,13 +197,21 @@ export function getStudentEffectiveGrade(student, subjectId = null) {
 }
 
 export function populateSubjectFromPresets(subject, presetsList = [], granularity = 'all', options = {}) {
-  if (!subject || !presetsList || presetsList.length === 0) return subject
+  const list = Array.isArray(presetsList) ? presetsList : (presetsList ? [presetsList] : [])
+  if (!subject || list.length === 0) return subject
 
-  const forceRefresh = Boolean(options.forceRefresh)
+  let resolvedGranularity = granularity
+  let resolvedOptions = options
+  if (typeof granularity === 'object' && granularity !== null) {
+    resolvedOptions = granularity
+    resolvedGranularity = resolvedOptions.granularity || 'all'
+  }
+
+  const forceRefresh = Boolean(resolvedOptions.forceRefresh)
   let existingUnits = [...(subject.gradebookUnits || [])]
   let existingExpectations = [...(subject.expectations || [])]
 
-  presetsList.forEach(preset => {
+  list.forEach(preset => {
     if (!preset || !preset.strands) return
     const pGrade = preset.grade || ''
 
@@ -228,25 +236,31 @@ export function populateSubjectFromPresets(subject, presetsList = [], granularit
         weight: 0
       })
 
-      if (strand.overalls) {
-        strand.overalls.forEach(ov => {
-          if (granularity === 'overall') {
+      const overalls = strand.overalls || strand.overallExpectations
+      if (overalls && overalls.length > 0) {
+        overalls.forEach(ov => {
+          const ovWeight = (ov.weight !== undefined && ov.weight !== null && !isNaN(ov.weight)) ? Number(ov.weight) : 1.0
+          const specifics = ov.specifics || ov.specificExpectations || []
+          if (resolvedGranularity === 'overall') {
             existingExpectations.push({
               expectationId: (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : `exp_${Date.now()}_${gTag}_${ov.code}_${Math.floor(Math.random()*10000)}`,
               unitId,
               code: cleanExpectationText(ov.code),
               description: cleanExpectationText(ov.description),
               isOverall: true,
+              weight: ovWeight,
               gradeLevel: pGrade
             })
-          } else if ((granularity === 'all' || granularity === 'success_criteria') && ov.specifics && ov.specifics.length > 0) {
-            ov.specifics.forEach(sp => {
+          } else if ((resolvedGranularity === 'all' || resolvedGranularity === 'success_criteria') && specifics.length > 0) {
+            specifics.forEach(sp => {
+              const spWeight = (sp.weight !== undefined && sp.weight !== null && !isNaN(sp.weight)) ? Number(sp.weight) : ovWeight
               existingExpectations.push({
                 expectationId: (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : `exp_${Date.now()}_${gTag}_${sp.code}_${Math.floor(Math.random()*10000)}`,
                 unitId,
                 code: cleanExpectationText(sp.code),
                 description: cleanExpectationText(sp.description),
                 isOverall: false,
+                weight: spWeight,
                 gradeLevel: pGrade
               })
             })
@@ -258,6 +272,7 @@ export function populateSubjectFromPresets(subject, presetsList = [], granularit
               code: cleanExpectationText(ov.code),
               description: cleanExpectationText(ov.description || ov.name),
               isOverall: true,
+              weight: ovWeight,
               gradeLevel: pGrade
             })
           }

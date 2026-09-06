@@ -7,6 +7,7 @@
           <div class="exp-modal-header-left">
             <div class="exp-modal-badges-row">
               <span class="exp-code-pill">{{ expectationCode }}</span>
+              <ExpectationWeightBadge :weight="resolvedWeight" />
               <span v-if="unitName" class="exp-unit-pill">{{ unitName }}</span>
               <span v-if="isOverridden" class="exp-override-pill">
                 <Sparkles :size="12" /> Professional Judgment Override
@@ -53,13 +54,19 @@
                 Calculated from {{ evaluations.length }} task{{ evaluations.length !== 1 ? 's' : '' }}:
                 <strong class="calc-highlight">{{ calculatedBadge?.level || '—' }} ({{ calculatedScore != null ? Math.round(calculatedScore) + '%' : '—' }})</strong>
                 via {{ algorithmLabel }}
+                <span v-if="resolvedWeight === 0" class="weight-note-text"> (0× Diagnostic - excluded from overall)</span>
+                <span v-else-if="resolvedWeight !== 1" class="weight-note-text"> (Weight: {{ resolvedWeight }}×)</span>
               </span>
               <span v-else-if="evaluations.length > 0">
                 Calculated via <strong>{{ algorithmLabel }}</strong>
                 ({{ evaluations.length }} contributing task{{ evaluations.length !== 1 ? 's' : '' }})
+                <span v-if="resolvedWeight === 0" class="weight-note-text"> (0× Diagnostic - excluded from overall)</span>
+                <span v-else-if="resolvedWeight !== 1" class="weight-note-text"> (Weight: {{ resolvedWeight }}×)</span>
               </span>
               <span v-else class="text-muted">
                 No formal assessments recorded yet for this standard.
+                <span v-if="resolvedWeight === 0" class="weight-note-text"> (0× Diagnostic standard)</span>
+                <span v-else-if="resolvedWeight !== 1" class="weight-note-text"> (Weight: {{ resolvedWeight }}×)</span>
               </span>
             </div>
           </div>
@@ -263,6 +270,7 @@ import { X, RotateCcw, Check, Award, FileText, Calendar, ExternalLink, Sparkles 
 import { SBAR_LEVELS, getSBARLevelBadge } from '../../db/gradebookService.js'
 import { saveStudentExpectationOverride, activeClassRecord } from '../../composables/useGradebook.js'
 import { formatLocalDisplay } from '../../utils/dates.js'
+import ExpectationWeightBadge from '../setup/ExpectationWeightBadge.vue'
 
 const props = defineProps({
   show: { type: Boolean, default: false },
@@ -271,8 +279,15 @@ const props = defineProps({
   expectationCode: { type: String, required: true },
   expectationTitle: { type: String, default: '' },
   expectationDescription: { type: String, default: '' },
+  expectationWeight: { type: Number, default: 1.0 },
   unitName: { type: String, default: '' },
   masteryData: { type: Object, default: () => ({}) }
+})
+
+const resolvedWeight = computed(() => {
+  if (props.masteryData?.weight != null) return Number(props.masteryData.weight)
+  if (props.expectationWeight != null) return Number(props.expectationWeight)
+  return 1.0
 })
 
 const emit = defineEmits(['close', 'open-dossier', 'select-assessment'])
@@ -901,5 +916,11 @@ async function saveNoteIfOverridden() {
 
 .btn-done:hover {
   opacity: 0.9;
+}
+
+.weight-note-text {
+  color: var(--primary, #3b82f6);
+  font-weight: 600;
+  font-size: 0.78rem;
 }
 </style>

@@ -151,6 +151,7 @@
                 <div class="eim-preset-card__badges">
                   <span class="eim-preset-badge eim-preset-badge--grade">{{ p.grade }}</span>
                   <span v-if="p.subjectCode" class="eim-preset-badge eim-preset-badge--code">{{ p.subjectCode }}</span>
+                  <span v-if="p.isCustomMaster" class="eim-preset-badge" style="background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); font-weight: 700;">★ Master Library</span>
                   <span v-if="p.isSuccessCriteria" class="eim-preset-badge eim-preset-badge--sc">Success Criteria</span>
                 </div>
                 <span v-if="selectedPresetId === p.presetId" class="eim-preset-card__check">
@@ -688,7 +689,11 @@ import {
   Sparkles, Copy, FileCode
 } from 'lucide-vue-next'
 import { curriculumPresets } from '../../data/curriculum/index.js'
+import { getMergedCurriculumPresets, useCurriculumLibrary } from '../../composables/useCurriculumLibrary.js'
 import { cleanExpectationText } from '../../utils/textUtils.js'
+
+const { initLibrary } = useCurriculumLibrary()
+initLibrary()
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
@@ -748,7 +753,7 @@ watch(() => props.modelValue, (isOpen) => {
 
 // Compute dynamic list of available grades based on panel filter
 const availableGrades = computed(() => {
-  let list = curriculumPresets
+  let list = getMergedCurriculumPresets(panelFilter.value || 'all')
   if (panelFilter.value && panelFilter.value !== 'all') {
     list = list.filter(p => p.panel === panelFilter.value)
   }
@@ -777,7 +782,7 @@ const availableSubjectCategories = computed(() => [
 ])
 
 const filteredPresets = computed(() => {
-  let list = curriculumPresets
+  let list = getMergedCurriculumPresets(panelFilter.value || 'all')
 
   // 1. Panel filter
   if (panelFilter.value && panelFilter.value !== 'all') {
@@ -850,7 +855,7 @@ function countPresetExpectations(preset) {
 
 const selectedPreset = computed(() => {
   if (!selectedPresetId.value) return null
-  return curriculumPresets.find(p => p.presetId === selectedPresetId.value)
+  return getMergedCurriculumPresets('all').find(p => p.presetId === selectedPresetId.value)
 })
 
 const hasSuccessCriteriaAvailable = computed(() => {
@@ -858,7 +863,7 @@ const hasSuccessCriteriaAvailable = computed(() => {
   if (selectedPreset.value.isSuccessCriteria) return true
   const sCode = (selectedPreset.value.subjectCode || '').toLowerCase()
   const pId = (selectedPreset.value.presetId || '').toLowerCase()
-  return curriculumPresets.some(p => p.isSuccessCriteria && (
+  return getMergedCurriculumPresets('all').some(p => p.isSuccessCriteria && (
     (sCode && p.subjectCode && p.subjectCode.toLowerCase() === sCode) ||
     (pId && p.presetId.toLowerCase().startsWith(pId))
   ))
@@ -876,7 +881,7 @@ const effectivePresetToUse = computed(() => {
     if (selectedPreset.value.isSuccessCriteria) return selectedPreset.value
     const sCode = (selectedPreset.value.subjectCode || '').toLowerCase()
     const pId = (selectedPreset.value.presetId || '').toLowerCase()
-    const scMatch = curriculumPresets.find(p => p.isSuccessCriteria && (
+    const scMatch = getMergedCurriculumPresets('all').find(p => p.isSuccessCriteria && (
       (sCode && p.subjectCode && p.subjectCode.toLowerCase() === sCode) ||
       (pId && p.presetId.toLowerCase().startsWith(pId))
     ))

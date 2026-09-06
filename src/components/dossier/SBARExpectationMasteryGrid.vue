@@ -68,7 +68,10 @@
                 @click="toggleRow(item.code)"
               >
                 <td class="td-code">
-                  <div class="code-title">{{ item.code }}</div>
+                  <div class="code-title-row">
+                    <span class="code-title">{{ item.code }}</span>
+                    <ExpectationWeightBadge :weight="item.weight" />
+                  </div>
                   <div v-if="item.description" class="code-desc" :title="item.description">{{ item.description }}</div>
                 </td>
                 <td class="td-level">
@@ -207,6 +210,7 @@ import { activeClassRecord, assessments, gradeMap, saveStudentExpectationOverrid
 import { activeSubjectId } from '../../composables/useClassroomState.js'
 import { calculateSBARExpectationMastery, SBAR_LEVELS } from '../../db/gradebook/gradeCalcSBAR.js'
 import { cleanUnitName } from '../../composables/useElementary.js'
+import ExpectationWeightBadge from '../setup/ExpectationWeightBadge.vue'
 
 const props = defineProps({
   studentId: { type: String, required: true }
@@ -303,6 +307,14 @@ const expectationList = computed(() => {
     }
   })
 
+  const weightMap = {}
+  flatExps.forEach(exp => {
+    if (!exp) return
+    const w = exp.weight != null ? Number(exp.weight) : 1.0
+    if (exp.code) weightMap[String(exp.code).trim()] = w
+    if (exp.expectationId || exp.id) weightMap[String(exp.expectationId || exp.id).trim()] = w
+  })
+
   return Object.keys(studentMastery).map(rawKey => {
     const data = studentMastery[rawKey]
     const rawStr = String(rawKey).trim()
@@ -315,6 +327,7 @@ const expectationList = computed(() => {
       score: data.score,
       badge: data.badge,
       trend: data.trend,
+      weight: data.weight != null ? Number(data.weight) : (weightMap[friendlyCode] ?? weightMap[rawStr] ?? 1.0),
       evaluations: data.evaluations || [],
       isOverridden: !!data.isOverridden,
       overrideLevel: data.overrideLevel || null,
@@ -600,6 +613,12 @@ const visibleExpectations = computed(() => {
 .sbar-mastery-row td {
   padding: 10px 12px;
   border-bottom: 1px solid var(--border);
+}
+
+.code-title-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .code-title {

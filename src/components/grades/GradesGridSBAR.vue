@@ -227,6 +227,7 @@
             >
               <div class="exp-code-main">
                 <span>{{ exp.code }}</span>
+                <ExpectationWeightBadge v-if="exp.weight != null && exp.weight !== 1" :weight="exp.weight" />
                 <span 
                   v-if="getExpAssessmentCount(exp.code)" 
                   class="exp-ast-badge" 
@@ -361,7 +362,10 @@
         <div class="exp-popover-header">
           <div class="exp-popover-title-row">
             <div>
-              <h4 class="exp-popover-code">{{ expectationPopover.code }}</h4>
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <h4 class="exp-popover-code">{{ expectationPopover.code }}</h4>
+                <ExpectationWeightBadge :weight="expectationPopover.weight" />
+              </div>
               <p class="exp-popover-desc">{{ expectationPopover.name || expectationPopover.description }}</p>
             </div>
             <button class="exp-popover-close" @click="expectationPopover = null"><X :size="14" /></button>
@@ -409,6 +413,7 @@
       :expectation-code="selectedStudentExpModal.expectationCode"
       :expectation-title="selectedStudentExpModal.expectationTitle"
       :expectation-description="selectedStudentExpModal.expectationDescription"
+      :expectation-weight="selectedStudentExpModal.weight"
       :unit-name="selectedStudentExpModal.unitName"
       :mastery-data="studentExpCellMap[selectedStudentExpModal.studentId]?.[selectedStudentExpModal.expectationCode] || {}"
       @close="selectedStudentExpModal = null"
@@ -421,6 +426,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { Search, ChevronDown, X, Layers, Calendar, FileText, FileEdit } from 'lucide-vue-next'
+import ExpectationWeightBadge from '../setup/ExpectationWeightBadge.vue'
 import GradesExpectationStudentModal from './GradesExpectationStudentModal.vue'
 import { 
   activeClassRecord, 
@@ -674,7 +680,8 @@ function toggleExpectationPopover(exp, event) {
     code: exp.code,
     name: exp.name,
     description: exp.description,
-    unitName: exp.unitName
+    unitName: exp.unitName,
+    weight: exp.weight != null ? exp.weight : 1.0
   }
 }
 
@@ -889,7 +896,8 @@ const allExpectations = computed(() => {
               unitName: u.name,
               description: exp.description || exp.name || '',
               gradeLevel: gLevel,
-              courseCode: exp.courseCode || exp.targetCourseCode || ''
+              courseCode: exp.courseCode || exp.targetCourseCode || '',
+              weight: (exp.weight !== undefined && exp.weight !== null && !isNaN(exp.weight)) ? Number(exp.weight) : 1.0
             }
           }
         })
@@ -914,7 +922,8 @@ const allExpectations = computed(() => {
             unitId: exp.unitId,
             description: exp.description || '',
             gradeLevel: gLevel,
-            courseCode: exp.courseCode || exp.targetCourseCode || ''
+            courseCode: exp.courseCode || exp.targetCourseCode || '',
+            weight: (exp.weight !== undefined && exp.weight !== null && !isNaN(exp.weight)) ? Number(exp.weight) : 1.0
           }
         }
       }
@@ -948,7 +957,8 @@ const allExpectations = computed(() => {
               strand: strandCode,
               description: `Evaluated in ${ast.name}`,
               gradeLevel: gLevel,
-              courseCode: ast.targetCourseCode || ''
+              courseCode: ast.targetCourseCode || '',
+              weight: (found?.weight !== undefined && found?.weight !== null && !isNaN(found?.weight)) ? Number(found.weight) : 1.0
             }
           }
         }
@@ -1065,20 +1075,22 @@ function openExpectationDetail(studentId, expCode) {
     expectationCode: expCode,
     expectationTitle: exp?.name || exp?.title || expCode,
     expectationDescription: exp?.description || exp?.text || '',
-    unitName: exp?.unitName || ''
+    unitName: exp?.unitName || '',
+    weight: exp?.weight != null ? exp.weight : 1.0
   }
 }
 
 function getExpCellTooltip(student, exp, cellData) {
   if (!cellData) return ''
+  const weightSuffix = (exp?.weight != null && exp.weight !== 1) ? ` [${exp.weight}×]` : ''
   if (cellData.isOverridden) {
     const calcText = cellData.calculatedBadge?.level 
       ? ` (Calculated: ${cellData.calculatedBadge.level})` 
       : ''
-    return `Professional Judgment Override: ${cellData.badge.level}${calcText} • Click to view tasks & adjust`
+    return `Professional Judgment Override: ${cellData.badge.level}${calcText}${weightSuffix} • Click to view tasks & adjust`
   }
   const evCount = cellData.evaluations?.length || 0
-  return `${cellData.badge.level} (${cellData.score}%) • ${evCount} assessment${evCount !== 1 ? 's' : ''} • Click to view tasks & override`
+  return `${exp?.code || ''}${weightSuffix} • ${cellData.badge.level} (${cellData.score}%) • ${evCount} assessment${evCount !== 1 ? 's' : ''} • Click to view tasks & override`
 }
 </script>
 

@@ -184,7 +184,7 @@
         <div v-if="expandedStrandSubjectId === sub.subjectId" class="elementary-subjects__strands-editor">
           <div class="elementary-subjects__strands-header-row" style="display: flex; justify-content: space-between; align-items: center; wrap: wrap; gap: 8px;">
             <strong style="font-size: 0.85rem;">Strands &amp; Expectations for {{ sub.name }}:</strong>
-            <div style="display: flex; gap: 6px;">
+            <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
               <button 
                 type="button" 
                 class="elementary-subjects__btn-ghost" 
@@ -193,6 +193,16 @@
                 @click="openExpectationModal(sub)"
               >
                 <BookOpen :size="13" /> Import Expectations
+              </button>
+              <button 
+                v-if="sub.expectations && sub.expectations.length > 0" 
+                type="button" 
+                class="elementary-subjects__btn-ghost" 
+                style="font-size: 0.75rem; padding: 4px 10px; display: inline-flex; align-items: center; gap: 5px; color: var(--primary);"
+                title="Save this subject configuration and expectation weights as your master preset in Curriculum Library"
+                @click="saveSubjectToMasterLibrary(sub)"
+              >
+                <BookmarkCheck :size="13" /> Save to Master Library
               </button>
               <button 
                 v-if="sub.expectations && sub.expectations.length > 0" 
@@ -295,6 +305,20 @@
                       @keydown.enter="saveEditExp(sub.subjectId, exp)"
                       @keydown.esc="cancelEditExp"
                     />
+                    <div class="elementary-subjects__weight-input-group" title="Expectation Weight Multiplier (e.g. 1.0, 2.0, 0.5, 0)">
+                      <input 
+                        v-model.number="editingExpWeight" 
+                        type="number" 
+                        step="0.1" 
+                        min="0" 
+                        max="10" 
+                        class="elementary-subjects__exp-input-weight" 
+                        placeholder="1.0" 
+                        @keydown.enter="saveEditExp(sub.subjectId, exp)"
+                        @keydown.esc="cancelEditExp"
+                      />
+                      <span class="elementary-subjects__weight-unit">×</span>
+                    </div>
                     <input 
                       v-model="editingExpDesc" 
                       type="text" 
@@ -326,6 +350,7 @@
                 <!-- Normal View -->
                 <template v-else>
                   <span class="elementary-subjects__exp-code">{{ exp.code }}</span>
+                  <ExpectationWeightBadge :weight="exp.weight" />
                   <span class="elementary-subjects__exp-desc">{{ exp.description }}</span>
                   <div class="elementary-subjects__exp-actions">
                     <button 
@@ -357,6 +382,18 @@
                   class="elementary-subjects__exp-input-code" 
                   placeholder="Code (A1.1)" 
                 />
+                <div class="elementary-subjects__weight-input-group" title="Expectation Weight Multiplier (e.g. 1.0, 2.0, 0.5, 0)">
+                  <input 
+                    v-model.number="newExpForms[`${sub.subjectId}_${unit.unitId}_weight`]" 
+                    type="number" 
+                    step="0.1" 
+                    min="0" 
+                    max="10" 
+                    class="elementary-subjects__exp-input-weight" 
+                    placeholder="1.0" 
+                  />
+                  <span class="elementary-subjects__weight-unit">×</span>
+                </div>
                 <input 
                   v-model="newExpForms[`${sub.subjectId}_${unit.unitId}_desc`]"
                   type="text" 
@@ -399,6 +436,20 @@
                       @keydown.enter="saveEditExp(sub.subjectId, exp)"
                       @keydown.esc="cancelEditExp"
                     />
+                    <div class="elementary-subjects__weight-input-group" title="Expectation Weight Multiplier (e.g. 1.0, 2.0, 0.5, 0)">
+                      <input 
+                        v-model.number="editingExpWeight" 
+                        type="number" 
+                        step="0.1" 
+                        min="0" 
+                        max="10" 
+                        class="elementary-subjects__exp-input-weight" 
+                        placeholder="1.0" 
+                        @keydown.enter="saveEditExp(sub.subjectId, exp)"
+                        @keydown.esc="cancelEditExp"
+                      />
+                      <span class="elementary-subjects__weight-unit">×</span>
+                    </div>
                     <input 
                       v-model="editingExpDesc" 
                       type="text" 
@@ -430,6 +481,7 @@
                 <!-- Normal View -->
                 <template v-else>
                   <span class="elementary-subjects__exp-code">{{ exp.code }}</span>
+                  <ExpectationWeightBadge :weight="exp.weight" />
                   <span class="elementary-subjects__exp-desc">{{ exp.description }}</span>
                   <div class="elementary-subjects__exp-actions">
                     <button 
@@ -461,6 +513,18 @@
                   class="elementary-subjects__exp-input-code" 
                   placeholder="Code (B1)" 
                 />
+                <div class="elementary-subjects__weight-input-group" title="Expectation Weight Multiplier (e.g. 1.0, 2.0, 0.5, 0)">
+                  <input 
+                    v-model.number="newExpForms[`${sub.subjectId}_general_weight`]" 
+                    type="number" 
+                    step="0.1" 
+                    min="0" 
+                    max="10" 
+                    class="elementary-subjects__exp-input-weight" 
+                    placeholder="1.0" 
+                  />
+                  <span class="elementary-subjects__weight-unit">×</span>
+                </div>
                 <input 
                   v-model="newExpForms[`${sub.subjectId}_general_desc`]"
                   type="text" 
@@ -540,9 +604,10 @@
 </template>
 
 <script setup>
-import { ref, computed, reactive } from 'vue'
-import { Plus, Check, Trash2, Zap, BookOpen, ChevronDown, Edit2, X, Search } from 'lucide-vue-next'
+import { ref, computed, reactive, onMounted } from 'vue'
+import { Plus, Check, Trash2, Zap, BookOpen, ChevronDown, Edit2, X, Search, BookmarkCheck } from 'lucide-vue-next'
 import SubjectIcon from '../SubjectIcon.vue'
+import ExpectationWeightBadge from './ExpectationWeightBadge.vue'
 import { useClassroom } from '../../composables/useClassroom.js'
 import { activeSubjectId } from '../../composables/useClassroomState.js'
 import { DEFAULT_ELEMENTARY_SUBJECTS, DEFAULT_TRADITIONAL_CATEGORIES } from '../../utils/elementarySubjects.js'
@@ -563,12 +628,22 @@ import {
   findElementaryPresets,
   cleanUnitName
 } from '../../composables/useElementary.js'
+import { 
+  useCurriculumLibrary, 
+  resolveSubjectPreset, 
+  saveMasterPreset 
+} from '../../composables/useCurriculumLibrary.js'
 
 import ExpectationImportModal from './ExpectationImportModal.vue'
 import { useMessage } from '../../composables/useMessage.js'
 import { cleanExpectationText } from '../../utils/textUtils.js'
 
-const { confirm: confirmMessage } = useMessage()
+const { confirm: confirmMessage, alert: alertMessage } = useMessage()
+const { initLibrary } = useCurriculumLibrary()
+
+onMounted(() => {
+  initLibrary()
+})
 
 const { activeClass, updateActiveClass } = useClassroom()
 
@@ -583,17 +658,20 @@ const strandSearchQuery = ref('')
 const editingExpId = ref(null)
 const editingExpCode = ref('')
 const editingExpDesc = ref('')
+const editingExpWeight = ref(1.0)
 
 function startEditExp(exp) {
   editingExpId.value = exp.expectationId
   editingExpCode.value = exp.code || ''
   editingExpDesc.value = exp.description || ''
+  editingExpWeight.value = (exp.weight !== undefined && exp.weight !== null && !isNaN(exp.weight)) ? Number(exp.weight) : 1.0
 }
 
 function cancelEditExp() {
   editingExpId.value = null
   editingExpCode.value = ''
   editingExpDesc.value = ''
+  editingExpWeight.value = 1.0
 }
 
 async function saveEditExp(subjectId, exp) {
@@ -620,12 +698,15 @@ async function saveEditExp(subjectId, exp) {
 
   const cleanCode = cleanExpectationText(newCode).toUpperCase()
   const cleanDesc = cleanExpectationText(newDesc)
+  const cleanWeight = (editingExpWeight.value !== undefined && editingExpWeight.value !== null && !isNaN(editingExpWeight.value)) 
+    ? Number(editingExpWeight.value) 
+    : 1.0
 
   const updated = currentSubjects.value.map(s => {
     if (s.subjectId !== subjectId) return s
     const exps = (s.expectations || []).map(e => {
       if (e.expectationId === exp.expectationId) {
-        return { ...e, code: cleanCode, description: cleanDesc }
+        return { ...e, code: cleanCode, description: cleanDesc, weight: cleanWeight }
       }
       return e
     })
@@ -634,6 +715,43 @@ async function saveEditExp(subjectId, exp) {
 
   cancelEditExp()
   await updateActiveClass({ subjects: updated })
+}
+
+async function saveSubjectToMasterLibrary(sub) {
+  if (!sub || !sub.expectations || sub.expectations.length === 0) return
+  
+  const strands = (sub.gradebookUnits || []).map(u => {
+    const exps = (sub.expectations || []).filter(e => e.unitId === u.unitId)
+    return {
+      name: u.name,
+      overalls: exps.map(e => ({
+        code: e.code,
+        name: e.code,
+        description: e.description,
+        weight: (e.weight !== undefined && e.weight !== null && !isNaN(e.weight)) ? Number(e.weight) : 1.0,
+        specifics: []
+      }))
+    }
+  })
+
+  const gradeStr = parsedGrades.value[0] || activeClass.value?.gradeLevel || ''
+  const cleanGrade = gradeStr.toLowerCase().replace(/[^a-z0-9]/g, '')
+  const cleanCode = (sub.code || sub.name || 'sub').toLowerCase().replace(/[^a-z0-9]/g, '')
+  const presetId = `elem_${cleanCode}_${cleanGrade || 'master'}`
+
+  const preset = {
+    presetId,
+    title: `${sub.name}${gradeStr ? ' (' + gradeStr + ')' : ''} Master`,
+    panel: 'elementary',
+    grade: gradeStr,
+    subjectCode: sub.code,
+    gradingFramework: sub.gradingFramework || 'sbar',
+    strands,
+    updatedAt: new Date().toISOString()
+  }
+
+  await saveMasterPreset(preset)
+  await alertMessage(`Saved "${preset.title}" with custom expectation weights to your Master Curriculum Library!`, 'Saved to Library')
 }
 
 const selectedGradeFilters = reactive({})
@@ -829,7 +947,7 @@ async function removeExpectation(subjectId, expectationId) {
   await updateActiveClass({ subjects: updated })
 }
 
-function addExpectationToUnit(subjectId, unitId, code, description) {
+function addExpectationToUnit(subjectId, unitId, code, description, weight = 1.0) {
   if (!code.trim() && !description.trim()) return
   const currentGrade = selectedGradeFilters[subjectId]
   const sub = currentSubjects.value.find(s => s.subjectId === subjectId)
@@ -840,6 +958,7 @@ function addExpectationToUnit(subjectId, unitId, code, description) {
     expectationId: crypto.randomUUID(),
     code: code.trim().toUpperCase(),
     description: description.trim(),
+    weight: (weight !== undefined && weight !== null && !isNaN(weight)) ? Number(weight) : 1.0,
     gradeLevel,
     unitId: unitId === 'general' ? undefined : unitId
   }
@@ -854,12 +973,15 @@ function addExpectationToUnit(subjectId, unitId, code, description) {
 function submitAddExp(subjectId, unitId) {
   const codeKey = `${subjectId}_${unitId}_code`
   const descKey = `${subjectId}_${unitId}_desc`
+  const weightKey = `${subjectId}_${unitId}_weight`
   const code = newExpForms[codeKey] || ''
   const desc = newExpForms[descKey] || ''
+  const weight = newExpForms[weightKey] != null && newExpForms[weightKey] !== '' ? Number(newExpForms[weightKey]) : 1.0
   if (!code.trim() && !desc.trim()) return
-  addExpectationToUnit(subjectId, unitId, code, desc)
+  addExpectationToUnit(subjectId, unitId, code, desc, weight)
   newExpForms[codeKey] = ''
   newExpForms[descKey] = ''
+  newExpForms[weightKey] = ''
 }
 
 function saveStrandName(subjectId, unitId, newName) {
@@ -974,6 +1096,8 @@ const detectedGrade = computed(() => parsedGrades.value.join('/') || 'Grade Leve
 
 function getSubjectPresetMatches(sub) {
   if (!sub || !parsedGrades.value.length) return []
+  const resolved = parsedGrades.value.map(g => resolveSubjectPreset(g, sub.code, sub.name)).filter(Boolean)
+  if (resolved.length > 0) return resolved
   return findElementaryPresets(parsedGrades.value, sub.code, sub.name)
 }
 
@@ -1872,6 +1996,36 @@ async function saveCustomSubject() {
 .elementary-subjects__btn-save-inline:hover {
   background: #10b981;
   color: #ffffff;
+}
+
+.elementary-subjects__weight-input-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  background: var(--bg-surface, var(--bg-primary));
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm, 6px);
+  padding: 0 4px;
+}
+
+.elementary-subjects__exp-input-weight {
+  width: 44px;
+  padding: 4px 2px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  text-align: right;
+  outline: none;
+}
+
+.elementary-subjects__weight-unit {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  user-select: none;
+  padding-right: 2px;
 }
 </style>
 
