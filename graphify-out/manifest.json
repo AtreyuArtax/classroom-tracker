@@ -1225,8 +1225,8 @@
     "semantic_hash": ""
   },
   "src/components/setup/CurriculumLibraryManager.vue": {
-    "mtime": 1788688526.5588553,
-    "ast_hash": "141c0b44f1d800f33ef8884a0f5c75c5",
+    "mtime": 1788691010.4748013,
+    "ast_hash": "1d14f94dcec830598a5652f5b4d3f6af",
     "semantic_hash": ""
   },
   "src/components/setup/ExpectationWeightBadge.vue": {

@@ -1,66 +1,82 @@
 <template>
   <div class="curriculum-manager">
-    <!-- Header Area -->
-    <div class="curriculum-manager__header">
-      <div class="curriculum-manager__title-group">
-        <h2 class="curriculum-manager__title">
-          <BookOpen :size="20" class="curriculum-manager__title-icon" />
-          Master Curriculum Library
-        </h2>
-        <p class="curriculum-manager__subtitle">
-          Define master curriculum standards, descriptions, and weight multipliers across school years and classes.
-        </p>
+    <!-- Header & Controls Card -->
+    <div class="curriculum-manager__header-card">
+      <div class="curriculum-manager__header-top">
+        <div class="curriculum-manager__title-group">
+          <h2 class="curriculum-manager__title">
+            <BookOpen :size="20" class="curriculum-manager__title-icon" />
+            Master Curriculum Library
+          </h2>
+          <p class="curriculum-manager__subtitle">
+            Define master curriculum standards, descriptions, and weight multipliers across school years and classes.
+          </p>
+        </div>
+
+        <!-- Quick Preset Search -->
+        <div class="curriculum-manager__search-box">
+          <Search :size="14" class="search-icon" />
+          <input 
+            v-model="searchQuery" 
+            type="text" 
+            placeholder="Search standards, codes, subjects..." 
+            class="curriculum-manager__search-input"
+          />
+          <button v-if="searchQuery" type="button" class="clear-search-btn" @click="searchQuery = ''">
+            <X :size="12" />
+          </button>
+        </div>
       </div>
 
-      <!-- Quick Preset Search -->
-      <div class="curriculum-manager__search-box">
-        <Search :size="14" class="search-icon" />
-        <input 
-          v-model="searchQuery" 
-          type="text" 
-          placeholder="Search standards, codes, subjects..." 
-          class="curriculum-manager__search-input"
-        />
-        <button v-if="searchQuery" type="button" class="clear-search-btn" @click="searchQuery = ''">
-          <X :size="12" />
-        </button>
-      </div>
-    </div>
+      <!-- Panel & Grade Selector Toolbar -->
+      <div class="curriculum-manager__nav-bar">
+        <!-- Elementary vs Secondary Toggle -->
+        <div class="curriculum-manager__segmented">
+          <button 
+            type="button" 
+            class="curriculum-manager__seg-btn"
+            :class="{ 'curriculum-manager__seg-btn--active': activePanel === 'elementary' }"
+            @click="selectPanel('elementary')"
+          >
+            <School :size="15" /> Elementary (K–8)
+          </button>
+          <button 
+            type="button" 
+            class="curriculum-manager__seg-btn"
+            :class="{ 'curriculum-manager__seg-btn--active': activePanel === 'secondary' }"
+            @click="selectPanel('secondary')"
+          >
+            <GraduationCap :size="15" /> Secondary (9–12)
+          </button>
+        </div>
 
-    <!-- Panel & Grade Selector Toolbar -->
-    <div class="curriculum-manager__nav-bar">
-      <!-- Elementary vs Secondary Toggle -->
-      <div class="curriculum-manager__segmented">
-        <button 
-          type="button" 
-          class="curriculum-manager__seg-btn"
-          :class="{ 'curriculum-manager__seg-btn--active': activePanel === 'elementary' }"
-          @click="selectPanel('elementary')"
-        >
-          <School :size="15" /> Elementary (K–8)
-        </button>
-        <button 
-          type="button" 
-          class="curriculum-manager__seg-btn"
-          :class="{ 'curriculum-manager__seg-btn--active': activePanel === 'secondary' }"
-          @click="selectPanel('secondary')"
-        >
-          <GraduationCap :size="15" /> Secondary (9–12)
-        </button>
-      </div>
+        <!-- Grade Level Pills (for Elementary) -->
+        <div v-if="activePanel === 'elementary'" class="curriculum-manager__grade-pills">
+          <button 
+            v-for="g in ['1', '2', '3', '4', '5', '6', '7', '8']" 
+            :key="g"
+            type="button"
+            class="curriculum-manager__grade-pill"
+            :class="{ 'curriculum-manager__grade-pill--active': activeGrade === g }"
+            @click="selectGrade(g)"
+          >
+            Grade {{ g }}
+          </button>
+        </div>
 
-      <!-- Grade Level Pills (for Elementary) -->
-      <div v-if="activePanel === 'elementary'" class="curriculum-manager__grade-pills">
-        <button 
-          v-for="g in ['1', '2', '3', '4', '5', '6', '7', '8']" 
-          :key="g"
-          type="button"
-          class="curriculum-manager__grade-pill"
-          :class="{ 'curriculum-manager__grade-pill--active': activeGrade === g }"
-          @click="selectGrade(g)"
-        >
-          Grade {{ g }}
-        </button>
+        <!-- Grade Level Pills (for Secondary) -->
+        <div v-else class="curriculum-manager__grade-pills">
+          <button 
+            v-for="g in ['9', '10', '11', '12']" 
+            :key="g"
+            type="button"
+            class="curriculum-manager__grade-pill"
+            :class="{ 'curriculum-manager__grade-pill--active': activeGrade === g }"
+            @click="selectGrade(g)"
+          >
+            Grade {{ g }}
+          </button>
+        </div>
       </div>
     </div>
 
@@ -584,19 +600,34 @@ async function handleResetToMinistry() {
 
 <style scoped>
 .curriculum-manager {
+  max-width: 1180px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 24px 24px 64px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  width: 100%;
+  gap: 24px;
+  box-sizing: border-box;
 }
 
-.curriculum-manager__header {
+.curriculum-manager__header-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg, 12px);
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow: var(--shadow-sm);
+}
+
+.curriculum-manager__header-top {
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 16px;
-  padding-bottom: 14px;
+  padding-bottom: 16px;
   border-bottom: 1px solid var(--border);
 }
 
@@ -833,10 +864,11 @@ async function handleResetToMinistry() {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg, 12px);
-  padding: 20px;
+  padding: 24px;
   display: flex;
   flex-direction: column;
   gap: 16px;
+  box-shadow: var(--shadow-sm);
 }
 
 .curriculum-editor__header {
