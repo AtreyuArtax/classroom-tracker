@@ -72,12 +72,20 @@
                   <div v-if="item.description" class="code-desc" :title="item.description">{{ item.description }}</div>
                 </td>
                 <td class="td-level">
-                  <span 
-                    class="sbar-level-badge" 
-                    :style="{ background: item.badge.color, color: 'white', padding: '3px 10px', borderRadius: '12px', fontWeight: 'bold' }"
-                  >
-                    {{ item.badge.level }}
-                  </span>
+                  <div class="sbar-level-display">
+                    <span 
+                      class="sbar-level-badge" 
+                      :class="{ 'sbar-level-badge--overridden': item.isOverridden }"
+                      :style="{ background: item.badge.color, color: 'white', padding: '3px 10px', borderRadius: '12px', fontWeight: 'bold' }"
+                      :title="item.isOverridden ? `Overridden to ${item.badge.level} (Calculated: ${item.calculatedBadge?.level || '—'})` : `Calculated level: ${item.badge.level}`"
+                    >
+                      <Zap v-if="item.isOverridden" :size="11" class="override-pill-icon" />
+                      {{ item.badge.level }}
+                    </span>
+                    <span v-if="item.isOverridden" class="overridden-tag-mini" title="Teacher Professional Judgment Override">
+                      was {{ item.calculatedBadge?.level || '—' }}
+                    </span>
+                  </div>
                 </td>
                 <td class="td-trend">
                   <span v-if="item.trend === 'improving'" class="trend-badge trend-badge--up" title="Improving trend">
@@ -103,7 +111,7 @@
                 <td colspan="4">
                   <div class="evals-detail-container">
                     <div class="evals-detail-title">Evaluations contributing to {{ item.code }}:</div>
-                    <div class="evals-pill-list">
+                    <div v-if="item.evaluations.length > 0" class="evals-pill-list">
                       <div 
                         v-for="ev in item.evaluations" 
                         :key="ev.assessmentId" 
@@ -119,6 +127,55 @@
                           {{ ev.badge.level }}
                         </span>
                         <span class="eval-date" v-if="ev.date">({{ ev.date }})</span>
+                      </div>
+                    </div>
+                    <div v-else class="evals-empty-note">
+                      No contributing assessment evaluations recorded yet for this expectation.
+                    </div>
+
+                    <!-- Teacher Professional Judgment Override Controls -->
+                    <div class="override-panel">
+                      <div class="override-panel-header">
+                        <div class="override-panel-title">
+                          <Zap :size="13" class="override-icon" />
+                          <span>Professional Judgment Override:</span>
+                        </div>
+                        <div v-if="item.isOverridden" class="override-active-pill">
+                          <span class="override-active-tag">Active Override</span>
+                          <span class="override-active-details">
+                            Held at <strong>{{ item.overrideLevel }}</strong>
+                            (Calculated: {{ item.calculatedBadge?.level || '—' }})
+                          </span>
+                          <button 
+                            type="button" 
+                            class="revert-override-btn"
+                            title="Revert to calculated algorithmic level"
+                            @click.stop="handleRevertOverride(item.code)"
+                          >
+                            <RotateCcw :size="11" /> Revert to {{ item.calculatedBadge?.level || 'Calculated' }}
+                          </button>
+                        </div>
+                        <div v-else class="override-inactive-hint">
+                          Calculated: <strong>{{ item.badge.level }}</strong>. Select level below to override permanently:
+                        </div>
+                      </div>
+
+                      <div class="override-buttons-bar">
+                        <button
+                          v-for="lvl in SBAR_LEVEL_OPTIONS"
+                          :key="lvl.code"
+                          type="button"
+                          class="override-lvl-btn"
+                          :class="{ 
+                            'override-lvl-btn--active': item.isOverridden && (item.overrideLevel === lvl.code || item.overrideLevel === lvl.shortLabel),
+                            'override-lvl-btn--calc': !item.isOverridden && (item.badge.level === lvl.code || item.badge.level === lvl.shortLabel)
+                          }"
+                          :style="item.isOverridden && (item.overrideLevel === lvl.code || item.overrideLevel === lvl.shortLabel) ? { background: lvl.color, borderColor: lvl.color, color: 'white' } : {}"
+                          :title="`Override ${item.code} to ${lvl.code} (${lvl.pct}%)`"
+                          @click.stop="handleSetOverride(item.code, lvl)"
+                        >
+                          {{ lvl.shortLabel || lvl.code }}
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -145,9 +202,10 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import { Target, AlertCircle, ChevronDown, TrendingUp, TrendingDown, Minus, Search, Filter } from 'lucide-vue-next'
-import { activeClassRecord, assessments, gradeMap } from '../../composables/useGradebook.js'
-import { calculateSBARExpectationMastery } from '../../db/gradebook/gradeCalcSBAR.js'
+import { Target, AlertCircle, ChevronDown, TrendingUp, TrendingDown, Minus, Search, Filter, Zap, RotateCcw } from 'lucide-vue-next'
+import { activeClassRecord, assessments, gradeMap, saveStudentExpectationOverride } from '../../composables/useGradebook.js'
+import { activeSubjectId } from '../../composables/useClassroomState.js'
+import { calculateSBARExpectationMastery, SBAR_LEVELS } from '../../db/gradebook/gradeCalcSBAR.js'
 import { cleanUnitName } from '../../composables/useElementary.js'
 
 const props = defineProps({
@@ -162,10 +220,35 @@ const selectedUnit = ref('ALL')
 const showAll = ref(false)
 const DEFAULT_LIMIT = 8
 
+const SBAR_LEVEL_OPTIONS = SBAR_LEVELS || []
+
 function toggleRow(code) {
   expandedRow.value = expandedRow.value === code ? null : code
 }
 
+async function handleSetOverride(code, lvl) {
+  if (!props.studentId) return
+  await saveStudentExpectationOverride(
+    props.studentId,
+    code,
+    {
+      level: lvl.code,
+      score: lvl.pct,
+      note: 'Teacher professional judgment override'
+    },
+    activeSubjectId?.value || null
+  )
+}
+
+async function handleRevertOverride(code) {
+  if (!props.studentId) return
+  await saveStudentExpectationOverride(
+    props.studentId,
+    code,
+    null,
+    activeSubjectId?.value || null
+  )
+}
 
 const expectationList = computed(() => {
   if (!activeClassRecord.value || !props.studentId) return []
@@ -232,7 +315,13 @@ const expectationList = computed(() => {
       score: data.score,
       badge: data.badge,
       trend: data.trend,
-      evaluations: data.evaluations || []
+      evaluations: data.evaluations || [],
+      isOverridden: !!data.isOverridden,
+      overrideLevel: data.overrideLevel || null,
+      calculatedScore: data.calculatedScore ?? data.score,
+      calculatedBadge: data.calculatedBadge || data.badge,
+      overrideNote: data.overrideNote || '',
+      overrideUpdatedAt: data.overrideUpdatedAt || null
     }
   }).sort((a, b) => a.code.localeCompare(b.code))
 })
@@ -655,6 +744,157 @@ const visibleExpectations = computed(() => {
 .sbar-show-more-btn:hover {
   background: var(--bg-hover);
   border-color: var(--primary);
+}
+
+.sbar-level-display {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.sbar-level-badge--overridden {
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.45), 0 2px 5px rgba(0, 0, 0, 0.25);
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.override-pill-icon {
+  color: #fbbf24;
+}
+
+.overridden-tag-mini {
+  font-size: 10px;
+  font-weight: 600;
+  color: #f59e0b;
+  letter-spacing: 0.2px;
+}
+
+.evals-empty-note {
+  font-size: 12px;
+  font-style: italic;
+  color: var(--text-secondary);
+  padding: 4px 0;
+}
+
+.override-panel {
+  margin-top: 8px;
+  padding: 10px 12px;
+  background: var(--surface, rgba(255, 255, 255, 0.03));
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm, 8px);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.override-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.override-panel-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+}
+
+.override-icon {
+  color: #f59e0b;
+}
+
+.override-active-pill {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 11px;
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+.override-active-tag {
+  font-weight: 700;
+  color: #f59e0b;
+}
+
+.override-active-details {
+  color: var(--text);
+}
+
+.revert-override-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  border-radius: 4px;
+  padding: 2px 7px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.revert-override-btn:hover {
+  background: var(--bg-hover);
+  border-color: #ef4444;
+  color: #ef4444;
+}
+
+.override-inactive-hint {
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.override-buttons-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.override-lvl-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 24px;
+  padding: 0 6px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  background: var(--bg-secondary, rgba(255, 255, 255, 0.05));
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.override-lvl-btn:hover {
+  background: var(--bg-hover);
+  border-color: var(--primary);
+  color: var(--text);
+  transform: translateY(-1px);
+}
+
+.override-lvl-btn--calc {
+  border-color: rgba(255, 255, 255, 0.25);
+  color: var(--text);
+}
+
+.override-lvl-btn--active {
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
 }
 </style>
 

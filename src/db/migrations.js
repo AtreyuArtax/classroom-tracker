@@ -149,6 +149,9 @@ export function migrateData(data) {
           if (cls.students[studentId].categoryOverrides === undefined) {
             cls.students[studentId].categoryOverrides = {}
           }
+          if (cls.students[studentId].expectationOverrides === undefined) {
+            cls.students[studentId].expectationOverrides = {}
+          }
           if (cls.students[studentId].gradebookNote === undefined) {
             cls.students[studentId].gradebookNote = ''
           }

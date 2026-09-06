@@ -59,6 +59,134 @@ export function getSBARLevelBadge(pct) {
 }
 
 /**
+ * Canonical SBAR rubric levels with percentage defaults, colors, and tier order.
+ */
+export const SBAR_LEVELS = [
+  { code: 'L4+', label: 'Level 4+', shortLabel: '4+', pct: 96, color: '#16a34a', order: 13 },
+  { code: 'L4',  label: 'Level 4',  shortLabel: '4',  pct: 88, color: '#22c55e', order: 12 },
+  { code: 'L4-', label: 'Level 4-', shortLabel: '4-', pct: 82, color: '#4ade80', order: 11 },
+  { code: 'L3+', label: 'Level 3+', shortLabel: '3+', pct: 78, color: '#2563eb', order: 10 },
+  { code: 'L3',  label: 'Level 3',  shortLabel: '3',  pct: 75, color: '#3b82f6', order: 9 },
+  { code: 'L3-', label: 'Level 3-', shortLabel: '3-', pct: 71, color: '#60a5fa', order: 8 },
+  { code: 'L2+', label: 'Level 2+', shortLabel: '2+', pct: 68, color: '#d97706', order: 7 },
+  { code: 'L2',  label: 'Level 2',  shortLabel: '2',  pct: 65, color: '#f59e0b', order: 6 },
+  { code: 'L2-', label: 'Level 2-', shortLabel: '2-', pct: 61, color: '#fbbf24', order: 5 },
+  { code: 'L1+', label: 'Level 1+', shortLabel: '1+', pct: 58, color: '#dc2626', order: 4 },
+  { code: 'L1',  label: 'Level 1',  shortLabel: '1',  pct: 55, color: '#ef4444', order: 3 },
+  { code: 'L1-', label: 'Level 1-', shortLabel: '1-', pct: 51, color: '#f87171', order: 2 },
+  { code: 'R',   label: 'Remediation', shortLabel: 'R', pct: 45, color: '#991b1b', order: 1 }
+]
+
+/**
+ * Resolves any professional judgment override for a student on a specific expectation.
+ * Supports elementary subject-scoped keys (e.g. "elem_sub_math::B1.1") to prevent cross-subject bleed.
+ *
+ * @param {Object} student - Student record from classRecord.students[studentId]
+ * @param {string} expCode - Expectation code (e.g. "B1.1")
+ * @param {string|null} [subjectId] - Active elementary subject ID if applicable
+ * @param {Array<Object>} [allClassExps] - All curriculum expectations for alias matching
+ * @returns {Object|null} Normalized override { level, score, note, updatedAt, isOverridden: true }
+ */
+export function resolveStudentExpectationOverride(student, expCode, subjectId = null, allClassExps = []) {
+  if (!student || !student.expectationOverrides || !expCode) return null
+
+  const overrides = student.expectationOverrides
+  const expCodeStr = String(expCode).trim()
+  const expCodeLower = expCodeStr.toLowerCase()
+
+  // 1. If subjectId is provided (elementary mode), check subject-scoped keys first
+  if (subjectId) {
+    const scopedKey = `${subjectId}::${expCodeStr}`
+    if (overrides[scopedKey]) return normalizeOverride(overrides[scopedKey])
+
+    const matchScoped = Object.keys(overrides).find(k => k.toLowerCase() === scopedKey.toLowerCase())
+    if (matchScoped) return normalizeOverride(overrides[matchScoped])
+
+    // Check alias by expectationId under this subject
+    const matchedExp = allClassExps.find(e => 
+      String(e.code || '').toLowerCase() === expCodeLower || 
+      String(e.expectationId || '').toLowerCase() === expCodeLower
+    )
+    if (matchedExp && matchedExp.expectationId) {
+      const scopedIdKey = `${subjectId}::${matchedExp.expectationId}`
+      if (overrides[scopedIdKey]) return normalizeOverride(overrides[scopedIdKey])
+      const matchScopedId = Object.keys(overrides).find(k => k.toLowerCase() === scopedIdKey.toLowerCase())
+      if (matchScopedId) return normalizeOverride(overrides[matchScopedId])
+    }
+
+    // In elementary mode, only fall back to unscoped key if it doesn't contain a scope separator
+    const unscopedDirect = overrides[expCodeStr]
+    if (unscopedDirect) return normalizeOverride(unscopedDirect)
+    const matchUnscoped = Object.keys(overrides).find(k => !k.includes('::') && k.toLowerCase() === expCodeLower)
+    if (matchUnscoped) return normalizeOverride(overrides[matchUnscoped])
+    return null
+  }
+
+  // 2. Standard / Secondary mode check (non-scoped)
+  if (overrides[expCodeStr]) return normalizeOverride(overrides[expCodeStr])
+  const matchDirect = Object.keys(overrides).find(k => !k.includes('::') && k.toLowerCase() === expCodeLower)
+  if (matchDirect) return normalizeOverride(overrides[matchDirect])
+
+  // Check alias by expectationId
+  const matchedExp = allClassExps.find(e => 
+    String(e.code || '').toLowerCase() === expCodeLower || 
+    String(e.expectationId || '').toLowerCase() === expCodeLower
+  )
+  if (matchedExp) {
+    const idStr = String(matchedExp.expectationId || '')
+    if (idStr && overrides[idStr]) return normalizeOverride(overrides[idStr])
+    const codeStr = String(matchedExp.code || '')
+    if (codeStr && overrides[codeStr]) return normalizeOverride(overrides[codeStr])
+  }
+
+  return null
+}
+
+function normalizeOverride(raw) {
+  if (!raw) return null
+  if (typeof raw === 'string') {
+    const found = SBAR_LEVELS.find(l => 
+      l.code.toUpperCase() === raw.toUpperCase() || 
+      l.shortLabel.toUpperCase() === raw.toUpperCase()
+    )
+    return {
+      level: found ? found.code : raw,
+      score: found ? found.pct : 75,
+      note: '',
+      updatedAt: null,
+      isOverridden: true
+    }
+  }
+  if (typeof raw === 'number') {
+    return {
+      level: getSBARLevelBadge(raw).level,
+      score: raw,
+      note: '',
+      updatedAt: null,
+      isOverridden: true
+    }
+  }
+  if (typeof raw === 'object') {
+    const level = raw.level || getSBARLevelBadge(raw.score).level
+    const found = SBAR_LEVELS.find(l => 
+      l.code.toUpperCase() === String(level).toUpperCase() || 
+      l.shortLabel.toUpperCase() === String(level).toUpperCase()
+    )
+    const score = raw.score != null && !isNaN(Number(raw.score))
+      ? Number(raw.score)
+      : (found ? found.pct : 75)
+    return {
+      level: found ? found.code : level,
+      score,
+      note: raw.note || '',
+      updatedAt: raw.updatedAt || null,
+      isOverridden: true
+    }
+  }
+  return null
+}
+
+/**
  * Calculates Power Law (Marzano Trajectory) model over chronologically sorted score percentages.
  * Projects true current mastery using log-log regression.
  *
@@ -250,8 +378,30 @@ export function calculateSBARExpectationMastery(classRecord, assessments, gradeM
 
   const allExpCodes = new Set([...Object.keys(expectationEvaluations), ...Object.keys(radialEvaluations)])
 
+  const isElementary = classRecord.classType === 'elementary'
+  const activeSubId = isElementary ? (classRecord.activeSubjectId || null) : null
+
+  // Ensure unassessed expectations that have student overrides are also evaluated
+  Object.values(classRecord.students || {}).forEach(st => {
+    if (st?.expectationOverrides) {
+      Object.keys(st.expectationOverrides).forEach(k => {
+        if (isElementary && activeSubId) {
+          if (k.startsWith(`${activeSubId}::`)) {
+            allExpCodes.add(k.slice(`${activeSubId}::`.length))
+          } else if (!k.includes('::')) {
+            allExpCodes.add(k)
+          }
+        } else if (!k.includes('::')) {
+          allExpCodes.add(k)
+        }
+      })
+    }
+  })
+
   // Calculate mastery per expectation for each student
   Object.keys(masteryMap).forEach(studentId => {
+    const student = classRecord.students?.[studentId]
+
     allExpCodes.forEach(expCode => {
       const astList = expectationEvaluations[expCode] ? [...expectationEvaluations[expCode]] : []
       const evaluations = []
@@ -259,7 +409,7 @@ export function calculateSBARExpectationMastery(classRecord, assessments, gradeM
       astList.forEach(ast => {
         if (ast.target === 'individual' && String(ast.targetStudentId) !== String(studentId)) return
 
-        const st = classRecord.students?.[studentId]
+        const st = student
         const isElem = classRecord.classType === 'elementary'
         const targetTag = isElem ? (ast.gradeLevel || ast.targetCourseCode) : (ast.targetCourseCode || ast.gradeLevel)
         const studentCohort = isElem 
@@ -355,6 +505,8 @@ export function calculateSBARExpectationMastery(classRecord, assessments, gradeM
         return String(a.assessmentId || '').localeCompare(String(b.assessmentId || ''))
       })
 
+      const override = resolveStudentExpectationOverride(student, expCode, activeSubId, allClassExps)
+
       if (evaluations.length > 0) {
         // Formative vs Summative Rule:
         // If summative evidence exists, calculate ONLY from summative evidence.
@@ -387,12 +539,48 @@ export function calculateSBARExpectationMastery(classRecord, assessments, gradeM
           else if (delta <= -5) trend = 'declining'
         }
 
+        if (override) {
+          masteryMap[studentId][expCode] = {
+            score: override.score,
+            badge: getSBARLevelBadge(override.score),
+            trend,
+            isProvisional: false,
+            isOverridden: true,
+            overrideLevel: override.level,
+            calculatedScore: finalScore,
+            calculatedBadge: getSBARLevelBadge(finalScore),
+            overrideNote: override.note || '',
+            overrideUpdatedAt: override.updatedAt || null,
+            evaluations
+          }
+        } else {
+          masteryMap[studentId][expCode] = {
+            score: finalScore,
+            badge: getSBARLevelBadge(finalScore),
+            trend,
+            isProvisional: !hasSummative,
+            isOverridden: false,
+            overrideLevel: null,
+            calculatedScore: finalScore,
+            calculatedBadge: getSBARLevelBadge(finalScore),
+            overrideNote: '',
+            overrideUpdatedAt: null,
+            evaluations
+          }
+        }
+      } else if (override) {
         masteryMap[studentId][expCode] = {
-          score: finalScore,
-          badge: getSBARLevelBadge(finalScore),
-          trend,
-          isProvisional: !hasSummative,
-          evaluations
+          score: override.score,
+          badge: getSBARLevelBadge(override.score),
+          trend: 'steady',
+          isProvisional: false,
+          isOverridden: true,
+          overrideLevel: override.level,
+          calculatedScore: null,
+          calculatedBadge: null,
+          overrideNote: override.note || '',
+          overrideUpdatedAt: override.updatedAt || null,
+          evaluations: []
         }
       }
     })

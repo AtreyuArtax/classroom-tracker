@@ -245,8 +245,8 @@
     "semantic_hash": ""
   },
   "src/composables/useGradebook.js": {
-    "mtime": 1788394818.9561715,
-    "ast_hash": "af2090c5e83620f5240c274a9ab2f144",
+    "mtime": 1788684918.584407,
+    "ast_hash": "d51e9cb8b1f3a956ad59cf927e7c0d8a",
     "semantic_hash": ""
   },
   "src/composables/useKeyboardWedge.js": {
@@ -295,13 +295,13 @@
     "semantic_hash": ""
   },
   "src/db/index.js": {
-    "mtime": 1788365815.8512304,
-    "ast_hash": "39ad91a336b303f1255ec721730eccb9",
+    "mtime": 1788684932.8235607,
+    "ast_hash": "ff1059e864b0c4972b3ea1f44495a029",
     "semantic_hash": ""
   },
   "src/db/migrations.js": {
-    "mtime": 1788365802.0038111,
-    "ast_hash": "5faf903c6de4e3bee82032a7cb1b6fd6",
+    "mtime": 1788684925.6256833,
+    "ast_hash": "9aedb53477784d6ba2b4edea084ee2e3",
     "semantic_hash": ""
   },
   "src/db/settingsService.js": {
@@ -585,18 +585,18 @@
     "semantic_hash": ""
   },
   "src/components/grades/GradesGridSBAR.vue": {
-    "mtime": 1788392951.4895895,
-    "ast_hash": "cc184ecb0a0253a4dc4064d3154a52ca",
+    "mtime": 1788685012.136745,
+    "ast_hash": "3aaeb4c15dfad7b26c88765e517f6fae",
     "semantic_hash": ""
   },
   "src/db/gradebook/gradeCalcSBAR.js": {
-    "mtime": 1788364296.8864818,
-    "ast_hash": "6917d3ea9426d99b56104ceda3fee82b",
+    "mtime": 1788686466.6914427,
+    "ast_hash": "01f8e3deb806b3535d329feaad024371",
     "semantic_hash": ""
   },
   "src/components/dossier/SBARExpectationMasteryGrid.vue": {
-    "mtime": 1788313659.680469,
-    "ast_hash": "fb7f44d8772663933f3d7e2abe8b1636",
+    "mtime": 1788686502.566548,
+    "ast_hash": "1bf6500526ae3efb19931aca6d595896",
     "semantic_hash": ""
   },
   "src/components/grades/GradesAnalyticsPanelSBAR.vue": {
@@ -1212,6 +1212,16 @@
   "src/utils/attendancePatterns.js": {
     "mtime": 1788442554.4092577,
     "ast_hash": "5a8ae926ac011430a3975616d1170257",
+    "semantic_hash": ""
+  },
+  "src/components/grades/GradesExpectationStudentModal.vue": {
+    "mtime": 1788684957.5273018,
+    "ast_hash": "7af13144bbc8f93647b479fe89c14bff",
+    "semantic_hash": ""
+  },
+  "src/test_sbar_expectation_overrides.js": {
+    "mtime": 1788686472.3585513,
+    "ast_hash": "979cbf5cad4785624be46e57c2c9c090",
     "semantic_hash": ""
   }
 }

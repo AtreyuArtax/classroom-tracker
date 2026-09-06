@@ -315,9 +315,20 @@
               <div v-if="isExpectationApplicableToStudent(exp, student) && studentExpCellMap[student.studentId]?.[exp.code]" class="sbar-cell-content">
                 <span 
                   class="sbar-level-pill"
-                  :style="{ background: studentExpCellMap[student.studentId][exp.code].badge.color + '22', color: studentExpCellMap[student.studentId][exp.code].badge.color, borderColor: studentExpCellMap[student.studentId][exp.code].badge.color + '44' }"
+                  :class="{ 'sbar-level-pill--overridden': studentExpCellMap[student.studentId][exp.code].isOverridden }"
+                  :style="{ 
+                    background: studentExpCellMap[student.studentId][exp.code].badge.color + '22', 
+                    color: studentExpCellMap[student.studentId][exp.code].badge.color, 
+                    borderColor: studentExpCellMap[student.studentId][exp.code].isOverridden ? '#a855f7' : studentExpCellMap[student.studentId][exp.code].badge.color + '44' 
+                  }"
+                  :title="getExpCellTooltip(student, exp, studentExpCellMap[student.studentId][exp.code])"
                 >
                   {{ studentExpCellMap[student.studentId][exp.code].badge.level }}
+                  <span 
+                    v-if="studentExpCellMap[student.studentId][exp.code].isOverridden" 
+                    class="sbar-override-indicator"
+                    title="Professional Judgment Override"
+                  >⚡</span>
                 </span>
 
                 <!-- Trend Arrow -->
@@ -388,12 +399,29 @@
         </div>
       </div>
     </div>
+
+    <!-- Student Expectation Detail & Override Modal -->
+    <GradesExpectationStudentModal
+      v-if="selectedStudentExpModal"
+      :show="!!selectedStudentExpModal"
+      :student-id="selectedStudentExpModal.studentId"
+      :student-name="selectedStudentExpModal.studentName"
+      :expectation-code="selectedStudentExpModal.expectationCode"
+      :expectation-title="selectedStudentExpModal.expectationTitle"
+      :expectation-description="selectedStudentExpModal.expectationDescription"
+      :unit-name="selectedStudentExpModal.unitName"
+      :mastery-data="studentExpCellMap[selectedStudentExpModal.studentId]?.[selectedStudentExpModal.expectationCode] || {}"
+      @close="selectedStudentExpModal = null"
+      @open-dossier="$emit('open-dossier', $event); selectedStudentExpModal = null"
+      @select-assessment="onSelectAssessmentId"
+    />
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { Search, ChevronDown, X, Layers, Calendar, FileText, FileEdit } from 'lucide-vue-next'
+import GradesExpectationStudentModal from './GradesExpectationStudentModal.vue'
 import { 
   activeClassRecord, 
   assessments, 
@@ -1026,8 +1054,31 @@ function getOverallStudentMastery(studentId) {
   return overallMasteryMap.value[studentId] || null
 }
 
+const selectedStudentExpModal = ref(null)
+
 function openExpectationDetail(studentId, expCode) {
-  emit('select-expectation', { studentId, expCode })
+  const st = sortedRoster.value.find(s => s.studentId === studentId)
+  const exp = displayedExpectations.value.find(e => e.code === expCode)
+  selectedStudentExpModal.value = {
+    studentId,
+    studentName: st ? `${st.firstName} ${st.lastName}` : 'Student',
+    expectationCode: expCode,
+    expectationTitle: exp?.name || exp?.title || expCode,
+    expectationDescription: exp?.description || exp?.text || '',
+    unitName: exp?.unitName || ''
+  }
+}
+
+function getExpCellTooltip(student, exp, cellData) {
+  if (!cellData) return ''
+  if (cellData.isOverridden) {
+    const calcText = cellData.calculatedBadge?.level 
+      ? ` (Calculated: ${cellData.calculatedBadge.level})` 
+      : ''
+    return `Professional Judgment Override: ${cellData.badge.level}${calcText} • Click to view tasks & adjust`
+  }
+  const evCount = cellData.evaluations?.length || 0
+  return `${cellData.badge.level} (${cellData.score}%) • ${evCount} assessment${evCount !== 1 ? 's' : ''} • Click to view tasks & override`
 }
 </script>
 
@@ -2027,5 +2078,18 @@ thead th.sticky-col {
   display: inline-flex;
   align-items: center;
   gap: 3px;
+}
+
+.sbar-level-pill--overridden {
+  box-shadow: 0 0 0 1.5px rgba(168, 85, 247, 0.5);
+  position: relative;
+}
+
+.sbar-override-indicator {
+  font-size: 0.65rem;
+  margin-left: 2px;
+  color: #a855f7;
+  font-weight: 800;
+  vertical-align: middle;
 }
 </style>

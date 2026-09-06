@@ -1336,6 +1336,72 @@ export async function saveStudentOverride(studentId, catId, value) {
   }
 }
 
+/**
+ * Saves or clears an SBAR curriculum expectation override for a student.
+ * Scoped by active subject in elementary mode to prevent cross-subject bleed.
+ *
+ * @param {string} studentId
+ * @param {string} expCode
+ * @param {Object|string|number|null} overrideData - { level, score, note } or null to clear
+ * @param {string|null} [targetSubjectId] - Optional subject override
+ */
+export async function saveStudentExpectationOverride(studentId, expCode, overrideData, targetSubjectId = null) {
+  if (!activeClassRecord.value) return
+
+  try {
+    const student = activeClassRecord.value.students[studentId]
+    if (!student) return
+
+    if (!student.expectationOverrides) student.expectationOverrides = {}
+
+    const isElem = activeClassRecord.value.classType === 'elementary'
+    const subId = targetSubjectId || (isElem ? (activeClassRecord.value.activeSubjectId || activeSubjectId.value) : null)
+    const overrideKey = (isElem && subId) ? `${subId}::${expCode}` : String(expCode).trim()
+
+    if (!overrideData || overrideData.level === null || overrideData.level === undefined || overrideData.level === '') {
+      delete student.expectationOverrides[overrideKey]
+      const lowerKey = overrideKey.toLowerCase()
+      Object.keys(student.expectationOverrides).forEach(k => {
+        if (k.toLowerCase() === lowerKey) {
+          delete student.expectationOverrides[k]
+        }
+      })
+      if (isElem) {
+        delete student.expectationOverrides[expCode]
+      }
+    } else {
+      const sbarLevels = gradebookService.SBAR_LEVELS || []
+      const levelCode = String(overrideData.level || overrideData).toUpperCase()
+      const foundLevel = sbarLevels.find(l => 
+        l.code.toUpperCase() === levelCode || 
+        l.shortLabel.toUpperCase() === levelCode
+      )
+      const score = overrideData.score != null && !isNaN(Number(overrideData.score))
+        ? Number(overrideData.score)
+        : (foundLevel ? foundLevel.pct : 75)
+      const level = foundLevel ? foundLevel.code : levelCode
+
+      student.expectationOverrides[overrideKey] = {
+        level,
+        score,
+        note: overrideData.note ? String(overrideData.note).trim() : '',
+        updatedAt: new Date().toISOString()
+      }
+    }
+
+    triggerRef(activeClassRecord)
+
+    await classService.patchStudent(activeClassRecord.value.classId, studentId, { 
+      expectationOverrides: student.expectationOverrides 
+    })
+    await refreshGrades()
+  } catch (err) {
+    console.error('[useGradebook] saveStudentExpectationOverride failed:', err)
+    const { alert } = useMessage()
+    await alert('Failed to save expectation override.')
+  }
+}
+
 import { useClassroom } from './useClassroom.js'
 
 /**
