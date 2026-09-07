@@ -249,7 +249,29 @@ export function getCourseBlueprints(panel = 'all') {
     return true
   })
 
-  const basePresets = [...builtInBase, ...customBase]
+  // Also include synthetic base for any orphaned custom companion presets (e.g. standalone success-criteria or overall imports)
+  const existingBaseIds = new Set([...curriculumPresets.map(p => p.presetId), ...customBase.map(p => p.presetId)])
+  const syntheticBases = []
+  Object.values(customMap).forEach(p => {
+    if (!p || !p.presetId) return
+    if (p.presetId.endsWith('-overall') || p.presetId.endsWith('-success-criteria')) {
+      const baseId = p.presetId.replace(/-success-criteria$/, '').replace(/-overall$/, '')
+      if (!existingBaseIds.has(baseId) && !syntheticBases.some(b => b.presetId === baseId)) {
+        if (panel !== 'all' && p.panel && p.panel !== panel) return
+        syntheticBases.push({
+          presetId: baseId,
+          title: (p.title || `${p.subjectCode || 'Course'} Blueprint`).replace(/\s*—\s*(?:Success Criteria|Overall Expectations).*$/i, ''),
+          subjectCode: p.subjectCode || baseId.toUpperCase().replace(/^CUSTOM-/, '').replace(/^ONTARIO-/, ''),
+          panel: p.panel || 'secondary',
+          grade: p.grade || 'Grade 9',
+          department: p.department || 'Custom',
+          strands: p.strands || []
+        })
+      }
+    }
+  })
+
+  const basePresets = [...builtInBase, ...customBase, ...syntheticBases]
 
   // Group blueprints
   const blueprints = basePresets.map(base => {
@@ -471,8 +493,8 @@ export function isCourseCodeMatch(code1, code2) {
   const c2 = String(code2).toUpperCase().trim().replace(/[^A-Z0-9]/g, '')
   if (!c1 || !c2) return false
   if (c1 === c2) return true
-  // Match prefix e.g. SNC1W01 and SNC1W
-  if (c1.startsWith(c2) || c2.startsWith(c1)) return true
+  // Match prefix e.g. SNC1W01 and SNC1W (minimum 3 chars to prevent 1-2 char false matches)
+  if (Math.min(c1.length, c2.length) >= 3 && (c1.startsWith(c2) || c2.startsWith(c1))) return true
   return false
 }
 
@@ -817,7 +839,7 @@ export function findMatchingClassesForPreset(preset, allClasses = []) {
   const matches = []
 
   allClasses.forEach(cls => {
-    if (!cls) return
+    if (!cls || cls.archived === true || cls.status === 'archived') return
     if (cls.classType === 'elementary') {
       if (preset.panel && preset.panel !== 'elementary') return
       const res = syncPresetToClass(cls, preset)

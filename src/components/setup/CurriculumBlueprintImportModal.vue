@@ -451,7 +451,21 @@ function parseContent(text, filename = '') {
 function normalizeJsonPreset(obj, filename) {
   const code = (obj.subjectCode || obj.courseCode || obj.code || filename.replace(/\.[^/.]+$/, '')).toUpperCase().trim()
   const title = obj.title || `${code} Course Blueprint`
-  const grade = obj.grade || (title.match(/Grade\s*(\d+)/i) ? `Grade ${title.match(/Grade\s*(\d+)/i)[1]}` : 'Grade 9')
+  
+  let detectedGrade = obj.grade
+  if (!detectedGrade) {
+    const titleMatch = title.match(/\b(?:Grade|Gr\.?)\s*(\d+)\b/i) || title.match(/\b([1-9]|1[0-2])\b/)
+    if (titleMatch) {
+      detectedGrade = `Grade ${titleMatch[1]}`
+    } else if (code && code.length >= 4) {
+      const codeDigit = code.charAt(3)
+      if (codeDigit === '1') detectedGrade = 'Grade 9'
+      else if (codeDigit === '2') detectedGrade = 'Grade 10'
+      else if (codeDigit === '3') detectedGrade = 'Grade 11'
+      else if (codeDigit === '4') detectedGrade = 'Grade 12'
+    }
+  }
+  const grade = detectedGrade || 'Grade 9'
   const isElem = /grade\s*([1-8])\b/i.test(grade) || obj.panel === 'elementary'
   const presetId = obj.presetId || `ontario-${code.toLowerCase().replace(/[^a-z0-9]/g, '')}`
 
@@ -583,12 +597,25 @@ function parseDelimitedText(text, filename) {
     ]
   }))
 
+  let detectedGrade = 'Grade 9'
+  const gradeMatch = (filename || '').match(/\b(?:Grade|Gr\.?)\s*(\d+)\b/i)
+  if (gradeMatch) {
+    detectedGrade = `Grade ${gradeMatch[1]}`
+  } else if (codeGuess && codeGuess.length >= 4) {
+    const d = codeGuess.charAt(3)
+    if (d === '1') detectedGrade = 'Grade 9'
+    else if (d === '2') detectedGrade = 'Grade 10'
+    else if (d === '3') detectedGrade = 'Grade 11'
+    else if (d === '4') detectedGrade = 'Grade 12'
+  }
+  const isElem = /grade\s*([1-8])\b/i.test(detectedGrade)
+
   return {
     presetId: `custom-${codeGuess.toLowerCase().replace(/[^a-z0-9]/g, '')}-${Date.now().toString().slice(-4)}`,
     title: `${codeGuess} Course Blueprint`,
     subjectCode: codeGuess,
-    grade: 'Grade 9',
-    panel: 'secondary',
+    grade: detectedGrade,
+    panel: isElem ? 'elementary' : 'secondary',
     department: 'Custom',
     isSuccessCriteria: false,
     strands

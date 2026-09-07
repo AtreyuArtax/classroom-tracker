@@ -1235,8 +1235,8 @@
     "semantic_hash": ""
   },
   "src/composables/useCurriculumLibrary.js": {
-    "mtime": 1788744921.4691293,
-    "ast_hash": "b00a5139e9113fe1f89995e5319c03dd",
+    "mtime": 1788778514.0114477,
+    "ast_hash": "c8cb16f40a5c975a69e5004cd0170de8",
     "semantic_hash": ""
   },
   "src/test_curriculum_library_and_weights.js": {
@@ -1285,8 +1285,8 @@
     "semantic_hash": ""
   },
   "src/components/setup/CurriculumBlueprintImportModal.vue": {
-    "mtime": 1788726348.6757088,
-    "ast_hash": "37f5ff46630ab943b6af4373129223ef",
+    "mtime": 1788778538.0308692,
+    "ast_hash": "d4ab33054ef7096d86b5ac1b57324294",
     "semantic_hash": ""
   },
   "src/test_master_curriculum_import.js": {
@@ -1295,8 +1295,8 @@
     "semantic_hash": ""
   },
   "src/components/setup/CurriculumSyncModal.vue": {
-    "mtime": 1788731226.1726084,
-    "ast_hash": "ef5a4a01857391984d21b98d95d8a399",
+    "mtime": 1788778526.7297852,
+    "ast_hash": "68fe1221f2ddc2d64ad6fa38041f8788",
     "semantic_hash": ""
   },
   "src/test_bidirectional_curriculum_sync.js": {
@@ -1312,6 +1312,11 @@
   "src/test_elementary_sbar_straight_grades_audit.js": {
     "mtime": 1788777874.20227,
     "ast_hash": "52a950047ab32ff3025ad00b7d264d74",
+    "semantic_hash": ""
+  },
+  "src/test_curriculum_library_stress_suite.js": {
+    "mtime": 1788778680.701989,
+    "ast_hash": "475d8f79b9ed01584501bedb6b0db8ef",
     "semantic_hash": ""
   }
 }

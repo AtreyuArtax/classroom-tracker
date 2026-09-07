@@ -248,6 +248,7 @@ import {
 } from 'lucide-vue-next'
 import ExpectationWeightBadge from './ExpectationWeightBadge.vue'
 import { saveClass } from '../../db/classService.js'
+import { syncPresetToClass } from '../../composables/useCurriculumLibrary.js'
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
@@ -336,9 +337,31 @@ async function applyMasterToClasses() {
       selectedClassIds.value.has(getItemKey(item))
     )
 
+    // Group matches by classId to prevent race conditions when multiple sections/subjects
+    // of the same class are synchronized simultaneously
+    const matchesByClassId = new Map()
     for (const item of selectedMatches) {
-      if (item.updatedClass) {
-        await saveClass(item.updatedClass)
+      if (!matchesByClassId.has(item.classId)) {
+        matchesByClassId.set(item.classId, [])
+      }
+      matchesByClassId.get(item.classId).push(item)
+    }
+
+    for (const [classId, items] of matchesByClassId) {
+      if (items.length === 1) {
+        if (items[0].updatedClass) {
+          await saveClass(items[0].updatedClass)
+        }
+      } else {
+        // Sequentially apply each section onto the accumulating class object
+        let accumulatedClass = items[0].cls ? JSON.parse(JSON.stringify(items[0].cls)) : items[0].updatedClass
+        for (const item of items) {
+          const res = syncPresetToClass(accumulatedClass, props.preset, item.sectionKey)
+          if (res && res.updatedClass) {
+            accumulatedClass = res.updatedClass
+          }
+        }
+        await saveClass(accumulatedClass)
       }
     }
 
