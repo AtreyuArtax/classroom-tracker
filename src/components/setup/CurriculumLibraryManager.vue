@@ -13,17 +13,30 @@
           </p>
         </div>
 
-        <!-- Quick Preset Search -->
-        <div class="curriculum-manager__search-box">
-          <Search :size="14" class="search-icon" />
-          <input 
-            v-model="searchQuery" 
-            type="text" 
-            placeholder="Search standards, codes, subjects..." 
-            class="curriculum-manager__search-input"
-          />
-          <button v-if="searchQuery" type="button" class="clear-search-btn" @click="searchQuery = ''">
-            <X :size="12" />
+        <div class="curriculum-manager__header-actions">
+          <!-- Quick Preset Search -->
+          <div class="curriculum-manager__search-box">
+            <Search :size="14" class="search-icon" />
+            <input 
+              v-model="searchQuery" 
+              type="text" 
+              placeholder="Search standards, codes, subjects..." 
+              class="curriculum-manager__search-input"
+            />
+            <button v-if="searchQuery" type="button" class="clear-search-btn" @click="searchQuery = ''">
+              <X :size="12" />
+            </button>
+          </div>
+
+          <!-- Import Course Blueprint Button -->
+          <button 
+            type="button" 
+            class="curriculum-manager__import-btn"
+            @click="isImportModalOpen = true"
+            title="Import or create a new course blueprint using AI prompts, JSON, or CSV"
+          >
+            <BookPlus :size="15" />
+            <span>Import Course</span>
           </button>
         </div>
       </div>
@@ -53,6 +66,14 @@
         <!-- Grade Level Pills (for Elementary) -->
         <div v-if="activePanel === 'elementary'" class="curriculum-manager__grade-pills">
           <button 
+            type="button" 
+            class="curriculum-manager__grade-pill"
+            :class="{ 'curriculum-manager__grade-pill--active': activeGrade === 'all' }"
+            @click="selectGrade('all')"
+          >
+            All Grades
+          </button>
+          <button 
             v-for="g in ['1', '2', '3', '4', '5', '6', '7', '8']" 
             :key="g"
             type="button"
@@ -67,6 +88,14 @@
         <!-- Grade Level Pills (for Secondary) -->
         <div v-else class="curriculum-manager__grade-pills">
           <button 
+            type="button" 
+            class="curriculum-manager__grade-pill"
+            :class="{ 'curriculum-manager__grade-pill--active': activeGrade === 'all' }"
+            @click="selectGrade('all')"
+          >
+            All Grades
+          </button>
+          <button 
             v-for="g in ['9', '10', '11', '12']" 
             :key="g"
             type="button"
@@ -80,66 +109,118 @@
       </div>
     </div>
 
-    <!-- Subject Cards Grid (Selector) -->
+    <!-- Subject Cards Grid (Course Blueprints Selector) -->
     <div class="curriculum-manager__subjects-section">
       <div class="curriculum-manager__section-header">
         <h3 class="curriculum-manager__section-title">
-          {{ activePanel === 'elementary' ? `Grade ${activeGrade} Subjects` : 'Secondary Course Blueprints' }}
+          {{ activePanel === 'elementary' ? (activeGrade === 'all' ? 'All Elementary Subjects' : `Grade ${activeGrade} Subjects`) : (activeGrade === 'all' ? 'All Secondary Course Blueprints' : `Grade ${activeGrade} Course Blueprints`) }}
         </h3>
         <span class="curriculum-manager__count-badge">
-          {{ availablePresets.length }} Subject Preset{{ availablePresets.length !== 1 ? 's' : '' }}
+          {{ availableBlueprints.length }} Course Blueprint{{ availableBlueprints.length !== 1 ? 's' : '' }}
         </span>
       </div>
 
-      <div v-if="availablePresets.length === 0" class="curriculum-manager__empty-presets">
-        No curriculum presets match your selection or search query.
+      <div v-if="availableBlueprints.length === 0" class="curriculum-manager__empty-presets">
+        No curriculum blueprints match your selection or search query.
       </div>
 
       <div v-else class="curriculum-manager__preset-grid">
         <div 
-          v-for="p in availablePresets" 
-          :key="p.presetId"
+          v-for="b in availableBlueprints" 
+          :key="b.presetId"
           class="curriculum-manager__preset-card"
-          :class="{ 'curriculum-manager__preset-card--selected': selectedPreset?.presetId === p.presetId }"
-          @click="loadPresetToEditor(p)"
+          :class="{ 'curriculum-manager__preset-card--selected': selectedBlueprint?.presetId === b.presetId }"
+          @click="loadBlueprintToEditor(b, activeVariant)"
         >
           <div class="preset-card__top">
             <div class="preset-card__info">
-              <span class="preset-card__title">{{ p.title }}</span>
-              <span class="preset-card__code">({{ p.subjectCode || 'SUBJ' }})</span>
+              <span class="preset-card__title">{{ b.title }}</span>
+              <span class="preset-card__code">({{ b.courseCode }})</span>
             </div>
-            <span v-if="isMasterCustomized(p.presetId)" class="preset-card__custom-badge" title="You have customized this master blueprint">
+            <span 
+              v-if="b.variants.specific.isCustomized || b.variants.overall.isCustomized || b.variants.success_criteria.isCustomized" 
+              class="preset-card__custom-badge" 
+              title="You have customized master standards or weights for this course"
+            >
               <Star :size="11" /> Customized Master
             </span>
           </div>
 
           <div class="preset-card__meta">
             <span class="preset-card__stat">
-              {{ countPresetStrands(p) }} Strands
+              {{ b.strandsCount }} Strands
             </span>
             <span class="preset-card__stat-divider">•</span>
             <span class="preset-card__stat">
-              {{ countPresetExpectations(p) }} Expectations
+              {{ b.grade || (b.panel === 'elementary' ? 'Elementary' : 'Secondary') }}
             </span>
-            <span v-if="countPresetWeighted(p) > 0" class="preset-card__stat-weighted">
-              ({{ countPresetWeighted(p) }} Weighted)
-            </span>
+            <template v-if="b.department">
+              <span class="preset-card__stat-divider">•</span>
+              <span class="preset-card__stat">{{ b.department }}</span>
+            </template>
+          </div>
+
+          <!-- 3 Curriculum Format Chips / Mini Pills -->
+          <div class="preset-card__variants" @click.stop>
+            <button 
+              type="button"
+              class="variant-pill"
+              :class="{ 
+                'variant-pill--active': selectedBlueprint?.presetId === b.presetId && activeVariant === 'specific',
+                'variant-pill--custom': b.variants.specific.isCustomized
+              }"
+              title="Work with Specific Expectations"
+              @click="loadBlueprintToEditor(b, 'specific')"
+            >
+              <span>Specific ({{ b.variants.specific.count }})</span>
+              <Star v-if="b.variants.specific.isCustomized" :size="9" class="pill-star" />
+            </button>
+
+            <button 
+              type="button"
+              class="variant-pill"
+              :class="{ 
+                'variant-pill--active': selectedBlueprint?.presetId === b.presetId && activeVariant === 'overall',
+                'variant-pill--custom': b.variants.overall.isCustomized
+              }"
+              title="Work with Overall Expectations Only"
+              @click="loadBlueprintToEditor(b, 'overall')"
+            >
+              <span>Overall ({{ b.variants.overall.count }})</span>
+              <Star v-if="b.variants.overall.isCustomized" :size="9" class="pill-star" />
+            </button>
+
+            <button 
+              type="button"
+              class="variant-pill"
+              :class="{ 
+                'variant-pill--active': selectedBlueprint?.presetId === b.presetId && activeVariant === 'success_criteria',
+                'variant-pill--disabled': !b.variants.success_criteria.available,
+                'variant-pill--custom': b.variants.success_criteria.isCustomized
+              }"
+              :disabled="!b.variants.success_criteria.available"
+              :title="b.variants.success_criteria.available ? 'Work with Success Criteria' : 'Success criteria preset not available for this course'"
+              @click="b.variants.success_criteria.available && loadBlueprintToEditor(b, 'success_criteria')"
+            >
+              <span>Success Criteria ({{ b.variants.success_criteria.available ? b.variants.success_criteria.count : 'N/A' }})</span>
+              <Star v-if="b.variants.success_criteria.isCustomized" :size="9" class="pill-star" />
+            </button>
           </div>
         </div>
       </div>
     </div>
 
     <!-- Master Preset Editor Panel (When a subject is selected) -->
-    <div v-if="selectedPreset" class="curriculum-manager__editor-card">
+    <div v-if="selectedBlueprint && currentEditorPreset" class="curriculum-manager__editor-card">
       <div class="curriculum-editor__header">
         <div class="curriculum-editor__title-row">
           <div class="curriculum-editor__title-info">
-            <h3 class="curriculum-editor__subject-name">{{ currentEditorPreset.title }}</h3>
+            <h3 class="curriculum-editor__subject-name">{{ selectedBlueprint.title }}</h3>
             <span class="curriculum-editor__meta-tag">
-              {{ currentEditorPreset.panel === 'elementary' ? `Elementary Grade ${currentEditorPreset.grade}` : 'Secondary' }} • {{ currentEditorPreset.subjectCode }}
+              {{ currentEditorPreset.panel === 'elementary' ? `Elementary Grade ${currentEditorPreset.grade}` : 'Secondary' }} • {{ selectedBlueprint.courseCode }}
             </span>
             <span v-if="isMasterCustomized(currentEditorPreset.presetId)" class="preset-card__custom-badge">
-              <Star :size="11" /> Active Master Blueprint
+              <Star :size="11" /> Active Master Blueprint ({{ activeVariant === 'overall' ? 'Overall Only' : activeVariant === 'success_criteria' ? 'Success Criteria' : 'Specific' }})
             </span>
             <span v-else class="curriculum-editor__standard-badge">
               Official Ontario Ministry Baseline
@@ -159,6 +240,16 @@
 
             <button 
               type="button" 
+              class="setup__btn-ghost" 
+              style="color: var(--primary); border-color: rgba(59, 130, 246, 0.35);"
+              title="Push this master blueprint's expectations and weights to existing classes"
+              @click="openPushToClassesModal"
+            >
+              <ArrowUpRight :size="13" /> Push to Classes
+            </button>
+
+            <button 
+              type="button" 
               class="setup__btn-primary" 
               :disabled="isSaving"
               @click="handleSaveMasterPreset"
@@ -170,7 +261,7 @@
               v-if="isMasterCustomized(currentEditorPreset.presetId)"
               type="button" 
               class="setup__btn-ghost text-danger" 
-              title="Revert all expectations and weights to official Ministry baseline"
+              title="Revert expectations and weights for this format to official Ministry baseline"
               @click="handleResetToMinistry"
             >
               <RotateCcw :size="13" /> Reset to Ministry Baseline
@@ -178,8 +269,64 @@
           </div>
         </div>
 
+        <!-- Segmented Curriculum Format Selector -->
+        <div class="curriculum-editor__variant-bar">
+          <span class="variant-bar__label">Curriculum Format:</span>
+          <div class="curriculum-editor__segmented-formats">
+            <button 
+              type="button" 
+              class="format-btn"
+              :class="{ 'format-btn--active': activeVariant === 'specific' }"
+              @click="switchVariant('specific')"
+            >
+              <Target :size="14" />
+              <span>Specific Expectations</span>
+              <span class="format-count">({{ selectedBlueprint.variants?.specific?.count || 0 }})</span>
+              <Star v-if="selectedBlueprint.variants?.specific?.isCustomized" :size="11" class="format-star" title="Customized master" />
+            </button>
+
+            <button 
+              type="button" 
+              class="format-btn"
+              :class="{ 'format-btn--active': activeVariant === 'overall' }"
+              @click="switchVariant('overall')"
+            >
+              <Layers :size="14" />
+              <span>Overall Only</span>
+              <span class="format-count">({{ selectedBlueprint.variants?.overall?.count || 0 }})</span>
+              <Star v-if="selectedBlueprint.variants?.overall?.isCustomized" :size="11" class="format-star" title="Customized master" />
+            </button>
+
+            <button 
+              type="button" 
+              class="format-btn"
+              :class="{ 
+                'format-btn--active': activeVariant === 'success_criteria',
+                'format-btn--disabled': !selectedBlueprint.variants?.success_criteria?.available
+              }"
+              :disabled="!selectedBlueprint.variants?.success_criteria?.available"
+              :title="selectedBlueprint.variants?.success_criteria?.available ? 'Student-friendly success criteria' : 'Success criteria preset not available for this course'"
+              @click="switchVariant('success_criteria')"
+            >
+              <Sparkles :size="14" />
+              <span>Success Criteria ("I Can...")</span>
+              <span class="format-count">({{ selectedBlueprint.variants?.success_criteria?.available ? selectedBlueprint.variants.success_criteria.count : 'N/A' }})</span>
+              <Star v-if="selectedBlueprint.variants?.success_criteria?.isCustomized" :size="11" class="format-star" title="Customized master" />
+            </button>
+          </div>
+        </div>
+
         <p class="curriculum-editor__instructions">
-          Adjust expectation wording and assign <strong>Weight Multipliers</strong> (e.g. <code>2x</code> double weight, <code>0.5x</code> half weight, or <code>0x</code> for diagnostic/formative-only). These standards and weights will automatically load whenever you teach this subject.
+          <template v-if="activeVariant === 'overall'">
+            Viewing <strong>Overall Expectations Only</strong>. Streamlined course-level curriculum outcomes (e.g. <code>A1</code>, <code>B2</code>), ideal for term summaries and streamlined reporting.
+          </template>
+          <template v-else-if="activeVariant === 'success_criteria'">
+            Viewing <strong>Success Criteria ("I Can..." Statements)</strong>. Student-friendly outcomes designed for standards-based descriptive feedback and student self-assessment.
+          </template>
+          <template v-else>
+            Viewing <strong>Specific Expectations</strong>. Full granular Ministry curriculum standards (e.g. <code>A1.1</code>, <code>B2.3</code>) for detailed assessment tracking.
+          </template>
+          Adjust expectation wording and assign <strong>Weight Multipliers</strong> (e.g. <code>2x</code> double weight, <code>0.5x</code> half weight, or <code>0x</code> for diagnostic-only).
         </p>
 
         <!-- Information Notice Banner -->
@@ -362,6 +509,21 @@
         </div>
       </div>
     </div>
+
+    <!-- Import Course Blueprint Modal -->
+    <CurriculumBlueprintImportModal
+      v-model="isImportModalOpen"
+      @saved="handleBlueprintImported"
+    />
+
+    <!-- Push to Classes Synchronization Modal -->
+    <CurriculumSyncModal
+      v-model="isSyncModalOpen"
+      mode="master-to-classes"
+      :preset="syncModalPreset"
+      :matching-classes="syncModalClasses"
+      @applied="handleSyncApplied"
+    />
   </div>
 </template>
 
@@ -381,9 +543,24 @@ import {
   Layers,
   Plus,
   Trash2,
-  Undo2
+  Undo2,
+  Target,
+  Sparkles,
+  BookPlus,
+  ArrowUpRight
 } from 'lucide-vue-next'
-import { useCurriculumLibrary, syncPresetToClass } from '../../composables/useCurriculumLibrary.js'
+import CurriculumBlueprintImportModal from './CurriculumBlueprintImportModal.vue'
+import CurriculumSyncModal from './CurriculumSyncModal.vue'
+import { 
+  useCurriculumLibrary, 
+  syncPresetToClass,
+  findMatchingClassesForPreset,
+  getCourseBlueprints,
+  getMasterPreset,
+  deriveOverallPreset,
+  deriveSpecificPreset,
+  getSuccessCriteriaPreset
+} from '../../composables/useCurriculumLibrary.js'
 import { curriculumPresets } from '../../data/curriculum/index.js'
 import { useMessage } from '../../composables/useMessage.js'
 import { useUndo } from '../../composables/useUndo.js'
@@ -402,63 +579,128 @@ const {
   resetMasterPreset
 } = useCurriculumLibrary()
 
-const activePanel = ref('elementary')
-const activeGrade = ref('8')
+const activePanel = ref('secondary')
+const activeGrade = ref('all')
+const activeVariant = ref('specific')
 const searchQuery = ref('')
-const selectedPreset = ref(null)
+const selectedBlueprint = ref(null)
 const currentEditorPreset = ref(null)
 const editorStrands = ref([])
 const isSaving = ref(false)
 const editorNotice = reactive({ text: '', type: 'info' })
 const undoStack = ref([])
 const lastUndoNotice = ref('')
+const isImportModalOpen = ref(false)
+const isSyncModalOpen = ref(false)
+const syncModalClasses = ref([])
+const syncModalPreset = ref(null)
+
+async function openPushToClassesModal() {
+  if (!currentEditorPreset.value || !selectedBlueprint.value) return
+  const preset = currentEditorPreset.value
+  const allClasses = await getAllClasses()
+  const matches = findMatchingClassesForPreset(preset, allClasses)
+  syncModalPreset.value = preset
+  syncModalClasses.value = matches.filter(m => m.changesCount > 0)
+  
+  if (syncModalClasses.value.length === 0) {
+    if (matches.length > 0) {
+      editorNotice.text = `All ${matches.length} active class(es) teaching this course are already up to date!`
+      editorNotice.type = 'info'
+    } else {
+      editorNotice.text = 'No active classes are currently teaching this curriculum.'
+      editorNotice.type = 'info'
+    }
+    return
+  }
+  isSyncModalOpen.value = true
+}
+
+function handleSyncApplied(result) {
+  editorNotice.text = `Master Blueprint successfully synchronized to ${result.count} active class(es)!`
+  editorNotice.type = 'success'
+}
+
+async function handleBlueprintImported(newPresetId) {
+  await initCurriculumLibrary()
+  const allB = getCourseBlueprints('all')
+  const baseId = newPresetId ? newPresetId.replace(/-success-criteria$/, '').replace(/-overall$/, '') : ''
+  const found = allB.find(b => b.presetId === baseId || b.presetId === newPresetId)
+  if (found) {
+    activePanel.value = found.panel || 'secondary'
+    activeGrade.value = 'all'
+    const variantToUse = newPresetId && newPresetId.endsWith('-success-criteria') ? 'success_criteria' : 'specific'
+    loadBlueprintToEditor(found, variantToUse)
+  }
+
+  // Check if any active classes teach this newly imported blueprint and offer push
+  try {
+    const allClasses = await getAllClasses()
+    const importedPreset = getMasterPreset(newPresetId)
+    if (importedPreset) {
+      const matches = findMatchingClassesForPreset(importedPreset, allClasses)
+      const classesWithChanges = matches.filter(m => m.changesCount > 0)
+      if (classesWithChanges.length > 0) {
+        syncModalPreset.value = importedPreset
+        syncModalClasses.value = classesWithChanges
+        isSyncModalOpen.value = true
+      }
+    }
+  } catch (syncErr) {
+    console.warn('[CurriculumLibraryManager] Error checking class sync on import:', syncErr)
+  }
+}
 
 onMounted(async () => {
   await initCurriculumLibrary()
-  // Select default preset if available
-  if (availablePresets.value.length > 0) {
-    loadPresetToEditor(availablePresets.value[0])
+  // Select default blueprint if available
+  if (availableBlueprints.value.length > 0) {
+    loadBlueprintToEditor(availableBlueprints.value[0], 'specific')
   }
 })
 
 function selectPanel(panel) {
   activePanel.value = panel
-  if (panel === 'elementary' && !activeGrade.value) {
+  if (panel === 'elementary') {
     activeGrade.value = '8'
-  }
-  // Auto-select first preset in new panel
-  if (availablePresets.value.length > 0) {
-    loadPresetToEditor(availablePresets.value[0])
   } else {
-    selectedPreset.value = null
+    activeGrade.value = 'all'
+  }
+  // Auto-select first blueprint in new panel
+  if (availableBlueprints.value.length > 0) {
+    loadBlueprintToEditor(availableBlueprints.value[0], activeVariant.value)
+  } else {
+    selectedBlueprint.value = null
+    currentEditorPreset.value = null
   }
 }
 
 function selectGrade(grade) {
   activeGrade.value = grade
-  if (availablePresets.value.length > 0) {
-    loadPresetToEditor(availablePresets.value[0])
+  if (availableBlueprints.value.length > 0) {
+    loadBlueprintToEditor(availableBlueprints.value[0], activeVariant.value)
   } else {
-    selectedPreset.value = null
+    selectedBlueprint.value = null
+    currentEditorPreset.value = null
   }
 }
 
-const availablePresets = computed(() => {
-  const merged = getMergedCurriculumPresets(activePanel.value)
-  let list = merged
+const availableBlueprints = computed(() => {
+  const list = getCourseBlueprints(activePanel.value)
+  let filtered = list
 
-  if (activePanel.value === 'elementary' && activeGrade.value) {
+  // Grade filtering: Works for BOTH Elementary (1-8) and Secondary (9-12)!
+  if (activeGrade.value && activeGrade.value !== 'all') {
     const gNorm = String(activeGrade.value).trim()
-    list = list.filter(p => String(p.grade || '').replace(/[^0-9]/g, '') === gNorm)
+    filtered = filtered.filter(b => String(b.grade || '').replace(/[^0-9]/g, '') === gNorm)
   }
 
   if (searchQuery.value.trim()) {
     const q = searchQuery.value.toLowerCase().trim()
-    list = list.filter(p => {
-      if ((p.title || '').toLowerCase().includes(q)) return true
-      if ((p.subjectCode || '').toLowerCase().includes(q)) return true
-      // Check strands and expectations
-      return (p.strands || []).some(s => {
+    filtered = filtered.filter(b => {
+      if ((b.title || '').toLowerCase().includes(q)) return true
+      if ((b.courseCode || '').toLowerCase().includes(q)) return true
+      return (b.basePreset?.strands || []).some(s => {
         if ((s.name || '').toLowerCase().includes(q)) return true
         return (s.expectations || s.overalls || []).some(e => {
           if ((e.code || '').toLowerCase().includes(q)) return true
@@ -469,7 +711,7 @@ const availablePresets = computed(() => {
     })
   }
 
-  return list
+  return filtered
 })
 
 function countPresetStrands(preset) {
@@ -500,8 +742,50 @@ function countPresetWeighted(preset) {
   return weighted
 }
 
+function loadBlueprintToEditor(blueprint, variant = activeVariant.value) {
+  if (!blueprint) return
+  selectedBlueprint.value = blueprint
+
+  // Validate variant availability
+  if (variant && blueprint.variants?.[variant]?.available) {
+    activeVariant.value = variant
+  } else if (blueprint.variants?.specific?.available) {
+    activeVariant.value = 'specific'
+  } else if (blueprint.variants?.overall?.available) {
+    activeVariant.value = 'overall'
+  }
+
+  let targetPresetId = blueprint.presetId
+  if (activeVariant.value === 'overall') {
+    targetPresetId = `${blueprint.presetId}-overall`
+  } else if (activeVariant.value === 'success_criteria') {
+    targetPresetId = `${blueprint.presetId}-success-criteria`
+  }
+
+  const preset = getMasterPreset(targetPresetId)
+  if (preset) {
+    loadPresetToEditor(preset)
+  }
+}
+
+async function switchVariant(newVariant) {
+  if (!selectedBlueprint.value) return
+  if (newVariant === activeVariant.value) return
+  if (!selectedBlueprint.value.variants?.[newVariant]?.available) return
+
+  if (undoStack.value.length > 0) {
+    const ok = await confirmMessage(
+      'You have unsaved changes on the current format. Switching formats will reload from the saved master or baseline.\n\nDo you want to switch formats?',
+      'Switch Curriculum Format?',
+      { confirmLabel: 'Switch Format', cancelLabel: 'Keep Editing', danger: false }
+    )
+    if (!ok) return
+  }
+
+  loadBlueprintToEditor(selectedBlueprint.value, newVariant)
+}
+
 function loadPresetToEditor(preset) {
-  selectedPreset.value = preset
   currentEditorPreset.value = JSON.parse(JSON.stringify(preset))
   clearGlobalUndo()
   undoStack.value = []
@@ -518,19 +802,30 @@ function loadPresetToEditor(preset) {
           code: e.code || '',
           description: e.description || '',
           weight: e.weight != null ? Number(e.weight) : 1.0,
-          active: e.active !== false
+          active: e.active !== false,
+          isOverall: e.isOverall === true || activeVariant.value === 'overall'
         })
       })
     } else if (s.overalls) {
       s.overalls.forEach((ov, ovIdx) => {
-        if (ov.specifics && ov.specifics.length > 0) {
+        if (activeVariant.value === 'overall') {
+          exps.push({
+            id: `exp-${sIdx}-${ovIdx}`,
+            code: ov.code || '',
+            description: ov.description || ov.name || '',
+            weight: ov.weight != null ? Number(ov.weight) : 1.0,
+            active: true,
+            isOverall: true
+          })
+        } else if (ov.specifics && ov.specifics.length > 0) {
           ov.specifics.forEach((sp, spIdx) => {
             exps.push({
               id: `exp-${sIdx}-${ovIdx}-${spIdx}`,
               code: sp.code || '',
               description: sp.description || '',
               weight: sp.weight != null ? Number(sp.weight) : 1.0,
-              active: true
+              active: true,
+              isOverall: false
             })
           })
         } else {
@@ -539,7 +834,8 @@ function loadPresetToEditor(preset) {
             code: ov.code || '',
             description: ov.description || ov.name || '',
             weight: ov.weight != null ? Number(ov.weight) : 1.0,
-            active: true
+            active: true,
+            isOverall: true
           })
         }
       })
@@ -648,25 +944,35 @@ async function handleUndo() {
 }
 
 async function handleDiscardEdits() {
-  if (!selectedPreset.value) return
+  if (!selectedBlueprint.value) return
   const ok = await confirmMessage(
-    'Discard any unsaved edits and reload this subject from its baseline preset?',
+    'Discard any unsaved edits and reload this format from its baseline preset?',
     'Discard Unsaved Edits',
     { confirmLabel: 'Discard & Reload', cancelLabel: 'Keep Editing', danger: true }
   )
   if (!ok) return
-  loadPresetToEditor(selectedPreset.value)
+  loadBlueprintToEditor(selectedBlueprint.value, activeVariant.value)
   clearGlobalUndo()
   undoStack.value = []
   lastUndoNotice.value = ''
-  editorNotice.text = 'Unsaved changes discarded. Subject reloaded from baseline.'
+  editorNotice.text = 'Unsaved changes discarded. Format reloaded.'
   editorNotice.type = 'info'
 }
 
 function restoreStrandFromBaseline(strandIdx) {
-  if (!currentEditorPreset.value) return
-  const rawPresets = curriculumPresets || []
-  const rawPreset = rawPresets.find(p => p.presetId === currentEditorPreset.value.presetId)
+  if (!currentEditorPreset.value || !selectedBlueprint.value) return
+  let rawPreset = null
+  if (activeVariant.value === 'overall') {
+    const baseRaw = curriculumPresets.find(p => p.presetId === selectedBlueprint.value.presetId)
+    rawPreset = deriveOverallPreset(baseRaw)
+  } else if (activeVariant.value === 'success_criteria') {
+    const baseRaw = curriculumPresets.find(p => p.presetId === selectedBlueprint.value.presetId)
+    rawPreset = getSuccessCriteriaPreset(baseRaw)
+  } else {
+    const baseRaw = curriculumPresets.find(p => p.presetId === selectedBlueprint.value.presetId)
+    rawPreset = deriveSpecificPreset(baseRaw) || baseRaw
+  }
+
   if (!rawPreset || !rawPreset.strands) return
 
   const currentStrand = editorStrands.value[strandIdx]
@@ -683,19 +989,30 @@ function restoreStrandFromBaseline(strandIdx) {
         code: e.code || '',
         description: e.description || '',
         weight: e.weight != null ? Number(e.weight) : 1.0,
-        active: e.active !== false
+        active: e.active !== false,
+        isOverall: e.isOverall === true || activeVariant.value === 'overall'
       })
     })
   } else if (rawStrand.overalls) {
     rawStrand.overalls.forEach((ov, ovIdx) => {
-      if (ov.specifics && ov.specifics.length > 0) {
+      if (activeVariant.value === 'overall') {
+        restoredExps.push({
+          id: `exp-${strandIdx}-${ovIdx}`,
+          code: ov.code || '',
+          description: ov.description || ov.name || '',
+          weight: ov.weight != null ? Number(ov.weight) : 1.0,
+          active: true,
+          isOverall: true
+        })
+      } else if (ov.specifics && ov.specifics.length > 0) {
         ov.specifics.forEach((sp, spIdx) => {
           restoredExps.push({
             id: `exp-${strandIdx}-${ovIdx}-${spIdx}`,
             code: sp.code || '',
             description: sp.description || '',
             weight: sp.weight != null ? Number(sp.weight) : 1.0,
-            active: true
+            active: true,
+            isOverall: false
           })
         })
       } else {
@@ -704,7 +1021,8 @@ function restoreStrandFromBaseline(strandIdx) {
           code: ov.code || '',
           description: ov.description || ov.name || '',
           weight: ov.weight != null ? Number(ov.weight) : 1.0,
-          active: true
+          active: true,
+          isOverall: true
         })
       }
     })
@@ -718,15 +1036,38 @@ function restoreStrandFromBaseline(strandIdx) {
 }
 
 async function handleSaveMasterPreset() {
-  if (!currentEditorPreset.value) return
+  if (!currentEditorPreset.value || !selectedBlueprint.value) return
   isSaving.value = true
   editorNotice.text = ''
 
   try {
+    const b = selectedBlueprint.value
+    let targetPresetId = b.presetId
+    let targetTitle = b.title
+    let isOverallOnly = false
+    let isSuccessCriteria = false
+
+    if (activeVariant.value === 'overall') {
+      targetPresetId = `${b.presetId}-overall`
+      targetTitle = `${b.courseCode || b.title} — Overall Expectations`
+      isOverallOnly = true
+    } else if (activeVariant.value === 'success_criteria') {
+      targetPresetId = `${b.presetId}-success-criteria`
+      targetTitle = `${b.courseCode || b.title} — Success Criteria`
+      isSuccessCriteria = true
+    }
+
     // Construct standardized master preset object with both expectations and overalls
     const updatedPreset = {
       ...currentEditorPreset.value,
+      presetId: targetPresetId,
+      title: targetTitle,
+      subjectCode: b.courseCode,
+      panel: b.panel,
+      grade: b.grade,
       isCustomMaster: true,
+      isOverallOnly,
+      isSuccessCriteria,
       updatedAt: new Date().toISOString(),
       strands: editorStrands.value.map(s => {
         const exps = s.expectations.map(e => ({
@@ -734,7 +1075,8 @@ async function handleSaveMasterPreset() {
           code: cleanExpectationText(e.code).toUpperCase(),
           description: cleanExpectationText(e.description),
           weight: e.weight != null && !isNaN(Number(e.weight)) ? Math.max(0, Number(e.weight)) : 1.0,
-          active: e.active !== false
+          active: e.active !== false,
+          isOverall: isOverallOnly || e.isOverall === true
         }))
         return {
           id: s.id,
@@ -752,41 +1094,29 @@ async function handleSaveMasterPreset() {
     }
 
     await saveMasterPreset(updatedPreset)
-    selectedPreset.value = updatedPreset
+    currentEditorPreset.value = JSON.parse(JSON.stringify(updatedPreset))
+
+    // Refresh blueprint state
+    const blueprints = getCourseBlueprints(activePanel.value)
+    const refreshed = blueprints.find(bp => bp.presetId === b.presetId)
+    if (refreshed) selectedBlueprint.value = refreshed
+
     clearGlobalUndo()
     undoStack.value = []
     lastUndoNotice.value = ''
     editorNotice.text = `Master Blueprint for "${updatedPreset.title}" saved successfully! It will now auto-load in all classes.`
     editorNotice.type = 'success'
 
-    // Optional Class Propagation: Check if any active classes teach this subject
+    // Smart Class Synchronization: Check if any active classes teach this subject with pending diffs
     try {
       const allClasses = await getAllClasses()
-      const matchingClasses = []
+      const matches = findMatchingClassesForPreset(updatedPreset, allClasses)
+      const classesWithChanges = matches.filter(m => m.changesCount > 0)
 
-      for (const cls of allClasses) {
-        if (!cls) continue
-        const syncCheck = syncPresetToClass(cls, updatedPreset)
-        if (syncCheck && syncCheck.changesCount > 0) {
-          matchingClasses.push({ cls, changesCount: syncCheck.changesCount, updatedClass: syncCheck.updatedClass })
-        }
-      }
-
-      if (matchingClasses.length > 0) {
-        const classNames = matchingClasses.map(m => m.cls.name).join(', ')
-        const totalChanges = matchingClasses.reduce((sum, m) => sum + m.changesCount, 0)
-        const ok = await confirmMessage(
-          `Master Blueprint saved!\n\nFound ${matchingClasses.length} active class(es) (${classNames}) currently teaching this subject with ${totalChanges} potential expectation/weight update(s).\n\nWould you like to sync these updated expectations and weights to existing classes now?`,
-          'Sync to Existing Classes?',
-          { confirmLabel: `Sync to ${matchingClasses.length} Class(es)`, cancelLabel: 'Keep Classes As-Is' }
-        )
-
-        if (ok) {
-          for (const m of matchingClasses) {
-            await saveClass(m.updatedClass)
-          }
-          editorNotice.text = `Master Blueprint saved and synchronized to ${matchingClasses.length} active class(es) (${classNames})!`
-        }
+      if (classesWithChanges.length > 0) {
+        syncModalPreset.value = updatedPreset
+        syncModalClasses.value = classesWithChanges
+        isSyncModalOpen.value = true
       }
     } catch (syncErr) {
       console.warn('[CurriculumLibraryManager] Error checking class sync:', syncErr)
@@ -801,26 +1131,32 @@ async function handleSaveMasterPreset() {
 }
 
 async function handleResetToMinistry() {
-  if (!currentEditorPreset.value) return
-  const title = currentEditorPreset.value.title
+  if (!currentEditorPreset.value || !selectedBlueprint.value) return
+  const targetId = currentEditorPreset.value.presetId
+  const variantLabel = activeVariant.value === 'overall' ? 'Overall Only' : activeVariant.value === 'success_criteria' ? 'Success Criteria' : 'Specific Expectations'
   const ok = await confirmMessage(
-    `Reset "${title}" to official Ministry baseline? This will remove your custom expectation weights and custom text.`,
+    `Reset "${selectedBlueprint.value.title} (${variantLabel})" to official Ministry baseline? This will remove your custom expectation weights and custom text for this format.`,
     'Reset to Official Ministry Baseline',
     { confirmLabel: 'Reset to Baseline', cancelLabel: 'Cancel', danger: true }
   )
   if (!ok) return
 
   try {
-    await resetMasterPreset(currentEditorPreset.value.presetId)
+    await resetMasterPreset(targetId)
     // Reload built-in preset
-    const builtIn = getMergedCurriculumPresets(activePanel.value).find(p => p.presetId === currentEditorPreset.value.presetId)
+    const builtIn = getMasterPreset(targetId)
     if (builtIn) {
       loadPresetToEditor(builtIn)
     }
+    // Refresh blueprint
+    const blueprints = getCourseBlueprints(activePanel.value)
+    const refreshed = blueprints.find(bp => bp.presetId === selectedBlueprint.value.presetId)
+    if (refreshed) selectedBlueprint.value = refreshed
+
     clearGlobalUndo()
     undoStack.value = []
     lastUndoNotice.value = ''
-    editorNotice.text = `"${title}" has been reset to official Ministry baseline.`
+    editorNotice.text = `"${selectedBlueprint.value.title} (${variantLabel})" has been reset to official Ministry baseline.`
     editorNotice.type = 'success'
   } catch (err) {
     console.error('[CurriculumLibraryManager] Error resetting preset:', err)
@@ -887,6 +1223,34 @@ async function handleResetToMinistry() {
   color: var(--text-secondary);
 }
 
+.curriculum-manager__header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.curriculum-manager__import-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--primary-light, rgba(37, 99, 235, 0.08));
+  color: var(--primary, #2563eb);
+  border: 1px solid var(--primary, #2563eb);
+  border-radius: var(--radius-sm, 8px);
+  padding: 7px 14px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.curriculum-manager__import-btn:hover {
+  background: var(--primary, #2563eb);
+  color: #ffffff;
+}
+
 .curriculum-manager__search-box {
   display: flex;
   align-items: center;
@@ -895,7 +1259,7 @@ async function handleResetToMinistry() {
   border: 1px solid var(--border);
   border-radius: var(--radius-sm, 8px);
   padding: 6px 12px;
-  min-width: 280px;
+  min-width: 240px;
 }
 
 .curriculum-manager__search-input {
@@ -1089,6 +1453,56 @@ async function handleResetToMinistry() {
   font-weight: 600;
 }
 
+.preset-card__variants {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
+.variant-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  padding: 3px 8px;
+  border-radius: 12px;
+  background: var(--bg-surface-secondary, rgba(255, 255, 255, 0.04));
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.variant-pill:hover:not(:disabled) {
+  border-color: var(--primary);
+  color: var(--text);
+  background: rgba(99, 102, 241, 0.08);
+}
+
+.variant-pill--active {
+  background: var(--primary) !important;
+  border-color: var(--primary) !important;
+  color: white !important;
+  font-weight: 600;
+}
+
+.variant-pill--custom:not(.variant-pill--active) {
+  border-color: rgba(245, 158, 11, 0.5);
+  color: #f59e0b;
+}
+
+.variant-pill--disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.pill-star {
+  color: #f59e0b;
+}
+
 /* Editor Card */
 .curriculum-manager__editor-card {
   background: var(--surface);
@@ -1099,6 +1513,73 @@ async function handleResetToMinistry() {
   flex-direction: column;
   gap: 16px;
   box-shadow: var(--shadow-sm);
+}
+
+.curriculum-editor__variant-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 4px;
+  flex-wrap: wrap;
+}
+
+.variant-bar__label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-secondary);
+}
+
+.curriculum-editor__segmented-formats {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--bg-surface-secondary, rgba(255, 255, 255, 0.05));
+  border: 1px solid var(--border);
+  padding: 3px;
+  border-radius: var(--radius-sm, 8px);
+}
+
+.format-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.format-btn:hover:not(:disabled) {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.format-btn--active {
+  background: var(--surface, #ffffff) !important;
+  color: var(--primary) !important;
+  font-weight: 700;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+}
+
+.format-btn--disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.format-count {
+  font-size: 0.75rem;
+  opacity: 0.8;
+}
+
+.format-star {
+  color: #f59e0b;
 }
 
 .curriculum-editor__header {

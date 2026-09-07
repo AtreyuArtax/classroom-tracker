@@ -6,10 +6,8 @@
         <button v-if="props.from === 'Grades'" class="app-back-btn" @click="$emit('navigate', 'Grades')">
           <ArrowLeft :size="15" /> Back to Gradebook
         </button>
-        <div class="setup__header-class">
-          <label for="setup-class-selector" class="setup__header-label">
-            {{ activeTab === 'curriculum' ? 'Class Context:' : 'Configuring:' }}
-          </label>
+        <div v-if="activeTab === 'active'" class="setup__header-class">
+          <label for="setup-class-selector" class="setup__header-label">Configuring:</label>
           <select 
             id="setup-class-selector" 
             class="setup__class-selector"
@@ -21,9 +19,6 @@
               {{ cls.classType === 'elementary' ? cls.name : `${cls.name} (P${cls.periodNumber})` }}
             </option>
           </select>
-          <span v-if="activeTab === 'curriculum'" class="setup__badge setup__badge--new" style="margin-left: 8px; font-size: 0.72rem; display: inline-flex; align-items: center; gap: 4px;">
-            📚 Master Library
-          </span>
         </div>
       </div>
       <div class="setup__header-right">
@@ -802,7 +797,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, watch, onMounted, nextTick, defineAsyncComponent } from 'vue'
+import { ref, reactive, computed, watch, onMounted, onUnmounted, nextTick, defineAsyncComponent } from 'vue'
 import Papa from 'papaparse'
 import { 
   LayoutDashboard, 
@@ -1627,7 +1622,15 @@ onMounted(async () => {
     if (!activeClass.value && filteredClassList.value.length > 0) {
       await switchToClass(filteredClassList.value[0].classId)
     }
-
+    const handleSwitchSetupTab = (e) => {
+      if (e?.detail) {
+        activeTab.value = tabMap[e.detail] || e.detail
+      }
+    }
+    window.addEventListener('switch-setup-tab', handleSwitchSetupTab)
+    onUnmounted(() => {
+      window.removeEventListener('switch-setup-tab', handleSwitchSetupTab)
+    })
 })
 </script>
 <style src="../assets/styles/setup.css"></style>

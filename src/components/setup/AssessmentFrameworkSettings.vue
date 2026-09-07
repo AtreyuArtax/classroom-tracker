@@ -218,11 +218,13 @@
             v-if="totalExpectationsCount > 0"
             type="button" 
             class="setup__btn-ghost setup__btn--small" 
-            style="color: var(--primary);"
-            title="Save this course configuration and expectation weights as your master preset in Curriculum Library"
-            @click="saveCourseToMasterLibrary"
+            :style="classMasterDiffs.length > 0 ? 'color: var(--primary); font-weight: 700; border-color: rgba(59, 130, 246, 0.4); background: rgba(59, 130, 246, 0.06);' : 'color: var(--primary);'"
+            :title="classMasterDiffs.length > 0 ? `${classMasterDiffs.length} customization(s) differ from Master Library. Click to review and push.` : 'Push this course configuration and expectation weights to Master Curriculum Library'"
+            @click="openPushToMasterModal"
           >
-            <BookmarkCheck :size="14" /> Save to Master Library
+            <BookmarkCheck :size="14" /> 
+            <span>Push to Master</span>
+            <span v-if="classMasterDiffs.length > 0" class="setup__diff-count-badge">{{ classMasterDiffs.length }}</span>
           </button>
           <button 
             v-if="totalExpectationsCount > 0"
@@ -669,6 +671,26 @@
       @import="onExpectationImport"
       @clear="onClearExpectationsFromModal"
     />
+
+    <!-- Push Class Customizations to Master Modal -->
+    <CurriculumSyncModal
+      v-model="showPushToMasterModal"
+      mode="class-to-master"
+      :class-name="activeClass?.name"
+      :target-code="classMasterDiffResult.targetCode"
+      :target-title="classMasterDiffResult.targetTitle"
+      :diffs="classMasterDiffs"
+      @pushed-to-master="handleClassPushedToMaster"
+    />
+
+    <!-- Sync from Master Modal -->
+    <CurriculumSyncModal
+      v-model="showSyncFromMasterModal"
+      mode="master-to-classes"
+      :preset="syncFromMasterPreset"
+      :matching-classes="syncFromMasterClasses"
+      @applied="handleSyncFromMasterApplied"
+    />
   </div>
 </template>
 
@@ -689,11 +711,15 @@ import {
 import BaseModal from '../BaseModal.vue'
 import ExpectationImportModal from './ExpectationImportModal.vue'
 import ExpectationWeightBadge from './ExpectationWeightBadge.vue'
+import CurriculumSyncModal from './CurriculumSyncModal.vue'
 import { cleanExpectationText } from '../../utils/textUtils.js'
 import { 
   getMergedCurriculumPresets, 
   saveMasterPreset, 
-  syncPresetToClass 
+  syncPresetToClass,
+  diffClassAgainstMaster,
+  exportClassExpectationsToMaster,
+  isCourseCodeMatch
 } from '../../composables/useCurriculumLibrary.js'
 
 const { activeClass, updateActiveClass, triggerActiveClass } = useClassroom()
@@ -711,6 +737,20 @@ const showPreviewModal = ref(false)
 
 const templateNotice = ref({ text: '', type: 'warning' })
 let templateNoticeTimer = null
+
+const showPushToMasterModal = ref(false)
+const showSyncFromMasterModal = ref(false)
+const syncFromMasterPreset = ref(null)
+const syncFromMasterClasses = ref([])
+
+const classMasterDiffResult = computed(() => {
+  if (!activeClass.value || totalExpectationsCount.value === 0) {
+    return { hasDiffs: false, diffs: [], targetCode: '', targetTitle: '' }
+  }
+  return diffClassAgainstMaster(activeClass.value, activeCourseSection.value)
+})
+
+const classMasterDiffs = computed(() => classMasterDiffResult.value?.diffs || [])
 
 function showTemplateNotice(text, type = 'warning') {
   if (templateNoticeTimer) clearTimeout(templateNoticeTimer)
@@ -1178,61 +1218,25 @@ async function onClearExpectationsFromModal() {
   showImportModal.value = false
 }
 
-async function saveCourseToMasterLibrary() {
+async function openPushToMasterModal() {
   if (!activeClass.value || totalExpectationsCount.value === 0) return
-  const courseCode = (activeCourseSection.value || activeClass.value.courseCode || activeClass.value.name || '').trim().toUpperCase()
-  const secPresets = getMergedCurriculumPresets('secondary')
-  const matched = secPresets.find(p => {
-    const pCode = (p.subjectCode || '').toUpperCase().trim()
-    return pCode === courseCode || (courseCode && p.presetId.includes(courseCode.toLowerCase()))
-  })
+  showPushToMasterModal.value = true
+}
 
-  const presetId = matched?.presetId || `sec_${courseCode.toLowerCase().replace(/[^a-z0-9]/g, '') || 'course'}`
-  const title = matched?.title || `${activeClass.value.name || courseCode} Master`
-
-  const ok = await confirm(
-    `Save "${courseCode}" as your Master Curriculum Library blueprint for "${title}"?\n\nThis will update the default expectations and weight multipliers in your Master Library for this course. Future classes importing this course will use this configuration.`,
-    'Save to Master Library',
-    { confirmLabel: 'Save to Master', cancelLabel: 'Cancel' }
-  )
-  if (!ok) return
-
-  const strands = (activeUnits.value || []).map(u => {
-    const formattedExps = (u.expectations || []).map(e => ({
-      expectationId: e.expectationId || crypto.randomUUID(),
-      code: cleanExpectationText(e.code).toUpperCase(),
-      description: cleanExpectationText(e.description),
-      weight: (e.weight !== undefined && e.weight !== null && !isNaN(e.weight)) ? Number(e.weight) : 1.0,
-      active: e.active !== false
-    }))
-    return {
-      id: u.unitId,
-      name: cleanExpectationText(u.name),
-      expectations: formattedExps,
-      overalls: formattedExps.map(e => ({
-        code: e.code,
-        name: e.code,
-        description: e.description,
-        weight: e.weight,
-        specifics: []
-      }))
-    }
-  })
-
-  const preset = {
-    presetId,
-    title,
-    panel: 'secondary',
-    grade: activeClass.value.gradeLevel || '9',
-    subjectCode: courseCode,
-    gradingFramework: activeClass.value.gradingFramework || 'sbar',
-    strands,
-    isCustomMaster: true,
-    updatedAt: new Date().toISOString()
+async function handleClassPushedToMaster() {
+  try {
+    const res = await exportClassExpectationsToMaster(activeClass.value, activeCourseSection.value)
+    frameworkWarning.value = `Successfully saved "${res.savedPreset.title}" with ${res.diffs.length} customization(s) to your Master Curriculum Library!`
+    frameworkBannerType.value = 'success'
+  } catch (err) {
+    console.error('Failed to export to master library:', err)
+    frameworkWarning.value = 'Failed to push customizations to Master Library: ' + err.message
+    frameworkBannerType.value = 'warning'
   }
+}
 
-  await saveMasterPreset(preset)
-  await alert(`Saved "${preset.title}" with custom expectation weights to your Master Curriculum Library!`, 'Saved to Library')
+async function saveCourseToMasterLibrary() {
+  await openPushToMasterModal()
 }
 
 async function syncCourseFromMasterLibrary() {
@@ -1241,7 +1245,7 @@ async function syncCourseFromMasterLibrary() {
   const secPresets = getMergedCurriculumPresets('secondary')
   const masterPreset = secPresets.find(p => {
     const pCode = (p.subjectCode || '').toUpperCase().trim()
-    return pCode === courseCode || (courseCode && p.presetId.includes(courseCode.toLowerCase()))
+    return isCourseCodeMatch(pCode, courseCode) || (courseCode && p.presetId.includes(courseCode.toLowerCase()))
   })
 
   if (!masterPreset) {
@@ -1249,22 +1253,31 @@ async function syncCourseFromMasterLibrary() {
     return
   }
 
-  const ok = await confirm(
-    `Sync "${courseCode}" with the Master Curriculum Library blueprint "${masterPreset.title}"?\n\nThis will update expectation weight multipliers and wording. Existing assessments and student grades will be preserved.`,
-    'Sync from Master Library',
-    { confirmLabel: 'Sync from Master', cancelLabel: 'Cancel' }
-  )
-  if (!ok) return
-
-  const syncResult = syncPresetToClass(activeClass.value, masterPreset)
-  if (syncResult && syncResult.updatedClass) {
-    await updateActiveClass(syncResult.updatedClass)
-    await saveGradebookSettings()
-    await alert(
-      `Successfully synced "${courseCode}" from Master Library!\n${syncResult.changesCount} expectation/weight update(s) applied.`,
-      'Sync Complete'
-    )
+  const syncResult = syncPresetToClass(activeClass.value, masterPreset, activeCourseSection.value)
+  if (!syncResult || syncResult.changesCount === 0) {
+    await alert(`Course expectations and weights already match Master Library "${masterPreset.title}"!`, 'Already Up to Date')
+    return
   }
+
+  syncFromMasterPreset.value = masterPreset
+  syncFromMasterClasses.value = [{
+    classId: activeClass.value.classId,
+    className: activeClass.value.name,
+    classType: 'secondary',
+    subjectName: syncResult.subjectName,
+    sectionKey: activeCourseSection.value,
+    changesCount: syncResult.changesCount,
+    diffs: syncResult.diffs,
+    updatedClass: syncResult.updatedClass,
+    cls: activeClass.value
+  }]
+  showSyncFromMasterModal.value = true
+}
+
+async function handleSyncFromMasterApplied() {
+  await triggerActiveClass()
+  frameworkWarning.value = `Course expectations and weights synchronized from Master Library!`
+  frameworkBannerType.value = 'success'
 }
 
 const categoriesRevision = ref(0)
@@ -2036,6 +2049,17 @@ onMounted(async () => {
   color: var(--text-secondary);
   user-select: none;
   padding-right: 2px;
+}
+
+.setup__diff-count-badge {
+  background: #3b82f6;
+  color: #ffffff;
+  font-size: 0.68rem;
+  font-weight: 800;
+  border-radius: 999px;
+  padding: 1px 6px;
+  margin-left: 4px;
+  letter-spacing: -0.02em;
 }
 </style>
 

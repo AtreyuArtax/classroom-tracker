@@ -7,37 +7,26 @@
           <BookOpen :size="20" class="eim-header__icon" />
           <h3>Import Expectations into {{ targetSubjectName || 'Subject' }}</h3>
         </div>
-        <button class="eim-close-btn" @click="onClose" title="Close">
-          <X :size="18" />
-        </button>
-      </div>
-
-      <!-- Tabs Navigation -->
-      <div class="eim-tabs">
-        <button 
-          :class="['eim-tab', activeTab === 'presets' ? 'eim-tab--active' : '']" 
-          @click="activeTab = 'presets'"
-        >
-          Curriculum Presets Library
-        </button>
-        <button 
-          :class="['eim-tab', activeTab === 'paste' ? 'eim-tab--active' : '']" 
-          @click="activeTab = 'paste'"
-        >
-          Bulk Paste / CSV / JSON
-        </button>
-        <button 
-          :class="['eim-tab', activeTab === 'ai' ? 'eim-tab--active' : '']" 
-          @click="activeTab = 'ai'"
-        >
-          <Sparkles :size="14" style="margin-right: 4px; display: inline-block; vertical-align: -2px; color: #a855f7;" /> AI Prompts &amp; Templates
-        </button>
+        <div class="eim-header__actions">
+          <button 
+            type="button" 
+            class="eim-header__library-link" 
+            @click="goToCurriculumLibrary"
+            title="Open Master Curriculum Library to import whole courses or generate standards with AI"
+          >
+            <Sparkles :size="14" />
+            <span>Master Curriculum Library</span>
+            <ExternalLink :size="12" />
+          </button>
+          <button class="eim-close-btn" @click="onClose" title="Close">
+            <X :size="18" />
+          </button>
+        </div>
       </div>
 
       <!-- Body Content -->
       <div class="eim-body">
-        <!-- TAB 1: PRESET CURRICULUM LIBRARY -->
-        <div v-if="activeTab === 'presets'" class="eim-section">
+        <div class="eim-section">
           
           <!-- Filter Controls Stack -->
           <div class="eim-filter-stack">
@@ -145,22 +134,54 @@
               v-for="p in filteredPresets" 
               :key="p.presetId"
               :class="['eim-preset-card', selectedPresetId === p.presetId ? 'eim-preset-card--selected' : '']"
-              @click="selectedPresetId = p.presetId"
+              @click="selectBlueprint(p)"
             >
               <div class="eim-preset-card__header">
                 <div class="eim-preset-card__badges">
                   <span class="eim-preset-badge eim-preset-badge--grade">{{ p.grade }}</span>
-                  <span v-if="p.subjectCode" class="eim-preset-badge eim-preset-badge--code">{{ p.subjectCode }}</span>
-                  <span v-if="p.isCustomMaster" class="eim-preset-badge" style="background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); font-weight: 700;">★ Master Library</span>
-                  <span v-if="p.isSuccessCriteria" class="eim-preset-badge eim-preset-badge--sc">Success Criteria</span>
+                  <span v-if="p.courseCode || p.subjectCode" class="eim-preset-badge eim-preset-badge--code">{{ p.courseCode || p.subjectCode }}</span>
+                  <span v-if="isAnyVariantCustomized(p)" class="eim-preset-badge" style="background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); font-weight: 700;">★ Master Library</span>
                 </div>
                 <span v-if="selectedPresetId === p.presetId" class="eim-preset-card__check">
                   <Check :size="14" /> Selected
                 </span>
               </div>
               <h4 class="eim-preset-card__title">{{ p.title }}</h4>
+
+              <!-- Quick Variant Pills -->
+              <div v-if="p.variants" class="eim-blueprint-variants">
+                <button 
+                  type="button" 
+                  class="eim-variant-pill"
+                  :class="{ 'eim-variant-pill--active': selectedPresetId === p.presetId && granularity === 'all' }"
+                  @click.stop="selectBlueprintVariant(p, 'all')"
+                  title="Specific Expectations"
+                >
+                  Specific ({{ p.variants.specific.count }})
+                </button>
+                <button 
+                  type="button" 
+                  class="eim-variant-pill"
+                  :class="{ 'eim-variant-pill--active': selectedPresetId === p.presetId && granularity === 'overall' }"
+                  @click.stop="selectBlueprintVariant(p, 'overall')"
+                  title="Overall Expectations Only"
+                >
+                  Overall ({{ p.variants.overall.count }})
+                </button>
+                <button 
+                  v-if="p.variants.success_criteria.available"
+                  type="button" 
+                  class="eim-variant-pill eim-variant-pill--sc"
+                  :class="{ 'eim-variant-pill--active': selectedPresetId === p.presetId && granularity === 'success_criteria' }"
+                  @click.stop="selectBlueprintVariant(p, 'success_criteria')"
+                  title="Success Criteria ('I Can...' Statements)"
+                >
+                  Success Criteria ({{ p.variants.success_criteria.count }})
+                </button>
+              </div>
+
               <div class="eim-preset-card__footer">
-                <span>{{ p.strands ? p.strands.length : 0 }} Strands</span>
+                <span>{{ p.strandsCount || (p.strands ? p.strands.length : 0) }} Strands</span>
                 <span>•</span>
                 <span>{{ countPresetExpectations(p) }} Expectations</span>
               </div>
@@ -287,7 +308,7 @@
                         />
                         <span>
                           <strong :class="{ 'eim-code-overall': exp.isOverall }">{{ exp.code }}:</strong> 
-                          {{ exp.description }}
+{{ exp.description }}
                         </span>
                       </label>
                     </div>
@@ -296,361 +317,25 @@
               </div>
             </template>
           </div>
-        </div>
 
-        <!-- TAB 2: BULK PASTE / CSV IMPORTER -->
-        <div v-if="activeTab === 'paste'" class="eim-section">
-          <!-- Format Helper & Sample Inserters -->
-          <div class="eim-format-guide-card">
-            <div class="eim-guide-header">
-              <div class="eim-guide-title">
-                <FileSpreadsheet :size="16" class="eim-guide-icon" />
-                <span>Bulk Import Format Guide &amp; Sample Templates</span>
+          <!-- Master Curriculum Library Link Banner -->
+          <div class="eim-library-shortcut-card">
+            <div class="eim-library-shortcut-info">
+              <div class="eim-library-shortcut-title">
+                <Sparkles :size="15" class="eim-library-shortcut-sparkle" />
+                <span>Looking to import a syllabus (.json / .csv) or create a custom course?</span>
               </div>
-              <button 
-                type="button" 
-                class="eim-action-link eim-action-link--small"
-                @click="downloadSampleCsv"
-                title="Download ready-to-use CSV template"
-              >
-                <Download :size="13" /> Download Sample CSV
-              </button>
-            </div>
-            
-            <p class="eim-hint" style="margin-top: 4px;">
-              Paste rows copied from Excel, Google Sheets, Word, or PDF, or upload a CSV file. Classroom Tracker automatically detects your format!
-            </p>
-
-            <div class="eim-sample-buttons-row">
-              <span class="eim-sample-buttons-label">Insert Sample:</span>
-              <div class="eim-sample-buttons-list">
-                <button type="button" class="eim-sample-btn" @click="loadSampleFormat('pipe')">
-                  Pipe (<code>A1.1 | Desc</code>)
-                </button>
-                <button type="button" class="eim-sample-btn" @click="loadSampleFormat('colon')">
-                  Colon (<code>B2.1: Desc</code>)
-                </button>
-                <button type="button" class="eim-sample-btn" @click="loadSampleFormat('tab')">
-                  Excel / Tab (<code>Code	Desc</code>)
-                </button>
-                <button type="button" class="eim-sample-btn" @click="loadSampleFormat('three_column')">
-                  3-Col (<code>Strand | Code | Desc</code>)
-                </button>
-                <button type="button" class="eim-sample-btn" @click="loadSampleFormat('csv')">
-                  CSV (<code>"Code","Desc"</code>)
-                </button>
-              </div>
-            </div>
-            <div class="eim-ai-shortcut-banner">
-              <Sparkles :size="14" class="eim-ai-shortcut-icon" />
-              <span>
-                Want to create expectations for a new course with AI? 
-                <button type="button" class="eim-inline-link" @click="activeTab = 'ai'">
-                  View AI Prompts &amp; JSON Templates &rarr;
-                </button>
-              </span>
-            </div>
-          </div>
-
-          <!-- File Upload Dropzone -->
-          <div 
-            class="eim-dropzone" 
-            :class="{ 'eim-dropzone--active': pasteDragOver }"
-            @dragover.prevent="pasteDragOver = true"
-            @dragleave.prevent="pasteDragOver = false"
-            @drop.prevent="handleFileDrop"
-            @click="triggerFileInput"
-          >
-            <input 
-              ref="fileInputRef" 
-              type="file" 
-              accept=".csv,.tsv,.txt,.json" 
-              style="display: none;" 
-              @change="handleFileSelect" 
-            />
-            <UploadCloud :size="22" class="eim-dropzone-icon" />
-            <div class="eim-dropzone-text">
-              <strong>Click to upload</strong> or drag and drop a <code>.json</code>, <code>.csv</code>, <code>.tsv</code>, or <code>.txt</code> file
-            </div>
-          </div>
-
-          <!-- Target Unit & Import Behavior Stack -->
-          <div class="eim-paste-controls-row">
-            <div class="eim-field" style="flex: 1;">
-              <label class="eim-label">Target Unit / Strand</label>
-              <select v-model="targetUnitChoice" class="eim-select">
-                <option v-if="hasParsedStrands" value="auto-strands">-- Auto-Create Units from Parsed Strands --</option>
-                <option value="new">-- Create New Unit --</option>
-                <option v-for="u in existingUnits" :key="u.unitId" :value="u.unitId">
-                  Attach to: {{ u.name }}
-                </option>
-              </select>
-            </div>
-
-            <div v-if="targetUnitChoice === 'new'" class="eim-field" style="flex: 1;">
-              <label class="eim-label">New Unit Name</label>
-              <input v-model="newUnitName" type="text" class="eim-input" placeholder="e.g. Unit 1: Chemistry" />
-            </div>
-
-            <div class="eim-field" style="width: 220px;">
-              <label class="eim-label">Import Behavior</label>
-              <select v-model="importBehavior" class="eim-select">
-                <option value="replace">Replace Existing</option>
-                <option value="append">Append to Existing</option>
-              </select>
-            </div>
-          </div>
-
-          <!-- Raw Textarea Input -->
-          <div class="eim-field">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-              <label class="eim-label">Paste Raw Expectations Text</label>
-              <button v-if="pasteRawText" type="button" class="eim-action-link eim-action-link--small" @click="pasteRawText = ''">
-                Clear Text
-              </button>
-            </div>
-            <textarea 
-              v-model="pasteRawText" 
-              class="eim-textarea" 
-              rows="5" 
-              placeholder="Paste rows here, e.g.:&#10;A1.1 | Apply scientific processes and research skills&#10;A1.2 | Apply engineering design processes&#10;B1.1 | Assess impacts of human activities on matter"
-            ></textarea>
-          </div>
-
-          <!-- Live Interactive & Editable Preview Table -->
-          <div v-if="parsedPasteList.length > 0" class="eim-preview-table-container">
-            <div class="eim-preview-header">
-              <div class="eim-preview-summary">
-                <CheckCircle2 :size="16" class="eim-preview-success-icon" />
-                <span>
-                  <strong>{{ parsedPasteList.length }}</strong> expectation{{ parsedPasteList.length !== 1 ? 's' : '' }} ready to import
-                </span>
-                <span v-if="duplicateCodes.size > 0" class="eim-preview-duplicate-warning">
-                  <AlertTriangle :size="13" /> {{ duplicateCodes.size }} duplicate code{{ duplicateCodes.size !== 1 ? 's' : '' }} detected
-                </span>
-                <span v-if="hasParsedStrands" class="eim-preview-strand-badge">
-                  {{ uniqueParsedStrands.length }} Strands Detected
-                </span>
-              </div>
-              <span class="eim-preview-edit-hint">💡 Click any cell below to edit before importing</span>
-            </div>
-
-            <div class="eim-table-scroll-wrapper">
-              <table class="eim-preview-table">
-                <thead>
-                  <tr>
-                    <th style="width: 38px; text-align: center;">#</th>
-                    <th v-if="hasParsedStrands" style="width: 140px;">Strand / Unit</th>
-                    <th style="width: 110px;">Code</th>
-                    <th>Description</th>
-                    <th style="width: 44px; text-align: center;">Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr 
-                    v-for="(item, idx) in parsedPasteList" 
-                    :key="item.id || idx"
-                    :class="{ 'eim-tr--duplicate': isDuplicateCode(item.code) }"
-                  >
-                    <td class="eim-td-num">{{ idx + 1 }}</td>
-                    <td v-if="hasParsedStrands">
-                      <input 
-                        v-model="item.strand" 
-                        type="text" 
-                        class="eim-table-input" 
-                        placeholder="Strand" 
-                      />
-                    </td>
-                    <td>
-                      <input 
-                        v-model="item.code" 
-                        type="text" 
-                        class="eim-table-input eim-table-input--code" 
-                        placeholder="Code" 
-                      />
-                    </td>
-                    <td>
-                      <input 
-                        v-model="item.description" 
-                        type="text" 
-                        class="eim-table-input eim-table-input--desc" 
-                        placeholder="Expectation description" 
-                      />
-                    </td>
-                    <td style="text-align: center;">
-                      <button 
-                        type="button" 
-                        class="eim-table-btn-delete" 
-                        title="Remove row"
-                        @click="deleteParsedRow(idx)"
-                      >
-                        <Trash2 :size="13" />
-                      </button>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-
-        <!-- TAB 3: AI PROMPTS & JSON TEMPLATES -->
-        <div v-if="activeTab === 'ai'" class="eim-section eim-ai-tab">
-          <!-- Hero Banner -->
-          <div class="eim-ai-hero-card">
-            <div class="eim-ai-hero-header">
-              <div class="eim-ai-hero-title">
-                <Sparkles :size="20" class="eim-ai-sparkle-icon" />
-                <h4>Generate Custom Curriculums &amp; Success Criteria with AI</h4>
-              </div>
-            </div>
-            <p class="eim-ai-hero-desc">
-              Have a course syllabus, PDF, or custom curriculum not in the presets? Use these optimized prompts with <strong>ChatGPT, Claude, or Gemini</strong> to convert raw course text into clean Classroom Tracker formats in seconds.
-            </p>
-
-            <!-- 3-Step Quick Visual Guide -->
-            <div class="eim-ai-steps-row">
-              <div class="eim-ai-step-item">
-                <div class="eim-ai-step-badge">1</div>
-                <div class="eim-ai-step-text">
-                  <strong>Copy Prompt</strong>
-                  <span>Choose your format below</span>
-                </div>
-              </div>
-              <div class="eim-ai-step-arrow">&rarr;</div>
-              <div class="eim-ai-step-item">
-                <div class="eim-ai-step-badge">2</div>
-                <div class="eim-ai-step-text">
-                  <strong>Feed to AI</strong>
-                  <span>Paste prompt + syllabus/PDF</span>
-                </div>
-              </div>
-              <div class="eim-ai-step-arrow">&rarr;</div>
-              <div class="eim-ai-step-item">
-                <div class="eim-ai-step-badge">3</div>
-                <div class="eim-ai-step-text">
-                  <strong>Import File</strong>
-                  <span>Upload .json or paste text</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Section: 1-Click Starter Template Downloads -->
-          <div class="eim-templates-download-card">
-            <div class="eim-templates-header">
-              <div class="eim-templates-title">
-                <FileCode :size="16" class="eim-templates-icon" />
-                <span>Starter Boilerplate Templates</span>
-              </div>
-              <span class="eim-templates-subtitle">Download clean JSON schemas or CSV templates to inspect or edit directly</span>
-            </div>
-            <div class="eim-templates-buttons">
-              <button 
-                type="button" 
-                class="eim-template-btn" 
-                @click="downloadPresetJsonTemplate"
-                title="Download starter Course Preset JSON template"
-              >
-                <Download :size="14" /> Download Course Preset (.json)
-              </button>
-              <button 
-                type="button" 
-                class="eim-template-btn" 
-                @click="downloadSuccessCriteriaJsonTemplate"
-                title="Download starter Success Criteria JSON template"
-              >
-                <Download :size="14" /> Download Success Criteria (.json)
-              </button>
-              <button 
-                type="button" 
-                class="eim-template-btn" 
-                @click="downloadSampleCsv"
-                title="Download sample Spreadsheet CSV template"
-              >
-                <Download :size="14" /> Download Sample CSV (.csv)
-              </button>
-            </div>
-          </div>
-
-          <!-- Section: Ready-to-Use AI Prompts -->
-          <div class="eim-ai-prompts-section">
-            <h5 class="eim-section-title">Ready-to-Use AI Prompts (Click to Copy)</h5>
-
-            <!-- PROMPT 1: Course Preset JSON -->
-            <div class="eim-prompt-card">
-              <div class="eim-prompt-card__header">
-                <div class="eim-prompt-card__meta">
-                  <span class="eim-prompt-tag eim-prompt-tag--json">Full Course JSON</span>
-                  <h6>1. Complete Course Preset Generator</h6>
-                </div>
-                <button 
-                  type="button" 
-                  class="eim-copy-prompt-btn" 
-                  :class="{ 'eim-copy-prompt-btn--copied': copiedPromptKey === 'preset_json' }"
-                  @click="copyPrompt('preset_json', aiPresetJsonPrompt)"
-                >
-                  <component :is="copiedPromptKey === 'preset_json' ? Check : Copy" :size="13" />
-                  {{ copiedPromptKey === 'preset_json' ? 'Copied Prompt!' : 'Copy AI Prompt' }}
-                </button>
-              </div>
-              <p class="eim-prompt-desc">
-                Converts an entire curriculum document or course syllabus into structured strands, overall expectations, and specific expectations.
+              <p class="eim-library-shortcut-desc">
+                Full-course imports, starter boilerplate templates, and AI prompts live in the <strong>Master Curriculum Library</strong>.
               </p>
-              <div class="eim-prompt-code-preview">
-                <pre><code>{{ aiPresetJsonPromptSample }}</code></pre>
-              </div>
             </div>
-
-            <!-- PROMPT 2: Success Criteria JSON -->
-            <div class="eim-prompt-card">
-              <div class="eim-prompt-card__header">
-                <div class="eim-prompt-card__meta">
-                  <span class="eim-prompt-tag eim-prompt-tag--purple">Success Criteria</span>
-                  <h6>2. "I Can..." Success Criteria Generator</h6>
-                </div>
-                <button 
-                  type="button" 
-                  class="eim-copy-prompt-btn" 
-                  :class="{ 'eim-copy-prompt-btn--copied': copiedPromptKey === 'success_criteria' }"
-                  @click="copyPrompt('success_criteria', aiSuccessCriteriaPrompt)"
-                >
-                  <component :is="copiedPromptKey === 'success_criteria' ? Check : Copy" :size="13" />
-                  {{ copiedPromptKey === 'success_criteria' ? 'Copied Prompt!' : 'Copy AI Prompt' }}
-                </button>
-              </div>
-              <p class="eim-prompt-desc">
-                Transforms formal curriculum expectations into student-friendly, actionable "I can..." achievement targets.
-              </p>
-              <div class="eim-prompt-code-preview">
-                <pre><code>{{ aiSuccessCriteriaPromptSample }}</code></pre>
-              </div>
-            </div>
-
-            <!-- PROMPT 3: Tabular Quick Paste -->
-            <div class="eim-prompt-card">
-              <div class="eim-prompt-card__header">
-                <div class="eim-prompt-card__meta">
-                  <span class="eim-prompt-tag eim-prompt-tag--blue">Quick Paste Table</span>
-                  <h6>3. Quick 3-Column Pipe Table Generator</h6>
-                </div>
-                <button 
-                  type="button" 
-                  class="eim-copy-prompt-btn" 
-                  :class="{ 'eim-copy-prompt-btn--copied': copiedPromptKey === 'table' }"
-                  @click="copyPrompt('table', aiTablePrompt)"
-                >
-                  <component :is="copiedPromptKey === 'table' ? Check : Copy" :size="13" />
-                  {{ copiedPromptKey === 'table' ? 'Copied Prompt!' : 'Copy AI Prompt' }}
-                </button>
-              </div>
-              <p class="eim-prompt-desc">
-                Generates a clean <code>Strand | Code | Description</code> table you can paste directly into the <strong>Bulk Paste</strong> tab.
-              </p>
-              <div class="eim-prompt-code-preview">
-                <pre><code>{{ aiTablePromptSample }}</code></pre>
-              </div>
-            </div>
+            <button 
+              type="button" 
+              class="eim-library-shortcut-btn"
+              @click="goToCurriculumLibrary"
+            >
+              Open Curriculum Library &rarr;
+            </button>
           </div>
         </div>
       </div>
@@ -685,15 +370,20 @@
 import { ref, computed, watch } from 'vue'
 import { 
   BookOpen, X, Zap, Search, Check, Filter, Trash2, 
-  FileSpreadsheet, UploadCloud, Download, AlertTriangle, CheckCircle2,
-  Sparkles, Copy, FileCode
+  Sparkles, ExternalLink
 } from 'lucide-vue-next'
-import { curriculumPresets } from '../../data/curriculum/index.js'
-import { getMergedCurriculumPresets, useCurriculumLibrary } from '../../composables/useCurriculumLibrary.js'
+import { 
+  useCurriculumLibrary, 
+  getCourseBlueprints, 
+  getMasterPreset, 
+  deriveOverallPreset, 
+  getSuccessCriteriaPreset, 
+  getMergedCurriculumPresets 
+} from '../../composables/useCurriculumLibrary.js'
 import { cleanExpectationText } from '../../utils/textUtils.js'
 
-const { initLibrary } = useCurriculumLibrary()
-initLibrary()
+const { initCurriculumLibrary } = useCurriculumLibrary()
+initCurriculumLibrary()
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
@@ -705,9 +395,7 @@ const props = defineProps({
   classType: { type: String, default: 'secondary' } // 'elementary' | 'secondary'
 })
 
-const emit = defineEmits(['update:modelValue', 'import', 'clear'])
-
-const activeTab = ref('presets') // 'presets' | 'paste'
+const emit = defineEmits(['update:modelValue', 'import', 'clear', 'open-curriculum-library'])
 
 // Filter toolbar state
 const panelFilter = ref(props.classType || 'secondary') // 'elementary' | 'secondary' | 'all'
@@ -753,10 +441,7 @@ watch(() => props.modelValue, (isOpen) => {
 
 // Compute dynamic list of available grades based on panel filter
 const availableGrades = computed(() => {
-  let list = getMergedCurriculumPresets(panelFilter.value || 'all')
-  if (panelFilter.value && panelFilter.value !== 'all') {
-    list = list.filter(p => p.panel === panelFilter.value)
-  }
+  let list = getCourseBlueprints(panelFilter.value || 'all')
   const gradesOrder = ['Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5', 'Grade 6', 'Grade 7', 'Grade 8', 'Grade 9', 'Grade 10', 'Grade 11', 'Grade 12']
   const gradesSet = new Set(list.map(p => p.grade).filter(Boolean))
 
@@ -782,26 +467,22 @@ const availableSubjectCategories = computed(() => [
 ])
 
 const filteredPresets = computed(() => {
-  let list = getMergedCurriculumPresets(panelFilter.value || 'all')
+  let list = getCourseBlueprints(panelFilter.value || 'all')
 
-  // 1. Panel filter
-  if (panelFilter.value && panelFilter.value !== 'all') {
-    list = list.filter(p => p.panel === panelFilter.value)
-  }
-
-  // 2. Grade filter
+  // 1. Grade filter
   if (gradeFilter.value && gradeFilter.value !== 'all') {
-    list = list.filter(p => (p.grade || '').toLowerCase() === gradeFilter.value.toLowerCase())
+    const gNorm = String(gradeFilter.value).replace(/[^0-9]/g, '')
+    list = list.filter(b => String(b.grade || '').replace(/[^0-9]/g, '') === gNorm)
   }
 
-  // 3. Subject filter (Department level)
+  // 2. Subject filter (Department level)
   if (subjectFilter.value && subjectFilter.value !== 'all') {
     const s = subjectFilter.value.toLowerCase()
-    list = list.filter(p => {
-      const dept = (p.department || '').toLowerCase()
-      const title = (p.title || '').toLowerCase()
-      const code = (p.subjectCode || '').toLowerCase()
-      const pId = (p.presetId || '').toLowerCase()
+    list = list.filter(b => {
+      const dept = (b.department || '').toLowerCase()
+      const title = (b.title || '').toLowerCase()
+      const code = (b.courseCode || b.subjectCode || '').toLowerCase()
+      const pId = (b.presetId || '').toLowerCase()
 
       if (s === 'math') {
         return dept === 'math' || title.includes('math') || title.includes('algebra') || title.includes('calculus') || title.includes('functions') || code.includes('mat') || code.startsWith('m') || pId.includes('math') || pId.includes('mth') || pId.includes('mpm') || pId.includes('mfm')
@@ -828,45 +509,54 @@ const filteredPresets = computed(() => {
     })
   }
 
-  // 4. Text search query
+  // 3. Text search query
   if (searchQuery.value.trim()) {
     const q = searchQuery.value.toLowerCase().trim()
-    list = list.filter(p => 
-      (p.title || '').toLowerCase().includes(q) ||
-      (p.presetId || '').toLowerCase().includes(q) ||
-      (p.grade || '').toLowerCase().includes(q) ||
-      (p.subjectCode || '').toLowerCase().includes(q)
+    list = list.filter(b => 
+      (b.title || '').toLowerCase().includes(q) ||
+      (b.presetId || '').toLowerCase().includes(q) ||
+      (b.grade || '').toLowerCase().includes(q) ||
+      (b.courseCode || b.subjectCode || '').toLowerCase().includes(q)
     )
   }
-
-  // Exclude standalone success criteria entries from preset cards list
-  list = list.filter(p => !p.isSuccessCriteria)
 
   return list
 })
 
-function countPresetExpectations(preset) {
-  if (!preset || !preset.strands) return 0
-  return preset.strands.reduce((acc, s) => {
-    if (!s.overalls) return acc
-    return acc + s.overalls.reduce((a, ov) => a + 1 + (ov.specifics ? ov.specifics.length : 0), 0)
-  }, 0)
+function selectBlueprint(b) {
+  selectedPresetId.value = b.presetId
 }
 
-const selectedPreset = computed(() => {
+function selectBlueprintVariant(b, varKey) {
+  selectedPresetId.value = b.presetId
+  granularity.value = varKey
+}
+
+function isAnyVariantCustomized(b) {
+  if (!b || !b.variants) return false
+  return b.variants.specific?.isCustomized || b.variants.overall?.isCustomized || b.variants.success_criteria?.isCustomized
+}
+
+function countPresetExpectations(b) {
+  if (!b) return 0
+  if (granularity.value === 'overall') return b.variants?.overall?.count || 0
+  if (granularity.value === 'success_criteria') return b.variants?.success_criteria?.count || 0
+  return b.variants?.specific?.count || 0
+}
+
+const selectedBlueprint = computed(() => {
   if (!selectedPresetId.value) return null
-  return getMergedCurriculumPresets('all').find(p => p.presetId === selectedPresetId.value)
+  const allB = getCourseBlueprints('all')
+  const baseId = selectedPresetId.value.replace(/-success-criteria$/, '').replace(/-overall$/, '')
+  return allB.find(b => b.presetId === baseId || b.presetId === selectedPresetId.value)
+})
+
+const selectedPreset = computed(() => {
+  return selectedBlueprint.value?.basePreset || null
 })
 
 const hasSuccessCriteriaAvailable = computed(() => {
-  if (!selectedPreset.value) return false
-  if (selectedPreset.value.isSuccessCriteria) return true
-  const sCode = (selectedPreset.value.subjectCode || '').toLowerCase()
-  const pId = (selectedPreset.value.presetId || '').toLowerCase()
-  return getMergedCurriculumPresets('all').some(p => p.isSuccessCriteria && (
-    (sCode && p.subjectCode && p.subjectCode.toLowerCase() === sCode) ||
-    (pId && p.presetId.toLowerCase().startsWith(pId))
-  ))
+  return !!selectedBlueprint.value?.variants?.success_criteria?.available
 })
 
 watch(hasSuccessCriteriaAvailable, (available) => {
@@ -876,33 +566,40 @@ watch(hasSuccessCriteriaAvailable, (available) => {
 })
 
 const effectivePresetToUse = computed(() => {
-  if (!selectedPreset.value) return null
-  if (granularity.value === 'success_criteria') {
-    if (selectedPreset.value.isSuccessCriteria) return selectedPreset.value
-    const sCode = (selectedPreset.value.subjectCode || '').toLowerCase()
-    const pId = (selectedPreset.value.presetId || '').toLowerCase()
-    const scMatch = getMergedCurriculumPresets('all').find(p => p.isSuccessCriteria && (
-      (sCode && p.subjectCode && p.subjectCode.toLowerCase() === sCode) ||
-      (pId && p.presetId.toLowerCase().startsWith(pId))
-    ))
-    if (scMatch) return scMatch
+  if (!selectedBlueprint.value) return null
+  const b = selectedBlueprint.value
+  if (granularity.value === 'overall') {
+    return getMasterPreset(b.variants.overall.presetId) || deriveOverallPreset(b.basePreset)
   }
-  return selectedPreset.value
+  if (granularity.value === 'success_criteria') {
+    return getSuccessCriteriaPreset(b.basePreset) || b.basePreset
+  }
+  return getMasterPreset(b.variants.specific.presetId) || b.basePreset
 })
 
 function getStrandExpectations(strand, currGranularity = granularity.value) {
-  if (!strand || !strand.overalls) return []
+  if (!strand) return []
+  if (strand.expectations && Array.isArray(strand.expectations)) {
+    return strand.expectations.map(e => ({
+      code: e.code || '',
+      description: e.description || '',
+      isOverall: e.isOverall !== false,
+      weight: e.weight != null ? Number(e.weight) : 1.0
+    }))
+  }
+  if (!strand.overalls) return []
   const list = []
   strand.overalls.forEach(ov => {
+    const ovWeight = (ov.weight != null) ? Number(ov.weight) : 1.0
     if (currGranularity === 'overall') {
-      list.push({ code: ov.code, description: ov.description, isOverall: true })
+      list.push({ code: ov.code, description: ov.description, isOverall: true, weight: ovWeight })
     } else if ((currGranularity === 'all' || currGranularity === 'success_criteria') && ov.specifics && ov.specifics.length > 0) {
       ov.specifics.forEach(sp => {
-        list.push({ code: sp.code, description: sp.description, isOverall: false })
+        const spWeight = (sp.weight != null) ? Number(sp.weight) : ovWeight
+        list.push({ code: sp.code, description: sp.description, isOverall: false, weight: spWeight })
       })
     } else {
-      // Preserve overall expectation if no specifics exist (e.g. foundational AA1/A1 in MTH1W)
-      list.push({ code: ov.code, description: ov.description || ov.name, isOverall: true })
+      list.push({ code: ov.code, description: ov.description || ov.name, isOverall: true, weight: ovWeight })
     }
   })
   return list
@@ -962,618 +659,44 @@ function toggleStrandSelection(strand) {
   }
 }
 
-// Paste state & file upload
-const pasteRawText = ref('')
-const pasteDragOver = ref(false)
-const fileInputRef = ref(null)
-const parsedPasteList = ref([])
-
-function parseCsvLine(text) {
-  const result = []
-  let cur = ''
-  let inQuotes = false
-  for (let i = 0; i < text.length; i++) {
-    const char = text[i]
-    const nextChar = text[i + 1]
-    if (inQuotes) {
-      if (char === '"') {
-        if (nextChar === '"') {
-          cur += '"'
-          i++ // skip escaped quote
-        } else {
-          inQuotes = false
-        }
-      } else {
-        cur += char
-      }
-    } else {
-      if (char === '"') {
-        inQuotes = true
-      } else if (char === ',') {
-        result.push(cur.trim().replace(/^["']|["']$/g, ''))
-        cur = ''
-      } else {
-        cur += char
-      }
-    }
-  }
-  if (cur.length > 0 || result.length > 0) {
-    result.push(cur.trim().replace(/^["']|["']$/g, ''))
-  }
-  return result
-}
-
-function parseRawExpectationsText(raw) {
-  if (!raw || !raw.trim()) return []
-  const lines = raw.split(/\r?\n/)
-  const results = []
-
-  let startIndex = 0
-  if (lines.length > 0) {
-    const first = lines[0].toLowerCase().trim()
-    const tokens = first.split(/[\t\|,]/).map(t => t.trim().replace(/^["']|["']$/g, ''))
-    const isHeader = tokens.some(t => 
-      t === 'code' || 
-      t === 'expectation' || 
-      t === 'expectations' || 
-      t === 'learning goal' || 
-      t === 'description' || 
-      t === 'expectation code' || 
-      (t === 'strand' && tokens.length > 1 && tokens.some(tok => tok === 'code' || tok === 'description' || tok === 'expectation'))
-    )
-    if (isHeader) {
-      startIndex = 1
-    }
-  }
-
-  for (let i = startIndex; i < lines.length; i++) {
-    const line = lines[i].trim()
-    if (!line) continue
-
-    // 1. Pipe-separated: Strand | Code | Desc OR Code | Desc
-    if (line.includes('|')) {
-      const parts = line.split('|').map(s => s.trim())
-      if (parts.length >= 3) {
-        results.push({
-          id: `paste_${i}_${Date.now()}`,
-          strand: cleanExpectationText(parts[0]),
-          code: cleanExpectationText(parts[1]).toUpperCase(),
-          description: cleanExpectationText(parts.slice(2).join(' | ')),
-          isOverall: /^[A-Z]\d+$/i.test(parts[1])
-        })
-        continue
-      } else if (parts.length === 2) {
-        results.push({
-          id: `paste_${i}_${Date.now()}`,
-          strand: '',
-          code: cleanExpectationText(parts[0]).toUpperCase(),
-          description: cleanExpectationText(parts[1]),
-          isOverall: /^[A-Z]\d+$/i.test(parts[0])
-        })
-        continue
-      }
-    }
-
-    // 2. Tab-separated (Excel / Google Sheets paste)
-    if (line.includes('\t')) {
-      const parts = line.split('\t').map(s => s.trim())
-      if (parts.length >= 3) {
-        results.push({
-          id: `paste_${i}_${Date.now()}`,
-          strand: cleanExpectationText(parts[0]),
-          code: cleanExpectationText(parts[1]).toUpperCase(),
-          description: cleanExpectationText(parts.slice(2).join(' ')),
-          isOverall: /^[A-Z]\d+$/i.test(parts[1])
-        })
-        continue
-      } else if (parts.length === 2) {
-        results.push({
-          id: `paste_${i}_${Date.now()}`,
-          strand: '',
-          code: cleanExpectationText(parts[0]).toUpperCase(),
-          description: cleanExpectationText(parts[1]),
-          isOverall: /^[A-Z]\d+$/i.test(parts[0])
-        })
-        continue
-      }
-    }
-
-    // 3. Colon-separated: Code: Description
-    const matchColon = line.match(/^([A-Za-z0-9\.-]{1,12})\s*:\s*(.+)$/)
-    if (matchColon) {
-      results.push({
-        id: `paste_${i}_${Date.now()}`,
-        strand: '',
-        code: cleanExpectationText(matchColon[1]).toUpperCase(),
-        description: cleanExpectationText(matchColon[2]),
-        isOverall: /^[A-Z]\d+$/i.test(matchColon[1].trim())
-      })
-      continue
-    }
-
-    // 4. CSV parsing with quotes
-    const csvParts = parseCsvLine(line)
-    if (csvParts.length >= 3) {
-      results.push({
-        id: `paste_${i}_${Date.now()}`,
-        strand: cleanExpectationText(csvParts[0]),
-        code: cleanExpectationText(csvParts[1]).toUpperCase(),
-        description: cleanExpectationText(csvParts.slice(2).join(', ')),
-        isOverall: /^[A-Z]\d+$/i.test(csvParts[1].trim())
-      })
-      continue
-    } else if (csvParts.length === 2) {
-      results.push({
-        id: `paste_${i}_${Date.now()}`,
-        strand: '',
-        code: cleanExpectationText(csvParts[0]).toUpperCase(),
-        description: cleanExpectationText(csvParts[1]),
-        isOverall: /^[A-Z]\d+$/i.test(csvParts[0].trim())
-      })
-      continue
-    }
-
-    // 5. Code [space] Description match
-    const matchSpace = line.match(/^([A-Za-z0-9\.-]{2,8})\s+(.+)$/)
-    if (matchSpace) {
-      results.push({
-        id: `paste_${i}_${Date.now()}`,
-        strand: '',
-        code: cleanExpectationText(matchSpace[1]).toUpperCase(),
-        description: cleanExpectationText(matchSpace[2]),
-        isOverall: /^[A-Z]\d+$/i.test(matchSpace[1].trim())
-      })
-      continue
-    }
-
-    // Fallback: entire line as description
-    results.push({
-      id: `paste_${i}_${Date.now()}`,
-      strand: '',
-      code: `EXP-${results.length + 1}`,
-      description: cleanExpectationText(line),
-      isOverall: false
-    })
-  }
-
-  return results
-}
-
-watch(pasteRawText, (newText) => {
-  parsedPasteList.value = parseRawExpectationsText(newText)
-  if (parsedPasteList.value.some(e => e.strand && e.strand.trim())) {
-    targetUnitChoice.value = 'auto-strands'
-  }
-}, { immediate: true })
-
-const duplicateCodes = computed(() => {
-  const counts = {}
-  parsedPasteList.value.forEach(item => {
-    const c = (item.code || '').toUpperCase().trim()
-    if (c) counts[c] = (counts[c] || 0) + 1
-  })
-  const dupes = new Set()
-  Object.entries(counts).forEach(([code, cnt]) => {
-    if (cnt > 1) dupes.add(code)
-  })
-  return dupes
-})
-
-function isDuplicateCode(code) {
-  if (!code) return false
-  return duplicateCodes.value.has(code.toUpperCase().trim())
-}
-
-const hasParsedStrands = computed(() => {
-  return parsedPasteList.value.some(e => e.strand && e.strand.trim())
-})
-
-const uniqueParsedStrands = computed(() => {
-  return Array.from(new Set(parsedPasteList.value.map(e => e.strand?.trim()).filter(Boolean)))
-})
-
-function deleteParsedRow(index) {
-  parsedPasteList.value.splice(index, 1)
-}
-
-function loadSampleFormat(type) {
-  if (type === 'pipe') {
-    pasteRawText.value = `A1.1 | Apply scientific processes and research skills to investigate questions
-A1.2 | Apply engineering design processes to construct working prototypes
-B1.1 | Assess social and environmental impacts of emerging technologies
-B1.2 | Investigate properties of matter and chemical changes in common substances`
-  } else if (type === 'colon') {
-    pasteRawText.value = `B1.1: Demonstrate understanding of integer operations and rational numbers
-B1.2: Model linear equations and solve multi-step problems in context
-C1.1: Collect, organize, and represent primary and secondary data distributions
-C1.2: Apply statistical measures of central tendency to draw conclusions`
-  } else if (type === 'tab') {
-    pasteRawText.value = `A1.1\tListen in order to understand and respond appropriately in a variety of situations
-A1.2\tUse speaking skills and strategies to communicate information clearly
-B1.1\tRead a wide variety of increasingly complex texts for multiple purposes
-B1.2\tDemonstrate understanding of literary elements and point of view`
-  } else if (type === 'three_column') {
-    pasteRawText.value = `Strand A: STEM Skills | A1.1 | Apply scientific processes and research skills
-Strand A: STEM Skills | A1.2 | Use coding and computational thinking to model systems
-Strand B: Matter & Energy | B1.1 | Investigate physical and chemical properties of matter
-Strand B: Matter & Energy | B1.2 | Evaluate environmental impacts of material synthesis`
-  } else if (type === 'csv') {
-    pasteRawText.value = `"Code","Description"
-"A1.1","Demonstrate understanding of explicit and implicit meanings in texts"
-"A1.2","Analyze how texts reflect diverse perspectives and cultural contexts"
-"B1.1","Draft coherent paragraphs with strong supporting evidence and transitions"`
-  }
-}
-
-function downloadSampleCsv() {
-  const csvContent = `"Strand","Code","Description"
-"Number Sense","B1.1","Demonstrate understanding of integers, fractions, and decimals"
-"Number Sense","B1.2","Apply order of operations and proportional reasoning"
-"Algebra & Relations","C1.1","Model linear relationships using tables, graphs, and equations"
-"Algebra & Relations","C1.2","Solve first-degree equations with rational coefficients"
-"Data & Probability","D1.1","Collect, organize, and represent two-variable data sets"
-"Spatial Sense","E1.1","Determine surface area and volume of composite geometric solids"`
-
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-  const url = URL.createObjectURL(blob)
-  const link = document.createElement('a')
-  link.setAttribute('href', url)
-  link.setAttribute('download', 'expectations_sample.csv')
-  document.body.appendChild(link)
-  link.click()
-  document.body.removeChild(link)
-  URL.revokeObjectURL(url)
-}
-
-function triggerFileInput() {
-  if (fileInputRef.value) {
-    fileInputRef.value.click()
-  }
-}
-
-function handleFileSelect(e) {
-  const file = e.target.files?.[0]
-  if (!file) return
-  readFileContent(file)
-  e.target.value = ''
-}
-
-function handleFileDrop(e) {
-  pasteDragOver.value = false
-  const file = e.dataTransfer.files?.[0]
-  if (!file) return
-  readFileContent(file)
-}
-
-function downloadPresetJsonTemplate() {
-  const templateObj = {
-    presetId: 'ontario-g7-subjectname',
-    title: 'Grade 7 Subject Name (2026)',
-    panel: 'elementary',
-    region: 'Ontario',
-    grade: '7',
-    subjectCode: 'SUB',
-    department: 'Department Name',
-    strands: [
-      {
-        name: 'Strand A: Title of Strand A',
-        overalls: [
-          {
-            code: 'A1',
-            title: 'Overall Topic Name',
-            description: 'Demonstrate an understanding of key concepts, principles, and fundamental ideas related to this strand.',
-            specifics: [
-              {
-                code: 'A1.1',
-                description: 'identify and describe fundamental components, processes, and relationships using appropriate terminology.'
-              },
-              {
-                code: 'A1.2',
-                description: 'analyze practical applications, societal impacts, and environmental considerations related to the topic.'
-              }
-            ]
-          }
-        ]
-      }
-    ]
-  }
-
-  const blob = new Blob([JSON.stringify(templateObj, null, 2)], { type: 'application/json;charset=utf-8;' })
-  const url = URL.createObjectURL(blob)
-  const link = document.createElement('a')
-  link.setAttribute('href', url)
-  link.setAttribute('download', 'curriculum_preset_template.json')
-  document.body.appendChild(link)
-  link.click()
-  document.body.removeChild(link)
-  URL.revokeObjectURL(url)
-}
-
-function downloadSuccessCriteriaJsonTemplate() {
-  const templateObj = {
-    presetId: 'ontario-snc1w-success-criteria',
-    title: 'Grade 9 Science (SNC1W) - Success Criteria',
-    panel: 'secondary',
-    region: 'Ontario',
-    grade: '9',
-    subjectCode: 'SNC1W',
-    department: 'Science',
-    isSuccessCriteria: true,
-    strands: [
-      {
-        name: 'Strand A: STEM Skills',
-        overalls: [
-          {
-            code: 'A1',
-            title: 'STEM Investigation',
-            description: 'I can apply scientific investigation and engineering design processes.',
-            specifics: [
-              {
-                code: 'A1.1',
-                description: 'I can formulate testable questions and hypotheses for scientific experiments.'
-              },
-              {
-                code: 'A1.2',
-                description: 'I can safely conduct lab investigations and gather accurate quantitative data.'
-              }
-            ]
-          }
-        ]
-      }
-    ]
-  }
-
-  const blob = new Blob([JSON.stringify(templateObj, null, 2)], { type: 'application/json;charset=utf-8;' })
-  const url = URL.createObjectURL(blob)
-  const link = document.createElement('a')
-  link.setAttribute('href', url)
-  link.setAttribute('download', 'success_criteria_template.json')
-  document.body.appendChild(link)
-  link.click()
-  document.body.removeChild(link)
-  URL.revokeObjectURL(url)
-}
-
-const copiedPromptKey = ref(null)
-
-function copyPrompt(key, promptText) {
-  navigator.clipboard.writeText(promptText).then(() => {
-    copiedPromptKey.value = key
-    setTimeout(() => {
-      if (copiedPromptKey.value === key) {
-        copiedPromptKey.value = null
-      }
-    }, 2500)
-  })
-}
-
-const aiPresetJsonPrompt = `You are a curriculum data specialist. Convert the attached Ontario Ministry of Education curriculum text into a single, strictly valid JSON preset following this exact format:
-
-Requirements:
-1. Output ONLY valid JSON matching the schema below.
-2. Ensure clean plain text descriptions with NO HTML entities (do NOT include &nbsp;, &amp;, &quot;, etc.). Use standard UTF-8 characters (e.g. standard space, en-dash –, curly apostrophe ’).
-3. Ensure no trailing space before punctuation (write "systems." NOT "systems .").
-4. Expectation codes must follow standard Ontario numbering (Overall: "A1", Specific: "A1.1").
-
-Schema Template:
-{
-  "presetId": "ontario-[grade]-[subjectcode]",
-  "title": "[Full Course Title (Year)]",
-  "panel": "[elementary or secondary]",
-  "region": "Ontario",
-  "grade": "[Grade number, e.g. 7 or 10]",
-  "subjectCode": "[Subject Code, e.g. SNC1W or SCI]",
-  "department": "[Department name, e.g. Science]",
-  "strands": [
-    {
-      "name": "Strand Name (e.g. Strand A: STEM Investigation)",
-      "overalls": [
-        {
-          "code": "A1",
-          "title": "Overall Topic Title",
-          "description": "Full text of overall expectation.",
-          "specifics": [
-            {
-              "code": "A1.1",
-              "description": "Full text of specific expectation."
-            }
-          ]
-        }
-      ]
-    }
-  ]
-}
-
-Here is the source curriculum text:
-[PASTE YOUR SYLLABUS OR CURRICULUM TEXT HERE]`
-
-const aiPresetJsonPromptSample = `{
-  "presetId": "ontario-snc1w",
-  "title": "Grade 9 Science (2022)",
-  "panel": "secondary",
-  "strands": [ ... ]
-}`
-
-const aiSuccessCriteriaPrompt = `You are an educational assessment expert. Convert the following curriculum expectations into student-friendly Success Criteria ("I Can..." statements) structured in this exact JSON format:
-
-Requirements:
-1. Output ONLY valid JSON matching the schema below.
-2. Start specific criteria with "I can..." in active, student-accessible language.
-3. Clean plain text only (no &nbsp; or HTML entities).
-
-Schema Template:
-{
-  "presetId": "ontario-[grade]-[subjectcode]-success-criteria",
-  "title": "[Full Course Title] (Success Criteria)",
-  "panel": "[elementary or secondary]",
-  "region": "Ontario",
-  "grade": "[Grade number]",
-  "subjectCode": "[Course Code]",
-  "isSuccessCriteria": true,
-  "strands": [
-    {
-      "name": "Strand Name",
-      "overalls": [
-        {
-          "code": "A1",
-          "title": "Topic Name",
-          "description": "I can demonstrate understanding of key concepts in this strand.",
-          "specifics": [
-            {
-              "code": "A1.1",
-              "description": "I can explain and apply [specific concept] using appropriate terminology."
-            }
-          ]
-        }
-      ]
-    }
-  ]
-}
-
-Here are the expectations to convert:
-[PASTE YOUR CURRICULUM EXPECTATIONS HERE]`
-
-const aiSuccessCriteriaPromptSample = `{
-  "presetId": "ontario-snc1w-success-criteria",
-  "title": "Grade 9 Science - Success Criteria",
-  "isSuccessCriteria": true,
-  "strands": [ ... "I can..." statements ]
-}`
-
-const aiTablePrompt = `Convert the following curriculum text into a clean 3-column table format for Classroom Tracker:
-
-Format:
-Strand Name | Expectation Code | Expectation Description
-
-Example:
-Strand A: Life Systems | A1.1 | Assess impacts of human activities on biodiversity
-Strand A: Life Systems | A1.2 | Investigate interactions within ecosystems
-Strand B: Structures & Mechanisms | B1.1 | Evaluate economic and environmental impacts of materials
-
-Formatting rules:
-- One expectation per line.
-- Separate columns with a vertical pipe " | ".
-- Plain text only (no HTML entities or symbols).
-
-Here is the curriculum text:
-[PASTE YOUR CURRICULUM TEXT HERE]`
-
-const aiTablePromptSample = `Strand A: Life Systems | A1.1 | Assess impacts of human activities...
-Strand A: Life Systems | A1.2 | Investigate interactions...
-Strand B: Structures & Mechanisms | B1.1 | Evaluate economic...`
-
-function readFileContent(file) {
-  const reader = new FileReader()
-  reader.onload = (event) => {
-    const content = event.target?.result || ''
-    if (file.name.endsWith('.json') || content.trim().startsWith('{')) {
-      try {
-        const parsed = JSON.parse(content)
-        if (parsed.strands && Array.isArray(parsed.strands)) {
-          const rows = []
-          parsed.strands.forEach(strand => {
-            const sName = strand.name || ''
-            if (strand.overalls) {
-              strand.overalls.forEach(ov => {
-                rows.push(`${sName} | ${ov.code} | ${ov.description}`)
-                if (ov.specifics) {
-                  ov.specifics.forEach(sp => {
-                    rows.push(`${sName} | ${sp.code} | ${sp.description}`)
-                  })
-                }
-              })
-            }
-          })
-          if (rows.length > 0) {
-            pasteRawText.value = rows.join('\n')
-            activeTab.value = 'paste'
-            return
-          }
-        }
-      } catch (err) {
-        console.warn('Failed parsing JSON file, falling back to raw text', err)
-      }
-    }
-    pasteRawText.value = content
-  }
-  reader.readAsText(file)
-}
-
 const canSubmit = computed(() => {
-  if (activeTab.value === 'presets') {
-    if (!selectedPreset.value) return false
-    if (props.classType === 'elementary' || targetUnitChoice.value === 'auto') return true
-    if (selectedExpectations.value.length === 0) return false
-    if (targetUnitChoice.value === 'new' && !newUnitName.value.trim()) return false
-    return true
-  }
-
-  if (activeTab.value === 'paste') {
-    if (parsedPasteList.value.length === 0) return false
-    if (targetUnitChoice.value === 'new' && !newUnitName.value.trim()) return false
-    return true
-  }
-
-  return false
+  if (!selectedPreset.value) return false
+  if (props.classType === 'elementary' || targetUnitChoice.value === 'auto') return true
+  if (selectedExpectations.value.length === 0) return false
+  if (targetUnitChoice.value === 'new' && !newUnitName.value.trim()) return false
+  return true
 })
 
 function onClose() {
   emit('update:modelValue', false)
 }
 
+function goToCurriculumLibrary() {
+  onClose()
+  window.dispatchEvent(new CustomEvent('switch-setup-tab', { detail: 'curriculum' }))
+  emit('open-curriculum-library')
+}
+
 function onSubmit() {
   if (!canSubmit.value) return
 
-  if (activeTab.value === 'presets') {
-    if (props.classType === 'elementary' || targetUnitChoice.value === 'auto') {
-      emit('import', {
-        mode: 'auto-units',
-        preset: effectivePresetToUse.value || selectedPreset.value,
-        granularity: granularity.value,
-        importBehavior: importBehavior.value,
-        targetSubjectId: props.targetSubjectId
-      })
-    } else {
-      emit('import', {
-        mode: 'attach-expectations',
-        targetUnitChoice: targetUnitChoice.value,
-        newUnitName: newUnitName.value.trim(),
-        expectations: selectedExpectations.value,
-        importBehavior: importBehavior.value,
-        targetSubjectId: props.targetSubjectId
-      })
-    }
-  } else if (activeTab.value === 'paste') {
-    if (targetUnitChoice.value === 'auto-strands' && hasParsedStrands.value) {
-      // Group expectations by parsed strand
-      const strandMap = {}
-      parsedPasteList.value.forEach(item => {
-        const sName = item.strand?.trim() || 'General'
-        if (!strandMap[sName]) strandMap[sName] = []
-        strandMap[sName].push({
-          code: item.code,
-          description: item.description,
-          isOverall: item.isOverall
-        })
-      })
-
-      emit('import', {
-        mode: 'auto-paste-strands',
-        strands: Object.entries(strandMap).map(([name, exps]) => ({ name, expectations: exps })),
-        expectations: parsedPasteList.value,
-        importBehavior: importBehavior.value,
-        targetSubjectId: props.targetSubjectId
-      })
-    } else {
-      emit('import', {
-        mode: 'attach-expectations',
-        targetUnitChoice: targetUnitChoice.value,
-        newUnitName: newUnitName.value.trim(),
-        expectations: parsedPasteList.value,
-        importBehavior: importBehavior.value,
-        targetSubjectId: props.targetSubjectId
-      })
-    }
+  if (props.classType === 'elementary' || targetUnitChoice.value === 'auto') {
+    emit('import', {
+      mode: 'auto-units',
+      preset: effectivePresetToUse.value || selectedPreset.value,
+      granularity: granularity.value,
+      importBehavior: importBehavior.value,
+      targetSubjectId: props.targetSubjectId
+    })
+  } else {
+    emit('import', {
+      mode: 'attach-expectations',
+      targetUnitChoice: targetUnitChoice.value,
+      newUnitName: newUnitName.value.trim(),
+      expectations: selectedExpectations.value,
+      importBehavior: importBehavior.value,
+      targetSubjectId: props.targetSubjectId
+    })
   }
 
   onClose()
@@ -1649,33 +772,90 @@ function onSubmit() {
   color: var(--text);
 }
 
-.eim-tabs {
+.eim-header__actions {
   display: flex;
-  background: var(--bg-secondary);
-  border-bottom: 1px solid var(--border);
+  align-items: center;
+  gap: 12px;
 }
 
-.eim-tab {
-  flex: 1;
-  padding: 12px;
-  border: none;
-  background: transparent;
-  font-size: 0.85rem;
+.eim-header__library-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--primary-light, rgba(79, 70, 229, 0.08));
+  color: var(--primary, #4f46e5);
+  border: 1px solid var(--primary-border, rgba(79, 70, 229, 0.25));
+  padding: 6px 12px;
+  border-radius: var(--radius-md, 6px);
+  font-size: 0.82rem;
   font-weight: 600;
-  color: var(--text-secondary);
   cursor: pointer;
-  border-bottom: 2px solid transparent;
   transition: all 0.15s ease;
 }
 
-.eim-tab:hover {
-  color: var(--text);
+.eim-header__library-link:hover {
+  background: var(--primary, #4f46e5);
+  color: #fff;
+  border-color: var(--primary, #4f46e5);
 }
 
-.eim-tab--active {
-  color: var(--primary);
-  border-bottom-color: var(--primary);
-  background: var(--surface);
+.eim-library-shortcut-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 18px;
+  background: var(--bg-secondary, #f8fafc);
+  border: 1px dashed var(--border, #cbd5e1);
+  border-radius: var(--radius-md, 8px);
+  margin-top: 20px;
+}
+
+.eim-library-shortcut-info {
+  flex: 1;
+}
+
+.eim-library-shortcut-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--text, #1e293b);
+  margin-bottom: 3px;
+}
+
+.eim-library-shortcut-sparkle {
+  color: #a855f7;
+}
+
+.eim-library-shortcut-desc {
+  font-size: 0.8rem;
+  color: var(--text-secondary, #64748b);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.eim-library-shortcut-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: var(--radius-md, 6px);
+  background: var(--surface, #ffffff);
+  border: 1px solid var(--border, #cbd5e1);
+  color: var(--primary, #4f46e5);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.eim-library-shortcut-btn:hover {
+  background: var(--primary, #4f46e5);
+  color: #ffffff;
+  border-color: var(--primary, #4f46e5);
 }
 
 .eim-body {
@@ -2821,6 +2001,74 @@ function onSubmit() {
 
 .eim-inline-link:hover {
   color: #9333ea;
+}
+
+/* Course Blueprint Variant Mini-Pills */
+.eim-blueprint-variants {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 6px 0;
+}
+
+.eim-variant-pill {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 4px;
+  border: 1px solid var(--border, #cbd5e1);
+  background: var(--bg-secondary, #f8fafc);
+  color: var(--text-secondary, #64748b);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.eim-variant-pill:hover {
+  border-color: var(--primary, #2563eb);
+  color: var(--primary, #2563eb);
+}
+
+.eim-variant-pill--active {
+  background: var(--primary, #2563eb) !important;
+  color: #ffffff !important;
+  border-color: var(--primary, #2563eb) !important;
+}
+
+.eim-variant-pill--sc.eim-variant-pill--active {
+  background: #9333ea !important;
+  border-color: #9333ea !important;
+}
+
+/* Master Library Direct Link Card */
+.eim-master-link-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: rgba(37, 99, 235, 0.05);
+  border: 1px solid rgba(37, 99, 235, 0.25);
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: 4px;
+}
+
+.eim-master-link-icon {
+  color: var(--primary, #2563eb);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.eim-master-link-body strong {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--text, #0f172a);
+  margin-bottom: 2px;
+}
+
+.eim-master-link-body p {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--text-secondary, #475569);
+  line-height: 1.4;
 }
 </style>
 

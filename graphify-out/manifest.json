@@ -355,8 +355,8 @@
     "semantic_hash": ""
   },
   "src/views/Setup.vue": {
-    "mtime": 1788717107.5525756,
-    "ast_hash": "1dbe9aca518d7fceec849db7532fb4a2",
+    "mtime": 1788730161.908104,
+    "ast_hash": "790fbe383aece3f5f5149cd861054c56",
     "semantic_hash": ""
   },
   "tmp/test_dates.js": {
@@ -400,8 +400,8 @@
     "semantic_hash": ""
   },
   "src/components/setup/AssessmentFrameworkSettings.vue": {
-    "mtime": 1788697480.1460361,
-    "ast_hash": "4b4dbe4974b6042862fa1e75aa1c2ef0",
+    "mtime": 1788731325.843865,
+    "ast_hash": "1e11c4c82a7a84bdd3019e0fdf60e985",
     "semantic_hash": ""
   },
   "src/composables/useGradeEditing.js": {
@@ -455,8 +455,8 @@
     "semantic_hash": ""
   },
   "src/components/setup/ExpectationImportModal.vue": {
-    "mtime": 1788704044.3999481,
-    "ast_hash": "6c79eac91d0e0d0e9400505b2ec35f80",
+    "mtime": 1788730130.741785,
+    "ast_hash": "8dfe7f1e77f759486b72be7f1a26984c",
     "semantic_hash": ""
   },
   "src/data/curriculum/index.js": {
@@ -530,8 +530,8 @@
     "semantic_hash": ""
   },
   "src/components/reports/ExpectationMasteryHeatmap.vue": {
-    "mtime": 1788706545.6749246,
-    "ast_hash": "5cbe4bb595f860992a546e3d62f452f5",
+    "mtime": 1788731295.886521,
+    "ast_hash": "e77a31429a65f9912aecfe0615e7012f",
     "semantic_hash": ""
   },
   "src/components/reports/ReportsPrintHub.vue": {
@@ -610,8 +610,8 @@
     "semantic_hash": ""
   },
   "src/components/setup/ElementarySubjectManager.vue": {
-    "mtime": 1788706528.7376845,
-    "ast_hash": "c3048f0c483cbfb61b3eade222f4ba11",
+    "mtime": 1788731383.8769262,
+    "ast_hash": "2ae6537e84d956068e0fc85633210f9a",
     "semantic_hash": ""
   },
   "src/utils/elementarySubjects.js": {
@@ -1095,8 +1095,8 @@
     "semantic_hash": ""
   },
   "src/components/dossier/DossierSBARMasteryBreakdown.vue": {
-    "mtime": 1788706571.268963,
-    "ast_hash": "728c4fb375ca2631b004b94a7d33b5a7",
+    "mtime": 1788731278.6705754,
+    "ast_hash": "765f1459707a0cacf1bdc3129bb2f1e8",
     "semantic_hash": ""
   },
   "src/test_db_integrity.js": {
@@ -1225,8 +1225,8 @@
     "semantic_hash": ""
   },
   "src/components/setup/CurriculumLibraryManager.vue": {
-    "mtime": 1788695880.8892992,
-    "ast_hash": "e89e00762b20416c2a40f411ad137a13",
+    "mtime": 1788731246.626638,
+    "ast_hash": "9b628603ae1d3c0983cb795f29349970",
     "semantic_hash": ""
   },
   "src/components/setup/ExpectationWeightBadge.vue": {
@@ -1235,8 +1235,8 @@
     "semantic_hash": ""
   },
   "src/composables/useCurriculumLibrary.js": {
-    "mtime": 1788696156.699338,
-    "ast_hash": "9e73e0a3477ee9fd5875f4273074efdb",
+    "mtime": 1788733294.9285703,
+    "ast_hash": "42ae1423efe8f672b68af96a9ead5873",
     "semantic_hash": ""
   },
   "src/test_curriculum_library_and_weights.js": {
@@ -1277,6 +1277,31 @@
   "src/test_grading_policy_ground_truth.js": {
     "mtime": 1788714823.419541,
     "ast_hash": "d3a88587b0799022811985addc757dc8",
+    "semantic_hash": ""
+  },
+  "src/test_curriculum_blueprint_variants.js": {
+    "mtime": 1788722969.2890344,
+    "ast_hash": "7f996603aa78ae351c6cb685e3a3202c",
+    "semantic_hash": ""
+  },
+  "src/components/setup/CurriculumBlueprintImportModal.vue": {
+    "mtime": 1788726348.6757088,
+    "ast_hash": "37f5ff46630ab943b6af4373129223ef",
+    "semantic_hash": ""
+  },
+  "src/test_master_curriculum_import.js": {
+    "mtime": 1788726867.9604702,
+    "ast_hash": "a4dc8e80207d2733973b7071971dc13b",
+    "semantic_hash": ""
+  },
+  "src/components/setup/CurriculumSyncModal.vue": {
+    "mtime": 1788731226.1726084,
+    "ast_hash": "ef5a4a01857391984d21b98d95d8a399",
+    "semantic_hash": ""
+  },
+  "src/test_bidirectional_curriculum_sync.js": {
+    "mtime": 1788733335.4334874,
+    "ast_hash": "9bda1eaae2c80bb40c660931a0c288e7",
     "semantic_hash": ""
   }
 }

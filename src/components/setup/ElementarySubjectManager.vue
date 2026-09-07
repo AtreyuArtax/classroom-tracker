@@ -195,14 +195,16 @@
                 <BookOpen :size="13" /> Import Expectations
               </button>
               <button 
-                v-if="sub.expectations && sub.expectations.length > 0" 
+                v-if="sub.expectations && sub.expectations.length > 0"
                 type="button" 
                 class="elementary-subjects__btn-ghost" 
-                style="font-size: 0.75rem; padding: 4px 10px; display: inline-flex; align-items: center; gap: 5px; color: var(--primary);"
-                title="Save this subject configuration and expectation weights as your master preset in Curriculum Library"
-                @click="saveSubjectToMasterLibrary(sub)"
+                :style="getSubjectDiffs(sub).length > 0 ? 'font-size: 0.75rem; padding: 4px 10px; display: inline-flex; align-items: center; gap: 5px; color: var(--primary); font-weight: 700; border-color: rgba(59, 130, 246, 0.4); background: rgba(59, 130, 246, 0.06);' : 'font-size: 0.75rem; padding: 4px 10px; display: inline-flex; align-items: center; gap: 5px; color: var(--primary);'"
+                :title="getSubjectDiffs(sub).length > 0 ? `${getSubjectDiffs(sub).length} customization(s) differ from Master Library. Click to review and push.` : 'Push this subject configuration and expectation weights to Master Curriculum Library'"
+                @click="openPushSubjectToMasterModal(sub)"
               >
-                <BookmarkCheck :size="13" /> Save to Master Library
+                <BookmarkCheck :size="13" /> 
+                <span>Push to Master</span>
+                <span v-if="getSubjectDiffs(sub).length > 0" class="setup__diff-count-badge">{{ getSubjectDiffs(sub).length }}</span>
               </button>
               <button 
                 v-if="sub.expectations && sub.expectations.length > 0" 
@@ -610,6 +612,26 @@
         </div>
       </div>
     </div>
+
+    <!-- Push Subject Customizations to Master Modal -->
+    <CurriculumSyncModal
+      v-model="showPushSubjectModal"
+      mode="class-to-master"
+      :class-name="activeClass?.name"
+      :target-code="pushSubjectTargetCode"
+      :target-title="pushSubjectTargetTitle"
+      :diffs="pushSubjectDiffs"
+      @pushed-to-master="handleSubjectPushedToMaster"
+    />
+
+    <!-- Sync Subject from Master Modal -->
+    <CurriculumSyncModal
+      v-model="showSyncSubjectModal"
+      mode="master-to-classes"
+      :preset="syncSubjectPreset"
+      :matching-classes="syncSubjectClasses"
+      @applied="handleSyncSubjectApplied"
+    />
   </div>
 </template>
 
@@ -618,6 +640,7 @@ import { ref, computed, reactive, onMounted } from 'vue'
 import { Plus, Check, Trash2, Zap, BookOpen, ChevronDown, Edit2, X, Search, BookmarkCheck, RefreshCw } from 'lucide-vue-next'
 import SubjectIcon from '../SubjectIcon.vue'
 import ExpectationWeightBadge from './ExpectationWeightBadge.vue'
+import CurriculumSyncModal from './CurriculumSyncModal.vue'
 import { useClassroom } from '../../composables/useClassroom.js'
 import { activeSubjectId } from '../../composables/useClassroomState.js'
 import { DEFAULT_ELEMENTARY_SUBJECTS, DEFAULT_TRADITIONAL_CATEGORIES } from '../../utils/elementarySubjects.js'
@@ -628,10 +651,7 @@ import {
   cascadeRenameExpectation, 
   detachExpectationFromAssessmentsAndGrades 
 } from '../../db/gradebookService.js'
-import { detachEventsForDeletedExpectation } from '../../db/eventService.js'
 import { 
-  parseGradesFromClass,
-  detectGradeFromClassName, 
   populateSubjectFromPreset, 
   populateSubjectFromPresets,
   findElementaryPreset, 
@@ -642,7 +662,9 @@ import {
   useCurriculumLibrary, 
   resolveSubjectPreset, 
   saveMasterPreset,
-  syncPresetToClass
+  syncPresetToClass,
+  diffClassAgainstMaster,
+  exportClassExpectationsToMaster
 } from '../../composables/useCurriculumLibrary.js'
 
 import ExpectationImportModal from './ExpectationImportModal.vue'
@@ -663,6 +685,43 @@ const showExpectationModal = ref(false)
 const activeImportSubject = ref(null)
 const expandedStrandSubjectId = ref(null)
 const expandedCategorySubjectId = ref(null)
+
+const showPushSubjectModal = ref(false)
+const pushSubjectTargetCode = ref('')
+const pushSubjectTargetTitle = ref('')
+const pushSubjectDiffs = ref([])
+const activePushSubject = ref(null)
+
+const showSyncSubjectModal = ref(false)
+const syncSubjectPreset = ref(null)
+const syncSubjectClasses = ref([])
+
+function getSubjectDiffs(sub) {
+  if (!sub || !activeClass.value) return []
+  const res = diffClassAgainstMaster(activeClass.value, sub.subjectId || sub.code)
+  return res?.diffs || []
+}
+
+function openPushSubjectToMasterModal(sub) {
+  if (!sub || !activeClass.value) return
+  activePushSubject.value = sub
+  const res = diffClassAgainstMaster(activeClass.value, sub.subjectId || sub.code)
+  pushSubjectTargetCode.value = res.targetCode
+  pushSubjectTargetTitle.value = res.targetTitle
+  pushSubjectDiffs.value = res.diffs
+  showPushSubjectModal.value = true
+}
+
+async function handleSubjectPushedToMaster() {
+  if (!activePushSubject.value || !activeClass.value) return
+  try {
+    const res = await exportClassExpectationsToMaster(activeClass.value, activePushSubject.value.subjectId || activePushSubject.value.code)
+    await alertMessage(`Saved "${res.savedPreset.title}" with ${res.diffs.length} customization(s) to your Master Curriculum Library!`, 'Saved to Library')
+  } catch (err) {
+    console.error('Failed to export subject to master:', err)
+    await alertMessage('Failed to push subject customizations to Master Library: ' + err.message, 'Error')
+  }
+}
 const newExpForms = reactive({})
 
 const strandSearchQuery = ref('')
@@ -729,65 +788,11 @@ async function saveEditExp(subjectId, exp) {
 }
 
 async function saveSubjectToMasterLibrary(sub) {
-  if (!sub || !sub.expectations || sub.expectations.length === 0) return
-  
-  const gradeStr = parsedGrades.value[0] || activeClass.value?.gradeLevel || ''
-  const cleanGrade = gradeStr.toLowerCase().replace(/[^a-z0-9]/g, '')
-  const cleanCode = (sub.code || sub.name || 'sub').toLowerCase().replace(/[^a-z0-9]/g, '')
-  
-  // Resolve matching preset in Master Library so we update the actual preset!
-  const matched = resolveSubjectPreset(gradeStr, sub.code, sub.name) || findElementaryPreset(gradeStr, sub.code, sub.name)
-  const presetId = matched?.presetId || `elem_${cleanCode}_${cleanGrade || 'master'}`
-  const title = matched?.title || `${sub.name}${gradeStr ? ' (' + gradeStr + ')' : ''} Master`
-
-  const ok = await confirmMessage(
-    `Save "${sub.name}" as your Master Curriculum Library blueprint for "${title}"?\n\nThis will update the default expectations and weight multipliers in your Master Library for this subject. Future classes importing this subject will use this configuration.`,
-    'Save to Master Library',
-    { confirmLabel: 'Save to Master', cancelLabel: 'Cancel' }
-  )
-  if (!ok) return
-
-  const strands = (sub.gradebookUnits || []).map(u => {
-    const exps = (sub.expectations || []).filter(e => e.unitId === u.unitId)
-    const formattedExps = exps.map(e => ({
-      expectationId: e.expectationId || crypto.randomUUID(),
-      code: cleanExpectationText(e.code).toUpperCase(),
-      description: cleanExpectationText(e.description),
-      weight: (e.weight !== undefined && e.weight !== null && !isNaN(e.weight)) ? Number(e.weight) : 1.0,
-      active: e.active !== false
-    }))
-    return {
-      id: u.unitId,
-      name: cleanExpectationText(u.name),
-      expectations: formattedExps,
-      overalls: formattedExps.map(e => ({
-        code: e.code,
-        name: e.code,
-        description: e.description,
-        weight: e.weight,
-        specifics: []
-      }))
-    }
-  })
-
-  const preset = {
-    presetId,
-    title,
-    panel: 'elementary',
-    grade: gradeStr,
-    subjectCode: sub.code,
-    gradingFramework: sub.gradingFramework || 'sbar',
-    strands,
-    isCustomMaster: true,
-    updatedAt: new Date().toISOString()
-  }
-
-  await saveMasterPreset(preset)
-  await alertMessage(`Saved "${preset.title}" with custom expectation weights to your Master Curriculum Library!`, 'Saved to Library')
+  openPushSubjectToMasterModal(sub)
 }
 
 async function syncSubjectFromMasterLibrary(sub) {
-  if (!sub) return
+  if (!sub || !activeClass.value) return
   const gradeStr = parsedGrades.value[0] || activeClass.value?.gradeLevel || ''
   const masterPreset = resolveSubjectPreset(gradeStr, sub.code, sub.name)
   if (!masterPreset) {
@@ -795,21 +800,29 @@ async function syncSubjectFromMasterLibrary(sub) {
     return
   }
 
-  const ok = await confirmMessage(
-    `Sync "${sub.name}" with the Master Curriculum Library blueprint "${masterPreset.title}"?\n\nThis will update expectation weight multipliers and wording. Existing assessments and student grades will be preserved.`,
-    'Sync from Master Library',
-    { confirmLabel: 'Sync from Master', cancelLabel: 'Cancel' }
-  )
-  if (!ok) return
-
-  const syncResult = syncPresetToClass(activeClass.value, masterPreset)
-  if (syncResult && syncResult.updatedClass) {
-    await updateActiveClass(syncResult.updatedClass)
-    await alertMessage(
-      `Successfully synced "${sub.name}" from Master Library!\n${syncResult.changesCount} expectation/weight update(s) applied.`,
-      'Sync Complete'
-    )
+  const syncResult = syncPresetToClass(activeClass.value, masterPreset, sub.subjectId || sub.code)
+  if (!syncResult || syncResult.changesCount === 0) {
+    await alertMessage(`Subject "${sub.name}" is already up to date with Master Library!`, 'Already Up to Date')
+    return
   }
+
+  syncSubjectPreset.value = masterPreset
+  syncSubjectClasses.value = [{
+    classId: activeClass.value.classId,
+    className: activeClass.value.name,
+    classType: 'elementary',
+    subjectName: syncResult.subjectName,
+    sectionKey: sub.subjectId,
+    changesCount: syncResult.changesCount,
+    diffs: syncResult.diffs,
+    updatedClass: syncResult.updatedClass,
+    cls: activeClass.value
+  }]
+  showSyncSubjectModal.value = true
+}
+
+async function handleSyncSubjectApplied() {
+  await alertMessage(`Subject expectations and weights synchronized from Master Library!`, 'Sync Complete')
 }
 
 const selectedGradeFilters = reactive({})
@@ -2195,6 +2208,17 @@ async function saveCustomSubject() {
   color: var(--text-secondary);
   user-select: none;
   padding-right: 2px;
+}
+
+.setup__diff-count-badge {
+  background: #3b82f6;
+  color: #ffffff;
+  font-size: 0.68rem;
+  font-weight: 800;
+  border-radius: 999px;
+  padding: 1px 6px;
+  margin-left: 4px;
+  letter-spacing: -0.02em;
 }
 </style>
 

@@ -102,6 +102,7 @@
           >
             <div class="expectation-heatmap__code-col">
               <span class="expectation-heatmap__code">{{ exp.code }}</span>
+              <ExpectationWeightBadge v-if="exp.weight != null && exp.weight !== 1" :weight="exp.weight" :compact="true" />
               <span class="expectation-heatmap__desc" :title="exp.description">{{ exp.description }}</span>
             </div>
 
@@ -174,6 +175,7 @@ import { gradeMap } from '../../composables/useGradebook.js'
 import { getEffectiveClassRecord, getUnitGradeLevel } from '../../composables/useElementary.js'
 import { isCohortMatch } from '../../db/gradebook/gradeCalc.js'
 import { activeSubjectId } from '../../composables/useClassroomState.js'
+import ExpectationWeightBadge from '../setup/ExpectationWeightBadge.vue'
 
 const props = defineProps({
   activeClass: { type: Object, default: null },
@@ -422,11 +424,23 @@ const unitsWithExpectations = computed(() => {
         }
       })
 
-      const unitAvgs = expectations
-        .map(e => e.average)
-        .filter(a => a !== null && a !== undefined && !isNaN(Number(a)) && isFinite(Number(a)))
-        .map(Number)
-      const unitAvg = unitAvgs.length ? (unitAvgs.reduce((a, b) => a + b, 0) / unitAvgs.length) : null
+      let weightedSum = 0
+      let totalWeight = 0
+      let validCount = 0
+
+      expectations.forEach(e => {
+        if (e.average !== null && e.average !== undefined && !isNaN(Number(e.average)) && isFinite(Number(e.average))) {
+          const w = (e.weight != null && !isNaN(Number(e.weight))) ? Math.max(0, Number(e.weight)) : 1.0
+          // 0x diagnostic standards are excluded from unit average
+          if (w > 0) {
+            weightedSum += Number(e.average) * w
+            totalWeight += w
+            validCount++
+          }
+        }
+      })
+
+      const unitAvg = (validCount > 0 && totalWeight > 0) ? (weightedSum / totalWeight) : null
       const unitSbarBadge = unitAvg !== null ? getSBARLevelBadge(unitAvg) : null
 
       return {

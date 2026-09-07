@@ -208,7 +208,9 @@ const unitBreakdown = computed(() => {
 
   return units.map(u => {
     const uExps = u.expectations || []
-    const scores = []
+    let weightedSum = 0
+    let totalWeight = 0
+    let evaluatedCount = 0
 
     uExps.forEach(exp => {
       const code = exp.code || exp.id || exp.expectationId
@@ -217,11 +219,18 @@ const unitBreakdown = computed(() => {
       // Look up in rawMastery
       const entry = rawMastery[code] || rawMastery[String(code).toLowerCase()] || rawMastery[String(code).toUpperCase()]
       if (entry && entry.score != null && entry.score !== '' && !isNaN(Number(entry.score)) && isFinite(Number(entry.score))) {
-        scores.push(Number(entry.score))
+        const rawW = entry.weight != null ? entry.weight : exp.weight
+        const w = (rawW != null && !isNaN(Number(rawW))) ? Math.max(0, Number(rawW)) : 1.0
+        // Weight 0 is diagnostic/formative-only and excluded from course/unit mastery
+        if (w > 0) {
+          weightedSum += Number(entry.score) * w
+          totalWeight += w
+          evaluatedCount++
+        }
       }
     })
 
-    const avgScore = scores.length > 0 ? (scores.reduce((a, b) => a + b, 0) / scores.length) : null
+    const avgScore = (evaluatedCount > 0 && totalWeight > 0) ? Math.round(weightedSum / totalWeight) : null
     const badge = avgScore != null ? getSBARLevelBadge(avgScore) : null
 
     return {
@@ -229,7 +238,7 @@ const unitBreakdown = computed(() => {
       name: cleanUnitName(u.name) || 'Unit',
       score: avgScore,
       badge,
-      evaluatedCount: scores.length,
+      evaluatedCount,
       totalExpectations: uExps.length
     }
   })
