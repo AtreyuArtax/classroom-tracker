@@ -21,7 +21,7 @@ export function calculateDecayingAverage(scores, weightNewest = 0.65) {
     .map(Number)
     .filter(s => isFinite(s))
   if (validScores.length === 0) return null
-  if (validScores.length === 1) return validScores[0]
+  if (validScores.length === 1) return Math.round(validScores[0] * 10) / 10
 
   let currentMastery = validScores[0]
   const w = (weightNewest != null && !isNaN(weightNewest) && isFinite(weightNewest))
@@ -209,7 +209,8 @@ export function calculatePowerLaw(scores) {
     .map(Number)
     .filter(s => isFinite(s))
   if (validScores.length === 0) return null
-  if (validScores.length === 1) return validScores[0]
+  if (validScores.length === 1) return Math.round(validScores[0] * 10) / 10
+  if (validScores.every(s => s <= 0)) return 0
 
   const safeScores = validScores.map(s => Math.max(1, Math.min(100, s)))
   const n = safeScores.length
@@ -260,7 +261,7 @@ export function calculateMode(scores) {
     .map(Number)
     .filter(s => isFinite(s))
   if (validScores.length === 0) return null
-  if (validScores.length === 1) return validScores[0]
+  if (validScores.length === 1) return Math.round(validScores[0] * 10) / 10
 
   const counts = new Map()
   validScores.forEach(s => {
@@ -539,7 +540,7 @@ export function calculateSBARExpectationMastery(classRecord, assessments, gradeM
           finalScore = calculatePowerLaw(scoresToCalculate)
         } else if (algorithm === 'mode') {
           finalScore = calculateMode(scoresToCalculate)
-        } else if (algorithm === 'most_recent') {
+        } else if (algorithm === 'most_recent' || algorithm === 'recent') {
           const validList = scoresToCalculate.map(Number).filter(n => !isNaN(n) && isFinite(n))
           if (validList.length === 0) {
             finalScore = null
@@ -547,9 +548,15 @@ export function calculateSBARExpectationMastery(classRecord, assessments, gradeM
             const recent = validList.slice(-3)
             finalScore = Math.round(recent.reduce((a, b) => a + Number(b), 0) / recent.length)
           }
+        } else if (algorithm === 'latest' || algorithm === 'most_recent_single') {
+          const validList = scoresToCalculate.map(Number).filter(n => !isNaN(n) && isFinite(n))
+          finalScore = validList.length > 0 ? Math.round(validList[validList.length - 1] * 10) / 10 : null
         } else if (algorithm === 'highest') {
           const validList = scoresToCalculate.map(Number).filter(n => !isNaN(n) && isFinite(n))
-          finalScore = validList.length > 0 ? Math.max(...validList) : null
+          finalScore = validList.length > 0 ? Math.round(Math.max(...validList) * 10) / 10 : null
+        } else if (algorithm === 'mean' || algorithm === 'average') {
+          const validList = scoresToCalculate.map(Number).filter(n => !isNaN(n) && isFinite(n))
+          finalScore = validList.length > 0 ? Math.round((validList.reduce((a, b) => a + Number(b), 0) / validList.length) * 10) / 10 : null
         } else {
           finalScore = calculateDecayingAverage(scoresToCalculate, 0.65)
         }

@@ -106,7 +106,7 @@
             </button>
 
             <select 
-              :value="sub.gradingFramework || 'sbar'"
+              :value="getSubjectSelectFrameworkValue(sub)"
               class="elementary-subjects__select"
               @change="e => updateSubjectFramework(sub.subjectId, e.target.value)"
             >
@@ -1504,11 +1504,28 @@ async function saveSubjectCategories(subjectId) {
   await updateActiveClass({ subjects: existing })
 }
 
+function getSubjectSelectFrameworkValue(sub) {
+  if (!sub) return 'sbar'
+  if (sub.gradingFramework === 'traditional') return 'traditional'
+  const algo = sub.sbarAlgorithm || (sub.gradingFramework?.startsWith('sbar_') ? sub.gradingFramework.replace(/^sbar_/, '') : 'decaying_average')
+  if (algo && algo !== 'decaying_average') return `sbar_${algo}`
+  return 'sbar'
+}
+
 async function updateSubjectFramework(subjectId, framework) {
+  let fw = framework || 'sbar'
+  let algo = 'decaying_average'
+  if (fw.startsWith('sbar_')) {
+    algo = fw.replace(/^sbar_/, '')
+    fw = 'sbar'
+  } else if (fw === 'sbar') {
+    algo = 'decaying_average'
+  }
+
   const existing = currentSubjects.value.map(s => {
     if (s.subjectId === subjectId) {
-      const updated = { ...s, gradingFramework: framework }
-      if (framework === 'traditional' && (!updated.gradebookCategories || updated.gradebookCategories.length === 0)) {
+      const updated = { ...s, gradingFramework: fw, sbarAlgorithm: algo }
+      if (fw === 'traditional' && (!updated.gradebookCategories || updated.gradebookCategories.length === 0)) {
         updated.gradebookCategories = JSON.parse(JSON.stringify(DEFAULT_TRADITIONAL_CATEGORIES))
       }
       return updated
@@ -1568,12 +1585,21 @@ async function removeSubject(subjectId) {
 
 async function saveCustomSubject() {
   if (!newSubject.value.name.trim()) return
+  let fw = newSubject.value.gradingFramework || 'sbar'
+  let algo = 'decaying_average'
+  if (fw.startsWith('sbar_')) {
+    algo = fw.replace(/^sbar_/, '')
+    fw = 'sbar'
+  } else if (fw === 'sbar') {
+    algo = 'decaying_average'
+  }
+
   const created = {
     subjectId: `subj_${Date.now()}`,
     name: newSubject.value.name.trim(),
     code: (newSubject.value.code || newSubject.value.name.slice(0, 4)).toUpperCase(),
-    gradingFramework: newSubject.value.gradingFramework || 'sbar',
-    sbarAlgorithm: 'decaying_average',
+    gradingFramework: fw,
+    sbarAlgorithm: algo,
     sbarInputMode: 'fine',
     gradebookCategories: [],
     gradebookUnits: []

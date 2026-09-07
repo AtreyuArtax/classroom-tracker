@@ -80,14 +80,21 @@ export function getEffectiveClassRecord(classRecord, targetSubjectId = null, tar
     ? activeSub.gradebookCategories
     : DEFAULT_TRADITIONAL_CATEGORIES
 
+  let framework = activeSub.gradingFramework || 'sbar'
+  let algorithm = activeSub.sbarAlgorithm || 'decaying_average'
+  if (framework.startsWith('sbar_')) {
+    algorithm = framework.replace(/^sbar_/, '')
+    framework = 'sbar'
+  }
+
   return {
     ...classRecord,
     activeSubjectId: activeSub.subjectId,
     activeSubjectName: activeSub.name,
     activeSubjectCode: activeSub.code,
     activeSubjectIcon: activeSub.icon,
-    gradingFramework: activeSub.gradingFramework || 'sbar',
-    sbarAlgorithm: activeSub.sbarAlgorithm || 'decaying_average',
+    gradingFramework: framework,
+    sbarAlgorithm: algorithm,
     sbarInputMode: activeSub.sbarInputMode || 'fine',
     gradebookCategories: effectiveCategories,
     gradebookUnits: activeSub.gradebookUnits || [],
@@ -438,6 +445,8 @@ export function useElementary() {
       case 'mode': return 'Mode / Most Frequent'
       case 'most_recent': return 'Most Recent'
       case 'highest': return 'Highest Mark'
+      case 'mean':
+      case 'average': return 'Mean / Average'
       default: return 'Decaying Average'
     }
   }
@@ -449,6 +458,8 @@ export function useElementary() {
       case 'sbar_mode': return 'SBAR — Mode'
       case 'sbar_most_recent': return 'SBAR — Most Recent'
       case 'sbar_highest': return 'SBAR — Highest'
+      case 'sbar_mean':
+      case 'sbar_average': return 'SBAR — Mean'
       default: return 'SBAR — Decaying Average'
     }
   }

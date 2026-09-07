@@ -552,7 +552,7 @@ import { formatLocalDisplay } from '../../utils/dates.js'
 import { useMessage } from '../../composables/useMessage.js'
 import { getSBARLevelBadge } from '../../db/gradebook/gradeCalcSBAR.js'
 import { getEffectiveClassRecord, getStudentEffectiveGrade } from '../../composables/useElementary.js'
-import { calculateSBARExpectationMastery } from '../../db/gradebookService.js'
+import { calculateSBARExpectationMastery, calculateSBARStudentOverallMastery } from '../../db/gradebookService.js'
 import { Plus, Trash2, X, ChevronRight, Calendar, AlertCircle, AlertTriangle, XCircle, NotebookPen, Flame, User } from 'lucide-vue-next'
 import SubjectIcon from '../SubjectIcon.vue'
 import DossierCategoryGrid from './DossierCategoryGrid.vue'
@@ -609,19 +609,11 @@ function getSubjectStudentMastery(subjectId) {
   if (effClass.gradingFramework === 'sbar') {
     const algo = effClass.sbarAlgorithm || 'decaying_average'
     const masteryMap = calculateSBARExpectationMastery(effClass, subAssessments, gradeMap.value, algo)
-    const studentMap = masteryMap[props.studentId]
-    if (!studentMap) return null
-    
-    const validScores = Object.values(studentMap)
-      .map(m => m?.score)
-      .filter(s => s !== null && s !== undefined && !isNaN(Number(s)) && isFinite(Number(s)))
-      .map(Number)
-    
-    if (validScores.length === 0) return null
-    const avg = validScores.reduce((a, b) => a + b, 0) / validScores.length
+    const overallScore = calculateSBARStudentOverallMastery(props.studentId, effClass, subAssessments, gradeMap.value, algo, [], masteryMap)
+    if (overallScore === null || overallScore === undefined) return null
     return {
       type: 'sbar',
-      badge: getSBARLevelBadge(avg)
+      badge: getSBARLevelBadge(overallScore)
     }
   } else {
     const studentGradeObj = classGrades.value?.[props.studentId]

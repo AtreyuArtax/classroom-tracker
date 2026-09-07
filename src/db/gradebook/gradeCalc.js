@@ -274,8 +274,8 @@ export function getBucketMode(scores) {
 
   if (maxCount <= 1 || bestBucketIndex === -1) return { result: null, isFallback: false }
 
-  const bucketScores = buckets[bestBucketIndex].map(s => s.percentage)
-  const mean = bucketScores.reduce((a, b) => a + b, 0) / bucketScores.length
+  const bucketScores = buckets[bestBucketIndex].map(s => Number(s.percentage))
+  const mean = bucketScores.reduce((a, b) => a + Number(b), 0) / bucketScores.length
   
   const low = bestBucketIndex * 10
   const high = bestBucketIndex >= 9 ? '' : (low + 9)
@@ -485,8 +485,24 @@ export function filterAssessmentsForSubject(assessmentsList, classRecord, target
   const subId = String(targetSubjectId || classRecord.activeSubjectId || '')
   if (!subId) return assessmentsList
 
-  const subUnits = new Set((classRecord.gradebookUnits || []).map(u => String(u.unitId)))
-  const subExps = new Set((classRecord.expectations || []).map(e => String(e.code || e.expectationId).toLowerCase()))
+  let units = classRecord.gradebookUnits || []
+  let exps = classRecord.expectations || []
+
+  // If called on a raw homeroom record where units/expectations live inside subjects array:
+  if (classRecord.subjects && Array.isArray(classRecord.subjects)) {
+    const matchedSub = classRecord.subjects.find(s => s.subjectId === subId)
+    if (matchedSub) {
+      if (matchedSub.gradebookUnits && matchedSub.gradebookUnits.length > 0) {
+        units = matchedSub.gradebookUnits
+      }
+      if (matchedSub.expectations && matchedSub.expectations.length > 0) {
+        exps = matchedSub.expectations
+      }
+    }
+  }
+
+  const subUnits = new Set(units.map(u => String(u.unitId)))
+  const subExps = new Set(exps.map(e => String(e.code || e.expectationId).toLowerCase()))
   const firstSubId = String(classRecord.subjects?.[0]?.subjectId || classRecord.activeSubjectId || 'elem_sub_math')
 
   return assessmentsList.filter(a => {

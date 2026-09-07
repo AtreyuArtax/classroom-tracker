@@ -207,7 +207,9 @@ const unitBreakdown = computed(() => {
   const rawMastery = studentMasteryData.value || {}
 
   return units.map(u => {
-    const uExps = u.expectations || []
+    const uExps = (u.expectations && u.expectations.length > 0)
+      ? u.expectations
+      : (cls?.expectations || []).filter(e => e.unitId && String(e.unitId) === String(u.unitId))
     let weightedSum = 0
     let totalWeight = 0
     let evaluatedCount = 0

@@ -325,8 +325,8 @@
     "semantic_hash": "bc048b92eaace0b0bc43f8e98aa3ae09"
   },
   "src/utils/math.js": {
-    "mtime": 1788705932.3584554,
-    "ast_hash": "db848edbf6b660148ddd05f7cc940728",
+    "mtime": 1788777645.4364178,
+    "ast_hash": "de65f6a218afb7b7d040524ea7b35589",
     "semantic_hash": ""
   },
   "src/utils/supabase.js": {
@@ -395,8 +395,8 @@
     "semantic_hash": ""
   },
   "src/components/dossier/StudentAcademicsTab.vue": {
-    "mtime": 1788704883.8639667,
-    "ast_hash": "690fc9fe705b18ec1151e9cb897c881e",
+    "mtime": 1788777738.7744071,
+    "ast_hash": "5737f3eb54871c419dc7d5ab526673aa",
     "semantic_hash": ""
   },
   "src/components/setup/AssessmentFrameworkSettings.vue": {
@@ -565,8 +565,8 @@
     "semantic_hash": ""
   },
   "src/db/gradebook/gradeCalc.js": {
-    "mtime": 1788715056.1232972,
-    "ast_hash": "97ee21c8a011188f2f0721b8e85a20fe",
+    "mtime": 1788777680.1415365,
+    "ast_hash": "f9ea62ebbb7bdd66b6fcdda2f3ece9a9",
     "semantic_hash": ""
   },
   "src/db/gradebook/gradeService.js": {
@@ -590,8 +590,8 @@
     "semantic_hash": ""
   },
   "src/db/gradebook/gradeCalcSBAR.js": {
-    "mtime": 1788703075.9639783,
-    "ast_hash": "302b098a2c25f6b53f8fae0b2e7ebd4e",
+    "mtime": 1788777660.298917,
+    "ast_hash": "aab532ec8ba9ddd8d170c13a15c0b86c",
     "semantic_hash": ""
   },
   "src/components/dossier/SBARExpectationMasteryGrid.vue": {
@@ -610,8 +610,8 @@
     "semantic_hash": ""
   },
   "src/components/setup/ElementarySubjectManager.vue": {
-    "mtime": 1788731383.8769262,
-    "ast_hash": "2ae6537e84d956068e0fc85633210f9a",
+    "mtime": 1788777713.92976,
+    "ast_hash": "fb532ccaf1e7475011f53806b1a5dd19",
     "semantic_hash": ""
   },
   "src/utils/elementarySubjects.js": {
@@ -620,8 +620,8 @@
     "semantic_hash": ""
   },
   "src/composables/useElementary.js": {
-    "mtime": 1788703098.0946548,
-    "ast_hash": "c8fcf08245c320a23fff5d8e98b3ae65",
+    "mtime": 1788777696.3356774,
+    "ast_hash": "cd0cb75a2311154147930564ec1a7bb5",
     "semantic_hash": ""
   },
   "src/components/SubjectIcon.vue": {
@@ -1095,8 +1095,8 @@
     "semantic_hash": ""
   },
   "src/components/dossier/DossierSBARMasteryBreakdown.vue": {
-    "mtime": 1788731278.6705754,
-    "ast_hash": "765f1459707a0cacf1bdc3129bb2f1e8",
+    "mtime": 1788777720.6726384,
+    "ast_hash": "21d226aaf223f4bb90c6a48d0a2c0c53",
     "semantic_hash": ""
   },
   "src/test_db_integrity.js": {
@@ -1307,6 +1307,11 @@
   "src/test_curriculum_dirty_protection.js": {
     "mtime": 1788745146.2122054,
     "ast_hash": "5bd9deb03449eacbe26d79386a9eb014",
+    "semantic_hash": ""
+  },
+  "src/test_elementary_sbar_straight_grades_audit.js": {
+    "mtime": 1788777874.20227,
+    "ast_hash": "52a950047ab32ff3025ad00b7d264d74",
     "semantic_hash": ""
   }
 }
