@@ -46,6 +46,7 @@
         >
           <component :is="view.icon" :size="22" class="app-nav__tab-icon" />
           <span class="app-nav__tab-label">{{ view.label }}</span>
+          <span v-if="view.id === 'Setup' && curriculumEditorDirty" class="app-nav__dirty-dot" title="Unsaved changes in Curriculum Library"></span>
         </button>
       </div>
     </nav>
@@ -117,13 +118,47 @@ const views = [
 ]
 
 import { useUndo } from './composables/useUndo.js'
+import { 
+  curriculumEditorDirty, 
+  curriculumEditorTitle, 
+  curriculumEditorSaveHandler,
+  curriculumEditorDiscardHandler 
+} from './composables/useCurriculumLibrary.js'
+import { useMessage } from './composables/useMessage.js'
+
+const { select: selectMessage } = useMessage()
 
 const { clear: clearUndo } = useUndo()
 const viewComponents = { Dashboard, Setup, Reports, Grades, ScanStation }
 const currentComponent = computed(() => viewComponents[currentView.value])
 
-function navigateTo(viewId, params = {}) {
+async function navigateTo(viewId, params = {}) {
   if (viewComponents[viewId]) {
+    if (currentView.value === 'Setup' && viewId !== 'Setup' && curriculumEditorDirty.value) {
+      const courseTitle = curriculumEditorTitle.value || 'this course blueprint'
+      const choice = await selectMessage(
+        `You have unsaved multiplier and text changes for "${courseTitle}". What would you like to do before leaving Setup?`,
+        [
+          { label: 'Save Changes to Master Library', value: 'save' },
+          { label: 'Discard Unsaved Changes', value: 'discard' }
+        ],
+        'Unsaved Blueprint Changes',
+        { cancelLabel: 'Keep Editing' }
+      )
+      if (choice === 'save') {
+        if (curriculumEditorSaveHandler.value) {
+          await curriculumEditorSaveHandler.value()
+        }
+      } else if (choice === 'discard') {
+        if (curriculumEditorDiscardHandler.value) {
+          curriculumEditorDiscardHandler.value()
+        } else {
+          curriculumEditorDirty.value = false
+        }
+      } else {
+        return
+      }
+    }
     if (currentView.value !== viewId) {
       clearUndo()
     }
@@ -403,5 +438,21 @@ async function doQuickSync() {
   flex:            1;
   color:           var(--text-secondary);
   font-size:       0.9rem;
+}
+
+.app-nav__dirty-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #f59e0b;
+  margin-left: 4px;
+  display: inline-block;
+  box-shadow: 0 0 6px rgba(245, 158, 11, 0.8);
+  animation: pulse-dot 2s infinite ease-in-out;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.3); opacity: 0.7; }
 }
 </style>

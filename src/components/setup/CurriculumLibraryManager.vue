@@ -130,7 +130,7 @@
           :key="b.presetId"
           class="curriculum-manager__preset-card"
           :class="{ 'curriculum-manager__preset-card--selected': selectedBlueprint?.presetId === b.presetId }"
-          @click="loadBlueprintToEditor(b, activeVariant)"
+          @click="handleBlueprintCardClick(b, activeVariant)"
         >
           <div class="preset-card__top">
             <div class="preset-card__info">
@@ -170,7 +170,7 @@
                 'variant-pill--custom': b.variants.specific.isCustomized
               }"
               title="Work with Specific Expectations"
-              @click="loadBlueprintToEditor(b, 'specific')"
+              @click="handleBlueprintCardClick(b, 'specific')"
             >
               <span>Specific ({{ b.variants.specific.count }})</span>
               <Star v-if="b.variants.specific.isCustomized" :size="9" class="pill-star" />
@@ -184,7 +184,7 @@
                 'variant-pill--custom': b.variants.overall.isCustomized
               }"
               title="Work with Overall Expectations Only"
-              @click="loadBlueprintToEditor(b, 'overall')"
+              @click="handleBlueprintCardClick(b, 'overall')"
             >
               <span>Overall ({{ b.variants.overall.count }})</span>
               <Star v-if="b.variants.overall.isCustomized" :size="9" class="pill-star" />
@@ -200,7 +200,7 @@
               }"
               :disabled="!b.variants.success_criteria.available"
               :title="b.variants.success_criteria.available ? 'Work with Success Criteria' : 'Success criteria preset not available for this course'"
-              @click="b.variants.success_criteria.available && loadBlueprintToEditor(b, 'success_criteria')"
+              @click="b.variants.success_criteria.available && handleBlueprintCardClick(b, 'success_criteria')"
             >
               <span>Success Criteria ({{ b.variants.success_criteria.available ? b.variants.success_criteria.count : 'N/A' }})</span>
               <Star v-if="b.variants.success_criteria.isCustomized" :size="9" class="pill-star" />
@@ -229,13 +229,18 @@
 
           <!-- Top Editor Actions -->
           <div class="curriculum-editor__actions">
+            <div v-if="isDirty" class="curriculum-editor__dirty-pill" title="You have unsaved changes to multipliers or expectations">
+              <span class="dirty-dot"></span> Unsaved Changes
+            </div>
+
             <button 
               type="button" 
               class="setup__btn-ghost" 
-              title="Discard any unsaved edits and reload preset from baseline"
+              :class="{ 'text-amber': isDirty }"
+              :title="isDirty ? 'Discard unsaved changes and reload preset from baseline' : 'Reload preset from baseline'"
               @click="handleDiscardEdits"
             >
-              <RotateCcw :size="13" /> Discard & Reload
+              <RotateCcw :size="13" /> {{ isDirty ? 'Discard Edits' : 'Discard & Reload' }}
             </button>
 
             <button 
@@ -251,10 +256,11 @@
             <button 
               type="button" 
               class="setup__btn-primary" 
+              :class="{ 'setup__btn-primary--dirty': isDirty }"
               :disabled="isSaving"
               @click="handleSaveMasterPreset"
             >
-              <Save :size="14" /> {{ isSaving ? 'Saving...' : 'Save as My Master Preset' }}
+              <Save :size="14" /> {{ isSaving ? 'Saving...' : (isDirty ? 'Save as My Master Preset' : 'Saved to Master') }}
             </button>
 
             <button 
@@ -528,7 +534,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, reactive } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, reactive } from 'vue'
 import {
   BookOpen,
   Search,
@@ -559,7 +565,11 @@ import {
   getMasterPreset,
   deriveOverallPreset,
   deriveSpecificPreset,
-  getSuccessCriteriaPreset
+  getSuccessCriteriaPreset,
+  curriculumEditorDirty,
+  curriculumEditorTitle,
+  curriculumEditorSaveHandler,
+  curriculumEditorDiscardHandler
 } from '../../composables/useCurriculumLibrary.js'
 import { curriculumPresets } from '../../data/curriculum/index.js'
 import { useMessage } from '../../composables/useMessage.js'
@@ -568,7 +578,7 @@ import { getAllClasses, saveClass } from '../../db/classService.js'
 import ExpectationWeightBadge from './ExpectationWeightBadge.vue'
 import { cleanExpectationText } from '../../utils/textUtils.js'
 
-const { confirm: confirmMessage } = useMessage()
+const { confirm: confirmMessage, select: selectMessage } = useMessage()
 const { push: pushGlobalUndo, undo: triggerGlobalUndo, canUndo: hasGlobalUndo, clear: clearGlobalUndo } = useUndo()
 
 const {
@@ -594,6 +604,82 @@ const isImportModalOpen = ref(false)
 const isSyncModalOpen = ref(false)
 const syncModalClasses = ref([])
 const syncModalPreset = ref(null)
+
+// ─── Dirty-state tracking & Unsaved Changes Protection ─────────────
+const loadedPresetSnapshot = ref('')
+
+function getEditorSnapshot() {
+  if (!selectedBlueprint.value || !currentEditorPreset.value) return ''
+  const strandsData = (editorStrands.value || []).map(s => ({
+    id: s.id,
+    name: (s.name || '').trim(),
+    expectations: (s.expectations || []).map(e => ({
+      id: e.id,
+      code: (e.code || '').trim().toUpperCase(),
+      description: (e.description || '').trim(),
+      weight: (e.weight !== undefined && e.weight !== null && !isNaN(Number(e.weight))) ? Number(e.weight) : 1.0,
+      active: e.active !== false
+    }))
+  }))
+  return JSON.stringify({
+    presetId: selectedBlueprint.value.presetId,
+    variant: activeVariant.value,
+    strands: strandsData
+  })
+}
+
+const isDirty = computed(() => {
+  if (!loadedPresetSnapshot.value) return false
+  return getEditorSnapshot() !== loadedPresetSnapshot.value
+})
+
+watch(isDirty, (dirty) => {
+  curriculumEditorDirty.value = dirty
+  curriculumEditorTitle.value = selectedBlueprint.value?.title || 'Course Blueprint'
+}, { immediate: true, flush: 'sync' })
+
+function discardEdits() {
+  if (!selectedBlueprint.value) return
+  loadBlueprintToEditor(selectedBlueprint.value, activeVariant.value)
+  clearGlobalUndo()
+  undoStack.value = []
+  lastUndoNotice.value = ''
+  loadedPresetSnapshot.value = getEditorSnapshot()
+  curriculumEditorDirty.value = false
+  editorNotice.text = 'Unsaved changes discarded. Blueprint reloaded.'
+  editorNotice.type = 'info'
+}
+
+async function confirmLeaveIfDirty(actionDesc = 'switch blueprints') {
+  if (!isDirty.value) return true
+  const courseTitle = selectedBlueprint.value?.title || 'this course blueprint'
+  const choice = await selectMessage(
+    `You have unsaved multiplier and text changes for "${courseTitle}". What would you like to do before you ${actionDesc}?`,
+    [
+      { label: 'Save Changes to Master Library', value: 'save' },
+      { label: 'Discard Unsaved Changes', value: 'discard' }
+    ],
+    'Unsaved Blueprint Changes',
+    { cancelLabel: 'Keep Editing' }
+  )
+
+  if (choice === 'save') {
+    await handleSaveMasterPreset()
+    return true
+  } else if (choice === 'discard') {
+    discardEdits()
+    return true
+  }
+  return false
+}
+
+function handleBeforeUnload(e) {
+  if (isDirty.value) {
+    e.preventDefault()
+    e.returnValue = ''
+    return ''
+  }
+}
 
 async function openPushToClassesModal() {
   if (!currentEditorPreset.value || !selectedBlueprint.value) return
@@ -652,6 +738,9 @@ async function handleBlueprintImported(newPresetId) {
 }
 
 onMounted(async () => {
+  window.addEventListener('beforeunload', handleBeforeUnload)
+  curriculumEditorSaveHandler.value = () => handleSaveMasterPreset()
+  curriculumEditorDiscardHandler.value = () => discardEdits()
   await initCurriculumLibrary()
   // Select default blueprint if available
   if (availableBlueprints.value.length > 0) {
@@ -659,7 +748,18 @@ onMounted(async () => {
   }
 })
 
-function selectPanel(panel) {
+onUnmounted(() => {
+  window.removeEventListener('beforeunload', handleBeforeUnload)
+  curriculumEditorDirty.value = false
+  curriculumEditorSaveHandler.value = null
+  curriculumEditorDiscardHandler.value = null
+})
+
+async function selectPanel(panel) {
+  if (panel === activePanel.value) return
+  const ok = await confirmLeaveIfDirty('switch panel')
+  if (!ok) return
+
   activePanel.value = panel
   if (panel === 'elementary') {
     activeGrade.value = '8'
@@ -675,7 +775,11 @@ function selectPanel(panel) {
   }
 }
 
-function selectGrade(grade) {
+async function selectGrade(grade) {
+  if (grade === activeGrade.value) return
+  const ok = await confirmLeaveIfDirty('switch grades')
+  if (!ok) return
+
   activeGrade.value = grade
   if (availableBlueprints.value.length > 0) {
     loadBlueprintToEditor(availableBlueprints.value[0], activeVariant.value)
@@ -683,6 +787,13 @@ function selectGrade(grade) {
     selectedBlueprint.value = null
     currentEditorPreset.value = null
   }
+}
+
+async function handleBlueprintCardClick(blueprint, variant = activeVariant.value) {
+  if (selectedBlueprint.value?.presetId === blueprint.presetId && activeVariant.value === variant) return
+  const ok = await confirmLeaveIfDirty(`open ${blueprint.title}`)
+  if (!ok) return
+  loadBlueprintToEditor(blueprint, variant)
 }
 
 const availableBlueprints = computed(() => {
@@ -773,14 +884,8 @@ async function switchVariant(newVariant) {
   if (newVariant === activeVariant.value) return
   if (!selectedBlueprint.value.variants?.[newVariant]?.available) return
 
-  if (undoStack.value.length > 0) {
-    const ok = await confirmMessage(
-      'You have unsaved changes on the current format. Switching formats will reload from the saved master or baseline.\n\nDo you want to switch formats?',
-      'Switch Curriculum Format?',
-      { confirmLabel: 'Switch Format', cancelLabel: 'Keep Editing', danger: false }
-    )
-    if (!ok) return
-  }
+  const ok = await confirmLeaveIfDirty('switch curriculum format')
+  if (!ok) return
 
   loadBlueprintToEditor(selectedBlueprint.value, newVariant)
 }
@@ -850,6 +955,8 @@ function loadPresetToEditor(preset) {
 
   editorStrands.value = strandsList
   editorNotice.text = ''
+  loadedPresetSnapshot.value = getEditorSnapshot()
+  curriculumEditorDirty.value = false
 }
 
 function addEditorStrand() {
@@ -945,18 +1052,15 @@ async function handleUndo() {
 
 async function handleDiscardEdits() {
   if (!selectedBlueprint.value) return
-  const ok = await confirmMessage(
-    'Discard any unsaved edits and reload this format from its baseline preset?',
-    'Discard Unsaved Edits',
-    { confirmLabel: 'Discard & Reload', cancelLabel: 'Keep Editing', danger: true }
-  )
-  if (!ok) return
-  loadBlueprintToEditor(selectedBlueprint.value, activeVariant.value)
-  clearGlobalUndo()
-  undoStack.value = []
-  lastUndoNotice.value = ''
-  editorNotice.text = 'Unsaved changes discarded. Format reloaded.'
-  editorNotice.type = 'info'
+  if (isDirty.value) {
+    const ok = await confirmMessage(
+      'Discard any unsaved edits and reload this format from its saved master or baseline preset?',
+      'Discard Unsaved Edits',
+      { confirmLabel: 'Discard & Reload', cancelLabel: 'Keep Editing', danger: true }
+    )
+    if (!ok) return
+  }
+  discardEdits()
 }
 
 function restoreStrandFromBaseline(strandIdx) {
@@ -1095,6 +1199,8 @@ async function handleSaveMasterPreset() {
 
     await saveMasterPreset(updatedPreset)
     currentEditorPreset.value = JSON.parse(JSON.stringify(updatedPreset))
+    loadedPresetSnapshot.value = getEditorSnapshot()
+    curriculumEditorDirty.value = false
 
     // Refresh blueprint state
     const blueprints = getCourseBlueprints(activePanel.value)
@@ -1635,6 +1741,51 @@ async function handleResetToMinistry() {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-wrap: wrap;
+}
+
+.curriculum-editor__dirty-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #f59e0b;
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  border-radius: 12px;
+  padding: 3px 10px;
+  letter-spacing: 0.2px;
+  animation: pulse-border 2s infinite ease-in-out;
+}
+
+.dirty-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #f59e0b;
+  box-shadow: 0 0 6px rgba(245, 158, 11, 0.8);
+}
+
+.setup__btn-primary--dirty {
+  background: #f59e0b !important;
+  border-color: #d97706 !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.4) !important;
+}
+
+.setup__btn-primary--dirty:hover {
+  background: #d97706 !important;
+}
+
+@keyframes pulse-border {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(245, 158, 11, 0);
+  }
 }
 
 .curriculum-editor__instructions {

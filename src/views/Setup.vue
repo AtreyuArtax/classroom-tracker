@@ -39,10 +39,11 @@
         :class="{ 'setup__tab--active': activeTab === tab.id }"
         role="tab"
         :aria-selected="activeTab === tab.id"
-        @click="activeTab = tab.id"
+        @click="handleTabClick(tab.id)"
       >
         <component :is="tab.icon" :size="16" />
         {{ tab.label }}
+        <span v-if="tab.id === 'curriculum' && curriculumEditorDirty" class="setup__tab-dirty-dot" title="Unsaved changes in Curriculum Library"></span>
       </button>
     </div>
 
@@ -350,14 +351,14 @@
     <!-- ══════════════════════════════════════════════════════════ -->
     <!-- PILLAR 4: Curriculum Library (Master Standards & Multipliers) -->
     <!-- ══════════════════════════════════════════════════════════ -->
-    <section v-else-if="activeTab === 'curriculum'" class="setup__panel">
+    <section v-show="activeTab === 'curriculum'" class="setup__panel">
       <CurriculumLibraryManager />
     </section>
 
     <!-- ══════════════════════════════════════════════════════════ -->
     <!-- PILLAR 5: All Classes (Class Manager)                     -->
     <!-- ══════════════════════════════════════════════════════════ -->
-    <section v-else-if="activeTab === 'manage'" class="setup__panel">
+    <section v-if="activeTab === 'manage'" class="setup__panel">
       <div class="setup__layout">
         <SetupQuickJumpNav :activeTab="activeTab" />
         <div class="setup__main-content">
@@ -852,9 +853,44 @@ const CsvHelpGuide                = defineAsyncComponent(() => import('../compon
 const BehaviorSettings            = defineAsyncComponent(() => import('../components/setup/BehaviorSettings.vue'))
 const PrintClassListModal         = defineAsyncComponent(() => import('../components/PrintClassListModal.vue'))
 const QrCodeGeneratorModal        = defineAsyncComponent(() => import('../components/setup/QrCodeGeneratorModal.vue'))
-import SetupQuickJumpNav from '../components/setup/SetupQuickJumpNav.vue'
+import { 
+  curriculumEditorDirty, 
+  curriculumEditorTitle, 
+  curriculumEditorSaveHandler,
+  curriculumEditorDiscardHandler 
+} from '../composables/useCurriculumLibrary.js'
 
-const { alert, confirm } = useMessage()
+const { alert, confirm, select: selectMessage } = useMessage()
+
+async function handleTabClick(tabId) {
+  if (activeTab.value === tabId) return
+  if (activeTab.value === 'curriculum' && curriculumEditorDirty.value) {
+    const courseTitle = curriculumEditorTitle.value || 'this course blueprint'
+    const choice = await selectMessage(
+      `You have unsaved multiplier and text changes for "${courseTitle}". What would you like to do before switching tabs?`,
+      [
+        { label: 'Save Changes to Master Library', value: 'save' },
+        { label: 'Discard Unsaved Changes', value: 'discard' }
+      ],
+      'Unsaved Blueprint Changes',
+      { cancelLabel: 'Keep Editing' }
+    )
+    if (choice === 'save') {
+      if (curriculumEditorSaveHandler.value) {
+        await curriculumEditorSaveHandler.value()
+      }
+    } else if (choice === 'discard') {
+      if (curriculumEditorDiscardHandler.value) {
+        curriculumEditorDiscardHandler.value()
+      } else {
+        curriculumEditorDirty.value = false
+      }
+    } else {
+      return
+    }
+  }
+  activeTab.value = tabId
+}
 
 const {
   classList,
@@ -1634,3 +1670,19 @@ onMounted(async () => {
 })
 </script>
 <style src="../assets/styles/setup.css"></style>
+<style scoped>
+.setup__tab-dirty-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #f59e0b;
+  margin-left: 6px;
+  display: inline-block;
+  box-shadow: 0 0 6px rgba(245, 158, 11, 0.8);
+  animation: pulse-dot 2s infinite ease-in-out;
+}
+@keyframes pulse-dot {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.3); opacity: 0.7; }
+}
+</style>

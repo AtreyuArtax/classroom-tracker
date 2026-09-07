@@ -55,8 +55,8 @@
     "semantic_hash": "292ba809cdc87ea16d7beff21d110324"
   },
   "src/App.vue": {
-    "mtime": 1788313689.8565419,
-    "ast_hash": "a6348566e85babe3092f848a55e4c12e",
+    "mtime": 1788744960.8247335,
+    "ast_hash": "f71cd40e6f6c527bfc97a0a8eb5383c2",
     "semantic_hash": ""
   },
   "src/components/AssessmentConversationModal.vue": {
@@ -355,8 +355,8 @@
     "semantic_hash": ""
   },
   "src/views/Setup.vue": {
-    "mtime": 1788730161.908104,
-    "ast_hash": "790fbe383aece3f5f5149cd861054c56",
+    "mtime": 1788744950.7385464,
+    "ast_hash": "68c4f06a397aacd8360eeb7ffad6c94e",
     "semantic_hash": ""
   },
   "tmp/test_dates.js": {
@@ -1225,8 +1225,8 @@
     "semantic_hash": ""
   },
   "src/components/setup/CurriculumLibraryManager.vue": {
-    "mtime": 1788731246.626638,
-    "ast_hash": "9b628603ae1d3c0983cb795f29349970",
+    "mtime": 1788744941.4330933,
+    "ast_hash": "a66202b1cc63e5bcbf3cddec2b506147",
     "semantic_hash": ""
   },
   "src/components/setup/ExpectationWeightBadge.vue": {
@@ -1235,8 +1235,8 @@
     "semantic_hash": ""
   },
   "src/composables/useCurriculumLibrary.js": {
-    "mtime": 1788733294.9285703,
-    "ast_hash": "42ae1423efe8f672b68af96a9ead5873",
+    "mtime": 1788744921.4691293,
+    "ast_hash": "b00a5139e9113fe1f89995e5319c03dd",
     "semantic_hash": ""
   },
   "src/test_curriculum_library_and_weights.js": {
@@ -1302,6 +1302,11 @@
   "src/test_bidirectional_curriculum_sync.js": {
     "mtime": 1788733335.4334874,
     "ast_hash": "9bda1eaae2c80bb40c660931a0c288e7",
+    "semantic_hash": ""
+  },
+  "src/test_curriculum_dirty_protection.js": {
+    "mtime": 1788745146.2122054,
+    "ast_hash": "5bd9deb03449eacbe26d79386a9eb014",
     "semantic_hash": ""
   }
 }
