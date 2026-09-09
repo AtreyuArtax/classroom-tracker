@@ -8,11 +8,15 @@ import { triggerRef } from 'vue'
 import { 
   activeClass, 
   students, 
-  classList,
-  gridSize
+  classList, 
+  gridSize,
+  activeClassRecord,
+  syncStudentAcrossRefs
 } from './useClassroomState.js'
-import { activeClassRecord, loadGradebook } from './useGradebook.js'
+import { loadGradebook } from './useGradebook.js'
 import { ensureIEPPresetsForClass } from './useElementary.js'
+
+export { syncStudentAcrossRefs }
 import * as classService from '../db/classService.js'
 import { useUndo } from './useUndo.js'
 import { useMessage } from './useMessage.js'
@@ -42,15 +46,15 @@ export async function moveStudentFromClass(fromClassId, student) {
 
     // Add to destination (upsert)
     await classService.importRoster(toClassId, [student])
-    students.value[student.studentId] = {
+    const newStudentObj = {
         firstName: student.firstName,
         lastName: student.lastName,
         seat: null,
         generalNote: '',
-        activeStates: { isOut: false, outTime: null },
+        activeStates: { isOut: false, outTime: null, isAbsent: false, lateMs: null },
         excludeFromAnalytics: false,
     }
-    triggerRef(activeClass)
+    syncStudentAcrossRefs(toClassId, student.studentId, newStudentObj)
 }
 
 /**
@@ -238,9 +242,7 @@ export async function updateStudentNote(studentId, note) {
         const classId = activeClass.value?.classId
         if (!classId) return
         await classService.updateStudentNote(classId, studentId, note)
-        if (students.value[studentId]) {
-            students.value[studentId].generalNote = note
-        }
+        syncStudentAcrossRefs(classId, studentId, { generalNote: note })
     } catch (err) {
         console.error('updateStudentNote failed:', err)
         const { alert } = useMessage()
@@ -358,14 +360,7 @@ export async function updateStudentParentContacts(studentId, parentContacts) {
         if (!classId) return
         const contactsCopy = JSON.parse(JSON.stringify(parentContacts || []))
         await classService.updateStudentParentContacts(classId, studentId, contactsCopy)
-        if (students.value[studentId]) {
-            students.value[studentId].parentContacts = contactsCopy
-        }
-        if (activeClass.value?.students?.[studentId]) {
-            activeClass.value.students[studentId].parentContacts = contactsCopy
-        }
-        triggerRef(students)
-        triggerRef(activeClass)
+        syncStudentAcrossRefs(classId, studentId, { parentContacts: contactsCopy })
     } catch (err) {
         console.error('updateStudentParentContacts failed:', err)
         const { alert } = useMessage()
@@ -405,20 +400,10 @@ export async function swapSeats(studentIdA, toSeatA, studentIdB = null, toSeatB 
 
         await classService.updateMultipleStudentSeats(classId, seatMap)
 
-        if (students.value[studentIdA]) students.value[studentIdA].seat = toSeatA
-        if (activeClass.value?.students?.[studentIdA]) activeClass.value.students[studentIdA].seat = toSeatA
-        if (activeClassRecord.value?.students?.[studentIdA]) activeClassRecord.value.students[studentIdA].seat = toSeatA
-
+        syncStudentAcrossRefs(classId, studentIdA, { seat: toSeatA })
         if (studentIdB) {
-            if (students.value[studentIdB]) students.value[studentIdB].seat = toSeatB
-            if (activeClass.value?.students?.[studentIdB]) activeClass.value.students[studentIdB].seat = toSeatB
-            if (activeClassRecord.value?.students?.[studentIdB]) activeClassRecord.value.students[studentIdB].seat = toSeatB
+            syncStudentAcrossRefs(classId, studentIdB, { seat: toSeatB })
         }
-
-        students.value = { ...students.value }
-        triggerRef(students)
-        triggerRef(activeClass)
-        if (activeClassRecord.value) triggerRef(activeClassRecord)
 
         pushUndo(async () => {
             try {
@@ -427,20 +412,10 @@ export async function swapSeats(studentIdA, toSeatA, studentIdB = null, toSeatB 
 
                 await classService.updateMultipleStudentSeats(classId, undoMap)
 
-                if (students.value[studentIdA]) students.value[studentIdA].seat = previousSeatA
-                if (activeClass.value?.students?.[studentIdA]) activeClass.value.students[studentIdA].seat = previousSeatA
-                if (activeClassRecord.value?.students?.[studentIdA]) activeClassRecord.value.students[studentIdA].seat = previousSeatA
-
+                syncStudentAcrossRefs(classId, studentIdA, { seat: previousSeatA })
                 if (studentIdB) {
-                    if (students.value[studentIdB]) students.value[studentIdB].seat = previousSeatB
-                    if (activeClass.value?.students?.[studentIdB]) activeClass.value.students[studentIdB].seat = previousSeatB
-                    if (activeClassRecord.value?.students?.[studentIdB]) activeClassRecord.value.students[studentIdB].seat = previousSeatB
+                    syncStudentAcrossRefs(classId, studentIdB, { seat: previousSeatB })
                 }
-
-                students.value = { ...students.value }
-                triggerRef(students)
-                triggerRef(activeClass)
-                if (activeClassRecord.value) triggerRef(activeClassRecord)
             } catch (err) {
                 console.error('Undo swapSeats failed:', err)
                 const { alert } = useMessage()
@@ -531,31 +506,16 @@ export async function autoAssignSeats() {
     try {
         for (const assign of assignments) {
             await classService.updateStudentSeat(classId, assign.studentId, assign.seat)
-            if (students.value[assign.studentId]) {
-                students.value[assign.studentId].seat = assign.seat
-            }
-            if (activeClass.value?.students?.[assign.studentId]) {
-                activeClass.value.students[assign.studentId].seat = assign.seat
-            }
+            syncStudentAcrossRefs(classId, assign.studentId, { seat: assign.seat })
         }
-        students.value = { ...students.value }
-        triggerRef(students)
-        triggerRef(activeClass)
 
         // Push a single batch undo operation
         pushUndo(async () => {
             try {
                 for (const [studentId, seat] of Object.entries(previousSeats)) {
                     await classService.updateStudentSeat(classId, studentId, seat)
-                    if (students.value[studentId]) {
-                        students.value[studentId].seat = seat
-                    }
-                    if (activeClass.value?.students?.[studentId]) {
-                        activeClass.value.students[studentId].seat = seat
-                    }
+                    syncStudentAcrossRefs(classId, studentId, { seat })
                 }
-                triggerRef(students)
-                triggerRef(activeClass)
             } catch (err) {
                 console.error('Undo autoAssignSeats failed:', err)
                 const { alert } = useMessage()

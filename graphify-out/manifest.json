@@ -240,13 +240,13 @@
     "semantic_hash": ""
   },
   "src/composables/useClassroom.js": {
-    "mtime": 1788968694.0980098,
-    "ast_hash": "4995d576cf5e363610b2431cea590d94",
+    "mtime": 1788975911.0774832,
+    "ast_hash": "1489c47c154a78b51a7bf2de2b0bfaa7",
     "semantic_hash": ""
   },
   "src/composables/useGradebook.js": {
-    "mtime": 1788795756.8399315,
-    "ast_hash": "55f3f9eecad3724ffc9e2adcfd90b85b",
+    "mtime": 1788975834.6641257,
+    "ast_hash": "b63bcf716bb7b02b2f2273cdd90c1f4c",
     "semantic_hash": ""
   },
   "src/composables/useKeyboardWedge.js": {
@@ -430,23 +430,23 @@
     "semantic_hash": ""
   },
   "src/composables/useAttendanceTracker.js": {
-    "mtime": 1788968649.426914,
-    "ast_hash": "1a0c59eab1f78130b153af4703fcb6ac",
+    "mtime": 1788975875.7284527,
+    "ast_hash": "6ecc0aeecbfdcf405e41ef0d43d6d2fc",
     "semantic_hash": ""
   },
   "src/composables/useClassroomState.js": {
-    "mtime": 1788795756.8390417,
-    "ast_hash": "23d9b3bf3af76ad3b06a51462c68d115",
+    "mtime": 1788975818.162216,
+    "ast_hash": "bcf3bc532c8bc4329cbdcef69fa91811",
     "semantic_hash": ""
   },
   "src/composables/useRosterOperations.js": {
-    "mtime": 1788974437.540149,
-    "ast_hash": "48e6ad90e664fde3228504b8fd4b4aef",
+    "mtime": 1788975860.6139083,
+    "ast_hash": "75a96918932d6c71a81adf89dae14ddf",
     "semantic_hash": ""
   },
   "src/components/setup/ClassLogisticsSettings.vue": {
-    "mtime": 1788795756.835859,
-    "ast_hash": "f01f6e650eb2862fbaac58aae119776a",
+    "mtime": 1788975934.157661,
+    "ast_hash": "165a9396457b15a5979e2f0cd44bd8c2",
     "semantic_hash": ""
   },
   "src/components/setup/DatabaseMaintenanceSettings.vue": {

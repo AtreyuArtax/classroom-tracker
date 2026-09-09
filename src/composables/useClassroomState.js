@@ -6,11 +6,12 @@
  * to prevent circular dependencies.
  */
 
-import { ref, shallowRef, watch } from 'vue'
+import { ref, shallowRef, watch, triggerRef } from 'vue'
 
 export const classList = shallowRef([])
 export const archivedClasses = shallowRef([])
 export const activeClass = shallowRef(null)
+export const activeClassRecord = shallowRef(null)
 export const suggestedClass = ref(null)
 export const students = ref({})
 export const behaviorCodes = shallowRef([])
@@ -46,6 +47,40 @@ watch(activeSubjectId, (val) => localStorage.setItem('activeSubjectId', val || '
 
 export const teachingMode = ref(localStorage.getItem('teachingMode') || 'secondary')
 watch(teachingMode, (val) => localStorage.setItem('teachingMode', val || 'secondary'), { flush: 'sync' })
+
+/**
+ * Keeps all 4 in-memory student references completely in lockstep:
+ * 1. students.value (dashboard desk tiles)
+ * 2. activeClass.value.students (classroom setup & logistics)
+ * 3. activeClassRecord.value.students (gradebook & analytics)
+ * 4. classList.value[c].students (class switcher & background timers)
+ *
+ * @param {string} classId
+ * @param {string} studentId
+ * @param {Object} updates Map of student properties to merge
+ */
+export function syncStudentAcrossRefs(classId, studentId, updates) {
+    if (!classId || !studentId || !updates) return
+
+    if (students.value && students.value[studentId]) {
+        Object.assign(students.value[studentId], updates)
+    }
+    if (activeClass.value?.classId === classId && activeClass.value?.students?.[studentId]) {
+        Object.assign(activeClass.value.students[studentId], updates)
+    }
+    if (activeClassRecord.value?.classId === classId && activeClassRecord.value?.students?.[studentId]) {
+        Object.assign(activeClassRecord.value.students[studentId], updates)
+    }
+    const clsInList = classList.value?.find(c => c.classId === classId)
+    if (clsInList?.students?.[studentId]) {
+        Object.assign(clsInList.students[studentId], updates)
+    }
+
+    triggerRef(students)
+    triggerRef(activeClass)
+    if (activeClassRecord.value) triggerRef(activeClassRecord)
+    triggerRef(classList)
+}
 
 
 

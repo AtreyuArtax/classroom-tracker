@@ -324,16 +324,12 @@ export async function reconcileStaleTrips() {
                         outTime: null
                     }
                     student.activeStates = newState
-                    classUpdated = true
                     reconciled.add(`${cls.classId}-${studentId}`)
                     reconciled.add(`${cls.name}: ${student.firstName} ${student.lastName}`)
+                    await classService.patchStudent(cls.classId, studentId, { activeStates: newState })
                     syncStudentState(cls.classId, studentId, newState, null)
                 }
             }
-        }
-
-        if (classUpdated) {
-            await classService.saveClass(cls)
         }
     }
     return reconciled
@@ -521,24 +517,14 @@ export async function markAllPresentToday(classId) {
                 }
             }
 
-            if (!student.activeStates) student.activeStates = {}
-            student.activeStates.isAbsent = false
-            student.activeStates.lateMs = null
-            classNeedsSave = true
-
-            if (isActive && students.value[studentId]) {
-                if (!students.value[studentId].activeStates) students.value[studentId].activeStates = {}
-                students.value[studentId].activeStates.isAbsent = false
-                students.value[studentId].activeStates.lateMs = null
+            const newActive = {
+                ...(student.activeStates || {}),
+                isAbsent: false,
+                lateMs: null
             }
-        }
-    }
-
-    if (classNeedsSave) {
-        const plain = JSON.parse(JSON.stringify(clsObj))
-        await classService.saveClass(plain)
-        if (isActive) {
-            triggerRef(activeClass)
+            student.activeStates = newActive
+            await classService.patchStudent(classId, studentId, { activeStates: newActive })
+            syncStudentState(classId, studentId, newActive, null)
         }
     }
 }

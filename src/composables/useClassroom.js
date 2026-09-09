@@ -39,7 +39,8 @@ import {
   importStudentSurveys,
   assignSeat,
   swapSeats,
-  autoAssignSeats
+  autoAssignSeats,
+  syncStudentAcrossRefs
 } from './useRosterOperations.js'
 import {
   logAttendanceEvent,
@@ -1433,7 +1434,7 @@ async function confirmResize(newSize) {
 
     for (const s of affected) {
         await classService.updateStudentSeat(classId, s.studentId, null)
-        students.value[s.studentId].seat = null
+        syncStudentAcrossRefs(classId, s.studentId, { seat: null })
     }
 
     // Save to the ACTIVE CLASS
@@ -1791,6 +1792,7 @@ export function useClassroom() {
         importStudentSurveys,
         updateStudentIEP,
         updateStudentAccommodations,
+        syncStudentAcrossRefs,
         confirmResize,
         reloadBehaviorCodes,
         refreshAcademicTerms,

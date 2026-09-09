@@ -916,6 +916,7 @@ const {
   importRoster,
   checkResize,
   confirmResize,
+  syncStudentAcrossRefs,
   teachingMode
 } = useClassroom()
 
@@ -1301,17 +1302,9 @@ const onRapidRFIDScan = async (hex) => {
     const studentId = currentRapidStudent.value.studentId
     const tagHex = hex.toUpperCase()
 
-    // 1. Immediately update activeClass in-memory
-    if (activeClass.value?.students?.[studentId]) {
-      activeClass.value.students[studentId].rfidTag = tagHex
-    }
-
-    // 2. Immediately update reactive students ref in-memory
-    if (students.value?.[studentId]) {
-      students.value[studentId].rfidTag = tagHex
-    }
-
-    await classService.patchStudent(activeClass.value.classId, studentId, { rfidTag: tagHex })
+    const classId = activeClass.value.classId
+    await classService.patchStudent(classId, studentId, { rfidTag: tagHex })
+    syncStudentAcrossRefs(classId, studentId, { rfidTag: tagHex })
     triggerActiveClass()
     
     rapidRFIDSuccess.value = `Linked to ${currentRapidStudent.value.firstName}!`

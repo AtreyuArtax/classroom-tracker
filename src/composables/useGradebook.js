@@ -10,18 +10,17 @@ import * as gradebookService from '../db/gradebookService.js'
 import * as classService from '../db/classService.js'
 import { getGlobalMilestones, getGradeBuckets } from '../db/settingsService.js'
 import { useUndo } from './useUndo.js'
-import { activeClass, activeSubjectId, selectedYear, selectedSemester, academicTerms } from './useClassroomState.js'
+import { activeClass, activeSubjectId, selectedYear, selectedSemester, academicTerms, activeClassRecord, syncStudentAcrossRefs } from './useClassroomState.js'
 import { getEffectiveClassRecord, getStudentEffectiveGrade, getUnitGradeLevel, ensureIEPPresetsForClass, autoPopulateAllElementarySubjects, filterAssessmentsForSubject } from './useElementary.js'
 import { isCohortMatch } from '../db/gradebook/gradeCalc.js'
 import { formatLocalDate, getSchoolYearFromDate } from '../utils/dates.js'
 
 const { push: pushUndo } = useUndo()
 
-export { getEffectiveClassRecord, getStudentEffectiveGrade, getUnitGradeLevel, ensureIEPPresetsForClass, isCohortMatch, filterAssessmentsForSubject }
+export { getEffectiveClassRecord, getStudentEffectiveGrade, getUnitGradeLevel, ensureIEPPresetsForClass, isCohortMatch, filterAssessmentsForSubject, activeClassRecord }
 
 // ─── Reactive State ──────────────────────────────────────────────────────────
 
-export const activeClassRecord = shallowRef(null)
 export const assessments = shallowRef([])
 export const grades = shallowRef([])
 export const classGrades = shallowRef({})
@@ -424,6 +423,8 @@ export async function toggleStudentFromAnalytics(studentId) {
     // Reload class record to pick up the change while preserving subject context
     const updatedRaw = await classService.getClass(classId)
     activeClassRecord.value = getEffectiveClassRecord(updatedRaw, currentSubId)
+    const newExcluded = Boolean(updatedRaw?.students?.[studentId]?.excludeFromAnalytics)
+    syncStudentAcrossRefs(classId, studentId, { excludeFromAnalytics: newExcluded })
     await refreshClassAnalytics()
   } catch (err) {
     console.error('[useGradebook] toggleStudentFromAnalytics failed:', err)
