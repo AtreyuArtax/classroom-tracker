@@ -454,10 +454,15 @@ export async function updateStudentNote(classId, studentId, note) {
  * @param {string} classId
  * @param {string} studentId
  * @param {boolean} hasIEP
+ * @param {string} [iepType]
  * @returns {Promise<void>}
  */
-export async function updateStudentIEP(classId, studentId, hasIEP) {
-    await patchStudent(classId, studentId, { hasIEP: Boolean(hasIEP) })
+export async function updateStudentIEP(classId, studentId, hasIEP, iepType) {
+    const patch = { hasIEP: Boolean(hasIEP) }
+    if (iepType !== undefined) {
+        patch.iepType = iepType
+    }
+    await patchStudent(classId, studentId, patch)
 }
 
 /**
@@ -470,10 +475,14 @@ export async function updateStudentIEP(classId, studentId, hasIEP) {
  */
 export async function updateStudentAccommodations(classId, studentId, accommodations) {
     const accObj = accommodations || { hasIEP: false, modifiedSubjectGrades: {} }
-    await patchStudent(classId, studentId, { 
+    const patch = { 
         hasIEP: Boolean(accObj.hasIEP),
         accommodations: accObj
-    })
+    }
+    if (accObj.iepType !== undefined) {
+        patch.iepType = accObj.iepType
+    }
+    await patchStudent(classId, studentId, patch)
 }
 
 /**
@@ -497,12 +506,19 @@ export async function updateStudentParentContacts(classId, studentId, parentCont
  * @returns {Promise<void>}
  */
 export async function updateStudentIntakeSurvey(classId, studentId, intakeSurvey) {
-    const updates = { intakeSurvey: intakeSurvey || {} }
-    if (intakeSurvey?.preferredName) {
-        updates.preferredName = intakeSurvey.preferredName.trim()
+    const prefName = (intakeSurvey?.preferredName || '').trim()
+    const pronouns = (intakeSurvey?.pronouns || '').trim()
+
+    const cleanSurvey = {
+        ...(intakeSurvey || {}),
+        preferredName: prefName,
+        pronouns: pronouns
     }
-    if (intakeSurvey?.pronouns) {
-        updates.pronouns = intakeSurvey.pronouns.trim()
+
+    const updates = { 
+        intakeSurvey: cleanSurvey,
+        preferredName: prefName,
+        pronouns: pronouns
     }
     await patchStudent(classId, studentId, updates)
 }

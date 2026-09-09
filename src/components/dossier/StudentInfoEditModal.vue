@@ -182,13 +182,17 @@ const form = ref({
 
 function initForm() {
   const existing = props.student?.intakeSurvey || {}
-  const rawPronouns = existing.pronouns || props.student?.pronouns || ''
+  const rawPronouns = existing.pronouns !== undefined ? existing.pronouns : (props.student?.pronouns || '')
   
   const standardPronouns = ['He / Him', 'She / Her', 'They / Them', 'Prefer to share privately', '']
   const isOther = rawPronouns && !standardPronouns.includes(rawPronouns)
 
+  const resolvedPrefName = existing.preferredName !== undefined 
+    ? existing.preferredName 
+    : (props.student?.preferredName || '')
+
   form.value = {
-    preferredName: existing.preferredName || props.student?.preferredName || '',
+    preferredName: resolvedPrefName,
     pronouns: isOther ? 'Other' : rawPronouns,
     parentCommunication: existing.parentCommunication || '',
     seatingPreference: existing.seatingPreference || '',
@@ -219,9 +223,11 @@ async function saveSurvey() {
   isSaving.value = true
   try {
     const finalPronouns = form.value.pronouns === 'Other' ? customPronouns.value.trim() : form.value.pronouns
+    const trimmedPreferredName = form.value.preferredName ? form.value.preferredName.trim() : ''
 
     const payload = {
       ...form.value,
+      preferredName: trimmedPreferredName,
       pronouns: finalPronouns,
       completedAt: props.student?.intakeSurvey?.completedAt || new Date().toISOString()
     }

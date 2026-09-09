@@ -942,9 +942,11 @@ async function saveGeneralNote(note) {
   }
 }
 
-async function saveStudentIEP(hasIEP) {
-  if (Boolean(student.value.hasIEP) !== hasIEP) {
-    await updateStudentIEP(props.studentId, hasIEP)
+async function saveStudentIEP(payload) {
+  const hasIEP = typeof payload === 'object' && payload !== null ? Boolean(payload.hasIEP) : Boolean(payload)
+  const iepType = (typeof payload === 'object' && payload !== null && payload.iepType) ? payload.iepType : (student.value.iepType || 'standard')
+  if (Boolean(student.value.hasIEP) !== hasIEP || student.value.iepType !== iepType) {
+    await updateStudentIEP(props.studentId, hasIEP, iepType)
   }
 }
 

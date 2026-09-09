@@ -262,6 +262,31 @@
           Enabling this adds a subtle discreet indicator on the teacher's seating plan for quick accommodation reference.
         </p>
 
+        <!-- Sub-selector for IEP Focus: Learning Needs vs Giftedness -->
+        <div v-if="student.hasIEP" class="iep-focus-selector">
+          <span class="iep-focus-title">Plan Focus / Exceptionality:</span>
+          <div class="iep-focus-pills">
+            <button 
+              type="button" 
+              class="iep-focus-pill"
+              :class="{ 'iep-focus-pill--active': !student.iepType || student.iepType === 'standard' }"
+              @click="setIEPType('standard')"
+            >
+              <span class="iep-focus-dot iep-focus-dot--standard"></span>
+              Learning Needs / Accommodations
+            </button>
+            <button 
+              type="button" 
+              class="iep-focus-pill"
+              :class="{ 'iep-focus-pill--active': student.iepType === 'gifted' }"
+              @click="setIEPType('gifted')"
+            >
+              <span class="iep-focus-dot iep-focus-dot--gifted"></span>
+              Giftedness / Enrichment
+            </button>
+          </div>
+        </div>
+
         <!-- Configured Subject Modifications List -->
         <div v-if="student.hasIEP && activeClassRecord?.classType === 'elementary'" class="iep-active-modifications">
           <div class="iep-mods-title">Modified Subject Grade Expectations:</div>
@@ -538,7 +563,17 @@ function saveContacts() {
 }
 
 function toggleIEP(val) {
-  emit('update-iep', Boolean(val))
+  emit('update-iep', {
+    hasIEP: Boolean(val),
+    iepType: props.student.iepType || 'standard'
+  })
+}
+
+function setIEPType(type) {
+  emit('update-iep', {
+    hasIEP: true,
+    iepType: type
+  })
 }
 
 const { confirm, select } = useMessage()
@@ -660,6 +695,8 @@ async function copyForReportCard(includeName = false) {
     const modGrade = s.accommodations?.modifiedSubjectGrades?.[curSubId]
     if (modGrade) {
       textLines.push(`Accommodations: IEP Modified Expectations (${modGrade})`)
+    } else if (s.iepType === 'gifted') {
+      textLines.push(`Accommodations: IEP — Gifted / Enrichment Plan`)
     } else {
       textLines.push(`Accommodations: IEP Plan Active`)
     }
@@ -870,6 +907,75 @@ async function copyForReportCard(includeName = false) {
   font-size: 0.78rem;
   color: var(--text-secondary);
   line-height: 1.35;
+}
+
+.iep-focus-selector {
+  margin-top: 10px;
+  margin-left: 28px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.iep-focus-title {
+  font-size: 0.74rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+}
+
+.iep-focus-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.iep-focus-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 12px;
+  border-radius: 9999px;
+  border: 1px solid var(--border);
+  background: var(--bg-primary, var(--card-bg));
+  color: var(--text);
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.iep-focus-pill:hover {
+  background: var(--bg-hover, rgba(255, 255, 255, 0.06));
+  border-color: var(--border-hover, var(--border));
+}
+
+.iep-focus-pill--active {
+  border-color: var(--primary, #6366f1);
+  background: rgba(99, 102, 241, 0.12);
+  font-weight: 600;
+  color: var(--text);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.iep-focus-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.iep-focus-dot--standard {
+  background: #8b5cf6;
+  box-shadow: 0 0 4px rgba(139, 92, 246, 0.5);
+}
+
+.iep-focus-dot--gifted {
+  background: #06b6d4;
+  box-shadow: 0 0 4px rgba(6, 182, 212, 0.6);
 }
 
 /* Safety & Custody Alerts Card */

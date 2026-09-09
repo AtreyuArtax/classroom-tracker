@@ -237,7 +237,8 @@
                     <span 
                       v-if="form.showIepDot && getStudent(currentPreviewClass, r, c)?.hasIEP" 
                       class="sheet-desk__iep-dot" 
-                      title="IEP / Accommodations Plan"
+                      :class="{ 'sheet-desk__iep-dot--gifted': getStudent(currentPreviewClass, r, c)?.iepType === 'gifted' }"
+                      :title="getStudent(currentPreviewClass, r, c)?.iepType === 'gifted' ? 'IEP: Gifted / Enrichment' : 'IEP / Accommodations Plan'"
                     />
 
                     <!-- Desk Content / Name -->
@@ -288,9 +289,15 @@
 
             <!-- Footer -->
             <footer class="sheet-doc-footer">
-              <div v-if="form.showLegend && form.showIepDot" class="sheet-legend-item">
-                <span class="sheet-desk__iep-dot sheet-legend-dot" />
-                <span class="sheet-legend-text"><strong>Accommodations</strong></span>
+              <div v-if="form.showLegend && form.showIepDot" class="sheet-legend-items">
+                <div class="sheet-legend-item">
+                  <span class="sheet-desk__iep-dot sheet-legend-dot" />
+                  <span class="sheet-legend-text"><strong>Accommodations (IEP)</strong></span>
+                </div>
+                <div class="sheet-legend-item">
+                  <span class="sheet-desk__iep-dot sheet-desk__iep-dot--gifted sheet-legend-dot" />
+                  <span class="sheet-legend-text"><strong>Gifted (IEP)</strong></span>
+                </div>
               </div>
               <div class="sheet-footer-info">
                 <span v-if="getClassSubheader(currentPreviewClass)">{{ getClassSubheader(currentPreviewClass) }}</span>
@@ -384,6 +391,8 @@
                   <span 
                     v-if="form.showIepDot && getStudent(cls, r, c)?.hasIEP" 
                     class="sheet-desk__iep-dot" 
+                    :class="{ 'sheet-desk__iep-dot--gifted': getStudent(cls, r, c)?.iepType === 'gifted' }"
+                    :title="getStudent(cls, r, c)?.iepType === 'gifted' ? 'IEP: Gifted / Enrichment' : 'IEP / Accommodations Plan'"
                   />
 
                   <!-- Desk Content / Name -->
@@ -434,9 +443,15 @@
 
           <!-- Footer -->
           <footer class="sheet-doc-footer">
-            <div v-if="form.showLegend && form.showIepDot" class="sheet-legend-item">
-              <span class="sheet-desk__iep-dot sheet-legend-dot" />
-              <span class="sheet-legend-text"><strong>Accommodations</strong></span>
+            <div v-if="form.showLegend && form.showIepDot" class="sheet-legend-items">
+              <div class="sheet-legend-item">
+                <span class="sheet-desk__iep-dot sheet-legend-dot" />
+                <span class="sheet-legend-text"><strong>Accommodations (IEP)</strong></span>
+              </div>
+              <div class="sheet-legend-item">
+                <span class="sheet-desk__iep-dot sheet-desk__iep-dot--gifted sheet-legend-dot" />
+                <span class="sheet-legend-text"><strong>Gifted (IEP)</strong></span>
+              </div>
             </div>
             <div class="sheet-footer-info">
               <span v-if="getClassSubheader(cls)">{{ getClassSubheader(cls) }}</span>
@@ -1413,6 +1428,10 @@ function handlePrint() {
   z-index: 2;
 }
 
+.sheet-desk__iep-dot--gifted {
+  background: #0891b2;
+}
+
 .sheet-desk__content {
   display: flex;
   flex-direction: column;
@@ -1507,6 +1526,12 @@ function handlePrint() {
   font-size: 0.7rem;
   color: #64748b;
   margin-top: auto;
+}
+
+.sheet-legend-items {
+  display: flex;
+  align-items: center;
+  gap: 14px;
 }
 
 .sheet-legend-item {
@@ -1643,6 +1668,10 @@ function handlePrint() {
     height: 7px;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
+  }
+
+  .seating-print-only .sheet-desk__iep-dot--gifted {
+    background: #0891b2 !important;
   }
 
   .seating-print-only .sheet-desk__first {

@@ -656,7 +656,8 @@ import {
   populateSubjectFromPresets,
   findElementaryPreset, 
   findElementaryPresets,
-  cleanUnitName
+  cleanUnitName,
+  parseGradesFromClass
 } from '../../composables/useElementary.js'
 import { 
   useCurriculumLibrary, 

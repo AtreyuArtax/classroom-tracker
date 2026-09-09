@@ -44,6 +44,7 @@ import {
 import {
   logAttendanceEvent,
   syncLateActiveState,
+  syncStudentState,
   reconcileStaleTrips,
   initializeRfidAttendance,
   handleRfidAttendanceScan,
@@ -1079,12 +1080,49 @@ async function logStandardEvent(studentId, code, note = null, options = {}) {
             }
         }
 
+        // Special case: if logging an attendance event for today, keep active state in sync
+        const todayStr = formatLocalDate(new Date())
+        const targetDate = options.timestamp ? formatLocalDate(options.timestamp) : todayStr
+        if (targetDate === todayStr && classId) {
+            const st = students.value[studentId]
+            if (code === 'a') {
+                await classService.setStudentAbsent(classId, studentId)
+                syncStudentState(classId, studentId, { ...(st?.activeStates || {}), isAbsent: true, lateMs: null }, { code, ts: Date.now() })
+            } else if (code === 'l') {
+                const durationMs = options.duration !== undefined ? options.duration : 0
+                await classService.setStudentLate(classId, studentId, durationMs)
+                syncStudentState(classId, studentId, { ...(st?.activeStates || {}), isAbsent: false, lateMs: durationMs }, { code, ts: Date.now() })
+            }
+        }
+
         pushUndo(async () => {
             try {
                 await eventService.deleteEvent(eventId)
                 if (students.value[studentId]) {
                     students.value[studentId].lastEvent = null
                     triggerRef(students)
+                }
+
+                if (targetDate === todayStr && classId && (code === 'a' || code === 'l')) {
+                    const remainingToday = await eventService.getEventsByStudent(studentId, { from: todayStr, to: todayStr })
+                    const hasRemainingAbsent = remainingToday.some(e => e.code === 'a' && !e.superseded)
+                    const remainingLate = remainingToday.find(e => e.code === 'l' && !e.superseded)
+                    const st = students.value[studentId]
+                    if (code === 'a') {
+                        if (!hasRemainingAbsent) {
+                            await classService.clearStudentAbsent(classId, studentId)
+                            syncStudentState(classId, studentId, { ...(st?.activeStates || {}), isAbsent: false }, null)
+                        }
+                    } else if (code === 'l') {
+                        if (!remainingLate) {
+                            await classService.clearStudentLate(classId, studentId)
+                            syncStudentState(classId, studentId, { ...(st?.activeStates || {}), lateMs: null }, null)
+                        } else {
+                            const newDuration = remainingLate.duration ?? 0
+                            await classService.setStudentLate(classId, studentId, newDuration)
+                            syncStudentState(classId, studentId, { ...(st?.activeStates || {}), isAbsent: false, lateMs: newDuration }, null)
+                        }
+                    }
                 }
 
                 if (code === 'w' || category === 'redirect') {
@@ -1209,31 +1247,17 @@ async function logToggleEvent(studentId, code, targetClassId = null) {
         if (!currentState.isOut) {
             // ── Toggle OUT ───────────────────────────────────────────────────────────
             const outTime = new Date().toISOString()
-            const newState = { isOut: true, outTime, code }
+            const newState = { ...(student.activeStates || {}), isOut: true, outTime, code }
 
             await classService.setStudentActiveState(classId, studentId, newState)
-            student.activeStates = newState
-            student.lastEvent = { code, ts: Date.now() }
-
-            if (isActive) {
-                students.value[studentId].activeStates = newState
-                students.value[studentId].lastEvent = { code, ts: Date.now() }
-            }
-            triggerRef(students)
-            triggerRef(activeClass)
-            triggerRef(classList)
+            syncStudentState(classId, studentId, newState, { code, ts: Date.now() })
 
             // Undo: clear the active state (no event was written for OUT, only state)
             pushUndo(async () => {
                 try {
                     await classService.clearStudentActiveState(classId, studentId)
-                    student.activeStates = { isOut: false, outTime: null }
-                    if (isActive) {
-                        students.value[studentId].activeStates = { isOut: false, outTime: null }
-                    }
-                    triggerRef(students)
-                    triggerRef(activeClass)
-                    triggerRef(classList)
+                    const undoneState = { ...(student.activeStates || {}), isOut: false, outTime: null }
+                    syncStudentState(classId, studentId, undoneState, null)
                 } catch (err) {
                     console.error('Undo toggle OUT failed:', err)
                     const { alert } = useMessage()
@@ -1256,17 +1280,8 @@ async function logToggleEvent(studentId, code, targetClassId = null) {
 
             await classService.clearStudentActiveState(classId, studentId)
             
-            const newState = { isOut: false, outTime: null }
-            student.activeStates = newState
-            student.lastEvent = { code, ts: Date.now() }
-
-            if (isActive) {
-                students.value[studentId].activeStates = newState
-                students.value[studentId].lastEvent = { code, ts: Date.now() }
-            }
-            triggerRef(students)
-            triggerRef(activeClass)
-            triggerRef(classList)
+            const newState = { ...(student.activeStates || {}), isOut: false, outTime: null }
+            syncStudentState(classId, studentId, newState, { code, ts: Date.now() })
 
             // Optimistic update for stats dot
             if (code === 'w') {
@@ -1282,17 +1297,11 @@ async function logToggleEvent(studentId, code, targetClassId = null) {
             // Undo: restore the exact original state (with original outTime) + delete event
             pushUndo(async () => {
                 try {
-                    const restoredState = { isOut: true, outTime: originalOutTime }
+                    const restoredState = { ...(student.activeStates || {}), isOut: true, outTime: originalOutTime, code }
                     await classService.setStudentActiveState(classId, studentId, restoredState)
                     await eventService.deleteEvent(eventId)
                     
-                    student.activeStates = restoredState
-                    student.lastEvent = null
-
-                    if (isActive) {
-                        students.value[studentId].activeStates = restoredState
-                        students.value[studentId].lastEvent = null
-                    }
+                    syncStudentState(classId, studentId, restoredState, null)
 
                     if (code === 'w' && isActive) {
                         const current = studentWeeklyStats.value[studentId] || { washroomTrips: 0, deviceIncidents: 0 }
@@ -1359,15 +1368,29 @@ async function removeEvent(eventId) {
     // Sync reactive stats
     await computeWeeklyStats(activeClass.value.classId, Object.keys(students.value))
 
-    // Special case: if it was the active late/absent state, clear it
+    // Special case: sync active late/absent state
+    const todayStr = formatLocalDate(new Date())
+    const remainingToday = await eventService.getEventsByStudent(original.studentId, { from: todayStr, to: todayStr })
+    const hasRemainingAbsent = remainingToday.some(e => e.code === 'a' && !e.superseded && String(e.eventId) !== String(eventId))
+    const remainingLate = remainingToday.find(e => e.code === 'l' && !e.superseded && String(e.eventId) !== String(eventId))
+
     const st = students.value[original.studentId]
-    if (st && st.activeStates) {
-        if (original.code === 'a' && st.activeStates.isAbsent) {
+
+    if (original.code === 'a') {
+        if (!hasRemainingAbsent) {
             await classService.clearStudentAbsent(original.classId, original.studentId)
-            st.activeStates.isAbsent = false
-        } else if (original.code === 'l' && st.activeStates.lateMs === original.duration) {
+            syncStudentState(original.classId, original.studentId, { ...(st?.activeStates || {}), isAbsent: false }, null)
+        } else {
+            syncStudentState(original.classId, original.studentId, { ...(st?.activeStates || {}), isAbsent: true }, null)
+        }
+    } else if (original.code === 'l') {
+        if (!remainingLate) {
             await classService.clearStudentLate(original.classId, original.studentId)
-            st.activeStates.lateMs = null
+            syncStudentState(original.classId, original.studentId, { ...(st?.activeStates || {}), lateMs: null }, null)
+        } else {
+            const newDuration = remainingLate.duration ?? 0
+            await classService.setStudentLate(original.classId, original.studentId, newDuration)
+            syncStudentState(original.classId, original.studentId, { ...(st?.activeStates || {}), isAbsent: false, lateMs: newDuration }, null)
         }
     }
 
@@ -1583,13 +1606,33 @@ async function _activateClass(cls) {
 
     let needsSave = false
     for (const [studentId, student] of Object.entries(cls.students ?? {})) {
+        if (!student.activeStates) {
+            student.activeStates = { isOut: false, outTime: null, isAbsent: false, lateMs: null }
+        }
         const states = student.activeStates
-        if (!states) continue
 
-        // Check for stale attendance (absent/late but no event today)
-        if (states.isAbsent || states.lateMs != null) {
-            const hasAtt = eventsToday.some(e => e.studentId === studentId && (e.code === 'a' || e.code === 'l'))
-            if (!hasAtt) {
+        // Find today's non-superseded attendance events for this student
+        const studentEvents = eventsToday.filter(e => String(e.studentId) === String(studentId) && !e.superseded)
+        const todayAbsentEvent = studentEvents.find(e => e.code === 'a')
+        const todayLateEvent = studentEvents.find(e => e.code === 'l')
+
+        // 1. Sync Absent & Late state (two-way: restore if event exists, clear if no event today)
+        if (todayAbsentEvent) {
+            if (!states.isAbsent || states.lateMs != null) {
+                states.isAbsent = true
+                states.lateMs = null
+                needsSave = true
+            }
+        } else if (todayLateEvent) {
+            const expectedDuration = todayLateEvent.duration ?? 0
+            if (states.isAbsent || states.lateMs !== expectedDuration) {
+                states.isAbsent = false
+                states.lateMs = expectedDuration
+                needsSave = true
+            }
+        } else {
+            // Neither absent nor late event exists today -> clear any stale attendance flags from previous days
+            if (states.isAbsent || states.lateMs != null) {
                 states.isAbsent = false
                 states.lateMs = null
                 needsSave = true

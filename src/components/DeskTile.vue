@@ -56,7 +56,8 @@
     <span
       v-if="student.hasIEP"
       class="desk-tile__iep-dot"
-      title="Accommodations Plan"
+      :class="{ 'desk-tile__iep-dot--gifted': student.iepType === 'gifted' }"
+      :title="student.iepType === 'gifted' ? 'IEP: Gifted / Enrichment Plan' : 'IEP: Accommodations Plan'"
     />
 
     <!-- Discreet Academic At-Risk Indicator — bottom right corner -->
@@ -735,6 +736,11 @@ function onDrop(evt) {
   background: #8b5cf6;
   opacity: 0.85;
   box-shadow: 0 0 5px rgba(139, 92, 246, 0.45);
+}
+
+.desk-tile__iep-dot--gifted {
+  background: #06b6d4;
+  box-shadow: 0 0 5px rgba(6, 182, 212, 0.55);
 }
 
 /* ── Discreet Academic At-Risk Indicator ────────────────────────────────── */

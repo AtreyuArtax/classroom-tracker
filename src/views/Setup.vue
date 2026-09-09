@@ -835,6 +835,7 @@ import {
   X
 } from 'lucide-vue-next'
 import UndoButton from '../components/UndoButton.vue'
+import SetupQuickJumpNav from '../components/setup/SetupQuickJumpNav.vue'
 import { useClassroom } from '../composables/useClassroom.js'
 import { useMessage } from '../composables/useMessage.js'
 import { detectGradeFromClassName } from '../composables/useElementary.js'

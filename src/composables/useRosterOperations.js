@@ -252,22 +252,38 @@ export async function updateStudentNote(studentId, note) {
  * Updates a student's IEP toggle status.
  *
  * @param {string} studentId
+ * @param {string} studentId
  * @param {boolean} hasIEP
+ * @param {string} [iepType]
  * @returns {Promise<void>}
  */
-export async function updateStudentIEP(studentId, hasIEP) {
+export async function updateStudentIEP(studentId, hasIEP, iepType = 'standard') {
     try {
         const classId = activeClass.value?.classId
         if (!classId) return
-        await classService.updateStudentIEP(classId, studentId, hasIEP)
+        await classService.updateStudentIEP(classId, studentId, hasIEP, iepType)
+        const resolvedType = iepType || 'standard'
         if (students.value[studentId]) {
             students.value[studentId].hasIEP = Boolean(hasIEP)
+            students.value[studentId].iepType = resolvedType
         }
         if (activeClass.value?.students?.[studentId]) {
             activeClass.value.students[studentId].hasIEP = Boolean(hasIEP)
+            activeClass.value.students[studentId].iepType = resolvedType
+        }
+        if (activeClassRecord.value?.students?.[studentId]) {
+            activeClassRecord.value.students[studentId].hasIEP = Boolean(hasIEP)
+            activeClassRecord.value.students[studentId].iepType = resolvedType
+        }
+        const classInList = classList.value?.find(c => c.classId === classId)
+        if (classInList?.students?.[studentId]) {
+            classInList.students[studentId].hasIEP = Boolean(hasIEP)
+            classInList.students[studentId].iepType = resolvedType
         }
         triggerRef(students)
         triggerRef(activeClass)
+        triggerRef(activeClassRecord)
+        triggerRef(classList)
     } catch (err) {
         console.error('updateStudentIEP failed:', err)
         const { alert } = useMessage()
@@ -288,17 +304,28 @@ export async function updateStudentAccommodations(studentId, accommodations) {
         if (!classId) return
         const accCopy = JSON.parse(JSON.stringify(accommodations || {}))
         await classService.updateStudentAccommodations(classId, studentId, accCopy)
+        const hasIEP = Boolean(accCopy.hasIEP)
+        const iepType = accCopy.iepType || 'standard'
         if (students.value[studentId]) {
-            students.value[studentId].hasIEP = Boolean(accCopy.hasIEP)
+            students.value[studentId].hasIEP = hasIEP
             students.value[studentId].accommodations = accCopy
+            if (accCopy.iepType) students.value[studentId].iepType = iepType
         }
         if (activeClass.value?.students?.[studentId]) {
-            activeClass.value.students[studentId].hasIEP = Boolean(accCopy.hasIEP)
+            activeClass.value.students[studentId].hasIEP = hasIEP
             activeClass.value.students[studentId].accommodations = accCopy
+            if (accCopy.iepType) activeClass.value.students[studentId].iepType = iepType
         }
         if (activeClassRecord.value?.students?.[studentId]) {
-            activeClassRecord.value.students[studentId].hasIEP = Boolean(accCopy.hasIEP)
+            activeClassRecord.value.students[studentId].hasIEP = hasIEP
             activeClassRecord.value.students[studentId].accommodations = accCopy
+            if (accCopy.iepType) activeClassRecord.value.students[studentId].iepType = iepType
+        }
+        const classInList = classList.value?.find(c => c.classId === classId)
+        if (classInList?.students?.[studentId]) {
+            classInList.students[studentId].hasIEP = hasIEP
+            classInList.students[studentId].accommodations = accCopy
+            if (accCopy.iepType) classInList.students[studentId].iepType = iepType
         }
         if (activeClassRecord.value && activeClassRecord.value.classType === 'elementary') {
             const afterIEP = ensureIEPPresetsForClass(activeClassRecord.value)
@@ -310,6 +337,7 @@ export async function updateStudentAccommodations(studentId, accommodations) {
         triggerRef(students)
         triggerRef(activeClass)
         triggerRef(activeClassRecord)
+        triggerRef(classList)
     } catch (err) {
         console.error('updateStudentAccommodations failed:', err)
         const { alert } = useMessage()
@@ -554,24 +582,39 @@ export async function updateStudentIntakeSurvey(studentId, intakeSurvey) {
         if (!classId) return
         await classService.updateStudentIntakeSurvey(classId, studentId, intakeSurvey)
 
+        const prefName = (intakeSurvey?.preferredName || '').trim()
+        const prns = (intakeSurvey?.pronouns || '').trim()
+        const cleanSurvey = {
+            ...(intakeSurvey || {}),
+            preferredName: prefName,
+            pronouns: prns
+        }
+
         if (students.value[studentId]) {
-            students.value[studentId].intakeSurvey = intakeSurvey
-            if (intakeSurvey?.preferredName) students.value[studentId].preferredName = intakeSurvey.preferredName
-            if (intakeSurvey?.pronouns) students.value[studentId].pronouns = intakeSurvey.pronouns
+            students.value[studentId].intakeSurvey = cleanSurvey
+            students.value[studentId].preferredName = prefName
+            students.value[studentId].pronouns = prns
         }
         if (activeClass.value?.students?.[studentId]) {
-            activeClass.value.students[studentId].intakeSurvey = intakeSurvey
-            if (intakeSurvey?.preferredName) activeClass.value.students[studentId].preferredName = intakeSurvey.preferredName
-            if (intakeSurvey?.pronouns) activeClass.value.students[studentId].pronouns = intakeSurvey.pronouns
+            activeClass.value.students[studentId].intakeSurvey = cleanSurvey
+            activeClass.value.students[studentId].preferredName = prefName
+            activeClass.value.students[studentId].pronouns = prns
         }
         if (activeClassRecord.value?.students?.[studentId]) {
-            activeClassRecord.value.students[studentId].intakeSurvey = intakeSurvey
-            if (intakeSurvey?.preferredName) activeClassRecord.value.students[studentId].preferredName = intakeSurvey.preferredName
-            if (intakeSurvey?.pronouns) activeClassRecord.value.students[studentId].pronouns = intakeSurvey.pronouns
+            activeClassRecord.value.students[studentId].intakeSurvey = cleanSurvey
+            activeClassRecord.value.students[studentId].preferredName = prefName
+            activeClassRecord.value.students[studentId].pronouns = prns
+        }
+        const clsInList = classList.value?.find(c => c.classId === classId)
+        if (clsInList?.students?.[studentId]) {
+            clsInList.students[studentId].intakeSurvey = cleanSurvey
+            clsInList.students[studentId].preferredName = prefName
+            clsInList.students[studentId].pronouns = prns
         }
         triggerRef(students)
         triggerRef(activeClass)
         triggerRef(activeClassRecord)
+        triggerRef(classList)
     } catch (err) {
         console.error('updateStudentIntakeSurvey failed:', err)
         const { alert } = useMessage()
