@@ -14,6 +14,19 @@
           <template v-else>
             Day 1 Baseline: Course Confidence (1–5) vs. Target Goals ({{ respondedStudentsCount }} of {{ totalStudentsCount }} students responded)
           </template>
+          <button 
+            v-if="unsubmittedStudents.length > 0"
+            type="button" 
+            class="mindset-unsubmitted-pill"
+            :class="{ 'mindset-unsubmitted-pill--active': isUnsubmittedExpanded }"
+            @click="isUnsubmittedExpanded = !isUnsubmittedExpanded"
+            title="Click to toggle students awaiting survey"
+          >
+            <UserX :size="11" />
+            {{ unsubmittedStudents.length }} awaiting
+            <ChevronUp v-if="isUnsubmittedExpanded" :size="10" />
+            <ChevronDown v-else :size="10" />
+          </button>
         </p>
       </div>
 
@@ -268,6 +281,84 @@
             <span class="mindset-ribbon-label">Support Needed</span>
           </div>
         </template>
+
+        <!-- Awaiting Survey Ribbon Tile (if any) -->
+        <div 
+          v-if="unsubmittedStudents.length > 0"
+          class="mindset-ribbon-tile mindset-ribbon-tile--unsubmitted"
+          :class="{ 'mindset-ribbon-tile--active': isUnsubmittedExpanded }"
+          role="button"
+          tabindex="0"
+          @click="isUnsubmittedExpanded = !isUnsubmittedExpanded"
+          title="Click to toggle students awaiting survey"
+        >
+          <span class="mindset-ribbon-count">{{ unsubmittedStudents.length }}</span>
+          <span class="mindset-ribbon-label">
+            Awaiting Survey
+            <ChevronUp v-if="isUnsubmittedExpanded" :size="12" class="mindset-ribbon-chevron" />
+            <ChevronDown v-else :size="12" class="mindset-ribbon-chevron" />
+          </span>
+        </div>
+      </div>
+
+      <!-- Collapsible Unsubmitted Students Drawer (Scatter View) -->
+      <div 
+        v-if="viewMode === 'scatter' && isUnsubmittedExpanded && unsubmittedStudents.length > 0" 
+        class="mindset-unsubmitted-panel"
+      >
+        <div class="mindset-unsubmitted-panel__header">
+          <div class="mindset-unsubmitted-panel__title-group">
+            <span class="mindset-unsubmitted-panel__title">
+              <UserX :size="14" />
+              Awaiting Survey Responses ({{ unsubmittedStudents.length }})
+            </span>
+            <span class="mindset-unsubmitted-panel__sub">
+              Enrolled students without recorded survey data. Click a student to open dossier, or copy emails to send a reminder.
+            </span>
+          </div>
+          <div class="mindset-unsubmitted-panel__actions">
+            <button 
+              v-if="unsubmittedEmails.length > 0"
+              type="button" 
+              class="mindset-action-btn"
+              @click="copyEmails"
+              title="Copy student email addresses separated by semicolons"
+            >
+              <Check v-if="hasCopiedEmails" :size="12" />
+              <Mail v-else :size="12" />
+              {{ hasCopiedEmails ? 'Emails Copied!' : 'Copy Emails' }}
+            </button>
+            <button 
+              type="button" 
+              class="mindset-action-btn mindset-action-btn--primary"
+              @click="showSurveyModal = true"
+            >
+              <UploadCloud :size="12" /> Import Survey
+            </button>
+          </div>
+        </div>
+
+        <div class="mindset-unsubmitted-chips">
+          <div 
+            v-for="st in unsubmittedStudents" 
+            :key="st.studentId" 
+            class="mindset-unsubmitted-chip"
+            @click="$emit('select-student', st.studentId)"
+            :title="st.email ? `${st.fullName} (${st.email}) — Click to view dossier` : `${st.fullName} — Click to view dossier`"
+          >
+            <span class="mindset-chip-avatar">{{ st.initials }}</span>
+            <span class="mindset-chip-name">{{ st.displayFirstLast }}</span>
+            <a 
+              v-if="st.email" 
+              :href="`mailto:${st.email}`" 
+              class="mindset-chip-mail"
+              @click.stop
+              :title="`Send email to ${st.displayFirstLast}`"
+            >
+              <Mail :size="11" />
+            </a>
+          </div>
+        </div>
       </div>
 
       <!-- VIEW 2: Cohort Breakdown & Quadrant Lists -->
@@ -526,6 +617,67 @@
           </div>
         </div>
 
+        <!-- Dedicated Card: Awaiting Survey Responses (Breakdown View) -->
+        <div v-if="unsubmittedStudents.length > 0" class="mindset-unsubmitted-card">
+          <div class="mindset-unsubmitted-card__header">
+            <div class="mindset-unsubmitted-card__title-group">
+              <span class="mindset-unsubmitted-card__title">
+                <UserX :size="15" />
+                Awaiting Survey Submission
+              </span>
+              <span class="mindset-unsubmitted-card__sub">
+                {{ unsubmittedStudents.length }} student{{ unsubmittedStudents.length === 1 ? '' : 's' }} enrolled without intake survey data — reach out to gather confidence, goals, and seating needs. Click any student to open dossier.
+              </span>
+            </div>
+            <div class="mindset-unsubmitted-card__actions">
+              <button 
+                v-if="unsubmittedEmails.length > 0"
+                type="button" 
+                class="mindset-action-btn"
+                @click="copyEmails"
+                title="Copy student email addresses separated by semicolons"
+              >
+                <Check v-if="hasCopiedEmails" :size="12" />
+                <Mail v-else :size="12" />
+                {{ hasCopiedEmails ? 'Emails Copied!' : 'Copy Emails' }}
+              </button>
+              <button 
+                type="button" 
+                class="mindset-action-btn mindset-action-btn--primary"
+                @click="showSurveyModal = true"
+              >
+                <UploadCloud :size="12" /> Import Survey
+              </button>
+              <span class="mindset-quad-card__badge mindset-quad-card__badge--unsubmitted">
+                {{ unsubmittedStudents.length }}
+              </span>
+            </div>
+          </div>
+
+          <div class="mindset-unsubmitted-chips">
+            <div 
+              v-for="st in unsubmittedStudents" 
+              :key="st.studentId" 
+              class="mindset-unsubmitted-chip"
+              @click="$emit('select-student', st.studentId)"
+              :title="st.email ? `${st.fullName} (${st.email}) — Click to view dossier` : `${st.fullName} — Click to view dossier`"
+            >
+              <span class="mindset-chip-avatar">{{ st.initials }}</span>
+              <span class="mindset-chip-name">{{ st.displayFirstLast }}</span>
+              <span v-if="st.email" class="mindset-chip-email">{{ st.email }}</span>
+              <a 
+                v-if="st.email" 
+                :href="`mailto:${st.email}`" 
+                class="mindset-chip-mail"
+                @click.stop
+                :title="`Send email to ${st.displayFirstLast}`"
+              >
+                <Mail :size="11" />
+              </a>
+            </div>
+          </div>
+        </div>
+
         <!-- 3-Column Demographic & Preferences Breakdown -->
         <div class="mindset-distributions-row">
           <!-- 1. Confidence Histogram -->
@@ -576,7 +728,10 @@
     <!-- Student Survey Modal -->
     <StudentInfoSurveyModal 
       :show="showSurveyModal" 
+      :class-id="classId"
+      :roster-students="sidebarStudents"
       @close="showSurveyModal = false" 
+      @imported="onSurveyImported"
     />
   </div>
 </template>
@@ -590,7 +745,12 @@ import {
   UploadCloud,
   Activity,
   Target,
-  Armchair
+  Armchair,
+  UserX,
+  ChevronDown,
+  ChevronUp,
+  Mail,
+  Check
 } from 'lucide-vue-next'
 import { getSBARLevelBadge } from '../../db/gradebookService.js'
 import StudentInfoSurveyModal from '../setup/StudentInfoSurveyModal.vue'
@@ -622,14 +782,21 @@ const ScatterPlotIcon = {
 const props = defineProps({
   sidebarStudents: { type: Array, default: () => [] },
   classGrades: { type: Object, default: () => ({}) },
-  isSbar: { type: Boolean, default: false }
+  isSbar: { type: Boolean, default: false },
+  classId: { type: String, default: '' }
 })
 
-const emit = defineEmits(['select-student'])
+const emit = defineEmits(['select-student', 'survey-imported'])
 
 const viewMode = ref('scatter') // 'scatter' or 'breakdown'
 const lensMode = ref('actualVsGoal') // 'actualVsGoal' (Progress vs Goal) or 'day1Mindset' (Day 1 Mindset)
 const showSurveyModal = ref(false)
+const isUnsubmittedExpanded = ref(false)
+const hasCopiedEmails = ref(false)
+
+function onSurveyImported(payload) {
+  emit('survey-imported', payload)
+}
 
 function getInitials(name, first, last) {
   if (first && last) {
@@ -668,7 +835,14 @@ const rawStudentsList = computed(() => {
   return students
     .filter(student => {
       const survey = student.intakeSurvey || {}
-      return Boolean(survey.courseConfidence || survey.targetGrade || survey.completedAt)
+      return Boolean(
+        survey.courseConfidence ||
+        survey.targetGrade ||
+        survey.completedAt ||
+        survey.seatingPreference ||
+        survey.extracurricularsHobbies ||
+        survey.confidentialNote
+      )
     })
     .map(student => {
       const sId = String(student.studentId)
@@ -810,7 +984,69 @@ const activeStudentPoints = computed(() => {
 })
 
 const respondedStudentsCount = computed(() => rawStudentsList.value.length)
-const unansweredCount = computed(() => Math.max(0, totalStudentsCount.value - respondedStudentsCount.value))
+
+// Students who have not yet submitted a survey
+const unsubmittedStudents = computed(() => {
+  const students = props.sidebarStudents || []
+  if (students.length === 0) return []
+
+  const submittedIds = new Set(rawStudentsList.value.map(s => String(s.studentId)))
+  return students
+    .filter(s => !submittedIds.has(String(s.studentId)))
+    .map(s => {
+      const sId = String(s.studentId)
+      const firstName = s.preferredName || s.firstName || ''
+      const lastName = s.lastName || ''
+      const fullName = (lastName && firstName)
+        ? `${lastName}, ${firstName}`
+        : (s.name || 'Student')
+      const displayFirstLast = firstName
+        ? `${firstName} ${lastName}`.trim()
+        : (s.name || 'Student')
+      const initials = getInitials(s.name, s.preferredName || s.firstName, s.lastName)
+      const email = (s.studentEmail || s.email || '').trim()
+
+      return {
+        studentId: sId,
+        fullName,
+        displayFirstLast,
+        initials,
+        email
+      }
+    })
+    .sort((a, b) => a.fullName.localeCompare(b.fullName))
+})
+
+const unansweredCount = computed(() => unsubmittedStudents.value.length)
+
+const unsubmittedEmails = computed(() => {
+  return unsubmittedStudents.value
+    .map(s => s.email)
+    .filter(Boolean)
+})
+
+async function copyEmails() {
+  if (unsubmittedEmails.value.length === 0) return
+  const text = unsubmittedEmails.value.join('; ')
+  try {
+    if (navigator?.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text)
+    } else {
+      const ta = document.createElement('textarea')
+      ta.value = text
+      document.body.appendChild(ta)
+      ta.select()
+      document.execCommand('copy')
+      document.body.removeChild(ta)
+    }
+    hasCopiedEmails.value = true
+    setTimeout(() => {
+      hasCopiedEmails.value = false
+    }, 2500)
+  } catch (e) {
+    console.error('Failed to copy emails:', e)
+  }
+}
 
 // ── Lens 1 Lists: Progress vs Goal ──
 const achievingList = computed(() => rawStudentsList.value.filter(p => p.progressQuadrant === 'achieving'))
@@ -1423,7 +1659,7 @@ const seatingHistogram = computed(() => {
 /* Bottom Ribbon */
 .mindset-summary-ribbon {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: 10px;
 }
 
@@ -1690,5 +1926,237 @@ const seatingHistogram = computed(() => {
   color: var(--text-secondary);
   text-align: right;
   white-space: nowrap;
+}
+
+/* ── Unsubmitted Survey Styles ── */
+.mindset-unsubmitted-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 6px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  background: rgba(255, 149, 0, 0.12);
+  color: #ff9500;
+  border: 1px solid rgba(255, 149, 0, 0.3);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  vertical-align: middle;
+}
+
+.mindset-unsubmitted-pill:hover,
+.mindset-unsubmitted-pill--active {
+  background: rgba(255, 149, 0, 0.22);
+  border-color: #ff9500;
+}
+
+.mindset-ribbon-tile--unsubmitted {
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border-left: 3px solid #ff9500;
+  user-select: none;
+}
+
+.mindset-ribbon-tile--unsubmitted:hover {
+  background: var(--surface-hover, rgba(255, 255, 255, 0.04));
+  border-color: #ff9500;
+}
+
+.mindset-ribbon-tile--unsubmitted.mindset-ribbon-tile--active {
+  background: rgba(255, 149, 0, 0.08);
+  border-color: #ff9500;
+}
+
+.mindset-ribbon-tile--unsubmitted .mindset-ribbon-count {
+  color: #ff9500;
+}
+
+.mindset-ribbon-chevron {
+  display: inline-block;
+  margin-left: 3px;
+  vertical-align: middle;
+}
+
+.mindset-unsubmitted-panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid #ff9500;
+  border-radius: 8px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  animation: mindsetPanelSlide 0.2s ease;
+}
+
+@keyframes mindsetPanelSlide {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.mindset-unsubmitted-panel__header,
+.mindset-unsubmitted-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.mindset-unsubmitted-panel__title-group,
+.mindset-unsubmitted-card__title-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.mindset-unsubmitted-panel__title,
+.mindset-unsubmitted-card__title {
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: var(--text);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.mindset-unsubmitted-panel__sub,
+.mindset-unsubmitted-card__sub {
+  font-size: 0.725rem;
+  color: var(--text-secondary);
+}
+
+.mindset-unsubmitted-panel__actions,
+.mindset-unsubmitted-card__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.mindset-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 9px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  border-radius: 6px;
+  background: var(--bg-secondary);
+  color: var(--text);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.mindset-action-btn:hover {
+  border-color: var(--text-secondary);
+  background: var(--surface-hover, rgba(255, 255, 255, 0.06));
+}
+
+.mindset-action-btn--primary {
+  background: rgba(0, 113, 227, 0.12);
+  color: #0071e3;
+  border-color: rgba(0, 113, 227, 0.3);
+}
+
+.mindset-action-btn--primary:hover {
+  background: rgba(0, 113, 227, 0.2);
+  border-color: #0071e3;
+}
+
+.mindset-unsubmitted-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-top: 3px solid #ff9500;
+  border-radius: 8px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.mindset-quad-card__badge--unsubmitted {
+  color: #ff9500;
+  border-color: rgba(255, 149, 0, 0.35);
+  background: rgba(255, 149, 0, 0.1);
+}
+
+.mindset-unsubmitted-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.mindset-unsubmitted-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 3px 9px 3px 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-size: 0.78rem;
+  color: var(--text);
+  user-select: none;
+}
+
+.mindset-unsubmitted-chip:hover {
+  border-color: #ff9500;
+  background: var(--surface-hover, rgba(255, 255, 255, 0.08));
+  transform: translateY(-1px);
+}
+
+.mindset-chip-avatar {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(255, 149, 0, 0.15);
+  color: #ff9500;
+  font-size: 0.65rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  letter-spacing: -0.02em;
+}
+
+.mindset-chip-name {
+  font-weight: 500;
+  color: var(--text);
+}
+
+.mindset-chip-email {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  margin-left: 2px;
+}
+
+.mindset-chip-mail {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  color: var(--text-secondary);
+  margin-left: 2px;
+  transition: color 0.15s, background 0.15s;
+}
+
+.mindset-chip-mail:hover {
+  color: #0071e3;
+  background: rgba(0, 113, 227, 0.1);
 }
 </style>

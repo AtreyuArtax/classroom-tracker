@@ -320,7 +320,9 @@
             :sidebar-students="sidebarStudents"
             :class-grades="classGrades"
             :is-sbar="isSBAR"
+            :class-id="props.reportClass?.classId || props.classId"
             @select-student="$emit('select-student', $event)"
+            @survey-imported="$emit('survey-imported', $event)"
           />
         </div>
 
@@ -435,7 +437,8 @@ const props = defineProps({
   periodEvents: { type: Array, default: () => [] },
   selectedPeriod: { type: String, default: 'week' },
   activeVisualTab: { type: String, default: null },
-  activeGradeFilter: { type: String, default: 'all' }
+  activeGradeFilter: { type: String, default: 'all' },
+  classId: { type: String, default: '' }
 })
 
 const emit = defineEmits([
@@ -444,7 +447,8 @@ const emit = defineEmits([
   'toggle-followup-expand',
   'toggle-longtrips-expand',
   'toggle-show-completed',
-  'toggle-note-complete'
+  'toggle-note-complete',
+  'survey-imported'
 ])
 
 const followUpExpandedLocal = ref(false)

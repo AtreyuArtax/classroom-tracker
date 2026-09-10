@@ -75,6 +75,39 @@
 
         <!-- Parsed Results Preview -->
         <div v-if="parsedResult" class="sism-preview">
+          <!-- Active Loaded File Indicator -->
+          <div v-if="loadedFileName" class="sism-active-file-card">
+            <div class="sism-active-file-left">
+              <FileSpreadsheet :size="18" class="sism-file-icon" />
+              <div class="sism-active-file-details">
+                <div class="sism-active-file-name">
+                  {{ loadedFileName }}
+                </div>
+                <div class="sism-active-file-sub">
+                  Target Class: <strong>{{ currentClassName }}</strong> ({{ availableRosterStudents.length }} enrolled)
+                </div>
+              </div>
+            </div>
+            <div class="sism-active-file-actions">
+              <button 
+                type="button" 
+                class="sism-btn-mini" 
+                @click="reScanRoster"
+                title="Re-scan current class roster against this loaded file"
+              >
+                <RefreshCw :size="12" /> Re-scan Class
+              </button>
+              <button 
+                type="button" 
+                class="sism-btn-mini sism-btn-mini--danger" 
+                @click="clearLoadedFile"
+                title="Clear loaded file and choose a new one"
+              >
+                <X :size="12" /> Clear File
+              </button>
+            </div>
+          </div>
+
           <!-- Summary Metrics -->
           <div class="sism-stats-grid">
             <div class="sism-stat-card sism-stat-card--success">
@@ -317,12 +350,14 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import BaseModal from '../BaseModal.vue'
 import { saveAs } from 'file-saver'
 import {
   UploadCloud,
   FileText,
+  FileSpreadsheet,
+  X,
   Sparkles,
   Download,
   Clipboard,
@@ -346,7 +381,9 @@ import { useMessage } from '../../composables/useMessage.js'
 
 const props = defineProps({
   show: { type: Boolean, default: false },
-  initialTab: { type: String, default: 'import' }
+  initialTab: { type: String, default: 'import' },
+  classId: { type: String, default: '' },
+  rosterStudents: { type: Array, default: null }
 })
 
 const emit = defineEmits(['close', 'imported'])
@@ -358,14 +395,33 @@ const copiedText = ref(false)
 const showQuestionsList = ref(false)
 const isSaving = ref(false)
 
+const rawSurveyRows = ref(null)
+const loadedFileName = ref('')
+const lastScannedClassId = ref('')
+
 const parsedResult = ref(null)
 const parseError = ref(null)
 
-const { sortedRoster, activeClass, importStudentSurveys } = useClassroom()
+const { sortedRoster, activeClass, classList, importStudentSurveys } = useClassroom()
 const { alert } = useMessage()
 
+const currentClassId = computed(() => {
+  return props.classId || activeClass.value?.classId || ''
+})
+
 const availableRosterStudents = computed(() => {
+  if (props.rosterStudents && Array.isArray(props.rosterStudents) && props.rosterStudents.length > 0) {
+    return props.rosterStudents
+  }
   return sortedRoster.value || []
+})
+
+const currentClassName = computed(() => {
+  if (currentClassId.value && classList.value) {
+    const c = classList.value.find(item => item.classId === currentClassId.value)
+    if (c?.name) return c.name
+  }
+  return activeClass.value?.name || 'Current Class'
 })
 
 function isClassOnlyComms(val) {
@@ -404,6 +460,51 @@ async function copyQuestionsText() {
   }
 }
 
+function reScanRoster() {
+  if (!rawSurveyRows.value || rawSurveyRows.value.length < 2) return
+  if (!availableRosterStudents.value || availableRosterStudents.value.length === 0) {
+    parsedResult.value = null
+    return
+  }
+  parseError.value = null
+  try {
+    const res = parseStudentInfoRows(rawSurveyRows.value, availableRosterStudents.value)
+    parsedResult.value = res
+    lastScannedClassId.value = currentClassId.value
+  } catch (err) {
+    console.error('Re-scan error:', err)
+    parseError.value = err.message || 'Failed to scan survey responses for current class.'
+  }
+}
+
+function clearLoadedFile() {
+  rawSurveyRows.value = null
+  loadedFileName.value = ''
+  lastScannedClassId.value = ''
+  parsedResult.value = null
+  parseError.value = null
+}
+
+watch([currentClassId, availableRosterStudents], ([newClassId]) => {
+  if (rawSurveyRows.value && rawSurveyRows.value.length >= 2) {
+    if (lastScannedClassId.value !== newClassId) {
+      reScanRoster()
+    }
+  } else {
+    parsedResult.value = null
+  }
+})
+
+watch(() => props.show, (isOpen) => {
+  if (isOpen) {
+    if (rawSurveyRows.value && rawSurveyRows.value.length >= 2) {
+      if (lastScannedClassId.value !== currentClassId.value) {
+        reScanRoster()
+      }
+    }
+  }
+})
+
 async function handleFile(file) {
   parseError.value = null
   parsedResult.value = null
@@ -425,8 +526,10 @@ async function handleFile(file) {
       throw new Error('The selected file does not contain any survey data rows.')
     }
 
-    const res = parseStudentInfoRows(rows, availableRosterStudents.value)
-    parsedResult.value = res
+    rawSurveyRows.value = rows
+    loadedFileName.value = file.name
+
+    reScanRoster()
   } catch (err) {
     console.error('Failed to parse survey file:', err)
     parseError.value = err.message || 'Failed to parse file. Please verify it is a valid Microsoft Forms export.'
@@ -478,7 +581,8 @@ function assignUnmatchedToStudent(unmatchedIdx, studentId) {
 
 async function applyImport() {
   if (!parsedResult.value || !parsedResult.value.matchedRecords.length) return
-  if (!activeClass.value?.classId) return
+  const targetClassId = currentClassId.value
+  if (!targetClassId) return
 
   isSaving.value = true
   try {
@@ -487,10 +591,10 @@ async function applyImport() {
       surveyData: r.surveyData
     }))
 
-    await importStudentSurveys(activeClass.value.classId, payload)
-    emit('imported', payload.length)
+    await importStudentSurveys(targetClassId, payload)
+    emit('imported', { count: payload.length, classId: targetClassId })
     emit('close')
-    await alert(`Successfully imported intake survey data for ${payload.length} students!`, 'Import Complete')
+    await alert(`Successfully imported intake survey data for ${payload.length} students into ${currentClassName.value}!`, 'Import Complete')
   } catch (err) {
     console.error('Failed to import surveys:', err)
     await alert('Failed to save survey data. Please try again.')
@@ -1119,5 +1223,85 @@ async function applyImport() {
 
 .sism-btn--ghost:hover {
   color: var(--text);
+}
+
+/* Active File Bar */
+.sism-active-file-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 10px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--primary, #0071e3);
+  border-radius: var(--radius-sm, 8px);
+}
+
+.sism-active-file-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sism-file-icon {
+  color: #34c759;
+  flex-shrink: 0;
+}
+
+.sism-active-file-details {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sism-active-file-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text);
+  word-break: break-all;
+}
+
+.sism-active-file-sub {
+  font-size: 0.74rem;
+  color: var(--text-secondary);
+}
+
+.sism-active-file-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sism-btn-mini {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  font-size: 0.74rem;
+  font-weight: 500;
+  border-radius: 6px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.sism-btn-mini:hover {
+  background: var(--surface-hover, rgba(255, 255, 255, 0.08));
+  border-color: var(--text-secondary);
+}
+
+.sism-btn-mini--danger {
+  color: #ff3b30;
+  border-color: rgba(255, 59, 48, 0.3);
+  background: rgba(255, 59, 48, 0.08);
+}
+
+.sism-btn-mini--danger:hover {
+  background: rgba(255, 59, 48, 0.18);
+  border-color: #ff3b30;
 }
 </style>

@@ -183,6 +183,7 @@
     <StudentInfoSurveyModal
       :show="showSurveyModal"
       initial-tab="import"
+      :class-id="props.student?.classId"
       @close="showSurveyModal = false"
       @imported="onBatchImported"
     />

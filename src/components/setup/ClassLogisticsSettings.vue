@@ -812,6 +812,8 @@
     <!-- Student Information Survey & MS Forms Template Modal -->
     <StudentInfoSurveyModal
       :show="isStudentSurveyOpen"
+      :class-id="activeClass?.classId"
+      :roster-students="sortedRoster"
       @close="isStudentSurveyOpen = false"
     />
     </div>

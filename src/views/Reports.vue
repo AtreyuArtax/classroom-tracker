@@ -155,6 +155,7 @@
             @toggle-longtrips-expand="longTripsExpanded = !longTripsExpanded"
             @toggle-show-completed="showCompletedNotes = !showCompletedNotes"
             @toggle-note-complete="onToggleNoteComplete"
+            @survey-imported="onSurveyImported"
           />
         </template>
 
@@ -476,6 +477,16 @@ watch(selectedPeriod, () => {
 async function onSelectStudent(studentId) {
   rightMode.value = 'dossier'
   await dossier.loadStudent(sidebarClassId.value, studentId)
+}
+
+async function onSurveyImported() {
+  if (sidebarClassId.value) {
+    await dossier.loadSidebarClass(sidebarClassId.value)
+    const target = classList.value?.find(c => c.classId === sidebarClassId.value)
+    if (target) {
+      await loadGradebook(target, activeSubjectId.value)
+    }
+  }
 }
 
 const showPrintModal = ref(false)

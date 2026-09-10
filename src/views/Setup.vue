@@ -141,7 +141,7 @@
                   <span class="setup__badge setup__badge--new" style="font-family: monospace; font-size: 0.78rem;">v{{ APP_VERSION }}</span>
                 </div>
                 <div style="font-size: 0.75rem; color: var(--text-secondary);">
-                  Build: {{ BUILD_DATE }} · Schema v{{ SCHEMA_VERSION }}
+                  Schema v{{ SCHEMA_VERSION }}
                 </div>
               </div>
               <button 
@@ -866,7 +866,7 @@ import { useMessage } from '../composables/useMessage.js'
 import { detectGradeFromClassName } from '../composables/useElementary.js'
 import { useTheme } from '../composables/useTheme.js'
 import { getDB } from '../db/index.js'
-import { APP_VERSION, BUILD_DATE, SCHEMA_VERSION, forceAppUpdate } from '../utils/appVersion.js'
+import { APP_VERSION, SCHEMA_VERSION, forceAppUpdate } from '../utils/appVersion.js'
 
 const { themePreference, setTheme } = useTheme()
 const isReloading = ref(false)

@@ -312,7 +312,7 @@ export async function parseXlsxToRows(arrayBuffer) {
     const rows = extractRowsFromWorksheet(workbook.worksheets[0])
     if (rows && rows.length > 0) return rows
   } catch (err) {
-    console.warn('ExcelJS direct load failed (falling back to direct XML extraction):', err?.message)
+    console.debug('ExcelJS direct load fallback (falling back to direct XML extraction):', err?.message)
   }
 
   // Attempt 2: Direct ZIP XML extraction (fast, robust against all MS Forms and Excel Online namespaces)
@@ -322,7 +322,7 @@ export async function parseXlsxToRows(arrayBuffer) {
       return directRows
     }
   } catch (directErr) {
-    console.warn('Direct XML extraction failed (attempting sanitized ExcelJS load):', directErr?.message)
+    console.debug('Direct XML extraction fallback (attempting sanitized ExcelJS load):', directErr?.message)
   }
 
   // Attempt 3: Sanitized ExcelJS retry as fallback
@@ -335,7 +335,7 @@ export async function parseXlsxToRows(arrayBuffer) {
       if (rows && rows.length > 0) return rows
     }
   } catch (retryErr) {
-    console.warn('ExcelJS sanitized retry failed:', retryErr?.message)
+    console.debug('ExcelJS sanitized retry fallback:', retryErr?.message)
   }
 
   return []

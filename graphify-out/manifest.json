@@ -30,8 +30,8 @@
     "semantic_hash": "88c406405897844f80881d296bf93ee4"
   },
   "package.json": {
-    "mtime": 1788313659.6615036,
-    "ast_hash": "5804056890e99ba336b43740b6081c45",
+    "mtime": 1789060409.0401955,
+    "ast_hash": "4fe2c78511d2201ef9cd7d6635f76869",
     "semantic_hash": ""
   },
   "public/manifest.json": {
@@ -345,8 +345,8 @@
     "semantic_hash": ""
   },
   "src/views/Reports.vue": {
-    "mtime": 1788795756.8465114,
-    "ast_hash": "6a0be1b6aea8acc20ca77b0b6139fb9b",
+    "mtime": 1789060905.4483767,
+    "ast_hash": "5c343e3f55b8d1273e91f1d4845c1d85",
     "semantic_hash": ""
   },
   "src/views/ScanStation.vue": {
@@ -355,8 +355,8 @@
     "semantic_hash": ""
   },
   "src/views/Setup.vue": {
-    "mtime": 1789058503.8527868,
-    "ast_hash": "c9530b44c3a760176d91c2ea117bcc1e",
+    "mtime": 1789060378.797459,
+    "ast_hash": "ed6af5add3e39ab3870abde0bffc449b",
     "semantic_hash": ""
   },
   "tmp/test_dates.js": {
@@ -375,8 +375,8 @@
     "semantic_hash": "61bd31a2b0ac08f10f13c932b32d6ca1"
   },
   "vite.config.js": {
-    "mtime": 1789058468.9322627,
-    "ast_hash": "2702fd4324d1c23b825a3b0bb0dee89e",
+    "mtime": 1789060400.589748,
+    "ast_hash": "7149c91bdb456be73380f3a22b3d3461",
     "semantic_hash": ""
   },
   "src/components/PrintGradesGridModal.vue": {
@@ -445,8 +445,8 @@
     "semantic_hash": ""
   },
   "src/components/setup/ClassLogisticsSettings.vue": {
-    "mtime": 1788975934.157661,
-    "ast_hash": "165a9396457b15a5979e2f0cd44bd8c2",
+    "mtime": 1789060919.011721,
+    "ast_hash": "e6e70b005d39a4ec638c97d10782c5a5",
     "semantic_hash": ""
   },
   "src/components/setup/DatabaseMaintenanceSettings.vue": {
@@ -495,8 +495,8 @@
     "semantic_hash": ""
   },
   "src/components/reports/ReportsClassOverview.vue": {
-    "mtime": 1788795756.8345838,
-    "ast_hash": "997aceaf99136719fbf9cf221e6211fc",
+    "mtime": 1789060882.8379047,
+    "ast_hash": "381cb9cfb4ebea8f31ded77697c3400a",
     "semantic_hash": ""
   },
   "src/components/reports/ReportsExportMenu.vue": {
@@ -1050,8 +1050,8 @@
     "semantic_hash": ""
   },
   "src/utils/learningSkillsCsvParser.js": {
-    "mtime": 1789059172.1252062,
-    "ast_hash": "33066cd8b286f267e7271cdd62eefd94",
+    "mtime": 1789060799.209943,
+    "ast_hash": "63d3747bd648f0cedd76a15395972211",
     "semantic_hash": ""
   },
   "src/utils/docxExport.js": {
@@ -1145,8 +1145,8 @@
     "semantic_hash": ""
   },
   "src/components/dossier/Student360IntakeCard.vue": {
-    "mtime": 1788313659.6838844,
-    "ast_hash": "713e82b7a3ef3167b2e55ff99af0e7ab",
+    "mtime": 1789060927.8153853,
+    "ast_hash": "d0355f108a50893f1226dd0d6972b488",
     "semantic_hash": ""
   },
   "src/components/dossier/StudentInfoEditModal.vue": {
@@ -1155,8 +1155,8 @@
     "semantic_hash": ""
   },
   "src/components/setup/StudentInfoSurveyModal.vue": {
-    "mtime": 1788313659.7122347,
-    "ast_hash": "5a189753454edc1bf992eea586e18873",
+    "mtime": 1789060843.4829736,
+    "ast_hash": "4b22c46e35d6875db3220a60f475c51c",
     "semantic_hash": ""
   },
   "src/utils/studentInfoCsvParser.js": {
@@ -1170,8 +1170,8 @@
     "semantic_hash": ""
   },
   "src/components/reports/StudentMindsetAnalytics.vue": {
-    "mtime": 1788313659.6995103,
-    "ast_hash": "e5ce715f793168a46aa923cbbec0cc51",
+    "mtime": 1789060864.3103456,
+    "ast_hash": "6a0e070ce20c5d8aca4b4cf8a5467e00",
     "semantic_hash": ""
   },
   "src/test_mission_critical_audit.js": {
@@ -1320,8 +1320,8 @@
     "semantic_hash": ""
   },
   "src/utils/appVersion.js": {
-    "mtime": 1789058462.0051157,
-    "ast_hash": "69374e9794a6431d476b3bc2aa083e81",
+    "mtime": 1789060388.3562489,
+    "ast_hash": "4d0ac4cd725080925c888fbe889957e9",
     "semantic_hash": ""
   }
 }
