@@ -75,6 +75,7 @@ export function parseStudentInfoRows(rows, rosterStudents = []) {
   // Find candidate column indices
   const emailColIndices = []
   const nameColIndices = []
+  const idColIndices = []
   let completionTimeCol = -1
 
   const fieldCols = {
@@ -126,8 +127,12 @@ export function parseStudentInfoRows(rows, rosterStudents = []) {
     // Metadata columns
     else if (/email|e-mail|upn|user\s*name|respondent(\s*email)?/i.test(headerLower)) {
       emailColIndices.push(idx)
+    } else if (/completion\s*time|submission\s*time/i.test(headerLower)) {
+      completionTimeCol = idx
     } else if (/completion|submission|start\s*time|date|timestamp/i.test(headerLower) && completionTimeCol === -1) {
       completionTimeCol = idx
+    } else if (/student\s*(id|number|#)|id\s*number|oen/i.test(headerLower)) {
+      idColIndices.push(idx)
     } else if (/(^|\b)name(\b|$)|student\s*name|full\s*name|respondent(\s*name)?|display\s*name/i.test(headerLower)) {
       nameColIndices.push(idx)
     }
@@ -199,9 +204,10 @@ export function parseStudentInfoRows(rows, rosterStudents = []) {
   for (let r = 1; r < rows.length; r++) {
     const row = rows[r]
     
-    // Extract potential emails and names
+    // Extract potential emails, names, and student IDs
     const emails = emailColIndices.map(idx => String(row[idx] || '').trim()).filter(Boolean)
     const names = nameColIndices.map(idx => String(row[idx] || '').trim()).filter(Boolean)
+    const studentIds = idColIndices.map(idx => String(row[idx] || '').trim()).filter(Boolean)
     const rawDate = completionTimeCol !== -1 ? String(row[completionTimeCol] || '').trim() : ''
 
     const confObj = fieldCols.courseConfidence !== -1 ? normalizeConfidence(row[fieldCols.courseConfidence]) : { rating: null, label: '' }
@@ -220,7 +226,7 @@ export function parseStudentInfoRows(rows, rosterStudents = []) {
     }
 
     // Skip ghost / blank rows with no identifiers and no response content
-    const hasAnyContent = emails.length > 0 || names.length > 0 || Object.entries(surveyData).some(([k, v]) => k !== 'completedAt' && v !== null && v !== '')
+    const hasAnyContent = emails.length > 0 || names.length > 0 || studentIds.length > 0 || Object.entries(surveyData).some(([k, v]) => k !== 'completedAt' && v !== null && v !== '')
     if (!hasAnyContent) {
       continue
     }
@@ -229,19 +235,31 @@ export function parseStudentInfoRows(rows, rosterStudents = []) {
     let matchedStudent = null
     let matchMethod = null
 
-    // 1. Match by Email
-    for (const em of emails) {
-      const cleanEm = em.toLowerCase()
-      if (emailIndex.has(cleanEm)) {
-        matchedStudent = emailIndex.get(cleanEm)
-        matchMethod = 'email'
+    // 0. Match by Student ID (if student ID column present)
+    for (const sid of studentIds) {
+      const cleanSid = sid.toLowerCase()
+      if (idIndex.has(cleanSid)) {
+        matchedStudent = idIndex.get(cleanSid)
+        matchMethod = 'student_id'
         break
       }
-      const uName = cleanEm.split('@')[0].trim()
-      if (usernameIndex.has(uName)) {
-        matchedStudent = usernameIndex.get(uName)
-        matchMethod = 'username'
-        break
+    }
+
+    // 1. Match by Email
+    if (!matchedStudent) {
+      for (const em of emails) {
+        const cleanEm = em.toLowerCase()
+        if (emailIndex.has(cleanEm)) {
+          matchedStudent = emailIndex.get(cleanEm)
+          matchMethod = 'email'
+          break
+        }
+        const uName = cleanEm.split('@')[0].trim()
+        if (usernameIndex.has(uName)) {
+          matchedStudent = usernameIndex.get(uName)
+          matchMethod = 'username'
+          break
+        }
       }
     }
 

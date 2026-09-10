@@ -92,17 +92,69 @@ export function parseCsvRows(text) {
 }
 
 /**
- * Parses an Excel .xlsx ArrayBuffer into a 2D array of row strings.
- * @param {ArrayBuffer} arrayBuffer
- * @returns {Promise<Array<Array<string>>>}
+ * Decodes XML character entities into plain string.
+ * @param {string} str
+ * @returns {string}
  */
-export async function parseXlsxToRows(arrayBuffer) {
-  const ExcelJS = (await import('exceljs')).default || (await import('exceljs'))
-  const workbook = new ExcelJS.Workbook()
-  await workbook.xlsx.load(arrayBuffer)
-  const worksheet = workbook.worksheets[0]
-  if (!worksheet) return []
+function decodeXmlEntities(str) {
+  if (!str) return ''
+  return str
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'")
+    .replace(/&#(\d+);/g, (_, num) => String.fromCharCode(parseInt(num, 10)))
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)))
+}
 
+/**
+ * Converts spreadsheet column reference (e.g. "A", "Z", "AA") to 0-based index.
+ * @param {string} colLetters
+ * @returns {number}
+ */
+function colLettersToIndex(colLetters) {
+  let idx = 0
+  for (let i = 0; i < colLetters.length; i++) {
+    idx = idx * 26 + (colLetters.charCodeAt(i) - 64)
+  }
+  return idx - 1
+}
+
+/**
+ * Strips non-standard document properties (docProps/) from XLSX zip buffer.
+ * Microsoft Forms and Excel Online often inject non-standard metadata nodes
+ * (such as <lastModifiedBy> without namespace prefixes) which cause strict
+ * XML parsers like exceljs to throw "Unexpected xml node in parseOpen".
+ * @param {ArrayBuffer} arrayBuffer
+ * @returns {Promise<ArrayBuffer|null>}
+ */
+async function stripDocPropsFromXlsx(arrayBuffer) {
+  try {
+    const JSZip = (await import('jszip')).default || (await import('jszip'))
+    const zip = await JSZip.loadAsync(arrayBuffer)
+    let removedAny = false
+    Object.keys(zip.files).forEach(filename => {
+      if (/^(\/)?docprops\//i.test(filename)) {
+        zip.remove(filename)
+        removedAny = true
+      }
+    })
+    if (!removedAny) return null
+    return await zip.generateAsync({ type: 'arraybuffer' })
+  } catch (err) {
+    console.warn('Could not strip docProps metadata:', err)
+    return null
+  }
+}
+
+/**
+ * Extracts 2D array of string rows from an ExcelJS worksheet.
+ * @param {Object} worksheet
+ * @returns {Array<Array<string>>}
+ */
+function extractRowsFromWorksheet(worksheet) {
+  if (!worksheet) return []
   const rows = []
   worksheet.eachRow({ includeEmpty: false }, (row) => {
     const rowData = []
@@ -124,6 +176,147 @@ export async function parseXlsxToRows(arrayBuffer) {
     }
   })
   return rows
+}
+
+/**
+ * Resilient fallback to directly parse spreadsheet rows from XLSX zip
+ * in case ExcelJS encounters schema or styling errors.
+ * @param {ArrayBuffer} arrayBuffer
+ * @returns {Promise<Array<Array<string>>>}
+ */
+async function parseXlsxDirectlyFromZip(arrayBuffer) {
+  try {
+    const JSZip = (await import('jszip')).default || (await import('jszip'))
+    const zip = await JSZip.loadAsync(arrayBuffer)
+
+    // 1. Shared Strings
+    const sharedStrings = []
+    const ssFile = zip.file('xl/sharedStrings.xml') || zip.file('/xl/sharedStrings.xml') ||
+      Object.values(zip.files).find(f => /xl\/sharedstrings\.xml$/i.test(f.name))
+
+    if (ssFile) {
+      const ssXml = await ssFile.async('string')
+      const siMatches = ssXml.match(/<si\b[\s\S]*?<\/si>/gi) || []
+      for (const si of siMatches) {
+        const tMatches = si.match(/<t\b[^>]*>([\s\S]*?)<\/t>/gi) || []
+        const text = tMatches.map(t => {
+          const inner = t.replace(/^<t\b[^>]*>/i, '').replace(/<\/t>$/i, '')
+          return decodeXmlEntities(inner)
+        }).join('')
+        sharedStrings.push(text)
+      }
+    }
+
+    // 2. Locate first worksheet
+    let sheetFile = zip.file('xl/worksheets/sheet1.xml') || zip.file('/xl/worksheets/sheet1.xml')
+    if (!sheetFile) {
+      sheetFile = Object.values(zip.files).find(f => /xl\/worksheets\/sheet\d+\.xml$/i.test(f.name))
+    }
+    if (!sheetFile) return []
+
+    const sheetXml = await sheetFile.async('string')
+    const rows = []
+    const rowMatches = sheetXml.match(/<row\b[\s\S]*?<\/row>/gi) || []
+
+    for (const rowTag of rowMatches) {
+      const cellMatches = rowTag.match(/<c\b[\s\S]*?(?:<\/c>|\/>)/gi) || []
+      const rowData = []
+      let maxColIdx = -1
+
+      for (const cellTag of cellMatches) {
+        const rAttr = cellTag.match(/\br=\"([A-Za-z]+)(\d+)\"/)
+        const tAttr = cellTag.match(/\bt=\"([^\"]+)\"/)
+
+        let colIdx = -1
+        if (rAttr) {
+          colIdx = colLettersToIndex(rAttr[1].toUpperCase())
+        } else {
+          colIdx = maxColIdx + 1
+        }
+        maxColIdx = Math.max(maxColIdx, colIdx)
+
+        const type = tAttr ? tAttr[1] : ''
+        let cellVal = ''
+
+        if (type === 's') {
+          const vMatch = cellTag.match(/<v>(\d+)<\/v>/i)
+          if (vMatch) {
+            const sIdx = parseInt(vMatch[1], 10)
+            cellVal = sharedStrings[sIdx] !== undefined ? sharedStrings[sIdx] : ''
+          }
+        } else if (type === 'inlineStr') {
+          const tMatch = cellTag.match(/<t\b[^>]*>([\s\S]*?)<\/t>/i)
+          if (tMatch) {
+            cellVal = decodeXmlEntities(tMatch[1])
+          }
+        } else if (type === 'b') {
+          const vMatch = cellTag.match(/<v>([01])<\/v>/i)
+          cellVal = vMatch && vMatch[1] === '1' ? 'TRUE' : 'FALSE'
+        } else {
+          const vMatch = cellTag.match(/<v>([\s\S]*?)<\/v>/i)
+          if (vMatch) {
+            cellVal = decodeXmlEntities(vMatch[1])
+          }
+        }
+
+        rowData[colIdx] = (cellVal || '').trim()
+      }
+
+      for (let i = 0; i < rowData.length; i++) {
+        if (rowData[i] === undefined) rowData[i] = ''
+      }
+
+      if (rowData.some(c => c && c.length > 0)) {
+        rows.push(rowData)
+      }
+    }
+
+    return rows
+  } catch (zipErr) {
+    console.error('Direct XLSX extraction failed:', zipErr)
+    return []
+  }
+}
+
+/**
+ * Parses an Excel .xlsx ArrayBuffer into a 2D array of row strings.
+ * Resilient against non-standard XML metadata generated by Microsoft Forms / Excel Online.
+ * @param {ArrayBuffer} arrayBuffer
+ * @returns {Promise<Array<Array<string>>>}
+ */
+export async function parseXlsxToRows(arrayBuffer) {
+  const ExcelJS = (await import('exceljs')).default || (await import('exceljs'))
+
+  // Attempt 1: Standard ExcelJS parse
+  try {
+    const workbook = new ExcelJS.Workbook()
+    await workbook.xlsx.load(arrayBuffer)
+    const rows = extractRowsFromWorksheet(workbook.worksheets[0])
+    if (rows && rows.length > 0) return rows
+  } catch (err) {
+    console.warn('ExcelJS direct load failed (attempting sanitized metadata retry):', err?.message)
+  }
+
+  // Attempt 2: Strip non-standard docProps metadata that causes XML parse crashes in ExcelJS
+  try {
+    const sanitizedBuffer = await stripDocPropsFromXlsx(arrayBuffer)
+    if (sanitizedBuffer) {
+      const cleanWb = new ExcelJS.Workbook()
+      await cleanWb.xlsx.load(sanitizedBuffer)
+      const rows = extractRowsFromWorksheet(cleanWb.worksheets[0])
+      if (rows && rows.length > 0) return rows
+    }
+  } catch (retryErr) {
+    console.warn('ExcelJS sanitized retry failed (attempting direct XML fallback):', retryErr?.message)
+  }
+
+  // Attempt 3: Direct ZIP XML extraction fallback
+  const directRows = await parseXlsxDirectlyFromZip(arrayBuffer)
+  if (directRows && directRows.length > 0) {
+    return directRows
+  }
+
+  return []
 }
 
 /**
@@ -174,6 +367,8 @@ export function parseLearningSkillsRows(rows, rosterStudents = []) {
     // Metadata columns
     else if (/email|e-mail|upn|user\s*name|respondent(\s*email)?/i.test(headerLower)) {
       emailColIndices.push(idx)
+    } else if (/completion\s*time|submission\s*time/i.test(headerLower)) {
+      completionTimeCol = idx
     } else if (/completion|submission|start\s*time|date|timestamp/i.test(headerLower) && completionTimeCol === -1) {
       completionTimeCol = idx
     } else if (/(^|\b)name(\b|$)|student\s*name|full\s*name|respondent(\s*name)?|display\s*name/i.test(headerLower)) {
