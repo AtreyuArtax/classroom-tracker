@@ -355,8 +355,8 @@
     "semantic_hash": ""
   },
   "src/views/Setup.vue": {
-    "mtime": 1788973194.5299435,
-    "ast_hash": "7996c980fda5bf52e21c08eee27205e4",
+    "mtime": 1789058503.8527868,
+    "ast_hash": "c9530b44c3a760176d91c2ea117bcc1e",
     "semantic_hash": ""
   },
   "tmp/test_dates.js": {
@@ -375,8 +375,8 @@
     "semantic_hash": "61bd31a2b0ac08f10f13c932b32d6ca1"
   },
   "vite.config.js": {
-    "mtime": 1788443911.154371,
-    "ast_hash": "0c5ccd637bbfc782297e266f194b3d40",
+    "mtime": 1789058468.9322627,
+    "ast_hash": "2702fd4324d1c23b825a3b0bb0dee89e",
     "semantic_hash": ""
   },
   "src/components/PrintGradesGridModal.vue": {
@@ -1050,8 +1050,8 @@
     "semantic_hash": ""
   },
   "src/utils/learningSkillsCsvParser.js": {
-    "mtime": 1789057442.6718876,
-    "ast_hash": "a545c8d621adfa1f2c2cb48c1aa29a9a",
+    "mtime": 1789059172.1252062,
+    "ast_hash": "33066cd8b286f267e7271cdd62eefd94",
     "semantic_hash": ""
   },
   "src/utils/docxExport.js": {
@@ -1160,8 +1160,8 @@
     "semantic_hash": ""
   },
   "src/utils/studentInfoCsvParser.js": {
-    "mtime": 1789057486.932351,
-    "ast_hash": "b2ce2b7ffe356e24e6b2b93719dc9311",
+    "mtime": 1789059187.9284313,
+    "ast_hash": "a547d3fab6a90f9e070cb32eada641cf",
     "semantic_hash": ""
   },
   "src/utils/studentInfoDocxExport.js": {
@@ -1317,6 +1317,11 @@
   "src/test_curriculum_library_stress_suite.js": {
     "mtime": 1788795756.8437648,
     "ast_hash": "475d8f79b9ed01584501bedb6b0db8ef",
+    "semantic_hash": ""
+  },
+  "src/utils/appVersion.js": {
+    "mtime": 1789058462.0051157,
+    "ast_hash": "69374e9794a6431d476b3bc2aa083e81",
     "semantic_hash": ""
   }
 }

@@ -10,7 +10,7 @@
  *  - Multi-submission deduplication (keeps newest completion timestamp)
  */
 
-import { parseCsvRows, parseXlsxToRows } from './learningSkillsCsvParser.js'
+import { parseCsvRows, parseXlsxToRows, formatExcelDateIfSerial } from './learningSkillsCsvParser.js'
 
 /**
  * Normalizes course confidence to { rating: number|null, label: string }
@@ -208,7 +208,7 @@ export function parseStudentInfoRows(rows, rosterStudents = []) {
     const emails = emailColIndices.map(idx => String(row[idx] || '').trim()).filter(Boolean)
     const names = nameColIndices.map(idx => String(row[idx] || '').trim()).filter(Boolean)
     const studentIds = idColIndices.map(idx => String(row[idx] || '').trim()).filter(Boolean)
-    const rawDate = completionTimeCol !== -1 ? String(row[completionTimeCol] || '').trim() : ''
+    const rawDate = completionTimeCol !== -1 ? formatExcelDateIfSerial(String(row[completionTimeCol] || '').trim()) : ''
 
     const confObj = fieldCols.courseConfidence !== -1 ? normalizeConfidence(row[fieldCols.courseConfidence]) : { rating: null, label: '' }
 

@@ -2,7 +2,17 @@ import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import { VitePWA } from 'vite-plugin-pwa'
 
+import fs from 'node:fs'
+
 const basePath = process.env.VITE_BASE_URL || '/classroom-tracker/'
+const pkg = JSON.parse(fs.readFileSync(new URL('./package.json', import.meta.url), 'utf-8'))
+const buildDate = new Date().toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+})
 
 /**
  * vite.config.js
@@ -15,6 +25,10 @@ const basePath = process.env.VITE_BASE_URL || '/classroom-tracker/'
  */
 
 export default defineConfig({
+    define: {
+        __APP_VERSION__: JSON.stringify(pkg.version || '0.1.0'),
+        __BUILD_DATE__: JSON.stringify(buildDate)
+    },
     plugins: [
         vue(),
 

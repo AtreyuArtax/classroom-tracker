@@ -133,6 +133,30 @@
               </p>
             </div>
 
+            <!-- Version & Update Status -->
+            <div class="setup__version-info-row" style="grid-column: 1 / -1; margin-top: 8px; padding-top: 14px; border-top: 1px solid var(--border-subtle, rgba(255,255,255,0.08)); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+              <div style="display: flex; flex-direction: column; gap: 3px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <span style="font-weight: 600; font-size: 0.88rem; color: var(--text);">Classroom Tracker</span>
+                  <span class="setup__badge setup__badge--new" style="font-family: monospace; font-size: 0.78rem;">v{{ APP_VERSION }}</span>
+                </div>
+                <div style="font-size: 0.75rem; color: var(--text-secondary);">
+                  Build: {{ BUILD_DATE }} · Schema v{{ SCHEMA_VERSION }}
+                </div>
+              </div>
+              <button 
+                type="button" 
+                class="setup__btn-ghost" 
+                style="padding: 7px 14px; font-size: 0.82rem; display: flex; align-items: center; gap: 6px;"
+                :disabled="isReloading"
+                @click="onForceReload"
+                title="Clears local browser cache and reloads the latest app version"
+              >
+                <RefreshCw :size="14" :class="{ 'setup-spin': isReloading }" />
+                {{ isReloading ? 'Purging Cache & Reloading...' : 'Check for Updates / Hard Refresh' }}
+              </button>
+            </div>
+
           </div>
         </div>
 
@@ -827,6 +851,7 @@ import {
   GraduationCap,
   School,
   RefreshCcw,
+  RefreshCw,
   Pencil,
   Sun,
   Moon,
@@ -841,8 +866,15 @@ import { useMessage } from '../composables/useMessage.js'
 import { detectGradeFromClassName } from '../composables/useElementary.js'
 import { useTheme } from '../composables/useTheme.js'
 import { getDB } from '../db/index.js'
+import { APP_VERSION, BUILD_DATE, SCHEMA_VERSION, forceAppUpdate } from '../utils/appVersion.js'
 
 const { themePreference, setTheme } = useTheme()
+const isReloading = ref(false)
+
+async function onForceReload() {
+  isReloading.value = true
+  await forceAppUpdate()
+}
 
 const CalendarSettings            = defineAsyncComponent(() => import('../components/setup/CalendarSettings.vue'))
 const GradeBucketsSettings        = defineAsyncComponent(() => import('../components/setup/GradeBucketsSettings.vue'))
