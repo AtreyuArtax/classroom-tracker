@@ -74,23 +74,23 @@
           </div>
         </div>
 
-        <!-- Loading -->
-        <div v-if="dossier.loading.value" class="reports__loading" aria-live="polite">Loading…</div>
-
-        <!-- Placeholder states -->
-        <div v-else-if="!sidebarClassId || filteredClassList.length === 0" class="reports__placeholder">
-          <BarChart2 :size="48" class="reports__placeholder-icon" />
-          <p>Select a class to view reports and analytics</p>
-        </div>
-
         <!-- ── PILLAR 3: STUDENT 360 DOSSIER ────────────────────────── -->
-        <template v-else-if="rightMode === 'dossier' && dossier.selectedStudentId.value">
+        <template v-if="rightMode === 'dossier' && dossier.selectedStudentId.value">
           <Student360 
             :student-id="dossier.selectedStudentId.value" 
             :class-id="sidebarClassId"
             @close="switchPillar('overview')"
           />
         </template>
+
+        <!-- Loading -->
+        <div v-else-if="dossier.loading.value" class="reports__loading" aria-live="polite">Loading…</div>
+
+        <!-- Placeholder states -->
+        <div v-else-if="!sidebarClassId || filteredClassList.length === 0" class="reports__placeholder">
+          <BarChart2 :size="48" class="reports__placeholder-icon" />
+          <p>Select a class to view reports and analytics</p>
+        </div>
 
         <!-- ── PILLAR 2: DOCUMENTS & COMMUNICATION HUB ──────────────── -->
         <template v-else-if="rightMode === 'printhub'">

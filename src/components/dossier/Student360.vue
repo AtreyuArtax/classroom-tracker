@@ -1053,7 +1053,7 @@ onUnmounted(() => {
   resetTimer = setTimeout(() => {
     activeTab.value = 'summary'
     selectedPeriod.value = 'semester'
-  }, 100)
+  }, 500)
 })
 </script>
 
