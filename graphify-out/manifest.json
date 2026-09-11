@@ -240,8 +240,8 @@
     "semantic_hash": ""
   },
   "src/composables/useClassroom.js": {
-    "mtime": 1788975911.0774832,
-    "ast_hash": "1489c47c154a78b51a7bf2de2b0bfaa7",
+    "mtime": 1789127363.6329732,
+    "ast_hash": "86e5f2e84a8aa2c27438bf693dfc6a57",
     "semantic_hash": ""
   },
   "src/composables/useGradebook.js": {
@@ -440,8 +440,8 @@
     "semantic_hash": ""
   },
   "src/composables/useRosterOperations.js": {
-    "mtime": 1788975860.6139083,
-    "ast_hash": "75a96918932d6c71a81adf89dae14ddf",
+    "mtime": 1789127354.485792,
+    "ast_hash": "9702f0d57c14c5607d9062fe1ab7e8d2",
     "semantic_hash": ""
   },
   "src/components/setup/ClassLogisticsSettings.vue": {
@@ -485,8 +485,8 @@
     "semantic_hash": ""
   },
   "src/components/dossier/Student360ProfileTab.vue": {
-    "mtime": 1788974465.8267927,
-    "ast_hash": "859c6c0fbd2934db84faa4cefae973f9",
+    "mtime": 1789127426.5929692,
+    "ast_hash": "049b0b02bde4e93d609c957beb891d19",
     "semantic_hash": ""
   },
   "src/components/reports/ReportsBatchPrintModal.vue": {
@@ -1145,8 +1145,8 @@
     "semantic_hash": ""
   },
   "src/components/dossier/Student360IntakeCard.vue": {
-    "mtime": 1789060927.8153853,
-    "ast_hash": "d0355f108a50893f1226dd0d6972b488",
+    "mtime": 1789127404.5281916,
+    "ast_hash": "08bcd2820518903f3e9aaa24c825a24e",
     "semantic_hash": ""
   },
   "src/components/dossier/StudentInfoEditModal.vue": {
@@ -1322,6 +1322,11 @@
   "src/utils/appVersion.js": {
     "mtime": 1789060388.3562489,
     "ast_hash": "4d0ac4cd725080925c888fbe889957e9",
+    "semantic_hash": ""
+  },
+  "src/components/dossier/StudentRosterEditModal.vue": {
+    "mtime": 1789127382.5437768,
+    "ast_hash": "24579603e933690f426103be454c9a16",
     "semantic_hash": ""
   }
 }

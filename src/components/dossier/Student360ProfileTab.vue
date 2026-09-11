@@ -71,7 +71,7 @@
     </div>
 
     <!-- Getting to Know You (Day 1 Intake Survey) -->
-    <Student360IntakeCard :student="student" />
+    <Student360IntakeCard :student="student" @updated="emit('updated', $event)" />
 
     <!-- Edit Contacts Modal -->
     <BaseModal
@@ -374,7 +374,7 @@ const props = defineProps({
   formattedGrade: { type: String, default: 'N/A' }
 })
 
-const emit = defineEmits(['update-note', 'update-iep', 'update-accommodations', 'update-contacts'])
+const emit = defineEmits(['update-note', 'update-iep', 'update-accommodations', 'update-contacts', 'updated'])
 
 const showAccommodationsModal = ref(false)
 const localModifiedSubjectGrades = ref({})

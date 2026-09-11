@@ -615,3 +615,24 @@ export async function importStudentSurveys(classId, surveyRecords) {
     }
 }
 
+/**
+ * Updates a student's basic roster identity (first name, last name, gradeLevel, courseCode, etc.)
+ *
+ * @param {string} studentId
+ * @param {Object} updates Map of student fields to update (e.g. { firstName: 'Alex', lastName: 'Smith' })
+ * @returns {Promise<void>}
+ */
+export async function updateStudentProfile(studentId, updates) {
+    try {
+        const classId = activeClass.value?.classId
+        if (!classId) return
+        await classService.patchStudent(classId, studentId, updates)
+        syncStudentAcrossRefs(classId, studentId, updates)
+    } catch (err) {
+        console.error('updateStudentProfile failed:', err)
+        const { alert } = useMessage()
+        await alert('Failed to update student roster profile.')
+        throw err
+    }
+}
+

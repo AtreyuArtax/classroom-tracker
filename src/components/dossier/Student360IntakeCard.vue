@@ -83,10 +83,31 @@
                 <template v-if="isPreferredNameDifferent">
                   <strong>{{ preferredName }}</strong>
                   <span class="intake-name-diff-note">
-                    ⚠️ Differs from roster "{{ student.firstName }}"
+                    <AlertTriangle :size="12" class="intake-name-diff-icon" />
+                    <span>Differs from roster "{{ student.firstName }}"</span>
+                    <button
+                      type="button"
+                      class="intake-name-diff-edit-btn"
+                      @click="showRosterEditModal = true"
+                      title="Edit official roster name"
+                    >
+                      <Pencil :size="10" />
+                      <span>Edit</span>
+                    </button>
                   </span>
                 </template>
-                <span v-else class="text-muted">Same as roster ({{ student.firstName }})</span>
+                <span v-else class="intake-same-roster-row">
+                  <span class="text-muted">Same as roster ({{ student.firstName }})</span>
+                  <button
+                    type="button"
+                    class="intake-name-diff-edit-btn intake-name-diff-edit-btn--subtle"
+                    @click="showRosterEditModal = true"
+                    title="Edit official roster name"
+                  >
+                    <Pencil :size="10" />
+                    <span>Edit</span>
+                  </button>
+                </span>
               </span>
             </div>
 
@@ -173,6 +194,14 @@
     </div>
 
     <!-- Modals -->
+    <StudentRosterEditModal
+      :show="showRosterEditModal"
+      :student="student"
+      :preferred-name="preferredName"
+      @close="showRosterEditModal = false"
+      @saved="onRosterSaved"
+    />
+
     <StudentInfoEditModal
       :show="showEditModal"
       :student="student"
@@ -197,6 +226,8 @@ import {
   ChevronDown,
   ChevronUp,
   Edit2,
+  Pencil,
+  AlertTriangle,
   UploadCloud,
   Plus,
   Lock,
@@ -206,6 +237,7 @@ import {
   CheckCircle2
 } from 'lucide-vue-next'
 import StudentInfoEditModal from './StudentInfoEditModal.vue'
+import StudentRosterEditModal from './StudentRosterEditModal.vue'
 import StudentInfoSurveyModal from '../setup/StudentInfoSurveyModal.vue'
 import { formatLocalDisplay } from '../../utils/dates.js'
 
@@ -225,6 +257,7 @@ function toggleExpanded() {
 
 const showEditModal = ref(false)
 const showSurveyModal = ref(false)
+const showRosterEditModal = ref(false)
 
 const survey = computed(() => props.student?.intakeSurvey || {})
 const preferredName = computed(() => survey.value?.preferredName || props.student?.preferredName || '')
@@ -280,6 +313,10 @@ function formatShortSeat(val) {
 
 function onSurveySaved(newSurvey) {
   emit('updated', newSurvey)
+}
+
+function onRosterSaved(updates) {
+  emit('updated', updates)
 }
 
 function onBatchImported() {
@@ -591,10 +628,65 @@ function onBatchImported() {
 }
 
 .intake-name-diff-note {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   font-size: 0.75rem;
   color: #c97500;
   margin-left: 6px;
   font-weight: 500;
+  background: rgba(255, 149, 0, 0.1);
+  padding: 2px 7px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 149, 0, 0.25);
+}
+
+.intake-name-diff-icon {
+  flex-shrink: 0;
+  color: #c97500;
+}
+
+.intake-same-roster-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.intake-name-diff-edit-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  border: 1px solid rgba(201, 117, 0, 0.35);
+  background: var(--surface);
+  color: #9a5700;
+  font-size: 0.7rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-left: 2px;
+  line-height: 1.2;
+  transition: all 0.15s ease;
+}
+
+.intake-name-diff-edit-btn:hover {
+  background: #c97500;
+  color: #ffffff;
+  border-color: #c97500;
+}
+
+.intake-name-diff-edit-btn--subtle {
+  border-color: var(--border);
+  color: var(--text-secondary);
+  background: var(--bg-secondary);
+  opacity: 0.7;
+}
+
+.intake-name-diff-edit-btn--subtle:hover {
+  opacity: 1;
+  background: var(--primary);
+  color: #ffffff;
+  border-color: var(--primary);
 }
 
 .intake-comms-val {
