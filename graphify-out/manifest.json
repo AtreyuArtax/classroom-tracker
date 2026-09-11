@@ -55,8 +55,8 @@
     "semantic_hash": "292ba809cdc87ea16d7beff21d110324"
   },
   "src/App.vue": {
-    "mtime": 1788795756.8296037,
-    "ast_hash": "f71cd40e6f6c527bfc97a0a8eb5383c2",
+    "mtime": 1789148734.6387095,
+    "ast_hash": "560d04e4f23dc2c73b0e476dc35a03c4",
     "semantic_hash": ""
   },
   "src/components/AssessmentConversationModal.vue": {
@@ -240,8 +240,8 @@
     "semantic_hash": ""
   },
   "src/composables/useClassroom.js": {
-    "mtime": 1789127363.6329732,
-    "ast_hash": "86e5f2e84a8aa2c27438bf693dfc6a57",
+    "mtime": 1789148770.2832227,
+    "ast_hash": "2ca9139ab65e537134c48ff03b84c4ed",
     "semantic_hash": ""
   },
   "src/composables/useGradebook.js": {
@@ -320,9 +320,9 @@
     "semantic_hash": ""
   },
   "src/utils/icons.js": {
-    "mtime": 1776472682.869528,
-    "ast_hash": "bc048b92eaace0b0bc43f8e98aa3ae09",
-    "semantic_hash": "bc048b92eaace0b0bc43f8e98aa3ae09"
+    "mtime": 1789148697.5373614,
+    "ast_hash": "909d2dd9ae4c76a8dd051c5f4dc5bb4d",
+    "semantic_hash": ""
   },
   "src/utils/math.js": {
     "mtime": 1788795756.845527,
@@ -375,8 +375,8 @@
     "semantic_hash": "61bd31a2b0ac08f10f13c932b32d6ca1"
   },
   "vite.config.js": {
-    "mtime": 1789060400.589748,
-    "ast_hash": "7149c91bdb456be73380f3a22b3d3461",
+    "mtime": 1789148819.7780948,
+    "ast_hash": "f16c6f0843eeeffac04ccfa8853dc606",
     "semantic_hash": ""
   },
   "src/components/PrintGradesGridModal.vue": {
@@ -1235,8 +1235,8 @@
     "semantic_hash": ""
   },
   "src/composables/useCurriculumLibrary.js": {
-    "mtime": 1788795756.839324,
-    "ast_hash": "c8cb16f40a5c975a69e5004cd0170de8",
+    "mtime": 1789148948.9511867,
+    "ast_hash": "971b1916324d7961a6b1db3cc6569e4f",
     "semantic_hash": ""
   },
   "src/test_curriculum_library_and_weights.js": {
@@ -1327,6 +1327,11 @@
   "src/components/dossier/StudentRosterEditModal.vue": {
     "mtime": 1789127382.5437768,
     "ast_hash": "24579603e933690f426103be454c9a16",
+    "semantic_hash": ""
+  },
+  "src/composables/useCurriculumEditorState.js": {
+    "mtime": 1789148716.3788357,
+    "ast_hash": "154d8984d71021c68c3a20da8f05b24c",
     "semantic_hash": ""
   }
 }

@@ -1,11 +1,89 @@
-import * as LucideIcons from 'lucide-vue-next'
+import {
+  DoorOpen,
+  UserX,
+  Clock,
+  NotebookPen,
+  Phone,
+  GraduationCap,
+  Smartphone,
+  Activity,
+  BookOpen,
+  Eye,
+  MessageSquare,
+  Hand,
+  Heart,
+  Smile,
+  AlertTriangle,
+  XCircle,
+  Shield,
+  Zap,
+  Award,
+  Flame,
+  HelpCircle,
+  Star,
+  CheckCircle2,
+  CalendarClock,
+  Check,
+  Plus,
+  Trash2,
+  Pencil,
+  Users,
+  Folder,
+  Calculator,
+  FlaskConical,
+  Globe,
+  Palette,
+  Languages
+} from 'lucide-vue-next'
+
+const iconMap = {
+  DoorOpen,
+  UserX,
+  Clock,
+  NotebookPen,
+  Phone,
+  GraduationCap,
+  Smartphone,
+  Activity,
+  BookOpen,
+  Eye,
+  MessageSquare,
+  Hand,
+  Heart,
+  Smile,
+  AlertTriangle,
+  XCircle,
+  Shield,
+  Zap,
+  Award,
+  Flame,
+  HelpCircle,
+  Star,
+  CheckCircle2,
+  CalendarClock,
+  Check,
+  Plus,
+  Trash2,
+  Pencil,
+  Users,
+  Folder,
+  Calculator,
+  FlaskConical,
+  Globe,
+  Palette,
+  Languages,
+  // Aliases for legacy data & migrations
+  Toilet: DoorOpen,
+  Droplets: DoorOpen
+}
 
 /**
  * Resolves a Lucide icon name string to its Vue component.
  * Falls back to HelpCircle if the name is not found.
  */
 export function resolveIcon(name) {
-    return LucideIcons[name] ?? LucideIcons.HelpCircle
+  if (!name) return HelpCircle
+  return iconMap[name] || HelpCircle
 }
 
 /**

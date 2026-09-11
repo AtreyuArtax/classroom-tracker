@@ -22,7 +22,6 @@ import * as settingsService from '../db/settingsService.js'
 import { useUndo } from './useUndo.js'
 import { useMessage } from './useMessage.js'
 import { getDB } from '../db/index.js'
-import { supabase } from '../utils/supabase.js'
 import { autoPopulateAllElementarySubjects } from './useElementary.js'
 import { formatLocalDate } from '../utils/dates.js'
 import {
@@ -384,16 +383,19 @@ const globalStudentsOut = computed(() => {
 })
 
 watch([globalStudentsOut, maxStudentsOut], async ([list, maxLimit]) => {
-    if (cloudModeEnabled.value && userCode.value && supabase) {
+    if (cloudModeEnabled.value && userCode.value) {
         try {
-            await supabase
-                .from('room_status')
-                .upsert({
-                    user_code: userCode.value,
-                    active_students_out: list.length,
-                    max_students_out: maxLimit,
-                    updated_at: new Date().toISOString()
-                })
+            const { supabase } = await import('../utils/supabase.js')
+            if (supabase) {
+                await supabase
+                    .from('room_status')
+                    .upsert({
+                        user_code: userCode.value,
+                        active_students_out: list.length,
+                        max_students_out: maxLimit,
+                        updated_at: new Date().toISOString()
+                    })
+            }
         } catch (err) {
             console.error('Failed to sync room status to Supabase:', err)
         }
@@ -1517,13 +1519,21 @@ async function generateUniqueUserCode() {
             code += chars.charAt(Math.floor(Math.random() * chars.length))
         }
         
-        if (!supabase) {
+        let client = null
+        try {
+            const { supabase } = await import('../utils/supabase.js')
+            client = supabase
+        } catch (e) {
+            client = null
+        }
+
+        if (!client) {
             unique = true
             break
         }
         
         try {
-            const { data, error } = await supabase
+            const { data, error } = await client
                 .from('room_status')
                 .select('user_code')
                 .eq('user_code', code)

@@ -123,7 +123,7 @@ import {
   curriculumEditorTitle, 
   curriculumEditorSaveHandler,
   curriculumEditorDiscardHandler 
-} from './composables/useCurriculumLibrary.js'
+} from './composables/useCurriculumEditorState.js'
 import { useMessage } from './composables/useMessage.js'
 
 const { select: selectMessage } = useMessage()

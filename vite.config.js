@@ -113,6 +113,12 @@ export default defineConfig({
                     if (id.includes('html5-qrcode') || id.includes('qrcode')) {
                         return 'vendor-qr'
                     }
+                    if (id.includes('exceljs') || id.includes('jszip')) {
+                        return 'vendor-excel'
+                    }
+                    if (id.includes('data/curriculum')) {
+                        return 'data-curriculum'
+                    }
                     if (id.includes('node_modules')) {
                         return 'vendor'
                     }

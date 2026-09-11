@@ -25,11 +25,20 @@ const customPresets = ref({})
 const isLoaded = ref(false)
 const isLoading = ref(false)
 
-// Shared reactive state for dirty tracking and navigation guards
-export const curriculumEditorDirty = ref(false)
-export const curriculumEditorTitle = ref('')
-export const curriculumEditorSaveHandler = ref(null)
-export const curriculumEditorDiscardHandler = ref(null)
+// Import & re-export shared reactive state for dirty tracking and navigation guards
+import {
+  curriculumEditorDirty,
+  curriculumEditorTitle,
+  curriculumEditorSaveHandler,
+  curriculumEditorDiscardHandler
+} from './useCurriculumEditorState.js'
+
+export {
+  curriculumEditorDirty,
+  curriculumEditorTitle,
+  curriculumEditorSaveHandler,
+  curriculumEditorDiscardHandler
+}
 
 /**
  * Initializes and loads custom curriculum presets from IndexedDB.
