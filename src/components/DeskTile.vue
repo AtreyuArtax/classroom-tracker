@@ -73,7 +73,11 @@
       :class="{ 'desk-tile__content--with-photo': showDeskPhotos && currentPhotoUrl }"
       :title="`${student.firstName} ${student.lastName}${student.studentId ? ' (#' + student.studentId + ')' : ''}`"
     >
-      <div v-if="showDeskPhotos && currentPhotoUrl" class="desk-tile__avatar-wrap">
+      <div 
+        v-if="showDeskPhotos && currentPhotoUrl" 
+        class="desk-tile__avatar-wrap"
+        @mouseenter="handleAvatarMouseEnter"
+      >
         <img 
           :src="currentPhotoUrl" 
           :alt="`${student.firstName} ${student.lastName}`"
@@ -81,7 +85,14 @@
         />
 
         <!-- Floating High-Res Hover Preview -->
-        <div class="desk-tile__hover-preview" aria-hidden="true">
+        <div 
+          class="desk-tile__hover-preview" 
+          :class="[
+            `desk-tile__hover-preview--${previewPlacement}`,
+            `desk-tile__hover-preview--align-${horizontalAlign}`
+          ]"
+          aria-hidden="true"
+        >
           <img 
             :src="currentPhotoUrl" 
             :alt="`${student.firstName} ${student.lastName}`"
@@ -224,6 +235,47 @@ const currentPhotoUrl = computed(() => {
   const sId = props.studentId || props.student?.studentId
   return sId ? getPhotoUrl(sId) : null
 })
+
+// ─── hover preview positioning ────────────────────────────────────────────────
+const previewPlacement = ref(props.row <= 2 ? 'bottom' : 'top')
+const horizontalAlign = ref(props.col === 1 ? 'left' : 'center')
+
+watch(() => props.row, (newRow) => {
+  previewPlacement.value = newRow <= 2 ? 'bottom' : 'top'
+})
+
+watch(() => props.col, (newCol) => {
+  horizontalAlign.value = newCol === 1 ? 'left' : 'center'
+})
+
+function handleAvatarMouseEnter(event) {
+  const el = event.currentTarget
+  if (!el) return
+  const rect = el.getBoundingClientRect()
+  
+  // Height of preview card is ~190px + 8px gap + safety buffer
+  const neededHeight = 210
+  const spaceAbove = rect.top
+  const spaceBelow = window.innerHeight - rect.bottom
+  
+  if (spaceAbove < neededHeight) {
+    previewPlacement.value = 'bottom'
+  } else if (spaceBelow < neededHeight && spaceAbove >= neededHeight) {
+    previewPlacement.value = 'top'
+  } else {
+    previewPlacement.value = props.row <= 2 ? 'bottom' : 'top'
+  }
+
+  // Horizontal edge collision avoidance (card is 160px wide, half-width: 80px)
+  const centerX = rect.left + rect.width / 2
+  if (centerX - 85 < 10) {
+    horizontalAlign.value = 'left'
+  } else if (centerX + 85 > window.innerWidth - 10) {
+    horizontalAlign.value = 'right'
+  } else {
+    horizontalAlign.value = 'center'
+  }
+}
 
 const isDimmed = computed(() => {
   if (!props.student || !activeSubCohortFilter.value || activeSubCohortFilter.value.toLowerCase() === 'all') return false
@@ -444,6 +496,7 @@ function onDrop(evt) {
   transform: translateY(-2px);
   box-shadow: 0 6px 14px rgba(0,0,0,0.07);
   border-color: rgba(79, 70, 229, 0.3);
+  z-index: 50;
 }
 
 .desk-tile:active {
@@ -562,9 +615,6 @@ function onDrop(evt) {
 /* ── Floating Hover Zoom Card ─────────────────────────────────────────────── */
 .desk-tile__hover-preview {
   position: absolute;
-  bottom: calc(100% + 8px);
-  left: 50%;
-  transform: translateX(-50%) translateY(6px) scale(0.92);
   width: 160px;
   background: var(--surface, #ffffff);
   border-radius: 12px;
@@ -583,16 +633,99 @@ function onDrop(evt) {
   gap: 6px;
 }
 
-/* Triangle caret at bottom of hover preview */
+/* Placement: Top (default for middle/lower rows) */
+.desk-tile__hover-preview--top {
+  bottom: calc(100% + 8px);
+  top: auto;
+  --preview-ty: 6px;
+}
+
+/* Placement: Bottom (for upper rows / restricted top clearance) */
+.desk-tile__hover-preview--bottom {
+  top: calc(100% + 8px);
+  bottom: auto;
+  --preview-ty: -6px;
+}
+
+/* Horizontal Alignment: Center */
+.desk-tile__hover-preview--align-center {
+  left: 50%;
+  right: auto;
+  transform: translateX(-50%) translateY(var(--preview-ty, 6px)) scale(0.92);
+}
+.desk-tile__avatar-wrap:hover .desk-tile__hover-preview--align-center {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0) scale(1);
+  transition-delay: 350ms;
+}
+
+/* Horizontal Alignment: Left */
+.desk-tile__hover-preview--align-left {
+  left: -4px;
+  right: auto;
+  transform: translateX(0) translateY(var(--preview-ty, 6px)) scale(0.92);
+}
+.desk-tile__avatar-wrap:hover .desk-tile__hover-preview--align-left {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(0) translateY(0) scale(1);
+  transition-delay: 350ms;
+}
+
+/* Horizontal Alignment: Right */
+.desk-tile__hover-preview--align-right {
+  left: auto;
+  right: -4px;
+  transform: translateX(0) translateY(var(--preview-ty, 6px)) scale(0.92);
+}
+.desk-tile__avatar-wrap:hover .desk-tile__hover-preview--align-right {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(0) translateY(0) scale(1);
+  transition-delay: 350ms;
+}
+
+/* Caret base */
 .desk-tile__hover-preview::after {
   content: '';
   position: absolute;
-  top: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  border-width: 6px 6px 0 6px;
   border-style: solid;
+}
+
+/* Top placement caret (points down to avatar) */
+.desk-tile__hover-preview--top::after {
+  top: 100%;
+  bottom: auto;
+  border-width: 6px 6px 0 6px;
   border-color: var(--surface, #ffffff) transparent transparent transparent;
+}
+
+/* Bottom placement caret (points up to avatar) */
+.desk-tile__hover-preview--bottom::after {
+  bottom: 100%;
+  top: auto;
+  border-width: 0 6px 6px 6px;
+  border-color: transparent transparent var(--surface, #ffffff) transparent;
+}
+
+/* Caret horizontal positions */
+.desk-tile__hover-preview--align-center::after {
+  left: 50%;
+  right: auto;
+  transform: translateX(-50%);
+}
+
+.desk-tile__hover-preview--align-left::after {
+  left: 26px;
+  right: auto;
+  transform: translateX(-50%);
+}
+
+.desk-tile__hover-preview--align-right::after {
+  left: auto;
+  right: 26px;
+  transform: translateX(50%);
 }
 
 .desk-tile__hover-preview-img {
@@ -614,14 +747,6 @@ function onDrop(evt) {
   text-overflow: ellipsis;
   max-width: 100%;
   padding: 0 2px;
-}
-
-/* Trigger hover card with intentional 350ms dwell delay */
-.desk-tile__avatar-wrap:hover .desk-tile__hover-preview {
-  opacity: 1;
-  visibility: visible;
-  transform: translateX(-50%) translateY(0) scale(1);
-  transition-delay: 350ms;
 }
 
 .desk-tile__compact-name {

@@ -213,6 +213,11 @@ async function onSeatDrop({ studentId, fromRow, fromCol, toRow, toCol, toStudent
   transition: box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
+.seating-grid__tile-wrapper:hover,
+.seating-grid__tile-wrapper:focus-within {
+  z-index: 50;
+}
+
 .seating-grid__pod-badge {
   position: absolute;
   top: 2px;

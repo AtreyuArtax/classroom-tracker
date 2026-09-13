@@ -1,7 +1,7 @@
-# Graph Report - classroom-tracker  (2026-09-12)
+# Graph Report - classroom-tracker  (2026-09-13)
 
 ## Corpus Check
-- 268 files · ~552,302 words
+- 268 files · ~553,171 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `4852bf93`
+- Built from commit: `a48fd9c4`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -164,7 +164,7 @@ Nodes (27): BaseHTTPRequestHandler, Path, consume_scan(), _create_tray_icon_imag
 
 ### Community 5 - "Community 5"
 Cohesion: 0.07
-Nodes (27): addRoute(), cacheDonePromiseForTransaction(), CacheFirst, cacheMatchIgnoreParams(), cacheWillUpdate(), canConstructResponseFromBodyStream(), copyResponse(), Deferred (+19 more)
+Nodes (19): addRoute(), CacheFirst, cacheMatchIgnoreParams(), cacheWillUpdate(), canConstructResponseFromBodyStream(), copyResponse(), Deferred, executeQuotaErrorCallbacks() (+11 more)
 
 ### Community 6 - "Community 6"
 Cohesion: 0.17
@@ -203,8 +203,8 @@ Cohesion: 0.08
 Nodes (20): props, allCombinedWork, allDossierAssessments, attendanceStats, behaviorCodesMap, currentStudentObj, displayMetaLine, evidenceMix (+12 more)
 
 ### Community 15 - "Community 15"
-Cohesion: 0.21
-Nodes (4): get(), getMethod(), has(), Router
+Cohesion: 0.13
+Nodes (12): cacheDonePromiseForTransaction(), get(), getCursorAdvanceMethods(), getIdbProxyableTypes(), getMethod(), has(), openDB(), promisifyRequest() (+4 more)
 
 ### Community 16 - "Community 16"
 Cohesion: 0.12
@@ -487,9 +487,9 @@ Nodes (3): subjectCode, description, type
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `getDB()` connect `Community 123` to `Community 0`, `Community 64`, `Community 2`, `Community 3`, `Community 35`, `Community 58`, `Community 5`, `Community 9`, `Community 81`, `Community 145`, `Community 21`, `Community 85`, `Community 23`, `Community 154`?**
+- **Why does `getDB()` connect `Community 123` to `Community 0`, `Community 64`, `Community 2`, `Community 3`, `Community 35`, `Community 58`, `Community 9`, `Community 15`, `Community 81`, `Community 145`, `Community 21`, `Community 85`, `Community 23`, `Community 154`?**
   _High betweenness centrality (0.134) - this node is a cross-community bridge._
-- **Why does `openDB()` connect `Community 5` to `Community 123`, `Community 94`?**
+- **Why does `openDB()` connect `Community 15` to `Community 123`, `Community 5`, `Community 94`?**
   _High betweenness centrality (0.087) - this node is a cross-community bridge._
 - **Are the 2 inferred relationships involving `loadGradebook()` (e.g. with `getGlobalMilestones()` and `getGradeBuckets()`) actually correct?**
   _`loadGradebook()` has 2 INFERRED edges - model-reasoned connections that need verification._

@@ -75,8 +75,8 @@
     "semantic_hash": ""
   },
   "src/components/DeskTile.vue": {
-    "mtime": 1788974476.0982573,
-    "ast_hash": "2ba9930854a81e5c9c08875a386889ca",
+    "mtime": 1789301916.3007085,
+    "ast_hash": "a99db9821e20833af1794d3643fc09fa",
     "semantic_hash": ""
   },
   "src/components/EventNoteModal.vue": {
@@ -110,8 +110,8 @@
     "semantic_hash": ""
   },
   "src/components/SeatingGrid.vue": {
-    "mtime": 1788367682.203059,
-    "ast_hash": "794ebead6c06589ee39dee1bd78b2659",
+    "mtime": 1789301923.0185027,
+    "ast_hash": "c76265750b25ed761e28d7f8609037e2",
     "semantic_hash": ""
   },
   "src/components/StudentProfileModal.vue": {
@@ -1010,8 +1010,8 @@
     "semantic_hash": ""
   },
   "src/components/photos/PhotoBatchImportModal.vue": {
-    "mtime": 1788313659.6908262,
-    "ast_hash": "a0d56616f4f5c1301ba888fbb9049e4b",
+    "mtime": 1789303152.2110207,
+    "ast_hash": "1708e18ca3715d864488a0eca1b417ed",
     "semantic_hash": ""
   },
   "src/components/photos/PhotoCaptureModal.vue": {

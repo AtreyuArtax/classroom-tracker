@@ -7,25 +7,72 @@
   >
     <div class="batch-import-content">
       <p class="setup__hint">
-        Select a folder on your computer containing student photos. Photos should be named by <strong>Student ID</strong> (e.g. <code>104829.jpg</code>) or <strong>LastName_FirstName</strong> (e.g. <code>Smith_John.jpg</code>).
+        Select or drag photos into the importer. Photos should be named by <strong>Student ID</strong> (e.g. <code>104829.jpg</code>) or <strong>LastName_FirstName</strong> (e.g. <code>Smith_John.jpg</code>).
       </p>
 
-      <!-- Folder Selector Area -->
-      <div v-if="!scannedResults" class="folder-picker-box">
-        <label class="folder-dropzone">
-          <input 
-            type="file" 
-            webkitdirectory 
-            directory 
-            multiple 
-            accept="image/*"
-            class="hidden-folder-input" 
-            @change="handleFolderSelected" 
-          />
-          <FolderOpen :size="48" class="folder-icon" />
-          <span class="folder-title">Click to Select Photos Folder</span>
-          <span class="setup__hint">Supports JPG, PNG, WEBP (auto-compressed on import)</span>
-        </label>
+      <!-- Unified Upload & Dropzone Area -->
+      <div 
+        v-if="!scannedResults" 
+        class="photo-dropzone"
+        :class="{ 'photo-dropzone--active': isDragging }"
+        @dragover.prevent="isDragging = true"
+        @dragleave.prevent="isDragging = false"
+        @drop.prevent="handleDrop"
+      >
+        <div class="photo-dropzone__icon-wrap">
+          <UploadCloud :size="36" class="photo-dropzone__icon" />
+        </div>
+
+        <div class="photo-dropzone__text">
+          <span class="photo-dropzone__title">Drag & drop photos or a folder here</span>
+          <span class="photo-dropzone__subtitle">Supports JPG, PNG, WEBP · Auto-matched & compressed</span>
+        </div>
+
+        <!-- Hidden Native File & Folder Inputs -->
+        <input 
+          ref="filesInputRef"
+          type="file" 
+          multiple 
+          accept="image/jpeg,image/png,image/webp,image/jpg"
+          class="hidden-input" 
+          @change="handleFilesSelected" 
+        />
+        <input 
+          ref="folderInputRef"
+          type="file" 
+          webkitdirectory 
+          directory 
+          multiple 
+          accept="image/*"
+          class="hidden-input" 
+          @change="handleFolderSelected" 
+        />
+
+        <div class="photo-dropzone__divider">
+          <span>or choose an option</span>
+        </div>
+
+        <div class="photo-dropzone__actions">
+          <button 
+            type="button" 
+            class="photo-dropzone__btn photo-dropzone__btn--primary"
+            @click.stop="triggerFilesInput"
+            title="Select multiple photo files directly (No browser prompt)"
+          >
+            <Images :size="16" />
+            <span>Select Photos</span>
+          </button>
+
+          <button 
+            type="button" 
+            class="photo-dropzone__btn photo-dropzone__btn--secondary"
+            @click.stop="triggerFolderInput"
+            title="Select an entire folder using your system folder picker"
+          >
+            <FolderOpen :size="16" />
+            <span>Select Folder</span>
+          </button>
+        </div>
       </div>
 
       <!-- Scanning Progress / Spinner -->
@@ -141,7 +188,7 @@
           class="setup__btn-ghost setup__btn-sm" 
           @click="resetScan"
         >
-          Choose Different Folder
+          Choose Different Photos
         </button>
 
         <div class="batch-footer-actions">
@@ -165,7 +212,7 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import { FolderOpen, CheckCircle, AlertCircle, HelpCircle, Check, Loader2, FileImage, UserX } from 'lucide-vue-next'
+import { FolderOpen, UploadCloud, Images, CheckCircle, AlertCircle, HelpCircle, Check, Loader2, FileImage, UserX } from 'lucide-vue-next'
 import BaseModal from '../BaseModal.vue'
 import { useStudentPhotos } from '../../composables/useStudentPhotos.js'
 import { useClassroom } from '../../composables/useClassroom.js'
@@ -208,13 +255,89 @@ const matchedList = computed(() => scannedResults.value?.matched || [])
 const unmatchedFiles = computed(() => scannedResults.value?.unmatched || [])
 const missingStudents = computed(() => scannedResults.value?.missing || [])
 
+const isDragging = ref(false)
+const filesInputRef = ref(null)
+const folderInputRef = ref(null)
+
+function triggerFilesInput() {
+  if (filesInputRef.value) {
+    filesInputRef.value.value = ''
+    filesInputRef.value.click()
+  }
+}
+
+function triggerFolderInput() {
+  if (folderInputRef.value) {
+    folderInputRef.value.value = ''
+    folderInputRef.value.click()
+  }
+}
+
+async function handleFilesSelected(event) {
+  const files = Array.from(event.target.files || [])
+  if (files.length > 0) {
+    await processFiles(files)
+  }
+}
+
 async function handleFolderSelected(event) {
   const files = Array.from(event.target.files || [])
-  if (files.length === 0) return
+  if (files.length > 0) {
+    await processFiles(files)
+  }
+}
 
+async function handleDrop(event) {
+  isDragging.value = false
+  const items = event.dataTransfer?.items
+  const collectedFiles = []
+
+  if (items && items.length > 0) {
+    for (const item of items) {
+      if (typeof item.webkitGetAsEntry === 'function') {
+        const entry = item.webkitGetAsEntry()
+        if (entry) {
+          await traverseEntry(entry, collectedFiles)
+          continue
+        }
+      }
+      if (item.kind === 'file') {
+        const file = item.getAsFile()
+        if (file) collectedFiles.push(file)
+      }
+    }
+  } else if (event.dataTransfer?.files?.length) {
+    collectedFiles.push(...Array.from(event.dataTransfer.files))
+  }
+
+  if (collectedFiles.length > 0) {
+    await processFiles(collectedFiles)
+  }
+}
+
+async function traverseEntry(entry, list) {
+  if (entry.isFile) {
+    const file = await new Promise((resolve) => entry.file(resolve, () => resolve(null)))
+    if (file) list.push(file)
+  } else if (entry.isDirectory) {
+    const reader = entry.createReader()
+    const readBatch = () => new Promise((resolve) => {
+      reader.readEntries((batch) => resolve(batch || []), () => resolve([]))
+    })
+    let batch = await readBatch()
+    while (batch.length > 0) {
+      for (const child of batch) {
+        await traverseEntry(child, list)
+      }
+      batch = await readBatch()
+    }
+  }
+}
+
+async function processFiles(files) {
   const imageFiles = files.filter(f => f.type.startsWith('image/') || /\.(jpe?g|png|webp)$/i.test(f.name))
   if (imageFiles.length === 0) {
-    alert('No image files found in the selected folder.')
+    alert('No image files found. Please ensure photos are JPG, PNG, or WEBP.')
     return
   }
 
@@ -231,6 +354,10 @@ async function handleFolderSelected(event) {
 
     const nameKey = `${(s.lastName || '').trim()}_${(s.firstName || '').trim()}`.toLowerCase()
     studentMapByName.set(nameKey, s)
+    const reverseNameKey = `${(s.firstName || '').trim()}_${(s.lastName || '').trim()}`.toLowerCase()
+    if (!studentMapByName.has(reverseNameKey)) {
+      studentMapByName.set(reverseNameKey, s)
+    }
   }
 
   const matched = []
@@ -312,38 +439,136 @@ async function commitImport() {
   gap: 16px;
 }
 
-.folder-dropzone {
+.photo-dropzone {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 40px 20px;
-  border: 2px dashed var(--border, #cbd5e1);
-  border-radius: var(--radius-md, 8px);
-  background: var(--bg-secondary, #f8fafc);
-  cursor: pointer;
-  transition: all 0.15s ease;
+  padding: 32px 20px;
+  border: 2px dashed var(--border);
+  border-radius: var(--radius-lg, 12px);
+  background: var(--bg-secondary);
+  transition: all 0.2s ease;
   text-align: center;
+  gap: 12px;
 }
 
-.folder-dropzone:hover {
-  border-color: var(--primary, #4f46e5);
-  background: rgba(79, 70, 229, 0.04);
+.photo-dropzone:hover {
+  border-color: var(--primary);
+  background: rgba(99, 102, 241, 0.03);
 }
 
-.hidden-folder-input {
-  display: none;
+.photo-dropzone--active {
+  border-color: var(--primary);
+  background: rgba(99, 102, 241, 0.08);
+  transform: scale(1.01);
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.12);
 }
 
-.folder-icon {
-  color: var(--primary, #4f46e5);
-  margin-bottom: 8px;
+.photo-dropzone__icon-wrap {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: var(--surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border);
 }
 
-.folder-title {
+.photo-dropzone__icon {
+  color: var(--primary);
+}
+
+.photo-dropzone__text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.photo-dropzone__title {
   font-weight: 700;
   font-size: 1.05rem;
-  color: var(--text, #0f172a);
+  color: var(--text);
+}
+
+.photo-dropzone__subtitle {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+}
+
+.photo-dropzone__divider {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  max-width: 260px;
+  margin: 2px 0;
+  color: var(--text-secondary);
+  font-size: 0.74rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  opacity: 0.7;
+}
+
+.photo-dropzone__divider::before,
+.photo-dropzone__divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid var(--border);
+}
+
+.photo-dropzone__divider span {
+  padding: 0 10px;
+}
+
+.photo-dropzone__actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.photo-dropzone__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 16px;
+  border-radius: var(--radius-md, 8px);
+  font-size: 0.86rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.photo-dropzone__btn--primary {
+  background: var(--primary);
+  color: #ffffff;
+  border: 1px solid transparent;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.photo-dropzone__btn--primary:hover {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+
+.photo-dropzone__btn--secondary {
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+.photo-dropzone__btn--secondary:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  transform: translateY(-1px);
+}
+
+.hidden-input {
+  display: none;
 }
 
 .scanning-state {
