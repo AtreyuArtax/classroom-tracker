@@ -8,13 +8,21 @@
         </button>
         <h1 class="compact-title">{{ currentAssessment.name }}</h1>
         <div class="compact-meta-chips">
-          <span class="meta-chip meta-chip--type">{{ currentAssessment.assessmentType }}</span>
-          <span class="meta-chip meta-chip--points"><Target :size="11" /> /{{ currentAssessment.totalPoints }}</span>
-          <span v-if="currentAssessment.unitId" class="meta-chip meta-chip--unit" :style="{ color: unitColor }">
-            <Hash :size="11" /> {{ getUnitName(currentAssessment.unitId) }}
-          </span>
+          <template v-if="currentAssessment.purpose === 'administrative'">
+            <span class="meta-chip meta-chip--type" style="color: #10b981; font-weight: 700;">Administrative</span>
+            <span class="meta-chip meta-chip--points">
+              {{ currentAssessment.adminFormat === 'text' ? 'Text Note' : 'Checklist' }}
+            </span>
+          </template>
+          <template v-else>
+            <span class="meta-chip meta-chip--type">{{ currentAssessment.assessmentType }}</span>
+            <span class="meta-chip meta-chip--points"><Target :size="11" /> /{{ currentAssessment.totalPoints }}</span>
+            <span v-if="currentAssessment.unitId" class="meta-chip meta-chip--unit" :style="{ color: unitColor }">
+              <Hash :size="11" /> {{ getUnitName(currentAssessment.unitId) }}
+            </span>
+          </template>
           <span class="meta-chip meta-chip--date"><Calendar :size="11" /> {{ formatLocalDisplay(currentAssessment.date) }}</span>
-          <span v-if="currentAssessment.weight" class="meta-chip meta-chip--weight"><Flame :size="11" style="display: inline-block; vertical-align: -1px; margin-right: 2px;" /> {{ currentAssessment.weight }}%</span>
+          <span v-if="currentAssessment.weight && currentAssessment.purpose !== 'administrative'" class="meta-chip meta-chip--weight"><Flame :size="11" style="display: inline-block; vertical-align: -1px; margin-right: 2px;" /> {{ currentAssessment.weight }}%</span>
         </div>
       </div>
 
@@ -34,7 +42,31 @@
     </div>
 
     <!-- Compact 1-Row Metrics & Distribution Strip -->
-    <div class="compact-metrics-strip">
+    <div class="compact-metrics-strip" v-if="currentAssessment.purpose === 'administrative'">
+      <div class="metric-pill">
+        <span class="metric-pill__label">FORMAT</span>
+        <strong class="metric-pill__val" style="color: #10b981;">
+          {{ currentAssessment.adminFormat === 'text' ? 'Text / ID Note' : 'Checklist (✓)' }}
+        </strong>
+      </div>
+
+      <div class="metric-divider"></div>
+
+      <div class="metric-pill">
+        <span class="metric-pill__label">COMPLETED</span>
+        <strong class="metric-pill__val">{{ getAdminDetailCompletionCount() }}/{{ targetCourseRoster.length }}</strong>
+        <span class="metric-pill__sub">({{ targetCourseRoster.length ? Math.round((getAdminDetailCompletionCount() / targetCourseRoster.length) * 100) : 0 }}%)</span>
+      </div>
+
+      <div class="metric-divider"></div>
+
+      <div class="metric-pill">
+        <span class="metric-pill__label">ACADEMIC WEIGHT</span>
+        <strong class="metric-pill__val" style="color: var(--text-secondary);">0% (Zero Grade Impact)</strong>
+      </div>
+    </div>
+
+    <div class="compact-metrics-strip" v-else>
       <div class="metric-pill">
         <span class="metric-pill__label">CLASS AVG</span>
         <strong class="metric-pill__val" :style="{ color: getHeatTextColor(liveAssessmentStats.mean) }">
@@ -159,8 +191,10 @@
             <thead>
               <tr>
                 <th class="grades__ath-student">Student</th>
-                <th class="grades__ath-score">Score (/{{ currentAssessment.totalPoints }})</th>
-                <th class="grades__ath-percent">% Grade</th>
+                <th class="grades__ath-score">
+                  {{ currentAssessment.purpose === 'administrative' ? (currentAssessment.adminFormat === 'text' ? 'Text Note / ID' : 'Status') : `Score (/${currentAssessment.totalPoints})` }}
+                </th>
+                <th v-if="currentAssessment.purpose !== 'administrative'" class="grades__ath-percent">% Grade</th>
                 <th class="grades__ath-actions"></th>
               </tr>
             </thead>
@@ -228,6 +262,28 @@
                     title="Click or right-click to include in grade"
                   >
                     EXCLUDED
+                  </div>
+                  <!-- Administrative Entry Controls -->
+                  <div v-else-if="currentAssessment.purpose === 'administrative'" class="grades__admin-detail-cell">
+                    <button 
+                      v-if="currentAssessment.adminFormat !== 'text'"
+                      type="button"
+                      class="btn-admin-detail-check"
+                      :class="{ 'btn-admin-detail-check--checked': isAdminChecked(s.studentId) }"
+                      @click="toggleAdminChecklist(currentAssessment.assessmentId, s.studentId)"
+                    >
+                      <Check v-if="isAdminChecked(s.studentId)" :size="14" :stroke-width="3" />
+                      <span>{{ isAdminChecked(s.studentId) ? 'Received' : 'Mark Received' }}</span>
+                    </button>
+                    <input 
+                      v-else
+                      type="text"
+                      class="grades__input-ghost"
+                      :value="getAdminTextValue(s.studentId)"
+                      placeholder="e.g. 104"
+                      @blur="e => saveAdminText(currentAssessment.assessmentId, s.studentId, e.target.value)"
+                      @keydown.enter.prevent="e => { saveAdminText(currentAssessment.assessmentId, s.studentId, e.target.value); $emit('on-enter', s.studentId, 'down', e) }"
+                    />
                   </div>
                   <div v-else class="grades__score-input-wrapper">
                     <!-- Change Overlay -->
@@ -321,7 +377,7 @@ import {
 } from 'lucide-vue-next'
 import { getHeatTextColor } from '../../utils/gradeColors.js'
 import { formatLocalDisplay } from '../../utils/dates.js'
-import { removeAttempt, updateAttemptComment } from '../../composables/useGradebook.js'
+import { removeAttempt, updateAttemptComment, toggleAdminChecklist, saveAdminText } from '../../composables/useGradebook.js'
 import { useMessage } from '../../composables/useMessage.js'
 import GradesAttemptHistoryModal from './GradesAttemptHistoryModal.vue'
 import UndoButton from '../UndoButton.vue'
@@ -639,9 +695,85 @@ const filteredRoster = computed(() => {
 
   return list
 })
+
+function isAdminChecked(studentId) {
+  const entry = props.gradeMap?.[String(props.selectedAssessmentId)]?.[String(studentId)]
+  return Boolean(
+    entry && (
+      entry.resolvedScore === 1 ||
+      entry.score === 1 ||
+      entry.pointsEarned === 1 ||
+      entry.received === true ||
+      entry.attempts?.[0]?.pointsEarned === 1
+    )
+  )
+}
+
+function getAdminTextValue(studentId) {
+  const entry = props.gradeMap?.[String(props.selectedAssessmentId)]?.[String(studentId)]
+  return entry?.textValue || entry?.comment || (entry?.resolvedScore != null && isNaN(Number(entry.resolvedScore)) ? String(entry.resolvedScore) : '')
+}
+
+function getAdminDetailCompletionCount() {
+  let count = 0
+  const astIdStr = String(props.selectedAssessmentId)
+  const isText = props.currentAssessment?.adminFormat === 'text'
+  for (const s of targetCourseRoster.value) {
+    const entry = props.gradeMap?.[astIdStr]?.[String(s.studentId)]
+    if (!entry) continue
+    if (isText) {
+      const txt = entry.textValue || entry.comment || entry.resolvedScore
+      if (txt && String(txt).trim() !== '') count++
+    } else {
+      if (entry.resolvedScore === 1 || entry.score === 1 || entry.pointsEarned === 1 || entry.received || entry.attempts?.[0]?.pointsEarned === 1) {
+        count++
+      }
+    }
+  }
+  return count
+}
 </script>
 
 <style scoped>
+.grades__admin-detail-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-admin-detail-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  background: var(--surface);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  transition: all 0.15s ease;
+}
+
+.btn-admin-detail-check:hover {
+  background: var(--surface-hover);
+  border-color: var(--border-hover);
+  color: var(--text);
+}
+
+.btn-admin-detail-check--checked {
+  background: rgba(16, 185, 129, 0.12);
+  color: #059669;
+  border-color: rgba(16, 185, 129, 0.35);
+  font-weight: 700;
+}
+
+.btn-admin-detail-check--checked:hover {
+  background: rgba(16, 185, 129, 0.2);
+  border-color: rgba(16, 185, 129, 0.5);
+}
+
 .grades__assessment-view {
   display: flex;
   flex-direction: column;

@@ -180,7 +180,8 @@ export const newAssessment = ref({
   description: '',
   categoryId: '',
   assessmentType: 'product',
-  purpose: 'summative', // 'summative' | 'formative'
+  purpose: 'summative', // 'summative' | 'formative' | 'administrative'
+  adminFormat: 'checklist', // 'checklist' | 'text'
   isFormative: false,
   unitId: null,
   expectationId: null,
@@ -541,7 +542,8 @@ export function openAddAssessment(target = 'class', studentId = null) {
     date: formatLocalDate(new Date()),
     totalPoints: 10,
     scaledTotal: null,
-    retestPolicy: 'highest'
+    retestPolicy: 'highest',
+    adminFormat: 'checklist'
   }
   
   showAddAssessmentModal.value = true
@@ -563,14 +565,27 @@ export function onTargetChange() {
 export async function saveAssessment() {
   if (!newAssessment.value.name) return
   
-  if (!newAssessment.value.categoryId && activeClassRecord.value?.gradebookCategories?.[0]?.categoryId) {
-    newAssessment.value.categoryId = activeClassRecord.value.gradebookCategories[0].categoryId
+  if (newAssessment.value.purpose === 'administrative') {
+    newAssessment.value.isFormative = false
+    newAssessment.value.totalPoints = 1
+    newAssessment.value.scaledTotal = null
+    newAssessment.value.unitId = null
+    newAssessment.value.expectationId = null
+    newAssessment.value.expectationIds = []
+    newAssessment.value.retestPolicy = 'highest'
+    newAssessment.value.adminFormat = newAssessment.value.adminFormat || 'checklist'
+    if (!newAssessment.value.categoryId) {
+      newAssessment.value.categoryId = 'admin'
+    }
+  } else {
+    newAssessment.value.isFormative = (newAssessment.value.purpose === 'formative')
+    if (!newAssessment.value.categoryId && activeClassRecord.value?.gradebookCategories?.[0]?.categoryId) {
+      newAssessment.value.categoryId = activeClassRecord.value.gradebookCategories[0].categoryId
+    }
+    if (!newAssessment.value.categoryId) {
+      newAssessment.value.categoryId = 'sbar_general'
+    }
   }
-  if (!newAssessment.value.categoryId) {
-    newAssessment.value.categoryId = 'sbar_general'
-  }
-  
-  newAssessment.value.isFormative = (newAssessment.value.purpose === 'formative')
 
   if (activeClassRecord.value?.classType === 'elementary' && activeSubjectId.value && !newAssessment.value.subjectId) {
     newAssessment.value.subjectId = activeSubjectId.value
@@ -586,6 +601,9 @@ export async function saveAssessment() {
   if (targetCohort !== 'all') {
     newAssessment.value.targetCourseCode = targetCohort
     newAssessment.value.gradeLevel = targetCohort
+  } else if (newAssessment.value.purpose === 'administrative') {
+    newAssessment.value.targetCourseCode = 'all'
+    newAssessment.value.gradeLevel = 'all'
   } else if (activeGradeFilter.value && activeGradeFilter.value !== 'all') {
     newAssessment.value.gradeLevel = activeGradeFilter.value
     newAssessment.value.targetCourseCode = activeGradeFilter.value
@@ -850,6 +868,137 @@ export function enterGrade(assessmentId, studentId, pointsEarned, date = null, c
       refreshSingleStudent(studentId)
       refreshSingleAssessmentStats(assessmentId)
     }
+  )
+}
+
+/**
+ * Toggles a binary checklist administrative mark (e.g. Science Safety Contract).
+ * Toggles between 1 (received) and null (missing/not received).
+ *
+ * @param {number|string} assessmentId
+ * @param {string} studentId
+ */
+export function toggleAdminChecklist(assessmentId, studentId) {
+  if (!activeClassRecord.value) return
+  const astIdNum = Number(assessmentId)
+  const stIdStr = String(studentId)
+
+  let grade = grades.value.find(g => Number(g.assessmentId) === astIdNum && String(g.studentId) === stIdStr)
+  if (!grade) {
+    grade = {
+      assessmentId: astIdNum,
+      studentId: stIdStr,
+      classId: activeClassRecord.value.classId,
+      missing: false,
+      excluded: false,
+      attempts: [],
+      resolvedScore: null
+    }
+    grades.value.push(grade)
+  }
+
+  const isCurrentlyChecked = Boolean(
+    grade.resolvedScore === 1 ||
+    grade.score === 1 ||
+    grade.pointsEarned === 1 ||
+    grade.received === true ||
+    (grade.attempts?.[0]?.pointsEarned === 1)
+  )
+  const newScore = isCurrentlyChecked ? null : 1
+
+  grade.resolvedScore = newScore
+  grade.score = newScore
+  grade.pointsEarned = newScore
+  grade.masteryLevel = newScore
+  grade.received = !isCurrentlyChecked
+  grade.missing = false
+
+  if (newScore === 1) {
+    if (!grade.attempts || grade.attempts.length === 0) {
+      grade.attempts = [{
+        attemptId: crypto.randomUUID(),
+        pointsEarned: 1,
+        date: new Date().toISOString(),
+        isPrimary: true
+      }]
+    } else {
+      grade.attempts[0].pointsEarned = 1
+    }
+  } else {
+    if (grade.attempts) {
+      grade.attempts = []
+    }
+  }
+
+  triggerRef(grades)
+  refreshSingleStudent(studentId)
+  refreshSingleAssessmentStats(assessmentId)
+
+  enqueueDBSave(`${assessmentId}_${studentId}`, () =>
+    gradebookService.saveFullGradeRecord(grade)
+  )
+}
+
+/**
+ * Saves text/identifier for an administrative item (e.g. Textbook Number).
+ *
+ * @param {number|string} assessmentId
+ * @param {string} studentId
+ * @param {string} text
+ */
+export function saveAdminText(assessmentId, studentId, text) {
+  if (!activeClassRecord.value) return
+  const astIdNum = Number(assessmentId)
+  const stIdStr = String(studentId)
+  const cleanText = (text || '').trim()
+
+  let grade = grades.value.find(g => Number(g.assessmentId) === astIdNum && String(g.studentId) === stIdStr)
+  if (!grade) {
+    if (!cleanText) return
+    grade = {
+      assessmentId: astIdNum,
+      studentId: stIdStr,
+      classId: activeClassRecord.value.classId,
+      missing: false,
+      excluded: false,
+      attempts: []
+    }
+    grades.value.push(grade)
+  }
+
+  if (!cleanText) {
+    grade.textValue = ''
+    grade.comment = ''
+    grade.resolvedScore = null
+    grade.score = null
+    grade.attempts = []
+  } else {
+    grade.textValue = cleanText
+    grade.comment = cleanText
+    grade.resolvedScore = cleanText
+    grade.score = cleanText
+    grade.missing = false
+
+    if (!grade.attempts || grade.attempts.length === 0) {
+      grade.attempts = [{
+        attemptId: crypto.randomUUID(),
+        pointsEarned: null,
+        date: new Date().toISOString(),
+        comment: cleanText,
+        isPrimary: true
+      }]
+    } else {
+      grade.attempts[0].comment = cleanText
+      grade.attempts[0].pointsEarned = null
+    }
+  }
+
+  triggerRef(grades)
+  refreshSingleStudent(studentId)
+  refreshSingleAssessmentStats(assessmentId)
+
+  enqueueDBSave(`${assessmentId}_${studentId}`, () =>
+    gradebookService.saveFullGradeRecord(grade)
   )
 }
 
@@ -1501,26 +1650,43 @@ export const gradeMap = computed(() => {
     if (!map[astIdNum]) map[astIdNum] = map[astIdStr]
 
     const assessment = assessments.value.find(a => Number(a.assessmentId) === Number(grade.assessmentId))
-    const resolvedAttemptScore = assessment 
-      ? gradebookService.resolveAttemptScore(grade.attempts, assessment?.retestPolicy)
-      : null
+    const isAdminText = assessment?.purpose === 'administrative' && assessment?.adminFormat === 'text'
 
     let resolvedScore = null
-    if (resolvedAttemptScore !== null && resolvedAttemptScore !== undefined) {
-      resolvedScore = resolvedAttemptScore
-    } else if (grade.resolvedScore !== undefined && grade.resolvedScore !== null) {
-      resolvedScore = Number(grade.resolvedScore)
-    } else if (grade.score !== undefined && grade.score !== null) {
-      resolvedScore = Number(grade.score)
-    } else if (grade.pointsEarned !== undefined && grade.pointsEarned !== null) {
-      resolvedScore = Number(grade.pointsEarned)
-    } else if (grade.masteryLevel !== undefined && grade.masteryLevel !== null) {
-      resolvedScore = Number(grade.masteryLevel)
+    if (isAdminText) {
+      resolvedScore = (grade.textValue != null && String(grade.textValue).trim() !== '')
+        ? String(grade.textValue)
+        : (grade.comment != null && String(grade.comment).trim() !== '')
+          ? String(grade.comment)
+          : (grade.resolvedScore != null && String(grade.resolvedScore).trim() !== '' && isNaN(Number(grade.resolvedScore)))
+            ? String(grade.resolvedScore)
+            : null
+    } else {
+      const resolvedAttemptScore = assessment 
+        ? gradebookService.resolveAttemptScore(grade.attempts, assessment?.retestPolicy)
+        : null
+
+      if (resolvedAttemptScore !== null && resolvedAttemptScore !== undefined) {
+        resolvedScore = resolvedAttemptScore
+      } else if (grade.resolvedScore !== undefined && grade.resolvedScore !== null) {
+        resolvedScore = Number(grade.resolvedScore)
+      } else if (grade.score !== undefined && grade.score !== null) {
+        resolvedScore = Number(grade.score)
+      } else if (grade.pointsEarned !== undefined && grade.pointsEarned !== null) {
+        resolvedScore = Number(grade.pointsEarned)
+      } else if (grade.masteryLevel !== undefined && grade.masteryLevel !== null) {
+        resolvedScore = Number(grade.masteryLevel)
+      }
     }
+
+    const textValue = isAdminText
+      ? (resolvedScore != null ? String(resolvedScore) : '')
+      : (grade.textValue || grade.attempts?.[0]?.comment || grade.comment || '')
 
     const entry = {
       ...grade,
-      resolvedScore
+      resolvedScore,
+      textValue
     }
 
     map[astIdStr][stIdStr] = entry

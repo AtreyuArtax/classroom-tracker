@@ -944,7 +944,7 @@ const levelMasteryPct = computed(() => {
 const classEvidenceBlend = computed(() => {
   const isSBAR = activeClassRecord.value?.gradingFramework === 'sbar'
   const activeAssessments = (assessments.value || []).filter(a => {
-    if (a.target === 'individual' || a.excluded) return false
+    if (a.purpose === 'administrative' || a.target === 'individual' || a.excluded) return false
     if (!isAssessmentInSubCohort(a)) return false
     const isSBARTask = a.categoryId === 'sbar_general' || (a.expectationIds && a.expectationIds.length > 0) || a.expectationId != null || a.isSbar || a.gradingFramework === 'sbar'
     return isSBAR ? isSBARTask : !isSBARTask
@@ -1013,7 +1013,7 @@ const categoryBreakdowns = computed(() => {
   })
   
   const activeAssessmentsList = (assessments.value || []).filter(a => {
-    if (a.target === 'individual' || a.excluded) return false
+    if (a.purpose === 'administrative' || a.target === 'individual' || a.excluded) return false
     if (analyticsEvidenceScope.value === 'product' && (a.assessmentType || 'product') !== 'product') return false
     return isAssessmentInSubCohort(a)
   })

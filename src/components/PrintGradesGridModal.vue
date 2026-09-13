@@ -488,6 +488,7 @@ const sortedAssessments = computed(() => {
     
   const isSBAR = props.classRecord?.gradingFramework === 'sbar'
   let list = [...assessments.value].filter(a => {
+    if (a.purpose === 'administrative') return false
     if (a.target === 'individual') return false
     if (isSBAR) {
       return a.categoryId === 'sbar_general' || (a.expectationIds && a.expectationIds.length > 0)

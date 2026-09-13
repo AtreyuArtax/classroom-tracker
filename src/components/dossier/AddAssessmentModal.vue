@@ -48,7 +48,7 @@
             </div>
           </div>
 
-          <!-- Assessment Purpose (Formative vs Summative - All Modes) -->
+          <!-- Assessment Purpose (Formative vs Summative vs Administrative) -->
           <div class="form-group">
             <label class="form-label">Assessment Purpose</label>
             <div class="toggle-group toggle-group--large">
@@ -68,6 +68,37 @@
               >
                 Formative (Practice)
               </button>
+              <button 
+                type="button" 
+                class="toggle-btn" 
+                :class="{ 'toggle-btn--active': newAssessment.purpose === 'administrative' }"
+                @click="newAssessment.purpose = 'administrative'; newAssessment.isFormative = false"
+              >
+                Admin (Checklist)
+              </button>
+            </div>
+          </div>
+
+          <!-- Tracking Format Toggle (Administrative Mode Only) -->
+          <div v-if="newAssessment.purpose === 'administrative'" class="form-group">
+            <label class="form-label">Tracking Format</label>
+            <div class="toggle-group toggle-group--large">
+              <button 
+                type="button" 
+                class="toggle-btn" 
+                :class="{ 'toggle-btn--active': (newAssessment.adminFormat || 'checklist') === 'checklist' }"
+                @click="newAssessment.adminFormat = 'checklist'"
+              >
+                Checklist (✓ / —)
+              </button>
+              <button 
+                type="button" 
+                class="toggle-btn" 
+                :class="{ 'toggle-btn--active': newAssessment.adminFormat === 'text' }"
+                @click="newAssessment.adminFormat = 'text'"
+              >
+                Text Box (Textbook #, Note)
+              </button>
             </div>
           </div>
 
@@ -84,38 +115,72 @@
 
           <div class="form-group">
             <label class="form-label">Name *</label>
-            <input v-model="newAssessment.name" class="form-input" placeholder="e.g. Unit 1 Test" required />
+            <input 
+              v-model="newAssessment.name" 
+              class="form-input" 
+              :placeholder="newAssessment.purpose === 'administrative' ? 'e.g. Science Safety Contract, Textbook #...' : 'e.g. Unit 1 Test'" 
+              required 
+            />
           </div>
 
           <!-- Date & Evidence Type / Category -->
-          <div class="form-row">
+          <div :class="newAssessment.purpose === 'administrative' ? 'form-group' : 'form-row'">
             <div class="form-group">
               <label class="form-label">Date</label>
               <input v-model="newAssessment.date" type="date" class="form-input" required />
             </div>
 
-            <div class="form-group" v-if="activeClassRecord?.gradingFramework === 'sbar'">
-              <label class="form-label">Evidence Type</label>
-              <select v-model="newAssessment.assessmentType" class="form-input" required>
-                <option value="product">Product (Test/Lab)</option>
-                <option value="observation">Observation (Practical)</option>
-                <option value="conversation">Conversation (Oral)</option>
-              </select>
-            </div>
+            <template v-if="newAssessment.purpose !== 'administrative'">
+              <div class="form-group" v-if="activeClassRecord?.gradingFramework === 'sbar'">
+                <label class="form-label">Evidence Type</label>
+                <select v-model="newAssessment.assessmentType" class="form-input" required>
+                  <option value="product">Product (Test/Lab)</option>
+                  <option value="observation">Observation (Practical)</option>
+                  <option value="conversation">Conversation (Oral)</option>
+                </select>
+              </div>
 
-            <div class="form-group" v-else>
-              <label class="form-label">Category</label>
-              <select v-model="newAssessment.categoryId" class="form-input" required>
-                <option v-for="cat in effectiveClass?.gradebookCategories" :key="cat.categoryId" :value="cat.categoryId">
-                  {{ cat.name }}
-                </option>
-              </select>
-            </div>
+              <div class="form-group" v-else>
+                <label class="form-label">Category</label>
+                <select v-model="newAssessment.categoryId" class="form-input" required>
+                  <option v-for="cat in effectiveClass?.gradebookCategories" :key="cat.categoryId" :value="cat.categoryId">
+                    {{ cat.name }}
+                  </option>
+                </select>
+              </div>
+            </template>
           </div>
 
-          <!-- Unit & Retest Policy (Traditional Mode) -->
-          <div class="form-row" v-if="activeClassRecord?.gradingFramework !== 'sbar'">
-            <div class="form-group">
+          <!-- Unit & Retest Policy (Traditional Mode, Non-Admin) -->
+          <template v-if="newAssessment.purpose !== 'administrative'">
+            <div class="form-row" v-if="activeClassRecord?.gradingFramework !== 'sbar'">
+              <div class="form-group">
+                <label class="form-label">Unit</label>
+                <select 
+                  v-model="newAssessment.unitId" 
+                  class="form-input"
+                  :disabled="!effectiveUnits.length"
+                >
+                  <option :value="null">Unassigned</option>
+                  <option v-for="u in filteredUnits" :key="u.unitId" :value="u.unitId">
+                    {{ (u.courseCode && newAssessment.targetCourseCode === 'all' ? '[' + u.courseCode + '] ' : (selectedGradeFilter === 'all' && u.gradeLevel ? '[' + u.gradeLevel + '] ' : '')) + u.name }}
+                  </option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Retest Policy</label>
+                <select v-model="newAssessment.retestPolicy" class="form-input">
+                  <option value="highest">Highest Attempt</option>
+                  <option value="latest">Latest Attempt</option>
+                  <option value="average">Average of Attempts</option>
+                  <option value="manual">Manual Selection</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Unit Field (SBAR Mode: Retest Policy Hidden) -->
+            <div class="form-group" v-else>
               <label class="form-label">Unit</label>
               <select 
                 v-model="newAssessment.unitId" 
@@ -129,92 +194,80 @@
               </select>
             </div>
 
-            <div class="form-group">
-              <label class="form-label">Retest Policy</label>
-              <select v-model="newAssessment.retestPolicy" class="form-input">
-                <option value="highest">Highest Attempt</option>
-                <option value="latest">Latest Attempt</option>
-                <option value="average">Average of Attempts</option>
-                <option value="manual">Manual Selection</option>
-              </select>
+            <!-- Traditional Points Fields (Non-SBAR Mode Only) -->
+            <div v-if="activeClassRecord?.gradingFramework !== 'sbar'" class="form-row">
+              <div class="form-group">
+                <label class="form-label">Total Points</label>
+                <input v-model.number="newAssessment.totalPoints" type="number" min="1" class="form-input" required />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Scaled Total (Optional)</label>
+                <input v-model.number="newAssessment.scaledTotal" type="number" min="1" class="form-input" placeholder="Raw" />
+              </div>
             </div>
-          </div>
-
-          <!-- Unit Field (SBAR Mode: Retest Policy Hidden) -->
-          <div class="form-group" v-else>
-            <label class="form-label">Unit</label>
-            <select 
-              v-model="newAssessment.unitId" 
-              class="form-input"
-              :disabled="!effectiveUnits.length"
-            >
-              <option :value="null">Unassigned</option>
-              <option v-for="u in filteredUnits" :key="u.unitId" :value="u.unitId">
-                {{ (u.courseCode && newAssessment.targetCourseCode === 'all' ? '[' + u.courseCode + '] ' : (selectedGradeFilter === 'all' && u.gradeLevel ? '[' + u.gradeLevel + '] ' : '')) + u.name }}
-              </option>
-            </select>
-          </div>
-
-          <!-- Traditional Points Fields (Non-SBAR Mode Only) -->
-          <div v-if="activeClassRecord?.gradingFramework !== 'sbar'" class="form-row">
-            <div class="form-group">
-              <label class="form-label">Total Points</label>
-              <input v-model.number="newAssessment.totalPoints" type="number" min="1" class="form-input" required />
-            </div>
-            <div class="form-group">
-              <label class="form-label">Scaled Total (Optional)</label>
-              <input v-model.number="newAssessment.scaledTotal" type="number" min="1" class="form-input" placeholder="Raw" />
-            </div>
-          </div>
+          </template>
         </div>
 
         <!-- RIGHT COLUMN: Curriculum Standards Tagging & Description -->
         <div class="modal-col modal-col--right">
-          <!-- Expectation Tagging -->
-          <div v-if="allAvailableExpectations.length" class="form-group exp-section">
-            <div class="exp-section-header">
-              <label class="form-label">
-                Tagged Standards (Expectations)
-                <span v-if="isSBAR" class="req-star" title="Required for SBAR assessments">*</span>
-              </label>
-              <span class="exp-count-badge" v-if="selectedExpCount > 0">{{ selectedExpCount }} selected</span>
-            </div>
-
-            <div v-if="isSBAR && selectedExpCount === 0" class="exp-required-hint">
-              <Info :size="13" class="exp-hint-icon" />
-              <span>Select at least 1 expectation to link this assessment to the gradebook grid.</span>
-            </div>
-
-            <div class="exp-pill-selector">
-              <label 
-                v-for="exp in filteredAvailableExpectations" 
-                :key="exp.code"
-                class="exp-checkbox-pill"
-                :class="{ 'exp-checkbox-pill--active': isExpSelected(exp.code) }"
-              >
-                <input 
-                  type="checkbox" 
-                  :value="exp.code"
-                  :checked="isExpSelected(exp.code)"
-                  @change="toggleExpSelection(exp.code)"
-                  style="display: none;"
-                />
-                <span v-if="exp.gradeLevel" class="exp-grade-tag">{{ exp.gradeLevel.replace('Grade ', 'Gr ') }}</span>
-                <span class="exp-code-pill">{{ exp.code }}</span>
-                <span class="exp-desc-pill">{{ exp.name || exp.description }}</span>
-              </label>
-            </div>
-          </div>
-          <div v-else class="form-group exp-section">
-            <label class="form-label">Tagged Standards (Expectations)</label>
-            <div class="exp-empty-box">
-              <BookOpen :size="20" class="exp-empty-icon" />
-              <div>
-                <div>No expectations loaded for <strong>{{ activeClassRecord?.activeSubjectName || 'this subject' }}</strong> yet.</div>
-                <div class="exp-empty-sub">Load expectations under Setup ➔ Class Settings ➔ Subject Expectations.</div>
+          <!-- Administrative Help Callout (Admin Mode) -->
+          <div v-if="newAssessment.purpose === 'administrative'" class="admin-help-box">
+            <CheckSquare :size="22" class="admin-help-icon" />
+            <div>
+              <div class="admin-help-title">Administrative Logistics Tracker</div>
+              <div class="admin-help-desc">
+                This column tracks paperwork or physical equipment (e.g. Science Safety Contracts, textbook numbers). It has <strong>zero weight</strong> and will never affect student averages, GPA, or academic reports.
               </div>
             </div>
           </div>
+
+          <!-- Expectation Tagging (Academic Mode) -->
+          <template v-else>
+            <div v-if="allAvailableExpectations.length" class="form-group exp-section">
+              <div class="exp-section-header">
+                <label class="form-label">
+                  Tagged Standards (Expectations)
+                  <span v-if="isSBAR" class="req-star" title="Required for SBAR assessments">*</span>
+                </label>
+                <span class="exp-count-badge" v-if="selectedExpCount > 0">{{ selectedExpCount }} selected</span>
+              </div>
+
+              <div v-if="isSBAR && selectedExpCount === 0" class="exp-required-hint">
+                <Info :size="13" class="exp-hint-icon" />
+                <span>Select at least 1 expectation to link this assessment to the gradebook grid.</span>
+              </div>
+
+              <div class="exp-pill-selector">
+                <label 
+                  v-for="exp in filteredAvailableExpectations" 
+                  :key="exp.code"
+                  class="exp-checkbox-pill"
+                  :class="{ 'exp-checkbox-pill--active': isExpSelected(exp.code) }"
+                >
+                  <input 
+                    type="checkbox" 
+                    :value="exp.code"
+                    :checked="isExpSelected(exp.code)"
+                    @change="toggleExpSelection(exp.code)"
+                    style="display: none;"
+                  />
+                  <span v-if="exp.gradeLevel" class="exp-grade-tag">{{ exp.gradeLevel.replace('Grade ', 'Gr ') }}</span>
+                  <span class="exp-code-pill">{{ exp.code }}</span>
+                  <span class="exp-desc-pill">{{ exp.name || exp.description }}</span>
+                </label>
+              </div>
+            </div>
+            <div v-else class="form-group exp-section">
+              <label class="form-label">Tagged Standards (Expectations)</label>
+              <div class="exp-empty-box">
+                <BookOpen :size="20" class="exp-empty-icon" />
+                <div>
+                  <div>No expectations loaded for <strong>{{ activeClassRecord?.activeSubjectName || 'this subject' }}</strong> yet.</div>
+                  <div class="exp-empty-sub">Load expectations under Setup ➔ Class Settings ➔ Subject Expectations.</div>
+                </div>
+              </div>
+            </div>
+          </template>
 
           <!-- Description (Optional) -->
           <div class="form-group">
@@ -222,7 +275,7 @@
             <textarea 
               v-model="newAssessment.description" 
               class="form-input form-textarea" 
-              placeholder="Extra details about this assessment task..." 
+              :placeholder="newAssessment.purpose === 'administrative' ? 'Extra details or instructions about this paperwork...' : 'Extra details about this assessment task...'" 
               rows="3"
             ></textarea>
           </div>
@@ -235,11 +288,11 @@
         <button 
           type="submit" 
           class="btn-primary"
-          :disabled="isSBAR && selectedExpCount === 0"
-          :class="{ 'btn-primary--disabled': isSBAR && selectedExpCount === 0 }"
-          :title="isSBAR && selectedExpCount === 0 ? 'Please select at least 1 expectation' : ''"
+          :disabled="isSBAR && newAssessment.purpose !== 'administrative' && selectedExpCount === 0"
+          :class="{ 'btn-primary--disabled': isSBAR && newAssessment.purpose !== 'administrative' && selectedExpCount === 0 }"
+          :title="isSBAR && newAssessment.purpose !== 'administrative' && selectedExpCount === 0 ? 'Please select at least 1 expectation' : ''"
         >
-          {{ isEditingAssessment ? 'Update Assessment' : 'Create Assessment' }}
+          {{ isEditingAssessment ? 'Update Assessment' : (newAssessment.purpose === 'administrative' ? 'Create Admin Tracker' : 'Create Assessment') }}
         </button>
       </div>
     </form>
@@ -248,7 +301,7 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue'
-import { BookOpen, Info } from 'lucide-vue-next'
+import { BookOpen, Info, CheckSquare } from 'lucide-vue-next'
 import {
   showAddAssessmentModal,
   isEditingAssessment,
@@ -734,5 +787,35 @@ function toggleExpSelection(code) {
 .exp-hint-icon {
   color: var(--primary);
   flex-shrink: 0;
+}
+
+.admin-help-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: var(--radius-md);
+  margin-bottom: 0.5rem;
+}
+
+.admin-help-icon {
+  color: #10b981;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.admin-help-title {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.admin-help-desc {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  line-height: 1.45;
 }
 </style>

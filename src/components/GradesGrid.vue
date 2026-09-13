@@ -1,7 +1,7 @@
 <template>
   <div class="grades__grid-container-outer">
     <!-- Unified Single-Row Filter Bar -->
-    <div v-if="availableSubCohorts.length > 1 || availableUnits.length > 0" class="grades__filter-bar">
+    <div v-if="availableSubCohorts.length > 1 || availableUnits.length > 0 || totalAdminAssessmentsCount > 0" class="grades__filter-bar">
       <!-- Cohort Chips -->
       <div v-if="availableSubCohorts.length > 1" class="grades__filter-group grades__filter-group--cohort">
         <span class="grades__filter-label">{{ activeClassRecord?.classType === 'elementary' ? 'Grade:' : 'Section:' }}</span>
@@ -10,7 +10,7 @@
             v-for="subCohort in availableSubCohorts" 
             :key="subCohort" 
             type="button"
-            class="grid-chip"
+            class="grid-chip" 
             :class="{ 'grid-chip--active': String(activeSubCohortFilter).toLowerCase() === String(subCohort).toLowerCase() }"
             @click="setSubCohort(subCohort)"
           >
@@ -19,10 +19,10 @@
         </div>
       </div>
 
-      <div v-if="availableSubCohorts.length > 1 && availableUnits.length > 0 && (activeClassRecord?.classType !== 'elementary' || availableSubCohorts.length <= 1 || String(activeSubCohortFilter).toLowerCase() !== 'all')" class="grades__filter-divider" />
+      <div v-if="availableSubCohorts.length > 1 && (availableUnits.length > 0 || totalAdminAssessmentsCount > 0) && (activeClassRecord?.classType !== 'elementary' || availableSubCohorts.length <= 1 || String(activeSubCohortFilter).toLowerCase() !== 'all')" class="grades__filter-divider" />
 
       <!-- Unit / Strand Chips -->
-      <div v-if="availableUnits.length > 0 && (activeClassRecord?.classType !== 'elementary' || availableSubCohorts.length <= 1 || String(activeSubCohortFilter).toLowerCase() !== 'all')" class="grades__filter-group grades__filter-group--units">
+      <div v-if="(availableUnits.length > 0 || totalAdminAssessmentsCount > 0) && (activeClassRecord?.classType !== 'elementary' || availableSubCohorts.length <= 1 || String(activeSubCohortFilter).toLowerCase() !== 'all')" class="grades__filter-group grades__filter-group--units">
         <span class="grades__filter-label">{{ activeClassRecord?.classType === 'elementary' ? 'Strand:' : 'Unit:' }}</span>
         <div class="grades__filter-chips">
           <button 
@@ -45,6 +45,19 @@
             <span class="grid-chip__dot" :style="{ background: selectedUnitId === u.unitId ? '#fff' : getUnitColor(u.unitId) }"></span>
             <span>{{ cleanUnitPillName(u.name) }}</span>
             <span class="grid-chip__badge">{{ getUnitAssessmentCount(u.unitId, u.name) }}</span>
+          </button>
+
+          <!-- Admin Filter Chip -->
+          <button 
+            v-if="totalAdminAssessmentsCount > 0"
+            class="grid-chip grid-chip--admin"
+            :class="{ 'grid-chip--active': selectedUnitId === 'admin' }"
+            @click="selectedUnitId = (selectedUnitId === 'admin' ? null : 'admin')"
+            title="Filter grid to show only administrative logistics and paperwork"
+          >
+            <span class="grid-chip__dot" style="background: #10b981;"></span>
+            <span>Admin</span>
+            <span class="grid-chip__badge">{{ totalAdminAssessmentsCount }}</span>
           </button>
         </div>
       </div>
@@ -100,19 +113,28 @@
                   </span>
                 </span>
                 <div class="grades__assessment-meta">
-                  <span class="grades__assessment-pts">{{ a.totalPoints }} pts</span>
-                  <span class="grades__assessment-sep">·</span>
-                  <span v-if="a.categoryId" class="grades__assessment-cat-tag">
-                    {{ getCategoryName(a.categoryId) }}
-                  </span>
-                  <span v-else-if="a.unitId" class="grades__assessment-unit">{{ cleanUnitPillName(getUnitName(a.unitId)) }}</span>
-                  <span 
-                    v-if="(a.targetCourseCode || a.gradeLevel) && (a.targetCourseCode !== 'ALL' && a.gradeLevel !== 'ALL') && availableSubCohorts.length > 1 && activeSubCohortFilter === 'all'" 
-                    class="grades__assessment-sec-badge"
-                    :title="'Section: ' + (a.targetCourseCode || a.gradeLevel)"
-                  >
-                    {{ a.targetCourseCode || (a.gradeLevel ? a.gradeLevel.replace('Grade ', 'Gr. ') : '') }}
-                  </span>
+                  <template v-if="a.purpose === 'administrative'">
+                    <span class="grades__admin-col-pill" :class="a.adminFormat === 'text' ? 'grades__admin-col-pill--text' : 'grades__admin-col-pill--check'">
+                      <Check v-if="a.adminFormat !== 'text'" :size="10" :stroke-width="2.5" />
+                      <Type v-else :size="10" :stroke-width="2.5" />
+                      {{ a.adminFormat === 'text' ? 'Text' : 'Checklist' }}
+                    </span>
+                  </template>
+                  <template v-else>
+                    <span class="grades__assessment-pts">{{ a.totalPoints }} pts</span>
+                    <span class="grades__assessment-sep">·</span>
+                    <span v-if="a.categoryId" class="grades__assessment-cat-tag">
+                      {{ getCategoryName(a.categoryId) }}
+                    </span>
+                    <span v-else-if="a.unitId" class="grades__assessment-unit">{{ cleanUnitPillName(getUnitName(a.unitId)) }}</span>
+                    <span 
+                      v-if="(a.targetCourseCode || a.gradeLevel) && (a.targetCourseCode !== 'ALL' && a.gradeLevel !== 'ALL') && availableSubCohorts.length > 1 && activeSubCohortFilter === 'all'" 
+                      class="grades__assessment-sec-badge"
+                      :title="'Section: ' + (a.targetCourseCode || a.gradeLevel)"
+                    >
+                      {{ a.targetCourseCode || (a.gradeLevel ? a.gradeLevel.replace('Grade ', 'Gr. ') : '') }}
+                    </span>
+                  </template>
                 </div>
               </div>
               <button class="grades__header-menu-btn" @click.stop="onHeaderMenu($event, 'assessment', a)">
@@ -142,7 +164,15 @@
             @click="toggleGridSort(a.assessmentId)"
             title="Sort by this assessment"
           >
-            <div v-if="getAssessmentAvg(a.assessmentId) !== null">
+            <div v-if="a.purpose === 'administrative'">
+              <span v-if="a.adminFormat === 'text'" class="grades__admin-avg-text" :title="getAdminTextCount(a.assessmentId) + ' entered'">
+                {{ getAdminTextCount(a.assessmentId) }}/{{ sortedRoster.length }}
+              </span>
+              <span v-else class="grades__admin-avg-check" :title="getAdminCheckCount(a.assessmentId) + ' received'">
+                {{ getAdminCheckCount(a.assessmentId) }}/{{ sortedRoster.length }} ✓
+              </span>
+            </div>
+            <div v-else-if="getAssessmentAvg(a.assessmentId) !== null">
               {{ formatCellGrade(getAssessmentAvg(a.assessmentId), a.totalPoints) }}
             </div>
             <div v-else class="text-muted">—</div>
@@ -255,13 +285,34 @@
             v-for="a in sortedAssessments" 
             :key="a.assessmentId"
             class="grades__td-assessment"
-            :class="{ 'grades__td-assessment--highlighted': highlightedColumnId === a.assessmentId }"
-            :style="getCellStyle(student.studentId, a.assessmentId, a.totalPoints)"
-            @click="isCellApplicable(student.studentId, a) && startEdit(student.studentId, a.assessmentId)"
+            :class="{ 
+              'grades__td-assessment--highlighted': highlightedColumnId === a.assessmentId,
+              'grades__td-assessment--admin': a.purpose === 'administrative',
+              'grades__td-assessment--admin-check': a.purpose === 'administrative' && a.adminFormat !== 'text'
+            }"
+            :style="a.purpose === 'administrative' ? {} : getCellStyle(student.studentId, a.assessmentId, a.totalPoints)"
+            :tabindex="a.purpose === 'administrative' && a.adminFormat !== 'text' ? 0 : undefined"
+            :data-admin-check-cell="a.purpose === 'administrative' && a.adminFormat !== 'text' ? (student.studentId + '_' + a.assessmentId) : undefined"
+            @click="handleCellClick(student.studentId, a)"
+            @keydown="onChecklistKeyNavigate($event, student, a)"
             @contextmenu.prevent="isCellApplicable(student.studentId, a) && onContextMenu($event, student.studentId, a.assessmentId)"
           >
-            <!-- Inline Editor -->
-            <div v-if="editingCell?.sId === student.studentId && editingCell?.aId === a.assessmentId" class="grades__cell-edit">
+            <!-- Inline Editor for Admin Text -->
+            <div v-if="editingAdminCell?.sId === student.studentId && editingAdminCell?.aId === a.assessmentId" class="grades__cell-edit" @click.stop>
+              <input 
+                ref="adminEditInput"
+                v-model="editingAdminCell.value"
+                type="text"
+                class="grades__input-inline grades__input-inline--text"
+                placeholder="e.g. 104"
+                @blur="saveAdminTextEdit"
+                @keydown="onAdminKeyNavigate($event, a)"
+                @keydown.esc.prevent="editingAdminCell = null"
+              />
+            </div>
+
+            <!-- Inline Editor for Academic Number Assessment -->
+            <div v-else-if="editingCell?.sId === student.studentId && editingCell?.aId === a.assessmentId" class="grades__cell-edit">
               <input 
                 ref="editInput"
                 v-model.number="editingCell.value"
@@ -277,6 +328,31 @@
 
             <div v-else-if="!isCellApplicable(student.studentId, a)" class="grades__cell-content">
               <span style="color: #9ca3af; font-size: 0.72rem; font-style: italic;">N/A</span>
+            </div>
+
+            <!-- Administrative Column Content -->
+            <div v-else-if="a.purpose === 'administrative'" class="grades__cell-content grades__cell-content--admin">
+              <template v-if="a.adminFormat !== 'text'">
+                <span 
+                  v-if="isAdminChecked(student.studentId, a.assessmentId)" 
+                  class="grades__admin-check-badge"
+                  title="Received (Click to toggle)"
+                >
+                  <Check :size="13" :stroke-width="3" />
+                </span>
+                <span v-else class="grades__admin-check-empty" title="Missing (Click to toggle)">—</span>
+              </template>
+
+              <template v-else>
+                <span 
+                  v-if="getAdminTextValue(student.studentId, a.assessmentId)" 
+                  class="grades__admin-text-val"
+                  :title="getAdminTextValue(student.studentId, a.assessmentId)"
+                >
+                  {{ getAdminTextValue(student.studentId, a.assessmentId) }}
+                </span>
+                <span v-else class="grades__cell-placeholder">—</span>
+              </template>
             </div>
 
             <div v-else-if="gradeMap[a.assessmentId]?.[student.studentId]" class="grades__cell-content">
@@ -425,7 +501,9 @@ import {
   isAssessmentInSubCohort,
   isAssessmentApplicableToStudent,
   getUnitGradeLevel,
-  isCohortMatch
+  isCohortMatch,
+  toggleAdminChecklist,
+  saveAdminText
 } from '../composables/useGradebook.js'
 import { useGradeEditing } from '../composables/useGradeEditing.js'
 import {
@@ -446,7 +524,7 @@ import { formatLocalDisplay } from '../utils/dates.js'
 import { 
   Plus, Pencil, XCircle, AlertCircle, Trash2, X, MoreVertical, 
   ChevronUp, ChevronDown, Copy, Calendar, RotateCcw, BarChart2, NotebookPen,
-  Asterisk
+  Asterisk, Check, Type
 } from 'lucide-vue-next'
 import TestDayWarning from './TestDayWarning.vue'
 import GradesAttemptHistoryModal from './grades/GradesAttemptHistoryModal.vue'
@@ -605,6 +683,10 @@ const overallClassAvg = computed(() => {
 const selectedUnitId = ref(null)
 const selectedCategoryId = ref(null)
 
+const totalAdminAssessmentsCount = computed(() => {
+  return assessments.value.filter(a => a.purpose === 'administrative' && isAssessmentInSubCohort(a)).length
+})
+
 const CATEGORY_COLORS = [
   '#3b82f6', // blue
   '#10b981', // green
@@ -695,10 +777,12 @@ const sortedAssessments = computed(() => {
   let list = [...assessments.value].filter(a => {
     if (a.target === 'individual') return false
     if (a.categoryId === 'sbar_general') return false
-    if (isSBAR.value && (!a.expectationIds || a.expectationIds.length === 0)) return false
+    if (isSBAR.value && a.purpose !== 'administrative' && (!a.expectationIds || a.expectationIds.length === 0)) return false
     return isAssessmentInSubCohort(a)
   })
-  if (selectedUnitId.value) {
+  if (selectedUnitId.value === 'admin') {
+    list = list.filter(a => a.purpose === 'administrative')
+  } else if (selectedUnitId.value) {
     const eff = getEffectiveClassRecord(activeClassRecord.value, activeSubjectId.value, selectedCourseFilter.value)
     const targetUnit = (eff?.gradebookUnits || []).find(u => u.unitId === selectedUnitId.value)
     if (targetUnit) {
@@ -712,6 +796,9 @@ const sortedAssessments = computed(() => {
     } else {
       list = list.filter(a => a.unitId === selectedUnitId.value)
     }
+  } else {
+    // When "All Units" is selected, show purely academic assessments
+    list = list.filter(a => a.purpose !== 'administrative')
   }
   if (selectedCategoryId.value) {
     list = list.filter(a => a.categoryId === selectedCategoryId.value)
@@ -724,6 +811,7 @@ const sortedAssessments = computed(() => {
 const totalAssessmentCount = computed(() => {
   return assessments.value.filter(a => {
     if (a.target === 'individual' || a.categoryId === 'sbar_general') return false
+    if (a.purpose === 'administrative') return false
     return isAssessmentInSubCohort(a)
   }).length
 })
@@ -778,11 +866,16 @@ const sortedRoster = computed(() => {
         if (!g) return -1
         if (g.excluded) return -1
         if (g.missing) return 0
+        if (g.textValue) return g.textValue
         return g.resolvedScore ?? -1
       }
       
       const valA = getVal(gradeA)
       const valB = getVal(gradeB)
+      if (typeof valA === 'string' || typeof valB === 'string') {
+        const cmp = String(valA).localeCompare(String(valB))
+        return gridSortOrder.value === 'asc' ? cmp : -cmp
+      }
       return gridSortOrder.value === 'asc' ? valA - valB : valB - valA
     }
     
@@ -798,7 +891,7 @@ const studentTrends = computed(() => {
   
   const productAssessments = [...assessments.value]
     .filter(a => {
-      if (a.assessmentType !== 'product' || a.excluded || a.target === 'individual') return false
+      if (a.purpose === 'administrative' || a.assessmentType !== 'product' || a.excluded || a.target === 'individual') return false
       if (isSBAR.value) {
         return a.categoryId === 'sbar_general' || (a.expectationIds && a.expectationIds.length > 0)
       } else {
@@ -834,6 +927,229 @@ function toggleGridSort(column) {
     gridSortBy.value = column
     gridSortOrder.value = (column === 'grade' || column !== 'name') ? 'desc' : 'asc'
   }
+}
+
+// Administrative Cell Editing & State
+const editingAdminCell = ref(null) // { sId, aId, value }
+const adminEditInput = ref(null)
+let isNavigatingAdmin = false
+
+function handleCellClick(studentId, a) {
+  if (!isCellApplicable(studentId, a)) return
+  if (a.purpose === 'administrative') {
+    if (a.adminFormat === 'text') {
+      startAdminTextEdit(studentId, a.assessmentId)
+    } else {
+      toggleAdminChecklist(a.assessmentId, studentId)
+      focusAdminCheckCell(studentId, a.assessmentId)
+    }
+  } else {
+    startEdit(studentId, a.assessmentId)
+  }
+}
+
+function startAdminTextEdit(studentId, assessmentId) {
+  const currentEntry = gradeMap.value[String(assessmentId)]?.[String(studentId)]
+  const currentVal = currentEntry?.textValue || currentEntry?.comment || ''
+  editingAdminCell.value = {
+    sId: studentId,
+    aId: assessmentId,
+    value: currentVal
+  }
+  nextTick(() => {
+    const el = adminEditInput.value
+    const inputEl = Array.isArray(el) ? el[0] : el
+    if (inputEl) {
+      inputEl.focus()
+      inputEl.select()
+    } else {
+      const fallback = document.querySelector('.grades__input-inline--text')
+      fallback?.focus()
+      fallback?.select()
+    }
+  })
+}
+
+function saveAdminTextEdit() {
+  if (isNavigatingAdmin) return
+  if (!editingAdminCell.value) return
+  const { sId, aId, value } = editingAdminCell.value
+  saveAdminText(aId, sId, value)
+  editingAdminCell.value = null
+}
+
+function onAdminKeyNavigate(e, assessment) {
+  if (!editingAdminCell.value) return
+  const isShift = e.shiftKey
+  let direction = null
+
+  if (e.key === 'Enter') {
+    direction = isShift ? 'up' : 'down'
+  } else if (e.key === 'ArrowDown') {
+    direction = 'down'
+  } else if (e.key === 'ArrowUp') {
+    direction = 'up'
+  } else if (e.key === 'Tab') {
+    direction = isShift ? 'up' : 'down'
+  } else if (e.key === 'Escape') {
+    editingAdminCell.value = null
+    return
+  }
+
+  if (direction) {
+    e.preventDefault()
+    const { sId, aId, value } = editingAdminCell.value
+    saveAdminText(aId, sId, value)
+
+    const studentIdx = sortedRoster.value.findIndex(s => String(s.studentId) === String(sId))
+    let targetIdx = direction === 'down' ? studentIdx + 1 : studentIdx - 1
+
+    while (targetIdx >= 0 && targetIdx < sortedRoster.value.length) {
+      const targetStudent = sortedRoster.value[targetIdx]
+      if (isCellApplicable(targetStudent.studentId, assessment)) {
+        break
+      }
+      targetIdx = direction === 'down' ? targetIdx + 1 : targetIdx - 1
+    }
+
+    if (targetIdx >= 0 && targetIdx < sortedRoster.value.length) {
+      const targetStudent = sortedRoster.value[targetIdx]
+      isNavigatingAdmin = true
+
+      const currentEntry = gradeMap.value[String(aId)]?.[String(targetStudent.studentId)]
+      const currentVal = currentEntry?.textValue || currentEntry?.comment || ''
+
+      editingAdminCell.value = {
+        sId: targetStudent.studentId,
+        aId: aId,
+        value: currentVal
+      }
+
+      nextTick(() => {
+        setTimeout(() => {
+          isNavigatingAdmin = false
+        }, 50)
+
+        const el = adminEditInput.value
+        const inputEl = Array.isArray(el) ? el[0] : el
+        if (inputEl) {
+          inputEl.focus()
+          inputEl.select()
+        } else {
+          const fallback = document.querySelector('.grades__input-inline--text')
+          fallback?.focus()
+          fallback?.select()
+        }
+      })
+    } else {
+      editingAdminCell.value = null
+    }
+  }
+}
+
+function isAdminChecked(studentId, assessmentId) {
+  const entry = gradeMap.value[String(assessmentId)]?.[String(studentId)]
+  return Boolean(
+    entry && (
+      entry.resolvedScore === 1 ||
+      entry.score === 1 ||
+      entry.pointsEarned === 1 ||
+      entry.received === true ||
+      entry.attempts?.[0]?.pointsEarned === 1
+    )
+  )
+}
+
+function focusAdminCheckCell(studentId, assessmentId) {
+  nextTick(() => {
+    const selector = `[data-admin-check-cell="${studentId}_${assessmentId}"]`
+    const el = document.querySelector(selector)
+    if (el) {
+      el.focus()
+    }
+  })
+}
+
+function onChecklistKeyNavigate(e, student, assessment) {
+  if (assessment.purpose !== 'administrative' || assessment.adminFormat === 'text') return
+
+  const isShift = e.shiftKey
+  const isChecked = isAdminChecked(student.studentId, assessment.assessmentId)
+
+  if (e.key === 'ArrowDown') {
+    e.preventDefault()
+    advanceChecklistFocus(student.studentId, assessment, 'down')
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault()
+    advanceChecklistFocus(student.studentId, assessment, 'up')
+  } else if (e.key === ' ' || e.code === 'Space') {
+    e.preventDefault()
+    toggleAdminChecklist(assessment.assessmentId, student.studentId)
+  } else if (e.key === 'Enter') {
+    e.preventDefault()
+    toggleAdminChecklist(assessment.assessmentId, student.studentId)
+    advanceChecklistFocus(student.studentId, assessment, isShift ? 'up' : 'down')
+  } else if (e.key === '1' || e.key.toLowerCase() === 'c' || e.key.toLowerCase() === 'y' || e.key.toLowerCase() === 'x') {
+    e.preventDefault()
+    if (!isChecked) {
+      toggleAdminChecklist(assessment.assessmentId, student.studentId)
+    }
+    advanceChecklistFocus(student.studentId, assessment, 'down')
+  } else if (e.key === '0' || e.key === 'Backspace' || e.key === 'Delete' || e.key.toLowerCase() === 'n') {
+    e.preventDefault()
+    if (isChecked) {
+      toggleAdminChecklist(assessment.assessmentId, student.studentId)
+    }
+    advanceChecklistFocus(student.studentId, assessment, 'down')
+  } else if (e.key === 'Tab') {
+    e.preventDefault()
+    advanceChecklistFocus(student.studentId, assessment, isShift ? 'up' : 'down')
+  }
+}
+
+function advanceChecklistFocus(currentStudentId, assessment, direction = 'down') {
+  const studentIdx = sortedRoster.value.findIndex(s => String(s.studentId) === String(currentStudentId))
+  if (studentIdx < 0) return
+
+  let targetIdx = direction === 'down' ? studentIdx + 1 : studentIdx - 1
+  while (targetIdx >= 0 && targetIdx < sortedRoster.value.length) {
+    const targetStudent = sortedRoster.value[targetIdx]
+    if (isCellApplicable(targetStudent.studentId, assessment)) {
+      focusAdminCheckCell(targetStudent.studentId, assessment.assessmentId)
+      break
+    }
+    targetIdx = direction === 'down' ? targetIdx + 1 : targetIdx - 1
+  }
+}
+
+function getAdminTextValue(studentId, assessmentId) {
+  const entry = gradeMap.value[String(assessmentId)]?.[String(studentId)]
+  return entry?.textValue || entry?.comment || ''
+}
+
+function getAdminCheckCount(assessmentId) {
+  let count = 0
+  const astIdStr = String(assessmentId)
+  for (const s of sortedRoster.value) {
+    const entry = gradeMap.value[astIdStr]?.[s.studentId]
+    if (entry && (entry.resolvedScore === 1 || entry.score === 1 || entry.pointsEarned === 1 || entry.received || entry.attempts?.[0]?.pointsEarned === 1)) {
+      count++
+    }
+  }
+  return count
+}
+
+function getAdminTextCount(assessmentId) {
+  let count = 0
+  const astIdStr = String(assessmentId)
+  for (const s of sortedRoster.value) {
+    const entry = gradeMap.value[astIdStr]?.[s.studentId]
+    const txt = entry?.textValue || entry?.comment || entry?.resolvedScore
+    if (txt && String(txt).trim() !== '') {
+      count++
+    }
+  }
+  return count
 }
 
 async function onKeyNavigate(e) {
@@ -1084,6 +1400,13 @@ function copyAssessmentGrades(assessment) {
   color: #ffffff;
 }
 
+.grid-chip--admin.grid-chip--active {
+  background: #10b981;
+  border-color: #10b981;
+  color: #fff;
+}
+
+
 .grades__assessment-cat-tag {
   font-size: 0.65rem;
   font-weight: 700;
@@ -1325,6 +1648,116 @@ function copyAssessmentGrades(assessment) {
   text-align: center;
   background: var(--surface);
   border-right: 1px solid var(--border);
+}
+
+.grades__td-assessment--admin {
+  cursor: pointer;
+}
+
+.grades__td-assessment--admin-check {
+  user-select: none;
+}
+
+.grades__td-assessment--admin-check:hover {
+  background: rgba(16, 185, 129, 0.05);
+}
+
+.grades__td-assessment--admin-check:focus,
+.grades__td-assessment--admin-check:focus-visible {
+  outline: 2px solid #10b981;
+  outline-offset: -2px;
+  background: rgba(16, 185, 129, 0.08);
+}
+
+.grades__admin-col-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+.grades__admin-col-pill--check {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+}
+
+.grades__admin-col-pill--text {
+  background: rgba(59, 130, 246, 0.15);
+  color: #3b82f6;
+}
+
+.grades__admin-avg-check {
+  color: #10b981;
+  font-weight: 700;
+  font-size: 0.78rem;
+}
+
+.grades__admin-avg-text {
+  color: #3b82f6;
+  font-weight: 700;
+  font-size: 0.78rem;
+}
+
+.grades__cell-content--admin {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+.grades__admin-check-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  background: rgba(16, 185, 129, 0.18);
+  color: #10b981;
+  font-weight: 800;
+  transition: transform 0.1s ease;
+}
+
+.grades__admin-check-badge:hover {
+  transform: scale(1.15);
+}
+
+.grades__admin-check-empty {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  color: var(--text-tertiary, #94a3b8);
+  font-weight: 600;
+  font-size: 0.9rem;
+  border-radius: 4px;
+  transition: background 0.1s ease;
+}
+
+.grades__admin-check-empty:hover {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+}
+
+.grades__admin-text-val {
+  font-weight: 600;
+  font-size: 0.8rem;
+  color: var(--text);
+  max-width: 90px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.grades__input-inline--text {
+  width: 90%;
+  text-align: center;
+  font-weight: 600;
 }
 
 .grades__td-student {

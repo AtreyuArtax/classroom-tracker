@@ -89,6 +89,13 @@
                   Summative
                 </button>
                 <button 
+                  class="hub-tab" 
+                  :class="{ 'hub-tab--active': hubFilterTab === 'admin' }"
+                  @click="hubFilterTab = 'admin'"
+                >
+                  Admin
+                </button>
+                <button 
                   v-if="isWeightedSBAR"
                   class="hub-tab" 
                   :class="{ 'hub-tab--active': hubFilterTab === 'final' }"
@@ -116,9 +123,12 @@
                     <span class="hub-card-title">{{ ast.name }}</span>
                     <span 
                       class="hub-card-tag" 
-                      :class="{ 'hub-card-tag--formative': ast.purpose === 'formative' || ast.isFormative }"
+                      :class="{ 
+                        'hub-card-tag--admin': ast.purpose === 'administrative',
+                        'hub-card-tag--formative': ast.purpose !== 'administrative' && (ast.purpose === 'formative' || ast.isFormative)
+                      }"
                     >
-                      {{ (ast.purpose === 'formative' || ast.isFormative) ? 'Formative' : 'Summative' }}
+                      {{ ast.purpose === 'administrative' ? 'Admin' : ((ast.purpose === 'formative' || ast.isFormative) ? 'Formative' : 'Summative') }}
                     </span>
                   </div>
                   <div class="hub-card-meta">
@@ -145,7 +155,7 @@
     </div>
 
     <!-- Tier 2: Curriculum Strands & Grade Filter Bar (Dedicated Row) -->
-    <div v-if="availableGradeFilters.length > 1 || availableStrands.length > 1" class="sbar-filter-bar">
+    <div v-if="availableGradeFilters.length > 1 || availableStrands.length > 1 || totalAdminAssessmentsCount > 0" class="sbar-filter-bar">
       <!-- Grade / Sub-cohort Filter Pills -->
       <div v-if="availableGradeFilters.length > 1" class="sbar-grade-pills">
         <span class="sbar-bar-label">{{ activeClassRecord?.classType === 'elementary' ? 'Grade:' : 'Section:' }}</span>
@@ -153,7 +163,7 @@
           v-for="gFilter in availableGradeFilters" 
           :key="gFilter" 
           type="button"
-          class="grade-pill"
+          class="grade-pill" 
           :class="{ 'grade-pill--active': String(activeGradeFilter).toLowerCase() === String(gFilter).toLowerCase() }"
           @click="setGradeFilter(gFilter)"
         >
@@ -161,10 +171,10 @@
         </button>
       </div>
 
-      <div v-if="availableGradeFilters.length > 1 && availableStrands.length > 1" class="sbar-toolbar-divider" />
+      <div v-if="availableGradeFilters.length > 1 && (availableStrands.length > 1 || totalAdminAssessmentsCount > 0)" class="sbar-toolbar-divider" />
 
       <!-- Strand Filter Pills -->
-      <div v-if="availableStrands.length > 1" class="sbar-strand-pills">
+      <div v-if="availableStrands.length > 1 || totalAdminAssessmentsCount > 0" class="sbar-strand-pills">
         <span class="sbar-bar-label">Strand:</span>
         <button 
           class="strand-pill" 
@@ -172,7 +182,7 @@
           @click="activeStrandFilter = 'all'"
         >
           All Strands
-          <span class="strand-pill-badge">{{ sortedAssessments.length }}</span>
+          <span class="strand-pill-badge">{{ academicAssessmentsCount }}</span>
         </button>
         <button 
           v-for="(strand, idx) in availableStrands" 
@@ -186,6 +196,19 @@
           <span>{{ formatStrandPillLabel(strand.name) }}</span>
           <span class="strand-pill-badge">{{ getStrandAssessmentCount(strand) }}</span>
         </button>
+
+        <!-- Admin Filter Pill -->
+        <button 
+          v-if="totalAdminAssessmentsCount > 0"
+          class="strand-pill strand-pill--admin"
+          :class="{ 'strand-pill--active': activeStrandFilter === 'admin' }"
+          @click="activeStrandFilter = (activeStrandFilter === 'admin' ? 'all' : 'admin')"
+          title="Filter grid to show only administrative paperwork and logistics"
+        >
+          <span class="strand-pill-dot" style="color: #10b981;">●</span>
+          <span>Admin</span>
+          <span class="strand-pill-badge">{{ totalAdminAssessmentsCount }}</span>
+        </button>
       </div>
     </div>
 
@@ -197,6 +220,17 @@
           <tr class="sbar-header-group">
             <th class="sticky-col sticky-col--name" colspan="1">STUDENT</th>
             <th class="sticky-col sticky-col--mastery" colspan="1">{{ isWeightedSBAR ? 'COURSE GRADE' : 'OVERALL MASTERY' }}</th>
+            
+            <!-- Administrative Column Header Group -->
+            <th 
+              v-if="sbarAdminAssessments.length" 
+              :colspan="sbarAdminAssessments.length"
+              class="strand-group-header strand-group-header--admin"
+              style="border-top: 3px solid #10b981; background: rgba(16, 185, 129, 0.08); color: var(--text);"
+            >
+              <div class="strand-group-title">ADMINISTRATIVE LOGISTICS</div>
+            </th>
+
             <th 
               v-for="(strand, idx) in displayedStrands" 
               :key="'grp-' + (strand.id || strand.code)" 
@@ -217,6 +251,29 @@
           <tr class="sbar-header-sub">
             <th class="sticky-col sticky-col--name">Student Name</th>
             <th class="sticky-col sticky-col--mastery">{{ isWeightedSBAR ? 'Final Mark' : 'Mastery' }}</th>
+
+            <!-- Administrative Task Columns Subheaders -->
+            <th 
+              v-for="a in sbarAdminAssessments" 
+              :key="'sbar-admin-th-' + a.assessmentId"
+              class="exp-code-header exp-code-header--admin exp-code-header--clickable"
+              :title="a.name + ' (' + (a.adminFormat === 'text' ? 'Text Note' : 'Checklist') + ') — Click to view details'"
+              @click.stop="emit('select-assessment', a.assessmentId)"
+            >
+              <div class="exp-code-main">
+                <span class="admin-col-name">{{ a.name }}</span>
+                <span 
+                  class="grades__admin-col-pill" 
+                  :class="a.adminFormat === 'text' ? 'grades__admin-col-pill--text' : 'grades__admin-col-pill--check'"
+                >
+                  {{ a.adminFormat === 'text' ? 'Text' : 'Checklist' }}
+                </span>
+                <span class="exp-ast-badge exp-ast-badge--admin" :title="`${getAdminCompletionCount(a.assessmentId)}/${sortedRoster.length} completed`">
+                  {{ getAdminCompletionCount(a.assessmentId) }}/{{ sortedRoster.length }}
+                </span>
+              </div>
+            </th>
+
             <th 
               v-for="exp in displayedExpectations" 
               :key="(exp.gradeLevel || exp.courseCode || 'all') + '-' + exp.code"
@@ -224,7 +281,7 @@
               :class="{ 'exp-code-header--active': expectationPopover?.code === exp.code }"
               :title="`Click to view connected assessments for ${exp.code}`"
               @click.stop="toggleExpectationPopover(exp, $event)"
-            >
+            >     >
               <div class="exp-code-main">
                 <span>{{ exp.code }}</span>
                 <ExpectationWeightBadge v-if="exp.weight != null && exp.weight !== 1" :weight="exp.weight" />
@@ -303,6 +360,41 @@
                 {{ overallMasteryMap[student.studentId].badge.level }}
               </span>
               <span v-else class="text-muted">—</span>
+            </td>
+
+            <!-- Administrative Task Cells -->
+            <td 
+              v-for="a in sbarAdminAssessments" 
+              :key="'sbar-admin-cell-' + student.studentId + '-' + a.assessmentId"
+              class="sbar-exp-cell sbar-exp-cell--admin"
+              :class="{ 'sbar-cell-na': !isAssessmentApplicableToStudent(a, student) }"
+            >
+              <div v-if="isAssessmentApplicableToStudent(a, student)" class="sbar-admin-cell-content">
+                <button 
+                  v-if="a.adminFormat !== 'text'"
+                  type="button"
+                  :data-sbar-admin-check="student.studentId + '_' + a.assessmentId"
+                  class="grades__admin-check-badge"
+                  :class="{ 'grades__admin-check-badge--checked': isAdminChecked(student.studentId, a.assessmentId) }"
+                  :title="isAdminChecked(student.studentId, a.assessmentId) ? 'Received (Click to toggle)' : 'Missing (Click to toggle)'"
+                  @click.stop="toggleAdminChecklist(a.assessmentId, student.studentId)"
+                  @keydown="onAdminSBARChecklistKeyNavigate($event, student, a)"
+                >
+                  <Check v-if="isAdminChecked(student.studentId, a.assessmentId)" :size="13" :stroke-width="3" />
+                  <span v-else class="grades__admin-check-empty">—</span>
+                </button>
+                <input 
+                  v-else
+                  type="text"
+                  :data-sbar-admin-input="student.studentId + '_' + a.assessmentId"
+                  class="grades__input-inline grades__input-inline--text"
+                  :value="getAdminTextValue(student.studentId, a.assessmentId)"
+                  placeholder="—"
+                  @blur="e => saveAdminText(a.assessmentId, student.studentId, e.target.value)"
+                  @keydown="e => onAdminSBARKeyNavigate(e, student, a)"
+                />
+              </div>
+              <div v-else class="sbar-cell-na" title="Not applicable to student cohort">—</div>
             </td>
 
             <!-- Expectation Cells -->
@@ -425,7 +517,7 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { Search, ChevronDown, X, Layers, Calendar, FileText, FileEdit } from 'lucide-vue-next'
+import { Search, ChevronDown, X, Layers, Calendar, FileText, FileEdit, Check } from 'lucide-vue-next'
 import ExpectationWeightBadge from '../setup/ExpectationWeightBadge.vue'
 import GradesExpectationStudentModal from './GradesExpectationStudentModal.vue'
 import { 
@@ -436,7 +528,11 @@ import {
   activeGradeFilter,
   activeSubCohortFilter,
   availableSubCohorts,
-  isStudentInSubCohort
+  isStudentInSubCohort,
+  isAssessmentInSubCohort,
+  isAssessmentApplicableToStudent,
+  toggleAdminChecklist,
+  saveAdminText
 } from '../../composables/useGradebook.js'
 import {
   calculateSBARExpectationMastery,
@@ -641,7 +737,7 @@ function getAssessmentTooltip(ast) {
 }
 
 function getStrandAssessmentCount(strand) {
-  if (!strand) return sortedAssessments.value.length
+  if (!strand) return academicAssessmentsCount.value
   const strandCode = (strand.code || strand.strandCode || strand.id || '').toLowerCase()
   return sortedAssessments.value.filter(ast => {
     const ids = ast.expectationIds || (ast.expectationId ? [ast.expectationId] : [])
@@ -720,9 +816,11 @@ const filteredHubAssessments = computed(() => {
   if (hubFilterTab.value === 'needs_grading') {
     list = list.filter(ast => !getAssessmentStats(ast.assessmentId).isComplete)
   } else if (hubFilterTab.value === 'formative') {
-    list = list.filter(ast => ast.isFormative || ast.purpose === 'formative')
+    list = list.filter(ast => (ast.isFormative || ast.purpose === 'formative') && ast.purpose !== 'administrative')
   } else if (hubFilterTab.value === 'summative') {
-    list = list.filter(ast => !ast.isFormative && ast.purpose !== 'formative' && !ast.isNumericComponent && ast.categoryId !== 'sbar_final_component')
+    list = list.filter(ast => !ast.isFormative && ast.purpose !== 'formative' && ast.purpose !== 'administrative' && !ast.isNumericComponent && ast.categoryId !== 'sbar_final_component')
+  } else if (hubFilterTab.value === 'admin') {
+    list = list.filter(ast => ast.purpose === 'administrative')
   } else if (hubFilterTab.value === 'final') {
     list = list.filter(ast => ast.isNumericComponent || ast.categoryId === 'sbar_final_component')
   }
@@ -818,12 +916,15 @@ function getAssessmentGradeLevel(a) {
 const sortedAssessments = computed(() => {
   if (!assessments.value) return []
   let list = [...assessments.value]
-    .filter(a => a.categoryId === 'sbar_general' || (a.expectationIds && a.expectationIds.length > 0) || a.expectationId || a.isNumericComponent || a.categoryId === 'sbar_final_component')
+    .filter(a => a.purpose === 'administrative' || a.categoryId === 'sbar_general' || (a.expectationIds && a.expectationIds.length > 0) || a.expectationId || a.isNumericComponent || a.categoryId === 'sbar_final_component')
 
   if (activeGradeFilter.value !== 'all' && availableGradeFilters.value.length > 1) {
     const targetG = activeGradeFilter.value.toLowerCase()
 
     list = list.filter(a => {
+      if (a.purpose === 'administrative') {
+        return isAssessmentInSubCohort(a, activeGradeFilter.value)
+      }
       const aGrade = getAssessmentGradeLevel(a)
       if (aGrade) {
         return isCohortMatch(aGrade, targetG)
@@ -1017,7 +1118,26 @@ const availableStrands = computed(() => {
   return Object.values(map)
 })
 
+const academicAssessmentsCount = computed(() => {
+  return (sortedAssessments.value || []).filter(a => a.purpose !== 'administrative').length
+})
+
+const totalAdminAssessmentsCount = computed(() => {
+  return (assessments.value || []).filter(a => a.purpose === 'administrative' && isAssessmentInSubCohort(a)).length
+})
+
+const sbarAdminAssessments = computed(() => {
+  if (activeStrandFilter.value === 'admin') {
+    return sortedAssessments.value.filter(a => a.purpose === 'administrative')
+  }
+  if (activeStrandFilter.value === 'all' && availableStrands.value.length === 0) {
+    return sortedAssessments.value.filter(a => a.purpose === 'administrative')
+  }
+  return []
+})
+
 const displayedStrands = computed(() => {
+  if (activeStrandFilter.value === 'admin') return []
   if (activeStrandFilter.value === 'all') return availableStrands.value
   return availableStrands.value.filter(s => (s.id || s.code) === activeStrandFilter.value)
 })
@@ -1029,6 +1149,143 @@ const displayedExpectations = computed(() => {
   })
   return list
 })
+
+function isAdminChecked(studentId, assessmentId) {
+  const entry = gradeMap.value[String(assessmentId)]?.[String(studentId)]
+  return Boolean(
+    entry && (
+      entry.resolvedScore === 1 ||
+      entry.score === 1 ||
+      entry.pointsEarned === 1 ||
+      entry.received === true ||
+      entry.attempts?.[0]?.pointsEarned === 1
+    )
+  )
+}
+
+function onAdminSBARKeyNavigate(e, student, assessment) {
+  const isShift = e.shiftKey
+  let direction = null
+
+  if (e.key === 'Enter') {
+    direction = isShift ? 'up' : 'down'
+  } else if (e.key === 'ArrowDown') {
+    direction = 'down'
+  } else if (e.key === 'ArrowUp') {
+    direction = 'up'
+  } else if (e.key === 'Tab') {
+    direction = isShift ? 'up' : 'down'
+  }
+
+  if (direction) {
+    e.preventDefault()
+    saveAdminText(assessment.assessmentId, student.studentId, e.target.value)
+
+    const studentIdx = sortedRoster.value.findIndex(s => String(s.studentId) === String(student.studentId))
+    let targetIdx = direction === 'down' ? studentIdx + 1 : studentIdx - 1
+
+    while (targetIdx >= 0 && targetIdx < sortedRoster.value.length) {
+      const targetStudent = sortedRoster.value[targetIdx]
+      if (isAssessmentApplicableToStudent(assessment, targetStudent)) {
+        break
+      }
+      targetIdx = direction === 'down' ? targetIdx + 1 : targetIdx - 1
+    }
+
+    if (targetIdx >= 0 && targetIdx < sortedRoster.value.length) {
+      const targetStudent = sortedRoster.value[targetIdx]
+      nextTick(() => {
+        const selector = `[data-sbar-admin-input="${targetStudent.studentId}_${assessment.assessmentId}"]`
+        const targetInput = document.querySelector(selector)
+        if (targetInput) {
+          targetInput.focus()
+          targetInput.select()
+        }
+      })
+    }
+  }
+}
+
+function onAdminSBARChecklistKeyNavigate(e, student, assessment) {
+  const isShift = e.shiftKey
+  const isChecked = isAdminChecked(student.studentId, assessment.assessmentId)
+
+  if (e.key === 'ArrowDown') {
+    e.preventDefault()
+    advanceSBARChecklistFocus(student.studentId, assessment, 'down')
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault()
+    advanceSBARChecklistFocus(student.studentId, assessment, 'up')
+  } else if (e.key === ' ' || e.code === 'Space') {
+    e.preventDefault()
+    toggleAdminChecklist(assessment.assessmentId, student.studentId)
+  } else if (e.key === 'Enter') {
+    e.preventDefault()
+    toggleAdminChecklist(assessment.assessmentId, student.studentId)
+    advanceSBARChecklistFocus(student.studentId, assessment, isShift ? 'up' : 'down')
+  } else if (e.key === '1' || e.key.toLowerCase() === 'c' || e.key.toLowerCase() === 'y' || e.key.toLowerCase() === 'x') {
+    e.preventDefault()
+    if (!isChecked) {
+      toggleAdminChecklist(assessment.assessmentId, student.studentId)
+    }
+    advanceSBARChecklistFocus(student.studentId, assessment, 'down')
+  } else if (e.key === '0' || e.key === 'Backspace' || e.key === 'Delete' || e.key.toLowerCase() === 'n') {
+    e.preventDefault()
+    if (isChecked) {
+      toggleAdminChecklist(assessment.assessmentId, student.studentId)
+    }
+    advanceSBARChecklistFocus(student.studentId, assessment, 'down')
+  } else if (e.key === 'Tab') {
+    e.preventDefault()
+    advanceSBARChecklistFocus(student.studentId, assessment, isShift ? 'up' : 'down')
+  }
+}
+
+function advanceSBARChecklistFocus(currentStudentId, assessment, direction = 'down') {
+  const studentIdx = sortedRoster.value.findIndex(s => String(s.studentId) === String(currentStudentId))
+  if (studentIdx < 0) return
+
+  let targetIdx = direction === 'down' ? studentIdx + 1 : studentIdx - 1
+  while (targetIdx >= 0 && targetIdx < sortedRoster.value.length) {
+    const targetStudent = sortedRoster.value[targetIdx]
+    if (isAssessmentApplicableToStudent(assessment, targetStudent)) {
+      nextTick(() => {
+        const selector = `[data-sbar-admin-check="${targetStudent.studentId}_${assessment.assessmentId}"]`
+        const targetBtn = document.querySelector(selector)
+        if (targetBtn) {
+          targetBtn.focus()
+        }
+      })
+      break
+    }
+    targetIdx = direction === 'down' ? targetIdx + 1 : targetIdx - 1
+  }
+}
+
+function getAdminTextValue(studentId, assessmentId) {
+  const entry = gradeMap.value[String(assessmentId)]?.[String(studentId)]
+  return entry?.textValue || entry?.comment || ''
+}
+
+function getAdminCompletionCount(assessmentId) {
+  let count = 0
+  const astIdStr = String(assessmentId)
+  const ast = (assessments.value || []).find(a => String(a.assessmentId) === astIdStr)
+  const isText = ast?.adminFormat === 'text'
+  for (const s of (sortedRoster.value || [])) {
+    const entry = gradeMap.value[astIdStr]?.[s.studentId]
+    if (!entry) continue
+    if (isText) {
+      const txt = entry.textValue || entry.comment || entry.resolvedScore
+      if (txt && String(txt).trim() !== '') count++
+    } else {
+      if (entry.resolvedScore === 1 || entry.score === 1 || entry.pointsEarned === 1 || entry.received || entry.attempts?.[0]?.pointsEarned === 1) {
+        count++
+      }
+    }
+  }
+  return count
+}
 
 const masteryMap = computed(() => {
   const algo = activeClassRecord.value?.sbarAlgorithm || 'decaying_average'
@@ -1307,6 +1564,113 @@ function getExpCellTooltip(student, exp, cellData) {
   background: var(--primary);
   color: white;
   border-color: var(--primary);
+}
+
+.strand-pill--admin.strand-pill--active {
+  background: #10b981;
+  border-color: #10b981;
+  color: #fff;
+}
+
+
+.strand-group-header--admin {
+  cursor: default;
+}
+
+.exp-code-header--admin {
+  min-width: 90px;
+  max-width: 140px;
+}
+
+.admin-col-name {
+  max-width: 80px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.grades__admin-col-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+
+.grades__admin-col-pill--check {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+}
+
+.grades__admin-col-pill--text {
+  background: rgba(59, 130, 246, 0.15);
+  color: #3b82f6;
+}
+
+.exp-ast-badge--admin {
+  background: rgba(16, 185, 129, 0.15);
+  color: #059669;
+  font-weight: 700;
+}
+
+.sbar-exp-cell--admin {
+  text-align: center;
+  vertical-align: middle;
+  padding: 4px;
+}
+
+.sbar-admin-cell-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+.grades__admin-check-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  background: rgba(16, 185, 129, 0.18);
+  color: #10b981;
+  font-weight: 800;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+
+.grades__admin-check-badge:hover {
+  transform: scale(1.15);
+}
+
+.grades__admin-check-badge:focus,
+.grades__admin-check-badge:focus-visible {
+  outline: 2px solid #10b981;
+  outline-offset: 2px;
+  background: rgba(16, 185, 129, 0.28);
+}
+
+.grades__admin-check-empty {
+  color: var(--text-tertiary, #94a3b8);
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.grades__input-inline--text {
+  width: 90%;
+  text-align: center;
+  font-weight: 600;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 2px 4px;
+  font-size: 0.8rem;
+  color: var(--text);
 }
 
 .sbar-algorithm-badge {
@@ -1869,6 +2233,11 @@ thead th.sticky-col {
 .hub-card-tag--summative {
   background: rgba(168, 85, 247, 0.12);
   color: #9333ea;
+}
+
+.hub-card-tag--admin {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
 }
 
 .hub-card-sub {

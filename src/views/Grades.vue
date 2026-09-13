@@ -34,7 +34,7 @@
 
         <!-- Detailed Assessment View Component Dispatcher -->
         <GradesAssessmentDetailSBAR
-          v-else-if="selectedAssessmentId && currentAssessment && activeClassRecord?.gradingFramework === 'sbar' && !currentAssessment.isNumericComponent"
+          v-else-if="selectedAssessmentId && currentAssessment && activeClassRecord?.gradingFramework === 'sbar' && !currentAssessment.isNumericComponent && currentAssessment.purpose !== 'administrative'"
           :current-assessment="currentAssessment"
           :sorted-roster="sortedRoster"
           :focused-student-id="focusedStudentId"
@@ -589,6 +589,7 @@ const studentTrends = computed(() => {
   const isSBAR = activeClassRecord.value?.gradingFramework === 'sbar'
   const productAssessments = [...assessments.value]
     .filter(a => {
+      if (a.purpose === 'administrative') return false
       if (a.excluded || a.target === 'individual' || a.isFormative || a.purpose === 'formative') return false
       // If assessmentType is explicitly observation or conversation (qualitative check-in), exclude from product trend
       if (a.assessmentType === 'observation' || a.assessmentType === 'conversation') return false
@@ -756,6 +757,9 @@ function startEditAssessment(assessment) {
     description: assessment.description || '',
     categoryId: assessment.categoryId,
     assessmentType: assessment.assessmentType,
+    purpose: assessment.purpose || (assessment.isFormative ? 'formative' : 'summative'),
+    adminFormat: assessment.adminFormat || 'checklist',
+    isFormative: Boolean(assessment.isFormative),
     unitId: assessment.unitId || null,
     expectationId: assessment.expectationId || null,
     expectationIds: assessment.expectationIds || (assessment.expectationId ? [assessment.expectationId] : []),

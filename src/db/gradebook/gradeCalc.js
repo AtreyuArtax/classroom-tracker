@@ -165,6 +165,7 @@ export function resolveAttemptScore(attempts, retestPolicy) {
  */
 export function getAssessmentPercentage(assessment, grade) {
   if (!grade || grade.excluded) return null
+  if (assessment?.purpose === 'administrative') return null
   if (grade.missing) return 0
   
   let earned = null
@@ -190,7 +191,7 @@ export function _calculateCategoryGrade(catAssessments, gradeMap, capAt100 = fal
   let totalPossible = 0
 
   for (const assessment of catAssessments) {
-    if (assessment.isFormative || assessment.purpose === 'formative') continue
+    if (assessment.isFormative || assessment.purpose === 'formative' || assessment.purpose === 'administrative') continue
     const grade = gradeMap[assessment.assessmentId]
     if (!grade || grade.excluded) continue
 
@@ -506,6 +507,10 @@ export function filterAssessmentsForSubject(assessmentsList, classRecord, target
   const firstSubId = String(classRecord.subjects?.[0]?.subjectId || classRecord.activeSubjectId || 'elem_sub_math')
 
   return assessmentsList.filter(a => {
+    if (a.purpose === 'administrative') {
+      if (a.subjectId && a.subjectId !== 'all') return String(a.subjectId) === subId
+      return true
+    }
     if (a.subjectId) return String(a.subjectId) === subId
     if (a.unitId && subUnits.has(String(a.unitId))) return true
     const expIds = a.expectationIds || (a.expectationId ? [a.expectationId] : [])

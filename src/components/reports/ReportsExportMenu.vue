@@ -142,7 +142,8 @@ async function downloadReportCardCsv(includeName) {
       const absences = nonSupersededEvents.filter(e => e.code === 'a').length
       const lates = nonSupersededEvents.filter(e => e.code === 'l').length
       
-      const studentAssessments = assessments.value
+      const studentAssessments = (assessments.value || [])
+        .filter(a => a.purpose !== 'administrative')
         .map(a => {
           const g = gradeMap.value[a.assessmentId]?.[sId]
           return {

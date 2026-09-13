@@ -316,6 +316,7 @@ const studentSubCohort = computed(() => {
 const studentAssessments = computed(() => {
   return assessments.value
     .filter(a => {
+      if (a.purpose === 'administrative') return false
       if (a.target === 'individual') {
         return String(a.targetStudentId) === String(props.studentId)
       }

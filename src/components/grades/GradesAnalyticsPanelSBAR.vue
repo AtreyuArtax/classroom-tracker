@@ -468,10 +468,11 @@ function setSubCohortFilter(filter) {
 
 const scopedAssessments = computed(() => {
   if (!assessments.value) return []
+  const list = assessments.value.filter(a => a.purpose !== 'administrative')
   if (analyticsEvidenceScope.value === 'product') {
-    return assessments.value.filter(a => (a.assessmentType || 'product') === 'product')
+    return list.filter(a => (a.assessmentType || 'product') === 'product')
   }
-  return assessments.value
+  return list
 })
 
 const algorithmFullLabel = computed(() => {
