@@ -33,6 +33,7 @@
     @drop.prevent="onDrop"
     @click="openRadialForStudent"
     @contextmenu.prevent="openTileContextMenu($event)"
+    @mouseenter="handleAvatarMouseEnter"
   >
     <!-- Washroom badge — top left corner -->
     <span
@@ -228,7 +229,7 @@ const emit = defineEmits(['seat-drop']) // emitted to SeatingGrid for drag/drop 
 // ─── composables ──────────────────────────────────────────────────────────────
 
 const { open: openRadial } = useRadial()
-const { behaviorCodes, assignSeat, studentWeeklyStats, thresholds } = useClassroom()
+const { behaviorCodes, assignSeat, studentWeeklyStats, thresholds, gridSize } = useClassroom()
 const { showDeskPhotos, getPhotoUrl, hasPhoto } = useStudentPhotos()
 
 const currentPhotoUrl = computed(() => {
@@ -237,40 +238,69 @@ const currentPhotoUrl = computed(() => {
 })
 
 // ─── hover preview positioning ────────────────────────────────────────────────
-const previewPlacement = ref(props.row <= 2 ? 'bottom' : 'top')
-const horizontalAlign = ref(props.col === 1 ? 'left' : 'center')
+const totalRows = computed(() => Number(gridSize.value?.rows || 6))
+const totalCols = computed(() => Number(gridSize.value?.cols || 6))
+const isTopHalf = computed(() => props.row <= Math.ceil(totalRows.value / 2))
 
-watch(() => props.row, (newRow) => {
-  previewPlacement.value = newRow <= 2 ? 'bottom' : 'top'
+const defaultPlacement = computed(() => isTopHalf.value ? 'bottom' : 'top')
+const defaultAlign = computed(() => {
+  if (props.col === 1) return 'left'
+  if (props.col >= totalCols.value) return 'right'
+  return 'center'
 })
 
-watch(() => props.col, (newCol) => {
-  horizontalAlign.value = newCol === 1 ? 'left' : 'center'
+const previewPlacement = ref(defaultPlacement.value)
+const horizontalAlign = ref(defaultAlign.value)
+
+watch([() => props.row, defaultPlacement], ([, newPlacement]) => {
+  previewPlacement.value = newPlacement
+})
+
+watch([() => props.col, defaultAlign], ([, newAlign]) => {
+  horizontalAlign.value = newAlign
 })
 
 function handleAvatarMouseEnter(event) {
-  const el = event.currentTarget
+  const el = (event?.currentTarget?.classList?.contains('desk-tile__avatar-wrap')
+    ? event.currentTarget
+    : event?.currentTarget?.querySelector?.('.desk-tile__avatar-wrap')) || event?.currentTarget
   if (!el) return
   const rect = el.getBoundingClientRect()
-  
-  // Height of preview card is ~190px + 8px gap + safety buffer
-  const neededHeight = 210
-  const spaceAbove = rect.top
-  const spaceBelow = window.innerHeight - rect.bottom
-  
-  if (spaceAbove < neededHeight) {
+
+  // Height of preview card is ~184px + 8px gap + buffer = ~200px
+  const neededHeight = 200
+
+  // Measure clearance within the seating chart / grid container (to prevent clipping by overflow:hidden)
+  const container = el.closest('.dashboard__grid-area') || el.closest('.seating-grid')
+  const containerRect = container?.getBoundingClientRect()
+
+  // The top boundary must not penetrate the top edge of the grid container or dashboard header
+  const topBoundary = containerRect ? Math.max(containerRect.top, 0) : 60
+  const bottomBoundary = containerRect ? Math.min(containerRect.bottom, window.innerHeight) : window.innerHeight
+
+  const spaceAbove = rect.top - topBoundary
+  const spaceBelow = bottomBoundary - rect.bottom
+
+  if (spaceAbove < neededHeight && spaceBelow >= neededHeight) {
     previewPlacement.value = 'bottom'
   } else if (spaceBelow < neededHeight && spaceAbove >= neededHeight) {
     previewPlacement.value = 'top'
+  } else if (spaceAbove < neededHeight && spaceBelow < neededHeight) {
+    // Highly constrained vertical clearance: pick whichever side has more room
+    previewPlacement.value = spaceBelow >= spaceAbove ? 'bottom' : 'top'
   } else {
-    previewPlacement.value = props.row <= 2 ? 'bottom' : 'top'
+    // Both directions have ample clearance: top half opens downward, bottom half opens upward
+    previewPlacement.value = isTopHalf.value ? 'bottom' : 'top'
   }
 
-  // Horizontal edge collision avoidance (card is 160px wide, half-width: 80px)
+  // Horizontal edge collision avoidance (relative to container boundaries)
+  const leftBoundary = containerRect ? Math.max(containerRect.left, 0) : 0
+  const rightBoundary = containerRect ? Math.min(containerRect.right, window.innerWidth) : window.innerWidth
   const centerX = rect.left + rect.width / 2
-  if (centerX - 85 < 10) {
+
+  if (centerX - 85 < leftBoundary + 8) {
     horizontalAlign.value = 'left'
-  } else if (centerX + 85 > window.innerWidth - 10) {
+  } else if (centerX + 85 > rightBoundary - 8) {
     horizontalAlign.value = 'right'
   } else {
     horizontalAlign.value = 'center'
@@ -492,11 +522,12 @@ function onDrop(evt) {
   -webkit-user-select: none;
 }
 
-.desk-tile:hover {
+.desk-tile:hover,
+.desk-tile:focus-within {
   transform: translateY(-2px);
   box-shadow: 0 6px 14px rgba(0,0,0,0.07);
   border-color: rgba(79, 70, 229, 0.3);
-  z-index: 50;
+  z-index: 60;
 }
 
 .desk-tile:active {
@@ -602,6 +633,10 @@ function onDrop(evt) {
   align-items: center;
   justify-content: center;
   cursor: pointer;
+}
+
+.desk-tile__avatar-wrap:hover {
+  z-index: 70;
 }
 
 .desk-tile__photo-img {
