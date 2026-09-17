@@ -1075,14 +1075,14 @@ async function contextMenuSelectLevel(pct) {
 }
 
 .exp-progress-badge--complete {
-  background: rgba(22, 163, 74, 0.15);
-  color: #16a34a;
+  background: var(--color-success-bg, rgba(22, 163, 74, 0.15));
+  color: var(--color-success-text, #16a34a);
   border-color: rgba(22, 163, 74, 0.35);
 }
 
 .exp-progress-badge--partial {
-  background: rgba(217, 119, 6, 0.15);
-  color: #d97706;
+  background: var(--color-warn-bg, rgba(217, 119, 6, 0.15));
+  color: var(--color-warn-text, #d97706);
   border-color: rgba(217, 119, 6, 0.35);
 }
 

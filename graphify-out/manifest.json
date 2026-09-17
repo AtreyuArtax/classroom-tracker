@@ -200,8 +200,8 @@
     "semantic_hash": ""
   },
   "src/components/dossier/StudentTimeline.vue": {
-    "mtime": 1788313689.8598711,
-    "ast_hash": "d8ed541ff7cd05231dab868a73cad110",
+    "mtime": 1789656744.02085,
+    "ast_hash": "53b1a74a9f16bb9df05bcb524dfc66ea",
     "semantic_hash": ""
   },
   "src/components/setup/CalendarSettings.vue": {
@@ -410,8 +410,8 @@
     "semantic_hash": ""
   },
   "src/utils/gradeColors.js": {
-    "mtime": 1788313659.7646623,
-    "ast_hash": "d43ac1d2d6085351ac3a263c6cd40ae1",
+    "mtime": 1789656497.8585713,
+    "ast_hash": "dd1264e4bf3c64197534d78fa099db03",
     "semantic_hash": ""
   },
   "src/components/setup/BehaviorSettings.vue": {
@@ -505,8 +505,8 @@
     "semantic_hash": ""
   },
   "src/components/grades/GradesAssessmentDetailView.vue": {
-    "mtime": 1789151772.3763463,
-    "ast_hash": "d2dce640f38f09f5dcc954fc30b4d6fa",
+    "mtime": 1789656549.501708,
+    "ast_hash": "37c3168413bd41c191c82f8ee325cc98",
     "semantic_hash": ""
   },
   "src/components/grades/GradesContextMenu.vue": {
@@ -580,8 +580,8 @@
     "semantic_hash": ""
   },
   "src/components/grades/GradesAssessmentDetailSBAR.vue": {
-    "mtime": 1788313659.6888058,
-    "ast_hash": "83926446c15242203c43b5869265eea1",
+    "mtime": 1789656561.3364792,
+    "ast_hash": "44e7eb3a7db269e72f3b2eada621a6c1",
     "semantic_hash": ""
   },
   "src/components/grades/GradesGridSBAR.vue": {

@@ -9,7 +9,7 @@
         <h1 class="compact-title">{{ currentAssessment.name }}</h1>
         <div class="compact-meta-chips">
           <template v-if="currentAssessment.purpose === 'administrative'">
-            <span class="meta-chip meta-chip--type" style="color: #10b981; font-weight: 700;">Administrative</span>
+            <span class="meta-chip meta-chip--type" style="color: var(--color-success-text, #10b981); font-weight: 700;">Administrative</span>
             <span class="meta-chip meta-chip--points">
               {{ currentAssessment.adminFormat === 'text' ? 'Text Note' : 'Checklist' }}
             </span>
@@ -45,7 +45,7 @@
     <div class="compact-metrics-strip" v-if="currentAssessment.purpose === 'administrative'">
       <div class="metric-pill">
         <span class="metric-pill__label">FORMAT</span>
-        <strong class="metric-pill__val" style="color: #10b981;">
+        <strong class="metric-pill__val" style="color: var(--color-success-text, #10b981);">
           {{ currentAssessment.adminFormat === 'text' ? 'Text / ID Note' : 'Checklist (✓)' }}
         </strong>
       </div>
@@ -549,10 +549,10 @@ function getStudentStatus(studentId) {
 }
 
 function getGradeBadgeStyle(percent) {
-  if (percent >= 80) return { background: 'rgba(34, 197, 94, 0.12)', color: '#15803d', border: '1px solid rgba(34, 197, 94, 0.25)' }
-  if (percent >= 70) return { background: 'rgba(59, 130, 246, 0.12)', color: '#1d4ed8', border: '1px solid rgba(59, 130, 246, 0.25)' }
-  if (percent >= 60) return { background: 'rgba(245, 158, 11, 0.12)', color: '#b45309', border: '1px solid rgba(245, 158, 11, 0.25)' }
-  return { background: 'rgba(239, 68, 68, 0.12)', color: '#b91c1c', border: '1px solid rgba(239, 68, 68, 0.25)' }
+  if (percent >= 80) return { background: 'var(--color-success-bg, rgba(34, 197, 94, 0.12))', color: 'var(--color-success-text, #10b981)', border: '1px solid rgba(50, 215, 75, 0.25)' }
+  if (percent >= 70) return { background: 'var(--color-attention-bg, rgba(59, 130, 246, 0.12))', color: 'var(--color-attention-text, #3b82f6)', border: '1px solid rgba(59, 130, 246, 0.25)' }
+  if (percent >= 60) return { background: 'var(--color-warn-bg, rgba(245, 158, 11, 0.12))', color: 'var(--color-warn-text, #f59e0b)', border: '1px solid rgba(245, 158, 11, 0.25)' }
+  return { background: 'var(--color-danger-bg, rgba(239, 68, 68, 0.12))', color: 'var(--color-danger-text, #ef4444)', border: '1px solid rgba(239, 68, 68, 0.25)' }
 }
 
 const targetCourseRoster = computed(() => {
@@ -763,8 +763,8 @@ function getAdminDetailCompletionCount() {
 }
 
 .btn-admin-detail-check--checked {
-  background: rgba(16, 185, 129, 0.12);
-  color: #059669;
+  background: var(--color-success-bg, rgba(16, 185, 129, 0.12));
+  color: var(--color-success-text, #059669);
   border-color: rgba(16, 185, 129, 0.35);
   font-weight: 700;
 }
@@ -1088,14 +1088,14 @@ function getAdminDetailCompletionCount() {
 }
 
 .range-pill--high {
-  background: rgba(34, 197, 94, 0.12);
-  color: #15803d;
+  background: var(--color-success-bg, rgba(34, 197, 94, 0.12));
+  color: var(--color-success-text, #15803d);
   border-color: rgba(34, 197, 94, 0.2);
 }
 
 .range-pill--low {
-  background: rgba(239, 68, 68, 0.12);
-  color: #b91c1c;
+  background: var(--color-danger-bg, rgba(239, 68, 68, 0.12));
+  color: var(--color-danger-text, #b91c1c);
   border-color: rgba(239, 68, 68, 0.2);
 }
 
@@ -1170,11 +1170,11 @@ function getAdminDetailCompletionCount() {
   border: 1px solid transparent;
 }
 
-.legend-pill--l4 { background: rgba(34, 197, 94, 0.12); color: #15803d; border-color: rgba(34, 197, 94, 0.25); }
-.legend-pill--l3 { background: rgba(59, 130, 246, 0.12); color: #1d4ed8; border-color: rgba(59, 130, 246, 0.25); }
-.legend-pill--l2 { background: rgba(245, 158, 11, 0.12); color: #b45309; border-color: rgba(245, 158, 11, 0.25); }
-.legend-pill--l1 { background: rgba(239, 68, 68, 0.12); color: #b91c1c; border-color: rgba(239, 68, 68, 0.25); }
-.legend-pill--missing { background: rgba(100, 116, 139, 0.12); color: #475569; border-color: rgba(100, 116, 139, 0.25); }
+.legend-pill--l4 { background: var(--color-success-bg, rgba(34, 197, 94, 0.12)); color: var(--color-success-text, #15803d); border-color: rgba(34, 197, 94, 0.25); }
+.legend-pill--l3 { background: var(--color-attention-bg, rgba(59, 130, 246, 0.12)); color: var(--color-attention-text, #1d4ed8); border-color: rgba(59, 130, 246, 0.25); }
+.legend-pill--l2 { background: var(--color-warn-bg, rgba(245, 158, 11, 0.12)); color: var(--color-warn-text, #b45309); border-color: rgba(245, 158, 11, 0.25); }
+.legend-pill--l1 { background: var(--color-danger-bg, rgba(239, 68, 68, 0.12)); color: var(--color-danger-text, #b91c1c); border-color: rgba(239, 68, 68, 0.25); }
+.legend-pill--missing { background: var(--color-neutral-bg, rgba(100, 116, 139, 0.12)); color: var(--color-neutral-text, #475569); border-color: rgba(100, 116, 139, 0.25); }
 
 .legend-pill:hover,
 .legend-pill--active {
@@ -1332,20 +1332,20 @@ function getAdminDetailCompletionCount() {
 }
 
 .smart-badge--attempts-note {
-  background: rgba(59, 130, 246, 0.12);
-  color: #1d4ed8;
+  background: var(--color-attention-bg, rgba(59, 130, 246, 0.12));
+  color: var(--color-attention-text, #3b82f6);
   border-color: rgba(59, 130, 246, 0.25);
 }
 
 .smart-badge--attempts {
-  background: rgba(59, 130, 246, 0.1);
-  color: #2563eb;
+  background: var(--color-attention-bg, rgba(59, 130, 246, 0.1));
+  color: var(--color-attention-text, #3b82f6);
   border-color: rgba(59, 130, 246, 0.2);
 }
 
 .smart-badge--note {
-  background: rgba(245, 158, 11, 0.12);
-  color: #b45309;
+  background: var(--color-warn-bg, rgba(245, 158, 11, 0.12));
+  color: var(--color-warn-text, #f59e0b);
   border-color: rgba(245, 158, 11, 0.25);
 }
 
@@ -1411,10 +1411,11 @@ function getAdminDetailCompletionCount() {
   border-radius: var(--radius-sm);
   background: var(--bg-secondary);
   font-weight: 700;
+  color: var(--text);
 }
 
 .grades__cell-missing-badge {
-  color: var(--danger);
+  color: var(--color-danger-text, #ff453a);
   font-weight: 800;
   font-size: 0.8rem;
   cursor: pointer;
@@ -1608,7 +1609,7 @@ function getAdminDetailCompletionCount() {
 .compact-title {
   font-size: 1.15rem;
   font-weight: 700;
-  color: var(--text-primary);
+  color: var(--text);
   margin: 0;
   line-height: 1.2;
 }
@@ -1624,9 +1625,10 @@ function getAdminDetailCompletionCount() {
   align-items: center;
   flex-wrap: wrap;
   gap: 12px;
-  background: var(--surface-subtle, rgba(241, 245, 249, 0.6));
+  background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
   padding: 8px 14px;
   margin-bottom: 10px;
 }
@@ -1642,14 +1644,14 @@ function getAdminDetailCompletionCount() {
   font-size: 0.68rem;
   font-weight: 700;
   letter-spacing: 0.04em;
-  color: var(--text-tertiary, #94a3b8);
+  color: var(--text-secondary);
   text-transform: uppercase;
 }
 
 .metric-pill__val {
   font-size: 0.95rem;
   font-weight: 700;
-  color: var(--text-primary);
+  color: var(--text);
 }
 
 .metric-pill__sub {
@@ -1672,7 +1674,7 @@ function getAdminDetailCompletionCount() {
 .mini-bar-label {
   font-size: 0.68rem;
   font-weight: 700;
-  color: var(--text-tertiary, #94a3b8);
+  color: var(--text-secondary);
   letter-spacing: 0.04em;
 }
 
@@ -1710,7 +1712,7 @@ function getAdminDetailCompletionCount() {
 .mini-bar-segment--l3 { background-color: #3b82f6; }
 .mini-bar-segment--l2 { background-color: #f59e0b; }
 .mini-bar-segment--l1 { background-color: #ef4444; }
-.tier-chip--l1 { background: rgba(239, 68, 68, 0.12); color: #dc2626; }
+.tier-chip--l1 { background: var(--color-danger-bg, rgba(239, 68, 68, 0.12)); color: var(--color-danger-text, #dc2626); }
 
 .tier-chip:hover, .tier-chip--active {
   transform: translateY(-1px);
@@ -1731,8 +1733,23 @@ function getAdminDetailCompletionCount() {
   font-size: 0.72rem;
   font-weight: 600;
   cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.15s ease;
 }
 
-.alert-chip--missing { background: rgba(239, 68, 68, 0.12); color: #dc2626; }
-.alert-chip--risk { background: rgba(245, 158, 11, 0.12); color: #d97706; }
+.alert-chip:hover {
+  filter: brightness(1.1);
+}
+
+.alert-chip--missing {
+  background: var(--color-danger-bg, rgba(239, 68, 68, 0.12));
+  color: var(--color-danger-text, #ef4444);
+  border-color: rgba(239, 68, 68, 0.25);
+}
+
+.alert-chip--risk {
+  background: var(--color-warn-bg, rgba(245, 158, 11, 0.12));
+  color: var(--color-warn-text, #f59e0b);
+  border-color: rgba(245, 158, 11, 0.25);
+}
 </style>

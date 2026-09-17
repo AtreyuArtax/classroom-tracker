@@ -14,10 +14,10 @@ export function getHeatColorHex(percent) {
 
 export function getSDColor(sd) {
   if (sd === null) return 'var(--text-secondary)'
-  if (sd < 5) return '#15803d'   // Dark Green
-  if (sd <= 12) return '#1d4ed8' // Dark Blue
-  if (sd <= 18) return '#b45309' // Dark Amber
-  return '#b91c1c'               // Dark Red
+  if (sd < 5) return 'var(--color-success-text, #10b981)'
+  if (sd <= 12) return 'var(--color-attention-text, #3b82f6)'
+  if (sd <= 18) return 'var(--color-warn-text, #f59e0b)'
+  return 'var(--color-danger-text, #ef4444)'
 }
 
 export function getCoverageColor(percent) {
@@ -41,10 +41,10 @@ export function getGradeColor(score) {
 
 export function getGradeColorMuted(grade) {
   if (grade === null || grade === undefined) return 'var(--text-secondary)'
-  if (grade >= 80) return '#1a6b3a' // muted green
-  if (grade >= 70) return '#1a5276' // muted blue
-  if (grade >= 60) return '#7d6608' // muted amber
-  return '#c0392b' // muted red
+  if (grade >= 80) return 'var(--color-success-text, #10b981)'
+  if (grade >= 70) return 'var(--color-attention-text, #3b82f6)'
+  if (grade >= 60) return 'var(--color-warn-text, #f59e0b)'
+  return 'var(--color-danger-text, #ef4444)'
 }
 
 export function getHeatColor(percent) {
@@ -57,10 +57,10 @@ export function getHeatColor(percent) {
 
 export function getHeatTextColor(percent) {
   if (percent === null || percent === undefined) return 'var(--text-secondary)'
-  if (percent >= 80) return '#15803d' // Dark Green
-  if (percent >= 70) return '#1d4ed8' // Dark Blue
-  if (percent >= 60) return '#b45309' // Dark Amber
-  return '#b91c1c'               // Dark Red
+  if (percent >= 80) return 'var(--color-success-text, #10b981)'
+  if (percent >= 70) return 'var(--color-attention-text, #3b82f6)'
+  if (percent >= 60) return 'var(--color-warn-text, #f59e0b)'
+  return 'var(--color-danger-text, #ef4444)'
 }
 
 export const UNIT_COLORS = [

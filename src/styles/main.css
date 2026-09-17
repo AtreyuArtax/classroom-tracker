@@ -30,11 +30,15 @@
   --bg-tertiary: #e9ecef;
   /* iOS system grouped background */
   --surface: #ffffff;
+  --surface-hover: rgba(0, 0, 0, 0.04);
+  --surface-subtle: #f8fafc;
 
   --text: #1c1c1e;
+  --text-primary: #1c1c1e;
   /* iOS label */
   --text-secondary: #6e6e73;
   /* iOS secondary label */
+  --text-tertiary: #8e8e93;
 
   --border: rgba(0, 0, 0, 0.1);
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
@@ -48,6 +52,7 @@
   --state-out: #ff3b30;
   /* iOS red — student is out of room */
   --state-danger: var(--state-out);
+  --danger: var(--state-danger);
   /* Alias — same iOS red, used for error/danger UI states */
   --state-success: #34c759;
   /* iOS green — confirmation flash */
@@ -117,9 +122,13 @@
   --bg-secondary: #181a1b;
   --bg-tertiary: #272a2e;
   --surface: #202326;
+  --surface-hover: rgba(255, 255, 255, 0.06);
+  --surface-subtle: #181a1b;
 
   --text: #f0f2f5;
+  --text-primary: #f0f2f5;
   --text-secondary: #9aa0a6;
+  --text-tertiary: #9aa0a6;
 
   --border: rgba(255, 255, 255, 0.09);
   --border-light: rgba(255, 255, 255, 0.05);
@@ -128,6 +137,7 @@
 
   --state-out: #ff453a;
   --state-danger: var(--state-out);
+  --danger: var(--state-danger);
   --state-success: #32d74b;
   --state-late: #ffd60a;
   --state-late-bg: rgba(255, 214, 10, 0.16);
@@ -181,9 +191,13 @@
     --bg-secondary: #181a1b;
     --bg-tertiary: #272a2e;
     --surface: #202326;
+    --surface-hover: rgba(255, 255, 255, 0.06);
+    --surface-subtle: #181a1b;
 
     --text: #f0f2f5;
+    --text-primary: #f0f2f5;
     --text-secondary: #9aa0a6;
+    --text-tertiary: #9aa0a6;
 
     --border: rgba(255, 255, 255, 0.09);
     --border-light: rgba(255, 255, 255, 0.05);
@@ -192,6 +206,7 @@
 
     --state-out: #ff453a;
     --state-danger: var(--state-out);
+    --danger: var(--state-danger);
     --state-success: #32d74b;
     --state-late: #ffd60a;
     --state-late-bg: rgba(255, 214, 10, 0.16);
