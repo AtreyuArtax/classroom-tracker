@@ -329,9 +329,11 @@ watch(classList, (newList) => {
     }
 }, { immediate: true })
 
-// Reset test day flag when active class changes
-watch(activeClass, () => {
-    isTestDay.value = false
+// Reset test day flag when active class becomes null
+watch(activeClass, (newClass) => {
+    if (!newClass) {
+        isTestDay.value = false
+    }
 })
 
 /**
@@ -1617,6 +1619,30 @@ async function _activateClass(cls) {
     const eventsToday = await eventService.getEventsByClass(cls.classId, { from: todayStr, to: todayStr })
 
     let needsSave = false
+
+    // Reconcile Test Day mode for this class today (restore if flagged or if test-day events exist today)
+    const hasTestDayEventsToday = eventsToday.some(e => !e.superseded && e.testDay)
+    const isStoredTestDayToday = cls.testDayDate === todayStr || (typeof sessionStorage !== 'undefined' && sessionStorage.getItem(`testDay_${cls.classId}`) === todayStr)
+
+    if (hasTestDayEventsToday || isStoredTestDayToday) {
+        isTestDay.value = true
+        if (typeof sessionStorage !== 'undefined') {
+            sessionStorage.setItem(`testDay_${cls.classId}`, todayStr)
+        }
+        if (cls.testDayDate !== todayStr) {
+            cls.testDayDate = todayStr
+            needsSave = true
+        }
+    } else {
+        isTestDay.value = false
+        if (typeof sessionStorage !== 'undefined') {
+            sessionStorage.removeItem(`testDay_${cls.classId}`)
+        }
+        if (cls.testDayDate) {
+            cls.testDayDate = null
+            needsSave = true
+        }
+    }
     for (const [studentId, student] of Object.entries(cls.students ?? {})) {
         if (!student.activeStates) {
             student.activeStates = { isOut: false, outTime: null, isAbsent: false, lateMs: null }

@@ -815,7 +815,7 @@ const recentActivityFeed = computed(() => {
     const isPositive = category === 'positive'
     const isRedirect = category === 'redirect'
     const isTeacherNote = evtType === 'note' || evtType === 'ac' || (evt.note && String(evt.note).trim().length > 0 && evtType !== 'w' && evtType !== 'l' && evtType !== 'a')
-    const isTestDayAbsence = evtType === 'a' && evt.isTestDay
+    const isTestDayAbsence = evtType === 'a' && (evt.testDay || evt.isTestDay)
 
     // Include significant events, positive praise, redirects, teacher notes, or test day absences
     if (isParentContact || isPositive || isRedirect || isTeacherNote || isTestDayAbsence) {

@@ -180,8 +180,8 @@
     "semantic_hash": ""
   },
   "src/components/dossier/Student360.vue": {
-    "mtime": 1789144030.0585713,
-    "ast_hash": "a62163b3df099d24eb68bec184d3bd20",
+    "mtime": 1789655394.791209,
+    "ast_hash": "69f66cf7e38e0343b501325666e995a0",
     "semantic_hash": ""
   },
   "src/components/dossier/Student360Header.vue": {
@@ -240,8 +240,8 @@
     "semantic_hash": ""
   },
   "src/composables/useClassroom.js": {
-    "mtime": 1789148770.2832227,
-    "ast_hash": "2ca9139ab65e537134c48ff03b84c4ed",
+    "mtime": 1789655381.8116908,
+    "ast_hash": "a8857c20fbc4c3a1588a7c790b621c2d",
     "semantic_hash": ""
   },
   "src/composables/useGradebook.js": {
@@ -430,8 +430,8 @@
     "semantic_hash": ""
   },
   "src/composables/useAttendanceTracker.js": {
-    "mtime": 1788975875.7284527,
-    "ast_hash": "6ecc0aeecbfdcf405e41ef0d43d6d2fc",
+    "mtime": 1789655389.6152802,
+    "ast_hash": "d12d17c41bcd68ff4b43a176112b3fb5",
     "semantic_hash": ""
   },
   "src/composables/useClassroomState.js": {
@@ -1337,6 +1337,11 @@
   "src/test_admin_paperwork_tracking.js": {
     "mtime": 1789261166.4407635,
     "ast_hash": "99ce2fad2bcb95a7fbc3060bc46d61ec",
+    "semantic_hash": ""
+  },
+  "src/test_test_day_persistence.js": {
+    "mtime": 1789655411.395073,
+    "ast_hash": "84ae07c769012af735dc1394034a62c0",
     "semantic_hash": ""
   }
 }

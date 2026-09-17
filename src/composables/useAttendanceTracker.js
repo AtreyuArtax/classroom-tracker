@@ -576,6 +576,18 @@ export async function toggleTestDay() {
         // Turning ON: sync any attendance events already logged today in this class
         isTestDay.value = true
         if (classId) {
+            if (typeof sessionStorage !== 'undefined') {
+                sessionStorage.setItem(`testDay_${classId}`, todayStr)
+            }
+            if (activeClass.value) {
+                activeClass.value.testDayDate = todayStr
+                try {
+                    await classService.saveClass(activeClass.value)
+                } catch (err) {
+                    console.error('Failed to save testDayDate on class:', err)
+                }
+            }
+
             const eventsToday = await eventService.getEventsByClass(classId, { from: todayStr, to: todayStr })
             const attendanceEvents = eventsToday.filter(e => !e.superseded && (e.code === 'a' || e.code === 'l'))
             for (const ev of attendanceEvents) {
@@ -599,6 +611,18 @@ export async function toggleTestDay() {
 
                 for (const ev of testDayEvents) {
                     await eventService.updateEvent(ev.eventId, { testDay: false })
+                }
+            }
+
+            if (typeof sessionStorage !== 'undefined') {
+                sessionStorage.removeItem(`testDay_${classId}`)
+            }
+            if (activeClass.value) {
+                activeClass.value.testDayDate = null
+                try {
+                    await classService.saveClass(activeClass.value)
+                } catch (err) {
+                    console.error('Failed to clear testDayDate on class:', err)
                 }
             }
         }
