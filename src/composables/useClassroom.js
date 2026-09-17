@@ -1806,6 +1806,8 @@ export function useClassroom() {
         moveStudentFromClass,
         removeStudent,
         archiveStudent,
+        archiveStudentInClass: async (classId, studentId) => await classService.archiveStudent(classId, studentId),
+        reloadClasses: _reloadClasses,
         unarchiveStudent,
         permanentlyDeleteStudent,
         assignSeat,

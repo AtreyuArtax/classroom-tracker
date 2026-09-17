@@ -1925,3 +1925,274 @@
   color: var(--text-muted);
   font-family: monospace;
 }
+
+/* --- Roster Reconciliation & Archive Review Modal --- */
+.setup__recon-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-height: 420px;
+  overflow-y: auto;
+  padding-right: 4px;
+  margin: 12px 0 16px;
+}
+
+.setup__recon-card {
+  padding: 14px;
+  background: var(--bg-secondary, rgba(255, 255, 255, 0.03));
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md, 8px);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.setup__recon-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 8px;
+}
+
+.setup__recon-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.setup__recon-section--adding {
+  background: rgba(16, 185, 129, 0.06);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  border-radius: 6px;
+  padding: 10px;
+}
+
+.setup__recon-section--missing {
+  background: rgba(245, 158, 11, 0.06);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  border-radius: 6px;
+  padding: 10px;
+}
+
+.setup__recon-section-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.setup__recon-section-title--warning {
+  color: #f59e0b;
+}
+
+.setup__recon-names-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.setup__recon-meta-note {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+
+.setup__recon-hint {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+  margin: 2px 0 6px;
+}
+
+.setup__recon-checklist-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.setup__recon-toggle-btns {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  font-size: 0.72rem;
+}
+
+.setup__text-btn {
+  background: none;
+  border: none;
+  color: var(--primary, #6366f1);
+  cursor: pointer;
+  padding: 0;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+.setup__text-btn:hover {
+  opacity: 0.8;
+}
+
+.setup__recon-checklist {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 160px;
+  overflow-y: auto;
+}
+
+.setup__recon-check-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+
+.setup__recon-check-row:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.setup__recon-student-name {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.setup__recon-student-id {
+  font-size: 0.75rem;
+  font-family: monospace;
+  color: var(--text-secondary);
+}
+
+.setup__recon-clean-state {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  padding: 4px 0;
+}
+
+/* --- Import Summary Modal --- */
+.setup__summary-icon-box {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(16, 185, 129, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.setup__summary-pills {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 12px 0;
+}
+
+.setup__chip--green {
+  background: rgba(16, 185, 129, 0.12);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.setup__chip--amber {
+  background: rgba(245, 158, 11, 0.12);
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.setup__badge--archived {
+  background: rgba(245, 158, 11, 0.12);
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.setup__summary-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 280px;
+  overflow-y: auto;
+  margin-bottom: 16px;
+}
+
+.setup__summary-item {
+  padding: 10px 12px;
+  background: var(--bg-secondary, rgba(255, 255, 255, 0.03));
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+.setup__dialog-box--recon {
+  max-width: 580px !important;
+  width: 95vw;
+}
+
+.setup__btn-secondary {
+  padding:       10px 18px;
+  border:        1px solid var(--border);
+  border-radius: var(--radius-md);
+  background:    var(--bg-tertiary);
+  color:         var(--text);
+  font-size:     0.9rem;
+  font-weight:   600;
+  cursor:        pointer;
+  min-height:    44px;
+  display:       inline-flex;
+  align-items:   center;
+  justify-content: center;
+  gap:           8px;
+  transition:    background 0.15s ease, border-color 0.15s ease, color 0.15s ease, opacity 0.15s ease;
+  white-space:   nowrap;
+}
+
+.setup__btn-secondary:hover:not(:disabled) {
+  background:    var(--bg-secondary);
+  border-color:  var(--text-tertiary);
+  color:         var(--text);
+}
+
+.setup__btn-secondary:active:not(:disabled) {
+  opacity: 0.85;
+}
+
+.setup__btn-secondary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.setup__recon-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.setup__recon-actions .setup__btn-ghost {
+  margin-right: auto;
+}
+
+@media (max-width: 600px) {
+  .setup__recon-actions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+  .setup__recon-actions .setup__btn-ghost {
+    margin-right: 0;
+  }
+  .setup__recon-actions button {
+    width: 100%;
+  }
+}

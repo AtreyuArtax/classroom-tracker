@@ -728,6 +728,155 @@
       <div class="setup__dialog-backdrop" @click="bulkImportGroups = null" />
     </div>
 
+    <!-- ── Roster Reconciliation & Archive Decision Dialog ─── -->
+    <div v-if="reconciliationData" class="setup__dialog" role="dialog" aria-modal="true" aria-labelledby="recon-modal-title">
+      <div class="setup__dialog-box setup__dialog-box--large setup__dialog-box--recon">
+        <h3 id="recon-modal-title" class="setup__dialog-title">Review Roster Changes</h3>
+        <p class="setup__dialog-body">
+          We detected updates for your selected class{{ reconciliationData.length === 1 ? '' : 'es' }}. Review newly added students and decide whether to archive students no longer on the CSV.
+        </p>
+
+        <div class="setup__recon-list">
+          <div v-for="item in reconciliationData" :key="item.className" class="setup__recon-card">
+            <div class="setup__recon-card-header">
+              <strong>{{ item.className }}</strong>
+              <span v-if="item.isExisting" class="setup__badge setup__badge--update">Update Existing</span>
+              <span v-else class="setup__badge setup__badge--new">New Class</span>
+            </div>
+
+            <!-- Added Students (XYZ) -->
+            <div v-if="item.adding.length > 0" class="setup__recon-section setup__recon-section--adding">
+              <div class="setup__recon-section-title">
+                <UserPlus :size="15" style="color: var(--success, #10b981);" />
+                <span>Adding {{ item.adding.length }} Student{{ item.adding.length === 1 ? '' : 's' }}</span>
+              </div>
+              <div class="setup__recon-names-wrap">
+                <span v-for="st in item.adding" :key="st.studentId" class="setup__chip setup__chip--green">
+                  {{ st.name }} <template v-if="st.grade">({{ st.grade }})</template>
+                </span>
+              </div>
+            </div>
+
+            <!-- Enrolled Students (kept / updated) -->
+            <div v-if="item.updating.length > 0" class="setup__recon-meta-note">
+              <Users :size="13" /> {{ item.updating.length }} currently enrolled student{{ item.updating.length === 1 ? '' : 's' }} will be updated / kept.
+            </div>
+
+            <!-- Missing Students / Archive Prompt (abc) -->
+            <div v-if="item.missing.length > 0" class="setup__recon-section setup__recon-section--missing">
+              <div class="setup__recon-section-title setup__recon-section-title--warning">
+                <AlertTriangle :size="15" style="color: #f59e0b;" />
+                <span>{{ item.missing.length }} student{{ item.missing.length === 1 ? '' : 's' }} not in this CSV — archive?</span>
+              </div>
+              <p class="setup__recon-hint">
+                These students are currently enrolled in Classroom Tracker but are absent from the uploaded CSV. Archiving hides them from the active seating chart while <strong>fully preserving</strong> all grades, attendance, and notes.
+              </p>
+
+              <div class="setup__recon-checklist-header">
+                <span style="font-size: 0.75rem; color: var(--text-secondary);">Select students to archive:</span>
+                <div class="setup__recon-toggle-btns">
+                  <button type="button" class="setup__text-btn" @click="toggleAllArchiveInClass(item, true)">Select All</button>
+                  <span>·</span>
+                  <button type="button" class="setup__text-btn" @click="toggleAllArchiveInClass(item, false)">Deselect All</button>
+                </div>
+              </div>
+
+              <div class="setup__recon-checklist">
+                <label 
+                  v-for="st in item.missing" 
+                  :key="st.studentId"
+                  class="setup__recon-check-row"
+                >
+                  <input type="checkbox" v-model="st.selectedForArchive" class="setup__checkbox" />
+                  <span class="setup__recon-student-name">{{ st.name }}</span>
+                  <span class="setup__recon-student-id">#{{ st.studentId }}</span>
+                  <span v-if="st.grade" class="setup__chip" style="font-size: 0.7rem;">{{ st.grade }}</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- No missing students notice -->
+            <div v-else-if="item.isExisting && item.adding.length === 0" class="setup__recon-clean-state">
+              ✓ All enrolled students match the uploaded CSV.
+            </div>
+          </div>
+        </div>
+
+        <div class="setup__dialog-actions setup__recon-actions">
+          <button 
+            type="button" 
+            class="setup__btn-ghost" 
+            @click="cancelReconciliation"
+          >
+            Cancel
+          </button>
+          <button 
+            type="button" 
+            class="setup__btn-primary" 
+            @click="finalizeImportWithReconciliation"
+          >
+            {{ totalSelectedForArchive > 0 ? `Archive (${totalSelectedForArchive}) & Import` : 'Complete Import' }}
+          </button>
+        </div>
+      </div>
+      <div class="setup__dialog-backdrop" @click="cancelReconciliation" />
+    </div>
+
+    <!-- ── Import Complete Summary Dialog ─── -->
+    <div v-if="importSummary" class="setup__dialog" role="dialog" aria-modal="true" aria-labelledby="summary-modal-title">
+      <div class="setup__dialog-box setup__dialog-box--large">
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+          <div class="setup__summary-icon-box">
+            <CheckCircle :size="26" style="color: var(--success, #10b981);" />
+          </div>
+          <div>
+            <h3 id="summary-modal-title" class="setup__dialog-title" style="margin: 0;">Roster Import Complete</h3>
+            <p class="setup__dialog-body" style="margin-top: 2px; margin-bottom: 0;">
+              Successfully processed {{ importSummary.classesCount }} class{{ importSummary.classesCount === 1 ? '' : 'es' }}.
+            </p>
+          </div>
+        </div>
+
+        <div class="setup__summary-pills">
+          <span class="setup__chip setup__chip--green">
+            <UserPlus :size="13" /> +{{ importSummary.totalAdded }} Added
+          </span>
+          <span class="setup__chip setup__chip--blue">
+            <Users :size="13" /> {{ importSummary.totalUpdated }} Kept / Updated
+          </span>
+          <span v-if="importSummary.totalArchived > 0" class="setup__chip setup__chip--amber">
+            <Archive :size="13" /> {{ importSummary.totalArchived }} Archived
+          </span>
+        </div>
+
+        <div class="setup__summary-list">
+          <div v-for="item in importSummary.items" :key="item.className" class="setup__summary-item">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <strong>{{ item.className }}</strong>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 4px; font-size: 0.82rem;">
+              <div v-if="item.addedCount > 0" style="display: flex; align-items: baseline; gap: 6px;">
+                <span class="setup__badge setup__badge--new" style="font-size: 0.68rem;">+{{ item.addedCount }} Added</span>
+                <span style="color: var(--text-secondary); font-size: 0.8rem;">{{ item.addedNames.join(', ') }}</span>
+              </div>
+              <div v-if="item.archivedCount > 0" style="display: flex; align-items: baseline; gap: 6px;">
+                <span class="setup__badge setup__badge--update" style="font-size: 0.68rem; background: rgba(245, 158, 11, 0.15); color: #f59e0b;">{{ item.archivedCount }} Archived</span>
+                <span style="color: var(--text-secondary); font-size: 0.8rem;">{{ item.archivedNames.join(', ') }}</span>
+              </div>
+              <div v-if="item.addedCount === 0 && item.archivedCount === 0" style="color: var(--text-secondary); font-size: 0.8rem;">
+                {{ item.updatedCount }} students updated.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="setup__dialog-actions">
+          <button type="button" class="setup__btn-primary" @click="importSummary = null">Done</button>
+        </div>
+      </div>
+      <div class="setup__dialog-backdrop" @click="importSummary = null" />
+    </div>
+
     <!-- ── Elementary Import Preview Dialog ─────────────────── -->
     <div v-if="elementaryPreview" class="setup__dialog" role="dialog" aria-modal="true">
       <div class="setup__dialog-box setup__dialog-box--large">
@@ -857,6 +1006,9 @@ import {
   Moon,
   Monitor,
   BookOpen,
+  CheckCircle,
+  UserPlus,
+  Users,
   X
 } from 'lucide-vue-next'
 import UndoButton from '../components/UndoButton.vue'
@@ -961,7 +1113,9 @@ const {
   importRoster,
   moveStudentFromClass,
   autoStartRFID,
-  teachingMode
+  teachingMode,
+  archiveStudentInClass,
+  reloadClasses
 } = useClassroom()
 
 
@@ -1252,6 +1406,14 @@ async function onDeleteClass(classId) {
 const importResult = ref(null)
 const crossClassConflicts = ref([])
 const bulkImportGroups = ref(null)
+const reconciliationData = ref(null)
+const totalSelectedForArchive = computed(() => {
+  if (!reconciliationData.value) return 0
+  return reconciliationData.value.reduce((total, item) => {
+    return total + (item.missing ? item.missing.filter(m => m.selectedForArchive).length : 0)
+  }, 0)
+})
+const importSummary = ref(null)
 let _pendingConflicts = []
 const isDraggingRoster = ref(false)
 const newPeriodsDetected = ref([])
@@ -1463,7 +1625,7 @@ function onFileSelected(evt) {
                   periodStartTime: periodStartTimes.value[row.periodNumber] || '08:00',
                   courseCode: row.courseCode,
                   students: [],
-                  selected: true
+                  selected: false
               }
           }
           groups[key].students.push(row)
@@ -1514,15 +1676,8 @@ function onFileSelected(evt) {
       }
 
       const groupKeys = Object.keys(groups)
-      if (groupKeys.length > 1) {
+      if (groupKeys.length >= 1) {
           bulkImportGroups.value = groups
-      } else {
-          if (!activeClass.value) {
-            await alert('This CSV contains only one class group. Please select or create a class first, then re-import.')
-            return
-          }
-          const result = await importRoster(validRows)
-          importResult.value = result
       }
     },
     error: (err) => {
@@ -1626,13 +1781,142 @@ async function confirmElementaryImport() {
 }
 
 async function confirmBulkImport() {
+  if (!bulkImportGroups.value) return
   const selectedGroups = Object.values(bulkImportGroups.value).filter(g => g.selected)
   if (selectedGroups.length === 0) return
   
+  const items = []
+  let anyMissing = false
+
+  for (const group of selectedGroups) {
+    const existing = classList.value.find(c => 
+      c.year === group.year && 
+      c.semester === group.semester && 
+      (String(c.periodNumber).trim() === String(group.periodNumber).trim() || 
+       (!isNaN(Number(c.periodNumber)) && !isNaN(Number(group.periodNumber)) && Number(c.periodNumber) === Number(group.periodNumber)))
+    )
+
+    const incomingIds = new Set(group.students.map(s => String(s.studentId).trim()))
+    const existingStudents = existing?.students || {}
+
+    const adding = []
+    const updating = []
+    for (const s of group.students) {
+      const cleanId = String(s.studentId).trim()
+      const ex = existingStudents[cleanId]
+      const displayName = `${s.firstName || ''} ${s.lastName || ''}`.trim() || cleanId
+      if (!ex || ex.archived) {
+        adding.push({
+          studentId: cleanId,
+          name: displayName,
+          grade: s.gradeLevel || s.grade || '',
+          wasArchived: !!ex?.archived
+        })
+      } else {
+        updating.push({
+          studentId: cleanId,
+          name: displayName
+        })
+      }
+    }
+
+    const missing = []
+    if (existing) {
+      for (const [cleanId, s] of Object.entries(existingStudents)) {
+        if (!s.archived && !incomingIds.has(cleanId)) {
+          missing.push({
+            studentId: cleanId,
+            name: `${s.firstName || ''} ${s.lastName || ''}`.trim() || cleanId,
+            grade: s.gradeLevel || s.grade || '',
+            selectedForArchive: true
+          })
+        }
+      }
+    }
+
+    if (missing.length > 0) {
+      anyMissing = true
+    }
+
+    items.push({
+      group,
+      existingClass: existing || null,
+      isExisting: !!existing,
+      className: group.name,
+      adding,
+      updating,
+      missing
+    })
+  }
+
+  if (anyMissing) {
+    bulkImportGroups.value = null
+    reconciliationData.value = items
+  } else {
+    bulkImportGroups.value = null
+    await executeRosterImport(items, false)
+  }
+}
+
+function toggleAllArchiveInClass(item, target) {
+  if (!item || !item.missing) return
+  item.missing.forEach(m => {
+    m.selectedForArchive = target
+  })
+}
+
+function cancelReconciliation() {
+  reconciliationData.value = null
+}
+
+async function finalizeImportWithReconciliation() {
+  const items = reconciliationData.value
+  if (!items || items.length === 0) return
+  await executeRosterImport(items, true)
+}
+
+async function executeRosterImport(items, shouldArchive) {
+  const selectedGroups = items.map(i => i.group)
+  selectedGroups.forEach(g => {
+    if (!g.classType) g.classType = teachingMode.value || 'secondary'
+  })
+
   await bulkImportClasses(selectedGroups)
-  bulkImportGroups.value = null
-  importResult.value = { inserted: 'Multiple', updated: 'Classes', skipped: [] }
-  await alert('Bulk import complete!')
+
+  let totalArchived = 0
+  if (shouldArchive) {
+    for (const item of items) {
+      if (!item.existingClass) continue
+      const toArchive = item.missing.filter(m => m.selectedForArchive)
+      for (const m of toArchive) {
+        await archiveStudentInClass(item.existingClass.classId, m.studentId)
+        totalArchived++
+      }
+    }
+    if (totalArchived > 0) {
+      await reloadClasses()
+    }
+  }
+
+  const totalAdded = items.reduce((sum, i) => sum + i.adding.length, 0)
+  const totalUpdated = items.reduce((sum, i) => sum + i.updating.length, 0)
+
+  reconciliationData.value = null
+
+  importSummary.value = {
+    classesCount: items.length,
+    totalAdded,
+    totalUpdated,
+    totalArchived,
+    items: items.map(i => ({
+      className: i.className,
+      addedCount: i.adding.length,
+      addedNames: i.adding.map(a => a.name),
+      updatedCount: i.updating.length,
+      archivedCount: shouldArchive ? i.missing.filter(m => m.selectedForArchive).length : 0,
+      archivedNames: shouldArchive ? i.missing.filter(m => m.selectedForArchive).map(m => m.name) : []
+    }))
+  }
 }
 
 // --- QR Generation / Printing State & Methods ---

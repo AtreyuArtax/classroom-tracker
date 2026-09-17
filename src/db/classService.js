@@ -352,6 +352,7 @@ export async function importRoster(classId, studentsArray) {
             cls.students[cleanId].lastName = lastName
             if (parsedG) cls.students[cleanId].gradeLevel = parsedG
             if (courseCode !== undefined) cls.students[cleanId].courseCode = courseCode
+            cls.students[cleanId].archived = false
 
             if (parentContacts && parentContacts.length > 0) {
                 // Replace parent contacts if new ones are provided in CSV
@@ -1012,6 +1013,7 @@ export async function bulkImportClasses(groups) {
                 cls.students[cleanId].lastName = lastName
                 if (parsedG) cls.students[cleanId].gradeLevel = parsedG
                 if (courseCode) cls.students[cleanId].courseCode = courseCode
+                cls.students[cleanId].archived = false
                 if (parentContacts && parentContacts.length > 0) cls.students[cleanId].parentContacts = parentContacts
                 if (studentEmail) cls.students[cleanId].studentEmail = studentEmail
                 if (custody) cls.students[cleanId].custody = custody
