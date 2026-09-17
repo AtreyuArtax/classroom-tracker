@@ -235,18 +235,53 @@ test('Re-importing a previously archived student restores them to active status'
     }
   }
 
-  // Incoming row with George Bailey
-  const row = { studentId: '301', firstName: 'George', lastName: 'Bailey' }
+  const row = { studentId: '301', firstName: 'George (SIS)', lastName: 'Bailey' }
   const cleanId = row.studentId
 
-  // classService upsert logic
+  // classService import logic: restore archived: false, but preserve existing customized data
   if (existingClass.students[cleanId]) {
-    existingClass.students[cleanId].firstName = row.firstName
-    existingClass.students[cleanId].lastName = row.lastName
     existingClass.students[cleanId].archived = false // restored
   }
 
   assert.strictEqual(existingClass.students['301'].archived, false, 'Student must be unarchived upon re-import')
+  assert.strictEqual(existingClass.students['301'].firstName, 'George', 'Student details preserved')
+})
+
+test('Re-import NEVER updates or overwrites existing student names, emails, phones, or notes', () => {
+  const existingClass = {
+    classId: 'cls_2',
+    name: 'Period 2 Science',
+    students: {
+      '401': {
+        firstName: 'Alexander (Alex)',
+        lastName: 'Smith',
+        parentContacts: [{ name: 'Mom', phone: '555-4321', email: 'mom@home.com' }],
+        studentEmail: 'alex.smith@school.ca',
+        generalNote: 'Needs front row seating'
+      }
+    }
+  }
+
+  const incomingCsvRow = {
+    studentId: '401',
+    firstName: 'Alexander', // Formal SIS name
+    lastName: 'Smith',
+    parentContacts: [], // Blank in SIS CSV
+    studentEmail: 'asmith@district.ca' // Different SIS email
+  }
+
+  const cleanId = incomingCsvRow.studentId
+  // classService import logic: NEVER overwrite existing student fields
+  if (existingClass.students[cleanId]) {
+    existingClass.students[cleanId].archived = false
+  }
+
+  const student = existingClass.students['401']
+  assert.strictEqual(student.firstName, 'Alexander (Alex)', 'Preferred nickname must NOT be overwritten by SIS formal name')
+  assert.strictEqual(student.parentContacts.length, 1, 'Custom parent contacts must NOT be wiped out by CSV')
+  assert.strictEqual(student.parentContacts[0].phone, '555-4321')
+  assert.strictEqual(student.studentEmail, 'alex.smith@school.ca', 'Custom student email must NOT be overwritten')
+  assert.strictEqual(student.generalNote, 'Needs front row seating', 'General notes must remain intact')
 })
 
 // =============================================================================

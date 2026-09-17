@@ -275,8 +275,8 @@
     "semantic_hash": ""
   },
   "src/db/classService.js": {
-    "mtime": 1789666219.570889,
-    "ast_hash": "381b3b6843a25c0240d0068b30cea097",
+    "mtime": 1789668332.9096875,
+    "ast_hash": "23776e944f02b7e68b4369ef735076e3",
     "semantic_hash": ""
   },
   "src/db/eventService.js": {
@@ -355,8 +355,8 @@
     "semantic_hash": ""
   },
   "src/views/Setup.vue": {
-    "mtime": 1789667570.035833,
-    "ast_hash": "0ce538868675502ea474665035222f74",
+    "mtime": 1789668361.9425907,
+    "ast_hash": "4a95893f67e14c02b9263dde38be9c12",
     "semantic_hash": ""
   },
   "tmp/test_dates.js": {
@@ -425,8 +425,8 @@
     "semantic_hash": ""
   },
   "src/components/setup/RosterCsvImporter.vue": {
-    "mtime": 1789667600.2707114,
-    "ast_hash": "ed1fd600dfee764c08b8bf9e2ffce401",
+    "mtime": 1789668389.008533,
+    "ast_hash": "47aa59fd40e1efec966639e9402ab0ab",
     "semantic_hash": ""
   },
   "src/composables/useAttendanceTracker.js": {
@@ -1265,8 +1265,8 @@
     "semantic_hash": ""
   },
   "src/test_data_pipelines_audit.js": {
-    "mtime": 1788795756.843957,
-    "ast_hash": "47c36f7b6af6269c01f5432547dd2ca9",
+    "mtime": 1789668420.8073585,
+    "ast_hash": "b6962e5d9e0a08b6f5449474091f30e8",
     "semantic_hash": ""
   },
   "src/test_math_and_statistics_audit.js": {
@@ -1345,8 +1345,8 @@
     "semantic_hash": ""
   },
   "src/test_roster_csv_reconciliation.js": {
-    "mtime": 1789667611.5042253,
-    "ast_hash": "9b9ff396cf0deeda0b0d7edcbe3bb147",
+    "mtime": 1789668460.833431,
+    "ast_hash": "cb35f406b9962ec2c9d1c4193bec0436",
     "semantic_hash": ""
   }
 }

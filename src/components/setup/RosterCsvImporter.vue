@@ -179,9 +179,9 @@
               </div>
             </div>
 
-            <!-- Enrolled Students (kept / updated) -->
+            <!-- Enrolled Students (kept active / unchanged) -->
             <div v-if="item.updating.length > 0" class="setup__recon-meta-note">
-              <Users :size="13" /> {{ item.updating.length }} currently enrolled student{{ item.updating.length === 1 ? '' : 's' }} will be updated / kept.
+              <Users :size="13" /> {{ item.updating.length }} currently enrolled student{{ item.updating.length === 1 ? '' : 's' }} will remain unchanged.
             </div>
 
             <!-- Missing Students / Archive Prompt (abc) -->
@@ -264,7 +264,7 @@
             <UserPlus :size="13" /> +{{ importSummary.totalAdded }} Added
           </span>
           <span class="setup__chip setup__chip--blue">
-            <Users :size="13" /> {{ importSummary.totalUpdated }} Kept / Updated
+            <Users :size="13" /> {{ importSummary.totalUpdated }} Kept Active
           </span>
           <span v-if="importSummary.totalArchived > 0" class="setup__chip setup__chip--amber">
             <Archive :size="13" /> {{ importSummary.totalArchived }} Archived
@@ -286,7 +286,7 @@
                 <span style="color: var(--text-secondary); font-size: 0.8rem;">{{ item.archivedNames.join(', ') }}</span>
               </div>
               <div v-if="item.addedCount === 0 && item.archivedCount === 0" style="color: var(--text-secondary); font-size: 0.8rem;">
-                {{ item.updatedCount }} students updated.
+                {{ item.updatedCount }} students kept active.
               </div>
             </div>
           </div>
@@ -673,7 +673,9 @@ async function confirmBulkImport() {
     for (const s of group.students) {
       const cleanId = String(s.studentId).trim()
       const ex = existingStudents[cleanId]
-      const displayName = `${s.firstName || ''} ${s.lastName || ''}`.trim() || cleanId
+      const displayName = ex 
+        ? `${ex.firstName || ''} ${ex.lastName || ''}`.trim() || cleanId
+        : `${s.firstName || ''} ${s.lastName || ''}`.trim() || cleanId
       if (!ex || ex.archived) {
         adding.push({
           studentId: cleanId,

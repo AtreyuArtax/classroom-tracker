@@ -347,24 +347,9 @@ export async function importRoster(classId, studentsArray) {
         const parsedG = rawG ? (rawG.toLowerCase().startsWith('grade') ? rawG : `Grade ${parseInt(rawG, 10) || rawG}`) : ''
 
         if (cls.students[cleanId]) {
-            // Upsert — preserve seat and activeStates, but update names and gradeLevel
-            cls.students[cleanId].firstName = firstName
-            cls.students[cleanId].lastName = lastName
-            if (parsedG) cls.students[cleanId].gradeLevel = parsedG
-            if (courseCode !== undefined) cls.students[cleanId].courseCode = courseCode
+            // Already enrolled — NEVER overwrite teacher-customized names, emails, phones, notes, or details.
+            // Only unarchive if previously archived so student is restored to active roster.
             cls.students[cleanId].archived = false
-
-            if (parentContacts && parentContacts.length > 0) {
-                // Replace parent contacts if new ones are provided in CSV
-                cls.students[cleanId].parentContacts = parentContacts
-            } else if (!cls.students[cleanId].parentContacts) {
-                cls.students[cleanId].parentContacts = []
-            }
-            if (studentEmail) cls.students[cleanId].studentEmail = studentEmail
-            if (custody) cls.students[cleanId].custody = custody
-            if (livingWith) cls.students[cleanId].livingWith = livingWith
-            if (birthDate) cls.students[cleanId].birthDate = birthDate
-            if (rfidTag !== undefined) cls.students[cleanId].rfidTag = rfidTag
             updated++
         } else {
             // Insert with defaults
@@ -1009,17 +994,9 @@ export async function bulkImportClasses(groups) {
             const parsedG = rawG ? (rawG.toLowerCase().startsWith('grade') ? rawG : `Grade ${parseInt(rawG, 10) || rawG}`) : ''
 
             if (cls.students[cleanId]) {
-                cls.students[cleanId].firstName = firstName
-                cls.students[cleanId].lastName = lastName
-                if (parsedG) cls.students[cleanId].gradeLevel = parsedG
-                if (courseCode) cls.students[cleanId].courseCode = courseCode
+                // Already enrolled — NEVER overwrite teacher-customized names, emails, phones, notes, or details.
+                // Only unarchive if previously archived so student is restored to active roster.
                 cls.students[cleanId].archived = false
-                if (parentContacts && parentContacts.length > 0) cls.students[cleanId].parentContacts = parentContacts
-                if (studentEmail) cls.students[cleanId].studentEmail = studentEmail
-                if (custody) cls.students[cleanId].custody = custody
-                if (livingWith) cls.students[cleanId].livingWith = livingWith
-                if (birthDate) cls.students[cleanId].birthDate = birthDate
-                if (rfidTag !== undefined) cls.students[cleanId].rfidTag = rfidTag
                 studentsUpdated++
             } else {
                 cls.students[cleanId] = {

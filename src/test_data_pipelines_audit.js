@@ -95,23 +95,13 @@ test('Re-importing the same CSV does not duplicate students and preserves seats 
     }
   ]
 
-  // Execute upsert logic from classService.js importRoster
+  // Execute roster import logic from classService.js importRoster (never overwrites existing students)
   let inserted = 0
   let updated = 0
   for (const row of incomingCsvRows) {
     const cleanId = (row.studentId || '').toString().trim()
     if (targetClass.students[cleanId]) {
-      const st = targetClass.students[cleanId]
-      st.firstName = row.firstName
-      st.lastName = row.lastName
-      if (row.gradeLevel) st.gradeLevel = row.gradeLevel
-      if (row.courseCode !== undefined) st.courseCode = row.courseCode
-      if (row.parentContacts && row.parentContacts.length > 0) st.parentContacts = row.parentContacts
-      if (row.studentEmail) st.studentEmail = row.studentEmail
-      if (row.custody) st.custody = row.custody
-      if (row.livingWith) st.livingWith = row.livingWith
-      if (row.birthDate) st.birthDate = row.birthDate
-      if (row.rfidTag !== undefined) st.rfidTag = row.rfidTag
+      targetClass.students[cleanId].archived = false
       updated++
     } else {
       inserted++
@@ -119,10 +109,11 @@ test('Re-importing the same CSV does not duplicate students and preserves seats 
   }
 
   assert.strictEqual(inserted, 0, 'Should not insert duplicate students')
-  assert.strictEqual(updated, 1, 'Should mark existing student as updated')
+  assert.strictEqual(updated, 1, 'Should mark existing student as kept active')
   assert.strictEqual(Object.keys(targetClass.students).length, 1, 'Student count must remain 1')
 
   const student = targetClass.students['1001']
+  assert.strictEqual(student.firstName, 'Alice', 'First name must remain intact')
   assert.deepStrictEqual(student.seat, { row: 2, col: 3 }, 'Seat must be 100% preserved')
   assert.strictEqual(student.adjustedGrade, 88, 'adjustedGrade must be 100% preserved')
   assert.strictEqual(student.categoryOverrides['cat_knowledge'], 90, 'Category override must be preserved')
@@ -137,14 +128,14 @@ test('Re-importing the same CSV does not duplicate students and preserves seats 
   assert.strictEqual(studentGrades[0].resolvedScore, 85)
 })
 
-test('Re-import cleanly updates student demographic info without touching marks', () => {
+test('Re-import NEVER overwrites existing student demographic info, names, or contacts (only adds new or unarchives)', () => {
   const targetClass = {
     classId: 'class_test_102',
     students: {
       '1002': {
-        firstName: 'Marcus',
+        firstName: 'Marcus (Preferred: Marc)',
         lastName: 'Brown',
-        studentEmail: 'old_email@school.ca',
+        studentEmail: 'teacher_custom_email@school.ca',
         parentContacts: [{ name: 'Parent One', phone: '555-1111' }],
         seat: { row: 1, col: 1 },
         adjustedGrade: 76
@@ -155,21 +146,22 @@ test('Re-import cleanly updates student demographic info without touching marks'
   const incomingUpdatedRow = {
     studentId: '1002',
     firstName: 'Marcus',
-    lastName: 'Brown-Smith', // Updated hyphenated last name
-    studentEmail: 'marcus.brown@school.ca', // Updated email
-    parentContacts: [{ name: 'Parent One', phone: '555-9999' }] // Updated phone
+    lastName: 'Brown-Smith', // Hyphenated SIS last name
+    studentEmail: 'marcus.brown@school.ca', // Raw SIS email
+    parentContacts: [{ name: 'Parent One', phone: '555-9999' }] // Raw SIS phone
   }
 
   const cleanId = incomingUpdatedRow.studentId.trim()
   const st = targetClass.students[cleanId]
-  st.firstName = incomingUpdatedRow.firstName
-  st.lastName = incomingUpdatedRow.lastName
-  st.studentEmail = incomingUpdatedRow.studentEmail
-  st.parentContacts = incomingUpdatedRow.parentContacts
+  // Invariant: Existing students are NEVER updated from CSV
+  if (st) {
+    st.archived = false
+  }
 
-  assert.strictEqual(st.lastName, 'Brown-Smith', 'Last name should update')
-  assert.strictEqual(st.studentEmail, 'marcus.brown@school.ca', 'Email should update')
-  assert.strictEqual(st.parentContacts[0].phone, '555-9999', 'Parent phone should update')
+  assert.strictEqual(st.firstName, 'Marcus (Preferred: Marc)', 'Preferred name must be preserved')
+  assert.strictEqual(st.lastName, 'Brown', 'Teacher customized last name must NOT be overwritten by SIS CSV')
+  assert.strictEqual(st.studentEmail, 'teacher_custom_email@school.ca', 'Teacher customized email must NOT be overwritten')
+  assert.strictEqual(st.parentContacts[0].phone, '555-1111', 'Teacher customized parent phone must NOT be overwritten')
   assert.deepStrictEqual(st.seat, { row: 1, col: 1 }, 'Seat coordinate must remain intact')
   assert.strictEqual(st.adjustedGrade, 76, 'Teacher override must remain intact')
 })
