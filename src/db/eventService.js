@@ -239,6 +239,37 @@ export async function getAllEvents(dateRange = {}) {
 }
 
 /**
+ * Converts a Base64 data URL string into a native Blob synchronously without yielding to the event loop.
+ * Essential for IndexedDB operations so that transactions do not auto-commit/deactivate during async yields.
+ *
+ * @param {string} dataUrl
+ * @returns {Blob|null}
+ */
+export function dataUrlToBlob(dataUrl) {
+    if (!dataUrl || typeof dataUrl !== 'string') return null
+    const commaIdx = dataUrl.indexOf(',')
+    if (commaIdx === -1) return null
+
+    const header = dataUrl.slice(0, commaIdx)
+    const base64 = dataUrl.slice(commaIdx + 1)
+    const mimeMatch = header.match(/:(.*?);/)
+    const mime = mimeMatch ? mimeMatch[1] : 'image/jpeg'
+
+    try {
+        const binaryString = atob(base64)
+        const len = binaryString.length
+        const bytes = new Uint8Array(len)
+        for (let i = 0; i < len; i++) {
+            bytes[i] = binaryString.charCodeAt(i)
+        }
+        return new Blob([bytes], { type: mime })
+    } catch (err) {
+        console.warn('Failed to parse data URL to blob:', err)
+        return null
+    }
+}
+
+/**
  * Returns all records across all object stores as a single JSON-serializable object.
  * Schema adheres to CLAUDE.md §13 (Backup schema).
  *
@@ -269,6 +300,10 @@ export async function exportAllData() {
                         reader.onerror = () => resolve(null)
                         reader.readAsDataURL(r.blob)
                     })
+                } else if (typeof r.blob === 'string' && r.blob.startsWith('data:')) {
+                    dataUrl = r.blob
+                } else if (typeof r.dataUrl === 'string') {
+                    dataUrl = r.dataUrl
                 }
                 return {
                     studentId: r.studentId,
@@ -714,23 +749,42 @@ export async function importAllData(backupObj) {
     await tx.done
 
     // Restore photos if present
+    let photoCount = 0
     if (Array.isArray(photos) && photos.length > 0) {
         try {
-            const photoTx = db.transaction('student_photos', 'readwrite')
-            const photoStore = photoTx.objectStore('student_photos')
-            await photoStore.clear()
+            // 1. Convert all data URLs to Blobs BEFORE opening the transaction.
+            // This prevents IDB from auto-committing during async microtask yields (TransactionInactiveError).
+            const preparedPhotos = []
             for (const p of photos) {
                 if (p.studentId && p.dataUrl) {
-                    const res = await fetch(p.dataUrl)
-                    const blob = await res.blob()
-                    await photoStore.put({
-                        studentId: String(p.studentId),
-                        blob,
-                        updatedAt: p.updatedAt || new Date().toISOString()
-                    })
+                    let blob = dataUrlToBlob(p.dataUrl)
+                    if (!blob && typeof fetch === 'function') {
+                        try {
+                            const res = await fetch(p.dataUrl)
+                            blob = await res.blob()
+                        } catch (e) { /* ignore */ }
+                    }
+                    if (blob) {
+                        preparedPhotos.push({
+                            studentId: String(p.studentId),
+                            blob,
+                            updatedAt: p.updatedAt || new Date().toISOString()
+                        })
+                    }
                 }
             }
-            await photoTx.done
+
+            // 2. Write to IndexedDB within a single atomic transaction
+            if (preparedPhotos.length > 0) {
+                const photoTx = db.transaction('student_photos', 'readwrite')
+                const photoStore = photoTx.objectStore('student_photos')
+                await photoStore.clear()
+                for (const item of preparedPhotos) {
+                    await photoStore.put(item)
+                }
+                await photoTx.done
+                photoCount = preparedPhotos.length
+            }
         } catch (e) {
             console.warn('Could not restore photos:', e)
         }
@@ -745,7 +799,7 @@ export async function importAllData(backupObj) {
         await db.put('settings', freshSettings, 'singleton')
     }
 
-    return { classCount: classes.length, eventCount: events.length }
+    return { classCount: classes.length, eventCount: events.length, photoCount }
 }
 
 /**

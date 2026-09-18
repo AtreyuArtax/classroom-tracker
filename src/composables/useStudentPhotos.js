@@ -33,6 +33,14 @@ export function clearPhotoCache() {
 }
 
 /**
+ * Fully clears and re-initializes the photo cache from IndexedDB after imports or restores.
+ */
+export async function reloadPhotoCache() {
+  clearPhotoCache()
+  await initPhotoIds()
+}
+
+/**
  * Compress, downscale, and center-crop any image (File, Blob, or Data URL)
  * into a lightweight 1:1 square WebP/JPEG blob (~20-30KB).
  *
@@ -240,6 +248,7 @@ export function useStudentPhotos() {
     showDeskPhotos,
     initPhotoIds,
     clearPhotoCache,
+    reloadPhotoCache,
     hasPhoto,
     getPhotoUrl,
     saveStudentPhoto,

@@ -1,5 +1,6 @@
 import assert from 'assert'
 import { CURRENT_SCHEMA, migrateData } from './db/migrations.js'
+import { dataUrlToBlob } from './db/eventService.js'
 
 console.log('=================================================================')
 console.log('🧪 DATABASE INTEGRITY, BACKUP & HEALTH AUTOMATED VERIFICATION')
@@ -226,6 +227,45 @@ assert.strictEqual(restoredPhoto.studentId, 'st_avatar_test', 'Photo studentId m
 assert.strictEqual(restoredPhoto.dataUrl, samplePhotoRecord.dataUrl, 'Base64 image string is uncorrupted')
 assert.ok(restoredPhoto.dataUrl.startsWith('data:image/jpeg;base64,'), 'MIME header preserved')
 console.log('  ✓ Base64 photo payload serialization & decoding verified')
+
+// Sub-test: Synchronous dataUrlToBlob conversion without transaction deactivation
+const jpegBlob = dataUrlToBlob(samplePhotoRecord.dataUrl)
+assert.ok(jpegBlob instanceof Blob, 'dataUrlToBlob returns a native Blob')
+assert.strictEqual(jpegBlob.type, 'image/jpeg', 'MIME type is image/jpeg')
+assert.ok(jpegBlob.size > 0, 'Blob size is greater than 0 bytes')
+
+const webpDataUrl = 'data:image/webp;base64,UklGRhoAAABXRUJQVlA4TA0AAAAvAAAAEAcQERGIiP4HAA=='
+const webpBlob = dataUrlToBlob(webpDataUrl)
+assert.ok(webpBlob instanceof Blob, 'dataUrlToBlob correctly creates WebP blob')
+assert.strictEqual(webpBlob.type, 'image/webp', 'MIME type is image/webp')
+
+// Sub-test: Graceful handling of null / malformed data
+assert.strictEqual(dataUrlToBlob(null), null, 'null returns null')
+assert.strictEqual(dataUrlToBlob('invalid-url'), null, 'invalid string returns null')
+assert.strictEqual(dataUrlToBlob(undefined), null, 'undefined returns null')
+
+// Sub-test: Full atomic photo preparation simulation (verifies no async IDB deactivation)
+const mockPhotosPayload = [
+  samplePhotoRecord,
+  { studentId: 'st_avatar_webp', dataUrl: webpDataUrl, updatedAt: '2026-09-17T12:00:00.000Z' }
+]
+
+const preparedItems = []
+for (const p of mockPhotosPayload) {
+  const blob = dataUrlToBlob(p.dataUrl)
+  if (blob) {
+    preparedItems.push({
+      studentId: String(p.studentId),
+      blob,
+      updatedAt: p.updatedAt
+    })
+  }
+}
+
+assert.strictEqual(preparedItems.length, 2, 'All photos converted to Blobs before IDB write')
+assert.strictEqual(preparedItems[0].studentId, 'st_avatar_test')
+assert.strictEqual(preparedItems[1].studentId, 'st_avatar_webp')
+console.log('  ✓ Synchronous dataUrlToBlob conversion & atomic photo restore preparation verified')
 
 // =============================================================================
 // TEST GROUP 4: Multi-Machine File-Handle Isolation

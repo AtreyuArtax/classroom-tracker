@@ -259,6 +259,12 @@
           <ul class="setup__list" style="margin-top: 1rem; padding-left: 20px;">
             <li>{{ importPreview.classes.length }} Classes</li>
             <li>{{ importPreview.events.length }} Events</li>
+            <li v-if="importPreview.photos && importPreview.photos.length > 0" style="color: var(--color-success, #34c759); font-weight: 600;">
+              📷 {{ importPreview.photos.length }} Student Photos Included
+            </li>
+            <li v-else style="color: var(--color-warning, #eab308);">
+              ⚠️ No student photos in this backup
+            </li>
             <li>Schema Version: {{ importPreview.schemaVersion }}</li>
           </ul>
           <p style="margin-top: 1rem; color: var(--state-out); font-weight: 600;">This action cannot be undone.</p>
@@ -284,6 +290,7 @@ import * as settingsService from '../../db/settingsService.js'
 import * as gradebookService from '../../db/gradebookService.js'
 import { getDB } from '../../db/index.js'
 import { formatLocalDate } from '../../utils/dates.js'
+import { reloadPhotoCache } from '../../composables/useStudentPhotos.js'
 
 import { 
   RefreshCcw, 
@@ -376,6 +383,7 @@ async function onRestoreSafetySnapshot(snapshotId) {
   try {
     const result = await eventService.restoreSafetySnapshot(snapshotId)
     await settingsService.auditSettingsIntegrity()
+    await reloadPhotoCache()
     await init()
     loadSafetySnapshots()
     await loadDirectoryBackups()
@@ -486,12 +494,14 @@ async function doImport() {
   try {
     const result = await eventService.importAllData(JSON.parse(JSON.stringify(importPreview.value)))
     await settingsService.auditSettingsIntegrity()
+    await reloadPhotoCache()
     await init()
     loadSafetySnapshots()
     await loadDirectoryBackups()
     
     importPreview.value = null
-    restoreMsg.value = `✅ Restore complete — ${result.classCount} classes, ${result.eventCount} events. Data restored and loaded!`
+    const photoText = result.photoCount > 0 ? `, ${result.photoCount} photos restored` : ''
+    restoreMsg.value = `✅ Restore complete — ${result.classCount} classes, ${result.eventCount} events${photoText}. Data restored and loaded!`
   } catch (err) {
     importPreview.value = null
     restoreMsg.value = `❌ Restore failed: ${err.message}`

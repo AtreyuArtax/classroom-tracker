@@ -280,8 +280,8 @@
     "semantic_hash": ""
   },
   "src/db/eventService.js": {
-    "mtime": 1788795756.8411627,
-    "ast_hash": "4e093db7262705efdf24f93954ad756d",
+    "mtime": 1789692311.1219804,
+    "ast_hash": "ca1a5ce19bbdc227de31442043c5569e",
     "semantic_hash": ""
   },
   "src/db/exportService.js": {
@@ -450,8 +450,8 @@
     "semantic_hash": ""
   },
   "src/components/setup/DatabaseMaintenanceSettings.vue": {
-    "mtime": 1788795756.83685,
-    "ast_hash": "be970fbcb642e7abc7476373b1fe615b",
+    "mtime": 1789692331.4386687,
+    "ast_hash": "0ac6258a547ae48577ed289651ad75c8",
     "semantic_hash": ""
   },
   "src/components/setup/ExpectationImportModal.vue": {
@@ -1025,8 +1025,8 @@
     "semantic_hash": ""
   },
   "src/composables/useStudentPhotos.js": {
-    "mtime": 1788313659.7293754,
-    "ast_hash": "ea6541d57c84425c6f5535012071c54e",
+    "mtime": 1789692319.0333157,
+    "ast_hash": "ff32b3f06031dc4ddb8f96b537af6c19",
     "semantic_hash": ""
   },
   "src/db/photoService.js": {
@@ -1100,8 +1100,8 @@
     "semantic_hash": ""
   },
   "src/test_db_integrity.js": {
-    "mtime": 1788365518.517413,
-    "ast_hash": "976d2ecc0112e034426b7deeeb869f0c",
+    "mtime": 1789692360.518755,
+    "ast_hash": "31a7796315ea39f7802c34ea6a137fb2",
     "semantic_hash": ""
   },
   "src/test_perf_stress.js": {
