@@ -30,15 +30,28 @@ export const resolvedTheme = computed(() => {
 export const isDarkMode = computed(() => resolvedTheme.value === 'dark')
 
 /**
- * Applies data-theme attribute to <html> element
+ * Applies data-theme attribute to <html> element and updates PWA window titlebar color
  */
 function applyDomTheme(theme) {
   if (typeof document === 'undefined') return
   const root = document.documentElement
-  if (theme === 'dark') {
+  const isDark = theme === 'dark'
+  if (isDark) {
     root.setAttribute('data-theme', 'dark')
   } else {
     root.setAttribute('data-theme', 'light')
+  }
+
+  // Dynamically update theme-color meta tag for PWA title bar in Chrome/Edge and mobile browsers
+  const titleBarColor = isDark ? '#202326' : '#4663ac'
+  const metaTags = document.querySelectorAll('meta[name="theme-color"]')
+  if (metaTags.length > 0) {
+    metaTags.forEach((meta) => meta.setAttribute('content', titleBarColor))
+  } else {
+    const meta = document.createElement('meta')
+    meta.name = 'theme-color'
+    meta.content = titleBarColor
+    document.head.appendChild(meta)
   }
 }
 

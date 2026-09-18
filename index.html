@@ -6,7 +6,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="description"
     content="Offline-first classroom tracker for teachers. Track students via a visual seating chart." />
-  <meta name="theme-color" content="#4663ac" />
+  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#4663ac" />
+  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#202326" />
+  <script>
+    (function () {
+      try {
+        var pref = localStorage.getItem('appTheme') || 'system';
+        var isDark = pref === 'dark' || (pref === 'system' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        if (isDark) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+          var metaTags = document.querySelectorAll('meta[name="theme-color"]');
+          metaTags.forEach(function (m) { m.setAttribute('content', '#202326'); });
+        }
+      } catch (e) {}
+    })();
+  </script>
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />

@@ -260,7 +260,7 @@
       "source_location": "L1304",
       "_origin": "ast",
       "id": "dev_dist_workbox_ca84f546_getidbproxyabletypes",
-      "community": 5,
+      "community": 15,
       "norm_label": "getidbproxyabletypes()"
     },
     {
@@ -270,7 +270,7 @@
       "source_location": "L1308",
       "_origin": "ast",
       "id": "dev_dist_workbox_ca84f546_getcursoradvancemethods",
-      "community": 5,
+      "community": 15,
       "norm_label": "getcursoradvancemethods()"
     },
     {
@@ -280,7 +280,7 @@
       "source_location": "L1316",
       "_origin": "ast",
       "id": "dev_dist_workbox_ca84f546_promisifyrequest",
-      "community": 5,
+      "community": 15,
       "norm_label": "promisifyrequest()"
     },
     {
@@ -290,7 +290,7 @@
       "source_location": "L1346",
       "_origin": "ast",
       "id": "dev_dist_workbox_ca84f546_cachedonepromisefortransaction",
-      "community": 5,
+      "community": 15,
       "norm_label": "cachedonepromisefortransaction()"
     },
     {
@@ -340,7 +340,7 @@
       "source_location": "L1401",
       "_origin": "ast",
       "id": "dev_dist_workbox_ca84f546_wrapfunction",
-      "community": 5,
+      "community": 15,
       "norm_label": "wrapfunction()"
     },
     {
@@ -350,7 +350,7 @@
       "source_location": "L1431",
       "_origin": "ast",
       "id": "dev_dist_workbox_ca84f546_transformcachablevalue",
-      "community": 5,
+      "community": 15,
       "norm_label": "transformcachablevalue()"
     },
     {
@@ -360,7 +360,7 @@
       "source_location": "L1440",
       "_origin": "ast",
       "id": "dev_dist_workbox_ca84f546_wrap",
-      "community": 5,
+      "community": 15,
       "norm_label": "wrap()"
     },
     {
@@ -370,7 +370,7 @@
       "source_location": "L1465",
       "_origin": "ast",
       "id": "dev_dist_workbox_ca84f546_opendb",
-      "community": 5,
+      "community": 15,
       "norm_label": "opendb()"
     },
     {
@@ -9977,7 +9977,7 @@
       "label": "setTheme()",
       "file_type": "code",
       "source_file": "src/composables/useTheme.js",
-      "source_location": "L48",
+      "source_location": "L61",
       "_origin": "ast",
       "id": "composables_usetheme_settheme",
       "community": 58,
@@ -9987,7 +9987,7 @@
       "label": "initTheme()",
       "file_type": "code",
       "source_file": "src/composables/useTheme.js",
-      "source_location": "L70",
+      "source_location": "L83",
       "_origin": "ast",
       "id": "composables_usetheme_inittheme",
       "community": 58,
@@ -9997,7 +9997,7 @@
       "label": "useTheme()",
       "file_type": "code",
       "source_file": "src/composables/useTheme.js",
-      "source_location": "L109",
+      "source_location": "L122",
       "_origin": "ast",
       "id": "composables_usetheme_usetheme",
       "community": 58,
@@ -10410,7 +10410,7 @@
       "source_location": "L39",
       "_origin": "ast",
       "id": "curriculum_schema_properties_subjectcode",
-      "community": 160,
+      "community": 91,
       "norm_label": "subjectcode"
     },
     {
@@ -10420,7 +10420,7 @@
       "source_location": "L40",
       "_origin": "ast",
       "id": "curriculum_schema_subjectcode_type",
-      "community": 160,
+      "community": 91,
       "norm_label": "type"
     },
     {
@@ -10430,7 +10430,7 @@
       "source_location": "L41",
       "_origin": "ast",
       "id": "curriculum_schema_subjectcode_description",
-      "community": 160,
+      "community": 91,
       "norm_label": "description"
     },
     {
@@ -10440,7 +10440,7 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "curriculum_schema_properties_department",
-      "community": 91,
+      "community": 160,
       "norm_label": "department"
     },
     {
@@ -10450,7 +10450,7 @@
       "source_location": "L44",
       "_origin": "ast",
       "id": "curriculum_schema_department_type",
-      "community": 91,
+      "community": 160,
       "norm_label": "type"
     },
     {
@@ -10460,7 +10460,7 @@
       "source_location": "L45",
       "_origin": "ast",
       "id": "curriculum_schema_department_description",
-      "community": 91,
+      "community": 160,
       "norm_label": "description"
     },
     {
@@ -27728,9 +27728,9 @@
       "source_file": "src/components/setup/DatabaseMaintenanceSettings.vue",
       "source_location": "L293",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "setup_databasemaintenancesettings",
-      "target": "composables_usestudentphotos",
-      "confidence_score": 1.0
+      "target": "composables_usestudentphotos"
     },
     {
       "relation": "imports",
@@ -27739,9 +27739,9 @@
       "source_file": "src/components/setup/DatabaseMaintenanceSettings.vue",
       "source_location": "L293",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "setup_databasemaintenancesettings",
-      "target": "composables_usestudentphotos_reloadphotocache",
-      "confidence_score": 1.0
+      "target": "composables_usestudentphotos_reloadphotocache"
     },
     {
       "relation": "imports_from",
@@ -37037,9 +37037,9 @@
       "source_file": "src/composables/useStudentPhotos.js",
       "source_location": "L38",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "composables_usestudentphotos",
-      "target": "composables_usestudentphotos_reloadphotocache",
-      "confidence_score": 1.0
+      "target": "composables_usestudentphotos_reloadphotocache"
     },
     {
       "relation": "contains",
@@ -37079,9 +37079,9 @@
       "source_file": "src/composables/useStudentPhotos.js",
       "source_location": "L39",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "composables_usestudentphotos_reloadphotocache",
-      "target": "composables_usestudentphotos_clearphotocache",
-      "confidence_score": 1.0
+      "target": "composables_usestudentphotos_clearphotocache"
     },
     {
       "relation": "calls",
@@ -37090,9 +37090,9 @@
       "source_file": "src/composables/useStudentPhotos.js",
       "source_location": "L40",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "composables_usestudentphotos_reloadphotocache",
-      "target": "composables_usestudentphotos_initphotoids",
-      "confidence_score": 1.0
+      "target": "composables_usestudentphotos_initphotoids"
     },
     {
       "relation": "contains",
@@ -38906,9 +38906,9 @@
       "source_file": "src/db/eventService.js",
       "source_location": "L248",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "db_eventservice",
-      "target": "db_eventservice_dataurltoblob",
-      "confidence_score": 1.0
+      "target": "db_eventservice_dataurltoblob"
     },
     {
       "relation": "contains",
@@ -39330,9 +39330,9 @@
       "source_file": "src/test_db_integrity.js",
       "source_location": "L3",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_test_db_integrity",
-      "target": "db_eventservice",
-      "confidence_score": 1.0
+      "target": "db_eventservice"
     },
     {
       "relation": "imports_from",
@@ -39561,9 +39561,9 @@
       "source_file": "src/db/eventService.js",
       "source_location": "L760",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "db_eventservice_importalldata",
-      "target": "db_eventservice_dataurltoblob",
-      "confidence_score": 1.0
+      "target": "db_eventservice_dataurltoblob"
     },
     {
       "relation": "imports",
@@ -39572,9 +39572,9 @@
       "source_file": "src/test_db_integrity.js",
       "source_location": "L3",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_test_db_integrity",
-      "target": "db_eventservice_dataurltoblob",
-      "confidence_score": 1.0
+      "target": "db_eventservice_dataurltoblob"
     },
     {
       "relation": "calls",
@@ -46114,9 +46114,9 @@
       "source_file": "src/test_db_integrity.js",
       "source_location": "L232",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_test_db_integrity",
-      "target": "src_test_db_integrity_jpegblob",
-      "confidence_score": 1.0
+      "target": "src_test_db_integrity_jpegblob"
     },
     {
       "relation": "contains",
@@ -46174,9 +46174,9 @@
       "source_file": "src/test_db_integrity.js",
       "source_location": "L248",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_test_db_integrity",
-      "target": "src_test_db_integrity_mockphotospayload",
-      "confidence_score": 1.0
+      "target": "src_test_db_integrity_mockphotospayload"
     },
     {
       "relation": "contains",
@@ -46204,9 +46204,9 @@
       "source_file": "src/test_db_integrity.js",
       "source_location": "L253",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_test_db_integrity",
-      "target": "src_test_db_integrity_prepareditems",
-      "confidence_score": 1.0
+      "target": "src_test_db_integrity_prepareditems"
     },
     {
       "relation": "contains",
@@ -46304,9 +46304,9 @@
       "source_file": "src/test_db_integrity.js",
       "source_location": "L238",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_test_db_integrity",
-      "target": "src_test_db_integrity_webpblob",
-      "confidence_score": 1.0
+      "target": "src_test_db_integrity_webpblob"
     },
     {
       "relation": "contains",
@@ -51276,5 +51276,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "5057333784251700591edd603cb307184350ce77"
+  "built_at_commit": "923eddff692dd5f9daa24e923bb8b4a8cafbe51c"
 }
