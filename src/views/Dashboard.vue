@@ -39,6 +39,18 @@
           <span class="dashboard__test-day-label">Test Day</span>
         </button>
 
+        <!-- Attendance History Button -->
+        <button
+          v-if="activeClass"
+          class="dashboard__history-btn"
+          :class="{ 'dashboard__history-btn--active': isHistoryOpen }"
+          @click="isHistoryOpen = !isHistoryOpen"
+          title="View Attendance History"
+        >
+          <History :size="20" />
+          <span class="dashboard__history-label">History</span>
+        </button>
+
         <!-- QR Scanner Toggle -->
         <button 
           v-if="activeClass && showScannerButton"
@@ -177,6 +189,13 @@
       :class-id="profileClassId"
     />
 
+    <!-- ── Attendance History Drawer ─────────────────────────────────── -->
+    <AttendanceHistoryDrawer
+      v-if="activeClass && isHistoryOpen"
+      :class-record="activeClass"
+      @close="isHistoryOpen = false"
+    />
+
   </div>
 </template>
 
@@ -201,7 +220,8 @@ const EventNoteModal                  = defineAsyncComponent(() => import('../co
 const AssessmentConversationModal     = defineAsyncComponent(() => import('../components/AssessmentConversationModal.vue'))
 const StudentProfileModal             = defineAsyncComponent(() => import('../components/StudentProfileModal.vue'))
 const GettingStartedGuide             = defineAsyncComponent(() => import('../components/setup/GettingStartedGuide.vue'))
-import { DoorOpen, Users, GripVertical, Calendar, CalendarCheck, Scan } from 'lucide-vue-next'
+const AttendanceHistoryDrawer         = defineAsyncComponent(() => import('../components/AttendanceHistoryDrawer.vue'))
+import { DoorOpen, Users, GripVertical, Calendar, CalendarCheck, Scan, History } from 'lucide-vue-next'
 import { useClassroom }    from '../composables/useClassroom.js'
 import { useRadial }       from '../composables/useRadial.js'
 import { loadGradebook, activeSubCohortFilter, setActiveSubCohortFilter, availableSubCohorts, availableNaturalSubCohorts } from '../composables/useGradebook.js'
@@ -241,6 +261,9 @@ const {
   pendingNoteStudent,
   profileStudent,
 } = useRadial()
+
+// ─── attendance history drawer ────────────────────────────────────────────────
+const isHistoryOpen = ref(false)
 
 // ─── pool panel ───────────────────────────────────────────────────────────────
 
@@ -441,6 +464,7 @@ watch(profileStudent, (student) => {
   }
   .dashboard__pool-toggle,
   .dashboard__test-day-btn,
+  .dashboard__history-btn,
   .dashboard__out-badge {
     padding: 8px 10px;
     min-width: 44px;
@@ -525,9 +549,38 @@ watch(profileStudent, (student) => {
   color:        #fff;
 }
 
+/* Attendance History Button */
+.dashboard__history-btn {
+  display:         flex;
+  align-items:     center;
+  justify-content: center;
+  gap:             6px;
+  padding:         8px 12px;
+  background:      var(--bg-secondary);
+  border:          1px solid var(--border);
+  border-radius:   var(--radius-md);
+  font-size:       0.85rem;
+  font-weight:     600;
+  color:           var(--text);
+  cursor:          pointer;
+  min-height:      44px;
+  transition:      all 0.15s ease;
+}
+
+.dashboard__history-btn:hover {
+  background: var(--border);
+}
+
+.dashboard__history-btn--active {
+  background:   var(--primary-light, rgba(0, 113, 227, 0.12));
+  border-color: var(--primary);
+  color:        var(--primary);
+}
+
 @media (max-width: 1000px) {
   .dashboard__pool-toggle-label,
   .dashboard__test-day-label,
+  .dashboard__history-label,
   .dashboard__qr-label {
     display: none;
   }

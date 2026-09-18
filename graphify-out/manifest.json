@@ -335,8 +335,8 @@
     "semantic_hash": ""
   },
   "src/views/Dashboard.vue": {
-    "mtime": 1788313689.8648996,
-    "ast_hash": "719ca3810e0b117ca229bcb0fddfa5e9",
+    "mtime": 1789751482.1719704,
+    "ast_hash": "4b99c97aa2581ce705ea5688aa75fbbd",
     "semantic_hash": ""
   },
   "src/views/Grades.vue": {
@@ -1347,6 +1347,16 @@
   "src/test_roster_csv_reconciliation.js": {
     "mtime": 1789668460.833431,
     "ast_hash": "cb35f406b9962ec2c9d1c4193bec0436",
+    "semantic_hash": ""
+  },
+  "src/components/AttendanceHistoryDrawer.vue": {
+    "mtime": 1789752319.8912842,
+    "ast_hash": "9f6cf1f1243fb679c65e75a77c6439c0",
+    "semantic_hash": ""
+  },
+  "src/test_attendance_history.js": {
+    "mtime": 1789751971.9122603,
+    "ast_hash": "e02a16fa3d26e497c3827e49a1f43627",
     "semantic_hash": ""
   }
 }
