@@ -72,7 +72,7 @@
     <div 
       class="desk-tile__content" 
       :class="{ 'desk-tile__content--with-photo': showDeskPhotos && currentPhotoUrl }"
-      :title="`${student.firstName} ${student.lastName}${student.studentId ? ' (#' + student.studentId + ')' : ''}`"
+      :title="`${student.firstName} ${student.lastName}`"
     >
       <div 
         v-if="showDeskPhotos && currentPhotoUrl" 

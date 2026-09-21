@@ -75,8 +75,8 @@
     "semantic_hash": ""
   },
   "src/components/DeskTile.vue": {
-    "mtime": 1789382703.9113374,
-    "ast_hash": "ec2b651bb218420903232dd80679e492",
+    "mtime": 1790004909.2686534,
+    "ast_hash": "e6c0c04d1c7afe54dbd88ee775ee966a",
     "semantic_hash": ""
   },
   "src/components/EventNoteModal.vue": {
@@ -855,8 +855,8 @@
     "semantic_hash": ""
   },
   "src/data/curriculum/ontario/elementary/grade-7/ontario-g7-math.json": {
-    "mtime": 1788313659.7330482,
-    "ast_hash": "1b2c34e532e0d9f0c13d044e6182c2d0",
+    "mtime": 1789990781.922675,
+    "ast_hash": "40e9ff34c8dc386c26c8dc2b4b898799",
     "semantic_hash": ""
   },
   "src/data/curriculum/ontario/elementary/grade-7/ontario-g7-science-tech.json": {
@@ -905,8 +905,8 @@
     "semantic_hash": ""
   },
   "src/data/curriculum/ontario/elementary/grade-8/ontario-g8-math.json": {
-    "mtime": 1788313659.738407,
-    "ast_hash": "82c7d37599260bc9355b2e86fab3ee69",
+    "mtime": 1789991052.4288533,
+    "ast_hash": "6d5603f855cd0a4b2669c249461b8c05",
     "semantic_hash": ""
   },
   "src/data/curriculum/ontario/elementary/grade-8/ontario-g8-science-tech.json": {
