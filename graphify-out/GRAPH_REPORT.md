@@ -1,7 +1,7 @@
 # Graph Report - classroom-tracker  (2026-09-22)
 
 ## Corpus Check
-- 278 files · ~569,454 words
+- 278 files · ~569,629 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `7e4d5d53`
+- Built from commit: `31047c23`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -256,8 +256,8 @@ Cohesion: 0.25
 Nodes (7): list_raw_input_devices(), list_serial_ports(), find_rfid.py — RFID Scanner Diagnostic Utility =================================, On Windows, use ctypes to enumerate Raw Input devices and print keyboard paths., Print all available serial ports on this machine., Listen for rapid keyboard bursts using pynput.     When a burst of ≥6 characters, sniff_keyboard_device()
 
 ### Community 28 - "Community 28"
-Cohesion: 0.27
-Nodes (13): filterAssessmentsForSubject(), getBucketMode(), calculateDecayingAverage(), calculateMode(), calculatePowerLaw(), calculateSBARExpectationMastery(), calculateSBARStudentOverallMastery(), getSBARLevelBadge() (+5 more)
+Cohesion: 0.26
+Nodes (14): filterAssessmentsForSubject(), getBucketMode(), isCohortMatch(), calculateDecayingAverage(), calculateMode(), calculatePowerLaw(), calculateSBARExpectationMastery(), calculateSBARStudentOverallMastery() (+6 more)
 
 ### Community 29 - "Community 29"
 Cohesion: 0.33
@@ -368,7 +368,7 @@ Nodes (19): mockAssessments, mockClassWithStrings, mockGrades, mockMasteryPreRef
 
 ### Community 91 - "Community 91"
 Cohesion: 0.20
-Nodes (10): description, type, description, type, properties, grade, isSuccessCriteria, subjectCode (+2 more)
+Nodes (10): description, type, description, type, description, type, properties, department (+2 more)
 
 ### Community 96 - "Community 96"
 Cohesion: 0.04
@@ -444,7 +444,7 @@ Nodes (11): assessmentsList, cleanCode, cleanText1, masteryMapMode, masteryMapPo
 
 ### Community 136 - "Community 136"
 Cohesion: 0.06
-Nodes (33): isCohortMatch(), academicAssessment1, academicAssessment2, adminCheckGrade, adminSafetyContract, adminTextbook, adminTextGrade, adminView (+25 more)
+Nodes (32): academicAssessment1, academicAssessment2, adminCheckGrade, adminSafetyContract, adminTextbook, adminTextGrade, adminView, allAssessments (+24 more)
 
 ### Community 138 - "Community 138"
 Cohesion: 0.17
@@ -468,7 +468,7 @@ Nodes (11): diffClassAgainstMaster(), exportClassExpectationsToMaster(), extract
 
 ### Community 146 - "Community 146"
 Cohesion: 0.67
-Nodes (3): description, type, department
+Nodes (3): subjectCode, description, type
 
 ### Community 150 - "Community 150"
 Cohesion: 0.40

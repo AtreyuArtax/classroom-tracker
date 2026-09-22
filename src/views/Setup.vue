@@ -403,7 +403,7 @@
                 class="setup__btn-primary" 
                 @click="isAddClassModalOpen = true"
               >
-                <Plus :size="16" /> Add / Import Class
+                <Plus :size="16" /> Import / Update Class
               </button>
             </div>
           </div>
@@ -415,7 +415,7 @@
               Get started by importing your board-provided roster CSV or creating your first class for this school year.
             </p>
             <button class="setup__btn-primary" style="padding: 0 20px; min-height: 40px;" @click="isAddClassModalOpen = true">
-              <Plus :size="16" /> Add / Import Class
+              <Plus :size="16" /> Import / Update Class
             </button>
           </div>
 
@@ -512,10 +512,10 @@
         <div class="setup__dialog-header-sticky">
           <div>
             <h3 id="add-class-modal-title" class="setup__dialog-title" style="margin-bottom: 4px;">
-              Add New Class
+              Import or Update Classes
             </h3>
-            <p class="setup__dialog-body" style="margin: 0; color: var(--text-secondary); font-size: 0.85rem;">
-              Import full rosters from your student information system or create an empty class manually.
+            <p class="setup__dialog-body" style="margin: 0; color: var(--text-secondary); font-size: 0.85rem; line-height: 1.4;">
+              Import new classes for a semester, reconcile roster changes from a fresh SIS / PowerSchool export, or manually create a single class.
             </p>
           </div>
           <button 
@@ -540,7 +540,7 @@
               @click="addClassMode = 'csv'"
             >
               <FolderOpen :size="15" class="setup__segmented-icon" />
-              <span>Bulk / Term CSV Import</span>
+              <span>CSV Roster Import & Update</span>
             </button>
             <button
               type="button"
@@ -556,9 +556,20 @@
           <!-- CSV Option -->
           <div v-if="addClassMode === 'csv'">
             <div class="setup__card setup__card--accent" style="margin-bottom: 0;">
-              <p class="setup__hint" style="margin-top: 0; margin-bottom: 12px;">
-                Drop your board-provided or PowerSchool CSV here to automatically detect, create, and populate classes for the new term.
-              </p>
+              <div style="margin-bottom: 14px;">
+                <p class="setup__hint" style="margin: 0 0 10px 0; font-size: 0.9rem; line-height: 1.5; color: var(--text);">
+                  Drop your official board or PowerSchool CSV export here to <strong>create new classes</strong> or <strong>update rosters</strong> for existing classes.
+                </p>
+                
+                <div style="display: flex; flex-direction: column; gap: 8px; background: var(--bg-secondary); border-radius: var(--radius-sm); padding: 10px 14px; font-size: 0.82rem; color: var(--text-secondary); border-left: 3px solid var(--primary); line-height: 1.45;">
+                  <div>
+                    <strong style="color: var(--text);">New Term Setup:</strong> Automatically detects periods, sections, and homerooms across all courses to build your classes in seconds.
+                  </div>
+                  <div>
+                    <strong style="color: var(--text);">Roster Changes & Updates:</strong> Drop a fresh CSV anytime to sync schedule changes. The app will automatically <strong>add new students</strong>, <strong>offer to archive removed students</strong>, and <strong>preserve all existing</strong> grades, attendance, student notes, IEP accommodations, and seating plans.
+                  </div>
+                </div>
+              </div>
               <label 
                 class="setup__file-label" 
                 for="roster-file-modal"
