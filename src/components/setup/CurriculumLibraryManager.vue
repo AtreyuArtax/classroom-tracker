@@ -629,9 +629,20 @@ function getEditorSnapshot() {
 }
 
 const isDirty = computed(() => {
-  if (!loadedPresetSnapshot.value) return false
+  if (!selectedBlueprint.value || !currentEditorPreset.value || !loadedPresetSnapshot.value) return false
   return getEditorSnapshot() !== loadedPresetSnapshot.value
 })
+
+function clearEditorState() {
+  selectedBlueprint.value = null
+  currentEditorPreset.value = null
+  editorStrands.value = []
+  loadedPresetSnapshot.value = ''
+  clearGlobalUndo()
+  undoStack.value = []
+  lastUndoNotice.value = ''
+  curriculumEditorDirty.value = false
+}
 
 watch(isDirty, (dirty) => {
   curriculumEditorDirty.value = dirty
@@ -770,8 +781,7 @@ async function selectPanel(panel) {
   if (availableBlueprints.value.length > 0) {
     loadBlueprintToEditor(availableBlueprints.value[0], activeVariant.value)
   } else {
-    selectedBlueprint.value = null
-    currentEditorPreset.value = null
+    clearEditorState()
   }
 }
 
@@ -784,8 +794,7 @@ async function selectGrade(grade) {
   if (availableBlueprints.value.length > 0) {
     loadBlueprintToEditor(availableBlueprints.value[0], activeVariant.value)
   } else {
-    selectedBlueprint.value = null
-    currentEditorPreset.value = null
+    clearEditorState()
   }
 }
 

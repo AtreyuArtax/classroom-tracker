@@ -437,13 +437,12 @@ function hasSuccessCriteriaAvailable(subject, targetGrade) {
 
 async function autoImportPresets(subject, targetGrade) {
   if (!props.activeClassRecord || !subject || !targetGrade) return
-  const existingCount = (subject.strands || []).reduce((acc, st) => acc + (st.expectations?.length || 0), 0)
+  const existingCount = subject.expectations?.length || 0
   if (existingCount > 0) {
     const { confirm } = useMessage()
     const confirmed = await confirm(
-      `Overwrite expectations in "${subject.name}" with ${targetGrade} presets? This will refresh ${existingCount} expectation(s).`,
-      'Overwrite Curriculum Expectations',
-      { danger: true }
+      `Import ${targetGrade} curriculum presets into "${subject.name}"? Existing expectations for other grades will be preserved, and any previous ${targetGrade} expectations will be refreshed.`,
+      'Import Curriculum Expectations'
     )
     if (!confirmed) return
   }

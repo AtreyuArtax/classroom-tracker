@@ -73,8 +73,9 @@ export function getEffectiveClassRecord(classRecord, targetSubjectId = null, tar
     : DEFAULT_ELEMENTARY_SUBJECTS
 
   const subId = targetSubjectId || activeSubjectId.value || subs[0]?.subjectId
-  const activeSub = subs.find(s => s.subjectId === subId) || subs[0]
-  if (!activeSub) return classRecord
+  const rawSub = subs.find(s => s.subjectId === subId) || subs[0]
+  if (!rawSub) return classRecord
+  const activeSub = sanitizeSubjectUnitCollisions(rawSub)
 
   const effectiveCategories = (activeSub.gradebookCategories && activeSub.gradebookCategories.length > 0)
     ? activeSub.gradebookCategories
@@ -207,6 +208,72 @@ export function getStudentEffectiveGrade(student, subjectId = null) {
   return student.gradeLevel || ''
 }
 
+/**
+ * Detects and repairs unitId collisions in elementary subjects where multiple units for different
+ * grade levels share the same unitId (e.g. from past imports). Also relinks affected expectations.
+ *
+ * @param {Object} subject
+ * @returns {Object}
+ */
+export function sanitizeSubjectUnitCollisions(subject) {
+  if (!subject || !Array.isArray(subject.gradebookUnits) || subject.gradebookUnits.length <= 1) {
+    return subject
+  }
+
+  const seenUnitIds = new Map()
+  let hasCollision = false
+
+  subject.gradebookUnits.forEach(u => {
+    if (!u.unitId) return
+    const uGrade = (getUnitGradeLevel(u) || u.gradeLevel || '').toLowerCase().trim()
+    if (seenUnitIds.has(u.unitId)) {
+      const prevGrade = seenUnitIds.get(u.unitId)
+      if (prevGrade !== uGrade) {
+        hasCollision = true
+      }
+    } else {
+      seenUnitIds.set(u.unitId, uGrade)
+    }
+  })
+
+  if (!hasCollision) return subject
+
+  // Remap duplicate unitIds across distinct grade levels
+  const remap = new Map() // `${oldUnitId}::${gradeLevel}` -> newUnitId
+  const occupiedIds = new Set()
+  const updatedUnits = subject.gradebookUnits.map((u, idx) => {
+    const uGrade = (getUnitGradeLevel(u) || u.gradeLevel || '').trim()
+    const normGrade = uGrade.toLowerCase()
+    const id = u.unitId || `unit_${Date.now()}_${idx}`
+
+    if (!occupiedIds.has(id)) {
+      occupiedIds.add(id)
+      return { ...u, unitId: id }
+    }
+
+    const gTag = uGrade.replace(/[^a-z0-9]/gi, '') || `g${idx}`
+    const newId = `${id}_${gTag}`
+    remap.set(`${id}::${normGrade}`, newId)
+    occupiedIds.add(newId)
+    return { ...u, unitId: newId }
+  })
+
+  const updatedExpectations = (subject.expectations || []).map(e => {
+    const eGrade = (e.gradeLevel || '').toLowerCase().trim()
+    const key = `${e.unitId}::${eGrade}`
+    if (remap.has(key)) {
+      return { ...e, unitId: remap.get(key) }
+    }
+    return e
+  })
+
+  return {
+    ...subject,
+    gradebookUnits: updatedUnits,
+    expectations: updatedExpectations
+  }
+}
+
 export function populateSubjectFromPresets(subject, presetsList = [], granularity = 'all', options = {}) {
   const list = Array.isArray(presetsList) ? presetsList : (presetsList ? [presetsList] : [])
   if (!subject || list.length === 0) return subject
@@ -222,32 +289,38 @@ export function populateSubjectFromPresets(subject, presetsList = [], granularit
   let existingUnits = [...(subject.gradebookUnits || [])]
   let existingExpectations = [...(subject.expectations || [])]
 
-  // Index existing units and expectations to maintain stable IDs across refreshes/imports
+  // Index existing units and expectations by gradeLevel + clean identifier to maintain stable IDs within the SAME grade
+  // while strictly avoiding cross-grade ID collisions and shadowing.
   const existingExpMap = new Map()
   ;(subject.expectations || []).forEach(e => {
     if (e.code && e.expectationId) {
-      existingExpMap.set(cleanExpectationText(e.code).toUpperCase(), e.expectationId)
+      const eGrade = (e.gradeLevel || '').toLowerCase().trim()
+      const cleanCode = cleanExpectationText(e.code).toUpperCase()
+      existingExpMap.set(`${eGrade}::${cleanCode}`, e.expectationId)
     }
   })
 
   const existingUnitMap = new Map()
   ;(subject.gradebookUnits || []).forEach(u => {
     if (u.name && u.unitId) {
-      existingUnitMap.set(cleanExpectationText(u.name).toLowerCase(), u.unitId)
+      const uGrade = (getUnitGradeLevel(u) || u.gradeLevel || '').toLowerCase().trim()
+      const cleanName = cleanExpectationText(u.name).toLowerCase()
+      existingUnitMap.set(`${uGrade}::${cleanName}`, u.unitId)
     }
   })
 
   list.forEach(preset => {
     if (!preset || !preset.strands) return
     const pGrade = preset.grade || ''
+    const normPGrade = pGrade.toLowerCase().trim()
 
     if (forceRefresh && pGrade) {
       // Clean out existing units and expectations ONLY for this specific grade level
-      existingUnits = existingUnits.filter(u => getUnitGradeLevel(u).toLowerCase() !== pGrade.toLowerCase())
-      existingExpectations = existingExpectations.filter(e => (e.gradeLevel || '').toLowerCase() !== pGrade.toLowerCase())
+      existingUnits = existingUnits.filter(u => getUnitGradeLevel(u).toLowerCase() !== normPGrade)
+      existingExpectations = existingExpectations.filter(e => (e.gradeLevel || '').toLowerCase() !== normPGrade)
     } else {
       // Prevent duplicating if this grade's preset is already imported
-      const alreadyImported = existingExpectations.some(e => (e.gradeLevel || '').toLowerCase() === pGrade.toLowerCase())
+      const alreadyImported = existingExpectations.some(e => (e.gradeLevel || '').toLowerCase() === normPGrade)
       if (alreadyImported && !forceRefresh) return
     }
 
@@ -255,7 +328,8 @@ export function populateSubjectFromPresets(subject, presetsList = [], granularit
       const gTag = pGrade.replace(/[^a-z0-9]/gi, '')
       const unitName = (strand.name || '').replace(/^\[Grade\s*\d+\]\s*/i, '').trim()
       const cleanName = cleanExpectationText(unitName)
-      const matchedUnitId = existingUnitMap.get(cleanName.toLowerCase())
+      const uKey = `${normPGrade}::${cleanName.toLowerCase()}`
+      const matchedUnitId = existingUnitMap.get(uKey)
       const unitId = matchedUnitId || `unit_${Date.now()}_${gTag}_${idx}_${Math.floor(Math.random()*1000)}`
 
       existingUnits.push({
@@ -273,7 +347,8 @@ export function populateSubjectFromPresets(subject, presetsList = [], granularit
           if (exp.active === false) return
           const expWeight = (exp.weight !== undefined && exp.weight !== null && !isNaN(exp.weight)) ? Number(exp.weight) : 1.0
           const cleanCode = cleanExpectationText(exp.code).toUpperCase()
-          const stableId = existingExpMap.get(cleanCode) || exp.id || exp.expectationId || ((typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : `exp_${Date.now()}_${gTag}_${cleanCode}_${Math.floor(Math.random()*10000)}`)
+          const eKey = `${normPGrade}::${cleanCode}`
+          const stableId = existingExpMap.get(eKey) || exp.id || exp.expectationId || ((typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : `exp_${Date.now()}_${gTag}_${cleanCode}_${Math.floor(Math.random()*10000)}`)
           existingExpectations.push({
             expectationId: stableId,
             unitId,
@@ -288,7 +363,8 @@ export function populateSubjectFromPresets(subject, presetsList = [], granularit
         overalls.forEach(ov => {
           const ovWeight = (ov.weight !== undefined && ov.weight !== null && !isNaN(ov.weight)) ? Number(ov.weight) : 1.0
           const cleanOvCode = cleanExpectationText(ov.code).toUpperCase()
-          const stableOvId = existingExpMap.get(cleanOvCode) || ((typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : `exp_${Date.now()}_${gTag}_${cleanOvCode}_${Math.floor(Math.random()*10000)}`)
+          const ovKey = `${normPGrade}::${cleanOvCode}`
+          const stableOvId = existingExpMap.get(ovKey) || ((typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : `exp_${Date.now()}_${gTag}_${cleanOvCode}_${Math.floor(Math.random()*10000)}`)
           const specifics = ov.specifics || ov.specificExpectations || []
           if (resolvedGranularity === 'overall') {
             existingExpectations.push({
@@ -304,7 +380,8 @@ export function populateSubjectFromPresets(subject, presetsList = [], granularit
             specifics.forEach(sp => {
               const spWeight = (sp.weight !== undefined && sp.weight !== null && !isNaN(sp.weight)) ? Number(sp.weight) : ovWeight
               const cleanSpCode = cleanExpectationText(sp.code).toUpperCase()
-              const stableSpId = existingExpMap.get(cleanSpCode) || ((typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : `exp_${Date.now()}_${gTag}_${cleanSpCode}_${Math.floor(Math.random()*10000)}`)
+              const spKey = `${normPGrade}::${cleanSpCode}`
+              const stableSpId = existingExpMap.get(spKey) || ((typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : `exp_${Date.now()}_${gTag}_${cleanSpCode}_${Math.floor(Math.random()*10000)}`)
               existingExpectations.push({
                 expectationId: stableSpId,
                 unitId,
@@ -332,11 +409,11 @@ export function populateSubjectFromPresets(subject, presetsList = [], granularit
     })
   })
 
-  return {
+  return sanitizeSubjectUnitCollisions({
     ...subject,
     gradebookUnits: existingUnits,
     expectations: existingExpectations
-  }
+  })
 }
 
 export function populateSubjectFromPreset(subject, preset, granularity = 'all') {
@@ -425,7 +502,7 @@ export function ensureIEPPresetsForClass(classRecord) {
       }
     })
 
-    return currentSub
+    return sanitizeSubjectUnitCollisions(currentSub)
   })
 
   if (!modified) return classRecord
@@ -476,6 +553,7 @@ export function useElementary() {
     getStudentEffectiveGrade,
     getUnitGradeLevel,
     ensureIEPPresetsForClass,
+    sanitizeSubjectUnitCollisions,
     populateSubjectFromPreset,
     populateSubjectFromPresets,
     autoPopulateAllElementarySubjects,

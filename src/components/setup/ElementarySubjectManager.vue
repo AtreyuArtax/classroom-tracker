@@ -654,6 +654,7 @@ import {
 import { 
   populateSubjectFromPreset, 
   populateSubjectFromPresets,
+  sanitizeSubjectUnitCollisions,
   findElementaryPreset, 
   findElementaryPresets,
   cleanUnitName,
@@ -1323,7 +1324,8 @@ async function handleExpectationImport(payload) {
     const targetSub = isReplace ? { ...sub, gradebookUnits: [], expectations: [] } : sub
 
     if (payload.mode === 'auto-units') {
-      return populateSubjectFromPreset(targetSub, payload.preset, payload.granularity, { forceRefresh: isReplace })
+      const res = populateSubjectFromPreset(targetSub, payload.preset, payload.granularity, { forceRefresh: isReplace })
+      return sanitizeSubjectUnitCollisions(res)
     }
 
     if (payload.mode === 'auto-paste-strands') {
@@ -1331,20 +1333,30 @@ async function handleExpectationImport(payload) {
       const existingExps = isReplace ? [] : [...(sub.expectations || [])]
       const newExps = []
 
-      // Create lookup map for existing expectation IDs by code to prevent orphaning assessments
+      // Create lookup map for existing expectation IDs by gradeLevel + clean code to prevent cross-grade ID collision
       const existingExpMap = new Map()
       ;(sub.expectations || []).forEach(e => {
         if (e.code && e.expectationId) {
-          existingExpMap.set(cleanExpectationText(e.code).toUpperCase(), e)
+          const eGrade = (e.gradeLevel || '').toLowerCase().trim()
+          existingExpMap.set(`${eGrade}::${cleanExpectationText(e.code).toUpperCase()}`, e)
         }
       })
 
       payload.strands.forEach((s, sIdx) => {
-        let targetUnit = units.find(u => cleanUnitName(u.name).toLowerCase() === cleanUnitName(s.name).toLowerCase())
+        const sGrade = (s.gradeLevel || payload.preset?.grade || '').trim()
+        const sGradeNorm = sGrade.toLowerCase()
+        let targetUnit = units.find(u => {
+          const uGradeNorm = (u.gradeLevel || '').toLowerCase().trim()
+          const nameMatch = cleanUnitName(u.name).toLowerCase() === cleanUnitName(s.name).toLowerCase()
+          if (!nameMatch) return false
+          if (sGradeNorm && uGradeNorm && sGradeNorm !== uGradeNorm) return false
+          return true
+        })
         if (!targetUnit) {
           targetUnit = {
             unitId: `unit_${Date.now()}_${sIdx}`,
             name: cleanExpectationText(s.name),
+            gradeLevel: sGrade || undefined,
             weight: 0
           }
           units.push(targetUnit)
@@ -1352,7 +1364,8 @@ async function handleExpectationImport(payload) {
 
         (s.expectations || []).forEach(e => {
           const cleanCode = cleanExpectationText(e.code).toUpperCase()
-          const matchedOld = existingExpMap.get(cleanCode)
+          const expGrade = (e.gradeLevel || sGrade || '').trim()
+          const matchedOld = existingExpMap.get(`${expGrade.toLowerCase()}::${cleanCode}`)
           const stableId = matchedOld?.expectationId || `exp_${Date.now()}_${cleanCode}_${Math.floor(Math.random()*1000)}`
           const expWeight = (e.weight !== undefined && e.weight !== null && !isNaN(e.weight)) 
             ? Number(e.weight) 
@@ -1365,16 +1378,16 @@ async function handleExpectationImport(payload) {
             description: cleanExpectationText(e.description),
             weight: expWeight,
             isOverall: e.isOverall ?? false,
-            gradeLevel: e.gradeLevel || payload.preset?.grade || ''
+            gradeLevel: expGrade
           })
         })
       })
 
-      return {
+      return sanitizeSubjectUnitCollisions({
         ...sub,
         gradebookUnits: units,
         expectations: [...existingExps, ...newExps]
-      }
+      })
     }
 
     if (payload.mode === 'attach-expectations') {
@@ -1390,13 +1403,15 @@ async function handleExpectationImport(payload) {
       const existingExpMap = new Map()
       ;(sub.expectations || []).forEach(e => {
         if (e.code && e.expectationId) {
-          existingExpMap.set(cleanExpectationText(e.code).toUpperCase(), e)
+          const eGrade = (e.gradeLevel || '').toLowerCase().trim()
+          existingExpMap.set(`${eGrade}::${cleanExpectationText(e.code).toUpperCase()}`, e)
         }
       })
 
       const newExps = (payload.expectations || []).map(e => {
         const cleanCode = cleanExpectationText(e.code).toUpperCase()
-        const matchedOld = existingExpMap.get(cleanCode)
+        const expGrade = (e.gradeLevel || '').trim()
+        const matchedOld = existingExpMap.get(`${expGrade.toLowerCase()}::${cleanCode}`)
         const stableId = matchedOld?.expectationId || `exp_${Date.now()}_${cleanCode}_${Math.floor(Math.random()*1000)}`
         const expWeight = (e.weight !== undefined && e.weight !== null && !isNaN(e.weight))
           ? Number(e.weight)
@@ -1409,15 +1424,15 @@ async function handleExpectationImport(payload) {
           description: cleanExpectationText(e.description),
           weight: expWeight,
           isOverall: e.isOverall ?? false,
-          gradeLevel: e.gradeLevel || ''
+          gradeLevel: expGrade
         }
       })
 
-      return {
+      return sanitizeSubjectUnitCollisions({
         ...sub,
         gradebookUnits: units,
         expectations: [...existingExps, ...newExps]
-      }
+      })
     }
 
     return sub

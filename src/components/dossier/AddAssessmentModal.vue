@@ -240,7 +240,7 @@
               <div class="exp-pill-selector">
                 <label 
                   v-for="exp in filteredAvailableExpectations" 
-                  :key="exp.code"
+                  :key="exp.expectationId || `${exp.gradeLevel || ''}_${exp.code}`"
                   class="exp-checkbox-pill"
                   :class="{ 'exp-checkbox-pill--active': isExpSelected(exp.code) }"
                 >
@@ -358,7 +358,8 @@ const allAvailableExpectations = computed(() => {
       const uGrade = getUnitGradeLevel(u)
       ;(u.expectations || []).forEach(e => {
         if (!e.code) return
-        const key = `${u.unitId}::${e.code}`
+        const gKey = (e.gradeLevel || uGrade || '').toLowerCase().trim()
+        const key = `${u.unitId}::${gKey}::${e.code}`
         expMap[key] = {
           ...e,
           unitId: e.unitId || u.unitId,
@@ -373,7 +374,8 @@ const allAvailableExpectations = computed(() => {
   if (flatExps.length > 0) {
     flatExps.forEach(e => {
       if (!e.code) return
-      const key = `${e.unitId || 'flat'}::${e.code}`
+      const gKey = (e.gradeLevel || '').toLowerCase().trim()
+      const key = `${e.unitId || 'flat'}::${gKey}::${e.code}`
       if (!expMap[key]) {
         expMap[key] = { ...e }
       }
@@ -432,6 +434,19 @@ watch(selectedGradeFilter, () => {
   }
 })
 
+watch(() => newAssessment.value?.unitId, (newUid) => {
+  if (newUid) {
+    const unit = effectiveUnits.value.find(u => String(u.unitId) === String(newUid))
+    const uGrade = unit ? getUnitGradeLevel(unit) : ''
+    if (uGrade && selectedGradeFilter.value === 'all') {
+      newAssessment.value.gradeLevel = uGrade
+      if (activeClassRecord.value?.classType === 'elementary') {
+        newAssessment.value.targetCourseCode = uGrade
+      }
+    }
+  }
+})
+
 watch(() => newAssessment.value?.targetCourseCode, () => {
   const cats = effectiveClass.value?.gradebookCategories || []
   if (cats.length > 0) {
@@ -459,7 +474,17 @@ const filteredAvailableExpectations = computed(() => {
   // 2. Filter by Selected Unit / Strand Dropdown
   if (newAssessment.value.unitId) {
     const selectedUnitIdStr = String(newAssessment.value.unitId)
-    list = list.filter(e => e.unitId && String(e.unitId) === selectedUnitIdStr)
+    const selectedUnit = effectiveUnits.value.find(u => String(u.unitId) === selectedUnitIdStr)
+    const unitGrade = selectedUnit ? getUnitGradeLevel(selectedUnit) : ''
+
+    list = list.filter(e => {
+      const idMatch = e.unitId && String(e.unitId) === selectedUnitIdStr
+      if (!idMatch) return false
+      if (unitGrade && e.gradeLevel) {
+        return isCohortMatch(e.gradeLevel, unitGrade)
+      }
+      return true
+    })
   }
 
   // Prefer specific expectations (e.g. A1.1, A1.2) over overalls if specifics exist

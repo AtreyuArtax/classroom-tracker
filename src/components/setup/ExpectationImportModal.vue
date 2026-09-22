@@ -236,7 +236,7 @@
                 </label>
                 <label class="eim-radio-label eim-radio-label--compact">
                   <input type="radio" v-model="importBehavior" value="append" />
-                  <span><strong>Append to existing expectations</strong></span>
+                  <span><strong>Append to existing expectations</strong> (Preserves existing grades/strands)</span>
                 </label>
               </div>
             </div>
@@ -406,7 +406,7 @@ const searchQuery = ref('')
 // Presets state
 const selectedPresetId = ref(null)
 const granularity = ref('overall') // 'overall' | 'all'
-const importBehavior = ref('replace') // 'replace' | 'append'
+const importBehavior = ref(props.existingCount > 0 ? 'append' : 'replace') // 'replace' | 'append'
 const selectedExpectations = ref([])
 
 // Shared unit state
@@ -433,6 +433,7 @@ watch(() => props.classType, (newVal) => {
 watch(() => props.modelValue, (isOpen) => {
   if (isOpen) {
     panelFilter.value = props.classType || 'secondary'
+    importBehavior.value = (props.existingCount > 0) ? 'append' : 'replace'
     if (props.initialPresetId) {
       selectedPresetId.value = props.initialPresetId
     }
