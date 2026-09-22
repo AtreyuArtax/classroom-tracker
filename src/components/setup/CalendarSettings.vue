@@ -49,15 +49,20 @@
       <BaseModal
         v-if="showAdvancedModal"
         :show="showAdvancedModal"
-        title="Advanced Calendar Settings"
+        :title="`Advanced Calendar Settings (${selectedYear || 'All Years'})`"
         maxWidth="800px"
         @close="showAdvancedModal = false"
       >
         <div class="advanced-terms-modal">
-          <p class="setup__hint" style="margin-bottom: 20px;">
-            Customize start and end dates for your semesters. These are used for attendance reporting and automated setup.
-            Old years are preserved for historical reports.
-          </p>
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; flex-wrap: wrap; gap: 8px;">
+            <p class="setup__hint" style="margin: 0; flex: 1; min-width: 240px;">
+              Customize start and end dates for your semesters. These are used for attendance reporting and automated setup.
+            </p>
+            <label style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.8rem; cursor: pointer; color: var(--text-muted); user-select: none;">
+              <input type="checkbox" v-model="showAllYearsInModal" style="cursor: pointer;" />
+              <span>Show all school years</span>
+            </label>
+          </div>
 
           <div class="setup__gb-list scrollable-list">
             <template v-for="group in termsByYear" :key="group.year">
@@ -103,12 +108,26 @@
               </div>
             </template>
 
-            <div v-if="terms.length === 0" class="setup__empty-state">
-              No custom calendar settings defined. Using standard defaults.
+            <div v-if="termsByYear.length === 0" class="setup__empty-state">
+              <p>No custom semester dates defined for <strong>{{ selectedYear }}</strong>.</p>
+              <p class="setup__hint" style="margin-top: 4px;">Currently using standard defaults (Sept 1 – Jan 31 / Feb 1 – June 30).</p>
+              <div style="display: flex; gap: 10px; justify-content: center; margin-top: 14px; flex-wrap: wrap;">
+                <button 
+                  v-if="availableBoardSemesters && availableBoardSemesters.length > 0"
+                  class="setup__btn-primary setup__btn-sm" 
+                  @click="loadOfficialBoardCalendar"
+                  style="background: #2563eb; color: #ffffff;"
+                >
+                  <CalendarDays :size="14" /> Load Board Schedule for {{ selectedYear }}
+                </button>
+                <button class="setup__btn-ghost setup__btn-sm" @click="addTerm">
+                  <Plus :size="14" /> Add Custom Term
+                </button>
+              </div>
             </div>
           </div>
 
-          <button class="setup__btn-ghost setup__btn--full" style="margin-top: 16px;" @click="addTerm">
+          <button v-if="termsByYear.length > 0" class="setup__btn-ghost setup__btn--full" style="margin-top: 16px;" @click="addTerm">
             <Plus :size="14" /> Add Custom Term
           </button>
         </div>
@@ -238,6 +257,25 @@
           <Download :size="14" /> Export CSV
         </button>
 
+        <button 
+          class="setup__btn-ghost setup__btn-sm" 
+          @click="exportHolidaysJson"
+          :disabled="filteredNonSchoolDays.length === 0"
+          title="Export current year schedule as JSON for repo"
+        >
+          <FileJson :size="14" /> Export JSON
+        </button>
+
+        <button 
+          v-if="availableBoardHolidays && availableBoardHolidays.length > 0"
+          class="setup__btn-primary setup__btn-sm" 
+          @click="loadOfficialBoardCalendar"
+          title="Load official board schedule for this year"
+          style="background: #2563eb; color: #ffffff;"
+        >
+          <CalendarDays :size="14" /> Load Board Calendar ({{ availableBoardHolidays.length }})
+        </button>
+
         <span class="setup__hint" style="margin-left: auto;">Format: <code>Date, [EndDate], Label</code></span>
       </div>
 
@@ -312,7 +350,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { CalendarDays, Palmtree, Trash2, Plus, FileUp, Flag, FileCode, Download } from 'lucide-vue-next'
+import { CalendarDays, Palmtree, Trash2, Plus, FileUp, Flag, FileCode, Download, FileJson } from 'lucide-vue-next'
 import { useClassroom } from '../../composables/useClassroom.js'
 import { globalMilestones } from '../../composables/useGradebook.js'
 import * as settingsService from '../../db/settingsService.js'
@@ -320,7 +358,8 @@ import { useMessage } from '../../composables/useMessage.js'
 import BaseModal from '../BaseModal.vue'
 import SemesterCalendar from './SemesterCalendar.vue'
 import Papa from 'papaparse'
-import { formatLocalDate, getSchoolYearFromDate, getSemesterFromDate } from '../../utils/dates.js'
+import { formatLocalDate, getSchoolYearFromDate, getSemesterFromDate, isSameSchoolYear } from '../../utils/dates.js'
+import { getBoardCalendar } from '../../utils/calendarLoader.js'
 
 const { 
   academicTerms: terms, 
@@ -336,6 +375,7 @@ const {
 const showPasteModal = ref(false)
 const showCalendarModal = ref(false)
 const showAdvancedModal = ref(false)
+const showAllYearsInModal = ref(false)
 const pastedCsv = ref('')
 const { alert, confirm } = useMessage()
 
@@ -358,11 +398,15 @@ const activeTermForCalendar = computed(() => {
 
 /**
  * Groups custom terms by school year for better organization in the modal.
+ * Scoped to selectedYear unless showAllYearsInModal is checked.
  */
 const termsByYear = computed(() => {
   const groups = {}
   terms.value.forEach((t, idx) => {
     const year = t.year || 'Unknown'
+    if (!showAllYearsInModal.value && selectedYear.value && !isSameSchoolYear(year, selectedYear.value)) {
+      return
+    }
     if (!groups[year]) groups[year] = []
     groups[year].push({ ...t, idx })
   })
@@ -385,7 +429,7 @@ onMounted(async () => {
 
 function addTerm() {
   const newTerms = [...terms.value, { 
-    year: selectedYear.value, 
+    year: selectedYear.value || '2026-27', 
     semester: '1', 
     startDate: '', 
     endDate: '',
@@ -604,6 +648,129 @@ function exportHolidaysCsv() {
   URL.revokeObjectURL(url)
 
   setCalendarStatus(`Exported ${dataToExport.length} holidays/PD days.`, 'success')
+}
+
+const availableBoardCalendar = computed(() => {
+  return getBoardCalendar(selectedYear.value || '2026-2027')
+})
+
+const availableBoardHolidays = computed(() => {
+  if (!availableBoardCalendar.value) return []
+  return availableBoardCalendar.value.holidays || availableBoardCalendar.value || []
+})
+
+const availableBoardSemesters = computed(() => {
+  return availableBoardCalendar.value?.semesters || null
+})
+
+async function loadOfficialBoardCalendar() {
+  if (!availableBoardHolidays.value || availableBoardHolidays.value.length === 0) return
+
+  if (filteredNonSchoolDays.value.length > 0 || termsByYear.value.length > 0) {
+    const shouldProceed = await confirm(
+      `Load official board schedule (${availableBoardHolidays.value.length} dates) for ${selectedYear.value}? This will add and update holidays and semester dates for this school year.`,
+      'Load Board Calendar'
+    )
+    if (!shouldProceed) return
+  }
+
+  // 1. Merge holidays into nonSchoolDays
+  const daysMap = new Map(nonSchoolDays.value.map(d => [d.date, { ...d }]))
+  let count = 0
+  for (const item of availableBoardHolidays.value) {
+    daysMap.set(item.date, {
+      date: item.date,
+      endDate: item.endDate || '',
+      label: item.label || ''
+    })
+    count++
+  }
+
+  nonSchoolDays.value = Array.from(daysMap.values())
+  await saveNonSchoolDays()
+
+  // 2. Load board semester boundaries if defined
+  let semesterMsg = ''
+  if (availableBoardSemesters.value && availableBoardSemesters.value.length > 0) {
+    const otherTerms = terms.value.filter(t => !isSameSchoolYear(t.year, selectedYear.value))
+    const newBoardTerms = availableBoardSemesters.value.map(s => ({
+      year: selectedYear.value,
+      semester: String(s.semester),
+      startDate: s.startDate,
+      endDate: s.endDate,
+      instructionalDays: s.instructionalDays || 94
+    }))
+    await updateAcademicTerms([...otherTerms, ...newBoardTerms])
+    semesterMsg = ' + semester boundaries'
+  }
+
+  setCalendarStatus(`Successfully loaded official board calendar (${count} dates${semesterMsg}).`, 'success')
+}
+
+function exportHolidaysJson() {
+  const holidaysToExport = filteredNonSchoolDays.value
+    .filter(d => d.date)
+    .map(d => ({
+      date: d.date,
+      endDate: d.endDate || '',
+      label: d.label || ''
+    }))
+
+  let semestersToExport = terms.value
+    .filter(t => isSameSchoolYear(t.year, selectedYear.value))
+    .map(t => ({
+      semester: String(t.semester),
+      startDate: t.startDate,
+      endDate: t.endDate,
+      instructionalDays: t.instructionalDays || 94
+    }))
+
+  // Fallback: If no custom terms were saved in Advanced Settings, export the active standard term ranges
+  if (semestersToExport.length === 0 && selectedYear.value) {
+    const sem1 = getTermRange(selectedYear.value, '1')
+    const sem2 = getTermRange(selectedYear.value, '2')
+    if (sem1?.start && sem1?.end) {
+      semestersToExport.push({
+        semester: '1',
+        startDate: formatLocalDate(sem1.start),
+        endDate: formatLocalDate(sem1.end),
+        instructionalDays: 94
+      })
+    }
+    if (sem2?.start && sem2?.end) {
+      semestersToExport.push({
+        semester: '2',
+        startDate: formatLocalDate(sem2.start),
+        endDate: formatLocalDate(sem2.end),
+        instructionalDays: 94
+      })
+    }
+  }
+
+  if (holidaysToExport.length === 0 && semestersToExport.length === 0) {
+    alert('No calendar dates or semesters to export for this school year.', 'Export Notice')
+    return
+  }
+
+  const exportPayload = {
+    year: selectedYear.value || '2026-2027',
+    semesters: semestersToExport,
+    holidays: holidaysToExport
+  }
+
+  const jsonStr = JSON.stringify(exportPayload, null, 2)
+  const blob = new Blob([jsonStr], { type: 'application/json;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  const fileName = `${selectedYear.value || '2026-2027'}.json`
+  link.setAttribute('href', url)
+  link.setAttribute('download', fileName)
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  setTimeout(() => URL.revokeObjectURL(url), 1000)
+
+  setCalendarStatus(`Exported schedule (${holidaysToExport.length} dates, ${semestersToExport.length} semesters) as ${fileName}. Drop it into src/data/calendar/ in your repo!`, 'success')
 }
 </script>
 

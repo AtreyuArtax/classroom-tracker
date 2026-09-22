@@ -24,8 +24,8 @@
         </div>
 
         <div class="photo-dropzone__text">
-          <span class="photo-dropzone__title">Drag & drop photos or a folder here</span>
-          <span class="photo-dropzone__subtitle">Supports JPG, PNG, WEBP · Auto-matched & compressed</span>
+          <span class="photo-dropzone__title">Drag & drop photos, a ZIP, or a folder here</span>
+          <span class="photo-dropzone__subtitle">Supports student_photos.zip, JPG, PNG, WEBP · Auto-matched & compressed</span>
         </div>
 
         <!-- Hidden Native File & Folder Inputs -->
@@ -33,7 +33,7 @@
           ref="filesInputRef"
           type="file" 
           multiple 
-          accept="image/jpeg,image/png,image/webp,image/jpg"
+          accept="image/jpeg,image/png,image/webp,image/jpg,.zip,application/zip,application/x-zip-compressed"
           class="hidden-input" 
           @change="handleFilesSelected" 
         />
@@ -57,10 +57,10 @@
             type="button" 
             class="photo-dropzone__btn photo-dropzone__btn--primary"
             @click.stop="triggerFilesInput"
-            title="Select multiple photo files directly (No browser prompt)"
+            title="Select photo files or student_photos.zip directly"
           >
             <Images :size="16" />
-            <span>Select Photos</span>
+            <span>Select Photos or ZIP</span>
           </button>
 
           <button 
@@ -72,6 +72,109 @@
             <FolderOpen :size="16" />
             <span>Select Folder</span>
           </button>
+        </div>
+      </div>
+
+      <!-- PowerSchool Automated Photo Downloader Helper -->
+      <div v-if="!scannedResults" class="ps-helper-card">
+        <button 
+          type="button" 
+          class="ps-helper-card__header"
+          @click="isPsHelperOpen = !isPsHelperOpen"
+        >
+          <div class="ps-helper-card__header-left">
+            <span class="ps-helper-card__badge">PowerSchool</span>
+            <span class="ps-helper-card__title">Need student photos from PowerSchool?</span>
+          </div>
+          <div class="ps-helper-card__header-right">
+            <span class="ps-helper-card__toggle-text">
+              {{ isPsHelperOpen ? 'Hide Instructions' : 'Show Bookmarklet & Instructions' }}
+            </span>
+            <ChevronUp v-if="isPsHelperOpen" :size="16" />
+            <ChevronDown v-else :size="16" />
+          </div>
+        </button>
+
+        <div v-if="isPsHelperOpen" class="ps-helper-card__body">
+          <p class="ps-helper-card__desc">
+            Use this automated helper to download all student photos directly from your class roster in PowerSchool, automatically named by <strong>Student ID</strong> (e.g. <code>104829381.jpg</code>).
+          </p>
+
+          <div class="ps-steps">
+            <!-- Step 1 -->
+            <div class="ps-step">
+              <div class="ps-step__num">1</div>
+              <div class="ps-step__content">
+                <div class="ps-step__title">Add the Bookmarklet to your browser</div>
+                <div class="ps-step__text">
+                  Drag the button below directly into your Chrome / Edge <strong>Bookmarks Bar</strong>:
+                </div>
+                <div class="ps-step__action-row">
+                  <a 
+                    :href="POWERSCHOOL_BOOKMARKLET_HREF" 
+                    class="ps-bookmarklet-btn"
+                    title="Drag this button to your Bookmarks bar"
+                    @click="handleBookmarkletClick"
+                  >
+                    <Bookmark :size="14" />
+                    <span>📸 PowerSchool Photos</span>
+                  </a>
+                  <span class="ps-step__hint">← Drag to Bookmarks bar</span>
+                </div>
+                <div class="ps-step__or-row">
+                  <span>or copy:</span>
+                  <button 
+                    type="button" 
+                    class="ps-copy-btn" 
+                    @click="handleCopyBookmarklet"
+                  >
+                    <Copy :size="12" />
+                    <span>Copy Bookmarklet URL</span>
+                  </button>
+                  <button 
+                    type="button" 
+                    class="ps-copy-btn" 
+                    @click="handleCopyScript"
+                  >
+                    <Copy :size="12" />
+                    <span>Copy Console Script</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Step 2 -->
+            <div class="ps-step">
+              <div class="ps-step__num">2</div>
+              <div class="ps-step__content">
+                <div class="ps-step__title">Run on PowerSchool Class Roster</div>
+                <div class="ps-step__text">
+                  Open PowerSchool to your class roster page (where student photos and names are listed). Click the <strong>📸 PowerSchool Photos</strong> bookmark.
+                </div>
+                <div class="ps-callout">
+                  <Info :size="15" class="ps-callout__icon" />
+                  <span>A live floating indicator in PowerSchool will track each student, with a <strong>Cancel</strong> button if you need to stop early. When complete, it automatically saves a single <code>student_photos.zip</code>!</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Step 3 -->
+            <div class="ps-step">
+              <div class="ps-step__num">3</div>
+              <div class="ps-step__content">
+                <div class="ps-step__title">Drop student_photos.zip into Classroom Tracker</div>
+                <div class="ps-step__text">
+                  Drop the downloaded <code>student_photos.zip</code> (or individual photos) straight into the box above. Classroom Tracker will unpack and pair each student by ID automatically!
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Copy Toast Notification -->
+          <div v-if="copyToast" class="ps-copy-toast">
+            <Check :size="14" />
+            <span>{{ copyToast }}</span>
+          </div>
         </div>
       </div>
 
@@ -212,10 +315,12 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import { FolderOpen, UploadCloud, Images, CheckCircle, AlertCircle, HelpCircle, Check, Loader2, FileImage, UserX } from 'lucide-vue-next'
+import { FolderOpen, UploadCloud, Images, CheckCircle, AlertCircle, HelpCircle, Check, Loader2, FileImage, UserX, ChevronDown, ChevronUp, Copy, Bookmark, Info } from 'lucide-vue-next'
+import JSZip from 'jszip'
 import BaseModal from '../BaseModal.vue'
 import { useStudentPhotos } from '../../composables/useStudentPhotos.js'
 import { useClassroom } from '../../composables/useClassroom.js'
+import { POWERSCHOOL_PHOTO_SCRIPT, POWERSCHOOL_BOOKMARKLET_HREF, copyToClipboard } from '../../utils/powerschoolBookmarklet.js'
 
 const props = defineProps({
   show: { type: Boolean, default: false },
@@ -234,6 +339,36 @@ const scannedCount = ref(0)
 const totalFiles = ref(0)
 const scannedResults = ref(null)
 const activeFilter = ref('matched')
+const isPsHelperOpen = ref(false)
+const copyToast = ref('')
+let copyToastTimeout = null
+
+async function handleCopyScript() {
+  const ok = await copyToClipboard(POWERSCHOOL_PHOTO_SCRIPT)
+  if (ok) {
+    showCopyToast('Script copied to clipboard!')
+  }
+}
+
+async function handleCopyBookmarklet() {
+  const ok = await copyToClipboard(POWERSCHOOL_BOOKMARKLET_HREF)
+  if (ok) {
+    showCopyToast('Bookmarklet URL copied to clipboard!')
+  }
+}
+
+function showCopyToast(msg) {
+  copyToast.value = msg
+  if (copyToastTimeout) clearTimeout(copyToastTimeout)
+  copyToastTimeout = setTimeout(() => {
+    copyToast.value = ''
+  }, 2500)
+}
+
+function handleBookmarkletClick(e) {
+  e.preventDefault()
+  alert("Drag this button up to your browser's Bookmarks Bar to create a one-click bookmarklet!")
+}
 
 const allStudents = computed(() => {
   if (props.studentList && props.studentList.length > 0) {
@@ -335,13 +470,36 @@ async function traverseEntry(entry, list) {
 }
 
 async function processFiles(files) {
-  const imageFiles = files.filter(f => f.type.startsWith('image/') || /\.(jpe?g|png|webp)$/i.test(f.name))
+  isScanning.value = true
+  const expandedFiles = []
+
+  for (const f of files) {
+    if (f.name.toLowerCase().endsWith('.zip') || f.type === 'application/zip' || f.type === 'application/x-zip-compressed') {
+      try {
+        const zip = await JSZip.loadAsync(f)
+        for (const [filename, fileEntry] of Object.entries(zip.files)) {
+          if (!fileEntry.dir && /\.(jpe?g|png|webp)$/i.test(filename)) {
+            const blob = await fileEntry.async('blob')
+            const cleanName = filename.split('/').pop()
+            expandedFiles.push(new File([blob], cleanName, { type: blob.type || 'image/jpeg' }))
+          }
+        }
+      } catch (zipErr) {
+        console.error('Failed to unpack ZIP file:', zipErr)
+        alert('Could not read the ZIP file. Please ensure it is a valid ZIP archive.')
+      }
+    } else {
+      expandedFiles.push(f)
+    }
+  }
+
+  const imageFiles = expandedFiles.filter(f => f.type.startsWith('image/') || /\.(jpe?g|png|webp)$/i.test(f.name))
   if (imageFiles.length === 0) {
-    alert('No image files found. Please ensure photos are JPG, PNG, or WEBP.')
+    isScanning.value = false
+    alert('No image files found. Please ensure photos are JPG, PNG, WEBP, or contained in a ZIP.')
     return
   }
 
-  isScanning.value = true
   totalFiles.value = imageFiles.length
   scannedCount.value = 0
 
@@ -725,5 +883,228 @@ async function commitImport() {
   display: flex;
   gap: 8px;
   margin-left: auto;
+}
+
+/* PowerSchool Helper Card Styles */
+.ps-helper-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md, 8px);
+  background: var(--surface);
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+
+.ps-helper-card__header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: var(--bg-secondary);
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s ease;
+}
+
+.ps-helper-card__header:hover {
+  background: rgba(99, 102, 241, 0.05);
+}
+
+.ps-helper-card__header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ps-helper-card__badge {
+  background: #3b82f6;
+  color: #ffffff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 2px 7px;
+  border-radius: 4px;
+}
+
+.ps-helper-card__title {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.ps-helper-card__header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--primary);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.ps-helper-card__body {
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  border-top: 1px solid var(--border);
+  position: relative;
+}
+
+.ps-helper-card__desc {
+  margin: 0;
+  font-size: 0.84rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.ps-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ps-step {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.ps-step__num {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: #ffffff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.ps-step__content {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+
+.ps-step__title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.ps-step__text {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.ps-step__action-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 2px;
+}
+
+.ps-bookmarklet-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  background: #3b82f6;
+  color: #ffffff !important;
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: grab;
+  box-shadow: 0 1px 3px rgba(59, 130, 246, 0.3);
+  transition: all 0.15s ease;
+}
+
+.ps-bookmarklet-btn:hover {
+  background: #2563eb;
+  transform: translateY(-1px);
+}
+
+.ps-step__hint {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.ps-step__or-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.76rem;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+.ps-copy-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.76rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.ps-copy-btn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.ps-callout {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 12px;
+  background: rgba(245, 158, 11, 0.08);
+  border-left: 3px solid #f59e0b;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  color: var(--text);
+  line-height: 1.4;
+}
+
+.ps-callout__icon {
+  color: #d97706;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.ps-copy-toast {
+  position: absolute;
+  bottom: 12px;
+  right: 20px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #10b981;
+  color: #ffffff;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 </style>

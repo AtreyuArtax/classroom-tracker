@@ -125,3 +125,19 @@ export function getSemesterFromDate(date) {
   return (month >= 1 && month <= 6) ? '2' : '1'
 }
 
+/**
+ * Compares two school year representations for equivalence.
+ * Matches "2026-27" and "2026-2027", or "2025-26" and "2025-2026".
+ * 
+ * @param {string} year1
+ * @param {string} year2
+ * @returns {boolean}
+ */
+export function isSameSchoolYear(year1, year2) {
+  if (!year1 || !year2) return false
+  if (year1 === year2) return true
+  const m1 = String(year1).trim().match(/\b(20\d\d)\b/)
+  const m2 = String(year2).trim().match(/\b(20\d\d)\b/)
+  return Boolean(m1 && m2 && m1[1] === m2[1])
+}
+

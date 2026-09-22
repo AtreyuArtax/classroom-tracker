@@ -23,7 +23,7 @@ import { useUndo } from './useUndo.js'
 import { useMessage } from './useMessage.js'
 import { getDB } from '../db/index.js'
 import { autoPopulateAllElementarySubjects } from './useElementary.js'
-import { formatLocalDate } from '../utils/dates.js'
+import { formatLocalDate, isSameSchoolYear } from '../utils/dates.js'
 import {
   moveStudentFromClass,
   removeStudent,
@@ -468,7 +468,7 @@ function dismissSuggestion() {
  * @returns {{ start: Date, end: Date, isCustom: boolean }}
  */
 function getTermRange(year, semester) {
-    const term = academicTerms.value.find(t => t.year === year && t.semester === semester)
+    const term = academicTerms.value.find(t => isSameSchoolYear(t.year, year) && String(t.semester) === String(semester))
     
     if (term) {
         return {

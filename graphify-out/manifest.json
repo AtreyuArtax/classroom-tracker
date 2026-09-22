@@ -205,8 +205,8 @@
     "semantic_hash": ""
   },
   "src/components/setup/CalendarSettings.vue": {
-    "mtime": 1788396467.6897042,
-    "ast_hash": "e369ce5f1857e4cb6744d61b6facb138",
+    "mtime": 1790100796.4574723,
+    "ast_hash": "b61c50dd1f465bd3739aca4c877d55f4",
     "semantic_hash": ""
   },
   "src/components/setup/CsvHelpGuide.vue": {
@@ -240,8 +240,8 @@
     "semantic_hash": ""
   },
   "src/composables/useClassroom.js": {
-    "mtime": 1789666305.8299303,
-    "ast_hash": "2b167e56616809435e0ffe6e5d30af7f",
+    "mtime": 1790100399.4617739,
+    "ast_hash": "13f7778be9c0eff5ae44eda3b43ffd4e",
     "semantic_hash": ""
   },
   "src/composables/useGradebook.js": {
@@ -315,8 +315,8 @@
     "semantic_hash": ""
   },
   "src/utils/dates.js": {
-    "mtime": 1788313689.8647764,
-    "ast_hash": "f3aaf51f959689c3e7611267b55ca622",
+    "mtime": 1790100330.0907538,
+    "ast_hash": "ed1d5c1454b2e91194f9fb1a8521d288",
     "semantic_hash": ""
   },
   "src/utils/icons.js": {
@@ -1010,8 +1010,8 @@
     "semantic_hash": ""
   },
   "src/components/photos/PhotoBatchImportModal.vue": {
-    "mtime": 1789303152.2110207,
-    "ast_hash": "1708e18ca3715d864488a0eca1b417ed",
+    "mtime": 1790097683.9381337,
+    "ast_hash": "208280b75300f27abf3d0960c129b44c",
     "semantic_hash": ""
   },
   "src/components/photos/PhotoCaptureModal.vue": {
@@ -1362,6 +1362,31 @@
   "src/test_elementary_iep_unit_isolation.js": {
     "mtime": 1790083547.4983282,
     "ast_hash": "876ae5a1e348c5a9d6962de472bad6ee",
+    "semantic_hash": ""
+  },
+  "src/test_powerschool_bookmarklet.js": {
+    "mtime": 1790097692.6908529,
+    "ast_hash": "deb440e9ecec0932f43b55a04533c204",
+    "semantic_hash": ""
+  },
+  "src/utils/powerschoolBookmarklet.js": {
+    "mtime": 1790098155.444473,
+    "ast_hash": "6e94798b7e687a02344c785ba38b5bb0",
+    "semantic_hash": ""
+  },
+  "src/data/calendar/2026-2027.json": {
+    "mtime": 1790100351.0724084,
+    "ast_hash": "e7e5da8572e857e946bac9e16d1999ce",
+    "semantic_hash": ""
+  },
+  "src/test_calendar_loader.js": {
+    "mtime": 1790100474.9200897,
+    "ast_hash": "6324bf1814f3171b185c1eaca83b9aed",
+    "semantic_hash": ""
+  },
+  "src/utils/calendarLoader.js": {
+    "mtime": 1790100366.9689546,
+    "ast_hash": "ee3b6a3e29f3c403e05941c3ed2a4e6d",
     "semantic_hash": ""
   }
 }

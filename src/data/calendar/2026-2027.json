@@ -1,0 +1,51 @@
+{
+  "year": "2026-2027",
+  "semesters": [
+    {
+      "semester": "1",
+      "startDate": "2026-09-08",
+      "endDate": "2027-02-02",
+      "instructionalDays": 94
+    },
+    {
+      "semester": "2",
+      "startDate": "2027-02-04",
+      "endDate": "2027-06-28",
+      "instructionalDays": 94
+    }
+  ],
+  "holidays": [
+    { "date": "2026-09-02", "endDate": "", "label": "PA Day" },
+    { "date": "2026-09-03", "endDate": "", "label": "PA Day" },
+    { "date": "2026-09-04", "endDate": "", "label": "Board Holiday" },
+    { "date": "2026-09-07", "endDate": "", "label": "Labour Day" },
+    { "date": "2026-10-12", "endDate": "", "label": "Thanksgiving" },
+    { "date": "2026-11-13", "endDate": "", "label": "Mid-Semester (Term 1)" },
+    { "date": "2026-11-19", "endDate": "", "label": "Reporting Schedule (Mid-Term)" },
+    { "date": "2026-11-20", "endDate": "", "label": "PA Day" },
+    { "date": "2026-12-21", "endDate": "2027-01-01", "label": "Winter Break" },
+    { "date": "2027-01-25", "endDate": "2027-01-28", "label": "Exam Period 1" },
+    { "date": "2027-01-26", "endDate": "", "label": "Exam Period 2" },
+    { "date": "2027-01-27", "endDate": "", "label": "Exam Period 3" },
+    { "date": "2027-01-28", "endDate": "", "label": "Exam Period 4" },
+    { "date": "2027-01-29", "endDate": "2027-02-02", "label": "Feedback" },
+    { "date": "2027-02-03", "endDate": "", "label": "PA Day" },
+    { "date": "2027-02-08", "endDate": "", "label": "Reporting Schedule (Sem. 1 Final)" },
+    { "date": "2027-02-15", "endDate": "", "label": "Family Day" },
+    { "date": "2027-03-15", "endDate": "2027-03-19", "label": "March Break" },
+    { "date": "2027-03-26", "endDate": "", "label": "Good Friday" },
+    { "date": "2027-03-29", "endDate": "", "label": "Easter Monday" },
+    { "date": "2027-04-22", "endDate": "", "label": "Mid-Semester (Term 2)" },
+    { "date": "2027-04-29", "endDate": "", "label": "Reporting Schedule (Mid-Term)" },
+    { "date": "2027-04-30", "endDate": "", "label": "PA Day" },
+    { "date": "2027-05-24", "endDate": "", "label": "Victoria Day" },
+    { "date": "2027-06-18", "endDate": "2027-06-23", "label": "Exam Period 1" },
+    { "date": "2027-06-21", "endDate": "", "label": "Exam Period 2" },
+    { "date": "2027-06-22", "endDate": "", "label": "Exam Period 3" },
+    { "date": "2027-06-23", "endDate": "", "label": "Exam Period 4" },
+    { "date": "2027-06-24", "endDate": "2027-06-28", "label": "Feedback" },
+    { "date": "2027-06-29", "endDate": "", "label": "PA Day" },
+    { "date": "2027-06-30", "endDate": "", "label": "PA Day" },
+    { "date": "2027-07-02", "endDate": "", "label": "Reporting Schedule (Sem. 2 Final)" }
+  ]
+}
