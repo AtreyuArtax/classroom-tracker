@@ -353,19 +353,32 @@
         <li v-for="note in recentNotes" :key="note.eventId" class="reports__note-item">
           <div class="reports__note-content">
             <div class="reports__note-top-row">
-              <span class="reports__note-student">{{ note.studentName }}</span>
+              <span 
+                class="reports__note-student" 
+                role="button"
+                tabindex="0"
+                :title="`View ${note.studentName}`"
+                @click="$emit('select-student', note.studentId)"
+                @keydown.enter="$emit('select-student', note.studentId)"
+              >
+                {{ note.studentName }}
+              </span>
+              <span v-if="getNoteLabel(note.code)" class="reports__note-type-badge">
+                {{ getNoteLabel(note.code) }}
+              </span>
               <span class="reports__note-time">{{ formatNoteTime(note.timestamp) }}</span>
               <button 
+                type="button"
                 class="reports__note-check-btn" 
-                :class="{ 'reports__note-check-btn--checked': note.isCompleted }"
-                :title="note.isCompleted ? 'Mark pending' : 'Mark complete'"
-                @click="$emit('toggle-note-complete', note.eventId)"
+                :class="{ 'reports__note-check-btn--checked': note.completed || note.isCompleted }"
+                :title="(note.completed || note.isCompleted) ? 'Mark pending' : 'Mark complete'"
+                @click="$emit('toggle-note-complete', note.eventId, note.completed ?? note.isCompleted)"
               >
                 <Check :size="12" />
               </button>
             </div>
-            <p class="reports__note-text" :class="{ 'reports__note-text--completed': note.isCompleted }">
-              {{ note.text }}
+            <p class="reports__note-text" :class="{ 'reports__note-text--completed': note.completed || note.isCompleted }">
+              {{ note.text || note.note }}
             </p>
           </div>
         </li>
@@ -549,6 +562,11 @@ function formatNoteTime(ts) {
   const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
   const timeStr = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }).toLowerCase()
   return `${dateStr}, ${timeStr}`
+}
+
+function getNoteLabel(code) {
+  if (!code || code === 'note') return null
+  return behaviorCodesMap.value[code]?.label || code
 }
 
 // Academic Calculations
@@ -1581,19 +1599,22 @@ function formatReasonPart(part) {
 .reports__list-count { font-weight: 700; color: #ef4444; }
 
 /* Section 3: Notes Card */
-.reports__notes-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 10px 14px; margin-top: 4px; }
-.reports__notes-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.reports__notes-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 12px 16px; margin-top: 4px; }
+.reports__notes-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
 .reports__notes-toggle-btn { background: none; border: none; color: var(--primary); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.04em; cursor: pointer; padding: 2px 4px; }
 .reports__notes-toggle-btn:hover { text-decoration: underline; }
 .reports__notes-empty { font-size: 0.78rem; color: var(--text-secondary); font-style: italic; padding: 4px 0; }
-.reports__notes-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px; }
-.reports__note-item { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 6px 10px; }
-.reports__note-top-row { display: flex; align-items: center; gap: 8px; margin-bottom: 2px; }
-.reports__note-student { font-weight: 700; font-size: 0.8rem; color: var(--text); }
-.reports__note-time { margin-left: auto; font-size: 0.7rem; color: var(--text-secondary); }
-.reports__note-check-btn { width: 20px; height: 20px; border-radius: 50%; border: 1px solid var(--border); background: var(--surface); color: transparent; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.15s ease; flex-shrink: 0; }
+.reports__notes-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
+.reports__note-item { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 8px 12px; transition: background 0.15s, border-color 0.15s; }
+.reports__note-item:hover { border-color: var(--border-hover, var(--border)); }
+.reports__note-top-row { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.reports__note-student { font-weight: 700; font-size: 0.82rem; color: var(--text); cursor: pointer; transition: color 0.15s; }
+.reports__note-student:hover { color: var(--primary); text-decoration: underline; }
+.reports__note-type-badge { font-size: 0.68rem; font-weight: 600; padding: 1px 6px; border-radius: 4px; background: var(--surface); border: 1px solid var(--border); color: var(--text-secondary); }
+.reports__note-time { margin-left: auto; font-size: 0.72rem; color: var(--text-secondary); }
+.reports__note-check-btn { width: 22px; height: 22px; border-radius: 50%; border: 1px solid var(--border); background: var(--surface); color: transparent; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.15s ease; flex-shrink: 0; }
 .reports__note-check-btn:hover { border-color: var(--primary); color: var(--primary); }
 .reports__note-check-btn--checked { background: var(--primary); border-color: var(--primary); color: #fff !important; }
-.reports__note-text { font-size: 0.78rem; color: var(--text); line-height: 1.35; margin: 0; white-space: pre-wrap; }
+.reports__note-text { font-size: 0.82rem; color: var(--text); line-height: 1.45; margin: 0; white-space: pre-wrap; word-break: break-word; }
 .reports__note-text--completed { text-decoration: line-through; opacity: 0.6; }
 </style>

@@ -1,7 +1,7 @@
-# Graph Report - classroom-tracker  (2026-09-18)
+# Graph Report - classroom-tracker  (2026-09-22)
 
 ## Corpus Check
-- 272 files · ~563,297 words
+- 272 files · ~563,090 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `f27eb2fc`
+- Built from commit: `dd172acf`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -164,7 +164,7 @@ Nodes (27): BaseHTTPRequestHandler, Path, consume_scan(), _create_tray_icon_imag
 
 ### Community 5 - "Community 5"
 Cohesion: 0.07
-Nodes (27): addRoute(), cacheDonePromiseForTransaction(), CacheFirst, cacheMatchIgnoreParams(), cacheWillUpdate(), canConstructResponseFromBodyStream(), copyResponse(), Deferred (+19 more)
+Nodes (19): addRoute(), CacheFirst, cacheMatchIgnoreParams(), cacheWillUpdate(), canConstructResponseFromBodyStream(), copyResponse(), Deferred, executeQuotaErrorCallbacks() (+11 more)
 
 ### Community 6 - "Community 6"
 Cohesion: 0.17
@@ -203,8 +203,8 @@ Cohesion: 0.07
 Nodes (24): getStudentEffectiveGrade(), isAssessmentApplicableToStudent(), isStudentInSubCohort(), props, allCombinedWork, allDossierAssessments, attendanceStats, behaviorCodesMap (+16 more)
 
 ### Community 15 - "Community 15"
-Cohesion: 0.21
-Nodes (4): get(), getMethod(), has(), Router
+Cohesion: 0.13
+Nodes (12): cacheDonePromiseForTransaction(), get(), getCursorAdvanceMethods(), getIdbProxyableTypes(), getMethod(), has(), openDB(), promisifyRequest() (+4 more)
 
 ### Community 16 - "Community 16"
 Cohesion: 0.12
@@ -359,7 +359,7 @@ Nodes (19): mockAssessments, mockClassWithStrings, mockGrades, mockMasteryPreRef
 
 ### Community 91 - "Community 91"
 Cohesion: 0.20
-Nodes (10): description, type, description, type, description, type, properties, department (+2 more)
+Nodes (10): description, type, description, type, properties, grade, isSuccessCriteria, title (+2 more)
 
 ### Community 96 - "Community 96"
 Cohesion: 0.04
@@ -471,7 +471,7 @@ Nodes (6): resetMasterPreset(), deleteCustomCurriculumPreset(), main(), mockStor
 
 ### Community 152 - "Community 152"
 Cohesion: 0.67
-Nodes (3): title, description, type
+Nodes (3): description, type, department
 
 ### Community 153 - "Community 153"
 Cohesion: 0.09
@@ -489,9 +489,9 @@ Nodes (7): DAY_NAMES, detectClassAttendancePatterns(), detectStudentAttendancePa
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `getDB()` connect `Community 153` to `Community 0`, `Community 2`, `Community 35`, `Community 3`, `Community 5`, `Community 9`, `Community 112`, `Community 81`, `Community 21`, `Community 85`, `Community 23`, `Community 151`, `Community 123`?**
+- **Why does `getDB()` connect `Community 153` to `Community 0`, `Community 2`, `Community 35`, `Community 3`, `Community 9`, `Community 15`, `Community 112`, `Community 81`, `Community 21`, `Community 85`, `Community 23`, `Community 151`, `Community 123`?**
   _High betweenness centrality (0.144) - this node is a cross-community bridge._
-- **Why does `openDB()` connect `Community 5` to `Community 153`, `Community 94`?**
+- **Why does `openDB()` connect `Community 15` to `Community 153`, `Community 5`, `Community 94`?**
   _High betweenness centrality (0.088) - this node is a cross-community bridge._
 - **Are the 2 inferred relationships involving `loadGradebook()` (e.g. with `getGlobalMilestones()` and `getGradeBuckets()`) actually correct?**
   _`loadGradebook()` has 2 INFERRED edges - model-reasoned connections that need verification._

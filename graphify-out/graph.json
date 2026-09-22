@@ -260,7 +260,7 @@
       "source_location": "L1304",
       "_origin": "ast",
       "id": "dev_dist_workbox_ca84f546_getidbproxyabletypes",
-      "community": 5,
+      "community": 15,
       "norm_label": "getidbproxyabletypes()"
     },
     {
@@ -270,7 +270,7 @@
       "source_location": "L1308",
       "_origin": "ast",
       "id": "dev_dist_workbox_ca84f546_getcursoradvancemethods",
-      "community": 5,
+      "community": 15,
       "norm_label": "getcursoradvancemethods()"
     },
     {
@@ -280,7 +280,7 @@
       "source_location": "L1316",
       "_origin": "ast",
       "id": "dev_dist_workbox_ca84f546_promisifyrequest",
-      "community": 5,
+      "community": 15,
       "norm_label": "promisifyrequest()"
     },
     {
@@ -290,7 +290,7 @@
       "source_location": "L1346",
       "_origin": "ast",
       "id": "dev_dist_workbox_ca84f546_cachedonepromisefortransaction",
-      "community": 5,
+      "community": 15,
       "norm_label": "cachedonepromisefortransaction()"
     },
     {
@@ -340,7 +340,7 @@
       "source_location": "L1401",
       "_origin": "ast",
       "id": "dev_dist_workbox_ca84f546_wrapfunction",
-      "community": 5,
+      "community": 15,
       "norm_label": "wrapfunction()"
     },
     {
@@ -350,7 +350,7 @@
       "source_location": "L1431",
       "_origin": "ast",
       "id": "dev_dist_workbox_ca84f546_transformcachablevalue",
-      "community": 5,
+      "community": 15,
       "norm_label": "transformcachablevalue()"
     },
     {
@@ -360,7 +360,7 @@
       "source_location": "L1440",
       "_origin": "ast",
       "id": "dev_dist_workbox_ca84f546_wrap",
-      "community": 5,
+      "community": 15,
       "norm_label": "wrap()"
     },
     {
@@ -370,7 +370,7 @@
       "source_location": "L1465",
       "_origin": "ast",
       "id": "dev_dist_workbox_ca84f546_opendb",
-      "community": 5,
+      "community": 15,
       "norm_label": "opendb()"
     },
     {
@@ -10280,7 +10280,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "curriculum_schema_properties_title",
-      "community": 152,
+      "community": 91,
       "norm_label": "title"
     },
     {
@@ -10290,7 +10290,7 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "curriculum_schema_title_type",
-      "community": 152,
+      "community": 91,
       "norm_label": "type"
     },
     {
@@ -10300,7 +10300,7 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "curriculum_schema_title_description",
-      "community": 152,
+      "community": 91,
       "norm_label": "description"
     },
     {
@@ -10450,7 +10450,7 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "curriculum_schema_properties_department",
-      "community": 91,
+      "community": 152,
       "norm_label": "department"
     },
     {
@@ -10460,7 +10460,7 @@
       "source_location": "L44",
       "_origin": "ast",
       "id": "curriculum_schema_department_type",
-      "community": 91,
+      "community": 152,
       "norm_label": "type"
     },
     {
@@ -10470,7 +10470,7 @@
       "source_location": "L45",
       "_origin": "ast",
       "id": "curriculum_schema_department_description",
-      "community": 91,
+      "community": 152,
       "norm_label": "description"
     },
     {
@@ -18207,7 +18207,7 @@
       "label": "hasAnyNotes",
       "file_type": "code",
       "source_file": "src/views/Reports.vue",
-      "source_location": "L592",
+      "source_location": "L594",
       "_origin": "ast",
       "id": "views_reports_hasanynotes",
       "community": 38,
@@ -18217,7 +18217,7 @@
       "label": "onToggleNoteComplete()",
       "file_type": "code",
       "source_file": "src/views/Reports.vue",
-      "source_location": "L596",
+      "source_location": "L598",
       "_origin": "ast",
       "id": "views_reports_ontogglenotecomplete",
       "community": 161,
@@ -18227,7 +18227,7 @@
       "label": "handleDownloadCsv()",
       "file_type": "code",
       "source_file": "src/views/Reports.vue",
-      "source_location": "L605",
+      "source_location": "L608",
       "_origin": "ast",
       "id": "views_reports_handledownloadcsv",
       "community": 81,
@@ -18237,7 +18237,7 @@
       "label": "handleDownloadComments()",
       "file_type": "code",
       "source_file": "src/views/Reports.vue",
-      "source_location": "L623",
+      "source_location": "L626",
       "_origin": "ast",
       "id": "views_reports_handledownloadcomments",
       "community": 38,
@@ -18247,7 +18247,7 @@
       "label": "runReport()",
       "file_type": "code",
       "source_file": "src/views/Reports.vue",
-      "source_location": "L627",
+      "source_location": "L630",
       "_origin": "ast",
       "id": "views_reports_runreport",
       "community": 161,
@@ -18257,7 +18257,7 @@
       "label": "formatTimestamp()",
       "file_type": "code",
       "source_file": "src/views/Reports.vue",
-      "source_location": "L793",
+      "source_location": "L796",
       "_origin": "ast",
       "id": "views_reports_formattimestamp",
       "community": 38,
@@ -18267,7 +18267,7 @@
       "label": "behaviorCodesMap",
       "file_type": "code",
       "source_file": "src/views/Reports.vue",
-      "source_location": "L801",
+      "source_location": "L804",
       "_origin": "ast",
       "id": "views_reports_behaviorcodesmap",
       "community": 38,
@@ -18277,7 +18277,7 @@
       "label": "washroomChartData",
       "file_type": "code",
       "source_file": "src/views/Reports.vue",
-      "source_location": "L805",
+      "source_location": "L808",
       "_origin": "ast",
       "id": "views_reports_washroomchartdata",
       "community": 38,
@@ -18287,7 +18287,7 @@
       "label": "attendanceRate",
       "file_type": "code",
       "source_file": "src/views/Reports.vue",
-      "source_location": "L818",
+      "source_location": "L821",
       "_origin": "ast",
       "id": "views_reports_attendancerate",
       "community": 38,
@@ -18297,7 +18297,7 @@
       "label": "chronicallyAbsentCount",
       "file_type": "code",
       "source_file": "src/views/Reports.vue",
-      "source_location": "L832",
+      "source_location": "L835",
       "_origin": "ast",
       "id": "views_reports_chronicallyabsentcount",
       "community": 38,
@@ -18307,7 +18307,7 @@
       "label": "tripsPerStudentAvg",
       "file_type": "code",
       "source_file": "src/views/Reports.vue",
-      "source_location": "L842",
+      "source_location": "L845",
       "_origin": "ast",
       "id": "views_reports_tripsperstudentavg",
       "community": 38,
@@ -18317,7 +18317,7 @@
       "label": "notesLoggedCount",
       "file_type": "code",
       "source_file": "src/views/Reports.vue",
-      "source_location": "L848",
+      "source_location": "L851",
       "_origin": "ast",
       "id": "views_reports_notesloggedcount",
       "community": 38,
@@ -18327,7 +18327,7 @@
       "label": "followUpExpanded",
       "file_type": "code",
       "source_file": "src/views/Reports.vue",
-      "source_location": "L852",
+      "source_location": "L855",
       "_origin": "ast",
       "id": "views_reports_followupexpanded",
       "community": 38,
@@ -18337,7 +18337,7 @@
       "label": "longTripsExpanded",
       "file_type": "code",
       "source_file": "src/views/Reports.vue",
-      "source_location": "L853",
+      "source_location": "L856",
       "_origin": "ast",
       "id": "views_reports_longtripsexpanded",
       "community": 38,
@@ -18347,7 +18347,7 @@
       "label": "followUpItems",
       "file_type": "code",
       "source_file": "src/views/Reports.vue",
-      "source_location": "L855",
+      "source_location": "L858",
       "_origin": "ast",
       "id": "views_reports_followupitems",
       "community": 38,
@@ -18357,7 +18357,7 @@
       "label": "followUpVisible",
       "file_type": "code",
       "source_file": "src/views/Reports.vue",
-      "source_location": "L1019",
+      "source_location": "L1022",
       "_origin": "ast",
       "id": "views_reports_followupvisible",
       "community": 38,
@@ -18367,7 +18367,7 @@
       "label": "longTripsVisible",
       "file_type": "code",
       "source_file": "src/views/Reports.vue",
-      "source_location": "L1023",
+      "source_location": "L1026",
       "_origin": "ast",
       "id": "views_reports_longtripsvisible",
       "community": 38,
@@ -51664,5 +51664,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "f27eb2fcd4bd4d22a55094920de28033ef9d07d0"
+  "built_at_commit": "dd172acf0478645570ce55722d6b504a7f040ad2"
 }

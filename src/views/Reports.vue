@@ -574,7 +574,7 @@ const showCompletedNotes = ref(false)
 const recentNotes = computed(() => {
   const studentsMap = reportStudents.value
   let filtered = allClassEvents.value
-    .filter(e => e.note && e.code !== 'a' && e.code !== 'ac' && e.code !== 'l' && e.code !== 'w' && e.code !== 'pc' && !e.superseded && !e.note.startsWith('[ob]') && !e.note.startsWith('[cv]'))
+    .filter(e => e.note && e.note.trim() && e.code !== 'ac' && e.code !== 'pc' && !e.superseded && !e.note.startsWith('[ob]') && !e.note.startsWith('[cv]'))
   
   if (!showCompletedNotes.value) {
     filtered = filtered.filter(e => !e.completed)
@@ -584,21 +584,24 @@ const recentNotes = computed(() => {
     .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
     .map(e => ({
       ...e,
+      text: e.note,
+      isCompleted: !!e.completed,
       studentName: studentsMap[e.studentId] ? `${studentsMap[e.studentId].firstName} ${studentsMap[e.studentId].lastName}` : 'Unknown Student'
     }))
     .slice(0, 12)
 })
 
 const hasAnyNotes = computed(() => {
-  return allClassEvents.value.some(e => e.note && e.code !== 'a' && e.code !== 'ac' && e.code !== 'l' && e.code !== 'w' && e.code !== 'pc' && !e.superseded && !e.note.startsWith('[ob]') && !e.note.startsWith('[cv]'))
+  return allClassEvents.value.some(e => e.note && e.note.trim() && e.code !== 'ac' && e.code !== 'pc' && !e.superseded && !e.note.startsWith('[ob]') && !e.note.startsWith('[cv]'))
 })
 
 async function onToggleNoteComplete(eventId, currentStatus) {
   const target = allClassEvents.value.find(e => e.eventId === eventId)
+  const newStatus = currentStatus !== undefined ? !currentStatus : (target ? !target.completed : true)
   if (target) {
-    target.completed = !currentStatus
+    target.completed = newStatus
   }
-  await eventService.updateEvent(eventId, { completed: !currentStatus })
+  await eventService.updateEvent(eventId, { completed: newStatus })
   await runReport(true)
 }
 
@@ -846,7 +849,7 @@ const tripsPerStudentAvg = computed(() => {
 })
 
 const notesLoggedCount = computed(() =>
-  reportData.value.filter(e => e.note && e.code !== 'a' && e.code !== 'l' && e.code !== 'w' && !e.superseded).length
+  reportData.value.filter(e => e.note && e.note.trim() && e.code !== 'ac' && e.code !== 'pc' && !e.superseded && !e.note.startsWith('[ob]') && !e.note.startsWith('[cv]')).length
 )
 
 const followUpExpanded = ref(false)

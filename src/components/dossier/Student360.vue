@@ -806,7 +806,7 @@ const recentActivityFeed = computed(() => {
   // 2. Logged significant student events (Teacher notes, Parent contacts, Positive recognition, Redirects, Test-Day Absences)
   const evtList = Array.isArray(events.value) ? events.value : []
   evtList.forEach(evt => {
-    if (!evt || evt.superseded) return
+    if (!evt || evt.superseded || evt.completed || evt.isCompleted) return
     const evtType = evt.code || evt.type || ''
     const config = behaviorCodesMap.value?.[evt.code] || {}
     const category = evt.category || config.category
@@ -814,7 +814,7 @@ const recentActivityFeed = computed(() => {
     const isParentContact = evtType === 'pc' || category === 'communication'
     const isPositive = category === 'positive'
     const isRedirect = category === 'redirect'
-    const isTeacherNote = evtType === 'note' || evtType === 'ac' || (evt.note && String(evt.note).trim().length > 0 && evtType !== 'w' && evtType !== 'l' && evtType !== 'a')
+    const isTeacherNote = evtType === 'note' || evtType === 'ac' || (evt.note && String(evt.note).trim().length > 0 && evtType !== 'w')
     const isTestDayAbsence = evtType === 'a' && (evt.testDay || evt.isTestDay)
 
     // Include significant events, positive praise, redirects, teacher notes, or test day absences
