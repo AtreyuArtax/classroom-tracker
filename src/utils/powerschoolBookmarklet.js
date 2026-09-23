@@ -1,7 +1,7 @@
 /**
  * src/utils/powerschoolBookmarklet.js
  *
- * Provides the PowerSchool automated photo downloader script and draggable bookmarklet.
+ * Provides the PowerSchool automated photo macro and draggable browser bookmark.
  * Safely extracts student portraits, packages them in-memory into a single `student_photos.zip`
  * (zero external CDN dependencies, 100% offline & CSP-safe), provides a live floating HUD
  * rendered inside valid frame bodies (bypassing <frameset> display bugs) with progress tracking
@@ -9,7 +9,7 @@
  */
 
 export const POWERSCHOOL_PHOTO_SCRIPT = `(async function () {
-  console.log("PowerSchool Photo Downloader (ZIP mode) starting...");
+  console.log("PowerSchool Photo Macro starting...");
 
   function getAllFrames(win, depth = 0, maxDepth = 6, acc = []) {
     acc.push(win);
@@ -129,7 +129,7 @@ export const POWERSCHOOL_PHOTO_SCRIPT = `(async function () {
     // Update browser tab title as a secondary indicator
     try {
       if (percent !== null) {
-        (window.top || window).document.title = \`[\${percent}%] 📸 Photo Downloader\`;
+        (window.top || window).document.title = \`[\${percent}%] 📸 Photo Macro\`;
       } else if (isDone) {
         (window.top || window).document.title = '✅ Photos Done!';
       }
@@ -175,7 +175,7 @@ export const POWERSCHOOL_PHOTO_SCRIPT = `(async function () {
     }
   }
 
-  updateHud({ title: "Photo Downloader", status: "Scanning roster...", percent: 5 });
+  updateHud({ title: "Photo Macro", status: "Scanning roster...", percent: 5 });
 
   // ── Pure JS Zero-Dependency ZIP Builder (STORE format for JPEGs) ──
   const crcTable = new Uint32Array(256);
@@ -311,11 +311,51 @@ export const POWERSCHOOL_PHOTO_SCRIPT = `(async function () {
     } catch (e) { return null; }
   }
 
+  // ── Adaptive Frame Polling with Student Validation ───────────────
+  async function waitForStudentContentFrame(previousId, expectedLastName = '', timeoutMs = 4500, intervalMs = 100) {
+    const start = Date.now();
+    const cleanLastName = expectedLastName.trim().toLowerCase();
+    while (Date.now() - start < timeoutMs) {
+      if (isCancelled) return null;
+      const frames = getAllFrames(window);
+      for (const f of frames) {
+        if (f === menuFrame) continue;
+        try {
+          const bodyText = f.document?.body?.innerText || '';
+          const match = bodyText.match(/\\b1\\d{8}\\b/);
+          if (!match) continue;
+          const currentId = match[0];
+
+          const nameMatches = Boolean(cleanLastName && bodyText.toLowerCase().includes(cleanLastName));
+
+          // If we have a previousId, the frame MUST have transitioned to a new student ID
+          // (prevents dropping siblings or consecutive students sharing the same last name)
+          const idChanged = previousId ? (currentId !== previousId) : true;
+
+          // For student 0 (no previousId), require name match to avoid reading whatever student
+          // was on screen before the bookmarklet started (with a 2s safety fallback)
+          const initialValid = !previousId ? (nameMatches || !cleanLastName || (Date.now() - start > 2000)) : true;
+
+          if (idChanged && initialValid) {
+            const imgs = f.document?.querySelectorAll('img') || [];
+            if (imgs.length > 0) {
+              return { frame: f, id: currentId };
+            }
+          }
+        } catch (e) {
+          // Frame navigation can throw temporary access errors; retry
+        }
+      }
+      await new Promise(r => setTimeout(r, intervalMs));
+    }
+    return null;
+  }
+
   if (!menuFrame || menuLinks.length === 0) {
     console.error("No menu frame or student links found.");
     cleanupUnload();
     updateHud({
-      title: "Photo Downloader",
+      title: "Photo Macro",
       status: "❌ No roster found. Navigate to your class roster page.",
       showCancel: false,
       isDone: true
@@ -325,7 +365,7 @@ export const POWERSCHOOL_PHOTO_SCRIPT = `(async function () {
 
   console.log(\`Found \${menuLinks.length} student links\`);
   updateHud({
-    title: "Photo Downloader",
+    title: "Photo Macro",
     status: \`Found \${menuLinks.length} students. Starting...\`,
     percent: 8,
     showCancel: true
@@ -333,6 +373,7 @@ export const POWERSCHOOL_PHOTO_SCRIPT = `(async function () {
 
   const downloadedIds = new Set();
   let skippedDup = 0, failed = 0;
+  let lastSeenId = null;
 
   for (let i = 0; i < menuLinks.length; i++) {
     if (isCancelled) break;
@@ -342,10 +383,11 @@ export const POWERSCHOOL_PHOTO_SCRIPT = `(async function () {
     if (!link) { failed++; continue; }
     const rawName = link.textContent.trim();
     const name = rawName.replace(/default\\s+student\\s+screen/i, '').split('\\n')[0].replace(/\\s+/g, ' ').trim();
+    const lastName = name.includes(',') ? name.split(',')[0].trim() : name.split(' ')[0].trim();
     const pct = Math.round(((i + 1) / menuLinks.length) * 100);
 
     updateHud({
-      title: "Photo Downloader",
+      title: "Photo Macro",
       studentName: \`[\${i + 1}/\${menuLinks.length}] \${name}\`,
       status: \`\${collectedPhotos.length} photos ready in ZIP\`,
       percent: pct,
@@ -355,24 +397,20 @@ export const POWERSCHOOL_PHOTO_SCRIPT = `(async function () {
 
     try {
       link.click();
-      await new Promise(r => setTimeout(r, 1300));
+
+      // Poll until the frame loads with the new student's data (adaptive, no fixed wait)
+      const detected = await waitForStudentContentFrame(lastSeenId, lastName, 4500, 100);
       if (isCancelled) break;
 
-      const frames2 = getAllFrames(window);
-      const cf = frames2.find(f => { try { return /\\b1\\d{8}\\b/.test(f.document.body.innerText); } catch (e) { return false; } });
-      if (!cf) {
-        console.warn("  No content frame found");
+      if (!detected) {
+        console.warn(\`  Content frame did not update or student ID not found for \${name}\`);
         failed++;
         continue;
       }
 
-      const idMatch = cf.document.body.innerText.match(/\\b1\\d{8}\\b/);
-      const studentId = idMatch ? idMatch[0] : null;
-      if (!studentId) {
-        console.warn("  Student ID not found in text");
-        failed++;
-        continue;
-      }
+      const cf = detected.frame;
+      const studentId = detected.id;
+      lastSeenId = studentId;
 
       console.log(\`  ID: \${studentId}\`);
 
@@ -381,6 +419,10 @@ export const POWERSCHOOL_PHOTO_SCRIPT = `(async function () {
         skippedDup++;
         continue;
       }
+
+      // Small settle buffer to ensure DOM click handlers and layout are stable
+      await new Promise(r => setTimeout(r, 150));
+      if (isCancelled) break;
 
       const originalImgs = Array.from(cf.document.querySelectorAll('img'));
       let thumbImg = originalImgs.find(img => isThumb(img));
@@ -474,16 +516,21 @@ export const POWERSCHOOL_PHOTO_SCRIPT = `(async function () {
     const zipBlob = buildZipBlob(collectedPhotos);
     triggerDownload(zipBlob, 'student_photos.zip');
 
+    const skippedOrMissing = menuLinks.length - collectedPhotos.length;
+    const summaryStatus = skippedOrMissing > 0
+      ? \`Downloaded \${collectedPhotos.length} of \${menuLinks.length} photos in student_photos.zip (\${skippedOrMissing} had no photo or were skipped). Drop it into Classroom Tracker.\`
+      : \`Downloaded all \${collectedPhotos.length} photos in student_photos.zip! Drop it into Classroom Tracker.\`;
+
     updateHud({
       title: "All Done! 🎉",
-      status: \`Downloaded \${collectedPhotos.length} photos in student_photos.zip! Drop it into Classroom Tracker.\`,
+      status: summaryStatus,
       percent: 100,
       showCancel: false,
       isDone: true
     });
   } else {
     updateHud({
-      title: "Photo Downloader",
+      title: "Photo Macro",
       status: \`Completed scan, but no photos could be matched (Failed: \${failed}).\`,
       showCancel: false,
       isDone: true

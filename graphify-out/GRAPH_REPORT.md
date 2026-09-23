@@ -1,7 +1,7 @@
 # Graph Report - classroom-tracker  (2026-09-22)
 
 ## Corpus Check
-- 278 files · ~569,629 words
+- 278 files · ~570,068 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `31047c23`
+- Built from commit: `5924672f`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -160,8 +160,8 @@ Cohesion: 0.06
 Nodes (42): getUnitGradeLevel(), addAssessment(), adjustStudentGrade(), analyticsEvidenceScope, assessmentSortOrder, assessmentStats, assessmentTypes, availableCourseFilters (+34 more)
 
 ### Community 2 - "Community 2"
-Cohesion: 0.36
-Nodes (14): getSettings(), calculateAssessmentAnalytics(), calculateClassAnalytics(), getExclusionResults(), buildDistributionBuckets(), buildLevelDistributionBuckets(), _calculateCategoryGrade(), calculateMedian() (+6 more)
+Cohesion: 0.31
+Nodes (15): getSettings(), getAssessmentsByClass(), calculateAssessmentAnalytics(), calculateClassAnalytics(), getExclusionResults(), buildDistributionBuckets(), buildLevelDistributionBuckets(), _calculateCategoryGrade() (+7 more)
 
 ### Community 3 - "Community 3"
 Cohesion: 0.07
@@ -256,8 +256,8 @@ Cohesion: 0.25
 Nodes (7): list_raw_input_devices(), list_serial_ports(), find_rfid.py — RFID Scanner Diagnostic Utility =================================, On Windows, use ctypes to enumerate Raw Input devices and print keyboard paths., Print all available serial ports on this machine., Listen for rapid keyboard bursts using pynput.     When a burst of ≥6 characters, sniff_keyboard_device()
 
 ### Community 28 - "Community 28"
-Cohesion: 0.26
-Nodes (14): filterAssessmentsForSubject(), getBucketMode(), isCohortMatch(), calculateDecayingAverage(), calculateMode(), calculatePowerLaw(), calculateSBARExpectationMastery(), calculateSBARStudentOverallMastery() (+6 more)
+Cohesion: 0.23
+Nodes (16): calculateMostConsistent(), calculateWeightedMedian(), filterAssessmentsForSubject(), getAssessmentPercentage(), getBucketMode(), calculateDecayingAverage(), calculateMode(), calculatePowerLaw() (+8 more)
 
 ### Community 29 - "Community 29"
 Cohesion: 0.33
@@ -383,8 +383,8 @@ Cohesion: 0.08
 Nodes (33): activeBulkExp, activeLevelOptions, applyBulkFill(), assignLevel(), assignLevelByCode(), assignNumericPercentage(), bulkScope, contextMenu (+25 more)
 
 ### Community 109 - "Community 109"
-Cohesion: 0.19
-Nodes (18): getAssessmentsByClass(), calculateClassGrades(), calculateStudentGrade(), getGradesByClass(), getGradesByStudent(), allGradesElem, assessmentsElem, classElementary (+10 more)
+Cohesion: 0.24
+Nodes (14): calculateStudentGrade(), allGradesElem, assessmentsElem, classElementary, gradesElemStudent1, gradesElemStudent2, runSuite(), testClassAnalytics() (+6 more)
 
 ### Community 111 - "Community 111"
 Cohesion: 0.24
@@ -444,7 +444,7 @@ Nodes (11): assessmentsList, cleanCode, cleanText1, masteryMapMode, masteryMapPo
 
 ### Community 136 - "Community 136"
 Cohesion: 0.06
-Nodes (32): academicAssessment1, academicAssessment2, adminCheckGrade, adminSafetyContract, adminTextbook, adminTextGrade, adminView, allAssessments (+24 more)
+Nodes (33): isCohortMatch(), academicAssessment1, academicAssessment2, adminCheckGrade, adminSafetyContract, adminTextbook, adminTextGrade, adminView (+25 more)
 
 ### Community 138 - "Community 138"
 Cohesion: 0.17
@@ -530,7 +530,7 @@ Nodes (11): curriculumEditorDirty, curriculumEditorDiscardHandler, curriculumEdi
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `getDB()` connect `Community 155` to `Community 0`, `Community 2`, `Community 35`, `Community 3`, `Community 5`, `Community 165`, `Community 9`, `Community 109`, `Community 81`, `Community 20`, `Community 21`, `Community 85`, `Community 23`, `Community 151`, `Community 158`?**
+- **Why does `getDB()` connect `Community 155` to `Community 0`, `Community 2`, `Community 35`, `Community 3`, `Community 5`, `Community 165`, `Community 9`, `Community 81`, `Community 20`, `Community 21`, `Community 85`, `Community 23`, `Community 151`, `Community 158`?**
   _High betweenness centrality (0.139) - this node is a cross-community bridge._
 - **Why does `openDB()` connect `Community 5` to `Community 155`, `Community 94`?**
   _High betweenness centrality (0.088) - this node is a cross-community bridge._

@@ -45,6 +45,14 @@ if (!POWERSCHOOL_PHOTO_SCRIPT.includes('ct-ps-hud')) {
   throw new Error('Script missing floating HUD element id');
 }
 
+if (!POWERSCHOOL_PHOTO_SCRIPT.includes('waitForStudentContentFrame')) {
+  throw new Error('Script missing waitForStudentContentFrame adaptive polling helper');
+}
+
+if (!POWERSCHOOL_PHOTO_SCRIPT.includes('lastSeenId')) {
+  throw new Error('Script missing lastSeenId tracker');
+}
+
 // 4. Check for ZIP builder and Cancel logic
 if (!POWERSCHOOL_PHOTO_SCRIPT.includes('buildZipBlob')) {
   throw new Error('Script missing buildZipBlob function');

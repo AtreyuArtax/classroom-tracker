@@ -1010,8 +1010,8 @@
     "semantic_hash": ""
   },
   "src/components/photos/PhotoBatchImportModal.vue": {
-    "mtime": 1790097683.9381337,
-    "ast_hash": "208280b75300f27abf3d0960c129b44c",
+    "mtime": 1790127434.888422,
+    "ast_hash": "abcdfad2d1c1ce1a6fb0dbaec2273b3f",
     "semantic_hash": ""
   },
   "src/components/photos/PhotoCaptureModal.vue": {
@@ -1365,13 +1365,13 @@
     "semantic_hash": ""
   },
   "src/test_powerschool_bookmarklet.js": {
-    "mtime": 1790097692.6908529,
-    "ast_hash": "deb440e9ecec0932f43b55a04533c204",
+    "mtime": 1790126314.2119198,
+    "ast_hash": "9bd6bfebd6a75ce861cac2af97323e3d",
     "semantic_hash": ""
   },
   "src/utils/powerschoolBookmarklet.js": {
-    "mtime": 1790098155.444473,
-    "ast_hash": "6e94798b7e687a02344c785ba38b5bb0",
+    "mtime": 1790127451.074748,
+    "ast_hash": "34abe7fee15de1c0ff54596933bed2a1",
     "semantic_hash": ""
   },
   "src/data/calendar/2026-2027.json": {

@@ -7,7 +7,7 @@
   >
     <div class="batch-import-content">
       <p class="setup__hint">
-        Select or drag photos into the importer. Photos should be named by <strong>Student ID</strong> (e.g. <code>104829.jpg</code>) or <strong>LastName_FirstName</strong> (e.g. <code>Smith_John.jpg</code>).
+        Select or drag photos into the importer. Photos should be named by <strong>Student ID</strong> (e.g. <code>104829.jpg</code>) or <strong>LastName_FirstName</strong> (e.g. <code>Smith_John.jpg</code>). All student data and photos are stored locally on your laptop and nothing is available online.
       </p>
 
       <!-- Unified Upload & Dropzone Area -->
@@ -88,7 +88,7 @@
           </div>
           <div class="ps-helper-card__header-right">
             <span class="ps-helper-card__toggle-text">
-              {{ isPsHelperOpen ? 'Hide Instructions' : 'Show Bookmarklet & Instructions' }}
+              {{ isPsHelperOpen ? 'Hide Instructions' : 'Show Browser Macro & Instructions' }}
             </span>
             <ChevronUp v-if="isPsHelperOpen" :size="16" />
             <ChevronDown v-else :size="16" />
@@ -97,7 +97,7 @@
 
         <div v-if="isPsHelperOpen" class="ps-helper-card__body">
           <p class="ps-helper-card__desc">
-            Use this automated helper to download all student photos directly from your class roster in PowerSchool, automatically named by <strong>Student ID</strong> (e.g. <code>104829381.jpg</code>).
+            Use this automated browser macro to quickly save your class roster photos directly from PowerSchool, automatically named by <strong>Student ID</strong> (e.g. <code>104829381.jpg</code>).
           </p>
 
           <div class="ps-steps">
@@ -105,7 +105,7 @@
             <div class="ps-step">
               <div class="ps-step__num">1</div>
               <div class="ps-step__content">
-                <div class="ps-step__title">Add the Bookmarklet to your browser</div>
+                <div class="ps-step__title">Add the Photo Macro to your browser</div>
                 <div class="ps-step__text">
                   Drag the button below directly into your Chrome / Edge <strong>Bookmarks Bar</strong>:
                 </div>
@@ -117,7 +117,7 @@
                     @click="handleBookmarkletClick"
                   >
                     <Bookmark :size="14" />
-                    <span>📸 PowerSchool Photos</span>
+                    <span>📸 PowerSchool Photo Macro</span>
                   </a>
                   <span class="ps-step__hint">← Drag to Bookmarks bar</span>
                 </div>
@@ -129,7 +129,7 @@
                     @click="handleCopyBookmarklet"
                   >
                     <Copy :size="12" />
-                    <span>Copy Bookmarklet URL</span>
+                    <span>Copy Macro Bookmark URL</span>
                   </button>
                   <button 
                     type="button" 
@@ -137,7 +137,7 @@
                     @click="handleCopyScript"
                   >
                     <Copy :size="12" />
-                    <span>Copy Console Script</span>
+                    <span>Copy Macro Code</span>
                   </button>
                 </div>
               </div>
@@ -149,7 +149,7 @@
               <div class="ps-step__content">
                 <div class="ps-step__title">Run on PowerSchool Class Roster</div>
                 <div class="ps-step__text">
-                  Open PowerSchool to your class roster page (where student photos and names are listed). Click the <strong>📸 PowerSchool Photos</strong> bookmark.
+                  Open PowerSchool to your class roster page (where student photos and names are listed). Click the <strong>📸 PowerSchool Photo Macro</strong> bookmark.
                 </div>
                 <div class="ps-callout">
                   <Info :size="15" class="ps-callout__icon" />
@@ -167,6 +167,14 @@
                   Drop the downloaded <code>student_photos.zip</code> (or individual photos) straight into the box above. Classroom Tracker will unpack and pair each student by ID automatically!
                 </div>
               </div>
+            </div>
+          </div>
+
+          <!-- Privacy & Local Storage Assurance -->
+          <div class="ps-privacy-callout">
+            <ShieldCheck :size="16" class="ps-privacy-callout__icon" />
+            <div class="ps-privacy-callout__text">
+              <strong>100% Offline &amp; Private:</strong> All student data and photos are stored locally on your laptop and nothing is available online. Both the browser macro and Classroom Tracker run entirely within your local browser—no student images or roster records are ever uploaded to an external server or cloud service.
             </div>
           </div>
 
@@ -315,7 +323,7 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import { FolderOpen, UploadCloud, Images, CheckCircle, AlertCircle, HelpCircle, Check, Loader2, FileImage, UserX, ChevronDown, ChevronUp, Copy, Bookmark, Info } from 'lucide-vue-next'
+import { FolderOpen, UploadCloud, Images, CheckCircle, AlertCircle, HelpCircle, Check, Loader2, FileImage, UserX, ChevronDown, ChevronUp, Copy, Bookmark, Info, ShieldCheck } from 'lucide-vue-next'
 import JSZip from 'jszip'
 import BaseModal from '../BaseModal.vue'
 import { useStudentPhotos } from '../../composables/useStudentPhotos.js'
@@ -346,14 +354,14 @@ let copyToastTimeout = null
 async function handleCopyScript() {
   const ok = await copyToClipboard(POWERSCHOOL_PHOTO_SCRIPT)
   if (ok) {
-    showCopyToast('Script copied to clipboard!')
+    showCopyToast('Macro code copied to clipboard!')
   }
 }
 
 async function handleCopyBookmarklet() {
   const ok = await copyToClipboard(POWERSCHOOL_BOOKMARKLET_HREF)
   if (ok) {
-    showCopyToast('Bookmarklet URL copied to clipboard!')
+    showCopyToast('Macro bookmark URL copied to clipboard!')
   }
 }
 
@@ -367,7 +375,7 @@ function showCopyToast(msg) {
 
 function handleBookmarkletClick(e) {
   e.preventDefault()
-  alert("Drag this button up to your browser's Bookmarks Bar to create a one-click bookmarklet!")
+  alert("Drag this button up to your browser's Bookmarks Bar to create a one-click macro shortcut!")
 }
 
 const allStudents = computed(() => {
@@ -1084,6 +1092,36 @@ async function commitImport() {
   color: #d97706;
   flex-shrink: 0;
   margin-top: 1px;
+}
+
+.ps-privacy-callout {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 14px;
+  padding: 10px 14px;
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  border-left: 3px solid #10b981;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  color: var(--text);
+  line-height: 1.45;
+}
+
+.ps-privacy-callout__icon {
+  color: #10b981;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.ps-privacy-callout__text {
+  flex: 1;
+}
+
+.ps-privacy-callout__text strong {
+  color: var(--text);
+  font-weight: 600;
 }
 
 .ps-copy-toast {
