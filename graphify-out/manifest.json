@@ -30,8 +30,8 @@
     "semantic_hash": "88c406405897844f80881d296bf93ee4"
   },
   "package.json": {
-    "mtime": 1789060409.0401955,
-    "ast_hash": "4fe2c78511d2201ef9cd7d6635f76869",
+    "mtime": 1790187407.3117867,
+    "ast_hash": "48ee75d68ec3fd86699d4628eef8a88b",
     "semantic_hash": ""
   },
   "public/manifest.json": {
@@ -1000,8 +1000,8 @@
     "semantic_hash": ""
   },
   "src/components/setup/SeatingLayoutDesigner.vue": {
-    "mtime": 1788367707.6919181,
-    "ast_hash": "b953e8ecbcc9dc847f0fb562c4b64c41",
+    "mtime": 1790186968.501732,
+    "ast_hash": "43078c60c10586cbe61a0cf2256b9521",
     "semantic_hash": ""
   },
   "src/components/reports/PrintSeatingChartModal.vue": {
@@ -1320,8 +1320,8 @@
     "semantic_hash": ""
   },
   "src/utils/appVersion.js": {
-    "mtime": 1789060388.3562489,
-    "ast_hash": "4d0ac4cd725080925c888fbe889957e9",
+    "mtime": 1790187414.5744524,
+    "ast_hash": "bc07b85afc0f2860df02b19c1d39ab67",
     "semantic_hash": ""
   },
   "src/components/dossier/StudentRosterEditModal.vue": {
@@ -1387,6 +1387,11 @@
   "src/utils/calendarLoader.js": {
     "mtime": 1790100366.9689546,
     "ast_hash": "ee3b6a3e29f3c403e05941c3ed2a4e6d",
+    "semantic_hash": ""
+  },
+  "src/test_seating_layout_designer_operations.js": {
+    "mtime": 1790187049.7474012,
+    "ast_hash": "3c2229a6abb1f241f085f816c4339529",
     "semantic_hash": ""
   }
 }

@@ -111,6 +111,26 @@
         />
       </div>
 
+      <!-- Quick Add Row/Column Buttons -->
+      <div class="seating-designer__quick-add-group">
+        <button 
+          type="button" 
+          class="setup__btn-ghost seating-designer__quick-add-btn" 
+          @click="insertRow(localRows + 1)" 
+          title="Add empty row at bottom"
+        >
+          <Plus :size="12" /> Row
+        </button>
+        <button 
+          type="button" 
+          class="setup__btn-ghost seating-designer__quick-add-btn" 
+          @click="insertCol(localCols + 1)" 
+          title="Add empty column at right"
+        >
+          <Plus :size="12" /> Col
+        </button>
+      </div>
+
       <!-- Mode Selector Segmented Group -->
       <div class="setup__segmented-toggle" style="margin: 0;">
         <button 
@@ -193,7 +213,68 @@
         class="seating-designer__grid-canvas"
         :style="canvasGridStyle"
       >
-        <template v-for="r in localRows" :key="r">
+        <!-- Top-Left Corner Spacer -->
+        <div class="seating-designer__corner-header" title="Seating Grid (Rows × Columns)">
+          <LayoutGrid :size="12" />
+        </div>
+
+        <!-- Top Column Headers -->
+        <div 
+          v-for="c in localCols" 
+          :key="`col-header-${c}`"
+          class="seating-designer__col-header"
+          :class="{ 'seating-designer__col-header--aisle': isColFullAisle(c) }"
+        >
+          <span class="seating-designer__header-label">C{{ c }}</span>
+          <div class="seating-designer__header-actions">
+            <button 
+              type="button" 
+              class="seating-designer__header-btn" 
+              title="Insert column to the left" 
+              @click.stop="insertCol(c)"
+            >
+              <Plus :size="10" />
+            </button>
+            <button 
+              type="button" 
+              class="seating-designer__header-btn seating-designer__header-btn--danger" 
+              title="Delete this column" 
+              @click.stop="deleteCol(c)"
+            >
+              <Trash2 :size="10" />
+            </button>
+          </div>
+        </div>
+
+        <!-- Rows: Left Row Header + Desks -->
+        <template v-for="r in localRows" :key="`row-group-${r}`">
+          <!-- Left Row Header -->
+          <div 
+            class="seating-designer__row-header"
+            :class="{ 'seating-designer__row-header--aisle': isRowFullAisle(r) }"
+          >
+            <span class="seating-designer__header-label">R{{ r }}</span>
+            <div class="seating-designer__header-actions">
+              <button 
+                type="button" 
+                class="seating-designer__header-btn" 
+                title="Insert row above" 
+                @click.stop="insertRow(r)"
+              >
+                <Plus :size="10" />
+              </button>
+              <button 
+                type="button" 
+                class="seating-designer__header-btn seating-designer__header-btn--danger" 
+                title="Delete this row" 
+                @click.stop="deleteRow(r)"
+              >
+                <Trash2 :size="10" />
+              </button>
+            </div>
+          </div>
+
+          <!-- Cells for Row r -->
           <div 
             v-for="c in localCols" 
             :key="`${r}-${c}`"
@@ -232,7 +313,7 @@
 
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted, triggerRef } from 'vue'
-import { LayoutGrid, Footprints, Armchair, Users, Save, Trash2, Undo2, Redo2, AlertCircle } from 'lucide-vue-next'
+import { LayoutGrid, Footprints, Armchair, Users, Save, Trash2, Undo2, Redo2, AlertCircle, Plus } from 'lucide-vue-next'
 import { useClassroom } from '../../composables/useClassroom.js'
 import { useMessage } from '../../composables/useMessage.js'
 import * as settingsService from '../../db/settingsService.js'
@@ -398,10 +479,43 @@ async function redoLayout() {
 /**
  * Commits layout updates while checking for and safely unseating any displaced students.
  */
+/**
+ * Prunes orphaned keys from cellTypes and pods that lie outside grid dimensions.
+ * Fixes phantom aisles / stale pods resurrecting when columns/rows are re-added.
+ */
+function pruneOrphanedLayout(cellTypesMap, podsList, rows, cols) {
+  const prunedCellTypes = {}
+  Object.entries(cellTypesMap || {}).forEach(([key, val]) => {
+    const parts = key.split('-')
+    if (parts.length === 2) {
+      const r = Number(parts[0])
+      const c = Number(parts[1])
+      if (r >= 1 && r <= rows && c >= 1 && c <= cols) {
+        prunedCellTypes[key] = val
+      }
+    }
+  })
+
+  const prunedPods = (podsList || []).map(pod => ({
+    ...pod,
+    cells: (pod.cells || []).filter(key => {
+      const parts = key.split('-')
+      if (parts.length !== 2) return false
+      const r = Number(parts[0])
+      const c = Number(parts[1])
+      return r >= 1 && r <= rows && c >= 1 && c <= cols
+    })
+  }))
+
+  return { prunedCellTypes, prunedPods }
+}
+
 async function commitLayoutWithDisplacementCheck(newCellTypes, newPods, newRows = localRows.value, newCols = localCols.value) {
   const snapshot = captureSnapshot()
   const classId = activeClass.value?.classId
   if (!classId) return
+
+  const { prunedCellTypes, prunedPods } = pruneOrphanedLayout(newCellTypes, newPods, newRows, newCols)
 
   // Identify any students whose current seat becomes an aisle or falls out of grid bounds
   const displacedStudents = []
@@ -411,7 +525,7 @@ async function commitLayoutWithDisplacementCheck(newCellTypes, newPods, newRows 
     Object.entries(students.value).forEach(([sId, s]) => {
       if (s.seat) {
         const isOutOfBounds = s.seat.row > newRows || s.seat.col > newCols
-        const isAisle = newCellTypes[`${s.seat.row}-${s.seat.col}`] === 'aisle'
+        const isAisle = prunedCellTypes[`${s.seat.row}-${s.seat.col}`] === 'aisle'
         if (isOutOfBounds || isAisle) {
           displacedStudents.push(s)
           seatUpdates[sId] = null
@@ -424,8 +538,8 @@ async function commitLayoutWithDisplacementCheck(newCellTypes, newPods, newRows 
 
   localRows.value = newRows
   localCols.value = newCols
-  cellTypes.value = { ...newCellTypes }
-  pods.value = JSON.parse(JSON.stringify(newPods))
+  cellTypes.value = { ...prunedCellTypes }
+  pods.value = JSON.parse(JSON.stringify(prunedPods))
 
   const layoutConfig = {
     cellTypes: { ...cellTypes.value },
@@ -451,6 +565,356 @@ async function commitLayoutWithDisplacementCheck(newCellTypes, newPods, newRows 
   } else {
     displacedNotice.value = null
   }
+}
+
+async function insertRow(atRowIndex) {
+  if (localRows.value >= 20) {
+    await alert('Maximum of 20 rows allowed.')
+    return
+  }
+
+  const snapshot = captureSnapshot()
+  pushLayoutUndo(snapshot)
+
+  const seatUpdates = {}
+  let hasSeatUpdates = false
+  if (students.value) {
+    Object.entries(students.value).forEach(([sId, s]) => {
+      if (s.seat && s.seat.row >= atRowIndex) {
+        seatUpdates[sId] = { row: s.seat.row + 1, col: s.seat.col }
+        hasSeatUpdates = true
+      }
+    })
+  }
+
+  const newCellTypes = {}
+  Object.entries(cellTypes.value).forEach(([key, val]) => {
+    const [r, c] = key.split('-').map(Number)
+    if (r >= atRowIndex) {
+      newCellTypes[`${r + 1}-${c}`] = val
+    } else {
+      newCellTypes[key] = val
+    }
+  })
+
+  const newPods = pods.value.map(pod => ({
+    ...pod,
+    cells: pod.cells.map(key => {
+      const [r, c] = key.split('-').map(Number)
+      if (r >= atRowIndex) {
+        return `${r + 1}-${c}`
+      }
+      return key
+    })
+  }))
+
+  const newRows = localRows.value + 1
+  const newCols = localCols.value
+  const { prunedCellTypes, prunedPods } = pruneOrphanedLayout(newCellTypes, newPods, newRows, newCols)
+
+  localRows.value = newRows
+  cellTypes.value = prunedCellTypes
+  pods.value = prunedPods
+
+  const layoutConfig = {
+    cellTypes: { ...cellTypes.value },
+    pods: JSON.parse(JSON.stringify(pods.value))
+  }
+  await updateActiveClass({
+    gridSize: { rows: newRows, cols: newCols },
+    layoutConfig
+  })
+
+  if (hasSeatUpdates && activeClass.value?.classId) {
+    await updateMultipleStudentSeats(activeClass.value.classId, seatUpdates)
+    Object.entries(seatUpdates).forEach(([sId, seat]) => {
+      if (students.value[sId]) students.value[sId].seat = seat ? { ...seat } : null
+      if (activeClass.value.students?.[sId]) activeClass.value.students[sId].seat = seat ? { ...seat } : null
+    })
+    students.value = { ...students.value }
+    triggerRef(students)
+    triggerRef(activeClass)
+  }
+}
+
+async function deleteRow(atRowIndex) {
+  if (localRows.value <= 2) {
+    await alert('Grid must have at least 2 rows.')
+    return
+  }
+
+  const occupiedStudents = Object.values(students.value || {}).filter(s => s.seat?.row === atRowIndex)
+  if (occupiedStudents.length > 0) {
+    const names = occupiedStudents.map(s => `${s.firstName} ${s.lastName?.charAt(0) || ''}.`).join(', ')
+    const ok = await confirm(`Row ${atRowIndex} contains ${occupiedStudents.length} assigned student(s): ${names}.\n\nDeleting this row will unseat them to the Unassigned Seating pool. Continue?`)
+    if (!ok) return
+  }
+
+  const snapshot = captureSnapshot()
+  pushLayoutUndo(snapshot)
+
+  const seatUpdates = {}
+  const displacedStudents = []
+  let hasSeatUpdates = false
+
+  if (students.value) {
+    Object.entries(students.value).forEach(([sId, s]) => {
+      if (s.seat) {
+        if (s.seat.row === atRowIndex) {
+          seatUpdates[sId] = null
+          displacedStudents.push(s)
+          hasSeatUpdates = true
+        } else if (s.seat.row > atRowIndex) {
+          seatUpdates[sId] = { row: s.seat.row - 1, col: s.seat.col }
+          hasSeatUpdates = true
+        }
+      }
+    })
+  }
+
+  const newCellTypes = {}
+  Object.entries(cellTypes.value).forEach(([key, val]) => {
+    const [r, c] = key.split('-').map(Number)
+    if (r === atRowIndex) {
+      // Row removed
+    } else if (r > atRowIndex) {
+      newCellTypes[`${r - 1}-${c}`] = val
+    } else {
+      newCellTypes[key] = val
+    }
+  })
+
+  const newPods = pods.value.map(pod => ({
+    ...pod,
+    cells: pod.cells
+      .filter(key => {
+        const [r] = key.split('-').map(Number)
+        return r !== atRowIndex
+      })
+      .map(key => {
+        const [r, c] = key.split('-').map(Number)
+        if (r > atRowIndex) {
+          return `${r - 1}-${c}`
+        }
+        return key
+      })
+  }))
+
+  const newRows = localRows.value - 1
+  const newCols = localCols.value
+  const { prunedCellTypes, prunedPods } = pruneOrphanedLayout(newCellTypes, newPods, newRows, newCols)
+
+  localRows.value = newRows
+  cellTypes.value = prunedCellTypes
+  pods.value = prunedPods
+
+  const layoutConfig = {
+    cellTypes: { ...cellTypes.value },
+    pods: JSON.parse(JSON.stringify(pods.value))
+  }
+  await updateActiveClass({
+    gridSize: { rows: newRows, cols: newCols },
+    layoutConfig
+  })
+
+  if (hasSeatUpdates && activeClass.value?.classId) {
+    await updateMultipleStudentSeats(activeClass.value.classId, seatUpdates)
+    Object.entries(seatUpdates).forEach(([sId, seat]) => {
+      if (students.value[sId]) students.value[sId].seat = seat ? { ...seat } : null
+      if (activeClass.value.students?.[sId]) activeClass.value.students[sId].seat = seat ? { ...seat } : null
+    })
+    students.value = { ...students.value }
+    triggerRef(students)
+    triggerRef(activeClass)
+  }
+
+  if (displacedStudents.length > 0) {
+    displacedNotice.value = `Row ${atRowIndex} deleted: ${displacedStudents.length} student${displacedStudents.length !== 1 ? 's' : ''} moved to Unassigned Seating.`
+  } else {
+    displacedNotice.value = null
+  }
+}
+
+async function insertCol(atColIndex) {
+  if (localCols.value >= 20) {
+    await alert('Maximum of 20 columns allowed.')
+    return
+  }
+
+  const snapshot = captureSnapshot()
+  pushLayoutUndo(snapshot)
+
+  const seatUpdates = {}
+  let hasSeatUpdates = false
+  if (students.value) {
+    Object.entries(students.value).forEach(([sId, s]) => {
+      if (s.seat && s.seat.col >= atColIndex) {
+        seatUpdates[sId] = { row: s.seat.row, col: s.seat.col + 1 }
+        hasSeatUpdates = true
+      }
+    })
+  }
+
+  const newCellTypes = {}
+  Object.entries(cellTypes.value).forEach(([key, val]) => {
+    const [r, c] = key.split('-').map(Number)
+    if (c >= atColIndex) {
+      newCellTypes[`${r}-${c + 1}`] = val
+    } else {
+      newCellTypes[key] = val
+    }
+  })
+
+  const newPods = pods.value.map(pod => ({
+    ...pod,
+    cells: pod.cells.map(key => {
+      const [r, c] = key.split('-').map(Number)
+      if (c >= atColIndex) {
+        return `${r}-${c + 1}`
+      }
+      return key
+    })
+  }))
+
+  const newRows = localRows.value
+  const newCols = localCols.value + 1
+  const { prunedCellTypes, prunedPods } = pruneOrphanedLayout(newCellTypes, newPods, newRows, newCols)
+
+  localCols.value = newCols
+  cellTypes.value = prunedCellTypes
+  pods.value = prunedPods
+
+  const layoutConfig = {
+    cellTypes: { ...cellTypes.value },
+    pods: JSON.parse(JSON.stringify(pods.value))
+  }
+  await updateActiveClass({
+    gridSize: { rows: newRows, cols: newCols },
+    layoutConfig
+  })
+
+  if (hasSeatUpdates && activeClass.value?.classId) {
+    await updateMultipleStudentSeats(activeClass.value.classId, seatUpdates)
+    Object.entries(seatUpdates).forEach(([sId, seat]) => {
+      if (students.value[sId]) students.value[sId].seat = seat ? { ...seat } : null
+      if (activeClass.value.students?.[sId]) activeClass.value.students[sId].seat = seat ? { ...seat } : null
+    })
+    students.value = { ...students.value }
+    triggerRef(students)
+    triggerRef(activeClass)
+  }
+}
+
+async function deleteCol(atColIndex) {
+  if (localCols.value <= 2) {
+    await alert('Grid must have at least 2 columns.')
+    return
+  }
+
+  const occupiedStudents = Object.values(students.value || {}).filter(s => s.seat?.col === atColIndex)
+  if (occupiedStudents.length > 0) {
+    const names = occupiedStudents.map(s => `${s.firstName} ${s.lastName?.charAt(0) || ''}.`).join(', ')
+    const ok = await confirm(`Column ${atColIndex} contains ${occupiedStudents.length} assigned student(s): ${names}.\n\nDeleting this column will unseat them to the Unassigned Seating pool. Continue?`)
+    if (!ok) return
+  }
+
+  const snapshot = captureSnapshot()
+  pushLayoutUndo(snapshot)
+
+  const seatUpdates = {}
+  const displacedStudents = []
+  let hasSeatUpdates = false
+
+  if (students.value) {
+    Object.entries(students.value).forEach(([sId, s]) => {
+      if (s.seat) {
+        if (s.seat.col === atColIndex) {
+          seatUpdates[sId] = null
+          displacedStudents.push(s)
+          hasSeatUpdates = true
+        } else if (s.seat.col > atColIndex) {
+          seatUpdates[sId] = { row: s.seat.row, col: s.seat.col - 1 }
+          hasSeatUpdates = true
+        }
+      }
+    })
+  }
+
+  const newCellTypes = {}
+  Object.entries(cellTypes.value).forEach(([key, val]) => {
+    const [r, c] = key.split('-').map(Number)
+    if (c === atColIndex) {
+      // Column removed
+    } else if (c > atColIndex) {
+      newCellTypes[`${r}-${c - 1}`] = val
+    } else {
+      newCellTypes[key] = val
+    }
+  })
+
+  const newPods = pods.value.map(pod => ({
+    ...pod,
+    cells: pod.cells
+      .filter(key => {
+        const [, c] = key.split('-').map(Number)
+        return c !== atColIndex
+      })
+      .map(key => {
+        const [r, c] = key.split('-').map(Number)
+        if (c > atColIndex) {
+          return `${r}-${c - 1}`
+        }
+        return key
+      })
+  }))
+
+  const newRows = localRows.value
+  const newCols = localCols.value - 1
+  const { prunedCellTypes, prunedPods } = pruneOrphanedLayout(newCellTypes, newPods, newRows, newCols)
+
+  localCols.value = newCols
+  cellTypes.value = prunedCellTypes
+  pods.value = prunedPods
+
+  const layoutConfig = {
+    cellTypes: { ...cellTypes.value },
+    pods: JSON.parse(JSON.stringify(pods.value))
+  }
+  await updateActiveClass({
+    gridSize: { rows: newRows, cols: newCols },
+    layoutConfig
+  })
+
+  if (hasSeatUpdates && activeClass.value?.classId) {
+    await updateMultipleStudentSeats(activeClass.value.classId, seatUpdates)
+    Object.entries(seatUpdates).forEach(([sId, seat]) => {
+      if (students.value[sId]) students.value[sId].seat = seat ? { ...seat } : null
+      if (activeClass.value.students?.[sId]) activeClass.value.students[sId].seat = seat ? { ...seat } : null
+    })
+    students.value = { ...students.value }
+    triggerRef(students)
+    triggerRef(activeClass)
+  }
+
+  if (displacedStudents.length > 0) {
+    displacedNotice.value = `Column ${atColIndex} deleted: ${displacedStudents.length} student${displacedStudents.length !== 1 ? 's' : ''} moved to Unassigned Seating.`
+  } else {
+    displacedNotice.value = null
+  }
+}
+
+function isRowFullAisle(r) {
+  for (let c = 1; c <= localCols.value; c++) {
+    if (!isCellAisle(r, c)) return false
+  }
+  return true
+}
+
+function isColFullAisle(c) {
+  for (let r = 1; r <= localRows.value; r++) {
+    if (!isCellAisle(r, c)) return false
+  }
+  return true
 }
 
 const canvasGridStyle = computed(() => {
@@ -502,8 +966,8 @@ const canvasGridStyle = computed(() => {
   }
 
   return {
-    gridTemplateColumns: colTracks.join(' '),
-    gridTemplateRows: rowTracks.join(' ')
+    gridTemplateColumns: ['46px', ...colTracks].join(' '),
+    gridTemplateRows: ['28px', ...rowTracks].join(' ')
   }
 })
 
@@ -933,6 +1397,34 @@ async function onLoadSavedPreset() {
   color: #1e40af;
 }
 
+.seating-designer__quick-add-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.seating-designer__quick-add-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.seating-designer__quick-add-btn:hover {
+  background: var(--surface-hover);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
 .seating-designer__canvas-container {
   overflow-x: auto;
   padding: 4px;
@@ -943,6 +1435,129 @@ async function onLoadSavedPreset() {
   gap: 4px;
   min-height: 240px;
   width: 100%;
+}
+
+/* Row & Column Headers */
+.seating-designer__corner-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-secondary);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  opacity: 0.7;
+}
+
+.seating-designer__col-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  position: relative;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  user-select: none;
+  transition: all 0.15s ease;
+  min-height: 28px;
+  min-width: 0;
+}
+
+.seating-designer__col-header:hover {
+  background: var(--surface-hover);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.seating-designer__col-header--aisle {
+  opacity: 0.6;
+  border-style: dashed;
+}
+
+.seating-designer__row-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  position: relative;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  user-select: none;
+  transition: all 0.15s ease;
+  padding: 2px 4px;
+  min-width: 0;
+}
+
+.seating-designer__row-header:hover {
+  background: var(--surface-hover);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.seating-designer__row-header--aisle {
+  opacity: 0.6;
+  border-style: dashed;
+}
+
+.seating-designer__header-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.seating-designer__header-actions {
+  display: none;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border-radius: var(--radius-sm);
+  padding: 2px 4px;
+  z-index: 30;
+  gap: 3px;
+  align-items: center;
+  white-space: nowrap;
+}
+
+.seating-designer__col-header:hover .seating-designer__header-actions,
+.seating-designer__row-header:hover .seating-designer__header-actions {
+  display: flex;
+}
+
+.seating-designer__header-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 3px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.12s ease;
+}
+
+.seating-designer__header-btn:hover {
+  background: var(--surface-hover);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.seating-designer__header-btn--danger:hover {
+  background: #fee2e2;
+  border-color: #ef4444;
+  color: #dc2626;
 }
 
 .seating-designer__cell {
