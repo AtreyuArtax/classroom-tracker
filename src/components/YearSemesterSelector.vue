@@ -49,8 +49,8 @@ const uniqueYears = computed(() => {
 })
 
 const uniqueSemesters = computed(() => {
-  const sems = new Set(allPossibleClasses.value.map(c => c.semester).filter(Boolean))
-  if (selectedSemester.value) sems.add(selectedSemester.value)
+  const sems = new Set(allPossibleClasses.value.map(c => (c.semester != null && c.semester !== '') ? String(c.semester) : null).filter(Boolean))
+  if (selectedSemester.value) sems.add(String(selectedSemester.value))
   return Array.from(sems).sort()
 })
 

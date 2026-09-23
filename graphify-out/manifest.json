@@ -140,8 +140,8 @@
     "semantic_hash": ""
   },
   "src/components/YearSemesterSelector.vue": {
-    "mtime": 1788313659.6742427,
-    "ast_hash": "638d895d9eb7e1abf928e3ddf428994d",
+    "mtime": 1790184473.9387565,
+    "ast_hash": "6705effbc56683b69f79507c90e4ffc6",
     "semantic_hash": ""
   },
   "src/components/dossier/AddAssessmentModal.vue": {
@@ -240,8 +240,8 @@
     "semantic_hash": ""
   },
   "src/composables/useClassroom.js": {
-    "mtime": 1790100399.4617739,
-    "ast_hash": "13f7778be9c0eff5ae44eda3b43ffd4e",
+    "mtime": 1790184462.3361936,
+    "ast_hash": "691700b36d47492af5b0bb006934128b",
     "semantic_hash": ""
   },
   "src/composables/useGradebook.js": {
@@ -355,8 +355,8 @@
     "semantic_hash": ""
   },
   "src/views/Setup.vue": {
-    "mtime": 1790175589.7236774,
-    "ast_hash": "f907472227822475dbf205dbdb34fd04",
+    "mtime": 1790185306.8111262,
+    "ast_hash": "19bb7365d5dd6455c9cac4562a8d8673",
     "semantic_hash": ""
   },
   "tmp/test_dates.js": {

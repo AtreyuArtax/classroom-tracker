@@ -110,7 +110,7 @@ const archivedRoster = computed(() =>
 const filteredClassList = computed(() => {
     return classList.value.filter(c => {
         const matchesYear = !selectedYear.value || c.year === selectedYear.value
-        const matchesSem  = !selectedSemester.value || teachingMode.value === 'elementary' || c.semester === selectedSemester.value
+        const matchesSem  = !selectedSemester.value || teachingMode.value === 'elementary' || String(c.semester) === String(selectedSemester.value)
         const cType = c.classType || (c.subjects && c.subjects.length > 0 ? 'elementary' : 'secondary')
         const matchesType = cType === teachingMode.value
         return matchesYear && matchesSem && matchesType
@@ -121,7 +121,7 @@ const filteredClassList = computed(() => {
 const filteredArchivedClasses = computed(() => {
     return archivedClasses.value.filter(c => {
         const matchesYear = !selectedYear.value || c.year === selectedYear.value
-        const matchesSem  = !selectedSemester.value || teachingMode.value === 'elementary' || c.semester === selectedSemester.value
+        const matchesSem  = !selectedSemester.value || teachingMode.value === 'elementary' || String(c.semester) === String(selectedSemester.value)
         const cType = c.classType || (c.subjects && c.subjects.length > 0 ? 'elementary' : 'secondary')
         const matchesType = cType === teachingMode.value
         return matchesYear && matchesSem && matchesType
@@ -626,7 +626,7 @@ async function init() {
     if (active.length > 0 && filteredClassList.value.length === 0) {
         const firstClass = active[0]
         if (firstClass.year) selectedYear.value = firstClass.year
-        if (firstClass.semester && teachingMode.value !== 'elementary') selectedSemester.value = firstClass.semester
+        if (firstClass.semester && teachingMode.value !== 'elementary') selectedSemester.value = String(firstClass.semester)
         if (firstClass.classType) teachingMode.value = firstClass.classType
     }
 
@@ -809,6 +809,14 @@ async function updateActiveClass(updates) {
         activeClass.value[key] = val
         const cls = classList.value.find(c => c.classId === classId)
         if (cls) cls[key] = val
+
+        // Keep global session context in lockstep if year or semester is modified
+        if (key === 'year' && val) {
+            selectedYear.value = val
+        }
+        if (key === 'semester' && val) {
+            selectedSemester.value = String(val)
+        }
 
         // Special case: if gridSize is updated, sync the global ref
         if (key === 'gridSize') {
@@ -1729,9 +1737,27 @@ async function _activateClass(cls) {
     }
 
     activeClass.value = cls
+    const resolvedType = cls.classType || (cls.subjects && cls.subjects.length > 0 ? 'elementary' : 'secondary')
+    if (teachingMode.value !== resolvedType) {
+        teachingMode.value = resolvedType
+    }
     if (cls.year) {
         selectedYear.value = cls.year
     }
+    if (resolvedType === 'elementary') {
+        selectedSemester.value = '1'
+    } else if (cls.semester) {
+        selectedSemester.value = String(cls.semester)
+    } else {
+        selectedSemester.value = '1'
+    }
+
+    // Keep classList entry in sync with active instance
+    const cachedIdx = classList.value.findIndex(c => c.classId === cls.classId)
+    if (cachedIdx !== -1) {
+        classList.value[cachedIdx] = cls
+    }
+
     // Deep-copy students map so Vue can track nested mutations
     students.value = JSON.parse(JSON.stringify(cls.students ?? {}))
     

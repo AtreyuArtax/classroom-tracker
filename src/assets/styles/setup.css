@@ -489,6 +489,141 @@
   padding:         4px 0;
 }
 
+/* ── Academic Year & Session Grouping (Manage Classes) ───────────── */
+.setup__year-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.setup__year-group {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg, 10px);
+  background: var(--bg-card, var(--surface));
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+
+.setup__year-group--current {
+  border-color: rgba(var(--primary-rgb, 59, 130, 246), 0.5);
+  box-shadow: 0 2px 10px rgba(var(--primary-rgb, 59, 130, 246), 0.07);
+}
+
+.setup__year-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 13px 18px;
+  background: var(--bg-secondary);
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s ease;
+  gap: 12px;
+}
+
+.setup__year-header:hover {
+  background: var(--bg-hover);
+}
+
+.setup__year-header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.setup__year-icon {
+  color: var(--primary);
+  opacity: 0.9;
+  flex-shrink: 0;
+}
+
+.setup__year-title {
+  font-size: 1.02rem;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.01em;
+}
+
+.setup__year-header-right {
+  display: flex;
+  align-items: center;
+  color: var(--text-secondary);
+}
+
+.setup__year-body {
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  border-top: 1px solid var(--border);
+  background: rgba(0, 0, 0, 0.015);
+}
+
+/* Semester card inside a School Year */
+.setup__session-group {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-card, var(--surface));
+  overflow: hidden;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.setup__session-group--current {
+  border-color: rgba(var(--primary-rgb, 59, 130, 246), 0.35);
+}
+
+.setup__session-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: var(--bg-card, var(--surface));
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s ease;
+  gap: 12px;
+}
+
+.setup__session-header:hover {
+  background: var(--bg-hover);
+}
+
+.setup__session-header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.setup__session-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.setup__session-body {
+  padding: 10px 12px;
+  border-top: 1px solid var(--border);
+  background: var(--bg-secondary);
+}
+
+.setup__segmented-toggle--compact {
+  margin-top: 0;
+  padding: 2px;
+}
+
+.setup__segmented-toggle--compact .setup__segmented-btn {
+  padding: 5px 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+}
+
 .setup__archived-label {
   display: flex;
   align-items: center;

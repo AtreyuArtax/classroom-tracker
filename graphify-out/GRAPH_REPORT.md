@@ -1,23 +1,22 @@
 # Graph Report - classroom-tracker  (2026-09-23)
 
 ## Corpus Check
-- 278 files · ~570,578 words
+- 278 files · ~571,468 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1893 nodes · 3195 edges · 167 communities (149 shown, 18 thin omitted)
+- 1893 nodes · 3195 edges · 166 communities (148 shown, 18 thin omitted)
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 9 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `64237a9c`
+- Built from commit: `735527f2`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
 ## Community Hubs (Navigation)
 - [[_COMMUNITY_Community 0|Community 0]]
 - [[_COMMUNITY_Community 1|Community 1]]
-- [[_COMMUNITY_Community 2|Community 2]]
 - [[_COMMUNITY_Community 3|Community 3]]
 - [[_COMMUNITY_Community 4|Community 4]]
 - [[_COMMUNITY_Community 5|Community 5]]
@@ -148,7 +147,7 @@
 ## Import Cycles
 - None detected.
 
-## Communities (167 total, 18 thin omitted)
+## Communities (166 total, 18 thin omitted)
 
 ### Community 0 - "Community 0"
 Cohesion: 0.05
@@ -157,10 +156,6 @@ Nodes (40): archivedRoster, dismissedSuggestions, dismissSuggestion(), filteredA
 ### Community 1 - "Community 1"
 Cohesion: 0.06
 Nodes (49): getUnitGradeLevel(), addAssessment(), adjustStudentGrade(), analyticsEvidenceScope, assessmentSortOrder, assessmentStats, assessmentTypes, availableCourseFilters (+41 more)
-
-### Community 2 - "Community 2"
-Cohesion: 0.26
-Nodes (19): getSettings(), getAssessmentsByClass(), calculateAssessmentAnalytics(), calculateClassAnalytics(), getExclusionResults(), buildDistributionBuckets(), buildLevelDistributionBuckets(), _calculateCategoryGrade() (+11 more)
 
 ### Community 3 - "Community 3"
 Cohesion: 0.07
@@ -223,8 +218,8 @@ Cohesion: 0.07
 Nodes (41): confirmImport(), detectedSubjects, emit, errorMsg, fileInputRef, handleDrop(), handleFileSelect(), isDragging (+33 more)
 
 ### Community 20 - "Community 20"
-Cohesion: 0.31
-Nodes (6): hasUnsyncedChanges, calculatePercentChange(), ensureFiniteNumber(), preciseRound(), safeDivide(), safeMean()
+Cohesion: 0.20
+Nodes (14): hasUnsyncedChanges, getSettings(), getAssessmentsByClass(), calculateClassGrades(), calculateMostConsistent(), calculateWeightedMedian(), getAssessmentPercentage(), getGradesByClass() (+6 more)
 
 ### Community 21 - "Community 21"
 Cohesion: 0.11
@@ -363,7 +358,7 @@ Nodes (17): aliciaOverall, ast1, ast2, ast3, bobOverall, decayingRes, gradeMap1,
 
 ### Community 88 - "Community 88"
 Cohesion: 0.12
-Nodes (14): mockAssessments, mockClassWithStrings, mockGrades, mockMasteryPreRef, mockSbarAssessments, mockSbarClass, n0, n1 (+6 more)
+Nodes (25): calculateAssessmentAnalytics(), calculateClassAnalytics(), getExclusionResults(), buildDistributionBuckets(), buildLevelDistributionBuckets(), _calculateCategoryGrade(), calculateMedian(), calculateStandardDeviation() (+17 more)
 
 ### Community 91 - "Community 91"
 Cohesion: 0.20
@@ -529,7 +524,7 @@ Nodes (11): curriculumEditorDirty, curriculumEditorDiscardHandler, curriculumEdi
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `getDB()` connect `Community 23` to `Community 0`, `Community 2`, `Community 35`, `Community 164`, `Community 3`, `Community 5`, `Community 165`, `Community 9`, `Community 155`, `Community 81`, `Community 20`, `Community 21`, `Community 85`, `Community 151`, `Community 123`, `Community 158`?**
+- **Why does `getDB()` connect `Community 23` to `Community 0`, `Community 35`, `Community 164`, `Community 3`, `Community 5`, `Community 165`, `Community 9`, `Community 155`, `Community 81`, `Community 20`, `Community 21`, `Community 85`, `Community 151`, `Community 88`, `Community 123`, `Community 158`?**
   _High betweenness centrality (0.138) - this node is a cross-community bridge._
 - **Why does `openDB()` connect `Community 5` to `Community 94`, `Community 23`?**
   _High betweenness centrality (0.087) - this node is a cross-community bridge._
