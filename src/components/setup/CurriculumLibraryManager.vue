@@ -351,7 +351,19 @@
         </div>
       </div>
 
-      <!-- Strands & Expectations List -->
+      <!-- Strands Toolbar & Expectations List -->
+      <div class="curriculum-editor__strands-toolbar" style="display: flex; justify-content: flex-end; align-items: center; margin-bottom: 8px;">
+        <button 
+          type="button" 
+          class="setup__btn-ghost setup__btn-xs"
+          style="display: flex; align-items: center; gap: 6px; padding: 4px 10px; font-size: 0.78rem;"
+          @click="toggleAllStrands"
+        >
+          <ChevronDown :size="13" class="setup__accordion-chevron" :class="{ 'setup__accordion-chevron--expanded': !areAllStrandsCollapsed }" />
+          <span>{{ areAllStrandsCollapsed ? 'Expand All Strands' : 'Collapse All Strands' }}</span>
+        </button>
+      </div>
+
       <div class="curriculum-editor__strands-container">
         <div 
           v-for="(strand, sIdx) in editorStrands" 
@@ -359,8 +371,17 @@
           class="curriculum-strand-block"
         >
           <!-- Strand Header -->
-          <div class="curriculum-strand-header">
-            <div class="strand-title-group">
+          <div class="curriculum-strand-header" style="cursor: pointer;" @click="toggleStrandCollapse(strand, sIdx)">
+            <div class="strand-title-group" @click.stop>
+              <button 
+                type="button" 
+                class="setup__icon-btn" 
+                style="padding: 3px; margin-right: 4px; color: var(--text-secondary);"
+                :title="isStrandCollapsed(strand, sIdx) ? 'Expand Strand' : 'Collapse Strand'"
+                @click.stop="toggleStrandCollapse(strand, sIdx)"
+              >
+                <ChevronDown :size="15" class="setup__accordion-chevron" :class="{ 'setup__accordion-chevron--expanded': !isStrandCollapsed(strand, sIdx) }" />
+              </button>
               <Layers :size="15" class="strand-icon" />
               <input 
                 v-model="strand.name" 
@@ -377,7 +398,7 @@
                 type="button" 
                 class="strand-delete-btn" 
                 title="Remove Strand"
-                @click="removeEditorStrand(sIdx)"
+                @click.stop="removeEditorStrand(sIdx)"
               >
                 <Trash2 :size="13" />
               </button>
@@ -385,7 +406,7 @@
           </div>
 
           <!-- Expectations in this Strand -->
-          <div class="curriculum-strand-exps">
+          <div v-if="!isStrandCollapsed(strand, sIdx)" class="curriculum-strand-exps">
             <!-- Empty Strand State with Restore Button -->
             <div v-if="strand.expectations.length === 0" class="curriculum-strand-empty">
               <div class="strand-empty-msg">
@@ -553,7 +574,8 @@ import {
   Target,
   Sparkles,
   BookPlus,
-  ArrowUpRight
+  ArrowUpRight,
+  ChevronDown
 } from 'lucide-vue-next'
 import CurriculumBlueprintImportModal from './CurriculumBlueprintImportModal.vue'
 import CurriculumSyncModal from './CurriculumSyncModal.vue'
@@ -605,6 +627,41 @@ const isSyncModalOpen = ref(false)
 const syncModalClasses = ref([])
 const syncModalPreset = ref(null)
 
+// ─── Strand Collapsibility (Session State) ──────────────────────────
+const collapsedStrandKeys = ref(new Set())
+
+function getStrandKey(strand, sIdx) {
+  return strand.id || strand.name || String(sIdx)
+}
+
+function isStrandCollapsed(strand, sIdx) {
+  return collapsedStrandKeys.value.has(getStrandKey(strand, sIdx))
+}
+
+function toggleStrandCollapse(strand, sIdx) {
+  const key = getStrandKey(strand, sIdx)
+  if (collapsedStrandKeys.value.has(key)) {
+    collapsedStrandKeys.value.delete(key)
+  } else {
+    collapsedStrandKeys.value.add(key)
+  }
+}
+
+const areAllStrandsCollapsed = computed(() => {
+  if (!editorStrands.value || editorStrands.value.length === 0) return false
+  return editorStrands.value.every((s, idx) => collapsedStrandKeys.value.has(getStrandKey(s, idx)))
+})
+
+function toggleAllStrands() {
+  if (areAllStrandsCollapsed.value) {
+    collapsedStrandKeys.value.clear()
+  } else {
+    editorStrands.value.forEach((s, idx) => {
+      collapsedStrandKeys.value.add(getStrandKey(s, idx))
+    })
+  }
+}
+
 // ─── Dirty-state tracking & Unsaved Changes Protection ─────────────
 const loadedPresetSnapshot = ref('')
 
@@ -642,6 +699,7 @@ function clearEditorState() {
   undoStack.value = []
   lastUndoNotice.value = ''
   curriculumEditorDirty.value = false
+  collapsedStrandKeys.value = new Set()
 }
 
 watch(isDirty, (dirty) => {
@@ -904,6 +962,7 @@ function loadPresetToEditor(preset) {
   clearGlobalUndo()
   undoStack.value = []
   lastUndoNotice.value = ''
+  collapsedStrandKeys.value = new Set()
   
   // Transform strands into uniform editable format with expectations array
   const strandsList = []

@@ -133,6 +133,21 @@
               </p>
             </div>
 
+            <!-- Dashboard Display Preferences -->
+            <div class="setup__label" style="grid-column: 1 / -1; margin-top: 4px; padding-top: 12px; border-top: 1px solid var(--border-subtle, rgba(255,255,255,0.08));">
+              Dashboard Display
+              <div class="setup__switch-container" style="margin-top: 8px;">
+                <label class="setup__switch">
+                  <input type="checkbox" v-model="showDeskPhotos" />
+                  <span class="setup__switch-slider"></span>
+                </label>
+                <span class="setup__switch-label">Show Student Headshots on Dashboard Desk Tiles</span>
+              </div>
+              <p class="setup__hint" style="margin-top: 4px; font-size: 0.76rem;">
+                When enabled, captured student photos appear directly on classroom desk tiles.
+              </p>
+            </div>
+
             <!-- Version & Update Status -->
             <div class="setup__version-info-row" style="grid-column: 1 / -1; margin-top: 8px; padding-top: 14px; border-top: 1px solid var(--border-subtle, rgba(255,255,255,0.08)); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
               <div style="display: flex; flex-direction: column; gap: 3px;">
@@ -452,7 +467,7 @@
             <span class="setup__archived-label">
               <Archive :size="16" /> Archived Classes ({{ (showAllSessions ? modeAllArchivedClasses : filteredArchivedClasses).length }})
             </span>
-            <span class="setup__archived-chevron"><component :is="isArchivedPanelVisible ? ChevronUp : ChevronDown" :size="16" /></span>
+            <span class="setup__archived-chevron"><ChevronDown :size="16" class="setup__accordion-chevron" :class="{ 'setup__accordion-chevron--expanded': isArchivedPanelVisible }" /></span>
           </button>
           <ul v-if="isArchivedPanelVisible" class="setup__class-list setup__archived-list">
             <li v-for="cls in (showAllSessions ? modeAllArchivedClasses : filteredArchivedClasses)" :key="cls.classId" class="setup__class-item setup__class-item--archived">
@@ -596,7 +611,7 @@
                 >
                   <Info :size="14" />
                   <span>{{ isCsvHelpOpen ? 'Hide CSV Format Guide' : 'Show Roster Format & PowerSchool CSV Help' }}</span>
-                  <component :is="isCsvHelpOpen ? ChevronUp : ChevronDown" :size="14" />
+                  <ChevronDown :size="14" class="setup__accordion-chevron" :class="{ 'setup__accordion-chevron--expanded': isCsvHelpOpen }" />
                 </button>
                 <Transition name="csv-fade">
                   <CsvHelpGuide v-if="isCsvHelpOpen" />
@@ -1028,6 +1043,7 @@ import { useClassroom } from '../composables/useClassroom.js'
 import { useMessage } from '../composables/useMessage.js'
 import { detectGradeFromClassName } from '../composables/useElementary.js'
 import { useTheme } from '../composables/useTheme.js'
+import { showDeskPhotos } from '../composables/useStudentPhotos.js'
 import { getDB } from '../db/index.js'
 import { APP_VERSION, SCHEMA_VERSION, forceAppUpdate } from '../utils/appVersion.js'
 

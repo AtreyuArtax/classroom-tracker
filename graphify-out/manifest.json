@@ -355,8 +355,8 @@
     "semantic_hash": ""
   },
   "src/views/Setup.vue": {
-    "mtime": 1790102068.654773,
-    "ast_hash": "ac371d6e90bd7999475e178e2eeeae93",
+    "mtime": 1790175589.7236774,
+    "ast_hash": "f907472227822475dbf205dbdb34fd04",
     "semantic_hash": ""
   },
   "tmp/test_dates.js": {
@@ -400,8 +400,8 @@
     "semantic_hash": ""
   },
   "src/components/setup/AssessmentFrameworkSettings.vue": {
-    "mtime": 1788795756.835272,
-    "ast_hash": "1e11c4c82a7a84bdd3019e0fdf60e985",
+    "mtime": 1790175661.6247303,
+    "ast_hash": "8b7f92406cbb23becb41be06c68845c6",
     "semantic_hash": ""
   },
   "src/composables/useGradeEditing.js": {
@@ -445,8 +445,8 @@
     "semantic_hash": ""
   },
   "src/components/setup/ClassLogisticsSettings.vue": {
-    "mtime": 1789060919.011721,
-    "ast_hash": "e6e70b005d39a4ec638c97d10782c5a5",
+    "mtime": 1790175627.5632067,
+    "ast_hash": "501480fc5eda1c2e337e1ab3f599dc1a",
     "semantic_hash": ""
   },
   "src/components/setup/DatabaseMaintenanceSettings.vue": {
@@ -610,8 +610,8 @@
     "semantic_hash": ""
   },
   "src/components/setup/ElementarySubjectManager.vue": {
-    "mtime": 1790083447.0020752,
-    "ast_hash": "3012da1192dbe227ba6b17c18ba80532",
+    "mtime": 1790175742.045531,
+    "ast_hash": "d26071f47287c9132346f23feec9425c",
     "semantic_hash": ""
   },
   "src/utils/elementarySubjects.js": {
@@ -1225,8 +1225,8 @@
     "semantic_hash": ""
   },
   "src/components/setup/CurriculumLibraryManager.vue": {
-    "mtime": 1790087516.6063173,
-    "ast_hash": "b5763cdd12361d0023bd8b44fb83fee8",
+    "mtime": 1790175719.2743676,
+    "ast_hash": "0d0895621dd2bdb4a064d9740b5de6d2",
     "semantic_hash": ""
   },
   "src/components/setup/ExpectationWeightBadge.vue": {

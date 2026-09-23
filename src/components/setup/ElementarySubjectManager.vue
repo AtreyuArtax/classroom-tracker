@@ -89,7 +89,7 @@
               title="View & Edit Curriculum Expectations"
               @click="expandedStrandSubjectId = expandedStrandSubjectId === sub.subjectId ? null : sub.subjectId"
             >
-              <ChevronDown :size="13" :style="{ transform: expandedStrandSubjectId === sub.subjectId ? 'rotate(180deg)' : 'none' }" />
+              <ChevronDown :size="13" class="setup__accordion-chevron" :class="{ 'setup__accordion-chevron--expanded': expandedStrandSubjectId === sub.subjectId }" />
               <span style="white-space: nowrap;">Expectations ({{ sub.expectations?.length || 0 }})</span>
             </button>
 
@@ -101,7 +101,7 @@
               title="Edit Category Weights"
               @click="expandedCategorySubjectId = expandedCategorySubjectId === sub.subjectId ? null : sub.subjectId"
             >
-              <ChevronDown :size="13" :style="{ transform: expandedCategorySubjectId === sub.subjectId ? 'rotate(180deg)' : 'none' }" />
+              <ChevronDown :size="13" class="setup__accordion-chevron" :class="{ 'setup__accordion-chevron--expanded': expandedCategorySubjectId === sub.subjectId }" />
               <span style="white-space: nowrap;">Categories ({{ (sub.gradebookCategories && sub.gradebookCategories.length > 0 ? sub.gradebookCategories : DEFAULT_TRADITIONAL_CATEGORIES).length }})</span>
             </button>
 

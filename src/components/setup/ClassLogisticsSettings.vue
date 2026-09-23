@@ -218,18 +218,6 @@
           <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
             <button 
               type="button" 
-              class="setup__btn-ghost" 
-              style="display: flex; align-items: center; gap: 8px; padding: 8px 14px; font-size: 0.85rem; font-weight: 600;"
-              :class="{ 'setup__btn-ghost--active': showDeskPhotos }"
-              @click="showDeskPhotos = !showDeskPhotos"
-              title="Toggle whether student photos appear on dashboard desk tiles"
-            >
-              <Camera :size="16" />
-              <span>Dashboard Photos: <strong>{{ showDeskPhotos ? 'ON' : 'OFF' }}</strong></span>
-            </button>
-
-            <button 
-              type="button" 
               class="setup__btn-primary" 
               style="display: flex; align-items: center; gap: 8px; padding: 8px 18px; font-size: 0.88rem; font-weight: 700;"
               @click="isDesignerModalOpen = true"
@@ -255,26 +243,89 @@
       <div class="setup__card" id="sec-roster">
         <div class="setup__card-header-row" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
           <div style="display: flex; align-items: center; gap: 8px; cursor: pointer; flex-shrink: 0;" @click="toggleRoster">
-            <component :is="isRosterExpanded ? ChevronUp : ChevronDown" :size="18" style="color: var(--text-muted);" />
+            <ChevronDown :size="18" class="setup__accordion-chevron" :class="{ 'setup__accordion-chevron--expanded': isRosterExpanded }" style="color: var(--text-muted);" />
             <h2 class="setup__card-title" style="margin: 0; white-space: nowrap;">Roster — {{ sortedRoster.length }} Students</h2>
           </div>
-          <div class="setup__card-actions" style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
-            <button class="setup__btn-ghost" @click="isStudentSurveyOpen = true" title="Download MS Forms template or import Day 1 student information survey">
-              <FileText :size="16" /> Student Survey
-            </button>
-            <button class="setup__btn-ghost" @click="isRapidPhotosOpen = true" title="Open webcam booth to rapidly photograph students">
-              <Camera :size="16" /> Rapid Photos
-            </button>
-            <button class="setup__btn-ghost" @click="isBatchPhotosOpen = true" title="Batch import student photos from folder">
-              <FolderOpen :size="16" /> Import Photos Folder
-            </button>
-            <button v-if="showScannerButton" class="setup__btn-ghost" @click="openRapidRFID" title="Rapidly scan RFID tags to assign to students">
-              <Zap :size="16" /> Rapid RFID
-            </button>
-            <button v-if="showScannerButton" class="setup__btn-ghost" @click="isQrModalOpen = true" title="Generate and print unique student QR codes for kiosk scanning & attendance">
-              <QrCode :size="16" /> Print QR Codes
-            </button>
-            <button class="setup__btn-primary setup__btn-add-student" @click="openAddStudentModal">
+          <div class="setup__card-actions" style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center; position: relative;">
+            <!-- Consolidated Roster Tools Dropdown -->
+            <div class="setup__dropdown-container" ref="rosterToolsContainer">
+              <button 
+                type="button" 
+                class="setup__btn-ghost" 
+                style="display: flex; align-items: center; gap: 6px; padding: 0 12px; height: 36px; font-size: 0.85rem;"
+                :class="{ 'setup__btn-ghost--active': isRosterToolsOpen }"
+                @click="isRosterToolsOpen = !isRosterToolsOpen"
+                title="Roster tools, photo capture, and badges"
+              >
+                <SlidersHorizontal :size="15" />
+                <span>Roster Tools</span>
+                <ChevronDown :size="14" class="setup__accordion-chevron" :class="{ 'setup__accordion-chevron--expanded': isRosterToolsOpen }" />
+              </button>
+
+              <div 
+                v-if="isRosterToolsOpen" 
+                class="setup__dropdown-menu"
+              >
+                <div class="setup__dropdown-header">
+                  Student Photos
+                </div>
+                <button 
+                  type="button" 
+                  class="setup__dropdown-item" 
+                  @click="isRapidPhotosOpen = true; isRosterToolsOpen = false;"
+                >
+                  <Camera :size="15" />
+                  <span>Rapid Photo Booth</span>
+                </button>
+                <button 
+                  type="button" 
+                  class="setup__dropdown-item" 
+                  @click="isBatchPhotosOpen = true; isRosterToolsOpen = false;"
+                >
+                  <FolderOpen :size="15" />
+                  <span>Import Photos Folder</span>
+                </button>
+
+                <template v-if="showScannerButton">
+                  <div class="setup__dropdown-divider"></div>
+                  <div class="setup__dropdown-header">
+                    Badges &amp; Scanner
+                  </div>
+                  <button 
+                    type="button" 
+                    class="setup__dropdown-item" 
+                    @click="isQrModalOpen = true; isRosterToolsOpen = false;"
+                  >
+                    <QrCode :size="15" />
+                    <span>Print Student QR Codes</span>
+                  </button>
+                  <button 
+                    type="button" 
+                    class="setup__dropdown-item" 
+                    @click="openRapidRFID(); isRosterToolsOpen = false;"
+                  >
+                    <Zap :size="15" />
+                    <span>Rapid RFID Linker</span>
+                  </button>
+                </template>
+
+                <div class="setup__dropdown-divider"></div>
+                <div class="setup__dropdown-header">
+                  Surveys &amp; Intake
+                </div>
+                <button 
+                  type="button" 
+                  class="setup__dropdown-item" 
+                  @click="isStudentSurveyOpen = true; isRosterToolsOpen = false;"
+                >
+                  <FileText :size="15" />
+                  <span>Day 1 Student Survey</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Primary Add Student Button -->
+            <button class="setup__btn-primary setup__btn-add-student" style="height: 36px;" @click="openAddStudentModal">
               <PlusCircle :size="16" /> Add Student
             </button>
           </div>
@@ -323,7 +374,7 @@
             <span class="setup__archived-label">
               <UserMinus :size="16" style="opacity: 0.6" /> Unenrolled ({{ archivedRoster.length }})
             </span>
-            <span class="setup__archived-chevron"><component :is="isArchivedPanelVisible ? ChevronUp : ChevronDown" :size="16" /></span>
+            <span class="setup__archived-chevron"><ChevronDown :size="16" class="setup__accordion-chevron" :class="{ 'setup__accordion-chevron--expanded': isArchivedPanelVisible }" /></span>
           </button>
           <ul v-if="isArchivedPanelVisible" class="setup__roster-list" style="margin-top: 0.5rem; opacity: 0.7;">
             <li v-for="s in archivedRoster" :key="s.studentId" class="setup__roster-item">
@@ -821,12 +872,11 @@
 </template>
 
 <script setup>
-import { ref, reactive, watch, computed, onMounted } from 'vue'
+import { ref, reactive, watch, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { useClassroom } from '../../composables/useClassroom.js'
 import { availableSubCohorts } from '../../composables/useGradebook.js'
 import { useKeyboardWedge } from '../../composables/useKeyboardWedge.js'
 import { useMessage } from '../../composables/useMessage.js'
-import { useStudentPhotos } from '../../composables/useStudentPhotos.js'
 import * as classService from '../../db/classService.js'
 import * as gradebookService from '../../db/gradebookService.js'
 import BaseModal from '../BaseModal.vue'
@@ -868,7 +918,8 @@ import {
   Calendar,
   Users,
   Plus,
-  FileText
+  FileText,
+  SlidersHorizontal
 } from 'lucide-vue-next'
 import { getEffectiveGradeLevel } from '../../composables/useElementary.js'
 
@@ -879,11 +930,63 @@ const emit = defineEmits(['open-add-class'])
 
 const activeSubTab = ref(props.initialSubtab || 'logistics')
 
-watch(() => props.initialSubtab, (val) => {
-  if (val) activeSubTab.value = val
+function scrollToSubtabSection(subtab) {
+  if (!subtab || subtab === 'logistics') return
+  nextTick(() => {
+    setTimeout(() => {
+      let targetId = null
+      if (subtab === 'grading') {
+        targetId = activeClass.value?.classType === 'elementary' ? 'sec-elem-subjects' : 'sec-grading-model'
+      } else if (subtab === 'students' || subtab === 'roster') {
+        targetId = 'sec-roster'
+        if (!isRosterExpanded.value) isRosterExpanded.value = true
+      } else if (subtab === 'seating') {
+        targetId = 'sec-seating'
+      }
+      if (targetId) {
+        const el = document.getElementById(targetId)
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        }
+      }
+    }, 150)
+  })
+}
+
+onMounted(() => {
+  document.addEventListener('click', handleDocumentClick)
+  document.addEventListener('keydown', handleDocumentKeydown)
+  if (props.initialSubtab) {
+    scrollToSubtabSection(props.initialSubtab)
+  }
 })
 
-const { showDeskPhotos } = useStudentPhotos()
+onUnmounted(() => {
+  document.removeEventListener('click', handleDocumentClick)
+  document.removeEventListener('keydown', handleDocumentKeydown)
+})
+
+watch(() => props.initialSubtab, (val) => {
+  if (val) {
+    activeSubTab.value = val
+    scrollToSubtabSection(val)
+  }
+})
+
+const isRosterToolsOpen = ref(false)
+const rosterToolsContainer = ref(null)
+
+function handleDocumentClick(e) {
+  if (isRosterToolsOpen.value && rosterToolsContainer.value && !rosterToolsContainer.value.contains(e.target)) {
+    isRosterToolsOpen.value = false
+  }
+}
+
+function handleDocumentKeydown(e) {
+  if (e.key === 'Escape' && isRosterToolsOpen.value) {
+    isRosterToolsOpen.value = false
+  }
+}
 
 const isRapidPhotosOpen = ref(false)
 const isBatchPhotosOpen = ref(false)

@@ -254,11 +254,18 @@
                 class="setup__icon-btn setup__expand-btn"
                 @click="toggleUnitExpand(unit.unitId)"
               >
-                <component :is="expandedUnitId === unit.unitId ? ChevronDown : ChevronRight" :size="16" />
+                <ChevronDown :size="16" class="setup__accordion-chevron" :class="{ 'setup__accordion-chevron--expanded': isUnitExpanded(unit) }" />
               </button>
               <input v-model="unit.name" class="setup__input setup__input--naked" @change="saveGradebookSettings" />
               <span class="setup__unit-exp-count-badge" v-if="unit.expectations?.length">
                 {{ unit.expectations.length }} exp{{ unit.expectations.length === 1 ? '' : 's' }}
+              </span>
+              <span 
+                v-if="expectationSearchQuery.trim() && getFilteredUnitExpectations(unit).length > 0" 
+                class="setup__chip setup__chip--blue" 
+                style="font-size: 0.72rem; padding: 2px 7px; font-weight: 700;"
+              >
+                {{ getFilteredUnitExpectations(unit).length }} match{{ getFilteredUnitExpectations(unit).length === 1 ? '' : 'es' }}
               </span>
             </div>
             <div class="setup__gb-actions">
@@ -269,7 +276,7 @@
           </div>
 
           <!-- Expectations Panel (Expandable) -->
-          <div v-if="expandedUnitId === unit.unitId" class="setup__expectations-panel">
+          <div v-if="isUnitExpanded(unit)" class="setup__expectations-panel">
             <div style="display: flex; align-items: center; justify-content: space-between;">
               <h4 class="setup__expectations-title">Curriculum Expectations</h4>
               <span v-if="expectationSearchQuery" class="setup__search-filtered-note">
@@ -786,8 +793,31 @@ const editingExpectationCode = ref('')
 const editingExpectationDesc = ref('')
 const editingExpectationWeight = ref(1.0)
 
+const searchManualOverrides = ref({})
+
+watch(expectationSearchQuery, () => {
+  searchManualOverrides.value = {}
+})
+
+function isUnitExpanded(unit) {
+  if (!unit) return false
+  if (expectationSearchQuery.value.trim()) {
+    if (searchManualOverrides.value[unit.unitId] !== undefined) {
+      return searchManualOverrides.value[unit.unitId]
+    }
+    return getFilteredUnitExpectations(unit).length > 0
+  }
+  return expandedUnitId.value === unit.unitId
+}
+
 function toggleUnitExpand(unitId) {
-  expandedUnitId.value = expandedUnitId.value === unitId ? null : unitId
+  if (expectationSearchQuery.value.trim()) {
+    const targetUnit = activeUnits.value?.find(u => u.unitId === unitId)
+    const currentlyExpanded = isUnitExpanded(targetUnit)
+    searchManualOverrides.value[unitId] = !currentlyExpanded
+  } else {
+    expandedUnitId.value = expandedUnitId.value === unitId ? null : unitId
+  }
   newExpectationCode.value = ''
   newExpectationDesc.value = ''
   newExpectationWeight.value = 1.0
