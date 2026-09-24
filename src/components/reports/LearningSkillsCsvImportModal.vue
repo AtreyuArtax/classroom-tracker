@@ -711,10 +711,26 @@ async function commitImport() {
   font-size: 0.75rem;
 }
 
-.lsim-badge--E { background: #dbeafe; color: #1d4ed8; border: 1px solid #bfdbfe; }
-.lsim-badge--G { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
-.lsim-badge--S { background: #fef9c3; color: #a16207; border: 1px solid #fef08a; }
-.lsim-badge--N { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
+.lsim-badge--E {
+  background: var(--color-attention-bg, #dbeafe);
+  color: var(--color-attention-text, #1d4ed8);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+.lsim-badge--G {
+  background: var(--color-success-bg, #dcfce7);
+  color: var(--color-success-text, #15803d);
+  border: 1px solid rgba(50, 215, 75, 0.3);
+}
+.lsim-badge--S {
+  background: var(--color-warn-bg, #fef9c3);
+  color: var(--color-warn-text, #a16207);
+  border: 1px solid rgba(255, 159, 10, 0.3);
+}
+.lsim-badge--N {
+  background: var(--color-danger-bg, #fee2e2);
+  color: var(--color-danger-text, #b91c1c);
+  border: 1px solid rgba(255, 69, 58, 0.3);
+}
 
 .lsim-badge-empty {
   color: var(--text-secondary);
@@ -746,8 +762,8 @@ async function commitImport() {
 
 .lsim-unmatched-notice {
   padding: 12px 14px;
-  background: #fffbeb;
-  border: 1px solid #fde68a;
+  background: var(--color-warn-bg, rgba(245, 158, 11, 0.1));
+  border: 1px solid rgba(245, 158, 11, 0.35);
   border-radius: var(--radius-md);
   font-size: 0.82rem;
 }
@@ -763,22 +779,22 @@ async function commitImport() {
   display: flex;
   align-items: center;
   gap: 6px;
-  color: #b45309;
+  color: var(--color-warn-text, #b45309);
   font-weight: 700;
   font-size: 0.85rem;
 }
 
 .lsim-unmatched-subtitle {
-  color: #78350f;
+  color: var(--text-secondary);
   font-size: 0.76rem;
 }
 
 .lsim-unmatched-table-wrap {
   max-height: 160px;
   overflow-y: auto;
-  border: 1px solid #fde68a;
+  border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  background: #ffffff;
+  background: var(--surface);
 }
 
 .lsim-unmatched-table {
@@ -790,18 +806,19 @@ async function commitImport() {
 .lsim-unmatched-table th {
   position: sticky;
   top: 0;
-  background: #fef3c7;
-  color: #92400e;
+  background: var(--bg-secondary);
+  color: var(--text);
   font-weight: 700;
   padding: 6px 10px;
   text-align: left;
-  border-bottom: 1px solid #fde68a;
+  border-bottom: 1px solid var(--border);
 }
 
 .lsim-unmatched-table td {
   padding: 6px 10px;
-  border-bottom: 1px solid #f3f4f6;
+  border-bottom: 1px solid var(--border);
   vertical-align: middle;
+  background: var(--surface);
 }
 
 .lsim-unmatched-entry {
@@ -827,12 +844,12 @@ async function commitImport() {
 
 .lsim-mini-pill {
   padding: 1px 4px;
-  background: #f3f4f6;
-  border: 1px solid #e5e7eb;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
   border-radius: 3px;
   font-size: 0.7rem;
   font-weight: 700;
-  color: #374151;
+  color: var(--text);
 }
 
 .lsim-select-student {

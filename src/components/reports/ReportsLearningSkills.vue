@@ -622,7 +622,7 @@ async function copyTableToClipboard() {
 .insight-bars-container { display: flex; flex-direction: column; gap: 4px; }
 .insight-bar-row { display: flex; align-items: center; gap: 5px; }
 .bar-label { font-size: 0.65rem; font-weight: 600; color: var(--text-secondary); width: 36px; }
-.stacked-bar { flex: 1; height: 8px; display: flex; background: rgba(0, 0, 0, 0.06); border-radius: 4px; overflow: hidden; }
+.stacked-bar { flex: 1; height: 8px; display: flex; background: var(--bg-tertiary, rgba(0, 0, 0, 0.06)); border-radius: 4px; overflow: hidden; }
 .bar-segment { height: 100%; transition: width 0.3s ease; }
 .bar-segment--E { background: #2563eb; }
 .bar-segment--G { background: #16a34a; }
@@ -674,10 +674,26 @@ async function copyTableToClipboard() {
   display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px;
   border-radius: 4px; font-size: 0.72rem; font-weight: 800;
 }
-.level-badge--E { background: #dbeafe; color: #1d4ed8; border: 1px solid #bfdbfe; }
-.level-badge--G { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
-.level-badge--S { background: #fef9c3; color: #a16207; border: 1px solid #fef08a; }
-.level-badge--N { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
+.level-badge--E {
+  background: var(--color-attention-bg, #dbeafe);
+  color: var(--color-attention-text, #1d4ed8);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+.level-badge--G {
+  background: var(--color-success-bg, #dcfce7);
+  color: var(--color-success-text, #15803d);
+  border: 1px solid rgba(50, 215, 75, 0.3);
+}
+.level-badge--S {
+  background: var(--color-warn-bg, #fef9c3);
+  color: var(--color-warn-text, #a16207);
+  border: 1px solid rgba(255, 159, 10, 0.3);
+}
+.level-badge--N {
+  background: var(--color-danger-bg, #fee2e2);
+  color: var(--color-danger-text, #b91c1c);
+  border: 1px solid rgba(255, 69, 58, 0.3);
+}
 .level-badge-none { font-size: 0.72rem; color: var(--text-secondary); opacity: 0.4; }
 .discrepancy-dot { width: 5px; height: 5px; background: #ea580c; border-radius: 50%; box-shadow: 0 0 2px #ea580c; }
 
@@ -690,7 +706,7 @@ async function copyTableToClipboard() {
   background: transparent; border: none; border-radius: 3px; font-size: 0.72rem; font-weight: 700;
   color: var(--text-secondary); cursor: pointer; transition: all 0.12s ease;
 }
-.teacher-pill:hover { background: rgba(0, 0, 0, 0.08); color: var(--text); }
+.teacher-pill:hover { background: var(--surface-hover, rgba(0, 0, 0, 0.08)); color: var(--text); }
 .teacher-pill--E.teacher-pill--active { background: #2563eb; color: #ffffff; }
 .teacher-pill--G.teacher-pill--active { background: #16a34a; color: #ffffff; }
 .teacher-pill--S.teacher-pill--active { background: #ca8a04; color: #ffffff; }
@@ -702,7 +718,7 @@ async function copyTableToClipboard() {
   cursor: pointer; padding: 4px; border-radius: 4px; transition: all 0.15s ease;
 }
 .matrix-row:hover .btn-row-clear { opacity: 0.8; }
-.btn-row-clear:hover { color: #dc2626; opacity: 1; background: #fee2e2; }
+.btn-row-clear:hover { color: var(--color-danger, #dc2626); opacity: 1; background: var(--color-danger-bg, #fee2e2); }
 
 .learning-skills__empty-state {
   display: flex; flex-direction: column; align-items: center; justify-content: center;

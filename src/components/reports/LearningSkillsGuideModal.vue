@@ -538,6 +538,12 @@ function printRubric() {
   color: var(--text-secondary);
   cursor: pointer;
   transition: all 0.15s ease;
+  outline: none;
+}
+
+.guide-tab:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: -2px;
 }
 
 .guide-tab:hover {
@@ -575,7 +581,7 @@ function printRubric() {
   width: 36px;
   height: 36px;
   border-radius: var(--radius-sm);
-  background: #eff6ff;
+  background: var(--primary-light, rgba(70, 99, 172, 0.12));
   color: var(--primary);
   flex-shrink: 0;
 }
@@ -611,8 +617,8 @@ function printRubric() {
 }
 
 .guide-step--important {
-  background: #fffbeb;
-  border-color: #fde68a;
+  background: var(--color-warn-bg, rgba(245, 158, 11, 0.1));
+  border: 1px solid rgba(245, 158, 11, 0.35);
 }
 
 .step-badge {
@@ -630,7 +636,8 @@ function printRubric() {
 }
 
 .step-badge--alert {
-  background: #d97706;
+  background: var(--color-warn, #d97706);
+  color: #ffffff;
 }
 
 .step-content {
@@ -652,6 +659,10 @@ function printRubric() {
   color: var(--text-secondary);
   margin: 0;
   line-height: 1.4;
+}
+
+.guide-step--important .step-desc {
+  color: var(--text);
 }
 
 .guide-link {
@@ -712,11 +723,15 @@ function printRubric() {
   display: flex;
   align-items: center;
   gap: 6px;
-  color: #b45309;
+  color: var(--color-warn-text, #b45309);
+}
+
+.important-header .step-title {
+  color: var(--color-warn-text, #b45309);
 }
 
 .important-icon {
-  color: #d97706;
+  color: var(--color-warn, #d97706);
 }
 
 .settings-checklist {
@@ -733,11 +748,11 @@ function printRubric() {
   align-items: center;
   gap: 6px;
   font-size: 0.8rem;
-  color: #78350f;
+  color: var(--text);
 }
 
 .check-icon {
-  color: #16a34a;
+  color: var(--color-success, #16a34a);
   flex-shrink: 0;
 }
 
@@ -747,12 +762,12 @@ function printRubric() {
   gap: 6px;
   margin-top: 6px;
   font-size: 0.76rem;
-  color: #92400e;
+  color: var(--color-warn-text, #92400e);
   font-style: italic;
 }
 
 .tip-icon {
-  color: #d97706;
+  color: var(--color-warn, #d97706);
 }
 
 /* Accordion */
@@ -848,10 +863,10 @@ function printRubric() {
   gap: 6px;
 }
 
-.level-card--e { border-left: 4px solid #2563eb; background: #f8fafc; }
-.level-card--g { border-left: 4px solid #16a34a; background: #f8fafc; }
-.level-card--s { border-left: 4px solid #ca8a04; background: #f8fafc; }
-.level-card--n { border-left: 4px solid #dc2626; background: #f8fafc; }
+.level-card--e { border-left: 4px solid var(--color-attention, #2563eb); }
+.level-card--g { border-left: 4px solid var(--color-success, #16a34a); }
+.level-card--s { border-left: 4px solid var(--color-warn, #ca8a04); }
+.level-card--n { border-left: 4px solid var(--color-danger, #dc2626); }
 
 .level-badge-row {
   display: flex;
@@ -870,10 +885,26 @@ function printRubric() {
   font-size: 0.78rem;
 }
 
-.level-badge--e { background: #dbeafe; color: #1d4ed8; }
-.level-badge--g { background: #dcfce7; color: #15803d; }
-.level-badge--s { background: #fef9c3; color: #a16207; }
-.level-badge--n { background: #fee2e2; color: #b91c1c; }
+.level-badge--e {
+  background: var(--color-attention-bg, #dbeafe);
+  color: var(--color-attention-text, #1d4ed8);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+.level-badge--g {
+  background: var(--color-success-bg, #dcfce7);
+  color: var(--color-success-text, #15803d);
+  border: 1px solid rgba(50, 215, 75, 0.3);
+}
+.level-badge--s {
+  background: var(--color-warn-bg, #fef9c3);
+  color: var(--color-warn-text, #a16207);
+  border: 1px solid rgba(255, 159, 10, 0.3);
+}
+.level-badge--n {
+  background: var(--color-danger-bg, #fee2e2);
+  color: var(--color-danger-text, #b91c1c);
+  border: 1px solid rgba(255, 69, 58, 0.3);
+}
 
 .level-name {
   font-weight: 700;
@@ -883,9 +914,13 @@ function printRubric() {
 
 .level-body {
   font-size: 0.8rem;
-  color: var(--text);
+  color: var(--text-secondary);
   line-height: 1.4;
   margin: 0;
+}
+
+.level-body strong {
+  color: var(--text);
 }
 
 .skills-grid {

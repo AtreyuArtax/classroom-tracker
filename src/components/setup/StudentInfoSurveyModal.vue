@@ -892,19 +892,19 @@ async function applyImport() {
 
 .sism-badge--conf-5,
 .sism-badge--conf-4 {
-  background: rgba(52, 199, 89, 0.12);
-  color: #248a3d;
+  background: var(--color-success-bg, rgba(52, 199, 89, 0.12));
+  color: var(--color-success-text, #248a3d);
 }
 
 .sism-badge--conf-3 {
-  background: rgba(255, 149, 0, 0.12);
-  color: #c97500;
+  background: var(--color-warn-bg, rgba(255, 149, 0, 0.12));
+  color: var(--color-warn-text, #c97500);
 }
 
 .sism-badge--conf-2,
 .sism-badge--conf-1 {
-  background: rgba(255, 59, 48, 0.12);
-  color: #d70015;
+  background: var(--color-danger-bg, rgba(255, 59, 48, 0.12));
+  color: var(--color-danger-text, #d70015);
 }
 
 .sism-pronoun-wrap {
@@ -914,7 +914,7 @@ async function applyImport() {
 }
 
 .sism-badge-icon {
-  color: #ff9500;
+  color: var(--color-warn, #ff9500);
   display: inline-flex;
   align-items: center;
 }
@@ -943,7 +943,7 @@ async function applyImport() {
 }
 
 .sism-row-del-btn:hover {
-  color: #ff3b30;
+  color: var(--color-danger, #ff3b30);
 }
 
 /* Unmatched */
@@ -951,7 +951,7 @@ async function applyImport() {
   margin-top: 1rem;
   padding: 12px;
   border-radius: var(--radius-sm, 8px);
-  background: rgba(255, 149, 0, 0.06);
+  background: var(--color-warn-bg, rgba(255, 149, 0, 0.06));
   border: 1px solid rgba(255, 149, 0, 0.25);
 }
 
@@ -959,7 +959,7 @@ async function applyImport() {
   display: flex;
   align-items: center;
   gap: 6px;
-  color: #c97500;
+  color: var(--color-warn-text, #c97500);
   font-size: 0.85rem;
   margin-bottom: 8px;
   flex-wrap: wrap;
