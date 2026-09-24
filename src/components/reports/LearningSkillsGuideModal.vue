@@ -159,8 +159,8 @@
           <button type="button" class="guide-btn guide-btn--secondary" @click="copyRubricText">
             <Clipboard :size="15" /> {{ copiedRubric ? 'Copied to Clipboard!' : 'Copy Reference Text' }}
           </button>
-          <button type="button" class="guide-btn guide-btn--ghost" @click="printRubric">
-            <Printer :size="15" /> Print / PDF
+          <button type="button" class="guide-btn guide-btn--ghost" :disabled="isPrinting" @click="printRubric">
+            <Printer :size="15" /> {{ isPrinting ? 'Preparing...' : 'Print / PDF' }}
           </button>
         </div>
 
@@ -318,13 +318,175 @@
       </div>
     </template>
   </BaseModal>
+
+  <!-- Native Print / PDF Teleported Container -->
+  <Teleport to="body">
+    <div 
+      v-if="isPrinting"
+      class="print-only-container rubric-print-root" 
+      :class="{ 'print-only-container--active': isPrinting }"
+    >
+      <div class="rubric-print-page">
+        <!-- Header -->
+        <div class="rprint-header">
+          <div class="rprint-title-row">
+            <h1 class="rprint-title">Ontario Growing Success Reference Guide</h1>
+            <span class="rprint-badge">Ministry of Education Curriculum Reference</span>
+          </div>
+          <p class="rprint-subtitle">
+            Learning Skills and Work Habits in Grades 1 to 12 &bull; 
+            <em>Source: Growing Success: Assessment, Evaluation, and Reporting in Ontario Schools (p. 11)</em>
+          </p>
+        </div>
+
+        <!-- Section 1: Performance Level Rubric -->
+        <div class="rprint-section">
+          <h2 class="rprint-section-title">Performance Level Rubric</h2>
+          <div class="rprint-levels-grid">
+            <div class="rprint-level-card rprint-level-card--e">
+              <div class="rprint-level-header">
+                <span class="rprint-badge-pill rprint-badge-pill--e">E</span>
+                <span class="rprint-level-name">Excellent</span>
+              </div>
+              <p class="rprint-level-desc">
+                The student demonstrates the learning skill <strong>consistently, automatically, and independently</strong>. They serve as a positive classroom model and maintain these work habits across all contexts without needing prompting.
+              </p>
+            </div>
+
+            <div class="rprint-level-card rprint-level-card--g">
+              <div class="rprint-level-header">
+                <span class="rprint-badge-pill rprint-badge-pill--g">G</span>
+                <span class="rprint-level-name">Good</span>
+              </div>
+              <p class="rprint-level-desc">
+                The student demonstrates the learning skill <strong>frequently and with very minimal supervision</strong>. The target behavior is their standard default baseline, requiring only rare structural reminders or occasional encouragement.
+              </p>
+            </div>
+
+            <div class="rprint-level-card rprint-level-card--s">
+              <div class="rprint-level-header">
+                <span class="rprint-badge-pill rprint-badge-pill--s">S</span>
+                <span class="rprint-level-name">Satisfactory</span>
+              </div>
+              <p class="rprint-level-desc">
+                The student demonstrates the learning skill <strong>regularly, but relies on structured teacher support</strong> or routine reminders. Their habits are baseline-adequate, but the behavior requires external scaffolding to remain consistent.
+              </p>
+            </div>
+
+            <div class="rprint-level-card rprint-level-card--n">
+              <div class="rprint-level-header">
+                <span class="rprint-badge-pill rprint-badge-pill--n">N</span>
+                <span class="rprint-level-name">Needs Improvement</span>
+              </div>
+              <p class="rprint-level-desc">
+                The student demonstrates the learning skill <strong>rarely, inconsistently, or only under constant, direct adult supervision</strong>. A lack of these habits actively impedes their academic progress or disrupts the learning environment.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 2: 6 Skills Observable Behaviours -->
+        <div class="rprint-section">
+          <h2 class="rprint-section-title">Sample Observable Behaviours</h2>
+          <div class="rprint-skills-grid">
+            
+            <div class="rprint-skill-card">
+              <div class="rprint-skill-header">
+                <span class="rprint-skill-letter">R</span>
+                <h3 class="rprint-skill-name">Responsibility</h3>
+              </div>
+              <ul class="rprint-skill-bullets">
+                <li>fulfils responsibilities and commitments within the learning environment;</li>
+                <li>completes and submits class work, homework, and assignments according to agreed-upon timelines;</li>
+                <li>takes responsibility for and manages own behaviour.</li>
+              </ul>
+            </div>
+
+            <div class="rprint-skill-card">
+              <div class="rprint-skill-header">
+                <span class="rprint-skill-letter">O</span>
+                <h3 class="rprint-skill-name">Organization</h3>
+              </div>
+              <ul class="rprint-skill-bullets">
+                <li>devises and follows a plan and process for completing work and tasks;</li>
+                <li>establishes priorities and manages time to complete tasks and achieve goals;</li>
+                <li>identifies, gathers, evaluates, and uses information, technology, and resources to complete tasks.</li>
+              </ul>
+            </div>
+
+            <div class="rprint-skill-card">
+              <div class="rprint-skill-header">
+                <span class="rprint-skill-letter">I</span>
+                <h3 class="rprint-skill-name">Independent Work</h3>
+              </div>
+              <ul class="rprint-skill-bullets">
+                <li>independently monitors, assesses, and revises plans to complete tasks and meet goals;</li>
+                <li>uses class time appropriately to complete tasks;</li>
+                <li>follows instructions with minimal supervision.</li>
+              </ul>
+            </div>
+
+            <div class="rprint-skill-card">
+              <div class="rprint-skill-header">
+                <span class="rprint-skill-letter">C</span>
+                <h3 class="rprint-skill-name">Collaboration</h3>
+              </div>
+              <ul class="rprint-skill-bullets">
+                <li>accepts various roles and an equitable share of work in a group;</li>
+                <li>responds positively to the ideas, opinions, values, and traditions of others;</li>
+                <li>builds healthy peer-to-peer relationships through personal and media-assisted interactions;</li>
+                <li>works with others to resolve conflicts and build consensus to achieve group goals;</li>
+                <li>shares information, resources, and expertise and promotes critical thinking to solve problems and make decisions.</li>
+              </ul>
+            </div>
+
+            <div class="rprint-skill-card">
+              <div class="rprint-skill-header">
+                <span class="rprint-skill-letter">I</span>
+                <h3 class="rprint-skill-name">Initiative</h3>
+              </div>
+              <ul class="rprint-skill-bullets">
+                <li>looks for and acts on new ideas and opportunities for learning;</li>
+                <li>demonstrates the capacity for innovation and a willingness to take risks;</li>
+                <li>demonstrates curiosity and interest in learning;</li>
+                <li>approaches new tasks with a positive attitude;</li>
+                <li>recognizes and advocates appropriately for the rights of self and others.</li>
+              </ul>
+            </div>
+
+            <div class="rprint-skill-card">
+              <div class="rprint-skill-header">
+                <span class="rprint-skill-letter">S</span>
+                <h3 class="rprint-skill-name">Self-Regulation</h3>
+              </div>
+              <ul class="rprint-skill-bullets">
+                <li>sets own individual goals and monitors progress towards achieving them;</li>
+                <li>seeks clarification or assistance when needed;</li>
+                <li>assesses and reflects critically on own strengths, needs, and interests;</li>
+                <li>identifies learning opportunities, choices, and strategies to meet personal needs and achieve goals;</li>
+                <li>perseveres and makes an effort when responding to challenges.</li>
+              </ul>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="rprint-footer">
+          <span>Classroom Tracker &bull; Growing Success Learning Skills Assessment Reference</span>
+          <span>Ontario Ministry of Education</span>
+        </div>
+      </div>
+    </div>
+  </Teleport>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, nextTick } from 'vue'
 import BaseModal from '../BaseModal.vue'
 import { saveAs } from 'file-saver'
 import { createDocxBlobFromLines } from '../../utils/docxExport.js'
+import { executePrint } from '../../composables/usePrintOptions.js'
 import { 
   FileText, 
   BookOpen, 
@@ -501,8 +663,19 @@ async function downloadRubricDocx() {
   }
 }
 
+const isPrinting = ref(false)
+
 function printRubric() {
-  window.print()
+  isPrinting.value = true
+  nextTick(() => {
+    executePrint({
+      orientation: 'portrait',
+      margin: '10mm',
+      onDone: () => {
+        isPrinting.value = false
+      }
+    })
+  })
 }
 </script>
 
@@ -985,6 +1158,212 @@ function printRubric() {
 @media (max-width: 640px) {
   .levels-grid, .skills-grid {
     grid-template-columns: 1fr;
+  }
+}
+</style>
+
+<style>
+/* ── Native Print Engine for Growing Success Rubric Reference ── */
+.rubric-print-root {
+  display: none;
+}
+
+.rubric-print-root.print-only-container--active {
+  display: block;
+}
+
+@media screen {
+  .rubric-print-root {
+    display: none !important;
+  }
+}
+
+@media print {
+  .rubric-print-root.print-only-container--active {
+    display: block !important;
+    position: static !important;
+    width: 100% !important;
+    background: #ffffff !important;
+    color: #111827 !important;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .rubric-print-page {
+    padding: 0;
+    margin: 0;
+    width: 100%;
+  }
+
+  .rprint-header {
+    border-bottom: 2px solid #111827;
+    padding-bottom: 6px;
+    margin-bottom: 12px;
+  }
+
+  .rprint-title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+  }
+
+  .rprint-title {
+    font-size: 15pt;
+    font-weight: 800;
+    margin: 0;
+    color: #111827;
+    letter-spacing: -0.01em;
+  }
+
+  .rprint-badge {
+    font-size: 8pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #4b5563;
+  }
+
+  .rprint-subtitle {
+    margin: 3px 0 0 0;
+    font-size: 8.5pt;
+    color: #4b5563;
+    line-height: 1.3;
+  }
+
+  .rprint-section {
+    margin-bottom: 12px;
+    page-break-inside: auto;
+  }
+
+  .rprint-section-title {
+    font-size: 10pt;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #111827;
+    margin: 0 0 6px 0;
+    border-bottom: 1px solid #d1d5db;
+    padding-bottom: 2px;
+  }
+
+  .rprint-levels-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+
+  .rprint-level-card {
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    padding: 7px 9px;
+    background: #ffffff !important;
+    page-break-inside: avoid;
+  }
+
+  .rprint-level-card--e { border-left: 4px solid #2563eb !important; }
+  .rprint-level-card--g { border-left: 4px solid #16a34a !important; }
+  .rprint-level-card--s { border-left: 4px solid #ca8a04 !important; }
+  .rprint-level-card--n { border-left: 4px solid #dc2626 !important; }
+
+  .rprint-level-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 3px;
+  }
+
+  .rprint-badge-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 17px;
+    height: 17px;
+    border-radius: 3px;
+    font-weight: 800;
+    font-size: 8pt;
+  }
+
+  .rprint-badge-pill--e { background: #dbeafe !important; color: #1d4ed8 !important; }
+  .rprint-badge-pill--g { background: #dcfce7 !important; color: #15803d !important; }
+  .rprint-badge-pill--s { background: #fef9c3 !important; color: #a16207 !important; }
+  .rprint-badge-pill--n { background: #fee2e2 !important; color: #b91c1c !important; }
+
+  .rprint-level-name {
+    font-size: 8.8pt;
+    font-weight: 700;
+    color: #111827;
+  }
+
+  .rprint-level-desc {
+    font-size: 7.6pt;
+    line-height: 1.35;
+    color: #374151;
+    margin: 0;
+  }
+
+  .rprint-skills-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+
+  .rprint-skill-card {
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    padding: 7px 9px;
+    background: #ffffff !important;
+    page-break-inside: avoid;
+  }
+
+  .rprint-skill-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 3px;
+  }
+
+  .rprint-skill-letter {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 17px;
+    height: 17px;
+    border-radius: 3px;
+    background: #eff6ff !important;
+    color: #2563eb !important;
+    border: 1px solid #bfdbfe;
+    font-weight: 800;
+    font-size: 8pt;
+  }
+
+  .rprint-skill-name {
+    font-size: 8.8pt;
+    font-weight: 700;
+    color: #111827;
+    margin: 0;
+  }
+
+  .rprint-skill-bullets {
+    margin: 0;
+    padding-left: 14px;
+    font-size: 7.5pt;
+    line-height: 1.32;
+    color: #374151;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .rprint-footer {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 12px;
+    padding-top: 5px;
+    border-top: 1px solid #e5e7eb;
+    font-size: 7pt;
+    color: #6b7280;
   }
 }
 </style>
