@@ -5,7 +5,7 @@
     <nav v-if="currentView !== 'ScanStation'" class="app-nav" role="navigation" aria-label="Main navigation">
       <div class="app-nav__brand">
         <ClipboardList :size="24" class="app-nav__logo" />
-        <span class="app-nav__title">Class Tracker</span>
+        <span class="app-nav__title">Classroom Tracker</span>
         <button 
           v-if="isSyncLinked" 
           class="app-nav__sync-btn" 

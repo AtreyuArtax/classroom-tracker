@@ -2,7 +2,7 @@
   <div class="csv-guide">
     <div class="csv-guide__intro">
       <p class="csv-guide__text">
-        Class Tracker can parse standard classroom rosters or multi-class schedule exports directly from your school information system (e.g., <strong>PowerSchool</strong>).
+        Classroom Tracker can parse standard classroom rosters or multi-class schedule exports directly from your school information system (e.g., <strong>PowerSchool</strong>).
       </p>
       <div class="csv-guide__callout">
         <strong>Important:</strong> A header row is required. The columns can be in any order. The system will automatically map the headers below.

@@ -1,6 +1,6 @@
 {
     "name": "Classroom Tracker",
-    "short_name": "Class Tracker",
+    "short_name": "Classroom Tracker",
     "description": "Offline-first classroom behavior tracker for teachers.",
     "start_url": "/classroom-tracker/",
     "display": "standalone",

@@ -35,9 +35,9 @@
     "semantic_hash": ""
   },
   "public/manifest.json": {
-    "mtime": 1776472682.8652163,
-    "ast_hash": "1b03479aca9c8c4fc1db77b894ae4cfb",
-    "semantic_hash": "1b03479aca9c8c4fc1db77b894ae4cfb"
+    "mtime": 1790211410.752995,
+    "ast_hash": "046b659b4a43179a5d00516b8a7d58ad",
+    "semantic_hash": ""
   },
   "rfid-companion/config.json": {
     "mtime": 1782131591.331373,
@@ -55,8 +55,8 @@
     "semantic_hash": "292ba809cdc87ea16d7beff21d110324"
   },
   "src/App.vue": {
-    "mtime": 1789148734.6387095,
-    "ast_hash": "560d04e4f23dc2c73b0e476dc35a03c4",
+    "mtime": 1790211400.857625,
+    "ast_hash": "985eb18bcafb77e19f4f7a3738087818",
     "semantic_hash": ""
   },
   "src/components/AssessmentConversationModal.vue": {
@@ -210,13 +210,13 @@
     "semantic_hash": ""
   },
   "src/components/setup/CsvHelpGuide.vue": {
-    "mtime": 1781619911.7201061,
-    "ast_hash": "0794c0177a8a0b5d3b9f3d8bad8c1024",
-    "semantic_hash": "0794c0177a8a0b5d3b9f3d8bad8c1024"
+    "mtime": 1790211420.9220781,
+    "ast_hash": "d64440f5baa9eaa11b4bc639f6850619",
+    "semantic_hash": ""
   },
   "src/components/setup/GettingStartedGuide.vue": {
-    "mtime": 1788313689.8601978,
-    "ast_hash": "814c1b586328d8b0a9410652f519dfb6",
+    "mtime": 1790213103.890222,
+    "ast_hash": "c8d0e514636901ecc53e014abb17d686",
     "semantic_hash": ""
   },
   "src/components/setup/GradeBucketsSettings.vue": {
@@ -225,8 +225,8 @@
     "semantic_hash": ""
   },
   "src/components/setup/HelpModal.vue": {
-    "mtime": 1788313689.8604777,
-    "ast_hash": "c2ad881d657cfd5c363bece256bfc726",
+    "mtime": 1790213037.6222367,
+    "ast_hash": "29ca781adb70477051def412298125de",
     "semantic_hash": ""
   },
   "src/components/setup/SemesterCalendar.vue": {
