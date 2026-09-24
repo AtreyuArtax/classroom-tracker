@@ -5107,7 +5107,7 @@
       "label": "printRubric()",
       "file_type": "code",
       "source_file": "src/components/reports/LearningSkillsGuideModal.vue",
-      "source_location": "L668",
+      "source_location": "L661",
       "_origin": "ast",
       "id": "reports_learningskillsguidemodal_printrubric",
       "community": 81,
@@ -8370,7 +8370,7 @@
       "source_location": "L203",
       "_origin": "ast",
       "id": "composables_useelementary_getstudenteffectivegrade",
-      "community": 1,
+      "community": 64,
       "norm_label": "getstudenteffectivegrade()"
     },
     {
@@ -8650,7 +8650,7 @@
       "source_location": "L103",
       "_origin": "ast",
       "id": "composables_usegradebook_isstudentinsubcohort",
-      "community": 1,
+      "community": 64,
       "norm_label": "isstudentinsubcohort()"
     },
     {
@@ -8670,7 +8670,7 @@
       "source_location": "L144",
       "_origin": "ast",
       "id": "composables_usegradebook_isassessmentapplicabletostudent",
-      "community": 1,
+      "community": 64,
       "norm_label": "isassessmentapplicabletostudent()"
     },
     {
@@ -8900,7 +8900,7 @@
       "source_location": "L371",
       "_origin": "ast",
       "id": "composables_usegradebook_refreshclassanalytics",
-      "community": 36,
+      "community": 1,
       "norm_label": "refreshclassanalytics()"
     },
     {
@@ -8910,7 +8910,7 @@
       "source_location": "L402",
       "_origin": "ast",
       "id": "composables_usegradebook_setanalyticsevidencescope",
-      "community": 36,
+      "community": 1,
       "norm_label": "setanalyticsevidencescope()"
     },
     {
@@ -8920,7 +8920,7 @@
       "source_location": "L410",
       "_origin": "ast",
       "id": "composables_usegradebook_setexclusionmode",
-      "community": 36,
+      "community": 1,
       "norm_label": "setexclusionmode()"
     },
     {
@@ -8930,7 +8930,7 @@
       "source_location": "L418",
       "_origin": "ast",
       "id": "composables_usegradebook_togglestudentfromanalytics",
-      "community": 36,
+      "community": 1,
       "norm_label": "togglestudentfromanalytics()"
     },
     {
@@ -14290,7 +14290,7 @@
       "source_location": "L273",
       "_origin": "ast",
       "id": "src_test_elementary_audit_isexpectationapplicable",
-      "community": 1,
+      "community": 64,
       "norm_label": "isexpectationapplicable()"
     },
     {
@@ -26971,9 +26971,9 @@
       "source_file": "src/components/reports/LearningSkillsGuideModal.vue",
       "source_location": "L668",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "reports_learningskillsguidemodal",
-      "target": "reports_learningskillsguidemodal_printrubric",
-      "confidence_score": 1.0
+      "target": "reports_learningskillsguidemodal_printrubric"
     },
     {
       "relation": "imports_from",
@@ -52485,5 +52485,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "6dd000a0adc3fadc446c5f88682aa741a9a7a60d"
+  "built_at_commit": "2b14543097012561c7e06e9c08e231301b6e53d7"
 }
