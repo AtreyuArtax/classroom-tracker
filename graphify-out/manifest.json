@@ -125,8 +125,8 @@
     "semantic_hash": ""
   },
   "src/components/StudentTrendGraph.vue": {
-    "mtime": 1790557989.4188778,
-    "ast_hash": "56c975b9c3c994c8b950d4fae66a32de",
+    "mtime": 1790560857.5781298,
+    "ast_hash": "06b2fe83e833b8ecf1fd7ec3f0cfeeeb",
     "semantic_hash": ""
   },
   "src/components/TestDayWarning.vue": {
@@ -485,8 +485,8 @@
     "semantic_hash": ""
   },
   "src/components/dossier/Student360ProfileTab.vue": {
-    "mtime": 1790256144.6399167,
-    "ast_hash": "ef591bf36c9ae23c94cabe2bba4d9393",
+    "mtime": 1790561801.6876538,
+    "ast_hash": "82764f8fd35a42ccadc3ce7bd1fc76e1",
     "semantic_hash": ""
   },
   "src/components/reports/ReportsBatchPrintModal.vue": {
@@ -1145,8 +1145,8 @@
     "semantic_hash": ""
   },
   "src/components/dossier/Student360IntakeCard.vue": {
-    "mtime": 1789127404.5281916,
-    "ast_hash": "08bcd2820518903f3e9aaa24c825a24e",
+    "mtime": 1790561807.5621405,
+    "ast_hash": "52fb7ec66625e2a4bc5b4da7e6c540e9",
     "semantic_hash": ""
   },
   "src/components/dossier/StudentInfoEditModal.vue": {
@@ -1457,6 +1457,16 @@
   "src/utils/trendAggregation.js": {
     "mtime": 1790557946.5200086,
     "ast_hash": "16202296566d64570b83273478df29f2",
+    "semantic_hash": ""
+  },
+  "src/test_seating_preference.js": {
+    "mtime": 1790561788.590624,
+    "ast_hash": "0e478cddabd6522d5e0316cbecb75e31",
+    "semantic_hash": ""
+  },
+  "src/utils/seatingPreference.js": {
+    "mtime": 1790561774.5781758,
+    "ast_hash": "4d9a2a2edf73385aa508b0c5a4b687f8",
     "semantic_hash": ""
   }
 }

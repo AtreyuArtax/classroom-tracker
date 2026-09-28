@@ -143,6 +143,17 @@
               <span class="intake-item__value">
                 {{ survey.seatingPreference || '—' }}
               </span>
+              <span
+                v-if="frontSeat.status !== 'na'"
+                class="intake-seat-check"
+                :class="`intake-seat-check--${frontSeat.status}`"
+                :title="frontSeatTitle"
+              >
+                <CheckCircle2 v-if="frontSeat.status === 'met'" :size="12" />
+                <AlertTriangle v-else-if="frontSeat.status === 'unmet'" :size="12" />
+                <CircleDashed v-else :size="12" />
+                {{ frontSeatLabel }}
+              </span>
             </div>
 
             <div class="intake-item">
@@ -234,15 +245,18 @@ import {
   MessageSquare,
   Target,
   Armchair,
-  CheckCircle2
+  CheckCircle2,
+  CircleDashed
 } from 'lucide-vue-next'
 import StudentInfoEditModal from './StudentInfoEditModal.vue'
 import StudentRosterEditModal from './StudentRosterEditModal.vue'
 import StudentInfoSurveyModal from '../setup/StudentInfoSurveyModal.vue'
 import { formatLocalDisplay } from '../../utils/dates.js'
+import { getFrontSeatStatus } from '../../utils/seatingPreference.js'
 
 const props = defineProps({
-  student: { type: Object, required: true }
+  student: { type: Object, required: true },
+  classRecord: { type: Object, default: null }
 })
 
 const emit = defineEmits(['updated'])
@@ -260,6 +274,29 @@ const showSurveyModal = ref(false)
 const showRosterEditModal = ref(false)
 
 const survey = computed(() => props.student?.intakeSurvey || {})
+
+const frontSeat = computed(() =>
+  getFrontSeatStatus(props.student?.studentId, props.classRecord, survey.value?.seatingPreference)
+)
+
+function ordinal(n) {
+  const suffix = { 1: 'st', 2: 'nd', 3: 'rd' }[n % 100 > 10 && n % 100 < 14 ? 0 : n % 10] || 'th'
+  return `${n}${suffix}`
+}
+
+const frontSeatLabel = computed(() => {
+  const { status, rowFromFront } = frontSeat.value
+  if (status === 'unseated') return 'Not seated'
+  if (rowFromFront === 1) return 'In front row'
+  return status === 'met' ? `In ${ordinal(rowFromFront)} row` : `Currently ${ordinal(rowFromFront)} row from front`
+})
+
+const frontSeatTitle = computed(() => {
+  const { status } = frontSeat.value
+  if (status === 'met') return 'Seated in the front 2 rows, as requested'
+  if (status === 'unmet') return 'Requested the front, but not seated in the front 2 rows'
+  return 'Requested the front, but has no seat on the seating chart'
+})
 const preferredName = computed(() => survey.value?.preferredName || props.student?.preferredName || '')
 const pronouns = computed(() => survey.value?.pronouns || props.student?.pronouns || '')
 
@@ -687,6 +724,32 @@ function onBatchImported() {
   background: var(--primary);
   color: #ffffff;
   border-color: var(--primary);
+}
+
+.intake-seat-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  width: fit-content;
+}
+
+.intake-seat-check--met {
+  background: rgba(52, 199, 89, 0.12);
+  color: #248a3d;
+}
+
+.intake-seat-check--unmet {
+  background: rgba(255, 149, 0, 0.15);
+  color: #c97500;
+}
+
+.intake-seat-check--unseated {
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
 }
 
 .intake-comms-val {

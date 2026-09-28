@@ -71,7 +71,7 @@
     </div>
 
     <!-- Getting to Know You (Day 1 Intake Survey) -->
-    <Student360IntakeCard :student="student" @updated="emit('updated', $event)" />
+    <Student360IntakeCard :student="student" :class-record="activeClassRecord" @updated="emit('updated', $event)" />
 
     <!-- Edit Contacts Modal -->
     <BaseModal
