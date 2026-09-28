@@ -128,7 +128,7 @@ const barChartData = computed(() => ({
     data: dataPoints.value.map(d => d[cat] || 0),
     backgroundColor: CATEGORY_COLOURS[cat] || '#aaaaaa',
     borderRadius: 4,
-    borderSkipped: false,
+    borderSkipped: 'middle',
     maxBarThickness: 34,
   }))
 }))
