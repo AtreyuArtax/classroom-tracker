@@ -1,7 +1,10 @@
 <template>
   <div class="trend">
     <div class="trend__header">
-      <h3 class="trend__title">{{ title }}</h3>
+      <div class="trend__title-group">
+        <h3 class="trend__title">{{ title }}</h3>
+        <span class="trend__subtitle">{{ isDaily ? 'Daily breakdown (Mon–Fri)' : 'Weekly frequency' }}</span>
+      </div>
       <div class="trend__legend">
         <div v-for="cat in categories" :key="cat" class="legend-item">
           <span class="dot" :style="{ backgroundColor: CATEGORY_COLOURS[cat] || '#8e8e93' }"></span>
@@ -10,22 +13,29 @@
       </div>
     </div>
     
-    <div v-if="weeklyTrend.length < 2" class="trend__empty">
-      Not enough data to show a trend. Log more events over multiple weeks.
+    <!-- Clean attendance / zero events state -->
+    <div v-if="dataPoints.length === 0" class="trend__empty">
+      No data available for this period.
+    </div>
+
+    <div v-else-if="totalEvents === 0" class="trend__empty trend__empty--clean">
+      <CheckCircle2 :size="16" class="clean-icon" />
+      <span>{{ isDaily ? 'No absences, lates, or departures logged this week.' : 'No absences, lates, or departures logged for this period.' }}</span>
     </div>
     
+    <!-- Active Chart Container -->
     <div v-else class="trend__chart-wrap" ref="chartContainer" style="height: 155px">
       <Bar 
-        v-if="period === 'week'"
+        v-if="isDaily"
         ref="barChart"
-        :data="chartData" 
-        :options="chartOptions" 
+        :data="barChartData" 
+        :options="barChartOptions" 
       />
       <Line 
         v-else
         ref="lineChart"
-        :data="chartData" 
-        :options="chartOptions" 
+        :data="lineChartData" 
+        :options="lineChartOptions" 
       />
     </div>
   </div>
@@ -39,13 +49,15 @@ import {
   CategoryScale, LinearScale, PointElement,
   LineElement, BarElement, Tooltip, Legend
 } from 'chart.js'
+import { CheckCircle2 } from 'lucide-vue-next'
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Tooltip, Legend)
 
 const props = defineProps({
   title:       { type: String, default: 'Attendance & Habits Trend' },
-  weeklyTrend: { type: Array, required: true },
-  categories:  { type: Array, required: true },
+  weeklyTrend: { type: Array, default: () => [] },
+  trendData:   { type: Array, default: null },
+  categories:  { type: Array, default: () => ['washroom', 'absence', 'late'] },
   period:      { type: String, required: true },
 })
 
@@ -99,31 +111,111 @@ function formatWeekLabel(isoDateString) {
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
-const chartData = computed(() => {
-  return {
-    labels: props.weeklyTrend.map(w => formatWeekLabel(w.week)),
-    datasets: props.categories.map(cat => ({
-      label: formatCategoryLabel(cat),
-      data: props.weeklyTrend.map(w => w[cat] || 0),
-      borderColor: CATEGORY_COLOURS[cat] || '#aaaaaa',
-      backgroundColor: props.period === 'week' 
-        ? (CATEGORY_COLOURS[cat] || '#aaaaaa') 
-        : 'transparent',
-      borderWidth: 2,
-      pointRadius: 3,
-      tension: 0.3
-    }))
-  }
+const isDaily = computed(() => props.period === 'week' || props.period === 'last_week')
+const dataPoints = computed(() => props.trendData || props.weeklyTrend || [])
+
+const totalEvents = computed(() => {
+  return dataPoints.value.reduce((sum, item) => {
+    return sum + props.categories.reduce((catSum, cat) => catSum + (item[cat] || 0), 0)
+  }, 0)
 })
 
-const chartOptions = computed(() => ({
+// Daily Stacked Bar Chart config
+const barChartData = computed(() => ({
+  labels: dataPoints.value.map(d => d.label || formatWeekLabel(d.week || d.key)),
+  datasets: props.categories.map(cat => ({
+    label: formatCategoryLabel(cat),
+    data: dataPoints.value.map(d => d[cat] || 0),
+    backgroundColor: CATEGORY_COLOURS[cat] || '#aaaaaa',
+    borderRadius: 4,
+    borderSkipped: false,
+    maxBarThickness: 34,
+  }))
+}))
+
+const barChartOptions = computed(() => ({
   responsive: true,
   maintainAspectRatio: false,
   plugins: {
     legend: { display: false },
-    tooltip: { mode: 'index', intersect: false }
+    tooltip: {
+      mode: 'index',
+      intersect: false,
+      callbacks: {
+        title: (items) => {
+          if (!items.length) return ''
+          const d = dataPoints.value[items[0].dataIndex]
+          return d?.fullDate || d?.label || ''
+        }
+      }
+    }
   },
   scales: {
+    x: {
+      stacked: true,
+      ticks: {
+        color: '#64748b',
+        font: { size: 11, weight: '500' }
+      },
+      grid: { display: false }
+    },
+    y: {
+      stacked: true,
+      beginAtZero: true,
+      ticks: {
+        stepSize: 1,
+        precision: 0,
+        color: '#64748b',
+        font: { size: 11 }
+      },
+      grid: {
+        color: 'rgba(0, 0, 0, 0.05)'
+      }
+    }
+  }
+}))
+
+// Multi-Week Line Chart config
+const lineChartData = computed(() => ({
+  labels: dataPoints.value.map(d => d.label || formatWeekLabel(d.week || d.key)),
+  datasets: props.categories.map(cat => ({
+    label: formatCategoryLabel(cat),
+    data: dataPoints.value.map(d => d[cat] || 0),
+    borderColor: CATEGORY_COLOURS[cat] || '#aaaaaa',
+    backgroundColor: 'transparent',
+    borderWidth: 2,
+    pointRadius: 3.5,
+    pointHoverRadius: 6,
+    pointBackgroundColor: CATEGORY_COLOURS[cat] || '#aaaaaa',
+    tension: 0.25
+  }))
+}))
+
+const lineChartOptions = computed(() => ({
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: { display: false },
+    tooltip: {
+      mode: 'index',
+      intersect: false,
+      callbacks: {
+        title: (items) => {
+          if (!items.length) return ''
+          const d = dataPoints.value[items[0].dataIndex]
+          return d?.fullDate || (d?.rangeLabel ? `Week of ${d.rangeLabel}` : d?.label || '')
+        }
+      }
+    }
+  },
+  scales: {
+    x: {
+      ticks: {
+        color: '#64748b',
+        font: { size: 11 }
+      },
+      grid: { display: false }
+    },
     y: {
       beginAtZero: true,
       ticks: {
@@ -135,13 +227,6 @@ const chartOptions = computed(() => ({
       grid: {
         color: 'rgba(0, 0, 0, 0.05)'
       }
-    },
-    x: {
-      ticks: {
-        color: '#64748b',
-        font: { size: 11 }
-      },
-      grid: { display: false }
     }
   }
 }))
@@ -162,11 +247,24 @@ const chartOptions = computed(() => ({
   flex-wrap: wrap;
 }
 
+.trend__title-group {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 .trend__title {
   margin: 0;
   font-size: 0.88rem;
   font-weight: 700;
   color: var(--text);
+}
+
+.trend__subtitle {
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--text-secondary, #64748b);
 }
 
 .trend__legend {
@@ -195,8 +293,25 @@ const chartOptions = computed(() => ({
   color: var(--text-secondary);
   font-size: 0.85rem;
   text-align: center;
-  padding: 30px 0;
+  padding: 36px 12px;
   font-style: italic;
+}
+
+.trend__empty--clean {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-style: normal;
+  color: var(--text-secondary, #64748b);
+  background: var(--surface-secondary, rgba(0, 0, 0, 0.02));
+  border-radius: 8px;
+  border: 1px dashed var(--border-color, rgba(0, 0, 0, 0.08));
+}
+
+.clean-icon {
+  color: #10b981;
+  flex-shrink: 0;
 }
 
 .trend__chart-wrap {

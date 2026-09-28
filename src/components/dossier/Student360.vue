@@ -173,7 +173,7 @@
           <div class="trend-item">
             <StudentTrendGraph 
               title="Attendance &amp; Habits Trend"
-              :weekly-trend="behaviorWeeklyTrend"
+              :trend-data="studentTrendData"
               :categories="['washroom', 'absence', 'late']"
               :period="selectedPeriod"
             />
@@ -473,7 +473,8 @@ const GradesAssessmentDetailSBAR  = defineAsyncComponent(() => import('../grades
 import { getSBARLevelBadge } from '../../utils/gradeCalcSBAR.js'
 
 import { useClassroom } from '../../composables/useClassroom.js'
-import { toMinutes } from '../../utils/timeUtils.js'
+import { toMinutes, getDateRangeForClassPeriod } from '../../utils/timeUtils.js'
+import { buildDailyTrend, buildWeeklyTrend } from '../../utils/trendAggregation.js'
 import { resolveIcon } from '../../utils/icons.js'
 import { formatLocalDate } from '../../utils/dates.js'
 import { 
@@ -530,6 +531,7 @@ const {
   sortedRoster,
   behaviorCodes,
   activeClass,
+  academicTerms,
   activeStudentEvents,
   getStudentEventHistory,
   getEventById,
@@ -855,32 +857,19 @@ function formatDateShort(dStr) {
   }
 }
 
-const behaviorWeeklyTrend = computed(() => {
-  if (!filteredEvents.value.length) return []
-  const weeks = {}
-  
-  filteredEvents.value.forEach(e => {
-    const d = new Date(e.timestamp)
-    const day = d.getDay()
-    const diff = d.getDate() - day + (day === 0 ? -6 : 1)
-    const mondayDate = new Date(d.setDate(diff))
-    const monday = formatLocalDate(mondayDate)
-    
-    if (!weeks[monday]) {
-      weeks[monday] = { week: monday, washroom: 0, absence: 0, late: 0 }
-    }
-    
-    const config = behaviorCodesMap.value[e.code]
-    if (config?.type === 'toggle' && !e.superseded) weeks[monday].washroom++
-    else if (e.code === 'a' && !e.superseded) weeks[monday].absence++
-    else if (e.code === 'l' && !e.superseded) weeks[monday].late++
-  })
-  
-  return Object.values(weeks).sort((a, b) => a.week.localeCompare(b.week))
+const studentTrendData = computed(() => {
+  if (selectedPeriod.value === 'week' || selectedPeriod.value === 'last_week') {
+    return buildDailyTrend(filteredEvents.value, selectedPeriod.value, behaviorCodesMap.value)
+  }
+
+  const range = getDateRangeForClassPeriod(selectedPeriod.value, activeClass.value, academicTerms.value)
+  return buildWeeklyTrend(filteredEvents.value, range?.from, range?.to, behaviorCodesMap.value)
 })
 
+const behaviorWeeklyTrend = studentTrendData
+
 const attendanceAverages = computed(() => {
-  const trend = behaviorWeeklyTrend.value
+  const trend = studentTrendData.value
   let weekCount = 1
   if (selectedPeriod.value === 'month') weekCount = 4.3
   else if (selectedPeriod.value === 'semester') weekCount = Math.max(1, trend.length)
