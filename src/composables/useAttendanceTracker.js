@@ -7,6 +7,7 @@
 import { ref, triggerRef } from 'vue'
 import { 
   activeClass, 
+  activeClassRecord,
   students, 
   classList, 
   periodStartTimes, 
@@ -26,22 +27,24 @@ const { push: pushUndo } = useUndo()
  * students.value, activeClass.value.students, and classList.value[cls].students.
  */
 export function syncStudentState(classId, studentId, newState, lastEvent = null) {
-    if (students.value[studentId]) {
-        students.value[studentId].activeStates = { ...newState }
-        students.value[studentId].lastEvent = lastEvent
+    const isActive = activeClass.value?.classId === classId
+    if (isActive) {
+        const student = students.value?.[studentId] || activeClass.value?.students?.[studentId]
+        if (student) {
+            student.activeStates = { ...newState }
+            student.lastEvent = lastEvent
+        }
+        triggerRef(students)
+        triggerRef(activeClass)
+        if (activeClassRecord.value) triggerRef(activeClassRecord)
+    } else {
+        const clsInList = classList.value?.find(c => c.classId === classId)
+        if (clsInList?.students?.[studentId]) {
+            clsInList.students[studentId].activeStates = { ...newState }
+            clsInList.students[studentId].lastEvent = lastEvent
+            triggerRef(classList)
+        }
     }
-    if (activeClass.value?.classId === classId && activeClass.value?.students?.[studentId]) {
-        activeClass.value.students[studentId].activeStates = { ...newState }
-        activeClass.value.students[studentId].lastEvent = lastEvent
-    }
-    const clsInList = classList.value.find(c => c.classId === classId)
-    if (clsInList?.students?.[studentId]) {
-        clsInList.students[studentId].activeStates = { ...newState }
-        clsInList.students[studentId].lastEvent = lastEvent
-    }
-    triggerRef(students)
-    triggerRef(activeClass)
-    triggerRef(classList)
 }
 
 /**

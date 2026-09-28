@@ -296,7 +296,7 @@ import {
   saveBatchLearningSkills,
   deleteLearningSkillsRecord,
   hasLearningSkillsData
-} from '../../db/learningSkillsService.js'
+} from '../../composables/useLearningSkills.js'
 import { saveAs } from 'file-saver'
 import { useMessage } from '../../composables/useMessage.js'
 import { 

@@ -224,6 +224,7 @@
                         min="0" 
                         class="grades__input-ghost grades__input-ghost--score"
                         placeholder="Score"
+                        @wheel.prevent="$event.target.blur()"
                       />
                       <input 
                         v-model="newAttemptForm.date" 
@@ -297,6 +298,7 @@
                         @blur="$emit('save-edit')"
                         @keydown.enter.prevent="$emit('save-edit')"
                         @keydown.esc.prevent="$emit('cancel-edit')"
+                        @wheel.prevent="$event.target.blur()"
                       />
                     </div>
                     <template v-else>
@@ -312,6 +314,7 @@
                         @keydown.up.prevent="e => $emit('on-enter', s.studentId, 'up', e)"
                         @keydown.down.prevent="e => $emit('on-enter', s.studentId, 'down', e)"
                         @contextmenu.prevent="e => $emit('open-context-menu', e, s.studentId, selectedAssessmentId)"
+                        @wheel.prevent="$event.target.blur()"
                       />
                       <button 
                         class="smart-badge" 
@@ -365,6 +368,7 @@
       @delete-attempt="handleDeleteAttempt"
       @update-comment="handleUpdateComment"
       @start-new-attempt="handleAddAttempt"
+      @set-primary="handleSetPrimary"
     />
   </div>
 </template>
@@ -377,7 +381,7 @@ import {
 } from 'lucide-vue-next'
 import { getHeatTextColor } from '../../utils/gradeColors.js'
 import { formatLocalDisplay } from '../../utils/dates.js'
-import { removeAttempt, updateAttemptComment, toggleAdminChecklist, saveAdminText } from '../../composables/useGradebook.js'
+import { removeAttempt, updateAttemptComment, setPrimaryAttempt, toggleAdminChecklist, saveAdminText } from '../../composables/useGradebook.js'
 import { useMessage } from '../../composables/useMessage.js'
 import GradesAttemptHistoryModal from './GradesAttemptHistoryModal.vue'
 import UndoButton from '../UndoButton.vue'
@@ -462,6 +466,11 @@ async function handleDeleteAttempt(attemptId) {
 async function handleUpdateComment(attemptId, comment) {
   if (!attemptsPopover.value) return
   await updateAttemptComment(props.selectedAssessmentId, attemptsPopover.value.studentId, attemptId, comment)
+}
+
+async function handleSetPrimary(attemptId) {
+  if (!attemptsPopover.value) return
+  await setPrimaryAttempt(props.selectedAssessmentId, attemptsPopover.value.studentId, attemptId)
 }
 
 function handleAddAttempt() {

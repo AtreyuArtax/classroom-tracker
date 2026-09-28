@@ -62,24 +62,22 @@ watch(teachingMode, (val) => localStorage.setItem('teachingMode', val || 'second
 export function syncStudentAcrossRefs(classId, studentId, updates) {
     if (!classId || !studentId || !updates) return
 
-    if (students.value && students.value[studentId]) {
-        Object.assign(students.value[studentId], updates)
+    const isActive = activeClass.value?.classId === classId
+    if (isActive) {
+        const student = students.value?.[studentId] || activeClass.value?.students?.[studentId]
+        if (student) {
+            Object.assign(student, updates)
+        }
+        triggerRef(students)
+        triggerRef(activeClass)
+        if (activeClassRecord.value) triggerRef(activeClassRecord)
+    } else {
+        const clsInList = classList.value?.find(c => c.classId === classId)
+        if (clsInList?.students?.[studentId]) {
+            Object.assign(clsInList.students[studentId], updates)
+            triggerRef(classList)
+        }
     }
-    if (activeClass.value?.classId === classId && activeClass.value?.students?.[studentId]) {
-        Object.assign(activeClass.value.students[studentId], updates)
-    }
-    if (activeClassRecord.value?.classId === classId && activeClassRecord.value?.students?.[studentId]) {
-        Object.assign(activeClassRecord.value.students[studentId], updates)
-    }
-    const clsInList = classList.value?.find(c => c.classId === classId)
-    if (clsInList?.students?.[studentId]) {
-        Object.assign(clsInList.students[studentId], updates)
-    }
-
-    triggerRef(students)
-    triggerRef(activeClass)
-    if (activeClassRecord.value) triggerRef(activeClassRecord)
-    triggerRef(classList)
 }
 
 

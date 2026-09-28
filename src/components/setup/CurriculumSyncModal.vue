@@ -247,7 +247,7 @@ import {
   Save
 } from 'lucide-vue-next'
 import ExpectationWeightBadge from './ExpectationWeightBadge.vue'
-import { saveClass } from '../../db/classService.js'
+import { saveClass } from '../../composables/useClassroom.js'
 import { syncPresetToClass } from '../../composables/useCurriculumLibrary.js'
 
 const props = defineProps({

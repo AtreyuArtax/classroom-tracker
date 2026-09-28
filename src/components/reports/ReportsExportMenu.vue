@@ -26,11 +26,8 @@ import {
   filteredMilestones, 
   globalMilestones 
 } from '../../composables/useGradebook.js'
-import { 
-  getDateRangeForClassPeriod, 
-  getEventsByClass, 
-  toMinutes 
-} from '../../db/eventService.js'
+import { getEventsByClass } from '../../composables/useClassroom.js'
+import { getDateRangeForClassPeriod, toMinutes } from '../../utils/timeUtils.js'
 
 const props = defineProps({
   reportClass: { type: Object, default: null },

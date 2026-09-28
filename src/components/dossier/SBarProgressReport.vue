@@ -151,7 +151,8 @@ import {
   gradeMap, 
   activeClassRecord 
 } from '../../composables/useGradebook.js'
-import { getEventsByStudent, toMinutes } from '../../db/eventService.js'
+import { getEventsByStudent } from '../../composables/useClassroom.js'
+import { toMinutes } from '../../utils/timeUtils.js'
 import { formatLocalDisplay } from '../../utils/dates.js'
 import { useSBarPrintOptions } from '../../composables/useSBarPrintOptions.js'
 

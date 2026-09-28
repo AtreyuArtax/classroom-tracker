@@ -200,14 +200,15 @@ import {
   activeClassRecord,
   isAssessmentInSubCohort
 } from '../../composables/useGradebook.js'
-import { getEventsByStudent, toMinutes } from '../../db/eventService.js'
+import { getEventsByStudent } from '../../composables/useClassroom.js'
+import { toMinutes } from '../../utils/timeUtils.js'
 import { formatLocalDisplay } from '../../utils/dates.js'
 import StudentGradeTrend from './StudentGradeTrend.vue'
 import DossierEvidenceMix from './DossierEvidenceMix.vue'
 import SBarProgressReport from './SBarProgressReport.vue'
 import { getEffectiveClassRecord, getStudentEffectiveGrade } from '../../composables/useElementary.js'
 import { activeSubjectId } from '../../composables/useClassroomState.js'
-import { LEARNING_SKILL_CATEGORIES, getLearningSkillsByStudent, hasLearningSkillsData } from '../../db/learningSkillsService.js'
+import { LEARNING_SKILL_CATEGORIES, getLearningSkillsByStudent, hasLearningSkillsData } from '../../composables/useLearningSkills.js'
 
 const effectiveClass = computed(() => {
   return getEffectiveClassRecord(activeClassRecord.value, activeSubjectId.value)

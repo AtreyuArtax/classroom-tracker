@@ -226,7 +226,7 @@ import {
   LEARNING_SKILL_CATEGORIES,
   LEARNING_SKILL_TERMS,
   saveBatchLearningSkills 
-} from '../../db/learningSkillsService.js'
+} from '../../composables/useLearningSkills.js'
 import { parseLearningSkillsCsv, parseLearningSkillsWorkbook } from '../../utils/learningSkillsCsvParser.js'
 import { 
   UploadCloud, 

@@ -352,8 +352,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { CalendarDays, Palmtree, Trash2, Plus, FileUp, Flag, FileCode, Download, FileJson } from 'lucide-vue-next'
 import { useClassroom } from '../../composables/useClassroom.js'
-import { globalMilestones } from '../../composables/useGradebook.js'
-import * as settingsService from '../../db/settingsService.js'
+import { globalMilestones, getGlobalMilestones, saveGlobalMilestones } from '../../composables/useGradebook.js'
 import { useMessage } from '../../composables/useMessage.js'
 import BaseModal from '../BaseModal.vue'
 import SemesterCalendar from './SemesterCalendar.vue'
@@ -421,7 +420,7 @@ const termsByYear = computed(() => {
 })
 
 onMounted(async () => {
-  const loaded = await settingsService.getGlobalMilestones()
+  const loaded = await getGlobalMilestones()
   if (loaded) {
     globalMilestones.value = loaded
   }
@@ -493,7 +492,7 @@ const filteredMilestones = computed(() => {
 })
 
 async function saveMilestones() {
-  await settingsService.saveGlobalMilestones(JSON.parse(JSON.stringify(globalMilestones.value)))
+  await saveGlobalMilestones(JSON.parse(JSON.stringify(globalMilestones.value)))
 }
 
 function onMilestoneDateChange(ms) {

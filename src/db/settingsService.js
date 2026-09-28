@@ -665,3 +665,27 @@ export async function deleteCustomCurriculumPreset(presetId) {
         }
     }
 }
+
+/**
+ * Returns summary counts of primary entities across all stores.
+ * Used for database maintenance audits and confirmation modals.
+ *
+ * @returns {Promise<{classesCount: number, studentCount: number, assessmentsCount: number, gradesCount: number, eventsCount: number}>}
+ */
+export async function getDatabaseSummaryCounts() {
+    const db = await getDB()
+    const [classes, assessments, grades, events] = await Promise.all([
+        db.getAll('classes').catch(() => []),
+        db.getAll('assessments').catch(() => []),
+        db.getAll('grades').catch(() => []),
+        db.getAll('events').catch(() => [])
+    ])
+    const studentCount = classes.reduce((sum, c) => sum + Object.keys(c.students || {}).length, 0)
+    return {
+        classesCount: classes.length,
+        studentCount,
+        assessmentsCount: assessments.length,
+        gradesCount: grades.length,
+        eventsCount: events.length
+    }
+}

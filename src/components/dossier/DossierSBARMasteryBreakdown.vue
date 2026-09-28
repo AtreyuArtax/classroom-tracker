@@ -82,7 +82,7 @@
 <script setup>
 import { computed } from 'vue'
 import { activeClassRecord, assessments, gradeMap } from '../../composables/useGradebook.js'
-import { calculateSBARExpectationMastery, getSBARLevelBadge } from '../../db/gradebook/gradeCalcSBAR.js'
+import { calculateSBARExpectationMastery, getSBARLevelBadge } from '../../utils/gradeCalcSBAR.js'
 import { cleanUnitName } from '../../composables/useElementary.js'
 
 const props = defineProps({

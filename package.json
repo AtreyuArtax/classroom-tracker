@@ -7,10 +7,11 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "predeploy": "npm run build",
+    "predeploy": "npm run check:imports && npm run build",
     "deploy": "gh-pages -d dist",
     "validate:curriculum": "node scripts/validate_curriculum.js",
-    "fix:curriculum": "node scripts/validate_curriculum.js --fix"
+    "fix:curriculum": "node scripts/validate_curriculum.js --fix",
+    "check:imports": "node scripts/check_imports.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.108.2",

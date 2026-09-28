@@ -170,10 +170,10 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { BookOpen, AlertCircle, AlertTriangle, ChevronDown, ChevronUp } from 'lucide-vue-next'
-import { calculateSBARExpectationMastery, getSBARLevelBadge } from '../../db/gradebookService.js'
+import { calculateSBARExpectationMastery, getSBARLevelBadge } from '../../utils/gradeCalcSBAR.js'
 import { gradeMap } from '../../composables/useGradebook.js'
 import { getEffectiveClassRecord, getUnitGradeLevel } from '../../composables/useElementary.js'
-import { isCohortMatch } from '../../db/gradebook/gradeCalc.js'
+import { isCohortMatch } from '../../utils/gradeCalc.js'
 import { activeSubjectId } from '../../composables/useClassroomState.js'
 import ExpectationWeightBadge from '../setup/ExpectationWeightBadge.vue'
 

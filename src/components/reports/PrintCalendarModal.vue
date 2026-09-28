@@ -257,9 +257,8 @@
 import { ref, computed, onMounted, nextTick } from 'vue'
 import { Calendar, X, Printer, Plus, Trash2, Activity } from 'lucide-vue-next'
 import { useClassroom } from '../../composables/useClassroom.js'
-import { globalMilestones } from '../../composables/useGradebook.js'
+import { globalMilestones, getGlobalMilestones } from '../../composables/useGradebook.js'
 import { executePrint } from '../../composables/usePrintOptions.js'
-import * as settingsService from '../../db/settingsService.js'
 import { formatLocalDate } from '../../utils/dates.js'
 
 const props = defineProps({
@@ -293,7 +292,7 @@ const classTitles = ref([props.reportClass?.name ? `${props.reportClass.name} Ca
 onMounted(async () => {
   mounted.value = true
   if (globalMilestones.value.length === 0) {
-    globalMilestones.value = await settingsService.getGlobalMilestones()
+    globalMilestones.value = await getGlobalMilestones()
   }
 })
 

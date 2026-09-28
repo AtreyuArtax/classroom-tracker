@@ -187,7 +187,7 @@
 import { ref, computed } from 'vue'
 import { UserCheck, UserMinus, Clock, DoorOpen, X, HelpCircle, CalendarX, GraduationCap, Camera, Trash2, MessageSquare } from 'lucide-vue-next'
 import { activeClassRecord } from '../../composables/useGradebook.js'
-import { getSBARLevelBadge } from '../../db/gradebook/gradeCalcSBAR.js'
+import { getSBARLevelBadge } from '../../utils/gradeCalcSBAR.js'
 import { useStudentPhotos } from '../../composables/useStudentPhotos.js'
 import { useMessage } from '../../composables/useMessage.js'
 import StudentAvatar from '../photos/StudentAvatar.vue'

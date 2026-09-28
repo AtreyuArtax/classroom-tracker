@@ -288,7 +288,6 @@ import * as classService from '../../db/classService.js'
 import * as eventService from '../../db/eventService.js'
 import * as settingsService from '../../db/settingsService.js'
 import * as gradebookService from '../../db/gradebookService.js'
-import { getDB } from '../../db/index.js'
 import { formatLocalDate } from '../../utils/dates.js'
 import { reloadPhotoCache } from '../../composables/useStudentPhotos.js'
 
@@ -585,15 +584,8 @@ async function fixUnlinkedSBARAssessments() {
 async function onClearAllData() {
   let countSummary = ''
   try {
-    const db = await getDB()
-    const [classes, assessments, grades, events] = await Promise.all([
-      db.getAll('classes').catch(() => []),
-      db.getAll('assessments').catch(() => []),
-      db.getAll('grades').catch(() => []),
-      db.getAll('events').catch(() => [])
-    ])
-    const studentCount = classes.reduce((sum, c) => sum + Object.keys(c.students || {}).length, 0)
-    countSummary = `\n\nCurrent Database Counts:\n• Classes: ${classes.length}\n• Students: ${studentCount}\n• Assessments: ${assessments.length}\n• Recorded Student Marks: ${grades.length}\n• Attendance & Behavior Events: ${events.length}\n`
+    const counts = await settingsService.getDatabaseSummaryCounts()
+    countSummary = `\n\nCurrent Database Counts:\n• Classes: ${counts.classesCount}\n• Students: ${counts.studentCount}\n• Assessments: ${counts.assessmentsCount}\n• Recorded Student Marks: ${counts.gradesCount}\n• Attendance & Behavior Events: ${counts.eventsCount}\n`
   } catch (err) {
     console.warn('Failed to prefetch db counts:', err)
   }

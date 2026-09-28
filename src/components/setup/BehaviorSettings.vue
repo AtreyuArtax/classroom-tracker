@@ -666,7 +666,7 @@ import { useClassroom } from '../../composables/useClassroom.js'
 import { useMessage } from '../../composables/useMessage.js'
 import { resolveIcon } from '../../utils/icons.js'
 import * as settingsService from '../../db/settingsService.js'
-import { getDB } from '../../db/index.js'
+import { getEventCountForCode } from '../../db/eventService.js'
 import BaseModal from '../BaseModal.vue'
 import { 
   Pencil, Trash2, Plus, AlertTriangle, NotebookPen, 
@@ -1038,14 +1038,7 @@ async function deleteCode(codeKey) {
     return
   }
 
-  let usageCount = 0
-  try {
-    const db = await getDB()
-    const allEvents = await db.getAll('events').catch(() => [])
-    usageCount = allEvents.filter(e => e.code === codeKey).length
-  } catch (err) {
-    console.warn('Failed to query event counts for code:', err)
-  }
+  const usageCount = await getEventCountForCode(codeKey)
 
   const usageNotice = usageCount > 0
     ? `\n\nNote: ${usageCount} past event(s) have been logged with this code. Past logged events will retain their data, but this action will remove "${name}" from the active radial menus.`

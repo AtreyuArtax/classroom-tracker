@@ -297,6 +297,7 @@
                             class="cell-edit-input"
                             @blur="saveEdit"
                             @keydown="handleCellKey"
+                            @wheel.prevent="$event.target.blur()"
                           />
                         </template>
                         
@@ -499,6 +500,7 @@
               required
               class="form-control"
               v-focus
+              @wheel.prevent="$event.target.blur()"
             />
           </div>
           <div class="form-group">
@@ -550,9 +552,8 @@ import { useGradeEditing } from '../../composables/useGradeEditing.js'
 import { getGradeColor } from '../../utils/gradeColors.js'
 import { formatLocalDisplay } from '../../utils/dates.js'
 import { useMessage } from '../../composables/useMessage.js'
-import { getSBARLevelBadge } from '../../db/gradebook/gradeCalcSBAR.js'
+import { getSBARLevelBadge, calculateSBARExpectationMastery, calculateSBARStudentOverallMastery } from '../../utils/gradeCalcSBAR.js'
 import { getEffectiveClassRecord, getStudentEffectiveGrade } from '../../composables/useElementary.js'
-import { calculateSBARExpectationMastery, calculateSBARStudentOverallMastery } from '../../db/gradebookService.js'
 import { Plus, Trash2, X, ChevronRight, Calendar, AlertCircle, AlertTriangle, XCircle, NotebookPen, Flame, User } from 'lucide-vue-next'
 import SubjectIcon from '../SubjectIcon.vue'
 import DossierCategoryGrid from './DossierCategoryGrid.vue'
@@ -913,7 +914,30 @@ function getAttemptsForPopover() {
 
 function isCountingAttempt(assessmentId, attempt) {
   const grade = gradeMap.value[assessmentId]?.[props.studentId]
-  return grade?.resolvedScore === attempt.pointsEarned
+  if (!grade || !attempt) return false
+  const policy = String(getRetestPolicy(assessmentId) || 'highest').trim().toLowerCase()
+  const attempts = (grade.attempts || []).filter(a => {
+    const raw = a?.pointsEarned != null ? a.pointsEarned : a?.score
+    return raw !== null && raw !== undefined && raw !== '' && !isNaN(Number(raw))
+  })
+  if (attempts.length === 0) return false
+
+  if (policy === 'average') return true
+  if (policy === 'manual') return !!attempt.isPrimary || (attempts.every(a => !a.isPrimary) && attempts[attempts.length - 1]?.attemptId === attempt.attemptId)
+  if (policy === 'latest') return attempts[attempts.length - 1]?.attemptId === attempt.attemptId
+
+  // highest
+  let maxScore = -Infinity
+  for (const a of attempts) {
+    const sc = Number(a.pointsEarned != null ? a.pointsEarned : a.score)
+    if (sc > maxScore) maxScore = sc
+  }
+  const target = (grade.resolvedScore != null && !isNaN(Number(grade.resolvedScore)))
+    ? Number(grade.resolvedScore)
+    : maxScore
+  const matches = attempts.filter(a => Number(a.pointsEarned != null ? a.pointsEarned : a.score) === target)
+  const winning = matches[matches.length - 1]
+  return winning?.attemptId === attempt.attemptId || winning === attempt
 }
 
 async function onArrowKey(direction) {

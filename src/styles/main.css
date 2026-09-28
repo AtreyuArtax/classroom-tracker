@@ -291,6 +291,16 @@ textarea {
   color: var(--text);
 }
 
+/* Remove default spinner arrows from number inputs across the app */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
 /* ── 6. Scrollbar (WebKit) matching iOS aesthetic ──────────────────────── */
 ::-webkit-scrollbar {
   width: 4px;

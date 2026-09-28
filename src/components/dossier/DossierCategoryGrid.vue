@@ -57,6 +57,7 @@
               class="dossier-cat-row__input"
               @keyup.enter="saveOverride(cat.categoryId)"
               @keyup.esc="cancelEdit"
+              @wheel.prevent="$event.target.blur()"
             />
             <div class="dossier-cat-row__edit-btns">
               <button class="btn-icon btn-save" title="Save" @click="saveOverride(cat.categoryId)"><Check :size="12" /></button>

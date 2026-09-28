@@ -874,11 +874,9 @@
 <script setup>
 import { ref, reactive, watch, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { useClassroom } from '../../composables/useClassroom.js'
-import { availableSubCohorts } from '../../composables/useGradebook.js'
+import { availableSubCohorts, retargetAssessmentsCourseCode } from '../../composables/useGradebook.js'
 import { useKeyboardWedge } from '../../composables/useKeyboardWedge.js'
 import { useMessage } from '../../composables/useMessage.js'
-import * as classService from '../../db/classService.js'
-import * as gradebookService from '../../db/gradebookService.js'
 import BaseModal from '../BaseModal.vue'
 import AssessmentFrameworkSettings from './AssessmentFrameworkSettings.vue'
 import ElementarySubjectManager from './ElementarySubjectManager.vue'
@@ -1022,6 +1020,9 @@ const {
   checkResize,
   confirmResize,
   syncStudentAcrossRefs,
+  updateStudentProfile,
+  getStudentClassDataCounts,
+  clearAllClassRfids,
   teachingMode
 } = useClassroom()
 
@@ -1105,14 +1106,7 @@ async function saveSectionTagRename(oldTag) {
 
   // Update any existing assessments targeted to oldTag
   try {
-    const classAssessments = await gradebookService.getAssessmentsByClass(activeClass.value.classId)
-    if (classAssessments && classAssessments.length > 0) {
-      for (const a of classAssessments) {
-        if (a.targetCourseCode === oldTag) {
-          await gradebookService.updateAssessment(a.assessmentId, { targetCourseCode: cleanNew })
-        }
-      }
-    }
+    await retargetAssessmentsCourseCode(activeClass.value.classId, oldTag, cleanNew)
   } catch (err) {
     console.error('Failed to update assessment target tags during section rename:', err)
   }
@@ -1265,7 +1259,7 @@ async function onUnarchiveStudent(student) {
 }
 
 async function onPermanentDeleteStudent(student) {
-  const counts = await classService.getStudentClassDataCounts(activeClass.value?.classId, student.studentId)
+  const counts = await getStudentClassDataCounts(activeClass.value?.classId, student.studentId)
   const details = []
   if (counts.gradeCount > 0) details.push(`${counts.gradeCount} student mark(s)`)
   if (counts.eventCount > 0) details.push(`${counts.eventCount} attendance/behavior event(s)`)
@@ -1407,10 +1401,7 @@ const onRapidRFIDScan = async (hex) => {
     const studentId = currentRapidStudent.value.studentId
     const tagHex = hex.toUpperCase()
 
-    const classId = activeClass.value.classId
-    await classService.patchStudent(classId, studentId, { rfidTag: tagHex })
-    syncStudentAcrossRefs(classId, studentId, { rfidTag: tagHex })
-    triggerActiveClass()
+    await updateStudentProfile(studentId, { rfidTag: tagHex })
     
     rapidRFIDSuccess.value = `Linked to ${currentRapidStudent.value.firstName}!`
     playRapidBeep(false)
@@ -1468,18 +1459,7 @@ async function clearAllRfidTagsForClass() {
 
   if (!confirmed) return
 
-  for (const student of Object.values(activeClass.value.students)) {
-    student.rfidTag = ''
-  }
-
-  if (students.value) {
-    for (const student of Object.values(students.value)) {
-      student.rfidTag = ''
-    }
-  }
-
-  await classService.saveClass(activeClass.value)
-  triggerActiveClass()
+  await clearAllClassRfids()
 
   rapidRFIError.value = ''
   rapidRFIDSuccess.value = 'All RFID cards unlinked for this class.'

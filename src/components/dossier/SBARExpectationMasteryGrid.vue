@@ -208,7 +208,7 @@ import { ref, computed } from 'vue'
 import { Target, AlertCircle, ChevronDown, TrendingUp, TrendingDown, Minus, Search, Filter, Zap, RotateCcw } from 'lucide-vue-next'
 import { activeClassRecord, assessments, gradeMap, saveStudentExpectationOverride } from '../../composables/useGradebook.js'
 import { activeSubjectId } from '../../composables/useClassroomState.js'
-import { calculateSBARExpectationMastery, SBAR_LEVELS } from '../../db/gradebook/gradeCalcSBAR.js'
+import { calculateSBARExpectationMastery, SBAR_LEVELS } from '../../utils/gradeCalcSBAR.js'
 import { cleanUnitName } from '../../composables/useElementary.js'
 import ExpectationWeightBadge from '../setup/ExpectationWeightBadge.vue'
 

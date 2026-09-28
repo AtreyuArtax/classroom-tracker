@@ -5,8 +5,9 @@ Rules for code creation, component organization, and refactoring in Classroom Tr
 ## Rules:
 
 1. **Strict File Line Limit (1,000 Lines Max)**:
-   - No single `.vue` file or `.js` file should exceed **1,000 lines**.
-   - If a file approaches 800–1,000 lines during feature development, proactive extraction into sub-components is mandatory.
+   - No single `.vue` file or `.js` file should exceed **1,000 lines of template + script**. The `<style>` block of a `.vue` file is not counted; `.js` files count every line.
+   - Moving CSS into a separate file does not bring a file under the limit. Extract logic instead (sub-components, composables, or `src/utils/` helpers).
+   - If a file approaches 800–1,000 counted lines during feature development, proactive extraction into sub-components is mandatory.
 
 2. **Modular Component Creation for New Additions**:
    - Always build new UI elements (modals, sub-tabs, export menus, detail views, custom toolbars) as dedicated components.

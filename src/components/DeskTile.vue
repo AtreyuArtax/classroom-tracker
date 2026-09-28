@@ -182,7 +182,7 @@
 import { ref, computed, watch, onUnmounted } from 'vue'
 import { HelpCircle, UserX, Clock, Footprints, Smartphone, DoorOpen, UserMinus } from 'lucide-vue-next'
 import { resolveIcon }    from '../utils/icons.js'
-import { toMinutes }      from '../db/eventService.js'
+import { toMinutes }      from '../utils/timeUtils.js'
 import { useRadial }    from '../composables/useRadial.js'
 import { useClassroom } from '../composables/useClassroom.js'
 import { useMasterAttendanceTicker } from '../composables/useAttendanceTracker.js'

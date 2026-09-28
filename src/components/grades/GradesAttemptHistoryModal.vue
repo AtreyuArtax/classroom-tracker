@@ -27,7 +27,7 @@
               v-for="(att, idx) in attempts" 
               :key="att.attemptId || idx" 
               class="attempt-modal-card"
-              :class="{ 'attempt-modal-card--primary': att.isPrimary || isCounting(att) }"
+              :class="{ 'attempt-modal-card--primary': isCounting(att) }"
             >
               <!-- Card Header Row -->
               <div class="attempt-card-header-row">
@@ -38,6 +38,14 @@
                 </div>
 
                 <div class="attempt-card-actions">
+                  <button
+                    v-if="isManualPolicy && !isCounting(att)"
+                    class="attempt-primary-toggle-btn"
+                    @click="$emit('set-primary', att.attemptId)"
+                    title="Set this attempt as counting"
+                  >
+                    Make Primary
+                  </button>
                   <span v-if="isCounting(att)" class="attempt-badge attempt-badge--counting">counting ✓</span>
                   <span v-else class="attempt-badge attempt-badge--not-counting">not counting</span>
 
@@ -75,6 +83,7 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import { X, Trash2, Plus } from 'lucide-vue-next'
 
 const props = defineProps({
@@ -87,7 +96,7 @@ const props = defineProps({
   attempts: { type: Array, default: () => [] }
 })
 
-const emit = defineEmits(['close', 'delete-attempt', 'update-comment', 'start-new-attempt'])
+const emit = defineEmits(['close', 'delete-attempt', 'update-comment', 'start-new-attempt', 'set-primary'])
 
 function handleClose() {
   emit('close')
@@ -98,9 +107,70 @@ function getPercent(score) {
   return Math.round((Number(score) / Number(props.totalPoints)) * 100)
 }
 
+function getAttemptScore(att) {
+  const raw = att?.pointsEarned != null ? att.pointsEarned : (att?.score != null ? att.score : att?.points)
+  if (raw === null || raw === undefined || raw === '' || isNaN(Number(raw))) return null
+  return Number(raw)
+}
+
+const isManualPolicy = computed(() => {
+  return String(props.retestPolicy || '').trim().toLowerCase() === 'manual'
+})
+
+const countingAttemptSet = computed(() => {
+  const list = props.attempts || []
+  const validList = list.filter(a => getAttemptScore(a) !== null)
+  if (validList.length === 0) return new Set()
+
+  const policy = String(props.retestPolicy || 'highest').trim().toLowerCase()
+
+  if (policy === 'average') {
+    // In an average policy, every valid attempt contributes to the calculated average
+    return new Set(validList)
+  }
+
+  if (policy === 'manual') {
+    const primary = validList.find(a => a.isPrimary)
+    if (primary) return new Set([primary])
+    return new Set([validList[validList.length - 1]])
+  }
+
+  if (policy === 'latest') {
+    return new Set([validList[validList.length - 1]])
+  }
+
+  // Default: 'highest'
+  let highestVal = -Infinity
+  for (const a of validList) {
+    const val = getAttemptScore(a)
+    if (val > highestVal) {
+      highestVal = val
+    }
+  }
+
+  // If resolvedScore is provided and valid, prioritize attempts matching resolvedScore
+  const targetVal = (props.resolvedScore != null && !isNaN(Number(props.resolvedScore)))
+    ? Number(props.resolvedScore)
+    : highestVal
+
+  const matching = validList.filter(a => getAttemptScore(a) === targetVal)
+  if (matching.length > 0) {
+    // If tied, select the latest attempt with this score
+    return new Set([matching[matching.length - 1]])
+  }
+
+  const highestMatches = validList.filter(a => getAttemptScore(a) === highestVal)
+  return new Set([highestMatches[highestMatches.length - 1] || validList[validList.length - 1]])
+})
+
 function isCounting(att) {
-  if (att.isPrimary) return true
-  if (props.resolvedScore != null && Number(att.pointsEarned) === Number(props.resolvedScore)) return true
+  if (!att) return false
+  if (countingAttemptSet.value.has(att)) return true
+  if (att.attemptId) {
+    for (const ca of countingAttemptSet.value) {
+      if (ca.attemptId === att.attemptId) return true
+    }
+  }
   return false
 }
 
@@ -263,6 +333,24 @@ function formatDate(dStr) {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.attempt-primary-toggle-btn {
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.attempt-primary-toggle-btn:hover {
+  background: var(--surface-hover);
+  color: var(--primary);
+  border-color: var(--primary);
 }
 
 .attempt-badge {

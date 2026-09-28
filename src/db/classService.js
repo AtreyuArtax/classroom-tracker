@@ -149,11 +149,50 @@ export async function updateMultipleStudentSeats(classId, seatMap) {
 
     for (const [studentId, newSeat] of Object.entries(seatMap)) {
         if (cls.students[studentId]) {
-            cls.students[studentId].seat = newSeat
+            cls.students[studentId].seat = newSeat ? { ...newSeat } : null
         }
     }
-    const plain = JSON.parse(JSON.stringify(cls))
-    await store.put(plain)
+    try {
+        await store.put(cls)
+    } catch {
+        await store.put(JSON.parse(JSON.stringify(cls)))
+    }
+    await tx.done
+    hasUnsyncedChanges.value = true
+}
+
+/**
+ * Internal helper to update a single student's activeStates in IndexedDB without
+ * serializing the entire class record via JSON.parse(JSON.stringify).
+ *
+ * @param {string} classId
+ * @param {string} studentId
+ * @param {(states: Object, student: Object) => void} updater
+ * @param {{ required?: boolean }} options
+ * @returns {Promise<void>}
+ */
+async function _updateStudentActiveStates(classId, studentId, updater, { required = false } = {}) {
+    const db = await getDB()
+    const tx = db.transaction('classes', 'readwrite')
+    const store = tx.objectStore('classes')
+    const cls = await store.get(classId)
+    const st = cls?.students?.[studentId]
+    if (!st) {
+        await tx.done
+        if (required) throw new Error('Student not found')
+        return
+    }
+
+    if (!st.activeStates) {
+        st.activeStates = { isOut: false, outTime: null, isAbsent: false, lateMs: null }
+    }
+    updater(st.activeStates, st)
+
+    try {
+        await store.put(cls)
+    } catch {
+        await store.put(JSON.parse(JSON.stringify(cls)))
+    }
     await tx.done
     hasUnsyncedChanges.value = true
 }
@@ -168,7 +207,9 @@ export async function updateMultipleStudentSeats(classId, seatMap) {
  * @returns {Promise<void>}
  */
 export async function setStudentActiveState(classId, studentId, activeStateObj) {
-    await patchStudent(classId, studentId, { activeStates: activeStateObj })
+    await _updateStudentActiveStates(classId, studentId, (states) => {
+        Object.assign(states, activeStateObj)
+    })
 }
 
 /**
@@ -180,8 +221,11 @@ export async function setStudentActiveState(classId, studentId, activeStateObj) 
  * @returns {Promise<void>}
  */
 export async function clearStudentActiveState(classId, studentId) {
-    await patchStudent(classId, studentId, { 
-        activeStates: { isOut: false, outTime: null, isAbsent: false, lateMs: null } 
+    await _updateStudentActiveStates(classId, studentId, (states) => {
+        states.isOut = false
+        states.outTime = null
+        states.isAbsent = false
+        states.lateMs = null
     })
 }
 
@@ -201,8 +245,11 @@ export async function setPeriodStartTime(classId, timeString) {
     if (!cls) throw new Error(`Class not found: ${classId}`)
 
     cls.periodStartTime = timeString
-    const plain = JSON.parse(JSON.stringify(cls))
-    await store.put(plain)
+    try {
+        await store.put(cls)
+    } catch {
+        await store.put(JSON.parse(JSON.stringify(cls)))
+    }
     await tx.done
     hasUnsyncedChanges.value = true
 }
@@ -215,22 +262,10 @@ export async function setPeriodStartTime(classId, timeString) {
  * @returns {Promise<void>}
  */
 export async function setStudentAbsent(classId, studentId) {
-    const db = await getDB()
-    const tx = db.transaction('classes', 'readwrite')
-    const store = tx.objectStore('classes')
-    const cls = await store.get(classId)
-    const st = cls?.students[studentId]
-    if (!st) throw new Error('Student not found')
-
-    st.activeStates = { 
-        ...(st.activeStates || { isOut: false, outTime: null }), 
-        isAbsent: true,
-        lateMs: null // Mutual exclusion
-    }
-    const plain = JSON.parse(JSON.stringify(cls))
-    await store.put(plain)
-    await tx.done
-    hasUnsyncedChanges.value = true
+    await _updateStudentActiveStates(classId, studentId, (states) => {
+        states.isAbsent = true
+        states.lateMs = null // Mutual exclusion
+    }, { required: true })
 }
 
 /**
@@ -241,18 +276,9 @@ export async function setStudentAbsent(classId, studentId) {
  * @returns {Promise<void>}
  */
 export async function clearStudentAbsent(classId, studentId) {
-    const db = await getDB()
-    const tx = db.transaction('classes', 'readwrite')
-    const store = tx.objectStore('classes')
-    const cls = await store.get(classId)
-    const st = cls?.students[studentId]
-    if (!st || !st.activeStates) return
-
-    st.activeStates.isAbsent = false
-    const plain = JSON.parse(JSON.stringify(cls))
-    await store.put(plain)
-    await tx.done
-    hasUnsyncedChanges.value = true
+    await _updateStudentActiveStates(classId, studentId, (states) => {
+        states.isAbsent = false
+    })
 }
 
 /**
@@ -265,22 +291,10 @@ export async function clearStudentAbsent(classId, studentId) {
  * @returns {Promise<void>}
  */
 export async function setStudentLate(classId, studentId, lateMs) {
-    const db = await getDB()
-    const tx = db.transaction('classes', 'readwrite')
-    const store = tx.objectStore('classes')
-    const cls = await store.get(classId)
-    const st = cls?.students[studentId]
-    if (!st) throw new Error('Student not found')
-
-    st.activeStates = { 
-        ...(st.activeStates || { isOut: false, outTime: null }), 
-        isAbsent: false, 
-        lateMs 
-    }
-    const plain = JSON.parse(JSON.stringify(cls))
-    await store.put(plain)
-    await tx.done
-    hasUnsyncedChanges.value = true
+    await _updateStudentActiveStates(classId, studentId, (states) => {
+        states.isAbsent = false
+        states.lateMs = lateMs
+    }, { required: true })
 }
 
 /**
@@ -291,18 +305,9 @@ export async function setStudentLate(classId, studentId, lateMs) {
  * @returns {Promise<void>}
  */
 export async function clearStudentLate(classId, studentId) {
-    const db = await getDB()
-    const tx = db.transaction('classes', 'readwrite')
-    const store = tx.objectStore('classes')
-    const cls = await store.get(classId)
-    const st = cls?.students[studentId]
-    if (!st || !st.activeStates) return
-
-    st.activeStates.lateMs = null
-    const plain = JSON.parse(JSON.stringify(cls))
-    await store.put(plain)
-    await tx.done
-    hasUnsyncedChanges.value = true
+    await _updateStudentActiveStates(classId, studentId, (states) => {
+        states.lateMs = null
+    })
 }
 
 /**
@@ -410,12 +415,16 @@ export async function patchStudent(classId, studentId, updates) {
     if (!cls) throw new Error(`Class not found: ${classId}`)
     if (!cls.students[studentId]) throw new Error(`Student not found: ${studentId} in ${classId}`)
 
-    // Shallow merge updates into the student record
-    Object.assign(cls.students[studentId], updates)
+    // Shallow merge sanitized updates into the student record
+    const safeUpdates = JSON.parse(JSON.stringify(updates))
+    Object.assign(cls.students[studentId], safeUpdates)
     syncClassSections(cls)
     
-    const plain = JSON.parse(JSON.stringify(cls))
-    await store.put(plain)
+    try {
+        await store.put(cls)
+    } catch {
+        await store.put(JSON.parse(JSON.stringify(cls)))
+    }
     await tx.done
 
     hasUnsyncedChanges.value = true

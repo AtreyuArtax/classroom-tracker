@@ -201,7 +201,7 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import { getSBARLevelBadge } from '../../db/gradebookService.js'
+import { getSBARLevelBadge } from '../../utils/gradeCalcSBAR.js'
 import { useClassroom } from '../../composables/useClassroom.js'
 import { LayoutGrid as ScatterPlotIcon, List } from 'lucide-vue-next'
 

@@ -752,7 +752,7 @@ import {
   Mail,
   Check
 } from 'lucide-vue-next'
-import { getSBARLevelBadge } from '../../db/gradebookService.js'
+import { getSBARLevelBadge } from '../../utils/gradeCalcSBAR.js'
 import StudentInfoSurveyModal from '../setup/StudentInfoSurveyModal.vue'
 
 const ScatterPlotIcon = {

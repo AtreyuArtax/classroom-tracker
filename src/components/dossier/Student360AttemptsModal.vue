@@ -92,7 +92,7 @@
       <div v-if="newAttemptForm" class="modal-body-content">
         <div class="form-group">
           <label>Points Earned</label>
-          <input type="number" v-model="newAttemptForm.points" autofocus />
+          <input type="number" v-model="newAttemptForm.points" autofocus @wheel.prevent="$event.target.blur()" />
         </div>
         <div class="form-group">
           <label>Date</label>

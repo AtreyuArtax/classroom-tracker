@@ -215,11 +215,10 @@ import { useClassroom } from '../composables/useClassroom.js'
 import { useKeyboardWedge, isAnyEnrollmentActive } from '../composables/useKeyboardWedge.js'
 import { useMessage } from '../composables/useMessage.js'
 import { supabase } from '../utils/supabase.js'
-import { isSyncActive } from '../db/eventService.js'
 
 const emit = defineEmits(['close'])
 
-const { students, logToggleEvent, studentsOut, globalStudentsOut, maxStudentsOut, filteredClassList, activeClass, periodStartTimes, reconcileStaleTrips, attendanceMode, handleRfidAttendanceScan, initializeRfidAttendance, cloudModeEnabled, userCode, teachingMode } = useClassroom()
+const { students, logToggleEvent, studentsOut, globalStudentsOut, maxStudentsOut, filteredClassList, activeClass, periodStartTimes, reconcileStaleTrips, attendanceMode, handleRfidAttendanceScan, initializeRfidAttendance, cloudModeEnabled, userCode, teachingMode, isSyncActive } = useClassroom()
 const { alert } = useMessage()
 
 // ── UI State ──────────────────────────────────────────────────────────────────

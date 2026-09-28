@@ -452,7 +452,7 @@ import {
   MessageSquare,
   Award
 } from 'lucide-vue-next'
-import { LEARNING_SKILL_CATEGORIES, getLearningSkillsByStudent, hasLearningSkillsData } from '../../db/learningSkillsService.js'
+import { LEARNING_SKILL_CATEGORIES, getLearningSkillsByStudent, hasLearningSkillsData } from '../../composables/useLearningSkills.js'
 import { useMessage } from '../../composables/useMessage.js'
 import Student360Header from './Student360Header.vue'
 import StudentStatCard from './StudentStatCard.vue'
@@ -470,10 +470,10 @@ const Student360AttemptsModal     = defineAsyncComponent(() => import('./Student
 import BaseModal from '../BaseModal.vue'
 import UndoButton from '../UndoButton.vue'
 const GradesAssessmentDetailSBAR  = defineAsyncComponent(() => import('../grades/GradesAssessmentDetailSBAR.vue'))
-import { getSBARLevelBadge } from '../../db/gradebook/gradeCalcSBAR.js'
+import { getSBARLevelBadge } from '../../utils/gradeCalcSBAR.js'
 
 import { useClassroom } from '../../composables/useClassroom.js'
-import { toMinutes } from '../../db/eventService.js'
+import { toMinutes } from '../../utils/timeUtils.js'
 import { resolveIcon } from '../../utils/icons.js'
 import { formatLocalDate } from '../../utils/dates.js'
 import { 
@@ -492,7 +492,6 @@ import {
   globalMilestones,
   isAssessmentInSubCohort
 } from '../../composables/useGradebook.js'
-import { getDB } from '../../db/index.js'
 import { useStudentDossier } from '../../composables/useStudentDossier.js'
 import { getStudentEffectiveGrade } from '../../composables/useElementary.js'
 import { activeSubjectId } from '../../composables/useClassroomState.js'
@@ -533,6 +532,7 @@ const {
   activeClass,
   activeStudentEvents,
   getStudentEventHistory,
+  getEventById,
   logStandardEvent,
   removeEvent,
   getClass,
@@ -915,8 +915,7 @@ washroomAvg: (totalWash / weekCount).toFixed(1),
 async function handleDeleteHistoryItem(eventId) {
   let detail = ''
   try {
-    const db = await getDB()
-    const original = await db.get('events', eventId)
+    const original = await getEventById(eventId)
     if (original) {
       const type = original.acType ? (original.acType === 'observation' ? 'Observation' : 'Conversation') : (original.code || 'Record')
       const dateStr = original.timestamp ? new Date(original.timestamp).toLocaleDateString() : ''

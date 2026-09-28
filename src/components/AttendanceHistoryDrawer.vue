@@ -464,7 +464,8 @@ import {
   ChevronDown
 } from 'lucide-vue-next'
 import StudentAvatar from './photos/StudentAvatar.vue'
-import * as eventService from '../db/eventService.js'
+import { getEventsByClass } from '../composables/useClassroom.js'
+import { toMinutes } from '../utils/timeUtils.js'
 import { formatLocalDate, formatLocalDisplay, parseLocal } from '../utils/dates.js'
 
 const props = defineProps({
@@ -555,7 +556,7 @@ async function fetchAttendance() {
   if (!props.classRecord?.classId || !selectedDate.value) return
   loading.value = true
   try {
-    const rawEvents = await eventService.getEventsByClass(props.classRecord.classId, {
+    const rawEvents = await getEventsByClass(props.classRecord.classId, {
       from: selectedDate.value,
       to: selectedDate.value
     })
@@ -704,10 +705,6 @@ const unseatedStudentsList = computed(() => {
 })
 
 // ─── utils ────────────────────────────────────────────────────────────────────
-
-function toMinutes(durationMs) {
-  return eventService.toMinutes(durationMs)
-}
 
 function formatTime(isoTimestamp) {
   if (!isoTimestamp) return ''

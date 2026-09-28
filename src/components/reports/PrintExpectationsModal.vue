@@ -156,7 +156,7 @@
 import { ref, computed, nextTick } from 'vue'
 import { BookOpen, Printer, X, Activity } from 'lucide-vue-next'
 import { usePrintOptions, executePrint } from '../../composables/usePrintOptions.js'
-import { calculateSBARExpectationMastery } from '../../db/gradebookService.js'
+import { calculateSBARExpectationMastery } from '../../utils/gradeCalcSBAR.js'
 
 const props = defineProps({
   show: { type: Boolean, default: false },

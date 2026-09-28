@@ -280,6 +280,7 @@ export function useGradeEditing(defaultStudentIdRef = null) {
       const grade = gradeMap.value[aId]?.[sId]
       if (grade) {
         attemptsPopover.value.attempts = grade.attempts || []
+        attemptsPopover.value.resolvedScore = grade.resolvedScore
       }
     }
   }
@@ -308,6 +309,7 @@ export function useGradeEditing(defaultStudentIdRef = null) {
       const grade = gradeMap.value[aId]?.[sId]
       if (grade && grade.attempts && grade.attempts.length > 0) {
         attemptsPopover.value.attempts = grade.attempts
+        attemptsPopover.value.resolvedScore = grade.resolvedScore
       } else {
         attemptsPopover.value = null
       }

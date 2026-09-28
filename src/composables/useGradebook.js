@@ -8,16 +8,53 @@ import { ref, shallowRef, computed, watch, triggerRef } from 'vue'
 import { useMessage } from './useMessage.js'
 import * as gradebookService from '../db/gradebookService.js'
 import * as classService from '../db/classService.js'
-import { getGlobalMilestones, getGradeBuckets } from '../db/settingsService.js'
+import { getGlobalMilestones, getGradeBuckets, saveGlobalMilestones, saveGradeBuckets, getSettings, saveSettings } from '../db/settingsService.js'
 import { useUndo } from './useUndo.js'
 import { activeClass, activeSubjectId, selectedYear, selectedSemester, academicTerms, activeClassRecord, syncStudentAcrossRefs } from './useClassroomState.js'
 import { getEffectiveClassRecord, getStudentEffectiveGrade, getUnitGradeLevel, ensureIEPPresetsForClass, autoPopulateAllElementarySubjects, filterAssessmentsForSubject } from './useElementary.js'
-import { isCohortMatch } from '../db/gradebook/gradeCalc.js'
+import { isCohortMatch } from '../utils/gradeCalc.js'
 import { formatLocalDate, getSchoolYearFromDate } from '../utils/dates.js'
 
 const { push: pushUndo } = useUndo()
 
-export { getEffectiveClassRecord, getStudentEffectiveGrade, getUnitGradeLevel, ensureIEPPresetsForClass, isCohortMatch, filterAssessmentsForSubject, activeClassRecord }
+export async function getGradebookSettings() {
+  const settings = await getSettings()
+  return {
+    gradeBuckets: settings.gradeBuckets || [
+      { label: 'R', min: 0, max: 49, color: '#ff3b30' },
+      { label: 'L1', min: 50, max: 59, color: '#ff9500' },
+      { label: 'L2', min: 60, max: 69, color: '#ffcc00' },
+      { label: 'L3', min: 70, max: 79, color: '#30b0c7' },
+      { label: 'L4', min: 80, max: 100, color: '#34c759' }
+    ],
+    capGradesAt100: settings.capGradesAt100 ?? true
+  }
+}
+
+export async function saveGradebookSettings({ gradeBuckets, capGradesAt100 }) {
+  const settings = await getSettings()
+  if (gradeBuckets !== undefined) {
+    settings.gradeBuckets = JSON.parse(JSON.stringify(gradeBuckets))
+  }
+  if (capGradesAt100 !== undefined) {
+    settings.capGradesAt100 = capGradesAt100
+  }
+  await saveSettings(settings)
+}
+
+export { 
+  getEffectiveClassRecord, 
+  getStudentEffectiveGrade, 
+  getUnitGradeLevel, 
+  ensureIEPPresetsForClass, 
+  isCohortMatch, 
+  filterAssessmentsForSubject, 
+  activeClassRecord, 
+  getGradeBuckets,
+  saveGradeBuckets,
+  getGlobalMilestones,
+  saveGlobalMilestones
+}
 
 // ─── Reactive State ──────────────────────────────────────────────────────────
 
@@ -491,6 +528,25 @@ export async function editAssessment(assessmentId, updates) {
     console.error('[useGradebook] editAssessment failed:', err)
     const { alert } = useMessage()
     await alert('Failed to update assessment.')
+  }
+}
+
+/**
+ * Retargets all assessments with an old course tag to a new tag (e.g. during section rename).
+ */
+export async function retargetAssessmentsCourseCode(classId, oldTag, newTag) {
+  if (!classId || !oldTag || !newTag) return
+  try {
+    const classAssessments = await gradebookService.getAssessmentsByClass(classId)
+    if (classAssessments && classAssessments.length > 0) {
+      for (const a of classAssessments) {
+        if (a.targetCourseCode === oldTag) {
+          await editAssessment(a.assessmentId, { targetCourseCode: newTag })
+        }
+      }
+    }
+  } catch (err) {
+    console.error('[useGradebook] Failed to retarget assessments course code:', err)
   }
 }
 /**

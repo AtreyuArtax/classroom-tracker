@@ -153,7 +153,7 @@ const props = defineProps({
 defineEmits(['select-student', 'navigate', 'toggle-privacy', 'toggle-collapse'])
 
 import { activeClassRecord, availableSubCohorts } from '../composables/useGradebook.js'
-import { getSBARLevelBadge } from '../db/gradebook/gradeCalcSBAR.js'
+import { getSBARLevelBadge } from '../utils/gradeCalcSBAR.js'
 
 const isMobileOpen = ref(false)
 

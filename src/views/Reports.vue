@@ -609,7 +609,7 @@ async function handleDownloadCsv(type) {
   if (type === 'learning_skills') {
     if (!sidebarClassId.value || !filteredSidebarStudents.value.length) return
     try {
-      const { getLearningSkillsByClass, exportAllLearningSkillsCsv } = await import('../db/learningSkillsService.js')
+      const { getLearningSkillsByClass, exportAllLearningSkillsCsv } = await import('../composables/useLearningSkills.js')
       const { saveAs } = await import('file-saver')
       const list = await getLearningSkillsByClass(sidebarClassId.value)
       const blob = exportAllLearningSkillsCsv(reportClass.value, filteredSidebarStudents.value, list)

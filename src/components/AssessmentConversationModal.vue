@@ -165,7 +165,7 @@ import { ref, watch, nextTick, computed } from 'vue'
 import { GraduationCap } from 'lucide-vue-next'
 import BaseModal from './BaseModal.vue'
 import { getEffectiveClassRecord, getUnitGradeLevel } from '../composables/useElementary.js'
-import { isCohortMatch } from '../db/gradebook/gradeCalc.js'
+import { isCohortMatch } from '../utils/gradeCalc.js'
 import { activeSubjectId } from '../composables/useClassroomState.js'
 
 const props = defineProps({

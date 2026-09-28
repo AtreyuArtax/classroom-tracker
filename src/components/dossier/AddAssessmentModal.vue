@@ -322,7 +322,7 @@ import BaseModal from '../BaseModal.vue'
 
 import { getEffectiveClassRecord, getUnitGradeLevel } from '../../composables/useElementary.js'
 import { activeSubjectId } from '../../composables/useClassroomState.js'
-import { isCohortMatch } from '../../db/gradebook/gradeCalc.js'
+import { isCohortMatch } from '../../utils/gradeCalc.js'
 
 const { sortedRoster } = useClassroom()
 

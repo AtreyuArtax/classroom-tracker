@@ -359,7 +359,7 @@
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { ArrowLeft, Edit2, Trash2, Zap, Keyboard, Users, UserMinus, AlertTriangle, Info } from 'lucide-vue-next'
 import { enterGradeSBAR, enterGradeSBARBulk, gradeMap, activeClassRecord } from '../../composables/useGradebook.js'
-import { getSBARLevelBadge } from '../../db/gradebookService.js'
+import { getSBARLevelBadge } from '../../utils/gradeCalcSBAR.js'
 import { getEffectiveClassRecord, getUnitGradeLevel } from '../../composables/useElementary.js'
 import { activeSubjectId } from '../../composables/useClassroomState.js'
 import UndoButton from '../UndoButton.vue'

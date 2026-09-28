@@ -359,7 +359,7 @@ import {
   populateSubjectFromPresets 
 } from '../../composables/useElementary.js'
 import { loadGradebook } from '../../composables/useGradebook.js'
-import * as classService from '../../db/classService.js'
+import { saveClass } from '../../composables/useClassroom.js'
 
 const props = defineProps({
   student: { type: Object, required: true },
@@ -465,7 +465,7 @@ async function autoImportPresets(subject, targetGrade) {
       ...props.activeClassRecord,
       subjects: updatedSubjects
     }
-    await classService.saveClass(updatedClass)
+    await saveClass(updatedClass)
     await loadGradebook(updatedClass)
     const { alert } = useMessage()
     await alert(`Successfully imported ${targetGrade} curriculum expectations into ${subject.name}!`)

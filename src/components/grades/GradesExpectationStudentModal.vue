@@ -267,7 +267,7 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { X, RotateCcw, Check, Award, FileText, Calendar, ExternalLink, Sparkles } from 'lucide-vue-next'
-import { SBAR_LEVELS, getSBARLevelBadge } from '../../db/gradebookService.js'
+import { SBAR_LEVELS, getSBARLevelBadge } from '../../utils/gradeCalcSBAR.js'
 import { saveStudentExpectationOverride, activeClassRecord } from '../../composables/useGradebook.js'
 import { formatLocalDisplay } from '../../utils/dates.js'
 import ExpectationWeightBadge from '../setup/ExpectationWeightBadge.vue'

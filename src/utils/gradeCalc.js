@@ -1,0 +1,776 @@
+/**
+ * src/utils/gradeCalc.js
+ *
+ * Core math algorithms, statistical functions, and pure grade calculations.
+ */
+
+import { preciseRound } from './math.js'
+import { calculateSBARStudentOverallMastery } from './gradeCalcSBAR.js'
+
+/**
+ * Calculates standard deviation for an array of numbers.
+ * @param {Array<number>} values 
+ * @returns {number|null}
+ */
+export function calculateStandardDeviation(values) {
+  if (!values || values.length < 2) return null
+  const valid = values
+    .filter(v => v !== null && v !== undefined && v !== '' && !isNaN(Number(v)) && isFinite(Number(v)))
+    .map(Number)
+  if (valid.length < 2) return null
+  const mean = valid.reduce((a, b) => a + b, 0) / valid.length
+  const squaredDiffs = valid.map(v => Math.pow(v - mean, 2))
+  // Use Sample SD (n-1) for cohort samples
+  const avgSquaredDiff = squaredDiffs.reduce((a, b) => a + b, 0) / (valid.length - 1)
+  return Math.sqrt(avgSquaredDiff)
+}
+
+/**
+ * Detects outliers using standard deviation (default 1.5 SD below mean).
+ * Includes a "Hard Zero" rule for non-attending students in healthy classes.
+ * @param {Array<number>} values 
+ * @param {number} threshold 
+ * @returns {Object} { clean, outliers, cutoff, mean, sd }
+ */
+export function detectOutliers(values, threshold = 1.5) {
+  if (!values || values.length < 3) return { clean: values || [], outliers: [] }
+  const valid = values
+    .filter(v => v !== null && v !== undefined && v !== '' && !isNaN(Number(v)) && isFinite(Number(v)))
+    .map(Number)
+  if (valid.length < 3) return { clean: valid, outliers: [] }
+  const mean = valid.reduce((a, b) => a + b, 0) / valid.length
+  const sd = calculateStandardDeviation(valid)
+  if (sd === null || sd === 0) return { clean: valid, outliers: [] }
+
+  let cutoff = mean - (threshold * sd)
+
+  // Hard Zero / Extreme Deviation Rule:
+  // If the class mean is healthy (>50%), any student at 0% is statistically
+  // likely to be a non-participator (outlier) unless >25% of the class also has 0%.
+  const zeroCount = valid.filter(v => v === 0).length
+  const zeroRatio = zeroCount / valid.length
+  if (mean > 50 && zeroRatio < 0.25) {
+    // Ensure cutoff is at least 1% to catch hard zeros/Missing entries
+    if (cutoff < 1) cutoff = 1
+  }
+
+  const clean = valid.filter(v => v >= cutoff)
+  const outliers = valid.filter(v => v < cutoff)
+  return { clean, outliers, cutoff, mean, sd }
+}
+
+/**
+ * Groups percentages into 10% buckets.
+ * @param {Array<number>} percentages 
+ * @returns {Array<Object>}
+ */
+export function buildDistributionBuckets(percentages) {
+  const buckets = Array(10).fill(0).map((_, i) => ({
+    label: i === 9 ? '90%+' : `${i * 10}-${i * 10 + 9}%`,
+    range: [i * 10, i === 9 ? Infinity : i * 10 + 9],
+    count: 0,
+    scores: []
+  }))
+
+  for (const p of percentages) {
+    if (p === null || p === undefined || isNaN(p)) continue
+    const idx = Math.floor(p / 10)
+    const safeIdx = Math.max(0, Math.min(9, idx))
+    buckets[safeIdx].count++
+    buckets[safeIdx].scores.push(p)
+  }
+  return buckets
+}
+
+/**
+ * Groups percentages into 'Growing Success' levels (Ontario Education).
+ * R: 0-49, L1: 50-59, L2: 60-69, L3: 70-79, L4: 80-100
+ * @param {Array<number>} percentages 
+ * @returns {Array<Object>}
+ */
+export function buildLevelDistributionBuckets(percentages, customBuckets = null) {
+  const buckets = (customBuckets && customBuckets.length > 0)
+    ? customBuckets.map(b => ({ ...b, count: 0, scores: [], range: [Number(b.min), Number(b.max)] }))
+    : [
+        { label: 'R', range: [0, 49], count: 0, scores: [] },
+        { label: 'L1', range: [50, 59], count: 0, scores: [] },
+        { label: 'L2', range: [60, 69], count: 0, scores: [] },
+        { label: 'L3', range: [70, 79], count: 0, scores: [] },
+        { label: 'L4', range: [80, 100], count: 0, scores: [] }
+      ]
+
+  for (const p of percentages) {
+    if (p === null || p === undefined || isNaN(p)) continue
+    const val = Math.round(Number(p))
+    
+    // Find the matching bucket
+    let bucket = buckets.find(b => val >= b.range[0] && val <= b.range[1])
+    
+    // If no matching bucket (e.g. score > 100) and it's a high score, add to the last bucket
+    if (!bucket && val > buckets[buckets.length - 1].range[1]) {
+      bucket = buckets[buckets.length - 1]
+    }
+    // If lower than lowest bucket, add to the lowest bucket
+    if (!bucket && val < buckets[0].range[0]) {
+      bucket = buckets[0]
+    }
+
+    if (bucket) {
+      bucket.count++
+      bucket.scores.push(p)
+    }
+  }
+  return buckets
+}
+
+/**
+ * Resolves which score counts for an assessment based on the retest policy.
+ * 
+ * @param {Array<Object>} attempts Array of attempt objects.
+ * @param {string} retestPolicy 'highest' | 'latest' | 'average' | 'manual'
+ * @returns {number|null}
+ */
+export function resolveAttemptScore(attempts, retestPolicy) {
+  if (!attempts || attempts.length === 0) return null
+  const getVal = a => {
+    const raw = (a.pointsEarned != null ? a.pointsEarned : (a.score != null ? a.score : (a.points != null ? a.points : null)))
+    if (raw === null || raw === undefined || raw === '' || isNaN(Number(raw))) return null
+    return Number(raw)
+  }
+  const validObjects = attempts.filter(a => getVal(a) !== null)
+  if (validObjects.length === 0) return null
+  const valid = validObjects.map(getVal)
+
+  switch (retestPolicy) {
+    case 'highest':
+      return Math.max(...valid)
+    case 'latest':
+      return valid[valid.length - 1]
+    case 'average':
+      return valid.reduce((sum, v) => sum + v, 0) / valid.length
+    case 'manual':
+      const primaryAttempt = validObjects.find(a => a.isPrimary)
+      const primaryVal = primaryAttempt ? getVal(primaryAttempt) : null
+      return primaryVal !== null ? primaryVal : valid[valid.length - 1]
+    default:
+      return Math.max(...valid)
+  }
+}
+
+/**
+ * Calculates the percentage score for an assessment.
+ * Centralizing this logic to ensure consistent reporting across grid and analytics.
+ * 
+ * @param {Object} assessment Assessment metadata
+ * @param {Object} grade Grade record with attempts
+ * @returns {number|null}
+ */
+export function getAssessmentPercentage(assessment, grade) {
+  if (!grade || grade.excluded) return null
+  if (assessment?.purpose === 'administrative') return null
+  if (grade.missing) return 0
+  
+  let earned = null
+  if (grade.attempts && grade.attempts.length > 0) {
+    earned = resolveAttemptScore(grade.attempts, assessment?.retestPolicy)
+  }
+  if (earned === null && grade.resolvedScore !== null && grade.resolvedScore !== undefined && grade.resolvedScore !== '') {
+    earned = Number(grade.resolvedScore)
+  }
+  if (earned === null && grade.score !== null && grade.score !== undefined && grade.score !== '') {
+    earned = Number(grade.score)
+  }
+  if (earned === null || isNaN(earned) || !isFinite(earned)) return null
+  
+  const rawDivisor = Number(assessment?.totalPoints)
+  const divisor = (!isNaN(rawDivisor) && rawDivisor > 0) ? rawDivisor : 1
+  const pct = (earned / divisor) * 100
+  return (isNaN(pct) || !isFinite(pct)) ? null : pct
+}
+
+export function _calculateCategoryGrade(catAssessments, gradeMap, capAt100 = false) {
+  let totalEarned = 0
+  let totalPossible = 0
+
+  for (const assessment of catAssessments) {
+    if (assessment.isFormative || assessment.purpose === 'formative' || assessment.purpose === 'administrative') continue
+    const grade = gradeMap[assessment.assessmentId]
+    if (!grade || grade.excluded) continue
+
+    const rawPossible = assessment.scaledTotal ?? assessment.totalPoints
+    const possible = Number(rawPossible)
+    if (isNaN(possible) || possible <= 0) continue
+
+    if (grade.missing) {
+      // Missing counts as 0 against the scaled total
+      totalPossible += possible
+      continue
+    }
+
+    let earned = null
+    if (grade.attempts && grade.attempts.length > 0) {
+      earned = resolveAttemptScore(grade.attempts, assessment.retestPolicy)
+    }
+    if (earned === null && grade.resolvedScore !== null && grade.resolvedScore !== undefined && grade.resolvedScore !== '') {
+      earned = Number(grade.resolvedScore)
+    }
+    if (earned === null && grade.score !== null && grade.score !== undefined && grade.score !== '') {
+      earned = Number(grade.score)
+    }
+
+    if (earned === null || isNaN(earned) || !isFinite(earned)) continue
+
+    // Guard against division by zero
+    const divisor = (assessment.totalPoints > 0) ? Number(assessment.totalPoints) : 1
+    const scaledEarned = assessment.scaledTotal
+      ? (earned / divisor) * Number(assessment.scaledTotal)
+      : earned
+
+    totalEarned += scaledEarned
+    totalPossible += possible
+  }
+
+  if (totalPossible === 0) return null
+  const result = (totalEarned / totalPossible) * 100
+  return preciseRound(capAt100 ? Math.min(100, result) : result)
+}
+
+/**
+ * Finds the dominant 10% bucket for a set of scores.
+ */
+export function getBucketMode(scores) {
+  if (!scores || scores.length === 0) return { result: null, isFallback: false }
+  
+  const validScores = scores.filter(s => s && s.percentage != null && !isNaN(Number(s.percentage)) && isFinite(Number(s.percentage)))
+  if (validScores.length === 0) return { result: null, isFallback: false }
+
+  const buckets = Array.from({ length: 10 }, () => []) // 0-9: 0-9%, 10-19%, ..., 90%+
+  
+  validScores.forEach(s => {
+    const p = Number(s.percentage)
+    let index = Math.floor(p / 10)
+    const safeIdx = Math.max(0, Math.min(9, isNaN(index) ? 0 : index))
+    buckets[safeIdx].push({ ...s, percentage: p })
+  })
+
+  let maxCount = 0
+  let bestBucketIndex = -1
+
+  for (let i = 0; i < 10; i++) {
+    if (buckets[i].length > maxCount) {
+      maxCount = buckets[i].length
+      bestBucketIndex = i
+    } else if (buckets[i].length === maxCount && maxCount > 0) {
+      // Tie-break: use bucket with most recent score
+      const currentNewest = Math.max(...buckets[bestBucketIndex].map(s => new Date(s.date).getTime()))
+      const candidateNewest = Math.max(...buckets[i].map(s => new Date(s.date).getTime()))
+      // Deterministic tie-break: 
+      // 1. Favor the bucket with the most recent entry
+      // 2. If dates are identical, favor the higher grade bucket
+      if (candidateNewest > currentNewest) {
+        bestBucketIndex = i
+      } else if (candidateNewest === currentNewest && i > bestBucketIndex) {
+        bestBucketIndex = i
+      }
+    }
+  }
+
+  if (maxCount <= 1 || bestBucketIndex === -1) return { result: null, isFallback: false }
+
+  const bucketScores = buckets[bestBucketIndex].map(s => Number(s.percentage))
+  const mean = bucketScores.reduce((a, b) => a + Number(b), 0) / bucketScores.length
+  
+  const low = bestBucketIndex * 10
+  const high = bestBucketIndex >= 9 ? '' : (low + 9)
+  const label = bestBucketIndex >= 9 ? '90%+' : `${low}-${high}%`
+
+  return { 
+    result: mean, 
+    bucketLabel: label, 
+    count: maxCount, 
+    isFallback: false 
+  }
+}
+
+/**
+ * Calculates the median of an array of numbers.
+ */
+export function calculateMedian(scores) {
+  if (!scores || scores.length === 0) return null
+  const valid = scores
+    .filter(s => s !== null && s !== undefined && s !== '' && !isNaN(Number(s)) && isFinite(Number(s)))
+    .map(Number)
+  if (valid.length === 0) return null
+  valid.sort((a, b) => a - b)
+  const mid = Math.floor(valid.length / 2)
+  if (valid.length % 2 === 0) {
+    return (valid[mid - 1] + valid[mid]) / 2
+  }
+  return valid[mid]
+}
+
+/**
+ * Calculates Most Consistent grade based on bucket mode per category.
+ */
+export function calculateMostConsistent(studentId, classRecord, gradeMap, assessments, capAt100 = false) {
+  const categories = classRecord.gradebookCategories
+  if (!categories || categories.length === 0) return null
+
+  const studentCourseCode = classRecord.students?.[studentId]?.courseCode
+  const studentGradeLevel = classRecord.students?.[studentId]?.gradeLevel
+  const isElem = classRecord.classType === 'elementary'
+  const studentCohort = isElem 
+    ? (classRecord.students?.[studentId]?.accommodations?.modifiedSubjectGrades?.[classRecord.activeSubjectId] || studentGradeLevel)
+    : studentCourseCode
+
+  const breakdown = {}
+  let weightedSum = 0
+  let totalWeight = 0
+
+  for (const cat of categories) {
+    const catAssessments = assessments.filter(a => {
+      if (String(a.categoryId) !== String(cat.categoryId) || a.excluded || a.categoryId === 'sbar_general') return false
+      if (a.target === 'individual') return String(a.targetStudentId) === String(studentId)
+      const targetTag = isElem ? (a.gradeLevel || a.targetCourseCode) : (a.targetCourseCode || a.gradeLevel)
+      return isCohortMatch(targetTag, studentCohort)
+    })
+
+    const scores = []
+    for (const a of catAssessments) {
+      const g = gradeMap[a.assessmentId]
+      const percentage = getAssessmentPercentage(a, g)
+      if (percentage === null) continue
+      
+      scores.push({
+        percentage: percentage,
+        date: a.date
+      })
+    }
+
+    let result = getBucketMode(scores)
+    let percentage = result.result
+    let isFallback = false
+    let bucketLabel = result.bucketLabel
+    let count = result.count
+
+    if (percentage === null || scores.length < 2) {
+      percentage = calculateMedian(scores.map(s => s.percentage))
+      isFallback = true
+      bucketLabel = null
+      count = scores.length
+    }
+
+    if (percentage !== null) {
+      const finalPerc = capAt100 ? Math.min(100, percentage) : percentage
+      const rounded = preciseRound(finalPerc)
+      breakdown[cat.categoryId] = { 
+        percentage: rounded, 
+        bucketLabel, 
+        count, 
+        totalCount: scores.length,
+        isFallback 
+      }
+      const catWeight = Number(cat.weight || 0)
+      if (catWeight > 0 && !isNaN(catWeight)) {
+        weightedSum += rounded * (catWeight / 100)
+        totalWeight += catWeight
+      }
+    } else {
+      breakdown[cat.categoryId] = null
+    }
+  }
+
+  if (totalWeight === 0) return null
+
+  const result = (weightedSum / totalWeight) * 100
+  const finalPerc = capAt100 ? Math.min(100, result) : result
+
+  return {
+    percentage: preciseRound(finalPerc),
+    isFallback: Object.values(breakdown).some(b => b?.isFallback),
+    categoryBreakdown: breakdown
+  }
+}
+
+export function calculateWeightedMedian(studentId, classRecord, gradeMap, assessments, capAt100 = false) {
+  const categories = classRecord.gradebookCategories
+  if (!categories || categories.length === 0) return null
+
+  const studentCourseCode = classRecord.students?.[studentId]?.courseCode
+  const studentGradeLevel = classRecord.students?.[studentId]?.gradeLevel
+  const isElem = classRecord.classType === 'elementary'
+  const studentCohort = isElem 
+    ? (classRecord.students?.[studentId]?.accommodations?.modifiedSubjectGrades?.[classRecord.activeSubjectId] || studentGradeLevel)
+    : studentCourseCode
+
+  const breakdown = {}
+  let weightedSum = 0
+  let totalWeight = 0
+
+  for (const cat of categories) {
+    const catAssessments = assessments.filter(a => {
+      if (String(a.categoryId) !== String(cat.categoryId) || a.excluded || a.categoryId === 'sbar_general') return false
+      if (a.target === 'individual') return String(a.targetStudentId) === String(studentId)
+      const targetTag = isElem ? (a.gradeLevel || a.targetCourseCode) : (a.targetCourseCode || a.gradeLevel)
+      return isCohortMatch(targetTag, studentCohort)
+    })
+
+    const scores = []
+    for (const a of catAssessments) {
+      const g = gradeMap[a.assessmentId]
+      const percentage = getAssessmentPercentage(a, g)
+      if (percentage !== null) {
+        scores.push(percentage)
+      }
+    }
+
+    if (scores.length > 0) {
+      const median = calculateMedian(scores)
+      const rounded = preciseRound(median)
+      breakdown[cat.categoryId] = { 
+        percentage: rounded, 
+        count: scores.length 
+      }
+      const catWeight = Number(cat.weight || 0)
+      if (catWeight > 0 && !isNaN(catWeight)) {
+        weightedSum += rounded * (catWeight / 100)
+        totalWeight += catWeight
+      }
+    }
+  }
+
+  if (totalWeight === 0) return null
+
+  const result = (weightedSum / totalWeight) * 100
+  const finalPerc = capAt100 ? Math.min(100, result) : result
+
+  return {
+    percentage: preciseRound(finalPerc),
+    categoryBreakdown: breakdown
+  }
+}
+
+export function isCohortMatch(targetTag, studentCohort) {
+  if (!targetTag || String(targetTag).toLowerCase() === 'all' || !studentCohort) return true
+  const normalize = (val) => {
+    let s = String(val).replace(/\s*\(IEP\)/i, '').trim().toLowerCase()
+    // Convert pure numbers like "7" or "07" into "grade 7"
+    if (/^\d+$/.test(s)) {
+      return `grade ${parseInt(s, 10)}`
+    }
+    // Normalize "gr 7", "gr. 7", "grade 7" into "grade 7"
+    s = s.replace(/^(grade|gr)\.?\s*/i, 'grade ')
+    return s.trim()
+  }
+  const cleanTarget = normalize(targetTag)
+  const cleanCohort = normalize(studentCohort)
+  return cleanTarget === cleanCohort
+}
+
+/**
+ * Scopes an assessments list to an active elementary subject.
+ * Returns the full assessments list untouched for non-elementary classes or when no subject is scoped.
+ * Uses exact parity across calculation engines:
+ * 1. Checks a.subjectId === subId
+ * 2. Checks a.unitId in subUnits
+ * 3. Checks a.expectationIds / expectationId in subExps
+ * 4. For unassigned assessments (no subjectId, no unitId, no expectations), scopes to first subject.
+ *
+ * @param {Array<Object>} assessmentsList
+ * @param {Object} classRecord - effective or raw class record
+ * @param {string|null} [targetSubjectId=null]
+ * @returns {Array<Object>}
+ */
+export function filterAssessmentsForSubject(assessmentsList, classRecord, targetSubjectId = null) {
+  if (!Array.isArray(assessmentsList) || assessmentsList.length === 0) return []
+  if (!classRecord || classRecord.classType !== 'elementary') return assessmentsList
+
+  const subId = String(targetSubjectId || classRecord.activeSubjectId || '')
+  if (!subId) return assessmentsList
+
+  let units = classRecord.gradebookUnits || []
+  let exps = classRecord.expectations || []
+
+  // If called on a raw homeroom record where units/expectations live inside subjects array:
+  if (classRecord.subjects && Array.isArray(classRecord.subjects)) {
+    const matchedSub = classRecord.subjects.find(s => s.subjectId === subId)
+    if (matchedSub) {
+      if (matchedSub.gradebookUnits && matchedSub.gradebookUnits.length > 0) {
+        units = matchedSub.gradebookUnits
+      }
+      if (matchedSub.expectations && matchedSub.expectations.length > 0) {
+        exps = matchedSub.expectations
+      }
+    }
+  }
+
+  const subUnits = new Set(units.map(u => String(u.unitId)))
+  const subExps = new Set(exps.map(e => String(e.code || e.expectationId).toLowerCase()))
+  const firstSubId = String(classRecord.subjects?.[0]?.subjectId || classRecord.activeSubjectId || 'elem_sub_math')
+
+  return assessmentsList.filter(a => {
+    if (a.purpose === 'administrative') {
+      if (a.subjectId && a.subjectId !== 'all') return String(a.subjectId) === subId
+      return true
+    }
+    if (a.subjectId) return String(a.subjectId) === subId
+    if (a.unitId && subUnits.has(String(a.unitId))) return true
+    const expIds = a.expectationIds || (a.expectationId ? [a.expectationId] : [])
+    if (expIds.length > 0 && expIds.some(code => subExps.has(String(code).toLowerCase()))) return true
+    if (!a.subjectId && !a.unitId && expIds.length === 0) {
+      return subId === firstSubId
+    }
+    return false
+  })
+}
+
+export async function calculateStudentGrade(studentId, classRecord, { asOf = null, dateFrom = null, assessmentsPreRef = null, gradesPreRef = null, settingsPreRef = null } = {}) {
+  if (!studentId || !classRecord || !classRecord.classId) return null
+  let assessments = assessmentsPreRef || []
+  const grades = gradesPreRef || []
+  
+  // Scope assessments to active subject for elementary classes
+  if (classRecord.classType === 'elementary' && classRecord.activeSubjectId) {
+    assessments = filterAssessmentsForSubject(assessments, classRecord)
+  }
+
+  const gradeMap = {}
+  for (const g of grades) {
+    if (!g.studentId || String(g.studentId) === String(studentId)) {
+      gradeMap[g.assessmentId] = g
+    }
+  }
+
+  const studentRecord = classRecord.students?.[studentId]
+  const rawAdjusted = studentRecord?.adjustedGrade
+  const adjustedGrade = (rawAdjusted !== null && rawAdjusted !== undefined && rawAdjusted !== '' && !isNaN(Number(rawAdjusted)))
+    ? Number(rawAdjusted)
+    : null
+  const isAdjusted = adjustedGrade !== null
+
+  if (classRecord.gradingFramework === 'sbar') {
+    const sbarAssessments = (asOf || dateFrom)
+      ? assessments.filter(a => (!asOf || a.date <= asOf) && (!dateFrom || a.date >= dateFrom))
+      : assessments
+    const sbarMasteryPct = calculateSBARStudentOverallMastery(studentId, classRecord, sbarAssessments, gradeMap)
+
+    // Check if Weighted Evaluation Components (e.g. 65% Coursework / 25% Exam / 10% Attendance) are enabled
+    if (classRecord.sbarWeighting?.enabled) {
+      const rawTermWeight = classRecord.sbarWeighting.termWeight
+      const termWeight = (rawTermWeight != null && !isNaN(Number(rawTermWeight))) ? Math.max(0, Number(rawTermWeight)) : 65
+      const components = classRecord.sbarWeighting.components || []
+      let weightedSum = 0
+      let weightUsed = 0
+      const componentResults = {}
+
+      if (sbarMasteryPct !== null && !isNaN(sbarMasteryPct)) {
+        weightedSum += sbarMasteryPct * (termWeight / 100)
+        weightUsed += termWeight
+      }
+
+      for (const comp of components) {
+        const compWeight = Number(comp.weight || 0)
+        if (compWeight <= 0) continue
+
+        // Locate component assessment
+        const compAssessment = assessments.find(a => {
+          if (asOf && a.date > asOf) return false
+          if (dateFrom && a.date < dateFrom) return false
+          if (comp.assessmentId && String(a.assessmentId) === String(comp.assessmentId)) return true
+          if (comp.componentId && String(a.componentId) === String(comp.componentId)) return true
+          return false
+        })
+
+        if (!compAssessment) {
+          componentResults[comp.componentId] = {
+            name: comp.name,
+            weight: compWeight,
+            percentage: null,
+            assessmentId: comp.assessmentId || null
+          }
+          continue
+        }
+
+        const grade = gradeMap[compAssessment.assessmentId]
+        const pct = getAssessmentPercentage(compAssessment, grade)
+
+        if (pct !== null && !isNaN(pct)) {
+          const roundedPct = preciseRound(pct)
+          weightedSum += roundedPct * (compWeight / 100)
+          weightUsed += compWeight
+          componentResults[comp.componentId] = {
+            name: comp.name,
+            weight: compWeight,
+            percentage: roundedPct,
+            assessmentId: compAssessment.assessmentId
+          }
+        } else {
+          componentResults[comp.componentId] = {
+            name: comp.name,
+            weight: compWeight,
+            percentage: null,
+            assessmentId: compAssessment.assessmentId
+          }
+        }
+      }
+
+      const capAt100 = settingsPreRef?.capGradesAt100 ?? true
+
+      const rawOverall = weightUsed === 0 ? null : (weightedSum / weightUsed) * 100
+      const calculatedOverallGrade = rawOverall === null ? null : preciseRound(capAt100 ? Math.min(100, rawOverall) : rawOverall, 0)
+      const displayOverallGrade = isAdjusted
+        ? preciseRound(capAt100 ? Math.min(100, Number(adjustedGrade)) : Number(adjustedGrade), 0)
+        : calculatedOverallGrade
+
+      return {
+        overallGrade: displayOverallGrade,
+        displayOverallGrade,
+        calculatedOverallGrade,
+        rawOverallGrade: rawOverall !== null ? preciseRound(rawOverall, 2) : null,
+        categoryResults: {
+          sbar_term: {
+            name: 'Coursework (Expectations)',
+            weight: termWeight,
+            percentage: sbarMasteryPct
+          },
+          ...componentResults
+        },
+        isGradeAdjusted: isAdjusted,
+        isAdjusted,
+        adjustedGrade: isAdjusted ? preciseRound(Number(adjustedGrade), 0) : null,
+        mostConsistent: null,
+        median: null,
+        sbarMasteryPct,
+        sbarBreakdown: {
+          enabled: true,
+          termWeight,
+          sbarMasteryPct,
+          components: componentResults,
+          weightUsed
+        },
+        weightUsed,
+        asOf,
+        dateFrom
+      }
+    }
+
+    // Default legacy unweighted SBAR mode (100% expectation mastery)
+    const displayOverallGrade = isAdjusted
+      ? preciseRound(Number(adjustedGrade), 0)
+      : sbarMasteryPct
+
+    return {
+      overallGrade: displayOverallGrade,
+      displayOverallGrade,
+      calculatedOverallGrade: sbarMasteryPct,
+      categoryResults: {},
+      isGradeAdjusted: isAdjusted,
+      isAdjusted,
+      adjustedGrade: isAdjusted ? preciseRound(Number(adjustedGrade), 0) : null,
+      mostConsistent: null,
+      median: null,
+      sbarMasteryPct,
+      asOf,
+      dateFrom
+    }
+  }
+
+  const categories = classRecord.gradebookCategories
+  if (!categories || categories.length === 0) return null
+
+  const capAt100 = settingsPreRef?.capGradesAt100 ?? true
+
+  const categoryResults = {}
+
+  for (const category of categories) {
+    const studentCourseCode = studentRecord?.courseCode
+    const studentGradeLevel = studentRecord?.gradeLevel
+    const isElem = classRecord.classType === 'elementary'
+    const studentCohort = isElem 
+      ? (studentRecord?.accommodations?.modifiedSubjectGrades?.[classRecord.activeSubjectId] || studentGradeLevel)
+      : studentCourseCode
+
+    let catAssessments = assessments.filter(a => {
+      if (String(a.categoryId) !== String(category.categoryId) || a.excluded || a.categoryId === 'sbar_general') return false
+      if (a.target === 'individual') return String(a.targetStudentId) === String(studentId)
+      
+      const targetTag = isElem ? (a.gradeLevel || a.targetCourseCode) : (a.targetCourseCode || a.gradeLevel)
+      return isCohortMatch(targetTag, studentCohort)
+    })
+
+    // Apply asOf and dateFrom date filters if provided
+    if (asOf || dateFrom) {
+      catAssessments = catAssessments.filter(a => (!asOf || a.date <= asOf) && (!dateFrom || a.date >= dateFrom))
+    }
+
+    // Individual category grades allow bonus marks >100% so they roll up accurately
+    const calculatedPercentage = _calculateCategoryGrade(catAssessments, gradeMap, false)
+
+    // Check for manual category override (honored even if calculatedPercentage is null)
+    const override = studentRecord?.categoryOverrides?.[category.categoryId]
+    const rawOverride = override?.overridePercentage ?? override
+    const overrideValue = (rawOverride !== null && rawOverride !== undefined && rawOverride !== '') ? Number(rawOverride) : null
+    const hasOverride = overrideValue !== null && !isNaN(overrideValue)
+    
+    if (hasOverride) {
+      categoryResults[category.categoryId] = {
+        percentage: preciseRound(overrideValue),
+        isOverridden: true
+      }
+    } else if (calculatedPercentage !== null && !isNaN(calculatedPercentage) && isFinite(calculatedPercentage)) {
+      categoryResults[category.categoryId] = {
+        percentage: preciseRound(calculatedPercentage),
+        isOverridden: false
+      }
+    } else {
+      categoryResults[category.categoryId] = null
+    }
+  }
+
+  // Calculate weighted final grade
+  let weightedSum = 0
+  let weightUsed = 0
+
+  for (const category of categories) {
+    const result = categoryResults[category.categoryId]
+    if (!result) continue
+    
+    const catWeight = Number(category.weight || 0)
+    if (catWeight <= 0 || isNaN(catWeight)) continue
+
+    weightedSum += result.percentage * (catWeight / 100)
+    weightUsed += catWeight
+  }
+
+  const rawOverall = weightUsed === 0 ? null : (weightedSum / weightUsed) * 100
+  const finalCalculatedGrade = rawOverall === null ? null : preciseRound(capAt100 ? Math.min(100, rawOverall) : rawOverall, 0)
+
+  const displayOverallGrade = isAdjusted
+    ? preciseRound(capAt100 ? Math.min(100, Number(adjustedGrade)) : Number(adjustedGrade), 0)
+    : finalCalculatedGrade
+
+  const effectiveAssessments = (asOf || dateFrom)
+    ? assessments.filter(a => (!asOf || a.date <= asOf) && (!dateFrom || a.date >= dateFrom))
+    : assessments
+
+  // New Metrics
+  const mostConsistent = calculateMostConsistent(studentId, classRecord, gradeMap, effectiveAssessments, capAt100)
+  const median = calculateWeightedMedian(studentId, classRecord, gradeMap, effectiveAssessments, capAt100)
+
+  return {
+    overallGrade: displayOverallGrade,
+    displayOverallGrade,
+    calculatedOverallGrade: finalCalculatedGrade,
+    rawOverallGrade: rawOverall !== null ? preciseRound(rawOverall, 2) : null,
+    isGradeAdjusted: isAdjusted,
+    isAdjusted,
+    adjustedGrade: isAdjusted ? preciseRound(Number(adjustedGrade), 0) : null,
+    mostConsistent,
+    median: median && median.percentage !== null ? Math.round(median.percentage * 10) / 10 : null,
+    medianData: median,
+    categoryResults,
+    weightUsed,
+    asOf,
+    dateFrom
+  }
+}

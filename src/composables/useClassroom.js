@@ -824,12 +824,15 @@ async function updateActiveClass(updates) {
         }
         // Special case: if students is updated, sync the global students ref and class sections
         if (key === 'students') {
-            students.value = JSON.parse(JSON.stringify(val))
+            const studentMap = val || {}
+            activeClass.value.students = studentMap
+            students.value = studentMap
             classService.syncClassSections(updated)
             activeClass.value.isSplitClass = updated.isSplitClass
             activeClass.value.courseSections = updated.courseSections
             activeClass.value.courseCode = updated.courseCode
             if (cls) {
+                cls.students = studentMap
                 cls.isSplitClass = updated.isSplitClass
                 cls.courseSections = updated.courseSections
                 cls.courseCode = updated.courseCode
@@ -933,20 +936,15 @@ async function importRoster(parsedRows, targetClassId = null) {
                 excludeFromAnalytics: false,
             }
             cls.students[studentId] = newSt
-            if (isActive) {
-                students.value[studentId] = JSON.parse(JSON.stringify(newSt))
-            }
         }
     }
 
     classService.syncClassSections(cls)
     await classService.saveClass(cls)
     if (isActive) {
-        activeClass.value = {
-            ...cls,
-            students: { ...cls.students }
-        }
-        students.value = { ...cls.students }
+        cls.students = cls.students || {}
+        activeClass.value = cls
+        students.value = cls.students
         triggerRef(students)
         triggerRef(activeClass)
     }
@@ -1001,7 +999,11 @@ async function _reloadClasses() {
         const fresh = active.find(c => c.classId === activeClass.value.classId)
         if (fresh) {
             Object.assign(activeClass.value, fresh)
-            students.value = JSON.parse(JSON.stringify(fresh.students || {}))
+            fresh.students = fresh.students || {}
+            activeClass.value.students = fresh.students
+            students.value = fresh.students
+            triggerRef(students)
+            triggerRef(activeClass)
         } else if (validFiltered.length > 0) {
             await _activateClass(validFiltered[0])
         }
@@ -1367,6 +1369,92 @@ async function editEvent(eventId, updates) {
     if (original.code === 'l' && updates.duration !== undefined) {
         await syncLateActiveState(original.classId, original.studentId, original.duration, updates.duration, updates.timestamp || original.timestamp)
     }
+}
+
+/**
+ * Fetches an event by its ID.
+ */
+async function getEventById(eventId) {
+    return eventService.getEventById(eventId)
+}
+
+/**
+ * Updates multiple student seats atomically in IDB and synchronizes reactive state.
+ */
+async function updateMultipleStudentSeats(classId, seatMap) {
+    if (!classId || !seatMap || Object.keys(seatMap).length === 0) return
+    await classService.updateMultipleStudentSeats(classId, seatMap)
+    for (const [studentId, seat] of Object.entries(seatMap)) {
+        syncStudentAcrossRefs(classId, studentId, { seat: seat ? { ...seat } : null })
+    }
+}
+
+/**
+ * Clears all RFID tags across the active class.
+ */
+async function clearAllClassRfids() {
+    const classId = activeClass.value?.classId
+    if (!classId) return
+    const fresh = await classService.getClass(classId)
+    if (!fresh || !fresh.students) return
+    for (const s of Object.values(fresh.students)) {
+        s.rfidTag = ''
+    }
+    await classService.saveClass(fresh)
+    if (activeClass.value?.classId === classId && activeClass.value.students) {
+        for (const s of Object.values(activeClass.value.students)) {
+            s.rfidTag = ''
+        }
+        triggerRef(activeClass)
+    }
+    if (students.value) {
+        for (const s of Object.values(students.value)) {
+            s.rfidTag = ''
+        }
+        triggerRef(students)
+    }
+}
+
+/**
+ * Gets student data counts across stores for delete confirmations.
+ */
+async function getStudentClassDataCounts(classId, studentId) {
+    return classService.getStudentClassDataCounts(classId, studentId)
+}
+
+/**
+ * Layout preset operations.
+ */
+async function getSavedLayoutPresets() {
+    return settingsService.getSavedLayoutPresets()
+}
+async function saveLayoutPreset(presetObj) {
+    return settingsService.saveLayoutPreset(presetObj)
+}
+
+async function getEventsByStudent(studentId, filters) {
+    return eventService.getEventsByStudent(studentId, filters)
+}
+
+async function getEventsByClass(classId, filters) {
+    return eventService.getEventsByClass(classId, filters)
+}
+
+async function isSyncActive() {
+    return eventService.isSyncActive()
+}
+
+async function saveClass(classObj) {
+    await classService.saveClass(classObj)
+    if (activeClass.value?.classId === classObj.classId) {
+        activeClass.value = { ...classObj }
+        activeClassRecord.value = { ...classObj }
+        triggerRef(activeClass)
+    }
+}
+
+async function getAllClasses() {
+    return classService.getAllClasses()
 }
 
 /**
@@ -1758,8 +1846,9 @@ async function _activateClass(cls) {
         classList.value[cachedIdx] = cls
     }
 
-    // Deep-copy students map so Vue can track nested mutations
-    students.value = JSON.parse(JSON.stringify(cls.students ?? {}))
+    // Canonical reactive student reference: shares the exact same student objects with activeClass
+    cls.students = cls.students ?? {}
+    students.value = cls.students
     
     // Reset sub-cohort filter on class switch so new class isn't accidentally filtered by previous class's sub-cohort
     activeSubCohortFilter.value = 'all'
@@ -1839,6 +1928,11 @@ export function useClassroom() {
         assignSeat,
         swapSeats,
         autoAssignSeats,
+        updateMultipleStudentSeats,
+        clearAllClassRfids,
+        getStudentClassDataCounts,
+        getSavedLayoutPresets,
+        saveLayoutPreset,
         computeSuggestedClass,
         logAttendanceEvent,
         syncLateActiveState,
@@ -1849,6 +1943,7 @@ export function useClassroom() {
         getAttendanceOnDate,
         getStudentEventHistory,
         editEvent,
+        getEventById,
         removeEvent,
         checkResize,
         updateStudentNote,
@@ -1887,8 +1982,21 @@ export function useClassroom() {
         userCode,
         isSeatValid,
         updateCloudConfig,
-        generateUniqueUserCode
+        generateUniqueUserCode,
+        getEventsByStudent,
+        getEventsByClass,
+        isSyncActive,
+        saveClass,
+        getAllClasses
     }
+}
+
+export {
+    getEventsByStudent,
+    getEventsByClass,
+    isSyncActive,
+    saveClass,
+    getAllClasses
 }
 
 /** Midnight reset scheduler for isTestDay and stale states */

@@ -596,7 +596,7 @@ import {
 import { curriculumPresets } from '../../data/curriculum/index.js'
 import { useMessage } from '../../composables/useMessage.js'
 import { useUndo } from '../../composables/useUndo.js'
-import { getAllClasses, saveClass } from '../../db/classService.js'
+import { getAllClasses, saveClass } from '../../composables/useClassroom.js'
 import ExpectationWeightBadge from './ExpectationWeightBadge.vue'
 import { cleanExpectationText } from '../../utils/textUtils.js'
 

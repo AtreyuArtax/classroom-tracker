@@ -116,6 +116,12 @@ export default defineConfig({
                     if (id.includes('exceljs') || id.includes('jszip')) {
                         return 'vendor-excel'
                     }
+                    if (id.includes('data/curriculum/ontario/secondary')) {
+                        return 'curriculum-secondary'
+                    }
+                    if (id.includes('data/curriculum/ontario/elementary')) {
+                        return 'curriculum-elementary'
+                    }
                     if (id.includes('data/curriculum')) {
                         return 'data-curriculum'
                     }

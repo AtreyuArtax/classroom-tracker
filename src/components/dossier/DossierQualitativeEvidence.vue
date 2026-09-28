@@ -461,12 +461,11 @@
 import { ref, computed, onMounted } from 'vue'
 import { Eye, MessageSquare, Trash2, ChevronDown, ChevronUp } from 'lucide-vue-next'
 import { formatLocalDisplay } from '../../utils/dates.js'
-import { getGradeBuckets } from '../../db/settingsService.js'
 import { getEffectiveClassRecord, cleanUnitName, getUnitGradeLevel } from '../../composables/useElementary.js'
 import { activeSubjectId } from '../../composables/useClassroomState.js'
-import { gradeMap } from '../../composables/useGradebook.js'
-import { getSBARLevelBadge } from '../../db/gradebookService.js'
-import { isCohortMatch } from '../../db/gradebook/gradeCalc.js'
+import { gradeMap, getGradeBuckets } from '../../composables/useGradebook.js'
+import { getSBARLevelBadge } from '../../utils/gradeCalcSBAR.js'
+import { isCohortMatch } from '../../utils/gradeCalc.js'
 
 const gradeBucketsList = ref([])
 

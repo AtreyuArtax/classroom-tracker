@@ -312,14 +312,21 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted, onUnmounted, triggerRef } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { LayoutGrid, Footprints, Armchair, Users, Save, Trash2, Undo2, Redo2, AlertCircle, Plus } from 'lucide-vue-next'
 import { useClassroom } from '../../composables/useClassroom.js'
 import { useMessage } from '../../composables/useMessage.js'
-import * as settingsService from '../../db/settingsService.js'
-import { updateMultipleStudentSeats } from '../../db/classService.js'
 
-const { activeClass, gridSize, updateActiveClass, students, assignSeat } = useClassroom()
+const { 
+  activeClass, 
+  gridSize, 
+  updateActiveClass, 
+  students, 
+  assignSeat, 
+  updateMultipleStudentSeats, 
+  getSavedLayoutPresets, 
+  saveLayoutPreset 
+} = useClassroom()
 const { prompt, confirm, alert } = useMessage()
 
 const localRows = ref(gridSize.value.rows || 6)
@@ -392,7 +399,7 @@ function initFromActiveClass() {
 
 async function loadSavedTemplates() {
   try {
-    savedTemplates.value = await settingsService.getSavedLayoutPresets()
+    savedTemplates.value = await getSavedLayoutPresets()
   } catch (err) {
     console.error('Failed to load layout templates:', err)
   }
@@ -447,13 +454,6 @@ async function restoreSnapshot(snapshot) {
 
   if (snapshot.seats && classId) {
     await updateMultipleStudentSeats(classId, snapshot.seats)
-    Object.entries(snapshot.seats).forEach(([sId, seat]) => {
-      if (students.value[sId]) students.value[sId].seat = seat ? { ...seat } : null
-      if (activeClass.value.students?.[sId]) activeClass.value.students[sId].seat = seat ? { ...seat } : null
-    })
-    students.value = { ...students.value }
-    triggerRef(students)
-    triggerRef(activeClass)
   }
 }
 
@@ -553,14 +553,6 @@ async function commitLayoutWithDisplacementCheck(newCellTypes, newPods, newRows 
   // Safely move displaced students to the unassigned pool
   if (displacedStudents.length > 0) {
     await updateMultipleStudentSeats(classId, seatUpdates)
-    Object.keys(seatUpdates).forEach(sId => {
-      if (students.value[sId]) students.value[sId].seat = null
-      if (activeClass.value.students?.[sId]) activeClass.value.students[sId].seat = null
-    })
-    students.value = { ...students.value }
-    triggerRef(students)
-    triggerRef(activeClass)
-
     displacedNotice.value = `Layout applied: ${displacedStudents.length} student${displacedStudents.length !== 1 ? 's' : ''} moved to the Unassigned Seating list on Dashboard.`
   } else {
     displacedNotice.value = null
@@ -627,13 +619,6 @@ async function insertRow(atRowIndex) {
 
   if (hasSeatUpdates && activeClass.value?.classId) {
     await updateMultipleStudentSeats(activeClass.value.classId, seatUpdates)
-    Object.entries(seatUpdates).forEach(([sId, seat]) => {
-      if (students.value[sId]) students.value[sId].seat = seat ? { ...seat } : null
-      if (activeClass.value.students?.[sId]) activeClass.value.students[sId].seat = seat ? { ...seat } : null
-    })
-    students.value = { ...students.value }
-    triggerRef(students)
-    triggerRef(activeClass)
   }
 }
 
@@ -719,13 +704,6 @@ async function deleteRow(atRowIndex) {
 
   if (hasSeatUpdates && activeClass.value?.classId) {
     await updateMultipleStudentSeats(activeClass.value.classId, seatUpdates)
-    Object.entries(seatUpdates).forEach(([sId, seat]) => {
-      if (students.value[sId]) students.value[sId].seat = seat ? { ...seat } : null
-      if (activeClass.value.students?.[sId]) activeClass.value.students[sId].seat = seat ? { ...seat } : null
-    })
-    students.value = { ...students.value }
-    triggerRef(students)
-    triggerRef(activeClass)
   }
 
   if (displacedStudents.length > 0) {
@@ -795,13 +773,6 @@ async function insertCol(atColIndex) {
 
   if (hasSeatUpdates && activeClass.value?.classId) {
     await updateMultipleStudentSeats(activeClass.value.classId, seatUpdates)
-    Object.entries(seatUpdates).forEach(([sId, seat]) => {
-      if (students.value[sId]) students.value[sId].seat = seat ? { ...seat } : null
-      if (activeClass.value.students?.[sId]) activeClass.value.students[sId].seat = seat ? { ...seat } : null
-    })
-    students.value = { ...students.value }
-    triggerRef(students)
-    triggerRef(activeClass)
   }
 }
 
@@ -887,13 +858,6 @@ async function deleteCol(atColIndex) {
 
   if (hasSeatUpdates && activeClass.value?.classId) {
     await updateMultipleStudentSeats(activeClass.value.classId, seatUpdates)
-    Object.entries(seatUpdates).forEach(([sId, seat]) => {
-      if (students.value[sId]) students.value[sId].seat = seat ? { ...seat } : null
-      if (activeClass.value.students?.[sId]) activeClass.value.students[sId].seat = seat ? { ...seat } : null
-    })
-    students.value = { ...students.value }
-    triggerRef(students)
-    triggerRef(activeClass)
   }
 
   if (displacedStudents.length > 0) {
@@ -1042,13 +1006,6 @@ async function clearAllSeats() {
 
   if (classId) {
     await updateMultipleStudentSeats(classId, seatUpdates)
-    Object.keys(seatUpdates).forEach(sId => {
-      if (students.value[sId]) students.value[sId].seat = null
-      if (activeClass.value.students?.[sId]) activeClass.value.students[sId].seat = null
-    })
-    students.value = { ...students.value }
-    triggerRef(students)
-    triggerRef(activeClass)
   }
   displacedNotice.value = 'All students moved to Unassigned Seating list.'
 }
@@ -1177,7 +1134,7 @@ async function saveCurrentAsTemplate() {
     }
   }
 
-  await settingsService.saveLayoutPreset(presetObj)
+  await saveLayoutPreset(presetObj)
   await loadSavedTemplates()
   await alert(`Layout template "${name.trim()}" saved successfully!`)
 }

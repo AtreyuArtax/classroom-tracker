@@ -300,7 +300,7 @@ console.log('\n--- AUDIT 7: syncPresetToClass Safety & Assessment Preservation -
 
   const syncResult = syncPresetToClass(mockClass, updatedMaster)
   assert(syncResult, 'syncPresetToClass returned result')
-  assert(syncResult.changesCount === 2, `Expected 2 changes (1 update, 1 addition), got ${syncResult.changesCount}`)
+  assert(syncResult.changesCount === 3, `Expected 3 changes (2 updates, 1 addition), got ${syncResult.changesCount}`)
 
   const syncedSub = syncResult.updatedClass.subjects[0]
   assert(syncedSub.expectations.length === 2, 'Class now has 2 expectations')

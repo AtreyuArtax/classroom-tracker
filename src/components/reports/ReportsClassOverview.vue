@@ -419,10 +419,10 @@ import OutOfClassAnalytics from './OutOfClassAnalytics.vue'
 import StudentMindsetAnalytics from './StudentMindsetAnalytics.vue'
 import ReportsMissingTasksModal from './ReportsMissingTasksModal.vue'
 import ReportsPositiveModal from './ReportsPositiveModal.vue'
-import { getSBARLevelBadge, calculateSBARExpectationMastery } from '../../db/gradebookService.js'
+import { getSBARLevelBadge, calculateSBARExpectationMastery } from '../../utils/gradeCalcSBAR.js'
 import { gradeMap } from '../../composables/useGradebook.js'
 import { useClassroom } from '../../composables/useClassroom.js'
-import { isCohortMatch, filterAssessmentsForSubject } from '../../db/gradebook/gradeCalc.js'
+import { isCohortMatch, filterAssessmentsForSubject } from '../../utils/gradeCalc.js'
 
 const props = defineProps({
   loading: { type: Boolean, default: false },

@@ -150,8 +150,8 @@
 <script setup>
 import { computed, ref, onMounted } from 'vue'
 import { UserMinus, Clock, DoorOpen, CheckCircle2 } from 'lucide-vue-next'
-import { useClassroom } from '../../composables/useClassroom.js'
-import { getEventsByStudent, toMinutes } from '../../db/eventService.js'
+import { useClassroom, getEventsByStudent } from '../../composables/useClassroom.js'
+import { toMinutes } from '../../utils/timeUtils.js'
 import { formatLocalDate } from '../../utils/dates.js'
 
 const props = defineProps({
