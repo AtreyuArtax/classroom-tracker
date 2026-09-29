@@ -2,14 +2,6 @@
   <div class="dossier-cat-panel">
     <div class="dossier-cat-panel__header">
       <span class="dossier-cat-panel__title">Category Breakdown</span>
-      <button 
-        class="mode-toggle-btn"
-        @click="cycleMode"
-        :title="`Currently showing ${currentMode === 'official' ? 'Official' : 'Consistent'} marks. Click to switch.`"
-      >
-        <span class="mode-toggle-label">{{ currentMode === 'official' ? 'Official' : 'Consistent' }}</span>
-        <ArrowUpDown :size="11" class="mode-toggle-icon" />
-      </button>
     </div>
 
     <div class="dossier-cat-list">
@@ -103,7 +95,7 @@
 
 <script setup>
 import { ref, computed, nextTick } from 'vue'
-import { Pencil, Check, X, Trash2, ArrowUpDown } from 'lucide-vue-next'
+import { Pencil, Check, X, Trash2 } from 'lucide-vue-next'
 import { saveStudentOverride } from '../../composables/useGradebook.js'
 import { useMessage } from '../../composables/useMessage.js'
 
@@ -114,37 +106,14 @@ const props = defineProps({
 
 const visibleCategories = computed(() => props.categories || [])
 
-// Calculation mode: 'official' | 'consistent'
-const currentMode = ref('official')
-
-function cycleMode() {
-  currentMode.value = currentMode.value === 'official' ? 'consistent' : 'official'
-}
-
 function getDisplayedScore(cat) {
-  if (currentMode.value === 'consistent') {
-    return cat.consistentScore !== null && cat.consistentScore !== undefined ? cat.consistentScore : cat.score
-  }
   return cat.score
 }
 
 function getScoreTooltip(cat) {
-  const officialStr = `Official: ${formatScore(cat.score)}`
-  const hasConsistent = cat.consistentScore !== null && cat.consistentScore !== undefined
-  
-  if (!hasConsistent) {
-    return officialStr
-  }
-
-  const consistentDetail = cat.bucketLabel && cat.count && cat.totalCount
-    ? `Consistent: ${formatScore(cat.consistentScore)} based on ${cat.bucketLabel} (${cat.count} of ${cat.totalCount})`
-    : `Consistent: ${formatScore(cat.consistentScore)}`
-
-  if (currentMode.value === 'official') {
-    return `${officialStr} • ${consistentDetail}`
-  } else {
-    return `${consistentDetail} • ${officialStr}`
-  }
+  return cat.isOverridden 
+    ? `Override: ${formatScore(cat.score)}`
+    : `Official: ${formatScore(cat.score)}`
 }
 
 const { confirm } = useMessage()
@@ -219,36 +188,6 @@ function getGradeColor(score) {
   text-transform: uppercase;
   letter-spacing: 0.04em;
   white-space:    nowrap;
-}
-
-.mode-toggle-btn {
-  display:       inline-flex;
-  align-items:   center;
-  gap:           4px;
-  padding:       2px 8px;
-  background:    var(--bg-secondary);
-  border:        1px solid var(--border);
-  border-radius: var(--radius-sm);
-  cursor:        pointer;
-  transition:    all 0.15s ease;
-  color:         var(--text-secondary);
-}
-
-.mode-toggle-btn:hover {
-  background:    var(--primary-light, rgba(99, 102, 241, 0.1));
-  border-color:  var(--primary);
-  color:         var(--primary);
-}
-
-.mode-toggle-label {
-  font-size:      0.65rem;
-  font-weight:    700;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-}
-
-.mode-toggle-icon {
-  opacity: 0.7;
 }
 
 .dossier-cat-list {

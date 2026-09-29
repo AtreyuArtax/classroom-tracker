@@ -118,11 +118,6 @@
                   No students match "{{ searchQuery }}"
                 </div>
               </div>
-
-              <div class="dossier-header__dropdown-footer">
-                <span v-if="currentIndex >= 0">{{ currentIndex + 1 }} of {{ roster.length }} students</span>
-                <span class="dossier-header__shortcut-hint">Use ← → to flip</span>
-              </div>
             </div>
 
             <!-- Click-outside backdrop -->
@@ -181,46 +176,46 @@
 
     <div class="dossier-header__right">
       <div class="dossier-header__metrics">
-        <!-- Main Grade / Mastery Pill -->
+        <!-- Main Grade / Mastery Pill (SBAR) -->
         <div 
-          class="dossier-header__pill dossier-header__pill--main"
-          :class="{ 'dossier-header__pill--clickable': isSBAR }"
-          @click="isSBAR && toggleShowPct()"
-          :title="isSBAR ? `Click to toggle calculated percentage mark (${formattedGrade} for Grade 7-12 report cards)` : ''"
+          v-if="isSBAR"
+          class="dossier-header__pill dossier-header__pill--main dossier-header__pill--clickable"
+          @click="toggleShowPct()"
+          :title="`Click to toggle calculated percentage mark (${formattedGrade} for Grade 7-12 report cards)`"
         >
-          <span class="dossier-header__pill-label">{{ isSBAR ? 'Overall Mastery' : 'Grade' }}</span>
-          <span class="dossier-header__pill-val" :style="{ color: isSBAR ? sbarBadge.color : gradeColor }">
-            <template v-if="isSBAR">
-              <template v-if="showPctInHeader && overallGrade !== null">
-                {{ sbarBadge.level }} <span class="dossier-header__pct-sub">({{ formattedGrade }})</span>
-              </template>
-              <template v-else>
-                {{ sbarBadge.level }}
-              </template>
+          <span class="dossier-header__pill-label">Overall Mastery</span>
+          <span class="dossier-header__pill-val" :style="{ color: sbarBadge.color }">
+            <template v-if="showPctInHeader && overallGrade !== null">
+              {{ sbarBadge.level }} <span class="dossier-header__pct-sub">({{ formattedGrade }})</span>
             </template>
             <template v-else>
-              {{ formattedGrade }}
+              {{ sbarBadge.level }}
             </template>
           </span>
         </div>
 
-        <!-- Consistent Pill (Secondary) -->
-        <div v-if="!isSBAR && mostConsistent !== null" class="dossier-header__pill dossier-header__pill--secondary">
-          <span class="dossier-header__pill-label">Consistent</span>
-          <span class="dossier-header__pill-val dossier-header__pill-val--sm">
-            {{ Math.round(mostConsistent) }}%
-            <span v-if="consistentIsFallback" class="dossier-header__metric-tip" title="Not enough assessments in a single score range yet to establish a consistent pattern (defaulted to category median)">
-              <HelpCircle :size="12" />
+        <!-- Grade & Median Unified Pill (Traditional: Avg, Median) -->
+        <div 
+          v-else
+          class="dossier-header__pill dossier-header__pill--main dossier-header__pill--duo"
+          title="Overall Weighted Grade and Median"
+        >
+          <!-- Avg Segment -->
+          <div class="dossier-header__trio-seg">
+            <span class="dossier-header__pill-label">Grade</span>
+            <span class="dossier-header__pill-val" :style="{ color: gradeColor }">
+              {{ formattedGrade }}
             </span>
-          </span>
-        </div>
+          </div>
 
-        <!-- Median Pill (Secondary) -->
-        <div v-if="!isSBAR && weightedMedian !== null" class="dossier-header__pill dossier-header__pill--secondary">
-          <span class="dossier-header__pill-label">Median</span>
-          <span class="dossier-header__pill-val dossier-header__pill-val--sm">
-            {{ Math.round(weightedMedian) }}%
-          </span>
+          <!-- Median Segment -->
+          <div v-if="weightedMedian !== null" class="dossier-header__trio-seg dossier-header__trio-seg--sub">
+            <span class="dossier-header__trio-divider" aria-hidden="true">|</span>
+            <span class="dossier-header__pill-label">Median</span>
+            <span class="dossier-header__pill-val dossier-header__pill-val--sm">
+              {{ Math.round(weightedMedian) }}%
+            </span>
+          </div>
         </div>
 
         <!-- Attendance Pill -->
@@ -299,7 +294,7 @@
 <script setup>
 import { ref, computed, nextTick } from 'vue'
 import { 
-  UserCheck, UserMinus, Clock, DoorOpen, X, HelpCircle, CalendarX, 
+  UserCheck, UserMinus, Clock, DoorOpen, X, CalendarX, 
   GraduationCap, Camera, Trash2, MessageSquare, ChevronDown, 
   ChevronLeft, ChevronRight, Search, Check 
 } from 'lucide-vue-next'
@@ -320,8 +315,6 @@ const { confirm } = useMessage()
 const props = defineProps({
   student: { type: Object, required: true },
   overallGrade: { type: Number, default: null },
-  mostConsistent: { type: Number, default: null },
-  consistentIsFallback: { type: Boolean, default: false },
   weightedMedian: { type: Number, default: null },
   attendanceStats: { type: Object, default: () => ({ absences: 0, lates: 0, testDayAbsences: 0 }) },
   attendanceRate:  { type: Number, default: null },
@@ -580,6 +573,7 @@ const statusIcon = computed(() => {
   align-items: center;
   gap:         8px;
   position:    relative;
+  min-width:   0;
 }
 
 .dossier-header__name-container {
@@ -587,6 +581,8 @@ const statusIcon = computed(() => {
   align-items: center;
   gap:         6px;
   position:    relative;
+  min-width:   0;
+  max-width:   100%;
 }
 
 .dossier-header__name-trigger {
@@ -602,6 +598,8 @@ const statusIcon = computed(() => {
   text-align:      left;
   transition:      background 0.15s ease;
   text-decoration: none;
+  min-width:       0;
+  max-width:       360px;
 }
 
 .dossier-header__name-trigger:hover {
@@ -631,6 +629,7 @@ const statusIcon = computed(() => {
   border:        1px solid var(--border);
   border-radius: var(--radius-sm);
   overflow:      hidden;
+  flex-shrink:   0;
 }
 
 .dossier-header__stepper-btn {
@@ -778,21 +777,6 @@ const statusIcon = computed(() => {
   text-align: center;
 }
 
-.dossier-header__dropdown-footer {
-  display:         flex;
-  align-items:     center;
-  justify-content: space-between;
-  padding:         6px 12px;
-  border-top:      1px solid var(--border);
-  background:      var(--bg-secondary);
-  font-size:       0.72rem;
-  color:           var(--text-secondary);
-}
-
-.dossier-header__shortcut-hint {
-  opacity: 0.8;
-}
-
 .dossier-header__backdrop {
   position: fixed;
   inset:    0;
@@ -810,6 +794,7 @@ const statusIcon = computed(() => {
   overflow:       hidden;
   text-overflow:  ellipsis;
   letter-spacing: -0.01em;
+  min-width:      0;
 }
 
 @media (max-width: 1280px) {
@@ -890,6 +875,28 @@ const statusIcon = computed(() => {
   border-color: rgba(99, 102, 241, 0.22);
 }
 
+.dossier-header__pill--trio,
+.dossier-header__pill--duo {
+  display:     inline-flex;
+  align-items: center;
+  gap:         6px;
+  padding:     4px 10px;
+}
+
+.dossier-header__trio-seg {
+  display:     inline-flex;
+  align-items: center;
+  gap:         5px;
+}
+
+.dossier-header__trio-divider {
+  color:        var(--border);
+  font-size:    0.72rem;
+  margin:       0 1px 0 0;
+  user-select:  none;
+  opacity:      0.7;
+}
+
 .dossier-header__pill--attendance {
   background: var(--surface);
 }
@@ -940,15 +947,6 @@ const statusIcon = computed(() => {
   opacity: 0.85;
 }
 
-.dossier-header__metric-tip {
-  display: inline-flex;
-  margin-left: 2px;
-  opacity: 0.6;
-  color: var(--text-secondary);
-  cursor: help;
-  vertical-align: middle;
-}
-
 .dossier-header__actions {
   display:        flex;
   align-items:    center;
@@ -960,7 +958,13 @@ const statusIcon = computed(() => {
 }
 
 @media (max-width: 1100px) {
-  .dossier-header__pill--secondary { display: none; }
+  .dossier-header__pill-sub { display: none; }
+  .dossier-header__name-trigger { max-width: 240px; }
+}
+
+@media (max-width: 800px) {
+  .dossier-header__pill-label { display: none; }
+  .dossier-header__name-trigger { max-width: 180px; }
 }
 
 @media (max-width: 600px) {

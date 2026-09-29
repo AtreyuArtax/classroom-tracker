@@ -5,8 +5,6 @@
       :roster="sortedRoster"
       :enable-dropdown="enableDropdown"
       :overall-grade="overallGrade"
-      :most-consistent="overallMostConsistent"
-      :consistent-is-fallback="consistentIsFallback"
       :weighted-median="overallWeightedMedian"
       :attendance-stats="overallStats"
       :attendance-rate="overallStats.attendanceRate"
@@ -622,9 +620,7 @@ const studentGrades = computed(() => classGrades.value?.[props.studentId] || {})
 const overallGrade  = computed(() => studentGrades.value.overallGrade ?? null)
 const formattedGrade = computed(() => overallGrade.value !== null ? `${Math.round(overallGrade.value)}%` : 'N/A')
 
-const overallMostConsistent = computed(() => studentGrades.value.mostConsistent?.percentage ?? null)
 const overallWeightedMedian = computed(() => studentGrades.value.median ?? null)
-const consistentIsFallback = computed(() => studentGrades.value.mostConsistent?.isFallback ?? false)
 
 // ── Learning Skills (Ontario Growing Success) ──
 const learningSkillsRecords = ref([])
@@ -667,16 +663,11 @@ const currentDossierLsRecord = computed(() => {
 const academicCategories = computed(() => {
   if (!activeClassRecord.value?.gradebookCategories) return []
   const results = studentGrades.value.categoryResults || {}
-  const consistent = studentGrades.value.mostConsistent?.categoryBreakdown || {}
-  
+
   return activeClassRecord.value.gradebookCategories.map(cat => ({
     ...cat,
     score: results[cat.categoryId]?.percentage ?? null,
-    isOverridden: results[cat.categoryId]?.isOverridden ?? false,
-    consistentScore: consistent[cat.categoryId]?.percentage ?? null,
-    bucketLabel: consistent[cat.categoryId]?.bucketLabel ?? null,
-    count: consistent[cat.categoryId]?.count ?? 0,
-    totalCount: consistent[cat.categoryId]?.totalCount ?? 0
+    isOverridden: results[cat.categoryId]?.isOverridden ?? false
   }))
 })
 

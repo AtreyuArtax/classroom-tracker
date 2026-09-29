@@ -710,16 +710,11 @@ const academicCategories = computed(() => {
 
   if (!activeClassRecord.value?.gradebookCategories) return []
   const results = studentGrades.value.categoryResults || {}
-  const consistent = studentGrades.value.mostConsistent?.categoryBreakdown || {}
-  
+
   return activeClassRecord.value.gradebookCategories.map(cat => ({
     ...cat,
     score: results[cat.categoryId]?.percentage ?? null,
-    isOverridden: results[cat.categoryId]?.isOverridden ?? false,
-    consistentScore: consistent[cat.categoryId]?.percentage ?? null,
-    bucketLabel: consistent[cat.categoryId]?.bucketLabel ?? null,
-    count: consistent[cat.categoryId]?.count ?? 0,
-    totalCount: consistent[cat.categoryId]?.totalCount ?? 0
+    isOverridden: results[cat.categoryId]?.isOverridden ?? false
   }))
 })
 

@@ -29,7 +29,6 @@ export async function exportGradebookToExcel({
   summarySheet.columns = [
     { header: 'Student Name', key: 'name', width: 25 },
     { header: 'Overall Grade', key: 'grade', width: 15 },
-    { header: 'Consistent Grade', key: 'consistent', width: 18 },
     { header: 'Weighted Median', key: 'median', width: 18 },
     { header: 'Absences', key: 'absences', width: 12 },
     { header: 'Lates', key: 'lates', width: 12 }
@@ -45,16 +44,10 @@ export async function exportGradebookToExcel({
 
   summaryData.forEach(row => {
     const fullName = `${row.lastName || ''}, ${row.firstName || ''}`.replace(/^, /, '').trim() || row.studentId;
-    
-    // mostConsistent is an object { percentage, categoryBreakdown } — unwrap it
-    const consistentPct = (row.mostConsistent && typeof row.mostConsistent === 'object')
-      ? row.mostConsistent.percentage
-      : (typeof row.mostConsistent === 'number' ? row.mostConsistent : null)
 
     summarySheet.addRow({
       name: fullName,
       grade: (typeof row.overallGrade === 'number' && !isNaN(row.overallGrade)) ? `${Math.round(row.overallGrade)}%` : '—',
-      consistent: (typeof consistentPct === 'number' && !isNaN(consistentPct)) ? `${Math.round(consistentPct)}%` : '—',
       median: (typeof row.median === 'number' && !isNaN(row.median)) ? `${Math.round(row.median)}%` : '—',
       absences: row.absences || 0,
       lates: row.lates || 0

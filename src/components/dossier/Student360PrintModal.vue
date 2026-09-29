@@ -81,7 +81,7 @@
               </label>
               <label class="print-modal__option">
                 <input type="checkbox" v-model="printConfig.includeMedians" />
-                Weighted Median & Consistent Grade
+                Weighted Median Grade
               </label>
               <label class="print-modal__option">
                 <input type="checkbox" v-model="printConfig.includeGradeTrend" />

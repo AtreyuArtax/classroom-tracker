@@ -36,10 +36,6 @@
           <span class="metric-lab">Weighted Median:</span>
           <span class="metric-val">{{ Math.round(overallWeightedMedian || 0) }}%</span>
         </div>
-        <div class="metric-item">
-          <span class="metric-lab">Most Consistent:</span>
-          <span class="metric-val">{{ Math.round(overallMostConsistent || 0) }}%</span>
-        </div>
       </div>
     </section>
 
@@ -270,7 +266,6 @@ const studentGrades = computed(() => classGrades.value?.[props.studentId] || {})
 const overallGrade  = computed(() => studentGrades.value.overallGrade ?? null)
 const formattedGrade = computed(() => overallGrade.value !== null ? `${Math.round(overallGrade.value)}%` : 'N/A')
 
-const overallMostConsistent = computed(() => studentGrades.value.mostConsistent?.percentage ?? null)
 const overallWeightedMedian = computed(() => studentGrades.value.median ?? null)
 
 const displayMetaLine = computed(() => {
