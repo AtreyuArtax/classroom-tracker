@@ -766,8 +766,6 @@ function getSyntheticProductEvents(unitId, expectationId, unitObj = null, target
     if (isSBAR.value && !astIsSBAR) return
     if (!isSBAR.value && astIsSBAR) return
     const expIds = a.expectationIds || (a.expectationId ? [a.expectationId] : [])
-    const isUnitMatch = (!unitId || unitId === 'general') ? true : matchesUnit(unitId, unitObj?.name, a.unitId)
-    
     let matchesExp = false
     if (!expectationId || expectationId === 'general') {
       // General row: ONLY match assessments that have NO specific expectation tags
@@ -775,6 +773,8 @@ function getSyntheticProductEvents(unitId, expectationId, unitObj = null, target
     } else {
       matchesExp = expIds.some(id => matchesExpectation(expectationId, targetCode, id))
     }
+
+    const isUnitMatch = (!unitId || unitId === 'general' || matchesExp) ? true : matchesUnit(unitId, unitObj?.name, a.unitId)
 
     if (!isUnitMatch || !matchesExp) return
 

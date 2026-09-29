@@ -7,8 +7,10 @@
   >
     <div class="spm-container">
       <Student360 
-        :student-id="studentId" 
+        :student-id="currentStudentId" 
         :class-id="classId"
+        :enable-dropdown="true"
+        @select-student="handleSelectStudent"
         @close="close"
       />
     </div>
@@ -16,6 +18,7 @@
 </template>
 
 <script setup>
+import { ref, watch } from 'vue'
 import BaseModal from './BaseModal.vue'
 import Student360 from './dossier/Student360.vue'
 
@@ -25,7 +28,18 @@ const props = defineProps({
   modelValue: { type: Boolean, required: true },
 })
 
-const emit = defineEmits(['update:modelValue'])
+const emit = defineEmits(['update:modelValue', 'update:studentId'])
+
+const currentStudentId = ref(props.studentId)
+
+watch(() => props.studentId, (newId) => {
+  if (newId) currentStudentId.value = newId
+})
+
+function handleSelectStudent(newStudentId) {
+  currentStudentId.value = newStudentId
+  emit('update:studentId', newStudentId)
+}
 
 function close() {
   emit('update:modelValue', false)

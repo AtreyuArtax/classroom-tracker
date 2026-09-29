@@ -236,6 +236,7 @@
             :student-id="selectedStudentId" 
             :class-id="activeClass?.classId"
             @select-assessment="openAssessmentView($event, 'dossier')"
+            @select-student="showStudentDossier"
             @close="closeStudentDossier"
           />
         </div>

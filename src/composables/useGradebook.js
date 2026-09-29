@@ -691,6 +691,21 @@ export async function saveAssessment() {
     }
   }
 
+  if (!newAssessment.value.unitId && effClass?.gradebookUnits) {
+    const expCodes = newAssessment.value.expectationIds || (newAssessment.value.expectationId ? [newAssessment.value.expectationId] : [])
+    const foundUnits = new Set()
+    effClass.gradebookUnits.forEach(u => {
+      ;(u.expectations || []).forEach(e => {
+        if (expCodes.includes(e.code) || expCodes.includes(e.expectationId)) {
+          foundUnits.add(u.unitId)
+        }
+      })
+    })
+    if (foundUnits.size === 1) {
+      newAssessment.value.unitId = Array.from(foundUnits)[0]
+    }
+  }
+
   const data = { 
     ...newAssessment.value,
     targetCourseCode: newAssessment.value.targetCourseCode || 'all'

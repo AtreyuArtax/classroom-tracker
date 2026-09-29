@@ -2,12 +2,15 @@
   <div class="student-360">
     <Student360Header 
       :student="student" 
+      :roster="sortedRoster"
+      :enable-dropdown="enableDropdown"
       :overall-grade="overallGrade"
       :most-consistent="overallMostConsistent"
       :consistent-is-fallback="consistentIsFallback"
       :weighted-median="overallWeightedMedian"
       :attendance-stats="overallStats"
       :attendance-rate="overallStats.attendanceRate"
+      @select-student="handleSelectStudent"
     >
       <template #actions>
         <UndoButton />
@@ -498,11 +501,16 @@ import { getStudentEffectiveGrade } from '../../composables/useElementary.js'
 import { activeSubjectId } from '../../composables/useClassroomState.js'
 
 const props = defineProps({
-  studentId: { type: String, required: true },
-  classId:   { type: String, required: true }
+  studentId:      { type: String,  required: true },
+  classId:        { type: String,  required: true },
+  enableDropdown: { type: Boolean, default: false }
 })
 
-const emit = defineEmits(['close', 'select-assessment'])
+const emit = defineEmits(['close', 'select-assessment', 'select-student'])
+
+function handleSelectStudent(studentId) {
+  emit('select-student', studentId)
+}
 
 const contextMenu = ref(null)
 const attemptsPopover = ref(null)
@@ -1032,12 +1040,44 @@ async function loadData() {
 watch(() => props.studentId, loadData)
 watch(() => props.classId, loadData)
 
+function handleKeyDown(e) {
+  const tag = e.target?.tagName?.toLowerCase()
+  if (tag === 'input' || tag === 'textarea' || e.target?.isContentEditable) return
+
+  if (
+    showEmailModal.value || 
+    showPrintModal.value || 
+    selectedSbarAssessmentId.value || 
+    newAttemptForm.value || 
+    attemptsPopover.value
+  ) return
+
+  if (e.key === 'ArrowLeft') {
+    navigateStudent(-1)
+  } else if (e.key === 'ArrowRight') {
+    navigateStudent(1)
+  }
+}
+
+function navigateStudent(direction) {
+  const roster = sortedRoster.value
+  if (!roster || roster.length <= 1) return
+  const idx = roster.findIndex(s => String(s.studentId) === String(props.studentId))
+  if (idx === -1) return
+  const targetIdx = idx + direction
+  if (targetIdx >= 0 && targetIdx < roster.length) {
+    emit('select-student', roster[targetIdx].studentId)
+  }
+}
+
 onMounted(() => {
   if (resetTimer) clearTimeout(resetTimer)
   loadData()
+  window.addEventListener('keydown', handleKeyDown)
 })
 
 onUnmounted(() => {
+  window.removeEventListener('keydown', handleKeyDown)
   resetTimer = setTimeout(() => {
     activeTab.value = 'summary'
     selectedPeriod.value = 'semester'

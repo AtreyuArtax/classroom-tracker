@@ -79,6 +79,7 @@
           <Student360 
             :student-id="dossier.selectedStudentId.value" 
             :class-id="sidebarClassId"
+            @select-student="onSelectStudent"
             @close="switchPillar('overview')"
           />
         </template>

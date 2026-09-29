@@ -185,7 +185,7 @@
     <StudentProfileModal
       v-if="profileModalOpen && profileStudentId"
       v-model="profileModalOpen"
-      :student-id="profileStudentId"
+      v-model:student-id="profileStudentId"
       :class-id="profileClassId"
     />
 

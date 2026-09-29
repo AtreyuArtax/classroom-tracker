@@ -13,9 +13,122 @@
         class="dossier-header__avatar"
       />
       <div class="dossier-header__info">
-        <h1 class="dossier-header__name">
-          {{ student.firstName }} {{ student.lastName }}
-        </h1>
+        <div class="dossier-header__title-row">
+          <div class="dossier-header__name-container">
+            <button
+              v-if="enableDropdown && roster?.length > 1"
+              type="button"
+              class="dossier-header__name-trigger"
+              :class="{ 'dossier-header__name-trigger--open': isDropdownOpen }"
+              :aria-expanded="isDropdownOpen"
+              aria-haspopup="listbox"
+              title="Switch student (Click or press Enter)"
+              @click="toggleDropdown"
+            >
+              <h1 class="dossier-header__name">
+                {{ student.firstName }} {{ student.lastName }}
+              </h1>
+              <ChevronDown 
+                :size="14" 
+                class="dossier-header__name-chevron" 
+                :class="{ 'dossier-header__name-chevron--open': isDropdownOpen }" 
+                aria-hidden="true"
+              />
+            </button>
+            <h1 v-else class="dossier-header__name">
+              {{ student.firstName }} {{ student.lastName }}
+            </h1>
+
+            <!-- Quick Stepper Arrows -->
+            <div v-if="roster?.length > 1" class="dossier-header__stepper">
+              <button
+                type="button"
+                class="dossier-header__stepper-btn"
+                :disabled="isFirstStudent"
+                title="Previous student (←)"
+                aria-label="Previous student"
+                @click.stop="prevStudent"
+              >
+                <ChevronLeft :size="14" />
+              </button>
+              <button
+                type="button"
+                class="dossier-header__stepper-btn"
+                :disabled="isLastStudent"
+                title="Next student (→)"
+                aria-label="Next student"
+                @click.stop="nextStudent"
+              >
+                <ChevronRight :size="14" />
+              </button>
+            </div>
+
+            <!-- Dropdown Popover -->
+            <div 
+              v-if="enableDropdown && isDropdownOpen" 
+              class="dossier-header__dropdown"
+              role="listbox"
+              :aria-label="`Select student, currently ${student.firstName} ${student.lastName}`"
+            >
+              <div class="dossier-header__dropdown-search">
+                <Search :size="13" class="dossier-header__search-icon" aria-hidden="true" />
+                <input
+                  ref="searchInputRef"
+                  v-model="searchQuery"
+                  type="text"
+                  placeholder="Search student..."
+                  class="dossier-header__search-input"
+                  aria-label="Search students in class"
+                  @keydown.stop="onSearchKeydown"
+                />
+                <button 
+                  v-if="searchQuery" 
+                  type="button"
+                  class="dossier-header__search-clear" 
+                  title="Clear search"
+                  @click="searchQuery = ''"
+                >
+                  <X :size="12" />
+                </button>
+              </div>
+
+              <div class="dossier-header__roster-list">
+                <button
+                  v-for="s in filteredRoster"
+                  :key="s.studentId"
+                  type="button"
+                  class="dossier-header__roster-item"
+                  :class="{ 'dossier-header__roster-item--active': String(s.studentId) === String(student.studentId) }"
+                  role="option"
+                  :aria-selected="String(s.studentId) === String(student.studentId)"
+                  @click="selectStudent(s.studentId)"
+                >
+                  <span class="dossier-header__roster-name">
+                    {{ s.lastName }}, {{ s.firstName }}
+                  </span>
+                  <span 
+                    v-if="(s.preferredName || s.intakeSurvey?.preferredName) && (s.preferredName || s.intakeSurvey?.preferredName).trim().toLowerCase() !== (s.firstName || '').trim().toLowerCase()" 
+                    class="dossier-header__roster-pref"
+                  >
+                    "{{ (s.preferredName || s.intakeSurvey?.preferredName).trim() }}"
+                  </span>
+                  <Check v-if="String(s.studentId) === String(student.studentId)" :size="14" class="dossier-header__roster-check" aria-hidden="true" />
+                </button>
+                <div v-if="filteredRoster.length === 0" class="dossier-header__roster-empty">
+                  No students match "{{ searchQuery }}"
+                </div>
+              </div>
+
+              <div class="dossier-header__dropdown-footer">
+                <span v-if="currentIndex >= 0">{{ currentIndex + 1 }} of {{ roster.length }} students</span>
+                <span class="dossier-header__shortcut-hint">Use ← → to flip</span>
+              </div>
+            </div>
+
+            <!-- Click-outside backdrop -->
+            <div v-if="enableDropdown && isDropdownOpen" class="dossier-header__backdrop" @click="closeDropdown" />
+          </div>
+        </div>
         <div class="dossier-header__status-badges">
           <span 
             v-if="preferredNameDisplay" 
@@ -184,8 +297,12 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
-import { UserCheck, UserMinus, Clock, DoorOpen, X, HelpCircle, CalendarX, GraduationCap, Camera, Trash2, MessageSquare } from 'lucide-vue-next'
+import { ref, computed, nextTick } from 'vue'
+import { 
+  UserCheck, UserMinus, Clock, DoorOpen, X, HelpCircle, CalendarX, 
+  GraduationCap, Camera, Trash2, MessageSquare, ChevronDown, 
+  ChevronLeft, ChevronRight, Search, Check 
+} from 'lucide-vue-next'
 import { activeClassRecord } from '../../composables/useGradebook.js'
 import { getSBARLevelBadge } from '../../utils/gradeCalcSBAR.js'
 import { useStudentPhotos } from '../../composables/useStudentPhotos.js'
@@ -207,8 +324,85 @@ const props = defineProps({
   consistentIsFallback: { type: Boolean, default: false },
   weightedMedian: { type: Number, default: null },
   attendanceStats: { type: Object, default: () => ({ absences: 0, lates: 0, testDayAbsences: 0 }) },
-  attendanceRate:  { type: Number, default: null }
+  attendanceRate:  { type: Number, default: null },
+  roster:          { type: Array,  default: () => [] },
+  enableDropdown:  { type: Boolean, default: false }
 })
+
+const emit = defineEmits(['select-student'])
+
+// ── Student Switcher & Dropdown ────────────────────────────────────────────────
+const isDropdownOpen = ref(false)
+const searchQuery = ref('')
+const searchInputRef = ref(null)
+
+const currentIndex = computed(() => {
+  if (!props.roster || !props.roster.length || !props.student?.studentId) return -1
+  return props.roster.findIndex(s => String(s.studentId) === String(props.student.studentId))
+})
+
+const isFirstStudent = computed(() => currentIndex.value <= 0)
+const isLastStudent = computed(() => currentIndex.value === -1 || currentIndex.value >= props.roster.length - 1)
+
+const filteredRoster = computed(() => {
+  if (!props.roster) return []
+  const q = searchQuery.value.trim().toLowerCase()
+  if (!q) return props.roster
+  return props.roster.filter(s => {
+    const fullName = `${s.firstName || ''} ${s.lastName || ''}`.toLowerCase()
+    const revName = `${s.lastName || ''} ${s.firstName || ''}`.toLowerCase()
+    const prefName = (s.preferredName || s.intakeSurvey?.preferredName || '').toLowerCase()
+    return fullName.includes(q) || revName.includes(q) || prefName.includes(q)
+  })
+})
+
+function toggleDropdown() {
+  isDropdownOpen.value = !isDropdownOpen.value
+  if (isDropdownOpen.value) {
+    searchQuery.value = ''
+    nextTick(() => {
+      searchInputRef.value?.focus()
+    })
+  }
+}
+
+function closeDropdown() {
+  isDropdownOpen.value = false
+  searchQuery.value = ''
+}
+
+function selectStudent(studentId) {
+  closeDropdown()
+  if (studentId && String(studentId) !== String(props.student?.studentId)) {
+    emit('select-student', studentId)
+  }
+}
+
+function prevStudent() {
+  if (isFirstStudent.value) return
+  const prev = props.roster[currentIndex.value - 1]
+  if (prev?.studentId) {
+    emit('select-student', prev.studentId)
+  }
+}
+
+function nextStudent() {
+  if (isLastStudent.value) return
+  const next = props.roster[currentIndex.value + 1]
+  if (next?.studentId) {
+    emit('select-student', next.studentId)
+  }
+}
+
+function onSearchKeydown(e) {
+  if (e.key === 'Escape') {
+    closeDropdown()
+  } else if (e.key === 'Enter') {
+    if (filteredRoster.value.length > 0) {
+      selectStudent(filteredRoster.value[0].studentId)
+    }
+  }
+}
 
 const currentPhotoUrl = computed(() => {
   const sId = props.student?.studentId
@@ -379,6 +573,231 @@ const statusIcon = computed(() => {
   justify-content: center;
   gap:            2px;
   min-width:      0;
+}
+
+.dossier-header__title-row {
+  display:     flex;
+  align-items: center;
+  gap:         8px;
+  position:    relative;
+}
+
+.dossier-header__name-container {
+  display:     flex;
+  align-items: center;
+  gap:         6px;
+  position:    relative;
+}
+
+.dossier-header__name-trigger {
+  display:         inline-flex;
+  align-items:     center;
+  gap:             6px;
+  background:      transparent;
+  border:          none;
+  padding:         2px 6px;
+  margin:          -2px -6px;
+  border-radius:   var(--radius-sm);
+  cursor:          pointer;
+  text-align:      left;
+  transition:      background 0.15s ease;
+  text-decoration: none;
+}
+
+.dossier-header__name-trigger:hover {
+  background: var(--bg-hover);
+}
+
+.dossier-header__name-trigger--open {
+  background: var(--bg-hover);
+}
+
+.dossier-header__name-chevron {
+  color:       var(--text-secondary);
+  transition:  transform 0.2s ease;
+  line-height: 1;
+  display:     flex;
+  flex-shrink: 0;
+}
+
+.dossier-header__name-chevron--open {
+  transform: rotate(180deg);
+}
+
+.dossier-header__stepper {
+  display:       inline-flex;
+  align-items:   center;
+  background:    var(--surface);
+  border:        1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow:      hidden;
+}
+
+.dossier-header__stepper-btn {
+  display:         flex;
+  align-items:     center;
+  justify-content: center;
+  width:           24px;
+  height:          24px;
+  background:      transparent;
+  border:          none;
+  color:           var(--text-secondary);
+  cursor:          pointer;
+  transition:      all 0.15s ease;
+  padding:         0;
+}
+
+.dossier-header__stepper-btn:first-child {
+  border-right: 1px solid var(--border);
+}
+
+.dossier-header__stepper-btn:hover:not(:disabled) {
+  background: var(--bg-hover);
+  color:      var(--text);
+}
+
+.dossier-header__stepper-btn:disabled {
+  opacity: 0.3;
+  cursor:  not-allowed;
+}
+
+/* ── Dropdown Popover ──────────────────────────────────────────────────────── */
+.dossier-header__dropdown {
+  position:      absolute;
+  top:           calc(100% + 6px);
+  left:          0;
+  width:         280px;
+  max-width:     calc(100vw - 32px);
+  background:    var(--surface);
+  border-radius: var(--radius-md);
+  border:        1px solid var(--border);
+  box-shadow:    0 10px 25px -5px rgba(0, 0, 0, 0.2), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  z-index:       500;
+  overflow:      hidden;
+  display:       flex;
+  flex-direction: column;
+  animation:     dropdown-in 0.15s ease;
+}
+
+@keyframes dropdown-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.dossier-header__dropdown-search {
+  display:       flex;
+  align-items:   center;
+  gap:           6px;
+  padding:       8px 10px;
+  border-bottom: 1px solid var(--border);
+  background:    var(--bg-secondary);
+}
+
+.dossier-header__search-icon {
+  color:       var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.dossier-header__search-input {
+  width:       100%;
+  border:      none;
+  background:  transparent;
+  font-size:   0.82rem;
+  color:       var(--text);
+  outline:     none;
+}
+
+.dossier-header__search-clear {
+  background:    transparent;
+  border:        none;
+  color:         var(--text-secondary);
+  cursor:        pointer;
+  padding:       2px;
+  border-radius: 50%;
+  display:       flex;
+  align-items:   center;
+  justify-content: center;
+}
+
+.dossier-header__roster-list {
+  max-height: 250px;
+  overflow-y: auto;
+  padding:    4px 0;
+}
+
+.dossier-header__roster-item {
+  display:         flex;
+  align-items:     center;
+  width:           100%;
+  padding:         7px 12px;
+  border:          none;
+  background:      transparent;
+  cursor:          pointer;
+  text-align:      left;
+  transition:      background 0.1s ease;
+  gap:             8px;
+  font-size:       0.84rem;
+  color:           var(--text);
+}
+
+.dossier-header__roster-item:hover {
+  background: var(--bg-hover);
+}
+
+.dossier-header__roster-item--active {
+  background:  var(--primary-light, rgba(59, 130, 246, 0.1));
+  font-weight: 600;
+  color:       var(--primary);
+}
+
+.dossier-header__roster-name {
+  flex:          1;
+  min-width:     0;
+  overflow:      hidden;
+  text-overflow: ellipsis;
+  white-space:   nowrap;
+}
+
+.dossier-header__roster-pref {
+  font-size:   0.75rem;
+  color:       var(--text-secondary);
+  font-style:  italic;
+  white-space: nowrap;
+}
+
+.dossier-header__roster-check {
+  color:       var(--primary);
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.dossier-header__roster-empty {
+  padding:   16px 12px;
+  font-size: 0.8rem;
+  color:     var(--text-secondary);
+  text-align: center;
+}
+
+.dossier-header__dropdown-footer {
+  display:         flex;
+  align-items:     center;
+  justify-content: space-between;
+  padding:         6px 12px;
+  border-top:      1px solid var(--border);
+  background:      var(--bg-secondary);
+  font-size:       0.72rem;
+  color:           var(--text-secondary);
+}
+
+.dossier-header__shortcut-hint {
+  opacity: 0.8;
+}
+
+.dossier-header__backdrop {
+  position: fixed;
+  inset:    0;
+  z-index:  499;
+  cursor:   default;
 }
 
 .dossier-header__name {
