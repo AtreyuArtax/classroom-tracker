@@ -973,7 +973,11 @@ function _sortAndSplitClasses(classes) {
         const semA = a.semester || '', semB = b.semester || ''
         if (semA > semB) return -1
         if (semA < semB) return 1
-        return (a.periodNumber || 0) - (b.periodNumber || 0)
+        const pA = isNaN(Number(a.periodNumber)) ? 0 : Number(a.periodNumber)
+        const pB = isNaN(Number(b.periodNumber)) ? 0 : Number(b.periodNumber)
+        if (pA !== pB) return pA - pB
+        const termA = a.term || '', termB = b.term || ''
+        return termA.localeCompare(termB)
     })
     const archived = classes.filter(c => c.archived)
     return [active, archived]

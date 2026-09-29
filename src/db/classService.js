@@ -936,14 +936,20 @@ export async function bulkImportClasses(groups) {
     let idCounter = 0
 
     for (const group of groups) {
-        // Find existing class by year/sem/period
+        // Find existing class by year/sem/period/term
         const all = await store.getAll()
-        let cls = all.find(c => 
-            c.year === group.year && 
-            c.semester === group.semester && 
-            (String(c.periodNumber).trim() === String(group.periodNumber).trim() || 
+        let cls = all.find(c => {
+            const sameYear = c.year === group.year
+            const sameSem = String(c.semester) === String(group.semester)
+            const samePeriod = (String(c.periodNumber).trim() === String(group.periodNumber).trim() || 
              (!isNaN(Number(c.periodNumber)) && !isNaN(Number(group.periodNumber)) && Number(c.periodNumber) === Number(group.periodNumber)))
-        )
+            if (!sameYear || !sameSem || !samePeriod) return false
+
+            if (group.term) {
+                return c.term === group.term || (c.courseCode && group.courseCode && c.courseCode === group.courseCode)
+            }
+            return !c.term
+        })
 
         const isSplit = group.isSplitClass || (group.courseSections && group.courseSections.length > 1)
         const coursePill = isSplit && group.courseSections ? group.courseSections.join('/') : (group.courseCode || '')
@@ -956,6 +962,7 @@ export async function bulkImportClasses(groups) {
                 courseCode: coursePill,
                 year: group.year,
                 semester: group.semester,
+                term: group.term || null,
                 periodNumber: group.periodNumber,
                 periodStartTime: group.periodStartTime || '08:00',
                 classType: group.classType || 'secondary',
@@ -974,6 +981,7 @@ export async function bulkImportClasses(groups) {
             created++
         } else {
             if (group.classType) cls.classType = group.classType
+            if (group.term && !cls.term) cls.term = group.term
             if (coursePill) cls.courseCode = coursePill
             if (isSplit) {
                 cls.isSplitClass = true

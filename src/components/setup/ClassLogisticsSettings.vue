@@ -1313,8 +1313,9 @@ function findRfidDuplicate(hex, targetStudentId) {
       const sameYear = !targetClass?.year || !s.year || String(s.year) === String(targetClass.year)
       const sameSem = !targetClass?.semester || !s.semester || String(s.semester) === String(targetClass.semester)
       const samePeriod = String(s.periodNumber) === String(targetClass?.periodNumber)
+      const sameTerm = (!targetClass?.term && !s.term) || (targetClass?.term === s.term)
 
-      return sameYear && sameSem && samePeriod
+      return sameYear && sameSem && samePeriod && sameTerm
     })
 }
 

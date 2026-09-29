@@ -543,7 +543,7 @@
                           </div>
                           <div class="setup__class-meta" style="margin-top: 2px;">
                             <template v-if="cls.classType === 'elementary'">Full Year {{ cls.year }} · {{ studentCount(cls) }} students</template>
-                            <template v-else>Period {{ cls.periodNumber }} · {{ cls.year }} Sem {{ cls.semester }} · {{ studentCount(cls) }} students</template>
+                            <template v-else>Period {{ cls.periodNumber }} · {{ cls.year }} Sem {{ cls.semester }}<span v-if="cls.term"> · {{ cls.term }}</span> · {{ studentCount(cls) }} students</template>
                           </div>
                         </div>
                         <div class="setup__class-actions" @click.stop>
@@ -575,7 +575,7 @@
                 </div>
                 <div class="setup__class-meta" style="margin-top: 2px;">
                   <template v-if="cls.classType === 'elementary'">Full Year {{ cls.year }} · {{ studentCount(cls) }} students</template>
-                  <template v-else>Period {{ cls.periodNumber }} · {{ cls.year }} Sem {{ cls.semester }} · {{ studentCount(cls) }} students</template>
+                  <template v-else>Period {{ cls.periodNumber }} · {{ cls.year }} Sem {{ cls.semester }}<span v-if="cls.term"> · {{ cls.term }}</span> · {{ studentCount(cls) }} students</template>
                 </div>
               </div>
               <div class="setup__class-actions" @click.stop>
@@ -856,9 +856,11 @@
                 <input type="checkbox" v-model="group.selected" class="setup__checkbox" />
                 <div class="setup__bulk-info">
                   <strong>{{ group.name }}</strong>
-                  <div style="display: flex; gap: 4px; align-items: center;">
+                  <div style="display: flex; gap: 4px; align-items: center; flex-wrap: wrap;">
                     <span class="setup__chip">{{ group.year }} · Sem {{ group.semester }} · P{{ group.periodNumber }}</span>
+                    <span v-if="group.term" class="setup__chip setup__chip--purple">{{ group.term }}</span>
                     <span v-if="group.courseCode" class="setup__chip setup__chip--blue">{{ group.courseCode }}</span>
+                    <span v-if="group.isSplitClass" class="setup__chip setup__chip--amber">Split Class</span>
                     <span v-if="isExistingClass(group)" class="setup__badge setup__badge--update">Update Existing</span>
                     <span v-else class="setup__badge setup__badge--new">New Class</span>
                   </div>
@@ -1727,10 +1729,30 @@ function normalizeSemester(raw) {
   // Full year strings like "2025-2026" are NOT semester numbers
   if (/^\d{4}-\d{2,4}$/.test(str)) return '1'
   const lower = str.toLowerCase()
-  if (lower.includes('sem 2') || lower.includes('semester 2') || /\bs2\b/.test(lower) || /\bsem2\b/.test(lower)) {
+  if (
+    lower.includes('sem 2') ||
+    lower.includes('semester 2') ||
+    /\bs2\b/.test(lower) ||
+    /\bsem2\b/.test(lower) ||
+    lower.includes('term 3') ||
+    lower.includes('term 4') ||
+    /\bt3\b/.test(lower) ||
+    /\bt4\b/.test(lower)
+  ) {
     return '2'
   }
   return '1'
+}
+
+function extractTerm(raw) {
+  if (!raw) return null
+  const str = raw.toString().trim()
+  const lower = str.toLowerCase()
+  const match = lower.match(/\bterm\s*([1-4])\b/i) || lower.match(/\bt([1-4])\b/i)
+  if (match) {
+    return `Term ${match[1]}`
+  }
+  return null
 }
 
 
@@ -1856,6 +1878,7 @@ function onFileSelected(evt) {
         const periodNumber = (rawPeriod || rawSection) ? cleanPeriod(rawPeriod || rawSection) : (activeClass.value?.periodNumber || '1')
         const courseCode = row['Course Code'] ?? row['CourseCode'] ?? (rawSection ? extractCourseCode(rawSection) : '')
         const semester = normalizeSemester(rawSem || (activeClass.value?.semester || '1'))
+        const term = extractTerm(row['Term'] ?? rawSem)
 
         const parsedG = extractGradeFromRow(row)
 
@@ -1871,9 +1894,11 @@ function onFileSelected(evt) {
           livingWith: livingWith.trim(),
           birthDate: birthDate.trim(),
           semester,
+          term,
           periodNumber,
           year,
-          courseCode
+          courseCode,
+          _rawCourseCode: courseCode
         }
       })
 
@@ -1888,20 +1913,44 @@ function onFileSelected(evt) {
 
       const groups = {}
       for (const row of validRows) {
-          const key = `${row.year}-${row.semester}-P${row.periodNumber}`
+          const key = row.term 
+            ? `${row.year}-${row.semester}-P${row.periodNumber}-${row.term}`
+            : `${row.year}-${row.semester}-P${row.periodNumber}`
           if (!groups[key]) {
+              const displayName = row.term 
+                ? `Period ${row.periodNumber} (${row.courseCode ? row.courseCode + ' · ' : ''}${row.term}) — ${row.year}`
+                : `Period ${row.periodNumber} — ${row.year}`
+
               groups[key] = {
-                  name: `Period ${row.periodNumber} — ${row.year}`,
+                  name: displayName,
                   year: row.year,
                   semester: row.semester,
+                  term: row.term || null,
                   periodNumber: row.periodNumber,
                   periodStartTime: periodStartTimes.value[row.periodNumber] || '08:00',
                   courseCode: row.courseCode,
                   students: [],
-                  selected: false
+                  selected: false,
+                  sectionMappings: reactive({})
               }
           }
           groups[key].students.push(row)
+      }
+
+      for (const k in groups) {
+        const uniqueCourses = [...new Set(groups[k].students.map(r => r._rawCourseCode || r.courseCode).filter(Boolean))]
+        if (uniqueCourses.length > 0) {
+          uniqueCourses.forEach(c => {
+            groups[k].sectionMappings[c] = c
+          })
+        }
+        if (uniqueCourses.length > 1) {
+          groups[k].isSplitClass = true
+          groups[k].courseSections = uniqueCourses
+          groups[k].courseCode = uniqueCourses.join('/')
+          const termSuffix = groups[k].term ? ` (${groups[k].term})` : ''
+          groups[k].name = `Period ${groups[k].periodNumber} (${uniqueCourses.join('/')}${termSuffix}) — ${groups[k].year}`
+        }
       }
 
       const detectedPeriods = [...new Set(validRows.map(r => Number(r.periodNumber)))].filter(p => !isNaN(p))
@@ -1972,7 +2021,13 @@ const bulkImportSemesters = computed(() => {
     label: sem === 'Full' ? 'Full Year' : `Semester ${sem}`,
     groups: entries
       .filter(e => e.group.semester === sem)
-      .sort((a, b) => Number(a.group.periodNumber) - Number(b.group.periodNumber))
+      .sort((a, b) => {
+        const pA = isNaN(Number(a.group.periodNumber)) ? 0 : Number(a.group.periodNumber)
+        const pB = isNaN(Number(b.group.periodNumber)) ? 0 : Number(b.group.periodNumber)
+        if (pA !== pB) return pA - pB
+        const termA = a.group.term || '', termB = b.group.term || ''
+        return termA.localeCompare(termB)
+      })
   }))
 })
 
@@ -2019,8 +2074,10 @@ function selectSemesterBulk(sem) {
 function isExistingClass(group) {
   return classList.value.some(c => 
     c.year === group.year && 
-    c.semester === group.semester && 
-    Number(c.periodNumber) === Number(group.periodNumber)
+    String(c.semester) === String(group.semester) && 
+    (String(c.periodNumber).trim() === String(group.periodNumber).trim() || 
+     (!isNaN(Number(c.periodNumber)) && !isNaN(Number(group.periodNumber)) && Number(c.periodNumber) === Number(group.periodNumber))) &&
+    (group.term ? (c.term === group.term || (c.courseCode && group.courseCode && c.courseCode === group.courseCode)) : !c.term)
   )
 }
 
@@ -2064,9 +2121,10 @@ async function confirmBulkImport() {
   for (const group of selectedGroups) {
     const existing = classList.value.find(c => 
       c.year === group.year && 
-      c.semester === group.semester && 
+      String(c.semester) === String(group.semester) && 
       (String(c.periodNumber).trim() === String(group.periodNumber).trim() || 
-       (!isNaN(Number(c.periodNumber)) && !isNaN(Number(group.periodNumber)) && Number(c.periodNumber) === Number(group.periodNumber)))
+       (!isNaN(Number(c.periodNumber)) && !isNaN(Number(group.periodNumber)) && Number(c.periodNumber) === Number(group.periodNumber))) &&
+      (group.term ? (c.term === group.term || (c.courseCode && group.courseCode && c.courseCode === group.courseCode)) : !c.term)
     )
 
     const incomingIds = new Set(group.students.map(s => String(s.studentId).trim()))

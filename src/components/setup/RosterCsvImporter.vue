@@ -113,7 +113,9 @@
                   <strong>{{ group.name }}</strong>
                   <div style="display: flex; gap: 4px; align-items: center; flex-wrap: wrap;">
                     <span class="setup__chip">{{ group.year }} · Sem {{ group.semester }} · P{{ group.periodNumber }}</span>
+                    <span v-if="group.term" class="setup__chip setup__chip--purple">{{ group.term }}</span>
                     <span v-if="group.courseCode || group.isSplitClass" class="setup__chip setup__chip--blue">{{ group.isSplitClass && group.courseSections ? group.courseSections.join('/') : group.courseCode }}</span>
+                    <span v-if="group.isSplitClass" class="setup__chip setup__chip--amber">Split Class</span>
                     <span v-if="isExistingClass(group)" class="setup__badge setup__badge--update">Update Existing</span>
                     <span v-else class="setup__badge setup__badge--new">New Class</span>
                   </div>
@@ -446,6 +448,7 @@ function onFileSelected(evt) {
         const periodNumber = (rawPeriod || rawSection) ? cleanPeriod(rawPeriod || rawSection) : (activeClass.value?.periodNumber || '1')
         const courseCode = row['Course Code'] ?? row['CourseCode'] ?? (rawSection ? extractCourseCode(rawSection) : '')
         const semester = normalizeSemester(rawSem || (activeClass.value?.semester || '1'))
+        const term = extractTerm(row['Term'] ?? rawSem)
 
         const rawGrade = row['Grade'] ?? row['Grade Level'] ?? row['GradeLevel'] ?? row['grade'] ?? ''
         const gNum = parseInt(rawGrade, 10)
@@ -465,6 +468,7 @@ function onFileSelected(evt) {
           livingWith: livingWith.trim(),
           birthDate: birthDate.trim(),
           semester,
+          term,
           periodNumber,
           year,
           courseCode: initialCourseCode,
@@ -495,17 +499,22 @@ function onFileSelected(evt) {
 
       const groups = {}
       for (const row of validRows) {
-        const key = `${row.year}-${row.semester}-P${row.periodNumber}`
+        const key = row.term 
+          ? `${row.year}-${row.semester}-P${row.periodNumber}-${row.term}`
+          : `${row.year}-${row.semester}-P${row.periodNumber}`
         if (!groups[key]) {
           const isHRM = (row.courseCode && row.courseCode.includes('HRM')) || row.periodNumber.toString().includes('AM-PM')
           const displayName = isHRM 
             ? `${row.courseCode || 'Homeroom'} — ${row.year}` 
-            : `Period ${row.periodNumber} — ${row.year}`
+            : (row.term 
+                ? `Period ${row.periodNumber} (${row.courseCode ? row.courseCode + ' · ' : ''}${row.term}) — ${row.year}`
+                : `Period ${row.periodNumber} — ${row.year}`)
 
             groups[key] = {
               name: displayName,
               year: row.year,
               semester: row.semester,
+              term: row.term || null,
               periodNumber: isNaN(Number(row.periodNumber)) ? 1 : Number(row.periodNumber),
               courseCode: row.courseCode,
               classType: teachingMode.value || 'secondary',
@@ -528,7 +537,8 @@ function onFileSelected(evt) {
           groups[k].isSplitClass = true
           groups[k].courseSections = uniqueCourses
           groups[k].courseCode = uniqueCourses.join('/')
-          groups[k].name = `Period ${groups[k].periodNumber} (${uniqueCourses.join('/')}) — ${groups[k].year}`
+          const termSuffix = groups[k].term ? ` (${groups[k].term})` : ''
+          groups[k].name = `Period ${groups[k].periodNumber} (${uniqueCourses.join('/')}${termSuffix}) — ${groups[k].year}`
         }
       }
 
@@ -573,7 +583,13 @@ const bulkImportSemesters = computed(() => {
     label: sem === 'Full' ? 'Full Year' : `Semester ${sem}`,
     groups: entries
       .filter(e => e.group.semester === sem)
-      .sort((a, b) => Number(a.group.periodNumber) - Number(b.group.periodNumber))
+      .sort((a, b) => {
+        const pA = isNaN(Number(a.group.periodNumber)) ? 0 : Number(a.group.periodNumber)
+        const pB = isNaN(Number(b.group.periodNumber)) ? 0 : Number(b.group.periodNumber)
+        if (pA !== pB) return pA - pB
+        const termA = a.group.term || '', termB = b.group.term || ''
+        return termA.localeCompare(termB)
+      })
   }))
 })
 
@@ -643,9 +659,10 @@ function onSectionMappingChanged(group) {
 function isExistingClass(group) {
   return classList.value.some(c => 
     c.year === group.year && 
-    c.semester === group.semester && 
+    String(c.semester) === String(group.semester) && 
     (String(c.periodNumber).trim() === String(group.periodNumber).trim() ||
-     (!isNaN(Number(c.periodNumber)) && !isNaN(Number(group.periodNumber)) && Number(c.periodNumber) === Number(group.periodNumber)))
+     (!isNaN(Number(c.periodNumber)) && !isNaN(Number(group.periodNumber)) && Number(c.periodNumber) === Number(group.periodNumber))) &&
+    (group.term ? (c.term === group.term || (c.courseCode && group.courseCode && c.courseCode === group.courseCode)) : !c.term)
   )
 }
 
@@ -660,9 +677,10 @@ async function confirmBulkImport() {
   for (const group of selectedGroups) {
     const existing = classList.value.find(c => 
       c.year === group.year && 
-      c.semester === group.semester && 
+      String(c.semester) === String(group.semester) && 
       (String(c.periodNumber).trim() === String(group.periodNumber).trim() || 
-       (!isNaN(Number(c.periodNumber)) && !isNaN(Number(group.periodNumber)) && Number(c.periodNumber) === Number(group.periodNumber)))
+       (!isNaN(Number(c.periodNumber)) && !isNaN(Number(group.periodNumber)) && Number(c.periodNumber) === Number(group.periodNumber))) &&
+      (group.term ? (c.term === group.term || (c.courseCode && group.courseCode && c.courseCode === group.courseCode)) : !c.term)
     )
 
     const incomingIds = new Set(group.students.map(s => String(s.studentId).trim()))
@@ -839,10 +857,30 @@ function normalizeSemester(raw) {
   // Full year strings like "2025-2026" are NOT semester numbers
   if (/^\d{4}-\d{2,4}$/.test(str)) return '1'
   const lower = str.toLowerCase()
-  if (lower.includes('sem 2') || lower.includes('semester 2') || /\bs2\b/.test(lower) || /\bsem2\b/.test(lower)) {
+  if (
+    lower.includes('sem 2') ||
+    lower.includes('semester 2') ||
+    /\bs2\b/.test(lower) ||
+    /\bsem2\b/.test(lower) ||
+    lower.includes('term 3') ||
+    lower.includes('term 4') ||
+    /\bt3\b/.test(lower) ||
+    /\bt4\b/.test(lower)
+  ) {
     return '2'
   }
   return '1'
+}
+
+function extractTerm(raw) {
+  if (!raw) return null
+  const str = raw.toString().trim()
+  const lower = str.toLowerCase()
+  const match = lower.match(/\bterm\s*([1-4])\b/i) || lower.match(/\bt([1-4])\b/i)
+  if (match) {
+    return `Term ${match[1]}`
+  }
+  return null
 }
 
 </script>
