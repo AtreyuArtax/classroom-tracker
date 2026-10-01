@@ -850,11 +850,11 @@ function onDrop(evt) {
   text-transform: uppercase;
 }
 
-/* ── Late state (Soft Warm Amber — In Class but Arrived Late) ────────────── */
+/* ── Late state (Warm Amber — In Class but Arrived Late, matches active radial) ── */
 .desk-tile--late {
-  background: rgba(254, 249, 195, 0.50) !important;
-  border:     1.5px solid rgba(234, 179, 8, 0.55) !important;
-  box-shadow: 0 2px 8px rgba(234, 179, 8, 0.08) !important;
+  background: rgba(254, 243, 199, 0.55) !important;
+  border:     1.5px solid #f59e0b !important;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.12) !important;
 }
 
 .desk-tile--late .desk-tile__content {
@@ -869,11 +869,11 @@ function onDrop(evt) {
   font-weight: 700;
 }
 
-/* ── Absent state (Dimmed Red — Not in Room Today) ────────────────────────── */
+/* ── Absent state (Soft Muted Red — Not in Room Today, matches active radial) ───── */
 .desk-tile--absent {
-  background: rgba(254, 242, 242, 0.70) !important;
-  border:     1.5px solid #ef4444 !important;
-  box-shadow: 0 2px 6px rgba(239, 68, 68, 0.08) !important;
+  background: rgba(254, 242, 242, 0.65) !important;
+  border:     1.5px solid #e25c5c !important;
+  box-shadow: 0 2px 6px rgba(226, 92, 92, 0.10) !important;
 }
 
 .desk-tile--absent .desk-tile__content {
@@ -889,8 +889,8 @@ function onDrop(evt) {
 
 .desk-tile__status-info--absent {
   background: rgba(254, 226, 226, 0.95);
-  color:      #dc2626;
-  border:     1px solid rgba(239, 68, 68, 0.35);
+  color:      #e25c5c;
+  border:     1px solid rgba(226, 92, 92, 0.35);
   font-weight: 800;
 }
 

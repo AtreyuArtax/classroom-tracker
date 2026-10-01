@@ -266,24 +266,24 @@ function onProfileTap() {
   color:           #ffffff !important;
 }
 
-/* Active toggle: Absent (Vibrant Red — matches absent desk) */
+/* Active toggle: Absent (Softer Muted Red — matches absent desk) */
 .radial-btn--active-absent .radial-btn__icon-circle {
-  background:      #ef4444 !important;
-  border-color:    #f87171 !important;
-  box-shadow:      0 8px 24px rgba(239, 68, 68, 0.55), 0 0 0 3px rgba(248, 113, 113, 0.3) !important;
+  background:      #e25c5c !important;
+  border-color:    #f18c8c !important;
+  box-shadow:      0 4px 16px rgba(226, 92, 92, 0.35) !important;
   color:           #ffffff !important;
 }
 
 .radial-btn--active-absent .radial-btn__label {
   color:           #ffffff !important;
   font-weight:     700 !important;
-  text-shadow:     0 1px 3px rgba(0, 0, 0, 0.8), 0 0 12px rgba(248, 113, 113, 0.85) !important;
+  text-shadow:     0 1px 3px rgba(0, 0, 0, 0.8), 0 0 8px rgba(226, 92, 92, 0.5) !important;
 }
 
 .radial-btn--active-absent:hover .radial-btn__icon-circle {
-  background:      #dc2626 !important;
-  border-color:    #fca5a5 !important;
-  box-shadow:      0 10px 28px rgba(239, 68, 68, 0.7), 0 0 0 4px rgba(248, 113, 113, 0.45) !important;
+  background:      #cc4949 !important;
+  border-color:    #f5a8a8 !important;
+  box-shadow:      0 6px 20px rgba(226, 92, 92, 0.45) !important;
   color:           #ffffff !important;
 }
 
@@ -291,20 +291,20 @@ function onProfileTap() {
 .radial-btn--active-late .radial-btn__icon-circle {
   background:      #f59e0b !important;
   border-color:    #fde047 !important;
-  box-shadow:      0 8px 24px rgba(245, 158, 11, 0.55), 0 0 0 3px rgba(253, 224, 71, 0.3) !important;
+  box-shadow:      0 4px 16px rgba(245, 158, 11, 0.35) !important;
   color:           #ffffff !important;
 }
 
 .radial-btn--active-late .radial-btn__label {
   color:           #ffffff !important;
   font-weight:     700 !important;
-  text-shadow:     0 1px 3px rgba(0, 0, 0, 0.8), 0 0 12px rgba(253, 224, 71, 0.85) !important;
+  text-shadow:     0 1px 3px rgba(0, 0, 0, 0.8), 0 0 8px rgba(245, 158, 11, 0.5) !important;
 }
 
 .radial-btn--active-late:hover .radial-btn__icon-circle {
   background:      #d97706 !important;
   border-color:    #fef08a !important;
-  box-shadow:      0 10px 28px rgba(245, 158, 11, 0.7), 0 0 0 4px rgba(253, 224, 71, 0.45) !important;
+  box-shadow:      0 6px 20px rgba(245, 158, 11, 0.45) !important;
   color:           #ffffff !important;
 }
 

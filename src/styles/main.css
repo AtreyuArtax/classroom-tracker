@@ -48,20 +48,20 @@
   --radius-md: 12px;
   --radius-lg: 16px;
 
-  /* Semantic states — derived from primary */
-  --state-out: #ff3b30;
-  /* iOS red — student is out of room */
+  /* Semantic states — derived from primary & radial button palette */
+  --state-out: #e25c5c;
+  /* Soft Red — matches active radial absent & desk tile */
   --state-danger: var(--state-out);
   --danger: var(--state-danger);
-  /* Alias — same iOS red, used for error/danger UI states */
+  /* Alias — same red, used for error/danger UI states */
   --state-success: #34c759;
-  /* iOS green — confirmation flash */
-  --state-late: #ffcc00;
-  /* iOS yellow — student arrived late */
-  --state-late-bg: color-mix(in srgb, #ffcc00 15%, white);
-  /* light amber tile background */
-  --state-late-text: #7a5c00;
-  /* dark amber for readable text on light bg */
+  /* Confirmation flash */
+  --state-late: #f59e0b;
+  /* Warm amber — student arrived late (matches active radial) */
+  --state-late-bg: rgba(254, 243, 199, 0.65);
+  /* light warm amber tile background */
+  --state-late-text: #b45309;
+  /* readable amber text on light bg */
   --state-neutral: #8e8e93;
   /* iOS grey */
 
