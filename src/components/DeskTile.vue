@@ -495,6 +495,8 @@ function onDrop(evt) {
 <style scoped>
 /* ── Base tile ───────────────────────────────────────────────────────────── */
 .desk-tile {
+  container-type:  size;
+  container-name:  desk;
   position:        relative;
   display:         flex;
   flex-direction:  column;
@@ -512,7 +514,7 @@ function onDrop(evt) {
   border-radius: var(--radius-md);
   box-shadow:    0 2px 6px rgba(0,0,0,0.03);
   border:        1px solid var(--border);
-  padding:       4px 6px;
+  padding:       2px 4px;
   cursor:        pointer;
 
   /* smooth transition for flash */
@@ -569,7 +571,7 @@ function onDrop(evt) {
 }
 
 .desk-tile__empty-label {
-  font-size:   0.65rem;
+  font-size:   clamp(0.60rem, 10cqmin, 0.72rem);
   font-weight: 600;
   color:       var(--text-secondary);
   text-align:  center;
@@ -616,14 +618,19 @@ function onDrop(evt) {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 4px;
-  padding: 1px 2px;
+  gap: 2px;
+  padding: 0;
 }
 
 .desk-tile__avatar-wrap {
   position: relative;
-  width: 44px;
-  height: 44px;
+  /* Base fallback for environments without container queries */
+  width: 64px;
+  height: 64px;
+  /* Fluid relative sizing based on seat dimensions: scales dynamically with smaller or larger seats */
+  --avatar-size: clamp(38px, 60cqmin, 74px);
+  width: var(--avatar-size, 64px);
+  height: var(--avatar-size, 64px);
   border-radius: 50%;
   flex-shrink: 0;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.14);
@@ -785,7 +792,7 @@ function onDrop(evt) {
 }
 
 .desk-tile__compact-name {
-  font-size: 0.82rem;
+  font-size: clamp(0.74rem, 13.5cqmin, 0.90rem);
   font-weight: 700;
   color: var(--text);
   line-height: 1.1;
@@ -804,13 +811,13 @@ function onDrop(evt) {
 }
 
 .desk-tile__first {
-  font-size:   0.82rem;
+  font-size:   clamp(0.76rem, 14cqmin, 0.92rem);
   font-weight: 700;
   color:       var(--text);
 }
 
 .desk-tile__last {
-  font-size:   0.72rem;
+  font-size:   clamp(0.66rem, 12cqmin, 0.78rem);
   font-weight: 400;
   color:       var(--text-secondary);
 }

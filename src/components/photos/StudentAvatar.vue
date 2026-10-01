@@ -15,7 +15,7 @@
       :src="photoUrl" 
       :alt="`${firstName} ${lastName}`"
       class="student-avatar__img" 
-      loading="lazy"
+      :loading="size === 'desk' ? 'eager' : 'lazy'"
     />
     <span v-else class="student-avatar__initials">
       {{ initials }}

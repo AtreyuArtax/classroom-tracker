@@ -206,6 +206,8 @@ async function onSeatDrop({ studentId, fromRow, fromCol, toRow, toCol, toStudent
 }
 
 .seating-grid__tile-wrapper {
+  container-type: size;
+  container-name: desk-wrapper;
   position: relative;
   width: 100%;
   height: 100%;

@@ -4,7 +4,7 @@
     <BaseModal
       :show="show"
       :show-x="false"
-      :max-width="showPreview ? '1150px' : '520px'"
+      :max-width="showPreview ? 'min(96vw, 1340px)' : '520px'"
       title="Print Seating Plan & Dashboard"
       @close="$emit('close')"
     >
@@ -15,7 +15,7 @@
             <div>
               <h3 class="seating-modal__title">Print Classroom Seating Plan</h3>
               <p class="seating-modal__subtitle">
-                <span v-if="scopeMode === 'single'">{{ currentPreviewClass?.name || 'Class' }} · {{ getClassSubheader(currentPreviewClass) }}</span>
+                <span v-if="targetClasses.length <= 1">{{ currentPreviewClass?.name || 'Class' }} · {{ getClassSubheader(currentPreviewClass) }}</span>
                 <span v-else>Batch Printing <strong>{{ targetClasses.length }} Classes</strong> (1 Page Each)</span>
               </p>
             </div>
@@ -41,8 +41,8 @@
             Classes to Print
             <select v-model="scopeMode" class="setup__input">
               <option value="active">Active Class ({{ activeReportClass?.name || 'Current Class' }})</option>
-              <option value="semester" v-if="availableClasses.length > 1">
-                {{ termLabel }} ({{ availableClasses.length }} Classes)
+              <option value="semester" v-if="semesterClasses.length > 1">
+                {{ termLabel }} ({{ semesterClasses.length }} Classes)
               </option>
               <option value="custom" v-if="availableClasses.length > 1">
                 Custom Selection... ({{ selectedClassIds.length }} Selected)
@@ -118,6 +118,21 @@
               <input type="checkbox" v-model="form.showPhotos" class="setup__checkbox" />
               Include Student Photos
             </label>
+            <label class="setup__label" v-if="form.showPhotos" style="margin-top: 4px; margin-bottom: 8px;">
+              Photo Layout
+              <select v-model="form.photoLayout" class="setup__input">
+                <option value="overlay">Bottom Name Overlay (Recommended - Fits Long Names)</option>
+                <option value="side">Side-by-Side (Classic)</option>
+              </select>
+            </label>
+            <label class="setup__label" v-if="form.showPhotos && form.photoLayout === 'side'" style="margin-top: 4px; margin-bottom: 8px;">
+              Photo Size
+              <select v-model="form.photoSize" class="setup__input">
+                <option value="max">Maximized (Fill Card - Recommended)</option>
+                <option value="large">Large</option>
+                <option value="compact">Compact</option>
+              </select>
+            </label>
             <label class="setup__label--checkbox">
               <input type="checkbox" v-model="form.showPods" class="setup__checkbox" />
               Color-Code Group Pods
@@ -181,7 +196,8 @@
             class="seating-preview__sheet"
             :class="[
               `seating-preview__sheet--${form.orientation}`,
-              `font-scale--${form.fontSize}`
+              `font-scale--${form.fontSize}`,
+              `photo-scale--${form.photoSize}`
             ]"
             :style="getDynamicClassStyles(currentPreviewClass)"
           >
@@ -220,7 +236,9 @@
                     class="sheet-cell sheet-cell--desk"
                     :class="{ 
                       'sheet-cell--occupied': getStudent(currentPreviewClass, r, c),
-                      'sheet-cell--empty': !getStudent(currentPreviewClass, r, c)
+                      'sheet-cell--empty': !getStudent(currentPreviewClass, r, c),
+                      'sheet-cell--has-photo': form.showPhotos && hasPhoto(getStudent(currentPreviewClass, r, c)?.studentId),
+                      'sheet-cell--photo-overlay': form.showPhotos && hasPhoto(getStudent(currentPreviewClass, r, c)?.studentId) && form.photoLayout !== 'side'
                     }"
                     :style="getDeskPodStyle(currentPreviewClass, r, c)"
                   >
@@ -242,7 +260,13 @@
                     />
 
                     <!-- Desk Content / Name -->
-                    <div class="sheet-desk__content" :class="{ 'sheet-desk__content--with-photo': form.showPhotos && hasPhoto(getStudent(currentPreviewClass, r, c)?.studentId) }">
+                    <div 
+                      class="sheet-desk__content" 
+                      :class="{ 
+                        'sheet-desk__content--with-photo': form.showPhotos && hasPhoto(getStudent(currentPreviewClass, r, c)?.studentId),
+                        'sheet-desk__content--overlay': form.showPhotos && hasPhoto(getStudent(currentPreviewClass, r, c)?.studentId) && form.photoLayout !== 'side'
+                      }"
+                    >
                       <template v-if="getStudent(currentPreviewClass, r, c)">
                         <StudentAvatar 
                           v-if="form.showPhotos && hasPhoto(getStudent(currentPreviewClass, r, c).studentId)"
@@ -255,8 +279,17 @@
                         />
                         <div class="sheet-desk__name-box">
                           <template v-if="form.showPhotos && hasPhoto(getStudent(currentPreviewClass, r, c).studentId)">
-                            <span class="sheet-desk__first">{{ getStudent(currentPreviewClass, r, c).firstName }}</span>
-                            <span class="sheet-desk__last">{{ (getStudent(currentPreviewClass, r, c).lastName || '')[0] ? (getStudent(currentPreviewClass, r, c).lastName)[0] + '.' : '' }}</span>
+                            <template v-if="form.nameFormat === 'firstOnly'">
+                              <span class="sheet-desk__first">{{ getStudent(currentPreviewClass, r, c).firstName }}</span>
+                            </template>
+                            <template v-else-if="form.nameFormat === 'lastFirst'">
+                              <span class="sheet-desk__first">{{ getStudent(currentPreviewClass, r, c).firstName }}</span>
+                              <span class="sheet-desk__last">{{ getStudent(currentPreviewClass, r, c).lastName }}</span>
+                            </template>
+                            <template v-else>
+                              <span class="sheet-desk__first">{{ getStudent(currentPreviewClass, r, c).firstName }}</span>
+                              <span class="sheet-desk__last">{{ (getStudent(currentPreviewClass, r, c).lastName || '')[0] ? (getStudent(currentPreviewClass, r, c).lastName)[0] + '.' : '' }}</span>
+                            </template>
                           </template>
                           <template v-else-if="form.nameFormat === 'initial'">
                             <span class="sheet-desk__last">
@@ -316,7 +349,7 @@
         <div class="reports__modal-footer-inner" style="display: flex; justify-content: flex-end; width: 100%; gap: 12px;">
           <button class="reports__btn-ghost" @click="$emit('close')">Cancel</button>
           <button class="reports__btn-primary" @click="handlePrint" :disabled="isPrinting || targetClasses.length === 0">
-            <Printer :size="16" /> {{ scopeMode === 'all' ? `Print All (${targetClasses.length} Classes)` : 'Open Print Dialog' }}
+            <Printer :size="16" /> {{ targetClasses.length > 1 ? `Print All (${targetClasses.length} Classes)` : 'Open Print Dialog' }}
           </button>
         </div>
       </template>
@@ -330,7 +363,8 @@
           'print-only-container--active': isPrinting,
           'seating-print-only--landscape': form.orientation === 'landscape',
           'seating-print-only--portrait': form.orientation === 'portrait',
-          [`font-scale--${form.fontSize}`]: true
+          [`font-scale--${form.fontSize}`]: true,
+          [`photo-scale--${form.photoSize}`]: true
         }"
       >
         <div 
@@ -374,7 +408,9 @@
                   class="sheet-cell sheet-cell--desk"
                   :class="{ 
                     'sheet-cell--occupied': getStudent(cls, r, c),
-                    'sheet-cell--empty': !getStudent(cls, r, c)
+                    'sheet-cell--empty': !getStudent(cls, r, c),
+                    'sheet-cell--has-photo': form.showPhotos && hasPhoto(getStudent(cls, r, c)?.studentId),
+                    'sheet-cell--photo-overlay': form.showPhotos && hasPhoto(getStudent(cls, r, c)?.studentId) && form.photoLayout !== 'side'
                   }"
                   :style="getDeskPodStyle(cls, r, c)"
                 >
@@ -396,7 +432,13 @@
                   />
 
                   <!-- Desk Content / Name -->
-                  <div class="sheet-desk__content" :class="{ 'sheet-desk__content--with-photo': form.showPhotos && hasPhoto(getStudent(cls, r, c)?.studentId) }">
+                  <div 
+                    class="sheet-desk__content" 
+                    :class="{ 
+                      'sheet-desk__content--with-photo': form.showPhotos && hasPhoto(getStudent(cls, r, c)?.studentId),
+                      'sheet-desk__content--overlay': form.showPhotos && hasPhoto(getStudent(cls, r, c)?.studentId) && form.photoLayout !== 'side'
+                    }"
+                  >
                     <template v-if="getStudent(cls, r, c)">
                       <StudentAvatar 
                         v-if="form.showPhotos && hasPhoto(getStudent(cls, r, c).studentId)"
@@ -409,8 +451,17 @@
                       />
                       <div class="sheet-desk__name-box">
                         <template v-if="form.showPhotos && hasPhoto(getStudent(cls, r, c).studentId)">
-                          <span class="sheet-desk__first">{{ getStudent(cls, r, c).firstName }}</span>
-                          <span class="sheet-desk__last">{{ (getStudent(cls, r, c).lastName || '')[0] ? (getStudent(cls, r, c).lastName)[0] + '.' : '' }}</span>
+                          <template v-if="form.nameFormat === 'firstOnly'">
+                            <span class="sheet-desk__first">{{ getStudent(cls, r, c).firstName }}</span>
+                          </template>
+                          <template v-else-if="form.nameFormat === 'lastFirst'">
+                            <span class="sheet-desk__first">{{ getStudent(cls, r, c).firstName }}</span>
+                            <span class="sheet-desk__last">{{ getStudent(cls, r, c).lastName }}</span>
+                          </template>
+                          <template v-else>
+                            <span class="sheet-desk__first">{{ getStudent(cls, r, c).firstName }}</span>
+                            <span class="sheet-desk__last">{{ (getStudent(cls, r, c).lastName || '')[0] ? (getStudent(cls, r, c).lastName)[0] + '.' : '' }}</span>
+                          </template>
                         </template>
                         <template v-else-if="form.nameFormat === 'initial'">
                           <span class="sheet-desk__last">
@@ -478,7 +529,7 @@ import { useStudentPhotos } from '../../composables/useStudentPhotos.js'
 import { executePrint } from '../../composables/usePrintOptions.js'
 import StudentAvatar from '../photos/StudentAvatar.vue'
 
-const { hasPhoto } = useStudentPhotos()
+const { hasPhoto, preloadPhotos } = useStudentPhotos()
 
 const props = defineProps({
   show: { type: Boolean, default: false },
@@ -503,6 +554,8 @@ const form = reactive({
   fontSize: 'auto', // Smart auto-scaling based on grid dimensions
   nameFormat: 'full', // 'full' | 'initial' | 'firstOnly' | 'lastFirst'
   showPhotos: false,
+  photoLayout: 'overlay', // 'overlay' (Bottom Name Banner / Overlay) | 'side' (Side-by-side)
+  photoSize: 'max', // 'max' (as large as possible) | 'large' | 'compact'
   showPods: true,
   showFrontIndicator: true,
   showIepDot: true,
@@ -586,7 +639,7 @@ watch(availableClasses, (newList) => {
 
 const targetClasses = computed(() => {
   if (scopeMode.value === 'semester') {
-    return availableClasses.value
+    return semesterClasses.value
   }
   if (scopeMode.value === 'custom') {
     return availableClasses.value.filter(c => selectedClassIds.value.includes(c.classId))
@@ -655,37 +708,63 @@ function getDeskPodStyle(cls, r, c) {
 }
 
 /**
- * Highly reactive student map resolution:
+ * Highly reactive student map resolution memoized per class to avoid O(N*cells) object recreation.
  * Checks stateStudents for live activeClass updates, falling back to class record.
  */
+const studentsMapByClass = computed(() => {
+  const result = new Map()
+  const classesToMap = availableClasses.value.length > 0
+    ? availableClasses.value
+    : (props.reportClass ? [props.reportClass] : [])
+
+  for (const cls of classesToMap) {
+    if (!cls?.classId) continue
+    const map = {}
+    if (cls.classId === stateActiveClass.value?.classId && stateStudents.value) {
+      for (const [studentId, s] of Object.entries(stateStudents.value)) {
+        if (s.seat && !s.archived && s.seat.row && s.seat.col) {
+          map[`${s.seat.row}-${s.seat.col}`] = { studentId, ...s }
+        }
+      }
+    } else if (cls.students) {
+      for (const [studentId, s] of Object.entries(cls.students)) {
+        if (s.seat && !s.archived && s.seat.row && s.seat.col) {
+          map[`${s.seat.row}-${s.seat.col}`] = { studentId, ...s }
+        }
+      }
+    }
+    result.set(cls.classId, map)
+  }
+  return result
+})
+
+// Automatically preload photos in a single batch transaction when include photos is active
+watch([() => form.showPhotos, targetClasses], ([showPhotos, classes]) => {
+  if (showPhotos && classes && classes.length > 0 && preloadPhotos) {
+    const studentIds = []
+    for (const cls of classes) {
+      if (!cls?.classId) continue
+      const sMap = studentsMapByClass.value.get(cls.classId)
+      if (sMap) {
+        for (const s of Object.values(sMap)) {
+          if (s?.studentId) studentIds.push(s.studentId)
+        }
+      }
+    }
+    if (studentIds.length > 0) {
+      preloadPhotos(studentIds)
+    }
+  }
+}, { immediate: true })
+
 function getStudentsMap(cls) {
-  const map = {}
-  if (!cls) return map
-
-  // If this class is the currently active class in the app, use reactive stateStudents
-  if (cls.classId === stateActiveClass.value?.classId && stateStudents.value) {
-    for (const [studentId, s] of Object.entries(stateStudents.value)) {
-      if (s.seat && !s.archived && s.seat.row && s.seat.col) {
-        map[`${s.seat.row}-${s.seat.col}`] = { studentId, ...s }
-      }
-    }
-    return map
-  }
-
-  // Otherwise read from the class record
-  if (cls.students) {
-    for (const [studentId, s] of Object.entries(cls.students)) {
-      if (s.seat && !s.archived && s.seat.row && s.seat.col) {
-        map[`${s.seat.row}-${s.seat.col}`] = { studentId, ...s }
-      }
-    }
-  }
-  return map
+  if (!cls?.classId) return {}
+  return studentsMapByClass.value.get(cls.classId) || {}
 }
 
 function getStudent(cls, r, c) {
-  const map = getStudentsMap(cls)
-  return map[`${r}-${c}`] || null
+  if (!cls?.classId) return null
+  return studentsMapByClass.value.get(cls.classId)?.[`${r}-${c}`] || null
 }
 
 function getIepCount(cls) {
@@ -720,6 +799,10 @@ function getDynamicClassStyles(cls) {
     return {
       '--desk-first-size': '0.52rem',
       '--desk-last-size': '0.62rem',
+      '--desk-photo-first': '7.5pt',
+      '--desk-photo-last': '6.5pt',
+      '--desk-photo-preview-first': '0.52rem',
+      '--desk-photo-preview-last': '0.48rem',
       '--desk-padding': '2px 3px',
       '--desk-min-height': '38px'
     }
@@ -728,6 +811,10 @@ function getDynamicClassStyles(cls) {
     return {
       '--desk-first-size': '0.60rem',
       '--desk-last-size': '0.70rem',
+      '--desk-photo-first': '8.5pt',
+      '--desk-photo-last': '7.5pt',
+      '--desk-photo-preview-first': '0.58rem',
+      '--desk-photo-preview-last': '0.52rem',
       '--desk-padding': '2px 4px',
       '--desk-min-height': '44px'
     }
@@ -736,6 +823,10 @@ function getDynamicClassStyles(cls) {
     return {
       '--desk-first-size': '0.72rem',
       '--desk-last-size': '0.85rem',
+      '--desk-photo-first': '9.5pt',
+      '--desk-photo-last': '8pt',
+      '--desk-photo-preview-first': '0.66rem',
+      '--desk-photo-preview-last': '0.58rem',
       '--desk-padding': '4px 6px',
       '--desk-min-height': '52px'
     }
@@ -744,6 +835,10 @@ function getDynamicClassStyles(cls) {
     return {
       '--desk-first-size': '0.80rem',
       '--desk-last-size': '0.98rem',
+      '--desk-photo-first': '11pt',
+      '--desk-photo-last': '9.5pt',
+      '--desk-photo-preview-first': '0.72rem',
+      '--desk-photo-preview-last': '0.64rem',
       '--desk-padding': '6px 8px',
       '--desk-min-height': '60px'
     }
@@ -754,28 +849,44 @@ function getDynamicClassStyles(cls) {
     return {
       '--desk-first-size': '0.50rem',
       '--desk-last-size': '0.60rem',
+      '--desk-photo-first': '7.5pt',
+      '--desk-photo-last': '6.5pt',
+      '--desk-photo-preview-first': '0.50rem',
+      '--desk-photo-preview-last': '0.46rem',
       '--desk-padding': '2px 3px',
       '--desk-min-height': '36px'
     }
-  } else if (cols >= 8 || rows >= 6) {
+  } else if (cols >= 8 || rows >= 7) {
     return {
       '--desk-first-size': '0.58rem',
       '--desk-last-size': '0.68rem',
+      '--desk-photo-first': '8.5pt',
+      '--desk-photo-last': '7.5pt',
+      '--desk-photo-preview-first': '0.56rem',
+      '--desk-photo-preview-last': '0.50rem',
       '--desk-padding': '2px 4px',
       '--desk-min-height': '42px'
     }
   } else if (cols >= 6) {
     return {
-      '--desk-first-size': '0.65rem',
-      '--desk-last-size': '0.78rem',
-      '--desk-padding': '3px 5px',
+      '--desk-first-size': '0.68rem',
+      '--desk-last-size': '0.80rem',
+      '--desk-photo-first': '10pt',
+      '--desk-photo-last': '8.5pt',
+      '--desk-photo-preview-first': '0.62rem',
+      '--desk-photo-preview-last': '0.56rem',
+      '--desk-padding': '2px 4px',
       '--desk-min-height': '48px'
     }
   } else {
     return {
-      '--desk-first-size': '0.75rem',
-      '--desk-last-size': '0.88rem',
-      '--desk-padding': '4px 6px',
+      '--desk-first-size': '0.78rem',
+      '--desk-last-size': '0.92rem',
+      '--desk-photo-first': '11pt',
+      '--desk-photo-last': '9.5pt',
+      '--desk-photo-preview-first': '0.70rem',
+      '--desk-photo-preview-last': '0.62rem',
+      '--desk-padding': '3px 5px',
       '--desk-min-height': '54px'
     }
   }
@@ -951,8 +1062,8 @@ function handlePrint() {
 
 .seating-modal__body {
   display: grid;
-  grid-template-columns: 290px 1fr;
-  gap: 20px;
+  grid-template-columns: 260px 1fr;
+  gap: 16px;
   padding: 16px 0 8px 0;
   height: calc(85vh - 100px);
   max-height: 750px;
@@ -1274,7 +1385,7 @@ function handlePrint() {
   color: #0f172a;
   border-radius: 4px;
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
-  padding: 18px 20px;
+  padding: 12px 14px;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -1388,13 +1499,18 @@ function handlePrint() {
   border-radius: 5px;
   background: #ffffff;
   display: flex;
-  align-items: center;
+  align-items: stretch;
   justify-content: center;
   min-height: var(--desk-min-height, 46px);
   padding: var(--desk-padding, 3px 4px);
   min-width: 0;
   box-sizing: border-box;
   overflow: hidden;
+  height: 100%;
+}
+
+.sheet-cell--has-photo {
+  padding: 2px 3px;
 }
 
 .sheet-cell--empty {
@@ -1438,6 +1554,7 @@ function handlePrint() {
   align-items: center;
   justify-content: center;
   width: 100%;
+  height: 100%;
   text-align: center;
   line-height: 1.1;
   min-width: 0;
@@ -1449,16 +1566,57 @@ function handlePrint() {
   align-items: center;
   justify-content: flex-start;
   gap: 6px;
-  padding: 0 3px;
+  padding: 0;
+  height: 100%;
+  width: 100%;
 }
 
 .sheet-desk__avatar {
-  width: 32px !important;
-  height: 32px !important;
+  height: 100% !important;
+  width: auto !important;
+  aspect-ratio: 1 / 1 !important;
+  max-height: 100% !important;
+  max-width: 58% !important;
   border-radius: 4px !important;
   flex-shrink: 0;
   box-shadow: 0 1px 3px rgba(0,0,0,0.12);
-  border: 1px solid rgba(0,0,0,0.1);
+  border: 1px solid rgba(0,0,0,0.15);
+  box-sizing: border-box;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sheet-desk__avatar :deep(.student-avatar__img),
+.sheet-desk__avatar :deep(img) {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  display: block !important;
+}
+
+.photo-scale--compact .sheet-desk__avatar {
+  height: 34px !important;
+  width: 34px !important;
+  max-height: 34px !important;
+  max-width: 34px !important;
+}
+
+.photo-scale--large .sheet-desk__avatar {
+  height: 85% !important;
+  max-height: 85% !important;
+  width: auto !important;
+  aspect-ratio: 1 / 1 !important;
+  max-width: 48% !important;
+}
+
+.photo-scale--max .sheet-desk__avatar {
+  height: 100% !important;
+  max-height: 100% !important;
+  width: auto !important;
+  aspect-ratio: 1 / 1 !important;
+  max-width: 58% !important;
 }
 
 .sheet-desk__name-box {
@@ -1475,7 +1633,9 @@ function handlePrint() {
 
 .sheet-desk__content--with-photo .sheet-desk__name-box {
   align-items: flex-start;
+  justify-content: center;
   text-align: left;
+  flex: 1 1 0%;
 }
 
 .sheet-desk__first {
@@ -1490,7 +1650,13 @@ function handlePrint() {
 }
 
 .sheet-desk__content--with-photo .sheet-desk__first {
+  font-size: var(--desk-photo-preview-first, 0.68rem);
+  font-weight: 700;
   text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 .sheet-desk__last {
@@ -1506,7 +1672,9 @@ function handlePrint() {
 
 .sheet-desk__content--with-photo .sheet-desk__last {
   text-align: left;
-  font-size: 0.74rem;
+  font-size: var(--desk-photo-preview-last, 0.60rem);
+  font-weight: 500;
+  white-space: nowrap;
 }
 
 .sheet-desk__empty-text {
@@ -1514,6 +1682,112 @@ function handlePrint() {
   font-weight: 600;
   color: #94a3b8;
   text-transform: uppercase;
+}
+
+/* ── Bottom Name Overlay Style (Full Uncropped Photo + Full-Width Name) ──── */
+.sheet-cell--photo-overlay {
+  padding: 0 !important;
+  position: relative !important;
+  overflow: hidden !important;
+  background: #ffffff !important;
+}
+
+.sheet-cell--photo-overlay .sheet-desk__content--overlay {
+  position: relative !important;
+  width: 100% !important;
+  height: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  background: #ffffff !important;
+}
+
+.sheet-cell--photo-overlay .sheet-desk__content--overlay .sheet-desk__avatar {
+  flex: 1 1 0% !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  position: relative !important;
+  inset: auto !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: #ffffff !important;
+  overflow: hidden !important;
+  padding: 1px 1px 0 1px !important;
+  box-sizing: border-box !important;
+  z-index: 1 !important;
+}
+
+.sheet-cell--photo-overlay .sheet-desk__content--overlay .sheet-desk__avatar :deep(.student-avatar__img),
+.sheet-cell--photo-overlay .sheet-desk__content--overlay .sheet-desk__avatar :deep(img) {
+  width: auto !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  object-fit: contain !important;
+  display: block !important;
+  margin: 0 auto !important;
+  border-radius: 2px !important;
+}
+
+.sheet-cell--photo-overlay .sheet-desk__content--overlay .sheet-desk__name-box {
+  flex: 0 0 auto !important;
+  width: 100% !important;
+  position: relative !important;
+  bottom: auto !important;
+  left: auto !important;
+  right: auto !important;
+  z-index: 5 !important;
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: baseline !important;
+  justify-content: center !important;
+  gap: 3px !important;
+  padding: 1.5px 3px !important;
+  box-sizing: border-box !important;
+  background: #ffffff !important;
+  border-top: 1.5px solid #0f172a !important;
+  box-shadow: none !important;
+  text-align: center !important;
+}
+
+.sheet-cell--photo-overlay .sheet-desk__content--overlay .sheet-desk__first {
+  font-size: var(--desk-photo-preview-first, 0.70rem) !important;
+  font-weight: 800 !important;
+  color: #000000 !important;
+  line-height: 1.15 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  max-width: 100% !important;
+  text-align: center !important;
+  letter-spacing: -0.01em;
+}
+
+.sheet-cell--photo-overlay .sheet-desk__content--overlay .sheet-desk__last {
+  font-size: var(--desk-photo-preview-last, 0.66rem) !important;
+  font-weight: 700 !important;
+  color: #1e293b !important;
+  line-height: 1.15 !important;
+  white-space: nowrap !important;
+  text-align: center !important;
+}
+
+.sheet-cell--photo-overlay .sheet-desk__iep-dot {
+  position: absolute !important;
+  bottom: 3px !important;
+  left: 3px !important;
+  z-index: 20 !important;
+  box-shadow: 0 0 2px rgba(0, 0, 0, 0.5) !important;
 }
 
 /* Document Footer */
@@ -1574,9 +1848,11 @@ function handlePrint() {
 
   .seating-print-only {
     display: block !important;
-    position: relative !important;
+    position: static !important;
     width: 100% !important;
-    height: 100vh !important;
+    height: auto !important;
+    min-height: 100% !important;
+    overflow: visible !important;
     box-sizing: border-box !important;
     background: #ffffff !important;
     color: #000000 !important;
@@ -1585,18 +1861,24 @@ function handlePrint() {
   }
 
   .seating-print-only .print-page-wrapper {
-    display: flex;
-    flex-direction: column;
-    height: 96vh;
-    justify-content: space-between;
-    box-sizing: border-box;
-    page-break-after: always;
-    break-after: page;
+    display: flex !important;
+    flex-direction: column !important;
+    height: 96vh !important;
+    max-height: 96vh !important;
+    justify-content: space-between !important;
+    box-sizing: border-box !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    page-break-after: always !important;
+    break-after: page !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
   }
 
   .seating-print-only .print-page-wrapper:last-child {
-    page-break-after: auto;
-    break-after: auto;
+    page-break-after: auto !important;
+    break-after: auto !important;
   }
 
   .seating-print-only .sheet-doc-header {
@@ -1645,8 +1927,16 @@ function handlePrint() {
     min-width: 0;
     box-sizing: border-box;
     overflow: hidden;
+    height: 100% !important;
+    display: flex !important;
+    align-items: stretch !important;
+    justify-content: center !important;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
+  }
+
+  .seating-print-only .sheet-cell--has-photo {
+    padding: 2px 3px !important;
   }
 
   .seating-print-only .sheet-cell--empty {
@@ -1674,6 +1964,100 @@ function handlePrint() {
     background: #0891b2 !important;
   }
 
+  .seating-print-only .sheet-desk__content {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
+  }
+
+  .seating-print-only .sheet-desk__content--with-photo {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    height: 100% !important;
+    width: 100% !important;
+    gap: 6px !important;
+    padding: 0 !important;
+  }
+
+  /* PHOTO SIZING IN PRINT: Maximized to fill the desk height */
+  .seating-print-only .sheet-desk__avatar {
+    height: 100% !important;
+    width: auto !important;
+    aspect-ratio: 1 / 1 !important;
+    max-height: 100% !important;
+    max-width: 60% !important;
+    object-fit: cover !important;
+    border-radius: 3px !important;
+    flex-shrink: 0 !important;
+    border: 1px solid #000000 !important;
+    box-shadow: none !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .seating-print-only .sheet-desk__avatar .student-avatar__img,
+  .seating-print-only .sheet-desk__avatar img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    display: block !important;
+  }
+
+  /* Photo scale variants in print */
+  .seating-print-only.photo-scale--compact .sheet-desk__avatar {
+    height: 38px !important;
+    width: 38px !important;
+    max-height: 38px !important;
+    max-width: 38px !important;
+  }
+
+  .seating-print-only.photo-scale--large .sheet-desk__avatar {
+    height: 85% !important;
+    max-height: 85% !important;
+    width: auto !important;
+    aspect-ratio: 1 / 1 !important;
+    max-width: 50% !important;
+  }
+
+  .seating-print-only.photo-scale--max .sheet-desk__avatar {
+    height: 100% !important;
+    max-height: 100% !important;
+    width: auto !important;
+    aspect-ratio: 1 / 1 !important;
+    max-width: 60% !important;
+  }
+
+  .seating-print-only .sheet-desk__name-box {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
+    word-break: break-word !important;
+    overflow-wrap: anywhere !important;
+  }
+
+  .seating-print-only .sheet-desk__content--with-photo .sheet-desk__name-box {
+    align-items: flex-start !important;
+    justify-content: center !important;
+    text-align: left !important;
+    flex: 1 1 0% !important;
+  }
+
   .seating-print-only .sheet-desk__first {
     font-size: var(--desk-first-size, 8.5pt) !important;
     font-weight: bold !important;
@@ -1686,12 +2070,172 @@ function handlePrint() {
     color: #444444 !important;
   }
 
+  .seating-print-only .sheet-desk__content--with-photo .sheet-desk__first {
+    font-size: var(--desk-photo-first, 9.5pt) !important;
+    font-weight: 800 !important;
+    color: #000000 !important;
+    text-align: left !important;
+    line-height: 1.15 !important;
+    max-width: 100% !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  .seating-print-only .sheet-desk__content--with-photo .sheet-desk__last {
+    font-size: var(--desk-photo-last, 8pt) !important;
+    font-weight: 600 !important;
+    color: #333333 !important;
+    text-align: left !important;
+    line-height: 1.1 !important;
+    max-width: 100% !important;
+    white-space: nowrap !important;
+  }
+
+  /* Portrait print layout adaptation: stack photo on top and name below */
+  .seating-print-only--portrait .sheet-cell--has-photo {
+    padding: 3px 2px !important;
+  }
+
+  .seating-print-only--portrait .sheet-desk__content--with-photo {
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 4px !important;
+  }
+
+  .seating-print-only--portrait .sheet-desk__content--with-photo .sheet-desk__avatar {
+    height: auto !important;
+    width: auto !important;
+    max-height: 65% !important;
+    max-width: 85% !important;
+    aspect-ratio: 1 / 1 !important;
+  }
+
+  .seating-print-only--portrait .sheet-desk__content--with-photo .sheet-desk__name-box {
+    align-items: center !important;
+    text-align: center !important;
+    flex: 0 1 auto !important;
+  }
+
+  .seating-print-only--portrait .sheet-desk__content--with-photo .sheet-desk__first,
+  .seating-print-only--portrait .sheet-desk__content--with-photo .sheet-desk__last {
+    text-align: center !important;
+  }
+
   .seating-print-only .sheet-doc-footer {
     border-top: 1px solid #888888;
     padding-top: 4px;
     font-size: 7.5pt;
     color: #555555;
     margin-top: 6px;
+  }
+
+  /* ── Bottom Name Overlay Style in Print (Full Uncropped Photo + Full-Width Name) ── */
+  .seating-print-only .sheet-cell--photo-overlay {
+    padding: 0 !important;
+    position: relative !important;
+    overflow: hidden !important;
+    background: #ffffff !important;
+  }
+
+  .seating-print-only .sheet-cell--photo-overlay .sheet-desk__content--overlay {
+    position: relative !important;
+    width: 100% !important;
+    height: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    background: #ffffff !important;
+  }
+
+  .seating-print-only .sheet-cell--photo-overlay .sheet-desk__content--overlay .sheet-desk__avatar {
+    flex: 1 1 0% !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    max-width: 100% !important;
+    max-height: 100% !important;
+    position: relative !important;
+    inset: auto !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: #ffffff !important;
+    overflow: hidden !important;
+    padding: 1px 1px 0 1px !important;
+    box-sizing: border-box !important;
+    z-index: 1 !important;
+  }
+
+  .seating-print-only .sheet-cell--photo-overlay .sheet-desk__content--overlay .sheet-desk__avatar .student-avatar__img,
+  .seating-print-only .sheet-cell--photo-overlay .sheet-desk__content--overlay .sheet-desk__avatar img {
+    width: auto !important;
+    height: 100% !important;
+    max-width: 100% !important;
+    max-height: 100% !important;
+    object-fit: contain !important;
+    display: block !important;
+    margin: 0 auto !important;
+    border-radius: 2px !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .seating-print-only .sheet-cell--photo-overlay .sheet-desk__content--overlay .sheet-desk__name-box {
+    flex: 0 0 auto !important;
+    width: 100% !important;
+    position: relative !important;
+    bottom: auto !important;
+    left: auto !important;
+    right: auto !important;
+    z-index: 5 !important;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: baseline !important;
+    justify-content: center !important;
+    gap: 3px !important;
+    padding: 1.5px 3px !important;
+    box-sizing: border-box !important;
+    background: #ffffff !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    border-top: 1.5px solid #000000 !important;
+    box-shadow: none !important;
+    text-align: center !important;
+  }
+
+  .seating-print-only .sheet-cell--photo-overlay .sheet-desk__content--overlay .sheet-desk__first {
+    font-size: var(--desk-photo-first, 9.5pt) !important;
+    font-weight: 900 !important;
+    color: #000000 !important;
+    line-height: 1.15 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    text-align: center !important;
+  }
+
+  .seating-print-only .sheet-cell--photo-overlay .sheet-desk__content--overlay .sheet-desk__last {
+    font-size: var(--desk-photo-last, 8.5pt) !important;
+    font-weight: 700 !important;
+    color: #000000 !important;
+    line-height: 1.15 !important;
+    white-space: nowrap !important;
+    text-align: center !important;
+  }
+
+  .seating-print-only .sheet-cell--photo-overlay .sheet-desk__iep-dot {
+    position: absolute !important;
+    bottom: 3px !important;
+    left: 3px !important;
+    z-index: 20 !important;
   }
 }
 </style>

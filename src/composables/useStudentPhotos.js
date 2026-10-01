@@ -6,30 +6,44 @@
  * and photo visibility preferences.
  */
 
-import { ref, shallowRef, watch } from 'vue'
+import { ref, reactive, watch } from 'vue'
 import * as photoService from '../db/photoService.js'
 
 // Global toggle for displaying photos on desk tiles (defaults to false)
 export const showDeskPhotos = ref(localStorage.getItem('showDeskPhotos') === 'true')
 watch(showDeskPhotos, (val) => localStorage.setItem('showDeskPhotos', String(val)))
 
-// In-memory lightweight reactive cache: studentId -> { url: string, updatedAt: string }
-const photoCache = shallowRef(new Map())
-const photoIdsSet = shallowRef(new Set())
+// In-memory lightweight reactive cache: studentId -> { url: string | null, updatedAt: string | null }
+// Uses reactive(new Map()) and reactive(new Set()) for granular key-level Vue reactivity.
+// Setting or loading one student's photo ONLY triggers the effect for that specific student,
+// completely eliminating the O(N^2) cross-invalidation cascading re-render loop.
+const photoCache = reactive(new Map())
+const photoIdsSet = reactive(new Set())
 let isInitialized = false
+let initPromise = null
+
+// In-flight batch queue & deduplication
+const inFlightRequests = new Map() // studentId -> Promise<string|null>
+const pendingBatch = new Set()
+let batchScheduled = false
+const batchResolvers = new Map() // studentId -> Array<Function>
 
 /**
  * Revokes all currently allocated ObjectURLs in the cache to free browser texture memory.
  */
 export function clearPhotoCache() {
-  for (const item of photoCache.value.values()) {
+  for (const item of photoCache.values()) {
     if (item?.url) {
       try { URL.revokeObjectURL(item.url) } catch (e) { /* ignore */ }
     }
   }
-  photoCache.value = new Map()
-  photoIdsSet.value = new Set()
+  photoCache.clear()
+  photoIdsSet.clear()
+  pendingBatch.clear()
+  inFlightRequests.clear()
+  batchResolvers.clear()
   isInitialized = false
+  initPromise = null
 }
 
 /**
@@ -105,73 +119,170 @@ export async function compressAndCropImage(source, targetSize = 240, quality = 0
 }
 
 /**
- * Initializes the known photo IDs set on app launch.
+ * Initializes the known photo IDs set on app launch with singleton in-flight deduplication.
  */
-async function initPhotoIds() {
-  try {
-    const ids = await photoService.getAllPhotoIds()
-    photoIdsSet.value = ids
-    isInitialized = true
-  } catch (err) {
-    console.warn('[useStudentPhotos] Failed to initialize photo IDs:', err)
-  }
+export async function initPhotoIds() {
+  if (isInitialized) return
+  if (initPromise) return initPromise
+
+  initPromise = (async () => {
+    try {
+      const ids = await photoService.getAllPhotoIds()
+      photoIdsSet.clear()
+      for (const id of ids) {
+        photoIdsSet.add(String(id))
+      }
+      isInitialized = true
+    } catch (err) {
+      console.warn('[useStudentPhotos] Failed to initialize photo IDs:', err)
+    } finally {
+      initPromise = null
+    }
+  })()
+
+  return initPromise
 }
 
 // Eagerly initialize on module load
 initPhotoIds()
 
+/**
+ * Queues a student ID to be loaded in the next microtask batch from IndexedDB.
+ * Deduplicates multiple concurrent requests for the same student ID.
+ */
+function queuePhotoLoad(studentId) {
+  const sId = String(studentId)
+  if (photoCache.has(sId) || inFlightRequests.has(sId)) return inFlightRequests.get(sId)
+
+  pendingBatch.add(sId)
+
+  const promise = new Promise((resolve) => {
+    if (!batchResolvers.has(sId)) {
+      batchResolvers.set(sId, [])
+    }
+    batchResolvers.get(sId).push(resolve)
+  })
+
+  inFlightRequests.set(sId, promise)
+
+  if (!batchScheduled) {
+    batchScheduled = true
+    queueMicrotask(flushPhotoBatch)
+  }
+
+  return promise
+}
+
+/**
+ * Flushes all queued photo requests in a single IndexedDB transaction.
+ */
+async function flushPhotoBatch() {
+  batchScheduled = false
+  const idsToFetch = Array.from(pendingBatch)
+  pendingBatch.clear()
+
+  if (idsToFetch.length === 0) return
+
+  try {
+    const photoRecords = await photoService.getPhotosBatch(idsToFetch)
+
+    for (const sId of idsToFetch) {
+      const record = photoRecords.get(sId)
+      if (record && record.blob) {
+        const url = URL.createObjectURL(record.blob)
+        photoCache.set(sId, { url, updatedAt: record.updatedAt })
+        photoIdsSet.add(sId)
+      } else {
+        // Record null so missing photos are not continuously re-queried
+        photoCache.set(sId, { url: null, updatedAt: null })
+      }
+    }
+  } catch (err) {
+    console.warn('[useStudentPhotos] Failed to batch load photos:', err)
+    for (const sId of idsToFetch) {
+      if (!photoCache.has(sId)) {
+        photoCache.set(sId, { url: null, updatedAt: null })
+      }
+    }
+  } finally {
+    for (const sId of idsToFetch) {
+      const resolvers = batchResolvers.get(sId)
+      if (resolvers) {
+        const finalUrl = photoCache.get(sId)?.url || null
+        resolvers.forEach(r => r(finalUrl))
+        batchResolvers.delete(sId)
+      }
+      inFlightRequests.delete(sId)
+    }
+  }
+}
+
+/**
+ * Preloads photos for a list of student IDs in batch.
+ * @param {Array<string|number>} studentIds
+ */
+export async function preloadPhotos(studentIds) {
+  if (!Array.isArray(studentIds) || studentIds.length === 0) return
+  const needed = studentIds
+    .map(id => String(id))
+    .filter(id => id && !photoCache.has(id))
+
+  if (needed.length === 0) return
+  const promises = needed.map(id => queuePhotoLoad(id))
+  await Promise.all(promises)
+}
+
 export function useStudentPhotos() {
 
   /**
    * Returns true if a photo is known to exist for this student ID.
-   * @param {string} studentId
+   * @param {string|number} studentId
    * @returns {boolean}
    */
   function hasPhoto(studentId) {
     if (!studentId) return false
     const sId = String(studentId)
-    // If not initialized yet, trigger async background load
     if (!isInitialized) {
       initPhotoIds()
     }
-    return photoIdsSet.value.has(sId) || photoCache.value.has(sId)
+    if (photoCache.has(sId)) {
+      return Boolean(photoCache.get(sId)?.url)
+    }
+    return photoIdsSet.has(sId)
   }
 
   /**
    * Retrieves the in-memory ObjectURL for a student photo.
-   * Loads asynchronously on-demand from IndexedDB if not already cached.
-   * @param {string} studentId
+   * Granularly tracked by Vue per studentId key.
+   * Loads asynchronously on-demand from IndexedDB in batches if not already cached.
+   * @param {string|number} studentId
    * @returns {string|null}
    */
   function getPhotoUrl(studentId) {
     if (!studentId) return null
     const sId = String(studentId)
-    const cached = photoCache.value.get(sId)
-    if (cached) return cached.url
+    const cached = photoCache.get(sId)
+    if (cached !== undefined) {
+      return cached?.url || null
+    }
 
-    // Fetch from DB asynchronously if not yet cached
-    loadPhotoFromDb(sId)
+    // Schedule batch load from IndexedDB
+    queuePhotoLoad(sId)
     return null
   }
 
+  /**
+   * Loads a single photo asynchronously if needed.
+   * @param {string|number} studentId
+   * @returns {Promise<string|null>}
+   */
   async function loadPhotoFromDb(studentId) {
+    if (!studentId) return null
     const sId = String(studentId)
-    if (photoCache.value.has(sId)) return
-    try {
-      const record = await photoService.getPhoto(sId)
-      if (record && record.blob) {
-        const url = URL.createObjectURL(record.blob)
-        const nextMap = new Map(photoCache.value)
-        nextMap.set(sId, { url, updatedAt: record.updatedAt })
-        photoCache.value = nextMap
-
-        const nextSet = new Set(photoIdsSet.value)
-        nextSet.add(sId)
-        photoIdsSet.value = nextSet
-      }
-    } catch (err) {
-      console.warn(`[useStudentPhotos] Failed to load photo for ${sId}:`, err)
+    if (photoCache.has(sId)) {
+      return photoCache.get(sId)?.url || null
     }
+    return queuePhotoLoad(sId)
   }
 
   /**
@@ -186,17 +297,12 @@ export function useStudentPhotos() {
     await photoService.savePhoto(sId, compressedBlob)
 
     // Revoke old URL if existing
-    const existing = photoCache.value.get(sId)
+    const existing = photoCache.get(sId)
     if (existing?.url) URL.revokeObjectURL(existing.url)
 
     const url = URL.createObjectURL(compressedBlob)
-    const nextMap = new Map(photoCache.value)
-    nextMap.set(sId, { url, updatedAt: new Date().toISOString() })
-    photoCache.value = nextMap
-
-    const nextSet = new Set(photoIdsSet.value)
-    nextSet.add(sId)
-    photoIdsSet.value = nextSet
+    photoCache.set(sId, { url, updatedAt: new Date().toISOString() })
+    photoIdsSet.add(sId)
   }
 
   /**
@@ -208,16 +314,11 @@ export function useStudentPhotos() {
     const sId = String(studentId)
     await photoService.deletePhoto(sId)
 
-    const existing = photoCache.value.get(sId)
+    const existing = photoCache.get(sId)
     if (existing?.url) URL.revokeObjectURL(existing.url)
 
-    const nextMap = new Map(photoCache.value)
-    nextMap.delete(sId)
-    photoCache.value = nextMap
-
-    const nextSet = new Set(photoIdsSet.value)
-    nextSet.delete(sId)
-    photoIdsSet.value = nextSet
+    photoCache.set(sId, { url: null, updatedAt: null })
+    photoIdsSet.delete(sId)
   }
 
   /**
@@ -227,20 +328,16 @@ export function useStudentPhotos() {
   async function batchImport(items) {
     if (!items || items.length === 0) return 0
     const count = await photoService.batchSavePhotos(items)
-    const nextMap = new Map(photoCache.value)
-    const nextSet = new Set(photoIdsSet.value)
 
     for (const item of items) {
       const sId = String(item.studentId)
-      const existing = nextMap.get(sId)
+      const existing = photoCache.get(sId)
       if (existing?.url) URL.revokeObjectURL(existing.url)
 
       const url = URL.createObjectURL(item.blob)
-      nextMap.set(sId, { url, updatedAt: new Date().toISOString() })
-      nextSet.add(sId)
+      photoCache.set(sId, { url, updatedAt: new Date().toISOString() })
+      photoIdsSet.add(sId)
     }
-    photoCache.value = nextMap
-    photoIdsSet.value = nextSet
     return count
   }
 
@@ -251,9 +348,12 @@ export function useStudentPhotos() {
     reloadPhotoCache,
     hasPhoto,
     getPhotoUrl,
+    loadPhotoFromDb,
+    preloadPhotos,
     saveStudentPhoto,
     deleteStudentPhoto,
     batchImport,
     compressAndCropImage
   }
 }
+

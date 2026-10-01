@@ -27,6 +27,37 @@ export async function getPhoto(studentId) {
 }
 
 /**
+ * Retrieves photo records for multiple student IDs in a single transaction.
+ * @param {Array<string>} studentIds
+ * @returns {Promise<Map<string, { studentId: string, blob: Blob, updatedAt: string }>>}
+ */
+export async function getPhotosBatch(studentIds) {
+  if (!studentIds || studentIds.length === 0) return new Map()
+  const db = await getDB()
+  const tx = db.transaction(STORE_NAME, 'readonly')
+  const store = tx.objectStore(STORE_NAME)
+  const resultMap = new Map()
+
+  await Promise.all(
+    studentIds.map(async (id) => {
+      if (!id) return
+      const sId = String(id)
+      try {
+        const record = await store.get(sId)
+        if (record) {
+          resultMap.set(sId, record)
+        }
+      } catch (err) {
+        // Individual key read errors should not fail the batch
+      }
+    })
+  )
+
+  await tx.done
+  return resultMap
+}
+
+/**
  * Saves or updates a student photo blob.
  * @param {string} studentId
  * @param {Blob} blob
