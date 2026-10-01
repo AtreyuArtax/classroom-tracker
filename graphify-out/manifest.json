@@ -65,9 +65,9 @@
     "semantic_hash": ""
   },
   "src/components/BaseModal.vue": {
-    "mtime": 1780947186.0314813,
-    "ast_hash": "5571438f191671e9bf9fb47f7205a9f9",
-    "semantic_hash": "5571438f191671e9bf9fb47f7205a9f9"
+    "mtime": 1790876483.827605,
+    "ast_hash": "6b6be8e4e585dd7a188f49dac28145be",
+    "semantic_hash": ""
   },
   "src/components/ClassSwitcher.vue": {
     "mtime": 1788313659.664045,
@@ -75,8 +75,8 @@
     "semantic_hash": ""
   },
   "src/components/DeskTile.vue": {
-    "mtime": 1790865481.1312187,
-    "ast_hash": "0657bfc29b0755f6c6dee1b952579f11",
+    "mtime": 1790875527.6001446,
+    "ast_hash": "9cee954e34b6f5ce692cf931740b617b",
     "semantic_hash": ""
   },
   "src/components/EventNoteModal.vue": {
@@ -105,8 +105,8 @@
     "semantic_hash": ""
   },
   "src/components/RadialMenu.vue": {
-    "mtime": 1788313659.6681066,
-    "ast_hash": "0e6b4f7f075d5e84cc5b1f4481652515",
+    "mtime": 1790876346.4670577,
+    "ast_hash": "b608daef385789f20d7437e21dedc46f",
     "semantic_hash": ""
   },
   "src/components/SeatingGrid.vue": {
@@ -335,8 +335,8 @@
     "semantic_hash": ""
   },
   "src/views/Dashboard.vue": {
-    "mtime": 1790636853.0385418,
-    "ast_hash": "68a05704bcc39324c392c906834ac9a7",
+    "mtime": 1790872524.62401,
+    "ast_hash": "08e42f109f0bb33f6f8d5ffff7a87869",
     "semantic_hash": ""
   },
   "src/views/Grades.vue": {

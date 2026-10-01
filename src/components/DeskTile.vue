@@ -18,8 +18,8 @@
     class="desk-tile"
     :class="{
       'desk-tile--out':         student.activeStates?.isOut,
-      'desk-tile--absent':      student.activeStates?.isAbsent,
-      'desk-tile--late':        student.activeStates?.lateMs > 0,
+      'desk-tile--absent':      student.activeStates?.isAbsent && !student.activeStates?.isOut,
+      'desk-tile--late':        student.activeStates?.lateMs > 0 && !student.activeStates?.isOut,
       'desk-tile--flash':       flashing,
       'desk-tile--dimmed':      isDimmed,
       'desk-tile--drop-target': isDragOver,
@@ -850,39 +850,66 @@ function onDrop(evt) {
   text-transform: uppercase;
 }
 
-/* ── Out-of-room state ───────────────────────────────────────────────────── */
-.desk-tile--out {
-  background: var(--color-danger-bg, rgba(254, 242, 242, 0.95)) !important;
-  border:     1.5px solid var(--color-danger, #ef4444) !important;
-  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.18) !important;
-}
-
-.desk-tile__status-info--out {
-  background: var(--color-danger, #ef4444);
-  color:      #ffffff;
-  box-shadow: 0 2px 6px rgba(239, 68, 68, 0.35);
-}
-
-/* ── Absent state ────────────────────────────────────────────────────────── */
-.desk-tile--absent {
-  background: var(--color-danger-bg, rgba(255, 241, 242, 0.85)) !important;
-  border:     1.5px solid var(--color-danger, #fda4af) !important;
-}
-
-.desk-tile__status-info--absent {
-  background: var(--color-danger-bg, rgba(225, 29, 72, 0.12));
-  color:      var(--color-danger, #e11d48);
-}
-
-/* ── Late state ──────────────────────────────────────────────────────────── */
+/* ── Late state (Soft Warm Amber — In Class but Arrived Late) ────────────── */
 .desk-tile--late {
-  background: var(--color-warn-bg, rgba(254, 243, 199, 0.85)) !important;
-  border:     1.5px solid var(--color-warn, #fcd34d) !important;
+  background: rgba(254, 249, 195, 0.50) !important;
+  border:     1.5px solid rgba(234, 179, 8, 0.55) !important;
+  box-shadow: 0 2px 8px rgba(234, 179, 8, 0.08) !important;
+}
+
+.desk-tile--late .desk-tile__content {
+  opacity: 1 !important;
+  filter: none !important;
 }
 
 .desk-tile__status-info--late {
-  background: var(--color-warn-bg, rgba(217, 119, 6, 0.12));
-  color:      var(--color-warn, #d97706);
+  background: rgba(254, 243, 199, 0.95);
+  color:      #b45309;
+  border:     1px solid rgba(245, 158, 11, 0.35);
+  font-weight: 700;
+}
+
+/* ── Absent state (Dimmed Red — Not in Room Today) ────────────────────────── */
+.desk-tile--absent {
+  background: rgba(254, 242, 242, 0.70) !important;
+  border:     1.5px solid #ef4444 !important;
+  box-shadow: 0 2px 6px rgba(239, 68, 68, 0.08) !important;
+}
+
+.desk-tile--absent .desk-tile__content {
+  opacity: 0.68;
+  filter: grayscale(0.25);
+  transition: opacity 0.15s ease, filter 0.15s ease;
+}
+
+.desk-tile--absent:hover .desk-tile__content {
+  opacity: 0.95;
+  filter: grayscale(0);
+}
+
+.desk-tile__status-info--absent {
+  background: rgba(254, 226, 226, 0.95);
+  color:      #dc2626;
+  border:     1px solid rgba(239, 68, 68, 0.35);
+  font-weight: 800;
+}
+
+/* ── Out-of-room state (Cool Sky Blue — Temporary In-Transit Pass) ────────── */
+.desk-tile--out {
+  background: rgba(240, 249, 255, 0.95) !important;
+  border:     1.5px solid #0284c7 !important;
+  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.16) !important;
+}
+
+.desk-tile--out .desk-tile__content {
+  opacity: 1 !important;
+  filter: none !important;
+}
+
+.desk-tile__status-info--out {
+  background: #0284c7;
+  color:      #ffffff;
+  box-shadow: 0 2px 6px rgba(2, 132, 199, 0.35);
 }
 
 /* ── Event flash — green for ~700ms ─────────────────────────────────────── */

@@ -11,7 +11,7 @@
       <button
         v-for="(item, idx) in visibleItems"
         :key="item.codeKey ?? item.categoryKey"
-        :class="['radial-btn', 'radial-btn--' + item.category, { 'radial-btn--active': isActiveToggle(item) }]"
+        :class="['radial-btn', 'radial-btn--' + item.category, getActiveToggleClass(item)]"
         :style="slotPositionStyle(idx, totalSlots)"
         :aria-label="item.label"
         @click.stop="onItemTap(item)"
@@ -126,19 +126,23 @@ const profilePositionStyle = computed(() =>
 // ─── active toggle styling ────────────────────────────────────────────────────
 
 function isActiveToggle(item) {
-  if (!item.codeKey) return false
+  return getActiveToggleClass(item) !== null
+}
+
+function getActiveToggleClass(item) {
+  if (!item.codeKey) return null
   const code = behaviorCodes.value.find(c => c.codeKey === item.codeKey)
-  if (!code) return false
-  if (code.type === 'toggle') {
-    return targetStudent.value?.activeStates?.isOut === true
+  if (!code) return null
+  if (code.type === 'toggle' && targetStudent.value?.activeStates?.isOut === true) {
+    return 'radial-btn--active radial-btn--active-out'
   }
-  if (code.codeKey === 'a') {
-    return targetStudent.value?.activeStates?.isAbsent === true
+  if (code.codeKey === 'a' && targetStudent.value?.activeStates?.isAbsent === true) {
+    return 'radial-btn--active radial-btn--active-absent'
   }
-  if (code.codeKey === 'l') {
-    return targetStudent.value?.activeStates?.lateMs != null && targetStudent.value?.activeStates?.lateMs > 0
+  if (code.codeKey === 'l' && targetStudent.value?.activeStates?.lateMs != null && targetStudent.value?.activeStates?.lateMs > 0) {
+    return 'radial-btn--active radial-btn--active-late'
   }
-  return false
+  return null
 }
 
 // ─── item tap handler ─────────────────────────────────────────────────────────
@@ -169,12 +173,13 @@ function onProfileTap() {
 /* ── Ring container ──────────────────────────────────────────────── */
 .radial-ring {
   position: relative;
-  animation: ring-pop 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+  z-index: 1;
+  animation: ring-pop 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @keyframes ring-pop {
-  from { transform: scale(0.65); opacity: 0; }
-  to   { transform: scale(1);    opacity: 1; }
+  from { transform: scale(0.8); opacity: 0; }
+  to   { transform: scale(1);   opacity: 1; }
 }
 
 /* ── Sector buttons ──────────────────────────────────────────────── */
@@ -190,6 +195,10 @@ function onProfileTap() {
   cursor:          pointer;
   padding:         0;
   transition:      transform 0.18s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.15s ease;
+  transform:       translate3d(0, 0, 0);
+  -webkit-transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
 .radial-btn:hover {
@@ -207,24 +216,25 @@ function onProfileTap() {
   display:         flex;
   align-items:     center;
   justify-content: center;
-  background:      var(--surface, #ffffff);
-  color:           var(--text, #1c1c1e);
-  box-shadow:      0 4px 14px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.06);
-  border:          1px solid var(--border, rgba(0, 0, 0, 0.08));
+  background:      rgba(255, 255, 255, 0.98);
+  color:           #1c1c1e;
+  box-shadow:      0 8px 24px rgba(0, 0, 0, 0.28), 0 2px 6px rgba(0, 0, 0, 0.12);
+  border:          1px solid rgba(255, 255, 255, 0.6);
   transition:      all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Hover: Matching the app's primary interactive state */
 .radial-btn:hover .radial-btn__icon-circle {
-  background:      var(--primary-light, #eef2ff);
+  background:      #ffffff;
   color:           var(--primary, #4663ac);
-  border-color:    var(--primary, #4663ac);
-  box-shadow:      0 6px 18px rgba(70, 99, 172, 0.25);
+  border-color:    #ffffff;
+  box-shadow:      0 10px 28px rgba(70, 99, 172, 0.45);
 }
 
 .radial-btn:hover .radial-btn__label {
-  color:           var(--primary, #4663ac);
-  font-weight:     700;
+  color:           #ffffff;
+  text-shadow:     0 2px 8px rgba(0, 0, 0, 0.9), 0 0 14px rgba(99, 133, 230, 0.9);
+  transform:       scale(1.05);
 }
 
 /* Active/Pressed state */
@@ -233,17 +243,69 @@ function onProfileTap() {
   color:           #ffffff;
 }
 
-/* Active toggle: student is currently out */
-.radial-btn--active .radial-btn__icon-circle {
-  background:      var(--state-out, #ef4444) !important;
-  border-color:    #dc2626 !important;
-  box-shadow:      0 6px 18px rgba(239, 68, 68, 0.45) !important;
+/* Active toggle: Out of Class (Sky Blue — matches out-of-room desk) */
+.radial-btn--active .radial-btn__icon-circle,
+.radial-btn--active-out .radial-btn__icon-circle {
+  background:      #0284c7 !important;
+  border-color:    #38bdf8 !important;
+  box-shadow:      0 8px 24px rgba(2, 132, 199, 0.55), 0 0 0 3px rgba(56, 189, 248, 0.3) !important;
   color:           #ffffff !important;
 }
 
-.radial-btn--active .radial-btn__label {
-  color:           var(--state-out, #ef4444) !important;
-  font-weight:     700;
+.radial-btn--active .radial-btn__label,
+.radial-btn--active-out .radial-btn__label {
+  color:           #ffffff !important;
+  font-weight:     700 !important;
+  text-shadow:     0 1px 3px rgba(0, 0, 0, 0.8), 0 0 12px rgba(56, 189, 248, 0.85) !important;
+}
+
+.radial-btn--active-out:hover .radial-btn__icon-circle {
+  background:      #0369a1 !important;
+  border-color:    #7dd3fc !important;
+  box-shadow:      0 10px 28px rgba(2, 132, 199, 0.7), 0 0 0 4px rgba(56, 189, 248, 0.45) !important;
+  color:           #ffffff !important;
+}
+
+/* Active toggle: Absent (Vibrant Red — matches absent desk) */
+.radial-btn--active-absent .radial-btn__icon-circle {
+  background:      #ef4444 !important;
+  border-color:    #f87171 !important;
+  box-shadow:      0 8px 24px rgba(239, 68, 68, 0.55), 0 0 0 3px rgba(248, 113, 113, 0.3) !important;
+  color:           #ffffff !important;
+}
+
+.radial-btn--active-absent .radial-btn__label {
+  color:           #ffffff !important;
+  font-weight:     700 !important;
+  text-shadow:     0 1px 3px rgba(0, 0, 0, 0.8), 0 0 12px rgba(248, 113, 113, 0.85) !important;
+}
+
+.radial-btn--active-absent:hover .radial-btn__icon-circle {
+  background:      #dc2626 !important;
+  border-color:    #fca5a5 !important;
+  box-shadow:      0 10px 28px rgba(239, 68, 68, 0.7), 0 0 0 4px rgba(248, 113, 113, 0.45) !important;
+  color:           #ffffff !important;
+}
+
+/* Active toggle: Late (Warm Amber / Gold — matches late desk) */
+.radial-btn--active-late .radial-btn__icon-circle {
+  background:      #f59e0b !important;
+  border-color:    #fde047 !important;
+  box-shadow:      0 8px 24px rgba(245, 158, 11, 0.55), 0 0 0 3px rgba(253, 224, 71, 0.3) !important;
+  color:           #ffffff !important;
+}
+
+.radial-btn--active-late .radial-btn__label {
+  color:           #ffffff !important;
+  font-weight:     700 !important;
+  text-shadow:     0 1px 3px rgba(0, 0, 0, 0.8), 0 0 12px rgba(253, 224, 71, 0.85) !important;
+}
+
+.radial-btn--active-late:hover .radial-btn__icon-circle {
+  background:      #d97706 !important;
+  border-color:    #fef08a !important;
+  box-shadow:      0 10px 28px rgba(245, 158, 11, 0.7), 0 0 0 4px rgba(253, 224, 71, 0.45) !important;
+  color:           #ffffff !important;
 }
 
 .radial-btn__icon {
@@ -252,12 +314,16 @@ function onProfileTap() {
 }
 
 .radial-btn__label {
-  font-size:   11px;
-  font-weight: 600;
-  white-space: nowrap;
-  color:       var(--text, #1c1c1e);
-  text-align:  center;
-  transition:  color 0.18s ease;
+  font-size:       11px;
+  font-weight:     600;
+  letter-spacing:  0.015em;
+  white-space:     nowrap;
+  color:           #ffffff;
+  text-align:      center;
+  text-shadow:     0 1px 3px rgba(0, 0, 0, 0.85), 0 2px 8px rgba(0, 0, 0, 0.5);
+  line-height:     1.2;
+  transition:      all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events:  none;
 }
 
 /* ── Centre button ───────────────────────────────────────────────── */
@@ -270,24 +336,24 @@ function onProfileTap() {
   width:           48px;
   height:          48px;
   border-radius:   50%;
-  border:          1px solid var(--border);
-  background:      var(--surface);
-  box-shadow:      0 4px 12px rgba(0, 0, 0, 0.12);
+  border:          1px solid rgba(255, 255, 255, 0.4);
+  background:      rgba(255, 255, 255, 0.96);
+  box-shadow:      0 6px 20px rgba(0, 0, 0, 0.3);
   cursor:          pointer;
 
   display:         flex;
   align-items:     center;
   justify-content: center;
 
-  color:           var(--text-secondary);
+  color:           #334155;
   transition:      all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .radial-centre:hover {
-  background:      var(--primary-light, #eef2ff);
+  background:      #ffffff;
   color:           var(--primary, #4663ac);
-  border-color:    var(--primary, #4663ac);
-  box-shadow:      0 6px 16px rgba(70, 99, 172, 0.2);
+  border-color:    #ffffff;
+  box-shadow:      0 8px 24px rgba(70, 99, 172, 0.35);
   transform:       translate(-50%, -50%) scale(1.08);
 }
 

@@ -593,8 +593,9 @@ watch(profileStudent, (student) => {
   gap:           5px;
   padding:       6px 12px;
   border-radius: var(--radius-md);
-  background:    rgba(255, 59, 48, 0.1);
-  color:         var(--state-out);
+  background:    rgba(2, 132, 199, 0.1);
+  color:         #0284c7;
+  border:        1px solid rgba(2, 132, 199, 0.25);
   font-size:     0.85rem;
   font-weight:   600;
   min-height:    44px;
