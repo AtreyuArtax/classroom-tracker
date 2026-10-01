@@ -180,8 +180,8 @@
     "semantic_hash": ""
   },
   "src/components/dossier/Student360.vue": {
-    "mtime": 1790887706.3246925,
-    "ast_hash": "f6c075b1e9fd5e7d744147485a23e07e",
+    "mtime": 1790888468.376727,
+    "ast_hash": "b51a06c58b89c78fe1461fb4b1794f14",
     "semantic_hash": ""
   },
   "src/components/dossier/Student360Header.vue": {
@@ -470,8 +470,8 @@
     "semantic_hash": ""
   },
   "src/components/dossier/Student360EmailModal.vue": {
-    "mtime": 1788313659.6821914,
-    "ast_hash": "dbaeed5a2f33d61d55364f8700412dfa",
+    "mtime": 1790888636.4206736,
+    "ast_hash": "91b686d51139f162ab3ec4dc2d59c5fd",
     "semantic_hash": ""
   },
   "src/components/dossier/Student360HistoryTab.vue": {

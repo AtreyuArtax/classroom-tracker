@@ -3,6 +3,7 @@
     :show="show"
     title="Configure Email Report"
     :z-index="3000"
+    max-width="620px"
     @close="$emit('close')"
   >
     <template #header>
@@ -51,17 +52,40 @@
             <span class="option-label">{{ isSBAR ? 'Current SBAR Overall Level' : 'Current Overall Grade' }}</span>
           </label>
           <label class="option-item">
+            <input type="checkbox" v-model="emailConfig.content.assessments" />
+            <span class="option-label">{{ isSBAR ? 'Expectation Mastery & Progression' : 'Detailed Assessment List & Attempts' }}</span>
+          </label>
+          <label class="option-item">
             <input type="checkbox" v-model="emailConfig.content.missing" />
             <span class="option-label">Missing Assessments List</span>
           </label>
           <label class="option-item">
-            <input type="checkbox" v-model="emailConfig.content.washroom" />
-            <span class="option-label">Out-of-Class Activity Logs</span>
+            <input type="checkbox" v-model="emailConfig.content.attendance" />
+            <span class="option-label">Attendance Summary</span>
           </label>
           <label class="option-item">
-            <input type="checkbox" v-model="emailConfig.content.assessments" />
-            <span class="option-label">{{ isSBAR ? 'Expectation Mastery & Progression' : 'Detailed Assessment List & Attempts' }}</span>
+            <input type="checkbox" v-model="emailConfig.content.washroom" />
+            <span class="option-label">Out-of-Class Activity</span>
           </label>
+        </div>
+      </div>
+
+      <!-- Email Draft Live Preview -->
+      <div class="config-section">
+        <div class="preview-header">
+          <h4 class="config-section-title" style="margin-bottom: 0;">Email Preview</h4>
+          <button 
+            type="button" 
+            class="btn-copy-preview"
+            @click="copyEmailBody"
+            title="Copy draft text to clipboard"
+          >
+            <component :is="copied ? Check : Copy" :size="13" />
+            <span>{{ copied ? 'Copied!' : 'Copy Text' }}</span>
+          </button>
+        </div>
+        <div class="email-preview-box">
+          <pre class="email-preview-text">{{ emailBody }}</pre>
         </div>
       </div>
     </div>
@@ -73,7 +97,7 @@
         :disabled="selectedRecipientEmails.size === 0"
         @click="generateEmailLink"
       >
-        Generate Draft & Open Mail
+        Generate Draft &amp; Open Mail
         <ChevronRight :size="18" />
       </button>
     </template>
@@ -82,12 +106,12 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue'
-import { Mail, CheckCircle2, ChevronRight } from 'lucide-vue-next'
+import { Mail, CheckCircle2, ChevronRight, Copy, Check } from 'lucide-vue-next'
 import BaseModal from '../BaseModal.vue'
 import { formatLocalDisplay } from '../../utils/dates.js'
+import { toMinutes } from '../../utils/timeUtils.js'
 import { activeClassRecord, gradeMap, assessments } from '../../composables/useGradebook.js'
 import { useSBarPrintOptions } from '../../composables/useSBarPrintOptions.js'
-
 import { getEffectiveClassRecord } from '../../composables/useElementary.js'
 import { activeSubjectId } from '../../composables/useClassroomState.js'
 
@@ -101,6 +125,9 @@ const props = defineProps({
   individualAssessments: { type: Array, default: () => [] },
   stats: { type: Object, default: () => ({ absences: 0, lates: 0 }) },
   washroomCount: { type: Number, default: 0 },
+  attendanceAverages: { type: Object, default: () => ({}) },
+  outOfClassEvents: { type: Array, default: () => [] },
+  selectedPeriod: { type: String, default: 'semester' },
   teacherName: { type: String, default: '' }
 })
 
@@ -129,6 +156,15 @@ const emailConfig = ref({
   content: { grade: true, missing: true, attendance: true, washroom: false, assessments: true }
 })
 
+const periodDisplay = computed(() => {
+  const p = props.selectedPeriod || 'semester'
+  if (p === 'week') return 'This Week'
+  if (p === 'last_week') return 'Last Week'
+  if (p === 'month') return 'This Month'
+  if (p === 'semester') return 'This Semester'
+  return p.charAt(0).toUpperCase() + p.slice(1)
+})
+
 const emailRecipients = computed(() => {
   const list = []
   if (props.student.studentEmail) {
@@ -145,10 +181,12 @@ const emailRecipients = computed(() => {
 })
 
 const selectedRecipientEmails = ref(new Set())
+const copied = ref(false)
 
 watch(() => props.show, (open) => {
   if (open) {
     selectedRecipientEmails.value = new Set(emailRecipients.value.map(r => r.email))
+    copied.value = false
   }
 })
 
@@ -160,11 +198,18 @@ function toggleRecipient(email) {
   }
 }
 
-function generateEmailLink() {
-  const emails = Array.from(selectedRecipientEmails.value).join(',')
-  const subject = `Progress Report Update: ${props.student.firstName} ${props.student.lastName}`
-  
-  let body = `Hello,\n\nI am sharing a progress update for ${props.student.firstName}.\n\n`
+async function copyEmailBody() {
+  try {
+    await navigator.clipboard.writeText(emailBody.value)
+    copied.value = true
+    setTimeout(() => { copied.value = false }, 2000)
+  } catch (err) {
+    console.error('Failed to copy email text:', err)
+  }
+}
+
+const emailBody = computed(() => {
+  let body = `Hello,\n\nI am sharing a progress update for ${props.student.firstName || 'the student'}.\n\n`
   
   if (isSBAR.value) {
     if (emailConfig.value.content.grade) {
@@ -253,19 +298,53 @@ function generateEmailLink() {
   }
   
   if (emailConfig.value.content.attendance) {
-    body += `\nAttendance Summary:\n`
-    body += `- Absences: ${props.stats.absences}\n`
-    body += `- Lates: ${props.stats.lates}\n`
+    const periodStr = periodDisplay.value ? ` (${periodDisplay.value})` : ''
+    body += `\nAttendance Summary${periodStr}:\n`
+    
+    let absLine = `- Absences: ${props.stats?.absences ?? 0}`
+    if (props.stats?.testDayAbsences > 0) {
+      absLine += ` (${props.stats.testDayAbsences} on assessment/test ${props.stats.testDayAbsences === 1 ? 'day' : 'days'})`
+    }
+    body += `${absLine}\n`
+
+    let latesLine = `- Lates: ${props.stats?.lates ?? 0}`
+    const lateMins = props.attendanceAverages?.latesTotal ?? (props.stats?.avgLateMinutes && props.stats?.lates ? Math.round(props.stats.avgLateMinutes * props.stats.lates) : 0)
+    if ((props.stats?.lates > 0) && lateMins > 0) {
+      latesLine += ` (${lateMins} min total lost instruction time)`
+    }
+    body += `${latesLine}\n`
+
+    if (props.stats?.attendanceRate !== null && props.stats?.attendanceRate !== undefined) {
+      body += `- Attendance Rate: ${props.stats.attendanceRate}%\n`
+    }
   }
   
   if (emailConfig.value.content.washroom) {
-    body += `\nOut of Class Logs:\n`
-    body += `- Out-of-class trips in period: ${props.washroomCount}\n`
+    const periodStr = periodDisplay.value ? ` (${periodDisplay.value})` : ''
+    body += `\nOut-of-Class Activity${periodStr}:\n`
+    
+    const count = props.washroomCount || 0
+    if (count === 0) {
+      body += `- 0 out-of-class departures recorded.\n`
+    } else {
+      const totalMins = props.attendanceAverages?.washroomTotal ?? (props.stats?.washroomMinutes ?? 0)
+      
+      let summaryLine = `- Total departures: ${count} ${count === 1 ? 'trip' : 'trips'}`
+      if (totalMins > 0) {
+        summaryLine += ` (${totalMins} minutes total missed class time)`
+      }
+      body += `${summaryLine}\n`
+    }
   }
   
   body += `\nPlease let me know if you have any questions.\n\nBest regards,\n${props.teacherName || 'Teacher'}`
-  
-  const mailto = `mailto:${emails}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
+  return body
+})
+
+function generateEmailLink() {
+  const emails = Array.from(selectedRecipientEmails.value).join(',')
+  const subject = `Progress Report Update: ${props.student.firstName} ${props.student.lastName}`
+  const mailto = `mailto:${emails}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(emailBody.value)}`
   window.location.href = mailto
   emit('close')
 }
@@ -294,7 +373,7 @@ function generateEmailLink() {
 .email-config-modal-body {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 18px;
 }
 
 .config-section-title {
@@ -303,7 +382,7 @@ function generateEmailLink() {
   color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  margin: 0 0 12px 0;
+  margin: 0 0 10px 0;
 }
 
 .recipient-list {
@@ -362,7 +441,7 @@ function generateEmailLink() {
 
 .options-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
   gap: 10px;
 }
 
@@ -372,6 +451,54 @@ function generateEmailLink() {
   gap: 8px;
   font-size: 0.85rem;
   cursor: pointer;
+}
+
+/* ── Live Email Preview Box ────────────────────────────────────────── */
+.preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.btn-copy-preview {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-copy-preview:hover {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+  border-color: var(--primary);
+}
+
+.email-preview-box {
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.email-preview-text {
+  margin: 0;
+  font-family: inherit;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: var(--text-primary);
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 .btn-cancel {

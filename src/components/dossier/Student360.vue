@@ -391,6 +391,9 @@
       :individual-assessments="individualAssessments"
       :stats="stats"
       :washroom-count="washroomCount"
+      :attendance-averages="attendanceAverages"
+      :out-of-class-events="outOfClassEvents"
+      :selected-period="selectedPeriod"
       :teacher-name="teacherName"
       @close="showEmailModal = false"
     />
@@ -737,6 +740,15 @@ const washroomCount = computed(() => {
     const config = behaviorCodesMap.value?.[e.code]
     return config?.type === 'toggle' && !e.superseded
   }).length
+})
+
+const outOfClassEvents = computed(() => {
+  return (filteredEvents.value || [])
+    .filter(e => {
+      const config = behaviorCodesMap.value?.[e.code]
+      return config?.type === 'toggle' && !e.superseded
+    })
+    .sort((a, b) => new Date(b.timestamp || 0) - new Date(a.timestamp || 0))
 })
 
 const redirectCount = computed(() => {
