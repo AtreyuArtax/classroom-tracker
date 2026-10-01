@@ -105,7 +105,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, toRef } from 'vue'
 import { Mail, CheckCircle2, ChevronRight, Copy, Check } from 'lucide-vue-next'
 import BaseModal from '../BaseModal.vue'
 import { formatLocalDisplay } from '../../utils/dates.js'
@@ -114,10 +114,13 @@ import { activeClassRecord, gradeMap, assessments } from '../../composables/useG
 import { useSBarPrintOptions } from '../../composables/useSBarPrintOptions.js'
 import { getEffectiveClassRecord } from '../../composables/useElementary.js'
 import { activeSubjectId } from '../../composables/useClassroomState.js'
+import { useActionAlerts } from '../../composables/useActionAlerts.js'
+import { suggestEmailContent, buildContactNote } from '../../utils/actionAlerts.js'
 
 const props = defineProps({
   show: { type: Boolean, default: false },
   studentId: { type: String, default: '' },
+  classId: { type: String, default: '' },
   student: { type: Object, required: true },
   formattedGrade: { type: String, default: 'N/A' },
   allDossierAssessments: { type: Array, default: () => [] },
@@ -151,10 +154,13 @@ const sbarOverallBadge = computed(() => {
   return getStudentOverallSBarBadge(targetStudentId.value, effectiveClass.value, assessments.value, gradeMap.value)
 })
 
+const DEFAULT_CONTENT = { grade: true, missing: true, attendance: true, washroom: false, assessments: true }
 const emailConfig = ref({
   recipients: { student: true, parents: true },
-  content: { grade: true, missing: true, attendance: true, washroom: false, assessments: true }
+  content: { ...DEFAULT_CONTENT }
 })
+
+const { alertFor, pendingEmailFor, setPendingEmail } = useActionAlerts(toRef(props, 'classId'))
 
 const periodDisplay = computed(() => {
   const p = props.selectedPeriod || 'semester'
@@ -183,12 +189,36 @@ const emailRecipients = computed(() => {
 const selectedRecipientEmails = ref(new Set())
 const copied = ref(false)
 
+// Reopening restores the last choices; otherwise preselect sections matching the alert
 watch(() => props.show, (open) => {
-  if (open) {
-    selectedRecipientEmails.value = new Set(emailRecipients.value.map(r => r.email))
-    copied.value = false
+  if (!open) return
+  copied.value = false
+  const pending = pendingEmailFor(targetStudentId.value)
+  if (pending) {
+    selectedRecipientEmails.value = new Set(pending.recipients || [])
+    emailConfig.value.content = { ...DEFAULT_CONTENT, ...pending.content }
+    return
   }
+  selectedRecipientEmails.value = new Set(emailRecipients.value.map(r => r.email))
+  const suggested = suggestEmailContent(alertFor(targetStudentId.value)?.kinds)
+  emailConfig.value.content = { ...DEFAULT_CONTENT, ...(suggested || {}) }
 })
+
+/** Remembers the email so the dossier can ask whether it was actually sent. */
+function recordPendingEmail() {
+  const recipients = Array.from(selectedRecipientEmails.value)
+  const recipientLabels = emailRecipients.value
+    .filter(r => selectedRecipientEmails.value.has(r.email))
+    .map(r => r.id === 'student' ? 'student' : `${r.label} (parent)`)
+  const reason = alertFor(targetStudentId.value)?.reason || ''
+  const content = { ...emailConfig.value.content }
+  setPendingEmail(targetStudentId.value, {
+    recipients,
+    content,
+    reason,
+    note: buildContactNote({ recipientLabels, content, reason })
+  })
+}
 
 function toggleRecipient(email) {
   if (selectedRecipientEmails.value.has(email)) {
@@ -202,6 +232,7 @@ async function copyEmailBody() {
   try {
     await navigator.clipboard.writeText(emailBody.value)
     copied.value = true
+    recordPendingEmail()
     setTimeout(() => { copied.value = false }, 2000)
   } catch (err) {
     console.error('Failed to copy email text:', err)
@@ -345,6 +376,7 @@ function generateEmailLink() {
   const emails = Array.from(selectedRecipientEmails.value).join(',')
   const subject = `Progress Report Update: ${props.student.firstName} ${props.student.lastName}`
   const mailto = `mailto:${emails}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(emailBody.value)}`
+  recordPendingEmail()
   window.location.href = mailto
   emit('close')
 }

@@ -180,8 +180,8 @@
     "semantic_hash": ""
   },
   "src/components/dossier/Student360.vue": {
-    "mtime": 1790888468.376727,
-    "ast_hash": "b51a06c58b89c78fe1461fb4b1794f14",
+    "mtime": 1790898119.3629737,
+    "ast_hash": "c77e2c021a42e9262c887f13b8d5b8f3",
     "semantic_hash": ""
   },
   "src/components/dossier/Student360Header.vue": {
@@ -345,8 +345,8 @@
     "semantic_hash": ""
   },
   "src/views/Reports.vue": {
-    "mtime": 1790636870.3855925,
-    "ast_hash": "21cd2bea4b91c1d3781fc194ae5fcc96",
+    "mtime": 1790897193.9176843,
+    "ast_hash": "96623fd201413e8b282958827a8b3ad9",
     "semantic_hash": ""
   },
   "src/views/ScanStation.vue": {
@@ -405,8 +405,8 @@
     "semantic_hash": ""
   },
   "src/composables/useGradeEditing.js": {
-    "mtime": 1790556183.0661385,
-    "ast_hash": "c88ca4914f32cb83ea1bf5f88ac942f6",
+    "mtime": 1790897943.5068483,
+    "ast_hash": "dd4f49b12f956e091a8f79ce99e4c700",
     "semantic_hash": ""
   },
   "src/utils/gradeColors.js": {
@@ -464,14 +464,9 @@
     "ast_hash": "c183019c0bd3c27cca65f9d16d6271ee",
     "semantic_hash": ""
   },
-  "src/components/dossier/Student360AttemptsModal.vue": {
-    "mtime": 1790556201.0829244,
-    "ast_hash": "a585a183edf737ce28f4f3d0f5007e72",
-    "semantic_hash": ""
-  },
   "src/components/dossier/Student360EmailModal.vue": {
-    "mtime": 1790888636.4206736,
-    "ast_hash": "91b686d51139f162ab3ec4dc2d59c5fd",
+    "mtime": 1790897253.7079806,
+    "ast_hash": "423729822ecc323ceb3ab9c52b458b17",
     "semantic_hash": ""
   },
   "src/components/dossier/Student360HistoryTab.vue": {
@@ -495,8 +490,8 @@
     "semantic_hash": ""
   },
   "src/components/reports/ReportsClassOverview.vue": {
-    "mtime": 1790253696.915764,
-    "ast_hash": "f2b9fcf853741290a39d3226a64c2414",
+    "mtime": 1790897228.1266017,
+    "ast_hash": "8247ce976560fc327d7ec1339f444d4f",
     "semantic_hash": ""
   },
   "src/components/reports/ReportsExportMenu.vue": {
@@ -1482,6 +1477,31 @@
   "src/test_term_and_split_csv_import.js": {
     "mtime": 1790683087.0685718,
     "ast_hash": "29802439bfd06f12d1bb299c6647026e",
+    "semantic_hash": ""
+  },
+  "src/components/dossier/ActionQueueBar.vue": {
+    "mtime": 1790898649.0072606,
+    "ast_hash": "02f0be1b80680a94bfab61c59a07815c",
+    "semantic_hash": ""
+  },
+  "src/composables/useActionAlerts.js": {
+    "mtime": 1790897173.7987142,
+    "ast_hash": "0a81c31170a96d1c24cf8fe4dae3ca20",
+    "semantic_hash": ""
+  },
+  "src/test_action_alerts.js": {
+    "mtime": 1790898138.9297826,
+    "ast_hash": "c2b2df3a3720e0b66914e2aa149f2500",
+    "semantic_hash": ""
+  },
+  "src/utils/actionAlerts.js": {
+    "mtime": 1790898137.8982248,
+    "ast_hash": "127f46aaac0e52fbcec298652d1dd706",
+    "semantic_hash": ""
+  },
+  "src/utils/dossierActivityFeed.js": {
+    "mtime": 1790897286.3356004,
+    "ast_hash": "66eac60632b57e62146bb34988b7d9b7",
     "semantic_hash": ""
   }
 }

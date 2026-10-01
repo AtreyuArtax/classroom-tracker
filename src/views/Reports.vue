@@ -131,9 +131,6 @@
             :chronically-absent-count="chronicallyAbsentCount"
             :trips-per-student-avg="tripsPerStudentAvg"
             :notes-logged-count="notesLoggedCount"
-            :follow-up-items="followUpItems"
-            :follow-up-visible="followUpVisible"
-            :follow-up-expanded="followUpExpanded"
             :washroom-chart-data="washroomChartData"
             :washroom-chart-options="washroomChartOptions"
             :long-trips-visible="longTripsVisible"
@@ -152,7 +149,6 @@
             :active-grade-filter="activeGradeFilter"
             @update:active-visual-tab="activeVisualTab = $event"
             @select-student="onSelectStudent"
-            @toggle-followup-expand="followUpExpanded = !followUpExpanded"
             @toggle-longtrips-expand="longTripsExpanded = !longTripsExpanded"
             @toggle-show-completed="showCompletedNotes = !showCompletedNotes"
             @toggle-note-complete="onToggleNoteComplete"
@@ -244,6 +240,7 @@ import { useClassroom } from '../composables/useClassroom.js'
 import { getEffectiveClassRecord } from '../composables/useElementary.js'
 import { activeSubjectId } from '../composables/useClassroomState.js'
 import { useStudentDossier } from '../composables/useStudentDossier.js'
+import { refreshActionAlerts } from '../composables/useActionAlerts.js'
 import * as classService from '../db/classService.js'
 import * as eventService from '../db/eventService.js'
 import { toMinutes } from '../db/eventService.js'
@@ -262,7 +259,6 @@ const ReportsLearningSkills        = defineAsyncComponent(() => import('../compo
 import { calculateClassGrades, getAssessmentsByClass, getAssessmentPercentage } from '../db/gradebookService.js'
 import { loadGradebook, clearGradebook, assessments as gbAssessments, gradeMap, activeGradeFilter } from '../composables/useGradebook.js'
 import { getSectionColor } from '../utils/gradeColors.js'
-import { detectClassAttendancePatterns } from '../utils/attendancePatterns.js'
 
 import { 
   Chart as ChartJS, 
@@ -319,7 +315,6 @@ watch(filteredClassList, (newList) => {
 }, { immediate: true })
 
 watch(sidebarClassId, () => {
-  followUpExpanded.value = false
   longTripsExpanded.value = false
   showCompletedNotes.value = false
 })
@@ -667,6 +662,7 @@ async function runReport(silent = false) {
     const targetClassRecord = effectiveReportClass.value || reportClass.value
     const grades = await calculateClassGrades(targetClassRecord, { asOf: dr.to || null })
     classGrades.value = grades
+    refreshActionAlerts(sidebarClassId.value, { period: selectedPeriod.value, events: activeAllEvents, classGrades: grades })
 
     const attEvents = events.filter(e => (e.code === 'a' || e.code === 'l') && !e.superseded)
     const absenceEvents = attEvents.filter(e => e.code === 'a')
@@ -853,176 +849,7 @@ const notesLoggedCount = computed(() =>
   reportData.value.filter(e => e.note && e.note.trim() && e.code !== 'ac' && e.code !== 'pc' && !e.superseded && !e.note.startsWith('[ob]') && !e.note.startsWith('[cv]')).length
 )
 
-const followUpExpanded = ref(false)
 const longTripsExpanded = ref(false)
-
-const followUpItems = computed(() => {
-  const items = []
-  const students = reportStudents.value
-  const washCodes = behaviorCodes.value.filter(c => c.type === 'toggle').map(c => c.codeKey)
-
-  const absMap = {}
-  const washMap = {}
-  reportData.value.forEach(e => {
-    if (e.superseded) return
-    if (e.code === 'a') {
-      absMap[e.studentId] = (absMap[e.studentId] ?? 0) + 1
-    }
-    if (washCodes.includes(e.code) && e.duration != null) {
-      if (!washMap[e.studentId]) washMap[e.studentId] = []
-      washMap[e.studentId].push(toMinutes(e.duration))
-    }
-  })
-
-  const nameFor = id => students[id] ? `${students[id].lastName}, ${students[id].firstName}` : id
-
-  // Run attendance & punctuality pattern detection
-  const assessmentDates = (assessmentsList.value || [])
-    .filter(a => a && a.date)
-    .map(a => (a.date || '').split('T')[0])
-    .filter(Boolean)
-
-  const detectedPatterns = detectClassAttendancePatterns(reportData.value, students, {
-    assessmentDates
-  })
-  const patternMap = {}
-  detectedPatterns.forEach(p => {
-    patternMap[p.studentId] = p
-  })
-
-  // 1. Process Absences & Absence Patterns
-  Object.entries(absMap).forEach(([id, count]) => {
-    if (!students[id]) return
-    const pData = patternMap[id]
-    const consec = pData?.patterns?.find(p => p.type === 'consecutive_absences')
-    const dow = pData?.patterns?.find(p => p.type === 'day_of_week_cluster')
-    const testAbs = pData?.patterns?.find(p => p.type === 'test_day_absence')
-
-    if (consec) {
-      const reason = count > consec.streak
-        ? `${consec.reason} · ${count} total`
-        : consec.reason
-      items.push({
-        studentId: id,
-        name: nameFor(id),
-        reason,
-        severity: 'high',
-        sortVal: 200 + count
-      })
-    } else if (testAbs) {
-      items.push({
-        studentId: id,
-        name: nameFor(id),
-        reason: `${testAbs.reason} · ${count} total`,
-        severity: 'high',
-        sortVal: 180 + count
-      })
-    } else if (dow) {
-      const reason = count > dow.count
-        ? `${dow.reason} · ${count} total`
-        : dow.reason
-      items.push({
-        studentId: id,
-        name: nameFor(id),
-        reason,
-        severity: count >= 5 ? 'high' : 'medium',
-        sortVal: (count >= 5 ? 150 : 80) + count
-      })
-    } else if (count >= 5) {
-      items.push({
-        studentId: id,
-        name: nameFor(id),
-        reason: `${count} absences`,
-        severity: 'high',
-        sortVal: 100 + count
-      })
-    } else if (count >= 3) {
-      items.push({
-        studentId: id,
-        name: nameFor(id),
-        reason: `${count} absences`,
-        severity: 'medium',
-        sortVal: count
-      })
-    }
-  })
-
-  // 2. Add Chronic Tardiness & Consecutive Lates
-  Object.entries(patternMap).forEach(([id, pData]) => {
-    if (!students[id]) return
-    const latePatterns = pData.patterns.filter(p => p.type === 'chronic_late' || p.type === 'consecutive_lates')
-    if (latePatterns.length === 0) return
-
-    const lateReason = latePatterns.map(p => p.reason).join(' · ')
-    const lateSeverity = latePatterns.some(p => p.severity === 'danger') ? 'high' : 'medium'
-    const existing = items.find(i => i.studentId === id)
-
-    if (existing) {
-      existing.reason += ` · ${lateReason}`
-      if (lateSeverity === 'high' && existing.severity !== 'high') {
-        existing.severity = 'high'
-      }
-    } else {
-      items.push({
-        studentId: id,
-        name: nameFor(id),
-        reason: lateReason,
-        severity: lateSeverity,
-        sortVal: (lateSeverity === 'high' ? 70 : 40) + (pData.metrics?.totalLates || 0)
-      })
-    }
-  })
-
-  // 3. Academic follow-up for grades < 60%
-  if (classGrades.value && Object.keys(classGrades.value).length > 0) {
-    Object.entries(classGrades.value).forEach(([id, data]) => {
-      if (data.overallGrade != null && data.overallGrade < 60 && students[id]) {
-        const alreadyHigh = items.some(i => i.studentId === id && i.severity === 'high')
-        if (!alreadyHigh) {
-          items.push({ studentId: id, name: nameFor(id), reason: `Grade at ${Math.round(data.overallGrade)}%`, severity: 'high', sortVal: 100 - data.overallGrade })
-        }
-      }
-    })
-  }
-
-  // 4. Extended washroom excursions
-  const longLimit = Number(thresholds.value?.washroomDurationLimit ?? 11)
-  Object.entries(washMap).forEach(([id, durations]) => {
-    if (!students[id]) return
-    const extendedTrips = durations.filter(d => d > longLimit)
-    const longest = Math.max(...durations)
-    if (extendedTrips.length >= 2) {
-      items.push({ 
-        studentId: id, 
-        name: nameFor(id), 
-        reason: `${extendedTrips.length} extended absences (max ${Math.round(longest)}m)`, 
-        severity: 'high', 
-        sortVal: longest + 100 
-      })
-    } else if (extendedTrips.length === 1) {
-      items.push({ 
-        studentId: id, 
-        name: nameFor(id), 
-        reason: `${Math.round(longest)}min out of class`, 
-        severity: 'medium', 
-        sortVal: longest 
-      })
-    }
-  })
-
-  const order = { high: 0, danger: 0, medium: 1, warning: 1, low: 2 }
-  items.sort((a, b) => {
-    const rankA = order[a.severity] ?? 2
-    const rankB = order[b.severity] ?? 2
-    if (rankA !== rankB) return rankA - rankB
-    return b.sortVal - a.sortVal
-  })
-  return items
-})
-
-const followUpVisible = computed(() =>
-  followUpExpanded.value ? followUpItems.value : followUpItems.value.slice(0, 8)
-)
 
 const longTripsVisible = computed(() =>
   longTripsExpanded.value ? aggregates.washroom.longTrips : aggregates.washroom.longTrips.slice(0, 5)

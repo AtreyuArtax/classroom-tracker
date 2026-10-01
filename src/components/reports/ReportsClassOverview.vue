@@ -130,6 +130,13 @@
       <div class="reports__followup-col">
         <div class="reports__col-header">
           <h4 class="reports__col-title">ACTION REQUIRED</h4>
+          <span
+            v-if="pendingEmailCount > 0"
+            class="reports__pending-tag"
+            title="Emails opened in your mail app but not yet confirmed as sent. Open the student to confirm."
+          >
+            <Mail :size="11" /> {{ pendingEmailCount }} to confirm
+          </span>
           <span class="reports__col-badge" :class="{ 'reports__col-badge--zero': evaluatedActionItems.active.length === 0 }">
             {{ evaluatedActionItems.active.length }} Flagged
           </span>
@@ -151,8 +158,8 @@
             ]"
             role="button"
             tabindex="0"
-            @click="$emit('select-student', item.studentId)"
-            @keydown.enter="$emit('select-student', item.studentId)"
+            @click="openFromQueue(item.studentId)"
+            @keydown.enter="openFromQueue(item.studentId)"
           >
             <div class="reports__followup-info">
               <div class="reports__followup-row">
@@ -410,7 +417,7 @@ import {
   UserCheck, Toilet, Activity, AlertTriangle, Check, 
   GraduationCap, Target, BookOpen, BarChart2,
   CheckCircle2, RotateCcw, ChevronDown, ChevronUp,
-  ClipboardCheck, DoorOpen, Star, Sparkles
+  ClipboardCheck, DoorOpen, Star, Sparkles, Mail
 } from 'lucide-vue-next'
 import { Bar } from 'vue-chartjs'
 import ExpectationMasteryHeatmap from './ExpectationMasteryHeatmap.vue'
@@ -423,6 +430,8 @@ import { getSBARLevelBadge, calculateSBARExpectationMastery } from '../../utils/
 import { gradeMap } from '../../composables/useGradebook.js'
 import { useClassroom } from '../../composables/useClassroom.js'
 import { isCohortMatch, filterAssessmentsForSubject } from '../../utils/gradeCalc.js'
+import { buildMissingSummary } from '../../utils/actionAlerts.js'
+import { useActionAlerts } from '../../composables/useActionAlerts.js'
 
 const props = defineProps({
   loading: { type: Boolean, default: false },
@@ -431,9 +440,6 @@ const props = defineProps({
   chronicallyAbsentCount: { type: Number, default: 0 },
   tripsPerStudentAvg: { type: [String, Number], default: '0.0' },
   notesLoggedCount: { type: Number, default: 0 },
-  followUpItems: { type: Array, default: () => [] },
-  followUpVisible: { type: Array, default: () => [] },
-  followUpExpanded: { type: Boolean, default: false },
   washroomChartData: { type: Object, required: true },
   washroomChartOptions: { type: Object, required: true },
   longTripsVisible: { type: Array, default: () => [] },
@@ -457,7 +463,6 @@ const props = defineProps({
 const emit = defineEmits([
   'select-student',
   'update:activeVisualTab',
-  'toggle-followup-expand',
   'toggle-longtrips-expand',
   'toggle-show-completed',
   'toggle-note-complete',
@@ -802,52 +807,12 @@ const strugglingExpectationsCount = computed(() => {
 })
 
 // Missing Tasks Breakdown & Audit
-const missingStudentsSummary = computed(() => {
-  const activeStudents = (props.sidebarStudents || []).filter(s => activeStudentIds.value.has(String(s.studentId)))
-  const astList = subjectAssessments.value || []
-  if (activeStudents.length === 0 || astList.length === 0 || !gradeMap.value) return []
-
-  const todayStr = new Date().toISOString().slice(0, 10)
-  const result = []
-
-  activeStudents.forEach(st => {
-    const sId = String(st.studentId)
-    const stTasks = []
-
-    astList.forEach(ast => {
-      if (ast.excluded) return
-      const astIdStr = String(ast.assessmentId)
-      const g = gradeMap.value[astIdStr]?.[sId]
-
-      if (g && g.excluded) return
-
-      const isExplicitMissing = Boolean(g && (g.missing || g.status === 'missing'))
-
-      if (isExplicitMissing) {
-        stTasks.push({
-          assessmentId: ast.assessmentId,
-          name: ast.name || ast.title || 'Untitled Assessment',
-          category: ast.category || ast.categoryName || '',
-          date: ast.date || ast.dueDate || '',
-          isExplicit: true
-        })
-      }
-    })
-
-    if (stTasks.length > 0) {
-      const gObj = props.classGrades[sId]
-      result.push({
-        studentId: sId,
-        name: st.name || `${st.firstName} ${st.lastName}`,
-        grade: gObj && gObj.overallGrade !== undefined && gObj.overallGrade !== null ? Math.round(gObj.overallGrade) : null,
-        tasks: stTasks
-      })
-    }
-  })
-
-  // Sort by most missing tasks descending
-  return result.sort((a, b) => b.tasks.length - a.tasks.length)
-})
+const missingStudentsSummary = computed(() => buildMissingSummary({
+  studentList: (props.sidebarStudents || []).filter(s => activeStudentIds.value.has(String(s.studentId))),
+  assessments: subjectAssessments.value || [],
+  gradeMap: gradeMap.value,
+  classGrades: props.classGrades
+}))
 
 // Task Completion & Evaluation Logistics
 const classEvaluationStats = computed(() => {
@@ -901,205 +866,29 @@ const classEvaluationStats = computed(() => {
   }
 })
 
-// Multi-reason Action Required Items
-const multiActionItems = computed(() => {
-  const items = []
-  
-  // 1. Add Academic Risk (Failing < 50% or Level 1 / R) - ONLY for active enrolled students
-  Object.entries(props.classGrades).forEach(([sId, gObj]) => {
-    if (!activeStudentIds.value.has(String(sId))) return
-    if (gObj && gObj.overallGrade !== undefined && gObj.overallGrade !== null && gObj.overallGrade < 50) {
-      const student = props.sidebarStudents.find(s => String(s.studentId) === String(sId))
-      if (!student) return
-      items.push({
-        studentId: String(sId),
-        name: student.name || `${student.firstName} ${student.lastName}`,
-        grade: Math.round(gObj.overallGrade),
-        reason: isSBAR.value ? 'Level 1 / Remediation Needed' : 'Failing Grade (<50%)',
-        severity: 'danger'
-      })
-    }
-  })
-
-  // 2. Add Attendance items - ONLY for active enrolled students
-  props.followUpItems.forEach(item => {
-    const sId = String(item.studentId)
-    if (!activeStudentIds.value.has(sId)) return
-    const existing = items.find(i => i.studentId === sId)
-    const gradeVal = props.classGrades[sId]?.overallGrade
-    const roundedGrade = gradeVal !== undefined && gradeVal !== null ? Math.round(gradeVal) : null
-
-    if (existing) {
-      existing.reason += ` · ${item.reason}`
-      if ((item.severity === 'danger' || item.severity === 'high') && existing.severity !== 'danger') {
-        existing.severity = 'danger'
-      }
-    } else {
-      const isDanger = item.severity === 'danger' || item.severity === 'high'
-      items.push({
-        studentId: sId,
-        name: item.name,
-        grade: roundedGrade,
-        reason: item.reason,
-        severity: isDanger ? 'danger' : (item.severity || 'warning')
-      })
-    }
-  })
-
-  // 3. Add Missing Work Alerts - ONLY for active enrolled students
-  missingStudentsSummary.value.forEach(m => {
-    const sId = String(m.studentId)
-    const existing = items.find(i => i.studentId === sId)
-    const taskCount = m.tasks.length
-    const taskText = `${taskCount} missing task${taskCount !== 1 ? 's' : ''}`
-
-    if (existing) {
-      existing.reason += ` · ${taskText}`
-      if (taskCount >= 3 && existing.severity !== 'danger') {
-        existing.severity = 'danger'
-      }
-    } else {
-      items.push({
-        studentId: sId,
-        name: m.name,
-        grade: m.grade,
-        reason: `${taskText} overdue`,
-        severity: taskCount >= 3 ? 'danger' : 'warning'
-      })
-    }
-  })
-
-  return items
-})
-
-const { thresholds } = useClassroom()
-const longWashroomThreshold = computed(() => Number(thresholds.value?.washroomDurationLimit ?? 11))
-
-// ── Option A: Smart Dismissal & Re-trigger Logic ──────────────────────
-/**
- * ── Action Required Re-Trigger Thresholds ──────────────────────────────
- * Configurable criteria for automatically re-surfacing a handled student alert:
- * 
- * 1. GRADE_DROP_PCT: Re-trigger if overall grade drops by 2%+ below grade at handling time.
- * 2. NEW_ABSENCES_COUNT: Re-trigger if 2+ new absences/lates accumulate after handling time.
- * 3. LONG_WASHROOM_MIN: Re-trigger if a washroom trip > washroomDurationLimit (default 11m) is logged after handling time.
- */
-const RE_TRIGGER_THRESHOLDS = {
-  GRADE_DROP_PCT: 2,
-  NEW_ABSENCES_COUNT: 2
-}
-
-const acknowledgedAlerts = ref(loadAcknowledgedAlerts())
+// ── Action Required (shared with the Student360 action bar) ──────────
+const {
+  evaluated: sharedActionItems,
+  acknowledge: acknowledgeItem,
+  unacknowledge: unacknowledgeItem,
+  pendingEmailCount,
+  enterFromQueue
+} = useActionAlerts(computed(() => props.reportClass?.classId))
 const showHandledSection = ref(false)
 
-watch(() => props.reportClass?.classId, () => {
-  acknowledgedAlerts.value = loadAcknowledgedAlerts()
-})
-
-function getStorageKey() {
-  return `classroom_ack_alerts_${props.reportClass?.classId || 'default'}`
-}
-
-function loadAcknowledgedAlerts() {
-  try {
-    const key = getStorageKey()
-    const stored = localStorage.getItem(key)
-    return stored ? JSON.parse(stored) : {}
-  } catch (e) {
-    return {}
-  }
-}
-
-function saveAcknowledgedAlerts() {
-  try {
-    const key = getStorageKey()
-    localStorage.setItem(key, JSON.stringify(acknowledgedAlerts.value))
-  } catch (e) {
-    console.error('Failed to save acknowledged alerts', e)
-  }
-}
-
-function acknowledgeItem(item) {
-  const sId = item.studentId
-  const currentGrade = item.grade
-  const studentEvents = (props.allClassEvents || []).filter(e => String(e.studentId) === String(sId))
-  const absences = studentEvents.filter(e => e.type === 'absence' || e.type === 'absent').length
-  const lates = studentEvents.filter(e => e.type === 'late').length
-  const redirects = studentEvents.filter(e => e.type === 'redirect' || e.type === 'behavior').length
-  const longTrips = studentEvents.filter(e => e.type === 'washroom' && (e.durationMinutes || 0) > longWashroomThreshold.value).length
-
-  acknowledgedAlerts.value = {
-    ...acknowledgedAlerts.value,
-    [sId]: {
-      acknowledgedAt: new Date().toISOString(),
-      gradeAtAck: currentGrade !== null ? currentGrade : 100,
-      absencesAtAck: absences,
-      latesAtAck: lates,
-      redirectsAtAck: redirects,
-      longTripsAtAck: longTrips
-    }
-  }
-  saveAcknowledgedAlerts()
-}
-
-function unacknowledgeItem(sId) {
-  const updated = { ...acknowledgedAlerts.value }
-  delete updated[sId]
-  acknowledgedAlerts.value = updated
-  saveAcknowledgedAlerts()
-}
-
+// Respect the sub-cohort filter: only show students currently in the sidebar
 const evaluatedActionItems = computed(() => {
-  const active = []
-  const handled = []
-
-  multiActionItems.value.forEach(item => {
-    const sId = item.studentId
-    const ack = acknowledgedAlerts.value[sId]
-
-    if (!ack) {
-      active.push(item)
-      return
-    }
-
-    // Evaluate Smart Re-trigger conditions
-    const studentEvents = (props.allClassEvents || []).filter(e => String(e.studentId) === String(sId))
-    const currentAbsences = studentEvents.filter(e => e.type === 'absence' || e.type === 'absent').length
-    const currentLates = studentEvents.filter(e => e.type === 'late').length
-    const currentRedirects = studentEvents.filter(e => e.type === 'redirect' || e.type === 'behavior').length
-    const currentLongTrips = studentEvents.filter(e => e.type === 'washroom' && (e.durationMinutes || 0) > longWashroomThreshold.value).length
-    const currentGrade = item.grade
-
-    let reTriggered = false
-    let reTriggerReason = ''
-
-    if (currentGrade !== null && ack.gradeAtAck !== null && currentGrade <= ack.gradeAtAck - RE_TRIGGER_THRESHOLDS.GRADE_DROP_PCT) {
-      reTriggered = true
-      reTriggerReason = `Grade dropped further (${currentGrade}%)`
-    } else if ((currentAbsences + currentLates) >= (ack.absencesAtAck + ack.latesAtAck + RE_TRIGGER_THRESHOLDS.NEW_ABSENCES_COUNT)) {
-      reTriggered = true
-      reTriggerReason = `${RE_TRIGGER_THRESHOLDS.NEW_ABSENCES_COUNT}+ new absences/lates`
-    } else if (currentRedirects > ack.redirectsAtAck || currentLongTrips > ack.longTripsAtAck) {
-      reTriggered = true
-      reTriggerReason = `New climate incident logged`
-    }
-
-    if (reTriggered) {
-      active.push({
-        ...item,
-        reason: `${item.reason} · Alert: ${reTriggerReason}`,
-        reTriggered: true
-      })
-    } else {
-      handled.push({
-        ...item,
-        ackDate: new Date(ack.acknowledgedAt).toLocaleDateString([], { month: 'short', day: 'numeric' })
-      })
-    }
-  })
-
-  return { active, handled }
+  const visible = item => activeStudentIds.value.has(item.studentId)
+  return {
+    active: sharedActionItems.value.active.filter(visible),
+    handled: sharedActionItems.value.handled.filter(visible)
+  }
 })
+
+function openFromQueue(studentId) {
+  enterFromQueue(studentId)
+  emit('select-student', studentId)
+}
 
 const activeActionItemsVisible = computed(() => {
   if (followUpExpandedLocal.value) return evaluatedActionItems.value.active
@@ -1269,6 +1058,7 @@ function formatReasonPart(part) {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 6px;
 }
 .reports__col-title {
   font-size: 0.76rem;
@@ -1288,6 +1078,18 @@ function formatReasonPart(part) {
 .reports__col-badge--zero {
   background: rgba(16, 185, 129, 0.12);
   color: #059669;
+}
+.reports__pending-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-left: auto;
+  font-size: 0.68rem;
+  font-weight: 700;
+  background: var(--primary-light);
+  color: var(--primary);
+  padding: 1px 6px;
+  border-radius: 4px;
 }
 
 .reports__followup-empty {

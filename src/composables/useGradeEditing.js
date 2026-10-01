@@ -216,9 +216,12 @@ export function useGradeEditing(defaultStudentIdRef = null) {
   async function toggleMissing(assessmentId, studentId) {
     let aId = (typeof assessmentId === 'string' || typeof assessmentId === 'number') ? assessmentId : null
     let sId = (typeof studentId === 'string' || typeof studentId === 'number') ? studentId : null
-    if (!aId && contextMenu.value) {
-      aId = contextMenu.value.assessmentId
-      sId = contextMenu.value.studentId
+    if (!aId && contextMenu.value) aId = contextMenu.value.assessmentId
+    // Callers like the dossier pass only the assessment; take the student from the menu
+    if (!sId) sId = contextMenu.value?.studentId ?? defaultStudentIdRef?.value ?? null
+    if (!aId || !sId) {
+      contextMenu.value = null
+      return
     }
     const current = isMissing(sId, aId)
     await markMissing(aId, sId, !current)
@@ -228,9 +231,12 @@ export function useGradeEditing(defaultStudentIdRef = null) {
   async function toggleExcluded(assessmentId, studentId) {
     let aId = (typeof assessmentId === 'string' || typeof assessmentId === 'number') ? assessmentId : null
     let sId = (typeof studentId === 'string' || typeof studentId === 'number') ? studentId : null
-    if (!aId && contextMenu.value) {
-      aId = contextMenu.value.assessmentId
-      sId = contextMenu.value.studentId
+    if (!aId && contextMenu.value) aId = contextMenu.value.assessmentId
+    // Callers like the dossier pass only the assessment; take the student from the menu
+    if (!sId) sId = contextMenu.value?.studentId ?? defaultStudentIdRef?.value ?? null
+    if (!aId || !sId) {
+      contextMenu.value = null
+      return
     }
     const current = isExcluded(sId, aId)
     await markExcluded(aId, sId, !current)

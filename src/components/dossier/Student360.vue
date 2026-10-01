@@ -24,6 +24,13 @@
       </template>
     </Student360Header>
 
+    <ActionQueueBar
+      :student-id="props.studentId"
+      :class-id="props.classId"
+      @open-email="showEmailModal = true"
+      @select-student="handleSelectStudent"
+    />
+
     <nav class="student-360__tabs">
       <button 
         v-for="tab in tabs" 
@@ -359,31 +366,11 @@
       />
     </main>
 
-    <!-- Context Menu & Attempts Dialogs -->
-    <Student360AttemptsModal
-      :context-menu="contextMenu"
-      :attempts-popover="attemptsPopover"
-      :new-attempt-form="newAttemptForm"
-      :grade-map="gradeMap"
-      :student-id="studentId"
-      @close-context-menu="contextMenu = null"
-      @close-attempts-popover="attemptsPopover = null"
-      @close-new-attempt="newAttemptForm = null"
-      @start-new-attempt="startNewAttempt"
-      @open-attempts="openAttemptsFromMenu"
-      @toggle-missing="toggleMissing"
-      @toggle-excluded="toggleExcluded"
-      @delete-assessment="doDeleteAssessment"
-      @set-primary="doSetPrimary"
-      @delete-attempt="doDeleteAttempt"
-      @update-comment="doUpdateComment"
-      @submit-new-attempt="submitNewAttempt"
-    />
-
     <!-- Email Progress Report Modal -->
     <Student360EmailModal
       :show="showEmailModal"
       :student-id="props.studentId"
+      :class-id="props.classId"
       :student="student"
       :formatted-grade="formattedGrade"
       :all-dossier-assessments="allDossierAssessments"
@@ -462,6 +449,7 @@ import Student360Header from './Student360Header.vue'
 import StudentStatCard from './StudentStatCard.vue'
 import StudentTimeline from './StudentTimeline.vue'
 import DossierCommunicationLog from './DossierCommunicationLog.vue'
+import ActionQueueBar from './ActionQueueBar.vue'
 import DossierQualitativeEvidence from './DossierQualitativeEvidence.vue'
 import StudentTrendGraph from '../StudentTrendGraph.vue'
 import StudentGradeTrend from './StudentGradeTrend.vue'
@@ -470,29 +458,21 @@ import Student360ProfileTab from './Student360ProfileTab.vue'
 import Student360HistoryTab from './Student360HistoryTab.vue'
 const Student360EmailModal        = defineAsyncComponent(() => import('./Student360EmailModal.vue'))
 const Student360PrintModal        = defineAsyncComponent(() => import('./Student360PrintModal.vue'))
-const Student360AttemptsModal     = defineAsyncComponent(() => import('./Student360AttemptsModal.vue'))
 import BaseModal from '../BaseModal.vue'
 import UndoButton from '../UndoButton.vue'
 const GradesAssessmentDetailSBAR  = defineAsyncComponent(() => import('../grades/GradesAssessmentDetailSBAR.vue'))
-import { getSBARLevelBadge } from '../../utils/gradeCalcSBAR.js'
 
 import { useClassroom } from '../../composables/useClassroom.js'
 import { toMinutes, getDateRangeForClassPeriod } from '../../utils/timeUtils.js'
 import { buildDailyTrend, buildWeeklyTrend } from '../../utils/trendAggregation.js'
 import { resolveIcon } from '../../utils/icons.js'
-import { formatLocalDate } from '../../utils/dates.js'
+import { buildRecentActivityFeed } from '../../utils/dossierActivityFeed.js'
 import { 
   classGrades, 
   assessments, 
   loadGradebook, 
   activeClassRecord, 
   gradeMap,
-  enterGrade,
-  removeAttempt,
-  setPrimaryAttempt,
-  updateAttemptComment,
-  deleteAssessment,
-  getAssessmentUsage,
   filteredMilestones,
   globalMilestones,
   isAssessmentInSubCohort
@@ -513,9 +493,6 @@ function handleSelectStudent(studentId) {
   emit('select-student', studentId)
 }
 
-const contextMenu = ref(null)
-const attemptsPopover = ref(null)
-const newAttemptForm = ref(null)
 const selectedSbarAssessmentId = ref(null)
 
 const currentSbarAssessment = computed(() => {
@@ -770,94 +747,12 @@ const coachingInsight = computed(() => {
   return null
 })
 
-const recentActivityFeed = computed(() => {
-  const items = []
-  const isSBARMode = activeClassRecord.value?.gradingFramework === 'sbar'
-
-  // 1. Graded assessments for this student
-  const assList = Array.isArray(allDossierAssessments.value) ? allDossierAssessments.value : []
-  assList.forEach(ass => {
-    if (!ass || ass.score === null || ass.score === undefined) return
-
-    const isSBAR = ass.categoryId === 'sbar_general' || (ass.expectationIds && ass.expectationIds.length > 0)
-    
-    // Strict isolation based on active mode
-    if (isSBARMode && !isSBAR) return
-    if (!isSBARMode && isSBAR) return
-
-    if (isSBAR) {
-      const pct = Math.round(Number(ass.score))
-      const badge = getSBARLevelBadge(pct)
-      const expCount = ass.expectationIds?.length || 1
-      items.push({
-        id: 'ass-' + ass.assessmentId,
-        date: ass.date || '',
-        title: ass.name,
-        type: 'grade',
-        category: 'SBAR EVAL',
-        value: badge.level,
-        levelColor: badge.color,
-        subText: `${expCount} Standard${expCount !== 1 ? 's' : ''}`,
-        isFailing: pct < 50
-      })
-    } else {
-      const total = ass.scaledTotal || ass.totalPoints || 100
-      const pct = Math.round((ass.score / total) * 100)
-      items.push({
-        id: 'ass-' + ass.assessmentId,
-        date: ass.date || '',
-        title: ass.name,
-        type: 'grade',
-        category: ass.category || 'Assessment',
-        value: `${pct}%`,
-        subText: `${ass.score}/${total}`,
-        isFailing: pct < 50
-      })
-    }
-  })
-
-  // 2. Logged significant student events (Teacher notes, Parent contacts, Positive recognition, Redirects, Test-Day Absences)
-  const evtList = Array.isArray(events.value) ? events.value : []
-  evtList.forEach(evt => {
-    if (!evt || evt.superseded || evt.completed || evt.isCompleted) return
-    const evtType = evt.code || evt.type || ''
-    const config = behaviorCodesMap.value?.[evt.code] || {}
-    const category = evt.category || config.category
-    
-    const isParentContact = evtType === 'pc' || category === 'communication'
-    const isPositive = category === 'positive'
-    const isRedirect = category === 'redirect'
-    const isTeacherNote = evtType === 'note' || evtType === 'ac' || (evt.note && String(evt.note).trim().length > 0 && evtType !== 'w')
-    const isTestDayAbsence = evtType === 'a' && (evt.testDay || evt.isTestDay)
-
-    // Include significant events, positive praise, redirects, teacher notes, or test day absences
-    if (isParentContact || isPositive || isRedirect || isTeacherNote || isTestDayAbsence) {
-      let cat = 'NOTE'
-      if (isParentContact) cat = 'PARENT'
-      else if (isPositive) cat = 'POSITIVE'
-      else if (isRedirect) cat = 'REDIRECT'
-      else if (isTestDayAbsence) cat = 'TEST DAY'
-
-      const label = config.label || evtType
-      const noteText = evt.note ? `${label}: ${evt.note}` : (isTestDayAbsence ? 'Absent on scheduled test day' : label)
-
-      items.push({
-        id: 'evt-' + (evt.eventId || evt.id || Math.random()),
-        date: evt.timestamp || evt.date || '',
-        title: noteText,
-        type: 'event',
-        category: cat,
-        value: isParentContact ? 'Contacted' : isTestDayAbsence ? 'Missed Test' : isPositive ? 'Praise' : isRedirect ? 'Redirect' : 'Logged',
-        subText: null,
-        isFailing: isTestDayAbsence
-      })
-    }
-  })
-
-  return items
-    .sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0))
-    .slice(0, 4)
-})
+const recentActivityFeed = computed(() => buildRecentActivityFeed({
+  assessments: allDossierAssessments.value,
+  events: events.value,
+  behaviorCodesMap: behaviorCodesMap.value,
+  isSBARMode: activeClassRecord.value?.gradingFramework === 'sbar'
+}))
 
 function formatDateShort(dStr) {
   if (!dStr) return ''
@@ -957,78 +852,6 @@ async function saveParentContacts(contacts) {
   await updateStudentParentContacts(props.studentId, contacts)
 }
 
-// Attempt Management Handlers
-function startNewAttempt(assessmentId) {
-  contextMenu.value = null
-  newAttemptForm.value = {
-    assessmentId,
-    points: null,
-    date: formatLocalDate(new Date()),
-    comment: ''
-  }
-}
-
-function openAttemptsFromMenu(event, assessmentId) {
-  contextMenu.value = null
-  attemptsPopover.value = {
-    assessmentId,
-    x: event.clientX,
-    y: event.clientY
-  }
-}
-
-async function toggleMissing(assessmentId) {
-  const current = gradeMap.value[assessmentId]?.[props.studentId]?.missing
-  await markMissing(assessmentId, props.studentId, !current)
-  contextMenu.value = null
-}
-
-async function toggleExcluded(assessmentId) {
-  const current = gradeMap.value[assessmentId]?.[props.studentId]?.excluded
-  await markExcluded(assessmentId, props.studentId, !current)
-  contextMenu.value = null
-}
-
-async function doDeleteAssessment(assessmentId) {
-  contextMenu.value = null
-  const assessment = assessments.value.find(a => a.assessmentId === assessmentId)
-  const name = assessment?.name || 'this assessment'
-  const usage = await getAssessmentUsage(assessmentId)
-  const countWarning = usage.studentCount > 0
-    ? `Warning: This assessment has marks recorded for ${usage.studentCount} student(s) (${usage.attemptCount || usage.markCount || usage.studentCount} score entries). Deleting it will permanently erase all these records.`
-    : 'No student marks are recorded for this assessment.'
-
-  if (await confirm(`Delete "${name}"?\n\n${countWarning}\n\nThis cannot be undone.`, 'Delete Assessment', { danger: true })) {
-    await deleteAssessment(assessmentId)
-  }
-}
-
-async function doSetPrimary(assessmentId, attemptId) {
-  await setPrimaryAttempt(assessmentId, props.studentId, attemptId)
-}
-
-async function doDeleteAttempt(assessmentId, attemptId) {
-  if (await confirm('Delete this attempt?', 'Delete Attempt', { danger: true })) {
-    await removeAttempt(assessmentId, props.studentId, attemptId)
-  }
-}
-
-async function doUpdateComment(assessmentId, attemptId, comment) {
-  await updateAttemptComment(assessmentId, props.studentId, attemptId, comment)
-}
-
-async function submitNewAttempt() {
-  if (!newAttemptForm.value || newAttemptForm.value.points === null) return
-  await enterGrade(
-    newAttemptForm.value.assessmentId,
-    props.studentId,
-    Number(newAttemptForm.value.points),
-    newAttemptForm.value.date,
-    newAttemptForm.value.comment
-  )
-  newAttemptForm.value = null
-}
-
 async function loadData() {
   loading.value = true
   if (!activeClassRecord.value || activeClassRecord.value.classId !== props.classId) {
@@ -1050,9 +873,7 @@ function handleKeyDown(e) {
   if (
     showEmailModal.value || 
     showPrintModal.value || 
-    selectedSbarAssessmentId.value || 
-    newAttemptForm.value || 
-    attemptsPopover.value
+    selectedSbarAssessmentId.value
   ) return
 
   if (e.key === 'ArrowLeft') {
