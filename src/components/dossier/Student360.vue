@@ -919,8 +919,8 @@ async function handleDeleteHistoryItem(eventId) {
 
 async function handleLogCommunicationEvent({ note, timestamp }) {
   if (!props.studentId || !note) return
-  await logStandardEvent(props.studentId, 'c', { note, timestamp })
-  await fetchAllTimeHistory()
+  await logStandardEvent(props.studentId, 'pc', note, { timestamp, classId: props.classId })
+  await fetchAllTimeHistory(props.studentId)
 }
 
 async function saveGeneralNote(note) {

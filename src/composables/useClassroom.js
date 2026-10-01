@@ -1070,7 +1070,7 @@ async function getStudentEventHistory(studentId) {
  */
 async function logStandardEvent(studentId, code, note = null, options = {}) {
     try {
-        const classId = activeClass.value?.classId
+        const classId = options.classId || activeClass.value?.classId
         const eventId = await eventService.logEvent({ 
             studentId, 
             classId, 
@@ -1361,7 +1361,10 @@ async function editEvent(eventId, updates) {
 
     // Sync reactive stats if duration, code, or timestamp changed
     if (updates.duration !== undefined || updates.code !== undefined || updates.timestamp !== undefined) {
-        await computeWeeklyStats(activeClass.value.classId, Object.keys(students.value))
+        const targetClassId = activeClass.value?.classId || original?.classId
+        if (targetClassId) {
+            await computeWeeklyStats(targetClassId, Object.keys(students.value))
+        }
     }
 
     // Reactively update the active student events list if this event is in it
@@ -1472,7 +1475,10 @@ async function removeEvent(eventId) {
     await eventService.deleteEvent(eventId)
 
     // Sync reactive stats
-    await computeWeeklyStats(activeClass.value.classId, Object.keys(students.value))
+    const targetClassId = activeClass.value?.classId || original.classId
+    if (targetClassId) {
+        await computeWeeklyStats(targetClassId, Object.keys(students.value))
+    }
 
     // Special case: sync active late/absent state
     const todayStr = formatLocalDate(new Date())
