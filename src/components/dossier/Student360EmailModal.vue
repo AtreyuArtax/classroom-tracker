@@ -3,7 +3,7 @@
     :show="show"
     title="Configure Email Report"
     :z-index="3000"
-    max-width="620px"
+    :max-width="showPreview ? '1080px' : '520px'"
     @close="$emit('close')"
   >
     <template #header>
@@ -16,64 +16,84 @@
       </div>
     </template>
 
-    <div class="email-config-modal-body">
-      <!-- Recipients Selection -->
-      <div class="config-section">
-        <h4 class="config-section-title">Recipients</h4>
-        <div class="recipient-list">
-          <div 
-            v-for="r in emailRecipients" 
-            :key="r.email" 
-            class="recipient-item"
-            :class="{ 'recipient-item--active': selectedRecipientEmails.has(r.email) }"
-            @click="toggleRecipient(r.email)"
-          >
-            <div class="recipient-info">
-              <span class="recipient-label">{{ r.label }}</span>
-              <span class="recipient-email">{{ r.email }}</span>
+    <div class="email-config-modal-body" :class="{ 'email-config-modal-body--with-preview': showPreview }">
+      <!-- Left Column: Controls (Recipients + Report Options) -->
+      <div class="config-controls-pane">
+        <!-- Recipients Selection -->
+        <div class="config-section">
+          <h4 class="config-section-title">Recipients</h4>
+          <div class="recipient-list">
+            <div 
+              v-for="r in emailRecipients" 
+              :key="r.email" 
+              class="recipient-item"
+              :class="{ 'recipient-item--active': selectedRecipientEmails.has(r.email) }"
+              @click="toggleRecipient(r.email)"
+            >
+              <div class="recipient-info">
+                <span class="recipient-label">{{ r.label }}</span>
+                <span class="recipient-email">{{ r.email }}</span>
+              </div>
+              <div class="recipient-checkbox">
+                <CheckCircle2 v-if="selectedRecipientEmails.has(r.email)" :size="20" class="icon-checked" />
+                <div v-else class="checkbox-placeholder"></div>
+              </div>
             </div>
-            <div class="recipient-checkbox">
-              <CheckCircle2 v-if="selectedRecipientEmails.has(r.email)" :size="20" class="icon-checked" />
-              <div v-else class="checkbox-placeholder"></div>
+            <div v-if="emailRecipients.length === 0" class="recipient-empty">
+              No email addresses found for this student or their parents.
             </div>
           </div>
-          <div v-if="emailRecipients.length === 0" class="recipient-empty">
-            No email addresses found for this student or their parents.
+        </div>
+
+        <!-- Content Options -->
+        <div class="config-section">
+          <div class="config-section-header">
+            <h4 class="config-section-title" style="margin-bottom: 0;">Include in Report</h4>
+            <button 
+              type="button" 
+              class="reports__btn-preview" 
+              @click="showPreview = !showPreview"
+            >
+              {{ showPreview ? 'Hide Preview' : 'Show Preview' }}
+            </button>
           </div>
+          <div class="options-list">
+            <label class="option-item">
+              <input type="checkbox" v-model="emailConfig.content.grade" />
+              <span class="option-label">{{ isSBAR ? 'Current SBAR Overall Level' : 'Current Overall Grade' }}</span>
+            </label>
+            <label class="option-item">
+              <input type="checkbox" v-model="emailConfig.content.assessments" />
+              <span class="option-label">{{ isSBAR ? 'Expectation Mastery & Progression' : 'Detailed Assessment List & Attempts' }}</span>
+            </label>
+            <label class="option-item">
+              <input type="checkbox" v-model="emailConfig.content.missing" />
+              <span class="option-label">Missing Assessments List</span>
+            </label>
+            <label class="option-item">
+              <input type="checkbox" v-model="emailConfig.content.attendance" />
+              <span class="option-label">Attendance Summary</span>
+            </label>
+            <label class="option-item">
+              <input type="checkbox" v-model="emailConfig.content.washroom" />
+              <span class="option-label">Out-of-Class Activity</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Collapsed Preview Notice -->
+        <div v-if="!showPreview" class="report-preview-mini">
+          <p>Live preview is hidden. Click <strong>Show Preview</strong> to review the generated email draft side-by-side.</p>
         </div>
       </div>
 
-      <!-- Content Options -->
-      <div class="config-section">
-        <h4 class="config-section-title">Include in Report</h4>
-        <div class="options-grid">
-          <label class="option-item">
-            <input type="checkbox" v-model="emailConfig.content.grade" />
-            <span class="option-label">{{ isSBAR ? 'Current SBAR Overall Level' : 'Current Overall Grade' }}</span>
-          </label>
-          <label class="option-item">
-            <input type="checkbox" v-model="emailConfig.content.assessments" />
-            <span class="option-label">{{ isSBAR ? 'Expectation Mastery & Progression' : 'Detailed Assessment List & Attempts' }}</span>
-          </label>
-          <label class="option-item">
-            <input type="checkbox" v-model="emailConfig.content.missing" />
-            <span class="option-label">Missing Assessments List</span>
-          </label>
-          <label class="option-item">
-            <input type="checkbox" v-model="emailConfig.content.attendance" />
-            <span class="option-label">Attendance Summary</span>
-          </label>
-          <label class="option-item">
-            <input type="checkbox" v-model="emailConfig.content.washroom" />
-            <span class="option-label">Out-of-Class Activity</span>
-          </label>
-        </div>
-      </div>
-
-      <!-- Email Draft Live Preview -->
-      <div class="config-section">
-        <div class="preview-header">
-          <h4 class="config-section-title" style="margin-bottom: 0;">Email Preview</h4>
+      <!-- Right Column: Live Email Preview (Matching Documents & Communication Hub) -->
+      <div v-if="showPreview" class="reports__print-preview-area">
+        <header class="preview-banner">
+          <div class="preview-banner__left">
+            <Activity :size="14" />
+            <span>LIVE EMAIL PREVIEW</span>
+          </div>
           <button 
             type="button" 
             class="btn-copy-preview"
@@ -83,9 +103,11 @@
             <component :is="copied ? Check : Copy" :size="13" />
             <span>{{ copied ? 'Copied!' : 'Copy Text' }}</span>
           </button>
-        </div>
-        <div class="email-preview-box">
-          <pre class="email-preview-text">{{ emailBody }}</pre>
+        </header>
+        <div class="preview-content">
+          <div class="email-preview-paper">
+            <pre class="email-preview-text">{{ emailBody }}</pre>
+          </div>
         </div>
       </div>
     </div>
@@ -97,7 +119,7 @@
         :disabled="selectedRecipientEmails.size === 0"
         @click="generateEmailLink"
       >
-        Generate Draft &amp; Open Mail
+        <span>Open in Mail</span>
         <ChevronRight :size="18" />
       </button>
     </template>
@@ -106,10 +128,15 @@
 
 <script setup>
 import { ref, computed, watch, toRef } from 'vue'
-import { Mail, CheckCircle2, ChevronRight, Copy, Check } from 'lucide-vue-next'
+import { Mail, CheckCircle2, ChevronRight, Copy, Check, Activity } from 'lucide-vue-next'
 import BaseModal from '../BaseModal.vue'
 import { formatLocalDisplay } from '../../utils/dates.js'
 import { toMinutes } from '../../utils/timeUtils.js'
+import { 
+  generateMobileSafeEmail, 
+  generateMobileSafeEmailBody, 
+  copyRichEmailToClipboard
+} from '../../utils/emailFormatter.js'
 import { activeClassRecord, gradeMap, assessments } from '../../composables/useGradebook.js'
 import { useSBarPrintOptions } from '../../composables/useSBarPrintOptions.js'
 import { getEffectiveClassRecord } from '../../composables/useElementary.js'
@@ -188,11 +215,13 @@ const emailRecipients = computed(() => {
 
 const selectedRecipientEmails = ref(new Set())
 const copied = ref(false)
+const showPreview = ref(true)
 
 // Reopening restores the last choices; otherwise preselect sections matching the alert
 watch(() => props.show, (open) => {
   if (!open) return
   copied.value = false
+  showPreview.value = true
   const pending = pendingEmailFor(targetStudentId.value)
   if (pending) {
     selectedRecipientEmails.value = new Set(pending.recipients || [])
@@ -228,156 +257,152 @@ function toggleRecipient(email) {
   }
 }
 
+const studentEmailData = computed(() => {
+  const fullName = `${props.student.firstName || ''} ${props.student.lastName || ''}`.trim() || 'Student'
+  
+  const isNonAdmin = a => (
+    a &&
+    !a.excluded &&
+    a.purpose !== 'administrative' &&
+    String(a.category || '').trim().toLowerCase() !== 'admin' &&
+    String(a.category || '').trim().toLowerCase() !== 'administrative'
+  )
+
+  // Format recent assessments (exclude admin tasks and non-graded items)
+  const recentAssessments = [...props.allDossierAssessments]
+    .filter(a => a.score !== null && isNonAdmin(a))
+    .sort((a, b) => new Date(b.date) - new Date(a.date))
+    .map(a => ({
+      date: formatLocalDisplay(a.date, { month: 'short', day: 'numeric' }),
+      name: a.name,
+      score: a.score,
+      totalPoints: a.totalPoints,
+      category: a.category
+    }))
+
+  // Missing assessments (exclude administrative checklists)
+  let missing = [
+    ...props.classAssessments.filter(a => (a.missing || a.score === null) && isNonAdmin(a)),
+    ...props.individualAssessments.filter(a => (a.missing || a.score === null) && isNonAdmin(a))
+  ]
+  if (isSBAR.value) {
+    missing = missing.filter(a => {
+      const hasExp = (a.expectationIds && a.expectationIds.length > 0) || a.expectationId
+      const isSbarMode = a.isSbar || a.gradingFramework === 'sbar' || a.assessmentType === 'sbar'
+      return hasExp || isSbarMode
+    })
+  }
+
+  // Deduplicate and format missing assessments with names and dates
+  const seenMissingIds = new Set()
+  const formattedMissing = []
+  for (const a of missing) {
+    const id = a.assessmentId || a.id
+    if (!id || !seenMissingIds.has(id)) {
+      if (id) seenMissingIds.add(id)
+      formattedMissing.push({
+        name: a.name || a.title || 'Untitled Assessment',
+        date: a.date ? formatLocalDisplay(a.date, { month: 'short', day: 'numeric' }) : '',
+        category: a.category || ''
+      })
+    }
+  }
+
+  // SBAR expectations if applicable
+  let sbarExpectations = []
+  if (isSBAR.value) {
+    const sbarUnits = prepareSBarReportData(
+      targetStudentId.value,
+      effectiveClass.value,
+      assessments.value,
+      gradeMap.value,
+      [],
+      'assessed'
+    )
+    sbarUnits.forEach(u => {
+      if (u.expectations) sbarExpectations.push(...u.expectations)
+    })
+  }
+
+  const washCount = props.washroomCount || 0
+  const washMins = props.attendanceAverages?.washroomTotal ?? (props.stats?.washroomMinutes ?? 0)
+
+  return {
+    name: fullName,
+    course: effectiveClass.value?.name,
+    teacher: props.teacherName || 'Teacher',
+    overallGrade: props.formattedGrade,
+    isSbar: isSBAR.value,
+    sbarOverallBadge: sbarOverallBadge.value,
+    sbarExpectations,
+    recentAssessments,
+    missingCount: formattedMissing.length,
+    missingAssessments: formattedMissing,
+    attendance: {
+      rate: props.stats?.attendanceRate,
+      absences: props.stats?.absences ?? 0,
+      lates: props.stats?.lates ?? 0
+    },
+    outOfClass: {
+      trips: washCount,
+      minutes: washMins
+    },
+    recipients: Array.from(selectedRecipientEmails.value)
+  }
+})
+
+const emailBody = computed(() => {
+  return generateMobileSafeEmailBody(studentEmailData.value, {
+    includeGrade: emailConfig.value.content.grade,
+    includeAssessments: emailConfig.value.content.assessments,
+    includeMissing: emailConfig.value.content.missing,
+    includeAttendance: emailConfig.value.content.attendance,
+    includeWashroom: emailConfig.value.content.washroom
+  })
+})
+
 async function copyEmailBody() {
   try {
-    await navigator.clipboard.writeText(emailBody.value)
+    await copyRichEmailToClipboard(studentEmailData.value, {
+      includeGrade: emailConfig.value.content.grade,
+      includeAssessments: emailConfig.value.content.assessments,
+      includeMissing: emailConfig.value.content.missing,
+      includeAttendance: emailConfig.value.content.attendance,
+      includeWashroom: emailConfig.value.content.washroom
+    })
     copied.value = true
     recordPendingEmail()
     setTimeout(() => { copied.value = false }, 2000)
   } catch (err) {
-    console.error('Failed to copy email text:', err)
+    console.error('Failed to copy email draft:', err)
   }
 }
 
-const emailBody = computed(() => {
-  let body = `Hello,\n\nI am sharing a progress update for ${props.student.firstName || 'the student'}.\n\n`
-  
-  if (isSBAR.value) {
-    if (emailConfig.value.content.grade) {
-      const badge = sbarOverallBadge.value
-      body += `Current SBAR Overall Level: ${badge?.label || 'Not Assessed'} (${badge?.level || '—'})\n`
-    }
-
-    if (emailConfig.value.content.assessments) {
-      const sbarUnits = prepareSBarReportData(
-        targetStudentId.value,
-        effectiveClass.value,
-        assessments.value,
-        gradeMap.value,
-        [],
-        'assessed'
-      )
-      
-      const allExps = []
-      sbarUnits.forEach(u => {
-        if (u.expectations) allExps.push(...u.expectations)
-      })
-
-      if (allExps.length > 0) {
-        body += `\nCurriculum Expectation Mastery:\n`
-        allExps.forEach(exp => {
-          let labelStr = exp.code
-          if (exp.description && exp.description !== exp.code) {
-            labelStr = `${exp.code} (${exp.description})`
-          }
-          let line = `- ${labelStr}: Level ${exp.badge?.level || '—'} (${exp.badge?.label || 'Unassessed'})`
-          if (exp.evaluations && exp.evaluations.length > 0) {
-            const history = exp.evaluations.slice(-3).map(e => e.badge?.level || '—').join(' ➔ ')
-            line += ` [Progression: ${history}]`
-          }
-          body += `${line}\n`
-        })
-      }
-    }
-  } else {
-    if (emailConfig.value.content.grade) {
-      body += `Current Overall Grade: ${props.formattedGrade}\n`
-    }
-    
-    if (emailConfig.value.content.assessments) {
-      const list = [...props.allDossierAssessments]
-        .filter(a => a.score !== null && !a.excluded)
-        .sort((a, b) => new Date(b.date) - new Date(a.date))
-      
-      if (list.length > 0) {
-        body += `\nAcademic Record & Recent Progress:\n`
-        list.forEach(a => {
-          const date = formatLocalDisplay(a.date, { month: 'short', day: 'numeric' })
-          let line = `${date} - ${a.name}: ${Math.round((a.score / a.totalPoints) * 100)}%`
-          if (a.attempts?.length > 1) {
-            const history = a.attempts
-              .map(att => Math.round((att.pointsEarned / a.totalPoints) * 100) + '%')
-              .join(', ')
-            line += ` (Attempts history: ${history})`
-          }
-          body += `- ${line}\n`
-        })
-      }
-    }
+async function generateEmailLink() {
+  // Automatically put the styled rich HTML card on the clipboard
+  // so the user can easily Cmd+V / Ctrl+V paste it into Outlook/Gmail if they prefer the visual card
+  try {
+    await copyRichEmailToClipboard(studentEmailData.value, {
+      includeGrade: emailConfig.value.content.grade,
+      includeAssessments: emailConfig.value.content.assessments,
+      includeMissing: emailConfig.value.content.missing,
+      includeAttendance: emailConfig.value.content.attendance,
+      includeWashroom: emailConfig.value.content.washroom
+    })
+  } catch (err) {
+    console.warn('Could not copy rich HTML to clipboard:', err)
   }
 
-  if (emailConfig.value.content.missing) {
-    let missing = [
-      ...props.classAssessments.filter(a => (a.missing || a.score === null) && !a.excluded),
-      ...props.individualAssessments.filter(a => (a.missing || a.score === null) && !a.excluded)
-    ]
-
-    if (isSBAR.value) {
-      missing = missing.filter(a => {
-        const hasExp = (a.expectationIds && a.expectationIds.length > 0) || a.expectationId
-        const isSbarMode = a.isSbar || a.gradingFramework === 'sbar' || a.assessmentType === 'sbar'
-        return hasExp || isSbarMode
-      })
-    }
-
-    if (missing.length > 0) {
-      body += `\nMissing Assessments:\n`
-      missing.forEach(m => body += `- ${m.name}\n`)
-    } else {
-      body += `\nNo missing assessments at this time.\n`
-    }
-  }
-  
-  if (emailConfig.value.content.attendance) {
-    const periodStr = periodDisplay.value ? ` (${periodDisplay.value})` : ''
-    body += `\nAttendance Summary${periodStr}:\n`
-    
-    let absLine = `- Absences: ${props.stats?.absences ?? 0}`
-    if (props.stats?.testDayAbsences > 0) {
-      absLine += ` (${props.stats.testDayAbsences} on assessment/test ${props.stats.testDayAbsences === 1 ? 'day' : 'days'})`
-    }
-    body += `${absLine}\n`
-
-    let latesLine = `- Lates: ${props.stats?.lates ?? 0}`
-    const lateMins = props.attendanceAverages?.latesTotal ?? (props.stats?.avgLateMinutes && props.stats?.lates ? Math.round(props.stats.avgLateMinutes * props.stats.lates) : 0)
-    if ((props.stats?.lates > 0) && lateMins > 0) {
-      latesLine += ` (${lateMins} min total lost instruction time)`
-    }
-    body += `${latesLine}\n`
-
-    if (props.stats?.attendanceRate !== null && props.stats?.attendanceRate !== undefined) {
-      body += `- Attendance Rate: ${props.stats.attendanceRate}%\n`
-    }
-  }
-  
-  if (emailConfig.value.content.washroom) {
-    const periodStr = periodDisplay.value ? ` (${periodDisplay.value})` : ''
-    body += `\nOut-of-Class Activity${periodStr}:\n`
-    
-    const count = props.washroomCount || 0
-    if (count === 0) {
-      body += `- 0 out-of-class departures recorded.\n`
-    } else {
-      const totalMins = props.attendanceAverages?.washroomTotal ?? (props.stats?.washroomMinutes ?? 0)
-      
-      let summaryLine = `- Total departures: ${count} ${count === 1 ? 'trip' : 'trips'}`
-      if (totalMins > 0) {
-        summaryLine += ` (${totalMins} minutes total missed class time)`
-      }
-      body += `${summaryLine}\n`
-    }
-  }
-  
-  body += `\nPlease let me know if you have any questions.\n\nBest regards,\n${props.teacherName || 'Teacher'}`
-  return body
-})
-
-function generateEmailLink() {
-  const emails = Array.from(selectedRecipientEmails.value).join(',')
-  const subject = `Progress Report Update: ${props.student.firstName} ${props.student.lastName}`
-  const mailto = `mailto:${emails}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(emailBody.value)}`
+  // Open native mail client with mobile-safe plain text
+  const result = generateMobileSafeEmail(studentEmailData.value, {
+    includeGrade: emailConfig.value.content.grade,
+    includeAssessments: emailConfig.value.content.assessments,
+    includeMissing: emailConfig.value.content.missing,
+    includeAttendance: emailConfig.value.content.attendance,
+    includeWashroom: emailConfig.value.content.washroom
+  })
   recordPendingEmail()
-  window.location.href = mailto
+  window.location.href = result.mailtoUrl
   emit('close')
 }
 </script>
@@ -405,7 +430,42 @@ function generateEmailLink() {
 .email-config-modal-body {
   display: flex;
   flex-direction: column;
+  gap: 16px;
+}
+
+.email-config-modal-body--with-preview {
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  gap: 20px;
+  height: min(680px, 72vh);
+  overflow: hidden;
+}
+
+@media (max-width: 900px) {
+  .email-config-modal-body--with-preview {
+    grid-template-columns: 1fr;
+    height: auto;
+    overflow-y: auto;
+  }
+}
+
+.config-controls-pane {
+  display: flex;
+  flex-direction: column;
   gap: 18px;
+  min-height: 0;
+}
+
+.email-config-modal-body--with-preview .config-controls-pane {
+  overflow-y: auto;
+  padding-right: 6px;
+}
+
+.config-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
 }
 
 .config-section-title {
@@ -414,13 +474,31 @@ function generateEmailLink() {
   color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  margin: 0 0 10px 0;
+  margin: 0;
+}
+
+.reports__btn-preview {
+  padding: 4px 10px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--text-primary);
+  transition: all 0.2s ease;
+}
+
+.reports__btn-preview:hover {
+  background: var(--surface-hover);
+  border-color: var(--primary);
 }
 
 .recipient-list {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  margin-top: 10px;
 }
 
 .recipient-item {
@@ -460,6 +538,15 @@ function generateEmailLink() {
   color: var(--text-secondary);
 }
 
+.recipient-empty {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  padding: 12px;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  text-align: center;
+}
+
 .icon-checked {
   color: var(--primary);
 }
@@ -471,33 +558,73 @@ function generateEmailLink() {
   border-radius: 50%;
 }
 
-.options-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+.options-list {
+  display: flex;
+  flex-direction: column;
   gap: 10px;
+  margin-top: 8px;
 }
 
 .option-item {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   font-size: 0.85rem;
   cursor: pointer;
 }
 
-/* ── Live Email Preview Box ────────────────────────────────────────── */
-.preview-header {
+.report-preview-mini {
+  padding: 14px 16px;
+  background: var(--bg-secondary);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-md);
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.report-preview-mini p {
+  margin: 0;
+}
+
+/* ── Live Email Preview Area (Documents & Communication style) ─────── */
+.reports__print-preview-area {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  background: var(--bg-secondary);
+}
+
+.preview-banner {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 8px;
+  background: var(--surface);
+  padding: 8px 14px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--primary);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.preview-banner__left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .btn-copy-preview {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  padding: 3px 8px;
+  padding: 4px 10px;
   background: var(--bg-secondary);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
@@ -514,21 +641,38 @@ function generateEmailLink() {
   border-color: var(--primary);
 }
 
-.email-preview-box {
-  background: var(--bg-primary);
+.preview-content {
+  padding: 16px;
+  background: #cbd5e1;
+  overflow-y: auto !important;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+:root[data-theme='dark'] .preview-content,
+.dark .preview-content {
+  background: #1e293b;
+}
+
+.email-preview-paper {
+  background: var(--surface, #ffffff);
   border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  padding: 10px 12px;
-  max-height: 180px;
+  border-radius: 6px;
+  padding: 20px 22px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
 }
 
 .email-preview-text {
   margin: 0;
-  font-family: inherit;
-  font-size: 0.8rem;
-  line-height: 1.5;
-  color: var(--text-primary);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-size: 0.88rem;
+  line-height: 1.6;
+  color: var(--text-primary, #0f172a);
   white-space: pre-wrap;
   word-break: break-word;
 }

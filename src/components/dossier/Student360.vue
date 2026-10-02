@@ -390,6 +390,7 @@
       :show="showPrintModal"
       :student-id="props.studentId"
       :class-id="props.classId"
+      :stats="overallStats"
       @close="showPrintModal = false"
     />
 

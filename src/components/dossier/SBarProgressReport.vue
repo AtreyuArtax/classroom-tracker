@@ -25,19 +25,27 @@
     <!-- Attendance & Behavior Markers (Matching Traditional Mode) -->
     <section v-if="config.includeAttendance || config.includeBehavior" class="report-section report-section--attendance">
       <div class="footer-grid">
-        <div v-if="config.includeAttendance" class="footer-card footer-card--compact">
-          <span class="footer-card-label">Attendance Summary:</span>
-          <div class="footer-stats-inline">
-            <span class="f-stat-inline"><strong>{{ attendanceStats.absences }}</strong> Absences</span>
-            <span class="f-stat-divider">•</span>
-            <span class="f-stat-inline"><strong>{{ attendanceStats.lates }}</strong> Late Arrivals</span>
-            <template v-if="attendanceStats.lates > 0">
+        <div v-if="config.includeAttendance" class="footer-card footer-card--attendance">
+          <div class="footer-card-header">
+            <span class="footer-card-label">Missed Classes:</span>
+            <div class="footer-stats-inline">
+              <span class="f-stat-inline">
+                <strong>{{ attendanceStats.absences }}</strong><template v-if="attendanceStats.totalClasses"> of {{ attendanceStats.totalClasses }} classes</template><template v-else> missed</template>
+              </span>
+              <span v-if="attendanceStats.rate !== null" class="f-stat-rate" :style="{ color: getAttendanceRateColor(attendanceStats.rate) }">
+                ({{ attendanceStats.rate }}% Attendance Rate)
+              </span>
               <span class="f-stat-divider">•</span>
-              <span class="f-stat-inline">Total: <strong>{{ attendanceStats.totalMinutes }}m</strong></span>
-              <span class="f-stat-divider">•</span>
-              <span class="f-stat-inline">Avg: <strong>{{ attendanceStats.average }}m</strong></span>
-            </template>
+              <span class="f-stat-inline"><strong>{{ attendanceStats.lates }}</strong> Late<template v-if="attendanceStats.lates !== 1">s</template></span>
+              <template v-if="attendanceStats.lates > 0">
+                <span class="f-stat-divider">•</span>
+                <span class="f-stat-inline">Total: <strong>{{ attendanceStats.totalMinutes }}m</strong></span>
+              </template>
+            </div>
           </div>
+          <p class="footer-card-explainer">
+            Reflects all missed class time; official excused codes are tracked in PowerSchool.
+          </p>
         </div>
         <div v-if="config.includeBehavior" class="footer-card footer-card--compact">
           <span class="footer-card-label">Out-of-Class Summary:</span>
@@ -152,7 +160,7 @@ import {
   activeClassRecord 
 } from '../../composables/useGradebook.js'
 import { getEventsByStudent } from '../../composables/useClassroom.js'
-import { toMinutes } from '../../utils/timeUtils.js'
+import { toMinutes, getDateRangeForClassPeriod } from '../../utils/timeUtils.js'
 import { formatLocalDisplay } from '../../utils/dates.js'
 import { useSBarPrintOptions } from '../../composables/useSBarPrintOptions.js'
 
@@ -166,10 +174,11 @@ const props = defineProps({
     includeAttendance: true, 
     includeBehavior: false 
   }) },
+  stats:     { type: Object, default: null },
   isBatch:   { type: Boolean, default: false }
 })
 
-const { students, activeClass, teacherName } = useClassroom()
+const { students, activeClass, teacherName, academicTerms } = useClassroom()
 const { getStudentOverallSBarBadge, prepareSBarReportData } = useSBarPrintOptions()
 
 const events = ref([])
@@ -242,6 +251,52 @@ const unitsData = computed(() => {
   )
 })
 
+function getAttendanceRateColor(rate) {
+  if (rate === null || rate === undefined) return 'var(--print-text-muted)'
+  if (rate >= 90) return '#166534'
+  if (rate >= 80) return '#0369a1'
+  if (rate >= 70) return '#9a3412'
+  return '#991b1b'
+}
+
+const currentClassObj = computed(() => {
+  return activeClassRecord.value || activeClass.value || {}
+})
+
+const matchingTerm = computed(() => {
+  const cls = currentClassObj.value
+  if (!cls) return null
+  return academicTerms.value?.find(t => t.year === cls.year && String(t.semester) === String(cls.semester))
+})
+
+const schoolDaysElapsed = computed(() => {
+  if (props.stats?.classDays) {
+    return props.stats.classDays
+  }
+
+  const cls = currentClassObj.value
+  const term = matchingTerm.value
+  const range = getDateRangeForClassPeriod('semester', cls, academicTerms.value || [])
+  
+  const earliestAssessment = assessments.value?.[0]?.date
+  const earliestEvent = events.value.length ? events.value[events.value.length - 1]?.timestamp?.slice(0, 10) : null
+  const anchor = term?.startDate || earliestAssessment || earliestEvent
+  const cap = term?.instructionalDays ? Number(term.instructionalDays) : 999
+
+  if (!range?.from && !anchor) return null
+
+  const fromStr = range?.from || anchor
+  const toDate = range?.to ? new Date(range.to + 'T23:59:59') : new Date()
+  let count = 0
+  let cur = new Date(fromStr + 'T00:00:00')
+  while (cur <= toDate) {
+    const day = cur.getDay()
+    if (day !== 0 && day !== 6) count++
+    cur.setDate(cur.getDate() + 1)
+  }
+  return Math.min(Math.max(1, count), cap)
+})
+
 const attendanceStats = computed(() => {
   const filteredEvents = events.value.filter(e => !e.superseded)
   const absences = filteredEvents.filter(e => e.code === 'a').length
@@ -251,7 +306,23 @@ const attendanceStats = computed(() => {
   const totalMinTotal = lateEvents.reduce((acc, e) => acc + toMinutes(e.duration), 0)
   const average = lates > 0 ? Math.round((totalMinTotal / lates) * 2) / 2 : 0
 
-  return { absences, lates, totalMinutes: totalMinTotal, average }
+  const totalClasses = schoolDaysElapsed.value
+
+  let rate = null
+  if (props.stats?.attendanceRate !== undefined && props.stats?.attendanceRate !== null) {
+    rate = Math.round(Number(props.stats.attendanceRate))
+  } else if (totalClasses && totalClasses > 0) {
+    rate = Math.round(Math.min(100, Math.max(0, ((totalClasses - absences) / totalClasses) * 100)))
+  }
+
+  return { 
+    absences, 
+    lates, 
+    totalMinutes: totalMinTotal, 
+    average,
+    totalClasses,
+    rate
+  }
 })
 
 const outOfClassStats = computed(() => {
@@ -376,6 +447,37 @@ function formatDateShort(d) {
   align-items: center;
   gap: 10px;
   font-size: 0.78rem;
+}
+
+.footer-card--attendance {
+  padding: 6px 12px;
+  background: #f8fafc;
+  border-radius: 6px;
+  border: 1px solid var(--print-border);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 0.78rem;
+  justify-content: center;
+}
+
+.footer-card-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.f-stat-rate {
+  font-weight: 700;
+}
+
+.footer-card-explainer {
+  margin: 0;
+  font-size: 0.65rem;
+  color: var(--print-text-muted);
+  font-style: italic;
+  line-height: 1.2;
 }
 
 .footer-card-label {

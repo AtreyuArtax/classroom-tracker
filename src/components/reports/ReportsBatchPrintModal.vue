@@ -81,16 +81,12 @@
                   Overall Grade Badge
                 </label>
                 <label class="print-modal__option">
-                  <input type="checkbox" v-model="printConfig.includeMedians" />
-                  Weighted Median Grade
-                </label>
-                <label class="print-modal__option">
                   <input type="checkbox" v-model="printConfig.includeGradeTrend" />
                   Performance Trend Graph
                 </label>
                 <label class="print-modal__option">
                   <input type="checkbox" v-model="printConfig.includeTriangulation" />
-                  Evidence Triangulation (Pie)
+                  Evidence Triangulation (Sources)
                 </label>
                 <label class="print-modal__option">
                   <input type="checkbox" v-model="printConfig.includeCategorySummary" />
@@ -229,7 +225,6 @@ const printConfig = reactive({
   includeAttendance: true,
   includeBehavior: false,
   includeOverallGrade: true,
-  includeMedians: false,
   includeGradeTrend: true,
   includeTriangulation: false,
   includeCategorySummary: true

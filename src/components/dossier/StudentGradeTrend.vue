@@ -201,6 +201,15 @@ const chartData = computed(() => {
   }
 })
 
+const minYValue = computed(() => {
+  const vals = history.value.flatMap(p => [p.overall, p.trending]).filter(v => v !== null && !isNaN(v))
+  if (!vals.length) return 0
+  const minVal = Math.min(...vals)
+  if (minVal >= 75) return 50
+  if (minVal >= 60) return 40
+  return 0
+})
+
 const chartOptions = computed(() => ({
   responsive: true,
   maintainAspectRatio: false,
@@ -225,7 +234,7 @@ const chartOptions = computed(() => ({
   },
   scales: {
     y: {
-      min: 0,
+      min: minYValue.value,
       suggestedMax: 100,
       ticks: {
         stepSize: 20,

@@ -80,16 +80,12 @@
                 Overall Grade Badge
               </label>
               <label class="print-modal__option">
-                <input type="checkbox" v-model="printConfig.includeMedians" />
-                Weighted Median Grade
-              </label>
-              <label class="print-modal__option">
                 <input type="checkbox" v-model="printConfig.includeGradeTrend" />
                 Performance Trend Graph
               </label>
               <label class="print-modal__option">
                 <input type="checkbox" v-model="printConfig.includeTriangulation" />
-                Evidence Triangulation (Pie)
+                Evidence Triangulation (Sources)
               </label>
               <label class="print-modal__option">
                 <input type="checkbox" v-model="printConfig.includeCategorySummary" />
@@ -132,6 +128,7 @@
                 :student-id="studentId" 
                 :class-id="classId" 
                 :config="printConfig" 
+                :stats="stats"
                 :is-batch="false"
               />
               <AttendanceActivityReport
@@ -167,6 +164,7 @@
           :student-id="studentId" 
           :class-id="classId" 
           :config="printConfig" 
+          :stats="stats"
         />
         <AttendanceActivityReport
           v-else
@@ -192,7 +190,8 @@ import { executePrint } from '../../composables/usePrintOptions.js'
 const props = defineProps({
   show: { type: Boolean, default: false },
   studentId: { type: String, required: true },
-  classId: { type: String, required: true }
+  classId: { type: String, required: true },
+  stats: { type: Object, default: null }
 })
 
 const emit = defineEmits(['close'])
@@ -226,7 +225,6 @@ const printConfig = reactive({
   includeAttendance: true,
   includeBehavior: false,
   includeOverallGrade: true,
-  includeMedians: false,
   includeGradeTrend: true,
   includeTriangulation: false,
   includeCategorySummary: true
