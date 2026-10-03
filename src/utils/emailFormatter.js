@@ -376,6 +376,7 @@ export function generateMobileSafeEmail(studentData = {}, options = {}) {
  */
 export function generateRichEmailHtml(studentData = {}, options = {}) {
   const {
+    maxAssessments = 5,
     includeGrade = true,
     includeAssessments = true,
     includeMissing = true,
@@ -391,7 +392,22 @@ export function generateRichEmailHtml(studentData = {}, options = {}) {
   let reportDate = studentData.reportDate
   if (!reportDate) {
     reportDate = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  } else if (reportDate instanceof Date) {
+    reportDate = reportDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
   }
+
+  const isSbar = Boolean(studentData.isSbar)
+  const sbarBadge = studentData.sbarOverallBadge || {}
+  const sbarLevel = sbarBadge.level || '—'
+  const sbarLabel = sbarBadge.label || (sbarLevel === '—' ? 'Not Assessed' : '')
+  const sbarBadgeColor = (sbarBadge.color && !sbarBadge.color.startsWith('var('))
+    ? sbarBadge.color
+    : (sbarLevel === '—' ? '#64748b' : '#3b82f6')
+  const cleanLevel = String(sbarLevel).trim()
+  const displayLevel = cleanLevel.startsWith('Level') ? cleanLevel : `Level ${cleanLevel}`
+  const sbarBadgeText = sbarLabel && sbarLabel !== displayLevel && sbarLabel !== cleanLevel
+    ? `${displayLevel} (${sbarLabel})`
+    : displayLevel
 
   const { num: gradeNum, str: gradeStr } = normalizePercent(studentData.overallGrade)
   const att = studentData.attendance || {}
@@ -403,10 +419,46 @@ export function generateRichEmailHtml(studentData = {}, options = {}) {
     ? missingList.length
     : (typeof studentData.missingCount === 'number' ? studentData.missingCount : 0)
 
+  const hasSbarExpectations = Boolean(isSbar && Array.isArray(studentData.sbarExpectations) && studentData.sbarExpectations.length > 0)
+
   const rawList = (Array.isArray(studentData.recentAssessments) ? studentData.recentAssessments : [])
     .filter(a => !isAdministrativeAssessment(a))
 
-  const assessmentsHtml = rawList.slice(0, 5).map(a => {
+  const sbarExpectationsHtml = hasSbarExpectations
+    ? studentData.sbarExpectations.slice(0, maxAssessments).map(exp => {
+        const code = exp.code || 'Expectation'
+        const expBadge = typeof exp.badge === 'string' ? { level: exp.badge } : (exp.badge || {})
+        const expLevel = expBadge.level || exp.level || '—'
+        const expColor = (expBadge.color && !expBadge.color.startsWith('var('))
+          ? expBadge.color
+          : (expLevel === '—' ? '#64748b' : '#3b82f6')
+        const cleanExpLevel = String(expLevel).trim()
+        const displayExpLevel = cleanExpLevel.startsWith('Level') ? cleanExpLevel : `Level ${cleanExpLevel}`
+
+        let progressionHtml = ''
+        if (Array.isArray(exp.evaluations) && exp.evaluations.length > 0) {
+          const pills = exp.evaluations.slice(-3).map(e => {
+            const eBadge = typeof e.badge === 'string' ? { level: e.badge } : (e.badge || {})
+            const eLevel = eBadge.level || e.level || '—'
+            const eColor = (eBadge.color && !eBadge.color.startsWith('var(')) ? eBadge.color : '#94a3b8'
+            return `<span style="display:inline-block; padding:1px 6px; font-size:9pt; font-weight:700; border:1px solid ${eColor}; border-radius:8px; background:#f8fafc; color:#0f172a;">${eLevel}</span>`
+          }).join(' <span style="color:#94a3b8; font-size:8pt;">➔</span> ')
+          progressionHtml = `<div style="margin-top:3px; font-size:10pt; color:#64748b;">Progression: ${pills}</div>`
+        }
+
+        return `
+      <tr>
+        <td style="padding:7px 0; border-bottom:1px solid #f1f5f9; font-size:12pt; text-align:left; vertical-align:middle; word-break:break-word;">
+          <strong>${code}</strong>${progressionHtml}
+        </td>
+        <td style="padding:7px 0; border-bottom:1px solid #f1f5f9; font-size:12pt; font-weight:bold; color:#0f172a; text-align:right; vertical-align:middle; white-space:nowrap; padding-left:12px;">
+          <span style="display:inline-block; padding:2px 8px; border-radius:4px; font-size:10pt; font-weight:bold; color:#ffffff; background-color:${expColor};">${displayExpLevel}</span>
+        </td>
+      </tr>`
+      }).join('')
+    : ''
+
+  const assessmentsHtml = rawList.slice(0, maxAssessments).map(a => {
     let score = ''
     if (a.score !== undefined && a.score !== null) {
       if (a.totalPoints) {
@@ -442,6 +494,8 @@ export function generateRichEmailHtml(studentData = {}, options = {}) {
   const gradeBarWidth = gradeNum !== null ? Math.min(100, Math.max(0, gradeNum)) : 0
   const attBarWidth = attNum !== null ? Math.min(100, Math.max(0, attNum)) : 0
 
+  const hasAssessments = hasSbarExpectations || rawList.length > 0
+
   return `
 <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="500" style="width:500px; max-width:100%; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color:#0f172a; border:1px solid #cbd5e1; border-radius:10px; overflow:hidden; background:#ffffff; box-shadow:0 1px 3px rgba(0,0,0,0.05); margin:12px 0; border-collapse:separate;">
   <tr>
@@ -456,9 +510,20 @@ export function generateRichEmailHtml(studentData = {}, options = {}) {
 
       <div style="padding:16px 18px 22px 18px;">
         <!-- Current Standing -->
-        ${includeGrade && studentData.overallGrade !== undefined && studentData.overallGrade !== null ? `
+        ${includeGrade && (isSbar || (studentData.overallGrade !== undefined && studentData.overallGrade !== null)) ? `
         <div style="margin-bottom:16px; padding-bottom:14px; border-bottom:1px solid #e2e8f0;">
           <div style="font-size:11pt; font-weight:700; color:#64748b; text-transform:uppercase; margin-bottom:8px; letter-spacing:0.04em;">Current Standing</div>
+          ${isSbar ? `
+          <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="width:100%; border-collapse:collapse; margin-bottom:6px;">
+            <tr>
+              <td style="font-size:12pt; color:#334155; text-align:left; vertical-align:middle; padding:0;">Overall Level:</td>
+              <td style="font-size:14pt; font-weight:bold; color:#0f172a; text-align:right; vertical-align:middle; padding:0;">
+                <span style="display:inline-block; padding:4px 12px; border-radius:12px; font-size:11pt; font-weight:bold; color:#ffffff; background-color:${sbarBadgeColor};">
+                  ${sbarBadgeText}
+                </span>
+              </td>
+            </tr>
+          </table>` : `
           <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="width:100%; border-collapse:collapse; margin-bottom:6px;">
             <tr>
               <td style="font-size:12pt; color:#334155; text-align:left; vertical-align:middle; padding:0;">Overall Grade:</td>
@@ -472,15 +537,18 @@ export function generateRichEmailHtml(studentData = {}, options = {}) {
               <td style="width:${100 - gradeBarWidth}%; height:8px; font-size:1px; line-height:1px;">&nbsp;</td>
             </tr>
           </table>` : ''}
+          `}
         </div>` : ''}
 
         <!-- Recent & Missing Assessments -->
-        ${(includeAssessments && rawList.length > 0) || (includeMissing && (missingList.length > 0 || missingCount >= 0)) ? `
+        ${(includeAssessments && hasAssessments) || (includeMissing && (missingList.length > 0 || missingCount >= 0)) ? `
         <div style="margin-bottom:16px; padding-bottom:14px; border-bottom:1px solid #e2e8f0;">
-          ${includeAssessments && rawList.length > 0 ? `
-          <div style="font-size:11pt; font-weight:700; color:#64748b; text-transform:uppercase; margin-bottom:8px; letter-spacing:0.04em;">Recent Assessments</div>
+          ${includeAssessments && hasAssessments ? `
+          <div style="font-size:11pt; font-weight:700; color:#64748b; text-transform:uppercase; margin-bottom:8px; letter-spacing:0.04em;">
+            ${hasSbarExpectations ? 'Curriculum Expectations' : 'Recent Assessments'}
+          </div>
           <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="width:100%; border-collapse:collapse; margin-bottom:6px;">
-            ${assessmentsHtml}
+            ${hasSbarExpectations ? sbarExpectationsHtml : assessmentsHtml}
           </table>` : ''}
 
           ${includeMissing ? `

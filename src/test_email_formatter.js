@@ -5,6 +5,7 @@ import {
   generateMobileSafeEmailBody,
   generateMobileSafeEmail,
   generateRichEmailHtml,
+  copyRichEmailToClipboard,
   DIVIDER_DOUBLE,
   DIVIDER_SINGLE
 } from './utils/emailFormatter.js'
@@ -187,6 +188,197 @@ assert.ok(multiHtml.includes('Unit 1 Lab Report'), 'HTML includes first missing 
 assert.ok(multiHtml.includes('Optics Quiz'), 'HTML includes second missing item name')
 assert.ok(multiHtml.includes('(Sep 28)'), 'HTML includes first missing item date')
 console.log('✓ Explicit missing assessment names and toggle options work cleanly\n')
+
+// ─── TEST 8: SBAR Plain-Text, Rich HTML, & Clipboard Output ──────
+console.log('TEST 8: SBAR Plain-Text, Rich HTML Generation, and Clipboard Output')
+
+const sampleSbarData = {
+  name: 'Marcus Brody',
+  course: 'Grade 9 Science',
+  teacher: 'Dr. Jones',
+  department: 'Science Dept',
+  reportDate: 'Oct 3, 2026',
+  isSbar: true,
+  sbarOverallBadge: {
+    level: 'L4',
+    label: 'Level 4',
+    color: '#22c55e',
+    levelNum: 4.0
+  },
+  sbarExpectations: [
+    {
+      code: 'B1.1',
+      description: 'Analyse sustainable ecosystem interactions',
+      badge: { level: 'L4', label: 'Level 4', color: '#22c55e' },
+      evaluations: [
+        { name: 'Quiz 1', date: 'Sep 15', badge: { level: 'L2', color: '#f59e0b' } },
+        { name: 'Lab Report', date: 'Sep 22', badge: { level: 'L3', color: '#3b82f6' } },
+        { name: 'Unit Project', date: 'Sep 30', badge: { level: 'L4', color: '#22c55e' } }
+      ]
+    },
+    {
+      code: 'C2.3',
+      description: 'Chemical reactions and conservation of mass',
+      badge: { level: 'L3', label: 'Level 3', color: '#3b82f6' },
+      evaluations: [
+        { name: 'Worksheet', date: 'Sep 18', badge: { level: 'L3', color: '#3b82f6' } }
+      ]
+    }
+  ],
+  missingCount: 0,
+  attendance: { rate: 96, absences: 1, lates: 0 },
+  outOfClass: { trips: 1, minutes: 5 }
+}
+
+// 8.1 SBAR Plain-Text Verification
+const sbarBody = generateMobileSafeEmailBody(sampleSbarData)
+console.log('--- GENERATED SBAR PLAIN-TEXT EMAIL BODY ---')
+console.log(sbarBody)
+console.log('--------------------------------------------\n')
+
+assert.ok(sbarBody.includes('quick progress update for Marcus Brody in Grade 9 Science'), 'Header student name & course included')
+assert.ok(sbarBody.includes('Current Standing:'), 'Current Standing header included')
+assert.ok(sbarBody.includes('• Overall Level: Level L4 (Level 4)'), 'SBAR Overall Level badge text included in plain-text')
+assert.ok(!sbarBody.includes('• Overall Grade:'), 'Overall Grade line omitted in SBAR plain-text')
+assert.ok(sbarBody.includes('Curriculum Expectations:'), 'Curriculum Expectations section header included')
+assert.ok(!sbarBody.includes('Recent Assessments:'), 'Recent Assessments header omitted in SBAR mode with expectations')
+assert.ok(sbarBody.includes('• B1.1: Level L4 (Progression: L2 ➔ L3 ➔ L4)'), 'Expectation B1.1 with level and evaluation history progression')
+assert.ok(sbarBody.includes('• C2.3: Level L3 (Progression: L3)'), 'Expectation C2.3 with level and single evaluation progression')
+
+// Toggle options for SBAR plain-text
+const sbarBodyNoGrade = generateMobileSafeEmailBody(sampleSbarData, { includeGrade: false })
+assert.ok(!sbarBodyNoGrade.includes('Overall Level:'), 'Overall Level excluded when includeGrade=false')
+const sbarBodyNoExp = generateMobileSafeEmailBody(sampleSbarData, { includeAssessments: false })
+assert.ok(!sbarBodyNoExp.includes('Curriculum Expectations:'), 'Curriculum Expectations excluded when includeAssessments=false')
+
+// Unassessed badge fallback in plain-text
+const sbarBodyUnassessed = generateMobileSafeEmailBody({
+  ...sampleSbarData,
+  sbarOverallBadge: null,
+  sbarExpectations: []
+})
+assert.ok(sbarBodyUnassessed.includes('• Overall Level: Level — (Not Assessed)'), 'Fallback unassessed badge in plain text')
+console.log('✓ SBAR plain-text generation passes all content & option checks\n')
+
+// 8.2 SBAR Rich HTML Verification
+const sbarHtml = generateRichEmailHtml(sampleSbarData)
+console.log('--- GENERATED SBAR RICH HTML SNIPPET ---')
+console.log(sbarHtml.slice(0, 1200))
+console.log('...\n-----------------------------------------\n')
+
+assert.ok(sbarHtml.includes('Marcus Brody'), 'HTML contains student name')
+assert.ok(sbarHtml.includes('Grade 9 Science'), 'HTML contains course info')
+assert.ok(sbarHtml.includes('Current Standing'), 'HTML contains Current Standing section')
+assert.ok(sbarHtml.includes('Overall Level:'), 'HTML contains Overall Level: label')
+assert.ok(!sbarHtml.includes('Overall Grade:'), 'HTML omits Overall Grade: label')
+assert.ok(sbarHtml.includes('Level L4 (Level 4)'), 'HTML renders SBAR overall level badge text')
+assert.ok(sbarHtml.includes('background-color:#22c55e'), 'HTML contains overall badge color styling')
+assert.ok(!sbarHtml.includes('background-color:#3b82f6; height:8px'), 'HTML strictly omits percentage bar in SBAR mode')
+
+assert.ok(sbarHtml.includes('Curriculum Expectations'), 'HTML contains Curriculum Expectations section header')
+assert.ok(!sbarHtml.includes('Recent Assessments</div>'), 'HTML omits Recent Assessments header in SBAR mode')
+assert.ok(sbarHtml.includes('<strong>B1.1</strong>'), 'HTML contains expectation code B1.1')
+assert.ok(sbarHtml.includes('Level L4'), 'HTML contains expectation level badge')
+assert.ok(sbarHtml.includes('<strong>C2.3</strong>'), 'HTML contains expectation code C2.3')
+assert.ok(sbarHtml.includes('Level L3'), 'HTML contains expectation C2.3 level badge')
+
+// Verify progression pills in HTML
+assert.ok(sbarHtml.includes('Progression:'), 'HTML contains Progression: label')
+assert.ok(sbarHtml.includes('➔'), 'HTML contains arrow separator between pills')
+assert.ok(sbarHtml.includes('>L2</span>'), 'HTML contains L2 progression pill')
+assert.ok(sbarHtml.includes('>L3</span>'), 'HTML contains L3 progression pill')
+assert.ok(sbarHtml.includes('>L4</span>'), 'HTML contains L4 progression pill')
+assert.ok(sbarHtml.includes('border:1px solid #f59e0b'), 'HTML contains L2 evaluation badge color')
+
+// HTML toggling options
+const sbarHtmlNoGrade = generateRichEmailHtml(sampleSbarData, { includeGrade: false })
+assert.ok(!sbarHtmlNoGrade.includes('Overall Level:'), 'Current Standing omitted when includeGrade=false')
+const sbarHtmlNoExp = generateRichEmailHtml(sampleSbarData, { includeAssessments: false })
+assert.ok(!sbarHtmlNoExp.includes('Curriculum Expectations'), 'Curriculum Expectations omitted when includeAssessments=false')
+
+// HTML unassessed fallback
+const sbarHtmlUnassessed = generateRichEmailHtml({
+  ...sampleSbarData,
+  sbarOverallBadge: null,
+  sbarExpectations: []
+})
+assert.ok(sbarHtmlUnassessed.includes('Level — (Not Assessed)'), 'HTML fallback renders unassessed badge text')
+assert.ok(sbarHtmlUnassessed.includes('#64748b'), 'HTML fallback uses neutral muted badge color')
+console.log('✓ SBAR rich HTML generation passes all markup & badge checks\n')
+
+// 8.3 SBAR Clipboard Output Verification
+console.log('Verifying SBAR Clipboard Output (ClipboardItem & writeText)...')
+let writtenItems = null
+const originalClipboard = globalThis.navigator?.clipboard
+const originalClipboardItem = globalThis.ClipboardItem
+
+class MockClipboardItem {
+  constructor(data) {
+    this.data = data
+  }
+}
+globalThis.ClipboardItem = MockClipboardItem
+
+if (!globalThis.navigator) {
+  globalThis.navigator = {}
+}
+
+Object.defineProperty(globalThis.navigator, 'clipboard', {
+  value: {
+    write: async (items) => {
+      writtenItems = items
+    },
+    writeText: async () => {}
+  },
+  configurable: true,
+  writable: true
+})
+
+const copied = await copyRichEmailToClipboard(sampleSbarData)
+assert.strictEqual(copied, true, 'copyRichEmailToClipboard returns true')
+assert.ok(writtenItems && writtenItems.length === 1, 'Single ClipboardItem written')
+const clipboardItem = writtenItems[0]
+assert.ok(clipboardItem.data['text/plain'] instanceof Blob, 'text/plain Blob present')
+assert.ok(clipboardItem.data['text/html'] instanceof Blob, 'text/html Blob present')
+
+const clipboardPlainText = await clipboardItem.data['text/plain'].text()
+const clipboardHtml = await clipboardItem.data['text/html'].text()
+
+assert.ok(clipboardPlainText.includes('Overall Level: Level L4 (Level 4)'), 'Clipboard plain-text contains SBAR overall level')
+assert.ok(clipboardPlainText.includes('Curriculum Expectations:'), 'Clipboard plain-text contains curriculum expectations')
+assert.ok(clipboardPlainText.includes('• B1.1: Level L4 (Progression: L2 ➔ L3 ➔ L4)'), 'Clipboard plain-text contains expectation progression')
+
+assert.ok(clipboardHtml.includes('Overall Level:'), 'Clipboard HTML contains Overall Level')
+assert.ok(clipboardHtml.includes('Level L4 (Level 4)'), 'Clipboard HTML contains SBAR badge text')
+assert.ok(clipboardHtml.includes('Curriculum Expectations'), 'Clipboard HTML contains Curriculum Expectations')
+assert.ok(clipboardHtml.includes('<strong>B1.1</strong>'), 'Clipboard HTML contains expectation B1.1')
+assert.ok(clipboardHtml.includes('Progression:'), 'Clipboard HTML contains Progression label')
+assert.ok(clipboardHtml.includes('➔'), 'Clipboard HTML contains progression arrows')
+assert.ok(!clipboardHtml.includes('background-color:#3b82f6; height:8px'), 'Clipboard HTML omits percentage bar')
+
+// Test fallback writeText path
+delete globalThis.ClipboardItem
+let fallbackText = null
+globalThis.navigator.clipboard.writeText = async (text) => {
+  fallbackText = text
+}
+const copiedFallback = await copyRichEmailToClipboard(sampleSbarData)
+assert.strictEqual(copiedFallback, true, 'Fallback writeText returns true')
+assert.ok(fallbackText.includes('Overall Level: Level L4 (Level 4)'), 'Fallback clipboard text contains SBAR level')
+
+// Cleanup mocks
+if (originalClipboardItem !== undefined) {
+  globalThis.ClipboardItem = originalClipboardItem
+} else {
+  delete globalThis.ClipboardItem
+}
+if (originalClipboard !== undefined) {
+  globalThis.navigator.clipboard = originalClipboard
+} else {
+  delete globalThis.navigator.clipboard
+}
+
+console.log('✓ SBAR clipboard output verification passed successfully\n')
 
 console.log('=================================================================')
 console.log('🎉 ALL EMAIL FORMATTER & UNICODE TESTS PASSED!')
