@@ -100,11 +100,13 @@
             <span class="print-hub__chip">Expectation Mastery</span>
             <span class="print-hub__chip">Progression Timeline</span>
             <span class="print-hub__chip">Attendance Markers</span>
+            <span class="print-hub__chip">Learning Skills</span>
           </div>
           <div v-else class="print-hub__features-list">
             <span class="print-hub__chip">Overall Grade Badge</span>
             <span class="print-hub__chip">Evidence Triangulation</span>
             <span class="print-hub__chip">Attendance &amp; Behavior</span>
+            <span class="print-hub__chip">Learning Skills</span>
             <span class="print-hub__chip">Trend Line</span>
           </div>
         </div>

@@ -22,46 +22,6 @@
       </div>
     </header>
 
-    <!-- Attendance & Behavior Markers (Matching Traditional Mode) -->
-    <section v-if="config.includeAttendance || config.includeBehavior" class="report-section report-section--attendance">
-      <div class="footer-grid">
-        <div v-if="config.includeAttendance" class="footer-card footer-card--attendance">
-          <div class="footer-card-header">
-            <span class="footer-card-label">Missed Classes:</span>
-            <div class="footer-stats-inline">
-              <span class="f-stat-inline">
-                <strong>{{ attendanceStats.absences }}</strong><template v-if="attendanceStats.totalClasses"> of {{ attendanceStats.totalClasses }} classes</template><template v-else> missed</template>
-              </span>
-              <span v-if="attendanceStats.rate !== null" class="f-stat-rate" :style="{ color: getAttendanceRateColor(attendanceStats.rate) }">
-                ({{ attendanceStats.rate }}% Attendance Rate)
-              </span>
-              <span class="f-stat-divider">•</span>
-              <span class="f-stat-inline"><strong>{{ attendanceStats.lates }}</strong> Late<template v-if="attendanceStats.lates !== 1">s</template></span>
-              <template v-if="attendanceStats.lates > 0">
-                <span class="f-stat-divider">•</span>
-                <span class="f-stat-inline">Total: <strong>{{ attendanceStats.totalMinutes }}m</strong></span>
-              </template>
-            </div>
-          </div>
-          <p class="footer-card-explainer">
-            Reflects all missed class time; official excused codes are tracked in PowerSchool.
-          </p>
-        </div>
-        <div v-if="config.includeBehavior" class="footer-card footer-card--compact">
-          <span class="footer-card-label">Out-of-Class Summary:</span>
-          <div class="footer-stats-inline">
-            <span class="f-stat-inline"><strong>{{ outOfClassStats.count }}</strong> Total Trips</span>
-            <template v-if="outOfClassStats.count > 0">
-              <span class="f-stat-divider">•</span>
-              <span class="f-stat-inline">Total: <strong>{{ outOfClassStats.totalMinutes }}m</strong></span>
-              <span class="f-stat-divider">•</span>
-              <span class="f-stat-inline">Avg: <strong>{{ outOfClassStats.average }}m</strong></span>
-            </template>
-          </div>
-        </div>
-      </div>
-    </section>
-
     <!-- Expectations & Progression Matrix Table -->
     <section class="report-section report-section--expectations">
       <div class="section-title-row">
@@ -144,6 +104,82 @@
       </div>
     </section>
 
+    <!-- Attendance & Behavior Markers (Matching Traditional Mode) -->
+    <section v-if="config.includeAttendance || config.includeBehavior" class="report-section report-section--attendance">
+      <div class="footer-grid">
+        <div v-if="config.includeAttendance" class="footer-card footer-card--attendance">
+          <div class="footer-card-header">
+            <span class="footer-card-label">Missed Classes:</span>
+            <div class="footer-stats-inline">
+              <span class="f-stat-inline">
+                <strong>{{ attendanceStats.absences }}</strong><template v-if="attendanceStats.totalClasses"> of {{ attendanceStats.totalClasses }} classes</template><template v-else> missed</template>
+              </span>
+              <span v-if="attendanceStats.rate !== null" class="f-stat-rate" :style="{ color: getAttendanceRateColor(attendanceStats.rate) }">
+                ({{ attendanceStats.rate }}% Attendance Rate)
+              </span>
+              <span class="f-stat-divider">•</span>
+              <span class="f-stat-inline"><strong>{{ attendanceStats.lates }}</strong> Late<template v-if="attendanceStats.lates !== 1">s</template></span>
+              <template v-if="attendanceStats.lates > 0">
+                <span class="f-stat-divider">•</span>
+                <span class="f-stat-inline">Total: <strong>{{ attendanceStats.totalMinutes }}m</strong></span>
+              </template>
+            </div>
+          </div>
+          <p class="footer-card-explainer">
+            Reflects all missed class time; official excused codes are tracked in PowerSchool.
+          </p>
+        </div>
+        <div v-if="config.includeBehavior" class="footer-card footer-card--compact">
+          <span class="footer-card-label">Out-of-Class Summary:</span>
+          <div class="footer-stats-inline">
+            <span class="f-stat-inline"><strong>{{ outOfClassStats.count }}</strong> Total Trips</span>
+            <template v-if="outOfClassStats.count > 0">
+              <span class="f-stat-divider">•</span>
+              <span class="f-stat-inline">Total: <strong>{{ outOfClassStats.totalMinutes }}m</strong></span>
+              <span class="f-stat-divider">•</span>
+              <span class="f-stat-inline">Avg: <strong>{{ outOfClassStats.average }}m</strong></span>
+            </template>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Learning Skills & Work Habits (Compact Footer Section) -->
+    <section v-if="config.includeLearningSkills !== false && latestLearningSkillRecord" class="report-section report-section--skills-footer">
+      <div class="footer-card footer-card--skills">
+        <div class="skills-card-header">
+          <div class="skills-card-title-row">
+            <span class="footer-card-label">Learning Skills:</span>
+            <span v-if="latestLearningSkillRecord.term" class="skills-card-term">({{ latestLearningSkillRecord.term }})</span>
+          </div>
+          <div class="skills-legend-inline">
+            <span><strong>E:</strong> Excellent</span>
+            <span><strong>G:</strong> Good</span>
+            <span><strong>S:</strong> Satisfactory</span>
+            <span><strong>N:</strong> Needs Improvement</span>
+          </div>
+        </div>
+        <div class="skills-compact-row">
+          <div v-for="cat in LEARNING_SKILL_CATEGORIES" :key="cat.key" class="skills-compact-cell">
+            <span class="scc-label">{{ cat.label }}</span>
+            <span 
+              class="scc-badge"
+              :class="'scc-badge--' + (getSkillRating(cat.key) || 'none').toLowerCase()"
+            >
+              {{ getSkillRating(cat.key) || '—' }}
+            </span>
+            <span v-if="getStudentSelfRating(cat.key) && latestLearningSkillRecord.teacherEval?.[cat.key] && getStudentSelfRating(cat.key) !== getSkillRating(cat.key)" class="scc-self">
+              Self: {{ getStudentSelfRating(cat.key) }}
+            </span>
+          </div>
+        </div>
+        <div v-if="learningSkillComment" class="skills-card-comment">
+          <span class="skills-comment-label">Teacher Note:</span>
+          <span class="skills-comment-text">"{{ learningSkillComment }}"</span>
+        </div>
+      </div>
+    </section>
+
     <!-- Page Footer -->
     <footer class="report-page-footer">
       <p>Standards-Based Assessment &amp; Reporting (S-BAR) · Values reflect records to date.</p>
@@ -163,6 +199,7 @@ import { getEventsByStudent } from '../../composables/useClassroom.js'
 import { toMinutes, getDateRangeForClassPeriod } from '../../utils/timeUtils.js'
 import { formatLocalDisplay } from '../../utils/dates.js'
 import { useSBarPrintOptions } from '../../composables/useSBarPrintOptions.js'
+import { LEARNING_SKILL_CATEGORIES, getLearningSkillsByStudent, hasLearningSkillsData } from '../../composables/useLearningSkills.js'
 
 const props = defineProps({
   studentId: { type: String, required: true },
@@ -172,7 +209,8 @@ const props = defineProps({
     includeProgression: true, 
     includeOverallBadge: true, 
     includeAttendance: true, 
-    includeBehavior: false 
+    includeBehavior: false,
+    includeLearningSkills: true
   }) },
   stats:     { type: Object, default: null },
   isBatch:   { type: Boolean, default: false }
@@ -182,13 +220,19 @@ const { students, activeClass, teacherName, academicTerms } = useClassroom()
 const { getStudentOverallSBarBadge, prepareSBarReportData } = useSBarPrintOptions()
 
 const events = ref([])
+const learningSkills = ref([])
 const loading = ref(true)
 
 async function fetchEvents() {
   if (!props.studentId) return
   loading.value = true
   try {
-    events.value = await getEventsByStudent(props.studentId)
+    const [evts, lsList] = await Promise.all([
+      getEventsByStudent(props.studentId),
+      getLearningSkillsByStudent(props.classId, props.studentId).catch(() => [])
+    ])
+    events.value = evts || []
+    learningSkills.value = lsList || []
   } finally {
     loading.value = false
   }
@@ -196,6 +240,41 @@ async function fetchEvents() {
 
 onMounted(fetchEvents)
 watch(() => props.studentId, fetchEvents)
+
+const latestLearningSkillRecord = computed(() => {
+  const valid = learningSkills.value.filter(hasLearningSkillsData)
+  if (!valid.length) return null
+  return valid[0]
+})
+
+function getSkillRating(key) {
+  const rec = latestLearningSkillRecord.value
+  if (!rec) return null
+  return rec.teacherEval?.[key] || rec.ratings?.[key] || rec.studentEval?.[key] || null
+}
+
+function getStudentSelfRating(key) {
+  const rec = latestLearningSkillRecord.value
+  if (!rec) return null
+  return rec.studentEval?.[key] || null
+}
+
+const learningSkillComment = computed(() => {
+  const rec = latestLearningSkillRecord.value
+  if (!rec) return ''
+  return rec.teacherComment || rec.comment || ''
+})
+
+function getRatingLabel(rating) {
+  if (!rating) return 'Not Evaluated'
+  const map = {
+    E: 'Excellent',
+    G: 'Good',
+    S: 'Satisfactory',
+    N: 'Needs Improvement'
+  }
+  return map[rating.toUpperCase()] || rating
+}
 
 const student = computed(() => students.value[props.studentId] || {})
 
@@ -484,6 +563,117 @@ function formatDateShort(d) {
   font-weight: 700;
   color: var(--print-text);
   white-space: nowrap;
+}
+
+/* Compact Footer Learning Skills Card */
+.report-section--skills-footer {
+  margin-top: 4px;
+}
+
+.footer-card--skills {
+  padding: 6px 12px;
+  background: #f8fafc;
+  border-radius: 6px;
+  border: 1px solid var(--print-border);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.skills-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.skills-card-title-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.skills-card-term {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--print-text-muted);
+}
+
+.skills-legend-inline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.60rem;
+  color: var(--print-text-muted);
+}
+
+.skills-legend-inline strong {
+  color: var(--print-text);
+}
+
+.skills-compact-row {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 6px;
+}
+
+.skills-compact-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: white;
+  border: 1px solid var(--print-border);
+  border-radius: 4px;
+  padding: 3px 6px;
+  min-width: 0;
+}
+
+.scc-label {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--print-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.scc-badge {
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 1px 6px;
+  border-radius: 3px;
+  line-height: 1.2;
+  flex-shrink: 0;
+}
+
+.scc-badge--e { background: #dcfce7; color: #166534; }
+.scc-badge--g { background: #dbeafe; color: #1e40af; }
+.scc-badge--s { background: #fef9c3; color: #854d0e; }
+.scc-badge--n { background: #fee2e2; color: #991b1b; }
+.scc-badge--none { background: #f1f5f9; color: #64748b; }
+
+.scc-self {
+  font-size: 0.58rem;
+  color: var(--print-text-muted);
+}
+
+.skills-card-comment {
+  font-size: 0.65rem;
+  color: var(--print-text);
+  line-height: 1.25;
+  border-top: 1px dashed var(--print-border);
+  padding-top: 3px;
+  margin-top: 1px;
+}
+
+.skills-comment-label {
+  font-weight: 700;
+  color: var(--print-primary);
+  margin-right: 4px;
+}
+
+.skills-comment-text {
+  font-style: italic;
 }
 
 .footer-stats-inline {

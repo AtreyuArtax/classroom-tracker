@@ -72,6 +72,10 @@
                 <input type="checkbox" v-model="printConfig.includeBehavior" />
                 Out-of-Class Summary
               </label>
+              <label class="print-modal__option">
+                <input type="checkbox" v-model="printConfig.includeLearningSkills" />
+                Learning Skills &amp; Work Habits
+              </label>
             </template>
 
             <template v-else>
@@ -99,6 +103,10 @@
               <label class="print-modal__option">
                 <input type="checkbox" v-model="printConfig.includeBehavior" />
                 Out-of-Class Summary
+              </label>
+              <label class="print-modal__option">
+                <input type="checkbox" v-model="printConfig.includeLearningSkills" />
+                Learning Skills &amp; Work Habits
               </label>
             </template>
           </div>
@@ -227,7 +235,8 @@ const printConfig = reactive({
   includeOverallGrade: true,
   includeGradeTrend: true,
   includeTriangulation: false,
-  includeCategorySummary: true
+  includeCategorySummary: true,
+  includeLearningSkills: true
 })
 
 async function triggerPrint() {

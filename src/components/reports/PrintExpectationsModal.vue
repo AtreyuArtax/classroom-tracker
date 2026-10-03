@@ -38,6 +38,15 @@
               </select>
             </label>
 
+            <label v-if="isSBAR" class="setup__label" style="margin-top: 10px;">
+              Mastery Score Display
+              <select v-model="sbarDisplayFormat" class="setup__input">
+                <option value="both">SBAR Level &amp; Percentage (e.g. L4 · 88%)</option>
+                <option value="level">SBAR Level Only (e.g. L4, L3+)</option>
+                <option value="percent">Percentage Only (e.g. 88%)</option>
+              </select>
+            </label>
+
             <div class="form-hint" style="margin-top: 14px;">
               Audits all curriculum expectations across <strong>{{ unitsData.length }} units</strong> with student mastery averages and assessment coverage counts.
             </div>
@@ -74,8 +83,8 @@
                           <th style="width: 80px;">Code</th>
                           <th>Expectation Description</th>
                           <th style="width: 100px; text-align: center;">Assessments</th>
-                          <th style="width: 90px; text-align: right;">Class Avg</th>
-                          <th style="width: 110px; text-align: center;">Mastery Level</th>
+                          <th style="width: 105px; text-align: right;">{{ isSBAR ? (sbarDisplayFormat === 'level' ? 'Class Level' : 'Class Mastery') : 'Class Avg' }}</th>
+                          <th style="width: 120px; text-align: center;">{{ isSBAR ? 'Rubric Tier' : 'Mastery Level' }}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -84,7 +93,7 @@
                           <td>{{ exp.description }}</td>
                           <td style="text-align: center;">{{ exp.assessmentCount }}</td>
                           <td style="text-align: right;" class="score-cell">
-                            <strong>{{ exp.average !== null ? exp.average.toFixed(1) + '%' : '—' }}</strong>
+                            <strong>{{ formatExpectationScore(exp.average) }}</strong>
                           </td>
                           <td style="text-align: center;">
                             <span class="mastery-badge" :style="{ backgroundColor: getBadgeBg(exp.average), color: getBadgeColor(exp.average) }">
@@ -129,9 +138,9 @@
             <thead>
               <tr>
                 <th style="width: 10%;">Code</th>
-                <th style="width: 56%;">Expectation Description</th>
+                <th style="width: 52%;">Expectation Description</th>
                 <th style="width: 14%; text-align: center;">Assessments</th>
-                <th style="width: 20%; text-align: right;">Class Average</th>
+                <th style="width: 24%; text-align: right;">{{ isSBAR ? (sbarDisplayFormat === 'level' ? 'Class Level' : 'Class Mastery') : 'Class Average' }}</th>
               </tr>
             </thead>
             <tbody>
@@ -140,8 +149,8 @@
                 <td>{{ exp.description }}</td>
                 <td style="text-align: center;">{{ exp.assessmentCount }}</td>
                 <td style="text-align: right;">
-                  <strong>{{ exp.average !== null ? exp.average.toFixed(1) + '%' : '—' }}</strong>
-                  <span style="font-size: 0.8em; color: #555; margin-left: 4px;">({{ getMasteryText(exp.average) }})</span>
+                  <strong>{{ formatExpectationScore(exp.average) }}</strong>
+                  <span v-if="!isSBAR || sbarDisplayFormat !== 'level'" style="font-size: 0.8em; color: #555; margin-left: 4px;">({{ getMasteryText(exp.average) }})</span>
                 </td>
               </tr>
             </tbody>
@@ -156,7 +165,7 @@
 import { ref, computed, nextTick } from 'vue'
 import { BookOpen, Printer, X, Activity } from 'lucide-vue-next'
 import { usePrintOptions, executePrint } from '../../composables/usePrintOptions.js'
-import { calculateSBARExpectationMastery } from '../../utils/gradeCalcSBAR.js'
+import { calculateSBARExpectationMastery, getSBARLevelBadge } from '../../utils/gradeCalcSBAR.js'
 
 const props = defineProps({
   show: { type: Boolean, default: false },
@@ -176,6 +185,7 @@ const { selectedCohort, isSplitClass, availableSubCohorts, filterStudents, getSu
 
 const isPrinting = ref(false)
 const showPreview = ref(false)
+const sbarDisplayFormat = ref('both')
 
 const isSBAR = computed(() => props.reportClass?.gradingFramework === 'sbar' || props.reportClass?.gradingScale === 'sbar')
 
@@ -302,8 +312,21 @@ const unitsData = computed(() => {
     .filter(u => u.expectations.length > 0)
 })
 
+function formatExpectationScore(avg) {
+  if (avg === null || avg === undefined || isNaN(avg)) return '—'
+  if (!isSBAR.value) return `${avg.toFixed(1)}%`
+  const badge = getSBARLevelBadge(avg)
+  if (sbarDisplayFormat.value === 'level') return badge.level
+  if (sbarDisplayFormat.value === 'percent') return `${avg.toFixed(1)}%`
+  return `${badge.level} · ${avg.toFixed(1)}%`
+}
+
 function getMasteryText(avg) {
   if (avg === null || avg === undefined) return 'Not Assessed'
+  if (isSBAR.value) {
+    const badge = getSBARLevelBadge(avg)
+    return badge.label
+  }
   if (avg >= 80) return 'Mastery (Level 4)'
   if (avg >= 70) return 'Proficient (Level 3)'
   if (avg >= 60) return 'Approaching (Level 2)'
@@ -313,6 +336,14 @@ function getMasteryText(avg) {
 
 function getBadgeBg(avg) {
   if (avg === null || avg === undefined) return 'var(--surface-hover)'
+  if (isSBAR.value) {
+    const badge = getSBARLevelBadge(avg)
+    if (badge.level.startsWith('L4')) return '#dcfce7'
+    if (badge.level.startsWith('L3')) return '#e0f2fe'
+    if (badge.level.startsWith('L2')) return '#fef9c3'
+    if (badge.level.startsWith('L1')) return '#ffedd5'
+    return '#fee2e2'
+  }
   if (avg >= 80) return '#dcfce7'
   if (avg >= 70) return '#e0f2fe'
   if (avg >= 60) return '#fef9c3'
@@ -322,6 +353,10 @@ function getBadgeBg(avg) {
 
 function getBadgeColor(avg) {
   if (avg === null || avg === undefined) return 'var(--text-secondary)'
+  if (isSBAR.value) {
+    const badge = getSBARLevelBadge(avg)
+    return badge.color
+  }
   if (avg >= 80) return '#166534'
   if (avg >= 70) return '#075985'
   if (avg >= 60) return '#854d0e'

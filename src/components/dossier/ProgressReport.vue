@@ -66,28 +66,6 @@
       </div>
     </section>
 
-    <!-- Learning Skills Section -->
-    <section v-if="config.includeLearningSkills !== false && latestLearningSkillRecord" class="report-section report-section--skills">
-      <h3 class="section-title">Learning Skills &amp; Work Habits ({{ latestLearningSkillRecord.term }})</h3>
-      <div class="report-skills-grid">
-        <div 
-          v-for="cat in LEARNING_SKILL_CATEGORIES" 
-          :key="cat.key" 
-          class="report-skill-pill"
-        >
-          <span class="rsp-name">{{ cat.label }}</span>
-          <div class="rsp-ratings">
-            <span v-if="latestLearningSkillRecord.studentEval?.[cat.key]" class="rsp-val rsp-val--self" title="Student Self-Rating">
-              Self: {{ latestLearningSkillRecord.studentEval[cat.key] }}
-            </span>
-            <span v-if="latestLearningSkillRecord.teacherEval?.[cat.key]" class="rsp-val rsp-val--teacher" title="Teacher Rating">
-              <strong>{{ latestLearningSkillRecord.teacherEval[cat.key] }}</strong>
-            </span>
-          </div>
-        </div>
-      </div>
-    </section>
-
     <!-- Assessments Section -->
     <section v-if="allCombinedWork.length" class="report-section">
       <h3 class="section-title">Assessments</h3>
@@ -184,6 +162,42 @@
       </div>
     </section>
 
+    <!-- Learning Skills & Work Habits (Compact Footer Section) -->
+    <section v-if="config.includeLearningSkills !== false && latestLearningSkillRecord" class="report-section report-section--skills-footer">
+      <div class="footer-card footer-card--skills">
+        <div class="skills-card-header">
+          <div class="skills-card-title-row">
+            <span class="footer-card-label">Learning Skills:</span>
+            <span v-if="latestLearningSkillRecord.term" class="skills-card-term">({{ latestLearningSkillRecord.term }})</span>
+          </div>
+          <div class="skills-legend-inline">
+            <span><strong>E:</strong> Excellent</span>
+            <span><strong>G:</strong> Good</span>
+            <span><strong>S:</strong> Satisfactory</span>
+            <span><strong>N:</strong> Needs Improvement</span>
+          </div>
+        </div>
+        <div class="skills-compact-row">
+          <div v-for="cat in LEARNING_SKILL_CATEGORIES" :key="cat.key" class="skills-compact-cell">
+            <span class="scc-label">{{ cat.label }}</span>
+            <span 
+              class="scc-badge"
+              :class="'scc-badge--' + (getSkillRating(cat.key) || 'none').toLowerCase()"
+            >
+              {{ getSkillRating(cat.key) || '—' }}
+            </span>
+            <span v-if="getStudentSelfRating(cat.key) && latestLearningSkillRecord.teacherEval?.[cat.key] && getStudentSelfRating(cat.key) !== getSkillRating(cat.key)" class="scc-self">
+              Self: {{ getStudentSelfRating(cat.key) }}
+            </span>
+          </div>
+        </div>
+        <div v-if="learningSkillComment" class="skills-card-comment">
+          <span class="skills-comment-label">Teacher Note:</span>
+          <span class="skills-comment-text">"{{ learningSkillComment }}"</span>
+        </div>
+      </div>
+    </section>
+
     <!-- Page Footer -->
     <footer class="report-page-footer">
       <p>Values reflect data currently on record.</p>
@@ -265,6 +279,24 @@ const latestLearningSkillRecord = computed(() => {
   const valid = learningSkills.value.filter(hasLearningSkillsData)
   if (!valid.length) return null
   return valid[0]
+})
+
+function getSkillRating(key) {
+  const rec = latestLearningSkillRecord.value
+  if (!rec) return null
+  return rec.teacherEval?.[key] || rec.ratings?.[key] || rec.studentEval?.[key] || null
+}
+
+function getStudentSelfRating(key) {
+  const rec = latestLearningSkillRecord.value
+  if (!rec) return null
+  return rec.studentEval?.[key] || null
+}
+
+const learningSkillComment = computed(() => {
+  const rec = latestLearningSkillRecord.value
+  if (!rec) return ''
+  return rec.teacherComment || rec.comment || ''
 })
 
 const student = computed(() => students.value[props.studentId] || {})
@@ -694,48 +726,115 @@ const categoryPerformance = computed(() => {
 .cp-weight { color: var(--print-text-muted); font-size: 0.68rem; font-weight: 500; }
 .cp-pct { font-weight: 800; margin-left: 2px; }
 
-/* Learning Skills Print Grid */
-.report-skills-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-  gap: 8px;
-  margin-bottom: 16px;
+/* Compact Footer Learning Skills Card */
+.report-section--skills-footer {
+  margin-top: 4px;
 }
 
-.report-skill-pill {
+.footer-card--skills {
+  padding: 6px 12px;
+  background: #f8fafc;
+  border-radius: 6px;
+  border: 1px solid var(--print-border);
   display: flex;
   flex-direction: column;
   gap: 4px;
-  padding: 6px 10px;
-  background: #f8fafc;
-  border: 1px solid var(--print-border, #e2e8f0);
-  border-radius: 6px;
 }
 
-.rsp-name {
-  font-size: 0.72rem;
-  font-weight: 700;
-  color: var(--print-text, #1e293b);
+.skills-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.skills-card-title-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.skills-card-term {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--print-text-muted);
+}
+
+.skills-legend-inline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.60rem;
+  color: var(--print-text-muted);
+}
+
+.skills-legend-inline strong {
+  color: var(--print-text);
+}
+
+.skills-compact-row {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 6px;
+}
+
+.skills-compact-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: white;
+  border: 1px solid var(--print-border);
+  border-radius: 4px;
+  padding: 3px 6px;
+  min-width: 0;
+}
+
+.scc-label {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--print-text);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.rsp-ratings {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 0.75rem;
+.scc-badge {
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 1px 6px;
+  border-radius: 3px;
+  line-height: 1.2;
+  flex-shrink: 0;
 }
 
-.rsp-val--self {
-  color: var(--print-text-muted, #64748b);
-  font-size: 0.7rem;
+.scc-badge--e { background: #dcfce7; color: #166534; }
+.scc-badge--g { background: #dbeafe; color: #1e40af; }
+.scc-badge--s { background: #fef9c3; color: #854d0e; }
+.scc-badge--n { background: #fee2e2; color: #991b1b; }
+.scc-badge--none { background: #f1f5f9; color: #64748b; }
+
+.scc-self {
+  font-size: 0.58rem;
+  color: var(--print-text-muted);
 }
 
-.rsp-val--teacher {
-  color: var(--print-primary, #0f172a);
+.skills-card-comment {
+  font-size: 0.65rem;
+  color: var(--print-text);
+  line-height: 1.25;
+  border-top: 1px dashed var(--print-border);
+  padding-top: 3px;
+  margin-top: 1px;
+}
+
+.skills-comment-label {
   font-weight: 700;
+  color: var(--print-primary);
+  margin-right: 4px;
+}
+
+.skills-comment-text {
+  font-style: italic;
 }
 
 .section-title {
