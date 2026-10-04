@@ -180,6 +180,7 @@
 import { ref, computed, nextTick, onMounted } from 'vue'
 import { Printer, X, Activity } from 'lucide-vue-next'
 import { usePrintOptions, executePrint } from '../composables/usePrintOptions.js'
+import { schoolName } from '../composables/useClassroomState.js'
 
 const props = defineProps({
   classRecord: { type: Object, required: true },
@@ -246,7 +247,14 @@ const effectiveFooterRows = computed(() => {
 })
 
 const subheader = computed(() => {
-  return buildSubheader(props.teacherName ? `Teacher: ${props.teacherName}` : '')
+  const parts = []
+  if (props.teacherName) {
+    parts.push(`Teacher: ${props.teacherName}`)
+  }
+  if (schoolName.value) {
+    parts.push(schoolName.value)
+  }
+  return buildSubheader(parts.join(' • '))
 })
 
 function handlePrint() {

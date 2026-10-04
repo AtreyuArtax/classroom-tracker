@@ -279,6 +279,12 @@ import {
 import BaseModal from './BaseModal.vue'
 import { usePrintOptions } from '../composables/usePrintOptions.js'
 import { useMessage } from '../composables/useMessage.js'
+import { 
+  teacherTitle, 
+  schoolName, 
+  teacherEmail, 
+  includeWorkingHoursStatement 
+} from '../composables/useClassroomState.js'
 
 const props = defineProps({
   show: { type: Boolean, default: false },
@@ -314,7 +320,17 @@ watch(() => props.show, (isOpen) => {
   if (isOpen) {
     const clsName = props.classRecord?.name || 'Class'
     emailSubject.value = `[${clsName}] Important Class Update`
-    emailBody.value = `Hello,\n\nI am sharing an update with students and families for ${clsName}.\n\nBest regards,\n${props.teacherName || 'Teacher'}`
+
+    const signatureParts = [props.teacherName || 'Teacher']
+    if (teacherTitle.value) signatureParts.push(teacherTitle.value)
+    if (schoolName.value) signatureParts.push(schoolName.value)
+    if (teacherEmail.value) signatureParts.push(teacherEmail.value)
+    let sig = signatureParts.join('\n')
+    if (includeWorkingHoursStatement.value) {
+      sig += '\n\nMy working hours and your working hours may be different. Please do not feel obligated to reply outside your regular work hours.'
+    }
+
+    emailBody.value = `Hello,\n\nI am sharing an update with students and families for ${clsName}.\n\nBest regards,\n${sig}`
     isCopied.value = false
     excludedKeys.value = new Set()
   }

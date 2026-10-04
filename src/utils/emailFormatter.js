@@ -159,7 +159,11 @@ export function generateMobileSafeEmailBody(studentData = {}, options = {}) {
   const studentName = studentData.name || studentData.studentName || 'Student'
   const courseInfo = studentData.course || studentData.courseInfo || ''
   const teacherName = studentData.teacher || studentData.teacherName || 'Teacher'
+  const teacherTitle = studentData.teacherTitle || studentData.title || ''
+  const schoolName = studentData.schoolName || studentData.school || ''
+  const teacherEmail = studentData.teacherEmail || studentData.email || ''
   const department = studentData.department || ''
+  const includeWorkingHours = studentData.includeWorkingHoursStatement ?? options.includeWorkingHoursStatement ?? false
   
   // Date formatting
   let reportDate = studentData.reportDate
@@ -310,8 +314,23 @@ export function generateMobileSafeEmailBody(studentData = {}, options = {}) {
     teacherName
   ]
 
-  if (department) {
+  if (teacherTitle) {
+    closingLines.push(teacherTitle)
+  } else if (department) {
     closingLines.push(department)
+  }
+
+  if (schoolName) {
+    closingLines.push(schoolName)
+  }
+
+  if (teacherEmail) {
+    closingLines.push(teacherEmail)
+  }
+
+  if (includeWorkingHours) {
+    closingLines.push('')
+    closingLines.push('My working hours and your working hours may be different. Please do not feel obligated to reply outside your regular work hours.')
   }
 
   sections.push(closingLines.join('\n'))
@@ -387,7 +406,11 @@ export function generateRichEmailHtml(studentData = {}, options = {}) {
   const studentName = studentData.name || studentData.studentName || 'Student'
   const courseInfo = studentData.course || studentData.courseInfo || ''
   const teacherName = studentData.teacher || studentData.teacherName || 'Teacher'
+  const teacherTitle = studentData.teacherTitle || studentData.title || ''
+  const schoolName = studentData.schoolName || studentData.school || ''
+  const teacherEmail = studentData.teacherEmail || studentData.email || ''
   const department = studentData.department || ''
+  const includeWorkingHours = studentData.includeWorkingHoursStatement ?? options.includeWorkingHoursStatement ?? false
 
   let reportDate = studentData.reportDate
   if (!reportDate) {
@@ -504,7 +527,7 @@ export function generateRichEmailHtml(studentData = {}, options = {}) {
       <div style="background:#1e293b; color:#ffffff; padding:16px 18px; border-top-left-radius:9px; border-top-right-radius:9px;">
         <div style="font-size:11pt; text-transform:uppercase; letter-spacing:0.05em; color:#94a3b8; font-weight:700;">Progress Report</div>
         <div style="font-size:16pt; font-weight:bold; margin-top:2px; color:#ffffff;">${studentName}</div>
-        <div style="font-size:12pt; color:#cbd5e1; margin-top:3px;">${courseInfo}${courseInfo && teacherName ? ' • ' : ''}${teacherName}</div>
+        <div style="font-size:12pt; color:#cbd5e1; margin-top:3px;">${courseInfo}${courseInfo && teacherName ? ' • ' : ''}${teacherName}${schoolName ? ` • ${schoolName}` : ''}</div>
         <div style="font-size:11pt; color:#94a3b8; margin-top:3px;">Date: ${reportDate}</div>
       </div>
 
@@ -605,7 +628,11 @@ export function generateRichEmailHtml(studentData = {}, options = {}) {
           ${studentData.closingNote || "Please feel free to reach out if you have any questions."}
         </div>
         <div style="margin-top:14px; font-size:12pt; font-weight:600; color:#1e293b; line-height:1.5;">
-          Best regards,<br/>${teacherName}${department ? `<br/><span style="font-weight:normal; color:#64748b;">${department}</span>` : ''}
+          Best regards,<br/>${teacherName}
+          ${teacherTitle ? `<br/><span style="font-weight:normal; color:#64748b;">${teacherTitle}</span>` : (department ? `<br/><span style="font-weight:normal; color:#64748b;">${department}</span>` : '')}
+          ${schoolName ? `<br/><span style="font-weight:normal; color:#64748b;">${schoolName}</span>` : ''}
+          ${teacherEmail ? `<br/><span style="font-weight:normal; color:#2563eb;"><a href="mailto:${teacherEmail}" style="color:#2563eb; text-decoration:none;">${teacherEmail}</a></span>` : ''}
+          ${includeWorkingHours ? `<br/><br/><span style="font-size:10pt; font-weight:normal; color:#94a3b8; line-height:1.4; display:block;">My working hours and your working hours may be different. Please do not feel obligated to reply outside your regular work hours.</span>` : ''}
         </div>
       </div>
     </td>

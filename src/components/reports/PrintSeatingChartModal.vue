@@ -205,6 +205,7 @@
             <header class="sheet-doc-header">
               <div class="sheet-title-group">
                 <h1 class="sheet-main-title">{{ getDisplayTitle(currentPreviewClass) }}</h1>
+                <div v-if="teacherMetaLine" class="sheet-meta-line">{{ teacherMetaLine }}</div>
               </div>
               <div v-if="form.showPods && getActivePods(currentPreviewClass).length > 0" class="sheet-pods-legend">
                 <span 
@@ -377,6 +378,7 @@
           <header class="sheet-doc-header">
             <div class="sheet-title-group">
               <h1 class="sheet-main-title">{{ getDisplayTitle(cls) }}</h1>
+              <div v-if="teacherMetaLine" class="sheet-meta-line">{{ teacherMetaLine }}</div>
             </div>
             <div v-if="form.showPods && getActivePods(cls).length > 0" class="sheet-pods-legend">
               <span 
@@ -523,7 +525,8 @@ import BaseModal from '../BaseModal.vue'
 import { 
   activeClass as stateActiveClass, 
   students as stateStudents, 
-  classList as stateClassList 
+  classList as stateClassList,
+  schoolName
 } from '../../composables/useClassroomState.js'
 import { useStudentPhotos } from '../../composables/useStudentPhotos.js'
 import { executePrint } from '../../composables/usePrintOptions.js'
@@ -547,6 +550,17 @@ const scopeMode = ref('active') // 'active' | 'single' | 'semester' | 'custom' |
 const selectedSingleClassId = ref('')
 const selectedClassIds = ref([])
 const previewIndex = ref(0)
+
+const teacherMetaLine = computed(() => {
+  const parts = []
+  if (props.teacherName) {
+    parts.push(`Teacher: ${props.teacherName}`)
+  }
+  if (schoolName.value) {
+    parts.push(schoolName.value)
+  }
+  return parts.join(' • ')
+})
 
 const form = reactive({
   title: '', // Empty by default -> uses class name dynamically per page

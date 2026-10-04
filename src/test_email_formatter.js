@@ -380,6 +380,34 @@ if (originalClipboard !== undefined) {
 
 console.log('✓ SBAR clipboard output verification passed successfully\n')
 
+// ─── TEST 9: Teacher Profile Signature & Working Hours Statement ───
+console.log('TEST 9: Teacher Profile Signature & Working Hours Statement')
+const profileData = {
+  name: 'Alex Mercer',
+  course: 'Grade 10 Science',
+  teacher: 'Jordan Lee',
+  teacherTitle: 'Department Head - Science',
+  schoolName: 'Maplewood High School',
+  teacherEmail: 'jlee@school.org',
+  includeWorkingHoursStatement: true,
+  overallGrade: 91
+}
+
+const profilePlainText = generateMobileSafeEmailBody(profileData)
+assert.ok(profilePlainText.includes('Jordan Lee'), 'Plain text contains teacher name')
+assert.ok(profilePlainText.includes('Department Head - Science'), 'Plain text contains title')
+assert.ok(profilePlainText.includes('Maplewood High School'), 'Plain text contains school name')
+assert.ok(profilePlainText.includes('jlee@school.org'), 'Plain text contains email')
+assert.ok(profilePlainText.includes('My working hours and your working hours may be different.'), 'Plain text contains working hours disclaimer')
+
+const profileHtml = generateRichEmailHtml(profileData)
+assert.ok(profileHtml.includes('Maplewood High School'), 'HTML header or footer contains school name')
+assert.ok(profileHtml.includes('Grade 10 Science • Jordan Lee • Maplewood High School'), 'HTML header banner includes school name')
+assert.ok(profileHtml.includes('Department Head - Science'), 'HTML footer contains title')
+assert.ok(profileHtml.includes('jlee@school.org'), 'HTML footer contains email')
+assert.ok(profileHtml.includes('My working hours and your working hours may be different.'), 'HTML footer contains working hours disclaimer')
+console.log('✓ Teacher Profile and working hours statement render cleanly in plain-text and HTML\n')
+
 console.log('=================================================================')
 console.log('🎉 ALL EMAIL FORMATTER & UNICODE TESTS PASSED!')
 console.log('=================================================================')

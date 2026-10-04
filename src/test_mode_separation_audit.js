@@ -464,7 +464,7 @@ it('Progress report displayMetaLine adapts cleanly between elementary and second
   const effMath = getEffectiveClassRecord(elementaryClass, 'sub_math')
   activeClassRecord.value = effMath
   activeClass.value = elementaryClass
-  const teacher = 'Mr. Stashuk'
+  const teacher = 'Ms. Smith'
 
   function getMetaLine(cls, effRec, tName) {
     const className = cls?.name || 'Class'
@@ -479,14 +479,14 @@ it('Progress report displayMetaLine adapts cleanly between elementary and second
   }
 
   const elmMeta = getMetaLine(elementaryClass, effMath, teacher)
-  assert.strictEqual(elmMeta, 'Grade 7/8 Homeroom — Mathematics • Mr. Stashuk')
+  assert.strictEqual(elmMeta, 'Grade 7/8 Homeroom — Mathematics • Ms. Smith')
 
   // Secondary
   const effSec = getEffectiveClassRecord(secondaryClass)
   activeClassRecord.value = effSec
   activeClass.value = secondaryClass
   const secMeta = getMetaLine(secondaryClass, effSec, teacher)
-  assert.strictEqual(secMeta, 'Grade 12 Chemistry • Mr. Stashuk')
+  assert.strictEqual(secMeta, 'Grade 12 Chemistry • Ms. Smith')
 })
 
 // 5. Master Curriculum Library & Panel Isolation

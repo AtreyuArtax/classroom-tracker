@@ -129,7 +129,7 @@
                     <h1 class="sheet-title-text">
                       {{ (classTitles[previewClassIdx] || defaultTitle) + (isTwoPage && previewPage === 2 ? ' (Continued)' : '') }}
                     </h1>
-                    <span class="sheet-header-teacher">{{ teacherName }}</span>
+                    <span class="sheet-header-teacher">{{ calendarTeacherDisplay }}</span>
                   </div>
                 </header>
 
@@ -184,7 +184,7 @@
             <header class="sheet-header-main">
               <div class="sheet-header-row-flex">
                 <h1 class="sheet-title-text">{{ title || defaultTitle }}</h1>
-                <span class="sheet-header-teacher">{{ teacherName }}</span>
+                <span class="sheet-header-teacher">{{ calendarTeacherDisplay }}</span>
               </div>
             </header>
 
@@ -219,7 +219,7 @@
             <header class="sheet-header-main">
               <div class="sheet-header-row-flex">
                 <h1 class="sheet-title-text">{{ title || defaultTitle }} (Continued)</h1>
-                <span class="sheet-header-teacher">{{ teacherName }}</span>
+                <span class="sheet-header-teacher">{{ calendarTeacherDisplay }}</span>
               </div>
             </header>
             <table class="sheet-cal-table sheet-cal-table--large">
@@ -273,8 +273,11 @@ const {
   selectedYear,
   selectedSemester,
   teacherName,
+  schoolName,
   getTermRange
 } = useClassroom()
+
+const calendarTeacherDisplay = computed(() => [teacherName.value, schoolName.value].filter(Boolean).join(' • '))
 
 const isPrinting = ref(false)
 const mounted = ref(false)

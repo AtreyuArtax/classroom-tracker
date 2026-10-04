@@ -78,6 +78,10 @@
               <input type="checkbox" v-model="emailConfig.content.washroom" />
               <span class="option-label">Out-of-Class Activity</span>
             </label>
+            <label class="option-item" v-if="includeWorkingHoursStatement">
+              <input type="checkbox" v-model="emailConfig.content.workingHours" />
+              <span class="option-label">Working Hours Statement</span>
+            </label>
           </div>
         </div>
 
@@ -140,7 +144,13 @@ import {
 import { activeClassRecord, gradeMap, assessments } from '../../composables/useGradebook.js'
 import { useSBarPrintOptions } from '../../composables/useSBarPrintOptions.js'
 import { getEffectiveClassRecord } from '../../composables/useElementary.js'
-import { activeSubjectId } from '../../composables/useClassroomState.js'
+import { 
+  activeSubjectId, 
+  teacherTitle, 
+  schoolName, 
+  teacherEmail, 
+  includeWorkingHoursStatement 
+} from '../../composables/useClassroomState.js'
 import { useActionAlerts } from '../../composables/useActionAlerts.js'
 import { suggestEmailContent, buildContactNote } from '../../utils/actionAlerts.js'
 
@@ -181,7 +191,14 @@ const sbarOverallBadge = computed(() => {
   return getStudentOverallSBarBadge(targetStudentId.value, effectiveClass.value, assessments.value, gradeMap.value)
 })
 
-const DEFAULT_CONTENT = { grade: true, missing: true, attendance: true, washroom: false, assessments: true }
+const DEFAULT_CONTENT = { 
+  grade: true, 
+  missing: true, 
+  attendance: true, 
+  washroom: false, 
+  assessments: true, 
+  workingHours: includeWorkingHoursStatement.value || false 
+}
 const emailConfig = ref({
   recipients: { student: true, parents: true },
   content: { ...DEFAULT_CONTENT }
@@ -331,6 +348,10 @@ const studentEmailData = computed(() => {
     name: fullName,
     course: effectiveClass.value?.name,
     teacher: props.teacherName || 'Teacher',
+    teacherTitle: teacherTitle.value || '',
+    schoolName: schoolName.value || '',
+    teacherEmail: teacherEmail.value || '',
+    includeWorkingHoursStatement: emailConfig.value.content.workingHours !== undefined ? emailConfig.value.content.workingHours : (includeWorkingHoursStatement.value || false),
     overallGrade: props.formattedGrade,
     isSbar: isSBAR.value,
     sbarOverallBadge: sbarOverallBadge.value,

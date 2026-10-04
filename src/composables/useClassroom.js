@@ -66,6 +66,10 @@ import {
   behaviorCodes, 
   gridSize, 
   teacherName, 
+  teacherTitle,
+  schoolName,
+  teacherEmail,
+  includeWorkingHoursStatement,
   attendanceMode, 
   latenessGracePeriod, 
   periodStartTimes, 
@@ -568,6 +572,10 @@ async function init() {
     // gridSize.value will be updated per-class in _activateClass
     // We store the global default from settings for new classes
     teacherName.value = settings.teacherName || ''
+    teacherTitle.value = settings.teacherTitle || ''
+    schoolName.value = settings.schoolName || ''
+    teacherEmail.value = settings.teacherEmail || ''
+    includeWorkingHoursStatement.value = settings.includeWorkingHoursStatement !== undefined ? settings.includeWorkingHoursStatement : false
     attendanceMode.value = settings.attendanceMode || 'natural'
     latenessGracePeriod.value = settings.latenessGracePeriod !== undefined ? settings.latenessGracePeriod : 5
     showScannerButton.value = settings.showScannerButton !== undefined ? settings.showScannerButton : false
@@ -1570,6 +1578,38 @@ async function updateTeacherName(name) {
 }
 
 /**
+ * Update the global teacher title / role.
+ */
+async function updateTeacherTitle(title) {
+    await settingsService.saveTeacherTitle(title)
+    teacherTitle.value = title
+}
+
+/**
+ * Update the global school name.
+ */
+async function updateSchoolName(name) {
+    await settingsService.saveSchoolName(name)
+    schoolName.value = name
+}
+
+/**
+ * Update the global teacher email.
+ */
+async function updateTeacherEmail(email) {
+    await settingsService.saveTeacherEmail(email)
+    teacherEmail.value = email
+}
+
+/**
+ * Update the preference to include working hours statement in emails.
+ */
+async function updateIncludeWorkingHoursStatement(include) {
+    await settingsService.saveIncludeWorkingHoursStatement(include)
+    includeWorkingHoursStatement.value = include
+}
+
+/**
  * Update the default period start times.
  */
 async function updatePeriodStartTimes(times) {
@@ -1898,6 +1938,10 @@ export function useClassroom() {
         academicTerms,
         nonSchoolDays,
         teacherName,
+        teacherTitle,
+        schoolName,
+        teacherEmail,
+        includeWorkingHoursStatement,
         attendanceMode,
         latenessGracePeriod,
         periodStartTimes,
@@ -1971,6 +2015,10 @@ export function useClassroom() {
         updateAcademicTerms,
         updateNonSchoolDays,
         updateTeacherName,
+        updateTeacherTitle,
+        updateSchoolName,
+        updateTeacherEmail,
+        updateIncludeWorkingHoursStatement,
         updatePeriodStartTimes,
         updateAttendanceConfig,
         toggleTestDay,

@@ -68,11 +68,53 @@
         <!-- Profile & Appearance -->
         <div class="setup__card" id="sec-general-settings">
           <h2 class="setup__card-title">General Settings</h2>
-          <div class="setup__form-grid" style="grid-template-columns: 1fr 1fr; gap: 16px;">
+
+          <!-- Teacher Profile & School Information -->
+          <div class="setup__card-subtitle" style="font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 12px;">
+            Teacher Profile &amp; School Information
+          </div>
+          <div class="setup__form-grid" style="grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
             <label class="setup__label">
-              Teacher Name (for Reports)
-              <input v-model="localTeacherName" class="setup__input" placeholder="" @blur="saveTeacherName" />
+              Teacher Name (for Reports &amp; Emails)
+              <input v-model="localTeacherName" class="setup__input" placeholder="e.g. Ms. Smith or Alex Smith" @blur="saveTeacherName" />
             </label>
+            <label class="setup__label">
+              Title / Role (Optional)
+              <input v-model="localTeacherTitle" class="setup__input" placeholder="e.g. Department Head or Teacher" @blur="saveTeacherTitle" />
+            </label>
+            <label class="setup__label">
+              School Name (Optional)
+              <input v-model="localSchoolName" class="setup__input" placeholder="e.g. Maple High School" @blur="saveSchoolName" />
+            </label>
+            <label class="setup__label">
+              School Email (Optional)
+              <input v-model="localTeacherEmail" class="setup__input" type="email" placeholder="e.g. teacher@school.org" @blur="saveTeacherEmail" />
+            </label>
+          </div>
+
+          <!-- Email Preferences -->
+          <div style="margin-bottom: 24px; padding: 12px 14px; background: var(--bg-hover, rgba(0,0,0,0.02)); border: 1px solid var(--border-color); border-radius: 8px;">
+            <label class="setup__label--checkbox" style="display: flex; align-items: flex-start; gap: 10px; cursor: pointer; margin-bottom: 0;">
+              <input 
+                type="checkbox" 
+                v-model="localIncludeWorkingHours" 
+                class="setup__checkbox" 
+                @change="saveWorkingHoursPreference"
+                style="margin-top: 2px;"
+              />
+              <div style="font-size: 0.9rem; line-height: 1.4;">
+                <span style="font-weight: 600; color: var(--text-main);">Include working hours statement in email sign-offs</span>
+                <p style="margin: 3px 0 0; font-size: 0.8rem; color: var(--text-muted);">
+                  Appends: <em>"My working hours and your working hours may be different. Please do not feel obligated to reply outside your regular work hours."</em>
+                </p>
+              </div>
+            </label>
+          </div>
+
+          <div class="setup__card-subtitle" style="font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 12px;">
+            Application Preferences
+          </div>
+          <div class="setup__form-grid" style="grid-template-columns: 1fr 1fr; gap: 16px;">
             <div class="setup__label">
               Teaching Mode
               <div class="setup__segmented-toggle">
@@ -1236,6 +1278,10 @@ const {
   archivedClasses,
   activeClass,
   teacherName,
+  teacherTitle,
+  schoolName,
+  teacherEmail,
+  includeWorkingHoursStatement,
   attendanceMode,
   latenessGracePeriod,
   periodStartTimes,
@@ -1247,6 +1293,10 @@ const {
   restoreClass,
   deleteClass,
   updateTeacherName,
+  updateTeacherTitle,
+  updateSchoolName,
+  updateTeacherEmail,
+  updateIncludeWorkingHoursStatement,
   updatePeriodStartTimes,
   updateAttendanceConfig,
   markAllPresentToday,
@@ -1436,8 +1486,22 @@ async function copyScanStationUrl() {
 
 // --- Profile / Teacher settings ---
 const localTeacherName = ref(teacherName.value)
+const localTeacherTitle = ref(teacherTitle.value)
+const localSchoolName = ref(schoolName.value)
+const localTeacherEmail = ref(teacherEmail.value)
+const localIncludeWorkingHours = ref(includeWorkingHoursStatement.value)
+
 watch(teacherName, (v) => { localTeacherName.value = v }, { immediate: true })
+watch(teacherTitle, (v) => { localTeacherTitle.value = v }, { immediate: true })
+watch(schoolName, (v) => { localSchoolName.value = v }, { immediate: true })
+watch(teacherEmail, (v) => { localTeacherEmail.value = v }, { immediate: true })
+watch(includeWorkingHoursStatement, (v) => { localIncludeWorkingHours.value = v }, { immediate: true })
+
 async function saveTeacherName() { await updateTeacherName(localTeacherName.value) }
+async function saveTeacherTitle() { await updateTeacherTitle(localTeacherTitle.value) }
+async function saveSchoolName() { await updateSchoolName(localSchoolName.value) }
+async function saveTeacherEmail() { await updateTeacherEmail(localTeacherEmail.value) }
+async function saveWorkingHoursPreference() { await updateIncludeWorkingHoursStatement(localIncludeWorkingHours.value) }
 
 // --- Attendance configuration ---
 const localAttendanceMode = ref(attendanceMode.value)

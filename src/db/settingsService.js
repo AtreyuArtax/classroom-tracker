@@ -144,6 +144,10 @@ async function _readSettings() {
         gradebookMilestones: [],
         gradebookTemplates: [],
         teacherName: '',
+        teacherTitle: '',
+        schoolName: '',
+        teacherEmail: '',
+        includeWorkingHoursStatement: false,
         attendanceMode: 'natural',
         latenessGracePeriod: 5,
         periodStartTimes: {
@@ -409,6 +413,102 @@ export async function saveTeacherName(name) {
     const db = await getDB()
     const settings = await db.get('settings', 'singleton')
     settings.teacherName = name
+    await db.put('settings', settings, 'singleton')
+    hasUnsyncedChanges.value = true
+}
+
+/**
+ * Returns the global teacher title / role.
+ *
+ * @returns {Promise<string>}
+ */
+export async function getTeacherTitle() {
+    const settings = await _readSettings()
+    return settings.teacherTitle || ''
+}
+
+/**
+ * Saves the global teacher title / role.
+ *
+ * @param {string} title
+ * @returns {Promise<void>}
+ */
+export async function saveTeacherTitle(title) {
+    const db = await getDB()
+    const settings = await db.get('settings', 'singleton')
+    settings.teacherTitle = title
+    await db.put('settings', settings, 'singleton')
+    hasUnsyncedChanges.value = true
+}
+
+/**
+ * Returns the global school name.
+ *
+ * @returns {Promise<string>}
+ */
+export async function getSchoolName() {
+    const settings = await _readSettings()
+    return settings.schoolName || ''
+}
+
+/**
+ * Saves the global school name.
+ *
+ * @param {string} name
+ * @returns {Promise<void>}
+ */
+export async function saveSchoolName(name) {
+    const db = await getDB()
+    const settings = await db.get('settings', 'singleton')
+    settings.schoolName = name
+    await db.put('settings', settings, 'singleton')
+    hasUnsyncedChanges.value = true
+}
+
+/**
+ * Returns the global teacher email.
+ *
+ * @returns {Promise<string>}
+ */
+export async function getTeacherEmail() {
+    const settings = await _readSettings()
+    return settings.teacherEmail || ''
+}
+
+/**
+ * Saves the global teacher email.
+ *
+ * @param {string} email
+ * @returns {Promise<void>}
+ */
+export async function saveTeacherEmail(email) {
+    const db = await getDB()
+    const settings = await db.get('settings', 'singleton')
+    settings.teacherEmail = email
+    await db.put('settings', settings, 'singleton')
+    hasUnsyncedChanges.value = true
+}
+
+/**
+ * Returns whether to include the working hours statement in emails.
+ *
+ * @returns {Promise<boolean>}
+ */
+export async function getIncludeWorkingHoursStatement() {
+    const settings = await _readSettings()
+    return settings.includeWorkingHoursStatement !== undefined ? settings.includeWorkingHoursStatement : false
+}
+
+/**
+ * Saves the preference to include the working hours statement in emails.
+ *
+ * @param {boolean} include
+ * @returns {Promise<void>}
+ */
+export async function saveIncludeWorkingHoursStatement(include) {
+    const db = await getDB()
+    const settings = await db.get('settings', 'singleton')
+    settings.includeWorkingHoursStatement = !!include
     await db.put('settings', settings, 'singleton')
     hasUnsyncedChanges.value = true
 }

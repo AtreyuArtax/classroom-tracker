@@ -136,6 +136,10 @@ export function getDB() {
             gradebookMilestones: [],
             academicTerms: [],
             teacherName: '',
+            teacherTitle: '',
+            schoolName: '',
+            teacherEmail: '',
+            includeWorkingHoursStatement: false,
             periodStartTimes: {
               '1': '08:00', '2': '09:20', '3': '11:40', '4': '13:00'
             }

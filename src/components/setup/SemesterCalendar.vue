@@ -90,7 +90,7 @@
                   <h1 class="sheet-title-text">
                     {{ (classTitles[previewClassIdx] || defaultTitle) + (isTwoPage && previewPage === 2 ? ' (Continued)' : '') }}
                   </h1>
-                  <span class="sheet-header-teacher">{{ teacherName }}</span>
+                  <span class="sheet-header-teacher">{{ calendarTeacherDisplay }}</span>
                 </div>
               </header>
 
@@ -138,7 +138,7 @@
             <header class="sheet-header-main">
               <div class="sheet-header-row-flex">
                 <h1 class="sheet-title-text">{{ title || defaultTitle }}</h1>
-                <span class="sheet-header-teacher">{{ teacherName }}</span>
+                <span class="sheet-header-teacher">{{ calendarTeacherDisplay }}</span>
               </div>
             </header>
 
@@ -173,7 +173,7 @@
             <header class="sheet-header-main">
               <div class="sheet-header-row-flex">
                 <h1 class="sheet-title-text">{{ title || defaultTitle }} (Continued)</h1>
-                <span class="sheet-header-teacher">{{ teacherName }}</span>
+                <span class="sheet-header-teacher">{{ calendarTeacherDisplay }}</span>
               </div>
             </header>
             <table class="sheet-cal-table sheet-cal-table--large">
@@ -213,6 +213,7 @@ import { ref, computed, onMounted, nextTick } from 'vue'
 import { Printer, AlertCircle, Plus, Trash2, Activity } from 'lucide-vue-next'
 import { formatLocalDate } from '../../utils/dates.js'
 import { executePrint } from '../../composables/usePrintOptions.js'
+import { schoolName } from '../../composables/useClassroomState.js'
 
 const props = defineProps({
   term: { type: Object, required: true },
@@ -230,6 +231,8 @@ const previewPage = ref(1)
 const defaultTitle = computed(() => {
   return `Course Calendar: ${props.term?.year || ''} Semester ${props.term?.semester || ''}`
 })
+
+const calendarTeacherDisplay = computed(() => [props.teacherName, schoolName.value].filter(Boolean).join(' • '))
 
 const classTitles = ref([defaultTitle.value])
 

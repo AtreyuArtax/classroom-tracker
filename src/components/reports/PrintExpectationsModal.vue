@@ -128,6 +128,7 @@
           <p class="print-meta">
             Class: <strong>{{ reportClass?.name }}</strong> | 
             Teacher: <strong>{{ teacherName || 'Teacher' }}</strong> | 
+            <span v-if="schoolName">School: <strong>{{ schoolName }}</strong> | </span>
             Generated: <strong>{{ formattedDate }}</strong>
           </p>
         </header>
@@ -166,6 +167,7 @@ import { ref, computed, nextTick } from 'vue'
 import { BookOpen, Printer, X, Activity } from 'lucide-vue-next'
 import { usePrintOptions, executePrint } from '../../composables/usePrintOptions.js'
 import { calculateSBARExpectationMastery, getSBARLevelBadge } from '../../utils/gradeCalcSBAR.js'
+import { schoolName } from '../../composables/useClassroomState.js'
 
 const props = defineProps({
   show: { type: Boolean, default: false },

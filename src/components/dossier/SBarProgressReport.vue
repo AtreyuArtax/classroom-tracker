@@ -216,7 +216,7 @@ const props = defineProps({
   isBatch:   { type: Boolean, default: false }
 })
 
-const { students, activeClass, teacherName, academicTerms } = useClassroom()
+const { students, activeClass, teacherName, schoolName, academicTerms } = useClassroom()
 const { getStudentOverallSBarBadge, prepareSBarReportData } = useSBarPrintOptions()
 
 const events = ref([])
@@ -283,16 +283,28 @@ const formattedDate = computed(() => {
 })
 
 const displayMetaLine = computed(() => {
+  const parts = []
+
   const className = activeClass.value?.name || 'Class'
-  const teacher = teacherName.value || 'Teacher'
   if (activeClassRecord.value?.classType === 'elementary' && activeClassRecord.value?.activeSubjectName) {
     const subName = activeClassRecord.value.activeSubjectName
     if (className.toLowerCase().includes(subName.toLowerCase())) {
-      return `${className} • ${teacher}`
+      parts.push(className)
+    } else {
+      parts.push(`${className} — ${subName}`)
     }
-    return `${className} — ${subName} • ${teacher}`
+  } else {
+    parts.push(className)
   }
-  return `${className} • ${teacher}`
+
+  const teacher = teacherName.value || 'Teacher'
+  parts.push(teacher)
+
+  if (schoolName?.value) {
+    parts.push(schoolName.value)
+  }
+
+  return parts.join(' • ')
 })
 
 import { getEffectiveClassRecord } from '../../composables/useElementary.js'

@@ -4,7 +4,7 @@
     <header class="report-header">
       <div class="report-header__left">
         <h1 class="report-student-name">{{ student?.firstName }} {{ student?.lastName }}</h1>
-        <p class="report-meta">{{ activeClass?.name }} • {{ teacherName || 'Teacher' }}</p>
+        <p class="report-meta">{{ activeClass?.name || 'Class' }} • {{ teacherName || 'Teacher' }}<span v-if="schoolName"> • {{ schoolName }}</span></p>
       </div>
       <div class="report-header__right">
         <div class="report-type-badge">Attendance &amp; Activity Report</div>
@@ -104,23 +104,31 @@
         <div class="month-box summary-panel-box">
           <h4 class="month-title summary-panel-title">Semester Insights &amp; Guide</h4>
           <div class="summary-panel-content">
-            <div class="summary-panel-stat-row">
-              <div class="stat-mini">
-                <span class="stat-mini__label">Attendance Rate</span>
-                <span class="stat-mini__val" :class="stats.attendanceRate < 85 ? 'text-danger' : 'text-success'">{{ stats.attendanceRate }}%</span>
-              </div>
-              <div class="stat-mini">
-                <span class="stat-mini__label">Total Time Lost</span>
-                <span class="stat-mini__val">{{ Number(stats.lateMinutes || 0) + Number(stats.washroomMinutes || 0) }}m</span>
-              </div>
-              <div class="stat-mini">
-                <span class="stat-mini__label">School Days</span>
-                <span class="stat-mini__val">{{ stats.instructionalDays }}</span>
+            <!-- Dynamic Pattern Insights -->
+            <div class="insights-container">
+              <div 
+                v-for="(insight, idx) in semesterInsights" 
+                :key="idx" 
+                class="insight-card"
+                :class="'insight-card--' + insight.type"
+              >
+                <div class="insight-card__badge" :class="'badge--' + insight.type">
+                  <CheckCircle2 v-if="insight.icon === 'check'" :size="12" />
+                  <AlertCircle v-else-if="insight.icon === 'alert'" :size="12" />
+                  <Clock v-else-if="insight.icon === 'clock'" :size="12" />
+                  <DoorOpen v-else-if="insight.icon === 'door'" :size="12" />
+                  <Info v-else :size="12" />
+                </div>
+                <div class="insight-card__body">
+                  <span class="insight-card__title">{{ insight.title }}</span>
+                  <p class="insight-card__text">{{ insight.text }}</p>
+                </div>
               </div>
             </div>
 
             <div class="legend-divider"></div>
 
+            <!-- Report Legend -->
             <div class="summary-panel-legend">
               <div class="legend-entry">
                 <span class="event-tag event-tag--absent">A</span>
@@ -139,6 +147,10 @@
                 <span class="legend-text"><strong>Holiday / PA Day:</strong> No classes</span>
               </div>
             </div>
+
+            <div class="legend-disclaimer">
+              Reflects all teacher-logged classroom activity. Official attendance codes are tracked in PowerSchool.
+            </div>
           </div>
         </div>
 
@@ -149,7 +161,7 @@
 
 <script setup>
 import { computed, ref, onMounted } from 'vue'
-import { UserMinus, Clock, DoorOpen, CheckCircle2 } from 'lucide-vue-next'
+import { UserMinus, Clock, DoorOpen, CheckCircle2, AlertCircle, Info } from 'lucide-vue-next'
 import { useClassroom, getEventsByStudent } from '../../composables/useClassroom.js'
 import { toMinutes } from '../../utils/timeUtils.js'
 import { formatLocalDate } from '../../utils/dates.js'
@@ -164,6 +176,7 @@ const {
   students, 
   activeClass, 
   teacherName, 
+  schoolName,
   getTermRange, 
   nonSchoolDays 
 } = useClassroom()
@@ -272,7 +285,41 @@ const calendar = computed(() => {
     months.push({ name: monthName, year: monthYear, key: monthKey, days })
     curr.setMonth(curr.getMonth() + 1)
   }
-  
+
+  // If term dates bleed slightly into a 6th month (e.g. turnaround/feedback/PA days in early February,
+  // or late August PA days), prune empty/non-instructional bleed months so the report maintains
+  // its 5-month + 1-summary (2x3 grid) single-page print layout.
+  if (months.length > 5) {
+    // 1. Check trailing month (e.g. February turnaround days)
+    const lastMonth = months[months.length - 1]
+    const lastInstructional = lastMonth.days.filter(
+      d => d.date && !d.isOutsideRange && (!d.isHoliday || d.hasEvents)
+    ).length
+    const lastHasEvents = lastMonth.days.some(d => d.hasEvents)
+
+    if (lastInstructional === 0 || (lastInstructional <= 3 && !lastHasEvents)) {
+      months.pop()
+    }
+  }
+
+  // 2. Check leading month (e.g. late August startup/PA days before September)
+  if (months.length > 5) {
+    const firstMonth = months[0]
+    const firstInstructional = firstMonth.days.filter(
+      d => d.date && !d.isOutsideRange && (!d.isHoliday || d.hasEvents)
+    ).length
+    const firstHasEvents = firstMonth.days.some(d => d.hasEvents)
+
+    if (firstInstructional === 0 || (firstInstructional <= 3 && !firstHasEvents)) {
+      months.shift()
+    }
+  }
+
+  // 3. Guarantee strictly 5 months max for the 2-column x 3-row (6 slots) single-page report layout
+  if (months.length > 5) {
+    months.splice(5)
+  }
+
   return months
 })
 
@@ -322,6 +369,109 @@ const stats = computed(() => {
     avgLateMinutes: avgFmt(lateMinutes, lates),
     avgWashroomMinutes: avgFmt(washroomMinutes, washroomCount)
   }
+})
+
+const semesterInsights = computed(() => {
+  const s = stats.value
+  const list = []
+
+  // 1. Primary Presence & Attendance Pattern
+  if (s.absences === 0 && s.lates === 0) {
+    list.push({
+      type: 'positive',
+      icon: 'check',
+      title: 'Punctuality & Presence',
+      text: `Exemplary attendance: 100% on-time presence across ${s.instructionalDays} school days.`
+    })
+  } else if (s.absences === 0 && s.lates > 0) {
+    list.push({
+      type: s.lates >= 4 ? 'warning' : 'neutral',
+      icon: s.lates >= 4 ? 'alert' : 'clock',
+      title: 'Attendance Standing',
+      text: `100% attendance rate (0 absences), but arrived late to ${s.lates} class${s.lates > 1 ? 'es' : ''} (${s.lateMinutes}m lost instruction).`
+    })
+  } else if (s.attendanceRate >= 95) {
+    list.push({
+      type: 'positive',
+      icon: 'check',
+      title: 'Attendance Standing',
+      text: `Strong attendance at ${s.attendanceRate}% (${s.absences} absence${s.absences > 1 ? 's' : ''} across ${s.instructionalDays} school days).`
+    })
+  } else if (s.attendanceRate >= 85) {
+    list.push({
+      type: 'neutral',
+      icon: 'info',
+      title: 'Attendance Standing',
+      text: `${s.attendanceRate}% attendance rate with ${s.absences} missed classes (averaging ${s.absencesPerWeek}/wk).`
+    })
+  } else {
+    list.push({
+      type: 'danger',
+      icon: 'alert',
+      title: 'Attendance Concern',
+      text: `${s.attendanceRate}% attendance rate (${s.absences} missed classes). Below the expected 85% course threshold.`
+    })
+  }
+
+  // Check Day-of-Week Clustering if student has 3+ absences
+  if (s.absences >= 3) {
+    const dowNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+    const dowCounts = {}
+    events.value.filter(e => e.code === 'a' && !e.superseded).forEach(e => {
+      const d = new Date(e.timestamp)
+      const day = d.getDay()
+      if (day >= 1 && day <= 5) dowCounts[day] = (dowCounts[day] || 0) + 1
+    })
+    for (const [day, count] of Object.entries(dowCounts)) {
+      if (count >= 3 && count / s.absences >= 0.4) {
+        list[0].text += ` Notable cluster on ${dowNames[day]}s (${count} of ${s.absences} missed).`
+        break
+      }
+    }
+  }
+
+  // 2. Hall Departures / Punctuality / Engagement Habit
+  if (s.washroomCount >= 8 || s.washroomMinutes >= 45) {
+    list.push({
+      type: 'warning',
+      icon: 'door',
+      title: 'Hallway Departures',
+      text: `Frequent hall trips: ${s.washroomCount} departures totaling ${s.washroomMinutes}m missed instruction (avg ${s.avgWashroomMinutes}m per trip).`
+    })
+  } else if (s.washroomCount >= 3) {
+    list.push({
+      type: 'neutral',
+      icon: 'door',
+      title: 'Hallway Departures',
+      text: `${s.washroomCount} departures recorded totaling ${s.washroomMinutes}m of missed class time (avg ${s.avgWashroomMinutes}m).`
+    })
+  } else if (s.lates >= 4) {
+    list.push({
+      type: 'warning',
+      icon: 'clock',
+      title: 'Tardiness Pattern',
+      text: `Frequent late arrivals: ${s.lates} lates totaling ${s.lateMinutes}m lost at the start of class.`
+    })
+  } else if (s.washroomCount === 0 && s.lateMinutes === 0) {
+    list.push({
+      type: 'positive',
+      icon: 'check',
+      title: 'In-Class Engagement',
+      text: `Zero instructional time lost to lates or out-of-class hall departures.`
+    })
+  } else {
+    const totalLost = Number(s.lateMinutes || 0) + Number(s.washroomMinutes || 0)
+    list.push({
+      type: 'neutral',
+      icon: 'check',
+      title: 'Instructional Continuity',
+      text: totalLost > 0 
+        ? `Minimal disruption: only ${totalLost}m of total instruction missed across the semester.`
+        : `Consistent classroom engagement throughout instructional periods.`
+    })
+  }
+
+  return list.slice(0, 2)
 })
 
 </script>
@@ -597,69 +747,107 @@ const stats = computed(() => {
   height: 100%;
 }
 
-.summary-panel-stat-row {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 4px;
-  background: white;
-  border: 1px solid var(--print-border);
-  border-radius: 4px;
-  padding: 6px 4px;
-  text-align: center;
-}
-
-.stat-mini {
+.insights-container {
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: 4px;
 }
 
-.stat-mini__label {
-  font-size: 0.52rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  color: var(--print-text-muted);
+.insight-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 5px;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  padding: 4px 6px;
 }
 
-.stat-mini__val {
-  font-size: 0.85rem;
+.insight-card--positive { border-left: 3px solid #16a34a; }
+.insight-card--warning  { border-left: 3px solid #f59e0b; }
+.insight-card--danger   { border-left: 3px solid #dc2626; }
+.insight-card--neutral  { border-left: 3px solid #0284c7; }
+
+.insight-card__badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.badge--positive { color: #16a34a; background: #dcfce7; }
+.badge--warning  { color: #d97706; background: #fef3c7; }
+.badge--danger   { color: #dc2626; background: #fee2e2; }
+.badge--neutral  { color: #0284c7; background: #e0f2fe; }
+
+.insight-card__body {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.insight-card__title {
+  font-size: 0.55rem;
   font-weight: 800;
-  color: var(--print-text);
+  color: #1e293b;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  line-height: 1.1;
+}
+
+.insight-card__text {
+  font-size: 0.52rem;
+  color: #475569;
+  line-height: 1.25;
+  margin: 1px 0 0;
 }
 
 .legend-divider {
   height: 1px;
   background: #e2e8f0;
-  margin: 1px 0;
+  margin: 2px 0;
 }
 
 .summary-panel-legend {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 5px 8px;
-  padding: 2px;
+  gap: 4px 6px;
+  padding: 1px;
 }
 
 .legend-entry {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
 }
 
 .legend-text {
-  font-size: 0.52rem;
+  font-size: 0.49rem;
   color: var(--print-text);
   line-height: 1.1;
 }
 
 .legend-sample-holiday {
-  font-size: 0.44rem;
+  font-size: 0.42rem;
   font-weight: 800;
   padding: 1px 3px;
   border-radius: 2px;
   background: #cbd5e1;
   color: #334155;
   white-space: nowrap;
+}
+
+.legend-disclaimer {
+  font-size: 0.43rem;
+  color: #64748b;
+  font-style: italic;
+  line-height: 1.15;
+  margin-top: auto;
+  padding-top: 2px;
 }
 
 @media print {

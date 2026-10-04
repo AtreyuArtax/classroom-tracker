@@ -414,7 +414,7 @@ import { exportGradebookToExcel } from '../utils/exportService.js'
 import { calculateSBARExpectationMastery, getSBARLevelBadge } from '../utils/gradeCalcSBAR.js'
 import { isCohortMatch } from '../utils/gradeCalc.js'
 import { getEffectiveClassRecord, getStudentEffectiveGrade } from '../composables/useElementary.js'
-import { activeSubjectId } from '../composables/useClassroomState.js'
+import { activeSubjectId, schoolName } from '../composables/useClassroomState.js'
 
 const props = defineProps({
   classRecord: { type: Object, required: true },
@@ -516,7 +516,14 @@ const sortedAssessments = computed(() => {
 })
 
 const subheader = computed(() => {
-  return buildSubheader(props.teacherName ? `Teacher: ${props.teacherName}` : '')
+  const parts = []
+  if (props.teacherName) {
+    parts.push(`Teacher: ${props.teacherName}`)
+  }
+  if (schoolName.value) {
+    parts.push(schoolName.value)
+  }
+  return buildSubheader(parts.join(' • '))
 })
 
 const formattedDate = computed(() => {
@@ -798,6 +805,7 @@ async function handleExcelExport() {
   await exportGradebookToExcel({
     className: props.classRecord?.name || 'Class',
     teacherName: props.teacherName,
+    schoolName: schoolName.value,
     students: sortedStudents.value,
     assessments: sortedAssessments.value,
     gradeMap: gradeMap.value,

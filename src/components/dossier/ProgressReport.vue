@@ -96,7 +96,7 @@
                       </span>
                     </div>
                   </td>
-                  <td class="td-cat"><span class="cat-chip" :title="getCategoryName(a.categoryId)">{{ getCategoryName(a.categoryId) }}</span></td>
+                  <td class="td-cat"><span class="cat-chip" :title="getCategoryName(a.categoryId)">{{ getCategoryShortCode(a.categoryId) }}</span></td>
                   <td class="td-score text-right">
                     <div class="score-cell-group">
                       <span class="score-pct" :style="{ color: getGradeColor((a.score / a.totalPoints) * 100) }">
@@ -219,6 +219,7 @@ import {
 import { getEventsByStudent } from '../../composables/useClassroom.js'
 import { toMinutes, getDateRangeForClassPeriod } from '../../utils/timeUtils.js'
 import { formatLocalDisplay } from '../../utils/dates.js'
+import { formatCategoryShortCode } from '../../utils/categoryUtils.js'
 import StudentGradeTrend from './StudentGradeTrend.vue'
 import DossierEvidenceMix from './DossierEvidenceMix.vue'
 import SBarProgressReport from './SBarProgressReport.vue'
@@ -251,7 +252,7 @@ const props = defineProps({
   isBatch:   { type: Boolean, default: false }
 })
 
-const { students, activeClass, behaviorCodes, teacherName, academicTerms } = useClassroom()
+const { students, activeClass, behaviorCodes, teacherName, schoolName, academicTerms } = useClassroom()
 
 const events = ref([])
 const learningSkills = ref([])
@@ -307,16 +308,28 @@ const formattedGrade = computed(() => overallGrade.value !== null ? `${Math.roun
 const overallWeightedMedian = computed(() => studentGrades.value.median ?? null)
 
 const displayMetaLine = computed(() => {
+  const parts = []
+
   const className = activeClass.value?.name || 'Class'
-  const teacher = teacherName.value || 'Teacher'
   if (activeClassRecord.value?.classType === 'elementary' && activeClassRecord.value?.activeSubjectName) {
     const subName = activeClassRecord.value.activeSubjectName
     if (className.toLowerCase().includes(subName.toLowerCase())) {
-      return `${className} • ${teacher}`
+      parts.push(className)
+    } else {
+      parts.push(`${className} — ${subName}`)
     }
-    return `${className} — ${subName} • ${teacher}`
+  } else {
+    parts.push(className)
   }
-  return `${className} • ${teacher}`
+
+  const teacher = teacherName.value || 'Teacher'
+  parts.push(teacher)
+
+  if (schoolName?.value) {
+    parts.push(schoolName.value)
+  }
+
+  return parts.join(' • ')
 })
 
 function formatDate(d) {
@@ -325,6 +338,11 @@ function formatDate(d) {
 
 function getCategoryName(catId) {
   return activeClassRecord.value?.gradebookCategories?.find(c => c.categoryId === catId)?.name || 'Misc'
+}
+
+function getCategoryShortCode(catId) {
+  const cat = activeClassRecord.value?.gradebookCategories?.find(c => c.categoryId === catId)
+  return formatCategoryShortCode(cat || 'Misc')
 }
 
 function getGradeColor(score) {
@@ -986,6 +1004,7 @@ const categoryPerformance = computed(() => {
   text-overflow: ellipsis;
   overflow: hidden;
   max-width: 50px;
+  text-align: center;
   vertical-align: middle;
 }
 

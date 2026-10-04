@@ -7,6 +7,7 @@ import { parseLocal, formatLocalDate } from './dates.js';
 export async function exportGradebookToExcel({ 
   className, 
   teacherName, 
+  schoolName = '',
   students, 
   assessments, 
   gradeMap, 
@@ -19,6 +20,7 @@ export async function exportGradebookToExcel({
   categories.forEach(c => { categoryNameMap[c.categoryId] = c.name })
   const workbook = new ExcelJS.Workbook();
   workbook.creator = teacherName || 'Classroom Tracker';
+  if (schoolName) workbook.company = schoolName;
   workbook.created = new Date();
 
   // ---------------------------------------------------------------------------
