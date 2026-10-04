@@ -53,7 +53,8 @@ const KNOWN_TAB_SECTIONS = {
     { id: 'sec-milestones', title: 'Calendar Milestones' }
   ],
   app: [
-    { id: 'sec-general-settings', title: 'General Settings' },
+    { id: 'sec-teacher-profile', title: 'Teacher Profile' },
+    { id: 'sec-app-preferences', title: 'Preferences' },
     { id: 'sec-app-buckets', title: 'Grade Buckets' },
     { id: 'sec-app-behavior', title: 'Behavior Strategy' },
     { id: 'sec-period-times', title: 'Period Start Times' },

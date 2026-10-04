@@ -91,6 +91,8 @@ const Grades    = defineAsyncComponent(() => import('./views/Grades.vue'))
 const ScanStation = defineAsyncComponent(() => import('./views/ScanStation.vue'))
 
 import { useClassroom } from './composables/useClassroom.js'
+import { consumeUpdateNotice } from './composables/useAppUpdate.js'
+import { APP_VERSION } from './utils/appVersion.js'
 const AddAssessmentModal = defineAsyncComponent(() => import('./components/dossier/AddAssessmentModal.vue'))
 const QRScanner          = defineAsyncComponent(() => import('./components/QRScanner.vue'))
 import YearSemesterSelector from './components/YearSemesterSelector.vue'
@@ -107,8 +109,10 @@ const isUnsynced = computed(() => hasUnsyncedChanges.value)
 const queryParams = new URLSearchParams(window.location.search)
 const normalizedPath = window.location.pathname.replace(/\/$/, '')
 const isScanRoute = normalizedPath.endsWith('/scan') || queryParams.get('view') === 'scan'
-const currentView = ref(isScanRoute ? 'ScanStation' : 'Dashboard')
-const viewParams  = ref({})
+// After a "Check for Updates" / "Force refresh" reload, reopen App Settings instead of the Dashboard
+const updateNotice = isScanRoute ? null : consumeUpdateNotice()
+const currentView = ref(isScanRoute ? 'ScanStation' : (updateNotice ? 'Setup' : 'Dashboard'))
+const viewParams  = ref(updateNotice ? { tab: 'app' } : {})
 
 const views = [
   { id: 'Dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -126,7 +130,7 @@ import {
 } from './composables/useCurriculumEditorState.js'
 import { useMessage } from './composables/useMessage.js'
 
-const { select: selectMessage } = useMessage()
+const { select: selectMessage, alert: alertMessage } = useMessage()
 
 const { clear: clearUndo } = useUndo()
 const viewComponents = { Dashboard, Setup, Reports, Grades, ScanStation }
@@ -202,7 +206,19 @@ onMounted(async () => {
   }
 
   window.addEventListener('backup-linked', checkSyncStatus)
+
+  if (updateNotice) showUpdateNotice(updateNotice)
 })
+
+function showUpdateNotice({ kind, fromVersion }) {
+  if (kind === 'refresh') {
+    alertMessage(`Classroom Tracker reloaded with a fresh copy of v${APP_VERSION}.`, 'App Refreshed')
+  } else if (fromVersion && fromVersion !== APP_VERSION) {
+    alertMessage(`Classroom Tracker was updated from v${fromVersion} to v${APP_VERSION}.`, 'Update Installed')
+  } else {
+    alertMessage(`The latest build of Classroom Tracker (v${APP_VERSION}) is now running.`, 'Update Installed')
+  }
+}
 
 onUnmounted(() => {
   window.removeEventListener('backup-linked', checkSyncStatus)

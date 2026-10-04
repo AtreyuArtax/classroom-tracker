@@ -1,12 +1,16 @@
 <template>
   <BaseModal :show="show" title="User Guide & Getting Started" maxWidth="860px" @close="emit('close')">
     <GettingStartedGuide :show-mode-selector="false" :initial-tab="initialTab" />
+    <template #footer>
+      <AppVersionFooter />
+    </template>
   </BaseModal>
 </template>
 
 <script setup>
 import BaseModal from '../BaseModal.vue'
 import GettingStartedGuide from './GettingStartedGuide.vue'
+import AppVersionFooter from './AppVersionFooter.vue'
 
 defineProps({
   show: { type: Boolean, required: true },

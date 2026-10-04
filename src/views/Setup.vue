@@ -61,6 +61,7 @@
         <SetupQuickJumpNav :activeTab="activeTab" />
         <div class="setup__main-content">
           <TeacherProfileSettings />
+          <AppPreferencesSettings />
           <GradeBucketsSettings />
           <BehaviorSettings />
           <PeriodScheduleSettings />
@@ -149,6 +150,7 @@ const CurriculumLibraryManager    = defineAsyncComponent(() => import('../compon
 const DatabaseMaintenanceSettings = defineAsyncComponent(() => import('../components/setup/DatabaseMaintenanceSettings.vue'))
 const BehaviorSettings            = defineAsyncComponent(() => import('../components/setup/BehaviorSettings.vue'))
 const TeacherProfileSettings      = defineAsyncComponent(() => import('../components/setup/TeacherProfileSettings.vue'))
+const AppPreferencesSettings      = defineAsyncComponent(() => import('../components/setup/AppPreferencesSettings.vue'))
 const PeriodScheduleSettings      = defineAsyncComponent(() => import('../components/setup/PeriodScheduleSettings.vue'))
 const AttendanceStationSettings   = defineAsyncComponent(() => import('../components/setup/AttendanceStationSettings.vue'))
 const ClassManagerPanel           = defineAsyncComponent(() => import('../components/setup/ClassManagerPanel.vue'))

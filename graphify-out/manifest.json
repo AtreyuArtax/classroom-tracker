@@ -55,8 +55,8 @@
     "semantic_hash": "292ba809cdc87ea16d7beff21d110324"
   },
   "src/App.vue": {
-    "mtime": 1790211400.857625,
-    "ast_hash": "985eb18bcafb77e19f4f7a3738087818",
+    "mtime": 1791146906.994938,
+    "ast_hash": "434fb4fd66949bc35c5dcc634028dec6",
     "semantic_hash": ""
   },
   "src/components/AssessmentConversationModal.vue": {
@@ -225,8 +225,8 @@
     "semantic_hash": ""
   },
   "src/components/setup/HelpModal.vue": {
-    "mtime": 1790213037.6222367,
-    "ast_hash": "29ca781adb70477051def412298125de",
+    "mtime": 1791146567.7222579,
+    "ast_hash": "843caa9018e24c515f6ca5b6faa714f4",
     "semantic_hash": ""
   },
   "src/components/setup/SemesterCalendar.vue": {
@@ -355,8 +355,8 @@
     "semantic_hash": ""
   },
   "src/views/Setup.vue": {
-    "mtime": 1791135503.1691256,
-    "ast_hash": "bb1c4b635a42d2420d682820a76db238",
+    "mtime": 1791146567.7223725,
+    "ast_hash": "4bd83a7009cde592a3793690cb9d23c1",
     "semantic_hash": ""
   },
   "tmp/test_dates.js": {
@@ -515,8 +515,8 @@
     "semantic_hash": ""
   },
   "src/components/setup/SetupQuickJumpNav.vue": {
-    "mtime": 1788313659.711948,
-    "ast_hash": "c5d858d8c751737262722967bf573958",
+    "mtime": 1791146567.722532,
+    "ast_hash": "85b7f7e08773aa47563a0dfcc4ee86bc",
     "semantic_hash": ""
   },
   "src/components/reports/ExpectationMasteryHeatmap.vue": {
@@ -1310,8 +1310,8 @@
     "semantic_hash": ""
   },
   "src/utils/appVersion.js": {
-    "mtime": 1790187414.5744524,
-    "ast_hash": "bc07b85afc0f2860df02b19c1d39ab67",
+    "mtime": 1791147321.3020937,
+    "ast_hash": "8039cf1ecdeab66d48288b2aa571377c",
     "semantic_hash": ""
   },
   "src/components/dossier/StudentRosterEditModal.vue": {
@@ -1570,8 +1570,8 @@
     "semantic_hash": ""
   },
   "src/components/setup/TeacherProfileSettings.vue": {
-    "mtime": 1791135448.0776403,
-    "ast_hash": "9dc53c47b6e035da51fc55be87a10a1b",
+    "mtime": 1791146410.399557,
+    "ast_hash": "72c384141e351f7617fcd11c2ebe74b5",
     "semantic_hash": ""
   },
   "src/composables/useClassDeletion.js": {
@@ -1592,6 +1592,21 @@
   "src/utils/rosterCsvImport.js": {
     "mtime": 1791136579.2335377,
     "ast_hash": "3db1c9b67ab6426d39163be5be267be5",
+    "semantic_hash": ""
+  },
+  "src/components/setup/AppPreferencesSettings.vue": {
+    "mtime": 1791146411.4175022,
+    "ast_hash": "4794c4eb1e2eea13a5fdca863a96af1b",
+    "semantic_hash": ""
+  },
+  "src/components/setup/AppVersionFooter.vue": {
+    "mtime": 1791146895.3739953,
+    "ast_hash": "a97d860043c7f4781ce84bfe8b926eda",
+    "semantic_hash": ""
+  },
+  "src/composables/useAppUpdate.js": {
+    "mtime": 1791146934.1838744,
+    "ast_hash": "7862858cec829d133c91dee065420215",
     "semantic_hash": ""
   }
 }
