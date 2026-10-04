@@ -21,6 +21,7 @@ import { getDB } from './index.js'
 import { hasUnsyncedChanges, createSafetySnapshot } from './eventService.js'
 import { getCurrentSchoolYear, getCurrentSemester } from '../utils/dates.js'
 import { CURRENT_SCHEMA } from './migrations.js'
+import { classMatchesGroup } from '../utils/rosterCsvImport.js'
 
 // ─── public API ───────────────────────────────────────────────────────────────
 
@@ -851,6 +852,23 @@ export async function getStudentClassDataCounts(classId, studentId) {
 }
 
 /**
+ * Count the assessments, grades and events stored for a class, to show the
+ * teacher what a permanent class deletion will remove.
+ *
+ * @param {string} classId
+ * @returns {Promise<{ assessmentCount: number, gradeCount: number, eventCount: number }>}
+ */
+export async function getClassDataCounts(classId) {
+    const db = await getDB()
+    const [assessmentCount, gradeCount, eventCount] = await Promise.all([
+        db.countFromIndex('assessments', 'by_classId', classId).catch(() => 0),
+        db.countFromIndex('grades', 'by_classId', classId).catch(() => 0),
+        db.countFromIndex('events', 'by_classId', classId).catch(() => 0)
+    ])
+    return { assessmentCount, gradeCount, eventCount }
+}
+
+/**
  * Permanently deletes a student and ALL of their historical data (events, grades,
  * learning skills) strictly scoped to a specific class.
  *
@@ -942,18 +960,7 @@ export async function bulkImportClasses(groups) {
     for (const group of groups) {
         // Find existing class by year/sem/period/term
         const all = await store.getAll()
-        let cls = all.find(c => {
-            const sameYear = c.year === group.year
-            const sameSem = String(c.semester) === String(group.semester)
-            const samePeriod = (String(c.periodNumber).trim() === String(group.periodNumber).trim() || 
-             (!isNaN(Number(c.periodNumber)) && !isNaN(Number(group.periodNumber)) && Number(c.periodNumber) === Number(group.periodNumber)))
-            if (!sameYear || !sameSem || !samePeriod) return false
-
-            if (group.term) {
-                return c.term === group.term || (c.courseCode && group.courseCode && c.courseCode === group.courseCode)
-            }
-            return !c.term
-        })
+        let cls = all.find(c => classMatchesGroup(c, group))
 
         const isSplit = group.isSplitClass || (group.courseSections && group.courseSections.length > 1)
         const coursePill = isSplit && group.courseSections ? group.courseSections.join('/') : (group.courseCode || '')

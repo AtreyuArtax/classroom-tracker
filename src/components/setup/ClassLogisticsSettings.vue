@@ -812,22 +812,11 @@
 
 
     <!-- Cross-Class Conflicts Dialog -->
-    <div v-if="crossClassConflicts.length > 0" class="setup__dialog" role="dialog" aria-modal="true">
-      <div class="setup__dialog-box setup__dialog-box--large">
-        <h3 class="setup__dialog-title"><AlertTriangle :size="20" style="color: #f59e0b; display: inline-block; vertical-align: -3px; margin-right: 6px;" /> Student Conflict Detected</h3>
-        <p class="setup__dialog-body">The following students are currently registered in another class this semester. Moving them will unenroll them from their current class.</p>
-        <ul class="setup__dialog-list">
-          <li v-for="c in crossClassConflicts" :key="c.student.studentId">
-            <strong>{{ c.student.firstName }} {{ c.student.lastName }}</strong> (ID: {{ c.student.studentId }}) is in <em>{{ c.existingClassName }}</em>
-          </li>
-        </ul>
-        <div class="setup__dialog-actions">
-          <button class="setup__btn-danger" @click="resolveConflicts('move')">Move students to this class</button>
-          <button class="setup__btn-ghost" @click="resolveConflicts('skip')">Skip / Cancel Import</button>
-        </div>
-      </div>
-      <div class="setup__dialog-backdrop" @click="resolveConflicts('skip')" />
-    </div>
+    <CrossClassConflictDialog
+      v-if="crossClassConflicts.length > 0"
+      :conflicts="crossClassConflicts"
+      @resolve="resolveConflicts"
+    />
 
     <!-- Student QR Codes Generator Modal -->
     <QrCodeGeneratorModal
@@ -881,6 +870,7 @@ import BaseModal from '../BaseModal.vue'
 import AssessmentFrameworkSettings from './AssessmentFrameworkSettings.vue'
 import ElementarySubjectManager from './ElementarySubjectManager.vue'
 import ElementaryCsvImporter from './ElementaryCsvImporter.vue'
+import CrossClassConflictDialog from './CrossClassConflictDialog.vue'
 import SetupQuickJumpNav from './SetupQuickJumpNav.vue'
 import QrCodeGeneratorModal from './QrCodeGeneratorModal.vue'
 import SeatingLayoutDesigner from './SeatingLayoutDesigner.vue'
@@ -1516,22 +1506,35 @@ async function addSingleStudent() {
     parentContacts: []
   }
 
+  const existing = activeClass.value.students?.[row.studentId]
+  if (!isEditingStudent.value && existing && !existing.archived) {
+    singleAddError.value = `Student ID ${row.studentId} is already on this roster (${existing.firstName} ${existing.lastName}). Use Edit to change their details.`
+    return
+  }
+
   try {
-    const result = await importRoster([row])
-    
-    if (result.crossClassConflicts.length > 0) {
-      _pendingConflicts = result.crossClassConflicts
-      crossClassConflicts.value = result.crossClassConflicts
+    if (isEditingStudent.value) {
+      // Patch only the fields on this form so parent contacts, notes and flags are kept
+      const { firstName, lastName, gradeLevel, courseCode, rfidTag } = row
+      const updates = { firstName, lastName, courseCode, rfidTag }
+      if (gradeLevel) updates.gradeLevel = gradeLevel // "Auto" keeps the current grade
+      await updateStudentProfile(row.studentId, updates)
     } else {
-      singleAddSuccess.value = isEditingStudent.value ? 'Student updated!' : 'Student added to roster!'
-      isEditingStudent.value = false
-      isStudentModalOpen.value = false
-      newStudent.studentId = ''
-      newStudent.firstName = ''
-      newStudent.lastName = ''
-      newStudent.rfidTag = ''
-      setTimeout(() => singleAddSuccess.value = '', 3000)
+      const result = await importRoster([row])
+      if (result.crossClassConflicts.length > 0) {
+        _pendingConflicts = result.crossClassConflicts
+        crossClassConflicts.value = result.crossClassConflicts
+        return
+      }
     }
+    singleAddSuccess.value = isEditingStudent.value ? 'Student updated!' : 'Student added to roster!'
+    isEditingStudent.value = false
+    isStudentModalOpen.value = false
+    newStudent.studentId = ''
+    newStudent.firstName = ''
+    newStudent.lastName = ''
+    newStudent.rfidTag = ''
+    setTimeout(() => singleAddSuccess.value = '', 3000)
   } catch (err) {
     singleAddError.value = err.message
   }
@@ -1632,11 +1635,6 @@ async function resolveConflicts(action) {
   gap: 8px;
   color: var(--text, #ffffff);
   font-weight: 600;
-}
-
-.setup__chip--purple {
-  background: rgba(168, 85, 247, 0.15);
-  color: #c084fc;
 }
 
 .grading-info-engine-list {

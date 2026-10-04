@@ -13,6 +13,13 @@ import assert from 'assert'
 import fs from 'fs'
 import path from 'path'
 import Papa from 'papaparse'
+import {
+  normalizeSemester,
+  extractTerm,
+  parseRosterRows,
+  groupRosterRows,
+  classMatchesGroup
+} from './utils/rosterCsvImport.js'
 
 console.log('=================================================================')
 console.log('🧪 RUNNING TERM & SPLIT-CLASS ROSTER IMPORT REGRESSION TEST')
@@ -20,39 +27,6 @@ console.log('=================================================================\n
 
 // ── Test 1: normalizeSemester & extractTerm Unit Logic ───────────────
 console.log('TEST GROUP 1: Semester Normalization & Term Extraction')
-
-function normalizeSemester(raw) {
-  if (!raw) return '1'
-  const str = raw.toString().trim()
-  if (str === '2') return '2'
-  if (str === '1') return '1'
-  if (/^\d{4}-\d{2,4}$/.test(str)) return '1'
-  const lower = str.toLowerCase()
-  if (
-    lower.includes('sem 2') ||
-    lower.includes('semester 2') ||
-    /\bs2\b/.test(lower) ||
-    /\bsem2\b/.test(lower) ||
-    lower.includes('term 3') ||
-    lower.includes('term 4') ||
-    /\bt3\b/.test(lower) ||
-    /\bt4\b/.test(lower)
-  ) {
-    return '2'
-  }
-  return '1'
-}
-
-function extractTerm(raw) {
-  if (!raw) return null
-  const str = raw.toString().trim()
-  const lower = str.toLowerCase()
-  const match = lower.match(/\bterm\s*([1-4])\b/i) || lower.match(/\bt([1-4])\b/i)
-  if (match) {
-    return `Term ${match[1]}`
-  }
-  return null
-}
 
 assert.strictEqual(normalizeSemester('Semester 1'), '1', 'Semester 1 maps to 1')
 assert.strictEqual(normalizeSemester('Semester 2'), '2', 'Semester 2 maps to 2')
@@ -87,106 +61,11 @@ console.log('TEST GROUP 2: Full Parse of Real Board Civics & Careers CSV')
 const csvPath = path.resolve(process.cwd(), 'Student ParentGuardian Contact List civics.csv')
 const csvContent = fs.readFileSync(csvPath, 'utf8')
 
-function cleanPeriod(raw) {
-  if (!raw) return '1'
-  const match = raw.toString().match(/^(\d+)/)
-  return match ? match[1] : raw.toString()
-}
-
-function extractCourseCode(raw) {
-  if (!raw) return ''
-  return raw.toString().replace(/-\d+$/, '').trim()
-}
-
-function extractYearFromPeriod(raw) {
-  if (!raw) return null
-  const match = raw.toString().match(/\(Y(\d+)\)/i)
-  if (match) {
-    const yy = match[1]
-    const fullYear = 2000 + parseInt(yy, 10)
-    return `${fullYear}-${(fullYear + 1).toString().slice(-2)}`
-  }
-  return null
-}
-
 const parsedCsv = Papa.parse(csvContent, { header: true, skipEmptyLines: true })
-const rows = parsedCsv.data.map(row => {
-  const studentId = (row['Student ID'] ?? row['Student Number'] ?? '').toString().trim()
-  const rawStudentName = (row['Student Name'] ?? '').toString().trim()
-  let firstName = '', lastName = ''
-  if (rawStudentName) {
-    const parts = rawStudentName.split(',')
-    if (parts.length >= 2) {
-      lastName = parts[0].trim()
-      firstName = parts.slice(1).join(',').trim()
-    } else {
-      lastName = rawStudentName.trim()
-    }
-  }
-
-  const rawSem = row['Semester'] ?? row['Sem'] ?? row['Schedule'] ?? ''
-  const rawPeriod = row['Period'] ?? ''
-  const rawSection = row['Section'] ?? row['Sec Section'] ?? ''
-
-  const detectedYear = extractYearFromPeriod(rawPeriod || rawSection)
-  const year = detectedYear || '2026-27'
-  const periodNumber = (rawPeriod || rawSection) ? cleanPeriod(rawPeriod || rawSection) : '1'
-  const courseCode = rawSection ? extractCourseCode(rawSection) : ''
-  const semester = normalizeSemester(rawSem)
-  const term = extractTerm(row['Term'] ?? rawSem)
-
-  return {
-    studentId,
-    firstName,
-    lastName,
-    semester,
-    term,
-    periodNumber,
-    year,
-    courseCode,
-    _rawCourseCode: courseCode
-  }
-})
-
-const validRows = rows.filter(r => (r.firstName || r.lastName) && r.studentId)
+const { validRows } = parseRosterRows(parsedCsv.data, { year: '2026-27', periodNumber: '1', semester: '1' })
 assert.strictEqual(validRows.length, 187, '187 valid students should be identified')
 
-const groups = {}
-for (const row of validRows) {
-  const key = row.term 
-    ? `${row.year}-${row.semester}-P${row.periodNumber}-${row.term}`
-    : `${row.year}-${row.semester}-P${row.periodNumber}`
-
-  if (!groups[key]) {
-    const displayName = row.term 
-      ? `Period ${row.periodNumber} (${row.courseCode ? row.courseCode + ' · ' : ''}${row.term}) — ${row.year}`
-      : `Period ${row.periodNumber} — ${row.year}`
-
-    groups[key] = {
-      name: displayName,
-      year: row.year,
-      semester: row.semester,
-      term: row.term || null,
-      periodNumber: row.periodNumber,
-      courseCode: row.courseCode,
-      students: []
-    }
-  }
-  groups[key].students.push(row)
-}
-
-for (const k in groups) {
-  const uniqueCourses = [...new Set(groups[k].students.map(r => r._rawCourseCode || r.courseCode).filter(Boolean))]
-  if (uniqueCourses.length > 1) {
-    groups[k].isSplitClass = true
-    groups[k].courseSections = uniqueCourses
-    groups[k].courseCode = uniqueCourses.join('/')
-  } else {
-    groups[k].isSplitClass = false
-    groups[k].courseSections = uniqueCourses
-  }
-}
-
+const groups = groupRosterRows(validRows)
 const groupKeys = Object.keys(groups)
 assert.strictEqual(groupKeys.length, 8, 'Exactly 8 distinct classes must be created')
 
@@ -199,8 +78,8 @@ assert.strictEqual(p1t1.students.length, 25, 'Period 1 Term 1 Civics has 25 stud
 assert.strictEqual(p1t2.students.length, 25, 'Period 1 Term 2 Careers has 25 students')
 assert.strictEqual(p1t1.courseCode, 'CHV2OH', 'Period 1 Term 1 course code is CHV2OH')
 assert.strictEqual(p1t2.courseCode, 'GLC2OH', 'Period 1 Term 2 course code is GLC2OH')
-assert.strictEqual(p1t1.isSplitClass, false, 'Period 1 Term 1 is NOT flagged as a split class')
-assert.strictEqual(p1t2.isSplitClass, false, 'Period 1 Term 2 is NOT flagged as a split class')
+assert.ok(!p1t1.isSplitClass, 'Period 1 Term 1 is NOT flagged as a split class')
+assert.ok(!p1t2.isSplitClass, 'Period 1 Term 2 is NOT flagged as a split class')
 assert.strictEqual(p1t1.semester, '1', 'Period 1 Term 1 belongs to Semester 1')
 assert.strictEqual(p1t2.semester, '1', 'Period 1 Term 2 belongs to Semester 1')
 
@@ -211,8 +90,8 @@ assert.ok(p2t1, 'Period 2 Term 1 class exists')
 assert.ok(p2t2, 'Period 2 Term 2 class exists')
 assert.strictEqual(p2t1.students.length, 26, 'Period 2 Term 1 Civics has 26 students')
 assert.strictEqual(p2t2.students.length, 26, 'Period 2 Term 2 Careers has 26 students')
-assert.strictEqual(p2t1.isSplitClass, false)
-assert.strictEqual(p2t2.isSplitClass, false)
+assert.ok(!p2t1.isSplitClass)
+assert.ok(!p2t2.isSplitClass)
 
 // Verify Period 4 Semester 1 History (CHC2P1)
 const p4s1 = groups['2026-27-1-P4']
@@ -245,36 +124,7 @@ const splitClassRows = [
   { studentId: 'S4', firstName: 'Dave',  lastName: 'D', semester: '1', term: null, periodNumber: '3', year: '2026-27', courseCode: 'SPH4U', _rawCourseCode: 'SPH4U' }
 ]
 
-const splitGroups = {}
-for (const row of splitClassRows) {
-  const key = row.term 
-    ? `${row.year}-${row.semester}-P${row.periodNumber}-${row.term}`
-    : `${row.year}-${row.semester}-P${row.periodNumber}`
-
-  if (!splitGroups[key]) {
-    splitGroups[key] = {
-      name: `Period ${row.periodNumber} — ${row.year}`,
-      year: row.year,
-      semester: row.semester,
-      term: row.term || null,
-      periodNumber: row.periodNumber,
-      courseCode: row.courseCode,
-      students: []
-    }
-  }
-  splitGroups[key].students.push(row)
-}
-
-for (const k in splitGroups) {
-  const uniqueCourses = [...new Set(splitGroups[k].students.map(r => r._rawCourseCode || r.courseCode).filter(Boolean))]
-  if (uniqueCourses.length > 1) {
-    splitGroups[k].isSplitClass = true
-    splitGroups[k].courseSections = uniqueCourses
-    splitGroups[k].courseCode = uniqueCourses.join('/')
-    const termSuffix = splitGroups[k].term ? ` (${splitGroups[k].term})` : ''
-    splitGroups[k].name = `Period ${splitGroups[k].periodNumber} (${uniqueCourses.join('/')}${termSuffix}) — ${splitGroups[k].year}`
-  }
-}
+const splitGroups = groupRosterRows(splitClassRows)
 
 const splitGroup = splitGroups['2026-27-1-P3']
 assert.ok(splitGroup, 'Split group created')
@@ -294,33 +144,20 @@ const mockExistingClasses = [
   { classId: 'cls_3', year: '2026-27', semester: '1', periodNumber: 4, term: null, courseCode: 'CHC2P1' }
 ]
 
-function matchesClassGroup(c, group) {
-  const sameYear = c.year === group.year
-  const sameSem = String(c.semester) === String(group.semester)
-  const samePeriod = (String(c.periodNumber).trim() === String(group.periodNumber).trim() || 
-   (!isNaN(Number(c.periodNumber)) && !isNaN(Number(group.periodNumber)) && Number(c.periodNumber) === Number(group.periodNumber)))
-  if (!sameYear || !sameSem || !samePeriod) return false
-
-  if (group.term) {
-    return c.term === group.term || (c.courseCode && group.courseCode && c.courseCode === group.courseCode)
-  }
-  return !c.term
-}
-
 // Re-importing Term 1 Civics
-const matchT1 = mockExistingClasses.find(c => matchesClassGroup(c, p1t1))
+const matchT1 = mockExistingClasses.find(c => classMatchesGroup(c, p1t1))
 assert.strictEqual(matchT1?.classId, 'cls_1', 'Incoming Term 1 Civics matches cls_1 (Term 1 Civics)')
 
 // Re-importing Term 2 Careers
-const matchT2 = mockExistingClasses.find(c => matchesClassGroup(c, p1t2))
+const matchT2 = mockExistingClasses.find(c => classMatchesGroup(c, p1t2))
 assert.strictEqual(matchT2?.classId, 'cls_2', 'Incoming Term 2 Careers matches cls_2 (Term 2 Careers)')
 
 // Re-importing Period 4 History
-const matchP4 = mockExistingClasses.find(c => matchesClassGroup(c, p4s1))
+const matchP4 = mockExistingClasses.find(c => classMatchesGroup(c, p4s1))
 assert.strictEqual(matchP4?.classId, 'cls_3', 'Incoming Period 4 History matches cls_3')
 
 // Incoming new Term 1 course in Period 2 does not match Period 1 Term 1
-const matchP2T1 = mockExistingClasses.find(c => matchesClassGroup(c, p2t1))
+const matchP2T1 = mockExistingClasses.find(c => classMatchesGroup(c, p2t1))
 assert.strictEqual(matchP2T1, undefined, 'Period 2 Term 1 is identified as a new class')
 
 console.log('  ✓ Re-importing matches existing classes precisely by period AND term')

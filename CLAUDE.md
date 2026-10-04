@@ -37,7 +37,6 @@ graphify explain "<concept>"       # one node plus its neighbors
 - Read `graphify-out/GRAPH_REPORT.md` (communities, god nodes like `getDB()`, `useMessage()`, `formatLocalDate()`) only for a broad architecture review, or when query/path/explain don't give you enough.
 - If `graphify-out/wiki/index.md` exists, navigate it instead of raw files. It does not exist at the moment.
 - **After you modify code files, run `graphify update .`** to keep the graph current. It is AST-only and costs no API calls. The report's "Built from commit" line tells you whether the graph is stale compared with `git rev-parse HEAD`.
-- `src/graphify-out/` is an older, src-only graph from August 2026. Use the root `graphify-out/`.
 
 ---
 
@@ -142,7 +141,7 @@ Only the non-obvious parts — browse `src/` for the rest.
 - **Curriculum presets** (`src/data/curriculum/`) are JSON files registered in `index.js` and validated against `schema.json` (see its README). They are bundled into a separate `data-curriculum` chunk.
 - **Other deliverables in the repo:** `extension/` is a Chrome MV3 extension that routes keyboard-wedge scanner input to the app from other tabs. `rfid-companion/` is a Python tray app for Windows RFID readers, built to an `.exe` by `.github/workflows/build-companion.yml` on push.
 - The root-level `update-*.md`, `implementation_plan_*.md`, and `APP_STATE_V*.md` files are historical design notes and may be out of date relative to the code.
-- **Known debt (line limit):** 21 non-test files are over the limit (counting template + script only). They include `views/Setup.vue` (~2,260), the composables `useClassroom.js` (~2,000), `useGradebook.js` (~1,800) and `useCurriculumLibrary.js`, `db/classService.js`, and components such as `setup/AssessmentFrameworkSettings.vue`, `setup/ElementarySubjectManager.vue`, `setup/ClassLogisticsSettings.vue` and `reports/OutOfClassAnalytics.vue`. List them with:
+- **Known debt (line limit):** 18 non-test files are over the limit (counting template + script only, as of October 2026). They include the composables `useClassroom.js` (~2,100), `useGradebook.js` (~1,800) and `useCurriculumLibrary.js`, `db/classService.js`, and components such as `setup/AssessmentFrameworkSettings.vue`, `setup/ElementarySubjectManager.vue`, `setup/ClassLogisticsSettings.vue` and `reports/OutOfClassAnalytics.vue`. List them with:
   ```bash
   find src \( -name '*.vue' -o -name '*.js' \) ! -name 'test_*' -exec awk '/^<style/{s=1} !s{n++} /^<\/style>/{s=0} END{if(n>1000) print n, FILENAME}' {} \; | sort -rn
   ```

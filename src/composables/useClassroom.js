@@ -24,6 +24,7 @@ import { useMessage } from './useMessage.js'
 import { getDB } from '../db/index.js'
 import { autoPopulateAllElementarySubjects } from './useElementary.js'
 import { formatLocalDate, isSameSchoolYear } from '../utils/dates.js'
+import { mergeRosterRows, findConflictingHomeroom } from '../utils/rosterCsvImport.js'
 import {
   moveStudentFromClass,
   removeStudent,
@@ -891,10 +892,8 @@ async function importRoster(parsedRows, targetClassId = null) {
             continue
         }
 
-        // Check if ID exists in a different class
-        const existingClass = classList.value.find(
-            c => c.classId !== classId && c.students?.[row.studentId]
-        )
+        // Elementary students belong to one homeroom per school year
+        const existingClass = findConflictingHomeroom(classList.value, cls, row.studentId)
         if (existingClass) {
             crossClassConflicts.push({
                 studentId: row.studentId,
@@ -910,42 +909,10 @@ async function importRoster(parsedRows, targetClassId = null) {
     // Write valid rows to IDB
     const { inserted, updated } = await classService.importRoster(classId, validRows)
 
-    // Update local reactive state
+    // Update local reactive state (enrolled students keep their edits; see mergeRosterRows)
     const isActive = classId === activeClass.value?.classId
-    for (const row of validRows) {
-        const { studentId, firstName, lastName } = row
-        
-        if (!cls.students) cls.students = {}
-        
-        const rawG = (row.gradeLevel || row.grade || '').toString().trim()
-        const parsedG = rawG ? (rawG.toLowerCase().startsWith('grade') ? rawG : `Grade ${parseInt(rawG, 10) || rawG}`) : ''
-
-        if (cls.students[studentId]) {
-            const updatedSt = { ...row, gradeLevel: parsedG || cls.students[studentId].gradeLevel }
-            Object.assign(cls.students[studentId], updatedSt)
-            if (isActive && students.value[studentId]) {
-                Object.assign(students.value[studentId], updatedSt)
-            }
-        } else {
-            const newSt = {
-                firstName,
-                lastName,
-                gradeLevel: parsedG,
-                courseCode: row.courseCode || '',
-                parentContacts: row.parentContacts || [],
-                studentEmail: row.studentEmail || '',
-                custody: row.custody || '',
-                livingWith: row.livingWith || '',
-                birthDate: row.birthDate || '',
-                seat: null,
-                generalNote: '',
-                rfidTag: row.rfidTag || '',
-                activeStates: { isOut: false, outTime: null },
-                excludeFromAnalytics: false,
-            }
-            cls.students[studentId] = newSt
-        }
-    }
+    if (!cls.students) cls.students = {}
+    mergeRosterRows(cls.students, validRows)
 
     classService.syncClassSections(cls)
     await classService.saveClass(cls)

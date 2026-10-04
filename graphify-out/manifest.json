@@ -240,8 +240,8 @@
     "semantic_hash": ""
   },
   "src/composables/useClassroom.js": {
-    "mtime": 1791116028.3467667,
-    "ast_hash": "ea40fb3067fd4dbd63b38cf0e26ac813",
+    "mtime": 1791136579.2338288,
+    "ast_hash": "3eeb81f6c2b0a45d2311e5f8fd46c26f",
     "semantic_hash": ""
   },
   "src/composables/useGradebook.js": {
@@ -275,8 +275,8 @@
     "semantic_hash": ""
   },
   "src/db/classService.js": {
-    "mtime": 1791115983.4208808,
-    "ast_hash": "326e3ee4197571b7b1eee96774980a31",
+    "mtime": 1791135211.6312134,
+    "ast_hash": "63c4e92ae4ffa2f212ac16b767199709",
     "semantic_hash": ""
   },
   "src/db/eventService.js": {
@@ -355,8 +355,8 @@
     "semantic_hash": ""
   },
   "src/views/Setup.vue": {
-    "mtime": 1791117948.6040556,
-    "ast_hash": "5022ec4a83d64e7f9270bc72629d0436",
+    "mtime": 1791135503.1691256,
+    "ast_hash": "bb1c4b635a42d2420d682820a76db238",
     "semantic_hash": ""
   },
   "tmp/test_dates.js": {
@@ -424,11 +424,6 @@
     "ast_hash": "6a5b9065d0df08bbde2ef0e081464084",
     "semantic_hash": ""
   },
-  "src/components/setup/RosterCsvImporter.vue": {
-    "mtime": 1790683045.9337034,
-    "ast_hash": "a60ffbe9259c02b6ee6aaa025115b435",
-    "semantic_hash": ""
-  },
   "src/composables/useAttendanceTracker.js": {
     "mtime": 1790262207.0611005,
     "ast_hash": "be074deadd1a86f092e4c14c0e0de879",
@@ -440,13 +435,13 @@
     "semantic_hash": ""
   },
   "src/composables/useRosterOperations.js": {
-    "mtime": 1789127354.485792,
-    "ast_hash": "9702f0d57c14c5607d9062fe1ab7e8d2",
+    "mtime": 1791136531.7543244,
+    "ast_hash": "ef354e11985b13fb63b734832da2ddbf",
     "semantic_hash": ""
   },
   "src/components/setup/ClassLogisticsSettings.vue": {
-    "mtime": 1790682916.1197598,
-    "ast_hash": "f0d6ca6c56c6f90bdca472abb78679f2",
+    "mtime": 1791136557.4573855,
+    "ast_hash": "8fc23f5c76b50e181bb302c2ac244744",
     "semantic_hash": ""
   },
   "src/components/setup/DatabaseMaintenanceSettings.vue": {
@@ -1475,8 +1470,8 @@
     "semantic_hash": ""
   },
   "src/test_term_and_split_csv_import.js": {
-    "mtime": 1790683087.0685718,
-    "ast_hash": "29802439bfd06f12d1bb299c6647026e",
+    "mtime": 1791135527.0496905,
+    "ast_hash": "32254bd1ce3b2604573aeeebf23979e9",
     "semantic_hash": ""
   },
   "src/components/dossier/ActionQueueBar.vue": {
@@ -1522,6 +1517,81 @@
   "src/utils/categoryUtils.js": {
     "mtime": 1791118972.339335,
     "ast_hash": "44d1ad721241ddd3ca84704bc67132d2",
+    "semantic_hash": ""
+  },
+  "src/components/setup/AddClassModal.vue": {
+    "mtime": 1791135399.4621153,
+    "ast_hash": "c6ed34e66b7ad4583a47636fcfc78d1d",
+    "semantic_hash": ""
+  },
+  "src/components/setup/AttendanceStationSettings.vue": {
+    "mtime": 1791135456.6668034,
+    "ast_hash": "05734576bb6a289a394ad8613a460abd",
+    "semantic_hash": ""
+  },
+  "src/components/setup/BulkImportDialog.vue": {
+    "mtime": 1791136557.4579625,
+    "ast_hash": "79a224b38363f6b2e32e41df0bcd57a4",
+    "semantic_hash": ""
+  },
+  "src/components/setup/ClassManagerPanel.vue": {
+    "mtime": 1791135421.0169783,
+    "ast_hash": "00e6174a50feaea2f1286a4ee70ce136",
+    "semantic_hash": ""
+  },
+  "src/components/setup/CrossClassConflictDialog.vue": {
+    "mtime": 1791135261.4512196,
+    "ast_hash": "14af50c2dae678386bf228f61597c07d",
+    "semantic_hash": ""
+  },
+  "src/components/setup/ElementaryImportPreviewDialog.vue": {
+    "mtime": 1791135307.0210369,
+    "ast_hash": "339a1c913a0f382ce5991908b74d1ffb",
+    "semantic_hash": ""
+  },
+  "src/components/setup/ImportSummaryDialog.vue": {
+    "mtime": 1791135796.6462677,
+    "ast_hash": "54112a00d64012006590d8d4188451a8",
+    "semantic_hash": ""
+  },
+  "src/components/setup/PeriodScheduleSettings.vue": {
+    "mtime": 1791135448.0777266,
+    "ast_hash": "5044ff12e00c3f14c44b8963840e0c79",
+    "semantic_hash": ""
+  },
+  "src/components/setup/RosterImportFlow.vue": {
+    "mtime": 1791136557.457692,
+    "ast_hash": "de9f64987171c2de980446dd27c3fb67",
+    "semantic_hash": ""
+  },
+  "src/components/setup/RosterReconciliationDialog.vue": {
+    "mtime": 1791135263.5116887,
+    "ast_hash": "5ce9923a3f4a47d7c288950541c0e5c8",
+    "semantic_hash": ""
+  },
+  "src/components/setup/TeacherProfileSettings.vue": {
+    "mtime": 1791135448.0776403,
+    "ast_hash": "9dc53c47b6e035da51fc55be87a10a1b",
+    "semantic_hash": ""
+  },
+  "src/composables/useClassDeletion.js": {
+    "mtime": 1791135225.8087542,
+    "ast_hash": "1b381e0597b1d6c92bfe09e4076edafa",
+    "semantic_hash": ""
+  },
+  "src/test_roster_import_summaries.js": {
+    "mtime": 1791136579.2341065,
+    "ast_hash": "122de33b13dbcab88544237e67a7deab",
+    "semantic_hash": ""
+  },
+  "src/utils/classGrouping.js": {
+    "mtime": 1791135187.324763,
+    "ast_hash": "b2a915113450c108f2958ec25d3b3639",
+    "semantic_hash": ""
+  },
+  "src/utils/rosterCsvImport.js": {
+    "mtime": 1791136579.2335377,
+    "ast_hash": "3db1c9b67ab6426d39163be5be267be5",
     "semantic_hash": ""
   }
 }

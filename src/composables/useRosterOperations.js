@@ -628,6 +628,14 @@ export async function updateStudentProfile(studentId, updates) {
         if (!classId) return
         await classService.patchStudent(classId, studentId, updates)
         syncStudentAcrossRefs(classId, studentId, updates)
+        // patchStudent re-derived the split-class sections in IDB; mirror that in memory
+        if ('courseCode' in updates) {
+            classService.syncClassSections(activeClass.value)
+            const listed = classList.value.find(c => c.classId === classId)
+            if (listed && listed !== activeClass.value) classService.syncClassSections(listed)
+            triggerRef(activeClass)
+            triggerRef(classList)
+        }
     } catch (err) {
         console.error('updateStudentProfile failed:', err)
         const { alert } = useMessage()
