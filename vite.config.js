@@ -3,9 +3,23 @@ import vue from '@vitejs/plugin-vue'
 import { VitePWA } from 'vite-plugin-pwa'
 
 import fs from 'node:fs'
+import { execSync } from 'node:child_process'
 
 const basePath = process.env.VITE_BASE_URL || '/classroom-tracker/'
 const pkg = JSON.parse(fs.readFileSync(new URL('./package.json', import.meta.url), 'utf-8'))
+
+// Build identity shown in the User Guide footer and compared by "Check for Updates".
+// Vercel exposes the commit it is building; local builds ask git directly.
+function resolveCommitSha() {
+    if (process.env.VERCEL_GIT_COMMIT_SHA) return process.env.VERCEL_GIT_COMMIT_SHA
+    try {
+        return execSync('git rev-parse HEAD', { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim()
+    } catch {
+        return ''
+    }
+}
+const buildId = resolveCommitSha().slice(0, 7) || 'unknown'
+const buildDate = new Date().toISOString()
 
 /**
  * vite.config.js
@@ -19,7 +33,9 @@ const pkg = JSON.parse(fs.readFileSync(new URL('./package.json', import.meta.url
 
 export default defineConfig({
     define: {
-        __APP_VERSION__: JSON.stringify(pkg.version || '0.1.0')
+        __APP_VERSION__: JSON.stringify(pkg.version || '0.1.0'),
+        __BUILD_ID__: JSON.stringify(buildId),
+        __BUILD_DATE__: JSON.stringify(buildDate)
     },
     plugins: [
         vue(),

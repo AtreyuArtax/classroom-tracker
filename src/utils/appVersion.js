@@ -7,6 +7,10 @@
 import { CURRENT_SCHEMA } from '../db/migrations.js'
 
 export const APP_VERSION = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : 'dev'
+// Short git commit of the build. The dev server reports 'dev' since its code may not match any commit.
+export const BUILD_ID = import.meta.env?.DEV || typeof __BUILD_ID__ === 'undefined' ? 'dev' : __BUILD_ID__
+// ISO timestamp of when the bundle was built (empty outside Vite builds)
+export const BUILD_DATE = typeof __BUILD_DATE__ !== 'undefined' ? __BUILD_DATE__ : ''
 export const SCHEMA_VERSION = CURRENT_SCHEMA
 
 /**

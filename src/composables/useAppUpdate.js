@@ -8,7 +8,7 @@
  */
 
 import { ref } from 'vue'
-import { APP_VERSION, forceAppUpdate } from '../utils/appVersion.js'
+import { APP_VERSION, BUILD_ID, forceAppUpdate } from '../utils/appVersion.js'
 
 const NOTICE_KEY = 'appUpdateNotice'
 const MIN_CHECK_MS = 900          // keep "Checking…" on screen long enough to read
@@ -29,12 +29,12 @@ const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 
 function leaveNotice(kind) {
   try {
-    sessionStorage.setItem(NOTICE_KEY, JSON.stringify({ kind, fromVersion: APP_VERSION }))
+    sessionStorage.setItem(NOTICE_KEY, JSON.stringify({ kind, fromVersion: APP_VERSION, fromBuild: BUILD_ID }))
   } catch { /* storage blocked: the reload still works, just without the confirmation */ }
 }
 
 /**
- * Returns the notice left before an update/refresh reload ({ kind, fromVersion }),
+ * Returns the notice left before an update/refresh reload ({ kind, fromVersion, fromBuild }),
  * or null, and clears it so it only shows once.
  */
 export function consumeUpdateNotice() {

@@ -30,8 +30,8 @@
     "semantic_hash": "88c406405897844f80881d296bf93ee4"
   },
   "package.json": {
-    "mtime": 1790298828.1703684,
-    "ast_hash": "80ccb44990a52ad75aa4f8ad54a2cbc6",
+    "mtime": 1791147337.2965395,
+    "ast_hash": "d30fb3649e7d823b547fd4be7649ec84",
     "semantic_hash": ""
   },
   "public/manifest.json": {
@@ -55,8 +55,8 @@
     "semantic_hash": "292ba809cdc87ea16d7beff21d110324"
   },
   "src/App.vue": {
-    "mtime": 1791146906.994938,
-    "ast_hash": "434fb4fd66949bc35c5dcc634028dec6",
+    "mtime": 1791147546.9705923,
+    "ast_hash": "56b2d6da96b9641d27c274c21ddc0ad7",
     "semantic_hash": ""
   },
   "src/components/AssessmentConversationModal.vue": {
@@ -375,8 +375,8 @@
     "semantic_hash": "61bd31a2b0ac08f10f13c932b32d6ca1"
   },
   "vite.config.js": {
-    "mtime": 1790264151.3367665,
-    "ast_hash": "7a9f602425a3e293a19bebb171ff23c5",
+    "mtime": 1791147532.1811185,
+    "ast_hash": "fb997d9c2f73a51b04ab4f9f2a4c30ae",
     "semantic_hash": ""
   },
   "src/components/PrintGradesGridModal.vue": {
@@ -1310,8 +1310,8 @@
     "semantic_hash": ""
   },
   "src/utils/appVersion.js": {
-    "mtime": 1791147321.3020937,
-    "ast_hash": "8039cf1ecdeab66d48288b2aa571377c",
+    "mtime": 1791147532.1812158,
+    "ast_hash": "b30207a8921733204859d0a4cf5a3b5b",
     "semantic_hash": ""
   },
   "src/components/dossier/StudentRosterEditModal.vue": {
@@ -1600,13 +1600,13 @@
     "semantic_hash": ""
   },
   "src/components/setup/AppVersionFooter.vue": {
-    "mtime": 1791146895.3739953,
-    "ast_hash": "a97d860043c7f4781ce84bfe8b926eda",
+    "mtime": 1791147546.9707947,
+    "ast_hash": "6b3e4bb070598a4fa88e983df19b00d4",
     "semantic_hash": ""
   },
   "src/composables/useAppUpdate.js": {
-    "mtime": 1791146934.1838744,
-    "ast_hash": "7862858cec829d133c91dee065420215",
+    "mtime": 1791147532.1814017,
+    "ast_hash": "52296b7289eb8ad2cd3fbfa68b3255c0",
     "semantic_hash": ""
   }
 }

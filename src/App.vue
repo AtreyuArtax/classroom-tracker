@@ -92,7 +92,7 @@ const ScanStation = defineAsyncComponent(() => import('./views/ScanStation.vue')
 
 import { useClassroom } from './composables/useClassroom.js'
 import { consumeUpdateNotice } from './composables/useAppUpdate.js'
-import { APP_VERSION } from './utils/appVersion.js'
+import { APP_VERSION, BUILD_ID } from './utils/appVersion.js'
 const AddAssessmentModal = defineAsyncComponent(() => import('./components/dossier/AddAssessmentModal.vue'))
 const QRScanner          = defineAsyncComponent(() => import('./components/QRScanner.vue'))
 import YearSemesterSelector from './components/YearSemesterSelector.vue'
@@ -210,13 +210,15 @@ onMounted(async () => {
   if (updateNotice) showUpdateNotice(updateNotice)
 })
 
-function showUpdateNotice({ kind, fromVersion }) {
+function showUpdateNotice({ kind, fromVersion, fromBuild }) {
   if (kind === 'refresh') {
-    alertMessage(`Classroom Tracker reloaded with a fresh copy of v${APP_VERSION}.`, 'App Refreshed')
+    alertMessage(`Classroom Tracker reloaded with a fresh copy of v${APP_VERSION} (build ${BUILD_ID}).`, 'App Refreshed')
   } else if (fromVersion && fromVersion !== APP_VERSION) {
-    alertMessage(`Classroom Tracker was updated from v${fromVersion} to v${APP_VERSION}.`, 'Update Installed')
+    alertMessage(`Classroom Tracker was updated from v${fromVersion} to v${APP_VERSION} (build ${BUILD_ID}).`, 'Update Installed')
+  } else if (fromBuild && fromBuild !== BUILD_ID) {
+    alertMessage(`Classroom Tracker v${APP_VERSION} was updated from build ${fromBuild} to build ${BUILD_ID}.`, 'Update Installed')
   } else {
-    alertMessage(`The latest build of Classroom Tracker (v${APP_VERSION}) is now running.`, 'Update Installed')
+    alertMessage(`The latest build of Classroom Tracker (v${APP_VERSION}, build ${BUILD_ID}) is now running.`, 'Update Installed')
   }
 }
 

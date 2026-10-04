@@ -42,7 +42,7 @@
 <script setup>
 import { computed } from 'vue'
 import { AlertCircle, CheckCircle2, Download, Loader2, RefreshCw, WifiOff } from 'lucide-vue-next'
-import { APP_VERSION, SCHEMA_VERSION } from '../../utils/appVersion.js'
+import { APP_VERSION, BUILD_DATE, BUILD_ID, SCHEMA_VERSION } from '../../utils/appVersion.js'
 import { useAppUpdate } from '../../composables/useAppUpdate.js'
 import { useMessage } from '../../composables/useMessage.js'
 
@@ -51,8 +51,16 @@ const { confirm } = useMessage()
 
 const isBusy = computed(() => ['checking', 'installing', 'refreshing'].includes(updateStatus.value))
 
+function describeBuild() {
+  if (BUILD_ID === 'dev') return `Dev build · Schema v${SCHEMA_VERSION}`
+  const date = BUILD_DATE
+    ? new Date(BUILD_DATE).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
+    : ''
+  return [`Build ${BUILD_ID}`, date, `Schema v${SCHEMA_VERSION}`].filter(Boolean).join(' · ')
+}
+
 const STATUS = {
-  idle:        { text: `Database schema v${SCHEMA_VERSION}`, tone: 'muted', icon: null },
+  idle:        { text: describeBuild(), tone: 'muted', icon: null },
   checking:    { text: 'Checking for updates…', tone: 'muted', icon: Loader2, spin: true },
   installing:  { text: 'Update found, installing. The app will reload.', tone: 'primary', icon: Download },
   refreshing:  { text: 'Clearing cache and reloading…', tone: 'primary', icon: Loader2, spin: true },
@@ -115,6 +123,7 @@ async function onForceRefresh() {
 }
 
 .version-footer__badge {
+  text-transform: none;
   font-family: monospace;
   font-size: 0.78rem;
 }
