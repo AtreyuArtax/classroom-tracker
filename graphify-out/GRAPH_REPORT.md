@@ -1,7 +1,7 @@
 # Graph Report - classroom-tracker  (2026-10-04)
 
 ## Corpus Check
-- 322 files · ~592,378 words
+- 322 files · ~592,423 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `31ad74e3`
+- Built from commit: `016d7c95`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -127,6 +127,7 @@
 - [[_COMMUNITY_Community 169|Community 169]]
 - [[_COMMUNITY_Community 170|Community 170]]
 - [[_COMMUNITY_Community 171|Community 171]]
+- [[_COMMUNITY_Community 172|Community 172]]
 - [[_COMMUNITY_Community 173|Community 173]]
 - [[_COMMUNITY_Community 174|Community 174]]
 - [[_COMMUNITY_Community 176|Community 176]]
@@ -137,7 +138,6 @@
 - [[_COMMUNITY_Community 182|Community 182]]
 - [[_COMMUNITY_Community 183|Community 183]]
 - [[_COMMUNITY_Community 184|Community 184]]
-- [[_COMMUNITY_Community 185|Community 185]]
 - [[_COMMUNITY_Community 186|Community 186]]
 - [[_COMMUNITY_Community 187|Community 187]]
 - [[_COMMUNITY_Community 189|Community 189]]
@@ -402,7 +402,7 @@ Nodes (19): mockAssessments, mockClassWithStrings, mockGrades, mockMasteryPreRef
 
 ### Community 91 - "Community 91"
 Cohesion: 0.20
-Nodes (10): description, type, description, type, description, type, properties, department (+2 more)
+Nodes (10): description, type, description, type, properties, grade, isSuccessCriteria, title (+2 more)
 
 ### Community 94 - "Community 94"
 Cohesion: 0.29
@@ -609,6 +609,10 @@ Nodes (9): activeAllowlistMatches, APPROVED_BURNDOWN_ALLOWLIST, componentFiles, 
 Cohesion: 0.22
 Nodes (6): cache, inFlightRequests, mockDbStore, pendingBatch, photoCache, promises
 
+### Community 172 - "Community 172"
+Cohesion: 0.67
+Nodes (3): description, type, department
+
 ### Community 173 - "Community 173"
 Cohesion: 0.40
 Nodes (4): elemClass, mockClass, mockStudent, storage
@@ -644,10 +648,6 @@ Nodes (7): useClassroom(), filteredMilestones, globalMilestones, saveStudentGrad
 ### Community 183 - "Community 183"
 Cohesion: 0.12
 Nodes (21): getDB(), batchSavePhotos(), deletePhoto(), getAllPhotoIds(), getPhoto(), getPhotosBatch(), purgeAllPhotos(), savePhoto() (+13 more)
-
-### Community 185 - "Community 185"
-Cohesion: 0.67
-Nodes (3): title, description, type
 
 ### Community 186 - "Community 186"
 Cohesion: 0.29

@@ -27,8 +27,8 @@
     <div class="setup__pref-list">
       <div class="setup__pref-row">
         <div class="setup__pref-text">
-          <span class="setup__pref-title">Working hours statement</span>
-          <span class="setup__pref-desc">Adds a note to email sign-offs that families don't need to reply outside their own hours.</span>
+          <span class="setup__pref-title">Add working hours statement by default</span>
+          <span class="setup__pref-desc">Tells families they don't need to reply outside their own hours. You can still turn it on or off for each email.</span>
         </div>
         <label class="setup__switch">
           <input type="checkbox" v-model="localIncludeWorkingHours" @change="saveWorkingHoursPreference" />

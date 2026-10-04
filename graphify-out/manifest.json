@@ -460,8 +460,8 @@
     "semantic_hash": ""
   },
   "src/components/dossier/Student360EmailModal.vue": {
-    "mtime": 1791116217.8118565,
-    "ast_hash": "1da31c06d0565c64748ed1e45ca9aaf8",
+    "mtime": 1791148362.5007536,
+    "ast_hash": "2a7dcf226ecfd2bce7d2c0147f33661f",
     "semantic_hash": ""
   },
   "src/components/dossier/Student360HistoryTab.vue": {
@@ -1570,8 +1570,8 @@
     "semantic_hash": ""
   },
   "src/components/setup/TeacherProfileSettings.vue": {
-    "mtime": 1791146410.399557,
-    "ast_hash": "72c384141e351f7617fcd11c2ebe74b5",
+    "mtime": 1791148362.5009978,
+    "ast_hash": "28ba47a476580cb2b6c08b6e1b4ab65d",
     "semantic_hash": ""
   },
   "src/composables/useClassDeletion.js": {

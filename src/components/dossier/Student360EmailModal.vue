@@ -78,9 +78,16 @@
               <input type="checkbox" v-model="emailConfig.content.washroom" />
               <span class="option-label">Out-of-Class Activity</span>
             </label>
-            <label class="option-item" v-if="includeWorkingHoursStatement">
+          </div>
+        </div>
+
+        <!-- Sign-off: starts from the App Settings default, can be changed per email -->
+        <div class="config-section">
+          <h4 class="config-section-title">Sign-off</h4>
+          <div class="options-list">
+            <label class="option-item">
               <input type="checkbox" v-model="emailConfig.content.workingHours" />
-              <span class="option-label">Working Hours Statement</span>
+              <span class="option-label">Working hours statement</span>
             </label>
           </div>
         </div>
@@ -191,17 +198,20 @@ const sbarOverallBadge = computed(() => {
   return getStudentOverallSBarBadge(targetStudentId.value, effectiveClass.value, assessments.value, gradeMap.value)
 })
 
-const DEFAULT_CONTENT = { 
-  grade: true, 
-  missing: true, 
-  attendance: true, 
-  washroom: false, 
-  assessments: true, 
-  workingHours: includeWorkingHoursStatement.value || false 
+// Built on each open so the working-hours default follows the current App Settings value
+function defaultContent() {
+  return {
+    grade: true,
+    missing: true,
+    attendance: true,
+    washroom: false,
+    assessments: true,
+    workingHours: includeWorkingHoursStatement.value || false
+  }
 }
 const emailConfig = ref({
   recipients: { student: true, parents: true },
-  content: { ...DEFAULT_CONTENT }
+  content: defaultContent()
 })
 
 const { alertFor, pendingEmailFor, setPendingEmail } = useActionAlerts(toRef(props, 'classId'))
@@ -242,12 +252,12 @@ watch(() => props.show, (open) => {
   const pending = pendingEmailFor(targetStudentId.value)
   if (pending) {
     selectedRecipientEmails.value = new Set(pending.recipients || [])
-    emailConfig.value.content = { ...DEFAULT_CONTENT, ...pending.content }
+    emailConfig.value.content = { ...defaultContent(), ...pending.content }
     return
   }
   selectedRecipientEmails.value = new Set(emailRecipients.value.map(r => r.email))
   const suggested = suggestEmailContent(alertFor(targetStudentId.value)?.kinds)
-  emailConfig.value.content = { ...DEFAULT_CONTENT, ...(suggested || {}) }
+  emailConfig.value.content = { ...defaultContent(), ...(suggested || {}) }
 })
 
 /** Remembers the email so the dossier can ask whether it was actually sent. */

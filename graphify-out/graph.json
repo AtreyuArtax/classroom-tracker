@@ -4487,7 +4487,7 @@
       "label": "copyRichEmailToClipboard()",
       "file_type": "code",
       "source_file": "src/components/dossier/Student360EmailModal.vue",
-      "source_location": "L406",
+      "source_location": "L416",
       "_origin": "ast",
       "id": "dossier_student360emailmodal_copyrichemailtoclipboard",
       "community": 153,
@@ -11690,7 +11690,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "curriculum_schema_properties_title",
-      "community": 185,
+      "community": 91,
       "norm_label": "title"
     },
     {
@@ -11700,7 +11700,7 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "curriculum_schema_title_type",
-      "community": 185,
+      "community": 91,
       "norm_label": "type"
     },
     {
@@ -11710,7 +11710,7 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "curriculum_schema_title_description",
-      "community": 185,
+      "community": 91,
       "norm_label": "description"
     },
     {
@@ -11860,7 +11860,7 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "curriculum_schema_properties_department",
-      "community": 91,
+      "community": 172,
       "norm_label": "department"
     },
     {
@@ -11870,7 +11870,7 @@
       "source_location": "L44",
       "_origin": "ast",
       "id": "curriculum_schema_department_type",
-      "community": 91,
+      "community": 172,
       "norm_label": "type"
     },
     {
@@ -11880,7 +11880,7 @@
       "source_location": "L45",
       "_origin": "ast",
       "id": "curriculum_schema_department_description",
-      "community": 91,
+      "community": 172,
       "norm_label": "description"
     },
     {
@@ -32830,9 +32830,9 @@
       "source_file": "src/components/setup/AppVersionFooter.vue",
       "source_location": "L54",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "setup_appversionfooter",
-      "target": "setup_appversionfooter_describebuild",
-      "confidence_score": 1.0
+      "target": "setup_appversionfooter_describebuild"
     },
     {
       "relation": "contains",
@@ -63059,9 +63059,9 @@
       "source_file": "vite.config.js",
       "source_location": "L22",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "vite_config",
-      "target": "vite_config_builddate",
-      "confidence_score": 1.0
+      "target": "vite_config_builddate"
     },
     {
       "relation": "contains",
@@ -63089,11 +63089,11 @@
       "source_file": "vite.config.js",
       "source_location": "L13",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "vite_config",
-      "target": "vite_config_resolvecommitsha",
-      "confidence_score": 1.0
+      "target": "vite_config_resolvecommitsha"
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "31ad74e3da698bb5549b6e804864825791f462e3"
+  "built_at_commit": "016d7c95e98937a67d0aabaa59c87f73f18d45a0"
 }
