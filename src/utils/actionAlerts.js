@@ -33,7 +33,16 @@ function addKind(item, kind) {
  * @param {Array}  opts.washCodes      Behaviour code keys of toggle (out-of-room) type
  * @param {number} opts.washLimit      Minutes before a trip counts as extended
  */
-export function buildFollowUpItems({ students = {}, periodEvents = [], assessments = [], classGrades = {}, washCodes = [], washLimit = 11 }) {
+export function buildFollowUpItems({
+  students = {},
+  periodEvents = [],
+  allEvents = null,
+  assessments = [],
+  classGrades = {},
+  washCodes = [],
+  washLimit = 11,
+  thresholds = {}
+}) {
   const items = []
 
   const absMap = {}
@@ -59,31 +68,74 @@ export function buildFollowUpItems({ students = {}, periodEvents = [], assessmen
     .map(a => (a.date || '').split('T')[0])
     .filter(Boolean)
 
-  const detectedPatterns = detectClassAttendancePatterns(periodEvents, students, { assessmentDates })
+  const eventsForPatterns = (allEvents && allEvents.length > 0) ? allEvents : periodEvents
+  const patternOptions = {
+    assessmentDates,
+    enableConsecutiveTier1: thresholds.enableConsecutiveTier1 ?? true,
+    consecutiveAbsenceThreshold: thresholds.consecutiveAbsenceTier1 ?? 3,
+    consecutiveTier1Label: thresholds.consecutiveTier1Label ?? '',
+    enableConsecutiveTier2: thresholds.enableConsecutiveTier2 ?? true,
+    consecutiveAbsenceTier2Threshold: thresholds.consecutiveAbsenceTier2 ?? 5,
+    consecutiveTier2Label: thresholds.consecutiveTier2Label ?? 'Notify Alpha VP',
+    absenceWindowDays: thresholds.absenceWindowDays ?? 15,
+    enableWindowTier1: thresholds.enableWindowTier1 ?? true,
+    absenceWindowTier1: thresholds.absenceWindowTier1 ?? 5,
+    windowTier1Label: thresholds.windowTier1Label ?? 'Contact family',
+    enableWindowTier2: thresholds.enableWindowTier2 ?? true,
+    absenceWindowTier2: thresholds.absenceWindowTier2 ?? 8,
+    windowTier2Label: thresholds.windowTier2Label ?? 'Student Success referral'
+  }
+
+  const detectedPatterns = detectClassAttendancePatterns(eventsForPatterns, students, patternOptions)
   const patternMap = {}
   detectedPatterns.forEach(p => {
     patternMap[p.studentId] = p
   })
 
+  // Set of all student IDs with either period absences or detected attendance patterns
+  const candidateStudentIds = new Set([
+    ...Object.keys(absMap),
+    ...Object.keys(patternMap)
+  ])
+
   // 1. Absences & absence patterns
-  Object.entries(absMap).forEach(([id, count]) => {
+  candidateStudentIds.forEach(id => {
     if (!students[id]) return
     const pData = patternMap[id]
+    const count = absMap[id] ?? pData?.metrics?.totalAbsences ?? 0
     const consec = pData?.patterns?.find(p => p.type === 'consecutive_absences')
+    const shortPeriod = pData?.patterns?.find(p => p.type === 'short_period_absences')
     const dow = pData?.patterns?.find(p => p.type === 'day_of_week_cluster')
     const testAbs = pData?.patterns?.find(p => p.type === 'test_day_absence')
 
-    if (consec) {
+    if (consec && shortPeriod) {
+      const isVp = consec.isVpAlert
+      const isSuccessReferral = shortPeriod.tier === 2
+      let combined = ''
+      if (isVp) {
+        combined = `${consec.reason} · ${shortPeriod.reason}`
+      } else {
+        combined = `${shortPeriod.reason} · ${consec.reason}`
+      }
+      push(id, combined, 'high', (isVp ? 270 : (isSuccessReferral ? 250 : 210)) + count, 'attendance')
+    } else if (consec) {
+      const isVp = consec.isVpAlert
       const reason = count > consec.streak ? `${consec.reason} · ${count} total` : consec.reason
-      push(id, reason, 'high', 200 + count, 'attendance')
+      push(id, reason, 'high', (isVp ? 260 : 200) + count, 'attendance')
+    } else if (shortPeriod) {
+      const isTier2 = shortPeriod.tier === 2
+      const reason = count > shortPeriod.count ? `${shortPeriod.reason} · ${count} total` : shortPeriod.reason
+      push(id, reason, 'high', (isTier2 ? 240 : 170) + count, 'attendance')
     } else if (testAbs) {
       push(id, `${testAbs.reason} · ${count} total`, 'high', 180 + count, 'attendance')
     } else if (dow) {
       const reason = count > dow.count ? `${dow.reason} · ${count} total` : dow.reason
       push(id, reason, count >= 5 ? 'high' : 'medium', (count >= 5 ? 150 : 80) + count, 'attendance')
-    } else if (count >= 5) {
+    } else if (count >= 8 && thresholds.enableWindowTier2 !== false) {
+      push(id, `${count} absences`, 'high', 120 + count, 'attendance')
+    } else if (count >= 5 && thresholds.enableWindowTier1 !== false) {
       push(id, `${count} absences`, 'high', 100 + count, 'attendance')
-    } else if (count >= 3) {
+    } else if (count >= 3 && thresholds.enableConsecutiveTier1 !== false) {
       push(id, `${count} absences`, 'medium', count, 'attendance')
     }
   })

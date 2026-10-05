@@ -152,4 +152,50 @@ const ev = (studentId, code, timestamp, extra = {}) => ({ studentId, code, times
   assert.strictEqual(buildContactNote({}), 'Emailed progress report to home.')
 }
 
+// ── buildFollowUpItems: 5 and 8 rolling absences & 5 consecutive Alpha VP ──
+{
+  const schoolDates = [
+    '2026-09-01', '2026-09-02', '2026-09-03', '2026-09-04', '2026-09-08',
+    '2026-09-09', '2026-09-10', '2026-09-11', '2026-09-14', '2026-09-15',
+    '2026-09-16', '2026-09-17', '2026-09-18', '2026-09-21', '2026-09-22'
+  ]
+  // s1: 5 non-consecutive absences in window
+  // s2: 8 non-consecutive absences in window
+  // s3: 5 consecutive absences (Alpha VP)
+  const allEvents = [
+    // s1 (5 absences)
+    ...['2026-09-01', '2026-09-04', '2026-09-10', '2026-09-16', '2026-09-22'].map(d => ev('s1', 'a', `${d}T08:50:00Z`)),
+    // s2 (8 absences)
+    ...['2026-09-01', '2026-09-03', '2026-09-08', '2026-09-10', '2026-09-14', '2026-09-16', '2026-09-18', '2026-09-22'].map(d => ev('s2', 'a', `${d}T08:50:00Z`)),
+    // s3 (5 consecutive absences)
+    ...['2026-09-16', '2026-09-17', '2026-09-18', '2026-09-21', '2026-09-22'].map(d => ev('s3', 'a', `${d}T08:50:00Z`))
+  ]
+
+  const items = buildFollowUpItems({
+    students,
+    periodEvents: allEvents,
+    allEvents,
+    thresholds: {
+      absenceWindowDays: 15,
+      absenceWindowTier1: 5,
+      absenceWindowTier2: 8,
+      consecutiveAbsenceTier1: 3,
+      consecutiveAbsenceTier2: 5
+    }
+  })
+
+  const itemS1 = items.find(i => i.studentId === 's1')
+  const itemS2 = items.find(i => i.studentId === 's2')
+  const itemS3 = items.find(i => i.studentId === 's3')
+
+  assert.ok(itemS1, 's1 flagged for 5 absences in window')
+  assert.ok(itemS1.reason.includes('Contact family'), 's1 reason specifies Contact family')
+
+  assert.ok(itemS2, 's2 flagged for 8 absences in window')
+  assert.ok(itemS2.reason.includes('Student Success referral'), 's2 reason specifies Student Success referral')
+
+  assert.ok(itemS3, 's3 flagged for 5 consecutive absences')
+  assert.ok(itemS3.reason.includes('Notify Alpha VP'), 's3 reason specifies Notify Alpha VP')
+}
+
 console.log('✅ action alerts tests passed')

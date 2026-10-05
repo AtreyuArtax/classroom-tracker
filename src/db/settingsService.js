@@ -302,26 +302,55 @@ export async function deleteBehaviorCode(codeKey) {
     hasUnsyncedChanges.value = true
 }
 
+export const DEFAULT_THRESHOLDS = {
+    washroomTripsPerWeek: 4,
+    washroomWeeklyMinutesLimit: 20,
+    deviceIncidentsPerWeek: 3,
+    washroomDurationLimit: 11,
+    atRiskThreshold: 70,
+    attendanceThreshold: 85,
+    absenceWindowDays: 15,
+    enableWindowTier1: true,
+    absenceWindowTier1: 5,
+    windowTier1Label: 'Contact family',
+    enableWindowTier2: true,
+    absenceWindowTier2: 8,
+    windowTier2Label: 'Student Success referral',
+    enableConsecutiveTier1: true,
+    consecutiveAbsenceTier1: 3,
+    consecutiveTier1Label: '',
+    enableConsecutiveTier2: true,
+    consecutiveAbsenceTier2: 5,
+    consecutiveTier2Label: 'Notify Alpha VP'
+}
+
 /**
  * Returns the current behavior thresholds.
  *
- * @returns {Promise<{washroomTripsPerWeek: number, deviceIncidentsPerWeek: number}>}
+ * @returns {Promise<typeof DEFAULT_THRESHOLDS>}
  */
 export async function getThresholds() {
     const settings = await _readSettings()
-    return settings.thresholds || { washroomTripsPerWeek: 4, washroomWeeklyMinutesLimit: 20, deviceIncidentsPerWeek: 3, washroomDurationLimit: 11, atRiskThreshold: 70, attendanceThreshold: 85 }
+    return {
+        ...DEFAULT_THRESHOLDS,
+        ...(settings.thresholds || {})
+    }
 }
 
 /**
  * Saves behavior thresholds.
  *
- * @param {{washroomTripsPerWeek: number, deviceIncidentsPerWeek: number}} thresholdsObj
+ * @param {Object} thresholdsObj
  * @returns {Promise<void>}
  */
 export async function saveThresholds(thresholdsObj) {
     const db = await getDB()
     const settings = await db.get('settings', 'singleton')
-    settings.thresholds = thresholdsObj
+    settings.thresholds = {
+        ...DEFAULT_THRESHOLDS,
+        ...(settings.thresholds || {}),
+        ...thresholdsObj
+    }
     await db.put('settings', settings, 'singleton')
     hasUnsyncedChanges.value = true
 }

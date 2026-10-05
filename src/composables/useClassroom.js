@@ -155,8 +155,27 @@ const modeAllArchivedClasses = computed(() => {
 
 // ─── weekly stats ─────────────────────────────────────────────────────────────
 
-/** @type {import('vue').Ref<{washroomTripsPerWeek: number, washroomWeeklyMinutesLimit: number, washroomDurationLimit: number, deviceIncidentsPerWeek: number, atRiskThreshold: number, attendanceThreshold: number}>} */
-const thresholds = ref({ washroomTripsPerWeek: 4, washroomWeeklyMinutesLimit: 20, washroomDurationLimit: 11, deviceIncidentsPerWeek: 3, atRiskThreshold: 70, attendanceThreshold: 85 })
+const thresholds = ref({
+    washroomTripsPerWeek: 4,
+    washroomWeeklyMinutesLimit: 20,
+    washroomDurationLimit: 11,
+    deviceIncidentsPerWeek: 3,
+    atRiskThreshold: 70,
+    attendanceThreshold: 85,
+    absenceWindowDays: 15,
+    enableWindowTier1: true,
+    absenceWindowTier1: 5,
+    windowTier1Label: 'Contact family',
+    enableWindowTier2: true,
+    absenceWindowTier2: 8,
+    windowTier2Label: 'Student Success referral',
+    enableConsecutiveTier1: true,
+    consecutiveAbsenceTier1: 3,
+    consecutiveTier1Label: '',
+    enableConsecutiveTier2: true,
+    consecutiveAbsenceTier2: 5,
+    consecutiveTier2Label: 'Notify Alpha VP'
+})
 
 /** @type {import('vue').Ref<Object>} Shape: { [studentId]: { washroomTrips: N, washroomMinutes: N, deviceIncidents: N } } */
 const studentWeeklyStats = shallowRef({})

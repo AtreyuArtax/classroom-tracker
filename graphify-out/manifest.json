@@ -55,8 +55,8 @@
     "semantic_hash": "292ba809cdc87ea16d7beff21d110324"
   },
   "src/App.vue": {
-    "mtime": 1791147546.9705923,
-    "ast_hash": "56b2d6da96b9641d27c274c21ddc0ad7",
+    "mtime": 1791208433.5076358,
+    "ast_hash": "caa1d5c0392f39558d1ebb73535b67b3",
     "semantic_hash": ""
   },
   "src/components/AssessmentConversationModal.vue": {
@@ -100,8 +100,8 @@
     "semantic_hash": ""
   },
   "src/components/QRScanner.vue": {
-    "mtime": 1790256121.4700637,
-    "ast_hash": "1e4edf4c9ea1cdbdbc40be942e8653a5",
+    "mtime": 1791208374.4955757,
+    "ast_hash": "f32521a9b5afbb91105bd873dd7e7d4c",
     "semantic_hash": ""
   },
   "src/components/RadialMenu.vue": {
@@ -240,8 +240,8 @@
     "semantic_hash": ""
   },
   "src/composables/useClassroom.js": {
-    "mtime": 1791136579.2338288,
-    "ast_hash": "3eeb81f6c2b0a45d2311e5f8fd46c26f",
+    "mtime": 1791227209.4725084,
+    "ast_hash": "5009a2e1d4b67c8e0eda776d59f75f3d",
     "semantic_hash": ""
   },
   "src/composables/useGradebook.js": {
@@ -305,8 +305,8 @@
     "semantic_hash": ""
   },
   "src/db/settingsService.js": {
-    "mtime": 1791115970.1944666,
-    "ast_hash": "d95ee85ef641d2c10bf9fcf477b4d7d4",
+    "mtime": 1791227204.3939881,
+    "ast_hash": "7078477d88ecdd5ab246127f6ca8a261",
     "semantic_hash": ""
   },
   "src/main.js": {
@@ -415,8 +415,8 @@
     "semantic_hash": ""
   },
   "src/components/setup/BehaviorSettings.vue": {
-    "mtime": 1790253452.9772117,
-    "ast_hash": "f68ace8d46f002316b4b82b369397e5e",
+    "mtime": 1791227306.2412164,
+    "ast_hash": "7e049e4d0cc5c0a5b41194b2fb7d0466",
     "semantic_hash": ""
   },
   "src/components/setup/QrCodeGeneratorModal.vue": {
@@ -430,8 +430,8 @@
     "semantic_hash": ""
   },
   "src/composables/useClassroomState.js": {
-    "mtime": 1791115987.613109,
-    "ast_hash": "0fdf911bc684f999f8c4917d433a9d27",
+    "mtime": 1791208358.1232302,
+    "ast_hash": "4ad74d8d808c3ed1ac0370481e1c5799",
     "semantic_hash": ""
   },
   "src/composables/useRosterOperations.js": {
@@ -1195,13 +1195,13 @@
     "semantic_hash": ""
   },
   "src/test_attendance_patterns.js": {
-    "mtime": 1788442567.1484957,
-    "ast_hash": "31a67d568d283cdce224b97383460b1f",
+    "mtime": 1791227323.9579823,
+    "ast_hash": "a661c77ae47698d79aa93738498aef51",
     "semantic_hash": ""
   },
   "src/utils/attendancePatterns.js": {
-    "mtime": 1788442554.4092577,
-    "ast_hash": "5a8ae926ac011430a3975616d1170257",
+    "mtime": 1791227230.3962376,
+    "ast_hash": "6d95287e246a7390b5bf9f4235b66db4",
     "semantic_hash": ""
   },
   "src/components/grades/GradesExpectationStudentModal.vue": {
@@ -1480,18 +1480,18 @@
     "semantic_hash": ""
   },
   "src/composables/useActionAlerts.js": {
-    "mtime": 1790897173.7987142,
-    "ast_hash": "0a81c31170a96d1c24cf8fe4dae3ca20",
+    "mtime": 1791227254.8985064,
+    "ast_hash": "11468ac0e4bb0117eef60dd1ebcf4782",
     "semantic_hash": ""
   },
   "src/test_action_alerts.js": {
-    "mtime": 1790898138.9297826,
-    "ast_hash": "c2b2df3a3720e0b66914e2aa149f2500",
+    "mtime": 1791227337.2553155,
+    "ast_hash": "de9f30a55c58c4dae5043b2760c1f6bb",
     "semantic_hash": ""
   },
   "src/utils/actionAlerts.js": {
-    "mtime": 1790898137.8982248,
-    "ast_hash": "127f46aaac0e52fbcec298652d1dd706",
+    "mtime": 1791227245.1232903,
+    "ast_hash": "68dfe33d61dbe82149f488638f680835",
     "semantic_hash": ""
   },
   "src/utils/dossierActivityFeed.js": {
@@ -1607,6 +1607,11 @@
   "src/composables/useAppUpdate.js": {
     "mtime": 1791147532.1814017,
     "ast_hash": "52296b7289eb8ad2cd3fbfa68b3255c0",
+    "semantic_hash": ""
+  },
+  "src/components/ActiveStudentsOutCapsule.vue": {
+    "mtime": 1791209054.7142391,
+    "ast_hash": "ebda7be4f2ec65302b3b9a95d905b978",
     "semantic_hash": ""
   }
 }

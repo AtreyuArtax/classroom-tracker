@@ -82,6 +82,225 @@
           />
         </label>
       </div>
+
+      <!-- Attendance Action Alert Strategy -->
+      <div class="attendance-alerts-section">
+        <div class="attendance-alerts-section__header">
+          <div>
+            <h3 class="setup__card-subtitle" style="margin-top: 0; margin-bottom: 4px; font-size: 0.95rem; font-weight: 700;">
+              Attendance Action Alert Strategy
+            </h3>
+            <p class="setup__hint" style="margin-bottom: 0;">
+              Choose which absence alert tiers are active and customize the action messages displayed in Action Required and Dossier logs.
+            </p>
+          </div>
+          <div class="attendance-alerts-window-box">
+            <label class="setup__label" style="margin: 0;">
+              <span class="setup__label-text">Short-Period Window</span>
+              <span class="setup__label-subtext">Active School Days</span>
+              <input 
+                v-model.number="editThresholds.absenceWindowDays" 
+                type="number" 
+                min="5" 
+                max="60" 
+                class="setup__input" 
+                style="width: 120px;"
+                @change="saveThresholds" 
+              />
+            </label>
+          </div>
+        </div>
+
+        <div class="attendance-rules-list">
+          <!-- Rule 1: Consecutive Early Check-in (Tier 1) -->
+          <div class="attendance-rule-card" :class="{ 'attendance-rule-card--disabled': !editThresholds.enableConsecutiveTier1 }">
+            <div class="attendance-rule-card__top">
+              <label class="setup__switch">
+                <input type="checkbox" v-model="editThresholds.enableConsecutiveTier1" @change="saveThresholds" />
+                <span class="setup__switch-slider"></span>
+              </label>
+              <div class="attendance-rule-card__title-group">
+                <span class="attendance-rule-card__title">Consecutive Early Check-in</span>
+                <span class="attendance-rule-card__badge" :class="editThresholds.enableConsecutiveTier1 ? 'badge--active' : 'badge--off'">
+                  {{ editThresholds.enableConsecutiveTier1 ? 'Active' : 'Disabled' }}
+                </span>
+              </div>
+            </div>
+            <div class="attendance-rule-card__fields">
+              <label class="setup__label" style="width: 110px;">
+                <span class="setup__label-subtext">Days in a row</span>
+                <input 
+                  v-model.number="editThresholds.consecutiveAbsenceTier1" 
+                  type="number" 
+                  min="2" 
+                  max="10" 
+                  class="setup__input" 
+                  :disabled="!editThresholds.enableConsecutiveTier1"
+                  @change="saveThresholds" 
+                />
+              </label>
+              <label class="setup__label" style="flex: 1;">
+                <span class="setup__label-subtext">Action Tag / Message</span>
+                <input 
+                  v-model="editThresholds.consecutiveTier1Label" 
+                  type="text" 
+                  placeholder="e.g. Check-in (or leave empty)" 
+                  class="setup__input" 
+                  :disabled="!editThresholds.enableConsecutiveTier1"
+                  @change="saveThresholds" 
+                />
+              </label>
+            </div>
+            <div class="attendance-rule-card__preview">
+              <span class="preview-label">Preview:</span>
+              <span class="preview-text">
+                {{ editThresholds.consecutiveAbsenceTier1 || 3 }} consecutive absences<template v-if="editThresholds.consecutiveTier1Label"> · {{ editThresholds.consecutiveTier1Label }}</template>
+              </span>
+            </div>
+          </div>
+
+          <!-- Rule 2: Consecutive Admin / VP Escalation (Tier 2) -->
+          <div class="attendance-rule-card" :class="{ 'attendance-rule-card--disabled': !editThresholds.enableConsecutiveTier2 }">
+            <div class="attendance-rule-card__top">
+              <label class="setup__switch">
+                <input type="checkbox" v-model="editThresholds.enableConsecutiveTier2" @change="saveThresholds" />
+                <span class="setup__switch-slider"></span>
+              </label>
+              <div class="attendance-rule-card__title-group">
+                <span class="attendance-rule-card__title">Consecutive Admin Escalation</span>
+                <span class="attendance-rule-card__badge" :class="editThresholds.enableConsecutiveTier2 ? 'badge--active' : 'badge--off'">
+                  {{ editThresholds.enableConsecutiveTier2 ? 'Active' : 'Disabled' }}
+                </span>
+              </div>
+            </div>
+            <div class="attendance-rule-card__fields">
+              <label class="setup__label" style="width: 110px;">
+                <span class="setup__label-subtext">Days in a row</span>
+                <input 
+                  v-model.number="editThresholds.consecutiveAbsenceTier2" 
+                  type="number" 
+                  min="3" 
+                  max="15" 
+                  class="setup__input" 
+                  :disabled="!editThresholds.enableConsecutiveTier2"
+                  @change="saveThresholds" 
+                />
+              </label>
+              <label class="setup__label" style="flex: 1;">
+                <span class="setup__label-subtext">Action Tag / Message</span>
+                <input 
+                  v-model="editThresholds.consecutiveTier2Label" 
+                  type="text" 
+                  placeholder="e.g. Notify Alpha VP" 
+                  class="setup__input" 
+                  :disabled="!editThresholds.enableConsecutiveTier2"
+                  @change="saveThresholds" 
+                />
+              </label>
+            </div>
+            <div class="attendance-rule-card__preview">
+              <span class="preview-label">Preview:</span>
+              <span class="preview-text">
+                {{ editThresholds.consecutiveAbsenceTier2 || 5 }} consecutive absences · {{ editThresholds.consecutiveTier2Label || 'Notify Alpha VP' }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Rule 3: Short-Period Family Contact (Tier 1 Window) -->
+          <div class="attendance-rule-card" :class="{ 'attendance-rule-card--disabled': !editThresholds.enableWindowTier1 }">
+            <div class="attendance-rule-card__top">
+              <label class="setup__switch">
+                <input type="checkbox" v-model="editThresholds.enableWindowTier1" @change="saveThresholds" />
+                <span class="setup__switch-slider"></span>
+              </label>
+              <div class="attendance-rule-card__title-group">
+                <span class="attendance-rule-card__title">Short-Period Family Contact</span>
+                <span class="attendance-rule-card__badge" :class="editThresholds.enableWindowTier1 ? 'badge--active' : 'badge--off'">
+                  {{ editThresholds.enableWindowTier1 ? 'Active' : 'Disabled' }}
+                </span>
+              </div>
+            </div>
+            <div class="attendance-rule-card__fields">
+              <label class="setup__label" style="width: 110px;">
+                <span class="setup__label-subtext">Absences in Window</span>
+                <input 
+                  v-model.number="editThresholds.absenceWindowTier1" 
+                  type="number" 
+                  min="2" 
+                  max="20" 
+                  class="setup__input" 
+                  :disabled="!editThresholds.enableWindowTier1"
+                  @change="saveThresholds" 
+                />
+              </label>
+              <label class="setup__label" style="flex: 1;">
+                <span class="setup__label-subtext">Action Tag / Message</span>
+                <input 
+                  v-model="editThresholds.windowTier1Label" 
+                  type="text" 
+                  placeholder="e.g. Contact family" 
+                  class="setup__input" 
+                  :disabled="!editThresholds.enableWindowTier1"
+                  @change="saveThresholds" 
+                />
+              </label>
+            </div>
+            <div class="attendance-rule-card__preview">
+              <span class="preview-label">Preview:</span>
+              <span class="preview-text">
+                {{ editThresholds.absenceWindowTier1 || 5 }} absences in last {{ editThresholds.absenceWindowDays || 15 }} school days · {{ editThresholds.windowTier1Label || 'Contact family' }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Rule 4: Short-Period Student Success Referral (Tier 2 Window) -->
+          <div class="attendance-rule-card" :class="{ 'attendance-rule-card--disabled': !editThresholds.enableWindowTier2 }">
+            <div class="attendance-rule-card__top">
+              <label class="setup__switch">
+                <input type="checkbox" v-model="editThresholds.enableWindowTier2" @change="saveThresholds" />
+                <span class="setup__switch-slider"></span>
+              </label>
+              <div class="attendance-rule-card__title-group">
+                <span class="attendance-rule-card__title">Short-Period Success Referral</span>
+                <span class="attendance-rule-card__badge" :class="editThresholds.enableWindowTier2 ? 'badge--active' : 'badge--off'">
+                  {{ editThresholds.enableWindowTier2 ? 'Active' : 'Disabled' }}
+                </span>
+              </div>
+            </div>
+            <div class="attendance-rule-card__fields">
+              <label class="setup__label" style="width: 110px;">
+                <span class="setup__label-subtext">Absences in Window</span>
+                <input 
+                  v-model.number="editThresholds.absenceWindowTier2" 
+                  type="number" 
+                  min="3" 
+                  max="30" 
+                  class="setup__input" 
+                  :disabled="!editThresholds.enableWindowTier2"
+                  @change="saveThresholds" 
+                />
+              </label>
+              <label class="setup__label" style="flex: 1;">
+                <span class="setup__label-subtext">Action Tag / Message</span>
+                <input 
+                  v-model="editThresholds.windowTier2Label" 
+                  type="text" 
+                  placeholder="e.g. Student Success referral" 
+                  class="setup__input" 
+                  :disabled="!editThresholds.enableWindowTier2"
+                  @change="saveThresholds" 
+                />
+              </label>
+            </div>
+            <div class="attendance-rule-card__preview">
+              <span class="preview-label">Preview:</span>
+              <span class="preview-text">
+                {{ editThresholds.absenceWindowTier2 || 8 }} absences in last {{ editThresholds.absenceWindowDays || 15 }} school days · {{ editThresholds.windowTier2Label || 'Student Success referral' }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
       <div v-if="thresholdsSuccess" class="setup__success-banner">
         {{ thresholdsSuccess }}
       </div>
@@ -684,7 +903,20 @@ const editThresholds = reactive({
   washroomDurationLimit: 11,
   deviceIncidentsPerWeek: 3, 
   atRiskThreshold: 70, 
-  attendanceThreshold: 85 
+  attendanceThreshold: 85,
+  absenceWindowDays: 15,
+  enableWindowTier1: true,
+  absenceWindowTier1: 5,
+  windowTier1Label: 'Contact family',
+  enableWindowTier2: true,
+  absenceWindowTier2: 8,
+  windowTier2Label: 'Student Success referral',
+  enableConsecutiveTier1: true,
+  consecutiveAbsenceTier1: 3,
+  consecutiveTier1Label: '',
+  enableConsecutiveTier2: true,
+  consecutiveAbsenceTier2: 5,
+  consecutiveTier2Label: 'Notify Alpha VP'
 })
 const thresholdsSuccess = ref('')
 
@@ -897,6 +1129,19 @@ onMounted(async () => {
     editThresholds.deviceIncidentsPerWeek = current.deviceIncidentsPerWeek
     editThresholds.atRiskThreshold = current.atRiskThreshold ?? 70
     editThresholds.attendanceThreshold = current.attendanceThreshold ?? 85
+    editThresholds.absenceWindowDays = current.absenceWindowDays ?? 15
+    editThresholds.enableWindowTier1 = current.enableWindowTier1 ?? true
+    editThresholds.absenceWindowTier1 = current.absenceWindowTier1 ?? 5
+    editThresholds.windowTier1Label = current.windowTier1Label ?? 'Contact family'
+    editThresholds.enableWindowTier2 = current.enableWindowTier2 ?? true
+    editThresholds.absenceWindowTier2 = current.absenceWindowTier2 ?? 8
+    editThresholds.windowTier2Label = current.windowTier2Label ?? 'Student Success referral'
+    editThresholds.enableConsecutiveTier1 = current.enableConsecutiveTier1 ?? true
+    editThresholds.consecutiveAbsenceTier1 = current.consecutiveAbsenceTier1 ?? 3
+    editThresholds.consecutiveTier1Label = current.consecutiveTier1Label ?? ''
+    editThresholds.enableConsecutiveTier2 = current.enableConsecutiveTier2 ?? true
+    editThresholds.consecutiveAbsenceTier2 = current.consecutiveAbsenceTier2 ?? 5
+    editThresholds.consecutiveTier2Label = current.consecutiveTier2Label ?? 'Notify Alpha VP'
   }
 })
 
@@ -907,7 +1152,20 @@ async function saveThresholds() {
     washroomDurationLimit: editThresholds.washroomDurationLimit,
     deviceIncidentsPerWeek: editThresholds.deviceIncidentsPerWeek,
     atRiskThreshold: editThresholds.atRiskThreshold,
-    attendanceThreshold: editThresholds.attendanceThreshold
+    attendanceThreshold: editThresholds.attendanceThreshold,
+    absenceWindowDays: editThresholds.absenceWindowDays,
+    enableWindowTier1: editThresholds.enableWindowTier1,
+    absenceWindowTier1: editThresholds.absenceWindowTier1,
+    windowTier1Label: editThresholds.windowTier1Label,
+    enableWindowTier2: editThresholds.enableWindowTier2,
+    absenceWindowTier2: editThresholds.absenceWindowTier2,
+    windowTier2Label: editThresholds.windowTier2Label,
+    enableConsecutiveTier1: editThresholds.enableConsecutiveTier1,
+    consecutiveAbsenceTier1: editThresholds.consecutiveAbsenceTier1,
+    consecutiveTier1Label: editThresholds.consecutiveTier1Label,
+    enableConsecutiveTier2: editThresholds.enableConsecutiveTier2,
+    consecutiveAbsenceTier2: editThresholds.consecutiveAbsenceTier2,
+    consecutiveTier2Label: editThresholds.consecutiveTier2Label
   })
   
   // Sync composable states
@@ -917,6 +1175,19 @@ async function saveThresholds() {
   classroomThresholds.value.deviceIncidentsPerWeek = editThresholds.deviceIncidentsPerWeek
   classroomThresholds.value.atRiskThreshold = editThresholds.atRiskThreshold
   classroomThresholds.value.attendanceThreshold = editThresholds.attendanceThreshold
+  classroomThresholds.value.absenceWindowDays = editThresholds.absenceWindowDays
+  classroomThresholds.value.enableWindowTier1 = editThresholds.enableWindowTier1
+  classroomThresholds.value.absenceWindowTier1 = editThresholds.absenceWindowTier1
+  classroomThresholds.value.windowTier1Label = editThresholds.windowTier1Label
+  classroomThresholds.value.enableWindowTier2 = editThresholds.enableWindowTier2
+  classroomThresholds.value.absenceWindowTier2 = editThresholds.absenceWindowTier2
+  classroomThresholds.value.windowTier2Label = editThresholds.windowTier2Label
+  classroomThresholds.value.enableConsecutiveTier1 = editThresholds.enableConsecutiveTier1
+  classroomThresholds.value.consecutiveAbsenceTier1 = editThresholds.consecutiveAbsenceTier1
+  classroomThresholds.value.consecutiveTier1Label = editThresholds.consecutiveTier1Label
+  classroomThresholds.value.enableConsecutiveTier2 = editThresholds.enableConsecutiveTier2
+  classroomThresholds.value.consecutiveAbsenceTier2 = editThresholds.consecutiveAbsenceTier2
+  classroomThresholds.value.consecutiveTier2Label = editThresholds.consecutiveTier2Label
   
   thresholdsSuccess.value = 'Saved!'
   setTimeout(() => { thresholdsSuccess.value = '' }, 1500)
@@ -1775,5 +2046,121 @@ export default {
 .setup__input:focus {
   outline: none;
   border-color: var(--primary);
+}
+
+.attendance-alerts-section {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.attendance-alerts-section__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.attendance-alerts-window-box {
+  min-width: 140px;
+}
+
+.attendance-rules-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 12px;
+}
+
+.attendance-rule-card {
+  background: var(--surface-subtle, rgba(0, 0, 0, 0.02));
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: opacity 0.2s ease, border-color 0.2s ease;
+}
+
+.attendance-rule-card--disabled {
+  opacity: 0.55;
+  border-style: dashed;
+}
+
+.attendance-rule-card__top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.attendance-rule-card__title-group {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.attendance-rule-card__title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.attendance-rule-card__badge {
+  font-size: 0.7rem;
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-weight: 600;
+}
+
+.badge--active {
+  background: rgba(16, 185, 129, 0.12);
+  color: #10b981;
+}
+
+.badge--off {
+  background: rgba(156, 163, 175, 0.15);
+  color: var(--text-secondary);
+}
+
+.attendance-rule-card__fields {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+}
+
+.attendance-rule-card__preview {
+  font-size: 0.75rem;
+  display: flex;
+  gap: 4px;
+  align-items: baseline;
+  color: var(--text-secondary);
+  background: var(--surface, #fff);
+  padding: 5px 8px;
+  border-radius: 5px;
+  border: 1px solid var(--border);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.preview-label {
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.68rem;
+  letter-spacing: 0.03em;
+  flex-shrink: 0;
+}
+
+.preview-text {
+  font-weight: 500;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 </style>

@@ -85,7 +85,8 @@ function codeOptions() {
   return {
     washCodes: codes.filter(c => c.type === 'toggle').map(c => c.codeKey),
     redirectCodes: codes.filter(c => c.category === 'redirect').map(c => c.codeKey),
-    washLimit: Number(thresholds.value?.washroomDurationLimit ?? 11)
+    washLimit: Number(thresholds.value?.washroomDurationLimit ?? 11),
+    thresholds: thresholds.value || {}
   }
 }
 
@@ -152,7 +153,7 @@ export async function refreshActionAlerts(classId, preloaded = {}) {
 function itemsFor(classId) {
   const src = sources.value[classId]
   if (!src) return []
-  const { washCodes, washLimit } = codeOptions()
+  const { washCodes, washLimit, thresholds } = codeOptions()
 
   // Missing work needs the gradebook, which every dossier host loads for its class.
   const gradebookReady = activeClassRecord.value?.classId === classId
@@ -161,10 +162,12 @@ function itemsFor(classId) {
   const followUpItems = buildFollowUpItems({
     students: src.students,
     periodEvents: src.periodEvents,
+    allEvents: src.events,
     assessments,
     classGrades: src.classGrades,
     washCodes,
-    washLimit
+    washLimit,
+    thresholds
   })
   const missingSummary = buildMissingSummary({
     studentList: src.studentList,

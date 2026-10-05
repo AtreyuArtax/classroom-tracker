@@ -92,7 +92,19 @@ export function getActiveClassDates(allClassEvents = []) {
  */
 export function detectStudentAttendancePatterns(studentId, studentEvents = [], activeClassDates = [], options = {}) {
   const opts = {
+    enableConsecutiveTier1: true,
     consecutiveAbsenceThreshold: 3,
+    consecutiveTier1Label: '',
+    enableConsecutiveTier2: true,
+    consecutiveAbsenceTier2Threshold: 5,
+    consecutiveTier2Label: 'Notify Alpha VP',
+    absenceWindowDays: 15,
+    enableWindowTier1: true,
+    absenceWindowTier1: 5,
+    windowTier1Label: 'Contact family',
+    enableWindowTier2: true,
+    absenceWindowTier2: 8,
+    windowTier2Label: 'Student Success referral',
     dayOfWeekClusterMinCount: 3,
     dayOfWeekClusterRatio: 0.4,
     chronicLateCountThreshold: 4,
@@ -130,15 +142,62 @@ export function detectStudentAttendancePatterns(studentId, studentEvents = [], a
     }
   }
 
-  if (maxAbsenceStreak >= opts.consecutiveAbsenceThreshold) {
-    const isCurrent = currentAbsenceStreak >= opts.consecutiveAbsenceThreshold
+  const tier2Threshold = opts.consecutiveAbsenceTier2Threshold ?? 5
+  const tier1Threshold = opts.consecutiveAbsenceThreshold ?? 3
+  const isTier2Eligible = Boolean(opts.enableConsecutiveTier2 !== false && maxAbsenceStreak >= tier2Threshold)
+  const isTier1Eligible = Boolean(opts.enableConsecutiveTier1 !== false && maxAbsenceStreak >= tier1Threshold)
+
+  if (isTier2Eligible || isTier1Eligible) {
+    const isVpAlert = isTier2Eligible
+    const activeStreakThreshold = isVpAlert ? tier2Threshold : tier1Threshold
+    const isCurrent = currentAbsenceStreak >= activeStreakThreshold
+    const tier2Label = (opts.consecutiveTier2Label !== undefined) ? opts.consecutiveTier2Label : 'Notify Alpha VP'
+    const tier1Label = opts.consecutiveTier1Label || ''
+    
+    let reasonSuffix = ''
+    if (isVpAlert) {
+      reasonSuffix = tier2Label ? ` · ${tier2Label}` : ''
+    } else {
+      reasonSuffix = tier1Label ? ` · ${tier1Label}` : ''
+    }
+
     patterns.push({
       type: 'consecutive_absences',
       streak: maxAbsenceStreak,
       isCurrent,
+      isVpAlert,
       severity: 'danger',
-      reason: `${maxAbsenceStreak} consecutive absences${isCurrent ? ' (Active)' : ''}`,
-      sortVal: 200 + maxAbsenceStreak
+      reason: `${maxAbsenceStreak} consecutive absences${isCurrent ? ' (Active)' : ''}${reasonSuffix}`,
+      sortVal: (isVpAlert ? 260 : 200) + maxAbsenceStreak
+    })
+  }
+
+  // ── 2. Short-Period / Rolling Window Absences ────────────────────────────
+  const windowDays = Math.max(1, opts.absenceWindowDays || 15)
+  const tier1 = opts.absenceWindowTier1 ?? 5
+  const tier2 = opts.absenceWindowTier2 ?? 8
+
+  const recentMeetingDates = activeClassDates.slice(-windowDays)
+  const absencesInWindow = recentMeetingDates.filter(d => absentDates.has(d)).length
+
+  const isWindowTier2Eligible = Boolean(opts.enableWindowTier2 !== false && absencesInWindow >= tier2)
+  const isWindowTier1Eligible = Boolean(opts.enableWindowTier1 !== false && absencesInWindow >= tier1)
+
+  if (isWindowTier2Eligible || isWindowTier1Eligible) {
+    const isTier2 = isWindowTier2Eligible
+    const tier2Label = (opts.windowTier2Label !== undefined) ? opts.windowTier2Label : 'Student Success referral'
+    const tier1Label = (opts.windowTier1Label !== undefined) ? opts.windowTier1Label : 'Contact family'
+    const label = isTier2 ? tier2Label : tier1Label
+    const labelSuffix = label ? ` · ${label}` : ''
+
+    patterns.push({
+      type: 'short_period_absences',
+      count: absencesInWindow,
+      windowDays: recentMeetingDates.length,
+      tier: isTier2 ? 2 : 1,
+      severity: 'danger',
+      reason: `${absencesInWindow} absences in last ${recentMeetingDates.length} school days${labelSuffix}`,
+      sortVal: (isTier2 ? 240 : 170) + absencesInWindow
     })
   }
 
@@ -253,6 +312,7 @@ export function detectStudentAttendancePatterns(studentId, studentEvents = [], a
       totalAbsences: absentDates.size,
       maxAbsenceStreak,
       currentAbsenceStreak,
+      windowAbsences: absencesInWindow,
       totalLates: totalLateCount,
       totalLateMinutes,
       maxLateStreak,

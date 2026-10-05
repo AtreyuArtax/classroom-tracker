@@ -1,16 +1,16 @@
-# Graph Report - classroom-tracker  (2026-10-04)
+# Graph Report - classroom-tracker  (2026-10-05)
 
 ## Corpus Check
-- 322 files · ~592,423 words
+- 323 files · ~595,002 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 2262 nodes · 3862 edges · 190 communities (176 shown, 14 thin omitted)
+- 2276 nodes · 3877 edges · 189 communities (172 shown, 17 thin omitted)
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 10 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `016d7c95`
+- Built from commit: `8886f204`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -132,7 +132,6 @@
 - [[_COMMUNITY_Community 174|Community 174]]
 - [[_COMMUNITY_Community 176|Community 176]]
 - [[_COMMUNITY_Community 177|Community 177]]
-- [[_COMMUNITY_Community 178|Community 178]]
 - [[_COMMUNITY_Community 179|Community 179]]
 - [[_COMMUNITY_Community 181|Community 181]]
 - [[_COMMUNITY_Community 182|Community 182]]
@@ -155,29 +154,29 @@
 10. `isCohortMatch()` - 17 edges
 
 ## Surprising Connections (you probably didn't know these)
-- `getDB()` --calls--> `openDB()`  [INFERRED]
-  src/db/index.js → dev-dist/workbox-ca84f546.js
 - `suggestEmailContent()` --calls--> `has()`  [INFERRED]
   src/utils/actionAlerts.js → dev-dist/workbox-ca84f546.js
+- `getDB()` --calls--> `openDB()`  [INFERRED]
+  src/db/index.js → dev-dist/workbox-ca84f546.js
+- `downloadAggregateCsv()` --calls--> `formatLocalDate()`  [EXTRACTED]
+  src/components/reports/ReportsExportMenu.vue → src/utils/dates.js
 - `doExport()` --calls--> `formatLocalDate()`  [EXTRACTED]
   src/components/setup/DatabaseMaintenanceSettings.vue → src/utils/dates.js
 - `onClearAllData()` --calls--> `getDB()`  [EXTRACTED]
   src/components/setup/DatabaseMaintenanceSettings.vue → src/db/index.js
-- `main()` --calls--> `resetMasterPreset()`  [INFERRED]
-  src/test_curriculum_library_stress_suite.js → src/composables/useCurriculumLibrary.js
 
 ## Import Cycles
 - None detected.
 
-## Communities (190 total, 14 thin omitted)
+## Communities (189 total, 17 thin omitted)
 
 ### Community 0 - "Community 0"
 Cohesion: 0.04
-Nodes (41): archivedRoster, dismissedSuggestions, dismissSuggestion(), filteredArchivedClasses, filteredClassList, generateUniqueUserCode(), globalStudentsOut, modeAllArchivedClasses (+33 more)
+Nodes (42): archivedRoster, dismissedSuggestions, dismissSuggestion(), filteredArchivedClasses, filteredClassList, generateUniqueUserCode(), getTermRange(), globalStudentsOut (+34 more)
 
 ### Community 1 - "Community 1"
 Cohesion: 0.06
-Nodes (43): getUnitGradeLevel(), addAssessment(), adjustStudentGrade(), analyticsEvidenceScope, assessmentSortOrder, assessmentStats, assessmentTypes, availableCourseFilters (+35 more)
+Nodes (47): getUnitGradeLevel(), addAssessment(), analyticsEvidenceScope, assessmentSortOrder, assessmentStats, assessmentTypes, availableCourseFilters, availableGradeFilters (+39 more)
 
 ### Community 2 - "Community 2"
 Cohesion: 0.13
@@ -188,12 +187,12 @@ Cohesion: 0.07
 Nodes (25): getLastSyncedAt(), isSyncActive(), AddAssessmentModal, checkSyncStatus(), { clear: clearUndo }, { computeSuggestedClass }, currentComponent, currentView (+17 more)
 
 ### Community 4 - "Community 4"
-Cohesion: 0.08
-Nodes (31): BaseHTTPRequestHandler, Path, consume_scan(), _create_tray_icon_image(), get_app_dir(), keyboard_reader(), load_config(), log() (+23 more)
+Cohesion: 0.20
+Nodes (15): _create_tray_icon_image(), get_app_dir(), keyboard_reader(), load_config(), log(), main(), rfid_app.py — RFID Companion App for Classroom Tracker =========================, Start the loopback HTTP server in its own daemon thread. (+7 more)
 
 ### Community 5 - "Community 5"
-Cohesion: 0.06
-Nodes (20): addRoute(), CacheFirst, cacheMatchIgnoreParams(), cacheWillUpdate(), canConstructResponseFromBodyStream(), copyResponse(), Deferred, executeQuotaErrorCallbacks() (+12 more)
+Cohesion: 0.07
+Nodes (27): addRoute(), cacheDonePromiseForTransaction(), CacheFirst, cacheMatchIgnoreParams(), cacheWillUpdate(), canConstructResponseFromBodyStream(), copyResponse(), Deferred (+19 more)
 
 ### Community 6 - "Community 6"
 Cohesion: 0.17
@@ -212,8 +211,8 @@ Cohesion: 0.08
 Nodes (23): { activeClass, teacherName, init }, auditMsg, auditReport, backupMsg, { confirm, alert }, directoryBackups, doExport(), fixInvalidCategories() (+15 more)
 
 ### Community 10 - "Community 10"
-Cohesion: 0.28
-Nodes (16): activeClassRecord, clearGrade(), enqueueDBSave(), enterGrade(), enterGradeSBAR(), enterGradeSBARBulk(), markExcluded(), markMissing() (+8 more)
+Cohesion: 0.26
+Nodes (17): adjustStudentGrade(), clearGrade(), enqueueDBSave(), enterGrade(), enterGradeSBAR(), enterGradeSBARBulk(), markExcluded(), markMissing() (+9 more)
 
 ### Community 11 - "Community 11"
 Cohesion: 0.10
@@ -228,12 +227,12 @@ Cohesion: 0.19
 Nodes (5): CacheExpiration, dontWaitFor(), ExpirationPlugin, registerQuotaErrorCallback(), removeIgnoredSearchParams()
 
 ### Community 14 - "Community 14"
-Cohesion: 0.08
-Nodes (22): getLearningSkillsByStudent(), attendanceStats, currentClassObj, displayMetaLine, effectiveClass, events, fetchEvents(), formattedDate (+14 more)
+Cohesion: 0.07
+Nodes (25): getLearningSkillsByStudent(), useSBarPrintOptions(), attendanceStats, currentClassObj, displayMetaLine, effectiveClass, events, fetchEvents() (+17 more)
 
 ### Community 15 - "Community 15"
-Cohesion: 0.13
-Nodes (12): cacheDonePromiseForTransaction(), get(), getCursorAdvanceMethods(), getIdbProxyableTypes(), getMethod(), has(), promisifyRequest(), Router (+4 more)
+Cohesion: 0.21
+Nodes (4): get(), getMethod(), has(), Router
 
 ### Community 16 - "Community 16"
 Cohesion: 0.12
@@ -256,16 +255,16 @@ Nodes (17): restoreClass(), switchClass(), {
 }, allYearGroups, areAllYearsExpanded, { confirmAndDeleteClass }, emit, isArchivedPanelVisible (+9 more)
 
 ### Community 18 - "Community 18"
-Cohesion: 0.15
-Nodes (14): confirmImport(), detectedSubjects, emit, errorMsg, fileInputRef, handleDrop(), handleFileSelect(), isDragging (+6 more)
+Cohesion: 0.07
+Nodes (41): confirmImport(), detectedSubjects, emit, errorMsg, fileInputRef, handleDrop(), handleFileSelect(), isDragging (+33 more)
 
 ### Community 20 - "Community 20"
-Cohesion: 0.20
-Nodes (12): ackKey(), acksByClass, alertPeriod, ensureAcks(), inFlight, pendingEmails, queueEntry, readStorage() (+4 more)
+Cohesion: 0.18
+Nodes (13): ackKey(), acksByClass, alertPeriod, ensureAcks(), inFlight, pendingEmails, queueEntry, readStorage() (+5 more)
 
 ### Community 21 - "Community 21"
-Cohesion: 0.13
-Nodes (26): deleteLayoutPreset(), getAcademicTerms(), getAppTheme(), getAttendanceConfig(), getBehaviorCodes(), getCustomCurriculumPresets(), getGlobalMilestones(), getGradeBuckets() (+18 more)
+Cohesion: 0.10
+Nodes (31): DEFAULT_THRESHOLDS, deleteLayoutPreset(), getAcademicTerms(), getAppTheme(), getAttendanceConfig(), getBehaviorCodes(), getCustomCurriculumPresets(), getGlobalMilestones() (+23 more)
 
 ### Community 22 - "Community 22"
 Cohesion: 0.20
@@ -273,19 +272,19 @@ Nodes (9): background_color, description, display, icons, name, orientation, sho
 
 ### Community 23 - "Community 23"
 Cohesion: 0.10
-Nodes (33): saveStudentDemographics(), archiveClass(), archiveStudent(), bulkImportClasses(), clearStudentAbsent(), clearStudentActiveState(), clearStudentLate(), getAllClasses() (+25 more)
+Nodes (35): saveStudentDemographics(), saveStudentGradebookNote(), saveStudentOverride(), archiveClass(), archiveStudent(), bulkImportClasses(), clearStudentAbsent(), clearStudentActiveState() (+27 more)
 
 ### Community 24 - "Community 24"
-Cohesion: 0.09
-Nodes (33): useClassDeletion(), logAssessmentEvent(), updateMultipleStudentSeats(), syncStudentAcrossRefs(), ensureIEPPresetsForClass(), toggleStudentFromAnalytics(), state, useMessage() (+25 more)
+Cohesion: 0.13
+Nodes (26): useClassDeletion(), logAssessmentEvent(), updateMultipleStudentSeats(), gridSize, syncStudentAcrossRefs(), ensureIEPPresetsForClass(), toggleStudentFromAnalytics(), state (+18 more)
 
 ### Community 25 - "Community 25"
 Cohesion: 0.22
 Nodes (8): background, service_worker, content_scripts, description, manifest_version, name, permissions, version
 
 ### Community 26 - "Community 26"
-Cohesion: 0.13
-Nodes (19): initializeRfidAttendance(), _activateClass(), archiveClass(), computeSuggestedClass(), computeWeeklyStats(), getAllClasses(), getAttendanceOnDate(), getEventsByClass() (+11 more)
+Cohesion: 0.12
+Nodes (20): initializeRfidAttendance(), _activateClass(), archiveClass(), checkResize(), clearAllClassRfids(), computeSuggestedClass(), confirmResize(), createClass() (+12 more)
 
 ### Community 27 - "Community 27"
 Cohesion: 0.25
@@ -293,7 +292,7 @@ Nodes (7): list_raw_input_devices(), list_serial_ports(), find_rfid.py — RFID 
 
 ### Community 28 - "Community 28"
 Cohesion: 0.19
-Nodes (19): runAllTests(), runTest(), _calculateCategoryGrade(), calculateMostConsistent(), calculateStudentGrade(), calculateWeightedMedian(), filterAssessmentsForSubject(), getAssessmentPercentage() (+11 more)
+Nodes (20): runAllTests(), runTest(), _calculateCategoryGrade(), calculateMostConsistent(), calculateStudentGrade(), calculateWeightedMedian(), filterAssessmentsForSubject(), getAssessmentPercentage() (+12 more)
 
 ### Community 29 - "Community 29"
 Cohesion: 0.33
@@ -308,16 +307,16 @@ Cohesion: 0.07
 Nodes (26): auditResult, corruptedAuditDatabase, exportedJsonString, fullDatabaseState, healedAssessments, healedGradesAfterOrphanRemoval, healedGradesWithClassId, importedParsedState (+18 more)
 
 ### Community 33 - "Community 33"
-Cohesion: 0.18
-Nodes (13): codeOptions(), itemsFor(), studentList, students, buildActionItems(), buildContactNote(), buildFollowUpItems(), buildMissingSummary() (+5 more)
+Cohesion: 0.16
+Nodes (15): codeOptions(), itemsFor(), studentList, students, buildActionItems(), buildContactNote(), buildFollowUpItems(), buildMissingSummary() (+7 more)
 
 ### Community 34 - "Community 34"
 Cohesion: 0.07
 Nodes (21): activeClassSubtab, activeTab, AddClassModal, AppPreferencesSettings, AttendanceStationSettings, BehaviorSettings, { classList, activeClass, filteredClassList, switchClass }, ClassLogisticsSettings (+13 more)
 
 ### Community 35 - "Community 35"
-Cohesion: 0.10
-Nodes (27): deleteClass(), _applyDateRange(), createSafetySnapshot(), dataUrlToBlob(), deleteEvent(), deleteSafetySnapshot(), detachEventsForDeletedExpectation(), detachEventsForDeletedUnit() (+19 more)
+Cohesion: 0.11
+Nodes (26): deleteClass(), _applyDateRange(), createSafetySnapshot(), dataUrlToBlob(), deleteEvent(), deleteSafetySnapshot(), detachEventsForDeletedExpectation(), detachEventsForDeletedUnit() (+18 more)
 
 ### Community 36 - "Community 36"
 Cohesion: 0.07
@@ -337,8 +336,8 @@ Nodes (52): activeGradeFilter, {
 }, activeClassType, activeSubCohortFilter, activeVisualTab, aggregates, allClassEvents, assessmentsList (+44 more)
 
 ### Community 41 - "Community 41"
-Cohesion: 0.12
-Nodes (17): getSuccessCriteriaPreset(), initCurriculumLibrary(), resolveSubjectPreset(), curriculumPresets, findElementaryPreset(), findElementaryPresets(), getPresetsByPanel(), elemBlueprints (+9 more)
+Cohesion: 0.13
+Nodes (16): initCurriculumLibrary(), resolveSubjectPreset(), curriculumPresets, findElementaryPreset(), findElementaryPresets(), getPresetsByPanel(), elemBlueprints, expectedCodes (+8 more)
 
 ### Community 42 - "Community 42"
 Cohesion: 0.04
@@ -369,28 +368,28 @@ Cohesion: 0.13
 Nodes (5): app, MockDocument, MockElement, MockEventTarget, setupNumberInputScrollPrevention()
 
 ### Community 61 - "Community 61"
-Cohesion: 0.09
-Nodes (22): activeDates, classResults, consecLatePattern, consecPattern, dowPattern, fullClassEvents, lateEvents, latePattern (+14 more)
+Cohesion: 0.06
+Nodes (33): activeDates, classResults, consecLatePattern, consecPattern, dowPattern, eightAbsEvents, fifteenClassDates, fiveConsecDates (+25 more)
 
 ### Community 64 - "Community 64"
-Cohesion: 0.22
-Nodes (10): curriculumEditorDirty, curriculumEditorDiscardHandler, curriculumEditorSaveHandler, curriculumEditorTitle, customPresets, getMergedCurriculumPresets(), isLoaded, isLoading (+2 more)
+Cohesion: 0.17
+Nodes (22): curriculumEditorDirty, curriculumEditorDiscardHandler, curriculumEditorSaveHandler, curriculumEditorTitle, customPresets, diffClassAgainstMaster(), exportClassExpectationsToMaster(), extractMasterExpectations() (+14 more)
 
 ### Community 78 - "Community 78"
-Cohesion: 0.14
-Nodes (13): getStudentEffectiveGrade(), isAssessmentApplicableToStudent(), isStudentInSubCohort(), executePrint(), effectiveClass, emit, isSBAR, isSystemPrinting (+5 more)
+Cohesion: 0.09
+Nodes (24): activeSubjectId, teachingMode, detectGradeFromClassName(), getEffectiveClassRecord(), getEffectiveGradeLevel(), getStudentEffectiveGrade(), parseGradesFromClass(), populateSubjectFromPreset() (+16 more)
 
 ### Community 79 - "Community 79"
 Cohesion: 0.15
-Nodes (13): deriveOverallPreset(), deriveSpecificPreset(), getMasterPreset(), useCurriculumLibrary(), allBlueprints, { customPresets }, derivedOveralls, icsBlueprint (+5 more)
+Nodes (13): deriveOverallPreset(), deriveSpecificPreset(), getMasterPreset(), getSuccessCriteriaPreset(), allBlueprints, { customPresets }, derivedOveralls, icsBlueprint (+5 more)
 
 ### Community 81 - "Community 81"
 Cohesion: 0.08
 Nodes (37): deleteLearningSkillsRecord(), getLearningSkillsByClassAndTerm(), saveBatchLearningSkills(), saveLearningSkillsRecord(), deleteLearningSkillsByTerm(), deleteLearningSkillsRecord(), escapeCsvCell(), exportAllLearningSkillsCsv() (+29 more)
 
 ### Community 85 - "Community 85"
-Cohesion: 0.22
-Nodes (9): migrateData(), CURRICULUM_DIR, __dirname, __filename, INDEX_FILE, ROOT_DIR, shouldFix, cleanCurriculumObject() (+1 more)
+Cohesion: 0.14
+Nodes (12): clearAllData(), migrateData(), repairExpectationHtmlEntities(), CURRICULUM_DIR, __dirname, __filename, INDEX_FILE, ROOT_DIR (+4 more)
 
 ### Community 87 - "Community 87"
 Cohesion: 0.11
@@ -398,15 +397,11 @@ Nodes (17): aliciaOverall, ast1, ast2, ast3, bobOverall, decayingRes, gradeMap1,
 
 ### Community 88 - "Community 88"
 Cohesion: 0.10
-Nodes (19): mockAssessments, mockClassWithStrings, mockGrades, mockMasteryPreRef, mockSbarAssessments, mockSbarClass, n0, n1 (+11 more)
+Nodes (28): hasUnsyncedChanges, calculateAssessmentAnalytics(), calculateClassAnalytics(), getExclusionResults(), mockAssessments, mockClassWithStrings, mockGrades, mockMasteryPreRef (+20 more)
 
 ### Community 91 - "Community 91"
 Cohesion: 0.20
-Nodes (10): description, type, description, type, properties, grade, isSuccessCriteria, title (+2 more)
-
-### Community 94 - "Community 94"
-Cohesion: 0.29
-Nodes (3): CacheTimestampsModel, deleteDB(), openDB()
+Nodes (10): description, type, description, type, properties, grade, isSuccessCriteria, subjectCode (+2 more)
 
 ### Community 96 - "Community 96"
 Cohesion: 0.04
@@ -421,27 +416,20 @@ Cohesion: 0.08
 Nodes (33): activeBulkExp, activeLevelOptions, applyBulkFill(), assignLevel(), assignLevelByCode(), assignNumericPercentage(), bulkScope, contextMenu (+25 more)
 
 ### Community 109 - "Community 109"
-Cohesion: 0.12
-Nodes (27): getGradebookSettings(), saveGradebookSettings(), getSettings(), getAssessmentsByClass(), calculateClassGrades(), calculateStudentGrade(), getGradesByClass(), getGradesByStudent() (+19 more)
+Cohesion: 0.13
+Nodes (25): getSettings(), getAssessmentsByClass(), calculateClassGrades(), calculateStudentGrade(), getGradesByClass(), getGradesByStudent(), allGradesElem, assessmentsElem (+17 more)
 
 ### Community 111 - "Community 111"
 Cohesion: 0.07
 Nodes (38): body, bodyAdminFiltered, bodyNoMissing, bodyWithMissing, emailResult, emlBasic, emlWithCid, html (+30 more)
 
 ### Community 112 - "Community 112"
-Cohesion: 0.09
-Nodes (21): calendar, events, loading, props, stats, student, { 
-  students, 
-  activeClass, 
-  teacherName, 
-  schoolName,
-  getTermRange, 
-  nonSchoolDays 
-}, termRange (+13 more)
+Cohesion: 0.14
+Nodes (13): getSeatStatus(), mockClassRecord, mockEvents, presentNames, prevFromMonday, prevFromSunday, prevFromWed, result (+5 more)
 
 ### Community 113 - "Community 113"
-Cohesion: 0.09
-Nodes (21): gr6ExpB11, gr6Exps, gr6Filtered, gr6Preset, gr6Unit, gr8ExpB11, gr8Exps, gr8Filtered (+13 more)
+Cohesion: 0.08
+Nodes (22): filterModalExpectations(), gr6ExpB11, gr6Exps, gr6Filtered, gr6Preset, gr6Unit, gr8ExpB11, gr8Exps (+14 more)
 
 ### Community 115 - "Community 115"
 Cohesion: 0.25
@@ -472,8 +460,8 @@ Cohesion: 0.50
 Nodes (4): region, default, description, type
 
 ### Community 123 - "Community 123"
-Cohesion: 0.13
-Nodes (17): handleRfidAttendanceScan(), logAttendanceEvent(), markAllPresentToday(), masterTimestamp, { push: pushUndo }, reconcileStaleTrips(), syncLateActiveState(), syncStudentState() (+9 more)
+Cohesion: 0.12
+Nodes (19): handleRfidAttendanceScan(), logAttendanceEvent(), markAllPresentToday(), masterTimestamp, { push: pushUndo }, reconcileStaleTrips(), syncLateActiveState(), syncStudentState() (+11 more)
 
 ### Community 127 - "Community 127"
 Cohesion: 0.50
@@ -484,12 +472,12 @@ Cohesion: 0.04
 Nodes (43): bucketTotalCount, classMean, classMedian, classSD, cohortOverallScores, decayingImproving, effMath, effSci (+35 more)
 
 ### Community 131 - "Community 131"
-Cohesion: 0.12
-Nodes (22): getTermRange(), clearAllData(), { alert, confirm, select }, downloadAggregateCsv(), downloadReportCardCsv(), exportContainer, props, showExportMenu (+14 more)
+Cohesion: 0.16
+Nodes (11): getEventsByClass(), getEventsByClass(), { alert, confirm, select }, downloadAggregateCsv(), downloadReportCardCsv(), exportContainer, props, showExportMenu (+3 more)
 
 ### Community 136 - "Community 136"
 Cohesion: 0.06
-Nodes (33): academicAssessment1, academicAssessment2, adminCheckGrade, adminSafetyContract, adminTextbook, adminTextGrade, adminView, allAssessments (+25 more)
+Nodes (32): academicAssessment1, academicAssessment2, adminCheckGrade, adminSafetyContract, adminTextbook, adminTextGrade, adminView, allAssessments (+24 more)
 
 ### Community 138 - "Community 138"
 Cohesion: 0.15
@@ -504,12 +492,12 @@ Cohesion: 0.20
 Nodes (10): useStudentPhotos(), avatarStyle, cameraIconSize, emit, { getPhotoUrl, initPhotoIds }, handleClick(), initials, photoUrl (+2 more)
 
 ### Community 142 - "Community 142"
-Cohesion: 0.15
-Nodes (12): activePinned, cleanOpt, conf1, conf2, csvBlob, markRecord, mockClass, mockRecordsMap (+4 more)
+Cohesion: 0.34
+Nodes (10): openAddAssessment(), jumpToPrevSchoolDayFrom(), formatLocalDate(), getCurrentSchoolYear(), getSchoolYearFromDate(), getSemesterFromDate(), parseLocal(), exportGradebookToExcel() (+2 more)
 
 ### Community 145 - "Community 145"
-Cohesion: 0.35
-Nodes (11): diffClassAgainstMaster(), exportClassExpectationsToMaster(), extractMasterExpectations(), findMatchingClassesForPreset(), getCourseBlueprints(), isCourseCodeMatch(), isMasterCustomized(), saveMasterPreset() (+3 more)
+Cohesion: 0.24
+Nodes (8): canRedo, canUndo, push(), redo(), _redoStack, undo(), _undoStack, useUndo()
 
 ### Community 146 - "Community 146"
 Cohesion: 0.18
@@ -532,16 +520,23 @@ Cohesion: 0.67
 Nodes (3): calendarFiles, getAvailableBoardCalendars(), getBoardCalendar()
 
 ### Community 153 - "Community 153"
-Cohesion: 0.18
-Nodes (9): activeSubjectId, assessments, classGrades, gradeMap, isAssessmentInSubCohort(), useSBarPrintOptions(), props, formatDateShort() (+1 more)
+Cohesion: 0.28
+Nodes (5): BaseHTTPRequestHandler, consume_scan(), Return the pending scan and clear it. Returns None if none pending., Endpoints:       GET /scan    → { "status": "idle" } or { "status": "scanned", ", RFIDHandler
 
 ### Community 155 - "Community 155"
-Cohesion: 0.67
-Nodes (3): subjectCode, description, type
+Cohesion: 0.22
+Nodes (8): calendar, events, loading, props, stats, student, { 
+  students, 
+  activeClass, 
+  teacherName, 
+  schoolName,
+  getTermRange, 
+  nonSchoolDays 
+}, termRange
 
 ### Community 157 - "Community 157"
 Cohesion: 0.43
-Nodes (7): DAY_NAMES, detectClassAttendancePatterns(), detectStudentAttendancePatterns(), getActiveClassDates(), getDayOfWeek(), normalizeDate(), toMinutes()
+Nodes (6): DAY_NAMES, detectStudentAttendancePatterns(), getActiveClassDates(), getDayOfWeek(), normalizeDate(), toMinutes()
 
 ### Community 158 - "Community 158"
 Cohesion: 0.13
@@ -555,33 +550,25 @@ Nodes (9): confirmBtnRef, inputRef, isConfirmDisabled, { state, handleAction, ha
 Cohesion: 0.33
 Nodes (6): c1, c2, c3, getFrontSeatStatus(), isFrontPreference(), isSeatInGrid()
 
-### Community 161 - "Community 161"
-Cohesion: 0.29
-Nodes (8): clearGradebook(), loadGradebook(), refreshAllAssessmentStats(), resetAnalyticsState(), setActiveSubject(), onSurveyImported(), onToggleNoteComplete(), runReport()
-
 ### Community 162 - "Community 162"
-Cohesion: 0.18
-Nodes (17): auditGradebookData(), calculateAssessmentAnalytics(), calculateClassAnalytics(), deleteAssessments(), deleteGradebookTemplate(), getExclusionResults(), getGradebookTemplates(), repairExpectationHtmlEntities() (+9 more)
+Cohesion: 0.33
+Nodes (5): Path, calendarDir, content, currentDir, file2026
 
 ### Community 163 - "Community 163"
 Cohesion: 0.18
 Nodes (8): batchResolvers, clearPhotoCache(), inFlightRequests, initPhotoIds(), pendingBatch, photoCache, photoIdsSet, reloadPhotoCache()
 
 ### Community 164 - "Community 164"
-Cohesion: 0.29
-Nodes (10): addAttempt(), deleteAttempt(), deleteGrade(), _getGradeInTransaction(), getOrCreateGrade(), saveFullGradeRecord(), saveSBARGrade(), setPrimaryAttempt() (+2 more)
+Cohesion: 0.33
+Nodes (6): notify(), Store a new scan, overwriting any un-consumed previous scan., Continuously read lines from a serial COM port.     Each line terminated by `ter, Show a tray balloon notification if supported., serial_reader(), store_scan()
 
 ### Community 165 - "Community 165"
-Cohesion: 0.36
-Nodes (10): colLettersToIndex(), decodeXmlEntities(), extractRowsFromWorksheet(), normalizeLearningSkillLevel(), parseLearningSkillsCsv(), parseLearningSkillsRows(), parseLearningSkillsWorkbook(), parseXlsxDirectlyFromZip() (+2 more)
+Cohesion: 0.50
+Nodes (4): getAttendanceOnDate(), getEventsByStudent(), getStudentEventHistory(), logStandardEvent()
 
 ### Community 166 - "Community 166"
 Cohesion: 0.83
 Nodes (3): pruneOrphanedLayout(), simulateDeleteRow(), simulateInsertRow()
-
-### Community 168 - "Community 168"
-Cohesion: 0.24
-Nodes (9): hasUnsyncedChanges, cascadeRenameExpectation(), createAssessment(), deleteAssessment(), detachExpectationFromAssessmentsAndGrades(), ensureSbarComponentAssessments(), getAssessmentUsage(), getExpectationUsageCounts() (+1 more)
 
 ### Community 169 - "Community 169"
 Cohesion: 0.09
@@ -622,32 +609,28 @@ Cohesion: 0.25
 Nodes (7): classA, classB, classC_stale, classD_fromEvents, lStorage, sStorage, todayStr
 
 ### Community 176 - "Community 176"
-Cohesion: 0.47
-Nodes (5): formatExcelDateIfSerial(), cleanOptionText(), normalizeConfidence(), parseStudentInfoRows(), sanitizeTextField()
+Cohesion: 0.67
+Nodes (3): title, description, type
 
 ### Community 177 - "Community 177"
 Cohesion: 0.21
 Nodes (10): importRoster(), civicsGroup, classList, defaults, newGroup, groupClassesByYearAndSession(), addMissingPeriodTimes(), findConflictingHomeroom() (+2 more)
-
-### Community 178 - "Community 178"
-Cohesion: 0.22
-Nodes (10): detectGradeFromClassName(), getEffectiveClassRecord(), getEffectiveGradeLevel(), parseGradesFromClass(), populateSubjectFromPreset(), populateSubjectFromPresets(), sanitizeSubjectUnitCollisions(), createDefaultElementarySubjects() (+2 more)
 
 ### Community 179 - "Community 179"
 Cohesion: 0.19
 Nodes (14): clearDone(), confirmSent(), done, finish(), goNext(), hasNext, inQueue, markHandled() (+6 more)
 
 ### Community 181 - "Community 181"
-Cohesion: 0.11
-Nodes (19): checkResize(), clearAllClassRfids(), confirmResize(), createClass(), saveClass(), updateActiveClass(), autoPopulateAllElementarySubjects(), addClassMode (+11 more)
+Cohesion: 0.16
+Nodes (12): addClassMode, classError, createNewClass(), emit, isCsvHelpOpen, isDraggingRoster, newClass, newClassGradeLevel (+4 more)
 
 ### Community 182 - "Community 182"
-Cohesion: 0.18
-Nodes (7): useClassroom(), filteredMilestones, globalMilestones, saveStudentGradebookNote(), useStudentDossier(), iconMap, resolveIcon()
+Cohesion: 0.12
+Nodes (11): useClassroom(), assessments, classGrades, filteredMilestones, globalMilestones, gradeMap, isAssessmentInSubCohort(), useStudentDossier() (+3 more)
 
 ### Community 183 - "Community 183"
-Cohesion: 0.12
-Nodes (21): getDB(), batchSavePhotos(), deletePhoto(), getAllPhotoIds(), getPhoto(), getPhotosBatch(), purgeAllPhotos(), savePhoto() (+13 more)
+Cohesion: 0.08
+Nodes (42): getDB(), batchSavePhotos(), deletePhoto(), getAllPhotoIds(), getPhoto(), getPhotosBatch(), purgeAllPhotos(), savePhoto() (+34 more)
 
 ### Community 186 - "Community 186"
 Cohesion: 0.29
@@ -662,24 +645,24 @@ Cohesion: 0.33
 Nodes (5): availableSemesters, isAllSelected, isSemesterAllSelected(), selectedCount, toggleSemester()
 
 ## Knowledge Gaps
-- **942 isolated node(s):** `scanBuffer`, `manifest_version`, `name`, `version`, `description` (+937 more)
+- **954 isolated node(s):** `scanBuffer`, `manifest_version`, `name`, `version`, `description` (+949 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **14 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **17 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `getDB()` connect `Community 183` to `Community 0`, `Community 131`, `Community 3`, `Community 9`, `Community 21`, `Community 23`, `Community 24`, `Community 26`, `Community 162`, `Community 35`, `Community 164`, `Community 168`, `Community 182`, `Community 64`, `Community 81`, `Community 88`, `Community 94`, `Community 109`, `Community 123`?**
-  _High betweenness centrality (0.112) - this node is a cross-community bridge._
-- **Why does `openDB()` connect `Community 94` to `Community 15`, `Community 5`, `Community 183`?**
+- **Why does `getDB()` connect `Community 183` to `Community 0`, `Community 64`, `Community 1`, `Community 35`, `Community 131`, `Community 3`, `Community 5`, `Community 88`, `Community 9`, `Community 109`, `Community 81`, `Community 85`, `Community 182`, `Community 23`, `Community 24`, `Community 21`, `Community 123`?**
+  _High betweenness centrality (0.107) - this node is a cross-community bridge._
+- **Why does `openDB()` connect `Community 5` to `Community 94`, `Community 183`?**
   _High betweenness centrality (0.072) - this node is a cross-community bridge._
 - **Why does `PrecacheController` connect `Community 12` to `Community 5`?**
   _High betweenness centrality (0.024) - this node is a cross-community bridge._
 - **What connects `scanBuffer`, `manifest_version`, `name` to the rest of the system?**
-  _958 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _970 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Community 0` be split into smaller, more focused modules?**
-  _Cohesion score 0.043154761904761904 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.04230769230769231 - nodes in this community are weakly interconnected._
 - **Should `Community 1` be split into smaller, more focused modules?**
-  _Cohesion score 0.058673469387755105 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.05587808417997097 - nodes in this community are weakly interconnected._
 - **Should `Community 2` be split into smaller, more focused modules?**
   _Cohesion score 0.13333333333333333 - nodes in this community are weakly interconnected._
