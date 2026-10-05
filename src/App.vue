@@ -34,6 +34,8 @@
         <YearSemesterSelector />
       </div>
 
+      <ActiveStudentsOutCapsule :current-view="currentView" @navigate="navigateTo" />
+
       <div class="app-nav__tabs" role="tablist">
         <button
           v-for="view in views"
@@ -96,6 +98,7 @@ import { APP_VERSION, BUILD_ID } from './utils/appVersion.js'
 const AddAssessmentModal = defineAsyncComponent(() => import('./components/dossier/AddAssessmentModal.vue'))
 const QRScanner          = defineAsyncComponent(() => import('./components/QRScanner.vue'))
 import YearSemesterSelector from './components/YearSemesterSelector.vue'
+import ActiveStudentsOutCapsule from './components/ActiveStudentsOutCapsule.vue'
 import MessageOverlay      from './components/MessageOverlay.vue'
 import * as settingsService from './db/settingsService.js'
 import * as eventService from './db/eventService.js'

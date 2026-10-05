@@ -216,6 +216,8 @@ import { useKeyboardWedge, isAnyEnrollmentActive } from '../composables/useKeybo
 import { useMessage } from '../composables/useMessage.js'
 import { supabase } from '../utils/supabase.js'
 
+import { isScannerMinimized } from '../composables/useClassroomState.js'
+
 const emit = defineEmits(['close'])
 
 const { students, logToggleEvent, studentsOut, globalStudentsOut, maxStudentsOut, filteredClassList, activeClass, periodStartTimes, reconcileStaleTrips, attendanceMode, handleRfidAttendanceScan, initializeRfidAttendance, cloudModeEnabled, userCode, teachingMode, isSyncActive } = useClassroom()
@@ -223,7 +225,7 @@ const { alert } = useMessage()
 
 // ── UI State ──────────────────────────────────────────────────────────────────
 const isScanning    = ref(false)
-const isMinimized   = ref(false)
+const isMinimized   = isScannerMinimized
 const isPiPStarting = ref(false)
 const cooldownActive = ref(false)
 const isError        = ref(false)
@@ -1019,6 +1021,7 @@ onUnmounted(async () => {
   window.removeEventListener('online', updateNetworkStatus)
   window.removeEventListener('offline', updateNetworkStatus)
   window.removeEventListener('backup-linked', checkSyncOffset)
+  isScannerMinimized.value = false
 })
 </script>
 

@@ -82,6 +82,7 @@ import {
   selectedYear, 
   selectedSemester, 
   isScannerOpen, 
+  isScannerMinimized, 
   autoStartRFID, 
   maxStudentsOut, 
   cloudModeEnabled, 
@@ -702,6 +703,15 @@ async function switchClass(classId) {
     if (!cls) return
     clearUndo()
     suggestedClass.value = null // clear suggestion on manual switch
+    if (cls.year && cls.year !== selectedYear.value) {
+        selectedYear.value = cls.year
+    }
+    if (cls.semester != null && String(cls.semester) !== String(selectedSemester.value)) {
+        selectedSemester.value = String(cls.semester)
+    }
+    if (cls.classType && cls.classType !== teachingMode.value) {
+        teachingMode.value = cls.classType
+    }
     await _activateClass(cls)
 }
 
@@ -1914,6 +1924,7 @@ export function useClassroom() {
         periodStartTimes,
         showScannerButton,
         isScannerOpen,
+        isScannerMinimized,
         autoStartRFID,
         maxStudentsOut,
         filteredClassList,

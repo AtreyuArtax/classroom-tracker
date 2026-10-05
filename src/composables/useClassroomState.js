@@ -35,6 +35,7 @@ export const activeStudentEvents = shallowRef([])
 export const selectedYear = ref(localStorage.getItem('selectedYear') || '')
 export const selectedSemester = ref(localStorage.getItem('selectedSemester') || '')
 export const isScannerOpen = ref(false)
+export const isScannerMinimized = ref(false)
 export const autoStartRFID = ref(localStorage.getItem('autoStartRFID') === 'true')
 export const maxStudentsOut = ref(parseInt(localStorage.getItem('maxStudentsOut')) || 0)
 
