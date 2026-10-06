@@ -21,7 +21,27 @@
       <div class="config-controls-pane">
         <!-- Recipients Selection -->
         <div class="config-section">
-          <h4 class="config-section-title">Recipients</h4>
+          <div class="config-section-header">
+            <h4 class="config-section-title" style="margin-bottom: 0;">Recipients</h4>
+          </div>
+
+          <!-- Custody & Household Reference Card -->
+          <div class="custody-glance">
+            <div class="custody-glance__cell">
+              <span class="custody-glance__label">Living With</span>
+              <span class="custody-glance__val">{{ studentLivingWith || '—' }}</span>
+            </div>
+            <div class="custody-glance__divider"></div>
+            <div class="custody-glance__cell">
+              <span class="custody-glance__label">Custody</span>
+              <span class="custody-glance__val">{{ studentCustody || '—' }}</span>
+            </div>
+          </div>
+          <div v-if="studentAlertNotes" class="custody-glance__note">
+            <span class="custody-glance__note-label">Note:</span>
+            <span class="custody-glance__note-val">{{ studentAlertNotes }}</span>
+          </div>
+
           <div class="recipient-list">
             <div 
               v-for="r in emailRecipients" 
@@ -31,7 +51,17 @@
               @click="toggleRecipient(r.email)"
             >
               <div class="recipient-info">
-                <span class="recipient-label">{{ r.label }}</span>
+                <div class="recipient-label-row">
+                  <span class="recipient-label">{{ r.label }}</span>
+                  <span 
+                    v-if="r.badge" 
+                    class="recipient-role-badge" 
+                    :class="`recipient-role-badge--${r.badgeType}`"
+                    :title="r.badgeTitle"
+                  >
+                    {{ r.badge }}
+                  </span>
+                </div>
                 <span class="recipient-email">{{ r.email }}</span>
               </div>
               <div class="recipient-checkbox">
@@ -225,15 +255,33 @@ const periodDisplay = computed(() => {
   return p.charAt(0).toUpperCase() + p.slice(1)
 })
 
+const studentLivingWith = computed(() => (props.student?.livingWith || '').trim())
+const studentCustody = computed(() => (props.student?.custody || '').trim())
+const studentAlertNotes = computed(() => (props.student?.notes || props.student?.parentAlert || '').trim())
+
 const emailRecipients = computed(() => {
   const list = []
-  if (props.student.studentEmail) {
-    list.push({ id: 'student', label: 'Student', email: props.student.studentEmail })
+  if (props.student?.studentEmail) {
+    list.push({ 
+      id: 'student', 
+      label: 'Student', 
+      email: props.student.studentEmail,
+      badge: 'Student',
+      badgeType: 'student',
+      badgeTitle: 'Student school email'
+    })
   }
-  if (props.student.parentContacts) {
+  if (props.student?.parentContacts) {
     props.student.parentContacts.forEach((pc, idx) => {
       if (pc.email) {
-        list.push({ id: `parent_${idx}`, label: pc.name || `Parent ${idx + 1}`, email: pc.email })
+        list.push({ 
+          id: `parent_${idx}`, 
+          label: pc.name || `Parent ${idx + 1}`, 
+          email: pc.email,
+          badge: idx === 0 ? 'Contact 1 (Primary in SIS)' : `Contact ${idx + 1}`,
+          badgeType: idx === 0 ? 'primary' : 'secondary',
+          badgeTitle: idx === 0 ? 'First parent/guardian listed in roster CSV' : `Parent/guardian contact #${idx + 1} in roster CSV`
+        })
       }
     })
   }
@@ -525,11 +573,106 @@ async function generateEmailLink() {
   border-color: var(--primary);
 }
 
+/* ── Custody & Household Reference Card ─────────────────────────── */
+.custody-glance {
+  display: grid;
+  grid-template-columns: 1fr 1px 1fr;
+  align-items: stretch;
+  margin-top: 8px;
+  margin-bottom: 12px;
+  padding: 9px 13px;
+  background: rgba(70, 99, 172, 0.05);
+  border: 1px solid rgba(70, 99, 172, 0.18);
+  border-left: 3.5px solid var(--primary);
+  border-radius: var(--radius-md);
+  gap: 12px;
+}
+
+:root[data-theme='dark'] .custody-glance,
+.dark .custody-glance {
+  background: rgba(99, 133, 230, 0.09);
+  border-color: rgba(99, 133, 230, 0.22);
+  border-left-color: var(--primary);
+}
+
+.custody-glance__cell {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.custody-glance__divider {
+  width: 1px;
+  background: rgba(70, 99, 172, 0.16);
+}
+
+:root[data-theme='dark'] .custody-glance__divider,
+.dark .custody-glance__divider {
+  background: rgba(99, 133, 230, 0.2);
+}
+
+.custody-glance__label {
+  font-size: 0.69rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--primary);
+}
+
+:root[data-theme='dark'] .custody-glance__label,
+.dark .custody-glance__label {
+  color: var(--primary-dark, #8ba8f8);
+}
+
+.custody-glance__val {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.35;
+  white-space: normal;
+  word-break: break-word;
+}
+
+.custody-glance__note {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-top: -6px;
+  margin-bottom: 12px;
+  padding: 8px 12px;
+  background: rgba(70, 99, 172, 0.05);
+  border: 1px solid rgba(70, 99, 172, 0.18);
+  border-radius: var(--radius-md);
+  font-size: 0.78rem;
+  line-height: 1.4;
+  color: var(--text-primary);
+  word-break: break-word;
+}
+
+:root[data-theme='dark'] .custody-glance__note,
+.dark .custody-glance__note {
+  background: rgba(99, 133, 230, 0.08);
+  border-color: rgba(99, 133, 230, 0.2);
+}
+
+.custody-glance__note-label {
+  font-weight: 700;
+  color: var(--primary);
+  text-transform: uppercase;
+  font-size: 0.7rem;
+  letter-spacing: 0.03em;
+  flex-shrink: 0;
+}
+
+.custody-glance__note-val {
+  color: var(--text-primary);
+}
+
 .recipient-list {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  margin-top: 10px;
 }
 
 .recipient-item {
@@ -542,6 +685,7 @@ async function generateEmailLink() {
   border-radius: var(--radius-md);
   cursor: pointer;
   transition: all 0.2s ease;
+  gap: 10px;
 }
 
 .recipient-item:hover {
@@ -557,6 +701,16 @@ async function generateEmailLink() {
 .recipient-info {
   display: flex;
   flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.recipient-label-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 2px;
 }
 
 .recipient-label {
@@ -564,9 +718,27 @@ async function generateEmailLink() {
   font-size: 0.9rem;
 }
 
+.recipient-role-badge {
+  font-size: 0.68rem;
+  font-weight: 500;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  line-height: 1.2;
+  white-space: nowrap;
+  background: var(--bg-tertiary, rgba(0, 0, 0, 0.05));
+  color: var(--text-secondary);
+}
+
+:root[data-theme='dark'] .recipient-role-badge,
+.dark .recipient-role-badge {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-secondary);
+}
+
 .recipient-email {
   font-size: 0.8rem;
   color: var(--text-secondary);
+  word-break: break-all;
 }
 
 .recipient-empty {

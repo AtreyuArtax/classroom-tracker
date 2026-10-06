@@ -240,8 +240,8 @@
     "semantic_hash": ""
   },
   "src/composables/useClassroom.js": {
-    "mtime": 1791227209.4725084,
-    "ast_hash": "5009a2e1d4b67c8e0eda776d59f75f3d",
+    "mtime": 1791234385.7986906,
+    "ast_hash": "097b0ac2e78cb9413e6a0eeecbb4cd85",
     "semantic_hash": ""
   },
   "src/composables/useGradebook.js": {
@@ -305,8 +305,8 @@
     "semantic_hash": ""
   },
   "src/db/settingsService.js": {
-    "mtime": 1791227204.3939881,
-    "ast_hash": "7078477d88ecdd5ab246127f6ca8a261",
+    "mtime": 1791234376.1770544,
+    "ast_hash": "da0cd5022d51e875c986dde1488e47e2",
     "semantic_hash": ""
   },
   "src/main.js": {
@@ -415,8 +415,8 @@
     "semantic_hash": ""
   },
   "src/components/setup/BehaviorSettings.vue": {
-    "mtime": 1791227306.2412164,
-    "ast_hash": "7e049e4d0cc5c0a5b41194b2fb7d0466",
+    "mtime": 1791234478.5525508,
+    "ast_hash": "d8e44e6b3e98bcab5d157ce73579d112",
     "semantic_hash": ""
   },
   "src/components/setup/QrCodeGeneratorModal.vue": {
@@ -460,8 +460,8 @@
     "semantic_hash": ""
   },
   "src/components/dossier/Student360EmailModal.vue": {
-    "mtime": 1791148362.5007536,
-    "ast_hash": "2a7dcf226ecfd2bce7d2c0147f33661f",
+    "mtime": 1791247779.833942,
+    "ast_hash": "78a4eed37655485794c24b0a51fbfcf1",
     "semantic_hash": ""
   },
   "src/components/dossier/Student360HistoryTab.vue": {
@@ -1195,13 +1195,13 @@
     "semantic_hash": ""
   },
   "src/test_attendance_patterns.js": {
-    "mtime": 1791227323.9579823,
-    "ast_hash": "a661c77ae47698d79aa93738498aef51",
+    "mtime": 1791234492.1993756,
+    "ast_hash": "51dfe61663a4346a7194b19fe6a234d7",
     "semantic_hash": ""
   },
   "src/utils/attendancePatterns.js": {
-    "mtime": 1791227230.3962376,
-    "ast_hash": "6d95287e246a7390b5bf9f4235b66db4",
+    "mtime": 1791234405.7247655,
+    "ast_hash": "4e2a692e0c1b3f84213e43d259f92175",
     "semantic_hash": ""
   },
   "src/components/grades/GradesExpectationStudentModal.vue": {
@@ -1490,8 +1490,8 @@
     "semantic_hash": ""
   },
   "src/utils/actionAlerts.js": {
-    "mtime": 1791227245.1232903,
-    "ast_hash": "68dfe33d61dbe82149f488638f680835",
+    "mtime": 1791234420.1437292,
+    "ast_hash": "11503fb5b1a811f7b9e8a7c7ecba804d",
     "semantic_hash": ""
   },
   "src/utils/dossierActivityFeed.js": {
