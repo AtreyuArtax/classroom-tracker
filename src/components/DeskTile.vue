@@ -39,18 +39,34 @@
     <span
       v-if="showWashroomDot"
       class="desk-tile__stats-badge desk-tile__stats-badge--washroom"
-      :title="washroomDotTooltip"
+      role="tooltip"
+      :aria-label="washroomDotTooltip"
     >
-      <Footprints :size="10" />
+      <Footprints :size="10" class="desk-tile__stats-icon" />
+      <span 
+        class="desk-tile__badge-tooltip desk-tile__badge-tooltip--washroom"
+        :class="{ 'desk-tile__badge-tooltip--right-edge': isRightEdge }"
+      >
+        <Footprints :size="9" class="desk-tile__badge-tooltip-icon" />
+        <span>{{ washroomDotTooltip }}</span>
+      </span>
     </span>
 
     <!-- Device badge — top right corner -->
     <span
       v-if="showDeviceDot"
       class="desk-tile__stats-badge desk-tile__stats-badge--device"
-      :title="deviceDotTooltip"
+      role="tooltip"
+      :aria-label="deviceDotTooltip"
     >
-      <Smartphone :size="10" />
+      <Smartphone :size="10" class="desk-tile__stats-icon" />
+      <span 
+        class="desk-tile__badge-tooltip desk-tile__badge-tooltip--device"
+        :class="{ 'desk-tile__badge-tooltip--left-edge': isLeftEdge }"
+      >
+        <Smartphone :size="9" class="desk-tile__badge-tooltip-icon" />
+        <span>{{ deviceDotTooltip }}</span>
+      </span>
     </span>
 
     <!-- Discreet Accommodations Indicator — bottom left corner -->
@@ -58,15 +74,31 @@
       v-if="student.hasIEP"
       class="desk-tile__iep-dot"
       :class="{ 'desk-tile__iep-dot--gifted': student.iepType === 'gifted' }"
-      :title="student.iepType === 'gifted' ? 'IEP: Gifted / Enrichment Plan' : 'IEP: Accommodations Plan'"
-    />
+      role="tooltip"
+      :aria-label="iepDotTooltip"
+    >
+      <span 
+        class="desk-tile__badge-tooltip desk-tile__badge-tooltip--bottom-left"
+        :class="{ 'desk-tile__badge-tooltip--right-edge': isRightEdge }"
+      >
+        <span>{{ iepDotTooltip }}</span>
+      </span>
+    </span>
 
     <!-- Discreet Academic At-Risk Indicator — bottom right corner -->
     <span
       v-if="showAtRiskDot"
       class="desk-tile__at-risk-dot"
-      :title="atRiskDotTooltip"
-    />
+      role="tooltip"
+      :aria-label="atRiskDotTooltip"
+    >
+      <span 
+        class="desk-tile__badge-tooltip desk-tile__badge-tooltip--bottom-right"
+        :class="{ 'desk-tile__badge-tooltip--left-edge': isLeftEdge }"
+      >
+        <span>{{ atRiskDotTooltip }}</span>
+      </span>
+    </span>
 
     <!-- Student content -->
     <div 
@@ -240,6 +272,8 @@ const currentPhotoUrl = computed(() => {
 // ─── hover preview positioning ────────────────────────────────────────────────
 const totalRows = computed(() => Number(gridSize.value?.rows || 6))
 const totalCols = computed(() => Number(gridSize.value?.cols || 6))
+const isLeftEdge = computed(() => props.col === 1)
+const isRightEdge = computed(() => props.col >= totalCols.value)
 const isTopHalf = computed(() => props.row <= Math.ceil(totalRows.value / 2))
 
 const defaultPlacement = computed(() => isTopHalf.value ? 'bottom' : 'top')
@@ -324,53 +358,80 @@ const showAtRiskDot = computed(() => {
   return Number(studentOverallGrade.value) < limit
 })
 
+const iepDotTooltip = computed(() => {
+  return props.student?.iepType === 'gifted' ? 'IEP: Gifted Plan' : 'IEP: Accommodations'
+})
+
 const atRiskDotTooltip = computed(() => {
   if (studentOverallGrade.value === null) return ''
-  return `Academic Review (Overall: ${Math.round(studentOverallGrade.value)}%)`
+  return `Academic Review: ${Math.round(studentOverallGrade.value)}%`
 })
 
-const showWashroomDot = computed(() => {
-  const stats = studentWeeklyStats.value[props.studentId]
-  if (!stats || !thresholds.value) return false
-  const tripsLimit = Number(thresholds.value.washroomTripsPerWeek ?? 4)
-  const weeklyMinsLimit = Number(thresholds.value.washroomWeeklyMinutesLimit ?? 0)
-
-  const tripSurpassed = tripsLimit > 0 && stats.washroomTrips >= tripsLimit
-  const minsSurpassed = weeklyMinsLimit > 0 && (stats.washroomMinutes || 0) >= weeklyMinsLimit
-  return tripSurpassed || minsSurpassed
-})
-
-const showDeviceDot = computed(() => {
-  const stats = studentWeeklyStats.value[props.studentId]
-  if (!stats || !thresholds.value) return false
-  return stats.deviceIncidents >= (thresholds.value.deviceIncidentsPerWeek ?? 3)
-})
-
-const washroomDotTooltip = computed(() => {
-  const stats = studentWeeklyStats.value[props.studentId]
-  if (!stats) return ''
+const washroomStatsData = computed(() => {
+  const stats = studentWeeklyStats.value?.[props.studentId]
+  if (!stats || !thresholds.value) return null
   const trips = stats.washroomTrips || 0
   const mins = stats.washroomMinutes || 0
   const tripsLimit = Number(thresholds.value?.washroomTripsPerWeek ?? 4)
   const weeklyMinsLimit = Number(thresholds.value?.washroomWeeklyMinutesLimit ?? 0)
 
-  const reasons = []
-  if (tripsLimit > 0 && trips >= tripsLimit) {
-    reasons.push(`${trips} trips (limit: ${tripsLimit})`)
+  const tripSurpassed = tripsLimit > 0 && trips >= tripsLimit
+  const minsSurpassed = weeklyMinsLimit > 0 && mins >= weeklyMinsLimit
+
+  return {
+    trips,
+    mins,
+    tripsLimit,
+    weeklyMinsLimit,
+    tripSurpassed,
+    minsSurpassed,
   }
-  if (weeklyMinsLimit > 0 && mins >= weeklyMinsLimit) {
-    reasons.push(`${mins}m out (limit: ${weeklyMinsLimit}m)`)
+})
+
+const showWashroomDot = computed(() => {
+  const d = washroomStatsData.value
+  if (!d) return false
+  return d.tripSurpassed || d.minsSurpassed
+})
+
+const washroomDotTooltip = computed(() => {
+  const d = washroomStatsData.value
+  if (!d) return ''
+  const reasons = []
+  if (d.tripSurpassed) {
+    reasons.push(`${d.trips} trips (limit ${d.tripsLimit})`)
+  }
+  if (d.minsSurpassed) {
+    reasons.push(`${d.mins}m out (limit ${d.weeklyMinsLimit}m)`)
   }
   if (reasons.length === 0) {
-    return `${trips} trip${trips === 1 ? '' : 's'} (${mins}m total) this week`
+    return `Washroom: ${d.trips} trips`
   }
-  return `Washroom Alert: ${reasons.join(' · ')} this week`
+  return `Washroom: ${reasons.join(' · ')}`
+})
+
+const deviceStatsData = computed(() => {
+  const stats = studentWeeklyStats.value?.[props.studentId]
+  if (!stats || !thresholds.value) return null
+  const incidents = stats.deviceIncidents || 0
+  const limit = Number(thresholds.value?.deviceIncidentsPerWeek ?? 3)
+  return {
+    incidents,
+    limit,
+    surpassed: incidents >= limit,
+  }
+})
+
+const showDeviceDot = computed(() => {
+  const d = deviceStatsData.value
+  if (!d) return false
+  return d.surpassed
 })
 
 const deviceDotTooltip = computed(() => {
-  const stats = studentWeeklyStats.value[props.studentId]
-  if (!stats) return ''
-  return `${stats.deviceIncidents} device incidents this week`
+  const d = deviceStatsData.value
+  if (!d) return ''
+  return `Device: ${d.incidents} incident${d.incidents === 1 ? '' : 's'} (limit ${d.limit})`
 })
 
 // ─── radial ───────────────────────────────────────────────────────────────────
@@ -589,6 +650,31 @@ function onDrop(evt) {
   justify-content: center;
   box-shadow: 0 2px 5px rgba(0,0,0,0.1);
   border: 1px solid rgba(255,255,255,0.8);
+  cursor: help;
+  z-index: 20;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+/* Expanded invisible hit target to ensure stable, effortless hovering */
+.desk-tile__stats-badge::before {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  pointer-events: auto;
+}
+
+.desk-tile__stats-badge:hover,
+.desk-tile__stats-badge:focus-within {
+  transform: scale(1.15);
+  box-shadow: 0 3px 8px rgba(0,0,0,0.18);
+  z-index: 100;
+}
+
+.desk-tile__stats-badge svg,
+.desk-tile__stats-icon {
+  pointer-events: none;
+  flex-shrink: 0;
 }
 
 .desk-tile__stats-badge--washroom {
@@ -930,6 +1016,24 @@ function onDrop(evt) {
   background: #8b5cf6;
   opacity: 0.85;
   box-shadow: 0 0 5px rgba(139, 92, 246, 0.45);
+  cursor: help;
+  z-index: 20;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+.desk-tile__iep-dot::before {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  pointer-events: auto;
+}
+
+.desk-tile__iep-dot:hover,
+.desk-tile__iep-dot:focus-within {
+  transform: scale(1.4);
+  opacity: 1;
+  z-index: 100;
 }
 
 .desk-tile__iep-dot--gifted {
@@ -948,6 +1052,138 @@ function onDrop(evt) {
   background: #f59e0b;
   opacity: 0.85;
   box-shadow: 0 0 5px rgba(245, 158, 11, 0.45);
+  cursor: help;
+  z-index: 20;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+.desk-tile__at-risk-dot::before {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  pointer-events: auto;
+}
+
+.desk-tile__at-risk-dot:hover,
+.desk-tile__at-risk-dot:focus-within {
+  transform: scale(1.4);
+  opacity: 1;
+  z-index: 100;
+}
+
+/* ── Badge Tooltips (Sleek, compact micro-pills) ─────────────────────────── */
+.desk-tile__badge-tooltip {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  width: max-content;
+  max-width: calc(100cqw - 8px);
+  background: var(--tooltip-bg, #0f172a);
+  color: var(--tooltip-text, #f8fafc);
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 0.58rem;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  z-index: 120;
+  display: inline-flex;
+  align-items: center;
+  gap: 3.5px;
+  text-align: left;
+  transform: translateY(2px) scale(0.96);
+  transition: opacity 0.12s ease, transform 0.12s ease, visibility 0.12s ease;
+}
+
+/* Tooltip caret arrow */
+.desk-tile__badge-tooltip::after {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 6px;
+  border-width: 0 3px 3px 3px;
+  border-style: solid;
+  border-color: transparent transparent var(--tooltip-bg, #0f172a) transparent;
+}
+
+/* Hover & focus trigger: Snappy 50ms delay */
+.desk-tile__stats-badge:hover .desk-tile__badge-tooltip,
+.desk-tile__stats-badge:focus-within .desk-tile__badge-tooltip,
+.desk-tile__iep-dot:hover .desk-tile__badge-tooltip,
+.desk-tile__iep-dot:focus-within .desk-tile__badge-tooltip,
+.desk-tile__at-risk-dot:hover .desk-tile__badge-tooltip,
+.desk-tile__at-risk-dot:focus-within .desk-tile__badge-tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0) scale(1);
+  transition-delay: 50ms;
+}
+
+/* Device badge tooltip placement (top right, extends leftward) */
+.desk-tile__badge-tooltip--device {
+  left: auto;
+  right: 0;
+}
+.desk-tile__badge-tooltip--device::after {
+  left: auto;
+  right: 6px;
+}
+
+/* Bottom dots tooltip placements (bottom edge, opens upward) */
+.desk-tile__badge-tooltip--bottom-left {
+  top: auto;
+  bottom: calc(100% + 4px);
+  left: 0;
+  transform: translateY(-2px) scale(0.96);
+}
+.desk-tile__badge-tooltip--bottom-left::after {
+  top: 100%;
+  bottom: auto;
+  left: 4px;
+  border-width: 3px 3px 0 3px;
+  border-color: var(--tooltip-bg, #0f172a) transparent transparent transparent;
+}
+
+.desk-tile__badge-tooltip--bottom-right {
+  top: auto;
+  bottom: calc(100% + 4px);
+  left: auto;
+  right: 0;
+  transform: translateY(-2px) scale(0.96);
+}
+.desk-tile__badge-tooltip--bottom-right::after {
+  top: 100%;
+  bottom: auto;
+  left: auto;
+  right: 4px;
+  border-width: 3px 3px 0 3px;
+  border-color: var(--tooltip-bg, #0f172a) transparent transparent transparent;
+}
+
+/* Edge column clamping */
+.desk-tile__badge-tooltip--right-edge {
+  max-width: calc(100cqw - 8px);
+}
+.desk-tile__badge-tooltip--left-edge {
+  max-width: calc(100cqw - 8px);
+}
+
+.desk-tile__badge-tooltip-icon {
+  flex-shrink: 0;
+}
+
+.desk-tile__badge-tooltip--washroom .desk-tile__badge-tooltip-icon {
+  color: #38bdf8;
+}
+
+.desk-tile__badge-tooltip--device .desk-tile__badge-tooltip-icon {
+  color: #fbbf24;
 }
 
 /* ── Right-Click Desk Context Menu ──────────────────────────────────────────── */

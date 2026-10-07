@@ -245,38 +245,38 @@
       <!-- Bottom Metric Summary Ribbon (Scatter View) -->
       <div v-if="viewMode === 'scatter'" class="mindset-summary-ribbon">
         <template v-if="lensMode === 'actualVsGoal'">
-          <div class="mindset-ribbon-tile mindset-ribbon-tile--green">
+          <div class="mindset-ribbon-tile mindset-ribbon-tile--green" title="Achieving Ambitions (High Goal ≥75% · High Actual ≥75%)">
             <span class="mindset-ribbon-count">{{ achievingCount }}</span>
             <span class="mindset-ribbon-label">Achieving Ambitions</span>
           </div>
-          <div class="mindset-ribbon-tile mindset-ribbon-tile--red">
+          <div class="mindset-ribbon-tile mindset-ribbon-tile--red" title="The Aspiration Gap (High Goal ≥75% · Actual Lagging <75%)">
             <span class="mindset-ribbon-count">{{ aspirationGapCount }}</span>
-            <span class="mindset-ribbon-label">The Aspiration Gap</span>
+            <span class="mindset-ribbon-label">Aspiration Gap</span>
           </div>
-          <div class="mindset-ribbon-tile mindset-ribbon-tile--teal">
+          <div class="mindset-ribbon-tile mindset-ribbon-tile--teal" title="Surprise High Achievers (Modest Goal <75% · High Actual ≥75%)">
             <span class="mindset-ribbon-count">{{ surpriseAchieversCount }}</span>
             <span class="mindset-ribbon-label">Surprise Achievers</span>
           </div>
-          <div class="mindset-ribbon-tile mindset-ribbon-tile--amber">
+          <div class="mindset-ribbon-tile mindset-ribbon-tile--amber" title="Low-Expectation Trap (Modest Goal <75% · Low Actual <75%)">
             <span class="mindset-ribbon-count">{{ lowTrapCount }}</span>
-            <span class="mindset-ribbon-label">Low Expectation Trap</span>
+            <span class="mindset-ribbon-label">Low Expectation</span>
           </div>
         </template>
 
         <template v-else>
-          <div class="mindset-ribbon-tile mindset-ribbon-tile--green">
+          <div class="mindset-ribbon-tile mindset-ribbon-tile--green" title="Primed Thrivers (High Target Goal · High Confidence)">
             <span class="mindset-ribbon-count">{{ primedThriversCount }}</span>
             <span class="mindset-ribbon-label">Primed Thrivers</span>
           </div>
-          <div class="mindset-ribbon-tile mindset-ribbon-tile--amber">
+          <div class="mindset-ribbon-tile mindset-ribbon-tile--amber" title="Anxious Strivers (High Target Goal · Low Confidence)">
             <span class="mindset-ribbon-count">{{ anxiousStriversCount }}</span>
             <span class="mindset-ribbon-label">Anxious Strivers</span>
           </div>
-          <div class="mindset-ribbon-tile mindset-ribbon-tile--purple">
+          <div class="mindset-ribbon-tile mindset-ribbon-tile--purple" title="Coasters / Untapped (Low Target Goal · High Confidence)">
             <span class="mindset-ribbon-count">{{ coastersCount }}</span>
             <span class="mindset-ribbon-label">Coasters / Untapped</span>
           </div>
-          <div class="mindset-ribbon-tile mindset-ribbon-tile--red">
+          <div class="mindset-ribbon-tile mindset-ribbon-tile--red" title="Support Needed (Low Target Goal · Low Confidence)">
             <span class="mindset-ribbon-count">{{ supportNeededCount }}</span>
             <span class="mindset-ribbon-label">Support Needed</span>
           </div>
@@ -295,8 +295,8 @@
           <span class="mindset-ribbon-count">{{ unsubmittedStudents.length }}</span>
           <span class="mindset-ribbon-label">
             Awaiting Survey
-            <ChevronUp v-if="isUnsubmittedExpanded" :size="12" class="mindset-ribbon-chevron" />
-            <ChevronDown v-else :size="12" class="mindset-ribbon-chevron" />
+            <ChevronUp v-if="isUnsubmittedExpanded" :size="10" class="mindset-ribbon-chevron" />
+            <ChevronDown v-else :size="10" class="mindset-ribbon-chevron" />
           </span>
         </div>
       </div>
@@ -1352,7 +1352,7 @@ const seatingHistogram = computed(() => {
 .mindset-canvas {
   position: relative;
   width: 100%;
-  height: 380px;
+  height: clamp(330px, 46vh, 420px);
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 12px;
@@ -1363,10 +1363,10 @@ const seatingHistogram = computed(() => {
 /* Quadrants Background Labels */
 .mindset-quadrant {
   position: absolute;
-  padding: 10px 12px;
+  padding: 6px 10px;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 1px;
   pointer-events: none;
   z-index: 1;
   max-width: 44%;
@@ -1657,51 +1657,66 @@ const seatingHistogram = computed(() => {
 }
 
 /* Bottom Ribbon */
+/* Bottom Ribbon (Matching Risk Matrix) */
 .mindset-summary-ribbon {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 10px;
-}
-
-@media (max-width: 900px) {
-  .mindset-summary-ribbon {
-    grid-template-columns: repeat(2, 1fr);
-  }
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 6px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .mindset-ribbon-tile {
+  flex: 1 1 0;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  padding: 4px 6px;
   display: flex;
-  align-items: baseline;
-  gap: 8px;
+  align-items: center;
+  gap: 5px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  cursor: pointer;
+  transition: transform 0.15s ease, border-color 0.15s ease;
   min-width: 0;
 }
 
+.mindset-ribbon-tile:hover {
+  transform: translateY(-1px);
+  border-color: var(--primary);
+}
+
 .mindset-ribbon-count {
-  font-size: 1.25rem;
+  font-size: 0.95rem;
   font-weight: 800;
+  flex-shrink: 0;
   line-height: 1;
 }
 
 .mindset-ribbon-label {
-  font-size: 0.75rem;
+  font-size: 0.67rem;
   font-weight: 600;
   color: var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  line-height: 1.15;
+  white-space: normal;
+  word-break: normal;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  min-width: 0;
 }
 
-.mindset-ribbon-tile--green  .mindset-ribbon-count { color: #34c759; }
-.mindset-ribbon-tile--teal   .mindset-ribbon-count { color: #30b0c7; }
-.mindset-ribbon-tile--amber  .mindset-ribbon-count { color: #ff9500; }
-.mindset-ribbon-tile--purple .mindset-ribbon-count { color: #af52de; }
-.mindset-ribbon-tile--red    .mindset-ribbon-count { color: #ff3b30; }
+.mindset-ribbon-chevron {
+  flex-shrink: 0;
+  color: var(--text-secondary);
+}
+
+.mindset-ribbon-tile--green  .mindset-ribbon-count { color: var(--color-success, #10b981); }
+.mindset-ribbon-tile--teal   .mindset-ribbon-count { color: #0ea5e9; }
+.mindset-ribbon-tile--amber  .mindset-ribbon-count { color: var(--color-warn, #f59e0b); }
+.mindset-ribbon-tile--purple .mindset-ribbon-count { color: #8b5cf6; }
+.mindset-ribbon-tile--red    .mindset-ribbon-count { color: var(--color-danger, #ef4444); }
+.mindset-ribbon-tile--unsubmitted .mindset-ribbon-count { color: #f97316; }
 
 /* ── VIEW 2: Breakdown & Lists ── */
 .mindset-breakdown {
@@ -2158,5 +2173,13 @@ const seatingHistogram = computed(() => {
 .mindset-chip-mail:hover {
   color: #0071e3;
   background: rgba(0, 113, 227, 0.1);
+}
+
+@media (max-height: 760px) {
+  .mindset-canvas { height: clamp(315px, 45vh, 345px); }
+  .mindset-summary-ribbon { gap: 5px; }
+  .mindset-ribbon-tile { padding: 3px 5px; gap: 4px; }
+  .mindset-ribbon-count { font-size: 0.88rem; }
+  .mindset-ribbon-label { font-size: 0.64rem; line-height: 1.1; }
 }
 </style>

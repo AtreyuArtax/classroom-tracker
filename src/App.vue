@@ -443,6 +443,19 @@ async function doQuickSync() {
   }
 }
 
+@media (max-height: 760px) {
+  .app-nav {
+    height: 46px;
+  }
+  .app-nav__tab {
+    min-height: 38px;
+    padding: 4px 10px;
+  }
+  .app-nav__tab-icon {
+    font-size: 1rem;
+  }
+}
+
 /* ── Main content area ───────────────────────────────────────────────── */
 .app-main {
   flex:     1;

@@ -351,10 +351,10 @@
 .ooc-canvas {
   position: relative;
   width: 100%;
-  height: clamp(360px, 48vh, 420px);
+  height: clamp(330px, 46vh, 420px);
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-md);
   overflow: visible;
   box-shadow: var(--shadow-sm);
   box-sizing: border-box;
@@ -585,46 +585,48 @@
 /* 4-Quadrant Summary Cards (Matching Risk Matrix) */
 .ooc-matrix-summary {
   display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
+  flex-wrap: nowrap;
+  gap: 6px;
   width: 100%;
   box-sizing: border-box;
-  margin-top: 10px;
+  margin-top: 6px;
 }
 
 .ooc-matrix-summary-card {
-  flex: 1 1 140px;
+  flex: 1 1 0;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  padding: 4px 8px;
   display: flex;
   align-items: center;
-  gap: 10px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  gap: 6px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
   cursor: default;
   transition: transform 0.15s ease, border-color 0.15s ease;
   min-width: 0;
 }
 
 .ooc-matrix-summary-card:hover {
-  transform: translateY(-2px);
+  transform: translateY(-1px);
   border-color: var(--primary);
 }
 
 .ooc-matrix-summary-card .count {
-  font-size: 1.15rem;
+  font-size: 0.95rem;
   font-weight: 800;
   flex-shrink: 0;
+  line-height: 1;
 }
 
 .ooc-matrix-summary-card .label {
-  font-size: 0.725rem;
+  font-size: 0.68rem;
   color: var(--text-secondary);
   font-weight: 600;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  line-height: 1;
 }
 
 .ooc-matrix-summary-card--red    .count { color: var(--color-danger); }
@@ -885,7 +887,7 @@
 }
 
 .ooc-overlap-list--scrollable {
-  max-height: 340px;
+  max-height: clamp(220px, 32vh, 300px);
   overflow-y: auto;
   padding-right: 4px;
 }
@@ -1459,4 +1461,13 @@
   .ooc-val-badge {
     margin-left: auto;
   }
+}
+
+@media (max-height: 760px) {
+  .ooc-canvas { height: clamp(315px, 45vh, 345px); }
+  .ooc-matrix-summary { gap: 6px; margin-top: 4px; }
+  .ooc-matrix-summary-card { padding: 3px 6px; }
+  .ooc-matrix-summary-card .count { font-size: 0.88rem; }
+  .ooc-matrix-summary-card .label { font-size: 0.66rem; }
+  .ooc-overlap-list--scrollable { max-height: clamp(200px, 28vh, 250px); }
 }

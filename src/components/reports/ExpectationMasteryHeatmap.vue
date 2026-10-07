@@ -670,7 +670,10 @@ function getHeatColor(avg) {
 .expectation-heatmap__content {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 10px;
+  max-height: clamp(310px, 44vh, 410px);
+  overflow-y: auto;
+  padding-right: 2px;
 }
 
 .expectation-heatmap__unit-card {
@@ -823,5 +826,9 @@ function getHeatColor(avg) {
   border-radius: 4px;
   color: #fff;
   display: inline-block;
+}
+
+@media (max-height: 760px) {
+  .expectation-heatmap__content { max-height: clamp(290px, 41vh, 340px); }
 }
 </style>

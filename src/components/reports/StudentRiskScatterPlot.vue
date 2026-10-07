@@ -323,21 +323,22 @@ const studentPoints = computed(() => {
     yPercent: item.baseY
   }))
 
-  const minDistance = 4.8 // Min % distance to prevent dot overlap
-  const iterations = 20
+  const aspectScaleX = 2.8 // Canvas is wider than tall in % space (~2.8x)
+  const minDistance = 11.5 // Minimum distance in normalized pixel space (~24px)
+  const iterations = 24
 
   for (let iter = 0; iter < iterations; iter++) {
     for (let i = 0; i < points.length; i++) {
       for (let j = i + 1; j < points.length; j++) {
         const p1 = points[i]
         const p2 = points[j]
-        let dx = p2.xPercent - p1.xPercent
+        let dx = (p2.xPercent - p1.xPercent) * aspectScaleX
         let dy = p2.yPercent - p1.yPercent
         let dist = Math.hypot(dx, dy)
 
         if (dist === 0) {
-          dx = (i % 2 === 0 ? 1 : -1) * 0.2
-          dy = (j % 2 === 0 ? 1 : -1) * 0.2
+          dx = (i % 2 === 0 ? 1 : -1) * 0.3
+          dy = (j % 2 === 0 ? 1 : -1) * 0.3
           dist = Math.hypot(dx, dy)
         }
 
@@ -346,26 +347,26 @@ const studentPoints = computed(() => {
           const nx = dx / dist
           const ny = dy / dist
           
-          p1.xPercent -= nx * overlap
+          p1.xPercent -= (nx / aspectScaleX) * overlap
           p1.yPercent -= ny * overlap
-          p2.xPercent += nx * overlap
+          p2.xPercent += (nx / aspectScaleX) * overlap
           p2.yPercent += ny * overlap
         }
       }
     }
 
-    // Keep within bounds [6%, 92%]
+    // Keep within bounds [6%, 92%] in X and [7%, 91%] in Y
     points.forEach(p => {
       p.xPercent = Math.max(6, Math.min(92, p.xPercent))
-      p.yPercent = Math.max(6, Math.min(92, p.yPercent))
+      p.yPercent = Math.max(7, Math.min(91, p.yPercent))
     })
   }
 
   // Attach cluster members for multi-student popovers
   return points.map(item => {
     const clusterMembers = points.filter(other => {
-      const dist = Math.hypot(other.xPercent - item.xPercent, other.yPercent - item.yPercent)
-      return dist <= 6.0
+      const dist = Math.hypot((other.xPercent - item.xPercent) * aspectScaleX, other.yPercent - item.yPercent)
+      return dist <= 13.5
     })
     return {
       ...item,
@@ -398,25 +399,25 @@ const unassessedCount = computed(() => studentPoints.value.filter(p => p.quadran
 .risk-plot {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 8px;
 }
 
 .risk-plot__header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
 }
 
 .risk-plot__title {
-  font-size: 1rem;
+  font-size: 0.88rem;
   font-weight: 700;
   color: var(--text);
-  margin: 0 0 2px 0;
+  margin: 0 0 1px 0;
 }
 
 .risk-plot__subtitle {
-  font-size: 0.8rem;
+  font-size: 0.72rem;
   color: var(--text-secondary);
   margin: 0;
   white-space: nowrap;
@@ -426,10 +427,10 @@ const unassessedCount = computed(() => studentPoints.value.filter(p => p.quadran
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px 14px;
-  font-size: 0.75rem;
+  gap: 4px 12px;
+  font-size: 0.7rem;
   font-weight: 600;
-  padding: 4px 0;
+  padding: 1px 0;
 }
 
 .legend-pill {
@@ -447,21 +448,21 @@ const unassessedCount = computed(() => studentPoints.value.filter(p => p.quadran
 
 .risk-plot__canvas {
   position: relative;
-  height: 380px;
+  height: clamp(330px, 46vh, 420px);
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-md);
   overflow: visible;
 }
 
 .risk-plot__quadrant {
   position: absolute;
-  padding: 12px 16px;
+  padding: 6px 12px;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 1px;
   pointer-events: none;
-  opacity: 0.5;
+  opacity: 0.45;
   z-index: 0;
 }
 
@@ -472,14 +473,14 @@ const unassessedCount = computed(() => studentPoints.value.filter(p => p.quadran
 
 .risk-plot__quad-label {
   font-weight: 700;
-  font-size: 0.85rem;
+  font-size: 0.72rem;
   color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
 
 .risk-plot__quad-sub {
-  font-size: 0.725rem;
+  font-size: 0.65rem;
   color: var(--text-secondary);
   opacity: 0.8;
 }
@@ -509,17 +510,17 @@ const unassessedCount = computed(() => studentPoints.value.filter(p => p.quadran
 
 .risk-plot__dot {
   position: absolute;
-  width: 30px;
-  height: 30px;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
   transform: translate(-50%, 50%);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   font-weight: 800;
   cursor: pointer;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.22);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
   transition: transform 0.15s ease, box-shadow 0.15s ease, z-index 0.1s ease;
   z-index: 10;
 }
@@ -541,7 +542,7 @@ const unassessedCount = computed(() => studentPoints.value.filter(p => p.quadran
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 26px;
+  max-width: 22px;
 }
 
 .risk-plot__tooltip {
@@ -707,40 +708,40 @@ const unassessedCount = computed(() => studentPoints.value.filter(p => p.quadran
 /* List View Styles */
 .risk-plot__list-view {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 14px;
-  min-height: 380px;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 8px;
+  min-height: clamp(320px, 44vh, 400px);
 }
 
 .risk-plot__list-card {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: 14px;
+  border-radius: var(--radius-md);
+  padding: 8px 10px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 6px;
 }
 
 .list-card__header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-bottom: 8px;
+  padding-bottom: 4px;
   border-bottom: 1px solid var(--border);
 }
 
 .list-card__title {
   font-weight: 800;
-  font-size: 0.825rem;
+  font-size: 0.76rem;
   color: var(--text);
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
 }
 
 .list-card__dot {
-  font-size: 0.75rem;
+  font-size: 0.725rem;
 }
 .dot--green      { color: var(--color-success); }
 .dot--yellow     { color: var(--color-warn); }
@@ -749,12 +750,12 @@ const unassessedCount = computed(() => studentPoints.value.filter(p => p.quadran
 .dot--unassessed { color: var(--color-neutral); }
 
 .list-card__badge {
-  font-size: 0.725rem;
+  font-size: 0.68rem;
   font-weight: 800;
   background: var(--bg-secondary);
   color: var(--text-secondary);
-  padding: 2px 8px;
-  border-radius: 10px;
+  padding: 1px 6px;
+  border-radius: 8px;
 }
 
 .list-card__student-list {
@@ -763,8 +764,8 @@ const unassessedCount = computed(() => studentPoints.value.filter(p => p.quadran
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  max-height: 280px;
+  gap: 4px;
+  max-height: 180px;
   overflow-y: auto;
 }
 
@@ -772,8 +773,8 @@ const unassessedCount = computed(() => studentPoints.value.filter(p => p.quadran
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 6px 8px;
-  border-radius: var(--radius-md);
+  padding: 3px 6px;
+  border-radius: var(--radius-sm);
   background: var(--bg-secondary);
   cursor: pointer;
   transition: background 0.15s ease, transform 0.1s ease;
@@ -787,15 +788,15 @@ const unassessedCount = computed(() => studentPoints.value.filter(p => p.quadran
 .list-card__student-left {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   overflow: hidden;
 }
 
 .list-card__avatar {
-  width: 24px;
-  height: 24px;
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
-  font-size: 0.65rem;
+  font-size: 0.6rem;
   font-weight: 800;
   display: flex;
   align-items: center;
@@ -810,7 +811,7 @@ const unassessedCount = computed(() => studentPoints.value.filter(p => p.quadran
 .avatar--unassessed { background: var(--color-neutral-bg);    border: 1px dashed var(--color-neutral);  color: var(--color-neutral-text); }
 
 .list-card__name {
-  font-size: 0.8rem;
+  font-size: 0.74rem;
   font-weight: 600;
   color: var(--text);
   white-space: nowrap;
@@ -821,69 +822,71 @@ const unassessedCount = computed(() => studentPoints.value.filter(p => p.quadran
 .list-card__student-right {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   flex-shrink: 0;
 }
 
 .list-card__score {
-  font-size: 0.775rem;
+  font-size: 0.72rem;
   font-weight: 800;
   color: var(--primary);
 }
 
 .list-card__att {
-  font-size: 0.7rem;
+  font-size: 0.66rem;
   color: var(--text-secondary);
 }
 
 .list-card__empty {
-  font-size: 0.75rem;
+  font-size: 0.725rem;
   color: var(--text-secondary);
   font-style: italic;
-  padding: 12px 0;
+  padding: 8px 0;
   text-align: center;
 }
 
 .risk-plot__summary {
   display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
+  flex-wrap: nowrap;
+  gap: 6px;
   width: 100%;
 }
 
 .risk-plot__summary-card {
-  flex: 1 1 140px;
+  flex: 1 1 0;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  padding: 4px 8px;
   display: flex;
   align-items: center;
-  gap: 10px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  gap: 6px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
   cursor: pointer;
   transition: transform 0.15s ease, border-color 0.15s ease;
   min-width: 0;
 }
 
 .risk-plot__summary-card:hover {
-  transform: translateY(-2px);
+  transform: translateY(-1px);
   border-color: var(--primary);
 }
 
 .risk-plot__summary-card .count {
-  font-size: 1.15rem;
+  font-size: 0.95rem;
   font-weight: 800;
   flex-shrink: 0;
+  line-height: 1;
 }
 
 .risk-plot__summary-card .label {
-  font-size: 0.725rem;
+  font-size: 0.68rem;
   color: var(--text-secondary);
   font-weight: 600;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  line-height: 1;
 }
 
 .risk-plot__summary-card--red    .count { color: var(--color-danger); }
@@ -891,4 +894,13 @@ const unassessedCount = computed(() => studentPoints.value.filter(p => p.quadran
 .risk-plot__summary-card--orange .count { color: var(--color-attention); }
 .risk-plot__summary-card--green  .count { color: var(--color-success); }
 .risk-plot__summary-card--slate  .count { color: var(--color-neutral); }
+
+@media (max-height: 760px) {
+  .risk-plot { gap: 6px; }
+  .risk-plot__canvas { height: clamp(315px, 45vh, 345px); }
+  .risk-plot__list-view { min-height: clamp(305px, 43vh, 340px); }
+  .risk-plot__dot { width: 25px; height: 25px; font-size: 0.64rem; }
+  .risk-plot__summary-card { padding: 3px 6px; }
+  .risk-plot__summary-card .count { font-size: 0.88rem; }
+}
 </style>
