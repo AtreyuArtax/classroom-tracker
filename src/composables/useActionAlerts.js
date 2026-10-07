@@ -110,7 +110,7 @@ export async function refreshActionAlerts(classId, preloaded = {}) {
   if (!hasPreloaded && inFlight[classId]) return inFlight[classId]
 
   const run = (async () => {
-    const { academicTerms } = useClassroom()
+    const { academicTerms, nonSchoolDays } = useClassroom()
     const rawClass = await classService.getClass(classId)
     if (!rawClass) return
 
@@ -123,6 +123,12 @@ export async function refreshActionAlerts(classId, preloaded = {}) {
     const studentList = Object.entries(students).map(([studentId, s]) => ({ ...s, studentId }))
 
     const dr = getDateRangeForClassPeriod(period, rawClass, academicTerms.value) || {}
+    const calendarConfig = (dr.from && dr.to) ? {
+      fromStr: dr.from,
+      toStr: dr.to,
+      nonSchoolDays: nonSchoolDays?.value || []
+    } : null
+
     const events = preloaded.events
       ?? (await eventService.getEventsByClass(classId)).filter(e => students[e.studentId])
     const periodEvents = (dr.from || dr.to)
@@ -137,7 +143,7 @@ export async function refreshActionAlerts(classId, preloaded = {}) {
 
     sources.value = {
       ...sources.value,
-      [classId]: { students, studentList, events, periodEvents, classGrades, effective, period, loadedAt: Date.now() }
+      [classId]: { students, studentList, events, periodEvents, classGrades, effective, period, calendarConfig, loadedAt: Date.now() }
     }
   })()
 
@@ -167,7 +173,10 @@ function itemsFor(classId) {
     classGrades: src.classGrades,
     washCodes,
     washLimit,
-    thresholds
+    thresholds: {
+      ...thresholds,
+      calendarConfig: src.calendarConfig
+    }
   })
   const missingSummary = buildMissingSummary({
     studentList: src.studentList,

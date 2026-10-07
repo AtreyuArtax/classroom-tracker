@@ -24,9 +24,10 @@ import { getDateRangeForClassPeriod, toMinutes } from '../db/eventService.js'
 import { getAssessmentsByClass } from '../db/gradebookService.js'
 import { useClassroom } from './useClassroom.js'
 import { formatLocalDate } from '../utils/dates.js'
+import { getSchoolDaysInRange } from '../utils/schoolDayUtils.js'
 
 export function useStudentDossier(periodRef = null, classIdRef = null) {
-    const { activeStudentEvents, getStudentEventHistory, behaviorCodes, academicTerms } = useClassroom()
+    const { activeStudentEvents, getStudentEventHistory, behaviorCodes, academicTerms, nonSchoolDays } = useClassroom()
 
     // ─── selection state ──────────────────────────────────────────────────────
 
@@ -171,26 +172,11 @@ export function useStudentDossier(periodRef = null, classIdRef = null) {
      * @returns {number|null}
      */
     function _countSchoolDays(range, fallbackStart, cap = 999) {
-        const toDate = range.to ? new Date(range.to + 'T23:59:59') : new Date()
-        let fromDate
-
-        if (range.from) {
-            fromDate = new Date(range.from)
-        } else if (fallbackStart) {
-            fromDate = new Date(fallbackStart)
-        } else {
-            return null
-        }
-
-        let count = 0
-        let cur = new Date(fromDate)
-        while (cur <= toDate) {
-            const day = cur.getDay()
-            if (day !== 0 && day !== 6) count++
-            cur.setDate(cur.getDate() + 1)
-        }
-
-        return Math.min(count, cap)
+        const fromDateStr = range?.from || (fallbackStart ? fallbackStart.slice(0, 10) : null)
+        if (!fromDateStr) return null
+        const toDateStr = range?.to ? range.to.slice(0, 10) : null
+        const schoolDays = getSchoolDaysInRange(fromDateStr, toDateStr, nonSchoolDays.value, { capToday: true })
+        return Math.min(schoolDays.count, cap)
     }
 
     /**

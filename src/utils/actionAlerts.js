@@ -83,7 +83,8 @@ export function buildFollowUpItems({
     windowTier1Label: thresholds.windowTier1Label ?? 'Contact family',
     enableWindowTier2: thresholds.enableWindowTier2 ?? true,
     absenceWindowTier2: thresholds.absenceWindowTier2 ?? 8,
-    windowTier2Label: thresholds.windowTier2Label ?? 'Student Success referral'
+    windowTier2Label: thresholds.windowTier2Label ?? 'Student Success referral',
+    calendarConfig: thresholds.calendarConfig || null
   }
 
   const detectedPatterns = detectClassAttendancePatterns(eventsForPatterns, students, patternOptions)

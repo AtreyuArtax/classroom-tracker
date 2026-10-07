@@ -220,6 +220,7 @@ import { getEventsByStudent } from '../../composables/useClassroom.js'
 import { toMinutes, getDateRangeForClassPeriod } from '../../utils/timeUtils.js'
 import { formatLocalDisplay } from '../../utils/dates.js'
 import { formatCategoryShortCode } from '../../utils/categoryUtils.js'
+import { getSchoolDaysInRange } from '../../utils/schoolDayUtils.js'
 import StudentGradeTrend from './StudentGradeTrend.vue'
 import DossierEvidenceMix from './DossierEvidenceMix.vue'
 import SBarProgressReport from './SBarProgressReport.vue'
@@ -252,7 +253,7 @@ const props = defineProps({
   isBatch:   { type: Boolean, default: false }
 })
 
-const { students, activeClass, behaviorCodes, teacherName, schoolName, academicTerms } = useClassroom()
+const { students, activeClass, behaviorCodes, teacherName, schoolName, academicTerms, nonSchoolDays } = useClassroom()
 
 const events = ref([])
 const learningSkills = ref([])
@@ -465,15 +466,9 @@ const schoolDaysElapsed = computed(() => {
   if (!range?.from && !anchor) return null
 
   const fromStr = range?.from || anchor
-  const toDate = range?.to ? new Date(range.to + 'T23:59:59') : new Date()
-  let count = 0
-  let cur = new Date(fromStr + 'T00:00:00')
-  while (cur <= toDate) {
-    const day = cur.getDay()
-    if (day !== 0 && day !== 6) count++
-    cur.setDate(cur.getDate() + 1)
-  }
-  return Math.min(Math.max(1, count), cap)
+  const toStr = range?.to || null
+  const schoolDays = getSchoolDaysInRange(fromStr, toStr, nonSchoolDays?.value || [], { capToday: true })
+  return Math.min(Math.max(1, schoolDays.count), cap)
 })
 
 // Stats (Real data from events)

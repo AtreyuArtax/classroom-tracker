@@ -150,8 +150,8 @@
     "semantic_hash": ""
   },
   "src/components/dossier/AttendanceActivityReport.vue": {
-    "mtime": 1791125668.5129194,
-    "ast_hash": "42251df39b2d14010f8d2c4a3d84b8fc",
+    "mtime": 1791308728.2530313,
+    "ast_hash": "a967bd45fdb90fec6e505b51b59cb7a3",
     "semantic_hash": ""
   },
   "src/components/dossier/DossierCategoryGrid.vue": {
@@ -175,8 +175,8 @@
     "semantic_hash": ""
   },
   "src/components/dossier/ProgressReport.vue": {
-    "mtime": 1791119047.8480422,
-    "ast_hash": "c76b7231ddcd799786ba79a98c5515ce",
+    "mtime": 1791308770.704711,
+    "ast_hash": "557de9625075ecc1ee45230a682bae76",
     "semantic_hash": ""
   },
   "src/components/dossier/Student360.vue": {
@@ -205,8 +205,8 @@
     "semantic_hash": ""
   },
   "src/components/setup/CalendarSettings.vue": {
-    "mtime": 1790264005.6965644,
-    "ast_hash": "ed4cd80c6a93e6d30b912e1cd40aeb6b",
+    "mtime": 1791330814.80069,
+    "ast_hash": "6f5a50f1e93dac8648a2a7d20be7f386",
     "semantic_hash": ""
   },
   "src/components/setup/CsvHelpGuide.vue": {
@@ -230,8 +230,8 @@
     "semantic_hash": ""
   },
   "src/components/setup/SemesterCalendar.vue": {
-    "mtime": 1791116394.2581859,
-    "ast_hash": "672d18aa582194aa65c6f2ea5ab560bc",
+    "mtime": 1791308176.4259346,
+    "ast_hash": "9e64c3771cc20227b475739707af9197",
     "semantic_hash": ""
   },
   "src/composables/useAttendanceInsights.js": {
@@ -240,8 +240,8 @@
     "semantic_hash": ""
   },
   "src/composables/useClassroom.js": {
-    "mtime": 1791234385.7986906,
-    "ast_hash": "097b0ac2e78cb9413e6a0eeecbb4cd85",
+    "mtime": 1791315878.1443691,
+    "ast_hash": "6b4f7d76fdaf6421c5659f5f32831fba",
     "semantic_hash": ""
   },
   "src/composables/useGradebook.js": {
@@ -265,8 +265,8 @@
     "semantic_hash": ""
   },
   "src/composables/useStudentDossier.js": {
-    "mtime": 1788361721.9543974,
-    "ast_hash": "8d56973092fc2bb6613e83c3cb03d191",
+    "mtime": 1791308744.8256443,
+    "ast_hash": "09cdb9e66aefae29587838fc9e420f22",
     "semantic_hash": ""
   },
   "src/composables/useUndo.js": {
@@ -345,8 +345,8 @@
     "semantic_hash": ""
   },
   "src/views/Reports.vue": {
-    "mtime": 1790897193.9176843,
-    "ast_hash": "96623fd201413e8b282958827a8b3ad9",
+    "mtime": 1791308368.984967,
+    "ast_hash": "d8293cfc666eef909ef67d21b44c5195",
     "semantic_hash": ""
   },
   "src/views/ScanStation.vue": {
@@ -1200,8 +1200,8 @@
     "semantic_hash": ""
   },
   "src/utils/attendancePatterns.js": {
-    "mtime": 1791234405.7247655,
-    "ast_hash": "4e2a692e0c1b3f84213e43d259f92175",
+    "mtime": 1791308499.361014,
+    "ast_hash": "d44d02948b481692466b286f5f131c94",
     "semantic_hash": ""
   },
   "src/components/grades/GradesExpectationStudentModal.vue": {
@@ -1340,8 +1340,8 @@
     "semantic_hash": ""
   },
   "src/components/AttendanceHistoryDrawer.vue": {
-    "mtime": 1790256101.2800975,
-    "ast_hash": "1301b86e73662ee5e44a34ab3bbce2b0",
+    "mtime": 1791308920.646082,
+    "ast_hash": "3ec7bd20623f7e3f1d56b883bee15dca",
     "semantic_hash": ""
   },
   "src/test_attendance_history.js": {
@@ -1365,8 +1365,8 @@
     "semantic_hash": ""
   },
   "src/data/calendar/2026-2027.json": {
-    "mtime": 1790100351.0724084,
-    "ast_hash": "e7e5da8572e857e946bac9e16d1999ce",
+    "mtime": 1791315777.1786714,
+    "ast_hash": "3d60c89cdd41125870b9862365abf14c",
     "semantic_hash": ""
   },
   "src/test_calendar_loader.js": {
@@ -1480,8 +1480,8 @@
     "semantic_hash": ""
   },
   "src/composables/useActionAlerts.js": {
-    "mtime": 1791227254.8985064,
-    "ast_hash": "11468ac0e4bb0117eef60dd1ebcf4782",
+    "mtime": 1791308555.0863473,
+    "ast_hash": "7181691ab7b33533d213956b5c1f201a",
     "semantic_hash": ""
   },
   "src/test_action_alerts.js": {
@@ -1490,8 +1490,8 @@
     "semantic_hash": ""
   },
   "src/utils/actionAlerts.js": {
-    "mtime": 1791234420.1437292,
-    "ast_hash": "11503fb5b1a811f7b9e8a7c7ecba804d",
+    "mtime": 1791308511.4797945,
+    "ast_hash": "c3b7b421e5377fb3975d35648a6d32b6",
     "semantic_hash": ""
   },
   "src/utils/dossierActivityFeed.js": {
@@ -1612,6 +1612,16 @@
   "src/components/ActiveStudentsOutCapsule.vue": {
     "mtime": 1791209054.7142391,
     "ast_hash": "ebda7be4f2ec65302b3b9a95d905b978",
+    "semantic_hash": ""
+  },
+  "src/test_school_day_engine.js": {
+    "mtime": 1791315889.735507,
+    "ast_hash": "5e6f1d3b13bc8bd0f16a34a3da12b14b",
+    "semantic_hash": ""
+  },
+  "src/utils/schoolDayUtils.js": {
+    "mtime": 1791308907.8090816,
+    "ast_hash": "d555f4df52cc5acedc011dc0db5a41ba",
     "semantic_hash": ""
   }
 }

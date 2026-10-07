@@ -92,7 +92,7 @@
                   </div>
                   <span class="day-num">{{ day.dayNum }}</span>
                 </div>
-                <div v-if="day.isHoliday" class="day-holiday-label" :title="day.holidayLabel">
+                <div v-if="day.holidayLabel" class="day-holiday-label" :class="{ 'day-holiday-label--milestone': day.isMilestone }" :title="day.holidayLabel">
                   {{ day.holidayLabel }}
                 </div>
               </template>
@@ -165,6 +165,7 @@ import { UserMinus, Clock, DoorOpen, CheckCircle2, AlertCircle, Info } from 'luc
 import { useClassroom, getEventsByStudent } from '../../composables/useClassroom.js'
 import { toMinutes } from '../../utils/timeUtils.js'
 import { formatLocalDate } from '../../utils/dates.js'
+import { autoClassifyCalendarLabel } from '../../utils/schoolDayUtils.js'
 
 const props = defineProps({
   studentId: { type: String, required: true },
@@ -215,15 +216,17 @@ const calendar = computed(() => {
   const holidayCache = {}
   nonSchoolDays.value.forEach(h => {
     if (!h.date) return
+    const isNonInst = h.nonInstructional !== undefined ? !!h.nonInstructional : autoClassifyCalendarLabel(h.label)
+    const entry = { label: h.label, isNonInstructional: isNonInst }
     const s = h.date
     const e = h.endDate || h.date
     if (s === e) {
-      holidayCache[s] = h.label
+      holidayCache[s] = entry
     } else {
       let curH = new Date(s + 'T12:00:00')
       let endH = new Date(e + 'T12:00:00')
       while (curH <= endH) {
-        holidayCache[formatLocalDate(curH)] = h.label
+        holidayCache[formatLocalDate(curH)] = entry
         curH.setDate(curH.getDate() + 1)
       }
     }
@@ -263,13 +266,16 @@ const calendar = computed(() => {
       const isOutsideRange = date < start || date > end
       
       const hasEvents = dayEvents.some(e => e.code === 'a' || e.code === 'l' || e.code === 'w')
+      const hInfo = holidayCache[dateStr]
+      const isHoliday = !!(hInfo && hInfo.isNonInstructional)
       
       days.push({
         date,
         dateStr,
         dayNum: d,
-        isHoliday: !!holidayCache[dateStr],
-        holidayLabel: holidayCache[dateStr],
+        isHoliday,
+        holidayLabel: hInfo?.label || '',
+        isMilestone: !!(hInfo && !hInfo.isNonInstructional),
         hasEvents,
         isOutsideRange,
         events: {
@@ -726,6 +732,10 @@ const semesterInsights = computed(() => {
   -webkit-box-orient: vertical;
   width: 100%;
   margin-top: auto;
+}
+
+.day-holiday-label--milestone {
+  color: #0284c7;
 }
 
 /* --- Slot 6: Summary Panel & Legend --- */

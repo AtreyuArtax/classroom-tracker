@@ -12,6 +12,8 @@
  * (like "Term 1 cut off") never break or falsify calculations.
  */
 
+import { getActiveClassMeetingDates } from './schoolDayUtils.js'
+
 const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 
 /**
@@ -66,12 +68,17 @@ export function getDayOfWeek(dateStr) {
 
 /**
  * Derives the unique, chronologically-sorted list of dates on which
- * active class meetings occurred based on logged event ground truth.
+ * active class meetings occurred based on logged event ground truth
+ * and optional calendar-driven school days.
  *
  * @param {Array<Object>} allClassEvents
+ * @param {Object} [calendarConfig]
  * @returns {Array<string>} Array of "YYYY-MM-DD"
  */
-export function getActiveClassDates(allClassEvents = []) {
+export function getActiveClassDates(allClassEvents = [], calendarConfig = null) {
+  if (calendarConfig && calendarConfig.fromStr) {
+    return getActiveClassMeetingDates(allClassEvents, calendarConfig)
+  }
   const dateSet = new Set()
   for (const e of allClassEvents) {
     if (!e || e.superseded) continue
@@ -330,7 +337,7 @@ export function detectStudentAttendancePatterns(studentId, studentEvents = [], a
  * @returns {Array<Object>} Flagged student pattern items sorted by severity
  */
 export function detectClassAttendancePatterns(allClassEvents = [], studentRoster = [], options = {}) {
-  const activeDates = getActiveClassDates(allClassEvents)
+  const activeDates = getActiveClassDates(allClassEvents, options.calendarConfig)
   if (activeDates.length === 0) return []
 
   // Resolve student IDs to check

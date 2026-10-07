@@ -259,6 +259,7 @@ const ReportsLearningSkills        = defineAsyncComponent(() => import('../compo
 import { calculateClassGrades, getAssessmentsByClass, getAssessmentPercentage } from '../db/gradebookService.js'
 import { loadGradebook, clearGradebook, assessments as gbAssessments, gradeMap, activeGradeFilter } from '../composables/useGradebook.js'
 import { getSectionColor } from '../utils/gradeColors.js'
+import { getSchoolDaysInRange } from '../utils/schoolDayUtils.js'
 
 import { 
   Chart as ChartJS, 
@@ -286,7 +287,8 @@ const {
   switchClass,
   academicTerms,
   teacherName,
-  thresholds
+  thresholds,
+  nonSchoolDays
 } = useClassroom()
 
 const dossier = useStudentDossier()
@@ -295,6 +297,7 @@ const sidebarClassId = ref(activeClass.value?.classId || filteredClassList.value
 const reportData = ref([])
 const allClassEvents = ref([])
 const assessmentsList = ref([])
+const currentDateRange = ref(null)
 const loading = ref(false)
 
 watch(filteredClassList, (newList) => {
@@ -628,6 +631,7 @@ async function runReport(silent = false) {
   if (!silent) loading.value = true
   try {
     const dr = eventService.getDateRangeForClassPeriod(selectedPeriod.value, reportClass.value, academicTerms.value)
+    currentDateRange.value = dr
     
     const currentClass = await classService.getClass(sidebarClassId.value)
     const activeStudents = {}
@@ -818,10 +822,25 @@ const washroomChartData = computed(() => {
 const attendanceRate = computed(() => {
   const studentCount = Object.keys(reportStudents.value).length
   if (studentCount === 0) return null
-  const dates = new Set(
-    reportData.value.filter(e => !e.superseded).map(e => e.timestamp.slice(0, 10))
-  )
-  const distinctDays = dates.size
+
+  let distinctDays = 0
+  const dr = currentDateRange.value
+
+  if (dr && dr.from) {
+    const schoolDays = getSchoolDaysInRange(dr.from, dr.to, nonSchoolDays.value, { capToday: true })
+    distinctDays = schoolDays.count
+  }
+
+  // Fallback to distinct dates of events if no calendar range
+  if (distinctDays === 0) {
+    const dates = new Set(
+      reportData.value.filter(e => !e.superseded).map(e => e.timestamp.slice(0, 10))
+    )
+    distinctDays = dates.size
+  }
+
+  if (distinctDays === 0) return null
+
   const possible = studentCount * distinctDays
   if (possible === 0) return null
   const absences = aggregates.attendance.totalAbsences

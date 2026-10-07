@@ -54,14 +54,10 @@
         @close="showAdvancedModal = false"
       >
         <div class="advanced-terms-modal">
-          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; flex-wrap: wrap; gap: 8px;">
-            <p class="setup__hint" style="margin: 0; flex: 1; min-width: 240px;">
+          <div style="margin-bottom: 16px;">
+            <p class="setup__hint" style="margin: 0;">
               Customize start and end dates for your semesters. These are used for attendance reporting and automated setup.
             </p>
-            <label style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.8rem; cursor: pointer; color: var(--text-muted); user-select: none;">
-              <input type="checkbox" v-model="showAllYearsInModal" style="cursor: pointer;" />
-              <span>Show all school years</span>
-            </label>
           </div>
 
           <div class="setup__gb-list scrollable-list">
@@ -310,6 +306,13 @@
         </template>
       </BaseModal>
 
+      <!-- Dynamic Term School Days Summary -->
+      <div v-if="activeTermSchoolDaysSummary" class="setup__inline-banner setup__inline-banner--info" style="margin-top: 10px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between;">
+        <span>
+          <strong>{{ activeTermSchoolDaysSummary.termLabel }}:</strong> {{ activeTermSchoolDaysSummary.schoolDays }} active school days ({{ activeTermSchoolDaysSummary.nonSchoolDays }} non-instructional days excluded)
+        </span>
+      </div>
+
       <div class="setup__gb-list scrollable-list">
         <div v-for="(day, idx) in filteredNonSchoolDays" :key="idx" class="setup__gb-item">
           <div class="setup__term-row">
@@ -323,13 +326,27 @@
               <input v-model="day.endDate" type="date" class="setup__input setup__input--white" style="width: 140px;" @change="saveNonSchoolDays" />
             </div>
             <div class="setup__term-unit" style="flex: 1;">
-              <span class="setup__mini-label">Holiday Name</span>
+              <span class="setup__mini-label">Holiday / Milestone Name</span>
               <input 
                 v-model="day.label" 
                 class="setup__input setup__input--white" 
                 placeholder="e.g. Winter Break" 
-                @change="saveNonSchoolDays" 
+                @change="onHolidayLabelChange(day)" 
               />
+            </div>
+            <div class="setup__term-unit" style="width: 130px;">
+              <span class="setup__mini-label">School Closed?</span>
+              <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; padding-top: 6px; font-size: 0.8rem; user-select: none;">
+                <input 
+                  type="checkbox" 
+                  :checked="isDayNonInstructional(day)" 
+                  @change="onToggleNonInstructional(day, $event.target.checked)"
+                  style="cursor: pointer; accent-color: #ef4444;"
+                />
+                <span :style="{ color: isDayNonInstructional(day) ? '#ef4444' : '#2563eb', fontWeight: 600 }">
+                  {{ isDayNonInstructional(day) ? 'No Classes' : 'School Day' }}
+                </span>
+              </label>
             </div>
           </div>
           <button class="setup__icon-btn setup__icon-btn--danger" @click="removeNonSchoolDay(day)">
@@ -359,6 +376,7 @@ import SemesterCalendar from './SemesterCalendar.vue'
 import Papa from 'papaparse'
 import { formatLocalDate, getSchoolYearFromDate, getSemesterFromDate, isSameSchoolYear } from '../../utils/dates.js'
 import { getBoardCalendar } from '../../utils/calendarLoader.js'
+import { autoClassifyCalendarLabel, getSchoolDaysInRange } from '../../utils/schoolDayUtils.js'
 
 const { 
   academicTerms: terms, 
@@ -374,13 +392,37 @@ const {
 const showPasteModal = ref(false)
 const showCalendarModal = ref(false)
 const showAdvancedModal = ref(false)
-const showAllYearsInModal = ref(false)
 const pastedCsv = ref('')
 const { alert, confirm } = useMessage()
 
 const activeTermDetails = computed(() => {
   if (!selectedYear.value || !selectedSemester.value) return null
   return getTermRange(selectedYear.value, selectedSemester.value)
+})
+
+const activeTermSchoolDaysSummary = computed(() => {
+  const details = activeTermDetails.value
+  if (!details || !details.start || !details.end) return null
+  const fromStr = formatLocalDate(details.start)
+  const toStr = formatLocalDate(details.end)
+  const res = getSchoolDaysInRange(fromStr, toStr, nonSchoolDays.value, { capToday: false })
+  
+  let weekdays = 0
+  let cur = new Date(details.start)
+  const end = new Date(details.end)
+  while (cur <= end) {
+    const dow = cur.getDay()
+    if (dow !== 0 && dow !== 6) weekdays++
+    cur.setDate(cur.getDate() + 1)
+  }
+  const nonSchoolDaysCount = Math.max(0, weekdays - res.count)
+  
+  const semName = selectedSemester.value === '1' ? 'Semester 1' : (selectedSemester.value === '2' ? 'Semester 2' : 'Full Year')
+  return {
+    termLabel: `${selectedYear.value || ''} ${semName}`.trim(),
+    schoolDays: res.count,
+    nonSchoolDays: nonSchoolDaysCount
+  }
 })
 
 // For the calendar modal, we need an object that looks like the DB term record
@@ -397,13 +439,13 @@ const activeTermForCalendar = computed(() => {
 
 /**
  * Groups custom terms by school year for better organization in the modal.
- * Scoped to selectedYear unless showAllYearsInModal is checked.
+ * Strictly scoped to the currently selected school year from the app filter pill.
  */
 const termsByYear = computed(() => {
   const groups = {}
   terms.value.forEach((t, idx) => {
     const year = t.year || 'Unknown'
-    if (!showAllYearsInModal.value && selectedYear.value && !isSameSchoolYear(year, selectedYear.value)) {
+    if (selectedYear.value && !isSameSchoolYear(year, selectedYear.value)) {
       return
     }
     if (!groups[year]) groups[year] = []
@@ -423,6 +465,24 @@ onMounted(async () => {
   const loaded = await getGlobalMilestones()
   if (loaded) {
     globalMilestones.value = loaded
+  }
+
+  // Auto-clean any July 2nd reporting entry and backfill undefined nonInstructional flags
+  if (Array.isArray(nonSchoolDays.value) && nonSchoolDays.value.length > 0) {
+    let changed = false
+    const cleaned = nonSchoolDays.value
+      .filter(d => !d.label?.includes('Reporting Schedule (Sem. 2 Final)'))
+      .map(d => {
+        if (d.nonInstructional === undefined) {
+          changed = true
+          return { ...d, nonInstructional: autoClassifyCalendarLabel(d.label) }
+        }
+        return d
+      })
+    if (cleaned.length !== nonSchoolDays.value.length || changed) {
+      nonSchoolDays.value = cleaned
+      await saveNonSchoolDays()
+    }
   }
 })
 
@@ -464,8 +524,25 @@ const filteredNonSchoolDays = computed(() => {
 function addNonSchoolDay() {
   const startYear = selectedYear.value ? parseInt(selectedYear.value.split('-')[0]) : new Date().getFullYear()
   const defaultDate = `${startYear}-09-01` // Pre-fill to fit current school year filter
-  const newDays = [{ date: defaultDate, endDate: '', label: '' }, ...nonSchoolDays.value]
+  const newDays = [{ date: defaultDate, endDate: '', label: '', nonInstructional: true }, ...nonSchoolDays.value]
   updateNonSchoolDays(newDays)
+}
+
+function isDayNonInstructional(day) {
+  if (day?.nonInstructional !== undefined) {
+    return Boolean(day.nonInstructional)
+  }
+  return autoClassifyCalendarLabel(day?.label)
+}
+
+function onToggleNonInstructional(day, checked) {
+  day.nonInstructional = checked
+  saveNonSchoolDays()
+}
+
+function onHolidayLabelChange(day) {
+  day.nonInstructional = autoClassifyCalendarLabel(day.label)
+  saveNonSchoolDays()
 }
 
 async function removeNonSchoolDay(day) {
@@ -585,7 +662,16 @@ async function importHolidays(rawData) {
       const date = row.Date || row.date || row.StartDate || row.startDate || Object.values(row)[0]
       const endDate = row.EndDate || row.endDate || ''
       const label = row.Label || row.label || row.Description || row.description || Object.values(row)[1] || 'Holiday'
-      return { date: date?.trim(), endDate: endDate?.trim(), label: label?.trim() }
+      const rawNonInst = row.NonInstructional ?? row.nonInstructional ?? row.Closed ?? row.closed
+      const nonInstructional = rawNonInst !== undefined
+        ? (String(rawNonInst).toLowerCase() === 'true' || rawNonInst === true)
+        : autoClassifyCalendarLabel(label)
+      return { 
+        date: date?.trim(), 
+        endDate: endDate?.trim(), 
+        label: label?.trim(),
+        nonInstructional
+      }
     })
     .filter(d => d.date && /^\d{4}-\d{2}-\d{2}$/.test(d.date))
 
@@ -626,7 +712,8 @@ function exportHolidaysCsv() {
     .map(d => ({
       Date: d.date,
       EndDate: d.endDate || '',
-      Label: d.label || ''
+      Label: d.label || '',
+      NonInstructional: isDayNonInstructional(d)
     }))
 
   if (dataToExport.length === 0) {
@@ -673,14 +760,22 @@ async function loadOfficialBoardCalendar() {
     if (!shouldProceed) return
   }
 
-  // 1. Merge holidays into nonSchoolDays
-  const daysMap = new Map(nonSchoolDays.value.map(d => [d.date, { ...d }]))
+  // 1. Merge holidays into nonSchoolDays (pruning any obsolete out-of-year July 2nd entries)
+  const daysMap = new Map(
+    nonSchoolDays.value
+      .filter(d => !d.label?.includes('Reporting Schedule (Sem. 2 Final)'))
+      .map(d => [d.date, { ...d }])
+  )
   let count = 0
   for (const item of availableBoardHolidays.value) {
+    const isNonInst = item.nonInstructional !== undefined
+      ? Boolean(item.nonInstructional)
+      : autoClassifyCalendarLabel(item.label)
     daysMap.set(item.date, {
       date: item.date,
       endDate: item.endDate || '',
-      label: item.label || ''
+      label: item.label || '',
+      nonInstructional: isNonInst
     })
     count++
   }
@@ -712,7 +807,8 @@ function exportHolidaysJson() {
     .map(d => ({
       date: d.date,
       endDate: d.endDate || '',
-      label: d.label || ''
+      label: d.label || '',
+      nonInstructional: isDayNonInstructional(d)
     }))
 
   let semestersToExport = terms.value

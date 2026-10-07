@@ -2944,6 +2944,16 @@
       "norm_label": "attendancehistorydrawer.vue"
     },
     {
+      "label": "if()",
+      "file_type": "code",
+      "source_file": "src/components/AttendanceHistoryDrawer.vue",
+      "source_location": "L551",
+      "_origin": "ast",
+      "id": "components_attendancehistorydrawer_if",
+      "community": 154,
+      "norm_label": "if()"
+    },
+    {
       "label": "BaseModal.vue",
       "file_type": "code",
       "source_file": "src/components/BaseModal.vue",
@@ -2980,7 +2990,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "components_classswitcher",
-      "community": 182,
+      "community": 41,
       "norm_label": "classswitcher.vue"
     },
     {
@@ -3800,7 +3810,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "components_yearsemesterselector",
-      "community": 182,
+      "community": 41,
       "norm_label": "yearsemesterselector.vue"
     },
     {
@@ -4037,7 +4047,7 @@
       "label": "props",
       "file_type": "code",
       "source_file": "src/components/dossier/AttendanceActivityReport.vue",
-      "source_location": "L169",
+      "source_location": "L170",
       "_origin": "ast",
       "id": "dossier_attendanceactivityreport_props",
       "community": 155,
@@ -4047,7 +4057,7 @@
       "label": "{ \n  students, \n  activeClass, \n  teacherName, \n  schoolName,\n  getTermRange, \n  nonSchoolDays \n}",
       "file_type": "code",
       "source_file": "src/components/dossier/AttendanceActivityReport.vue",
-      "source_location": "L175",
+      "source_location": "L176",
       "_origin": "ast",
       "id": "dossier_attendanceactivityreport_students_activeclass_teachername_schoolname_gettermrange_nonschooldays",
       "community": 155,
@@ -4057,7 +4067,7 @@
       "label": "events",
       "file_type": "code",
       "source_file": "src/components/dossier/AttendanceActivityReport.vue",
-      "source_location": "L184",
+      "source_location": "L185",
       "_origin": "ast",
       "id": "dossier_attendanceactivityreport_events",
       "community": 155,
@@ -4067,7 +4077,7 @@
       "label": "loading",
       "file_type": "code",
       "source_file": "src/components/dossier/AttendanceActivityReport.vue",
-      "source_location": "L185",
+      "source_location": "L186",
       "_origin": "ast",
       "id": "dossier_attendanceactivityreport_loading",
       "community": 155,
@@ -4077,7 +4087,7 @@
       "label": "student",
       "file_type": "code",
       "source_file": "src/components/dossier/AttendanceActivityReport.vue",
-      "source_location": "L187",
+      "source_location": "L188",
       "_origin": "ast",
       "id": "dossier_attendanceactivityreport_student",
       "community": 155,
@@ -4087,7 +4097,7 @@
       "label": "termRange",
       "file_type": "code",
       "source_file": "src/components/dossier/AttendanceActivityReport.vue",
-      "source_location": "L190",
+      "source_location": "L191",
       "_origin": "ast",
       "id": "dossier_attendanceactivityreport_termrange",
       "community": 155,
@@ -4097,7 +4107,7 @@
       "label": "calendar",
       "file_type": "code",
       "source_file": "src/components/dossier/AttendanceActivityReport.vue",
-      "source_location": "L207",
+      "source_location": "L208",
       "_origin": "ast",
       "id": "dossier_attendanceactivityreport_calendar",
       "community": 155,
@@ -4107,7 +4117,7 @@
       "label": "stats",
       "file_type": "code",
       "source_file": "src/components/dossier/AttendanceActivityReport.vue",
-      "source_location": "L326",
+      "source_location": "L332",
       "_origin": "ast",
       "id": "dossier_attendanceactivityreport_stats",
       "community": 155,
@@ -4470,7 +4480,7 @@
       "source_location": "L428",
       "_origin": "ast",
       "id": "dossier_sbarprogressreport_formatdateshort",
-      "community": 131,
+      "community": 78,
       "norm_label": "formatdateshort()"
     },
     {
@@ -4540,7 +4550,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dossier_student360printmodal",
-      "community": 78,
+      "community": 165,
       "norm_label": "student360printmodal.vue"
     },
     {
@@ -4550,7 +4560,7 @@
       "source_location": "L198",
       "_origin": "ast",
       "id": "dossier_student360printmodal_props",
-      "community": 78,
+      "community": 165,
       "norm_label": "props"
     },
     {
@@ -4560,7 +4570,7 @@
       "source_location": "L205",
       "_origin": "ast",
       "id": "dossier_student360printmodal_emit",
-      "community": 78,
+      "community": 165,
       "norm_label": "emit"
     },
     {
@@ -4570,7 +4580,7 @@
       "source_location": "L207",
       "_origin": "ast",
       "id": "dossier_student360printmodal_showprintpreview",
-      "community": 78,
+      "community": 165,
       "norm_label": "showprintpreview"
     },
     {
@@ -4580,7 +4590,7 @@
       "source_location": "L208",
       "_origin": "ast",
       "id": "dossier_student360printmodal_issystemprinting",
-      "community": 78,
+      "community": 165,
       "norm_label": "issystemprinting"
     },
     {
@@ -4590,7 +4600,7 @@
       "source_location": "L210",
       "_origin": "ast",
       "id": "dossier_student360printmodal_effectiveclass",
-      "community": 78,
+      "community": 165,
       "norm_label": "effectiveclass"
     },
     {
@@ -4600,7 +4610,7 @@
       "source_location": "L214",
       "_origin": "ast",
       "id": "dossier_student360printmodal_issbar",
-      "community": 78,
+      "community": 165,
       "norm_label": "issbar"
     },
     {
@@ -4610,7 +4620,7 @@
       "source_location": "L227",
       "_origin": "ast",
       "id": "dossier_student360printmodal_printconfig",
-      "community": 78,
+      "community": 165,
       "norm_label": "printconfig"
     },
     {
@@ -4620,7 +4630,7 @@
       "source_location": "L242",
       "_origin": "ast",
       "id": "dossier_student360printmodal_triggerprint",
-      "community": 78,
+      "community": 165,
       "norm_label": "triggerprint()"
     },
     {
@@ -5310,7 +5320,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "grades_gradesgridsbar",
-      "community": 10,
+      "community": 78,
       "norm_label": "gradesgridsbar.vue"
     },
     {
@@ -5320,7 +5330,7 @@
       "source_location": "L791",
       "_origin": "ast",
       "id": "grades_gradesgridsbar_for",
-      "community": 10,
+      "community": 78,
       "norm_label": "for()"
     },
     {
@@ -5700,7 +5710,7 @@
       "source_location": "L71",
       "_origin": "ast",
       "id": "reports_reportsexportmenu_downloadreportcardcsv",
-      "community": 131,
+      "community": 35,
       "norm_label": "downloadreportcardcsv()"
     },
     {
@@ -5980,7 +5990,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "reports_studentriskscatterplot",
-      "community": 41,
+      "community": 88,
       "norm_label": "studentriskscatterplot.vue"
     },
     {
@@ -6250,7 +6260,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "setup_assessmentframeworksettings",
-      "community": 162,
+      "community": 131,
       "norm_label": "assessmentframeworksettings.vue"
     },
     {
@@ -6260,7 +6270,7 @@
       "source_location": "L1204",
       "_origin": "ast",
       "id": "setup_assessmentframeworksettings_for",
-      "community": 162,
+      "community": 131,
       "norm_label": "for()"
     },
     {
@@ -6270,7 +6280,7 @@
       "source_location": "L1439",
       "_origin": "ast",
       "id": "setup_assessmentframeworksettings_if",
-      "community": 162,
+      "community": 131,
       "norm_label": "if()"
     },
     {
@@ -6500,7 +6510,7 @@
       "source_location": "L254",
       "_origin": "ast",
       "id": "setup_classmanagerpanel_onarchiveclass",
-      "community": 26,
+      "community": 17,
       "norm_label": "onarchiveclass()"
     },
     {
@@ -7570,7 +7580,7 @@
       "source_location": "L141",
       "_origin": "ast",
       "id": "setup_rosterimportflow_confirmbulkimport",
-      "community": 169,
+      "community": 178,
       "norm_label": "confirmbulkimport()"
     },
     {
@@ -7580,7 +7590,7 @@
       "source_location": "L154",
       "_origin": "ast",
       "id": "setup_rosterimportflow_executebulkimport",
-      "community": 169,
+      "community": 178,
       "norm_label": "executebulkimport()"
     },
     {
@@ -7667,7 +7677,7 @@
       "label": "calendarTeacherDisplay",
       "file_type": "code",
       "source_file": "src/components/setup/SemesterCalendar.vue",
-      "source_location": "L235",
+      "source_location": "L236",
       "_origin": "ast",
       "id": "setup_semestercalendar_calendarteacherdisplay",
       "community": 45,
@@ -7677,7 +7687,7 @@
       "label": "classTitles",
       "file_type": "code",
       "source_file": "src/components/setup/SemesterCalendar.vue",
-      "source_location": "L237",
+      "source_location": "L238",
       "_origin": "ast",
       "id": "setup_semestercalendar_classtitles",
       "community": 45,
@@ -7687,7 +7697,7 @@
       "label": "addClass()",
       "file_type": "code",
       "source_file": "src/components/setup/SemesterCalendar.vue",
-      "source_location": "L243",
+      "source_location": "L244",
       "_origin": "ast",
       "id": "setup_semestercalendar_addclass",
       "community": 45,
@@ -7697,7 +7707,7 @@
       "label": "removeClass()",
       "file_type": "code",
       "source_file": "src/components/setup/SemesterCalendar.vue",
-      "source_location": "L247",
+      "source_location": "L248",
       "_origin": "ast",
       "id": "setup_semestercalendar_removeclass",
       "community": 45,
@@ -7707,7 +7717,7 @@
       "label": "holidayCache",
       "file_type": "code",
       "source_file": "src/components/setup/SemesterCalendar.vue",
-      "source_location": "L254",
+      "source_location": "L255",
       "_origin": "ast",
       "id": "setup_semestercalendar_holidaycache",
       "community": 45,
@@ -7717,7 +7727,7 @@
       "label": "milestoneMap",
       "file_type": "code",
       "source_file": "src/components/setup/SemesterCalendar.vue",
-      "source_location": "L274",
+      "source_location": "L280",
       "_origin": "ast",
       "id": "setup_semestercalendar_milestonemap",
       "community": 45,
@@ -7727,7 +7737,7 @@
       "label": "weeks",
       "file_type": "code",
       "source_file": "src/components/setup/SemesterCalendar.vue",
-      "source_location": "L283",
+      "source_location": "L289",
       "_origin": "ast",
       "id": "setup_semestercalendar_weeks",
       "community": 45,
@@ -7737,7 +7747,7 @@
       "label": "splitIndex",
       "file_type": "code",
       "source_file": "src/components/setup/SemesterCalendar.vue",
-      "source_location": "L325",
+      "source_location": "L333",
       "_origin": "ast",
       "id": "setup_semestercalendar_splitindex",
       "community": 45,
@@ -7747,7 +7757,7 @@
       "label": "topHalf",
       "file_type": "code",
       "source_file": "src/components/setup/SemesterCalendar.vue",
-      "source_location": "L342",
+      "source_location": "L350",
       "_origin": "ast",
       "id": "setup_semestercalendar_tophalf",
       "community": 45,
@@ -7757,7 +7767,7 @@
       "label": "bottomHalf",
       "file_type": "code",
       "source_file": "src/components/setup/SemesterCalendar.vue",
-      "source_location": "L343",
+      "source_location": "L351",
       "_origin": "ast",
       "id": "setup_semestercalendar_bottomhalf",
       "community": 45,
@@ -7767,7 +7777,7 @@
       "label": "currentPreviewWeeks",
       "file_type": "code",
       "source_file": "src/components/setup/SemesterCalendar.vue",
-      "source_location": "L345",
+      "source_location": "L353",
       "_origin": "ast",
       "id": "setup_semestercalendar_currentpreviewweeks",
       "community": 45,
@@ -7777,7 +7787,7 @@
       "label": "isRowStartOfMonth()",
       "file_type": "code",
       "source_file": "src/components/setup/SemesterCalendar.vue",
-      "source_location": "L350",
+      "source_location": "L358",
       "_origin": "ast",
       "id": "setup_semestercalendar_isrowstartofmonth",
       "community": 45,
@@ -7787,7 +7797,7 @@
       "label": "getRowSpanForMonth()",
       "file_type": "code",
       "source_file": "src/components/setup/SemesterCalendar.vue",
-      "source_location": "L355",
+      "source_location": "L363",
       "_origin": "ast",
       "id": "setup_semestercalendar_getrowspanformonth",
       "community": 45,
@@ -7797,7 +7807,7 @@
       "label": "getMonthName()",
       "file_type": "code",
       "source_file": "src/components/setup/SemesterCalendar.vue",
-      "source_location": "L365",
+      "source_location": "L373",
       "_origin": "ast",
       "id": "setup_semestercalendar_getmonthname",
       "community": 45,
@@ -7807,7 +7817,7 @@
       "label": "printNow()",
       "file_type": "code",
       "source_file": "src/components/setup/SemesterCalendar.vue",
-      "source_location": "L371",
+      "source_location": "L379",
       "_origin": "ast",
       "id": "setup_semestercalendar_printnow",
       "community": 45,
@@ -7997,7 +8007,7 @@
       "label": "itemsFor()",
       "file_type": "code",
       "source_file": "src/composables/useActionAlerts.js",
-      "source_location": "L153",
+      "source_location": "L159",
       "_origin": "ast",
       "id": "composables_useactionalerts_itemsfor",
       "community": 33,
@@ -8007,7 +8017,7 @@
       "label": "useActionAlerts()",
       "file_type": "code",
       "source_file": "src/composables/useActionAlerts.js",
-      "source_location": "L192",
+      "source_location": "L201",
       "_origin": "ast",
       "id": "composables_useactionalerts_useactionalerts",
       "community": 20,
@@ -8230,7 +8240,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "composables_useclassdeletion",
-      "community": 24,
+      "community": 17,
       "norm_label": "useclassdeletion.js"
     },
     {
@@ -8240,7 +8250,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "composables_useclassdeletion_useclassdeletion",
-      "community": 24,
+      "community": 17,
       "norm_label": "useclassdeletion()"
     },
     {
@@ -8257,7 +8267,7 @@
       "label": "{ push: pushUndo, clear: clearUndo }",
       "file_type": "code",
       "source_file": "src/composables/useClassroom.js",
-      "source_location": "L58",
+      "source_location": "L59",
       "_origin": "ast",
       "id": "composables_useclassroom_push_pushundo_clear_clearundo",
       "community": 0,
@@ -8267,7 +8277,7 @@
       "label": "sortedRoster",
       "file_type": "code",
       "source_file": "src/composables/useClassroom.js",
-      "source_location": "L100",
+      "source_location": "L101",
       "_origin": "ast",
       "id": "composables_useclassroom_sortedroster",
       "community": 0,
@@ -8277,7 +8287,7 @@
       "label": "archivedRoster",
       "file_type": "code",
       "source_file": "src/composables/useClassroom.js",
-      "source_location": "L108",
+      "source_location": "L109",
       "_origin": "ast",
       "id": "composables_useclassroom_archivedroster",
       "community": 0,
@@ -8287,7 +8297,7 @@
       "label": "filteredClassList",
       "file_type": "code",
       "source_file": "src/composables/useClassroom.js",
-      "source_location": "L116",
+      "source_location": "L117",
       "_origin": "ast",
       "id": "composables_useclassroom_filteredclasslist",
       "community": 0,
@@ -8297,7 +8307,7 @@
       "label": "filteredArchivedClasses",
       "file_type": "code",
       "source_file": "src/composables/useClassroom.js",
-      "source_location": "L127",
+      "source_location": "L128",
       "_origin": "ast",
       "id": "composables_useclassroom_filteredarchivedclasses",
       "community": 0,
@@ -8307,7 +8317,7 @@
       "label": "modeAllClasses",
       "file_type": "code",
       "source_file": "src/composables/useClassroom.js",
-      "source_location": "L138",
+      "source_location": "L139",
       "_origin": "ast",
       "id": "composables_useclassroom_modeallclasses",
       "community": 0,
@@ -8317,7 +8327,7 @@
       "label": "modeAllArchivedClasses",
       "file_type": "code",
       "source_file": "src/composables/useClassroom.js",
-      "source_location": "L146",
+      "source_location": "L147",
       "_origin": "ast",
       "id": "composables_useclassroom_modeallarchivedclasses",
       "community": 0,
@@ -8327,7 +8337,7 @@
       "label": "thresholds",
       "file_type": "code",
       "source_file": "src/composables/useClassroom.js",
-      "source_location": "L158",
+      "source_location": "L159",
       "_origin": "ast",
       "id": "composables_useclassroom_thresholds",
       "community": 0,
@@ -8337,7 +8347,7 @@
       "label": "studentWeeklyStats",
       "file_type": "code",
       "source_file": "src/composables/useClassroom.js",
-      "source_location": "L181",
+      "source_location": "L182",
       "_origin": "ast",
       "id": "composables_useclassroom_studentweeklystats",
       "community": 0,
@@ -8347,17 +8357,17 @@
       "label": "computeWeeklyStats()",
       "file_type": "code",
       "source_file": "src/composables/useClassroom.js",
-      "source_location": "L183",
+      "source_location": "L184",
       "_origin": "ast",
       "id": "composables_useclassroom_computeweeklystats",
-      "community": 123,
+      "community": 26,
       "norm_label": "computeweeklystats()"
     },
     {
       "label": "termOptions",
       "file_type": "code",
       "source_file": "src/composables/useClassroom.js",
-      "source_location": "L224",
+      "source_location": "L225",
       "_origin": "ast",
       "id": "composables_useclassroom_termoptions",
       "community": 0,
@@ -8367,7 +8377,7 @@
       "label": "yearOptions",
       "file_type": "code",
       "source_file": "src/composables/useClassroom.js",
-      "source_location": "L262",
+      "source_location": "L263",
       "_origin": "ast",
       "id": "composables_useclassroom_yearoptions",
       "community": 0,
@@ -8377,7 +8387,7 @@
       "label": "periodOptionsList",
       "file_type": "code",
       "source_file": "src/composables/useClassroom.js",
-      "source_location": "L273",
+      "source_location": "L274",
       "_origin": "ast",
       "id": "composables_useclassroom_periodoptionslist",
       "community": 0,
@@ -8387,7 +8397,7 @@
       "label": "computeSuggestedClass()",
       "file_type": "code",
       "source_file": "src/composables/useClassroom.js",
-      "source_location": "L284",
+      "source_location": "L285",
       "_origin": "ast",
       "id": "composables_useclassroom_computesuggestedclass",
       "community": 26,
@@ -8397,7 +8407,7 @@
       "label": "isSeatValid()",
       "file_type": "code",
       "source_file": "src/composables/useClassroom.js",
-      "source_location": "L372",
+      "source_location": "L373",
       "_origin": "ast",
       "id": "composables_useclassroom_isseatvalid",
       "community": 0,
@@ -8407,7 +8417,7 @@
       "label": "unseatedStudents",
       "file_type": "code",
       "source_file": "src/composables/useClassroom.js",
-      "source_location": "L384",
+      "source_location": "L385",
       "_origin": "ast",
       "id": "composables_useclassroom_unseatedstudents",
       "community": 0,
@@ -8417,7 +8427,7 @@
       "label": "studentsOut",
       "file_type": "code",
       "source_file": "src/composables/useClassroom.js",
-      "source_location": "L389",
+      "source_location": "L390",
       "_origin": "ast",
       "id": "composables_useclassroom_studentsout",
       "community": 0,
@@ -8427,7 +8437,7 @@
       "label": "globalStudentsOut",
       "file_type": "code",
       "source_file": "src/composables/useClassroom.js",
-      "source_location": "L394",
+      "source_location": "L395",
       "_origin": "ast",
       "id": "composables_useclassroom_globalstudentsout",
       "community": 0,
@@ -8437,7 +8447,7 @@
       "label": "dismissedSuggestions",
       "file_type": "code",
       "source_file": "src/composables/useClassroom.js",
-      "source_location": "L435",
+      "source_location": "L436",
       "_origin": "ast",
       "id": "composables_useclassroom_dismissedsuggestions",
       "community": 0,
@@ -8447,7 +8457,7 @@
       "label": "loadDismissedSuggestions()",
       "file_type": "code",
       "source_file": "src/composables/useClassroom.js",
-      "source_location": "L437",
+      "source_location": "L438",
       "_origin": "ast",
       "id": "composables_useclassroom_loaddismissedsuggestions",
       "community": 26,
@@ -8457,7 +8467,7 @@
       "label": "saveDismissedSuggestions()",
       "file_type": "code",
       "source_file": "src/composables/useClassroom.js",
-      "source_location": "L448",
+      "source_location": "L449",
       "_origin": "ast",
       "id": "composables_useclassroom_savedismissedsuggestions",
       "community": 0,
@@ -8467,7 +8477,7 @@
       "label": "hasBeenDismissedToday()",
       "file_type": "code",
       "source_file": "src/composables/useClassroom.js",
-      "source_location": "L456",
+      "source_location": "L457",
       "_origin": "ast",
       "id": "composables_useclassroom_hasbeendismissedtoday",
       "community": 26,
@@ -8477,7 +8487,7 @@
       "label": "dismissSuggestion()",
       "file_type": "code",
       "source_file": "src/composables/useClassroom.js",
-      "source_location": "L465",
+      "source_location": "L466",
       "_origin": "ast",
       "id": "composables_useclassroom_dismisssuggestion",
       "community": 0,
@@ -8487,7 +8497,7 @@
       "label": "getTermRange()",
       "file_type": "code",
       "source_file": "src/composables/useClassroom.js",
-      "source_location": "L495",
+      "source_location": "L496",
       "_origin": "ast",
       "id": "composables_useclassroom_gettermrange",
       "community": 0,
@@ -8497,7 +8507,7 @@
       "label": "refreshAcademicTerms()",
       "file_type": "code",
       "source_file": "src/composables/useClassroom.js",
-      "source_location": "L525",
+      "source_location": "L526",
       "_origin": "ast",
       "id": "composables_useclassroom_refreshacademicterms",
       "community": 0,
@@ -8507,7 +8517,7 @@
       "label": "refreshNonSchoolDays()",
       "file_type": "code",
       "source_file": "src/composables/useClassroom.js",
-      "source_location": "L529",
+      "source_location": "L530",
       "_origin": "ast",
       "id": "composables_useclassroom_refreshnonschooldays",
       "community": 0,
@@ -8517,7 +8527,7 @@
       "label": "updateAcademicTerms()",
       "file_type": "code",
       "source_file": "src/composables/useClassroom.js",
-      "source_location": "L533",
+      "source_location": "L534",
       "_origin": "ast",
       "id": "composables_useclassroom_updateacademicterms",
       "community": 0,
@@ -8527,7 +8537,7 @@
       "label": "updateNonSchoolDays()",
       "file_type": "code",
       "source_file": "src/composables/useClassroom.js",
-      "source_location": "L538",
+      "source_location": "L539",
       "_origin": "ast",
       "id": "composables_useclassroom_updatenonschooldays",
       "community": 0,
@@ -8537,7 +8547,7 @@
       "label": "init()",
       "file_type": "code",
       "source_file": "src/composables/useClassroom.js",
-      "source_location": "L551",
+      "source_location": "L552",
       "_origin": "ast",
       "id": "composables_useclassroom_init",
       "community": 26,
@@ -8547,7 +8557,7 @@
       "label": "switchClass()",
       "file_type": "code",
       "source_file": "src/composables/useClassroom.js",
-      "source_location": "L720",
+      "source_location": "L743",
       "_origin": "ast",
       "id": "composables_useclassroom_switchclass",
       "community": 17,
@@ -8557,27 +8567,27 @@
       "label": "createClass()",
       "file_type": "code",
       "source_file": "src/composables/useClassroom.js",
-      "source_location": "L743",
+      "source_location": "L766",
       "_origin": "ast",
       "id": "composables_useclassroom_createclass",
-      "community": 26,
+      "community": 172,
       "norm_label": "createclass()"
     },
     {
       "label": "updateActiveClass()",
       "file_type": "code",
       "source_file": "src/composables/useClassroom.js",
-      "source_location": "L812",
+      "source_location": "L835",
       "_origin": "ast",
       "id": "composables_useclassroom_updateactiveclass",
-      "community": 26,
+      "community": 172,
       "norm_label": "updateactiveclass()"
     },
     {
       "label": "importRoster()",
       "file_type": "code",
       "source_file": "src/composables/useClassroom.js",
-      "source_location": "L897",
+      "source_location": "L920",
       "_origin": "ast",
       "id": "composables_useclassroom_importroster",
       "community": 177,
@@ -8587,17 +8597,17 @@
       "label": "bulkImportClasses()",
       "file_type": "code",
       "source_file": "src/composables/useClassroom.js",
-      "source_location": "L964",
+      "source_location": "L987",
       "_origin": "ast",
       "id": "composables_useclassroom_bulkimportclasses",
-      "community": 169,
+      "community": 178,
       "norm_label": "bulkimportclasses()"
     },
     {
       "label": "_sortAndSplitClasses()",
       "file_type": "code",
       "source_file": "src/composables/useClassroom.js",
-      "source_location": "L972",
+      "source_location": "L995",
       "_origin": "ast",
       "id": "composables_useclassroom_sortandsplitclasses",
       "community": 26,
@@ -8607,7 +8617,7 @@
       "label": "_reloadClasses()",
       "file_type": "code",
       "source_file": "src/composables/useClassroom.js",
-      "source_location": "L993",
+      "source_location": "L1016",
       "_origin": "ast",
       "id": "composables_useclassroom_reloadclasses",
       "community": 26,
@@ -8617,37 +8627,37 @@
       "label": "getAttendanceOnDate()",
       "file_type": "code",
       "source_file": "src/composables/useClassroom.js",
-      "source_location": "L1037",
+      "source_location": "L1060",
       "_origin": "ast",
       "id": "composables_useclassroom_getattendanceondate",
-      "community": 165,
+      "community": 26,
       "norm_label": "getattendanceondate()"
     },
     {
       "label": "getStudentEventHistory()",
       "file_type": "code",
       "source_file": "src/composables/useClassroom.js",
-      "source_location": "L1057",
+      "source_location": "L1080",
       "_origin": "ast",
       "id": "composables_useclassroom_getstudenteventhistory",
-      "community": 165,
+      "community": 26,
       "norm_label": "getstudenteventhistory()"
     },
     {
       "label": "logStandardEvent()",
       "file_type": "code",
       "source_file": "src/composables/useClassroom.js",
-      "source_location": "L1075",
+      "source_location": "L1098",
       "_origin": "ast",
       "id": "composables_useclassroom_logstandardevent",
-      "community": 165,
+      "community": 26,
       "norm_label": "logstandardevent()"
     },
     {
       "label": "logAssessmentEvent()",
       "file_type": "code",
       "source_file": "src/composables/useClassroom.js",
-      "source_location": "L1172",
+      "source_location": "L1195",
       "_origin": "ast",
       "id": "composables_useclassroom_logassessmentevent",
       "community": 24,
@@ -8657,7 +8667,7 @@
       "label": "logToggleEvent()",
       "file_type": "code",
       "source_file": "src/composables/useClassroom.js",
-      "source_location": "L1251",
+      "source_location": "L1274",
       "_origin": "ast",
       "id": "composables_useclassroom_logtoggleevent",
       "community": 123,
@@ -8667,7 +8677,7 @@
       "label": "editEvent()",
       "file_type": "code",
       "source_file": "src/composables/useClassroom.js",
-      "source_location": "L1354",
+      "source_location": "L1377",
       "_origin": "ast",
       "id": "composables_useclassroom_editevent",
       "community": 123,
@@ -8677,7 +8687,7 @@
       "label": "getEventById()",
       "file_type": "code",
       "source_file": "src/composables/useClassroom.js",
-      "source_location": "L1388",
+      "source_location": "L1411",
       "_origin": "ast",
       "id": "composables_useclassroom_geteventbyid",
       "community": 0,
@@ -8687,7 +8697,7 @@
       "label": "updateMultipleStudentSeats()",
       "file_type": "code",
       "source_file": "src/composables/useClassroom.js",
-      "source_location": "L1395",
+      "source_location": "L1418",
       "_origin": "ast",
       "id": "composables_useclassroom_updatemultiplestudentseats",
       "community": 24,
@@ -8697,17 +8707,17 @@
       "label": "clearAllClassRfids()",
       "file_type": "code",
       "source_file": "src/composables/useClassroom.js",
-      "source_location": "L1406",
+      "source_location": "L1429",
       "_origin": "ast",
       "id": "composables_useclassroom_clearallclassrfids",
-      "community": 26,
+      "community": 172,
       "norm_label": "clearallclassrfids()"
     },
     {
       "label": "getStudentClassDataCounts()",
       "file_type": "code",
       "source_file": "src/composables/useClassroom.js",
-      "source_location": "L1432",
+      "source_location": "L1455",
       "_origin": "ast",
       "id": "composables_useclassroom_getstudentclassdatacounts",
       "community": 0,
@@ -8717,7 +8727,7 @@
       "label": "getSavedLayoutPresets()",
       "file_type": "code",
       "source_file": "src/composables/useClassroom.js",
-      "source_location": "L1439",
+      "source_location": "L1462",
       "_origin": "ast",
       "id": "composables_useclassroom_getsavedlayoutpresets",
       "community": 0,
@@ -8727,7 +8737,7 @@
       "label": "saveLayoutPreset()",
       "file_type": "code",
       "source_file": "src/composables/useClassroom.js",
-      "source_location": "L1442",
+      "source_location": "L1465",
       "_origin": "ast",
       "id": "composables_useclassroom_savelayoutpreset",
       "community": 0,
@@ -8737,27 +8747,27 @@
       "label": "getEventsByStudent()",
       "file_type": "code",
       "source_file": "src/composables/useClassroom.js",
-      "source_location": "L1446",
+      "source_location": "L1469",
       "_origin": "ast",
       "id": "composables_useclassroom_geteventsbystudent",
-      "community": 165,
+      "community": 26,
       "norm_label": "geteventsbystudent()"
     },
     {
       "label": "getEventsByClass()",
       "file_type": "code",
       "source_file": "src/composables/useClassroom.js",
-      "source_location": "L1450",
+      "source_location": "L1473",
       "_origin": "ast",
       "id": "composables_useclassroom_geteventsbyclass",
-      "community": 131,
+      "community": 26,
       "norm_label": "geteventsbyclass()"
     },
     {
       "label": "isSyncActive()",
       "file_type": "code",
       "source_file": "src/composables/useClassroom.js",
-      "source_location": "L1454",
+      "source_location": "L1477",
       "_origin": "ast",
       "id": "composables_useclassroom_issyncactive",
       "community": 0,
@@ -8767,17 +8777,17 @@
       "label": "saveClass()",
       "file_type": "code",
       "source_file": "src/composables/useClassroom.js",
-      "source_location": "L1458",
+      "source_location": "L1481",
       "_origin": "ast",
       "id": "composables_useclassroom_saveclass",
-      "community": 26,
+      "community": 172,
       "norm_label": "saveclass()"
     },
     {
       "label": "getAllClasses()",
       "file_type": "code",
       "source_file": "src/composables/useClassroom.js",
-      "source_location": "L1467",
+      "source_location": "L1490",
       "_origin": "ast",
       "id": "composables_useclassroom_getallclasses",
       "community": 26,
@@ -8787,37 +8797,37 @@
       "label": "removeEvent()",
       "file_type": "code",
       "source_file": "src/composables/useClassroom.js",
-      "source_location": "L1474",
+      "source_location": "L1497",
       "_origin": "ast",
       "id": "composables_useclassroom_removeevent",
-      "community": 123,
+      "community": 26,
       "norm_label": "removeevent()"
     },
     {
       "label": "checkResize()",
       "file_type": "code",
       "source_file": "src/composables/useClassroom.js",
-      "source_location": "L1528",
+      "source_location": "L1551",
       "_origin": "ast",
       "id": "composables_useclassroom_checkresize",
-      "community": 26,
+      "community": 172,
       "norm_label": "checkresize()"
     },
     {
       "label": "confirmResize()",
       "file_type": "code",
       "source_file": "src/composables/useClassroom.js",
-      "source_location": "L1545",
+      "source_location": "L1568",
       "_origin": "ast",
       "id": "composables_useclassroom_confirmresize",
-      "community": 26,
+      "community": 172,
       "norm_label": "confirmresize()"
     },
     {
       "label": "reloadBehaviorCodes()",
       "file_type": "code",
       "source_file": "src/composables/useClassroom.js",
-      "source_location": "L1564",
+      "source_location": "L1587",
       "_origin": "ast",
       "id": "composables_useclassroom_reloadbehaviorcodes",
       "community": 0,
@@ -8827,7 +8837,7 @@
       "label": "updateTeacherName()",
       "file_type": "code",
       "source_file": "src/composables/useClassroom.js",
-      "source_location": "L1571",
+      "source_location": "L1594",
       "_origin": "ast",
       "id": "composables_useclassroom_updateteachername",
       "community": 0,
@@ -8837,7 +8847,7 @@
       "label": "updateTeacherTitle()",
       "file_type": "code",
       "source_file": "src/composables/useClassroom.js",
-      "source_location": "L1579",
+      "source_location": "L1602",
       "_origin": "ast",
       "id": "composables_useclassroom_updateteachertitle",
       "community": 0,
@@ -8847,7 +8857,7 @@
       "label": "updateSchoolName()",
       "file_type": "code",
       "source_file": "src/composables/useClassroom.js",
-      "source_location": "L1587",
+      "source_location": "L1610",
       "_origin": "ast",
       "id": "composables_useclassroom_updateschoolname",
       "community": 0,
@@ -8857,7 +8867,7 @@
       "label": "updateTeacherEmail()",
       "file_type": "code",
       "source_file": "src/composables/useClassroom.js",
-      "source_location": "L1595",
+      "source_location": "L1618",
       "_origin": "ast",
       "id": "composables_useclassroom_updateteacheremail",
       "community": 0,
@@ -8867,7 +8877,7 @@
       "label": "updateIncludeWorkingHoursStatement()",
       "file_type": "code",
       "source_file": "src/composables/useClassroom.js",
-      "source_location": "L1603",
+      "source_location": "L1626",
       "_origin": "ast",
       "id": "composables_useclassroom_updateincludeworkinghoursstatement",
       "community": 0,
@@ -8877,17 +8887,17 @@
       "label": "updatePeriodStartTimes()",
       "file_type": "code",
       "source_file": "src/composables/useClassroom.js",
-      "source_location": "L1611",
+      "source_location": "L1634",
       "_origin": "ast",
       "id": "composables_useclassroom_updateperiodstarttimes",
-      "community": 169,
+      "community": 178,
       "norm_label": "updateperiodstarttimes()"
     },
     {
       "label": "updateAttendanceConfig()",
       "file_type": "code",
       "source_file": "src/composables/useClassroom.js",
-      "source_location": "L1619",
+      "source_location": "L1642",
       "_origin": "ast",
       "id": "composables_useclassroom_updateattendanceconfig",
       "community": 26,
@@ -8897,7 +8907,7 @@
       "label": "updateShowScannerButton()",
       "file_type": "code",
       "source_file": "src/composables/useClassroom.js",
-      "source_location": "L1631",
+      "source_location": "L1654",
       "_origin": "ast",
       "id": "composables_useclassroom_updateshowscannerbutton",
       "community": 0,
@@ -8907,7 +8917,7 @@
       "label": "updateCloudConfig()",
       "file_type": "code",
       "source_file": "src/composables/useClassroom.js",
-      "source_location": "L1641",
+      "source_location": "L1664",
       "_origin": "ast",
       "id": "composables_useclassroom_updatecloudconfig",
       "community": 0,
@@ -8917,7 +8927,7 @@
       "label": "generateUniqueUserCode()",
       "file_type": "code",
       "source_file": "src/composables/useClassroom.js",
-      "source_location": "L1654",
+      "source_location": "L1677",
       "_origin": "ast",
       "id": "composables_useclassroom_generateuniqueusercode",
       "community": 0,
@@ -8927,17 +8937,17 @@
       "label": "archiveClass()",
       "file_type": "code",
       "source_file": "src/composables/useClassroom.js",
-      "source_location": "L1708",
+      "source_location": "L1731",
       "_origin": "ast",
       "id": "composables_useclassroom_archiveclass",
-      "community": 26,
+      "community": 17,
       "norm_label": "archiveclass()"
     },
     {
       "label": "restoreClass()",
       "file_type": "code",
       "source_file": "src/composables/useClassroom.js",
-      "source_location": "L1729",
+      "source_location": "L1752",
       "_origin": "ast",
       "id": "composables_useclassroom_restoreclass",
       "community": 17,
@@ -8947,7 +8957,7 @@
       "label": "deleteClass()",
       "file_type": "code",
       "source_file": "src/composables/useClassroom.js",
-      "source_location": "L1743",
+      "source_location": "L1766",
       "_origin": "ast",
       "id": "composables_useclassroom_deleteclass",
       "community": 0,
@@ -8957,7 +8967,7 @@
       "label": "_activateClass()",
       "file_type": "code",
       "source_file": "src/composables/useClassroom.js",
-      "source_location": "L1750",
+      "source_location": "L1773",
       "_origin": "ast",
       "id": "composables_useclassroom_activateclass",
       "community": 26,
@@ -8967,17 +8977,17 @@
       "label": "useClassroom()",
       "file_type": "code",
       "source_file": "src/composables/useClassroom.js",
-      "source_location": "L1916",
+      "source_location": "L1939",
       "_origin": "ast",
       "id": "composables_useclassroom_useclassroom",
-      "community": 182,
+      "community": 41,
       "norm_label": "useclassroom()"
     },
     {
       "label": "_scheduleMidnightReset()",
       "file_type": "code",
       "source_file": "src/composables/useClassroom.js",
-      "source_location": "L2058",
+      "source_location": "L2081",
       "_origin": "ast",
       "id": "composables_useclassroom_schedulemidnightreset",
       "community": 0,
@@ -9300,7 +9310,7 @@
       "source_location": "L53",
       "_origin": "ast",
       "id": "composables_useclassroomstate_teachingmode",
-      "community": 78,
+      "community": 0,
       "norm_label": "teachingmode"
     },
     {
@@ -9660,7 +9670,7 @@
       "source_location": "L203",
       "_origin": "ast",
       "id": "composables_useelementary_getstudenteffectivegrade",
-      "community": 78,
+      "community": 165,
       "norm_label": "getstudenteffectivegrade()"
     },
     {
@@ -9700,7 +9710,7 @@
       "source_location": "L424",
       "_origin": "ast",
       "id": "composables_useelementary_autopopulateallelementarysubjects",
-      "community": 26,
+      "community": 172,
       "norm_label": "autopopulateallelementarysubjects()"
     },
     {
@@ -9720,7 +9730,7 @@
       "source_location": "L468",
       "_origin": "ast",
       "id": "composables_useelementary_ensureieppresetsforclass",
-      "community": 26,
+      "community": 24,
       "norm_label": "ensureieppresetsforclass()"
     },
     {
@@ -9750,7 +9760,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "composables_usegradeediting_usegradeediting",
-      "community": 24,
+      "community": 10,
       "norm_label": "usegradeediting()"
     },
     {
@@ -9780,7 +9790,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "composables_usegradebook_getgradebooksettings",
-      "community": 109,
+      "community": 1,
       "norm_label": "getgradebooksettings()"
     },
     {
@@ -9790,7 +9800,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "composables_usegradebook_savegradebooksettings",
-      "community": 109,
+      "community": 1,
       "norm_label": "savegradebooksettings()"
     },
     {
@@ -9800,7 +9810,7 @@
       "source_location": "L61",
       "_origin": "ast",
       "id": "composables_usegradebook_assessments",
-      "community": 10,
+      "community": 78,
       "norm_label": "assessments"
     },
     {
@@ -9850,7 +9860,7 @@
       "source_location": "L66",
       "_origin": "ast",
       "id": "composables_usegradebook_globalmilestones",
-      "community": 162,
+      "community": 131,
       "norm_label": "globalmilestones"
     },
     {
@@ -9960,7 +9970,7 @@
       "source_location": "L140",
       "_origin": "ast",
       "id": "composables_usegradebook_isstudentinsubcohort",
-      "community": 78,
+      "community": 165,
       "norm_label": "isstudentinsubcohort()"
     },
     {
@@ -9980,7 +9990,7 @@
       "source_location": "L181",
       "_origin": "ast",
       "id": "composables_usegradebook_isassessmentapplicabletostudent",
-      "community": 78,
+      "community": 165,
       "norm_label": "isassessmentapplicabletostudent()"
     },
     {
@@ -10550,7 +10560,7 @@
       "source_location": "L1712",
       "_origin": "ast",
       "id": "composables_usegradebook_grademap",
-      "community": 10,
+      "community": 78,
       "norm_label": "grademap"
     },
     {
@@ -10740,7 +10750,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "composables_useprintoptions",
-      "community": 78,
+      "community": 165,
       "norm_label": "useprintoptions.js"
     },
     {
@@ -10750,7 +10760,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "composables_useprintoptions_useprintoptions",
-      "community": 78,
+      "community": 165,
       "norm_label": "useprintoptions()"
     },
     {
@@ -10760,7 +10770,7 @@
       "source_location": "L130",
       "_origin": "ast",
       "id": "composables_useprintoptions_executeprint",
-      "community": 78,
+      "community": 165,
       "norm_label": "executeprint()"
     },
     {
@@ -11090,7 +11100,7 @@
       "source_location": "L303",
       "_origin": "ast",
       "id": "composables_userosteroperations_updatestudentaccommodations",
-      "community": 26,
+      "community": 24,
       "norm_label": "updatestudentaccommodations()"
     },
     {
@@ -11170,7 +11180,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "composables_usesbarprintoptions",
-      "community": 28,
+      "community": 78,
       "norm_label": "usesbarprintoptions.js"
     },
     {
@@ -11190,17 +11200,17 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "composables_usestudentdossier",
-      "community": 182,
+      "community": 41,
       "norm_label": "usestudentdossier.js"
     },
     {
       "label": "useStudentDossier()",
       "file_type": "code",
       "source_file": "src/composables/useStudentDossier.js",
-      "source_location": "L28",
+      "source_location": "L29",
       "_origin": "ast",
       "id": "composables_usestudentdossier_usestudentdossier",
-      "community": 182,
+      "community": 41,
       "norm_label": "usestudentdossier()"
     },
     {
@@ -11850,7 +11860,7 @@
       "source_location": "L39",
       "_origin": "ast",
       "id": "curriculum_schema_properties_subjectcode",
-      "community": 164,
+      "community": 91,
       "norm_label": "subjectcode"
     },
     {
@@ -11860,7 +11870,7 @@
       "source_location": "L40",
       "_origin": "ast",
       "id": "curriculum_schema_subjectcode_type",
-      "community": 164,
+      "community": 91,
       "norm_label": "type"
     },
     {
@@ -11870,7 +11880,7 @@
       "source_location": "L41",
       "_origin": "ast",
       "id": "curriculum_schema_subjectcode_description",
-      "community": 164,
+      "community": 91,
       "norm_label": "description"
     },
     {
@@ -11880,7 +11890,7 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "curriculum_schema_properties_department",
-      "community": 91,
+      "community": 164,
       "norm_label": "department"
     },
     {
@@ -11890,7 +11900,7 @@
       "source_location": "L44",
       "_origin": "ast",
       "id": "curriculum_schema_department_type",
-      "community": 91,
+      "community": 164,
       "norm_label": "type"
     },
     {
@@ -11900,7 +11910,7 @@
       "source_location": "L45",
       "_origin": "ast",
       "id": "curriculum_schema_department_description",
-      "community": 91,
+      "community": 164,
       "norm_label": "description"
     },
     {
@@ -12420,7 +12430,7 @@
       "source_location": "L861",
       "_origin": "ast",
       "id": "db_classservice_getclassdatacounts",
-      "community": 24,
+      "community": 17,
       "norm_label": "getclassdatacounts()"
     },
     {
@@ -12460,7 +12470,7 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "db_eventservice_hasunsyncedchanges",
-      "community": 41,
+      "community": 88,
       "norm_label": "hasunsyncedchanges"
     },
     {
@@ -12760,7 +12770,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "gradebook_assessmentservice",
-      "community": 41,
+      "community": 183,
       "norm_label": "assessmentservice.js"
     },
     {
@@ -12770,7 +12780,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "gradebook_assessmentservice_createassessment",
-      "community": 41,
+      "community": 183,
       "norm_label": "createassessment()"
     },
     {
@@ -12790,7 +12800,7 @@
       "source_location": "L67",
       "_origin": "ast",
       "id": "gradebook_assessmentservice_updateassessment",
-      "community": 41,
+      "community": 183,
       "norm_label": "updateassessment()"
     },
     {
@@ -12800,7 +12810,7 @@
       "source_location": "L85",
       "_origin": "ast",
       "id": "gradebook_assessmentservice_deleteassessment",
-      "community": 41,
+      "community": 183,
       "norm_label": "deleteassessment()"
     },
     {
@@ -12810,7 +12820,7 @@
       "source_location": "L115",
       "_origin": "ast",
       "id": "gradebook_assessmentservice_getassessmentusage",
-      "community": 41,
+      "community": 183,
       "norm_label": "getassessmentusage()"
     },
     {
@@ -12820,7 +12830,7 @@
       "source_location": "L164",
       "_origin": "ast",
       "id": "gradebook_assessmentservice_getexpectationusagecounts",
-      "community": 41,
+      "community": 183,
       "norm_label": "getexpectationusagecounts()"
     },
     {
@@ -12830,7 +12840,7 @@
       "source_location": "L234",
       "_origin": "ast",
       "id": "gradebook_assessmentservice_cascaderenameexpectation",
-      "community": 41,
+      "community": 183,
       "norm_label": "cascaderenameexpectation()"
     },
     {
@@ -12840,7 +12850,7 @@
       "source_location": "L349",
       "_origin": "ast",
       "id": "gradebook_assessmentservice_detachexpectationfromassessmentsandgrades",
-      "community": 41,
+      "community": 183,
       "norm_label": "detachexpectationfromassessmentsandgrades()"
     },
     {
@@ -12850,7 +12860,7 @@
       "source_location": "L437",
       "_origin": "ast",
       "id": "gradebook_assessmentservice_ensuresbarcomponentassessments",
-      "community": 41,
+      "community": 183,
       "norm_label": "ensuresbarcomponentassessments()"
     },
     {
@@ -12900,7 +12910,7 @@
       "source_location": "L491",
       "_origin": "ast",
       "id": "gradebook_gradeanalytics_getgradebooktemplates",
-      "community": 88,
+      "community": 183,
       "norm_label": "getgradebooktemplates()"
     },
     {
@@ -12910,7 +12920,7 @@
       "source_location": "L500",
       "_origin": "ast",
       "id": "gradebook_gradeanalytics_savegradebooktemplate",
-      "community": 88,
+      "community": 183,
       "norm_label": "savegradebooktemplate()"
     },
     {
@@ -12920,7 +12930,7 @@
       "source_location": "L530",
       "_origin": "ast",
       "id": "gradebook_gradeanalytics_deletegradebooktemplate",
-      "community": 88,
+      "community": 183,
       "norm_label": "deletegradebooktemplate()"
     },
     {
@@ -12930,7 +12940,7 @@
       "source_location": "L547",
       "_origin": "ast",
       "id": "gradebook_gradeanalytics_auditgradebookdata",
-      "community": 88,
+      "community": 183,
       "norm_label": "auditgradebookdata()"
     },
     {
@@ -12940,7 +12950,7 @@
       "source_location": "L670",
       "_origin": "ast",
       "id": "gradebook_gradeanalytics_repairgradebookorphans",
-      "community": 88,
+      "community": 183,
       "norm_label": "repairgradebookorphans()"
     },
     {
@@ -12950,7 +12960,7 @@
       "source_location": "L684",
       "_origin": "ast",
       "id": "gradebook_gradeanalytics_repairmissingclassids",
-      "community": 88,
+      "community": 183,
       "norm_label": "repairmissingclassids()"
     },
     {
@@ -12960,7 +12970,7 @@
       "source_location": "L712",
       "_origin": "ast",
       "id": "gradebook_gradeanalytics_repairinvalidcategories",
-      "community": 88,
+      "community": 183,
       "norm_label": "repairinvalidcategories()"
     },
     {
@@ -12970,7 +12980,7 @@
       "source_location": "L748",
       "_origin": "ast",
       "id": "gradebook_gradeanalytics_deleteassessments",
-      "community": 88,
+      "community": 183,
       "norm_label": "deleteassessments()"
     },
     {
@@ -13030,7 +13040,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "gradebook_gradeservice",
-      "community": 183,
+      "community": 168,
       "norm_label": "gradeservice.js"
     },
     {
@@ -13040,7 +13050,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "gradebook_gradeservice_getgradeintransaction",
-      "community": 183,
+      "community": 168,
       "norm_label": "_getgradeintransaction()"
     },
     {
@@ -13050,7 +13060,7 @@
       "source_location": "L49",
       "_origin": "ast",
       "id": "gradebook_gradeservice_savesbargrade",
-      "community": 183,
+      "community": 168,
       "norm_label": "savesbargrade()"
     },
     {
@@ -13060,7 +13070,7 @@
       "source_location": "L97",
       "_origin": "ast",
       "id": "gradebook_gradeservice_getorcreategrade",
-      "community": 183,
+      "community": 168,
       "norm_label": "getorcreategrade()"
     },
     {
@@ -13070,7 +13080,7 @@
       "source_location": "L110",
       "_origin": "ast",
       "id": "gradebook_gradeservice_addattempt",
-      "community": 183,
+      "community": 168,
       "norm_label": "addattempt()"
     },
     {
@@ -13080,7 +13090,7 @@
       "source_location": "L150",
       "_origin": "ast",
       "id": "gradebook_gradeservice_deleteattempt",
-      "community": 183,
+      "community": 168,
       "norm_label": "deleteattempt()"
     },
     {
@@ -13090,7 +13100,7 @@
       "source_location": "L178",
       "_origin": "ast",
       "id": "gradebook_gradeservice_setprimaryattempt",
-      "community": 183,
+      "community": 168,
       "norm_label": "setprimaryattempt()"
     },
     {
@@ -13100,7 +13110,7 @@
       "source_location": "L209",
       "_origin": "ast",
       "id": "gradebook_gradeservice_updateattemptcomment",
-      "community": 183,
+      "community": 168,
       "norm_label": "updateattemptcomment()"
     },
     {
@@ -13110,7 +13120,7 @@
       "source_location": "L238",
       "_origin": "ast",
       "id": "gradebook_gradeservice_updategradeflags",
-      "community": 183,
+      "community": 168,
       "norm_label": "updategradeflags()"
     },
     {
@@ -13120,7 +13130,7 @@
       "source_location": "L263",
       "_origin": "ast",
       "id": "gradebook_gradeservice_deletegrade",
-      "community": 183,
+      "community": 168,
       "norm_label": "deletegrade()"
     },
     {
@@ -13130,7 +13140,7 @@
       "source_location": "L284",
       "_origin": "ast",
       "id": "gradebook_gradeservice_savefullgraderecord",
-      "community": 183,
+      "community": 168,
       "norm_label": "savefullgraderecord()"
     },
     {
@@ -13160,7 +13170,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "db_gradebookservice",
-      "community": 41,
+      "community": 88,
       "norm_label": "gradebookservice.js"
     },
     {
@@ -13490,7 +13500,7 @@
       "source_location": "L201",
       "_origin": "ast",
       "id": "db_settingsservice_savesettings",
-      "community": 21,
+      "community": 1,
       "norm_label": "savesettings()"
     },
     {
@@ -13560,7 +13570,7 @@
       "source_location": "L346",
       "_origin": "ast",
       "id": "db_settingsservice_savethresholds",
-      "community": 183,
+      "community": 21,
       "norm_label": "savethresholds()"
     },
     {
@@ -13570,7 +13580,7 @@
       "source_location": "L363",
       "_origin": "ast",
       "id": "db_settingsservice_getglobalmilestones",
-      "community": 21,
+      "community": 1,
       "norm_label": "getglobalmilestones()"
     },
     {
@@ -13580,7 +13590,7 @@
       "source_location": "L374",
       "_origin": "ast",
       "id": "db_settingsservice_saveglobalmilestones",
-      "community": 183,
+      "community": 21,
       "norm_label": "saveglobalmilestones()"
     },
     {
@@ -13650,7 +13660,7 @@
       "source_location": "L465",
       "_origin": "ast",
       "id": "db_settingsservice_saveteachertitle",
-      "community": 183,
+      "community": 21,
       "norm_label": "saveteachertitle()"
     },
     {
@@ -13670,7 +13680,7 @@
       "source_location": "L489",
       "_origin": "ast",
       "id": "db_settingsservice_saveschoolname",
-      "community": 183,
+      "community": 21,
       "norm_label": "saveschoolname()"
     },
     {
@@ -13690,7 +13700,7 @@
       "source_location": "L513",
       "_origin": "ast",
       "id": "db_settingsservice_saveteacheremail",
-      "community": 183,
+      "community": 21,
       "norm_label": "saveteacheremail()"
     },
     {
@@ -13710,7 +13720,7 @@
       "source_location": "L537",
       "_origin": "ast",
       "id": "db_settingsservice_saveincludeworkinghoursstatement",
-      "community": 183,
+      "community": 21,
       "norm_label": "saveincludeworkinghoursstatement()"
     },
     {
@@ -13770,7 +13780,7 @@
       "source_location": "L615",
       "_origin": "ast",
       "id": "db_settingsservice_saveacademicterms",
-      "community": 183,
+      "community": 21,
       "norm_label": "saveacademicterms()"
     },
     {
@@ -13790,7 +13800,7 @@
       "source_location": "L644",
       "_origin": "ast",
       "id": "db_settingsservice_saveperiodstarttimes",
-      "community": 183,
+      "community": 21,
       "norm_label": "saveperiodstarttimes()"
     },
     {
@@ -13800,7 +13810,7 @@
       "source_location": "L655",
       "_origin": "ast",
       "id": "db_settingsservice_getgradebuckets",
-      "community": 21,
+      "community": 1,
       "norm_label": "getgradebuckets()"
     },
     {
@@ -13810,7 +13820,7 @@
       "source_location": "L669",
       "_origin": "ast",
       "id": "db_settingsservice_savegradebuckets",
-      "community": 183,
+      "community": 21,
       "norm_label": "savegradebuckets()"
     },
     {
@@ -13830,7 +13840,7 @@
       "source_location": "L693",
       "_origin": "ast",
       "id": "db_settingsservice_savenonschooldays",
-      "community": 21,
+      "community": 183,
       "norm_label": "savenonschooldays()"
     },
     {
@@ -13840,7 +13850,7 @@
       "source_location": "L704",
       "_origin": "ast",
       "id": "db_settingsservice_auditsettingsintegrity",
-      "community": 183,
+      "community": 21,
       "norm_label": "auditsettingsintegrity()"
     },
     {
@@ -13850,7 +13860,7 @@
       "source_location": "L745",
       "_origin": "ast",
       "id": "db_settingsservice_getcustomcurriculumpresets",
-      "community": 21,
+      "community": 64,
       "norm_label": "getcustomcurriculumpresets()"
     },
     {
@@ -13860,7 +13870,7 @@
       "source_location": "L755",
       "_origin": "ast",
       "id": "db_settingsservice_savecustomcurriculumpreset",
-      "community": 21,
+      "community": 64,
       "norm_label": "savecustomcurriculumpreset()"
     },
     {
@@ -13880,7 +13890,7 @@
       "source_location": "L804",
       "_origin": "ast",
       "id": "db_settingsservice_getdatabasesummarycounts",
-      "community": 21,
+      "community": 183,
       "norm_label": "getdatabasesummarycounts()"
     },
     {
@@ -14140,7 +14150,7 @@
       "source_location": "L184",
       "_origin": "ast",
       "id": "src_test_admin_paperwork_tracking_isassessmentinsubcohorthelper",
-      "community": 28,
+      "community": 136,
       "norm_label": "isassessmentinsubcohorthelper()"
     },
     {
@@ -14150,7 +14160,7 @@
       "source_location": "L194",
       "_origin": "ast",
       "id": "src_test_admin_paperwork_tracking_isassessmentapplicabletostudenthelper",
-      "community": 28,
+      "community": 136,
       "norm_label": "isassessmentapplicabletostudenthelper()"
     },
     {
@@ -14430,7 +14440,7 @@
       "source_location": "L139",
       "_origin": "ast",
       "id": "src_test_attendance_history_jumptoprevschooldayfrom",
-      "community": 142,
+      "community": 112,
       "norm_label": "jumptoprevschooldayfrom()"
     },
     {
@@ -15940,7 +15950,7 @@
       "source_location": "L273",
       "_origin": "ast",
       "id": "src_test_elementary_audit_isexpectationapplicable",
-      "community": 78,
+      "community": 165,
       "norm_label": "isexpectationapplicable()"
     },
     {
@@ -16170,7 +16180,7 @@
       "source_location": "L209",
       "_origin": "ast",
       "id": "src_test_elementary_iep_unit_isolation_filtermodalexpectations",
-      "community": 113,
+      "community": 1,
       "norm_label": "filtermodalexpectations()"
     },
     {
@@ -19340,7 +19350,7 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "src_test_sbar_math_assert",
-      "community": 28,
+      "community": 109,
       "norm_label": "assert()"
     },
     {
@@ -19422,6 +19432,96 @@
       "id": "src_test_sbar_weighted_components_alicegrades",
       "community": 151,
       "norm_label": "alicegrades"
+    },
+    {
+      "label": "test_school_day_engine.js",
+      "file_type": "code",
+      "source_file": "src/test_school_day_engine.js",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "src_test_school_day_engine",
+      "community": 162,
+      "norm_label": "test_school_day_engine.js"
+    },
+    {
+      "label": "sampleCalendar",
+      "file_type": "code",
+      "source_file": "src/test_school_day_engine.js",
+      "source_location": "L61",
+      "_origin": "ast",
+      "id": "src_test_school_day_engine_samplecalendar",
+      "community": 162,
+      "norm_label": "samplecalendar"
+    },
+    {
+      "label": "map",
+      "file_type": "code",
+      "source_file": "src/test_school_day_engine.js",
+      "source_location": "L70",
+      "_origin": "ast",
+      "id": "src_test_school_day_engine_map",
+      "community": 162,
+      "norm_label": "map"
+    },
+    {
+      "label": "resultSem1",
+      "file_type": "code",
+      "source_file": "src/test_school_day_engine.js",
+      "source_location": "L87",
+      "_origin": "ast",
+      "id": "src_test_school_day_engine_resultsem1",
+      "community": 162,
+      "norm_label": "resultsem1"
+    },
+    {
+      "label": "resultCapped",
+      "file_type": "code",
+      "source_file": "src/test_school_day_engine.js",
+      "source_location": "L107",
+      "_origin": "ast",
+      "id": "src_test_school_day_engine_resultcapped",
+      "community": 162,
+      "norm_label": "resultcapped"
+    },
+    {
+      "label": "sampleEvents",
+      "file_type": "code",
+      "source_file": "src/test_school_day_engine.js",
+      "source_location": "L121",
+      "_origin": "ast",
+      "id": "src_test_school_day_engine_sampleevents",
+      "community": 162,
+      "norm_label": "sampleevents"
+    },
+    {
+      "label": "meetingDates",
+      "file_type": "code",
+      "source_file": "src/test_school_day_engine.js",
+      "source_location": "L128",
+      "_origin": "ast",
+      "id": "src_test_school_day_engine_meetingdates",
+      "community": 162,
+      "norm_label": "meetingdates"
+    },
+    {
+      "label": "simulatePrevSchoolDay()",
+      "file_type": "code",
+      "source_file": "src/test_school_day_engine.js",
+      "source_location": "L145",
+      "_origin": "ast",
+      "id": "src_test_school_day_engine_simulateprevschoolday",
+      "community": 162,
+      "norm_label": "simulateprevschoolday()"
+    },
+    {
+      "label": "prevDay",
+      "file_type": "code",
+      "source_file": "src/test_school_day_engine.js",
+      "source_location": "L164",
+      "_origin": "ast",
+      "id": "src_test_school_day_engine_prevday",
+      "community": 162,
+      "norm_label": "prevday"
     },
     {
       "label": "test_seating_layout_designer_operations.js",
@@ -19967,7 +20067,7 @@
       "label": "buildMissingSummary()",
       "file_type": "code",
       "source_file": "src/utils/actionAlerts.js",
-      "source_location": "L202",
+      "source_location": "L203",
       "_origin": "ast",
       "id": "utils_actionalerts_buildmissingsummary",
       "community": 33,
@@ -19977,7 +20077,7 @@
       "label": "buildActionItems()",
       "file_type": "code",
       "source_file": "src/utils/actionAlerts.js",
-      "source_location": "L248",
+      "source_location": "L249",
       "_origin": "ast",
       "id": "utils_actionalerts_buildactionitems",
       "community": 33,
@@ -19987,7 +20087,7 @@
       "label": "countEventsSince()",
       "file_type": "code",
       "source_file": "src/utils/actionAlerts.js",
-      "source_location": "L328",
+      "source_location": "L329",
       "_origin": "ast",
       "id": "utils_actionalerts_counteventssince",
       "community": 112,
@@ -19997,7 +20097,7 @@
       "label": "evaluateActionItems()",
       "file_type": "code",
       "source_file": "src/utils/actionAlerts.js",
-      "source_location": "L350",
+      "source_location": "L351",
       "_origin": "ast",
       "id": "utils_actionalerts_evaluateactionitems",
       "community": 33,
@@ -20007,7 +20107,7 @@
       "label": "suggestEmailContent()",
       "file_type": "code",
       "source_file": "src/utils/actionAlerts.js",
-      "source_location": "L385",
+      "source_location": "L386",
       "_origin": "ast",
       "id": "utils_actionalerts_suggestemailcontent",
       "community": 15,
@@ -20017,7 +20117,7 @@
       "label": "CONTENT_LABELS",
       "file_type": "code",
       "source_file": "src/utils/actionAlerts.js",
-      "source_location": "L397",
+      "source_location": "L398",
       "_origin": "ast",
       "id": "utils_actionalerts_content_labels",
       "community": 33,
@@ -20027,7 +20127,7 @@
       "label": "buildContactNote()",
       "file_type": "code",
       "source_file": "src/utils/actionAlerts.js",
-      "source_location": "L406",
+      "source_location": "L407",
       "_origin": "ast",
       "id": "utils_actionalerts_buildcontactnote",
       "community": 33,
@@ -20067,7 +20167,7 @@
       "label": "DAY_NAMES",
       "file_type": "code",
       "source_file": "src/utils/attendancePatterns.js",
-      "source_location": "L15",
+      "source_location": "L17",
       "_origin": "ast",
       "id": "utils_attendancepatterns_day_names",
       "community": 157,
@@ -20077,7 +20177,7 @@
       "label": "toMinutes()",
       "file_type": "code",
       "source_file": "src/utils/attendancePatterns.js",
-      "source_location": "L24",
+      "source_location": "L26",
       "_origin": "ast",
       "id": "utils_attendancepatterns_tominutes",
       "community": 157,
@@ -20087,7 +20187,7 @@
       "label": "normalizeDate()",
       "file_type": "code",
       "source_file": "src/utils/attendancePatterns.js",
-      "source_location": "L36",
+      "source_location": "L38",
       "_origin": "ast",
       "id": "utils_attendancepatterns_normalizedate",
       "community": 157,
@@ -20097,7 +20197,7 @@
       "label": "getDayOfWeek()",
       "file_type": "code",
       "source_file": "src/utils/attendancePatterns.js",
-      "source_location": "L57",
+      "source_location": "L59",
       "_origin": "ast",
       "id": "utils_attendancepatterns_getdayofweek",
       "community": 157,
@@ -20107,7 +20207,7 @@
       "label": "getActiveClassDates()",
       "file_type": "code",
       "source_file": "src/utils/attendancePatterns.js",
-      "source_location": "L74",
+      "source_location": "L78",
       "_origin": "ast",
       "id": "utils_attendancepatterns_getactiveclassdates",
       "community": 157,
@@ -20117,7 +20217,7 @@
       "label": "detectStudentAttendancePatterns()",
       "file_type": "code",
       "source_file": "src/utils/attendancePatterns.js",
-      "source_location": "L93",
+      "source_location": "L100",
       "_origin": "ast",
       "id": "utils_attendancepatterns_detectstudentattendancepatterns",
       "community": 157,
@@ -20127,7 +20227,7 @@
       "label": "detectClassAttendancePatterns()",
       "file_type": "code",
       "source_file": "src/utils/attendancePatterns.js",
-      "source_location": "L332",
+      "source_location": "L339",
       "_origin": "ast",
       "id": "utils_attendancepatterns_detectclassattendancepatterns",
       "community": 157,
@@ -20240,7 +20340,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "utils_dates_formatlocaldisplay",
-      "community": 131,
+      "community": 78,
       "norm_label": "formatlocaldisplay()"
     },
     {
@@ -20400,7 +20500,7 @@
       "source_location": "L93",
       "_origin": "ast",
       "id": "utils_elementarysubjects_createdefaultelementarysubjects",
-      "community": 78,
+      "community": 172,
       "norm_label": "createdefaultelementarysubjects()"
     },
     {
@@ -20630,7 +20730,7 @@
       "source_location": "L241",
       "_origin": "ast",
       "id": "utils_gradecalc_getbucketmode",
-      "community": 28,
+      "community": 88,
       "norm_label": "getbucketmode()"
     },
     {
@@ -21430,7 +21530,7 @@
       "source_location": "L313",
       "_origin": "ast",
       "id": "utils_rostercsvimport_fullname",
-      "community": 187,
+      "community": 178,
       "norm_label": "fullname()"
     },
     {
@@ -21440,7 +21540,7 @@
       "source_location": "L320",
       "_origin": "ast",
       "id": "utils_rostercsvimport_buildreconciliationitems",
-      "community": 169,
+      "community": 178,
       "norm_label": "buildreconciliationitems()"
     },
     {
@@ -21450,7 +21550,7 @@
       "source_location": "L358",
       "_origin": "ast",
       "id": "utils_rostercsvimport_buildbulkimportsummary",
-      "community": 187,
+      "community": 178,
       "norm_label": "buildbulkimportsummary()"
     },
     {
@@ -21460,7 +21560,7 @@
       "source_location": "L387",
       "_origin": "ast",
       "id": "utils_rostercsvimport_buildelementaryimportsummary",
-      "community": 187,
+      "community": 178,
       "norm_label": "buildelementaryimportsummary()"
     },
     {
@@ -21470,7 +21570,7 @@
       "source_location": "L412",
       "_origin": "ast",
       "id": "utils_rostercsvimport_summarize",
-      "community": 187,
+      "community": 178,
       "norm_label": "summarize()"
     },
     {
@@ -21522,6 +21622,86 @@
       "id": "utils_rostercsvimport_getpreviewsubcohorts",
       "community": 187,
       "norm_label": "getpreviewsubcohorts()"
+    },
+    {
+      "label": "schoolDayUtils.js",
+      "file_type": "code",
+      "source_file": "src/utils/schoolDayUtils.js",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "utils_schooldayutils",
+      "community": 162,
+      "norm_label": "schooldayutils.js"
+    },
+    {
+      "label": "NON_INSTRUCTIONAL_REGEXES",
+      "file_type": "code",
+      "source_file": "src/utils/schoolDayUtils.js",
+      "source_location": "L17",
+      "_origin": "ast",
+      "id": "utils_schooldayutils_non_instructional_regexes",
+      "community": 162,
+      "norm_label": "non_instructional_regexes"
+    },
+    {
+      "label": "autoClassifyCalendarLabel()",
+      "file_type": "code",
+      "source_file": "src/utils/schoolDayUtils.js",
+      "source_location": "L41",
+      "_origin": "ast",
+      "id": "utils_schooldayutils_autoclassifycalendarlabel",
+      "community": 162,
+      "norm_label": "autoclassifycalendarlabel()"
+    },
+    {
+      "label": "buildNonInstructionalDateMap()",
+      "file_type": "code",
+      "source_file": "src/utils/schoolDayUtils.js",
+      "source_location": "L69",
+      "_origin": "ast",
+      "id": "utils_schooldayutils_buildnoninstructionaldatemap",
+      "community": 162,
+      "norm_label": "buildnoninstructionaldatemap()"
+    },
+    {
+      "label": "isNonInstructionalDay()",
+      "file_type": "code",
+      "source_file": "src/utils/schoolDayUtils.js",
+      "source_location": "L116",
+      "_origin": "ast",
+      "id": "utils_schooldayutils_isnoninstructionalday",
+      "community": 162,
+      "norm_label": "isnoninstructionalday()"
+    },
+    {
+      "label": "getNonInstructionalDayInfo()",
+      "file_type": "code",
+      "source_file": "src/utils/schoolDayUtils.js",
+      "source_location": "L137",
+      "_origin": "ast",
+      "id": "utils_schooldayutils_getnoninstructionaldayinfo",
+      "community": 162,
+      "norm_label": "getnoninstructionaldayinfo()"
+    },
+    {
+      "label": "getSchoolDaysInRange()",
+      "file_type": "code",
+      "source_file": "src/utils/schoolDayUtils.js",
+      "source_location": "L169",
+      "_origin": "ast",
+      "id": "utils_schooldayutils_getschooldaysinrange",
+      "community": 162,
+      "norm_label": "getschooldaysinrange()"
+    },
+    {
+      "label": "getActiveClassMeetingDates()",
+      "file_type": "code",
+      "source_file": "src/utils/schoolDayUtils.js",
+      "source_location": "L221",
+      "_origin": "ast",
+      "id": "utils_schooldayutils_getactiveclassmeetingdates",
+      "community": 162,
+      "norm_label": "getactiveclassmeetingdates()"
     },
     {
       "label": "seatingPreference.js",
@@ -21680,7 +21860,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_timeutils",
-      "community": 131,
+      "community": 142,
       "norm_label": "timeutils.js"
     },
     {
@@ -21700,7 +21880,7 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "utils_timeutils_getdaterangeforperiod",
-      "community": 131,
+      "community": 142,
       "norm_label": "getdaterangeforperiod()"
     },
     {
@@ -21710,7 +21890,7 @@
       "source_location": "L77",
       "_origin": "ast",
       "id": "utils_timeutils_getdaterangeforclassperiod",
-      "community": 131,
+      "community": 142,
       "norm_label": "getdaterangeforclassperiod()"
     },
     {
@@ -21857,27 +22037,27 @@
       "label": "props",
       "file_type": "code",
       "source_file": "src/views/Reports.vue",
-      "source_location": "L275",
+      "source_location": "L276",
       "_origin": "ast",
       "id": "views_reports_props",
       "community": 38,
       "norm_label": "props"
     },
     {
-      "label": "{\n  activeClass,\n  behaviorCodes,\n  classList,\n  filteredClassList,\n  switchClass,\n  academicTerms,\n  teacherName,\n  thresholds\n}",
+      "label": "{\n  activeClass,\n  behaviorCodes,\n  classList,\n  filteredClassList,\n  switchClass,\n  academicTerms,\n  teacherName,\n  thresholds,\n  nonSchoolDays\n}",
       "file_type": "code",
       "source_file": "src/views/Reports.vue",
-      "source_location": "L281",
+      "source_location": "L282",
       "_origin": "ast",
-      "id": "views_reports_activeclass_behaviorcodes_classlist_filteredclasslist_switchclass_academicterms_teachername_thresholds",
+      "id": "views_reports_activeclass_behaviorcodes_classlist_filteredclasslist_switchclass_academicterms_teachername_thresholds_nonschooldays",
       "community": 38,
-      "norm_label": "{\n  activeclass,\n  behaviorcodes,\n  classlist,\n  filteredclasslist,\n  switchclass,\n  academicterms,\n  teachername,\n  thresholds\n}"
+      "norm_label": "{\n  activeclass,\n  behaviorcodes,\n  classlist,\n  filteredclasslist,\n  switchclass,\n  academicterms,\n  teachername,\n  thresholds,\n  nonschooldays\n}"
     },
     {
       "label": "dossier",
       "file_type": "code",
       "source_file": "src/views/Reports.vue",
-      "source_location": "L292",
+      "source_location": "L294",
       "_origin": "ast",
       "id": "views_reports_dossier",
       "community": 38,
@@ -21887,7 +22067,7 @@
       "label": "sidebarClassId",
       "file_type": "code",
       "source_file": "src/views/Reports.vue",
-      "source_location": "L294",
+      "source_location": "L296",
       "_origin": "ast",
       "id": "views_reports_sidebarclassid",
       "community": 38,
@@ -21897,7 +22077,7 @@
       "label": "reportData",
       "file_type": "code",
       "source_file": "src/views/Reports.vue",
-      "source_location": "L295",
+      "source_location": "L297",
       "_origin": "ast",
       "id": "views_reports_reportdata",
       "community": 38,
@@ -21907,7 +22087,7 @@
       "label": "allClassEvents",
       "file_type": "code",
       "source_file": "src/views/Reports.vue",
-      "source_location": "L296",
+      "source_location": "L298",
       "_origin": "ast",
       "id": "views_reports_allclassevents",
       "community": 38,
@@ -21917,17 +22097,27 @@
       "label": "assessmentsList",
       "file_type": "code",
       "source_file": "src/views/Reports.vue",
-      "source_location": "L297",
+      "source_location": "L299",
       "_origin": "ast",
       "id": "views_reports_assessmentslist",
       "community": 38,
       "norm_label": "assessmentslist"
     },
     {
+      "label": "currentDateRange",
+      "file_type": "code",
+      "source_file": "src/views/Reports.vue",
+      "source_location": "L300",
+      "_origin": "ast",
+      "id": "views_reports_currentdaterange",
+      "community": 38,
+      "norm_label": "currentdaterange"
+    },
+    {
       "label": "loading",
       "file_type": "code",
       "source_file": "src/views/Reports.vue",
-      "source_location": "L298",
+      "source_location": "L301",
       "_origin": "ast",
       "id": "views_reports_loading",
       "community": 38,
@@ -21937,7 +22127,7 @@
       "label": "isSidebarCollapsed",
       "file_type": "code",
       "source_file": "src/views/Reports.vue",
-      "source_location": "L346",
+      "source_location": "L349",
       "_origin": "ast",
       "id": "views_reports_issidebarcollapsed",
       "community": 38,
@@ -21947,7 +22137,7 @@
       "label": "isPrivacyMode",
       "file_type": "code",
       "source_file": "src/views/Reports.vue",
-      "source_location": "L347",
+      "source_location": "L350",
       "_origin": "ast",
       "id": "views_reports_isprivacymode",
       "community": 38,
@@ -21957,7 +22147,7 @@
       "label": "studentTrends",
       "file_type": "code",
       "source_file": "src/views/Reports.vue",
-      "source_location": "L349",
+      "source_location": "L352",
       "_origin": "ast",
       "id": "views_reports_studenttrends",
       "community": 38,
@@ -21967,7 +22157,7 @@
       "label": "rightMode",
       "file_type": "code",
       "source_file": "src/views/Reports.vue",
-      "source_location": "L384",
+      "source_location": "L387",
       "_origin": "ast",
       "id": "views_reports_rightmode",
       "community": 38,
@@ -21977,7 +22167,7 @@
       "label": "activeVisualTab",
       "file_type": "code",
       "source_file": "src/views/Reports.vue",
-      "source_location": "L385",
+      "source_location": "L388",
       "_origin": "ast",
       "id": "views_reports_activevisualtab",
       "community": 38,
@@ -21987,7 +22177,7 @@
       "label": "switchPillar()",
       "file_type": "code",
       "source_file": "src/views/Reports.vue",
-      "source_location": "L387",
+      "source_location": "L390",
       "_origin": "ast",
       "id": "views_reports_switchpillar",
       "community": 38,
@@ -21997,7 +22187,7 @@
       "label": "activeSubCohortFilter",
       "file_type": "code",
       "source_file": "src/views/Reports.vue",
-      "source_location": "L419",
+      "source_location": "L422",
       "_origin": "ast",
       "id": "views_reports_activesubcohortfilter",
       "community": 38,
@@ -22007,7 +22197,7 @@
       "label": "activeClassType",
       "file_type": "code",
       "source_file": "src/views/Reports.vue",
-      "source_location": "L421",
+      "source_location": "L424",
       "_origin": "ast",
       "id": "views_reports_activeclasstype",
       "community": 38,
@@ -22017,7 +22207,7 @@
       "label": "availableSubCohortFilters",
       "file_type": "code",
       "source_file": "src/views/Reports.vue",
-      "source_location": "L426",
+      "source_location": "L429",
       "_origin": "ast",
       "id": "views_reports_availablesubcohortfilters",
       "community": 38,
@@ -22027,7 +22217,7 @@
       "label": "filteredSidebarStudents",
       "file_type": "code",
       "source_file": "src/views/Reports.vue",
-      "source_location": "L448",
+      "source_location": "L451",
       "_origin": "ast",
       "id": "views_reports_filteredsidebarstudents",
       "community": 38,
@@ -22037,7 +22227,7 @@
       "label": "selectedPeriod",
       "file_type": "code",
       "source_file": "src/views/Reports.vue",
-      "source_location": "L461",
+      "source_location": "L464",
       "_origin": "ast",
       "id": "views_reports_selectedperiod",
       "community": 38,
@@ -22047,7 +22237,7 @@
       "label": "PERIOD_OPTIONS",
       "file_type": "code",
       "source_file": "src/views/Reports.vue",
-      "source_location": "L462",
+      "source_location": "L465",
       "_origin": "ast",
       "id": "views_reports_period_options",
       "community": 38,
@@ -22057,7 +22247,7 @@
       "label": "onSelectStudent()",
       "file_type": "code",
       "source_file": "src/views/Reports.vue",
-      "source_location": "L473",
+      "source_location": "L476",
       "_origin": "ast",
       "id": "views_reports_onselectstudent",
       "community": 38,
@@ -22067,7 +22257,7 @@
       "label": "onSurveyImported()",
       "file_type": "code",
       "source_file": "src/views/Reports.vue",
-      "source_location": "L478",
+      "source_location": "L481",
       "_origin": "ast",
       "id": "views_reports_onsurveyimported",
       "community": 1,
@@ -22077,7 +22267,7 @@
       "label": "showPrintModal",
       "file_type": "code",
       "source_file": "src/views/Reports.vue",
-      "source_location": "L488",
+      "source_location": "L491",
       "_origin": "ast",
       "id": "views_reports_showprintmodal",
       "community": 38,
@@ -22087,7 +22277,7 @@
       "label": "showPrintGridModal",
       "file_type": "code",
       "source_file": "src/views/Reports.vue",
-      "source_location": "L489",
+      "source_location": "L492",
       "_origin": "ast",
       "id": "views_reports_showprintgridmodal",
       "community": 38,
@@ -22097,7 +22287,7 @@
       "label": "showPrintExpectationsModal",
       "file_type": "code",
       "source_file": "src/views/Reports.vue",
-      "source_location": "L490",
+      "source_location": "L493",
       "_origin": "ast",
       "id": "views_reports_showprintexpectationsmodal",
       "community": 38,
@@ -22107,7 +22297,7 @@
       "label": "showPrintClassListModal",
       "file_type": "code",
       "source_file": "src/views/Reports.vue",
-      "source_location": "L491",
+      "source_location": "L494",
       "_origin": "ast",
       "id": "views_reports_showprintclasslistmodal",
       "community": 38,
@@ -22117,7 +22307,7 @@
       "label": "showPrintCalendarModal",
       "file_type": "code",
       "source_file": "src/views/Reports.vue",
-      "source_location": "L492",
+      "source_location": "L495",
       "_origin": "ast",
       "id": "views_reports_showprintcalendarmodal",
       "community": 38,
@@ -22127,7 +22317,7 @@
       "label": "showPrintSeatingModal",
       "file_type": "code",
       "source_file": "src/views/Reports.vue",
-      "source_location": "L493",
+      "source_location": "L496",
       "_origin": "ast",
       "id": "views_reports_showprintseatingmodal",
       "community": 38,
@@ -22137,7 +22327,7 @@
       "label": "showEmailBroadcastModal",
       "file_type": "code",
       "source_file": "src/views/Reports.vue",
-      "source_location": "L494",
+      "source_location": "L497",
       "_origin": "ast",
       "id": "views_reports_showemailbroadcastmodal",
       "community": 38,
@@ -22147,7 +22337,7 @@
       "label": "reportClass",
       "file_type": "code",
       "source_file": "src/views/Reports.vue",
-      "source_location": "L496",
+      "source_location": "L499",
       "_origin": "ast",
       "id": "views_reports_reportclass",
       "community": 38,
@@ -22157,7 +22347,7 @@
       "label": "effectiveReportClass",
       "file_type": "code",
       "source_file": "src/views/Reports.vue",
-      "source_location": "L504",
+      "source_location": "L507",
       "_origin": "ast",
       "id": "views_reports_effectivereportclass",
       "community": 38,
@@ -22167,7 +22357,7 @@
       "label": "availableGradeFilters",
       "file_type": "code",
       "source_file": "src/views/Reports.vue",
-      "source_location": "L509",
+      "source_location": "L512",
       "_origin": "ast",
       "id": "views_reports_availablegradefilters",
       "community": 38,
@@ -22177,7 +22367,7 @@
       "label": "reportStudents",
       "file_type": "code",
       "source_file": "src/views/Reports.vue",
-      "source_location": "L528",
+      "source_location": "L531",
       "_origin": "ast",
       "id": "views_reports_reportstudents",
       "community": 38,
@@ -22187,7 +22377,7 @@
       "label": "aggregates",
       "file_type": "code",
       "source_file": "src/views/Reports.vue",
-      "source_location": "L537",
+      "source_location": "L540",
       "_origin": "ast",
       "id": "views_reports_aggregates",
       "community": 38,
@@ -22197,7 +22387,7 @@
       "label": "classGrades",
       "file_type": "code",
       "source_file": "src/views/Reports.vue",
-      "source_location": "L567",
+      "source_location": "L570",
       "_origin": "ast",
       "id": "views_reports_classgrades",
       "community": 38,
@@ -22207,7 +22397,7 @@
       "label": "showCompletedNotes",
       "file_type": "code",
       "source_file": "src/views/Reports.vue",
-      "source_location": "L568",
+      "source_location": "L571",
       "_origin": "ast",
       "id": "views_reports_showcompletednotes",
       "community": 38,
@@ -22217,7 +22407,7 @@
       "label": "recentNotes",
       "file_type": "code",
       "source_file": "src/views/Reports.vue",
-      "source_location": "L570",
+      "source_location": "L573",
       "_origin": "ast",
       "id": "views_reports_recentnotes",
       "community": 38,
@@ -22227,7 +22417,7 @@
       "label": "hasAnyNotes",
       "file_type": "code",
       "source_file": "src/views/Reports.vue",
-      "source_location": "L590",
+      "source_location": "L593",
       "_origin": "ast",
       "id": "views_reports_hasanynotes",
       "community": 38,
@@ -22237,7 +22427,7 @@
       "label": "onToggleNoteComplete()",
       "file_type": "code",
       "source_file": "src/views/Reports.vue",
-      "source_location": "L594",
+      "source_location": "L597",
       "_origin": "ast",
       "id": "views_reports_ontogglenotecomplete",
       "community": 161,
@@ -22247,7 +22437,7 @@
       "label": "handleDownloadCsv()",
       "file_type": "code",
       "source_file": "src/views/Reports.vue",
-      "source_location": "L604",
+      "source_location": "L607",
       "_origin": "ast",
       "id": "views_reports_handledownloadcsv",
       "community": 81,
@@ -22257,7 +22447,7 @@
       "label": "handleDownloadComments()",
       "file_type": "code",
       "source_file": "src/views/Reports.vue",
-      "source_location": "L622",
+      "source_location": "L625",
       "_origin": "ast",
       "id": "views_reports_handledownloadcomments",
       "community": 38,
@@ -22267,7 +22457,7 @@
       "label": "runReport()",
       "file_type": "code",
       "source_file": "src/views/Reports.vue",
-      "source_location": "L626",
+      "source_location": "L629",
       "_origin": "ast",
       "id": "views_reports_runreport",
       "community": 161,
@@ -22277,7 +22467,7 @@
       "label": "formatTimestamp()",
       "file_type": "code",
       "source_file": "src/views/Reports.vue",
-      "source_location": "L793",
+      "source_location": "L797",
       "_origin": "ast",
       "id": "views_reports_formattimestamp",
       "community": 38,
@@ -22287,7 +22477,7 @@
       "label": "behaviorCodesMap",
       "file_type": "code",
       "source_file": "src/views/Reports.vue",
-      "source_location": "L801",
+      "source_location": "L805",
       "_origin": "ast",
       "id": "views_reports_behaviorcodesmap",
       "community": 38,
@@ -22297,7 +22487,7 @@
       "label": "washroomChartData",
       "file_type": "code",
       "source_file": "src/views/Reports.vue",
-      "source_location": "L805",
+      "source_location": "L809",
       "_origin": "ast",
       "id": "views_reports_washroomchartdata",
       "community": 38,
@@ -22307,7 +22497,7 @@
       "label": "attendanceRate",
       "file_type": "code",
       "source_file": "src/views/Reports.vue",
-      "source_location": "L818",
+      "source_location": "L822",
       "_origin": "ast",
       "id": "views_reports_attendancerate",
       "community": 38,
@@ -22317,7 +22507,7 @@
       "label": "chronicallyAbsentCount",
       "file_type": "code",
       "source_file": "src/views/Reports.vue",
-      "source_location": "L832",
+      "source_location": "L851",
       "_origin": "ast",
       "id": "views_reports_chronicallyabsentcount",
       "community": 38,
@@ -22327,7 +22517,7 @@
       "label": "tripsPerStudentAvg",
       "file_type": "code",
       "source_file": "src/views/Reports.vue",
-      "source_location": "L842",
+      "source_location": "L861",
       "_origin": "ast",
       "id": "views_reports_tripsperstudentavg",
       "community": 38,
@@ -22337,7 +22527,7 @@
       "label": "notesLoggedCount",
       "file_type": "code",
       "source_file": "src/views/Reports.vue",
-      "source_location": "L848",
+      "source_location": "L867",
       "_origin": "ast",
       "id": "views_reports_notesloggedcount",
       "community": 38,
@@ -22347,7 +22537,7 @@
       "label": "longTripsExpanded",
       "file_type": "code",
       "source_file": "src/views/Reports.vue",
-      "source_location": "L852",
+      "source_location": "L871",
       "_origin": "ast",
       "id": "views_reports_longtripsexpanded",
       "community": 38,
@@ -22357,7 +22547,7 @@
       "label": "longTripsVisible",
       "file_type": "code",
       "source_file": "src/views/Reports.vue",
-      "source_location": "L854",
+      "source_location": "L873",
       "_origin": "ast",
       "id": "views_reports_longtripsvisible",
       "community": 38,
@@ -27519,6 +27709,16 @@
       "target": "components_assessmentconversationmodal_unitexpectations"
     },
     {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/AttendanceHistoryDrawer.vue",
+      "source_location": "L551",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "components_attendancehistorydrawer",
+      "target": "components_attendancehistorydrawer_if"
+    },
+    {
       "relation": "imports_from",
       "context": "import",
       "confidence": "EXTRACTED",
@@ -29261,6 +29461,28 @@
       "confidence_score": 1.0,
       "source": "dossier_attendanceactivityreport",
       "target": "utils_dates_formatlocaldate"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/dossier/AttendanceActivityReport.vue",
+      "source_location": "L168",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "dossier_attendanceactivityreport",
+      "target": "utils_schooldayutils"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/dossier/AttendanceActivityReport.vue",
+      "source_location": "L168",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "dossier_attendanceactivityreport",
+      "target": "utils_schooldayutils_autoclassifycalendarlabel"
     },
     {
       "relation": "imports_from",
@@ -38614,6 +38836,28 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "src/composables/useClassroom.js",
+      "source_location": "L27",
+      "weight": 1.0,
+      "source": "composables_useclassroom",
+      "target": "utils_schooldayutils",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/composables/useClassroom.js",
+      "source_location": "L27",
+      "weight": 1.0,
+      "source": "composables_useclassroom",
+      "target": "utils_schooldayutils_autoclassifycalendarlabel",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/composables/useClassroom.js",
       "source_location": "L24",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -38817,6 +39061,17 @@
       "confidence_score": 1.0,
       "source": "composables_useclassroom_init",
       "target": "utils_dates_formatlocaldate"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/composables/useClassroom.js",
+      "source_location": "L575",
+      "weight": 1.0,
+      "source": "composables_useclassroom_init",
+      "target": "utils_schooldayutils_autoclassifycalendarlabel",
+      "confidence_score": 1.0
     },
     {
       "relation": "calls",
@@ -44989,6 +45244,28 @@
       "confidence_score": 1.0,
       "source": "composables_usestudentdossier",
       "target": "utils_dates_formatlocaldate"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/composables/useStudentDossier.js",
+      "source_location": "L27",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "composables_usestudentdossier",
+      "target": "utils_schooldayutils"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/composables/useStudentDossier.js",
+      "source_location": "L27",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "composables_usestudentdossier",
+      "target": "utils_schooldayutils_getschooldaysinrange"
     },
     {
       "relation": "imports",
@@ -59089,6 +59366,163 @@
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
+      "source_file": "src/test_school_day_engine.js",
+      "source_location": "L67",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "src_test_school_day_engine",
+      "target": "src_test_school_day_engine_map"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/test_school_day_engine.js",
+      "source_location": "L125",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "src_test_school_day_engine",
+      "target": "src_test_school_day_engine_meetingdates"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/test_school_day_engine.js",
+      "source_location": "L161",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "src_test_school_day_engine",
+      "target": "src_test_school_day_engine_prevday"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/test_school_day_engine.js",
+      "source_location": "L104",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "src_test_school_day_engine",
+      "target": "src_test_school_day_engine_resultcapped"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/test_school_day_engine.js",
+      "source_location": "L84",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "src_test_school_day_engine",
+      "target": "src_test_school_day_engine_resultsem1"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/test_school_day_engine.js",
+      "source_location": "L58",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "src_test_school_day_engine",
+      "target": "src_test_school_day_engine_samplecalendar"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/test_school_day_engine.js",
+      "source_location": "L118",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "src_test_school_day_engine",
+      "target": "src_test_school_day_engine_sampleevents"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/test_school_day_engine.js",
+      "source_location": "L142",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "src_test_school_day_engine",
+      "target": "src_test_school_day_engine_simulateprevschoolday"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/test_school_day_engine.js",
+      "source_location": "L8",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "src_test_school_day_engine",
+      "target": "utils_schooldayutils"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/test_school_day_engine.js",
+      "source_location": "L8",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "src_test_school_day_engine",
+      "target": "utils_schooldayutils_autoclassifycalendarlabel"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/test_school_day_engine.js",
+      "source_location": "L8",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "src_test_school_day_engine",
+      "target": "utils_schooldayutils_buildnoninstructionaldatemap"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/test_school_day_engine.js",
+      "source_location": "L8",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "src_test_school_day_engine",
+      "target": "utils_schooldayutils_getactiveclassmeetingdates"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/test_school_day_engine.js",
+      "source_location": "L8",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "src_test_school_day_engine",
+      "target": "utils_schooldayutils_getschooldaysinrange"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/test_school_day_engine.js",
+      "source_location": "L8",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "src_test_school_day_engine",
+      "target": "utils_schooldayutils_isnoninstructionalday"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/test_school_day_engine.js",
+      "source_location": "L147",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "src_test_school_day_engine_simulateprevschoolday",
+      "target": "utils_schooldayutils_isnoninstructionalday"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
       "source_file": "src/test_seating_layout_designer_operations.js",
       "source_location": "L3",
       "weight": 1.0,
@@ -59909,6 +60343,28 @@
       "relation": "imports_from",
       "context": "import",
       "confidence": "EXTRACTED",
+      "source_file": "src/utils/attendancePatterns.js",
+      "source_location": "L15",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "utils_attendancepatterns",
+      "target": "utils_schooldayutils"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/utils/attendancePatterns.js",
+      "source_location": "L15",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "utils_attendancepatterns",
+      "target": "utils_schooldayutils_getactiveclassmeetingdates"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
       "source_file": "src/views/Reports.vue",
       "source_location": "L263",
       "weight": 1.0,
@@ -59959,6 +60415,17 @@
       "confidence_score": 1.0,
       "source": "utils_attendancepatterns_detectclassattendancepatterns",
       "target": "utils_attendancepatterns_getactiveclassdates"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/utils/attendancePatterns.js",
+      "source_location": "L80",
+      "weight": 1.0,
+      "source": "utils_attendancepatterns_getactiveclassdates",
+      "target": "utils_schooldayutils_getactiveclassmeetingdates"
     },
     {
       "relation": "calls",
@@ -60159,6 +60626,17 @@
       "relation": "imports_from",
       "context": "import",
       "confidence": "EXTRACTED",
+      "source_file": "src/utils/schoolDayUtils.js",
+      "source_location": "L10",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "utils_schooldayutils",
+      "target": "utils_dates"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
       "source_file": "src/utils/timeUtils.js",
       "source_location": "L8",
       "weight": 1.0,
@@ -60236,6 +60714,61 @@
       "relation": "imports",
       "context": "import",
       "confidence": "EXTRACTED",
+      "source_file": "src/utils/schoolDayUtils.js",
+      "source_location": "L10",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "utils_schooldayutils",
+      "target": "utils_dates_parselocal"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/utils/schoolDayUtils.js",
+      "source_location": "L87",
+      "weight": 1.0,
+      "source": "utils_schooldayutils_buildnoninstructionaldatemap",
+      "target": "utils_dates_parselocal"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/utils/schoolDayUtils.js",
+      "source_location": "L138",
+      "weight": 1.0,
+      "source": "utils_schooldayutils_getnoninstructionaldayinfo",
+      "target": "utils_dates_parselocal"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/utils/schoolDayUtils.js",
+      "source_location": "L187",
+      "weight": 1.0,
+      "source": "utils_schooldayutils_getschooldaysinrange",
+      "target": "utils_dates_parselocal"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/utils/schoolDayUtils.js",
+      "source_location": "L117",
+      "weight": 1.0,
+      "source": "utils_schooldayutils_isnoninstructionalday",
+      "target": "utils_dates_parselocal"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
       "source_file": "src/utils/trendAggregation.js",
       "source_location": "L8",
       "weight": 1.0,
@@ -60307,6 +60840,61 @@
       "source_location": "L175",
       "weight": 1.0,
       "source": "utils_exportservice_exportgradebooktoexcel",
+      "target": "utils_dates_formatlocaldate"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/utils/schoolDayUtils.js",
+      "source_location": "L10",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "utils_schooldayutils",
+      "target": "utils_dates_formatlocaldate"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/utils/schoolDayUtils.js",
+      "source_location": "L90",
+      "weight": 1.0,
+      "source": "utils_schooldayutils_buildnoninstructionaldatemap",
+      "target": "utils_dates_formatlocaldate"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/utils/schoolDayUtils.js",
+      "source_location": "L146",
+      "weight": 1.0,
+      "source": "utils_schooldayutils_getnoninstructionaldayinfo",
+      "target": "utils_dates_formatlocaldate"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/utils/schoolDayUtils.js",
+      "source_location": "L173",
+      "weight": 1.0,
+      "source": "utils_schooldayutils_getschooldaysinrange",
+      "target": "utils_dates_formatlocaldate"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/utils/schoolDayUtils.js",
+      "source_location": "L125",
+      "weight": 1.0,
+      "source": "utils_schooldayutils_isnoninstructionalday",
       "target": "utils_dates_formatlocaldate"
     },
     {
@@ -62308,6 +62896,153 @@
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
+      "source_file": "src/utils/schoolDayUtils.js",
+      "source_location": "L41",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "utils_schooldayutils",
+      "target": "utils_schooldayutils_autoclassifycalendarlabel"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/utils/schoolDayUtils.js",
+      "source_location": "L69",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "utils_schooldayutils",
+      "target": "utils_schooldayutils_buildnoninstructionaldatemap"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/utils/schoolDayUtils.js",
+      "source_location": "L221",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "utils_schooldayutils",
+      "target": "utils_schooldayutils_getactiveclassmeetingdates"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/utils/schoolDayUtils.js",
+      "source_location": "L137",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "utils_schooldayutils",
+      "target": "utils_schooldayutils_getnoninstructionaldayinfo"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/utils/schoolDayUtils.js",
+      "source_location": "L169",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "utils_schooldayutils",
+      "target": "utils_schooldayutils_getschooldaysinrange"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/utils/schoolDayUtils.js",
+      "source_location": "L116",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "utils_schooldayutils",
+      "target": "utils_schooldayutils_isnoninstructionalday"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/utils/schoolDayUtils.js",
+      "source_location": "L17",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "utils_schooldayutils",
+      "target": "utils_schooldayutils_non_instructional_regexes"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/views/Reports.vue",
+      "source_location": "L262",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "views_reports",
+      "target": "utils_schooldayutils"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/utils/schoolDayUtils.js",
+      "source_location": "L79",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "utils_schooldayutils_buildnoninstructionaldatemap",
+      "target": "utils_schooldayutils_autoclassifycalendarlabel"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/utils/schoolDayUtils.js",
+      "source_location": "L147",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "utils_schooldayutils_getnoninstructionaldayinfo",
+      "target": "utils_schooldayutils_buildnoninstructionaldatemap"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/utils/schoolDayUtils.js",
+      "source_location": "L184",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "utils_schooldayutils_getschooldaysinrange",
+      "target": "utils_schooldayutils_buildnoninstructionaldatemap"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/utils/schoolDayUtils.js",
+      "source_location": "L126",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "utils_schooldayutils_isnoninstructionalday",
+      "target": "utils_schooldayutils_buildnoninstructionaldatemap"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/utils/schoolDayUtils.js",
+      "source_location": "L235",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "utils_schooldayutils_getactiveclassmeetingdates",
+      "target": "utils_schooldayutils_getschooldaysinrange"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/views/Reports.vue",
+      "source_location": "L262",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "views_reports",
+      "target": "utils_schooldayutils_getschooldaysinrange"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
       "source_file": "src/utils/seatingPreference.js",
       "source_location": "L35",
       "weight": 1.0,
@@ -62551,7 +63286,7 @@
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "views_reports",
-      "target": "views_reports_activeclass_behaviorcodes_classlist_filteredclasslist_switchclass_academicterms_teachername_thresholds"
+      "target": "views_reports_activeclass_behaviorcodes_classlist_filteredclasslist_switchclass_academicterms_teachername_thresholds_nonschooldays"
     },
     {
       "relation": "contains",
@@ -62682,6 +63417,16 @@
       "confidence_score": 1.0,
       "source": "views_reports",
       "target": "views_reports_classgrades"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/views/Reports.vue",
+      "source_location": "L300",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "views_reports",
+      "target": "views_reports_currentdaterange"
     },
     {
       "relation": "contains",
@@ -63547,5 +64292,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "b9e0e041a67c351d8e9fc7a1e7fca31d0b524396"
+  "built_at_commit": "a2e5c936114837cb472bfb3369483f170fd332ea"
 }

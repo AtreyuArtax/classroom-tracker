@@ -464,9 +464,10 @@ import {
   ChevronDown
 } from 'lucide-vue-next'
 import StudentAvatar from './photos/StudentAvatar.vue'
-import { getEventsByClass } from '../composables/useClassroom.js'
+import { getEventsByClass, useClassroom } from '../composables/useClassroom.js'
 import { toMinutes } from '../utils/timeUtils.js'
 import { formatLocalDate, formatLocalDisplay, parseLocal } from '../utils/dates.js'
+import { isNonInstructionalDay } from '../utils/schoolDayUtils.js'
 
 const props = defineProps({
   classRecord: {
@@ -479,6 +480,7 @@ const emit = defineEmits(['close'])
 
 // ─── state ────────────────────────────────────────────────────────────────────
 
+const { nonSchoolDays } = useClassroom()
 const todayStr = formatLocalDate(new Date())
 
 function getYesterdayDateStr() {
@@ -545,8 +547,13 @@ function shiftDate(deltaDays) {
 function jumpToPrevSchoolDay() {
   const d = selectedDate.value ? parseLocal(selectedDate.value) : new Date()
   d.setDate(d.getDate() - 1)
-  if (d.getDay() === 0) d.setDate(d.getDate() - 2)
-  else if (d.getDay() === 6) d.setDate(d.getDate() - 1)
+  for (let i = 0; i < 30; i++) {
+    if (isNonInstructionalDay(d, nonSchoolDays?.value || [])) {
+      d.setDate(d.getDate() - 1)
+    } else {
+      break
+    }
+  }
   selectedDate.value = formatLocalDate(d)
 }
 

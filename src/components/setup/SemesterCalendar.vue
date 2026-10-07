@@ -106,11 +106,11 @@
                     <td v-if="isRowStartOfMonth(weekIdx, currentPreviewWeeks)" :rowspan="getRowSpanForMonth(weekIdx, currentPreviewWeeks)" class="sheet-month-cell">
                       <div class="sheet-month-vlabel">{{ getMonthName(currentPreviewWeeks[weekIdx]) }}</div>
                     </td>
-                    <td v-for="(day, dIdx) in week" :key="dIdx" class="sheet-day-cell" :class="{ 'sheet-day--holiday': day.holiday, 'sheet-day--empty': !day.date, 'sheet-day--outside': day.isOutsideTerm }">
+                    <td v-for="(day, dIdx) in week" :key="dIdx" class="sheet-day-cell" :class="{ 'sheet-day--holiday': day.holiday && day.isNonInstructional, 'sheet-day--empty': !day.date, 'sheet-day--outside': day.isOutsideTerm }">
                       <div v-if="day.date" class="sheet-day-inner">
                         <span class="sheet-day-number">{{ day.dayNum }}</span>
                         <div class="sheet-events-stack">
-                          <div v-if="day.holiday" class="sheet-event-text sheet-event--holiday">{{ day.holiday }}</div>
+                          <div v-if="day.holiday" class="sheet-event-text" :class="day.isNonInstructional ? 'sheet-event--holiday' : 'sheet-event--milestone'">{{ day.holiday }}</div>
                           <div v-if="day.milestone" class="sheet-event-text sheet-event--milestone">{{ day.milestone }}</div>
                         </div>
                       </div>
@@ -154,11 +154,11 @@
                   <td v-if="isRowStartOfMonth(weekIdx, isTwoPage ? topHalf : weeks)" :rowspan="getRowSpanForMonth(weekIdx, isTwoPage ? topHalf : weeks)" class="sheet-month-cell">
                     <div class="sheet-month-vlabel">{{ getMonthName(isTwoPage ? topHalf[weekIdx] : weeks[weekIdx]) }}</div>
                   </td>
-                  <td v-for="(day, dIdx) in week" :key="dIdx" class="sheet-day-cell" :class="{ 'sheet-day--holiday': day.holiday, 'sheet-day--empty': !day.date, 'sheet-day--outside': day.isOutsideTerm }">
+                  <td v-for="(day, dIdx) in week" :key="dIdx" class="sheet-day-cell" :class="{ 'sheet-day--holiday': day.holiday && day.isNonInstructional, 'sheet-day--empty': !day.date, 'sheet-day--outside': day.isOutsideTerm }">
                     <div v-if="day.date" class="sheet-day-inner">
                       <span class="sheet-day-number">{{ day.dayNum }}</span>
                       <div class="sheet-events-stack">
-                        <div v-if="day.holiday" class="sheet-event-text sheet-event--holiday">{{ day.holiday }}</div>
+                        <div v-if="day.holiday" class="sheet-event-text" :class="day.isNonInstructional ? 'sheet-event--holiday' : 'sheet-event--milestone'">{{ day.holiday }}</div>
                         <div v-if="day.milestone" class="sheet-event-text sheet-event--milestone">{{ day.milestone }}</div>
                       </div>
                     </div>
@@ -188,11 +188,11 @@
                   <td v-if="isRowStartOfMonth(weekIdx, bottomHalf)" :rowspan="getRowSpanForMonth(weekIdx, bottomHalf)" class="sheet-month-cell">
                     <div class="sheet-month-vlabel">{{ getMonthName(bottomHalf[weekIdx]) }}</div>
                   </td>
-                  <td v-for="(day, dIdx) in week" :key="dIdx" class="sheet-day-cell" :class="{ 'sheet-day--holiday': day.holiday, 'sheet-day--empty': !day.date, 'sheet-day--outside': day.isOutsideTerm }">
+                  <td v-for="(day, dIdx) in week" :key="dIdx" class="sheet-day-cell" :class="{ 'sheet-day--holiday': day.holiday && day.isNonInstructional, 'sheet-day--empty': !day.date, 'sheet-day--outside': day.isOutsideTerm }">
                     <div v-if="day.date" class="sheet-day-inner">
                       <span class="sheet-day-number">{{ day.dayNum }}</span>
                       <div class="sheet-events-stack">
-                        <div v-if="day.holiday" class="sheet-event-text sheet-event--holiday">{{ day.holiday }}</div>
+                        <div v-if="day.holiday" class="sheet-event-text" :class="day.isNonInstructional ? 'sheet-event--holiday' : 'sheet-event--milestone'">{{ day.holiday }}</div>
                         <div v-if="day.milestone" class="sheet-event-text sheet-event--milestone">{{ day.milestone }}</div>
                       </div>
                     </div>
@@ -214,6 +214,7 @@ import { Printer, AlertCircle, Plus, Trash2, Activity } from 'lucide-vue-next'
 import { formatLocalDate } from '../../utils/dates.js'
 import { executePrint } from '../../composables/usePrintOptions.js'
 import { schoolName } from '../../composables/useClassroomState.js'
+import { autoClassifyCalendarLabel } from '../../utils/schoolDayUtils.js'
 
 const props = defineProps({
   term: { type: Object, required: true },
@@ -258,12 +259,17 @@ const holidayCache = computed(() => {
     const s = h.date
     const e = h.endDate || h.date
     const lbl = h.label
-    if (s === e) map[s] = lbl
+    const isNonInst = h.nonInstructional !== undefined
+      ? Boolean(h.nonInstructional)
+      : autoClassifyCalendarLabel(lbl)
+    const entry = { label: lbl, isNonInstructional: isNonInst }
+
+    if (s === e) map[s] = entry
     else {
       let cur = new Date(s + 'T12:00:00')
       let end = new Date(e + 'T12:00:00')
       while (cur <= end) {
-        map[formatLocalDate(cur)] = lbl
+        map[formatLocalDate(cur)] = entry
         cur.setDate(cur.getDate() + 1)
       }
     }
@@ -305,12 +311,14 @@ const weeks = computed(() => {
       continue
     }
     const ds = formatLocalDate(curr)
+    const hEntry = holidayCache.value[ds]
     currentWeek.push({
       date: new Date(curr),
       dayNum: curr.getDate(),
       month: curr.toLocaleString('default', { month: 'long' }),
       isOutsideTerm: curr < startDate || curr > endDate,
-      holiday: holidayCache.value[ds],
+      holiday: hEntry?.label,
+      isNonInstructional: hEntry?.isNonInstructional ?? false,
       milestone: milestoneMap.value[ds]
     })
     if (currentWeek.length === 5) {

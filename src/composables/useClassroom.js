@@ -24,6 +24,7 @@ import { useMessage } from './useMessage.js'
 import { getDB } from '../db/index.js'
 import { autoPopulateAllElementarySubjects } from './useElementary.js'
 import { formatLocalDate, isSameSchoolYear } from '../utils/dates.js'
+import { autoClassifyCalendarLabel } from '../utils/schoolDayUtils.js'
 import { mergeRosterRows, findConflictingHomeroom } from '../utils/rosterCsvImport.js'
 import {
   moveStudentFromClass,
@@ -560,7 +561,29 @@ async function init() {
     ])
 
     academicTerms.value = terms
-    nonSchoolDays.value = nsd
+
+    // Normalize and backfill nonInstructional flag on nonSchoolDays if missing, and prune July 2nd out-of-year milestone
+    let nsdUpdated = false
+    const rawNsd = Array.isArray(nsd) ? nsd : []
+    const normalizedNsd = rawNsd
+      .filter(d => !d.label?.includes('Reporting Schedule (Sem. 2 Final)'))
+      .map(d => {
+        if (d.nonInstructional === undefined) {
+          nsdUpdated = true
+          return {
+            ...d,
+            nonInstructional: autoClassifyCalendarLabel(d.label)
+          }
+        }
+        return d
+      })
+    if (rawNsd.length !== normalizedNsd.length) {
+      nsdUpdated = true
+    }
+    if (nsdUpdated) {
+      settingsService.saveNonSchoolDays(JSON.parse(JSON.stringify(normalizedNsd))).catch(e => console.error('Failed to backfill nonSchoolDays', e))
+    }
+    nonSchoolDays.value = normalizedNsd
 
     // Inject 'a' and 'l' if missing (migrating existing dbs smoothly)
     let codesUpdated = false
