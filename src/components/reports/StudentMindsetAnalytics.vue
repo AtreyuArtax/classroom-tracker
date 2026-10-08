@@ -175,55 +175,61 @@
           >
             <span class="mindset-dot-label">{{ s.initials }}</span>
             
-            <!-- Tooltip Popover -->
+            <!-- Tooltip Popover (Compact Dashboard Size & Zero Bleed) -->
             <div 
               class="mindset-tooltip"
               :class="{
-                'mindset-tooltip--left': s.xPercent > 65,
-                'mindset-tooltip--right': s.xPercent < 35,
-                'mindset-tooltip--bottom': s.yPercent > 55,
+                'mindset-tooltip--anchor-right': s.xPercent > 50,
+                'mindset-tooltip--anchor-left': s.xPercent <= 50,
+                'mindset-tooltip--anchor-top': s.yPercent > 50,
+                'mindset-tooltip--anchor-bottom': s.yPercent <= 50,
                 'mindset-tooltip--cluster': s.clusterMembers && s.clusterMembers.length > 1
               }"
             >
               <!-- Single Student Tooltip -->
               <template v-if="!s.clusterMembers || s.clusterMembers.length <= 1">
-                <div class="mindset-tooltip-name">{{ s.fullName }}</div>
-                <div class="mindset-tooltip-row">
-                  Target Goal: <strong>{{ s.targetGradeLabel || 'None' }}</strong>
+                <div class="mindset-tt-header">
+                  <span class="mindset-tt-name">{{ s.fullName }}</span>
+                  <span v-if="s.currentGrade !== null" class="mindset-tt-badge">
+                    {{ isSbar && s.sbarBadge ? `${s.sbarBadge.level} (${s.currentGrade}%)` : `${s.currentGrade}%` }}
+                  </span>
                 </div>
-                <div class="mindset-tooltip-row">
-                  Confidence: <strong>{{ s.confidence ? `${s.confidence}/5` : 'Not rated' }}</strong>
-                  <span v-if="s.confidenceLabel" class="mindset-tooltip-sub">({{ s.confidenceLabel }})</span>
-                </div>
-                <div v-if="s.seating" class="mindset-tooltip-row">
-                  Seating: <strong>{{ s.seating }}</strong>
-                </div>
-                <div v-if="s.currentGrade !== null" class="mindset-tooltip-row mindset-tooltip-row--grade">
-                  Current Mark: <strong>{{ isSbar && s.sbarBadge ? `${s.sbarBadge.level} (${s.currentGrade}%)` : `${s.currentGrade}%` }}</strong>
+                <div class="mindset-tt-meta">
+                  Goal: <strong>{{ s.targetGradeLabel || 'None' }}</strong> · Conf: <strong>{{ s.confidence ? `${s.confidence}/5` : 'N/A' }}</strong>
                   <span 
                     v-if="s.goalDelta !== null" 
                     class="mindset-delta-badge"
                     :class="s.goalDelta >= 0 ? 'mindset-delta-badge--pos' : 'mindset-delta-badge--neg'"
                   >
-                    {{ s.goalDelta >= 0 ? `+${s.goalDelta}%` : `${s.goalDelta}%` }} vs Goal
+                    {{ s.goalDelta >= 0 ? `+${s.goalDelta}%` : `${s.goalDelta}%` }}
                   </span>
                 </div>
-                <div class="mindset-tooltip-hint">Click to view Dossier →</div>
+                <div v-if="s.seating" class="mindset-tt-sub">
+                  Seating: {{ s.seating }}
+                </div>
               </template>
 
               <!-- Clustered Multi-Student Tooltip -->
               <template v-else>
-                <div class="mindset-tooltip-cluster-title">{{ s.clusterMembers.length }} Students in Cluster:</div>
-                <div 
-                  v-for="m in s.clusterMembers" 
-                  :key="m.studentId" 
-                  class="mindset-tooltip-cluster-item"
-                  @click.stop="$emit('select-student', m.studentId)"
-                >
-                  <div class="mindset-cluster-name">{{ m.fullName }}</div>
-                  <div class="mindset-cluster-meta">
-                    Goal: {{ m.targetGradeLabel }} · Conf: {{ m.confidence }}/5
-                    <span v-if="m.currentGrade !== null"> · Live: {{ isSbar && m.sbarBadge ? `${m.sbarBadge.level} (${m.currentGrade}%)` : `${m.currentGrade}%` }}</span>
+                <div class="mindset-tt-cluster-title">
+                  Cluster ({{ s.clusterMembers.length }} Students)
+                </div>
+                <div class="mindset-tt-cluster-items">
+                  <div 
+                    v-for="m in s.clusterMembers" 
+                    :key="m.studentId" 
+                    class="mindset-tt-cluster-row"
+                    @click.stop="$emit('select-student', m.studentId)"
+                  >
+                    <div class="mindset-cluster-row-top">
+                      <span class="mindset-cluster-name">{{ m.fullName }}</span>
+                      <span v-if="m.currentGrade !== null" class="mindset-cluster-grade">
+                        {{ isSbar && m.sbarBadge ? m.sbarBadge.level : `${m.currentGrade}%` }}
+                      </span>
+                    </div>
+                    <div class="mindset-cluster-row-sub">
+                      Goal: {{ m.targetGradeLabel }} · Conf: {{ m.confidence ? `${m.confidence}/5` : 'N/A' }}
+                    </div>
                   </div>
                 </div>
               </template>
@@ -1385,11 +1391,11 @@ const seatingHistogram = computed(() => {
   text-transform: uppercase;
 }
 
-.mindset-quad-label--green  { color: #34c759; }
-.mindset-quad-label--teal   { color: #30b0c7; }
-.mindset-quad-label--amber  { color: #ff9500; }
-.mindset-quad-label--purple { color: #af52de; }
-.mindset-quad-label--red    { color: #ff3b30; }
+.mindset-quad-label--green  { color: var(--color-success, #10b981); }
+.mindset-quad-label--teal   { color: var(--color-teal, #0d9488); }
+.mindset-quad-label--amber  { color: var(--color-warn, #f59e0b); }
+.mindset-quad-label--purple { color: var(--color-purple, #8b5cf6); }
+.mindset-quad-label--red    { color: var(--color-danger, #ef4444); }
 
 .mindset-quad-sub {
   font-size: 0.7rem;
@@ -1468,44 +1474,44 @@ const seatingHistogram = computed(() => {
 /* Student Dots */
 .mindset-dot {
   position: absolute;
-  width: 28px;
-  height: 28px;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   transform: translate(-50%, 50%);
   cursor: pointer;
-  z-index: 2;
-  transition: left 0.45s cubic-bezier(0.4, 0, 0.2, 1), bottom 0.45s cubic-bezier(0.4, 0, 0.2, 1), transform 0.15s ease, box-shadow 0.15s ease;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+  z-index: 10;
+  transition: left 0.45s cubic-bezier(0.4, 0, 0.2, 1), bottom 0.45s cubic-bezier(0.4, 0, 0.2, 1), transform 0.15s ease, box-shadow 0.15s ease, z-index 0.1s ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 }
 
 .mindset-dot:hover {
-  transform: translate(-50%, 50%) scale(1.22);
-  z-index: 10;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.22);
+  transform: translate(-50%, 50%) scale(1.35);
+  z-index: 99999 !important;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
 }
 
 .mindset-dot-label {
   font-size: 0.65rem;
   font-weight: 800;
-  color: #ffffff;
   pointer-events: none;
+  white-space: nowrap;
 }
 
-/* Dot Colors for Lens 2 (Day 1 Mindset Archetypes) */
-.mindset-dot--green  { background: #34c759; border: 2px solid #ffffff; }
-.mindset-dot--amber  { background: #ff9500; border: 2px solid #ffffff; }
-.mindset-dot--purple { background: #af52de; border: 2px solid #ffffff; }
-.mindset-dot--red    { background: #ff3b30; border: 2px solid #ffffff; }
+/* Dot Colors for Lens 2 (Day 1 Mindset Archetypes) - Harmonized with Risk & OOC */
+.mindset-dot--green  { background: var(--color-success-bg); border: 2px solid var(--color-success); color: var(--color-success-text); }
+.mindset-dot--amber  { background: var(--color-warn-bg);    border: 2px solid var(--color-warn);    color: var(--color-warn-text); }
+.mindset-dot--purple { background: var(--color-purple-bg);  border: 2px solid var(--color-purple);  color: var(--color-purple-text); }
+.mindset-dot--red    { background: var(--color-danger-bg);  border: 2px solid var(--color-danger);  color: var(--color-danger-text); }
 
-/* Dot Colors for Lens 1 (Confidence Overlays) */
-.mindset-dot--conf-5 { background: #34c759; border: 2px solid #ffffff; } /* 5: Green */
-.mindset-dot--conf-4 { background: #30b0c7; border: 2px solid #ffffff; } /* 4: Cyan */
-.mindset-dot--conf-3 { background: #ffd60a; border: 2px solid #ffffff; } /* 3: Yellow */
-.mindset-dot--conf-2 { background: #ff9500; border: 2px solid #ffffff; } /* 2: Orange */
-.mindset-dot--conf-1 { background: #ff3b30; border: 2px solid #ffffff; } /* 1: Red */
+/* Dot Colors for Lens 1 (Confidence Overlays) - Harmonized with Risk & OOC */
+.mindset-dot--conf-5 { background: var(--color-success-bg); border: 2px solid var(--color-success); color: var(--color-success-text); } /* 5: High (Green) */
+.mindset-dot--conf-4 { background: var(--color-teal-bg);    border: 2px solid var(--color-teal);    color: var(--color-teal-text); }    /* 4: Confident (Teal) */
+.mindset-dot--conf-3 { background: var(--color-warn-bg);    border: 2px solid var(--color-warn);    color: var(--color-warn-text); }    /* 3: Neutral (Yellow/Amber) */
+.mindset-dot--conf-2 { background: var(--color-orange-bg);  border: 2px solid var(--color-orange);  color: var(--color-orange-text); }  /* 2: Unsure (Orange) */
+.mindset-dot--conf-1 { background: var(--color-danger-bg);  border: 2px solid var(--color-danger);  color: var(--color-danger-text); }  /* 1: Anxious (Red) */
 
 /* Confidence Legend Bar */
 .mindset-conf-legend {
@@ -1537,123 +1543,176 @@ const seatingHistogram = computed(() => {
 }
 
 .mindset-conf-dot {
-  width: 8px;
-  height: 8px;
+  width: 9px;
+  height: 9px;
   border-radius: 50%;
   display: inline-block;
 }
 
-.mindset-conf-dot--5 { background: #34c759; }
-.mindset-conf-dot--4 { background: #30b0c7; }
-.mindset-conf-dot--3 { background: #ffd60a; }
-.mindset-conf-dot--2 { background: #ff9500; }
-.mindset-conf-dot--1 { background: #ff3b30; }
+.mindset-conf-dot--5 { background: var(--color-success-bg); border: 1.5px solid var(--color-success); }
+.mindset-conf-dot--4 { background: var(--color-teal-bg);    border: 1.5px solid var(--color-teal); }
+.mindset-conf-dot--3 { background: var(--color-warn-bg);    border: 1.5px solid var(--color-warn); }
+.mindset-conf-dot--2 { background: var(--color-orange-bg);  border: 1.5px solid var(--color-orange); }
+.mindset-conf-dot--1 { background: var(--color-danger-bg);  border: 1.5px solid var(--color-danger); }
 
-/* Tooltip Popover */
+/* Tooltip Popover (Compact Dashboard Size & Zero Bleed) */
 .mindset-tooltip {
   display: none;
   position: absolute;
-  bottom: calc(100% + 10px);
-  left: 50%;
-  transform: translateX(-50%);
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 10px 12px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.16);
-  z-index: 20;
-  min-width: 170px;
-  white-space: nowrap;
-  pointer-events: none;
+  background: var(--tooltip-bg, #0f172a);
+  color: var(--tooltip-text, #f8fafc);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 6px;
+  padding: 5px 8px;
+  font-size: 0.65rem;
+  line-height: 1.25;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+  z-index: 20000;
+  width: max-content;
+  max-width: 215px;
+  white-space: normal;
+  pointer-events: auto;
 }
 
 .mindset-dot:hover .mindset-tooltip {
-  display: block;
+  display: flex;
+  flex-direction: column;
+  gap: 2.5px;
 }
 
-.mindset-tooltip--left   { left: auto; right: 0; transform: none; }
-.mindset-tooltip--right  { left: 0; transform: none; }
-.mindset-tooltip--bottom { bottom: auto; top: calc(100% + 10px); }
+/* 4-Way Boundary Clamping */
+.mindset-tooltip--anchor-right  { right: 0; left: auto; transform: none; }
+.mindset-tooltip--anchor-left   { left: 0; right: auto; transform: none; }
+.mindset-tooltip--anchor-top    { top: calc(100% + 5px); bottom: auto; }
+.mindset-tooltip--anchor-bottom { bottom: calc(100% + 5px); top: auto; }
 
-.mindset-tooltip-name {
-  font-size: 0.85rem;
+/* Single Student Tooltip Header */
+.mindset-tt-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.mindset-tt-name {
+  font-size: 0.72rem;
   font-weight: 700;
-  color: var(--text);
-  margin-bottom: 4px;
-  padding-bottom: 4px;
-  border-bottom: 1px solid var(--border);
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.mindset-tooltip-row {
-  font-size: 0.775rem;
-  color: var(--text-secondary);
-  line-height: 1.35;
+.mindset-tt-badge {
+  font-size: 0.64rem;
+  font-weight: 800;
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.18);
+  padding: 1px 4px;
+  border-radius: 3px;
+  white-space: nowrap;
 }
 
-.mindset-tooltip-row strong {
-  color: var(--text);
+.mindset-tt-meta {
+  font-size: 0.62rem;
+  color: #cbd5e1;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 3px;
 }
 
-.mindset-tooltip-row--grade {
-  margin-top: 4px;
-  padding-top: 4px;
-  border-top: 1px dashed var(--border);
+.mindset-tt-meta strong {
+  color: #fff;
 }
 
-.mindset-tooltip-sub {
-  font-size: 0.7rem;
-  opacity: 0.8;
-  margin-left: 2px;
+.mindset-tt-sub {
+  font-size: 0.58rem;
+  color: #94a3b8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .mindset-delta-badge {
   display: inline-block;
-  font-size: 0.675rem;
+  font-size: 0.6rem;
   font-weight: 700;
-  padding: 1px 5px;
+  padding: 0.5px 3.5px;
+  border-radius: 3px;
+  margin-left: 2px;
+}
+
+.mindset-delta-badge--pos { background: rgba(52, 199, 89, 0.2); color: #4ade80; }
+.mindset-delta-badge--neg { background: rgba(255, 59, 48, 0.2); color: #f87171; }
+
+/* Cluster Popover Tooltip */
+.mindset-tooltip--cluster {
+  min-width: 175px;
+  max-width: 215px;
+  padding: 5px 6px;
+}
+
+.mindset-tt-cluster-title {
+  font-weight: 800;
+  font-size: 0.65rem;
+  color: #38bdf8;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  padding-bottom: 3px;
+  margin-bottom: 2px;
+}
+
+.mindset-tt-cluster-items {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  max-height: 140px;
+  overflow-y: auto;
+}
+
+.mindset-tt-cluster-row {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 3px 5px;
   border-radius: 4px;
-  margin-left: 4px;
-}
-
-.mindset-delta-badge--pos { background: rgba(52, 199, 89, 0.15); color: #34c759; }
-.mindset-delta-badge--neg { background: rgba(255, 59, 48, 0.15); color: #ff3b30; }
-
-.mindset-tooltip-hint {
-  font-size: 0.675rem;
-  color: var(--primary);
-  margin-top: 6px;
-  font-weight: 600;
-}
-
-/* Cluster Tooltip */
-.mindset-tooltip-cluster-title {
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: var(--text-secondary);
-  margin-bottom: 6px;
-  text-transform: uppercase;
-}
-
-.mindset-tooltip-cluster-item {
-  padding: 4px 0;
-  border-bottom: 1px solid var(--border);
-  pointer-events: auto;
+  background: rgba(255, 255, 255, 0.05);
   cursor: pointer;
+  transition: background 0.12s ease;
 }
 
-.mindset-tooltip-cluster-item:last-child {
-  border-bottom: none;
+.mindset-tt-cluster-row:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.mindset-cluster-row-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
 }
 
 .mindset-cluster-name {
-  font-size: 0.8rem;
+  font-size: 0.66rem;
   font-weight: 700;
-  color: var(--text);
+  color: #f8fafc;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.mindset-cluster-meta {
-  font-size: 0.725rem;
-  color: var(--text-secondary);
+.mindset-cluster-grade {
+  font-size: 0.62rem;
+  font-weight: 800;
+  color: #38bdf8;
+}
+
+.mindset-cluster-row-sub {
+  font-size: 0.58rem;
+  color: #94a3b8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Bottom Ribbon */
@@ -1712,9 +1771,9 @@ const seatingHistogram = computed(() => {
 }
 
 .mindset-ribbon-tile--green  .mindset-ribbon-count { color: var(--color-success, #10b981); }
-.mindset-ribbon-tile--teal   .mindset-ribbon-count { color: #0ea5e9; }
+.mindset-ribbon-tile--teal   .mindset-ribbon-count { color: var(--color-teal, #0d9488); }
 .mindset-ribbon-tile--amber  .mindset-ribbon-count { color: var(--color-warn, #f59e0b); }
-.mindset-ribbon-tile--purple .mindset-ribbon-count { color: #8b5cf6; }
+.mindset-ribbon-tile--purple .mindset-ribbon-count { color: var(--color-purple, #8b5cf6); }
 .mindset-ribbon-tile--red    .mindset-ribbon-count { color: var(--color-danger, #ef4444); }
 .mindset-ribbon-tile--unsubmitted .mindset-ribbon-count { color: #f97316; }
 
@@ -1744,11 +1803,11 @@ const seatingHistogram = computed(() => {
   min-width: 0;
 }
 
-.mindset-quad-card--green  { border-top: 3px solid #34c759; }
-.mindset-quad-card--teal   { border-top: 3px solid #30b0c7; }
-.mindset-quad-card--amber  { border-top: 3px solid #ff9500; }
-.mindset-quad-card--purple { border-top: 3px solid #af52de; }
-.mindset-quad-card--red    { border-top: 3px solid #ff3b30; }
+.mindset-quad-card--green  { border-top: 3px solid var(--color-success, #10b981); }
+.mindset-quad-card--teal   { border-top: 3px solid var(--color-teal, #0d9488); }
+.mindset-quad-card--amber  { border-top: 3px solid var(--color-warn, #f59e0b); }
+.mindset-quad-card--purple { border-top: 3px solid var(--color-purple, #8b5cf6); }
+.mindset-quad-card--red    { border-top: 3px solid var(--color-danger, #ef4444); }
 
 .mindset-quad-card__header {
   display: flex;
@@ -1833,11 +1892,11 @@ const seatingHistogram = computed(() => {
 }
 
 .mindset-tag--goal { background: rgba(99, 102, 241, 0.12); color: #6366f1; }
-.mindset-tag--conf-1 { background: rgba(255, 59, 48, 0.12); color: #ff3b30; }
-.mindset-tag--conf-2 { background: rgba(255, 149, 0, 0.15); color: #ff9500; }
-.mindset-tag--conf-3 { background: rgba(255, 214, 10, 0.15); color: #b28a00; }
-.mindset-tag--conf-4 { background: rgba(48, 176, 199, 0.15); color: #30b0c7; }
-.mindset-tag--conf-5 { background: rgba(52, 199, 89, 0.15); color: #34c759; }
+.mindset-tag--conf-1 { background: var(--color-danger-bg);  color: var(--color-danger-text); }
+.mindset-tag--conf-2 { background: var(--color-orange-bg);  color: var(--color-orange-text); }
+.mindset-tag--conf-3 { background: var(--color-warn-bg);    color: var(--color-warn-text); }
+.mindset-tag--conf-4 { background: var(--color-teal-bg);    color: var(--color-teal-text); }
+.mindset-tag--conf-5 { background: var(--color-success-bg); color: var(--color-success-text); }
 
 .mindset-live-grade {
   font-size: 0.8rem;
@@ -1903,11 +1962,11 @@ const seatingHistogram = computed(() => {
   min-width: 0;
 }
 
-.mindset-bar-fill--lvl-1 { background: #ff3b30 !important; }
-.mindset-bar-fill--lvl-2 { background: #ff9500 !important; }
-.mindset-bar-fill--lvl-3 { background: #ffd60a !important; }
-.mindset-bar-fill--lvl-4 { background: #30b0c7 !important; }
-.mindset-bar-fill--lvl-5 { background: #34c759 !important; }
+.mindset-bar-fill--lvl-1 { background: var(--color-danger, #ef4444) !important; }
+.mindset-bar-fill--lvl-2 { background: var(--color-orange, #ea580c) !important; }
+.mindset-bar-fill--lvl-3 { background: var(--color-warn, #f59e0b) !important; }
+.mindset-bar-fill--lvl-4 { background: var(--color-teal, #0d9488) !important; }
+.mindset-bar-fill--lvl-5 { background: var(--color-success, #10b981) !important; }
 
 .mindset-bar-label {
   color: var(--text);

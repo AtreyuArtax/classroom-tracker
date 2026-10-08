@@ -93,6 +93,18 @@
   --color-info:             #3b82f6; /* Blue — informational accent */
   --color-info-text:        #1d4ed8; /* Dark blue for text */
 
+  --color-teal:             #0d9488; /* Teal — confident / high achiever */
+  --color-teal-text:        #0f766e; /* Dark teal for text (5.5:1 contrast) */
+  --color-teal-bg:          rgba(13, 148, 136, 0.15);
+
+  --color-purple:           #9333ea; /* Purple — untapped / coasters */
+  --color-purple-text:      #7e22ce; /* Dark purple for text (7:1 contrast) */
+  --color-purple-bg:        rgba(147, 51, 234, 0.15);
+
+  --color-orange:           #ea580c; /* Orange — unsure / mid-low */
+  --color-orange-text:      #c2410c; /* Dark orange for text (5.6:1 contrast) */
+  --color-orange-bg:        rgba(234, 88, 12, 0.15);
+
   /* ── Tooltip palette ──────────────────────────────────────────────────────
    * Dark floating tooltips that appear on both light and dark backgrounds.
    * In dark mode these invert to a light surface automatically.
@@ -166,6 +178,18 @@
 
   --color-info:             #0a84ff;
   --color-info-text:        #60a5fa;
+
+  --color-teal:             #2dd4bf;
+  --color-teal-text:        #5eead4;
+  --color-teal-bg:          rgba(45, 212, 191, 0.18);
+
+  --color-purple:           #a855f7;
+  --color-purple-text:      #d8b4fe;
+  --color-purple-bg:        rgba(168, 85, 247, 0.18);
+
+  --color-orange:           #fb923c;
+  --color-orange-text:      #fdba74;
+  --color-orange-bg:        rgba(249, 115, 22, 0.18);
 
   --tooltip-bg:             #2c2c2e;
   --tooltip-text:           #f8fafc;

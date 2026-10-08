@@ -302,50 +302,50 @@
           <div 
             class="ooc-tooltip"
             :class="{
-              'ooc-tooltip--left': pt.xPercent > 65,
-              'ooc-tooltip--right': pt.xPercent < 35,
-              'ooc-tooltip--bottom': pt.yPercent > 55,
+              'ooc-tooltip--anchor-right': pt.xPercent > 50,
+              'ooc-tooltip--anchor-left': pt.xPercent <= 50,
+              'ooc-tooltip--anchor-top': pt.yPercent > 50,
+              'ooc-tooltip--anchor-bottom': pt.yPercent <= 50,
               'ooc-tooltip--cluster': pt.clusterMembers && pt.clusterMembers.length > 1
             }"
           >
-            <!-- Single Student Tooltip -->
+            <!-- Single Student Tooltip (Compact Dashboard Size) -->
             <template v-if="!pt.clusterMembers || pt.clusterMembers.length <= 1">
-              <div class="ooc-tooltip-name">{{ pt.lastName }}, {{ pt.firstName }}</div>
-              <div class="ooc-tooltip-badge" :class="'ooc-tooltip-badge--' + pt.quadrant">
-                {{ pt.quadrantLabel }}
+              <div class="ooc-tt-header">
+                <span class="ooc-tt-name">{{ pt.lastName }}, {{ pt.firstName }}</span>
+                <span class="ooc-tt-badge" :class="'ooc-tt-badge--' + pt.quadrant">
+                  {{ pt.quadrantLabel }}
+                </span>
               </div>
-              <div class="ooc-tooltip-row">
-                Total Departures: <strong>{{ pt.totalTrips }} trips</strong>
+              <div class="ooc-tt-meta">
+                <strong>{{ pt.totalTrips }} trips</strong> · avg {{ Math.round(pt.avgDuration) }}m ({{ Math.round(pt.totalDuration) }}m out)
               </div>
-              <div class="ooc-tooltip-row">
-                Avg Duration: <strong>{{ Math.round(pt.avgDuration) }} min / trip</strong>
+              <div v-if="pt.extendedTrips > 0" class="ooc-tt-alert">
+                <AlertTriangle :size="9" class="ooc-tt-alert-icon" />
+                <span>{{ pt.extendedTrips }} extended (&gt;{{ extendedLimit }}m)</span>
               </div>
-              <div class="ooc-tooltip-row">
-                Total Time Out: <strong>{{ Math.round(pt.totalDuration) }} min</strong>
-              </div>
-              <div v-if="pt.extendedTrips > 0" class="ooc-tooltip-row ooc-tooltip-row--alert">
-                Extended Trips (>{{ extendedLimit }}m): <strong>{{ pt.extendedTrips }}</strong>
-              </div>
-              <div class="ooc-tooltip-hint">Click to open 360 Dossier →</div>
             </template>
 
             <!-- Multi-Student Cluster Popover -->
             <template v-else>
-              <div class="ooc-cluster-header">
+              <div class="ooc-tt-cluster-title">
                 Cluster ({{ pt.clusterMembers.length }} Students)
               </div>
-              <div class="ooc-cluster-list">
+              <div class="ooc-tt-cluster-items">
                 <div 
                   v-for="cSt in pt.clusterMembers" 
                   :key="'cst-'+cSt.studentId" 
-                  class="ooc-cluster-item"
+                  class="ooc-tt-cluster-row"
                   @click.stop="$emit('select-student', cSt.studentId)"
                   title="Click to view dossier"
                 >
-                  <span class="ooc-cluster-name">{{ cSt.lastName }}, {{ cSt.firstName }}</span>
-                  <span class="ooc-cluster-meta">
-                    {{ cSt.totalTrips }} trips · avg {{ Math.round(cSt.avgDuration) }}m
-                  </span>
+                  <div class="ooc-cluster-row-top">
+                    <span class="ooc-cluster-name">{{ cSt.lastName }}, {{ cSt.firstName }}</span>
+                    <span class="ooc-cluster-trips">{{ cSt.totalTrips }} trips</span>
+                  </div>
+                  <div class="ooc-cluster-row-sub">
+                    avg {{ Math.round(cSt.avgDuration) }}m · {{ Math.round(cSt.totalDuration) }}m total
+                  </div>
                 </div>
               </div>
             </template>
