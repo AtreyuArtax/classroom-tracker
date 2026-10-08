@@ -457,16 +457,17 @@
 
 /* Tooltip on Canvas Dot */
 /* Tooltip on Canvas Dot (Dashboard Compact Sizing & Zero Bleed) */
+/* Tooltip Popover (Compact Dashboard Size & Zero Bleed — Theme-Adaptive) */
 .ooc-tooltip {
   position: absolute;
-  background: var(--tooltip-bg, #0f172a);
-  color: var(--tooltip-text, #f8fafc);
-  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: var(--chart-popover-bg, var(--surface, #ffffff));
+  color: var(--chart-popover-text, var(--text, #1c1c1e));
+  border: 1px solid var(--chart-popover-border, var(--border, rgba(0, 0, 0, 0.1)));
   border-radius: 6px;
   padding: 5px 8px;
   font-size: 0.65rem;
   line-height: 1.25;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+  box-shadow: var(--chart-popover-shadow, 0 4px 18px rgba(0, 0, 0, 0.15));
   pointer-events: auto;
   opacity: 0;
   visibility: hidden;
@@ -502,7 +503,7 @@
 .ooc-tt-name {
   font-size: 0.72rem;
   font-weight: 700;
-  color: #fff;
+  color: var(--chart-popover-text, var(--text, #1c1c1e));
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -516,19 +517,19 @@
   white-space: nowrap;
 }
 
-.ooc-tt-badge--chronic  { background: rgba(248, 113, 113, 0.2); color: #f87171; }
-.ooc-tt-badge--extended { background: rgba(250, 204, 21, 0.2);  color: #facc15; }
-.ooc-tt-badge--frequent { background: rgba(56, 189, 248, 0.2);  color: #38bdf8; }
-.ooc-tt-badge--typical  { background: rgba(74, 222, 128, 0.2);  color: #4ade80; }
+.ooc-tt-badge--chronic  { background: var(--color-danger-bg, rgba(248, 113, 113, 0.2)); color: var(--color-danger-text, #f87171); }
+.ooc-tt-badge--extended { background: var(--color-warn-bg, rgba(250, 204, 21, 0.2));  color: var(--color-warn-text, #facc15); }
+.ooc-tt-badge--frequent { background: var(--color-attention-bg, rgba(56, 189, 248, 0.2));  color: var(--color-attention-text, #38bdf8); }
+.ooc-tt-badge--typical  { background: var(--color-success-bg, rgba(74, 222, 128, 0.2));  color: var(--color-success-text, #4ade80); }
 
 .ooc-tt-meta {
   font-size: 0.62rem;
-  color: #cbd5e1;
+  color: var(--chart-popover-text-sub, var(--text-secondary, #6e6e73));
   white-space: nowrap;
 }
 
 .ooc-tt-meta strong {
-  color: #fff;
+  color: var(--chart-popover-text, var(--text, #1c1c1e));
 }
 
 .ooc-tt-alert {
@@ -537,9 +538,9 @@
   gap: 3.5px;
   font-size: 0.62rem;
   font-weight: 700;
-  color: #f87171;
-  background: rgba(248, 113, 113, 0.15);
-  border: 1px solid rgba(248, 113, 113, 0.35);
+  color: var(--color-danger-text, #f87171);
+  background: var(--color-danger-bg, rgba(248, 113, 113, 0.15));
+  border: 1px solid rgba(239, 68, 68, 0.35);
   padding: 1px 4px;
   border-radius: 3px;
   width: fit-content;
@@ -547,7 +548,7 @@
 
 .ooc-tt-alert-icon {
   flex-shrink: 0;
-  color: #f87171;
+  color: var(--color-danger-text, #f87171);
 }
 
 /* Cluster Popover Tooltip */
@@ -560,8 +561,8 @@
 .ooc-tt-cluster-title {
   font-weight: 800;
   font-size: 0.65rem;
-  color: #38bdf8;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--chart-popover-title, var(--primary, #4663ac));
+  border-bottom: 1px solid var(--chart-popover-divider, var(--border, rgba(0, 0, 0, 0.08)));
   padding-bottom: 3px;
   margin-bottom: 2px;
 }
@@ -580,13 +581,13 @@
   gap: 1px;
   padding: 3px 5px;
   border-radius: 4px;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--chart-popover-row-bg, rgba(0, 0, 0, 0.03));
   cursor: pointer;
   transition: background 0.12s ease;
 }
 
 .ooc-tt-cluster-row:hover {
-  background: rgba(255, 255, 255, 0.12);
+  background: var(--chart-popover-row-hover, rgba(0, 0, 0, 0.07));
 }
 
 .ooc-cluster-row-top {
@@ -599,7 +600,7 @@
 .ooc-cluster-name {
   font-size: 0.66rem;
   font-weight: 700;
-  color: #f8fafc;
+  color: var(--chart-popover-text, var(--text, #1c1c1e));
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -608,12 +609,12 @@
 .ooc-cluster-trips {
   font-size: 0.62rem;
   font-weight: 700;
-  color: #94a3b8;
+  color: var(--chart-popover-text-sub, var(--text-secondary, #6e6e73));
 }
 
 .ooc-cluster-row-sub {
   font-size: 0.58rem;
-  color: #94a3b8;
+  color: var(--text-tertiary, #8e8e93);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;

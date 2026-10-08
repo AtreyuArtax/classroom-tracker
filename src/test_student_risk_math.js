@@ -31,7 +31,7 @@ assert.strictEqual(
 )
 assert.strictEqual(
   getMetricSubtitle({ absences: false, lates: true, washroom: true }, false),
-  'Comparing Academic Mark vs. Time in Class (Lates & Hallway)'
+  'Comparing Academic Mark vs. Time in Class (Lates & Out of Class)'
 )
 assert.strictEqual(
   getMetricSubtitle({ absences: true, lates: false, washroom: false }, false),

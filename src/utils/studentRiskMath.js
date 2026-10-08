@@ -57,7 +57,7 @@ export function getMetricSubtitle(filters = {}, isSbar = false) {
     return `Comparing ${academicLabel} vs. Time in Class (All Factors)`
   }
   if (!absences && lates && washroom) {
-    return `Comparing ${academicLabel} vs. Time in Class (Lates & Hallway)`
+    return `Comparing ${academicLabel} vs. Time in Class (Lates & Out of Class)`
   }
   if (absences && !lates && !washroom) {
     return `Comparing ${academicLabel} vs. Time in Class (Absences Only)`
@@ -66,13 +66,13 @@ export function getMetricSubtitle(filters = {}, isSbar = false) {
     return `Comparing ${academicLabel} vs. Time in Class (Lates Only)`
   }
   if (!absences && !lates && washroom) {
-    return `Comparing ${academicLabel} vs. Time in Class (Hallway Only)`
+    return `Comparing ${academicLabel} vs. Time in Class (Out of Class Only)`
   }
   if (absences && lates && !washroom) {
     return `Comparing ${academicLabel} vs. Time in Class (Absences & Lates)`
   }
   if (absences && !lates && washroom) {
-    return `Comparing ${academicLabel} vs. Time in Class (Absences & Hallway)`
+    return `Comparing ${academicLabel} vs. Time in Class (Absences & Out of Class)`
   }
   return `Comparing ${academicLabel} vs. Time in Class`
 }
@@ -275,12 +275,12 @@ export function calculateStudentRiskMatrix({
 
     let haloReason = ''
     if (hasHallwayHalo && hasLateHalo) {
-      haloReason = `Frequent Leaver (${totalWashroomCount} hall · ${totalLateCount} late)`
+      haloReason = `Frequent Leaver (${totalWashroomCount} out · ${totalLateCount} late)`
     } else if (hasHallwayHalo) {
       if (isExtendedHallway && !isChronicHallway) {
-        haloReason = `Extended Hall Departures (${totalWashroomCount} trips · avg ${Math.round(avgWashroomMins)}m)`
+        haloReason = `Extended Out-of-Class Departures (${totalWashroomCount} trips · avg ${Math.round(avgWashroomMins)}m)`
       } else {
-        haloReason = `Frequent Hallway Leaver (${totalWashroomCount} trips · ${tripsPerWeek.toFixed(1)}/wk)`
+        haloReason = `Frequent Out-of-Class Leaver (${totalWashroomCount} trips · ${tripsPerWeek.toFixed(1)}/wk)`
       }
     } else if (hasLateHalo) {
       haloReason = `Chronically Late (${totalLateCount} lates · ${latesPerWeek.toFixed(1)}/wk)`

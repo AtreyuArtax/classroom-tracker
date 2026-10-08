@@ -1555,18 +1555,18 @@ const seatingHistogram = computed(() => {
 .mindset-conf-dot--2 { background: var(--color-orange-bg);  border: 1.5px solid var(--color-orange); }
 .mindset-conf-dot--1 { background: var(--color-danger-bg);  border: 1.5px solid var(--color-danger); }
 
-/* Tooltip Popover (Compact Dashboard Size & Zero Bleed) */
+/* Tooltip Popover (Compact Dashboard Size & Zero Bleed — Theme-Adaptive) */
 .mindset-tooltip {
   display: none;
   position: absolute;
-  background: var(--tooltip-bg, #0f172a);
-  color: var(--tooltip-text, #f8fafc);
-  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: var(--chart-popover-bg, var(--surface, #ffffff));
+  color: var(--chart-popover-text, var(--text, #1c1c1e));
+  border: 1px solid var(--chart-popover-border, var(--border, rgba(0, 0, 0, 0.1)));
   border-radius: 6px;
   padding: 5px 8px;
   font-size: 0.65rem;
   line-height: 1.25;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+  box-shadow: var(--chart-popover-shadow, 0 4px 18px rgba(0, 0, 0, 0.15));
   z-index: 20000;
   width: max-content;
   max-width: 215px;
@@ -1597,7 +1597,7 @@ const seatingHistogram = computed(() => {
 .mindset-tt-name {
   font-size: 0.72rem;
   font-weight: 700;
-  color: #fff;
+  color: var(--chart-popover-text, var(--text, #1c1c1e));
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1606,16 +1606,21 @@ const seatingHistogram = computed(() => {
 .mindset-tt-badge {
   font-size: 0.64rem;
   font-weight: 800;
-  color: #38bdf8;
-  background: rgba(56, 189, 248, 0.18);
+  color: var(--primary, #4663ac);
+  background: var(--primary-light, rgba(70, 99, 172, 0.12));
   padding: 1px 4px;
   border-radius: 3px;
   white-space: nowrap;
 }
 
+:root[data-theme="dark"] .mindset-tt-badge {
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.18);
+}
+
 .mindset-tt-meta {
   font-size: 0.62rem;
-  color: #cbd5e1;
+  color: var(--chart-popover-text-sub, var(--text-secondary, #6e6e73));
   white-space: nowrap;
   display: flex;
   align-items: center;
@@ -1623,12 +1628,12 @@ const seatingHistogram = computed(() => {
 }
 
 .mindset-tt-meta strong {
-  color: #fff;
+  color: var(--chart-popover-text, var(--text, #1c1c1e));
 }
 
 .mindset-tt-sub {
   font-size: 0.58rem;
-  color: #94a3b8;
+  color: var(--text-tertiary, #8e8e93);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1643,8 +1648,11 @@ const seatingHistogram = computed(() => {
   margin-left: 2px;
 }
 
-.mindset-delta-badge--pos { background: rgba(52, 199, 89, 0.2); color: #4ade80; }
-.mindset-delta-badge--neg { background: rgba(255, 59, 48, 0.2); color: #f87171; }
+.mindset-delta-badge--pos { background: var(--color-success-bg, rgba(52, 199, 89, 0.15)); color: var(--color-success-text, #047857); }
+.mindset-delta-badge--neg { background: var(--color-danger-bg, rgba(255, 59, 48, 0.15)); color: var(--color-danger-text, #b91c1c); }
+
+:root[data-theme="dark"] .mindset-delta-badge--pos { color: #4ade80; background: rgba(52, 199, 89, 0.2); }
+:root[data-theme="dark"] .mindset-delta-badge--neg { color: #f87171; background: rgba(255, 59, 48, 0.2); }
 
 /* Cluster Popover Tooltip */
 .mindset-tooltip--cluster {
@@ -1656,8 +1664,8 @@ const seatingHistogram = computed(() => {
 .mindset-tt-cluster-title {
   font-weight: 800;
   font-size: 0.65rem;
-  color: #38bdf8;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--chart-popover-title, var(--primary, #4663ac));
+  border-bottom: 1px solid var(--chart-popover-divider, var(--border, rgba(0, 0, 0, 0.08)));
   padding-bottom: 3px;
   margin-bottom: 2px;
 }
@@ -1676,13 +1684,13 @@ const seatingHistogram = computed(() => {
   gap: 1px;
   padding: 3px 5px;
   border-radius: 4px;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--chart-popover-row-bg, rgba(0, 0, 0, 0.03));
   cursor: pointer;
   transition: background 0.12s ease;
 }
 
 .mindset-tt-cluster-row:hover {
-  background: rgba(255, 255, 255, 0.12);
+  background: var(--chart-popover-row-hover, rgba(0, 0, 0, 0.07));
 }
 
 .mindset-cluster-row-top {
@@ -1695,7 +1703,7 @@ const seatingHistogram = computed(() => {
 .mindset-cluster-name {
   font-size: 0.66rem;
   font-weight: 700;
-  color: #f8fafc;
+  color: var(--chart-popover-text, var(--text, #1c1c1e));
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1704,12 +1712,16 @@ const seatingHistogram = computed(() => {
 .mindset-cluster-grade {
   font-size: 0.62rem;
   font-weight: 800;
+  color: var(--primary, #4663ac);
+}
+
+:root[data-theme="dark"] .mindset-cluster-grade {
   color: #38bdf8;
 }
 
 .mindset-cluster-row-sub {
   font-size: 0.58rem;
-  color: #94a3b8;
+  color: var(--chart-popover-text-sub, var(--text-secondary, #6e6e73));
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;

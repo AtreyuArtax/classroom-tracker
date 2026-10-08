@@ -36,10 +36,10 @@
             class="risk-plot__filter-chip"
             :class="{ 'risk-plot__filter-chip--active': activeFactors.washroom }"
             @click="toggleFactor('washroom')"
-            title="Include Hallway & Washroom Minutes in Lost Time"
+            title="Include Out-of-Class & Washroom Minutes in Lost Time"
           >
             <Check :size="11" class="chip-check" :class="{ 'chip-check--hidden': !activeFactors.washroom }" />
-            <span>Hallway</span>
+            <span>Out of Class</span>
           </button>
         </div>
 
@@ -144,7 +144,7 @@
             <div class="risk-plot__tt-meta">
               <strong>{{ s.timeInClassPct }}%</strong> In-Class
               <span v-if="s.activeLostMins > 0" class="risk-plot__tt-lost">
-                ({{ s.activeLostMins }}m lost<template v-if="s.absences > 0 && activeFactors.absences"> · {{ s.absences }}a</template><template v-if="s.lateCount > 0 && activeFactors.lates"> · {{ s.lateCount }}l</template><template v-if="s.washroomCount > 0 && activeFactors.washroom"> · {{ s.washroomCount }}h</template>)
+                ({{ s.activeLostMins }}m lost<template v-if="s.absences > 0 && activeFactors.absences"> · {{ s.absences }}a</template><template v-if="s.lateCount > 0 && activeFactors.lates"> · {{ s.lateCount }}l</template><template v-if="s.washroomCount > 0 && activeFactors.washroom"> · {{ s.washroomCount }} out</template>)
               </span>
             </div>
           </template>
@@ -382,15 +382,15 @@ const metricSubtitle = computed(() => matrixData.value.metricSubtitle)
 .legend-pill--orange { color: var(--color-attention); }
 .legend-pill--red    { color: var(--color-danger); }
 .legend-pill--slate  { color: var(--color-neutral); }
-.legend-pill--halo   { color: #f59e0b; }
+.legend-pill--halo   { color: var(--color-halo, #cbd5e1); }
 
 .legend-halo-ring {
   display: inline-block;
   width: 9px;
   height: 9px;
   border-radius: 50%;
-  border: 2px solid #f59e0b;
-  box-shadow: 0 0 0 1.5px rgba(245, 158, 11, 0.4);
+  border: 1.5px solid var(--color-halo, #cbd5e1);
+  box-shadow: 0 0 0 1px var(--color-halo-border, rgba(203, 213, 225, 0.35));
 }
 
 .risk-plot__canvas {
@@ -487,13 +487,19 @@ const metricSubtitle = computed(() => matrixData.value.metricSubtitle)
 .risk-plot__dot--red        { background: var(--color-danger-bg);     border: 2px solid var(--color-danger);    color: var(--color-danger-text); }
 .risk-plot__dot--unassessed { background: var(--color-neutral-bg);    border: 2px dashed var(--color-neutral);  color: var(--color-neutral-text); }
 
-/* Option 1: Chronic / Frequent Disruption Halo Ring */
+/* Option 1: Chronic / Frequent Disruption Halo Ring (Subtle Architectural Platinum Orbit) */
 .risk-plot__dot--halo {
-  box-shadow: 0 0 0 2px var(--surface), 0 0 0 4.5px #f59e0b, 0 3px 10px rgba(245, 158, 11, 0.4);
+  box-shadow: 
+    0 0 0 2px var(--surface), 
+    0 0 0 3.5px var(--color-halo, #cbd5e1), 
+    0 1px 4px rgba(0, 0, 0, 0.35);
 }
 
 .risk-plot__dot--halo:hover {
-  box-shadow: 0 0 0 2px var(--surface), 0 0 0 5.5px #f59e0b, 0 6px 20px rgba(245, 158, 11, 0.6);
+  box-shadow: 
+    0 0 0 2px var(--surface), 
+    0 0 0 4px var(--color-halo-text, #e2e8f0), 
+    0 2px 8px rgba(0, 0, 0, 0.5);
 }
 
 .risk-plot__dot-label {
@@ -503,17 +509,17 @@ const metricSubtitle = computed(() => matrixData.value.metricSubtitle)
   max-width: 22px;
 }
 
-/* ── Sleek, Compact Dashboard-Style Tooltips (Zero Bleed) ─────────────── */
+/* ── Sleek, Compact Dashboard-Style Tooltips (Theme-Adaptive) ─────────── */
 .risk-plot__tooltip {
   position: absolute;
-  background: var(--tooltip-bg, #0f172a);
-  color: var(--tooltip-text, #f8fafc);
-  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: var(--chart-popover-bg, var(--surface, #ffffff));
+  color: var(--chart-popover-text, var(--text, #1c1c1e));
+  border: 1px solid var(--chart-popover-border, var(--border, rgba(0, 0, 0, 0.1)));
   border-radius: 6px;
   padding: 5px 8px;
   font-size: 0.65rem;
   line-height: 1.25;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+  box-shadow: var(--chart-popover-shadow, 0 4px 18px rgba(0, 0, 0, 0.15));
   pointer-events: auto;
   opacity: 0;
   visibility: hidden;
@@ -566,7 +572,7 @@ const metricSubtitle = computed(() => matrixData.value.metricSubtitle)
 .risk-plot__tt-name {
   font-weight: 700;
   font-size: 0.72rem;
-  color: #fff;
+  color: var(--text, #1c1c1e);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -580,19 +586,19 @@ const metricSubtitle = computed(() => matrixData.value.metricSubtitle)
   white-space: nowrap;
 }
 
-.tt-grade--green   { color: #4ade80; background: rgba(74, 222, 128, 0.18); }
-.tt-grade--yellow  { color: #facc15; background: rgba(250, 204, 21, 0.18); }
-.tt-grade--orange  { color: #fb923c; background: rgba(251, 146, 60, 0.18); }
-.tt-grade--red     { color: #f87171; background: rgba(248, 113, 113, 0.18); }
-.tt-grade--unassessed { color: #94a3b8; background: rgba(148, 163, 184, 0.18); }
+.tt-grade--green      { color: var(--color-success-text);   background: var(--color-success-bg); }
+.tt-grade--yellow     { color: var(--color-warn-text);      background: var(--color-warn-bg); }
+.tt-grade--orange     { color: var(--color-attention-text); background: var(--color-attention-bg); }
+.tt-grade--red        { color: var(--color-danger-text);    background: var(--color-danger-bg); }
+.tt-grade--unassessed { color: var(--color-neutral-text);   background: var(--color-neutral-bg); }
 
 .risk-plot__tt-halo {
   display: inline-flex;
   align-items: center;
   gap: 3.5px;
-  background: rgba(245, 158, 11, 0.15);
-  border: 1px solid rgba(245, 158, 11, 0.35);
-  color: #f59e0b;
+  background: var(--color-halo-bg, rgba(203, 213, 225, 0.14));
+  border: 1px solid var(--color-halo-border, rgba(203, 213, 225, 0.35));
+  color: var(--color-halo-text, #475569);
   font-weight: 700;
   font-size: 0.62rem;
   padding: 1.5px 5px;
@@ -601,16 +607,16 @@ const metricSubtitle = computed(() => matrixData.value.metricSubtitle)
 
 .risk-plot__tt-meta {
   font-size: 0.62rem;
-  color: #cbd5e1;
+  color: var(--text-secondary, #6e6e73);
   white-space: nowrap;
 }
 
 .risk-plot__tt-meta strong {
-  color: #fff;
+  color: var(--text, #1c1c1e);
 }
 
 .risk-plot__tt-lost {
-  color: #94a3b8;
+  color: var(--text-tertiary, #8e8e93);
   margin-left: 2px;
 }
 
@@ -624,8 +630,8 @@ const metricSubtitle = computed(() => matrixData.value.metricSubtitle)
 .risk-plot__tt-cluster-title {
   font-weight: 800;
   font-size: 0.65rem;
-  color: #38bdf8;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--chart-popover-title, var(--primary, #4663ac));
+  border-bottom: 1px solid var(--chart-popover-divider, var(--border, rgba(0, 0, 0, 0.08)));
   padding-bottom: 3px;
   margin-bottom: 2px;
 }
@@ -644,13 +650,13 @@ const metricSubtitle = computed(() => matrixData.value.metricSubtitle)
   gap: 1px;
   padding: 3px 5px;
   border-radius: 4px;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--chart-popover-row-bg, rgba(0, 0, 0, 0.03));
   cursor: pointer;
   transition: background 0.12s ease;
 }
 
 .risk-plot__tt-cluster-row:hover {
-  background: rgba(255, 255, 255, 0.12);
+  background: var(--chart-popover-row-hover, rgba(0, 0, 0, 0.07));
 }
 
 .cluster-row-top {
@@ -663,7 +669,7 @@ const metricSubtitle = computed(() => matrixData.value.metricSubtitle)
 .cluster-row-name {
   font-weight: 700;
   font-size: 0.66rem;
-  color: #f8fafc;
+  color: var(--text, #1c1c1e);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -685,7 +691,7 @@ const metricSubtitle = computed(() => matrixData.value.metricSubtitle)
 
 .cluster-row-sub {
   font-size: 0.58rem;
-  color: #94a3b8;
+  color: var(--text-secondary, #6e6e73);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -693,15 +699,15 @@ const metricSubtitle = computed(() => matrixData.value.metricSubtitle)
 
 .tt-halo-icon {
   flex-shrink: 0;
-  color: #f59e0b;
+  color: var(--color-halo, #cbd5e1);
 }
 
 .list-card__halo-tag {
   font-size: 0.65rem;
   font-weight: 700;
-  color: #f59e0b;
-  background: rgba(245, 158, 11, 0.12);
-  border: 1px solid rgba(245, 158, 11, 0.35);
+  color: var(--color-halo, #cbd5e1);
+  background: var(--color-halo-bg, rgba(203, 213, 225, 0.12));
+  border: 1px solid var(--color-halo-border, rgba(203, 213, 225, 0.35));
   padding: 1px 5px;
   border-radius: 4px;
   margin-left: 6px;
@@ -712,7 +718,7 @@ const metricSubtitle = computed(() => matrixData.value.metricSubtitle)
 
 .list-card__halo-icon {
   flex-shrink: 0;
-  color: #f59e0b;
+  color: var(--color-halo, #cbd5e1);
 }
 
 .risk-plot__header-left {

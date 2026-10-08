@@ -105,6 +105,25 @@
   --color-orange-text:      #c2410c; /* Dark orange for text (5.6:1 contrast) */
   --color-orange-bg:        rgba(234, 88, 12, 0.15);
 
+  --color-halo:             #64748b; /* Cool architectural slate for frequent leaver halo */
+  --color-halo-text:        #475569;
+  --color-halo-bg:          rgba(100, 116, 139, 0.12);
+  --color-halo-border:      rgba(100, 116, 139, 0.35);
+
+  /* ── Matrix & Chart Rich Popovers (Theme-Adaptive) ──────────────────────
+   * Shared design tokens for rich hover popovers across all analytics matrices:
+   * Risk & Engagement, Mindset & Goals, and Out of Class.
+   */
+  --chart-popover-bg:           var(--surface, #ffffff);
+  --chart-popover-text:         var(--text, #1c1c1e);
+  --chart-popover-text-sub:     var(--text-secondary, #6e6e73);
+  --chart-popover-border:       var(--border, rgba(0, 0, 0, 0.1));
+  --chart-popover-shadow:       0 4px 18px rgba(0, 0, 0, 0.15), 0 1px 3px rgba(0, 0, 0, 0.08);
+  --chart-popover-row-bg:       rgba(0, 0, 0, 0.03);
+  --chart-popover-row-hover:    rgba(0, 0, 0, 0.07);
+  --chart-popover-title:        var(--primary, #4663ac);
+  --chart-popover-divider:      var(--border, rgba(0, 0, 0, 0.08));
+
   /* ── Tooltip palette ──────────────────────────────────────────────────────
    * Dark floating tooltips that appear on both light and dark backgrounds.
    * In dark mode these invert to a light surface automatically.
@@ -191,6 +210,21 @@
   --color-orange-text:      #fdba74;
   --color-orange-bg:        rgba(249, 115, 22, 0.18);
 
+  --color-halo:             #cbd5e1; /* Architectural platinum for frequent leaver halo */
+  --color-halo-text:        #e2e8f0;
+  --color-halo-bg:          rgba(203, 213, 225, 0.14);
+  --color-halo-border:      rgba(203, 213, 225, 0.35);
+
+  --chart-popover-bg:           var(--surface, #202326);
+  --chart-popover-text:         var(--text, #f0f2f5);
+  --chart-popover-text-sub:     var(--text-secondary, #9aa0a6);
+  --chart-popover-border:       rgba(255, 255, 255, 0.14);
+  --chart-popover-shadow:       0 4px 18px rgba(0, 0, 0, 0.6), 0 1px 3px rgba(0, 0, 0, 0.4);
+  --chart-popover-row-bg:       rgba(255, 255, 255, 0.05);
+  --chart-popover-row-hover:    rgba(255, 255, 255, 0.12);
+  --chart-popover-title:        #38bdf8;
+  --chart-popover-divider:      rgba(255, 255, 255, 0.12);
+
   --tooltip-bg:             #2c2c2e;
   --tooltip-text:           #f8fafc;
   --tooltip-text-muted:     #94a3b8;
@@ -259,6 +293,21 @@
 
     --color-info:             #0a84ff;
     --color-info-text:        #60a5fa;
+
+    --color-halo:             #cbd5e1;
+    --color-halo-text:        #e2e8f0;
+    --color-halo-bg:          rgba(203, 213, 225, 0.14);
+    --color-halo-border:      rgba(203, 213, 225, 0.35);
+
+    --chart-popover-bg:           var(--surface, #202326);
+    --chart-popover-text:         var(--text, #f0f2f5);
+    --chart-popover-text-sub:     var(--text-secondary, #9aa0a6);
+    --chart-popover-border:       rgba(255, 255, 255, 0.14);
+    --chart-popover-shadow:       0 4px 18px rgba(0, 0, 0, 0.6), 0 1px 3px rgba(0, 0, 0, 0.4);
+    --chart-popover-row-bg:       rgba(255, 255, 255, 0.05);
+    --chart-popover-row-hover:    rgba(255, 255, 255, 0.12);
+    --chart-popover-title:        #38bdf8;
+    --chart-popover-divider:      rgba(255, 255, 255, 0.12);
 
     --tooltip-bg:             #2c2c2e;
     --tooltip-text:           #f8fafc;
