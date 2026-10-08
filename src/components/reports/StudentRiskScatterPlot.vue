@@ -443,6 +443,7 @@ const metricSubtitle = computed(() => matrixData.value.metricSubtitle)
   background: rgba(100, 116, 139, 0.35);
   border-top: 1px dashed rgba(100, 116, 139, 0.45);
   z-index: 1;
+  transition: bottom 0.45s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .risk-plot__axis-y {
@@ -453,6 +454,7 @@ const metricSubtitle = computed(() => matrixData.value.metricSubtitle)
   background: rgba(100, 116, 139, 0.35);
   border-left: 1px dashed rgba(100, 116, 139, 0.45);
   z-index: 1;
+  transition: left 0.45s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .risk-plot__dot {
@@ -468,7 +470,7 @@ const metricSubtitle = computed(() => matrixData.value.metricSubtitle)
   font-weight: 800;
   cursor: pointer;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-  transition: transform 0.15s ease, box-shadow 0.15s ease, z-index 0.1s ease;
+  transition: left 0.45s cubic-bezier(0.4, 0, 0.2, 1), bottom 0.45s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.35s ease, border-color 0.35s ease, color 0.35s ease, transform 0.15s ease, box-shadow 0.15s ease, z-index 0.1s ease;
   z-index: 10;
 }
 
