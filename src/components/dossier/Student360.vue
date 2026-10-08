@@ -335,6 +335,7 @@
       <section v-if="activeTab === 'timeline'" class="student-360__pane">
         <StudentTimeline 
           :student-id="studentId" 
+          :class-id="props.classId"
           :events="events"
           :behavior-codes-map="behaviorCodesMap"
         />

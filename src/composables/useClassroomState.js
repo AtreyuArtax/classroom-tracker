@@ -85,5 +85,22 @@ export function syncStudentAcrossRefs(classId, studentId, updates) {
     }
 }
 
+/**
+ * Event mutation notifier to keep useActionAlerts, useClassroom, etc. in lockstep
+ * without circular dependencies.
+ */
+export const eventMutationSignal = ref(null)
+
+export function notifyEventMutated({ type, eventId, classId, updates, event }) {
+    eventMutationSignal.value = {
+        type,
+        eventId: String(eventId || event?.eventId || event?.id || ''),
+        classId: classId ? String(classId) : null,
+        updates: updates || null,
+        event: event || null,
+        timestamp: Date.now()
+    }
+}
+
 
 

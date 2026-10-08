@@ -15,7 +15,7 @@
 import { ref, shallowRef, computed, unref, watch } from 'vue'
 import { useClassroom } from './useClassroom.js'
 import { getEffectiveClassRecord } from './useElementary.js'
-import { activeSubjectId } from './useClassroomState.js'
+import { activeSubjectId, eventMutationSignal } from './useClassroomState.js'
 import { activeClassRecord, assessments as gbAssessments, gradeMap } from './useGradebook.js'
 import * as classService from '../db/classService.js'
 import * as eventService from '../db/eventService.js'
@@ -107,8 +107,14 @@ export async function refreshActionAlerts(classId, preloaded = {}) {
   const hasPreloaded = preloaded.events && preloaded.classGrades
   const isFresh = existing && existing.period === alertPeriod.value && Date.now() - existing.loadedAt < STALE_MS
   if (!hasPreloaded && !preloaded.force && isFresh) return
-  if (!hasPreloaded && inFlight[classId]) return inFlight[classId]
+  if (!hasPreloaded && !preloaded.force && inFlight[classId]) return inFlight[classId]
+  if (preloaded.force && inFlight[classId]) {
+    try {
+      await inFlight[classId]
+    } catch (_) {}
+  }
 
+  const fetchStartTime = Date.now()
   const run = (async () => {
     const { academicTerms, nonSchoolDays } = useClassroom()
     const rawClass = await classService.getClass(classId)
@@ -131,19 +137,29 @@ export async function refreshActionAlerts(classId, preloaded = {}) {
 
     const events = preloaded.events
       ?? (await eventService.getEventsByClass(classId)).filter(e => students[e.studentId])
-    const periodEvents = (dr.from || dr.to)
-      ? events.filter(e => {
-          const date = e.timestamp?.slice(0, 10)
-          if (dr.from && date < dr.from) return false
-          if (dr.to && date > dr.to) return false
-          return true
-        })
-      : events
+    const periodEvents = filterPeriodEvents(events, dr)
     const classGrades = preloaded.classGrades ?? await calculateClassGrades(effective, { asOf: dr.to || null })
+
+    // If an in-memory mutation occurred while this query was running, do not overwrite with stale data
+    const currentSrc = sources.value[classId]
+    if (currentSrc && currentSrc.loadedAt > fetchStartTime) {
+      return
+    }
 
     sources.value = {
       ...sources.value,
-      [classId]: { students, studentList, events, periodEvents, classGrades, effective, period, calendarConfig, loadedAt: Date.now() }
+      [classId]: {
+        students,
+        studentList,
+        events,
+        periodEvents,
+        classGrades,
+        effective,
+        period,
+        calendarConfig,
+        dateRange: dr,
+        loadedAt: Date.now()
+      }
     }
   })()
 
@@ -154,6 +170,134 @@ export async function refreshActionAlerts(classId, preloaded = {}) {
     if (inFlight[classId] === run) delete inFlight[classId]
   }
 }
+
+function filterPeriodEvents(events, dateRange) {
+  if (!dateRange || (!dateRange.from && !dateRange.to)) return [...events]
+  return events.filter(e => {
+    const date = e.timestamp?.slice(0, 10)
+    if (dateRange.from && date < dateRange.from) return false
+    if (dateRange.to && date > dateRange.to) return false
+    return true
+  })
+}
+
+/**
+ * Reactively syncs an updated event in the in-memory alerts cache.
+ */
+export function syncEventUpdated(classId, eventId, updates) {
+  if (!classId) return
+  const src = sources.value[classId]
+  if (!src || !src.events) {
+    refreshActionAlerts(classId, { force: true })
+    return
+  }
+
+  const sEventId = String(eventId)
+  let matched = false
+  const updatedEvents = src.events.map(e => {
+    if (String(e.eventId) === sEventId || String(e.id) === sEventId) {
+      matched = true
+      return { ...e, ...updates }
+    }
+    return e
+  })
+
+  if (!matched) {
+    refreshActionAlerts(classId, { force: true })
+    return
+  }
+
+  const periodEvents = filterPeriodEvents(updatedEvents, src.dateRange)
+
+  sources.value = {
+    ...sources.value,
+    [classId]: {
+      ...src,
+      events: updatedEvents,
+      periodEvents,
+      loadedAt: Date.now()
+    }
+  }
+}
+
+/**
+ * Reactively removes an event from the in-memory alerts cache.
+ */
+export function syncEventRemoved(classId, eventId) {
+  if (!classId) return
+  const src = sources.value[classId]
+  if (!src || !src.events) return
+
+  const sEventId = String(eventId)
+  const updatedEvents = src.events.filter(e =>
+    String(e.eventId) !== sEventId && String(e.id) !== sEventId
+  )
+
+  const periodEvents = filterPeriodEvents(updatedEvents, src.dateRange)
+
+  sources.value = {
+    ...sources.value,
+    [classId]: {
+      ...src,
+      events: updatedEvents,
+      periodEvents,
+      loadedAt: Date.now()
+    }
+  }
+}
+
+/**
+ * Reactively prepends a new event into the in-memory alerts cache.
+ */
+export function syncEventCreated(classId, newEvent) {
+  if (!classId || !newEvent) return
+  const src = sources.value[classId]
+  if (!src || !src.events) return
+
+  const sEventId = String(newEvent.eventId || newEvent.id || '')
+  if (sEventId && src.events.some(e => String(e.eventId) === sEventId || String(e.id) === sEventId)) {
+    return
+  }
+
+  const updatedEvents = [newEvent, ...src.events]
+  const periodEvents = filterPeriodEvents(updatedEvents, src.dateRange)
+
+  sources.value = {
+    ...sources.value,
+    [classId]: {
+      ...src,
+      events: updatedEvents,
+      periodEvents,
+      loadedAt: Date.now()
+    }
+  }
+}
+
+/**
+ * Directly seeds or replaces sources for a class (useful for tests).
+ */
+export function setAlertSource(classId, sourceData) {
+  sources.value = {
+    ...sources.value,
+    [classId]: {
+      ...sourceData,
+      dateRange: sourceData.dateRange || {},
+      loadedAt: Date.now()
+    }
+  }
+}
+
+// Watch event mutations across the application to keep alerts immediately synchronized
+watch(eventMutationSignal, signal => {
+  if (!signal || !signal.classId) return
+  if (signal.type === 'update') {
+    syncEventUpdated(signal.classId, signal.eventId, signal.updates)
+  } else if (signal.type === 'remove') {
+    syncEventRemoved(signal.classId, signal.eventId)
+  } else if (signal.type === 'create') {
+    syncEventCreated(signal.classId, signal.event)
+  }
+}, { flush: 'sync' })
 
 /** All alert items for a class (handled or not). Reads gradebook state reactively. */
 function itemsFor(classId) {

@@ -89,7 +89,8 @@ import {
   cloudModeEnabled, 
   userCode,
   activeSubjectId,
-  teachingMode
+  teachingMode,
+  notifyEventMutated
 } from './useClassroomState.js'
 
 import { createDefaultElementarySubjects } from '../utils/elementarySubjects.js'
@@ -1142,9 +1143,34 @@ async function logStandardEvent(studentId, code, note = null, options = {}) {
             }
         }
 
+        if (classId) {
+            notifyEventMutated({
+                type: 'create',
+                eventId,
+                classId,
+                event: {
+                    eventId,
+                    studentId,
+                    classId,
+                    code,
+                    note,
+                    duration: options.duration !== undefined ? options.duration : null,
+                    testDay: options.testDay !== undefined ? options.testDay : isTestDay.value,
+                    timestamp: options.timestamp || new Date().toISOString()
+                }
+            })
+        }
+
         pushUndo(async () => {
             try {
                 await eventService.deleteEvent(eventId)
+                if (classId) {
+                    notifyEventMutated({
+                        type: 'remove',
+                        eventId,
+                        classId
+                    })
+                }
                 if (students.value[studentId]) {
                     students.value[studentId].lastEvent = null
                     triggerRef(students)
@@ -1341,12 +1367,36 @@ async function logToggleEvent(studentId, code, targetClassId = null) {
                 }
             }
 
+            if (classId) {
+                notifyEventMutated({
+                    type: 'create',
+                    eventId,
+                    classId,
+                    event: {
+                        eventId,
+                        studentId,
+                        classId,
+                        code,
+                        duration: durationMs,
+                        testDay: isTestDay.value,
+                        timestamp: new Date().toISOString()
+                    }
+                })
+            }
+
             // Undo: restore the exact original state (with original outTime) + delete event
             pushUndo(async () => {
                 try {
                     const restoredState = { ...(student.activeStates || {}), isOut: true, outTime: originalOutTime, code }
                     await classService.setStudentActiveState(classId, studentId, restoredState)
                     await eventService.deleteEvent(eventId)
+                    if (classId) {
+                        notifyEventMutated({
+                            type: 'remove',
+                            eventId,
+                            classId
+                        })
+                    }
                     
                     syncStudentState(classId, studentId, restoredState, null)
 
@@ -1402,6 +1452,16 @@ async function editEvent(eventId, updates) {
     // Special case: if it was a late event from today, sync active state
     if (original.code === 'l' && updates.duration !== undefined) {
         await syncLateActiveState(original.classId, original.studentId, original.duration, updates.duration, updates.timestamp || original.timestamp)
+    }
+
+    const targetClassId = original?.classId || activeClass.value?.classId
+    if (targetClassId) {
+        notifyEventMutated({
+            type: 'update',
+            eventId,
+            classId: targetClassId,
+            updates: { ...original, ...updates }
+        })
     }
 }
 
@@ -1535,6 +1595,14 @@ async function removeEvent(eventId) {
 
     // Reactively remove from the active events list
     activeStudentEvents.value = activeStudentEvents.value.filter(e => String(e.eventId) !== String(eventId))
+
+    if (targetClassId) {
+        notifyEventMutated({
+            type: 'remove',
+            eventId,
+            classId: targetClassId
+        })
+    }
 }
 
 // ─── grid resize ──────────────────────────────────────────────────────────────

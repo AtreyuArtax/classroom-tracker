@@ -587,7 +587,7 @@
         </div>
 
         <!-- Duration (for Late or Washroom) -->
-        <div v-if="editingItem.rawCode === 'l' || editingItem.rawCode === 'w'" class="form-field">
+        <div v-if="editingItem.rawCode === 'l' || editingItem.rawCode === 'w' || behaviorCodesMap?.[editingItem.rawCode]?.type === 'toggle'" class="form-field">
           <label class="form-label">
             {{ editingItem.rawCode === 'l' ? 'Minutes Late' : 'Duration (minutes)' }}
           </label>
@@ -612,7 +612,7 @@
         </div>
 
         <!-- Test Day Toggle -->
-        <div v-if="['a', 'l', 'w'].includes(editingItem.rawCode)" class="form-checkbox-wrap">
+        <div v-if="['a', 'l', 'w'].includes(editingItem.rawCode) || behaviorCodesMap?.[editingItem.rawCode]?.type === 'toggle'" class="form-checkbox-wrap">
           <label class="form-checkbox-card">
             <input
               type="checkbox"
@@ -709,6 +709,7 @@ import { formatLocalDate } from '../../utils/dates.js'
 
 const props = defineProps({
   studentId: { type: String, required: true },
+  classId: { type: String, default: '' },
   events: { type: Array, default: () => [] },
   behaviorCodesMap: { type: Object, default: () => ({}) }
 })
@@ -1125,7 +1126,7 @@ async function submitPastRecord() {
         props.studentId,
         'a',
         note.trim() || 'Past Absence Logged',
-        { timestamp: isoTimestamp, testDay: isTestDay }
+        { timestamp: isoTimestamp, testDay: isTestDay, classId: props.classId || activeClass.value?.classId }
       )
     } else if (logRecordType.value === 'late') {
       const { date, time, minutes, isTestDay, note } = pastLateForm
@@ -1139,7 +1140,7 @@ async function submitPastRecord() {
         props.studentId,
         'l',
         note.trim() || 'Past Late Logged',
-        { timestamp: isoTimestamp, duration: durationMs, testDay: isTestDay }
+        { timestamp: isoTimestamp, duration: durationMs, testDay: isTestDay, classId: props.classId || activeClass.value?.classId }
       )
     } else if (logRecordType.value === 'washroom') {
       const { date, minutes, isTestDay, note } = pastWashForm
@@ -1152,7 +1153,7 @@ async function submitPastRecord() {
         props.studentId,
         'w',
         note.trim() || null,
-        { timestamp: isoTimestamp, duration: durationMs, testDay: isTestDay }
+        { timestamp: isoTimestamp, duration: durationMs, testDay: isTestDay, classId: props.classId || activeClass.value?.classId }
       )
     } else if (logRecordType.value === 'contact') {
       const { date, method, guardian, note } = pastContactForm
@@ -1167,7 +1168,7 @@ async function submitPastRecord() {
         props.studentId,
         'pc',
         formattedNote,
-        { timestamp: isoTimestamp }
+        { timestamp: isoTimestamp, classId: props.classId || activeClass.value?.classId }
       )
     } else if (logRecordType.value === 'note') {
       const { date, code, note } = pastNoteForm
@@ -1178,7 +1179,7 @@ async function submitPastRecord() {
         props.studentId,
         code || 'note',
         note.trim(),
-        { timestamp: isoTimestamp }
+        { timestamp: isoTimestamp, classId: props.classId || activeClass.value?.classId }
       )
     }
 
@@ -1226,12 +1227,12 @@ async function saveEdit() {
       }
     }
 
-    if (editingItem.value.rawCode === 'l' || editingItem.value.rawCode === 'w') {
+    if (editingItem.value.rawCode === 'l' || editingItem.value.rawCode === 'w' || props.behaviorCodesMap?.[editingItem.value.rawCode]?.type === 'toggle') {
       const mins = parseFloat(editForm.duration) || 0
       updates.duration = Math.round(mins * 60000)
     }
 
-    if (['a', 'l', 'w'].includes(editingItem.value.rawCode)) {
+    if (['a', 'l', 'w'].includes(editingItem.value.rawCode) || props.behaviorCodesMap?.[editingItem.value.rawCode]?.type === 'toggle') {
       updates.testDay = editForm.testDay
     }
 
