@@ -105,7 +105,7 @@
   --color-orange-text:      #c2410c; /* Dark orange for text (5.6:1 contrast) */
   --color-orange-bg:        rgba(234, 88, 12, 0.15);
 
-  --color-halo:             #64748b; /* Cool architectural slate for frequent leaver halo */
+  --color-halo:             #64748b; /* Cool architectural slate for frequent out of class halo */
   --color-halo-text:        #475569;
   --color-halo-bg:          rgba(100, 116, 139, 0.12);
   --color-halo-border:      rgba(100, 116, 139, 0.35);
@@ -210,7 +210,7 @@
   --color-orange-text:      #fdba74;
   --color-orange-bg:        rgba(249, 115, 22, 0.18);
 
-  --color-halo:             #cbd5e1; /* Architectural platinum for frequent leaver halo */
+  --color-halo:             #cbd5e1; /* Architectural platinum for frequent out of class halo */
   --color-halo-text:        #e2e8f0;
   --color-halo-bg:          rgba(203, 213, 225, 0.14);
   --color-halo-border:      rgba(203, 213, 225, 0.35);

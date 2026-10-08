@@ -257,7 +257,7 @@ export function calculateStudentRiskMatrix({
       }
     }
 
-    // Option 1: Chronic Disruption Halo (Frequent Hallway / Late Leaver)
+    // Option 1: Chronic Disruption Halo (Frequent Out of Class / Late Departure)
     // Identifies students with serial out-of-class patterns without fudging raw minute percentages
     const schoolDays = Math.max(totalDays, 1)
     const tripsPerWeek = (totalWashroomCount / schoolDays) * 5
@@ -275,12 +275,12 @@ export function calculateStudentRiskMatrix({
 
     let haloReason = ''
     if (hasHallwayHalo && hasLateHalo) {
-      haloReason = `Frequent Leaver (${totalWashroomCount} out · ${totalLateCount} late)`
+      haloReason = `Frequent Out-of-Class (${totalWashroomCount} out · ${totalLateCount} late)`
     } else if (hasHallwayHalo) {
       if (isExtendedHallway && !isChronicHallway) {
         haloReason = `Extended Out-of-Class Departures (${totalWashroomCount} trips · avg ${Math.round(avgWashroomMins)}m)`
       } else {
-        haloReason = `Frequent Out-of-Class Leaver (${totalWashroomCount} trips · ${tripsPerWeek.toFixed(1)}/wk)`
+        haloReason = `Frequent Out-of-Class (${totalWashroomCount} trips · ${tripsPerWeek.toFixed(1)}/wk)`
       }
     } else if (hasLateHalo) {
       haloReason = `Chronically Late (${totalLateCount} lates · ${latesPerWeek.toFixed(1)}/wk)`

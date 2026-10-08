@@ -72,7 +72,7 @@
       <span class="legend-pill legend-pill--orange">● Presence Risk</span>
       <span class="legend-pill legend-pill--red">● Critical Intervention</span>
       <span class="legend-pill legend-pill--halo" title="Students with frequent or extended out-of-class departures">
-        <span class="legend-halo-ring"></span> Frequent Leaver
+        <span class="legend-halo-ring"></span> Frequent Out Of Class
       </span>
       <span v-if="unassessedCount > 0" class="legend-pill legend-pill--slate">● Pending Marks</span>
     </div>
@@ -209,7 +209,7 @@
               <span class="list-card__name">{{ st.fullName }}</span>
               <span v-if="st.hasHalo" class="list-card__halo-tag" :title="st.haloReason">
                 <AlertTriangle :size="10" class="list-card__halo-icon" />
-                <span>Frequent Leaver</span>
+                <span>Frequent Out Of Class</span>
               </span>
             </div>
             <div class="list-card__student-right">

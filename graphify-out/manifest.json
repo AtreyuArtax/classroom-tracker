@@ -530,8 +530,8 @@
     "semantic_hash": ""
   },
   "src/components/reports/StudentRiskScatterPlot.vue": {
-    "mtime": 1791459036.8460941,
-    "ast_hash": "57e813a0153d8145fc46c65ffbce0653",
+    "mtime": 1791464861.7015371,
+    "ast_hash": "8c89c4b5a16f9551f979ddbf25dab20d",
     "semantic_hash": ""
   },
   "src/components/reports/PrintExpectationsModal.vue": {
@@ -1630,13 +1630,13 @@
     "semantic_hash": ""
   },
   "src/test_student_risk_math.js": {
-    "mtime": 1791456195.1747813,
-    "ast_hash": "004b4f4372c40982465b80b427840a36",
+    "mtime": 1791464585.031506,
+    "ast_hash": "8afb0faf36a3f97027cca9c536e83fc5",
     "semantic_hash": ""
   },
   "src/utils/studentRiskMath.js": {
-    "mtime": 1791456183.1911883,
-    "ast_hash": "966a311034e4dd72817e1ed1d709ba19",
+    "mtime": 1791464592.8397257,
+    "ast_hash": "f1b1a0d246dbb635619dee88652cd8c2",
     "semantic_hash": ""
   }
 }

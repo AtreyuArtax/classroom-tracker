@@ -150,7 +150,7 @@ assert.strictEqual(pHallway.timeInClassPct, 84)
 assert.strictEqual(pHallway.activeLostMins, 240)
 assert.strictEqual(pHallway.quadrant, 'red')
 assert.strictEqual(pHallway.baseX, 64, '84% in-class maps to baseX=64% (< 85% cutoff at 66%)')
-assert.strictEqual(pHallway.hasHalo, true, 'Harry has chronic leaver halo')
+assert.strictEqual(pHallway.hasHalo, true, 'Harry has chronic out of class halo')
 assert.strictEqual(pHallway.equivClassesLost, '3.2') // 240 / 75 = 3.2 classes
 console.log('✓ Chronic hallway/late student drops to 84%, shifts to Critical Intervention, and gains Halo')
 

@@ -1078,7 +1078,6 @@ function onDrop(evt) {
   top: calc(100% + 4px);
   left: 0;
   width: max-content;
-  max-width: calc(100cqw - 8px);
   background: var(--tooltip-bg, #0f172a);
   color: var(--tooltip-text, #f8fafc);
   border-radius: 4px;
@@ -1168,14 +1167,20 @@ function onDrop(evt) {
 
 /* Edge column clamping */
 .desk-tile__badge-tooltip--right-edge {
+  white-space: normal;
   max-width: calc(100cqw - 8px);
 }
 .desk-tile__badge-tooltip--left-edge {
+  white-space: normal;
   max-width: calc(100cqw - 8px);
 }
 
 .desk-tile__badge-tooltip-icon {
   flex-shrink: 0;
+}
+
+.desk-tile__badge-tooltip > span {
+  min-width: 0;
 }
 
 .desk-tile__badge-tooltip--washroom .desk-tile__badge-tooltip-icon {
