@@ -32,11 +32,6 @@
             <span class="print-hub__stat-label">Roster Size:</span>
             <span class="print-hub__stat-value">{{ sidebarStudents.length }} Students</span>
           </div>
-          <div class="print-hub__features-list">
-            <span class="print-hub__chip">Custom Blank Columns</span>
-            <span class="print-hub__chip">Auto-fill Rows</span>
-            <span class="print-hub__chip">Sub Plan Ready</span>
-          </div>
         </div>
 
         <div class="print-hub__card-footer">
@@ -62,12 +57,6 @@
           <div class="print-hub__stat-row">
             <span class="print-hub__stat-label">Grid Layout:</span>
             <span class="print-hub__stat-value">{{ reportClass?.gridSize?.rows || 6 }} × {{ reportClass?.gridSize?.cols || 6 }} Layout</span>
-          </div>
-          <div class="print-hub__features-list">
-            <span class="print-hub__chip">Landscape Default</span>
-            <span class="print-hub__chip">Table Pod Badges</span>
-            <span class="print-hub__chip">IEP Indicator Dots</span>
-            <span class="print-hub__chip">Sub Plan Ready</span>
           </div>
         </div>
 
@@ -95,20 +84,6 @@
             <span class="print-hub__stat-label">Target Audience:</span>
             <span class="print-hub__stat-value">{{ sidebarStudents.length }} Students enrolled</span>
           </div>
-          <div v-if="isSBAR" class="print-hub__features-list">
-            <span class="print-hub__chip">SBAR Level Badges</span>
-            <span class="print-hub__chip">Expectation Mastery</span>
-            <span class="print-hub__chip">Progression Timeline</span>
-            <span class="print-hub__chip">Attendance Markers</span>
-            <span class="print-hub__chip">Learning Skills</span>
-          </div>
-          <div v-else class="print-hub__features-list">
-            <span class="print-hub__chip">Overall Grade Badge</span>
-            <span class="print-hub__chip">Evidence Triangulation</span>
-            <span class="print-hub__chip">Attendance &amp; Behavior</span>
-            <span class="print-hub__chip">Learning Skills</span>
-            <span class="print-hub__chip">Trend Line</span>
-          </div>
         </div>
 
         <div class="print-hub__card-footer">
@@ -134,11 +109,6 @@
           <div class="print-hub__stat-row">
             <span class="print-hub__stat-label">Columns Included:</span>
             <span class="print-hub__stat-value">Assessments, Categories &amp; Final Mark</span>
-          </div>
-          <div class="print-hub__features-list">
-            <span class="print-hub__chip">Compact Grid Layout</span>
-            <span class="print-hub__chip">Privacy Anonymizer</span>
-            <span class="print-hub__chip">Teacher Signature Line</span>
           </div>
         </div>
 
@@ -166,11 +136,6 @@
             <span class="print-hub__stat-label">Expectations Assessed:</span>
             <span class="print-hub__stat-value">{{ totalExpectationsCount }} Specific Expectations</span>
           </div>
-          <div class="print-hub__features-list">
-            <span class="print-hub__chip">Strand Summaries</span>
-            <span class="print-hub__chip">Mastery Levels (1-4)</span>
-            <span class="print-hub__chip">Admin Ready</span>
-          </div>
         </div>
 
         <div class="print-hub__card-footer">
@@ -197,11 +162,6 @@
             <span class="print-hub__stat-label">Print Format:</span>
             <span class="print-hub__stat-value">1-Page or 2-Page Duplex</span>
           </div>
-          <div class="print-hub__features-list">
-            <span class="print-hub__chip">Multi-class Batching</span>
-            <span class="print-hub__chip">Day 1/2 Schedule</span>
-            <span class="print-hub__chip">Binder Layout</span>
-          </div>
         </div>
 
         <div class="print-hub__card-footer">
@@ -227,12 +187,6 @@
           <div class="print-hub__stat-row">
             <span class="print-hub__stat-label">Contacts on File:</span>
             <span class="print-hub__stat-value">{{ totalParentEmailsCount }} Parents · {{ totalStudentEmailsCount }} Students</span>
-          </div>
-          <div class="print-hub__features-list">
-            <span class="print-hub__chip">Privacy BCC Mode</span>
-            <span class="print-hub__chip">Parent &amp; Student Groups</span>
-            <span class="print-hub__chip">One-Click Clipboard</span>
-            <span class="print-hub__chip">Split-Class Filter</span>
           </div>
         </div>
 
@@ -299,10 +253,6 @@ const effectiveClass = computed(() => {
   return getEffectiveClassRecord(props.reportClass, activeSubjectId.value)
 })
 
-const isSBAR = computed(() => {
-  const fw = effectiveClass.value?.gradingFramework
-  return fw === 'sbar' || (typeof fw === 'string' && fw.startsWith('sbar'))
-})
 
 const emit = defineEmits([
   'open-batch-print',
@@ -471,21 +421,6 @@ function handlePrintExpectations() {
 
 .print-hub__stat-label { color: var(--text-secondary); }
 .print-hub__stat-value { font-weight: 600; color: var(--text); }
-
-.print-hub__features-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.print-hub__chip {
-  font-size: 0.75rem;
-  background: var(--surface-hover);
-  border: 1px solid var(--border);
-  padding: 4px 8px;
-  border-radius: var(--radius-sm);
-  color: var(--text-secondary);
-}
 
 .print-hub__card-footer {
   margin-top: auto;

@@ -529,7 +529,7 @@ const metricSubtitle = computed(() => matrixData.value.metricSubtitle)
   flex-direction: column;
   gap: 2.5px;
   width: max-content;
-  max-width: 215px;
+  max-width: 280px;
   white-space: normal;
 }
 
@@ -584,6 +584,7 @@ const metricSubtitle = computed(() => matrixData.value.metricSubtitle)
   padding: 1px 4px;
   border-radius: 3px;
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .tt-grade--green      { color: var(--color-success-text);   background: var(--color-success-bg); }
@@ -608,7 +609,9 @@ const metricSubtitle = computed(() => matrixData.value.metricSubtitle)
 .risk-plot__tt-meta {
   font-size: 0.62rem;
   color: var(--text-secondary, #6e6e73);
-  white-space: nowrap;
+  white-space: normal;
+  word-break: normal;
+  overflow-wrap: break-word;
 }
 
 .risk-plot__tt-meta strong {
@@ -623,7 +626,7 @@ const metricSubtitle = computed(() => matrixData.value.metricSubtitle)
 /* Cluster Popover Tooltip */
 .risk-plot__tooltip--cluster {
   min-width: 175px;
-  max-width: 215px;
+  max-width: 250px;
   padding: 5px 6px;
 }
 
