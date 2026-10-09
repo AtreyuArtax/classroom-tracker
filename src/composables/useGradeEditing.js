@@ -165,7 +165,7 @@ export function useGradeEditing(defaultStudentIdRef = null) {
   }
 
   // 3. Attempts popover
-  function openAttempts(e, arg1, arg2) {
+  function openAttempts(e, arg1, arg2, options = {}) {
     let studentId = defaultStudentIdRef?.value || null
     let assessmentId = null
     if (arg2 !== undefined) {
@@ -180,7 +180,7 @@ export function useGradeEditing(defaultStudentIdRef = null) {
     const student = activeClassRecord.value?.students?.[studentId]
     const assessment = assessments.value.find(a => String(a.assessmentId) === String(assessmentId))
 
-    if (grade && student && assessment) {
+    if (student && assessment) {
       attemptsPopover.value = {
         x,
         y,
@@ -191,18 +191,51 @@ export function useGradeEditing(defaultStudentIdRef = null) {
         studentName: `${student.firstName} ${student.lastName}`,
         assessmentName: assessment.name,
         retestPolicy: assessment.retestPolicy || 'highest',
-        attempts: grade.attempts || [],
+        attempts: grade?.attempts || [],
         totalPoints: assessment.totalPoints,
-        resolvedScore: grade.resolvedScore
+        resolvedScore: grade?.resolvedScore ?? null,
+        initialAddMode: !!options.initialAddMode
       }
     }
   }
 
-  function openAttemptsFromMenu(e, studentId, assessmentId) {
-    const x = contextMenu.value?.x || e.clientX
-    const y = contextMenu.value?.y || e.clientY
+  function openAttemptsFromMenu(e, studentId, assessmentId, options = {}) {
+    const x = contextMenu.value?.x || e?.clientX
+    const y = contextMenu.value?.y || e?.clientY
     contextMenu.value = null
-    openAttempts({ clientX: x, clientY: y }, studentId, assessmentId)
+    openAttempts({ clientX: x, clientY: y }, studentId, assessmentId, options)
+  }
+
+  async function addAttempt(arg1, arg2, arg3) {
+    let aId, sId, payload
+    if (arg3 !== undefined) {
+      aId = arg1
+      sId = arg2
+      payload = arg3
+    } else if (arg2 !== undefined) {
+      aId = arg1
+      sId = defaultStudentIdRef?.value
+      payload = arg2
+    } else {
+      aId = attemptsPopover.value?.assessmentId
+      sId = attemptsPopover.value?.studentId
+      payload = arg1
+    }
+    if (!aId || !sId || !payload) return
+    const points = Number(payload.pointsEarned ?? payload.points ?? payload.score)
+    const date = payload.date || new Date().toISOString()
+    const comment = payload.comment || ''
+    await enterGrade(aId, sId, points, date, comment)
+
+    // Sync attempts array in active popover
+    if (attemptsPopover.value && attemptsPopover.value.assessmentId === aId && attemptsPopover.value.studentId === sId) {
+      const grade = gradeMap.value[aId]?.[sId]
+      if (grade) {
+        attemptsPopover.value.attempts = grade.attempts || []
+        attemptsPopover.value.resolvedScore = grade.resolvedScore
+        attemptsPopover.value.initialAddMode = false
+      }
+    }
   }
 
   function isMissing(studentId, assessmentId) {
@@ -366,6 +399,7 @@ export function useGradeEditing(defaultStudentIdRef = null) {
     submitNewAttempt,
     setAttemptPrimary,
     deleteAttempt,
-    updateComment
+    updateComment,
+    addAttempt
   }
 }

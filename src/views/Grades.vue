@@ -68,9 +68,6 @@
           @cancel-edit="cancelEdit"
           @on-blur="onAssessmentViewBlur"
           @on-enter="onAssessmentViewEnter"
-          @open-attempts="openAttempts"
-          @open-context-menu="onContextMenu"
-          @open-action-menu="onStudentActionMenu"
         />
 
         <div v-else-if="!selectedStudentId" class="grades__grid-container">
@@ -244,17 +241,7 @@
       </main>
     </div>
 
-    <!-- Student Action Context Menu Component -->
-    <GradesContextMenu
-      :student-action-menu="studentActionMenu"
-      :selected-assessment-id="selectedAssessmentId"
-      :grade-map="gradeMap"
-      @close="studentActionMenu = null"
-      @toggle-missing="toggleMissingFromView"
-      @toggle-excluded="toggleExcludedFromView"
-      @open-attempts="openAttempts"
-      @start-new-attempt="startNewAttempt"
-    />
+    <!-- Missing Students Modal Component -->
 
     <!-- Missing Students Modal Component -->
     <GradesMissingModal
@@ -335,7 +322,6 @@ import StudentSidebar from '../components/StudentSidebar.vue'
 const GradesAssessmentDetailView   = defineAsyncComponent(() => import('../components/grades/GradesAssessmentDetailView.vue'))
 const GradesAssessmentDetailSBAR   = defineAsyncComponent(() => import('../components/grades/GradesAssessmentDetailSBAR.vue'))
 const GradesMissingModal           = defineAsyncComponent(() => import('../components/grades/GradesMissingModal.vue'))
-import GradesContextMenu from '../components/grades/GradesContextMenu.vue'
 import ClassSwitcher from '../components/ClassSwitcher.vue'
 import UndoButton from '../components/UndoButton.vue'
 import { useMessage } from '../composables/useMessage.js'

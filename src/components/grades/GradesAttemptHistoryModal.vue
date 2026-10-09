@@ -1,6 +1,6 @@
 <template>
   <Teleport to="body">
-    <div v-if="show" class="attempt-modal-backdrop" @click="handleClose" @contextmenu.prevent="handleClose">
+    <div v-if="show" class="attempt-modal-backdrop" @click="handleBackdropClick" @contextmenu.prevent="handleBackdropClick">
       <div class="attempt-modal-container" @click.stop>
         <!-- Header -->
         <div class="attempt-modal-header">
@@ -11,18 +11,76 @@
               <span v-if="retestPolicy" class="attempt-policy-badge">· Policy: {{ retestPolicy }}</span>
             </p>
           </div>
-          <button class="attempt-modal-close-btn" @click="handleClose" title="Close">
+          <button class="attempt-modal-close-btn" @click="handleClose" title="Close (Esc)">
             <X :size="18" />
           </button>
         </div>
 
         <!-- Scrollable Body -->
         <div class="attempt-modal-body">
-          <div v-if="attempts.length === 0" class="attempt-modal-empty">
+          <!-- In-Modal New Attempt Entry Card -->
+          <div v-if="isAddingAttempt" class="attempt-modal-card attempt-modal-card--new">
+            <div class="attempt-new-header">
+              <span class="attempt-new-title">Log New Attempt</span>
+              <button class="attempt-cancel-btn-subtle" @click="cancelNewAttempt" title="Cancel">
+                <X :size="14" />
+              </button>
+            </div>
+            <div class="attempt-new-fields">
+              <div class="attempt-field-group">
+                <label class="attempt-field-label">Score (out of {{ totalPoints }})</label>
+                <input
+                  ref="newScoreInputRef"
+                  v-model.number="newScore"
+                  type="number"
+                  min="0"
+                  :max="totalPoints"
+                  class="attempt-field-input"
+                  placeholder="Score"
+                  @keydown.enter.prevent="handleSaveAttempt"
+                  @keydown.esc.prevent="cancelNewAttempt"
+                />
+              </div>
+              <div class="attempt-field-group">
+                <label class="attempt-field-label">Attempt Date</label>
+                <input
+                  v-model="newDate"
+                  type="date"
+                  class="attempt-field-input"
+                  @keydown.enter.prevent="handleSaveAttempt"
+                  @keydown.esc.prevent="cancelNewAttempt"
+                />
+              </div>
+            </div>
+            <div class="attempt-field-group">
+              <label class="attempt-field-label">Observation / Note (optional)</label>
+              <textarea
+                v-model="newComment"
+                class="attempt-note-textarea"
+                placeholder="Reason for re-test, feedback, or observations..."
+                rows="2"
+                @keydown.esc.prevent="cancelNewAttempt"
+              ></textarea>
+            </div>
+            <div class="attempt-new-actions">
+              <button
+                class="attempt-save-btn"
+                :disabled="newScore === null || newScore === '' || newScore < 0"
+                @click="handleSaveAttempt"
+              >
+                <Check :size="14" /> Save Attempt
+              </button>
+              <button class="attempt-cancel-btn" @click="cancelNewAttempt">
+                Cancel
+              </button>
+            </div>
+          </div>
+
+          <div v-if="attempts.length === 0 && !isAddingAttempt" class="attempt-modal-empty">
             <p>No attempts recorded for this student yet.</p>
           </div>
 
-          <div v-else class="attempt-modal-list">
+          <div v-else-if="attempts.length > 0" class="attempt-modal-list">
             <div 
               v-for="(att, idx) in attempts" 
               :key="att.attemptId || idx" 
@@ -73,9 +131,17 @@
 
         <!-- Footer -->
         <div class="attempt-modal-footer">
-          <button class="attempt-add-btn" @click="$emit('start-new-attempt')">
-            <Plus :size="16" /> Add Re-test / Attempt
-          </button>
+          <div class="attempt-footer-left">
+            <button v-if="!isAddingAttempt" class="attempt-add-btn" @click="startNewAttempt">
+              <Plus :size="16" /> Log Re-test / Attempt
+            </button>
+            <span v-else class="attempt-footer-helper">Enter score to record attempt</span>
+          </div>
+          <div class="attempt-footer-right">
+            <span class="attempt-save-indicator" title="Changes to notes are saved immediately">
+              <Check :size="13" class="attempt-save-icon" /> Notes auto-saved
+            </span>
+          </div>
         </div>
       </div>
     </div>
@@ -83,8 +149,8 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
-import { X, Trash2, Plus } from 'lucide-vue-next'
+import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
+import { X, Trash2, Plus, Check } from 'lucide-vue-next'
 
 const props = defineProps({
   show: { type: Boolean, default: false },
@@ -93,14 +159,98 @@ const props = defineProps({
   totalPoints: { type: Number, default: 100 },
   retestPolicy: { type: String, default: 'highest' },
   resolvedScore: { type: Number, default: null },
-  attempts: { type: Array, default: () => [] }
+  attempts: { type: Array, default: () => [] },
+  initialAddMode: { type: Boolean, default: false }
 })
 
-const emit = defineEmits(['close', 'delete-attempt', 'update-comment', 'start-new-attempt', 'set-primary'])
+const emit = defineEmits(['close', 'delete-attempt', 'update-comment', 'create-attempt', 'set-primary'])
+
+const isAddingAttempt = ref(false)
+const newScore = ref(null)
+const newDate = ref('')
+const newComment = ref('')
+const newScoreInputRef = ref(null)
+
+function resetNewAttemptForm() {
+  newScore.value = null
+  const today = new Date()
+  const yyyy = today.getFullYear()
+  const mm = String(today.getMonth() + 1).padStart(2, '0')
+  const dd = String(today.getDate()).padStart(2, '0')
+  newDate.value = `${yyyy}-${mm}-${dd}`
+  newComment.value = ''
+}
+
+watch(() => props.show, (newVal) => {
+  if (newVal) {
+    resetNewAttemptForm()
+    isAddingAttempt.value = !!props.initialAddMode
+    if (isAddingAttempt.value) {
+      nextTick(() => newScoreInputRef.value?.focus())
+    }
+  } else {
+    isAddingAttempt.value = false
+  }
+})
+
+watch(() => props.initialAddMode, (newVal) => {
+  if (props.show && newVal) {
+    resetNewAttemptForm()
+    isAddingAttempt.value = true
+    nextTick(() => newScoreInputRef.value?.focus())
+  }
+})
+
+function startNewAttempt() {
+  resetNewAttemptForm()
+  isAddingAttempt.value = true
+  nextTick(() => newScoreInputRef.value?.focus())
+}
+
+function cancelNewAttempt() {
+  isAddingAttempt.value = false
+  resetNewAttemptForm()
+}
+
+function handleSaveAttempt() {
+  if (newScore.value === null || newScore.value === '' || isNaN(Number(newScore.value))) return
+  const val = Number(newScore.value)
+  if (val < 0) return
+  emit('create-attempt', {
+    pointsEarned: val,
+    date: newDate.value || new Date().toISOString(),
+    comment: (newComment.value || '').trim()
+  })
+  isAddingAttempt.value = false
+  resetNewAttemptForm()
+}
 
 function handleClose() {
   emit('close')
 }
+
+function handleBackdropClick() {
+  if (isAddingAttempt.value) return
+  handleClose()
+}
+
+function handleKeyDown(e) {
+  if (e.key === 'Escape' && props.show) {
+    if (isAddingAttempt.value) {
+      cancelNewAttempt()
+    } else {
+      handleClose()
+    }
+  }
+}
+
+onMounted(() => {
+  window.addEventListener('keydown', handleKeyDown)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleKeyDown)
+})
 
 function getPercent(score) {
   if (score == null || !props.totalPoints) return 0
@@ -408,19 +558,174 @@ function formatDate(dStr) {
   border-color: var(--primary);
 }
 
+.attempt-modal-card--new {
+  border-color: var(--primary);
+  background: var(--surface);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  margin-bottom: 14px;
+}
+
+.attempt-new-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.attempt-new-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--primary);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.attempt-cancel-btn-subtle {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 2px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.attempt-cancel-btn-subtle:hover {
+  color: var(--text);
+  background: var(--bg-secondary);
+}
+
+.attempt-new-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.attempt-field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.attempt-field-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.attempt-field-input {
+  width: 100%;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm, 6px);
+  background: var(--bg-secondary);
+  color: var(--text);
+  font-size: 0.85rem;
+  font-family: inherit;
+  transition: border-color 0.15s ease;
+}
+
+.attempt-field-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  background: var(--surface);
+}
+
+.attempt-new-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.attempt-save-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: #16a34a;
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm, 6px);
+  font-size: 0.825rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, opacity 0.15s ease;
+}
+
+.attempt-save-btn:hover:not(:disabled) {
+  background: #15803d;
+}
+
+.attempt-save-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.attempt-cancel-btn {
+  padding: 6px 12px;
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm, 6px);
+  font-size: 0.825rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.attempt-cancel-btn:hover {
+  background: var(--bg-secondary);
+  color: var(--text);
+}
+
 .attempt-modal-footer {
   padding: 12px 20px;
   border-top: 1px solid var(--border);
   background: var(--surface);
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.attempt-footer-left {
+  display: flex;
+  align-items: center;
+}
+
+.attempt-footer-helper {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.attempt-footer-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.attempt-save-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  user-select: none;
+}
+
+.attempt-save-icon {
+  color: #16a34a;
 }
 
 .attempt-add-btn {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 8px 14px;
+  padding: 6px 14px;
   background: var(--primary);
   color: white;
   border: none;

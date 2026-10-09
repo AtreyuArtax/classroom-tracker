@@ -296,7 +296,7 @@
             :data-admin-check-cell="a.purpose === 'administrative' && a.adminFormat !== 'text' ? (student.studentId + '_' + a.assessmentId) : undefined"
             @click="handleCellClick(student.studentId, a)"
             @keydown="onChecklistKeyNavigate($event, student, a)"
-            @contextmenu.prevent="isCellApplicable(student.studentId, a) && onContextMenu($event, student.studentId, a.assessmentId)"
+            @contextmenu.prevent="isCellApplicable(student.studentId, a) && (cancelHoverTimer(), onContextMenu($event, student.studentId, a.assessmentId))"
           >
             <!-- Inline Editor for Admin Text -->
             <div v-if="editingAdminCell?.sId === student.studentId && editingAdminCell?.aId === a.assessmentId" class="grades__cell-edit" @click.stop>
@@ -357,7 +357,10 @@
               </template>
             </div>
 
-            <div v-else-if="gradeMap[a.assessmentId]?.[student.studentId]" class="grades__cell-content">
+            <div 
+              v-else-if="gradeMap[a.assessmentId]?.[student.studentId]" 
+              class="grades__cell-content"
+            >
               <span v-if="gradeMap[a.assessmentId][student.studentId].missing" class="grades__cell-missing">M</span>
               <span v-else-if="gradeMap[a.assessmentId][student.studentId].excluded" class="grades__cell-excluded">EX</span>
               <span v-else-if="gradeMap[a.assessmentId][student.studentId].resolvedScore !== null">
@@ -372,13 +375,22 @@
                 title="Student was marked absent on the date of this assessment"
               ></div>
               
-              <!-- Retest Indicator -->
+              <!-- Retest & Note Smart Badge (Unified Option 2 - purposefully hovered on badge) -->
               <button 
-                v-if="gradeMap[a.assessmentId]?.[student.studentId]?.attempts?.length > 1" 
-                class="grades__cell-retest-btn"
-                title="View attempts"
-                @click.stop="openAttempts($event, student.studentId, a.assessmentId)"
-              >•</button>
+                v-if="getGridSmartBadge(student.studentId, a.assessmentId)" 
+                class="smart-badge smart-badge--grid"
+                :class="'smart-badge--' + getGridSmartBadge(student.studentId, a.assessmentId).type"
+                :title="getGridSmartBadge(student.studentId, a.assessmentId).title"
+                @click.stop="openAttempts($event, student.studentId, a.assessmentId); cancelHoverTimer()"
+                @mouseenter="startBadgeHover($event, student, a)"
+                @mouseleave="cancelHoverTimer"
+              >
+                <RefreshCw v-if="getGridSmartBadge(student.studentId, a.assessmentId).hasIcon" :size="8.5" class="smart-badge__icon" />
+                <span v-if="getGridSmartBadge(student.studentId, a.assessmentId).countText" class="smart-badge__text">
+                  {{ getGridSmartBadge(student.studentId, a.assessmentId).countText }}
+                </span>
+                <NotebookPen v-if="getGridSmartBadge(student.studentId, a.assessmentId).hasNoteIcon" :size="8.5" class="smart-badge__icon" />
+              </button>
             </div>
             <div v-else class="grades__cell-placeholder">—</div>
           </td>
@@ -386,41 +398,19 @@
       </tbody>
     </table>
 
-    <!-- Context Menus & Attempts Popover (Moved inside the grid wrapper for self-containment) -->
-    <div v-if="contextMenu" class="grades__context-backdrop grades__context-backdrop--dim" @click="contextMenu = null" @contextmenu.prevent="contextMenu = null">
-      <div class="grades__context-menu" :style="{ top: contextMenu.y + 'px', left: contextMenu.x + 'px' }">
-        <template v-if="contextMenu.aId === 'overall'">
-          <button class="grades__context-btn" @click="startEdit(contextMenu.sId, 'overall'); contextMenu = null">
-            <Pencil :size="14" /> Adjust Grade
-          </button>
-          <button 
-            v-if="classGrades[contextMenu.sId]?.isGradeAdjusted" 
-            class="grades__context-btn" 
-            @click="undoStudentGradeAdjustment(contextMenu.sId); contextMenu = null"
-          >
-            <RotateCcw :size="14" /> Reset to Calculated
-          </button>
-        </template>
-        <template v-else>
-          <button class="grades__context-btn" @click="startEdit(contextMenu.sId, contextMenu.aId); contextMenu = null">
-            <Plus :size="14" /> New Attempt
-          </button>
-          <button 
-            v-if="gradeMap[contextMenu.aId]?.[contextMenu.sId]?.attempts?.length >= 1" 
-            class="grades__context-btn" 
-            @click="openAttemptsFromMenu($event, contextMenu.sId, contextMenu.aId)"
-          >
-            <NotebookPen :size="14" /> View Notes
-          </button>
-          <button class="grades__context-btn" @click="toggleMissing">
-            <AlertCircle :size="14" /> {{ isMissing(contextMenu.sId, contextMenu.aId) ? 'Unmark Missing' : 'Mark Missing' }}
-          </button>
-          <button class="grades__context-btn" @click="toggleExcluded">
-            <XCircle :size="14" /> {{ isExcluded(contextMenu.sId, contextMenu.aId) ? 'Include in Grade' : 'Mark Excluded' }}
-          </button>
-        </template>
-      </div>
-    </div>
+    <!-- Unified Student Action Context Menu -->
+    <GradesContextMenu
+      :menu="contextMenu"
+      :grade-map="gradeMap"
+      :class-grades="classGrades"
+      @close="contextMenu = null"
+      @open-attempts="openAttemptsFromMenu($event, contextMenu.sId, contextMenu.aId, { initialAddMode: false })"
+      @start-new-attempt="openAttemptsFromMenu($event, contextMenu.sId, contextMenu.aId, { initialAddMode: true })"
+      @toggle-missing="toggleMissing(contextMenu.aId, contextMenu.sId)"
+      @toggle-excluded="toggleExcluded(contextMenu.aId, contextMenu.sId)"
+      @adjust-grade="startEdit(contextMenu.sId, 'overall'); contextMenu = null"
+      @reset-grade="undoStudentGradeAdjustment(contextMenu.sId); contextMenu = null"
+    />
 
     <div v-if="headerMenu" class="grades__context-backdrop grades__context-backdrop--dim" @click="headerMenu = null" @contextmenu.prevent="headerMenu = null">
       <div class="grades__context-menu" :style="{ top: headerMenu.y + 'px', left: headerMenu.x + 'px' }">
@@ -468,18 +458,22 @@
       :retest-policy="attemptsPopover?.retestPolicy"
       :resolved-score="gradeMap[attemptsPopover?.assessmentId]?.[attemptsPopover?.studentId]?.resolvedScore ?? attemptsPopover?.resolvedScore"
       :attempts="gradeMap[attemptsPopover?.assessmentId]?.[attemptsPopover?.studentId]?.attempts ?? attemptsPopover?.attempts ?? []"
+      :initial-add-mode="!!attemptsPopover?.initialAddMode"
       @close="attemptsPopover = null"
       @delete-attempt="attId => onDeleteAttempt(attId)"
       @update-comment="(attId, val) => onUpdateComment(attId, val)"
-      @start-new-attempt="attemptsPopover = null"
+      @create-attempt="payload => onAddAttempt(payload)"
       @set-primary="attId => onSetPrimary(attId)"
     />
+
+    <!-- Delayed Attempt & Note Hover Card (Unified Option 2) -->
+    <GradeAttemptHoverCard :card="activeHoverCard" />
   </div>
 </div>
 </template>
 
 <script setup>
-import { ref, computed, watch, nextTick } from 'vue'
+import { ref, computed, watch, nextTick, onBeforeUnmount } from 'vue'
 import { getEffectiveClassRecord } from '../composables/useElementary.js'
 import { activeSubjectId } from '../composables/useClassroomState.js'
 import { 
@@ -522,15 +516,17 @@ import {
 } from '../utils/gradeColors.js'
 import { useMessage } from '../composables/useMessage.js'
 import { cleanUnitName } from '../composables/useElementary.js'
-import { getAssessmentPercentage } from '../utils/gradeCalc.js'
+import { getAssessmentPercentage, getGradeSmartBadge } from '../utils/gradeCalc.js'
 import { formatLocalDisplay } from '../utils/dates.js'
 import { 
   Plus, Pencil, XCircle, AlertCircle, Trash2, X, MoreVertical, 
   ChevronUp, ChevronDown, Copy, Calendar, RotateCcw, BarChart2, NotebookPen,
-  Asterisk, Check, Type
+  Asterisk, Check, Type, RefreshCw
 } from 'lucide-vue-next'
 import TestDayWarning from './TestDayWarning.vue'
 import GradesAttemptHistoryModal from './grades/GradesAttemptHistoryModal.vue'
+import GradeAttemptHoverCard from './grades/GradeAttemptHoverCard.vue'
+import GradesContextMenu from './grades/GradesContextMenu.vue'
 import {
   buildStudentNamesClipboardText,
   buildOverallGradesClipboardText,
@@ -571,11 +567,68 @@ const {
   setAttemptPrimary: onSetPrimary,
   deleteAttempt: onDeleteAttempt,
   updateComment: onUpdateComment,
+  addAttempt: onAddAttempt,
   getAdjustedPosition
 } = useGradeEditing()
 
 const headerMenu = ref(null) // { x, y, type, assessment? }
 const highlightedColumnId = ref(null) // assessmentId or 'name' or 'grade'
+
+// Smart Badge & Hover Preview (Unified Option 2)
+const activeHoverCard = ref(null)
+let hoverTimer = null
+
+function getGridSmartBadge(studentId, assessmentId) {
+  const g = gradeMap.value[String(assessmentId)]?.[String(studentId)]
+  return getGradeSmartBadge(g, { compact: true })
+}
+
+function startBadgeHover(e, student, assessment) {
+  cancelHoverTimer()
+  const g = gradeMap.value[String(assessment.assessmentId)]?.[String(student.studentId)]
+  const badge = getGradeSmartBadge(g, { compact: true })
+  if (!badge) return
+
+  const targetEl = e.currentTarget
+  hoverTimer = setTimeout(() => {
+    if (!targetEl) return
+    const rect = targetEl.getBoundingClientRect()
+    const cardWidth = 290
+    let x = rect.left + (rect.width / 2) - (cardWidth / 2)
+    if (x < 12) x = 12
+    if (x + cardWidth > window.innerWidth - 12) {
+      x = window.innerWidth - cardWidth - 12
+    }
+
+    const placedAbove = rect.bottom + 210 > window.innerHeight
+    const y = placedAbove ? Math.max(12, rect.top - 6) : rect.bottom + 6
+
+    activeHoverCard.value = {
+      studentName: `${student.lastName}, ${student.firstName}`,
+      assessmentName: assessment.name,
+      totalPoints: assessment.totalPoints,
+      retestPolicy: assessment.retestPolicy || 'highest',
+      resolvedScore: g?.resolvedScore,
+      attempts: g?.attempts || [],
+      badgeType: badge.type,
+      x,
+      y,
+      placedAbove
+    }
+  }, 300)
+}
+
+function cancelHoverTimer() {
+  if (hoverTimer) {
+    clearTimeout(hoverTimer)
+    hoverTimer = null
+  }
+  activeHoverCard.value = null
+}
+
+onBeforeUnmount(() => {
+  cancelHoverTimer()
+})
 
 // Helpers
 const getUnitName = (unitId) => {
@@ -976,6 +1029,7 @@ const adminEditInput = ref(null)
 let isNavigatingAdmin = false
 
 function handleCellClick(studentId, a) {
+  cancelHoverTimer()
   if (!isCellApplicable(studentId, a)) return
   if (a.purpose === 'administrative') {
     if (a.adminFormat === 'text') {

@@ -158,6 +158,81 @@ export function resolveAttemptScore(attempts, retestPolicy) {
 }
 
 /**
+ * Resolves smart badge state for a student grade record (attempts & teacher observations).
+ * Unifies smart badge presentation across the full grade matrix and assessment detail view.
+ * 
+ * @param {Object} gradeEntry Grade record { attempts, ... }
+ * @param {Object} [options]
+ * @param {boolean} [options.compact=false] If true, omits countText for note-only badge
+ * @param {boolean} [options.showGhost=false] If true, returns ghost badge when 0/1 attempt with no note
+ * @returns {Object|null}
+ */
+export function getGradeSmartBadge(gradeEntry, { compact = false, showGhost = false } = {}) {
+  if (!gradeEntry) {
+    return showGhost ? {
+      type: 'ghost',
+      hasIcon: false,
+      hasNoteIcon: true,
+      countText: compact ? '' : 'Note',
+      title: 'Add teacher note or re-test attempt',
+      count: 0,
+      hasNote: false
+    } : null
+  }
+
+  const attempts = gradeEntry.attempts || []
+  const count = attempts.length
+  const hasNote = attempts.some(a => a.comment && String(a.comment).trim() !== '') || 
+    Boolean(gradeEntry.comment && String(gradeEntry.comment).trim() !== '')
+
+  if (count > 1 && hasNote) {
+    return {
+      type: 'attempts-note',
+      hasIcon: false,
+      hasNoteIcon: true,
+      countText: `${count}x`,
+      title: `${count} attempts & teacher note — hover to preview, click for history`,
+      count,
+      hasNote: true
+    }
+  }
+  if (count > 1) {
+    return {
+      type: 'attempts',
+      hasIcon: true,
+      hasNoteIcon: false,
+      countText: `${count}x`,
+      title: `${count} attempts — hover to preview, click for history`,
+      count,
+      hasNote: false
+    }
+  }
+  if (hasNote) {
+    return {
+      type: 'note',
+      hasIcon: false,
+      hasNoteIcon: true,
+      countText: '',
+      title: 'Teacher note — hover to preview, click for history',
+      count: Math.max(1, count),
+      hasNote: true
+    }
+  }
+  if (showGhost) {
+    return {
+      type: 'ghost',
+      hasIcon: false,
+      hasNoteIcon: true,
+      countText: '',
+      title: 'Add teacher note or re-test attempt',
+      count,
+      hasNote: false
+    }
+  }
+  return null
+}
+
+/**
  * Calculates the percentage score for an assessment.
  * Centralizing this logic to ensure consistent reporting across grid and analytics.
  * 

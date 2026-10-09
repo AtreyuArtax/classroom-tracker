@@ -235,7 +235,7 @@
                     v-for="s in columnList" 
                     :key="s.studentId" 
                     class="grades__atr-student"
-                    @contextmenu.prevent="e => $emit('open-context-menu', e, s.studentId, selectedAssessmentId)"
+                    @contextmenu.prevent="e => handleOpenContextMenu(e, s.studentId)"
                   >
                     <!-- Student Cell -->
                     <td class="grades__atd-student">
@@ -281,8 +281,8 @@
                       <div 
                         v-else-if="gradeMap[selectedAssessmentId]?.[s.studentId]?.missing" 
                         class="grades__cell-missing-badge"
-                        @click="e => $emit('open-context-menu', e, s.studentId, selectedAssessmentId)"
-                        @contextmenu.prevent="e => $emit('open-context-menu', e, s.studentId, selectedAssessmentId)"
+                        @click="e => handleOpenContextMenu(e, s.studentId)"
+                        @contextmenu.prevent="e => handleOpenContextMenu(e, s.studentId)"
                         title="Click or right-click to unmark missing / enter grade"
                       >
                         MISSING
@@ -290,8 +290,8 @@
                       <div 
                         v-else-if="gradeMap[selectedAssessmentId]?.[s.studentId]?.excluded" 
                         class="grades__cell-excluded-badge"
-                        @click="e => $emit('open-context-menu', e, s.studentId, selectedAssessmentId)"
-                        @contextmenu.prevent="e => $emit('open-context-menu', e, s.studentId, selectedAssessmentId)"
+                        @click="e => handleOpenContextMenu(e, s.studentId)"
+                        @contextmenu.prevent="e => handleOpenContextMenu(e, s.studentId)"
                         title="Click or right-click to include in grade"
                       >
                         EXCLUDED
@@ -345,17 +345,19 @@
                             @keydown.tab.prevent="e => $emit('on-enter', s.studentId, 'down', e)"
                             @keydown.up.prevent="e => $emit('on-enter', s.studentId, 'up', e)"
                             @keydown.down.prevent="e => $emit('on-enter', s.studentId, 'down', e)"
-                            @contextmenu.prevent="e => $emit('open-context-menu', e, s.studentId, selectedAssessmentId)"
+                            @contextmenu.prevent="e => handleOpenContextMenu(e, s.studentId)"
                             @wheel.prevent="$event.target.blur()"
                           />
                           <button 
                             class="smart-badge" 
                             :class="'smart-badge--' + getSmartBadge(s.studentId).type"
-                            @click.stop="openAttemptsPopover($event, s.studentId)"
+                            @click.stop="openAttemptsPopover($event, s.studentId); cancelHoverTimer()"
+                            @mouseenter="startDetailHover($event, s)"
+                            @mouseleave="cancelHoverTimer"
                             :title="getSmartBadge(s.studentId).title"
                           >
                             <RefreshCw v-if="getSmartBadge(s.studentId).hasIcon" :size="11" class="smart-badge__icon" />
-                            <span class="smart-badge__text">{{ getSmartBadge(s.studentId).countText }}</span>
+                            <span v-if="getSmartBadge(s.studentId).countText" class="smart-badge__text">{{ getSmartBadge(s.studentId).countText }}</span>
                             <NotebookPen v-if="getSmartBadge(s.studentId).hasNoteIcon" :size="11" class="smart-badge__icon" />
                           </button>
                         </template>
@@ -376,7 +378,7 @@
 
                     <!-- Actions Column -->
                     <td class="grades__atd-actions">
-                      <button class="grades__icon-btn" @click="$emit('open-action-menu', $event, s.studentId)">
+                      <button class="grades__icon-btn" @click="handleOpenContextMenu($event, s.studentId)">
                         <MoreVertical :size="14" />
                       </button>
                     </td>
@@ -398,17 +400,33 @@
       :retest-policy="currentAssessment.retestPolicy || 'highest'"
       :resolved-score="gradeMap[selectedAssessmentId]?.[attemptsPopover?.studentId]?.resolvedScore"
       :attempts="popoverAttempts"
+      :initial-add-mode="!!attemptsPopover?.initialAddMode"
       @close="attemptsPopover = null"
       @delete-attempt="handleDeleteAttempt"
       @update-comment="handleUpdateComment"
-      @start-new-attempt="handleAddAttempt"
+      @create-attempt="handleCreateAttempt"
       @set-primary="handleSetPrimary"
     />
+
+    <!-- Unified Student Action Context Menu -->
+    <GradesContextMenu
+      :menu="contextMenu"
+      :selected-assessment-id="selectedAssessmentId"
+      :grade-map="gradeMap"
+      @close="contextMenu = null"
+      @open-attempts="openAttemptsPopover($event, contextMenu.studentId, { initialAddMode: false })"
+      @start-new-attempt="openAttemptsPopover($event, contextMenu.studentId, { initialAddMode: true })"
+      @toggle-missing="handleToggleMissing(contextMenu.studentId)"
+      @toggle-excluded="handleToggleExcluded(contextMenu.studentId)"
+    />
+
+    <!-- Delayed Attempt & Note Hover Card (Unified Option 2) -->
+    <GradeAttemptHoverCard :card="activeHoverCard" />
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onBeforeUnmount } from 'vue'
 import { 
   ArrowLeft, FileText, Target, Hash, Calendar, Edit2, UserMinus, Trash2, X, 
   AlertCircle, AlertTriangle, Check, MoreVertical, BarChart3, CheckCircle2, TrendingUp, Search, NotebookPen, RefreshCw, Flame,
@@ -416,9 +434,12 @@ import {
 } from 'lucide-vue-next'
 import { getHeatTextColor } from '../../utils/gradeColors.js'
 import { formatLocalDisplay } from '../../utils/dates.js'
-import { removeAttempt, updateAttemptComment, setPrimaryAttempt, toggleAdminChecklist, saveAdminText } from '../../composables/useGradebook.js'
+import { getGradeSmartBadge } from '../../utils/gradeCalc.js'
+import { removeAttempt, updateAttemptComment, setPrimaryAttempt, toggleAdminChecklist, saveAdminText, enterGrade, markMissing, markExcluded } from '../../composables/useGradebook.js'
 import { useMessage } from '../../composables/useMessage.js'
 import GradesAttemptHistoryModal from './GradesAttemptHistoryModal.vue'
+import GradeAttemptHoverCard from './GradeAttemptHoverCard.vue'
+import GradesContextMenu from './GradesContextMenu.vue'
 import UndoButton from '../UndoButton.vue'
 
 const { confirm } = useMessage()
@@ -457,6 +478,7 @@ const emit = defineEmits([
 const searchQuery = ref('')
 const activeFilter = ref('all')
 const attemptsPopover = ref(null)
+const contextMenu = ref(null)
 
 // Layout mode: 'split' (2-column side-by-side) vs 'single' (1-column full width)
 const layoutMode = ref(
@@ -508,23 +530,50 @@ const popoverAttempts = computed(() => {
   return g?.attempts || []
 })
 
-function openAttemptsPopover(event, studentId) {
+function openAttemptsPopover(event, studentId, options = {}) {
   const s = props.sortedRoster?.find(item => item.studentId === studentId)
   if (!s) return
 
-  const rect = event.currentTarget.getBoundingClientRect()
-  let x = rect.left + window.scrollX
-  let y = rect.bottom + window.scrollY + 6
+  let x = event?.clientX ?? (typeof window !== 'undefined' ? window.innerWidth / 2 - 160 : 100)
+  let y = event?.clientY ?? (typeof window !== 'undefined' ? window.innerHeight / 2 - 150 : 100)
 
-  if (x + 330 > window.innerWidth) x = window.innerWidth - 340
-  if (y + 300 > window.innerHeight) y = rect.top + window.scrollY - 300
+  if (event?.currentTarget && typeof event.currentTarget.getBoundingClientRect === 'function') {
+    const rect = event.currentTarget.getBoundingClientRect()
+    x = rect.left + window.scrollX
+    y = rect.bottom + window.scrollY + 6
+
+    if (x + 330 > window.innerWidth) x = window.innerWidth - 340
+    if (y + 300 > window.innerHeight) y = rect.top + window.scrollY - 300
+  }
 
   attemptsPopover.value = {
     studentId,
     studentName: `${s.lastName}, ${s.firstName}`,
     x: Math.max(16, x),
-    y: Math.max(16, y)
+    y: Math.max(16, y),
+    initialAddMode: !!options.initialAddMode
   }
+}
+
+function handleOpenContextMenu(event, studentId) {
+  contextMenu.value = {
+    x: event.clientX,
+    y: event.clientY,
+    studentId,
+    assessmentId: props.selectedAssessmentId
+  }
+}
+
+async function handleToggleMissing(studentId) {
+  const current = !!props.gradeMap[props.selectedAssessmentId]?.[studentId]?.missing
+  await markMissing(props.selectedAssessmentId, studentId, !current)
+  contextMenu.value = null
+}
+
+async function handleToggleExcluded(studentId) {
+  const current = !!props.gradeMap[props.selectedAssessmentId]?.[studentId]?.excluded
+  await markExcluded(props.selectedAssessmentId, studentId, !current)
+  contextMenu.value = null
 }
 
 async function handleDeleteAttempt(attemptId) {
@@ -544,54 +593,72 @@ async function handleSetPrimary(attemptId) {
   await setPrimaryAttempt(props.selectedAssessmentId, attemptsPopover.value.studentId, attemptId)
 }
 
-function handleAddAttempt() {
+async function handleCreateAttempt(payload) {
   if (!attemptsPopover.value) return
-  const studentId = attemptsPopover.value.studentId
-  attemptsPopover.value = null
-  emit('open-action-menu', null, studentId)
+  await enterGrade(
+    props.selectedAssessmentId,
+    attemptsPopover.value.studentId,
+    payload.pointsEarned,
+    payload.date,
+    payload.comment
+  )
 }
+
+// Smart Badge & Hover Preview (Unified Option 2)
+const activeHoverCard = ref(null)
+let hoverTimer = null
 
 function getSmartBadge(studentId) {
   const g = props.gradeMap[props.selectedAssessmentId]?.[studentId]
-  const attempts = g?.attempts || []
-  const count = attempts.length
-  const hasNote = attempts.some(a => a.comment?.trim())
-
-  if (count > 1 && hasNote) {
-    return {
-      type: 'attempts-note',
-      hasIcon: true,
-      hasNoteIcon: true,
-      countText: `${count}x`,
-      title: `${count} attempts & teacher note — click to view history`
-    }
-  }
-  if (count > 1) {
-    return {
-      type: 'attempts',
-      hasIcon: true,
-      hasNoteIcon: false,
-      countText: `${count}x`,
-      title: `${count} attempts — click to view history`
-    }
-  }
-  if (hasNote) {
-    return {
-      type: 'note',
-      hasIcon: false,
-      hasNoteIcon: true,
-      countText: 'Note',
-      title: 'Teacher note — click to edit'
-    }
-  }
-  return {
-    type: 'ghost',
-    hasIcon: false,
-    hasNoteIcon: true,
-    countText: 'Note',
-    title: 'Add teacher note or re-test attempt'
-  }
+  return getGradeSmartBadge(g, { showGhost: true })
 }
+
+function startDetailHover(e, student) {
+  cancelHoverTimer()
+  const g = props.gradeMap[props.selectedAssessmentId]?.[student.studentId]
+  const badge = getSmartBadge(student.studentId)
+  if (!badge || badge.type === 'ghost') return
+
+  const targetEl = e.currentTarget
+  hoverTimer = setTimeout(() => {
+    if (!targetEl) return
+    const rect = targetEl.getBoundingClientRect()
+    const cardWidth = 290
+    let x = rect.left + (rect.width / 2) - (cardWidth / 2)
+    if (x < 12) x = 12
+    if (x + cardWidth > window.innerWidth - 12) {
+      x = window.innerWidth - cardWidth - 12
+    }
+
+    const placedAbove = rect.bottom + 210 > window.innerHeight
+    const y = placedAbove ? Math.max(12, rect.top - 6) : rect.bottom + 6
+
+    activeHoverCard.value = {
+      studentName: `${student.lastName}, ${student.firstName}`,
+      assessmentName: props.currentAssessment?.name || '',
+      totalPoints: props.currentAssessment?.totalPoints || 100,
+      retestPolicy: props.currentAssessment?.retestPolicy || 'highest',
+      resolvedScore: g?.resolvedScore,
+      attempts: g?.attempts || [],
+      badgeType: badge.type,
+      x,
+      y,
+      placedAbove
+    }
+  }, 300)
+}
+
+function cancelHoverTimer() {
+  if (hoverTimer) {
+    clearTimeout(hoverTimer)
+    hoverTimer = null
+  }
+  activeHoverCard.value = null
+}
+
+onBeforeUnmount(() => {
+  cancelHoverTimer()
+})
 
 const UNIT_COLORS = [
   '#0284c7', '#059669', '#7c3aed', '#d97706', '#db2777', '#0891b2', '#4f46e5'
@@ -1460,45 +1527,88 @@ function getAdminDetailCompletionCount() {
 .smart-badge {
   display: inline-flex;
   align-items: center;
-  gap: 2px;
-  padding: 1px 5px;
-  border-radius: 8px;
-  font-size: 0.68rem;
+  gap: 2.5px;
+  padding: 1.5px 5px;
+  border-radius: 5px;
+  font-size: 0.65rem;
   font-weight: 700;
-  border: 1px solid transparent;
+  line-height: 1;
+  background: var(--surface, #ffffff);
+  color: var(--text, #1c1c1e);
+  border: 1px solid var(--border, rgba(0, 0, 0, 0.15));
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
   cursor: pointer;
   transition: all 0.15s ease;
   white-space: nowrap;
 }
 
-.smart-badge--attempts-note {
-  background: var(--color-attention-bg, rgba(59, 130, 246, 0.12));
-  color: var(--color-attention-text, #3b82f6);
-  border-color: rgba(59, 130, 246, 0.25);
+.smart-badge:hover {
+  transform: scale(1.06);
+  border-color: var(--primary, #4663ac);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.14);
 }
 
-.smart-badge--attempts {
-  background: var(--color-attention-bg, rgba(59, 130, 246, 0.1));
-  color: var(--color-attention-text, #3b82f6);
-  border-color: rgba(59, 130, 246, 0.2);
+:root[data-theme="dark"] .smart-badge,
+.dark .smart-badge {
+  background: #1e293b;
+  color: #f8fafc;
+  border-color: rgba(255, 255, 255, 0.24);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
 }
 
-.smart-badge--note {
-  background: var(--color-warn-bg, rgba(245, 158, 11, 0.12));
-  color: var(--color-warn-text, #f59e0b);
-  border-color: rgba(245, 158, 11, 0.25);
+:root[data-theme="dark"] .smart-badge:hover,
+.dark .smart-badge:hover {
+  background: #283548;
+  border-color: #60a5fa;
+  color: #ffffff;
+}
+
+.smart-badge .smart-badge__icon {
+  flex-shrink: 0;
+  opacity: 0.85;
+}
+
+.smart-badge.smart-badge--note .smart-badge__icon {
+  color: #d97706;
+}
+
+:root[data-theme="dark"] .smart-badge.smart-badge--note .smart-badge__icon,
+.dark .smart-badge.smart-badge--note .smart-badge__icon {
+  color: #fbbf24;
+  opacity: 1;
+}
+
+.smart-badge.smart-badge--attempts .smart-badge__icon {
+  color: #2563eb;
+}
+
+:root[data-theme="dark"] .smart-badge.smart-badge--attempts .smart-badge__icon,
+.dark .smart-badge.smart-badge--attempts .smart-badge__icon {
+  color: #60a5fa;
+  opacity: 1;
+}
+
+.smart-badge.smart-badge--attempts-note .smart-badge__icon {
+  color: #4f46e5;
+}
+
+:root[data-theme="dark"] .smart-badge.smart-badge--attempts-note .smart-badge__icon,
+.dark .smart-badge.smart-badge--attempts-note .smart-badge__icon {
+  color: #a78bfa;
+  opacity: 1;
 }
 
 .smart-badge--ghost {
   background: transparent;
   color: var(--text-secondary);
   border-color: transparent;
+  box-shadow: none;
   opacity: 0;
 }
 
 .grades__atr-student:hover .smart-badge--ghost,
-.smart-badge:hover {
-  opacity: 1;
+.smart-badge--ghost:hover {
+  opacity: 0.7;
   background: var(--surface-hover);
   border-color: var(--border);
 }

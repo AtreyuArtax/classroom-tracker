@@ -344,6 +344,8 @@
   text-align: center;
   background: var(--surface);
   border-right: 1px solid var(--border);
+  position: relative;
+  padding: 0;
 }
 
 .grades__td-assessment--admin {
@@ -525,6 +527,9 @@
   justify-content: center;
   width: 100%;
   height: 100%;
+  min-height: 38px;
+  padding: 2px 4px;
+  box-sizing: border-box;
 }
 
 .grades__cell-retest-btn {
@@ -543,6 +548,86 @@
 .grades__cell-retest-btn:hover {
   transform: scale(1.2);
   font-weight: 700;
+}
+
+/* Smart Badge in Grid Cell (Unified Option 2 - Compact Corner Placement) */
+.smart-badge--grid {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 1px 3.5px;
+  border-radius: 4px;
+  font-size: 0.6rem;
+  font-weight: 700;
+  line-height: 1;
+  background: var(--surface, #ffffff);
+  color: var(--text, #1c1c1e);
+  border: 1px solid var(--border, rgba(0, 0, 0, 0.15));
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  z-index: 2;
+}
+
+.smart-badge--grid:hover {
+  transform: scale(1.1);
+  border-color: var(--primary, #4663ac);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.16);
+  z-index: 5;
+}
+
+:root[data-theme="dark"] .smart-badge--grid,
+.dark .smart-badge--grid {
+  background: #1e293b;
+  color: #f8fafc;
+  border-color: rgba(255, 255, 255, 0.24);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
+}
+
+:root[data-theme="dark"] .smart-badge--grid:hover,
+.dark .smart-badge--grid:hover {
+  background: #283548;
+  border-color: #60a5fa;
+  color: #ffffff;
+}
+
+.smart-badge--grid .smart-badge__icon {
+  flex-shrink: 0;
+  opacity: 0.85;
+}
+
+.smart-badge--grid.smart-badge--note .smart-badge__icon {
+  color: #d97706;
+}
+
+:root[data-theme="dark"] .smart-badge--grid.smart-badge--note .smart-badge__icon,
+.dark .smart-badge--grid.smart-badge--note .smart-badge__icon {
+  color: #fbbf24;
+  opacity: 1;
+}
+
+.smart-badge--grid.smart-badge--attempts .smart-badge__icon {
+  color: #2563eb;
+}
+
+:root[data-theme="dark"] .smart-badge--grid.smart-badge--attempts .smart-badge__icon,
+.dark .smart-badge--grid.smart-badge--attempts .smart-badge__icon {
+  color: #60a5fa;
+  opacity: 1;
+}
+
+.smart-badge--grid.smart-badge--attempts-note .smart-badge__icon {
+  color: #4f46e5;
+}
+
+:root[data-theme="dark"] .smart-badge--grid.smart-badge--attempts-note .smart-badge__icon,
+.dark .smart-badge--grid.smart-badge--attempts-note .smart-badge__icon {
+  color: #a78bfa;
+  opacity: 1;
 }
 
 .grades__attempts-popover {
