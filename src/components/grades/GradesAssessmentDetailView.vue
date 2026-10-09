@@ -4,25 +4,27 @@
     <div class="compact-header-card" :style="{ borderLeft: '4px solid ' + unitColor }">
       <div class="compact-header-left">
         <button class="app-back-btn" @click="$emit('close')" title="Return to Previous View">
-          <ArrowLeft :size="15" /> {{ returnTab === 'analytics' ? 'Back to Analytics' : 'Back to Grid' }}
+          <ArrowLeft :size="13" /> {{ returnTab === 'analytics' ? 'Analytics' : 'Grid' }}
         </button>
         <h1 class="compact-title">{{ currentAssessment.name }}</h1>
         <div class="compact-meta-chips">
           <template v-if="currentAssessment.purpose === 'administrative'">
-            <span class="meta-chip meta-chip--type" style="color: var(--color-success-text, #10b981); font-weight: 700;">Administrative</span>
+            <span class="meta-chip meta-chip--type" style="color: var(--color-success-text, #10b981); font-weight: 700;">Admin</span>
             <span class="meta-chip meta-chip--points">
-              {{ currentAssessment.adminFormat === 'text' ? 'Text Note' : 'Checklist' }}
+              {{ currentAssessment.adminFormat === 'text' ? 'Text' : 'Checklist' }}
             </span>
           </template>
           <template v-else>
             <span class="meta-chip meta-chip--type">{{ currentAssessment.assessmentType }}</span>
-            <span class="meta-chip meta-chip--points"><Target :size="11" /> /{{ currentAssessment.totalPoints }}</span>
+            <span class="meta-chip meta-chip--points"><Target :size="10" /> /{{ currentAssessment.totalPoints }}</span>
             <span v-if="currentAssessment.unitId" class="meta-chip meta-chip--unit" :style="{ color: unitColor }">
-              <Hash :size="11" /> {{ getUnitName(currentAssessment.unitId) }}
+              <Hash :size="10" /> {{ getUnitName(currentAssessment.unitId) }}
             </span>
           </template>
-          <span class="meta-chip meta-chip--date"><Calendar :size="11" /> {{ formatLocalDisplay(currentAssessment.date) }}</span>
-          <span v-if="currentAssessment.weight && currentAssessment.purpose !== 'administrative'" class="meta-chip meta-chip--weight"><Flame :size="11" style="display: inline-block; vertical-align: -1px; margin-right: 2px;" /> {{ currentAssessment.weight }}%</span>
+          <span class="meta-chip meta-chip--date"><Calendar :size="10" /> {{ formatLocalDisplay(currentAssessment.date) }}</span>
+          <span v-if="currentAssessment.weight && currentAssessment.purpose !== 'administrative'" class="meta-chip meta-chip--weight">
+            <Flame :size="10" style="display: inline-block; vertical-align: -1px; margin-right: 2px;" /> {{ currentAssessment.weight }}%
+          </span>
         </div>
       </div>
 
@@ -30,140 +32,137 @@
       <div class="assessment-header__actions">
         <UndoButton />
         <button class="btn-secondary-sm" title="Edit Assessment Setup" @click="$emit('start-edit', currentAssessment)">
-          <Edit2 :size="13" /> Edit Setup
+          <Edit2 :size="12" /> Edit
         </button>
         <button class="btn-secondary-sm" title="View Missing Students" @click="$emit('show-missing-modal')">
-          <UserMinus :size="13" /> Missing
+          <UserMinus :size="12" /> Missing
+          <span v-if="levelBreakdown.missing > 0" class="badge-count-tiny">{{ levelBreakdown.missing }}</span>
         </button>
         <button class="btn-danger-sm" title="Delete Assessment" @click="$emit('confirm-delete', currentAssessment)">
-          <Trash2 :size="13" />
+          <Trash2 :size="12" />
         </button>
       </div>
     </div>
 
-    <!-- Compact 1-Row Metrics & Distribution Strip -->
-    <div class="compact-metrics-strip" v-if="currentAssessment.purpose === 'administrative'">
-      <div class="metric-pill">
-        <span class="metric-pill__label">FORMAT</span>
-        <strong class="metric-pill__val" style="color: var(--color-success-text, #10b981);">
-          {{ currentAssessment.adminFormat === 'text' ? 'Text / ID Note' : 'Checklist (✓)' }}
-        </strong>
-      </div>
-
-      <div class="metric-divider"></div>
-
-      <div class="metric-pill">
-        <span class="metric-pill__label">COMPLETED</span>
-        <strong class="metric-pill__val">{{ getAdminDetailCompletionCount() }}/{{ targetCourseRoster.length }}</strong>
-        <span class="metric-pill__sub">({{ targetCourseRoster.length ? Math.round((getAdminDetailCompletionCount() / targetCourseRoster.length) * 100) : 0 }}%)</span>
-      </div>
-
-      <div class="metric-divider"></div>
-
-      <div class="metric-pill">
-        <span class="metric-pill__label">ACADEMIC WEIGHT</span>
-        <strong class="metric-pill__val" style="color: var(--text-secondary);">0% (Zero Grade Impact)</strong>
-      </div>
-    </div>
-
-    <div class="compact-metrics-strip" v-else>
-      <div class="metric-pill">
-        <span class="metric-pill__label">CLASS AVG</span>
-        <strong class="metric-pill__val" :style="{ color: getHeatTextColor(liveAssessmentStats.mean) }">
-          {{ liveAssessmentStats.mean != null ? liveAssessmentStats.mean + '%' : '—' }}
-        </strong>
-        <span v-if="liveAssessmentStats.average != null" class="metric-pill__sub">({{ liveAssessmentStats.average }}/{{ currentAssessment.totalPoints }} pts)</span>
-      </div>
-
-      <div class="metric-divider"></div>
-
-      <div class="metric-pill">
-        <span class="metric-pill__label">PROGRESS</span>
-        <strong class="metric-pill__val">{{ currentAssessmentSummary?.enteredCount || levelBreakdown.graded }}/{{ targetCourseRoster.length }}</strong>
-      </div>
-
-      <div class="metric-divider"></div>
-
-      <div class="metric-pill" v-if="liveAssessmentStats.median != null">
-        <span class="metric-pill__label">MEDIAN</span>
-        <strong class="metric-pill__val">{{ liveAssessmentStats.median }}%</strong>
-        <span class="metric-pill__sub">(High: {{ liveAssessmentStats.highest }}% · Low: {{ liveAssessmentStats.lowest }}%)</span>
-      </div>
-
-      <div class="metric-divider" v-if="levelBreakdown.graded > 0"></div>
-
-      <!-- Self-Contained Mini Stacked Bar Pill -->
-      <div class="mini-stacked-bar-container" v-if="levelBreakdown.graded > 0">
-        <span class="mini-bar-label">TIERS:</span>
-        <div class="mini-stacked-bar" title="Click segment to filter table by performance level">
-          <div 
-            v-if="levelBreakdown.level4 > 0"
-            class="mini-bar-segment mini-bar-segment--l4" 
-            :style="{ flex: levelBreakdown.level4 }" 
-            :class="{ 'mini-bar-segment--active': activeFilter === 'l4' }"
-            :title="'Level 4 (80%+): ' + levelBreakdown.level4 + ' students'"
-            @click="activeFilter = activeFilter === 'l4' ? 'all' : 'l4'"
-          >
-            <span>{{ levelBreakdown.level4 }}</span>
-          </div>
-          <div 
-            v-if="levelBreakdown.level3 > 0"
-            class="mini-bar-segment mini-bar-segment--l3" 
-            :style="{ flex: levelBreakdown.level3 }" 
-            :class="{ 'mini-bar-segment--active': activeFilter === 'l3' }"
-            :title="'Level 3 (70-79%): ' + levelBreakdown.level3 + ' students'"
-            @click="activeFilter = activeFilter === 'l3' ? 'all' : 'l3'"
-          >
-            <span>{{ levelBreakdown.level3 }}</span>
-          </div>
-          <div 
-            v-if="levelBreakdown.level2 > 0"
-            class="mini-bar-segment mini-bar-segment--l2" 
-            :style="{ flex: levelBreakdown.level2 }" 
-            :class="{ 'mini-bar-segment--active': activeFilter === 'l2' }"
-            :title="'Level 2 (60-69%): ' + levelBreakdown.level2 + ' students'"
-            @click="activeFilter = activeFilter === 'l2' ? 'all' : 'l2'"
-          >
-            <span>{{ levelBreakdown.level2 }}</span>
-          </div>
-          <div 
-            v-if="levelBreakdown.level1 > 0"
-            class="mini-bar-segment mini-bar-segment--l1" 
-            :style="{ flex: levelBreakdown.level1 }" 
-            :class="{ 'mini-bar-segment--active': activeFilter === 'l1' }"
-            :title="'Level 1 (<60%): ' + levelBreakdown.level1 + ' students'"
-            @click="activeFilter = activeFilter === 'l1' ? 'all' : 'l1'"
-          >
-            <span>{{ levelBreakdown.level1 }}</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="compact-alerts-group">
-        <span v-if="levelBreakdown.missing > 0" class="alert-chip alert-chip--missing" @click="activeFilter = 'missing'">
-          <AlertTriangle :size="13" style="display: inline-block; vertical-align: -1px; margin-right: 3px;" /> {{ levelBreakdown.missing }} Missing
-        </span>
-        <span v-if="levelBreakdown.level1 > 0" class="alert-chip alert-chip--risk" @click="activeFilter = 'at-risk'">
-          <span class="status-dot status-dot--danger" /> {{ levelBreakdown.level1 }} At-Risk (&lt;50%)
-        </span>
-      </div>
-    </div>
-
-    <!-- Student Scoring Table Card -->
+    <!-- Student Scoring Table Card with Integrated Metrics Strip & Toolbar -->
     <div class="grades__focused-view">
       <div class="grades__table-card">
+        <!-- Integrated Metrics & Distribution Header Strip -->
+        <div class="table-metrics-strip" v-if="currentAssessment.purpose === 'administrative'">
+          <div class="metric-pill">
+            <span class="metric-pill__label">FORMAT</span>
+            <strong class="metric-pill__val" style="color: var(--color-success-text, #10b981);">
+              {{ currentAssessment.adminFormat === 'text' ? 'Text Note' : 'Checklist (✓)' }}
+            </strong>
+          </div>
+          <div class="metric-divider"></div>
+          <div class="metric-pill">
+            <span class="metric-pill__label">COMPLETED</span>
+            <strong class="metric-pill__val">{{ getAdminDetailCompletionCount() }}/{{ targetCourseRoster.length }}</strong>
+            <span class="metric-pill__sub">({{ targetCourseRoster.length ? Math.round((getAdminDetailCompletionCount() / targetCourseRoster.length) * 100) : 0 }}%)</span>
+          </div>
+          <div class="metric-divider"></div>
+          <div class="metric-pill">
+            <span class="metric-pill__label">WEIGHT</span>
+            <strong class="metric-pill__val" style="color: var(--text-secondary);">0%</strong>
+          </div>
+        </div>
+
+        <div class="table-metrics-strip" v-else>
+          <div class="metric-pill" title="Class Average">
+            <span class="metric-pill__label">AVG</span>
+            <strong class="metric-pill__val" :style="{ color: getHeatTextColor(liveAssessmentStats.mean) }">
+              {{ liveAssessmentStats.mean != null ? liveAssessmentStats.mean + '%' : '—' }}
+            </strong>
+            <span v-if="liveAssessmentStats.average != null" class="metric-pill__sub">({{ liveAssessmentStats.average }}/{{ currentAssessment.totalPoints }})</span>
+          </div>
+
+          <div class="metric-divider"></div>
+
+          <div class="metric-pill" title="Grading Progress">
+            <span class="metric-pill__label">PROG</span>
+            <strong class="metric-pill__val">{{ currentAssessmentSummary?.enteredCount || levelBreakdown.graded }}/{{ targetCourseRoster.length }}</strong>
+          </div>
+
+          <div class="metric-divider" v-if="liveAssessmentStats.median != null"></div>
+
+          <div class="metric-pill" v-if="liveAssessmentStats.median != null" title="Median and High/Low Scores">
+            <span class="metric-pill__label">MED</span>
+            <strong class="metric-pill__val">{{ liveAssessmentStats.median }}%</strong>
+            <span class="metric-pill__sub">({{ liveAssessmentStats.highest }}% / {{ liveAssessmentStats.lowest }}%)</span>
+          </div>
+
+          <div class="metric-divider" v-if="levelBreakdown.graded > 0"></div>
+
+          <!-- Mini Stacked Bar Tiers -->
+          <div class="mini-stacked-bar-container" v-if="levelBreakdown.graded > 0" title="Click tier segment to filter roster">
+            <span class="mini-bar-label">TIERS:</span>
+            <div class="mini-stacked-bar">
+              <div 
+                v-if="levelBreakdown.level4 > 0"
+                class="mini-bar-segment mini-bar-segment--l4" 
+                :style="{ flex: levelBreakdown.level4 }" 
+                :class="{ 'mini-bar-segment--active': activeFilter === 'l4' }"
+                :title="'Level 4 (80%+): ' + levelBreakdown.level4"
+                @click="activeFilter = activeFilter === 'l4' ? 'all' : 'l4'"
+              >
+                <span>{{ levelBreakdown.level4 }}</span>
+              </div>
+              <div 
+                v-if="levelBreakdown.level3 > 0"
+                class="mini-bar-segment mini-bar-segment--l3" 
+                :style="{ flex: levelBreakdown.level3 }" 
+                :class="{ 'mini-bar-segment--active': activeFilter === 'l3' }"
+                :title="'Level 3 (70-79%): ' + levelBreakdown.level3"
+                @click="activeFilter = activeFilter === 'l3' ? 'all' : 'l3'"
+              >
+                <span>{{ levelBreakdown.level3 }}</span>
+              </div>
+              <div 
+                v-if="levelBreakdown.level2 > 0"
+                class="mini-bar-segment mini-bar-segment--l2" 
+                :style="{ flex: levelBreakdown.level2 }" 
+                :class="{ 'mini-bar-segment--active': activeFilter === 'l2' }"
+                :title="'Level 2 (60-69%): ' + levelBreakdown.level2"
+                @click="activeFilter = activeFilter === 'l2' ? 'all' : 'l2'"
+              >
+                <span>{{ levelBreakdown.level2 }}</span>
+              </div>
+              <div 
+                v-if="levelBreakdown.level1 > 0"
+                class="mini-bar-segment mini-bar-segment--l1" 
+                :style="{ flex: levelBreakdown.level1 }" 
+                :class="{ 'mini-bar-segment--active': activeFilter === 'l1' }"
+                :title="'Level 1 (<60%): ' + levelBreakdown.level1"
+                @click="activeFilter = activeFilter === 'l1' ? 'all' : 'l1'"
+              >
+                <span>{{ levelBreakdown.level1 }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="compact-alerts-group">
+            <span v-if="levelBreakdown.missing > 0" class="alert-chip alert-chip--missing" @click="activeFilter = 'missing'" title="Click to filter missing">
+              <AlertTriangle :size="11" style="display: inline-block; vertical-align: -1px; margin-right: 2px;" /> {{ levelBreakdown.missing }} Missing
+            </span>
+            <span v-if="levelBreakdown.level1 > 0" class="alert-chip alert-chip--risk" @click="activeFilter = 'at-risk'" title="Click to filter at-risk">
+              <span class="status-dot status-dot--danger" /> {{ levelBreakdown.level1 }} At-Risk
+            </span>
+          </div>
+        </div>
+
         <!-- Table Toolbar: Search & Filters -->
         <div class="table-toolbar">
           <!-- Search Box -->
           <div class="search-box">
-            <Search :size="14" class="search-icon" />
+            <Search :size="12" class="search-icon" />
             <input 
               v-model="searchQuery" 
               type="text" 
-              placeholder="Search student name..." 
+              placeholder="Filter student..." 
               class="search-input"
             />
-            <button v-if="searchQuery" class="clear-search" @click="searchQuery = ''"><X :size="12" /></button>
+            <button v-if="searchQuery" class="clear-search" @click="searchQuery = ''"><X :size="11" /></button>
           </div>
 
           <!-- Filter Chips -->
@@ -178,179 +177,214 @@
               Ungraded ({{ levelBreakdown.ungraded }})
             </button>
             <button v-if="levelBreakdown.missing > 0" class="chip-btn chip-btn--danger" :class="{ 'chip-btn--active': activeFilter === 'missing' }" @click="activeFilter = 'missing'">
-              <AlertTriangle :size="13" style="display: inline-block; vertical-align: -1px; margin-right: 3px;" /> Missing ({{ levelBreakdown.missing }})
+              Missing ({{ levelBreakdown.missing }})
             </button>
             <button v-if="levelBreakdown.level1 > 0" class="chip-btn chip-btn--warning" :class="{ 'chip-btn--active': activeFilter === 'at-risk' }" @click="activeFilter = 'at-risk'">
-              <span class="status-dot status-dot--danger" /> &lt;50% ({{ levelBreakdown.level1 }})
+              &lt;50% ({{ levelBreakdown.level1 }})
+            </button>
+          </div>
+
+          <!-- View Layout Toggle -->
+          <div class="view-layout-toggle" role="group" aria-label="Layout view mode">
+            <button 
+              type="button"
+              class="layout-toggle-btn"
+              :class="{ 'layout-toggle-btn--active': layoutMode === 'split' }"
+              @click="setLayoutMode('split')"
+              title="2-Column Split View (Side-by-side, fits all students on screen)"
+            >
+              <Columns2 :size="12" />
+              <span>2-Col</span>
+            </button>
+            <button 
+              type="button"
+              class="layout-toggle-btn"
+              :class="{ 'layout-toggle-btn--active': layoutMode === 'single' }"
+              @click="setLayoutMode('single')"
+              title="1-Column Full Width View"
+            >
+              <Rows :size="12" />
+              <span>1-Col</span>
             </button>
           </div>
         </div>
 
         <div class="grades__table-scroll-area">
-          <table class="grades__assessment-table">
-            <thead>
-              <tr>
-                <th class="grades__ath-student">Student</th>
-                <th class="grades__ath-score">
-                  {{ currentAssessment.purpose === 'administrative' ? (currentAssessment.adminFormat === 'text' ? 'Text Note / ID' : 'Status') : `Score (/${currentAssessment.totalPoints})` }}
-                </th>
-                <th v-if="currentAssessment.purpose !== 'administrative'" class="grades__ath-percent">% Grade</th>
-                <th class="grades__ath-actions"></th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr 
-                v-for="s in filteredRoster" 
-                :key="s.studentId" 
-                class="grades__atr-student"
-                @contextmenu.prevent="e => $emit('open-context-menu', e, s.studentId, selectedAssessmentId)"
-              >
-                <!-- Student Cell -->
-                <td class="grades__atd-student">
-                  <span 
-                    class="grades__student-link" 
-                    @click="$emit('show-dossier', s.studentId)"
-                    title="Open Student 360 Dossier"
-                  >
-                    {{ s.lastName }}, {{ s.firstName }}
-                  </span>
-                </td>
-                <td class="grades__atd-score">
-                  <div v-if="newAttemptForm?.studentId === s.studentId" class="grades__new-attempt-inline">
-                    <div class="grades__attempt-form-row">
-                      <input 
-                        v-model.number="newAttemptForm.points" 
-                        type="number" 
-                        min="0" 
-                        class="grades__input-ghost grades__input-ghost--score"
-                        placeholder="Score"
-                        @wheel.prevent="$event.target.blur()"
-                      />
-                      <input 
-                        v-model="newAttemptForm.date" 
-                        type="date" 
-                        class="grades__input-ghost grades__input-ghost--date"
-                      />
-                      <input 
-                        v-model="newAttemptForm.comment" 
-                        class="grades__input-ghost grades__input-ghost--note"
-                        placeholder="Note"
-                      />
-                      <div class="grades__inline-actions">
-                        <button class="grades__icon-btn grades__icon-btn--success" @click="$emit('save-new-attempt')">
-                          <Check :size="16" />
-                        </button>
-                        <button class="grades__icon-btn" @click="$emit('cancel-new-attempt')">
-                          <X :size="16" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                  <div 
-                    v-else-if="gradeMap[selectedAssessmentId]?.[s.studentId]?.missing" 
-                    class="grades__cell-missing-badge"
-                    @click="e => $emit('open-context-menu', e, s.studentId, selectedAssessmentId)"
+          <div v-if="filteredRoster.length === 0" class="grades__empty-roster-msg">
+            No students found matching your criteria.
+          </div>
+          <div v-else :class="['grades__table-layout-container', `grades__table-layout--${layoutMode}`]">
+            <div 
+              v-for="(columnList, colIdx) in activeColumns" 
+              :key="colIdx" 
+              class="grades__table-column"
+            >
+              <table class="grades__assessment-table">
+                <thead>
+                  <tr>
+                    <th class="grades__ath-student">{{ getColumnStudentHeader(colIdx, columnList) }}</th>
+                    <th class="grades__ath-score">
+                      {{ currentAssessment.purpose === 'administrative' ? (currentAssessment.adminFormat === 'text' ? 'Text Note / ID' : 'Status') : `Score (/${currentAssessment.totalPoints})` }}
+                    </th>
+                    <th v-if="currentAssessment.purpose !== 'administrative'" class="grades__ath-percent">% Grade</th>
+                    <th class="grades__ath-actions"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr 
+                    v-for="s in columnList" 
+                    :key="s.studentId" 
+                    class="grades__atr-student"
                     @contextmenu.prevent="e => $emit('open-context-menu', e, s.studentId, selectedAssessmentId)"
-                    title="Click or right-click to unmark missing / enter grade"
                   >
-                    MISSING
-                  </div>
-                  <div 
-                    v-else-if="gradeMap[selectedAssessmentId]?.[s.studentId]?.excluded" 
-                    class="grades__cell-excluded-badge"
-                    @click="e => $emit('open-context-menu', e, s.studentId, selectedAssessmentId)"
-                    @contextmenu.prevent="e => $emit('open-context-menu', e, s.studentId, selectedAssessmentId)"
-                    title="Click or right-click to include in grade"
-                  >
-                    EXCLUDED
-                  </div>
-                  <!-- Administrative Entry Controls -->
-                  <div v-else-if="currentAssessment.purpose === 'administrative'" class="grades__admin-detail-cell">
-                    <button 
-                      v-if="currentAssessment.adminFormat !== 'text'"
-                      type="button"
-                      class="btn-admin-detail-check"
-                      :class="{ 'btn-admin-detail-check--checked': isAdminChecked(s.studentId) }"
-                      @click="toggleAdminChecklist(currentAssessment.assessmentId, s.studentId)"
-                    >
-                      <Check v-if="isAdminChecked(s.studentId)" :size="14" :stroke-width="3" />
-                      <span>{{ isAdminChecked(s.studentId) ? 'Received' : 'Mark Received' }}</span>
-                    </button>
-                    <input 
-                      v-else
-                      type="text"
-                      class="grades__input-ghost"
-                      :value="getAdminTextValue(s.studentId)"
-                      placeholder="e.g. 104"
-                      @blur="e => saveAdminText(currentAssessment.assessmentId, s.studentId, e.target.value)"
-                      @keydown.enter.prevent="e => { saveAdminText(currentAssessment.assessmentId, s.studentId, e.target.value); $emit('on-enter', s.studentId, 'down', e) }"
-                    />
-                  </div>
-                  <div v-else class="grades__score-input-wrapper">
-                    <!-- Change Overlay -->
-                    <div v-if="editingCell?.sId === s.studentId && editingCell?.aId === selectedAssessmentId" class="grades__cell-edit">
-                      <input 
-                        v-model.number="editingCell.value"
-                        type="number"
-                        min="0"
-                        :max="currentAssessment.totalPoints"
-                        class="grades__input-ghost grades__input-ghost--active"
-                        @blur="$emit('save-edit')"
-                        @keydown.enter.prevent="$emit('save-edit')"
-                        @keydown.esc.prevent="$emit('cancel-edit')"
-                        @wheel.prevent="$event.target.blur()"
-                      />
-                    </div>
-                    <template v-else>
-                      <input 
-                        type="number"
-                        min="0"
-                        :max="currentAssessment.totalPoints"
-                        class="grades__input-ghost"
-                        :value="gradeMap[selectedAssessmentId]?.[s.studentId]?.resolvedScore"
-                        @blur="e => $emit('on-blur', s.studentId, e.target.value)"
-                        @keydown.enter.prevent="e => $emit('on-enter', s.studentId, 'down', e)"
-                        @keydown.tab.prevent="e => $emit('on-enter', s.studentId, 'down', e)"
-                        @keydown.up.prevent="e => $emit('on-enter', s.studentId, 'up', e)"
-                        @keydown.down.prevent="e => $emit('on-enter', s.studentId, 'down', e)"
-                        @contextmenu.prevent="e => $emit('open-context-menu', e, s.studentId, selectedAssessmentId)"
-                        @wheel.prevent="$event.target.blur()"
-                      />
-                      <button 
-                        class="smart-badge" 
-                        :class="'smart-badge--' + getSmartBadge(s.studentId).type"
-                        @click.stop="openAttemptsPopover($event, s.studentId)"
-                        :title="getSmartBadge(s.studentId).title"
+                    <!-- Student Cell -->
+                    <td class="grades__atd-student">
+                      <span 
+                        class="grades__student-link" 
+                        @click="$emit('show-dossier', s.studentId)"
+                        title="Open Student 360 Dossier"
                       >
-                        <RefreshCw v-if="getSmartBadge(s.studentId).hasIcon" :size="11" class="smart-badge__icon" />
-                        <span class="smart-badge__text">{{ getSmartBadge(s.studentId).countText }}</span>
-                        <NotebookPen v-if="getSmartBadge(s.studentId).hasNoteIcon" :size="11" class="smart-badge__icon" />
+                        {{ s.lastName }}, {{ s.firstName }}
+                      </span>
+                    </td>
+                    <td class="grades__atd-score">
+                      <div v-if="newAttemptForm?.studentId === s.studentId" class="grades__new-attempt-inline">
+                        <div class="grades__attempt-form-row">
+                          <input 
+                            v-model.number="newAttemptForm.points" 
+                            type="number" 
+                            min="0" 
+                            class="grades__input-ghost grades__input-ghost--score"
+                            placeholder="Score"
+                            @wheel.prevent="$event.target.blur()"
+                          />
+                          <input 
+                            v-model="newAttemptForm.date" 
+                            type="date" 
+                            class="grades__input-ghost grades__input-ghost--date"
+                          />
+                          <input 
+                            v-model="newAttemptForm.comment" 
+                            class="grades__input-ghost grades__input-ghost--note"
+                            placeholder="Note"
+                          />
+                          <div class="grades__inline-actions">
+                            <button class="grades__icon-btn grades__icon-btn--success" @click="$emit('save-new-attempt')">
+                              <Check :size="16" />
+                            </button>
+                            <button class="grades__icon-btn" @click="$emit('cancel-new-attempt')">
+                              <X :size="16" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                      <div 
+                        v-else-if="gradeMap[selectedAssessmentId]?.[s.studentId]?.missing" 
+                        class="grades__cell-missing-badge"
+                        @click="e => $emit('open-context-menu', e, s.studentId, selectedAssessmentId)"
+                        @contextmenu.prevent="e => $emit('open-context-menu', e, s.studentId, selectedAssessmentId)"
+                        title="Click or right-click to unmark missing / enter grade"
+                      >
+                        MISSING
+                      </div>
+                      <div 
+                        v-else-if="gradeMap[selectedAssessmentId]?.[s.studentId]?.excluded" 
+                        class="grades__cell-excluded-badge"
+                        @click="e => $emit('open-context-menu', e, s.studentId, selectedAssessmentId)"
+                        @contextmenu.prevent="e => $emit('open-context-menu', e, s.studentId, selectedAssessmentId)"
+                        title="Click or right-click to include in grade"
+                      >
+                        EXCLUDED
+                      </div>
+                      <!-- Administrative Entry Controls -->
+                      <div v-else-if="currentAssessment.purpose === 'administrative'" class="grades__admin-detail-cell">
+                        <button 
+                          v-if="currentAssessment.adminFormat !== 'text'"
+                          type="button"
+                          class="btn-admin-detail-check"
+                          :class="{ 'btn-admin-detail-check--checked': isAdminChecked(s.studentId) }"
+                          @click="toggleAdminChecklist(currentAssessment.assessmentId, s.studentId)"
+                        >
+                          <Check v-if="isAdminChecked(s.studentId)" :size="14" :stroke-width="3" />
+                          <span>{{ isAdminChecked(s.studentId) ? 'Received' : 'Mark Received' }}</span>
+                        </button>
+                        <input 
+                          v-else
+                          type="text"
+                          class="grades__input-ghost"
+                          :value="getAdminTextValue(s.studentId)"
+                          placeholder="e.g. 104"
+                          @blur="e => saveAdminText(currentAssessment.assessmentId, s.studentId, e.target.value)"
+                          @keydown.enter.prevent="e => { saveAdminText(currentAssessment.assessmentId, s.studentId, e.target.value); $emit('on-enter', s.studentId, 'down', e) }"
+                        />
+                      </div>
+                      <div v-else class="grades__score-input-wrapper">
+                        <!-- Change Overlay -->
+                        <div v-if="editingCell?.sId === s.studentId && editingCell?.aId === selectedAssessmentId" class="grades__cell-edit">
+                          <input 
+                            v-model.number="editingCell.value"
+                            type="number"
+                            min="0"
+                            :max="currentAssessment.totalPoints"
+                            class="grades__input-ghost grades__input-ghost--active"
+                            @blur="$emit('save-edit')"
+                            @keydown.enter.prevent="$emit('save-edit')"
+                            @keydown.esc.prevent="$emit('cancel-edit')"
+                            @wheel.prevent="$event.target.blur()"
+                          />
+                        </div>
+                        <template v-else>
+                          <input 
+                            type="number"
+                            min="0"
+                            :max="currentAssessment.totalPoints"
+                            class="grades__input-ghost"
+                            :value="gradeMap[selectedAssessmentId]?.[s.studentId]?.resolvedScore"
+                            @blur="e => $emit('on-blur', s.studentId, e.target.value)"
+                            @keydown.enter.prevent="e => $emit('on-enter', s.studentId, 'down', e)"
+                            @keydown.tab.prevent="e => $emit('on-enter', s.studentId, 'down', e)"
+                            @keydown.up.prevent="e => $emit('on-enter', s.studentId, 'up', e)"
+                            @keydown.down.prevent="e => $emit('on-enter', s.studentId, 'down', e)"
+                            @contextmenu.prevent="e => $emit('open-context-menu', e, s.studentId, selectedAssessmentId)"
+                            @wheel.prevent="$event.target.blur()"
+                          />
+                          <button 
+                            class="smart-badge" 
+                            :class="'smart-badge--' + getSmartBadge(s.studentId).type"
+                            @click.stop="openAttemptsPopover($event, s.studentId)"
+                            :title="getSmartBadge(s.studentId).title"
+                          >
+                            <RefreshCw v-if="getSmartBadge(s.studentId).hasIcon" :size="11" class="smart-badge__icon" />
+                            <span class="smart-badge__text">{{ getSmartBadge(s.studentId).countText }}</span>
+                            <NotebookPen v-if="getSmartBadge(s.studentId).hasNoteIcon" :size="11" class="smart-badge__icon" />
+                          </button>
+                        </template>
+                      </div>
+                    </td>
+
+                    <!-- Color-Coded Percentage Badge -->
+                    <td class="grades__atd-percent">
+                      <span 
+                        v-if="gradeMap[selectedAssessmentId]?.[s.studentId]?.resolvedScore != null" 
+                        class="grade-percent-badge"
+                        :style="getGradeBadgeStyle((gradeMap[selectedAssessmentId]?.[s.studentId]?.resolvedScore / currentAssessment.totalPoints) * 100)"
+                      >
+                        {{ Math.round((gradeMap[selectedAssessmentId]?.[s.studentId]?.resolvedScore / currentAssessment.totalPoints) * 100) }}%
+                      </span>
+                      <span v-else class="text-muted">—</span>
+                    </td>
+
+                    <!-- Actions Column -->
+                    <td class="grades__atd-actions">
+                      <button class="grades__icon-btn" @click="$emit('open-action-menu', $event, s.studentId)">
+                        <MoreVertical :size="14" />
                       </button>
-                    </template>
-                  </div>
-                </td>
-
-                <!-- Color-Coded Percentage Badge -->
-                <td class="grades__atd-percent">
-                  <span 
-                    v-if="gradeMap[selectedAssessmentId]?.[s.studentId]?.resolvedScore != null" 
-                    class="grade-percent-badge"
-                    :style="getGradeBadgeStyle((gradeMap[selectedAssessmentId]?.[s.studentId]?.resolvedScore / currentAssessment.totalPoints) * 100)"
-                  >
-                    {{ Math.round((gradeMap[selectedAssessmentId]?.[s.studentId]?.resolvedScore / currentAssessment.totalPoints) * 100) }}%
-                  </span>
-                  <span v-else class="text-muted">—</span>
-                </td>
-
-                <!-- Actions Column -->
-                <td class="grades__atd-actions">
-                  <button class="grades__icon-btn" @click="$emit('open-action-menu', $event, s.studentId)">
-                    <MoreVertical :size="14" />
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -377,7 +411,8 @@
 import { ref, computed } from 'vue'
 import { 
   ArrowLeft, FileText, Target, Hash, Calendar, Edit2, UserMinus, Trash2, X, 
-  AlertCircle, AlertTriangle, Check, MoreVertical, BarChart3, CheckCircle2, TrendingUp, Search, NotebookPen, RefreshCw, Flame
+  AlertCircle, AlertTriangle, Check, MoreVertical, BarChart3, CheckCircle2, TrendingUp, Search, NotebookPen, RefreshCw, Flame,
+  Columns2, Rows
 } from 'lucide-vue-next'
 import { getHeatTextColor } from '../../utils/gradeColors.js'
 import { formatLocalDisplay } from '../../utils/dates.js'
@@ -422,6 +457,42 @@ const emit = defineEmits([
 const searchQuery = ref('')
 const activeFilter = ref('all')
 const attemptsPopover = ref(null)
+
+// Layout mode: 'split' (2-column side-by-side) vs 'single' (1-column full width)
+const layoutMode = ref(
+  (typeof window !== 'undefined' && localStorage.getItem('grades_assessment_layout_mode')) || 'split'
+)
+
+function setLayoutMode(mode) {
+  layoutMode.value = mode
+  try {
+    localStorage.setItem('grades_assessment_layout_mode', mode)
+  } catch (e) {
+    console.warn('Failed to save assessment layout mode to localStorage', e)
+  }
+}
+
+const activeColumns = computed(() => {
+  const roster = filteredRoster.value || []
+  if (layoutMode.value !== 'split' || roster.length <= 1) {
+    return [roster]
+  }
+  const half = Math.ceil(roster.length / 2)
+  const col1 = roster.slice(0, half)
+  const col2 = roster.slice(half)
+  return col2.length > 0 ? [col1, col2] : [col1]
+})
+
+function getColumnStudentHeader(colIdx, columnList) {
+  if (layoutMode.value !== 'split' || activeColumns.value.length <= 1) {
+    return 'Student'
+  }
+  if (colIdx === 0) {
+    return `Student (1–${columnList.length})`
+  }
+  const prevCount = activeColumns.value[0]?.length || 0
+  return `Student (${prevCount + 1}–${filteredRoster.value.length})`
+}
 
 const popoverStyle = computed(() => {
   if (!attemptsPopover.value) return {}
@@ -787,8 +858,8 @@ function getAdminDetailCompletionCount() {
   display: flex;
   flex-direction: column;
   height: 100%;
-  gap: 16px;
-  padding: 16px 24px;
+  gap: 6px;
+  padding: 6px 10px;
   background: var(--bg);
   overflow-y: auto;
 }
@@ -834,16 +905,17 @@ function getAdminDetailCompletionCount() {
 .btn-secondary-sm {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  font-size: 0.8rem;
+  gap: 4px;
+  padding: 3px 8px;
+  font-size: 0.74rem;
   font-weight: 600;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-sm);
   color: var(--text);
   cursor: pointer;
   transition: all 0.15s ease;
+  line-height: 1.2;
 }
 
 .btn-secondary-sm:hover {
@@ -855,12 +927,12 @@ function getAdminDetailCompletionCount() {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 6px 10px;
-  font-size: 0.8rem;
+  padding: 3px 6px;
+  font-size: 0.74rem;
   font-weight: 600;
   background: rgba(239, 68, 68, 0.1);
   border: 1px solid rgba(239, 68, 68, 0.2);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-sm);
   color: #ef4444;
   cursor: pointer;
   transition: all 0.15s ease;
@@ -869,6 +941,21 @@ function getAdminDetailCompletionCount() {
 .btn-danger-sm:hover {
   background: #ef4444;
   color: #fff;
+}
+
+.badge-count-tiny {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+  min-width: 14px;
+  height: 14px;
+  border-radius: 7px;
+  background: #ef4444;
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 800;
+  margin-left: 2px;
 }
 
 .header-v-divider {
@@ -945,14 +1032,15 @@ function getAdminDetailCompletionCount() {
 .meta-chip {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 3px 10px;
-  border-radius: 12px;
-  font-size: 0.75rem;
+  gap: 3px;
+  padding: 1px 6px;
+  border-radius: 8px;
+  font-size: 0.68rem;
   font-weight: 600;
   background: var(--bg);
   border: 1px solid var(--border);
   color: var(--text-secondary);
+  line-height: 1.3;
 }
 
 .meta-chip--type {
@@ -1235,7 +1323,7 @@ function getAdminDetailCompletionCount() {
 .grades__table-card {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-md);
   overflow: hidden;
 }
 
@@ -1243,21 +1331,22 @@ function getAdminDetailCompletionCount() {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 16px;
+  padding: 4px 10px;
   border-bottom: 1px solid var(--border);
-  gap: 12px;
+  gap: 6px;
   flex-wrap: wrap;
+  background: var(--surface);
 }
 
 .search-box {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   background: var(--bg);
   border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  padding: 4px 10px;
-  width: 220px;
+  border-radius: var(--radius-sm);
+  padding: 2px 7px;
+  width: 135px;
 }
 
 .search-icon {
@@ -1268,7 +1357,7 @@ function getAdminDetailCompletionCount() {
   border: none;
   background: transparent;
   outline: none;
-  font-size: 0.8rem;
+  font-size: 0.74rem;
   width: 100%;
   color: var(--text);
 }
@@ -1278,25 +1367,29 @@ function getAdminDetailCompletionCount() {
   border: none;
   color: var(--text-secondary);
   cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
 }
 
 .table-filter-chips {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   flex-wrap: wrap;
 }
 
 .chip-btn {
-  padding: 4px 10px;
-  font-size: 0.75rem;
+  padding: 2px 7px;
+  font-size: 0.7rem;
   font-weight: 600;
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: 10px;
   background: var(--surface);
   color: var(--text-secondary);
   cursor: pointer;
   transition: all 0.15s ease;
+  line-height: 1.2;
 }
 
 .chip-btn:hover {
@@ -1320,19 +1413,57 @@ function getAdminDetailCompletionCount() {
   border-color: #f59e0b;
 }
 
+.view-layout-toggle {
+  display: inline-flex;
+  align-items: center;
+  background: var(--bg);
+  padding: 1px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  gap: 1px;
+  margin-left: auto;
+}
+
+.layout-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 6px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  border-radius: var(--radius-xs, 3px);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  line-height: 1;
+}
+
+.layout-toggle-btn:hover {
+  color: var(--text);
+}
+
+.layout-toggle-btn--active {
+  background: var(--surface);
+  color: var(--primary);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+  font-weight: 700;
+}
+
 .grades__score-input-wrapper {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .smart-badge {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 3px 8px;
-  border-radius: 12px;
-  font-size: 0.72rem;
+  gap: 2px;
+  padding: 1px 5px;
+  border-radius: 8px;
+  font-size: 0.68rem;
   font-weight: 700;
   border: 1px solid transparent;
   cursor: pointer;
@@ -1375,10 +1506,50 @@ function getAdminDetailCompletionCount() {
 .grade-percent-badge {
   display: inline-flex;
   align-items: center;
-  padding: 3px 10px;
-  border-radius: 12px;
-  font-size: 0.8rem;
+  padding: 1px 6px;
+  border-radius: 8px;
+  font-size: 0.74rem;
   font-weight: 700;
+}
+
+/* Layout Containers: 2-Column Split vs 1-Column Single */
+.grades__table-layout-container {
+  width: 100%;
+}
+
+.grades__table-layout--split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: start;
+}
+
+.grades__table-layout--single {
+  display: block;
+}
+
+.grades__table-column {
+  min-width: 0;
+}
+
+.grades__table-layout--split .grades__table-column:first-child {
+  border-right: 1px solid var(--border);
+}
+
+@media (max-width: 640px) {
+  .grades__table-layout--split {
+    grid-template-columns: 1fr;
+  }
+  .grades__table-layout--split .grades__table-column:first-child {
+    border-right: none;
+    border-bottom: 2px solid var(--border);
+  }
+}
+
+.grades__empty-roster-msg {
+  padding: 24px 16px;
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
 }
 
 .grades__assessment-table {
@@ -1387,25 +1558,63 @@ function getAdminDetailCompletionCount() {
 }
 
 .grades__assessment-table th {
-  padding: 12px 16px;
+  padding: 6px 10px;
   text-align: left;
-  font-size: 0.8rem;
+  font-size: 0.72rem;
   font-weight: 700;
   color: var(--text-secondary);
   text-transform: uppercase;
   border-bottom: 1px solid var(--border);
   background: var(--bg-secondary);
+  white-space: nowrap;
 }
 
 .grades__assessment-table td {
-  padding: 12px 16px;
+  padding: 4px 8px;
   border-bottom: 1px solid var(--border);
+}
+
+.grades__atr-student:hover {
+  background: var(--surface-hover);
+}
+
+.grades__ath-student {
+  width: auto;
+}
+
+.grades__ath-score {
+  width: 120px;
+}
+
+.grades__ath-percent {
+  width: 55px;
+  text-align: center;
+}
+
+.grades__atd-percent {
+  text-align: center;
+}
+
+.grades__ath-actions {
+  width: 28px;
+  text-align: center;
+}
+
+.grades__atd-actions {
+  text-align: center;
 }
 
 .grades__student-link {
   font-weight: 600;
   cursor: pointer;
   color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: inline-block;
+  max-width: 155px;
+  vertical-align: middle;
+  font-size: 0.82rem;
 }
 
 .grades__student-link:hover {
@@ -1414,13 +1623,33 @@ function getAdminDetailCompletionCount() {
 }
 
 .grades__input-ghost {
-  width: 90px;
-  padding: 6px 10px;
+  width: 68px;
+  padding: 3px 6px;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   background: var(--bg-secondary);
   font-weight: 700;
   color: var(--text);
+  font-size: 0.82rem;
+}
+
+/* Single column override for spaciousness when toggled */
+.grades__table-layout--single .grades__assessment-table th {
+  padding: 8px 14px;
+  font-size: 0.76rem;
+}
+
+.grades__table-layout--single .grades__assessment-table td {
+  padding: 6px 14px;
+}
+
+.grades__table-layout--single .grades__student-link {
+  max-width: 320px;
+}
+
+.grades__table-layout--single .grades__input-ghost {
+  width: 82px;
+  padding: 5px 8px;
 }
 
 .grades__cell-missing-badge {
@@ -1595,7 +1824,7 @@ function getAdminDetailCompletionCount() {
   justify-content: flex-end;
 }
 
-/* Compact Header & Metrics Strip */
+/* Compact Header & Integrated Metrics Strip */
 .compact-header-card {
   display: flex;
   align-items: center;
@@ -1603,20 +1832,20 @@ function getAdminDetailCompletionCount() {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  padding: 10px 14px;
-  margin-bottom: 8px;
-  gap: 12px;
+  padding: 4px 10px;
+  margin-bottom: 0;
+  gap: 8px;
 }
 
 .compact-header-left {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   flex-wrap: wrap;
 }
 
 .compact-title {
-  font-size: 1.15rem;
+  font-size: 1rem;
   font-weight: 700;
   color: var(--text);
   margin: 0;
@@ -1626,73 +1855,71 @@ function getAdminDetailCompletionCount() {
 .compact-meta-chips {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
 }
 
-.compact-metrics-strip {
+.table-metrics-strip {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 12px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-sm);
-  padding: 8px 14px;
-  margin-bottom: 10px;
+  gap: 8px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
+  padding: 3px 10px;
+  font-size: 0.74rem;
 }
 
 .metric-pill {
   display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.82rem;
+  align-items: baseline;
+  gap: 4px;
+  font-size: 0.75rem;
 }
 
 .metric-pill__label {
-  font-size: 0.68rem;
+  font-size: 0.62rem;
   font-weight: 700;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.03em;
   color: var(--text-secondary);
   text-transform: uppercase;
 }
 
 .metric-pill__val {
-  font-size: 0.95rem;
-  font-weight: 700;
+  font-size: 0.86rem;
+  font-weight: 800;
   color: var(--text);
 }
 
 .metric-pill__sub {
-  font-size: 0.76rem;
+  font-size: 0.68rem;
   color: var(--text-secondary);
 }
 
 .metric-divider {
   width: 1px;
-  height: 18px;
+  height: 12px;
   background: var(--border);
 }
 
 .mini-stacked-bar-container {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 5px;
 }
 
 .mini-bar-label {
-  font-size: 0.68rem;
+  font-size: 0.62rem;
   font-weight: 700;
   color: var(--text-secondary);
-  letter-spacing: 0.04em;
+  letter-spacing: 0.03em;
 }
 
 .mini-stacked-bar {
   display: flex;
-  height: 20px;
-  min-width: 140px;
-  max-width: 200px;
-  border-radius: 6px;
+  height: 16px;
+  min-width: 110px;
+  max-width: 150px;
+  border-radius: 4px;
   overflow: hidden;
   background: var(--border);
   cursor: pointer;
@@ -1705,7 +1932,7 @@ function getAdminDetailCompletionCount() {
   align-items: center;
   justify-content: center;
   color: #ffffff;
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   font-weight: 800;
   line-height: 1;
   transition: all 0.15s ease;
@@ -1721,29 +1948,23 @@ function getAdminDetailCompletionCount() {
 .mini-bar-segment--l3 { background-color: #3b82f6; }
 .mini-bar-segment--l2 { background-color: #f59e0b; }
 .mini-bar-segment--l1 { background-color: #ef4444; }
-.tier-chip--l1 { background: var(--color-danger-bg, rgba(239, 68, 68, 0.12)); color: var(--color-danger-text, #dc2626); }
-
-.tier-chip:hover, .tier-chip--active {
-  transform: translateY(-1px);
-  filter: brightness(0.95);
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-}
 
 .compact-alerts-group {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   margin-left: auto;
 }
 
 .alert-chip {
-  padding: 2px 8px;
-  border-radius: 12px;
-  font-size: 0.72rem;
-  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 10px;
+  font-size: 0.68rem;
+  font-weight: 700;
   cursor: pointer;
   border: 1px solid transparent;
   transition: all 0.15s ease;
+  line-height: 1.3;
 }
 
 .alert-chip:hover {

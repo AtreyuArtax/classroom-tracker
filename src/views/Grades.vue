@@ -555,32 +555,70 @@ const sortedRoster = computed(() => {
       overallGrade: classGrades.value[id]?.overallGrade ?? -1
     }))
 
+  function tieBreakName(sA, sB) {
+    const lA = (sA.lastName || '').toLowerCase()
+    const lB = (sB.lastName || '').toLowerCase()
+    const lCmp = lA.localeCompare(lB)
+    if (lCmp !== 0) return lCmp
+    return (sA.firstName || '').toLowerCase().localeCompare((sB.firstName || '').toLowerCase())
+  }
+
   return studentList.sort((a, b) => {
     if (gridSortBy.value === 'grade') {
       const gA = a.overallGrade
       const gB = b.overallGrade
-      return gridSortOrder.value === 'asc' ? gA - gB : gB - gA
+      if (gA === -1 && gB !== -1) return 1
+      if (gA !== -1 && gB === -1) return -1
+      if (gA === -1 && gB === -1) return tieBreakName(a, b)
+      const diff = gridSortOrder.value === 'asc' ? gA - gB : gB - gA
+      if (diff !== 0) return diff
+      return tieBreakName(a, b)
     } else if (gridSortBy.value !== 'name') {
       const aId = gridSortBy.value
       const gradeA = gradeMap.value[aId]?.[a.studentId]
       const gradeB = gradeMap.value[aId]?.[b.studentId]
-      
+
+      const targetAssess = (assessments.value || []).find(ast => String(ast.assessmentId) === String(aId))
+      const isAdminText = targetAssess?.purpose === 'administrative' && targetAssess?.adminFormat === 'text'
+
+      if (isAdminText) {
+        const valA = (gradeA?.textValue || (gradeA?.resolvedScore != null && isNaN(Number(gradeA.resolvedScore)) ? String(gradeA.resolvedScore) : '')).trim()
+        const valB = (gradeB?.textValue || (gradeB?.resolvedScore != null && isNaN(Number(gradeB.resolvedScore)) ? String(gradeB.resolvedScore) : '')).trim()
+        if (!valA && valB) return 1
+        if (valA && !valB) return -1
+        if (!valA && !valB) return tieBreakName(a, b)
+        const cmp = valA.localeCompare(valB, undefined, { numeric: true, sensitivity: 'base' })
+        const diff = gridSortOrder.value === 'asc' ? cmp : -cmp
+        if (diff !== 0) return diff
+        return tieBreakName(a, b)
+      }
+
       const getVal = (g) => {
         if (!g) return -1
         if (g.excluded) return -1
         if (g.missing) return 0
-        return g.resolvedScore ?? -1
+        const score = g.resolvedScore ?? g.score ?? g.pointsEarned ?? -1
+        const num = Number(score)
+        return isNaN(num) ? -1 : num
       }
       
       const valA = getVal(gradeA)
       const valB = getVal(gradeB)
-      return gridSortOrder.value === 'asc' ? valA - valB : valB - valA
+      if (valA === -1 && valB !== -1) return 1
+      if (valA !== -1 && valB === -1) return -1
+      if (valA === -1 && valB === -1) return tieBreakName(a, b)
+      const diff = gridSortOrder.value === 'asc' ? valA - valB : valB - valA
+      if (diff !== 0) return diff
+      return tieBreakName(a, b)
     }
     
-    const nameA = a.lastName.toLowerCase()
-    const nameB = b.lastName.toLowerCase()
-    if (gridSortOrder.value === 'asc') return nameA.localeCompare(nameB)
-    return nameB.localeCompare(nameA)
+    const nameA = (a.lastName || '').toLowerCase()
+    const nameB = (b.lastName || '').toLowerCase()
+    const lastCmp = nameA.localeCompare(nameB)
+    if (lastCmp !== 0) return gridSortOrder.value === 'asc' ? lastCmp : -lastCmp
+    const firstA = (a.firstName || '').toLowerCase()
+    const firstB = (b.firstName || '').toLowerCase()
+    return gridSortOrder.value === 'asc' ? firstA.localeCompare(firstB) : -firstA.localeCompare(firstB)
   })
 })
 

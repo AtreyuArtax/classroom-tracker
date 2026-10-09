@@ -32,6 +32,8 @@ import {
   Filler
 } from 'chart.js'
 import { activeClassRecord } from '../../composables/useGradebook.js'
+import { getEffectiveClassRecord } from '../../composables/useElementary.js'
+import { activeSubjectId } from '../../composables/useClassroomState.js'
 import { formatLocalDisplay } from '../../utils/dates.js'
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend, Filler)
@@ -71,13 +73,30 @@ onUnmounted(() => {
 const history = computed(() => {
   if (!props.assessments.length || !activeClassRecord.value) return []
 
+  const effClass = activeClassRecord.value?.classType === 'elementary'
+    ? getEffectiveClassRecord(activeClassRecord.value, activeSubjectId.value)
+    : activeClassRecord.value
+
   // Ensure assessments are sorted by date and filter SBAR tasks in traditional framework
-  const isSBAR = activeClassRecord.value?.gradingFramework === 'sbar'
+  const isSBAR = effClass?.gradingFramework === 'sbar'
+  const categories = effClass?.gradebookCategories || activeClassRecord.value?.gradebookCategories || []
+  const catWeightMap = new Map(categories.map(c => [String(c.categoryId), Number(c.weight || 0)]))
+
   const sorted = [...props.assessments]
     .filter(a => {
       if (a.excluded) return false
+      // Exclude formative and administrative tasks from academic grade trends
+      if (a.isFormative || a.purpose === 'formative' || a.purpose === 'administrative') return false
+
       const isSBARTask = a.categoryId === 'sbar_general' || (a.expectationIds && a.expectationIds.length > 0) || a.expectationId != null || a.isSbar || a.gradingFramework === 'sbar'
       if (isSBAR ? !isSBARTask : isSBARTask) return false
+
+      // In traditional framework, exclude assessments belonging to 0%-weighted categories
+      if (!isSBAR && categories.length > 0) {
+        const catWeight = catWeightMap.get(String(a.categoryId))
+        if (catWeight === undefined || catWeight <= 0) return false
+      }
+
       return props.gradeMap[a.assessmentId]?.[props.studentId]?.resolvedScore !== null || props.gradeMap[a.assessmentId]?.[props.studentId]?.missing
     })
     .sort((a, b) => new Date(a.date) - new Date(b.date))
@@ -85,7 +104,6 @@ const history = computed(() => {
   if (sorted.length === 0) return []
 
   const points = []
-  const categories = activeClassRecord.value.gradebookCategories || []
 
   // We iterate through every assessment date to build the running average
   for (let i = 0; i < sorted.length; i++) {
@@ -105,7 +123,7 @@ const history = computed(() => {
 
       for (const a of catAssessments) {
         const grade = props.gradeMap[a.assessmentId]?.[props.studentId]
-        if (!grade || grade.excluded) continue
+        if (!grade || grade.excluded || a.isFormative || a.purpose === 'formative' || a.purpose === 'administrative') continue
 
         const isSBART = a.categoryId === 'sbar_general' || (a.expectationIds && a.expectationIds.length > 0) || a.expectationId != null || a.isSbar || a.gradingFramework === 'sbar'
         const rawPossible = isSBART ? 100 : (a.scaledTotal ?? a.totalPoints)

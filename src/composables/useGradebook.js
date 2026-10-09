@@ -1752,7 +1752,7 @@ export const gradeMap = computed(() => {
 
     const textValue = isAdminText
       ? (resolvedScore != null ? String(resolvedScore) : '')
-      : (grade.textValue || grade.attempts?.[0]?.comment || grade.comment || '')
+      : (grade.textValue || '')
 
     const entry = {
       ...grade,

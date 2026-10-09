@@ -275,17 +275,28 @@
               class="recent-activity__card"
               :class="{ 
                 'recent-activity__card--failing': item.isFailing,
+                'recent-activity__card--formative': item.isFormative,
                 'recent-activity__card--event': item.type === 'event'
               }"
             >
               <div class="activity-top">
-                <span class="activity-badge" :class="'activity-badge--' + item.type">{{ item.category }}</span>
+                <span 
+                  class="activity-badge" 
+                  :class="item.isFormative ? 'activity-badge--formative' : ('activity-badge--' + item.type)"
+                >{{ item.category }}</span>
                 <span class="activity-date">{{ formatDateShort(item.date) }}</span>
               </div>
               <div class="activity-main">
                 <span class="activity-name" :title="item.title">{{ item.title }}</span>
               </div>
-              <div v-if="item.value" class="activity-score" :class="{ 'activity-score--failing': item.isFailing }">
+              <div 
+                v-if="item.value" 
+                class="activity-score" 
+                :class="{ 
+                  'activity-score--failing': item.isFailing,
+                  'activity-score--formative': item.isFormative 
+                }"
+              >
                 <span v-if="item.levelColor" class="sbar-level-badge" :style="{ background: item.levelColor, color: 'white', padding: '2px 7px', borderRadius: '4px', fontWeight: 'bold' }">
                   {{ item.value }}
                 </span>
@@ -480,7 +491,7 @@ import {
   isAssessmentInSubCohort
 } from '../../composables/useGradebook.js'
 import { useStudentDossier } from '../../composables/useStudentDossier.js'
-import { getStudentEffectiveGrade } from '../../composables/useElementary.js'
+import { getStudentEffectiveGrade, getEffectiveClassRecord } from '../../composables/useElementary.js'
 import { activeSubjectId } from '../../composables/useClassroomState.js'
 
 const props = defineProps({
@@ -749,12 +760,20 @@ const coachingInsight = computed(() => {
   return null
 })
 
-const recentActivityFeed = computed(() => buildRecentActivityFeed({
-  assessments: allDossierAssessments.value,
-  events: events.value,
-  behaviorCodesMap: behaviorCodesMap.value,
-  isSBARMode: activeClassRecord.value?.gradingFramework === 'sbar'
-}))
+const recentActivityFeed = computed(() => {
+  const effClass = activeClassRecord.value?.classType === 'elementary'
+    ? getEffectiveClassRecord(activeClassRecord.value, activeSubjectId.value)
+    : activeClassRecord.value
+  const categories = effClass?.gradebookCategories || activeClassRecord.value?.gradebookCategories || []
+
+  return buildRecentActivityFeed({
+    assessments: allDossierAssessments.value,
+    events: events.value,
+    behaviorCodesMap: behaviorCodesMap.value,
+    isSBARMode: activeClassRecord.value?.gradingFramework === 'sbar',
+    categories
+  })
+})
 
 function formatDateShort(dStr) {
   if (!dStr) return ''
@@ -1360,6 +1379,11 @@ onUnmounted(() => {
   color: #8b5cf6;
 }
 
+.activity-badge--formative {
+  background: rgba(100, 116, 139, 0.15);
+  color: var(--text-secondary);
+}
+
 .activity-name {
   font-size: 0.8rem;
   font-weight: 700;
@@ -1380,6 +1404,10 @@ onUnmounted(() => {
 
 .activity-score--failing {
   color: #ef4444;
+}
+
+.activity-score--formative {
+  color: var(--text);
 }
 
 .activity-sub {

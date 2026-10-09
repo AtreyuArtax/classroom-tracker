@@ -11,21 +11,26 @@ import { getSBARLevelBadge } from './gradeCalcSBAR.js'
  * @param {Array}   opts.events            The student's events
  * @param {Object}  opts.behaviorCodesMap  { codeKey: behaviourCode }
  * @param {boolean} opts.isSBARMode        Class uses standards-based grading
+ * @param {Array}   [opts.categories]      Class categories list
  * @param {number}  [opts.limit=4]
  */
-export function buildRecentActivityFeed({ assessments = [], events = [], behaviorCodesMap = {}, isSBARMode = false, limit = 4 }) {
+export function buildRecentActivityFeed({ assessments = [], events = [], behaviorCodesMap = {}, isSBARMode = false, categories = [], limit = 4 }) {
   const items = []
+  const catMap = new Map((categories || []).map(c => [String(c.categoryId), c.name]))
 
   // 1. Graded assessments for this student
   const assList = Array.isArray(assessments) ? assessments : []
   assList.forEach(ass => {
     if (!ass || ass.score === null || ass.score === undefined) return
+    if (ass.purpose === 'administrative') return
 
     const isSBAR = ass.categoryId === 'sbar_general' || (ass.expectationIds && ass.expectationIds.length > 0)
     
     // Strict isolation based on active mode
     if (isSBARMode && !isSBAR) return
     if (!isSBARMode && isSBAR) return
+
+    const isFormative = Boolean(ass.isFormative || ass.purpose === 'formative')
 
     if (isSBAR) {
       const pct = Math.round(Number(ass.score))
@@ -36,24 +41,32 @@ export function buildRecentActivityFeed({ assessments = [], events = [], behavio
         date: ass.date || '',
         title: ass.name,
         type: 'grade',
-        category: 'SBAR EVAL',
+        category: isFormative ? 'SBAR Practice' : 'SBAR EVAL',
         value: badge.level,
         levelColor: badge.color,
         subText: `${expCount} Standard${expCount !== 1 ? 's' : ''}`,
-        isFailing: pct < 50
+        isFormative,
+        isFailing: !isFormative && pct < 50
       })
     } else {
       const total = ass.scaledTotal || ass.totalPoints || 100
       const pct = Math.round((ass.score / total) * 100)
+      const rawCatName = catMap.get(String(ass.categoryId)) || ass.category
+      let categoryLabel = rawCatName || (isFormative ? 'Formative' : 'Assessment')
+      if (isFormative && (!rawCatName || rawCatName.toLowerCase() === 'assessment' || rawCatName.toLowerCase() === 'assessments')) {
+        categoryLabel = 'Formative'
+      }
+
       items.push({
         id: 'ass-' + ass.assessmentId,
         date: ass.date || '',
         title: ass.name,
         type: 'grade',
-        category: ass.category || 'Assessment',
+        category: categoryLabel,
         value: `${pct}%`,
         subText: `${ass.score}/${total}`,
-        isFailing: pct < 50
+        isFormative,
+        isFailing: !isFormative && pct < 50
       })
     }
   })
@@ -91,6 +104,7 @@ export function buildRecentActivityFeed({ assessments = [], events = [], behavio
         category: cat,
         value: isParentContact ? 'Contacted' : isTestDayAbsence ? 'Missed Test' : isPositive ? 'Praise' : isRedirect ? 'Redirect' : 'Logged',
         subText: null,
+        isFormative: false,
         isFailing: isTestDayAbsence
       })
     }
