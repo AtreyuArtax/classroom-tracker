@@ -45,6 +45,13 @@
             >
               <Award :size="14" /> Learning Skills
             </button>
+            <button 
+              class="reports__pillar-btn"
+              :class="{ 'reports__pillar-btn--active': rightMode === 'comments' }"
+              @click="switchPillar('comments')"
+            >
+              <MessageSquareText :size="14" /> Report Comments
+            </button>
           </div>
 
           <div class="reports__header-controls">
@@ -113,6 +120,14 @@
         <!-- ── PILLAR 3: LEARNING SKILLS MATRIX ─────────────────────── -->
         <template v-else-if="rightMode === 'learningskills'">
           <ReportsLearningSkills
+            :report-class="reportClass"
+            :sidebar-students="filteredSidebarStudents"
+          />
+        </template>
+
+        <!-- ── PILLAR 4: REPORT CARD COMMENTS ───────────────────────── -->
+        <template v-else-if="rightMode === 'comments'">
+          <ReportsCommentGenerator
             :report-class="reportClass"
             :sidebar-students="filteredSidebarStudents"
           />
@@ -234,7 +249,7 @@
 
 <script setup>
 import { ref, reactive, computed, watch, onMounted, defineAsyncComponent } from 'vue'
-import { BarChart2, Printer, User, Award, Send } from 'lucide-vue-next'
+import { BarChart2, Printer, User, Award, Send, MessageSquareText } from 'lucide-vue-next'
 
 import { useClassroom } from '../composables/useClassroom.js'
 import { getEffectiveClassRecord } from '../composables/useElementary.js'
@@ -256,6 +271,7 @@ import ReportsClassOverview from '../components/reports/ReportsClassOverview.vue
 const ReportsBatchPrintModal       = defineAsyncComponent(() => import('../components/reports/ReportsBatchPrintModal.vue'))
 import ReportsPrintHub from '../components/reports/ReportsPrintHub.vue'
 const ReportsLearningSkills        = defineAsyncComponent(() => import('../components/reports/ReportsLearningSkills.vue'))
+const ReportsCommentGenerator      = defineAsyncComponent(() => import('../components/reports/ReportsCommentGenerator.vue'))
 import { calculateClassGrades, getAssessmentsByClass, getAssessmentPercentage } from '../db/gradebookService.js'
 import { loadGradebook, clearGradebook, assessments as gbAssessments, gradeMap, activeGradeFilter } from '../composables/useGradebook.js'
 import { getSectionColor } from '../utils/gradeColors.js'
