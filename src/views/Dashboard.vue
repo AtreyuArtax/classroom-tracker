@@ -104,6 +104,27 @@
         <SeatingGrid v-if="activeClass" />
         <div v-else-if="classList.length === 0" class="dashboard__getting-started">
           <div class="dashboard__getting-started-card">
+            <!-- Returning User / Device Restore Callout -->
+            <div class="dashboard__restore-banner">
+              <div class="dashboard__restore-banner-icon">
+                <RefreshCcw :size="20" />
+              </div>
+              <div class="dashboard__restore-banner-body">
+                <h3 class="dashboard__restore-banner-title">
+                  Setting up a new computer or restoring previous records?
+                </h3>
+                <p class="dashboard__restore-banner-desc">
+                  If you previously linked a backup folder in your school OneDrive or Google Drive, you can reconnect it to restore all your classes, students, and marks in one click.
+                </p>
+              </div>
+              <button 
+                class="dashboard__restore-banner-btn" 
+                @click="emit('navigate', 'Setup', { tab: 'data' })"
+              >
+                Reconnect Folder & Restore →
+              </button>
+            </div>
+
             <GettingStartedGuide />
             <div class="dashboard__getting-started-actions">
               <button class="dashboard__go-setup" @click="emit('navigate', 'Setup', { tab: 'manage' })">
@@ -221,7 +242,7 @@ const AssessmentConversationModal     = defineAsyncComponent(() => import('../co
 const StudentProfileModal             = defineAsyncComponent(() => import('../components/StudentProfileModal.vue'))
 const GettingStartedGuide             = defineAsyncComponent(() => import('../components/setup/GettingStartedGuide.vue'))
 const AttendanceHistoryDrawer         = defineAsyncComponent(() => import('../components/AttendanceHistoryDrawer.vue'))
-import { DoorOpen, Users, GripVertical, Calendar, CalendarCheck, Scan, History } from 'lucide-vue-next'
+import { DoorOpen, Users, GripVertical, Calendar, CalendarCheck, Scan, History, RefreshCcw } from 'lucide-vue-next'
 import { useClassroom }    from '../composables/useClassroom.js'
 import { useRadial }       from '../composables/useRadial.js'
 import { loadGradebook, activeSubCohortFilter, setActiveSubCohortFilter, availableSubCohorts, availableNaturalSubCohorts } from '../composables/useGradebook.js'
@@ -887,5 +908,68 @@ watch(profileStudent, (student) => {
   margin-top: 12px;
   border-top: 1px solid var(--border);
   padding-top: 24px;
+}
+
+/* ── Restore Callout Banner ── */
+.dashboard__restore-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 20px;
+  background: var(--primary-light, #eef2ff);
+  border: 1px solid color-mix(in srgb, var(--primary) 22%, transparent);
+  border-radius: var(--radius-md, 12px);
+  flex-wrap: wrap;
+}
+
+.dashboard__restore-banner-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-sm, 8px);
+  background: var(--primary);
+  color: #ffffff;
+  flex-shrink: 0;
+}
+
+.dashboard__restore-banner-body {
+  flex: 1;
+  min-width: 240px;
+}
+
+.dashboard__restore-banner-title {
+  font-size: 0.96rem;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0 0 4px 0;
+}
+
+.dashboard__restore-banner-desc {
+  font-size: 0.84rem;
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.dashboard__restore-banner-btn {
+  background: var(--primary);
+  color: #ffffff;
+  border: none;
+  border-radius: var(--radius-sm, 8px);
+  padding: 10px 16px;
+  font-size: 0.86rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  box-shadow: var(--shadow-sm);
+}
+
+.dashboard__restore-banner-btn:hover {
+  opacity: 0.92;
+  transform: translateY(-1px);
 }
 </style>

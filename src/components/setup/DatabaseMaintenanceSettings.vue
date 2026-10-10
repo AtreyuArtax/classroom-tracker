@@ -60,7 +60,7 @@
         
         <div v-else style="display: flex; flex-direction: column; gap: 8px; max-height: 320px; overflow-y: auto; padding-right: 4px;">
           <div 
-            v-for="backup in directoryBackups" 
+            v-for="(backup, idx) in directoryBackups" 
             :key="backup.name"
             style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: rgba(255,255,255,0.03); border: 1px solid var(--border-subtle, rgba(255,255,255,0.06)); border-radius: 6px; flex-wrap: wrap; gap: 8px;"
           >
@@ -75,6 +75,9 @@
                       : 'background: rgba(255, 255, 255, 0.1); color: var(--text-secondary); font-size: 0.72rem; padding: 2px 6px;')"
                 >
                   {{ backup.type === 'daily' ? 'Daily Archive' : (backup.type === 'auto' ? 'Auto Snapshot' : 'Legacy Live') }}
+                </span>
+                <span v-if="idx === 0" class="setup__badge" style="background: rgba(16, 185, 129, 0.2); color: #10b981; font-size: 0.72rem; padding: 2px 6px; font-weight: 700;">
+                  Latest
                 </span>
                 <span style="font-size: 0.88rem; font-weight: 600; color: var(--text-primary);">
                   {{ new Date(backup.lastModified).toLocaleString() }}
@@ -413,6 +416,50 @@ async function linkBackupDirectory() {
     syncMsg.value = '✅ Folder linked successfully! You are now using rolling folder backups.'
     window.dispatchEvent(new Event('backup-linked'))
     await loadDirectoryBackups()
+
+    // If the database is currently empty and the linked directory has backups, offer to restore the latest one
+    if (directoryBackups.value && directoryBackups.value.length > 0) {
+      const currentClasses = await classService.getAllClasses()
+      if (!currentClasses || currentClasses.length === 0) {
+        const newestBackup = directoryBackups.value[0]
+        try {
+          const preview = await eventService.previewDirectoryBackup(newestBackup.name)
+          if (preview && Array.isArray(preview.classes) && preview.classes.length > 0) {
+            let totalStudents = 0
+            preview.classes.forEach(c => {
+              totalStudents += Object.keys(c.students || {}).length
+            })
+            const backupDate = preview.exportedAt 
+              ? new Date(preview.exportedAt).toLocaleString() 
+              : new Date(newestBackup.lastModified).toLocaleString()
+            const gradeCount = Array.isArray(preview.grades) ? preview.grades.length : 0
+            const photoCount = Array.isArray(preview.photos) ? preview.photos.length : 0
+
+            const confirmed = await confirm(
+              `We detected existing classroom records in this folder from ${backupDate}:\n\n` +
+              `• ${preview.classes.length} ${preview.classes.length === 1 ? 'Class' : 'Classes'}\n` +
+              `• ${totalStudents} ${totalStudents === 1 ? 'Student' : 'Students'}\n` +
+              (gradeCount > 0 ? `• ${gradeCount} Marks recorded\n` : '') +
+              (photoCount > 0 ? `• ${photoCount} Student Photos\n` : '') +
+              `\nWould you like to restore this backup into your app now?`,
+              'Existing Classroom Data Found',
+              {
+                confirmLabel: 'Restore Latest Backup',
+                cancelLabel: 'Keep Empty App'
+              }
+            )
+
+            if (confirmed) {
+              importPreview.value = preview
+              await doImport()
+              syncMsg.value = `✅ Folder linked and restored ${preview.classes.length} classes from ${backupDate}!`
+            }
+          }
+        } catch (previewErr) {
+          console.warn('Could not preview latest backup for auto-restore prompt:', previewErr)
+        }
+      }
+    }
   } catch (err) {
     if (err.name !== 'AbortError') syncMsg.value = `❌ Failed to link folder: ${err.message}`
   }
