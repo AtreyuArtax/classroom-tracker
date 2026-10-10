@@ -52,8 +52,8 @@ export default defineConfig({
 
             // Workbox configuration
             workbox: {
-                // Increase the default 2MB limit to 5MB to accommodate larger bundles
-                maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
+                // Increase the limit to 15MB to accommodate WebLLM in-browser AI engine chunks
+                maximumFileSizeToCacheInBytes: 15 * 1024 * 1024,
 
                 // Cache ALL application routes and static assets
                 globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
@@ -131,6 +131,9 @@ export default defineConfig({
                     }
                     if (id.includes('exceljs') || id.includes('jszip')) {
                         return 'vendor-excel'
+                    }
+                    if (id.includes('@mlc-ai/web-llm')) {
+                        return 'vendor-webllm'
                     }
                     if (id.includes('data/curriculum/ontario/secondary')) {
                         return 'curriculum-secondary'

@@ -128,7 +128,7 @@
               </div>
             </div>
 
-            <div class="cg__sb-right" style="display: flex; gap: 8px; align-items: center;">
+            <div class="cg__sb-right" style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
               <button 
                 v-if="isCommentCustomized"
                 type="button" 
@@ -147,6 +147,30 @@
               >
                 <Sparkles :size="14" />
                 <span>🎲 Reroll Phrasing</span>
+              </button>
+
+              <!-- Local AI Polish Button -->
+              <button
+                type="button"
+                class="cg__btn-icon"
+                :class="{ 'cg__btn-icon--ai-ready': llmState.status === 'ready' }"
+                :title="llmState.status === 'ready' ? `Polish with local ${llmState.activeModelName}` : 'Configure local AI rephraser'"
+                :disabled="isPolishing"
+                @click="handleAiPolishClick"
+              >
+                <Sparkles :size="13" :class="{ 'cg__icon--spin': isPolishing }" />
+                <span v-if="isPolishing">Polishing (Local AI)...</span>
+                <span v-else-if="llmState.status === 'ready'">✨ Polish ({{ llmState.activeModelKey === 'qwen-0.5b' ? 'Qwen' : (llmState.activeModelKey === 'llama-1b' ? 'Llama' : 'Nano') }})</span>
+                <span v-else>✨ AI Polish (Offline)...</span>
+              </button>
+
+              <button
+                type="button"
+                class="cg__btn-icon cg__btn-icon--gear"
+                title="Manage Local AI Models & WebGPU Settings"
+                @click="showLlmModal = true"
+              >
+                <Cpu :size="13" />
               </button>
             </div>
           </div>
@@ -270,11 +294,17 @@
         </div>
       </main>
     </div>
+
+    <!-- Local AI Settings & Model Manager Modal -->
+    <CommentLlmSettingsModal
+      v-if="showLlmModal"
+      @close="showLlmModal = false"
+    />
   </div>
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted, defineAsyncComponent } from 'vue'
 import {
   MessageSquareText,
   GraduationCap,
@@ -285,7 +315,8 @@ import {
   Download,
   Sparkles,
   Target,
-  ChevronRight
+  ChevronRight,
+  Cpu
 } from 'lucide-vue-next'
 
 import { classGrades } from '../../composables/useGradebook.js'
@@ -295,6 +326,13 @@ import {
   getAchievementLevel,
   extractEvidenceFromGrades
 } from '../../utils/commentGenerator.js'
+import {
+  llmState,
+  detectHardwareCapabilities,
+  polishReportComment
+} from '../../utils/localLlmService.js'
+
+const CommentLlmSettingsModal = defineAsyncComponent(() => import('./CommentLlmSettingsModal.vue'))
 
 const props = defineProps({
   reportClass: {
@@ -323,6 +361,10 @@ const copySuccess = ref(false)
 const copiedStudents = ref(new Set())
 const customEdits = ref({}) // studentId -> manually edited comment text
 const learningSkillsMap = ref({}) // studentId -> { responsibility, ... }
+
+// Local LLM State
+const showLlmModal = ref(false)
+const isPolishing = ref(false)
 
 // ── Students List ────────────────────────────────────────────────────────────
 const studentList = computed(() => {
@@ -490,6 +532,36 @@ function rerollPhrasing() {
   variantSeed.value = (variantSeed.value + 1) % 8
 }
 
+// ── Local AI Polish Action ───────────────────────────────────────────────────
+async function handleAiPolishClick() {
+  if (llmState.status !== 'ready') {
+    // If no model is active, open the model settings modal
+    showLlmModal.value = true
+    return
+  }
+
+  if (!currentCommentText.value || isPolishing.value) return
+
+  isPolishing.value = true
+  try {
+    const res = await polishReportComment({
+      draftComment: currentCommentText.value,
+      student: activeStudent.value,
+      charLimit: charLimit.value,
+      pronounMode: pronounMode.value
+    })
+
+    currentCommentText.value = res.text
+    if (activeStudent.value) {
+      customEdits.value[activeStudent.value.studentId] = res.text
+    }
+  } catch (err) {
+    alert(`Local AI polish encountered an issue: ${err.message || err}. You can re-open AI settings to switch models.`)
+  } finally {
+    isPolishing.value = false
+  }
+}
+
 // ── Copy Actions ─────────────────────────────────────────────────────────────
 async function copyCurrentComment() {
   if (!currentCommentText.value) return
@@ -596,8 +668,15 @@ function getGradeColorClass(mark) {
   return 'cg__grade-pill--r'
 }
 
-// Load Learning Skills on mount
+// Load Learning Skills & scan local AI capabilities on mount
 onMounted(async () => {
+  // Proactively check local hardware capabilities & cached models
+  try {
+    await detectHardwareCapabilities()
+  } catch {
+    // Non-fatal background check
+  }
+
   if (props.reportClass?.classId) {
     try {
       const records = await getLearningSkillsByClass(props.reportClass.classId)
@@ -915,6 +994,28 @@ onMounted(async () => {
 
 .cg__btn-icon:hover {
   background: var(--border);
+}
+
+.cg__btn-icon--ai-ready {
+  background: #f0fdf4;
+  border-color: #86efac;
+  color: #15803d;
+}
+.cg__btn-icon--ai-ready:hover {
+  background: #dcfce7;
+}
+
+.cg__btn-icon--gear {
+  padding: 6px 8px;
+}
+
+.cg__icon--spin {
+  animation: cg-spin 1.2s linear infinite;
+}
+
+@keyframes cg-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 /* ── Evidence Selector Row ────────────────────────────────────────────────── */
