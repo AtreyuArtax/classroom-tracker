@@ -46,6 +46,7 @@
               <Award :size="14" /> Learning Skills
             </button>
             <button 
+              v-if="isCommentsEnabled"
               class="reports__pillar-btn"
               :class="{ 'reports__pillar-btn--active': rightMode === 'comments' }"
               @click="switchPillar('comments')"
@@ -249,7 +250,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, watch, onMounted, defineAsyncComponent } from 'vue'
+import { ref, reactive, computed, watch, onMounted, onUnmounted, defineAsyncComponent } from 'vue'
 import { BarChart2, Printer, User, Award, Send, MessageSquareText } from 'lucide-vue-next'
 
 import { useClassroom } from '../composables/useClassroom.js'
@@ -401,11 +402,46 @@ watch(isSidebarCollapsed, () => {
   }, 350)
 })
 
+// ── Feature Flag: Report Card Comments (?comments=1 to enable, ?comments=0 to disable) ──
+const isCommentsEnabled = ref(localStorage.getItem('feature_comments_enabled') === 'true')
+
+function checkCommentsFlag() {
+  const urlParams = new URLSearchParams(window.location.search)
+  const hash = window.location.hash
+  if (urlParams.get('comments') === '1' || urlParams.get('comments') === 'true' || hash.includes('comments')) {
+    localStorage.setItem('feature_comments_enabled', 'true')
+    isCommentsEnabled.value = true
+  } else if (urlParams.get('comments') === '0' || urlParams.get('comments') === 'false') {
+    localStorage.removeItem('feature_comments_enabled')
+    isCommentsEnabled.value = false
+  }
+}
+
+function handleSecretKeydown(e) {
+  // Secret hotkey toggle: Option + Shift + C (Mac) or Alt + Shift + C (Windows)
+  if (e.altKey && e.shiftKey && (e.key === 'C' || e.key === 'c')) {
+    e.preventDefault()
+    isCommentsEnabled.value = !isCommentsEnabled.value
+    if (isCommentsEnabled.value) {
+      localStorage.setItem('feature_comments_enabled', 'true')
+    } else {
+      localStorage.removeItem('feature_comments_enabled')
+      if (rightMode.value === 'comments') {
+        switchPillar('overview')
+      }
+    }
+  }
+}
+
 const rightMode = ref('overview') // 'overview' | 'printhub' | 'dossier' | 'learningskills' | 'comments'
 const previousModeBeforeDossier = ref('overview')
 const activeVisualTab = ref(null)
 
 function switchPillar(mode) {
+  if (mode === 'comments' && !isCommentsEnabled.value) {
+    rightMode.value = 'overview'
+    return
+  }
   rightMode.value = mode
   if (mode !== 'dossier') {
     dossier.clearStudent()
@@ -413,6 +449,14 @@ function switchPillar(mode) {
 }
 
 onMounted(async () => {
+  checkCommentsFlag()
+  window.addEventListener('keydown', handleSecretKeydown)
+
+  const urlParams = new URLSearchParams(window.location.search)
+  if ((urlParams.get('comments') === '1' || window.location.hash.includes('comments')) && isCommentsEnabled.value) {
+    rightMode.value = 'comments'
+  }
+
   if (props.classId) {
     sidebarClassId.value = props.classId
     switchClass(props.classId)
@@ -433,6 +477,10 @@ onMounted(async () => {
   if (targetClass) {
     await loadGradebook(targetClass, activeSubjectId.value)
   }
+})
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleSecretKeydown)
 })
 
 const sidebarStudents = dossier.sidebarStudents

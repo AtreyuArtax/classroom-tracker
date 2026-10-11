@@ -110,11 +110,26 @@ const isUnsynced = computed(() => hasUnsyncedChanges.value)
 // ─── navigation ──────────────────────────────────────────────────────────────
 
 const queryParams = new URLSearchParams(window.location.search)
+
+// Feature flag: Report Card Comments (?comments=1 to enable, ?comments=0 to disable)
+if (queryParams.get('comments') === '1' || queryParams.get('comments') === 'true' || window.location.hash.includes('comments')) {
+  localStorage.setItem('feature_comments_enabled', 'true')
+} else if (queryParams.get('comments') === '0' || queryParams.get('comments') === 'false') {
+  localStorage.removeItem('feature_comments_enabled')
+}
+
 const normalizedPath = window.location.pathname.replace(/\/$/, '')
 const isScanRoute = normalizedPath.endsWith('/scan') || queryParams.get('view') === 'scan'
 // After a "Check for Updates" / "Force refresh" reload, reopen App Settings instead of the Dashboard
 const updateNotice = isScanRoute ? null : consumeUpdateNotice()
-const currentView = ref(isScanRoute ? 'ScanStation' : (updateNotice ? 'Setup' : 'Dashboard'))
+const initialView = isScanRoute 
+  ? 'ScanStation' 
+  : updateNotice 
+    ? 'Setup' 
+    : (queryParams.get('comments') === '1' || queryParams.get('comments') === 'true' || window.location.hash.includes('comments'))
+      ? 'Reports'
+      : 'Dashboard'
+const currentView = ref(initialView)
 const viewParams  = ref(updateNotice ? { tab: 'app' } : {})
 
 const views = [
