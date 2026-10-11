@@ -4,6 +4,15 @@
     <div class="cg__header">
       <div class="cg__header-left">
         <div class="cg__title-row">
+          <button
+            type="button"
+            class="cg__btn-back"
+            title="Return to Reports Overview"
+            @click="$emit('back')"
+          >
+            <ArrowLeft :size="14" />
+            <span>Back to Reports</span>
+          </button>
           <h2 class="cg__title"><MessageSquareText :size="20" /> Report Card Comment Generator</h2>
           <span v-if="reportClass" class="cg__class-pill">
             <GraduationCap :size="14" /> {{ reportClass.name }}
@@ -15,6 +24,23 @@
       </div>
 
       <div class="cg__header-controls">
+        <!-- Reporting Period Selector -->
+        <div class="cg__control-item">
+          <label class="cg__control-label">Reporting Period</label>
+          <div class="cg__term-pills">
+            <button
+              v-for="t in terms"
+              :key="t"
+              type="button"
+              class="cg__term-pill-btn"
+              :class="{ 'cg__term-pill-btn--active': selectedTerm === t }"
+              @click="selectTerm(t)"
+            >
+              {{ t }}
+            </button>
+          </div>
+        </div>
+
         <!-- Target Preset Selector -->
         <div class="cg__control-item">
           <label class="cg__control-label">Target Mode</label>
@@ -286,6 +312,25 @@
               <strong>Next Step:</strong> {{ activeGrowthDisplay }}
             </div>
           </div>
+
+          <!-- Previous Term Reference (Midterm vs Final progression tracking) -->
+          <div v-if="previousTermComment" class="cg__prev-term-card">
+            <div class="cg__prev-term-header" @click="showPrevTerm = !showPrevTerm">
+              <div class="cg__prev-term-title">
+                <History :size="13" class="cg__prev-icon" />
+                <span>Previous Comment ({{ previousTermName }})</span>
+              </div>
+              <button type="button" class="cg__prev-toggle-btn">
+                {{ showPrevTerm ? 'Hide Previous' : 'View Previous' }}
+              </button>
+            </div>
+            <div v-if="showPrevTerm" class="cg__prev-term-body">
+              <p class="cg__prev-term-text">"{{ previousTermComment }}"</p>
+              <div class="cg__prev-term-hint">
+                💡 Progression Tip: Ensure {{ selectedTerm }} next steps target new growth areas rather than repeating the {{ previousTermName }} focus.
+              </div>
+            </div>
+          </div>
         </template>
 
         <div v-else class="cg__empty-editor">
@@ -316,11 +361,16 @@ import {
   Sparkles,
   Target,
   ChevronRight,
-  Cpu
+  Cpu,
+  History,
+  ArrowLeft
 } from 'lucide-vue-next'
 
 import { classGrades } from '../../composables/useGradebook.js'
-import { getLearningSkillsByClass } from '../../composables/useLearningSkills.js'
+import {
+  LEARNING_SKILL_TERMS,
+  getLearningSkillsByClass
+} from '../../composables/useLearningSkills.js'
 import {
   generateReportComment,
   getAchievementLevel,
@@ -333,6 +383,8 @@ import {
 } from '../../utils/localLlmService.js'
 
 const CommentLlmSettingsModal = defineAsyncComponent(() => import('./CommentLlmSettingsModal.vue'))
+
+const emit = defineEmits(['back'])
 
 const props = defineProps({
   reportClass: {
@@ -352,6 +404,12 @@ const charLimit = ref(400)
 const searchQuery = ref('')
 const selectedStudentId = ref(null)
 
+// ── Reporting Period / Term State ───────────────────────────────────────────
+const terms = LEARNING_SKILL_TERMS // ['Progress Report', 'Midterm', 'Final']
+const selectedTerm = ref('Midterm')
+const showPrevTerm = ref(false)
+const allTermsSkillsMap = ref({}) // term -> { studentId -> skillsRecord }
+
 // Per-student active state
 const variantSeed = ref(0)
 const selectedStrengthTask = ref('')
@@ -359,12 +417,16 @@ const selectedGrowthTask = ref('')
 const currentCommentText = ref('')
 const copySuccess = ref(false)
 const copiedStudents = ref(new Set())
-const customEdits = ref({}) // studentId -> manually edited comment text
+const customEdits = ref({}) // `${term}__${studentId}` -> manually edited comment text
 const learningSkillsMap = ref({}) // studentId -> { responsibility, ... }
 
 // Local LLM State
 const showLlmModal = ref(false)
 const isPolishing = ref(false)
+
+function getEditKey(studentId, term = selectedTerm.value) {
+  return `${term}__${studentId}`
+}
 
 // ── Students List ────────────────────────────────────────────────────────────
 const studentList = computed(() => {
@@ -436,25 +498,66 @@ const activeHabitDisplay = computed(() => {
   return items.length > 0 ? items.join(', ') : 'Consistent Participation'
 })
 
+// ── Previous Term Progression Tracking ───────────────────────────────────────
+const previousTermName = computed(() => {
+  if (selectedTerm.value === 'Final') return 'Midterm'
+  if (selectedTerm.value === 'Midterm') return 'Progress Report'
+  return null
+})
+
+const previousTermComment = computed(() => {
+  if (!activeStudent.value || !previousTermName.value) return null
+  const prevKey = getEditKey(activeStudent.value.studentId, previousTermName.value)
+  if (customEdits.value[prevKey]) {
+    return customEdits.value[prevKey]
+  }
+
+  // Fallback: check if we have previous term skills loaded to construct previous draft
+  const prevSkills = allTermsSkillsMap.value[previousTermName.value]?.[activeStudent.value.studentId] || {}
+  const studentGradeObj = classGrades.value?.[activeStudent.value.studentId] || {}
+  const res = generateReportComment({
+    student: activeStudent.value,
+    gradeData: {
+      percentage: activeStudentMark.value,
+      level: activeLevel.value?.key,
+      assessments: studentAssessments.value,
+      ...studentGradeObj
+    },
+    learningSkills: prevSkills,
+    options: {
+      mode: targetMode.value,
+      charLimit: charLimit.value,
+      pronounMode: pronounMode.value
+    }
+  })
+  return res.text
+})
+
 // ── Character & Word Counting ────────────────────────────────────────────────
 const charCount = computed(() => currentCommentText.value.length)
 const wordCount = computed(() => currentCommentText.value.trim().split(/\s+/).filter(Boolean).length)
 const isCommentCustomized = computed(() => {
   if (!activeStudent.value) return false
-  return customEdits.value[activeStudent.value.studentId] !== undefined
+  return customEdits.value[getEditKey(activeStudent.value.studentId)] !== undefined
 })
 
 function onCommentInput() {
   if (activeStudent.value) {
-    customEdits.value[activeStudent.value.studentId] = currentCommentText.value
+    customEdits.value[getEditKey(activeStudent.value.studentId)] = currentCommentText.value
   }
 }
 
 function resetToGenerated() {
   if (activeStudent.value) {
-    delete customEdits.value[activeStudent.value.studentId]
+    delete customEdits.value[getEditKey(activeStudent.value.studentId)]
     buildCommentForActive()
   }
+}
+
+function selectTerm(term) {
+  selectedTerm.value = term
+  learningSkillsMap.value = allTermsSkillsMap.value[term] || {}
+  buildCommentForActive()
 }
 
 // ── Regeneration ─────────────────────────────────────────────────────────────
@@ -464,8 +567,9 @@ function buildCommentForActive() {
     return
   }
 
-  // Preserve manual edits if teacher has modified this student's comment
-  const savedEdit = customEdits.value[activeStudent.value.studentId]
+  // Preserve manual edits for this student and reporting term
+  const key = getEditKey(activeStudent.value.studentId)
+  const savedEdit = customEdits.value[key]
   if (savedEdit !== undefined) {
     currentCommentText.value = savedEdit
     return
@@ -499,6 +603,7 @@ function buildCommentForActive() {
 // Re-generate when inputs change
 watch([
   selectedStudentId,
+  selectedTerm,
   targetMode,
   pronounMode,
   charLimit,
@@ -527,7 +632,7 @@ function selectStudent(studentId) {
 
 function rerollPhrasing() {
   if (activeStudent.value) {
-    delete customEdits.value[activeStudent.value.studentId]
+    delete customEdits.value[getEditKey(activeStudent.value.studentId)]
   }
   variantSeed.value = (variantSeed.value + 1) % 8
 }
@@ -553,7 +658,7 @@ async function handleAiPolishClick() {
 
     currentCommentText.value = res.text
     if (activeStudent.value) {
-      customEdits.value[activeStudent.value.studentId] = res.text
+      customEdits.value[getEditKey(activeStudent.value.studentId)] = res.text
     }
   } catch (err) {
     alert(`Local AI polish encountered an issue: ${err.message || err}. You can re-open AI settings to switch models.`)
@@ -590,12 +695,13 @@ function exportAllCommentsCsv() {
   if (!studentList.value || studentList.value.length === 0) return
 
   const rows = [
-    ['Student ID', 'Last Name', 'First Name', 'Grade %', 'Level', 'Characters', 'Report Card Comment']
+    ['Student ID', 'Last Name', 'First Name', 'Term', 'Grade %', 'Level', 'Characters', 'Report Card Comment']
   ]
 
   studentList.value.forEach(st => {
     const mark = getStudentMark(st.studentId)
-    const savedEdit = customEdits.value[st.studentId]
+    const key = getEditKey(st.studentId)
+    const savedEdit = customEdits.value[key]
 
     if (savedEdit !== undefined) {
       const level = getAchievementLevel(mark)
@@ -603,6 +709,7 @@ function exportAllCommentsCsv() {
         st.studentId || '',
         st.lastName || '',
         st.firstName || '',
+        selectedTerm.value,
         mark != null ? Math.round(mark) : '',
         level?.key || '',
         savedEdit.length,
@@ -628,6 +735,7 @@ function exportAllCommentsCsv() {
       st.studentId || '',
       st.lastName || '',
       st.firstName || '',
+      selectedTerm.value,
       mark != null ? Math.round(mark) : '',
       res.achievementLevel?.key || '',
       res.charCount,
@@ -640,7 +748,7 @@ function exportAllCommentsCsv() {
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
-  a.download = `${props.reportClass?.name || 'Class'}-Comments-${new Date().toISOString().slice(0, 10)}.csv`
+  a.download = `${props.reportClass?.name || 'Class'}-${selectedTerm.value}-Comments-${new Date().toISOString().slice(0, 10)}.csv`
   document.body.appendChild(a)
   a.click()
   document.body.removeChild(a)
@@ -668,6 +776,29 @@ function getGradeColorClass(mark) {
   return 'cg__grade-pill--r'
 }
 
+async function loadLearningSkillsForClass() {
+  if (!props.reportClass?.classId) return
+  try {
+    const records = await getLearningSkillsByClass(props.reportClass.classId)
+    const map = {
+      'Progress Report': {},
+      'Midterm': {},
+      'Final': {}
+    }
+    if (Array.isArray(records)) {
+      records.forEach(r => {
+        const t = r.term || 'Midterm'
+        if (!map[t]) map[t] = {}
+        if (r.studentId) map[t][r.studentId] = r
+      })
+    }
+    allTermsSkillsMap.value = map
+    learningSkillsMap.value = map[selectedTerm.value] || {}
+  } catch (e) {
+    console.warn('Could not load learning skills for comments:', e)
+  }
+}
+
 // Load Learning Skills & scan local AI capabilities on mount
 onMounted(async () => {
   // Proactively check local hardware capabilities & cached models
@@ -677,20 +808,11 @@ onMounted(async () => {
     // Non-fatal background check
   }
 
-  if (props.reportClass?.classId) {
-    try {
-      const records = await getLearningSkillsByClass(props.reportClass.classId)
-      const map = {}
-      if (Array.isArray(records)) {
-        records.forEach(r => {
-          if (r.studentId) map[r.studentId] = r
-        })
-      }
-      learningSkillsMap.value = map
-    } catch (e) {
-      console.warn('Could not load learning skills for comments:', e)
-    }
-  }
+  await loadLearningSkillsForClass()
+})
+
+watch(() => props.reportClass?.classId, () => {
+  loadLearningSkillsForClass()
 })
 </script>
 
@@ -720,6 +842,28 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   gap: 10px;
+}
+
+.cg__btn-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.cg__btn-back:hover {
+  background: var(--surface-hover);
+  color: var(--text);
+  border-color: var(--primary);
 }
 
 .cg__title {
@@ -804,6 +948,100 @@ onMounted(async () => {
 
 .cg__btn-ghost:hover {
   background: var(--bg-secondary);
+}
+
+/* ── Term Selector Pills ──────────────────────────────────────────────────── */
+.cg__term-pills {
+  display: flex;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 2px;
+  gap: 2px;
+  height: 36px;
+  align-items: center;
+}
+
+.cg__term-pill-btn {
+  padding: 4px 10px;
+  border-radius: 4px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.cg__term-pill-btn:hover {
+  color: var(--text);
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.cg__term-pill-btn--active {
+  background: var(--surface);
+  color: var(--primary);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+/* ── Previous Term Reference Card ─────────────────────────────────────────── */
+.cg__prev-term-card {
+  margin-top: 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.cg__prev-term-header {
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  background: var(--bg-secondary);
+}
+
+.cg__prev-term-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.cg__prev-icon {
+  color: var(--primary);
+}
+
+.cg__prev-toggle-btn {
+  background: none;
+  border: none;
+  color: var(--primary);
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.cg__prev-term-body {
+  padding: 10px 12px;
+  border-top: 1px solid var(--border);
+}
+
+.cg__prev-term-text {
+  font-size: 0.8rem;
+  color: var(--text);
+  line-height: 1.45;
+  margin: 0 0 6px;
+  font-style: italic;
+}
+
+.cg__prev-term-hint {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
 }
 
 /* ── Workspace Split ──────────────────────────────────────────────────────── */

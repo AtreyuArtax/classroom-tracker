@@ -29,7 +29,7 @@
               :class="{ 'reports__pillar-btn--active': rightMode === 'overview' }"
               @click="switchPillar('overview')"
             >
-              <BarChart2 :size="14" /> Analytics
+              <BarChart2 :size="14" /> Reports Overview
             </button>
             <button 
               class="reports__pillar-btn"
@@ -87,7 +87,7 @@
             :student-id="dossier.selectedStudentId.value" 
             :class-id="sidebarClassId"
             @select-student="onSelectStudent"
-            @close="switchPillar('overview')"
+            @close="switchPillar(previousModeBeforeDossier)"
           />
         </template>
 
@@ -130,6 +130,7 @@
           <ReportsCommentGenerator
             :report-class="reportClass"
             :sidebar-students="filteredSidebarStudents"
+            @back="switchPillar('overview')"
           />
         </template>
 
@@ -400,7 +401,8 @@ watch(isSidebarCollapsed, () => {
   }, 350)
 })
 
-const rightMode = ref('overview') // 'overview' | 'printhub' | 'dossier'
+const rightMode = ref('overview') // 'overview' | 'printhub' | 'dossier' | 'learningskills' | 'comments'
+const previousModeBeforeDossier = ref('overview')
 const activeVisualTab = ref(null)
 
 function switchPillar(mode) {
@@ -490,6 +492,9 @@ watch(selectedPeriod, () => {
 })
 
 async function onSelectStudent(studentId) {
+  if (rightMode.value !== 'dossier') {
+    previousModeBeforeDossier.value = rightMode.value
+  }
   rightMode.value = 'dossier'
   await dossier.loadStudent(sidebarClassId.value, studentId)
 }
@@ -909,7 +914,7 @@ const washroomChartOptions = {
 .reports { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: var(--bg-secondary); }
 .reports__layout { display: flex; flex: 1; overflow: hidden; }
 .reports__main { flex: 1; overflow-y: auto; padding: 8px 14px; display: flex; flex-direction: column; gap: 8px; }
-.reports__header-bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: nowrap; min-width: 0; }
+.reports__header-bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: nowrap; min-width: 0; position: sticky; top: 0; z-index: 20; background: var(--bg-secondary); padding: 4px 0 6px 0; }
 .reports__header-controls { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
 .reports__pillar-nav { display: flex; gap: 2px; background: var(--surface); border: 1px solid var(--border); padding: 2px; border-radius: var(--radius-md); flex-shrink: 0; }
 .reports__pillar-btn { display: flex; align-items: center; gap: 5px; background: none; border: none; padding: 4px 9px; border-radius: var(--radius-sm); font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); cursor: pointer; transition: all 0.15s ease; white-space: nowrap; line-height: 1.2; }
