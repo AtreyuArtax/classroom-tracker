@@ -25,8 +25,13 @@
 
       <div class="cg__header-controls">
         <!-- Reporting Period Selector -->
-        <div class="cg__control-item">
-          <label class="cg__control-label">Reporting Period</label>
+        <div class="cg__control-item cg__control-item--term">
+          <div class="cg__control-label-row">
+            <label class="cg__control-label">Reporting Period</label>
+            <span v-if="termWindowBadge" class="cg__window-badge" :title="termWindowTooltip">
+              <Calendar :size="11" /> {{ termWindowBadge }}
+            </span>
+          </div>
           <div class="cg__term-pills">
             <button
               v-for="t in terms"
@@ -204,10 +209,18 @@
           <!-- Specific Task Evidence Selectors -->
           <div class="cg__evidence-grid">
             <div class="cg__evidence-field">
-              <label class="cg__field-label">
-                <Sparkles :size="13" class="cg__field-icon cg__field-icon--gold" />
-                Featured Strength Task
-              </label>
+              <div class="cg__control-label-row">
+                <label class="cg__field-label">
+                  <Sparkles :size="13" class="cg__field-icon cg__field-icon--gold" />
+                  Featured Strength Task
+                </label>
+                <span v-if="studentAssessments.length > 0" class="cg__evidence-count-badge">
+                  {{ studentAssessments.length }} in period
+                </span>
+                <span v-else class="cg__evidence-count-badge cg__evidence-count-badge--empty">
+                  0 in period
+                </span>
+              </div>
               <select v-model="selectedStrengthTask" class="cg__select cg__select--field">
                 <option value="">Auto-detected ({{ autoStrengthLabel }})</option>
                 <optgroup v-if="courseCompetencies.length > 0" label="Curriculum Competencies">
@@ -232,10 +245,18 @@
             </div>
 
             <div class="cg__evidence-field">
-              <label class="cg__field-label">
-                <Target :size="13" class="cg__field-icon cg__field-icon--blue" />
-                Featured Next Step Focus
-              </label>
+              <div class="cg__control-label-row">
+                <label class="cg__field-label">
+                  <Target :size="13" class="cg__field-icon cg__field-icon--blue" />
+                  Featured Next Step Focus
+                </label>
+                <span v-if="studentAssessments.length > 0" class="cg__evidence-count-badge">
+                  {{ studentAssessments.length }} in period
+                </span>
+                <span v-else class="cg__evidence-count-badge cg__evidence-count-badge--empty">
+                  0 in period
+                </span>
+              </div>
               <select v-model="selectedGrowthTask" class="cg__select cg__select--field">
                 <option value="">Auto-detected ({{ autoGrowthLabel }})</option>
                 <optgroup v-if="courseCompetencies.length > 0" label="Curriculum Competencies">
@@ -381,16 +402,32 @@ import {
   ChevronRight,
   Cpu,
   History,
-  ArrowLeft
+  ArrowLeft,
+  Calendar
 } from 'lucide-vue-next'
 
 import {
   classGrades,
   loadGradebook,
   assessments as gbAssessments,
-  gradeMap
+  grades as gbGrades,
+  gradeMap,
+  filteredMilestones,
+  globalMilestones,
+  activeClassRecord
 } from '../../composables/useGradebook.js'
-import { getAssessmentPercentage } from '../../utils/gradeCalc.js'
+import {
+  academicTerms
+} from '../../composables/useClassroomState.js'
+import {
+  calculateStudentGrade,
+  getAssessmentPercentage
+} from '../../utils/gradeCalc.js'
+import {
+  formatLocalDate,
+  formatLocalDisplay,
+  parseLocal
+} from '../../utils/dates.js'
 import {
   LEARNING_SKILL_TERMS,
   getLearningSkillsByClass
@@ -441,10 +478,11 @@ const selectedTerm = ref('Midterm')
 const showPrevTerm = ref(false)
 const allTermsSkillsMap = ref({}) // term -> { studentId -> skillsRecord }
 
-// Per-student active state
-const variantSeed = ref(0)
-const selectedStrengthTask = ref('')
-const selectedGrowthTask = ref('')
+// Per-student & Per-term active state
+const termVariantSeeds = ref({}) // `${term}__${studentId}` -> number
+const termStrengthTasks = ref({}) // `${term}__${studentId}` -> task string
+const termGrowthTasks = ref({}) // `${term}__${studentId}` -> task string
+const termGradesCache = ref({}) // `${term}__${studentId}` -> calculatedGradeObj
 const currentCommentText = ref('')
 const copySuccess = ref(false)
 const copiedStudents = ref(new Set())
@@ -458,6 +496,134 @@ const isPolishing = ref(false)
 function getEditKey(studentId, term = selectedTerm.value) {
   return `${term}__${studentId}`
 }
+
+const reportClassRecord = computed(() => {
+  return props.reportClass || activeClassRecord.value || null
+})
+
+// ── Milestone & Midpoint Date Windows ─────────────────────────────────────────
+function resolveWindowForTerm(termName) {
+  const cls = reportClassRecord.value || {}
+  const milestones = (filteredMilestones.value && filteredMilestones.value.length > 0)
+    ? filteredMilestones.value
+    : (globalMilestones.value || [])
+  const termsList = academicTerms.value || []
+
+  // 1. Check for milestone explicitly matching this reporting period
+  let matchedMs = null
+  if (termName === 'Progress Report') {
+    matchedMs = milestones.find(m => /progress/i.test(m.name))
+  } else if (termName === 'Midterm') {
+    matchedMs = milestones.find(m => /mid/i.test(m.name) || /term\s*1\b/i.test(m.name))
+  } else if (termName === 'Final') {
+    matchedMs = milestones.find(m => /final/i.test(m.name) || /term\s*2\b/i.test(m.name) || /end/i.test(m.name))
+  }
+
+  if (matchedMs && matchedMs.date) {
+    return {
+      asOf: matchedMs.date,
+      dateFrom: matchedMs.startDate || null,
+      source: 'milestone',
+      label: matchedMs.name,
+      displayDate: formatLocalDisplay(matchedMs.date)
+    }
+  }
+
+  // 2. Resolve Semester / Term boundary dates
+  const clsYear = cls.year || ''
+  const clsSem = cls.semester || (cls.classType === 'elementary' ? 'Full' : '1')
+  const matchedTerm = termsList.find(t => t.year === clsYear && String(t.semester) === String(clsSem))
+
+  let startStr = ''
+  let endStr = ''
+
+  if (matchedTerm?.startDate && matchedTerm?.endDate) {
+    startStr = matchedTerm.startDate
+    endStr = matchedTerm.endDate
+  } else {
+    // Standard Ontario defaults
+    const currentYear = new Date().getFullYear()
+    let startYear = currentYear
+    if (clsYear && clsYear.includes('-')) {
+      const parsed = parseInt(clsYear.split('-')[0])
+      if (!isNaN(parsed)) startYear = parsed
+    }
+    if (clsSem === '2') {
+      startStr = `${startYear + 1}-02-01`
+      endStr = `${startYear + 1}-06-30`
+    } else if (cls.classType === 'elementary' || clsSem === 'Full') {
+      startStr = `${startYear}-09-01`
+      endStr = `${startYear + 1}-06-30`
+    } else {
+      startStr = `${startYear}-09-01`
+      endStr = `${startYear + 1}-01-31`
+    }
+  }
+
+  const startMs = parseLocal(startStr).getTime()
+  const endMs = parseLocal(endStr).getTime()
+  const span = Math.max(0, endMs - startMs)
+
+  if (termName === 'Progress Report') {
+    // 28% into the semester (approx. 5-6 weeks in)
+    const progMs = startMs + span * 0.28
+    const asOfDate = formatLocalDate(new Date(progMs))
+    return {
+      asOf: asOfDate,
+      dateFrom: null,
+      source: 'midpoint',
+      label: 'Early Progress Cutoff',
+      displayDate: formatLocalDisplay(asOfDate)
+    }
+  }
+
+  if (termName === 'Midterm') {
+    // Exact 50% midpoint of the term
+    const midMs = startMs + span * 0.50
+    const asOfDate = formatLocalDate(new Date(midMs))
+    return {
+      asOf: asOfDate,
+      dateFrom: null,
+      source: 'midpoint',
+      label: 'Term Midpoint',
+      displayDate: formatLocalDisplay(asOfDate)
+    }
+  }
+
+  // Final: full semester
+  return {
+    asOf: endStr,
+    dateFrom: null,
+    source: 'term_end',
+    label: 'End of Term',
+    displayDate: formatLocalDisplay(endStr)
+  }
+}
+
+const currentTermWindow = computed(() => {
+  return resolveWindowForTerm(selectedTerm.value)
+})
+
+const termWindowBadge = computed(() => {
+  const w = currentTermWindow.value
+  if (!w) return ''
+  if (w.source === 'milestone') {
+    return `${w.displayDate} (${w.label})`
+  }
+  if (selectedTerm.value === 'Midterm') {
+    return `${w.displayDate} (Midpoint)`
+  }
+  if (selectedTerm.value === 'Progress Report') {
+    return `${w.displayDate} (Early)`
+  }
+  return `To ${w.displayDate} (Full)`
+})
+
+const termWindowTooltip = computed(() => {
+  const w = currentTermWindow.value
+  if (!w) return ''
+  return `Filtered to assessments on or before ${w.asOf}${w.dateFrom ? ' and after ' + w.dateFrom : ''} (${w.source === 'milestone' ? 'Milestone' : 'Term Midpoint'})`
+})
 
 // ── Students List ────────────────────────────────────────────────────────────
 const studentList = computed(() => {
@@ -486,13 +652,29 @@ const activeStudent = computed(() => {
   return studentList.value.find(s => s.studentId === selectedStudentId.value) || null
 })
 
-// ── Grade Data for Active Student ────────────────────────────────────────────
-function getStudentMark(studentId) {
+// ── Grade Data for Active Student & Reporting Period ──────────────────────────
+function getStudentMark(studentId, term = selectedTerm.value) {
+  if (!studentId) return null
+  const cacheKey = `${term}__${studentId}`
+  const termRes = termGradesCache.value[cacheKey]
+  if (termRes && typeof termRes.overallGrade === 'number') {
+    return termRes.overallGrade
+  }
+
+  // Fallback to classGrades if available
   const gradeObj = classGrades.value?.[studentId]
   if (gradeObj && typeof gradeObj.overallGrade === 'number') {
     return gradeObj.overallGrade
   }
   return null
+}
+
+function getStudentGradeObj(studentId, term = selectedTerm.value) {
+  if (!studentId) return {}
+  const cacheKey = `${term}__${studentId}`
+  const termRes = termGradesCache.value[cacheKey]
+  if (termRes) return termRes
+  return classGrades.value?.[studentId] || {}
 }
 
 const activeStudentMark = computed(() => {
@@ -507,14 +689,9 @@ const activeLevel = computed(() => {
 const studentAssessments = computed(() => {
   if (!activeStudent.value) return []
   const stId = activeStudent.value.studentId
+  const window = currentTermWindow.value
 
-  // 1. If gradeObj already has assessments pre-attached
-  const gradeObj = classGrades.value?.[stId]
-  if (gradeObj?.assessments && Array.isArray(gradeObj.assessments) && gradeObj.assessments.length > 0) {
-    return gradeObj.assessments.filter(a => typeof a.scorePercent === 'number')
-  }
-
-  // 2. Read live assessments and gradeMap from useGradebook
+  // Read live assessments and gradeMap from useGradebook
   const astList = (props.assessments && props.assessments.length > 0)
     ? props.assessments
     : (gbAssessments.value || [])
@@ -524,6 +701,14 @@ const studentAssessments = computed(() => {
   const list = []
   astList.forEach(a => {
     if (a.excluded) return
+
+    // Date filtering based on reporting window
+    if (a.date) {
+      const aDate = String(a.date).slice(0, 10)
+      if (window.asOf && aDate > window.asOf) return
+      if (window.dateFrom && aDate < window.dateFrom) return
+    }
+
     const grade = gradeMap.value[a.assessmentId]?.[stId]
     const pct = getAssessmentPercentage(a, grade)
     if (pct !== null && !isNaN(pct) && isFinite(pct)) {
@@ -531,7 +716,8 @@ const studentAssessments = computed(() => {
         id: a.assessmentId,
         name: a.name || 'Assessment',
         description: a.description || '',
-        scorePercent: Math.round(pct)
+        scorePercent: Math.round(pct),
+        date: a.date
       })
     }
   })
@@ -551,7 +737,8 @@ const courseCompetencies = computed(() => {
 })
 
 const autoEvidence = computed(() => {
-  const gradeObj = classGrades.value?.[activeStudent.value?.studentId] || {}
+  const stId = activeStudent.value?.studentId
+  const gradeObj = getStudentGradeObj(stId)
   return extractEvidenceFromGrades({
     ...gradeObj,
     assessments: studentAssessments.value
@@ -569,6 +756,35 @@ const autoStrengthLabel = computed(() => {
 const autoGrowthLabel = computed(() => {
   const found = courseCompetencies.value.find(c => c.phrase === autoGrowthTask.value)
   return found ? found.label : (autoGrowthTask.value || 'General')
+})
+
+// Per-term & Per-student specific selections
+const selectedStrengthTask = computed({
+  get: () => {
+    if (!activeStudent.value) return ''
+    const key = getEditKey(activeStudent.value.studentId)
+    return termStrengthTasks.value[key] || ''
+  },
+  set: (val) => {
+    if (!activeStudent.value) return
+    const key = getEditKey(activeStudent.value.studentId)
+    termStrengthTasks.value[key] = val
+    buildCommentForActive()
+  }
+})
+
+const selectedGrowthTask = computed({
+  get: () => {
+    if (!activeStudent.value) return ''
+    const key = getEditKey(activeStudent.value.studentId)
+    return termGrowthTasks.value[key] || ''
+  },
+  set: (val) => {
+    if (!activeStudent.value) return
+    const key = getEditKey(activeStudent.value.studentId)
+    termGrowthTasks.value[key] = val
+    buildCommentForActive()
+  }
 })
 
 const activeStrengthDisplay = computed(() => {
@@ -601,27 +817,62 @@ const previousTermName = computed(() => {
 
 const previousTermComment = computed(() => {
   if (!activeStudent.value || !previousTermName.value) return null
-  const prevKey = getEditKey(activeStudent.value.studentId, previousTermName.value)
+  const prevTerm = previousTermName.value
+  const prevKey = getEditKey(activeStudent.value.studentId, prevTerm)
   if (customEdits.value[prevKey]) {
     return customEdits.value[prevKey]
   }
 
-  // Fallback: check if we have previous term skills loaded to construct previous draft
-  const prevSkills = allTermsSkillsMap.value[previousTermName.value]?.[activeStudent.value.studentId] || {}
-  const studentGradeObj = classGrades.value?.[activeStudent.value.studentId] || {}
+  const prevSkills = allTermsSkillsMap.value[prevTerm]?.[activeStudent.value.studentId] || {}
+  const prevGradeObj = getStudentGradeObj(activeStudent.value.studentId, prevTerm)
+  const prevMark = getStudentMark(activeStudent.value.studentId, prevTerm)
+  const prevLevel = getAchievementLevel(prevMark)
+  const prevSeed = getTermVariantSeed(activeStudent.value.studentId, prevTerm)
+  const prevStrength = termStrengthTasks.value[prevKey] || ''
+  const prevGrowth = termGrowthTasks.value[prevKey] || ''
+
+  // Filter assessments for previous term window
+  const prevWindow = resolveWindowForTerm(prevTerm)
+  const astList = (props.assessments && props.assessments.length > 0)
+    ? props.assessments
+    : (gbAssessments.value || [])
+  const prevAssessments = []
+  if (astList && gradeMap.value) {
+    astList.forEach(a => {
+      if (a.excluded) return
+      if (a.date) {
+        const aDate = String(a.date).slice(0, 10)
+        if (prevWindow.asOf && aDate > prevWindow.asOf) return
+        if (prevWindow.dateFrom && aDate < prevWindow.dateFrom) return
+      }
+      const grade = gradeMap.value[a.assessmentId]?.[activeStudent.value.studentId]
+      const pct = getAssessmentPercentage(a, grade)
+      if (pct !== null && !isNaN(pct) && isFinite(pct)) {
+        prevAssessments.push({
+          id: a.assessmentId,
+          name: a.name || 'Assessment',
+          scorePercent: Math.round(pct)
+        })
+      }
+    })
+  }
+
   const res = generateReportComment({
     student: activeStudent.value,
     gradeData: {
-      percentage: activeStudentMark.value,
-      level: activeLevel.value?.key,
-      assessments: studentAssessments.value,
-      ...studentGradeObj
+      percentage: prevMark,
+      level: prevLevel?.key,
+      assessments: prevAssessments,
+      ...prevGradeObj
     },
     learningSkills: prevSkills,
     options: {
       mode: targetMode.value,
       charLimit: charLimit.value,
       pronounMode: pronounMode.value,
+      featuredStrength: prevStrength,
+      featuredNextStep: prevGrowth,
+      variantSeed: prevSeed,
       courseCode: currentCourseCode.value
     }
   })
@@ -652,6 +903,79 @@ function resetToGenerated() {
 function selectTerm(term) {
   selectedTerm.value = term
   learningSkillsMap.value = allTermsSkillsMap.value[term] || {}
+  refreshTermGradesForClass()
+}
+
+// ── Term Variant Seed Logic ──────────────────────────────────────────────────
+function getTermVariantSeed(studentId, term = selectedTerm.value) {
+  if (!studentId) return 0
+  const key = `${term}__${studentId}`
+  if (termVariantSeeds.value[key] !== undefined) {
+    return termVariantSeeds.value[key]
+  }
+  // Stagger default seeds across reporting periods:
+  // Progress Report: 0, Midterm: 1, Final: 2
+  if (term === 'Midterm') return 1
+  if (term === 'Final') return 2
+  return 0
+}
+
+const currentVariantSeed = computed(() => {
+  return getTermVariantSeed(activeStudent.value?.studentId)
+})
+
+function rerollPhrasing() {
+  if (!activeStudent.value) return
+  const stId = activeStudent.value.studentId
+  const key = getEditKey(stId)
+  delete customEdits.value[key]
+  const cur = getTermVariantSeed(stId)
+  termVariantSeeds.value[key] = (cur + 1) % 8
+  buildCommentForActive()
+}
+
+// ── Term Grade Recalculation for Class ────────────────────────────────────────
+async function refreshTermGradesForClass() {
+  const cls = reportClassRecord.value
+  if (!cls?.classId) return
+  const term = selectedTerm.value
+  const window = currentTermWindow.value
+
+  const astList = (props.assessments && props.assessments.length > 0)
+    ? props.assessments
+    : (gbAssessments.value || [])
+  const allGrades = gbGrades.value || []
+
+  const studentGradeMap = new Map()
+  for (const g of allGrades) {
+    if (!studentGradeMap.has(g.studentId)) studentGradeMap.set(g.studentId, [])
+    studentGradeMap.get(g.studentId).push(g)
+  }
+
+  const results = {}
+  for (const student of studentList.value) {
+    const stId = student.studentId
+    const stGrades = studentGradeMap.get(stId) || []
+    try {
+      const res = await calculateStudentGrade(stId, cls, {
+        asOf: window.asOf,
+        dateFrom: window.dateFrom,
+        assessmentsPreRef: astList,
+        gradesPreRef: stGrades
+      })
+      if (res) {
+        results[`${term}__${stId}`] = res
+      }
+    } catch (e) {
+      // Fallback
+    }
+  }
+
+  termGradesCache.value = {
+    ...termGradesCache.value,
+    ...results
+  }
+
   buildCommentForActive()
 }
 
@@ -670,7 +994,7 @@ function buildCommentForActive() {
     return
   }
 
-  const studentGradeObj = classGrades.value?.[activeStudent.value.studentId] || {}
+  const studentGradeObj = getStudentGradeObj(activeStudent.value.studentId)
   const studentSkills = learningSkillsMap.value[activeStudent.value.studentId] || {}
 
   const result = generateReportComment({
@@ -688,7 +1012,7 @@ function buildCommentForActive() {
       pronounMode: pronounMode.value,
       featuredStrength: selectedStrengthTask.value,
       featuredNextStep: selectedGrowthTask.value,
-      variantSeed: variantSeed.value,
+      variantSeed: currentVariantSeed.value,
       courseCode: currentCourseCode.value
     }
   })
@@ -702,12 +1026,14 @@ watch([
   selectedTerm,
   targetMode,
   pronounMode,
-  charLimit,
-  selectedStrengthTask,
-  selectedGrowthTask,
-  variantSeed
+  charLimit
 ], () => {
   buildCommentForActive()
+})
+
+// Trigger grade refresh when term or class changes
+watch([selectedTerm, () => reportClassRecord.value?.classId], () => {
+  refreshTermGradesForClass()
 })
 
 // Auto-select first student on mount
@@ -719,18 +1045,8 @@ watch(studentList, (list) => {
 
 function selectStudent(studentId) {
   selectedStudentId.value = studentId
-  variantSeed.value = 0
-  selectedStrengthTask.value = ''
-  selectedGrowthTask.value = ''
   copySuccess.value = false
   buildCommentForActive()
-}
-
-function rerollPhrasing() {
-  if (activeStudent.value) {
-    delete customEdits.value[getEditKey(activeStudent.value.studentId)]
-  }
-  variantSeed.value = (variantSeed.value + 1) % 8
 }
 
 // ── Local AI Polish Action ───────────────────────────────────────────────────
@@ -814,16 +1130,28 @@ function exportAllCommentsCsv() {
       return
     }
 
-    const gradeObj = classGrades.value?.[st.studentId] || {}
+    const gradeObj = getStudentGradeObj(st.studentId)
     const skills = learningSkillsMap.value[st.studentId] || {}
+    const stSeed = getTermVariantSeed(st.studentId)
+    const stStrength = termStrengthTasks.value[key] || ''
+    const stGrowth = termGrowthTasks.value[key] || ''
+
     const res = generateReportComment({
       student: st,
-      gradeData: { percentage: mark, ...gradeObj },
+      gradeData: {
+        percentage: mark,
+        level: getAchievementLevel(mark)?.key,
+        assessments: (st.studentId === activeStudent.value?.studentId) ? studentAssessments.value : [],
+        ...gradeObj
+      },
       learningSkills: skills,
       options: {
         mode: targetMode.value,
         charLimit: charLimit.value,
         pronounMode: pronounMode.value,
+        featuredStrength: stStrength,
+        featuredNextStep: stGrowth,
+        variantSeed: stSeed,
         courseCode: st.courseCode || currentCourseCode.value
       }
     })
@@ -905,15 +1233,16 @@ onMounted(async () => {
     // Non-fatal background check
   }
 
-  if (props.reportClass && (!gbAssessments.value || gbAssessments.value.length === 0)) {
+  if (reportClassRecord.value && (!gbAssessments.value || gbAssessments.value.length === 0)) {
     try {
-      await loadGradebook(props.reportClass)
+      await loadGradebook(reportClassRecord.value)
     } catch (e) {
       console.warn('Could not load gradebook for comments:', e)
     }
   }
 
   await loadLearningSkillsForClass()
+  await refreshTermGradesForClass()
 })
 
 watch(() => props.reportClass?.classId, async () => {
@@ -924,7 +1253,8 @@ watch(() => props.reportClass?.classId, async () => {
       console.warn('Could not reload gradebook for comments:', e)
     }
   }
-  loadLearningSkillsForClass()
+  await loadLearningSkillsForClass()
+  await refreshTermGradesForClass()
 })
 </script>
 
@@ -1025,6 +1355,40 @@ watch(() => props.reportClass?.classId, async () => {
   color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.03em;
+}
+
+.cg__control-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.cg__window-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--primary);
+  background: var(--primary-light, rgba(59, 130, 246, 0.1));
+  padding: 1px 6px;
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+}
+
+.cg__evidence-count-badge {
+  font-size: 0.68rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: var(--bg-secondary, rgba(0, 0, 0, 0.05));
+  padding: 1px 5px;
+  border-radius: var(--radius-sm);
+}
+
+.cg__evidence-count-badge--empty {
+  color: #dc2626;
+  background: rgba(220, 38, 38, 0.08);
 }
 
 .cg__select,

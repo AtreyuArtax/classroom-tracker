@@ -1655,13 +1655,13 @@
     "semantic_hash": ""
   },
   "src/components/reports/ReportsCommentGenerator.vue": {
-    "mtime": 1791686986.6021585,
-    "ast_hash": "da70b2a6d28c299cff0b8566139c4447",
+    "mtime": 1791714753.133872,
+    "ast_hash": "f50af87ec64aaeb9e124d2a7581e0ed4",
     "semantic_hash": ""
   },
   "src/test_comment_generator.js": {
-    "mtime": 1791689131.412534,
-    "ast_hash": "dd1a6ce104e1300bd12e4d4e84d00aa7",
+    "mtime": 1791714794.0564752,
+    "ast_hash": "5e5275779eb416e78cffac0f42078671",
     "semantic_hash": ""
   },
   "src/test_local_llm_service.js": {
@@ -1675,8 +1675,8 @@
     "semantic_hash": ""
   },
   "src/utils/localLlmService.js": {
-    "mtime": 1791689182.51461,
-    "ast_hash": "15a70a575c7c07e7a8e69302ba479b7f",
+    "mtime": 1791714477.4330907,
+    "ast_hash": "4539a64b8a6177a5e37c43496e7b5397",
     "semantic_hash": ""
   },
   "src/utils/curriculumCompetencies.js": {

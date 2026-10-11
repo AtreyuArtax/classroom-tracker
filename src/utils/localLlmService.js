@@ -305,22 +305,22 @@ export async function polishReportComment({
     : `Use "${pronouns}" pronouns for ${studentName}.`
 
   const systemPrompt = [
-    `You are an expert Ontario secondary teacher polishing an official Growing Success report card comment.`,
-    `Your goal: Polish the draft comment into smooth, natural, parent-friendly English with authentic pedagogical voice.`,
+    `You are an educational writing assistant helping an Ontario high school teacher proofread and refine constructive student report card feedback.`,
+    `Your goal: Polish the teacher's draft feedback into clear, encouraging, parent-friendly English while maintaining pedagogical accuracy.`,
     ``,
-    `STRICT CONSTRAINTS (Ontario Growing Success & SIS Guidelines):`,
-    `1. LENGTH PRIORITY: Strictly under ${charLimit} characters (target 290-360 characters).`,
+    `GUIDELINES (Ontario Growing Success Framework):`,
+    `1. LENGTH: Strictly under ${charLimit} characters (target 290-360 characters).`,
     `2. NO COURSE NAME: Do not mention the subject or course code.`,
     `3. NATURAL FLOW: Maintain 3 flowing sentences without bullet points, headings, or labels (do NOT say "Next step:").`,
-    `   - Sentence 1: Key curriculum strength (using active participial or inquiry phrasing).`,
-    `   - Sentence 2: Thinking, application, or inquiry capability.`,
-    `   - Sentence 3: Actionable next step recommending a concrete learning scaffold or organizer.`,
+    `   - Sentence 1: Key curriculum strength or academic accomplishment.`,
+    `   - Sentence 2: Demonstration of thinking, inquiry, or applied skills.`,
+    `   - Sentence 3: Actionable, constructive next step recommending an active learning strategy.`,
     `4. CAPITALIZATION: Keep curriculum topics lowercase (e.g., "projectile motion", "free-body diagrams").`,
     `5. ${pronounInstruction}`,
     `6. TONE: Professional, supportive, parent-friendly. Return ONLY the polished comment text with no markdown quotes or extra commentary.`
   ].join('\n')
 
-  const userPrompt = `Draft comment to polish:\n"${draftComment.trim()}"\n\nPolished comment:`
+  const userPrompt = `Teacher draft to polish:\n"${draftComment.trim()}"\n\nPolished comment:`
 
   llmState.status = 'generating'
   llmState.progressText = 'Polishing comment locally...'
@@ -349,9 +349,19 @@ export async function polishReportComment({
     // Clean up response formatting
     let cleanText = rawOutput
       .replace(/^["'`]|["'`]$/g, '') // remove surrounding quotes
-      .replace(/^Polished comment:\s*/i, '')
+      .replace(/^(?:Polished comment|Refined comment|Refined feedback):\s*/i, '')
       .replace(/\*\*/g, '') // strip markdown bold
       .trim()
+
+    // Detect safety filter hyper-refusals from small local models (e.g. Meta Llama 3.2 1B false positives)
+    const isRefusal = /^(I cannot|I am unable|I'm sorry, but I cannot|As an AI|I apologize)/i.test(cleanText) ||
+      /(deceive or defraud|safety guidelines|content policy)/i.test(cleanText)
+    if (isRefusal) {
+      console.warn('Local LLM safety refusal detected:', cleanText)
+      throw new Error(
+        'The local model triggered a false-positive safety refusal ("deceive or defraud"). Your draft comment was preserved. Try rephrasing or switching to Qwen 2.5 (0.5B) in AI Settings.'
+      )
+    }
 
     // Safety fallback: if model rambles beyond charLimit, fallback to draft or truncate neatly at sentence
     let isOver = cleanText.length > charLimit

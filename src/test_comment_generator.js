@@ -304,7 +304,77 @@ test('SBI3U, SCH3U, and SPH4U correctly map specialized senior competencies', ()
   assert(phys12Res.charCount <= 400)
 })
 
+// ── TEST GROUP 7: Reporting Period Milestone Windows & Term Independence ────
+console.log('\nTEST GROUP 7: Reporting Period Milestone Windows & Term Independence')
+
+test('Progress Report, Midterm, and Final produce distinct comments with staggered default seeds', () => {
+  const student = { firstName: 'Lucas', pronouns: 'he/him' }
+  const gradeData = {
+    percentage: 82,
+    assessments: [{ name: 'Kinematics Unit Test', scorePercent: 82 }]
+  }
+
+  // Progress Report (seed 0), Midterm (seed 1), Final (seed 2)
+  const commentProgress = generateReportComment({
+    student,
+    gradeData,
+    options: { mode: 'secondary', courseCode: 'SPH3U', variantSeed: 0 }
+  }).text
+
+  const commentMidterm = generateReportComment({
+    student,
+    gradeData,
+    options: { mode: 'secondary', courseCode: 'SPH3U', variantSeed: 1 }
+  }).text
+
+  const commentFinal = generateReportComment({
+    student,
+    gradeData,
+    options: { mode: 'secondary', courseCode: 'SPH3U', variantSeed: 2 }
+  }).text
+
+  assert.notStrictEqual(commentProgress, commentMidterm, 'Progress Report and Midterm comments must be distinctly phrased')
+  assert.notStrictEqual(commentMidterm, commentFinal, 'Midterm and Final comments must be distinctly phrased')
+  assert.notStrictEqual(commentProgress, commentFinal, 'Progress and Final comments must be distinctly phrased')
+})
+
+test('Date-scoped assessment filtering dynamically updates evidence between Midterm and Final', () => {
+  const student = { firstName: 'Lucas', pronouns: 'he/him' }
+  
+  // All assessments across the semester
+  const allAssessments = [
+    { name: 'Kinematics Unit Test', date: '2026-10-10', scorePercent: 92 },
+    { name: 'Forces Dynamics Lab', date: '2026-11-20', scorePercent: 68 },
+    { name: 'Waves & Sound Inquiry', date: '2026-12-15', scorePercent: 95 }
+  ]
+
+  // Midpoint cutoff: 2026-11-15 (includes Kinematics only, excludes Forces & Waves)
+  const midtermCutoff = '2026-11-15'
+  const midtermAssessments = allAssessments.filter(a => a.date <= midtermCutoff)
+  assert.strictEqual(midtermAssessments.length, 1)
+
+  const midtermComment = generateReportComment({
+    student,
+    gradeData: { percentage: 92, assessments: midtermAssessments },
+    options: { mode: 'secondary', courseCode: 'SPH3U', variantSeed: 1 }
+  }).text
+  assert(midtermComment.toLowerCase().includes('analyzing 1d and 2d motion and solving projectile kinematics problems'))
+
+  // Final cutoff: 2027-01-31 (includes all 3 assessments, top is Waves 95%, low is Forces 68%)
+  const finalCutoff = '2027-01-31'
+  const finalAssessments = allAssessments.filter(a => a.date <= finalCutoff)
+  assert.strictEqual(finalAssessments.length, 3)
+
+  const finalComment = generateReportComment({
+    student,
+    gradeData: { percentage: 85, assessments: finalAssessments },
+    options: { mode: 'secondary', courseCode: 'SPH3U', variantSeed: 2 }
+  }).text
+  assert(finalComment.toLowerCase().includes('investigating mechanical wave properties, resonance, and the doppler effect'))
+  assert(finalComment.includes('constructing free-body diagrams and applying Newton’s laws to solve net force problems'))
+})
+
 console.log('\n=================================================================')
-console.log('🎉 ALL 11 COMMENT GENERATOR TEST SUITES PASSED (100% SUCCESS)!')
+console.log('🎉 ALL 13 COMMENT GENERATOR TEST SUITES PASSED (100% SUCCESS)!')
 console.log('=================================================================')
 
