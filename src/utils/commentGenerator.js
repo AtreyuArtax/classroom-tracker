@@ -225,39 +225,39 @@ function getNextStepPhrases(tokens, level, growthTaskName, variant = 0) {
 
   const templates = {
     '4+': [
-      `Next step: ${tokens.name} is encouraged to explore advanced extension questions to deepen ${tokens.possessive} conceptual synthesis.`,
+      `Moving forward, ${tokens.name} is encouraged to explore advanced extension questions to deepen ${tokens.possessive} conceptual synthesis.`,
       `To extend learning, ${tokens.subjectLower} should seek opportunities to articulate reasoning and justify complex conclusions.`,
-      `Next step: Tackling novel, non-routine problems will further enhance ${tokens.possessive} critical insight.`,
+      `Tackling novel, non-routine problems will further enhance ${tokens.possessive} critical insight.`,
       `For ongoing growth, ${tokens.name} should continue challenging ${tokens.object} with independent enrichment inquiries.`
     ],
     '4': [
-      `Next step: ${tokens.name} is encouraged to focus on clear written justifications when solving ${cleanTask}.`,
+      `Moving forward, ${tokens.name} is encouraged to focus on clear written justifications when solving ${cleanTask}.`,
       `To reach the highest standard, ${tokens.subjectLower} should review feedback and refine details when completing ${cleanTask}.`,
-      `Next step: Continuing to practice multi-step problem solving on ${cleanTask} will further solidify mastery.`,
+      `Continuing to practice multi-step problem solving on ${cleanTask} will further solidify mastery.`,
       `For future assessments, ${tokens.name} should ensure thorough explanations accompany all multi-step solutions.`
     ],
     '3': [
-      `Next step: ${tokens.name} should practice multi-step problem solving on ${cleanTask} before unit assessments.`,
+      `Moving forward, ${tokens.name} should practice multi-step problem solving on ${cleanTask} before unit assessments.`,
       `To advance to Level 4, ${tokens.subjectLower} is encouraged to review notes daily and seek clarification on ${cleanTask}.`,
-      `Next step: ${tokens.name} would benefit from demonstrating complete steps and clear units on ${cleanTask}.`,
+      `${tokens.name} would benefit from demonstrating complete steps and clear units on ${cleanTask}.`,
       `For continued improvement, consistent completion of homework practice related to ${cleanTask} is recommended.`
     ],
     '2': [
-      `Next step: ${tokens.name} is encouraged to seek timely extra help and practice foundational skills in ${cleanTask}.`,
+      `Moving forward, ${tokens.name} is encouraged to seek timely extra help and practice foundational skills in ${cleanTask}.`,
       `To improve achievement, ${tokens.subjectLower} should review teacher feedback carefully and complete all practice on ${cleanTask}.`,
-      `Next step: Regular review of core terminology and dedicated study for quizzes will support ${tokens.possessive} progress in ${cleanTask}.`,
+      `Regular review of core terminology and dedicated study for quizzes will support ${tokens.possessive} progress in ${cleanTask}.`,
       `${tokens.name} should focus on organizing study materials and asking clarifying questions during lessons on ${cleanTask}.`
     ],
     '1': [
-      `Next step: ${tokens.name} must attend extra help regularly and ensure all outstanding practice on ${cleanTask} is completed.`,
+      `To support steady progress, ${tokens.name} must attend extra help regularly and ensure all outstanding practice on ${cleanTask} is completed.`,
       `To achieve credit expectations, ${tokens.subjectLower} must submit all assignments promptly and review core concepts in ${cleanTask}.`,
-      `Next step: Daily review of lesson notes and active participation in class review sessions on ${cleanTask} is essential.`,
+      `Daily review of lesson notes and active participation in class review sessions on ${cleanTask} is essential.`,
       `${tokens.name} is strongly advised to utilize peer study resources and teacher office hours to reinforce ${cleanTask}.`
     ],
     'R': [
-      `Immediate next step: ${tokens.name} must meet with the teacher to establish an intervention plan for ${cleanTask}.`,
+      `As an immediate priority, ${tokens.name} must meet with the teacher to establish an intervention plan for ${cleanTask}.`,
       `To work toward credit recovery, ${tokens.subjectLower} must submit missing evidence and attend structured remediation on ${cleanTask}.`,
-      `Next step: Regular attendance, active class engagement, and completion of foundational catch-up tasks in ${cleanTask} are urgent priorities.`,
+      `Regular attendance, active class engagement, and completion of foundational catch-up tasks in ${cleanTask} are urgent priorities.`,
       `A parent-teacher consultation is recommended to support ${tokens.name} with consistent homework completion and review of ${cleanTask}.`
     ]
   }
