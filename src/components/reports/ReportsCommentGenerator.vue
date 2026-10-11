@@ -46,6 +46,33 @@
           </div>
         </div>
 
+        <!-- Final Evidence Scope Toggle (Ontario Growing Success) -->
+        <div v-if="selectedTerm === 'Final'" class="cg__control-item cg__control-item--scope">
+          <label class="cg__control-label" title="Ontario Growing Success emphasizes most recent and consistent evidence">
+            Evidence Scope
+          </label>
+          <div class="cg__term-pills">
+            <button
+              type="button"
+              class="cg__term-pill-btn"
+              :class="{ 'cg__term-pill-btn--active': finalEvidenceScope === 'recent' }"
+              title="Focuses comments on post-midterm units & culminating evidence (Ontario best practice)"
+              @click="setFinalScope('recent')"
+            >
+              Post-Midterm (Recent)
+            </button>
+            <button
+              type="button"
+              class="cg__term-pill-btn"
+              :class="{ 'cg__term-pill-btn--active': finalEvidenceScope === 'all' }"
+              title="Include all assessments across the entire semester"
+              @click="setFinalScope('all')"
+            >
+              Full Semester
+            </button>
+          </div>
+        </div>
+
         <!-- Target Preset Selector -->
         <div class="cg__control-item">
           <label class="cg__control-label">Target Mode</label>
@@ -502,6 +529,13 @@ const reportClassRecord = computed(() => {
 })
 
 // ── Milestone & Midpoint Date Windows ─────────────────────────────────────────
+const finalEvidenceScope = ref('recent') // 'recent' (post-midterm) | 'all' (full semester)
+
+function setFinalScope(scope) {
+  finalEvidenceScope.value = scope
+  buildCommentForActive()
+}
+
 function resolveWindowForTerm(termName) {
   const cls = reportClassRecord.value || {}
   const milestones = (filteredMilestones.value && filteredMilestones.value.length > 0)
@@ -509,27 +543,7 @@ function resolveWindowForTerm(termName) {
     : (globalMilestones.value || [])
   const termsList = academicTerms.value || []
 
-  // 1. Check for milestone explicitly matching this reporting period
-  let matchedMs = null
-  if (termName === 'Progress Report') {
-    matchedMs = milestones.find(m => /progress/i.test(m.name))
-  } else if (termName === 'Midterm') {
-    matchedMs = milestones.find(m => /mid/i.test(m.name) || /term\s*1\b/i.test(m.name))
-  } else if (termName === 'Final') {
-    matchedMs = milestones.find(m => /final/i.test(m.name) || /term\s*2\b/i.test(m.name) || /end/i.test(m.name))
-  }
-
-  if (matchedMs && matchedMs.date) {
-    return {
-      asOf: matchedMs.date,
-      dateFrom: matchedMs.startDate || null,
-      source: 'milestone',
-      label: matchedMs.name,
-      displayDate: formatLocalDisplay(matchedMs.date)
-    }
-  }
-
-  // 2. Resolve Semester / Term boundary dates
+  // Resolve Semester / Term boundary dates first
   const clsYear = cls.year || ''
   const clsSem = cls.semester || (cls.classType === 'elementary' ? 'Full' : '1')
   const matchedTerm = termsList.find(t => t.year === clsYear && String(t.semester) === String(clsSem))
@@ -564,6 +578,31 @@ function resolveWindowForTerm(termName) {
   const endMs = parseLocal(endStr).getTime()
   const span = Math.max(0, endMs - startMs)
 
+  // 1. Check for milestone explicitly matching this reporting period
+  let matchedMs = null
+  if (termName === 'Progress Report') {
+    matchedMs = milestones.find(m => /progress/i.test(m.name))
+  } else if (termName === 'Midterm') {
+    matchedMs = milestones.find(m => /mid/i.test(m.name) || /term\s*1\b/i.test(m.name))
+  } else if (termName === 'Final') {
+    matchedMs = milestones.find(m => /final/i.test(m.name) || /term\s*2\b/i.test(m.name) || /end/i.test(m.name))
+  }
+
+  if (matchedMs && matchedMs.date) {
+    let dateFrom = matchedMs.startDate || null
+    if (termName === 'Final' && finalEvidenceScope.value === 'recent') {
+      const midMsObj = milestones.find(m => /mid/i.test(m.name) || /term\s*1\b/i.test(m.name))
+      dateFrom = midMsObj?.date || formatLocalDate(new Date(startMs + span * 0.50))
+    }
+    return {
+      asOf: matchedMs.date,
+      dateFrom,
+      source: 'milestone',
+      label: termName === 'Final' && finalEvidenceScope.value === 'recent' ? 'Post-Midterm (Recent)' : matchedMs.name,
+      displayDate: formatLocalDisplay(matchedMs.date)
+    }
+  }
+
   if (termName === 'Progress Report') {
     // 28% into the semester (approx. 5-6 weeks in)
     const progMs = startMs + span * 0.28
@@ -590,12 +629,18 @@ function resolveWindowForTerm(termName) {
     }
   }
 
-  // Final: full semester
+  // Final: Under Ontario Growing Success, defaults to post-midterm recent evidence
+  let dateFrom = null
+  if (finalEvidenceScope.value === 'recent') {
+    const midMsObj = milestones.find(m => /mid/i.test(m.name) || /term\s*1\b/i.test(m.name))
+    dateFrom = midMsObj?.date || formatLocalDate(new Date(startMs + span * 0.50))
+  }
+
   return {
     asOf: endStr,
-    dateFrom: null,
-    source: 'term_end',
-    label: 'End of Term',
+    dateFrom,
+    source: finalEvidenceScope.value === 'recent' ? 'post_midterm' : 'term_end',
+    label: finalEvidenceScope.value === 'recent' ? 'Post-Midterm (Recent)' : 'Full Semester',
     displayDate: formatLocalDisplay(endStr)
   }
 }
@@ -607,6 +652,12 @@ const currentTermWindow = computed(() => {
 const termWindowBadge = computed(() => {
   const w = currentTermWindow.value
   if (!w) return ''
+  if (selectedTerm.value === 'Final') {
+    if (w.dateFrom) {
+      return `${formatLocalDisplay(w.dateFrom)} → ${w.displayDate}`
+    }
+    return `To ${w.displayDate} (Full)`
+  }
   if (w.source === 'milestone') {
     return `${w.displayDate} (${w.label})`
   }
@@ -616,12 +667,15 @@ const termWindowBadge = computed(() => {
   if (selectedTerm.value === 'Progress Report') {
     return `${w.displayDate} (Early)`
   }
-  return `To ${w.displayDate} (Full)`
+  return `To ${w.displayDate}`
 })
 
 const termWindowTooltip = computed(() => {
   const w = currentTermWindow.value
   if (!w) return ''
+  if (selectedTerm.value === 'Final' && w.dateFrom) {
+    return `Filtered to post-midterm and culminating tasks between ${w.dateFrom} and ${w.asOf} (Ontario Growing Success recent evidence)`
+  }
   return `Filtered to assessments on or before ${w.asOf}${w.dateFrom ? ' and after ' + w.dateFrom : ''} (${w.source === 'milestone' ? 'Milestone' : 'Term Midpoint'})`
 })
 
@@ -686,12 +740,9 @@ const activeLevel = computed(() => {
   return getAchievementLevel(activeStudentMark.value)
 })
 
-const studentAssessments = computed(() => {
-  if (!activeStudent.value) return []
-  const stId = activeStudent.value.studentId
-  const window = currentTermWindow.value
+function getStudentAssessmentsForWindow(studentId, window = currentTermWindow.value) {
+  if (!studentId || !window) return []
 
-  // Read live assessments and gradeMap from useGradebook
   const astList = (props.assessments && props.assessments.length > 0)
     ? props.assessments
     : (gbAssessments.value || [])
@@ -709,7 +760,7 @@ const studentAssessments = computed(() => {
       if (window.dateFrom && aDate < window.dateFrom) return
     }
 
-    const grade = gradeMap.value[a.assessmentId]?.[stId]
+    const grade = gradeMap.value[a.assessmentId]?.[studentId]
     const pct = getAssessmentPercentage(a, grade)
     if (pct !== null && !isNaN(pct) && isFinite(pct)) {
       list.push({
@@ -721,7 +772,33 @@ const studentAssessments = computed(() => {
       })
     }
   })
+
+  // Fallback: If in Post-Midterm mode on Final but no assessments exist post-midterm yet,
+  // gracefully fall back to all semester assessments so early tests still appear
+  if (list.length === 0 && window.dateFrom && selectedTerm.value === 'Final') {
+    astList.forEach(a => {
+      if (a.excluded) return
+      if (a.date && window.asOf && String(a.date).slice(0, 10) > window.asOf) return
+      const grade = gradeMap.value[a.assessmentId]?.[studentId]
+      const pct = getAssessmentPercentage(a, grade)
+      if (pct !== null && !isNaN(pct) && isFinite(pct)) {
+        list.push({
+          id: a.assessmentId,
+          name: a.name || 'Assessment',
+          description: a.description || '',
+          scorePercent: Math.round(pct),
+          date: a.date
+        })
+      }
+    })
+  }
+
   return list.sort((a, b) => b.scorePercent - a.scorePercent)
+}
+
+const studentAssessments = computed(() => {
+  if (!activeStudent.value) return []
+  return getStudentAssessmentsForWindow(activeStudent.value.studentId, currentTermWindow.value)
 })
 
 const currentCourseCode = computed(() => {
@@ -873,7 +950,8 @@ const previousTermComment = computed(() => {
       featuredStrength: prevStrength,
       featuredNextStep: prevGrowth,
       variantSeed: prevSeed,
-      courseCode: currentCourseCode.value
+      courseCode: currentCourseCode.value,
+      reportingPeriod: prevTerm
     }
   })
   return res.text
@@ -952,6 +1030,11 @@ async function refreshTermGradesForClass() {
     studentGradeMap.get(g.studentId).push(g)
   }
 
+  // Under Ontario Growing Success, a student's final report card mark is their cumulative
+  // whole-course grade (not just post-midterm units). Therefore, for Final term, dateFrom is null
+  // for overall grade calculation.
+  const gradeDateFrom = (term === 'Final') ? null : window.dateFrom
+
   const results = {}
   for (const student of studentList.value) {
     const stId = student.studentId
@@ -959,7 +1042,7 @@ async function refreshTermGradesForClass() {
     try {
       const res = await calculateStudentGrade(stId, cls, {
         asOf: window.asOf,
-        dateFrom: window.dateFrom,
+        dateFrom: gradeDateFrom,
         assessmentsPreRef: astList,
         gradesPreRef: stGrades
       })
@@ -1013,7 +1096,8 @@ function buildCommentForActive() {
       featuredStrength: selectedStrengthTask.value,
       featuredNextStep: selectedGrowthTask.value,
       variantSeed: currentVariantSeed.value,
-      courseCode: currentCourseCode.value
+      courseCode: currentCourseCode.value,
+      reportingPeriod: selectedTerm.value
     }
   })
 
@@ -1024,6 +1108,7 @@ function buildCommentForActive() {
 watch([
   selectedStudentId,
   selectedTerm,
+  finalEvidenceScope,
   targetMode,
   pronounMode,
   charLimit
@@ -1136,12 +1221,14 @@ function exportAllCommentsCsv() {
     const stStrength = termStrengthTasks.value[key] || ''
     const stGrowth = termGrowthTasks.value[key] || ''
 
+    const stAssessments = getStudentAssessmentsForWindow(st.studentId, currentTermWindow.value)
+
     const res = generateReportComment({
       student: st,
       gradeData: {
         percentage: mark,
         level: getAchievementLevel(mark)?.key,
-        assessments: (st.studentId === activeStudent.value?.studentId) ? studentAssessments.value : [],
+        assessments: stAssessments,
         ...gradeObj
       },
       learningSkills: skills,
@@ -1152,7 +1239,8 @@ function exportAllCommentsCsv() {
         featuredStrength: stStrength,
         featuredNextStep: stGrowth,
         variantSeed: stSeed,
-        courseCode: st.courseCode || currentCourseCode.value
+        courseCode: st.courseCode || currentCourseCode.value,
+        reportingPeriod: selectedTerm.value
       }
     })
 
@@ -1711,12 +1799,13 @@ watch(() => props.reportClass?.classId, async () => {
 }
 
 .cg__btn-icon--ai-ready {
-  background: #f0fdf4;
-  border-color: #86efac;
-  color: #15803d;
+  background: var(--color-success-bg);
+  border-color: rgba(50, 215, 75, 0.35);
+  color: var(--color-success-text);
 }
 .cg__btn-icon--ai-ready:hover {
-  background: #dcfce7;
+  background: var(--color-success-bg);
+  filter: brightness(1.08);
 }
 
 .cg__btn-icon--gear {

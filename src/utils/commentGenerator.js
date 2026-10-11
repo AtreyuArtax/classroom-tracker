@@ -76,7 +76,18 @@ export function getPronounTokens(student, pronounMode = 'preferred') {
 
   const raw = String(student?.pronouns || '').toLowerCase()
 
-  if (raw.includes('she') || raw.includes('her')) {
+  if (/\b(they|them|their)\b/i.test(raw)) {
+    return {
+      name: firstName,
+      subject: 'They',
+      subjectLower: 'they',
+      object: 'them',
+      possessive: 'their',
+      isPlural: true,
+    }
+  }
+
+  if (/\b(she|her)\b/i.test(raw)) {
     return {
       name: firstName,
       subject: 'She',
@@ -87,7 +98,7 @@ export function getPronounTokens(student, pronounMode = 'preferred') {
     }
   }
 
-  if (raw.includes('he') || raw.includes('him')) {
+  if (/\b(he|him|his)\b/i.test(raw)) {
     return {
       name: firstName,
       subject: 'He',
@@ -99,7 +110,7 @@ export function getPronounTokens(student, pronounMode = 'preferred') {
   }
 
   // Default to neutral / they
-  if (raw.includes('they') || raw.includes('them') || pronounMode === 'preferred') {
+  if (pronounMode === 'preferred') {
     return {
       name: firstName,
       subject: 'They',
@@ -127,7 +138,7 @@ export function getPronounTokens(student, pronounMode = 'preferred') {
  * Returns strength sentence variations based on achievement level and specific task.
  */
 function getStrengthPhrases(tokens, level, taskName, variant = 0) {
-  const cleanTask = taskName ? taskName.trim() : 'course learning goals'
+  const cleanTask = formatCurriculumTopic(taskName || 'course learning goals')
   const isGerund = /^(analyzing|solving|constructing|applying|investigating|interpreting|evaluating|predicting|classifying|examining|designing|representing|calculating|resolving|measuring|mapping|building)\b/i.test(cleanTask)
   const capTask = isGerund ? (cleanTask.charAt(0).toUpperCase() + cleanTask.slice(1)) : ''
   const whenTask = isGerund ? cleanTask : makeGerund(cleanTask)
@@ -284,15 +295,37 @@ function getCurriculumApplicationPhrases(tokens, level, variant = 0) {
 
 /**
  * Returns actionable next step variations based on level and specific growth task.
+ * For Final reports, next steps pivot forward to senior course pathways, future studies,
+ * or credit recovery (under Ontario Growing Success & SCDSB guidelines).
  */
-function getNextStepPhrases(tokens, level, growthTaskName, variant = 0) {
-  const cleanTask = growthTaskName ? growthTaskName.trim() : 'multi-step problem solving'
-  const isGerund = /^(analyzing|solving|constructing|applying|investigating|interpreting|evaluating|predicting|classifying|examining|designing|representing)\b/i.test(cleanTask)
-  const whenTask = isGerund ? `when ${cleanTask}` : `when solving ${cleanTask}`
+function getNextStepPhrases(tokens, level, growthTaskName, variant = 0, options = {}) {
+  const isFinal = typeof options === 'boolean' ? options : Boolean(options?.isFinal)
+  const cleanTask = formatCurriculumTopic(growthTaskName || 'multi-step problem solving')
+  const lower = cleanTask.toLowerCase()
+  const isGerund = /^(analyzing|solving|constructing|applying|investigating|interpreting|evaluating|predicting|classifying|examining|designing|representing|calculating)\b/i.test(lower)
+
+  let whenTask = ''
+  if (isGerund) {
+    whenTask = `when ${cleanTask}`
+  } else if (lower.includes('theory') || lower.includes('concept') || lower.includes('law') || lower.includes('principle')) {
+    whenTask = `when applying ${cleanTask} concepts`
+  } else if (lower.includes('lab') || lower.includes('inquiry') || lower.includes('investigation')) {
+    whenTask = `during ${cleanTask}`
+  } else if (lower.includes('test') || lower.includes('quiz') || lower.includes('exam')) {
+    whenTask = `before ${cleanTask}`
+  } else if (lower.includes('problem') || lower.includes('calculation') || lower.includes('equation')) {
+    whenTask = `when solving ${cleanTask}`
+  } else if (lower.includes('motion') || lower.includes('kinematic')) {
+    whenTask = `when analyzing ${cleanTask}`
+  } else {
+    whenTask = `when working with ${cleanTask}`
+  }
+
   const onTask = isGerund ? `when ${cleanTask}` : `on ${cleanTask}`
   const inTask = isGerund ? `when ${cleanTask}` : `in ${cleanTask}`
 
-  const templates = {
+  // Standard term / midterm templates (actionable classroom strategies for upcoming units)
+  const termTemplates = {
     '4+': [
       `Moving forward, ${tokens.name} is encouraged to explore advanced extension questions to deepen conceptual synthesis.`,
       `To extend learning, ${tokens.subjectLower} should seek opportunities to articulate reasoning and justify complex conclusions ${whenTask}.`,
@@ -331,6 +364,48 @@ function getNextStepPhrases(tokens, level, growthTaskName, variant = 0) {
     ]
   }
 
+  // Final report templates: Course has concluded, so next steps pivot forward to senior course
+  // pathways, subsequent studies, or credit recovery (Ontario Growing Success & SCDSB guidelines)
+  const finalTemplates = {
+    '4+': [
+      `Moving forward into senior coursework, ${tokens.name} is encouraged to continue exploring advanced extension questions and independent inquiry.`,
+      `As ${tokens.name} advances to future studies, maintaining this high standard of critical insight and theoretical justification will ensure continued success.`,
+      `In subsequent senior coursework, ${tokens.name} is well prepared to tackle rigorous theoretical challenges and complex problem-solving inquiries.`,
+      `For ongoing academic growth, ${tokens.name} should continue challenging ${tokens.object} with non-routine problem solving and conceptual synthesis.`
+    ],
+    '4': [
+      `Moving forward into senior courses, ${tokens.name} should continue utilizing structured problem-solving frameworks to tackle complex investigations.`,
+      `To excel in subsequent studies, ${tokens.subjectLower} should maintain thorough written justifications and clear unit communication.`,
+      `As ${tokens.name} progresses to higher-level coursework, practicing multi-step problem solving will sustain ${tokens.possessive} high achievement.`,
+      `In future academic studies, ${tokens.name} is encouraged to sustain this diligent approach to inquiry and quantitative problem solving.`
+    ],
+    '3': [
+      `To prepare for subsequent courses, ${tokens.name} is encouraged to review core problem-solving templates and verify multi-step calculations.`,
+      `In future studies, maintaining regular review habits and practicing multi-step problem solving will support ${tokens.possessive} progress.`,
+      `Moving forward into subsequent coursework, consistent application of structured methods will reinforce ${tokens.name}'s ongoing success.`,
+      `For future academic pathways, ${tokens.name} should continue consolidating core concepts and seeking early clarification on complex topics.`
+    ],
+    '2': [
+      `Prior to enrolling in subsequent courses, ${tokens.name} is encouraged to review foundational concepts and practice multi-step calculations independently.`,
+      `In future coursework, establishing consistent study routines and seeking timely extra help on challenging topics will build confidence.`,
+      `Consolidating core procedures and formula applications will be key as ${tokens.name} transitions into subsequent academic studies.`,
+      `To ensure success in future courses, ${tokens.name} would benefit from reinforcing foundational problem-solving strategies.`
+    ],
+    '1': [
+      `Prior to advancing to subsequent courses in this subject, ${tokens.name} requires focused review of core curriculum expectations.`,
+      `To prepare for future academic pathways, ${tokens.subjectLower} should review foundational concepts and strengthen basic problem-solving procedures.`,
+      `Consistent practice with core formulas and terminology is strongly recommended before advancing to higher-level studies.`,
+      `Seeking additional tutorial support to solidify essential concepts will be critical for ${tokens.name}'s future coursework.`
+    ],
+    'R': [
+      `To work toward credit recovery, ${tokens.name} must consult with guidance to discuss remediation or summer school options.`,
+      `Enrolling in credit recovery or repeating the course is strongly recommended to establish required curriculum competencies.`,
+      `A consultation with guidance and student success is recommended to explore appropriate pathway options and credit recovery.`,
+      `To satisfy diploma requirements, ${tokens.name} should attend summer school or enroll in credit recovery to complete essential expectations.`
+    ]
+  }
+
+  const templates = isFinal ? finalTemplates : termTemplates
   const list = templates[level.key] || templates['3']
   const idx = Math.abs(variant) % list.length
   return list[idx]
@@ -358,6 +433,71 @@ export function sanitizeTaskTitle(rawTitle) {
   }
 
   return t.trim()
+}
+
+/**
+ * Normalizes a raw assessment title or curriculum topic for natural pedagogical phrasing.
+ * Strips awkward leading articles, expands bare topic keywords (e.g. "Projectile" -> "projectile motion"),
+ * lowercases academic concepts, and preserves proper nouns/acronyms (e.g., "Newton's laws", "1D", "2D").
+ */
+export function formatCurriculumTopic(rawTitle) {
+  if (!rawTitle) return ''
+  let t = sanitizeTaskTitle(rawTitle)
+
+  // Strip leading articles: "the Projectile" -> "Projectile", "a Lab" -> "Lab"
+  t = t.replace(/^(?:the|a|an)\s+/i, '')
+
+  const lower = t.toLowerCase().trim()
+
+  // Shorthand or bare topic expansions common in Ontario secondary curriculum
+  const TOPIC_EXPANSIONS = {
+    'projectile': 'projectile motion',
+    'projectiles': 'projectile motion',
+    'light theory': 'light theory',
+    'friction': 'friction and forces',
+    'kinematics': 'kinematics',
+    'dynamics': 'forces and dynamics',
+    'forces': 'forces and motion',
+    'circuits': 'electric circuits',
+    'circuit': 'electric circuits',
+    'waves': 'wave properties',
+    'wave': 'wave properties',
+    'optics': 'optics and light',
+    'energy': 'conservation of energy',
+    'heat': 'thermal energy',
+    'thermal': 'thermal energy',
+    'work & energy': 'work and energy',
+    'work and energy': 'work and energy',
+    'electricity': 'current electricity',
+    'momentum': 'momentum and collisions',
+    'rotational': 'rotational motion',
+    'circular motion': 'uniform circular motion',
+    'gravitation': 'universal gravitation',
+    'sound': 'sound and acoustic waves',
+    'standing waves': 'standing waves and resonance'
+  }
+
+  if (TOPIC_EXPANSIONS[lower]) {
+    return TOPIC_EXPANSIONS[lower]
+  }
+
+  // Preserve explicit evaluation titles like "1D Kinematics Test" or "Forces & Friction Lab"
+  if (/\b(test|quiz|lab|exam|assignment|checkpoint|project)\b/i.test(t)) {
+    return t
+  }
+
+  // Otherwise, format as lowercase curriculum concept while preserving recognized proper nouns/acronyms
+  const PROPER_PRESERVE = /\b(1d|2d|3d|newton'?s?|ohm'?s?|kirchhoff'?s?|hooke'?s?|kepler'?s?|boyle'?s?|charles'?s?|snell'?s?|cartesian|pythagorean|doppler|einstein|galileo|archimedes|canada|canadian|indigenous|first nations|inuit|m[eé]tis|french|english|ontario)\b/gi
+
+  let formatted = lower.replace(PROPER_PRESERVE, match => {
+    const m = match.toLowerCase()
+    if (m === '1d') return '1D'
+    if (m === '2d') return '2D'
+    if (m === '3d') return '3D'
+    return match.charAt(0).toUpperCase() + match.slice(1)
+  })
+
+  return formatted
 }
 
 /**
@@ -403,20 +543,37 @@ const NON_ACADEMIC_CATEGORIES = new Set([
 /**
  * Converts a task title into a smooth parent-friendly gerund phrase.
  */
-function makeGerund(task) {
+export function makeGerund(task) {
   if (!task) return 'completing assignments'
-  const t = sanitizeTaskTitle(task)
-  const lower = t.toLowerCase()
-  if (lower.startsWith('solving') || lower.startsWith('analyzing') || lower.startsWith('calculating') || lower.startsWith('creating') || lower.startsWith('applying') || lower.startsWith('modeling')) {
-    return t
+  const clean = formatCurriculumTopic(task)
+  const lower = clean.toLowerCase()
+
+  // 1. If already starts with an action gerund
+  if (/^(analyzing|solving|calculating|creating|applying|modeling|investigating|conducting|constructing|interpreting|evaluating|representing)\b/i.test(lower)) {
+    return clean
   }
+
+  // 2. Specific evaluation events (e.g. "1D Kinematics Test", "Forces Lab")
   if (lower.includes('lab') || lower.includes('inquiry') || lower.includes('investigation')) {
-    return lower.startsWith('the ') ? `conducting ${t}` : `conducting the ${t}`
+    return lower.startsWith('the ') ? `conducting ${clean}` : `conducting the ${clean}`
   }
   if (lower.includes('test') || lower.includes('quiz') || lower.includes('exam')) {
-    return lower.startsWith('the ') ? `completing ${t}` : `completing the ${t}`
+    return lower.startsWith('the ') ? `completing ${clean}` : `completing the ${clean}`
   }
-  return lower.startsWith('the ') ? `working on ${t}` : `working on the ${t}`
+
+  // 3. Curriculum concepts & topics (e.g. "projectile motion", "light theory", "kinematics")
+  if (lower.includes('theory') || lower.includes('concept') || lower.includes('law') || lower.includes('principle')) {
+    return `applying ${clean} concepts`
+  }
+  if (lower.includes('motion') || lower.includes('projectile') || lower.includes('kinematic')) {
+    return `analyzing ${clean}`
+  }
+  if (lower.includes('problem') || lower.includes('calculation') || lower.includes('equation')) {
+    return `solving ${clean} problems`
+  }
+
+  // 4. Default natural phrasing (never "working on the [topic]")
+  return `investigating ${clean}`
 }
 
 /**
@@ -551,9 +708,12 @@ export function generateReportComment({
     featuredNextStep = '',
     variantSeed = 0,
     includeWorkHabits = false,
-    courseCode = ''
+    courseCode = '',
+    reportingPeriod = 'Midterm',
+    isFinal = false
   } = options
 
+  const resolvedIsFinal = Boolean(isFinal || reportingPeriod === 'Final')
   const resolvedCourseCode = courseCode || gradeData.courseCode || student.courseCode || ''
 
   // 1. Determine level & pronoun tokens
@@ -582,7 +742,10 @@ export function generateReportComment({
     ? getCurriculumApplicationPhrases(tokens, level, seedNum + 1)
     : getWorkHabitPhrases(tokens, learningSkills, seedNum + 1)
 
-  const sentence3 = getNextStepPhrases(tokens, level, growthTask, seedNum + 2)
+  const sentence3 = getNextStepPhrases(tokens, level, growthTask, seedNum + 2, {
+    isFinal: resolvedIsFinal,
+    courseCode: resolvedCourseCode
+  })
 
   let fullComment = ''
 
@@ -598,20 +761,57 @@ export function generateReportComment({
     // Secondary: Strictly concise 3-sentence body within ~400 chars
     fullComment = [sentence1, sentence2, sentence3].filter(Boolean).join(' ')
 
-    // If strictly over the character budget, attempt to produce a compact variant
+    // If strictly over the character budget, search for a valid combination that fits <= charLimit
     if (fullComment.length > charLimit) {
-      const compactS1 = getStrengthPhrases(tokens, level, strengthTask, seedNum + 1)
-      const compactS3 = getNextStepPhrases(tokens, level, growthTask, seedNum + 3)
-      const compactCandidate = [compactS1, sentence2, compactS3].filter(Boolean).join(' ')
-      if (compactCandidate.length <= charLimit) {
-        fullComment = compactCandidate
-      } else {
-        // Drop sentence 2 if still exceeding limit to guarantee fitting in SIS box
-        const emergency2Sentence = [compactS1, compactS3].join(' ')
-        if (emergency2Sentence.length <= charLimit) {
-          fullComment = emergency2Sentence
+      let fitted = ''
+
+      // Tier 1: Search across variant combinations of 3 sentences (s1, sentence2, s3)
+      for (let s1Offset = 1; s1Offset <= 4; s1Offset++) {
+        const altS1 = getStrengthPhrases(tokens, level, strengthTask, seedNum + s1Offset)
+        for (let s3Offset = 1; s3Offset <= 4; s3Offset++) {
+          const altS3 = getNextStepPhrases(tokens, level, growthTask, seedNum + s3Offset, {
+            isFinal: resolvedIsFinal,
+            courseCode: resolvedCourseCode
+          })
+          const candidate3 = [altS1, sentence2, altS3].filter(Boolean).join(' ')
+          if (candidate3.length <= charLimit) {
+            fitted = candidate3
+            break
+          }
+        }
+        if (fitted) break
+      }
+
+      // Tier 2: If 3 sentences still exceed charLimit (due to long curriculum strings), drop sentence 2
+      if (!fitted) {
+        for (let s1Offset = 0; s1Offset < 4; s1Offset++) {
+          const altS1 = getStrengthPhrases(tokens, level, strengthTask, seedNum + s1Offset)
+          for (let s3Offset = 0; s3Offset < 4; s3Offset++) {
+            const altS3 = getNextStepPhrases(tokens, level, growthTask, seedNum + s3Offset, {
+              isFinal: resolvedIsFinal,
+              courseCode: resolvedCourseCode
+            })
+            const candidate2 = [altS1, altS3].filter(Boolean).join(' ')
+            if (candidate2.length <= charLimit) {
+              fitted = candidate2
+              break
+            }
+          }
+          if (fitted) break
         }
       }
+
+      // Tier 3: Concise guaranteed emergency fallback
+      if (!fitted) {
+        const conciseS1 = `${tokens.name} demonstrates ${level.adjective} achievement when working with ${formatCurriculumTopic(strengthTask)}.`
+        const conciseS3 = getNextStepPhrases(tokens, level, growthTask, seedNum, {
+          isFinal: resolvedIsFinal,
+          courseCode: resolvedCourseCode
+        })
+        fitted = [conciseS1, conciseS3].join(' ')
+      }
+
+      fullComment = fitted
     }
   }
 

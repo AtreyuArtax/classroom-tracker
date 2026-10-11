@@ -1,26 +1,33 @@
 <template>
-  <div class="cllm-modal__backdrop" @click.self="$emit('close')">
-    <div class="cllm-modal__dialog">
-      <!-- Header -->
-      <div class="cllm-modal__header">
-        <div class="cllm-modal__header-info">
-          <div class="cllm-modal__header-icon">
-            <Sparkles :size="20" />
+  <Teleport to="body">
+    <div 
+      class="cllm-modal__backdrop" 
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="cllm-modal-title"
+      @click.self="$emit('close')"
+    >
+      <div class="cllm-modal__dialog" @click.stop>
+        <!-- Header -->
+        <div class="cllm-modal__header">
+          <div class="cllm-modal__header-info">
+            <div class="cllm-modal__header-icon">
+              <Sparkles :size="20" />
+            </div>
+            <div>
+              <h3 id="cllm-modal-title" class="cllm-modal__title">Local AI Comment Rephraser</h3>
+              <p class="cllm-modal__subtitle">100% Private & Offline • Zero student data leaves your device</p>
+            </div>
           </div>
-          <div>
-            <h3 class="cllm-modal__title">Local AI Comment Rephraser</h3>
-            <p class="cllm-modal__subtitle">100% Private & Offline • Zero student data leaves your device</p>
-          </div>
+          <button 
+            type="button" 
+            class="cllm-modal__close-btn" 
+            aria-label="Close dialog"
+            @click="$emit('close')"
+          >
+            <X :size="18" />
+          </button>
         </div>
-        <button 
-          type="button" 
-          class="cllm-modal__close-btn" 
-          aria-label="Close dialog"
-          @click="$emit('close')"
-        >
-          <X :size="18" />
-        </button>
-      </div>
 
       <!-- Privacy Callout Banner -->
       <div class="cllm-modal__privacy-banner">
@@ -268,11 +275,11 @@
         </button>
       </div>
     </div>
-  </div>
+  </Teleport>
 </template>
 
 <script setup>
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, onUnmounted } from 'vue'
 import {
   Sparkles,
   ShieldCheck,
@@ -289,7 +296,7 @@ import {
   purgeModelFromCache
 } from '../../utils/localLlmService.js'
 
-defineEmits(['close'])
+const emit = defineEmits(['close'])
 
 const isLoading = computed(() => llmState.status === 'loading')
 
@@ -297,8 +304,19 @@ function isCached(key) {
   return llmState.cachedModelKeys.includes(key)
 }
 
+function handleEsc(e) {
+  if (e.key === 'Escape') {
+    emit('close')
+  }
+}
+
 onMounted(async () => {
+  window.addEventListener('keydown', handleEsc)
   await detectHardwareCapabilities()
+})
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleEsc)
 })
 
 async function onSelectModel(key) {
@@ -324,31 +342,45 @@ async function onPurgeCache(key) {
 .cllm-modal__backdrop {
   position: fixed;
   inset: 0;
-  background-color: rgba(15, 23, 42, 0.75);
-  backdrop-filter: blur(4px);
+  background-color: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   z-index: 9999;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 16px;
+  animation: cllm-fade-in 0.2s ease-out;
+}
+
+@keyframes cllm-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .cllm-modal__dialog {
-  background: #ffffff;
-  border-radius: 12px;
+  background: var(--surface);
+  color: var(--text);
+  border-radius: var(--radius-lg, 16px);
   width: 100%;
   max-width: 640px;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  box-shadow: var(--shadow-2xl, 0 20px 25px -5px rgba(0, 0, 0, 0.3));
   display: flex;
   flex-direction: column;
   max-height: 90vh;
   overflow-y: auto;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--border);
+  animation: cllm-pop-in 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes cllm-pop-in {
+  from { transform: scale(0.96) translateY(8px); opacity: 0; }
+  to { transform: scale(1) translateY(0); opacity: 1; }
 }
 
 .cllm-modal__header {
   padding: 16px 20px;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid var(--border);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -363,9 +395,9 @@ async function onPurgeCache(key) {
 .cllm-modal__header-icon {
   width: 36px;
   height: 36px;
-  border-radius: 8px;
-  background: #f0fdf4;
-  color: #16a34a;
+  border-radius: var(--radius-sm, 8px);
+  background: var(--color-success-bg);
+  color: var(--color-success);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -374,52 +406,55 @@ async function onPurgeCache(key) {
 .cllm-modal__title {
   font-size: 1.1rem;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--text);
   margin: 0;
 }
 
 .cllm-modal__subtitle {
   font-size: 0.8rem;
-  color: #64748b;
+  color: var(--text-secondary);
   margin: 2px 0 0;
 }
 
 .cllm-modal__close-btn {
-  background: none;
+  background: transparent;
   border: none;
-  color: #94a3b8;
+  color: var(--text-secondary);
   cursor: pointer;
   padding: 6px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm, 6px);
   display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.15s, color 0.15s;
 }
 .cllm-modal__close-btn:hover {
-  background: #f1f5f9;
-  color: #334155;
+  background: var(--surface-hover);
+  color: var(--text);
 }
 
 /* Privacy Banner */
 .cllm-modal__privacy-banner {
   margin: 16px 20px 0;
   padding: 12px 14px;
-  background: #f0fdf4;
-  border: 1px solid #bbf7d0;
-  border-radius: 8px;
+  background: var(--color-success-bg);
+  border: 1px solid rgba(50, 215, 75, 0.3);
+  border-radius: var(--radius-sm, 8px);
   display: flex;
   gap: 10px;
   align-items: flex-start;
 }
 
 .cllm-modal__privacy-icon {
-  color: #16a34a;
+  color: var(--color-success);
   flex-shrink: 0;
   margin-top: 1px;
 }
 
 .cllm-modal__privacy-text {
   font-size: 0.78rem;
-  line-height: 1.4;
-  color: #166534;
+  line-height: 1.45;
+  color: var(--color-success-text);
 }
 
 /* Hardware Bar */
@@ -428,9 +463,10 @@ async function onPurgeCache(key) {
   display: flex;
   gap: 16px;
   font-size: 0.78rem;
-  background: #f8fafc;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
   padding: 8px 12px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm, 6px);
 }
 
 .cllm-modal__hw-item {
@@ -440,36 +476,39 @@ async function onPurgeCache(key) {
 }
 
 .cllm-modal__hw-label {
-  color: #64748b;
+  color: var(--text-secondary);
   font-weight: 500;
 }
 
 .cllm-modal__hw-badge {
   font-size: 0.72rem;
-  padding: 2px 6px;
+  padding: 2px 7px;
   border-radius: 4px;
   font-weight: 600;
 }
 .cllm-modal__hw-badge--success {
-  background: #dcfce7;
-  color: #15803d;
+  background: var(--color-success-bg);
+  color: var(--color-success-text);
+  border: 1px solid rgba(50, 215, 75, 0.25);
 }
 .cllm-modal__hw-badge--warn {
-  background: #fef3c7;
-  color: #b45309;
+  background: var(--color-warn-bg);
+  color: var(--color-warn-text);
+  border: 1px solid rgba(245, 158, 11, 0.25);
 }
 .cllm-modal__hw-badge--muted {
-  background: #e2e8f0;
-  color: #64748b;
+  background: var(--surface-hover);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
 }
 
 /* Progress */
 .cllm-modal__progress-panel {
   margin: 14px 20px 0;
   padding: 14px;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm, 8px);
 }
 
 .cllm-modal__progress-header {
@@ -477,36 +516,37 @@ async function onPurgeCache(key) {
   justify-content: space-between;
   font-size: 0.82rem;
   font-weight: 600;
-  color: #0f172a;
+  color: var(--text);
   margin-bottom: 6px;
 }
 
 .cllm-modal__progress-track {
   height: 8px;
-  background: #e2e8f0;
+  background: var(--surface-hover);
+  border: 1px solid var(--border);
   border-radius: 4px;
   overflow: hidden;
 }
 
 .cllm-modal__progress-fill {
   height: 100%;
-  background: #2563eb;
+  background: var(--primary);
   transition: width 0.2s ease;
 }
 
 .cllm-modal__progress-subtext {
   font-size: 0.72rem;
-  color: #64748b;
+  color: var(--text-secondary);
   margin: 6px 0 0;
 }
 
 .cllm-modal__error-banner {
   margin: 14px 20px 0;
   padding: 10px 14px;
-  background: #fef2f2;
-  border: 1px solid #fecaca;
-  border-radius: 6px;
-  color: #dc2626;
+  background: var(--color-danger-bg);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: var(--radius-sm, 6px);
+  color: var(--color-danger-text);
   font-size: 0.8rem;
   display: flex;
   align-items: center;
@@ -522,22 +562,29 @@ async function onPurgeCache(key) {
 }
 
 .cllm-card {
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md, 10px);
   padding: 14px;
-  background: #ffffff;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  background: var(--surface);
+  transition: border-color 0.15s, box-shadow 0.15s, background-color 0.15s;
 }
 .cllm-card:hover {
-  border-color: #cbd5e1;
+  border-color: var(--primary-hover);
 }
 .cllm-card--active {
-  border-color: #10b981;
-  background: #f0fdf4;
+  border-color: var(--color-success);
+  background: var(--color-success-bg);
 }
 .cllm-card--disabled {
-  opacity: 0.6;
-  background: #f8fafc;
+  opacity: 0.55;
+  background: var(--bg-secondary);
+}
+
+:root[data-theme="dark"] .cllm-card {
+  background: var(--bg-secondary);
+}
+:root[data-theme="dark"] .cllm-card--active {
+  background: var(--color-success-bg);
 }
 
 .cllm-card__top {
@@ -556,7 +603,7 @@ async function onPurgeCache(key) {
 .cllm-card__name {
   font-size: 0.92rem;
   font-weight: 600;
-  color: #0f172a;
+  color: var(--text);
 }
 
 .cllm-card__badge {
@@ -566,38 +613,41 @@ async function onPurgeCache(key) {
   font-weight: 600;
 }
 .cllm-card__badge--green {
-  background: #dcfce7;
-  color: #15803d;
+  background: var(--color-success-bg);
+  color: var(--color-success-text);
+  border: 1px solid rgba(50, 215, 75, 0.25);
 }
 .cllm-card__badge--blue {
-  background: #dbeafe;
-  color: #1d4ed8;
+  background: var(--color-attention-bg);
+  color: var(--color-attention-text);
+  border: 1px solid rgba(59, 130, 246, 0.25);
 }
 .cllm-card__badge--purple {
-  background: #f3e8ff;
-  color: #7e22ce;
+  background: var(--color-purple-bg);
+  color: var(--color-purple-text);
+  border: 1px solid rgba(168, 85, 247, 0.25);
 }
 
 .cllm-card__status-active {
   font-size: 0.72rem;
-  color: #10b981;
+  color: var(--color-success);
   font-weight: 700;
 }
 .cllm-card__status-cached {
   font-size: 0.72rem;
-  color: #64748b;
+  color: var(--text-secondary);
   font-weight: 600;
 }
 
 .cllm-card__desc {
   font-size: 0.78rem;
-  color: #475569;
-  line-height: 1.4;
+  color: var(--text-secondary);
+  line-height: 1.45;
   margin: 0 0 10px;
 }
 
 .cllm-card__disabled-note {
-  color: #94a3b8;
+  color: var(--text-tertiary);
   display: block;
   margin-top: 2px;
 }
@@ -607,14 +657,14 @@ async function onPurgeCache(key) {
   align-items: center;
   justify-content: space-between;
   padding-top: 8px;
-  border-top: 1px solid #f1f5f9;
+  border-top: 1px solid var(--border);
 }
 
 .cllm-card__specs {
   display: flex;
   gap: 6px;
   font-size: 0.72rem;
-  color: #94a3b8;
+  color: var(--text-secondary);
 }
 
 .cllm-card__actions {
@@ -628,73 +678,77 @@ async function onPurgeCache(key) {
   font-size: 0.78rem;
   font-weight: 600;
   padding: 6px 12px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm, 6px);
   border: 1px solid transparent;
   cursor: pointer;
-  transition: background-color 0.15s;
+  transition: background-color 0.15s, border-color 0.15s, color 0.15s, opacity 0.15s;
 }
 .cllm-btn:disabled {
-  opacity: 0.5;
+  opacity: 0.6;
   cursor: not-allowed;
 }
 
 .cllm-btn--primary {
-  background: #2563eb;
+  background: var(--primary);
   color: #ffffff;
 }
 .cllm-btn--primary:hover:not(:disabled) {
-  background: #1d4ed8;
+  background: var(--primary-hover);
 }
 
 .cllm-btn--success {
-  background: #10b981;
+  background: var(--color-success);
   color: #ffffff;
 }
 
 .cllm-btn--secondary {
-  background: #f1f5f9;
-  color: #334155;
-  border-color: #cbd5e1;
+  background: var(--bg-secondary);
+  color: var(--text);
+  border-color: var(--border);
 }
 .cllm-btn--secondary:hover:not(:disabled) {
-  background: #e2e8f0;
+  background: var(--surface-hover);
 }
 
 .cllm-btn--outline {
   background: transparent;
-  border-color: #cbd5e1;
-  color: #475569;
+  border-color: var(--border);
+  color: var(--text-secondary);
 }
 .cllm-btn--outline:hover:not(:disabled) {
-  background: #f8fafc;
+  background: var(--surface-hover);
+  color: var(--text);
 }
 
 .cllm-btn--danger-icon {
-  background: #fee2e2;
-  border-color: #fecaca;
-  color: #dc2626;
+  background: var(--color-danger-bg);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: var(--color-danger);
   padding: 6px;
   display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .cllm-btn--danger-icon:hover:not(:disabled) {
-  background: #fca5a5;
+  background: rgba(239, 68, 68, 0.25);
 }
 
 .cllm-btn--done {
-  background: #0f172a;
-  color: #ffffff;
+  background: var(--text);
+  color: var(--surface);
+  border: 1px solid transparent;
 }
 .cllm-btn--done:hover {
-  background: #1e293b;
+  opacity: 0.9;
 }
 
 .cllm-modal__footer {
   padding: 12px 20px;
-  border-top: 1px solid #f1f5f9;
+  border-top: 1px solid var(--border);
   display: flex;
   align-items: center;
-  background: #f8fafc;
-  border-bottom-left-radius: 12px;
-  border-bottom-right-radius: 12px;
+  background: var(--bg-secondary);
+  border-bottom-left-radius: var(--radius-lg, 16px);
+  border-bottom-right-radius: var(--radius-lg, 16px);
 }
 </style>

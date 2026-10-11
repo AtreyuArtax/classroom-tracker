@@ -374,7 +374,84 @@ test('Date-scoped assessment filtering dynamically updates evidence between Midt
   assert(finalComment.includes('constructing free-body diagrams and applying Newton’s laws to solve net force problems'))
 })
 
+// ── TEST GROUP 8: Final Report Senior Pathway Next Steps (Ontario Growing Success) ──
+console.log('\nTEST GROUP 8: Final Report Senior Pathway Next Steps (Ontario Growing Success & SCDSB)')
+
+test('Final report comments pivot next steps forward to senior course pathways', () => {
+  const student = { firstName: 'Lucas', pronouns: 'he/him' }
+  const gradeData = {
+    percentage: 86,
+    assessments: [
+      { name: 'Waves & Sound Inquiry', date: '2026-12-15', scorePercent: 92 },
+      { name: 'Forces Dynamics Lab', date: '2026-11-20', scorePercent: 74 }
+    ]
+  }
+
+  // Midterm comment: guides practice before upcoming unit assessments
+  const midtermComment = generateReportComment({
+    student,
+    gradeData,
+    options: { mode: 'secondary', courseCode: 'SPH3U', reportingPeriod: 'Midterm', variantSeed: 1 }
+  }).text
+
+  // Final comment: guides transition to senior courses or future studies
+  const finalComment = generateReportComment({
+    student,
+    gradeData,
+    options: { mode: 'secondary', courseCode: 'SPH3U', reportingPeriod: 'Final', variantSeed: 2 }
+  }).text
+
+  assert(finalComment.toLowerCase().includes('senior courses') || finalComment.toLowerCase().includes('subsequent studies') || finalComment.toLowerCase().includes('higher-level coursework') || finalComment.toLowerCase().includes('future academic studies'),
+    `Final comment must reference senior coursework / future studies. Got: ${finalComment}`)
+  assert(!finalComment.includes('before unit assessments'),
+    'Final comment must not tell students to practice before unit assessments when course has ended')
+  assert(finalComment.length <= 400, `Final comment exceeded 400 chars: ${finalComment.length}`)
+})
+
+test('Level R on Final report explicitly recommends credit recovery or summer school', () => {
+  const student = { firstName: 'Taylor', pronouns: 'she/her' }
+  const gradeData = {
+    percentage: 42,
+    assessments: [{ name: 'Electricity Quiz', scorePercent: 40 }]
+  }
+
+  const finalFailComment = generateReportComment({
+    student,
+    gradeData,
+    options: { mode: 'secondary', courseCode: 'SNC1W', reportingPeriod: 'Final', variantSeed: 0 }
+  }).text
+
+  assert(finalFailComment.toLowerCase().includes('credit recovery') || finalFailComment.toLowerCase().includes('summer school') || finalFailComment.toLowerCase().includes('guidance'),
+    `Level R final comment must recommend credit recovery / summer school / guidance. Got: ${finalFailComment}`)
+  assert(finalFailComment.length <= 400, `Level R final comment exceeded 400 chars: ${finalFailComment.length}`)
+})
+
+test('All levels on Final report remain strictly <= 400 characters across multiple seeds', () => {
+  const marks = [95, 84, 73, 62, 53, 41]
+  const student = { firstName: 'Morgan', pronouns: 'they/them' }
+
+  marks.forEach(mark => {
+    for (let seed = 0; seed < 4; seed++) {
+      const res = generateReportComment({
+        student,
+        gradeData: {
+          percentage: mark,
+          assessments: [
+            { name: 'Conservation of Energy Project', scorePercent: mark },
+            { name: 'Electric Circuits Lab', scorePercent: mark - 10 }
+          ]
+        },
+        options: { mode: 'secondary', courseCode: 'SPH3U', reportingPeriod: 'Final', variantSeed: seed, charLimit: 400 }
+      })
+
+      assert(res.charCount <= 400, `Final comment for mark ${mark} (seed ${seed}) exceeded 400 chars: ${res.charCount}`)
+      assert(res.charCount >= 100, `Final comment for mark ${mark} (seed ${seed}) too short: ${res.charCount}`)
+    }
+  })
+})
+
 console.log('\n=================================================================')
-console.log('🎉 ALL 13 COMMENT GENERATOR TEST SUITES PASSED (100% SUCCESS)!')
+console.log('🎉 ALL 16 COMMENT GENERATOR TEST SUITES PASSED (100% SUCCESS)!')
 console.log('=================================================================')
+
 

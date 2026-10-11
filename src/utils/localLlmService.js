@@ -304,23 +304,41 @@ export async function polishReportComment({
     ? `Refer to the student strictly by name ("${studentName}") and avoid third-person pronouns.`
     : `Use "${pronouns}" pronouns for ${studentName}.`
 
-  const systemPrompt = [
-    `You are an educational writing assistant helping an Ontario high school teacher proofread and refine constructive student report card feedback.`,
-    `Your goal: Polish the teacher's draft feedback into clear, encouraging, parent-friendly English while maintaining pedagogical accuracy.`,
-    ``,
-    `GUIDELINES (Ontario Growing Success Framework):`,
-    `1. LENGTH: Strictly under ${charLimit} characters (target 290-360 characters).`,
-    `2. NO COURSE NAME: Do not mention the subject or course code.`,
-    `3. NATURAL FLOW: Maintain 3 flowing sentences without bullet points, headings, or labels (do NOT say "Next step:").`,
-    `   - Sentence 1: Key curriculum strength or academic accomplishment.`,
-    `   - Sentence 2: Demonstration of thinking, inquiry, or applied skills.`,
-    `   - Sentence 3: Actionable, constructive next step recommending an active learning strategy.`,
-    `4. CAPITALIZATION: Keep curriculum topics lowercase (e.g., "projectile motion", "free-body diagrams").`,
-    `5. ${pronounInstruction}`,
-    `6. TONE: Professional, supportive, parent-friendly. Return ONLY the polished comment text with no markdown quotes or extra commentary.`
-  ].join('\n')
+  const exampleDraft = `Alex demonstrates competent understanding and solid skills when analyzing projectile motion. They demonstrate sound problem-solving skills during classroom investigations and evaluations. Using a structured reference checklist will support Alex in verifying intermediate steps when applying light theory concepts.`
+  const examplePolished = `Alex demonstrates a solid understanding and strong technical precision when analyzing projectile motion. They consistently apply effective problem-solving strategies during classroom laboratory investigations. Utilizing a structured reference checklist will support Alex in verifying intermediate calculations when applying light theory concepts.`
 
-  const userPrompt = `Teacher draft to polish:\n"${draftComment.trim()}"\n\nPolished comment:`
+  const systemPrompt = [
+    `You are an expert Ontario educational writing assistant helping a high school teacher refine report card comments.`,
+    `Your goal: Polish the draft comment into smooth, natural, parent-friendly English with an authentic pedagogical voice.`,
+    ``,
+    `CORE EDITING RULES (Ontario Growing Success Guidelines):`,
+    `1. LENGTH: Strictly under ${charLimit} characters (target 290-360 characters).`,
+    `2. NO COURSE NAMES: Never mention the course code or subject name.`,
+    `3. 3-SENTENCE STRUCTURE: Produce exactly 3 flowing sentences without bullet points, headings, or labels (never write "Next step:").`,
+    `   - Sentence 1: Specific curriculum strength and conceptual understanding.`,
+    `   - Sentence 2: Thinking, problem-solving, or inquiry capability.`,
+    `   - Sentence 3: Actionable next step recommending a concrete learning scaffold or strategy.`,
+    `4. GRAMMAR & TOPIC CORRECTION:`,
+    `   - Actively interpret and fix awkward phrasing or raw assignment titles from the draft.`,
+    `   - For example, rewrite awkward phrases like "when working on the Projectile" into natural phrasing like "when analyzing projectile motion", and "when solving Light Theory" into "when applying light theory concepts".`,
+    `5. STRICT LOWERCASE FOR TOPICS:`,
+    `   - Never capitalize academic topics or units (e.g. write "projectile motion", "light theory", "kinematics", "forces").`,
+    `   - Only capitalize true proper nouns (e.g. "Newton's laws", "Ohm's law") and the student's name.`,
+    `6. STRICT THIRD-PERSON VOICE:`,
+    `   - Do NOT use first-person pronouns ("I", "me", "my", "I recommend that").`,
+    `   - Write from a professional third-person educator perspective (e.g. "To support further growth, utilizing a structured checklist will help ${studentName}...").`,
+    `7. ASSET-BASED LANGUAGE (GROWING SUCCESS):`,
+    `   - Always frame learning with constructive, growth-oriented language.`,
+    `   - For developing skills, write "is continuing to build consistency" or "with guided practice, demonstrates developing confidence".`,
+    `   - NEVER use negative, deficit-based language like "is not as strong as it could be", "fails to", "struggles with", or "shows some potential".`,
+    `8. TOPIC FIDELITY:`,
+    `   - Only reference the specific curriculum concepts and next steps already mentioned in the draft. Do NOT invent or list unrelated course units.`,
+    `9. ${pronounInstruction}`,
+    `10. STRICT OUTPUT FORMAT:`,
+    `   - Output ONLY the 3-sentence comment text.`,
+    `   - NEVER output conversational preamble or filler (do NOT write "Here is the polished comment:" or similar).`,
+    `   - Do NOT enclose the text in quotation marks.`
+  ].join('\n')
 
   llmState.status = 'generating'
   llmState.progressText = 'Polishing comment locally...'
@@ -330,14 +348,18 @@ export async function polishReportComment({
 
     if (llmState.activeModelKey === 'chrome-nano' && activeNanoSession) {
       // Chrome Prompt API
-      rawOutput = await activeNanoSession.prompt(`${systemPrompt}\n\n${userPrompt}`)
+      const prompt = `${systemPrompt}\n\nDraft comment to polish:\n${exampleDraft}\n\n${examplePolished}\n\nDraft comment to polish:\n${draftComment.trim()}\n\n`
+      rawOutput = await activeNanoSession.prompt(prompt)
     } else if (activeWebLlmEngine) {
-      // WebLLM Chat Completion
+      // WebLLM Multi-Turn Chat Completion (standard few-shotting pattern prevents conversational preambles)
+      const messages = [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: `Draft comment to polish:\n${exampleDraft}` },
+        { role: 'assistant', content: examplePolished },
+        { role: 'user', content: `Draft comment to polish:\n${draftComment.trim()}` }
+      ]
       const completion = await activeWebLlmEngine.chat.completions.create({
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt }
-        ],
+        messages,
         temperature: 0.3,
         max_tokens: 220
       })
@@ -347,11 +369,45 @@ export async function polishReportComment({
     }
 
     // Clean up response formatting
-    let cleanText = rawOutput
-      .replace(/^["'`]|["'`]$/g, '') // remove surrounding quotes
-      .replace(/^(?:Polished comment|Refined comment|Refined feedback):\s*/i, '')
-      .replace(/\*\*/g, '') // strip markdown bold
+    let cleanText = rawOutput.trim()
+
+    // 1. Remove markdown code fences if model wrapped output in ```
+    cleanText = cleanText.replace(/^```[a-z]*\s*/i, '').replace(/\s*```$/i, '')
+
+    // 2. Strip conversational preambles (e.g. "Here is the polished comment:", "Certainly! ...")
+    cleanText = cleanText
+      .replace(/^[\s\S]*?(?:here(?:'s|\s+is)\s+(?:the\s+)?(?:polished|revised|updated|refined)?\s*(?:comment|feedback)?[:.]?\s*)/i, '')
+      .replace(/^[\s\S]*?(?:polished\s+comment|refined\s+comment|revised\s+comment)[:.]?\s*/i, '')
       .trim()
+
+    // 3. Strip leading and trailing quotes (", ', “, ”, ‘, ’, `)
+    cleanText = cleanText.replace(/^["'“`]+|["'”`]+$/g, '').trim()
+
+    // 4. Strip nested preamble if inside quotes
+    cleanText = cleanText
+      .replace(/^(?:here(?:'s|\s+is)\s+[^:\n]+[:.]|polished\s+comment[:.]|refined\s+comment[:.]|revised\s+comment[:.])\s*/i, '')
+      .trim()
+    cleanText = cleanText.replace(/^["'“`]+|["'”`]+$/g, '').trim()
+    cleanText = cleanText.replace(/\*\*/g, '').trim()
+
+    // 5. Post-processing cleanup for first-person slips
+    cleanText = cleanText.replace(/\bTo further support ([^,]+)'s learning,\s*I recommend that (they|he|she)\s+use\b/gi, 'To further support $1\'s learning, utilizing')
+    cleanText = cleanText.replace(/\bI recommend that (they|he|she)\s+use\b/gi, 'utilizing')
+    cleanText = cleanText.replace(/\bI recommend that (they|he|she)\b/gi, '$1 is encouraged to')
+    cleanText = cleanText.replace(/\bI recommend\s+/gi, '')
+
+    // 6. Post-processing cleanup for deficit-based language
+    cleanText = cleanText.replace(/\bis not as strong as it could be\b/gi, 'continues to develop with guided practice')
+    cleanText = cleanText.replace(/\bshows some potential in\b/gi, 'demonstrates developing understanding when')
+    cleanText = cleanText.replace(/\bhas trouble with\b/gi, 'is building consistency with')
+    cleanText = cleanText.replace(/\bstruggles with\b/gi, 'is working to strengthen')
+
+    // 7. Post-processing cleanup for raw assignment titles
+    cleanText = cleanText.replace(/\b(?:working on|work on)\s+the\s+Projectile\b/gi, 'analyzing projectile motion')
+    cleanText = cleanText.replace(/\bthe\s+Projectile\b/g, 'projectile motion')
+    cleanText = cleanText.replace(/\bsolving\s+Light\s+Theory\b/gi, 'applying light theory concepts')
+    cleanText = cleanText.replace(/\bLight\s+Theory\b/g, 'light theory')
+    cleanText = cleanText.replace(/\bProjectile\b/g, 'projectile motion')
 
     // Detect safety filter hyper-refusals from small local models (e.g. Meta Llama 3.2 1B false positives)
     const isRefusal = /^(I cannot|I am unable|I'm sorry, but I cannot|As an AI|I apologize)/i.test(cleanText) ||
