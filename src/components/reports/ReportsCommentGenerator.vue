@@ -209,7 +209,16 @@
                 Featured Strength Task
               </label>
               <select v-model="selectedStrengthTask" class="cg__select cg__select--field">
-                <option value="">Auto-detected ({{ autoStrengthTask || 'General' }})</option>
+                <option value="">Auto-detected ({{ autoStrengthLabel }})</option>
+                <optgroup v-if="courseCompetencies.length > 0" label="Curriculum Competencies">
+                  <option 
+                    v-for="comp in courseCompetencies" 
+                    :key="comp.phrase" 
+                    :value="comp.phrase"
+                  >
+                    {{ comp.label }}
+                  </option>
+                </optgroup>
                 <optgroup v-if="studentAssessments.length > 0" label="Specific Assessments">
                   <option 
                     v-for="ass in studentAssessments" 
@@ -228,7 +237,16 @@
                 Featured Next Step Focus
               </label>
               <select v-model="selectedGrowthTask" class="cg__select cg__select--field">
-                <option value="">Auto-detected ({{ autoGrowthTask || 'General' }})</option>
+                <option value="">Auto-detected ({{ autoGrowthLabel }})</option>
+                <optgroup v-if="courseCompetencies.length > 0" label="Curriculum Competencies">
+                  <option 
+                    v-for="comp in courseCompetencies" 
+                    :key="comp.phrase" 
+                    :value="comp.phrase"
+                  >
+                    {{ comp.label }}
+                  </option>
+                </optgroup>
                 <optgroup v-if="studentAssessments.length > 0" label="Specific Assessments">
                   <option 
                     v-for="ass in studentAssessments" 
@@ -366,7 +384,13 @@ import {
   ArrowLeft
 } from 'lucide-vue-next'
 
-import { classGrades } from '../../composables/useGradebook.js'
+import {
+  classGrades,
+  loadGradebook,
+  assessments as gbAssessments,
+  gradeMap
+} from '../../composables/useGradebook.js'
+import { getAssessmentPercentage } from '../../utils/gradeCalc.js'
 import {
   LEARNING_SKILL_TERMS,
   getLearningSkillsByClass
@@ -376,6 +400,9 @@ import {
   getAchievementLevel,
   extractEvidenceFromGrades
 } from '../../utils/commentGenerator.js'
+import {
+  getCourseCompetencies
+} from '../../utils/curriculumCompetencies.js'
 import {
   llmState,
   detectHardwareCapabilities,
@@ -392,6 +419,10 @@ const props = defineProps({
     default: null
   },
   sidebarStudents: {
+    type: Array,
+    default: () => []
+  },
+  assessments: {
     type: Array,
     default: () => []
   }
@@ -475,23 +506,83 @@ const activeLevel = computed(() => {
 
 const studentAssessments = computed(() => {
   if (!activeStudent.value) return []
-  const gradeObj = classGrades.value?.[activeStudent.value.studentId]
-  if (gradeObj?.assessments && Array.isArray(gradeObj.assessments)) {
+  const stId = activeStudent.value.studentId
+
+  // 1. If gradeObj already has assessments pre-attached
+  const gradeObj = classGrades.value?.[stId]
+  if (gradeObj?.assessments && Array.isArray(gradeObj.assessments) && gradeObj.assessments.length > 0) {
     return gradeObj.assessments.filter(a => typeof a.scorePercent === 'number')
   }
-  return []
+
+  // 2. Read live assessments and gradeMap from useGradebook
+  const astList = (props.assessments && props.assessments.length > 0)
+    ? props.assessments
+    : (gbAssessments.value || [])
+
+  if (!astList || astList.length === 0 || !gradeMap.value) return []
+
+  const list = []
+  astList.forEach(a => {
+    if (a.excluded) return
+    const grade = gradeMap.value[a.assessmentId]?.[stId]
+    const pct = getAssessmentPercentage(a, grade)
+    if (pct !== null && !isNaN(pct) && isFinite(pct)) {
+      list.push({
+        id: a.assessmentId,
+        name: a.name || 'Assessment',
+        description: a.description || '',
+        scorePercent: Math.round(pct)
+      })
+    }
+  })
+  return list.sort((a, b) => b.scorePercent - a.scorePercent)
+})
+
+const currentCourseCode = computed(() => {
+  return activeStudent.value?.courseCode ||
+    props.reportClass?.courseCode ||
+    props.reportClass?.course ||
+    props.reportClass?.name ||
+    ''
+})
+
+const courseCompetencies = computed(() => {
+  return getCourseCompetencies(currentCourseCode.value)
 })
 
 const autoEvidence = computed(() => {
-  const gradeObj = classGrades.value?.[activeStudent.value?.studentId]
-  return extractEvidenceFromGrades(gradeObj || {})
+  const gradeObj = classGrades.value?.[activeStudent.value?.studentId] || {}
+  return extractEvidenceFromGrades({
+    ...gradeObj,
+    assessments: studentAssessments.value
+  }, currentCourseCode.value)
 })
 
 const autoStrengthTask = computed(() => autoEvidence.value.strengthTask || '')
 const autoGrowthTask = computed(() => autoEvidence.value.growthTask || '')
 
-const activeStrengthDisplay = computed(() => selectedStrengthTask.value || autoStrengthTask.value || 'General Achievement')
-const activeGrowthDisplay = computed(() => selectedGrowthTask.value || autoGrowthTask.value || 'Independent Review')
+const autoStrengthLabel = computed(() => {
+  const found = courseCompetencies.value.find(c => c.phrase === autoStrengthTask.value)
+  return found ? found.label : (autoStrengthTask.value || 'General')
+})
+
+const autoGrowthLabel = computed(() => {
+  const found = courseCompetencies.value.find(c => c.phrase === autoGrowthTask.value)
+  return found ? found.label : (autoGrowthTask.value || 'General')
+})
+
+const activeStrengthDisplay = computed(() => {
+  const raw = selectedStrengthTask.value || autoStrengthTask.value
+  const found = courseCompetencies.value.find(c => c.phrase === raw)
+  return found ? found.label : (raw || 'General Achievement')
+})
+
+const activeGrowthDisplay = computed(() => {
+  const raw = selectedGrowthTask.value || autoGrowthTask.value
+  const found = courseCompetencies.value.find(c => c.phrase === raw)
+  return found ? found.label : (raw || 'Independent Review')
+})
+
 const activeHabitDisplay = computed(() => {
   if (targetMode.value === 'secondary') {
     return 'Inquiry & Problem Solving'
@@ -530,7 +621,8 @@ const previousTermComment = computed(() => {
     options: {
       mode: targetMode.value,
       charLimit: charLimit.value,
-      pronounMode: pronounMode.value
+      pronounMode: pronounMode.value,
+      courseCode: currentCourseCode.value
     }
   })
   return res.text
@@ -596,7 +688,8 @@ function buildCommentForActive() {
       pronounMode: pronounMode.value,
       featuredStrength: selectedStrengthTask.value,
       featuredNextStep: selectedGrowthTask.value,
-      variantSeed: variantSeed.value
+      variantSeed: variantSeed.value,
+      courseCode: currentCourseCode.value
     }
   })
 
@@ -730,7 +823,8 @@ function exportAllCommentsCsv() {
       options: {
         mode: targetMode.value,
         charLimit: charLimit.value,
-        pronounMode: pronounMode.value
+        pronounMode: pronounMode.value,
+        courseCode: st.courseCode || currentCourseCode.value
       }
     })
 
@@ -802,7 +896,7 @@ async function loadLearningSkillsForClass() {
   }
 }
 
-// Load Learning Skills & scan local AI capabilities on mount
+// Load Gradebook, Learning Skills & scan local AI capabilities on mount
 onMounted(async () => {
   // Proactively check local hardware capabilities & cached models
   try {
@@ -811,10 +905,25 @@ onMounted(async () => {
     // Non-fatal background check
   }
 
+  if (props.reportClass && (!gbAssessments.value || gbAssessments.value.length === 0)) {
+    try {
+      await loadGradebook(props.reportClass)
+    } catch (e) {
+      console.warn('Could not load gradebook for comments:', e)
+    }
+  }
+
   await loadLearningSkillsForClass()
 })
 
-watch(() => props.reportClass?.classId, () => {
+watch(() => props.reportClass?.classId, async () => {
+  if (props.reportClass) {
+    try {
+      await loadGradebook(props.reportClass)
+    } catch (e) {
+      console.warn('Could not reload gradebook for comments:', e)
+    }
+  }
   loadLearningSkillsForClass()
 })
 </script>

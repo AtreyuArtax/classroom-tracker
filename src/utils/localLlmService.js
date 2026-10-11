@@ -305,14 +305,19 @@ export async function polishReportComment({
     : `Use "${pronouns}" pronouns for ${studentName}.`
 
   const systemPrompt = [
-    `You are an Ontario high school teacher polishing an official Growing Success report card comment.`,
-    `Your goal: Polish the draft comment into smooth, natural, parent-friendly English while fixing any typos or awkward phrasing in assessment titles (e.g., change "inclined plan" to "inclined plane", "forces lb" to "the Forces Lab").`,
+    `You are an expert Ontario secondary teacher polishing an official Growing Success report card comment.`,
+    `Your goal: Polish the draft comment into smooth, natural, parent-friendly English with authentic pedagogical voice.`,
     ``,
-    `STRICT REQUIREMENTS:`,
-    `1. Maintain the required Ontario sections: (a) Key curriculum strength, (b) Application and problem-solving reasoning, (c) Actionable curriculum next step. Do NOT include label headings or bullet points (e.g. no "Next step:").`,
-    `2. ${pronounInstruction}`,
-    `3. ABSOLUTE LENGTH LIMIT: The output MUST be strictly under ${charLimit} characters.`,
-    `4. Output ONLY the polished comment text. Do NOT include markdown quotes, introductory pleasantries, or explanations.`
+    `STRICT CONSTRAINTS (Ontario Growing Success & SIS Guidelines):`,
+    `1. LENGTH PRIORITY: Strictly under ${charLimit} characters (target 290-360 characters).`,
+    `2. NO COURSE NAME: Do not mention the subject or course code.`,
+    `3. NATURAL FLOW: Maintain 3 flowing sentences without bullet points, headings, or labels (do NOT say "Next step:").`,
+    `   - Sentence 1: Key curriculum strength (using active participial or inquiry phrasing).`,
+    `   - Sentence 2: Thinking, application, or inquiry capability.`,
+    `   - Sentence 3: Actionable next step recommending a concrete learning scaffold or organizer.`,
+    `4. CAPITALIZATION: Keep curriculum topics lowercase (e.g., "projectile motion", "free-body diagrams").`,
+    `5. ${pronounInstruction}`,
+    `6. TONE: Professional, supportive, parent-friendly. Return ONLY the polished comment text with no markdown quotes or extra commentary.`
   ].join('\n')
 
   const userPrompt = `Draft comment to polish:\n"${draftComment.trim()}"\n\nPolished comment:`

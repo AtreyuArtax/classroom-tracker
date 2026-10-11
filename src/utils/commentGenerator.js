@@ -15,6 +15,8 @@
  * Pure utility function: no database imports, no side-effects, 100% unit-testable.
  */
 
+import { mapAssessmentToCompetency } from './curriculumCompetencies.js'
+
 // ─── Achievement Level Descriptors (Growing Success) ─────────────────────────
 
 export const ACHIEVEMENT_LEVELS = {
@@ -126,44 +128,56 @@ export function getPronounTokens(student, pronounMode = 'preferred') {
  */
 function getStrengthPhrases(tokens, level, taskName, variant = 0) {
   const cleanTask = taskName ? taskName.trim() : 'course learning goals'
-  const isGeneric = !taskName
+  const isGerund = /^(analyzing|solving|constructing|applying|investigating|interpreting|evaluating|predicting|classifying|examining|designing|representing|calculating|resolving|measuring|mapping|building)\b/i.test(cleanTask)
+  const capTask = isGerund ? (cleanTask.charAt(0).toUpperCase() + cleanTask.slice(1)) : ''
+  const whenTask = isGerund ? cleanTask : makeGerund(cleanTask)
+  const onTask = isGerund ? `when ${cleanTask}` : `on ${cleanTask}`
+  const withTask = isGerund ? `when ${cleanTask}` : `with ${cleanTask}`
 
   const templates = {
     '4+': [
-      `${tokens.name} demonstrates an exceptional grasp of course concepts, excelling at ${cleanTask}.`,
-      `${tokens.name} consistently exhibits outstanding analytical skill, demonstrating mastery when ${makeGerund(cleanTask)}.`,
-      `Throughout the term, ${tokens.name} has produced exemplary work, demonstrating deep insight in ${cleanTask}.`,
-      `${tokens.name} applies critical thinking skills with high effectiveness, particularly on ${cleanTask}.`
+      isGerund
+        ? `${capTask}, ${tokens.name} demonstrates exceptional analytical precision and deep insight.`
+        : `${tokens.name} demonstrates exceptional analytical precision, excelling when ${whenTask}.`,
+      `In advanced laboratory inquiries, ${tokens.name} demonstrates mastery when ${whenTask}.`,
+      `${tokens.name} applies critical thinking skills with exemplary insight, particularly ${onTask}.`,
+      `During complex problem-solving tasks, ${tokens.name} exhibits thorough precision when ${whenTask}.`
     ],
     '4': [
-      `${tokens.name} demonstrates a thorough grasp of course concepts, excelling at ${cleanTask}.`,
-      `In class, ${tokens.name} exhibits strong problem-solving skills, particularly on ${cleanTask}.`,
-      `${tokens.name} has achieved a high standard this term, demonstrating consistent strength in ${cleanTask}.`,
-      `${tokens.name} applies learned skills with considerable precision, showing confidence when ${makeGerund(cleanTask)}.`
+      isGerund
+        ? `${capTask}, ${tokens.name} demonstrates strong problem-solving skills with high effectiveness.`
+        : `${tokens.name} demonstrates a high degree of effectiveness, excelling when ${whenTask}.`,
+      `During classroom inquiries and investigations, ${tokens.name} applies concepts with thorough consistency when ${whenTask}.`,
+      `${tokens.name} exhibits commendable analytical skill and consistency, particularly ${onTask}.`,
+      `In problem-solving tasks, ${tokens.name} applies learned skills with considerable precision when ${whenTask}.`
     ],
     '3': [
-      `${tokens.name} demonstrates a solid and competent understanding of course material, especially in ${cleanTask}.`,
-      `${tokens.name} applies core concepts effectively, producing good quality work on ${cleanTask}.`,
-      `During classroom evaluations, ${tokens.name} has shown consistent achievement when ${makeGerund(cleanTask)}.`,
-      `${tokens.name} demonstrates good comprehension of foundational topics, performing reliably on ${cleanTask}.`
+      isGerund
+        ? `${capTask}, ${tokens.name} demonstrates competent understanding and solid skills.`
+        : `${tokens.name} demonstrates competent understanding and solid skills when ${whenTask}.`,
+      `During unit investigations, ${tokens.name} applies core course concepts reliably when ${whenTask}.`,
+      `${tokens.name} produces good quality work and communicates solution steps clearly when ${whenTask}.`,
+      `In classroom evaluations, ${tokens.name} shows sound problem-solving capability when ${whenTask}.`
     ],
     '2': [
-      `${tokens.name} demonstrates developing understanding of course concepts, with emerging skills in ${cleanTask}.`,
-      `${tokens.name} is making steady progress in foundational skills, showing promise when ${makeGerund(cleanTask)}.`,
-      `With guided practice, ${tokens.name} demonstrates some understanding of key concepts in ${cleanTask}.`,
-      `${tokens.name} has shown developing capability when working on ${cleanTask}, though consistency varies.`
+      isGerund
+        ? `With emerging consistency in ${cleanTask}, ${tokens.name} demonstrates developing understanding of core procedures.`
+        : `${tokens.name} demonstrates developing understanding of key concepts in ${cleanTask}.`,
+      `With guided practice, ${tokens.name} demonstrates some effectiveness when ${whenTask}.`,
+      `${tokens.name} is making steady progress in foundational skills, showing promise when ${whenTask}.`,
+      `During classroom activities, ${tokens.name} demonstrates developing capability ${onTask}, though consistency varies.`
     ],
     '1': [
-      `${tokens.name} demonstrates limited understanding of course expectations, requiring frequent assistance with ${cleanTask}.`,
       `With ongoing teacher support, ${tokens.name} is working to develop foundational skills in ${cleanTask}.`,
-      `${tokens.name} has demonstrated emerging familiarity with basic concepts, but finds ${cleanTask} challenging.`,
-      `${tokens.name} requires structured guidance to apply fundamental concepts effectively on ${cleanTask}.`
+      `During class inquiries, ${tokens.name} demonstrates emerging familiarity when ${whenTask} with structured guidance.`,
+      `${tokens.name} is working to apply basic principles, but finds ${cleanTask} challenging.`,
+      `${tokens.name} requires structured scaffolding to build confidence when ${whenTask}.`
     ],
     'R': [
-      `${tokens.name} is experiencing significant difficulty meeting curriculum expectations in ${cleanTask}.`,
-      `${tokens.name} requires intensive support to grasp fundamental principles, especially regarding ${cleanTask}.`,
-      `At this time, ${tokens.name} has not yet demonstrated basic competency in ${cleanTask}.`,
-      `${tokens.name} requires substantial intervention and review to achieve credit expectations in ${cleanTask}.`
+      `To meet curriculum expectations in ${cleanTask}, ${tokens.name} requires intensive support and guided practice.`,
+      `At this stage, ${tokens.name} requires direct assistance to interpret foundational concepts in ${cleanTask}.`,
+      `Substantial remediation in ${cleanTask} is necessary to develop required credit competencies.`,
+      `Focused intervention is needed to support ${tokens.name} with core expectations in ${cleanTask}.`
     ]
   }
 
@@ -227,26 +241,26 @@ function getCurriculumApplicationPhrases(tokens, level, variant = 0) {
   const templates = {
     '4+': [
       `${tokens.subject} ${tokens.isPlural ? 'apply' : 'applies'} critical thinking skills to analyze complex scenarios and ${tokens.isPlural ? 'communicate' : 'communicates'} reasoning with precision.`,
-      `${tokens.subject} ${tokens.isPlural ? 'demonstrate' : 'demonstrates'} sophisticated problem-solving strategies, interpreting data and justifying theoretical models with thoroughness.`,
-      `${tokens.subject} ${tokens.isPlural ? 'synthesize' : 'synthesizes'} concepts effectively and ${tokens.isPlural ? 'express' : 'expresses'} mathematical and scientific reasoning with notable clarity.`,
-      `In inquiry activities, ${tokens.subjectLower} ${tokens.isPlural ? 'evaluate' : 'evaluates'} experimental evidence and ${tokens.isPlural ? 'articulate' : 'articulates'} connections to practical contexts with high effectiveness.`
+      `${tokens.subject} ${tokens.isPlural ? 'demonstrate' : 'demonstrates'} sophisticated problem-solving strategies, interpreting data and justifying theoretical models.`,
+      `${tokens.subject} ${tokens.isPlural ? 'synthesize' : 'synthesizes'} concepts effectively and ${tokens.isPlural ? 'express' : 'expresses'} mathematical and scientific reasoning with clarity.`,
+      `In inquiry activities, ${tokens.subjectLower} ${tokens.isPlural ? 'evaluate' : 'evaluates'} experimental evidence and ${tokens.isPlural ? 'articulate' : 'articulates'} connections to practical contexts.`
     ],
     '4': [
       `${tokens.subject} ${tokens.isPlural ? 'apply' : 'applies'} learned concepts reliably to multi-step problems and ${tokens.isPlural ? 'communicate' : 'communicates'} reasoning clearly.`,
       `${tokens.subject} ${tokens.isPlural ? 'demonstrate' : 'demonstrates'} strong analytical capability during classroom inquiries and investigation tasks.`,
-      `During problem-solving tasks, ${tokens.subjectLower} ${tokens.isPlural ? 'use' : 'uses'} appropriate conventions and ${tokens.isPlural ? 'explain' : 'explains'} methodology with considerable accuracy.`,
+      `During problem solving, ${tokens.subjectLower} ${tokens.isPlural ? 'use' : 'uses'} appropriate conventions and ${tokens.isPlural ? 'explain' : 'explains'} methodology clearly.`,
       `${tokens.subject} effectively ${tokens.isPlural ? 'connect' : 'connects'} theoretical concepts to practical contexts and experimental results.`
     ],
     '3': [
       `${tokens.subject} ${tokens.isPlural ? 'apply' : 'applies'} course concepts with competence and generally ${tokens.isPlural ? 'communicate' : 'communicates'} solution steps clearly.`,
       `${tokens.subject} ${tokens.isPlural ? 'demonstrate' : 'demonstrates'} sound problem-solving skills during classroom investigations and evaluations.`,
       `When tackling multi-step tasks, ${tokens.subjectLower} ${tokens.isPlural ? 'use' : 'uses'} established methods and ${tokens.isPlural ? 'interpret' : 'interprets'} data appropriately.`,
-      `${tokens.subject} ${tokens.isPlural ? 'show' : 'shows'} good understanding of foundational procedures and ${tokens.isPlural ? 'explain' : 'explains'} reasoning with appropriate terminology.`
+      `${tokens.subject} ${tokens.isPlural ? 'show' : 'shows'} good understanding of foundational procedures and ${tokens.isPlural ? 'explain' : 'explains'} reasoning clearly.`
     ],
     '2': [
       `${tokens.subject} ${tokens.isPlural ? 'show' : 'shows'} developing consistency when applying standard procedures to multi-step problem solving.`,
       `With guided practice, ${tokens.subjectLower} ${tokens.isPlural ? 'interpret' : 'interprets'} core relationships and ${tokens.isPlural ? 'communicate' : 'communicates'} steps with emerging accuracy.`,
-      `${tokens.subject} ${tokens.isPlural ? 'demonstrate' : 'demonstrates'} some ability to connect concepts during inquiry tasks, though calculations require regular verification.`,
+      `${tokens.subject} ${tokens.isPlural ? 'demonstrate' : 'demonstrates'} some ability to connect concepts during inquiry tasks, though calculations require verification.`,
       `${tokens.subject} ${tokens.isPlural ? 'are' : 'is'} continuing to build confidence when explaining reasoning and applying methods to new problems.`
     ],
     '1': [
@@ -273,42 +287,46 @@ function getCurriculumApplicationPhrases(tokens, level, variant = 0) {
  */
 function getNextStepPhrases(tokens, level, growthTaskName, variant = 0) {
   const cleanTask = growthTaskName ? growthTaskName.trim() : 'multi-step problem solving'
+  const isGerund = /^(analyzing|solving|constructing|applying|investigating|interpreting|evaluating|predicting|classifying|examining|designing|representing)\b/i.test(cleanTask)
+  const whenTask = isGerund ? `when ${cleanTask}` : `when solving ${cleanTask}`
+  const onTask = isGerund ? `when ${cleanTask}` : `on ${cleanTask}`
+  const inTask = isGerund ? `when ${cleanTask}` : `in ${cleanTask}`
 
   const templates = {
     '4+': [
-      `Moving forward, ${tokens.name} is encouraged to explore advanced extension questions to deepen ${tokens.possessive} conceptual synthesis.`,
-      `To extend learning, ${tokens.subjectLower} should seek opportunities to articulate reasoning and justify complex conclusions.`,
-      `Tackling novel, non-routine problems will further enhance ${tokens.possessive} critical insight.`,
-      `For ongoing growth, ${tokens.name} should continue challenging ${tokens.object} with independent enrichment inquiries.`
+      `Moving forward, ${tokens.name} is encouraged to explore advanced extension questions to deepen conceptual synthesis.`,
+      `To extend learning, ${tokens.subjectLower} should seek opportunities to articulate reasoning and justify complex conclusions ${whenTask}.`,
+      `Tackling novel, non-routine problems ${whenTask} will further enhance ${tokens.possessive} critical insight.`,
+      `For ongoing growth, ${tokens.name} should continue challenging ${tokens.object} with independent enrichment inquiries ${whenTask}.`
     ],
     '4': [
-      `Moving forward, ${tokens.name} is encouraged to focus on clear written justifications when solving ${cleanTask}.`,
-      `To reach the highest standard, ${tokens.subjectLower} should review feedback and refine details when completing ${cleanTask}.`,
-      `Continuing to practice multi-step problem solving on ${cleanTask} will further solidify mastery.`,
-      `For future assessments, ${tokens.name} should ensure thorough explanations accompany all multi-step solutions.`
+      `Utilizing a structured problem-solving template will support ${tokens.name} in organizing multi-step solutions ${whenTask}.`,
+      `To reach the highest standard, ${tokens.subjectLower} should review feedback and refine written justifications ${whenTask}.`,
+      `Continuing to practice multi-step problem solving ${whenTask} will further solidify mastery.`,
+      `For future assessments, ${tokens.name} should ensure thorough explanations and clear units accompany solutions ${whenTask}.`
     ],
     '3': [
-      `Moving forward, ${tokens.name} should practice multi-step problem solving on ${cleanTask} before unit assessments.`,
-      `To advance to Level 4, ${tokens.subjectLower} is encouraged to review notes daily and seek clarification on ${cleanTask}.`,
-      `${tokens.name} would benefit from demonstrating complete steps and clear units on ${cleanTask}.`,
-      `For continued improvement, consistent completion of homework practice related to ${cleanTask} is recommended.`
+      `Utilizing a step-by-step problem-solving ledger will help ${tokens.name} organize variables and calculations ${whenTask}.`,
+      `Moving forward, ${tokens.name} should practice multi-step problem solving ${whenTask} before unit assessments.`,
+      `Using a structured reference checklist will support ${tokens.name} in verifying intermediate steps ${whenTask}.`,
+      `For continued improvement, consistent completion of practice problems related to ${cleanTask} is recommended.`
     ],
     '2': [
-      `Moving forward, ${tokens.name} is encouraged to seek timely extra help and practice foundational skills in ${cleanTask}.`,
-      `To improve achievement, ${tokens.subjectLower} should review teacher feedback carefully and complete all practice on ${cleanTask}.`,
-      `Regular review of core terminology and dedicated study for quizzes will support ${tokens.possessive} progress in ${cleanTask}.`,
-      `${tokens.name} should focus on organizing study materials and asking clarifying questions during lessons on ${cleanTask}.`
+      `Utilizing a variable-mapping organizer and reference checklist will help ${tokens.name} organize solution steps ${whenTask}.`,
+      `With guided practice, ${tokens.subjectLower} should review teacher feedback carefully and complete all practice ${onTask}.`,
+      `Using a step-by-step problem-solving template and seeking timely extra help ${inTask} will build confidence.`,
+      `Regular review of core concepts and completing sample exercises ${whenTask} will support ${tokens.possessive} progress.`
     ],
     '1': [
-      `To support steady progress, ${tokens.name} must attend extra help regularly and ensure all outstanding practice on ${cleanTask} is completed.`,
-      `To achieve credit expectations, ${tokens.subjectLower} must submit all assignments promptly and review core concepts in ${cleanTask}.`,
-      `Daily review of lesson notes and active participation in class review sessions on ${cleanTask} is essential.`,
-      `${tokens.name} is strongly advised to utilize peer study resources and teacher office hours to reinforce ${cleanTask}.`
+      `Utilizing a structured step-by-step organizer and attending regular extra help will support ${tokens.name} ${inTask}.`,
+      `To develop consistency, ${tokens.subjectLower} should use guided templates to organize foundational procedures ${whenTask}.`,
+      `Daily review of lesson notes and active participation in class review sessions ${whenTask} is essential.`,
+      `Consistent completion of practice tasks and guided review ${whenTask} will help ${tokens.name} build required competencies.`
     ],
     'R': [
-      `As an immediate priority, ${tokens.name} must meet with the teacher to establish an intervention plan for ${cleanTask}.`,
-      `To work toward credit recovery, ${tokens.subjectLower} must submit missing evidence and attend structured remediation on ${cleanTask}.`,
-      `Regular attendance, active class engagement, and completion of foundational catch-up tasks in ${cleanTask} are urgent priorities.`,
+      `As an immediate priority, ${tokens.name} must meet with the teacher to establish an intervention plan regarding ${cleanTask}.`,
+      `To work toward credit recovery, ${tokens.subjectLower} must submit missing evidence and attend structured remediation ${onTask}.`,
+      `Regular attendance, active class engagement, and completion of foundational catch-up tasks ${inTask} are urgent priorities.`,
       `A parent-teacher consultation is recommended to support ${tokens.name} with consistent homework completion and review of ${cleanTask}.`
     ]
   }
@@ -404,8 +422,9 @@ function makeGerund(task) {
 /**
  * Extracts best strength and growth evidence from available gradebook data.
  */
-export function extractEvidenceFromGrades(gradeData = {}) {
+export function extractEvidenceFromGrades(gradeData = {}, courseCode = '') {
   const { sbarExpectations = [], assessments = [], categories = [] } = gradeData
+  const resolvedCourseCode = courseCode || gradeData.courseCode || ''
 
   let strengthTask = null
   let strengthSource = 'holistic'
@@ -420,13 +439,15 @@ export function extractEvidenceFromGrades(gradeData = {}) {
     if (sorted.length > 0) {
       const top = sorted[0]
       const rawTop = top.title || top.description || (top.code ? `Expectation ${top.code}` : null)
-      strengthTask = sanitizeTaskTitle(rawTop)
+      const mappedTop = resolvedCourseCode ? mapAssessmentToCompetency(rawTop, resolvedCourseCode) : ''
+      strengthTask = mappedTop || sanitizeTaskTitle(rawTop)
       strengthSource = 'sbar'
 
       const low = sorted[sorted.length - 1]
       if (sorted.length > 1 && low && low !== top) {
         const rawLow = low.title || low.description || (low.code ? `Expectation ${low.code}` : null)
-        growthTask = sanitizeTaskTitle(rawLow)
+        const mappedLow = resolvedCourseCode ? mapAssessmentToCompetency(rawLow, resolvedCourseCode) : ''
+        growthTask = mappedLow || sanitizeTaskTitle(rawLow)
         growthSource = 'sbar'
       }
     }
@@ -443,7 +464,8 @@ export function extractEvidenceFromGrades(gradeData = {}) {
       const topName = (isGenericTitle(topAss.name) && topAss.description)
         ? topAss.description
         : topAss.name
-      strengthTask = sanitizeTaskTitle(topName)
+      const mappedTop = resolvedCourseCode ? mapAssessmentToCompetency(topName, resolvedCourseCode) : ''
+      strengthTask = mappedTop || sanitizeTaskTitle(topName)
       strengthSource = 'assessment'
 
       const lowAss = valid[valid.length - 1]
@@ -451,7 +473,8 @@ export function extractEvidenceFromGrades(gradeData = {}) {
         const lowName = (isGenericTitle(lowAss.name) && lowAss.description)
           ? lowAss.description
           : lowAss.name
-        growthTask = sanitizeTaskTitle(lowName)
+        const mappedLow = resolvedCourseCode ? mapAssessmentToCompetency(lowName, resolvedCourseCode) : ''
+        growthTask = mappedLow || sanitizeTaskTitle(lowName)
         growthSource = 'assessment'
       }
     }
@@ -527,17 +550,22 @@ export function generateReportComment({
     featuredStrength = '',
     featuredNextStep = '',
     variantSeed = 0,
-    includeWorkHabits = false
+    includeWorkHabits = false,
+    courseCode = ''
   } = options
+
+  const resolvedCourseCode = courseCode || gradeData.courseCode || student.courseCode || ''
 
   // 1. Determine level & pronoun tokens
   const level = getAchievementLevel(gradeData.level || gradeData.percentage)
   const tokens = getPronounTokens(student, pronounMode)
 
   // 2. Resolve specific evidence tasks
-  const autoEvidence = extractEvidenceFromGrades(gradeData)
-  const strengthTask = featuredStrength || autoEvidence.strengthTask || ''
-  const growthTask = featuredNextStep || autoEvidence.growthTask || ''
+  const autoEvidence = extractEvidenceFromGrades(gradeData, resolvedCourseCode)
+  const rawStrength = featuredStrength || autoEvidence.strengthTask || ''
+  const rawGrowth = featuredNextStep || autoEvidence.growthTask || ''
+  const strengthTask = (resolvedCourseCode ? mapAssessmentToCompetency(rawStrength, resolvedCourseCode) : '') || rawStrength
+  const growthTask = (resolvedCourseCode ? mapAssessmentToCompetency(rawGrowth, resolvedCourseCode) : '') || rawGrowth
 
   // Deterministic variant index
   let seedNum = typeof variantSeed === 'number' ? variantSeed : 0

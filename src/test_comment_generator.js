@@ -103,7 +103,7 @@ test('Tier 1: SBAR Expectations take precedence when available', () => {
     options: { mode: 'secondary' }
   })
 
-  assert(res.text.includes('solving 1D kinematic equations'))
+  assert(res.text.toLowerCase().includes('solving 1d kinematic equations'))
   assert(res.text.includes('vector components in 2D'))
 })
 
@@ -193,6 +193,118 @@ test('Elementary mode produces structured 2-paragraph narrative', () => {
   assert(res.text.includes("partnership between home and school"))
 })
 
+// ── TEST GROUP 6: Authentic Ontario Curriculum Competency Mapping ───────────
+console.log('\nTEST GROUP 6: Authentic Curriculum Competency Mapping & Pedagogical Voice')
+
+test('SPH3U correctly maps Kinematics and Forces assessments to authentic competencies', () => {
+  const student = { firstName: 'Ella', pronouns: 'she/her' }
+  const gradeData = {
+    percentage: 84,
+    assessments: [
+      { name: 'Kinematics Unit Test', scorePercent: 90 },
+      { name: 'Forces & Friction Lab', scorePercent: 65 }
+    ]
+  }
+
+  const res = generateReportComment({
+    student,
+    gradeData,
+    options: {
+      mode: 'secondary',
+      courseCode: 'SPH3U',
+      charLimit: 400
+    }
+  })
+
+  // Must map to authentic competencies
+  assert(res.text.toLowerCase().includes('analyzing 1d and 2d motion and solving projectile kinematics problems'), 'Must map Kinematics test to projectile kinematics competency')
+  assert(res.text.includes('constructing free-body diagrams and applying Newton’s laws to solve net force problems'), 'Must map Forces lab to free-body diagrams competency')
+
+  // Must flow naturally without "Next step:" heading
+  assert(!res.text.includes('Next step:'), 'Must NOT contain "Next step:" label')
+  assert(!res.text.includes('Immediate next step:'), 'Must NOT contain "Immediate next step:" label')
+
+  // Must stay within secondary character budget
+  assert(res.charCount <= 400, `Expected <= 400, got ${res.charCount}`)
+  assert.strictEqual(res.isOverLimit, false)
+})
+
+test('SNC1W destreamed science maps biology, chemistry, physics, and space strands', () => {
+  const student = { firstName: 'Noah', pronouns: 'he/him' }
+  const gradeData = {
+    percentage: 76,
+    assessments: [
+      { name: 'Ecosystem Sustainability Project', scorePercent: 88 },
+      { name: 'Ohm’s Law & Circuits Lab', scorePercent: 62 }
+    ]
+  }
+
+  const res = generateReportComment({
+    student,
+    gradeData,
+    options: {
+      mode: 'secondary',
+      courseCode: 'SNC1W',
+      charLimit: 400
+    }
+  })
+
+  assert(res.text.toLowerCase().includes('evaluating nutrient cycles, biodiversity, and sustainable ecosystem dynamics'))
+  assert(res.text.includes('designing and analyzing series and parallel circuits using Ohm’s law'))
+  assert(!res.text.includes('Next step:'))
+  assert(res.charCount <= 400)
+})
+
+test('SBI3U, SCH3U, and SPH4U correctly map specialized senior competencies', () => {
+  const student = { firstName: 'Chloe', pronouns: 'she/her' }
+
+  // SBI3U: Biology
+  const bioRes = generateReportComment({
+    student,
+    gradeData: {
+      percentage: 91,
+      assessments: [
+        { name: 'Unit 2: Mendelian Genetics Test', scorePercent: 95 },
+        { name: 'Internal Systems Circulatory Quiz', scorePercent: 80 }
+      ]
+    },
+    options: { mode: 'secondary', courseCode: 'SBI3U', charLimit: 400 }
+  })
+  assert(bioRes.text.toLowerCase().includes('analyzing mendelian genetics, monohybrid and dihybrid crosses, and dna inheritance patterns'))
+  assert(bioRes.charCount <= 400)
+
+  // SCH3U: Chemistry
+  const chemRes = generateReportComment({
+    student,
+    gradeData: {
+      percentage: 82,
+      assessments: [
+        { name: 'Stoichiometry & Mole Calculations Lab', scorePercent: 88 },
+        { name: 'Chemical Reactions & Balancing Equations Test', scorePercent: 70 }
+      ]
+    },
+    options: { mode: 'secondary', courseCode: 'SCH3U', charLimit: 400 }
+  })
+  assert(chemRes.text.toLowerCase().includes('applying the mole concept and stoichiometry to calculate theoretical yield and limiting reactants'))
+  assert(chemRes.charCount <= 400)
+
+  // SPH4U: Physics 12
+  const phys12Res = generateReportComment({
+    student,
+    gradeData: {
+      percentage: 85,
+      assessments: [
+        { name: 'Circular Motion & Orbital Dynamics Test', scorePercent: 90 },
+        { name: 'Momentum & 2D Collisions Investigation', scorePercent: 72 }
+      ]
+    },
+    options: { mode: 'secondary', courseCode: 'SPH4U', charLimit: 400 }
+  })
+  assert(phys12Res.text.toLowerCase().includes('solving 2d circular motion, centripetal force, and orbital mechanics problems'))
+  assert(phys12Res.charCount <= 400)
+})
+
 console.log('\n=================================================================')
-console.log('🎉 ALL 8 COMMENT GENERATOR TEST SUITES PASSED (100% SUCCESS)!')
+console.log('🎉 ALL 11 COMMENT GENERATOR TEST SUITES PASSED (100% SUCCESS)!')
 console.log('=================================================================')
+

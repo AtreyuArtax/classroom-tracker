@@ -131,6 +131,7 @@
           <ReportsCommentGenerator
             :report-class="reportClass"
             :sidebar-students="filteredSidebarStudents"
+            :assessments="assessmentsList"
             @back="switchPillar('overview')"
           />
         </template>
