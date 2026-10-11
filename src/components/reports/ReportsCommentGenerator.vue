@@ -19,7 +19,7 @@
           </span>
         </div>
         <p class="cg__subtitle">
-          Ontario Growing Success 3-Part Comments (Strength + Work Habits + Next Steps). Grounded in real classroom assessments.
+          Ontario Growing Success Comments (Curriculum Strength + Thinking &amp; Application + Next Steps). Grounded in real classroom assessments.
         </p>
       </div>
 
@@ -305,7 +305,7 @@
             </div>
             <div class="cg__guide-chip">
               <span class="cg__guide-dot cg__guide-dot--habit" />
-              <strong>Habits:</strong> {{ activeHabitDisplay }}
+              <strong>{{ targetMode === 'secondary' ? 'Application:' : 'Habits:' }}</strong> {{ activeHabitDisplay }}
             </div>
             <div class="cg__guide-chip">
               <span class="cg__guide-dot cg__guide-dot--next" />
@@ -493,6 +493,9 @@ const autoGrowthTask = computed(() => autoEvidence.value.growthTask || '')
 const activeStrengthDisplay = computed(() => selectedStrengthTask.value || autoStrengthTask.value || 'General Achievement')
 const activeGrowthDisplay = computed(() => selectedGrowthTask.value || autoGrowthTask.value || 'Independent Review')
 const activeHabitDisplay = computed(() => {
+  if (targetMode.value === 'secondary') {
+    return 'Inquiry & Problem Solving'
+  }
   const skills = learningSkillsMap.value[activeStudent.value?.studentId] || {}
   const items = Object.entries(skills).filter(([_, v]) => v === 'E' || v === 'G').map(([k]) => k)
   return items.length > 0 ? items.join(', ') : 'Consistent Participation'

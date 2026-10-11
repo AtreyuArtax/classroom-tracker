@@ -218,6 +218,57 @@ function getWorkHabitPhrases(tokens, learningSkills = {}, variant = 0) {
 }
 
 /**
+ * Returns curriculum thinking, application, and inquiry variations based on achievement level.
+ * Under Ontario Growing Success & SCDSB guidelines, secondary subject comments focus on
+ * curriculum demonstration (Achievement Chart: Knowledge/Understanding, Thinking, Communication, Application)
+ * rather than Learning Skills and Work Habits (which are already reported in the E/G/S/N columns).
+ */
+function getCurriculumApplicationPhrases(tokens, level, variant = 0) {
+  const templates = {
+    '4+': [
+      `${tokens.subject} ${tokens.isPlural ? 'apply' : 'applies'} critical thinking skills to analyze complex scenarios and ${tokens.isPlural ? 'communicate' : 'communicates'} reasoning with precision.`,
+      `${tokens.subject} ${tokens.isPlural ? 'demonstrate' : 'demonstrates'} sophisticated problem-solving strategies, interpreting data and justifying theoretical models with thoroughness.`,
+      `${tokens.subject} ${tokens.isPlural ? 'synthesize' : 'synthesizes'} concepts effectively and ${tokens.isPlural ? 'express' : 'expresses'} mathematical and scientific reasoning with notable clarity.`,
+      `In inquiry activities, ${tokens.subjectLower} ${tokens.isPlural ? 'evaluate' : 'evaluates'} experimental evidence and ${tokens.isPlural ? 'articulate' : 'articulates'} connections to practical contexts with high effectiveness.`
+    ],
+    '4': [
+      `${tokens.subject} ${tokens.isPlural ? 'apply' : 'applies'} learned concepts reliably to multi-step problems and ${tokens.isPlural ? 'communicate' : 'communicates'} reasoning clearly.`,
+      `${tokens.subject} ${tokens.isPlural ? 'demonstrate' : 'demonstrates'} strong analytical capability during classroom inquiries and investigation tasks.`,
+      `During problem-solving tasks, ${tokens.subjectLower} ${tokens.isPlural ? 'use' : 'uses'} appropriate conventions and ${tokens.isPlural ? 'explain' : 'explains'} methodology with considerable accuracy.`,
+      `${tokens.subject} effectively ${tokens.isPlural ? 'connect' : 'connects'} theoretical concepts to practical contexts and experimental results.`
+    ],
+    '3': [
+      `${tokens.subject} ${tokens.isPlural ? 'apply' : 'applies'} course concepts with competence and generally ${tokens.isPlural ? 'communicate' : 'communicates'} solution steps clearly.`,
+      `${tokens.subject} ${tokens.isPlural ? 'demonstrate' : 'demonstrates'} sound problem-solving skills during classroom investigations and evaluations.`,
+      `When tackling multi-step tasks, ${tokens.subjectLower} ${tokens.isPlural ? 'use' : 'uses'} established methods and ${tokens.isPlural ? 'interpret' : 'interprets'} data appropriately.`,
+      `${tokens.subject} ${tokens.isPlural ? 'show' : 'shows'} good understanding of foundational procedures and ${tokens.isPlural ? 'explain' : 'explains'} reasoning with appropriate terminology.`
+    ],
+    '2': [
+      `${tokens.subject} ${tokens.isPlural ? 'show' : 'shows'} developing consistency when applying standard procedures to multi-step problem solving.`,
+      `With guided practice, ${tokens.subjectLower} ${tokens.isPlural ? 'interpret' : 'interprets'} core relationships and ${tokens.isPlural ? 'communicate' : 'communicates'} steps with emerging accuracy.`,
+      `${tokens.subject} ${tokens.isPlural ? 'demonstrate' : 'demonstrates'} some ability to connect concepts during inquiry tasks, though calculations require regular verification.`,
+      `${tokens.subject} ${tokens.isPlural ? 'are' : 'is'} continuing to build confidence when explaining reasoning and applying methods to new problems.`
+    ],
+    '1': [
+      `With ongoing teacher support, ${tokens.subjectLower} ${tokens.isPlural ? 'are' : 'is'} working to apply basic principles and complete multi-step solutions.`,
+      `${tokens.subject} ${tokens.isPlural ? 'show' : 'shows'} emerging capability with core procedures, though additional practice is required to communicate reasoning clearly.`,
+      `During inquiry and problem-solving activities, ${tokens.subjectLower} ${tokens.isPlural ? 'require' : 'requires'} structured scaffolding to select and apply correct methods.`,
+      `${tokens.subject} ${tokens.isPlural ? 'are' : 'is'} developing foundational familiarity with course formulas and terminology.`
+    ],
+    'R': [
+      `${tokens.subject} ${tokens.isPlural ? 'require' : 'requires'} comprehensive guidance to interpret core concepts and complete basic problem-solving procedures.`,
+      `Substantial support is needed to understand fundamental curriculum terminology and apply standard methods.`,
+      `At this stage, ${tokens.subjectLower} ${tokens.isPlural ? 'struggle' : 'struggles'} to demonstrate consistent application of essential course expectations.`,
+      `Extensive review of foundational material is necessary to build required curriculum competencies.`
+    ]
+  }
+
+  const list = templates[level.key] || templates['3']
+  const idx = Math.abs(variant) % list.length
+  return list[idx]
+}
+
+/**
  * Returns actionable next step variations based on level and specific growth task.
  */
 function getNextStepPhrases(tokens, level, growthTaskName, variant = 0) {
@@ -476,7 +527,7 @@ export function generateReportComment({
     featuredStrength = '',
     featuredNextStep = '',
     variantSeed = 0,
-    includeWorkHabits = true
+    includeWorkHabits = false
   } = options
 
   // 1. Determine level & pronoun tokens
@@ -496,7 +547,13 @@ export function generateReportComment({
 
   // 3. Assemble Sentences
   const sentence1 = getStrengthPhrases(tokens, level, strengthTask, seedNum)
-  const sentence2 = includeWorkHabits ? getWorkHabitPhrases(tokens, learningSkills, seedNum + 1) : ''
+  
+  // Sentence 2: Under Growing Success & SCDSB policy, Secondary comments focus on curriculum
+  // demonstration (Thinking & Application). Elementary mode uses Learning Skills.
+  const sentence2 = (mode === 'secondary' && !includeWorkHabits)
+    ? getCurriculumApplicationPhrases(tokens, level, seedNum + 1)
+    : getWorkHabitPhrases(tokens, learningSkills, seedNum + 1)
+
   const sentence3 = getNextStepPhrases(tokens, level, growthTask, seedNum + 2)
 
   let fullComment = ''

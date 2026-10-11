@@ -309,7 +309,7 @@ export async function polishReportComment({
     `Your goal: Polish the draft comment into smooth, natural, parent-friendly English while fixing any typos or awkward phrasing in assessment titles (e.g., change "inclined plan" to "inclined plane", "forces lb" to "the Forces Lab").`,
     ``,
     `STRICT REQUIREMENTS:`,
-    `1. Maintain the 3 required Ontario sections: (a) Key strength, (b) Learning habit / work ethic, (c) Actionable next step.`,
+    `1. Maintain the required Ontario sections: (a) Key curriculum strength, (b) Application and problem-solving reasoning, (c) Actionable curriculum next step. Do NOT include label headings or bullet points (e.g. no "Next step:").`,
     `2. ${pronounInstruction}`,
     `3. ABSOLUTE LENGTH LIMIT: The output MUST be strictly under ${charLimit} characters.`,
     `4. Output ONLY the polished comment text. Do NOT include markdown quotes, introductory pleasantries, or explanations.`
