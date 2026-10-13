@@ -15,7 +15,7 @@
  * Pure utility function: no database imports, no side-effects, 100% unit-testable.
  */
 
-import { mapAssessmentToCompetency } from './curriculumCompetencies.js'
+import { mapAssessmentToCompetency, extractCompetenciesFromAssessment } from './curriculumCompetencies.js'
 
 // ─── Achievement Level Descriptors (Growing Success) ─────────────────────────
 
@@ -621,7 +621,7 @@ export function extractEvidenceFromGrades(gradeData = {}, courseCode = '') {
       const topName = (isGenericTitle(topAss.name) && topAss.description)
         ? topAss.description
         : topAss.name
-      const mappedTop = resolvedCourseCode ? mapAssessmentToCompetency(topName, resolvedCourseCode) : ''
+      const mappedTop = resolvedCourseCode ? mapAssessmentToCompetency(topName, resolvedCourseCode, topAss.description) : ''
       strengthTask = mappedTop || sanitizeTaskTitle(topName)
       strengthSource = 'assessment'
 
@@ -630,9 +630,17 @@ export function extractEvidenceFromGrades(gradeData = {}, courseCode = '') {
         const lowName = (isGenericTitle(lowAss.name) && lowAss.description)
           ? lowAss.description
           : lowAss.name
-        const mappedLow = resolvedCourseCode ? mapAssessmentToCompetency(lowName, resolvedCourseCode) : ''
+        const mappedLow = resolvedCourseCode ? mapAssessmentToCompetency(lowName, resolvedCourseCode, lowAss.description) : ''
         growthTask = mappedLow || sanitizeTaskTitle(lowName)
         growthSource = 'assessment'
+      } else if (valid.length === 1 && topAss.description && resolvedCourseCode) {
+        // When there is only 1 comprehensive assessment with a rich description,
+        // extract the second-highest scoring competency from that assessment for growth!
+        const allMatches = extractCompetenciesFromAssessment(topAss, resolvedCourseCode)
+        if (allMatches.length > 1 && allMatches[1].phrase !== mappedTop) {
+          growthTask = allMatches[1].phrase
+          growthSource = 'assessment'
+        }
       }
     }
   }

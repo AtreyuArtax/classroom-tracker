@@ -1157,7 +1157,16 @@ async function handleAiPolishClick() {
       pronounMode: pronounMode.value,
       temperature: currentTemperature.value,
       customDirectives: activePreset.value?.customDirectives || '',
-      customSystemPrompt: activePreset.value?.customSystemPrompt || ''
+      customSystemPrompt: activePreset.value?.customSystemPrompt || '',
+      assessmentEvidence: {
+        courseCode: currentCourseCode.value,
+        strengthTask: activeStrengthDisplay.value,
+        growthTask: autoGrowthLabel.value,
+        assessments: studentAssessments.value.map(a => ({
+          name: a.name,
+          description: a.description
+        }))
+      }
     })
 
     currentCommentText.value = res.text

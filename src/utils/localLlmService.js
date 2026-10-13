@@ -343,8 +343,9 @@ export function getDefaultSecondarySystemPrompt({
     `   - Always frame learning with constructive, growth-oriented language.`,
     `   - For developing skills, write "is continuing to build consistency" or "with guided practice, demonstrates developing confidence".`,
     `   - NEVER use negative, deficit-based language like "is not as strong as it could be", "fails to", "struggles with", or "shows some potential".`,
-    `8. TOPIC FIDELITY:`,
-    `   - Only reference the specific curriculum concepts and next steps already mentioned in the draft. Do NOT invent or list unrelated course units.`,
+    `8. TOPIC FIDELITY & CURRICULUM GROUNDING:`,
+    `   - Preserve the authentic skills and next steps from the draft.`,
+    `   - If gradebook assessment context is provided, you may weave in the specific curriculum concepts, phenomena, or models evaluated in class. Do NOT invent unrelated course units.`,
     `9. ${pronounInstruction}`,
     `10. STRICT OUTPUT FORMAT:`,
     `   - Output ONLY the 3-sentence comment text.`,
@@ -415,7 +416,8 @@ export async function polishReportComment({
   pronounMode = 'preferred',
   temperature = 0.3,
   customDirectives = '',
-  customSystemPrompt = ''
+  customSystemPrompt = '',
+  assessmentEvidence = null
 } = {}) {
   if (!draftComment || !draftComment.trim()) {
     throw new Error('No draft comment provided to polish.')
@@ -453,6 +455,25 @@ export async function polishReportComment({
   const exampleDraft = `Alex demonstrates competent understanding and solid skills when analyzing projectile motion. They demonstrate sound problem-solving skills during classroom investigations and evaluations. Using a structured reference checklist will support Alex in verifying intermediate steps when applying light theory concepts.`
   const examplePolished = `Alex demonstrates a solid understanding and strong technical precision when analyzing projectile motion. They consistently apply effective problem-solving strategies during classroom laboratory investigations. Utilizing a structured reference checklist will support Alex in verifying intermediate calculations when applying light theory concepts.`
 
+  let userDraftPrompt = `Draft comment to polish:\n${draftComment.trim()}`
+  if (assessmentEvidence) {
+    const lines = []
+    if (assessmentEvidence.courseCode) lines.push(`Course: ${assessmentEvidence.courseCode}`)
+    if (assessmentEvidence.strengthTask) lines.push(`Featured Strength Focus: ${assessmentEvidence.strengthTask}`)
+    if (assessmentEvidence.growthTask) lines.push(`Featured Next Step Focus: ${assessmentEvidence.growthTask}`)
+    if (Array.isArray(assessmentEvidence.assessments) && assessmentEvidence.assessments.length > 0) {
+      const astSummary = assessmentEvidence.assessments.slice(0, 3).map(a => {
+        let entry = `• ${a.name}`
+        if (a.description) entry += ` — ${a.description.slice(0, 220)}`
+        return entry
+      }).join('\n')
+      lines.push(`Recent Gradebook Evaluations & Evidence:\n${astSummary}`)
+    }
+    if (lines.length > 0) {
+      userDraftPrompt = `CURRICULUM CONTEXT FROM GRADEBOOK:\n${lines.join('\n')}\n\nDraft comment to polish:\n${draftComment.trim()}`
+    }
+  }
+
   llmState.status = 'generating'
   llmState.progressText = 'Polishing comment locally...'
 
@@ -461,7 +482,7 @@ export async function polishReportComment({
 
     if (llmState.activeModelKey === 'chrome-nano' && activeNanoSession) {
       // Chrome Prompt API
-      const prompt = `${systemPrompt}\n\nDraft comment to polish:\n${exampleDraft}\n\n${examplePolished}\n\nDraft comment to polish:\n${draftComment.trim()}\n\n`
+      const prompt = `${systemPrompt}\n\nDraft comment to polish:\n${exampleDraft}\n\n${examplePolished}\n\n${userDraftPrompt}\n\n`
       rawOutput = await activeNanoSession.prompt(prompt)
     } else if (activeWebLlmEngine) {
       // WebLLM Multi-Turn Chat Completion (standard few-shotting pattern prevents conversational preambles)
@@ -469,7 +490,7 @@ export async function polishReportComment({
         { role: 'system', content: systemPrompt },
         { role: 'user', content: `Draft comment to polish:\n${exampleDraft}` },
         { role: 'assistant', content: examplePolished },
-        { role: 'user', content: `Draft comment to polish:\n${draftComment.trim()}` }
+        { role: 'user', content: userDraftPrompt }
       ]
       const completion = await activeWebLlmEngine.chat.completions.create({
         messages,
