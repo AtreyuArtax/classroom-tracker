@@ -73,15 +73,6 @@
           </div>
         </div>
 
-        <!-- Target Preset Selector -->
-        <div class="cg__control-item">
-          <label class="cg__control-label">Target Mode</label>
-          <select v-model="targetMode" class="cg__select">
-            <option value="secondary">Secondary (Strict &le; 400 chars)</option>
-            <option value="elementary">Elementary (Narrative 2-Para)</option>
-          </select>
-        </div>
-
         <!-- Pronoun Mode Selector -->
         <div class="cg__control-item">
           <label class="cg__control-label">Pronoun Style</label>
@@ -91,8 +82,8 @@
           </select>
         </div>
 
-        <!-- Character Budget (Secondary) -->
-        <div v-if="targetMode === 'secondary'" class="cg__control-item">
+        <!-- Character Budget -->
+        <div class="cg__control-item">
           <label class="cg__control-label">Char Budget</label>
           <input 
             v-model.number="charLimit" 
@@ -212,7 +203,7 @@
                 type="button"
                 class="cg__btn-icon"
                 :class="{ 'cg__btn-icon--ai-ready': llmState.status === 'ready' }"
-                :title="llmState.status === 'ready' ? `Polish with local ${llmState.activeModelName}` : 'Configure local AI rephraser'"
+                :title="llmState.status === 'ready' ? `Polish with local ${llmState.activeModelName} (${activePreset?.name || 'Ontario Standard'})` : 'Configure local AI rephraser'"
                 :disabled="isPolishing"
                 @click="handleAiPolishClick"
               >
@@ -222,10 +213,22 @@
                 <span v-else>✨ AI Polish (Offline)...</span>
               </button>
 
+              <select
+                v-if="llmState.status === 'ready'"
+                :value="activePresetId"
+                class="cg__select-preset-pill"
+                title="Active Prompt Preset & Tone"
+                @change="selectPreset($event.target.value)"
+              >
+                <option v-for="p in allPresets" :key="p.id" :value="p.id">
+                  {{ p.name }}
+                </option>
+              </select>
+
               <button
                 type="button"
                 class="cg__btn-icon cg__btn-icon--gear"
-                title="Manage Local AI Models & WebGPU Settings"
+                title="Manage Local AI Models, Temperature & Prompt Settings"
                 @click="showLlmModal = true"
               >
                 <Cpu :size="13" />
@@ -371,7 +374,7 @@
             </div>
             <div class="cg__guide-chip">
               <span class="cg__guide-dot cg__guide-dot--habit" />
-              <strong>{{ targetMode === 'secondary' ? 'Application:' : 'Habits:' }}</strong> {{ activeHabitDisplay }}
+              <strong>Application:</strong> {{ activeHabitDisplay }}
             </div>
             <div class="cg__guide-chip">
               <span class="cg__guide-dot cg__guide-dot--next" />
@@ -472,6 +475,14 @@ import {
   detectHardwareCapabilities,
   polishReportComment
 } from '../../utils/localLlmService.js'
+import {
+  currentTemperature,
+  activePresetId,
+  activePreset,
+  allPresets,
+  selectPreset,
+  initAiPrompts
+} from '../../composables/useAiPrompts.js'
 
 const CommentLlmSettingsModal = defineAsyncComponent(() => import('./CommentLlmSettingsModal.vue'))
 
@@ -493,7 +504,6 @@ const props = defineProps({
 })
 
 // ── Preferences State ────────────────────────────────────────────────────────
-const targetMode = ref('secondary') // 'secondary' | 'elementary'
 const pronounMode = ref('preferred') // 'preferred' | 'name-only'
 const charLimit = ref(400)
 const searchQuery = ref('')
@@ -877,12 +887,7 @@ const activeGrowthDisplay = computed(() => {
 })
 
 const activeHabitDisplay = computed(() => {
-  if (targetMode.value === 'secondary') {
-    return 'Inquiry & Problem Solving'
-  }
-  const skills = learningSkillsMap.value[activeStudent.value?.studentId] || {}
-  const items = Object.entries(skills).filter(([_, v]) => v === 'E' || v === 'G').map(([k]) => k)
-  return items.length > 0 ? items.join(', ') : 'Consistent Participation'
+  return 'Inquiry & Problem Solving'
 })
 
 // ── Previous Term Progression Tracking ───────────────────────────────────────
@@ -944,7 +949,7 @@ const previousTermComment = computed(() => {
     },
     learningSkills: prevSkills,
     options: {
-      mode: targetMode.value,
+      mode: 'secondary',
       charLimit: charLimit.value,
       pronounMode: pronounMode.value,
       featuredStrength: prevStrength,
@@ -1090,7 +1095,7 @@ function buildCommentForActive() {
     },
     learningSkills: studentSkills,
     options: {
-      mode: targetMode.value,
+      mode: 'secondary',
       charLimit: charLimit.value,
       pronounMode: pronounMode.value,
       featuredStrength: selectedStrengthTask.value,
@@ -1109,7 +1114,6 @@ watch([
   selectedStudentId,
   selectedTerm,
   finalEvidenceScope,
-  targetMode,
   pronounMode,
   charLimit
 ], () => {
@@ -1150,7 +1154,10 @@ async function handleAiPolishClick() {
       draftComment: currentCommentText.value,
       student: activeStudent.value,
       charLimit: charLimit.value,
-      pronounMode: pronounMode.value
+      pronounMode: pronounMode.value,
+      temperature: currentTemperature.value,
+      customDirectives: activePreset.value?.customDirectives || '',
+      customSystemPrompt: activePreset.value?.customSystemPrompt || ''
     })
 
     currentCommentText.value = res.text
@@ -1233,7 +1240,7 @@ function exportAllCommentsCsv() {
       },
       learningSkills: skills,
       options: {
-        mode: targetMode.value,
+        mode: 'secondary',
         charLimit: charLimit.value,
         pronounMode: pronounMode.value,
         featuredStrength: stStrength,
@@ -1317,6 +1324,7 @@ onMounted(async () => {
   // Proactively check local hardware capabilities & cached models
   try {
     await detectHardwareCapabilities()
+    await initAiPrompts()
   } catch {
     // Non-fatal background check
   }
@@ -2009,5 +2017,22 @@ watch(() => props.reportClass?.classId, async () => {
 
 .cg__empty-icon {
   opacity: 0.4;
+}
+
+.cg__select-preset-pill {
+  height: 28px;
+  padding: 0 8px;
+  font-size: 0.76rem;
+  font-weight: 600;
+  border-radius: var(--radius-sm, 6px);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  max-width: 170px;
+  transition: border-color 0.15s ease;
+}
+.cg__select-preset-pill:hover {
+  border-color: var(--color-primary, #3b82f6);
 }
 </style>

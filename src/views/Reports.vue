@@ -128,7 +128,16 @@
 
         <!-- ── PILLAR 4: REPORT CARD COMMENTS ───────────────────────── -->
         <template v-else-if="rightMode === 'comments'">
+          <!-- Elementary Homeroom View -->
+          <ElementaryCommentGenerator
+            v-if="reportClass?.classType === 'elementary'"
+            :report-class="reportClass"
+            :sidebar-students="filteredSidebarStudents"
+            @back="switchPillar('overview')"
+          />
+          <!-- Secondary Course View (Untouched!) -->
           <ReportsCommentGenerator
+            v-else
             :report-class="reportClass"
             :sidebar-students="filteredSidebarStudents"
             :assessments="assessmentsList"
@@ -275,6 +284,7 @@ const ReportsBatchPrintModal       = defineAsyncComponent(() => import('../compo
 import ReportsPrintHub from '../components/reports/ReportsPrintHub.vue'
 const ReportsLearningSkills        = defineAsyncComponent(() => import('../components/reports/ReportsLearningSkills.vue'))
 const ReportsCommentGenerator      = defineAsyncComponent(() => import('../components/reports/ReportsCommentGenerator.vue'))
+const ElementaryCommentGenerator   = defineAsyncComponent(() => import('../components/reports/ElementaryCommentGenerator.vue'))
 import { calculateClassGrades, getAssessmentsByClass, getAssessmentPercentage } from '../db/gradebookService.js'
 import { loadGradebook, clearGradebook, assessments as gbAssessments, gradeMap, activeGradeFilter } from '../composables/useGradebook.js'
 import { getSectionColor } from '../utils/gradeColors.js'

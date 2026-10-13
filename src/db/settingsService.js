@@ -47,6 +47,11 @@ async function _readSettings() {
         schemaVersion: 32,
         gridSize: { rows: 6, cols: 6 },
         customCurriculumPresets: {},
+        aiCommentSettings: {
+            temperature: 0.3,
+            activePresetId: 'ontario-standard',
+            customPresets: {}
+        },
         behaviorCodes: {
             w: {
                 key: 'w',
@@ -793,6 +798,54 @@ export async function deleteCustomCurriculumPreset(presetId) {
             delete _memorySettings.customCurriculumPresets[presetId]
         }
     }
+}
+
+/**
+ * Retrieves the AI comment settings (temperature, activePresetId, customPresets).
+ * @returns {Promise<{temperature: number, activePresetId: string, customPresets: Object}>}
+ */
+export async function getAiCommentSettings() {
+    const settings = await _readSettings()
+    return settings?.aiCommentSettings || {
+        temperature: 0.3,
+        activePresetId: 'ontario-standard',
+        customPresets: {}
+    }
+}
+
+/**
+ * Saves AI comment settings.
+ * @param {Object} aiSettings
+ * @returns {Promise<Object>}
+ */
+export async function saveAiCommentSettings(aiSettings) {
+    if (!aiSettings) throw new Error('aiSettings object is required')
+    const clone = JSON.parse(JSON.stringify(aiSettings))
+    if (typeof indexedDB !== 'undefined') {
+        const db = await getDB()
+        const settings = await db.get('settings', SETTINGS_KEY) || {}
+        settings.aiCommentSettings = clone
+        await db.put('settings', settings, SETTINGS_KEY)
+        hasUnsyncedChanges.value = true
+    } else {
+        if (!_memorySettings) await _readSettings()
+        if (!_memorySettings) _memorySettings = {}
+        _memorySettings.aiCommentSettings = clone
+    }
+    return clone
+}
+
+/**
+ * Resets AI comment settings to factory defaults.
+ * @returns {Promise<Object>}
+ */
+export async function resetAiCommentSettingsToDefault() {
+    const defaults = {
+        temperature: 0.3,
+        activePresetId: 'ontario-standard',
+        customPresets: {}
+    }
+    return saveAiCommentSettings(defaults)
 }
 
 /**

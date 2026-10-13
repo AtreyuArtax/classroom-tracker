@@ -265,49 +265,61 @@ export async function purgeModelFromCache(modelKey) {
   }
 }
 
-// ── Comment Polish Engine ────────────────────────────────────────────────────
+// ── Built-in Prompt Presets ───────────────────────────────────────────────────
 
-/**
- * Uses the loaded local model to polish an Ontario report card comment.
- *
- * @param {Object} params
- * @param {string} params.draftComment  The rule-generated comment draft
- * @param {Object} [params.student]     Student record
- * @param {number} [params.charLimit=400]
- * @param {string} [params.pronounMode='preferred']
- *
- * @returns {Promise<{
- *   text: string,
- *   originalText: string,
- *   charCount: number,
- *   isOverLimit: boolean,
- *   modelUsed: string
- * }>}
- */
-export async function polishReportComment({
-  draftComment,
-  student = {},
+export const BUILTIN_PROMPT_PRESETS = [
+  {
+    id: 'ontario-standard',
+    name: 'Ontario Standard (Default)',
+    badge: 'Growing Success',
+    isBuiltin: true,
+    description: 'Strict 3-sentence Growing Success format. Factual, asset-based, and objective without conversational fluff.',
+    temperature: 0.30,
+    customDirectives: '',
+    customSystemPrompt: ''
+  },
+  {
+    id: 'warm-encouraging',
+    name: 'Warm & Encouraging',
+    badge: 'Growth Mindset',
+    isBuiltin: true,
+    description: 'Supportive, asset-based phrasing highlighting student effort, persistence, and self-advocacy.',
+    temperature: 0.35,
+    customDirectives: 'Frame achievements and next steps with a warm, encouraging growth mindset, highlighting effort and constructive student self-advocacy.',
+    customSystemPrompt: ''
+  },
+  {
+    id: 'inquiry-investigation',
+    name: 'Inquiry & Investigation',
+    badge: 'STEM / Inquiry',
+    isBuiltin: true,
+    description: 'Emphasizes scientific inquiry, analytical problem-solving steps, and experimental verification.',
+    temperature: 0.25,
+    customDirectives: 'Emphasize scientific inquiry, analytical problem-solving steps, and experimental verification strategies.',
+    customSystemPrompt: ''
+  },
+  {
+    id: 'concise-direct',
+    name: 'Concise & Direct',
+    badge: 'Compact',
+    isBuiltin: true,
+    description: 'Short, crisp phrasing targeting 280-320 characters for tight report card character limits.',
+    temperature: 0.20,
+    customDirectives: 'Use concise, direct wording. Keep sentences succinct and targeted around 280-320 characters.',
+    customSystemPrompt: ''
+  }
+]
+
+export function getBuiltinPromptPresets() {
+  return JSON.parse(JSON.stringify(BUILTIN_PROMPT_PRESETS))
+}
+
+export function getDefaultSecondarySystemPrompt({
   charLimit = 400,
-  pronounMode = 'preferred'
+  studentName = 'The student',
+  pronounInstruction = ''
 } = {}) {
-  if (!draftComment || !draftComment.trim()) {
-    throw new Error('No draft comment provided to polish.')
-  }
-
-  if (llmState.status !== 'ready') {
-    throw new Error('Local AI engine is not ready. Please select and load a model first.')
-  }
-
-  const studentName = (student.preferredName || student.firstName || 'The student').trim()
-  const pronouns = student.pronouns || ''
-  const pronounInstruction = (pronounMode === 'name-only' || !pronouns)
-    ? `Refer to the student strictly by name ("${studentName}") and avoid third-person pronouns.`
-    : `Use "${pronouns}" pronouns for ${studentName}.`
-
-  const exampleDraft = `Alex demonstrates competent understanding and solid skills when analyzing projectile motion. They demonstrate sound problem-solving skills during classroom investigations and evaluations. Using a structured reference checklist will support Alex in verifying intermediate steps when applying light theory concepts.`
-  const examplePolished = `Alex demonstrates a solid understanding and strong technical precision when analyzing projectile motion. They consistently apply effective problem-solving strategies during classroom laboratory investigations. Utilizing a structured reference checklist will support Alex in verifying intermediate calculations when applying light theory concepts.`
-
-  const systemPrompt = [
+  return [
     `You are an expert Ontario educational writing assistant helping a high school teacher refine report card comments.`,
     `Your goal: Polish the draft comment into smooth, natural, parent-friendly English with an authentic pedagogical voice.`,
     ``,
@@ -339,6 +351,107 @@ export async function polishReportComment({
     `   - NEVER output conversational preamble or filler (do NOT write "Here is the polished comment:" or similar).`,
     `   - Do NOT enclose the text in quotation marks.`
   ].join('\n')
+}
+
+export function getDefaultElementarySystemPrompt({
+  charLimit = 1050,
+  studentName = 'The student',
+  pronounInstruction = '',
+  subjectName = 'Science and Technology',
+  isLearningSkills = false
+} = {}) {
+  if (isLearningSkills) {
+    return [
+      `You are an expert Ontario educational writing assistant helping an elementary teacher refine a Learning Skills and Work Habits report card comment.`,
+      `Your goal: Polish the draft comment into warm, professional, asset-based English adhering to Ontario Growing Success guidelines.`,
+      ``,
+      `CORE EDITING RULES:`,
+      `1. LENGTH: Strictly under ${charLimit} characters (SCDSB limit).`,
+      `2. FORMAT INTEGRITY: If the draft uses labeled sections (e.g. STRENGTHS: ... NEXT STEPS: ...), preserve those section headings exactly.`,
+      `3. ASSET-BASED LANGUAGE: Always frame student progress constructively and supportively. Avoid negative or deficit language.`,
+      `4. THIRD-PERSON PERSPECTIVE: Never use first-person pronouns ("I", "my", "I observed").`,
+      `5. ${pronounInstruction}`,
+      `6. STRICT OUTPUT: Output ONLY the polished report comment text without preamble, quotes, or markdown code fences.`
+    ].join('\n')
+  }
+
+  return [
+    `You are an expert Ontario educational writing assistant helping an elementary teacher refine a report card comment for ${subjectName}.`,
+    `Your goal: Polish the draft comment into smooth, natural, parent-friendly English with an authentic pedagogical voice.`,
+    ``,
+    `CORE EDITING RULES (Ontario Growing Success Guidelines):`,
+    `1. LENGTH: Strictly under ${charLimit} characters (SCDSB limit).`,
+    `2. STRUCTURE: Maintain clear conceptual understanding, hands-on in-class investigation evidence, and actionable next steps starting with "Next Steps: ${studentName} is encouraged to...".`,
+    `3. THIRD-PERSON PERSPECTIVE: Do NOT use first-person pronouns ("I", "me", "my").`,
+    `4. ASSET-BASED LANGUAGE: Always frame developing skills with growth-oriented phrasing.`,
+    `5. ${pronounInstruction}`,
+    `6. STRICT OUTPUT: Output ONLY the comment text without conversational filler or quotation marks.`
+  ].join('\n')
+}
+
+// ── Comment Polish Engine ────────────────────────────────────────────────────
+
+/**
+ * Uses the loaded local model to polish an Ontario report card comment.
+ *
+ * @param {Object} params
+ * @param {string} params.draftComment  The rule-generated comment draft
+ * @param {Object} [params.student]     Student record
+ * @param {number} [params.charLimit=400]
+ * @param {string} [params.pronounMode='preferred']
+ *
+ * @returns {Promise<{
+ *   text: string,
+ *   originalText: string,
+ *   charCount: number,
+ *   isOverLimit: boolean,
+ *   modelUsed: string
+ * }>}
+ */
+export async function polishReportComment({
+  draftComment,
+  student = {},
+  charLimit = 400,
+  pronounMode = 'preferred',
+  temperature = 0.3,
+  customDirectives = '',
+  customSystemPrompt = ''
+} = {}) {
+  if (!draftComment || !draftComment.trim()) {
+    throw new Error('No draft comment provided to polish.')
+  }
+
+  if (llmState.status !== 'ready') {
+    throw new Error('Local AI engine is not ready. Please select and load a model first.')
+  }
+
+  const studentName = (student.preferredName || student.firstName || 'The student').trim()
+  const pronouns = student.pronouns || ''
+  const pronounInstruction = (pronounMode === 'name-only' || !pronouns)
+    ? `Refer to the student strictly by name ("${studentName}") and avoid third-person pronouns.`
+    : `Use "${pronouns}" pronouns for ${studentName}.`
+
+  const effectiveTemp = (typeof temperature === 'number' && !isNaN(temperature))
+    ? Math.max(0.0, Math.min(1.0, temperature))
+    : 0.3
+
+  let systemPrompt = ''
+  if (customSystemPrompt && customSystemPrompt.trim()) {
+    systemPrompt = customSystemPrompt
+      .replace(/\{\{studentName\}\}/gi, studentName)
+      .replace(/\{\{pronouns\}\}/gi, pronouns)
+      .replace(/\{\{pronounInstruction\}\}/gi, pronounInstruction)
+      .replace(/\{\{charLimit\}\}/gi, String(charLimit))
+  } else {
+    systemPrompt = getDefaultSecondarySystemPrompt({ charLimit, studentName, pronounInstruction })
+  }
+
+  if (customDirectives && customDirectives.trim()) {
+    systemPrompt += `\n\nCUSTOM TEACHER DIRECTIVES:\n${customDirectives.trim()}`
+  }
+
+  const exampleDraft = `Alex demonstrates competent understanding and solid skills when analyzing projectile motion. They demonstrate sound problem-solving skills during classroom investigations and evaluations. Using a structured reference checklist will support Alex in verifying intermediate steps when applying light theory concepts.`
+  const examplePolished = `Alex demonstrates a solid understanding and strong technical precision when analyzing projectile motion. They consistently apply effective problem-solving strategies during classroom laboratory investigations. Utilizing a structured reference checklist will support Alex in verifying intermediate calculations when applying light theory concepts.`
 
   llmState.status = 'generating'
   llmState.progressText = 'Polishing comment locally...'
@@ -360,7 +473,7 @@ export async function polishReportComment({
       ]
       const completion = await activeWebLlmEngine.chat.completions.create({
         messages,
-        temperature: 0.3,
+        temperature: effectiveTemp,
         max_tokens: 220
       })
       rawOutput = completion.choices[0]?.message?.content || ''
@@ -445,6 +558,159 @@ export async function polishReportComment({
     llmState.status = 'ready'
     llmState.progressText = 'Ready'
     console.error('Error during local LLM polish:', err)
+    throw err
+  }
+}
+
+// ── Elementary Comment Polish Engine ──────────────────────────────────────────
+
+/**
+ * Uses the loaded local model to polish an Ontario elementary report card comment
+ * (Science, Math, Language, or Learning Skills).
+ *
+ * @param {Object} params
+ * @param {string} params.draftComment
+ * @param {Object} [params.student]
+ * @param {number} [params.charLimit=1050]
+ * @param {string} [params.subjectName='Science and Technology']
+ * @param {boolean} [params.isLearningSkills=false]
+ * @param {string} [params.pronounMode='preferred']
+ *
+ * @returns {Promise<{
+ *   text: string,
+ *   originalText: string,
+ *   charCount: number,
+ *   isOverLimit: boolean,
+ *   modelUsed: string
+ * }>}
+ */
+export async function polishElementaryComment({
+  draftComment,
+  student = {},
+  charLimit = 1050,
+  subjectName = 'Science and Technology',
+  isLearningSkills = false,
+  pronounMode = 'preferred',
+  temperature = 0.3,
+  customDirectives = '',
+  customSystemPrompt = ''
+} = {}) {
+  if (!draftComment || !draftComment.trim()) {
+    throw new Error('No draft comment provided to polish.')
+  }
+
+  if (llmState.status !== 'ready') {
+    throw new Error('Local AI engine is not ready. Please select and load a model first.')
+  }
+
+  const studentName = (student.preferredName || student.firstName || 'The student').trim()
+  const pronouns = student.pronouns || ''
+  const pronounInstruction = (pronounMode === 'name-only' || !pronouns)
+    ? `Refer to the student strictly by name ("${studentName}") and avoid third-person pronouns.`
+    : `Use "${pronouns}" pronouns for ${studentName}.`
+
+  const effectiveTemp = (typeof temperature === 'number' && !isNaN(temperature))
+    ? Math.max(0.0, Math.min(1.0, temperature))
+    : 0.3
+
+  let systemPrompt = ''
+  let exampleDraft = ''
+  let examplePolished = ''
+
+  if (isLearningSkills) {
+    exampleDraft = `STRENGTHS: Maya follows through with her responsibilities and commitments in our classroom community. Maya completes classroom jobs with care and takes pride in organizing the classroom environment. Maya manages her time effectively to complete tasks and achieve learning goals. She utilizes her agenda and digital calendars to keep track of assignments and timelines.\n\nNEXT STEPS: Maya is learning to collaborate more effectively within small-group settings. She is encouraged to accept varied group roles and ensure she contributes an equitable share of the work. Maya is developing strategies to self-regulate and maintain focus during instructional periods. Maya is encouraged to take a deep breath and use positive self-talk when encountering frustrating tasks.`
+    examplePolished = `STRENGTHS: Maya consistently follows through with her responsibilities and commitments within our classroom community. She completes classroom helper jobs with diligence and takes genuine pride in maintaining an organized learning environment. Maya manages her time effectively, routinely utilizing her agenda and digital calendar tools to prioritize tasks and meet agreed-upon timelines.\n\nNEXT STEPS: In small-group settings, Maya is encouraged to take on varied cooperative roles and ensure an equitable share of the work is completed. When encountering challenging tasks, Maya is developing self-regulation strategies, including deep breathing and positive self-talk, to maintain focus and persevere through obstacles.`
+  } else {
+    exampleDraft = `Alex demonstrates an understanding of viscosity and compares how viscosity affects flow rates of various liquids, such as water, ketchup, honey. They investigated liquids with different densities and experimented with the buoyancy of an object in various fluids. Alex analyzed oil spills and cleanup technologies and communicated findings using appropriate vocabulary and visuals. Next Steps: Alex is encouraged to consider how properties of fluids can be applied to daily tasks, such as cooking. Alex is encouraged to experiment with how heat or lack of heat can affect a liquid.`
+    examplePolished = `Alex demonstrates a solid understanding of viscosity and effectively compares how viscosity governs the flow rates of everyday liquids, including water, ketchup, and honey. During hands-on investigations, they explored liquids with different densities and tested the buoyancy of objects in varied fluid environments. Alex analyzed the environmental and economic impacts of oil spills, communicating conclusions clearly through structured visuals and scientific vocabulary. Next Steps: Alex is encouraged to explore how fluid properties are harnessed in everyday household tasks, and experiment with the effects of temperature on fluid viscosity.`
+  }
+
+  if (customSystemPrompt && customSystemPrompt.trim()) {
+    systemPrompt = customSystemPrompt
+      .replace(/\{\{studentName\}\}/gi, studentName)
+      .replace(/\{\{pronouns\}\}/gi, pronouns)
+      .replace(/\{\{pronounInstruction\}\}/gi, pronounInstruction)
+      .replace(/\{\{charLimit\}\}/gi, String(charLimit))
+      .replace(/\{\{subjectName\}\}/gi, subjectName)
+  } else {
+    systemPrompt = getDefaultElementarySystemPrompt({
+      charLimit,
+      studentName,
+      pronounInstruction,
+      subjectName,
+      isLearningSkills
+    })
+  }
+
+  if (customDirectives && customDirectives.trim()) {
+    systemPrompt += `\n\nCUSTOM TEACHER DIRECTIVES:\n${customDirectives.trim()}`
+  }
+
+  llmState.status = 'generating'
+  llmState.progressText = 'Polishing comment locally...'
+
+  try {
+    let rawOutput = ''
+    const maxTokens = Math.min(750, Math.max(220, Math.ceil(charLimit / 3.0)))
+
+    if (llmState.activeModelKey === 'chrome-nano' && activeNanoSession) {
+      const prompt = `${systemPrompt}\n\nDraft comment to polish:\n${exampleDraft}\n\n${examplePolished}\n\nDraft comment to polish:\n${draftComment.trim()}\n\n`
+      rawOutput = await activeNanoSession.prompt(prompt)
+    } else if (activeWebLlmEngine) {
+      const messages = [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: `Draft comment to polish:\n${exampleDraft}` },
+        { role: 'assistant', content: examplePolished },
+        { role: 'user', content: `Draft comment to polish:\n${draftComment.trim()}` }
+      ]
+      const completion = await activeWebLlmEngine.chat.completions.create({
+        messages,
+        temperature: effectiveTemp,
+        max_tokens: maxTokens
+      })
+      rawOutput = completion.choices[0]?.message?.content || ''
+    } else {
+      throw new Error('No active local engine available.')
+    }
+
+    let cleanText = rawOutput.trim()
+    cleanText = cleanText.replace(/^```[a-z]*\s*/i, '').replace(/\s*```$/i, '')
+    cleanText = cleanText
+      .replace(/^[\s\S]*?(?:here(?:'s|\s+is)\s+(?:the\s+)?(?:polished|revised|updated|refined)?\s*(?:comment|feedback)?[:.]?\s*)/i, '')
+      .replace(/^[\s\S]*?(?:polished\s+comment|refined\s+comment|revised\s+comment)[:.]?\s*/i, '')
+      .trim()
+    cleanText = cleanText.replace(/^["'“`]+|["'”`]+$/g, '').trim()
+
+    // Post-processing cleanup
+    cleanText = cleanText.replace(/\bI recommend that (they|he|she)\b/gi, '$1 is encouraged to')
+    cleanText = cleanText.replace(/\bI recommend\s+/gi, '')
+    cleanText = cleanText.replace(/\bis not as strong as it could be\b/gi, 'continues to develop with guided practice')
+    cleanText = cleanText.replace(/\bstruggles with\b/gi, 'is working to strengthen')
+
+    let isOver = cleanText.length > charLimit
+    if (isOver && cleanText.length > charLimit + 20) {
+      const sub = cleanText.slice(0, charLimit)
+      const lastPeriod = Math.max(sub.lastIndexOf('. '), sub.lastIndexOf('.'))
+      if (lastPeriod > 100) {
+        cleanText = sub.slice(0, lastPeriod + 1).trim()
+        isOver = cleanText.length > charLimit
+      }
+    }
+
+    llmState.status = 'ready'
+    llmState.progressText = 'Ready'
+
+    return {
+      text: cleanText,
+      originalText: draftComment,
+      charCount: cleanText.length,
+      isOverLimit: isOver,
+      modelUsed: llmState.activeModelName || llmState.activeModelKey
+    }
+  } catch (err) {
+    llmState.status = 'ready'
+    llmState.progressText = 'Ready'
+    console.error('Error during local LLM elementary polish:', err)
     throw err
   }
 }
