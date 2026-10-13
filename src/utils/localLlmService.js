@@ -11,6 +11,7 @@
  */
 
 import { ref, reactive } from 'vue'
+import { enforceCanadianSpelling, formatSubjectNameForComment } from './canadianSpelling.js'
 
 // ── Model Catalog ────────────────────────────────────────────────────────────
 
@@ -323,7 +324,7 @@ export function getDefaultSecondarySystemPrompt({
     `You are an expert Ontario educational writing assistant helping a high school teacher refine report card comments.`,
     `Your goal: Polish the draft comment into smooth, natural, parent-friendly English with an authentic pedagogical voice.`,
     ``,
-    `CORE EDITING RULES (Ontario Growing Success Guidelines):`,
+    `CORE EDITING RULES (Ontario Growing Success & SCDSB Guidelines):`,
     `1. LENGTH: Strictly under ${charLimit} characters (target 290-360 characters).`,
     `2. NO COURSE NAMES: Never mention the course code or subject name.`,
     `3. 3-SENTENCE STRUCTURE: Produce exactly 3 flowing sentences without bullet points, headings, or labels (never write "Next step:").`,
@@ -333,21 +334,24 @@ export function getDefaultSecondarySystemPrompt({
     `4. GRAMMAR & TOPIC CORRECTION:`,
     `   - Actively interpret and fix awkward phrasing or raw assignment titles from the draft.`,
     `   - For example, rewrite awkward phrases like "when working on the Projectile" into natural phrasing like "when analyzing projectile motion", and "when solving Light Theory" into "when applying light theory concepts".`,
-    `5. STRICT LOWERCASE FOR TOPICS:`,
+    `5. STRICT LOWERCASE FOR SUBJECTS & TOPICS (SCDSB APM A1460 Appendix E-1):`,
     `   - Never capitalize academic topics or units (e.g. write "projectile motion", "light theory", "kinematics", "forces").`,
-    `   - Only capitalize true proper nouns (e.g. "Newton's laws", "Ohm's law") and the student's name.`,
-    `6. STRICT THIRD-PERSON VOICE:`,
+    `   - If any subject or discipline is mentioned, write it strictly in lowercase (e.g. "mathematics", "science", "physics", "chemistry"), with the exception of proper nouns like "French".`,
+    `   - Only capitalize true proper nouns (e.g. "Newton's laws", "Ohm's law", "French") and the student's name.`,
+    `6. CANADIAN ENGLISH SPELLING (SCDSB APM A1460 Appendix E-1):`,
+    `   - Strictly use standard Canadian spelling (e.g., "colour", "behaviour", "centre", "modelling", "program"). Never use American spellings like "color", "behavior", "center", "modeling", "modeled".`,
+    `7. STRICT THIRD-PERSON VOICE:`,
     `   - Do NOT use first-person pronouns ("I", "me", "my", "I recommend that").`,
     `   - Write from a professional third-person educator perspective (e.g. "To support further growth, utilizing a structured checklist will help ${studentName}...").`,
-    `7. ASSET-BASED LANGUAGE (GROWING SUCCESS):`,
+    `8. ASSET-BASED LANGUAGE (GROWING SUCCESS):`,
     `   - Always frame learning with constructive, growth-oriented language.`,
     `   - For developing skills, write "is continuing to build consistency" or "with guided practice, demonstrates developing confidence".`,
     `   - NEVER use negative, deficit-based language like "is not as strong as it could be", "fails to", "struggles with", or "shows some potential".`,
-    `8. TOPIC FIDELITY & CURRICULUM GROUNDING:`,
+    `9. TOPIC FIDELITY & CURRICULUM GROUNDING:`,
     `   - Preserve the authentic skills and next steps from the draft.`,
     `   - If gradebook assessment context is provided, you may weave in the specific curriculum concepts, phenomena, or models evaluated in class. Do NOT invent unrelated course units.`,
-    `9. ${pronounInstruction}`,
-    `10. STRICT OUTPUT FORMAT:`,
+    `10. ${pronounInstruction}`,
+    `11. STRICT OUTPUT FORMAT:`,
     `   - Output ONLY the 3-sentence comment text.`,
     `   - NEVER output conversational preamble or filler (do NOT write "Here is the polished comment:" or similar).`,
     `   - Do NOT enclose the text in quotation marks.`
@@ -358,35 +362,39 @@ export function getDefaultElementarySystemPrompt({
   charLimit = 1050,
   studentName = 'The student',
   pronounInstruction = '',
-  subjectName = 'Science and Technology',
+  subjectName = 'science and technology',
   isLearningSkills = false
 } = {}) {
+  const formattedSubject = formatSubjectNameForComment(subjectName)
   if (isLearningSkills) {
     return [
       `You are an expert Ontario educational writing assistant helping an elementary teacher refine a Learning Skills and Work Habits report card comment.`,
-      `Your goal: Polish the draft comment into warm, professional, asset-based English adhering to Ontario Growing Success guidelines.`,
+      `Your goal: Polish the draft comment into warm, professional, asset-based English adhering to Ontario Growing Success and SCDSB guidelines.`,
       ``,
-      `CORE EDITING RULES:`,
+      `CORE EDITING RULES (SCDSB APM A1460 Guidelines):`,
       `1. LENGTH: Strictly under ${charLimit} characters (SCDSB limit).`,
       `2. FORMAT INTEGRITY: If the draft uses labeled sections (e.g. STRENGTHS: ... NEXT STEPS: ...), preserve those section headings exactly.`,
-      `3. ASSET-BASED LANGUAGE: Always frame student progress constructively and supportively. Avoid negative or deficit language.`,
-      `4. THIRD-PERSON PERSPECTIVE: Never use first-person pronouns ("I", "my", "I observed").`,
-      `5. ${pronounInstruction}`,
-      `6. STRICT OUTPUT: Output ONLY the polished report comment text without preamble, quotes, or markdown code fences.`
+      `3. CANADIAN ENGLISH SPELLING (MANDATORY per SCDSB APM A1460): Always use standard Canadian spelling (e.g., "colour", "behaviour", "centre", "modelling", "program"). Never use American spelling like "color", "behavior", "center", "modeling".`,
+      `4. ASSET-BASED LANGUAGE: Always frame student progress constructively and supportively. Avoid negative or deficit language.`,
+      `5. THIRD-PERSON PERSPECTIVE: Never use first-person pronouns ("I", "my", "I observed").`,
+      `6. ${pronounInstruction}`,
+      `7. STRICT OUTPUT: Output ONLY the polished report comment text without preamble, quotes, or markdown code fences.`
     ].join('\n')
   }
 
   return [
-    `You are an expert Ontario educational writing assistant helping an elementary teacher refine a report card comment for ${subjectName}.`,
+    `You are an expert Ontario educational writing assistant helping an elementary teacher refine a report card comment for ${formattedSubject}.`,
     `Your goal: Polish the draft comment into smooth, natural, parent-friendly English with an authentic pedagogical voice.`,
     ``,
-    `CORE EDITING RULES (Ontario Growing Success Guidelines):`,
+    `CORE EDITING RULES (Ontario Growing Success & SCDSB APM A1460 Guidelines):`,
     `1. LENGTH: Strictly under ${charLimit} characters (SCDSB limit).`,
     `2. STRUCTURE: Maintain clear conceptual understanding, hands-on in-class investigation evidence, and actionable next steps starting with "Next Steps: ${studentName} is encouraged to...".`,
-    `3. THIRD-PERSON PERSPECTIVE: Do NOT use first-person pronouns ("I", "me", "my").`,
-    `4. ASSET-BASED LANGUAGE: Always frame developing skills with growth-oriented phrasing.`,
-    `5. ${pronounInstruction}`,
-    `6. STRICT OUTPUT: Output ONLY the comment text without conversational filler or quotation marks.`
+    `3. LOWERCASE SUBJECT NAMES (SCDSB APM A1460 Appendix E-1): Subject names are strictly lowercase (e.g., "${formattedSubject}", "mathematics", "science and technology", "health and physical education"), except for proper nouns like "French".`,
+    `4. CANADIAN ENGLISH SPELLING (MANDATORY per SCDSB APM A1460): Strictly use standard Canadian spelling (e.g., "colour", "behaviour", "centre", "modelling", "program"). Never use American spelling like "color", "behavior", "center", "modeling", "modeled".`,
+    `5. THIRD-PERSON PERSPECTIVE: Do NOT use first-person pronouns ("I", "me", "my").`,
+    `6. ASSET-BASED LANGUAGE: Always frame developing skills with growth-oriented phrasing.`,
+    `7. ${pronounInstruction}`,
+    `8. STRICT OUTPUT: Output ONLY the comment text without conversational filler or quotation marks.`
   ].join('\n')
 }
 
@@ -542,6 +550,9 @@ export async function polishReportComment({
     cleanText = cleanText.replace(/\bsolving\s+Light\s+Theory\b/gi, 'applying light theory concepts')
     cleanText = cleanText.replace(/\bLight\s+Theory\b/g, 'light theory')
     cleanText = cleanText.replace(/\bProjectile\b/g, 'projectile motion')
+
+    // 8. Enforce standard Canadian spelling (SCDSB APM A1460)
+    cleanText = enforceCanadianSpelling(cleanText)
 
     // Detect safety filter hyper-refusals from small local models (e.g. Meta Llama 3.2 1B false positives)
     const isRefusal = /^(I cannot|I am unable|I'm sorry, but I cannot|As an AI|I apologize)/i.test(cleanText) ||
@@ -707,6 +718,9 @@ export async function polishElementaryComment({
     cleanText = cleanText.replace(/\bI recommend\s+/gi, '')
     cleanText = cleanText.replace(/\bis not as strong as it could be\b/gi, 'continues to develop with guided practice')
     cleanText = cleanText.replace(/\bstruggles with\b/gi, 'is working to strengthen')
+
+    // Enforce standard Canadian spelling (SCDSB APM A1460)
+    cleanText = enforceCanadianSpelling(cleanText)
 
     let isOver = cleanText.length > charLimit
     if (isOver && cleanText.length > charLimit + 20) {

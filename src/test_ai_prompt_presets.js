@@ -69,7 +69,7 @@ const elemSciencePrompt = getDefaultElementarySystemPrompt({
   subjectName: 'Science and Technology',
   isLearningSkills: false
 })
-assert(elemSciencePrompt.includes('Science and Technology'), 'Elementary prompt includes subject')
+assert(elemSciencePrompt.toLowerCase().includes('science and technology'), 'Elementary prompt includes subject')
 assert(elemSciencePrompt.includes('1050 characters'), 'Elementary prompt includes 1050 limit')
 
 const elemSkillsPrompt = getDefaultElementarySystemPrompt({

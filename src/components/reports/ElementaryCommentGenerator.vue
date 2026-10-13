@@ -531,7 +531,8 @@ import { GRADE_8_SCIENCE_STRANDS, resolveScienceStrand } from '../../data/commen
 import {
   generateElementaryScienceComment,
   generateElementarySubjectComment,
-  generateLearningSkillsComment
+  generateLearningSkillsComment,
+  formatSubjectNameForComment
 } from '../../utils/elementaryCommentGenerator.js'
 import { getAchievementLevel } from '../../utils/commentGenerator.js'
 import {
@@ -1092,7 +1093,7 @@ async function handleAiPolishClick() {
       draftComment: currentCommentText.value,
       student: activeStudent.value,
       charLimit: activeCharLimit.value,
-      subjectName: activeAreaTitle.value,
+      subjectName: formatSubjectNameForComment(activeAreaTitle.value),
       isLearningSkills: activeTab.value === 'learning_skills',
       pronounMode: pronounMode.value,
       temperature: currentTemperature.value,

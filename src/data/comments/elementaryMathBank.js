@@ -124,7 +124,7 @@ export const GRADE_8_MATH_STRANDS = {
           '{name} wrote and executed sophisticated code in Scratch, utilizing variables, nested loops, and conditional statements to model mathematical relationships.'
         ],
         nextSteps: [
-          '{name} is encouraged to explore non-linear patterns and investigate how algebraic modeling is utilized in scientific simulation and coding.',
+          '{name} is encouraged to explore non-linear patterns and investigate how algebraic modelling is utilized in scientific simulation and coding.',
           '{name} should continue verifying equations by graphing systems of linear equations.'
         ]
       },
@@ -168,7 +168,7 @@ export const GRADE_8_MATH_STRANDS = {
         ],
         nextSteps: [
           '{name} is encouraged to practice using visual balance models and tape diagrams to understand inverse operations when solving equations.',
-          '{name} is encouraged to practice adding and subtracting monomials with integers using color-coded algebra tiles.',
+          '{name} is encouraged to practice adding and subtracting monomials with integers using colour-coded algebra tiles.',
           '{name} would benefit from using table of values charts to identify constant rates of change.'
         ]
       },
@@ -211,7 +211,7 @@ export const GRADE_8_MATH_STRANDS = {
           '{name} compares experimental and theoretical probabilities of multiple dependent events using sophisticated sample space models.'
         ],
         nextSteps: [
-          '{name} is encouraged to explore statistical modeling using real-world public data sets and digital spreadsheets.',
+          '{name} is encouraged to explore statistical modelling using real-world public data sets and digital spreadsheets.',
           '{name} should continue examining how statistical data is interpreted across public policy and scientific research.'
         ]
       },

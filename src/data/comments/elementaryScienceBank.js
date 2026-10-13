@@ -75,7 +75,7 @@ export const GRADE_8_SCIENCE_STRANDS = {
         ],
         nextSteps: [
           '{name} is encouraged to consider how deeper knowledge of cellular functions can be applied to address modern healthcare and environmental challenges.',
-          '{name} should continue adding detailed annotations and color-coding to scientific drawings to illustrate organelle structures with maximum clarity.'
+          '{name} should continue adding detailed annotations and colour-coding to scientific drawings to illustrate organelle structures with maximum clarity.'
         ]
       },
       '3': {
@@ -93,7 +93,7 @@ export const GRADE_8_SCIENCE_STRANDS = {
         ],
         nextSteps: [
           '{name} is encouraged to consider how knowledge of cells can improve the quality of medical care.',
-          '{name} is encouraged to use color, texture, and clear labels to enhance {possessive} scientific drawings.',
+          '{name} is encouraged to use colour, texture, and clear labels to enhance {possessive} scientific drawings.',
           '{name} should continue practicing the use of unit vocabulary (e.g., organelle, diffusion, cytoplasm) during class discussions.'
         ]
       },
@@ -412,7 +412,7 @@ export const GRADE_8_SCIENCE_STRANDS = {
       'A2.1': 'write and execute code in investigations and when modelling concepts'
     },
     inClassInvestigations: [
-      'investigating factors affecting local watersheds and modeling changes in the groundwater table',
+      'investigating factors affecting local watersheds and modelling changes in the groundwater table',
       'testing water quality indicators (pH, turbidity, dissolved oxygen) using testing kits',
       'writing and executing code in Scratch or micro:bit to simulate the water cycle and municipal water treatment',
       'mapping local watershed boundaries and analyzing runoff patterns from agricultural and urban areas'
@@ -430,7 +430,7 @@ export const GRADE_8_SCIENCE_STRANDS = {
         ],
         investigationStems: [
           'In STEM investigations, {subjectLower} wrote and executed sophisticated code to model water filtration processes, incorporating multi-variable conditional logic.',
-          '{name} accurately analyzed water quality data and modeled how watershed runoff impacts municipal reservoirs.'
+          '{name} accurately analyzed water quality data and modelled how watershed runoff impacts municipal reservoirs.'
         ],
         communicationStems: [
           '{name} thoroughly evaluated {project}, presenting compelling community sustainability proposals backed by empirical data.',

@@ -18,6 +18,9 @@ import { GRADE_8_LANGUAGE_STRANDS, resolveLanguageStrand } from '../data/comment
 import { GRADE_8_HISTORY_STRANDS, resolveHistoryStrand } from '../data/comments/elementaryHistoryBank.js'
 import { GRADE_8_GEOGRAPHY_STRANDS, resolveGeographyStrand } from '../data/comments/elementaryGeographyBank.js'
 import { LEARNING_SKILLS_BANK, LEARNING_SKILL_KEYS } from '../data/comments/learningSkillsCommentBank.js'
+import { enforceCanadianSpelling, formatSubjectNameForComment } from './canadianSpelling.js'
+
+export { formatSubjectNameForComment, enforceCanadianSpelling }
 
 // ─── Helper Token Inserter ────────────────────────────────────────────────────
 
@@ -116,6 +119,8 @@ export function generateElementaryScienceComment({
   if (fullComment.length > charLimit) {
     fullComment = [conceptSentence, investSentence, nextStepSentence].filter(Boolean).join(' ')
   }
+
+  fullComment = enforceCanadianSpelling(fullComment)
 
   return {
     text: fullComment,
@@ -216,6 +221,8 @@ export function generateElementaryMathComment({
     }
   }
 
+  fullComment = enforceCanadianSpelling(fullComment)
+
   return {
     text: fullComment,
     charCount: fullComment.length,
@@ -314,6 +321,8 @@ export function generateElementaryLanguageComment({
     }
   }
 
+  fullComment = enforceCanadianSpelling(fullComment)
+
   return {
     text: fullComment,
     charCount: fullComment.length,
@@ -404,6 +413,8 @@ export function generateElementaryHistoryComment({
     fullComment = [conceptSentence, nextStepSentence].filter(Boolean).join(' ')
   }
 
+  fullComment = enforceCanadianSpelling(fullComment)
+
   return {
     text: fullComment,
     charCount: fullComment.length,
@@ -493,6 +504,8 @@ export function generateElementaryGeographyComment({
   if (fullComment.length > charLimit) {
     fullComment = [conceptSentence, nextStepSentence].filter(Boolean).join(' ')
   }
+
+  fullComment = enforceCanadianSpelling(fullComment)
 
   return {
     text: fullComment,
@@ -587,7 +600,7 @@ export function generateElementarySubjectComment({
   const tokens = getPronounTokens(student, pronounMode)
   const seed = Math.abs(typeof variantSeed === 'number' ? variantSeed : 0)
 
-  const subjectName = subject.name || 'the curriculum'
+  const subjectName = formatSubjectNameForComment(subject.name || subject.title || 'the curriculum')
 
   // Extract SBAR strengths and growth expectations if available
   const sbarList = Array.isArray(gradeData.sbarExpectations) ? gradeData.sbarExpectations : []
@@ -652,7 +665,7 @@ export function generateElementarySubjectComment({
     ],
     '2': [
       `With teacher prompting and guided organizers, ${tokens.subjectLower} follows structured procedures to complete learning tasks.`,
-      `${tokens.subject} benefits from small-group modeling and the use of classroom anchor charts to support task completion.`
+      `${tokens.subject} benefits from small-group modelling and the use of classroom anchor charts to support task completion.`
     ],
     '1': [
       `With ongoing teacher assistance and visual templates, ${tokens.subjectLower} participates in guided practice and foundational exercises.`,
@@ -698,6 +711,8 @@ export function generateElementarySubjectComment({
   if (fullComment.length > charLimit) {
     fullComment = [sentence1, sentence3].join(' ')
   }
+
+  fullComment = enforceCanadianSpelling(fullComment)
 
   return {
     text: fullComment,
@@ -813,6 +828,8 @@ export function generateLearningSkillsComment({
     // Format B: Flowing narrative without labels
     fullComment = [...strengthParagraphs, ...nextStepParagraphs].join(' ')
   }
+
+  fullComment = enforceCanadianSpelling(fullComment)
 
   return {
     text: fullComment,

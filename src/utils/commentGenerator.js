@@ -16,6 +16,7 @@
  */
 
 import { mapAssessmentToCompetency, extractCompetenciesFromAssessment } from './curriculumCompetencies.js'
+import { enforceCanadianSpelling } from './canadianSpelling.js'
 
 // ─── Achievement Level Descriptors (Growing Success) ─────────────────────────
 
@@ -537,7 +538,8 @@ const NON_ACADEMIC_CATEGORIES = new Set([
   'admin',
   'checklist',
   'attendance & participation',
-  'behavior'
+  'behavior',
+  'behaviour'
 ])
 
 /**
@@ -822,6 +824,8 @@ export function generateReportComment({
       fullComment = fitted
     }
   }
+
+  fullComment = enforceCanadianSpelling(fullComment)
 
   const charCount = fullComment.length
   const wordCount = fullComment.trim().split(/\s+/).filter(Boolean).length
