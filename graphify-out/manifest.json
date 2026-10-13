@@ -305,8 +305,8 @@
     "semantic_hash": ""
   },
   "src/db/settingsService.js": {
-    "mtime": 1791234376.1770544,
-    "ast_hash": "da0cd5022d51e875c986dde1488e47e2",
+    "mtime": 1791853015.8014517,
+    "ast_hash": "239f8bc75ac1a030b61555bf405132e8",
     "semantic_hash": ""
   },
   "src/main.js": {
@@ -345,8 +345,8 @@
     "semantic_hash": ""
   },
   "src/views/Reports.vue": {
-    "mtime": 1791686946.7872367,
-    "ast_hash": "f366a72d7add254af6f7fde3f1265910",
+    "mtime": 1791852264.184339,
+    "ast_hash": "d169c5668992b0f9756fdf00aa5d88b6",
     "semantic_hash": ""
   },
   "src/views/ScanStation.vue": {
@@ -1650,13 +1650,13 @@
     "semantic_hash": ""
   },
   "src/components/reports/CommentLlmSettingsModal.vue": {
-    "mtime": 1791673582.0063753,
-    "ast_hash": "647142ac6e7ef059f0c0f796e96c80bc",
+    "mtime": 1791853200.9871979,
+    "ast_hash": "bf6177c52bc77c1f7025b2eb7bc58b0a",
     "semantic_hash": ""
   },
   "src/components/reports/ReportsCommentGenerator.vue": {
-    "mtime": 1791715553.3611119,
-    "ast_hash": "8cd917b47e261a350d9705fc4c14d874",
+    "mtime": 1791853833.4708445,
+    "ast_hash": "fa4ae4c1a57a3a01d6b7327ecbb5895e",
     "semantic_hash": ""
   },
   "src/test_comment_generator.js": {
@@ -1675,13 +1675,73 @@
     "semantic_hash": ""
   },
   "src/utils/localLlmService.js": {
-    "mtime": 1791715405.1894722,
-    "ast_hash": "9eee80d6d83bb722a63021dd7480b54d",
+    "mtime": 1791853080.572495,
+    "ast_hash": "0770d874f8e7d7708b25d1e7b4aa1555",
     "semantic_hash": ""
   },
   "src/utils/curriculumCompetencies.js": {
     "mtime": 1791689530.7838604,
     "ast_hash": "529d481ba21dad26bb490562aa0988aa",
+    "semantic_hash": ""
+  },
+  "src/components/reports/ElementaryCommentGenerator.vue": {
+    "mtime": 1791853387.9926953,
+    "ast_hash": "65e0c315f7d60f10b176b46c336fc4ba",
+    "semantic_hash": ""
+  },
+  "src/composables/useAiPrompts.js": {
+    "mtime": 1791853100.0599916,
+    "ast_hash": "ae5826e604bf71bf9073f6e8114587b1",
+    "semantic_hash": ""
+  },
+  "src/data/comments/elementaryGeographyBank.js": {
+    "mtime": 1791852616.4369154,
+    "ast_hash": "fa403f78fb0bf2511f6532493127ec64",
+    "semantic_hash": ""
+  },
+  "src/data/comments/elementaryHistoryBank.js": {
+    "mtime": 1791852596.8207624,
+    "ast_hash": "868c815be5c74baaf12db805a24f332a",
+    "semantic_hash": ""
+  },
+  "src/data/comments/elementaryLanguageBank.js": {
+    "mtime": 1791852566.7195275,
+    "ast_hash": "ab45e137041416d326aa918629711f66",
+    "semantic_hash": ""
+  },
+  "src/data/comments/elementaryMathBank.js": {
+    "mtime": 1791852520.070916,
+    "ast_hash": "da1a642df70c0d0bdd5a81a8c8afea19",
+    "semantic_hash": ""
+  },
+  "src/data/comments/elementaryScienceBank.js": {
+    "mtime": 1791852105.4237595,
+    "ast_hash": "3bcec7843c25638e208c597c5f6780ff",
+    "semantic_hash": ""
+  },
+  "src/data/comments/learningSkillsCommentBank.js": {
+    "mtime": 1791852038.608778,
+    "ast_hash": "e403de9826b7d6b9d6404edffe6f3176",
+    "semantic_hash": ""
+  },
+  "src/data/comments/scdsbCharacterLimits.js": {
+    "mtime": 1791852914.324071,
+    "ast_hash": "6c1872dbd6312b81060df88bba8acee8",
+    "semantic_hash": ""
+  },
+  "src/test_ai_prompt_presets.js": {
+    "mtime": 1791853416.027572,
+    "ast_hash": "e7d0b11ca98619ab2b3c94ecd5c1dbdb",
+    "semantic_hash": ""
+  },
+  "src/test_elementary_comment_generator.js": {
+    "mtime": 1791852894.1973023,
+    "ast_hash": "8ad470e0839be1bdd92d167a28d35c0e",
+    "semantic_hash": ""
+  },
+  "src/utils/elementaryCommentGenerator.js": {
+    "mtime": 1791852863.9986122,
+    "ast_hash": "8dbcd05e66f497df383388ae065260b9",
     "semantic_hash": ""
   }
 }
