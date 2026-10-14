@@ -118,6 +118,60 @@ export function getCleanMissingAssessments(studentData = {}) {
 }
 
 /**
+ * Formats the out-of-class line for emails (plain-text or HTML).
+ * Translates minutes into instructional time lost (equivalent class periods)
+ * and extended departure patterns without peer ranking.
+ *
+ * @param {Object} wash - { trips, minutes, avgMinutes, equivClasses, periodDuration }
+ * @param {boolean} [isHtml=false]
+ * @returns {string}
+ */
+export function formatOutOfClassEmailLine(wash = {}, isHtml = false) {
+  const trips = Math.round(Number(String(wash.trips ?? wash.count ?? 0).replace(/[^0-9.]/g, '')) || 0)
+  const minutes = Math.round(Number(String(wash.minutes ?? 0).replace(/[^0-9.]/g, '')) || 0)
+  const periodDuration = Number(wash.periodDuration || 75)
+  const avgMins = wash.avgMinutes !== undefined 
+    ? Math.round(Number(wash.avgMinutes)) 
+    : (trips > 0 ? Math.round(minutes / trips) : 0)
+
+  const tripsStr = `${trips} ${trips === 1 ? 'departure' : 'departures'}`
+  if (trips === 0) {
+    return isHtml ? `Out-of-Class: <strong>0 departures</strong>` : `• Out-of-Class: 0 departures`
+  }
+
+  if (minutes <= 0) {
+    return isHtml ? `Out-of-Class: <strong>${tripsStr}</strong>` : `• Out-of-Class: ${tripsStr}`
+  }
+
+  // Calculate equivalent full class periods lost
+  const equivRaw = (minutes / periodDuration).toFixed(1)
+  const equivClasses = wash.equivClasses !== undefined ? String(wash.equivClasses) : equivRaw
+
+  const contextParts = []
+  if (minutes >= 35) {
+    const periodNoun = (equivClasses === '1.0' || equivClasses === '1') ? 'period' : 'periods'
+    contextParts.push(`≈ ${equivClasses} full class ${periodNoun}`)
+  }
+  if (trips > 1 && avgMins >= 10) {
+    contextParts.push(`avg ${avgMins} mins per trip`)
+  }
+
+  if (contextParts.length > 0) {
+    const details = contextParts.join(', ')
+    if (isHtml) {
+      return `Out-of-Class: <strong>${tripsStr}</strong> · ${minutes} mins missed instruction <span style="color:#64748b;">(${details})</span>`
+    }
+    return `• Out-of-Class: ${tripsStr} · ${minutes} mins missed instruction (${details})`
+  }
+
+  // Standard brief trips
+  if (isHtml) {
+    return `Out-of-Class: <strong>${tripsStr}</strong> (${minutes} mins missed instruction time)`
+  }
+  return `• Out-of-Class: ${tripsStr} (${minutes} mins missed instruction time)`
+}
+
+/**
  * Assembles a mobile-safe plain-text email body according to the 36-character card layout.
  *
  * @param {Object} studentData
@@ -291,12 +345,7 @@ export function generateMobileSafeEmailBody(studentData = {}, options = {}) {
     }
 
     if (includeWashroom) {
-      const trips = wash.trips ?? wash.count ?? 0
-      let washLine = `• Out-of-Class: ${trips} ${trips === 1 ? 'departure' : 'departures'}`
-      if (wash.minutes && Number(wash.minutes) > 0) {
-        washLine += ` (${wash.minutes} mins missed instruction time)`
-      }
-      attendanceLines.push(washLine)
+      attendanceLines.push(formatOutOfClassEmailLine(wash, false))
     }
 
     if (includeAttendance) {
@@ -615,7 +664,7 @@ export function generateRichEmailHtml(studentData = {}, options = {}) {
           </div>` : ''}
           ${includeWashroom ? `
           <div style="font-size:12pt; color:#475569; margin-bottom:5px;">
-            Out-of-Class: <strong>${wash.trips ?? wash.count ?? 0} departures</strong> ${wash.minutes ? `(${wash.minutes} mins)` : ''}
+            ${formatOutOfClassEmailLine(wash, true)}
           </div>` : ''}
           ${includeAttendance ? `
           <div style="font-size:11pt; color:#64748b; font-style:italic; margin-top:6px; line-height:1.4;">

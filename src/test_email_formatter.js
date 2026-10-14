@@ -6,6 +6,7 @@ import {
   generateMobileSafeEmail,
   generateRichEmailHtml,
   copyRichEmailToClipboard,
+  formatOutOfClassEmailLine,
   DIVIDER_DOUBLE,
   DIVIDER_SINGLE
 } from './utils/emailFormatter.js'
@@ -407,6 +408,95 @@ assert.ok(profileHtml.includes('Department Head - Science'), 'HTML footer contai
 assert.ok(profileHtml.includes('jlee@school.org'), 'HTML footer contains email')
 assert.ok(profileHtml.includes('My working hours and your working hours may be different.'), 'HTML footer contains working hours disclaimer')
 console.log('✓ Teacher Profile and working hours statement render cleanly in plain-text and HTML\n')
+
+// ─── TEST 10: Out-of-Class Instructional Impact Formatting ────────
+console.log('TEST 10: Out-of-Class Instructional Impact Formatting (No Peer Ranking)')
+
+// 10A: Elevated departures (8 trips, 140m -> equivalent full class periods & avg duration)
+const elevatedData = {
+  name: 'Harry Hallway',
+  course: 'Grade 10 Science',
+  teacher: 'Ms. Vance',
+  overallGrade: 65,
+  attendance: { rate: 91, absences: 1, lates: 2 },
+  outOfClass: { trips: 8, minutes: 140, avgMinutes: 18, periodDuration: 75 }
+}
+
+const elevatedBody = generateMobileSafeEmailBody(elevatedData)
+assert.ok(
+  elevatedBody.includes('• Out-of-Class: 8 departures · 140 mins missed instruction (≈ 1.9 full class periods, avg 18 mins per trip)'),
+  'Elevated departures include equivalent class periods and average trip length in plain text'
+)
+
+const elevatedHtml = generateRichEmailHtml(elevatedData)
+assert.ok(
+  elevatedHtml.includes('Out-of-Class: <strong>8 departures</strong> · 140 mins missed instruction'),
+  'Elevated departures bold count and minutes in HTML'
+)
+assert.ok(
+  elevatedHtml.includes('(≈ 1.9 full class periods, avg 18 mins per trip)'),
+  'Elevated departures include context note in HTML'
+)
+
+// 10B: Extended duration with moderate total time (2 trips, 30m, avg 15m)
+const extendedTripData = {
+  ...elevatedData,
+  outOfClass: { trips: 2, minutes: 30, avgMinutes: 15 }
+}
+const extendedBody = generateMobileSafeEmailBody(extendedTripData)
+assert.ok(
+  extendedBody.includes('• Out-of-Class: 2 departures · 30 mins missed instruction (avg 15 mins per trip)'),
+  'Extended trips without high total time display avg trip duration'
+)
+
+// 10C: Single extended departure (1 trip, 50m)
+const singleLongData = {
+  ...elevatedData,
+  outOfClass: { trips: 1, minutes: 50 }
+}
+const singleLongBody = generateMobileSafeEmailBody(singleLongData)
+assert.ok(
+  singleLongBody.includes('• Out-of-Class: 1 departure · 50 mins missed instruction (≈ 0.7 full class periods)'),
+  'Single long departure uses singular departure and displays class period fraction'
+)
+
+// 10D: Standard brief departures (2 trips, 14m)
+const briefData = {
+  ...elevatedData,
+  outOfClass: { trips: 2, minutes: 14 }
+}
+const briefBody = generateMobileSafeEmailBody(briefData)
+assert.ok(
+  briefBody.includes('• Out-of-Class: 2 departures (14 mins missed instruction time)'),
+  'Brief standard departures preserve non-alarmist phrasing'
+)
+
+// 10E: Zero departures
+const zeroData = {
+  ...elevatedData,
+  outOfClass: { trips: 0, minutes: 0 }
+}
+const zeroBody = generateMobileSafeEmailBody(zeroData)
+assert.ok(
+  zeroBody.includes('• Out-of-Class: 0 departures'),
+  'Zero departures formats cleanly'
+)
+
+// 10F: Direct unit tests of formatOutOfClassEmailLine
+assert.strictEqual(
+  formatOutOfClassEmailLine({ trips: 1, minutes: 75, periodDuration: 75 }),
+  '• Out-of-Class: 1 departure · 75 mins missed instruction (≈ 1.0 full class period)'
+)
+assert.strictEqual(
+  formatOutOfClassEmailLine({ trips: 4, minutes: 60, avgMinutes: 15, periodDuration: 75 }),
+  '• Out-of-Class: 4 departures · 60 mins missed instruction (≈ 0.8 full class periods, avg 15 mins per trip)'
+)
+assert.strictEqual(
+  formatOutOfClassEmailLine({ trips: 0 }),
+  '• Out-of-Class: 0 departures'
+)
+
+console.log('✓ Out-of-class instructional impact formatting passes all tests cleanly\n')
 
 console.log('=================================================================')
 console.log('🎉 ALL EMAIL FORMATTER & UNICODE TESTS PASSED!')

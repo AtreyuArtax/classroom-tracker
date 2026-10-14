@@ -460,8 +460,8 @@
     "semantic_hash": ""
   },
   "src/components/dossier/Student360EmailModal.vue": {
-    "mtime": 1791247779.833942,
-    "ast_hash": "78a4eed37655485794c24b0a51fbfcf1",
+    "mtime": 1792002940.6273553,
+    "ast_hash": "8b698b6fa5837e8bfc9b0bd203dec8a6",
     "semantic_hash": ""
   },
   "src/components/dossier/Student360HistoryTab.vue": {
@@ -1500,13 +1500,13 @@
     "semantic_hash": ""
   },
   "src/test_email_formatter.js": {
-    "mtime": 1791117957.7270608,
-    "ast_hash": "07cc69d50b7e36451373255291d5438f",
+    "mtime": 1792002970.0258965,
+    "ast_hash": "cb8b4b2e09b022b67a60d4b3aa78f618",
     "semantic_hash": ""
   },
   "src/utils/emailFormatter.js": {
-    "mtime": 1791116072.6882877,
-    "ast_hash": "fb6d3ff023c17480914a2f2a49c7dd69",
+    "mtime": 1792002930.0783026,
+    "ast_hash": "acc24de523bfee54219937f297e9c5bd",
     "semantic_hash": ""
   },
   "src/test_category_utils.js": {

@@ -4140,7 +4140,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dossier_dossierevidencemix",
-      "community": 205,
+      "community": 14,
       "norm_label": "dossierevidencemix.vue"
     },
     {
@@ -4150,7 +4150,7 @@
       "source_location": "L57",
       "_origin": "ast",
       "id": "dossier_dossierevidencemix_props",
-      "community": 205,
+      "community": 14,
       "norm_label": "props"
     },
     {
@@ -4190,7 +4190,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dossier_progressreport",
-      "community": 205,
+      "community": 14,
       "norm_label": "progressreport.vue"
     },
     {
@@ -4470,7 +4470,7 @@
       "source_location": "L428",
       "_origin": "ast",
       "id": "dossier_sbarprogressreport_formatdateshort",
-      "community": 172,
+      "community": 14,
       "norm_label": "formatdateshort()"
     },
     {
@@ -4490,17 +4490,17 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dossier_student360emailmodal",
-      "community": 172,
+      "community": 14,
       "norm_label": "student360emailmodal.vue"
     },
     {
       "label": "copyRichEmailToClipboard()",
       "file_type": "code",
       "source_file": "src/components/dossier/Student360EmailModal.vue",
-      "source_location": "L464",
+      "source_location": "L467",
       "_origin": "ast",
       "id": "dossier_student360emailmodal_copyrichemailtoclipboard",
-      "community": 172,
+      "community": 14,
       "norm_label": "copyrichemailtoclipboard()"
     },
     {
@@ -4670,7 +4670,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "dossier_studentgradetrend",
-      "community": 205,
+      "community": 14,
       "norm_label": "studentgradetrend.vue"
     },
     {
@@ -5550,7 +5550,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "grades_gradesgridsbar",
-      "community": 205,
+      "community": 14,
       "norm_label": "gradesgridsbar.vue"
     },
     {
@@ -5560,7 +5560,7 @@
       "source_location": "L791",
       "_origin": "ast",
       "id": "grades_gradesgridsbar_for",
-      "community": 205,
+      "community": 14,
       "norm_label": "for()"
     },
     {
@@ -6970,7 +6970,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "reports_studentriskscatterplot",
-      "community": 79,
+      "community": 207,
       "norm_label": "studentriskscatterplot.vue"
     },
     {
@@ -9310,7 +9310,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "composables_useattendanceinsights",
-      "community": 35,
+      "community": 151,
       "norm_label": "useattendanceinsights.js"
     },
     {
@@ -9320,7 +9320,7 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "composables_useattendanceinsights_useattendanceinsights",
-      "community": 35,
+      "community": 151,
       "norm_label": "useattendanceinsights()"
     },
     {
@@ -9440,7 +9440,7 @@
       "source_location": "L573",
       "_origin": "ast",
       "id": "composables_useattendancetracker_toggletestday",
-      "community": 24,
+      "community": 123,
       "norm_label": "toggletestday()"
     },
     {
@@ -9570,7 +9570,7 @@
       "source_location": "L184",
       "_origin": "ast",
       "id": "composables_useclassroom_computeweeklystats",
-      "community": 123,
+      "community": 188,
       "norm_label": "computeweeklystats()"
     },
     {
@@ -9840,7 +9840,7 @@
       "source_location": "L1060",
       "_origin": "ast",
       "id": "composables_useclassroom_getattendanceondate",
-      "community": 123,
+      "community": 188,
       "norm_label": "getattendanceondate()"
     },
     {
@@ -9850,7 +9850,7 @@
       "source_location": "L1080",
       "_origin": "ast",
       "id": "composables_useclassroom_getstudenteventhistory",
-      "community": 123,
+      "community": 188,
       "norm_label": "getstudenteventhistory()"
     },
     {
@@ -9860,7 +9860,7 @@
       "source_location": "L1098",
       "_origin": "ast",
       "id": "composables_useclassroom_logstandardevent",
-      "community": 123,
+      "community": 188,
       "norm_label": "logstandardevent()"
     },
     {
@@ -9890,7 +9890,7 @@
       "source_location": "L1426",
       "_origin": "ast",
       "id": "composables_useclassroom_editevent",
-      "community": 123,
+      "community": 211,
       "norm_label": "editevent()"
     },
     {
@@ -9960,7 +9960,7 @@
       "source_location": "L1528",
       "_origin": "ast",
       "id": "composables_useclassroom_geteventsbystudent",
-      "community": 123,
+      "community": 188,
       "norm_label": "geteventsbystudent()"
     },
     {
@@ -9970,7 +9970,7 @@
       "source_location": "L1532",
       "_origin": "ast",
       "id": "composables_useclassroom_geteventsbyclass",
-      "community": 151,
+      "community": 188,
       "norm_label": "geteventsbyclass()"
     },
     {
@@ -10010,7 +10010,7 @@
       "source_location": "L1556",
       "_origin": "ast",
       "id": "composables_useclassroom_removeevent",
-      "community": 206,
+      "community": 211,
       "norm_label": "removeevent()"
     },
     {
@@ -10510,7 +10510,7 @@
       "source_location": "L50",
       "_origin": "ast",
       "id": "composables_useclassroomstate_activesubjectid",
-      "community": 172,
+      "community": 14,
       "norm_label": "activesubjectid"
     },
     {
@@ -10520,7 +10520,7 @@
       "source_location": "L53",
       "_origin": "ast",
       "id": "composables_useclassroomstate_teachingmode",
-      "community": 0,
+      "community": 172,
       "norm_label": "teachingmode"
     },
     {
@@ -10550,7 +10550,7 @@
       "source_location": "L94",
       "_origin": "ast",
       "id": "composables_useclassroomstate_notifyeventmutated",
-      "community": 123,
+      "community": 211,
       "norm_label": "notifyeventmutated()"
     },
     {
@@ -10560,7 +10560,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "composables_usecurriculumeditorstate",
-      "community": 182,
+      "community": 64,
       "norm_label": "usecurriculumeditorstate.js"
     },
     {
@@ -10570,7 +10570,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "composables_usecurriculumeditorstate_curriculumeditordirty",
-      "community": 182,
+      "community": 64,
       "norm_label": "curriculumeditordirty"
     },
     {
@@ -10580,7 +10580,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "composables_usecurriculumeditorstate_curriculumeditortitle",
-      "community": 182,
+      "community": 64,
       "norm_label": "curriculumeditortitle"
     },
     {
@@ -10590,7 +10590,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "composables_usecurriculumeditorstate_curriculumeditorsavehandler",
-      "community": 182,
+      "community": 64,
       "norm_label": "curriculumeditorsavehandler"
     },
     {
@@ -10600,7 +10600,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "composables_usecurriculumeditorstate_curriculumeditordiscardhandler",
-      "community": 182,
+      "community": 64,
       "norm_label": "curriculumeditordiscardhandler"
     },
     {
@@ -10610,7 +10610,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "composables_usecurriculumlibrary",
-      "community": 182,
+      "community": 64,
       "norm_label": "usecurriculumlibrary.js"
     },
     {
@@ -10620,7 +10620,7 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "composables_usecurriculumlibrary_custompresets",
-      "community": 182,
+      "community": 64,
       "norm_label": "custompresets"
     },
     {
@@ -10630,7 +10630,7 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "composables_usecurriculumlibrary_isloaded",
-      "community": 182,
+      "community": 64,
       "norm_label": "isloaded"
     },
     {
@@ -10640,7 +10640,7 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "composables_usecurriculumlibrary_isloading",
-      "community": 182,
+      "community": 64,
       "norm_label": "isloading"
     },
     {
@@ -10650,7 +10650,7 @@
       "source_location": "L46",
       "_origin": "ast",
       "id": "composables_usecurriculumlibrary_initcurriculumlibrary",
-      "community": 182,
+      "community": 153,
       "norm_label": "initcurriculumlibrary()"
     },
     {
@@ -10690,7 +10690,7 @@
       "source_location": "L174",
       "_origin": "ast",
       "id": "composables_usecurriculumlibrary_getsuccesscriteriapreset",
-      "community": 26,
+      "community": 153,
       "norm_label": "getsuccesscriteriapreset()"
     },
     {
@@ -10760,7 +10760,7 @@
       "source_location": "L486",
       "_origin": "ast",
       "id": "composables_usecurriculumlibrary_normalizeexpectationweight",
-      "community": 182,
+      "community": 64,
       "norm_label": "normalizeexpectationweight()"
     },
     {
@@ -10830,7 +10830,7 @@
       "source_location": "L1104",
       "_origin": "ast",
       "id": "composables_usecurriculumlibrary_usecurriculumlibrary",
-      "community": 64,
+      "community": 26,
       "norm_label": "usecurriculumlibrary()"
     },
     {
@@ -10850,7 +10850,7 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "composables_useelementary_geteffectiveclassrecord",
-      "community": 172,
+      "community": 14,
       "norm_label": "geteffectiveclassrecord()"
     },
     {
@@ -10960,7 +10960,7 @@
       "source_location": "L468",
       "_origin": "ast",
       "id": "composables_useelementary_ensureieppresetsforclass",
-      "community": 183,
+      "community": 24,
       "norm_label": "ensureieppresetsforclass()"
     },
     {
@@ -11020,7 +11020,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "composables_usegradebook_getgradebooksettings",
-      "community": 109,
+      "community": 1,
       "norm_label": "getgradebooksettings()"
     },
     {
@@ -11030,7 +11030,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "composables_usegradebook_savegradebooksettings",
-      "community": 109,
+      "community": 21,
       "norm_label": "savegradebooksettings()"
     },
     {
@@ -11040,7 +11040,7 @@
       "source_location": "L61",
       "_origin": "ast",
       "id": "composables_usegradebook_assessments",
-      "community": 205,
+      "community": 14,
       "norm_label": "assessments"
     },
     {
@@ -11210,7 +11210,7 @@
       "source_location": "L168",
       "_origin": "ast",
       "id": "composables_usegradebook_isassessmentinsubcohort",
-      "community": 205,
+      "community": 165,
       "norm_label": "isassessmentinsubcohort()"
     },
     {
@@ -11420,7 +11420,7 @@
       "source_location": "L319",
       "_origin": "ast",
       "id": "composables_usegradebook_loadgradebook",
-      "community": 183,
+      "community": 1,
       "norm_label": "loadgradebook()"
     },
     {
@@ -11540,7 +11540,7 @@
       "source_location": "L576",
       "_origin": "ast",
       "id": "composables_usegradebook_openaddassessment",
-      "community": 1,
+      "community": 206,
       "norm_label": "openaddassessment()"
     },
     {
@@ -11790,7 +11790,7 @@
       "source_location": "L1714",
       "_origin": "ast",
       "id": "composables_usegradebook_grademap",
-      "community": 205,
+      "community": 14,
       "norm_label": "grademap"
     },
     {
@@ -12330,7 +12330,7 @@
       "source_location": "L303",
       "_origin": "ast",
       "id": "composables_userosteroperations_updatestudentaccommodations",
-      "community": 183,
+      "community": 24,
       "norm_label": "updatestudentaccommodations()"
     },
     {
@@ -12410,7 +12410,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "composables_usesbarprintoptions",
-      "community": 172,
+      "community": 14,
       "norm_label": "usesbarprintoptions.js"
     },
     {
@@ -12420,7 +12420,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "composables_usesbarprintoptions_usesbarprintoptions",
-      "community": 172,
+      "community": 14,
       "norm_label": "usesbarprintoptions()"
     },
     {
@@ -12430,7 +12430,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "composables_usestudentdossier",
-      "community": 162,
+      "community": 207,
       "norm_label": "usestudentdossier.js"
     },
     {
@@ -12970,7 +12970,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "comments_scdsbcharacterlimits",
-      "community": 196,
+      "community": 191,
       "norm_label": "scdsbcharacterlimits.js"
     },
     {
@@ -12980,7 +12980,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "comments_scdsbcharacterlimits_scdsb_character_limits",
-      "community": 196,
+      "community": 191,
       "norm_label": "scdsb_character_limits"
     },
     {
@@ -12990,7 +12990,7 @@
       "source_location": "L58",
       "_origin": "ast",
       "id": "comments_scdsbcharacterlimits_getscdsbcharacterlimit",
-      "community": 196,
+      "community": 191,
       "norm_label": "getscdsbcharacterlimit()"
     },
     {
@@ -14020,7 +14020,7 @@
       "source_location": "L719",
       "_origin": "ast",
       "id": "db_classservice_clearalldata",
-      "community": 206,
+      "community": 211,
       "norm_label": "clearalldata()"
     },
     {
@@ -14100,7 +14100,7 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "db_eventservice_hasunsyncedchanges",
-      "community": 168,
+      "community": 207,
       "norm_label": "hasunsyncedchanges"
     },
     {
@@ -14160,7 +14160,7 @@
       "source_location": "L190",
       "_origin": "ast",
       "id": "db_eventservice_geteventsbyclass",
-      "community": 35,
+      "community": 151,
       "norm_label": "geteventsbyclass()"
     },
     {
@@ -14400,7 +14400,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "gradebook_assessmentservice",
-      "community": 168,
+      "community": 207,
       "norm_label": "assessmentservice.js"
     },
     {
@@ -14410,7 +14410,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "gradebook_assessmentservice_createassessment",
-      "community": 168,
+      "community": 207,
       "norm_label": "createassessment()"
     },
     {
@@ -14420,7 +14420,7 @@
       "source_location": "L55",
       "_origin": "ast",
       "id": "gradebook_assessmentservice_getassessmentsbyclass",
-      "community": 109,
+      "community": 207,
       "norm_label": "getassessmentsbyclass()"
     },
     {
@@ -14430,7 +14430,7 @@
       "source_location": "L67",
       "_origin": "ast",
       "id": "gradebook_assessmentservice_updateassessment",
-      "community": 168,
+      "community": 207,
       "norm_label": "updateassessment()"
     },
     {
@@ -14440,7 +14440,7 @@
       "source_location": "L85",
       "_origin": "ast",
       "id": "gradebook_assessmentservice_deleteassessment",
-      "community": 168,
+      "community": 207,
       "norm_label": "deleteassessment()"
     },
     {
@@ -14450,7 +14450,7 @@
       "source_location": "L115",
       "_origin": "ast",
       "id": "gradebook_assessmentservice_getassessmentusage",
-      "community": 168,
+      "community": 207,
       "norm_label": "getassessmentusage()"
     },
     {
@@ -14460,7 +14460,7 @@
       "source_location": "L164",
       "_origin": "ast",
       "id": "gradebook_assessmentservice_getexpectationusagecounts",
-      "community": 168,
+      "community": 207,
       "norm_label": "getexpectationusagecounts()"
     },
     {
@@ -14470,7 +14470,7 @@
       "source_location": "L234",
       "_origin": "ast",
       "id": "gradebook_assessmentservice_cascaderenameexpectation",
-      "community": 168,
+      "community": 207,
       "norm_label": "cascaderenameexpectation()"
     },
     {
@@ -14480,7 +14480,7 @@
       "source_location": "L349",
       "_origin": "ast",
       "id": "gradebook_assessmentservice_detachexpectationfromassessmentsandgrades",
-      "community": 168,
+      "community": 207,
       "norm_label": "detachexpectationfromassessmentsandgrades()"
     },
     {
@@ -14490,7 +14490,7 @@
       "source_location": "L437",
       "_origin": "ast",
       "id": "gradebook_assessmentservice_ensuresbarcomponentassessments",
-      "community": 168,
+      "community": 207,
       "norm_label": "ensuresbarcomponentassessments()"
     },
     {
@@ -14630,7 +14630,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "gradebook_gradecalc",
-      "community": 109,
+      "community": 112,
       "norm_label": "gradecalc.js"
     },
     {
@@ -14650,7 +14650,7 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "gradebook_gradecalc_calculateclassgrades",
-      "community": 109,
+      "community": 207,
       "norm_label": "calculateclassgrades()"
     },
     {
@@ -14780,7 +14780,7 @@
       "source_location": "L301",
       "_origin": "ast",
       "id": "gradebook_gradeservice_getgradesbyclass",
-      "community": 109,
+      "community": 207,
       "norm_label": "getgradesbyclass()"
     },
     {
@@ -14790,7 +14790,7 @@
       "source_location": "L371",
       "_origin": "ast",
       "id": "gradebook_gradeservice_getgradesbystudent",
-      "community": 109,
+      "community": 207,
       "norm_label": "getgradesbystudent()"
     },
     {
@@ -14800,7 +14800,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "db_gradebookservice",
-      "community": 79,
+      "community": 207,
       "norm_label": "gradebookservice.js"
     },
     {
@@ -14810,7 +14810,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "db_index",
-      "community": 206,
+      "community": 211,
       "norm_label": "index.js"
     },
     {
@@ -14820,7 +14820,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "db_index_getdb",
-      "community": 21,
+      "community": 190,
       "norm_label": "getdb()"
     },
     {
@@ -15120,7 +15120,7 @@
       "source_location": "L195",
       "_origin": "ast",
       "id": "db_settingsservice_getsettings",
-      "community": 109,
+      "community": 21,
       "norm_label": "getsettings()"
     },
     {
@@ -15170,7 +15170,7 @@
       "source_location": "L302",
       "_origin": "ast",
       "id": "db_settingsservice_deletebehaviorcode",
-      "community": 21,
+      "community": 190,
       "norm_label": "deletebehaviorcode()"
     },
     {
@@ -15220,7 +15220,7 @@
       "source_location": "L378",
       "_origin": "ast",
       "id": "db_settingsservice_saveglobalmilestones",
-      "community": 21,
+      "community": 190,
       "norm_label": "saveglobalmilestones()"
     },
     {
@@ -15290,7 +15290,7 @@
       "source_location": "L469",
       "_origin": "ast",
       "id": "db_settingsservice_saveteachertitle",
-      "community": 21,
+      "community": 190,
       "norm_label": "saveteachertitle()"
     },
     {
@@ -15310,7 +15310,7 @@
       "source_location": "L493",
       "_origin": "ast",
       "id": "db_settingsservice_saveschoolname",
-      "community": 21,
+      "community": 190,
       "norm_label": "saveschoolname()"
     },
     {
@@ -15330,7 +15330,7 @@
       "source_location": "L517",
       "_origin": "ast",
       "id": "db_settingsservice_saveteacheremail",
-      "community": 21,
+      "community": 190,
       "norm_label": "saveteacheremail()"
     },
     {
@@ -15370,7 +15370,7 @@
       "source_location": "L565",
       "_origin": "ast",
       "id": "db_settingsservice_saveapptheme",
-      "community": 21,
+      "community": 190,
       "norm_label": "saveapptheme()"
     },
     {
@@ -15390,7 +15390,7 @@
       "source_location": "L594",
       "_origin": "ast",
       "id": "db_settingsservice_saveattendanceconfig",
-      "community": 21,
+      "community": 190,
       "norm_label": "saveattendanceconfig()"
     },
     {
@@ -15410,7 +15410,7 @@
       "source_location": "L619",
       "_origin": "ast",
       "id": "db_settingsservice_saveacademicterms",
-      "community": 21,
+      "community": 190,
       "norm_label": "saveacademicterms()"
     },
     {
@@ -15430,7 +15430,7 @@
       "source_location": "L648",
       "_origin": "ast",
       "id": "db_settingsservice_saveperiodstarttimes",
-      "community": 21,
+      "community": 190,
       "norm_label": "saveperiodstarttimes()"
     },
     {
@@ -15450,7 +15450,7 @@
       "source_location": "L673",
       "_origin": "ast",
       "id": "db_settingsservice_savegradebuckets",
-      "community": 21,
+      "community": 190,
       "norm_label": "savegradebuckets()"
     },
     {
@@ -15470,7 +15470,7 @@
       "source_location": "L697",
       "_origin": "ast",
       "id": "db_settingsservice_savenonschooldays",
-      "community": 21,
+      "community": 190,
       "norm_label": "savenonschooldays()"
     },
     {
@@ -15480,7 +15480,7 @@
       "source_location": "L708",
       "_origin": "ast",
       "id": "db_settingsservice_auditsettingsintegrity",
-      "community": 21,
+      "community": 190,
       "norm_label": "auditsettingsintegrity()"
     },
     {
@@ -15490,7 +15490,7 @@
       "source_location": "L749",
       "_origin": "ast",
       "id": "db_settingsservice_getcustomcurriculumpresets",
-      "community": 182,
+      "community": 21,
       "norm_label": "getcustomcurriculumpresets()"
     },
     {
@@ -15510,7 +15510,7 @@
       "source_location": "L785",
       "_origin": "ast",
       "id": "db_settingsservice_deletecustomcurriculumpreset",
-      "community": 21,
+      "community": 190,
       "norm_label": "deletecustomcurriculumpreset()"
     },
     {
@@ -15530,7 +15530,7 @@
       "source_location": "L820",
       "_origin": "ast",
       "id": "db_settingsservice_saveaicommentsettings",
-      "community": 197,
+      "community": 21,
       "norm_label": "saveaicommentsettings()"
     },
     {
@@ -15550,7 +15550,7 @@
       "source_location": "L856",
       "_origin": "ast",
       "id": "db_settingsservice_getdatabasesummarycounts",
-      "community": 21,
+      "community": 190,
       "norm_label": "getdatabasesummarycounts()"
     },
     {
@@ -15870,7 +15870,7 @@
       "source_location": "L184",
       "_origin": "ast",
       "id": "src_test_admin_paperwork_tracking_isassessmentinsubcohorthelper",
-      "community": 136,
+      "community": 165,
       "norm_label": "isassessmentinsubcohorthelper()"
     },
     {
@@ -15880,7 +15880,7 @@
       "source_location": "L194",
       "_origin": "ast",
       "id": "src_test_admin_paperwork_tracking_isassessmentapplicabletostudenthelper",
-      "community": 136,
+      "community": 165,
       "norm_label": "isassessmentapplicabletostudenthelper()"
     },
     {
@@ -17480,7 +17480,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_test_data_pipelines_audit",
-      "community": 18,
+      "community": 212,
       "norm_label": "test_data_pipelines_audit.js"
     },
     {
@@ -17490,7 +17490,7 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "src_test_data_pipelines_audit_test",
-      "community": 18,
+      "community": 212,
       "norm_label": "test()"
     },
     {
@@ -17500,7 +17500,7 @@
       "source_location": "L276",
       "_origin": "ast",
       "id": "src_test_data_pipelines_audit_parsecsvlinecustom",
-      "community": 18,
+      "community": 212,
       "norm_label": "parsecsvlinecustom()"
     },
     {
@@ -17810,7 +17810,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_test_deep_audit_subsystems",
-      "community": 18,
+      "community": 182,
       "norm_label": "test_deep_audit_subsystems.js"
     },
     {
@@ -17820,7 +17820,7 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "src_test_deep_audit_subsystems_mockclass",
-      "community": 18,
+      "community": 182,
       "norm_label": "mockclass"
     },
     {
@@ -17830,7 +17830,7 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "src_test_deep_audit_subsystems_mockstudentswithquotes",
-      "community": 18,
+      "community": 182,
       "norm_label": "mockstudentswithquotes"
     },
     {
@@ -17840,7 +17840,7 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "src_test_deep_audit_subsystems_mockrecordsmap",
-      "community": 18,
+      "community": 182,
       "norm_label": "mockrecordsmap"
     },
     {
@@ -17850,7 +17850,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "src_test_deep_audit_subsystems_csvblob",
-      "community": 18,
+      "community": 182,
       "norm_label": "csvblob"
     },
     {
@@ -17860,7 +17860,7 @@
       "source_location": "L39",
       "_origin": "ast",
       "id": "src_test_deep_audit_subsystems_parsedrows",
-      "community": 18,
+      "community": 182,
       "norm_label": "parsedrows"
     },
     {
@@ -17870,7 +17870,7 @@
       "source_location": "L57",
       "_origin": "ast",
       "id": "src_test_deep_audit_subsystems_rawcsvrows",
-      "community": 18,
+      "community": 182,
       "norm_label": "rawcsvrows"
     },
     {
@@ -17880,7 +17880,7 @@
       "source_location": "L58",
       "_origin": "ast",
       "id": "src_test_deep_audit_subsystems_parseresult",
-      "community": 18,
+      "community": 182,
       "norm_label": "parseresult"
     },
     {
@@ -17890,7 +17890,7 @@
       "source_location": "L63",
       "_origin": "ast",
       "id": "src_test_deep_audit_subsystems_markrecord",
-      "community": 18,
+      "community": 182,
       "norm_label": "markrecord"
     },
     {
@@ -17900,7 +17900,7 @@
       "source_location": "L72",
       "_origin": "ast",
       "id": "src_test_deep_audit_subsystems_conf1",
-      "community": 18,
+      "community": 182,
       "norm_label": "conf1"
     },
     {
@@ -17910,7 +17910,7 @@
       "source_location": "L76",
       "_origin": "ast",
       "id": "src_test_deep_audit_subsystems_conf2",
-      "community": 18,
+      "community": 182,
       "norm_label": "conf2"
     },
     {
@@ -17920,7 +17920,7 @@
       "source_location": "L79",
       "_origin": "ast",
       "id": "src_test_deep_audit_subsystems_cleanopt",
-      "community": 18,
+      "community": 182,
       "norm_label": "cleanopt"
     },
     {
@@ -17930,7 +17930,7 @@
       "source_location": "L87",
       "_origin": "ast",
       "id": "src_test_deep_audit_subsystems_activepinned",
-      "community": 18,
+      "community": 182,
       "norm_label": "activepinned"
     },
     {
@@ -18997,7 +18997,7 @@
       "label": "sampleData",
       "file_type": "code",
       "source_file": "src/test_email_formatter.js",
-      "source_location": "L38",
+      "source_location": "L39",
       "_origin": "ast",
       "id": "src_test_email_formatter_sampledata",
       "community": 111,
@@ -19007,7 +19007,7 @@
       "label": "body",
       "file_type": "code",
       "source_file": "src/test_email_formatter.js",
-      "source_location": "L54",
+      "source_location": "L55",
       "_origin": "ast",
       "id": "src_test_email_formatter_body",
       "community": 111,
@@ -19017,7 +19017,7 @@
       "label": "sampleWithMissing",
       "file_type": "code",
       "source_file": "src/test_email_formatter.js",
-      "source_location": "L74",
+      "source_location": "L75",
       "_origin": "ast",
       "id": "src_test_email_formatter_samplewithmissing",
       "community": 111,
@@ -19027,7 +19027,7 @@
       "label": "bodyWithMissing",
       "file_type": "code",
       "source_file": "src/test_email_formatter.js",
-      "source_location": "L78",
+      "source_location": "L79",
       "_origin": "ast",
       "id": "src_test_email_formatter_bodywithmissing",
       "community": 111,
@@ -19037,7 +19037,7 @@
       "label": "emailResult",
       "file_type": "code",
       "source_file": "src/test_email_formatter.js",
-      "source_location": "L85",
+      "source_location": "L86",
       "_origin": "ast",
       "id": "src_test_email_formatter_emailresult",
       "community": 111,
@@ -19047,7 +19047,7 @@
       "label": "html",
       "file_type": "code",
       "source_file": "src/test_email_formatter.js",
-      "source_location": "L99",
+      "source_location": "L100",
       "_origin": "ast",
       "id": "src_test_email_formatter_html",
       "community": 111,
@@ -19057,7 +19057,7 @@
       "label": "emlBasic",
       "file_type": "code",
       "source_file": "src/test_email_formatter.js",
-      "source_location": "L112",
+      "source_location": "L113",
       "_origin": "ast",
       "id": "src_test_email_formatter_emlbasic",
       "community": 111,
@@ -19067,7 +19067,7 @@
       "label": "emlWithCid",
       "file_type": "code",
       "source_file": "src/test_email_formatter.js",
-      "source_location": "L118",
+      "source_location": "L119",
       "_origin": "ast",
       "id": "src_test_email_formatter_emlwithcid",
       "community": 111,
@@ -19077,7 +19077,7 @@
       "label": "sampleWithAdmin",
       "file_type": "code",
       "source_file": "src/test_email_formatter.js",
-      "source_location": "L130",
+      "source_location": "L131",
       "_origin": "ast",
       "id": "src_test_email_formatter_samplewithadmin",
       "community": 111,
@@ -19087,7 +19087,7 @@
       "label": "bodyAdminFiltered",
       "file_type": "code",
       "source_file": "src/test_email_formatter.js",
-      "source_location": "L144",
+      "source_location": "L145",
       "_origin": "ast",
       "id": "src_test_email_formatter_bodyadminfiltered",
       "community": 111,
@@ -19097,7 +19097,7 @@
       "label": "htmlAdminFiltered",
       "file_type": "code",
       "source_file": "src/test_email_formatter.js",
-      "source_location": "L153",
+      "source_location": "L154",
       "_origin": "ast",
       "id": "src_test_email_formatter_htmladminfiltered",
       "community": 111,
@@ -19107,7 +19107,7 @@
       "label": "multiMissingData",
       "file_type": "code",
       "source_file": "src/test_email_formatter.js",
-      "source_location": "L161",
+      "source_location": "L162",
       "_origin": "ast",
       "id": "src_test_email_formatter_multimissingdata",
       "community": 111,
@@ -19117,7 +19117,7 @@
       "label": "multiBody",
       "file_type": "code",
       "source_file": "src/test_email_formatter.js",
-      "source_location": "L169",
+      "source_location": "L170",
       "_origin": "ast",
       "id": "src_test_email_formatter_multibody",
       "community": 111,
@@ -19127,7 +19127,7 @@
       "label": "bodyNoMissing",
       "file_type": "code",
       "source_file": "src/test_email_formatter.js",
-      "source_location": "L180",
+      "source_location": "L181",
       "_origin": "ast",
       "id": "src_test_email_formatter_bodynomissing",
       "community": 111,
@@ -19137,7 +19137,7 @@
       "label": "multiHtml",
       "file_type": "code",
       "source_file": "src/test_email_formatter.js",
-      "source_location": "L185",
+      "source_location": "L186",
       "_origin": "ast",
       "id": "src_test_email_formatter_multihtml",
       "community": 111,
@@ -19147,7 +19147,7 @@
       "label": "sampleSbarData",
       "file_type": "code",
       "source_file": "src/test_email_formatter.js",
-      "source_location": "L195",
+      "source_location": "L196",
       "_origin": "ast",
       "id": "src_test_email_formatter_samplesbardata",
       "community": 111,
@@ -19157,7 +19157,7 @@
       "label": "sbarBody",
       "file_type": "code",
       "source_file": "src/test_email_formatter.js",
-      "source_location": "L234",
+      "source_location": "L235",
       "_origin": "ast",
       "id": "src_test_email_formatter_sbarbody",
       "community": 111,
@@ -19167,7 +19167,7 @@
       "label": "sbarBodyNoGrade",
       "file_type": "code",
       "source_file": "src/test_email_formatter.js",
-      "source_location": "L249",
+      "source_location": "L250",
       "_origin": "ast",
       "id": "src_test_email_formatter_sbarbodynograde",
       "community": 111,
@@ -19177,7 +19177,7 @@
       "label": "sbarBodyNoExp",
       "file_type": "code",
       "source_file": "src/test_email_formatter.js",
-      "source_location": "L251",
+      "source_location": "L252",
       "_origin": "ast",
       "id": "src_test_email_formatter_sbarbodynoexp",
       "community": 111,
@@ -19187,7 +19187,7 @@
       "label": "sbarBodyUnassessed",
       "file_type": "code",
       "source_file": "src/test_email_formatter.js",
-      "source_location": "L255",
+      "source_location": "L256",
       "_origin": "ast",
       "id": "src_test_email_formatter_sbarbodyunassessed",
       "community": 111,
@@ -19197,7 +19197,7 @@
       "label": "sbarHtml",
       "file_type": "code",
       "source_file": "src/test_email_formatter.js",
-      "source_location": "L264",
+      "source_location": "L265",
       "_origin": "ast",
       "id": "src_test_email_formatter_sbarhtml",
       "community": 111,
@@ -19207,7 +19207,7 @@
       "label": "sbarHtmlNoGrade",
       "file_type": "code",
       "source_file": "src/test_email_formatter.js",
-      "source_location": "L294",
+      "source_location": "L295",
       "_origin": "ast",
       "id": "src_test_email_formatter_sbarhtmlnograde",
       "community": 111,
@@ -19217,7 +19217,7 @@
       "label": "sbarHtmlNoExp",
       "file_type": "code",
       "source_file": "src/test_email_formatter.js",
-      "source_location": "L296",
+      "source_location": "L297",
       "_origin": "ast",
       "id": "src_test_email_formatter_sbarhtmlnoexp",
       "community": 111,
@@ -19227,7 +19227,7 @@
       "label": "sbarHtmlUnassessed",
       "file_type": "code",
       "source_file": "src/test_email_formatter.js",
-      "source_location": "L300",
+      "source_location": "L301",
       "_origin": "ast",
       "id": "src_test_email_formatter_sbarhtmlunassessed",
       "community": 111,
@@ -19237,27 +19237,27 @@
       "label": "MockClipboardItem",
       "file_type": "code",
       "source_file": "src/test_email_formatter.js",
-      "source_location": "L315",
+      "source_location": "L316",
       "_origin": "ast",
       "id": "src_test_email_formatter_mockclipboarditem",
-      "community": 111,
+      "community": 213,
       "norm_label": "mockclipboarditem"
     },
     {
       "label": ".constructor()",
       "file_type": "code",
       "source_file": "src/test_email_formatter.js",
-      "source_location": "L316",
+      "source_location": "L317",
       "_origin": "ast",
       "id": "src_test_email_formatter_mockclipboarditem_constructor",
-      "community": 111,
+      "community": 213,
       "norm_label": ".constructor()"
     },
     {
       "label": "profileData",
       "file_type": "code",
       "source_file": "src/test_email_formatter.js",
-      "source_location": "L385",
+      "source_location": "L386",
       "_origin": "ast",
       "id": "src_test_email_formatter_profiledata",
       "community": 111,
@@ -19267,7 +19267,7 @@
       "label": "profilePlainText",
       "file_type": "code",
       "source_file": "src/test_email_formatter.js",
-      "source_location": "L396",
+      "source_location": "L397",
       "_origin": "ast",
       "id": "src_test_email_formatter_profileplaintext",
       "community": 111,
@@ -19277,11 +19277,121 @@
       "label": "profileHtml",
       "file_type": "code",
       "source_file": "src/test_email_formatter.js",
-      "source_location": "L403",
+      "source_location": "L404",
       "_origin": "ast",
       "id": "src_test_email_formatter_profilehtml",
       "community": 111,
       "norm_label": "profilehtml"
+    },
+    {
+      "label": "elevatedData",
+      "file_type": "code",
+      "source_file": "src/test_email_formatter.js",
+      "source_location": "L416",
+      "_origin": "ast",
+      "id": "src_test_email_formatter_elevateddata",
+      "community": 111,
+      "norm_label": "elevateddata"
+    },
+    {
+      "label": "elevatedBody",
+      "file_type": "code",
+      "source_file": "src/test_email_formatter.js",
+      "source_location": "L425",
+      "_origin": "ast",
+      "id": "src_test_email_formatter_elevatedbody",
+      "community": 111,
+      "norm_label": "elevatedbody"
+    },
+    {
+      "label": "elevatedHtml",
+      "file_type": "code",
+      "source_file": "src/test_email_formatter.js",
+      "source_location": "L431",
+      "_origin": "ast",
+      "id": "src_test_email_formatter_elevatedhtml",
+      "community": 111,
+      "norm_label": "elevatedhtml"
+    },
+    {
+      "label": "extendedTripData",
+      "file_type": "code",
+      "source_file": "src/test_email_formatter.js",
+      "source_location": "L442",
+      "_origin": "ast",
+      "id": "src_test_email_formatter_extendedtripdata",
+      "community": 111,
+      "norm_label": "extendedtripdata"
+    },
+    {
+      "label": "extendedBody",
+      "file_type": "code",
+      "source_file": "src/test_email_formatter.js",
+      "source_location": "L446",
+      "_origin": "ast",
+      "id": "src_test_email_formatter_extendedbody",
+      "community": 111,
+      "norm_label": "extendedbody"
+    },
+    {
+      "label": "singleLongData",
+      "file_type": "code",
+      "source_file": "src/test_email_formatter.js",
+      "source_location": "L453",
+      "_origin": "ast",
+      "id": "src_test_email_formatter_singlelongdata",
+      "community": 111,
+      "norm_label": "singlelongdata"
+    },
+    {
+      "label": "singleLongBody",
+      "file_type": "code",
+      "source_file": "src/test_email_formatter.js",
+      "source_location": "L457",
+      "_origin": "ast",
+      "id": "src_test_email_formatter_singlelongbody",
+      "community": 111,
+      "norm_label": "singlelongbody"
+    },
+    {
+      "label": "briefData",
+      "file_type": "code",
+      "source_file": "src/test_email_formatter.js",
+      "source_location": "L464",
+      "_origin": "ast",
+      "id": "src_test_email_formatter_briefdata",
+      "community": 111,
+      "norm_label": "briefdata"
+    },
+    {
+      "label": "briefBody",
+      "file_type": "code",
+      "source_file": "src/test_email_formatter.js",
+      "source_location": "L468",
+      "_origin": "ast",
+      "id": "src_test_email_formatter_briefbody",
+      "community": 111,
+      "norm_label": "briefbody"
+    },
+    {
+      "label": "zeroData",
+      "file_type": "code",
+      "source_file": "src/test_email_formatter.js",
+      "source_location": "L475",
+      "_origin": "ast",
+      "id": "src_test_email_formatter_zerodata",
+      "community": 111,
+      "norm_label": "zerodata"
+    },
+    {
+      "label": "zeroBody",
+      "file_type": "code",
+      "source_file": "src/test_email_formatter.js",
+      "source_location": "L479",
+      "_origin": "ast",
+      "id": "src_test_email_formatter_zerobody",
+      "community": 111,
+      "norm_label": "zerobody"
     },
     {
       "label": "test_expectation_lifecycle.js",
@@ -20000,7 +20110,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_test_local_llm_service",
-      "community": 197,
+      "community": 168,
       "norm_label": "test_local_llm_service.js"
     },
     {
@@ -22820,7 +22930,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_canadianspelling",
-      "community": 208,
+      "community": 168,
       "norm_label": "canadianspelling.js"
     },
     {
@@ -22830,7 +22940,7 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "utils_canadianspelling_formatsubjectnameforcomment",
-      "community": 208,
+      "community": 168,
       "norm_label": "formatsubjectnameforcomment()"
     },
     {
@@ -23140,7 +23250,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "utils_dates_formatlocaldisplay",
-      "community": 172,
+      "community": 14,
       "norm_label": "formatlocaldisplay()"
     },
     {
@@ -23160,7 +23270,7 @@
       "source_location": "L41",
       "_origin": "ast",
       "id": "utils_dates_getcurrentschoolyear",
-      "community": 206,
+      "community": 211,
       "norm_label": "getcurrentschoolyear()"
     },
     {
@@ -23180,7 +23290,7 @@
       "source_location": "L78",
       "_origin": "ast",
       "id": "utils_dates_getcurrentsemester",
-      "community": 206,
+      "community": 211,
       "norm_label": "getcurrentsemester()"
     },
     {
@@ -23400,7 +23510,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_emailformatter",
-      "community": 111,
+      "community": 192,
       "norm_label": "emailformatter.js"
     },
     {
@@ -23410,7 +23520,7 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "utils_emailformatter_makeminibar",
-      "community": 111,
+      "community": 192,
       "norm_label": "makeminibar()"
     },
     {
@@ -23420,7 +23530,7 @@
       "source_location": "L53",
       "_origin": "ast",
       "id": "utils_emailformatter_normalizepercent",
-      "community": 111,
+      "community": 192,
       "norm_label": "normalizepercent()"
     },
     {
@@ -23430,7 +23540,7 @@
       "source_location": "L71",
       "_origin": "ast",
       "id": "utils_emailformatter_fitline",
-      "community": 111,
+      "community": 192,
       "norm_label": "fitline()"
     },
     {
@@ -23440,7 +23550,7 @@
       "source_location": "L84",
       "_origin": "ast",
       "id": "utils_emailformatter_isadministrativeassessment",
-      "community": 111,
+      "community": 192,
       "norm_label": "isadministrativeassessment()"
     },
     {
@@ -23450,67 +23560,77 @@
       "source_location": "L97",
       "_origin": "ast",
       "id": "utils_emailformatter_getcleanmissingassessments",
-      "community": 111,
+      "community": 192,
       "norm_label": "getcleanmissingassessments()"
+    },
+    {
+      "label": "formatOutOfClassEmailLine()",
+      "file_type": "code",
+      "source_file": "src/utils/emailFormatter.js",
+      "source_location": "L129",
+      "_origin": "ast",
+      "id": "utils_emailformatter_formatoutofclassemailline",
+      "community": 192,
+      "norm_label": "formatoutofclassemailline()"
     },
     {
       "label": "generateMobileSafeEmailBody()",
       "file_type": "code",
       "source_file": "src/utils/emailFormatter.js",
-      "source_location": "L149",
+      "source_location": "L203",
       "_origin": "ast",
       "id": "utils_emailformatter_generatemobilesafeemailbody",
-      "community": 111,
+      "community": 192,
       "norm_label": "generatemobilesafeemailbody()"
     },
     {
       "label": "generateMobileSafeEmail()",
       "file_type": "code",
       "source_file": "src/utils/emailFormatter.js",
-      "source_location": "L349",
+      "source_location": "L398",
       "_origin": "ast",
       "id": "utils_emailformatter_generatemobilesafeemail",
-      "community": 111,
+      "community": 192,
       "norm_label": "generatemobilesafeemail()"
     },
     {
       "label": "generateRichEmailHtml()",
       "file_type": "code",
       "source_file": "src/utils/emailFormatter.js",
-      "source_location": "L396",
+      "source_location": "L445",
       "_origin": "ast",
       "id": "utils_emailformatter_generaterichemailhtml",
-      "community": 111,
+      "community": 192,
       "norm_label": "generaterichemailhtml()"
     },
     {
       "label": "copyRichEmailToClipboard()",
       "file_type": "code",
       "source_file": "src/utils/emailFormatter.js",
-      "source_location": "L652",
+      "source_location": "L701",
       "_origin": "ast",
       "id": "utils_emailformatter_copyrichemailtoclipboard",
-      "community": 111,
+      "community": 192,
       "norm_label": "copyrichemailtoclipboard()"
     },
     {
       "label": "generateEmlContent()",
       "file_type": "code",
       "source_file": "src/utils/emailFormatter.js",
-      "source_location": "L694",
+      "source_location": "L743",
       "_origin": "ast",
       "id": "utils_emailformatter_generateemlcontent",
-      "community": 111,
+      "community": 192,
       "norm_label": "generateemlcontent()"
     },
     {
       "label": "downloadEmlFile()",
       "file_type": "code",
       "source_file": "src/utils/emailFormatter.js",
-      "source_location": "L764",
+      "source_location": "L813",
       "_origin": "ast",
       "id": "utils_emailformatter_downloademlfile",
-      "community": 111,
+      "community": 192,
       "norm_label": "downloademlfile()"
     },
     {
@@ -23590,7 +23710,7 @@
       "source_location": "L133",
       "_origin": "ast",
       "id": "utils_gradecalc_resolveattemptscore",
-      "community": 79,
+      "community": 28,
       "norm_label": "resolveattemptscore()"
     },
     {
@@ -23610,7 +23730,7 @@
       "source_location": "L243",
       "_origin": "ast",
       "id": "utils_gradecalc_getassessmentpercentage",
-      "community": 79,
+      "community": 28,
       "norm_label": "getassessmentpercentage()"
     },
     {
@@ -23620,7 +23740,7 @@
       "source_location": "L266",
       "_origin": "ast",
       "id": "utils_gradecalc_calculatecategorygrade",
-      "community": 79,
+      "community": 28,
       "norm_label": "_calculatecategorygrade()"
     },
     {
@@ -23630,7 +23750,7 @@
       "source_location": "L316",
       "_origin": "ast",
       "id": "utils_gradecalc_getbucketmode",
-      "community": 79,
+      "community": 28,
       "norm_label": "getbucketmode()"
     },
     {
@@ -23650,7 +23770,7 @@
       "source_location": "L390",
       "_origin": "ast",
       "id": "utils_gradecalc_calculatemostconsistent",
-      "community": 79,
+      "community": 28,
       "norm_label": "calculatemostconsistent()"
     },
     {
@@ -23660,7 +23780,7 @@
       "source_location": "L470",
       "_origin": "ast",
       "id": "utils_gradecalc_calculateweightedmedian",
-      "community": 79,
+      "community": 28,
       "norm_label": "calculateweightedmedian()"
     },
     {
@@ -23670,7 +23790,7 @@
       "source_location": "L528",
       "_origin": "ast",
       "id": "utils_gradecalc_iscohortmatch",
-      "community": 28,
+      "community": 165,
       "norm_label": "iscohortmatch()"
     },
     {
@@ -23680,7 +23800,7 @@
       "source_location": "L559",
       "_origin": "ast",
       "id": "utils_gradecalc_filterassessmentsforsubject",
-      "community": 79,
+      "community": 28,
       "norm_label": "filterassessmentsforsubject()"
     },
     {
@@ -23690,7 +23810,7 @@
       "source_location": "L602",
       "_origin": "ast",
       "id": "utils_gradecalc_calculatestudentgrade",
-      "community": 79,
+      "community": 28,
       "norm_label": "calculatestudentgrade()"
     },
     {
@@ -24000,7 +24120,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_learningskillscsvparser",
-      "community": 18,
+      "community": 210,
       "norm_label": "learningskillscsvparser.js"
     },
     {
@@ -24010,7 +24130,7 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "utils_learningskillscsvparser_normalizelearningskilllevel",
-      "community": 18,
+      "community": 210,
       "norm_label": "normalizelearningskilllevel()"
     },
     {
@@ -24030,7 +24150,7 @@
       "source_location": "L99",
       "_origin": "ast",
       "id": "utils_learningskillscsvparser_decodexmlentities",
-      "community": 18,
+      "community": 210,
       "norm_label": "decodexmlentities()"
     },
     {
@@ -24040,7 +24160,7 @@
       "source_location": "L116",
       "_origin": "ast",
       "id": "utils_learningskillscsvparser_colletterstoindex",
-      "community": 18,
+      "community": 210,
       "norm_label": "colletterstoindex()"
     },
     {
@@ -24050,7 +24170,7 @@
       "source_location": "L132",
       "_origin": "ast",
       "id": "utils_learningskillscsvparser_stripdocpropsfromxlsx",
-      "community": 18,
+      "community": 210,
       "norm_label": "stripdocpropsfromxlsx()"
     },
     {
@@ -24060,7 +24180,7 @@
       "source_location": "L156",
       "_origin": "ast",
       "id": "utils_learningskillscsvparser_extractrowsfromworksheet",
-      "community": 18,
+      "community": 210,
       "norm_label": "extractrowsfromworksheet()"
     },
     {
@@ -24070,7 +24190,7 @@
       "source_location": "L186",
       "_origin": "ast",
       "id": "utils_learningskillscsvparser_formatexceldateifserial",
-      "community": 18,
+      "community": 212,
       "norm_label": "formatexceldateifserial()"
     },
     {
@@ -24080,7 +24200,7 @@
       "source_location": "L205",
       "_origin": "ast",
       "id": "utils_learningskillscsvparser_parsexlsxdirectlyfromzip",
-      "community": 18,
+      "community": 210,
       "norm_label": "parsexlsxdirectlyfromzip()"
     },
     {
@@ -24090,7 +24210,7 @@
       "source_location": "L305",
       "_origin": "ast",
       "id": "utils_learningskillscsvparser_parsexlsxtorows",
-      "community": 18,
+      "community": 210,
       "norm_label": "parsexlsxtorows()"
     },
     {
@@ -24100,7 +24220,7 @@
       "source_location": "L351",
       "_origin": "ast",
       "id": "utils_learningskillscsvparser_parselearningskillsrows",
-      "community": 18,
+      "community": 210,
       "norm_label": "parselearningskillsrows()"
     },
     {
@@ -24110,7 +24230,7 @@
       "source_location": "L621",
       "_origin": "ast",
       "id": "utils_learningskillscsvparser_parselearningskillscsv",
-      "community": 18,
+      "community": 210,
       "norm_label": "parselearningskillscsv()"
     },
     {
@@ -24120,7 +24240,7 @@
       "source_location": "L629",
       "_origin": "ast",
       "id": "utils_learningskillscsvparser_parselearningskillsworkbook",
-      "community": 18,
+      "community": 210,
       "norm_label": "parselearningskillsworkbook()"
     },
     {
@@ -24130,7 +24250,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_localllmservice",
-      "community": 197,
+      "community": 168,
       "norm_label": "localllmservice.js"
     },
     {
@@ -24140,7 +24260,7 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "utils_localllmservice_model_catalog",
-      "community": 197,
+      "community": 168,
       "norm_label": "model_catalog"
     },
     {
@@ -24150,7 +24270,7 @@
       "source_location": "L50",
       "_origin": "ast",
       "id": "utils_localllmservice_llmstate",
-      "community": 197,
+      "community": 168,
       "norm_label": "llmstate"
     },
     {
@@ -24160,7 +24280,7 @@
       "source_location": "L73",
       "_origin": "ast",
       "id": "utils_localllmservice_detecthardwarecapabilities",
-      "community": 197,
+      "community": 168,
       "norm_label": "detecthardwarecapabilities()"
     },
     {
@@ -24170,7 +24290,7 @@
       "source_location": "L128",
       "_origin": "ast",
       "id": "utils_localllmservice_refreshcachedmodelslist",
-      "community": 197,
+      "community": 168,
       "norm_label": "refreshcachedmodelslist()"
     },
     {
@@ -24180,7 +24300,7 @@
       "source_location": "L163",
       "_origin": "ast",
       "id": "utils_localllmservice_loadmodel",
-      "community": 197,
+      "community": 168,
       "norm_label": "loadmodel()"
     },
     {
@@ -24190,7 +24310,7 @@
       "source_location": "L222",
       "_origin": "ast",
       "id": "utils_localllmservice_unloadmodel",
-      "community": 197,
+      "community": 168,
       "norm_label": "unloadmodel()"
     },
     {
@@ -24200,7 +24320,7 @@
       "source_location": "L251",
       "_origin": "ast",
       "id": "utils_localllmservice_purgemodelfromcache",
-      "community": 197,
+      "community": 168,
       "norm_label": "purgemodelfromcache()"
     },
     {
@@ -24230,7 +24350,7 @@
       "source_location": "L318",
       "_origin": "ast",
       "id": "utils_localllmservice_getdefaultsecondarysystemprompt",
-      "community": 197,
+      "community": 168,
       "norm_label": "getdefaultsecondarysystemprompt()"
     },
     {
@@ -24240,7 +24360,7 @@
       "source_location": "L361",
       "_origin": "ast",
       "id": "utils_localllmservice_getdefaultelementarysystemprompt",
-      "community": 197,
+      "community": 168,
       "norm_label": "getdefaultelementarysystemprompt()"
     },
     {
@@ -24250,7 +24370,7 @@
       "source_location": "L420",
       "_origin": "ast",
       "id": "utils_localllmservice_polishreportcomment",
-      "community": 197,
+      "community": 168,
       "norm_label": "polishreportcomment()"
     },
     {
@@ -24260,7 +24380,7 @@
       "source_location": "L619",
       "_origin": "ast",
       "id": "utils_localllmservice_polishelementarycomment",
-      "community": 197,
+      "community": 168,
       "norm_label": "polishelementarycomment()"
     },
     {
@@ -24270,7 +24390,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_math",
-      "community": 79,
+      "community": 112,
       "norm_label": "math.js"
     },
     {
@@ -24280,7 +24400,7 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "utils_math_preciseround",
-      "community": 79,
+      "community": 112,
       "norm_label": "preciseround()"
     },
     {
@@ -24290,7 +24410,7 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "utils_math_calculatepercentchange",
-      "community": 79,
+      "community": 112,
       "norm_label": "calculatepercentchange()"
     },
     {
@@ -24300,7 +24420,7 @@
       "source_location": "L44",
       "_origin": "ast",
       "id": "utils_math_ensurefinitenumber",
-      "community": 79,
+      "community": 112,
       "norm_label": "ensurefinitenumber()"
     },
     {
@@ -24310,7 +24430,7 @@
       "source_location": "L59",
       "_origin": "ast",
       "id": "utils_math_safesum",
-      "community": 79,
+      "community": 112,
       "norm_label": "safesum()"
     },
     {
@@ -24320,7 +24440,7 @@
       "source_location": "L77",
       "_origin": "ast",
       "id": "utils_math_safemean",
-      "community": 79,
+      "community": 112,
       "norm_label": "safemean()"
     },
     {
@@ -24330,7 +24450,7 @@
       "source_location": "L95",
       "_origin": "ast",
       "id": "utils_math_safedivide",
-      "community": 79,
+      "community": 112,
       "norm_label": "safedivide()"
     },
     {
@@ -24790,7 +24910,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "utils_studentinfocsvparser",
-      "community": 18,
+      "community": 212,
       "norm_label": "studentinfocsvparser.js"
     },
     {
@@ -24800,7 +24920,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "utils_studentinfocsvparser_normalizeconfidence",
-      "community": 18,
+      "community": 212,
       "norm_label": "normalizeconfidence()"
     },
     {
@@ -24810,7 +24930,7 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "utils_studentinfocsvparser_sanitizetextfield",
-      "community": 18,
+      "community": 212,
       "norm_label": "sanitizetextfield()"
     },
     {
@@ -24820,7 +24940,7 @@
       "source_location": "L55",
       "_origin": "ast",
       "id": "utils_studentinfocsvparser_cleanoptiontext",
-      "community": 18,
+      "community": 212,
       "norm_label": "cleanoptiontext()"
     },
     {
@@ -24830,7 +24950,7 @@
       "source_location": "L68",
       "_origin": "ast",
       "id": "utils_studentinfocsvparser_parsestudentinforows",
-      "community": 18,
+      "community": 212,
       "norm_label": "parsestudentinforows()"
     },
     {
@@ -25430,7 +25550,7 @@
       "source_location": "L561",
       "_origin": "ast",
       "id": "views_reports_onsurveyimported",
-      "community": 38,
+      "community": 1,
       "norm_label": "onsurveyimported()"
     },
     {
@@ -26020,7 +26140,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "tmp_test_dates",
-      "community": 206,
+      "community": 211,
       "norm_label": "test_dates.js"
     },
     {
@@ -26030,7 +26150,7 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "tmp_test_dates_testyear",
-      "community": 206,
+      "community": 211,
       "norm_label": "testyear()"
     },
     {
@@ -62334,6 +62454,56 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/test_email_formatter.js",
+      "source_location": "L468",
+      "weight": 1.0,
+      "source": "src_test_email_formatter",
+      "target": "src_test_email_formatter_briefbody",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/test_email_formatter.js",
+      "source_location": "L464",
+      "weight": 1.0,
+      "source": "src_test_email_formatter",
+      "target": "src_test_email_formatter_briefdata",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/test_email_formatter.js",
+      "source_location": "L425",
+      "weight": 1.0,
+      "source": "src_test_email_formatter",
+      "target": "src_test_email_formatter_elevatedbody",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/test_email_formatter.js",
+      "source_location": "L416",
+      "weight": 1.0,
+      "source": "src_test_email_formatter",
+      "target": "src_test_email_formatter_elevateddata",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/test_email_formatter.js",
+      "source_location": "L431",
+      "weight": 1.0,
+      "source": "src_test_email_formatter",
+      "target": "src_test_email_formatter_elevatedhtml",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/test_email_formatter.js",
       "source_location": "L85",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -62359,6 +62529,26 @@
       "confidence_score": 1.0,
       "source": "src_test_email_formatter",
       "target": "src_test_email_formatter_emlwithcid"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/test_email_formatter.js",
+      "source_location": "L446",
+      "weight": 1.0,
+      "source": "src_test_email_formatter",
+      "target": "src_test_email_formatter_extendedbody",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/test_email_formatter.js",
+      "source_location": "L442",
+      "weight": 1.0,
+      "source": "src_test_email_formatter",
+      "target": "src_test_email_formatter_extendedtripdata",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -62571,6 +62761,46 @@
       "target": "src_test_email_formatter_sbarhtmlunassessed"
     },
     {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/test_email_formatter.js",
+      "source_location": "L457",
+      "weight": 1.0,
+      "source": "src_test_email_formatter",
+      "target": "src_test_email_formatter_singlelongbody",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/test_email_formatter.js",
+      "source_location": "L453",
+      "weight": 1.0,
+      "source": "src_test_email_formatter",
+      "target": "src_test_email_formatter_singlelongdata",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/test_email_formatter.js",
+      "source_location": "L479",
+      "weight": 1.0,
+      "source": "src_test_email_formatter",
+      "target": "src_test_email_formatter_zerobody",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/test_email_formatter.js",
+      "source_location": "L475",
+      "weight": 1.0,
+      "source": "src_test_email_formatter",
+      "target": "src_test_email_formatter_zerodata",
+      "confidence_score": 1.0
+    },
+    {
       "relation": "imports_from",
       "context": "import",
       "confidence": "EXTRACTED",
@@ -62602,6 +62832,17 @@
       "confidence_score": 1.0,
       "source": "src_test_email_formatter",
       "target": "utils_emailformatter_fitline"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/test_email_formatter.js",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "src_test_email_formatter",
+      "target": "utils_emailformatter_formatoutofclassemailline",
+      "confidence_score": 1.0
     },
     {
       "relation": "imports",
@@ -69385,6 +69626,16 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/utils/emailFormatter.js",
+      "source_location": "L129",
+      "weight": 1.0,
+      "source": "utils_emailformatter",
+      "target": "utils_emailformatter_formatoutofclassemailline",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/utils/emailFormatter.js",
       "source_location": "L694",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -69504,6 +69755,28 @@
       "confidence_score": 1.0,
       "source": "utils_emailformatter_generaterichemailhtml",
       "target": "utils_emailformatter_getcleanmissingassessments"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/utils/emailFormatter.js",
+      "source_location": "L348",
+      "weight": 1.0,
+      "source": "utils_emailformatter_generatemobilesafeemailbody",
+      "target": "utils_emailformatter_formatoutofclassemailline",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/utils/emailFormatter.js",
+      "source_location": "L667",
+      "weight": 1.0,
+      "source": "utils_emailformatter_generaterichemailhtml",
+      "target": "utils_emailformatter_formatoutofclassemailline",
+      "confidence_score": 1.0
     },
     {
       "relation": "calls",
@@ -72957,5 +73230,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "47cb3c9e0abd6ae513895e201d301d6f33786539"
+  "built_at_commit": "329ab06af98b4519f08d583f8ea9ef358932d19e"
 }

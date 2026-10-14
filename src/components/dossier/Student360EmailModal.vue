@@ -401,6 +401,7 @@ const studentEmailData = computed(() => {
 
   const washCount = props.washroomCount || 0
   const washMins = props.attendanceAverages?.washroomTotal ?? (props.stats?.washroomMinutes ?? 0)
+  const washAvgMins = props.attendanceAverages?.washroomAvgPerVisit ?? (washCount > 0 ? Math.round(washMins / washCount) : 0)
 
   return {
     name: fullName,
@@ -424,7 +425,9 @@ const studentEmailData = computed(() => {
     },
     outOfClass: {
       trips: washCount,
-      minutes: washMins
+      minutes: washMins,
+      avgMinutes: washAvgMins,
+      periodDuration: 75
     },
     recipients: Array.from(selectedRecipientEmails.value)
   }
