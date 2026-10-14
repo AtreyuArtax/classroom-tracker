@@ -83,19 +83,19 @@
       <!-- Quadrant Background Labels (Fixed to 4 outer corners of the canvas card) -->
       <div class="risk-plot__quadrant risk-plot__quadrant--top-left">
         <span class="risk-plot__quad-label">Presence Risk</span>
-        <span class="risk-plot__quad-sub">{{ isSbar ? 'High Level' : 'High Marks' }} · Low Time in Class</span>
+        <span class="risk-plot__quad-sub">{{ isSbar ? 'High Level' : 'High Marks' }} · High Lost Time</span>
       </div>
       <div class="risk-plot__quadrant risk-plot__quadrant--top-right">
         <span class="risk-plot__quad-label">Thriving</span>
-        <span class="risk-plot__quad-sub">{{ isSbar ? 'High Level' : 'High Marks' }} · High Time in Class</span>
+        <span class="risk-plot__quad-sub">{{ isSbar ? 'High Level' : 'High Marks' }} · In Class</span>
       </div>
       <div class="risk-plot__quadrant risk-plot__quadrant--bottom-left">
         <span class="risk-plot__quad-label">Critical Intervention</span>
-        <span class="risk-plot__quad-sub">{{ isSbar ? 'Low Level' : 'Low Marks' }} · Low Time in Class</span>
+        <span class="risk-plot__quad-sub">{{ isSbar ? 'Low Level' : 'Low Marks' }} · High Lost Time</span>
       </div>
       <div class="risk-plot__quadrant risk-plot__quadrant--bottom-right">
         <span class="risk-plot__quad-label">Academic Risk</span>
-        <span class="risk-plot__quad-sub">{{ isSbar ? 'Low Level' : 'Low Marks' }} · High Time in Class</span>
+        <span class="risk-plot__quad-sub">{{ isSbar ? 'Low Level' : 'Low Marks' }} · In Class</span>
       </div>
 
       <!-- Axis Divider Lines -->
@@ -142,10 +142,17 @@
             </div>
 
             <div class="risk-plot__tt-meta">
-              <strong>{{ s.timeInClassPct }}%</strong> In-Class
-              <span v-if="s.activeLostMins > 0" class="risk-plot__tt-lost">
-                ({{ s.activeLostMins }}m lost<template v-if="s.absences > 0 && activeFactors.absences"> · {{ s.absences }}a</template><template v-if="s.lateCount > 0 && activeFactors.lates"> · {{ s.lateCount }}l</template><template v-if="s.washroomCount > 0 && activeFactors.washroom"> · {{ s.washroomCount }} out</template>)
-              </span>
+              <template v-if="s.activeLostMins > 0">
+                <strong>{{ s.formattedLostTime }}</strong>
+                <span v-if="s.cohortComparison" class="risk-plot__tt-median"> · {{ s.cohortComparison }}</span>
+                <span class="risk-plot__tt-lost">
+                  (≈ {{ s.equivClassesLost }} {{ s.equivClassesLost === '1.0' ? 'class' : 'classes' }}<template v-if="s.absences > 0 && activeFactors.absences"> · {{ s.absences }}a</template><template v-if="s.lateCount > 0 && activeFactors.lates"> · {{ s.lateCount }}l</template><template v-if="s.washroomCount > 0 && activeFactors.washroom"> · {{ s.washroomCount }} out</template>)
+                </span>
+              </template>
+              <template v-else>
+                <strong>Full Presence</strong>
+                <span class="risk-plot__tt-lost">(0m lost outside class)</span>
+              </template>
             </div>
           </template>
 
@@ -171,7 +178,12 @@
                   </span>
                 </div>
                 <div class="cluster-row-sub">
-                  {{ cSt.timeInClassPct }}% In-Class ({{ cSt.activeLostMins }}m lost)
+                  <template v-if="cSt.activeLostMins > 0">
+                    {{ cSt.formattedLostTime }}<template v-if="cSt.cohortComparison"> · {{ cSt.cohortComparison }}</template> (≈ {{ cSt.equivClassesLost }} cl)
+                  </template>
+                  <template v-else>
+                    0m lost
+                  </template>
                 </div>
               </div>
             </div>
@@ -204,16 +216,12 @@
             class="list-card__student-item"
             @click="$emit('select-student', st.studentId)"
           >
-            <div class="list-card__student-left">
-              <span class="list-card__avatar" :class="'avatar--' + group.key">{{ st.initials }}</span>
-              <span class="list-card__name">{{ st.fullName }}</span>
-              <span v-if="st.hasHalo" class="list-card__halo-tag" :title="st.haloReason">
-                <AlertTriangle :size="10" class="list-card__halo-icon" />
-                <span>Frequent Out Of Class</span>
-              </span>
-            </div>
-            <div class="list-card__student-right">
-              <span class="list-card__score">
+            <div class="list-card__item-main">
+              <div class="list-card__identity">
+                <span class="list-card__avatar" :class="'avatar--' + group.key">{{ st.initials }}</span>
+                <span class="list-card__name" :title="st.fullName">{{ st.fullName }}</span>
+              </div>
+              <span class="list-card__score" :class="'score--' + group.key">
                 <template v-if="isSbar">
                   {{ st.sbarBadge ? st.sbarBadge.level : 'N/A' }}
                 </template>
@@ -221,7 +229,23 @@
                   {{ st.grade !== null ? st.grade + '%' : 'N/A' }}
                 </template>
               </span>
-              <span class="list-card__att">{{ st.timeInClassPct }}% In-Class ({{ st.activeLostMins }}m lost)</span>
+            </div>
+
+            <div class="list-card__item-meta">
+              <span v-if="st.hasHalo" class="list-card__halo-tag" :title="st.haloReason">
+                <AlertTriangle :size="9" class="list-card__halo-icon" />
+                <span>Frequent Out</span>
+              </span>
+              <span class="list-card__att">
+                <template v-if="st.activeLostMins > 0">
+                  <strong>{{ st.formattedLostTime }}</strong>
+                  <span v-if="st.cohortComparison" class="list-card__att-sub"> · {{ st.cohortComparison }}</span>
+                  <span class="list-card__att-sub"> (≈ {{ st.equivClassesLost }} {{ st.equivClassesLost === '1.0' ? 'cl' : 'cls' }})</span>
+                </template>
+                <template v-else>
+                  <span>Full Presence (0m lost)</span>
+                </template>
+              </span>
             </div>
           </li>
         </ul>
@@ -291,9 +315,7 @@ function toggleFactor(key) {
 }
 
 const axisXPercent = computed(() => {
-  const attCutoff = Number(thresholds.value.attendanceThreshold ?? 85)
-  const norm = Math.max(0, Math.min(1, (attCutoff - 50) / 50))
-  return Math.max(6, Math.min(92, Math.round(norm * 86 + 6)))
+  return matrixData.value.axisXPercent ?? 68
 })
 
 const axisYPercent = computed(() => {
@@ -618,6 +640,11 @@ const metricSubtitle = computed(() => matrixData.value.metricSubtitle)
   color: var(--text, #1c1c1e);
 }
 
+.risk-plot__tt-cohort-tag {
+  color: var(--primary, #4663ac);
+  font-weight: 700;
+}
+
 .risk-plot__tt-lost {
   color: var(--text-tertiary, #8e8e93);
   margin-left: 2px;
@@ -848,7 +875,7 @@ const metricSubtitle = computed(() => matrixData.value.metricSubtitle)
 /* List View Styles */
 .risk-plot__list-view {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
   gap: 8px;
   min-height: clamp(320px, 44vh, 400px);
 }
@@ -861,6 +888,7 @@ const metricSubtitle = computed(() => matrixData.value.metricSubtitle)
   display: flex;
   flex-direction: column;
   gap: 6px;
+  min-width: 0;
 }
 
 .list-card__header {
@@ -904,20 +932,21 @@ const metricSubtitle = computed(() => matrixData.value.metricSubtitle)
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  max-height: 180px;
+  gap: 5px;
+  max-height: 220px;
   overflow-y: auto;
 }
 
 .list-card__student-item {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 3px 6px;
+  flex-direction: column;
+  gap: 2.5px;
+  padding: 4px 7px;
   border-radius: var(--radius-sm);
   background: var(--bg-secondary);
   cursor: pointer;
   transition: background 0.15s ease, transform 0.1s ease;
+  min-width: 0;
 }
 
 .list-card__student-item:hover {
@@ -925,10 +954,20 @@ const metricSubtitle = computed(() => matrixData.value.metricSubtitle)
   transform: translateX(2px);
 }
 
-.list-card__student-left {
+.list-card__item-main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  min-width: 0;
+}
+
+.list-card__identity {
   display: flex;
   align-items: center;
   gap: 6px;
+  min-width: 0;
+  flex: 1 1 auto;
   overflow: hidden;
 }
 
@@ -952,29 +991,71 @@ const metricSubtitle = computed(() => matrixData.value.metricSubtitle)
 
 .list-card__name {
   font-size: 0.74rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--text);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.list-card__student-right {
-  display: flex;
-  align-items: center;
-  gap: 6px;
+.list-card__score {
+  font-size: 0.68rem;
+  font-weight: 800;
+  padding: 1px 4px;
+  border-radius: 3px;
   flex-shrink: 0;
+  white-space: nowrap;
 }
 
-.list-card__score {
-  font-size: 0.72rem;
-  font-weight: 800;
-  color: var(--primary);
+.score--green      { color: var(--color-success-text);   background: var(--color-success-bg); }
+.score--yellow     { color: var(--color-warn-text);      background: var(--color-warn-bg); }
+.score--orange     { color: var(--color-attention-text); background: var(--color-attention-bg); }
+.score--red        { color: var(--color-danger-text);    background: var(--color-danger-bg); }
+.score--unassessed { color: var(--color-neutral-text);   background: var(--color-neutral-bg); }
+
+.list-card__item-meta {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.list-card__halo-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 0.58rem;
+  font-weight: 700;
+  color: var(--color-halo-text, #475569);
+  background: var(--color-halo-bg, rgba(203, 213, 225, 0.2));
+  border: 1px solid var(--color-halo-border, rgba(203, 213, 225, 0.4));
+  border-radius: 2.5px;
+  padding: 0.5px 3.5px;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .list-card__att {
-  font-size: 0.66rem;
+  font-size: 0.63rem;
   color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.list-card__att strong {
+  color: var(--text);
+}
+
+.list-card__att-cohort {
+  color: var(--primary, #4663ac);
+  font-weight: 700;
+}
+
+.list-card__att-sub {
+  color: var(--text-tertiary, #8e8e93);
 }
 
 .list-card__empty {

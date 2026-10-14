@@ -18,6 +18,44 @@ import { toMinutes } from './timeUtils.js'
 import { getSBARLevelBadge } from './gradeCalcSBAR.js'
 
 /**
+ * Standard horizontal axis divider coordinate in percentage space (68%).
+ * Separates elevated lost time (left, 8%-68%) from healthy classroom presence (right, 68%-90%).
+ */
+export const AXIS_DIVIDER_X = 68
+
+/**
+ * Calculates the exact median of an array of numbers.
+ *
+ * @param {Array<number>} [values]
+ * @returns {number}
+ */
+export function calculateMedian(values = []) {
+  if (!values || values.length === 0) return 0
+  const sorted = [...values].sort((a, b) => a - b)
+  const mid = Math.floor(sorted.length / 2)
+  return sorted.length % 2 !== 0
+    ? sorted[mid]
+    : Math.round((sorted[mid - 1] + sorted[mid]) / 2)
+}
+
+/**
+ * Formats lost instructional minutes into a clear, tangible human string (e.g., '45m lost' or '2h 15m lost').
+ *
+ * @param {number} mins
+ * @returns {string}
+ */
+export function formatLostTime(mins) {
+  const m = Math.round(mins || 0)
+  if (m <= 0) return '0m lost'
+  if (m >= 60) {
+    const hours = Math.floor(m / 60)
+    const remMins = m % 60
+    return remMins > 0 ? `${hours}h ${remMins}m lost` : `${hours}h lost`
+  }
+  return `${m}m lost`
+}
+
+/**
  * Extracts student initials (2 uppercase characters).
  *
  * @param {string} [name] Full name string
@@ -54,27 +92,27 @@ export function getMetricSubtitle(filters = {}, isSbar = false) {
   const { absences = true, lates = true, washroom = true } = filters
 
   if (absences && lates && washroom) {
-    return `Comparing ${academicLabel} vs. Time in Class (All Factors)`
+    return `Comparing ${academicLabel} vs. Lost Time (All Factors)`
   }
   if (!absences && lates && washroom) {
-    return `Comparing ${academicLabel} vs. Time in Class (Lates & Out of Class)`
+    return `Comparing ${academicLabel} vs. Lost Time (Lates & Out of Class)`
   }
   if (absences && !lates && !washroom) {
-    return `Comparing ${academicLabel} vs. Time in Class (Absences Only)`
+    return `Comparing ${academicLabel} vs. Lost Time (Absences Only)`
   }
   if (!absences && lates && !washroom) {
-    return `Comparing ${academicLabel} vs. Time in Class (Lates Only)`
+    return `Comparing ${academicLabel} vs. Lost Time (Lates Only)`
   }
   if (!absences && !lates && washroom) {
-    return `Comparing ${academicLabel} vs. Time in Class (Out of Class Only)`
+    return `Comparing ${academicLabel} vs. Lost Time (Out of Class Only)`
   }
   if (absences && lates && !washroom) {
-    return `Comparing ${academicLabel} vs. Time in Class (Absences & Lates)`
+    return `Comparing ${academicLabel} vs. Lost Time (Absences & Lates)`
   }
   if (absences && !lates && washroom) {
-    return `Comparing ${academicLabel} vs. Time in Class (Absences & Out of Class)`
+    return `Comparing ${academicLabel} vs. Lost Time (Absences & Out of Class)`
   }
-  return `Comparing ${academicLabel} vs. Time in Class`
+  return `Comparing ${academicLabel} vs. Lost Time`
 }
 
 /**
@@ -112,6 +150,10 @@ export function calculateStudentRiskMatrix({
       unassessedCount: 0,
       totalDays: 0,
       scheduledMins: 0,
+      medianLostMins: 0,
+      maxLostMins: 0,
+      lostTimeCutoff: 0,
+      axisXPercent: AXIS_DIVIDER_X,
       metricSubtitle: getMetricSubtitle(filters, isSbar)
     }
   }
@@ -174,9 +216,8 @@ export function calculateStudentRiskMatrix({
   const scheduledMins = totalDays * periodDuration
 
   const academicCutoff = Number(thresholds.atRiskThreshold ?? 70)
-  const attendanceCutoff = Number(thresholds.attendanceThreshold ?? 85)
 
-  // Map students to raw data and coordinates
+  // Pass 1: Map students to raw data and individual loss metrics
   const rawList = sidebarStudents.map(student => {
     const sId = String(student.studentId)
     const gradeObj = classGrades[sId]
@@ -223,42 +264,19 @@ export function calculateStudentRiskMatrix({
       activeLostMins += dailyActiveLost
     })
 
-    // Total Time in Class (%)
+    const roundedLostMins = Math.round(activeLostMins)
+
+    // Total Time in Class (%) kept for backward-compatibility
     const timeInClassPct = Math.max(
       0,
-      Math.min(100, Math.round(((scheduledMins - activeLostMins) / scheduledMins) * 100))
+      Math.min(100, Math.round(((scheduledMins - roundedLostMins) / scheduledMins) * 100))
     )
 
-    // Equivalent full classes lost
-    const equivClassesLost = activeLostMins > 0 ? (activeLostMins / periodDuration).toFixed(1) : '0.0'
-
-    // X-axis: Map timeInClassPct (50% to 100% active domain) to graph X position (6% to 92%)
-    // Eliminates the empty 0%-50% dead desert, centers the threshold line, and gives students room to disperse.
-    const normX = Math.max(0, Math.min(1, (timeInClassPct - 50) / 50))
-    const baseX = Math.max(6, Math.min(92, Math.round(normX * 86 + 6)))
-
-    // Y-axis: Map grade (0% to 100%) to graph Y position (6% to 92%)
-    let baseY = 50
-    let quadrant = 'unassessed'
-
-    if (grade === null) {
-      quadrant = 'unassessed'
-      baseY = 50
-    } else {
-      baseY = Math.max(6, Math.min(92, Math.round(grade * 0.86 + 6)))
-      if (timeInClassPct < attendanceCutoff && grade < academicCutoff) {
-        quadrant = 'red' // Critical Intervention
-      } else if (timeInClassPct >= attendanceCutoff && grade < academicCutoff) {
-        quadrant = 'yellow' // Academic Risk
-      } else if (timeInClassPct < attendanceCutoff && grade >= academicCutoff) {
-        quadrant = 'orange' // Attendance/Presence Risk
-      } else {
-        quadrant = 'green' // Thriving
-      }
-    }
+    // Equivalent full classes lost & readable lost time
+    const equivClassesLost = roundedLostMins > 0 ? (roundedLostMins / periodDuration).toFixed(1) : '0.0'
+    const formattedLostTime = formatLostTime(roundedLostMins)
 
     // Option 1: Chronic Disruption Halo (Frequent Out of Class / Late Departure)
-    // Identifies students with serial out-of-class patterns without fudging raw minute percentages
     const schoolDays = Math.max(totalDays, 1)
     const tripsPerWeek = (totalWashroomCount / schoolDays) * 5
     const avgWashroomMins = totalWashroomCount > 0 ? (totalWashroomMins / totalWashroomCount) : 0
@@ -268,7 +286,6 @@ export function calculateStudentRiskMatrix({
     const isExtendedHallway = totalWashroomCount >= 3 && avgWashroomMins >= 12
     const isChronicLate = totalLateCount >= 4 && (latesPerWeek >= 2.0 || totalLateCount >= 8)
 
-    // Respect active filters: only halo factors that are currently enabled
     const hasHallwayHalo = Boolean(activeFilters.washroom && (isChronicHallway || isExtendedHallway))
     const hasLateHalo = Boolean(activeFilters.lates && isChronicLate)
     const hasHalo = hasHallwayHalo || hasLateHalo
@@ -295,7 +312,8 @@ export function calculateStudentRiskMatrix({
       grade,
       sbarBadge,
       timeInClassPct,
-      activeLostMins: Math.round(activeLostMins),
+      activeLostMins: roundedLostMins,
+      formattedLostTime,
       equivClassesLost,
       absences: totalAbsences,
       absenceMins: totalAbsenceMins,
@@ -310,15 +328,127 @@ export function calculateStudentRiskMatrix({
       hasHallwayHalo,
       hasLateHalo,
       haloReason,
-      baseX,
-      baseY,
-      quadrant,
       isUnassessed: grade === null
     }
   })
 
+  // Cohort distribution analytics
+  const allLostMins = rawList.map(s => s.activeLostMins)
+  const medianLostMins = calculateMedian(allLostMins)
+  const sumLostMins = allLostMins.reduce((a, b) => a + b, 0)
+  const meanLostMins = rawList.length > 0 ? Math.round(sumLostMins / rawList.length) : 0
+  const maxLostMins = Math.max(...allLostMins, 0)
+
+  // Sorted list for rank and percentile standing
+  const sortedLostDesc = [...allLostMins].sort((a, b) => b - a)
+  const totalStudents = rawList.length
+
+  // Calibrate the lost time concern threshold
+  let lostTimeCutoff = 0
+  if (activeFilters.absences) {
+    // Require at least 1 class period (75m). Also, if class median is high,
+    // ensure risk requires being an outlier relative to the cohort (1.35x class median).
+    const relativeFloor = Math.round(medianLostMins * 1.35)
+    lostTimeCutoff = Math.max(periodDuration, relativeFloor)
+  } else {
+    // Only Lates & Out of Class:
+    // Minimum noise floor is 25m (grace cushion for normal trips)
+    const noiseFloor = 25
+    // If median is 0m, use the class average or noise floor as baseline
+    const effectiveBaseline = Math.max(medianLostMins, meanLostMins, noiseFloor)
+    lostTimeCutoff = Math.max(noiseFloor, Math.round(effectiveBaseline * 1.5))
+  }
+
+  // Pass 2: Project coordinates (baseX, baseY) and assign quadrants
+  const studentListWithCoords = rawList.map(s => {
+    const lost = s.activeLostMins
+    const hasLostTimeRisk = lost > lostTimeCutoff
+
+    // Relative comparison vs cohort
+    let medianMultiple = null
+    let cohortComparison = ''
+
+    if (lost === 0) {
+      cohortComparison = ''
+      medianMultiple = 0
+    } else if (medianLostMins > 0) {
+      // Non-zero class median available
+      const mult = Number((lost / medianLostMins).toFixed(1))
+      medianMultiple = mult
+      if (mult >= 1.3) {
+        cohortComparison = `${mult}x class median`
+      } else if (mult <= 0.8) {
+        cohortComparison = `${mult}x class median`
+      } else {
+        cohortComparison = 'Near class median'
+      }
+    } else {
+      // Median is 0m (more than half the class had zero lost time)
+      // Rank-based / percentile standing in cohort
+      const rank = sortedLostDesc.indexOf(lost) + 1
+      const isHighest = rank === 1 && sortedLostDesc[0] > (sortedLostDesc[1] || 0)
+      const isTopTier = rank <= Math.max(1, Math.ceil(totalStudents * 0.12))
+
+      if (isHighest) {
+        cohortComparison = 'Highest in class'
+      } else if (isTopTier) {
+        cohortComparison = 'Top 10% lost time'
+      } else {
+        cohortComparison = ''
+      }
+      medianMultiple = null
+    }
+
+    const medianComparisonLabel = cohortComparison
+
+    // Horizontal mapping:
+    // Left of AXIS_DIVIDER_X (8% to 67%) = Elevated lost time (Risk)
+    // Right of AXIS_DIVIDER_X (68% to 90%) = Healthy classroom presence
+    let baseX = AXIS_DIVIDER_X
+    if (!hasLostTimeRisk) {
+      const safeRatio = lostTimeCutoff > 0 ? (lost / lostTimeCutoff) : 0
+      baseX = Math.round(90 - safeRatio * (90 - AXIS_DIVIDER_X))
+    } else {
+      const excess = lost - lostTimeCutoff
+      const maxExcess = Math.max(1, maxLostMins - lostTimeCutoff)
+      const excessRatio = Math.min(1, excess / maxExcess)
+      baseX = Math.round(AXIS_DIVIDER_X - excessRatio * (AXIS_DIVIDER_X - 8))
+    }
+    baseX = Math.max(8, Math.min(92, baseX))
+
+    // Vertical mapping & Quadrants
+    let baseY = 50
+    let quadrant = 'unassessed'
+    if (s.grade === null) {
+      quadrant = 'unassessed'
+      baseY = 50
+    } else {
+      baseY = Math.max(6, Math.min(92, Math.round(s.grade * 0.86 + 6)))
+      if (hasLostTimeRisk && s.grade < academicCutoff) {
+        quadrant = 'red' // Critical Intervention (Low Marks, High Lost Time)
+      } else if (!hasLostTimeRisk && s.grade < academicCutoff) {
+        quadrant = 'yellow' // Academic Risk (Low Marks, In Class)
+      } else if (hasLostTimeRisk && s.grade >= academicCutoff) {
+        quadrant = 'orange' // Attendance/Presence Risk (High Marks, High Lost Time)
+      } else {
+        quadrant = 'green' // Thriving (High Marks, In Class)
+      }
+    }
+
+    return {
+      ...s,
+      medianMultiple,
+      cohortComparison,
+      medianComparisonLabel,
+      hasLostTimeRisk,
+      baseX,
+      baseY,
+      quadrant
+    }
+  })
+
   // Beeswarm / Circle Relaxation Packing to eliminate all dot overlaps
-  const points = rawList.map(item => ({
+  const points = studentListWithCoords.map(item => ({
     ...item,
     xPercent: item.baseX,
     yPercent: item.baseY
@@ -356,9 +486,15 @@ export function calculateStudentRiskMatrix({
       }
     }
 
-    // Keep strictly within visual card bounds [6%, 92%] in X and [7%, 91%] in Y
+    // Keep strictly within visual card bounds and respect quadrant divider
     points.forEach(p => {
-      p.xPercent = Math.max(6, Math.min(92, p.xPercent))
+      if (p.hasLostTimeRisk) {
+        // Students with lost time risk MUST stay strictly on the left of the divider
+        p.xPercent = Math.max(8, Math.min(AXIS_DIVIDER_X - 1.5, p.xPercent))
+      } else {
+        // Students without lost time risk MUST stay strictly on the right of the divider
+        p.xPercent = Math.max(AXIS_DIVIDER_X + 1.5, Math.min(92, p.xPercent))
+      }
       p.yPercent = Math.max(7, Math.min(91, p.yPercent))
     })
   }
@@ -395,6 +531,10 @@ export function calculateStudentRiskMatrix({
     unassessedCount: finalPoints.filter(p => p.quadrant === 'unassessed').length,
     totalDays,
     scheduledMins,
+    medianLostMins,
+    maxLostMins,
+    lostTimeCutoff,
+    axisXPercent: AXIS_DIVIDER_X,
     metricSubtitle: getMetricSubtitle(activeFilters, isSbar)
   }
 }

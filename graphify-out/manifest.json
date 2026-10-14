@@ -35,8 +35,8 @@
     "semantic_hash": ""
   },
   "public/manifest.json": {
-    "mtime": 1790211410.752995,
-    "ast_hash": "046b659b4a43179a5d00516b8a7d58ad",
+    "mtime": 1791986667.0057895,
+    "ast_hash": "575797b97eb80975a972adc1c2e5b510",
     "semantic_hash": ""
   },
   "rfid-companion/config.json": {
@@ -145,8 +145,8 @@
     "semantic_hash": ""
   },
   "src/components/dossier/AddAssessmentModal.vue": {
-    "mtime": 1790630805.9407055,
-    "ast_hash": "b096224572e197f695b5a69255055efb",
+    "mtime": 1791988364.9562519,
+    "ast_hash": "ba9c12d03f583a0a2175e179036eb464",
     "semantic_hash": ""
   },
   "src/components/dossier/AttendanceActivityReport.vue": {
@@ -240,13 +240,13 @@
     "semantic_hash": ""
   },
   "src/composables/useClassroom.js": {
-    "mtime": 1791463286.359534,
-    "ast_hash": "af848164a4f42e831b3d62f3fac0693c",
+    "mtime": 1792001863.6350422,
+    "ast_hash": "1307ef449bfb4485b0fd2e6b9b84a545",
     "semantic_hash": ""
   },
   "src/composables/useGradebook.js": {
-    "mtime": 1791512722.5653148,
-    "ast_hash": "c7c80bc74e6cd23a41ae9946c2a4bd65",
+    "mtime": 1791988380.969076,
+    "ast_hash": "6a4b0947f6313e0e14a5526968da39e1",
     "semantic_hash": ""
   },
   "src/composables/useKeyboardWedge.js": {
@@ -305,8 +305,8 @@
     "semantic_hash": ""
   },
   "src/db/settingsService.js": {
-    "mtime": 1791853015.8014517,
-    "ast_hash": "239f8bc75ac1a030b61555bf405132e8",
+    "mtime": 1792001871.3100865,
+    "ast_hash": "12f524852b280e004ad0507424ab2e49",
     "semantic_hash": ""
   },
   "src/main.js": {
@@ -340,8 +340,8 @@
     "semantic_hash": ""
   },
   "src/views/Grades.vue": {
-    "mtime": 1791550554.2467272,
-    "ast_hash": "efe9df4047fb69c05d2f2a61253f2660",
+    "mtime": 1791988373.9624505,
+    "ast_hash": "7f99aa003bd69460325d465aa041cb6f",
     "semantic_hash": ""
   },
   "src/views/Reports.vue": {
@@ -375,8 +375,8 @@
     "semantic_hash": "61bd31a2b0ac08f10f13c932b32d6ca1"
   },
   "vite.config.js": {
-    "mtime": 1791673715.5878382,
-    "ast_hash": "3d22ac8417cae2a0260acb98e516d871",
+    "mtime": 1791986685.1843894,
+    "ast_hash": "76c6ecf2e70f1595fe1218ecb45490ce",
     "semantic_hash": ""
   },
   "src/components/PrintGradesGridModal.vue": {
@@ -385,8 +385,8 @@
     "semantic_hash": ""
   },
   "src/components/GradesAnalyticsPanel.vue": {
-    "mtime": 1790556212.5988028,
-    "ast_hash": "2ba9a4938836cd98827e832299fcd31b",
+    "mtime": 1791990116.4630826,
+    "ast_hash": "a0066819346638cbe70552ad5f9a78c7",
     "semantic_hash": ""
   },
   "src/components/GradesGrid.vue": {
@@ -415,8 +415,8 @@
     "semantic_hash": ""
   },
   "src/components/setup/BehaviorSettings.vue": {
-    "mtime": 1791234478.5525508,
-    "ast_hash": "d8e44e6b3e98bcab5d157ce73579d112",
+    "mtime": 1792001720.5569425,
+    "ast_hash": "fa8f9b61f0668483a320a2a2bf27deb3",
     "semantic_hash": ""
   },
   "src/components/setup/QrCodeGeneratorModal.vue": {
@@ -530,8 +530,8 @@
     "semantic_hash": ""
   },
   "src/components/reports/StudentRiskScatterPlot.vue": {
-    "mtime": 1791555661.133901,
-    "ast_hash": "d5785490c63443e98cb36066cf3a015f",
+    "mtime": 1792000849.9569457,
+    "ast_hash": "c5a6778d55279b148e596464aa460f64",
     "semantic_hash": ""
   },
   "src/components/reports/PrintExpectationsModal.vue": {
@@ -550,8 +550,8 @@
     "semantic_hash": ""
   },
   "src/db/gradebook/gradeAnalytics.js": {
-    "mtime": 1788795756.8416493,
-    "ast_hash": "842a73781d9d81ab0250e150556a2cee",
+    "mtime": 1791990057.4411523,
+    "ast_hash": "6a70c43a052767344925f8a3f4577858",
     "semantic_hash": ""
   },
   "src/db/gradebook/gradeCalc.js": {
@@ -1630,13 +1630,13 @@
     "semantic_hash": ""
   },
   "src/test_student_risk_math.js": {
-    "mtime": 1791464585.031506,
-    "ast_hash": "8afb0faf36a3f97027cca9c536e83fc5",
+    "mtime": 1792001811.3050184,
+    "ast_hash": "7ed90a93d730abb76e5d5ca25e910373",
     "semantic_hash": ""
   },
   "src/utils/studentRiskMath.js": {
-    "mtime": 1791464592.8397257,
-    "ast_hash": "f1b1a0d246dbb635619dee88652cd8c2",
+    "mtime": 1792001782.0075493,
+    "ast_hash": "853a53069d50ceb847b5d98b5d592ad9",
     "semantic_hash": ""
   },
   "src/test_assessment_sorting.js": {
@@ -1655,8 +1655,8 @@
     "semantic_hash": ""
   },
   "src/components/reports/ReportsCommentGenerator.vue": {
-    "mtime": 1791853833.4708445,
-    "ast_hash": "fa4ae4c1a57a3a01d6b7327ecbb5895e",
+    "mtime": 1791855373.2233887,
+    "ast_hash": "8d3a07748fa84b97208efa20c788d3f3",
     "semantic_hash": ""
   },
   "src/test_comment_generator.js": {
@@ -1670,23 +1670,23 @@
     "semantic_hash": ""
   },
   "src/utils/commentGenerator.js": {
-    "mtime": 1791715650.4474866,
-    "ast_hash": "c4ed839cefec52973b28f1cbceaae646",
+    "mtime": 1791887060.4513698,
+    "ast_hash": "51342a993c17e918ae73335f207aa8a1",
     "semantic_hash": ""
   },
   "src/utils/localLlmService.js": {
-    "mtime": 1791853080.572495,
-    "ast_hash": "0770d874f8e7d7708b25d1e7b4aa1555",
+    "mtime": 1791887284.2348166,
+    "ast_hash": "c7cd6287489918231d51bc7741082251",
     "semantic_hash": ""
   },
   "src/utils/curriculumCompetencies.js": {
-    "mtime": 1791689530.7838604,
-    "ast_hash": "529d481ba21dad26bb490562aa0988aa",
+    "mtime": 1791855300.2710125,
+    "ast_hash": "c7a6998d422cc042e80a5cb8f3ee605a",
     "semantic_hash": ""
   },
   "src/components/reports/ElementaryCommentGenerator.vue": {
-    "mtime": 1791853387.9926953,
-    "ast_hash": "65e0c315f7d60f10b176b46c336fc4ba",
+    "mtime": 1791887301.2031982,
+    "ast_hash": "3edbc8c14fce7836d440b19b59e063e9",
     "semantic_hash": ""
   },
   "src/composables/useAiPrompts.js": {
@@ -1710,13 +1710,13 @@
     "semantic_hash": ""
   },
   "src/data/comments/elementaryMathBank.js": {
-    "mtime": 1791852520.070916,
-    "ast_hash": "da1a642df70c0d0bdd5a81a8c8afea19",
+    "mtime": 1791887186.4915166,
+    "ast_hash": "e68c4cc2b1181a37710931cabb983a64",
     "semantic_hash": ""
   },
   "src/data/comments/elementaryScienceBank.js": {
-    "mtime": 1791852105.4237595,
-    "ast_hash": "3bcec7843c25638e208c597c5f6780ff",
+    "mtime": 1791887221.5400422,
+    "ast_hash": "b1ffce1991e732c668a5a437c3b090ce",
     "semantic_hash": ""
   },
   "src/data/comments/learningSkillsCommentBank.js": {
@@ -1730,8 +1730,8 @@
     "semantic_hash": ""
   },
   "src/test_ai_prompt_presets.js": {
-    "mtime": 1791853416.027572,
-    "ast_hash": "e7d0b11ca98619ab2b3c94ecd5c1dbdb",
+    "mtime": 1791887404.893075,
+    "ast_hash": "3942d99fdcb24673beee2d5488023334",
     "semantic_hash": ""
   },
   "src/test_elementary_comment_generator.js": {
@@ -1740,8 +1740,73 @@
     "semantic_hash": ""
   },
   "src/utils/elementaryCommentGenerator.js": {
-    "mtime": 1791852863.9986122,
-    "ast_hash": "8dbcd05e66f497df383388ae065260b9",
+    "mtime": 1791887165.6245835,
+    "ast_hash": "5ddb565f17fe500b80756ce212ba3be3",
+    "semantic_hash": ""
+  },
+  "scripts/generate_icons.js": {
+    "mtime": 1791986637.9785087,
+    "ast_hash": "472183e165563ed560d0d6c48af0bdd4",
+    "semantic_hash": ""
+  },
+  "src/data/comments/secondary/index.js": {
+    "mtime": 1791855271.3829167,
+    "ast_hash": "67e37cbfa8bb3d1e3c1163188b2a5195",
+    "semantic_hash": ""
+  },
+  "src/data/comments/secondary/mpm2d.js": {
+    "mtime": 1791855264.4914243,
+    "ast_hash": "ae8d632fadbf4814b400486f747e77a0",
+    "semantic_hash": ""
+  },
+  "src/data/comments/secondary/mth1w.js": {
+    "mtime": 1791855259.5980494,
+    "ast_hash": "58b035101f33b49a23bf60a682594f20",
+    "semantic_hash": ""
+  },
+  "src/data/comments/secondary/sbi3u.js": {
+    "mtime": 1791855238.2321634,
+    "ast_hash": "35405e4c1da2c03cc202d42fc4009eb3",
+    "semantic_hash": ""
+  },
+  "src/data/comments/secondary/sch3u.js": {
+    "mtime": 1791855245.251302,
+    "ast_hash": "61049b142a1d0cebae45540ed32db7ea",
+    "semantic_hash": ""
+  },
+  "src/data/comments/secondary/snc1w.js": {
+    "mtime": 1791855230.3759387,
+    "ast_hash": "ed47bde2780cd0dc6a46e642d1410dac",
+    "semantic_hash": ""
+  },
+  "src/data/comments/secondary/snc2d.js": {
+    "mtime": 1791855255.8994915,
+    "ast_hash": "f4e569bf5e1eb8b6ec26b2ee4ddd72a6",
+    "semantic_hash": ""
+  },
+  "src/data/comments/secondary/sph3u.js": {
+    "mtime": 1791855221.3721771,
+    "ast_hash": "a663187349e9f196400989c420a28145",
+    "semantic_hash": ""
+  },
+  "src/data/comments/secondary/sph4u.js": {
+    "mtime": 1791855251.707927,
+    "ast_hash": "d09a39bd4a7ef8f4fe9941ade07ac253",
+    "semantic_hash": ""
+  },
+  "src/test_canadian_spelling.js": {
+    "mtime": 1791887375.1757069,
+    "ast_hash": "ed4c2823b32772bc59337f00d7fe91e5",
+    "semantic_hash": ""
+  },
+  "src/test_curriculum_modular.js": {
+    "mtime": 1791855405.7767918,
+    "ast_hash": "3d9cf0d167e88dccc8fb2af86bb50696",
+    "semantic_hash": ""
+  },
+  "src/utils/canadianSpelling.js": {
+    "mtime": 1791887027.230781,
+    "ast_hash": "ebb5483a57be6c89c7fac464a7ad780a",
     "semantic_hash": ""
   }
 }

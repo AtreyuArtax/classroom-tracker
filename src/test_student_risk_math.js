@@ -27,15 +27,15 @@ console.log('✓ Initials extracted correctly')
 console.log('\n[Test 2] Metric Subtitle')
 assert.strictEqual(
   getMetricSubtitle({ absences: true, lates: true, washroom: true }, false),
-  'Comparing Academic Mark vs. Time in Class (All Factors)'
+  'Comparing Academic Mark vs. Lost Time (All Factors)'
 )
 assert.strictEqual(
   getMetricSubtitle({ absences: false, lates: true, washroom: true }, false),
-  'Comparing Academic Mark vs. Time in Class (Lates & Out of Class)'
+  'Comparing Academic Mark vs. Lost Time (Lates & Out of Class)'
 )
 assert.strictEqual(
   getMetricSubtitle({ absences: true, lates: false, washroom: false }, false),
-  'Comparing Academic Mark vs. Time in Class (Absences Only)'
+  'Comparing Academic Mark vs. Lost Time (Absences Only)'
 )
 console.log('✓ Metric subtitles match active filter states')
 
@@ -48,6 +48,7 @@ const emptyResult = calculateStudentRiskMatrix({
 assert.strictEqual(emptyResult.studentPoints.length, 0)
 assert.strictEqual(emptyResult.criticalCount, 0)
 assert.strictEqual(emptyResult.totalDays, 0)
+assert.strictEqual(emptyResult.axisXPercent, 68)
 console.log('✓ Empty roster returns safe structure')
 
 // ── 4. In-Class Time Calculation with Realistic Events ─────────────
@@ -115,44 +116,45 @@ const resAll = calculateStudentRiskMatrix({
   sidebarStudents: students,
   allClassEvents: events,
   classGrades,
-  thresholds: { attendanceThreshold: 85, atRiskThreshold: 70 },
+  thresholds: { atRiskThreshold: 70 },
   filters: { absences: true, lates: true, washroom: true },
   periodDuration: 75
 })
 
 assert.strictEqual(resAll.totalDays, 20, '20 class days scheduled')
 assert.strictEqual(resAll.scheduledMins, 1500, '1,500 total scheduled minutes')
+assert.strictEqual(resAll.medianLostMins, 75, 'Median lost minutes across [0, 75, 240] is 75m')
+assert.strictEqual(resAll.axisXPercent, 68, 'Vertical divider is anchored at 68%')
 
 const pPerfect = resAll.studentPoints.find(p => p.studentId === 'st_perfect')
 const pAbsent = resAll.studentPoints.find(p => p.studentId === 'st_absent')
 const pHallway = resAll.studentPoints.find(p => p.studentId === 'st_hallway')
 
-// Penny: 100% time in class, 92% mark -> Thriving (green)
-assert.strictEqual(pPerfect.timeInClassPct, 100)
+// Penny: 0m lost time, 92% mark -> Thriving (green)
+assert.strictEqual(pPerfect.activeLostMins, 0)
 assert.strictEqual(pPerfect.quadrant, 'green')
-assert.strictEqual(pPerfect.baseX, 92, '100% in-class maps to rightmost edge baseX=92%')
+assert.strictEqual(pPerfect.baseX, 90, '0 lost time maps to rightmost edge baseX=90%')
 assert.strictEqual(pPerfect.hasHalo, false, 'Penny has no halo')
 
-// Aaron: 1 absence = 75m lost. (1500 - 75) / 1500 = 1425 / 1500 = 95%.
-// Mark = 58% (< 70%). Attendance = 95% (>= 85%). -> Academic Risk (yellow)
-assert.strictEqual(pAbsent.timeInClassPct, 95)
+// Aaron: 1 absence = 75m lost.
+// Mark = 58% (< 70%). Lost time = 75m (<= 101m cutoff). -> Academic Risk (yellow)
 assert.strictEqual(pAbsent.activeLostMins, 75)
 assert.strictEqual(pAbsent.quadrant, 'yellow')
-assert.strictEqual(pAbsent.baseX, 83, '95% in-class maps to baseX=83% (> 85% cutoff at 66%)')
+assert.strictEqual(pAbsent.baseX, 74, '75m lost maps to baseX=74% (on safe right side of 68% divider)')
 assert.strictEqual(pAbsent.hasHalo, false, 'Aaron has no halo')
+assert.strictEqual(pAbsent.medianMultiple, 1.0, 'Aaron is exactly at class median (75m / 75m = 1.0x)')
 
 // Harry: 0 absences, 240m lost (120m late + 120m washroom).
-// (1500 - 240) / 1500 = 1260 / 1500 = 84.0% -> 84%.
-// Mark = 54% (< 70%). Time in Class = 84% (< 85%).
-// Under the old metric, Harry had 100% attendance!
-// Under the new metric, Harry is at 84% and correctly lands in Critical Intervention (red)!
-assert.strictEqual(pHallway.timeInClassPct, 84)
+// Mark = 54% (< 70%). Lost time = 240m (> 101m cutoff).
+// Correctly lands in Critical Intervention (red)!
 assert.strictEqual(pHallway.activeLostMins, 240)
 assert.strictEqual(pHallway.quadrant, 'red')
-assert.strictEqual(pHallway.baseX, 64, '84% in-class maps to baseX=64% (< 85% cutoff at 66%)')
+assert.strictEqual(pHallway.baseX, 8, '240m maximum lost maps to leftmost edge baseX=8%')
 assert.strictEqual(pHallway.hasHalo, true, 'Harry has chronic out of class halo')
 assert.strictEqual(pHallway.equivClassesLost, '3.2') // 240 / 75 = 3.2 classes
-console.log('✓ Chronic hallway/late student drops to 84%, shifts to Critical Intervention, and gains Halo')
+assert.strictEqual(pHallway.formattedLostTime, '4h lost')
+assert.strictEqual(pHallway.medianMultiple, 3.2, 'Harry has 3.2x the class median lost time')
+console.log('✓ Chronic hallway/late student drops to Critical Intervention, maps to far left (8%), with 3.2x median')
 
 // ── 5. Filter Toggling Recalculation ───────────────────────────────
 console.log('\n[Test 5] Toggling Absences OFF (Isolating In-School Disengagement)')
@@ -161,7 +163,7 @@ const resNoAbs = calculateStudentRiskMatrix({
   sidebarStudents: students,
   allClassEvents: events,
   classGrades,
-  thresholds: { attendanceThreshold: 85, atRiskThreshold: 70 },
+  thresholds: { atRiskThreshold: 70 },
   filters: { absences: false, lates: true, washroom: true },
   periodDuration: 75
 })
@@ -169,14 +171,15 @@ const resNoAbs = calculateStudentRiskMatrix({
 const pAbsentNoAbs = resNoAbs.studentPoints.find(p => p.studentId === 'st_absent')
 const pHallwayNoAbs = resNoAbs.studentPoints.find(p => p.studentId === 'st_hallway')
 
-// With absences toggled OFF, Aaron was never late or out of class, so his in-school time is 100%
-assert.strictEqual(pAbsentNoAbs.timeInClassPct, 100)
+// With absences toggled OFF, Aaron was never late or out of class, so his lost time is 0m
 assert.strictEqual(pAbsentNoAbs.activeLostMins, 0)
+assert.strictEqual(pAbsentNoAbs.baseX, 90)
 
-// Harry still lost 240m, so he stays at 84%
-assert.strictEqual(pHallwayNoAbs.timeInClassPct, 84)
+// Harry still lost 240m out of class / late, which greatly exceeds the noise floor cutoff (25m)
 assert.strictEqual(pHallwayNoAbs.activeLostMins, 240)
-console.log('✓ Toggling absences off isolates in-school disengagement accurately')
+assert.strictEqual(pHallwayNoAbs.quadrant, 'red')
+assert.strictEqual(pHallwayNoAbs.baseX, 8, 'Harry is still pushed far to the left (8%) in Critical Intervention')
+console.log('✓ Toggling absences off isolates in-school disengagement accurately and pushes wanderers to the left')
 
 // ── 6. Daily 75m Clamping Rule ─────────────────────────────────────
 console.log('\n[Test 6] Daily 75-Minute Lost Time Clamping')
@@ -197,15 +200,43 @@ const resClamp = calculateStudentRiskMatrix({
 const pClamp = resClamp.studentPoints[0]
 // Even though 75 + 20 = 95m, daily cap ensures lost minutes is exactly 75m (100% of that 1 day)
 assert.strictEqual(pClamp.activeLostMins, 75, 'Daily lost time is clamped to period duration (75m)')
-assert.strictEqual(pClamp.timeInClassPct, 0, 'Lost 100% of the 1 scheduled day')
+assert.strictEqual(pClamp.equivClassesLost, '1.0')
 console.log('✓ Clamping correctly prevents losing more than 75 minutes on one day')
 
-// ── 7. Beeswarm Bounds ─────────────────────────────────────────────
-console.log('\n[Test 7] Beeswarm Boundary Enforcement')
-resAll.studentPoints.forEach(p => {
-  assert(p.xPercent >= 6 && p.xPercent <= 92, `xPercent ${p.xPercent} is within [6, 92]`)
-  assert(p.yPercent >= 7 && p.yPercent <= 91, `yPercent ${p.yPercent} is within [7, 91]`)
+// ── 8. Zero-Median Cohort Comparison (Percentile / Rank) ──────────
+console.log('\n[Test 8] Zero-Median Cohort Standing (More than 50% Zero Lost Time)')
+const zeroMedianStudents = Array.from({ length: 10 }, (_, i) => ({
+  studentId: `s_${i}`,
+  name: `Student ${i}`
+}))
+
+// Students 0-6 have 0 lost mins (7 out of 10 students = 70% zero lost)
+// Student 7 has 15m lost
+// Student 8 has 60m lost
+// Student 9 has 120m lost
+const zeroMedianEvents = [
+  { eventId: 'z1', timestamp: '2026-09-01T08:30:00.000Z', studentId: 's_7', code: 'l', duration: 15 * 60000 },
+  { eventId: 'z2', timestamp: '2026-09-01T08:30:00.000Z', studentId: 's_8', code: 'w', duration: 60 * 60000 },
+  { eventId: 'z3', timestamp: '2026-09-01T08:30:00.000Z', studentId: 's_9', code: 'w', duration: 120 * 60000 }
+]
+
+const resZeroMed = calculateStudentRiskMatrix({
+  sidebarStudents: zeroMedianStudents,
+  allClassEvents: zeroMedianEvents,
+  classGrades: { s_9: { overallGrade: 45 }, s_8: { overallGrade: 60 }, s_7: { overallGrade: 75 } },
+  filters: { absences: false, lates: true, washroom: true }
 })
-console.log('✓ All student dot coordinates stay within canvas bounds')
+
+assert.strictEqual(resZeroMed.medianLostMins, 0, 'Class median is 0m')
+const pTop = resZeroMed.studentPoints.find(p => p.studentId === 's_9')
+const pSecond = resZeroMed.studentPoints.find(p => p.studentId === 's_8')
+const pMod = resZeroMed.studentPoints.find(p => p.studentId === 's_7')
+const pZero = resZeroMed.studentPoints.find(p => p.studentId === 's_0')
+
+assert.strictEqual(pTop.cohortComparison, 'Highest in class', 'Top student is labeled Highest in class')
+assert.strictEqual(pSecond.cohortComparison, 'Top 10% lost time', 'Second student is labeled Top 10% lost time')
+assert.strictEqual(pMod.cohortComparison, '', 'Moderate student has no clunky multiplier')
+assert.strictEqual(pZero.cohortComparison, '', 'Zero-lost student has empty comparison')
+console.log('✓ Zero-median distributions cleanly assign rank/percentile badges without average jargon')
 
 console.log('\nALL TESTS PASSED! ✨')

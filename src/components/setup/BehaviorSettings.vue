@@ -69,18 +69,6 @@
             @change="saveThresholds" 
           />
         </label>
-        <label class="setup__label">
-          <span class="setup__label-text">Attendance Warning</span>
-          <span class="setup__label-subtext">At-Risk Rate (%)</span>
-          <input 
-            v-model.number="editThresholds.attendanceThreshold" 
-            type="number" 
-            min="50"
-            max="98"
-            class="setup__input" 
-            @change="saveThresholds" 
-          />
-        </label>
       </div>
 
       <!-- Attendance Action Alert Strategy -->
@@ -903,7 +891,6 @@ const editThresholds = reactive({
   washroomDurationLimit: 11,
   deviceIncidentsPerWeek: 3, 
   atRiskThreshold: 70, 
-  attendanceThreshold: 85,
   absenceWindowDays: 15,
   enableWindowTier1: true,
   absenceWindowTier1: 5,
@@ -1128,7 +1115,6 @@ onMounted(async () => {
     editThresholds.washroomDurationLimit = current.washroomDurationLimit ?? 11
     editThresholds.deviceIncidentsPerWeek = current.deviceIncidentsPerWeek
     editThresholds.atRiskThreshold = current.atRiskThreshold ?? 70
-    editThresholds.attendanceThreshold = current.attendanceThreshold ?? 85
     editThresholds.absenceWindowDays = current.absenceWindowDays ?? 15
     editThresholds.enableWindowTier1 = current.enableWindowTier1 ?? true
     editThresholds.absenceWindowTier1 = current.absenceWindowTier1 ?? 5
@@ -1152,7 +1138,6 @@ async function saveThresholds() {
     washroomDurationLimit: editThresholds.washroomDurationLimit,
     deviceIncidentsPerWeek: editThresholds.deviceIncidentsPerWeek,
     atRiskThreshold: editThresholds.atRiskThreshold,
-    attendanceThreshold: editThresholds.attendanceThreshold,
     absenceWindowDays: editThresholds.absenceWindowDays,
     enableWindowTier1: editThresholds.enableWindowTier1,
     absenceWindowTier1: editThresholds.absenceWindowTier1,
@@ -1174,7 +1159,6 @@ async function saveThresholds() {
   classroomThresholds.value.washroomDurationLimit = editThresholds.washroomDurationLimit
   classroomThresholds.value.deviceIncidentsPerWeek = editThresholds.deviceIncidentsPerWeek
   classroomThresholds.value.atRiskThreshold = editThresholds.atRiskThreshold
-  classroomThresholds.value.attendanceThreshold = editThresholds.attendanceThreshold
   classroomThresholds.value.absenceWindowDays = editThresholds.absenceWindowDays
   classroomThresholds.value.enableWindowTier1 = editThresholds.enableWindowTier1
   classroomThresholds.value.absenceWindowTier1 = editThresholds.absenceWindowTier1
