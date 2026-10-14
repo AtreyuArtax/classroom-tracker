@@ -615,6 +615,8 @@ export function closeAddAssessment() {
 export function onTargetChange() {
   if (newAssessment.value.target === 'individual') {
     newAssessment.value.assessmentType = 'conversation'
+  } else if (!newAssessment.value.assessmentType || newAssessment.value.assessmentType === 'conversation') {
+    newAssessment.value.assessmentType = 'product'
   }
 }
 

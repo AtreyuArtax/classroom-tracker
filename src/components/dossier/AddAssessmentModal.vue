@@ -123,24 +123,28 @@
             />
           </div>
 
-          <!-- Date & Evidence Type / Category -->
+          <!-- Date & Evidence Type -->
           <div :class="newAssessment.purpose === 'administrative' ? 'form-group' : 'form-row'">
             <div class="form-group">
               <label class="form-label">Date</label>
               <input v-model="newAssessment.date" type="date" class="form-input" required />
             </div>
 
-            <template v-if="newAssessment.purpose !== 'administrative'">
-              <div class="form-group" v-if="activeClassRecord?.gradingFramework === 'sbar'">
-                <label class="form-label">Evidence Type</label>
-                <select v-model="newAssessment.assessmentType" class="form-input" required>
-                  <option value="product">Product (Test/Lab)</option>
-                  <option value="observation">Observation (Practical)</option>
-                  <option value="conversation">Conversation (Oral)</option>
-                </select>
-              </div>
+            <div class="form-group" v-if="newAssessment.purpose !== 'administrative'">
+              <label class="form-label">Evidence Type</label>
+              <select v-model="newAssessment.assessmentType" class="form-input" required>
+                <option value="product">Product (Test/Lab)</option>
+                <option value="observation">Observation (Practical)</option>
+                <option value="conversation">Conversation (Oral)</option>
+              </select>
+            </div>
+          </div>
 
-              <div class="form-group" v-else>
+          <!-- Category, Unit & Retest Policy (Non-Admin) -->
+          <template v-if="newAssessment.purpose !== 'administrative'">
+            <!-- Category & Unit (Traditional Mode) -->
+            <div class="form-row" v-if="activeClassRecord?.gradingFramework !== 'sbar'">
+              <div class="form-group">
                 <label class="form-label">Category</label>
                 <select v-model="newAssessment.categoryId" class="form-input" required>
                   <option v-for="cat in effectiveClass?.gradebookCategories" :key="cat.categoryId" :value="cat.categoryId">
@@ -148,12 +152,7 @@
                   </option>
                 </select>
               </div>
-            </template>
-          </div>
 
-          <!-- Unit & Retest Policy (Traditional Mode, Non-Admin) -->
-          <template v-if="newAssessment.purpose !== 'administrative'">
-            <div class="form-row" v-if="activeClassRecord?.gradingFramework !== 'sbar'">
               <div class="form-group">
                 <label class="form-label">Unit</label>
                 <select 
@@ -167,19 +166,9 @@
                   </option>
                 </select>
               </div>
-
-              <div class="form-group">
-                <label class="form-label">Retest Policy</label>
-                <select v-model="newAssessment.retestPolicy" class="form-input">
-                  <option value="highest">Highest Attempt</option>
-                  <option value="latest">Latest Attempt</option>
-                  <option value="average">Average of Attempts</option>
-                  <option value="manual">Manual Selection</option>
-                </select>
-              </div>
             </div>
 
-            <!-- Unit Field (SBAR Mode: Retest Policy Hidden) -->
+            <!-- Strand / Unit (SBAR Mode: Retest Policy & Category Hidden) -->
             <div class="form-group" v-else>
               <label class="form-label">Strand / Unit</label>
               <select 
@@ -204,6 +193,17 @@
                 <label class="form-label">Scaled Total (Optional)</label>
                 <input v-model.number="newAssessment.scaledTotal" type="number" min="1" class="form-input" placeholder="Raw" />
               </div>
+            </div>
+
+            <!-- Retest Policy (Traditional Mode Only) -->
+            <div v-if="activeClassRecord?.gradingFramework !== 'sbar'" class="form-group">
+              <label class="form-label">Retest Policy</label>
+              <select v-model="newAssessment.retestPolicy" class="form-input">
+                <option value="highest">Highest Attempt</option>
+                <option value="latest">Latest Attempt</option>
+                <option value="average">Average of Attempts</option>
+                <option value="manual">Manual Selection</option>
+              </select>
             </div>
           </template>
         </div>
@@ -495,6 +495,9 @@ watch(showAddAssessmentModal, (open) => {
     const cats = effectiveClass.value?.gradebookCategories || []
     if (!newAssessment.value.categoryId && cats.length > 0) {
       newAssessment.value.categoryId = cats[0].categoryId
+    }
+    if (!newAssessment.value.assessmentType) {
+      newAssessment.value.assessmentType = 'product'
     }
     if (newAssessment.value.unitId) {
       selectedStrandFilter.value = newAssessment.value.unitId

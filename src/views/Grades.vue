@@ -781,7 +781,7 @@ function startEditAssessment(assessment) {
     name: assessment.name,
     description: assessment.description || '',
     categoryId: assessment.categoryId,
-    assessmentType: assessment.assessmentType,
+    assessmentType: assessment.assessmentType || 'product',
     purpose: assessment.purpose || (assessment.isFormative ? 'formative' : 'summative'),
     adminFormat: assessment.adminFormat || 'checklist',
     isFormative: Boolean(assessment.isFormative),
