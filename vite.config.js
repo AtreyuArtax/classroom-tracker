@@ -82,7 +82,7 @@ export default defineConfig({
                             request.destination === 'font',
                         handler: 'CacheFirst',
                         options: {
-                            cacheName: 'app-static-v1',
+                            cacheName: 'app-static-v2',
                             expiration: {
                                 maxEntries: 200,
                                 maxAgeSeconds: 365 * 24 * 60 * 60, // 1 year

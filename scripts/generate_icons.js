@@ -10,7 +10,9 @@ const { PNG } = require('pngjs')
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const rootDir = path.resolve(__dirname, '..')
 const iconsDir = path.resolve(rootDir, 'public/icons')
+const publicDir = path.resolve(rootDir, 'public')
 
+// Master icon source
 const masterPath = path.resolve(iconsDir, 'icon-512.png')
 if (!fs.existsSync(masterPath)) {
     console.error(`Master icon not found at ${masterPath}`)
@@ -110,17 +112,73 @@ for (let y = 0; y < height; y++) {
 
 const tmpAny = path.resolve(iconsDir, '.tmp-master-any.png')
 const tmpMaskable = path.resolve(iconsDir, '.tmp-master-maskable.png')
+const tmp16 = path.resolve(iconsDir, '.tmp-16.png')
+const tmp32 = path.resolve(iconsDir, '.tmp-32.png')
+const tmp48 = path.resolve(iconsDir, '.tmp-48.png')
+const tmp256 = path.resolve(iconsDir, '.tmp-256.png')
 
 fs.writeFileSync(tmpAny, PNG.sync.write(pngAny))
 fs.writeFileSync(tmpMaskable, PNG.sync.write(pngMaskable))
 
+function createIco(pngBuffers) {
+    const count = pngBuffers.length
+    const headerSize = 6
+    const dirEntrySize = 16
+    let offset = headerSize + count * dirEntrySize
+
+    const header = Buffer.alloc(headerSize)
+    header.writeUInt16LE(0, 0)
+    header.writeUInt16LE(1, 2)
+    header.writeUInt16LE(count, 4)
+
+    const dirEntries = []
+    for (const item of pngBuffers) {
+        const entry = Buffer.alloc(dirEntrySize)
+        entry.writeUInt8(item.width >= 256 ? 0 : item.width, 0)
+        entry.writeUInt8(item.height >= 256 ? 0 : item.height, 1)
+        entry.writeUInt8(0, 2)
+        entry.writeUInt8(0, 3)
+        entry.writeUInt16LE(1, 4)
+        entry.writeUInt16LE(32, 6)
+        entry.writeUInt32LE(item.buffer.length, 8)
+        entry.writeUInt32LE(offset, 12)
+        dirEntries.push(entry)
+        offset += item.buffer.length
+    }
+
+    return Buffer.concat([header, ...dirEntries, ...pngBuffers.map(p => p.buffer)])
+}
+
 try {
-    execSync(`sips -z 192 192 "${tmpAny}" --out "${path.resolve(iconsDir, 'icon-192.png')}"`)
-    execSync(`sips -z 512 512 "${tmpAny}" --out "${path.resolve(iconsDir, 'icon-512.png')}"`)
-    execSync(`sips -z 192 192 "${tmpMaskable}" --out "${path.resolve(iconsDir, 'icon-maskable-192.png')}"`)
-    execSync(`sips -z 512 512 "${tmpMaskable}" --out "${path.resolve(iconsDir, 'icon-maskable-512.png')}"`)
-    console.log('Successfully generated public/icons: icon-192.png, icon-512.png, icon-maskable-192.png, icon-maskable-512.png')
+    // Generate versioned icons (to bust all Service Worker and HTTP caches)
+    execSync(`sips -z 192 192 "${tmpAny}" --out "${path.resolve(iconsDir, 'icon-v2-192.png')}"`)
+    execSync(`sips -z 512 512 "${tmpAny}" --out "${path.resolve(iconsDir, 'icon-v2-512.png')}"`)
+    execSync(`sips -z 192 192 "${tmpMaskable}" --out "${path.resolve(iconsDir, 'icon-maskable-v2-192.png')}"`)
+    execSync(`sips -z 512 512 "${tmpMaskable}" --out "${path.resolve(iconsDir, 'icon-maskable-v2-512.png')}"`)
+
+    // Also update legacy filenames so unversioned references also have the fix
+    fs.copyFileSync(path.resolve(iconsDir, 'icon-v2-192.png'), path.resolve(iconsDir, 'icon-192.png'))
+    fs.copyFileSync(path.resolve(iconsDir, 'icon-v2-512.png'), path.resolve(iconsDir, 'icon-512.png'))
+    fs.copyFileSync(path.resolve(iconsDir, 'icon-maskable-v2-192.png'), path.resolve(iconsDir, 'icon-maskable-192.png'))
+    fs.copyFileSync(path.resolve(iconsDir, 'icon-maskable-v2-512.png'), path.resolve(iconsDir, 'icon-maskable-512.png'))
+
+    // Generate multi-resolution native Windows favicon.ico
+    execSync(`sips -z 16 16 "${tmpAny}" --out "${tmp16}"`)
+    execSync(`sips -z 32 32 "${tmpAny}" --out "${tmp32}"`)
+    execSync(`sips -z 48 48 "${tmpAny}" --out "${tmp48}"`)
+    execSync(`sips -z 256 256 "${tmpAny}" --out "${tmp256}"`)
+
+    const icoBuf = createIco([
+        { width: 16, height: 16, buffer: fs.readFileSync(tmp16) },
+        { width: 32, height: 32, buffer: fs.readFileSync(tmp32) },
+        { width: 48, height: 48, buffer: fs.readFileSync(tmp48) },
+        { width: 256, height: 256, buffer: fs.readFileSync(tmp256) }
+    ])
+    fs.writeFileSync(path.resolve(publicDir, 'favicon.ico'), icoBuf)
+
+    console.log('Successfully generated public/icons and public/favicon.ico!')
 } finally {
-    if (fs.existsSync(tmpAny)) fs.unlinkSync(tmpAny)
-    if (fs.existsSync(tmpMaskable)) fs.unlinkSync(tmpMaskable)
+    for (const f of [tmpAny, tmpMaskable, tmp16, tmp32, tmp48, tmp256]) {
+        if (fs.existsSync(f)) fs.unlinkSync(f)
+    }
 }
