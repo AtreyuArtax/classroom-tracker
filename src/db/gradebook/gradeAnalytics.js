@@ -41,8 +41,8 @@ export function calculateAssessmentAnalytics(assessmentId, grades, assessment, o
     gradeBuckets = null
   } = options
 
-  // Skip individual assessments as they don't have "class averages"
-  if (assessment.target === 'individual') return null
+  // Skip individual and administrative assessments as they don't have academic class analytics
+  if (assessment.target === 'individual' || assessment.purpose === 'administrative') return null
 
   // Collect all valid scores
   const allScores = grades
@@ -151,8 +151,8 @@ export async function calculateClassAnalytics(classRecord, assessments, grades, 
     allStudentIds.filter(id => classRecord.students[id].excludeFromAnalytics || classRecord.students[id].archived)
   )
 
-  // Filter class-target assessments matching sub-cohort & asOf
-  let filteredAssessments = assessments.filter(a => a.target !== 'individual' && !a.excluded)
+  // Filter class-target assessments matching sub-cohort & asOf (exclude individual & administrative paperwork)
+  let filteredAssessments = assessments.filter(a => a.target !== 'individual' && !a.excluded && a.purpose !== 'administrative')
 
   if (filterKey && filterKey !== 'all') {
     const fLower = filterKey.toLowerCase()
@@ -391,7 +391,7 @@ export async function calculateClassAnalytics(classRecord, assessments, grades, 
   const activeTriangulationStudentSet = new Set(studentIds)
   const conversationStudents = new Set()
   const observationStudents = new Set()
-  for (const a of assessments.filter(a => a.target !== 'individual' && !a.excluded)) {
+  for (const a of filteredAssessments) {
     const aGrades = assessmentGradesMap.get(a.assessmentId) || []
     for (const g of aGrades) {
       if (activeTriangulationStudentSet.has(g.studentId) && g.attempts && g.attempts.length > 0) {
@@ -441,7 +441,7 @@ export async function calculateClassAnalytics(classRecord, assessments, grades, 
     productCount: Object.keys(productAnalytics).length,
     observationCount: Object.keys(observationAnalytics).length,
     conversationCount: Object.keys(conversationAnalytics).length,
-    totalAssessmentsCount: assessments.filter(a => a.target !== 'individual' && !a.excluded).length,
+    totalAssessmentsCount: filteredAssessments.length,
 
     // Triangulation coverage
     conversationCoverage,

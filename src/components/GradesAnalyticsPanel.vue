@@ -950,7 +950,10 @@ const classEvidenceBlend = computed(() => {
     const isSBARTask = a.categoryId === 'sbar_general' || (a.expectationIds && a.expectationIds.length > 0) || a.expectationId != null || a.isSbar || a.gradingFramework === 'sbar'
     return isSBAR ? isSBARTask : !isSBARTask
   })
-  const total = classAnalytics.value?.totalAssessmentsCount ?? activeAssessments.length
+  const pCount = classAnalytics.value?.productCount ?? activeAssessments.filter(a => (a.assessmentType || 'product') === 'product').length
+  const oCount = classAnalytics.value?.observationCount ?? activeAssessments.filter(a => a.assessmentType === 'observation').length
+  const cCount = classAnalytics.value?.conversationCount ?? activeAssessments.filter(a => a.assessmentType === 'conversation').length
+  const total = pCount + oCount + cCount
   
   if (total === 0) {
     return {
@@ -959,14 +962,10 @@ const classEvidenceBlend = computed(() => {
       conversation: { count: 0, percentage: 0 }
     }
   }
-  
-  const pCount = classAnalytics.value?.productCount ?? activeAssessments.filter(a => (a.assessmentType || 'product') === 'product').length
-  const oCount = classAnalytics.value?.observationCount ?? activeAssessments.filter(a => a.assessmentType === 'observation').length
-  const cCount = classAnalytics.value?.conversationCount ?? activeAssessments.filter(a => a.assessmentType === 'conversation').length
 
   const pPct = Math.round((pCount / total) * 100)
   const oPct = Math.round((oCount / total) * 100)
-  const cPct = total > 0 && (oCount > 0 || cCount > 0) ? Math.max(0, 100 - pPct - oPct) : Math.round((cCount / total) * 100)
+  const cPct = (oCount > 0 || cCount > 0) ? Math.max(0, 100 - pPct - oPct) : Math.round((cCount / total) * 100)
 
   return {
     product: { count: pCount, percentage: pPct },
