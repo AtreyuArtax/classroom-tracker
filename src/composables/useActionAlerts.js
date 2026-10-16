@@ -15,8 +15,8 @@
 import { ref, shallowRef, computed, unref, watch } from 'vue'
 import { useClassroom } from './useClassroom.js'
 import { getEffectiveClassRecord } from './useElementary.js'
-import { activeSubjectId, eventMutationSignal } from './useClassroomState.js'
-import { activeClassRecord, assessments as gbAssessments, gradeMap } from './useGradebook.js'
+import { activeSubjectId, eventMutationSignal, gradeMutationSignal } from './useClassroomState.js'
+import { activeClassRecord, assessments as gbAssessments, gradeMap, classGrades as gbClassGrades } from './useGradebook.js'
 import * as classService from '../db/classService.js'
 import * as eventService from '../db/eventService.js'
 import { calculateClassGrades } from '../db/gradebookService.js'
@@ -287,6 +287,37 @@ export function setAlertSource(classId, sourceData) {
   }
 }
 
+/**
+ * Reactively syncs updated student grade(s) in the in-memory alerts cache.
+ */
+export function syncGradeUpdated(classId, studentId = null) {
+  if (!classId) return
+  const src = sources.value[classId]
+  if (!src) return
+
+  // If gradebook has reactive classGrades for this class, merge them directly
+  const isCurrentClass = activeClassRecord.value?.classId === classId
+  const liveGrades = isCurrentClass ? gbClassGrades.value : null
+
+  if (liveGrades && Object.keys(liveGrades).length > 0) {
+    const updatedClassGrades = (studentId && liveGrades[studentId])
+      ? { ...(src.classGrades || {}), [studentId]: liveGrades[studentId] }
+      : { ...(src.classGrades || {}), ...liveGrades }
+
+    sources.value = {
+      ...sources.value,
+      [classId]: {
+        ...src,
+        classGrades: updatedClassGrades,
+        loadedAt: Date.now()
+      }
+    }
+  } else {
+    // Fallback: force re-calculation if live gradebook state isn't available
+    refreshActionAlerts(classId, { force: true })
+  }
+}
+
 // Watch event mutations across the application to keep alerts immediately synchronized
 watch(eventMutationSignal, signal => {
   if (!signal || !signal.classId) return
@@ -299,6 +330,12 @@ watch(eventMutationSignal, signal => {
   }
 }, { flush: 'sync' })
 
+// Watch grade mutations across the application to keep alerts immediately synchronized
+watch(gradeMutationSignal, signal => {
+  if (!signal || !signal.classId) return
+  syncGradeUpdated(signal.classId, signal.studentId)
+}, { flush: 'sync' })
+
 /** All alert items for a class (handled or not). Reads gradebook state reactively. */
 function itemsFor(classId) {
   const src = sources.value[classId]
@@ -309,12 +346,17 @@ function itemsFor(classId) {
   const gradebookReady = activeClassRecord.value?.classId === classId
   const assessments = gradebookReady ? filterAssessmentsForSubject(gbAssessments.value, src.effective) : []
 
+  // Prefer live gradebook classGrades when available so mark changes reflect immediately
+  const effectiveGrades = (gradebookReady && gbClassGrades.value && Object.keys(gbClassGrades.value).length > 0)
+    ? { ...(src.classGrades || {}), ...gbClassGrades.value }
+    : (src.classGrades || {})
+
   const followUpItems = buildFollowUpItems({
     students: src.students,
     periodEvents: src.periodEvents,
     allEvents: src.events,
     assessments,
-    classGrades: src.classGrades,
+    classGrades: effectiveGrades,
     washCodes,
     washLimit,
     thresholds: {
@@ -326,11 +368,11 @@ function itemsFor(classId) {
     studentList: src.studentList,
     assessments,
     gradeMap: gradebookReady ? gradeMap.value : null,
-    classGrades: src.classGrades
+    classGrades: effectiveGrades
   })
   return buildActionItems({
     studentList: src.studentList,
-    classGrades: src.classGrades,
+    classGrades: effectiveGrades,
     followUpItems,
     missingSummary,
     isSBAR: src.effective?.gradingFramework === 'sbar'

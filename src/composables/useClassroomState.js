@@ -102,5 +102,17 @@ export function notifyEventMutated({ type, eventId, classId, updates, event }) {
     }
 }
 
+/**
+ * Grade mutation notifier to keep useActionAlerts, Reports, etc. in lockstep
+ * when marks are entered or adjusted, without circular dependencies.
+ */
+export const gradeMutationSignal = ref(null)
 
-
+export function notifyGradeMutated({ classId, studentId, assessmentId } = {}) {
+    gradeMutationSignal.value = {
+        classId: classId ? String(classId) : null,
+        studentId: studentId ? String(studentId) : null,
+        assessmentId: assessmentId ? String(assessmentId) : null,
+        timestamp: Date.now()
+    }
+}

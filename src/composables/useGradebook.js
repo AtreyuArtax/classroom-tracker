@@ -10,7 +10,7 @@ import * as gradebookService from '../db/gradebookService.js'
 import * as classService from '../db/classService.js'
 import { getGlobalMilestones, getGradeBuckets, saveGlobalMilestones, saveGradeBuckets, getSettings, saveSettings } from '../db/settingsService.js'
 import { useUndo } from './useUndo.js'
-import { activeClass, activeSubjectId, selectedYear, selectedSemester, academicTerms, activeClassRecord, syncStudentAcrossRefs } from './useClassroomState.js'
+import { activeClass, activeSubjectId, selectedYear, selectedSemester, academicTerms, activeClassRecord, syncStudentAcrossRefs, notifyGradeMutated } from './useClassroomState.js'
 import { getEffectiveClassRecord, getStudentEffectiveGrade, getUnitGradeLevel, ensureIEPPresetsForClass, autoPopulateAllElementarySubjects, filterAssessmentsForSubject } from './useElementary.js'
 import { isCohortMatch } from '../utils/gradeCalc.js'
 import { formatLocalDate, getSchoolYearFromDate } from '../utils/dates.js'
@@ -400,6 +400,7 @@ export async function refreshGrades() {
     
   classGrades.value = await gradebookService.calculateClassGrades(activeClassRecord.value, { asOf, dateFrom })
   await refreshClassAnalytics()
+  notifyGradeMutated({ classId: activeClassRecord.value.classId })
 }
 
 /**
@@ -806,6 +807,7 @@ async function refreshSingleStudent(studentId) {
     ...classGrades.value,
     [studentId]: result
   }
+  notifyGradeMutated({ classId: activeClassRecord.value.classId, studentId })
 }
 
 /**

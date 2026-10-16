@@ -19,13 +19,20 @@ const {
   setAlertSource,
   syncEventUpdated,
   syncEventRemoved,
-  syncEventCreated
+  syncEventCreated,
+  syncGradeUpdated
 } = await import('./composables/useActionAlerts.js')
 
 const {
   notifyEventMutated,
+  notifyGradeMutated,
   behaviorCodes
 } = await import('./composables/useClassroomState.js')
+
+const {
+  classGrades: gbClassGrades,
+  activeClassRecord
+} = await import('./composables/useGradebook.js')
 
 behaviorCodes.value = [
   { codeKey: 'w', label: 'Out of Class', category: 'washroom', type: 'toggle' }
@@ -153,6 +160,66 @@ setAlertSource(classId, {
   assert.ok(alert, 'Alert triggers on new event')
   assert.strictEqual(alert.reason, '18min out of class')
   console.log('✓ Test 7 Passed: Banner immediately appears when a new long excursion event is created')
+}
+
+// ── Grade Mutation Reactivity Tests ──
+
+// Remove lingering washroom event so we test pure grade alerts
+syncEventRemoved(classId, 'evt_100')
+
+// Test 8: Student is failing (<50%) -> alert triggered
+{
+  activeClassRecord.value = { classId }
+  gbClassGrades.value = {
+    [studentId]: { overallGrade: 42 }
+  }
+  notifyGradeMutated({ classId, studentId })
+
+  const alert = alertFor(studentId)
+  assert.ok(alert, 'Alert should be triggered for failing grade (<50%)')
+  assert.strictEqual(alert.reason, 'Failing Grade (<50%)')
+  assert.deepStrictEqual(alert.kinds, ['grade'])
+  console.log('✓ Test 8 Passed: Initial failing grade alert triggered correctly (Failing Grade <50%)')
+}
+
+// Test 9: Adjust mark above 50% threshold to 55% -> alert changes from failing to low-grade follow-up
+{
+  gbClassGrades.value = {
+    [studentId]: { overallGrade: 55 }
+  }
+  notifyGradeMutated({ classId, studentId })
+
+  const alert = alertFor(studentId)
+  assert.ok(alert, 'Alert should be updated to low grade follow-up')
+  assert.strictEqual(alert.reason, 'Grade at 55%')
+  assert.strictEqual(alert.severity, 'danger')
+  console.log('✓ Test 9 Passed: Mark adjusted above 50% threshold -> alert updates to "Grade at 55%"')
+}
+
+// Test 10: Adjust mark above 60% threshold to 78% -> alert banner completely disappears!
+{
+  gbClassGrades.value = {
+    [studentId]: { overallGrade: 78 }
+  }
+  notifyGradeMutated({ classId, studentId })
+
+  const alert = alertFor(studentId)
+  assert.strictEqual(alert, null, 'Alert should be completely removed when grade is above 60%')
+  assert.strictEqual(evaluated.value.active.length, 0, 'Active queue should be empty')
+  console.log('✓ Test 10 Passed: Mark adjusted above 60% threshold -> student completely removed from Action Required')
+}
+
+// Test 11: Mark drops back below threshold (45%) -> alert immediately returns
+{
+  gbClassGrades.value = {
+    [studentId]: { overallGrade: 45 }
+  }
+  notifyGradeMutated({ classId, studentId })
+
+  const alert = alertFor(studentId)
+  assert.ok(alert, 'Alert should re-appear when grade drops back below threshold')
+  assert.strictEqual(alert.reason, 'Failing Grade (<50%)')
+  console.log('✓ Test 11 Passed: Mark drops back below 50% -> alert immediately re-appears')
 }
 
 console.log('\n🎉 ALL ACTION ALERTS REACTIVITY TESTS PASSED!\n')

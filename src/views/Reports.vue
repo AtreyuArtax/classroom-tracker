@@ -265,7 +265,7 @@ import { BarChart2, Printer, User, Award, Send, MessageSquareText } from 'lucide
 
 import { useClassroom } from '../composables/useClassroom.js'
 import { getEffectiveClassRecord } from '../composables/useElementary.js'
-import { activeSubjectId } from '../composables/useClassroomState.js'
+import { activeSubjectId, gradeMutationSignal } from '../composables/useClassroomState.js'
 import { useStudentDossier } from '../composables/useStudentDossier.js'
 import { refreshActionAlerts } from '../composables/useActionAlerts.js'
 import * as classService from '../db/classService.js'
@@ -286,7 +286,7 @@ const ReportsLearningSkills        = defineAsyncComponent(() => import('../compo
 const ReportsCommentGenerator      = defineAsyncComponent(() => import('../components/reports/ReportsCommentGenerator.vue'))
 const ElementaryCommentGenerator   = defineAsyncComponent(() => import('../components/reports/ElementaryCommentGenerator.vue'))
 import { calculateClassGrades, getAssessmentsByClass, getAssessmentPercentage } from '../db/gradebookService.js'
-import { loadGradebook, clearGradebook, assessments as gbAssessments, gradeMap, activeGradeFilter } from '../composables/useGradebook.js'
+import { loadGradebook, clearGradebook, assessments as gbAssessments, gradeMap, activeGradeFilter, classGrades as gbClassGrades } from '../composables/useGradebook.js'
 import { getSectionColor } from '../utils/gradeColors.js'
 import { getSchoolDaysInRange } from '../utils/schoolDayUtils.js'
 
@@ -453,9 +453,16 @@ function switchPillar(mode) {
     rightMode.value = 'overview'
     return
   }
+  const wasDossier = rightMode.value === 'dossier'
   rightMode.value = mode
   if (mode !== 'dossier') {
     dossier.clearStudent()
+  }
+  if (wasDossier && mode === 'overview') {
+    if (gbClassGrades.value && Object.keys(gbClassGrades.value).length > 0) {
+      classGrades.value = { ...classGrades.value, ...gbClassGrades.value }
+    }
+    runReport(true)
   }
 }
 
@@ -548,6 +555,16 @@ const PERIOD_OPTIONS = [
 
 watch(selectedPeriod, () => {
   if (rightMode.value === 'overview') runReport(true)
+})
+
+watch(gradeMutationSignal, signal => {
+  if (!signal || !signal.classId || signal.classId !== sidebarClassId.value) return
+  if (gbClassGrades.value && Object.keys(gbClassGrades.value).length > 0) {
+    classGrades.value = { ...classGrades.value, ...gbClassGrades.value }
+  }
+  if (rightMode.value === 'overview') {
+    runReport(true)
+  }
 })
 
 async function onSelectStudent(studentId) {
