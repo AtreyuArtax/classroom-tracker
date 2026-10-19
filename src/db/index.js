@@ -18,7 +18,7 @@ import { getCurrentSchoolYear, getCurrentSemester } from '../utils/dates.js'
 import { cleanExpectationText } from '../utils/textUtils.js'
 
 const DB_NAME = 'classroomTrackerDB'
-const DB_VERSION = 32
+const DB_VERSION = 33
 
 /**
  * Cached promise — set synchronously before the first await so every
@@ -101,11 +101,19 @@ export function getDB() {
         lsStore.createIndex('by_student_class', ['studentId', 'classId'])
       }
 
+      // ── duties store (v33) ────────────────────────────────────────────────
+      if (!db.objectStoreNames.contains('duties')) {
+        const dutyStore = db.createObjectStore('duties', { keyPath: 'dutyId', autoIncrement: true })
+        dutyStore.createIndex('by_date', 'date')
+        dutyStore.createIndex('by_schoolYear', 'schoolYear')
+        dutyStore.createIndex('by_dutyName', 'dutyName')
+      }
+
       // ── seed defaults on fresh install (oldVersion === 0) ────────────────
       if (oldVersion === 0) {
         transaction.objectStore('settings').put(
           {
-            schemaVersion: 32,
+            schemaVersion: 33,
             gridSize: { rows: 6, cols: 6 },
             currentYear: getCurrentSchoolYear(),
             currentSemester: getCurrentSemester(),
@@ -882,6 +890,23 @@ export function getDB() {
             }
           }
           settings.schemaVersion = 32
+          await settingsStore.put(settings, 'singleton')
+        }
+      }
+
+      // --- VERSION 33 MIGRATION (Duties & APA Tracking) ---
+      if (oldVersion < 33) {
+        console.log('[IDB] Migrating to v33: Ensuring duties store exists...')
+        if (!db.objectStoreNames.contains('duties')) {
+          const dutyStore = db.createObjectStore('duties', { keyPath: 'dutyId', autoIncrement: true })
+          dutyStore.createIndex('by_date', 'date')
+          dutyStore.createIndex('by_schoolYear', 'schoolYear')
+          dutyStore.createIndex('by_dutyName', 'dutyName')
+        }
+        const settingsStore = transaction.objectStore('settings')
+        const settings = await settingsStore.get('singleton')
+        if (settings) {
+          settings.schemaVersion = 33
           await settingsStore.put(settings, 'singleton')
         }
       }

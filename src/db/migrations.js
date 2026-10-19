@@ -8,7 +8,7 @@
 
 import { cleanExpectationText } from '../utils/textUtils.js'
 
-export const CURRENT_SCHEMA = 32
+export const CURRENT_SCHEMA = 33
 
 /**
  * Migrates a backup data object to the current schema version (25).
@@ -29,6 +29,7 @@ export function migrateData(data) {
   if (!migrated.events) migrated.events = []
   if (!migrated.assessments) migrated.assessments = []
   if (!migrated.grades) migrated.grades = []
+  if (!migrated.duties) migrated.duties = []
 
   // ── Version 6 ────────────────────────────────────────────────────────
   if (version < 6) {
@@ -497,6 +498,12 @@ export function migrateData(data) {
       }
     }
     version = 32
+  }
+
+  // ── Version 33 (Duties & APA Tracking) ──
+  if (version < 33) {
+    if (!migrated.duties) migrated.duties = []
+    version = 33
   }
 
   migrated.schemaVersion = currentVersion

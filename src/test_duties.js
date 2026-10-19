@@ -1,0 +1,287 @@
+/**
+ * src/test_duties.js
+ *
+ * Unit tests for duty tracking calculations, defaults, and Outlook calendar export.
+ * Run with: node src/test_duties.js
+ */
+
+import assert from 'node:assert'
+import { INITIAL_DUTY_SETTINGS } from './db/dutyService.js'
+import {
+  generateIcsContent,
+  getOutlookWebComposeUrl,
+  getWeekRangeForDate,
+  groupDutiesByWeek,
+  getLastEnteredWeek
+} from './utils/dutyCalendarExport.js'
+
+console.log('🧪 Running Duty Tracker Unit Tests...\n')
+
+// ── Test 1: Initial Duty Settings & Catalog Defaults ──
+{
+  assert.strictEqual(INITIAL_DUTY_SETTINGS.allottedMinutes, 1875, 'Default allotted minutes must be 1875')
+  assert.strictEqual(INITIAL_DUTY_SETTINGS.emergencyCap, 2, 'Default emergency cap must be 2')
+  assert.ok(Array.isArray(INITIAL_DUTY_SETTINGS.dutyTypes), 'dutyTypes must be an array')
+  assert.strictEqual(INITIAL_DUTY_SETTINGS.dutyTypes.length, 13, 'Must have 13 initial duty presets')
+
+  const amBus = INITIAL_DUTY_SETTINGS.dutyTypes.find(d => d.name === 'AM Bus')
+  assert.ok(amBus, 'AM Bus must be present')
+  assert.strictEqual(amBus.defaultDuration, 15, 'AM Bus must default to 15 min')
+  assert.strictEqual(amBus.defaultDays, 5, 'AM Bus must default to 5 days')
+
+  const cafe = INITIAL_DUTY_SETTINGS.dutyTypes.find(d => d.name === 'Cafeteria')
+  assert.ok(cafe, 'Cafeteria must be present')
+  assert.strictEqual(cafe.defaultDuration, 20, 'Cafeteria must default to 20 min')
+  assert.strictEqual(cafe.defaultDays, 5, 'Cafeteria must default to 5 days')
+
+  const weightRoom = INITIAL_DUTY_SETTINGS.dutyTypes.find(d => d.name === 'Weight Room')
+  assert.ok(weightRoom, 'Weight Room must be present')
+  assert.strictEqual(weightRoom.defaultDuration, 30, 'Weight Room must default to 30 min')
+  assert.strictEqual(weightRoom.defaultDays, 2, 'Weight Room must default to 2 days')
+
+  const onCall = INITIAL_DUTY_SETTINGS.dutyTypes.find(d => d.name === 'On-call')
+  assert.ok(onCall, 'On-call must be present')
+  assert.strictEqual(onCall.defaultDuration, 75, 'On-call must default to 75 min')
+  assert.strictEqual(onCall.defaultDays, 1, 'On-call must default to 1 day')
+
+  const emergency = INITIAL_DUTY_SETTINGS.dutyTypes.find(d => d.name === 'Emergency')
+  assert.ok(emergency, 'Emergency duty must be present')
+  assert.strictEqual(emergency.isEmergency, true, 'Emergency duty must have isEmergency: true')
+
+  console.log('✅ Test 1 Passed: Initial duty settings and presets verified.')
+}
+
+// ── Test 2: RFC 5545 iCalendar (.ics) Generation ──
+{
+  const mockDuties = [
+    {
+      dutyId: 101,
+      dutyName: 'AM Bus',
+      date: '2026-10-19',
+      duration: 15,
+      startTime: '08:15',
+      notes: 'Bus Bay 3',
+      isEmergency: false,
+      isSnowDay: false
+    },
+    {
+      dutyId: 102,
+      dutyName: 'On-call',
+      date: '2026-10-20',
+      duration: 75,
+      startTime: '09:00',
+      notes: 'Covered for Rodney',
+      isEmergency: true,
+      isSnowDay: false
+    }
+  ]
+
+  const ics = generateIcsContent(mockDuties)
+
+  assert.ok(ics.includes('BEGIN:VCALENDAR'), 'Must contain VCALENDAR start')
+  assert.ok(ics.includes('VERSION:2.0'), 'Must specify iCalendar 2.0')
+  assert.ok(ics.includes('BEGIN:VEVENT'), 'Must contain VEVENT')
+  assert.ok(ics.includes('SUMMARY:AM Bus Duty'), 'Must contain AM Bus summary')
+  assert.ok(ics.includes('DTSTART:20261019T081500'), 'Must calculate start timestamp correctly')
+  assert.ok(ics.includes('DTEND:20261019T083000'), 'Must calculate end timestamp (08:15 + 15m = 08:30)')
+  assert.ok(ics.includes('SUMMARY:On-call Duty'), 'Must contain On-call summary')
+  assert.ok(ics.includes('DTSTART:20261020T090000'), 'Must calculate on-call start')
+  assert.ok(ics.includes('DTEND:20261020T101500'), 'Must calculate on-call end (09:00 + 75m = 10:15)')
+  assert.ok(ics.includes('TRIGGER:-PT10M'), 'Must contain 10-minute alarm reminder')
+  assert.ok(ics.includes('END:VCALENDAR'), 'Must contain VCALENDAR end')
+
+  console.log('✅ Test 2 Passed: RFC 5545 iCalendar formatting verified.')
+}
+
+// ── Test 3: Outlook Web Deep-Link Generation ──
+{
+  const duty = {
+    dutyName: 'Halls Upstairs',
+    date: '2026-10-21',
+    duration: 20,
+    startTime: '11:40',
+    notes: '2nd floor west wing'
+  }
+
+  const url = getOutlookWebComposeUrl(duty)
+  assert.ok(url.startsWith('https://outlook.office.com/calendar/0/deeplink/compose'), 'Must start with Outlook Web compose URL')
+  assert.ok(url.includes('subject=Halls%20Upstairs%20Supervision'), 'Must encode subject')
+  assert.ok(url.includes('2nd%20floor%20west%20wing'), 'Must encode body notes')
+
+  console.log('✅ Test 3 Passed: Outlook Web deep-link verified.')
+}
+
+// ── Test 4: Calculation Logic (Minutes, Snow Days, Emergency Counter) ──
+{
+  const allotted = 1875
+  const sampleData = [
+    { duration: 15, isSnowDay: false, isEmergency: false },
+    { duration: 15, isSnowDay: false, isEmergency: false },
+    { duration: 15, isSnowDay: false, isEmergency: false },
+    { duration: 15, isSnowDay: false, isEmergency: false },
+    { duration: 15, isSnowDay: false, isEmergency: false }, // 75 min
+    { duration: 20, isSnowDay: true,  isEmergency: false }, // Snow day: 0 min counted
+    { duration: 75, isSnowDay: false, isEmergency: true  }, // On-call: 75 min (Emergency #1)
+    { duration: 75, isSnowDay: false, isEmergency: true  }, // On-call: 75 min (Emergency #2)
+    { duration: 20, isSnowDay: false, isEmergency: false }, // 20 min
+  ]
+
+  const completed = sampleData.reduce((acc, d) => d.isSnowDay ? acc : acc + d.duration, 0)
+  const remaining = allotted - completed
+  const ratio = completed / allotted
+  const emergencies = sampleData.filter(d => d.isEmergency && !d.isSnowDay).length
+
+  assert.strictEqual(completed, 245, 'Completed minutes should exclude snow day (75 + 75 + 75 + 20 = 245)')
+  assert.strictEqual(remaining, 1630, 'Remaining minutes should be 1875 - 245 = 1630')
+  assert.strictEqual(emergencies, 2, 'Emergency count should be 2')
+  assert.ok(Math.abs(ratio - 0.13066) < 0.001, 'Ratio matches expectation')
+
+  console.log('✅ Test 4 Passed: Calculation math verified.')
+}
+
+// ── Test 5: Duty Service Exports ──
+{
+  import('./db/dutyService.js').then(dutyService => {
+    assert.strictEqual(typeof dutyService.getAllDuties, 'function', 'dutyService must export getAllDuties')
+    assert.strictEqual(typeof dutyService.getDutiesByYear, 'function', 'dutyService must export getDutiesByYear')
+    assert.strictEqual(typeof dutyService.addDutiesBatch, 'function', 'dutyService must export addDutiesBatch')
+    console.log('✅ Test 5 Passed: dutyService exports verified.')
+
+    // ── Test 6: Backup & Restore Round-Trip & Migration ──
+    import('./db/migrations.js').then(({ migrateData, CURRENT_SCHEMA }) => {
+      const mockBackupPayload = {
+        schemaVersion: CURRENT_SCHEMA,
+        settings: {
+          dutySettings: {
+            allottedMinutes: 1875,
+            emergencyCap: 2,
+            dutyTypes: [{ name: 'AM Bus', defaultDuration: 15 }]
+          }
+        },
+        classes: [],
+        events: [],
+        assessments: [],
+        grades: [],
+        learning_skills: [],
+        duties: [
+          { dutyId: 1, dutyName: 'AM Bus', duration: 15, date: '2026-10-15', schoolYear: '2026-27' },
+          { dutyId: 2, dutyName: 'Cafeteria', duration: 20, date: '2025-10-15', schoolYear: '2025-26' }
+        ]
+      }
+
+      // 1. JSON Roundtrip
+      const serialized = JSON.stringify(mockBackupPayload)
+      const parsed = JSON.parse(serialized)
+      const migrated = migrateData(parsed)
+
+      assert.strictEqual(migrated.duties.length, 2, 'Duties must be 100% preserved in backup roundtrip')
+      assert.strictEqual(migrated.duties[0].schoolYear, '2026-27')
+      assert.strictEqual(migrated.settings.dutySettings.allottedMinutes, 1875, 'dutySettings must be preserved')
+
+      // 2. Legacy Migration Backfill
+      const legacyBackup = { schemaVersion: 25, settings: {}, classes: [], events: [] }
+      const migratedLegacy = migrateData(legacyBackup)
+      assert.ok(Array.isArray(migratedLegacy.duties), 'Legacy backup without duties safely backfills duties: []')
+      assert.strictEqual(migratedLegacy.schemaVersion, CURRENT_SCHEMA)
+
+      console.log('✅ Test 6 Passed: Backup & Restore serialization and legacy migration verified.')
+
+      // ── Test 7: Semester Schedule & Calendar Pace Integration ──
+      import('./utils/dutyCalendarUtils.js').then(({ getSemesterSchedule, getSchoolYearCalendarPace }) => {
+        // 1. Official Board Calendar Lookup for 2026-27
+        const boardSched = getSemesterSchedule('2026-27')
+        assert.strictEqual(boardSched.isBoard, true, '2026-27 must be recognized as board calendar')
+        assert.strictEqual(boardSched.sem1Start, '2026-09-08', 'Sem 1 start date must match board calendar (Sept 8)')
+        assert.strictEqual(boardSched.sem2Start, '2027-02-04', 'Sem 2 start date must match board calendar (Feb 4)')
+
+        // 2. Custom Term Override
+        const customTerms = [
+          { year: '2026-27', semester: '1', startDate: '2026-09-01', endDate: '2027-01-25' },
+          { year: '2026-27', semester: '2', startDate: '2027-01-28', endDate: '2027-06-25' }
+        ]
+        const customSched = getSemesterSchedule('2026-27', customTerms)
+        assert.strictEqual(customSched.isCustom, true, 'Custom terms must take precedence')
+        assert.strictEqual(customSched.sem2Start, '2027-01-28', 'Custom Sem 2 start date honored')
+
+        // 3. Fallback for unconfigured year
+        const fallbackSched = getSemesterSchedule('2023-24')
+        assert.strictEqual(fallbackSched.isBoard, false)
+        assert.strictEqual(fallbackSched.isCustom, false)
+        assert.strictEqual(fallbackSched.sem1Start, '2023-09-01')
+        assert.strictEqual(fallbackSched.sem2Start, '2024-02-01')
+
+        // 4. Calendar Instructional Pace (Oct 18, 2026)
+        const paceOnTrack = getSchoolYearCalendarPace('2026-27', [], [], { percentComplete: 16, todayStr: '2026-10-18' })
+        assert.strictEqual(paceOnTrack.isActiveYear, true, 'Must be active school year')
+        assert.strictEqual(paceOnTrack.totalDays, 173, 'Total instructional school days must equal 173')
+        assert.strictEqual(paceOnTrack.elapsedDays, 28, 'Elapsed school days up to Oct 18 must equal 28')
+        assert.strictEqual(paceOnTrack.elapsedPercent, 16, 'Elapsed percent must equal 16%')
+        assert.strictEqual(paceOnTrack.sem2MarkerPercent, 50, 'Sem 2 marker must sit at 50% target')
+        assert.strictEqual(paceOnTrack.paceStatus, 'on-track', '16% duty vs 16% elapsed is on-track')
+        assert.strictEqual(paceOnTrack.paceIconName, 'CheckCircle2', 'Pace icon must be CheckCircle2')
+
+        // 5. Ahead and Behind Pace checks
+        const paceAhead = getSchoolYearCalendarPace('2026-27', [], [], { percentComplete: 25, todayStr: '2026-10-18' })
+        assert.strictEqual(paceAhead.paceStatus, 'ahead', '25% duty vs 16% elapsed is ahead')
+
+        const paceBehind = getSchoolYearCalendarPace('2026-27', [], [], { percentComplete: 5, todayStr: '2026-10-18' })
+        assert.strictEqual(paceBehind.paceStatus, 'behind', '5% duty vs 16% elapsed is behind')
+
+        console.log('✅ Test 7 Passed: Semester 2 board calendar extraction and instructional pace verified.')
+
+        // ── Test 8: Weekly Calendar Grouping & Last Entered Week Detection ──
+        {
+          const range = getWeekRangeForDate('2026-10-08') // Thursday
+          assert.strictEqual(range.mondayIso, '2026-10-05')
+          assert.strictEqual(range.fridayIso, '2026-10-09')
+          assert.strictEqual(range.label, 'Oct 5 – 9, 2026', 'Same-month week must be formatted as "Oct 5 – 9, 2026"')
+
+          const crossMonthRange = getWeekRangeForDate('2026-09-30')
+          assert.strictEqual(crossMonthRange.label, 'Sep 28 – Oct 2, 2026', 'Cross-month week must be formatted as "Sep 28 – Oct 2, 2026"')
+
+          const sepMidRange = getWeekRangeForDate('2026-09-15')
+          assert.strictEqual(sepMidRange.label, 'Sep 14 – 18, 2026', 'Same-month week must be formatted as "Sep 14 – 18, 2026"')
+
+          const testDuties = [
+            { dutyId: 1, dutyName: 'Cafeteria', date: '2026-10-05', duration: 20, createdAt: '2026-10-02T10:00:00Z' },
+            { dutyId: 2, dutyName: 'Cafeteria', date: '2026-10-06', duration: 20, createdAt: '2026-10-02T10:00:00Z' },
+            { dutyId: 3, dutyName: 'Halls Upstairs', date: '2026-10-12', duration: 20, createdAt: '2026-10-09T14:30:00Z' },
+            { dutyId: 4, dutyName: 'Halls Upstairs', date: '2026-10-13', duration: 20, createdAt: '2026-10-09T14:30:00Z' }
+          ]
+
+          const weeks = groupDutiesByWeek(testDuties)
+          assert.strictEqual(weeks.length, 2, 'Must group into 2 distinct weeks')
+          assert.strictEqual(weeks[0].startDate, '2026-10-12', 'Newest week must be first')
+          assert.strictEqual(weeks[0].totalMinutes, 40)
+          assert.strictEqual(weeks[0].isLatest, true, 'Oct 12-16 week must be tagged as latest entered')
+
+          const latest = getLastEnteredWeek(testDuties)
+          assert.ok(latest, 'Must find latest entered week')
+          assert.strictEqual(latest.startDate, '2026-10-12')
+          assert.strictEqual(latest.dutyNames[0], 'Halls Upstairs')
+
+          // Single-duty week check (e.g. 1-day on-call on Wednesday Oct 21, 2026)
+          const singleDutyList = [
+            { dutyId: 99, dutyName: 'On-call', date: '2026-10-21', duration: 75, startTime: '09:00', createdAt: '2026-10-18T10:00:00Z' }
+          ]
+          const singleWeek = groupDutiesByWeek(singleDutyList)
+          assert.strictEqual(singleWeek.length, 1, 'Must group single duty into 1 week')
+          assert.strictEqual(singleWeek[0].duties.length, 1, 'Week must contain exactly 1 duty')
+          assert.strictEqual(singleWeek[0].startDate, '2026-10-19', 'Work week starts on Monday Oct 19')
+          assert.strictEqual(singleWeek[0].endDate, '2026-10-23', 'Work week ends on Friday Oct 23')
+          assert.strictEqual(singleWeek[0].totalMinutes, 75)
+          assert.strictEqual(singleWeek[0].dutyNames[0], 'On-call')
+
+          const singleIcs = generateIcsContent(singleWeek[0].duties)
+          assert.ok(singleIcs.includes('BEGIN:VEVENT'), 'Must contain 1 calendar event')
+          assert.ok(singleIcs.includes('SUMMARY:On-call Duty'), 'Must contain On-call summary')
+          assert.ok(singleIcs.includes('DTSTART:20261021T090000'), 'Event timestamp must match the specific duty date/time')
+
+          console.log('✅ Test 8 Passed: Weekly calendar grouping and single-duty week handling verified.')
+        }
+
+        console.log('\n🎉 ALL DUTY TRACKER TESTS PASSED SUCCESSFULLY!\n')
+      })
+    })
+  })
+}

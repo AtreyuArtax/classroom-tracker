@@ -264,13 +264,14 @@ export function dataUrlToBlob(dataUrl) {
 export async function exportAllData() {
     const db = await getDB()
 
-    const [settings, classes, events, assessments, grades, learningSkills] = await Promise.all([
+    const [settings, classes, events, assessments, grades, learningSkills, duties] = await Promise.all([
         db.get('settings', 'singleton'),
         db.getAll('classes'),
         db.getAllFromIndex('events', 'by_timestamp'),
         db.getAll('assessments'),
         db.getAll('grades'),
-        db.getAll('learning_skills').catch(() => [])
+        db.getAll('learning_skills').catch(() => []),
+        db.getAll('duties').catch(() => [])
     ])
 
     let photos = []
@@ -312,6 +313,7 @@ export async function exportAllData() {
         assessments,
         grades,
         learning_skills: learningSkills || [],
+        duties: duties || [],
         photos
     }
 }
@@ -677,7 +679,7 @@ export async function importAllData(backupObj) {
         data = migrateData(data)
     }
 
-    const { settings, classes = [], events = [], assessments = [], grades = [], learning_skills = [], photos = [] } = data
+    const { settings, classes = [], events = [], assessments = [], grades = [], learning_skills = [], duties = [], photos = [] } = data
 
     const db = await getDB()
 
@@ -688,7 +690,9 @@ export async function importAllData(backupObj) {
     const existingFileHandle = currentSettings?.backupFileHandle ?? null
 
     // Single transaction across all primary stores
-    const tx = db.transaction(['settings', 'classes', 'events', 'assessments', 'grades', 'learning_skills'], 'readwrite')
+    const stores = ['settings', 'classes', 'events', 'assessments', 'grades', 'learning_skills']
+    if (db.objectStoreNames.contains('duties')) stores.push('duties')
+    const tx = db.transaction(stores, 'readwrite')
 
     // Clear and rewrite settings
     await tx.objectStore('settings').clear()
@@ -730,6 +734,14 @@ export async function importAllData(backupObj) {
     await tx.objectStore('learning_skills').clear()
     for (const ls of learning_skills) {
         await tx.objectStore('learning_skills').put(ls)
+    }
+
+    // Clear and rewrite duties
+    if (db.objectStoreNames.contains('duties')) {
+        await tx.objectStore('duties').clear()
+        for (const d of duties) {
+            await tx.objectStore('duties').put(d)
+        }
     }
 
     await tx.done

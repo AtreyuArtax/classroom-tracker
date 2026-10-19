@@ -25,6 +25,7 @@ export const attendanceMode = ref('natural')
 export const latenessGracePeriod = ref(5)
 export const periodStartTimes = ref({})
 export const showScannerButton = ref(false)
+export const showDutiesNav = ref(true)
 export const academicTerms = shallowRef([])
 export const nonSchoolDays = shallowRef([])
 

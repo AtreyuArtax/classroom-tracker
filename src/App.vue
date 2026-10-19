@@ -38,7 +38,7 @@
 
       <div class="app-nav__tabs" role="tablist">
         <button
-          v-for="view in views"
+          v-for="view in visibleViews"
           :key="view.id"
           class="app-nav__tab"
           :class="{ 'app-nav__tab--active': currentView === view.id }"
@@ -83,13 +83,14 @@
  */
 
 import { ref, computed, onMounted, onUnmounted, watch, defineAsyncComponent } from 'vue'
-import { ClipboardList, LayoutDashboard, Settings, BarChart2, Cloud, CloudUpload, CloudCheck, CloudOff, GraduationCap } from 'lucide-vue-next'
+import { ClipboardList, LayoutDashboard, Settings, BarChart2, Cloud, CloudUpload, CloudCheck, CloudOff, GraduationCap, CalendarCheck } from 'lucide-vue-next'
 
 // Lazy-load views to reduce initial bundle size
 const Dashboard = defineAsyncComponent(() => import('./views/Dashboard.vue'))
 const Setup     = defineAsyncComponent(() => import('./views/Setup.vue'))
 const Reports   = defineAsyncComponent(() => import('./views/Reports.vue'))
 const Grades    = defineAsyncComponent(() => import('./views/Grades.vue'))
+const Duties    = defineAsyncComponent(() => import('./views/Duties.vue'))
 const ScanStation = defineAsyncComponent(() => import('./views/ScanStation.vue'))
 
 import { useClassroom } from './composables/useClassroom.js'
@@ -136,6 +137,7 @@ const views = [
   { id: 'Dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { id: 'Reports',   label: 'Reports',   icon: BarChart2 },
   { id: 'Grades',    label: 'Grades',    icon: GraduationCap },
+  { id: 'Duties',    label: 'Duties',    icon: CalendarCheck },
   { id: 'Setup',     label: 'Setup',     icon: Settings },
 ]
 
@@ -150,11 +152,26 @@ import { useMessage } from './composables/useMessage.js'
 
 const { select: selectMessage, alert: alertMessage } = useMessage()
 
+const { init, isScannerOpen, showDutiesNav } = useClassroom()
+
+const visibleViews = computed(() => {
+  return views.filter(v => v.id !== 'Duties' || showDutiesNav.value)
+})
+
+watch(showDutiesNav, (enabled) => {
+  if (!enabled && currentView.value === 'Duties') {
+    navigateTo('Dashboard')
+  }
+})
+
 const { clear: clearUndo } = useUndo()
-const viewComponents = { Dashboard, Setup, Reports, Grades, ScanStation }
+const viewComponents = { Dashboard, Setup, Reports, Grades, ScanStation, Duties }
 const currentComponent = computed(() => viewComponents[currentView.value])
 
 async function navigateTo(viewId, params = {}) {
+  if (viewId === 'Duties' && !showDutiesNav.value) {
+    viewId = 'Dashboard'
+  }
   if (viewComponents[viewId]) {
     if (currentView.value === 'Setup' && viewId !== 'Setup' && curriculumEditorDirty.value) {
       const courseTitle = curriculumEditorTitle.value || 'this course blueprint'
@@ -190,8 +207,6 @@ async function navigateTo(viewId, params = {}) {
 }
 
 // ─── init — load IDB data before first render ─────────────────────────────
-
-const { init, isScannerOpen } = useClassroom()
 
 const isSyncLinked   = ref(false)
 const isSyncing      = ref(false)

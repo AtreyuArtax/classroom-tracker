@@ -60,6 +60,21 @@
           <span class="setup__switch-slider"></span>
         </label>
       </div>
+
+      <div class="setup__pref-row">
+        <div class="setup__pref-text">
+          <span class="setup__pref-title">Duty Tracker in navigation</span>
+          <span class="setup__pref-desc">Show the Duties tab in the main top navigation bar.</span>
+        </div>
+        <label class="setup__switch">
+          <input
+            type="checkbox"
+            :checked="showDutiesNav"
+            @change="updateShowDutiesNav($event.target.checked)"
+          />
+          <span class="setup__switch-slider"></span>
+        </label>
+      </div>
     </div>
   </div>
 </template>
@@ -77,7 +92,7 @@ const THEME_OPTIONS = [
   { value: 'dark', label: 'Dark', icon: Moon }
 ]
 
-const { teachingMode } = useClassroom()
+const { teachingMode, showDutiesNav, updateShowDutiesNav } = useClassroom()
 const { themePreference, setTheme } = useTheme()
 
 const themeHint = computed(() => {

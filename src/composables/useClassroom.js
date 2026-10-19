@@ -24,6 +24,7 @@ import { useMessage } from './useMessage.js'
 import { getDB } from '../db/index.js'
 import { autoPopulateAllElementarySubjects } from './useElementary.js'
 import { formatLocalDate, isSameSchoolYear } from '../utils/dates.js'
+import { getBoardCalendar } from '../utils/calendarLoader.js'
 import { autoClassifyCalendarLabel } from '../utils/schoolDayUtils.js'
 import { mergeRosterRows, findConflictingHomeroom } from '../utils/rosterCsvImport.js'
 import {
@@ -76,6 +77,7 @@ import {
   latenessGracePeriod, 
   periodStartTimes, 
   showScannerButton,
+  showDutiesNav,
   academicTerms, 
   nonSchoolDays, 
   isTestDay, 
@@ -504,6 +506,23 @@ function getTermRange(year, semester) {
         }
     }
 
+    // Check Official Board Calendar
+    try {
+        const board = getBoardCalendar(year)
+        if (board && Array.isArray(board.semesters)) {
+            const boardSem = board.semesters.find(s => String(s.semester) === String(semester))
+            if (boardSem && boardSem.startDate && boardSem.endDate) {
+                return {
+                    start: new Date(boardSem.startDate + 'T00:00:00'),
+                    end: new Date(boardSem.endDate + 'T23:59:59'),
+                    isCustom: false
+                }
+            }
+        }
+    } catch (e) {
+        // Fall through to smart defaults
+    }
+
     // Smart Defaults
     const startYear = parseInt(year.split('-')[0])
     let startDate, endDate
@@ -623,6 +642,7 @@ async function init() {
     attendanceMode.value = settings.attendanceMode || 'natural'
     latenessGracePeriod.value = settings.latenessGracePeriod !== undefined ? settings.latenessGracePeriod : 5
     showScannerButton.value = settings.showScannerButton !== undefined ? settings.showScannerButton : false
+    showDutiesNav.value = settings.showDutiesNav !== undefined ? settings.showDutiesNav : true
     cloudModeEnabled.value = settings.cloudModeEnabled || false
     userCode.value = settings.userCode || ''
 
@@ -1726,6 +1746,16 @@ async function updateShowScannerButton(enabled) {
 }
 
 /**
+ * Update global show duty tracker nav preference.
+ */
+async function updateShowDutiesNav(enabled) {
+    showDutiesNav.value = enabled
+    const settings = await settingsService.getSettings()
+    settings.showDutiesNav = enabled
+    await settingsService.saveSettings(settings)
+}
+
+/**
  * Update the global cloud configuration.
  */
 async function updateCloudConfig(enabled, code) {
@@ -2032,6 +2062,7 @@ export function useClassroom() {
         latenessGracePeriod,
         periodStartTimes,
         showScannerButton,
+        showDutiesNav,
         isScannerOpen,
         isScannerMinimized,
         autoStartRFID,
@@ -2110,6 +2141,7 @@ export function useClassroom() {
         updateAttendanceConfig,
         toggleTestDay,
         updateShowScannerButton,
+        updateShowDutiesNav,
         markAllPresentToday,
         handleRfidAttendanceScan,
         initializeRfidAttendance,

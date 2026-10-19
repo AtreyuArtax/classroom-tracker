@@ -44,7 +44,7 @@ async function _readSettings() {
 
     // Fallback: seed defaults (should have been written during upgrade, but guard anyway)
     const defaults = {
-        schemaVersion: 32,
+        schemaVersion: 33,
         gridSize: { rows: 6, cols: 6 },
         customCurriculumPresets: {},
         aiCommentSettings: {
@@ -170,7 +170,8 @@ async function _readSettings() {
         ],
         capGradesAt100: true,
         nonSchoolDays: [],
-        appTheme: 'system'
+        appTheme: 'system',
+        showDutiesNav: true
     }
     if (typeof indexedDB !== 'undefined') {
         try {

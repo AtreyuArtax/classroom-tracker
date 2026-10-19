@@ -5,11 +5,37 @@
  * from the `src/data/calendar/` repository folder using Vite's eager glob import.
  */
 
-const calendarFiles = import.meta.glob('../data/calendar/**/*.json', { eager: true });
+const calendarFiles = (typeof import.meta !== 'undefined' && typeof import.meta.glob === 'function')
+  ? import.meta.glob('../data/calendar/**/*.json', { eager: true })
+  : {};
+
+function getNodeCalendarFiles() {
+  try {
+    if (typeof process === 'undefined' || typeof process.getBuiltinModule !== 'function') return {};
+    const fs = process.getBuiltinModule('fs');
+    const path = process.getBuiltinModule('path');
+    if (!fs || !path) return {};
+    const dir = path.resolve(process.cwd(), 'src/data/calendar');
+    if (!fs.existsSync(dir)) return {};
+    const files = {};
+    const entries = fs.readdirSync(dir, { recursive: true });
+    for (const entry of entries) {
+      if (typeof entry === 'string' && entry.endsWith('.json')) {
+        const fullPath = path.join(dir, entry);
+        const content = JSON.parse(fs.readFileSync(fullPath, 'utf8'));
+        files[entry] = content;
+      }
+    }
+    return files;
+  } catch (e) {
+    return {};
+  }
+}
 
 export function getAvailableBoardCalendars() {
   const result = [];
-  for (const [filePath, module] of Object.entries(calendarFiles)) {
+  const files = Object.keys(calendarFiles).length > 0 ? calendarFiles : getNodeCalendarFiles();
+  for (const [filePath, module] of Object.entries(files)) {
     const parts = filePath.replace(/\\/g, '/').split('/');
     const fileName = parts.pop() || '';
     const levelDir = parts.pop() || '';

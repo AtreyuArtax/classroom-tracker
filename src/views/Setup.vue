@@ -103,6 +103,13 @@
       </div>
     </section>
 
+    <!-- PILLAR 7: Duty Tracking Settings -->
+    <section v-else-if="activeTab === 'duties'" class="setup__panel">
+      <div class="setup__panel-content">
+        <DutySettings />
+      </div>
+    </section>
+
     <HelpModal :show="isHelpModalOpen" @close="isHelpModalOpen = false" />
 
     <!-- Add / Import Class (reachable from Manage Classes and the Active Class tab) -->
@@ -123,6 +130,7 @@ import { ref, computed, watch, onMounted, onUnmounted, defineAsyncComponent } fr
 import { 
   ArrowLeft,
   BookOpen,
+  CalendarCheck,
   CalendarDays,
   Database,
   FolderOpen,
@@ -155,6 +163,7 @@ const PeriodScheduleSettings      = defineAsyncComponent(() => import('../compon
 const AttendanceStationSettings   = defineAsyncComponent(() => import('../components/setup/AttendanceStationSettings.vue'))
 const ClassManagerPanel           = defineAsyncComponent(() => import('../components/setup/ClassManagerPanel.vue'))
 const AddClassModal               = defineAsyncComponent(() => import('../components/setup/AddClassModal.vue'))
+const DutySettings                = defineAsyncComponent(() => import('../components/setup/DutySettings.vue'))
 
 const props = defineProps({
   tab: { type: String, default: '' },
@@ -173,6 +182,7 @@ const setupTabs = [
   { id: 'calendar',   label: 'Calendar',            icon: CalendarDays },
   { id: 'curriculum', label: 'Curriculum Library',  icon: BookOpen },
   { id: 'manage',     label: 'Manage Classes',      icon: FolderOpen },
+  { id: 'duties',     label: 'Duty Settings',       icon: CalendarCheck },
   { id: 'data',       label: 'Backup & Data',       icon: Database },
 ]
 
@@ -189,6 +199,9 @@ const tabMap = {
   'codes': 'app', 
   'app': 'app',
   'calendar': 'calendar',
+  'duties': 'duties',
+  'duty': 'duties',
+  'apa': 'duties',
   'backup': 'data',
   'data': 'data'
 }
