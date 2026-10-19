@@ -131,6 +131,7 @@ export function useDutyTracker() {
     dutyName,
     startDate,
     days = 1,
+    dates: explicitDates = null,
     duration = 15,
     startTime = '',
     notes = '',
@@ -138,36 +139,41 @@ export function useDutyTracker() {
     schoolYear = activeSchoolYear.value,
     semester = getCurrentSemester()
   }) {
-    if (!startDate || days < 1) return []
-
-    const numDays = Math.max(1, parseInt(days, 10) || 1)
-    const [startYear, startMonth, startDay] = startDate.split('-').map(Number)
-    let curr = new Date(startYear, startMonth - 1, startDay)
-
-    const batch = []
-    let added = 0
-
-    while (added < numDays) {
-      const dayOfWeek = curr.getDay() // 0 = Sun, 6 = Sat
-      if (dayOfWeek !== 0 && dayOfWeek !== 6) {
-        const dateStr = formatDateLocal(curr)
-        const yr = schoolYear || getSchoolYearFromDate(dateStr) || activeSchoolYear.value || getCurrentSchoolYear()
-        const sem = semester || getSemesterFromDate(dateStr) || getCurrentSemester()
-        batch.push({
-          date: dateStr,
-          dutyName,
-          duration: Number(duration) || 0,
-          startTime: startTime || '',
-          notes: notes || '',
-          isEmergency: Boolean(isEmergency),
-          isSnowDay: false,
-          schoolYear: yr,
-          semester: sem
-        })
-        added++
+    let dateList = []
+    if (Array.isArray(explicitDates) && explicitDates.length > 0) {
+      dateList = explicitDates
+    } else if (startDate && days >= 1) {
+      const numDays = Math.max(1, parseInt(days, 10) || 1)
+      const [startYear, startMonth, startDay] = startDate.split('-').map(Number)
+      let curr = new Date(startYear, startMonth - 1, startDay)
+      while (dateList.length < numDays) {
+        const dow = curr.getDay()
+        if (dow !== 0 && dow !== 6) {
+          dateList.push(formatDateLocal(curr))
+        }
+        curr.setDate(curr.getDate() + 1)
       }
-      curr.setDate(curr.getDate() + 1)
+    } else if (startDate) {
+      dateList = [startDate]
     }
+
+    if (dateList.length === 0) return []
+
+    const batch = dateList.map(dateStr => {
+      const yr = schoolYear || getSchoolYearFromDate(dateStr) || activeSchoolYear.value || getCurrentSchoolYear()
+      const sem = semester || getSemesterFromDate(dateStr) || getCurrentSemester()
+      return {
+        date: dateStr,
+        dutyName,
+        duration: Number(duration) || 0,
+        startTime: startTime || '',
+        notes: notes || '',
+        isEmergency: Boolean(isEmergency),
+        isSnowDay: false,
+        schoolYear: yr,
+        semester: sem
+      }
+    })
 
     const createdList = await dutyService.addDutiesBatch(batch)
     const matching = createdList.filter(d => d.schoolYear === activeSchoolYear.value)

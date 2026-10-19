@@ -14,19 +14,19 @@ export const INITIAL_DUTY_SETTINGS = {
   allottedMinutes: 1875,
   emergencyCap: 2,
   dutyTypes: [
-    { id: 'am-bus', name: 'AM Bus', defaultDuration: 15, defaultDays: 5, defaultStartTime: '08:15', isEmergency: false },
-    { id: 'cafeteria', name: 'Cafeteria', defaultDuration: 20, defaultDays: 5, defaultStartTime: '11:20', isEmergency: false },
-    { id: 'library', name: 'Library', defaultDuration: 20, defaultDays: 5, defaultStartTime: '11:20', isEmergency: false },
-    { id: 'student-commons', name: 'Student Commons', defaultDuration: 20, defaultDays: 5, defaultStartTime: '11:40', isEmergency: false },
-    { id: 'weight-room', name: 'Weight Room', defaultDuration: 30, defaultDays: 2, defaultStartTime: '11:25', isEmergency: false },
-    { id: 'halls-upstairs', name: 'Halls Upstairs', defaultDuration: 20, defaultDays: 5, defaultStartTime: '11:40', isEmergency: false },
-    { id: 'halls-downstairs', name: 'Halls Downstairs', defaultDuration: 20, defaultDays: 5, defaultStartTime: '11:40', isEmergency: false },
-    { id: 'flagpole', name: 'Flagpole', defaultDuration: 15, defaultDays: 5, defaultStartTime: '08:15', isEmergency: false },
-    { id: 'pm-bus', name: 'PM Bus', defaultDuration: 15, defaultDays: 5, defaultStartTime: '14:40', isEmergency: false },
-    { id: 'on-call', name: 'On-call', defaultDuration: 75, defaultDays: 1, defaultStartTime: '09:00', isEmergency: false },
-    { id: 'osslt', name: 'OSSLT', defaultDuration: 75, defaultDays: 1, defaultStartTime: '09:00', isEmergency: false },
-    { id: 'emergency', name: 'Emergency', defaultDuration: 20, defaultDays: 1, defaultStartTime: '09:00', isEmergency: true },
-    { id: 'adjustment', name: 'Adjustment', defaultDuration: 0, defaultDays: 1, defaultStartTime: '', isEmergency: false }
+    { id: 'am-bus', name: 'AM Bus', defaultDuration: 15, defaultDays: 5, defaultWeekdays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'], defaultStartTime: '08:15', isEmergency: false },
+    { id: 'cafeteria', name: 'Cafeteria', defaultDuration: 20, defaultDays: 5, defaultWeekdays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'], defaultStartTime: '11:20', isEmergency: false },
+    { id: 'library', name: 'Library', defaultDuration: 20, defaultDays: 5, defaultWeekdays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'], defaultStartTime: '11:20', isEmergency: false },
+    { id: 'student-commons', name: 'Student Commons', defaultDuration: 20, defaultDays: 5, defaultWeekdays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'], defaultStartTime: '11:40', isEmergency: false },
+    { id: 'weight-room', name: 'Weight Room', defaultDuration: 30, defaultDays: 2, defaultStartTime: '11:25', defaultWeekdays: ['Tue', 'Thu'], isEmergency: false },
+    { id: 'halls-upstairs', name: 'Halls Upstairs', defaultDuration: 20, defaultDays: 5, defaultWeekdays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'], defaultStartTime: '11:40', isEmergency: false },
+    { id: 'halls-downstairs', name: 'Halls Downstairs', defaultDuration: 20, defaultDays: 5, defaultWeekdays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'], defaultStartTime: '11:40', isEmergency: false },
+    { id: 'flagpole', name: 'Flagpole', defaultDuration: 15, defaultDays: 5, defaultWeekdays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'], defaultStartTime: '08:15', isEmergency: false },
+    { id: 'pm-bus', name: 'PM Bus', defaultDuration: 15, defaultDays: 5, defaultWeekdays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'], defaultStartTime: '14:40', isEmergency: false },
+    { id: 'on-call', name: 'On-call', defaultDuration: 75, defaultDays: 1, defaultWeekdays: [], defaultStartTime: '09:00', isEmergency: false },
+    { id: 'osslt', name: 'OSSLT', defaultDuration: 75, defaultDays: 1, defaultWeekdays: [], defaultStartTime: '09:00', isEmergency: false },
+    { id: 'emergency', name: 'Emergency', defaultDuration: 20, defaultDays: 1, defaultWeekdays: [], defaultStartTime: '09:00', isEmergency: true },
+    { id: 'adjustment', name: 'Adjustment', defaultDuration: 0, defaultDays: 1, defaultWeekdays: [], defaultStartTime: '', isEmergency: false }
   ]
 }
 

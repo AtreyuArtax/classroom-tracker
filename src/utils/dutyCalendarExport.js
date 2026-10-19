@@ -230,6 +230,41 @@ export function getWeekRangeForDate(dateString) {
 }
 
 /**
+ * Returns an array of the 5 school weekdays (Mon–Fri) for any given ISO date string.
+ * @param {string} dateString - YYYY-MM-DD
+ * @returns {Array<{ dayKey: string, dayName: string, dateIso: string, displayDate: string }>}
+ */
+export function getWeekDaysList(dateString) {
+  if (!dateString) return []
+  const [y, m, d] = dateString.split('-').map(Number)
+  const dt = new Date(y, m - 1, d)
+  const day = dt.getDay() // 0 = Sun, 1 = Mon ... 6 = Sat
+  const diffToMon = day === 0 ? -6 : 1 - day
+  const monday = new Date(dt)
+  monday.setDate(dt.getDate() + diffToMon)
+
+  const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+  const DAY_KEYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri']
+  const DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
+
+  const list = []
+  for (let i = 0; i < 5; i++) {
+    const cur = new Date(monday)
+    cur.setDate(monday.getDate() + i)
+    const yr = cur.getFullYear()
+    const mo = String(cur.getMonth() + 1).padStart(2, '0')
+    const dy = String(cur.getDate()).padStart(2, '0')
+    list.push({
+      dayKey: DAY_KEYS[i],
+      dayName: DAY_NAMES[i],
+      dateIso: `${yr}-${mo}-${dy}`,
+      displayDate: `${MONTH_NAMES[cur.getMonth()]} ${cur.getDate()}`
+    })
+  }
+  return list
+}
+
+/**
  * Groups an array of duties into Monday–Friday school weeks.
  * Sorted descending by start date (newest weeks first).
  * @param {Array<Object>} duties

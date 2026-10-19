@@ -28,30 +28,51 @@
         </select>
       </div>
 
-      <!-- Start Date & Days Grid -->
-      <div class="add-duty-form__row">
-        <div class="add-duty-form__group" style="flex: 1.2;">
-          <label class="add-duty-form__label" for="duty-start-date">Start Date</label>
-          <input
-            id="duty-start-date"
-            v-model="form.startDate"
-            type="date"
-            class="setup__input"
-            required
-          />
+      <!-- Week / Start Date & Quick Week Range -->
+      <div class="add-duty-form__group">
+        <div class="add-duty-form__label-row">
+          <label class="add-duty-form__label" for="duty-start-date">Week of / Start Date</label>
+          <span v-if="weekRangeLabel" class="add-duty-form__label-context">{{ weekRangeLabel }}</span>
+        </div>
+        <input
+          id="duty-start-date"
+          v-model="form.startDate"
+          type="date"
+          class="setup__input"
+          required
+          @change="onStartDateChange"
+        />
+      </div>
+
+      <!-- Days on Duty Selector -->
+      <div class="add-duty-form__group">
+        <div class="add-duty-form__days-header">
+          <label class="add-duty-form__label">
+            Days on Duty ({{ selectedDays.length }} {{ selectedDays.length === 1 ? 'day' : 'days' }})
+          </label>
+          <div class="add-duty-form__quick-links">
+            <button type="button" class="add-duty-form__quick-btn" @click="selectAllWeekdays">All Week (M–F)</button>
+            <button type="button" class="add-duty-form__quick-btn" @click="selectTueThu">Tue &amp; Thu</button>
+            <button type="button" class="add-duty-form__quick-btn" @click="selectSingleDay">1 Day</button>
+          </div>
         </div>
 
-        <div class="add-duty-form__group" style="flex: 1;">
-          <label class="add-duty-form__label" for="duty-days">Consecutive Days</label>
-          <input
-            id="duty-days"
-            v-model.number="form.days"
-            type="number"
-            min="1"
-            max="14"
-            class="setup__input"
-            required
-          />
+        <div class="add-duty-form__day-pills">
+          <button
+            v-for="day in weekDaysList"
+            :key="day.dayKey"
+            type="button"
+            class="add-duty-form__day-pill"
+            :class="{ 'add-duty-form__day-pill--active': isDaySelected(day.dayKey) }"
+            @click="toggleDay(day.dayKey)"
+            :title="`Toggle ${day.dayName} (${day.displayDate})`"
+          >
+            <span class="add-duty-form__day-check">
+              <Check v-if="isDaySelected(day.dayKey)" :size="12" />
+            </span>
+            <strong class="add-duty-form__day-name">{{ day.dayKey }}</strong>
+            <small class="add-duty-form__day-date">{{ day.displayDate }}</small>
+          </button>
         </div>
       </div>
 
@@ -105,7 +126,7 @@
           v-model="form.notes"
           type="text"
           class="setup__input"
-          placeholder="e.g. Teacher covered (Rodney), location (Bus Bay), etc."
+          placeholder="e.g. Teacher covered (Skywalker), location (Bus Bay), etc."
         />
       </div>
 
@@ -157,10 +178,10 @@
 
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
-import { CalendarCheck, CalendarDays } from 'lucide-vue-next'
+import { CalendarCheck, CalendarDays, Check } from 'lucide-vue-next'
 import BaseModal from '../BaseModal.vue'
 import { useDutyTracker } from '../../composables/useDutyTracker.js'
-import { downloadDutiesIcs } from '../../utils/dutyCalendarExport.js'
+import { downloadDutiesIcs, getWeekDaysList, getWeekRangeForDate } from '../../utils/dutyCalendarExport.js'
 
 const props = defineProps({
   show: { type: Boolean, default: false }
@@ -171,6 +192,7 @@ const emit = defineEmits(['close', 'created'])
 const { dutySettings, addBatchDuties } = useDutyTracker()
 
 const selectedDutyId = ref('')
+const selectedDays = ref(['Mon', 'Tue', 'Wed', 'Thu', 'Fri'])
 const isSubmitting = ref(false)
 const exportToOutlook = ref(true)
 
@@ -185,11 +207,19 @@ function getTodayLocalDate() {
 const form = ref({
   dutyName: '',
   startDate: getTodayLocalDate(),
-  days: 5,
   duration: 15,
   startTime: '08:15',
   notes: '',
   isEmergency: false
+})
+
+const weekDaysList = computed(() => {
+  return getWeekDaysList(form.value.startDate)
+})
+
+const weekRangeLabel = computed(() => {
+  const range = getWeekRangeForDate(form.value.startDate)
+  return range ? range.label : ''
 })
 
 onMounted(() => {
@@ -220,51 +250,128 @@ function onDutyTypeChange() {
   }
 }
 
+function isDaySelected(dayKey) {
+  return selectedDays.value.includes(dayKey)
+}
+
+function toggleDay(dayKey) {
+  if (selectedDays.value.includes(dayKey)) {
+    if (selectedDays.value.length > 1) {
+      selectedDays.value = selectedDays.value.filter(k => k !== dayKey)
+    }
+  } else {
+    const order = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri']
+    selectedDays.value = [...selectedDays.value, dayKey].sort(
+      (a, b) => order.indexOf(a) - order.indexOf(b)
+    )
+  }
+}
+
+function selectAllWeekdays() {
+  selectedDays.value = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri']
+}
+
+function selectTueThu() {
+  selectedDays.value = ['Tue', 'Thu']
+}
+
+function selectSingleDay() {
+  if (!form.value.startDate) {
+    selectedDays.value = ['Mon']
+    return
+  }
+  const [y, m, d] = form.value.startDate.split('-').map(Number)
+  const dt = new Date(y, m - 1, d)
+  const dow = dt.getDay()
+  const map = { 1: 'Mon', 2: 'Tue', 3: 'Wed', 4: 'Thu', 5: 'Fri' }
+  selectedDays.value = [map[dow] || 'Mon']
+}
+
+function onStartDateChange() {
+  const catalog = dutySettings.value.dutyTypes || []
+  const found = catalog.find(d => (d.id || d.name) === selectedDutyId.value)
+  if (!found) return
+
+  // If 5-day duty and user picked a specific day (like Tuesday for a holiday week)
+  if (found.defaultDays === 5) {
+    const [y, m, d] = (form.value.startDate || '').split('-').map(Number)
+    const dt = new Date(y, m - 1, d)
+    const dow = dt.getDay()
+    if (dow === 2) {
+      // User specifically selected Tuesday (e.g. Holiday Monday!)
+      selectedDays.value = ['Tue', 'Wed', 'Thu', 'Fri']
+    } else if (dow === 3) {
+      selectedDays.value = ['Wed', 'Thu', 'Fri']
+    } else if (dow === 4) {
+      selectedDays.value = ['Thu', 'Fri']
+    } else if (dow === 1 || dow === 0 || dow === 6) {
+      selectedDays.value = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri']
+    }
+  } else if (found.defaultDays === 1) {
+    selectSingleDay()
+  }
+  // Weight room stays ['Tue', 'Thu']
+}
+
 function applyDutyPreset(duty) {
   form.value.dutyName = duty.name
   form.value.duration = Number(duty.defaultDuration) || 15
-  form.value.days = Number(duty.defaultDays) || 1
   form.value.startTime = duty.defaultStartTime || ''
   form.value.isEmergency = Boolean(duty.isEmergency)
+
+  // Smart weekday selection
+  if (duty.defaultWeekdays && Array.isArray(duty.defaultWeekdays) && duty.defaultWeekdays.length > 0) {
+    selectedDays.value = [...duty.defaultWeekdays]
+  } else if (duty.id === 'weight-room' || (duty.name && duty.name.toLowerCase().includes('weight')) || duty.defaultDays === 2) {
+    selectedDays.value = ['Tue', 'Thu']
+  } else if (duty.defaultDays === 5) {
+    const [y, m, d] = (form.value.startDate || '').split('-').map(Number)
+    const dt = new Date(y, m - 1, d)
+    const dow = dt.getDay()
+    if (dow === 2) {
+      selectedDays.value = ['Tue', 'Wed', 'Thu', 'Fri']
+    } else {
+      selectedDays.value = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri']
+    }
+  } else if (duty.defaultDays === 1) {
+    selectSingleDay()
+  } else {
+    selectedDays.value = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri']
+  }
 }
 
 const totalMinutesCalculated = computed(() => {
   const d = Number(form.value.duration) || 0
-  const days = Math.max(1, Number(form.value.days) || 1)
-  return d * days
+  return d * selectedDays.value.length
 })
 
 const datePreviewText = computed(() => {
-  if (!form.value.startDate || form.value.days <= 1) return ''
-  const days = Math.min(14, Math.max(1, Number(form.value.days) || 1))
-  const [y, m, d] = form.value.startDate.split('-').map(Number)
-  const start = new Date(y, m - 1, d)
-
-  const dates = []
-  let curr = new Date(start)
-  while (dates.length < days) {
-    const dow = curr.getDay()
-    if (dow !== 0 && dow !== 6) {
-      dates.push(new Date(curr))
-    }
-    curr.setDate(curr.getDate() + 1)
+  const days = weekDaysList.value.filter(d => selectedDays.value.includes(d.dayKey))
+  if (days.length === 0) return ''
+  if (days.length === 1) {
+    return `1 day: ${days[0].dayName}, ${days[0].displayDate}`
   }
-
-  if (dates.length === 0) return ''
-  const first = dates[0].toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })
-  const last = dates[dates.length - 1].toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })
-  return `${days} weekdays: ${first} – ${last}`
+  if (days.length === 2) {
+    return `2 days: ${days[0].dayKey} (${days[0].displayDate}) & ${days[1].dayKey} (${days[1].displayDate})`
+  }
+  return `${days.length} days: ${days[0].dayKey} (${days[0].displayDate}) – ${days[days.length - 1].dayKey} (${days[days.length - 1].displayDate})`
 })
 
 async function handleSubmit() {
   if (!form.value.dutyName || !form.value.startDate) return
+  if (selectedDays.value.length === 0) return
   isSubmitting.value = true
 
   try {
+    const datesToCreate = weekDaysList.value
+      .filter(d => selectedDays.value.includes(d.dayKey))
+      .map(d => d.dateIso)
+
     const createdDuties = await addBatchDuties({
       dutyName: form.value.dutyName,
       startDate: form.value.startDate,
-      days: form.value.days,
+      dates: datesToCreate,
+      days: datesToCreate.length,
       duration: form.value.duration,
       startTime: form.value.startTime,
       notes: form.value.notes,
@@ -272,7 +379,7 @@ async function handleSubmit() {
     })
 
     if (exportToOutlook.value && createdDuties.length > 0) {
-      const filename = `duties_${form.value.startDate}.ics`
+      const filename = `duties_${datesToCreate[0]}.ics`
       downloadDutiesIcs(createdDuties, filename)
     }
 
@@ -368,6 +475,116 @@ async function handleSubmit() {
   font-size: 0.85rem;
   color: var(--text-primary);
   cursor: pointer;
+}
+
+.add-duty-form__label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.add-duty-form__label-context {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.add-duty-form__days-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.add-duty-form__quick-links {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.add-duty-form__quick-btn {
+  background: transparent;
+  border: none;
+  color: var(--primary, #4663ac);
+  font-size: 0.74rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+}
+
+.add-duty-form__quick-btn:hover {
+  background: var(--bg-secondary, #f2f2f7);
+  text-decoration: underline;
+}
+
+.add-duty-form__day-pills {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+}
+
+.add-duty-form__day-pill {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 4px;
+  background: var(--bg-secondary, #f2f2f7);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md, 8px);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+  min-height: 52px;
+}
+
+.add-duty-form__day-pill:hover {
+  border-color: var(--primary, #4663ac);
+}
+
+.add-duty-form__day-pill--active {
+  background: rgba(70, 99, 172, 0.12);
+  border-color: var(--primary, #4663ac);
+  color: var(--primary, #4663ac);
+}
+
+body.dark-theme .add-duty-form__day-pill--active {
+  background: rgba(96, 165, 250, 0.2);
+  border-color: #60a5fa;
+  color: #93c5fd;
+}
+
+.add-duty-form__day-check {
+  height: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.add-duty-form__day-name {
+  font-size: 0.85rem;
+  font-weight: 700;
+  line-height: 1.1;
+  margin-top: 2px;
+}
+
+.add-duty-form__day-date {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+.add-duty-form__day-pill--active .add-duty-form__day-date {
+  color: var(--primary, #4663ac);
+  opacity: 0.9;
+}
+
+body.dark-theme .add-duty-form__day-pill--active .add-duty-form__day-date {
+  color: #93c5fd;
 }
 
 .add-duty-form__footer {

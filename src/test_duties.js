@@ -11,6 +11,7 @@ import {
   generateIcsContent,
   getOutlookWebComposeUrl,
   getWeekRangeForDate,
+  getWeekDaysList,
   groupDutiesByWeek,
   getLastEnteredWeek
 } from './utils/dutyCalendarExport.js'
@@ -70,7 +71,7 @@ console.log('🧪 Running Duty Tracker Unit Tests...\n')
       date: '2026-10-20',
       duration: 75,
       startTime: '09:00',
-      notes: 'Covered for Rodney',
+      notes: 'Covered for Skywalker',
       isEmergency: true,
       isSnowDay: false
     }
@@ -278,6 +279,104 @@ console.log('🧪 Running Duty Tracker Unit Tests...\n')
           assert.ok(singleIcs.includes('DTSTART:20261021T090000'), 'Event timestamp must match the specific duty date/time')
 
           console.log('✅ Test 8 Passed: Weekly calendar grouping and single-duty week handling verified.')
+        }
+
+        // ── Test 9: Weekday Selector & Weight Room (Tue/Thu) Export ──
+        {
+          // Any date in the week of Oct 5-9, 2026 (e.g. Wednesday Oct 7)
+          const weekList = getWeekDaysList('2026-10-07')
+          assert.strictEqual(weekList.length, 5, 'Must return 5 weekdays')
+          assert.strictEqual(weekList[0].dayKey, 'Mon')
+          assert.strictEqual(weekList[0].dateIso, '2026-10-05')
+          assert.strictEqual(weekList[1].dayKey, 'Tue')
+          assert.strictEqual(weekList[1].dateIso, '2026-10-06')
+          assert.strictEqual(weekList[3].dayKey, 'Thu')
+          assert.strictEqual(weekList[3].dateIso, '2026-10-08')
+
+          // Simulate Weight Room duty: Tue & Thu selected
+          const weightRoomPreset = INITIAL_DUTY_SETTINGS.dutyTypes.find(d => d.name === 'Weight Room')
+          assert.ok(weightRoomPreset, 'Weight Room preset must exist')
+          assert.deepStrictEqual(weightRoomPreset.defaultWeekdays, ['Tue', 'Thu'], 'Weight Room must default to Tue & Thu')
+
+          const selectedDays = ['Tue', 'Thu']
+          const createdDates = weekList.filter(d => selectedDays.includes(d.dayKey)).map(d => d.dateIso)
+          assert.deepStrictEqual(createdDates, ['2026-10-06', '2026-10-08'], 'Must resolve to Tuesday Oct 6 and Thursday Oct 8')
+
+          const duties = createdDates.map((date, idx) => ({
+            dutyId: 501 + idx,
+            dutyName: 'Weight Room',
+            date,
+            duration: 30,
+            startTime: '11:25',
+            notes: 'Supervision',
+            isEmergency: false
+          }))
+
+          const ics = generateIcsContent(duties)
+          assert.ok(ics.includes('DTSTART:20261006T112500'), 'Must contain Tuesday Oct 6 at 11:25')
+          assert.ok(ics.includes('DTEND:20261006T115500'), 'Must end Tuesday Oct 6 at 11:55')
+          assert.ok(ics.includes('DTSTART:20261008T112500'), 'Must contain Thursday Oct 8 at 11:25')
+          assert.ok(ics.includes('DTEND:20261008T115500'), 'Must end Thursday Oct 8 at 11:55')
+          assert.ok(!ics.includes('20261007T112500'), 'Must NOT contain Wednesday Oct 7')
+
+          console.log('✅ Test 9 Passed: Weekday selector and Weight Room (Tue/Thu) calendar export verified.')
+        }
+
+        // ── Test 10: Schedule Days Catalog Presets & Weekday Toggle Sync ──
+        {
+          const order = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri']
+          function toggleDutyWeekday(duty, dayKey) {
+            if (!Array.isArray(duty.defaultWeekdays)) {
+              duty.defaultWeekdays = []
+            }
+            if (duty.defaultWeekdays.includes(dayKey)) {
+              duty.defaultWeekdays = duty.defaultWeekdays.filter(k => k !== dayKey)
+            } else {
+              duty.defaultWeekdays = [...duty.defaultWeekdays, dayKey].sort(
+                (a, b) => order.indexOf(a) - order.indexOf(b)
+              )
+            }
+            duty.defaultDays = duty.defaultWeekdays.length > 0 ? duty.defaultWeekdays.length : 1
+          }
+
+          const amBus = INITIAL_DUTY_SETTINGS.dutyTypes.find(d => d.name === 'AM Bus')
+          assert.deepStrictEqual(amBus.defaultWeekdays, ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'], 'AM Bus must default to M-F')
+          assert.strictEqual(amBus.defaultDays, 5)
+
+          const weightRoom = INITIAL_DUTY_SETTINGS.dutyTypes.find(d => d.name === 'Weight Room')
+          assert.deepStrictEqual(weightRoom.defaultWeekdays, ['Tue', 'Thu'], 'Weight Room must default to Tue & Thu')
+          assert.strictEqual(weightRoom.defaultDays, 2)
+
+          const onCall = INITIAL_DUTY_SETTINGS.dutyTypes.find(d => d.name === 'On-call')
+          assert.deepStrictEqual(onCall.defaultWeekdays, [], 'On-call default weekdays must be empty')
+          assert.strictEqual(onCall.defaultDays, 1)
+
+          // Test toggling
+          const mockCustomDuty = {
+            id: 'custom-1',
+            name: 'Weight Room',
+            defaultDuration: 30,
+            defaultDays: 2,
+            defaultWeekdays: ['Tue', 'Thu']
+          }
+
+          // Toggle Wednesday ON -> ['Tue', 'Wed', 'Thu'], defaultDays: 3
+          toggleDutyWeekday(mockCustomDuty, 'Wed')
+          assert.deepStrictEqual(mockCustomDuty.defaultWeekdays, ['Tue', 'Wed', 'Thu'])
+          assert.strictEqual(mockCustomDuty.defaultDays, 3)
+
+          // Toggle Tuesday OFF -> ['Wed', 'Thu'], defaultDays: 2
+          toggleDutyWeekday(mockCustomDuty, 'Tue')
+          assert.deepStrictEqual(mockCustomDuty.defaultWeekdays, ['Wed', 'Thu'])
+          assert.strictEqual(mockCustomDuty.defaultDays, 2)
+
+          // Toggle all OFF -> [], defaultDays: 1
+          toggleDutyWeekday(mockCustomDuty, 'Wed')
+          toggleDutyWeekday(mockCustomDuty, 'Thu')
+          assert.deepStrictEqual(mockCustomDuty.defaultWeekdays, [])
+          assert.strictEqual(mockCustomDuty.defaultDays, 1)
+
+          console.log('✅ Test 10 Passed: Schedule Days catalog presets and weekday toggle sync verified.')
         }
 
         console.log('\n🎉 ALL DUTY TRACKER TESTS PASSED SUCCESSFULLY!\n')

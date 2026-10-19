@@ -98,8 +98,8 @@
             <tr>
               <th style="min-width: 170px;">Duty Name</th>
               <th style="width: 110px;">Default Min</th>
-              <th style="width: 110px;">Default Days</th>
-              <th style="width: 155px;">Start Time</th>
+              <th style="min-width: 195px;">Schedule Days</th>
+              <th style="width: 145px;">Start Time</th>
               <th style="width: 110px; text-align: center;">Emergency?</th>
               <th style="width: 60px; text-align: center;">Remove</th>
             </tr>
@@ -129,16 +129,27 @@
                 </div>
               </td>
               <td>
-                <div class="duty-settings__mini-wrap">
-                  <input
-                    v-model.number="duty.defaultDays"
-                    type="number"
-                    min="1"
-                    max="10"
-                    class="setup__input duty-settings__num-input"
-                    placeholder="5"
-                  />
-                  <span class="duty-settings__mini-unit">days</span>
+                <div class="duty-settings__days-cell">
+                  <div class="duty-settings__weekdays-group" role="group" :aria-label="`Schedule days for ${duty.name}`">
+                    <button
+                      v-for="d in WEEKDAY_KEYS"
+                      :key="d.key"
+                      type="button"
+                      class="duty-settings__weekday-pill"
+                      :class="{ 'duty-settings__weekday-pill--active': isWeekdaySelected(duty, d.key) }"
+                      @click="toggleDutyWeekday(duty, d.key)"
+                      :title="`Toggle ${d.key} default for ${duty.name}`"
+                    >
+                      {{ d.label }}
+                    </button>
+                  </div>
+                  <span
+                    class="duty-settings__days-badge"
+                    :class="{ 'duty-settings__days-badge--muted': !duty.defaultWeekdays || duty.defaultWeekdays.length === 0 }"
+                    :title="duty.defaultWeekdays && duty.defaultWeekdays.length > 0 ? `${duty.defaultWeekdays.length} days per week default` : '1 day default (ad-hoc)'"
+                  >
+                    {{ duty.defaultWeekdays && duty.defaultWeekdays.length > 0 ? `${duty.defaultWeekdays.length}d` : '1d' }}
+                  </span>
                 </div>
               </td>
               <td>
@@ -206,17 +217,61 @@ const form = ref({
   dutyTypes: []
 })
 
+const WEEKDAY_KEYS = [
+  { key: 'Mon', label: 'M' },
+  { key: 'Tue', label: 'T' },
+  { key: 'Wed', label: 'W' },
+  { key: 'Thu', label: 'Th' },
+  { key: 'Fri', label: 'F' }
+]
+
 onMounted(async () => {
   await loadSettings()
   syncForm()
 })
 
 function syncForm() {
+  const loadedDuties = JSON.parse(JSON.stringify(dutySettings.value.dutyTypes || []))
+  
+  // Ensure defaultWeekdays exists on every duty entry for backward compatibility
+  for (const d of loadedDuties) {
+    if (!Array.isArray(d.defaultWeekdays)) {
+      if (d.id === 'weight-room' || (d.name && d.name.toLowerCase().includes('weight')) || d.defaultDays === 2) {
+        d.defaultWeekdays = ['Tue', 'Thu']
+      } else if (d.defaultDays === 5 || d.defaultDays == null) {
+        d.defaultWeekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri']
+      } else if (d.defaultDays === 1) {
+        d.defaultWeekdays = []
+      } else {
+        d.defaultWeekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'].slice(0, d.defaultDays || 1)
+      }
+    }
+  }
+
   form.value = {
     allottedMinutes: dutySettings.value.allottedMinutes ?? 1875,
     emergencyCap: dutySettings.value.emergencyCap ?? 2,
-    dutyTypes: JSON.parse(JSON.stringify(dutySettings.value.dutyTypes || []))
+    dutyTypes: loadedDuties
   }
+}
+
+function isWeekdaySelected(duty, dayKey) {
+  return Array.isArray(duty.defaultWeekdays) && duty.defaultWeekdays.includes(dayKey)
+}
+
+function toggleDutyWeekday(duty, dayKey) {
+  if (!Array.isArray(duty.defaultWeekdays)) {
+    duty.defaultWeekdays = []
+  }
+  const order = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri']
+  if (duty.defaultWeekdays.includes(dayKey)) {
+    duty.defaultWeekdays = duty.defaultWeekdays.filter(k => k !== dayKey)
+  } else {
+    duty.defaultWeekdays = [...duty.defaultWeekdays, dayKey].sort(
+      (a, b) => order.indexOf(a) - order.indexOf(b)
+    )
+  }
+  duty.defaultDays = duty.defaultWeekdays.length > 0 ? duty.defaultWeekdays.length : 1
 }
 
 function onAddDutyType() {
@@ -225,6 +280,7 @@ function onAddDutyType() {
     name: 'New Duty',
     defaultDuration: 20,
     defaultDays: 5,
+    defaultWeekdays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
     defaultStartTime: '11:20',
     isEmergency: false
   })
@@ -260,11 +316,15 @@ async function onSave() {
   isSaving.value = true
   saveMessage.value = ''
   try {
-    // Validate names
+    // Validate names and synchronize defaultWeekdays and defaultDays
     for (const d of form.value.dutyTypes) {
       if (!d.name || !d.name.trim()) {
         d.name = 'Unnamed Duty'
       }
+      if (!Array.isArray(d.defaultWeekdays)) {
+        d.defaultWeekdays = []
+      }
+      d.defaultDays = d.defaultWeekdays.length > 0 ? d.defaultWeekdays.length : 1
     }
     await updateSettings(form.value)
     saveMessage.value = '✅ Duty settings saved successfully!'
@@ -415,6 +475,69 @@ async function onSave() {
 .duty-settings__delete-btn:hover {
   color: #ef4444;
   background: rgba(239, 68, 68, 0.1);
+}
+
+.duty-settings__days-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.duty-settings__weekdays-group {
+  display: inline-flex;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm, 8px);
+  padding: 2px;
+  gap: 2px;
+}
+
+.duty-settings__weekday-pill {
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.72rem;
+  font-weight: 700;
+  width: 25px;
+  height: 25px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+  padding: 0;
+  line-height: 1;
+}
+
+.duty-settings__weekday-pill:hover {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+}
+
+.duty-settings__weekday-pill--active {
+  background: var(--primary) !important;
+  color: #ffffff !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.duty-settings__days-badge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 3px 6px;
+  border-radius: 6px;
+  background: var(--primary-light, rgba(70, 99, 172, 0.15));
+  color: var(--primary);
+  min-width: 26px;
+  text-align: center;
+}
+
+.duty-settings__days-badge--muted {
+  background: var(--bg-secondary);
+  color: var(--text-tertiary, #8e8e93);
+  font-weight: 500;
 }
 
 .duty-settings__actions-bar {
