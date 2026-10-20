@@ -184,7 +184,8 @@ import { useDutyTracker } from '../../composables/useDutyTracker.js'
 import { downloadDutiesIcs, getWeekDaysList, getWeekRangeForDate } from '../../utils/dutyCalendarExport.js'
 
 const props = defineProps({
-  show: { type: Boolean, default: false }
+  show: { type: Boolean, default: false },
+  initialDate: { type: String, default: '' }
 })
 
 const emit = defineEmits(['close', 'created'])
@@ -233,12 +234,22 @@ watch(() => props.show, (isOpen) => {
 })
 
 function initDefaults() {
-  form.value.startDate = getTodayLocalDate()
+  form.value.startDate = props.initialDate || getTodayLocalDate()
   const catalog = dutySettings.value.dutyTypes || []
   if (catalog.length > 0) {
     const first = catalog[0]
     selectedDutyId.value = first.id || first.name
     applyDutyPreset(first)
+  }
+  if (props.initialDate) {
+    const [y, m, d] = props.initialDate.split('-').map(Number)
+    const dt = new Date(y, m - 1, d)
+    const dow = dt.getDay()
+    const map = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+    const dayKey = map[dow]
+    if (['Mon', 'Tue', 'Wed', 'Thu', 'Fri'].includes(dayKey)) {
+      selectedDays.value = [dayKey]
+    }
   }
 }
 

@@ -297,10 +297,34 @@
         <span class="duties-view__count-text">
           Showing {{ filteredDuties.length }} of {{ duties.length }} duties
         </span>
+
+        <div class="duties-view__view-toggle" role="group" aria-label="Duty log view mode">
+          <button
+            type="button"
+            class="duties-view__view-btn"
+            :class="{ 'duties-view__view-btn--active': viewMode === 'table' }"
+            @click="viewMode = 'table'"
+            title="Table List View"
+          >
+            <List :size="14" />
+            <span>Table</span>
+          </button>
+          <button
+            type="button"
+            class="duties-view__view-btn"
+            :class="{ 'duties-view__view-btn--active': viewMode === 'calendar' }"
+            @click="viewMode = 'calendar'"
+            title="Calendar Grid View"
+          >
+            <CalendarDays :size="14" />
+            <span>Calendar</span>
+          </button>
+        </div>
       </div>
     </div>
 
-    <!-- ── Duty Log Table ──────────────────────────────────────────── -->
+    <!-- ── Duty Log: Table View vs Calendar View ────────────────── -->
+    <template v-if="viewMode === 'table'">
     <div class="duties-view__table-card">
       
       <div v-if="filteredDuties.length === 0" class="duties-view__empty">
@@ -360,12 +384,14 @@
             >
               <!-- Date -->
               <td class="duties-view__cell-date">
-                <span class="duties-view__date-text">
-                  {{ formatDateDisplay(duty.date) }}
-                </span>
-                <span class="duties-view__dow-text">
-                  {{ getDayOfWeek(duty.date) }}
-                </span>
+                <div class="duties-view__date-wrap">
+                  <span class="duties-view__date-text">
+                    {{ formatDateDisplay(duty.date) }}
+                  </span>
+                  <span class="duties-view__dow-text">
+                    {{ getDayOfWeek(duty.date) }}
+                  </span>
+                </div>
               </td>
 
               <!-- Duty Name -->
@@ -412,8 +438,8 @@
                   @click="onToggleSnowDay(duty.dutyId)"
                   :title="duty.isSnowDay ? 'Click to mark as active' : 'Click to flag as Snow Day / Cancelled'"
                 >
-                  <CloudSnow v-if="duty.isSnowDay" :size="13" />
-                  <Check v-else :size="13" />
+                  <CloudSnow v-if="duty.isSnowDay" :size="12" />
+                  <Check v-else :size="12" />
                   <span>{{ duty.isSnowDay ? 'Snow Day' : 'Completed' }}</span>
                 </button>
               </td>
@@ -427,7 +453,7 @@
                     title="Download .ics calendar file for this duty week"
                     @click="onExportDutyWeek(duty)"
                   >
-                    <Calendar :size="15" />
+                    <Calendar :size="14" />
                   </button>
 
                   <a
@@ -438,7 +464,7 @@
                     class="duties-view__action-btn"
                     title="Open draft event in Outlook on the web"
                   >
-                    <ExternalLink :size="15" />
+                    <ExternalLink :size="14" />
                   </a>
 
                   <button
@@ -447,7 +473,7 @@
                     title="Edit duty entry"
                     @click="onEditDuty(duty)"
                   >
-                    <Edit3 :size="15" />
+                    <Edit3 :size="14" />
                   </button>
 
                   <button
@@ -456,7 +482,7 @@
                     title="Delete duty entry"
                     @click="onDeleteDuty(duty)"
                   >
-                    <Trash2 :size="15" />
+                    <Trash2 :size="14" />
                   </button>
                 </div>
               </td>
@@ -465,6 +491,19 @@
         </table>
       </div>
     </div>
+    </template>
+
+    <template v-else-if="viewMode === 'calendar'">
+      <DutyCalendarView
+        :duties="duties"
+        :filtered-duties="filteredDuties"
+        :active-school-year="activeSchoolYear"
+        :filter-duty-type="filterDutyType"
+        :search-query="searchQuery"
+        @add-duty="onAddDutyWithDate"
+        @edit-duty="onEditDuty"
+      />
+    </template>
     </template>
 
     <!-- ── Mode 2: Multi-Year Insights & Analytics ─────────────────── -->
@@ -480,7 +519,8 @@
     <!-- ── Modals ──────────────────────────────────────────────────── -->
     <AddDutyModal
       :show="isAddModalOpen"
-      @close="isAddModalOpen = false"
+      :initial-date="addModalInitialDate"
+      @close="isAddModalOpen = false; addModalInitialDate = ''"
     />
 
     <EditDutyModal
@@ -521,6 +561,7 @@ import {
   CloudSnow,
   Edit3,
   ExternalLink,
+  List,
   Plus,
   Search,
   Settings,
@@ -547,6 +588,7 @@ import EditDutyModal from '../components/duties/EditDutyModal.vue'
 import ImportDutiesModal from '../components/duties/ImportDutiesModal.vue'
 import ExportDutyCalendarModal from '../components/duties/ExportDutyCalendarModal.vue'
 import DutyAnalytics from '../components/duties/DutyAnalytics.vue'
+import DutyCalendarView from '../components/duties/DutyCalendarView.vue'
 
 const emit = defineEmits(['navigate'])
 
@@ -605,6 +647,23 @@ const isEditModalOpen = ref(false)
 const isImportModalOpen = ref(false)
 const isExportModalOpen = ref(false)
 const editingDuty = ref(null)
+const addModalInitialDate = ref('')
+
+// View mode: 'table' | 'calendar'
+const viewMode = ref(localStorage.getItem('duties_view_mode') || 'table')
+
+watch(viewMode, (newMode) => {
+  try {
+    localStorage.setItem('duties_view_mode', newMode)
+  } catch (e) {
+    // ignore
+  }
+})
+
+function onAddDutyWithDate(dateIso) {
+  addModalInitialDate.value = dateIso || ''
+  isAddModalOpen.value = true
+}
 
 const lastEnteredWeek = computed(() => getLastEnteredWeek(duties.value))
 
@@ -1433,9 +1492,52 @@ body.dark-theme .duty-hero-card__footer {
   width: 160px;
 }
 
+.duties-view__toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
 .duties-view__count-text {
   font-size: 0.85rem;
   color: var(--text-secondary);
+}
+
+.duties-view__view-toggle {
+  display: inline-flex;
+  align-items: center;
+  background: var(--bg-secondary, #f2f2f7);
+  padding: 3px;
+  border-radius: var(--radius-sm, 8px);
+  gap: 2px;
+  border: 1px solid var(--border);
+}
+
+.duties-view__view-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-weight: 600;
+  font-size: 0.82rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.duties-view__view-btn:hover {
+  color: var(--text-primary);
+}
+
+.duties-view__view-btn--active {
+  background: var(--surface, #ffffff);
+  color: var(--primary, #4663ac);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
 /* ── Table Card ── */
@@ -1455,20 +1557,20 @@ body.dark-theme .duty-hero-card__footer {
   width: 100%;
   border-collapse: collapse;
   text-align: left;
-  font-size: 0.88rem;
+  font-size: 0.84rem;
 }
 
 .duties-view__table th {
-  padding: 12px 16px;
+  padding: 7px 12px;
   background: var(--bg-secondary, #f2f2f7);
   color: var(--text-secondary);
   font-weight: 600;
-  font-size: 0.8rem;
+  font-size: 0.76rem;
   border-bottom: 1px solid var(--border);
 }
 
 .duties-view__table td {
-  padding: 12px 16px;
+  padding: 6px 12px;
   border-bottom: 1px solid var(--border-subtle, rgba(0, 0, 0, 0.05));
   vertical-align: middle;
 }
@@ -1482,35 +1584,43 @@ body.dark-theme .duty-hero-card__footer {
 }
 
 .duties-view__cell-date {
-  display: flex;
-  flex-direction: column;
+  white-space: nowrap;
+}
+
+.duties-view__date-wrap {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
 }
 
 .duties-view__date-text {
   font-weight: 600;
   color: var(--text-primary);
+  font-size: 0.84rem;
 }
 
 .duties-view__dow-text {
-  font-size: 0.75rem;
+  font-size: 0.74rem;
+  font-weight: 500;
   color: var(--text-secondary);
 }
 
 .duties-view__duty-badge-wrap {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .duties-view__duty-name {
   font-weight: 600;
   color: var(--text-primary);
+  font-size: 0.84rem;
 }
 
 .duties-view__tag {
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   font-weight: 600;
-  padding: 2px 6px;
+  padding: 1px 5px;
   border-radius: 4px;
 }
 
@@ -1522,33 +1632,36 @@ body.dark-theme .duty-hero-card__footer {
 .duties-view__duration {
   font-weight: 600;
   color: var(--text-primary);
+  font-size: 0.82rem;
 }
 
 .duties-view__duration--struck {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
 }
 
 .duties-view__strikethrough {
   text-decoration: line-through;
   color: var(--text-secondary);
-  font-size: 0.82rem;
+  font-size: 0.78rem;
 }
 
 .duties-view__duration-zero {
   color: #0284c7;
   font-weight: 700;
+  font-size: 0.82rem;
 }
 
 .duties-view__cell-time {
-  font-size: 0.82rem;
+  font-size: 0.8rem;
   color: var(--text-secondary);
   font-variant-numeric: tabular-nums;
 }
 
 .duties-view__cell-notes {
   color: var(--text-secondary);
+  font-size: 0.8rem;
 }
 
 .duties-view__cell-empty {
@@ -1558,16 +1671,17 @@ body.dark-theme .duty-hero-card__footer {
 .duties-view__status-btn {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 4px 10px;
+  gap: 4px;
+  padding: 2px 8px;
   border-radius: 999px;
-  font-size: 0.76rem;
+  font-size: 0.72rem;
   font-weight: 600;
   border: 1px solid rgba(34, 197, 94, 0.3);
   background: rgba(34, 197, 94, 0.1);
   color: #15803d;
   cursor: pointer;
   transition: all 0.2s ease;
+  line-height: 1.2;
 }
 
 .duties-view__status-btn:hover {
@@ -1584,12 +1698,12 @@ body.dark-theme .duty-hero-card__footer {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 6px;
+  gap: 2px;
 }
 
 .duties-view__action-btn {
-  padding: 6px;
-  border-radius: var(--radius-sm, 8px);
+  padding: 4px;
+  border-radius: var(--radius-sm, 6px);
   color: var(--text-secondary);
   border: 1px solid transparent;
   background: none;
@@ -1598,6 +1712,7 @@ body.dark-theme .duty-hero-card__footer {
   align-items: center;
   justify-content: center;
   text-decoration: none;
+  transition: all 0.15s ease;
 }
 
 .duties-view__action-btn:hover {
