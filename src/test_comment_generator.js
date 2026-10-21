@@ -19,6 +19,7 @@ import {
   extractEvidenceFromGrades,
   ACHIEVEMENT_LEVELS
 } from './utils/commentGenerator.js'
+import { isFormativeAssessment } from './utils/gradeCalc.js'
 
 console.log('=================================================================')
 console.log('📝 REPORT CARD COMMENT GENERATOR VERIFICATION SUITE')
@@ -450,8 +451,80 @@ test('All levels on Final report remain strictly <= 400 characters across multip
   })
 })
 
+// ── TEST GROUP 9: Formative & 0% Weight Assessment Exclusion ─────────────────
+console.log('\nTEST GROUP 9: Formative & 0% Weight Assessment Exclusion')
+
+test('isFormativeAssessment identifies formative by flag, purpose, and 0% category weight', () => {
+  const mockClass = {
+    gradebookCategories: [
+      { categoryId: 'cat_summative', name: 'Tests & Quizzes', weight: 70 },
+      { categoryId: 'cat_formative', name: 'Formative Practice', weight: 0 },
+      { categoryId: 'cat_zero', name: 'Diagnostics', weight: 0 }
+    ]
+  }
+
+  // 1. Direct flags
+  assert.strictEqual(isFormativeAssessment({ isFormative: true }, mockClass), true)
+  assert.strictEqual(isFormativeAssessment({ purpose: 'formative' }, mockClass), true)
+  assert.strictEqual(isFormativeAssessment({ purpose: 'administrative' }, mockClass), true)
+  assert.strictEqual(isFormativeAssessment({ assessmentType: 'formative' }, mockClass), true)
+
+  // 2. 0% Category Weight lookup
+  assert.strictEqual(isFormativeAssessment({ categoryId: 'cat_formative' }, mockClass), true)
+  assert.strictEqual(isFormativeAssessment({ categoryId: 'cat_zero' }, mockClass), true)
+
+  // 3. Summative assessment with positive weight
+  assert.strictEqual(isFormativeAssessment({ categoryId: 'cat_summative', isFormative: false }, mockClass), false)
+})
+
+test('extractEvidenceFromGrades bypasses 100% formative quiz in favor of summative test', () => {
+  const gradeData = {
+    percentage: 84,
+    gradebookCategories: [
+      { categoryId: 'cat_formative', name: 'Formative Quizzes', weight: 0 },
+      { categoryId: 'cat_tests', name: 'Unit Tests', weight: 100 }
+    ],
+    assessments: [
+      // 100% on formative practice quiz
+      {
+        name: 'Practice Kinematics Quiz',
+        scorePercent: 100,
+        categoryId: 'cat_formative'
+      },
+      // 82% on summative unit test
+      {
+        name: 'Kinematics Unit Test',
+        scorePercent: 82,
+        categoryId: 'cat_tests'
+      }
+    ]
+  }
+
+  const evidence = extractEvidenceFromGrades(gradeData, 'SPH3U')
+  assert.strictEqual(evidence.strengthSource, 'assessment')
+  // Must NOT pick the 100% formative quiz!
+  assert(!evidence.strengthTask.toLowerCase().includes('practice kinematics quiz'),
+    `Expected summative evidence, but got formative: ${evidence.strengthTask}`)
+  assert(evidence.strengthTask.includes('kinematic') || evidence.strengthTask.includes('Kinematics Unit Test'))
+})
+
+test('Categories fallback ignores 0% weight formative categories', () => {
+  const gradeData = {
+    percentage: 75,
+    categories: [
+      { name: 'Formative Work', average: 98, weight: 0 },
+      { name: 'Thinking & Inquiry', average: 80, weight: 30 },
+      { name: 'Communication', average: 65, weight: 20 }
+    ]
+  }
+
+  const evidence = extractEvidenceFromGrades(gradeData)
+  assert.strictEqual(evidence.strengthSource, 'category')
+  assert.strictEqual(evidence.strengthTask, 'critical thinking and analytical inquiry')
+})
+
 console.log('\n=================================================================')
-console.log('🎉 ALL 16 COMMENT GENERATOR TEST SUITES PASSED (100% SUCCESS)!')
+console.log('🎉 ALL COMMENT GENERATOR TEST SUITES PASSED (100% SUCCESS)!')
 console.log('=================================================================')
 
 

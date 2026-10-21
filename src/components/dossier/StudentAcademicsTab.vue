@@ -412,12 +412,12 @@
       v-if="attemptsPopover" 
       class="context-menu-backdrop" 
       @click="attemptsPopover = null"
-      @contextmenu.prevent="attemptsPopover = null"
     >
       <div 
         class="attempts-popover"
         :style="{ top: attemptsPopover.y + 'px', left: attemptsPopover.x + 'px' }"
         @click.stop
+        @contextmenu.stop
       >
         <div class="attempts-popover__header">
           Attempts & Notes
@@ -472,6 +472,7 @@
               class="attempt-comment-input"
               :value="att.comment || ''"
               placeholder="Add a note..."
+              @input="doUpdateComment(attemptsPopover.assessmentId, att.attemptId, $event.target.value)"
               @change="doUpdateComment(attemptsPopover.assessmentId, att.attemptId, $event.target.value)"
             ></textarea>
           </li>
@@ -485,7 +486,7 @@
 
     <!-- Log Another Attempt Modal Overlay (Safety Portal) -->
     <div v-if="newAttemptForm" class="context-menu-backdrop" style="background: rgba(0,0,0,0.4);" @click="newAttemptForm = null">
-      <div class="new-attempt-modal" @click.stop>
+      <div class="new-attempt-modal" @click.stop @contextmenu.stop>
         <div class="new-attempt-modal__header">
           <h3>Log Retest / Score Attempt</h3>
           <button class="btn-close" @click="newAttemptForm = null"><X :size="16" /></button>

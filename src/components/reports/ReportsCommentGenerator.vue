@@ -244,11 +244,11 @@
                   <Sparkles :size="13" class="cg__field-icon cg__field-icon--gold" />
                   Featured Strength Task
                 </label>
-                <span v-if="studentAssessments.length > 0" class="cg__evidence-count-badge">
-                  {{ studentAssessments.length }} in period
+                <span v-if="studentAssessments.length > 0" class="cg__evidence-count-badge" :title="`Found ${studentAssessments.length} summative assessment(s) in this term window`">
+                  {{ studentAssessments.length }} in term
                 </span>
-                <span v-else class="cg__evidence-count-badge cg__evidence-count-badge--empty">
-                  0 in period
+                <span v-else class="cg__evidence-count-badge cg__evidence-count-badge--empty" title="No summative assessments found in this term window">
+                  0 in term
                 </span>
               </div>
               <select v-model="selectedStrengthTask" class="cg__select cg__select--field">
@@ -280,11 +280,11 @@
                   <Target :size="13" class="cg__field-icon cg__field-icon--blue" />
                   Featured Next Step Focus
                 </label>
-                <span v-if="studentAssessments.length > 0" class="cg__evidence-count-badge">
-                  {{ studentAssessments.length }} in period
+                <span v-if="studentAssessments.length > 0" class="cg__evidence-count-badge" :title="`Found ${studentAssessments.length} summative assessment(s) in this term window`">
+                  {{ studentAssessments.length }} in term
                 </span>
-                <span v-else class="cg__evidence-count-badge cg__evidence-count-badge--empty">
-                  0 in period
+                <span v-else class="cg__evidence-count-badge cg__evidence-count-badge--empty" title="No summative assessments found in this term window">
+                  0 in term
                 </span>
               </div>
               <select v-model="selectedGrowthTask" class="cg__select cg__select--field">
@@ -451,7 +451,8 @@ import {
 } from '../../composables/useClassroomState.js'
 import {
   calculateStudentGrade,
-  getAssessmentPercentage
+  getAssessmentPercentage,
+  isFormativeAssessment
 } from '../../utils/gradeCalc.js'
 import {
   formatLocalDate,
@@ -763,6 +764,9 @@ function getStudentAssessmentsForWindow(studentId, window = currentTermWindow.va
   astList.forEach(a => {
     if (a.excluded) return
 
+    // Exclude formative, diagnostic, administrative, or 0% weighted assessments
+    if (isFormativeAssessment(a, reportClassRecord.value)) return
+
     // Date filtering based on reporting window
     if (a.date) {
       const aDate = String(a.date).slice(0, 10)
@@ -788,6 +792,7 @@ function getStudentAssessmentsForWindow(studentId, window = currentTermWindow.va
   if (list.length === 0 && window.dateFrom && selectedTerm.value === 'Final') {
     astList.forEach(a => {
       if (a.excluded) return
+      if (isFormativeAssessment(a, reportClassRecord.value)) return
       if (a.date && window.asOf && String(a.date).slice(0, 10) > window.asOf) return
       const grade = gradeMap.value[a.assessmentId]?.[studentId]
       const pct = getAssessmentPercentage(a, grade)

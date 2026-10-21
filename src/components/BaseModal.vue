@@ -19,14 +19,15 @@
         <div 
           v-else
           class="bm-card" 
+          :class="{ 'bm-card--compact': compact }"
           :style="{ maxWidth }"
           @keydown.esc="emit('close')"
           @click.stop
         >
           <!-- Optional Header -->
-          <header v-if="title || $slots.header" class="bm-header">
+          <header v-if="title || $slots.header" class="bm-header" :class="{ 'bm-header--compact': compact }">
             <slot name="header">
-              <h3 class="bm-title">{{ title }}</h3>
+              <h3 class="bm-title" :class="{ 'bm-title--compact': compact }">{{ title }}</h3>
             </slot>
             <button 
               v-if="showX" 
@@ -34,17 +35,17 @@
               @click="emit('close')"
               aria-label="Close modal"
             >
-              <X :size="20" />
+              <X :size="compact ? 18 : 20" />
             </button>
           </header>
 
           <!-- Main Content -->
-          <div class="bm-body">
+          <div class="bm-body" :class="[{ 'bm-body--compact': compact }, bodyClass]">
             <slot></slot>
           </div>
 
           <!-- Optional Footer -->
-          <footer v-if="$slots.footer" class="bm-footer">
+          <footer v-if="$slots.footer" class="bm-footer" :class="{ 'bm-footer--compact': compact }">
             <slot name="footer"></slot>
           </footer>
         </div>
@@ -65,6 +66,8 @@ const props = defineProps({
   unstyled: { type: Boolean, default: false },
   maxWidth: { type: String, default: '500px' },
   zIndex: { type: [Number, String], default: 2000 },
+  compact: { type: Boolean, default: false },
+  bodyClass: { type: String, default: '' },
 })
 
 const emit = defineEmits(['close'])
@@ -134,11 +137,19 @@ onUnmounted(() => {
   flex-shrink: 0; /* Header stays pinned */
 }
 
+.bm-header--compact {
+  padding: 0.75rem 1.25rem;
+}
+
 .bm-title {
   margin: 0;
   font-size: 1.15rem;
   font-weight: 700;
   color: var(--text);
+}
+
+.bm-title--compact {
+  font-size: 1.05rem;
 }
 
 .bm-x-btn {
@@ -166,11 +177,21 @@ onUnmounted(() => {
   min-height: 0; /* Important for flex-scroll */
 }
 
+.bm-body--compact {
+  padding: 0.85rem 1.25rem;
+}
+
 .bm-footer {
   padding: 1.25rem 1.5rem;
   border-top: 1px solid var(--border);
   display: flex;
   gap: 1rem;
+  flex-shrink: 0;
+}
+
+.bm-footer--compact {
+  padding: 0.65rem 1.25rem;
+  gap: 0.75rem;
 }
 
 /* Transitions */

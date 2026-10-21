@@ -5,8 +5,9 @@
     :title="isEditingAssessment ? 'Edit Assessment' : 'New Assessment'"
     max-width="920px"
     :z-index="3000"
+    compact
   >
-    <form class="modal-form modal-form--wide" @submit.prevent="saveAssessment">
+    <form id="assessment-form" class="modal-form modal-form--wide" @submit.prevent="saveAssessment">
       <div class="modal-body-grid">
         <!-- LEFT COLUMN: Metadata & Setup -->
         <div class="modal-col modal-col--left">
@@ -212,7 +213,7 @@
         <div class="modal-col modal-col--right">
           <!-- Administrative Help Callout (Admin Mode) -->
           <div v-if="newAssessment.purpose === 'administrative'" class="admin-help-box">
-            <CheckSquare :size="22" class="admin-help-icon" />
+            <CheckSquare :size="18" class="admin-help-icon" />
             <div>
               <div class="admin-help-title">Administrative Logistics Tracker</div>
               <div class="admin-help-desc">
@@ -336,7 +337,7 @@
             <div v-else class="form-group exp-section">
               <label class="form-label">Tagged Standards (Expectations)</label>
               <div class="exp-empty-box">
-                <BookOpen :size="20" class="exp-empty-icon" />
+                <BookOpen :size="16" class="exp-empty-icon" />
                 <div>
                   <div>No expectations loaded for <strong>{{ activeClassRecord?.activeSubjectName || 'this subject' }}</strong> yet.</div>
                   <div class="exp-empty-sub">Load expectations under Setup ➔ Class Settings ➔ Subject Expectations.</div>
@@ -352,17 +353,20 @@
               v-model="newAssessment.description" 
               class="form-input form-textarea" 
               :placeholder="newAssessment.purpose === 'administrative' ? 'Extra details or instructions about this paperwork...' : 'Extra details about this assessment task...'" 
-              rows="3"
+              rows="2"
             ></textarea>
           </div>
         </div>
       </div>
+    </form>
 
-      <!-- Footer Modal Actions -->
+    <!-- Footer Modal Actions -->
+    <template #footer>
       <div class="modal-actions">
         <button type="button" class="btn-ghost" @click="closeAddAssessment">Cancel</button>
         <button 
           type="submit" 
+          form="assessment-form"
           class="btn-primary"
           :disabled="isSBAR && newAssessment.purpose !== 'administrative' && selectedExpCount === 0"
           :class="{ 'btn-primary--disabled': isSBAR && newAssessment.purpose !== 'administrative' && selectedExpCount === 0 }"
@@ -371,7 +375,7 @@
           {{ isEditingAssessment ? 'Update Assessment' : (newAssessment.purpose === 'administrative' ? 'Create Admin Tracker' : 'Create Assessment') }}
         </button>
       </div>
-    </form>
+    </template>
   </BaseModal>
 </template>
 
@@ -662,13 +666,13 @@ function toggleExpSelection(code) {
 .modal-form--wide {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0.6rem;
 }
 
 .modal-body-grid {
   display: grid;
   grid-template-columns: minmax(320px, 350px) 1fr;
-  gap: 1.5rem;
+  gap: 1.25rem;
   align-items: start;
 }
 
@@ -681,36 +685,39 @@ function toggleExpSelection(code) {
 .modal-col {
   display: flex;
   flex-direction: column;
-  gap: 0.9rem;
+  gap: 0.5rem;
 }
 
 .form-group {
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: 0.2rem;
 }
 
 .form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 0.8rem;
+  gap: 0.6rem;
 }
 
 .form-label {
-  font-size: 0.825rem;
+  font-size: 0.76rem;
   font-weight: 600;
   color: var(--text-secondary);
+  line-height: 1.2;
 }
 
 .form-input {
   width: 100%;
-  padding: 0.55rem 0.75rem;
+  padding: 0.35rem 0.6rem;
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   background: var(--bg-secondary);
-  font-size: 0.9rem;
+  font-size: 0.82rem;
   color: var(--text);
   transition: border-color 0.2s;
+  box-sizing: border-box;
+  min-height: 32px;
 }
 
 .form-input:focus {
@@ -720,28 +727,30 @@ function toggleExpSelection(code) {
 
 .form-textarea {
   resize: vertical;
-  min-height: 85px;
+  min-height: 48px;
+  height: 52px;
 }
 
 .toggle-group {
   display: flex;
   background: var(--bg-secondary);
-  padding: 3px;
+  padding: 2px;
   border-radius: var(--radius-md);
-  gap: 3px;
+  gap: 2px;
 }
 
 .toggle-btn {
   flex: 1;
-  padding: 6px 10px;
+  padding: 4px 8px;
   border: none;
   background: transparent;
   color: var(--text-secondary);
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   font-weight: 600;
   cursor: pointer;
   border-radius: var(--radius-sm);
   transition: all 0.2s;
+  line-height: 1.3;
 }
 
 .toggle-btn--active {
@@ -807,24 +816,24 @@ function toggleExpSelection(code) {
 .exp-pill-selector {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  max-height: 250px;
+  gap: 4px;
+  max-height: 150px;
   overflow-y: auto;
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  padding: 8px;
+  padding: 6px;
   background: var(--bg-secondary);
 }
 
 .exp-checkbox-pill {
   display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  padding: 8px 10px;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 8px;
   border-radius: var(--radius-md);
   border: 1px solid var(--border);
   background: var(--surface);
-  font-size: 0.82rem;
+  font-size: 0.78rem;
   color: var(--text-secondary);
   cursor: pointer;
   transition: all 0.2s ease;
@@ -846,21 +855,21 @@ function toggleExpSelection(code) {
   background: var(--bg-secondary);
   padding: 2px 6px;
   border-radius: 4px;
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   flex-shrink: 0;
 }
 
 .exp-empty-box {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 14px;
+  gap: 10px;
+  padding: 8px 12px;
   background: var(--bg-secondary);
   border: 1px dashed var(--border);
   border-radius: var(--radius-md);
   color: var(--text-secondary);
-  font-size: 0.83rem;
-  line-height: 1.4;
+  font-size: 0.78rem;
+  line-height: 1.35;
 }
 
 .exp-empty-icon {
@@ -871,9 +880,9 @@ function toggleExpSelection(code) {
 
 .exp-empty-sub {
   display: block;
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   opacity: 0.8;
-  margin-top: 2px;
+  margin-top: 1px;
 }
 
 .exp-checkbox-pill--active .exp-code-pill {
@@ -882,7 +891,7 @@ function toggleExpSelection(code) {
 }
 
 .exp-desc-pill {
-  line-height: 1.35;
+  line-height: 1.3;
   flex: 1;
 }
 
@@ -891,11 +900,11 @@ function toggleExpSelection(code) {
   background: rgba(59, 130, 246, 0.05);
   border: 1px solid rgba(59, 130, 246, 0.25);
   border-radius: var(--radius-md);
-  padding: 8px 10px;
+  padding: 5px 8px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  margin-bottom: 4px;
+  gap: 4px;
+  margin-bottom: 2px;
 }
 
 .exp-selected-tray-header {
@@ -982,14 +991,14 @@ function toggleExpSelection(code) {
 .exp-controls-row {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin-bottom: 4px;
+  gap: 5px;
+  margin-bottom: 2px;
 }
 
 .exp-strand-pills-bar {
   display: flex;
   flex-wrap: wrap;
-  gap: 5px;
+  gap: 4px;
 }
 
 .exp-strand-pill {
@@ -997,8 +1006,8 @@ function toggleExpSelection(code) {
   border: 1px solid var(--border);
   color: var(--text-secondary);
   border-radius: 12px;
-  padding: 3px 9px;
-  font-size: 0.74rem;
+  padding: 2px 7px;
+  font-size: 0.7rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.15s ease;
@@ -1019,27 +1028,29 @@ function toggleExpSelection(code) {
 .exp-search-box {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   position: relative;
   width: 100%;
 }
 
 .exp-search-icon {
   position: absolute;
-  left: 9px;
+  left: 8px;
   color: var(--text-secondary);
   pointer-events: none;
 }
 
 .exp-search-input {
   width: 100%;
-  padding: 6px 28px 6px 28px;
+  padding: 4px 26px 4px 26px;
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   background: var(--bg-secondary);
-  font-size: 0.82rem;
+  font-size: 0.78rem;
   color: var(--text);
   transition: border-color 0.2s;
+  min-height: 30px;
+  box-sizing: border-box;
 }
 
 .exp-search-input:focus {
@@ -1050,7 +1061,7 @@ function toggleExpSelection(code) {
 
 .exp-search-clear {
   position: absolute;
-  right: 8px;
+  right: 6px;
   background: transparent;
   border: none;
   color: var(--text-secondary);
@@ -1067,50 +1078,56 @@ function toggleExpSelection(code) {
 }
 
 .exp-strand-tag {
-  font-size: 0.68rem;
+  font-size: 0.65rem;
   font-weight: 600;
   color: var(--text-secondary);
   background: var(--bg-secondary);
-  padding: 2px 5px;
+  padding: 1px 4px;
   border-radius: 4px;
   flex-shrink: 0;
 }
 
 .exp-no-results {
-  padding: 18px 12px;
+  padding: 10px 8px;
   text-align: center;
   color: var(--text-secondary);
-  font-size: 0.82rem;
+  font-size: 0.78rem;
   font-style: italic;
 }
 
 .modal-actions {
   display: flex;
-  gap: 1rem;
-  margin-top: 0.5rem;
-  padding-top: 0.5rem;
-  border-top: 1px solid var(--border);
+  gap: 0.75rem;
+  width: 100%;
 }
 
 .btn-ghost {
   flex: 1;
-  padding: 0.65rem;
+  padding: 0.45rem 0.8rem;
   border: 1px solid var(--border);
   background: transparent;
   border-radius: var(--radius-md);
   color: var(--text-secondary);
   font-weight: 600;
+  font-size: 0.82rem;
   cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.btn-ghost:hover {
+  background: var(--bg-secondary);
+  color: var(--text);
 }
 
 .btn-primary {
   flex: 2;
-  padding: 0.65rem;
+  padding: 0.45rem 0.8rem;
   border: none;
   background: var(--primary);
   border-radius: var(--radius-md);
   color: white;
   font-weight: 600;
+  font-size: 0.82rem;
   cursor: pointer;
   transition: opacity 0.15s ease;
 }
@@ -1132,15 +1149,15 @@ function toggleExpSelection(code) {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 10px;
+  padding: 4px 8px;
   background: var(--bg-secondary, #f8fafc);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm, 6px);
   color: var(--text-secondary);
-  font-size: 0.76rem;
+  font-size: 0.72rem;
   font-weight: 500;
-  margin-bottom: 8px;
-  line-height: 1.3;
+  margin-bottom: 6px;
+  line-height: 1.25;
 }
 
 .exp-hint-icon {
@@ -1151,12 +1168,12 @@ function toggleExpSelection(code) {
 .admin-help-box {
   display: flex;
   align-items: flex-start;
-  gap: 12px;
-  padding: 14px 16px;
+  gap: 10px;
+  padding: 8px 12px;
   background: rgba(16, 185, 129, 0.08);
   border: 1px solid rgba(16, 185, 129, 0.3);
   border-radius: var(--radius-md);
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.35rem;
 }
 
 .admin-help-icon {
@@ -1166,15 +1183,15 @@ function toggleExpSelection(code) {
 }
 
 .admin-help-title {
-  font-size: 0.88rem;
+  font-size: 0.82rem;
   font-weight: 700;
   color: var(--text);
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 }
 
 .admin-help-desc {
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   color: var(--text-secondary);
-  line-height: 1.45;
+  line-height: 1.35;
 }
 </style>

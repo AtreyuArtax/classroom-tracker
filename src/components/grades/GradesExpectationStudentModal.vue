@@ -1,7 +1,7 @@
 <template>
   <Teleport to="body">
-    <div v-if="show" class="exp-modal-backdrop" @click="handleClose" @contextmenu.prevent="handleClose">
-      <div class="exp-modal-container" @click.stop>
+    <div v-if="show" class="exp-modal-backdrop" @click="handleClose">
+      <div class="exp-modal-container" @click.stop @contextmenu.stop>
         <!-- Modal Header -->
         <header class="exp-modal-header">
           <div class="exp-modal-header-left">
@@ -265,7 +265,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { X, RotateCcw, Check, Award, FileText, Calendar, ExternalLink, Sparkles } from 'lucide-vue-next'
 import { SBAR_LEVELS, getSBARLevelBadge } from '../../utils/gradeCalcSBAR.js'
 import { saveStudentExpectationOverride, activeClassRecord } from '../../composables/useGradebook.js'
@@ -363,9 +363,26 @@ function formatDate(dStr) {
   return formatLocalDisplay(dStr)
 }
 
-function handleClose() {
+async function handleClose() {
+  if (isOverridden.value) {
+    await saveNoteIfOverridden()
+  }
   emit('close')
 }
+
+function handleKeyDown(e) {
+  if (e.key === 'Escape' && props.show) {
+    handleClose()
+  }
+}
+
+onMounted(() => {
+  window.addEventListener('keydown', handleKeyDown)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleKeyDown)
+})
 
 function onSelectAssessment(assessmentId) {
   if (assessmentId && !String(assessmentId).startsWith('radial-')) {

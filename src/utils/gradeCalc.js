@@ -263,12 +263,56 @@ export function getAssessmentPercentage(assessment, grade) {
   return (isNaN(pct) || !isFinite(pct)) ? null : pct
 }
 
+/**
+ * Determines whether an assessment is formative or non-evaluative (practice, diagnostic, administrative, or 0% weight).
+ *
+ * @param {Object} assessment Assessment object
+ * @param {Object|null} classRecord Class object containing gradebookCategories or courseFrameworks
+ * @returns {boolean} True if formative, diagnostic, administrative, or belongs to a 0% weighted category
+ */
+export function isFormativeAssessment(assessment, classRecord = null) {
+  if (!assessment) return false
+
+  // 1. Explicit assessment-level flags
+  if (assessment.isFormative === true || assessment.purpose === 'formative' || assessment.purpose === 'administrative') {
+    return true
+  }
+  if (assessment.type === 'formative' || assessment.assessmentType === 'formative' ||
+      assessment.type === 'diagnostic' || assessment.assessmentType === 'diagnostic') {
+    return true
+  }
+
+  // 2. Direct category text matching if present on assessment
+  if (typeof assessment.category === 'string' && /formative|diagnostic|practice/i.test(assessment.category)) {
+    return true
+  }
+
+  // 3. Category lookup from class gradebookCategories, categories, or courseFrameworks
+  const categories = [
+    ...(classRecord?.gradebookCategories || []),
+    ...(classRecord?.categories || []),
+    ...Object.values(classRecord?.courseFrameworks || {}).flatMap(f => f?.gradebookCategories || [])
+  ]
+
+  if (categories.length > 0 && assessment.categoryId) {
+    const cat = categories.find(c => String(c.categoryId) === String(assessment.categoryId) || (c.name && c.name === assessment.categoryId))
+    if (cat) {
+      if (cat.isFormative === true || cat.purpose === 'formative') return true
+      if (typeof cat.name === 'string' && /formative|diagnostic|practice/i.test(cat.name)) return true
+      const weight = Number(cat.weight)
+      if (!isNaN(weight) && weight <= 0) return true
+    }
+  }
+
+  return false
+}
+
 export function _calculateCategoryGrade(catAssessments, gradeMap, capAt100 = false) {
   let totalEarned = 0
   let totalPossible = 0
 
   for (const assessment of catAssessments) {
-    if (assessment.isFormative || assessment.purpose === 'formative' || assessment.purpose === 'administrative') continue
+    if (isFormativeAssessment(assessment)) continue
     const grade = gradeMap[assessment.assessmentId]
     if (!grade || grade.excluded) continue
 

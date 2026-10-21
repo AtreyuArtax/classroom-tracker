@@ -1,7 +1,7 @@
 <template>
   <Teleport to="body">
-    <div v-if="show" class="attempt-modal-backdrop" @click="handleBackdropClick" @contextmenu.prevent="handleBackdropClick">
-      <div class="attempt-modal-container" @click.stop>
+    <div v-if="show" class="attempt-modal-backdrop" @click="handleBackdropClick">
+      <div class="attempt-modal-container" @click.stop @contextmenu.stop>
         <!-- Header -->
         <div class="attempt-modal-header">
           <div class="attempt-modal-title-area">
@@ -120,10 +120,12 @@
               <!-- Teacher Note Textarea -->
               <textarea
                 class="attempt-note-textarea"
-                :value="att.comment || ''"
+                :value="getCommentValue(att)"
                 placeholder="Add a note or observation about this attempt…"
                 rows="2"
-                @change="e => $emit('update-comment', att.attemptId, e.target.value)"
+                @input="handleCommentInput(att.attemptId, $event.target.value)"
+                @change="handleCommentChange(att.attemptId, $event.target.value)"
+                @blur="handleCommentChange(att.attemptId, $event.target.value)"
               ></textarea>
             </div>
           </div>
@@ -171,6 +173,56 @@ const newDate = ref('')
 const newComment = ref('')
 const newScoreInputRef = ref(null)
 
+const localComments = ref({})
+const commentDebounceTimers = new Map()
+const lastEmittedComments = new Map()
+
+function getCommentValue(att) {
+  if (att?.attemptId && localComments.value[att.attemptId] !== undefined) {
+    return localComments.value[att.attemptId]
+  }
+  return att?.comment || ''
+}
+
+function handleCommentInput(attId, value) {
+  localComments.value[attId] = value
+  if (commentDebounceTimers.has(attId)) {
+    clearTimeout(commentDebounceTimers.get(attId))
+  }
+  const timer = setTimeout(() => {
+    lastEmittedComments.set(attId, value)
+    emit('update-comment', attId, value)
+    commentDebounceTimers.delete(attId)
+  }, 350)
+  commentDebounceTimers.set(attId, timer)
+}
+
+function handleCommentChange(attId, value) {
+  if (commentDebounceTimers.has(attId)) {
+    clearTimeout(commentDebounceTimers.get(attId))
+    commentDebounceTimers.delete(attId)
+  }
+  localComments.value[attId] = value
+  if (lastEmittedComments.get(attId) !== value) {
+    lastEmittedComments.set(attId, value)
+    emit('update-comment', attId, value)
+  }
+}
+
+function flushPendingComments() {
+  for (const [attId, timer] of commentDebounceTimers.entries()) {
+    clearTimeout(timer)
+    if (attId in localComments.value) {
+      const val = localComments.value[attId]
+      if (lastEmittedComments.get(attId) !== val) {
+        lastEmittedComments.set(attId, val)
+        emit('update-comment', attId, val)
+      }
+    }
+  }
+  commentDebounceTimers.clear()
+}
+
 function resetNewAttemptForm() {
   newScore.value = null
   const today = new Date()
@@ -183,12 +235,17 @@ function resetNewAttemptForm() {
 
 watch(() => props.show, (newVal) => {
   if (newVal) {
+    localComments.value = {}
+    lastEmittedComments.clear()
     resetNewAttemptForm()
     isAddingAttempt.value = !!props.initialAddMode
     if (isAddingAttempt.value) {
       nextTick(() => newScoreInputRef.value?.focus())
     }
   } else {
+    flushPendingComments()
+    localComments.value = {}
+    lastEmittedComments.clear()
     isAddingAttempt.value = false
   }
 })
@@ -226,6 +283,7 @@ function handleSaveAttempt() {
 }
 
 function handleClose() {
+  flushPendingComments()
   emit('close')
 }
 
@@ -249,6 +307,7 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  flushPendingComments()
   window.removeEventListener('keydown', handleKeyDown)
 })
 

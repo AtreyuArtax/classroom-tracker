@@ -17,6 +17,7 @@
 
 import { mapAssessmentToCompetency, extractCompetenciesFromAssessment } from './curriculumCompetencies.js'
 import { enforceCanadianSpelling } from './canadianSpelling.js'
+import { isFormativeAssessment } from './gradeCalc.js'
 
 // ─── Achievement Level Descriptors (Growing Success) ─────────────────────────
 
@@ -614,8 +615,11 @@ export function extractEvidenceFromGrades(gradeData = {}, courseCode = '') {
 
   // 2. Fall back to Individual Assessments if SBAR not present
   if (!strengthTask && Array.isArray(assessments) && assessments.length > 0) {
-    const valid = assessments.filter(a => typeof a.scorePercent === 'number')
-      .sort((a, b) => b.scorePercent - a.scorePercent)
+    const valid = assessments.filter(a => {
+      if (typeof a.scorePercent !== 'number') return false
+      if (isFormativeAssessment(a, gradeData)) return false
+      return true
+    }).sort((a, b) => b.scorePercent - a.scorePercent)
 
     if (valid.length > 0) {
       const topAss = valid[0]
@@ -647,12 +651,15 @@ export function extractEvidenceFromGrades(gradeData = {}, courseCode = '') {
     }
   }
 
-  // 3. Fall back to Categories (filtering non-academic ones & normalizing)
+  // 3. Fall back to Categories (filtering non-academic & formative/0% ones & normalizing)
   if (!strengthTask && Array.isArray(categories) && categories.length > 0) {
     const validCats = categories.filter(c => {
       if (typeof c.average !== 'number') return false
       const nameLower = (c.name || '').trim().toLowerCase()
-      return !NON_ACADEMIC_CATEGORIES.has(nameLower)
+      if (NON_ACADEMIC_CATEGORIES.has(nameLower)) return false
+      if (nameLower.includes('formative') || nameLower.includes('diagnostic') || nameLower.includes('practice')) return false
+      if (c.weight !== undefined && Number(c.weight) <= 0) return false
+      return true
     }).sort((a, b) => b.average - a.average)
 
     if (validCats.length > 0) {
