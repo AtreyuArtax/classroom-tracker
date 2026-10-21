@@ -466,7 +466,8 @@ import {
 import {
   generateReportComment,
   getAchievementLevel,
-  extractEvidenceFromGrades
+  extractEvidenceFromGrades,
+  isCommentExcludedAssessment
 } from '../../utils/commentGenerator.js'
 import {
   getCourseCompetencies
@@ -764,8 +765,8 @@ function getStudentAssessmentsForWindow(studentId, window = currentTermWindow.va
   astList.forEach(a => {
     if (a.excluded) return
 
-    // Exclude formative, diagnostic, administrative, or 0% weighted assessments
-    if (isFormativeAssessment(a, reportClassRecord.value)) return
+    // Exclude formative, diagnostic, administrative, 0% weighted, or non-academic (attendance/participation) assessments
+    if (isCommentExcludedAssessment(a, reportClassRecord.value)) return
 
     // Date filtering based on reporting window
     if (a.date) {
@@ -792,7 +793,7 @@ function getStudentAssessmentsForWindow(studentId, window = currentTermWindow.va
   if (list.length === 0 && window.dateFrom && selectedTerm.value === 'Final') {
     astList.forEach(a => {
       if (a.excluded) return
-      if (isFormativeAssessment(a, reportClassRecord.value)) return
+      if (isCommentExcludedAssessment(a, reportClassRecord.value)) return
       if (a.date && window.asOf && String(a.date).slice(0, 10) > window.asOf) return
       const grade = gradeMap.value[a.assessmentId]?.[studentId]
       const pct = getAssessmentPercentage(a, grade)

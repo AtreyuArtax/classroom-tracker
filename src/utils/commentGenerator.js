@@ -532,16 +532,66 @@ const CATEGORY_NORMALIZER = {
   'knowledge & understanding': 'understanding of foundational core concepts'
 }
 
-const NON_ACADEMIC_CATEGORIES = new Set([
+export const NON_ACADEMIC_CATEGORIES = new Set([
   'attendance',
   'participation',
+  'attendance and participation',
+  'attendance & participation',
+  'attendance / participation',
   'homework',
   'admin',
   'checklist',
-  'attendance & participation',
   'behavior',
-  'behaviour'
+  'behaviour',
+  'effort',
+  'learning skills'
 ])
+
+/**
+ * Checks whether a category or task name represents non-academic tracking
+ * (e.g. attendance, participation, homework, behavior).
+ */
+export function isNonAcademicCategory(name) {
+  if (!name || typeof name !== 'string') return false
+  const lower = name.trim().toLowerCase()
+  if (NON_ACADEMIC_CATEGORIES.has(lower)) return true
+  if (lower.includes('attendance') || lower.includes('participation')) return true
+  if (lower.includes('homework') || lower.includes('behaviour') || lower.includes('behavior')) return true
+  return false
+}
+
+/**
+ * Determines whether an assessment should be excluded from report card comment evidence.
+ * Excludes:
+ * - Formative, diagnostic, or administrative tasks
+ * - Tasks with 0% category weight
+ * - Non-academic tasks (attendance, participation, homework, behavior)
+ */
+export function isCommentExcludedAssessment(assessment, classRecord = null) {
+  if (!assessment) return false
+  if (isFormativeAssessment(assessment, classRecord)) return true
+
+  // Check assessment direct name or category
+  if (isNonAcademicCategory(assessment.name) || isNonAcademicCategory(assessment.category)) {
+    return true
+  }
+
+  // Check category lookup in classRecord / gradeData
+  const categories = [
+    ...(classRecord?.gradebookCategories || []),
+    ...(classRecord?.categories || []),
+    ...Object.values(classRecord?.courseFrameworks || {}).flatMap(f => f?.gradebookCategories || [])
+  ]
+
+  if (categories.length > 0 && assessment.categoryId) {
+    const cat = categories.find(c => String(c.categoryId) === String(assessment.categoryId) || (c.name && c.name === assessment.categoryId))
+    if (cat && isNonAcademicCategory(cat.name)) {
+      return true
+    }
+  }
+
+  return false
+}
 
 /**
  * Converts a task title into a smooth parent-friendly gerund phrase.
@@ -617,7 +667,7 @@ export function extractEvidenceFromGrades(gradeData = {}, courseCode = '') {
   if (!strengthTask && Array.isArray(assessments) && assessments.length > 0) {
     const valid = assessments.filter(a => {
       if (typeof a.scorePercent !== 'number') return false
-      if (isFormativeAssessment(a, gradeData)) return false
+      if (isCommentExcludedAssessment(a, gradeData)) return false
       return true
     }).sort((a, b) => b.scorePercent - a.scorePercent)
 
@@ -652,11 +702,19 @@ export function extractEvidenceFromGrades(gradeData = {}, courseCode = '') {
   }
 
   // 3. Fall back to Categories (filtering non-academic & formative/0% ones & normalizing)
-  if (!strengthTask && Array.isArray(categories) && categories.length > 0) {
-    const validCats = categories.filter(c => {
+  const catSource = (Array.isArray(categories) && categories.length > 0)
+    ? categories
+    : (gradeData.categoryResults ? Object.values(gradeData.categoryResults).filter(Boolean).map(c => ({
+        name: c.name,
+        average: c.percentage,
+        weight: c.weight
+      })) : [])
+
+  if (!strengthTask && Array.isArray(catSource) && catSource.length > 0) {
+    const validCats = catSource.filter(c => {
       if (typeof c.average !== 'number') return false
+      if (isNonAcademicCategory(c.name)) return false
       const nameLower = (c.name || '').trim().toLowerCase()
-      if (NON_ACADEMIC_CATEGORIES.has(nameLower)) return false
       if (nameLower.includes('formative') || nameLower.includes('diagnostic') || nameLower.includes('practice')) return false
       if (c.weight !== undefined && Number(c.weight) <= 0) return false
       return true

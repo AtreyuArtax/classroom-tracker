@@ -17,6 +17,8 @@ import {
   getAchievementLevel,
   getPronounTokens,
   extractEvidenceFromGrades,
+  isCommentExcludedAssessment,
+  isNonAcademicCategory,
   ACHIEVEMENT_LEVELS
 } from './utils/commentGenerator.js'
 import { isFormativeAssessment } from './utils/gradeCalc.js'
@@ -521,6 +523,47 @@ test('Categories fallback ignores 0% weight formative categories', () => {
   const evidence = extractEvidenceFromGrades(gradeData)
   assert.strictEqual(evidence.strengthSource, 'category')
   assert.strictEqual(evidence.strengthTask, 'critical thinking and analytical inquiry')
+})
+
+test('Attendance and Participation category (even with positive weight) is excluded from comment evidence', () => {
+  const mockClass = {
+    gradebookCategories: [
+      { categoryId: 'cat_att', name: 'Attendance and Participation', weight: 10 },
+      { categoryId: 'cat_tests', name: 'Unit Tests', weight: 90 }
+    ]
+  }
+
+  // Attendance task in weighted category is excluded from comments
+  assert.strictEqual(
+    isCommentExcludedAssessment({ name: 'Weekly Attendance', categoryId: 'cat_att' }, mockClass),
+    true
+  )
+  assert.strictEqual(
+    isCommentExcludedAssessment({ name: 'Class Participation', categoryId: 'cat_att' }, mockClass),
+    true
+  )
+
+  // Summative academic task is included
+  assert.strictEqual(
+    isCommentExcludedAssessment({ name: 'Forces Unit Test', categoryId: 'cat_tests' }, mockClass),
+    false
+  )
+
+  // In extractEvidenceFromGrades, a 100% Attendance mark does NOT usurp an 80% physics test
+  const gradeData = {
+    percentage: 82,
+    gradebookCategories: mockClass.gradebookCategories,
+    assessments: [
+      { name: 'Attendance and Participation Score', scorePercent: 100, categoryId: 'cat_att' },
+      { name: 'Dynamics and Forces Test', scorePercent: 80, categoryId: 'cat_tests' }
+    ]
+  }
+
+  const evidence = extractEvidenceFromGrades(gradeData, 'SPH3U')
+  assert.strictEqual(evidence.strengthSource, 'assessment')
+  assert(!evidence.strengthTask.toLowerCase().includes('attendance'),
+    `Attendance should not be picked as academic strength. Got: ${evidence.strengthTask}`)
+  assert(evidence.strengthTask.includes('force') || evidence.strengthTask.includes('Dynamics'))
 })
 
 console.log('\n=================================================================')
