@@ -380,6 +380,7 @@
             <tr
               v-for="duty in filteredDuties"
               :key="duty.dutyId"
+              class="duties-view__row"
               :class="{ 'duties-view__row--snow-day': duty.isSnowDay }"
             >
               <!-- Date -->
@@ -469,7 +470,7 @@
 
                   <button
                     type="button"
-                    class="duties-view__action-btn"
+                    class="duties-view__action-btn duties-view__action-btn--edit"
                     title="Edit duty entry"
                     @click="onEditDuty(duty)"
                   >
@@ -1573,14 +1574,37 @@ body.dark-theme .duty-hero-card__footer {
   padding: 6px 12px;
   border-bottom: 1px solid var(--border-subtle, rgba(0, 0, 0, 0.05));
   vertical-align: middle;
+  transition: background-color 0.15s ease;
 }
 
 .duties-view__table tr:last-child td {
   border-bottom: none;
 }
 
+/* ── Row Hover & Alignment Highlights ── */
+.duties-view__row:hover td {
+  background-color: var(--surface-hover, rgba(70, 99, 172, 0.04));
+}
+
+.duties-view__row:has(.duties-view__action-btn--edit:hover) td {
+  background-color: rgba(70, 99, 172, 0.08);
+}
+
+.duties-view__row:has(.duties-view__action-btn--delete:hover) td {
+  background-color: rgba(239, 68, 68, 0.07) !important;
+}
+
+/* Snow day row & hover states */
 .duties-view__row--snow-day td {
   background: rgba(2, 132, 199, 0.04);
+}
+
+.duties-view__row--snow-day:hover td {
+  background: rgba(2, 132, 199, 0.08);
+}
+
+.duties-view__row--snow-day:has(.duties-view__action-btn--delete:hover) td {
+  background: rgba(239, 68, 68, 0.08) !important;
 }
 
 .duties-view__cell-date {
@@ -1720,9 +1744,29 @@ body.dark-theme .duty-hero-card__footer {
   color: var(--text-primary);
 }
 
+.duties-view__action-btn--edit:hover {
+  color: var(--primary, #4663ac);
+  background: rgba(70, 99, 172, 0.1);
+}
+
 .duties-view__action-btn--delete:hover {
   color: #ef4444;
   background: rgba(239, 68, 68, 0.1);
+}
+
+body.dark-theme .duties-view__row:hover td,
+:root[data-theme="dark"] .duties-view__row:hover td {
+  background-color: rgba(255, 255, 255, 0.04);
+}
+
+body.dark-theme .duties-view__row:has(.duties-view__action-btn--edit:hover) td,
+:root[data-theme="dark"] .duties-view__row:has(.duties-view__action-btn--edit:hover) td {
+  background-color: rgba(70, 99, 172, 0.18);
+}
+
+body.dark-theme .duties-view__row:has(.duties-view__action-btn--delete:hover) td,
+:root[data-theme="dark"] .duties-view__row:has(.duties-view__action-btn--delete:hover) td {
+  background-color: rgba(239, 68, 68, 0.15) !important;
 }
 
 /* ── Empty State ── */

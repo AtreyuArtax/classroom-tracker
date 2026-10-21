@@ -577,6 +577,7 @@ input[type="number"] {
   align-items:   center;
   justify-content: center;
   gap:           8px;
+  white-space:   nowrap;
 }
 .setup__btn-primary:hover:not(:disabled) {
   background: var(--primary-hover);
@@ -606,6 +607,7 @@ input[type="number"] {
   align-items:   center;
   justify-content: center;
   gap:           8px;
+  white-space:   nowrap;
 }
 
 .setup__btn-secondary {
@@ -652,6 +654,7 @@ input[type="number"] {
   justify-content: center;
   gap:           8px;
   transition:    all 0.2s;
+  white-space:   nowrap;
 }
 .setup__btn-ghost:hover {
   background: var(--bg-secondary);

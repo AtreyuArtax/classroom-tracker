@@ -73,24 +73,23 @@
     <!-- 2. Duty Catalog (Add, Rename, Remove, Defaults) -->
     <div class="setup__card">
       <div class="setup__card-header-row">
-        <div>
-          <h2 class="setup__card-title">
-            <ListPlus :size="20" /> Duty Catalog & Quick Defaults
-          </h2>
-          <p class="setup__hint" style="margin-top: 4px; margin-bottom: 0;">
-            Customize your school's duty types. When logging your schedule, picking a duty auto-fills its default minutes, consecutive days, and time slot.
-          </p>
-        </div>
+        <h2 class="setup__card-title">
+          <ListPlus :size="20" /> Duty Catalog & Quick Defaults
+        </h2>
 
         <div class="duty-settings__header-actions">
-          <button class="setup__btn-ghost setup__btn-sm" @click="onResetDefaults">
-            <RotateCcw :size="14" /> Reset Defaults
+          <button type="button" class="setup__btn-ghost" @click="onResetDefaults">
+            <RotateCcw :size="16" /> Reset Defaults
           </button>
-          <button class="setup__btn-primary setup__btn-sm" @click="onAddDutyType">
-            <Plus :size="14" /> Add Duty
+          <button type="button" class="setup__btn-primary" @click="onAddDutyType">
+            <Plus :size="16" /> Add Duty
           </button>
         </div>
       </div>
+
+      <p class="setup__hint" style="margin-top: -4px; margin-bottom: 0;">
+        Customize your school's duty types. When logging your schedule, picking a duty auto-fills its default minutes, consecutive days, and time slot.
+      </p>
 
       <div class="duty-settings__table-wrap">
         <table class="duty-settings__table">
@@ -383,7 +382,13 @@ async function onSave() {
 .duty-settings__header-actions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.duty-settings__header-actions .setup__btn-ghost,
+.duty-settings__header-actions .setup__btn-primary {
+  white-space: nowrap;
 }
 
 .duty-settings__table-wrap {

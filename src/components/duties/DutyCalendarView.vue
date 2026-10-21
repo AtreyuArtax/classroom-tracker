@@ -734,7 +734,7 @@ function handleExportCurrentMonth() {
 .duty-cal-view {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
   width: 100%;
 }
 
@@ -810,9 +810,9 @@ function handleExportCurrentMonth() {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 12px;
+  padding: 4px 10px;
   border-radius: 20px;
-  font-size: 0.8rem;
+  font-size: 0.76rem;
   font-weight: 600;
 }
 
@@ -840,7 +840,7 @@ function handleExportCurrentMonth() {
   align-items: center;
   gap: 6px;
   overflow-x: auto;
-  padding: 4px 2px;
+  padding: 2px 0;
   -webkit-overflow-scrolling: touch;
 }
 
@@ -848,12 +848,12 @@ function handleExportCurrentMonth() {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 14px;
+  padding: 4px 12px;
   border-radius: 20px;
   border: 1px solid var(--border);
   background: var(--surface, #ffffff);
   color: var(--text-secondary);
-  font-size: 0.82rem;
+  font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.15s ease;
@@ -886,11 +886,11 @@ function handleExportCurrentMonth() {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 18px;
-  height: 18px;
-  padding: 0 5px;
-  border-radius: 9px;
-  font-size: 0.7rem;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 8px;
+  font-size: 0.68rem;
   font-weight: 700;
   background: rgba(70, 99, 172, 0.15);
   color: var(--primary, #4663ac);
@@ -925,9 +925,9 @@ function handleExportCurrentMonth() {
 
 /* ── Column Headers ── */
 .duty-cal-th {
-  padding: 12px 14px;
+  padding: 8px 12px;
   text-align: left;
-  font-size: 0.78rem;
+  font-size: 0.74rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -956,9 +956,9 @@ function handleExportCurrentMonth() {
 
 .duty-cal-td {
   vertical-align: top;
-  padding: 8px;
+  padding: 5px 6px;
   border-right: 1px solid var(--border);
-  height: 120px;
+  height: 74px;
   position: relative;
 }
 
@@ -970,14 +970,14 @@ function handleExportCurrentMonth() {
 .duty-cal-td--week-summary {
   background: var(--bg-secondary, #f9f9fb);
   border-right: 1px solid var(--border);
-  padding: 10px;
-  width: 140px;
+  padding: 5px 8px;
+  width: 135px;
 }
 
 .duty-cal-week-card {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 3px;
   height: 100%;
 }
 
@@ -988,17 +988,18 @@ function handleExportCurrentMonth() {
 }
 
 .duty-cal-week-card__dates {
-  font-size: 0.76rem;
+  font-size: 0.72rem;
   font-weight: 700;
   color: var(--text-secondary);
+  line-height: 1.2;
 }
 
 .duty-cal-week-card__export-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   border-radius: 4px;
   border: 1px solid var(--border);
   background: var(--surface, #ffffff);
@@ -1013,11 +1014,11 @@ function handleExportCurrentMonth() {
 }
 
 .duty-cal-week-card__badge {
-  padding: 6px 8px;
+  padding: 4px 6px;
   border-radius: var(--radius-sm, 6px);
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 1px;
 }
 
 .duty-cal-week-card__badge--active {
@@ -1030,31 +1031,33 @@ function handleExportCurrentMonth() {
   display: flex;
   align-items: baseline;
   gap: 4px;
-  font-size: 0.82rem;
+  font-size: 0.76rem;
+  line-height: 1.2;
 }
 
 .duty-cal-week-card__badge-count {
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   color: var(--text-secondary);
 }
 
 .duty-cal-week-card__names {
-  font-size: 0.7rem;
+  font-size: 0.67rem;
   font-weight: 600;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   color: var(--text-primary);
+  line-height: 1.2;
 }
 
 .duty-cal-week-card__badge--off {
   background: transparent;
   color: var(--text-secondary);
-  font-size: 0.74rem;
+  font-size: 0.7rem;
   font-weight: 500;
   border: 1px dashed var(--border);
   text-align: center;
-  padding: 8px 4px;
+  padding: 4px;
 }
 
 .duty-cal-week-card__badge--holiday {
@@ -1090,7 +1093,7 @@ function handleExportCurrentMonth() {
 .duty-cal-day-cell {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 3px;
   height: 100%;
 }
 
@@ -1107,15 +1110,15 @@ function handleExportCurrentMonth() {
 }
 
 .duty-cal-day-num {
-  font-size: 0.84rem;
+  font-size: 0.78rem;
   font-weight: 700;
   color: var(--text-primary);
-  min-width: 22px;
-  height: 22px;
+  min-width: 20px;
+  height: 20px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 11px;
+  border-radius: 10px;
 }
 
 .duty-cal-day-num--today {
@@ -1125,7 +1128,7 @@ function handleExportCurrentMonth() {
 }
 
 .duty-cal-today-tag {
-  font-size: 0.68rem;
+  font-size: 0.64rem;
   font-weight: 700;
   color: var(--primary, #4663ac);
   text-transform: uppercase;
@@ -1138,9 +1141,9 @@ function handleExportCurrentMonth() {
 }
 
 .duty-cal-holiday-tag {
-  font-size: 0.65rem;
+  font-size: 0.62rem;
   font-weight: 600;
-  padding: 1px 5px;
+  padding: 1px 4px;
   border-radius: 4px;
   background: rgba(245, 158, 11, 0.12);
   color: #d97706;
@@ -1156,8 +1159,8 @@ function handleExportCurrentMonth() {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 18px;
-  height: 18px;
+  width: 17px;
+  height: 17px;
   border-radius: 9px;
   border: 1px solid var(--border);
   background: var(--surface, #ffffff);
@@ -1181,7 +1184,7 @@ function handleExportCurrentMonth() {
 .duty-cal-duties-stack {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
   flex: 1;
   overflow-y: auto;
 }
@@ -1189,8 +1192,8 @@ function handleExportCurrentMonth() {
 .duty-card-pill {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  padding: 5px 7px;
+  gap: 1px;
+  padding: 2.5px 6px;
   border-radius: var(--radius-sm, 6px);
   background: rgba(70, 99, 172, 0.08);
   border: 1px solid rgba(70, 99, 172, 0.2);
@@ -1213,18 +1216,19 @@ function handleExportCurrentMonth() {
 }
 
 .duty-card-pill__name {
-  font-size: 0.74rem;
+  font-size: 0.71rem;
   font-weight: 700;
   color: var(--primary, #4663ac);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  line-height: 1.2;
 }
 
 .duty-card-pill__badge {
-  font-size: 0.62rem;
+  font-size: 0.6rem;
   font-weight: 700;
-  padding: 1px 4px;
+  padding: 1px 3px;
   border-radius: 3px;
   text-transform: uppercase;
 }
@@ -1239,8 +1243,9 @@ function handleExportCurrentMonth() {
   align-items: center;
   justify-content: space-between;
   gap: 4px;
-  font-size: 0.68rem;
+  font-size: 0.64rem;
   color: var(--text-secondary);
+  line-height: 1.2;
 }
 
 .duty-card-pill__duration {
@@ -1289,8 +1294,8 @@ function handleExportCurrentMonth() {
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 16px;
-  padding: 14px 18px;
+  gap: 12px;
+  padding: 8px 14px;
   background: var(--bg-secondary, #f9f9fb);
   border-top: 1px solid var(--border);
 }
@@ -1299,17 +1304,17 @@ function handleExportCurrentMonth() {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 16px;
+  gap: 12px;
 }
 
 .duty-cal-metric-item {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 1px;
 }
 
 .duty-cal-metric-item__label {
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   font-weight: 600;
   color: var(--text-secondary);
   text-transform: uppercase;
@@ -1317,19 +1322,19 @@ function handleExportCurrentMonth() {
 }
 
 .duty-cal-metric-item__val {
-  font-size: 0.96rem;
+  font-size: 0.88rem;
   font-weight: 700;
   color: var(--text-primary);
 }
 
 .duty-cal-metric-item__sub {
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   color: var(--text-secondary);
 }
 
 .duty-cal-metric-sep {
   width: 1px;
-  height: 28px;
+  height: 20px;
   background: var(--border);
 }
 
