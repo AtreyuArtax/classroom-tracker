@@ -81,6 +81,9 @@
                 @change="onFileSelected"
               />
             </label>
+            <p class="setup__file-drop-hint" style="margin: 8px 0 0; font-size: 0.78rem; color: var(--text-secondary); text-align: center;">
+              PowerSchool: Run report <strong>Student Parent/Guardian Contact List (Teachers)</strong> and save as CSV
+            </p>
             
             <div class="setup__csv-help-container" style="margin-top: 12px;">
               <button 

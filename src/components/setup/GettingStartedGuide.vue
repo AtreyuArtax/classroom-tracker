@@ -124,10 +124,23 @@
             <h3 class="guide-step-title">Import Your Roster (CSV)</h3>
           </div>
           <p class="guide-step-text">
-            Drop your board export CSV under <strong>Setup → Class Manager</strong>. Formats from systems like <strong>PowerSchool</strong> are detected automatically.
+            Drop your board export CSV under <strong>Setup → Class Manager</strong>.
           </p>
+          <div class="guide-powerschool-box">
+            <div class="guide-powerschool-header">
+              <Sparkles :size="14" class="guide-powerschool-icon" />
+              <span>Where to find your CSV in PowerSchool:</span>
+            </div>
+            <ol class="guide-powerschool-steps">
+              <li>Log into <strong>PowerSchool</strong> and open <strong>Reports</strong>.</li>
+              <li>Run the report: <strong>Student Parent/Guardian Contact List (Teachers)</strong>.</li>
+              <li>Set output format to <strong>CSV</strong> and download the file.</li>
+              <li>Drop the <code>.csv</code> file into Classroom Tracker!</li>
+            </ol>
+          </div>
           <ul class="guide-list">
             <li><strong>Auto-Mapped Fields:</strong> Student ID, First/Last Name, contact numbers, and parent emails are matched automatically.</li>
+            <li><strong>Multi-Class Schedules:</strong> Multi-period schedules are automatically split into distinct classes.</li>
             <li><strong>Manual Adding:</strong> Prefer typing? You can also quickly add students one by one directly from the roster list.</li>
           </ul>
         </div>
@@ -403,6 +416,32 @@ function selectTeachingMode(mode) {
 
 // ── Feature Deep Dives Data ───────────────────────────────────────
 const sections = [
+  {
+    id: 'roster',
+    icon: FolderOpen,
+    title: 'Roster Import & Finding Your PowerSchool CSV',
+    tag: 'Setup & Onboarding',
+    summary: 'How to run the Student Parent/Guardian Contact List report in PowerSchool and import it.',
+    content: `
+      <p>Classroom Tracker automatically builds your class rosters, periods, and parent contacts directly from your student information system (SIS):</p>
+      <h5>How to Find and Export from PowerSchool</h5>
+      <ol>
+        <li>Log into your <strong>PowerSchool</strong> teacher portal.</li>
+        <li>In the navigation menu, select <strong>Reports</strong> (or System Reports).</li>
+        <li>Locate and run the report named: <strong>Student Parent/Guardian Contact List (Teachers)</strong>.</li>
+        <li>Set the report output format to <strong>CSV</strong> (comma-separated values).</li>
+        <li>Run the report and save the resulting <code>.csv</code> file to your computer.</li>
+        <li>In Classroom Tracker, go to <strong>Setup → Class Manager</strong> (or click <em>Import / Update Class</em>) and drag the file into the upload area.</li>
+      </ol>
+      <h5>What Gets Automatically Configured</h5>
+      <ul>
+        <li><strong>Multi-Class Schedules:</strong> If your export contains multiple periods (e.g. Period 1 Math, Period 2 Science), Classroom Tracker automatically splits them into separate classes so you can set up your entire semester in seconds.</li>
+        <li><strong>Demographics & Student IDs:</strong> Student IDs, given names, family names, and grades are securely loaded into your local browser database.</li>
+        <li><strong>Parent & Guardian Contacts:</strong> Contact names, phone numbers, and emails are linked to each student's <em>Student 360 Dossier</em> for 1-click emailing and communication logging.</li>
+        <li><strong>Safe Mid-Term Updates:</strong> As student schedules change, drop a fresh CSV anytime. New students are added, withdrawn students can be archived, and your existing grades, IEP notes, seating plans, and attendance history are 100% preserved.</li>
+      </ul>
+    `
+  },
   {
     id: 'seating',
     icon: LayoutGrid,
@@ -818,6 +857,54 @@ const filteredSections = computed(() => {
   font-size: 0.85rem;
   color: var(--text-secondary);
   margin: 0;
+}
+
+.guide-powerschool-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--primary);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.guide-powerschool-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.825rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.guide-powerschool-icon {
+  color: var(--primary);
+  flex-shrink: 0;
+}
+
+.guide-powerschool-steps {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.guide-powerschool-steps strong {
+  color: var(--text);
+}
+
+.guide-powerschool-steps code {
+  background: rgba(0, 0, 0, 0.06);
+  padding: 1px 5px;
+  border-radius: var(--radius-sm);
+  font-family: monospace;
+  font-size: 0.76rem;
+  color: var(--text);
 }
 
 .guide-list {

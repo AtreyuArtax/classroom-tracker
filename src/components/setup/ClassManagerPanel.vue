@@ -2,14 +2,91 @@
   <div class="setup__layout">
     <SetupQuickJumpNav activeTab="manage" />
     <div class="setup__main-content">
+    <!-- 0. 3-Step Semester Intake Hub -->
+    <div class="setup__card setup__intake-hub" id="sec-intake-hub">
+      <div class="setup__intake-hub-header">
+        <div>
+          <h2 class="setup__card-title" style="margin-bottom: 4px;">Class &amp; Student Intake</h2>
+          <p class="setup__hint" style="margin: 0;">
+            Follow these 3 steps at the start of the term (or anytime rosters change) to set up or sync all your classes at once.
+          </p>
+        </div>
+      </div>
+
+      <div class="setup__intake-grid">
+        <!-- Step 1: Roster CSV -->
+        <div class="setup__intake-step-card">
+          <div class="setup__intake-step-top">
+            <span class="setup__intake-step-badge">Step 1 · Rosters</span>
+            <div class="setup__intake-step-title">
+              <FileSpreadsheet :size="18" class="setup__intake-step-icon" />
+              <span>PowerSchool Roster CSV</span>
+            </div>
+            <p class="setup__intake-step-desc">
+              Create your semester classes in seconds or drop a fresh PowerSchool CSV anytime to sync added or dropped students.
+            </p>
+          </div>
+          <button
+            type="button"
+            class="setup__btn-primary setup__intake-step-btn"
+            @click="emit('add-class')"
+          >
+            <Plus :size="15" /> Import / Update Classes
+          </button>
+        </div>
+
+        <!-- Step 2: Student Photos & Macro -->
+        <div class="setup__intake-step-card">
+          <div class="setup__intake-step-top">
+            <span class="setup__intake-step-badge">Step 2 · Headshots</span>
+            <div class="setup__intake-step-title">
+              <Camera :size="18" class="setup__intake-step-icon" />
+              <span>Student Photos &amp; Macro</span>
+            </div>
+            <p class="setup__intake-step-desc">
+              Grab our 1-click PowerSchool Photo Macro bookmarklet or drop a <code>student_photos.zip</code> to match headshots across all classes.
+            </p>
+          </div>
+          <button
+            type="button"
+            class="setup__btn-ghost setup__intake-step-btn"
+            @click="isBatchPhotosOpen = true"
+          >
+            <Camera :size="15" /> Photos &amp; PS Macro
+          </button>
+        </div>
+
+        <!-- Step 3: Day 1 Student Survey -->
+        <div class="setup__intake-step-card">
+          <div class="setup__intake-step-top">
+            <span class="setup__intake-step-badge">Step 3 · Intake Form</span>
+            <div class="setup__intake-step-title">
+              <FileText :size="18" class="setup__intake-step-icon" />
+              <span>Day 1 Microsoft Form</span>
+            </div>
+            <p class="setup__intake-step-desc">
+              Download our 30-second Word (<code>.docx</code>) template for Microsoft Forms Quick Import, or drop your <code>.xlsx</code> responses for all classes at once.
+            </p>
+          </div>
+          <button
+            type="button"
+            class="setup__btn-ghost setup__intake-step-btn"
+            @click="isStudentSurveyOpen = true"
+          >
+            <FileText :size="15" /> Survey &amp; Template
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- 1. All Classes Directory -->
     <div class="setup__card" id="sec-classes">
       <div class="setup__card-header-row" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 12px;">
-        <div>
+        <div style="flex: 1 1 300px; min-width: 0;">
           <h2 class="setup__card-title" style="margin-bottom: 2px;">Manage Classes</h2>
           <p class="setup__hint" style="margin: 0;">Click any class to configure its roster, gradebook framework, and seating.</p>
         </div>
-        <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+        <div style="display: flex; align-items: center; gap: 10px; flex-shrink: 0; margin-left: auto;">
           <button 
             v-if="showAllSessions && allYearGroups.length > 0" 
             type="button"
@@ -37,13 +114,6 @@
               <span>All Sessions</span>
             </button>
           </div>
-          <button 
-            v-if="(showAllSessions ? modeAllClasses : filteredClassList).length > 0"
-            class="setup__btn-primary" 
-            @click="emit('add-class')"
-          >
-            <Plus :size="16" /> Import / Update Class
-          </button>
         </div>
       </div>
 
@@ -210,14 +280,30 @@
         </li>
       </ul>
     </div>
+
+    <!-- Batch Photo Importer Modal (Global across all active classes) -->
+    <PhotoBatchImportModal
+      v-if="isBatchPhotosOpen"
+      :show="isBatchPhotosOpen"
+      :student-list="[]"
+      @close="isBatchPhotosOpen = false"
+    />
+
+    <!-- Day 1 Student Survey & MS Forms Template Modal (Multi-Class enabled) -->
+    <StudentInfoSurveyModal
+      :show="isStudentSurveyOpen"
+      @close="isStudentSurveyOpen = false"
+    />
     </div>
   </div>
 </template>
 
 <script setup>
 import { ref, computed } from 'vue'
-import { Archive, CalendarDays, ChevronDown, FolderOpen, Plus } from 'lucide-vue-next'
+import { Archive, CalendarDays, Camera, ChevronDown, FileSpreadsheet, FileText, FolderOpen, Plus } from 'lucide-vue-next'
 import SetupQuickJumpNav from './SetupQuickJumpNav.vue'
+import PhotoBatchImportModal from '../photos/PhotoBatchImportModal.vue'
+import StudentInfoSurveyModal from './StudentInfoSurveyModal.vue'
 import { useClassroom } from '../../composables/useClassroom.js'
 import { useClassDeletion } from '../../composables/useClassDeletion.js'
 import { groupClassesByYearAndSession } from '../../utils/classGrouping.js'
@@ -241,6 +327,8 @@ const { confirmAndDeleteClass } = useClassDeletion()
 
 const showAllSessions = ref(false)
 const isArchivedPanelVisible = ref(false)
+const isBatchPhotosOpen = ref(false)
+const isStudentSurveyOpen = ref(false)
 
 function studentCount(cls) {
   return Object.keys(cls?.students ?? {}).length
@@ -325,3 +413,84 @@ function toggleAllYears() {
   sessionExpandOverrides.value = new Map(sessionExpandOverrides.value)
 }
 </script>
+
+<style scoped>
+.setup__intake-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 14px;
+  margin-top: 4px;
+}
+
+.setup__intake-step-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 16px;
+  border-radius: var(--radius-md);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.setup__intake-step-card:hover {
+  border-color: color-mix(in srgb, var(--primary) 35%, var(--border));
+  box-shadow: var(--shadow-sm);
+}
+
+.setup__intake-step-top {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.setup__intake-step-badge {
+  align-self: flex-start;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--primary);
+  background: var(--primary-light);
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.setup__intake-step-title {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-top: 2px;
+}
+
+.setup__intake-step-icon {
+  color: var(--primary);
+  flex-shrink: 0;
+}
+
+.setup__intake-step-desc {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: var(--text-secondary);
+}
+
+.setup__intake-step-desc code {
+  font-size: 0.78rem;
+  background: var(--surface);
+  padding: 1px 5px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+}
+
+.setup__intake-step-btn {
+  width: 100%;
+  justify-content: center;
+  min-height: 38px;
+  font-size: 0.85rem;
+}
+</style>

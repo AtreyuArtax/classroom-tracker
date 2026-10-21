@@ -1,5 +1,19 @@
 <template>
-  <aside v-if="sections.length > 1" class="setup-toc">
+  <aside v-if="sections.length > 1 || (activeTab === 'active' && filteredClassList.length > 0)" class="setup-toc">
+    <div v-if="activeTab === 'active' && filteredClassList.length > 0" class="setup-toc__class-picker">
+      <label for="setup-class-selector" class="setup-toc__picker-label">CONFIGURING</label>
+      <select
+        id="setup-class-selector"
+        class="setup-toc__picker-select"
+        :value="activeClass?.classId"
+        @change="e => switchClass(e.target.value)"
+      >
+        <option v-for="cls in filteredClassList" :key="cls.classId" :value="cls.classId">
+          {{ cls.classType === 'elementary' ? cls.name : `${cls.name} (P${cls.periodNumber})` }}
+        </option>
+      </select>
+    </div>
+
     <div class="setup-toc__header">
       <ListFilter :size="14" class="setup-toc__header-icon" />
       <span class="setup-toc__header-title">ON THIS PAGE</span>
@@ -30,10 +44,13 @@
 <script setup>
 import { ref, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { ListFilter } from 'lucide-vue-next'
+import { useClassroom } from '../../composables/useClassroom.js'
 
 const props = defineProps({
   activeTab: { type: String, default: '' }
 })
+
+const { activeClass, filteredClassList, switchClass } = useClassroom()
 
 const KNOWN_TAB_SECTIONS = {
   active: [
@@ -45,12 +62,14 @@ const KNOWN_TAB_SECTIONS = {
     { id: 'sec-elem-subjects', title: 'Elementary Subjects' }
   ],
   manage: [
-    { id: 'sec-classes', title: 'Active Classes' },
+    { id: 'sec-intake-hub', title: 'Class & Student Intake' },
+    { id: 'sec-classes', title: 'Manage Classes' },
     { id: 'sec-archived', title: 'Archived Classes' }
   ],
   calendar: [
     { id: 'sec-calendar-boundaries', title: 'School Year & Semester' },
-    { id: 'sec-milestones', title: 'Calendar Milestones' }
+    { id: 'sec-milestones', title: 'Calendar Milestones' },
+    { id: 'sec-duty-settings', title: 'Duty Settings' }
   ],
   app: [
     { id: 'sec-teacher-profile', title: 'Teacher Profile' },
@@ -172,6 +191,42 @@ onUnmounted(() => {
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.setup-toc__class-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.setup-toc__picker-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+}
+
+.setup-toc__picker-select {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-secondary);
+  color: var(--text);
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.setup-toc__picker-select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-light);
 }
 
 .setup-toc__header {

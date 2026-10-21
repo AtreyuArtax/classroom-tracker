@@ -1,50 +1,56 @@
 <template>
   <div class="setup">
-    <!-- ── Page Header & Class Selector ───────────────────────────── -->
-    <div class="setup__header">
-      <div class="setup__header-left">
-        <button v-if="props.from === 'Grades'" class="app-back-btn" @click="$emit('navigate', 'Grades')">
+    <!-- ── Unified Top Bar: 5 Core Tabs + Global Actions ──────────── -->
+    <div class="setup__tabs-bar">
+      <div class="setup__tabs" role="tablist">
+        <button
+          v-if="props.from === 'Grades'"
+          type="button"
+          class="app-back-btn setup__back-inline"
+          @click="$emit('navigate', 'Grades')"
+        >
           <ArrowLeft :size="15" /> Back to Gradebook
         </button>
-        <div v-if="activeTab === 'active'" class="setup__header-class">
-          <label for="setup-class-selector" class="setup__header-label">Configuring:</label>
-          <select 
-            id="setup-class-selector" 
-            class="setup__class-selector"
-            :value="activeClass?.classId"
-            @change="e => switchClass(e.target.value)"
-          >
-            <option v-if="filteredClassList.length === 0" value="">No Classes</option>
-            <option v-for="cls in filteredClassList" :key="cls.classId" :value="cls.classId">
-              {{ cls.classType === 'elementary' ? cls.name : `${cls.name} (P${cls.periodNumber})` }}
-            </option>
-          </select>
-        </div>
+
+        <button
+          v-for="tab in setupTabs"
+          :key="tab.id"
+          class="setup__tab"
+          :class="{ 'setup__tab--active': activeTab === tab.id }"
+          role="tab"
+          :aria-selected="activeTab === tab.id"
+          @click="handleTabClick(tab.id)"
+        >
+          <component :is="tab.icon" :size="16" />
+          {{ tab.label }}
+          <span v-if="tab.id === 'curriculum' && curriculumEditorDirty" class="setup__tab-dirty-dot" title="Unsaved changes in Curriculum Library"></span>
+        </button>
       </div>
+
       <div class="setup__header-right">
         <UndoButton />
 
-        <button class="setup__btn-ghost" style="min-height: 38px; padding: 0 16px;" @click="isHelpModalOpen = true">
-          <HelpCircle :size="16" /> User Guide
+        <button
+          type="button"
+          class="setup__intake-nav-btn"
+          :class="{ 'setup__intake-nav-btn--active': activeTab === 'manage' }"
+          @click="handleTabClick('manage')"
+          title="Import rosters, student photos, Day 1 surveys, and manage all classes"
+        >
+          <FolderOpen :size="16" />
+          <span>Classes &amp; Intake</span>
+        </button>
+
+        <button
+          type="button"
+          class="setup__btn-ghost setup__help-btn"
+          title="Open User Guide"
+          @click="isHelpModalOpen = true"
+        >
+          <HelpCircle :size="16" />
+          <span class="setup__help-btn-label">User Guide</span>
         </button>
       </div>
-    </div>
-
-    <!-- ── Page tabs ─────────────────────────────────────────────── -->
-    <div class="setup__tabs" role="tablist">
-      <button
-        v-for="tab in setupTabs"
-        :key="tab.id"
-        class="setup__tab"
-        :class="{ 'setup__tab--active': activeTab === tab.id }"
-        role="tab"
-        :aria-selected="activeTab === tab.id"
-        @click="handleTabClick(tab.id)"
-      >
-        <component :is="tab.icon" :size="16" />
-        {{ tab.label }}
-        <span v-if="tab.id === 'curriculum' && curriculumEditorDirty" class="setup__tab-dirty-dot" title="Unsaved changes in Curriculum Library"></span>
-      </button>
     </div>
 
     <!-- PILLAR 1: Active Class Configuration -->
@@ -70,12 +76,13 @@
       </div>
     </section>
 
-    <!-- PILLAR 3: Calendar Manager -->
+    <!-- PILLAR 3: Calendar & Duty Settings -->
     <section v-else-if="activeTab === 'calendar'" class="setup__panel">
       <div class="setup__layout">
         <SetupQuickJumpNav :activeTab="activeTab" />
         <div class="setup__main-content">
           <CalendarSettings />
+          <DutySettings id="sec-duty-settings" />
         </div>
       </div>
     </section>
@@ -85,7 +92,7 @@
       <CurriculumLibraryManager />
     </section>
 
-    <!-- PILLAR 5: All Classes (Class Manager) -->
+    <!-- PILLAR 5: Classes & Student Intake Hub -->
     <section v-if="activeTab === 'manage'" class="setup__panel">
       <ClassManagerPanel
         @add-class="isAddClassModalOpen = true"
@@ -100,13 +107,6 @@
         <div class="setup__main-content">
           <DatabaseMaintenanceSettings />
         </div>
-      </div>
-    </section>
-
-    <!-- PILLAR 7: Duty Tracking Settings -->
-    <section v-else-if="activeTab === 'duties'" class="setup__panel">
-      <div class="setup__panel-content">
-        <DutySettings />
       </div>
     </section>
 
@@ -126,11 +126,10 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted, onUnmounted, defineAsyncComponent } from 'vue'
+import { ref, computed, watch, nextTick, onMounted, onUnmounted, defineAsyncComponent } from 'vue'
 import { 
   ArrowLeft,
   BookOpen,
-  CalendarCheck,
   CalendarDays,
   Database,
   FolderOpen,
@@ -175,14 +174,12 @@ defineEmits(['navigate'])
 const { classList, activeClass, filteredClassList, switchClass } = useClassroom()
 const { select: selectMessage } = useMessage()
 
-// --- Tabs ---
+// --- 5 Core Tabs ---
 const setupTabs = [
   { id: 'active',     label: 'Active Class',        icon: Zap },
+  { id: 'curriculum', label: 'Curriculum',          icon: BookOpen },
+  { id: 'calendar',   label: 'Calendar & Duties',   icon: CalendarDays },
   { id: 'app',        label: 'App Settings',        icon: Settings },
-  { id: 'calendar',   label: 'Calendar',            icon: CalendarDays },
-  { id: 'curriculum', label: 'Curriculum Library',  icon: BookOpen },
-  { id: 'manage',     label: 'Manage Classes',      icon: FolderOpen },
-  { id: 'duties',     label: 'Duty Settings',       icon: CalendarCheck },
   { id: 'data',       label: 'Backup & Data',       icon: Database },
 ]
 
@@ -199,11 +196,21 @@ const tabMap = {
   'codes': 'app', 
   'app': 'app',
   'calendar': 'calendar',
-  'duties': 'duties',
-  'duty': 'duties',
-  'apa': 'duties',
+  'duties': 'calendar',
+  'duty': 'calendar',
+  'apa': 'calendar',
   'backup': 'data',
   'data': 'data'
+}
+
+const DUTY_ALIASES = new Set(['duties', 'duty', 'apa'])
+
+function scrollToDutySectionIfNeeded(rawTab) {
+  if (!DUTY_ALIASES.has(rawTab)) return
+  setTimeout(() => {
+    const el = document.getElementById('sec-duty-settings')
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }, 150)
 }
 
 function resolveDefaultTab() {
@@ -221,7 +228,10 @@ const activeClassSubtab = computed(() => {
 })
 
 watch(() => props.tab, (newTab) => {
-  if (newTab) activeTab.value = tabMap[newTab] || newTab
+  if (newTab) {
+    activeTab.value = tabMap[newTab] || newTab
+    nextTick(() => scrollToDutySectionIfNeeded(newTab))
+  }
 })
 
 async function handleTabClick(tabId) {
@@ -275,13 +285,19 @@ async function onClassCreated(classId) {
 }
 
 function handleSwitchSetupTab(e) {
-  if (e?.detail) activeTab.value = tabMap[e.detail] || e.detail
+  if (e?.detail) {
+    activeTab.value = tabMap[e.detail] || e.detail
+    nextTick(() => scrollToDutySectionIfNeeded(e.detail))
+  }
 }
 
 onMounted(async () => {
   window.addEventListener('switch-setup-tab', handleSwitchSetupTab)
   if (!activeClass.value && filteredClassList.value.length > 0) {
     await switchClass(filteredClassList.value[0].classId)
+  }
+  if (props.tab) {
+    scrollToDutySectionIfNeeded(props.tab)
   }
 })
 onUnmounted(() => {
@@ -290,6 +306,120 @@ onUnmounted(() => {
 </script>
 <style src="../assets/styles/setup.css"></style>
 <style scoped>
+.setup__tabs-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+  border-bottom: 1px solid var(--border);
+  padding-right: 12px;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.setup__tabs-bar .setup__tabs {
+  flex: 1 1 auto;
+  min-width: 0;
+  box-shadow: none;
+  border-bottom: none;
+  background: transparent;
+}
+
+.setup__tabs-bar :deep(.setup__tab) {
+  flex: 1 1 auto;
+  padding: 12px 12px;
+  font-size: 0.86rem;
+  gap: 6px;
+}
+
+.setup__tabs-bar .setup__header-right {
+  flex-shrink: 0;
+  gap: 8px;
+}
+
+.setup__help-btn {
+  min-height: 36px;
+  padding: 0 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+@media (max-width: 1220px) {
+  .setup__help-btn {
+    padding: 0 9px;
+  }
+  .setup__help-btn-label {
+    display: none;
+  }
+  .setup__tabs-bar :deep(.setup__tab) {
+    padding: 12px 9px;
+    font-size: 0.83rem;
+  }
+  .setup__intake-nav-btn {
+    padding: 0 11px;
+    font-size: 0.83rem;
+  }
+}
+
+@media (max-width: 900px) {
+  .setup__tabs-bar {
+    flex-wrap: wrap;
+    padding: 0 12px 8px;
+    gap: 6px;
+  }
+  .setup__tabs-bar .setup__tabs {
+    flex: 1 1 100%;
+    border-bottom: 1px solid var(--border-light, var(--border));
+  }
+  .setup__tabs-bar .setup__header-right {
+    margin-left: auto;
+    padding-top: 4px;
+  }
+}
+
+.setup__back-inline {
+  margin-left: 12px;
+  align-self: center;
+  flex-shrink: 0;
+}
+
+.setup__intake-nav-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 36px;
+  padding: 0 14px;
+  border-radius: var(--radius-md);
+  border: 1px solid color-mix(in srgb, var(--primary) 30%, transparent);
+  background: var(--primary-light);
+  color: var(--primary);
+  font-size: 0.86rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.setup__intake-nav-btn:hover {
+  background: color-mix(in srgb, var(--primary) 22%, white);
+  border-color: var(--primary);
+}
+
+.setup__intake-nav-btn--active {
+  background: var(--primary);
+  color: #ffffff;
+  border-color: var(--primary);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--primary) 35%, transparent);
+}
+
+.setup__intake-nav-btn--active:hover {
+  background: var(--primary-dark);
+  color: #ffffff;
+}
+
 .setup__tab-dirty-dot {
   width: 7px;
   height: 7px;

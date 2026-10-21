@@ -6,20 +6,42 @@
     @close="$emit('close')"
   >
     <div class="lsim-container">
-      <!-- Section 1: Target Term Selection -->
-      <div class="lsim-term-selector">
-        <label class="lsim-label">Target Reporting Period:</label>
-        <div class="lsim-pill-group">
-          <button
-            v-for="termOption in defaultTerms"
-            :key="termOption"
-            type="button"
-            class="lsim-term-pill"
-            :class="{ 'lsim-term-pill--active': selectedTerm === termOption }"
-            @click="selectedTerm = termOption"
+      <!-- Section 1: Target Term & Target Roster Selection -->
+      <div class="lsim-top-controls">
+        <div class="lsim-term-selector">
+          <label class="lsim-label">Target Reporting Period:</label>
+          <div class="lsim-pill-group">
+            <button
+              v-for="termOption in defaultTerms"
+              :key="termOption"
+              type="button"
+              class="lsim-term-pill"
+              :class="{ 'lsim-term-pill--active': selectedTerm === termOption }"
+              @click="selectedTerm = termOption"
+            >
+              {{ termOption }}
+            </button>
+          </div>
+        </div>
+
+        <div v-if="filteredClassList.length > 0" class="lsim-scope-bar">
+          <label for="lsim-target-scope" class="lsim-label">Target Roster:</label>
+          <select
+            id="lsim-target-scope"
+            v-model="selectedScope"
+            class="lsim-scope-select"
           >
-            {{ termOption }}
-          </button>
+            <option v-if="filteredClassList.length > 1" value="ALL">
+              All Current Session Classes ({{ filteredClassList.length }} classes · {{ totalAllClassesStudents }} students)
+            </option>
+            <option
+              v-for="cls in filteredClassList"
+              :key="cls.classId"
+              :value="cls.classId"
+            >
+              {{ cls.classType === 'elementary' ? cls.name : `${cls.name} (P${cls.periodNumber})` }} ({{ getActiveStudentCount(cls) }} students)
+            </option>
+          </select>
         </div>
       </div>
 
@@ -45,7 +67,7 @@
               {{ parsedResult ? 'Choose a different file' : 'Click to select or drag & drop Microsoft Forms Excel (.xlsx) or CSV' }}
             </span>
             <span class="lsim-secondary-txt">
-              Automatically matches student login email or full name against this class roster
+              Automatically matches student login email or full name across {{ selectedScope === 'ALL' && filteredClassList.length > 1 ? 'all active classes' : 'selected class' }}
             </span>
           </div>
         </label>
@@ -116,9 +138,18 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="rec in parsedResult.matchedRecords" :key="rec.studentId">
+              <tr v-for="(rec, idx) in parsedResult.matchedRecords" :key="rec.studentId">
                 <td class="lsim-student-name">
-                  <div class="lsim-name-txt">{{ rec.lastName }}, {{ rec.firstName }}</div>
+                  <div class="lsim-name-row">
+                    <span class="lsim-name-txt">{{ rec.lastName }}, {{ rec.firstName }}</span>
+                    <span
+                      v-for="ce in (rec.classEntries || [])"
+                      :key="ce.classId"
+                      class="lsim-class-chip"
+                    >
+                      {{ ce.className }}
+                    </span>
+                  </div>
                   <div class="lsim-email-txt">{{ rec.studentEmail }}</div>
                 </td>
                 <td v-for="skill in ['responsibility', 'organization', 'independentWork', 'collaboration', 'initiative', 'selfRegulation']" :key="skill" class="text-center">
@@ -184,11 +215,11 @@
                     >
                       <option value="">-- Choose Student --</option>
                       <option 
-                        v-for="st in rosterStudents" 
+                        v-for="st in availableRosterStudents" 
                         :key="st.studentId" 
                         :value="st.studentId"
                       >
-                        {{ st.lastName }}, {{ st.firstName }}
+                        {{ st.lastName }}, {{ st.firstName }}{{ selectedScope === 'ALL' && st.classEntries?.length ? ' (' + st.classEntries.map(c => c.className).join(', ') + ')' : '' }}
                       </option>
                     </select>
                   </td>
@@ -212,7 +243,7 @@
           @click="commitImport"
         >
           <Save :size="16" />
-          {{ isSaving ? 'Saving...' : `Import ${parsedResult?.matchedRecords.length || 0} Evaluations` }}
+          {{ isSaving ? 'Saving...' : `Import ${parsedResult?.matchedRecords.length || 0} Evaluations${matchedClassesCount > 1 ? ' (' + matchedClassesCount + ' Classes)' : ''}` }}
         </button>
       </div>
     </template>
@@ -220,14 +251,16 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import BaseModal from '../BaseModal.vue'
 import { 
   LEARNING_SKILL_CATEGORIES,
   LEARNING_SKILL_TERMS,
   saveBatchLearningSkills 
 } from '../../composables/useLearningSkills.js'
-import { parseLearningSkillsCsv, parseLearningSkillsWorkbook } from '../../utils/learningSkillsCsvParser.js'
+import { useClassroom } from '../../composables/useClassroom.js'
+import { useMessage } from '../../composables/useMessage.js'
+import { parseCsvRows, parseXlsxToRows, parseLearningSkillsRows } from '../../utils/learningSkillsCsvParser.js'
 import { 
   UploadCloud, 
   AlertTriangle, 
@@ -247,18 +280,121 @@ const props = defineProps({
 
 const emit = defineEmits(['close', 'imported', 'open-guide'])
 
+const { classList, filteredClassList, activeClass } = useClassroom()
+const { alert } = useMessage()
+
 const defaultTerms = LEARNING_SKILL_TERMS
 const selectedTerm = ref(props.initialTerm || 'Progress Report')
 const isDragging = ref(false)
+const rawRows = ref(null)
 const parsedResult = ref(null)
 const parseError = ref(null)
 const prefillTeacherRatings = ref(true)
 const isSaving = ref(false)
 
+function resolveDefaultScope() {
+  if (filteredClassList.value && filteredClassList.value.length > 1) return 'ALL'
+  if (props.classId) return props.classId
+  if (filteredClassList.value && filteredClassList.value.length === 1) return filteredClassList.value[0].classId
+  return activeClass.value?.classId || 'ALL'
+}
+
+const selectedScope = ref(resolveDefaultScope())
+
+function getActiveStudentCount(cls) {
+  return Object.values(cls?.students || {}).filter(s => !s.archived).length
+}
+
+const totalAllClassesStudents = computed(() => {
+  const seen = new Set()
+  for (const cls of filteredClassList.value || []) {
+    for (const [id, s] of Object.entries(cls.students || {})) {
+      if (!s.archived) seen.add(id)
+    }
+  }
+  return seen.size
+})
+
+const availableRosterStudents = computed(() => {
+  if (selectedScope.value === 'ALL' && filteredClassList.value && filteredClassList.value.length > 0) {
+    const map = new Map()
+    for (const cls of filteredClassList.value) {
+      for (const [id, s] of Object.entries(cls.students || {})) {
+        if (s.archived) continue
+        if (map.has(id)) {
+          map.get(id).classEntries.push({ classId: cls.classId, className: cls.name })
+        } else {
+          map.set(id, {
+            ...s,
+            studentId: id,
+            classEntries: [{ classId: cls.classId, className: cls.name }]
+          })
+        }
+      }
+    }
+    return Array.from(map.values()).sort((a, b) => (a.lastName || '').localeCompare(b.lastName || ''))
+  }
+
+  const targetId = selectedScope.value || props.classId
+  const targetCls = (filteredClassList.value || []).find(c => c.classId === targetId)
+    || (classList.value || []).find(c => c.classId === targetId)
+
+  if (targetCls && targetCls.students) {
+    return Object.entries(targetCls.students)
+      .filter(([, s]) => !s.archived)
+      .map(([id, s]) => ({
+        ...s,
+        studentId: id,
+        classEntries: [{ classId: targetCls.classId, className: targetCls.name }]
+      }))
+      .sort((a, b) => (a.lastName || '').localeCompare(b.lastName || ''))
+  }
+
+  return (props.rosterStudents || []).map(s => ({
+    ...s,
+    classEntries: [{ classId: props.classId, className: 'Current Class' }]
+  }))
+})
+
+const matchedClassesCount = computed(() => {
+  if (!parsedResult.value?.matchedRecords?.length) return 0
+  const cIds = new Set()
+  for (const r of parsedResult.value.matchedRecords) {
+    for (const ce of (r.classEntries || [])) {
+      cIds.add(ce.classId)
+    }
+  }
+  return cIds.size
+})
+
 function resetState() {
   parsedResult.value = null
   parseError.value = null
 }
+
+function scanLoadedRows() {
+  if (!rawRows.value || rawRows.value.length < 2) return
+  parseError.value = null
+  try {
+    const result = parseLearningSkillsRows(rawRows.value, availableRosterStudents.value)
+    const entriesByStudent = new Map(
+      availableRosterStudents.value.map(s => [s.studentId, s.classEntries || []])
+    )
+    result.matchedRecords = (result.matchedRecords || []).map(rec => ({
+      ...rec,
+      classEntries: entriesByStudent.get(rec.studentId) || []
+    }))
+    parsedResult.value = result
+  } catch (err) {
+    parseError.value = err.message || 'Failed to parse responses file.'
+  }
+}
+
+watch(selectedScope, () => {
+  if (rawRows.value && rawRows.value.length >= 2) {
+    scanLoadedRows()
+  }
+})
 
 function processFile(file) {
   if (!file) return
@@ -271,13 +407,12 @@ function processFile(file) {
     try {
       if (isXlsx) {
         const buffer = e.target.result
-        const result = await parseLearningSkillsWorkbook(buffer, props.rosterStudents)
-        parsedResult.value = result
+        rawRows.value = await parseXlsxToRows(buffer)
       } else {
         const text = e.target.result
-        const result = parseLearningSkillsCsv(text, props.rosterStudents)
-        parsedResult.value = result
+        rawRows.value = parseCsvRows(text)
       }
+      scanLoadedRows()
     } catch (err) {
       parseError.value = err.message || 'Failed to parse responses file.'
     }
@@ -316,7 +451,7 @@ const skillCategories = [
 
 function onManualAssignStudent(unmatchedIndex, targetStudentId) {
   if (!targetStudentId || !parsedResult.value) return
-  const targetStudent = props.rosterStudents.find(s => s.studentId === targetStudentId)
+  const targetStudent = availableRosterStudents.value.find(s => s.studentId === targetStudentId)
   if (!targetStudent) return
 
   const unmatched = parsedResult.value.unmatchedRows[unmatchedIndex]
@@ -330,7 +465,8 @@ function onManualAssignStudent(unmatchedIndex, targetStudentId) {
     studentEmail: targetStudent.studentEmail || unmatched.rawEmail || '',
     matchType: 'manual',
     date: unmatched.dateStr || new Date().toISOString().slice(0, 10),
-    studentEval: unmatched.studentEval
+    studentEval: unmatched.studentEval,
+    classEntries: targetStudent.classEntries || [{ classId: props.classId, className: 'Current Class' }]
   }
 
   if (existingIdx !== -1) {
@@ -358,47 +494,66 @@ function onRemoveMatchedRecord(recordIndex) {
 }
 
 async function commitImport() {
-  if (!parsedResult.value || !props.classId) return
+  if (!parsedResult.value || !parsedResult.value.matchedRecords.length) return
 
   isSaving.value = true
   try {
-    const rawRecords = parsedResult.value.matchedRecords.map(item => ({
-      classId: String(props.classId),
-      studentId: String(item.studentId),
-      term: String(selectedTerm.value),
-      date: String(item.date || new Date().toISOString().slice(0, 10)),
-      studentEval: {
-        responsibility: item.studentEval?.responsibility || null,
-        organization: item.studentEval?.organization || null,
-        independentWork: item.studentEval?.independentWork || null,
-        collaboration: item.studentEval?.collaboration || null,
-        initiative: item.studentEval?.initiative || null,
-        selfRegulation: item.studentEval?.selfRegulation || null
-      },
-      teacherEval: prefillTeacherRatings.value ? {
-        responsibility: item.studentEval?.responsibility || null,
-        organization: item.studentEval?.organization || null,
-        independentWork: item.studentEval?.independentWork || null,
-        collaboration: item.studentEval?.collaboration || null,
-        initiative: item.studentEval?.initiative || null,
-        selfRegulation: item.studentEval?.selfRegulation || null
-      } : {
-        responsibility: null,
-        organization: null,
-        independentWork: null,
-        collaboration: null,
-        initiative: null,
-        selfRegulation: null
+    const rawRecords = []
+    const updatedClassNames = new Set()
+
+    for (const item of parsedResult.value.matchedRecords) {
+      const entries = (item.classEntries && item.classEntries.length > 0)
+        ? item.classEntries
+        : [{ classId: String(props.classId), className: 'Current Class' }]
+
+      for (const ce of entries) {
+        if (ce.className) updatedClassNames.add(ce.className)
+        rawRecords.push({
+          classId: String(ce.classId),
+          studentId: String(item.studentId),
+          term: String(selectedTerm.value),
+          date: String(item.date || new Date().toISOString().slice(0, 10)),
+          studentEval: {
+            responsibility: item.studentEval?.responsibility || null,
+            organization: item.studentEval?.organization || null,
+            independentWork: item.studentEval?.independentWork || null,
+            collaboration: item.studentEval?.collaboration || null,
+            initiative: item.studentEval?.initiative || null,
+            selfRegulation: item.studentEval?.selfRegulation || null
+          },
+          teacherEval: prefillTeacherRatings.value ? {
+            responsibility: item.studentEval?.responsibility || null,
+            organization: item.studentEval?.organization || null,
+            independentWork: item.studentEval?.independentWork || null,
+            collaboration: item.studentEval?.collaboration || null,
+            initiative: item.studentEval?.initiative || null,
+            selfRegulation: item.studentEval?.selfRegulation || null
+          } : {
+            responsibility: null,
+            organization: null,
+            independentWork: null,
+            collaboration: null,
+            initiative: null,
+            selfRegulation: null
+          }
+        })
       }
-    }))
+    }
 
     const cleanRecords = JSON.parse(JSON.stringify(rawRecords))
     await saveBatchLearningSkills(cleanRecords)
+    const studentCount = parsedResult.value.matchedRecords.length
+    const classNamesList = Array.from(updatedClassNames)
+
     emit('imported', {
       term: selectedTerm.value,
-      count: cleanRecords.length
+      count: studentCount
     })
     emit('close')
+
+    if (classNamesList.length > 1) {
+      await alert(`Successfully imported ${selectedTerm.value} learning skills for ${studentCount} students across ${classNamesList.length} classes (${classNamesList.join(', ')})!`, 'Import Complete')
+    }
   } catch (err) {
     console.error('Import save error:', err)
     parseError.value = `Failed to save learning skills: ${err.message}`
@@ -413,6 +568,53 @@ async function commitImport() {
   display: flex;
   flex-direction: column;
   gap: 18px;
+}
+
+.lsim-top-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.lsim-scope-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  flex-wrap: wrap;
+}
+
+.lsim-scope-select {
+  flex: 1;
+  min-width: 220px;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.lsim-name-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.lsim-class-chip {
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--primary-light);
+  color: var(--primary);
+  white-space: nowrap;
 }
 
 .lsim-term-selector {

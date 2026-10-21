@@ -30,6 +30,27 @@
       <!-- TAB 1: IMPORT SURVEY DATA                                 -->
       <!-- ══════════════════════════════════════════════════════════ -->
       <div v-if="activeTab === 'import'" class="sism-tab-content">
+        <!-- Target Class / Multi-Class Scope Bar -->
+        <div v-if="filteredClassList.length > 0" class="sism-scope-bar">
+          <label for="sism-target-scope" class="sism-scope-label">Target Roster:</label>
+          <select
+            id="sism-target-scope"
+            v-model="selectedScope"
+            class="sism-scope-select"
+          >
+            <option v-if="filteredClassList.length > 1" value="ALL">
+              All Current Session Classes ({{ filteredClassList.length }} classes · {{ totalAllClassesStudents }} students)
+            </option>
+            <option
+              v-for="cls in filteredClassList"
+              :key="cls.classId"
+              :value="cls.classId"
+            >
+              {{ cls.classType === 'elementary' ? cls.name : `${cls.name} (P${cls.periodNumber})` }} ({{ getActiveStudentCount(cls) }} students)
+            </option>
+          </select>
+        </div>
+
         <!-- Dropzone -->
         <div
           class="sism-dropzone"
@@ -52,7 +73,7 @@
                 {{ parsedResult ? 'Choose or drop a different file' : 'Click to select or drag & drop Microsoft Forms Excel (.xlsx) or CSV' }}
               </span>
               <span class="sism-secondary-txt">
-                Automatically matches students by school email, student ID, or full name
+                Automatically matches students by school email, student ID, or full name across {{ selectedScope === 'ALL' && filteredClassList.length > 1 ? 'all active classes' : 'selected class' }}
               </span>
             </div>
           </label>
@@ -84,7 +105,7 @@
                   {{ loadedFileName }}
                 </div>
                 <div class="sism-active-file-sub">
-                  Target Class: <strong>{{ currentClassName }}</strong> ({{ availableRosterStudents.length }} enrolled)
+                  Matching Scope: <strong>{{ currentScopeLabel }}</strong> ({{ availableRosterStudents.length }} students)
                 </div>
               </div>
             </div>
@@ -93,9 +114,9 @@
                 type="button" 
                 class="sism-btn-mini" 
                 @click="reScanRoster"
-                title="Re-scan current class roster against this loaded file"
+                title="Re-scan selected roster against this loaded file"
               >
-                <RefreshCw :size="12" /> Re-scan Class
+                <RefreshCw :size="12" /> Re-scan
               </button>
               <button 
                 type="button" 
@@ -150,7 +171,16 @@
               <tbody>
                 <tr v-for="(rec, idx) in parsedResult.matchedRecords" :key="rec.studentId">
                   <td class="sism-student-name">
-                    <div class="sism-name-txt">{{ rec.lastName }}, {{ rec.firstName }}</div>
+                    <div class="sism-name-row">
+                      <span class="sism-name-txt">{{ rec.lastName }}, {{ rec.firstName }}</span>
+                      <span
+                        v-for="ce in (rec.classEntries || [])"
+                        :key="ce.classId"
+                        class="sism-class-chip"
+                      >
+                        {{ ce.className }}
+                      </span>
+                    </div>
                     <div class="sism-email-txt">{{ rec.studentEmail || rec.studentId }}</div>
                   </td>
                   <td>
@@ -229,7 +259,7 @@
                       :key="st.studentId"
                       :value="st.studentId"
                     >
-                      {{ st.lastName }}, {{ st.firstName }}
+                      {{ st.lastName }}, {{ st.firstName }}{{ selectedScope === 'ALL' && st.classEntries?.length ? ' (' + st.classEntries.map(c => c.className).join(', ') + ')' : '' }}
                     </option>
                   </select>
                 </div>
@@ -342,7 +372,7 @@
           :disabled="isSaving"
           @click="applyImport"
         >
-          <Check :size="15" /> {{ isSaving ? 'Saving...' : `Import Data for ${parsedResult.matchedRecords.length} Students` }}
+          <Check :size="15" /> {{ isSaving ? 'Saving...' : `Import Data for ${parsedResult.matchedRecords.length} Students${matchedClassesCount > 1 ? ' (' + matchedClassesCount + ' Classes)' : ''}` }}
         </button>
       </div>
     </template>
@@ -397,31 +427,97 @@ const isSaving = ref(false)
 
 const rawSurveyRows = ref(null)
 const loadedFileName = ref('')
-const lastScannedClassId = ref('')
+const lastScannedScope = ref('')
 
 const parsedResult = ref(null)
 const parseError = ref(null)
 
-const { sortedRoster, activeClass, classList, importStudentSurveys } = useClassroom()
+const { sortedRoster, activeClass, classList, filteredClassList, importStudentSurveys } = useClassroom()
 const { alert } = useMessage()
 
-const currentClassId = computed(() => {
-  return props.classId || activeClass.value?.classId || ''
+function resolveDefaultScope() {
+  if (filteredClassList.value && filteredClassList.value.length > 1) return 'ALL'
+  if (props.classId) return props.classId
+  if (filteredClassList.value && filteredClassList.value.length === 1) return filteredClassList.value[0].classId
+  return activeClass.value?.classId || 'ALL'
+}
+
+const selectedScope = ref(resolveDefaultScope())
+
+function getActiveStudentCount(cls) {
+  return Object.values(cls?.students || {}).filter(s => !s.archived).length
+}
+
+const totalAllClassesStudents = computed(() => {
+  const seen = new Set()
+  for (const cls of filteredClassList.value || []) {
+    for (const [id, s] of Object.entries(cls.students || {})) {
+      if (!s.archived) seen.add(id)
+    }
+  }
+  return seen.size
 })
 
 const availableRosterStudents = computed(() => {
+  if (selectedScope.value === 'ALL' && filteredClassList.value && filteredClassList.value.length > 0) {
+    const map = new Map()
+    for (const cls of filteredClassList.value) {
+      for (const [id, s] of Object.entries(cls.students || {})) {
+        if (s.archived) continue
+        if (map.has(id)) {
+          map.get(id).classEntries.push({ classId: cls.classId, className: cls.name })
+        } else {
+          map.set(id, {
+            ...s,
+            studentId: id,
+            classEntries: [{ classId: cls.classId, className: cls.name }]
+          })
+        }
+      }
+    }
+    return Array.from(map.values()).sort((a, b) => (a.lastName || '').localeCompare(b.lastName || ''))
+  }
+
+  const targetId = selectedScope.value || props.classId || activeClass.value?.classId
+  const targetCls = (filteredClassList.value || []).find(c => c.classId === targetId)
+    || (classList.value || []).find(c => c.classId === targetId)
+    || activeClass.value
+
+  if (targetCls && targetCls.students) {
+    return Object.entries(targetCls.students)
+      .filter(([, s]) => !s.archived)
+      .map(([id, s]) => ({
+        ...s,
+        studentId: id,
+        classEntries: [{ classId: targetCls.classId, className: targetCls.name }]
+      }))
+      .sort((a, b) => (a.lastName || '').localeCompare(b.lastName || ''))
+  }
+
   if (props.rosterStudents && Array.isArray(props.rosterStudents) && props.rosterStudents.length > 0) {
     return props.rosterStudents
   }
   return sortedRoster.value || []
 })
 
-const currentClassName = computed(() => {
-  if (currentClassId.value && classList.value) {
-    const c = classList.value.find(item => item.classId === currentClassId.value)
-    if (c?.name) return c.name
+const currentScopeLabel = computed(() => {
+  if (selectedScope.value === 'ALL' && filteredClassList.value && filteredClassList.value.length > 1) {
+    return `All Current Session Classes (${filteredClassList.value.length})`
   }
-  return activeClass.value?.name || 'Current Class'
+  const targetId = selectedScope.value || props.classId || activeClass.value?.classId
+  const c = (classList.value || []).find(item => item.classId === targetId)
+  return c?.name || activeClass.value?.name || 'Current Class'
+})
+
+const matchedClassesCount = computed(() => {
+  if (!parsedResult.value?.matchedRecords?.length) return 0
+  const cIds = new Set()
+  for (const r of parsedResult.value.matchedRecords) {
+    for (const ce of (r.classEntries || [])) {
+      cIds.add(ce.classId)
+    }
+  }
+  return cIds.size
 })
 
 function isClassOnlyComms(val) {
@@ -469,25 +565,32 @@ function reScanRoster() {
   parseError.value = null
   try {
     const res = parseStudentInfoRows(rawSurveyRows.value, availableRosterStudents.value)
+    const entriesByStudent = new Map(
+      availableRosterStudents.value.map(s => [s.studentId, s.classEntries || []])
+    )
+    res.matchedRecords = (res.matchedRecords || []).map(rec => ({
+      ...rec,
+      classEntries: entriesByStudent.get(rec.studentId) || []
+    }))
     parsedResult.value = res
-    lastScannedClassId.value = currentClassId.value
+    lastScannedScope.value = selectedScope.value
   } catch (err) {
     console.error('Re-scan error:', err)
-    parseError.value = err.message || 'Failed to scan survey responses for current class.'
+    parseError.value = err.message || 'Failed to scan survey responses.'
   }
 }
 
 function clearLoadedFile() {
   rawSurveyRows.value = null
   loadedFileName.value = ''
-  lastScannedClassId.value = ''
+  lastScannedScope.value = ''
   parsedResult.value = null
   parseError.value = null
 }
 
-watch([currentClassId, availableRosterStudents], ([newClassId]) => {
+watch([selectedScope, availableRosterStudents], ([newScope]) => {
   if (rawSurveyRows.value && rawSurveyRows.value.length >= 2) {
-    if (lastScannedClassId.value !== newClassId) {
+    if (lastScannedScope.value !== newScope) {
       reScanRoster()
     }
   } else {
@@ -497,8 +600,11 @@ watch([currentClassId, availableRosterStudents], ([newClassId]) => {
 
 watch(() => props.show, (isOpen) => {
   if (isOpen) {
+    if (!selectedScope.value || (selectedScope.value !== 'ALL' && !(filteredClassList.value || []).some(c => c.classId === selectedScope.value))) {
+      selectedScope.value = resolveDefaultScope()
+    }
     if (rawSurveyRows.value && rawSurveyRows.value.length >= 2) {
-      if (lastScannedClassId.value !== currentClassId.value) {
+      if (lastScannedScope.value !== selectedScope.value) {
         reScanRoster()
       }
     }
@@ -572,7 +678,8 @@ function assignUnmatchedToStudent(unmatchedIdx, studentId) {
     lastName: st.lastName,
     studentEmail: st.studentEmail || (unmatched.submittedEmails[0] || ''),
     surveyData: unmatched.surveyData,
-    matchMethod: 'manual_override'
+    matchMethod: 'manual_override',
+    classEntries: st.classEntries || []
   })
 
   // Remove from unmatched
@@ -581,20 +688,47 @@ function assignUnmatchedToStudent(unmatchedIdx, studentId) {
 
 async function applyImport() {
   if (!parsedResult.value || !parsedResult.value.matchedRecords.length) return
-  const targetClassId = currentClassId.value
-  if (!targetClassId) return
 
   isSaving.value = true
   try {
-    const payload = parsedResult.value.matchedRecords.map(r => ({
-      studentId: r.studentId,
-      surveyData: r.surveyData
-    }))
+    const byClass = new Map()
+    const classNamesById = new Map()
+    const fallbackClassId = props.classId || activeClass.value?.classId
 
-    await importStudentSurveys(targetClassId, payload)
-    emit('imported', { count: payload.length, classId: targetClassId })
+    for (const r of parsedResult.value.matchedRecords) {
+      const entries = (r.classEntries && r.classEntries.length > 0)
+        ? r.classEntries
+        : (fallbackClassId ? [{ classId: fallbackClassId, className: currentScopeLabel.value }] : [])
+
+      for (const ce of entries) {
+        if (!byClass.has(ce.classId)) {
+          byClass.set(ce.classId, [])
+          classNamesById.set(ce.classId, ce.className || ce.classId)
+        }
+        byClass.get(ce.classId).push({
+          studentId: r.studentId,
+          surveyData: r.surveyData
+        })
+      }
+    }
+
+    if (byClass.size === 0) return
+
+    for (const [cId, payload] of byClass.entries()) {
+      await importStudentSurveys(cId, payload)
+    }
+
+    const totalStudents = parsedResult.value.matchedRecords.length
+    const updatedClassNames = Array.from(classNamesById.values())
+
+    emit('imported', { count: totalStudents, classIds: Array.from(byClass.keys()) })
     emit('close')
-    await alert(`Successfully imported intake survey data for ${payload.length} students into ${currentClassName.value}!`, 'Import Complete')
+
+    if (updatedClassNames.length === 1) {
+      await alert(`Successfully imported intake survey data for ${totalStudents} students into ${updatedClassNames[0]}!`, 'Import Complete')
+    } else {
+      await alert(`Successfully imported intake survey data for ${totalStudents} students across ${updatedClassNames.length} classes (${updatedClassNames.join(', ')})!`, 'Import Complete')
+    }
   } catch (err) {
     console.error('Failed to import surveys:', err)
     await alert('Failed to save survey data. Please try again.')
@@ -609,6 +743,56 @@ async function applyImport() {
   display: flex;
   flex-direction: column;
   gap: 1rem;
+}
+
+.sism-scope-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  flex-wrap: wrap;
+}
+
+.sism-scope-label {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.sism-scope-select {
+  flex: 1;
+  min-width: 220px;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.sism-name-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.sism-class-chip {
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--primary-light);
+  color: var(--primary);
+  white-space: nowrap;
 }
 
 /* Tabs */

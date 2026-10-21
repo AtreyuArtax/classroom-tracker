@@ -1,5 +1,25 @@
 <template>
   <div class="csv-guide">
+    <!-- PowerSchool Export Guide -->
+    <div class="csv-guide__powerschool">
+      <div class="csv-guide__powerschool-header">
+        <Sparkles :size="16" class="csv-guide__powerschool-icon" />
+        <h4 class="csv-guide__powerschool-title">Finding Your CSV in PowerSchool</h4>
+      </div>
+      <p class="csv-guide__powerschool-desc">
+        To export your roster with student IDs, periods, and parent contact information:
+      </p>
+      <ol class="csv-guide__powerschool-steps">
+        <li>Log into <strong>PowerSchool</strong> and open <strong>Reports</strong> (or System Reports).</li>
+        <li>Select and run the report: <strong>Student Parent/Guardian Contact List (Teachers)</strong>.</li>
+        <li>Choose <strong>CSV</strong> as the report output format and click Submit / Download.</li>
+        <li>Upload or drop the downloaded <code>.csv</code> file into Classroom Tracker!</li>
+      </ol>
+      <p class="csv-guide__powerschool-footer">
+        Classroom Tracker automatically detects student IDs, names, multi-period class schedules, and parent contacts from this export.
+      </p>
+    </div>
+
     <div class="csv-guide__intro">
       <p class="csv-guide__text">
         Classroom Tracker can parse standard classroom rosters or multi-class schedule exports directly from your school information system (e.g., <strong>PowerSchool</strong>).
@@ -158,6 +178,10 @@
   </div>
 </template>
 
+<script setup>
+import { Sparkles } from 'lucide-vue-next'
+</script>
+
 <style scoped>
 .csv-guide {
   font-size: 0.85rem;
@@ -171,6 +195,65 @@
   border-radius: var(--radius-md);
   padding: 16px;
   margin-top: 12px;
+}
+
+.csv-guide__powerschool {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--primary);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.csv-guide__powerschool-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.csv-guide__powerschool-icon {
+  color: var(--primary);
+  flex-shrink: 0;
+}
+
+.csv-guide__powerschool-title {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.csv-guide__powerschool-desc,
+.csv-guide__powerschool-footer {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+}
+
+.csv-guide__powerschool-steps {
+  margin: 0;
+  padding-left: 20px;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.csv-guide__powerschool-steps strong {
+  color: var(--text);
+}
+
+.csv-guide__powerschool-steps code {
+  background: var(--bg-secondary);
+  padding: 2px 4px;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 0.75rem;
+  color: var(--text);
 }
 
 .csv-guide__intro {
