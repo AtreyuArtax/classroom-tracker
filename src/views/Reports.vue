@@ -19,10 +19,10 @@
       />
 
       <!-- ══ RIGHT PANEL ════════════════════════════════════════════════ -->
-      <main class="reports__main" :class="{ 'reports__main--sidebar-collapsed': isSidebarCollapsed && sidebarClassId && filteredClassList.length > 0 }">
+      <div class="reports__panel" :class="{ 'reports__panel--sidebar-collapsed': isSidebarCollapsed && sidebarClassId && filteredClassList.length > 0 }">
 
-        <!-- Pillar Navigation Bar + Grade Filter Pills + Inline Time Filter (Hidden in Student 360 mode) -->
-        <div v-if="rightMode !== 'dossier'" class="reports__header-bar">
+        <!-- Pillar Navigation Bar + Grade Filter Pills + Inline Time Filter (Fixed Header, Hidden in Student 360 mode) -->
+        <header v-if="rightMode !== 'dossier'" class="reports__header-bar">
           <div class="reports__pillar-nav" role="tablist" aria-label="Reports Mode">
             <button 
               class="reports__pillar-btn"
@@ -80,9 +80,10 @@
               >{{ p.label }}</button>
             </div>
           </div>
-        </div>
+        </header>
 
-        <!-- ── PILLAR 3: STUDENT 360 DOSSIER ────────────────────────── -->
+        <main class="reports__main">
+          <!-- ── PILLAR 3: STUDENT 360 DOSSIER ────────────────────────── -->
         <template v-if="rightMode === 'dossier' && dossier.selectedStudentId.value">
           <Student360 
             :student-id="dossier.selectedStudentId.value" 
@@ -183,7 +184,8 @@
           />
         </template>
 
-      </main>
+        </main>
+      </div>
     </div>
 
     <!-- Batch Print Modal Component -->
@@ -985,23 +987,27 @@ const washroomChartOptions = {
 <style scoped>
 .reports { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: var(--bg-secondary); }
 .reports__layout { display: flex; flex: 1; overflow: hidden; position: relative; }
-.reports__main { flex: 1; overflow-y: auto; padding: 8px 14px; display: flex; flex-direction: column; gap: 8px; transition: padding-left 0.25s cubic-bezier(0.4, 0, 0.2, 1); }
-.reports__main.reports__main--sidebar-collapsed { padding-left: 32px; }
-.reports__header-bar { display: flex; align-items: center; justify-content: space-between; gap: 6px 8px; flex-wrap: wrap; min-width: 0; min-height: 36px; position: sticky; top: 0; z-index: 20; background: var(--bg-secondary); padding: 2px 0 6px 0; flex-shrink: 0; }
+.reports__panel { flex: 1; display: flex; flex-direction: column; min-width: 0; height: 100%; overflow: hidden; transition: padding-left 0.25s cubic-bezier(0.4, 0, 0.2, 1); }
+.reports__panel--sidebar-collapsed { padding-left: 32px; }
+.reports__header-bar { display: flex; align-items: center; justify-content: space-between; gap: 6px 8px; flex-wrap: wrap; min-width: 0; min-height: 44px; background: var(--surface); border-bottom: 1px solid var(--border); padding: 6px 14px; flex-shrink: 0; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03); z-index: 20; box-sizing: border-box; }
+.reports__main { flex: 1; overflow-y: auto; padding: 8px 14px; display: flex; flex-direction: column; gap: 8px; }
 .reports__header-controls { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-left: auto; }
 .reports__pillar-nav { display: flex; flex-wrap: wrap; gap: 2px; background: var(--surface); border: 1px solid var(--border); padding: 2px; border-radius: var(--radius-md); }
 .reports__pillar-btn { display: flex; align-items: center; gap: 4px; background: none; border: none; padding: 4px 8px; border-radius: var(--radius-sm); font-size: 0.74rem; font-weight: 600; color: var(--text-secondary); cursor: pointer; transition: all 0.15s ease; white-space: nowrap; line-height: 1.2; }
 .reports__pillar-btn:hover { color: var(--text); background: var(--surface-hover); }
 .reports__pillar-btn--active { background: var(--primary); color: white; }
 @media (max-width: 1300px) {
+  .reports__header-bar { padding: 6px 12px; }
   .reports__main { padding: 8px 12px; }
   .reports__pillar-btn { padding: 4px 6px; font-size: 0.72rem; gap: 3.5px; }
   .reports__period-btn { padding: 4px 6px; font-size: 0.72rem; }
 }
 @media (max-width: 1024px) { 
+  .reports__header-bar { padding: 5px 10px; }
   .reports__main { padding: 6px 10px; }
 }
 @media (max-height: 760px) {
+  .reports__header-bar { min-height: 38px; padding: 4px 10px; }
   .reports__main { padding: 6px 10px; gap: 6px; }
   .reports__pillar-btn { padding: 3px 7px; font-size: 0.72rem; }
   .reports__period-btn { padding: 3px 6px; font-size: 0.72rem; }

@@ -375,7 +375,7 @@
           <div class="mindset-quad-card mindset-quad-card--red">
             <div class="mindset-quad-card__header">
               <div class="mindset-quad-card__title-group">
-                <span class="mindset-quad-card__title">The Aspiration Gap ⚠️</span>
+                <span class="mindset-quad-card__title">The Aspiration Gap</span>
                 <span class="mindset-quad-card__sub">High Goal (≥75%) · Marks Lagging (&lt;75%) — High Priority Check-in</span>
               </div>
               <span class="mindset-quad-card__badge">{{ aspirationGapList.length }}</span>

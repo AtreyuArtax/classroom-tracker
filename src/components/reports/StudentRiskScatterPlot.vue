@@ -1,8 +1,13 @@
 <template>
   <div class="risk-plot">
     <div class="risk-plot__header">
-      <!-- Loss Factors Filter Group -->
-      <div class="risk-plot__filter-group" role="group" aria-label="Loss Factors Filter">
+      <!-- Loss Factors Filter Group (only in scatter plot view) -->
+      <div 
+        v-if="viewMode === 'scatter'" 
+        class="risk-plot__filter-group" 
+        role="group" 
+        aria-label="Loss Factors Filter"
+      >
         <button
           type="button"
           class="risk-plot__filter-chip"
@@ -36,7 +41,10 @@
       </div>
 
       <!-- View Switcher -->
-      <div class="risk-plot__view-switcher">
+      <div 
+        class="risk-plot__view-switcher"
+        :class="{ 'risk-plot__view-switcher--right': viewMode === 'list' }"
+      >
         <button 
           class="risk-plot__view-btn"
           :class="{ 'risk-plot__view-btn--active': viewMode === 'scatter' }"
@@ -244,8 +252,12 @@
       </div>
     </div>
 
-    <!-- Bottom summary pills (5 columns single-row) -->
-    <div class="risk-plot__summary" :class="{ 'risk-plot__summary--5col': unassessedCount > 0 }">
+    <!-- Bottom summary pills (5 columns single-row, only in scatter view) -->
+    <div 
+      v-if="viewMode === 'scatter'" 
+      class="risk-plot__summary" 
+      :class="{ 'risk-plot__summary--5col': unassessedCount > 0 }"
+    >
       <div class="risk-plot__summary-card risk-plot__summary-card--red" @click="viewMode = 'list'">
         <span class="count">{{ criticalCount }}</span>
         <span class="label">Critical</span>
@@ -821,13 +833,16 @@ const unassessedCount = computed(() => matrixData.value.unassessedCount)
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
+.risk-plot__view-switcher--right {
+  margin-left: auto;
+}
+
 /* List View Styles */
 .risk-plot__list-view {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
   gap: 8px;
-  flex: 1 1 0px;
-  min-height: 220px;
+  width: 100%;
 }
 
 .risk-plot__list-card {
@@ -883,8 +898,6 @@ const unassessedCount = computed(() => matrixData.value.unassessedCount)
   display: flex;
   flex-direction: column;
   gap: 5px;
-  max-height: 220px;
-  overflow-y: auto;
 }
 
 .list-card__student-item {
