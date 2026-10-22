@@ -257,12 +257,16 @@ function getSparklinePath(data, width, height) {
 .student-sidebar {
   background: var(--surface);
   border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  border-bottom-right-radius: var(--radius-md);
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
   width: 244px; /* Fits 180px ClassSwitcher + privacy & collapse buttons without shrinking */
   min-width: 0;
-  height: 100%;
+  height: calc(100% - 8px);
+  margin-bottom: 8px;
+  box-sizing: border-box;
   position: relative;
   z-index: 30;
   transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.25s ease;
@@ -275,6 +279,7 @@ function getSparklinePath(data, width, height) {
   min-width: 0;
   height: 100%;
   overflow: hidden;
+  border-bottom-right-radius: var(--radius-md);
   transition: opacity 0.2s ease;
 }
 
@@ -288,8 +293,16 @@ function getSparklinePath(data, width, height) {
 .student-sidebar--collapsed {
   width: 0;
   border-right-color: transparent;
+  border-bottom-color: transparent;
   overflow: visible;
   pointer-events: none;
+}
+
+@media (max-width: 1024px), (max-height: 760px) {
+  .student-sidebar {
+    height: calc(100% - 6px);
+    margin-bottom: 6px;
+  }
 }
 
 .student-sidebar--collapsed .student-sidebar__inner {
@@ -435,8 +448,10 @@ function getSparklinePath(data, width, height) {
   .student-sidebar {
     width: 100%;
     height: auto;
+    margin-bottom: 0;
     border-right: none;
     border-bottom: 1px solid var(--border);
+    border-bottom-right-radius: 0;
   }
 
   .student-sidebar__header,
@@ -467,7 +482,7 @@ function getSparklinePath(data, width, height) {
 
 .student-sidebar__roster {
   list-style: none;
-  padding: 0;
+  padding: 0 0 4px 0;
   margin: 0;
 }
 

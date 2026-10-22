@@ -356,6 +356,7 @@ const metricSubtitle = computed(() => matrixData.value.metricSubtitle)
 
 <style scoped>
 .risk-plot {
+  flex: 1 0 auto;
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -367,6 +368,7 @@ const metricSubtitle = computed(() => matrixData.value.metricSubtitle)
   align-items: center;
   flex-wrap: wrap;
   gap: 6px 12px;
+  flex-shrink: 0;
 }
 
 .risk-plot__legend-bar {
@@ -377,6 +379,7 @@ const metricSubtitle = computed(() => matrixData.value.metricSubtitle)
   font-size: 0.7rem;
   font-weight: 600;
   padding: 1px 0;
+  flex-shrink: 0;
 }
 
 .legend-pill {
@@ -404,7 +407,8 @@ const metricSubtitle = computed(() => matrixData.value.metricSubtitle)
 
 .risk-plot__canvas {
   position: relative;
-  height: clamp(300px, 41vh, 395px);
+  flex: 1 1 0px;
+  min-height: 220px;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
@@ -862,7 +866,8 @@ const metricSubtitle = computed(() => matrixData.value.metricSubtitle)
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
   gap: 8px;
-  min-height: clamp(295px, 40vh, 385px);
+  flex: 1 1 0px;
+  min-height: 220px;
 }
 
 .risk-plot__list-card {
@@ -1056,6 +1061,7 @@ const metricSubtitle = computed(() => matrixData.value.metricSubtitle)
   flex-wrap: nowrap;
   gap: 6px;
   width: 100%;
+  flex-shrink: 0;
 }
 
 .risk-plot__summary-card {
@@ -1102,9 +1108,7 @@ const metricSubtitle = computed(() => matrixData.value.metricSubtitle)
 .risk-plot__summary-card--slate  .count { color: var(--color-neutral); }
 
 @media (max-height: 820px) {
-  .risk-plot { gap: 6px; }
-  .risk-plot__canvas { height: clamp(285px, 39vh, 330px); }
-  .risk-plot__list-view { min-height: clamp(280px, 38vh, 325px); }
+  .risk-plot { gap: 5px; }
   .risk-plot__dot { width: 25px; height: 25px; font-size: 0.64rem; }
   .risk-plot__summary-card { padding: 3px 6px; }
   .risk-plot__summary-card .count { font-size: 0.88rem; }
