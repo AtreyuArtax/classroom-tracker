@@ -165,6 +165,23 @@ export function cleanUnitName(name) {
   return cleaned
 }
 
+export function formatUnitPillLabel(name) {
+  if (!name) return ''
+  let cleaned = String(name)
+    .replace(/^\[Grade\s*\d+\]\s*/i, '')
+    .replace(/^unit\s+\d+\s*[:\-–—]\s*/i, '')
+    .trim()
+
+  cleaned = cleanUnitName(cleaned).replace(/…$/, '')
+  cleaned = cleaned.replace(/\s+and\s+/gi, ' & ')
+
+  if (cleaned.length > 22) {
+    cleaned = cleaned.substring(0, 20).replace(/[\s,&:\-–—]+$/, '') + '…'
+  }
+
+  return cleaned
+}
+
 export function detectGradeFromClassName(name = '') {
   const grades = parseGradesFromClass(name)
   return grades.length > 0 ? grades.join('/') : ''

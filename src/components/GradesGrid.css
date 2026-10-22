@@ -6,8 +6,14 @@
   padding: 6px 14px;
   background: var(--surface);
   border-bottom: 1px solid var(--border);
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
   min-height: 38px;
+}
+
+.grades__filter-bar::-webkit-scrollbar {
+  display: none;
 }
 
 .grades__filter-divider {
@@ -22,6 +28,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
+  flex-shrink: 0;
 }
 
 .grades__filter-label {
@@ -31,13 +38,15 @@
   text-transform: uppercase;
   letter-spacing: 0.05em;
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .grades__filter-chips {
   display: flex;
   align-items: center;
   gap: 4px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  flex-shrink: 0;
 }
 
 .grid-chip {
@@ -53,10 +62,16 @@
   color: var(--text-secondary);
   cursor: pointer;
   transition: all 0.15s ease;
-  max-width: 200px;
+  max-width: 150px;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.grid-chip__label {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  min-width: 0;
 }
 
 .grid-chip:hover {

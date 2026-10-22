@@ -10,9 +10,37 @@
       <div class="kpi-tile kpi-tile--academics">
         <div class="kpi-tile__header">
           <span class="kpi-tile__label"><GraduationCap :size="13" /> ACADEMICS</span>
-          <span v-if="failingStudentsCount > 0" class="kpi-tile__badge kpi-tile__badge--danger">
-            <AlertTriangle :size="10" /> {{ failingStudentsCount }} failing
-          </span>
+          <div v-if="failingStudentsList.length > 0" class="kpi-tile__badge-wrap" tabindex="0">
+            <span class="kpi-tile__badge kpi-tile__badge--danger kpi-tile__badge--interactive">
+              <AlertTriangle :size="10" /> {{ failingStudentsList.length }} failing
+            </span>
+
+            <!-- Hover Popover listing failing students with click-to-Student360 -->
+            <div class="kpi-tile__popover" role="region" aria-label="Failing Students">
+              <div class="kpi-tile__popover-title">
+                <span>Failing Students (&lt;50%)</span>
+                <span class="kpi-tile__popover-count">{{ failingStudentsList.length }}</span>
+              </div>
+              <ul class="kpi-tile__popover-list">
+                <li
+                  v-for="st in failingStudentsList"
+                  :key="'fail-' + st.studentId"
+                  class="kpi-tile__popover-item"
+                  role="button"
+                  tabindex="0"
+                  @click.stop="openFromQueue(st.studentId)"
+                  @keydown.enter.stop="openFromQueue(st.studentId)"
+                >
+                  <span class="kpi-tile__popover-name" :title="st.name">{{ st.name }}</span>
+                  <div class="kpi-tile__popover-right">
+                    <span class="kpi-tile__popover-grade">{{ formatGradeDisplay(st.grade) }}</span>
+                    <span class="kpi-tile__popover-arrow">→</span>
+                  </div>
+                </li>
+              </ul>
+              <div class="kpi-tile__popover-hint">Click a student to open Student 360 →</div>
+            </div>
+          </div>
           <span v-else class="kpi-tile__badge kpi-tile__badge--ok">
             <Check :size="10" /> All passing
           </span>
@@ -130,121 +158,167 @@
       <div class="reports__followup-col">
         <div class="reports__col-header">
           <h4 class="reports__col-title">ACTION REQUIRED</h4>
-          <span
-            v-if="pendingEmailCount > 0"
-            class="reports__pending-tag"
-            title="Emails opened in your mail app but not yet confirmed as sent. Open the student to confirm."
-          >
-            <Mail :size="11" /> {{ pendingEmailCount }} to confirm
-          </span>
-          <span class="reports__col-badge" :class="{ 'reports__col-badge--zero': evaluatedActionItems.active.length === 0 }">
-            {{ evaluatedActionItems.active.length }} Flagged
-          </span>
-        </div>
 
-        <div v-if="evaluatedActionItems.active.length === 0" class="reports__followup-empty">
-          <Check :size="15" class="reports__followup-ok-icon" />
-          <span class="reports__followup-ok">No active alerts requiring attention</span>
-        </div>
-
-        <ul v-else class="reports__followup-list">
-          <li
-            v-for="(item, idx) in activeActionItemsVisible"
-            :key="item.studentId + '-' + item.reason"
-            class="reports__followup-item"
-            :class="[
-              `reports__followup-item--${item.severity}`,
-              { 'reports__followup-item--flip-up': idx >= Math.max(0, activeActionItemsVisible.length - 3) }
-            ]"
-            role="button"
-            tabindex="0"
-            @click="openFromQueue(item.studentId)"
-            @keydown.enter="openFromQueue(item.studentId)"
-          >
-            <div class="reports__followup-info">
-              <div class="reports__followup-row">
-                <span class="reports__followup-name" :title="item.name">{{ item.name }}</span>
-                <span v-if="item.reTriggered" class="reports__retrigger-tag">Re-triggered</span>
-              </div>
-              <div class="reports__followup-meta">
-                <span v-if="item.grade !== null" class="reports__grade-badge" :class="{ 'reports__grade-badge--failing': item.grade < 50 }">
-                  {{ formatGradeDisplay(item.grade) }}
-                </span>
-                <span class="reports__followup-reason" :title="item.reason">{{ item.reason }}</span>
-              </div>
-            </div>
-
-            <div class="reports__followup-actions">
-              <button 
-                class="reports__btn-ack" 
-                title="Mark as Addressed"
-                @click.stop="acknowledgeItem(item)"
-              >
-                <Check :size="11" /> Handled
-              </button>
-              <span class="reports__followup-arrow">→</span>
-            </div>
-
-            <!-- Sleek Rich Hover Tooltip showing all cut-off items -->
-            <div class="reports__followup-tooltip" role="tooltip">
-              <div class="reports__tooltip-header">
-                <span class="reports__tooltip-name">{{ item.name }}</span>
-                <span v-if="item.grade !== null" class="reports__tooltip-grade" :class="{ 'reports__tooltip-grade--failing': item.grade < 50 }">
-                  {{ formatGradeDisplay(item.grade) }}
-                </span>
-              </div>
-              <ul class="reports__tooltip-list">
-                <li v-for="(reasonPart, rIdx) in getReasonParts(item.reason)" :key="rIdx" class="reports__tooltip-item">
-                  <span class="reports__tooltip-bullet" />
-                  <span class="reports__tooltip-text">{{ formatReasonPart(reasonPart) }}</span>
-                </li>
-              </ul>
-              <div class="reports__tooltip-hint">Click card to open Dossier →</div>
-            </div>
-          </li>
-        </ul>
-
-        <button
-          v-if="evaluatedActionItems.active.length > 8"
-          class="reports__followup-more"
-          @click="followUpExpandedLocal = !followUpExpandedLocal"
-        >
-          {{ followUpExpandedLocal ? 'show less ↑' : `and ${evaluatedActionItems.active.length - 8} more →` }}
-        </button>
-
-        <!-- Handled / Addressed Sub-Section -->
-        <div v-if="evaluatedActionItems.handled.length > 0" class="reports__handled-section">
-          <button 
-            class="reports__handled-toggle" 
-            @click="showHandledSection = !showHandledSection"
-          >
-            <span class="handled-title">
-              <CheckCircle2 :size="13" class="handled-icon" /> 
-              Handled Items ({{ evaluatedActionItems.handled.length }})
-            </span>
-            <ChevronDown v-if="!showHandledSection" :size="13" />
-            <ChevronUp v-else :size="13" />
-          </button>
-
-          <ul v-if="showHandledSection" class="reports__handled-list">
-            <li 
-              v-for="item in evaluatedActionItems.handled" 
-              :key="'handled-' + item.studentId" 
-              class="reports__handled-item"
+          <div class="reports__col-pills">
+            <button
+              type="button"
+              class="reports__col-badge reports__col-badge--btn"
+              :class="{
+                'reports__col-badge--zero': evaluatedActionItems.active.length === 0,
+                'reports__col-badge--active-tab': actionQueueTab === 'active' && evaluatedActionItems.handled.length > 0
+              }"
+              @click="actionQueueTab = 'active'"
             >
-              <div class="handled-info">
-                <span class="handled-name">{{ item.name }}</span>
-                <span class="handled-meta" :title="item.reason">Handled {{ item.ackDate }} · {{ item.reason }}</span>
-              </div>
-              <button 
-                class="reports__btn-reopen" 
-                title="Re-activate alert"
-                @click.stop="unacknowledgeItem(item.studentId)"
+              {{ evaluatedActionItems.active.length }} Flagged
+            </button>
+            <button
+              v-if="evaluatedActionItems.handled.length > 0"
+              type="button"
+              class="reports__col-badge reports__col-badge--handled reports__col-badge--btn"
+              :class="{ 'reports__col-badge--active-tab': actionQueueTab === 'handled' }"
+              title="Switch to view addressed items"
+              @click="actionQueueTab = actionQueueTab === 'handled' ? 'active' : 'handled'"
+            >
+              <CheckCircle2 :size="10" /> {{ evaluatedActionItems.handled.length }} Handled
+            </button>
+          </div>
+        </div>
+
+        <div class="reports__followup-scroll-wrap">
+          <!-- VIEW A: Active Action Items (and pinned Pending Email confirmations) -->
+          <template v-if="actionQueueTab === 'active' || evaluatedActionItems.handled.length === 0">
+            <div v-if="evaluatedActionItems.active.length === 0 && visiblePendingEmails.length === 0" class="reports__followup-empty">
+              <Check :size="15" class="reports__followup-ok-icon" />
+              <span class="reports__followup-ok">No active alerts requiring attention</span>
+            </div>
+
+            <ul v-else class="reports__followup-list">
+              <!-- Pinned Pending Email Confirmation Cards -->
+              <li
+                v-for="pe in visiblePendingEmails"
+                :key="'pending-' + pe.studentId"
+                class="reports__followup-item reports__followup-item--pending"
+                role="button"
+                tabindex="0"
+                @click="openFromQueue(pe.studentId)"
+                @keydown.enter="openFromQueue(pe.studentId)"
               >
-                <RotateCcw :size="11" /> Restore
-              </button>
-            </li>
-          </ul>
+                <div class="reports__followup-info">
+                  <div class="reports__followup-row">
+                    <span class="reports__followup-name" :title="pe.name">{{ pe.name }}</span>
+                    <span class="reports__pending-inline-tag"><Mail :size="9" /> Confirm email?</span>
+                  </div>
+                  <div class="reports__followup-meta">
+                    <span class="reports__followup-reason" :title="pe.note || pe.reason">
+                      {{ pe.note || pe.reason || 'Email opened in mail app' }}
+                    </span>
+                  </div>
+                </div>
+
+                <div class="reports__followup-actions">
+                  <button
+                    type="button"
+                    class="reports__btn-ack reports__btn-ack--confirm"
+                    title="Confirm email was sent and mark alert handled"
+                    @click.stop="confirmPendingEmailInline(pe)"
+                  >
+                    <Check :size="11" /> Sent
+                  </button>
+                  <button
+                    type="button"
+                    class="reports__btn-dismiss-pending"
+                    title="Not sent — dismiss pending email prompt"
+                    @click.stop="clearPendingEmail(pe.studentId)"
+                  >
+                    <X :size="11" />
+                  </button>
+                </div>
+              </li>
+
+              <!-- Active Flagged Student Cards -->
+              <li
+                v-for="(item, idx) in evaluatedActionItems.active"
+                :key="item.studentId + '-' + item.reason"
+                class="reports__followup-item"
+                :class="[
+                  `reports__followup-item--${item.severity}`,
+                  { 'reports__followup-item--flip-up': idx >= Math.max(0, evaluatedActionItems.active.length - 3) }
+                ]"
+                role="button"
+                tabindex="0"
+                @click="openFromQueue(item.studentId)"
+                @keydown.enter="openFromQueue(item.studentId)"
+              >
+                <div class="reports__followup-info">
+                  <div class="reports__followup-row">
+                    <span class="reports__followup-name" :title="item.name">{{ item.name }}</span>
+                    <span v-if="item.reTriggered" class="reports__retrigger-tag">Re-triggered</span>
+                  </div>
+                  <div class="reports__followup-meta">
+                    <span v-if="item.grade !== null" class="reports__grade-badge" :class="{ 'reports__grade-badge--failing': item.grade < 50 }">
+                      {{ formatGradeDisplay(item.grade) }}
+                    </span>
+                    <span class="reports__followup-reason" :title="item.reason">{{ item.reason }}</span>
+                  </div>
+                </div>
+
+                <div class="reports__followup-actions">
+                  <button 
+                    class="reports__btn-ack" 
+                    title="Mark as Addressed"
+                    @click.stop="acknowledgeItem(item)"
+                  >
+                    <Check :size="11" /> Handled
+                  </button>
+                  <span class="reports__followup-arrow">→</span>
+                </div>
+
+                <!-- Sleek Rich Hover Tooltip showing all cut-off items -->
+                <div class="reports__followup-tooltip" role="tooltip">
+                  <div class="reports__tooltip-header">
+                    <span class="reports__tooltip-name">{{ item.name }}</span>
+                    <span v-if="item.grade !== null" class="reports__tooltip-grade" :class="{ 'reports__tooltip-grade--failing': item.grade < 50 }">
+                      {{ formatGradeDisplay(item.grade) }}
+                    </span>
+                  </div>
+                  <ul class="reports__tooltip-list">
+                    <li v-for="(reasonPart, rIdx) in getReasonParts(item.reason)" :key="rIdx" class="reports__tooltip-item">
+                      <span class="reports__tooltip-bullet" />
+                      <span class="reports__tooltip-text">{{ formatReasonPart(reasonPart) }}</span>
+                    </li>
+                  </ul>
+                  <div class="reports__tooltip-hint">Click card to open Dossier →</div>
+                </div>
+              </li>
+            </ul>
+          </template>
+
+          <!-- VIEW B: Handled / Addressed Items -->
+          <template v-else>
+            <ul class="reports__handled-list">
+              <li 
+                v-for="item in evaluatedActionItems.handled" 
+                :key="'handled-' + item.studentId" 
+                class="reports__handled-item"
+                role="button"
+                tabindex="0"
+                @click="openFromQueue(item.studentId)"
+                @keydown.enter="openFromQueue(item.studentId)"
+              >
+                <div class="handled-info">
+                  <span class="handled-name">{{ item.name }}</span>
+                  <span class="handled-meta" :title="item.reason">Handled {{ item.ackDate }} · {{ item.reason }}</span>
+                </div>
+                <button 
+                  class="reports__btn-reopen" 
+                  title="Re-activate alert"
+                  @click.stop="unacknowledgeItem(item.studentId)"
+                >
+                  <RotateCcw :size="11" /> Restore
+                </button>
+              </li>
+            </ul>
+          </template>
         </div>
       </div>
 
@@ -416,8 +490,8 @@ import { ref, computed, watch } from 'vue'
 import { 
   UserCheck, Toilet, Activity, AlertTriangle, Check, 
   GraduationCap, Target, BookOpen, BarChart2,
-  CheckCircle2, RotateCcw, ChevronDown, ChevronUp,
-  ClipboardCheck, DoorOpen, Star, Sparkles, Mail
+  CheckCircle2, RotateCcw,
+  ClipboardCheck, DoorOpen, Star, Sparkles, Mail, X
 } from 'lucide-vue-next'
 import { Bar } from 'vue-chartjs'
 import ExpectationMasteryHeatmap from './ExpectationMasteryHeatmap.vue'
@@ -469,7 +543,6 @@ const emit = defineEmits([
   'survey-imported'
 ])
 
-const followUpExpandedLocal = ref(false)
 const showMissingModal = ref(false)
 const showPositiveModal = ref(false)
 const { behaviorCodes } = useClassroom()
@@ -624,11 +697,29 @@ const subjectAssessments = computed(() => {
 
 const totalAssessmentsCount = computed(() => subjectAssessments.value.length)
 
-const failingStudentsCount = computed(() => {
-  return Object.entries(props.classGrades)
-    .filter(([sId, g]) => activeStudentIds.value.has(String(sId)) && g && g.overallGrade !== undefined && g.overallGrade !== null && g.overallGrade < 50)
-    .length
+const failingStudentsList = computed(() => {
+  const list = []
+  Object.entries(props.classGrades).forEach(([sId, g]) => {
+    if (
+      activeStudentIds.value.has(String(sId)) &&
+      g &&
+      g.overallGrade !== undefined &&
+      g.overallGrade !== null &&
+      g.overallGrade < 50
+    ) {
+      const st = (props.sidebarStudents || []).find(s => String(s.studentId) === String(sId))
+      const name = st ? `${st.lastName}, ${st.firstName}` : `Student ${sId}`
+      list.push({
+        studentId: String(sId),
+        name,
+        grade: Number(g.overallGrade)
+      })
+    }
+  })
+  return list.sort((a, b) => a.grade - b.grade)
 })
+
+const failingStudentsCount = computed(() => failingStudentsList.value.length)
 
 // Expectation Calculations
 const totalExpectationsCount = computed(() => {
@@ -871,10 +962,22 @@ const {
   evaluated: sharedActionItems,
   acknowledge: acknowledgeItem,
   unacknowledge: unacknowledgeItem,
-  pendingEmailCount,
+  pendingEmailList,
+  clearPendingEmail,
+  logContactAndHandle,
   enterFromQueue
 } = useActionAlerts(computed(() => props.reportClass?.classId))
-const showHandledSection = ref(false)
+const actionQueueTab = ref('active')
+
+const visiblePendingEmails = computed(() => {
+  return (pendingEmailList.value || []).filter(item => activeStudentIds.value.has(String(item.studentId)))
+})
+
+async function confirmPendingEmailInline(pe) {
+  if (!pe || !pe.studentId) return
+  const note = (pe.note || '').trim() || 'Parent email sent'
+  await logContactAndHandle(pe.studentId, note)
+}
 
 // Respect the sub-cohort filter: only show students currently in the sidebar
 const evaluatedActionItems = computed(() => {
@@ -885,15 +988,16 @@ const evaluatedActionItems = computed(() => {
   }
 })
 
+watch(() => evaluatedActionItems.value.handled.length, (newLen) => {
+  if (newLen === 0 && actionQueueTab.value === 'handled') {
+    actionQueueTab.value = 'active'
+  }
+})
+
 function openFromQueue(studentId) {
   enterFromQueue(studentId)
   emit('select-student', studentId)
 }
-
-const activeActionItemsVisible = computed(() => {
-  if (followUpExpandedLocal.value) return evaluatedActionItems.value.active
-  return evaluatedActionItems.value.active.slice(0, 8)
-})
 
 function getReasonParts(reason) {
   if (!reason) return []
@@ -995,6 +1099,192 @@ function formatReasonPart(part) {
   color: #059669;
 }
 
+.kpi-tile__badge-wrap {
+  position: relative;
+  display: inline-flex;
+  outline: none;
+}
+
+.kpi-tile__badge--interactive {
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.kpi-tile__badge-wrap:hover .kpi-tile__badge--interactive,
+.kpi-tile__badge-wrap:focus-within .kpi-tile__badge--interactive {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.45);
+}
+
+.kpi-tile__popover {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  width: 240px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.25), 0 4px 6px -2px rgba(0, 0, 0, 0.12);
+  padding: 8px 10px;
+  z-index: 60;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateY(-4px);
+  transition: opacity 0.16s ease, transform 0.16s ease, visibility 0.16s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Invisible hover bridge so moving the cursor from badge to popover doesn't close it */
+.kpi-tile__popover::before {
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: 0;
+  right: 0;
+  height: 8px;
+}
+
+.kpi-tile__badge-wrap:hover .kpi-tile__popover,
+.kpi-tile__badge-wrap:focus-within .kpi-tile__popover {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+.kpi-tile__popover-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--border);
+}
+
+.kpi-tile__popover-count {
+  background: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+  padding: 0 5px;
+  border-radius: 4px;
+  font-size: 0.65rem;
+}
+
+.kpi-tile__popover-count--pending {
+  background: var(--primary-light, rgba(59, 130, 246, 0.12));
+  color: var(--primary);
+}
+
+.kpi-tile__popover--pending {
+  left: 0;
+  right: auto;
+  width: 245px;
+}
+
+.kpi-tile__popover-item--pending {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 2px;
+}
+
+.kpi-tile__popover-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6px;
+}
+
+.kpi-tile__popover-sub {
+  font-size: 0.65rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.kpi-tile__popover-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  max-height: 200px;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  overscroll-behavior: contain;
+}
+
+.kpi-tile__popover-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 6px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-hover);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background-color 0.12s ease, border-color 0.12s ease;
+}
+
+.kpi-tile__popover-item:hover,
+.kpi-tile__popover-item:focus-visible {
+  background: var(--surface);
+  border-color: var(--primary);
+  outline: none;
+}
+
+.kpi-tile__popover-name {
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.kpi-tile__popover-right {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+}
+
+.kpi-tile__popover-grade {
+  font-size: 0.66rem;
+  font-weight: 700;
+  background: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+
+.kpi-tile__popover-arrow {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  transition: transform 0.12s ease, color 0.12s ease;
+}
+
+.kpi-tile__popover-item:hover .kpi-tile__popover-arrow {
+  color: var(--primary);
+  transform: translateX(2px);
+}
+
+.kpi-tile__popover-hint {
+  font-size: 0.63rem;
+  font-weight: 600;
+  color: var(--primary);
+  padding-top: 2px;
+  border-top: 1px solid var(--border);
+}
+
 .kpi-tile__body {
   display: flex;
   align-items: baseline;
@@ -1040,9 +1330,19 @@ function formatReasonPart(part) {
   grid-template-columns: minmax(300px, 340px) minmax(0, 1fr);
   gap: 8px;
   min-width: 0;
+  align-items: stretch;
 }
 @media (max-width: 1000px) {
   .reports__two-col { grid-template-columns: 1fr; }
+  .reports__followup-scroll-wrap {
+    flex: none;
+    min-height: 0;
+  }
+  .reports__followup-list,
+  .reports__handled-list {
+    position: static;
+    max-height: 360px;
+  }
 }
 
 .reports__followup-col {
@@ -1054,43 +1354,68 @@ function formatReasonPart(part) {
   flex-direction: column;
   gap: 6px;
   min-height: 0;
+  position: relative;
 }
 .reports__col-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
+  flex-wrap: nowrap;
+}
+.reports__col-pills {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  margin-left: auto;
+  flex-shrink: 0;
 }
 .reports__col-title {
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   font-weight: 700;
   color: var(--text-secondary);
-  letter-spacing: 0.04em;
+  letter-spacing: 0.03em;
   margin: 0;
+  white-space: nowrap;
 }
 .reports__col-badge {
-  font-size: 0.65rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 2.5px;
+  font-size: 0.63rem;
   font-weight: 700;
   background: rgba(239, 68, 68, 0.12);
   color: #ef4444;
-  padding: 1px 5px;
+  padding: 2px 5px;
   border-radius: 4px;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+.reports__col-badge--btn {
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.reports__col-badge--btn:hover {
+  filter: brightness(0.95);
 }
 .reports__col-badge--zero {
   background: rgba(16, 185, 129, 0.12);
   color: #059669;
 }
-.reports__pending-tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  margin-left: auto;
-  font-size: 0.65rem;
-  font-weight: 700;
-  background: var(--primary-light);
+.reports__col-badge--handled {
+  background: rgba(16, 185, 129, 0.12);
+  color: #059669;
+}
+.reports__col-badge--pending {
+  background: var(--primary-light, rgba(59, 130, 246, 0.12));
   color: var(--primary);
-  padding: 1px 5px;
-  border-radius: 4px;
+}
+.reports__col-badge--pending:hover {
+  border-color: var(--primary);
+}
+.reports__col-badge--active-tab {
+  border-color: currentColor;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
 }
 
 .reports__followup-empty {
@@ -1104,16 +1429,24 @@ function formatReasonPart(part) {
 .reports__followup-ok-icon { color: #10b981; }
 .reports__followup-ok { font-size: 0.75rem; color: var(--text-secondary); font-weight: 500; }
 
+.reports__followup-scroll-wrap {
+  position: relative;
+  flex: 1 1 0;
+  min-height: 260px;
+}
+
 .reports__followup-list {
+  position: absolute;
+  inset: 0;
   list-style: none;
-  padding: 0;
+  padding: 0 2px 0 0;
   margin: 0;
   display: flex;
   flex-direction: column;
   gap: 4px;
-  max-height: clamp(270px, 38vh, 380px);
   overflow-y: auto;
-  padding-right: 2px;
+  scrollbar-gutter: stable;
+  overscroll-behavior: contain;
 }
 .reports__followup-item {
   position: relative;
@@ -1139,6 +1472,52 @@ function formatReasonPart(part) {
 .reports__followup-item--warning,
 .reports__followup-item--medium {
   border-left: 3px solid #f59e0b;
+}
+.reports__followup-item--pending {
+  border-left: 3px solid var(--primary);
+  background: color-mix(in srgb, var(--primary) 6%, var(--surface));
+}
+.reports__pending-inline-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.6rem;
+  font-weight: 700;
+  background: var(--primary-light, rgba(59, 130, 246, 0.14));
+  color: var(--primary);
+  padding: 1px 5px;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+.reports__btn-ack--confirm {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+.reports__btn-ack--confirm:hover {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+  filter: brightness(0.93);
+}
+.reports__btn-dismiss-pending {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  padding: 0;
+}
+.reports__btn-dismiss-pending:hover {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: #ef4444;
+  color: #ef4444;
 }
 
 /* ── Rich Action Required Hover Tooltip ── */
@@ -1358,35 +1737,40 @@ function formatReasonPart(part) {
 }
 
 /* Handled items */
-.reports__handled-section {
-  margin-top: 4px;
-  border-top: 1px solid var(--border);
-  padding-top: 4px;
+.reports__handled-list {
+  position: absolute;
+  inset: 0;
+  list-style: none;
+  padding: 0 2px 0 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  overscroll-behavior: contain;
 }
-.reports__handled-toggle {
-  width: 100%;
+.reports__handled-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: none;
-  border: none;
-  padding: 2px;
-  font-size: 0.7rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-  cursor: pointer;
+  background: var(--surface-hover);
+  border: 1px dashed var(--border);
+  border-left: 3px solid #10b981;
+  padding: 5px 8px;
   border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
 }
-.reports__handled-toggle:hover { color: var(--text); background: var(--surface-hover); }
-.handled-title { display: flex; align-items: center; gap: 4px; }
-.handled-icon { color: #10b981; }
-.reports__handled-list { list-style: none; padding: 4px 0 0 0; margin: 0; display: flex; flex-direction: column; gap: 3px; max-height: 90px; overflow-y: auto; }
-.reports__handled-item { display: flex; justify-content: space-between; align-items: center; background: var(--surface-hover); border: 1px dashed var(--border); padding: 3px 6px; border-radius: var(--radius-sm); opacity: 0.85; }
+.reports__handled-item:hover {
+  background: var(--surface);
+  border-color: var(--primary);
+}
 .handled-info { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
-.handled-name { font-size: 0.74rem; font-weight: 600; color: var(--text); }
+.handled-name { font-size: 0.76rem; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .handled-meta { font-size: 0.66rem; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.reports__btn-reopen { display: flex; align-items: center; gap: 2px; background: none; border: 1px solid var(--border); color: var(--text-secondary); font-size: 0.65rem; padding: 1px 4px; border-radius: var(--radius-sm); cursor: pointer; }
-.reports__btn-reopen:hover { background: var(--surface); color: var(--primary); border-color: var(--primary); }
+.reports__btn-reopen { display: flex; align-items: center; gap: 2px; background: var(--surface); border: 1px solid var(--border); color: var(--text-secondary); font-size: 0.65rem; font-weight: 600; padding: 2px 6px; border-radius: var(--radius-sm); cursor: pointer; flex-shrink: 0; margin-left: 4px; transition: all 0.15s ease; }
+.reports__btn-reopen:hover { background: var(--surface-hover); color: var(--primary); border-color: var(--primary); }
 
 /* Right Visual Column */
 .reports__visual-col { display: flex; flex-direction: column; gap: 6px; min-width: 0; width: 100%; }
@@ -1430,7 +1814,6 @@ function formatReasonPart(part) {
   .reports__kpi-ribbon { gap: 6px; }
   .kpi-tile { padding: 4px 8px; min-height: 42px; }
   .kpi-tile__value { font-size: 1.05rem; }
-  .reports__followup-list { max-height: clamp(250px, 36vh, 310px); }
   .reports__visual-pane { padding: 6px 8px; }
   .reports__notes-card { padding: 6px 10px; }
   .reports__notes-list { max-height: 105px; gap: 4px; }

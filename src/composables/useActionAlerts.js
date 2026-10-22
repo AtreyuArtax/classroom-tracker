@@ -463,6 +463,27 @@ export function useActionAlerts(classIdRef) {
     return Object.keys(pendingEmails.value).filter(k => k.startsWith(prefix)).length
   })
 
+  const pendingEmailList = computed(() => {
+    const cid = classId.value
+    if (!cid) return []
+    const prefix = `${cid}:`
+    const studentsMap = sources.value[cid]?.students || {}
+    return Object.entries(pendingEmails.value)
+      .filter(([k]) => k.startsWith(prefix))
+      .map(([k, val]) => {
+        const studentId = k.slice(prefix.length)
+        const st = studentsMap[studentId]
+        const name = st ? `${st.lastName}, ${st.firstName}` : `Student ${studentId}`
+        return {
+          studentId,
+          name,
+          note: val?.note || '',
+          reason: val?.reason || '',
+          createdAt: val?.createdAt || ''
+        }
+      })
+  })
+
   /** Logs a parent contact, marks the alert handled and clears any pending email. */
   async function logContactAndHandle(studentId, note) {
     const { logStandardEvent } = useClassroom()
@@ -494,6 +515,7 @@ export function useActionAlerts(classIdRef) {
     setPendingEmail,
     clearPendingEmail,
     pendingEmailCount,
+    pendingEmailList,
     logContactAndHandle,
     enterFromQueue,
     isQueueEntry

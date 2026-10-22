@@ -365,21 +365,8 @@ const metricSubtitle = computed(() => matrixData.value.metricSubtitle)
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 12px;
-}
-
-.risk-plot__title {
-  font-size: 0.88rem;
-  font-weight: 700;
-  color: var(--text);
-  margin: 0 0 1px 0;
-}
-
-.risk-plot__subtitle {
-  font-size: 0.72rem;
-  color: var(--text-secondary);
-  margin: 0;
-  white-space: nowrap;
+  flex-wrap: wrap;
+  gap: 6px 12px;
 }
 
 .risk-plot__legend-bar {
@@ -752,8 +739,8 @@ const metricSubtitle = computed(() => matrixData.value.metricSubtitle)
 }
 
 .risk-plot__header-left {
-  min-width: 0;
-  flex: 1 1 auto;
+  min-width: 240px;
+  flex: 1 1 240px;
 }
 
 .risk-plot__title {
@@ -767,17 +754,15 @@ const metricSubtitle = computed(() => matrixData.value.metricSubtitle)
   font-size: 0.72rem;
   color: var(--text-secondary);
   margin: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  line-height: 1.3;
 }
 
 .risk-plot__header-right {
   display: flex;
   align-items: center;
-  gap: 8px;
-  flex-wrap: nowrap;
-  flex-shrink: 0;
+  gap: 6px 8px;
+  flex-wrap: wrap;
+  margin-left: auto;
 }
 
 .risk-plot__filter-group {

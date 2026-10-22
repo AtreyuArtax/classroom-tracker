@@ -201,7 +201,7 @@
         >
           <span class="strand-pill-dot" :style="{ color: getUnitColorByIdx(idx) }">●</span>
           <span>{{ formatStrandPillLabel(strand.name) }}</span>
-          <span class="strand-pill-badge">{{ getStrandAssessmentCount(strand) }}</span>
+          <span v-if="getStrandAssessmentCount(strand) > 0" class="strand-pill-badge">{{ getStrandAssessmentCount(strand) }}</span>
         </button>
 
         <!-- Admin Filter Pill -->
@@ -547,7 +547,7 @@ import {
 } from '../../utils/gradeCalcSBAR.js'
 
 import { formatLocalDisplay } from '../../utils/dates.js'
-import { getEffectiveClassRecord, getUnitGradeLevel, cleanUnitName, getStudentEffectiveGrade } from '../../composables/useElementary.js'
+import { getEffectiveClassRecord, getUnitGradeLevel, cleanUnitName, formatUnitPillLabel, getStudentEffectiveGrade } from '../../composables/useElementary.js'
 import { activeSubjectId } from '../../composables/useClassroomState.js'
 import { UNIT_COLORS, getSectionColor } from '../../utils/gradeColors.js'
 import { isCohortMatch } from '../../utils/gradeCalc.js'
@@ -1091,7 +1091,7 @@ function stripGradePrefix(name) {
 }
 
 function formatStrandPillLabel(fullName) {
-  return cleanUnitName(fullName)
+  return formatUnitPillLabel(fullName)
 }
 
 function formatStrandHeaderName(fullName) {

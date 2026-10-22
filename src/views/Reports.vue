@@ -991,16 +991,19 @@ const washroomChartOptions = {
 .reports__layout { display: flex; flex: 1; overflow: hidden; position: relative; }
 .reports__main { flex: 1; overflow-y: auto; padding: 8px 14px; display: flex; flex-direction: column; gap: 8px; transition: padding-left 0.25s cubic-bezier(0.4, 0, 0.2, 1); }
 .reports__main.reports__main--sidebar-collapsed { padding-left: 32px; }
-.reports__header-bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: nowrap; min-width: 0; min-height: 36px; position: sticky; top: 0; z-index: 20; background: var(--bg-secondary); padding: 2px 0 6px 0; }
-.reports__header-controls { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
-.reports__pillar-nav { display: flex; gap: 2px; background: var(--surface); border: 1px solid var(--border); padding: 2px; border-radius: var(--radius-md); flex-shrink: 0; }
-.reports__pillar-btn { display: flex; align-items: center; gap: 5px; background: none; border: none; padding: 4px 9px; border-radius: var(--radius-sm); font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); cursor: pointer; transition: all 0.15s ease; white-space: nowrap; line-height: 1.2; }
+.reports__header-bar { display: flex; align-items: center; justify-content: space-between; gap: 6px 8px; flex-wrap: wrap; min-width: 0; min-height: 36px; position: sticky; top: 0; z-index: 20; background: var(--bg-secondary); padding: 2px 0 6px 0; flex-shrink: 0; }
+.reports__header-controls { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-left: auto; }
+.reports__pillar-nav { display: flex; flex-wrap: wrap; gap: 2px; background: var(--surface); border: 1px solid var(--border); padding: 2px; border-radius: var(--radius-md); }
+.reports__pillar-btn { display: flex; align-items: center; gap: 4px; background: none; border: none; padding: 4px 8px; border-radius: var(--radius-sm); font-size: 0.74rem; font-weight: 600; color: var(--text-secondary); cursor: pointer; transition: all 0.15s ease; white-space: nowrap; line-height: 1.2; }
 .reports__pillar-btn:hover { color: var(--text); background: var(--surface-hover); }
 .reports__pillar-btn--active { background: var(--primary); color: white; }
-@media (max-width: 1300px) { .reports__main { padding: 8px 12px; } }
+@media (max-width: 1300px) {
+  .reports__main { padding: 8px 12px; }
+  .reports__pillar-btn { padding: 4px 6px; font-size: 0.72rem; gap: 3.5px; }
+  .reports__period-btn { padding: 4px 6px; font-size: 0.72rem; }
+}
 @media (max-width: 1024px) { 
   .reports__main { padding: 6px 10px; }
-  .reports__header-bar { flex-wrap: wrap; }
 }
 @media (max-height: 760px) {
   .reports__main { padding: 6px 10px; gap: 6px; }

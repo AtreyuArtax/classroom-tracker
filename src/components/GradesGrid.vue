@@ -43,8 +43,8 @@
             @click="selectedUnitId = u.unitId"
           >
             <span class="grid-chip__dot" :style="{ background: selectedUnitId === u.unitId ? '#fff' : getUnitColor(u.unitId) }"></span>
-            <span>{{ cleanUnitPillName(u.name) }}</span>
-            <span class="grid-chip__badge">{{ getUnitAssessmentCount(u.unitId, u.name) }}</span>
+            <span class="grid-chip__label">{{ formatUnitPillLabel(u.name) }}</span>
+            <span v-if="getUnitAssessmentCount(u.unitId, u.name) > 0" class="grid-chip__badge">{{ getUnitAssessmentCount(u.unitId, u.name) }}</span>
           </button>
 
           <!-- Admin Filter Chip -->
@@ -528,7 +528,7 @@ import {
   getSectionColor
 } from '../utils/gradeColors.js'
 import { useMessage } from '../composables/useMessage.js'
-import { cleanUnitName } from '../composables/useElementary.js'
+import { cleanUnitName, formatUnitPillLabel } from '../composables/useElementary.js'
 import { getAssessmentPercentage, getGradeSmartBadge } from '../utils/gradeCalc.js'
 import { formatLocalDisplay } from '../utils/dates.js'
 import { 

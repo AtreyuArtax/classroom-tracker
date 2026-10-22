@@ -122,28 +122,37 @@
 
               <!-- Group 3: Grid Display Modifiers (Sort & Score Format) -->
               <div v-if="!analyticsMode && !isSBAR" class="grades__modifiers-group">
-                <!-- 1-Click Flip Button for Assessment Column Sort Order (Newest <-> Oldest) -->
-                <button 
-                  type="button"
-                  class="grades__flip-btn"
-                  :title="assessmentSortOrder === 'desc' ? 'Sorted: Newest first. Click for Oldest first.' : 'Sorted: Oldest first. Click for Newest first.'"
-                  @click="assessmentSortOrder = (assessmentSortOrder === 'desc' ? 'asc' : 'desc')"
-                >
-                  <ArrowDownUp :size="12" class="flip-btn-icon" />
-                  <span>{{ assessmentSortOrder === 'desc' ? 'Newest' : 'Oldest' }}</span>
-                </button>
+                <!-- Segmented Pill for Assessment Column Sort Order (Newest | Oldest) -->
+                <div class="grades__toggle-group" title="Sort assessment columns by date">
+                  <button 
+                    type="button"
+                    class="grades__toggle-btn"
+                    :class="{ 'grades__toggle-btn--active': assessmentSortOrder === 'desc' }"
+                    @click="assessmentSortOrder = 'desc'"
+                  >Newest</button>
+                  <button 
+                    type="button"
+                    class="grades__toggle-btn"
+                    :class="{ 'grades__toggle-btn--active': assessmentSortOrder === 'asc' }"
+                    @click="assessmentSortOrder = 'asc'"
+                  >Oldest</button>
+                </div>
 
-                <!-- 1-Click Flip Button for Score Format (Raw <-> %) -->
-                <button 
-                  type="button"
-                  class="grades__flip-btn"
-                  :title="displayMode === 'percent' ? 'Format: Percentage (%). Click for Raw Points.' : 'Format: Raw Points. Click for Percentage (%)'"
-                  @click="displayMode = (displayMode === 'percent' ? 'raw' : 'percent')"
-                >
-                  <Percent v-if="displayMode === 'percent'" :size="12" class="flip-btn-icon" />
-                  <Hash v-else :size="12" class="flip-btn-icon" />
-                  <span>{{ displayMode === 'percent' ? 'Pct' : 'Raw' }}</span>
-                </button>
+                <!-- Segmented Pill for Score Format (% | Raw) -->
+                <div class="grades__toggle-group" title="Toggle score display format">
+                  <button 
+                    type="button"
+                    class="grades__toggle-btn"
+                    :class="{ 'grades__toggle-btn--active': displayMode === 'percent' }"
+                    @click="displayMode = 'percent'"
+                  >%</button>
+                  <button 
+                    type="button"
+                    class="grades__toggle-btn"
+                    :class="{ 'grades__toggle-btn--active': displayMode === 'raw' }"
+                    @click="displayMode = 'raw'"
+                  >Raw</button>
+                </div>
               </div>
             </div>
 
@@ -311,7 +320,7 @@ import {
 import { formatGrade } from '../utils/gradeColors.js'
 import { getSBARLevelBadge } from '../db/gradebookService.js'
 import { useAttendanceInsights } from '../composables/useAttendanceInsights.js'
-import { Plus, BarChart2, Settings, Printer, LayoutGrid, Zap, ArrowDownUp, Percent, Hash } from 'lucide-vue-next'
+import { Plus, BarChart2, Settings, Printer, LayoutGrid, Zap } from 'lucide-vue-next'
 const Student360                   = defineAsyncComponent(() => import('../components/dossier/Student360.vue'))
 import GradesGrid from '../components/GradesGrid.vue'
 import GradesGridSBAR from '../components/grades/GradesGridSBAR.vue'
@@ -958,9 +967,6 @@ onMounted(async () => {
 .grades__toggle-group, .grades__milestone-toggle { display: flex; gap: 2px; background: var(--bg-secondary); padding: 2px; border-radius: var(--radius-md); flex-shrink: 0; }
 .grades__toggle-btn { padding: 3px 8px; border: none; background: none; font-size: 0.74rem; font-weight: 600; color: var(--text-secondary); border-radius: var(--radius-sm); cursor: pointer; white-space: nowrap; }
 .grades__toggle-btn--active { background: var(--surface); color: var(--primary); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); }
-.grades__flip-btn { display: inline-flex; align-items: center; gap: 4px; padding: 3px 7px; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius-sm, 6px); color: var(--text-secondary); font-size: 0.74rem; font-weight: 600; cursor: pointer; transition: all 0.15s ease; white-space: nowrap; flex-shrink: 0; }
-.grades__flip-btn:hover { background: var(--surface-hover); color: var(--text); border-color: var(--primary); }
-.flip-btn-icon { color: var(--primary); flex-shrink: 0; }
 .grades__class-avg-display { font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); white-space: nowrap; flex-shrink: 0; display: inline-flex; align-items: center; gap: 3px; }
 .grades__avg-value { font-weight: 800; color: var(--primary); }
 .sbar-engine-select-wrapper { display: inline-flex; align-items: center; gap: 3px; margin-left: 4px; padding: 2px 6px; border-radius: 14px; background: var(--bg-tertiary, rgba(99, 102, 241, 0.08)); border: 1px solid var(--border); transition: all 0.15s ease; }
