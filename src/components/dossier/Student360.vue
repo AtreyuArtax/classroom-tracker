@@ -678,7 +678,7 @@ const studentSubCohort = computed(() => {
 const classAssessments = computed(() => {
   const assList = Array.isArray(assessments.value) ? assessments.value : []
   return assList
-    .filter(a => a && a.target !== 'individual' && isAssessmentInSubCohort(a, studentSubCohort.value))
+    .filter(a => a && !a.excluded && a.target !== 'individual' && isAssessmentInSubCohort(a, studentSubCohort.value))
     .map(a => {
       const g = gradeMap.value?.[a.assessmentId]?.[props.studentId]
       const score = g?.resolvedScore ?? null
@@ -692,7 +692,7 @@ const classAssessments = computed(() => {
         score,
         attempts: g?.attempts || [],
         missing: g?.missing,
-        excluded: g?.excluded,
+        excluded: Boolean(a.excluded || g?.excluded),
         wasAbsent
       }
     })
@@ -702,7 +702,7 @@ const classAssessments = computed(() => {
 const individualAssessments = computed(() => {
   const assList = Array.isArray(assessments.value) ? assessments.value : []
   return assList
-    .filter(a => a && a.target === 'individual' && String(a.targetStudentId) === String(props.studentId))
+    .filter(a => a && !a.excluded && a.target === 'individual' && String(a.targetStudentId) === String(props.studentId))
     .map(a => {
       const g = gradeMap.value?.[a.assessmentId]?.[props.studentId]
       const score = g?.resolvedScore ?? null
@@ -711,7 +711,7 @@ const individualAssessments = computed(() => {
         score,
         attempts: g?.attempts || [],
         missing: g?.missing,
-        excluded: g?.excluded
+        excluded: Boolean(a.excluded || g?.excluded)
       }
     })
     .sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0))

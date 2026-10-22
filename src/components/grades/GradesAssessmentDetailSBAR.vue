@@ -16,12 +16,22 @@
               {{ (currentAssessment.isFormative || currentAssessment.purpose === 'formative') ? 'FORMATIVE' : 'SUMMATIVE' }}
             </span>
             <span class="sbar-tag sbar-tag--type">SBAR TASK</span>
+            <span v-if="currentAssessment.excluded" class="sbar-tag" style="background: rgba(100, 116, 139, 0.14); color: var(--text-secondary);">EXCLUDED</span>
             <span class="sbar-tag sbar-tag--date" v-if="currentAssessment.date">{{ currentAssessment.date }}</span>
           </div>
         </div>
 
         <div class="sbar-header-actions">
           <UndoButton />
+          <button 
+            class="sbar-btn sbar-btn--secondary" 
+            :title="currentAssessment.excluded ? 'Include in Calculations & Reports' : 'Exclude from Calculations & Reports'"
+            @click="toggleAssessmentExcluded(currentAssessment.assessmentId)"
+          >
+            <Eye v-if="currentAssessment.excluded" :size="14" />
+            <EyeOff v-else :size="14" />
+            {{ currentAssessment.excluded ? 'Include' : 'Exclude' }}
+          </button>
           <button class="sbar-btn sbar-btn--secondary" @click="$emit('start-edit', currentAssessment)">
             <Edit2 :size="14" /> Edit Setup
           </button>
@@ -357,8 +367,8 @@
 
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
-import { ArrowLeft, Edit2, Trash2, Zap, Keyboard, Users, UserMinus, AlertTriangle, Info } from 'lucide-vue-next'
-import { enterGradeSBAR, enterGradeSBARBulk, gradeMap, activeClassRecord } from '../../composables/useGradebook.js'
+import { ArrowLeft, Edit2, Trash2, Zap, Keyboard, Users, UserMinus, AlertTriangle, Info, Eye, EyeOff } from 'lucide-vue-next'
+import { enterGradeSBAR, enterGradeSBARBulk, gradeMap, activeClassRecord, toggleAssessmentExcluded } from '../../composables/useGradebook.js'
 import { getSBARLevelBadge } from '../../utils/gradeCalcSBAR.js'
 import { getEffectiveClassRecord, getUnitGradeLevel } from '../../composables/useElementary.js'
 import { activeSubjectId } from '../../composables/useClassroomState.js'

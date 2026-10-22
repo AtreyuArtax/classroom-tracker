@@ -369,7 +369,7 @@ const studentSubCohort = computed(() => {
 const studentAssessments = computed(() => {
   return assessments.value
     .filter(a => {
-      if (a.purpose === 'administrative') return false
+      if (a.purpose === 'administrative' || a.excluded) return false
       if (a.target === 'individual') {
         return String(a.targetStudentId) === String(props.studentId)
       }
@@ -382,7 +382,7 @@ const studentAssessments = computed(() => {
         score: g?.resolvedScore ?? null, 
         attempts: g?.attempts || [],
         missing: g?.missing, 
-        excluded: g?.excluded 
+        excluded: Boolean(a.excluded || g?.excluded)
       }
     })
     .filter(a => !a.excluded)

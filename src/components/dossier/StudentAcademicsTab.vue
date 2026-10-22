@@ -730,7 +730,7 @@ const classAssessments = computed(() => {
   const isSBAR = activeClassRecord.value?.gradingFramework === 'sbar'
   return assessments.value
     .filter(a => {
-      if (a.purpose === 'administrative') return false
+      if (a.purpose === 'administrative' || a.excluded) return false
       if (a.target === 'individual') return false
       if (!isAssessmentInSubCohort(a, studentSubCohort.value)) return false
       const isSBARTask = a.categoryId === 'sbar_general' || (a.expectationIds && a.expectationIds.length > 0) || a.expectationId != null || a.isSbar || a.gradingFramework === 'sbar'
@@ -756,7 +756,7 @@ const classAssessments = computed(() => {
         score,
         attempts: g?.attempts || [],
         missing: g?.missing,
-        excluded: g?.excluded,
+        excluded: Boolean(a.excluded || g?.excluded),
         wasAbsent
       }
     })
@@ -806,7 +806,7 @@ const individualAssessments = computed(() => {
   const isSBAR = activeClassRecord.value?.gradingFramework === 'sbar'
   return assessments.value
     .filter(a => {
-      if (a.purpose === 'administrative') return false
+      if (a.purpose === 'administrative' || a.excluded) return false
       if (a.target !== 'individual' || String(a.targetStudentId) !== String(props.studentId)) return false
       const isSBARTask = a.categoryId === 'sbar_general' || (a.expectationIds && a.expectationIds.length > 0) || a.expectationId != null || a.isSbar || a.gradingFramework === 'sbar'
       return isSBAR ? isSBARTask : !isSBARTask
@@ -820,7 +820,7 @@ const individualAssessments = computed(() => {
         score,
         attempts: g?.attempts || [],
         missing: g?.missing,
-        excluded: g?.excluded
+        excluded: Boolean(a.excluded || g?.excluded)
       }
     })
     .sort((a, b) => new Date(b.date) - new Date(a.date))

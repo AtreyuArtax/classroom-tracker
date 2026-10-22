@@ -101,7 +101,8 @@
             v-for="a in sortedAssessments" 
             :key="a.assessmentId"
             class="grades__th-assessment"
-            :style="{ borderTop: '3px solid ' + (a.unitId ? getUnitColor(a.unitId) : 'var(--border)') }"
+            :class="{ 'grades__th-assessment--excluded': a.excluded }"
+            :style="{ borderTop: '3px solid ' + (a.excluded ? 'var(--border)' : (a.unitId ? getUnitColor(a.unitId) : 'var(--border)')) }"
           >
             <div class="grades__assessment-header">
               <div class="grades__assessment-info" @click="$emit('select-assessment', a.assessmentId)">
@@ -121,12 +122,18 @@
                     </span>
                   </template>
                   <template v-else>
-                    <span class="grades__assessment-pts">{{ a.totalPoints }} pts</span>
-                    <span class="grades__assessment-sep">·</span>
-                    <span v-if="a.categoryId" class="grades__assessment-cat-tag">
-                      {{ getCategoryName(a.categoryId) }}
+                    <span v-if="a.excluded" class="grades__excluded-col-pill" title="Excluded from all grade calculations and reports">
+                      <EyeOff :size="10" :stroke-width="2.5" />
+                      Excluded
                     </span>
-                    <span v-else-if="a.unitId" class="grades__assessment-unit">{{ cleanUnitPillName(getUnitName(a.unitId)) }}</span>
+                    <template v-else>
+                      <span class="grades__assessment-pts">{{ a.totalPoints }} pts</span>
+                      <span class="grades__assessment-sep">·</span>
+                      <span v-if="a.categoryId" class="grades__assessment-cat-tag">
+                        {{ getCategoryName(a.categoryId) }}
+                      </span>
+                      <span v-else-if="a.unitId" class="grades__assessment-unit">{{ cleanUnitPillName(getUnitName(a.unitId)) }}</span>
+                    </template>
                     <span 
                       v-if="(a.targetCourseCode || a.gradeLevel) && (a.targetCourseCode !== 'ALL' && a.gradeLevel !== 'ALL') && availableSubCohorts.length > 1 && activeSubCohortFilter === 'all'" 
                       class="grades__assessment-sec-badge"
@@ -439,6 +446,11 @@
           <button class="grades__context-btn" @click="onEditAssessment(headerMenu.assessment); headerMenu = null">
             <Pencil :size="14" /> Edit Assessment
           </button>
+          <button v-if="headerMenu.assessment.purpose !== 'administrative'" class="grades__context-btn" @click="toggleAssessmentExcluded(headerMenu.assessment.assessmentId); headerMenu = null">
+            <Eye v-if="headerMenu.assessment.excluded" :size="14" />
+            <EyeOff v-else :size="14" />
+            {{ headerMenu.assessment.excluded ? 'Include in Calculations' : 'Exclude Assessment' }}
+          </button>
           <button class="grades__context-btn" @click="copyAssessmentGrades(headerMenu.assessment); headerMenu = null">
             <Copy :size="14" /> Copy Column (Scores)
           </button>
@@ -486,6 +498,7 @@ import {
   adjustStudentGrade,
   undoStudentGradeAdjustment,
   deleteAssessment,
+  toggleAssessmentExcluded,
   getAssessmentUsage,
   assessmentStats,
   gridSortBy,
@@ -521,7 +534,7 @@ import { formatLocalDisplay } from '../utils/dates.js'
 import { 
   Plus, Pencil, XCircle, AlertCircle, Trash2, X, MoreVertical, 
   ChevronUp, ChevronDown, Copy, Calendar, RotateCcw, BarChart2, NotebookPen,
-  Asterisk, Check, Type, RefreshCw
+  Asterisk, Check, Type, RefreshCw, Eye, EyeOff
 } from 'lucide-vue-next'
 import TestDayWarning from './TestDayWarning.vue'
 import GradesAttemptHistoryModal from './grades/GradesAttemptHistoryModal.vue'

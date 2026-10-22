@@ -515,10 +515,10 @@ export async function addAssessment(assessmentData) {
  */
 export async function editAssessment(assessmentId, updates) {
   try {
-    const updated = await gradebookService.updateAssessment(assessmentId, updates)
+    const updated = await gradebookService.updateAssessment(Number(assessmentId), updates)
     
     // Update local ref
-    const index = assessments.value.findIndex(a => a.assessmentId === assessmentId)
+    const index = assessments.value.findIndex(a => Number(a.assessmentId) === Number(assessmentId))
     if (index !== -1) {
       assessments.value = assessments.value.map((a, i) => i === index ? updated : a)
     }
@@ -530,6 +530,28 @@ export async function editAssessment(assessmentId, updates) {
     const { alert } = useMessage()
     await alert('Failed to update assessment.')
   }
+}
+
+/**
+ * Toggles the assessment-level `excluded` flag (pausing/including the entire assessment
+ * from calculations and reports while leaving all student grade records untouched).
+ */
+export async function toggleAssessmentExcluded(assessmentId) {
+  const target = assessments.value.find(a => Number(a.assessmentId) === Number(assessmentId))
+  if (!target) return
+  const prevExcluded = Boolean(target.excluded)
+  const nextExcluded = !prevExcluded
+
+  await editAssessment(target.assessmentId, { excluded: nextExcluded })
+
+  pushUndo(
+    async () => {
+      await editAssessment(target.assessmentId, { excluded: prevExcluded })
+    },
+    async () => {
+      await editAssessment(target.assessmentId, { excluded: nextExcluded })
+    }
+  )
 }
 
 /**
@@ -599,6 +621,7 @@ export function openAddAssessment(target = 'class', studentId = null) {
     date: formatLocalDate(new Date()),
     totalPoints: 10,
     scaledTotal: null,
+    excluded: false,
     retestPolicy: 'highest',
     adminFormat: 'checklist'
   }

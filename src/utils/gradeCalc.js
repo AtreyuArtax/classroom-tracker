@@ -312,7 +312,7 @@ export function _calculateCategoryGrade(catAssessments, gradeMap, capAt100 = fal
   let totalPossible = 0
 
   for (const assessment of catAssessments) {
-    if (isFormativeAssessment(assessment)) continue
+    if (assessment.excluded || isFormativeAssessment(assessment)) continue
     const grade = gradeMap[assessment.assessmentId]
     if (!grade || grade.excluded) continue
 
@@ -693,6 +693,7 @@ export async function calculateStudentGrade(studentId, classRecord, { asOf = nul
 
         // Locate component assessment
         const compAssessment = assessments.find(a => {
+          if (a.excluded) return false
           if (asOf && a.date > asOf) return false
           if (dateFrom && a.date < dateFrom) return false
           if (comp.assessmentId && String(a.assessmentId) === String(comp.assessmentId)) return true

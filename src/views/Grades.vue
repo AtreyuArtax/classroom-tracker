@@ -795,6 +795,7 @@ function startEditAssessment(assessment) {
     date: assessment.date,
     totalPoints: assessment.totalPoints,
     scaledTotal: assessment.scaledTotal,
+    excluded: Boolean(assessment.excluded),
     retestPolicy: assessment.retestPolicy || 'highest'
   }
   

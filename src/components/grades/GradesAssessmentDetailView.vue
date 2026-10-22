@@ -22,6 +22,9 @@
             </span>
           </template>
           <span class="meta-chip meta-chip--date"><Calendar :size="10" /> {{ formatLocalDisplay(currentAssessment.date) }}</span>
+          <span v-if="currentAssessment.excluded" class="meta-chip" style="background: rgba(100, 116, 139, 0.14); color: var(--text-secondary); font-weight: 700;" title="Excluded from all calculations and reports">
+            <EyeOff :size="10" style="display: inline-block; vertical-align: -1px; margin-right: 2px;" /> Excluded
+          </span>
           <span v-if="currentAssessment.weight && currentAssessment.purpose !== 'administrative'" class="meta-chip meta-chip--weight">
             <Flame :size="10" style="display: inline-block; vertical-align: -1px; margin-right: 2px;" /> {{ currentAssessment.weight }}%
           </span>
@@ -31,6 +34,16 @@
       <!-- Action Buttons Top Right -->
       <div class="assessment-header__actions">
         <UndoButton />
+        <button 
+          v-if="currentAssessment.purpose !== 'administrative'"
+          class="btn-secondary-sm" 
+          :title="currentAssessment.excluded ? 'Include in Calculations & Reports' : 'Exclude from Calculations & Reports'" 
+          @click="toggleAssessmentExcluded(currentAssessment.assessmentId)"
+        >
+          <Eye v-if="currentAssessment.excluded" :size="12" />
+          <EyeOff v-else :size="12" />
+          {{ currentAssessment.excluded ? 'Include' : 'Exclude' }}
+        </button>
         <button class="btn-secondary-sm" title="Edit Assessment Setup" @click="$emit('start-edit', currentAssessment)">
           <Edit2 :size="12" /> Edit
         </button>
@@ -430,12 +443,12 @@ import { ref, computed, onBeforeUnmount } from 'vue'
 import { 
   ArrowLeft, FileText, Target, Hash, Calendar, Edit2, UserMinus, Trash2, X, 
   AlertCircle, AlertTriangle, Check, MoreVertical, BarChart3, CheckCircle2, TrendingUp, Search, NotebookPen, RefreshCw, Flame,
-  Columns2, Rows
+  Columns2, Rows, Eye, EyeOff
 } from 'lucide-vue-next'
 import { getHeatTextColor } from '../../utils/gradeColors.js'
 import { formatLocalDisplay } from '../../utils/dates.js'
 import { getGradeSmartBadge } from '../../utils/gradeCalc.js'
-import { removeAttempt, updateAttemptComment, setPrimaryAttempt, toggleAdminChecklist, saveAdminText, enterGrade, markMissing, markExcluded } from '../../composables/useGradebook.js'
+import { removeAttempt, updateAttemptComment, setPrimaryAttempt, toggleAdminChecklist, saveAdminText, enterGrade, markMissing, markExcluded, toggleAssessmentExcluded } from '../../composables/useGradebook.js'
 import { useMessage } from '../../composables/useMessage.js'
 import GradesAttemptHistoryModal from './GradesAttemptHistoryModal.vue'
 import GradeAttemptHoverCard from './GradeAttemptHoverCard.vue'

@@ -122,6 +122,13 @@
                   <div class="hub-card-title-row">
                     <span class="hub-card-title">{{ ast.name }}</span>
                     <span 
+                      v-if="ast.excluded" 
+                      class="hub-card-tag" 
+                      style="background: rgba(100, 116, 139, 0.14); color: var(--text-secondary);"
+                    >
+                      Excluded
+                    </span>
+                    <span 
                       class="hub-card-tag" 
                       :class="{ 
                         'hub-card-tag--admin': ast.purpose === 'administrative',

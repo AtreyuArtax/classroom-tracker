@@ -412,6 +412,63 @@ const resHybridComplete = await calculateStudentGrade('s1', classSbarHybrid, {
 assert(resHybridComplete.calculatedOverallGrade === 82, `Hybrid SBAR complete evaluation computes exact composite: Expected 82%, got ${resHybridComplete.calculatedOverallGrade}%`)
 assert(resHybridComplete.weightUsed === 100, 'Hybrid SBAR complete evaluation uses 100% weight')
 
+// Scenario 5D-4: Assessment-level excluded: true on Attendance & Participation (SBAR Hybrid & Traditional)
+const sbarHybridAstsAttExcluded = [
+  { assessmentId: 'ast_term1', expectationIds: ['C1.1'], totalPoints: 100, date: '2026-09-01', excluded: false },
+  { assessmentId: 'ast_exam', totalPoints: 100, date: '2026-11-20', excluded: false },
+  { assessmentId: 'ast_att', totalPoints: 100, date: '2026-11-25', excluded: true } // Excluded until end of semester
+]
+const resHybridAttExcluded = await calculateStudentGrade('s1', classSbarHybrid, {
+  assessmentsPreRef: sbarHybridAstsAttExcluded,
+  gradesPreRef: gradesHybridComplete,
+  settingsPreRef: { capGradesAt100: true }
+})
+// Term 80% (wt 65) + Exam 80% (wt 25) = 80% over 90% weightUsed; Attendance (100%) is ignored while ast_att.excluded === true
+assert(resHybridAttExcluded.calculatedOverallGrade === 80, `Hybrid SBAR with excluded Attendance component ignores its mark: Expected 80%, got ${resHybridAttExcluded.calculatedOverallGrade}%`)
+assert(resHybridAttExcluded.weightUsed === 90, `Hybrid SBAR with excluded Attendance component uses 90% weight, got ${resHybridAttExcluded.weightUsed}`)
+
+// Scenario 5E: Toggling assessment.excluded true -> false preserves student scores AND individual student grade.excluded
+const classTradAtt = {
+  classId: 'c_trad_att',
+  gradingFramework: 'traditional',
+  gradebookCategories: [
+    { categoryId: 'cat_coursework', name: 'Coursework', weight: 90 },
+    { categoryId: 'cat_att', name: 'Attendance & Participation', weight: 10 }
+  ],
+  students: {
+    's1': { studentId: 's1', firstName: 'Alice', lastName: 'Smith' },
+    's2': { studentId: 's2', firstName: 'Bob', lastName: 'Jones' }
+  }
+}
+const tradGrades = [
+  { assessmentId: 'a_cw', studentId: 's1', resolvedScore: 80, excluded: false },
+  { assessmentId: 'a_att', studentId: 's1', resolvedScore: 100, excluded: false },
+  { assessmentId: 'a_cw', studentId: 's2', resolvedScore: 70, excluded: false },
+  { assessmentId: 'a_att', studentId: 's2', resolvedScore: 50, excluded: true } // Bob is individually excluded from Attendance
+]
+
+// 1. Assessment excluded = true (during semester)
+const tradAstsExcluded = [
+  { assessmentId: 'a_cw', categoryId: 'cat_coursework', totalPoints: 100, date: '2026-10-01', excluded: false },
+  { assessmentId: 'a_att', categoryId: 'cat_att', totalPoints: 100, date: '2026-10-15', excluded: true }
+]
+const s1During = await calculateStudentGrade('s1', classTradAtt, { assessmentsPreRef: tradAstsExcluded, gradesPreRef: tradGrades })
+const s2During = await calculateStudentGrade('s2', classTradAtt, { assessmentsPreRef: tradAstsExcluded, gradesPreRef: tradGrades })
+assert(s1During.calculatedOverallGrade === 80 && s1During.weightUsed === 90, `Alice mark during semester excludes Attendance: Expected 80% (wt 90), got ${s1During.calculatedOverallGrade}% (wt ${s1During.weightUsed})`)
+assert(s2During.calculatedOverallGrade === 70 && s2During.weightUsed === 90, `Bob mark during semester excludes Attendance: Expected 70% (wt 90), got ${s2During.calculatedOverallGrade}% (wt ${s2During.weightUsed})`)
+
+// 2. Assessment excluded = false (end of semester: un-excluded from 3 dots)
+const tradAstsIncluded = [
+  { assessmentId: 'a_cw', categoryId: 'cat_coursework', totalPoints: 100, date: '2026-10-01', excluded: false },
+  { assessmentId: 'a_att', categoryId: 'cat_att', totalPoints: 100, date: '2026-10-15', excluded: false }
+]
+const s1End = await calculateStudentGrade('s1', classTradAtt, { assessmentsPreRef: tradAstsIncluded, gradesPreRef: tradGrades })
+const s2End = await calculateStudentGrade('s2', classTradAtt, { assessmentsPreRef: tradAstsIncluded, gradesPreRef: tradGrades })
+// Alice gets 80 * 0.90 + 100 * 0.10 = 82% (wt 100)
+assert(s1End.calculatedOverallGrade === 82 && s1End.weightUsed === 100, `Alice mark at end of semester includes preserved 100% Attendance: Expected 82% (wt 100), got ${s1End.calculatedOverallGrade}% (wt ${s1End.weightUsed})`)
+// Bob still has his individual grade.excluded === true preserved, so he remains at 70% (wt 90)!
+assert(s2End.calculatedOverallGrade === 70 && s2End.weightUsed === 90, `Bob retains his individual exclusion when assessment is un-excluded: Expected 70% (wt 90), got ${s2End.calculatedOverallGrade}% (wt ${s2End.weightUsed})`)
+
 console.log('\n===================================================================')
 console.log('🎉 ALL GRADING POLICY GROUND-TRUTH ASSERTIONS PASSED (100%)!')
 console.log('===================================================================\n')

@@ -347,6 +347,7 @@ export function calculateSBARExpectationMastery(classRecord, assessments, gradeM
   }
 
   scopedAssessments.forEach(ast => {
+    if (ast.excluded) return
     const expCodes = ast.expectationIds || (ast.expectationId ? [ast.expectationId] : [])
     if (!expCodes.length) return
 

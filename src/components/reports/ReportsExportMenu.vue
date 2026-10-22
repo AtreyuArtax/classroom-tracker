@@ -140,7 +140,7 @@ async function downloadReportCardCsv(includeName) {
       const lates = nonSupersededEvents.filter(e => e.code === 'l').length
       
       const studentAssessments = (assessments.value || [])
-        .filter(a => a.purpose !== 'administrative')
+        .filter(a => a.purpose !== 'administrative' && !a.excluded)
         .map(a => {
           const g = gradeMap.value[a.assessmentId]?.[sId]
           return {
@@ -148,7 +148,7 @@ async function downloadReportCardCsv(includeName) {
             score: g?.resolvedScore ?? null,
             attempts: g?.attempts || [],
             missing: g?.missing,
-            excluded: g?.excluded
+            excluded: Boolean(a.excluded || g?.excluded)
           }
         })
         .filter(a => !a.excluded && (a.target !== 'individual' || (a.target === 'individual' && String(a.targetStudentId) === String(sId))))

@@ -1085,3 +1085,21 @@
 .grades__icon-btn--danger {
   color: var(--state-out);
 }
+
+.grades__th-assessment--excluded .grades__assessment-name {
+  opacity: 0.72;
+}
+
+.grades__excluded-col-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  background: rgba(100, 116, 139, 0.14);
+  color: var(--text-secondary);
+  border: 1px solid rgba(100, 116, 139, 0.28);
+  line-height: 1.3;
+}
