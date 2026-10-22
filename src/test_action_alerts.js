@@ -198,4 +198,39 @@ const ev = (studentId, code, timestamp, extra = {}) => ({ studentId, code, times
   assert.ok(itemS3.reason.includes('Notify Alpha VP'), 's3 reason specifies Notify Alpha VP')
 }
 
+// ── buildFollowUpItems: Test day absences ONLY trigger on event.testDay === true ──
+{
+  // Student absent on two dates that happen to have assessments, but NOT marked as testDay
+  const eventsWithoutTestDay = [
+    ev('s1', 'a', '2026-09-10T08:50:00Z'),
+    ev('s1', 'a', '2026-09-24T08:50:00Z')
+  ]
+  const assessments = [
+    { assessmentId: 'a1', date: '2026-09-10T00:00:00Z' },
+    { assessmentId: 'a2', date: '2026-09-24T00:00:00Z' }
+  ]
+  const itemsRegular = buildFollowUpItems({
+    students,
+    periodEvents: eventsWithoutTestDay,
+    allEvents: eventsWithoutTestDay,
+    assessments
+  })
+  const s1Regular = itemsRegular.find(i => i.studentId === 's1')
+  assert.ok(!s1Regular || !s1Regular.reason.includes('test day'), 'Gradebook assessment date does not trigger test day absence')
+
+  // Student absent on two dates where teacher toggled Test Day (testDay: true)
+  const eventsWithTestDay = [
+    ev('s1', 'a', '2026-09-10T08:50:00Z', { testDay: true }),
+    ev('s1', 'a', '2026-09-24T08:50:00Z', { testDay: true })
+  ]
+  const itemsTestDay = buildFollowUpItems({
+    students,
+    periodEvents: eventsWithTestDay,
+    allEvents: eventsWithTestDay
+  })
+  const s1TestDay = itemsTestDay.find(i => i.studentId === 's1')
+  assert.ok(s1TestDay, 's1 flagged for test day absences')
+  assert.ok(s1TestDay.reason.includes('Absent on 2 test days'), 's1 reason includes Absent on 2 test days')
+}
+
 console.log('✅ action alerts tests passed')

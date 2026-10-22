@@ -123,18 +123,28 @@ console.log('✓ Superseded event correctly treated as late instead of absent\n'
 
 // ── Test 8: Test-Day Absences ─────────────────────────────────────────────────
 console.log('Test 8: Test-day absences')
+// Only absences with testDay: true count as test day absences;
+// general assessment dates must NOT trigger test day absences.
 const testEvents = [
   { studentId: 's15', code: 'a', testDay: true, timestamp: '2026-09-10T08:50:00' },
-  { studentId: 's15', code: 'a', timestamp: '2026-09-24T08:50:00' } // Matched by assessmentDates
+  { studentId: 's15', code: 'a', testDay: true, timestamp: '2026-09-24T08:50:00' },
+  { studentId: 's15', code: 'a', timestamp: '2026-09-25T08:50:00' } // Regular absence (should not count as test day)
 ]
-const resTest = detectStudentAttendancePatterns('s15', testEvents, ['2026-09-10', '2026-09-24'], {
-  assessmentDates: ['2026-09-24']
-})
+const resTest = detectStudentAttendancePatterns('s15', testEvents, ['2026-09-10', '2026-09-24', '2026-09-25'])
 const testPattern = resTest.patterns.find(p => p.type === 'test_day_absence')
 assert.ok(testPattern, 'test_day_absence pattern exists')
 assert.strictEqual(testPattern.count, 2)
 assert.strictEqual(testPattern.severity, 'danger')
-console.log(`✓ Test-day absence flagged: "${testPattern.reason}"\n`)
+assert.strictEqual(resTest.metrics.testDayAbsences, 2, 'Metrics reflect 2 test day absences')
+
+// Absence on a day with an activity/assessment but testDay !== true should not flag test_day_absence
+const nonTestDayEvents = [
+  { studentId: 's15b', code: 'a', timestamp: '2026-09-10T08:50:00' },
+  { studentId: 's15b', code: 'a', timestamp: '2026-09-24T08:50:00' }
+]
+const resNonTest = detectStudentAttendancePatterns('s15b', nonTestDayEvents, ['2026-09-10', '2026-09-24'])
+assert.strictEqual(resNonTest.patterns.some(p => p.type === 'test_day_absence'), false, 'Non-test-day absences do not trigger test_day_absence pattern')
+console.log(`✓ Test-day absence flagged: "${testPattern.reason}" (and non-test-day absences ignored)\n`)
 
 // ── Test 9: Class-Level Batch Detection & Priority Sorting ────────────────────
 console.log('Test 9: Class-level batch detection with priority sorting')

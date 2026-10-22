@@ -284,13 +284,8 @@ export function detectStudentAttendancePatterns(studentId, studentEvents = [], a
     })
   }
 
-  // ── 5. Assessment / Test Day Absences ────────────────────────────────────
-  const assessmentDateSet = new Set((opts.assessmentDates || []).map(normalizeDate).filter(Boolean))
-  const testAbsences = absenceEvents.filter(e => {
-    if (Boolean(e.testDay)) return true
-    const d = normalizeDate(e.timestamp)
-    return assessmentDateSet.has(d)
-  })
+  // ── 5. Test Day Absences ────────────────────────────────────────────────
+  const testAbsences = absenceEvents.filter(e => Boolean(e.testDay))
   if (testAbsences.length >= opts.testDayAbsenceThreshold) {
     patterns.push({
       type: 'test_day_absence',

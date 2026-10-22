@@ -28,7 +28,7 @@ function addKind(item, kind) {
  * @param {Object} opts
  * @param {Object} opts.students       Active (non-archived) students map { id: student }
  * @param {Array}  opts.periodEvents   Events inside the selected period
- * @param {Array}  opts.assessments    Assessments (for test-day absence detection)
+ * @param {Array}  opts.assessments    Assessments
  * @param {Object} opts.classGrades    { studentId: { overallGrade } }
  * @param {Array}  opts.washCodes      Behaviour code keys of toggle (out-of-room) type
  * @param {number} opts.washLimit      Minutes before a trip counts as extended
@@ -63,14 +63,8 @@ export function buildFollowUpItems({
     items.push({ studentId: id, name: nameFor(id), reason, severity, sortVal, kinds: [kind] })
 
   // Run attendance & punctuality pattern detection
-  const assessmentDates = (assessments || [])
-    .filter(a => a && a.date)
-    .map(a => (a.date || '').split('T')[0])
-    .filter(Boolean)
-
   const eventsForPatterns = (allEvents && allEvents.length > 0) ? allEvents : periodEvents
   const patternOptions = {
-    assessmentDates,
     enableConsecutiveTier1: thresholds.enableConsecutiveTier1 ?? true,
     consecutiveAbsenceThreshold: thresholds.consecutiveAbsenceTier1 ?? 3,
     consecutiveTier1Label: thresholds.consecutiveTier1Label ?? '',
