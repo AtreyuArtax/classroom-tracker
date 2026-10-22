@@ -1,67 +1,49 @@
 <template>
   <div class="mindset-analytics">
-    <!-- Header with Title, Lens Switcher, View Mode & Actions -->
+    <!-- Header with Lens Switcher & View Switcher -->
     <div class="mindset-analytics__header">
-      <div class="mindset-analytics__header-left">
-        <div class="mindset-analytics__title-row">
-          <Sparkles :size="15" class="mindset-title-icon" />
-          <h4 class="mindset-analytics__title">Student Mindset &amp; Aspirations Matrix</h4>
-        </div>
-        <p class="mindset-analytics__subtitle">
-          <template v-if="lensMode === 'actualVsGoal'">
-            Target Goals vs. Actual Live Marks ({{ respondedStudentsCount }} of {{ totalStudentsCount }} responded)
-          </template>
-          <template v-else>
-            Day 1 Confidence (1–5) vs. Target Goals ({{ respondedStudentsCount }} of {{ totalStudentsCount }} responded)
-          </template>
-        </p>
+      <!-- Lens Switcher: Progress vs Goal OR Day 1 Mindset -->
+      <div class="mindset-lens-switcher" role="group" aria-label="Matrix Lens">
+        <button 
+          type="button"
+          class="mindset-lens-btn"
+          :class="{ 'mindset-lens-btn--active': lensMode === 'actualVsGoal' }"
+          @click="lensMode = 'actualVsGoal'"
+          title="Compare Anticipated Target Goal vs. Live Current Academic Mark"
+        >
+          <Target :size="13" /> Progress vs. Goal
+        </button>
+        <button 
+          type="button"
+          class="mindset-lens-btn"
+          :class="{ 'mindset-lens-btn--active': lensMode === 'day1Mindset' }"
+          @click="lensMode = 'day1Mindset'"
+          title="Day 1 Baseline: Course Confidence vs. Target Goal"
+        >
+          <Sparkles :size="13" /> Day 1 Mindset
+        </button>
       </div>
 
-      <!-- Actions and View Switcher -->
-      <div class="mindset-analytics__actions">
-        <!-- Lens Switcher: Progress vs Goal OR Day 1 Mindset -->
-        <div class="mindset-lens-switcher" role="group" aria-label="Matrix Lens">
-          <button 
-            type="button"
-            class="mindset-lens-btn"
-            :class="{ 'mindset-lens-btn--active': lensMode === 'actualVsGoal' }"
-            @click="lensMode = 'actualVsGoal'"
-            title="Compare Anticipated Target Goal vs. Live Current Academic Mark"
-          >
-            <Target :size="13" /> Progress vs. Goal
-          </button>
-          <button 
-            type="button"
-            class="mindset-lens-btn"
-            :class="{ 'mindset-lens-btn--active': lensMode === 'day1Mindset' }"
-            @click="lensMode = 'day1Mindset'"
-            title="Day 1 Baseline: Course Confidence vs. Target Goal"
-          >
-            <Sparkles :size="13" /> Day 1 Mindset
-          </button>
-        </div>
-
-        <!-- View Switcher: Scatter vs Breakdown -->
-        <div class="mindset-view-switcher">
-          <button 
-            type="button"
-            class="mindset-view-btn"
-            :class="{ 'mindset-view-btn--active': viewMode === 'scatter' }"
-            @click="viewMode = 'scatter'"
-            title="Visual 4-Quadrant Scatter Matrix"
-          >
-            <ScatterPlotIcon :size="13" /> Scatter Plot
-          </button>
-          <button 
-            type="button"
-            class="mindset-view-btn"
-            :class="{ 'mindset-view-btn--active': viewMode === 'breakdown' }"
-            @click="viewMode = 'breakdown'"
-            title="Cohort Breakdown & Lists"
-          >
-            <List :size="13" /> Breakdown &amp; Lists
-          </button>
-        </div>
+      <!-- View Switcher: Scatter vs Breakdown -->
+      <div class="mindset-view-switcher">
+        <button 
+          type="button"
+          class="mindset-view-btn"
+          :class="{ 'mindset-view-btn--active': viewMode === 'scatter' }"
+          @click="viewMode = 'scatter'"
+          title="Visual 4-Quadrant Scatter Matrix"
+        >
+          <ScatterPlotIcon :size="13" /> Scatter Plot
+        </button>
+        <button 
+          type="button"
+          class="mindset-view-btn"
+          :class="{ 'mindset-view-btn--active': viewMode === 'breakdown' }"
+          @click="viewMode = 'breakdown'"
+          title="Cohort Breakdown & Lists"
+        >
+          <List :size="13" /> Breakdown &amp; Lists
+        </button>
       </div>
     </div>
 
@@ -818,8 +800,6 @@ function parseTargetGoal(raw) {
   return { value: 75, label: raw, isHighGoal: false }
 }
 
-const totalStudentsCount = computed(() => props.sidebarStudents.length)
-
 // Process all student data records
 const rawStudentsList = computed(() => {
   const students = props.sidebarStudents || []
@@ -1161,52 +1141,6 @@ const seatingHistogram = computed(() => {
   flex-wrap: nowrap;
   gap: 6px 8px;
   flex-shrink: 0;
-}
-
-.mindset-analytics__header-left {
-  min-width: 0;
-  flex: 1 1 0%;
-  overflow: hidden;
-}
-
-.mindset-analytics__title-row {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.mindset-title-icon {
-  color: #6366f1;
-  flex-shrink: 0;
-}
-
-.mindset-analytics__title {
-  font-size: 0.88rem;
-  font-weight: 700;
-  color: var(--text);
-  margin: 0 0 1px 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.mindset-analytics__subtitle {
-  font-size: 0.7rem;
-  color: var(--text-secondary);
-  margin: 0;
-  line-height: 1.3;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.mindset-analytics__actions {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: nowrap;
-  flex-shrink: 0;
-  margin-left: auto;
 }
 
 /* Lens Switcher (Progress vs Goal / Day 1) */

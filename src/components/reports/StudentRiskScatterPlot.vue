@@ -1,67 +1,58 @@
 <template>
   <div class="risk-plot">
     <div class="risk-plot__header">
-      <div class="risk-plot__header-left">
-        <h4 class="risk-plot__title">Student Risk & Engagement Matrix</h4>
-        <p class="risk-plot__subtitle" :title="metricSubtitle">
-          {{ metricSubtitle }}
-        </p>
+      <!-- Loss Factors Filter Group -->
+      <div class="risk-plot__filter-group" role="group" aria-label="Loss Factors Filter">
+        <button
+          type="button"
+          class="risk-plot__filter-chip"
+          :class="{ 'risk-plot__filter-chip--active': activeFactors.absences }"
+          @click="toggleFactor('absences')"
+          title="Include 75m Absences in Lost Time"
+        >
+          <Check :size="11" class="chip-check" :class="{ 'chip-check--hidden': !activeFactors.absences }" />
+          <span>Absences</span>
+        </button>
+        <button
+          type="button"
+          class="risk-plot__filter-chip"
+          :class="{ 'risk-plot__filter-chip--active': activeFactors.lates }"
+          @click="toggleFactor('lates')"
+          title="Include Late Minutes in Lost Time"
+        >
+          <Check :size="11" class="chip-check" :class="{ 'chip-check--hidden': !activeFactors.lates }" />
+          <span>Lates</span>
+        </button>
+        <button
+          type="button"
+          class="risk-plot__filter-chip"
+          :class="{ 'risk-plot__filter-chip--active': activeFactors.washroom }"
+          @click="toggleFactor('washroom')"
+          title="Include Out-of-Class & Washroom Minutes in Lost Time"
+        >
+          <Check :size="11" class="chip-check" :class="{ 'chip-check--hidden': !activeFactors.washroom }" />
+          <span>Out of Class</span>
+        </button>
       </div>
 
-      <div class="risk-plot__header-right">
-        <!-- Loss Factors Filter Group -->
-        <div class="risk-plot__filter-group" role="group" aria-label="Loss Factors Filter">
-          <button
-            type="button"
-            class="risk-plot__filter-chip"
-            :class="{ 'risk-plot__filter-chip--active': activeFactors.absences }"
-            @click="toggleFactor('absences')"
-            title="Include 75m Absences in Lost Time"
-          >
-            <Check :size="11" class="chip-check" :class="{ 'chip-check--hidden': !activeFactors.absences }" />
-            <span>Absences</span>
-          </button>
-          <button
-            type="button"
-            class="risk-plot__filter-chip"
-            :class="{ 'risk-plot__filter-chip--active': activeFactors.lates }"
-            @click="toggleFactor('lates')"
-            title="Include Late Minutes in Lost Time"
-          >
-            <Check :size="11" class="chip-check" :class="{ 'chip-check--hidden': !activeFactors.lates }" />
-            <span>Lates</span>
-          </button>
-          <button
-            type="button"
-            class="risk-plot__filter-chip"
-            :class="{ 'risk-plot__filter-chip--active': activeFactors.washroom }"
-            @click="toggleFactor('washroom')"
-            title="Include Out-of-Class & Washroom Minutes in Lost Time"
-          >
-            <Check :size="11" class="chip-check" :class="{ 'chip-check--hidden': !activeFactors.washroom }" />
-            <span>Out of Class</span>
-          </button>
-        </div>
-
-        <!-- View Switcher -->
-        <div class="risk-plot__view-switcher">
-          <button 
-            class="risk-plot__view-btn"
-            :class="{ 'risk-plot__view-btn--active': viewMode === 'scatter' }"
-            @click="viewMode = 'scatter'"
-            title="Visual Scatter Matrix"
-          >
-            <ScatterPlotIcon :size="13" /> Scatter Plot
-          </button>
-          <button 
-            class="risk-plot__view-btn"
-            :class="{ 'risk-plot__view-btn--active': viewMode === 'list' }"
-            @click="viewMode = 'list'"
-            title="Structured Quadrant Lists"
-          >
-            <List :size="13" /> Quadrant Lists
-          </button>
-        </div>
+      <!-- View Switcher -->
+      <div class="risk-plot__view-switcher">
+        <button 
+          class="risk-plot__view-btn"
+          :class="{ 'risk-plot__view-btn--active': viewMode === 'scatter' }"
+          @click="viewMode = 'scatter'"
+          title="Visual Scatter Matrix"
+        >
+          <ScatterPlotIcon :size="13" /> Scatter Plot
+        </button>
+        <button 
+          class="risk-plot__view-btn"
+          :class="{ 'risk-plot__view-btn--active': viewMode === 'list' }"
+          @click="viewMode = 'list'"
+          title="Structured Quadrant Lists"
+        >
+          <List :size="13" /> Quadrant Lists
+        </button>
       </div>
     </div>
 
@@ -351,7 +342,6 @@ const academicRiskCount = computed(() => matrixData.value.academicRiskCount)
 const attendanceRiskCount = computed(() => matrixData.value.attendanceRiskCount)
 const thrivingCount = computed(() => matrixData.value.thrivingCount)
 const unassessedCount = computed(() => matrixData.value.unassessedCount)
-const metricSubtitle = computed(() => matrixData.value.metricSubtitle)
 </script>
 
 <style scoped>
@@ -736,41 +726,6 @@ const metricSubtitle = computed(() => matrixData.value.metricSubtitle)
 .list-card__halo-icon {
   flex-shrink: 0;
   color: var(--color-halo, #cbd5e1);
-}
-
-.risk-plot__header-left {
-  min-width: 0;
-  flex: 1 1 0%;
-  overflow: hidden;
-}
-
-.risk-plot__title {
-  font-size: 0.88rem;
-  font-weight: 700;
-  color: var(--text);
-  margin: 0 0 1px 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.risk-plot__subtitle {
-  font-size: 0.7rem;
-  color: var(--text-secondary);
-  margin: 0;
-  line-height: 1.3;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.risk-plot__header-right {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: nowrap;
-  flex-shrink: 0;
-  margin-left: auto;
 }
 
 .risk-plot__filter-group {
