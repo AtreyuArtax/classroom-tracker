@@ -18,7 +18,7 @@
       />
 
       <!-- Main Panel -->
-      <main class="grades__main">
+      <main class="grades__main" :class="{ 'grades__main--sidebar-collapsed': selectedStudentId && isSidebarCollapsed }">
         
         <!-- Loading State -->
         <div v-if="isLoading" class="grades__loading">
@@ -938,13 +938,14 @@ onMounted(async () => {
 
 <style scoped>
 .grades { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: var(--bg-secondary); }
-.grades__layout { display: flex; flex: 1; overflow: hidden; }
-.grades__main { flex: 1; min-width: 0; overflow-y: auto; overflow-x: hidden; padding: 16px 20px; display: flex; flex-direction: column; }
+.grades__layout { display: flex; flex: 1; overflow: hidden; position: relative; }
+.grades__main { flex: 1; min-width: 0; overflow-y: auto; overflow-x: hidden; padding: 12px 16px; display: flex; flex-direction: column; transition: padding-left 0.25s cubic-bezier(0.4, 0, 0.2, 1); }
+.grades__main.grades__main--sidebar-collapsed { padding-left: 32px; }
 .grades__loading, .grades__placeholder { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 20px; color: var(--text-secondary); font-weight: 600; }
 .grades__spinner { width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 12px; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .grades__grid-container { display: flex; flex-direction: column; gap: 10px; height: 100%; }
-.grades__toolbar { display: flex; justify-content: space-between; align-items: center; background: var(--surface); padding: 5px 10px; border-radius: var(--radius-lg); border: 1px solid var(--border); flex-wrap: nowrap; gap: 6px; min-height: 42px; min-width: 0; box-sizing: border-box; }
+.grades__toolbar { display: flex; justify-content: space-between; align-items: center; background: var(--surface); margin: -12px -16px 2px -16px; padding: 8px 12px; border-bottom: 1px solid var(--border); box-shadow: var(--shadow-sm); flex-wrap: nowrap; gap: 6px; min-height: 52px; min-width: 0; box-sizing: border-box; }
 .grades__toolbar-left { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
 .grades__toolbar-center { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
 .grades__center-divider { width: 1px; height: 16px; background: var(--border); margin: 0 2px; flex-shrink: 0; }
@@ -970,7 +971,8 @@ onMounted(async () => {
 
 @media (max-width: 1280px) {
   .grades__main { padding: 8px 10px; }
-  .grades__toolbar { padding: 4px 8px; gap: 4px; }
+  .grades__main--sidebar-collapsed { padding-left: 32px; }
+  .grades__toolbar { margin: -8px -10px 2px -10px; padding: 8px 12px; gap: 4px; }
   .grades__toolbar-left, .grades__toolbar-center, .grades__toolbar-right { gap: 4px; }
 }
 </style>

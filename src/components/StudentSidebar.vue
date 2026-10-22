@@ -10,10 +10,13 @@
     >
       <ChevronRight :size="18" />
     </button>
-    <!-- Sidebar Header -->
-    <div class="student-sidebar__header">
-      <div class="student-sidebar__header-toolbar">
-        <h2 class="student-sidebar__title">Classroom</h2>
+
+    <div class="student-sidebar__inner">
+      <!-- Sidebar Header -->
+      <div class="student-sidebar__header">
+        <div class="student-sidebar__class-select">
+          <ClassSwitcher @navigate="$emit('navigate', $event)" />
+        </div>
         <div class="student-sidebar__actions">
           <!-- Privacy Toggle (Only shown if showAcademics is true) -->
           <button 
@@ -36,81 +39,78 @@
           </button>
         </div>
       </div>
-      <div class="student-sidebar__class-select">
-        <ClassSwitcher @navigate="$emit('navigate', $event)" />
+
+      <!-- Mobile toggle (from Reports.vue) -->
+      <button class="student-sidebar__mobile-toggle" @click="isMobileOpen = !isMobileOpen">
+        {{ isMobileOpen ? '▲ Hide Students' : '▼ Show Students' }}
+      </button>
+
+      <!-- Student List -->
+      <div class="student-sidebar__roster-container" :class="{ 'student-sidebar__roster-container--open': isMobileOpen }">
+        <ul class="student-sidebar__roster">
+          <li 
+            v-for="student in students" 
+            :key="student.studentId"
+            class="student-sidebar__roster-item"
+            :class="{ 'student-sidebar__roster-item--active': selectedStudentId === student.studentId }"
+            @click="$emit('select-student', student.studentId)"
+          >
+            <!-- Line 1: Full Width Student Name -->
+            <div class="student-sidebar__name-row" :title="`${student.lastName}, ${student.firstName}`">
+              <span class="student-sidebar__roster-lastname">{{ student.lastName }},</span>
+              <span class="student-sidebar__roster-firstname">{{ student.firstName }}</span>
+            </div>
+
+            <!-- Line 2: Metrics & Badges Row (Grade + Sparkline + Tag) -->
+            <div v-if="showAcademics || (availableSubCohorts.length > 1 && studentDisplayMap[student.studentId]?.tag)" class="student-sidebar__metrics-row">
+              <template v-if="showAcademics">
+                <!-- Grade / Mastery Badge -->
+                <span 
+                  v-if="studentDisplayMap[student.studentId]?.hasGrade" 
+                  class="student-sidebar__grade-pill"
+                  :class="{ 'student-sidebar__grade-pill--privacy': isPrivacyMode }"
+                  :style="isPrivacyMode ? {} : { 
+                    color: studentDisplayMap[student.studentId].gradeColor, 
+                    borderColor: studentDisplayMap[student.studentId].gradeColor + '40', 
+                    backgroundColor: studentDisplayMap[student.studentId].gradeColor + '15' 
+                  }"
+                >
+                  {{ isPrivacyMode ? '···' : studentDisplayMap[student.studentId].gradeText }}
+                </span>
+                <span v-else class="student-sidebar__grade-pill student-sidebar__grade-pill--empty">—</span>
+
+                <!-- Sparkline Curve -->
+                <div 
+                  v-if="!isPrivacyMode && studentDisplayMap[student.studentId]?.sparklinePath" 
+                  class="student-sidebar__sparkline-container"
+                >
+                  <svg width="50" height="12" viewBox="0 0 50 12">
+                    <path
+                      fill="none"
+                      :stroke="studentDisplayMap[student.studentId].sparklineColor"
+                      stroke-width="1.5"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      :d="studentDisplayMap[student.studentId].sparklinePath"
+                    />
+                  </svg>
+                </div>
+              </template>
+
+              <!-- Subcohort / Grade Tag -->
+              <span 
+                v-if="availableSubCohorts.length > 1 && studentDisplayMap[student.studentId]?.tag" 
+                class="student-sidebar__course-tag"
+              >
+                {{ studentDisplayMap[student.studentId].tag }}
+              </span>
+            </div>
+          </li>
+          <li v-if="students.length === 0" class="student-sidebar__roster-empty">No students</li>
+        </ul>
       </div>
     </div>
-
-    <!-- Mobile toggle (from Reports.vue) -->
-    <button class="student-sidebar__mobile-toggle" @click="isMobileOpen = !isMobileOpen">
-      {{ isMobileOpen ? '▲ Hide Students' : '▼ Show Students' }}
-    </button>
-
-    <!-- Student List -->
-    <div class="student-sidebar__roster-container" :class="{ 'student-sidebar__roster-container--open': isMobileOpen }">
-      <ul class="student-sidebar__roster">
-        <li 
-          v-for="student in students" 
-          :key="student.studentId"
-          class="student-sidebar__roster-item"
-          :class="{ 'student-sidebar__roster-item--active': selectedStudentId === student.studentId }"
-          @click="$emit('select-student', student.studentId)"
-        >
-          <!-- Line 1: Full Width Student Name -->
-          <div class="student-sidebar__name-row" :title="`${student.lastName}, ${student.firstName}`">
-            <span class="student-sidebar__roster-lastname">{{ student.lastName }},</span>
-            <span class="student-sidebar__roster-firstname">{{ student.firstName }}</span>
-          </div>
-
-          <!-- Line 2: Metrics & Badges Row (Grade + Sparkline + Tag) -->
-          <div v-if="showAcademics || (availableSubCohorts.length > 1 && studentDisplayMap[student.studentId]?.tag)" class="student-sidebar__metrics-row">
-            <template v-if="showAcademics">
-              <!-- Grade / Mastery Badge -->
-              <span 
-                v-if="studentDisplayMap[student.studentId]?.hasGrade" 
-                class="student-sidebar__grade-pill"
-                :class="{ 'student-sidebar__grade-pill--privacy': isPrivacyMode }"
-                :style="isPrivacyMode ? {} : { 
-                  color: studentDisplayMap[student.studentId].gradeColor, 
-                  borderColor: studentDisplayMap[student.studentId].gradeColor + '40', 
-                  backgroundColor: studentDisplayMap[student.studentId].gradeColor + '15' 
-                }"
-              >
-                {{ isPrivacyMode ? '···' : studentDisplayMap[student.studentId].gradeText }}
-              </span>
-              <span v-else class="student-sidebar__grade-pill student-sidebar__grade-pill--empty">—</span>
-
-              <!-- Sparkline Curve -->
-              <div 
-                v-if="!isPrivacyMode && studentDisplayMap[student.studentId]?.sparklinePath" 
-                class="student-sidebar__sparkline-container"
-              >
-                <svg width="50" height="12" viewBox="0 0 50 12">
-                  <path
-                    fill="none"
-                    :stroke="studentDisplayMap[student.studentId].sparklineColor"
-                    stroke-width="1.5"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    :d="studentDisplayMap[student.studentId].sparklinePath"
-                  />
-                </svg>
-              </div>
-            </template>
-
-            <!-- Subcohort / Grade Tag -->
-            <span 
-              v-if="availableSubCohorts.length > 1 && studentDisplayMap[student.studentId]?.tag" 
-              class="student-sidebar__course-tag"
-            >
-              {{ studentDisplayMap[student.studentId].tag }}
-            </span>
-          </div>
-        </li>
-        <li v-if="students.length === 0" class="student-sidebar__roster-empty">No students</li>
-      </ul>
-    </div>
-    </aside>
+  </aside>
 </template>
 
 <script setup>
@@ -260,40 +260,64 @@ function getSparklinePath(data, width, height) {
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
-  width: 200px; /* Streamlined compact width */
+  width: 244px; /* Fits 180px ClassSwitcher + privacy & collapse buttons without shrinking */
   min-width: 0;
   height: 100%;
   position: relative;
-  z-index: 10;
-  transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1), min-width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 30;
+  transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.25s ease;
+}
+
+.student-sidebar__inner {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  overflow: hidden;
+  transition: opacity 0.2s ease;
+}
+
+.student-sidebar__header,
+.student-sidebar__roster-container {
+  width: 244px;
+  min-width: 244px;
+  box-sizing: border-box;
 }
 
 .student-sidebar--collapsed {
-  width: 0 !important;
-  min-width: 0 !important;
-  max-width: 0 !important;
-  border-right: none !important;
+  width: 0;
+  border-right-color: transparent;
   overflow: visible;
   pointer-events: none;
 }
 
-.student-sidebar--collapsed > *:not(.student-sidebar__show-btn) {
-  display: none !important;
+.student-sidebar--collapsed .student-sidebar__inner {
+  opacity: 0;
+  pointer-events: none;
 }
 
 @media (max-width: 1280px) {
   .student-sidebar {
-    width: 180px;
+    width: 236px;
+  }
+  .student-sidebar__header,
+  .student-sidebar__roster-container {
+    width: 236px;
+    min-width: 236px;
+  }
+  .student-sidebar--collapsed {
+    width: 0;
   }
 }
 
 /* Show Handle Styles */
 .student-sidebar__show-btn {
-  position: fixed;
+  position: absolute;
   left: 0;
-  top: 90px; /* Position below header */
-  width: 28px;
-  height: 44px;
+  top: 10px;
+  width: 24px;
+  height: 32px;
   background: var(--surface);
   border: 1px solid var(--border);
   border-left: none;
@@ -310,39 +334,28 @@ function getSparklinePath(data, width, height) {
 }
 
 .student-sidebar__show-btn:hover {
-  width: 34px;
+  width: 30px;
   background: var(--primary-light, rgba(37, 99, 235, 0.1));
 }
 
 .student-sidebar__header {
-  padding: 10px 12px;
+  padding: 10px 6px 10px 12px;
+  min-height: 52px;
+  box-sizing: border-box;
   border-bottom: 1px solid var(--border);
-  background: var(--bg-primary, var(--surface));
+  background: var(--surface);
   display: flex;
-  flex-direction: column; /* Stacked layout */
-  gap: 10px;
-}
-
-.student-sidebar__header-toolbar {
-  display: flex;
+  flex-direction: row;
   align-items: center;
   justify-content: space-between;
-  width: 100%;
-}
-
-.student-sidebar__title {
-  font-size: 0.8rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--text-secondary);
-  margin: 0;
+  gap: 4px;
 }
 
 .student-sidebar__class-select {
-  width: 100%;
+  width: 180px;
+  flex: 0 1 180px;
   min-width: 0;
-  max-width: 100%;
+  max-width: 180px;
   box-sizing: border-box;
 }
 
@@ -358,13 +371,13 @@ function getSparklinePath(data, width, height) {
 .student-sidebar__class-select :deep(.class-switcher) {
   width: 100% !important;
   min-width: 0 !important;
-  max-width: 100% !important;
+  max-width: 180px !important;
 }
 
 .student-sidebar__class-select :deep(.subject-switcher) {
   width: 100% !important;
   min-width: 0 !important;
-  max-width: 100% !important;
+  max-width: 180px !important;
 }
 
 .student-sidebar__class-select :deep(.class-switcher__trigger) {
@@ -377,7 +390,10 @@ function getSparklinePath(data, width, height) {
 
 .student-sidebar__actions {
   display: flex;
-  gap: 8px;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+  margin-left: auto;
 }
 
 .student-sidebar__icon-btn {
@@ -385,7 +401,9 @@ function getSparklinePath(data, width, height) {
   border: none;
   color: var(--text-secondary);
   cursor: pointer;
-  padding: 4px;
+  padding: 3px;
+  width: 22px;
+  height: 22px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -419,6 +437,12 @@ function getSparklinePath(data, width, height) {
     height: auto;
     border-right: none;
     border-bottom: 1px solid var(--border);
+  }
+
+  .student-sidebar__header,
+  .student-sidebar__roster-container {
+    width: 100%;
+    min-width: 0;
   }
   
   .student-sidebar__mobile-toggle {

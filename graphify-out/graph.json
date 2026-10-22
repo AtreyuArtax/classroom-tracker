@@ -7557,7 +7557,7 @@
       "label": "emit",
       "file_type": "code",
       "source_file": "src/components/setup/ClassManagerPanel.vue",
-      "source_location": "L318",
+      "source_location": "L311",
       "_origin": "ast",
       "id": "setup_classmanagerpanel_emit",
       "community": 17,
@@ -7567,7 +7567,7 @@
       "label": "{\n  activeClass,\n  filteredClassList,\n  filteredArchivedClasses,\n  modeAllClasses,\n  modeAllArchivedClasses,\n  selectedYear,\n  selectedSemester,\n  teachingMode,\n  switchClass,\n  archiveClass,\n  restoreClass\n}",
       "file_type": "code",
       "source_file": "src/components/setup/ClassManagerPanel.vue",
-      "source_location": "L320",
+      "source_location": "L313",
       "_origin": "ast",
       "id": "setup_classmanagerpanel_activeclass_filteredclasslist_filteredarchivedclasses_modeallclasses_modeallarchivedclasses_selectedyear_selectedsemester_teachingmode_switchclass_archiveclass_restoreclass",
       "community": 17,
@@ -7577,7 +7577,7 @@
       "label": "{ confirmAndDeleteClass }",
       "file_type": "code",
       "source_file": "src/components/setup/ClassManagerPanel.vue",
-      "source_location": "L333",
+      "source_location": "L326",
       "_origin": "ast",
       "id": "setup_classmanagerpanel_confirmanddeleteclass",
       "community": 17,
@@ -7587,7 +7587,7 @@
       "label": "showAllSessions",
       "file_type": "code",
       "source_file": "src/components/setup/ClassManagerPanel.vue",
-      "source_location": "L335",
+      "source_location": "L328",
       "_origin": "ast",
       "id": "setup_classmanagerpanel_showallsessions",
       "community": 17,
@@ -7597,7 +7597,7 @@
       "label": "isArchivedPanelVisible",
       "file_type": "code",
       "source_file": "src/components/setup/ClassManagerPanel.vue",
-      "source_location": "L336",
+      "source_location": "L329",
       "_origin": "ast",
       "id": "setup_classmanagerpanel_isarchivedpanelvisible",
       "community": 17,
@@ -7607,7 +7607,7 @@
       "label": "isBatchPhotosOpen",
       "file_type": "code",
       "source_file": "src/components/setup/ClassManagerPanel.vue",
-      "source_location": "L337",
+      "source_location": "L330",
       "_origin": "ast",
       "id": "setup_classmanagerpanel_isbatchphotosopen",
       "community": 17,
@@ -7617,7 +7617,7 @@
       "label": "isStudentSurveyOpen",
       "file_type": "code",
       "source_file": "src/components/setup/ClassManagerPanel.vue",
-      "source_location": "L338",
+      "source_location": "L331",
       "_origin": "ast",
       "id": "setup_classmanagerpanel_isstudentsurveyopen",
       "community": 17,
@@ -7627,7 +7627,7 @@
       "label": "studentCount()",
       "file_type": "code",
       "source_file": "src/components/setup/ClassManagerPanel.vue",
-      "source_location": "L340",
+      "source_location": "L333",
       "_origin": "ast",
       "id": "setup_classmanagerpanel_studentcount",
       "community": 17,
@@ -7637,7 +7637,7 @@
       "label": "selectAndOpenClass()",
       "file_type": "code",
       "source_file": "src/components/setup/ClassManagerPanel.vue",
-      "source_location": "L344",
+      "source_location": "L337",
       "_origin": "ast",
       "id": "setup_classmanagerpanel_selectandopenclass",
       "community": 17,
@@ -7647,7 +7647,7 @@
       "label": "onArchiveClass()",
       "file_type": "code",
       "source_file": "src/components/setup/ClassManagerPanel.vue",
-      "source_location": "L349",
+      "source_location": "L342",
       "_origin": "ast",
       "id": "setup_classmanagerpanel_onarchiveclass",
       "community": 188,
@@ -7657,7 +7657,7 @@
       "label": "onRestoreClass()",
       "file_type": "code",
       "source_file": "src/components/setup/ClassManagerPanel.vue",
-      "source_location": "L353",
+      "source_location": "L346",
       "_origin": "ast",
       "id": "setup_classmanagerpanel_onrestoreclass",
       "community": 17,
@@ -7667,7 +7667,7 @@
       "label": "onDeleteClass()",
       "file_type": "code",
       "source_file": "src/components/setup/ClassManagerPanel.vue",
-      "source_location": "L357",
+      "source_location": "L350",
       "_origin": "ast",
       "id": "setup_classmanagerpanel_ondeleteclass",
       "community": 17,
@@ -7677,7 +7677,7 @@
       "label": "yearExpandOverrides",
       "file_type": "code",
       "source_file": "src/components/setup/ClassManagerPanel.vue",
-      "source_location": "L362",
+      "source_location": "L355",
       "_origin": "ast",
       "id": "setup_classmanagerpanel_yearexpandoverrides",
       "community": 17,
@@ -7687,7 +7687,7 @@
       "label": "sessionExpandOverrides",
       "file_type": "code",
       "source_file": "src/components/setup/ClassManagerPanel.vue",
-      "source_location": "L363",
+      "source_location": "L356",
       "_origin": "ast",
       "id": "setup_classmanagerpanel_sessionexpandoverrides",
       "community": 17,
@@ -7697,7 +7697,7 @@
       "label": "allYearGroups",
       "file_type": "code",
       "source_file": "src/components/setup/ClassManagerPanel.vue",
-      "source_location": "L365",
+      "source_location": "L358",
       "_origin": "ast",
       "id": "setup_classmanagerpanel_allyeargroups",
       "community": 17,
@@ -7707,7 +7707,7 @@
       "label": "isYearExpanded()",
       "file_type": "code",
       "source_file": "src/components/setup/ClassManagerPanel.vue",
-      "source_location": "L371",
+      "source_location": "L364",
       "_origin": "ast",
       "id": "setup_classmanagerpanel_isyearexpanded",
       "community": 17,
@@ -7717,7 +7717,7 @@
       "label": "toggleYear()",
       "file_type": "code",
       "source_file": "src/components/setup/ClassManagerPanel.vue",
-      "source_location": "L380",
+      "source_location": "L373",
       "_origin": "ast",
       "id": "setup_classmanagerpanel_toggleyear",
       "community": 17,
@@ -7727,7 +7727,7 @@
       "label": "isSessionExpanded()",
       "file_type": "code",
       "source_file": "src/components/setup/ClassManagerPanel.vue",
-      "source_location": "L387",
+      "source_location": "L380",
       "_origin": "ast",
       "id": "setup_classmanagerpanel_issessionexpanded",
       "community": 17,
@@ -7737,7 +7737,7 @@
       "label": "toggleSession()",
       "file_type": "code",
       "source_file": "src/components/setup/ClassManagerPanel.vue",
-      "source_location": "L395",
+      "source_location": "L388",
       "_origin": "ast",
       "id": "setup_classmanagerpanel_togglesession",
       "community": 17,
@@ -7747,7 +7747,7 @@
       "label": "areAllYearsExpanded",
       "file_type": "code",
       "source_file": "src/components/setup/ClassManagerPanel.vue",
-      "source_location": "L406",
+      "source_location": "L399",
       "_origin": "ast",
       "id": "setup_classmanagerpanel_areallyearsexpanded",
       "community": 17,
@@ -7757,7 +7757,7 @@
       "label": "toggleAllYears()",
       "file_type": "code",
       "source_file": "src/components/setup/ClassManagerPanel.vue",
-      "source_location": "L411",
+      "source_location": "L404",
       "_origin": "ast",
       "id": "setup_classmanagerpanel_toggleallyears",
       "community": 17,
@@ -10820,7 +10820,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "composables_usecurriculumeditorstate",
-      "community": 3,
+      "community": 64,
       "norm_label": "usecurriculumeditorstate.js"
     },
     {
@@ -10830,7 +10830,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "composables_usecurriculumeditorstate_curriculumeditordirty",
-      "community": 3,
+      "community": 64,
       "norm_label": "curriculumeditordirty"
     },
     {
@@ -10840,7 +10840,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "composables_usecurriculumeditorstate_curriculumeditortitle",
-      "community": 3,
+      "community": 64,
       "norm_label": "curriculumeditortitle"
     },
     {
@@ -10850,7 +10850,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "composables_usecurriculumeditorstate_curriculumeditorsavehandler",
-      "community": 3,
+      "community": 64,
       "norm_label": "curriculumeditorsavehandler"
     },
     {
@@ -10860,7 +10860,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "composables_usecurriculumeditorstate_curriculumeditordiscardhandler",
-      "community": 3,
+      "community": 64,
       "norm_label": "curriculumeditordiscardhandler"
     },
     {
@@ -10990,7 +10990,7 @@
       "source_location": "L380",
       "_origin": "ast",
       "id": "composables_usecurriculumlibrary_resetmasterpreset",
-      "community": 64,
+      "community": 174,
       "norm_label": "resetmasterpreset()"
     },
     {
@@ -13820,7 +13820,7 @@
       "source_location": "L39",
       "_origin": "ast",
       "id": "curriculum_schema_properties_subjectcode",
-      "community": 198,
+      "community": 91,
       "norm_label": "subjectcode"
     },
     {
@@ -13830,7 +13830,7 @@
       "source_location": "L40",
       "_origin": "ast",
       "id": "curriculum_schema_subjectcode_type",
-      "community": 198,
+      "community": 91,
       "norm_label": "type"
     },
     {
@@ -13840,7 +13840,7 @@
       "source_location": "L41",
       "_origin": "ast",
       "id": "curriculum_schema_subjectcode_description",
-      "community": 198,
+      "community": 91,
       "norm_label": "description"
     },
     {
@@ -13850,7 +13850,7 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "curriculum_schema_properties_department",
-      "community": 91,
+      "community": 198,
       "norm_label": "department"
     },
     {
@@ -13860,7 +13860,7 @@
       "source_location": "L44",
       "_origin": "ast",
       "id": "curriculum_schema_department_type",
-      "community": 91,
+      "community": 198,
       "norm_label": "type"
     },
     {
@@ -13870,7 +13870,7 @@
       "source_location": "L45",
       "_origin": "ast",
       "id": "curriculum_schema_department_description",
-      "community": 91,
+      "community": 198,
       "norm_label": "description"
     },
     {
@@ -15950,7 +15950,7 @@
       "source_location": "L786",
       "_origin": "ast",
       "id": "db_settingsservice_deletecustomcurriculumpreset",
-      "community": 64,
+      "community": 174,
       "norm_label": "deletecustomcurriculumpreset()"
     },
     {
@@ -75280,5 +75280,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "73a6399ad41b738eb4d6bae6d8b08aff6cb2467b"
+  "built_at_commit": "ac19c6fef94a32f476f13279f11fe3c39065af4f"
 }

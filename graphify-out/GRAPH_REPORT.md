@@ -1,7 +1,7 @@
-# Graph Report - classroom-tracker  (2026-10-21)
+# Graph Report - classroom-tracker  (2026-10-22)
 
 ## Corpus Check
-- 378 files · ~694,114 words
+- 378 files · ~694,204 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `73a6399a`
+- Built from commit: `ac19c6fe`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -205,7 +205,7 @@ Nodes (14): csvContent, csvPath, groupKeys, groups, matchP2T1, matchP4, matchT1,
 
 ### Community 3 - "Community 3"
 Cohesion: 0.06
-Nodes (30): curriculumEditorDirty, curriculumEditorDiscardHandler, curriculumEditorSaveHandler, curriculumEditorTitle, isSyncActive(), AddAssessmentModal, checkSyncStatus(), { clear: clearUndo } (+22 more)
+Nodes (26): isSyncActive(), AddAssessmentModal, checkSyncStatus(), { clear: clearUndo }, { computeSuggestedClass }, currentComponent, currentView, Duties (+18 more)
 
 ### Community 4 - "Community 4"
 Cohesion: 0.08
@@ -386,8 +386,8 @@ Cohesion: 0.05
 Nodes (41): activeDates, classResults, consecLatePattern, consecPattern, customPattern, customWindowPattern, dowPattern, eightAbsEvents (+33 more)
 
 ### Community 64 - "Community 64"
-Cohesion: 0.21
-Nodes (18): customPresets, diffClassAgainstMaster(), exportClassExpectationsToMaster(), extractMasterExpectations(), findMatchingClassesForPreset(), getCourseBlueprints(), getMergedCurriculumPresets(), isCourseCodeMatch() (+10 more)
+Cohesion: 0.18
+Nodes (20): curriculumEditorDirty, curriculumEditorDiscardHandler, curriculumEditorSaveHandler, curriculumEditorTitle, customPresets, diffClassAgainstMaster(), exportClassExpectationsToMaster(), extractMasterExpectations() (+12 more)
 
 ### Community 72 - "Community 72"
 Cohesion: 0.25
@@ -426,7 +426,7 @@ Nodes (8): calendar, events, loading, props, stats, student, {
 
 ### Community 91 - "Community 91"
 Cohesion: 0.20
-Nodes (10): description, type, description, type, description, type, properties, department (+2 more)
+Nodes (10): description, type, description, type, properties, grade, isSuccessCriteria, subjectCode (+2 more)
 
 ### Community 92 - "Community 92"
 Cohesion: 0.29
@@ -643,8 +643,8 @@ Cohesion: 0.40
 Nodes (4): elemClass, mockClass, mockStudent, storage
 
 ### Community 174 - "Community 174"
-Cohesion: 0.60
-Nodes (4): main(), mockStorage, runAsyncTest(), runTest()
+Cohesion: 0.38
+Nodes (6): resetMasterPreset(), deleteCustomCurriculumPreset(), main(), mockStorage, runAsyncTest(), runTest()
 
 ### Community 177 - "Community 177"
 Cohesion: 0.21
@@ -712,7 +712,7 @@ Nodes (41): activePreset, activePresetId, allPresets, currentTemperature, custom
 
 ### Community 198 - "Community 198"
 Cohesion: 0.67
-Nodes (3): subjectCode, description, type
+Nodes (3): description, type, department
 
 ### Community 199 - "Community 199"
 Cohesion: 0.67
@@ -762,7 +762,7 @@ Nodes (5): formatExcelDateIfSerial(), cleanOptionText(), normalizeConfidence(), 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `getDB()` connect `Community 190` to `Community 0`, `Community 1`, `Community 3`, `Community 134`, `Community 9`, `Community 21`, `Community 23`, `Community 24`, `Community 35`, `Community 64`, `Community 197`, `Community 207`, `Community 81`, `Community 211`, `Community 85`, `Community 94`, `Community 109`, `Community 112`, `Community 123`?**
+- **Why does `getDB()` connect `Community 190` to `Community 0`, `Community 1`, `Community 3`, `Community 134`, `Community 9`, `Community 21`, `Community 23`, `Community 24`, `Community 35`, `Community 174`, `Community 64`, `Community 197`, `Community 207`, `Community 81`, `Community 211`, `Community 85`, `Community 94`, `Community 109`, `Community 112`, `Community 123`?**
   _High betweenness centrality (0.116) - this node is a cross-community bridge._
 - **Why does `openDB()` connect `Community 94` to `Community 5`, `Community 190`, `Community 15`?**
   _High betweenness centrality (0.069) - this node is a cross-community bridge._

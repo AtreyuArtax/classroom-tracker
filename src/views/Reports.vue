@@ -19,7 +19,7 @@
       />
 
       <!-- ══ RIGHT PANEL ════════════════════════════════════════════════ -->
-      <main class="reports__main">
+      <main class="reports__main" :class="{ 'reports__main--sidebar-collapsed': isSidebarCollapsed && sidebarClassId && filteredClassList.length > 0 }">
 
         <!-- Pillar Navigation Bar + Grade Filter Pills + Inline Time Filter (Hidden in Student 360 mode) -->
         <div v-if="rightMode !== 'dossier'" class="reports__header-bar">
@@ -988,9 +988,10 @@ const washroomChartOptions = {
 
 <style scoped>
 .reports { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: var(--bg-secondary); }
-.reports__layout { display: flex; flex: 1; overflow: hidden; }
-.reports__main { flex: 1; overflow-y: auto; padding: 8px 14px; display: flex; flex-direction: column; gap: 8px; }
-.reports__header-bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: nowrap; min-width: 0; position: sticky; top: 0; z-index: 20; background: var(--bg-secondary); padding: 4px 0 6px 0; }
+.reports__layout { display: flex; flex: 1; overflow: hidden; position: relative; }
+.reports__main { flex: 1; overflow-y: auto; padding: 8px 14px; display: flex; flex-direction: column; gap: 8px; transition: padding-left 0.25s cubic-bezier(0.4, 0, 0.2, 1); }
+.reports__main.reports__main--sidebar-collapsed { padding-left: 32px; }
+.reports__header-bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: nowrap; min-width: 0; min-height: 36px; position: sticky; top: 0; z-index: 20; background: var(--bg-secondary); padding: 2px 0 6px 0; }
 .reports__header-controls { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
 .reports__pillar-nav { display: flex; gap: 2px; background: var(--surface); border: 1px solid var(--border); padding: 2px; border-radius: var(--radius-md); flex-shrink: 0; }
 .reports__pillar-btn { display: flex; align-items: center; gap: 5px; background: none; border: none; padding: 4px 9px; border-radius: var(--radius-sm); font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); cursor: pointer; transition: all 0.15s ease; white-space: nowrap; line-height: 1.2; }

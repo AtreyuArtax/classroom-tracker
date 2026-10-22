@@ -428,8 +428,11 @@ watch(profileStudent, (student) => {
   display:         flex;
   align-items:     center;
   justify-content: space-between;
-  padding:         10px 16px;
+  padding:         8px 12px;
+  min-height:      52px;
+  box-sizing:      border-box;
   background:      var(--surface);
+  border-bottom:   1px solid var(--border);
   box-shadow:      var(--shadow-sm);
   gap:             12px;
   flex-shrink:     0;
@@ -499,7 +502,7 @@ watch(profileStudent, (student) => {
   align-items:     center;
   justify-content: center;
   gap:             6px;
-  padding:         8px 12px;
+  padding:         6px 12px;
   background:      var(--bg-secondary);
   border:          1px solid var(--border);
   border-radius:   var(--radius-md);
@@ -507,7 +510,7 @@ watch(profileStudent, (student) => {
   font-weight:     600;
   color:           var(--text);
   cursor:          pointer;
-  min-height:      44px;
+  min-height:      36px;
   transition:      all 0.15s ease;
 }
 
@@ -548,7 +551,7 @@ watch(profileStudent, (student) => {
   align-items:     center;
   justify-content: center;
   gap:             6px;
-  padding:         8px 12px;
+  padding:         6px 12px;
   background:      var(--bg-secondary);
   border:          1px solid var(--border);
   border-radius:   var(--radius-md);
@@ -556,7 +559,7 @@ watch(profileStudent, (student) => {
   font-weight:     600;
   color:           var(--text);
   cursor:          pointer;
-  min-height:      44px;
+  min-height:      36px;
   transition:      all 0.15s ease;
 }
 
@@ -576,7 +579,7 @@ watch(profileStudent, (student) => {
   align-items:     center;
   justify-content: center;
   gap:             6px;
-  padding:         8px 12px;
+  padding:         6px 12px;
   background:      var(--bg-secondary);
   border:          1px solid var(--border);
   border-radius:   var(--radius-md);
@@ -584,7 +587,7 @@ watch(profileStudent, (student) => {
   font-weight:     600;
   color:           var(--text);
   cursor:          pointer;
-  min-height:      44px;
+  min-height:      36px;
   transition:      all 0.15s ease;
 }
 
@@ -619,7 +622,7 @@ watch(profileStudent, (student) => {
   border:        1px solid rgba(2, 132, 199, 0.25);
   font-size:     0.85rem;
   font-weight:   600;
-  min-height:    44px;
+  min-height:    36px;
 }
 
 /* QR Scanner Button */
@@ -628,7 +631,7 @@ watch(profileStudent, (student) => {
   align-items:     center;
   justify-content: center;
   gap:             6px;
-  padding:         8px 12px;
+  padding:         6px 12px;
   background:      var(--bg-secondary);
   border:          1px solid var(--border);
   border-radius:   var(--radius-md);
@@ -636,7 +639,7 @@ watch(profileStudent, (student) => {
   font-weight:     600;
   color:           var(--text);
   cursor:          pointer;
-  min-height:      44px;
+  min-height:      36px;
   transition:      all 0.15s ease;
 }
 

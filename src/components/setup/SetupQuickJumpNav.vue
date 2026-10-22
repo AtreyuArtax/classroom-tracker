@@ -1,5 +1,5 @@
 <template>
-  <aside v-if="sections.length > 1 || (activeTab === 'active' && filteredClassList.length > 0)" class="setup-toc">
+  <aside ref="asideRef" v-if="sections.length > 1 || (activeTab === 'active' && filteredClassList.length > 0)" class="setup-toc">
     <div v-if="activeTab === 'active' && filteredClassList.length > 0" class="setup-toc__class-picker">
       <label for="setup-class-selector" class="setup-toc__picker-label">CONFIGURING</label>
       <select
@@ -19,13 +19,14 @@
       <span class="setup-toc__header-title">ON THIS PAGE</span>
     </div>
 
-    <nav class="setup-toc__list">
+    <nav class="setup-toc__list" aria-label="On this page">
       <template v-if="sections.length > 0">
         <button
           v-for="item in sections"
           :key="item.id"
           class="setup-toc__item"
           :class="{ 'setup-toc__item--active': activeSectionId === item.id }"
+          :aria-current="activeSectionId === item.id ? 'true' : 'false'"
           @click="scrollToSection(item.id)"
         >
           <span class="setup-toc__indicator"></span>
@@ -88,15 +89,93 @@ const KNOWN_TAB_SECTIONS = {
   ]
 }
 
+const asideRef = ref(null)
 const sections = ref([])
 const activeSectionId = ref('')
 let observer = null
 let mutationObserver = null
+let scrollContainer = null
+let programmaticScrollTargetId = null
+let programmaticScrollTimeout = null
+
+function clearProgrammaticScrollLock() {
+  if (programmaticScrollTimeout) {
+    clearTimeout(programmaticScrollTimeout)
+    programmaticScrollTimeout = null
+  }
+  programmaticScrollTargetId = null
+}
+
+function getScrollContainer() {
+  return asideRef.value?.closest('.setup__panel') || document.querySelector('.setup__panel')
+}
+
+function handleContainerScroll() {
+  if (programmaticScrollTargetId) {
+    activeSectionId.value = programmaticScrollTargetId
+    return
+  }
+  if (!scrollContainer || sections.value.length === 0) return
+
+  const { scrollTop, scrollHeight, clientHeight } = scrollContainer
+  // When scrolled to the very bottom, highlight the last section if it cannot reach the top zone
+  if (scrollHeight - scrollTop - clientHeight <= 24 && scrollTop > 0) {
+    const lastItem = sections.value[sections.value.length - 1]
+    if (lastItem) {
+      activeSectionId.value = lastItem.id
+    }
+    return
+  }
+
+  // Otherwise, determine active section based on scroll position relative to the container's top detection zone
+  const containerRect = scrollContainer.getBoundingClientRect()
+  const triggerLine = containerRect.top + containerRect.height * 0.25
+  let bestId = sections.value[0].id
+  for (const item of sections.value) {
+    if (!item.el) continue
+    const rect = item.el.getBoundingClientRect()
+    if (rect.top <= triggerLine) {
+      bestId = item.id
+    } else {
+      break
+    }
+  }
+  activeSectionId.value = bestId
+}
+
+function handleScrollEnd() {
+  if (programmaticScrollTargetId) {
+    const targetId = programmaticScrollTargetId
+    clearProgrammaticScrollLock()
+    activeSectionId.value = targetId
+  }
+}
+
+function bindScrollListeners(container) {
+  if (scrollContainer === container) return
+  unbindScrollListeners()
+  scrollContainer = container
+  if (scrollContainer) {
+    scrollContainer.addEventListener('scroll', handleContainerScroll, { passive: true })
+    scrollContainer.addEventListener('scrollend', handleScrollEnd, { passive: true })
+  }
+}
+
+function unbindScrollListeners() {
+  if (scrollContainer) {
+    scrollContainer.removeEventListener('scroll', handleContainerScroll)
+    scrollContainer.removeEventListener('scrollend', handleScrollEnd)
+    scrollContainer = null
+  }
+}
 
 function updateSections() {
   nextTick(() => {
-    const mainEl = document.querySelector('.setup__main-content') || document.querySelector('.setup__panel-content')
+    const layoutEl = asideRef.value?.closest('.setup__layout')
+    const mainEl = layoutEl?.querySelector('.setup__main-content') || document.querySelector('.setup__main-content') || document.querySelector('.setup__panel-content')
     if (!mainEl) return
+
+    bindScrollListeners(getScrollContainer())
 
     const cards = mainEl.querySelectorAll('.setup__card, .setup__section-card')
     const items = []
@@ -120,7 +199,7 @@ function updateSections() {
 
     if (items.length > 0) {
       sections.value = items
-      if (!activeSectionId.value) {
+      if (!activeSectionId.value || !items.some(i => i.id === activeSectionId.value)) {
         activeSectionId.value = items[0].id
       }
 
@@ -128,12 +207,27 @@ function updateSections() {
       if (observer) observer.disconnect()
       if ('IntersectionObserver' in window) {
         observer = new IntersectionObserver((entries) => {
+          if (programmaticScrollTargetId) {
+            activeSectionId.value = programmaticScrollTargetId
+            return
+          }
+          if (scrollContainer) {
+            const { scrollTop, scrollHeight, clientHeight } = scrollContainer
+            if (scrollHeight - scrollTop - clientHeight <= 24 && scrollTop > 0) {
+              activeSectionId.value = items[items.length - 1].id
+              return
+            }
+          }
           entries.forEach(entry => {
             if (entry.isIntersecting) {
               activeSectionId.value = entry.target.getAttribute('id')
             }
           })
-        }, { rootMargin: '-10% 0px -70% 0px', threshold: 0 })
+        }, {
+          root: scrollContainer || null,
+          rootMargin: '-10% 0px -70% 0px',
+          threshold: 0
+        })
 
         items.forEach(item => {
           if (item.el) observer.observe(item.el)
@@ -144,7 +238,16 @@ function updateSections() {
 }
 
 function scrollToSection(id) {
+  clearProgrammaticScrollLock()
+  programmaticScrollTargetId = id
   activeSectionId.value = id
+
+  // Fallback timeout in case scroll doesn't move (already at bottom) or scrollend isn't fired
+  programmaticScrollTimeout = setTimeout(() => {
+    clearProgrammaticScrollLock()
+    activeSectionId.value = id
+  }, 850)
+
   const target = document.getElementById(id)
   if (target) {
     target.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -152,6 +255,7 @@ function scrollToSection(id) {
 }
 
 watch(() => props.activeTab, (newTab) => {
+  clearProgrammaticScrollLock()
   const initial = KNOWN_TAB_SECTIONS[newTab] || []
   sections.value = initial
   activeSectionId.value = initial.length > 0 ? initial[0].id : ''
@@ -171,6 +275,8 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  clearProgrammaticScrollLock()
+  unbindScrollListeners()
   if (observer) observer.disconnect()
   if (mutationObserver) mutationObserver.disconnect()
 })
