@@ -404,7 +404,7 @@ const metricSubtitle = computed(() => matrixData.value.metricSubtitle)
 
 .risk-plot__canvas {
   position: relative;
-  height: clamp(260px, 36vh, 360px);
+  height: clamp(300px, 41vh, 395px);
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
@@ -862,7 +862,7 @@ const metricSubtitle = computed(() => matrixData.value.metricSubtitle)
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
   gap: 8px;
-  min-height: clamp(255px, 35vh, 350px);
+  min-height: clamp(295px, 40vh, 385px);
 }
 
 .risk-plot__list-card {
@@ -1102,9 +1102,9 @@ const metricSubtitle = computed(() => matrixData.value.metricSubtitle)
 .risk-plot__summary-card--slate  .count { color: var(--color-neutral); }
 
 @media (max-height: 820px) {
-  .risk-plot { gap: 5px; }
-  .risk-plot__canvas { height: clamp(240px, 33vh, 295px); }
-  .risk-plot__list-view { min-height: clamp(235px, 32vh, 290px); }
+  .risk-plot { gap: 6px; }
+  .risk-plot__canvas { height: clamp(285px, 39vh, 330px); }
+  .risk-plot__list-view { min-height: clamp(280px, 38vh, 325px); }
   .risk-plot__dot { width: 25px; height: 25px; font-size: 0.64rem; }
   .risk-plot__summary-card { padding: 3px 6px; }
   .risk-plot__summary-card .count { font-size: 0.88rem; }

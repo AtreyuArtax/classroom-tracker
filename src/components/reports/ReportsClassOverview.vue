@@ -1432,7 +1432,7 @@ function formatReasonPart(part) {
 .reports__followup-scroll-wrap {
   position: relative;
   flex: 1 1 0;
-  min-height: 210px;
+  min-height: 250px;
 }
 
 .reports__followup-list {
