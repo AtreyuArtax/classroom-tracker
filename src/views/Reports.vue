@@ -267,7 +267,7 @@ import { BarChart2, Printer, User, Award, Send, MessageSquareText } from 'lucide
 
 import { useClassroom } from '../composables/useClassroom.js'
 import { getEffectiveClassRecord } from '../composables/useElementary.js'
-import { activeSubjectId, gradeMutationSignal } from '../composables/useClassroomState.js'
+import { activeSubjectId, gradeMutationSignal, activeClassRecord } from '../composables/useClassroomState.js'
 import { useStudentDossier } from '../composables/useStudentDossier.js'
 import { refreshActionAlerts } from '../composables/useActionAlerts.js'
 import * as classService from '../db/classService.js'
@@ -288,7 +288,7 @@ const ReportsLearningSkills        = defineAsyncComponent(() => import('../compo
 const ReportsCommentGenerator      = defineAsyncComponent(() => import('../components/reports/ReportsCommentGenerator.vue'))
 const ElementaryCommentGenerator   = defineAsyncComponent(() => import('../components/reports/ElementaryCommentGenerator.vue'))
 import { calculateClassGrades, getAssessmentsByClass, getAssessmentPercentage } from '../db/gradebookService.js'
-import { loadGradebook, clearGradebook, assessments as gbAssessments, gradeMap, activeGradeFilter, classGrades as gbClassGrades } from '../composables/useGradebook.js'
+import { loadGradebook, clearGradebook, assessments as gbAssessments, gradeMap, activeGradeFilter } from '../composables/useGradebook.js'
 import { getSectionColor } from '../utils/gradeColors.js'
 import { getSchoolDaysInRange } from '../utils/schoolDayUtils.js'
 
@@ -458,9 +458,6 @@ function switchPillar(mode) {
     dossier.clearStudent()
   }
   if (wasDossier && mode === 'overview') {
-    if (gbClassGrades.value && Object.keys(gbClassGrades.value).length > 0) {
-      classGrades.value = { ...classGrades.value, ...gbClassGrades.value }
-    }
     runReport(true)
   }
 }
@@ -557,9 +554,6 @@ watch(selectedPeriod, () => {
 
 watch(gradeMutationSignal, signal => {
   if (!signal || !signal.classId || signal.classId !== sidebarClassId.value) return
-  if (gbClassGrades.value && Object.keys(gbClassGrades.value).length > 0) {
-    classGrades.value = { ...classGrades.value, ...gbClassGrades.value }
-  }
   if (rightMode.value === 'overview') {
     runReport(true)
   }
@@ -721,14 +715,18 @@ function handleDownloadComments(withNames) {
   alert(`Preparing report card comments CSV (${withNames ? 'with names' : 'anonymous'})...`)
 }
 
+let reportRunId = 0
+
 async function runReport(silent = false) {
   if (!sidebarClassId.value) return
+  const runId = ++reportRunId
   if (!silent) loading.value = true
   try {
     const dr = eventService.getDateRangeForClassPeriod(selectedPeriod.value, reportClass.value, academicTerms.value)
     currentDateRange.value = dr
     
     const currentClass = await classService.getClass(sidebarClassId.value)
+    if (runId !== reportRunId) return
     const activeStudents = {}
     Object.entries(currentClass?.students || {}).forEach(([id, s]) => {
       if (!s.archived) activeStudents[id] = s
@@ -739,8 +737,8 @@ async function runReport(silent = false) {
 
     // Single IDB fetch for all class events, filtering active students and date range in-memory
     const allEventsRaw = await eventService.getEventsByClass(sidebarClassId.value)
+    if (runId !== reportRunId) return
     const activeAllEvents = allEventsRaw.filter(e => activeStudentIds.has(e.studentId))
-    allClassEvents.value = activeAllEvents
 
     const events = (dr && (dr.from || dr.to))
       ? activeAllEvents.filter(e => {
@@ -750,16 +748,25 @@ async function runReport(silent = false) {
           return true
         })
       : activeAllEvents
-    reportData.value = events
 
-    // Load gradebook & assessments for academics and expectations
-    if (reportClass.value) {
-      await loadGradebook(reportClass.value, activeSubjectId.value)
-      assessmentsList.value = gbAssessments.value || await getAssessmentsByClass(sidebarClassId.value)
-    }
-
+    // Load gradebook & assessments for academics and expectations if not already loaded for this class
     const targetClassRecord = effectiveReportClass.value || reportClass.value
-    const grades = await calculateClassGrades(targetClassRecord, { asOf: dr.to || null })
+    const isGradebookLoaded = activeClassRecord.value &&
+      activeClassRecord.value.classId === targetClassRecord?.classId &&
+      (targetClassRecord?.classType !== 'elementary' || activeClassRecord.value.activeSubjectId === activeSubjectId.value)
+
+    if (reportClass.value && !isGradebookLoaded) {
+      await loadGradebook(reportClass.value, activeSubjectId.value)
+      if (runId !== reportRunId) return
+    }
+    assessmentsList.value = gbAssessments.value?.length ? gbAssessments.value : await getAssessmentsByClass(sidebarClassId.value)
+    if (runId !== reportRunId) return
+
+    const grades = await calculateClassGrades(targetClassRecord)
+    if (runId !== reportRunId) return
+
+    allClassEvents.value = activeAllEvents
+    reportData.value = events
     classGrades.value = grades
     refreshActionAlerts(sidebarClassId.value, { period: selectedPeriod.value, events: activeAllEvents, classGrades: grades })
 
@@ -885,7 +892,7 @@ async function runReport(silent = false) {
     }
 
   } finally {
-    if (!silent) loading.value = false
+    if (!silent && runId === reportRunId) loading.value = false
   }
 }
 

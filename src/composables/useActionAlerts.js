@@ -138,7 +138,7 @@ export async function refreshActionAlerts(classId, preloaded = {}) {
     const events = preloaded.events
       ?? (await eventService.getEventsByClass(classId)).filter(e => students[e.studentId])
     const periodEvents = filterPeriodEvents(events, dr)
-    const classGrades = preloaded.classGrades ?? await calculateClassGrades(effective, { asOf: dr.to || null })
+    const classGrades = preloaded.classGrades ?? await calculateClassGrades(effective)
 
     // If an in-memory mutation occurred while this query was running, do not overwrite with stale data
     const currentSrc = sources.value[classId]

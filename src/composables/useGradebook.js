@@ -388,7 +388,7 @@ export function clearGradebook() {
 /**
  * Recalculates all student grades based on active class and current data.
  */
-export async function refreshGrades() {
+export async function refreshGrades({ notify = false } = {}) {
   if (!activeClassRecord.value) return
   
   // Find date boundary if a milestone is selected
@@ -400,7 +400,9 @@ export async function refreshGrades() {
     
   classGrades.value = await gradebookService.calculateClassGrades(activeClassRecord.value, { asOf, dateFrom })
   await refreshClassAnalytics()
-  notifyGradeMutated({ classId: activeClassRecord.value.classId })
+  if (notify) {
+    notifyGradeMutated({ classId: activeClassRecord.value.classId })
+  }
 }
 
 /**
@@ -523,7 +525,7 @@ export async function editAssessment(assessmentId, updates) {
       assessments.value = assessments.value.map((a, i) => i === index ? updated : a)
     }
     
-    await refreshGrades()
+    await refreshGrades({ notify: true })
     return updated
   } catch (err) {
     console.error('[useGradebook] editAssessment failed:', err)
@@ -583,7 +585,7 @@ export async function deleteAssessment(assessmentId) {
     assessments.value = assessments.value.filter(a => Number(a.assessmentId) !== Number(assessmentId))
     
     // Refresh grades as they are now orphaned/removed
-    await refreshGrades()
+    await refreshGrades({ notify: true })
   } catch (err) {
     console.error('[useGradebook] deleteAssessment failed:', err)
     const { alert } = useMessage()
@@ -1595,7 +1597,7 @@ export async function saveStudentOverride(studentId, catId, value) {
     await classService.patchStudent(activeClassRecord.value.classId, studentId, { 
       categoryOverrides: student.categoryOverrides 
     })
-    await refreshGrades()
+    await refreshGrades({ notify: true })
   } catch (err) {
     console.error('[useGradebook] saveStudentOverride failed:', err)
     const { alert } = useMessage()
@@ -1661,7 +1663,7 @@ export async function saveStudentExpectationOverride(studentId, expCode, overrid
     await classService.patchStudent(activeClassRecord.value.classId, studentId, { 
       expectationOverrides: student.expectationOverrides 
     })
-    await refreshGrades()
+    await refreshGrades({ notify: true })
   } catch (err) {
     console.error('[useGradebook] saveStudentExpectationOverride failed:', err)
     const { alert } = useMessage()
@@ -1821,7 +1823,7 @@ export async function adjustStudentGrade(studentId, adjustedGrade) {
     await classService.patchStudent(activeClassRecord.value.classId, studentId, { 
       adjustedGrade: newVal 
     })
-    await refreshGrades()
+    await refreshGrades({ notify: true })
 
     // Register inverse and redo operations in the global Undo/Redo stack
     pushUndo(
@@ -1832,7 +1834,7 @@ export async function adjustStudentGrade(studentId, adjustedGrade) {
         await classService.patchStudent(activeClassRecord.value.classId, studentId, {
           adjustedGrade: prevVal
         })
-        await refreshGrades()
+        await refreshGrades({ notify: true })
       },
       async () => {
         if (!activeClassRecord.value?.students?.[studentId]) return
@@ -1841,7 +1843,7 @@ export async function adjustStudentGrade(studentId, adjustedGrade) {
         await classService.patchStudent(activeClassRecord.value.classId, studentId, {
           adjustedGrade: newVal
         })
-        await refreshGrades()
+        await refreshGrades({ notify: true })
       }
     )
   } catch (err) {
