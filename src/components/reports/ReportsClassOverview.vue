@@ -1432,7 +1432,7 @@ function formatReasonPart(part) {
 .reports__followup-scroll-wrap {
   position: relative;
   flex: 1 1 0;
-  min-height: 260px;
+  min-height: 210px;
 }
 
 .reports__followup-list {
@@ -1808,7 +1808,7 @@ function formatReasonPart(part) {
 .reports__note-text { font-size: 0.76rem; color: var(--text); line-height: 1.35; margin: 0; white-space: pre-wrap; word-break: break-word; }
 .reports__note-text--completed { text-decoration: line-through; opacity: 0.6; }
 
-@media (max-height: 760px) {
+@media (max-height: 820px) {
   .reports__overview { gap: 6px; }
   .reports__two-col { gap: 6px; }
   .reports__kpi-ribbon { gap: 6px; }
