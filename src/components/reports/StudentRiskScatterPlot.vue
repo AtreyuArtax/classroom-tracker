@@ -3,7 +3,7 @@
     <div class="risk-plot__header">
       <div class="risk-plot__header-left">
         <h4 class="risk-plot__title">Student Risk & Engagement Matrix</h4>
-        <p class="risk-plot__subtitle">
+        <p class="risk-plot__subtitle" :title="metricSubtitle">
           {{ metricSubtitle }}
         </p>
       </div>
@@ -366,8 +366,8 @@ const metricSubtitle = computed(() => matrixData.value.metricSubtitle)
   display: flex;
   justify-content: space-between;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 6px 12px;
+  flex-wrap: nowrap;
+  gap: 6px 8px;
   flex-shrink: 0;
 }
 
@@ -375,8 +375,8 @@ const metricSubtitle = computed(() => matrixData.value.metricSubtitle)
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 4px 12px;
-  font-size: 0.7rem;
+  gap: 3px 10px;
+  font-size: 0.68rem;
   font-weight: 600;
   padding: 1px 0;
   flex-shrink: 0;
@@ -524,6 +524,7 @@ const metricSubtitle = computed(() => matrixData.value.metricSubtitle)
 
 /* ── Sleek, Compact Dashboard-Style Tooltips (Theme-Adaptive) ─────────── */
 .risk-plot__tooltip {
+  display: none;
   position: absolute;
   background: var(--chart-popover-bg, var(--surface, #ffffff));
   color: var(--chart-popover-text, var(--text, #1c1c1e));
@@ -534,11 +535,7 @@ const metricSubtitle = computed(() => matrixData.value.metricSubtitle)
   line-height: 1.25;
   box-shadow: var(--chart-popover-shadow, 0 4px 18px rgba(0, 0, 0, 0.15));
   pointer-events: auto;
-  opacity: 0;
-  visibility: hidden;
-  transition: opacity 0.12s ease, visibility 0.12s ease;
   z-index: 20000;
-  display: flex;
   flex-direction: column;
   gap: 2.5px;
   width: max-content;
@@ -547,8 +544,7 @@ const metricSubtitle = computed(() => matrixData.value.metricSubtitle)
 }
 
 .risk-plot__dot:hover .risk-plot__tooltip {
-  opacity: 1;
-  visibility: visible;
+  display: flex;
 }
 
 /* Horizontal & Vertical Boundary Clamping (Guaranteed Zero Bleed) */
@@ -743,8 +739,9 @@ const metricSubtitle = computed(() => matrixData.value.metricSubtitle)
 }
 
 .risk-plot__header-left {
-  min-width: 240px;
-  flex: 1 1 240px;
+  min-width: 0;
+  flex: 1 1 0%;
+  overflow: hidden;
 }
 
 .risk-plot__title {
@@ -752,20 +749,27 @@ const metricSubtitle = computed(() => matrixData.value.metricSubtitle)
   font-weight: 700;
   color: var(--text);
   margin: 0 0 1px 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .risk-plot__subtitle {
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   color: var(--text-secondary);
   margin: 0;
   line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .risk-plot__header-right {
   display: flex;
   align-items: center;
-  gap: 6px 8px;
-  flex-wrap: wrap;
+  gap: 6px;
+  flex-wrap: nowrap;
+  flex-shrink: 0;
   margin-left: auto;
 }
 
@@ -782,16 +786,16 @@ const metricSubtitle = computed(() => matrixData.value.metricSubtitle)
 .risk-plot__filter-chip {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 3px 8px;
+  gap: 3.5px;
+  padding: 3px 6px;
   border-radius: var(--radius-sm);
-  font-size: 0.72rem;
-  font-weight: 600;
+  font-size: 0.7rem;
+  font-weight: 700;
   background: transparent;
   border: none;
   color: var(--text-secondary);
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
   white-space: nowrap;
   user-select: none;
 }
@@ -839,16 +843,17 @@ const metricSubtitle = computed(() => matrixData.value.metricSubtitle)
 .risk-plot__view-btn {
   display: flex;
   align-items: center;
-  gap: 5px;
-  padding: 4px 10px;
-  font-size: 0.725rem;
+  gap: 4px;
+  padding: 3px 8px;
+  font-size: 0.7rem;
   font-weight: 700;
   color: var(--text-secondary);
   background: transparent;
   border: none;
   border-radius: var(--radius-sm);
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+  white-space: nowrap;
 }
 
 .risk-plot__view-btn:hover {

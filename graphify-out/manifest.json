@@ -120,8 +120,8 @@
     "semantic_hash": ""
   },
   "src/components/StudentSidebar.vue": {
-    "mtime": 1792660796.4786174,
-    "ast_hash": "0b9ef794bce84c2b5c6221c7e26160c9",
+    "mtime": 1792681129.3412657,
+    "ast_hash": "855f32a42262fa2995205e4850d3b50e",
     "semantic_hash": ""
   },
   "src/components/StudentTrendGraph.vue": {
@@ -345,8 +345,8 @@
     "semantic_hash": ""
   },
   "src/views/Reports.vue": {
-    "mtime": 1792676156.308323,
-    "ast_hash": "b415d8cdc2b05ab486ade3967b8faf7c",
+    "mtime": 1792682443.0469568,
+    "ast_hash": "b1008d0f4cf874177269c5ebed2707f7",
     "semantic_hash": ""
   },
   "src/views/ScanStation.vue": {
@@ -485,8 +485,8 @@
     "semantic_hash": ""
   },
   "src/components/reports/ReportsClassOverview.vue": {
-    "mtime": 1792676507.6326416,
-    "ast_hash": "bb17060502e83903f9e5f6c9fa27718c",
+    "mtime": 1792680512.0982711,
+    "ast_hash": "23958f5af7ef8ecc4b8fd38c381612eb",
     "semantic_hash": ""
   },
   "src/components/reports/ReportsExportMenu.vue": {
@@ -530,8 +530,8 @@
     "semantic_hash": ""
   },
   "src/components/reports/StudentRiskScatterPlot.vue": {
-    "mtime": 1792675677.393819,
-    "ast_hash": "a8f194c3b6e3d81cd447dec740e7e555",
+    "mtime": 1792683441.2056181,
+    "ast_hash": "d24aeadcf58bfff00773d792a2188c64",
     "semantic_hash": ""
   },
   "src/components/reports/PrintExpectationsModal.vue": {
@@ -1160,8 +1160,8 @@
     "semantic_hash": ""
   },
   "src/components/reports/StudentMindsetAnalytics.vue": {
-    "mtime": 1791458925.8040638,
-    "ast_hash": "65f1d2ad67264a15523041a7bedf7947",
+    "mtime": 1792683550.3651865,
+    "ast_hash": "a5be1c21bc723abb1ee7b973b408b2c0",
     "semantic_hash": ""
   },
   "src/test_mission_critical_audit.js": {

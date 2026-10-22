@@ -4,29 +4,16 @@
     <div class="mindset-analytics__header">
       <div class="mindset-analytics__header-left">
         <div class="mindset-analytics__title-row">
-          <Sparkles :size="16" class="mindset-title-icon" />
+          <Sparkles :size="15" class="mindset-title-icon" />
           <h4 class="mindset-analytics__title">Student Mindset &amp; Aspirations Matrix</h4>
         </div>
         <p class="mindset-analytics__subtitle">
           <template v-if="lensMode === 'actualVsGoal'">
-            Tracking Anticipated Target Goals vs. Actual Live Academic Marks ({{ respondedStudentsCount }} of {{ totalStudentsCount }} students responded)
+            Target Goals vs. Actual Live Marks ({{ respondedStudentsCount }} of {{ totalStudentsCount }} responded)
           </template>
           <template v-else>
-            Day 1 Baseline: Course Confidence (1–5) vs. Target Goals ({{ respondedStudentsCount }} of {{ totalStudentsCount }} students responded)
+            Day 1 Confidence (1–5) vs. Target Goals ({{ respondedStudentsCount }} of {{ totalStudentsCount }} responded)
           </template>
-          <button 
-            v-if="unsubmittedStudents.length > 0"
-            type="button" 
-            class="mindset-unsubmitted-pill"
-            :class="{ 'mindset-unsubmitted-pill--active': isUnsubmittedExpanded }"
-            @click="isUnsubmittedExpanded = !isUnsubmittedExpanded"
-            title="Click to toggle students awaiting survey"
-          >
-            <UserX :size="11" />
-            {{ unsubmittedStudents.length }} awaiting
-            <ChevronUp v-if="isUnsubmittedExpanded" :size="10" />
-            <ChevronDown v-else :size="10" />
-          </button>
         </p>
       </div>
 
@@ -1157,9 +1144,10 @@ const seatingHistogram = computed(() => {
 
 <style scoped>
 .mindset-analytics {
+  flex: 1 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 6px;
   width: 100%;
   box-sizing: border-box;
   container-type: inline-size;
@@ -1170,38 +1158,55 @@ const seatingHistogram = computed(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 12px;
+  flex-wrap: nowrap;
+  gap: 6px 8px;
+  flex-shrink: 0;
+}
+
+.mindset-analytics__header-left {
+  min-width: 0;
+  flex: 1 1 0%;
+  overflow: hidden;
 }
 
 .mindset-analytics__title-row {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
 }
 
 .mindset-title-icon {
   color: #6366f1;
+  flex-shrink: 0;
 }
 
 .mindset-analytics__title {
-  font-size: 1rem;
+  font-size: 0.88rem;
   font-weight: 700;
   color: var(--text);
-  margin: 0;
+  margin: 0 0 1px 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .mindset-analytics__subtitle {
-  font-size: 0.8rem;
+  font-size: 0.7rem;
   color: var(--text-secondary);
-  margin: 2px 0 0 0;
+  margin: 0;
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .mindset-analytics__actions {
   display: flex;
   align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
+  gap: 6px;
+  flex-wrap: nowrap;
+  flex-shrink: 0;
+  margin-left: auto;
 }
 
 /* Lens Switcher (Progress vs Goal / Day 1) */
@@ -1209,7 +1214,7 @@ const seatingHistogram = computed(() => {
   display: flex;
   background: var(--bg-secondary);
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   padding: 2px;
   gap: 2px;
 }
@@ -1217,16 +1222,17 @@ const seatingHistogram = computed(() => {
 .mindset-lens-btn {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
   background: transparent;
   border: none;
-  border-radius: 4px;
-  padding: 5px 10px;
-  font-size: 0.775rem;
-  font-weight: 600;
+  border-radius: var(--radius-sm);
+  padding: 3px 8px;
+  font-size: 0.7rem;
+  font-weight: 700;
   color: var(--text-secondary);
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+  white-space: nowrap;
 }
 
 .mindset-lens-btn:hover {
@@ -1244,23 +1250,25 @@ const seatingHistogram = computed(() => {
   display: flex;
   background: var(--bg-secondary);
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   padding: 2px;
+  gap: 2px;
 }
 
 .mindset-view-btn {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
   background: transparent;
   border: none;
-  border-radius: 4px;
-  padding: 5px 9px;
-  font-size: 0.775rem;
-  font-weight: 600;
+  border-radius: var(--radius-sm);
+  padding: 3px 8px;
+  font-size: 0.7rem;
+  font-weight: 700;
   color: var(--text-secondary);
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+  white-space: nowrap;
 }
 
 .mindset-view-btn:hover {
@@ -1349,20 +1357,23 @@ const seatingHistogram = computed(() => {
 
 /* ── VIEW 1: Scatter Canvas ── */
 .mindset-canvas-wrap {
+  flex: 1 1 0px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   width: 100%;
+  min-height: 0;
 }
 
 .mindset-canvas {
   position: relative;
   width: 100%;
-  height: clamp(330px, 46vh, 420px);
+  flex: 1 1 0px;
+  min-height: 200px;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 12px;
-  overflow: hidden;
+  border-radius: var(--radius-md, 10px);
+  overflow: visible;
   box-sizing: border-box;
 }
 
@@ -1518,16 +1529,17 @@ const seatingHistogram = computed(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 14px;
-  padding: 6px 12px;
+  gap: 12px;
+  padding: 4px 10px;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 8px;
   flex-wrap: wrap;
+  flex-shrink: 0;
 }
 
 .mindset-conf-legend__title {
-  font-size: 0.725rem;
+  font-size: 0.68rem;
   font-weight: 700;
   color: var(--text-secondary);
   text-transform: uppercase;
@@ -1537,7 +1549,7 @@ const seatingHistogram = computed(() => {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-size: 0.725rem;
+  font-size: 0.68rem;
   font-weight: 600;
   color: var(--text);
 }
@@ -1735,6 +1747,7 @@ const seatingHistogram = computed(() => {
   gap: 6px;
   width: 100%;
   box-sizing: border-box;
+  flex-shrink: 0;
 }
 
 .mindset-ribbon-tile {
@@ -2246,8 +2259,10 @@ const seatingHistogram = computed(() => {
   background: rgba(0, 113, 227, 0.1);
 }
 
-@media (max-height: 760px) {
-  .mindset-canvas { height: clamp(315px, 45vh, 345px); }
+@media (max-height: 820px) {
+  .mindset-analytics { gap: 5px; }
+  .mindset-canvas { min-height: 190px; }
+  .mindset-dot { width: 25px; height: 25px; }
   .mindset-summary-ribbon { gap: 5px; }
   .mindset-ribbon-tile { padding: 3px 5px; gap: 4px; }
   .mindset-ribbon-count { font-size: 0.88rem; }

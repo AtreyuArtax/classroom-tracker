@@ -336,7 +336,7 @@ watch(filteredClassList, (newList) => {
       sidebarClassId.value = newList[0].classId
       dossier.clearStudent()
       dossier.loadSidebarClass(newList[0].classId)
-      runReport()
+      runReport(true)
     }
   } else {
     sidebarClassId.value = null
@@ -359,19 +359,16 @@ watch([activeClass, activeSubjectId], async ([newClass, newSub], [oldClass, oldS
       sidebarClassId.value = newClass.classId
       dossier.clearStudent()
       dossier.loadSidebarClass(newClass.classId)
+      rightMode.value = 'overview'
     }
     if (classChanged || subjectChanged) {
-      await loadGradebook(newClass)
-      if (classChanged) {
-        rightMode.value = 'overview'
-      }
-      runReport()
+      await runReport(true)
     }
   } else {
     sidebarClassId.value = null
     dossier.clearStudent()
     clearGradebook()
-    runReport()
+    await runReport(true)
   }
 })
 
@@ -483,17 +480,16 @@ onMounted(async () => {
   if (sidebarClassId.value) {
     dossier.loadSidebarClass(sidebarClassId.value)
     if (props.studentId) {
+      const targetClass = (activeClass.value && activeClass.value.classId === sidebarClassId.value)
+        ? activeClass.value
+        : (classList.value.find(c => c.classId === sidebarClassId.value) || activeClass.value)
+      if (targetClass) {
+        await loadGradebook(targetClass, activeSubjectId.value)
+      }
       onSelectStudent(props.studentId)
     } else {
-      runReport()
+      await runReport()
     }
-  }
-
-  const targetClass = (activeClass.value && activeClass.value.classId === sidebarClassId.value)
-    ? activeClass.value
-    : (classList.value.find(c => c.classId === sidebarClassId.value) || activeClass.value)
-  if (targetClass) {
-    await loadGradebook(targetClass, activeSubjectId.value)
   }
 })
 
@@ -756,7 +752,7 @@ async function runReport(silent = false) {
 
     // Load gradebook & assessments for academics and expectations
     if (reportClass.value) {
-      await loadGradebook(reportClass.value)
+      await loadGradebook(reportClass.value, activeSubjectId.value)
       assessmentsList.value = gbAssessments.value || await getAssessmentsByClass(sidebarClassId.value)
     }
 
