@@ -88,7 +88,7 @@
       </div>
 
       <p class="setup__hint" style="margin-top: -4px; margin-bottom: 0;">
-        Customize your school's duty types. When logging your schedule, picking a duty auto-fills its default minutes, consecutive days, and time slot.
+        Customize your school's duty types. When logging your schedule, picking a duty auto-fills its default minutes, consecutive days, and time slot. Select "None" for ad-hoc duties (like On-call, OSSLT, or Emergency) so they default to no day pre-selected.
       </p>
 
       <div class="duty-settings__table-wrap">
@@ -97,7 +97,7 @@
             <tr>
               <th style="min-width: 170px;">Duty Name</th>
               <th style="width: 110px;">Default Min</th>
-              <th style="min-width: 195px;">Schedule Days</th>
+              <th style="min-width: 245px;">Schedule Days</th>
               <th style="width: 145px;">Start Time</th>
               <th style="width: 110px; text-align: center;">Emergency?</th>
               <th style="width: 60px; text-align: center;">Remove</th>
@@ -141,13 +141,22 @@
                     >
                       {{ d.label }}
                     </button>
+                    <button
+                      type="button"
+                      class="duty-settings__weekday-pill duty-settings__weekday-pill--none"
+                      :class="{ 'duty-settings__weekday-pill--active': isNoDaySelected(duty) }"
+                      @click="setDutyNoDay(duty)"
+                      :title="`Default to no day selected for ${duty.name} (user picks day when logging)`"
+                    >
+                      None
+                    </button>
                   </div>
                   <span
                     class="duty-settings__days-badge"
-                    :class="{ 'duty-settings__days-badge--muted': !duty.defaultWeekdays || duty.defaultWeekdays.length === 0 }"
-                    :title="duty.defaultWeekdays && duty.defaultWeekdays.length > 0 ? `${duty.defaultWeekdays.length} days per week default` : '1 day default (ad-hoc)'"
+                    :class="{ 'duty-settings__days-badge--muted': isNoDaySelected(duty) }"
+                    :title="duty.defaultWeekdays && duty.defaultWeekdays.length > 0 ? `${duty.defaultWeekdays.length} days per week default` : 'No default day selected (user selects day when logging)'"
                   >
-                    {{ duty.defaultWeekdays && duty.defaultWeekdays.length > 0 ? `${duty.defaultWeekdays.length}d` : '1d' }}
+                    {{ duty.defaultWeekdays && duty.defaultWeekdays.length > 0 ? `${duty.defaultWeekdays.length}d` : 'No day' }}
                   </span>
                 </div>
               </td>
@@ -237,13 +246,27 @@ function syncForm() {
     if (!Array.isArray(d.defaultWeekdays)) {
       if (d.id === 'weight-room' || (d.name && d.name.toLowerCase().includes('weight')) || d.defaultDays === 2) {
         d.defaultWeekdays = ['Tue', 'Thu']
+        d.defaultDays = 2
       } else if (d.defaultDays === 5 || d.defaultDays == null) {
         d.defaultWeekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri']
-      } else if (d.defaultDays === 1) {
+        d.defaultDays = 5
+      } else if (d.defaultDays === 0 || ['on-call', 'osslt', 'emergency', 'adjustment'].includes(d.id)) {
         d.defaultWeekdays = []
+        d.defaultDays = 0
+      } else if (d.defaultDays === 1) {
+        if (['on-call', 'emergency', 'osslt', 'adjustment'].some(k => (d.id || '').includes(k) || (d.name || '').toLowerCase().includes(k))) {
+          d.defaultWeekdays = []
+          d.defaultDays = 0
+        } else {
+          d.defaultWeekdays = ['Mon']
+          d.defaultDays = 1
+        }
       } else {
         d.defaultWeekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'].slice(0, d.defaultDays || 1)
+        d.defaultDays = d.defaultWeekdays.length
       }
+    } else {
+      d.defaultDays = d.defaultWeekdays.length
     }
   }
 
@@ -258,6 +281,15 @@ function isWeekdaySelected(duty, dayKey) {
   return Array.isArray(duty.defaultWeekdays) && duty.defaultWeekdays.includes(dayKey)
 }
 
+function isNoDaySelected(duty) {
+  return !duty.defaultWeekdays || duty.defaultWeekdays.length === 0
+}
+
+function setDutyNoDay(duty) {
+  duty.defaultWeekdays = []
+  duty.defaultDays = 0
+}
+
 function toggleDutyWeekday(duty, dayKey) {
   if (!Array.isArray(duty.defaultWeekdays)) {
     duty.defaultWeekdays = []
@@ -270,7 +302,7 @@ function toggleDutyWeekday(duty, dayKey) {
       (a, b) => order.indexOf(a) - order.indexOf(b)
     )
   }
-  duty.defaultDays = duty.defaultWeekdays.length > 0 ? duty.defaultWeekdays.length : 1
+  duty.defaultDays = duty.defaultWeekdays.length
 }
 
 function onAddDutyType() {
@@ -323,7 +355,7 @@ async function onSave() {
       if (!Array.isArray(d.defaultWeekdays)) {
         d.defaultWeekdays = []
       }
-      d.defaultDays = d.defaultWeekdays.length > 0 ? d.defaultWeekdays.length : 1
+      d.defaultDays = d.defaultWeekdays.length
     }
     await updateSettings(form.value)
     saveMessage.value = '✅ Duty settings saved successfully!'
@@ -526,6 +558,13 @@ async function onSave() {
   background: var(--primary) !important;
   color: #ffffff !important;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.duty-settings__weekday-pill--none {
+  width: auto;
+  padding: 0 7px;
+  font-size: 0.70rem;
+  letter-spacing: -0.01em;
 }
 
 .duty-settings__days-badge {

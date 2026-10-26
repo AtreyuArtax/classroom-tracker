@@ -74,9 +74,15 @@ export function generateIcsContent(duties) {
 
     const [year, month, day] = duty.date.split('-').map(Number)
     const uid = `duty-${duty.dutyId || Math.random().toString(36).slice(2, 9)}-${duty.date}@classroomtracker`
-    const summary = escapeIcsText(`${duty.dutyName || 'Duty'} Duty`)
+    const summaryTitle = duty.location && duty.location.trim()
+      ? `${duty.dutyName || 'Duty'} (${duty.location.trim()}) Duty`
+      : `${duty.dutyName || 'Duty'} Duty`
+    const summary = escapeIcsText(summaryTitle)
     
     let description = `Duty: ${duty.dutyName || 'Duty'}\\nDuration: ${duty.duration || 0} minutes`
+    if (duty.location && duty.location.trim()) {
+      description += `\\nLocation: ${escapeIcsText(duty.location.trim())}`
+    }
     if (duty.notes) {
       description += `\\nNotes: ${escapeIcsText(duty.notes)}`
     }
@@ -89,6 +95,9 @@ export function generateIcsContent(duties) {
     ics.push(`DTSTAMP:${dtStamp}`)
     ics.push(`SUMMARY:${summary}`)
     ics.push(`DESCRIPTION:${description}`)
+    if (duty.location && duty.location.trim()) {
+      ics.push(`LOCATION:${escapeIcsText(duty.location.trim())}`)
+    }
     ics.push('STATUS:CONFIRMED')
 
     if (duty.startTime && /^\d{1,2}:\d{2}$/.test(duty.startTime)) {
@@ -153,8 +162,18 @@ export function downloadDutiesIcs(duties, filename = 'school_duties.ics') {
 export function getOutlookWebComposeUrl(duty) {
   if (!duty || !duty.date) return ''
 
-  const subject = encodeURIComponent(`${duty.dutyName || 'Duty'} Supervision`)
-  let body = encodeURIComponent(`Duty: ${duty.dutyName}\nDuration: ${duty.duration} min\n${duty.notes ? 'Notes: ' + duty.notes : ''}`)
+  const title = duty.location && duty.location.trim()
+    ? `${duty.dutyName || 'Duty'} (${duty.location.trim()}) Supervision`
+    : `${duty.dutyName || 'Duty'} Supervision`
+  const subject = encodeURIComponent(title)
+  let bodyText = `Duty: ${duty.dutyName}\nDuration: ${duty.duration} min`
+  if (duty.location && duty.location.trim()) {
+    bodyText += `\nLocation: ${duty.location.trim()}`
+  }
+  if (duty.notes) {
+    bodyText += `\nNotes: ${duty.notes}`
+  }
+  const body = encodeURIComponent(bodyText)
   
   let startdt = ''
   let enddt = ''
@@ -174,7 +193,11 @@ export function getOutlookWebComposeUrl(duty) {
     enddt = `${duty.date}T09:00:00`
   }
 
-  return `https://outlook.office.com/calendar/0/deeplink/compose?subject=${subject}&startdt=${encodeURIComponent(startdt)}&enddt=${encodeURIComponent(enddt)}&body=${body}`
+  let url = `https://outlook.office.com/calendar/0/deeplink/compose?subject=${subject}&startdt=${encodeURIComponent(startdt)}&enddt=${encodeURIComponent(enddt)}&body=${body}`
+  if (duty.location && duty.location.trim()) {
+    url += `&location=${encodeURIComponent(duty.location.trim())}`
+  }
+  return url
 }
 
 /**

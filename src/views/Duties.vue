@@ -400,6 +400,13 @@
                 <div class="duties-view__duty-badge-wrap">
                   <span class="duties-view__duty-name">{{ duty.dutyName }}</span>
                   <span
+                    v-if="duty.location"
+                    class="duties-view__tag duties-view__tag--location"
+                    :title="`Location: ${duty.location}`"
+                  >
+                    {{ duty.location }}
+                  </span>
+                  <span
                     v-if="duty.isEmergency"
                     class="duties-view__tag duties-view__tag--emergency"
                   >
@@ -760,7 +767,8 @@ const filteredDuties = computed(() => {
       const matchName = (d.dutyName || '').toLowerCase().includes(q)
       const matchNotes = (d.notes || '').toLowerCase().includes(q)
       const matchDate = (d.date || '').toLowerCase().includes(q)
-      return matchName || matchNotes || matchDate
+      const matchLocation = (d.location || '').toLowerCase().includes(q)
+      return matchName || matchNotes || matchDate || matchLocation
     })
   }
 
@@ -1651,6 +1659,12 @@ body.dark-theme .duty-hero-card__footer {
 .duties-view__tag--emergency {
   background: rgba(239, 68, 68, 0.15);
   color: #dc2626;
+}
+
+.duties-view__tag--location {
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
 }
 
 .duties-view__duration {

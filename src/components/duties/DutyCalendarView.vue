@@ -209,10 +209,13 @@
                         'duty-card-pill--snow': duty.isSnowDay
                       }"
                       @click.stop="$emit('edit-duty', duty)"
-                      :title="`${duty.dutyName} (${duty.duration}m)${duty.isSnowDay ? ' - Snow Day / Cancelled' : ''}${duty.notes ? ' · ' + duty.notes : ''}\nClick to edit`"
+                      :title="`${duty.dutyName} (${duty.duration}m)${duty.location ? ' · ' + duty.location : ''}${duty.isSnowDay ? ' - Snow Day / Cancelled' : ''}${duty.notes ? ' · ' + duty.notes : ''}\nClick to edit`"
                     >
                       <div class="duty-card-pill__main">
                         <span class="duty-card-pill__name">{{ duty.dutyName }}</span>
+                        <span v-if="duty.location" class="duty-card-pill__loc" :title="duty.location">
+                          {{ duty.location }}
+                        </span>
                         <span v-if="duty.isEmergency && !duty.isSnowDay" class="duty-card-pill__badge duty-card-pill__badge--emergency">
                           Emerg
                         </span>
@@ -1223,6 +1226,24 @@ function handleExportCurrentMonth() {
   overflow: hidden;
   text-overflow: ellipsis;
   line-height: 1.2;
+}
+
+.duty-card-pill__loc {
+  font-size: 0.64rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: rgba(0, 0, 0, 0.05);
+  padding: 1px 4px;
+  border-radius: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 65px;
+}
+
+body.dark-theme .duty-card-pill__loc {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-secondary);
 }
 
 .duty-card-pill__badge {

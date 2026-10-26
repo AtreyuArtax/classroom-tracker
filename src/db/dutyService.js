@@ -23,10 +23,10 @@ export const INITIAL_DUTY_SETTINGS = {
     { id: 'halls-downstairs', name: 'Halls Downstairs', defaultDuration: 20, defaultDays: 5, defaultWeekdays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'], defaultStartTime: '11:40', isEmergency: false },
     { id: 'flagpole', name: 'Flagpole', defaultDuration: 15, defaultDays: 5, defaultWeekdays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'], defaultStartTime: '08:15', isEmergency: false },
     { id: 'pm-bus', name: 'PM Bus', defaultDuration: 15, defaultDays: 5, defaultWeekdays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'], defaultStartTime: '14:40', isEmergency: false },
-    { id: 'on-call', name: 'On-call', defaultDuration: 75, defaultDays: 1, defaultWeekdays: [], defaultStartTime: '09:00', isEmergency: false },
-    { id: 'osslt', name: 'OSSLT', defaultDuration: 75, defaultDays: 1, defaultWeekdays: [], defaultStartTime: '09:00', isEmergency: false },
-    { id: 'emergency', name: 'Emergency', defaultDuration: 20, defaultDays: 1, defaultWeekdays: [], defaultStartTime: '09:00', isEmergency: true },
-    { id: 'adjustment', name: 'Adjustment', defaultDuration: 0, defaultDays: 1, defaultWeekdays: [], defaultStartTime: '', isEmergency: false }
+    { id: 'on-call', name: 'On-call', defaultDuration: 75, defaultDays: 0, defaultWeekdays: [], defaultStartTime: '09:00', isEmergency: false },
+    { id: 'osslt', name: 'OSSLT', defaultDuration: 75, defaultDays: 0, defaultWeekdays: [], defaultStartTime: '09:00', isEmergency: false },
+    { id: 'emergency', name: 'Emergency', defaultDuration: 20, defaultDays: 0, defaultWeekdays: [], defaultStartTime: '09:00', isEmergency: true },
+    { id: 'adjustment', name: 'Adjustment', defaultDuration: 0, defaultDays: 0, defaultWeekdays: [], defaultStartTime: '', isEmergency: false }
   ]
 }
 
@@ -38,12 +38,31 @@ export async function getDutySettings() {
   const db = await getDB()
   const settings = await db.get('settings', 'singleton')
   if (settings && settings.dutySettings) {
+    const rawDutyTypes = Array.isArray(settings.dutySettings.dutyTypes) && settings.dutySettings.dutyTypes.length > 0
+      ? settings.dutySettings.dutyTypes
+      : INITIAL_DUTY_SETTINGS.dutyTypes
+
+    const dutyTypes = rawDutyTypes.map(d => {
+      const defaultWeekdays = Array.isArray(d.defaultWeekdays) ? d.defaultWeekdays : []
+      let defaultDays = defaultWeekdays.length
+      if (defaultWeekdays.length === 0) {
+        if (d.defaultDays === 0 || ['on-call', 'osslt', 'emergency', 'adjustment'].includes(d.id)) {
+          defaultDays = 0
+        } else if (d.defaultDays === 1 && !d.defaultWeekdays) {
+          defaultDays = ['on-call', 'emergency', 'osslt', 'adjustment'].some(k => (d.id || '').includes(k) || (d.name || '').toLowerCase().includes(k)) ? 0 : 1
+        }
+      }
+      return {
+        ...d,
+        defaultWeekdays,
+        defaultDays
+      }
+    })
+
     return {
       allottedMinutes: typeof settings.dutySettings.allottedMinutes === 'number' ? settings.dutySettings.allottedMinutes : INITIAL_DUTY_SETTINGS.allottedMinutes,
       emergencyCap: typeof settings.dutySettings.emergencyCap === 'number' ? settings.dutySettings.emergencyCap : INITIAL_DUTY_SETTINGS.emergencyCap,
-      dutyTypes: Array.isArray(settings.dutySettings.dutyTypes) && settings.dutySettings.dutyTypes.length > 0
-        ? settings.dutySettings.dutyTypes
-        : JSON.parse(JSON.stringify(INITIAL_DUTY_SETTINGS.dutyTypes))
+      dutyTypes
     }
   }
   return JSON.parse(JSON.stringify(INITIAL_DUTY_SETTINGS))

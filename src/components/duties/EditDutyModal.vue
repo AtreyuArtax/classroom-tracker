@@ -58,13 +58,24 @@
       </div>
 
       <div class="edit-duty-form__group">
+        <label class="edit-duty-form__label" for="edit-duty-location">Location / Room (Optional)</label>
+        <input
+          id="edit-duty-location"
+          v-model="form.location"
+          type="text"
+          class="setup__input"
+          placeholder="e.g. Rm 151, Gym, 252"
+        />
+      </div>
+
+      <div class="edit-duty-form__group">
         <label class="edit-duty-form__label" for="edit-duty-notes">Notes</label>
         <input
           id="edit-duty-notes"
           v-model="form.notes"
           type="text"
           class="setup__input"
-          placeholder="e.g. Teacher covered, snow day, etc."
+          placeholder="e.g. Teacher covered, details, etc."
         />
       </div>
 
@@ -145,6 +156,7 @@ const form = ref({
   date: '',
   duration: 15,
   startTime: '',
+  location: '',
   notes: '',
   isSnowDay: false,
   isEmergency: false
@@ -157,6 +169,7 @@ watch(() => props.duty, (val) => {
       date: val.date || '',
       duration: Number(val.duration) || 0,
       startTime: val.startTime || '',
+      location: val.location || '',
       notes: val.notes || '',
       isSnowDay: Boolean(val.isSnowDay),
       isEmergency: Boolean(val.isEmergency)

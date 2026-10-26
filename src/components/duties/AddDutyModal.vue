@@ -23,7 +23,7 @@
             :key="opt.id || opt.name"
             :value="opt.id || opt.name"
           >
-            {{ opt.name }} ({{ opt.defaultDuration }}m · {{ opt.defaultDays }}d)
+            {{ opt.name }} ({{ opt.defaultDuration }}m · {{ opt.defaultDays > 0 ? opt.defaultDays + 'd' : 'No day' }})
           </option>
         </select>
       </div>
@@ -54,6 +54,7 @@
             <button type="button" class="add-duty-form__quick-btn" @click="selectAllWeekdays">All Week (M–F)</button>
             <button type="button" class="add-duty-form__quick-btn" @click="selectTueThu">Tue &amp; Thu</button>
             <button type="button" class="add-duty-form__quick-btn" @click="selectSingleDay">1 Day</button>
+            <button type="button" class="add-duty-form__quick-btn" @click="clearDays">No Days</button>
           </div>
         </div>
 
@@ -80,6 +81,10 @@
       <div v-if="datePreviewText" class="add-duty-form__preview-pill">
         <CalendarDays :size="14" />
         <span>{{ datePreviewText }}</span>
+      </div>
+      <div v-else class="add-duty-form__preview-pill add-duty-form__preview-pill--muted">
+        <CalendarDays :size="14" />
+        <span>No days selected — click a day button above (Mon–Fri) to schedule</span>
       </div>
 
       <!-- Duration & Time -->
@@ -118,6 +123,18 @@
         <strong>{{ totalMinutesCalculated }} minutes</strong>
       </div>
 
+      <!-- Location / Room -->
+      <div class="add-duty-form__group">
+        <label class="add-duty-form__label" for="duty-location">Location / Room (Optional)</label>
+        <input
+          id="duty-location"
+          v-model="form.location"
+          type="text"
+          class="setup__input"
+          placeholder="e.g. Rm 151, Gym, 252, Bus Loop"
+        />
+      </div>
+
       <!-- Additional Notes -->
       <div class="add-duty-form__group">
         <label class="add-duty-form__label" for="duty-notes">Additional Notes (Optional)</label>
@@ -126,7 +143,7 @@
           v-model="form.notes"
           type="text"
           class="setup__input"
-          placeholder="e.g. Teacher covered (Skywalker), location (Bus Bay), etc."
+          placeholder="e.g. Teacher covered (Skywalker), details, etc."
         />
       </div>
 
@@ -166,9 +183,9 @@
         <button
           type="submit"
           class="setup__btn-primary"
-          :disabled="isSubmitting || !form.dutyName"
+          :disabled="isSubmitting || !form.dutyName || selectedDays.length === 0"
         >
-          {{ isSubmitting ? 'Adding...' : `Add Duty (${totalMinutesCalculated}m)` }}
+          {{ isSubmitting ? 'Adding...' : selectedDays.length === 0 ? 'Select a day to add' : `Add Duty (${totalMinutesCalculated}m)` }}
         </button>
       </div>
 
@@ -210,6 +227,7 @@ const form = ref({
   startDate: getTodayLocalDate(),
   duration: 15,
   startTime: '08:15',
+  location: '',
   notes: '',
   isEmergency: false
 })
@@ -267,15 +285,17 @@ function isDaySelected(dayKey) {
 
 function toggleDay(dayKey) {
   if (selectedDays.value.includes(dayKey)) {
-    if (selectedDays.value.length > 1) {
-      selectedDays.value = selectedDays.value.filter(k => k !== dayKey)
-    }
+    selectedDays.value = selectedDays.value.filter(k => k !== dayKey)
   } else {
     const order = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri']
     selectedDays.value = [...selectedDays.value, dayKey].sort(
       (a, b) => order.indexOf(a) - order.indexOf(b)
     )
   }
+}
+
+function clearDays() {
+  selectedDays.value = []
 }
 
 function selectAllWeekdays() {
@@ -303,6 +323,11 @@ function onStartDateChange() {
   const found = catalog.find(d => (d.id || d.name) === selectedDutyId.value)
   if (!found) return
 
+  // If duty defaults to no day (or defaultDays is 0), do not auto-select a day
+  if (found.defaultDays === 0 || (!found.defaultWeekdays || found.defaultWeekdays.length === 0)) {
+    return
+  }
+
   // If 5-day duty and user picked a specific day (like Tuesday for a holiday week)
   if (found.defaultDays === 5) {
     const [y, m, d] = (form.value.startDate || '').split('-').map(Number)
@@ -328,11 +353,27 @@ function applyDutyPreset(duty) {
   form.value.dutyName = duty.name
   form.value.duration = Number(duty.defaultDuration) || 15
   form.value.startTime = duty.defaultStartTime || ''
+  form.value.location = duty.defaultLocation || ''
   form.value.isEmergency = Boolean(duty.isEmergency)
 
   // Smart weekday selection
   if (duty.defaultWeekdays && Array.isArray(duty.defaultWeekdays) && duty.defaultWeekdays.length > 0) {
     selectedDays.value = [...duty.defaultWeekdays]
+  } else if (duty.defaultDays === 0 || (!duty.defaultWeekdays || duty.defaultWeekdays.length === 0)) {
+    // Ad-hoc duty defaulting to no day selected (e.g. Emergency, On-call, OSSLT)
+    // Only preserve initialDate if the user specifically opened the modal by clicking a calendar date cell
+    if (props.initialDate && form.value.startDate === props.initialDate) {
+      const [y, m, d] = props.initialDate.split('-').map(Number)
+      const dt = new Date(y, m - 1, d)
+      const dow = dt.getDay()
+      const map = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+      const dayKey = map[dow]
+      if (['Mon', 'Tue', 'Wed', 'Thu', 'Fri'].includes(dayKey)) {
+        selectedDays.value = [dayKey]
+        return
+      }
+    }
+    selectedDays.value = []
   } else if (duty.id === 'weight-room' || (duty.name && duty.name.toLowerCase().includes('weight')) || duty.defaultDays === 2) {
     selectedDays.value = ['Tue', 'Thu']
   } else if (duty.defaultDays === 5) {
@@ -347,7 +388,7 @@ function applyDutyPreset(duty) {
   } else if (duty.defaultDays === 1) {
     selectSingleDay()
   } else {
-    selectedDays.value = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri']
+    selectedDays.value = []
   }
 }
 
@@ -385,6 +426,7 @@ async function handleSubmit() {
       days: datesToCreate.length,
       duration: form.value.duration,
       startTime: form.value.startTime,
+      location: form.value.location,
       notes: form.value.notes,
       isEmergency: form.value.isEmergency
     })
@@ -453,6 +495,11 @@ async function handleSubmit() {
   font-size: 0.82rem;
   color: var(--primary, #4663ac);
   font-weight: 500;
+}
+
+.add-duty-form__preview-pill--muted {
+  background: var(--bg-secondary, #f2f2f7);
+  color: var(--text-tertiary, #8e8e93);
 }
 
 .add-duty-form__summary-pill {

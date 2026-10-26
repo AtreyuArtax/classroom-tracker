@@ -43,11 +43,19 @@ console.log('🧪 Running Duty Tracker Unit Tests...\n')
   const onCall = INITIAL_DUTY_SETTINGS.dutyTypes.find(d => d.name === 'On-call')
   assert.ok(onCall, 'On-call must be present')
   assert.strictEqual(onCall.defaultDuration, 75, 'On-call must default to 75 min')
-  assert.strictEqual(onCall.defaultDays, 1, 'On-call must default to 1 day')
+  assert.strictEqual(onCall.defaultDays, 0, 'On-call must default to 0 days (no day pre-selected)')
+  assert.deepStrictEqual(onCall.defaultWeekdays, [], 'On-call must default to empty weekdays')
 
   const emergency = INITIAL_DUTY_SETTINGS.dutyTypes.find(d => d.name === 'Emergency')
   assert.ok(emergency, 'Emergency duty must be present')
   assert.strictEqual(emergency.isEmergency, true, 'Emergency duty must have isEmergency: true')
+  assert.strictEqual(emergency.defaultDays, 0, 'Emergency must default to 0 days (no day pre-selected)')
+  assert.deepStrictEqual(emergency.defaultWeekdays, [], 'Emergency must default to empty weekdays')
+
+  const osslt = INITIAL_DUTY_SETTINGS.dutyTypes.find(d => d.name === 'OSSLT')
+  assert.ok(osslt, 'OSSLT must be present')
+  assert.strictEqual(osslt.defaultDays, 0, 'OSSLT must default to 0 days (no day pre-selected)')
+  assert.deepStrictEqual(osslt.defaultWeekdays, [], 'OSSLT must default to empty weekdays')
 
   console.log('✅ Test 1 Passed: Initial duty settings and presets verified.')
 }
@@ -71,6 +79,7 @@ console.log('🧪 Running Duty Tracker Unit Tests...\n')
       date: '2026-10-20',
       duration: 75,
       startTime: '09:00',
+      location: 'Rm 151',
       notes: 'Covered for Skywalker',
       isEmergency: true,
       isSnowDay: false
@@ -85,7 +94,9 @@ console.log('🧪 Running Duty Tracker Unit Tests...\n')
   assert.ok(ics.includes('SUMMARY:AM Bus Duty'), 'Must contain AM Bus summary')
   assert.ok(ics.includes('DTSTART:20261019T081500'), 'Must calculate start timestamp correctly')
   assert.ok(ics.includes('DTEND:20261019T083000'), 'Must calculate end timestamp (08:15 + 15m = 08:30)')
-  assert.ok(ics.includes('SUMMARY:On-call Duty'), 'Must contain On-call summary')
+  assert.ok(ics.includes('SUMMARY:On-call (Rm 151) Duty'), 'Must contain On-call summary with location')
+  assert.ok(ics.includes('LOCATION:Rm 151'), 'Must contain LOCATION property')
+  assert.ok(ics.includes('Location: Rm 151'), 'Must contain Location in description')
   assert.ok(ics.includes('DTSTART:20261020T090000'), 'Must calculate on-call start')
   assert.ok(ics.includes('DTEND:20261020T101500'), 'Must calculate on-call end (09:00 + 75m = 10:15)')
   assert.ok(ics.includes('TRIGGER:-PT10M'), 'Must contain 10-minute alarm reminder')
@@ -101,13 +112,15 @@ console.log('🧪 Running Duty Tracker Unit Tests...\n')
     date: '2026-10-21',
     duration: 20,
     startTime: '11:40',
-    notes: '2nd floor west wing'
+    location: '2nd Floor West',
+    notes: 'Covering zone 3'
   }
 
   const url = getOutlookWebComposeUrl(duty)
   assert.ok(url.startsWith('https://outlook.office.com/calendar/0/deeplink/compose'), 'Must start with Outlook Web compose URL')
-  assert.ok(url.includes('subject=Halls%20Upstairs%20Supervision'), 'Must encode subject')
-  assert.ok(url.includes('2nd%20floor%20west%20wing'), 'Must encode body notes')
+  assert.ok(url.includes('subject=Halls%20Upstairs%20(2nd%20Floor%20West)%20Supervision'), 'Must encode subject with location')
+  assert.ok(url.includes('location=2nd%20Floor%20West'), 'Must encode location parameter')
+  assert.ok(url.includes('Covering%20zone%203'), 'Must encode body notes')
 
   console.log('✅ Test 3 Passed: Outlook Web deep-link verified.')
 }
@@ -336,7 +349,12 @@ console.log('🧪 Running Duty Tracker Unit Tests...\n')
                 (a, b) => order.indexOf(a) - order.indexOf(b)
               )
             }
-            duty.defaultDays = duty.defaultWeekdays.length > 0 ? duty.defaultWeekdays.length : 1
+            duty.defaultDays = duty.defaultWeekdays.length
+          }
+
+          function setDutyNoDay(duty) {
+            duty.defaultWeekdays = []
+            duty.defaultDays = 0
           }
 
           const amBus = INITIAL_DUTY_SETTINGS.dutyTypes.find(d => d.name === 'AM Bus')
@@ -349,7 +367,7 @@ console.log('🧪 Running Duty Tracker Unit Tests...\n')
 
           const onCall = INITIAL_DUTY_SETTINGS.dutyTypes.find(d => d.name === 'On-call')
           assert.deepStrictEqual(onCall.defaultWeekdays, [], 'On-call default weekdays must be empty')
-          assert.strictEqual(onCall.defaultDays, 1)
+          assert.strictEqual(onCall.defaultDays, 0, 'On-call must default to 0 days (no day selected)')
 
           // Test toggling
           const mockCustomDuty = {
@@ -370,13 +388,142 @@ console.log('🧪 Running Duty Tracker Unit Tests...\n')
           assert.deepStrictEqual(mockCustomDuty.defaultWeekdays, ['Wed', 'Thu'])
           assert.strictEqual(mockCustomDuty.defaultDays, 2)
 
-          // Toggle all OFF -> [], defaultDays: 1
+          // Toggle all OFF -> [], defaultDays: 0 (No day selected)
           toggleDutyWeekday(mockCustomDuty, 'Wed')
           toggleDutyWeekday(mockCustomDuty, 'Thu')
           assert.deepStrictEqual(mockCustomDuty.defaultWeekdays, [])
+          assert.strictEqual(mockCustomDuty.defaultDays, 0)
+
+          // Explicit None action sets to 0 days
+          toggleDutyWeekday(mockCustomDuty, 'Mon')
           assert.strictEqual(mockCustomDuty.defaultDays, 1)
+          setDutyNoDay(mockCustomDuty)
+          assert.deepStrictEqual(mockCustomDuty.defaultWeekdays, [])
+          assert.strictEqual(mockCustomDuty.defaultDays, 0)
 
           console.log('✅ Test 10 Passed: Schedule Days catalog presets and weekday toggle sync verified.')
+        }
+
+        // ── Test 11: AddDutyModal 'No Day' Default & Ad-hoc Duty Logic ──
+        {
+          function simulateAddDutyModal(dutyPreset, initialDate = '', currentStartDate = '2026-10-26') {
+            let selectedDays = []
+            const form = {
+              dutyName: dutyPreset.name,
+              startDate: initialDate || currentStartDate,
+              duration: Number(dutyPreset.defaultDuration) || 15,
+              startTime: dutyPreset.defaultStartTime || '',
+              isEmergency: Boolean(dutyPreset.isEmergency)
+            }
+
+            function selectSingleDay() {
+              const [y, m, d] = form.startDate.split('-').map(Number)
+              const dt = new Date(y, m - 1, d)
+              const dow = dt.getDay()
+              const map = { 1: 'Mon', 2: 'Tue', 3: 'Wed', 4: 'Thu', 5: 'Fri' }
+              selectedDays = [map[dow] || 'Mon']
+            }
+
+            function applyDutyPreset(duty) {
+              form.dutyName = duty.name
+              form.duration = Number(duty.defaultDuration) || 15
+              form.startTime = duty.defaultStartTime || ''
+              form.isEmergency = Boolean(duty.isEmergency)
+
+              if (duty.defaultWeekdays && Array.isArray(duty.defaultWeekdays) && duty.defaultWeekdays.length > 0) {
+                selectedDays = [...duty.defaultWeekdays]
+              } else if (duty.defaultDays === 0 || (!duty.defaultWeekdays || duty.defaultWeekdays.length === 0)) {
+                if (initialDate && form.startDate === initialDate) {
+                  const [y, m, d] = initialDate.split('-').map(Number)
+                  const dt = new Date(y, m - 1, d)
+                  const dow = dt.getDay()
+                  const map = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+                  const dayKey = map[dow]
+                  if (['Mon', 'Tue', 'Wed', 'Thu', 'Fri'].includes(dayKey)) {
+                    selectedDays = [dayKey]
+                    return
+                  }
+                }
+                selectedDays = []
+              } else if (duty.id === 'weight-room' || (duty.name && duty.name.toLowerCase().includes('weight')) || duty.defaultDays === 2) {
+                selectedDays = ['Tue', 'Thu']
+              } else if (duty.defaultDays === 5) {
+                selectedDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri']
+              } else if (duty.defaultDays === 1) {
+                selectSingleDay()
+              } else {
+                selectedDays = []
+              }
+            }
+
+            function toggleDay(dayKey) {
+              if (selectedDays.includes(dayKey)) {
+                selectedDays = selectedDays.filter(k => k !== dayKey)
+              } else {
+                const order = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri']
+                selectedDays = [...selectedDays, dayKey].sort(
+                  (a, b) => order.indexOf(a) - order.indexOf(b)
+                )
+              }
+            }
+
+            function onStartDateChange(newStartDate) {
+              form.startDate = newStartDate
+              if (dutyPreset.defaultDays === 0 || (!dutyPreset.defaultWeekdays || dutyPreset.defaultWeekdays.length === 0)) {
+                return
+              }
+              if (dutyPreset.defaultDays === 5) {
+                selectedDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri']
+              } else if (dutyPreset.defaultDays === 1) {
+                selectSingleDay()
+              }
+            }
+
+            applyDutyPreset(dutyPreset)
+
+            return {
+              getSelectedDays: () => selectedDays,
+              toggleDay,
+              onStartDateChange
+            }
+          }
+
+          // Case A: Emergency duty logged via header "+ Log Assigned Duty" (no initialDate)
+          const emergencyPreset = INITIAL_DUTY_SETTINGS.dutyTypes.find(d => d.name === 'Emergency')
+          const emModal = simulateAddDutyModal(emergencyPreset)
+          assert.deepStrictEqual(emModal.getSelectedDays(), [], 'Emergency must default to no day selected')
+
+          // Clicking Wednesday selects only Wednesday (no accidental Monday!)
+          emModal.toggleDay('Wed')
+          assert.deepStrictEqual(emModal.getSelectedDays(), ['Wed'], 'Only Wednesday should be selected')
+
+          // Clicking Wednesday again deselects it down to 0 days
+          emModal.toggleDay('Wed')
+          assert.deepStrictEqual(emModal.getSelectedDays(), [], 'Should deselect down to 0 days')
+
+          // Changing week/start date does NOT auto-populate Monday
+          emModal.onStartDateChange('2026-11-02') // Monday
+          assert.deepStrictEqual(emModal.getSelectedDays(), [], 'Changing date must not auto-populate Monday for no-day duty')
+
+          // Case B: On-call and OSSLT presets default to empty
+          const onCallPreset = INITIAL_DUTY_SETTINGS.dutyTypes.find(d => d.name === 'On-call')
+          const ocModal = simulateAddDutyModal(onCallPreset)
+          assert.deepStrictEqual(ocModal.getSelectedDays(), [], 'On-call must default to no day selected')
+
+          const ossltPreset = INITIAL_DUTY_SETTINGS.dutyTypes.find(d => d.name === 'OSSLT')
+          const osModal = simulateAddDutyModal(ossltPreset)
+          assert.deepStrictEqual(osModal.getSelectedDays(), [], 'OSSLT must default to no day selected')
+
+          // Case C: Standard 5-day duty still defaults to M-F
+          const busPreset = INITIAL_DUTY_SETTINGS.dutyTypes.find(d => d.name === 'AM Bus')
+          const busModal = simulateAddDutyModal(busPreset)
+          assert.deepStrictEqual(busModal.getSelectedDays(), ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'])
+
+          // Case D: Calendar view click on a specific date (e.g. Wednesday 2026-10-28)
+          const calModal = simulateAddDutyModal(emergencyPreset, '2026-10-28')
+          assert.deepStrictEqual(calModal.getSelectedDays(), ['Wed'], 'Clicking specific calendar cell pre-fills that specific day')
+
+          console.log('✅ Test 11 Passed: AddDutyModal no-day defaults and ad-hoc duty workflows verified.')
         }
 
         console.log('\n🎉 ALL DUTY TRACKER TESTS PASSED SUCCESSFULLY!\n')
