@@ -253,6 +253,15 @@
               </div>
               <select v-model="selectedStrengthTask" class="cg__select cg__select--field">
                 <option value="">Auto-detected ({{ autoStrengthLabel }})</option>
+                <optgroup v-if="studentEvaluatedExpectations.length > 0" label="Tagged Expectations (SBAR)">
+                  <option 
+                    v-for="exp in studentEvaluatedExpectations" 
+                    :key="exp.code" 
+                    :value="exp.title || exp.description || exp.code"
+                  >
+                    {{ exp.code }}: {{ exp.title }} ({{ exp.displayScore }})
+                  </option>
+                </optgroup>
                 <optgroup v-if="courseCompetencies.length > 0" label="Curriculum Competencies">
                   <option 
                     v-for="comp in courseCompetencies" 
@@ -268,9 +277,33 @@
                     :key="ass.name" 
                     :value="ass.name"
                   >
-                    {{ ass.name }} ({{ ass.scorePercent }}%)
+                    {{ formatAssessmentOptionLabel(ass) }}
                   </option>
                 </optgroup>
+              </select>
+            </div>
+
+            <div class="cg__evidence-field cg__evidence-field--profile">
+              <div class="cg__control-label-row">
+                <label class="cg__field-label">
+                  <Compass :size="13" class="cg__field-icon cg__field-icon--purple" />
+                  Profile &amp; Inquiry Focus (Sentence 2)
+                </label>
+                <span v-if="autoProfileBadge" class="cg__evidence-count-badge cg__evidence-count-badge--purple" :title="autoProfileMetric">
+                  {{ autoProfileBadge }}
+                </span>
+              </div>
+              <select v-model="selectedProfileFocus" class="cg__select cg__select--field">
+                <option value="auto">Auto-detected ({{ autoProfileLabel }})</option>
+                <option value="inquiry_practical">🔬 Hands-on Labs &amp; Empirical Inquiry</option>
+                <option value="analytical_theory">📐 Analytical Problem Solving &amp; Theory</option>
+                <option value="growth_trajectory">📈 Rising Momentum &amp; Formative Growth</option>
+                <option value="consistent_rigor">🎯 High Consistency &amp; Rigorous Application</option>
+                <option value="category_thinking">💡 Critical Thinking &amp; Inquiry</option>
+                <option value="category_communication">💬 Technical Communication &amp; Precision</option>
+                <option value="category_application">🌍 Real-World &amp; Authentic Application</option>
+                <option value="qualitative_evidence">🗣️ Triangulation (Observations / Conversations)</option>
+                <option value="curriculum_general">📚 General Curriculum Synthesis</option>
               </select>
             </div>
 
@@ -289,6 +322,15 @@
               </div>
               <select v-model="selectedGrowthTask" class="cg__select cg__select--field">
                 <option value="">Auto-detected ({{ autoGrowthLabel }})</option>
+                <optgroup v-if="studentEvaluatedExpectations.length > 0" label="Tagged Expectations (SBAR)">
+                  <option 
+                    v-for="exp in studentEvaluatedExpectations" 
+                    :key="exp.code" 
+                    :value="exp.title || exp.description || exp.code"
+                  >
+                    {{ exp.code }}: {{ exp.title }} ({{ exp.displayScore }})
+                  </option>
+                </optgroup>
                 <optgroup v-if="courseCompetencies.length > 0" label="Curriculum Competencies">
                   <option 
                     v-for="comp in courseCompetencies" 
@@ -304,7 +346,7 @@
                     :key="ass.name" 
                     :value="ass.name"
                   >
-                    {{ ass.name }} ({{ ass.scorePercent }}%)
+                    {{ formatAssessmentOptionLabel(ass) }}
                   </option>
                 </optgroup>
               </select>
@@ -433,7 +475,8 @@ import {
   Cpu,
   History,
   ArrowLeft,
-  Calendar
+  Calendar,
+  Compass
 } from 'lucide-vue-next'
 
 import {
@@ -444,7 +487,8 @@ import {
   gradeMap,
   filteredMilestones,
   globalMilestones,
-  activeClassRecord
+  activeClassRecord,
+  isAssessmentApplicableToStudent
 } from '../../composables/useGradebook.js'
 import {
   academicTerms
@@ -467,7 +511,9 @@ import {
   generateReportComment,
   getAchievementLevel,
   extractEvidenceFromGrades,
-  isCommentExcludedAssessment
+  deriveStudentProfileFocus,
+  isCommentExcludedAssessment,
+  isGenericTitle
 } from '../../utils/commentGenerator.js'
 import {
   getCourseCompetencies
@@ -502,6 +548,10 @@ const props = defineProps({
   assessments: {
     type: Array,
     default: () => []
+  },
+  events: {
+    type: Array,
+    default: () => []
   }
 })
 
@@ -521,6 +571,7 @@ const allTermsSkillsMap = ref({}) // term -> { studentId -> skillsRecord }
 const termVariantSeeds = ref({}) // `${term}__${studentId}` -> number
 const termStrengthTasks = ref({}) // `${term}__${studentId}` -> task string
 const termGrowthTasks = ref({}) // `${term}__${studentId}` -> task string
+const termProfileFocuses = ref({}) // `${term}__${studentId}` -> profile focus string ('auto' | 'inquiry_practical' | ...)
 const termGradesCache = ref({}) // `${term}__${studentId}` -> calculatedGradeObj
 const currentCommentText = ref('')
 const copySuccess = ref(false)
@@ -761,9 +812,16 @@ function getStudentAssessmentsForWindow(studentId, window = currentTermWindow.va
 
   if (!astList || astList.length === 0 || !gradeMap.value) return []
 
+  const targetStudent = studentList.value.find(s => s.studentId === studentId)
+
   const list = []
   astList.forEach(a => {
     if (a.excluded) return
+
+    // Check student applicability (IEP, grade level, specific student assignment)
+    if (targetStudent && !isAssessmentApplicableToStudent(a, targetStudent, reportClassRecord.value?.classType)) {
+      return
+    }
 
     // Exclude formative, diagnostic, administrative, 0% weighted, or non-academic (attendance/participation) assessments
     if (isCommentExcludedAssessment(a, reportClassRecord.value)) return
@@ -783,7 +841,14 @@ function getStudentAssessmentsForWindow(studentId, window = currentTermWindow.va
         name: a.name || 'Assessment',
         description: a.description || '',
         scorePercent: Math.round(pct),
-        date: a.date
+        date: a.date,
+        unitName: a.unitName || a.unit || '',
+        categoryName: a.categoryName || a.category || '',
+        categoryId: a.categoryId,
+        assessmentType: a.assessmentType || a.type || '',
+        expectations: a.expectations || a.expectationIds || [],
+        note: grade?.note || a.note || '',
+        modality: a.modality || ''
       })
     }
   })
@@ -793,6 +858,9 @@ function getStudentAssessmentsForWindow(studentId, window = currentTermWindow.va
   if (list.length === 0 && window.dateFrom && selectedTerm.value === 'Final') {
     astList.forEach(a => {
       if (a.excluded) return
+      if (targetStudent && !isAssessmentApplicableToStudent(a, targetStudent, reportClassRecord.value?.classType)) {
+        return
+      }
       if (isCommentExcludedAssessment(a, reportClassRecord.value)) return
       if (a.date && window.asOf && String(a.date).slice(0, 10) > window.asOf) return
       const grade = gradeMap.value[a.assessmentId]?.[studentId]
@@ -803,7 +871,14 @@ function getStudentAssessmentsForWindow(studentId, window = currentTermWindow.va
           name: a.name || 'Assessment',
           description: a.description || '',
           scorePercent: Math.round(pct),
-          date: a.date
+          date: a.date,
+          unitName: a.unitName || a.unit || '',
+          categoryName: a.categoryName || a.category || '',
+          categoryId: a.categoryId,
+          assessmentType: a.assessmentType || a.type || '',
+          expectations: a.expectations || a.expectationIds || [],
+          note: grade?.note || a.note || '',
+          modality: a.modality || ''
         })
       }
     })
@@ -816,6 +891,22 @@ const studentAssessments = computed(() => {
   if (!activeStudent.value) return []
   return getStudentAssessmentsForWindow(activeStudent.value.studentId, currentTermWindow.value)
 })
+
+function formatAssessmentOptionLabel(ass) {
+  if (!ass) return ''
+  let label = `${ass.name} (${ass.scorePercent}%)`
+  if (isGenericTitle(ass.name)) {
+    if (ass.unitName && !isGenericTitle(ass.unitName)) {
+      label += ` — ${ass.unitName}`
+    } else if (ass.categoryName) {
+      label += ` — ${ass.categoryName}`
+    } else if (ass.description) {
+      const shortDesc = ass.description.length > 30 ? `${ass.description.slice(0, 30)}…` : ass.description
+      label += ` — ${shortDesc}`
+    }
+  }
+  return label
+}
 
 const currentCourseCode = computed(() => {
   return activeStudent.value?.courseCode ||
@@ -880,6 +971,59 @@ const selectedGrowthTask = computed({
   }
 })
 
+const studentEvaluatedExpectations = computed(() => {
+  const gradeObj = getStudentGradeObj(activeStudent.value?.studentId)
+  const exps = gradeObj?.sbarExpectations || []
+  return exps.map(e => ({
+    code: e.code || '',
+    title: e.title || e.description || e.code || '',
+    description: e.description || '',
+    displayScore: e.average != null ? `${Math.round(e.average)}%` : (e.masteryLevel ? `Level ${e.masteryLevel}` : '--'),
+    average: e.average,
+    masteryLevel: e.masteryLevel
+  }))
+})
+
+const studentEvents = computed(() => {
+  if (!activeStudent.value) return []
+  const stId = activeStudent.value.studentId
+  const rawEvents = (props.events && props.events.length > 0) ? props.events : []
+  return rawEvents.filter(e => {
+    if (e.studentId && e.studentId !== stId) return false
+    if (e.studentIds && !e.studentIds.includes(stId)) return false
+    return true
+  })
+})
+
+const autoProfile = computed(() => {
+  const stId = activeStudent.value?.studentId
+  const gradeObj = getStudentGradeObj(stId)
+  const skills = learningSkillsMap.value[stId] || {}
+  return deriveStudentProfileFocus({
+    ...gradeObj,
+    assessments: studentAssessments.value,
+    events: studentEvents.value
+  }, skills)
+})
+
+const autoProfileLabel = computed(() => autoProfile.value.label || 'Curriculum Focus')
+const autoProfileBadge = computed(() => autoProfile.value.badge || '')
+const autoProfileMetric = computed(() => autoProfile.value.metric || '')
+
+const selectedProfileFocus = computed({
+  get: () => {
+    if (!activeStudent.value) return 'auto'
+    const key = getEditKey(activeStudent.value.studentId)
+    return termProfileFocuses.value[key] || 'auto'
+  },
+  set: (val) => {
+    if (!activeStudent.value) return
+    const key = getEditKey(activeStudent.value.studentId)
+    termProfileFocuses.value[key] = val
+    buildCommentForActive()
+  }
+})
+
 const activeStrengthDisplay = computed(() => {
   const raw = selectedStrengthTask.value || autoStrengthTask.value
   const found = courseCompetencies.value.find(c => c.phrase === raw)
@@ -893,7 +1037,21 @@ const activeGrowthDisplay = computed(() => {
 })
 
 const activeHabitDisplay = computed(() => {
-  return 'Inquiry & Problem Solving'
+  if (selectedProfileFocus.value && selectedProfileFocus.value !== 'auto') {
+    const focusMap = {
+      inquiry_practical: '🔬 Practical Inquiry',
+      analytical_theory: '📐 Analytical Problem Solving',
+      growth_trajectory: '📈 Rising Momentum',
+      consistent_rigor: '🎯 High Consistency',
+      category_thinking: '💡 Critical Thinking',
+      category_communication: '💬 Technical Communication',
+      category_application: '🌍 Real-World Application',
+      qualitative_evidence: '🗣️ Triangulated Observations',
+      curriculum_general: '📚 General Curriculum'
+    }
+    return focusMap[selectedProfileFocus.value] || 'Pedagogical Focus'
+  }
+  return autoProfile.value.label || 'Inquiry & Problem Solving'
 })
 
 // ── Previous Term Progression Tracking ───────────────────────────────────────
@@ -1097,6 +1255,7 @@ function buildCommentForActive() {
       percentage: activeStudentMark.value,
       level: activeLevel.value.key,
       assessments: studentAssessments.value,
+      events: studentEvents.value,
       ...studentGradeObj
     },
     learningSkills: studentSkills,
@@ -1106,6 +1265,7 @@ function buildCommentForActive() {
       pronounMode: pronounMode.value,
       featuredStrength: selectedStrengthTask.value,
       featuredNextStep: selectedGrowthTask.value,
+      profileFocus: selectedProfileFocus.value,
       variantSeed: currentVariantSeed.value,
       courseCode: currentCourseCode.value,
       reportingPeriod: selectedTerm.value
@@ -1121,7 +1281,8 @@ watch([
   selectedTerm,
   finalEvidenceScope,
   pronounMode,
-  charLimit
+  charLimit,
+  selectedProfileFocus
 ], () => {
   buildCommentForActive()
 })
@@ -1167,10 +1328,14 @@ async function handleAiPolishClick() {
       assessmentEvidence: {
         courseCode: currentCourseCode.value,
         strengthTask: activeStrengthDisplay.value,
-        growthTask: autoGrowthLabel.value,
+        growthTask: activeGrowthDisplay.value,
+        profileFocus: activeHabitDisplay.value,
         assessments: studentAssessments.value.map(a => ({
           name: a.name,
-          description: a.description
+          description: a.description,
+          scorePercent: a.scorePercent,
+          unitName: a.unitName,
+          categoryName: a.categoryName
         }))
       }
     })
@@ -1242,6 +1407,7 @@ function exportAllCommentsCsv() {
     const stSeed = getTermVariantSeed(st.studentId)
     const stStrength = termStrengthTasks.value[key] || ''
     const stGrowth = termGrowthTasks.value[key] || ''
+    const stProfile = termProfileFocuses.value[key] || 'auto'
 
     const stAssessments = getStudentAssessmentsForWindow(st.studentId, currentTermWindow.value)
 
@@ -1251,6 +1417,7 @@ function exportAllCommentsCsv() {
         percentage: mark,
         level: getAchievementLevel(mark)?.key,
         assessments: stAssessments,
+        events: props.events,
         ...gradeObj
       },
       learningSkills: skills,
@@ -1260,6 +1427,7 @@ function exportAllCommentsCsv() {
         pronounMode: pronounMode.value,
         featuredStrength: stStrength,
         featuredNextStep: stGrowth,
+        profileFocus: stProfile,
         variantSeed: stSeed,
         courseCode: st.courseCode || currentCourseCode.value,
         reportingPeriod: selectedTerm.value
@@ -1847,11 +2015,11 @@ watch(() => props.reportClass?.classId, async () => {
 /* ── Evidence Selector Row ────────────────────────────────────────────────── */
 .cg__evidence-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(3, 1fr);
   gap: 12px;
 }
 
-@media (max-width: 700px) {
+@media (max-width: 900px) {
   .cg__evidence-grid {
     grid-template-columns: 1fr;
   }
@@ -1874,6 +2042,13 @@ watch(() => props.reportClass?.classId, async () => {
 
 .cg__field-icon--gold { color: #f59e0b; }
 .cg__field-icon--blue { color: #3b82f6; }
+.cg__field-icon--purple { color: #8b5cf6; }
+
+.cg__evidence-count-badge--purple {
+  background: rgba(139, 92, 246, 0.12);
+  color: #8b5cf6;
+  border-color: rgba(139, 92, 246, 0.25);
+}
 
 .cg__select--field {
   width: 100%;

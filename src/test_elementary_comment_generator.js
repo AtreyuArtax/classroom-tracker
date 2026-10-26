@@ -275,6 +275,162 @@ assert(dispGeog.charCount <= 600, 'Dispatched geography fits under 600 chars')
 
 console.log('✓ Automatic subject dispatcher routes all subjects correctly')
 
+// 11. Science with SBAR Expectations Integration
+console.log('\nTest Group 11: Science with SBAR Expectations Integration')
+const sciSbarRes = generateElementaryScienceComment({
+  student: studentMaya,
+  gradeData: {
+    percentage: 78,
+    sbarExpectations: [
+      { code: 'B1.1', description: 'B1.1 assess the role of selected cellular technologies to enhance human health', average: 92 },
+      { code: 'B2.3', description: 'B2.3 use a microscope to observe and draw specimen slides', average: 64 }
+    ]
+  },
+  options: {
+    charLimit: 1050
+  }
+})
+console.log('Generated Science SBAR Comment:')
+console.log(sciSbarRes.text)
+assert(!sciSbarRes.text.includes('B1.1'), 'Strips raw ministry expectation code B1.1')
+assert(!sciSbarRes.text.includes('B2.3'), 'Strips raw ministry expectation code B2.3')
+assert(sciSbarRes.text.includes('cellular technologies') || sciSbarRes.text.includes('human health'), 'Integrates condensed science strength expectation')
+assert(sciSbarRes.text.includes('Next Steps: Maya is encouraged to use a microscope') || sciSbarRes.text.includes('specimen slides'), 'Integrates condensed growth expectation as actionable infinitive')
+console.log('✓ Science successfully integrates and condenses SBAR expectations')
+
+// 12. Raw Ministry Boilerplate Condensation
+console.log('\nTest Group 12: Raw Ministry Boilerplate Condensation')
+const mathRawRes = generateElementaryMathComment({
+  student: studentMaya,
+  gradeData: {
+    percentage: 82,
+    sbarExpectations: [
+      {
+        code: 'B2.1',
+        description: 'B2.1 use the properties of operations, and the relationships between operations, to solve problems involving rational numbers',
+        average: 90
+      },
+      {
+        code: 'B2.4',
+        description: 'B2.4 add and subtract integers using appropriate tools and strategies, in order to verify results',
+        average: 65
+      }
+    ]
+  },
+  options: {
+    charLimit: 1200
+  }
+})
+console.log('Generated Math Comment with Condensed Ministry Text:')
+console.log(mathRawRes.text)
+assert(!mathRawRes.text.includes('B2.1'), 'No B2.1 code in comment')
+assert(!mathRawRes.text.includes('B2.4'), 'No B2.4 code in comment')
+assert(mathRawRes.text.includes('using the properties of operations'), 'Naturally gerundized strength expectation')
+assert(mathRawRes.text.includes('Next Steps: Maya is encouraged to add and subtract integers'), 'Next step converted to clean infinitive verb')
+console.log('✓ Raw Ministry expectations condensed into natural grammatical sentences')
+
+// 13. SBAR Mastery Tone Calibration
+console.log('\nTest Group 13: SBAR Mastery Tone Calibration (Level 2 Overall, Level 4+ Expectation)')
+const calibratedRes = generateElementarySubjectComment({
+  student: studentMaya,
+  subject: { code: 'THE_ARTS', name: 'The Arts' },
+  gradeData: {
+    percentage: 62, // Level 2 overall
+    sbarExpectations: [
+      {
+        code: 'D1.1',
+        description: 'creating two- and three-dimensional art works that express feelings and personal perspectives',
+        average: 95,
+        masteryLevel: '4+'
+      },
+      {
+        code: 'D2.1',
+        description: 'interpreting a variety of art works and identifying the elements of design',
+        average: 58,
+        masteryLevel: '1'
+      }
+    ]
+  },
+  options: {
+    charLimit: 300
+  }
+})
+console.log('Generated Arts Comment with Calibrated Tone:')
+console.log(calibratedRes.text)
+// The strength sentence must use Level 4+ evaluative vocabulary, not Level 2
+assert(calibratedRes.text.includes('exceptional') || calibratedRes.text.includes('insightful') || calibratedRes.text.includes('sophisticated'), 'Strength sentence uses Level 4+ tone based on expectation mastery')
+assert(!calibratedRes.text.startsWith('Maya demonstrates developing understanding'), 'Does NOT use overall Level 2 tone for Level 4+ expectation strength')
+assert(calibratedRes.text.includes('Next Steps: Maya is encouraged to interpret'), 'Next step formatted with clean base verb')
+assert.strictEqual(calibratedRes.charCount <= 300, true, `Fits under SCDSB 300 limit (was ${calibratedRes.charCount})`)
+console.log('✓ Evaluative strength tone is calibrated to expectation mastery level')
+
+// 14. Multi-Grade Curriculum Support (Grade 7 & Grade 4)
+console.log('\nTest Group 14: Multi-Grade Curriculum Support (Grade 7 & Grade 4)')
+const g7Student = {
+  firstName: 'Liam',
+  preferredName: 'Liam',
+  pronouns: 'he/him',
+  gradeLevel: 7
+}
+const g7ScienceRes = generateElementarySubjectComment({
+  student: g7Student,
+  subject: { code: 'SCI', name: 'Science and Technology' },
+  gradeData: {
+    percentage: 84,
+    sbarExpectations: [
+      {
+        code: 'B2.1',
+        description: 'explain that an ecosystem is a network of interactions among living organisms and their environment',
+        average: 90
+      },
+      {
+        code: 'B2.4',
+        description: 'describe the transfer of energy in a food chain, and explain the effects of altering any part of the chain',
+        average: 68
+      }
+    ]
+  }
+})
+console.log('Generated Grade 7 Science Comment:')
+console.log(g7ScienceRes.text)
+assert(!g7ScienceRes.text.toLowerCase().includes('cells'), 'Does NOT inject Grade 8 Cells content into Grade 7')
+assert(!g7ScienceRes.text.toLowerCase().includes('organelles'), 'Does NOT inject Grade 8 organelles into Grade 7')
+assert(g7ScienceRes.text.includes('ecosystem'), 'Accurately includes Grade 7 ecosystem expectation')
+assert(g7ScienceRes.text.includes('Next Steps: Liam is encouraged to describe the transfer of energy'), 'Accurately includes Grade 7 next step')
+
+const g4Student = {
+  firstName: 'Sophia',
+  preferredName: 'Sophia',
+  pronouns: 'she/her',
+  gradeLevel: 4
+}
+const g4MathRes = generateElementarySubjectComment({
+  student: g4Student,
+  subject: { code: 'MAT', name: 'Mathematics' },
+  gradeData: {
+    percentage: 88,
+    sbarExpectations: [
+      {
+        code: 'B2.2',
+        description: 'multiply two-digit whole numbers by one-digit whole numbers using mental strategies and algorithms',
+        average: 94
+      },
+      {
+        code: 'B2.5',
+        description: 'add and subtract fractions with like denominators using visual models and tools',
+        average: 66
+      }
+    ]
+  }
+})
+console.log('Generated Grade 4 Math Comment:')
+console.log(g4MathRes.text)
+assert(!g4MathRes.text.toLowerCase().includes('scientific notation'), 'Does NOT inject Grade 8 scientific notation into Grade 4')
+assert(!g4MathRes.text.toLowerCase().includes('integers'), 'Does NOT inject Grade 8 integers into Grade 4')
+assert(g4MathRes.text.includes('multiplying two-digit whole numbers'), 'Accurately includes Grade 4 multiplication expectation')
+assert(g4MathRes.text.includes('Next Steps: Sophia is encouraged to add and subtract fractions'), 'Accurately includes Grade 4 fractions next step')
+console.log('✓ Multi-grade (Grade 7 & Grade 4) generates authentic comments from their own expectations')
+
 console.log('\n===============================================')
-console.log('ALL 10 ELEMENTARY COMMENT GENERATOR SUITES PASSED!')
+console.log('ALL 14 ELEMENTARY COMMENT GENERATOR SUITES PASSED!')
 console.log('===============================================')

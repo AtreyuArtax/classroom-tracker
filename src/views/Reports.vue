@@ -134,14 +134,17 @@
             v-if="reportClass?.classType === 'elementary'"
             :report-class="reportClass"
             :sidebar-students="filteredSidebarStudents"
+            :assessments="assessmentsList"
+            :events="allClassEvents"
             @back="switchPillar('overview')"
           />
-          <!-- Secondary Course View (Untouched!) -->
+          <!-- Secondary Course View -->
           <ReportsCommentGenerator
             v-else
             :report-class="reportClass"
             :sidebar-students="filteredSidebarStudents"
             :assessments="assessmentsList"
+            :events="allClassEvents"
             @back="switchPillar('overview')"
           />
         </template>

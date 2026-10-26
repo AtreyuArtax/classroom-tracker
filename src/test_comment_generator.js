@@ -19,6 +19,12 @@ import {
   extractEvidenceFromGrades,
   isCommentExcludedAssessment,
   isNonAcademicCategory,
+  deriveStudentProfileFocus,
+  resolveAssessmentTaskName,
+  isGenericTitle,
+  sanitizeTaskTitle,
+  hasVerbClash,
+  condenseTopicForNextStep,
   ACHIEVEMENT_LEVELS
 } from './utils/commentGenerator.js'
 import { isFormativeAssessment } from './utils/gradeCalc.js'
@@ -564,6 +570,390 @@ test('Attendance and Participation category (even with positive weight) is exclu
   assert(!evidence.strengthTask.toLowerCase().includes('attendance'),
     `Attendance should not be picked as academic strength. Got: ${evidence.strengthTask}`)
   assert(evidence.strengthTask.includes('force') || evidence.strengthTask.includes('Dynamics'))
+})
+
+// ── TEST GROUP 10: Generic Title Resolution & Pedagogical Profile Derivation ─
+console.log('\nTEST GROUP 10: Generic Title Resolution & Pedagogical Profile Focus')
+
+test('isGenericTitle detects unit tests, chapter quizzes, and bare assessment labels', () => {
+  assert.strictEqual(isGenericTitle('Unit 1 Test'), true)
+  assert.strictEqual(isGenericTitle('Unit 2 Quiz'), true)
+  assert.strictEqual(isGenericTitle('Ch. 3 Lab'), true)
+  assert.strictEqual(isGenericTitle('Module 1 Checkpoint'), true)
+  assert.strictEqual(isGenericTitle('Quiz #4'), true)
+  assert.strictEqual(isGenericTitle('Forces & Friction Lab'), false)
+  assert.strictEqual(isGenericTitle('Kinematics Project'), false)
+})
+
+test('resolveAssessmentTaskName resolves generic "Unit 1 Test" via expectations, description, or unit', () => {
+  const genericWithExp = {
+    name: 'Unit 1 Test',
+    expectations: ['A1.1 analyze relationships between displacement, velocity, and time']
+  }
+  const resolvedExp = resolveAssessmentTaskName(genericWithExp, 'SPH3U')
+  assert(resolvedExp.toLowerCase().includes('velocity') || resolvedExp.toLowerCase().includes('motion'),
+    `Expected resolved expectation topic, got: ${resolvedExp}`)
+
+  const genericWithDesc = {
+    name: 'Unit 2 Quiz',
+    description: 'Investigating static and kinetic friction on inclined planes'
+  }
+  const resolvedDesc = resolveAssessmentTaskName(genericWithDesc, 'SPH3U')
+  assert(resolvedDesc.toLowerCase().includes('friction') || resolvedDesc.toLowerCase().includes('net force') || resolvedDesc.toLowerCase().includes('newton'),
+    `Expected friction or forces competency topic, got: ${resolvedDesc}`)
+
+  const genericWithUnit = {
+    name: 'Lab 1',
+    unitName: 'Unit 1: Kinematics'
+  }
+  const resolvedUnit = resolveAssessmentTaskName(genericWithUnit, 'SPH3U')
+  assert(resolvedUnit.toLowerCase().includes('kinematics') || resolvedUnit.toLowerCase().includes('motion'),
+    `Expected kinematics topic, got: ${resolvedUnit}`)
+})
+
+test('deriveStudentProfileFocus detects practical inquiry, rising trajectory, and consistency', () => {
+  // Case A: Practical Inquiry advantage (labs average 90%, tests average 72%)
+  const labHeavyData = {
+    assessments: [
+      { name: 'Forces Lab', scorePercent: 92, date: '2026-10-01' },
+      { name: 'Optics Investigation', scorePercent: 88, date: '2026-10-15' },
+      { name: 'Dynamics Test', scorePercent: 72, date: '2026-10-05' },
+      { name: 'Kinematics Test', scorePercent: 72, date: '2026-10-20' }
+    ]
+  }
+  const focusA = deriveStudentProfileFocus(labHeavyData)
+  assert.strictEqual(focusA.key, 'modality_practical')
+  assert(focusA.badge.includes('Practical') || focusA.badge.includes('🔬'))
+
+  // Case B: Rising Momentum (+12% across chronological assessments)
+  const improvingData = {
+    assessments: [
+      { name: 'Quiz 1', scorePercent: 68, date: '2026-09-15' },
+      { name: 'Test 1', scorePercent: 70, date: '2026-09-30' },
+      { name: 'Test 2', scorePercent: 82, date: '2026-10-15' },
+      { name: 'Test 3', scorePercent: 84, date: '2026-10-30' }
+    ]
+  }
+  const focusB = deriveStudentProfileFocus(improvingData)
+  assert.strictEqual(focusB.key, 'trajectory_improving')
+  assert(focusB.label.includes('Rising Momentum') || focusB.badge.includes('📈'))
+
+  // Case C: High Consistency (scores: 85, 86, 84 -> SD ~1)
+  const consistentData = {
+    assessments: [
+      { name: 'Task 1', scorePercent: 85, date: '2026-09-15' },
+      { name: 'Task 2', scorePercent: 86, date: '2026-09-30' },
+      { name: 'Task 3', scorePercent: 84, date: '2026-10-15' }
+    ]
+  }
+  const focusC = deriveStudentProfileFocus(consistentData)
+  assert.strictEqual(focusC.key, 'consistency_high')
+})
+
+// ── TEST GROUP 11: 3-Sentence Budget Guarantee & Preposition Cleanliness ─────
+console.log('\nTEST GROUP 11: 3-Sentence Preservation & Preposition Verification')
+
+test('3-sentence Growing Success structure is strictly preserved under 400 chars (never drops Sentence 2)', () => {
+  const student = { firstName: 'Maya', pronouns: 'she/her' }
+  const gradeData = {
+    percentage: 78,
+    assessments: [
+      { name: 'Kinematics Unit Test', scorePercent: 82, date: '2026-09-20' },
+      { name: 'Forces and Dynamics Lab', scorePercent: 64, date: '2026-10-10' }
+    ]
+  }
+
+  const res = generateReportComment({
+    student,
+    gradeData,
+    options: {
+      mode: 'secondary',
+      courseCode: 'SPH3U',
+      charLimit: 400
+    }
+  })
+
+  assert(res.charCount <= 400, `Comment exceeded 400 chars: ${res.charCount}`)
+  assert.strictEqual(res.isOverLimit, false)
+
+  // Count sentences in comment (must be at least 3)
+  const sentences = res.text.split(/(?<=[.!?])\s+/).filter(Boolean)
+  assert(sentences.length >= 3, `Expected at least 3 sentences, got ${sentences.length}: "${res.text}"`)
+
+  // Preposition bug verification: NO "before X before unit assessments"
+  assert(!res.text.includes('before unit assessments'), 'Must not contain awkward trailing "before unit assessments"')
+  assert(!/\bbefore\b.*\bbefore\b/i.test(res.text), 'Must not contain duplicate "before" prepositions in single comment')
+})
+
+test('Sentence 1 celebrates strength score performance even when overall grade is Level 2', () => {
+  const student = { firstName: 'Liam', pronouns: 'he/him' }
+  const gradeData = {
+    percentage: 64, // Level 2 overall
+    assessments: [
+      { name: 'Forces and Dynamics Lab', scorePercent: 92 }, // Level 4 strength task
+      { name: 'Kinematics Test', scorePercent: 55 }
+    ]
+  }
+
+  const res = generateReportComment({
+    student,
+    gradeData,
+    options: {
+      mode: 'secondary',
+      courseCode: 'SPH3U',
+      charLimit: 400
+    }
+  })
+
+  // Sentence 1 should celebrate their thorough / strong capability on the Forces lab, not "finds challenging"
+  assert(!res.text.toLowerCase().includes('finds forces and dynamics challenging'), 'Strength sentence must not say student finds strength task challenging')
+  assert(res.text.includes('Liam'), 'Must include student name')
+  assert(res.charCount <= 400, `Expected <= 400, got ${res.charCount}`)
+})
+
+// ─── TEST GROUP 12: Administrative Word Scrubbing & Next Step Grammar Adapter ───
+console.log('\nTEST GROUP 12: Administrative Word Scrubbing & Next Step Grammar Adapter')
+
+test('Administrative delivery containers (submission, dropbox, worksheet) are scrubbed from topics', () => {
+  assert.strictEqual(sanitizeTaskTitle('Hare Lynx Submission'), 'Hare Lynx')
+  assert.strictEqual(sanitizeTaskTitle('Forces Lab - Dropbox'), 'Forces Lab')
+  assert.strictEqual(sanitizeTaskTitle('Kinematics Worksheet #2'), 'Kinematics')
+  assert.strictEqual(sanitizeTaskTitle('Photosynthesis Activity Sheet'), 'Photosynthesis')
+  assert.strictEqual(isGenericTitle('Dropbox'), true)
+  assert.strictEqual(isGenericTitle('Submission #1'), true)
+})
+
+test('Tomi comment in SNC1W resolves "Hare Lynx Submission" to authentic ecology competency without grammar errors', () => {
+  const student = { firstName: 'Tomi', pronouns: 'she/her' }
+  const gradeData = {
+    courseCode: 'SNC1W',
+    percentage: 88,
+    assessments: [
+      { name: 'Space Exploration Inquiry', scorePercent: 96 },
+      { name: 'Hare Lynx Submission', scorePercent: 78 }
+    ]
+  }
+
+  for (let seed = 0; seed < 4; seed++) {
+    const res = generateReportComment({
+      student,
+      gradeData,
+      options: {
+        mode: 'secondary',
+        courseCode: 'SNC1W',
+        charLimit: 400,
+        variantSeed: seed
+      }
+    })
+
+    assert(res.charCount <= 400, `Comment exceeds 400 chars: ${res.charCount}`)
+    assert(!res.text.includes('submission'), 'Must never include administrative word "submission"')
+    assert(!res.text.includes('when working with'), 'Must never produce awkward "when working with" clause')
+    assert(!res.text.includes('hare lynx submission'), 'Must not leak raw assignment title')
+    assert(res.text.includes('Tomi'), 'Must include student name')
+  }
+})
+
+test('Reflexive pronouns (herself, himself, themselves) work cleanly in next step templates', () => {
+  const female = getPronounTokens({ firstName: 'Maya', pronouns: 'she/her' })
+  assert.strictEqual(female.reflexive, 'herself')
+
+  const male = getPronounTokens({ firstName: 'Liam', pronouns: 'he/him' })
+  assert.strictEqual(male.reflexive, 'himself')
+
+  const neutral = getPronounTokens({ firstName: 'Alex', pronouns: 'they/them' })
+  assert.strictEqual(neutral.reflexive, 'themselves')
+})
+
+// ── TEST GROUP 13: Ontario Growing Success Learning Skills Separation ────────
+console.log('\nTEST GROUP 13: Ontario Growing Success Learning Skills Exclusion (Secondary)')
+
+test('Secondary comments strictly exclude learning skills and work habits phrasing across all profile focuses', () => {
+  const forbiddenPhrases = [
+    'disciplined consistency',
+    'positive dedication',
+    'teacher guidance',
+    'incorporating feedback',
+    'incorporate feedback',
+    'thorough preparation',
+    'academic focus and sustained',
+    'works diligently',
+    'collaborates constructively',
+    'completes assigned tasks',
+    'satisfactory work habits',
+    'manage class time',
+    'managing class time',
+    'regular attendance',
+    'active class engagement',
+    'consistent homework completion',
+    'diligent approach'
+  ]
+
+  const student = { firstName: 'Jordan', pronouns: 'he/him' }
+  const profiles = [
+    'trajectory_improving',
+    'consistency_high',
+    'modality_practical',
+    'modality_analytical',
+    'category_thinking',
+    'category_communication',
+    'category_application',
+    'qualitative_triangulation',
+    'curriculum_general'
+  ]
+
+  const gradeData = {
+    percentage: 84,
+    assessments: [
+      { name: 'Kinematics Investigation', scorePercent: 90, date: '2026-09-15' },
+      { name: 'Dynamics Test', scorePercent: 78, date: '2026-09-30' },
+      { name: 'Energy and Society Case Study', scorePercent: 85, date: '2026-10-15' }
+    ]
+  }
+
+  for (const focus of profiles) {
+    for (let seed = 0; seed < 4; seed++) {
+      const res = generateReportComment({
+        student,
+        gradeData,
+        learningSkills: { responsibility: 'G', organization: 'G', independentWork: 'E' },
+        options: {
+          mode: 'secondary',
+          courseCode: 'SPH3U',
+          charLimit: 400,
+          profileFocus: focus,
+          variantSeed: seed
+        }
+      })
+
+      assert(res.charCount <= 400, `Comment exceeds 400 chars for profile ${focus}: ${res.charCount}`)
+
+      const lower = res.text.toLowerCase()
+      for (const phrase of forbiddenPhrases) {
+        assert(
+          !lower.includes(phrase),
+          `Secondary comment contains forbidden Learning Skill phrase "${phrase}" under profile "${focus}". Comment: ${res.text}`
+        )
+      }
+    }
+  }
+})
+
+test('Secondary mode refuses learning_skills / work_habits profile injection', () => {
+  const student = { firstName: 'Alex', pronouns: 'they/them' }
+  const gradeData = { percentage: 76 }
+  const learningSkills = { responsibility: 'N', organization: 'S', independentWork: 'S' }
+
+  // Even if explicitly requested via profileFocus or includeWorkHabits:
+  const res = generateReportComment({
+    student,
+    gradeData,
+    learningSkills,
+    options: {
+      mode: 'secondary',
+      charLimit: 400,
+      profileFocus: 'work_habits',
+      includeWorkHabits: true
+    }
+  })
+
+  const lower = res.text.toLowerCase()
+  assert(!lower.includes('work habits'), 'Must not include work habits phrasing in secondary subject comments')
+  assert(!lower.includes('class time'), 'Must not evaluate class time management in secondary subject comments')
+  assert(!lower.includes('deadlines'), 'Must not evaluate deadlines in secondary subject comments')
+  assert(res.charCount <= 400, `Exceeds 400 characters: ${res.charCount}`)
+})
+
+// ── TEST GROUP 14: Anti-Repetition & Non-Generic Sentence 2 (Ashton SNC1W Case) ─
+console.log('\nTEST GROUP 14: Anti-Repetition & Non-Generic Sentence 2 (Ashton SNC1W Case)')
+
+test('hasVerbClash accurately detects repeated evaluative verbs across S1 and S2', () => {
+  const clash1 = hasVerbClash(
+    'Ashton demonstrates strong capability and high effectiveness when evaluating nutrient cycles.',
+    'She demonstrates steady progression in applying course concepts and methods.'
+  )
+  assert.strictEqual(clash1, true, 'Must detect repeated "demonstrates"')
+
+  const clash2 = hasVerbClash(
+    'Ashton shows sound capability when evaluating nutrient cycles.',
+    'She shows noticeable growth across recent units.'
+  )
+  assert.strictEqual(clash2, true, 'Must detect repeated "shows"')
+
+  const noClash = hasVerbClash(
+    'Ashton excels when evaluating nutrient cycles and sustainable ecosystem dynamics.',
+    'She shows clear growth across recent units, solving multi-step problems with increasing precision.'
+  )
+  assert.strictEqual(noClash, false, 'Must recognize distinct verbs (excels vs shows)')
+})
+
+test('condenseTopicForNextStep shortens 3-part compound topics cleanly', () => {
+  const longTopic = 'investigating celestial bodies, astronomical phenomena, and space exploration technologies'
+  const condensed = condenseTopicForNextStep(longTopic)
+  assert(condensed.length <= 65, `Expected <= 65 chars, got ${condensed.length}`)
+  assert(condensed.includes('investigating celestial bodies'), 'Must preserve opening action clause')
+  assert(condensed.includes('space exploration technologies'), 'Must preserve closing domain clause')
+  assert(!condensed.includes('astronomical phenomena'), 'Must omit middle redundant clause in Next Step')
+})
+
+test('Ashton comment in SNC1W strictly avoids repeated "demonstrates" and vague boilerplate across seeds', () => {
+  const student = { firstName: 'Ashton', pronouns: 'she/her' }
+  const gradeData = {
+    courseCode: 'SNC1W',
+    percentage: 84,
+    assessments: [
+      { name: 'Ecosystem Sustainability Inquiry', scorePercent: 90, date: '2026-09-15' },
+      { name: 'Space Exploration Test', scorePercent: 78, date: '2026-10-15' }
+    ]
+  }
+
+  for (let seed = 0; seed < 4; seed++) {
+    const res = generateReportComment({
+      student,
+      gradeData,
+      options: {
+        mode: 'secondary',
+        courseCode: 'SNC1W',
+        charLimit: 400,
+        profileFocus: 'trajectory_improving',
+        variantSeed: seed
+      }
+    })
+
+    assert(res.charCount <= 400, `Comment exceeds 400 chars: ${res.charCount}`)
+
+    // Verify Sentence 1 and Sentence 2 do not repeat the same verb
+    const sentences = res.text.split(/(?<=[.?!])\s+/).filter(Boolean)
+    assert(sentences.length >= 3, `Expected 3 sentences, got ${sentences.length}: ${res.text}`)
+
+    const s1 = sentences[0]
+    const s2 = sentences[1]
+    const s1HasDemonstrates = /\bdemonstrates?\b/i.test(s1)
+    const s2HasDemonstrates = /\bdemonstrates?\b/i.test(s2)
+    assert(
+      !(s1HasDemonstrates && s2HasDemonstrates),
+      `Sentence 1 and Sentence 2 repeat "demonstrates"! Comment:\n${res.text}`
+    )
+
+    // Verify Sentence 2 is concrete and not vague boilerplate
+    const lower = res.text.toLowerCase()
+    assert(
+      !lower.includes('in applying course concepts and methods'),
+      `Sentence 2 contains vague boilerplate "in applying course concepts and methods". Comment:\n${res.text}`
+    )
+
+    // Verify Sentence 2 has meaningful cognitive action
+    assert(
+      lower.includes('multi-step') ||
+      lower.includes('growth') ||
+      lower.includes('precision') ||
+      lower.includes('principles') ||
+      lower.includes('relationships') ||
+      lower.includes('accuracy') ||
+      lower.includes('inquiries'),
+      `Sentence 2 lacked concrete cognitive descriptors: ${s2}`
+    )
+  }
 })
 
 console.log('\n=================================================================')

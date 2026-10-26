@@ -10,7 +10,8 @@ export const SNC1W_COMPETENCIES = [
       'ecosystem', 'climate', 'sustainability', 'biodiversity', 'nutrient cycle',
       'carbon cycle', 'nitrogen cycle', 'water cycle', 'cycle', 'cycles',
       'biogeochemical', 'ecology', 'greenhouse', 'invasive', 'living system',
-      'engines of life', 'biosphere'
+      'engines of life', 'biosphere', 'population', 'predator', 'prey',
+      'predator-prey', 'hare', 'lynx', 'carrying capacity', 'limiting factors', 'equilibrium', 'boreal'
     ]
   },
   {

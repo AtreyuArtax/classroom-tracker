@@ -322,8 +322,8 @@
               </select>
             </div>
 
-            <!-- Featured Curriculum Strength (for Math, Language, Social Studies, Arts, etc.) -->
-            <div v-if="!isScienceTab" class="cg__evidence-field">
+            <!-- Featured Curriculum Strength (all academic subjects) -->
+            <div class="cg__evidence-field">
               <label class="cg__field-label">
                 <Sparkles :size="13" class="cg__field-icon cg__field-icon--gold" />
                 Featured Curriculum Strength
@@ -334,9 +334,9 @@
                   <option 
                     v-for="exp in subjectSbarExpectations" 
                     :key="exp.code || exp.expectationId" 
-                    :value="exp.description || exp.title || exp.code"
+                    :value="exp.cleanTitle || exp.description || exp.title || exp.code"
                   >
-                    {{ exp.code ? exp.code + ': ' : '' }}{{ exp.description || exp.title }}
+                    {{ exp.displayScore ? `${exp.displayScore} • ` : '' }}{{ exp.code ? exp.code + ': ' : '' }}{{ exp.cleanTitle || exp.title }}
                   </option>
                 </optgroup>
                 <optgroup v-if="studentSubjectAssessments.length > 0" label="Specific Tasks">
@@ -363,9 +363,9 @@
                   <option 
                     v-for="exp in subjectSbarExpectations" 
                     :key="exp.code || exp.expectationId" 
-                    :value="exp.description || exp.title || exp.code"
+                    :value="exp.cleanTitle || exp.description || exp.title || exp.code"
                   >
-                    {{ exp.code ? exp.code + ': ' : '' }}{{ exp.description || exp.title }}
+                    {{ exp.displayScore ? `${exp.displayScore} • ` : '' }}{{ exp.code ? exp.code + ': ' : '' }}{{ exp.cleanTitle || exp.title }}
                   </option>
                 </optgroup>
                 <optgroup v-if="studentSubjectAssessments.length > 0" label="Specific Tasks">
@@ -560,9 +560,16 @@ import {
 import {
   filteredMilestones,
   globalMilestones,
-  activeClassRecord
+  activeClassRecord,
+  assessments as gbAssessments,
+  grades as gbGrades,
+  gradeMap
 } from '../../composables/useGradebook.js'
 import { academicTerms } from '../../composables/useClassroomState.js'
+import { getEffectiveClassRecord } from '../../composables/useElementary.js'
+import { calculateStudentGrade, getAssessmentPercentage } from '../../utils/gradeCalc.js'
+import { condenseCurriculumExpectation } from '../../utils/curriculumCompetencies.js'
+import { filterAssessmentsForSubject } from '../../db/gradebook/gradeCalc.js'
 
 const CommentLlmSettingsModal = defineAsyncComponent(() => import('./CommentLlmSettingsModal.vue'))
 
@@ -574,6 +581,14 @@ const props = defineProps({
     default: null
   },
   sidebarStudents: {
+    type: Array,
+    default: () => []
+  },
+  assessments: {
+    type: Array,
+    default: () => []
+  },
+  events: {
     type: Array,
     default: () => []
   }
@@ -668,7 +683,41 @@ const isGeographyTab = computed(() => {
 })
 
 const currentSubjectStrands = computed(() => {
+  const gradeLevel = Number(activeStudent.value?.gradeLevel || props.reportClass?.gradeLevel || 8)
+
   if (isScienceTab.value) {
+    if (gradeLevel === 7) {
+      return [
+        { code: 'B', label: 'Strand B: Life Systems - Interactions in the Environment' },
+        { code: 'C', label: 'Strand C: Matter & Energy - Pure Substances & Mixtures' },
+        { code: 'D', label: 'Strand D: Structures & Mechanisms - Form, Function & Design' },
+        { code: 'E', label: 'Strand E: Earth & Space Systems - Heat in the Environment' }
+      ]
+    }
+    if (gradeLevel === 6) {
+      return [
+        { code: 'B', label: 'Strand B: Life Systems - Biodiversity' },
+        { code: 'C', label: 'Strand C: Matter & Energy - Flight' },
+        { code: 'D', label: 'Strand D: Structures & Mechanisms - Electricity & Electrical Devices' },
+        { code: 'E', label: 'Strand E: Earth & Space Systems - Space' }
+      ]
+    }
+    if (gradeLevel === 5) {
+      return [
+        { code: 'B', label: 'Strand B: Life Systems - Human Organ Systems' },
+        { code: 'C', label: 'Strand C: Matter & Energy - Properties of & Changes in Matter' },
+        { code: 'D', label: 'Strand D: Structures & Mechanisms - Forces Acting on Structures' },
+        { code: 'E', label: 'Strand E: Earth & Space Systems - Conservation of Energy' }
+      ]
+    }
+    if (gradeLevel === 4) {
+      return [
+        { code: 'B', label: 'Strand B: Life Systems - Habitats and Communities' },
+        { code: 'C', label: 'Strand C: Matter & Energy - Light and Sound' },
+        { code: 'D', label: 'Strand D: Structures & Mechanisms - Pulleys and Gears' },
+        { code: 'E', label: 'Strand E: Earth & Space Systems - Rocks and Minerals' }
+      ]
+    }
     return [
       { code: 'B', label: 'Strand B: Life Systems - Cells' },
       { code: 'C', label: 'Strand C: Matter & Energy - Fluids' },
@@ -678,27 +727,39 @@ const currentSubjectStrands = computed(() => {
   }
   if (isMathTab.value) {
     return [
-      { code: 'B', label: 'Strand B: Number (Fractions, Integers, Proportions)' },
-      { code: 'C', label: 'Strand C: Algebra (Patterns, Equations, Coding)' },
-      { code: 'D', label: 'Strand D: Data (Scatter Plots, Probability, Infographics)' },
-      { code: 'E', label: 'Strand E: Spatial Sense (Transformations, Geometry)' },
-      { code: 'F', label: 'Strand F: Financial Literacy (Budgets, Interest)' }
+      { code: 'B', label: 'Strand B: Number (Operations & Quantities)' },
+      { code: 'C', label: 'Strand C: Algebra (Patterns, Equations & Coding)' },
+      { code: 'D', label: 'Strand D: Data (Probability & Data Literacy)' },
+      { code: 'E', label: 'Strand E: Spatial Sense (Geometry & Measurement)' },
+      { code: 'F', label: 'Strand F: Financial Literacy (Money & Economics)' }
     ]
   }
   if (isLanguageTab.value) {
     return [
-      { code: 'B', label: 'Strand B: Foundations of Language (Oral, Morphology)' },
-      { code: 'C', label: 'Strand C: Comprehension (Texts, Perspectives, Media Bias)' },
-      { code: 'D', label: 'Strand D: Composition (Inquiry, Drafting, Publishing)' }
+      { code: 'B', label: 'Strand B: Foundations of Language (Oral, Morphology, Vocabulary)' },
+      { code: 'C', label: 'Strand C: Comprehension (Texts, Perspectives, Critical Literacy)' },
+      { code: 'D', label: 'Strand D: Composition (Inquiry, Drafting & Publishing)' }
     ]
   }
   if (isHistoryTab.value) {
+    if (gradeLevel === 7) {
+      return [
+        { code: 'A', label: 'Strand A: New France and British North America (1713–1800)' },
+        { code: 'B', label: 'Strand B: Canada (1800–1850): Conflict and Challenges' }
+      ]
+    }
     return [
-      { code: 'A', label: 'Strand A: Creating Canada 1850-1890' },
-      { code: 'B', label: 'Strand B: Canada 1890-1914: A Changing Society' }
+      { code: 'A', label: 'Strand A: Creating Canada 1850–1890' },
+      { code: 'B', label: 'Strand B: Canada 1890–1914: A Changing Society' }
     ]
   }
   if (isGeographyTab.value) {
+    if (gradeLevel === 7) {
+      return [
+        { code: 'A', label: 'Strand A: Physical Patterns in a Changing World' },
+        { code: 'B', label: 'Strand B: Natural Resources Around the World: Use & Sustainability' }
+      ]
+    }
     return [
       { code: 'A', label: 'Strand A: Global Settlement: Patterns & Sustainability' },
       { code: 'B', label: 'Strand B: Global Inequalities & Quality of Life' }
@@ -880,43 +941,223 @@ const selectedScienceProject = computed({
   }
 })
 
-// ── Academic Subject Expectations & Assessments ──────────────────────────────
-const subjectSbarExpectations = computed(() => {
-  if (!activeSubjectObj.value) return []
-  return activeSubjectObj.value.expectations || 
-    activeSubjectObj.value.gradebookUnits?.flatMap(u => u.expectations || []) || []
-})
+// ── Academic Subject Expectations, Assessments & SBAR Grade Calculation ───────
+const subjectGradesCache = ref({}) // `${term}__${studentId}__${subjectId}` -> calculatedGradeObj
 
-const studentSubjectAssessments = computed(() => {
-  return [] // Can be linked with gradebook if assessments exist
-})
+function resolveWindowForTerm(termName = selectedTerm.value) {
+  const cls = props.reportClass || activeClassRecord.value || {}
+  const milestones = (filteredMilestones.value && filteredMilestones.value.length > 0)
+    ? filteredMilestones.value
+    : (globalMilestones.value || [])
 
-function getStudentSubjectMark(studentId, subjectId) {
-  // Scoped subject grade if available
-  return 78 // Competent fallback default for display
+  const currentYear = new Date().getFullYear()
+  let startYear = currentYear
+  if (cls.year && cls.year.includes('-')) {
+    const parsed = parseInt(cls.year.split('-')[0])
+    if (!isNaN(parsed)) startYear = parsed
+  }
+
+  const defaultStart = `${startYear}-09-01`
+  const defaultNov = `${startYear}-11-15`
+  const defaultFeb = `${startYear + 1}-02-15`
+  const defaultJune = `${startYear + 1}-06-30`
+
+  if (termName === 'Progress Report') {
+    const m = milestones.find(m => /progress|fall/i.test(m.name || m.title || ''))
+    const asOf = m?.date || defaultNov
+    return { asOf, dateFrom: defaultStart, displayDate: formatLocalDate(asOf) }
+  }
+  if (termName === 'Term 1') {
+    const m = milestones.find(m => /term\s*1|midterm|winter/i.test(m.name || m.title || ''))
+    const asOf = m?.date || defaultFeb
+    return { asOf, dateFrom: defaultStart, displayDate: formatLocalDate(asOf) }
+  }
+  // Term 2 (Final)
+  const m = milestones.find(m => /term\s*2|final|spring/i.test(m.name || m.title || ''))
+  const asOf = m?.date || defaultJune
+  return { asOf, dateFrom: defaultStart, displayDate: formatLocalDate(asOf) }
 }
+
+function getStudentGradeObj(studentId, subjectId = activeTab.value, term = selectedTerm.value) {
+  if (!studentId || !subjectId || subjectId === 'learning_skills') return null
+  const cacheKey = `${term}__${studentId}__${subjectId}`
+  return subjectGradesCache.value[cacheKey] || null
+}
+
+async function refreshGradesForActiveTab() {
+  if (activeTab.value === 'learning_skills' || !activeTab.value) return
+  const rawCls = props.reportClass || activeClassRecord.value
+  if (!rawCls) return
+
+  const effClass = getEffectiveClassRecord(rawCls, activeTab.value)
+  if (!effClass) return
+
+  const astList = (props.assessments && props.assessments.length > 0)
+    ? props.assessments
+    : (gbAssessments.value || [])
+  const allGrades = gbGrades.value || []
+  const studentGradeMap = new Map()
+  for (const g of allGrades) {
+    if (!studentGradeMap.has(g.studentId)) studentGradeMap.set(g.studentId, [])
+    studentGradeMap.get(g.studentId).push(g)
+  }
+
+  const windowBounds = resolveWindowForTerm(selectedTerm.value)
+  const term = selectedTerm.value
+  const subId = activeTab.value
+
+  const results = {}
+  for (const st of studentList.value) {
+    const stId = st.studentId
+    const stGrades = studentGradeMap.get(stId) || []
+    try {
+      const res = await calculateStudentGrade(stId, effClass, {
+        asOf: windowBounds.asOf,
+        dateFrom: windowBounds.dateFrom,
+        assessmentsPreRef: astList,
+        gradesPreRef: stGrades
+      })
+      if (res) {
+        results[`${term}__${stId}__${subId}`] = res
+      }
+    } catch (e) {
+      // Ignore
+    }
+  }
+
+  subjectGradesCache.value = {
+    ...subjectGradesCache.value,
+    ...results
+  }
+
+  buildCommentForActive()
+}
+
+watch([activeTab, selectedTerm, studentList], () => {
+  if (activeTab.value !== 'learning_skills') {
+    refreshGradesForActiveTab()
+  }
+}, { immediate: true })
 
 const activeSubjectMark = computed(() => {
   if (!activeStudent.value || activeTab.value === 'learning_skills') return null
-  return getStudentSubjectMark(activeStudent.value.studentId, activeTab.value)
+  const gradeObj = getStudentGradeObj(activeStudent.value.studentId, activeTab.value, selectedTerm.value)
+  if (gradeObj && gradeObj.displayOverallGrade != null && !isNaN(gradeObj.displayOverallGrade)) {
+    return Math.round(gradeObj.displayOverallGrade)
+  }
+  if (gradeObj && gradeObj.overallGrade != null && !isNaN(gradeObj.overallGrade)) {
+    return Math.round(gradeObj.overallGrade)
+  }
+  return 78 // Default competent fallback
 })
 
 const activeLevel = computed(() => {
   return getAchievementLevel(activeSubjectMark.value || 75)
 })
 
+const subjectSbarExpectations = computed(() => {
+  if (!activeStudent.value || !activeSubjectObj.value || activeTab.value === 'learning_skills') return []
+  const gradeObj = getStudentGradeObj(activeStudent.value.studentId, activeTab.value, selectedTerm.value)
+  const scoredExps = gradeObj?.sbarExpectations || []
+
+  if (scoredExps.length > 0) {
+    return scoredExps.map(e => {
+      const clean = condenseCurriculumExpectation(e.description || e.title || e.code || '')
+      const scoreNum = e.average ?? (e.score != null ? e.score * 25 : (e.masteryLevel != null ? Number(e.masteryLevel) * 25 : null))
+      const lvl = e.masteryLevel || (scoreNum != null ? getAchievementLevel(scoreNum).key : '')
+      return {
+        code: e.code || '',
+        expectationId: e.expectationId || e.code || '',
+        title: e.title || e.code || '',
+        description: e.description || e.title || '',
+        cleanTitle: clean,
+        average: e.average,
+        masteryLevel: lvl,
+        score: e.score,
+        displayScore: e.average != null ? `${Math.round(e.average)}%` : (lvl ? `Level ${lvl}` : '')
+      }
+    }).sort((a, b) => {
+      const scoreB = b.average ?? (b.score != null ? b.score * 25 : 0)
+      const scoreA = a.average ?? (a.score != null ? a.score * 25 : 0)
+      return scoreB - scoreA
+    })
+  }
+
+  // Fallback to static syllabus expectations
+  const staticExps = activeSubjectObj.value.expectations || 
+    activeSubjectObj.value.gradebookUnits?.flatMap(u => u.expectations || []) || []
+
+  return staticExps.map(e => ({
+    code: e.code || '',
+    expectationId: e.expectationId || e.code || '',
+    title: e.title || e.code || '',
+    description: e.description || e.title || '',
+    cleanTitle: condenseCurriculumExpectation(e.description || e.title || e.code || ''),
+    average: null,
+    masteryLevel: null,
+    displayScore: ''
+  }))
+})
+
+const studentSubjectAssessments = computed(() => {
+  if (!activeStudent.value || !activeTab.value || activeTab.value === 'learning_skills') return []
+  const astList = (props.assessments && props.assessments.length > 0)
+    ? props.assessments
+    : (gbAssessments.value || [])
+  if (!astList.length || !gradeMap.value) return []
+
+  const rawCls = props.reportClass || activeClassRecord.value
+  if (!rawCls) return []
+  const effClass = getEffectiveClassRecord(rawCls, activeTab.value)
+  const filtered = filterAssessmentsForSubject(astList, effClass)
+  const windowBounds = resolveWindowForTerm(selectedTerm.value)
+
+  const list = []
+  filtered.forEach(a => {
+    if (a.excluded) return
+    if (a.date) {
+      const aDate = String(a.date).slice(0, 10)
+      if (windowBounds.asOf && aDate > windowBounds.asOf) return
+      if (windowBounds.dateFrom && aDate < windowBounds.dateFrom) return
+    }
+    const grade = gradeMap.value[a.assessmentId]?.[activeStudent.value.studentId]
+    const pct = getAssessmentPercentage(a, grade)
+    if (pct !== null && !isNaN(pct) && isFinite(pct)) {
+      list.push({
+        id: a.assessmentId,
+        name: a.name || 'Assessment',
+        scorePercent: Math.round(pct),
+        date: a.date,
+        unitName: a.unitName || a.unit || '',
+        categoryName: a.categoryName || a.category || ''
+      })
+    }
+  })
+  return list.sort((a, b) => b.scorePercent - a.scorePercent)
+})
+
 const autoStrengthDisplay = computed(() => {
+  const scored = subjectSbarExpectations.value.filter(e => e.average != null || e.masteryLevel)
+  if (scored.length > 0) {
+    const top = scored[0]
+    return top.cleanTitle || top.description || top.title || 'Core Goals'
+  }
   if (subjectSbarExpectations.value.length > 0) {
     const e = subjectSbarExpectations.value[0]
-    return e.description || e.title || e.code || 'Core Goals'
+    return e.cleanTitle || e.description || e.title || 'Core Goals'
   }
   return 'Curriculum Goals'
 })
 
 const autoGrowthDisplay = computed(() => {
+  const scored = subjectSbarExpectations.value.filter(e => e.average != null || e.masteryLevel)
+  if (scored.length > 1) {
+    const low = scored[scored.length - 1]
+    return low.cleanTitle || low.description || low.title || 'Problem Solving'
+  }
   if (subjectSbarExpectations.value.length > 1) {
     const e = subjectSbarExpectations.value[subjectSbarExpectations.value.length - 1]
-    return e.description || e.title || e.code || 'Problem Solving'
+    return e.cleanTitle || e.description || e.title || 'Problem Solving'
   }
   return 'Problem Solving'
 })
@@ -996,7 +1237,10 @@ function buildCommentForActive() {
   } else if (isScienceTab.value) {
     const res = generateElementaryScienceComment({
       student: activeStudent.value,
-      gradeData: { percentage: activeSubjectMark.value || 75 },
+      gradeData: {
+        percentage: activeSubjectMark.value || 75,
+        sbarExpectations: subjectSbarExpectations.value
+      },
       options: {
         strandCode: selectedSubjectStrand.value,
         featuredProject: selectedScienceProject.value,
@@ -1158,12 +1402,15 @@ function exportAllCommentsCsv() {
           }
         }).text
       } else {
+        const stGradeObj = getStudentGradeObj(st.studentId, activeTab.value, selectedTerm.value)
+        const stMark = stGradeObj?.displayOverallGrade ?? stGradeObj?.overallGrade ?? 75
+        const stExps = stGradeObj?.sbarExpectations?.length ? stGradeObj.sbarExpectations : subjectSbarExpectations.value
         comment = generateElementarySubjectComment({
           student: st,
           subject: activeSubjectObj.value || { name: 'Subject' },
           gradeData: {
-            percentage: getStudentSubjectMark(st.studentId, activeTab.value) || 75,
-            sbarExpectations: subjectSbarExpectations.value
+            percentage: stMark,
+            sbarExpectations: stExps
           },
           options: {
             strandCode: selectedSubjectStrand.value,

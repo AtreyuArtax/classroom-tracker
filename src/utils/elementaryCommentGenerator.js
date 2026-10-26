@@ -19,19 +19,216 @@ import { GRADE_8_HISTORY_STRANDS, resolveHistoryStrand } from '../data/comments/
 import { GRADE_8_GEOGRAPHY_STRANDS, resolveGeographyStrand } from '../data/comments/elementaryGeographyBank.js'
 import { LEARNING_SKILLS_BANK, LEARNING_SKILL_KEYS } from '../data/comments/learningSkillsCommentBank.js'
 import { enforceCanadianSpelling, formatSubjectNameForComment } from './canadianSpelling.js'
+import { condenseCurriculumExpectation } from './curriculumCompetencies.js'
 
-export { formatSubjectNameForComment, enforceCanadianSpelling }
+export { formatSubjectNameForComment, enforceCanadianSpelling, condenseCurriculumExpectation }
+
+// ─── Action Formatter for Next Steps ──────────────────────────────────────────
+
+/**
+ * Transforms an SBAR expectation or task description into a grammatically clean action
+ * for Ontario report card Next Steps sentences (e.g. "solving fractions" -> "solve fractions").
+ *
+ * @param {string} raw
+ * @returns {string}
+ */
+export function formatNextStepAction(raw = '') {
+  if (!raw) return 'continue reviewing core concepts and practicing fundamental skills'
+  let s = String(raw).trim()
+    .replace(/^Next Steps:\s*/i, '')
+    .replace(/^is encouraged to\s*/i, '')
+    .replace(/^to\s+/i, '')
+    .replace(/[.]+$/, '')
+    .trim()
+
+  // Map leading gerund to infinitive (e.g. "solving..." -> "solve...")
+  const GERUND_TO_BASE = [
+    [/^solving\b/i, 'solve'],
+    [/^using\b/i, 'use'],
+    [/^applying\b/i, 'apply'],
+    [/^analyzing\b/i, 'analyze'],
+    [/^explaining\b/i, 'explain'],
+    [/^describing\b/i, 'describe'],
+    [/^identifying\b/i, 'identify'],
+    [/^calculating\b/i, 'calculate'],
+    [/^determining\b/i, 'determine'],
+    [/^modelling\b/i, 'model'],
+    [/^evaluating\b/i, 'evaluate'],
+    [/^investigating\b/i, 'investigate'],
+    [/^constructing\b/i, 'construct'],
+    [/^creating\b/i, 'create'],
+    [/^practicing\b/i, 'practice'],
+    [/^reviewing\b/i, 'review'],
+    [/^integrating\b/i, 'integrate'],
+    [/^communicating\b/i, 'communicate'],
+    [/^representing\b/i, 'represent'],
+    [/^organizing\b/i, 'organize'],
+    [/^selecting\b/i, 'select'],
+    [/^verifying\b/i, 'verify'],
+    [/^conducting\b/i, 'conduct'],
+    [/^comparing\b/i, 'compare'],
+    [/^measuring\b/i, 'measure'],
+    [/^estimating\b/i, 'estimate'],
+    [/^exploring\b/i, 'explore'],
+    [/^demonstrating\b/i, 'demonstrate'],
+    [/^adding\b/i, 'add'],
+    [/^subtracting\b/i, 'subtract'],
+    [/^multiplying\b/i, 'multiply'],
+    [/^dividing\b/i, 'divide'],
+    [/^simplifying\b/i, 'simplify'],
+    [/^converting\b/i, 'convert'],
+    [/^composing\b/i, 'compose'],
+    [/^decomposing\b/i, 'decompose'],
+    [/^drafting\b/i, 'draft'],
+    [/^editing\b/i, 'edit'],
+    [/^revising\b/i, 'revise'],
+    [/^reading\b/i, 'read'],
+    [/^writing\b/i, 'write'],
+    [/^drawing\b/i, 'draw'],
+    [/^building\b/i, 'build'],
+    [/^observing\b/i, 'observe'],
+    [/^recording\b/i, 'record'],
+    [/^testing\b/i, 'test'],
+    [/^sorting\b/i, 'sort'],
+    [/^classifying\b/i, 'classify'],
+    [/^connecting\b/i, 'connect'],
+    [/^interpreting\b/i, 'interpret'],
+    [/^sharing\b/i, 'share']
+  ]
+
+  for (const [pattern, base] of GERUND_TO_BASE) {
+    if (pattern.test(s)) {
+      return s.replace(pattern, base)
+    }
+  }
+
+  // If already starts with a common base action verb
+  if (/^(solve|use|apply|analyze|explain|describe|identify|calculate|determine|model|evaluate|investigate|construct|create|practice|review|integrate|communicate|represent|organize|select|verify|conduct|compare|measure|estimate|explore|focus|develop|continue|add|subtract|multiply|divide|simplify|convert|compose|decompose|draft|edit|revise|read|write|draw|build|observe|record|test|sort|classify|connect|interpret|share)\b/i.test(s)) {
+    return s
+  }
+
+  // If a noun phrase, prepend review and practice
+  return `review and practice ${s}`
+}
+
+// ─── SBAR Expectation & Mastery Extractor ──────────────────────────────────────
+
+function extractSbarStrengthsAndGrowth(gradeData = {}, fallbackStrength = '', fallbackGrowth = '', defaultSubject = '') {
+  const sbarList = Array.isArray(gradeData.sbarExpectations) ? gradeData.sbarExpectations : []
+  let autoStrengthExp = ''
+  let autoStrengthLevel = null
+  let autoGrowthExp = ''
+  let autoGrowthLevel = null
+
+  const mark = gradeData.percentage ?? gradeData.mark
+
+  if (sbarList.length > 0) {
+    const scored = [...sbarList].filter(e => e.average != null || e.masteryLevel != null || e.score != null)
+      .sort((a, b) => {
+        const scoreB = b.average ?? (b.score != null ? b.score * 25 : (b.masteryLevel != null ? Number(b.masteryLevel) * 25 : 0))
+        const scoreA = a.average ?? (a.score != null ? a.score * 25 : (a.masteryLevel != null ? Number(a.masteryLevel) * 25 : 0))
+        return scoreB - scoreA
+      })
+
+    if (scored.length > 0) {
+      const top = scored[0]
+      const rawTop = top.description || top.title || (top.code ? `Expectation ${top.code}` : '')
+      autoStrengthExp = condenseCurriculumExpectation(rawTop)
+      const topScore = top.average ?? (top.score != null ? top.score * 25 : (top.masteryLevel != null ? Number(top.masteryLevel) * 25 : mark))
+      autoStrengthLevel = getAchievementLevel(top.masteryLevel || topScore)
+
+      const low = scored[scored.length - 1]
+      if (low && low !== top) {
+        const rawLow = low.description || low.title || (low.code ? `Expectation ${low.code}` : '')
+        autoGrowthExp = condenseCurriculumExpectation(rawLow)
+        const lowScore = low.average ?? (low.score != null ? low.score * 25 : (low.masteryLevel != null ? Number(low.masteryLevel) * 25 : mark))
+        autoGrowthLevel = getAchievementLevel(low.masteryLevel || lowScore)
+      }
+    } else {
+      // Unscored expectations list fallback
+      const first = sbarList[0]
+      if (first) {
+        autoStrengthExp = condenseCurriculumExpectation(first.description || first.title || first.code)
+      }
+      const last = sbarList[sbarList.length - 1]
+      if (last && last !== first) {
+        autoGrowthExp = condenseCurriculumExpectation(last.description || last.title || last.code)
+      }
+    }
+  }
+
+  const rawStrength = fallbackStrength || autoStrengthExp
+  const rawGrowth = fallbackGrowth || autoGrowthExp
+
+  const effectiveStrength = rawStrength ? condenseCurriculumExpectation(rawStrength) : ''
+  const effectiveGrowth = rawGrowth ? condenseCurriculumExpectation(rawGrowth) : ''
+
+  return {
+    effectiveStrength,
+    autoStrengthLevel,
+    effectiveGrowth,
+    autoGrowthLevel
+  }
+}
 
 // ─── Helper Token Inserter ────────────────────────────────────────────────────
 
 function fillTokens(template = '', tokens = {}, extra = {}) {
   if (!template) return ''
   let text = template
+
+  if (tokens.isPlural) {
+    const SINGULAR_TO_PLURAL_VERBS = {
+      is: 'are',
+      was: 'were',
+      has: 'have',
+      demonstrates: 'demonstrate',
+      applies: 'apply',
+      works: 'work',
+      utilizes: 'utilize',
+      articulates: 'articulate',
+      integrates: 'integrate',
+      writes: 'write',
+      participates: 'participate',
+      benefits: 'benefit',
+      follows: 'follow',
+      uses: 'use',
+      makes: 'make',
+      refers: 'refer',
+      responds: 'respond',
+      arrives: 'arrive',
+      strives: 'strive',
+      manages: 'manage',
+      completes: 'complete',
+      identifies: 'identify',
+      evaluates: 'evaluate',
+      solves: 'solve',
+      compares: 'compare',
+      creates: 'create',
+      shows: 'show',
+      explains: 'explain'
+    }
+
+    text = text.replace(/(\{subject\}|\{subjectLower\})\s+((?:[a-z]+ly\s+)?)([a-z]+)\b/gi, (match, subjTag, adv, verb) => {
+      const lowerVerb = verb.toLowerCase()
+      if (SINGULAR_TO_PLURAL_VERBS[lowerVerb]) {
+        const pluralVerb = SINGULAR_TO_PLURAL_VERBS[lowerVerb]
+        const pronoun = subjTag.toLowerCase() === '{subjectlower}' ? 'they' : 'They'
+        return `${pronoun} ${adv || ''}${pluralVerb}`
+      }
+      return match
+    })
+  }
+
+  const reflexive = tokens.isPlural ? 'themselves' : (tokens.object === 'her' ? 'herself' : 'himself')
+
+  text = text
     .replace(/\{name\}/g, tokens.name || 'The student')
     .replace(/\{subject\}/g, tokens.subject || 'They')
     .replace(/\{subjectLower\}/g, tokens.subjectLower || 'they')
     .replace(/\{object\}/g, tokens.object || 'them')
     .replace(/\{possessive\}/g, tokens.possessive || 'their')
+    .replace(/\{reflexive\}/g, reflexive)
 
   if (extra.project) {
     text = text.replace(/\{project\}/g, extra.project)
@@ -73,16 +270,29 @@ export function generateElementaryScienceComment({
   const level = getAchievementLevel(gradeData.level || mark)
   const tokens = getPronounTokens(student, pronounMode)
 
+  const {
+    effectiveStrength,
+    autoStrengthLevel,
+    effectiveGrowth
+  } = extractSbarStrengthsAndGrowth(gradeData, featuredStrength, featuredNextStep, 'Science')
+
   // Resolve strand from explicit code or featured expectation
-  const strand = resolveScienceStrand(strandCode || featuredStrength || featuredNextStep || 'B')
-  const levelBank = strand.levels[level.key] || strand.levels['3']
+  const strand = resolveScienceStrand(strandCode || effectiveStrength || effectiveGrowth || 'B')
+  const strengthLvl = autoStrengthLevel || level
+  const levelBank = strand.levels[strengthLvl.key] || strand.levels['3']
 
   const seed = Math.abs(typeof variantSeed === 'number' ? variantSeed : 0)
 
   // 1. Concept Understanding Sentence
   const conceptTemplates = levelBank.conceptStems || []
   const conceptIdx = seed % (conceptTemplates.length || 1)
-  const conceptSentence = fillTokens(conceptTemplates[conceptIdx] || '', tokens)
+  let conceptSentence = fillTokens(conceptTemplates[conceptIdx] || '', tokens)
+  if (effectiveStrength && !conceptSentence.toLowerCase().includes(effectiveStrength.toLowerCase())) {
+    const connector = /^(using|applying|analyzing|investigating|identifying|explaining|modelling|assessing|conducting|evaluating)\b/i.test(effectiveStrength)
+      ? 'when'
+      : 'when investigating'
+    conceptSentence = `${conceptSentence} ${tokens.name} demonstrated particular proficiency ${connector} ${effectiveStrength}.`
+  }
 
   // 2. In-Class Investigation Sentence
   const investTemplates = levelBank.investigationStems || []
@@ -97,11 +307,12 @@ export function generateElementaryScienceComment({
   const commSentence = fillTokens(commTemplates[commIdx] || '', tokens, { project: projectTopic })
 
   // 4. Next Steps Sentences
-  const nextStepTemplates = levelBank.nextSteps || []
   let nextStepSentence = ''
-  if (featuredNextStep) {
-    nextStepSentence = `Next Steps: ${tokens.name} is encouraged to ${featuredNextStep.replace(/^Next Steps:\s*/i, '').trim()}.`
+  if (effectiveGrowth) {
+    const growthAction = formatNextStepAction(effectiveGrowth)
+    nextStepSentence = `Next Steps: ${tokens.name} is encouraged to ${growthAction}.`
   } else {
+    const nextStepTemplates = levelBank.nextSteps || []
     const nsIdx1 = seed % (nextStepTemplates.length || 1)
     const nsIdx2 = (seed + 1) % (nextStepTemplates.length || 1)
     const ns1 = fillTokens(nextStepTemplates[nsIdx1] || '', tokens)
@@ -118,6 +329,9 @@ export function generateElementaryScienceComment({
   // If strictly over character limit, drop commSentence or compress next steps
   if (fullComment.length > charLimit) {
     fullComment = [conceptSentence, investSentence, nextStepSentence].filter(Boolean).join(' ')
+  }
+  if (fullComment.length > charLimit) {
+    fullComment = [conceptSentence, nextStepSentence].filter(Boolean).join(' ')
   }
 
   fullComment = enforceCanadianSpelling(fullComment)
@@ -158,35 +372,26 @@ export function generateElementaryMathComment({
   const level = getAchievementLevel(gradeData.level || mark)
   const tokens = getPronounTokens(student, pronounMode)
 
-  // Extract SBAR expectations if available
-  const sbarList = Array.isArray(gradeData.sbarExpectations) ? gradeData.sbarExpectations : []
-  let autoStrengthExp = ''
-  let autoGrowthExp = ''
-  if (sbarList.length > 0) {
-    const sorted = [...sbarList].filter(e => e.average != null || e.masteryLevel != null)
-      .sort((a, b) => (b.average ?? 0) - (a.average ?? 0))
-    if (sorted[0]) {
-      autoStrengthExp = sorted[0].description || sorted[0].title || (sorted[0].code ? `Expectation ${sorted[0].code}` : '')
-    }
-    const low = sorted[sorted.length - 1]
-    if (low && low !== sorted[0]) {
-      autoGrowthExp = low.description || low.title || (low.code ? `Expectation ${low.code}` : '')
-    }
-  }
-
-  const effectiveStrength = featuredStrength || autoStrengthExp
-  const effectiveGrowth = featuredNextStep || autoGrowthExp
+  const {
+    effectiveStrength,
+    autoStrengthLevel,
+    effectiveGrowth
+  } = extractSbarStrengthsAndGrowth(gradeData, featuredStrength, featuredNextStep, 'Mathematics')
 
   const strand = resolveMathStrand(strandCode || effectiveStrength || effectiveGrowth || 'B')
-  const levelBank = strand.levels[level.key] || strand.levels['3']
+  const strengthLvl = autoStrengthLevel || level
+  const levelBank = strand.levels[strengthLvl.key] || strand.levels['3']
   const seed = Math.abs(typeof variantSeed === 'number' ? variantSeed : 0)
 
   // 1. Concept Understanding Sentence
   const conceptTemplates = levelBank.conceptStems || []
   const conceptIdx = seed % (conceptTemplates.length || 1)
   let conceptSentence = fillTokens(conceptTemplates[conceptIdx] || '', tokens, { topic: effectiveStrength, expectation: effectiveStrength })
-  if (effectiveStrength && !conceptSentence.includes(effectiveStrength)) {
-    conceptSentence = `${conceptSentence} ${tokens.name} demonstrated particular proficiency when working with ${effectiveStrength}.`
+  if (effectiveStrength && !conceptSentence.toLowerCase().includes(effectiveStrength.toLowerCase())) {
+    const connector = /^(using|applying|solving|determining|calculating|modelling|representing)\b/i.test(effectiveStrength)
+      ? 'when'
+      : 'when working with'
+    conceptSentence = `${conceptSentence} ${tokens.name} demonstrated particular proficiency ${connector} ${effectiveStrength}.`
   }
 
   // 2. Mathematical Procedure / Application Sentence
@@ -195,11 +400,12 @@ export function generateElementaryMathComment({
   const procSentence = fillTokens(procTemplates[procIdx] || '', tokens, { topic: effectiveStrength, expectation: effectiveStrength })
 
   // 3. Next Steps Sentence
-  const nextStepTemplates = levelBank.nextSteps || []
   let nextStepSentence = ''
   if (effectiveGrowth) {
-    nextStepSentence = `Next Steps: ${tokens.name} is encouraged to ${effectiveGrowth.replace(/^Next Steps:\s*/i, '').trim()}.`
+    const growthAction = formatNextStepAction(effectiveGrowth)
+    nextStepSentence = `Next Steps: ${tokens.name} is encouraged to ${growthAction}.`
   } else {
+    const nextStepTemplates = levelBank.nextSteps || []
     const nsIdx1 = seed % (nextStepTemplates.length || 1)
     const nsIdx2 = (seed + 1) % (nextStepTemplates.length || 1)
     const ns1 = fillTokens(nextStepTemplates[nsIdx1] || '', tokens)
@@ -213,6 +419,7 @@ export function generateElementaryMathComment({
   let fullComment = [conceptSentence, procSentence, nextStepSentence].filter(Boolean).join(' ')
 
   if (fullComment.length > charLimit) {
+    const nextStepTemplates = levelBank.nextSteps || []
     const singleNs = fillTokens(nextStepTemplates[seed % (nextStepTemplates.length || 1)] || '', tokens)
     const trimmedNs = singleNs.startsWith('Next Steps:') ? singleNs : `Next Steps: ${singleNs}`
     fullComment = [conceptSentence, procSentence, trimmedNs].filter(Boolean).join(' ')
@@ -259,34 +466,26 @@ export function generateElementaryLanguageComment({
   const level = getAchievementLevel(gradeData.level || mark)
   const tokens = getPronounTokens(student, pronounMode)
 
-  const sbarList = Array.isArray(gradeData.sbarExpectations) ? gradeData.sbarExpectations : []
-  let autoStrengthExp = ''
-  let autoGrowthExp = ''
-  if (sbarList.length > 0) {
-    const sorted = [...sbarList].filter(e => e.average != null || e.masteryLevel != null)
-      .sort((a, b) => (b.average ?? 0) - (a.average ?? 0))
-    if (sorted[0]) {
-      autoStrengthExp = sorted[0].description || sorted[0].title || (sorted[0].code ? `Expectation ${sorted[0].code}` : '')
-    }
-    const low = sorted[sorted.length - 1]
-    if (low && low !== sorted[0]) {
-      autoGrowthExp = low.description || low.title || (low.code ? `Expectation ${low.code}` : '')
-    }
-  }
-
-  const effectiveStrength = featuredStrength || autoStrengthExp
-  const effectiveGrowth = featuredNextStep || autoGrowthExp
+  const {
+    effectiveStrength,
+    autoStrengthLevel,
+    effectiveGrowth
+  } = extractSbarStrengthsAndGrowth(gradeData, featuredStrength, featuredNextStep, 'Language')
 
   const strand = resolveLanguageStrand(strandCode || effectiveStrength || effectiveGrowth || 'C')
-  const levelBank = strand.levels[level.key] || strand.levels['3']
+  const strengthLvl = autoStrengthLevel || level
+  const levelBank = strand.levels[strengthLvl.key] || strand.levels['3']
   const seed = Math.abs(typeof variantSeed === 'number' ? variantSeed : 0)
 
   // 1. Concept Understanding Sentence
   const conceptTemplates = levelBank.conceptStems || []
   const conceptIdx = seed % (conceptTemplates.length || 1)
   let conceptSentence = fillTokens(conceptTemplates[conceptIdx] || '', tokens, { topic: effectiveStrength, expectation: effectiveStrength })
-  if (effectiveStrength && !conceptSentence.includes(effectiveStrength)) {
-    conceptSentence = `${conceptSentence} ${tokens.name} demonstrated particular proficiency with ${effectiveStrength}.`
+  if (effectiveStrength && !conceptSentence.toLowerCase().includes(effectiveStrength.toLowerCase())) {
+    const connector = /^(using|applying|analyzing|interpreting|composing|drafting|reading|communicating)\b/i.test(effectiveStrength)
+      ? 'when'
+      : 'with'
+    conceptSentence = `${conceptSentence} ${tokens.name} demonstrated particular proficiency ${connector} ${effectiveStrength}.`
   }
 
   // 2. Classroom Application / Evidence Sentence
@@ -295,11 +494,12 @@ export function generateElementaryLanguageComment({
   const appSentence = fillTokens(appTemplates[appIdx] || '', tokens, { topic: effectiveStrength, expectation: effectiveStrength })
 
   // 3. Next Steps Sentence
-  const nextStepTemplates = levelBank.nextSteps || []
   let nextStepSentence = ''
   if (effectiveGrowth) {
-    nextStepSentence = `Next Steps: ${tokens.name} is encouraged to ${effectiveGrowth.replace(/^Next Steps:\s*/i, '').trim()}.`
+    const growthAction = formatNextStepAction(effectiveGrowth)
+    nextStepSentence = `Next Steps: ${tokens.name} is encouraged to ${growthAction}.`
   } else {
+    const nextStepTemplates = levelBank.nextSteps || []
     const nsIdx1 = seed % (nextStepTemplates.length || 1)
     const nsIdx2 = (seed + 1) % (nextStepTemplates.length || 1)
     const ns1 = fillTokens(nextStepTemplates[nsIdx1] || '', tokens)
@@ -313,6 +513,7 @@ export function generateElementaryLanguageComment({
   let fullComment = [conceptSentence, appSentence, nextStepSentence].filter(Boolean).join(' ')
 
   if (fullComment.length > charLimit) {
+    const nextStepTemplates = levelBank.nextSteps || []
     const singleNs = fillTokens(nextStepTemplates[seed % (nextStepTemplates.length || 1)] || '', tokens)
     const trimmedNs = singleNs.startsWith('Next Steps:') ? singleNs : `Next Steps: ${singleNs}`
     fullComment = [conceptSentence, appSentence, trimmedNs].filter(Boolean).join(' ')
@@ -360,33 +561,22 @@ export function generateElementaryHistoryComment({
   const level = getAchievementLevel(gradeData.level || mark)
   const tokens = getPronounTokens(student, pronounMode)
 
-  const sbarList = Array.isArray(gradeData.sbarExpectations) ? gradeData.sbarExpectations : []
-  let autoStrengthExp = ''
-  let autoGrowthExp = ''
-  if (sbarList.length > 0) {
-    const sorted = [...sbarList].filter(e => e.average != null || e.masteryLevel != null)
-      .sort((a, b) => (b.average ?? 0) - (a.average ?? 0))
-    if (sorted[0]) {
-      autoStrengthExp = sorted[0].description || sorted[0].title || (sorted[0].code ? `Expectation ${sorted[0].code}` : '')
-    }
-    const low = sorted[sorted.length - 1]
-    if (low && low !== sorted[0]) {
-      autoGrowthExp = low.description || low.title || (low.code ? `Expectation ${low.code}` : '')
-    }
-  }
-
-  const effectiveStrength = featuredStrength || autoStrengthExp
-  const effectiveGrowth = featuredNextStep || autoGrowthExp
+  const {
+    effectiveStrength,
+    autoStrengthLevel,
+    effectiveGrowth
+  } = extractSbarStrengthsAndGrowth(gradeData, featuredStrength, featuredNextStep, 'History')
 
   const strand = resolveHistoryStrand(strandCode || effectiveStrength || effectiveGrowth || 'A')
-  const levelBank = strand.levels[level.key] || strand.levels['3']
+  const strengthLvl = autoStrengthLevel || level
+  const levelBank = strand.levels[strengthLvl.key] || strand.levels['3']
   const seed = Math.abs(typeof variantSeed === 'number' ? variantSeed : 0)
 
   // 1. Concept Understanding Sentence
   const conceptTemplates = levelBank.conceptStems || []
   const conceptIdx = seed % (conceptTemplates.length || 1)
   let conceptSentence = fillTokens(conceptTemplates[conceptIdx] || '', tokens, { topic: effectiveStrength, expectation: effectiveStrength })
-  if (effectiveStrength && !conceptSentence.includes(effectiveStrength)) {
+  if (effectiveStrength && !conceptSentence.toLowerCase().includes(effectiveStrength.toLowerCase())) {
     conceptSentence = `${conceptSentence} ${tokens.name} excelled at ${effectiveStrength}.`
   }
 
@@ -396,11 +586,12 @@ export function generateElementaryHistoryComment({
   const inqSentence = fillTokens(inqTemplates[inqIdx] || '', tokens, { topic: effectiveStrength, expectation: effectiveStrength })
 
   // 3. Next Steps Sentence
-  const nextStepTemplates = levelBank.nextSteps || []
   let nextStepSentence = ''
   if (effectiveGrowth) {
-    nextStepSentence = `Next Steps: ${tokens.name} is encouraged to ${effectiveGrowth.replace(/^Next Steps:\s*/i, '').trim()}.`
+    const growthAction = formatNextStepAction(effectiveGrowth)
+    nextStepSentence = `Next Steps: ${tokens.name} is encouraged to ${growthAction}.`
   } else {
+    const nextStepTemplates = levelBank.nextSteps || []
     const nsIdx = seed % (nextStepTemplates.length || 1)
     const ns = fillTokens(nextStepTemplates[nsIdx] || '', tokens)
     nextStepSentence = ns.startsWith('Next Steps:') ? ns : `Next Steps: ${ns}`
@@ -452,33 +643,22 @@ export function generateElementaryGeographyComment({
   const level = getAchievementLevel(gradeData.level || mark)
   const tokens = getPronounTokens(student, pronounMode)
 
-  const sbarList = Array.isArray(gradeData.sbarExpectations) ? gradeData.sbarExpectations : []
-  let autoStrengthExp = ''
-  let autoGrowthExp = ''
-  if (sbarList.length > 0) {
-    const sorted = [...sbarList].filter(e => e.average != null || e.masteryLevel != null)
-      .sort((a, b) => (b.average ?? 0) - (a.average ?? 0))
-    if (sorted[0]) {
-      autoStrengthExp = sorted[0].description || sorted[0].title || (sorted[0].code ? `Expectation ${sorted[0].code}` : '')
-    }
-    const low = sorted[sorted.length - 1]
-    if (low && low !== sorted[0]) {
-      autoGrowthExp = low.description || low.title || (low.code ? `Expectation ${low.code}` : '')
-    }
-  }
-
-  const effectiveStrength = featuredStrength || autoStrengthExp
-  const effectiveGrowth = featuredNextStep || autoGrowthExp
+  const {
+    effectiveStrength,
+    autoStrengthLevel,
+    effectiveGrowth
+  } = extractSbarStrengthsAndGrowth(gradeData, featuredStrength, featuredNextStep, 'Geography')
 
   const strand = resolveGeographyStrand(strandCode || effectiveStrength || effectiveGrowth || 'A')
-  const levelBank = strand.levels[level.key] || strand.levels['3']
+  const strengthLvl = autoStrengthLevel || level
+  const levelBank = strand.levels[strengthLvl.key] || strand.levels['3']
   const seed = Math.abs(typeof variantSeed === 'number' ? variantSeed : 0)
 
   // 1. Concept Understanding Sentence
   const conceptTemplates = levelBank.conceptStems || []
   const conceptIdx = seed % (conceptTemplates.length || 1)
   let conceptSentence = fillTokens(conceptTemplates[conceptIdx] || '', tokens, { topic: effectiveStrength, expectation: effectiveStrength })
-  if (effectiveStrength && !conceptSentence.includes(effectiveStrength)) {
+  if (effectiveStrength && !conceptSentence.toLowerCase().includes(effectiveStrength.toLowerCase())) {
     conceptSentence = `${conceptSentence} ${tokens.name} excelled at ${effectiveStrength}.`
   }
 
@@ -488,11 +668,12 @@ export function generateElementaryGeographyComment({
   const inqSentence = fillTokens(inqTemplates[inqIdx] || '', tokens, { topic: effectiveStrength, expectation: effectiveStrength })
 
   // 3. Next Steps Sentence
-  const nextStepTemplates = levelBank.nextSteps || []
   let nextStepSentence = ''
   if (effectiveGrowth) {
-    nextStepSentence = `Next Steps: ${tokens.name} is encouraged to ${effectiveGrowth.replace(/^Next Steps:\s*/i, '').trim()}.`
+    const growthAction = formatNextStepAction(effectiveGrowth)
+    nextStepSentence = `Next Steps: ${tokens.name} is encouraged to ${growthAction}.`
   } else {
+    const nextStepTemplates = levelBank.nextSteps || []
     const nsIdx = seed % (nextStepTemplates.length || 1)
     const ns = fillTokens(nextStepTemplates[nsIdx] || '', tokens)
     nextStepSentence = ns.startsWith('Next Steps:') ? ns : `Next Steps: ${ns}`
@@ -543,56 +724,59 @@ export function generateElementarySubjectComment({
     charLimit = defaultLimit
   } = options
 
-  // Dispatch to specialized banks if available
-  if (subCode.includes('sci') || subCode.includes('snc')) {
-    return generateElementaryScienceComment({
-      student,
-      gradeData,
-      options: {
-        ...options,
-        charLimit
-      }
-    })
-  }
-  if (subCode.includes('math') || subCode.includes('mat')) {
-    return generateElementaryMathComment({
-      student,
-      gradeData,
-      options: {
-        ...options,
-        charLimit
-      }
-    })
-  }
-  if (subCode.includes('lang') || subCode.includes('eng') || subCode.includes('ela')) {
-    return generateElementaryLanguageComment({
-      student,
-      gradeData,
-      options: {
-        ...options,
-        charLimit
-      }
-    })
-  }
-  if (subCode.includes('hist') || subCode.includes('his')) {
-    return generateElementaryHistoryComment({
-      student,
-      gradeData,
-      options: {
-        ...options,
-        charLimit
-      }
-    })
-  }
-  if (subCode.includes('geog') || subCode.includes('geo')) {
-    return generateElementaryGeographyComment({
-      student,
-      gradeData,
-      options: {
-        ...options,
-        charLimit
-      }
-    })
+  // Dispatch to specialized Grade 8 banks if student is Grade 8 (or unstated)
+  const isGrade8 = gradeLevel === 8 || !student.gradeLevel
+  if (isGrade8) {
+    if (subCode.includes('sci') || subCode.includes('snc')) {
+      return generateElementaryScienceComment({
+        student,
+        gradeData,
+        options: {
+          ...options,
+          charLimit
+        }
+      })
+    }
+    if (subCode.includes('math') || subCode.includes('mat')) {
+      return generateElementaryMathComment({
+        student,
+        gradeData,
+        options: {
+          ...options,
+          charLimit
+        }
+      })
+    }
+    if (subCode.includes('lang') || subCode.includes('eng') || subCode.includes('ela')) {
+      return generateElementaryLanguageComment({
+        student,
+        gradeData,
+        options: {
+          ...options,
+          charLimit
+        }
+      })
+    }
+    if (subCode.includes('hist') || subCode.includes('his')) {
+      return generateElementaryHistoryComment({
+        student,
+        gradeData,
+        options: {
+          ...options,
+          charLimit
+        }
+      })
+    }
+    if (subCode.includes('geog') || subCode.includes('geo')) {
+      return generateElementaryGeographyComment({
+        student,
+        gradeData,
+        options: {
+          ...options,
+          charLimit
+        }
+      })
+    }
   }
 
   const mark = gradeData.percentage ?? gradeData.mark
@@ -602,108 +786,104 @@ export function generateElementarySubjectComment({
 
   const subjectName = formatSubjectNameForComment(subject.name || subject.title || 'the curriculum')
 
-  // Extract SBAR strengths and growth expectations if available
-  const sbarList = Array.isArray(gradeData.sbarExpectations) ? gradeData.sbarExpectations : []
-  let autoStrengthExp = ''
-  let autoGrowthExp = ''
+  const {
+    effectiveStrength,
+    autoStrengthLevel,
+    effectiveGrowth
+  } = extractSbarStrengthsAndGrowth(gradeData, featuredStrength, featuredNextStep, subjectName)
 
-  if (sbarList.length > 0) {
-    const sorted = [...sbarList].filter(e => e.average != null || e.masteryLevel != null)
-      .sort((a, b) => (b.average ?? 0) - (a.average ?? 0))
-    if (sorted[0]) {
-      autoStrengthExp = sorted[0].description || sorted[0].title || (sorted[0].code ? `Expectation ${sorted[0].code}` : '')
-    }
-    const low = sorted[sorted.length - 1]
-    if (low && low !== sorted[0]) {
-      autoGrowthExp = low.description || low.title || (low.code ? `Expectation ${low.code}` : '')
-    }
-  }
+  const strengthTopic = effectiveStrength || `${subjectName} learning goals`
+  const growthTopic = effectiveGrowth || `${subjectName} problem-solving tasks`
+  const strengthLvl = autoStrengthLevel || level
 
-  const strengthTopic = featuredStrength || autoStrengthExp || `${subjectName} learning goals`
-  const growthTopic = featuredNextStep || autoGrowthExp || `${subjectName} problem-solving tasks`
+  const isGerundStrength = /^(using|applying|analyzing|interpreting|composing|creating|performing|demonstrating|investigating|exploring)\b/i.test(strengthTopic)
+  const strengthPrep = isGerundStrength ? 'when' : 'when engaging with'
 
   // 1. Curriculum Strength sentence
   const strengthTemplates = {
     '4+': [
-      `${tokens.name} demonstrates exceptional, insightful understanding when engaging with ${strengthTopic}.`,
-      `${tokens.name} consistently shows thorough and sophisticated application of core concepts when exploring ${strengthTopic}.`
+      `${tokens.name} demonstrates exceptional, insightful understanding ${strengthPrep} ${strengthTopic}.`,
+      `${tokens.name} consistently shows thorough and sophisticated application of core concepts ${strengthPrep} ${strengthTopic}.`
     ],
     '4': [
-      `${tokens.name} demonstrates a thorough and consistent understanding of curriculum expectations when working with ${strengthTopic}.`,
-      `${tokens.name} accurately and effectively applies key concepts and procedures when investigating ${strengthTopic}.`
+      `${tokens.name} demonstrates a thorough and consistent understanding of curriculum expectations ${strengthPrep} ${strengthTopic}.`,
+      `${tokens.name} accurately and effectively applies key concepts and procedures ${strengthPrep} ${strengthTopic}.`
     ],
     '3': [
-      `${tokens.name} demonstrates a competent and solid understanding of ${strengthTopic}.`,
-      `${tokens.name} consistently applies learned strategies and skills when working with ${strengthTopic}.`
+      `${tokens.name} demonstrates a competent and solid understanding ${isGerundStrength ? 'when' : 'of'} ${strengthTopic}.`,
+      `${tokens.name} consistently applies learned strategies and skills ${strengthPrep} ${strengthTopic}.`
     ],
     '2': [
-      `${tokens.name} demonstrates developing understanding when working with ${strengthTopic}.`,
+      `${tokens.name} demonstrates developing understanding ${strengthPrep} ${strengthTopic}.`,
       `${tokens.name} applies core strategies with emerging consistency during in-class tasks involving ${strengthTopic}.`
     ],
     '1': [
-      `${tokens.name} demonstrates emerging knowledge of foundational skills with regular teacher guidance when working with ${strengthTopic}.`,
-      `${tokens.name} participates in classroom activities and requires guided assistance when exploring ${strengthTopic}.`
+      `${tokens.name} demonstrates emerging knowledge of foundational skills with regular teacher guidance ${strengthPrep} ${strengthTopic}.`,
+      `${tokens.name} participates in classroom activities and requires guided assistance ${strengthPrep} ${strengthTopic}.`
     ]
   }
 
-  const sList = strengthTemplates[level.key] || strengthTemplates['3']
+  const sList = strengthTemplates[strengthLvl.key] || strengthTemplates['3']
   const sentence1 = sList[seed % sList.length]
 
-  // 2. Classroom Application / Task Evidence sentence
+  // 2. Classroom Application / Task Evidence sentence (calibrated to student overall subject level)
   const appTemplates = {
     '4+': [
-      `During classroom evaluations and collaborative tasks, ${tokens.subjectLower} independently integrates advanced problem-solving methods and communicates reasoning with outstanding precision.`,
-      `${tokens.subject} demonstrates excellent critical thinking during inquiry challenges, regularly making insightful connections across units.`
+      `During classroom evaluations and collaborative tasks, {subjectLower} independently integrates advanced problem-solving methods and communicates reasoning with outstanding precision.`,
+      `{subject} demonstrates excellent critical thinking during inquiry challenges, regularly making insightful connections across units.`
     ],
     '4': [
-      `During daily learning activities, ${tokens.subjectLower} works diligently, solving problems with precision and communicating findings clearly.`,
-      `${tokens.subject} actively engages during classroom discussions, using appropriate vocabulary and visual models to justify ${tokens.possessive} thinking.`
+      `During daily learning activities, {subjectLower} works diligently, solving problems with precision and communicating findings clearly.`,
+      `{subject} actively engages during classroom discussions, using appropriate vocabulary and visual models to justify {possessive} thinking.`
     ],
     '3': [
-      `In classroom tasks, ${tokens.subjectLower} uses guided tools and models effectively to solve problems and share ${tokens.possessive} thinking.`,
-      `${tokens.subject} participates well during in-class activities, utilizing available references to complete assignments with care.`
+      `In classroom tasks, {subjectLower} uses guided tools and models effectively to solve problems and share {possessive} thinking.`,
+      `{subject} participates well during in-class activities, utilizing available references to complete assignments with care.`
     ],
     '2': [
-      `With teacher prompting and guided organizers, ${tokens.subjectLower} follows structured procedures to complete learning tasks.`,
-      `${tokens.subject} benefits from small-group modelling and the use of classroom anchor charts to support task completion.`
+      `With teacher prompting and guided organizers, {subjectLower} follows structured procedures to complete learning tasks.`,
+      `{subject} benefits from small-group modelling and the use of classroom anchor charts to support task completion.`
     ],
     '1': [
-      `With ongoing teacher assistance and visual templates, ${tokens.subjectLower} participates in guided practice and foundational exercises.`,
-      `${tokens.subject} works with direct support during lessons to complete essential curriculum tasks.`
+      `With ongoing teacher assistance and visual templates, {subjectLower} participates in guided practice and foundational exercises.`,
+      `{subject} works with direct support during lessons to complete essential curriculum tasks.`
     ]
   }
 
   const aList = appTemplates[level.key] || appTemplates['3']
-  const sentence2 = aList[(seed + 1) % aList.length]
+  const sentence2 = fillTokens(aList[(seed + 1) % aList.length], tokens)
 
   // 3. Actionable Next Step
-  const nextStepTemplates = {
-    '4+': [
-      `Next Steps: ${tokens.name} is encouraged to challenge ${tokens.object} with open-ended extension questions and multi-step inquiry problems.`,
-      `Next Steps: To foster continued excellence, ${tokens.name} should explore non-routine challenges that connect ${subjectName} to real-world contexts.`
-    ],
-    '4': [
-      `Next Steps: ${tokens.name} is encouraged to continue explaining intermediate steps and justifications thoroughly.`,
-      `Next Steps: ${tokens.name} should continue verifying solutions and exploring creative alternative strategies.`
-    ],
-    '3': [
-      `Next Steps: ${tokens.name} is encouraged to review core procedures and verify calculations independently when working with ${growthTopic}.`,
-      `Next Steps: Utilizing structured checklists will support ${tokens.name} in organizing intermediate steps when tackling complex problems.`
-    ],
-    '2': [
-      `Next Steps: ${tokens.name} is encouraged to use classroom anchor charts, graphic organizers, and vocabulary aids to build confidence with ${growthTopic}.`,
-      `Next Steps: Daily practice with foundational concepts and seeking timely clarification will support ${tokens.possessive} ongoing progress.`
-    ],
-    '1': [
-      `Next Steps: ${tokens.name} is encouraged to use personal glossaries, step-by-step templates, and attend extra help to reinforce core ${subjectName} expectations.`,
-      `Next Steps: Consistent review of lesson notes and active participation in guided review sessions will help ${tokens.name} build required competencies.`
-    ]
+  let sentence3 = ''
+  if (effectiveGrowth) {
+    const growthAction = formatNextStepAction(effectiveGrowth)
+    sentence3 = `Next Steps: ${tokens.name} is encouraged to ${growthAction}.`
+  } else {
+    const nextStepTemplates = {
+      '4+': [
+        `Next Steps: ${tokens.name} is encouraged to challenge {reflexive} with open-ended extension questions and multi-step inquiry problems.`,
+        `Next Steps: To foster continued excellence, ${tokens.name} should explore non-routine challenges that connect ${subjectName} to real-world contexts.`
+      ],
+      '4': [
+        `Next Steps: ${tokens.name} is encouraged to continue explaining intermediate steps and justifications thoroughly.`,
+        `Next Steps: ${tokens.name} should continue verifying solutions and exploring creative alternative strategies.`
+      ],
+      '3': [
+        `Next Steps: ${tokens.name} is encouraged to review core procedures and verify calculations independently when working with ${growthTopic}.`,
+        `Next Steps: Utilizing structured checklists will support ${tokens.name} in organizing intermediate steps when tackling complex problems.`
+      ],
+      '2': [
+        `Next Steps: ${tokens.name} is encouraged to use classroom anchor charts, graphic organizers, and vocabulary aids to build confidence with ${growthTopic}.`,
+        `Next Steps: Daily practice with foundational concepts and seeking timely clarification will support ${tokens.possessive} ongoing progress.`
+      ],
+      '1': [
+        `Next Steps: ${tokens.name} is encouraged to use personal glossaries, step-by-step templates, and attend extra help to reinforce core ${subjectName} expectations.`,
+        `Next Steps: Consistent review of lesson notes and active participation in guided review sessions will help ${tokens.name} build required competencies.`
+      ]
+    }
+    const nsList = nextStepTemplates[level.key] || nextStepTemplates['3']
+    sentence3 = fillTokens(nsList[(seed + 2) % nsList.length], tokens)
   }
-
-  const nsList = nextStepTemplates[level.key] || nextStepTemplates['3']
-  const sentence3 = featuredNextStep
-    ? `Next Steps: ${tokens.name} is encouraged to ${featuredNextStep.replace(/^Next Steps:\s*/i, '').trim()}.`
-    : nsList[(seed + 2) % nsList.length]
 
   let fullComment = [sentence1, sentence2, sentence3].join(' ')
 

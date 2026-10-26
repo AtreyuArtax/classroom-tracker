@@ -5,7 +5,7 @@
  */
 
 import { preciseRound } from './math.js'
-import { calculateSBARStudentOverallMastery } from './gradeCalcSBAR.js'
+import { calculateSBARStudentOverallMastery, calculateSBARExpectationMastery } from './gradeCalcSBAR.js'
 
 /**
  * Calculates standard deviation for an array of numbers.
@@ -671,7 +671,46 @@ export async function calculateStudentGrade(studentId, classRecord, { asOf = nul
     const sbarAssessments = (asOf || dateFrom)
       ? assessments.filter(a => (!asOf || a.date <= asOf) && (!dateFrom || a.date >= dateFrom))
       : assessments
-    const sbarMasteryPct = calculateSBARStudentOverallMastery(studentId, classRecord, sbarAssessments, gradeMap)
+    const activeAlgorithm = classRecord.sbarAlgorithm || 'decaying_average'
+    const masteryMap = calculateSBARExpectationMastery(classRecord, sbarAssessments, gradeMap, activeAlgorithm)
+    const sbarMasteryPct = calculateSBARStudentOverallMastery(studentId, classRecord, sbarAssessments, gradeMap, activeAlgorithm, [], masteryMap)
+
+    // Build resolved per-expectation mastery list for downstream consumers (e.g. Report Comments)
+    const allClassExps = [
+      ...(classRecord.expectations || []),
+      ...(classRecord.curriculumExpectations || []),
+      ...((classRecord.gradebookUnits || []).flatMap(u => (u.expectations || []).map(e => ({ ...e, unitName: u.name }))))
+    ]
+    if (classRecord.courseFrameworks) {
+      Object.values(classRecord.courseFrameworks).forEach(fw => {
+        if (fw?.gradebookUnits) {
+          fw.gradebookUnits.forEach(u => {
+            if (u.expectations) allClassExps.push(...u.expectations.map(e => ({ ...e, unitName: u.name })))
+          })
+        }
+      })
+    }
+    const studentExpMap = masteryMap[studentId] || {}
+    const sbarExpectations = Object.entries(studentExpMap)
+      .filter(([, expData]) => expData?.score != null && !isNaN(expData.score) && (expData.weight == null || Number(expData.weight) > 0))
+      .map(([expCode, expData]) => {
+        const expDef = allClassExps.find(e =>
+          String(e.code || '').toLowerCase() === String(expCode).toLowerCase() ||
+          String(e.expectationId || '').toLowerCase() === String(expCode).toLowerCase()
+        )
+        return {
+          code: expDef?.code || expCode,
+          expectationId: expDef?.expectationId || expCode,
+          title: expDef?.title || expDef?.name || '',
+          description: expDef?.description || '',
+          unitName: expDef?.unitName || '',
+          average: expData.score,
+          masteryLevel: expData.badge?.level || null,
+          trend: expData.trend || 'steady',
+          weight: expData.weight ?? 1.0,
+          overrideNote: expData.overrideNote || ''
+        }
+      })
 
     // Check if Weighted Evaluation Components (e.g. 65% Coursework / 25% Exam / 10% Attendance) are enabled
     if (classRecord.sbarWeighting?.enabled) {
@@ -761,6 +800,7 @@ export async function calculateStudentGrade(studentId, classRecord, { asOf = nul
         mostConsistent: null,
         median: null,
         sbarMasteryPct,
+        sbarExpectations,
         sbarBreakdown: {
           enabled: true,
           termWeight,
@@ -790,6 +830,7 @@ export async function calculateStudentGrade(studentId, classRecord, { asOf = nul
       mostConsistent: null,
       median: null,
       sbarMasteryPct,
+      sbarExpectations,
       asOf,
       dateFrom
     }
@@ -834,11 +875,15 @@ export async function calculateStudentGrade(studentId, classRecord, { asOf = nul
     
     if (hasOverride) {
       categoryResults[category.categoryId] = {
+        name: category.name,
+        weight: Number(category.weight || 0),
         percentage: preciseRound(overrideValue),
         isOverridden: true
       }
     } else if (calculatedPercentage !== null && !isNaN(calculatedPercentage) && isFinite(calculatedPercentage)) {
       categoryResults[category.categoryId] = {
+        name: category.name,
+        weight: Number(category.weight || 0),
         percentage: preciseRound(calculatedPercentage),
         isOverridden: false
       }
