@@ -13,13 +13,29 @@
         :key="item.codeKey ?? item.categoryKey"
         :class="['radial-btn', 'radial-btn--' + item.category, getActiveToggleClass(item)]"
         :style="slotPositionStyle(idx, totalSlots)"
-        :aria-label="item.label"
+        :aria-label="getWashroomAlert(item) ? `${item.label} (${getWashroomAlert(item).tooltip})` : item.label"
+        :title="getWashroomAlert(item)?.tooltip"
         @click.stop="onItemTap(item)"
       >
         <div class="radial-btn__icon-circle">
           <component :is="resolveIcon(item.icon)" :size="20" class="radial-btn__icon" />
+          <span 
+            v-if="getWashroomAlert(item)" 
+            class="radial-btn__alert-dot" 
+            aria-hidden="true" 
+          />
         </div>
         <span class="radial-btn__label">{{ item.label }}</span>
+
+        <!-- Hover Tip for button -->
+        <span 
+          v-if="getWashroomAlert(item)" 
+          class="radial-btn__hover-tip" 
+          role="tooltip"
+        >
+          <Footprints :size="11" class="radial-btn__hover-tip-icon" />
+          <span>{{ getWashroomAlert(item).tooltip }}</span>
+        </span>
       </button>
 
       <!-- Permanent 👤 Profile button — first level only -->
@@ -57,7 +73,7 @@
  */
 
 import { computed } from 'vue'
-import { User, X, ChevronLeft } from 'lucide-vue-next'
+import { User, X, ChevronLeft, Footprints } from 'lucide-vue-next'
 import { resolveIcon }  from '../utils/icons.js'
 import { useRadial }    from '../composables/useRadial.js'
 import { useClassroom } from '../composables/useClassroom.js'
@@ -77,7 +93,36 @@ const {
   handleProfileTap,
 } = useRadial()
 
-const { logStandardEvent, logToggleEvent, logAttendanceEvent, behaviorCodes } = useClassroom()
+const { logStandardEvent, logToggleEvent, logAttendanceEvent, behaviorCodes, studentWeeklyStats, thresholds } = useClassroom()
+
+function getWashroomAlert(item) {
+  if (item?.codeKey !== 'w' && item?.type !== 'toggle') return null
+  const studentId = targetStudent.value?.studentId
+  if (!studentId || !thresholds.value) return null
+  const stats = studentWeeklyStats.value?.[studentId]
+  if (!stats) return null
+
+  const trips = stats.washroomTrips || 0
+  const mins = stats.washroomMinutes || 0
+  const tripsLimit = Number(thresholds.value?.washroomTripsPerWeek ?? 4)
+  const weeklyMinsLimit = Number(thresholds.value?.washroomWeeklyMinutesLimit ?? 0)
+
+  const tripSurpassed = tripsLimit > 0 && trips >= tripsLimit
+  const minsSurpassed = weeklyMinsLimit > 0 && mins >= weeklyMinsLimit
+
+  if (!tripSurpassed && !minsSurpassed) return null
+
+  const reasons = []
+  if (tripSurpassed) reasons.push(`${trips} trips (limit ${tripsLimit})`)
+  if (minsSurpassed) reasons.push(`${mins}m out (limit ${weeklyMinsLimit}m)`)
+
+  return {
+    surpassed: true,
+    trips,
+    mins,
+    tooltip: reasons.join(' · ')
+  }
+}
 
 // ─── geometry ─────────────────────────────────────────────────────────────────
 
@@ -184,6 +229,7 @@ function onProfileTap() {
 
 /* ── Sector buttons ──────────────────────────────────────────────── */
 .radial-btn {
+  position:        relative;
   display:         flex;
   flex-direction:  column;
   align-items:     center;
@@ -203,6 +249,7 @@ function onProfileTap() {
 
 .radial-btn:hover {
   transform: translateY(-2px) scale(1.05);
+  z-index: 20;
 }
 
 .radial-btn:active {
@@ -210,6 +257,7 @@ function onProfileTap() {
 }
 
 .radial-btn__icon-circle {
+  position:        relative;
   width:           52px;
   height:          52px;
   border-radius:   50%;
@@ -221,6 +269,69 @@ function onProfileTap() {
   box-shadow:      0 8px 24px rgba(0, 0, 0, 0.28), 0 2px 6px rgba(0, 0, 0, 0.12);
   border:          1px solid rgba(255, 255, 255, 0.6);
   transition:      all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Alert dot directly on Out of Class button */
+.radial-btn__alert-dot {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: #f59e0b;
+  border: 2px solid #ffffff;
+  box-shadow: 0 0 6px rgba(245, 158, 11, 0.6);
+  z-index: 5;
+}
+
+/* Hover tooltip providing current out of class values */
+.radial-btn__hover-tip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+  background: var(--tooltip-bg, #0f172a);
+  color: var(--tooltip-text, #f8fafc);
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 0.65rem;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  z-index: 100;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s ease;
+}
+
+.radial-btn__hover-tip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 4px 4px 0 4px;
+  border-style: solid;
+  border-color: var(--tooltip-bg, #0f172a) transparent transparent transparent;
+}
+
+.radial-btn:hover .radial-btn__hover-tip,
+.radial-btn:focus-visible .radial-btn__hover-tip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+}
+
+.radial-btn__hover-tip-icon {
+  color: #38bdf8;
+  flex-shrink: 0;
 }
 
 /* Hover: Matching the app's primary interactive state */

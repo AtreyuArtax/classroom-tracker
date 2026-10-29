@@ -138,6 +138,29 @@
   --grade-mid-high: #d0e8f5;
   --grade-mid-low: #fff3cd;
   --grade-low: #f8d7da;
+
+  /* ── Desk Tile Attendance & Departure States (Light Mode) ──────────────── */
+  --desk-late-bg:              rgba(254, 243, 199, 0.55);
+  --desk-late-border:          #f59e0b;
+  --desk-late-shadow:          0 2px 8px rgba(245, 158, 11, 0.12);
+  --desk-late-pill-bg:         rgba(254, 243, 199, 0.95);
+  --desk-late-pill-text:       #b45309;
+  --desk-late-pill-border:     rgba(245, 158, 11, 0.35);
+
+  --desk-absent-bg:            rgba(254, 242, 242, 0.65);
+  --desk-absent-border:        #e25c5c;
+  --desk-absent-shadow:        0 2px 6px rgba(226, 92, 92, 0.10);
+  --desk-absent-pill-bg:       rgba(254, 226, 226, 0.95);
+  --desk-absent-pill-text:     #e25c5c;
+  --desk-absent-pill-border:   rgba(226, 92, 92, 0.35);
+
+  --desk-out-bg:               rgba(240, 249, 255, 0.95);
+  --desk-out-border:           #0284c7;
+  --desk-out-shadow:           0 4px 14px rgba(2, 132, 199, 0.16);
+  --desk-out-pill-bg:          #0284c7;
+  --desk-out-pill-text:        #ffffff;
+  --desk-out-pill-shadow:      0 2px 6px rgba(2, 132, 199, 0.35);
+  --desk-out-pill-border:      transparent;
 }
 
 /* ── 2.1 Dark Mode Design Tokens ────────────────────────────────────────── */
@@ -234,6 +257,29 @@
   --grade-mid-high: rgba(10, 132, 255, 0.22);
   --grade-mid-low: rgba(255, 214, 10, 0.22);
   --grade-low: rgba(255, 69, 58, 0.22);
+
+  /* ── Desk Tile Attendance & Departure States (Dark Mode) ───────────────── */
+  --desk-late-bg:              color-mix(in srgb, #f59e0b 18%, var(--surface));
+  --desk-late-border:          #fbbf24;
+  --desk-late-shadow:          0 2px 8px rgba(245, 158, 11, 0.22);
+  --desk-late-pill-bg:         rgba(245, 158, 11, 0.22);
+  --desk-late-pill-text:       #fde68a;
+  --desk-late-pill-border:     rgba(245, 158, 11, 0.4);
+
+  --desk-absent-bg:            color-mix(in srgb, #e25c5c 18%, var(--surface));
+  --desk-absent-border:        #f87171;
+  --desk-absent-shadow:        0 2px 6px rgba(226, 92, 92, 0.20);
+  --desk-absent-pill-bg:       rgba(239, 68, 68, 0.22);
+  --desk-absent-pill-text:     #fca5a5;
+  --desk-absent-pill-border:   rgba(239, 68, 68, 0.4);
+
+  --desk-out-bg:               color-mix(in srgb, #0284c7 22%, var(--surface));
+  --desk-out-border:           #38bdf8;
+  --desk-out-shadow:           0 4px 16px rgba(2, 132, 199, 0.32);
+  --desk-out-pill-bg:          #0284c7;
+  --desk-out-pill-text:        #ffffff;
+  --desk-out-pill-shadow:      0 2px 8px rgba(2, 132, 199, 0.50);
+  --desk-out-pill-border:      rgba(56, 189, 248, 0.4);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -318,6 +364,29 @@
     --grade-mid-high: rgba(10, 132, 255, 0.22);
     --grade-mid-low: rgba(255, 214, 10, 0.22);
     --grade-low: rgba(255, 69, 58, 0.22);
+
+    /* ── Desk Tile Attendance & Departure States (Dark Mode) ───────────────── */
+    --desk-late-bg:              color-mix(in srgb, #f59e0b 18%, var(--surface));
+    --desk-late-border:          #fbbf24;
+    --desk-late-shadow:          0 2px 8px rgba(245, 158, 11, 0.22);
+    --desk-late-pill-bg:         rgba(245, 158, 11, 0.22);
+    --desk-late-pill-text:       #fde68a;
+    --desk-late-pill-border:     rgba(245, 158, 11, 0.4);
+
+    --desk-absent-bg:            color-mix(in srgb, #e25c5c 18%, var(--surface));
+    --desk-absent-border:        #f87171;
+    --desk-absent-shadow:        0 2px 6px rgba(226, 92, 92, 0.20);
+    --desk-absent-pill-bg:       rgba(239, 68, 68, 0.22);
+    --desk-absent-pill-text:     #fca5a5;
+    --desk-absent-pill-border:   rgba(239, 68, 68, 0.4);
+
+    --desk-out-bg:               color-mix(in srgb, #0284c7 22%, var(--surface));
+    --desk-out-border:           #38bdf8;
+    --desk-out-shadow:           0 4px 16px rgba(2, 132, 199, 0.32);
+    --desk-out-pill-bg:          #0284c7;
+    --desk-out-pill-text:        #ffffff;
+    --desk-out-pill-shadow:      0 2px 8px rgba(2, 132, 199, 0.50);
+    --desk-out-pill-border:      rgba(56, 189, 248, 0.4);
   }
 }
 

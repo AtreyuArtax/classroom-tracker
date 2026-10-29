@@ -156,9 +156,10 @@ export function buildFollowUpItems({
     }
   })
 
-  // 3. Academic follow-up for grades < 60%
+  // 3. Academic follow-up for grades below atRiskThreshold (default 60%)
+  const academicCutoff = Number(thresholds?.atRiskThreshold ?? 60)
   Object.entries(classGrades || {}).forEach(([id, data]) => {
-    if (data?.overallGrade != null && data.overallGrade < 60 && students[id]) {
+    if (data?.overallGrade != null && data.overallGrade < academicCutoff && students[id]) {
       const alreadyHigh = items.some(i => i.studentId === id && i.severity === 'high')
       if (!alreadyHigh) {
         push(id, `Grade at ${Math.round(data.overallGrade)}%`, 'high', 100 - data.overallGrade, 'grade')
@@ -239,8 +240,9 @@ export function buildMissingSummary({ studentList = [], assessments = [], gradeM
  * @param {Array}   opts.followUpItems   From buildFollowUpItems
  * @param {Array}   opts.missingSummary  From buildMissingSummary
  * @param {boolean} opts.isSBAR
+ * @param {Array}   opts.gradeBuckets
  */
-export function buildActionItems({ studentList = [], classGrades = {}, followUpItems = [], missingSummary = [], isSBAR = false }) {
+export function buildActionItems({ studentList = [], classGrades = {}, followUpItems = [], missingSummary = [], isSBAR = false, gradeBuckets = [] }) {
   const items = []
   const byId = new Map(studentList.map(s => [String(s.studentId), s]))
   const gradeOf = sId => {
@@ -248,15 +250,22 @@ export function buildActionItems({ studentList = [], classGrades = {}, followUpI
     return g !== undefined && g !== null ? Math.round(g) : null
   }
 
-  // 1. Academic risk (failing < 50% or Level 1 / R)
+  // Derive failing cutoff from 'R' (or 'F') grade bucket if available, else default to 50
+  const rBucket = (gradeBuckets || []).find(b => {
+    const lbl = String(b.label || '').trim().toUpperCase()
+    return lbl === 'R' || lbl === 'F'
+  })
+  const failingCutoff = (rBucket && typeof rBucket.max === 'number') ? (rBucket.max + 1) : 50
+
+  // 1. Academic risk (failing < cutoff or Level 1 / R)
   Object.entries(classGrades).forEach(([sId, gObj]) => {
     const student = byId.get(String(sId))
-    if (!student || gObj?.overallGrade == null || gObj.overallGrade >= 50) return
+    if (!student || gObj?.overallGrade == null || gObj.overallGrade >= failingCutoff) return
     items.push({
       studentId: String(sId),
       name: student.name || `${student.lastName}, ${student.firstName}`,
       grade: Math.round(gObj.overallGrade),
-      reason: isSBAR ? 'Level 1 / Remediation Needed' : 'Failing Grade (<50%)',
+      reason: isSBAR ? 'Level 1 / Remediation Needed' : `Failing Grade (<${failingCutoff}%)`,
       severity: 'danger',
       kinds: ['grade']
     })

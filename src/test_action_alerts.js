@@ -42,6 +42,23 @@ const ev = (studentId, code, timestamp, extra = {}) => ({ studentId, code, times
   assert.deepStrictEqual(s2.kinds, ['grade'])
   assert.strictEqual(s2.reason, 'Grade at 55%')
   assert.deepStrictEqual(s3.kinds, ['washroom'])
+
+  // Custom atRiskThreshold: student at 65% is flagged if threshold is 70, but not if 60
+  const customItems = buildFollowUpItems({
+    students,
+    periodEvents: [],
+    classGrades: { s1: { overallGrade: 65 } },
+    thresholds: { atRiskThreshold: 70 }
+  })
+  assert.strictEqual(customItems.find(i => i.studentId === 's1')?.reason, 'Grade at 65%')
+
+  const defaultItems = buildFollowUpItems({
+    students,
+    periodEvents: [],
+    classGrades: { s1: { overallGrade: 65 } },
+    thresholds: { atRiskThreshold: 60 }
+  })
+  assert.strictEqual(defaultItems.find(i => i.studentId === 's1'), undefined)
 }
 
 // ── buildMissingSummary ──
@@ -92,6 +109,15 @@ const ev = (studentId, code, timestamp, extra = {}) => ({ studentId, code, times
   })
   assert.strictEqual(noRepeat.find(i => i.studentId === 's1').reason, 'Failing Grade (<50%)')
   assert.strictEqual(noRepeat.find(i => i.studentId === 's2').reason, 'Grade at 55%')
+
+  // Custom gradeBuckets where F is 0-59 (top of F bucket is 60)
+  const customBucketItems = buildActionItems({
+    studentList,
+    classGrades: { s1: { overallGrade: 58 } },
+    gradeBuckets: [{ label: 'F', min: 0, max: 59 }, { label: 'D', min: 60, max: 69 }]
+  })
+  assert.strictEqual(customBucketItems.find(i => i.studentId === 's1')?.reason, 'Failing Grade (<60%)')
+  assert.strictEqual(customBucketItems.find(i => i.studentId === 's1')?.severity, 'danger')
 
   const sbar = buildActionItems({ studentList, classGrades: { s1: { overallGrade: 42 } }, isSBAR: true })
   assert.strictEqual(sbar[0].reason, 'Level 1 / Remediation Needed')

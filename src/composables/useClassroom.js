@@ -164,7 +164,7 @@ const thresholds = ref({
     washroomWeeklyMinutesLimit: 20,
     washroomDurationLimit: 11,
     deviceIncidentsPerWeek: 3,
-    atRiskThreshold: 70,
+    atRiskThreshold: 60,
     absenceWindowDays: 15,
     enableWindowTier1: true,
     absenceWindowTier1: 5,

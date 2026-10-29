@@ -2,10 +2,10 @@
   <div class="behavior-settings">
     <!-- Behavior Thresholds Strategy Card -->
     <div class="setup__card" id="sec-app-behavior">
-      <h2 class="setup__card-title">Behavior Strategy Warnings</h2>
+      <h2 class="setup__card-title">Hall Departure &amp; Attendance Limits</h2>
       <p class="setup__hint">
-        Define weekly limits for student washroom trips and mobile devices. 
-        Exceeding these limits will trigger warning flags in room grids and student dossier logs.
+        Define weekly departure thresholds for student washroom visits. 
+        Exceeding these limits will trigger Just-in-Time alert badges in the Radial Menu and flags in student dossiers.
       </p>
       <div class="setup__form-grid behavior-thresholds__grid">
         <label class="setup__label">
@@ -41,30 +41,6 @@
             type="number" 
             min="3"
             max="60"
-            class="setup__input" 
-            @change="saveThresholds" 
-          />
-        </label>
-        <label class="setup__label">
-          <span class="setup__label-text">Device Limit</span>
-          <span class="setup__label-subtext">Incidents / Week</span>
-          <input 
-            v-model.number="editThresholds.deviceIncidentsPerWeek" 
-            type="number" 
-            min="1"
-            max="20"
-            class="setup__input" 
-            @change="saveThresholds" 
-          />
-        </label>
-        <label class="setup__label">
-          <span class="setup__label-text">Academic Warning</span>
-          <span class="setup__label-subtext">At-Risk Mark (%)</span>
-          <input 
-            v-model.number="editThresholds.atRiskThreshold" 
-            type="number" 
-            min="30"
-            max="95"
             class="setup__input" 
             @change="saveThresholds" 
           />
@@ -890,7 +866,7 @@ const editThresholds = reactive({
   washroomWeeklyMinutesLimit: 20,
   washroomDurationLimit: 11,
   deviceIncidentsPerWeek: 3, 
-  atRiskThreshold: 70, 
+  atRiskThreshold: 60, 
   absenceWindowDays: 15,
   enableWindowTier1: true,
   absenceWindowTier1: 5,
@@ -1114,7 +1090,7 @@ onMounted(async () => {
     editThresholds.washroomWeeklyMinutesLimit = current.washroomWeeklyMinutesLimit ?? 20
     editThresholds.washroomDurationLimit = current.washroomDurationLimit ?? 11
     editThresholds.deviceIncidentsPerWeek = current.deviceIncidentsPerWeek
-    editThresholds.atRiskThreshold = current.atRiskThreshold ?? 70
+    editThresholds.atRiskThreshold = current.atRiskThreshold ?? 60
     editThresholds.absenceWindowDays = current.absenceWindowDays ?? 15
     editThresholds.enableWindowTier1 = current.enableWindowTier1 ?? true
     editThresholds.absenceWindowTier1 = current.absenceWindowTier1 ?? 5

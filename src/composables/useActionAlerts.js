@@ -16,7 +16,7 @@ import { ref, shallowRef, computed, unref, watch } from 'vue'
 import { useClassroom } from './useClassroom.js'
 import { getEffectiveClassRecord } from './useElementary.js'
 import { activeSubjectId, eventMutationSignal, gradeMutationSignal } from './useClassroomState.js'
-import { activeClassRecord, assessments as gbAssessments, gradeMap, classGrades as gbClassGrades } from './useGradebook.js'
+import { activeClassRecord, assessments as gbAssessments, gradeMap, classGrades as gbClassGrades, gradeBuckets } from './useGradebook.js'
 import * as classService from '../db/classService.js'
 import * as eventService from '../db/eventService.js'
 import { calculateClassGrades } from '../db/gradebookService.js'
@@ -375,7 +375,8 @@ function itemsFor(classId) {
     classGrades: effectiveGrades,
     followUpItems,
     missingSummary,
-    isSBAR: src.effective?.gradingFramework === 'sbar'
+    isSBAR: src.effective?.gradingFramework === 'sbar',
+    gradeBuckets: gradeBuckets.value || []
   })
 }
 

@@ -313,7 +313,7 @@ export const DEFAULT_THRESHOLDS = {
     washroomWeeklyMinutesLimit: 20,
     deviceIncidentsPerWeek: 3,
     washroomDurationLimit: 11,
-    atRiskThreshold: 70,
+    atRiskThreshold: 60,
     absenceWindowDays: 15,
     enableWindowTier1: true,
     absenceWindowTier1: 5,

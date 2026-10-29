@@ -75,6 +75,7 @@ const KNOWN_TAB_SECTIONS = {
   app: [
     { id: 'sec-teacher-profile', title: 'Teacher Profile' },
     { id: 'sec-app-preferences', title: 'Preferences' },
+    { id: 'sec-seating-display', title: 'Seating Chart Display' },
     { id: 'sec-app-buckets', title: 'Grade Buckets' },
     { id: 'sec-app-behavior', title: 'Behavior Strategy' },
     { id: 'sec-period-times', title: 'Period Start Times' },

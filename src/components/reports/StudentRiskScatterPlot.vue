@@ -322,7 +322,7 @@ const axisXPercent = computed(() => {
 })
 
 const axisYPercent = computed(() => {
-  const markCutoff = Number(thresholds.value.atRiskThreshold ?? 70)
+  const markCutoff = Number(thresholds.value.atRiskThreshold ?? 60)
   return Math.max(6, Math.min(92, Math.round(markCutoff * 0.86 + 6)))
 })
 

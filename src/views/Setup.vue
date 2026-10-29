@@ -68,6 +68,7 @@
         <div class="setup__main-content">
           <TeacherProfileSettings />
           <AppPreferencesSettings />
+          <SeatingDisplaySettings />
           <GradeBucketsSettings />
           <BehaviorSettings />
           <PeriodScheduleSettings />
@@ -158,6 +159,7 @@ const DatabaseMaintenanceSettings = defineAsyncComponent(() => import('../compon
 const BehaviorSettings            = defineAsyncComponent(() => import('../components/setup/BehaviorSettings.vue'))
 const TeacherProfileSettings      = defineAsyncComponent(() => import('../components/setup/TeacherProfileSettings.vue'))
 const AppPreferencesSettings      = defineAsyncComponent(() => import('../components/setup/AppPreferencesSettings.vue'))
+const SeatingDisplaySettings      = defineAsyncComponent(() => import('../components/setup/SeatingDisplaySettings.vue'))
 const PeriodScheduleSettings      = defineAsyncComponent(() => import('../components/setup/PeriodScheduleSettings.vue'))
 const AttendanceStationSettings   = defineAsyncComponent(() => import('../components/setup/AttendanceStationSettings.vue'))
 const ClassManagerPanel           = defineAsyncComponent(() => import('../components/setup/ClassManagerPanel.vue'))

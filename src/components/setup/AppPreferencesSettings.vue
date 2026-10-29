@@ -52,17 +52,6 @@
 
       <div class="setup__pref-row">
         <div class="setup__pref-text">
-          <span class="setup__pref-title">Photos on desk tiles</span>
-          <span class="setup__pref-desc">Show captured student headshots on the Dashboard seating chart.</span>
-        </div>
-        <label class="setup__switch">
-          <input type="checkbox" v-model="showDeskPhotos" />
-          <span class="setup__switch-slider"></span>
-        </label>
-      </div>
-
-      <div class="setup__pref-row">
-        <div class="setup__pref-text">
           <span class="setup__pref-title">Duty Tracker in navigation</span>
           <span class="setup__pref-desc">Show the Duties tab in the main top navigation bar.</span>
         </div>
@@ -84,7 +73,6 @@ import { computed } from 'vue'
 import { GraduationCap, Monitor, Moon, School, Sun } from 'lucide-vue-next'
 import { useClassroom } from '../../composables/useClassroom.js'
 import { useTheme } from '../../composables/useTheme.js'
-import { showDeskPhotos } from '../../composables/useStudentPhotos.js'
 
 const THEME_OPTIONS = [
   { value: 'system', label: 'System', icon: Monitor },

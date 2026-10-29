@@ -567,9 +567,8 @@ import {
 } from '../../composables/useGradebook.js'
 import { academicTerms } from '../../composables/useClassroomState.js'
 import { getEffectiveClassRecord } from '../../composables/useElementary.js'
-import { calculateStudentGrade, getAssessmentPercentage } from '../../utils/gradeCalc.js'
+import { calculateStudentGrade, getAssessmentPercentage, filterAssessmentsForSubject } from '../../utils/gradeCalc.js'
 import { condenseCurriculumExpectation } from '../../utils/curriculumCompetencies.js'
-import { filterAssessmentsForSubject } from '../../db/gradebook/gradeCalc.js'
 
 const CommentLlmSettingsModal = defineAsyncComponent(() => import('./CommentLlmSettingsModal.vue'))
 

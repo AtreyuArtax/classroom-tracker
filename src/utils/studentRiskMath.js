@@ -215,7 +215,7 @@ export function calculateStudentRiskMatrix({
   const totalDays = Math.max(distinctDaysSet.size, maxAbsences, 1)
   const scheduledMins = totalDays * periodDuration
 
-  const academicCutoff = Number(thresholds.atRiskThreshold ?? 70)
+  const academicCutoff = Number(thresholds.atRiskThreshold ?? 60)
 
   // Pass 1: Map students to raw data and individual loss metrics
   const rawList = sidebarStudents.map(student => {

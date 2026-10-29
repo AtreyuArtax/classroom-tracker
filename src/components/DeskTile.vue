@@ -35,43 +35,9 @@
     @contextmenu.prevent="openTileContextMenu($event)"
     @mouseenter="handleAvatarMouseEnter"
   >
-    <!-- Washroom badge — top left corner -->
-    <span
-      v-if="showWashroomDot"
-      class="desk-tile__stats-badge desk-tile__stats-badge--washroom"
-      role="tooltip"
-      :aria-label="washroomDotTooltip"
-    >
-      <Footprints :size="10" class="desk-tile__stats-icon" />
-      <span 
-        class="desk-tile__badge-tooltip desk-tile__badge-tooltip--washroom"
-        :class="{ 'desk-tile__badge-tooltip--right-edge': isRightEdge }"
-      >
-        <Footprints :size="9" class="desk-tile__badge-tooltip-icon" />
-        <span>{{ washroomDotTooltip }}</span>
-      </span>
-    </span>
-
-    <!-- Device badge — top right corner -->
-    <span
-      v-if="showDeviceDot"
-      class="desk-tile__stats-badge desk-tile__stats-badge--device"
-      role="tooltip"
-      :aria-label="deviceDotTooltip"
-    >
-      <Smartphone :size="10" class="desk-tile__stats-icon" />
-      <span 
-        class="desk-tile__badge-tooltip desk-tile__badge-tooltip--device"
-        :class="{ 'desk-tile__badge-tooltip--left-edge': isLeftEdge }"
-      >
-        <Smartphone :size="9" class="desk-tile__badge-tooltip-icon" />
-        <span>{{ deviceDotTooltip }}</span>
-      </span>
-    </span>
-
     <!-- Discreet Accommodations Indicator — bottom left corner -->
     <span
-      v-if="student.hasIEP"
+      v-if="showIepDot && student.hasIEP"
       class="desk-tile__iep-dot"
       :class="{ 'desk-tile__iep-dot--gifted': student.iepType === 'gifted' }"
       role="tooltip"
@@ -212,7 +178,7 @@
  */
 
 import { ref, computed, watch, onUnmounted } from 'vue'
-import { HelpCircle, UserX, Clock, Footprints, Smartphone, DoorOpen, UserMinus } from 'lucide-vue-next'
+import { HelpCircle, UserX, Clock, DoorOpen, UserMinus } from 'lucide-vue-next'
 import { resolveIcon }    from '../utils/icons.js'
 import { toMinutes }      from '../utils/timeUtils.js'
 import { useRadial }    from '../composables/useRadial.js'
@@ -220,6 +186,7 @@ import { useClassroom } from '../composables/useClassroom.js'
 import { useMasterAttendanceTicker } from '../composables/useAttendanceTracker.js'
 import { classGrades, activeSubCohortFilter, isStudentInSubCohort }  from '../composables/useGradebook.js'
 import { useStudentPhotos } from '../composables/useStudentPhotos.js'
+import { showIepDot, showAtRiskDot as showAtRiskPreference } from '../composables/useSeatingDisplay.js'
 import StudentAvatar from './photos/StudentAvatar.vue'
 
 // ─── context menu state ───────────────────────────────────────────────────────
@@ -261,7 +228,7 @@ const emit = defineEmits(['seat-drop']) // emitted to SeatingGrid for drag/drop 
 // ─── composables ──────────────────────────────────────────────────────────────
 
 const { open: openRadial } = useRadial()
-const { behaviorCodes, assignSeat, studentWeeklyStats, thresholds, gridSize } = useClassroom()
+const { behaviorCodes, assignSeat, thresholds, gridSize } = useClassroom()
 const { showDeskPhotos, getPhotoUrl, hasPhoto } = useStudentPhotos()
 
 const currentPhotoUrl = computed(() => {
@@ -353,8 +320,9 @@ const studentOverallGrade = computed(() => {
 })
 
 const showAtRiskDot = computed(() => {
+  if (!showAtRiskPreference.value) return false
   if (studentOverallGrade.value === null || studentOverallGrade.value === undefined || !thresholds.value) return false
-  const limit = Number(thresholds.value.atRiskThreshold ?? 50)
+  const limit = Number(thresholds.value.atRiskThreshold ?? 60)
   return Number(studentOverallGrade.value) < limit
 })
 
@@ -365,73 +333,6 @@ const iepDotTooltip = computed(() => {
 const atRiskDotTooltip = computed(() => {
   if (studentOverallGrade.value === null) return ''
   return `Academic Review: ${Math.round(studentOverallGrade.value)}%`
-})
-
-const washroomStatsData = computed(() => {
-  const stats = studentWeeklyStats.value?.[props.studentId]
-  if (!stats || !thresholds.value) return null
-  const trips = stats.washroomTrips || 0
-  const mins = stats.washroomMinutes || 0
-  const tripsLimit = Number(thresholds.value?.washroomTripsPerWeek ?? 4)
-  const weeklyMinsLimit = Number(thresholds.value?.washroomWeeklyMinutesLimit ?? 0)
-
-  const tripSurpassed = tripsLimit > 0 && trips >= tripsLimit
-  const minsSurpassed = weeklyMinsLimit > 0 && mins >= weeklyMinsLimit
-
-  return {
-    trips,
-    mins,
-    tripsLimit,
-    weeklyMinsLimit,
-    tripSurpassed,
-    minsSurpassed,
-  }
-})
-
-const showWashroomDot = computed(() => {
-  const d = washroomStatsData.value
-  if (!d) return false
-  return d.tripSurpassed || d.minsSurpassed
-})
-
-const washroomDotTooltip = computed(() => {
-  const d = washroomStatsData.value
-  if (!d) return ''
-  const reasons = []
-  if (d.tripSurpassed) {
-    reasons.push(`${d.trips} trips (limit ${d.tripsLimit})`)
-  }
-  if (d.minsSurpassed) {
-    reasons.push(`${d.mins}m out (limit ${d.weeklyMinsLimit}m)`)
-  }
-  if (reasons.length === 0) {
-    return `Washroom: ${d.trips} trips`
-  }
-  return `Washroom: ${reasons.join(' · ')}`
-})
-
-const deviceStatsData = computed(() => {
-  const stats = studentWeeklyStats.value?.[props.studentId]
-  if (!stats || !thresholds.value) return null
-  const incidents = stats.deviceIncidents || 0
-  const limit = Number(thresholds.value?.deviceIncidentsPerWeek ?? 3)
-  return {
-    incidents,
-    limit,
-    surpassed: incidents >= limit,
-  }
-})
-
-const showDeviceDot = computed(() => {
-  const d = deviceStatsData.value
-  if (!d) return false
-  return d.surpassed
-})
-
-const deviceDotTooltip = computed(() => {
-  const d = deviceStatsData.value
-  if (!d) return ''
-  return `Device: ${d.incidents} incident${d.incidents === 1 ? '' : 's'} (limit ${d.limit})`
 })
 
 // ─── radial ───────────────────────────────────────────────────────────────────
@@ -636,57 +537,6 @@ function onDrop(evt) {
   font-weight: 600;
   color:       var(--text-secondary);
   text-align:  center;
-}
-
-/* ── Micro Stats Badges ─────────────────────────────────────────────────── */
-.desk-tile__stats-badge {
-  position: absolute;
-  top: 5px;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-  border: 1px solid rgba(255,255,255,0.8);
-  cursor: help;
-  z-index: 20;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-}
-
-/* Expanded invisible hit target to ensure stable, effortless hovering */
-.desk-tile__stats-badge::before {
-  content: '';
-  position: absolute;
-  inset: -6px;
-  border-radius: 50%;
-  pointer-events: auto;
-}
-
-.desk-tile__stats-badge:hover,
-.desk-tile__stats-badge:focus-within {
-  transform: scale(1.15);
-  box-shadow: 0 3px 8px rgba(0,0,0,0.18);
-  z-index: 100;
-}
-
-.desk-tile__stats-badge svg,
-.desk-tile__stats-icon {
-  pointer-events: none;
-  flex-shrink: 0;
-}
-
-.desk-tile__stats-badge--washroom {
-  left: 5px;
-  background: rgba(224, 242, 254, 0.95);
-  color: #0284c7;
-}
-
-.desk-tile__stats-badge--device {
-  right: 5px;
-  background: rgba(254, 243, 199, 0.95);
-  color: #d97706;
 }
 
 /* ── Student content & photo layout ──────────────────────────────────────── */
@@ -938,9 +788,9 @@ function onDrop(evt) {
 
 /* ── Late state (Warm Amber — In Class but Arrived Late, matches active radial) ── */
 .desk-tile--late {
-  background: rgba(254, 243, 199, 0.55) !important;
-  border:     1.5px solid #f59e0b !important;
-  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.12) !important;
+  background: var(--desk-late-bg, rgba(254, 243, 199, 0.55)) !important;
+  border:     1.5px solid var(--desk-late-border, #f59e0b) !important;
+  box-shadow: var(--desk-late-shadow, 0 2px 8px rgba(245, 158, 11, 0.12)) !important;
 }
 
 .desk-tile--late .desk-tile__content {
@@ -949,17 +799,17 @@ function onDrop(evt) {
 }
 
 .desk-tile__status-info--late {
-  background: rgba(254, 243, 199, 0.95);
-  color:      #b45309;
-  border:     1px solid rgba(245, 158, 11, 0.35);
+  background: var(--desk-late-pill-bg, rgba(254, 243, 199, 0.95));
+  color:      var(--desk-late-pill-text, #b45309);
+  border:     1px solid var(--desk-late-pill-border, rgba(245, 158, 11, 0.35));
   font-weight: 700;
 }
 
 /* ── Absent state (Soft Muted Red — Not in Room Today, matches active radial) ───── */
 .desk-tile--absent {
-  background: rgba(254, 242, 242, 0.65) !important;
-  border:     1.5px solid #e25c5c !important;
-  box-shadow: 0 2px 6px rgba(226, 92, 92, 0.10) !important;
+  background: var(--desk-absent-bg, rgba(254, 242, 242, 0.65)) !important;
+  border:     1.5px solid var(--desk-absent-border, #e25c5c) !important;
+  box-shadow: var(--desk-absent-shadow, 0 2px 6px rgba(226, 92, 92, 0.10)) !important;
 }
 
 .desk-tile--absent .desk-tile__content {
@@ -974,17 +824,17 @@ function onDrop(evt) {
 }
 
 .desk-tile__status-info--absent {
-  background: rgba(254, 226, 226, 0.95);
-  color:      #e25c5c;
-  border:     1px solid rgba(226, 92, 92, 0.35);
+  background: var(--desk-absent-pill-bg, rgba(254, 226, 226, 0.95));
+  color:      var(--desk-absent-pill-text, #e25c5c);
+  border:     1px solid var(--desk-absent-pill-border, rgba(226, 92, 92, 0.35));
   font-weight: 800;
 }
 
 /* ── Out-of-room state (Cool Sky Blue — Temporary In-Transit Pass) ────────── */
 .desk-tile--out {
-  background: rgba(240, 249, 255, 0.95) !important;
-  border:     1.5px solid #0284c7 !important;
-  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.16) !important;
+  background: var(--desk-out-bg, rgba(240, 249, 255, 0.95)) !important;
+  border:     1.5px solid var(--desk-out-border, #0284c7) !important;
+  box-shadow: var(--desk-out-shadow, 0 4px 14px rgba(2, 132, 199, 0.16)) !important;
 }
 
 .desk-tile--out .desk-tile__content {
@@ -993,9 +843,26 @@ function onDrop(evt) {
 }
 
 .desk-tile__status-info--out {
-  background: #0284c7;
-  color:      #ffffff;
-  box-shadow: 0 2px 6px rgba(2, 132, 199, 0.35);
+  background: var(--desk-out-pill-bg, #0284c7);
+  color:      var(--desk-out-pill-text, #ffffff);
+  box-shadow: var(--desk-out-pill-shadow, 0 2px 6px rgba(2, 132, 199, 0.35));
+  border:     var(--desk-out-pill-border, none);
+}
+
+/* Scoped dark-theme fallbacks ensuring crisp contrast under all mounting modes */
+:root[data-theme="dark"] .desk-tile--out {
+  background: color-mix(in srgb, #0284c7 22%, var(--surface, #202326)) !important;
+  border-color: #38bdf8 !important;
+}
+
+:root[data-theme="dark"] .desk-tile--late {
+  background: color-mix(in srgb, #f59e0b 18%, var(--surface, #202326)) !important;
+  border-color: #fbbf24 !important;
+}
+
+:root[data-theme="dark"] .desk-tile--absent {
+  background: color-mix(in srgb, #e25c5c 18%, var(--surface, #202326)) !important;
+  border-color: #f87171 !important;
 }
 
 /* ── Event flash — green for ~700ms ─────────────────────────────────────── */
@@ -1112,8 +979,6 @@ function onDrop(evt) {
 }
 
 /* Hover & focus trigger: Snappy 50ms delay */
-.desk-tile__stats-badge:hover .desk-tile__badge-tooltip,
-.desk-tile__stats-badge:focus-within .desk-tile__badge-tooltip,
 .desk-tile__iep-dot:hover .desk-tile__badge-tooltip,
 .desk-tile__iep-dot:focus-within .desk-tile__badge-tooltip,
 .desk-tile__at-risk-dot:hover .desk-tile__badge-tooltip,
@@ -1124,15 +989,7 @@ function onDrop(evt) {
   transition-delay: 50ms;
 }
 
-/* Device badge tooltip placement (top right, extends leftward) */
-.desk-tile__badge-tooltip--device {
-  left: auto;
-  right: 0;
-}
-.desk-tile__badge-tooltip--device::after {
-  left: auto;
-  right: 6px;
-}
+
 
 /* Bottom dots tooltip placements (bottom edge, opens upward) */
 .desk-tile__badge-tooltip--bottom-left {
@@ -1183,13 +1040,7 @@ function onDrop(evt) {
   min-width: 0;
 }
 
-.desk-tile__badge-tooltip--washroom .desk-tile__badge-tooltip-icon {
-  color: #38bdf8;
-}
 
-.desk-tile__badge-tooltip--device .desk-tile__badge-tooltip-icon {
-  color: #fbbf24;
-}
 
 /* ── Right-Click Desk Context Menu ──────────────────────────────────────────── */
 .desk-context-backdrop {
