@@ -18,7 +18,7 @@ import { getCurrentSchoolYear, getCurrentSemester } from '../utils/dates.js'
 import { cleanExpectationText } from '../utils/textUtils.js'
 
 const DB_NAME = 'classroomTrackerDB'
-const DB_VERSION = 33
+const DB_VERSION = 34
 
 /**
  * Cached promise — set synchronously before the first await so every
@@ -109,11 +109,17 @@ export function getDB() {
         dutyStore.createIndex('by_dutyName', 'dutyName')
       }
 
+      // ── safety_snapshots store (v34) ──────────────────────────────────────
+      if (!db.objectStoreNames.contains('safety_snapshots')) {
+        const snapStore = db.createObjectStore('safety_snapshots', { keyPath: 'id' })
+        snapStore.createIndex('by_timestamp', 'timestamp')
+      }
+
       // ── seed defaults on fresh install (oldVersion === 0) ────────────────
       if (oldVersion === 0) {
         transaction.objectStore('settings').put(
           {
-            schemaVersion: 33,
+            schemaVersion: 34,
             gridSize: { rows: 6, cols: 6 },
             currentYear: getCurrentSchoolYear(),
             currentSemester: getCurrentSemester(),

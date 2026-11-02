@@ -769,7 +769,10 @@ const hasAnySurveyResponses = computed(() => {
       survey.courseConfidence ||
       survey.targetGrade ||
       survey.seatingPreference ||
+      survey.helpSeeking ||
+      survey.helpSeekingLabel ||
       survey.extracurricularsHobbies ||
+      survey.curiosities ||
       survey.confidentialNote ||
       survey.completedAt ||
       s.preferredName ||

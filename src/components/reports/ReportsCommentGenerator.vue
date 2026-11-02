@@ -513,7 +513,9 @@ import {
   extractEvidenceFromGrades,
   deriveStudentProfileFocus,
   isCommentExcludedAssessment,
-  isGenericTitle
+  isGenericTitle,
+  computeStudentVariantSeed,
+  normalizeCommentTemplate
 } from '../../utils/commentGenerator.js'
 import {
   getCourseCompetencies
@@ -1160,11 +1162,9 @@ function getTermVariantSeed(studentId, term = selectedTerm.value) {
   if (termVariantSeeds.value[key] !== undefined) {
     return termVariantSeeds.value[key]
   }
-  // Stagger default seeds across reporting periods:
-  // Progress Report: 0, Midterm: 1, Final: 2
-  if (term === 'Midterm') return 1
-  if (term === 'Final') return 2
-  return 0
+  const rosterIndex = studentList.value.findIndex(s => s.studentId === studentId)
+  const studentObj = rosterIndex !== -1 ? studentList.value[rosterIndex] : { studentId }
+  return computeStudentVariantSeed(studentObj, term, rosterIndex)
 }
 
 const currentVariantSeed = computed(() => {
@@ -1177,7 +1177,7 @@ function rerollPhrasing() {
   const key = getEditKey(stId)
   delete customEdits.value[key]
   const cur = getTermVariantSeed(stId)
-  termVariantSeeds.value[key] = (cur + 1) % 8
+  termVariantSeeds.value[key] = (cur + 1) % 64
   buildCommentForActive()
 }
 
@@ -1382,6 +1382,8 @@ function exportAllCommentsCsv() {
     ['Student ID', 'Last Name', 'First Name', 'Term', 'Grade %', 'Level', 'Characters', 'Report Card Comment']
   ]
 
+  const seenTemplates = new Set()
+
   studentList.value.forEach(st => {
     const mark = getStudentMark(st.studentId)
     const key = getEditKey(st.studentId)
@@ -1389,6 +1391,7 @@ function exportAllCommentsCsv() {
 
     if (savedEdit !== undefined) {
       const level = getAchievementLevel(mark)
+      seenTemplates.add(normalizeCommentTemplate(savedEdit, st))
       rows.push([
         st.studentId || '',
         st.lastName || '',
@@ -1404,35 +1407,46 @@ function exportAllCommentsCsv() {
 
     const gradeObj = getStudentGradeObj(st.studentId)
     const skills = learningSkillsMap.value[st.studentId] || {}
-    const stSeed = getTermVariantSeed(st.studentId)
+    const baseSeed = getTermVariantSeed(st.studentId)
     const stStrength = termStrengthTasks.value[key] || ''
     const stGrowth = termGrowthTasks.value[key] || ''
     const stProfile = termProfileFocuses.value[key] || 'auto'
 
     const stAssessments = getStudentAssessmentsForWindow(st.studentId, currentTermWindow.value)
 
-    const res = generateReportComment({
-      student: st,
-      gradeData: {
-        percentage: mark,
-        level: getAchievementLevel(mark)?.key,
-        assessments: stAssessments,
-        events: props.events,
-        ...gradeObj
-      },
-      learningSkills: skills,
-      options: {
-        mode: 'secondary',
-        charLimit: charLimit.value,
-        pronounMode: pronounMode.value,
-        featuredStrength: stStrength,
-        featuredNextStep: stGrowth,
-        profileFocus: stProfile,
-        variantSeed: stSeed,
-        courseCode: st.courseCode || currentCourseCode.value,
-        reportingPeriod: selectedTerm.value
+    let res = null
+    for (let attempt = 0; attempt < 64; attempt++) {
+      const candidateRes = generateReportComment({
+        student: st,
+        gradeData: {
+          percentage: mark,
+          level: getAchievementLevel(mark)?.key,
+          assessments: stAssessments,
+          events: props.events,
+          ...gradeObj
+        },
+        learningSkills: skills,
+        options: {
+          mode: 'secondary',
+          charLimit: charLimit.value,
+          pronounMode: pronounMode.value,
+          featuredStrength: stStrength,
+          featuredNextStep: stGrowth,
+          profileFocus: stProfile,
+          variantSeed: (baseSeed + attempt) % 64,
+          courseCode: st.courseCode || currentCourseCode.value,
+          reportingPeriod: selectedTerm.value
+        }
+      })
+
+      const norm = normalizeCommentTemplate(candidateRes.text, st)
+      if (!res) res = candidateRes
+      if (!seenTemplates.has(norm)) {
+        res = candidateRes
+        seenTemplates.add(norm)
+        break
       }
-    })
+    }
 
     rows.push([
       st.studentId || '',

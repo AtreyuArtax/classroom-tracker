@@ -331,8 +331,8 @@ function formatFileSize(bytes) {
   return (bytes / (1024 * 1024)).toFixed(1) + ' MB'
 }
 
-function loadSafetySnapshots() {
-  safetySnapshots.value = eventService.getSafetySnapshots()
+async function loadSafetySnapshots() {
+  safetySnapshots.value = await eventService.getSafetySnapshots()
 }
 
 async function loadDirectoryBackups() {
@@ -351,7 +351,7 @@ onMounted(async () => {
   const settings = await settingsService.getSettings()
   isSyncLinked.value = !!(settings.backupDirHandle || settings.backupFileHandle)
   isLegacyFileSync.value = !settings.backupDirHandle && !!settings.backupFileHandle
-  loadSafetySnapshots()
+  await loadSafetySnapshots()
   if (settings.backupDirHandle) {
     await loadDirectoryBackups()
   }
@@ -362,7 +362,7 @@ async function onTakeSafetySnapshot() {
   try {
     const snap = await eventService.createSafetySnapshot('Manual Snapshot by Teacher')
     if (snap) {
-      loadSafetySnapshots()
+      await loadSafetySnapshots()
       snapshotMsg.value = '✅ Safety snapshot created successfully!'
       setTimeout(() => { if (snapshotMsg.value.startsWith('✅')) snapshotMsg.value = '' }, 3000)
     }
@@ -387,7 +387,7 @@ async function onRestoreSafetySnapshot(snapshotId) {
     await settingsService.auditSettingsIntegrity()
     await reloadPhotoCache()
     await init()
-    loadSafetySnapshots()
+    await loadSafetySnapshots()
     await loadDirectoryBackups()
     snapshotMsg.value = `✅ Successfully restored snapshot — ${result.classCount} classes, ${result.eventCount} events!`
     setTimeout(() => { if (snapshotMsg.value.startsWith('✅')) snapshotMsg.value = '' }, 4000)
@@ -398,8 +398,8 @@ async function onRestoreSafetySnapshot(snapshotId) {
 
 async function onDeleteSafetySnapshot(snapshotId) {
   if (!await confirm('Delete this safety recovery snapshot? Once removed, you will not be able to restore from this point in time.', 'Delete Snapshot', { danger: true })) return
-  eventService.deleteSafetySnapshot(snapshotId)
-  loadSafetySnapshots()
+  await eventService.deleteSafetySnapshot(snapshotId)
+  await loadSafetySnapshots()
 }
 
 async function linkBackupDirectory() {
@@ -542,7 +542,7 @@ async function doImport() {
     await settingsService.auditSettingsIntegrity()
     await reloadPhotoCache()
     await init()
-    loadSafetySnapshots()
+    await loadSafetySnapshots()
     await loadDirectoryBackups()
     
     importPreview.value = null

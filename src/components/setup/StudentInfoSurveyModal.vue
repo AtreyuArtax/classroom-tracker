@@ -294,7 +294,7 @@
             <div class="sism-step-body">
               <h5 class="sism-step-title">Download the Word (.docx) Template</h5>
               <p class="sism-step-desc">
-                Contains the 8 standardized questions formatted with multiple choice options (a., b., c.) and text fields.
+                Contains the 10 standardized questions formatted with multiple choice options (a., b., c.) and text fields.
               </p>
               <div class="sism-step-actions">
                 <button
@@ -322,7 +322,7 @@
             <div class="sism-step-body">
               <h5 class="sism-step-title">Quick Import in Microsoft Forms</h5>
               <p class="sism-step-desc">
-                Go to <a href="https://forms.cloud.microsoft/" target="_blank" rel="noopener noreferrer" class="sism-link">forms.cloud.microsoft</a>, click <strong>Quick import</strong> &rarr; <strong>Upload</strong>, and choose the downloaded <code>.docx</code> file. Forms will automatically generate all 8 questions.
+                Go to <a href="https://forms.cloud.microsoft/" target="_blank" rel="noopener noreferrer" class="sism-link">forms.cloud.microsoft</a>, click <strong>Quick import</strong> &rarr; <strong>Upload</strong>, and choose the downloaded <code>.docx</code> file. Forms will automatically generate all 10 questions.
               </p>
             </div>
           </div>
@@ -349,7 +349,7 @@
             class="sism-preview-toggle"
             @click="showQuestionsList = !showQuestionsList"
           >
-            <span>Preview the 8 Survey Questions</span>
+            <span>Preview the 10 Survey Questions</span>
             <component :is="showQuestionsList ? ChevronUp : ChevronDown" :size="16" />
           </button>
           <div v-if="showQuestionsList" class="sism-questions-list">
@@ -378,6 +378,15 @@
     </template>
   </BaseModal>
 </template>
+
+<script>
+import { ref as sharedRef } from 'vue'
+
+// Shared in-memory cache so uploading a survey file once persists across class
+// switches and modal instances without requiring the teacher to re-upload.
+const rawSurveyRows = sharedRef(null)
+const loadedFileName = sharedRef('')
+</script>
 
 <script setup>
 import { ref, computed, watch } from 'vue'
@@ -425,8 +434,6 @@ const copiedText = ref(false)
 const showQuestionsList = ref(false)
 const isSaving = ref(false)
 
-const rawSurveyRows = ref(null)
-const loadedFileName = ref('')
 const lastScannedScope = ref('')
 
 const parsedResult = ref(null)
@@ -588,6 +595,15 @@ function clearLoadedFile() {
   parseError.value = null
 }
 
+watch(
+  () => props.classId || activeClass.value?.classId,
+  (newClassId) => {
+    if (newClassId && selectedScope.value !== 'ALL' && selectedScope.value !== newClassId) {
+      selectedScope.value = newClassId
+    }
+  }
+)
+
 watch([selectedScope, availableRosterStudents], ([newScope]) => {
   if (rawSurveyRows.value && rawSurveyRows.value.length >= 2) {
     if (lastScannedScope.value !== newScope) {
@@ -600,16 +616,17 @@ watch([selectedScope, availableRosterStudents], ([newScope]) => {
 
 watch(() => props.show, (isOpen) => {
   if (isOpen) {
-    if (!selectedScope.value || (selectedScope.value !== 'ALL' && !(filteredClassList.value || []).some(c => c.classId === selectedScope.value))) {
+    const currentTargetClass = props.classId || activeClass.value?.classId
+    if (selectedScope.value !== 'ALL' && currentTargetClass) {
+      selectedScope.value = currentTargetClass
+    } else if (!selectedScope.value || (selectedScope.value !== 'ALL' && !(filteredClassList.value || []).some(c => c.classId === selectedScope.value))) {
       selectedScope.value = resolveDefaultScope()
     }
     if (rawSurveyRows.value && rawSurveyRows.value.length >= 2) {
-      if (lastScannedScope.value !== selectedScope.value) {
-        reScanRoster()
-      }
+      reScanRoster()
     }
   }
-})
+}, { immediate: true })
 
 async function handleFile(file) {
   parseError.value = null

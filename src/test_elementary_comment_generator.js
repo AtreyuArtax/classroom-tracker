@@ -12,7 +12,9 @@ import {
   generateElementaryHistoryComment,
   generateElementaryGeographyComment,
   generateElementarySubjectComment,
-  generateLearningSkillsComment
+  generateLearningSkillsComment,
+  computeStudentVariantSeed,
+  normalizeCommentTemplate
 } from './utils/elementaryCommentGenerator.js'
 import { getScdsbCharacterLimit } from './data/comments/scdsbCharacterLimits.js'
 
@@ -431,6 +433,46 @@ assert(g4MathRes.text.includes('multiplying two-digit whole numbers'), 'Accurate
 assert(g4MathRes.text.includes('Next Steps: Sophia is encouraged to add and subtract fractions'), 'Accurately includes Grade 4 fractions next step')
 console.log('✓ Multi-grade (Grade 7 & Grade 4) generates authentic comments from their own expectations')
 
+// 15. Multi-Student Uniqueness (Avoid same comment for multiple students)
+console.log('\nTest Group 15: Multi-Student Uniqueness Across Identical Profiles')
+const elemRoster = [
+  { studentId: 'el-1', firstName: 'Ava', pronouns: 'she/her', gradeLevel: 8 },
+  { studentId: 'el-2', firstName: 'Ben', pronouns: 'he/him', gradeLevel: 8 },
+  { studentId: 'el-3', firstName: 'Chloe', pronouns: 'she/her', gradeLevel: 8 },
+  { studentId: 'el-4', firstName: 'Diego', pronouns: 'he/him', gradeLevel: 8 },
+  { studentId: 'el-5', firstName: 'Elena', pronouns: 'she/her', gradeLevel: 8 },
+  { studentId: 'el-6', firstName: 'Finn', pronouns: 'he/him', gradeLevel: 8 }
+]
+const elemSubjectTemplates = new Set()
+const elemLsTemplates = new Set()
+elemRoster.forEach((st, idx) => {
+  const subjSeed = computeStudentVariantSeed(st, 'term1__science', idx)
+  const subjRes = generateElementaryScienceComment({
+    student: st,
+    gradeData: { percentage: 78 },
+    options: { strandCode: 'B', variantSeed: subjSeed, charLimit: 1050 }
+  })
+  elemSubjectTemplates.add(normalizeCommentTemplate(subjRes.text, st))
+
+  const lsSeed = computeStudentVariantSeed(st, 'term1__learning_skills', idx)
+  const lsRes = generateLearningSkillsComment({
+    student: st,
+    skillsRatings: {
+      responsibility: 'G',
+      organization: 'G',
+      independentWork: 'G',
+      collaboration: 'G',
+      initiative: 'G',
+      selfRegulation: 'G'
+    },
+    options: { variantSeed: lsSeed, charLimit: 2600 }
+  })
+  elemLsTemplates.add(normalizeCommentTemplate(lsRes.text, st))
+})
+assert(elemSubjectTemplates.size >= 5, `Expected at least 5 distinct Science comment templates across 6 identical students, got ${elemSubjectTemplates.size}`)
+assert.strictEqual(elemLsTemplates.size, elemRoster.length, `Expected all ${elemRoster.length} identical Learning Skills students to receive unique templates, got ${elemLsTemplates.size}`)
+console.log('✓ Elementary Subject and Learning Skills generators produce distinct comments across students')
+
 console.log('\n===============================================')
-console.log('ALL 14 ELEMENTARY COMMENT GENERATOR SUITES PASSED!')
+console.log('ALL 15 ELEMENTARY COMMENT GENERATOR SUITES PASSED!')
 console.log('===============================================')

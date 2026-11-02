@@ -8,9 +8,10 @@
     <div class="siem-container">
       <div class="siem-grid">
         <!-- 1. Preferred Name -->
-        <div class="form-group">
-          <label class="siem-label">Preferred Name / Nickname</label>
+        <div class="form-group siem-full">
+          <label for="siem-preferred-name" class="siem-label">Preferred Name / Nickname</label>
           <input
+            id="siem-preferred-name"
             type="text"
             v-model="form.preferredName"
             placeholder="e.g. Alex (if different from roster name)"
@@ -18,33 +19,57 @@
           />
         </div>
 
-        <!-- 2. Pronouns -->
-        <div class="form-group">
-          <label class="siem-label">Pronouns</label>
-          <select v-model="form.pronouns" class="siem-select">
-            <option value="">-- Select or type below --</option>
-            <option value="He / Him">He / Him</option>
-            <option value="She / Her">She / Her</option>
-            <option value="They / Them">They / Them</option>
-            <option value="Prefer to share privately">Prefer to share privately</option>
-            <option value="Other">Other</option>
-          </select>
+        <!-- 2. Pronouns (Multiple Select) -->
+        <div class="form-group siem-full">
+          <label class="siem-label">
+            <span>Pronouns</span>
+            <span class="siem-hint">Select all that apply</span>
+          </label>
+          <div class="siem-pill-group" role="group" aria-label="Pronouns">
+            <label
+              v-for="opt in standardPronounOptions"
+              :key="opt"
+              class="siem-check-pill"
+              :class="{ 'siem-check-pill--active': selectedPronouns.includes(opt) }"
+            >
+              <input
+                type="checkbox"
+                class="siem-check-input"
+                :checked="selectedPronouns.includes(opt)"
+                @change="togglePronoun(opt)"
+              />
+              <span>{{ opt }}</span>
+            </label>
+            <label
+              class="siem-check-pill"
+              :class="{ 'siem-check-pill--active': hasOtherPronoun }"
+            >
+              <input
+                type="checkbox"
+                class="siem-check-input"
+                v-model="hasOtherPronoun"
+              />
+              <span>Other</span>
+            </label>
+          </div>
           <input
-            v-if="form.pronouns === 'Other'"
+            v-if="hasOtherPronoun"
+            id="siem-custom-pronouns"
             type="text"
             v-model="customPronouns"
-            placeholder="Specify pronouns..."
+            aria-label="Specify custom pronouns"
+            placeholder="Specify custom pronouns..."
             class="siem-input siem-input--sub"
           />
         </div>
 
         <!-- 3. Parent Communication Boundary -->
         <div class="form-group siem-full">
-          <label class="siem-label">
+          <label for="siem-parent-comms" class="siem-label">
             <span>Parent / Home Communication Boundary</span>
             <span class="siem-hint">Protects student safety when contacting home</span>
           </label>
-          <select v-model="form.parentCommunication" class="siem-select">
+          <select id="siem-parent-comms" v-model="form.parentCommunication" class="siem-select">
             <option value="">-- No preference recorded --</option>
             <option value="Yes, in class and when contacting home">Yes, in class and when contacting home</option>
             <option value="Only in the classroom (Please use my official roster name/pronouns when contacting home)">
@@ -56,24 +81,39 @@
           </select>
         </div>
 
-        <!-- 4. Seating Preference -->
+        <!-- 4. Seating Preference (Single Select) -->
         <div class="form-group">
-          <label class="siem-label">Seating &amp; Environment Needs</label>
-          <select v-model="form.seatingPreference" class="siem-select">
+          <label for="siem-seating" class="siem-label">Seating Location Need</label>
+          <select id="siem-seating" v-model="form.seatingPreference" class="siem-select">
             <option value="">-- Select preference --</option>
-            <option value="Front near the board / screen">Front near the board / screen</option>
-            <option value="Middle of the room">Middle of the room</option>
-            <option value="Near a window / natural light">Near a window / natural light</option>
-            <option value="Away from high-traffic doors">Away from high-traffic doors</option>
-            <option value="In a quiet corner">In a quiet corner</option>
-            <option value="No preference">No preference</option>
+            <option
+              v-if="form.seatingPreference && !standardSeatingOptions.includes(form.seatingPreference)"
+              :value="form.seatingPreference"
+            >
+              {{ form.seatingPreference }}
+            </option>
+            <option value="Near the front (easier to see the board, hear clearly, and stay locked in)">
+              Near the front (Board / audio focus)
+            </option>
+            <option value="Middle of the room">
+              Middle of the room
+            </option>
+            <option value="Towards the back or outer edge (I focus better when I'm not surrounded on all sides)">
+              Towards the back or outer edge
+            </option>
+            <option value="Away from the door / high-traffic walkways (I get easily distracted by movement)">
+              Away from the door / high-traffic walkways
+            </option>
+            <option value="No preference — I can focus well anywhere">
+              No preference — Focuses well anywhere
+            </option>
           </select>
         </div>
 
         <!-- 5. Target Grade / Goal -->
         <div class="form-group">
-          <label class="siem-label">Target Grade / Course Goal</label>
-          <select v-model="form.targetGrade" class="siem-select">
+          <label for="siem-target-grade" class="siem-label">Target Grade / Course Goal</label>
+          <select id="siem-target-grade" v-model="form.targetGrade" class="siem-select">
             <option value="">-- Select goal --</option>
             <option value="90% – 100% (Level 4+ / Aiming for top marks)">90% – 100% (Level 4+ / Top Marks)</option>
             <option value="80% – 89% (Level 4 / Strong mastery)">80% – 89% (Level 4 / Strong Mastery)</option>
@@ -88,7 +128,7 @@
         <div class="form-group siem-full">
           <label class="siem-label">Course Confidence (1 to 5)</label>
           <div class="siem-meter-row">
-            <div class="siem-meter-selector">
+            <div class="siem-meter-selector" role="group" aria-label="Course confidence rating from 1 to 5">
               <button
                 v-for="lvl in [1, 2, 3, 4, 5]"
                 :key="lvl"
@@ -108,10 +148,34 @@
           </div>
         </div>
 
-        <!-- 7. Extracurriculars & Hobbies -->
+        <!-- 7. Help-Seeking Behavior (When Stuck) -->
         <div class="form-group siem-full">
-          <label class="siem-label">Sports, School Clubs, Arts &amp; Hobbies</label>
+          <label for="siem-help-seeking" class="siem-label">
+            <span>When Stuck on a Task in Class</span>
+            <span class="siem-hint">In-class help-seeking habit</span>
+          </label>
+          <select id="siem-help-seeking" v-model="form.helpSeekingLabel" class="siem-select">
+            <option value="">-- No response recorded --</option>
+            <option value="I raise my hand or ask the teacher right away">
+              I raise my hand or ask the teacher right away
+            </option>
+            <option value="I re-read the notes, examples, or instructions to try to figure it out myself">
+              I re-read the notes, examples, or instructions to try to figure it out myself
+            </option>
+            <option value="I ask a classmate sitting near me">
+              I ask a classmate sitting near me
+            </option>
+            <option value="I tend to wait and hope it gets explained later / I hesitate to ask out loud">
+              I tend to wait and hope it gets explained later / I hesitate to ask out loud
+            </option>
+          </select>
+        </div>
+
+        <!-- 8. Extracurriculars & Hobbies -->
+        <div class="form-group siem-full">
+          <label for="siem-hobbies" class="siem-label">Sports, School Clubs, Arts &amp; Hobbies</label>
           <textarea
+            id="siem-hobbies"
             v-model="form.extracurricularsHobbies"
             rows="2"
             placeholder="e.g. Varsity Basketball, Robotics club, 3D printing, Guitar..."
@@ -119,13 +183,29 @@
           ></textarea>
         </div>
 
-        <!-- 8. Confidential Note for Teacher -->
+        <!-- 9. Curiosities & Real-World Topics -->
         <div class="form-group siem-full">
-          <label class="siem-label">
+          <label for="siem-curiosities" class="siem-label">
+            <span>Real-World Topics, Fields &amp; Technologies of Interest</span>
+            <span class="siem-hint">Authentic contexts across subjects</span>
+          </label>
+          <textarea
+            id="siem-curiosities"
+            v-model="form.curiosities"
+            rows="2"
+            placeholder="e.g. Athletics/biomechanics, gaming/coding, medicine/health, mechanics/cars, climate/energy..."
+            class="siem-textarea"
+          ></textarea>
+        </div>
+
+        <!-- 10. Confidential Note for Teacher -->
+        <div class="form-group siem-full">
+          <label for="siem-confidential-note" class="siem-label">
             <span>Confidential Note to Teacher</span>
             <span class="siem-hint">Part-time jobs, anxiety triggers, personal context</span>
           </label>
           <textarea
+            id="siem-confidential-note"
             v-model="form.confidentialNote"
             rows="2"
             placeholder="e.g. Works evening shifts on Wednesdays, prefers quiet test space..."
@@ -157,6 +237,7 @@
 import { ref, watch } from 'vue'
 import BaseModal from '../BaseModal.vue'
 import { useClassroom } from '../../composables/useClassroom.js'
+import { normalizeHelpSeeking } from '../../utils/studentInfoCsvParser.js'
 
 const props = defineProps({
   show: { type: Boolean, default: false },
@@ -168,6 +249,23 @@ const emit = defineEmits(['close', 'saved'])
 const { updateStudentIntakeSurvey } = useClassroom()
 const isSaving = ref(false)
 const customPronouns = ref('')
+const hasOtherPronoun = ref(false)
+const selectedPronouns = ref([])
+
+const standardPronounOptions = [
+  'He / Him',
+  'She / Her',
+  'They / Them',
+  'Prefer to share privately'
+]
+
+const standardSeatingOptions = [
+  'Near the front (easier to see the board, hear clearly, and stay locked in)',
+  'Middle of the room',
+  "Towards the back or outer edge (I focus better when I'm not surrounded on all sides)",
+  'Away from the door / high-traffic walkways (I get easily distracted by movement)',
+  'No preference — I can focus well anywhere'
+]
 
 const form = ref({
   preferredName: '',
@@ -176,16 +274,42 @@ const form = ref({
   seatingPreference: '',
   targetGrade: '',
   courseConfidence: null,
+  helpSeekingLabel: '',
   extracurricularsHobbies: '',
+  curiosities: '',
   confidentialNote: ''
 })
+
+function togglePronoun(opt) {
+  const idx = selectedPronouns.value.indexOf(opt)
+  if (idx >= 0) {
+    selectedPronouns.value.splice(idx, 1)
+  } else {
+    selectedPronouns.value.push(opt)
+  }
+}
 
 function initForm() {
   const existing = props.student?.intakeSurvey || {}
   const rawPronouns = existing.pronouns !== undefined ? existing.pronouns : (props.student?.pronouns || '')
   
-  const standardPronouns = ['He / Him', 'She / Her', 'They / Them', 'Prefer to share privately', '']
-  const isOther = rawPronouns && !standardPronouns.includes(rawPronouns)
+  const pronounParts = String(rawPronouns)
+    .split(/[,;]/)
+    .map(p => p.trim())
+    .filter(Boolean)
+
+  const matchedStandardPronouns = []
+  const customParts = []
+  for (const part of pronounParts) {
+    if (standardPronounOptions.includes(part)) {
+      matchedStandardPronouns.push(part)
+    } else {
+      customParts.push(part)
+    }
+  }
+  selectedPronouns.value = matchedStandardPronouns
+  hasOtherPronoun.value = customParts.length > 0
+  customPronouns.value = customParts.join(', ')
 
   const resolvedPrefName = existing.preferredName !== undefined 
     ? existing.preferredName 
@@ -193,15 +317,16 @@ function initForm() {
 
   form.value = {
     preferredName: resolvedPrefName,
-    pronouns: isOther ? 'Other' : rawPronouns,
+    pronouns: rawPronouns,
     parentCommunication: existing.parentCommunication || '',
     seatingPreference: existing.seatingPreference || '',
     targetGrade: existing.targetGrade || '',
     courseConfidence: existing.courseConfidence || null,
+    helpSeekingLabel: existing.helpSeekingLabel || '',
     extracurricularsHobbies: existing.extracurricularsHobbies || '',
+    curiosities: existing.curiosities || '',
     confidentialNote: existing.confidentialNote || ''
   }
-  customPronouns.value = isOther ? rawPronouns : ''
 }
 
 watch(() => props.show, (isOpen) => {
@@ -222,13 +347,21 @@ async function saveSurvey() {
   if (!props.student?.studentId) return
   isSaving.value = true
   try {
-    const finalPronouns = form.value.pronouns === 'Other' ? customPronouns.value.trim() : form.value.pronouns
+    const pronounList = [...selectedPronouns.value]
+    if (hasOtherPronoun.value && customPronouns.value.trim()) {
+      pronounList.push(customPronouns.value.trim())
+    }
+    const finalPronouns = pronounList.join(', ')
     const trimmedPreferredName = form.value.preferredName ? form.value.preferredName.trim() : ''
+    const helpObj = normalizeHelpSeeking(form.value.helpSeekingLabel)
 
     const payload = {
       ...form.value,
       preferredName: trimmedPreferredName,
       pronouns: finalPronouns,
+      helpSeeking: helpObj.code,
+      helpSeekingLabel: helpObj.label,
+      isSilentStruggler: helpObj.isSilentStruggler,
       completedAt: props.student?.intakeSurvey?.completedAt || new Date().toISOString()
     }
 
@@ -295,10 +428,11 @@ async function saveSurvey() {
   transition: border-color 0.15s ease;
 }
 
-.siem-input:focus,
-.siem-select:focus,
-.siem-textarea:focus {
-  outline: none;
+.siem-input:focus-visible,
+.siem-select:focus-visible,
+.siem-textarea:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 1px;
   border-color: var(--primary);
 }
 
@@ -309,6 +443,52 @@ async function saveSurvey() {
 .siem-textarea {
   resize: vertical;
   min-height: 54px;
+}
+
+/* Multi-select Checkbox Pills */
+.siem-pill-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.siem-check-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 11px;
+  border-radius: var(--radius-sm, 8px);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.15s ease;
+}
+
+.siem-check-pill:hover:not(.siem-check-pill--disabled) {
+  border-color: var(--primary);
+}
+
+.siem-check-pill--active {
+  background: rgba(59, 130, 246, 0.12);
+  border-color: var(--primary);
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.siem-check-pill--disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.siem-check-input {
+  margin: 0;
+  accent-color: var(--primary);
+  cursor: inherit;
 }
 
 /* Stars Rating */

@@ -177,6 +177,13 @@
                 <span class="intake-conf-desc">{{ survey.courseConfidenceLabel || (survey.courseConfidence ? `${survey.courseConfidence}/5` : 'Not rated') }}</span>
               </div>
             </div>
+
+            <div v-if="helpSeekingDisplay" class="intake-item">
+              <span class="intake-item__label">When Stuck</span>
+              <span class="intake-item__value">
+                {{ helpSeekingDisplay }}
+              </span>
+            </div>
           </div>
         </div>
 
@@ -184,6 +191,11 @@
         <div v-if="survey.extracurricularsHobbies" class="intake-item intake-item--full">
           <span class="intake-item__label">Sports, Clubs, Arts &amp; Hobbies</span>
           <p class="intake-text-block">{{ survey.extracurricularsHobbies }}</p>
+        </div>
+
+        <div v-if="survey.curiosities" class="intake-item intake-item--full">
+          <span class="intake-item__label">Curiosities &amp; Real-World Interests</span>
+          <p class="intake-text-block">{{ survey.curiosities }}</p>
         </div>
 
         <!-- Confidential Teacher Note -->
@@ -306,6 +318,20 @@ const isPreferredNameDifferent = computed(() => {
   return preferredName.value.trim().toLowerCase() !== rosterFirst
 })
 
+const helpSeekingLabels = {
+  ask_teacher: 'Raises hand / asks teacher right away',
+  reread_notes: 'Re-reads notes or examples first',
+  ask_classmate: 'Asks a classmate sitting nearby',
+  hesitate_wait: 'Waits or hesitates to ask out loud'
+}
+
+const helpSeekingDisplay = computed(() => {
+  const s = survey.value
+  if (s?.helpSeekingLabel) return s.helpSeekingLabel
+  if (s?.helpSeeking && helpSeekingLabels[s.helpSeeking]) return helpSeekingLabels[s.helpSeeking]
+  return ''
+})
+
 const hasSurveyData = computed(() => {
   const s = survey.value
   return Boolean(
@@ -314,7 +340,10 @@ const hasSurveyData = computed(() => {
     s.seatingPreference ||
     s.targetGrade ||
     s.courseConfidence ||
+    s.helpSeeking ||
+    s.helpSeekingLabel ||
     s.extracurricularsHobbies ||
+    s.curiosities ||
     s.confidentialNote
   )
 })
@@ -337,15 +366,24 @@ function formatShortGoal(val) {
   return val.slice(0, 12)
 }
 
+function formatSingleShortSeat(part) {
+  if (/front/i.test(part)) return 'Front'
+  if (/middle/i.test(part)) return 'Middle'
+  if (/back|outer\s*edge|edge/i.test(part)) return 'Back / Edge'
+  if (/door|walkway|traffic/i.test(part)) return 'Away Doors'
+  if (/window/i.test(part)) return 'Window'
+  if (/quiet|corner/i.test(part)) return 'Corner'
+  if (/no\s*preference|anywhere/i.test(part)) return 'No Pref'
+  return 'Desk'
+}
+
 function formatShortSeat(val) {
   if (!val) return ''
-  if (/front/i.test(val)) return 'Front'
-  if (/middle/i.test(val)) return 'Middle'
-  if (/window/i.test(val)) return 'Window'
-  if (/back/i.test(val)) return 'Back'
-  if (/quiet|corner/i.test(val)) return 'Corner'
-  if (/door/i.test(val)) return 'Away Doors'
-  return 'Desk'
+  const parts = String(val).split(/[,;]/).map(p => p.trim()).filter(Boolean)
+  if (parts.length > 1) {
+    return parts.slice(0, 2).map(formatSingleShortSeat).join(' + ')
+  }
+  return formatSingleShortSeat(val)
 }
 
 function onSurveySaved(newSurvey) {

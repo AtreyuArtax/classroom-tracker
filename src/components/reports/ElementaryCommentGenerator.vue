@@ -532,7 +532,9 @@ import {
   generateElementaryScienceComment,
   generateElementarySubjectComment,
   generateLearningSkillsComment,
-  formatSubjectNameForComment
+  formatSubjectNameForComment,
+  computeStudentVariantSeed,
+  normalizeCommentTemplate
 } from '../../utils/elementaryCommentGenerator.js'
 import { getAchievementLevel } from '../../utils/commentGenerator.js'
 import {
@@ -1206,6 +1208,16 @@ const previousTermComment = computed(() => {
 })
 
 // ── Main Comment Assembly ────────────────────────────────────────────────────
+function getStudentVariantSeed(studentId, tab = activeTab.value, term = selectedTerm.value) {
+  const sKey = getSeedKey(studentId, tab, term)
+  if (variantSeeds.value[sKey] !== undefined) {
+    return variantSeeds.value[sKey]
+  }
+  const rosterIndex = (studentList.value || []).findIndex(s => s.studentId === studentId)
+  const studentObj = rosterIndex >= 0 ? studentList.value[rosterIndex] : { studentId }
+  return computeStudentVariantSeed(studentObj, `${term}__${tab}`, rosterIndex >= 0 ? rosterIndex : undefined)
+}
+
 function buildCommentForActive() {
   if (!activeStudent.value) {
     currentCommentText.value = ''
@@ -1218,7 +1230,7 @@ function buildCommentForActive() {
     return
   }
 
-  const seed = variantSeeds.value[getSeedKey(activeStudent.value.studentId)] || 0
+  const seed = getStudentVariantSeed(activeStudent.value.studentId)
 
   if (activeTab.value === 'learning_skills') {
     const ratings = getStudentSkillsObj(activeStudent.value.studentId)
@@ -1290,7 +1302,8 @@ function resetToGenerated() {
 function rerollPhrasing() {
   if (!activeStudent.value) return
   const sKey = getSeedKey(activeStudent.value.studentId)
-  variantSeeds.value[sKey] = (variantSeeds.value[sKey] || 0) + 1
+  const cur = getStudentVariantSeed(activeStudent.value.studentId)
+  variantSeeds.value[sKey] = (cur + 1) % 64
   const key = getEditKey(activeStudent.value.studentId)
   delete customEdits.value[key]
   buildCommentForActive()
@@ -1383,28 +1396,31 @@ function exportAllCommentsCsv() {
     ['Student ID', 'Last Name', 'First Name', 'Term', 'Area / Subject', 'Characters', 'Comment']
   ]
 
+  const seenTemplates = new Set()
+
   studentList.value.forEach(st => {
     const key = getEditKey(st.studentId)
     let comment = customEdits.value[key]
     if (!comment) {
-      const seed = variantSeeds.value[getSeedKey(st.studentId)] || 0
-      if (activeTab.value === 'learning_skills') {
-        const ratings = getStudentSkillsObj(st.studentId)
-        comment = generateLearningSkillsComment({
-          student: st,
-          skillsRatings: ratings,
-          options: {
-            format: lsFormat.value,
-            variantSeed: seed,
-            charLimit: activeCharLimit.value,
-            pronounMode: pronounMode.value
-          }
-        }).text
-      } else {
+      const baseSeed = getStudentVariantSeed(st.studentId)
+      const generateWithSeed = (seed) => {
+        if (activeTab.value === 'learning_skills') {
+          const ratings = getStudentSkillsObj(st.studentId)
+          return generateLearningSkillsComment({
+            student: st,
+            skillsRatings: ratings,
+            options: {
+              format: lsFormat.value,
+              variantSeed: seed,
+              charLimit: activeCharLimit.value,
+              pronounMode: pronounMode.value
+            }
+          }).text
+        }
         const stGradeObj = getStudentGradeObj(st.studentId, activeTab.value, selectedTerm.value)
         const stMark = stGradeObj?.displayOverallGrade ?? stGradeObj?.overallGrade ?? 75
         const stExps = stGradeObj?.sbarExpectations?.length ? stGradeObj.sbarExpectations : subjectSbarExpectations.value
-        comment = generateElementarySubjectComment({
+        return generateElementarySubjectComment({
           student: st,
           subject: activeSubjectObj.value || { name: 'Subject' },
           gradeData: {
@@ -1423,6 +1439,21 @@ function exportAllCommentsCsv() {
           }
         }).text
       }
+
+      comment = generateWithSeed(baseSeed)
+      let templateSig = normalizeCommentTemplate(comment, st)
+      let retry = 1
+      while (seenTemplates.has(templateSig) && retry < 64) {
+        const candidate = generateWithSeed((baseSeed + retry) % 64)
+        const candidateSig = normalizeCommentTemplate(candidate, st)
+        comment = candidate
+        templateSig = candidateSig
+        if (!seenTemplates.has(templateSig)) break
+        retry++
+      }
+      seenTemplates.add(templateSig)
+    } else {
+      seenTemplates.add(normalizeCommentTemplate(comment, st))
     }
 
     rows.push([

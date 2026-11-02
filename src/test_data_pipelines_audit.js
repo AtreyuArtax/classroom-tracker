@@ -422,6 +422,43 @@ test('Trailing blank rows in survey CSV do not produce phantom unmatched rows', 
   assert.strictEqual(result.unmatchedRows.length, 0, 'Blank rows must not appear as unmatched rows')
 })
 
+test('Parses 10-question survey fields including help-seeking, curiosities, and multi-select options', () => {
+  const roster = [
+    { studentId: 'st_20', firstName: 'Maya', lastName: 'Lin', studentEmail: 'maya@school.ca' }
+  ]
+
+  const surveyRows = [
+    [
+      'Email',
+      'Name',
+      'What pronouns do you want me to use?',
+      'When I set up the seating chart, what location helps you focus best?',
+      "When you get stuck on a task or don't understand something in class, what do you usually do first?",
+      'What sports, school clubs, creative arts, or hobbies do you enjoy inside or outside of school?',
+      'What real-world topics, fields, or technologies are you curious about right now?'
+    ],
+    [
+      'maya@school.ca',
+      'Maya Lin',
+      'b. She / Her; c. They / Them;',
+      'a. Near the front (easier to see the board, hear clearly, and stay locked in)',
+      'd. I tend to wait and hope it gets explained later / I hesitate to ask out loud',
+      'Varsity Track, Digital Illustration',
+      'Biomechanics, Sports Medicine'
+    ]
+  ]
+
+  const result = parseStudentInfoRows(surveyRows, roster)
+  assert.strictEqual(result.matchedRecords.length, 1)
+  const data = result.matchedRecords[0].surveyData
+  assert.strictEqual(data.pronouns, 'She / Her, They / Them')
+  assert.strictEqual(data.seatingPreference, 'Near the front (easier to see the board, hear clearly, and stay locked in)')
+  assert.strictEqual(data.helpSeeking, 'hesitate_wait')
+  assert.strictEqual(data.isSilentStruggler, true)
+  assert.strictEqual(data.extracurricularsHobbies, 'Varsity Track, Digital Illustration')
+  assert.strictEqual(data.curiosities, 'Biomechanics, Sports Medicine')
+})
+
 // =============================================================================
 // TEST GROUP 5: Full Database Backup & Restore Roundtrip Fidelity
 // =============================================================================

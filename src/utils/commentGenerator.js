@@ -1432,6 +1432,84 @@ export function hasVerbClash(s1, s2) {
   return false
 }
 
+/**
+ * Computes a deterministic, well-dispersed variant seed (0..63) for a student so that
+ * multiple students in the same class with similar grades do not receive identical phrasing.
+ *
+ * @param {Object} [student={}]
+ * @param {string} [contextKey='']   Reporting period and/or subject key (e.g. 'Midterm', 'Term 1__subj_math')
+ * @param {number} [rosterIndex=-1]  Optional 0-based index of student in class roster
+ * @returns {number}
+ */
+export function computeStudentVariantSeed(student = {}, contextKey = '', rosterIndex = -1) {
+  let contextOffset = 0
+  const cleanCtx = String(contextKey || '').trim()
+  if (cleanCtx === 'Midterm' || cleanCtx === 'Term 1') {
+    contextOffset = 1
+  } else if (cleanCtx === 'Final' || cleanCtx === 'Term 2') {
+    contextOffset = 2
+  } else if (cleanCtx && cleanCtx !== 'Progress Report') {
+    let h = 2166136261
+    for (let i = 0; i < cleanCtx.length; i++) {
+      h ^= cleanCtx.charCodeAt(i)
+      h = Math.imul(h, 16777619) >>> 0
+    }
+    contextOffset = h % 64
+  }
+
+  // If roster index is known, step by coprime stride (5 is coprime to 64) so adjacent
+  // students in the class list always vary across all 3 sentence positions without colliding
+  if (typeof rosterIndex === 'number' && rosterIndex >= 0) {
+    return (rosterIndex * 5 + contextOffset) % 64
+  }
+
+  const idStr = String(
+    student?.studentId ||
+    student?.id ||
+    `${student?.firstName || ''}_${student?.lastName || ''}_${student?.preferredName || ''}`
+  ).trim()
+
+  if (!idStr || idStr === '__') {
+    return contextOffset % 64
+  }
+
+  let hash = 2166136261
+  for (let i = 0; i < idStr.length; i++) {
+    hash ^= idStr.charCodeAt(i)
+    hash = Math.imul(hash, 16777619) >>> 0
+  }
+
+  return (hash + contextOffset) % 64
+}
+
+/**
+ * Normalizes a generated comment by replacing the student's name and pronouns with
+ * canonical placeholders so two students' comments can be compared for identical phrasing.
+ *
+ * @param {string} commentText
+ * @param {Object} [student={}]
+ * @returns {string}
+ */
+export function normalizeCommentTemplate(commentText = '', student = {}) {
+  if (!commentText) return ''
+  const tokens = getPronounTokens(student, 'preferred')
+  let norm = String(commentText).trim()
+
+  if (tokens.name && tokens.name.length > 1) {
+    const escapedName = tokens.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    norm = norm.replace(new RegExp(`\\b${escapedName}'s\\b`, 'gi'), '{POSS}')
+    norm = norm.replace(new RegExp(`\\b${escapedName}\\b`, 'gi'), '{NAME}')
+  }
+
+  norm = norm
+    .replace(/\b(he|she|they)\b/gi, '{SUBJ}')
+    .replace(/\b(him|her|them)\b/gi, '{OBJ}')
+    .replace(/\b(his|hers|their|theirs)\b/gi, '{POSS}')
+    .replace(/\b(himself|herself|themselves)\b/gi, '{REFL}')
+
+  return norm.toLowerCase()
+}
+
 // ─── Main Public Generator Function ──────────────────────────────────────────
 
 /**
@@ -1447,7 +1525,7 @@ export function hasVerbClash(s1, s2) {
  * @param {'preferred'|'name-only'|'roster'} [params.options.pronounMode='preferred']
  * @param {string} [params.options.featuredStrength]  Manual override for featured strength task
  * @param {string} [params.options.featuredNextStep]  Manual override for featured next step task
- * @param {number|string} [params.options.variantSeed=0]  Seed for varying sentence phrasing
+ * @param {number|string} [params.options.variantSeed]  Seed for varying sentence phrasing (auto-derived per studentId if omitted)
  * @param {boolean} [params.options.includeWorkHabits=false]
  * @param {string} [params.options.courseCode='']
  * @param {string} [params.options.reportingPeriod='Midterm']
@@ -1487,7 +1565,7 @@ export function generateReportComment({
     pronounMode = 'preferred',
     featuredStrength = '',
     featuredNextStep = '',
-    variantSeed = 0,
+    variantSeed,
     includeWorkHabits = false,
     courseCode = '',
     reportingPeriod = 'Midterm',
@@ -1528,17 +1606,31 @@ export function generateReportComment({
     profileFocus: resolvedProfileFocus
   })
 
-  // Deterministic variant index
-  let seedNum = typeof variantSeed === 'number' ? variantSeed : 0
-  if (typeof variantSeed === 'string') {
-    for (let i = 0; i < variantSeed.length; i++) seedNum += variantSeed.charCodeAt(i)
+  // Deterministic variant index:
+  // If variantSeed is explicitly supplied, honor it; otherwise if student has a studentId,
+  // automatically derive a unique student seed so two students never default to identical phrasing.
+  let seedNum = 0
+  if (typeof variantSeed === 'number' && !isNaN(variantSeed)) {
+    seedNum = Math.abs(Math.floor(variantSeed))
+  } else if (typeof variantSeed === 'string' && variantSeed.length > 0) {
+    seedNum = computeStudentVariantSeed({ studentId: variantSeed }, reportingPeriod)
+  } else if (student?.studentId || student?.id) {
+    seedNum = computeStudentVariantSeed(student, reportingPeriod)
   }
 
+  // Mixed-radix sentence indices:
+  // - For seedNum 0..3, Math.floor(seedNum / 4) === 0 and Math.floor(seedNum / 16) === 0,
+  //   preserving exact (seedNum, seedNum + 1, seedNum + 2) offsets.
+  // - Across seedNum 0..63, visits all 4 x 4 x 4 = 64 unique 3-sentence combinations!
+  const s1Base = seedNum
+  const s2Base = seedNum + Math.floor(seedNum / 4) + 1
+  const s3Base = seedNum + Math.floor(seedNum / 4) + Math.floor(seedNum / 16) + 2
+
   // Helper generator functions for standard and compact sentences
-  const getS1 = (compact, offset = 0) => getStrengthPhrases(tokens, strengthLevel, strengthTask, seedNum + offset, { compact })
-  const getS2 = (compact, offset = 1) => {
+  const getS1 = (compact, offset = 0) => getStrengthPhrases(tokens, strengthLevel, strengthTask, s1Base + offset, { compact })
+  const getS2 = (compact, offset = 0) => {
     if (mode === 'secondary') {
-      return getCurriculumApplicationPhrases(tokens, overallLevel, seedNum + offset, {
+      return getCurriculumApplicationPhrases(tokens, overallLevel, s2Base + offset, {
         profileFocus: (profile.key === 'work_habits' ? 'curriculum_general' : profile.key),
         learningSkills,
         compact,
@@ -1547,9 +1639,9 @@ export function generateReportComment({
       })
     }
     if (includeWorkHabits || profile.key === 'work_habits') {
-      return getWorkHabitPhrases(tokens, learningSkills, seedNum + offset, { compact })
+      return getWorkHabitPhrases(tokens, learningSkills, s2Base + offset, { compact })
     }
-    return getCurriculumApplicationPhrases(tokens, overallLevel, seedNum + offset, {
+    return getCurriculumApplicationPhrases(tokens, overallLevel, s2Base + offset, {
       profileFocus: profile.key,
       learningSkills,
       compact,
@@ -1557,7 +1649,7 @@ export function generateReportComment({
       courseCode: resolvedCourseCode
     })
   }
-  const getS3 = (compact, offset = 2) => getNextStepPhrases(tokens, growthLevel, growthTask, seedNum + offset, {
+  const getS3 = (compact, offset = 0) => getNextStepPhrases(tokens, growthLevel, growthTask, s3Base + offset, {
     isFinal: resolvedIsFinal,
     courseCode: resolvedCourseCode,
     compact
@@ -1568,8 +1660,8 @@ export function generateReportComment({
   if (mode === 'elementary') {
     // Elementary: Structured two-paragraph narrative
     const sentence1 = getS1(false, 0)
-    const sentence2 = getS2(false, 1)
-    const sentence3 = getS3(false, 2)
+    const sentence2 = getS2(false, 0)
+    const sentence3 = getS3(false, 0)
     const para1 = [sentence1, sentence2].filter(Boolean).join(' ')
     const para2 = [
       sentence3,
@@ -1582,8 +1674,8 @@ export function generateReportComment({
     // Evaluates across s1Offset (0..3), s2Offset (0..3), and s3Offset (0..3)
     // Enforces <= charLimit AND avoids repetitive verbs between Sentence 1 and Sentence 2!
     const stdS1 = getS1(false, 0)
-    const stdS2 = getS2(false, 1)
-    const stdS3 = getS3(false, 2)
+    const stdS2 = getS2(false, 0)
+    const stdS3 = getS3(false, 0)
     const initialCand = [stdS1, stdS2, stdS3].filter(Boolean).join(' ')
 
     if (initialCand.length <= charLimit && !hasVerbClash(stdS1, stdS2)) {
@@ -1591,7 +1683,33 @@ export function generateReportComment({
     } else {
       let fitted = ''
 
-      // Helper to evaluate candidates across offsets (s1Offset, s2Offset, s3Offset)
+      // First, try to preserve this seed's specific S1 and S3 selection (s1Offset = 0, s3Offset = 0),
+      // only stepping s2Offset if needed to avoid a verb clash, across progressively more compact tiers.
+      // This prevents different student seeds from collapsing onto the single shortest standard template.
+      const compactTiers = [
+        [false, false, false],
+        [false, true, false],
+        [false, true, true],
+        [true, true, true]
+      ]
+
+      for (const [c1, c2, c3] of compactTiers) {
+        if (fitted) break
+        const s1 = getS1(c1, 0)
+        const s3 = getS3(c3, 0)
+        for (let s2Offset = 0; s2Offset < 4; s2Offset++) {
+          const s2 = getS2(c2, s2Offset)
+          if (!hasVerbClash(s1, s2)) {
+            const cand = [s1, s2, s3].filter(Boolean).join(' ')
+            if (cand.length <= charLimit) {
+              fitted = cand
+              break
+            }
+          }
+        }
+      }
+
+      // Helper to evaluate candidates across all offsets (s1Offset, s2Offset, s3Offset) as a fallback
       const findBestCandidate = (compactS1, compactS2, compactS3) => {
         let candidateAny = ''
         for (let s1Offset = 0; s1Offset < 4; s1Offset++) {
@@ -1616,8 +1734,10 @@ export function generateReportComment({
         return candidateAny
       }
 
-      // Tier 1: Standard S1 + Standard S2 + Standard S3 (prioritizing no verb clash)
-      fitted = findBestCandidate(false, false, false)
+      // Fallback Tier 1: Standard S1 + Standard S2 + Standard S3
+      if (!fitted) {
+        fitted = findBestCandidate(false, false, false)
+      }
 
       // Tier 2: Standard S1 + Compact S2 + Standard S3
       if (!fitted) {

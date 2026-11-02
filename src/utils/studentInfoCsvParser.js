@@ -48,14 +48,48 @@ export function sanitizeTextField(raw, maxLength = 2000) {
 
 /**
  * Strips option prefixes like "a. ", "b. ", "c. " from multiple choice answers.
+ * Also supports semicolon-separated multi-select answers from Microsoft Forms.
  * @param {string|null|undefined} raw
  * @param {number} maxLength
  * @returns {string}
  */
 export function cleanOptionText(raw, maxLength = 250) {
   if (raw === null || raw === undefined) return ''
-  const cleaned = sanitizeTextField(raw, maxLength).replace(/^[a-z]\.\s*/i, '').trim()
-  return cleaned
+  const sanitized = sanitizeTextField(raw, maxLength)
+  if (sanitized.includes(';')) {
+    return sanitized
+      .split(';')
+      .map(part => part.trim().replace(/^[a-z]\.\s*/i, '').trim())
+      .filter(Boolean)
+      .join(', ')
+  }
+  return sanitized.replace(/^[a-z]\.\s*/i, '').trim()
+}
+
+/**
+ * Normalizes Question 7 (Help-Seeking Behavior when stuck) to:
+ * { code: 'ask_teacher'|'reread_notes'|'ask_classmate'|'hesitate_wait'|'', label: string, isSilentStruggler: boolean }
+ * @param {string|null|undefined} raw
+ * @returns {{ code: string, label: string, isSilentStruggler: boolean }}
+ */
+export function normalizeHelpSeeking(raw) {
+  if (raw === null || raw === undefined) return { code: '', label: '', isSilentStruggler: false }
+  const label = cleanOptionText(raw, 250)
+  if (!label) return { code: '', label: '', isSilentStruggler: false }
+
+  if (/wait.*hope|hesitate|explained\s*later/i.test(label)) {
+    return { code: 'hesitate_wait', label, isSilentStruggler: true }
+  }
+  if (/re-?read|notes|examples|figure\s*it\s*out\s*myself/i.test(label)) {
+    return { code: 'reread_notes', label, isSilentStruggler: false }
+  }
+  if (/classmate|peer|sitting\s*near/i.test(label)) {
+    return { code: 'ask_classmate', label, isSilentStruggler: false }
+  }
+  if (/raise\s*my\s*hand|ask\s*the\s*teacher|right\s*away/i.test(label)) {
+    return { code: 'ask_teacher', label, isSilentStruggler: false }
+  }
+  return { code: '', label, isSilentStruggler: false }
 }
 
 /**
@@ -85,7 +119,9 @@ export function parseStudentInfoRows(rows, rosterStudents = []) {
     seatingPreference: -1,
     targetGrade: -1,
     courseConfidence: -1,
+    helpSeeking: -1,
     extracurricularsHobbies: -1,
+    curiosities: -1,
     confidentialNote: -1
   }
 
@@ -105,7 +141,7 @@ export function parseStudentInfoRows(rows, rosterStudents = []) {
       fieldCols.pronouns = idx
     }
     // 4. Seating / Learning Environment
-    else if (/seat|classroom.*learn\s*best|where.*learn\s*best|desk/i.test(headerLower) && fieldCols.seatingPreference === -1) {
+    else if (/seat|classroom.*(learn|focus)\s*best|where.*(learn|focus)\s*best|location.*focus\s*best|desk/i.test(headerLower) && fieldCols.seatingPreference === -1) {
       fieldCols.seatingPreference = idx
     }
     // 5. Target Grade / Goal
@@ -116,12 +152,20 @@ export function parseStudentInfoRows(rows, rosterStudents = []) {
     else if (/confiden|scale\s*of\s*1\s*to\s*5|feel.*course/i.test(headerLower) && fieldCols.courseConfidence === -1) {
       fieldCols.courseConfidence = idx
     }
-    // 7. Extracurriculars & Hobbies
+    // 7. Help-Seeking Behavior (when stuck)
+    else if (/get\s*stuck|stuck\s*on|don't\s*understand|when\s*stuck|help.*seek|usually\s*do\s*first/i.test(headerLower) && fieldCols.helpSeeking === -1) {
+      fieldCols.helpSeeking = idx
+    }
+    // 8. Real-World Curiosities & Technologies
+    else if (/curious|real-world\s*topic|fields.*technolog|topics.*curious/i.test(headerLower) && fieldCols.curiosities === -1) {
+      fieldCols.curiosities = idx
+    }
+    // 9. Extracurriculars & Hobbies
     else if (/sport|club|extracurricular|hobbi|arts|outside.*school|enjoy/i.test(headerLower) && fieldCols.extracurricularsHobbies === -1) {
       fieldCols.extracurricularsHobbies = idx
     }
-    // 8. Confidential Teacher Note
-    else if (/anything\s*else|confidential|help\s*you.*succeed|know\s*about\s*you|teacher.*note/i.test(headerLower) && fieldCols.confidentialNote === -1) {
+    // 10. Confidential Teacher Note
+    else if (/anything\s*else|confidential|help\s*you.*(succeed|successful)|know\s*about\s*you|teacher.*note/i.test(headerLower) && fieldCols.confidentialNote === -1) {
       fieldCols.confidentialNote = idx
     }
     // Metadata columns
@@ -211,22 +255,27 @@ export function parseStudentInfoRows(rows, rosterStudents = []) {
     const rawDate = completionTimeCol !== -1 ? formatExcelDateIfSerial(String(row[completionTimeCol] || '').trim()) : ''
 
     const confObj = fieldCols.courseConfidence !== -1 ? normalizeConfidence(row[fieldCols.courseConfidence]) : { rating: null, label: '' }
+    const helpObj = fieldCols.helpSeeking !== -1 ? normalizeHelpSeeking(row[fieldCols.helpSeeking]) : { code: '', label: '', isSilentStruggler: false }
 
     const surveyData = {
       preferredName: fieldCols.preferredName !== -1 ? sanitizeTextField(row[fieldCols.preferredName], 100) : '',
-      pronouns: fieldCols.pronouns !== -1 ? cleanOptionText(row[fieldCols.pronouns], 50) : '',
+      pronouns: fieldCols.pronouns !== -1 ? cleanOptionText(row[fieldCols.pronouns], 100) : '',
       parentCommunication: fieldCols.parentCommunication !== -1 ? cleanOptionText(row[fieldCols.parentCommunication], 250) : '',
       seatingPreference: fieldCols.seatingPreference !== -1 ? cleanOptionText(row[fieldCols.seatingPreference], 250) : '',
       targetGrade: fieldCols.targetGrade !== -1 ? cleanOptionText(row[fieldCols.targetGrade], 250) : '',
       courseConfidence: confObj.rating,
       courseConfidenceLabel: confObj.label,
+      helpSeeking: helpObj.code,
+      helpSeekingLabel: helpObj.label,
+      isSilentStruggler: helpObj.isSilentStruggler,
       extracurricularsHobbies: fieldCols.extracurricularsHobbies !== -1 ? sanitizeTextField(row[fieldCols.extracurricularsHobbies], 2000) : '',
+      curiosities: fieldCols.curiosities !== -1 ? sanitizeTextField(row[fieldCols.curiosities], 2000) : '',
       confidentialNote: fieldCols.confidentialNote !== -1 ? sanitizeTextField(row[fieldCols.confidentialNote], 4000) : '',
       completedAt: rawDate || new Date().toISOString()
     }
 
     // Skip ghost / blank rows with no identifiers and no response content
-    const hasAnyContent = emails.length > 0 || names.length > 0 || studentIds.length > 0 || Object.entries(surveyData).some(([k, v]) => k !== 'completedAt' && v !== null && v !== '')
+    const hasAnyContent = emails.length > 0 || names.length > 0 || studentIds.length > 0 || Object.entries(surveyData).some(([k, v]) => k !== 'completedAt' && k !== 'isSilentStruggler' && v !== null && v !== '')
     if (!hasAnyContent) {
       continue
     }

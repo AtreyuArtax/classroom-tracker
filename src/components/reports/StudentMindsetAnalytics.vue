@@ -257,6 +257,24 @@
           </div>
         </template>
 
+        <!-- Hesitate to Ask Ribbon Tile (if any) -->
+        <div 
+          v-if="hesitantStudents.length > 0"
+          class="mindset-ribbon-tile mindset-ribbon-tile--amber"
+          :class="{ 'mindset-ribbon-tile--active': isHesitantExpanded }"
+          role="button"
+          tabindex="0"
+          @click="isHesitantExpanded = !isHesitantExpanded"
+          :title="`${hesitantPercent}% of respondents hesitate to ask for help when stuck — click to toggle list`"
+        >
+          <span class="mindset-ribbon-count">{{ hesitantStudents.length }}</span>
+          <span class="mindset-ribbon-label">
+            Hesitate to Ask ({{ hesitantPercent }}%)
+            <ChevronUp v-if="isHesitantExpanded" :size="10" class="mindset-ribbon-chevron" />
+            <ChevronDown v-else :size="10" class="mindset-ribbon-chevron" />
+          </span>
+        </div>
+
         <!-- Awaiting Survey Ribbon Tile (if any) -->
         <div 
           v-if="unsubmittedStudents.length > 0"
@@ -273,6 +291,36 @@
             <ChevronUp v-if="isUnsubmittedExpanded" :size="10" class="mindset-ribbon-chevron" />
             <ChevronDown v-else :size="10" class="mindset-ribbon-chevron" />
           </span>
+        </div>
+      </div>
+
+      <!-- Collapsible Hesitant Students Drawer (Scatter View) -->
+      <div 
+        v-if="viewMode === 'scatter' && isHesitantExpanded && hesitantStudents.length > 0" 
+        class="mindset-unsubmitted-panel"
+      >
+        <div class="mindset-unsubmitted-panel__header">
+          <div class="mindset-unsubmitted-panel__title-group">
+            <span class="mindset-unsubmitted-panel__title">
+              Hesitate to Ask for Help ({{ hesitantStudents.length }} · {{ hesitantPercent }}% of respondents)
+            </span>
+            <span class="mindset-unsubmitted-panel__sub">
+              Students who wait or hesitate to ask out loud when stuck. Prioritize checking in during independent seatwork.
+            </span>
+          </div>
+        </div>
+
+        <div class="mindset-unsubmitted-chips">
+          <div 
+            v-for="st in hesitantStudents" 
+            :key="st.studentId" 
+            class="mindset-unsubmitted-chip"
+            @click="$emit('select-student', st.studentId)"
+            :title="`${st.fullName} — Click to view dossier`"
+          >
+            <span class="mindset-chip-avatar">{{ st.initials }}</span>
+            <span class="mindset-chip-name">{{ st.fullName }}</span>
+          </div>
         </div>
       </div>
 
@@ -767,6 +815,7 @@ const viewMode = ref('scatter') // 'scatter' or 'breakdown'
 const lensMode = ref('actualVsGoal') // 'actualVsGoal' (Progress vs Goal) or 'day1Mindset' (Day 1 Mindset)
 const showSurveyModal = ref(false)
 const isUnsubmittedExpanded = ref(false)
+const isHesitantExpanded = ref(false)
 const hasCopiedEmails = ref(false)
 
 function onSurveyImported(payload) {
@@ -813,7 +862,10 @@ const rawStudentsList = computed(() => {
         survey.targetGrade ||
         survey.completedAt ||
         survey.seatingPreference ||
+        survey.helpSeeking ||
+        survey.helpSeekingLabel ||
         survey.extracurricularsHobbies ||
+        survey.curiosities ||
         survey.confidentialNote
       )
     })
@@ -871,6 +923,12 @@ const rawStudentsList = computed(() => {
         ? `${student.firstName} ${student.lastName}`
         : (student.name || 'Student')
 
+      const isSilentStruggler = Boolean(
+        survey.isSilentStruggler ||
+        survey.helpSeeking === 'hesitate_wait' ||
+        /wait.*hope|hesitate|explained\s*later/i.test(survey.helpSeekingLabel || '')
+      )
+
       return {
         studentId: sId,
         fullName,
@@ -880,6 +938,8 @@ const rawStudentsList = computed(() => {
         targetGrade: rawGoal,
         targetGradeLabel: goalParsed.label,
         seating: survey.seatingPreference || '',
+        isSilentStruggler,
+        helpSeekingLabel: survey.helpSeekingLabel || '',
         currentGrade,
         sbarBadge,
         goalDelta,
@@ -891,6 +951,18 @@ const rawStudentsList = computed(() => {
         day1Quadrant
       }
     })
+})
+
+const hesitantStudents = computed(() =>
+  rawStudentsList.value
+    .filter(s => s.isSilentStruggler)
+    .sort((a, b) => a.fullName.localeCompare(b.fullName))
+)
+
+const hesitantPercent = computed(() => {
+  const total = rawStudentsList.value.length
+  if (!total) return 0
+  return Math.round((hesitantStudents.value.length / total) * 100)
 })
 
 // Calculate relaxed positions dynamically for whichever lens is active
@@ -1105,11 +1177,11 @@ const seatingHistogram = computed(() => {
     let normalized = raw
     if (/front|board|screen/i.test(raw)) normalized = 'Front / Board'
     else if (/middle/i.test(raw)) normalized = 'Middle of room'
-    else if (/back/i.test(raw)) normalized = 'Back of room'
+    else if (/back|outer\s*edge|edge/i.test(raw)) normalized = 'Back / Outer edge'
+    else if (/door|walkway|traffic/i.test(raw)) normalized = 'Away from door'
     else if (/window/i.test(raw)) normalized = 'Near windows'
     else if (/quiet|corner/i.test(raw)) normalized = 'Quiet area / Corner'
-    else if (/door/i.test(raw)) normalized = 'Near door'
-    else if (/no pref|any/i.test(raw)) normalized = 'No preference'
+    else if (/no\s*pref|anywhere|any\b/i.test(raw)) normalized = 'No preference'
 
     counts[normalized] = (counts[normalized] || 0) + 1
   })

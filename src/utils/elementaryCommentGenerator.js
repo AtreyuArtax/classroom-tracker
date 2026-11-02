@@ -10,7 +10,12 @@
  *  - Three reporting periods: 'Progress Report' (Fall), 'Term 1' (Winter), 'Term 2' (Spring)
  */
 
-import { getPronounTokens, getAchievementLevel } from './commentGenerator.js'
+import {
+  getPronounTokens,
+  getAchievementLevel,
+  computeStudentVariantSeed,
+  normalizeCommentTemplate
+} from './commentGenerator.js'
 import { getScdsbCharacterLimit } from '../data/comments/scdsbCharacterLimits.js'
 import { GRADE_8_SCIENCE_STRANDS, resolveScienceStrand } from '../data/comments/elementaryScienceBank.js'
 import { GRADE_8_MATH_STRANDS, resolveMathStrand } from '../data/comments/elementaryMathBank.js'
@@ -21,7 +26,31 @@ import { LEARNING_SKILLS_BANK, LEARNING_SKILL_KEYS } from '../data/comments/lear
 import { enforceCanadianSpelling, formatSubjectNameForComment } from './canadianSpelling.js'
 import { condenseCurriculumExpectation } from './curriculumCompetencies.js'
 
-export { formatSubjectNameForComment, enforceCanadianSpelling, condenseCurriculumExpectation }
+export {
+  formatSubjectNameForComment,
+  enforceCanadianSpelling,
+  condenseCurriculumExpectation,
+  computeStudentVariantSeed,
+  normalizeCommentTemplate
+}
+
+/**
+ * Resolves a deterministic variant seed for elementary comment generation.
+ * Honors explicit variantSeed if passed; otherwise derives a unique per-student seed
+ * when student.studentId / student.id is available.
+ */
+function resolveElementarySeed(variantSeed, student = {}, contextKey = '') {
+  if (typeof variantSeed === 'number' && !isNaN(variantSeed)) {
+    return Math.abs(Math.floor(variantSeed))
+  }
+  if (typeof variantSeed === 'string' && variantSeed.length > 0) {
+    return computeStudentVariantSeed({ studentId: variantSeed }, contextKey)
+  }
+  if (student?.studentId || student?.id) {
+    return computeStudentVariantSeed(student, contextKey)
+  }
+  return 0
+}
 
 // ─── Action Formatter for Next Steps ──────────────────────────────────────────
 
@@ -260,7 +289,7 @@ export function generateElementaryScienceComment({
     featuredStrength = '',
     featuredNextStep = '',
     featuredProject = '',
-    variantSeed = 0,
+    variantSeed,
     pronounMode = 'preferred',
     reportingPeriod = 'Term 1',
     charLimit = 1050
@@ -281,7 +310,7 @@ export function generateElementaryScienceComment({
   const strengthLvl = autoStrengthLevel || level
   const levelBank = strand.levels[strengthLvl.key] || strand.levels['3']
 
-  const seed = Math.abs(typeof variantSeed === 'number' ? variantSeed : 0)
+  const seed = resolveElementarySeed(variantSeed, student, `${reportingPeriod}__science`)
 
   // 1. Concept Understanding Sentence
   const conceptTemplates = levelBank.conceptStems || []
@@ -294,16 +323,16 @@ export function generateElementaryScienceComment({
     conceptSentence = `${conceptSentence} ${tokens.name} demonstrated particular proficiency ${connector} ${effectiveStrength}.`
   }
 
-  // 2. In-Class Investigation Sentence
+  // 2. In-Class Investigation Sentence (mixed-radix offset unlocks full cross-product for seed >= 2)
   const investTemplates = levelBank.investigationStems || []
-  const investIdx = (seed + 1) % (investTemplates.length || 1)
+  const investIdx = (seed + Math.floor(seed / 2) + 1) % (investTemplates.length || 1)
   const investSentence = fillTokens(investTemplates[investIdx] || '', tokens)
 
   // 3. STEM Communication / Inquiry Project Sentence
   const projectDefault = strand.researchProjects[seed % strand.researchProjects.length]
   const projectTopic = featuredProject || projectDefault
   const commTemplates = levelBank.communicationStems || []
-  const commIdx = (seed + 2) % (commTemplates.length || 1)
+  const commIdx = (seed + Math.floor(seed / 4) + 2) % (commTemplates.length || 1)
   const commSentence = fillTokens(commTemplates[commIdx] || '', tokens, { project: projectTopic })
 
   // 4. Next Steps Sentences
@@ -313,8 +342,8 @@ export function generateElementaryScienceComment({
     nextStepSentence = `Next Steps: ${tokens.name} is encouraged to ${growthAction}.`
   } else {
     const nextStepTemplates = levelBank.nextSteps || []
-    const nsIdx1 = seed % (nextStepTemplates.length || 1)
-    const nsIdx2 = (seed + 1) % (nextStepTemplates.length || 1)
+    const nsIdx1 = (seed + Math.floor(seed / 2)) % (nextStepTemplates.length || 1)
+    const nsIdx2 = (nsIdx1 + 1) % (nextStepTemplates.length || 1)
     const ns1 = fillTokens(nextStepTemplates[nsIdx1] || '', tokens)
     const ns2 = (nsIdx1 !== nsIdx2 && nextStepTemplates[nsIdx2]) ? fillTokens(nextStepTemplates[nsIdx2] || '', tokens) : ''
     nextStepSentence = [ns1, ns2].filter(Boolean).join(' ')
@@ -362,7 +391,7 @@ export function generateElementaryMathComment({
     strandCode = '',
     featuredStrength = '',
     featuredNextStep = '',
-    variantSeed = 0,
+    variantSeed,
     pronounMode = 'preferred',
     reportingPeriod = 'Term 1',
     charLimit = 1200
@@ -381,7 +410,7 @@ export function generateElementaryMathComment({
   const strand = resolveMathStrand(strandCode || effectiveStrength || effectiveGrowth || 'B')
   const strengthLvl = autoStrengthLevel || level
   const levelBank = strand.levels[strengthLvl.key] || strand.levels['3']
-  const seed = Math.abs(typeof variantSeed === 'number' ? variantSeed : 0)
+  const seed = resolveElementarySeed(variantSeed, student, `${reportingPeriod}__math`)
 
   // 1. Concept Understanding Sentence
   const conceptTemplates = levelBank.conceptStems || []
@@ -396,7 +425,7 @@ export function generateElementaryMathComment({
 
   // 2. Mathematical Procedure / Application Sentence
   const procTemplates = levelBank.procedures || []
-  const procIdx = (seed + 1) % (procTemplates.length || 1)
+  const procIdx = (seed + Math.floor(seed / 2) + 1) % (procTemplates.length || 1)
   const procSentence = fillTokens(procTemplates[procIdx] || '', tokens, { topic: effectiveStrength, expectation: effectiveStrength })
 
   // 3. Next Steps Sentence
@@ -406,8 +435,8 @@ export function generateElementaryMathComment({
     nextStepSentence = `Next Steps: ${tokens.name} is encouraged to ${growthAction}.`
   } else {
     const nextStepTemplates = levelBank.nextSteps || []
-    const nsIdx1 = seed % (nextStepTemplates.length || 1)
-    const nsIdx2 = (seed + 1) % (nextStepTemplates.length || 1)
+    const nsIdx1 = (seed + Math.floor(seed / 4)) % (nextStepTemplates.length || 1)
+    const nsIdx2 = (nsIdx1 + 1) % (nextStepTemplates.length || 1)
     const ns1 = fillTokens(nextStepTemplates[nsIdx1] || '', tokens)
     const ns2 = (nsIdx1 !== nsIdx2 && nextStepTemplates[nsIdx2]) ? fillTokens(nextStepTemplates[nsIdx2] || '', tokens) : ''
     nextStepSentence = [ns1, ns2].filter(Boolean).join(' ')
@@ -456,7 +485,7 @@ export function generateElementaryLanguageComment({
     strandCode = '',
     featuredStrength = '',
     featuredNextStep = '',
-    variantSeed = 0,
+    variantSeed,
     pronounMode = 'preferred',
     reportingPeriod = 'Term 1',
     charLimit = 1200
@@ -475,7 +504,7 @@ export function generateElementaryLanguageComment({
   const strand = resolveLanguageStrand(strandCode || effectiveStrength || effectiveGrowth || 'C')
   const strengthLvl = autoStrengthLevel || level
   const levelBank = strand.levels[strengthLvl.key] || strand.levels['3']
-  const seed = Math.abs(typeof variantSeed === 'number' ? variantSeed : 0)
+  const seed = resolveElementarySeed(variantSeed, student, `${reportingPeriod}__language`)
 
   // 1. Concept Understanding Sentence
   const conceptTemplates = levelBank.conceptStems || []
@@ -490,7 +519,7 @@ export function generateElementaryLanguageComment({
 
   // 2. Classroom Application / Evidence Sentence
   const appTemplates = levelBank.applications || []
-  const appIdx = (seed + 1) % (appTemplates.length || 1)
+  const appIdx = (seed + Math.floor(seed / 2) + 1) % (appTemplates.length || 1)
   const appSentence = fillTokens(appTemplates[appIdx] || '', tokens, { topic: effectiveStrength, expectation: effectiveStrength })
 
   // 3. Next Steps Sentence
@@ -500,8 +529,8 @@ export function generateElementaryLanguageComment({
     nextStepSentence = `Next Steps: ${tokens.name} is encouraged to ${growthAction}.`
   } else {
     const nextStepTemplates = levelBank.nextSteps || []
-    const nsIdx1 = seed % (nextStepTemplates.length || 1)
-    const nsIdx2 = (seed + 1) % (nextStepTemplates.length || 1)
+    const nsIdx1 = (seed + Math.floor(seed / 4)) % (nextStepTemplates.length || 1)
+    const nsIdx2 = (nsIdx1 + 1) % (nextStepTemplates.length || 1)
     const ns1 = fillTokens(nextStepTemplates[nsIdx1] || '', tokens)
     const ns2 = (nsIdx1 !== nsIdx2 && nextStepTemplates[nsIdx2]) ? fillTokens(nextStepTemplates[nsIdx2] || '', tokens) : ''
     nextStepSentence = [ns1, ns2].filter(Boolean).join(' ')
@@ -551,7 +580,7 @@ export function generateElementaryHistoryComment({
     strandCode = '',
     featuredStrength = '',
     featuredNextStep = '',
-    variantSeed = 0,
+    variantSeed,
     pronounMode = 'preferred',
     reportingPeriod = 'Term 1',
     charLimit = 600
@@ -570,7 +599,7 @@ export function generateElementaryHistoryComment({
   const strand = resolveHistoryStrand(strandCode || effectiveStrength || effectiveGrowth || 'A')
   const strengthLvl = autoStrengthLevel || level
   const levelBank = strand.levels[strengthLvl.key] || strand.levels['3']
-  const seed = Math.abs(typeof variantSeed === 'number' ? variantSeed : 0)
+  const seed = resolveElementarySeed(variantSeed, student, `${reportingPeriod}__history`)
 
   // 1. Concept Understanding Sentence
   const conceptTemplates = levelBank.conceptStems || []
@@ -582,7 +611,7 @@ export function generateElementaryHistoryComment({
 
   // 2. Inquiry / Research Sentence
   const inqTemplates = levelBank.inquiries || []
-  const inqIdx = (seed + 1) % (inqTemplates.length || 1)
+  const inqIdx = (seed + Math.floor(seed / 2) + 1) % (inqTemplates.length || 1)
   const inqSentence = fillTokens(inqTemplates[inqIdx] || '', tokens, { topic: effectiveStrength, expectation: effectiveStrength })
 
   // 3. Next Steps Sentence
@@ -592,7 +621,7 @@ export function generateElementaryHistoryComment({
     nextStepSentence = `Next Steps: ${tokens.name} is encouraged to ${growthAction}.`
   } else {
     const nextStepTemplates = levelBank.nextSteps || []
-    const nsIdx = seed % (nextStepTemplates.length || 1)
+    const nsIdx = (seed + Math.floor(seed / 4)) % (nextStepTemplates.length || 1)
     const ns = fillTokens(nextStepTemplates[nsIdx] || '', tokens)
     nextStepSentence = ns.startsWith('Next Steps:') ? ns : `Next Steps: ${ns}`
   }
@@ -633,7 +662,7 @@ export function generateElementaryGeographyComment({
     strandCode = '',
     featuredStrength = '',
     featuredNextStep = '',
-    variantSeed = 0,
+    variantSeed,
     pronounMode = 'preferred',
     reportingPeriod = 'Term 1',
     charLimit = 600
@@ -652,7 +681,7 @@ export function generateElementaryGeographyComment({
   const strand = resolveGeographyStrand(strandCode || effectiveStrength || effectiveGrowth || 'A')
   const strengthLvl = autoStrengthLevel || level
   const levelBank = strand.levels[strengthLvl.key] || strand.levels['3']
-  const seed = Math.abs(typeof variantSeed === 'number' ? variantSeed : 0)
+  const seed = resolveElementarySeed(variantSeed, student, `${reportingPeriod}__geography`)
 
   // 1. Concept Understanding Sentence
   const conceptTemplates = levelBank.conceptStems || []
@@ -664,7 +693,7 @@ export function generateElementaryGeographyComment({
 
   // 2. Inquiry / Application Sentence
   const inqTemplates = levelBank.inquiries || []
-  const inqIdx = (seed + 1) % (inqTemplates.length || 1)
+  const inqIdx = (seed + Math.floor(seed / 2) + 1) % (inqTemplates.length || 1)
   const inqSentence = fillTokens(inqTemplates[inqIdx] || '', tokens, { topic: effectiveStrength, expectation: effectiveStrength })
 
   // 3. Next Steps Sentence
@@ -674,7 +703,7 @@ export function generateElementaryGeographyComment({
     nextStepSentence = `Next Steps: ${tokens.name} is encouraged to ${growthAction}.`
   } else {
     const nextStepTemplates = levelBank.nextSteps || []
-    const nsIdx = seed % (nextStepTemplates.length || 1)
+    const nsIdx = (seed + Math.floor(seed / 4)) % (nextStepTemplates.length || 1)
     const ns = fillTokens(nextStepTemplates[nsIdx] || '', tokens)
     nextStepSentence = ns.startsWith('Next Steps:') ? ns : `Next Steps: ${ns}`
   }
@@ -718,7 +747,7 @@ export function generateElementarySubjectComment({
   const {
     featuredStrength = '',
     featuredNextStep = '',
-    variantSeed = 0,
+    variantSeed,
     pronounMode = 'preferred',
     reportingPeriod = 'Term 1',
     charLimit = defaultLimit
@@ -782,7 +811,7 @@ export function generateElementarySubjectComment({
   const mark = gradeData.percentage ?? gradeData.mark
   const level = getAchievementLevel(gradeData.level || mark)
   const tokens = getPronounTokens(student, pronounMode)
-  const seed = Math.abs(typeof variantSeed === 'number' ? variantSeed : 0)
+  const seed = resolveElementarySeed(variantSeed, student, `${reportingPeriod}__${subCode}`)
 
   const subjectName = formatSubjectNameForComment(subject.name || subject.title || 'the curriculum')
 
@@ -851,7 +880,7 @@ export function generateElementarySubjectComment({
   }
 
   const aList = appTemplates[level.key] || appTemplates['3']
-  const sentence2 = fillTokens(aList[(seed + 1) % aList.length], tokens)
+  const sentence2 = fillTokens(aList[(seed + Math.floor(seed / 2) + 1) % aList.length], tokens)
 
   // 3. Actionable Next Step
   let sentence3 = ''
@@ -882,7 +911,7 @@ export function generateElementarySubjectComment({
       ]
     }
     const nsList = nextStepTemplates[level.key] || nextStepTemplates['3']
-    sentence3 = fillTokens(nsList[(seed + 2) % nsList.length], tokens)
+    sentence3 = fillTokens(nsList[(seed + Math.floor(seed / 4) + 2) % nsList.length], tokens)
   }
 
   let fullComment = [sentence1, sentence2, sentence3].join(' ')
@@ -917,7 +946,7 @@ export function generateElementarySubjectComment({
  * @param {'format_a'|'format_b'} [params.options.format='format_a']
  * @param {string[]} [params.options.spotlightStrengths]
  * @param {string[]} [params.options.spotlightNextSteps]
- * @param {number} [params.options.variantSeed=0]
+ * @param {number} [params.options.variantSeed]
  * @param {number} [params.options.charLimit=2600]
  * @param {string} [params.options.pronounMode='preferred']
  */
@@ -930,13 +959,14 @@ export function generateLearningSkillsComment({
     format = 'format_a', // 'format_a' (Labeled STRENGTHS / NEXT STEPS) | 'format_b' (Flowing paragraph)
     spotlightStrengths = null,
     spotlightNextSteps = null,
-    variantSeed = 0,
+    variantSeed,
     charLimit = 2600,
-    pronounMode = 'preferred'
+    pronounMode = 'preferred',
+    reportingPeriod = 'Term 1'
   } = options
 
   const tokens = getPronounTokens(student, pronounMode)
-  const seed = Math.abs(typeof variantSeed === 'number' ? variantSeed : 0)
+  const seed = resolveElementarySeed(variantSeed, student, `${reportingPeriod}__learning_skills`)
 
   // Rank skills by rating: E (4) > G (3) > S (2) > N (1)
   const scoreMap = { 'E': 4, 'G': 3, 'S': 2, 'N': 1 }
@@ -949,11 +979,16 @@ export function generateLearningSkillsComment({
     selfRegulation: 'G'
   }
   const mergedRatings = { ...defaultRatings, ...skillsRatings }
+  const tieRotate = Math.floor(seed / 4)
 
-  // 1. Identify top 2 strength skills
+  // 1. Identify top 2 strength skills (rotating within equally rated skills when seed >= 4)
   let strengthKeys = spotlightStrengths && spotlightStrengths.length > 0 ? spotlightStrengths : null
   if (!strengthKeys) {
-    const sortedDescending = [...LEARNING_SKILL_KEYS].sort((a, b) => {
+    const baseKeys = [...LEARNING_SKILL_KEYS]
+    const rotatedKeys = tieRotate > 0
+      ? baseKeys.map((_, i) => baseKeys[(i + tieRotate) % baseKeys.length])
+      : baseKeys
+    const sortedDescending = [...rotatedKeys].sort((a, b) => {
       const scoreA = scoreMap[String(mergedRatings[a] || 'G').toUpperCase()] || 2
       const scoreB = scoreMap[String(mergedRatings[b] || 'G').toUpperCase()] || 2
       return scoreB - scoreA
@@ -964,7 +999,10 @@ export function generateLearningSkillsComment({
   // 2. Identify 1-2 next step skills (from lower ratings, ensuring no duplicate with strengths)
   let nextStepKeys = spotlightNextSteps && spotlightNextSteps.length > 0 ? spotlightNextSteps : null
   if (!nextStepKeys) {
-    const availableForGrowth = LEARNING_SKILL_KEYS.filter(k => !strengthKeys.includes(k))
+    const availableBase = LEARNING_SKILL_KEYS.filter(k => !strengthKeys.includes(k))
+    const availableForGrowth = (tieRotate > 0 && availableBase.length > 0)
+      ? availableBase.map((_, i) => availableBase[(i + tieRotate) % availableBase.length])
+      : availableBase
     const sortedAscending = [...availableForGrowth].sort((a, b) => {
       const scoreA = scoreMap[String(mergedRatings[a] || 'G').toUpperCase()] || 2
       const scoreB = scoreMap[String(mergedRatings[b] || 'G').toUpperCase()] || 2
@@ -973,7 +1011,7 @@ export function generateLearningSkillsComment({
     nextStepKeys = [sortedAscending[0], sortedAscending[1]].filter(Boolean)
   }
 
-  // 3. Assemble Strengths Sentences
+  // 3. Assemble Strengths Sentences (independently varying stem and example indices)
   const strengthParagraphs = []
   strengthKeys.forEach((key, idx) => {
     const bank = LEARNING_SKILLS_BANK[key]
@@ -981,11 +1019,12 @@ export function generateLearningSkillsComment({
     const sGroup = bank.strengths[(seed + idx) % bank.strengths.length]
     if (!sGroup) return
     const stem = fillTokens(sGroup.stem, tokens)
-    const example = fillTokens(sGroup.examples[(seed + idx) % sGroup.examples.length] || '', tokens)
+    const exOffset = seed + Math.floor(seed / bank.strengths.length) + idx
+    const example = fillTokens(sGroup.examples[exOffset % sGroup.examples.length] || '', tokens)
     strengthParagraphs.push([stem, example].filter(Boolean).join(' '))
   })
 
-  // 4. Assemble Next Steps Sentences
+  // 4. Assemble Next Steps Sentences (independently varying stem and example indices)
   const nextStepParagraphs = []
   nextStepKeys.forEach((key, idx) => {
     const bank = LEARNING_SKILLS_BANK[key]
@@ -993,7 +1032,8 @@ export function generateLearningSkillsComment({
     const nsGroup = bank.nextSteps[(seed + idx) % bank.nextSteps.length]
     if (!nsGroup) return
     const stem = fillTokens(nsGroup.stem, tokens)
-    const example = fillTokens(nsGroup.examples[(seed + idx) % nsGroup.examples.length] || '', tokens)
+    const exOffset = seed + Math.floor(seed / bank.nextSteps.length) + idx
+    const example = fillTokens(nsGroup.examples[exOffset % nsGroup.examples.length] || '', tokens)
     nextStepParagraphs.push([stem, example].filter(Boolean).join(' '))
   })
 

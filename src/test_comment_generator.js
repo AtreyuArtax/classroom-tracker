@@ -25,6 +25,8 @@ import {
   sanitizeTaskTitle,
   hasVerbClash,
   condenseTopicForNextStep,
+  computeStudentVariantSeed,
+  normalizeCommentTemplate,
   ACHIEVEMENT_LEVELS
 } from './utils/commentGenerator.js'
 import { isFormativeAssessment } from './utils/gradeCalc.js'
@@ -954,6 +956,70 @@ test('Ashton comment in SNC1W strictly avoids repeated "demonstrates" and vague 
       `Sentence 2 lacked concrete cognitive descriptors: ${s2}`
     )
   }
+})
+
+test('Multi-student uniqueness: students with identical grades receive distinct comment templates', () => {
+  const sharedGradeData = {
+    percentage: 78,
+    assessments: [
+      { name: 'Ecosystem Sustainability Project', scorePercent: 86 },
+      { name: 'Ohm’s Law & Circuits Lab', scorePercent: 68 }
+    ]
+  }
+
+  const classRoster = [
+    { studentId: 'st-101', firstName: 'Liam', lastName: 'Anderson', pronouns: 'he/him' },
+    { studentId: 'st-102', firstName: 'Olivia', lastName: 'Brown', pronouns: 'she/her' },
+    { studentId: 'st-103', firstName: 'Noah', lastName: 'Clark', pronouns: 'he/him' },
+    { studentId: 'st-104', firstName: 'Emma', lastName: 'Davis', pronouns: 'she/her' },
+    { studentId: 'st-105', firstName: 'Lucas', lastName: 'Evans', pronouns: 'he/him' },
+    { studentId: 'st-106', firstName: 'Mia', lastName: 'Foster', pronouns: 'she/her' },
+    { studentId: 'st-107', firstName: 'Ethan', lastName: 'Garcia', pronouns: 'he/him' },
+    { studentId: 'st-108', firstName: 'Sophia', lastName: 'Harris', pronouns: 'she/her' }
+  ]
+
+  const templates = new Set()
+  classRoster.forEach((student, idx) => {
+    const seed = computeStudentVariantSeed(student, 'Final', idx)
+    const res = generateReportComment({
+      student,
+      gradeData: sharedGradeData,
+      options: {
+        mode: 'secondary',
+        courseCode: 'SNC1W',
+        charLimit: 400,
+        variantSeed: seed
+      }
+    })
+    assert(res.charCount <= 400, `Expected <= 400 chars, got ${res.charCount}`)
+    const sig = normalizeCommentTemplate(res.text, student)
+    assert(!sig.includes(student.firstName), `Normalized template should strip student name: ${sig}`)
+    templates.add(sig)
+  })
+
+  // Every student in the 8-student cohort with identical marks should get a distinct comment structure
+  assert.strictEqual(
+    templates.size,
+    classRoster.length,
+    `Expected all ${classRoster.length} students with identical marks to get unique templates, got ${templates.size}`
+  )
+
+  // Also verify auto-seeding via studentId without passing variantSeed
+  const autoRes1 = generateReportComment({
+    student: classRoster[0],
+    gradeData: sharedGradeData,
+    options: { mode: 'secondary', courseCode: 'SNC1W', charLimit: 400 }
+  })
+  const autoRes2 = generateReportComment({
+    student: classRoster[1],
+    gradeData: sharedGradeData,
+    options: { mode: 'secondary', courseCode: 'SNC1W', charLimit: 400 }
+  })
+  assert.notStrictEqual(
+    normalizeCommentTemplate(autoRes1.text, classRoster[0]),
+    normalizeCommentTemplate(autoRes2.text, classRoster[1]),
+    'Students with different studentIds must auto-generate different comment templates without manual rerolling'
+  )
 })
 
 console.log('\n=================================================================')

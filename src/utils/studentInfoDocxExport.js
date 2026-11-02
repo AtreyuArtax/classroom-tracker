@@ -23,13 +23,12 @@ a. Yes, in class and when contacting home
 b. Only in the classroom (Please use my official roster name/pronouns when contacting home)
 c. Let's talk about it privately first
 
-4. Where in the classroom do you learn best?
-a. Front near the board / screen
+4. When I set up the seating chart, what location helps you focus best?
+a. Near the front (easier to see the board, hear clearly, and stay locked in)
 b. Middle of the room
-c. Near a window / natural light
-d. Away from high-traffic doors
-e. In a quiet corner
-f. No preference
+c. Towards the back or outer edge (I focus better when I'm not surrounded on all sides)
+d. Away from the door / high-traffic walkways (I get easily distracted by movement)
+e. No preference — I can focus well anywhere
 
 5. What grade range or goal are you aiming for in this course?
 a. 90% – 100% (Level 4+ / Aiming for top marks)
@@ -46,12 +45,20 @@ c. 3 - Okay / In the middle
 d. 4 - Fairly confident / Ready to learn
 e. 5 - Very confident / Love this subject
 
-7. What sports, school clubs, arts, or hobbies do you enjoy inside or outside of school?
+7. When you get stuck on a task or don't understand something in class, what do you usually do first?
+a. I raise my hand or ask the teacher right away
+b. I re-read the notes, examples, or instructions to try to figure it out myself
+c. I ask a classmate sitting near me
+d. I tend to wait and hope it gets explained later / I hesitate to ask out loud
 
-8. Is there anything else you want me to know about you to help you have a great year? (Confidential note for your teacher)`
+8. What sports, school clubs, creative arts, or hobbies do you enjoy inside or outside of school?
+
+9. What real-world topics, fields, or technologies are you curious about right now? (e.g., athletics/biomechanics, gaming/coding, medicine/health, space exploration, mechanics/cars, climate/energy, social issues, music/media)
+
+10. Is there anything else you want me to know about you to help you have a successful semester? (Confidential note for your teacher)`
 
 /**
- * Generates a .docx Blob containing the 8-question Student Intake template.
+ * Generates a .docx Blob containing the 10-question Student Intake template.
  * @returns {Promise<Blob>}
  */
 export async function generateStudentInfoDocx() {

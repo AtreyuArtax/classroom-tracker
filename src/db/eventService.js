@@ -319,14 +319,40 @@ export async function exportAllData() {
 }
 
 /**
- * Creates an emergency recovery snapshot in localStorage before destructive actions.
+ * Migrates any legacy snapshots stored in localStorage into IndexedDB,
+ * then cleans up the localStorage key to free browser quota.
+ */
+async function migrateLegacyLocalStorageSnapshots(db) {
+    if (typeof localStorage === 'undefined') return
+    try {
+        const raw = localStorage.getItem('ct_safety_snapshots')
+        if (raw) {
+            const list = JSON.parse(raw)
+            if (Array.isArray(list) && list.length > 0 && db.objectStoreNames.contains('safety_snapshots')) {
+                const tx = db.transaction('safety_snapshots', 'readwrite')
+                for (const item of list) {
+                    if (item && item.id) {
+                        await tx.store.put(item)
+                    }
+                }
+                await tx.done
+            }
+            localStorage.removeItem('ct_safety_snapshots')
+        }
+    } catch {
+        try { localStorage.removeItem('ct_safety_snapshots') } catch {}
+    }
+}
+
+/**
+ * Creates an emergency recovery snapshot in IndexedDB before destructive actions.
  * Keeps the most recent 5 snapshots.
  */
 export async function createSafetySnapshot(triggerReason = 'Manual snapshot') {
     try {
         const data = await exportAllData()
         const safeData = { ...data }
-        delete safeData.photos // Exclude heavy photos from localStorage quota
+        delete safeData.photos // Exclude heavy photos to keep snapshot storage lightweight
         const snapshot = {
             id: `snap_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
             timestamp: new Date().toISOString(),
@@ -338,25 +364,47 @@ export async function createSafetySnapshot(triggerReason = 'Manual snapshot') {
             data: safeData
         }
 
-        const raw = localStorage.getItem('ct_safety_snapshots')
-        const list = raw ? JSON.parse(raw) : []
-        const updatedList = [snapshot, ...list].slice(0, 5)
-        localStorage.setItem('ct_safety_snapshots', JSON.stringify(updatedList))
+        const db = await getDB()
+        if (!db.objectStoreNames.contains('safety_snapshots')) {
+            return null
+        }
+
+        await migrateLegacyLocalStorageSnapshots(db)
+        await db.put('safety_snapshots', snapshot)
+
+        // Prune to retain only the 5 most recent snapshots
+        const allSnapshots = await db.getAllFromIndex('safety_snapshots', 'by_timestamp')
+        if (allSnapshots.length > 5) {
+            allSnapshots.sort((a, b) => (a.timestamp > b.timestamp ? 1 : -1))
+            const excess = allSnapshots.slice(0, allSnapshots.length - 5)
+            const tx = db.transaction('safety_snapshots', 'readwrite')
+            for (const item of excess) {
+                await tx.store.delete(item.id)
+            }
+            await tx.done
+        }
+
         return snapshot
     } catch (err) {
-        console.warn('Could not write emergency safety snapshot to localStorage:', err)
+        console.warn('Could not write emergency safety snapshot to IndexedDB:', err)
         return null
     }
 }
 
 /**
- * Returns all emergency recovery snapshots currently stored in localStorage.
+ * Returns all emergency recovery snapshots currently stored in IndexedDB.
  */
-export function getSafetySnapshots() {
+export async function getSafetySnapshots() {
     try {
-        const raw = localStorage.getItem('ct_safety_snapshots')
-        return raw ? JSON.parse(raw) : []
-    } catch {
+        const db = await getDB()
+        if (!db.objectStoreNames.contains('safety_snapshots')) {
+            return []
+        }
+        await migrateLegacyLocalStorageSnapshots(db)
+        const snapshots = await db.getAllFromIndex('safety_snapshots', 'by_timestamp')
+        return snapshots.sort((a, b) => (b.timestamp > a.timestamp ? 1 : -1))
+    } catch (err) {
+        console.warn('Could not retrieve safety snapshots from IndexedDB:', err)
         return []
     }
 }
@@ -365,20 +413,19 @@ export function getSafetySnapshots() {
  * Restores all data from a chosen safety snapshot.
  */
 export async function restoreSafetySnapshot(snapshotId) {
-    const list = getSafetySnapshots()
-    const found = list.find(s => s.id === snapshotId)
+    const db = await getDB()
+    const found = await db.get('safety_snapshots', snapshotId)
     if (!found || !found.data) throw new Error('Safety snapshot not found.')
     return await importAllData(found.data)
 }
 
 /**
- * Removes a safety snapshot from localStorage.
+ * Removes a safety snapshot from IndexedDB.
  */
-export function deleteSafetySnapshot(snapshotId) {
+export async function deleteSafetySnapshot(snapshotId) {
     try {
-        const list = getSafetySnapshots()
-        const updated = list.filter(s => s.id !== snapshotId)
-        localStorage.setItem('ct_safety_snapshots', JSON.stringify(updated))
+        const db = await getDB()
+        await db.delete('safety_snapshots', snapshotId)
         return true
     } catch {
         return false

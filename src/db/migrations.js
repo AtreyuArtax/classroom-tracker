@@ -8,7 +8,7 @@
 
 import { cleanExpectationText } from '../utils/textUtils.js'
 
-export const CURRENT_SCHEMA = 33
+export const CURRENT_SCHEMA = 34
 
 /**
  * Migrates a backup data object to the current schema version (25).
@@ -504,6 +504,11 @@ export function migrateData(data) {
   if (version < 33) {
     if (!migrated.duties) migrated.duties = []
     version = 33
+  }
+
+  // ── Version 34 (Safety Snapshots in IndexedDB) ──
+  if (version < 34) {
+    version = 34
   }
 
   migrated.schemaVersion = currentVersion
