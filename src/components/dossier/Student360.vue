@@ -248,18 +248,23 @@
           </div>
         </div>
 
-        <!-- Coaching Insight Alert -->
-        <div v-if="coachingInsight" class="student-360__insight-card">
-          <div class="insight-icon" :class="'insight-icon--' + coachingInsight.type">
-            <AlertTriangle v-if="coachingInsight.type === 'warning'" :size="20" />
-            <TrendingDown v-else :size="20" />
-          </div>
-          <div class="insight-content">
-            <h4 class="insight-title">{{ coachingInsight.title }}</h4>
-            <p class="insight-message">{{ coachingInsight.message }}</p>
-            <p class="insight-recommendation"><strong>Recommendation:</strong> {{ coachingInsight.recommendation }}</p>
-          </div>
-        </div>
+        <!-- Student Course Progress Summary -->
+        <StudentCourseSummaryCard
+          :student="student"
+          :overall-grade="overallGrade"
+          :weighted-median="overallWeightedMedian"
+          :is-sbar="activeClassRecord?.gradingFramework === 'sbar'"
+          :class-name="activeClassRecord?.name || ''"
+          :academic-categories="academicCategories"
+          :assessments="allDossierAssessments"
+          :stats="stats"
+          :attendance-averages="attendanceAverages"
+          :washroom-count="washroomCount"
+          :redirect-count="redirectCount"
+          :events="filteredEvents"
+          :learning-skills-record="currentDossierLsRecord"
+          :selected-period="selectedPeriod"
+        />
 
         <!-- Recent Activity & Assessment Feed -->
         <div v-if="recentActivityFeed && recentActivityFeed.length > 0" class="student-360__recent-activity">
@@ -460,6 +465,7 @@ import { LEARNING_SKILL_CATEGORIES, getLearningSkillsByStudent, hasLearningSkill
 import { useMessage } from '../../composables/useMessage.js'
 import Student360Header from './Student360Header.vue'
 import StudentStatCard from './StudentStatCard.vue'
+import StudentCourseSummaryCard from './StudentCourseSummaryCard.vue'
 import StudentTimeline from './StudentTimeline.vue'
 import DossierCommunicationLog from './DossierCommunicationLog.vue'
 import ActionQueueBar from './ActionQueueBar.vue'
@@ -743,21 +749,6 @@ const outOfClassEvents = computed(() => {
 
 const redirectCount = computed(() => {
   return (filteredEvents.value || []).filter(e => e.category === 'redirect' && !e.superseded).length
-})
-
-const coachingInsight = computed(() => {
-  const grade = overallGrade.value
-  const absences = stats.value.absences
-
-  if (grade !== null && grade < 70 && absences >= 3) {
-    return {
-      type: 'warning',
-      title: 'Coaching Insight: Attendance Correlation',
-      message: `Overall progress (${Math.round(grade)}%) appears to be impacted by ${absences} absences.`,
-      recommendation: 'Recommend a 1-on-1 to discuss missed instruction and catch-up opportunities.'
-    }
-  }
-  return null
 })
 
 const recentActivityFeed = computed(() => {
@@ -1228,39 +1219,6 @@ onUnmounted(() => {
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
-
-.student-360__insight-card {
-  display: flex;
-  gap: 12px;
-  padding: 14px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  border-left: 4px solid var(--warning);
-}
-
-.insight-icon {
-  color: var(--warning);
-}
-
-.insight-title {
-  margin: 0 0 4px 0;
-  font-size: 0.9rem;
-  font-weight: 700;
-}
-
-.insight-message {
-  margin: 0 0 4px 0;
-  font-size: 0.85rem;
-  color: var(--text-secondary);
-}
-
-.insight-recommendation {
-  margin: 0;
-  font-size: 0.85rem;
-}
-
-
 
 .btn-ghost {
   padding: 8px 16px;

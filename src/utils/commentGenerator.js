@@ -63,7 +63,26 @@ export function getAchievementLevel(mark) {
  * @returns {{ name: string, subject: string, subjectLower: string, object: string, possessive: string, isPlural: boolean }}
  */
 export function getPronounTokens(student, pronounMode = 'preferred') {
-  const firstName = (student?.preferredName || student?.firstName || 'The student').trim()
+  // If preferredName matches the official roster firstName case-insensitively,
+  // always prefer the properly-cased roster firstName.
+  let resolvedFirst = ''
+  const rosterFirst = (student?.firstName || '').trim()
+  const prefName = (student?.preferredName || '').trim()
+
+  if (prefName) {
+    if (rosterFirst && prefName.toLowerCase() === rosterFirst.toLowerCase()) {
+      resolvedFirst = rosterFirst
+    } else {
+      resolvedFirst = prefName
+    }
+  } else {
+    resolvedFirst = rosterFirst || 'The student'
+  }
+
+  // Ensure first character is always capitalized as a safety measure
+  const firstName = resolvedFirst
+    ? resolvedFirst.charAt(0).toUpperCase() + resolvedFirst.slice(1)
+    : 'The student'
 
   if (pronounMode === 'name-only') {
     return {
@@ -72,6 +91,7 @@ export function getPronounTokens(student, pronounMode = 'preferred') {
       subjectLower: firstName,
       object: firstName,
       possessive: `${firstName}'s`,
+      possessiveCapital: `${firstName}'s`,
       reflexive: 'themselves',
       isPlural: false,
     }
@@ -87,6 +107,7 @@ export function getPronounTokens(student, pronounMode = 'preferred') {
       subjectLower: 'they',
       object: 'them',
       possessive: 'their',
+      possessiveCapital: 'Their',
       reflexive: 'themselves',
       isPlural: true,
     }
@@ -99,6 +120,7 @@ export function getPronounTokens(student, pronounMode = 'preferred') {
       subjectLower: 'she',
       object: 'her',
       possessive: 'her',
+      possessiveCapital: 'Her',
       reflexive: 'herself',
       isPlural: false,
     }
@@ -111,6 +133,7 @@ export function getPronounTokens(student, pronounMode = 'preferred') {
       subjectLower: 'he',
       object: 'him',
       possessive: 'his',
+      possessiveCapital: 'His',
       reflexive: 'himself',
       isPlural: false,
     }
@@ -124,6 +147,7 @@ export function getPronounTokens(student, pronounMode = 'preferred') {
       subjectLower: 'they',
       object: 'them',
       possessive: 'their',
+      possessiveCapital: 'Their',
       reflexive: 'themselves',
       isPlural: true,
     }
@@ -136,6 +160,7 @@ export function getPronounTokens(student, pronounMode = 'preferred') {
     subjectLower: firstName,
     object: firstName,
     possessive: `${firstName}'s`,
+    possessiveCapital: `${firstName}'s`,
     reflexive: 'themselves',
     isPlural: false,
   }
