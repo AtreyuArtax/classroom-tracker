@@ -41,6 +41,14 @@
         >
           <RotateCcw :size="14" /> {{ isLoadingBackups ? 'Scanning...' : 'Refresh List' }}
         </button>
+        <button 
+          v-if="isSyncLinked"
+          class="setup__btn-ghost" 
+          @click="unlinkBackupDirectory"
+          title="Disconnect this sync folder from this device"
+        >
+          <Unlink :size="14" /> Unlink Folder
+        </button>
       </div>
       <p v-if="syncMsg" class="setup__result-ok" style="margin-top: 8px;">{{ syncMsg }}</p>
 
@@ -307,7 +315,8 @@ import {
   Trash2,
   Folder,
   FolderCheck,
-  RotateCcw
+  RotateCcw,
+  Unlink
 } from 'lucide-vue-next'
 
 const { activeClass, teacherName, init } = useClassroom()
@@ -462,6 +471,27 @@ async function linkBackupDirectory() {
     }
   } catch (err) {
     if (err.name !== 'AbortError') syncMsg.value = `❌ Failed to link folder: ${err.message}`
+  }
+}
+
+async function unlinkBackupDirectory() {
+  if (!await confirm(
+    'Unlink this sync folder? Automatic backups to this folder will stop on this device. Existing backup files already in the folder will NOT be deleted.',
+    'Unlink Sync Folder',
+    { danger: true, confirmLabel: 'Unlink Folder' }
+  )) return
+
+  try {
+    const settings = await settingsService.getSettings()
+    await settingsService.saveSettings({ ...settings, backupDirHandle: null, backupFileHandle: null })
+    isSyncLinked.value = false
+    isLegacyFileSync.value = false
+    directoryBackups.value = []
+    syncMsg.value = '✅ Sync folder unlinked successfully.'
+    window.dispatchEvent(new Event('backup-linked'))
+    setTimeout(() => { if (syncMsg.value.startsWith('✅')) syncMsg.value = '' }, 3000)
+  } catch (err) {
+    syncMsg.value = `❌ Failed to unlink folder: ${err.message}`
   }
 }
 
