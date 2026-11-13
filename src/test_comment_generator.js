@@ -1022,6 +1022,203 @@ test('Multi-student uniqueness: students with identical grades receive distinct 
   )
 })
 
+// ─── TEST GROUP 15: Audit Regressions ─────────────────────────────────────────
+
+console.log('\nTEST GROUP 15: Audit Regressions (No Meetings, Plural Grammar, Gerunds, Dept-Awareness, Deduplication)')
+
+test('Level R comments never reference parent-teacher consultations or teacher meetings', () => {
+  const student = { firstName: 'Jordan', pronouns: 'they/them' }
+  const gradeData = {
+    percentage: 42,
+    assessments: [{ name: 'Kinematics Test', scorePercent: 42 }]
+  }
+  const forbidden = /\b(parent-teacher|parent consultation|meet with the teacher|meeting with the teacher)\b/i
+
+  for (const period of ['Progress Report', 'Midterm', 'Final']) {
+    for (const limit of [400, 260]) {
+      for (let seed = 0; seed < 12; seed++) {
+        const res = generateReportComment({
+          student,
+          gradeData,
+          options: {
+            mode: 'secondary',
+            courseCode: 'SPH3U',
+            reportingPeriod: period,
+            isFinal: period === 'Final',
+            charLimit: limit,
+            variantSeed: seed
+          }
+        })
+        assert(!forbidden.test(res.text), `Unexpected meeting/parent phrase in ${period} (limit ${limit}, seed ${seed}): ${res.text}`)
+        assert(!/\bremediation\b.*\bnecessary\b|\bstruggles to\b/i.test(res.text), `Deficit phrasing in Level R: ${res.text}`)
+      }
+    }
+  }
+})
+
+test('Plural they/them pronouns maintain strict subject-verb agreement across all levels and focuses', () => {
+  const student = { firstName: 'Taylor', pronouns: 'they/them' }
+  const focuses = [
+    'curriculum_general',
+    'category_thinking',
+    'category_communication',
+    'category_application',
+    'modality_practical',
+    'modality_analytical',
+    'trajectory_improving',
+    'consistency_high'
+  ]
+  const levels = [97, 85, 75, 65, 55, 42]
+  const badPlural = /\bthey\b[^.!?]*\b(evaluates|interprets|explains|applies|demonstrates|shows|exhibits|excels|solves|formulates|communicates|connects)\b/i
+
+  for (const pct of levels) {
+    for (const focus of focuses) {
+      for (let seed = 0; seed < 8; seed++) {
+        const res = generateReportComment({
+          student,
+          gradeData: { percentage: pct },
+          options: { mode: 'secondary', courseCode: 'SPH3U', profileFocus: focus, variantSeed: seed, charLimit: 400 }
+        })
+        assert(!badPlural.test(res.text), `Plural subject-verb error (${pct}%, ${focus}, seed ${seed}): ${res.text}`)
+      }
+    }
+  }
+})
+
+test('Gerund competencies never produce double-gerunds like "investigating explaining"', () => {
+  const student = { firstName: 'Sam', pronouns: 'he/him' }
+  const gerundTasks = [
+    'explaining cellular transport mechanisms',
+    'comparing ionic and covalent bonding',
+    'modelling linear and quadratic relations',
+    'determining chemical formulas'
+  ]
+  for (const task of gerundTasks) {
+    for (let seed = 0; seed < 4; seed++) {
+      const res = generateReportComment({
+        student,
+        gradeData: { percentage: 84 },
+        options: {
+          mode: 'secondary',
+          featuredStrength: task,
+          featuredNextStep: task,
+          variantSeed: seed,
+          charLimit: 400
+        }
+      })
+      assert(!/\binvestigating\s+(explaining|comparing|modelling|determining)\b/i.test(res.text), `Double gerund detected: ${res.text}`)
+    }
+  }
+})
+
+test('Non-STEM courses (e.g. ENG3U) avoid laboratory and variable-mapping phrasing', () => {
+  const student = { firstName: 'Avery', pronouns: 'she/her' }
+  const gradeData = {
+    percentage: 74,
+    assessments: [
+      { name: 'Literary Essay', scorePercent: 78 },
+      { name: 'Rhetorical Analysis', scorePercent: 68 }
+    ]
+  }
+  for (let seed = 0; seed < 12; seed++) {
+    const res = generateReportComment({
+      student,
+      gradeData,
+      options: { mode: 'secondary', courseCode: 'ENG3U', variantSeed: seed, charLimit: 400 }
+    })
+    assert(!/\b(laboratory investigations|variable-mapping|problem-solving ledger|variables and calculations)\b/i.test(res.text), `STEM jargon in ENG3U: ${res.text}`)
+  }
+})
+
+test('extractEvidenceFromGrades deduplicates strengthTask and growthTask when two assessments map to the same competency', () => {
+  const evidence = extractEvidenceFromGrades({
+    assessments: [
+      { name: 'Kinematics Quiz 1', scorePercent: 92 },
+      { name: 'Kinematics Unit Test', scorePercent: 65 },
+      { name: 'Forces & Newtons Laws Lab', scorePercent: 72 }
+    ]
+  }, 'SPH3U')
+
+  assert.notStrictEqual(
+    evidence.strengthTask.toLowerCase(),
+    evidence.growthTask.toLowerCase(),
+    `Expected distinct strength and growth tasks, got both "${evidence.strengthTask}"`
+  )
+})
+
+// ─── TEST GROUP 16: Relative Strength Calibration & Class-Median Ranking ─────
+
+console.log('\nTEST GROUP 16: Relative Strength Calibration & Class-Median Ranking')
+
+test('Level R student with high single-item score or trajectory_improving never gets "excels with thorough insight" or unqualified praise', () => {
+  const student = { firstName: 'Breanna', pronouns: 'she/her' }
+  const gradeData = {
+    percentage: 47,
+    assessments: [
+      { name: 'Worm Dissection Lab', scorePercent: 95, classMedian: 95, weight: 2 },
+      { name: 'Ecology & Environmental Dynamics Test', scorePercent: 68, classMedian: 60, weight: 20 },
+      { name: 'Space Celestial Systems Quiz', scorePercent: 32, classMedian: 65, weight: 10 }
+    ]
+  }
+
+  for (let seed = 0; seed < 8; seed++) {
+    const res = generateReportComment({
+      student,
+      gradeData,
+      options: {
+        mode: 'secondary',
+        courseCode: 'SNC1W',
+        reportingPeriod: 'Midterm',
+        profileFocus: 'trajectory_improving',
+        featuredStrength: 'Ecology & Environmental Dynamics Test',
+        variantSeed: seed,
+        charLimit: 400
+      }
+    })
+    assert(!/\bexcels with thorough insight\b/i.test(res.text), `Overstated strength on 47% student: ${res.text}`)
+    assert(!/\burgent priorities\b/i.test(res.text), `Alarmist "urgent priorities" on midterm: ${res.text}`)
+    assert(/\bbelow (?:the provincial )?standard\b|\bfoundational gaps remain\b/i.test(res.text), `Expected honest bridge in S2: ${res.text}`)
+    assert(res.charCount <= 400, `Exceeded 400 chars: ${res.charCount}`)
+  }
+})
+
+test('extractEvidenceFromGrades prefers individual relative strength over class-wide inflated hands-on lab', () => {
+  const evidence = extractEvidenceFromGrades({
+    assessments: [
+      { name: 'Worm Dissection Lab', scorePercent: 95, classMedian: 95, weight: 2 },
+      { name: 'Ecology & Environmental Dynamics Test', scorePercent: 82, classMedian: 64, weight: 20 },
+      { name: 'Space Celestial Systems Quiz', scorePercent: 45, classMedian: 70, weight: 10 }
+    ]
+  }, 'SNC1W')
+
+  assert(
+    evidence.strengthTask.toLowerCase().includes('ecosystem') || evidence.strengthTask.toLowerCase().includes('nutrient'),
+    `Expected Ecology Test (+18 above median, weight 20) to beat Worm Dissection (+0 above median, weight 2), got: ${evidence.strengthTask}`
+  )
+})
+
+test('Manual featuredStrength override resolves that specific assessment score rather than autoEvidence.strengthScore', () => {
+  const student = { firstName: 'Liam', pronouns: 'he/him' }
+  const res = generateReportComment({
+    student,
+    gradeData: {
+      percentage: 74,
+      assessments: [
+        { name: 'Worm Dissection Lab', scorePercent: 98, classMedian: 96, weight: 2 },
+        { name: 'Kinematics Test', scorePercent: 72, classMedian: 70, weight: 20 }
+      ]
+    },
+    options: {
+      mode: 'secondary',
+      courseCode: 'SPH3U',
+      featuredStrength: 'Kinematics Test',
+      charLimit: 400
+    }
+  })
+
+  assert.strictEqual(res.strengthLevel.key, '3', `Expected strengthLevel 3 (72%) for manual Kinematics Test, got ${res.strengthLevel.key}`)
+})
+
 console.log('\n=================================================================')
 console.log('🎉 ALL COMMENT GENERATOR TEST SUITES PASSED (100% SUCCESS)!')
 console.log('=================================================================')

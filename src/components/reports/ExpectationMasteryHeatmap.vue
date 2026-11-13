@@ -47,9 +47,9 @@
       </div>
 
       <div class="expand-toggles">
-        <button class="btn-toggle-all" @click="expandAllUnits">Expand All</button>
+        <button type="button" class="btn-toggle-all" @click="expandAllUnits">Expand All</button>
         <span class="divider">·</span>
-        <button class="btn-toggle-all" @click="collapseAllUnits">Collapse All</button>
+        <button type="button" class="btn-toggle-all" @click="collapseAllUnits">Collapse All</button>
       </div>
     </div>
 
@@ -73,8 +73,10 @@
         :key="unit.unitId"
         class="expectation-heatmap__unit-card"
       >
-        <div 
+        <button
+          type="button"
           class="expectation-heatmap__unit-header"
+          :aria-expanded="!collapsedUnits.has(unit.unitId)"
           @click="toggleUnitCollapse(unit.unitId)"
         >
           <div class="unit-header-left">
@@ -92,7 +94,7 @@
             <ChevronUp v-if="!collapsedUnits.has(unit.unitId)" :size="16" class="chevron-icon" />
             <ChevronDown v-else :size="16" class="chevron-icon" />
           </div>
-        </div>
+        </button>
 
         <div v-if="!collapsedUnits.has(unit.unitId)" class="expectation-heatmap__grid">
           <div 
@@ -684,14 +686,19 @@ function getHeatColor(avg) {
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  flex-shrink: 0;
 }
 
 .expectation-heatmap__unit-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  width: 100%;
   padding: 12px 16px;
+  border: none;
   background: var(--surface);
+  font: inherit;
+  text-align: left;
   cursor: pointer;
   user-select: none;
   transition: background 0.15s ease;

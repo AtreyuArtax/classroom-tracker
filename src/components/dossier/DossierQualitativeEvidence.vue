@@ -91,10 +91,11 @@
                     :key="evt.eventId"
                     class="timeline__step"
                     :class="[
-                      evt.eventId === getSelectedGeneralEvent()?.eventId ? 'timeline__step--active' : '',
+                      isCardExpanded('general', 'general') && evt.eventId === getSelectedGeneralEvent()?.eventId ? 'timeline__step--active' : '',
                       `timeline__step--${evt.acOutcome}`
                     ]"
-                    :style="evt.eventId === getSelectedGeneralEvent()?.eventId && evt.acType === 'product' && evt.pctValue !== undefined ? { boxShadow: `0 0 0 2px var(--surface), 0 0 0 4px ${getProductColor(evt.pctValue)}` } : {}"
+                    :style="isCardExpanded('general', 'general') && evt.eventId === getSelectedGeneralEvent()?.eventId && evt.acType === 'product' && evt.pctValue !== undefined ? { boxShadow: `0 0 0 2px var(--surface), 0 0 0 4px ${getProductColor(evt.pctValue)}` } : {}"
+                    :title="evt.acType === 'product' ? evt.assessmentName : undefined"
                     @click.stop="selectGeneralEvent(evt.eventId)"
                   >
                     <div 
@@ -219,10 +220,11 @@
                       :key="evt.eventId"
                       class="timeline__step"
                       :class="[
-                        evt.eventId === getSelectedEvent(unit.unitId, getExpKey(exp))?.eventId ? 'timeline__step--active' : '',
+                        isCardExpanded(unit.unitId, getExpKey(exp)) && evt.eventId === getSelectedEvent(unit.unitId, getExpKey(exp))?.eventId ? 'timeline__step--active' : '',
                         `timeline__step--${evt.acOutcome}`
                       ]"
-                      :style="evt.eventId === getSelectedEvent(unit.unitId, getExpKey(exp))?.eventId && evt.acType === 'product' && evt.pctValue !== undefined ? { boxShadow: `0 0 0 2px var(--surface), 0 0 0 4px ${getProductColor(evt.pctValue)}` } : {}"
+                      :style="isCardExpanded(unit.unitId, getExpKey(exp)) && evt.eventId === getSelectedEvent(unit.unitId, getExpKey(exp))?.eventId && evt.acType === 'product' && evt.pctValue !== undefined ? { boxShadow: `0 0 0 2px var(--surface), 0 0 0 4px ${getProductColor(evt.pctValue)}` } : {}"
+                      :title="evt.acType === 'product' ? evt.assessmentName : undefined"
                       @click.stop="selectEvent(unit.unitId, getExpKey(exp), evt.eventId)"
                     >
                       <div 
@@ -355,10 +357,11 @@
                     :key="evt.eventId"
                     class="timeline__step"
                     :class="[
-                      evt.eventId === getSelectedEvent(unit.unitId, 'general')?.eventId ? 'timeline__step--active' : '',
+                      isCardExpanded(unit.unitId, 'general') && evt.eventId === getSelectedEvent(unit.unitId, 'general')?.eventId ? 'timeline__step--active' : '',
                       `timeline__step--${evt.acOutcome}`
                     ]"
-                    :style="evt.eventId === getSelectedEvent(unit.unitId, 'general')?.eventId && evt.acType === 'product' && evt.pctValue !== undefined ? { boxShadow: `0 0 0 2px var(--surface), 0 0 0 4px ${getProductColor(evt.pctValue)}` } : {}"
+                    :style="isCardExpanded(unit.unitId, 'general') && evt.eventId === getSelectedEvent(unit.unitId, 'general')?.eventId && evt.acType === 'product' && evt.pctValue !== undefined ? { boxShadow: `0 0 0 2px var(--surface), 0 0 0 4px ${getProductColor(evt.pctValue)}` } : {}"
+                    :title="evt.acType === 'product' ? evt.assessmentName : undefined"
                     @click.stop="selectEvent(unit.unitId, 'general', evt.eventId)"
                   >
                     <div 
@@ -763,8 +766,10 @@ function getSyntheticProductEvents(unitId, expectationId, unitObj = null, target
     const astIsSBAR = isSBARAssessment(a)
 
     // Filter by framework matching:
+    // In SBAR mode, keep existing SBAR matching; in Traditional mode, allow assessments with tagged expectations
+    // unless explicitly marked as SBAR-only.
     if (isSBAR.value && !astIsSBAR) return
-    if (!isSBAR.value && astIsSBAR) return
+    if (!isSBAR.value && (a.gradingFramework === 'sbar' || a.categoryId === 'sbar_general' || a.isSbar)) return
     const expIds = a.expectationIds || (a.expectationId ? [a.expectationId] : [])
     let matchesExp = false
     if (!expectationId || expectationId === 'general') {
@@ -774,7 +779,10 @@ function getSyntheticProductEvents(unitId, expectationId, unitObj = null, target
       matchesExp = expIds.some(id => matchesExpectation(expectationId, targetCode, id))
     }
 
-    const isUnitMatch = (!unitId || unitId === 'general' || matchesExp) ? true : matchesUnit(unitId, unitObj?.name, a.unitId)
+    const isSpecificExpMatch = Boolean(expectationId && expectationId !== 'general' && matchesExp)
+    const isUnitMatch = (!unitId || unitId === 'general' || isSpecificExpMatch)
+      ? true
+      : matchesUnit(unitId, unitObj?.name, a.unitId)
 
     if (!isUnitMatch || !matchesExp) return
 

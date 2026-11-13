@@ -805,6 +805,34 @@ const activeLevel = computed(() => {
   return getAchievementLevel(activeStudentMark.value)
 })
 
+const classAssessmentMedians = computed(() => {
+  const astList = (props.assessments && props.assessments.length > 0)
+    ? props.assessments
+    : (gbAssessments.value || [])
+  const map = {}
+  if (!astList || !gradeMap.value || studentList.value.length < 3) return map
+
+  for (const a of astList) {
+    const scores = []
+    const byStudent = gradeMap.value[a.assessmentId]
+    if (!byStudent) continue
+    for (const st of studentList.value) {
+      const pct = getAssessmentPercentage(a, byStudent[st.studentId])
+      if (pct !== null && !isNaN(pct) && isFinite(pct)) {
+        scores.push(pct)
+      }
+    }
+    if (scores.length >= 3) {
+      scores.sort((x, y) => x - y)
+      const mid = Math.floor(scores.length / 2)
+      map[a.assessmentId] = scores.length % 2 === 0
+        ? Math.round((scores[mid - 1] + scores[mid]) / 2)
+        : Math.round(scores[mid])
+    }
+  }
+  return map
+})
+
 function getStudentAssessmentsForWindow(studentId, window = currentTermWindow.value) {
   if (!studentId || !window) return []
 
@@ -850,7 +878,9 @@ function getStudentAssessmentsForWindow(studentId, window = currentTermWindow.va
         assessmentType: a.assessmentType || a.type || '',
         expectations: a.expectations || a.expectationIds || [],
         note: grade?.note || a.note || '',
-        modality: a.modality || ''
+        modality: a.modality || '',
+        weight: a.weight,
+        classMedian: classAssessmentMedians.value[a.assessmentId]
       })
     }
   })
@@ -1413,6 +1443,11 @@ function exportAllCommentsCsv() {
     const stProfile = termProfileFocuses.value[key] || 'auto'
 
     const stAssessments = getStudentAssessmentsForWindow(st.studentId, currentTermWindow.value)
+    const stEvents = (props.events || []).filter(e => {
+      if (e.studentId && e.studentId !== st.studentId) return false
+      if (e.studentIds && !e.studentIds.includes(st.studentId)) return false
+      return true
+    })
 
     let res = null
     for (let attempt = 0; attempt < 64; attempt++) {
@@ -1422,7 +1457,7 @@ function exportAllCommentsCsv() {
           percentage: mark,
           level: getAchievementLevel(mark)?.key,
           assessments: stAssessments,
-          events: props.events,
+          events: stEvents,
           ...gradeObj
         },
         learningSkills: skills,
