@@ -100,8 +100,15 @@ export function useGradeEditing(defaultStudentIdRef = null) {
     const normalizedNew = (currentVal === null || currentVal === undefined || currentVal === '') ? null : Number(currentVal)
     const normalizedOld = (editOriginalValue.value === null || editOriginalValue.value === undefined || editOriginalValue.value === '') ? null : Number(editOriginalValue.value)
 
+    // Clear editing state before any async work or reactive grade mutations.
+    // Otherwise, if sorting by grade re-orders the row in the DOM while the input
+    // still has focus, the resulting blur event re-enters saveEdit() and records
+    // the grade a second time.
+    editingCell.value = null
+    editOriginalValue.value = null
+    editInput.value = null
+
     if (normalizedNew === normalizedOld) {
-      editingCell.value = null
       return
     }
 
@@ -112,7 +119,6 @@ export function useGradeEditing(defaultStudentIdRef = null) {
         const adjusted = Math.max(0, normalizedNew)
         await adjustStudentGrade(studentId, adjusted)
       }
-      editingCell.value = null
       return
     }
 
@@ -122,24 +128,20 @@ export function useGradeEditing(defaultStudentIdRef = null) {
 
       if (hasMultipleAttempts) {
         await alert('Cannot clear: This student has multiple attempts. Use the attempt history menu (•) to manage or delete specific entries.')
-        editingCell.value = null
         return
       }
 
       await clearGrade(assessmentId, studentId)
-      editingCell.value = null
       return
     }
 
     const assessment = assessments.value.find(a => String(a.assessmentId) === String(assessmentId))
     if (!assessment) {
-      editingCell.value = null
       return
     }
 
     const points = Math.max(0, normalizedNew)
     await enterGrade(assessmentId, studentId, points)
-    editingCell.value = null
   }
 
   // 2. Context Menu

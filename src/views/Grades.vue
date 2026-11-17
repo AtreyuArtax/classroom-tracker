@@ -876,8 +876,11 @@ async function saveNewAttempt() {
   newAttemptForm.value = null
 }
 
-async function onAssessmentViewBlur(studentId, value) {
+let skippingBlurStudentId = null
+
+async function onAssessmentViewBlur(studentId, value, fromEnter = false) {
   if (!selectedAssessmentId.value) return
+  if (!fromEnter && skippingBlurStudentId === studentId) return
 
   if (value === '' || value === null || value === undefined) {
     const currentGrade = gradeMap.value[selectedAssessmentId.value]?.[studentId]
@@ -909,17 +912,25 @@ async function onAssessmentViewBlur(studentId, value) {
 async function onAssessmentViewEnter(studentId, direction, event) {
   const inputEl = event?.target
   const val = inputEl ? inputEl.value : ''
-  await onAssessmentViewBlur(studentId, val)
 
-  if (inputEl) {
-    const allInputs = Array.from(document.querySelectorAll('.grades__input-ghost'))
-    const currentIndex = allInputs.indexOf(inputEl)
-    if (currentIndex !== -1) {
-      let targetIndex = direction === 'down' ? currentIndex + 1 : currentIndex - 1
-      if (targetIndex >= 0 && targetIndex < allInputs.length) {
-        allInputs[targetIndex].focus()
-        allInputs[targetIndex].select()
+  skippingBlurStudentId = studentId
+  try {
+    await onAssessmentViewBlur(studentId, val, true)
+    await nextTick()
+    if (inputEl) {
+      const allInputs = Array.from(document.querySelectorAll('.grades__input-ghost'))
+      const currentIndex = allInputs.indexOf(inputEl)
+      if (currentIndex !== -1) {
+        let targetIndex = direction === 'down' ? currentIndex + 1 : currentIndex - 1
+        if (targetIndex >= 0 && targetIndex < allInputs.length) {
+          allInputs[targetIndex].focus()
+          allInputs[targetIndex].select()
+        }
       }
+    }
+  } finally {
+    if (skippingBlurStudentId === studentId) {
+      skippingBlurStudentId = null
     }
   }
 }
