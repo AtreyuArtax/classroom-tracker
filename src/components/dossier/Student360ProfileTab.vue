@@ -352,13 +352,14 @@ import Student360IntakeCard from './Student360IntakeCard.vue'
 
 import { formatLocalDisplay } from '../../utils/dates.js'
 import { useMessage } from '../../composables/useMessage.js'
-import { formatQualitativeEvidenceForReport } from '../../utils/reportFormatter.js'
+import { formatQualitativeEvidenceForReport, formatStudentReportCardSummary } from '../../utils/reportFormatter.js'
+import { calculateSBARExpectationMastery } from '../../utils/gradeCalcSBAR.js'
 import { 
   DEFAULT_ELEMENTARY_SUBJECTS, 
   findElementaryPresets, 
   populateSubjectFromPresets 
 } from '../../composables/useElementary.js'
-import { loadGradebook } from '../../composables/useGradebook.js'
+import { loadGradebook, assessments as gbAssessments, gradeMap } from '../../composables/useGradebook.js'
 import { saveClass } from '../../composables/useClassroom.js'
 
 const props = defineProps({
@@ -609,115 +610,47 @@ const isCopiedNamed = ref(false)
 
 async function copyForReportCard(includeName = false) {
   const s = props.student
-  const absences = props.stats.absences
-  const lates = props.stats.lates
-  
   const reportType = await select(
     'Select the report card term for this comment copy.',
     ['Midterm', 'Final'],
     'Select Report Type'
   )
   if (!reportType) return
-  
-  const midtermMs = props.filteredMilestones?.find(m => m.name?.toLowerCase() === 'midterm') || 
+
+  const midtermMs = props.filteredMilestones?.find(m => m.name?.toLowerCase() === 'midterm') ||
                     props.globalMilestones?.find(m => m.name?.toLowerCase() === 'midterm')
   const midtermDate = midtermMs?.date || 'N/A'
-  
-  const academicList = [...props.allDossierAssessments]
-    .filter(a => !a.excluded && (a.score !== null || a.missing || a.attempts?.some(att => att.comment?.trim())))
-    .sort((a, b) => new Date(a.date) - new Date(b.date))
+  const classObj = props.activeClassRecord || props.activeClass
 
-  const classCode = props.activeClass?.courseCode ? ` (${props.activeClass.courseCode})` : ''
-  const header = includeName
-    ? `Student Name: ${s.firstName} ${s.lastName}${classCode}`
-    : `Student${classCode} — Progress Summary`
+  let expectationMastery = null
+  if (classObj?.gradingFramework === 'sbar' && s?.studentId) {
+    const algo = classObj.sbarAlgorithm || 'decaying_average'
+    const masteryMap = calculateSBARExpectationMastery(
+      classObj,
+      gbAssessments.value || [],
+      gradeMap.value || {},
+      algo,
+      props.activeStudentEvents || []
+    )
+    expectationMastery = masteryMap?.[s.studentId] || null
+  }
 
-  let boundaryInserted = false
-  const academicLines = []
-  academicList.forEach(a => {
-    if (midtermDate !== 'N/A' && a.date > midtermDate && !boundaryInserted) {
-      academicLines.push('--- MIDTERM CUTOFF BOUNDARY ---')
-      boundaryInserted = true
-    }
-    const date = formatLocalDisplay(a.date, { month: 'short', day: 'numeric' })
-    const classObj = props.activeClassRecord || props.activeClass
-    const unit = classObj?.gradebookUnits?.find(u => u.unitId === a.unitId)
-    const unitPrefix = unit ? `[${unit.name}] ` : ''
-    
-    let line = `- ${date} - ${unitPrefix}${a.name}: `
-    if (a.missing) {
-      line += 'Missing'
-    } else if (a.score !== null) {
-      line += `${Math.round((a.score / (a.totalPoints || 1)) * 100)}%`
-    } else {
-      line += 'Ungraded'
-    }
-
-    if (a.attempts?.length > 1) {
-      const history = a.attempts
-        .map(att => {
-          if (att.pointsEarned === null || att.pointsEarned === undefined) return 'Ungraded'
-          return Math.round((att.pointsEarned / (a.totalPoints || 1)) * 100) + '%'
-        })
-        .join(', ')
-      line += ` (Attempts history: ${history})`
-    }
-    const comments = (a.attempts || [])
-      .map((att, idx) => {
-        const trimmed = att.comment?.trim()
-        if (!trimmed) return null
-        if ((a.attempts || []).length === 1) return `[Note] ${trimmed}`
-        if (att.pointsEarned === null || att.pointsEarned === undefined) {
-          return `[Note - Attempt ${idx + 1}] ${trimmed}`
-        }
-        const pct = Math.round((att.pointsEarned / (a.totalPoints || 1)) * 100)
-        return `[Note - Attempt ${idx + 1} (${pct}%)] ${trimmed}`
-      })
-      .filter(Boolean)
-    
-    comments.forEach(c => {
-      line += `\n  ↳ ${c}`
-    })
-    academicLines.push(line)
+  const fullText = formatStudentReportCardSummary({
+    student: s,
+    classRecord: classObj,
+    includeName,
+    reportType,
+    midtermDate,
+    formattedGrade: props.formattedGrade,
+    absences: props.stats.absences,
+    lates: props.stats.lates,
+    assessments: props.allDossierAssessments,
+    categoryAverages: props.academicCategories,
+    events: props.activeStudentEvents,
+    expectationMastery,
+    lineEnding: '\n'
   })
 
-  const textLines = [
-    header
-  ]
-  const courseCode = props.activeClassRecord?.courseCode || props.activeClass?.courseCode
-  if (courseCode) {
-    textLines.push(`Course: ${courseCode}`)
-  }
-  textLines.push(`Current Grade: ${props.formattedGrade}`)
-  if (s.hasIEP) {
-    const curSubId = props.activeClassRecord?.activeSubjectId
-    const modGrade = s.accommodations?.modifiedSubjectGrades?.[curSubId]
-    if (modGrade) {
-      textLines.push(`Accommodations: IEP Modified Expectations (${modGrade})`)
-    } else if (s.iepType === 'gifted') {
-      textLines.push(`Accommodations: IEP — Gifted / Enrichment Plan`)
-    } else {
-      textLines.push(`Accommodations: IEP Plan Active`)
-    }
-  }
-  if (midtermDate !== 'N/A') {
-    textLines.push(`Midterm Cutoff Date: ${midtermDate}`)
-  }
-  textLines.push(`Report Type: ${reportType}`)
-  textLines.push(`Attendance: ${absences} Absences, ${lates} Lates`)
-  textLines.push('')
-  textLines.push('Gradebook Log (Chronological):')
-  textLines.push(...academicLines)
-  textLines.push('')
-  textLines.push('Category Averages:')
-  textLines.push(...props.academicCategories.map(c => `- ${c.name}: ${c.score !== null ? Math.round(c.score) + '%' : 'N/A'}`))
-  textLines.push('')
-  textLines.push('Professional Judgment (Observations & Conversations):')
-  const classObj = props.activeClassRecord || props.activeClass
-  const judgmentLines = formatQualitativeEvidenceForReport(props.activeStudentEvents, classObj)
-  textLines.push(...judgmentLines)
-
-  const fullText = textLines.join('\n')
   await navigator.clipboard.writeText(fullText)
   if (includeName) {
     isCopiedNamed.value = true

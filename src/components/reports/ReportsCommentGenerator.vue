@@ -1413,6 +1413,12 @@ function exportAllCommentsCsv() {
   ]
 
   const seenTemplates = new Set()
+  const seenSentenceCounts = new Map()
+  const splitNormalizedSentences = (normText) =>
+    String(normText || '')
+      .split(/(?<=[.!?])\s+/)
+      .map(s => s.trim())
+      .filter(Boolean)
 
   studentList.value.forEach(st => {
     const mark = getStudentMark(st.studentId)
@@ -1421,7 +1427,11 @@ function exportAllCommentsCsv() {
 
     if (savedEdit !== undefined) {
       const level = getAchievementLevel(mark)
-      seenTemplates.add(normalizeCommentTemplate(savedEdit, st))
+      const norm = normalizeCommentTemplate(savedEdit, st)
+      seenTemplates.add(norm)
+      splitNormalizedSentences(norm).forEach(s => {
+        seenSentenceCounts.set(s, (seenSentenceCounts.get(s) || 0) + 1)
+      })
       rows.push([
         st.studentId || '',
         st.lastName || '',
@@ -1450,6 +1460,8 @@ function exportAllCommentsCsv() {
     })
 
     let res = null
+    let bestScore = Infinity
+    let bestNorm = ''
     for (let attempt = 0; attempt < 64; attempt++) {
       const candidateRes = generateReportComment({
         student: st,
@@ -1468,19 +1480,33 @@ function exportAllCommentsCsv() {
           featuredStrength: stStrength,
           featuredNextStep: stGrowth,
           profileFocus: stProfile,
-          variantSeed: (baseSeed + attempt) % 64,
+          variantSeed: (baseSeed + attempt * 7) % 512,
           courseCode: st.courseCode || currentCourseCode.value,
           reportingPeriod: selectedTerm.value
         }
       })
 
       const norm = normalizeCommentTemplate(candidateRes.text, st)
-      if (!res) res = candidateRes
-      if (!seenTemplates.has(norm)) {
+      const sentences = splitNormalizedSentences(norm)
+      const dupPenalty = seenTemplates.has(norm) ? 1000 : 0
+      const sentenceOverlap = sentences.reduce((sum, s) => sum + (seenSentenceCounts.get(s) || 0), 0)
+      const score = dupPenalty + sentenceOverlap
+
+      if (!res || score < bestScore) {
         res = candidateRes
-        seenTemplates.add(norm)
+        bestScore = score
+        bestNorm = norm
+      }
+      if (score === 0) {
         break
       }
+    }
+
+    if (bestNorm) {
+      seenTemplates.add(bestNorm)
+      splitNormalizedSentences(bestNorm).forEach(s => {
+        seenSentenceCounts.set(s, (seenSentenceCounts.get(s) || 0) + 1)
+      })
     }
 
     rows.push([

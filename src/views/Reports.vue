@@ -291,7 +291,11 @@ const ReportsLearningSkills        = defineAsyncComponent(() => import('../compo
 const ReportsCommentGenerator      = defineAsyncComponent(() => import('../components/reports/ReportsCommentGenerator.vue'))
 const ElementaryCommentGenerator   = defineAsyncComponent(() => import('../components/reports/ElementaryCommentGenerator.vue'))
 import { calculateClassGrades, getAssessmentsByClass, getAssessmentPercentage } from '../db/gradebookService.js'
-import { loadGradebook, clearGradebook, assessments as gbAssessments, gradeMap, activeGradeFilter } from '../composables/useGradebook.js'
+import { loadGradebook, clearGradebook, assessments as gbAssessments, gradeMap, activeGradeFilter, filteredMilestones, globalMilestones } from '../composables/useGradebook.js'
+import { useMessage } from '../composables/useMessage.js'
+import { formatLocalDate } from '../utils/dates.js'
+import { formatStudentReportCardSummary } from '../utils/reportFormatter.js'
+import { calculateSBARExpectationMastery } from '../utils/gradeCalcSBAR.js'
 import { getSectionColor } from '../utils/gradeColors.js'
 import { getSchoolDaysInRange } from '../utils/schoolDayUtils.js'
 
@@ -326,6 +330,7 @@ const {
 } = useClassroom()
 
 const dossier = useStudentDossier()
+const { select, alert: showAlert } = useMessage()
 
 const sidebarClassId = ref(activeClass.value?.classId || filteredClassList.value[0]?.classId || null)
 const reportData = ref([])
@@ -714,8 +719,138 @@ async function handleDownloadCsv(type) {
   alert(`Preparing CSV export for ${type}...`)
 }
 
-function handleDownloadComments(withNames) {
-  alert(`Preparing report card comments CSV (${withNames ? 'with names' : 'anonymous'})...`)
+async function handleDownloadComments(withNames) {
+  const rawClass = reportClass.value
+  const classObj = effectiveReportClass.value || rawClass
+  if (!rawClass || !classObj) return
+
+  const reportType = await select(
+    'Select the report card term for this comment export.',
+    ['Midterm', 'Final'],
+    'Select Report Type'
+  )
+  if (!reportType) return
+
+  try {
+    const isGradebookLoaded = activeClassRecord.value &&
+      activeClassRecord.value.classId === classObj.classId &&
+      (classObj.classType !== 'elementary' || activeClassRecord.value.activeSubjectId === activeSubjectId.value)
+
+    if (!isGradebookLoaded) {
+      await loadGradebook(rawClass, activeSubjectId.value)
+    }
+
+    const grades = (classGrades.value && Object.keys(classGrades.value).length > 0)
+      ? classGrades.value
+      : await calculateClassGrades(classObj)
+
+    let classEvents = allClassEvents.value
+    if (!classEvents || classEvents.length === 0) {
+      const activeStudentIds = new Set(filteredSidebarStudents.value.map(s => s.studentId))
+      const allEventsRaw = await eventService.getEventsByClass(sidebarClassId.value)
+      classEvents = allEventsRaw.filter(e => activeStudentIds.has(e.studentId))
+    }
+
+    const dr = eventService.getDateRangeForClassPeriod(selectedPeriod.value, rawClass, academicTerms.value)
+    const midtermMs = filteredMilestones.value?.find(m => m.name?.toLowerCase() === 'midterm') ||
+                      globalMilestones.value?.find(m => m.name?.toLowerCase() === 'midterm')
+    const midtermDate = midtermMs?.date || 'N/A'
+
+    const sbarMasteryMap = classObj.gradingFramework === 'sbar'
+      ? calculateSBARExpectationMastery(
+          classObj,
+          gbAssessments.value || [],
+          gradeMap.value || {},
+          classObj.sbarAlgorithm || 'decaying_average',
+          classEvents
+        )
+      : null
+
+    let csvContent = withNames
+      ? 'Student,Course,Progress Summary\r\n'
+      : 'Row,Course,Progress Summary\r\n'
+
+    const studentsToExport = filteredSidebarStudents.value.length > 0
+      ? filteredSidebarStudents.value
+      : Object.values(classObj.students || {}).filter(s => !s.archived)
+
+    studentsToExport.forEach((studentItem, index) => {
+      const sId = studentItem.studentId
+      const s = classObj.students?.[sId] || studentItem
+      if (!s) return
+
+      const studentGrades = grades?.[sId] || {}
+      const overallGrade = studentGrades.overallGrade ?? null
+      const formattedGrade = overallGrade !== null ? `${Math.round(overallGrade)}%` : 'N/A'
+
+      const studentEvents = classEvents.filter(e => {
+        if (e.studentId !== sId) return false
+        const dateStr = e.timestamp?.slice(0, 10)
+        if (dr?.from && dateStr < dr.from) return false
+        if (dr?.to && dateStr > dr.to) return false
+        return true
+      })
+      const nonSuperseded = studentEvents.filter(e => !e.superseded)
+      const absences = nonSuperseded.filter(e => e.code === 'a').length
+      const lates = nonSuperseded.filter(e => e.code === 'l').length
+
+      const studentAssessments = (gbAssessments.value || [])
+        .filter(a => a.purpose !== 'administrative' && !a.excluded)
+        .map(a => {
+          const g = gradeMap.value?.[a.assessmentId]?.[sId]
+          return {
+            ...a,
+            score: g?.resolvedScore ?? null,
+            attempts: g?.attempts || [],
+            missing: g?.missing,
+            excluded: Boolean(a.excluded || g?.excluded)
+          }
+        })
+        .filter(a => !a.excluded && (a.target !== 'individual' || String(a.targetStudentId) === String(sId)))
+
+      const results = studentGrades.categoryResults || {}
+      const categoryAverages = (classObj.gradebookCategories || []).map(cat => ({
+        name: cat.name,
+        score: results[cat.categoryId]?.percentage ?? null
+      }))
+
+      const text = formatStudentReportCardSummary({
+        student: s,
+        classRecord: classObj,
+        includeName: withNames,
+        reportType,
+        midtermDate,
+        formattedGrade,
+        absences,
+        lates,
+        assessments: studentAssessments,
+        categoryAverages,
+        events: studentEvents,
+        expectationMastery: sbarMasteryMap?.[sId] || null,
+        lineEnding: '\r\n'
+      })
+
+      const escapedText = `"${text.replace(/"/g, '""')}"`
+      const escapedCourse = `"${(classObj.courseCode || classObj.name || '').replace(/"/g, '""')}"`
+
+      if (withNames) {
+        const escapedName = `"${`${s.lastName || ''}, ${s.firstName || ''}`.trim().replace(/"/g, '""')}"`
+        csvContent += `${escapedName},${escapedCourse},${escapedText}\r\n`
+      } else {
+        csvContent += `${index + 1},${escapedCourse},${escapedText}\r\n`
+      }
+    })
+
+    const { saveAs } = await import('file-saver')
+    const className = (rawClass.name || 'Class').replace(/[^a-zA-Z0-9_-]/g, '_')
+    const date = formatLocalDate(new Date())
+    const filename = `${className}-report-card-comments-${reportType.toLowerCase()}-${withNames ? 'with-names' : 'anonymous'}-${date}.csv`
+    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' })
+    saveAs(blob, filename)
+  } catch (err) {
+    console.error('Failed to export report card comments CSV:', err)
+    await showAlert('Failed to export report card comments CSV: ' + err.message)
+  }
 }
 
 let reportRunId = 0

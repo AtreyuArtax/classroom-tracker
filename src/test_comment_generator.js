@@ -369,7 +369,10 @@ test('Date-scoped assessment filtering dynamically updates evidence between Midt
     gradeData: { percentage: 92, assessments: midtermAssessments },
     options: { mode: 'secondary', courseCode: 'SPH3U', variantSeed: 1 }
   }).text
-  assert(midtermComment.toLowerCase().includes('analyzing 1d and 2d motion and solving projectile kinematics problems'))
+  assert(
+    /kinematics|projectile|uniform acceleration|1d and 2d/i.test(midtermComment),
+    `Expected Kinematics competency in Midterm comment: ${midtermComment}`
+  )
 
   // Final cutoff: 2027-01-31 (includes all 3 assessments, top is Waves 95%, low is Forces 68%)
   const finalCutoff = '2027-01-31'
@@ -381,8 +384,14 @@ test('Date-scoped assessment filtering dynamically updates evidence between Midt
     gradeData: { percentage: 85, assessments: finalAssessments },
     options: { mode: 'secondary', courseCode: 'SPH3U', variantSeed: 2 }
   }).text
-  assert(finalComment.toLowerCase().includes('investigating mechanical wave properties, resonance, and the doppler effect'))
-  assert(finalComment.includes('constructing free-body diagrams and applying Newton’s laws to solve net force problems'))
+  assert(
+    /wave|resonance|doppler|wavelength|sound/i.test(finalComment),
+    `Expected Waves & Sound competency in Final comment: ${finalComment}`
+  )
+  assert(
+    /free-body|newton|net force|dynamics/i.test(finalComment),
+    `Expected Forces competency in Final comment: ${finalComment}`
+  )
 })
 
 // ── TEST GROUP 8: Final Report Senior Pathway Next Steps (Ontario Growing Success) ──
@@ -1217,6 +1226,60 @@ test('Manual featuredStrength override resolves that specific assessment score r
   })
 
   assert.strictEqual(res.strengthLevel.key, '3', `Expected strengthLevel 3 (72%) for manual Kinematics Test, got ${res.strengthLevel.key}`)
+})
+
+test('SNC1W class with shared 4-5 assessments produces diverse S1/S2/S3 stems and competency phrasings', () => {
+  const roster = [
+    { studentId: 's-1', firstName: 'Tomi', pronouns: 'she/her' },
+    { studentId: 's-2', firstName: 'Ashton', pronouns: 'she/her' },
+    { studentId: 's-3', firstName: 'Ethel', pronouns: 'she/her' },
+    { studentId: 's-4', firstName: 'Sam', pronouns: 'she/her' },
+    { studentId: 's-5', firstName: 'Andrew', pronouns: 'he/him' },
+    { studentId: 's-6', firstName: 'Van', pronouns: 'he/him' },
+    { studentId: 's-7', firstName: 'Breanna', pronouns: 'she/her' },
+    { studentId: 's-8', firstName: 'Paxton', pronouns: 'they/them' }
+  ]
+  const sharedAssessments = [
+    { name: 'Ecosystem Sustainability Lab', scorePercent: 86, classMedian: 78, weight: 20 },
+    { name: 'Hare Lynx Population Inquiry', scorePercent: 84, classMedian: 76, weight: 15 },
+    { name: 'Space Celestial Systems Quiz', scorePercent: 72, classMedian: 74, weight: 20 },
+    { name: 'Controlled Scientific Inquiry', scorePercent: 79, classMedian: 75, weight: 15 }
+  ]
+
+  const s1Stems = new Set()
+  const s2Stems = new Set()
+  const s3Stems = new Set()
+  const fullTemplates = new Set()
+
+  roster.forEach((student, idx) => {
+    const seed = computeStudentVariantSeed(student, 'Midterm', idx)
+    const res = generateReportComment({
+      student,
+      gradeData: { percentage: 82, assessments: sharedAssessments },
+      options: {
+        mode: 'secondary',
+        courseCode: 'SNC1W',
+        reportingPeriod: 'Midterm',
+        variantSeed: seed,
+        charLimit: 400
+      }
+    })
+    assert(res.charCount <= 400, `Exceeded 400 chars for ${student.firstName}: ${res.charCount}`)
+    assert(!/exercises when investigating/i.test(res.text), `Clunky grammar in: ${res.text}`)
+    assert(!/focused remediation focused on/i.test(res.text), `Duplicate 'focused' in: ${res.text}`)
+
+    const norm = normalizeCommentTemplate(res.text, student)
+    fullTemplates.add(norm)
+    const parts = norm.split(/(?<=[.!?])\s+/)
+    if (parts[0]) s1Stems.add(parts[0])
+    if (parts[1]) s2Stems.add(parts[1])
+    if (parts[2]) s3Stems.add(parts[2])
+  })
+
+  assert.strictEqual(fullTemplates.size, 8, `Expected 8 unique full comments, got ${fullTemplates.size}`)
+  assert(s1Stems.size >= 6, `Expected >= 6 distinct S1 stems across 8 students, got ${s1Stems.size}`)
+  assert(s2Stems.size >= 5, `Expected >= 5 distinct S2 stems across 8 students, got ${s2Stems.size}`)
+  assert(s3Stems.size >= 5, `Expected >= 5 distinct S3 stems across 8 students, got ${s3Stems.size}`)
 })
 
 console.log('\n=================================================================')

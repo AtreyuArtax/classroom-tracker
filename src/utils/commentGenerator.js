@@ -202,13 +202,17 @@ function getStrengthPhrases(tokens, level, taskName, variant = 0, options = {}) 
     const relList = isCompact
       ? [
           `${tokens.name} showed ${tokens.possessive} strongest understanding when ${whenTask}.`,
-          `${tokens.name} achieved ${tokens.possessive} best results when ${whenTask}.`
+          `${tokens.name} achieved ${tokens.possessive} best results when ${whenTask}.`,
+          `Relative to overall progress, ${tokens.name} performed strongest ${onTask}.`,
+          `${tokens.name}'s clearest grasp of concepts appeared when ${whenTask}.`
         ]
       : [
           `${tokens.name} showed ${tokens.possessive} strongest understanding when ${whenTask}.`,
           `Within an emerging overall performance, ${tokens.name} achieved ${tokens.possessive} best results when ${whenTask}.`,
           `${tokens.name} demonstrated ${tokens.possessive} strongest capability in ${cleanTask}.`,
-          `Among recent evaluations, ${tokens.name} performed best when ${whenTask}.`
+          `Among recent evaluations, ${tokens.name} performed best when ${whenTask}.`,
+          `Relative to other course tasks, ${tokens.name} showed stronger engagement ${onTask}.`,
+          `${tokens.name}'s most consistent work this term came when ${whenTask}.`
         ]
     return relList[Math.abs(variant) % relList.length]
   }
@@ -219,6 +223,9 @@ function getStrengthPhrases(tokens, level, taskName, variant = 0, options = {}) 
   const problemContext = isScience || isMath
     ? 'During classroom problem-solving tasks'
     : 'Across course assignments and inquiries'
+  const evalContext = isScience
+    ? 'Across unit labs and evaluations'
+    : (isMath ? 'Across unit assessments' : 'Across unit tasks and evaluations')
 
   const standardTemplates = {
     '4+': [
@@ -227,7 +234,11 @@ function getStrengthPhrases(tokens, level, taskName, variant = 0, options = {}) 
         : `${tokens.name} excels with thorough insight, particularly when ${whenTask}.`,
       `${inquiryContext}, ${tokens.name} shows thorough understanding when ${whenTask}.`,
       `${tokens.name} applies critical thinking skills with thorough insight, particularly ${onTask}.`,
-      `${problemContext}, ${tokens.name} exhibits thorough precision when ${whenTask}.`
+      `${problemContext}, ${tokens.name} exhibits thorough precision when ${whenTask}.`,
+      `${tokens.name} brings sophisticated analytical depth to ${cleanTask}.`,
+      `${evalContext}, ${tokens.name} consistently achieves at an exceptional standard when ${whenTask}.`,
+      `Strong conceptual mastery is evident as ${tokens.name} excels ${onTask}.`,
+      `${tokens.name} synthesizes complex ideas with remarkable clarity when ${whenTask}.`
     ],
     '4': [
       isGerund
@@ -235,7 +246,11 @@ function getStrengthPhrases(tokens, level, taskName, variant = 0, options = {}) 
         : `${tokens.name} excels with a high degree of skill when ${whenTask}.`,
       `During classroom inquiries, ${tokens.name} applies concepts with thorough consistency when ${whenTask}.`,
       `${tokens.name} exhibits commendable analytical skill and consistency, particularly ${onTask}.`,
-      `${problemContext}, ${tokens.name} applies learned skills with considerable precision when ${whenTask}.`
+      `${problemContext}, ${tokens.name} applies learned skills with considerable precision when ${whenTask}.`,
+      `${tokens.name} tackles ${cleanTask} with strong conceptual accuracy and confidence.`,
+      `${evalContext}, ${tokens.name} consistently produces high-quality work when ${whenTask}.`,
+      `Well-developed reasoning is evident in ${tokens.name}'s work ${onTask}.`,
+      `${tokens.name} works with notable precision and independence when ${whenTask}.`
     ],
     '3': [
       isGerund
@@ -243,7 +258,11 @@ function getStrengthPhrases(tokens, level, taskName, variant = 0, options = {}) 
         : `${tokens.name} shows competent understanding and solid skills when ${whenTask}.`,
       `During unit tasks, ${tokens.name} applies core course concepts reliably when ${whenTask}.`,
       `${tokens.name} produces good quality work and communicates ideas clearly when ${whenTask}.`,
-      `In classroom evaluations, ${tokens.name} demonstrates sound capability when ${whenTask}.`
+      `In classroom evaluations, ${tokens.name} demonstrates sound capability when ${whenTask}.`,
+      `${tokens.name} grasps key principles and works steadily ${onTask}.`,
+      `${evalContext}, ${tokens.name} meets expectations reliably when ${whenTask}.`,
+      `Solid foundational comprehension supports ${tokens.name}'s performance in ${cleanTask}.`,
+      `${tokens.name} approaches ${cleanTask} with steady competence and clear organization.`
     ],
     '2': [
       isGerund
@@ -251,19 +270,27 @@ function getStrengthPhrases(tokens, level, taskName, variant = 0, options = {}) 
         : `${tokens.name} shows developing understanding of key concepts in ${cleanTask}.`,
       `With guided practice, ${tokens.name} demonstrates emerging capability when ${whenTask}.`,
       `${tokens.name} is making steady progress in foundational skills, showing promise when ${whenTask}.`,
-      `During classroom activities, ${tokens.name} displays developing capability ${onTask}, though consistency varies.`
+      `During classroom activities, ${tokens.name} displays developing capability ${onTask}, though consistency varies.`,
+      `${tokens.name} is building confidence with core ideas when ${whenTask}.`,
+      `${evalContext}, ${tokens.name} grasps basic principles in ${cleanTask} with occasional prompts.`,
+      `Growing familiarity with course expectations is evident when ${tokens.name} works ${onTask}.`,
+      `${tokens.name} applies fundamental strategies with developing accuracy when ${whenTask}.`
     ],
     '1': [
       `With ongoing teacher support, ${tokens.name} is working to develop foundational skills in ${cleanTask}.`,
       `During class inquiries, ${tokens.name} shows emerging familiarity when ${whenTask} with structured guidance.`,
       `${tokens.name} is working to apply basic principles, though ${cleanTask} remains challenging.`,
-      `${tokens.name} benefits from structured scaffolding to build confidence when ${whenTask}.`
+      `${tokens.name} benefits from structured scaffolding to build confidence when ${whenTask}.`,
+      `Guided examples help ${tokens.name} engage with essential concepts when ${whenTask}.`,
+      `${tokens.name} is beginning to recognize key patterns in ${cleanTask} with regular check-ins.`
     ],
     'R': [
       `With direct teacher guidance, ${tokens.name} is working to build foundational understanding when ${whenTask}.`,
       `With structured scaffolding, ${tokens.name} is developing familiarity with core concepts in ${cleanTask}.`,
       `With guided practice, ${tokens.name} is beginning to engage with essential expectations in ${cleanTask}.`,
-      `Through step-by-step support, ${tokens.name} is working toward foundational skills in ${cleanTask}.`
+      `Through step-by-step support, ${tokens.name} is working toward foundational skills in ${cleanTask}.`,
+      `One-on-one prompting helps ${tokens.name} approach basic tasks in ${cleanTask}.`,
+      `${tokens.name} is currently building entry-level familiarity when ${whenTask}.`
     ]
   }
 
@@ -271,31 +298,45 @@ function getStrengthPhrases(tokens, level, taskName, variant = 0, options = {}) 
     '4+': [
       `${tokens.name} excels with thorough insight when ${whenTask}.`,
       `${tokens.name} shows a thorough understanding when ${whenTask}.`,
-      `In inquiry tasks, ${tokens.name} works with thorough insight when ${whenTask}.`
+      `In inquiry tasks, ${tokens.name} works with thorough insight when ${whenTask}.`,
+      `${tokens.name} brings exceptional analytical depth to ${cleanTask}.`,
+      `Strong mastery is evident as ${tokens.name} excels ${onTask}.`,
+      `${tokens.name} synthesizes ideas with remarkable clarity when ${whenTask}.`
     ],
     '4': [
       `${tokens.name} excels when ${whenTask}.`,
       `${tokens.name} shows strong capability and high effectiveness when ${whenTask}.`,
       `${tokens.name} consistently applies learned concepts with thorough skill when ${whenTask}.`,
-      `During class inquiries, ${tokens.name} works with commendable precision when ${whenTask}.`
+      `During class inquiries, ${tokens.name} works with commendable precision when ${whenTask}.`,
+      `${tokens.name} tackles ${cleanTask} with notable accuracy and confidence.`,
+      `${evalContext}, ${tokens.name} produces high-quality work when ${whenTask}.`
     ],
     '3': [
       `${tokens.name} shows competent understanding and solid skills when ${whenTask}.`,
       `${tokens.name} applies core course concepts reliably when ${whenTask}.`,
-      `In class activities, ${tokens.name} demonstrates sound capability when ${whenTask}.`
+      `In class activities, ${tokens.name} demonstrates sound capability when ${whenTask}.`,
+      `${tokens.name} grasps key principles and works steadily ${onTask}.`,
+      `${tokens.name} meets course expectations reliably when ${whenTask}.`,
+      `${tokens.name} approaches ${cleanTask} with clear organization and competence.`
     ],
     '2': [
       `${tokens.name} shows developing understanding when ${whenTask}.`,
       `With guided practice, ${tokens.name} displays steady progress when ${whenTask}.`,
-      `${tokens.name} is building foundational skills in ${cleanTask}.`
+      `${tokens.name} is building foundational skills in ${cleanTask}.`,
+      `${tokens.name} applies basic strategies with emerging accuracy when ${whenTask}.`,
+      `Growing familiarity is evident when ${tokens.name} works ${onTask}.`
     ],
     '1': [
       `With regular guidance, ${tokens.name} is developing basic skills in ${cleanTask}.`,
-      `${tokens.name} shows emerging familiarity when ${whenTask} with support.`
+      `${tokens.name} shows emerging familiarity when ${whenTask} with support.`,
+      `Guided examples help ${tokens.name} engage with ${cleanTask}.`,
+      `${tokens.name} is building foundational confidence when ${whenTask}.`
     ],
     'R': [
       `With directed support, ${tokens.name} is working to grasp core concepts in ${cleanTask}.`,
-      `With structured guidance, ${tokens.name} is building foundational skills in ${cleanTask}.`
+      `With structured guidance, ${tokens.name} is building foundational skills in ${cleanTask}.`,
+      `Step-by-step prompting helps ${tokens.name} engage with ${cleanTask}.`,
+      `${tokens.name} is building entry-level familiarity when ${whenTask}.`
     ]
   }
 
@@ -399,21 +440,29 @@ function getCurriculumApplicationPhrases(tokens, level, variant = 0, options = {
     if (isBelowStandard) {
       const list = [
         `While overall achievement remains below standard, ${tokens.subjectLower} ${tokens.isPlural ? 'engage' : 'engages'} more effectively during hands-on inquiry tasks.`,
-        `Although foundational gaps remain, ${tokens.subjectLower} ${tokens.isPlural ? 'demonstrate' : 'demonstrates'} stronger engagement in practical activities.`
+        `Although foundational gaps remain, ${tokens.subjectLower} ${tokens.isPlural ? 'demonstrate' : 'demonstrates'} stronger engagement in practical activities.`,
+        `Hands-on lab activities draw stronger participation from ${tokens.object}, even as core concepts remain developing.`
       ]
       return list[Math.abs(variant) % list.length]
     }
     if (isCompact) {
       const list = [
         `${tokens.subject} ${tokens.isPlural ? 'excel' : 'excels'} in hands-on inquiry and experimental lab investigations.`,
-        `In laboratory inquiries, ${tokens.subjectLower} ${tokens.isPlural ? 'demonstrate' : 'demonstrates'} strong practical and observational skills.`
+        `In laboratory inquiries, ${tokens.subjectLower} ${tokens.isPlural ? 'demonstrate' : 'demonstrates'} strong practical and observational skills.`,
+        `${tokens.subject} ${tokens.isPlural ? 'follow' : 'follows'} experimental procedures methodically and ${tokens.isPlural ? 'interpret' : 'interprets'} lab data well.`,
+        `Practical lab tasks highlight ${tokens.possessive} careful observation and inquiry technique.`,
+        `${tokens.subject} ${tokens.isPlural ? 'connect' : 'connects'} hands-on observations to scientific theory effectively.`,
+        `During lab work, ${tokens.subjectLower} ${tokens.isPlural ? 'gather' : 'gathers'} accurate evidence and ${tokens.isPlural ? 'draw' : 'draws'} sound conclusions.`
       ]
       return list[Math.abs(variant) % list.length]
     }
     const list = [
       `${tokens.subject} ${tokens.isPlural ? 'excel' : 'excels'} in laboratory investigations, collecting accurate data and connecting findings to theory.`,
       `In hands-on inquiry tasks, ${tokens.subjectLower} ${tokens.isPlural ? 'demonstrate' : 'demonstrates'} keen observational skill and methodical lab technique.`,
-      `${tokens.subject} ${tokens.isPlural ? 'show' : 'shows'} strong practical capability, interpreting experimental results and following protocols with precision.`
+      `${tokens.subject} ${tokens.isPlural ? 'show' : 'shows'} strong practical capability, interpreting experimental results and following protocols with precision.`,
+      `Experimental activities bring out ${tokens.possessive} strongest analytical habits, especially when recording and analyzing evidence.`,
+      `During lab investigations, ${tokens.subjectLower} ${tokens.isPlural ? 'handle' : 'handles'} apparatus carefully and ${tokens.isPlural ? 'justify' : 'justifies'} conclusions with empirical data.`,
+      `${tokens.subject} ${tokens.isPlural ? 'translate' : 'translates'} hands-on experimental observations into clear, evidence-based scientific explanations.`
     ]
     return list[Math.abs(variant) % list.length]
   }
@@ -422,21 +471,29 @@ function getCurriculumApplicationPhrases(tokens, level, variant = 0, options = {
     if (isBelowStandard) {
       const list = [
         `While overall achievement remains below standard, ${tokens.subjectLower} ${tokens.isPlural ? 'show' : 'shows'} stronger focus during structured problem-solving tasks.`,
-        `Although foundational gaps remain, ${tokens.subjectLower} ${tokens.isPlural ? 'demonstrate' : 'demonstrates'} greater consistency on guided analytical tasks.`
+        `Although foundational gaps remain, ${tokens.subjectLower} ${tokens.isPlural ? 'demonstrate' : 'demonstrates'} greater consistency on guided analytical tasks.`,
+        `Structured calculations elicit steadier focus from ${tokens.object}, even as broader expectations remain emerging.`
       ]
       return list[Math.abs(variant) % list.length]
     }
     if (isCompact) {
       const list = [
         `${tokens.subject} ${tokens.isPlural ? 'apply' : 'applies'} analytical reasoning and multi-step problem solving effectively.`,
-        `${tokens.subject} ${tokens.isPlural ? 'demonstrate' : 'demonstrates'} strong quantitative problem solving and conceptual clarity.`
+        `${tokens.subject} ${tokens.isPlural ? 'demonstrate' : 'demonstrates'} strong quantitative problem solving and conceptual clarity.`,
+        `${tokens.subject} ${tokens.isPlural ? 'organize' : 'organizes'} multi-step calculations logically and ${tokens.isPlural ? 'verify' : 'verifies'} results well.`,
+        `Abstract relationships and theoretical models are handled with clear precision.`,
+        `${tokens.subject} ${tokens.isPlural ? 'break' : 'breaks'} down complex quantitative problems into clear, logical steps.`,
+        `Theoretical evaluations highlight ${tokens.possessive} sharp analytical reasoning.`
       ]
       return list[Math.abs(variant) % list.length]
     }
     const list = [
       `${tokens.subject} ${tokens.isPlural ? 'exhibit' : 'exhibits'} strong analytical reasoning, interpreting abstract relationships and applying theoretical models with precision.`,
       `During quantitative problem solving, ${tokens.subjectLower} ${tokens.isPlural ? 'apply' : 'applies'} mathematical relationships and multi-step formulas with clarity.`,
-      `${tokens.subject} ${tokens.isPlural ? 'synthesize' : 'synthesizes'} theoretical principles effectively, demonstrating deep conceptual problem-solving ability.`
+      `${tokens.subject} ${tokens.isPlural ? 'synthesize' : 'synthesizes'} theoretical principles effectively, demonstrating deep conceptual problem-solving ability.`,
+      `When tackling unfamiliar calculations, ${tokens.subjectLower} ${tokens.isPlural ? 'select' : 'selects'} appropriate formulas and ${tokens.isPlural ? 'justify' : 'justifies'} each step clearly.`,
+      `Conceptual and mathematical rigor is a clear asset in ${tokens.possessive} written problem solutions.`,
+      `${tokens.subject} ${tokens.isPlural ? 'interpret' : 'interprets'} theoretical models accurately and ${tokens.isPlural ? 'communicate' : 'communicates'} logical derivations with precision.`
     ]
     return list[Math.abs(variant) % list.length]
   }
@@ -446,11 +503,13 @@ function getCurriculumApplicationPhrases(tokens, level, variant = 0, options = {
       const list = isCompact
         ? [
             `While achievement remains below standard, ${tokens.subjectLower} ${tokens.isPlural ? 'are' : 'is'} beginning to show growth with core concepts.`,
-            `Although foundational gaps remain, ${tokens.subjectLower} ${tokens.isPlural ? 'show' : 'shows'} recent progress on core tasks.`
+            `Although foundational gaps remain, ${tokens.subjectLower} ${tokens.isPlural ? 'show' : 'shows'} recent progress on core tasks.`,
+            `While overall achievement remains below standard, recent tasks show encouraging upward momentum.`
           ]
         : [
             `While overall achievement remains below the provincial standard, ${tokens.subjectLower} ${tokens.isPlural ? 'are' : 'is'} beginning to show growth when interpreting core concepts.`,
-            `Although foundational gaps remain, ${tokens.subjectLower} ${tokens.isPlural ? 'have' : 'has'} shown recent progress when explaining core relationships.`
+            `Although foundational gaps remain, ${tokens.subjectLower} ${tokens.isPlural ? 'have' : 'has'} shown recent progress when explaining core relationships.`,
+            `Encouraging upward momentum is emerging in recent tasks, even as overall achievement remains below standard.`
           ]
       return list[Math.abs(variant) % list.length]
     }
@@ -459,7 +518,9 @@ function getCurriculumApplicationPhrases(tokens, level, variant = 0, options = {
         `${tokens.subject} ${tokens.isPlural ? 'show' : 'shows'} clear growth across recent units, solving multi-step problems with increasing precision.`,
         `${tokens.subject} ${tokens.isPlural ? 'exhibit' : 'exhibits'} rising capability when interpreting data and explaining core relationships.`,
         `${tokens.subject} ${tokens.isPlural ? 'apply' : 'applies'} theoretical principles with increasing precision and analytical clarity.`,
-        `${tokens.subject} ${tokens.isPlural ? 'refine' : 'refines'} problem-solving strategies effectively, tackling new inquiries with confidence.`
+        `${tokens.subject} ${tokens.isPlural ? 'refine' : 'refines'} problem-solving strategies effectively, tackling new inquiries with confidence.`,
+        `Recent assessments reflect steady upward progress in ${tokens.possessive} conceptual accuracy.`,
+        `${tokens.subject} ${tokens.isPlural ? 'build' : 'builds'} momentum unit by unit, justifying conclusions with growing clarity.`
       ]
       return list[Math.abs(variant) % list.length]
     }
@@ -467,7 +528,9 @@ function getCurriculumApplicationPhrases(tokens, level, variant = 0, options = {
       `${tokens.subject} ${tokens.isPlural ? 'show' : 'shows'} noticeable growth across recent units, consolidating theoretical principles with increasing accuracy.`,
       `${tokens.subject} ${tokens.isPlural ? 'exhibit' : 'exhibits'} rising capability in analyzing complex scenarios and communicating logical problem-solving steps.`,
       `${tokens.subject} ${tokens.isPlural ? 'refine' : 'refines'} investigative methods effectively, approaching multi-step inquiries with growing independence.`,
-      `${tokens.subject} ${tokens.isPlural ? 'apply' : 'applies'} core course principles with increasing precision when solving unfamiliar problems.`
+      `${tokens.subject} ${tokens.isPlural ? 'apply' : 'applies'} core course principles with increasing precision when solving unfamiliar problems.`,
+      `Steady improvement across the term is evident as ${tokens.subjectLower} ${tokens.isPlural ? 'connect' : 'connects'} concepts with greater confidence.`,
+      `Recent evaluations show meaningful gains in how ${tokens.subjectLower} ${tokens.isPlural ? 'structure' : 'structures'} reasoning and ${tokens.isPlural ? 'verify' : 'verifies'} solutions.`
     ]
     return list[Math.abs(variant) % list.length]
   }
@@ -482,7 +545,9 @@ function getCurriculumApplicationPhrases(tokens, level, variant = 0, options = {
           `${tokens.subject} reliably ${tokens.isPlural ? 'produce' : 'produces'} accurate, well-structured solutions across all scientific inquiries.`,
           `${tokens.subject} ${tokens.isPlural ? 'apply' : 'applies'} scientific conventions and formulas with dependable accuracy.`,
           `${tokens.subject} consistently ${tokens.isPlural ? 'connect' : 'connects'} experimental observations to theory with clear reasoning.`,
-          `${tokens.subject} ${tokens.isPlural ? 'solve' : 'solves'} multi-step inquiry problems with dependable precision.`
+          `${tokens.subject} ${tokens.isPlural ? 'solve' : 'solves'} multi-step inquiry problems with dependable precision.`,
+          `Across labs and tests, ${tokens.subjectLower} ${tokens.isPlural ? 'maintain' : 'maintains'} a high standard of analytical clarity.`,
+          `${tokens.subject} ${tokens.isPlural ? 'justify' : 'justifies'} scientific conclusions with steady precision and proper terminology.`
         ]
         return list[Math.abs(variant) % list.length]
       }
@@ -491,7 +556,9 @@ function getCurriculumApplicationPhrases(tokens, level, variant = 0, options = {
           `${tokens.subject} reliably ${tokens.isPlural ? 'produce' : 'produces'} accurate, well-organized solutions across multi-step mathematical tasks.`,
           `${tokens.subject} ${tokens.isPlural ? 'apply' : 'applies'} formulas and algebraic conventions with dependable accuracy.`,
           `${tokens.subject} consistently ${tokens.isPlural ? 'verify' : 'verifies'} intermediate calculations with clear logical steps.`,
-          `${tokens.subject} ${tokens.isPlural ? 'solve' : 'solves'} multi-step problems with dependable accuracy and precision.`
+          `${tokens.subject} ${tokens.isPlural ? 'solve' : 'solves'} multi-step problems with dependable accuracy and precision.`,
+          `Across unit assessments, ${tokens.subjectLower} ${tokens.isPlural ? 'maintain' : 'maintains'} clear, well-justified algebraic work.`,
+          `${tokens.subject} ${tokens.isPlural ? 'translate' : 'translates'} word problems into accurate mathematical models reliably.`
         ]
         return list[Math.abs(variant) % list.length]
       }
@@ -499,7 +566,9 @@ function getCurriculumApplicationPhrases(tokens, level, variant = 0, options = {
         `${tokens.subject} reliably ${tokens.isPlural ? 'produce' : 'produces'} accurate, well-structured solutions across all unit tasks.`,
         `${tokens.subject} ${tokens.isPlural ? 'apply' : 'applies'} learned methods and conventions with dependable accuracy.`,
         `${tokens.subject} consistently ${tokens.isPlural ? 'organize' : 'organizes'} multi-step solutions with clear, logical reasoning.`,
-        `${tokens.subject} ${tokens.isPlural ? 'solve' : 'solves'} multi-step problems with dependable accuracy and thorough reasoning.`
+        `${tokens.subject} ${tokens.isPlural ? 'solve' : 'solves'} multi-step problems with dependable accuracy and thorough reasoning.`,
+        `Across course assessments, ${tokens.subjectLower} ${tokens.isPlural ? 'maintain' : 'maintains'} steady analytical quality.`,
+        `${tokens.subject} ${tokens.isPlural ? 'support' : 'supports'} conclusions with well-organized evidence across units.`
       ]
       return list[Math.abs(variant) % list.length]
     }
@@ -509,7 +578,9 @@ function getCurriculumApplicationPhrases(tokens, level, variant = 0, options = {
         `${tokens.subject} reliably ${tokens.isPlural ? 'produce' : 'produces'} thorough, accurate work across diverse laboratory and classroom inquiries.`,
         `${tokens.subject} ${tokens.isPlural ? 'exhibit' : 'exhibits'} dependable precision when applying scientific formulas, conventions, and theoretical models.`,
         `${tokens.subject} consistently ${tokens.isPlural ? 'connect' : 'connects'} experimental observations to scientific principles with clear analytical reasoning.`,
-        `During problem solving and inquiry, ${tokens.subjectLower} ${tokens.isPlural ? 'explain' : 'explains'} reasoning clearly and ${tokens.isPlural ? 'apply' : 'applies'} core principles with dependable accuracy.`
+        `During problem solving and inquiry, ${tokens.subjectLower} ${tokens.isPlural ? 'explain' : 'explains'} reasoning clearly and ${tokens.isPlural ? 'apply' : 'applies'} core principles with dependable accuracy.`,
+        `Across both theoretical and practical tasks, ${tokens.subjectLower} ${tokens.isPlural ? 'maintain' : 'maintains'} a high standard of scientific communication.`,
+        `${tokens.subject} ${tokens.isPlural ? 'integrate' : 'integrates'} data analysis and conceptual theory seamlessly across unit evaluations.`
       ]
       return list[Math.abs(variant) % list.length]
     }
@@ -519,7 +590,9 @@ function getCurriculumApplicationPhrases(tokens, level, variant = 0, options = {
         `${tokens.subject} reliably ${tokens.isPlural ? 'produce' : 'produces'} accurate, well-organized solutions across multi-step mathematical problems.`,
         `${tokens.subject} ${tokens.isPlural ? 'exhibit' : 'exhibits'} dependable precision when applying mathematical formulas, algebraic rules, and conventions.`,
         `${tokens.subject} consistently ${tokens.isPlural ? 'organize' : 'organizes'} calculations and ${tokens.isPlural ? 'justify' : 'justifies'} intermediate steps with clear logical reasoning.`,
-        `During quantitative problem solving, ${tokens.subjectLower} ${tokens.isPlural ? 'apply' : 'applies'} mathematical relationships with dependable accuracy.`
+        `During quantitative problem solving, ${tokens.subjectLower} ${tokens.isPlural ? 'apply' : 'applies'} mathematical relationships with dependable accuracy.`,
+        `Across unit tests and tasks, ${tokens.subjectLower} ${tokens.isPlural ? 'maintain' : 'maintains'} thoroughness and precision in every step.`,
+        `${tokens.subject} ${tokens.isPlural ? 'verify' : 'verifies'} solutions systematically and ${tokens.isPlural ? 'communicate' : 'communicates'} mathematical reasoning clearly.`
       ]
       return list[Math.abs(variant) % list.length]
     }
@@ -528,7 +601,9 @@ function getCurriculumApplicationPhrases(tokens, level, variant = 0, options = {
       `${tokens.subject} reliably ${tokens.isPlural ? 'produce' : 'produces'} accurate, well-structured solutions across diverse classroom inquiries.`,
       `${tokens.subject} ${tokens.isPlural ? 'exhibit' : 'exhibits'} thorough precision when applying learned methods, conventions, and models across all units.`,
       `${tokens.subject} consistently ${tokens.isPlural ? 'organize' : 'organizes'} multi-step solutions and ${tokens.isPlural ? 'explain' : 'explains'} reasoning with clarity.`,
-      `Across diverse evaluations, ${tokens.subjectLower} ${tokens.isPlural ? 'apply' : 'applies'} core course principles with dependable accuracy and sound methodology.`
+      `Across diverse evaluations, ${tokens.subjectLower} ${tokens.isPlural ? 'apply' : 'applies'} core course principles with dependable accuracy and sound methodology.`,
+      `Steady, high-calibre performance characterizes ${tokens.possessive} work across both independent and inquiry tasks.`,
+      `${tokens.subject} ${tokens.isPlural ? 'maintain' : 'maintains'} clear organization and well-supported reasoning in every unit.`
     ]
     return list[Math.abs(variant) % list.length]
   }
@@ -599,64 +674,88 @@ function getCurriculumApplicationPhrases(tokens, level, variant = 0, options = {
       `${tokens.subject} ${tokens.isPlural ? 'apply' : 'applies'} critical thinking skills to analyze complex scenarios and ${tokens.isPlural ? 'communicate' : 'communicates'} reasoning with precision.`,
       `${tokens.subject} ${tokens.isPlural ? 'evaluate' : 'evaluates'} experimental evidence and ${tokens.isPlural ? 'interpret' : 'interprets'} complex theoretical models with precision.`,
       `${tokens.subject} ${tokens.isPlural ? 'synthesize' : 'synthesizes'} concepts effectively and ${tokens.isPlural ? 'express' : 'expresses'} mathematical and scientific reasoning with clarity.`,
-      `In inquiry activities, ${tokens.subjectLower} ${tokens.isPlural ? 'analyze' : 'analyzes'} data insightfully and ${tokens.isPlural ? 'articulate' : 'articulates'} connections to practical contexts.`
+      `In inquiry activities, ${tokens.subjectLower} ${tokens.isPlural ? 'analyze' : 'analyzes'} data insightfully and ${tokens.isPlural ? 'articulate' : 'articulates'} connections to practical contexts.`,
+      `Across unfamiliar tasks, ${tokens.subjectLower} ${tokens.isPlural ? 'transfer' : 'transfers'} theoretical principles seamlessly and ${tokens.isPlural ? 'justify' : 'justifies'} conclusions thoroughly.`,
+      `${tokens.subject} ${tokens.isPlural ? 'combine' : 'combines'} sharp conceptual insight with clear, well-structured technical communication.`
     ],
     '4': [
       `${tokens.subject} ${tokens.isPlural ? 'apply' : 'applies'} learned concepts reliably to multi-step problems and ${tokens.isPlural ? 'communicate' : 'communicates'} reasoning clearly.`,
       `${tokens.subject} ${tokens.isPlural ? 'exhibit' : 'exhibits'} strong analytical capability during classroom inquiries and investigation tasks.`,
       `During problem solving, ${tokens.subjectLower} ${tokens.isPlural ? 'use' : 'uses'} appropriate conventions and ${tokens.isPlural ? 'explain' : 'explains'} methodology clearly.`,
-      `${tokens.subject} effectively ${tokens.isPlural ? 'connect' : 'connects'} theoretical concepts to practical contexts and experimental results.`
+      `${tokens.subject} effectively ${tokens.isPlural ? 'connect' : 'connects'} theoretical concepts to practical contexts and experimental results.`,
+      `In unit assessments, ${tokens.subjectLower} ${tokens.isPlural ? 'organize' : 'organizes'} multi-step reasoning logically and ${tokens.isPlural ? 'verify' : 'verifies'} conclusions.`,
+      `${tokens.subject} ${tokens.isPlural ? 'interpret' : 'interprets'} course data accurately and ${tokens.isPlural ? 'support' : 'supports'} findings with clear evidence.`
     ],
     '3': [
       `${tokens.subject} ${tokens.isPlural ? 'apply' : 'applies'} core procedures with competence, communicating intermediate solution steps clearly.`,
       `${tokens.subject} ${tokens.isPlural ? 'show' : 'shows'} sound problem-solving skills during classroom investigations and evaluations.`,
       `When tackling multi-step tasks, ${tokens.subjectLower} ${tokens.isPlural ? 'use' : 'uses'} established methods and ${tokens.isPlural ? 'interpret' : 'interprets'} data appropriately.`,
-      `${tokens.subject} ${tokens.isPlural ? 'explain' : 'explains'} foundational procedures and reasoning with sound clarity.`
+      `${tokens.subject} ${tokens.isPlural ? 'explain' : 'explains'} foundational procedures and reasoning with sound clarity.`,
+      `Across unit activities, ${tokens.subjectLower} ${tokens.isPlural ? 'connect' : 'connects'} core ideas accurately and ${tokens.isPlural ? 'follow' : 'follows'} standard conventions.`,
+      `${tokens.subject} ${tokens.isPlural ? 'select' : 'selects'} appropriate strategies for routine problems and ${tokens.isPlural ? 'present' : 'presents'} organized work.`
     ],
     '2': [
       `${tokens.subject} ${tokens.isPlural ? 'show' : 'shows'} developing consistency when applying standard procedures to multi-step problem solving.`,
       `With guided practice, ${tokens.subjectLower} ${tokens.isPlural ? 'interpret' : 'interprets'} core relationships and ${tokens.isPlural ? 'communicate' : 'communicates'} steps with emerging accuracy.`,
       `${tokens.subject} ${tokens.isPlural ? 'display' : 'displays'} emerging capability during inquiry tasks, though calculations require verification.`,
-      `${tokens.subject} ${tokens.isPlural ? 'are' : 'is'} continuing to build confidence when explaining reasoning and applying methods to new problems.`
+      `${tokens.subject} ${tokens.isPlural ? 'are' : 'is'} continuing to build confidence when explaining reasoning and applying methods to new problems.`,
+      `In structured class tasks, ${tokens.subjectLower} ${tokens.isPlural ? 'apply' : 'applies'} basic formulas with developing independence.`,
+      `${tokens.subject} ${tokens.isPlural ? 'benefit' : 'benefits'} from step-by-step checklists when organizing multi-part explanations.`
     ],
     '1': [
       `With ongoing teacher support, ${tokens.subjectLower} ${tokens.isPlural ? 'are' : 'is'} working to apply basic principles and complete multi-step solutions.`,
       `${tokens.subject} ${tokens.isPlural ? 'show' : 'shows'} emerging capability with core procedures, though additional practice is required to communicate reasoning clearly.`,
       `During inquiry and problem-solving activities, ${tokens.subjectLower} ${tokens.isPlural ? 'require' : 'requires'} structured scaffolding to select and apply correct methods.`,
-      `${tokens.subject} ${tokens.isPlural ? 'are' : 'is'} developing foundational familiarity with course formulas and terminology.`
+      `${tokens.subject} ${tokens.isPlural ? 'are' : 'is'} developing foundational familiarity with course formulas and terminology.`,
+      `Guided templates help ${tokens.object} break basic problems into manageable steps.`,
+      `${tokens.subject} ${tokens.isPlural ? 'need' : 'needs'} regular check-ins to verify foundational steps and terminology.`
     ],
     'R': [
       `${tokens.subject} ${tokens.isPlural ? 'require' : 'requires'} comprehensive guidance to interpret core concepts and complete basic problem-solving procedures.`,
       `Substantial support is needed to understand fundamental curriculum terminology and apply standard methods.`,
       `At this stage, ${tokens.subjectLower} ${tokens.isPlural ? 'struggle' : 'struggles'} to demonstrate consistent application of essential course expectations.`,
-      `Extensive review of foundational material is necessary to build required curriculum competencies.`
+      `Extensive review of foundational material is necessary to build required curriculum competencies.`,
+      `Structured one-on-one scaffolding is essential to help ${tokens.object} engage with core expectations.`,
+      `Consistent practice with foundational examples is needed to establish basic course skills.`
     ]
   }
 
   const compactTemplates = {
     '4+': [
       `${tokens.subject} ${tokens.isPlural ? 'apply' : 'applies'} critical thinking skills to analyze complex scenarios with precision.`,
-      `${tokens.subject} ${tokens.isPlural ? 'exhibit' : 'exhibits'} strong problem-solving strategies and clear insight.`
+      `${tokens.subject} ${tokens.isPlural ? 'exhibit' : 'exhibits'} strong problem-solving strategies and clear insight.`,
+      `${tokens.subject} ${tokens.isPlural ? 'transfer' : 'transfers'} theoretical models seamlessly to unfamiliar problems.`,
+      `${tokens.subject} ${tokens.isPlural ? 'justify' : 'justifies'} complex conclusions with clear, concise evidence.`
     ],
     '4': [
       `${tokens.subject} ${tokens.isPlural ? 'solve' : 'solves'} multi-step problems with conceptual clarity and analytical precision.`,
-      `${tokens.subject} ${tokens.isPlural ? 'exhibit' : 'exhibits'} strong analytical capability during classroom inquiries.`
+      `${tokens.subject} ${tokens.isPlural ? 'exhibit' : 'exhibits'} strong analytical capability during classroom inquiries.`,
+      `${tokens.subject} ${tokens.isPlural ? 'organize' : 'organizes'} multi-step reasoning logically and ${tokens.isPlural ? 'verify' : 'verifies'} solutions.`,
+      `${tokens.subject} ${tokens.isPlural ? 'connect' : 'connects'} theoretical principles to practical data accurately.`
     ],
     '3': [
       `${tokens.subject} ${tokens.isPlural ? 'solve' : 'solves'} standard multi-step problems reliably and ${tokens.isPlural ? 'explain' : 'explains'} reasoning clearly.`,
-      `${tokens.subject} ${tokens.isPlural ? 'show' : 'shows'} sound problem-solving skills during classroom tasks.`
+      `${tokens.subject} ${tokens.isPlural ? 'show' : 'shows'} sound problem-solving skills during classroom tasks.`,
+      `${tokens.subject} ${tokens.isPlural ? 'use' : 'uses'} established methods and ${tokens.isPlural ? 'interpret' : 'interprets'} data appropriately.`,
+      `${tokens.subject} ${tokens.isPlural ? 'present' : 'presents'} organized steps and clear foundational explanations.`
     ],
     '2': [
       `${tokens.subject} ${tokens.isPlural ? 'show' : 'shows'} developing consistency when applying standard procedures.`,
-      `With guided practice, ${tokens.subjectLower} ${tokens.isPlural ? 'interpret' : 'interprets'} core relationships with emerging accuracy.`
+      `With guided practice, ${tokens.subjectLower} ${tokens.isPlural ? 'interpret' : 'interprets'} core relationships with emerging accuracy.`,
+      `${tokens.subject} ${tokens.isPlural ? 'apply' : 'applies'} basic methods with growing confidence in structured tasks.`,
+      `Verifying intermediate steps will strengthen ${tokens.possessive} problem-solving accuracy.`
     ],
     '1': [
       `With ongoing guidance, ${tokens.subjectLower} ${tokens.isPlural ? 'are' : 'is'} developing familiarity with core formulas.`,
-      `${tokens.subject} ${tokens.isPlural ? 'require' : 'requires'} structured scaffolding to apply basic methods.`
+      `${tokens.subject} ${tokens.isPlural ? 'require' : 'requires'} structured scaffolding to apply basic methods.`,
+      `Guided templates help ${tokens.object} organize foundational problem steps.`,
+      `Regular check-ins support ${tokens.possessive} grasp of core terminology.`
     ],
     'R': [
       `${tokens.subject} ${tokens.isPlural ? 'require' : 'requires'} comprehensive guidance to interpret fundamental concepts.`,
-      `Extensive review of core material is necessary to build credit competencies.`
+      `Extensive review of core material is necessary to build credit competencies.`,
+      `Structured scaffolding is needed to engage with essential expectations.`,
+      `Focused review of foundational examples is essential at this stage.`
     ]
   }
 
@@ -706,31 +805,37 @@ function getNextStepPhrases(tokens, level, growthTaskName, variant = 0, options 
   const isLab = /\b(lab|inquiry|investigation|experiment)\b/i.test(lower)
 
   // Natural grammar-adapted modifiers:
-  // inTopic: used after solutions, justifications, extra help ("in kinematics", "during investigations in optics", "when analyzing motion")
+  // inTopic: used after solutions, justifications ("in kinematics", "when analyzing motion")
   let inTopic = ''
-  // relatedTopic: used after problems, practice, concepts ("related to kinematics", "when analyzing motion")
+  // relatedTopic: used after problems, practice, concepts ("related to kinematics", "focused on analyzing motion")
   let relatedTopic = ''
   // onTopic: used after practice, remediation ("on unit evaluations", "in kinematics", "when analyzing motion")
   let onTopic = ''
+  // focusedTopic: used after nouns like "extra help", "sample exercises", "tutorial support"
+  let focusedTopic = ''
 
   if (!isGeneric) {
     if (isGerund) {
       inTopic = ` when ${cleanTask}`
-      relatedTopic = ` when ${cleanTask}`
+      relatedTopic = ` focused on ${cleanTask}`
       onTopic = ` when ${cleanTask}`
+      focusedTopic = ` focused on ${cleanTask}`
     } else if (isEvaluation) {
       inTopic = ` on unit evaluations`
       relatedTopic = ` for upcoming evaluations on ${cleanTask}`
       onTopic = ` on upcoming evaluations on ${cleanTask}`
+      focusedTopic = ` for upcoming evaluations on ${cleanTask}`
     } else if (isLab) {
       inTopic = ` during investigations in ${cleanTask}`
       relatedTopic = ` during investigations in ${cleanTask}`
       onTopic = ` in laboratory investigations`
+      focusedTopic = ` during investigations in ${cleanTask}`
     } else {
       // Academic concept or topic noun phrase (e.g. "sustainable ecosystems", "kinematics", "quadratic relations")
       inTopic = ` in ${cleanTask}`
       relatedTopic = ` related to ${cleanTask}`
       onTopic = ` in ${cleanTask}`
+      focusedTopic = ` in ${cleanTask}`
     }
   }
 
@@ -740,7 +845,9 @@ function getNextStepPhrases(tokens, level, growthTaskName, variant = 0, options 
       `Moving forward, ${tokens.name} is encouraged to explore extension questions to deepen conceptual understanding.`,
       `To extend learning, ${tokens.subjectLower} should seek opportunities to articulate reasoning and justify complex conclusions${inTopic}.`,
       `Tackling novel, non-routine problems${relatedTopic} will further enhance ${tokens.possessive} critical insight.`,
-      `For ongoing growth, ${tokens.name} should continue challenging ${tokens.reflexive || tokens.object} with independent enrichment inquiries${inTopic}.`
+      `For ongoing growth, ${tokens.name} should continue challenging ${tokens.reflexive || tokens.object} with independent enrichment inquiries${inTopic}.`,
+      `Exploring open-ended applications${focusedTopic} will allow ${tokens.name} to stretch ${tokens.possessive} analytical thinking.`,
+      `Next, ${tokens.name} can deepen mastery by connecting theoretical models to unfamiliar scenarios${inTopic}.`
     ],
     '4': [
       isStem
@@ -748,7 +855,9 @@ function getNextStepPhrases(tokens, level, growthTaskName, variant = 0, options 
         : `Utilizing a structured planning organizer will support ${tokens.name} in organizing detailed responses${inTopic}.`,
       `To reach the highest standard, ${tokens.subjectLower} should continue refining written justifications and verifying ${isStem ? 'multi-step solutions' : 'supporting evidence'}${inTopic}.`,
       `Continuing to practice ${isStem ? 'multi-step problem solving' : 'analytical writing and synthesis'}${relatedTopic} will further consolidate understanding.`,
-      `For future assessments, ${tokens.name} should ensure thorough explanations${isStem ? ' and clear units' : ' and clear supporting details'} accompany ${isStem ? 'solutions' : 'responses'}${inTopic}.`
+      `For future assessments, ${tokens.name} should ensure thorough explanations${isStem ? ' and clear units' : ' and clear supporting details'} accompany ${isStem ? 'solutions' : 'responses'}${inTopic}.`,
+      `Double-checking assumptions and ${isStem ? 'intermediate calculations' : 'supporting evidence'}${focusedTopic} will help ${tokens.name} push toward Level 4+ consistency.`,
+      `Next, ${tokens.subjectLower} should focus on articulating full reasoning${inTopic} on complex, multi-part tasks.`
     ],
     '3': [
       isStem
@@ -756,59 +865,84 @@ function getNextStepPhrases(tokens, level, growthTaskName, variant = 0, options 
         : `Utilizing a step-by-step revision checklist will help ${tokens.name} organize ideas and supporting details${inTopic}.`,
       `Moving forward, ${tokens.name} should practice ${isStem ? 'multi-step problem solving' : 'structured analysis and review'}${relatedTopic}.`,
       `Using a structured reference checklist will support ${tokens.name} in verifying ${isStem ? 'intermediate steps' : 'key criteria'}${inTopic}.`,
-      `For continued improvement, consistent completion of practice ${isStem ? 'problems' : 'tasks'}${relatedTopic || ` related to ${cleanTask || 'core concepts'}`} is recommended.`
+      `For continued improvement, consistent completion of practice ${isStem ? 'problems' : 'tasks'}${relatedTopic || ` related to ${cleanTask || 'core concepts'}`} is recommended.`,
+      `Reviewing worked examples${focusedTopic} before unit evaluations will strengthen ${tokens.possessive} accuracy.`,
+      `Next, ${tokens.name} would benefit from checking ${isStem ? 'units, formulas, and final steps' : 'clarity and supporting details'}${inTopic}.`
     ],
     '2': [
       isStem
         ? `Utilizing a variable-mapping organizer and reference checklist will help ${tokens.name} organize solution steps${inTopic}.`
         : `Utilizing a structured graphic organizer and reference checklist will help ${tokens.name} organize responses${inTopic}.`,
       `With guided practice, ${tokens.subjectLower} should focus on applying structured ${isStem ? 'problem-solving frameworks and verifying calculations' : 'planning frameworks and checking key criteria'}${onTopic}.`,
-      `Using a step-by-step ${isStem ? 'problem-solving template' : 'planning template'} and seeking timely extra help${inTopic} will build confidence.`,
-      `Regular review of core concepts and completing sample exercises${relatedTopic} will support ${tokens.possessive} progress.`
+      `Using a step-by-step ${isStem ? 'problem-solving template' : 'planning template'} and seeking timely extra help${focusedTopic} will build confidence.`,
+      `Regular review of core concepts and completing sample exercises${relatedTopic} will support ${tokens.possessive} progress.`,
+      `Breaking multi-part tasks into smaller checkpoints${focusedTopic} will help ${tokens.name} build steadier accuracy.`,
+      `Seeking early feedback on practice ${isStem ? 'problems' : 'drafts'}${focusedTopic} is recommended to close conceptual gaps.`
     ],
     '1': [
-      `Utilizing a structured step-by-step organizer and attending regular extra help will support ${tokens.name}${inTopic}.`,
+      `Utilizing a structured step-by-step organizer and attending regular extra help${focusedTopic} will support ${tokens.name}.`,
       `To develop consistency, ${tokens.subjectLower} should use guided templates to organize foundational ${isStem ? 'procedures' : 'concepts'}${inTopic}.`,
-      `Regular review of core concept notes and guided ${isStem ? 'calculation practice' : 'skill practice'}${inTopic} will support ongoing progress.`,
-      `Consistent completion of practice tasks and guided review${relatedTopic} will help ${tokens.name} build required competencies.`
+      `Regular review of core concept notes and guided ${isStem ? 'calculation practice' : 'skill practice'}${focusedTopic} will support ongoing progress.`,
+      `Consistent completion of practice tasks and guided review${relatedTopic} will help ${tokens.name} build required competencies.`,
+      `Working through foundational examples with teacher feedback${focusedTopic} will help ${tokens.name} gain confidence.`,
+      `Attending targeted tutorial sessions${focusedTopic} is strongly encouraged to strengthen essential skills.`
     ],
     'R': [
-      `Completing missing summative work and reviewing core concepts${inTopic} are essential to build toward credit expectations.`,
-      `Consistent completion of foundational practice and attending extra help${inTopic} will support progress toward the provincial standard.`,
-      `Reviewing core expectations and submitting outstanding evaluations${inTopic} will help ${tokens.name} work toward credit completion.`,
-      `Utilizing guided review materials and attending regular tutorial support${inTopic} will help ${tokens.name} strengthen essential competencies.`
+      `Completing missing summative work and reviewing core concepts${focusedTopic} are essential to build toward credit expectations.`,
+      `Consistent completion of foundational practice and attending extra help${focusedTopic} will support progress toward the provincial standard.`,
+      `Reviewing core expectations and submitting outstanding evaluations${focusedTopic} will help ${tokens.name} work toward credit completion.`,
+      `Utilizing guided review materials and attending regular tutorial support${focusedTopic} will help ${tokens.name} strengthen essential competencies.`,
+      `Prioritizing overdue unit tasks and seeking structured extra help${focusedTopic} will be critical for ${tokens.possessive} progress.`,
+      `Targeted remediation on foundational skills${focusedTopic} is needed to move toward the provincial standard.`
     ]
   }
 
   const compactTermTemplates = {
     '4+': [
-      `Moving forward, ${tokens.name} is encouraged to tackle extension questions${inTopic}.`,
-      `To extend learning, ${tokens.subjectLower} should seek opportunities to justify complex conclusions${inTopic}.`
+      `Moving forward, ${tokens.name} is encouraged to tackle extension questions${focusedTopic}.`,
+      `To extend learning, ${tokens.subjectLower} should seek opportunities to justify complex conclusions${inTopic}.`,
+      `Exploring non-routine problems${relatedTopic} will further sharpen ${tokens.possessive} critical insight.`,
+      `Next, ${tokens.name} can deepen mastery through independent enrichment${focusedTopic}.`
     ],
     '4': [
       isStem
         ? `Utilizing a structured template will support ${tokens.name} in organizing multi-step solutions${inTopic}.`
         : `Utilizing a structured organizer will support ${tokens.name} in organizing detailed responses${inTopic}.`,
-      `To reach the highest level, ${tokens.subjectLower} should refine written justifications${isStem ? ' and verify solutions' : ''}${inTopic}.`
+      `To reach the highest level, ${tokens.subjectLower} should refine written justifications${isStem ? ' and verify solutions' : ''}${inTopic}.`,
+      `Practicing multi-part ${isStem ? 'calculations' : 'responses'}${relatedTopic} will further consolidate understanding.`,
+      `Verifying units and full reasoning${inTopic} will help ${tokens.name} reach Level 4+ consistency.`,
+      `Double-checking assumptions${focusedTopic} will strengthen ${tokens.possessive} analytical precision.`,
+      `Next, ${tokens.subjectLower} can push toward Level 4+ by justifying complex steps${inTopic}.`
     ],
     '3': [
       isStem
         ? `Utilizing a step-by-step problem ledger will help ${tokens.name} verify intermediate calculations${inTopic}.`
         : `Utilizing a structured checklist will help ${tokens.name} refine written responses${inTopic}.`,
-      `Moving forward, ${tokens.name} should complete regular practice ${isStem ? 'problems' : 'tasks'}${relatedTopic}.`
+      `Moving forward, ${tokens.name} should complete regular practice ${isStem ? 'problems' : 'tasks'}${relatedTopic}.`,
+      `Reviewing worked examples${focusedTopic} will strengthen ${tokens.possessive} evaluation accuracy.`,
+      `Using a reference checklist${inTopic} will help ${tokens.name} verify key steps reliably.`,
+      `Consistent practice${relatedTopic} will build stronger fluency before evaluations.`,
+      `Next, ${tokens.name} should check ${isStem ? 'formulas, units, and final steps' : 'supporting evidence'}${inTopic}.`
     ],
     '2': [
       `Focusing on structured ${isStem ? 'problem-solving frameworks' : 'planning frameworks'} and practicing sample exercises${relatedTopic} will support ${tokens.possessive} progress.`,
-      `Using a structured reference checklist and seeking timely extra help${inTopic} will build confidence.`,
-      `Regular practice and verifying ${isStem ? 'intermediate steps' : 'key details'}${inTopic} will support ${tokens.possessive} progress.`
+      `Using a structured reference checklist and seeking timely extra help${focusedTopic} will build confidence.`,
+      `Regular practice and verifying ${isStem ? 'intermediate steps' : 'key details'}${inTopic} will support ${tokens.possessive} progress.`,
+      `Breaking tasks into guided checkpoints${focusedTopic} will strengthen ${tokens.possessive} consistency.`,
+      `Reviewing core notes and sample ${isStem ? 'problems' : 'responses'}${focusedTopic} will build steadier accuracy.`,
+      `Seeking early feedback on practice work${focusedTopic} will help close conceptual gaps.`
     ],
     '1': [
-      `Utilizing guided ${isStem ? 'problem templates' : 'review templates'} and attending regular extra help${inTopic} will support ${tokens.name}.`,
-      `Reviewing core concepts and practicing foundational ${isStem ? 'procedures' : 'skills'}${relatedTopic} will build consistency.`
+      `Utilizing guided ${isStem ? 'problem templates' : 'review templates'} and attending regular extra help${focusedTopic} will support ${tokens.name}.`,
+      `Reviewing core concepts and practicing foundational ${isStem ? 'procedures' : 'skills'}${relatedTopic} will build consistency.`,
+      `Working through guided examples${focusedTopic} will help ${tokens.name} build core skills.`,
+      `Attending tutorial sessions${focusedTopic} is encouraged to strengthen foundational understanding.`
     ],
     'R': [
-      `Completing missing summative work and reviewing core concepts${inTopic} will support progress toward credit expectations.`,
-      `Targeted practice and attending extra help${inTopic} will support ${tokens.name} toward credit completion.`
+      `Completing missing summative work and reviewing core concepts${focusedTopic} will support progress toward credit expectations.`,
+      `Targeted practice and attending extra help${focusedTopic} will support ${tokens.name} toward credit completion.`,
+      `Submitting overdue evaluations and reviewing basics${focusedTopic} are essential next steps.`,
+      `Targeted remediation${focusedTopic} is needed to build toward the provincial standard.`
     ]
   }
 
@@ -819,31 +953,36 @@ function getNextStepPhrases(tokens, level, growthTaskName, variant = 0, options 
       `Moving forward into senior coursework, ${tokens.name} is encouraged to continue exploring extension questions and independent inquiry.`,
       `As ${tokens.name} advances to future studies, maintaining this high standard of critical insight and theoretical justification will ensure continued success.`,
       `In subsequent senior coursework, ${tokens.name} is well prepared to tackle rigorous theoretical challenges and complex problem-solving inquiries.`,
-      `For ongoing academic growth, ${tokens.name} should continue challenging ${tokens.reflexive || tokens.object} with non-routine problem solving and conceptual synthesis.`
+      `For ongoing academic growth, ${tokens.name} should continue challenging ${tokens.reflexive || tokens.object} with non-routine problem solving and conceptual synthesis.`,
+      `Carrying this strong analytical curiosity into future courses will serve ${tokens.name} well in senior studies.`
     ],
     '4': [
       `Moving forward into senior courses, ${tokens.name} should continue utilizing structured problem-solving frameworks to tackle complex investigations.`,
       `To excel in subsequent studies, ${tokens.subjectLower} should maintain thorough written justifications and clear unit communication.`,
       `As ${tokens.name} progresses to higher-level coursework, practicing multi-step problem solving will sustain ${tokens.possessive} high achievement.`,
-      `In future academic studies, ${tokens.name} is encouraged to sustain this rigorous approach to inquiry and quantitative problem solving.`
+      `In future academic studies, ${tokens.name} is encouraged to sustain this rigorous approach to inquiry and quantitative problem solving.`,
+      `Continuing to verify multi-step reasoning will support ${tokens.name}'s transition into senior-level expectations.`
     ],
     '3': [
       `Moving forward into senior courses, ${tokens.name} is encouraged to review core problem-solving templates and verify multi-step calculations.`,
       `In future studies, maintaining structured review and practicing multi-step problem solving will support ${tokens.possessive} progress.`,
       `Moving forward into subsequent studies, consistent application of structured methods will reinforce ${tokens.name}'s ongoing success.`,
-      `For future academic studies, ${tokens.name} should continue consolidating core concepts and seeking early clarification on complex topics.`
+      `For future academic studies, ${tokens.name} should continue consolidating core concepts and seeking early clarification on complex topics.`,
+      `Building consistent review habits will serve ${tokens.name} well in subsequent studies.`
     ],
     '2': [
       `Prior to enrolling in subsequent courses, ${tokens.name} is encouraged to review foundational concepts and practice multi-step calculations independently.`,
       `In future coursework, establishing structured review routines and seeking timely clarification on challenging topics will build confidence.`,
       `Consolidating core procedures and formula applications will be key as ${tokens.name} transitions into subsequent academic studies.`,
-      `To ensure success in future courses, ${tokens.name} would benefit from reinforcing foundational problem-solving strategies.`
+      `To ensure success in future courses, ${tokens.name} would benefit from reinforcing foundational problem-solving strategies.`,
+      `Regularly revisiting core notes and seeking early tutorial support will help ${tokens.name} succeed in next year's coursework.`
     ],
     '1': [
       `Prior to advancing to subsequent courses in this subject, ${tokens.name} requires focused review of core curriculum expectations.`,
       `To prepare for future academic pathways, ${tokens.subjectLower} should review foundational concepts and strengthen basic problem-solving procedures.`,
       `Consistent practice with core formulas and terminology is strongly recommended before advancing to higher-level studies.`,
-      `Seeking additional tutorial support to solidify essential concepts will be critical for ${tokens.name}'s future coursework.`
+      `Seeking additional tutorial support to solidify essential concepts will be critical for ${tokens.name}'s future coursework.`,
+      `A structured review of foundational skills over the break will help ${tokens.name} prepare for upcoming pathways.`
     ],
     'R': [
       `To work toward credit recovery, ${tokens.name} must consult with guidance to discuss remediation or summer school options.`,
@@ -855,24 +994,29 @@ function getNextStepPhrases(tokens, level, growthTaskName, variant = 0, options 
 
   const compactFinalTemplates = {
     '4+': [
-      `In senior coursework, ${tokens.name} is encouraged to explore extension questions${inTopic}.`,
-      `As ${tokens.name} advances to future studies, maintaining deep insight${inTopic} will ensure success.`
+      `In senior coursework, ${tokens.name} is encouraged to explore extension questions${focusedTopic}.`,
+      `As ${tokens.name} advances to future studies, maintaining deep insight${inTopic} will ensure success.`,
+      `Carrying this strong inquiry mindset into senior courses will ensure continued excellence.`
     ],
     '4': [
       `Moving forward into senior courses, ${tokens.name} should continue using structured problem frameworks${inTopic}.`,
-      `In future studies, practicing multi-step problem solving${relatedTopic} will sustain high achievement.`
+      `In future studies, practicing multi-step problem solving${relatedTopic} will sustain high achievement.`,
+      `Maintaining clear justifications and careful verification will support ${tokens.name} in senior courses.`
     ],
     '3': [
       `To prepare for subsequent courses, ${tokens.name} should review core problem templates${inTopic}.`,
-      `In future coursework, consistent practice${relatedTopic} will reinforce ${tokens.possessive} success.`
+      `In future coursework, consistent practice${relatedTopic} will reinforce ${tokens.possessive} success.`,
+      `Building steady review habits will support ${tokens.name}'s transition to subsequent studies.`
     ],
     '2': [
       `Prior to subsequent courses, ${tokens.name} is encouraged to review foundational concepts${inTopic} independently.`,
-      `In future studies, establishing consistent review routines${inTopic} will build confidence.`
+      `In future studies, establishing consistent review routines${inTopic} will build confidence.`,
+      `Seeking early clarification and practicing core procedures will aid ${tokens.name} in future courses.`
     ],
     '1': [
       `Prior to advancing to subsequent courses, ${tokens.name} requires focused review${inTopic}.`,
-      `Consistent practice${relatedTopic} is strongly recommended before advancing to subsequent studies.`
+      `Consistent practice${relatedTopic} is strongly recommended before advancing to subsequent studies.`,
+      `Solidifying foundational skills with tutorial support will be vital for future coursework.`
     ],
     'R': [
       `To work toward credit recovery, ${tokens.name} should consult with guidance regarding remediation in ${cleanTask || 'core curriculum expectations'}.`,
@@ -1566,7 +1710,7 @@ export function hasVerbClash(s1, s2) {
 }
 
 /**
- * Computes a deterministic, well-dispersed variant seed (0..63) for a student so that
+ * Computes a deterministic, well-dispersed variant seed (0..511) for a student so that
  * multiple students in the same class with similar grades do not receive identical phrasing.
  *
  * @param {Object} [student={}]
@@ -1587,13 +1731,13 @@ export function computeStudentVariantSeed(student = {}, contextKey = '', rosterI
       h ^= cleanCtx.charCodeAt(i)
       h = Math.imul(h, 16777619) >>> 0
     }
-    contextOffset = h % 64
+    contextOffset = h % 512
   }
 
-  // If roster index is known, step by coprime stride (5 is coprime to 64) so adjacent
+  // If roster index is known, step by coprime stride (5 is coprime to 512) so adjacent
   // students in the class list always vary across all 3 sentence positions without colliding
   if (typeof rosterIndex === 'number' && rosterIndex >= 0) {
-    return (rosterIndex * 5 + contextOffset) % 64
+    return (rosterIndex * 5 + contextOffset) % 512
   }
 
   const idStr = String(
@@ -1603,7 +1747,7 @@ export function computeStudentVariantSeed(student = {}, contextKey = '', rosterI
   ).trim()
 
   if (!idStr || idStr === '__') {
-    return contextOffset % 64
+    return contextOffset % 512
   }
 
   let hash = 2166136261
@@ -1612,7 +1756,7 @@ export function computeStudentVariantSeed(student = {}, contextKey = '', rosterI
     hash = Math.imul(hash, 16777619) >>> 0
   }
 
-  return (hash + contextOffset) % 64
+  return (hash + contextOffset) % 512
 }
 
 /**
@@ -1709,16 +1853,27 @@ export function generateReportComment({
   const resolvedIsFinal = Boolean(isFinal || reportingPeriod === 'Final')
   const resolvedCourseCode = courseCode || gradeData.courseCode || student.courseCode || ''
 
-  // 1. Determine level & pronoun tokens
+  // 1. Determine level, pronoun tokens, and deterministic student variant seed
   const overallLevel = getAchievementLevel(gradeData.level || gradeData.percentage)
   const tokens = getPronounTokens(student, pronounMode)
 
-  // 2. Resolve specific evidence tasks & calibrate levels
+  let seedNum = 0
+  if (typeof variantSeed === 'number' && !isNaN(variantSeed)) {
+    seedNum = Math.abs(Math.floor(variantSeed))
+  } else if (typeof variantSeed === 'string' && variantSeed.length > 0) {
+    seedNum = computeStudentVariantSeed({ studentId: variantSeed }, reportingPeriod)
+  } else if (student?.studentId || student?.id) {
+    seedNum = computeStudentVariantSeed(student, reportingPeriod)
+  }
+
+  // 2. Resolve specific evidence tasks & calibrate levels (varying competency phrasing per student seed)
   const autoEvidence = extractEvidenceFromGrades(gradeData, resolvedCourseCode)
   const rawStrength = featuredStrength || autoEvidence.strengthTask || ''
   const rawGrowth = featuredNextStep || autoEvidence.growthTask || ''
-  const strengthTask = (resolvedCourseCode ? mapAssessmentToCompetency(rawStrength, resolvedCourseCode) : '') || rawStrength
-  const growthTask = (resolvedCourseCode ? mapAssessmentToCompetency(rawGrowth, resolvedCourseCode) : '') || rawGrowth
+  const strengthCompVariant = seedNum
+  const growthCompVariant = seedNum === 0 ? 0 : seedNum + 1
+  const strengthTask = (resolvedCourseCode ? mapAssessmentToCompetency(rawStrength, resolvedCourseCode, '', strengthCompVariant) : '') || rawStrength
+  const growthTask = (resolvedCourseCode ? mapAssessmentToCompetency(rawGrowth, resolvedCourseCode, '', growthCompVariant) : '') || rawGrowth
 
   // Resolve score for manually selected assessment if applicable
   const findSelectedScore = (selectedLabel) => {
@@ -1758,25 +1913,15 @@ export function generateReportComment({
     profileFocus: resolvedProfileFocus
   })
 
-  // Deterministic variant index:
-  // If variantSeed is explicitly supplied, honor it; otherwise if student has a studentId,
-  // automatically derive a unique student seed so two students never default to identical phrasing.
-  let seedNum = 0
-  if (typeof variantSeed === 'number' && !isNaN(variantSeed)) {
-    seedNum = Math.abs(Math.floor(variantSeed))
-  } else if (typeof variantSeed === 'string' && variantSeed.length > 0) {
-    seedNum = computeStudentVariantSeed({ studentId: variantSeed }, reportingPeriod)
-  } else if (student?.studentId || student?.id) {
-    seedNum = computeStudentVariantSeed(student, reportingPeriod)
-  }
-
-  // Mixed-radix sentence indices:
-  // - For seedNum 0..3, Math.floor(seedNum / 4) === 0 and Math.floor(seedNum / 16) === 0,
+  // Mixed-radix sentence indices across expanded 6-8 template pools:
+  // - For seedNum 0..7, Math.floor(seedNum / 8) === 0 and Math.floor(seedNum / 64) === 0,
   //   preserving exact (seedNum, seedNum + 1, seedNum + 2) offsets.
-  // - Across seedNum 0..63, visits all 4 x 4 x 4 = 64 unique 3-sentence combinations!
+  // - Across seedNum 0..511, visits up to 8 x 8 x 8 = 512 unique 3-sentence combinations!
   const s1Base = seedNum
-  const s2Base = seedNum + Math.floor(seedNum / 4) + 1
-  const s3Base = seedNum + Math.floor(seedNum / 4) + Math.floor(seedNum / 16) + 2
+  const s2Base = seedNum + Math.floor(seedNum / 8) + 1
+  const s3Base = seedNum < 4
+    ? seedNum + 2
+    : seedNum * 5 + Math.floor(seedNum / 8) + Math.floor(seedNum / 64) + 2
 
   // Helper generator functions for standard and compact sentences
   const getS1 = (compact, offset = 0) => getStrengthPhrases(tokens, strengthLevel, strengthTask, s1Base + offset, { compact, courseCode: resolvedCourseCode, overallLevelKey: overallLevel.key })

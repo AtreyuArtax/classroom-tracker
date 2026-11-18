@@ -125,6 +125,7 @@ export function extractCompetenciesFromAssessment(assessment, rawCourseCode) {
       scored.push({
         label: comp.label,
         phrase: comp.phrase,
+        phraseVariants: comp.phraseVariants,
         score
       })
     }
@@ -264,20 +265,29 @@ export function condenseCurriculumExpectation(rawInput, rawCourseCode = '') {
  * Uses word-boundary matching and checks descriptions when available.
  * If no keywords match, falls back to the cleaned task title.
  */
-export function mapAssessmentToCompetency(rawTitle, rawCourseCode, rawDescription = '') {
+function pickCompetencyPhrase(comp, variantIndex = 0) {
+  if (!comp) return ''
+  const idx = Math.abs(Math.floor(Number(variantIndex) || 0))
+  if (idx > 0 && Array.isArray(comp.phraseVariants) && comp.phraseVariants.length > 0) {
+    return comp.phraseVariants[idx % comp.phraseVariants.length] || comp.phrase
+  }
+  return comp.phrase
+}
+
+export function mapAssessmentToCompetency(rawTitle, rawCourseCode, rawDescription = '', variantIndex = 0) {
   if (!rawTitle) return ''
   const trimmed = String(rawTitle).trim()
   if (!trimmed) return ''
 
   // 1. Direct match check: did the user already pick a competency phrase or label?
   const competencies = getCourseCompetencies(rawCourseCode)
-  const existingComp = competencies.find(c => c.phrase === trimmed || c.label === trimmed)
-  if (existingComp) return existingComp.phrase
+  const existingComp = competencies.find(c => c.phrase === trimmed || c.label === trimmed || (Array.isArray(c.phraseVariants) && c.phraseVariants.includes(trimmed)))
+  if (existingComp) return pickCompetencyPhrase(existingComp, variantIndex)
 
   // Also check if trimmed is already a known competency phrase across all courses
   for (const list of Object.values(COURSE_COMPETENCIES)) {
-    const directMatch = list.find(c => c.phrase === trimmed || c.label === trimmed)
-    if (directMatch) return directMatch.phrase
+    const directMatch = list.find(c => c.phrase === trimmed || c.label === trimmed || (Array.isArray(c.phraseVariants) && c.phraseVariants.includes(trimmed)))
+    if (directMatch) return pickCompetencyPhrase(directMatch, variantIndex)
   }
 
   // 2. Keyword match with word-boundaries across title and description
@@ -287,7 +297,7 @@ export function mapAssessmentToCompetency(rawTitle, rawCourseCode, rawDescriptio
   )
 
   if (matches.length > 0) {
-    return matches[0].phrase
+    return pickCompetencyPhrase(matches[0], variantIndex)
   }
 
   // 3. Fallback: Strip common evaluation & administrative wrappers ("Unit 1 - ", "Test", "Quiz", "Lab", "Submission")
