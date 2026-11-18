@@ -315,8 +315,14 @@ const props = defineProps({
   sidebarStudents: { type: Array, default: () => [] }
 })
 
+const SELECTED_TERM_STORAGE_KEY = 'learning_skills_selected_term'
 const terms = LEARNING_SKILL_TERMS
-const selectedTerm = ref('Progress Report')
+const storedTerm = localStorage.getItem(SELECTED_TERM_STORAGE_KEY)
+const selectedTerm = ref(terms.includes(storedTerm) ? storedTerm : 'Progress Report')
+
+watch(selectedTerm, (term) => {
+  localStorage.setItem(SELECTED_TERM_STORAGE_KEY, term)
+})
 const learningSkillsMap = ref(new Map())
 const showImportModal = ref(false)
 const showGuideModal = ref(false)

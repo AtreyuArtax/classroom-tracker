@@ -369,7 +369,9 @@ watch([activeClass, activeSubjectId], async ([newClass, newSub], [oldClass, oldS
       sidebarClassId.value = newClass.classId
       dossier.clearStudent()
       dossier.loadSidebarClass(newClass.classId)
-      rightMode.value = 'overview'
+      if (rightMode.value === 'dossier') {
+        rightMode.value = 'overview'
+      }
     }
     if (classChanged || subjectChanged) {
       await runReport(true)
