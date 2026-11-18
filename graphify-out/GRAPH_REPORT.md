@@ -1,16 +1,16 @@
 # Graph Report - classroom-tracker  (2026-11-18)
 
 ## Corpus Check
-- 383 files · ~727,840 words
+- 383 files · ~728,106 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 2815 nodes · 4896 edges · 224 communities (206 shown, 18 thin omitted)
+- 2815 nodes · 4896 edges · 225 communities (206 shown, 19 thin omitted)
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 10 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `bf73ad6c`
+- Built from commit: `8395ece1`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -162,6 +162,7 @@
 - [[_COMMUNITY_Community 211|Community 211]]
 - [[_COMMUNITY_Community 212|Community 212]]
 - [[_COMMUNITY_Community 213|Community 213]]
+- [[_COMMUNITY_Community 220|Community 220]]
 - [[_COMMUNITY_Community 222|Community 222]]
 - [[_COMMUNITY_Community 223|Community 223]]
 
@@ -192,7 +193,7 @@
 ## Import Cycles
 - None detected.
 
-## Communities (224 total, 18 thin omitted)
+## Communities (225 total, 19 thin omitted)
 
 ### Community 0 - "Community 0"
 Cohesion: 0.04
@@ -215,8 +216,8 @@ Cohesion: 0.08
 Nodes (31): BaseHTTPRequestHandler, Path, consume_scan(), _create_tray_icon_image(), get_app_dir(), keyboard_reader(), load_config(), log() (+23 more)
 
 ### Community 5 - "Community 5"
-Cohesion: 0.06
-Nodes (20): addRoute(), CacheFirst, cacheMatchIgnoreParams(), cacheWillUpdate(), canConstructResponseFromBodyStream(), copyResponse(), Deferred, executeQuotaErrorCallbacks() (+12 more)
+Cohesion: 0.07
+Nodes (19): addRoute(), CacheFirst, cacheMatchIgnoreParams(), cacheWillUpdate(), canConstructResponseFromBodyStream(), copyResponse(), Deferred, executeQuotaErrorCallbacks() (+11 more)
 
 ### Community 6 - "Community 6"
 Cohesion: 0.17
@@ -764,7 +765,7 @@ Nodes (3): copyAndNext(), copyCurrentComment(), selectStudent()
 ## Knowledge Gaps
 - **1179 isolated node(s):** `scanBuffer`, `manifest_version`, `name`, `version`, `description` (+1174 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **18 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **19 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_

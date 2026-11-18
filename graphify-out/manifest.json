@@ -390,8 +390,8 @@
     "semantic_hash": ""
   },
   "src/components/GradesGrid.vue": {
-    "mtime": 1792677531.111389,
-    "ast_hash": "d2014c281b1119f4e75d9b21bf73dd95",
+    "mtime": 1795013091.805309,
+    "ast_hash": "f9ab52fa1b13155dfc3c835093bb8936",
     "semantic_hash": ""
   },
   "src/components/dossier/StudentAcademicsTab.vue": {

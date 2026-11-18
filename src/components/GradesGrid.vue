@@ -63,6 +63,50 @@
       </div>
     </div>
 
+    <!-- Orphaned Category Warning Banner -->
+    <div
+      v-if="orphanedCategoryAssessments.length > 0 && !isOrphanBannerDismissed"
+      class="grades__orphan-banner"
+      role="alert"
+    >
+      <div class="grades__orphan-banner-info">
+        <AlertTriangle :size="16" class="grades__orphan-banner-icon" />
+        <span>
+          <strong>{{ orphanedCategoryAssessments.length }}</strong>
+          {{ orphanedCategoryAssessments.length === 1 ? 'assessment is' : 'assessments are' }}
+          not linked to an active category and {{ orphanedCategoryAssessments.length === 1 ? 'is' : 'are' }} excluded from Overall averages.
+        </span>
+      </div>
+      <div class="grades__orphan-banner-actions">
+        <template v-if="activeCategories.length > 0">
+          <label class="grades__orphan-banner-label">
+            Assign all to:
+            <select v-model="bulkReassignCategoryId" class="grades__orphan-banner-select" :disabled="isReassigningOrphans">
+              <option v-for="cat in activeCategories" :key="cat.categoryId" :value="cat.categoryId">
+                {{ cat.name }} ({{ cat.weight }}%)
+              </option>
+            </select>
+          </label>
+          <button
+            type="button"
+            class="grades__orphan-banner-btn"
+            :disabled="!bulkReassignCategoryId || isReassigningOrphans"
+            @click="reassignOrphanedAssessments"
+          >
+            {{ isReassigningOrphans ? 'Applying...' : 'Apply' }}
+          </button>
+        </template>
+        <button
+          type="button"
+          class="grades__orphan-banner-close"
+          title="Dismiss warning"
+          @click="isOrphanBannerDismissed = true"
+        >
+          <X :size="14" />
+        </button>
+      </div>
+    </div>
+
     <!-- Scrollable Table Wrapper -->
     <div class="grades__grid-wrapper">
       <table class="grades__grid">
@@ -129,7 +173,16 @@
                     <template v-else>
                       <span class="grades__assessment-pts">{{ a.totalPoints }} pts</span>
                       <span class="grades__assessment-sep">·</span>
-                      <span v-if="a.categoryId" class="grades__assessment-cat-tag">
+                      <button
+                        v-if="isOrphanedCategoryAssessment(a)"
+                        type="button"
+                        class="grades__orphan-cat-pill"
+                        title="This assessment's category no longer exists in Setup, so it is excluded from Overall averages. Click to reassign."
+                        @click.stop="$emit('edit-assessment', a)"
+                      >
+                        Missing Category
+                      </button>
+                      <span v-else-if="a.categoryId" class="grades__assessment-cat-tag">
                         {{ getCategoryName(a.categoryId) }}
                       </span>
                       <span v-else-if="a.unitId" class="grades__assessment-unit">{{ cleanUnitPillName(getUnitName(a.unitId)) }}</span>
@@ -498,6 +551,7 @@ import {
   adjustStudentGrade,
   undoStudentGradeAdjustment,
   deleteAssessment,
+  editAssessment,
   toggleAssessmentExcluded,
   getAssessmentUsage,
   assessmentStats,
@@ -532,7 +586,7 @@ import { cleanUnitName, formatUnitPillLabel } from '../composables/useElementary
 import { getAssessmentPercentage, getGradeSmartBadge } from '../utils/gradeCalc.js'
 import { formatLocalDisplay } from '../utils/dates.js'
 import { 
-  Plus, Pencil, XCircle, AlertCircle, Trash2, X, MoreVertical, 
+  Plus, Pencil, XCircle, AlertCircle, AlertTriangle, Trash2, X, MoreVertical, 
   ChevronUp, ChevronDown, Copy, Calendar, RotateCcw, BarChart2, NotebookPen,
   Asterisk, Check, Type, RefreshCw, Eye, EyeOff
 } from 'lucide-vue-next'
@@ -788,10 +842,61 @@ function getCategoryColor(categoryId) {
 }
 
 function getCategoryName(categoryId) {
-  const eff = getEffectiveClassRecord(activeClassRecord.value, activeSubjectId.value, selectedCourseFilter.value)
-  const cats = eff?.gradebookCategories || activeClassRecord.value?.gradebookCategories
-  if (!categoryId || !cats) return ''
+  const cats = activeCategories.value
+  if (!categoryId || !cats.length) return ''
   return cats.find(c => c.categoryId === categoryId)?.name ?? ''
+}
+
+const activeCategories = computed(() => {
+  const eff = getEffectiveClassRecord(activeClassRecord.value, activeSubjectId.value, selectedCourseFilter.value)
+  return eff?.gradebookCategories || activeClassRecord.value?.gradebookCategories || []
+})
+
+const activeCategoryIdSet = computed(() => {
+  return new Set(activeCategories.value.map(c => String(c.categoryId)))
+})
+
+function isOrphanedCategoryAssessment(a) {
+  if (!a || isSBAR.value) return false
+  if (a.purpose === 'administrative' || a.excluded || a.target === 'individual') return false
+  if (a.categoryId === 'sbar_general') return false
+  if (!isAssessmentInSubCohort(a)) return false
+  return !a.categoryId || !activeCategoryIdSet.value.has(String(a.categoryId))
+}
+
+const orphanedCategoryAssessments = computed(() => {
+  return assessments.value.filter(isOrphanedCategoryAssessment)
+})
+
+const isOrphanBannerDismissed = ref(false)
+const bulkReassignCategoryId = ref('')
+const isReassigningOrphans = ref(false)
+
+watch(() => activeClassRecord.value?.classId, () => {
+  isOrphanBannerDismissed.value = false
+})
+
+watch(activeCategories, (cats) => {
+  if (!cats.length) {
+    bulkReassignCategoryId.value = ''
+  } else if (!cats.some(c => c.categoryId === bulkReassignCategoryId.value)) {
+    bulkReassignCategoryId.value = cats[0].categoryId
+  }
+}, { immediate: true })
+
+async function reassignOrphanedAssessments() {
+  if (!bulkReassignCategoryId.value || isReassigningOrphans.value) return
+  const targets = orphanedCategoryAssessments.value
+  if (!targets.length) return
+
+  isReassigningOrphans.value = true
+  try {
+    for (const a of targets) {
+      await editAssessment(a.assessmentId, { categoryId: bulkReassignCategoryId.value })
+    }
+  } finally {
+    isReassigningOrphans.value = false
+  }
 }
 
 const cleanUnitPillName = cleanUnitName

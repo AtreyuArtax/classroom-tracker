@@ -60,7 +60,7 @@
       "source_location": "L542",
       "_origin": "ast",
       "id": "dev_dist_workbox_ca84f546_route",
-      "community": 5,
+      "community": 220,
       "norm_label": "route"
     },
     {
@@ -70,7 +70,7 @@
       "source_location": "L554",
       "_origin": "ast",
       "id": "dev_dist_workbox_ca84f546_route_constructor",
-      "community": 5,
+      "community": 220,
       "norm_label": ".constructor()"
     },
     {
@@ -80,7 +80,7 @@
       "source_location": "L579",
       "_origin": "ast",
       "id": "dev_dist_workbox_ca84f546_route_setcatchhandler",
-      "community": 5,
+      "community": 220,
       "norm_label": ".setcatchhandler()"
     },
     {
@@ -3667,7 +3667,7 @@
       "label": "tieBreakName()",
       "file_type": "code",
       "source_file": "src/components/GradesGrid.vue",
-      "source_location": "L929",
+      "source_location": "L1034",
       "_origin": "ast",
       "id": "components_gradesgrid_tiebreakname",
       "community": 83,
@@ -67814,9 +67814,9 @@
       "source_file": "src/test_local_llm_service.js",
       "source_location": "L8",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "src_test_local_llm_service",
-      "target": "utils_localllmservice_computerecommendedmodel",
-      "confidence_score": 1.0
+      "target": "utils_localllmservice_computerecommendedmodel"
     },
     {
       "relation": "imports",
@@ -77123,9 +77123,9 @@
       "source_file": "src/utils/localLlmService.js",
       "source_location": "L186",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "utils_localllmservice",
-      "target": "utils_localllmservice_computerecommendedmodel",
-      "confidence_score": 1.0
+      "target": "utils_localllmservice_computerecommendedmodel"
     },
     {
       "relation": "contains",
@@ -77254,9 +77254,9 @@
       "source_file": "src/utils/localLlmService.js",
       "source_location": "L160",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "utils_localllmservice_detecthardwarecapabilities",
-      "target": "utils_localllmservice_computerecommendedmodel",
-      "confidence_score": 1.0
+      "target": "utils_localllmservice_computerecommendedmodel"
     },
     {
       "relation": "calls",
@@ -79507,5 +79507,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "bf73ad6cd99d37543baf73e03125ced8724241a9"
+  "built_at_commit": "8395ece1eeb227c4dc97cb7a656bb88d557d08ea"
 }
