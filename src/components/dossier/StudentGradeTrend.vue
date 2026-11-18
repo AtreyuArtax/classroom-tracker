@@ -88,8 +88,9 @@ const history = computed(() => {
       // Exclude formative and administrative tasks from academic grade trends
       if (a.isFormative || a.purpose === 'formative' || a.purpose === 'administrative') return false
 
-      const isSBARTask = a.categoryId === 'sbar_general' || (a.expectationIds && a.expectationIds.length > 0) || a.expectationId != null || a.isSbar || a.gradingFramework === 'sbar'
-      if (isSBAR ? !isSBARTask : isSBARTask) return false
+      const isSBARTask = a.categoryId === 'sbar_general' || a.isSbar || a.gradingFramework === 'sbar'
+      const isSBAREligible = isSBARTask || (a.expectationIds && a.expectationIds.length > 0) || a.expectationId != null
+      if (isSBAR ? !isSBAREligible : isSBARTask) return false
 
       // In traditional framework, exclude assessments belonging to 0%-weighted categories
       if (!isSBAR && categories.length > 0) {
@@ -125,7 +126,7 @@ const history = computed(() => {
         const grade = props.gradeMap[a.assessmentId]?.[props.studentId]
         if (!grade || grade.excluded || a.isFormative || a.purpose === 'formative' || a.purpose === 'administrative') continue
 
-        const isSBART = a.categoryId === 'sbar_general' || (a.expectationIds && a.expectationIds.length > 0) || a.expectationId != null || a.isSbar || a.gradingFramework === 'sbar'
+        const isSBART = isSBAR || a.categoryId === 'sbar_general' || a.isSbar || a.gradingFramework === 'sbar'
         const rawPossible = isSBART ? 100 : (a.scaledTotal ?? a.totalPoints)
         const possible = Number(rawPossible) || 0
         if (grade.missing) {
@@ -163,7 +164,7 @@ const history = computed(() => {
       const g = props.gradeMap[a.assessmentId]?.[props.studentId]
       if (!g || g.excluded) return null
       if (g.missing) return 0
-      const isSBART = a.categoryId === 'sbar_general' || (a.expectationIds && a.expectationIds.length > 0)
+      const isSBART = isSBAR || a.categoryId === 'sbar_general' || a.isSbar || a.gradingFramework === 'sbar'
       if (g.resolvedScore == null || isNaN(Number(g.resolvedScore))) return null
       const scoreNum = Number(g.resolvedScore)
       if (isSBART) {

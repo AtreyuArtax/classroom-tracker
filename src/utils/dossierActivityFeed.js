@@ -24,15 +24,16 @@ export function buildRecentActivityFeed({ assessments = [], events = [], behavio
     if (!ass || ass.score === null || ass.score === undefined) return
     if (ass.purpose === 'administrative') return
 
-    const isSBAR = ass.categoryId === 'sbar_general' || (ass.expectationIds && ass.expectationIds.length > 0)
-    
+    const isSBAR = ass.categoryId === 'sbar_general' || ass.isSbar || ass.gradingFramework === 'sbar'
+    const isSBAREligible = isSBAR || (ass.expectationIds && ass.expectationIds.length > 0) || ass.expectationId != null
+
     // Strict isolation based on active mode
-    if (isSBARMode && !isSBAR) return
+    if (isSBARMode && !isSBAREligible) return
     if (!isSBARMode && isSBAR) return
 
     const isFormative = Boolean(ass.isFormative || ass.purpose === 'formative')
 
-    if (isSBAR) {
+    if (isSBARMode) {
       const pct = Math.round(Number(ass.score))
       const badge = getSBARLevelBadge(pct)
       const expCount = ass.expectationIds?.length || 1

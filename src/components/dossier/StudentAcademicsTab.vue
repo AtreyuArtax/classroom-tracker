@@ -733,9 +733,9 @@ const classAssessments = computed(() => {
       if (a.purpose === 'administrative' || a.excluded) return false
       if (a.target === 'individual') return false
       if (!isAssessmentInSubCohort(a, studentSubCohort.value)) return false
-      const isSBARTask = a.categoryId === 'sbar_general' || (a.expectationIds && a.expectationIds.length > 0) || a.expectationId != null || a.isSbar || a.gradingFramework === 'sbar'
+      const isSBARTask = a.categoryId === 'sbar_general' || a.isSbar || a.gradingFramework === 'sbar'
       if (isSBAR) {
-        return isSBARTask || a.isNumericComponent || a.categoryId === 'sbar_final_component'
+        return isSBARTask || (a.expectationIds && a.expectationIds.length > 0) || a.expectationId != null || a.isNumericComponent || a.categoryId === 'sbar_final_component'
       } else {
         return !isSBARTask
       }
@@ -808,8 +808,12 @@ const individualAssessments = computed(() => {
     .filter(a => {
       if (a.purpose === 'administrative' || a.excluded) return false
       if (a.target !== 'individual' || String(a.targetStudentId) !== String(props.studentId)) return false
-      const isSBARTask = a.categoryId === 'sbar_general' || (a.expectationIds && a.expectationIds.length > 0) || a.expectationId != null || a.isSbar || a.gradingFramework === 'sbar'
-      return isSBAR ? isSBARTask : !isSBARTask
+      const isSBARTask = a.categoryId === 'sbar_general' || a.isSbar || a.gradingFramework === 'sbar'
+      if (isSBAR) {
+        return isSBARTask || (a.expectationIds && a.expectationIds.length > 0) || a.expectationId != null
+      } else {
+        return !isSBARTask
+      }
     })
     .map(a => {
       const g = gradeMap.value[a.assessmentId]?.[props.studentId]

@@ -627,8 +627,9 @@ const studentTrends = computed(() => {
       if (a.excluded || a.target === 'individual' || a.isFormative || a.purpose === 'formative') return false
       // If assessmentType is explicitly observation or conversation (qualitative check-in), exclude from product trend
       if (a.assessmentType === 'observation' || a.assessmentType === 'conversation') return false
-      const isSBARTask = a.categoryId === 'sbar_general' || (a.expectationIds && a.expectationIds.length > 0)
-      return isSBAR ? isSBARTask : !isSBARTask
+      const isSBARTask = a.categoryId === 'sbar_general' || a.isSbar || a.gradingFramework === 'sbar'
+      const isSBAREligible = isSBARTask || (a.expectationIds && a.expectationIds.length > 0) || a.expectationId != null
+      return isSBAR ? isSBAREligible : !isSBARTask
     })
     .sort((a, b) => new Date(a.date) - new Date(b.date))
     
