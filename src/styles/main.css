@@ -253,10 +253,10 @@
   --tooltip-text-muted:     #94a3b8;
   --tooltip-accent:         #38bdf8;
 
-  --grade-high: rgba(50, 215, 75, 0.22);
-  --grade-mid-high: rgba(10, 132, 255, 0.22);
-  --grade-mid-low: rgba(255, 214, 10, 0.22);
-  --grade-low: rgba(255, 69, 58, 0.22);
+  --grade-high: color-mix(in srgb, rgb(50, 215, 75) 22%, var(--surface));
+  --grade-mid-high: color-mix(in srgb, rgb(10, 132, 255) 22%, var(--surface));
+  --grade-mid-low: color-mix(in srgb, rgb(255, 214, 10) 22%, var(--surface));
+  --grade-low: color-mix(in srgb, rgb(255, 69, 58) 22%, var(--surface));
 
   /* ── Desk Tile Attendance & Departure States (Dark Mode) ───────────────── */
   --desk-late-bg:              color-mix(in srgb, #f59e0b 18%, var(--surface));
@@ -360,10 +360,10 @@
     --tooltip-text-muted:     #94a3b8;
     --tooltip-accent:         #38bdf8;
 
-    --grade-high: rgba(50, 215, 75, 0.22);
-    --grade-mid-high: rgba(10, 132, 255, 0.22);
-    --grade-mid-low: rgba(255, 214, 10, 0.22);
-    --grade-low: rgba(255, 69, 58, 0.22);
+    --grade-high: color-mix(in srgb, rgb(50, 215, 75) 22%, var(--surface));
+    --grade-mid-high: color-mix(in srgb, rgb(10, 132, 255) 22%, var(--surface));
+    --grade-mid-low: color-mix(in srgb, rgb(255, 214, 10) 22%, var(--surface));
+    --grade-low: color-mix(in srgb, rgb(255, 69, 58) 22%, var(--surface));
 
     /* ── Desk Tile Attendance & Departure States (Dark Mode) ───────────────── */
     --desk-late-bg:              color-mix(in srgb, #f59e0b 18%, var(--surface));
